@@ -79,7 +79,7 @@
       "roles": [
         "PATIENT"
       ],
-      "rolesExclusivos": false,
+      "rolesExclusivos": true,
       "componente": "PsychologicalHelp",
       "apis": [],
       "estado": "presentacional",
@@ -216,6 +216,7 @@
         "ProceduresClient",
         "ProfilesClient",
         "QuotationsClient",
+        "ReferralsClient",
         "SchedulingClient",
         "SystemContextClient",
         "TerminologyClient",
@@ -312,6 +313,7 @@
       "rolesExclusivos": false,
       "componente": "Glossary",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -673,7 +675,10 @@
       "rolesExclusivos": false,
       "componente": "MedicalOrganization",
       "apis": [
-        "MedicalOrganizationClient"
+        "AccountingClient",
+        "MedicalOrganizationClient",
+        "PracticeSitesClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -852,6 +857,7 @@
       "componente": "MedicalRecord",
       "apis": [
         "ClinicalClient",
+        "DiagnosticUnitsClient",
         "DiagnosticsClient",
         "FormsClient",
         "PharmacyCampaignsClient",
@@ -1062,7 +1068,7 @@
     },
     {
       "ruta": "/administration/my-practice",
-      "etiqueta": "Mis organizaciones",
+      "etiqueta": "Mi consultorio propio",
       "grupo": "Administración",
       "roles": [
         "PRACTITIONER"
@@ -2421,22 +2427,6 @@
       "parametrizada": true
     },
     {
-      "ruta": "/directory/:profileId",
-      "seccion": "Directorio de médicos",
-      "roles": [
-        "PATIENT",
-        "PRACTITIONER"
-      ],
-      "componente": "PractitionerDetail",
-      "apis": [
-        "FilesClient",
-        "ProfilesClient",
-        "TerminologyClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": true
-    },
-    {
       "ruta": "/glossary/:conceptId",
       "seccion": "Glosario",
       "roles": [
@@ -2454,10 +2444,35 @@
       ],
       "componente": "GlossaryTerm",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": true
+    },
+    {
+      "ruta": "/glossary/anatomy-atlas",
+      "seccion": "Glosario",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GlossaryAnatomyAtlas",
+      "apis": [
+        "AnatomyAtlasClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
     },
     {
       "ruta": "/glossary/network",
@@ -2477,6 +2492,7 @@
       ],
       "componente": "GlossaryNetwork",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -2550,6 +2566,7 @@
         "PracticeSitesClient",
         "ProceduresClient",
         "ProfilesClient",
+        "ReferralsClient",
         "SchedulingClient",
         "SystemContextClient",
         "TerminologyClient",
@@ -2646,9 +2663,11 @@
       "ruta": "/my-account/identity/cases/:caseId",
       "seccion": "Mi identidad",
       "roles": [],
-      "componente": "VerificationCaseDetail",
+      "componente": "PractitionerDetail",
       "apis": [
-        "IdentityClient"
+        "FilesClient",
+        "ProfilesClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2660,6 +2679,8 @@
       "componente": "WhereToBuy",
       "apis": [
         "ClinicalClient",
+        "DiagnosticUnitsClient",
+        "DiagnosticsClient",
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient",

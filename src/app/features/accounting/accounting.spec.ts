@@ -4,7 +4,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 
-import { Accounting, agruparPorMes } from './accounting';
+import { Accounting, agruparPorMes, relatedEntityFields } from './accounting';
+import { LEDGER_TABS } from './ledger-period';
 import type { PaidConsultation } from '../../core/data-access/accounting/accounting.types';
 import { CsvExportService } from '../../shared/utils/csv-export/csv-export';
 
@@ -17,13 +18,11 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
   /**
    * Los pedidos que cuelgan de la práctica elegida (sin `/practices`).
    *
-   * `general-ledger` sale último a propósito: depende de `cuentaDelMayor`, un
-   * `linkedSignal` que recién elige la primera cuenta cuando responde
-   * `/accounting/accounts` — así que hace falta un tick de detección de
-   * cambios entre medio para que la pestaña «Libro mayor» (activa por
-   * omisión) dispare su pedido.
+   * La pestaña activa por omisión es el «Cuadro de mando integral» (TAREA-20:
+   * primera del pedido), que tras un tick de detección de cambios pide el
+   * estado de resultados y el balance general.
    */
-  function flushDependientesDeLaPractica(): void {
+  function flushDependientesDeLaPractica(cuadroDeMando = true): void {
     http.expectOne((r) => r.url === '/accounting/trial-balance').flush({
       items: [],
       count: 0,
@@ -50,23 +49,40 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
       .flush({ items: [], count: 0 });
 
     fixture.detectChanges();
-    http
-      .expectOne((r) => r.url === '/accounting/general-ledger')
-      .flush({
-        accountId: 'acc-1',
-        code: '1000',
-        name: 'Caja',
-        normalBalanceConceptId: 'b',
-        currencyConceptId: null,
-        openingBalance: '0.00',
-        items: [],
-        count: 0,
-        limit: 100,
-        nextCursor: null,
-      });
+    if (cuadroDeMando) flushCuadroDeMando();
   }
 
-  function flushCarga(): void {
+  /** La pestaña por omisión es el Cuadro de mando: pide resultados y balance general. */
+  function flushCuadroDeMando(): void {
+    http.expectOne((r) => r.url === '/accounting/income-statement').flush({
+      revenueItems: [],
+      expenseItems: [],
+      totalRevenue: '0.00',
+      totalExpense: '0.00',
+      netIncome: '0.00',
+      count: 0,
+      limit: 100,
+      nextCursor: null,
+      truncated: false,
+    });
+    http.expectOne((r) => r.url === '/accounting/balance-sheet').flush({
+      assetItems: [],
+      liabilityItems: [],
+      equityItems: [],
+      netIncomeOfPeriod: '0.00',
+      totalAssets: '0.00',
+      totalLiabilities: '0.00',
+      totalEquity: '0.00',
+      totalLiabilitiesAndEquity: '0.00',
+      balanced: true,
+      count: 0,
+      limit: 100,
+      nextCursor: null,
+      truncated: false,
+    });
+  }
+
+  function flushCarga(cuadroDeMando = true): void {
     // Arreglo desnudo, que es lo que manda el controlador: `listPractices()`
     // hace `body.map(...)` sobre la respuesta. Con `{ items, count }` el `map`
     // no existe, el observable muere, el `catchError` del componente lo traga y
@@ -80,7 +96,7 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
     // arriba; los cuatro pedidos que cuelgan de la práctica elegida no salen
     // hasta que un tick de detección de cambios propaga esa señal.
     fixture.detectChanges();
-    flushDependientesDeLaPractica();
+    flushDependientesDeLaPractica(cuadroDeMando);
   }
 
   /**
@@ -180,6 +196,50 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
     flushDependientesDeLaPractica();
   });
 
+  it('MODO CONTADOR: agrega, modifica y elimina filas con totales exactos', () => {
+    fixture.detectChanges();
+    flushCarga();
+
+    interface Fila { amount: string; direction: 'DEBIT' | 'CREDIT'; related: readonly unknown[] }
+    const c = fixture.componentInstance as unknown as {
+      filaEnCurso: { setValue: (v: unknown) => void };
+      relacionadasEnCurso: { set: (v: unknown) => void };
+      agregarOModificarFila: () => void;
+      editarFila: (i: number) => void;
+      eliminarFila: (i: number) => void;
+      filaEnEdicion: () => number | null;
+      filasDelAsiento: () => readonly Fila[];
+      descuadreEnVivo: () => { debe: string; haber: string; diferencia: string };
+      asientoBalanceado: () => boolean;
+    };
+    const agregar = (amount: string, direction: 'DEBIT' | 'CREDIT'): void => {
+      c.filaEnCurso.setValue({ accountId: 'acc-1', direction, amount, memo: '' });
+      c.agregarOModificarFila();
+    };
+
+    agregar('0.10', 'DEBIT');
+    c.relacionadasEnCurso.set([{ kind: 'ASSET', id: 'as-1', label: 'Ecógrafo' }]);
+    agregar('0.20', 'DEBIT');
+    agregar('0.30', 'CREDIT');
+    expect(c.descuadreEnVivo()).toEqual({ debe: '0.30', haber: '0.30', diferencia: '0.00' });
+    expect(c.asientoBalanceado()).toBe(true);
+    expect(c.filasDelAsiento()[1]?.related).toEqual([{ kind: 'ASSET', id: 'as-1', label: 'Ecógrafo' }]);
+    // Al agregar, la fila en curso se limpia también de sus entidades relacionadas.
+    expect(c.filasDelAsiento()[2]?.related).toEqual([]);
+
+    // Se edita la tercera y se elimina la primera: la edición sigue apuntando
+    // a la misma fila (antes guardaba sobre la de al lado).
+    c.editarFila(2);
+    c.eliminarFila(0);
+    expect(c.filaEnEdicion()).toBe(1);
+    c.filaEnCurso.setValue({ accountId: 'acc-1', direction: 'CREDIT', amount: '0.25', memo: '' });
+    c.agregarOModificarFila();
+
+    expect(c.filasDelAsiento().map((f) => f.amount)).toEqual(['0.20', '0.25']);
+    expect(c.descuadreEnVivo()).toEqual({ debe: '0.20', haber: '0.25', diferencia: '-0.05' });
+    expect(c.asientoBalanceado()).toBe(false);
+  });
+
   /**
    * FT-20 · Cuadro de mando integral: no agrega ninguna lectura propia, junta
    * las tres que ya existían (`resumen`, `estadoDeResultados`,
@@ -190,17 +250,12 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
    */
   it('el cuadro de mando junta los tres informes sólo cuando los tres respondieron', () => {
     fixture.detectChanges();
-    flushCarga();
-    fixture.detectChanges();
+    flushCarga(false);
 
     const componente = fixture.componentInstance as unknown as {
-      pestanaActiva: { set: (n: number) => void };
       indicadores: () => unknown;
     };
     expect(componente.indicadores()).toBeNull();
-
-    componente.pestanaActiva.set(3);
-    fixture.detectChanges();
 
     http.expectOne((r) => r.url === '/accounting/income-statement').flush({
       revenueItems: [],
@@ -257,7 +312,7 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
       resumenDeCaja: () => { entradas: string; salidas: string; neto: string } | null;
     };
 
-    componente.pestanaActiva.set(4);
+    componente.pestanaActiva.set(LEDGER_TABS.cashFlow);
     fixture.detectChanges();
 
     http.expectOne((r) => r.url === '/accounting/general-ledger').flush({
@@ -364,24 +419,17 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush({ items: [], count: 0 });
     fixture.detectChanges();
-    http.expectOne((r) => r.url === '/accounting/general-ledger').flush({
-      accountId: 'acc-1',
-      code: '1000',
-      name: 'Caja',
-      normalBalanceConceptId: 'b',
-      currencyConceptId: null,
-      openingBalance: '0.00',
-      items: [],
-      count: 0,
-      limit: 100,
-      nextCursor: null,
-    });
+    flushCuadroDeMando();
 
     (fixture.componentInstance as unknown as { exportarDiarioCsv: () => void }).exportarDiarioCsv();
 
     expect(csvExportEspiado.download).toHaveBeenCalledTimes(1);
     expect(csvExportEspiado.download.mock.calls[0]?.[0]).toEqual([
-      expect.objectContaining({ transactionNumber: 'JT-1', totalAmount: '80.00' }),
+      expect.objectContaining({
+        transactionNumber: 'JT-1',
+        totalAmount: '80.00',
+        statusLabel: 'Contabilizado',
+      }),
     ]);
     expect(csvExportEspiado.download.mock.calls[0]?.[2]).toBe('libro-diario');
   });
@@ -439,5 +487,17 @@ describe('agruparPorMes', () => {
     ]);
 
     expect(meses.map((m) => m.clave)).toEqual(['2026-08', '2025-08']);
+  });
+});
+
+describe('relatedEntityFields (TAREA-20 · entidades relacionadas por tipo)', () => {
+  it('lleva cada tipo a su campo de la línea y omite los que no se eligieron', () => {
+    expect(relatedEntityFields([])).toEqual({});
+    expect(
+      relatedEntityFields([
+        { kind: 'COST_CENTER', id: 'cc-1', label: 'CC' },
+        { kind: 'ASSET', id: 'as-1', label: 'Ecógrafo' },
+      ]),
+    ).toEqual({ costCenterId: 'cc-1', assetId: 'as-1' });
   });
 });

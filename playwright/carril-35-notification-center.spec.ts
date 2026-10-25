@@ -135,7 +135,11 @@ test('«Ver más notificaciones» sigue por cursor y agrega filas', async () => 
 
 test('abrir una notificación sin leer la marca leída y así sigue al recargar', async () => {
   const { page } = session;
-  const before = await centerList(page, () => irA(page, CENTER));
+  // Si la página ya está en la bandeja (las pruebas comparten sesión), navegar
+  // a la misma ruta no vuelve a crear el componente ni a pedir la lista.
+  const before = await centerList(page, () =>
+    new URL(page.url()).pathname === CENTER ? reloadApp(page) : irA(page, CENTER),
+  );
   const { unreadCount: unreadBefore } = (await before.json()) as NotificationPage;
   const unreadRow = page.locator('li.avisos__fila.is-sin-leer').filter({
     has: page.locator('button[data-testid="aviso"]'),

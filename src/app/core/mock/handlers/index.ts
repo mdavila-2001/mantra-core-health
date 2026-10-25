@@ -4,6 +4,7 @@ import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
 import { registrarDiagnostico } from './diagnostics.handlers';
@@ -64,6 +65,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarPracticas(router);
   registrarClinica(router);
   registerReceivedServices(router);
+  registerProcedureCenters(router);
   registerMedicalNotes(router);
   registerDiagnosisVerification(router);
   registrarComunidad(router);

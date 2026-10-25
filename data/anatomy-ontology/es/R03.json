@@ -1,0 +1,1718 @@
+{
+ "UBERON:0000101": {
+  "labelEs": "lóbulo del pulmón",
+  "definitionEs": "Un lóbulo pulmonar es una de las proyecciones redondeadas que componen el pulmón[GO]."
+ },
+ "UBERON:0000102": {
+  "labelEs": "vasculatura pulmonar",
+  "definitionEs": "La vasculatura pulmonar está compuesta por las estructuras tubulares que transportan sangre o linfa en los pulmones[GO]."
+ },
+ "UBERON:0000114": {
+  "labelEs": "tejido conjuntivo pulmonar",
+  "definitionEs": "Tejido conjuntivo situado entre el epitelio respiratorio (de las vías aéreas y alveolar), el endotelio capilar y el mesotelio pleural; contiene membrana basal compuesta de colágeno, elastina, proteoglucanos y fibronectina."
+ },
+ "UBERON:0000310": {
+  "labelEs": "mama",
+  "definitionEs": "Región ventral superior del torso de un organismo."
+ },
+ "UBERON:0000398": {
+  "labelEs": "tejido cartilaginoso del esternón",
+  "definitionEs": "Cualquier porción de tejido cartilaginoso que forma parte del esternón."
+ },
+ "UBERON:0000915": {
+  "labelEs": "segmento torácico del tronco",
+  "definitionEs": "Subdivisión del tronco que se encuentra entre la cabeza y el abdomen."
+ },
+ "UBERON:0000946": {
+  "labelEs": "válvula cardíaca",
+  "definitionEs": "Pliegue membranoso del corazón que impide el reflujo de líquido."
+ },
+ "UBERON:0000948": {
+  "labelEs": "corazón",
+  "definitionEs": "Órgano circulatorio muscular miogénico presente en el sistema cardiovascular de los vertebrados, compuesto por cámaras de músculo cardíaco. Es el órgano circulatorio principal."
+ },
+ "UBERON:0000961": {
+  "labelEs": "ganglio torácico",
+  "definitionEs": "Los ganglios torácicos son ganglios paravertebrales. La porción torácica del tronco simpático tiene típicamente 12 ganglios torácicos. De los ganglios emergen los nervios esplácnicos torácicos (el cardiopulmonar y los esplácnicos mayor, menor e inferior), que contribuyen a proporcionar inervación simpática a las estructuras abdominales. Además, los ganglios del tronco simpático torácico tienen ramos comunicantes tanto blancos como grises. Los ramos blancos transportan fibras simpáticas que se originan en la médula espinal hacia el tronco simpático. [WP,unvetted]."
+ },
+ "UBERON:0000975": {
+  "labelEs": "esternón",
+  "definitionEs": "Elemento esquelético endocondral medioventral que representa el sitio de origen de los músculos pectorales[PHENOSCAPE:ad]."
+ },
+ "UBERON:0001074": {
+  "labelEs": "cavidad pericárdica",
+  "definitionEs": "Espacio potencial entre las capas visceral y parietal del pericardio."
+ },
+ "UBERON:0001081": {
+  "labelEs": "endocardio ventricular",
+  "definitionEs": "Endocardio que forma parte del ventrículo cardíaco."
+ },
+ "UBERON:0001082": {
+  "labelEs": "epicardio ventricular",
+  "definitionEs": "Capa epicárdica que reviste un ventrículo cardíaco."
+ },
+ "UBERON:0001083": {
+  "labelEs": "miocardio ventricular",
+  "definitionEs": "Capa muscular del ventrículo cardíaco compuesta por una capa miocárdica compacta que rodea a la capa trabecular."
+ },
+ "UBERON:0001100": {
+  "labelEs": "músculo pectoral menor",
+  "definitionEs": "El pectoral menor es un músculo delgado y triangular, situado en la parte superior del tórax, por debajo del pectoral mayor. [WP,unvetted]."
+ },
+ "UBERON:0001103": {
+  "labelEs": "diafragma",
+  "definitionEs": "Barrera musculomembranosa delgada que separa las cavidades abdominal y torácica. A menudo se utiliza para el control de la respiración."
+ },
+ "UBERON:0001111": {
+  "labelEs": "músculo intercostal",
+  "definitionEs": "Músculos respiratorios que se originan en el borde inferior de una costilla y se insertan en el borde superior de la costilla adyacente."
+ },
+ "UBERON:0001121": {
+  "labelEs": "músculo largo del cuello",
+  "definitionEs": "El músculo largo del cuello es un músculo del cuerpo humano. El largo del cuello está situado en la cara anterior de la columna vertebral, entre el atlas y la tercera vértebra torácica. Es ancho en su parte media, estrecho y puntiagudo en ambos extremos, y consta de tres porciones: una oblicua superior, una oblicua inferior y una vertical. La porción oblicua superior se origina en los tubérculos anteriores de las apófisis transversas de la tercera, cuarta y quinta vértebras cervicales y, ascendiendo oblicuamente con una inclinación medial, se inserta mediante un tendón estrecho en el tubérculo del arco anterior del atlas. La porción oblicua inferior, la parte más pequeña del músculo, se origina en la cara anterior de los cuerpos de las dos o tres primeras vértebras torácicas y, ascendiendo oblicuamente en dirección lateral, se inserta en los tubérculos anteriores de las apófisis transversas de la quinta y sexta vértebras cervicales. La porción vertical se origina, por abajo, en la cara anterior de los cuerpos de las tres vértebras torácicas superiores y de las tres cervicales inferiores, y se inserta en la cara anterior de los cuerpos de la segunda, tercera y cuarta vértebras cervicales. [WP,unvetted]."
+ },
+ "UBERON:0001126": {
+  "labelEs": "músculo serrato posterior superior",
+  "definitionEs": "El serrato posterior superior es un músculo delgado y cuadrilátero, situado en la parte superior y posterior del tórax. Se origina mediante una aponeurosis delgada y ancha en la parte inferior del ligamento nucal, en las apófisis espinosas de la séptima vértebra cervical y de las dos o tres primeras vértebras torácicas, y en el ligamento supraespinoso. Inclinándose hacia abajo y lateralmente se vuelve muscular, y se inserta, mediante cuatro digitaciones carnosas, en los bordes superiores de las costillas segunda, tercera, cuarta y quinta, un poco más allá de sus ángulos. [WP,unvetted]."
+ },
+ "UBERON:0001418": {
+  "labelEs": "piel del tórax",
+  "definitionEs": "Zona de piel que forma parte de un tórax [Automatically generated definition]."
+ },
+ "UBERON:0001443": {
+  "labelEs": "tórax",
+  "definitionEs": "Subdivisión del tronco propiamente dicho que está delimitada del cuello por el plano de la abertura torácica superior y del abdomen, internamente, por la cara inferior del diafragma y, externamente, por el margen costal, y que está asociada con la columna vertebral torácica y la caja torácica, y de la espalda del tórax por la superficie externa de la parte posterolateral de la caja torácica, la cara anterior de la columna vertebral torácica y las líneas axilares posteriores; junto con el abdomen y el periné, constituye el tronco propiamente dicho[FMA]."
+ },
+ "UBERON:0001495": {
+  "labelEs": "músculo pectoral",
+  "definitionEs": "Músculos de la parte superior del tórax. El término puede referirse a uno de dos músculos, el pectoral mayor y el pectoral menor. El primero es un músculo grueso de la porción anterior del tórax. Su acción comprende la flexión, la rotación medial y la aducción del húmero. El segundo es un músculo delgado situado por debajo del pectoral mayor. Su acción comprende el descenso de la escápula y la elevación de las costillas."
+ },
+ "UBERON:0001496": {
+  "labelEs": "aorta ascendente",
+  "definitionEs": "La aorta ascendente es la porción de la aorta, en un sistema circulatorio de doble circuito, que se encuentra entre el corazón y el arco de la aorta[GO]. Porción de la aorta que comienza en la parte superior de la base del ventrículo izquierdo, a la altura del borde inferior del tercer cartílago costal, detrás de la mitad izquierda del esternón; discurre oblicuamente hacia arriba, hacia delante y hacia la derecha, en la dirección del eje del corazón, hasta la altura del borde superior del segundo cartílago costal derecho, describiendo una ligera curva en su trayecto, y está situada a unos 6 cm por detrás de la cara posterior del esternón. Su longitud total es de unos 5 cm [Wikipedia]."
+ },
+ "UBERON:0001508": {
+  "labelEs": "arco de la aorta",
+  "definitionEs": "Porción convexa de la aorta entre las partes ascendente y descendente de la aorta; de ella surgen como ramas el tronco braquiocefálico, la arteria carótida común izquierda y la arteria subclavia izquierda; el tronco braquiocefálico se divide a su vez para formar la arteria subclavia derecha y la arteria carótida común derecha."
+ },
+ "UBERON:0001515": {
+  "labelEs": "aorta torácica",
+  "definitionEs": "Parte de la aorta que se extiende desde su origen en el corazón hasta el diafragma, y de la cual surgen numerosas ramas que suministran sangre oxigenada a la caja torácica y a los órganos del interior del tórax."
+ },
+ "UBERON:0001589": {
+  "labelEs": "vena torácica interna",
+  "definitionEs": "Vaso que drena la pared torácica y las mamas, que se origina de la vena epigástrica superior, acompaña a la arteria torácica interna a lo largo de su trayecto y termina en la vena braquiocefálica."
+ },
+ "UBERON:0001621": {
+  "labelEs": "arteria coronaria",
+  "definitionEs": "Arteria que irriga el miocardio."
+ },
+ "UBERON:0001625": {
+  "labelEs": "arteria coronaria derecha",
+  "definitionEs": "Arteria coronaria que discurre a lo largo del lado derecho del corazón e irriga predominantemente el miocardio del lado derecho del corazón[Wikipedia,modified]."
+ },
+ "UBERON:0001626": {
+  "labelEs": "arteria coronaria izquierda",
+  "definitionEs": "Arteria coronaria que discurre a lo largo del lado izquierdo del corazón e irriga predominantemente el miocardio del lado izquierdo del corazón[Wikipedia,modified]."
+ },
+ "UBERON:0001765": {
+  "labelEs": "conducto mamario",
+  "definitionEs": "Tubo epitelial que transporta leche[GO]."
+ },
+ "UBERON:0001868": {
+  "labelEs": "piel del pecho",
+  "definitionEs": "Zona de piel que forma parte de un pecho [Automatically generated definition]."
+ },
+ "UBERON:0001955": {
+  "labelEs": "epitelio del bronquiolo respiratorio",
+  "definitionEs": "Epitelio que forma parte de un bronquiolo respiratorio [Automatically generated definition]."
+ },
+ "UBERON:0001958": {
+  "labelEs": "epitelio del bronquiolo terminal",
+  "definitionEs": "Epitelio que reviste un bronquiolo terminal."
+ },
+ "UBERON:0001964": {
+  "labelEs": "nervio esplácnico inferior",
+  "definitionEs": "Nervio torácico que se dirige al abdomen, donde sus fibras hacen sinapsis en los ganglios renales."
+ },
+ "UBERON:0002030": {
+  "labelEs": "pezón",
+  "definitionEs": "Proyección de la piel que contiene las desembocaduras de 15-20 conductos galactóforos dispuestos cilíndricamente alrededor de la punta."
+ },
+ "UBERON:0002048": {
+  "labelEs": "pulmón",
+  "definitionEs": "Órgano de la respiración que se desarrolla como una evaginación del esófago."
+ },
+ "UBERON:0002051": {
+  "labelEs": "epitelio del bronquiolo",
+  "definitionEs": "Epitelio que forma parte de un bronquiolo [Automatically generated definition]."
+ },
+ "UBERON:0002061": {
+  "labelEs": "tronco arterioso",
+  "definitionEs": "El tronco arterioso y el bulbo cardíaco están divididos por el tabique aorticopulmonar. El tronco arterioso da origen a la aorta ascendente y al tronco pulmonar. El bulbo cardíaco da origen a las partes lisas (tracto de salida) de los ventrículos izquierdo y derecho."
+ },
+ "UBERON:0002062": {
+  "labelEs": "cojinete endocárdico",
+  "definitionEs": "El cojinete endocárdico es una región especializada de células mesenquimatosas que dará origen a los tabiques y las válvulas del corazón[GO]. Abultamientos de tejido presentes entre las capas celulares endocárdica y miocárdica que darán origen a las células intersticiales de las válvulas cardíacas[ZFA]."
+ },
+ "UBERON:0002063": {
+  "labelEs": "seno venoso",
+  "definitionEs": "El seno venoso es una gran cámara cardíaca situada en el tracto de entrada que recibe la sangre venosa de la circulación sistémica. Precede al atrio en el lado venoso del corazón de los cordados."
+ },
+ "UBERON:0002078": {
+  "labelEs": "atrio derecho",
+  "definitionEs": "Atrio cardíaco que se encuentra en el lado derecho del corazón. Recibe sangre desoxigenada. En los mamíferos, esta procede de las venas cavas superior e inferior y del seno coronario, y la bombea hacia el ventrículo derecho a través de la válvula tricúspide."
+ },
+ "UBERON:0002079": {
+  "labelEs": "atrio izquierdo",
+  "definitionEs": "Atrio cardíaco que se encuentra en el lado izquierdo del corazón. Recibe sangre oxigenada de las venas pulmonares. En los mamíferos, esta se bombea hacia el ventrículo izquierdo a través de la válvula mitral."
+ },
+ "UBERON:0002080": {
+  "labelEs": "ventrículo derecho",
+  "definitionEs": "Ventrículo cardíaco que se encuentra en el lado derecho del corazón."
+ },
+ "UBERON:0002081": {
+  "labelEs": "atrio cardíaco",
+  "definitionEs": "Cámara cardíaca por la que la sangre entra en el corazón."
+ },
+ "UBERON:0002082": {
+  "labelEs": "ventrículo cardíaco",
+  "definitionEs": "Cámara cardíaca a través de la cual la sangre sale del corazón."
+ },
+ "UBERON:0002084": {
+  "labelEs": "ventrículo izquierdo",
+  "definitionEs": "Ventrículo cardíaco que se encuentra en el lado izquierdo del corazón."
+ },
+ "UBERON:0002085": {
+  "labelEs": "tabique interatrial",
+  "definitionEs": "Tabique cardíaco que divide los atrios izquierdo y derecho del corazón."
+ },
+ "UBERON:0002086": {
+  "labelEs": "válvula sinoatrial",
+  "definitionEs": "Válvula situada en la desembocadura del seno venoso en el atrio primitivo[TFD,modified]."
+ },
+ "UBERON:0002087": {
+  "labelEs": "conducto atrioventricular",
+  "definitionEs": "Parte del corazón que conecta el atrio con el ventrículo cardíaco[ZFA]. En el corazón en desarrollo, la constricción entre el atrio y el ventrículo constituye el conducto atrial e indica el sitio de las futuras válvulas atrioventriculares[WP]."
+ },
+ "UBERON:0002088": {
+  "labelEs": "vena torácica lateral",
+  "definitionEs": "La vena torácica lateral es una tributaria de la vena axilar. Discurre junto con la arteria torácica lateral y drena el músculo serrato ventral y el músculo pectoral mayor. Normalmente, la vena toracoepigástrica existe entre esta vena y la vena epigástrica superficial (una tributaria de la vena femoral), para actuar como derivación de la sangre si el sistema porta (a través del hígado) desarrolla hipertensión o una obstrucción. [WP,unvetted]."
+ },
+ "UBERON:0002094": {
+  "labelEs": "tabique interventricular",
+  "definitionEs": "Tabique cardíaco que separa el ventrículo derecho del ventrículo izquierdo.[FMA]."
+ },
+ "UBERON:0002098": {
+  "labelEs": "vértice del corazón",
+  "definitionEs": "El vértice del corazón es la parte superficial más baja del corazón. Está dirigido hacia abajo, hacia delante y hacia la izquierda, y está cubierto por el pulmón izquierdo y la pleura. [WP,unvetted]."
+ },
+ "UBERON:0002099": {
+  "labelEs": "tabique cardíaco",
+  "definitionEs": "Estructura membranosa delgada entre partes del corazón, incluidos los atrios, los ventrículos y el tracto de salida."
+ },
+ "UBERON:0002133": {
+  "labelEs": "válvula atrioventricular",
+  "definitionEs": "Válvula cardíaca de la región atrioventricular que separa el atrio del ventrículo e impide el reflujo desde los ventrículos hacia los atrios durante la sístole."
+ },
+ "UBERON:0002134": {
+  "labelEs": "válvula tricúspide",
+  "definitionEs": "Válvula atrioventricular que forma parte de la porción de salida del atrio derecho."
+ },
+ "UBERON:0002135": {
+  "labelEs": "válvula mitral",
+  "definitionEs": "Válvula atrioventricular que forma parte de la porción de salida del atrio izquierdo."
+ },
+ "UBERON:0002137": {
+  "labelEs": "válvula aórtica",
+  "definitionEs": "Válvula cardíaca que tiene como partes las valvas anterior, posterior derecha y posterior izquierda, unidas al anillo fibroso de la válvula aórtica.[FMA]."
+ },
+ "UBERON:0002146": {
+  "labelEs": "válvula pulmonar",
+  "definitionEs": "Válvula semilunar del corazón que se encuentra entre el ventrículo derecho y la arteria pulmonar."
+ },
+ "UBERON:0002165": {
+  "labelEs": "endocardio",
+  "definitionEs": "El endocardio es una estructura anatómica compuesta por un endotelio y una matriz extracelular que forma la capa de tejido más interna del corazón y reviste las cámaras cardíacas[GO]."
+ },
+ "UBERON:0002166": {
+  "labelEs": "endocardio atrial",
+  "definitionEs": "Endocardio que forma parte del atrio."
+ },
+ "UBERON:0002167": {
+  "labelEs": "pulmón derecho",
+  "definitionEs": "Pulmón que consta del lóbulo superior derecho, el lóbulo medio y el lóbulo inferior derecho.[FMA]."
+ },
+ "UBERON:0002168": {
+  "labelEs": "pulmón izquierdo",
+  "definitionEs": "Pulmón que consta del lóbulo superior izquierdo y el lóbulo inferior izquierdo.[FMA]."
+ },
+ "UBERON:0002169": {
+  "labelEs": "saco alveolar",
+  "definitionEs": "Pequeña dilatación terminal de los conductos alveolares alrededor de la cual los alvéolos forman agrupaciones a modo de bolsillos."
+ },
+ "UBERON:0002170": {
+  "labelEs": "lóbulo superior del pulmón derecho",
+  "definitionEs": "Lóbulo del pulmón derecho que está más cerca de la cabeza."
+ },
+ "UBERON:0002171": {
+  "labelEs": "lóbulo inferior del pulmón derecho",
+  "definitionEs": "Lóbulo del pulmón derecho que está más alejado de la cabeza."
+ },
+ "UBERON:0002172": {
+  "labelEs": "atrio alveolar",
+  "definitionEs": null
+ },
+ "UBERON:0002173": {
+  "labelEs": "conducto alveolar",
+  "definitionEs": "Tubos conductores respiratorios distales al bronquiolo respiratorio que conducen a los sacos alveolares y a los alvéolos."
+ },
+ "UBERON:0002174": {
+  "labelEs": "lóbulo medio del pulmón derecho",
+  "definitionEs": "En el ser humano, el pulmón derecho está dividido en tres lóbulos (a diferencia de los dos lóbulos del izquierdo), superior, medio e inferior, por dos fisuras interlobulares: [WP,unvetted]."
+ },
+ "UBERON:0002183": {
+  "labelEs": "bronquio lobular",
+  "definitionEs": "El bronquio lobular es la vía aérea principal del árbol respiratorio que comienza por la división de los bronquios principales a ambos lados y termina en el punto de su propia subdivisión en bronquios terciarios o segmentarios[GO]."
+ },
+ "UBERON:0002184": {
+  "labelEs": "bronquio segmentario",
+  "definitionEs": "Los bronquios terciarios (también conocidos como bronquios segmentarios) surgen de los bronquios secundarios. El epitelio respiratorio que reviste su luz está rodeado por una capa de músculo liso. Esta capa está compuesta por dos cintas de músculo liso que se enrollan en espiral en direcciones opuestas. La capa de músculo liso está rodeada por placas irregulares de cartílago hialino que ayudan a mantener la permeabilidad de la vía aérea. Cada uno de los bronquios terciarios sirve a un segmento broncopulmonar específico. Hay 10 bronquios terciarios en el pulmón derecho y ocho en el izquierdo. Los bronquios terciarios se hacen más pequeños y se dividen en bronquiolos primarios. [WP,unvetted]."
+ },
+ "UBERON:0002186": {
+  "labelEs": "bronquiolo",
+  "definitionEs": "Vía aérea de conducción de los pulmones que se encuentra en posición terminal respecto a los bronquios; estas estructuras no contienen cartílago ni glándulas secretoras de moco; el epitelio de los bronquiolos se vuelve más delgado con cada ramificación."
+ },
+ "UBERON:0002187": {
+  "labelEs": "bronquiolo terminal",
+  "definitionEs": "Bronquiolo que forma parte de un lobulillo pulmonar secundario y es la última estructura de conducción de un bronquiolo no respiratorio; a partir de este punto, las vías aéreas tienen alvéolos en sus paredes."
+ },
+ "UBERON:0002188": {
+  "labelEs": "bronquiolo respiratorio",
+  "definitionEs": "Bronquiolo que constituye el primer segmento de la zona respiratoria."
+ },
+ "UBERON:0002205": {
+  "labelEs": "manubrio del esternón",
+  "definitionEs": "Segmento más craneal del esternón. Situado ventralmente, de forma cuadrangular, más ancho por arriba y más estrecho por abajo, se articula con las clavículas y las dos primeras costillas[MP,WP]."
+ },
+ "UBERON:0002207": {
+  "labelEs": "apófisis xifoides",
+  "definitionEs": "Prolongación cartilaginosa de la parte distal del esternón."
+ },
+ "UBERON:0002208": {
+  "labelEs": "esternebra",
+  "definitionEs": "Uno de los segmentos óseos del esternón[TFD]."
+ },
+ "UBERON:0002224": {
+  "labelEs": "cavidad torácica",
+  "definitionEs": "Parte de la luz de la cavidad celómica que está encerrada por las paredes del tórax."
+ },
+ "UBERON:0002225": {
+  "labelEs": "arco costal",
+  "definitionEs": "El margen costal, a veces denominado arco costal, es el margen medial formado por las costillas falsas, que en el ser humano va desde la octava hasta la décima costilla."
+ },
+ "UBERON:0002228": {
+  "labelEs": "costilla",
+  "definitionEs": "Hueso intersegmentario en forma de varilla que se forma en la membrana peritoneal y se une a las parapófisis vertebrales."
+ },
+ "UBERON:0002230": {
+  "labelEs": "cabeza de la costilla",
+  "definitionEs": "La cabeza de la costilla es el extremo de una costilla más próximo a la columna vertebral, con la cual se articula."
+ },
+ "UBERON:0002231": {
+  "labelEs": "cuerpo de la costilla",
+  "definitionEs": null
+ },
+ "UBERON:0002235": {
+  "labelEs": "tubérculo de la costilla",
+  "definitionEs": "El tubérculo de una costilla es una eminencia de la cara posterior, en la unión del cuello y el cuerpo de la costilla, y más cerca del borde inferior que del superior. Consta de una porción articular y una porción no articular. La porción articular, la más inferior y medial de las dos, presenta una pequeña superficie oval para articularse con el extremo de la apófisis transversa de la inferior de las dos vértebras con las que se conecta la cabeza. La porción no articular es una elevación rugosa y proporciona inserción al ligamento del tubérculo. El tubérculo es mucho más prominente en las costillas superiores que en las inferiores[WP]."
+ },
+ "UBERON:0002236": {
+  "labelEs": "cartílago costal",
+  "definitionEs": "Tejido conjuntivo hialino, avascular, resiliente y flexible que conecta el extremo de una costilla verdadera con el esternón o el extremo de una costilla falsa con el borde inferior del cartílago costal situado por encima."
+ },
+ "UBERON:0002237": {
+  "labelEs": "costilla verdadera",
+  "definitionEs": "Costilla que está conectada ventralmente al esternón."
+ },
+ "UBERON:0002238": {
+  "labelEs": "costilla falsa",
+  "definitionEs": "Costilla que no está conectada directamente por vía ventral al esternón."
+ },
+ "UBERON:0002239": {
+  "labelEs": "costilla flotante",
+  "definitionEs": "Costilla que no está conectada al esternón ni al cartílago esternal."
+ },
+ "UBERON:0002248": {
+  "labelEs": "seno transverso del pericardio",
+  "definitionEs": "Paso entre los mesocardios venoso y arterial, es decir, entre la aorta y la arteria pulmonar por delante y la vena cava superior por detrás. También, el seno que se forma en la cavidad pericárdica donde reside el pericardio dorsomesentérico.[WP,unvetted]."
+ },
+ "UBERON:0002299": {
+  "labelEs": "alvéolo pulmonar",
+  "definitionEs": "Evaginación esférica de los bronquiolos respiratorios y sitio principal del intercambio gaseoso con la sangre. Los alvéolos son propios de los pulmones de los mamíferos. En otros vertebrados intervienen estructuras diferentes en el intercambio gaseoso[WP]."
+ },
+ "UBERON:0002302": {
+  "labelEs": "miocardio atrial",
+  "definitionEs": "Parte atrial de la capa media del corazón, compuesta de músculo involuntario."
+ },
+ "UBERON:0002339": {
+  "labelEs": "epitelio del bronquio lobular",
+  "definitionEs": "Tejido formado por células epiteliales que reviste el interior del bronquio lobular."
+ },
+ "UBERON:0002341": {
+  "labelEs": "epitelio del bronquio segmentario",
+  "definitionEs": "Epitelio que forma parte de un bronquio segmentario [Automatically generated definition]."
+ },
+ "UBERON:0002345": {
+  "labelEs": "aorta torácica descendente",
+  "definitionEs": "Parte de la aorta que se extiende desde el arco de la aorta hasta el diafragma, y de la cual surgen numerosas ramas que suministran sangre oxigenada a la caja torácica y a los órganos del interior del tórax."
+ },
+ "UBERON:0002348": {
+  "labelEs": "epicardio",
+  "definitionEs": "Región de la membrana serosa que forma la capa más interna del pericardio y la superficie externa del corazón."
+ },
+ "UBERON:0002349": {
+  "labelEs": "miocardio",
+  "definitionEs": "Capa media del corazón, compuesta principalmente por fibras musculares cardíacas estriadas."
+ },
+ "UBERON:0002350": {
+  "labelEs": "sistema de conducción del corazón",
+  "definitionEs": "El sistema de conducción cardíaco consta de cardiomiocitos especializados que regulan la frecuencia del latido cardíaco[GO]."
+ },
+ "UBERON:0002351": {
+  "labelEs": "nodo sinoatrial",
+  "definitionEs": "Parte del sistema de conducción cardíaco que controla la sincronización de la contracción del músculo cardíaco. Transmite señales eléctricas al nodo AV[GO]. Subdivisión del sistema de conducción del corazón situada en la unión del atrio derecho y la vena cava superior, alrededor de la rama del nodo sinoatrial de la arteria coronaria derecha, y que se continúa con el tracto internodal[FMA]."
+ },
+ "UBERON:0002352": {
+  "labelEs": "nodo atrioventricular",
+  "definitionEs": "Área de tejido de conducción entre los atrios y los ventrículos del corazón que conduce el impulso eléctrico normal desde los atrios hacia los ventrículos."
+ },
+ "UBERON:0002353": {
+  "labelEs": "fascículo atrioventricular",
+  "definitionEs": "Parte del sistema de His-Purkinje que transmite señales desde el nodo AV hasta las fibras de Purkinje cardíacas[GO]."
+ },
+ "UBERON:0002354": {
+  "labelEs": "fibra de Purkinje cardíaca",
+  "definitionEs": "La fibra de Purkinje cardíaca es parte del sistema de conducción cardíaco que recibe señales del haz de His e inerva el músculo cardíaco ventricular."
+ },
+ "UBERON:0002357": {
+  "labelEs": "pericardio seroso",
+  "definitionEs": "Membrana serosa que se divide en pericardio seroso parietal y visceral."
+ },
+ "UBERON:0002359": {
+  "labelEs": "pericardio fibroso",
+  "definitionEs": "Órgano membranoso que está unido al saco pericárdico propiamente dicho y al centro tendinoso del diafragma y se continúa con la fascia pretraqueal.[FMA]."
+ },
+ "UBERON:0002381": {
+  "labelEs": "músculo pectoral mayor",
+  "definitionEs": "El pectoral mayor es un músculo grueso, en forma de abanico, situado en la parte anterior superior de la pared torácica. Constituye la mayor parte de los músculos del tórax en el varón y se encuentra debajo de la mama en la mujer. Por debajo del pectoral mayor se encuentra el pectoral menor, un músculo delgado y triangular. [WP,unvetted]."
+ },
+ "UBERON:0002401": {
+  "labelEs": "pleura visceral",
+  "definitionEs": "Membrana serosa interna de la pleura pulmonar. La pleura visceral reviste los pulmones."
+ },
+ "UBERON:0002403": {
+  "labelEs": "músculo intercostal interno",
+  "definitionEs": "Músculo intercostal que contribuye a la espiración forzada (la espiración tranquila es un proceso pasivo)."
+ },
+ "UBERON:0002404": {
+  "labelEs": "músculo transverso del tórax",
+  "definitionEs": "El transverso del tórax se encuentra en el interior de la caja torácica, en su parte anterior. Es un plano delgado de fibras musculares y tendinosas, situado sobre la cara interna de la pared anterior del tórax. Está en la misma capa que los músculos subcostales. Se origina a cada lado en el tercio inferior de la cara posterior del cuerpo del esternón, en la cara posterior de la apófisis xifoides y en los extremos esternales de los cartílagos costales de las tres o cuatro costillas verdaderas inferiores. Sus fibras divergen hacia arriba y lateralmente, para insertarse mediante lengüetas en los bordes inferiores y las caras internas de los cartílagos costales de las costillas segunda, tercera, cuarta, quinta y sexta. Las fibras más inferiores de este músculo tienen dirección horizontal y se continúan con las del transverso del abdomen; las fibras intermedias son oblicuas, mientras que las más altas son casi verticales. Este músculo varía en sus inserciones, no solo en distintos sujetos, sino en lados opuestos del mismo sujeto. [WP,unvetted]."
+ },
+ "UBERON:0002406": {
+  "labelEs": "saco pericárdico",
+  "definitionEs": "Saco de doble pared que contiene el corazón y las raíces de los grandes vasos."
+ },
+ "UBERON:0002407": {
+  "labelEs": "pericardio",
+  "definitionEs": "Combinación del saco pericárdico (un saco de doble pared que contiene el corazón y las raíces de los grandes vasos) más el pericardio fibroso."
+ },
+ "UBERON:0002408": {
+  "labelEs": "lámina parietal del pericardio seroso",
+  "definitionEs": "Membrana serosa parietal que forma parte del pericardio y constituye la capa externa del saco pericárdico."
+ },
+ "UBERON:0002425": {
+  "labelEs": "lámina visceral del pericardio seroso",
+  "definitionEs": "Membrana serosa visceral que se continúa con el pericardio seroso parietal y está unida al miocardio[FMA]."
+ },
+ "UBERON:0002426": {
+  "labelEs": "músculo del tórax",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un tórax [Automatically generated definition]."
+ },
+ "UBERON:0002494": {
+  "labelEs": "músculo papilar del corazón",
+  "definitionEs": "Uno del grupo de fascículos miocárdicos que terminan en las cuerdas tendinosas que se unen a las valvas de las válvulas atrioventriculares; cada ventrículo tiene un músculo papilar anterior y uno posterior; el ventrículo derecho tiene a veces un músculo papilar septal."
+ },
+ "UBERON:0002511": {
+  "labelEs": "trabécula carnosa",
+  "definitionEs": "Fascículos de sostén de fibras musculares que revisten las paredes de los ventrículos del corazón."
+ },
+ "UBERON:0002524": {
+  "labelEs": "nódulo linfático mediastínico",
+  "definitionEs": "Nódulo linfático que forma parte de un mediastino. Cada uno consta de varios grupos de nódulos linfáticos, especialmente a lo largo de la tráquea (5 grupos), a lo largo del esófago y entre el pulmón y el diafragma. En los nódulos linfáticos mediastínicos se originan conductos linfáticos, que drenan la linfa hacia la vena subclavia izquierda (hacia el ángulo venoso en la confluencia de las venas subclavia y yugular profunda). Los nódulos linfáticos mediastínicos situados a lo largo del esófago están en estrecha conexión con los nódulos linfáticos abdominales situados a lo largo del esófago y del estómago. Este hecho facilita la diseminación de células tumorales a través de estos vasos linfáticos en casos de cáncer de estómago y, en particular, de esófago. A través del mediastino, el principal drenaje linfático de los órganos abdominales discurre por el conducto torácico (ductus thoracicus), que drena la mayor parte de la linfa del abdomen hacia el ángulo venoso izquierdo antes mencionado."
+ },
+ "UBERON:0003244": {
+  "labelEs": "epitelio de la glándula mamaria",
+  "definitionEs": "Capa epitelial de las superficies luminales de la glándula mamaria."
+ },
+ "UBERON:0003252": {
+  "labelEs": "caja torácica",
+  "definitionEs": "Subdivisión del sistema esquelético que consta de todas las costillas de un organismo conectadas al esternón y a las vértebras. Algunos vertebrados tienen costillas abdominales (gastralia), no conectadas a las vértebras; estas no se consideran parte de la caja torácica."
+ },
+ "UBERON:0003253": {
+  "labelEs": "cuello de la costilla",
+  "definitionEs": "El cuello de la costilla es la porción aplanada que se extiende lateralmente desde la cabeza; mide unos 2,5 cm de largo y está situado delante de la apófisis transversa de la inferior de las dos vértebras con las que se articula la cabeza. Su cara anterior es plana y lisa, y la posterior, rugosa para la inserción del ligamento del cuello y perforada por numerosos forámenes. De sus dos bordes, el superior presenta una cresta rugosa (crista colli costae) para la inserción del ligamento costotransverso anterior; su borde inferior es redondeado. En la cara posterior, en la unión del cuello y el cuerpo, y más cerca del borde inferior que del superior, hay una eminencia, el tubérculo; consta de una porción articular y una porción no articular. La porción articular, la más inferior y medial de las dos, presenta una pequeña superficie oval para articularse con el extremo de la apófisis transversa de la inferior de las dos vértebras con las que se conecta la cabeza. La porción no articular es una elevación rugosa y proporciona inserción al ligamento del tubérculo. El tubérculo es mucho más prominente en las costillas superiores que en las inferiores."
+ },
+ "UBERON:0003369": {
+  "labelEs": "fosa oval del corazón",
+  "definitionEs": "Situada en el atrio derecho del corazón, la fosa oval es un vestigio embrionario del foramen oval, que normalmente se cierra poco después del nacimiento. En una pieza de corazón de un neonato, la fosa oval es translúcida, pero más adelante en la vida la membrana se engrosa."
+ },
+ "UBERON:0003378": {
+  "labelEs": "músculo cardíaco de la región auricular",
+  "definitionEs": "Tejido muscular cardíaco que forma parte de una región auricular del atrio."
+ },
+ "UBERON:0003379": {
+  "labelEs": "músculo cardíaco del atrio derecho",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un atrio derecho [Automatically generated definition]."
+ },
+ "UBERON:0003380": {
+  "labelEs": "músculo cardíaco del atrio izquierdo",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un atrio izquierdo [Automatically generated definition]."
+ },
+ "UBERON:0003381": {
+  "labelEs": "músculo cardíaco del ventrículo derecho",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un ventrículo derecho [Automatically generated definition]."
+ },
+ "UBERON:0003382": {
+  "labelEs": "músculo cardíaco del ventrículo izquierdo",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un ventrículo izquierdo [Automatically generated definition]."
+ },
+ "UBERON:0003383": {
+  "labelEs": "tejido muscular cardíaco del tabique interventricular",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un tabique interventricular [Automatically generated definition]."
+ },
+ "UBERON:0003452": {
+  "labelEs": "tejido muscular cardíaco de la trabécula carnosa",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de una trabécula carnosa [Automatically generated definition]."
+ },
+ "UBERON:0003707": {
+  "labelEs": "seno aórtico",
+  "definitionEs": "Una de las dilataciones anatómicas de la aorta ascendente, que se produce justo por encima de la válvula aórtica."
+ },
+ "UBERON:0003728": {
+  "labelEs": "mediastino",
+  "definitionEs": "Parte central de la cavidad torácica encerrada por las pleuras izquierda y derecha."
+ },
+ "UBERON:0003907": {
+  "labelEs": "conducto atrioventricular izquierdo",
+  "definitionEs": "Conducto atrioventricular que se encuentra en el lado izquierdo de una región atrioventricular."
+ },
+ "UBERON:0003908": {
+  "labelEs": "conducto atrioventricular derecho",
+  "definitionEs": "Conducto atrioventricular que se encuentra en el lado derecho de una región atrioventricular."
+ },
+ "UBERON:0004126": {
+  "labelEs": "capa trabecular del ventrículo",
+  "definitionEs": "Capa trabecular del miocardio que forma parte de un ventrículo cardíaco."
+ },
+ "UBERON:0004148": {
+  "labelEs": "vena cardíaca",
+  "definitionEs": "Vena del corazón que drena el miocardio."
+ },
+ "UBERON:0004150": {
+  "labelEs": "válvula del seno coronario",
+  "definitionEs": "Válvula cardíaca vestigial que se continúa con la válvula de la vena cava inferior[FMA]."
+ },
+ "UBERON:0004151": {
+  "labelEs": "cámara cardíaca",
+  "definitionEs": "Una cámara cardíaca rodea una cavidad cerrada dentro del corazón."
+ },
+ "UBERON:0004154": {
+  "labelEs": "septum primum",
+  "definitionEs": "En el corazón en desarrollo, la cavidad del atrio primitivo se subdivide en cámaras derecha e izquierda mediante un tabique, el septum primum, que crece hacia abajo en la cavidad. La abertura cada vez más pequeña situada por debajo de él (antes de que se fusione con el cojinete endocárdico) se conoce como ostium primum. El septum primum termina fusionándose con el cojinete endocárdico, cerrando completamente el ostium primum. Mientras tanto, aparecen perforaciones en la parte superior del septum primum, que forman el ostium secundum. Este acabará formando parte de la fosa oval."
+ },
+ "UBERON:0004155": {
+  "labelEs": "septum secundum",
+  "definitionEs": "Falta la definición del término UBERON:0004155. Sustitúyala utilizando la referencia vinculada."
+ },
+ "UBERON:0004292": {
+  "labelEs": "esqueleto fibroso del corazón",
+  "definitionEs": "Tejido conjuntivo denso que separa los atrios de los ventrículos y proporciona soporte físico al corazón."
+ },
+ "UBERON:0004464": {
+  "labelEs": "musculatura del tórax",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un tórax [Automatically generated definition]."
+ },
+ "UBERON:0004490": {
+  "labelEs": "tejido muscular cardíaco del atrio",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un atrio [Automatically generated definition]."
+ },
+ "UBERON:0004491": {
+  "labelEs": "tejido muscular cardíaco del tabique interatrial",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un tabique interatrial [Automatically generated definition]."
+ },
+ "UBERON:0004492": {
+  "labelEs": "tejido muscular cardíaco del tabique cardíaco",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un tabique cardíaco [Automatically generated definition]."
+ },
+ "UBERON:0004493": {
+  "labelEs": "tejido muscular cardíaco del miocardio",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un miocardio [Automatically generated definition]."
+ },
+ "UBERON:0004494": {
+  "labelEs": "tejido muscular cardíaco del músculo papilar",
+  "definitionEs": "Porción de tejido muscular cardíaco que forma parte de un músculo papilar [Automatically generated definition]."
+ },
+ "UBERON:0004495": {
+  "labelEs": "tejido muscular esquelético del diafragma",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un diafragma [Automatically generated definition]."
+ },
+ "UBERON:0004510": {
+  "labelEs": "tejido muscular esquelético del pectoral mayor",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un pectoral mayor [Automatically generated definition]."
+ },
+ "UBERON:0004513": {
+  "labelEs": "tejido muscular esquelético del músculo intercostal interno",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un músculo intercostal interno [Automatically generated definition]."
+ },
+ "UBERON:0004514": {
+  "labelEs": "tejido muscular esquelético del transverso del tórax",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un transverso del tórax [Automatically generated definition]."
+ },
+ "UBERON:0004515": {
+  "labelEs": "tejido muscular liso del bronquiolo",
+  "definitionEs": "Porción de tejido muscular liso que forma parte de un bronquiolo [Automatically generated definition]."
+ },
+ "UBERON:0004516": {
+  "labelEs": "tejido muscular liso del bronquiolo terminal",
+  "definitionEs": "Porción de tejido muscular liso que forma parte de un bronquiolo terminal [Automatically generated definition]."
+ },
+ "UBERON:0004517": {
+  "labelEs": "tejido muscular liso del bronquiolo respiratorio",
+  "definitionEs": "Porción de tejido muscular liso que forma parte de un bronquiolo respiratorio [Automatically generated definition]."
+ },
+ "UBERON:0004523": {
+  "labelEs": "músculo papilar del ventrículo derecho",
+  "definitionEs": "Músculo papilar que forma parte de un ventrículo derecho [Automatically generated definition]."
+ },
+ "UBERON:0004524": {
+  "labelEs": "músculo papilar del ventrículo izquierdo",
+  "definitionEs": "Músculo papilar que forma parte de un ventrículo izquierdo [Automatically generated definition]."
+ },
+ "UBERON:0004525": {
+  "labelEs": "tejido muscular cardíaco de la trabécula carnosa del ventrículo derecho",
+  "definitionEs": "Porción de tejido muscular cardíaco de trabécula carnosa que forma parte de un ventrículo derecho [Automatically generated definition]."
+ },
+ "UBERON:0004526": {
+  "labelEs": "tejido muscular cardíaco de la trabécula carnosa del ventrículo izquierdo",
+  "definitionEs": "Porción de tejido muscular cardíaco de trabécula carnosa que forma parte de un ventrículo izquierdo [Automatically generated definition]."
+ },
+ "UBERON:0004601": {
+  "labelEs": "costilla I",
+  "definitionEs": "Primera costilla de la caja torácica."
+ },
+ "UBERON:0004602": {
+  "labelEs": "costilla II",
+  "definitionEs": "Segunda costilla de la caja torácica."
+ },
+ "UBERON:0004603": {
+  "labelEs": "costilla III",
+  "definitionEs": "Tercera costilla contando de arriba abajo en la caja torácica. Téngase en cuenta que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004604": {
+  "labelEs": "costilla IV",
+  "definitionEs": "Cuarta costilla contando de arriba abajo en la caja torácica. Téngase en cuenta que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004605": {
+  "labelEs": "costilla V",
+  "definitionEs": "Quinta costilla contando de arriba abajo en la caja torácica. Téngase en cuenta que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004606": {
+  "labelEs": "costilla VI",
+  "definitionEs": "Sexta costilla contando de arriba abajo en la caja torácica. Téngase en cuenta que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004607": {
+  "labelEs": "costilla VII",
+  "definitionEs": "Séptima costilla contando de arriba abajo en la caja torácica. Téngase en cuenta que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004608": {
+  "labelEs": "costilla IX",
+  "definitionEs": "Novena costilla contando de arriba abajo en la caja torácica. Téngase en cuenta que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0004609": {
+  "labelEs": "costilla X",
+  "definitionEs": "La décima costilla tiene una sola carilla articular en su cabeza. [WP,unvetted]."
+ },
+ "UBERON:0004610": {
+  "labelEs": "costilla XI",
+  "definitionEs": "La undécima costilla tiene una sola carilla articular en la cabeza, de tamaño bastante grande. No tiene cuello ni tubérculo, y es puntiaguda en su extremo anterior. La undécima tiene un ligero ángulo y un surco costal poco profundo. [WP,unvetted]."
+ },
+ "UBERON:0004611": {
+  "labelEs": "costilla XII",
+  "definitionEs": "En el ser humano: la duodécima costilla tiene una sola carilla articular en la cabeza, de tamaño bastante grande. No tiene cuello ni tubérculo, y es puntiaguda en su extremo anterior. La duodécima no tiene ángulo ni surco costal; es mucho más corta que la undécima costilla, y su cabeza está ligeramente inclinada hacia abajo. A veces la duodécima costilla es incluso más corta que la primera costilla. [WP,unvetted]."
+ },
+ "UBERON:0004666": {
+  "labelEs": "porción membranosa del tabique interventricular",
+  "definitionEs": "Porción membranosa de la pared entre las dos cámaras inferiores del corazón."
+ },
+ "UBERON:0004667": {
+  "labelEs": "porción muscular del tabique interventricular",
+  "definitionEs": "Porción muscular de la pared entre las dos cámaras inferiores del corazón."
+ },
+ "UBERON:0004706": {
+  "labelEs": "bulbo cardíaco",
+  "definitionEs": "Dilatación fetal transitoria del tubo cardíaco distal (o craneal), situada donde el tronco arterial se une a las raíces ventrales de los arcos aórticos."
+ },
+ "UBERON:0004754": {
+  "labelEs": "foramen oval del corazón",
+  "definitionEs": "Espacio anatómico del corazón fetal que permite que la sangre entre en el atrio izquierdo desde el atrio derecho."
+ },
+ "UBERON:0004784": {
+  "labelEs": "pared del ventrículo cardíaco",
+  "definitionEs": "Pared anatómica que forma parte de un ventrículo cardíaco [Automatically generated definition]."
+ },
+ "UBERON:0004821": {
+  "labelEs": "epitelio alveolar pulmonar",
+  "definitionEs": "Capa epitelial de los alvéolos[MP]. Capa de células que cubre el revestimiento de los diminutos sacos aéreos situados al final de los bronquiolos[BTO]."
+ },
+ "UBERON:0004863": {
+  "labelEs": "tronco simpático torácico",
+  "definitionEs": "Tronco nervioso simpático que forma parte de un tórax [Automatically generated definition]."
+ },
+ "UBERON:0004886": {
+  "labelEs": "hilio del pulmón",
+  "definitionEs": "Depresión de la superficie del pulmón por donde entran el bronquio, los vasos sanguíneos y los nervios."
+ },
+ "UBERON:0004887": {
+  "labelEs": "hilio del pulmón izquierdo",
+  "definitionEs": "Hilio pulmonar que forma parte del pulmón izquierdo."
+ },
+ "UBERON:0004888": {
+  "labelEs": "hilio del pulmón derecho",
+  "definitionEs": "Hilio pulmonar que forma parte del pulmón derecho."
+ },
+ "UBERON:0004894": {
+  "labelEs": "pared alveolar",
+  "definitionEs": "Pared que contiene los alvéolos."
+ },
+ "UBERON:0004950": {
+  "labelEs": "submucosa del bronquio lobular",
+  "definitionEs": "Submucosa que forma parte de un bronquio lobular [Automatically generated definition]."
+ },
+ "UBERON:0004951": {
+  "labelEs": "submucosa del bronquio segmentario",
+  "definitionEs": "Submucosa que forma parte de un bronquio segmentario [Automatically generated definition]."
+ },
+ "UBERON:0004952": {
+  "labelEs": "submucosa del bronquiolo",
+  "definitionEs": "Submucosa que forma parte de un bronquiolo [Automatically generated definition]."
+ },
+ "UBERON:0005037": {
+  "labelEs": "mucosa del bronquio lobular",
+  "definitionEs": "Mucosa que forma parte de un bronquio lobular [Automatically generated definition]."
+ },
+ "UBERON:0005038": {
+  "labelEs": "mucosa del bronquio segmentario",
+  "definitionEs": "Mucosa que forma parte de un bronquio segmentario [Automatically generated definition]."
+ },
+ "UBERON:0005039": {
+  "labelEs": "mucosa del bronquiolo",
+  "definitionEs": "Mucosa que forma parte de un bronquiolo [Automatically generated definition]."
+ },
+ "UBERON:0005040": {
+  "labelEs": "mucosa del bronquiolo terminal",
+  "definitionEs": "Mucosa que forma parte de un bronquiolo terminal [Automatically generated definition]."
+ },
+ "UBERON:0005041": {
+  "labelEs": "mucosa del bronquiolo respiratorio",
+  "definitionEs": "Mucosa que forma parte de un bronquiolo respiratorio [Automatically generated definition]."
+ },
+ "UBERON:0005091": {
+  "labelEs": "asta izquierda del seno venoso",
+  "definitionEs": null
+ },
+ "UBERON:0005092": {
+  "labelEs": "asta derecha del seno venoso",
+  "definitionEs": null
+ },
+ "UBERON:0005200": {
+  "labelEs": "glándula mamaria torácica",
+  "definitionEs": "Glándula lactífera situada en la región torácica o mama."
+ },
+ "UBERON:0005243": {
+  "labelEs": "endocardio del tabique interventricular",
+  "definitionEs": "Endocardio que forma parte de un tabique interventricular [Automatically generated definition]."
+ },
+ "UBERON:0005244": {
+  "labelEs": "bronquio lobular del lóbulo craneal del pulmón derecho",
+  "definitionEs": null
+ },
+ "UBERON:0005316": {
+  "labelEs": "endotelio endocárdico",
+  "definitionEs": "Revestimiento endotelial del endocardio."
+ },
+ "UBERON:0005337": {
+  "labelEs": "tracto de salida del ventrículo",
+  "definitionEs": "Un tracto de salida ventricular es una porción del ventrículo izquierdo o del ventrículo derecho del corazón por la que pasa la sangre para entrar en las grandes arterias. El tracto de salida del ventrículo derecho (TSVD) es una prolongación infundibular de la cavidad ventricular que conecta con la arteria pulmonar. El tracto de salida del ventrículo izquierdo (TSVI), que conecta con la aorta, es casi indistinguible del resto del ventrículo[WP]."
+ },
+ "UBERON:0005432": {
+  "labelEs": "saco aórtico",
+  "definitionEs": "Estructura dilatada revestida por células endoteliales y situada en el polo arterial del corazón, justo por encima (en posición distal) del tronco arterioso, en los embriones de mamíferos; es el canal vascular primordial del que surgen los arcos aórticos (y, finalmente, las aortas dorsales); el saco aórtico es homólogo de la aorta ventral de los vertebrados con branquias."
+ },
+ "UBERON:0005438": {
+  "labelEs": "seno coronario",
+  "definitionEs": "Tronco corto que recibe la mayoría de las venas cardíacas que transportan la sangre del miocardio y la entrega al atrio derecho, produciéndose la conexión sinoatrial entre la vena cava inferior y el orificio atrioventricular."
+ },
+ "UBERON:0005440": {
+  "labelEs": "conducto arterioso",
+  "definitionEs": "Vaso sanguíneo fetal que conecta la arteria pulmonar con la aorta descendente[MESH]. En el feto en desarrollo, el conducto arterioso es una derivación que conecta la arteria pulmonar con el arco de la aorta. Permite que la mayor parte de la sangre del ventrículo derecho evite los pulmones llenos de líquido del feto, protegiendo a los pulmones de un trabajo excesivo y permitiendo que el ventrículo izquierdo se fortalezca. Existen otras dos derivaciones fetales, el conducto venoso y el foramen oval[MP]. Vaso fetal que conecta la arteria pulmonar izquierda con la aorta descendente; el conducto arterioso normalmente involuciona tras el nacimiento hasta convertirse en un cordón fibroso, el ligamento arterioso[MP]."
+ },
+ "UBERON:0005441": {
+  "labelEs": "músculo intercostal externo",
+  "definitionEs": "Músculo intercostal que contribuye a la inspiración tranquila y forzada mediante la elevación de las costillas y la expansión de las dimensiones transversales de la cavidad torácica."
+ },
+ "UBERON:0005455": {
+  "labelEs": "surco interventricular",
+  "definitionEs": "Cualquiera de los surcos anterior y posterior de la superficie del corazón que se sitúan sobre el tabique interventricular y se unen en el vértice."
+ },
+ "UBERON:0005484": {
+  "labelEs": "valva de la válvula tricúspide",
+  "definitionEs": "Valva que forma parte de una válvula tricúspide."
+ },
+ "UBERON:0005485": {
+  "labelEs": "válvula de la vena cava inferior",
+  "definitionEs": "Pliegue semicircular de endocardio situado en el atrio derecho en el punto de unión de la vena cava inferior; durante el desarrollo, esta válvula ayuda a dirigir el flujo de sangre rica en oxígeno a través del atrio derecho hacia el atrio cardíaco izquierdo por el foramen oval (impidiendo que la sangre fluya hacia el ventrículo derecho)."
+ },
+ "UBERON:0005489": {
+  "labelEs": "surco interventricular anterior",
+  "definitionEs": "Los ventrículos del corazón están separados por dos surcos, uno de los cuales, el surco longitudinal anterior (o surco interventricular anterior), está situado en la cara esternocostal del corazón, cerca de su borde izquierdo. El otro surco que separa los ventrículos es el surco interventricular posterior."
+ },
+ "UBERON:0005490": {
+  "labelEs": "surco interventricular posterior",
+  "definitionEs": "Los ventrículos están separados por dos surcos, uno de los cuales, el surco longitudinal anterior, está situado en la cara esternocostal del corazón, cerca de su borde izquierdo, y el otro, el surco longitudinal posterior (surco interventricular posterior, surco interventricular inferior), en la cara diafragmática, cerca del borde derecho. Por él discurren la arteria interventricular posterior y la vena cardíaca media."
+ },
+ "UBERON:0005946": {
+  "labelEs": "tracto de salida del atrio",
+  "definitionEs": "Tracto de salida que forma parte de un atrio cardíaco."
+ },
+ "UBERON:0005953": {
+  "labelEs": "porción de salida del ventrículo derecho",
+  "definitionEs": "Porción anterosuperior, de paredes lisas, de la cavidad del ventrículo derecho, que comienza en la cresta supraventricular y termina en el tronco pulmonar."
+ },
+ "UBERON:0005956": {
+  "labelEs": "porción de salida del ventrículo izquierdo",
+  "definitionEs": "Porción fibrosa anterosuperior del ventrículo izquierdo que conecta con la aorta ascendente."
+ },
+ "UBERON:0005965": {
+  "labelEs": "porción de salida del atrio derecho",
+  "definitionEs": "Porción de salida del atrio que consta de la pared y la cavidad de la porción de salida del atrio derecho y de la válvula tricúspide.[FMA]."
+ },
+ "UBERON:0005966": {
+  "labelEs": "porción de salida del atrio izquierdo",
+  "definitionEs": "Tracto de salida del atrio que forma parte de un atrio izquierdo."
+ },
+ "UBERON:0005979": {
+  "labelEs": "cresta terminal",
+  "definitionEs": "Cresta vertical de la pared interior del atrio derecho que se encuentra a la derecha del seno de la vena cava y lo separa del resto del atrio derecho."
+ },
+ "UBERON:0005980": {
+  "labelEs": "músculo pectíneo",
+  "definitionEs": "Crestas prominentes del miocardio atrial situadas en la superficie interna de la mayor parte del atrio derecho y de las regiones auriculares derecha e izquierda[MP]."
+ },
+ "UBERON:0005981": {
+  "labelEs": "seno de las venas cavas",
+  "definitionEs": "Porción de la cavidad del atrio derecho del corazón que recibe la sangre de las venas cavas y está separada del resto del atrio por la cresta terminal."
+ },
+ "UBERON:0005982": {
+  "labelEs": "fascículo de Bachmann",
+  "definitionEs": "Tracto de conducción del impulso que se origina en el nodo sinoatrial y transmite la señal al atrio izquierdo."
+ },
+ "UBERON:0005986": {
+  "labelEs": "rama izquierda del fascículo atrioventricular",
+  "definitionEs": "Rama izquierda del fascículo atrioventricular que se separa en el haz de His, desciende por la pared septal del ventrículo izquierdo y conecta con la fibra de Purkinje terminal[MP]."
+ },
+ "UBERON:0005987": {
+  "labelEs": "rama derecha del fascículo atrioventricular",
+  "definitionEs": "Rama derecha del fascículo atrioventricular que se separa justo por debajo del haz de His, desciende por la pared septal del ventrículo derecho y conecta con las fibras de Purkinje terminales[MP]."
+ },
+ "UBERON:0005989": {
+  "labelEs": "tabique atrioventricular",
+  "definitionEs": "Pared del corazón que separa el atrio derecho y el ventrículo izquierdo; está situada justo por encima de la valva septal de la válvula tricúspide."
+ },
+ "UBERON:0005990": {
+  "labelEs": "valva de la válvula aórtica",
+  "definitionEs": "Los tres componentes fibrosos triangulares y el colgajo asociado de la válvula aórtica."
+ },
+ "UBERON:0005991": {
+  "labelEs": "anillo de la válvula aórtica",
+  "definitionEs": "Anillo fibroso de la válvula aórtica que une las valvas de la válvula aórtica a la pared del ventrículo izquierdo, y que consta de porciones de los festones fibrosos de las valvas posterior, anterior derecha y anterior izquierda."
+ },
+ "UBERON:0005992": {
+  "labelEs": "valva de la válvula pulmonar",
+  "definitionEs": "Los tres componentes fibrosos triangulares y el colgajo asociado de la válvula pulmonar."
+ },
+ "UBERON:0005993": {
+  "labelEs": "anillo de la válvula pulmonar",
+  "definitionEs": "Anillo fibroso de la válvula pulmonar que une las valvas de la válvula pulmonar a la pared del ventrículo derecho, y que consta de porciones de los festones fibrosos de las valvas anterior, posterior derecha y posterior izquierda."
+ },
+ "UBERON:0005994": {
+  "labelEs": "cuerdas tendinosas",
+  "definitionEs": "Cordones tendinosos que conectan los músculos papilares de la pared de los ventrículos con las valvas de las válvulas atrioventriculares; las cuerdas tendinosas sirven para impedir que las válvulas AV se prolapsen hacia los atrios."
+ },
+ "UBERON:0005995": {
+  "labelEs": "anillo de la válvula mitral",
+  "definitionEs": "Anillo fibroso de la válvula mitral que une las valvas de la válvula mitral al corazón, y que consta de porciones de los festones fibrosos de las valvas anterior y posterior."
+ },
+ "UBERON:0005997": {
+  "labelEs": "anillo de la válvula tricúspide",
+  "definitionEs": "Anillo fibroso de la válvula tricúspide que une las valvas de la válvula tricúspide al corazón, y que consta de porciones de los festones fibrosos de la valva anterior (valva infundibular), la valva posterior (valva marginal) y la valva septal (valva medial)."
+ },
+ "UBERON:0005998": {
+  "labelEs": "cúspide de la válvula tricúspide",
+  "definitionEs": "Los tres componentes fibrosos triangulares y los colgajos asociados de la válvula tricúspide."
+ },
+ "UBERON:0006008": {
+  "labelEs": "anillo fibroso del corazón",
+  "definitionEs": "Anillo de tejido fibroso que rodea los orificios atrioventriculares y arteriales."
+ },
+ "UBERON:0006009": {
+  "labelEs": "valva de válvula cardíaca",
+  "definitionEs": "Parte de las válvulas cardíacas que sirve para sellar las válvulas cardíacas cuando están cerradas. Hay tres valvas en cada válvula excepto en la válvula mitral, que solo tiene dos (de ahí su nombre alternativo, «válvula bicúspide»). En el extremo de la valva se encuentran unos «nódulos», que forman un sellado más hermético[WP]."
+ },
+ "UBERON:0006198": {
+  "labelEs": "arteria intercostal posterior",
+  "definitionEs": "La arteria intercostal suprema (arteria intercostal superior) es una arteria del cuerpo humano que habitualmente da origen a la primera y la segunda arterias intercostales posteriores, que irrigan su espacio intercostal correspondiente. Habitualmente se origina del tronco costocervical, que es una rama de la arteria subclavia."
+ },
+ "UBERON:0006430": {
+  "labelEs": "cartílago xifoideo",
+  "definitionEs": "Cartílago costal que forma parte de una apófisis xifoides."
+ },
+ "UBERON:0006431": {
+  "labelEs": "hueso de la apófisis xifoides",
+  "definitionEs": "Tejido óseo que forma parte de una apófisis xifoides."
+ },
+ "UBERON:0006566": {
+  "labelEs": "miocardio del ventrículo izquierdo",
+  "definitionEs": "Miocardio que forma parte de un ventrículo izquierdo de un corazón."
+ },
+ "UBERON:0006567": {
+  "labelEs": "miocardio del ventrículo derecho",
+  "definitionEs": "Miocardio que forma parte de un ventrículo derecho de un corazón."
+ },
+ "UBERON:0006570": {
+  "labelEs": "trabécula carnosa del ventrículo derecho",
+  "definitionEs": "Trabécula carnosa que forma parte de un ventrículo derecho del corazón."
+ },
+ "UBERON:0006571": {
+  "labelEs": "trabécula carnosa del ventrículo izquierdo",
+  "definitionEs": "Trabécula carnosa que forma parte de un ventrículo izquierdo del corazón."
+ },
+ "UBERON:0006618": {
+  "labelEs": "orejuela",
+  "definitionEs": "Pequeñas proyecciones en forma de bolsa cónica situadas en la porción anterior superior de cada atrio del corazón."
+ },
+ "UBERON:0006630": {
+  "labelEs": "orejuela izquierda",
+  "definitionEs": "Bolsa muscular conectada al atrio izquierdo del corazón."
+ },
+ "UBERON:0006631": {
+  "labelEs": "orejuela derecha",
+  "definitionEs": "Pequeña bolsa muscular cónica unida al atrio derecho del corazón."
+ },
+ "UBERON:0006670": {
+  "labelEs": "centro tendinoso del diafragma",
+  "definitionEs": "Aponeurosis trilobulada en forma de hoja de trébol situada en el centro del diafragma; el centro tendinoso está fusionado con el pericardio fibroso, que proporciona inserción a las fibras musculares."
+ },
+ "UBERON:0006678": {
+  "labelEs": "foramen secundum",
+  "definitionEs": "El foramen secundum es una abertura del septum primum, precursor del tabique interatrial del corazón humano. Se forma en una etapa del desarrollo posterior a la del foramen primum. Su ubicación también es diferente respecto a la del foramen primum en el septum primum."
+ },
+ "UBERON:0006820": {
+  "labelEs": "cuerpo del esternón",
+  "definitionEs": "Porción media y más larga del esternón, situada entre el manubrio por arriba y la apófisis xifoides por abajo; es considerablemente más larga, más estrecha y más delgada que el manubrio, y alcanza su mayor anchura cerca del extremo inferior."
+ },
+ "UBERON:0006954": {
+  "labelEs": "mioepitelio de la glándula mamaria",
+  "definitionEs": "Capa celular externa de la bicapa epitelial de la glándula mamaria, que se sitúa en posición basal respecto a las células luminales (secretoras) y adyacente a la membrana basal."
+ },
+ "UBERON:0006958": {
+  "labelEs": "vena cardíaca magna",
+  "definitionEs": "La vena cardíaca magna (vena coronaria izquierda) comienza en el vértice del corazón y asciende a lo largo del surco longitudinal anterior hasta la base de los ventrículos. Luego se curva hacia la izquierda en el surco coronario y, al llegar a la parte posterior del corazón, desemboca en el extremo izquierdo del seno coronario. Recibe tributarias del atrio izquierdo y de ambos ventrículos: una, la vena marginal izquierda, es de tamaño considerable y asciende a lo largo del borde izquierdo del corazón."
+ },
+ "UBERON:0007145": {
+  "labelEs": "cúpula del diafragma",
+  "definitionEs": null
+ },
+ "UBERON:0007151": {
+  "labelEs": "valva de la válvula mitral",
+  "definitionEs": "Valva que forma parte de una válvula mitral."
+ },
+ "UBERON:0007161": {
+  "labelEs": "ligamento arqueado medial",
+  "definitionEs": "El ligamento arqueado medial (también arco lumbocostal medial) es una fascia tendinosa que forma un arco sobre el músculo psoas mayor cuando este atraviesa el diafragma."
+ },
+ "UBERON:0007162": {
+  "labelEs": "ligamento arqueado lateral",
+  "definitionEs": "El ligamento arqueado lateral (también arco lumbocostal lateral) es un ligamento situado bajo el diafragma que forma un arco a través de la parte superior del cuadrado lumbar. Está atravesado por el nervio, la arteria y la vena subcostales."
+ },
+ "UBERON:0007166": {
+  "labelEs": "cúpula izquierda del diafragma",
+  "definitionEs": null
+ },
+ "UBERON:0007167": {
+  "labelEs": "cúpula derecha del diafragma",
+  "definitionEs": null
+ },
+ "UBERON:0007186": {
+  "labelEs": "mesotelio visceral del pericardio",
+  "definitionEs": "Mesotelio visceral que forma parte de un pericardio."
+ },
+ "UBERON:0007187": {
+  "labelEs": "mesotelio parietal del pericardio",
+  "definitionEs": "Mesotelio parietal que forma parte de un pericardio."
+ },
+ "UBERON:0007188": {
+  "labelEs": "mesotelio del pericardio seroso",
+  "definitionEs": "Mesotelio que forma parte de un pericardio seroso."
+ },
+ "UBERON:0007311": {
+  "labelEs": "esputo",
+  "definitionEs": "Material expulsado de los pulmones, los bronquios y la tráquea a través de la boca."
+ },
+ "UBERON:0007643": {
+  "labelEs": "nódulo del ligamento arterioso",
+  "definitionEs": "Nódulo linfático inconstante del grupo mediastínico anterior situado junto al ligamento arterioso."
+ },
+ "UBERON:0007644": {
+  "labelEs": "nódulo linfático torácico",
+  "definitionEs": "Nódulo linfático que forma parte de un tórax. Incluye los nódulos linfáticos de los pulmones y los nódulos linfáticos mediastínicos."
+ },
+ "UBERON:0008617": {
+  "labelEs": "músculo intercostal íntimo",
+  "definitionEs": "El músculo intercostal íntimo es una capa de músculo intercostal situada por debajo de los nervios intercostales y de los músculos intercostales internos. Se divide en el transverso del tórax por delante, lengüetas musculares laterales lateralmente y el subcostal por detrás."
+ },
+ "UBERON:0008618": {
+  "labelEs": "músculo subcostal",
+  "definitionEs": "Los subcostales (infracostales) constan de fascículos musculares y aponeuróticos, que habitualmente solo están bien desarrollados en la parte inferior del tórax; cada uno se origina en la cara interna de una costilla y se inserta en la cara interna de la segunda o tercera costilla superior, cerca de su ángulo. Sus fibras discurren en la misma dirección que las de los intercostales internos."
+ },
+ "UBERON:0008779": {
+  "labelEs": "músculo subclavio",
+  "definitionEs": "El subclavio es un pequeño músculo triangular, situado entre la clavícula y la primera costilla. Junto con los músculos pectoral mayor y pectoral menor, el músculo subclavio forma la pared anterior de la axila."
+ },
+ "UBERON:0008818": {
+  "labelEs": "mediastino superior",
+  "definitionEs": "El mediastino superior es la porción del espacio interpleural que se encuentra entre el manubrio del esternón por delante y las vértebras torácicas superiores por detrás."
+ },
+ "UBERON:0008819": {
+  "labelEs": "mediastino inferior",
+  "definitionEs": "Mediastino anterior, medio y posterior."
+ },
+ "UBERON:0008820": {
+  "labelEs": "mediastino anterior",
+  "definitionEs": "El mediastino anterior existe solo en el lado izquierdo, donde la pleura izquierda se separa de la línea medioesternal. Es estrecho por arriba, pero se ensancha un poco por abajo."
+ },
+ "UBERON:0008821": {
+  "labelEs": "mediastino medio",
+  "definitionEs": "El mediastino medio es la parte más ancha del espacio interpleural. Está formado por el saco pericárdico y su contenido."
+ },
+ "UBERON:0008822": {
+  "labelEs": "mediastino posterior",
+  "definitionEs": "El mediastino posterior es un espacio triangular irregular que discurre paralelo a la columna vertebral."
+ },
+ "UBERON:0008874": {
+  "labelEs": "ácino pulmonar",
+  "definitionEs": "Subunidad pulmonar más grande en la que todas las vías aéreas participan en el intercambio gaseoso; está compuesta por el parénquima de los bronquiolos respiratorios, los conductos alveolares y los alvéolos."
+ },
+ "UBERON:0008946": {
+  "labelEs": "parénquima pulmonar",
+  "definitionEs": "Parénquima que forma parte de un pulmón."
+ },
+ "UBERON:0008948": {
+  "labelEs": "lóbulo superior del pulmón",
+  "definitionEs": "Lóbulo del pulmón que está más cerca de la cabeza."
+ },
+ "UBERON:0008949": {
+  "labelEs": "lóbulo inferior del pulmón",
+  "definitionEs": "Subdivisión más inferior del pulmón derecho o del izquierdo."
+ },
+ "UBERON:0008952": {
+  "labelEs": "lóbulo superior del pulmón izquierdo",
+  "definitionEs": "Lóbulo del pulmón izquierdo que está más cerca de la cabeza."
+ },
+ "UBERON:0008953": {
+  "labelEs": "lóbulo inferior del pulmón izquierdo",
+  "definitionEs": "Lóbulo inferior del pulmón que forma parte de un pulmón izquierdo."
+ },
+ "UBERON:0008954": {
+  "labelEs": "língula del pulmón izquierdo",
+  "definitionEs": "Porción anteroinferior del lóbulo superior del pulmón izquierdo."
+ },
+ "UBERON:0009129": {
+  "labelEs": "endocardio del atrio derecho",
+  "definitionEs": "Endocardio que forma parte del atrio derecho."
+ },
+ "UBERON:0009687": {
+  "labelEs": "vena cardíaca media",
+  "definitionEs": "La vena cardíaca media comienza en el vértice del corazón, asciende por el surco longitudinal posterior y termina en el seno coronario cerca de su extremo derecho."
+ },
+ "UBERON:0009712": {
+  "labelEs": "endocardio del ventrículo derecho",
+  "definitionEs": "Cualquier endocardio que forma parte del ventrículo derecho del corazón."
+ },
+ "UBERON:0009713": {
+  "labelEs": "endocardio del ventrículo izquierdo",
+  "definitionEs": "Cualquier endocardio que forma parte del ventrículo izquierdo del corazón."
+ },
+ "UBERON:0009779": {
+  "labelEs": "tejido muscular cardíaco de la orejuela derecha",
+  "definitionEs": "Tejido muscular cardíaco que forma parte de una orejuela derecha."
+ },
+ "UBERON:0009780": {
+  "labelEs": "tejido muscular cardíaco de la orejuela izquierda",
+  "definitionEs": "Tejido muscular cardíaco que forma parte de una orejuela izquierda."
+ },
+ "UBERON:0009966": {
+  "labelEs": "tracto internodal",
+  "definitionEs": "Vía de conducción del tejido de conducción del corazón a través de la cual la actividad eléctrica se propaga desde el nodo SA hasta el nodo AV."
+ },
+ "UBERON:0010172": {
+  "labelEs": "bulbo de la aorta",
+  "definitionEs": "Porción del tracto de salida del ventrículo izquierdo delimitada por la cresta sinotubular por arriba y por las bases de las valvas por abajo; comprende los senos aórticos, las valvas de la válvula aórtica, las comisuras y los triángulos intervalvares."
+ },
+ "UBERON:0010283": {
+  "labelEs": "seno oblicuo del pericardio",
+  "definitionEs": "El fondo de saco encerrado entre las ramas de la U invertida del mesocardio venoso se encuentra detrás del atrio izquierdo.[WP,unvetted]."
+ },
+ "UBERON:0010368": {
+  "labelEs": "lobulillo pulmonar",
+  "definitionEs": "Unidad anatómica más pequeña del pulmón, que mide de 0,50 a 2,00 cm de diámetro. Cada lobulillo está compuesto por 4-8 bronquiolos terminales y sus conductos y sacos alveolares distales. Los lobulillos están separados por tabiques interlobulillares fibrosos."
+ },
+ "UBERON:0010369": {
+  "labelEs": "lobulillo pulmonar secundario",
+  "definitionEs": "Unidad del pulmón abastecida por tres a cinco bronquiolos terminales y contenida por tabiques fibrosos."
+ },
+ "UBERON:0010757": {
+  "labelEs": "costilla VIII",
+  "definitionEs": "Octava costilla contando de arriba abajo en la caja torácica. Téngase en cuenta que los miembros de esta clase no son necesariamente homólogos[ncit,modified]."
+ },
+ "UBERON:0011005": {
+  "labelEs": "endocardio de la orejuela",
+  "definitionEs": "Endocardio que forma parte de una orejuela."
+ },
+ "UBERON:0011006": {
+  "labelEs": "endocardio de la orejuela izquierda",
+  "definitionEs": "Endocardio que forma parte de una orejuela izquierda."
+ },
+ "UBERON:0011007": {
+  "labelEs": "endocardio de la orejuela derecha",
+  "definitionEs": "Endocardio que forma parte de una orejuela derecha."
+ },
+ "UBERON:0011820": {
+  "labelEs": "región atrioventricular",
+  "definitionEs": "Unión anatómica que divide un atrio y un ventrículo del corazón y se superpone con ellos."
+ },
+ "UBERON:0011828": {
+  "labelEs": "tubérculo areolar",
+  "definitionEs": null
+ },
+ "UBERON:0011844": {
+  "labelEs": "conducto de la glándula areolar",
+  "definitionEs": null
+ },
+ "UBERON:0011950": {
+  "labelEs": "epitelio luminal de la glándula mamaria",
+  "definitionEs": "Capa celular interna de la bicapa epitelial mamaria que reviste la superficie luminal de los conductos y alvéolos de la glándula mamaria; las células luminales tienen solo un contacto limitado con la membrana basal subyacente y el tejido conjuntivo circundante; son células epiteliales secretoras caracterizadas por la expresión de los receptores de hormonas sistémicas, es decir, estrógenos, progesterona y prolactina."
+ },
+ "UBERON:0011967": {
+  "labelEs": "articulación costotransversa",
+  "definitionEs": "La carilla del tubérculo de la costilla forma una articulación con la apófisis transversa adyacente de una vértebra torácica. Se trata de una articulación sinovial de tipo plano denominada articulación costotransversa. Esta articulación está presente en todas las costillas excepto en la undécima y la duodécima. Las costillas 1 a 10 tienen dos articulaciones muy próximas entre sí por detrás: las articulaciones costovertebrales y las articulaciones costotransversas. Esta disposición restringe el movimiento de las costillas, lo que les permite trabajar de forma paralela durante la respiración. Si una costilla típica tuviera solo una articulación por detrás, la acción giratoria resultante permitiría que una costilla no fuera paralela respecto a las costillas vecinas, lo que daría lugar a un mecanismo respiratorio muy ineficiente. Los ramos ventrales inervan las articulaciones costotransversas. Por tanto, los bloqueos terapéuticos del ramo medial son ineficaces. Los ligamentos de la articulación son: cápsula articular, costotransverso posterior, costotransverso anterior, ligamento del cuello de la costilla, ligamento del tubérculo de la costilla."
+ },
+ "UBERON:0012063": {
+  "labelEs": "bronquio lobular del lóbulo medio del pulmón derecho",
+  "definitionEs": "Bronquio lobular que forma parte de un lóbulo medio del pulmón derecho."
+ },
+ "UBERON:0012065": {
+  "labelEs": "bronquio lobular del lóbulo superior del pulmón izquierdo",
+  "definitionEs": "Bronquio lobular que forma parte de un lóbulo superior del pulmón izquierdo."
+ },
+ "UBERON:0012066": {
+  "labelEs": "bronquio lobular del lóbulo inferior del pulmón izquierdo",
+  "definitionEs": "Bronquio lobular que forma parte de un lóbulo inferior del pulmón izquierdo."
+ },
+ "UBERON:0012067": {
+  "labelEs": "bronquiolo primario",
+  "definitionEs": "Bronquiolo que surge de un bronquio segmentario y no contiene cartílago."
+ },
+ "UBERON:0012084": {
+  "labelEs": "luz del bronquio secundario",
+  "definitionEs": "Cavidad anatómica que forma parte de un bronquio lobular."
+ },
+ "UBERON:0012085": {
+  "labelEs": "luz del bronquio terciario",
+  "definitionEs": "Cavidad anatómica que forma parte de un bronquio segmentario."
+ },
+ "UBERON:0012103": {
+  "labelEs": "ligamento suspensorio de la mama",
+  "definitionEs": "Los ligamentos de Cooper (también conocidos como ligamentos suspensorios de Cooper y tabiques fibrocolágenos) son tejido conjuntivo de la mama que ayuda a mantener su integridad estructural. La tomografía de difracción por transmisión puede mostrar su anatomía. El ligamento suspensorio de Cooper no debe confundirse con el ligamento pectíneo (a veces llamado ligamento inguinal de Cooper), que comparte el mismo epónimo."
+ },
+ "UBERON:0012198": {
+  "labelEs": "espacio intercostal",
+  "definitionEs": "Espacio de la caja torácica entre dos costillas sucesivas."
+ },
+ "UBERON:0012236": {
+  "labelEs": "nódulo linfático intercostal",
+  "definitionEs": "Los nódulos linfáticos intercostales (glándulas intercostales) ocupan las partes posteriores de los espacios intercostales, en relación con los vasos intercostales. Reciben los linfáticos profundos de la cara posterolateral del tórax; algunos de estos vasos se interrumpen en pequeñas glándulas intercostales laterales."
+ },
+ "UBERON:0013133": {
+  "labelEs": "arteria frénica superior",
+  "definitionEs": "Arteria frénica que se origina de la parte inferior de la aorta torácica, se distribuye por la parte posterior de la cara superior del diafragma y se anastomosa con las arterias musculofrénica y pericardiofrénica."
+ },
+ "UBERON:0013772": {
+  "labelEs": "pezón izquierdo",
+  "definitionEs": "Pezón que se encuentra en el lado izquierdo del cuerpo propiamente dicho."
+ },
+ "UBERON:0013773": {
+  "labelEs": "pezón derecho",
+  "definitionEs": "Pezón que se encuentra en el lado derecho del cuerpo propiamente dicho."
+ },
+ "UBERON:0014477": {
+  "labelEs": "esqueleto torácico",
+  "definitionEs": "Subdivisión del sistema esquelético que consta de todos los elementos esqueléticos de la región torácica del tronco. En la mayoría de los vertebrados, se trata de la caja torácica y el esternón."
+ },
+ "UBERON:0014766": {
+  "labelEs": "pilar derecho del diafragma",
+  "definitionEs": "Pilar del diafragma que se encuentra en el lado derecho de un diafragma."
+ },
+ "UBERON:0014767": {
+  "labelEs": "pilar izquierdo del diafragma",
+  "definitionEs": "Pilar del diafragma que se encuentra en el lado izquierdo de un diafragma."
+ },
+ "UBERON:0014851": {
+  "labelEs": "cuerda tendinosa del ventrículo izquierdo",
+  "definitionEs": "Cuerda tendinosa que está unida a la valva de la válvula mitral y se continúa con el endocardio del músculo papilar del ventrículo izquierdo."
+ },
+ "UBERON:0014852": {
+  "labelEs": "cuerda tendinosa del ventrículo derecho",
+  "definitionEs": "Cuerda tendinosa que está unida a la valva de la válvula tricúspide y se continúa con el endocardio del músculo papilar del ventrículo derecho."
+ },
+ "UBERON:0014853": {
+  "labelEs": "valva comisural de la válvula mitral",
+  "definitionEs": "Valva de la válvula mitral que está unida a la cuerda tendinosa comisural del ventrículo izquierdo."
+ },
+ "UBERON:0014854": {
+  "labelEs": "valva anterior de la válvula mitral",
+  "definitionEs": "Valva de la válvula mitral que está unida a la cabeza anterior del músculo papilar posterior del ventrículo izquierdo a través de la cuerda tendinosa del ventrículo izquierdo."
+ },
+ "UBERON:0014855": {
+  "labelEs": "valva posterior de la válvula mitral",
+  "definitionEs": "Valva de la válvula mitral que está unida a la cabeza posterior del músculo papilar lateral del ventrículo izquierdo a través de la cuerda tendinosa del ventrículo izquierdo."
+ },
+ "UBERON:0015125": {
+  "labelEs": "tracto internodal anterior",
+  "definitionEs": "Tracto internodal que consta de las ramas atriales y septales atriales."
+ },
+ "UBERON:0015126": {
+  "labelEs": "tracto internodal medio",
+  "definitionEs": null
+ },
+ "UBERON:0015127": {
+  "labelEs": "tracto internodal posterior",
+  "definitionEs": null
+ },
+ "UBERON:0015128": {
+  "labelEs": "capa subepicárdica del epicardio",
+  "definitionEs": null
+ },
+ "UBERON:0015129": {
+  "labelEs": "grasa epicárdica",
+  "definitionEs": "Grasa intrapericárdica visceral contigua a la superficie miocárdica."
+ },
+ "UBERON:0015132": {
+  "labelEs": "conducto galactóforo extralobulillar",
+  "definitionEs": null
+ },
+ "UBERON:0015133": {
+  "labelEs": "conducto galactóforo terminal",
+  "definitionEs": null
+ },
+ "UBERON:0015134": {
+  "labelEs": "conducto galactóforo principal",
+  "definitionEs": null
+ },
+ "UBERON:0015135": {
+  "labelEs": "conducto galactóforo primario",
+  "definitionEs": null
+ },
+ "UBERON:0015136": {
+  "labelEs": "conducto galactóforo secundario",
+  "definitionEs": null
+ },
+ "UBERON:0015137": {
+  "labelEs": "conducto galactóforo terciario",
+  "definitionEs": null
+ },
+ "UBERON:0015138": {
+  "labelEs": "conducto galactóforo cuaternario",
+  "definitionEs": null
+ },
+ "UBERON:0015214": {
+  "labelEs": "ligamento arqueado",
+  "definitionEs": "Ligamento que forma parte de un diafragma."
+ },
+ "UBERON:0015215": {
+  "labelEs": "ligamento arqueado medio",
+  "definitionEs": "El ligamento arqueado medio es un ligamento situado bajo el diafragma que conecta los pilares derecho e izquierdo del diafragma."
+ },
+ "UBERON:0015472": {
+  "labelEs": "nódulo linfático traqueobronquial",
+  "definitionEs": "Nódulo linfático situado cerca de la bifurcación de la tráquea."
+ },
+ "UBERON:0016403": {
+  "labelEs": "pared torácica",
+  "definitionEs": "La pared torácica (o pared del tórax) es el límite de la cavidad torácica. La porción ósea se conoce como caja torácica. Sin embargo, la pared también incluye músculo, piel y fascia."
+ },
+ "UBERON:0016405": {
+  "labelEs": "capilar pulmonar",
+  "definitionEs": "Capilar que forma parte de un pulmón."
+ },
+ "UBERON:0016410": {
+  "labelEs": "mama masculina",
+  "definitionEs": "Mama que forma parte de un organismo masculino."
+ },
+ "UBERON:0016416": {
+  "labelEs": "tórax anterior",
+  "definitionEs": "Subdivisión del tórax que se encuentra por delante del plano del límite posterior del mediastino medio."
+ },
+ "UBERON:0016435": {
+  "labelEs": "pared del tórax",
+  "definitionEs": "Subdivisión del tórax que incluye todas las estructuras desde la piel hasta la pleura costal. Ejemplos: solo hay una pared del tórax."
+ },
+ "UBERON:0016458": {
+  "labelEs": "hiato esofágico",
+  "definitionEs": "Orificio del diafragma a través del cual pasa el esófago."
+ },
+ "UBERON:0016509": {
+  "labelEs": "cavidad del ventrículo derecho",
+  "definitionEs": "Espacio luminal del ventrículo derecho del corazón."
+ },
+ "UBERON:0016513": {
+  "labelEs": "cavidad del atrio izquierdo",
+  "definitionEs": "Espacio luminal del atrio izquierdo del corazón."
+ },
+ "UBERON:0016514": {
+  "labelEs": "cavidad del ventrículo izquierdo",
+  "definitionEs": "Espacio luminal del ventrículo izquierdo del corazón."
+ },
+ "UBERON:0016522": {
+  "labelEs": "cavidad del atrio derecho",
+  "definitionEs": "Espacio luminal del atrio derecho del corazón."
+ },
+ "UBERON:0016920": {
+  "labelEs": "tronco descendente del arco de la aorta",
+  "definitionEs": null
+ },
+ "UBERON:0016923": {
+  "labelEs": "región preductal del arco de la aorta",
+  "definitionEs": "Área de la aorta proximal al conducto arterioso."
+ },
+ "UBERON:0016924": {
+  "labelEs": "región posductal del arco de la aorta",
+  "definitionEs": "Área de la aorta distal al conducto arterioso."
+ },
+ "UBERON:0016925": {
+  "labelEs": "región yuxtaductal del arco de la aorta",
+  "definitionEs": "Área de la aorta en la zona de inserción del conducto arterioso."
+ },
+ "UBERON:0018226": {
+  "labelEs": "porción pulmonar del sistema linfático",
+  "definitionEs": "Subdivisión de sistema de órganos que es la parte del sistema linfoide que incluye los vasos linfáticos pulmonares."
+ },
+ "UBERON:0018227": {
+  "labelEs": "vaso linfático pulmonar",
+  "definitionEs": "Vaso linfático que forma parte de un pulmón."
+ },
+ "UBERON:0018649": {
+  "labelEs": "tejido muscular cardíaco del ventrículo",
+  "definitionEs": null
+ },
+ "UBERON:0018674": {
+  "labelEs": "vasculatura del corazón",
+  "definitionEs": "Estructura tubular multitisular interconectada que contiene líquido que es transportado activamente alrededor del corazón."
+ },
+ "UBERON:0018679": {
+  "labelEs": "nervio esplácnico torácico",
+  "definitionEs": "Los nervios esplácnicos torácicos son nervios esplácnicos que surgen del tronco simpático en el tórax y se dirigen en sentido inferior para proporcionar inervación simpática al abdomen. Los nervios contienen fibras simpáticas preganglionares y fibras aferentes viscerales generales."
+ },
+ "UBERON:0018680": {
+  "labelEs": "nervio esplácnico mayor",
+  "definitionEs": null
+ },
+ "UBERON:0018681": {
+  "labelEs": "nervio esplácnico menor",
+  "definitionEs": null
+ },
+ "UBERON:0019190": {
+  "labelEs": "glándula mucosa del pulmón",
+  "definitionEs": null
+ },
+ "UBERON:0019200": {
+  "labelEs": "piel de la región anterior del tórax",
+  "definitionEs": "Zona de piel que forma parte de la región anterior del tórax."
+ },
+ "UBERON:0019320": {
+  "labelEs": "región precordial",
+  "definitionEs": "Subdivisión del tronco que comprende el epigastrio y la parte inferior anterior del tórax."
+ },
+ "UBERON:0034697": {
+  "labelEs": "tracto de entrada",
+  "definitionEs": null
+ },
+ "UBERON:0034698": {
+  "labelEs": "tracto de entrada del ventrículo",
+  "definitionEs": null
+ },
+ "UBERON:0034699": {
+  "labelEs": "tracto de entrada del atrio",
+  "definitionEs": null
+ },
+ "UBERON:0034703": {
+  "labelEs": "tracto de entrada del ventrículo derecho",
+  "definitionEs": null
+ },
+ "UBERON:0034704": {
+  "labelEs": "tracto de entrada del ventrículo izquierdo",
+  "definitionEs": null
+ },
+ "UBERON:0034903": {
+  "labelEs": "endocardio del atrio izquierdo",
+  "definitionEs": "Endocardio que forma parte del atrio izquierdo."
+ },
+ "UBERON:0035168": {
+  "labelEs": "región infraclavicular",
+  "definitionEs": "Región situada por debajo de la clavícula."
+ },
+ "UBERON:0035186": {
+  "labelEs": "válvula del foramen oval",
+  "definitionEs": null
+ },
+ "UBERON:0035213": {
+  "labelEs": "base del corazón",
+  "definitionEs": "Porción superior del corazón situada en el lado opuesto a la porción apical. Está formada principalmente por el atrio izquierdo."
+ },
+ "UBERON:0035219": {
+  "labelEs": "nódulo linfático paraesternal",
+  "definitionEs": "Cualquiera de los nódulos linfáticos de la mama situados bajo la caja torácica, cerca del esternón."
+ },
+ "UBERON:0035289": {
+  "labelEs": "prolongación axilar de la mama",
+  "definitionEs": "Prolongación del tejido de la mama que se extiende hacia la axila."
+ },
+ "UBERON:0035328": {
+  "labelEs": "cuadrante superior externo de la mama",
+  "definitionEs": "Cuarto de la mama que es superior y lateral."
+ },
+ "UBERON:0035365": {
+  "labelEs": "cuadrante inferior externo de la mama",
+  "definitionEs": "Cuarto de la mama que es inferior y lateral."
+ },
+ "UBERON:0035374": {
+  "labelEs": "vena cardíaca menor",
+  "definitionEs": "Vena que discurre paralela a la arteria coronaria derecha en el surco coronario y que drena en el extremo derecho del seno coronario."
+ },
+ "UBERON:0035422": {
+  "labelEs": "rama circunfleja de la arteria coronaria izquierda",
+  "definitionEs": "Rama de la arteria coronaria izquierda que discurre perpendicular a la rama interventricular anterior de la arteria coronaria izquierda, en el lado izquierdo del surco interventricular, e irriga el lado izquierdo del corazón."
+ },
+ "UBERON:0035468": {
+  "labelEs": "receso costodiafragmático",
+  "definitionEs": "Unión angulada donde el diafragma se encuentra con la pared torácica."
+ },
+ "UBERON:0035477": {
+  "labelEs": "cuadrante inferior interno de la mama",
+  "definitionEs": "Cuarto de la mama que es inferior y medial."
+ },
+ "UBERON:0035520": {
+  "labelEs": "nódulo linfático mediastínico anterior",
+  "definitionEs": "Nódulo linfático situado en el mediastino superior que recoge la linfa del timo, el pericardio y el lado derecho del corazón."
+ },
+ "UBERON:0035542": {
+  "labelEs": "cuadrante superior interno de la mama",
+  "definitionEs": "Cuarto de la mama que es superior y medial."
+ },
+ "UBERON:0035553": {
+  "labelEs": "cámara cardíaca izquierda",
+  "definitionEs": "Cualquier cámara del lado izquierdo del corazón."
+ },
+ "UBERON:0035554": {
+  "labelEs": "cámara cardíaca derecha",
+  "definitionEs": "Cualquier cámara del lado derecho del corazón."
+ },
+ "UBERON:0035634": {
+  "labelEs": "cuadrante de la mama",
+  "definitionEs": "Parte de la mama que está delimitada por la línea intermamaria y una línea perpendicular que divide en dos el pezón."
+ },
+ "UBERON:0035763": {
+  "labelEs": "cavidad de cámara cardíaca",
+  "definitionEs": null
+ },
+ "UBERON:0035767": {
+  "labelEs": "bronquio intrapulmonar",
+  "definitionEs": null
+ },
+ "UBERON:0035831": {
+  "labelEs": "porción costal del diafragma",
+  "definitionEs": "Dominio del diafragma que es una lámina muscular delgada en forma de cúpula, compuesta por una disposición radial de miofibras que se extienden lateralmente desde las costillas y medialmente hasta un centro tendinoso."
+ },
+ "UBERON:0035835": {
+  "labelEs": "región apical del ventrículo izquierdo",
+  "definitionEs": "Región alrededor del vértice del ventrículo izquierdo cardíaco, situada en la parte inferior del ventrículo izquierdo, por debajo de las válvulas mitral y aórtica."
+ },
+ "UBERON:0035836": {
+  "labelEs": "región apical del ventrículo derecho",
+  "definitionEs": null
+ },
+ "UBERON:0035963": {
+  "labelEs": "líquido de revestimiento epitelial",
+  "definitionEs": "El líquido de revestimiento epitelial forma una delgada capa de líquido que cubre la mucosa de los alvéolos, las vías aéreas pequeñas y las vías aéreas grandes."
+ },
+ "UBERON:0036285": {
+  "labelEs": "pared del ventrículo izquierdo",
+  "definitionEs": "Pared de ventrículo que se continúa con la pared de la aorta."
+ },
+ "UBERON:0036286": {
+  "labelEs": "pared del ventrículo derecho",
+  "definitionEs": "Pared de ventrículo que se continúa con la pared del tronco pulmonar."
+ },
+ "UBERON:0036288": {
+  "labelEs": "pared anterior del ventrículo izquierdo",
+  "definitionEs": null
+ },
+ "UBERON:0036289": {
+  "labelEs": "pared anterior del ventrículo derecho",
+  "definitionEs": "Región de la pared del ventrículo derecho que se continúa con las paredes lateral y septal del ventrículo derecho."
+ },
+ "UBERON:0036290": {
+  "labelEs": "miocardio de la pared anterior del ventrículo izquierdo",
+  "definitionEs": null
+ },
+ "UBERON:0036291": {
+  "labelEs": "miocardio de la pared anterior del ventrículo derecho",
+  "definitionEs": null
+ },
+ "UBERON:0036328": {
+  "labelEs": "pared de la arteria coronaria",
+  "definitionEs": null
+ },
+ "UBERON:0037144": {
+  "labelEs": "pared del corazón",
+  "definitionEs": "Pared de órgano que tiene como partes el endocardio, el miocardio, el epicardio y el tabique cardíaco, está rodeada por el saco pericárdico propiamente dicho y se continúa con las paredes de los árboles arteriales y venosos sistémicos y pulmonares."
+ },
+ "UBERON:0037480": {
+  "labelEs": "nódulo linfático supramamario",
+  "definitionEs": null
+ },
+ "UBERON:0037566": {
+  "labelEs": "nódulo linfático diafragmático",
+  "definitionEs": null
+ },
+ "UBERON:0038001": {
+  "labelEs": "nódulo linfático esternal",
+  "definitionEs": null
+ },
+ "UBERON:0038002": {
+  "labelEs": "nódulo linfático intercostal superior",
+  "definitionEs": null
+ },
+ "UBERON:0038003": {
+  "labelEs": "nódulo linfático intercostal inferior",
+  "definitionEs": null
+ },
+ "UBERON:0038124": {
+  "labelEs": "nódulo linfático diafragmático medial",
+  "definitionEs": null
+ },
+ "UBERON:0038587": {
+  "labelEs": "nódulo linfático paracardíaco",
+  "definitionEs": null
+ },
+ "UBERON:0038632": {
+  "labelEs": "nódulo linfático pericárdico",
+  "definitionEs": null
+ },
+ "UBERON:0038633": {
+  "labelEs": "nódulo linfático aortopulmonar",
+  "definitionEs": null
+ },
+ "UBERON:0038634": {
+  "labelEs": "nódulo linfático paraaórtico torácico",
+  "definitionEs": null
+ },
+ "UBERON:0038647": {
+  "labelEs": "nódulo linfático del ligamento pulmonar inferior",
+  "definitionEs": null
+ },
+ "UBERON:0038651": {
+  "labelEs": "nódulo linfático mediastínico superior",
+  "definitionEs": null
+ },
+ "UBERON:0038868": {
+  "labelEs": "nódulo linfático paramamario",
+  "definitionEs": null
+ },
+ "UBERON:0038878": {
+  "labelEs": "nódulo linfático diafragmático lateral",
+  "definitionEs": null
+ },
+ "UBERON:0038879": {
+  "labelEs": "nódulo linfático diafragmático anterior",
+  "definitionEs": null
+ },
+ "UBERON:0038882": {
+  "labelEs": "nódulo linfático diafragmático posterior",
+  "definitionEs": null
+ },
+ "UBERON:0038885": {
+  "labelEs": "nódulo linfático braquiocefálico",
+  "definitionEs": null
+ },
+ "UBERON:0038888": {
+  "labelEs": "nódulo linfático mediastínico posterior",
+  "definitionEs": null
+ },
+ "UBERON:0038897": {
+  "labelEs": "nódulo linfático traqueobronquial superior",
+  "definitionEs": null
+ },
+ "UBERON:0038900": {
+  "labelEs": "nódulo linfático traqueobronquial inferior",
+  "definitionEs": null
+ },
+ "UBERON:0038943": {
+  "labelEs": "nódulo linfático diafragmático superior",
+  "definitionEs": null
+ },
+ "UBERON:0039167": {
+  "labelEs": "nódulo linfático broncopulmonar",
+  "definitionEs": "Nódulo linfático traqueobronquial situado en el hilio de un pulmón."
+ },
+ "UBERON:0039169": {
+  "labelEs": "arteria intercostal anterior",
+  "definitionEs": "Las ramas intercostales anteriores de la arteria torácica interna irrigan los cinco o seis espacios intercostales superiores."
+ },
+ "UBERON:0039232": {
+  "labelEs": "arteria del cono",
+  "definitionEs": "La arteria del cono se considera generalmente la primera rama de la arteria coronaria derecha (ACD) en el seno de Valsalva derecho. Sin embargo, un estudio ha demostrado que en aproximadamente el 50 % de los seres humanos la arteria del cono surge de un ostium independiente en el seno de Valsalva derecho."
+ },
+ "UBERON:0039838": {
+  "labelEs": "séptima arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0039839": {
+  "labelEs": "octava arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0039840": {
+  "labelEs": "novena arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0039841": {
+  "labelEs": "primera arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0039842": {
+  "labelEs": "segunda arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0039843": {
+  "labelEs": "tercera arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0039844": {
+  "labelEs": "cuarta arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0039845": {
+  "labelEs": "quinta arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0039846": {
+  "labelEs": "sexta arteria intercostal anterior",
+  "definitionEs": null
+ },
+ "UBERON:8410070": {
+  "labelEs": "músculos elevadores de las costillas",
+  "definitionEs": "Músculo del tórax con una función en la inspiración forzada. En el ser humano hay doce elevadores de las costillas a cada lado del tórax; son pequeños fascículos tendinosos y carnosos que se originan en los extremos de las apófisis transversas de la séptima vértebra cervical y de las once vértebras torácicas superiores. Discurren oblicuamente hacia abajo y lateralmente, como las fibras de los intercostales externos, y cada uno se inserta en la cara externa de la costilla situada inmediatamente por debajo de la vértebra de la que se origina, entre el tubérculo y el ángulo (elevadores cortos de las costillas). Cada uno de los cuatro músculos inferiores se divide en dos fascículos, uno de los cuales se inserta como se ha descrito; el otro desciende hasta la segunda costilla por debajo de su origen (elevadores largos de las costillas)."
+ },
+ "UBERON:8600051": {
+  "labelEs": "vena pulmonar segmentaria",
+  "definitionEs": "Vena que es tributaria de las venas pulmonares principales y drena sangre oxigenada de un segmento del pulmón."
+ },
+ "UBERON:8600052": {
+  "labelEs": "vena pulmonar subsegmentaria",
+  "definitionEs": "Vena que es tributaria de las venas pulmonares segmentarias y drena sangre oxigenada de un subsegmento del pulmón."
+ },
+ "UBERON:8600054": {
+  "labelEs": "vena intercostal suprema",
+  "definitionEs": "Vena que es tributaria de la vena intercostal superior y drena el primer espacio intercostal."
+ },
+ "UBERON:8600055": {
+  "labelEs": "arteria del nodo atrioventricular",
+  "definitionEs": "Arteria que se ramifica de la arteria coronaria derecha e irriga el nodo atrioventricular."
+ },
+ "UBERON:8600060": {
+  "labelEs": "arteria pulmonar subsegmentaria",
+  "definitionEs": "Arteria que es una rama de la arteria pulmonar segmentaria y suministra sangre desoxigenada a un subsegmento más pequeño del pulmón."
+ },
+ "UBERON:8600077": {
+  "labelEs": "arteriola pulmonar",
+  "definitionEs": "Arteriola que se ramifica de las arterias pulmonares y suministra sangre desoxigenada a los capilares pulmonares y a los capilares alveolares de los pulmones."
+ },
+ "UBERON:8600080": {
+  "labelEs": "arteria pericárdica",
+  "definitionEs": "Arteria que se ramifica de la aorta torácica descendente e irriga la porción dorsal del pericardio."
+ },
+ "UBERON:8600081": {
+  "labelEs": "arteria pericardiofrénica",
+  "definitionEs": "Arteria que se ramifica de la arteria torácica interna e irriga el pericardio y el diafragma."
+ },
+ "UBERON:8600102": {
+  "labelEs": "arteria descendente anterior izquierda",
+  "definitionEs": "Arteria que se ramifica de la arteria coronaria izquierda e irriga la pared anterior del ventrículo izquierdo, el tabique interventricular y el vértice del corazón."
+ },
+ "UBERON:8850000": {
+  "labelEs": "luz del alvéolo pulmonar",
+  "definitionEs": "Cavidad anatómica que forma parte del alvéolo del pulmón."
+ },
+ "UBERON:8920003": {
+  "labelEs": "arteria marginal derecha",
+  "definitionEs": "Arteria que es una rama de la arteria coronaria derecha. Sigue el borde agudo del corazón, suministrando sangre al ventrículo derecho."
+ },
+ "UBERON:8920010": {
+  "labelEs": "vena marginal izquierda",
+  "definitionEs": "Vena que es tributaria de la vena cardíaca magna (vena coronaria izquierda) y drena sangre del ventrículo izquierdo del corazón. Discurre junto con la arteria marginal izquierda en su trayecto ascendente a lo largo del borde cardíaco izquierdo."
+ },
+ "UBERON:8920014": {
+  "labelEs": "vena bronquial izquierda",
+  "definitionEs": "Vena bronquial que drena la sangre de los bronquios en la vena hemiácigos accesoria o en la vena intercostal superior izquierda."
+ },
+ "UBERON:8920015": {
+  "labelEs": "vena bronquial derecha",
+  "definitionEs": "Vena bronquial que drena la sangre de los bronquios en la vena ácigos."
+ },
+ "UBERON:8920016": {
+  "labelEs": "vena pulmonar inferior derecha",
+  "definitionEs": "Vena pulmonar que drena la sangre del lóbulo inferior del pulmón derecho."
+ },
+ "UBERON:8920017": {
+  "labelEs": "vena pulmonar inferior izquierda",
+  "definitionEs": "Vena pulmonar que drena la sangre del lóbulo inferior del pulmón izquierdo."
+ },
+ "UBERON:8920018": {
+  "labelEs": "vena pulmonar superior derecha",
+  "definitionEs": "Vena pulmonar que drena la sangre de los lóbulos superior y medio del pulmón derecho."
+ },
+ "UBERON:8920019": {
+  "labelEs": "vena pulmonar superior izquierda",
+  "definitionEs": "Vena pulmonar que drena la sangre del lóbulo superior y de la língula del pulmón izquierdo."
+ }
+}

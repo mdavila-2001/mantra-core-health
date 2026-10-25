@@ -68,7 +68,7 @@ test.describe('Carril E3 · dónde comprar mi receta', () => {
     // «no encontrada», sin pedir la ubicación y sin salir a farmacias.
     await irA(page, '/my-account/medical-record/where-to-buy/00000000-0000-4000-8000-000000000000');
     await estable(page);
-    await expect(page.getByRole('heading', { name: /Dónde comprar mi receta/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Dónde conseguir lo de mi receta/i })).toBeVisible();
     // La pantalla no llegó a los renglones: no hay nada que comprar.
     await expect(page.getByTestId('compra-items')).toHaveCount(0);
 
