@@ -863,21 +863,6 @@ export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
   ['SRQ-OTHER', 'Otro', 'Orden de análisis que no pertenece a laboratorio ni imagenología.'],
 ]);
 
-/* Quién realiza una orden de procedimiento. El front nombra el conjunto
-   por su código interno y reconoce los tres modos por el código del concepto,
-   con o sin prefijo de módulo. El `display` está en castellano porque el
-   paciente lo lee en «Mis órdenes» (`readConceptLabels`). */
-conjunto(
-  'service-request-performer-selection',
-  'Quién realiza la orden',
-  'Modo del ejecutor de una orden de procedimiento: el médico, un centro o lo que elija el paciente.',
-);
-export const MODO_EJECUTOR = definir('service-request-performer-selection', [
-  ['SR_PERF_SELF', 'Lo realiza quien indica la orden'],
-  ['SR_PERF_ORGANIZATION', 'Se recomienda un centro'],
-  ['SR_PERF_PATIENT_CHOICE', 'Lo elige el paciente'],
-]);
-
 conjunto('VS_PRIORITY', 'Prioridad', 'Prioridad de una orden.');
 export const PRIORIDAD = definir('VS_PRIORITY', [
   ['PRI-ROUTINE', 'Rutina'],
