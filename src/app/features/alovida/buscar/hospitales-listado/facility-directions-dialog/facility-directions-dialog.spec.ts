@@ -14,6 +14,7 @@ import {
 
 import {
   FacilityDirectionsDialog,
+  openStreetMapRouteUrl,
   formatKm,
   straightLineKm,
 } from './facility-directions-dialog';
@@ -92,6 +93,20 @@ describe('straightLineKm', () => {
     const ida = straightLineKm(HOSPITAL, { lat: -16.4957, lng: -68.1335 });
     const vuelta = straightLineKm({ lat: -16.4957, lng: -68.1335 }, HOSPITAL);
     expect(ida).toBeCloseTo(vuelta, 9);
+  });
+});
+
+describe('openStreetMapRouteUrl', () => {
+  it('sin origen deja el «desde» vacío para que OpenStreetMap lo pida', () => {
+    expect(openStreetMapRouteUrl(HOSPITAL, null)).toBe(
+      'https://www.openstreetmap.org/directions?route=%3B-17.7833%2C-63.1821',
+    );
+  });
+
+  it('con origen arma el recorrido completo', () => {
+    expect(openStreetMapRouteUrl(HOSPITAL, { lat: -17.79, lng: -63.19 })).toBe(
+      'https://www.openstreetmap.org/directions?route=-17.79%2C-63.19%3B-17.7833%2C-63.1821',
+    );
   });
 });
 
@@ -179,6 +194,24 @@ describe('FacilityDirectionsDialog', () => {
 
     expect(porTestId('directions-origin')?.textContent).toContain('el punto que marcó');
     expect(porTestId('directions-distance')?.textContent).toContain('en línea recta');
+  });
+
+  it('ofrece ver el recorrido en OpenStreetMap, y usa el origen cuando lo hay', async () => {
+    await abrir();
+    const enlace = (): HTMLAnchorElement | null =>
+      porTestId('directions-open-route') as HTMLAnchorElement | null;
+
+    expect(enlace()?.getAttribute('href')).toBe(openStreetMapRouteUrl(HOSPITAL, null));
+    expect(enlace()?.getAttribute('target')).toBe('_blank');
+
+    porTestId('directions-pick-on-map')?.click();
+    await fixture.whenStable();
+    registry.clickHandler?.({ latlng: { lat: -17.79, lng: -63.19 } });
+    await fixture.whenStable();
+
+    expect(enlace()?.getAttribute('href')).toBe(
+      openStreetMapRouteUrl(HOSPITAL, { lat: -17.79, lng: -63.19 }),
+    );
   });
 
   it('un clic en el mapa SIN haber pedido marcar no mueve el origen', async () => {
