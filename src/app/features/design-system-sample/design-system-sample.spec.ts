@@ -109,6 +109,8 @@ describe('DesignSystemSample', () => {
   it('el selector de tema sigue expuesto: es la única UI del ThemeService', () => {
     const grupo = root().querySelector('[role="group"][aria-label="Tema de la interfaz"]');
 
-    expect(grupo?.querySelectorAll('button')).toHaveLength(3);
+    // Claro y oscuro: la tercera opción «sistema» se retiró del ThemeService
+    // (65985b534) y de todos los selectores.
+    expect(grupo?.querySelectorAll('button')).toHaveLength(2);
   });
 });
