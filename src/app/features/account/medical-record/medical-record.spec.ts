@@ -135,6 +135,38 @@ const FORMULARIO_DETALLE = {
 
 const SIN_FORMULARIOS = { items: [], limit: 50, truncated: false };
 
+/* ---- Servicios recibidos --------------------------------------------------- */
+
+const SIN_REGISTROS = { ...RESUMEN, conditions: [], allergies: [], medicationRequests: [], observations: [], encounters: [] };
+
+/** La pregunta de «¿tiene al menos uno?»: la API recibe el tope de uno. */
+const SERVICIOS_DE_UNO = (r: { url: string; params: { get(name: string): string | null } }): boolean =>
+  r.url === '/clinical/patients/pp-1/received-services' && r.params.get('limit') === '1';
+
+const SERVICIOS_VACIOS = { patientProfileId: 'pp-1', items: [], limit: 100, truncated: false, costsVisible: true };
+
+const UN_SERVICIO = {
+  id: 'rs-1',
+  type: 'INTERVENTION',
+  typeConceptId: 'type-int',
+  serviceConceptId: 'svc-infiltracion',
+  statusConceptId: 'st-realizada',
+  performedAt: '2026-08-12T14:30:00.000Z',
+  performerName: 'Dra. Ana Rojas',
+  practiceSiteName: 'Clínica Los Olivos',
+  resultText: 'Tolerancia adecuada.',
+  cost: { amount: '350.00', currencyCode: 'BOB', source: 'INVOICE_LINE' },
+};
+
+const CONCEPTOS_DE_SERVICIOS = {
+  items: [
+    { conceptId: 'svc-infiltracion', code: 'PROC-INFILTRACION', display: 'Infiltración articular', codeSystemVersionId: 'v-1' },
+    { conceptId: 'st-realizada', code: 'PROC_COMPLETED', display: 'Realizada', codeSystemVersionId: 'v-1' },
+  ],
+  limit: 200,
+  truncated: false,
+};
+
 /* ---- C6 · lo que la línea del encuentro necesita -------------------------- */
 
 /**
@@ -627,18 +659,89 @@ describe('MedicalRecord', () => {
     await montar();
     // Sin registros no hay conceptos que traducir, así que la lectura del
     // catálogo ni sale: pedirla vacía sería una petición que se sabe inútil.
-    http
-      .expectOne((r) => r.url === '/clinical/patients/pp-1/summary')
-      .flush({
-        ...RESUMEN,
-        conditions: [],
-        medicationRequests: [],
-        encounters: [],
-      });
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(SIN_REGISTROS);
+    // Y como lo demás está vacío, se pregunta por los servicios antes de decirlo.
+    http.expectOne(SERVICIOS_DE_UNO).flush(SERVICIOS_VACIOS);
     responderFormularios(SIN_FORMULARIOS);
     harness.detectChanges();
 
     expect(harness.routeNativeElement?.textContent).toContain('Todavía no hay atenciones');
+  });
+
+  /**
+   * Quien solo recibió vacunas o una intervención no tiene la historia vacía:
+   * decirle «todavía no hay atenciones» es falso, y no podría llegar a su pestaña.
+   */
+  it('una historia con sólo servicios recibidos no se declara vacía', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(SIN_REGISTROS);
+    http.expectOne(SERVICIOS_DE_UNO).flush({ ...SERVICIOS_VACIOS, items: [UN_SERVICIO] });
+    responderFormularios(SIN_FORMULARIOS);
+    harness.detectChanges();
+
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    expect(texto).not.toContain('Todavía no hay atenciones');
+    expect(pestanas(harness.routeNativeElement).map((t) => t.split(' (')[0])).toContain('Servicios recibidos');
+  });
+
+  it('si no se puede preguntar por los servicios, no se afirma que la historia está vacía', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(SIN_REGISTROS);
+    http
+      .expectOne(SERVICIOS_DE_UNO)
+      .flush({ code: 'ERROR', message: 'caído', timestamp: '', path: '' }, { status: 500, statusText: 'Server Error' });
+    responderFormularios(SIN_FORMULARIOS);
+    harness.detectChanges();
+
+    // La pestaña mostrará su propio error con reintento; decir «vacía» sería afirmar lo que no se sabe.
+    expect(harness.routeNativeElement?.textContent).not.toContain('Todavía no hay atenciones');
+  });
+
+  it('con registros clínicos NO se pregunta por los servicios al abrir la pantalla', async () => {
+    await montar();
+    responder();
+    // `afterEach` verifica que no quedó ninguna petición abierta: leerlos acá sería
+    // una lectura de más para todas las visitas.
+    expect(harness.routeNativeElement?.textContent).toContain('Dolor de garganta');
+  });
+
+  /** «Servicios recibidos»: se lee al abrir la pestaña, no antes. */
+  it('la pestaña de servicios recibidos lee los servicios del paciente y los dibuja', async () => {
+    await montar();
+    responder();
+    await abrirPestana(5);
+
+    http
+      .expectOne((r) => r.url === '/clinical/patients/pp-1/received-services')
+      .flush({ ...SERVICIOS_VACIOS, items: [UN_SERVICIO] });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS_DE_SERVICIOS);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    const raiz = harness.routeNativeElement;
+    expect(raiz?.querySelector('[data-testid="historia-servicios"]')).not.toBeNull();
+    const texto = raiz?.textContent ?? '';
+    expect(texto).toContain('Infiltración articular');
+    expect(texto).toContain('Intervención médica');
+    expect(texto).toContain('Dra. Ana Rojas');
+    expect(texto).toContain('350.00 Bs');
+    expect(raiz?.innerHTML ?? '').not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  });
+
+  it('la pestaña de servicios se puede enlazar con ?seccion=servicios', async () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'], pid: 'pp-1' }),
+      refreshToken: 'r-1',
+    });
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/my-account/medical-record?seccion=servicios', MedicalRecord);
+    responder();
+
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/received-services').flush(SERVICIOS_VACIOS);
+    harness.detectChanges();
+    const abierta = harness.routeNativeElement?.querySelector('[role="tab"][aria-selected="true"]');
+    expect(abierta?.textContent).toContain('Servicios recibidos');
   });
 
   it('si el catálogo falla, la historia igual se muestra', async () => {
@@ -701,6 +804,8 @@ describe('MedicalRecord', () => {
     http
       .expectOne((r) => r.url === '/diagnostic-results/me')
       .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    // Los servicios recibidos se leen al descargar, como las órdenes y los resultados.
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/received-services').flush(SERVICIOS_VACIOS);
     // C6 · sin órdenes no hay conceptos nuevos que traducir: la lectura ni sale.
     http.expectNone((r) => r.url === '/terminology/concepts');
   });
@@ -724,6 +829,7 @@ describe('MedicalRecord', () => {
     http
       .expectOne((r) => r.url === '/diagnostic-results/me')
       .flush(null, { status: 500, statusText: 'Server Error' });
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/received-services').flush(SERVICIOS_VACIOS);
     http.expectNone((r) => r.url === '/terminology/concepts');
     harness.detectChanges();
 
@@ -754,6 +860,7 @@ describe('MedicalRecord', () => {
     http
       .expectOne((r) => r.url === '/diagnostic-results/me')
       .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/received-services').flush(SERVICIOS_VACIOS);
     harness.detectChanges();
 
     expect(toasts.warning).not.toHaveBeenCalled();
@@ -763,16 +870,45 @@ describe('MedicalRecord', () => {
     );
   });
 
+  it('si los servicios recibidos fallan, la descarga sigue y lo dice: el papel no afirma «sin servicios»', async () => {
+    await montar();
+    responder();
+
+    const boton = [
+      ...(harness.routeNativeElement?.querySelectorAll('button[app-button]') ?? []),
+    ].find((b) => (b.textContent ?? '').includes('historia completa')) as HTMLButtonElement;
+    boton.click();
+    harness.detectChanges();
+
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+      .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me')
+      .flush({ patientProfileId: 'pp-1', items: [], limit: 50, truncated: false });
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/received-services').flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-srv-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    harness.detectChanges();
+
+    expect(toasts.success).not.toHaveBeenCalled();
+    expect(toasts.warning).toHaveBeenCalledWith(
+      'Descargamos su historia, pero sin los servicios recibidos. No se pudieron traer. (Código de soporte: corr-srv-1)',
+      'Historia clínica incompleta',
+    );
+  });
+
   /* ---- FT-20 · la historia por pestañas ----------------------------------- */
 
-  /** FT-20-R01/R02/R03 + C6 · cinco pestañas, con la primera abierta. */
+  /** FT-20-R01/R02/R03 + C6 · seis pestañas, con la primera abierta. */
   it('organiza la historia en pestañas clickeables con estado activo', async () => {
     await montar();
     responder();
 
     const raiz = harness.routeNativeElement;
     const tabs = [...(raiz?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
-    expect(tabs.length).toBe(5);
+    expect(tabs.length).toBe(6);
     expect(pestanas(raiz).map((t) => t.split(' (')[0])).toEqual([
       'Atenciones',
       'Recetas',
@@ -780,6 +916,9 @@ describe('MedicalRecord', () => {
       'Resultados',
       // C6 · al final para no mover los enlaces `?seccion=` que ya circulan.
       'Diagnósticos',
+      // Las intervenciones realizadas y las vacunas; la consulta sigue en
+      // «Atenciones» y el análisis médico en «Resultados».
+      'Servicios recibidos',
     ]);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(tabs[1].getAttribute('aria-selected')).toBe('false');

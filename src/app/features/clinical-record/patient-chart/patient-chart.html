@@ -49,22 +49,17 @@
     }
 
     <!-- ─── La historia ───────────────────────────────────────────────────
-         Se lleva el ancho entero: es lo único que hace esta pantalla. Antes
-         cedía una columna de 24rem a la tarjeta del encuentro, y una tabla de
-         cuatro columnas en el resto quedaba apretada contra media pantalla en
-         blanco. Lo que se escribe se mudó a «Atención», que se abre desde el
-         botón de la cabecera.
-
-         Las pestañas van con el marco de ventana (`appearance="browser"`):
-         son ocho, no entran de una en la línea, y sueltas sobre el fondo de la
-         página se leían como una fila de rótulos cortados en vez de como las
-         secciones de un mismo documento. -->
+         Se lleva el ancho entero: es lo único que hace esta pantalla. Lo que se
+         escribe se mudó a «Atención», que se abre desde el botón de la cabecera.
+         Las pestañas van con el marco de ventana (`appearance="browser"`): son
+         nueve, no entran de una en la línea, y sueltas sobre el fondo se leían
+         como rótulos cortados y no como las secciones de un mismo documento. -->
     <section
       class="expediente__historia"
       aria-label="Historia clínica"
       appTutorialTarget="expediente-pestanas"
     >
-      <app-tabs appearance="browser">
+      <app-tabs appearance="browser" [(selectedIndex)]="activeTab">
         @for (bloque of bloques(); track bloque.clave) {
           <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
             <!-- El alta del bloque, arriba de su tabla. El expediente sigue
@@ -117,6 +112,12 @@
             />
           </app-tab>
         }
+        <!-- Servicios recibidos (intervenciones y vacunas): lo proyectado se crea aun cerrado, por eso el @if. -->
+        <app-tab label="Servicios recibidos">
+          @if (activeTab() === bloques().length) {
+            <app-received-services-panel data-testid="expediente-servicios" [patientProfileId]="pacienteDeLaFicha()" />
+          }
+        </app-tab>
       </app-tabs>
     </section>
   </div>
