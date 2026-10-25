@@ -1766,6 +1766,16 @@ export const routes: Routes = [
           (m) => m.ProcedureImport,
         ),
       ),
+      // Centros médicos: qué procedimientos ofrece cada sede y a qué precio.
+      pantallaDeOperacion(
+        'administration/services-catalog',
+        'procedure-offers',
+        'Procedimientos por sede',
+        () =>
+          import('./features/admin/services-catalog/procedure-offers/procedure-offers').then(
+            (m) => m.ProcedureOffers,
+          ),
+      ),
       // Carril 22: el médico importa a su propia práctica desde «Mis servicios».
       // Misma pantalla; la API deja dar de alta servicios a quien atiende en
       // esa práctica (PRACTITIONER/CLINICIAN) y la lista evita duplicar códigos.
