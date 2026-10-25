@@ -197,7 +197,7 @@
                   <h3 class="atlas3d__subtitulo">Descripción extendida</h3>
                   @if (ficha.extendedDescription; as ext) {
                     @if (ext.status === 'described') {
-                      <p class="atlas3d__marca">
+                      <p class="atlas3d__aviso-ia">
                         Redactada con asistencia de inteligencia artificial y sin revisión humana: cada frase resume, con otras
                         palabras, lo que dice el resumen del artículo citado entre corchetes. Lo que la literatura revisada no
                         dice no se completa.
@@ -218,7 +218,7 @@
                           Sin fuente en la literatura revisada, y por eso vacío: {{ missingAspectsLabel(ext.missingAspects) }}.
                         </p>
                       }
-                      <h4 class="atlas3d__aspecto">Artículos citados</h4>
+                      <h4 class="atlas3d__aspecto atlas3d__aspecto--fuentes">Artículos citados</h4>
                       <ol class="atlas3d__bibliografia" data-testid="atlas3d-bibliografia">
                         @for (fuente of ext.sources; track fuente.id; let i = $index) {
                           <li [id]="'atlas3d-fuente-' + (i + 1)">
@@ -258,7 +258,7 @@
                             decoding="async"
                           />
                           <figcaption>
-                            {{ imagen.altEs }}. {{ imagen.author }} ·
+                            {{ imagen.author }} ·
                             @if (imagen.licenseUrl) {
                               <a [href]="imagen.licenseUrl" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
                             } @else {

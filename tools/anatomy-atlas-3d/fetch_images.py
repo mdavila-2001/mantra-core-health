@@ -88,14 +88,14 @@ def texto(valor: str | None) -> str:
 
 
 # Upload.wikimedia.org sólo sirve miniaturas en anchos estándar (120, 250, 330,
-# 500, 960…): 480 devuelve 400.
-ANCHO = 330
+# 500, 960…): 480 devuelve 400. 500 llena el panel de la ficha sin verse borrosa.
+ANCHO = 500
 
 
 def miniatura_de(info: dict) -> tuple[str, int, int]:
-    """La miniatura de 330 px que sirve upload.wikimedia.org (el original si es más chico).
+    """La miniatura de 500 px que sirve upload.wikimedia.org (el original si es más chico).
 
-    Es la ruta estándar de MediaWiki: `/thumb/<h>/<hh>/<archivo>/330px-<archivo>`,
+    Es la ruta estándar de MediaWiki: `/thumb/<h>/<hh>/<archivo>/500px-<archivo>`,
     con `.png` agregado a los SVG.
     """
     # La API agrega parámetros de seguimiento (`?utm_source=…`) al URL del original.

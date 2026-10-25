@@ -59,6 +59,10 @@ for (const caso of CASOS) {
     await page.emulateMedia({ colorScheme: caso.tema, reducedMotion: 'reduce' });
     await entrarComoMedica(page);
     await page.goto(RUTA, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+    // La app cambia de tema con `data-theme`, no sólo con la preferencia del sistema.
+    if (caso.tema === 'dark') {
+      await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+    }
     await expect(page.getByTestId('atlas3d-ficha-titulo')).toBeVisible({ timeout: 60_000 });
 
     const descripcion = page.getByTestId('atlas3d-descripcion');
@@ -83,6 +87,21 @@ for (const caso of CASOS) {
       .poll(() => imagen.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth), { timeout: 60_000 })
       .toBeGreaterThan(0);
     await expect(figura.locator('figcaption')).toContainText('Wikimedia Commons');
+    if (caso.tema === 'dark') {
+      const fondo = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+      expect(fondo, 'el tema oscuro está aplicado').not.toBe('rgb(255, 255, 255)');
+    }
+
+    // El foco de teclado se ve: un contorno real, no `none`.
+    await page.getByRole('button', { name: 'Quitar selección' }).focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    const foco = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      const estilo = el ? getComputedStyle(el) : null;
+      return { style: estilo?.outlineStyle, width: estilo?.outlineWidth };
+    });
+    expect(foco.style, 'el foco se ve').not.toBe('none');
 
     // Sin desborde horizontal: la ficha cabe en el ancho.
     const desborde = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

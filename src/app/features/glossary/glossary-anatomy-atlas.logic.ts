@@ -187,7 +187,7 @@ export function sideLabel(side: AnatomyPart['side']): string | null {
 
 export const ASPECT_LABELS: Readonly<Record<AnatomyAspect, string>> = {
   situation: 'Situación',
-  parts: 'Partes',
+  parts: 'Partes y morfología',
   relations: 'Relaciones',
   irrigation: 'Irrigación',
   innervation: 'Inervación',

@@ -157,8 +157,9 @@
 
 .atlas3d__opcion:focus-visible,
 .atlas3d__limpiar:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  /* `--focus-ring` es un color, no una sombra: como `box-shadow` no pintaba nada. */
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .atlas3d__sin-pieza,
@@ -192,8 +193,9 @@
 }
 
 .atlas3d__ficha-cabecera h2:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  /* `--focus-ring` es un color, no una sombra: como `box-shadow` no pintaba nada. */
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .atlas3d__lado {
@@ -347,6 +349,9 @@
 }
 
 .atlas3d__cita {
+  display: inline-block;
+  min-inline-size: 1.5em;
+  text-align: center;
   margin-inline-start: 0.15em;
   font-size: var(--fs-caption);
   vertical-align: super;
@@ -358,14 +363,32 @@
   gap: var(--sp-1);
   margin: 0;
   padding-inline-start: var(--sp-5);
+  /* El reset global quita los números; acá son los que nombran las citas [n]. */
+  list-style: decimal;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   overflow-wrap: anywhere;
 }
 
+.atlas3d__bibliografia li {
+  scroll-margin-block: var(--sp-16);
+}
+
+.atlas3d__bibliografia li:target {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  color: var(--text-primary);
+}
+
+.atlas3d__aviso-ia {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* Una imagen ocupa el ancho del panel; dos se reparten. */
 .atlas3d__imagenes {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
   gap: var(--sp-3);
 }
 
@@ -377,6 +400,8 @@
   display: block;
   inline-size: 100%;
   block-size: auto;
+  max-block-size: 28rem;
+  object-fit: contain;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-sm);
   background: var(--bg-surface);
@@ -387,4 +412,10 @@
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   overflow-wrap: anywhere;
+}
+
+.atlas3d__aspecto--fuentes {
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-subtle);
 }

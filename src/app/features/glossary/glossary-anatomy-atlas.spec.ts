@@ -223,7 +223,7 @@ describe('GlossaryAnatomyAtlas', () => {
     const bibliografia = html().querySelector('[data-testid="atlas3d-bibliografia"]');
     expect(bibliografia?.querySelector('a[href="https://pubmed.ncbi.nlm.nih.gov/1/"]')).not.toBeNull();
     expect(bibliografia?.querySelector('a[href="https://doi.org/10.1/a"]')).not.toBeNull();
-    expect(html().querySelector('[data-testid="atlas3d-aspectos-sin-fuente"]')?.textContent).toContain('partes, irrigación');
+    expect(html().querySelector('[data-testid="atlas3d-aspectos-sin-fuente"]')?.textContent).toContain('partes y morfología, irrigación');
     expect(html().textContent).toContain('sin revisión humana');
   });
 
