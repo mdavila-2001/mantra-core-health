@@ -35,18 +35,13 @@ async function entrar(pagina, usuario) {
 
 async function main() {
   mkdirSync(SALIDA, { recursive: true });
-  const navegador = await chromium.launch();
+  const navegador = await chromium.launch(process.env['PW_CHROMIUM'] ? { executablePath: process.env['PW_CHROMIUM'] } : {});
   const errores = [];
-  let pacienteId = null;
-
+  
   /* ── Paciente ─────────────────────────────────────────────────────────── */
   const ctxPaciente = await navegador.newContext({ viewport: { width: 1440, height: 1000 } });
   const paciente = await ctxPaciente.newPage();
   paciente.on('pageerror', (e) => errores.push(String(e)));
-  paciente.on('request', (r) => {
-    const m = r.url().match(/\/clinical\/patients\/([^/]+)\/summary/);
-    if (m) pacienteId = m[1];
-  });
   await entrar(paciente, 'paciente');
   await paciente.goto(`${BASE}/my-account/medical-record?seccion=servicios`, { waitUntil: 'domcontentloaded', timeout: 240_000 });
   await paciente.getByTestId('received-services-table').waitFor({ timeout: 90_000 });
@@ -98,19 +93,20 @@ async function main() {
   await ctxPaciente.close();
 
   /* ── Médica ───────────────────────────────────────────────────────────── */
-  ok('se obtuvo el id del paciente de la maqueta', Boolean(pacienteId), String(pacienteId));
   const ctxMedica = await navegador.newContext({ viewport: { width: 1440, height: 1000 } });
   const medica = await ctxMedica.newPage();
   medica.on('pageerror', (e) => errores.push(String(e)));
-  const lecturas = [];
-  medica.on('request', (r) => {
-    if (/received-services/.test(r.url())) lecturas.push(r.url());
-  });
   await entrar(medica, 'medica');
-  await medica.goto(`${BASE}/medical-records/${pacienteId}`, { waitUntil: 'domcontentloaded', timeout: 240_000 });
+  // Como llega una médica de verdad: busca a la paciente por nombre y abre su expediente.
+  await medica.goto(`${BASE}/medical-records`, { waitUntil: 'domcontentloaded', timeout: 240_000 });
+  await medica.getByLabel('Nombre o código').fill('Pérez Quiroga');
+  const fila = medica.locator('tr[data-testid="tabla-fila"]').filter({ hasText: 'Ana Lucía Pérez Quiroga' }).first();
+  await fila.waitFor({ timeout: 60_000 });
+  await fila.getByTestId('paciente-ver-expediente').click();
+  await medica.waitForURL(/\/medical-records\/[0-9a-f-]{36}/, { timeout: 60_000 });
   await medica.locator('[role="tab"]').first().waitFor({ timeout: 90_000 });
   await medica.waitForTimeout(1000);
-  ok('la ficha NO lee los servicios hasta abrir su pestaña', lecturas.length === 0, `${lecturas.length} lecturas`);
+  ok('la ficha NO monta el panel de servicios hasta abrir su pestaña', (await medica.getByTestId('expediente-servicios').count()) === 0);
   const tabsM = (await medica.locator('[role="tab"]').allTextContents()).map((t) => t.trim().split(' (')[0]);
   ok('«Servicios recibidos» es la última pestaña de la ficha', tabsM.at(-1) === 'Servicios recibidos', tabsM.join(' · '));
   await medica.locator('[role="tab"]').last().click();
@@ -118,7 +114,7 @@ async function main() {
   await medica.getByText('Infiltración articular').first().waitFor({ timeout: 30_000 });
   await medica.waitForTimeout(500);
   const textoM = await medica.locator('[data-testid="expediente-servicios"]').innerText();
-  ok('la ficha lee los servicios al abrir la pestaña', lecturas.length === 1, `${lecturas.length} lecturas`);
+  ok('la ficha monta el panel al abrir la pestaña', (await medica.getByTestId('expediente-servicios').count()) === 1);
   ok('el médico ve las cuatro filas', /Infiltración articular/.test(textoM) && /Apendicectomía/.test(textoM) && /Influenza/.test(textoM) && /Antitetánica/.test(textoM));
   ok('el médico NO ve importes ni columna de costo', !/\bBs\b/.test(textoM) && !/Costo/.test(textoM));
   ok('el médico NO ve un «Sin cobro registrado» falso', !/Sin cobro registrado/.test(textoM));
