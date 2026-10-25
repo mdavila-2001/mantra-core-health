@@ -33,8 +33,8 @@ describe('PractitionerAffiliations', () => {
   let listForPractice: ReturnType<typeof vi.fn>;
   let approve: ReturnType<typeof vi.fn>;
   let reject: ReturnType<typeof vi.fn>;
-  const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
-  const byId = (id: string): HTMLElement | null => el().querySelector(`[data-testid="${id}"]`);
+  const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const byId = (id: string): HTMLElement | null => host().querySelector(`[data-testid="${id}"]`);
 
   beforeEach(() => {
     rows = [
@@ -102,9 +102,9 @@ describe('PractitionerAffiliations', () => {
   });
 
   it('«Invitar a un médico» abre el formulario de la sede elegida', () => {
-    expect(el().querySelector('app-practitioner-invite-form')).toBeNull();
+    expect(host().querySelector('app-practitioner-invite-form')).toBeNull();
     (byId('affiliations-invite-open') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(el().querySelector('app-practitioner-invite-form')).not.toBeNull();
+    expect(host().querySelector('app-practitioner-invite-form')).not.toBeNull();
   });
 });

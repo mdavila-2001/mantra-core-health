@@ -18,14 +18,14 @@ export const SITE_CM_SUR_1 = uuid('site-cm-sur-1');
 export const PROC_ENDOSCOPIA_ALTA = uuid('proc-endoscopia-alta');
 export const PROC_COLONOSCOPIA = uuid('proc-colonoscopia');
 
-const MONEDA_BOB = uuid('concept-currency-bob');
-const TIPO_CLINICA = uuid('concept-practice-type-clinic');
-const ESTADO_ACTIVO = ESTADO['ST-ACTIVE']!;
+const BOB_CURRENCY = uuid('concept-currency-bob');
+const CLINIC_TYPE = uuid('concept-practice-type-clinic');
+const ACTIVE_STATUS = ESTADO['ST-ACTIVE']!;
 
 /** Las prácticas de ejemplo que suma `GET /practices`. */
 export const CM_PRACTICES = [
-  { id: PRACTICE_CM_NORTE, code: 'CMNORTE', name: 'Centro Médico Norte', status: 'ACTIVE', typeConceptId: TIPO_CLINICA, statusConceptId: ESTADO_ACTIVO, currencyConceptId: MONEDA_BOB, timeZone: 'America/La_Paz' },
-  { id: PRACTICE_CM_SUR, code: 'CMSUR', name: 'Centro Médico Sur', status: 'ACTIVE', typeConceptId: TIPO_CLINICA, statusConceptId: ESTADO_ACTIVO, currencyConceptId: MONEDA_BOB, timeZone: 'America/La_Paz' },
+  { id: PRACTICE_CM_NORTE, code: 'CMNORTE', name: 'Centro Médico Norte', status: 'ACTIVE', typeConceptId: CLINIC_TYPE, statusConceptId: ACTIVE_STATUS, currencyConceptId: BOB_CURRENCY, timeZone: 'America/La_Paz' },
+  { id: PRACTICE_CM_SUR, code: 'CMSUR', name: 'Centro Médico Sur', status: 'ACTIVE', typeConceptId: CLINIC_TYPE, statusConceptId: ACTIVE_STATUS, currencyConceptId: BOB_CURRENCY, timeZone: 'America/La_Paz' },
 ];
 
 /** Las sedes de ejemplo de los dos centros, para `GET /practices/:practiceId/sites`. */

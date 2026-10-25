@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import { sinNulos, type ConNulos } from '../wire';
+import { sinNulos } from '../wire';
 import type {
   PracticeInvitationInput,
   RoleAssignmentRow,
@@ -11,7 +11,7 @@ import type {
 } from './role-assignments.types';
 
 /** Lo que viaja: los textos opcionales llegan `null`. */
-type WireRow = ConNulos<RoleAssignmentRow>;
+type WireRow = { readonly [K in keyof RoleAssignmentRow]: RoleAssignmentRow[K] | null };
 
 function toRow(wire: WireRow): RoleAssignmentRow {
   // `healthcareServiceId`, `serviceConceptId` y `serviceDisplay` son `string | null` en la vista:

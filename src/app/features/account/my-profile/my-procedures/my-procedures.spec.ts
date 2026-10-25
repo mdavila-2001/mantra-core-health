@@ -35,8 +35,8 @@ describe('MyProcedures', () => {
   let fixture: ComponentFixture<MyProcedures>;
   let list: MyRoleAssignment[];
   let listSitesOfPractice: ReturnType<typeof vi.fn>;
-  const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
-  const byId = (id: string): HTMLElement | null => el().querySelector(`[data-testid="${id}"]`);
+  const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const byId = (id: string): HTMLElement | null => host().querySelector(`[data-testid="${id}"]`);
 
   function build(): void {
     listSitesOfPractice = vi.fn((practiceId: string) =>
@@ -93,13 +93,13 @@ describe('MyProcedures', () => {
   it('sin procedimientos dice qué hacer', () => {
     list = [];
     build();
-    expect(el().textContent).toContain('Todavía no hace procedimientos en ningún centro');
+    expect(host().textContent).toContain('Todavía no hace procedimientos en ningún centro');
   });
 
   it('«Agregar un procedimiento» abre la solicitud, que queda pendiente del centro', () => {
     build();
     (byId('procedures-add-open') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(el().querySelector('app-affiliation-request-form')).not.toBeNull();
+    expect(host().querySelector('app-affiliation-request-form')).not.toBeNull();
   });
 });

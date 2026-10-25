@@ -39,7 +39,7 @@ describe('PractitionerInviteForm', () => {
   let invite: ReturnType<typeof vi.fn>;
   let listPublishedProcedures: ReturnType<typeof vi.fn>;
   const internal = (): Internal => fixture.componentInstance as unknown as Internal;
-  const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   beforeEach(() => {
     invite = vi.fn(() => of([ROW]));
@@ -61,9 +61,9 @@ describe('PractitionerInviteForm', () => {
 
   it('las casillas son los procedimientos que publica la sede, y de ninguna otra fuente', () => {
     expect(listPublishedProcedures).toHaveBeenCalledWith('pr-1', 'site-1');
-    expect(el().querySelector('[data-testid="invite-procedure-hs-1"]')).not.toBeNull();
-    expect(el().querySelector('[data-testid="invite-procedure-hs-2"]')).not.toBeNull();
-    expect(el().textContent).toContain('Colonoscopia');
+    expect(host().querySelector('[data-testid="invite-procedure-hs-1"]')).not.toBeNull();
+    expect(host().querySelector('[data-testid="invite-procedure-hs-2"]')).not.toBeNull();
+    expect(host().textContent).toContain('Colonoscopia');
   });
 
   it('no deja enviar sin médico ni sin procedimientos', () => {
@@ -101,7 +101,7 @@ describe('PractitionerInviteForm', () => {
 
     expect(invited).toEqual([]);
     expect(internal().error()).not.toBeNull();
-    expect(el().querySelector('[data-testid="invite-error"]')).not.toBeNull();
+    expect(host().querySelector('[data-testid="invite-error"]')).not.toBeNull();
   });
 
   it('una sede sin procedimientos publicados lo dice y no ofrece casillas', () => {
@@ -109,7 +109,7 @@ describe('PractitionerInviteForm', () => {
     fixture.componentRef.setInput('practiceSiteId', 'site-2');
     fixture.detectChanges();
 
-    expect(el().querySelector('[data-testid="invite-no-procedures"]')).not.toBeNull();
-    expect(el().querySelectorAll('app-checkbox').length).toBe(0);
+    expect(host().querySelector('[data-testid="invite-no-procedures"]')).not.toBeNull();
+    expect(host().querySelectorAll('app-checkbox').length).toBe(0);
   });
 });

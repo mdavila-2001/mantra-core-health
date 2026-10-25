@@ -35,8 +35,8 @@ describe('AffiliationInvitations', () => {
   let accept: ReturnType<typeof vi.fn>;
   let decline: ReturnType<typeof vi.fn>;
   let listMyRoleAssignments: ReturnType<typeof vi.fn>;
-  const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
-  const byId = (id: string): HTMLElement | null => el().querySelector(`[data-testid="${id}"]`);
+  const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const byId = (id: string): HTMLElement | null => host().querySelector(`[data-testid="${id}"]`);
 
   function build(): void {
     listMyRoleAssignments = vi.fn(() => of(list));
@@ -119,13 +119,13 @@ describe('AffiliationInvitations', () => {
   it('sin ninguna afiliación dice qué hacer en lugar de mostrar una lista vacía', () => {
     list = [];
     build();
-    expect(el().textContent).toContain('No tiene invitaciones ni solicitudes');
+    expect(host().textContent).toContain('No tiene invitaciones ni solicitudes');
   });
 
   it('«Pedir afiliarme a un centro» abre el formulario de solicitud', () => {
     build();
     (byId('invitations-request-open') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(el().querySelector('app-affiliation-request-form')).not.toBeNull();
+    expect(host().querySelector('app-affiliation-request-form')).not.toBeNull();
   });
 });
