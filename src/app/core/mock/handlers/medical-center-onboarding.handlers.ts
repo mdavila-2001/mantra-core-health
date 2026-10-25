@@ -18,7 +18,7 @@ export const UNVERIFIED_TENANT_ID = uuid('tenant-clinica-nueva');
 interface MockPractice {
   readonly id: string;
   readonly tenantId: string;
-  readonly codigo: string;
+  readonly code: string;
 }
 
 const practicas = new Coleccion<MockPractice>([]);
@@ -104,16 +104,16 @@ export function registerOrganizationPracticeHandlers(router: MockRouter): void {
       });
     }
 
-    const codigo = practiceCodeFromName(datos.name!);
-    if (practicas.filtrar((p) => p.tenantId === tenantId && p.codigo === codigo).length > 0) {
+    const code = practiceCodeFromName(datos.name!);
+    if (practicas.filtrar((p) => p.tenantId === tenantId && p.code === code).length > 0) {
       return conflict('La organización ya tiene una práctica con ese nombre', { tenantId });
     }
 
-    const practiceId = uuid(`practica-${tenantId}-${codigo}`);
-    practicas.agregar({ id: practiceId, tenantId, codigo });
+    const practiceId = uuid(`practica-${tenantId}-${code}`);
+    practicas.agregar({ id: practiceId, tenantId, code });
     return reply(201, {
       practiceId,
-      practiceSiteId: uuid(`sede-${tenantId}-${codigo}-${practiceCodeFromName(site!.name!)}`),
+      practiceSiteId: uuid(`sede-${tenantId}-${code}-${practiceCodeFromName(site!.name!)}`),
     });
   });
 }

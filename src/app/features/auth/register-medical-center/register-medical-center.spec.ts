@@ -132,8 +132,8 @@ describe('RegisterMedicalCenter', () => {
     fixture.detectChanges();
 
     expect(interno().registered()).toBe(true);
-    const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('[data-testid="medical-center-signup-pending"]')?.textContent).toContain(
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="medical-center-signup-pending"]')?.textContent).toContain(
       'pendiente de verificación',
     );
   });

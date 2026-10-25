@@ -114,8 +114,8 @@ describe('MedicalCenterSetup', () => {
     fixture.detectChanges();
 
     expect(interno().created()).toEqual({ practiceId: 'pr-1', practiceSiteId: 'site-1' });
-    const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('[data-testid="medical-center-setup-site-id"]')?.textContent).toContain('site-1');
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="medical-center-setup-site-id"]')?.textContent).toContain('site-1');
   });
 
   it.each([
