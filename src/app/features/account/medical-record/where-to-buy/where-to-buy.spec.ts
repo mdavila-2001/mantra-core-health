@@ -488,11 +488,41 @@ describe('WhereToBuy', () => {
     const pestanas = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
     pestanas[2]?.click();
     harness.detectChanges();
+    // Abrir «Centros médicos» es lo que dispara su lectura de órdenes.
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+      .flush({ patientProfileId: 'pp-1', limit: 50, truncated: false, items: [] });
 
     expect(navegar).toHaveBeenCalledWith(
       [],
       expect.objectContaining({ queryParams: { tab: 'medical-centers' }, replaceUrl: true }),
     );
+  });
+
+  it('la pestaña «Centros médicos» monta su componente y ya no el estado vacío', async () => {
+    await montar('m-1', '?tab=medical-centers');
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    // Abierta la pestaña, el componente lee las órdenes; sin procedimientos, lo dice.
+    http
+      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+      .flush({ patientProfileId: 'pp-1', limit: 50, truncated: false, items: [] });
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement?.querySelector('app-medical-centers-tab')).not.toBeNull();
+    expect(texto()).toContain('No tiene procedimientos pendientes');
+    expect(texto()).not.toContain('Esta parte todavía no está');
+    expect(texto()).not.toContain('Ver clínicas y hospitales');
+  });
+
+  it('sin abrir «Centros médicos» no sale ninguna petición a /medical-centers ni a las órdenes', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    http.expectNone((r) => r.url.startsWith('/medical-centers'));
+    http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
   });
 
   it('con una sucursal que tiene todo, la propone sola y lo dice', async () => {
