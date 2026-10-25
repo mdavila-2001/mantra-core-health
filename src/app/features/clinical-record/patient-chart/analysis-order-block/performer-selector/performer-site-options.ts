@@ -3,7 +3,8 @@ import { forkJoin, map, of, shareReplay, startWith, switchMap, tap, throwError }
 import { catchError } from 'rxjs/operators';
 import type { Observable } from 'rxjs';
 
-import { PerformerSitesClient } from '../../../../../core/data-access/performer-sites/performer-sites.client';
+import { MedicalCentersClient } from '../../../../../core/data-access/medical-centers/medical-centers.client';
+import { PerformerAssignmentsClient } from '../../../../../core/data-access/performer-assignments/performer-assignments.client';
 import { TerminologyClient } from '../../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../../core/view-state/view-state';
@@ -36,13 +37,14 @@ export interface PerformerSiteData {
  * procedimientos. Si **cualquiera** falla el estado es de error: no se inventan
  * sedes, porque una sede inventada sería una recomendación falsa al paciente.
  *
- * Las lecturas de sedes salen de `PerformerSitesClient`, un cliente provisional:
- * cuando existan los clientes completos de afiliaciones y de búsqueda de
- * centros, sólo cambia la inyección de acá.
+ * La búsqueda de centros sale de `MedicalCentersClient`; las vinculaciones del
+ * médico, de `PerformerAssignmentsClient`, un cliente provisional hasta que
+ * exista el de afiliaciones.
  */
 @Injectable({ providedIn: 'root' })
 export class PerformerSiteOptions {
-  private readonly sites = inject(PerformerSitesClient);
+  private readonly assignments = inject(PerformerAssignmentsClient);
+  private readonly medicalCenters = inject(MedicalCentersClient);
   private readonly terminology = inject(TerminologyClient);
 
   /** La expansión del conjunto: se lee una vez; un fallo se puede reintentar. */
@@ -55,8 +57,17 @@ export class PerformerSiteOptions {
   load(procedureConceptId: string): Observable<ViewState<PerformerSiteData>> {
     return forkJoin({
       concepts: this.readConcepts(),
-      assignments: this.sites.readOwnAssignments(),
-      centerSites: this.sites.searchSites(procedureConceptId),
+      assignments: this.assignments.readOwnAssignments(),
+      // Sólo los centros completos (sin `includePartial`), en el orden que decide la API.
+      centerSites: this.medicalCenters.search({ procedureConceptIds: [procedureConceptId], includePartial: false }).pipe(
+        map((page) =>
+          page.items.map((item) => ({
+            practiceSiteId: item.practiceSiteId,
+            name: item.name,
+            addressText: item.addressText,
+          })),
+        ),
+      ),
     }).pipe(
       map(({ concepts, assignments, centerSites }) =>
         ready<PerformerSiteData>({
