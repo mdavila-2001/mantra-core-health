@@ -1,10 +1,12 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { orderList, type SimulatedOrder } from '../fixtures/clinic';
-import { STATUS, ESTUDIO } from '../fixtures/concepts';
+import { STATUS, ESTUDIO, ORDER_CATEGORY } from '../fixtures/concepts';
+import { PERFORMER_MODE } from '../fixtures/performer-concepts';
 import { MEDICAL, PACIENTE, professionalById } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
+import { uuid } from '../mock-store';
 import { registrarDiagnostico } from './diagnostics.handlers';
 
 /**
@@ -294,5 +296,112 @@ describe('GET /diagnostic-units/search', () => {
         expect(item.minAmountCurrency).not.toBeNull();
       }
     }
+  });
+});
+
+/**
+ * «Mis órdenes» con procedimientos (CM-10): `GET /diagnostic-results/me/orders`
+ * devuelve los cuatro campos del ejecutor y dos órdenes de procedimiento de la
+ * paciente de ejemplo, y `POST /clinical/service-requests` guarda los tres que
+ * manda el médico.
+ */
+describe('el ejecutor de la orden en «Mis órdenes» (CM-10)', () => {
+  const router = new MockRouter();
+  const medica = buscarUsuario('medica')!;
+  const paciente = buscarUsuario('paciente')!;
+
+  registrarDiagnostico(router);
+
+  interface OrdenPropia {
+    readonly id: string;
+    readonly codeConceptId: string;
+    readonly categoryConceptId: string;
+    readonly performerSelectionConceptId?: string;
+    readonly performerPractitionerProfileId?: string;
+    readonly suggestedPracticeSiteId?: string;
+    readonly suggestedPracticeSiteName?: string | null;
+  }
+
+  function call<T>(method: MockMethod, path: string, body: unknown, user: MockUser | null): T {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user,
+    }) as T;
+  }
+
+  const propias = () =>
+    call<{ items: readonly OrdenPropia[] }>('GET', '/diagnostic-results/me/orders', undefined, paciente).items;
+
+  it('devuelve las dos órdenes de procedimiento de la paciente con sus campos', () => {
+    const endoscopia = propias().find((o) => o.id === uuid('order-proc-endoscopia-alta'));
+    const colonoscopia = propias().find((o) => o.id === uuid('order-proc-colonoscopia'));
+
+    expect(endoscopia).toMatchObject({
+      categoryConceptId: ORDER_CATEGORY['SRQ-PROCEDURE'],
+      performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
+      suggestedPracticeSiteId: uuid('site-cm-sur-1'),
+      suggestedPracticeSiteName: 'Centro Médico Sur — Sede Central',
+    });
+    expect(colonoscopia?.performerSelectionConceptId).toBe(PERFORMER_MODE['SR_PERF_PATIENT_CHOICE']);
+    expect('suggestedPracticeSiteId' in (colonoscopia ?? {})).toBe(false);
+  });
+
+  it('las órdenes de laboratorio e imagen no traen campos de ejecutor', () => {
+    const otras = propias().filter((o) => o.categoryConceptId !== ORDER_CATEGORY['SRQ-PROCEDURE']);
+
+    expect(otras.length).toBeGreaterThan(0);
+    for (const o of otras) {
+      expect('performerSelectionConceptId' in o).toBe(false);
+      expect('suggestedPracticeSiteName' in o).toBe(false);
+    }
+  });
+
+  it('un alta con el modo SELF guarda los tres campos y la lista los devuelve con el nombre de la sede', () => {
+    const creada = call<{ status: number; body: { id: string } }>(
+      'POST',
+      '/clinical/service-requests',
+      {
+        patientProfileId: PACIENTE.id,
+        codeConceptId: uuid('proc-colonoscopia'),
+        categoryConceptId: ORDER_CATEGORY['SRQ-PROCEDURE'],
+        performerSelectionConceptId: PERFORMER_MODE['SR_PERF_SELF'],
+        performerPractitionerProfileId: medica.practitionerProfileId,
+        suggestedPracticeSiteId: uuid('site-cm-norte-1'),
+      },
+      medica,
+    );
+    expect(creada.status).toBe(201);
+
+    const guardada = propias().find((o) => o.id === creada.body.id);
+    expect(guardada).toMatchObject({
+      performerSelectionConceptId: PERFORMER_MODE['SR_PERF_SELF'],
+      performerPractitionerProfileId: medica.practitionerProfileId,
+      suggestedPracticeSiteId: uuid('site-cm-norte-1'),
+      suggestedPracticeSiteName: 'Centro Médico Norte — Sede Central',
+    });
+  });
+
+  it('una sede que el doble no conoce vuelve con nombre null, nunca con el uuid', () => {
+    const creada = call<{ body: { id: string } }>(
+      'POST',
+      '/clinical/service-requests',
+      {
+        patientProfileId: PACIENTE.id,
+        codeConceptId: uuid('proc-endoscopia-alta'),
+        categoryConceptId: ORDER_CATEGORY['SRQ-PROCEDURE'],
+        performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
+        suggestedPracticeSiteId: uuid('site-desconocida'),
+      },
+      medica,
+    );
+
+    expect(propias().find((o) => o.id === creada.body.id)?.suggestedPracticeSiteName).toBeNull();
   });
 });
