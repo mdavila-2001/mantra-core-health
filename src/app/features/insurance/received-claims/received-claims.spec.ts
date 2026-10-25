@@ -2,11 +2,13 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { afterAll, beforeAll } from 'vitest';
 
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 
 import type { ReceivedClaim } from '../../../core/data-access/insurance/insurance.types';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { environment } from '../../../../environments/environment';
 import { ReceivedClaims } from './received-claims';
 
 const BOB = { code: 'BOB', display: 'Boliviano' };
@@ -52,6 +54,15 @@ function claimWire(index: number, overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+// Anular y reemitir la factura de una solicitud recibida sólo existen en la maqueta
+// (informe B, §2): contra la API real `simulatorOnly()` no manda la petición y avisa
+// que la función no está disponible, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá,
+// sólo para este archivo.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 /**
  * «Solicitudes recibidas»: la cara de la aseguradora de `insurance_claims`,
