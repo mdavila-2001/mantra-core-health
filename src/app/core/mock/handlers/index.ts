@@ -25,6 +25,7 @@ import { registerSignatureAndSeal } from './signature-and-seal.handlers';
 import { registrarPerfiles } from './profiles.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
+import { registrarGruposMedicos } from './medical-groups.handlers';
 import { registrarPublico } from './public.handlers';
 import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
 import { registerInsuranceCampaigns } from './insurance-campaigns.handlers';
@@ -55,6 +56,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);
   registrarPracticas(router);
+  registrarGruposMedicos(router);
   registrarClinica(router);
   registerMedicalNotes(router);
   registerDiagnosisVerification(router);
