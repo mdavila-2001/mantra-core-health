@@ -501,6 +501,28 @@ describe('WhereToBuy', () => {
       [],
       expect.objectContaining({ queryParams: { tab: 'medical-centers' }, replaceUrl: true }),
     );
+    // Abrir Centros médicos es lo que dispara su consulta, y no antes.
+    http
+      .expectOne((r) => r.url === '/clinical/me/procedure-centers')
+      .flush({ procedures: [], centers: [], total: 0, limit: 20 });
+  });
+
+  it('carril 19: Centros médicos abre por la URL y busca los centros de mis procedimientos', async () => {
+    await montar('m-1', '?tab=medical-centers');
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const consulta = http.expectOne((r) => r.url === '/clinical/me/procedure-centers');
+    // Lo que le pidieron no viaja en la URL: sólo el tope (y el origen, si lo hay).
+    expect(consulta.request.params.keys()).toEqual(['limit']);
+    consulta.flush({ procedures: [], centers: [], total: 0, limit: 20 });
+    harness.detectChanges();
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
+    expect(pestanas[2]?.getAttribute('aria-selected')).toBe('true');
+    expect(texto()).toContain('No tiene procedimientos pendientes.');
+    expect(texto()).not.toContain('Esta parte todavía no está');
   });
 
   it('con una sucursal que tiene todo, la propone sola y lo dice', async () => {

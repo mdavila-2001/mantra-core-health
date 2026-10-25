@@ -537,18 +537,13 @@
     </app-tab>
 
     <!-- ─── Centros médicos ─────────────────────────────────────────────────
-         La pestaña más lejana de las tres, y no por trabajo de front: no hay de
-         dónde sacar «qué operaciones necesita esta persona» —la receta no las
-         declara— ni endpoint que busque organizaciones por prestación. El
-         modelo declara el gancho (`practice.healthcare_services`) pero los
-         seeds no lo pueblan. Hasta que eso se defina, lo honesto es decirlo. -->
+         Carril 19. Los procedimientos salen de las órdenes propias y los
+         centros de lo que cada sede declara ofrecer; los lee el servidor
+         (`GET /clinical/me/procedure-centers`) para que lo pedido no viaje en
+         la URL. Consulta al abrir la pestaña y vuelve a medir cuando cambia el
+         punto de partida elegido en Farmacias. -->
     <app-tab label="Centros médicos">
-      <app-empty-state
-        title="Esta parte todavía no está"
-        description="Acá van a aparecer los centros donde le pueden hacer los procedimientos que le indicaron. Todavía no está definido de dónde salen esos procedimientos ni qué centros los declaran, así que preferimos no mostrarle una lista que no sea la suya."
-      >
-        <a app-button variant="ghost" [routerLink]="clinicsDirectoryRoute">Ver clínicas y hospitales</a>
-      </app-empty-state>
+      <app-medical-centers-tab [active]="medicalCentersActive()" [origin]="origen()" />
     </app-tab>
   </app-tabs>
 }
