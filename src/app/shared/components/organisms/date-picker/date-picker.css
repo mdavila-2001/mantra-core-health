@@ -370,6 +370,32 @@
   background: transparent;
 }
 
+/* Un año fuera de `minDate`/`maxDate` no se muestra atenuado: no se ve. Un
+   1890 gris en el alta, que arranca en 1910, se leía como elegible y roto.
+   Suelto en una fila con años válidos guarda su casilla (`visibility`), para
+   que su columna no se corra; una fila entera fuera de rango se quita
+   (`display`), y los años que quedan suben arriba como en la última página. */
+.calendar-grid-years .calendar-unit-btn.is-disabled {
+  visibility: hidden;
+}
+
+.calendar-grid-years .calendar-unit-btn.is-row-out-of-range {
+  display: none;
+}
+
+/* Las seis filas de siempre reservan su alto aunque se quiten algunas: el
+   diálogo no cambia de tamaño al pasar de página. */
+.calendar-grid-years {
+  min-block-size: calc(6 * 40px + 5 * var(--sp-1));
+  align-content: start;
+}
+
+@media (max-width: 779px) {
+  .calendar-grid-years {
+    min-block-size: calc(6 * 44px + 5 * var(--sp-1));
+  }
+}
+
 /* Sección Selector de Hora */
 .time-picker-section {
   display: flex;

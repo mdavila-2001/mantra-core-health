@@ -64,4 +64,19 @@ describe('portal-nav', () => {
     expect(groupOf('/superadmin/portal/linaje')?.id).toBe('linaje');
     expect(groupOf('/otra/cosa')).toBeNull();
   });
+
+  it('el gobierno de acceso declara auditoría, usuarios y roles y deriva de permisos', () => {
+    const governance = PORTAL_NAV.find((g) => g.id === 'gobierno')!;
+    expect(governance.items.map((i) => i.path)).toEqual([
+      'gobierno/auditoria',
+      'gobierno/usuarios',
+      'gobierno/deriva-permisos',
+    ]);
+    expect(groupOf('/superadmin/portal/gobierno/usuarios?user=x')?.id).toBe('gobierno');
+    expect(portalCrumbs('/superadmin/portal/gobierno/auditoria?view=data-access').map((c) => c.label)).toEqual([
+      'Portal',
+      'Gobierno y acceso',
+      'Auditoría',
+    ]);
+  });
 });

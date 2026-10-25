@@ -66,6 +66,8 @@ export interface AfiliacionVisible {
 export interface SedeVisible {
   readonly id: string;
   readonly nombre: string;
+  /** Teléfono público de contacto de esta sede, si fue declarado. */
+  readonly contactPhone?: string | null;
   /** Dirección en una línea, ya normalizada para mostrar (ALV-010). Vacía si no tiene. */
   readonly direccion: string;
   /** Punto en el mapa, si la dirección lo trae (ALV-006). */

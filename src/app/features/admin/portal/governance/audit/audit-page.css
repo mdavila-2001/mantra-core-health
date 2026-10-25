@@ -1,0 +1,68 @@
+.audit {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.audit__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.audit__cell {
+  min-inline-size: 0;
+}
+
+.audit__when {
+  /* Parte entre la fecha y la hora: con el marco del portal, a 1024 px la tabla
+     mide menos de 30rem y una fecha sin cortes le quitaba la columna del riesgo. */
+  display: block;
+  min-inline-size: 7rem;
+}
+
+.audit__action {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.audit__route {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  /* `break-word` y no `anywhere`: `anywhere` baja el ancho mínimo de la celda a
+     una letra y la tabla le quita la columna a la ruta. */
+  overflow-wrap: break-word;
+}
+
+.audit__nowrap {
+  white-space: nowrap;
+}
+
+.audit__resource,
+.audit__actor {
+  display: block;
+}
+
+.audit__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-block-start: var(--sp-1);
+}
+
+.audit__secondary {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: break-word;
+}
+
+.audit__filter-link {
+  display: inline-block;
+  font-size: var(--fs-caption);
+  white-space: nowrap;
+}

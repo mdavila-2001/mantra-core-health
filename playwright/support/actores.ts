@@ -213,7 +213,7 @@ async function firstConceptIdOfValueSet(
   return primerMiembro.conceptId;
 }
 
-async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
+export async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
   return firstConceptIdOfValueSet(api, MUNICIPALITY_VALUE_SET);
 }
 

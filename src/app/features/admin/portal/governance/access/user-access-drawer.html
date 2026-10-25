@@ -1,0 +1,98 @@
+<app-drawer-panel
+  [open]="userId() !== ''"
+  heading="Roles de la persona"
+  [subheading]="userName()"
+  closeLabel="Cerrar"
+  (closed)="closed.emit()"
+>
+  <div class="access" data-testid="portal-user-access">
+    @if (notice(); as message) {
+      <app-alert tone="success" data-testid="portal-user-access-notice">{{ message }}</app-alert>
+    }
+    @if (error(); as message) {
+      <app-alert tone="error" data-testid="portal-user-access-error">{{ message }}</app-alert>
+    }
+
+    <app-view-state-host [state]="assignments()" (retry)="reload()">
+      @if (assignments(); as state) {
+        @if (state.status === 'ready') {
+          @if (state.data.length === 0) {
+            <p class="access__empty">Todavía no tiene asignaciones de rol. Puede asignarle una con «Asignar un rol».</p>
+          } @else {
+            <p class="access__note">
+              @switch (activeCount()) {
+                @case (0) { Ningún rol activo. }
+                @case (1) { Un rol activo. }
+                @default { {{ activeCount() }} roles activos. }
+              }
+              Las asignaciones revocadas y vencidas quedan como historia.
+            </p>
+            <ul class="access__list" aria-label="Asignaciones de rol">
+              @for (a of state.data; track a.id) {
+                <li class="access__item" data-testid="portal-assignment">
+                  <div class="access__head">
+                    <span class="access__role">{{ a.roleName }}</span>
+                    <code class="access__code">{{ a.roleCode }}</code>
+                  </div>
+                  <div class="access__badges">
+                    <app-badge size="sm" [variant]="status(a.status).tone">{{ status(a.status).label }}</app-badge>
+                    <app-badge size="sm" [variant]="scope(a.roleScope).tone">{{ scope(a.roleScope).label }}</app-badge>
+                    @if (a.status === 'ACTIVE') {
+                      <app-badge size="sm" [variant]="a.isEffective ? 'success' : 'warning'">
+                        {{ a.isEffective ? 'Vale hoy' : 'Fuera de su vigencia' }}
+                      </app-badge>
+                    }
+                  </div>
+                  <p class="access__detail">
+                    {{ where(a) }}
+                    @if (a.validFrom || a.validTo) {
+                      · vale
+                      @if (a.validFrom) { desde el {{ day(a.validFrom) }} }
+                      @if (a.validTo) { hasta el {{ day(a.validTo) }} }
+                    }
+                    · asignada el {{ day(a.createdAt) }}
+                  </p>
+                  @if (tiedToTenant(a)) {
+                    <app-alert tone="warning">
+                      Es un rol de ámbito global atado a una organización: no autoriza en las pantallas de plataforma.
+                    </app-alert>
+                  }
+                  @if (a.status === 'ACTIVE') {
+                    <div class="access__actions">
+                      <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        data-testid="portal-assignment-revoke"
+                        [disabled]="revoking() !== null"
+                        [isLoading]="revoking() === a.id"
+                        (clicked)="revoke(a)"
+                      >
+                        Revocar
+                      </button>
+                    </div>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+    </app-view-state-host>
+  </div>
+
+  <div drawer-footer class="access__footer">
+    <button app-button variant="primary" data-testid="portal-assign-role" (clicked)="assigning.set(true)">
+      Asignar un rol
+    </button>
+  </div>
+</app-drawer-panel>
+
+@if (assigning() && userId()) {
+  <app-portal-assign-role-dialog
+    [userId]="userId()"
+    [userName]="name()"
+    (assigned)="assigned($event)"
+    (closed)="assigning.set(false)"
+  />
+}

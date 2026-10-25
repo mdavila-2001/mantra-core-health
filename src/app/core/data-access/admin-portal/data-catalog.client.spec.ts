@@ -54,3 +54,34 @@ describe('DataCatalogClient', () => {
     expect(queryParams({ a: 'x', b: undefined, c: null, d: '', e: 0 })).toEqual({ a: 'x', e: '0' });
   });
 });
+
+describe('DataCatalogClient · deriva de permisos', () => {
+  let client: DataCatalogClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    client = TestBed.inject(DataCatalogClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('pide la deriva y convierte la fecha de cálculo; las listas pasan tal cual', () => {
+    let drift: unknown;
+    client.permissionDrift().subscribe((d) => (drift = d));
+    const req = http.expectOne('/admin/catalog/permission-drift');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      generatedAt: '2026-10-24T12:00:00.000Z',
+      routes: { total: 10, public: 1, withRoles: 7, withoutRoles: 2 },
+      usedNotSeeded: [{ role: 'AUDITOR', routeCount: 2, inDatabase: null, sample: [] }],
+      seededNotUsed: ['LEGACY'],
+      routesWithoutRoles: [],
+      routesWithoutRolesTruncated: false,
+    });
+    const view = drift as { generatedAt: Date; usedNotSeeded: { inDatabase: boolean | null }[] };
+    expect(view.generatedAt).toBeInstanceOf(Date);
+    expect(view.usedNotSeeded[0]!.inDatabase).toBeNull();
+  });
+});

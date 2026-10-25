@@ -184,8 +184,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // enlazados al pie del resumen.
   'administration/accounting': () =>
     import('./features/accounting/summary/summary').then((m) => m.Summary),
-  'my-organizations': () =>
-    import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
     import('./features/admin/terminology/terminology-catalog').then((m) => m.TerminologyCatalog),
   'administration/content-packs': () =>
@@ -705,14 +703,22 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Ficha de un caso de verificación (V27-01): una fila del listado de
-    // `identidad/casos` abierta.
+    // El listado viejo de casos abre la pestaña «Mis trámites» de la identidad
+    // unificada. Función y no texto: un `redirectTo` de texto con `?tab=` no es
+    // una ruta, y además perdería el query que traía el enlace.
+    path: 'my-account/identity/cases',
+    pathMatch: 'full',
+    redirectTo: redireccionConQuery({ ruta: '/my-account/identity', query: { tab: 'cases' } }),
+  },
+  {
+    // Ruta anterior a la unión de identidad. Conserva el enlace profundo y lo
+    // abre como diálogo dentro de la pestaña «Mis trámites».
     path: 'my-account/identity/cases/:caseId',
-    title: `${APP_TITLE} - Caso de verificación`,
-    loadComponent: () =>
-      import('./features/identity-assurance/verification-case-detail/verification-case-detail')
-        .then((m) => m.VerificationCaseDetail)
-        .catch(() => chunkFallido()),
+    pathMatch: 'full',
+    redirectTo: ({ params, queryParams }) =>
+      inject(Router).createUrlTree(['/my-account/identity'], {
+        queryParams: { ...queryParams, tab: 'cases', case: params['caseId'] },
+      }),
   },
   {
     // La ficha de un profesional: el destino del clic en la guía (R2-1). No va
@@ -817,7 +823,7 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Se cuelga de «Mi perfil»: se llega por el botón «Configurar mi perfil»,
+    // Se cuelga de «Mi perfil»: se llega por el botón «Editar perfil»,
     // nunca desde el menú. Y sólo la abre quien atiende: «Mi perfil» no
     // declara roles, así que la restricción va en la ruta.
     // TJ-1 · el alta del profesional. Se cuelga fuera de «Mi cuenta» porque no
@@ -833,7 +839,7 @@ const PANTALLAS_HIJAS: Routes = [
   },
   {
     path: 'my-account/edit',
-    title: `${APP_TITLE} - Configurar su perfil`,
+    title: `${APP_TITLE} - Editar perfil`,
     ...soloDeQuienAtiende(),
     loadComponent: () =>
       import('./features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit')
@@ -1324,10 +1330,6 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // Las dos rutas propias de antes de unificar (2026-09-10). Están en
   // historiales, en favoritos y en los correos que la plataforma ya mandó.
   'my-account/identity/verify': '/my-account/identity',
-  'my-account/identity/cases': '/my-account/identity',
-  // «Mis organizaciones» pasó a ser una pestaña de «Organización médica»
-  // (2026-09-10). Está en historiales y en el lateral de «Mi perfil».
-  'my-organizations': '/administration/medical-organization',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',
@@ -2028,6 +2030,17 @@ export const routes: Routes = [
       // Hoy no podrían tapar a ninguna —son textos distintos y van con
       // `pathMatch: 'full'`—, pero el día que una ruta nueva se llame como una
       // vieja, gana la que pinta algo. Es más barato ordenarlas que acordarse.
+      {
+        // «Mis organizaciones» pasó a «Mis vinculaciones» (2026-09-10).
+        // El enlace viejo conserva la pestaña funcional en vez de dejar al
+        // médico en la primera pestaña administrativa.
+        path: 'my-organizations',
+        pathMatch: 'full',
+        redirectTo: redireccionConQuery({
+          ruta: '/administration/medical-organization',
+          query: { tab: 'memberships' },
+        }),
+      },
       ...rutasHeredadas(RUTAS_HEREDADAS),
       ...rutasHeredadasConParametro(RUTAS_HEREDADAS_CON_PARAMETRO),
     ],
