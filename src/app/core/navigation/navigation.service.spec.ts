@@ -324,6 +324,12 @@ describe('NavigationService', () => {
         'Formularios',
         'Mis servicios',
         'Cotizaciones',
+        // «Grupos médicos» entra el 25/10/2026 con el carril 21 (FT-21): la
+        // ficha pide la pantalla con sus tres pestañas y «Crear grupo médico»,
+        // y responder invitaciones o cargar las notas del ejercicio es un
+        // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
+        // por el propietario en el PR.
+        'Grupos médicos',
         'Contabilidad',
       ]);
     });
@@ -435,10 +441,14 @@ describe('NavigationService', () => {
 
       // Ampliada el 24/09/2026: el médico también (pedido del cliente).
       abrirSesion(['PRACTITIONER', 'CLINICIAN']);
-      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).toContain('/directory');
+      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).toContain(
+        '/directory',
+      );
 
       abrirSesion(['SECURITY_ADMIN']);
-      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).not.toContain('/directory');
+      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).not.toContain(
+        '/directory',
+      );
     });
 
     it('los cuatro directorios no ocupan renglón, y ninguno perdió la puerta', () => {
@@ -592,7 +602,9 @@ describe('NavigationService', () => {
         // hace, y exigir el orden plano acá sería prohibírselo. Lo que no puede
         // pasar —y es lo que esta prueba cuida— es que un destino se pierda por
         // el camino o aparezca dos veces.
-        expect([...enBloques].sort(), grupo.label).toEqual([...grupo.items.map((i) => i.route)].sort());
+        expect([...enBloques].sort(), grupo.label).toEqual(
+          [...grupo.items.map((i) => i.route)].sort(),
+        );
       }
     });
 
@@ -650,13 +662,17 @@ describe('NavigationService', () => {
       abrirSesion(['PRACTITIONER']);
 
       const atencion = service.menu().find((grupo) => grupo.label === 'Atención');
-      const formularios = atencion?.blocks.find((bloque) => bloque.label === 'Formularios y referencia');
+      const formularios = atencion?.blocks.find(
+        (bloque) => bloque.label === 'Formularios y referencia',
+      );
 
       expect(formularios?.items.map((item) => item.route)).toEqual([
         '/glossary',
         '/form-builder',
         '/my-services',
         '/my-quotations',
+        // Carril 21: los grupos médicos se arman sobre el mismo catálogo.
+        '/my-medical-groups',
       ]);
     });
 
