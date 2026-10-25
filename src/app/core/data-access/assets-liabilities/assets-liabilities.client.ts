@@ -4,10 +4,12 @@ import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
+  AssetDepreciationHistory,
   AssetSummary,
   CapitalizeOwnAssetInput,
   CreateOwnLiabilityInput,
   LiabilityCreated,
+  LiabilityScheduleView,
   LiabilitySummary,
   ProgressRegistered,
   RegisterAssetProgressInput,
@@ -54,6 +56,13 @@ export class AssetsLiabilitiesClient {
     );
   }
 
+  /** `GET /accounting/practitioner/assets/:id/depreciations` */
+  readAssetDepreciations(assetId: string): Observable<AssetDepreciationHistory> {
+    return this.http.get<AssetDepreciationHistory>(
+      this.url(`/accounting/practitioner/assets/${assetId}/depreciations`),
+    );
+  }
+
   /** `GET /accounting/practitioner/liabilities` */
   listLiabilities(practiceId: string): Observable<readonly LiabilitySummary[]> {
     const params = new HttpParams().set('practiceId', practiceId);
@@ -81,6 +90,13 @@ export class AssetsLiabilitiesClient {
     return this.http.post<ProgressRegistered>(
       this.url(`/accounting/practitioner/liabilities/${liabilityId}/progress`),
       input,
+    );
+  }
+
+  /** `GET /accounting/practitioner/liabilities/:id/schedule` */
+  readLiabilitySchedule(liabilityId: string): Observable<LiabilityScheduleView> {
+    return this.http.get<LiabilityScheduleView>(
+      this.url(`/accounting/practitioner/liabilities/${liabilityId}/schedule`),
     );
   }
 
