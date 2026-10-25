@@ -5,6 +5,10 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
+import {
+  MEDICAL_CENTER_SCREENS,
+  MEDICAL_CENTER_SIGNUP_ROUTE,
+} from './features/auth/register-medical-center/medical-center.routes';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
@@ -57,6 +61,7 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
+  ...MEDICAL_CENTER_SCREENS,
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
   //
@@ -2216,6 +2221,7 @@ export const routes: Routes = [
       import('./features/auth/register-pharmacy/register-pharmacy').then((m) => m.RegisterPharmacy),
     title: 'AloVida - Registrar farmacia',
   },
+  MEDICAL_CENTER_SIGNUP_ROUTE,
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…
     path: 'auth/verify-email',
