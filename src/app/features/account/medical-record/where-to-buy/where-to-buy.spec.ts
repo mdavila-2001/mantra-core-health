@@ -503,6 +503,27 @@ describe('WhereToBuy', () => {
     );
   });
 
+  /**
+   * Centros médicos no tiene contrato que lo respalde: muestra el vacío honesto
+   * y, debajo, la salida al directorio. El enlace va en `empty-actions`; sin ese
+   * atributo la molécula no lo proyecta y desaparecía.
+   */
+  it('en Centros médicos dice que todavía no está y ofrece el directorio de clínicas', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
+    pestanas[2]?.click();
+    harness.detectChanges();
+
+    expect(texto()).toContain('Esta parte todavía no está');
+    const enlaces = Array.from(harness.routeNativeElement?.querySelectorAll('a') ?? []);
+    expect(enlaces.some((a) => a.textContent?.trim() === 'Ver clínicas y hospitales')).toBe(true);
+  });
+
   it('con una sucursal que tiene todo, la propone sola y lo dice', async () => {
     await montar();
     responderHastaProductos();
