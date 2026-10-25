@@ -863,6 +863,19 @@ export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
   ['SRQ-OTHER', 'Otro', 'Orden de análisis que no pertenece a laboratorio ni imagenología.'],
 ]);
 
+/* Centros médicos (CM-10): el modo del ejecutor que elige el médico. Son tres conceptos y el
+   front los reconoce por su código (`SR_PERF_*`), nunca por su uuid ni por su texto. */
+conjunto(
+  'service-request-performer-selection',
+  'Modo del ejecutor de la orden',
+  'Quién hace el procedimiento que pidió el médico: él mismo, un centro o lo que elija el paciente.',
+);
+export const MODO_DEL_EJECUTOR = definir('service-request-performer-selection', [
+  ['SR_PERF_SELF', 'El médico lo hace él mismo'],
+  ['SR_PERF_ORGANIZATION', 'En un centro que sugiere el médico'],
+  ['SR_PERF_PATIENT_CHOICE', 'Lo elige el paciente'],
+]);
+
 conjunto('VS_PRIORITY', 'Prioridad', 'Prioridad de una orden.');
 export const PRIORIDAD = definir('VS_PRIORITY', [
   ['PRI-ROUTINE', 'Rutina'],
@@ -929,6 +942,30 @@ export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
   ['PROC-ENDOSCOPIA', 'Endoscopia digestiva alta'],
   ['PROC-SUTURA', 'Sutura de herida'],
   ['PROC-INFILTRACION', 'Infiltración articular'],
+]);
+
+/*
+ * Procedimientos de ejemplo de «Centros médicos» (CONTRATO, «Datos de la maqueta»). Llevan el id
+ * que todos los carriles derivan con `uuid('<semilla>')`, no el de `definir`, para que la orden, el
+ * centro y la búsqueda hablen del mismo concepto.
+ */
+function definirConId(valueSet: string, entradas: readonly (readonly [seed: string, display: string])[]): void {
+  entradas.forEach(([code, display], indice) => {
+    registro.set(code, {
+      id: uuid(code),
+      code,
+      display,
+      valueSets: [valueSet],
+      selectable: true,
+      ordinal: indice + 1,
+    });
+  });
+}
+
+conjunto('VS_BO_MEDICAL_PROCEDURE', 'Nomenclador de procedimientos médicos', 'Procedimientos del nomenclador boliviano.');
+definirConId('VS_BO_MEDICAL_PROCEDURE', [
+  ['proc-endoscopia-alta', 'Endoscopia digestiva alta'],
+  ['proc-colonoscopia', 'Colonoscopia'],
 ]);
 
 /* ---- diagnósticos (CIE-10 abreviado, también en el glosario) ------------- */
