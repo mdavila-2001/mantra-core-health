@@ -1,0 +1,96 @@
+<app-page-header
+  title="Configurar centro médico"
+  subtitle="Abra la práctica de su organización con su primera sede. Después podrá publicar sus procedimientos y afiliar a sus médicos."
+/>
+
+<app-card class="setup" padding="lg" data-testid="centro-medico-setup-card">
+  @if (created(); as done) {
+    <div class="setup__done" data-testid="centro-medico-setup-exito">
+      <h2 class="setup__done-title">Su centro médico quedó configurado</h2>
+      <p class="setup__done-text">
+        La sede «{{ form().siteName.trim() }}» ya tiene su dirección y su punto en el mapa.
+      </p>
+      <dl class="setup__ids">
+        <div>
+          <dt>Práctica</dt>
+          <dd data-testid="centro-medico-setup-practice-id">{{ done.practiceId }}</dd>
+        </div>
+        <div>
+          <dt>Sede</dt>
+          <dd data-testid="centro-medico-setup-site-id">{{ done.practiceSiteId }}</dd>
+        </div>
+      </dl>
+    </div>
+  } @else {
+    @if (errorMessage(); as message) {
+      <app-alert tone="error" data-testid="centro-medico-setup-error">{{ message }}</app-alert>
+    }
+
+    <form class="setup__form" novalidate (submit)="$event.preventDefault(); save()" data-testid="centro-medico-setup-form">
+      <app-form-field icon="hospital" label="Nombre del centro médico" [required]="true" [errorMessage]="shown('practiceName')">
+        <app-input
+          [value]="form().practiceName"
+          (valueChange)="set('practiceName', $event)"
+          [hasError]="shown('practiceName') !== ''"
+          testId="centro-medico-setup-practice-name"
+        />
+      </app-form-field>
+
+      <app-form-field icon="building" label="Nombre de la sede" [required]="true" [errorMessage]="shown('siteName')"
+        hint="Como la va a ver el paciente: «Sede Norte», «Casa matriz».">
+        <app-input
+          [value]="form().siteName"
+          (valueChange)="set('siteName', $event)"
+          [hasError]="shown('siteName') !== ''"
+          testId="centro-medico-setup-site-name"
+        />
+      </app-form-field>
+
+      <app-form-field icon="pin" label="Dirección" [required]="true" [errorMessage]="shown('addressText')">
+        <app-input
+          [value]="form().addressText"
+          (valueChange)="set('addressText', $event)"
+          [hasError]="shown('addressText') !== ''"
+          autocomplete="street-address"
+          testId="centro-medico-setup-address"
+        />
+      </app-form-field>
+
+      <app-form-field icon="pin" label="Ciudad">
+        <app-input
+          [value]="form().cityText"
+          (valueChange)="set('cityText', $event)"
+          autocomplete="address-level2"
+          testId="centro-medico-setup-city"
+        />
+      </app-form-field>
+
+      <div class="setup__map">
+        <app-ubicacion-picker
+          pinId="centro-medico-sede"
+          etiquetaConfirmada="Sede del centro médico"
+          etiquetaQuitar="Quitar la ubicación de la sede"
+          etiquetaMapa="La sede en el mapa"
+          indicacionMarcar="Toque el mapa en el lugar exacto de la sede."
+          [ids]="pointIds"
+          [inicial]="point()"
+          (confirmado)="point.set($event)"
+        />
+        @if (shown('point'); as pointError) {
+          <p class="setup__error" role="alert" data-testid="centro-medico-setup-point-error">{{ pointError }}</p>
+        }
+      </div>
+
+      <button
+        app-button
+        type="submit"
+        variant="primary"
+        size="lg"
+        [disabled]="saving()"
+        data-testid="centro-medico-setup-save"
+      >
+        {{ saving() ? 'Guardando…' : 'Guardar centro médico' }}
+      </button>
+    </form>
+  }
+</app-card>

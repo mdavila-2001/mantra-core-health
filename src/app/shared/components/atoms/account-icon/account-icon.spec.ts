@@ -33,6 +33,7 @@ describe('AccountIcon', () => {
     laboratory: '.sample',
     imaging: '.sweep',
     pharmacy: '.pharmacy-cross',
+    clinic: '.cross',
   };
 
   it.each(Object.entries(ACCESORIO))('«%s» trae su accesorio animable (%s)', (name, selector) => {

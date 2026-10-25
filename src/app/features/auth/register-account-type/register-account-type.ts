@@ -114,6 +114,14 @@ const CUENTAS_DE_ORGANIZACION: readonly TipoDeCuenta[] = [
     ruta: '/auth/register/pharmacy',
     testId: 'tipo-farmacia',
   },
+  {
+    icono: 'clinic',
+    tone: 'primary',
+    titulo: 'Centro médico',
+    detalle: 'Clínicas y hospitales: publique sus procedimientos y afilie a sus médicos.',
+    ruta: '/auth/register/medical-center',
+    testId: 'tipo-centro-medico',
+  },
 ];
 
 /** Qué se está eligiendo: una cuenta de persona o el alta de una organización. */
