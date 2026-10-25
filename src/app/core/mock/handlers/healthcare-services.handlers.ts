@@ -5,7 +5,7 @@ import type {
   ReferenceUnit,
 } from '../../data-access/healthcare-services/healthcare-services.types';
 import { PRACTICE_CM_NORTE, SITES_BY_PRACTICE, initialHealthcareServiceOffers } from '../fixtures/healthcare-services';
-import { conflict, notFound, preconditionFailed, validation, type MockRouter } from '../mock-router';
+import { conflict, notFound, reply, type MockReply, type MockRouter } from '../mock-router';
 import { Coleccion, cuerpo, nuevoId, texto, uuid } from '../mock-store';
 import { procedimientoPorConceptId, servicios } from './practice.handlers';
 
@@ -41,6 +41,31 @@ for (const offer of initialHealthcareServiceOffers()) {
       isActive: true,
     } as never);
   }
+}
+
+/**
+ * Las respuestas de error del contrato §1 armadas acá, con su código y estado
+ * explícitos: los ayudantes del enrutador cambiaron de estado entre ramas
+ * (`preconditionFailed` fue 412 y hoy es 422) y este doble no puede depender de eso.
+ */
+function badRequest(message: string, violation: string): MockReply {
+  return reply(400, {
+    statusCode: 400,
+    code: 'VALIDATION_FAILED',
+    message,
+    error: 'Bad Request',
+    details: { violations: [violation] },
+  });
+}
+
+function unprocessable(message: string): MockReply {
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message,
+    error: 'Unprocessable Entity',
+    details: {},
+  });
 }
 
 /** La unidad del nomenclador, o `null` si trae una que el contrato no admite. */
@@ -99,15 +124,16 @@ export function registerHealthcareServices(router: MockRouter): void {
     const sites = SITES_BY_PRACTICE[practiceId];
     if (sites === undefined) return notFound('Práctica no encontrada');
     if (body.practiceSiteId === undefined || !sites.some((s) => s.id === body.practiceSiteId)) {
-      return validation('La sede no pertenece a esta organización.', [
-        { field: 'practiceSiteId', message: 'Elija una sede de la organización.' },
-      ]);
+      return badRequest(
+        'La sede no pertenece a esta organización.',
+        'practiceSiteId Elija una sede de la organización.',
+      );
     }
     const reference = body.serviceConceptId === undefined ? undefined : procedimientoPorConceptId(body.serviceConceptId);
     const known = reference !== undefined || offers.todos().some((o) => o.serviceConceptId === body.serviceConceptId);
     if (body.serviceConceptId === undefined || !known) {
       // 422 y no 400: el contrato §1 responde así al concepto fuera del nomenclador.
-      return preconditionFailed('El procedimiento no pertenece al nomenclador de procedimientos.');
+      return unprocessable('El procedimiento no pertenece al nomenclador de procedimientos.');
     }
     const duplicated = offers
       .todos()
