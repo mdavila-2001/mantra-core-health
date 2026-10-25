@@ -13,9 +13,9 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { map, type Subscription } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink, Scroll } from '@angular/router';
+import { filter, map, type Subscription } from 'rxjs';
 
 import { AnatomyAtlasClient } from '../../core/data-access/anatomy-atlas/anatomy-atlas.client';
 import type {
@@ -260,7 +260,15 @@ export class GlossaryAnatomyAtlas {
     // Una cita [n] lleva a su entrada de la bibliografía. El desplazamiento
     // del router (`anchorScrolling`) la deja en el borde superior, debajo de
     // la barra fija, y no le da el foco: se centra y se enfoca acá, después
-    // de que el router termine. También al abrir un enlace con el ancla.
+    // de que el router termine. El evento `Scroll` sale en cada toque, aunque
+    // el ancla ya estuviera en la URL (tocar dos veces la misma fuente)...
+    this.router.events
+      .pipe(
+        filter((e): e is Scroll => e instanceof Scroll && (e.anchor ?? '').startsWith('atlas3d-fuente-')),
+        takeUntilDestroyed(),
+      )
+      .subscribe((e) => setTimeout(() => this.revealSource(e.anchor ?? ''), 0));
+    // ...y esto cubre el enlace abierto con el ancla, que llega antes que la ficha.
     effect(() => {
       const ancla = this.fragment();
       const ficha = this.structure();

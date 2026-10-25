@@ -351,7 +351,7 @@
 .atlas3d__cita {
   /* En línea y con relleno: un área de toque real sin romper el renglón. */
   padding: 0.1em 0.2em;
-  margin-inline-start: 0.1em;
+  margin-inline-start: 0.25em;
   font-size: var(--fs-caption);
   vertical-align: super;
   line-height: 1;
@@ -378,10 +378,11 @@
   scroll-margin-block: var(--sp-16);
 }
 
+/* La activa se marca con fondo; el anillo queda para el foco (no dos anillos). */
 .atlas3d__bibliografia .atlas3d__fuente--activa {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  background: var(--bg-hover);
   color: var(--text-primary);
+  border-radius: var(--r-sm);
 }
 
 .atlas3d__aviso-ia {
@@ -433,7 +434,8 @@
 /* El anillo global de 4 px tapaba el punto de la frase. */
 .atlas3d__cita:focus-visible {
   outline-width: 2px;
-  outline-offset: 1px;
+  outline-offset: 0;
+  border-radius: 2px;
 }
 
 .atlas3d__bibliografia li:focus {
@@ -443,5 +445,5 @@
 .atlas3d__bibliografia li:focus-visible,
 .atlas3d__bibliografia .atlas3d__fuente--activa:focus {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: 0;
 }

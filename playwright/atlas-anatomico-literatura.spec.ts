@@ -92,6 +92,24 @@ for (const caso of CASOS) {
       )
       .toBe(true);
     await expect(entrada).toBeFocused();
+
+    // Una segunda cita de la MISMA fuente (el ancla ya está en la URL): también
+    // tiene que dejarla a la vista. La primera vez se arreglaba; la segunda no.
+    const mismaFuente = descripcion.locator(`a.atlas3d__cita[href$="#${destino?.split('#')[1] ?? ''}"]`);
+    if ((await mismaFuente.count()) > 1) {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await mismaFuente.nth(1).scrollIntoViewIfNeeded();
+      await mismaFuente.nth(1).click();
+      await expect
+        .poll(() =>
+          entrada.evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            const encima = document.elementFromPoint(r.left + Math.min(40, r.width / 2), r.top + r.height / 2);
+            return encima !== null && el.contains(encima);
+          }),
+        )
+        .toBe(true);
+    }
     await expect(page.getByText('sin revisión humana').first()).toBeVisible();
 
     await expect(page.getByTestId('atlas3d-ta2')).toContainText(/TA2 \d+/);
