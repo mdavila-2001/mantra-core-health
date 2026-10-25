@@ -20,6 +20,7 @@
       <app-tab [label]="'Todas (' + conteos().TODAS + ')'" data-testid="mis-ordenes-tab-TODAS" />
       <app-tab [label]="'Laboratorio (' + conteos().LAB + ')'" data-testid="mis-ordenes-tab-LAB" />
       <app-tab [label]="'Imagenología (' + conteos().IMAGING + ')'" data-testid="mis-ordenes-tab-IMAGING" />
+      <app-tab [label]="'Procedimientos (' + conteos().PROCEDURE + ')'" data-testid="my-orders-tab-PROCEDURE" />
       <app-tab [label]="'Otros (' + conteos().OTHER + ')'" data-testid="mis-ordenes-tab-OTHER" />
     </app-tabs>
 
@@ -73,7 +74,7 @@
               [columns]="columnas()"
               [trackBy]="porId"
               [rowLabel]="nombreDeFila"
-              caption="Sus órdenes de laboratorio e imagen"
+              caption="Sus órdenes de laboratorio, imagen y procedimientos"
               maxHeight="480px"
               data-testid="mis-ordenes-tabla"
             />
@@ -95,7 +96,10 @@
 
 <ng-template #celdaPedida let-fila>{{ fila.requestedAt | date: 'dd/MM/yyyy' }}</ng-template>
 
-<ng-template #celdaEstudio let-fila>{{ fila.studyLabel }}</ng-template>
+<ng-template #celdaEstudio let-fila>
+  {{ fila.studyLabel }}
+  <app-order-performer-summary [mode]="fila.performerMode" [siteName]="fila.suggestedSiteName" />
+</ng-template>
 
 <ng-template #celdaTipo let-fila>
   <app-badge variant="info">{{ fila.typeLabel }}</app-badge>

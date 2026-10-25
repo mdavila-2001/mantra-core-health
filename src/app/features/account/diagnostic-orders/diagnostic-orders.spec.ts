@@ -52,6 +52,10 @@ interface OrdenDeApi {
   readonly insuranceSettlement?: unknown;
   readonly insuranceSettlementAvailability?: string;
   readonly appointment?: OrderAppointment | null;
+  readonly performerSelectionConceptId?: string;
+  readonly performerPractitionerProfileId?: string;
+  readonly suggestedPracticeSiteId?: string;
+  readonly suggestedPracticeSiteName?: string | null;
 }
 
 function orden(overrides: Partial<OrdenDeApi> = {}): OrdenDeApi {
@@ -390,6 +394,166 @@ describe('DiagnosticOrders', () => {
     harness.detectChanges();
 
     expect(texto()).toContain('Ayuno de 8 horas');
+  });
+
+  /* ---- CM-10: «Procedimientos» y el ejecutor visto por el paciente ----------- */
+
+  const CATEGORIAS = [
+    concepto('cat-lab', 'SRQ-LAB', 'Laboratorio'),
+    concepto('cat-img', 'SRQ-IMAGING', 'Imagenología'),
+    concepto('cat-proc', 'SRQ-PROCEDURE', 'Procedimiento'),
+  ];
+
+  it('aparece la pestaña «Procedimientos» con su conteo y la orden no cae en Otros', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [
+        orden({ categoryConceptId: 'cat-proc' }),
+        orden({ categoryConceptId: 'cat-proc' }),
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-img' }),
+        orden(),
+      ],
+      CATEGORIAS,
+    );
+
+    expect(botonDePestana('Procedimientos')?.textContent).toContain('2');
+    expect(botonDePestana('Otros')?.textContent).toContain('1');
+    expect(botonDePestana('Todas')?.textContent).toContain('5');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="my-orders-tab-PROCEDURE"]')).not.toBeNull();
+  });
+
+  it('Laboratorio, Imagenología y Otros dan lo mismo con o sin órdenes de procedimiento', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-img' }),
+        orden(),
+        orden({ categoryConceptId: 'cat-proc' }),
+      ],
+      CATEGORIAS,
+    );
+
+    expect(botonDePestana('Laboratorio')?.textContent).toContain('2');
+    expect(botonDePestana('Imagenología')?.textContent).toContain('1');
+    expect(botonDePestana('Otros')?.textContent).toContain('1');
+  });
+
+  it('entrar por ?tab=PROCEDURE deja sólo las órdenes de procedimiento', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount(`${RUTA}?tab=PROCEDURE`);
+    responder([orden({ categoryConceptId: 'cat-proc' }), orden({ categoryConceptId: 'cat-lab' })], CATEGORIAS);
+
+    expect(api(componente).tab()).toBe('PROCEDURE');
+    expect(api(componente).filasFiltradas().map((f) => f.type)).toEqual(['PROCEDURE']);
+  });
+
+  it('un procedimiento no se puede reservar: la reserva es de laboratorio e imagen', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder([orden({ categoryConceptId: 'cat-proc' })], CATEGORIAS);
+
+    const fila = api(componente).filasFiltradas()[0];
+    expect(api(componente).accionesDe(fila).map((a) => a.code)).not.toContain('reservar');
+  });
+
+  it('ORGANIZATION: dice que su médico sugirió un centro, nombra la sede y avisa que es una recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-org',
+          suggestedPracticeSiteId: id('site'),
+          suggestedPracticeSiteName: 'Centro Médico Sur — Sede Central',
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-org', 'SR_PERF_ORGANIZATION', 'En un centro')],
+    );
+
+    expect(texto()).toContain('Su médico sugirió un centro');
+    expect(texto()).toContain('Centro Médico Sur — Sede Central');
+    expect(texto()).toContain('Es una recomendación: puede elegir otro centro.');
+  });
+
+  it('SELF: dice que su médico se ofreció a hacerlo y avisa que es una recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-self',
+          performerPractitionerProfileId: id('practitioner'),
+          suggestedPracticeSiteId: id('site'),
+          suggestedPracticeSiteName: 'Centro Médico Norte — Sede Central',
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-self', 'clinical:SR_PERF_SELF', 'Lo hace él')],
+    );
+
+    expect(texto()).toContain('Su médico se ofreció a hacerlo');
+    expect(texto()).toContain('Es una recomendación: puede elegir otro centro.');
+  });
+
+  it('PATIENT_CHOICE: dice que puede elegir dónde hacérselo, sin recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [orden({ categoryConceptId: 'cat-proc', performerSelectionConceptId: 'perf-pc' })],
+      [...CATEGORIAS, concepto('perf-pc', 'SR_PERF_PATIENT_CHOICE', 'Lo elige el paciente')],
+    );
+
+    expect(texto()).toContain('Puede elegir dónde hacérselo');
+    expect(texto()).not.toContain('Es una recomendación');
+  });
+
+  it('sin performerSelectionConceptId no pinta ninguna línea de ejecutor', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder([orden({ categoryConceptId: 'cat-proc' })], CATEGORIAS);
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="order-performer-summary"]')).toBeNull();
+  });
+
+  it('un modo con un código desconocido no pinta nada: no se inventa un modo', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [orden({ categoryConceptId: 'cat-proc', performerSelectionConceptId: 'perf-x' })],
+      [...CATEGORIAS, concepto('perf-x', 'SR_PERF_OTRO', 'Otro')],
+    );
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="order-performer-summary"]')).toBeNull();
+  });
+
+  it('la sede sin nombre no se pinta, y nunca se muestra el uuid de la sede ni del médico', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    const sede = id('site');
+    const medico = id('practitioner');
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-self',
+          performerPractitionerProfileId: medico,
+          suggestedPracticeSiteId: sede,
+          suggestedPracticeSiteName: null,
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-self', 'SR_PERF_SELF', 'Lo hace él')],
+    );
+
+    expect(texto()).toContain('Su médico se ofreció a hacerlo');
+    expect(texto()).not.toContain('Sede sugerida');
+    expect(texto()).not.toContain(sede);
+    expect(texto()).not.toContain(medico);
   });
 
   /* ---- Sin uuids en pantalla -------------------------------------------------- */
