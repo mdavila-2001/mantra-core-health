@@ -84,13 +84,13 @@ test.describe('Carril 19 — dónde conseguir lo de mi receta', () => {
     await openWhereToBuy(page);
 
     const branches = page.getByTestId('compra-sedes');
-    const noneComplete = page.getByTestId('compra-ninguna-completa');
+    const noneComplete = page.getByTestId('where-to-buy-none-complete');
     await expect(branches.or(noneComplete).first()).toBeVisible({ timeout: 30_000 });
 
     // Sin pedir las incompletas, ninguna tarjeta dice lo que le falta.
     await expect(branches.getByTestId('compra-faltantes')).toHaveCount(0);
 
-    const showIncomplete = page.getByTestId('compra-ver-incompletas');
+    const showIncomplete = page.getByTestId('where-to-buy-show-partial');
     if ((await showIncomplete.count()) > 0) {
       await expect(showIncomplete).toHaveAttribute('aria-pressed', 'false');
       await showIncomplete.click();
@@ -99,7 +99,7 @@ test.describe('Carril 19 — dónde conseguir lo de mi receta', () => {
       await expect(branches.getByTestId('compra-faltantes').first()).toContainText('Le falta');
     }
 
-    const directions = page.getByTestId('compra-como-llegar');
+    const directions = page.getByTestId('where-to-buy-directions');
     if ((await directions.count()) > 0) {
       const first = directions.first();
       await expect(first).toHaveAttribute('href', /^https:\/\/www\.openstreetmap\.org\/directions\?/u);
