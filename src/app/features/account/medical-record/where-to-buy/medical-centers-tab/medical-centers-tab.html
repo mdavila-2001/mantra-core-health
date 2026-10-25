@@ -1,0 +1,79 @@
+<div class="compra">
+  <section class="compra__bloque" aria-labelledby="medical-centers-title">
+    <h2 id="medical-centers-title" class="compra__titulo">Dónde hacerse sus procedimientos</h2>
+    <p class="compra__nota" data-testid="medical-centers-origin">
+      @if (origin(); as punto) {
+        Distancias en línea recta, medidas desde {{ punto.etiqueta }}. Puede cambiar el punto en la
+        pestaña Farmacias.
+      } @else {
+        Sin un punto de partida no se calculan distancias. Puede elegirlo en la pestaña Farmacias: su
+        casa, una ciudad o su ubicación actual.
+      }
+    </p>
+    <app-view-state-host [state]="state()" (retry)="load()">
+      @if (data(); as datos) {
+        <p class="compra__secundario" data-testid="medical-centers-procedures">
+          Procedimientos pendientes: {{ procedureNames(datos.procedures) }}
+        </p>
+        <ul class="compra__sedes" data-testid="medical-centers-list">
+          @for (centro of visibleCenters(); track centro.id) {
+            <li class="compra__sede">
+              <div class="compra__sede-datos">
+                <span class="compra__principal">{{ centro.name }}</span>
+                @if (centro.address !== null) {
+                  <span class="compra__secundario">{{ centro.address }}</span>
+                }
+                @if (centro.distance !== null) {
+                  <span class="compra__secundario">{{ centro.distance }} en línea recta</span>
+                }
+                @if (!centro.complete) {
+                  <p class="compra__faltantes" data-testid="medical-centers-missing">
+                    Le falta: {{ centro.missing.join(', ') }}
+                  </p>
+                }
+              </div>
+              <div class="compra__acciones">
+                <app-badge [variant]="centro.complete ? 'success' : 'warning'">
+                  {{ centro.complete ? 'Tiene todos' : 'Le falta algo' }}
+                </app-badge>
+                @if (centro.directions; as enlace) {
+                  <a
+                    app-link
+                    [href]="enlace"
+                    [external]="true"
+                    [attr.aria-label]="'Cómo llegar a ' + centro.name + ' (abre en una pestaña nueva)'"
+                  >
+                    Cómo llegar
+                  </a>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+        @if (partialCenterCount() > 0) {
+          @if (!showPartialCenters() && visibleCenters().length === 0) {
+            <p class="compra__nota" data-testid="medical-centers-none-complete">
+              Ningún centro tiene hoy todos los procedimientos que le pidieron.
+            </p>
+          }
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="medical-centers-show-partial"
+            [attr.aria-pressed]="showPartialCenters()"
+            (clicked)="showPartialCenters.set(!showPartialCenters())"
+          >
+            {{ partialCentersLabel() }}
+          </button>
+        }
+        <p class="compra__nota">
+          La lista muestra los centros que declaran ofrecer el procedimiento. Confirme la
+          disponibilidad y el turno con el centro antes de ir.
+        </p>
+      }
+    </app-view-state-host>
+    <a app-button variant="ghost" [routerLink]="clinicsDirectoryRoute">Ver clínicas y hospitales</a>
+  </section>
+</div>

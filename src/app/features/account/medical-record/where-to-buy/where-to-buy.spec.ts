@@ -501,14 +501,36 @@ describe('WhereToBuy', () => {
       [],
       expect.objectContaining({ queryParams: { tab: 'medical-centers' }, replaceUrl: true }),
     );
+    // Abrir Centros médicos es lo que dispara su consulta, y no antes.
+    http
+      .expectOne((r) => r.url === '/clinical/me/procedure-centers')
+      .flush({ procedures: [], centers: [], total: 0, limit: 20 });
+  });
+
+  it('carril 19: Centros médicos abre por la URL y busca los centros de mis procedimientos', async () => {
+    await montar('m-1', '?tab=medical-centers');
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
+    harness.detectChanges();
+
+    const consulta = http.expectOne((r) => r.url === '/clinical/me/procedure-centers');
+    // Lo que le pidieron no viaja en la URL: sólo el tope (y el origen, si lo hay).
+    expect(consulta.request.params.keys()).toEqual(['limit']);
+    consulta.flush({ procedures: [], centers: [], total: 0, limit: 20 });
+    harness.detectChanges();
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
+    expect(pestanas[2]?.getAttribute('aria-selected')).toBe('true');
+    expect(texto()).toContain('No tiene procedimientos pendientes.');
+    expect(texto()).not.toContain('Esta parte todavía no está');
   });
 
   /**
-   * Centros médicos no tiene contrato que lo respalde: muestra el vacío honesto
-   * y, debajo, la salida al directorio. El enlace va en `empty-actions`; sin ese
-   * atributo la molécula no lo proyecta y desaparecía.
+   * Sin procedimientos pendientes, Centros médicos muestra el vacío honesto y la
+   * salida al directorio de clínicas tiene que verse (antes desaparecía porque
+   * la molécula no proyectaba el enlace).
    */
-  it('en Centros médicos dice que todavía no está y ofrece el directorio de clínicas', async () => {
+  it('en Centros médicos, sin procedimientos pendientes, lo dice y ofrece el directorio de clínicas', async () => {
     await montar();
     responderHastaProductos();
     http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
@@ -518,8 +540,13 @@ describe('WhereToBuy', () => {
     const pestanas = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
     pestanas[2]?.click();
     harness.detectChanges();
+    http
+      .expectOne((r) => r.url === '/clinical/me/procedure-centers')
+      .flush({ procedures: [], centers: [], total: 0, limit: 20 });
+    harness.detectChanges();
 
-    expect(texto()).toContain('Esta parte todavía no está');
+    expect(texto()).toContain('No tiene procedimientos pendientes.');
+    expect(texto()).not.toContain('Esta parte todavía no está');
     const enlaces = Array.from(harness.routeNativeElement?.querySelectorAll('a') ?? []);
     expect(enlaces.some((a) => a.textContent?.trim() === 'Ver clínicas y hospitales')).toBe(true);
   });

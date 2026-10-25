@@ -537,24 +537,13 @@
     </app-tab>
 
     <!-- ─── Centros médicos ─────────────────────────────────────────────────
-         La pestaña más lejana de las tres, y no por trabajo de front: no hay de
-         dónde sacar «qué operaciones necesita esta persona» —la receta no las
-         declara— ni endpoint que busque organizaciones por prestación. El
-         modelo declara el gancho (`practice.healthcare_services`) pero los
-         seeds no lo pueblan. Hasta que eso se defina, lo honesto es decirlo.
-         Revisado contra la API de `dev` el 25/10/2026: `GET diagnostics/me/orders`
-         sólo devuelve las categorías LAB e IMAGING (`DIAGNOSTIC_CATEGORIES`),
-         `GET procedure-cases` es sólo para el equipo quirúrgico, la búsqueda por
-         cobertura acepta `kind` LABORATORY | IMAGING y `healthcare-services` no
-         tiene lectura. El enlace va en `empty-actions`: sin ese atributo la
-         molécula no lo proyecta y la salida al directorio no se veía. -->
+         Carril 19. Los procedimientos salen de las órdenes propias y los
+         centros de lo que cada sede declara ofrecer; los lee el servidor
+         (`GET /clinical/me/procedure-centers`) para que lo pedido no viaje en
+         la URL. Consulta al abrir la pestaña y vuelve a medir cuando cambia el
+         punto de partida elegido en Farmacias. -->
     <app-tab label="Centros médicos">
-      <app-empty-state
-        title="Esta parte todavía no está"
-        description="Acá van a aparecer los centros donde le pueden hacer los procedimientos que le indicaron. Todavía no está definido de dónde salen esos procedimientos ni qué centros los declaran, así que preferimos no mostrarle una lista que no sea la suya."
-      >
-        <a app-button empty-actions variant="ghost" [routerLink]="clinicsDirectoryRoute">Ver clínicas y hospitales</a>
-      </app-empty-state>
+      <app-medical-centers-tab [active]="medicalCentersActive()" [origin]="origen()" />
     </app-tab>
   </app-tabs>
 }
