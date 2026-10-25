@@ -9,8 +9,8 @@ import {
   type TemplateRef,
 } from '@angular/core';
 
-import { PracticeSitesClient } from '../../../core/data-access/practice-sites/practice-sites.client';
-import type { PracticeSite } from '../../../core/data-access/practice-sites/practice-sites.types';
+import { HealthcareServicesClient } from '../../../core/data-access/healthcare-services/healthcare-services.client';
+import type { PracticeSiteOption } from '../../../core/data-access/healthcare-services/healthcare-services.types';
 import {
   roleAssignmentInitiatorText,
   roleAssignmentState,
@@ -55,13 +55,13 @@ import { PractitionerInviteForm } from './practitioner-invite-form/practitioner-
 })
 export class PractitionerAffiliations implements OnInit {
   private readonly catalog = inject(ServicesCatalogClient);
-  private readonly practiceSites = inject(PracticeSitesClient);
+  private readonly services = inject(HealthcareServicesClient);
   private readonly assignments = inject(RoleAssignmentsClient);
   private readonly toasts = inject(ToastService);
 
   protected readonly practices = signal<readonly Practice[]>([]);
   protected readonly practiceId = signal<string | null>(null);
-  protected readonly sites = signal<readonly PracticeSite[]>([]);
+  protected readonly sites = signal<readonly PracticeSiteOption[]>([]);
   protected readonly siteId = signal<string | null>(null);
   protected readonly rows = signal<ViewState<readonly RoleAssignmentRow[]>>(loading());
   protected readonly inviting = signal(false);
@@ -123,7 +123,7 @@ export class PractitionerAffiliations implements OnInit {
     this.siteId.set(null);
     this.sites.set([]);
     this.loadError.set(null);
-    this.practiceSites.listSitesOfPractice(id).subscribe({
+    this.services.listSites(id).subscribe({
       next: (list) => {
         this.sites.set(list);
         this.siteId.set(list[0]?.id ?? null);

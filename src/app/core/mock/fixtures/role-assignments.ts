@@ -34,7 +34,7 @@ export const CM_SITES = [
   { id: SITE_CM_SUR_1, practiceId: PRACTICE_CM_SUR, code: 'SUR-1', name: 'Sede Sur 1', addressText: 'Av. Santos Dumont 410, Santa Cruz de la Sierra' },
 ].map((site) => ({ ...site, timeZone: 'America/La_Paz', latitude: null, longitude: null, status: 'ACTIVE' }));
 
-/** Lo que publica cada sede, mientras el catálogo del centro (CM-06) no esté en la base. */
+/** Lo que publica cada sede, con la forma de `HealthcareServiceOffer` (CM-06). Transitorio: lo reemplaza el doble de CM-06 cuando CM-00 lo registre. */
 export const PUBLISHED_PROCEDURES = [
   { site: SITE_CM_NORTE_1, practiceId: PRACTICE_CM_NORTE, concept: PROC_ENDOSCOPIA_ALTA, display: 'Endoscopia digestiva alta', active: true },
   { site: SITE_CM_NORTE_1, practiceId: PRACTICE_CM_NORTE, concept: PROC_COLONOSCOPIA, display: 'Colonoscopia', active: true },
@@ -47,6 +47,13 @@ export const PUBLISHED_PROCEDURES = [
   practiceSiteId: p.site,
   serviceConceptId: p.concept,
   serviceDisplay: p.display,
+  serviceCatalogId: null,
+  price: null,
+  currencyConceptId: null,
+  referencePrice: null,
+  referenceUnit: null,
+  overMargin: null,
+  visibleInSearch: p.active,
   active: p.active,
 }));
 

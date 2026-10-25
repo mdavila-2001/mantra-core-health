@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 
+import { HealthcareServicesClient } from '../../../../core/data-access/healthcare-services/healthcare-services.client';
+import type { HealthcareServiceOffer } from '../../../../core/data-access/healthcare-services/healthcare-services.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { RoleAssignmentsClient } from '../../../../core/data-access/role-assignments/role-assignments.client';
-import type { RoleAssignmentRow, SiteProcedure } from '../../../../core/data-access/role-assignments/role-assignments.types';
+import type { RoleAssignmentRow } from '../../../../core/data-access/role-assignments/role-assignments.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Select } from '../../../../shared/components/atoms/select/select';
@@ -31,6 +33,7 @@ const PRACTITIONERS_LIMIT = 100;
 })
 export class PractitionerInviteForm {
   private readonly assignments = inject(RoleAssignmentsClient);
+  private readonly services = inject(HealthcareServicesClient);
   private readonly profiles = inject(ProfilesClient);
 
   readonly practiceId = input.required<string>();
@@ -42,7 +45,7 @@ export class PractitionerInviteForm {
 
   protected readonly practitionerOptions = signal<readonly SelectOption<string>[]>([]);
   protected readonly practitionerId = signal<string | null>(null);
-  protected readonly procedures = signal<readonly SiteProcedure[]>([]);
+  protected readonly procedures = signal<readonly HealthcareServiceOffer[]>([]);
   protected readonly proceduresLoading = signal(true);
   protected readonly checked = signal<ReadonlySet<string>>(new Set());
   protected readonly saving = signal(false);
@@ -112,9 +115,10 @@ export class PractitionerInviteForm {
   private loadProcedures(practiceId: string, siteId: string): void {
     this.proceduresLoading.set(true);
     this.checked.set(new Set());
-    this.assignments.listPublishedProcedures(practiceId, siteId).subscribe({
+    this.services.listOffers(practiceId, siteId).subscribe({
       next: (list) => {
-        this.procedures.set(list);
+        // Solo lo que la sede tiene activo: no hay otra fuente de procedimientos.
+        this.procedures.set(list.filter((offer) => offer.active));
         this.proceduresLoading.set(false);
       },
       error: () => {

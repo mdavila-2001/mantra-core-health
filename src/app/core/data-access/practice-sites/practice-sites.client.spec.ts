@@ -29,20 +29,6 @@ describe('PracticeSitesClient', () => {
     req.flush({ items: [], count: 0 });
   });
 
-  it('pide las sedes de una práctica y acepta página o arreglo', () => {
-    const sede = { id: 's-1', practiceId: 'pr-1', code: 'N1', name: 'Sede Norte', timeZone: null, addressText: null, latitude: null, longitude: null, status: 'st' };
-    const recibidas: (readonly unknown[])[] = [];
-    client.listSitesOfPractice('pr-1').subscribe((r) => recibidas.push(r));
-    client.listSitesOfPractice('pr-1').subscribe((r) => recibidas.push(r));
-
-    const [pagina, arreglo] = http.match((r) => r.url === '/practices/pr-1/sites');
-    expect(pagina!.request.method).toBe('GET');
-    pagina!.flush({ items: [sede], count: 1 });
-    arreglo!.flush([sede]);
-
-    expect(recibidas).toEqual([[sede], [sede]]);
-  });
-
   it('escapa el identificador en la ruta', () => {
     client.listSitesOfPractitioner('prac/1').subscribe();
 

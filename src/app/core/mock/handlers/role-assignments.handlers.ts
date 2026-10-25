@@ -62,12 +62,10 @@ export function registerRoleAssignments(router: MockRouter): void {
   router.post('/role-assignments/:roleId/approve', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ACTIVE'));
   router.post('/role-assignments/:roleId/reject', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_REJECTED'));
 
-  router.get('/practices/:practiceId/sites', ({ params }) => {
-    const items = CM_SITES.filter((site) => site.practiceId === params['practiceId']);
-    return { items, count: items.length };
-  });
+  // El arreglo pelado, como lo devuelve la API (CM-11).
+  router.get('/practices/:practiceId/sites', ({ params }) => CM_SITES.filter((site) => site.practiceId === params['practiceId']));
 
-  // Mismo contrato que publica CM-06; acá solo lo que las casillas necesitan leer.
+  // Mismo contrato que CM-06 (`HealthcareServicesClient.listOffers`); transitorio hasta que CM-00 registre su doble.
   router.get('/practices/:practiceId/healthcare-services', ({ params, query }) => {
     const site = texto(query, 'practiceSiteId');
     return { items: PUBLISHED_PROCEDURES.filter((p) => p.practiceId === params['practiceId'] && (site === null || p.practiceSiteId === site)) };

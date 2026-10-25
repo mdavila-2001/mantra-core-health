@@ -28,12 +28,3 @@ export interface PracticeInvitationInput {
   readonly practiceSiteId: string;
   readonly healthcareServiceIds: readonly string[];
 }
-
-/** Un procedimiento que la sede publica, tal como lo ofrece `GET .../healthcare-services`. */
-export interface SiteProcedure {
-  readonly id: string;
-  readonly practiceSiteId: string;
-  readonly serviceConceptId: string;
-  readonly serviceDisplay: string;
-  readonly active: boolean;
-}

@@ -143,8 +143,8 @@ describe('handlers de afiliación médico-centro', () => {
   });
 
   it('las sedes de un centro salen de GET /practices/:practiceId/sites', () => {
-    const { body } = call<{ items: { id: string }[] }>('GET', `/practices/${PRACTICE_CM_SUR}/sites`);
-    expect(body.items.map((s) => s.id)).toEqual([SITE_CM_SUR_1]);
+    const { body } = call<{ id: string }[]>('GET', `/practices/${PRACTICE_CM_SUR}/sites`);
+    expect(body.map((s) => s.id)).toEqual([SITE_CM_SUR_1]);
   });
 
   it('GET /practices incluye practice-cm-norte y practice-cm-sur', () => {

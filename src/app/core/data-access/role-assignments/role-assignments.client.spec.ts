@@ -93,20 +93,4 @@ describe('RoleAssignmentsClient', () => {
     expect(req.request.url).not.toBe('/practices/pr-1/role-assignments');
     req.flush({ items: [] });
   });
-
-  it('las casillas salen de los procedimientos activos de la sede', () => {
-    let names: readonly string[] = [];
-    client.listPublishedProcedures('pr-1', 'site-1').subscribe((p) => (names = p.map((x) => x.serviceDisplay)));
-
-    const req = http.expectOne((r) => r.url === '/practices/pr-1/healthcare-services');
-    expect(req.request.params.get('practiceSiteId')).toBe('site-1');
-    req.flush({
-      items: [
-        { id: 'a', practiceSiteId: 'site-1', serviceConceptId: 'c1', serviceDisplay: 'Colonoscopia', active: true },
-        { id: 'b', practiceSiteId: 'site-1', serviceConceptId: 'c2', serviceDisplay: 'Retirado', active: false },
-      ],
-    });
-
-    expect(names).toEqual(['Colonoscopia']);
-  });
 });

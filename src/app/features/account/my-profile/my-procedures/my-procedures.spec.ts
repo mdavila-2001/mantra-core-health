@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { MyRoleAssignment } from '../../../../core/data-access/practice-sites/practice-sites.types';
-import { RoleAssignmentsClient } from '../../../../core/data-access/role-assignments/role-assignments.client';
+import { HealthcareServicesClient } from '../../../../core/data-access/healthcare-services/healthcare-services.client';
 import { ServicesCatalogClient } from '../../../../core/data-access/services-catalog/services-catalog.client';
 import { MyProcedures } from './my-procedures';
 
@@ -34,18 +34,18 @@ const site = (id: string, practiceId: string, name: string) => ({ id, practiceId
 describe('MyProcedures', () => {
   let fixture: ComponentFixture<MyProcedures>;
   let list: MyRoleAssignment[];
-  let listSitesOfPractice: ReturnType<typeof vi.fn>;
+  let listSites: ReturnType<typeof vi.fn>;
   const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byId = (id: string): HTMLElement | null => host().querySelector(`[data-testid="${id}"]`);
 
   function build(): void {
-    listSitesOfPractice = vi.fn((practiceId: string) =>
+    listSites = vi.fn((practiceId: string) =>
       of(practiceId === 'pr-n' ? [site('site-n1', 'pr-n', 'Sede Norte 1')] : [site('site-s1', 'pr-s', 'Sede Sur 1')]),
     );
     TestBed.configureTestingModule({
       providers: [
-        { provide: PracticeSitesClient, useValue: { listMyRoleAssignments: () => of(list), listSitesOfPractice, selfRequestAffiliation: vi.fn() } },
-        { provide: RoleAssignmentsClient, useValue: { listPublishedProcedures: () => of([]) } },
+        { provide: PracticeSitesClient, useValue: { listMyRoleAssignments: () => of(list), selfRequestAffiliation: vi.fn() } },
+        { provide: HealthcareServicesClient, useValue: { listSites, listOffers: () => of([]) } },
         { provide: ServicesCatalogClient, useValue: { listPractices: () => of([]) } },
       ],
     });
@@ -82,7 +82,7 @@ describe('MyProcedures', () => {
 
   it('si no se puede nombrar una sede, la lista sigue y dice «Sede»', () => {
     build();
-    listSitesOfPractice.mockReturnValue(throwError(() => new Error('sin red')));
+    listSites.mockReturnValue(throwError(() => new Error('sin red')));
     fixture.componentInstance['reload']();
     fixture.detectChanges();
 

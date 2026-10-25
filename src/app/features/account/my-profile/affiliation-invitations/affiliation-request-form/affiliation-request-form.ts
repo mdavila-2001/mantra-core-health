@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, output, signal, untracked } from '@angular/core';
 import { concatMap, from, tap } from 'rxjs';
 
+import { HealthcareServicesClient } from '../../../../../core/data-access/healthcare-services/healthcare-services.client';
+import type {
+  HealthcareServiceOffer,
+  PracticeSiteOption,
+} from '../../../../../core/data-access/healthcare-services/healthcare-services.types';
 import { PracticeSitesClient } from '../../../../../core/data-access/practice-sites/practice-sites.client';
-import type { PracticeSite } from '../../../../../core/data-access/practice-sites/practice-sites.types';
-import { RoleAssignmentsClient } from '../../../../../core/data-access/role-assignments/role-assignments.client';
-import type { SiteProcedure } from '../../../../../core/data-access/role-assignments/role-assignments.types';
 import { ServicesCatalogClient } from '../../../../../core/data-access/services-catalog/services-catalog.client';
 import type { Practice } from '../../../../../core/data-access/services-catalog/services-catalog.types';
 import { errorToViewState } from '../../../../../core/http/error-to-view-state';
@@ -35,7 +37,7 @@ import { FormField } from '../../../../../shared/components/molecules/form-field
 export class AffiliationRequestForm {
   private readonly catalog = inject(ServicesCatalogClient);
   private readonly practiceSites = inject(PracticeSitesClient);
-  private readonly assignments = inject(RoleAssignmentsClient);
+  private readonly services = inject(HealthcareServicesClient);
 
   /** Se enviaron todas las solicitudes; dice cuántas. */
   readonly requested = output<number>();
@@ -45,9 +47,9 @@ export class AffiliationRequestForm {
 
   protected readonly practices = signal<readonly Practice[]>([]);
   protected readonly practiceId = signal<string | null>(null);
-  protected readonly sites = signal<readonly PracticeSite[]>([]);
+  protected readonly sites = signal<readonly PracticeSiteOption[]>([]);
   protected readonly siteId = signal<string | null>(null);
-  protected readonly procedures = signal<readonly SiteProcedure[]>([]);
+  protected readonly procedures = signal<readonly HealthcareServiceOffer[]>([]);
   protected readonly proceduresLoading = signal(false);
   protected readonly checked = signal<ReadonlySet<string>>(new Set());
   protected readonly saving = signal(false);
@@ -128,7 +130,7 @@ export class AffiliationRequestForm {
     this.sites.set([]);
     this.siteId.set(null);
     if (practiceId === null) return;
-    this.practiceSites.listSitesOfPractice(practiceId).subscribe({
+    this.services.listSites(practiceId).subscribe({
       next: (list) => this.sites.set(list),
       error: () => this.error.set('No pudimos cargar las sedes del centro.'),
     });
@@ -139,9 +141,9 @@ export class AffiliationRequestForm {
     this.checked.set(new Set());
     if (practiceId === null || siteId === null) return;
     this.proceduresLoading.set(true);
-    this.assignments.listPublishedProcedures(practiceId, siteId).subscribe({
+    this.services.listOffers(practiceId, siteId).subscribe({
       next: (list) => {
-        this.procedures.set(list);
+        this.procedures.set(list.filter((offer) => offer.active));
         this.proceduresLoading.set(false);
       },
       error: () => {
