@@ -1,7 +1,11 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AccountIcon } from './account-icon';
-import { ACCOUNT_ICON_NAMES, type AccountIconName } from './account-icon.types';
+import {
+  ACCOUNT_ICON_NAMES,
+  EXTRA_ACCOUNT_ICON_NAMES,
+  type AccountIconName,
+} from './account-icon.types';
 
 /**
  * El set es cerrado y cada nombre tiene su alta detrás: lo que se prueba es que
@@ -22,7 +26,7 @@ describe('AccountIcon', () => {
     await TestBed.configureTestingModule({ imports: [AccountIcon] }).compileComponents();
   });
 
-  it.each(ACCOUNT_ICON_NAMES)('«%s» dibuja un contorno', (name) => {
+  it.each([...ACCOUNT_ICON_NAMES, ...EXTRA_ACCOUNT_ICON_NAMES])('«%s» dibuja un contorno', (name) => {
     expect(render(name).querySelectorAll('svg .draw').length).toBeGreaterThan(0);
   });
 
