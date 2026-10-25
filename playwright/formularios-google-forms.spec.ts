@@ -55,7 +55,8 @@ test.describe('Formularios · edición como Google Forms', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
 
     await entrar(page, MEDICA);
-    await irA(page, '/form-builder');
+    // El catálogo es el paso de «Cargar formulario» (carril 27).
+    await irA(page, '/form-builder?view=catalog');
     await estable(page);
 
     // ── La lista y el formulario abierto, centrados y a 76rem ──────────────

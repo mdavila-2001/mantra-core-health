@@ -8,8 +8,9 @@
  *   a pedido y con lo que les falta dicho por su nombre.
  * - REQ-19-009: «Cómo llegar» va a OpenStreetMap (la CSP no admite Google
  *   Maps, regla 99 §7) y la pestaña de centros médicos no inventa una lista:
- *   no hay contrato que diga qué procedimientos le indicaron al paciente ni qué
- *   centro los hace, así que muestra un estado vacío honesto.
+ *   la maqueta no siembra órdenes de procedimiento, así que
+ *   `GET /clinical/me/procedure-centers` responde vacío y la pestaña lo dice.
+ *   El recorrido con centros reales está en `carril-19-centros-medicos.spec.ts`.
  *
  * Corre contra `ng serve` en modo demo (simulador). Sin consola en rojo.
  */
@@ -83,13 +84,13 @@ test.describe('Carril 19 — dónde conseguir lo de mi receta', () => {
     await openWhereToBuy(page);
 
     const branches = page.getByTestId('compra-sedes');
-    const noneComplete = page.getByTestId('compra-ninguna-completa');
+    const noneComplete = page.getByTestId('where-to-buy-none-complete');
     await expect(branches.or(noneComplete).first()).toBeVisible({ timeout: 30_000 });
 
     // Sin pedir las incompletas, ninguna tarjeta dice lo que le falta.
     await expect(branches.getByTestId('compra-faltantes')).toHaveCount(0);
 
-    const showIncomplete = page.getByTestId('compra-ver-incompletas');
+    const showIncomplete = page.getByTestId('where-to-buy-show-partial');
     if ((await showIncomplete.count()) > 0) {
       await expect(showIncomplete).toHaveAttribute('aria-pressed', 'false');
       await showIncomplete.click();
@@ -98,7 +99,7 @@ test.describe('Carril 19 — dónde conseguir lo de mi receta', () => {
       await expect(branches.getByTestId('compra-faltantes').first()).toContainText('Le falta');
     }
 
-    const directions = page.getByTestId('compra-como-llegar');
+    const directions = page.getByTestId('where-to-buy-directions');
     if ((await directions.count()) > 0) {
       const first = directions.first();
       await expect(first).toHaveAttribute('href', /^https:\/\/www\.openstreetmap\.org\/directions\?/u);
@@ -119,9 +120,11 @@ test.describe('Carril 19 — dónde conseguir lo de mi receta', () => {
     await page.goto(`${screenUrl}?tab=medical-centers`, { waitUntil: 'domcontentloaded' });
 
     const panel = page.getByRole('tabpanel');
-    await expect(panel.getByText('Esta parte todavía no está')).toBeVisible({ timeout: 30_000 });
-    await expect(panel.getByRole('link', { name: 'Ver clínicas y hospitales' })).toBeVisible();
-    // Ninguna tarjeta de centro ni ninguna sucursal: no hay contrato que las respalde.
+    await expect(panel.getByText('No tiene procedimientos pendientes.')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(panel.getByRole('link', { name: 'Ver clínicas y hospitales' }).first()).toBeVisible();
+    // Ninguna tarjeta de centro ni ninguna sucursal: la maqueta no tiene oferta que las respalde.
     await expect(panel.locator('.compra__sede')).toHaveCount(0);
 
     const overflow = await page.evaluate(

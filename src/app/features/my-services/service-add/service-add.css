@@ -1,0 +1,65 @@
+/* ============================================================================
+    Agregar servicio adicional. Mobile-first: una columna, dos desde 640 px.
+    ========================================================================== */
+
+.agregar__campos {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.agregar__parecidos {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.agregar__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+}
+
+.agregar__bajada {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.agregar__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agregar__opcion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.agregar__nombre {
+  flex: 1 1 12rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.agregar__codigo {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.agregar__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 640px) {
+  .agregar__campos {
+    grid-template-columns: 2fr 1fr;
+  }
+}
