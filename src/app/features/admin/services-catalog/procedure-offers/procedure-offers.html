@@ -1,0 +1,184 @@
+<app-page-header
+  title="Procedimientos por sede"
+  subtitle="Publique en cada sede los procedimientos del nomenclador que realiza, con su precio propio."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- Una sola tarjeta con pestañas, centrada y a lo ancho del área
+     (composition-rules §5): la organización y la sede valen para las dos. -->
+<app-card class="offers" data-testid="procedure-offers-card">
+  <div class="offers__scope">
+    <app-form-field label="Organización" hint="El catálogo se publica por sede de una organización.">
+      <app-select
+        data-testid="procedure-offers-practice"
+        placeholder="Elija una organización"
+        [options]="practiceOptions()"
+        [value]="practiceId()"
+        (valueChange)="changePractice($event)"
+      />
+    </app-form-field>
+
+    <app-form-field label="Sede" hint="Cada sede tiene su propio precio por procedimiento.">
+      <app-select
+        data-testid="procedure-offers-site"
+        placeholder="Elija una sede"
+        [options]="siteOptions()"
+        [value]="siteId()"
+        [disabled]="sitesState().status !== 'ready'"
+        (valueChange)="changeSite($event)"
+      />
+    </app-form-field>
+  </div>
+
+  <app-view-state-host [state]="sitesState()" (retry)="reloadSites()">
+    <app-tabs [(selectedIndex)]="selectedTab">
+      <app-tab label="Publicados">
+        <app-view-state-host [state]="offersState()" (retry)="reloadOffers()">
+          <ul class="offers__list" data-testid="procedure-offers-list" aria-label="Procedimientos publicados en la sede">
+            @for (offer of offerItems(); track byId(offer)) {
+              <li
+                class="offer"
+                data-testid="procedure-offer-row"
+                [class.offer--inactive]="!offer.active"
+              >
+                <div class="offer__main">
+                  <h3 class="offer__name">{{ offer.serviceDisplay }}</h3>
+                  <p class="offer__reference" data-testid="procedure-offer-reference">
+                    {{ referenceText(offer) }}
+                  </p>
+                </div>
+
+                <div class="offer__price">
+                  <span class="offer__amount" data-testid="procedure-offer-price">{{ ownPriceText(offer) }}</span>
+                  @if (visibilityLabel(offer); as label) {
+                    <app-badge variant="warning" size="sm" data-testid="procedure-offer-visibility">{{ label }}</app-badge>
+                  }
+                  @if (!offer.active) {
+                    <app-badge variant="secondary" size="sm" data-testid="procedure-offer-inactive">Desactivado</app-badge>
+                  }
+                </div>
+
+                @if (overMarginNotice(offer); as notice) {
+                  <app-alert class="offer__notice" tone="warning" data-testid="procedure-offer-over-margin">{{ notice }}</app-alert>
+                }
+
+                <div class="offer__actions">
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    data-testid="procedure-offer-price-edit"
+                    [attr.aria-label]="(offer.price === null ? 'Fijar el precio de ' : 'Cambiar el precio de ') + offer.serviceDisplay"
+                    (clicked)="openPriceEditor(offer)"
+                  >
+                    {{ offer.price === null ? 'Fijar precio' : 'Cambiar precio' }}
+                  </button>
+                  <app-switch
+                    data-testid="procedure-offer-active"
+                    [checked]="offer.active"
+                    [disabled]="togglingId() !== null"
+                    [ariaLabel]="(offer.active ? 'Desactivar ' : 'Activar ') + offer.serviceDisplay"
+                    (checkedChange)="toggleActive(offer, $event)"
+                  />
+                </div>
+              </li>
+            }
+          </ul>
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Publicar un procedimiento">
+        <form class="publish" novalidate (submit)="$event.preventDefault(); publish()" data-testid="procedure-offers-publish-form">
+          @if (publishError(); as message) {
+            <app-alert tone="error" data-testid="procedure-offers-publish-error">{{ message }}</app-alert>
+          }
+
+          <div class="publish__fields">
+            <app-form-field
+              label="Procedimiento del nomenclador"
+              hint="Busque por nombre. Sólo se pueden publicar procedimientos del nomenclador."
+              [required]="true"
+              [errorMessage]="procedureMissing() ? 'Elija un procedimiento de la lista del nomenclador.' : ''"
+            >
+              <app-reference-combobox
+                data-testid="procedure-offers-procedure"
+                placeholder="Ej.: endoscopía"
+                [minQueryLength]="2"
+                [options]="procedureOptions()"
+                [loading]="searchingProcedures()"
+                [selected]="chosenOption()"
+                (searched)="searchProcedures($event)"
+                (selectionChange)="chooseProcedure($event)"
+              />
+            </app-form-field>
+
+            <app-form-field
+              label="Precio propio de esta sede (Bs)"
+              hint="Opcional. Sin precio queda publicado, pero no aparece en las búsquedas."
+              [errorMessage]="publishPrice.touched && publishPrice.invalid ? 'Escriba un importe válido, por ejemplo 350 o 350,50.' : ''"
+            >
+              <app-input
+                [formControl]="publishPrice"
+                type="text"
+                inputMode="decimal"
+                testId="procedure-offers-price"
+              />
+            </app-form-field>
+          </div>
+
+          <div class="publish__actions">
+            <button
+              app-button
+              variant="primary"
+              type="submit"
+              data-testid="procedure-offers-publish"
+              [disabled]="publishing()"
+            >
+              {{ publishing() ? 'Publicando…' : 'Publicar en esta sede' }}
+            </button>
+          </div>
+        </form>
+      </app-tab>
+    </app-tabs>
+  </app-view-state-host>
+</app-card>
+
+@if (priceEditing(); as offer) {
+  <app-content-dialog
+    [heading]="offer.price === null ? 'Fijar el precio' : 'Cambiar el precio'"
+    [description]="offer.serviceDisplay"
+    closeLabel="Cancelar"
+    size="sm"
+    (closed)="closePriceEditor()"
+  >
+    <form class="price-editor" novalidate (submit)="$event.preventDefault(); savePrice()">
+      @if (priceEditError(); as message) {
+        <app-alert tone="error" data-testid="procedure-offers-price-error">{{ message }}</app-alert>
+      }
+      <app-form-field
+        label="Precio propio de esta sede (Bs)"
+        [required]="true"
+        [errorMessage]="priceEditControl.touched && priceEditControl.invalid ? 'Escriba un importe válido, por ejemplo 350 o 350,50.' : ''"
+      >
+        <app-input
+          [formControl]="priceEditControl"
+          type="text"
+          inputMode="decimal"
+          testId="procedure-offers-price-edit-input"
+        />
+      </app-form-field>
+    </form>
+    <button
+      app-button
+      dialog-actions
+      variant="primary"
+      type="button"
+      data-testid="procedure-offers-price-save"
+      [disabled]="savingPrice()"
+      (clicked)="savePrice()"
+    >
+      {{ savingPrice() ? 'Guardando…' : 'Guardar precio' }}
+    </button>
+  </app-content-dialog>
+}
