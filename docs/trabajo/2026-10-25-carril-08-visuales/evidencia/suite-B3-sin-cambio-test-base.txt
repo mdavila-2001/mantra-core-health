@@ -1,0 +1,166 @@
+# Salida recortada: resumen y líneas FAIL (la salida completa pesa 612476 bytes)
+ FAIL   mantra-core-health  src/app/features/billing/billing.spec.ts > Billing · facturación contra el SIAT SIMULADO > la puerta por omisión > se abre en la maqueta y se cierra si se fuerza la API real
+AssertionError: expected true to be false // Object.is equality
+ FAIL   mantra-core-health  src/app/features/design-system-sample/design-system-sample.spec.ts > DesignSystemSample > el selector de tema sigue expuesto: es la única UI del ThemeService
+AssertionError: expected <button …(8)></button>
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > cambiar las opciones de un campo propio guarda la lista entera
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > el cambio se ve en la pantalla antes de que el servidor conteste
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > un cambio que llega mientras el anterior viaja espera y sale después, no se pierde
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > si el guardado falla se relee del servidor, porque la pantalla ya no sabe qué quedó
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > duplicar declara una definición NUEVA con lo mismo y la cuelga debajo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > la descripción se sirve como la ayuda bajo el campo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > con «Otro» se sirve a la vista aunque tenga muchas opciones: un desplegable no tiene dónde escribir
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > una cuadrícula se sirve como cuadrícula, con sus filas y sus columnas
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > la cuadrícula de casillas admite varias por fila
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > el control de una cuadrícula nace como objeto y no en cadena
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > las dos restricciones de la cuadrícula validan en la vista previa
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > un sí/no se sirve con los dos botones y arranca sin responder
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > los topes de un campo de varias validan en la vista previa
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > muestra de dónde salió el formulario, que es lo que explica el bloqueo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > el aviso de bloqueo va igual cuando la plantilla no declara procedencia
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > los campos del estándar se siguen mostrando, no se esconden por bloqueados
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > soltar una tarjeta sobre otra manda el orden entero, como las flechas
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > soltar una tarjeta sobre sí misma no pide nada
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > sólo es arrastrable la tarjeta cuyo agarre está apretado
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > mis formularios (REQ-27-001/002/008) > al entrar lista sólo los que su organización extendió, con versión y especialidad
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > mis formularios (REQ-27-001/002/008) > la fila entera abre la edición del formulario
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > mis formularios (REQ-27-001/002/008) > sin formularios propios lo dice y ofrece cargar uno del catálogo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > mis formularios (REQ-27-001/002/008) > al volver de un formulario recién extendido, aparece en la lista sin releer el catálogo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > el catálogo se resuelve sin pedir nada más al escribir: filtra lo ya leído
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > la búsqueda ignora tildes y encuentra por especialidad y por organismo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > el filtro de especialidad sólo ofrece las que tienen formulario
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > sin rótulos de especialidad el listado sigue en pie, con el filtro sin opciones
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > arranca en la especialidad de quien entra, con las fichas generales al lado
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > «Ver todas las especialidades» quita el filtro y no se vuelve a poner solo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > un enlace que ya trae filtro no se pisa con la especialidad propia
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > agrupa por especialidad: la propia primero, las generales al final y la base antes
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > lo vacío del filtro no es lo vacío del catálogo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > descargar el formulario en PDF > manda a imprimir el formulario abierto, con sus páginas y su conteo de campos
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > descargar el formulario en PDF > sin formulario abierto no baja nada
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > vista previa de una ficha con condiciones > pagina por sección y lleva la condición con la clave del padre
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > vista previa de una ficha con condiciones > el «¿a qué?» aparece al contestar «sí» y se va con el «no»
+Error: Cannot configure the test module when the test module has already been instantiated. Make sure you are not using `inject` before `TestBed.configureTestingModule`.
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > refactor UX: lo que viene primero y la acción a la vista > R-02 · las próximas encabezan la lista y las atendidas van debajo, la más reciente arriba
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > refactor UX: lo que viene primero y la acción a la vista > R-02 · sin citas pasadas no dibuja un grupo «Anteriores» vacío
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > refactor UX: lo que viene primero y la acción a la vista > R-01 · el botón del encabezado cambia de sección —no scrollea— y deja el foco detrás
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > refactor UX: lo que viene primero y la acción a la vista > R-01 · una cuenta sin perfil de paciente no recibe el botón
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > refactor UX: lo que viene primero y la acción a la vista > R-03 · «Más filtros» anuncia si está abierto y cuántos filtros esconde
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > reglas finas de la cita (TJ-2) > un turno movido dice de cuándo, para que no se lea como ajeno
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > reglas finas de la cita (TJ-2) > un turno que nunca se movió no dice nada de reprogramación
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > reglas finas de la cita (TJ-2) > fuera de la ventana, se muestra lo que el servidor explica y NO se relee
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > por defecto sólo pide PROFESIONALES, no todos los recursos del tenant
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > refactor UX: con ?resource=lab (desde «Mis órdenes») arranca pidiendo laboratorios
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > con ?campaign=<código> avisa que se agenda por una campaña del seguro
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > sin título en la dirección, el aviso cae al código de la campaña
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > sin ?campaign no hay aviso de campaña
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > un ?campaign vacío o sólo con espacios tampoco muestra aviso
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > al cambiar a laboratorio, vuelve a preguntar por recursos de tipo ROOM
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > cambiar de tipo limpia lo elegido: el recurso era de la otra lista
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > cambiar al tipo que ya está puesto no vuelve a pedir nada
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > un turno médico conserva el nombre de su agenda al mirar laboratorios
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con quién se pide el turno (J2) > el vacío de laboratorios no le dice a la persona que espere sin más
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > sin perfil de paciente no sale a la red y lo dice
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > sin perfil de paciente ofrece la salida a la agenda, no solo la explicación
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el turno pide sus turnos por perfil, no por organización
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > sin turnos, el vacío ofrece la próxima acción en vez de quedar mudo
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > dice el estado en castellano, no el «display» en inglés del catálogo
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el tono del badge sale del código: confirmado y cancelado no se ven igual
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > si el catálogo no responde, la lista sobrevive con el estado en neutro
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > dice con quién es el turno, aunque las agendas lleguen después
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > jamás muestra el uuid del estado en pantalla
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > volver al placeholder de agendas no pide horarios de nadie
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > elegir un día en el calendario acota los horarios a ese día
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el buscador de profesional filtra por nombre, sin tildes ni mayúsculas
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > agrupa los dos consultorios de la misma profesional en una sola opción
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > ofrece consulta y cada servicio, y cada opción dice cuánto dura
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > con ?profesional llega con ese profesional ya elegido
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > con ?profesional y ?servicio llega con el servicio elegido y sus horarios pedidos
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > un ?servicio que el profesional ya no ofrece no se elige: queda la consulta
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > un ?profesional sin agenda en esta organización no elige a nadie
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > el enlace se aplica una sola vez: elegir a mano después no lo pisa
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > un profesional sin servicios no recibe la pregunta
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > por omisión se pide una consulta y los horarios son los de siempre
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > elegir un servicio pide la disponibilidad calculada de cada sede, no los cupos
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > cada horario es un inicio posible y la hora de fin es el MÁXIMO que se reserva
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > la reserva de un servicio viaja con la oferta, no con un id de cupo
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > una consulta sigue viajando sin `oferta` y con el id del cupo
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > volver a «Consulta» vuelve a pedir los cupos de la grilla
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > el detalle del servicio dice cuánto dura, cuánto sale y si necesita confirmación
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > un servicio no ofrece lista de espera: no hay cupo al que anotarse
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > cambiar de profesional descarta el servicio elegido
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > un servicio sin horarios lo dice con su nombre, no con un mensaje de consultas
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > si una sede no contesta, muestra los horarios de la otra y lo avisa
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > pedir un servicio, no una consulta > si falla la lectura de los servicios, la pantalla sigue siendo la de consultas
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con un solo consultorio no pregunta dónde
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > «cualquier lugar» pide las dos agendas, mezcla por hora y dice de dónde es cada hueco
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > elegir un lugar consulta sólo ése y deja de rotular la sede en cada fila
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > si una sede no contesta, muestra los horarios de la otra y lo avisa
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > si NINGUNA sede contesta es un error, no una lista corta
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > con varios lugares en foco no ofrece la lista de espera: es de UNA agenda
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el servicio reservado en «Mis citas» (v4.2.40) > la fila de un servicio dice cuál es y cuánto puede durar
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el servicio reservado en «Mis citas» (v4.2.40) > con mínimo y máximo iguales dice un solo número
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el servicio reservado en «Mis citas» (v4.2.40) > una consulta no lleva esa línea
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el servicio reservado en «Mis citas» (v4.2.40) > se guarda en el turno, para poder buscarlo y mostrarlo igual en el calendario
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el sello de reconsulta (C4) > la fila de una reconsulta lleva el sello
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el sello de reconsulta (C4) > y la frase dice quién la agendó y por qué consulta
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el sello de reconsulta (C4) > sin la fecha del origen la frase cambia entera, no queda con un hueco
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el sello de reconsulta (C4) > un turno que la persona pidió no lleva sello ni frase
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments > el sello de reconsulta (C4) > el estado sigue viéndose: el sello lo acompaña, no lo reemplaza
+ FAIL   mantra-core-health  src/app/features/account/appointments/appointments.spec.ts > Appointments · cancelar turno propio > muestra "Cancelar" solo en turnos cancelables (gate por código normalizado)
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > pinta las columnas del pedido más la de acciones, y la moneda una sola vez en el conteo
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > ofrece un filtro por cada encabezado filtrable, con sólo los valores que existen
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > el buscador es multicampo e ignora acentos y mayúsculas
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > filtra por tramo de monto y período de prestación leídos de la URL
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > arranca en «Por dictaminar» y cada bandeja cuenta lo que tiene
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > ordena por el encabezado elegido, en las dos direcciones
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > pagina en el cliente y vuelve a la página 1 cuando cambia la búsqueda
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > el buscador no escribe en la URL: ahí irían nombres y CI de pacientes
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > sin solicitudes queda en vacío con la próxima acción, no en una tabla vacía
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > un error del servidor se muestra como error, no como lista vacía
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > avisa cuando el servidor recortó la lista
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > el nombre del paciente es un botón que abre el detalle con los otros datos
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > ofrece decidir sólo lo abierto, anular la factura vigente y volver a facturar la anulada
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > cada fila tiene su botón «Ver detalle»
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > aprobar avisa que no se revierte y que factura, y sólo manda el dictamen si se confirma
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > rechazar exige motivo y lo manda
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > aprobar en parte no deja pasar un monto igual o mayor que lo solicitado
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > anular la factura pide motivo y lo manda
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > muestra la institución médica junto al médico y como entidad principal cuando no hay médico
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > muestra el monto aprobado cuando la solicitud tiene dictamen favorable
+ FAIL   mantra-core-health  src/app/features/organization/pharmacy-inbox/pharmacy-inbox.spec.ts > PharmacyInbox with the tenant API list > sin casa matriz marcada abre con la primera sede y lo dice
+AssertionError: expected null to be '00000000-0000-4000-8000-0000000000a1' // Object.is equality
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > crea una categoría con POST y relee la lista
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > un nombre repetido es un 409 que se dice en el modal
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > renombra con PATCH
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > eliminar una con productos es un 409 que queda a la vista en la pantalla
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > elimina una sin productos con DELETE y relee
+ FAIL   mantra-core-health  src/app/features/pharmacy/import/pharmacy-import.spec.ts > PharmacyImport > modo > «sólo actualizar» rechaza el código que no existe, con un mensaje claro, y actualiza el que sí
+AssertionError: expected { brandName: 'Ya está' } to deeply equal { brandName: 'Ya está', inStock: true }
+ FAIL   mantra-core-health  src/app/features/pharmacy/import/pharmacy-import.spec.ts > PharmacyImport > categorías de la farmacia > publica la categoría con la grafía de la farmacia aunque el archivo la traiga sin tilde ni mayúscula
+AssertionError: expected { Object (productCode, brandName) } to match object { productCode: 'C-1', …(1) }
+ FAIL   mantra-core-health  src/app/features/pharmacy/import/pharmacy-import.spec.ts > PharmacyImport > paso 4 · publicar y resultado > publica fila por fila, en serie, y cuenta lo que la API rechazó
+AssertionError: expected { productCode: 'A-1', …(2) } to deeply equal { productCode: 'A-1', …(3) }
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > guarda sólo lo que cambió, en un único PATCH, y relee la tabla
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > guarda sólo el booleano —sin existencias— en el mismo PATCH
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > cantidades y booleano pendientes viajan juntos; si una fila tiene las dos, mandan las cantidades
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > alta desde el modal > el alta manda el id del catálogo y la presentación, nunca los datos del producto
+AssertionError: expected { productCode: '700002', …(2) } to deeply equal { productCode: '700002', …(4) }
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > alta desde el modal > guardar un borrador manda status DRAFT
+AssertionError: expected undefined to be 'DRAFT' // Object.is equality
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > alta desde el modal > «no encuentro mi medicamento» manda la solicitud y no publica ningún producto
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > editar un producto del catálogo guarda lo suyo y NO manda nombre, concentración ni receta
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > editar abre el modal con el producto y guarda con PATCH, sin tocar el código
+AssertionError: expected { brandName: 'Paracetamol Bagó', …(4) } to match object { brandName: 'Paracetamol Bagó', …(4) }
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > publica un borrador con PATCH status PUBLISHED
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > «marcar sin stock» avisa a la API y relee el catálogo
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > en lote > publica lo seleccionado en serie: la segunda sale cuando vuelve la primera
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > en lote > retirar en lote pide confirmación una sola vez y sigue aunque uno falle
+ FAIL   mantra-core-health  src/app/features/admin/patients/patient-list/patient-list.spec.ts > PatientList > el texto buscado no va a la URL > inválido — un enlace viejo con `?q=` busca lo que traía y lo saca de la URL
+ FAIL   mantra-core-health  src/app/features/admin/patients/patient-list/patient-list.spec.ts > PatientList > elegir un filtro de catálogo viaja a la consulta con su clave real
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > «Aplicar» manda un único PATCH con las filas válidas y avisa que terminó
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > un archivo sólo con «disponible» manda el booleano, sin cantidades
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > si el servidor rechaza, el diálogo queda abierto con el motivo y no avisa que terminó
+ FAIL   mantra-core-health  src/app/shared/components/organisms/paginated-form/paginated-form.spec.ts > PaginatedForm > sirve una página por vez > empieza por la primera y no pinta los campos de las demás
+ Test Files  13 failed | 829 passed (842)
+      Tests  156 failed | 11685 passed (11841)
+   Duration  134.02s (transform 224.30s, setup 7.13s, import 70.26s, tests 432.85s, environment 1559.09s)
