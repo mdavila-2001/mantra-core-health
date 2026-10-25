@@ -1,5 +1,5 @@
 <app-page-header
-  title="Configurar su perfil"
+  title="Editar perfil"
   subtitle="Su presentación, sus especialidades y sus matrículas."
   [breadcrumbs]="breadcrumbs()"
 />
@@ -26,7 +26,6 @@
         >
           <!-- ─── Datos personales ──────────────────────────────────────── -->
           <app-tab [label]="pestanas[0]">
-            <p class="edicion__nota">Cómo le ven las personas que consultan su perfil.</p>
 
             <form class="edicion__formulario" (submit)="$event.preventDefault()">
               <!-- Vacío BORRA el dato opcional, que es cómo se quita un segundo

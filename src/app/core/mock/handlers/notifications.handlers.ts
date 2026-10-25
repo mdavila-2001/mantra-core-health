@@ -199,6 +199,10 @@ export function registrarNotificaciones(router: MockRouter): void {
     return { marked: pendientes.length, unreadCount: 0 };
   });
 
+  // La maqueta no tiene servidor de push: se dice que está apagado para que la
+  // pantalla no ofrezca algo que no puede cumplir.
+  router.get('/notifications/web-push/config', () => ({ enabled: false, publicKey: null }));
+
   router.get('/notifications/preferences/me', (request) => preferenciasDe(request.user?.id ?? ''));
 
   router.put('/notifications/preferences/me', (request) => {

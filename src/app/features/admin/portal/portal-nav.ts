@@ -122,6 +122,28 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
       },
     ],
   },
+  {
+    id: 'gobierno',
+    label: 'Gobierno y acceso',
+    icon: 'shield',
+    items: [
+      {
+        label: 'Auditoría',
+        path: 'gobierno/auditoria',
+        summary: 'Quién hizo qué y cuándo, y quién leyó datos sensibles',
+      },
+      {
+        label: 'Usuarios y roles',
+        path: 'gobierno/usuarios',
+        summary: 'Usuarios internos, sus roles y los permisos de cada rol',
+      },
+      {
+        label: 'Deriva de permisos',
+        path: 'gobierno/deriva-permisos',
+        summary: 'Roles que las rutas exigen y nadie siembra, y rutas sin roles',
+      },
+    ],
+  },
 ];
 
 /** La dirección absoluta de una pantalla. */

@@ -16,11 +16,10 @@
       Marcar todas como leídas ({{ sinLeer() }})
     </button>
   }
+  <a app-button page-actions variant="outline" size="sm" routerLink="/settings">
+    Preferencias
+  </a>
 </app-page-header>
-
-@if (error(); as mensaje) {
-  <app-alert tone="error" class="avisos__alerta">{{ mensaje }}</app-alert>
-}
 
 <!-- UNA tarjeta con pestañas, a lo ancho del área y centrada: la regla de la
      casa (`docs/components/composition-rules.md` §5). Antes la lista estaba
@@ -38,6 +37,18 @@
     <app-tab [label]="sinLeer() > 0 ? 'Sin leer (' + sinLeer() + ')' : 'Sin leer'">
       <ng-container [ngTemplateOutlet]="bandeja" />
     </app-tab>
+    <app-tab label="Consultas">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
+    <app-tab label="Mensajes">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
+    <app-tab label="Recetas">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
+    <app-tab label="Red">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
   </app-tabs>
 </app-card>
 
@@ -45,17 +56,16 @@
      es el mismo, lo que cambia es qué pidió el servidor. Copiarla habría
      garantizado que el arreglo de una se aplicara a la mitad. -->
 <ng-template #bandeja>
-  @if (vacio()) {
-    <div class="avisos__vacio">
-      <app-empty-state
-        [title]="
-          soloSinLeer() ? 'No tiene notificaciones sin leer' : 'Todavía no tiene notificaciones'
-        "
-        description="Acá van a aparecer los avisos de sus recetas, sus consultas, sus turnos y sus mensajes."
-        variant="empty"
-      />
-    </div>
-  } @else {
+  <app-view-state-host [state]="estado()" (retry)="recargar()">
+    @if (hayFiltrosSinResultados()) {
+      <div class="avisos__vacio">
+        <app-empty-state
+          title="Todavía no aparecen avisos de esta categoría"
+          description="Cargá más notificaciones para seguir buscando."
+          variant="empty"
+        />
+      </div>
+    }
     @for (grupo of grupos(); track grupo.etiqueta) {
       <section class="avisos__dia">
         <h2 class="avisos__dia-titulo">{{ grupo.etiqueta }}</h2>
@@ -127,7 +137,7 @@
         </button>
       </div>
     }
-  }
+  </app-view-state-host>
 </ng-template>
 
 <!-- El contenido de una fila: dibujo, texto, cuándo y si es nueva. -->

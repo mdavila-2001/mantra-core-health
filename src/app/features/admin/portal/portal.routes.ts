@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 
 import { APP_TITLE } from '../../../core/navigation/navigation.types';
+import { PORTAL_GOVERNANCE_ROUTES } from './governance/governance.routes';
 
 /**
  * Las pantallas del portal, relativas a `superadmin/portal`. El marco las
@@ -85,4 +86,5 @@ export const PORTAL_RUTAS: Routes = [
     title: `${APP_TITLE} - Esquema`,
     loadComponent: () => import('./schemas/schemas-page').then((m) => m.SchemasPage),
   },
+  ...PORTAL_GOVERNANCE_ROUTES,
 ];
