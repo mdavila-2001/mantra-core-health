@@ -51,6 +51,15 @@ describe('AuthStage', () => {
     expect(columnas.every((x) => parseFloat(x) >= 0 && parseFloat(x) < 100)).toBe(true);
   });
 
+  it('el resplandor del puntero es UNA capa, entre las motas y el latido', () => {
+    const capas = Array.from(el().children).map((c) => c.getAttribute('class'));
+    const resplandor = capas.indexOf('auth-stage__glow');
+
+    expect(capas.filter((c) => c === 'auth-stage__glow')).toHaveLength(1);
+    expect(capas[resplandor - 1]).toBe('auth-stage__motes');
+    expect(capas[resplandor + 1]).toBe('auth-stage__ecg');
+  });
+
   describe('hoja de estilos', () => {
     const css = (): string =>
       readFileSync('src/app/shared/components/organisms/auth-stage/auth-stage.css', 'utf8');
@@ -74,6 +83,39 @@ describe('AuthStage', () => {
       const reducido = css().slice(css().indexOf('prefers-reduced-motion'));
       expect(reducido).toContain('.auth-stage__ecg-base');
       expect(reducido).toMatch(/animation:\s*none\s*!important/);
+    });
+
+    describe('modo claro', () => {
+      const claro = (): string => css().slice(css().indexOf('Modo claro'));
+
+      it('es un bloque de overrides sin literales de color: solo tokens', () => {
+        expect(claro().length).toBeGreaterThan(0);
+        const sinComentarios = claro().replace(/\/\*[\s\S]*?\*\//g, '');
+        expect(sinComentarios).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
+      });
+
+      it('el resplandor sigue al puntero solo con transform y opacity, sin repintar', () => {
+        const regla = claro().match(
+          /:host-context\(:root\[data-tema='claro'\]\) \.auth-stage__glow \{[^}]+\}/,
+        )?.[0];
+
+        expect(regla).toBeDefined();
+        expect(regla).toMatch(/opacity:\s*var\(--pointer-on/);
+        expect(regla).toMatch(/transform:\s*translate3d\(/);
+        expect(regla).not.toMatch(/background-position|filter|mix-blend-mode/);
+      });
+
+      it('fuera de claro el resplandor no existe: el oscuro queda igual', () => {
+        expect(css()).toMatch(/^\.auth-stage__glow \{\s*display: none;\s*\}/m);
+      });
+
+      it('«reducir movimiento» también apaga el resplandor', () => {
+        const reducido = css().slice(
+          css().indexOf('@media (prefers-reduced-motion'),
+          css().indexOf('Modo claro'),
+        );
+        expect(reducido).toContain('.auth-stage__glow');
+      });
     });
   });
 });

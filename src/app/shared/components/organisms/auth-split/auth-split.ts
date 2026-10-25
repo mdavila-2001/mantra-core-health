@@ -48,7 +48,7 @@ export type AuthSplitScene = 'split' | 'stage' | 'calm';
   selector: 'app-auth-split',
   imports: [AccountIcon, AppButton, AuthStage, BrandMark, PointerScene],
   templateUrl: './auth-split.html',
-  styleUrl: './auth-split.css',
+  styleUrls: ['./auth-split.css', './auth-split-light-stage.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthSplit {

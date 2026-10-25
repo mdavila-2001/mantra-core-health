@@ -1,0 +1,63 @@
+/* ==========================================================================
+    `app-auth-split` en `scene="stage"`, modo claro.
+
+    El escenario del latido (`app-auth-stage`) invierte su balance en claro:
+    blanco y menta, tinta petróleo, y celeste solo junto al puntero. Lo que esta
+    plantilla pinta ENCIMA del escenario tiene que acompañarlo: la columna de
+    marca pasa de texto blanco sobre un velo petróleo a tinta petróleo sobre un
+    velo blanco, y el resplandor de la tarjeta deja de ser aqua, que en reposo
+    rompería el «celeste solo con el puntero».
+
+    Hoja aparte y no dentro de `auth-split.css`: aquella ya es grande, y estas
+    reglas son las mismas en todas las ramas. Todo es override bajo
+    `:host-context(:root[data-tema='claro'])` (el script del `<head>` fija
+    `data-tema` antes del primer pintado), así que el oscuro no cambia.
+
+    Contraste: petróleo 700 sobre blanco da 12,18:1, y 7,00:1 sobre aqua 300
+    puro, el peor fondo posible bajo el resplandor (identidad-visual.md §8).
+    ========================================================================== */
+
+/* El logo petróleo solo existe para el escenario claro. */
+.auth-split__wordmark-ink {
+  display: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__wordmark-ink {
+  display: block;
+}
+
+:host-context(:root[data-tema='claro'])
+  .auth-split--stage
+  .auth-split__wordmark
+  img:not(.auth-split__wordmark-ink) {
+  display: none;
+}
+
+/* Resplandor detrás de la tarjeta: respira igual, pero en petróleo muy suave. */
+:host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__slot::before {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--c-petrol-100) 40%, transparent),
+    transparent
+  );
+}
+
+/* --bp-lg, literal: las media queries no admiten variables. La columna de
+   marca solo se ve en escritorio. */
+@media (min-width: 1024px) {
+  :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__brand {
+    color: var(--c-petrol-700);
+  }
+
+  :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__brand::before {
+    background: radial-gradient(
+      85% 50% at 0% 100%,
+      color-mix(in srgb, var(--bg-surface) 80%, transparent),
+      transparent 72%
+    );
+  }
+
+  :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__claim {
+    text-shadow: none;
+  }
+}
