@@ -91,6 +91,20 @@
                 <ng-container [ngTemplateOutlet]="panelDiagnosticos" />
               }
             </app-tab>
+            <!-- «Servicios recibidos» va última por lo mismo: los enlaces con `?seccion=`
+                 que ya circulan siguen apuntando a lo mismo. Las intervenciones médicas
+                 realizadas son un tipo de servicio, junto a las vacunas. La consulta
+                 vive en «Atenciones» y el análisis médico en «Resultados». Sin
+                 contador en el rótulo: se lee al abrir la pestaña, no antes. -->
+            <app-tab label="Servicios recibidos">
+              @if (seccion() === 5 && perfil !== null) {
+                <app-received-services-panel
+                  data-testid="historia-servicios"
+                  [patientProfileId]="perfil"
+                  [emptyAction]="{ label: 'Pedir una cita', route: rutaDeTurnos }"
+                />
+              }
+            </app-tab>
           </app-tabs>
         </app-card>
       </div>

@@ -90,6 +90,7 @@ import {
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { ReceivedServicesPanel } from '../../../shared/components/organisms/received-services-panel/received-services-panel';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
@@ -395,6 +396,7 @@ interface Expediente {
     ObservationBlock,
     PdfExportButton,
     PageHeader,
+    ReceivedServicesPanel,
     Progress,
     Tab,
     Tabs,
@@ -465,6 +467,8 @@ export class PatientChart {
 
   /** El mismo perfil, para los bloques hijos que escriben contra él. */
   protected readonly pacienteDeLaFicha = this.profileId;
+  /** La pestaña abierta de la historia: «Servicios recibidos» lee solo cuando es la activa. */
+  protected readonly activeTab = signal(0);
 
   protected readonly expediente = signal<ViewState<Expediente>>(loading());
 
@@ -1525,9 +1529,7 @@ export class PatientChart {
 
   /** Abre `app-diagnosis-verify-dialog` sobre una fila presuntiva. */
   protected abrirVerificacion(fila: FilaClinica, outcome: DiagnosisOutcome): void {
-    if (fila.condicionOriginal === undefined) {
-      return;
-    }
+    if (fila.condicionOriginal === undefined) return;
     this.verificando.set({ condicion: fila.condicionOriginal, nombre: fila.principal, outcome });
   }
 
@@ -1975,9 +1977,7 @@ export class PatientChart {
     const guardada = (this.datos()?.resumen.medicationRequests ?? []).find(
       (fila) => fila.id === receta.id,
     );
-    if (guardada === undefined) {
-      return;
-    }
+    if (guardada === undefined) return;
 
     downloadPrescriptionPdf(
       recetaDesdeResumen(guardada, this.contextoDelDocumento(), (id) => this.label(id)),

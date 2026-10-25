@@ -37,7 +37,7 @@ import {
   preconditionFailed,
   reply,
   unauthorized,
-  validation,
+  validationPipeRejected,
   type MockReply,
   type MockRouter,
 } from '../mock-router';
@@ -86,7 +86,7 @@ function enteroEnRango(
   return Number.isInteger(valor) && valor >= rango.minimo && valor <= rango.maximo ? valor : null;
 }
 
-/** Lee la query del vecindario; un texto es el motivo del 422. */
+/** Lee la query del vecindario; un texto es el motivo del 400 (como el `ValidationPipe` de la API). */
 function pedidoDeVecindario(query: URLSearchParams): PedidoDeVecindario | string {
   const tipo = texto(query, 'type');
   const sentido = texto(query, 'direction');
@@ -515,7 +515,7 @@ export function registrarTerminologia(
 
   router.get('/terminology/concepts/:id/glossary-neighborhood', async ({ params, query }) => {
     const pedido = pedidoDeVecindario(query);
-    if (typeof pedido === 'string') return validation(pedido);
+    if (typeof pedido === 'string') return validationPipeRejected(pedido);
     try {
       const fila = await glosario.porId(params['id']!);
       if (fila === null) return notFound('Término del glosario no encontrado');
