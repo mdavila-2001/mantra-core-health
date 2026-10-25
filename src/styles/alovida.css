@@ -380,12 +380,12 @@ html::after {
    se deriva de `--fondo-presencia`, el mismo interruptor del runtime: en
    reposo (`.35`, y también con `prefers-reduced-motion`, donde el servicio
    nunca la toca) da 0 y el blanco de `--sup-pagina` queda limpio; con el
-   puntero activo (`1`) sube a .35 (tope por contraste AA: con los cuatro focos
-   apilados `--tinta-3` da 4,61:1; a .6 daba 4,11). Mapeo lineal: (presencia − .35) / .65
-   × .35. */
+   puntero activo (`1`) sube a .30 (tope por contraste AA: con los cuatro focos
+   apilados `--tinta-3` da 4,73:1; a .6 daba 4,11). Mapeo lineal: (presencia − .35) / .65
+   × .30. */
 :root:not([data-tema="oscuro"]):not([data-theme="dark"]) body::before,
 :root:not([data-tema="oscuro"]):not([data-theme="dark"]) body::after {
-  opacity: calc((var(--fondo-presencia, .35) - .35) / .65 * .35);
+  opacity: calc((var(--fondo-presencia, .35) - .35) / .65 * .30);
 }
 h1, h2, h3 { margin: 0; font-family: var(--f-titulo); color: var(--tinta-marca); }
 h1, .titulo-h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 600; letter-spacing: -.015em; }

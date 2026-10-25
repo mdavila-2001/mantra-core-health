@@ -1,0 +1,46 @@
+[
+  {
+    "ms": 100,
+    "sin_clic": {
+      "px_distintos": 0,
+      "dif_max": 0
+    },
+    "con_clic": {
+      "px_distintos": 284457,
+      "dif_max": 25
+    }
+  },
+  {
+    "ms": 250,
+    "sin_clic": {
+      "px_distintos": 0,
+      "dif_max": 0
+    },
+    "con_clic": {
+      "px_distintos": 297579,
+      "dif_max": 16
+    }
+  },
+  {
+    "ms": 450,
+    "sin_clic": {
+      "px_distintos": 0,
+      "dif_max": 0
+    },
+    "con_clic": {
+      "px_distintos": 297630,
+      "dif_max": 13
+    }
+  },
+  {
+    "ms": 800,
+    "sin_clic": {
+      "px_distintos": 0,
+      "dif_max": 0
+    },
+    "con_clic": {
+      "px_distintos": 127647,
+      "dif_max": 2
+    }
+  }
+]
