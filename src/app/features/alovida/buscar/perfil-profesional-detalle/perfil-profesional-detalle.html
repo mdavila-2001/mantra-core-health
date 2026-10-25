@@ -1,7 +1,7 @@
 <div class="app-page-header" app-page-header="">
       <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
       <div class="app-page-header__texto">
-        <p style="margin-bottom:var(--e2)"><a app-link="" routerLink="/buscar/profesionales-listado"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Volver a los resultados</a></p>
+        <p style="margin-bottom:var(--e2)"><a app-link="" routerLink="/search/practitioners-list"><svg class="icono icono--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"></path></svg>Volver a los resultados</a></p>
         <p class="overline">Perfil del profesional</p>
         <p class="caption">Todo lo que se puede saber de un profesional antes de sentarse enfrente: qué verificó AloVida, qué declaró, dónde atiende, qué seguro le aceptan y qué dicen quienes ya se atendieron.</p>
       </div>
@@ -40,8 +40,8 @@
             <caption class="solo-lectores">Sedes y horarios de atención</caption>
             <thead><tr><th scope="col">Sede</th><th scope="col">Dirección</th><th scope="col">Días</th><th scope="col">Horario</th><th scope="col">Modalidad</th></tr></thead>
             <tbody>
-            <tr><td><a app-link="" routerLink="/buscar/perfil-organizacion-detalle">Clínica Los Olivos</a></td><td>Av. 6 de Agosto 2455, Sopocachi</td><td>Lunes a jueves</td><td><span class="col-codigo">14:00 – 19:00</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Presencial</span></td></tr>
-            <tr><td><a app-link="" routerLink="/buscar/perfil-organizacion-detalle">Clínica Los Olivos · San Miguel</a></td><td>Calle 21 esq. Montenegro, San Miguel</td><td>Viernes</td><td><span class="col-codigo">09:00 – 13:00</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Presencial</span></td></tr>
+            <tr><td><a app-link="" routerLink="/search/organization-profile-detail">Clínica Los Olivos</a></td><td>Av. 6 de Agosto 2455, Sopocachi</td><td>Lunes a jueves</td><td><span class="col-codigo">14:00 – 19:00</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Presencial</span></td></tr>
+            <tr><td><a app-link="" routerLink="/search/organization-profile-detail">Clínica Los Olivos · San Miguel</a></td><td>Calle 21 esq. Montenegro, San Miguel</td><td>Viernes</td><td><span class="col-codigo">09:00 – 13:00</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg>Presencial</span></td></tr>
             <tr><td>Teleconsulta</td><td>En línea</td><td>Martes y jueves</td><td><span class="col-codigo">20:00 – 22:00</span></td><td><span class="app-badge" data-tono="neutro"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="6" width="12" height="12" rx="2.5"></rect><path d="m15 11 6-3.5v9L15 13z"></path></svg>Virtual</span></td></tr>
             </tbody>
           </table>
@@ -54,8 +54,8 @@
             <caption class="solo-lectores">Convenios vigentes</caption>
             <thead><tr><th scope="col">Aseguradora</th><th scope="col">Plan</th><th scope="col">Copago de consulta</th><th scope="col">Vigencia del convenio</th></tr></thead>
             <tbody>
-            <tr><td><a app-link="" routerLink="/buscar/perfil-aseguradora-detalle">La Boliviana Ciacruz</a></td><td>Salud Familiar Plus</td><td><span class="num">Bs 40</span></td><td><span class="col-codigo">hasta 31/12/2026</span></td></tr>
-            <tr><td><a app-link="" routerLink="/buscar/perfil-aseguradora-detalle">Alianza Seguros</a></td><td>Salud Individual</td><td><span class="num">Bs 60</span></td><td><span class="col-codigo">hasta 30/06/2027</span></td></tr>
+            <tr><td><a app-link="" routerLink="/search/insurer-profile-detail">La Boliviana Ciacruz</a></td><td>Salud Familiar Plus</td><td><span class="num">Bs 40</span></td><td><span class="col-codigo">hasta 31/12/2026</span></td></tr>
+            <tr><td><a app-link="" routerLink="/search/insurer-profile-detail">Alianza Seguros</a></td><td>Salud Individual</td><td><span class="num">Bs 60</span></td><td><span class="col-codigo">hasta 30/06/2027</span></td></tr>
             <tr><td>Particular</td><td>Sin seguro</td><td><span class="num">Bs 250</span></td><td>—</td></tr>
             </tbody>
           </table>
