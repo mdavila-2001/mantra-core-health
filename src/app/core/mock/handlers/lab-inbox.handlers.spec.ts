@@ -1,7 +1,9 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { SPECIMEN_CONTAINER_TYPE, SPECIMEN_STATUS, SPECIMEN_TYPE } from '../fixtures/concepts';
-import { patientById } from '../fixtures/people';
+import { ORDER_CATEGORY, SPECIMEN_CONTAINER_TYPE, SPECIMEN_STATUS, SPECIMEN_TYPE } from '../fixtures/concepts';
+import { PERFORMER_MODE } from '../fixtures/performer-concepts';
+import { PACIENTE, patientById } from '../fixtures/people';
+import { uuid } from '../mock-store';
 import { MockRouter, isMockReply, validation, type MockMethod } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_TYPES, buscarUsuario, type MockUser } from '../mock-session';
 import { registrarDiagnostico } from './diagnostics.handlers';
@@ -213,5 +215,34 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
       expect(inbox({ patientQuery: 'x'.repeat(81) }).status).toBe(INVALID);
       expect(inbox({ cursor: 'no-es-un-cursor' }).status).toBe(INVALID);
     });
+  });
+
+  it('una orden de procedimiento no entra a la bandeja del laboratorio', () => {
+    // Pedida por la médica con sede sugerida, igual que las de «Centros médicos».
+    const creada = call<{ id: string }>(
+      'POST',
+      '/clinical/service-requests',
+      {
+        patientProfileId: PACIENTE.id,
+        codeConceptId: uuid('proc-colonoscopia'),
+        categoryConceptId: ORDER_CATEGORY['SRQ-PROCEDURE'],
+        performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
+        suggestedPracticeSiteId: uuid('site-cm-sur-1'),
+      },
+      medica,
+      new HttpHeaders({ 'X-Tenant-Id': TENANT_CLINICA }),
+    );
+    expect(creada.status).toBe(201);
+
+    const todas: string[] = [];
+    let cursor: string | null = null;
+    do {
+      const pagina: Result<InboxPage> = inbox({ limit: 100, ...(cursor === null ? {} : { cursor }) });
+      todas.push(...pagina.body.items.map((i) => i.serviceRequestId));
+      cursor = pagina.body.nextCursor;
+    } while (cursor !== null);
+
+    expect(todas).not.toContain(creada.body.id);
+    expect(todas.length).toBeGreaterThan(0);
   });
 });

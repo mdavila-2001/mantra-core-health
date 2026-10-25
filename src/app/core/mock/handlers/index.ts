@@ -11,6 +11,7 @@ import { registrarDiagnostico } from './diagnostics.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
+import { registerHealthcareServices } from './healthcare-services.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
@@ -38,6 +39,7 @@ import { registrarPortalAdministrativo } from './admin-portal.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 import { registerMedicalGroups } from './medical-groups.handlers';
+import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerReceivedServices } from './received-services.handlers';
 import { registerMedicalCenters } from './medical-centers.handlers';
 
@@ -54,6 +56,9 @@ export function crearRouterSimulado(): MockRouter {
   registerSignatureAndSeal(router);
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);
+  // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
+  // ante patrones equivalentes gana el registrado primero.
+  registerHealthcareServices(router);
   registrarPracticas(router);
   registrarClinica(router);
   registerReceivedServices(router);
@@ -91,5 +96,6 @@ export function crearRouterSimulado(): MockRouter {
   registerPatientSpending(router);
   registerMedicalGroups(router);
   registerMedicalCenters(router);
+  registerOrganizationPracticeHandlers(router);
   return router;
 }
