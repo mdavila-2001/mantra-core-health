@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { administrador, contextoDeApi, type Actor } from './support/actores';
+import { administrador, contextoDeApi, crearPaciente, type Actor } from './support/actores';
 import { crearMedicoSintetico, crearPacienteConToken } from './support/api-real-clinica';
 import { entrar, irA } from './support/sesion';
 
@@ -16,13 +16,43 @@ import { entrar, irA } from './support/sesion';
  *   y el clic despliega la lista de doctores de esa especialidad.
  * - REQ-18-006: nodo → categoría → lista → perfil, y la vuelta.
  */
-const OUTPUT_DIR = join('docs', 'trabajo', '2026-10-24-carril-18-directorios', 'evidencia');
-const PATIENT: Actor = {
+/**
+ * Con `E2E_API_REAL=1` el mismo recorrido corre contra la API real: el
+ * paciente se da de alta en cada corrida y el administrador es el de
+ * `E2E_ADMIN_*`. Sin él, son las cuentas del simulador de la maqueta.
+ */
+const REAL_API = process.env['E2E_API_REAL'] === '1';
+const OUTPUT_DIR = join(
+  'docs',
+  'trabajo',
+  '2026-10-24-carril-18-directorios',
+  'evidencia',
+  ...(REAL_API ? ['api-real'] : []),
+);
+const MOCK_PATIENT: Actor = {
   rol: 'paciente',
   identificador: 'paciente@alovida.mock',
   clave: 'mock',
   nombre: 'Paciente',
 };
+const MOCK_ADMIN: Actor = {
+  rol: 'administrador',
+  identificador: 'admin@alovida.mock',
+  clave: 'mock',
+  nombre: 'Admin',
+};
+
+async function patient(): Promise<Actor> {
+  if (!REAL_API) return MOCK_PATIENT;
+  const api = await contextoDeApi();
+  const actor = await crearPaciente(api);
+  await api.dispose();
+  return actor;
+}
+
+function admin(): Actor {
+  return REAL_API ? administrador() : MOCK_ADMIN;
+}
 
 test.beforeEach(() => {
   test.setTimeout(240_000);
@@ -47,7 +77,7 @@ for (const width of [1440, 390]) {
     const watched = watchFailures(page);
     await page.setViewportSize({ width: width, height: width > 800 ? 1000 : 844 });
 
-    await entrar(page, PATIENT);
+    await entrar(page, await patient());
 
     // REQ-18-001 · la portada con un nodo por directorio.
     await irA(page, '/directories');
@@ -137,23 +167,29 @@ test('REQ-18-003/004 clínicas con sesión = hospitales de la red social, ficha 
   // Sin sesión: la red social.
   await page.goto('/search/hospitals');
   const publicTotal = await totalIn(page, /^(\d+) centros?/u);
-  await page
-    .getByTestId('hospitales-chip-categoria')
-    .filter({ hasText: 'Hospital público' })
-    .click();
-  await expect(page).toHaveURL(/[?&]categoria=/u);
-  const categoryCode = new URL(page.url()).searchParams.get('categoria');
-  const publicInCategory = await totalIn(page, /^(\d+) centros?/u);
-  expect(publicInCategory).toBeLessThan(publicTotal);
   expect(await page.locator('main a[href^="/o/"]').count()).toBeGreaterThan(0);
+  // El corte de categoría, si el contrato la sirve: con menos de dos
+  // categorías la pantalla no dibuja chips y no hay corte que comparar.
+  const chips = page.getByTestId('hospitales-chip-categoria');
+  let categoryCode: string | null = null;
+  let publicInCategory = 0;
+  if ((await chips.count()) > 1) {
+    await chips.filter({ hasText: 'Hospital público' }).or(chips.first()).first().click();
+    await expect(page).toHaveURL(/[?&]categoria=/u);
+    categoryCode = new URL(page.url()).searchParams.get('categoria');
+    publicInCategory = await totalIn(page, /^(\d+) centros?/u);
+    expect(publicInCategory).toBeLessThan(publicTotal);
+  }
 
   // Con sesión: el mismo corte, el mismo número.
-  await entrar(page, PATIENT);
+  await entrar(page, await patient());
   await irA(page, '/clinics-directory');
   // «1–24 de 500 clínicas encontradas», o «19 clínicas encontradas» si caben.
   expect(await totalIn(page, /(\d+) clínicas? encontradas?/u)).toBe(publicTotal);
-  await irA(page, `/clinics-directory?categoria=${categoryCode}`);
-  expect(await totalIn(page, /(\d+) clínicas? encontradas?/u)).toBe(publicInCategory);
+  if (categoryCode !== null) {
+    await irA(page, `/clinics-directory?categoria=${categoryCode}`);
+    expect(await totalIn(page, /(\d+) clínicas? encontradas?/u)).toBe(publicInCategory);
+  }
   await page.screenshot({ path: join(OUTPUT_DIR, '1440-6-clinicas-con-sesion.png') });
 
   // La ficha cuelga del panel, no de la ficha anónima de la red social.
@@ -190,7 +226,7 @@ test('REQ-18-005 sin sesión la red social, con sesión el panel; cada rol ve su
   }
 
   // Paciente: ve la guía de médicos, con la agenda de cada uno.
-  await entrar(page, PATIENT);
+  await entrar(page, await patient());
   await irA(page, '/directories');
   await expect(page.locator('li[data-path="directory"]')).toBeVisible({ timeout: 30_000 });
   await irA(page, '/directory?especialidad=todos');
@@ -202,12 +238,7 @@ test('REQ-18-005 sin sesión la red social, con sesión el panel; cada rol ve su
     localStorage.clear();
     sessionStorage.clear();
   });
-  await entrar(page, {
-    rol: 'administrador',
-    identificador: 'admin@alovida.mock',
-    clave: 'mock',
-    nombre: 'Admin',
-  });
+  await entrar(page, admin());
   await irA(page, '/directories');
   await expect(page.locator('.directories__card').first()).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('li[data-path="directory"]')).toHaveCount(0);
