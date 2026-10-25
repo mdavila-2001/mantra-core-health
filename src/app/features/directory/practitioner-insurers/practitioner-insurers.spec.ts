@@ -55,11 +55,26 @@ describe('PractitionerInsurers', () => {
   }
 
   function urlOf(profileId: string): string {
-    return `/practitioners/${encodeURIComponent(profileId)}/insurance-carriers`;
+    return `/practitioners/${encodeURIComponent(profileId)}/insurance-networks`;
   }
 
-  async function respond(items: readonly PractitionerInsuranceCarrier[], profileId = PROFILE) {
-    http.expectOne(urlOf(profileId)).flush({ items });
+  /** La API responde una fila por membresía; la ficha agrupa por aseguradora. */
+  function membershipsOf(carriers: readonly PractitionerInsuranceCarrier[]) {
+    return carriers.flatMap((carrier) =>
+      carrier.networks.map((network) => ({
+        membershipId: network.id,
+        carrierId: carrier.carrierId,
+        carrierName: carrier.carrierName,
+        networkName: network.name,
+        effectiveFrom: null,
+        effectiveTo: null,
+      })),
+    );
+  }
+
+  async function respond(carriers: readonly PractitionerInsuranceCarrier[], profileId = PROFILE) {
+    const items = membershipsOf(carriers);
+    http.expectOne(urlOf(profileId)).flush({ items, count: items.length });
     await fixture.whenStable();
     fixture.detectChanges();
   }
@@ -124,14 +139,19 @@ describe('PractitionerInsurers', () => {
     expect(text()).toContain('Según la red médica que publica cada aseguradora');
   });
 
-  it('una aseguradora sin planes publicados lo dice, en vez de dejar el hueco', async () => {
+  it('la misma red por dos caminos se muestra una sola vez', async () => {
     await mount();
-    await respond([{ ...ALIANZA, networks: [] }]);
+    const items = [
+      ...membershipsOf([ALIANZA]),
+      { ...membershipsOf([ALIANZA])[0]!, membershipId: 'otra-membresia' },
+    ];
+    http.expectOne(urlOf(PROFILE)).flush({ items, count: items.length });
+    await fixture.whenStable();
+    fixture.detectChanges();
 
-    const row = host().querySelector('[data-testid="practitioner-insurer"]');
-    expect(row?.textContent).toContain('Alianza Seguros');
-    expect(row?.textContent).toContain('no detalla en qué planes');
-    expect(row?.querySelector('app-chip')).toBeNull();
+    const rows = host().querySelectorAll('[data-testid="practitioner-insurer"]');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].querySelectorAll('app-chip')).toHaveLength(2);
   });
 
   it('sin convenios dice «sin seguros informados», nunca que no acepta seguros', async () => {

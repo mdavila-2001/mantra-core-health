@@ -53,23 +53,51 @@ describe('InsuranceClient', () => {
 
   afterEach(() => http.verify());
 
-  it('listPractitionerCarriers pega en la ruta del profesional y desenvuelve items', () => {
+  it('listPractitionerCarriers lee las membresías del profesional y las agrupa por aseguradora', () => {
     let result: unknown;
     client.listPractitionerCarriers('hp 1/x').subscribe((carriers) => (result = carriers));
 
-    const request = http.expectOne('/practitioners/hp%201%2Fx/insurance-carriers');
+    const request = http.expectOne('/practitioners/hp%201%2Fx/insurance-networks');
     expect(request.request.method).toBe('GET');
-    const items = [
+    const fila = (
+      membershipId: string,
+      carrierId: string,
+      carrierName: string,
+      networkName: string,
+    ) => ({
+      membershipId,
+      carrierId,
+      carrierName,
+      networkName,
+      effectiveFrom: '2026-01-01',
+      effectiveTo: null,
+    });
+    request.flush({
+      items: [
+        fila('m-1', 'c-2', 'Nacional Seguros', 'SALUD FLEXIBLE'),
+        fila('m-2', 'c-1', 'Alianza Seguros', 'OASIS'),
+        fila('m-3', 'c-1', 'Alianza Seguros', 'AFI GOLD'),
+        fila('m-4', 'c-1', 'Alianza Seguros', 'AFI GOLD'),
+      ],
+      count: 4,
+    });
+    http.verify();
+
+    expect(result).toEqual([
       {
         carrierId: 'c-1',
         carrierName: 'Alianza Seguros',
-        networks: [{ id: 'n-1', name: 'AFI GOLD' }],
+        networks: [
+          { id: 'm-3', name: 'AFI GOLD' },
+          { id: 'm-2', name: 'OASIS' },
+        ],
       },
-    ];
-    request.flush({ items });
-    http.verify();
-
-    expect(result).toEqual(items);
+      {
+        carrierId: 'c-2',
+        carrierName: 'Nacional Seguros',
+        networks: [{ id: 'm-1', name: 'SALUD FLEXIBLE' }],
+      },
+    ]);
   });
 
   it('listCarriers pega en /insurance-carriers y convierte el alta a Date', () => {
