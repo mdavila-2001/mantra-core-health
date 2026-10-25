@@ -40,6 +40,13 @@ const PERFIL_BASE = {
   profileId: 'per-1',
   personId: 'per-1',
   practitionerCode: 'MED-7',
+  // Lo que el alta exige: el editor no deja guardar una pestaña con un campo
+  // obligatorio vacío (CORR-08, MT-38-02), así que el perfil base lo trae.
+  name: 'Ana',
+  lastName: 'Salas',
+  birthDate: '1990-01-01',
+  mobilePhone: '+591 70000000',
+  personalEmail: 'ana@ejemplo.bo',
   displayName: 'Dra. Salas',
   professionalTitle: 'Cardióloga',
   professionalBio: 'Bio actual.',
@@ -334,6 +341,7 @@ describe('PractitionerProfileEdit', () => {
 
     it('mover el punto lo manda como par, y no tocarlo no manda nada', () => {
       montarYCargar();
+      señal<number>('pestana').set(1);
 
       señal<unknown>('gpsDomicilio').set({ lat: -16.5, lng: -68.15 });
       interno<() => void>('guardarPresentacion')();
@@ -345,6 +353,7 @@ describe('PractitionerProfileEdit', () => {
 
     it('quitar el punto lo manda como null en los dos extremos', () => {
       montarYCargar();
+      señal<number>('pestana').set(1);
 
       señal<unknown>('gpsDomicilio').set(null);
       interno<() => void>('guardarPresentacion')();
@@ -549,6 +558,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('guardarPresentacion manda el NIT nuevo, y sólo el NIT', () => {
     montarYCargar();
+    señal<number>('pestana').set(2);
 
     señal<string>('nit').set('5414404011');
     interno<() => void>('guardarPresentacion')();
@@ -563,6 +573,7 @@ describe('PractitionerProfileEdit', () => {
     // Es la única forma de sacar un NIT cargado mal. Descartar los vacíos
     // dejaría el número viejo para siempre.
     montarYCargar({ taxId: '5414404011' });
+    señal<number>('pestana').set(2);
 
     señal<string>('nit').set('');
     interno<() => void>('guardarPresentacion')();
@@ -574,6 +585,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('siembra la frecuencia de facturación al seguro y manda sólo la que cambió', () => {
     montarYCargar({ insuranceBillingFrequency: 'MONTHLY' });
+    señal<number>('pestana').set(2);
     expect(interno<() => string | null>('frecuenciaFacturacionSeguro')()).toBe('MONTHLY');
 
     señal<string>('frecuenciaFacturacionSeguro').set('BIWEEKLY');
@@ -586,6 +598,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('sin tocar la frecuencia no la manda', () => {
     montarYCargar({ insuranceBillingFrequency: 'WEEKLY', taxId: '1' });
+    señal<number>('pestana').set(2);
 
     señal<string>('nit').set('2');
     interno<() => void>('guardarPresentacion')();
@@ -608,6 +621,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('no guarda con un teléfono a medias y lleva a «Contacto»', () => {
     montarYCargar();
+    señal<number>('pestana').set(1);
 
     interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
     interno<() => void>('guardarPresentacion')();
@@ -618,6 +632,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('un teléfono completo viaja con su prefijo', () => {
     montarYCargar();
+    señal<number>('pestana').set(1);
 
     interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 70012345');
     interno<() => void>('guardarPresentacion')();
@@ -1080,6 +1095,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('guardarPresentacion manda homeAddressLines si la dirección cambió', () => {
     montarYCargar();
+    señal<number>('pestana').set(1);
 
     señal<string>('direccion').set('Av. Brasil 1234');
     interno<() => void>('guardarPresentacion')();
@@ -1112,6 +1128,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('guardarPresentacion manda workAddressLines sólo cuando cambia', () => {
     montarYCargar({ workAddress: { lines: 'Calle Warnes 45' } });
+    señal<number>('pestana').set(1);
 
     señal<string>('direccionTrabajo').set('Av. Melchor Pinto 620');
     interno<() => void>('guardarPresentacion')();
@@ -1126,6 +1143,7 @@ describe('PractitionerProfileEdit', () => {
       homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
       workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
     });
+    señal<number>('pestana').set(1);
 
     señal<unknown>('gpsTrabajo').set({ lat: -17.8, lng: -63.2 });
     interno<() => void>('guardarPresentacion')();
@@ -3090,6 +3108,7 @@ describe('PractitionerProfileEdit', () => {
         workLandline: '+591 33000000',
         workEmail: 'consultorio@example.test',
       });
+      señal<number>('pestana').set(1);
 
       interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 70012345');
       interno<() => void>('guardarPresentacion')();
@@ -3192,6 +3211,7 @@ describe('PractitionerProfileEdit', () => {
 
     it('corregido, viaja como workEmail y sin espacios', () => {
       montarYCargar(CON_CORREO);
+      señal<number>('pestana').set(1);
 
       señal<string>('correoTrabajo').set('  dra.salas@clinica.bo ');
       interno<() => void>('guardarPresentacion')();
@@ -3211,7 +3231,7 @@ describe('PractitionerProfileEdit', () => {
       ['sin @', 'dra.salas.clinica.bo', 'Revise el correo: le falta algo, como la @ o el dominio.'],
     ])('%s no viaja: se marca y lleva a «Contacto»', (_caso, valor, mensaje) => {
       montarYCargar(CON_CORREO);
-      señal<number>('pestana').set(0);
+      señal<number>('pestana').set(1);
 
       señal<string>('correoTrabajo').set(valor);
       interno<() => void>('guardarPresentacion')();
@@ -3233,9 +3253,96 @@ describe('PractitionerProfileEdit', () => {
    * (`details.violations`, con el nombre del campo al frente del mensaje), no
    * uno inventado para la prueba.
    */
+  describe('cada pestaña guarda sólo lo suyo (CORR-08)', () => {
+    it('guardar «Datos personales» no manda el NIT que quedó escrito en «Facturación»', () => {
+      montarYCargar();
+      señal<string>('nit').set('5414404011');
+      señal<number>('pestana').set(0);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ professionalTitle: 'Cardióloga intervencionista' });
+      req.flush({ ...PERFIL_BASE, professionalTitle: 'Cardióloga intervencionista' });
+
+      // Lo de la otra pestaña sigue ahí, sin guardar y sin perderse.
+      expect(señal<string>('nit')()).toBe('5414404011');
+    });
+
+    it('guardar «Facturación» no manda el título que quedó a medias en «Datos personales»', () => {
+      montarYCargar();
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('5414404011');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ taxId: '5414404011' });
+      req.flush({ ...PERFIL_BASE, taxId: '5414404011' });
+      expect(señal<string>('titulo')()).toBe('Cardióloga intervencionista');
+    });
+
+    it('un teléfono a medias en «Contacto» no frena el guardado de «Facturación»', () => {
+      montarYCargar();
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('5414404011');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ taxId: '5414404011' });
+      req.flush({ ...PERFIL_BASE, taxId: '5414404011' });
+    });
+
+    it('vaciar el apellido paterno no se guarda: el alta lo exige', () => {
+      montarYCargar();
+      señal<number>('pestana').set(0);
+      señal<string>('apellidoPaterno').set('  ');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(ultimoAviso()?.message).toBe('Ingrese su apellido paterno.');
+    });
+
+    it('el celular personal vacío no se guarda: el alta lo exige', () => {
+      montarYCargar();
+      señal<number>('pestana').set(1);
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(ultimoAviso()?.message).toBe('Ingrese su celular personal.');
+    });
+
+    it('un correo personal sin forma de correo no se guarda y se marca en su campo', () => {
+      montarYCargar();
+      señal<number>('pestana').set(1);
+      señal<string>('correoPersonal').set('ana-sin-arroba');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('personalEmailError')()).toBe('Ingrese un correo válido.');
+    });
+
+    it('los rótulos compartidos son los del alta', () => {
+      montarYCargar();
+      const rotulo = interno<(clave: string, respaldo: string) => string>('practitionerFieldLabel');
+      const exige = interno<(clave: string) => boolean>('practitionerFieldRequired');
+
+      expect(rotulo('lastName', '—')).toBe('Apellido paterno');
+      expect(rotulo('personalEmail', '—')).toBe('Su correo personal — con éste entra');
+      // El alta proyecta el nombre sin rótulo propio: el editor conserva el suyo.
+      expect(rotulo('name', 'Nombre')).toBe('Nombre');
+      expect(exige('lastName')).toBe(true);
+      expect(exige('mobilePhone')).toBe(true);
+      expect(exige('motherLastName')).toBe(false);
+    });
+  });
+
   describe('cuando el servidor rechaza el guardado', () => {
     function rechazar(cuerpo: object, status = 422): void {
       montarYCargar();
+      señal<number>('pestana').set(2);
       señal<string>('nit').set('12345678');
       interno<() => void>('guardarPresentacion')();
       http
@@ -3364,7 +3471,7 @@ describe('PractitionerProfileEdit', () => {
     it('un campo rechazado en otra pestaña la nombra en el aviso y la abre', () => {
       montarYCargar();
       señal<number>('pestana').set(0);
-      señal<string>('nit').set('12345678');
+      señal<string>('titulo').set('Cardióloga intervencionista');
       interno<() => void>('guardarPresentacion')();
       http
         .expectOne('/profiles/practitioners/me')
@@ -3399,6 +3506,7 @@ describe('PractitionerProfileEdit', () => {
 
     it('un campo que la pantalla no muestra va con su mensaje en el aviso', () => {
       montarYCargar();
+      señal<number>('pestana').set(2);
       señal<string>('nit').set('12345678');
       interno<() => void>('guardarPresentacion')();
       http
@@ -3465,6 +3573,7 @@ describe('PractitionerProfileEdit', () => {
         path: '/profiles/practitioners/me',
       });
 
+      señal<number>('pestana').set(1);
       interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
       interno<() => void>('guardarPresentacion')();
 
