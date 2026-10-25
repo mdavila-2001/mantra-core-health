@@ -42,6 +42,7 @@ import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
 import { registerPortalInventory } from './portal-inventory.handlers';
 import { registerReceivedServices } from './received-services.handlers';
+import { registerMedicalGroups } from './medical-groups.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -95,5 +96,6 @@ export function crearRouterSimulado(): MockRouter {
   registerPromotions(router);
   registerPatientSpending(router);
   registerPortalInventory(router);
+  registerMedicalGroups(router);
   return router;
 }

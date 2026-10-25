@@ -668,6 +668,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // FT-21 (carril 21). El equipo de un servicio de salud: cargos, pago
+    // acordado por cargo y un expediente que se cierra una semana después de
+    // realizado. Renglón propio por el mismo criterio que «Cotizaciones»: es
+    // un destino al que se vuelve —responder invitaciones, cargar las notas
+    // del ejercicio—, no un paso que se hace una vez.
+    //
+    // La ruta es `my-medical-groups` y no `medical-groups`: ese es el prefijo
+    // del módulo en la API y el proxy compara por inicio de ruta.
+    path: 'my-medical-groups',
+    label: 'Grupos médicos',
+    group: 'Atención',
+    icon: 'people',
+    // Los dos roles que exige `MedicalGroupsController`.
+    roles: ['PRACTITIONER', 'CLINICIAN'],
+    availability: 'disponible',
+    summary: 'Arme el equipo de un servicio y responda las invitaciones de sus colegas.',
+    module: 'M21 medical_groups',
+  },
+
+  {
     // Carril 10. **La ruta NO es `surveys` y eso no es decoración**: `/surveys`
     // es el prefijo del módulo en la API, y el proxy compara por inicio de ruta
     // sin límite de segmento — una sección llamada `surveys` se iría entera al
