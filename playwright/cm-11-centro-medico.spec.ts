@@ -15,8 +15,8 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { farmacia, type Actor } from './support/actores';
-import { entrar, esperarAplicacionLista } from './support/sesion';
+import { CLAVE } from './support/actores';
+import { esperarAplicacionLista } from './support/sesion';
 
 const EVIDENCIA = join('docs', 'frontend', 'evidence', 'cm-11-medical-center-registration');
 const VIEWPORTS = [
@@ -40,6 +40,28 @@ async function escribir(page: Page, testId: string, texto: string): Promise<void
   const campo = page.getByTestId(testId);
   await campo.fill(texto);
   await expect(campo).toHaveValue(texto);
+}
+
+/**
+ * Entra como administración del Hospital San Lucas, la organización de tipo
+ * `HOSPITAL` verificada de la maqueta.
+ *
+ * No usa `entrar` de `support/sesion`: ese helper espera aterrizar en
+ * `/dashboard`, y esta cuenta tiene tres organizaciones y pasa primero por la
+ * elección de organización.
+ */
+async function ingresar(page: Page): Promise<void> {
+  await page.goto('/auth', { waitUntil: 'domcontentloaded' });
+  await esperarAplicacionLista(page);
+  await escribir(page, 'login-identifier', 'admin@alovida.mock');
+  await escribir(page, 'login-password', CLAVE);
+  await page.getByTestId('login-submit').click();
+  await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  if (page.url().includes('/auth/organization')) {
+    await page.getByText('Hospital San Lucas').first().click();
+    await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
+  }
+  await esperarAplicacionLista(page);
 }
 
 test.beforeAll(() => mkdirSync(EVIDENCIA, { recursive: true }));
@@ -78,8 +100,11 @@ for (const vista of VIEWPORTS) {
       await foto(page, `${vista.nombre}-03-alta-pagina-1-con-errores`);
 
       await escribir(page, 'registro-centro-medico-razon-social', `Centro Médico Norte ${Date.now()}`);
-      await page.getByTestId('registro-centro-medico-tipo-societario').click();
-      await page.getByRole('option').first().click();
+      await page
+        .getByTestId('registro-centro-medico-tipo-societario')
+        .locator('xpath=self::select | .//select')
+        .first()
+        .selectOption({ index: 1 });
       await sinDesborde(page);
       await foto(page, `${vista.nombre}-04-alta-pagina-1-completa`);
       await page.getByTestId('paginated-form-continuar').click();
@@ -101,9 +126,9 @@ for (const vista of VIEWPORTS) {
       expect(errores.filter((e) => !/favicon|tile\.openstreetmap/i.test(e))).toEqual([]);
     });
 
-    test('la organización verificada configura su práctica y su sede', async ({ page }) => {
-      await entrar(page, farmacia() as Actor);
-      await page.goto('/organization/medical-center-setup', { waitUntil: 'domcontentloaded' });
+    test('el hospital verificado configura su práctica y su sede', async ({ page }) => {
+      await ingresar(page);
+      await page.goto('/administration/medical-center-setup', { waitUntil: 'domcontentloaded' });
       await esperarAplicacionLista(page);
       await expect(
         page.getByRole('heading', { level: 1, name: 'Configurar centro médico' }),
