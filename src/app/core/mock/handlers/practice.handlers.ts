@@ -1,8 +1,9 @@
 import { ROLE_ASSIGNMENT_STATUS } from '../../data-access/practice-sites/role-assignment-concepts';
 import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS, PRACTICE_SANLUCAS, SITIO_CONSULTORIO, SITIO_OLIVOS, SITIO_SANLUCAS } from '../fixtures/agenda';
-import { CARGO, SPECIALTY, FACILITY, STATUS, PROCEDIMIENTO, displayOf } from '../fixtures/concepts';
+import { CARGO, SPECIALTY, STATUS, PROCEDIMIENTO, displayOf } from '../fixtures/concepts';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
 import { MEDICAL, PROFESSIONALS, professionalById } from '../fixtures/people';
+import { myAffiliations, requestAffiliation, CM_PRACTICES } from '../fixtures/role-assignments';
 import { noContent, notFound, type MockRouter } from '../mock-router';
 import { ahora, avatarSvg, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
@@ -244,14 +245,14 @@ const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: stri
  * registrado tiene para ofrecer.
  */
 export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesional[] {
-  const propias = sitiosPropios
+  const own = sitiosPropios
     .filtrar((s) => s.practitionerProfileId === practitionerProfileId)
     .map(({ practitionerProfileId: _p, ...s }) => ({
       ...s,
       isOwnSite: s.practiceId === PRACTICE_CONSULTORIO,
     }));
-  if (propias.length > 0) {
-    return [...propias].sort((a, b) => Number(b.isOwnSite) - Number(a.isOwnSite));
+  if (own.length > 0) {
+    return [...own].sort((a, b) => Number(b.isOwnSite) - Number(a.isOwnSite));
   }
 
   // Quien no cargó ninguna atiende donde su organización: es lo que el padrón
@@ -301,7 +302,7 @@ function concepto(code: string, display: string) {
 }
 
 export function registrarPracticas(router: MockRouter): void {
-  router.get('/practices', () => PRACTICAS);
+  router.get('/practices', () => [...PRACTICAS, ...CM_PRACTICES]);
 
   router.get('/billing/service-catalog', ({ query }) => {
     const practiceId = texto(query, 'practiceId');
@@ -362,17 +363,14 @@ export function registrarPracticas(router: MockRouter): void {
 
   router.get('/practitioners/me/role-assignments', (request) => {
     const hpid = request.user?.practitionerProfileId;
-    return vinculaciones
-      .filtrar((v) => v.practitionerProfileId === hpid)
-      .map(({ practitionerProfileId: _p, ...v }) => ({
-        ...v,
-        status: conceptoDeVinculacion(v.status),
-      }));
+    const own = vinculaciones.filtrar((v) => v.practitionerProfileId === hpid).map(({ practitionerProfileId: _p, ...v }) => ({ ...v, status: conceptoDeVinculacion(v.status) }));
+    return [...own, ...myAffiliations(hpid ?? '')];
   });
 
   router.post('/practices/:id/role-assignments/self-request', (request) => {
     const practica = PRACTICAS.find((p) => p.id === request.params['id']);
-    const datos = cuerpo<{ practiceSiteId?: string; roleConceptId?: string; specialtyConceptId?: string; validFrom?: string }>(request);
+    const datos = cuerpo<{ practiceSiteId?: string; roleConceptId?: string; specialtyConceptId?: string; healthcareServiceId?: string; validFrom?: string }>(request);
+    if (datos.healthcareServiceId !== undefined) return requestAffiliation(request.params['id']!, datos.practiceSiteId, datos.healthcareServiceId, request.user?.practitionerProfileId ?? MEDICAL.id);
     const nueva = vinculaciones.agregar({
       id: nuevoId('ra'),
       practiceId: request.params['id']!,
@@ -584,9 +582,6 @@ export function registrarPracticas(router: MockRouter): void {
       ],
     };
   });
-
-  // Establecimientos vinculables usan el padrón: mismo catálogo que `linkable-organizations`.
-  void FACILITY;
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
