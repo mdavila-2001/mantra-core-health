@@ -1,0 +1,29 @@
+/* ============================================================================
+    Grupos médicos · listado. Sólo distribución: los átomos y organismos ya
+    traen su pinta del sistema.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.grupos {
+  margin-block-start: var(--sp-6);
+}
+
+.grupos__enlace {
+  color: var(--text-link);
+  font-weight: 600;
+}
+
+.grupos__estado {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.grupos__pendientes {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}

@@ -161,8 +161,16 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // consulta —el vocabulario y el catálogo de servicios de la práctica—, lo
     // que se diseña, lo que se manda a responder y lo que se cotiza sobre ese
     // mismo catálogo (FT-24, junto a «Mis servicios» por ser la misma tabla
-    // vista desde el paso siguiente).
-    paths: ['glossary', 'form-builder', 'my-services', 'my-quotations', 'questionnaires'],
+    // vista desde el paso siguiente). Los grupos médicos (FT-21) también se
+    // arman sobre un servicio de ese catálogo, así que van con ellos.
+    paths: [
+      'glossary',
+      'form-builder',
+      'my-services',
+      'my-quotations',
+      'my-medical-groups',
+      'questionnaires',
+    ],
   },
 
   /* -- Administración ----------------------------------------------------- */
