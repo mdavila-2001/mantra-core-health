@@ -218,36 +218,17 @@ form {
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
   align-items: start;
-}
-
-/* En oscuro, la confirmación no explica nada —ya no hay nada que contestar—,
-   así que queda sola con ancho de tarjeta. En claro la variante CORR-34 ocupa
-   toda la superficie disponible. */
-.registro-conjunto--solo {
-  max-width: 44rem;
-  margin-inline: auto;
-}
-
-/* En oscuro el alta y su ayuda se mantienen acotadas en pantalla ancha. En
-   claro, CORR-34 quita ese tope y aprovecha el área disponible. */
-@media (min-width: 1024px) {
-  .registro-conjunto {
-    max-width: 52rem;
-    margin-inline: auto;
-    gap: var(--sp-6);
-  }
-}
-
-/* CORR-34: en claro, el área de registro aprovecha la superficie completa.
-   Los campos cortos ya resuelven sus columnas por ancho; el tope de 52 rem
-   dejaba una columna vacía en monitores anchos. En oscuro se conserva el
-   espaciado previo. */
-:host-context(:root[data-tema='claro']) .registro-conjunto {
+  /* Ancho completo en los dos temas (regla del cliente: toda vista ocupa la
+     superficie disponible y va centrada). CORR-34 lo hizo en claro y dejó el
+     oscuro con un tope de 52 rem —una tarjeta de ~730 px con media pantalla
+     vacía a cada lado—; el tema no cambia cuánto espacio merece un formulario. */
   inline-size: 100%;
   max-width: none;
   margin-inline: auto;
 }
 
-:host-context(:root[data-tema='claro']) .registro-conjunto--solo {
-  max-width: none;
+@media (min-width: 1024px) {
+  .registro-conjunto {
+    gap: var(--sp-6);
+  }
 }
