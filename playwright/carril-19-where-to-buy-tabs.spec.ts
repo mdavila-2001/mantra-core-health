@@ -8,8 +8,9 @@
  *   a pedido y con lo que les falta dicho por su nombre.
  * - REQ-19-009: «Cómo llegar» va a OpenStreetMap (la CSP no admite Google
  *   Maps, regla 99 §7) y la pestaña de centros médicos no inventa una lista:
- *   no hay contrato que diga qué procedimientos le indicaron al paciente ni qué
- *   centro los hace, así que muestra un estado vacío honesto.
+ *   la maqueta no siembra órdenes de procedimiento, así que
+ *   `GET /clinical/me/procedure-centers` responde vacío y la pestaña lo dice.
+ *   El recorrido con centros reales está en `carril-19-centros-medicos.spec.ts`.
  *
  * Corre contra `ng serve` en modo demo (simulador). Sin consola en rojo.
  */
@@ -119,9 +120,11 @@ test.describe('Carril 19 — dónde conseguir lo de mi receta', () => {
     await page.goto(`${screenUrl}?tab=medical-centers`, { waitUntil: 'domcontentloaded' });
 
     const panel = page.getByRole('tabpanel');
-    await expect(panel.getByText('Esta parte todavía no está')).toBeVisible({ timeout: 30_000 });
-    await expect(panel.getByRole('link', { name: 'Ver clínicas y hospitales' })).toBeVisible();
-    // Ninguna tarjeta de centro ni ninguna sucursal: no hay contrato que las respalde.
+    await expect(panel.getByText('No tiene procedimientos pendientes.')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(panel.getByRole('link', { name: 'Ver clínicas y hospitales' }).first()).toBeVisible();
+    // Ninguna tarjeta de centro ni ninguna sucursal: la maqueta no tiene oferta que las respalde.
     await expect(panel.locator('.compra__sede')).toHaveCount(0);
 
     const overflow = await page.evaluate(
