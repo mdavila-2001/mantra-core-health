@@ -243,11 +243,24 @@ describe('GlossaryTerm', () => {
     await harness.fixture.whenStable();
     await abrirPestana('Relacionados');
 
-    const enlaces = [...html().querySelectorAll('.termino__relaciones a')].map((a) =>
+    const enlaces = [...html().querySelectorAll('.termino__grupo a.enlace-chip')].map((a) =>
       a.getAttribute('href'),
     );
     expect(enlaces).toContain('/glossary/c-2');
     expect(enlaces).toContain('/glossary/c-3');
+  });
+
+  it('cada grupo de relaciones dice cuántos términos tiene y los muestra como chips', async () => {
+    peticion().flush(FICHA);
+    await harness.fixture.whenStable();
+    await abrirPestana('Relacionados');
+
+    const grupos = [...html().querySelectorAll('.termino__grupo')];
+    expect(grupos.length).toBeGreaterThan(0);
+    for (const grupo of grupos) {
+      const chips = grupo.querySelectorAll('a.enlace-chip');
+      expect(Number(grupo.querySelector('.termino__grupo-cuenta')?.textContent)).toBe(chips.length);
+    }
   });
 
   it('sin relaciones, no dibuja ningún grupo', async () => {
@@ -255,19 +268,17 @@ describe('GlossaryTerm', () => {
     await harness.fixture.whenStable();
 
     expect(interno<() => readonly unknown[]>('gruposDeRelaciones')().length).toBe(0);
-    expect(html().querySelector('.termino__relaciones')).toBeNull();
+    expect(html().querySelector('.termino__grupos')).toBeNull();
     expect(rotulosDePestanas()).not.toContain('Relacionados');
   });
 
   // --- Imagen: hoy siempre ausente, mostrada defensivamente si existiera -----
 
-  it('sin imagen, usa el ícono de la categoría como marcador visual', async () => {
+  it('sin imagen, muestra la portada ilustrada en lugar de la foto', async () => {
     peticion().flush(FICHA);
     await harness.fixture.whenStable();
 
-    expect(
-      html().querySelector('.termino__imagen-marcador app-glossary-category-icon'),
-    ).not.toBeNull();
+    expect(html().querySelector('app-glossary-term-cover svg')).not.toBeNull();
     expect(html().querySelector('.termino__imagen img')).toBeNull();
   });
 

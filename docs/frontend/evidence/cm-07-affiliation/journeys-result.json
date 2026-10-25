@@ -1,0 +1,81 @@
+{
+  "fecha": "2026-10-25T19:43:26.791Z",
+  "results": [
+    {
+      "name": "centro ve la fila de ejemplo INVITED de Norte con su estado e iniciador",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente de aceptación del médico Invitado por el centro"
+    },
+    {
+      "name": "centro: INVITED no ofrece Aprobar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "las casillas son solo los procedimientos publicados y activos de la sede (retirado no aparece)",
+      "ok": true,
+      "detail": "Endoscopia digestiva alta | Colonoscopia"
+    },
+    {
+      "name": "tras recargar, la invitación nueva sigue ahí como «Pendiente de aceptación del médico»",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente de aceptación del médico Invitado por el centro Valeria Rojas Mendoza Colonoscopia Pendiente de aceptación del médico Invitado por el centro"
+    },
+    {
+      "name": "la médica ve las dos invitaciones de Norte",
+      "ok": true,
+      "detail": "2"
+    },
+    {
+      "name": "tras recargar queda 1 invitación (la aceptada ya no se ofrece)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "«Procedimientos que hago» agrupa por centro y sede y marca Colonoscopia de Norte Activa",
+      "ok": true,
+      "detail": "Agregar un procedimiento Centro Médico Norte Sede Norte 1 Endoscopia digestiva alta Invitado por el centro Pendiente de aceptación del médico Colonoscopia Invitado por el centro Activa Centro Médico Sur Sede Sur 1 Colonoscopia Pedido por el médico Activa"
+    },
+    {
+      "name": "muestra lo de Sur (Colonoscopia Activa)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tras recargar, lo pedido en Sur queda «Pendiente del centro» (nunca Activa solo)",
+      "ok": true,
+      "detail": "Agregar un procedimiento Centro Médico Norte Sede Norte 1 Endoscopia digestiva alta Invitado por el centro Pendiente de aceptación del médico Colonoscopia Invitado por el centro Activa Centro Médico Sur Sede Sur 1 Colonoscopia Pedido por el médico Activa Endoscopia digestiva alta Pedido por el médico Pendiente del centro"
+    },
+    {
+      "name": "centro ve la solicitud pedida por el médico",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Colonoscopia Activa Pedido por el médico Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente del centro Aprobar Rechazar Pedido por el médico"
+    },
+    {
+      "name": "tras recargar, la solicitud figura «Rechazada»",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Colonoscopia Activa Pedido por el médico Valeria Rojas Mendoza Endoscopia digestiva alta Rechazada Pedido por el médico"
+    },
+    {
+      "name": "sin errores de consola ni de página (se excluye el aviso CSP del script en línea que inyecta ng serve)",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "errors": [
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash ("
+  ]
+}

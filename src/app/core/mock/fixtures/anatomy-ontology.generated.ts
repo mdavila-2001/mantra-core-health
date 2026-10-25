@@ -31,6 +31,7 @@ export const ATLAS_3D_META = {
   "definitionsEs": 5152,
   "labelsEs": 6322,
   "meshes": 930,
+  "compositeStructures": 492,
   "meshesMappedToUberon": 682,
   "netterEntries": 3161,
   "netterMapped": 805,

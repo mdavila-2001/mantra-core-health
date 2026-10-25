@@ -11,6 +11,7 @@ import { registrarDiagnostico } from './diagnostics.handlers';
 import { registerDiagnosisVerification } from './diagnosis-verification.handlers';
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
+import { registerHealthcareServices } from './healthcare-services.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
@@ -45,6 +46,7 @@ import { registerPortalInventory } from './portal-inventory.handlers';
 import { registerReceivedServices } from './received-services.handlers';
 import { registerMedicalGroups } from './medical-groups.handlers';
 import { registerMedicalCenters } from './medical-centers.handlers';
+import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -59,6 +61,9 @@ export function crearRouterSimulado(): MockRouter {
   registerSignatureAndSeal(router);
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);
+  // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
+  // ante patrones equivalentes gana el registrado primero.
+  registerHealthcareServices(router);
   registrarPracticas(router);
   registrarClinica(router);
   registerReceivedServices(router);
@@ -101,5 +106,6 @@ export function crearRouterSimulado(): MockRouter {
   registerPortalInventory(router);
   registerMedicalGroups(router);
   registerMedicalCenters(router);
+  registerOrganizationPracticeHandlers(router);
   return router;
 }

@@ -98,3 +98,10 @@ export interface AnatomyIndex {
   readonly shards: number;
   readonly entries: readonly AnatomyIndexEntry[];
 }
+
+/**
+ * Estructura compuesta → las partes suyas que sí tienen malla propia. «Pulmón»
+ * no tiene malla: BodyParts3D dibuja sus lóbulos. Sólo figuran las compuestas
+ * (las que tienen malla propia no están) y no las clases demasiado generales.
+ */
+export type AnatomyComposites = Readonly<Record<string, readonly string[]>>;

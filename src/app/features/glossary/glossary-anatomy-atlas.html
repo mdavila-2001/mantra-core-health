@@ -72,10 +72,21 @@
           label="Buscar una estructura"
           placeholder="Por ejemplo «fémur» o «uterus»"
           [debounceMs]="200"
+          [loading]="indexLoading()"
           (searched)="search.set($event)"
           data-testid="atlas3d-buscar"
         />
-        @if (search().length >= 2) {
+        @if (indexLoading()) {
+          <p class="atlas3d__estado" role="status" data-testid="atlas3d-cargando">
+            Cargando el catálogo de estructuras… puede escribir ya: los resultados aparecen en cuanto
+            termine.
+          </p>
+        } @else if (indexFailed()) {
+          <p class="atlas3d__estado atlas3d__estado--error" role="alert" data-testid="atlas3d-catalogo-fallo">
+            No pudimos cargar el catálogo de búsqueda.
+            <button type="button" class="atlas3d__reintentar" (click)="retryIndex()">Reintentar</button>
+          </p>
+        } @else if (search().length >= 2) {
           <ul class="atlas3d__resultados" aria-label="Resultados de la búsqueda">
             @for (entrada of results(); track entrada[0]) {
               <li>
@@ -104,9 +115,17 @@
                     <span class="atlas3d__marca">nombre traducido automáticamente</span>
                   }
                   @if (ficha.meshes.length === 0) {
-                    <span class="atlas3d__marca" data-testid="atlas3d-sin-pieza">
-                      Sin pieza 3D en este modelo: por eso no se resalta nada en el cuerpo.
-                    </span>
+                    @if (esCompuesta()) {
+                      <span class="atlas3d__marca" data-testid="atlas3d-compuesta">
+                        Sin pieza propia: se resaltan las piezas de sus partes ({{
+                          selectedMeshes().length
+                        }}).
+                      </span>
+                    } @else {
+                      <span class="atlas3d__marca" data-testid="atlas3d-sin-pieza">
+                        Sin pieza 3D en este modelo: por eso no se resalta nada en el cuerpo.
+                      </span>
+                    }
                   }
                 </div>
                 @if (pickedSide(); as lado) {

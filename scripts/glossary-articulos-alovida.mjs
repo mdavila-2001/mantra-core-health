@@ -16,6 +16,9 @@
  * Uso: node scripts/glossary-articulos-alovida.mjs [--check] [--min <palabras>] [--only a,b]
  *   --check  valida los archivos y sale con error si alguno no cumple; no escribe.
  *   --min    piso de palabras por artículo (por omisión 2000); uno más corto es error.
+ *   --sin-imagen  permite artículos sin ilustración (por omisión cada artículo necesita al menos una).
+ *            Es una excepción explícita y no el modo normal: se usa para los artículos de investigación
+ *            de los términos que todavía no tienen una ilustración original revisada.
  *   --only   procesa sólo esos slugs (para validar un lote sin tocar el resto).
  *   --api    carpeta del repo del API (por omisión `../mantra-core-health-api` si existe): se le
  *            escribe `src/common/seed/glossary-articles.generated.ts`, de donde el seed siembra la
@@ -38,6 +41,7 @@ const opcion = (nombre) => {
 const PISO = Number(opcion('--min') ?? 2000);
 const API = resolve(opcion('--api') ?? join(RAIZ, '..', 'mantra-core-health-api'));
 const SOLO = opcion('--only')?.split(',').filter(Boolean);
+const SIN_IMAGEN = process.argv.includes('--sin-imagen');
 
 /** Identificador corto de la fuente; `glossary-article.logic.ts` lo traduce a un nombre legible. */
 export const FUENTE = 'alovida-curated';
@@ -183,7 +187,7 @@ export function compilar(autoria, hoy = VERSION) {
       retrievedAt: hoy,
     };
   });
-  if (imagenes.length === 0) falla('el artículo necesita al menos una imagen');
+  if (imagenes.length === 0 && !SIN_IMAGEN) falla('el artículo necesita al menos una imagen (o pase --sin-imagen)');
 
   return {
     conceptRef: { system: FUENTE, code: slug, slug },

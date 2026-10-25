@@ -1,0 +1,84 @@
+/* ============================================================================
+    Enlace en forma de chip. Para listas de enlaces que antes iban separados por
+    puntos medios («mondo · mondo · icd10») o como viñetas de azul subrayado:
+    fuentes, referencias y términos relacionados.
+
+    Todo sale de tokens del sistema (nada de colores sueltos), así el tema
+    oscuro lo resuelve el tema. La forma imita al Chip (`atoms/chip`), que no
+    puede ser un enlace: su host no es un `<a>`. Se usa sobre el propio ancla:
+
+        <a class="enlace-chip" href="…" target="_blank" rel="noopener noreferrer">mondo</a>
+        <a class="enlace-chip" [routerLink]="…">Neumología</a>
+
+    Se importa desde el CSS del componente (`@import`), que lo encapsula.
+    ========================================================================== */
+
+.enlace-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-block-size: 2rem;
+  max-inline-size: 100%;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-link);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+.enlace-chip:visited {
+  color: var(--text-link);
+}
+
+.enlace-chip:hover {
+  border-color: var(--brand-primary);
+  background: var(--bg-hover);
+  color: var(--brand-primary-hover);
+}
+
+.enlace-chip:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Marca de enlace externo: la flecha se dibuja con CSS y no se lee en voz alta
+   (el texto alternativo vacío de `content`). */
+.enlace-chip[target='_blank']::after {
+  content: '↗' / '';
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+/* Un chip de referencia lleva un título largo: puede partirse en líneas y deja
+   de ser una píldora para no deformarse. */
+.enlace-chip--largo {
+  border-radius: var(--r-md);
+  font-weight: 500;
+}
+
+/* Cuántos datos aporta la fuente, cuando son varios. */
+.enlace-chip__cuenta {
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+}
+
+.enlace-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

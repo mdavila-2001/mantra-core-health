@@ -1081,6 +1081,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M14 practice',
   },
   {
+    // CM-11 · la organización registrada como centro médico (`HOSPITAL`) abre su
+    // práctica y su primera sede. Cuelga de `administration/` como el resto de
+    // la configuración: una raíz propia se iría al proxy. La API decide quién
+    // puede (membresía OWNER/ADMIN de esa organización y organización
+    // verificada); acá sólo se ofrece la puerta a quien tiene ese tipo de cuenta.
+    path: 'administration/medical-center-setup',
+    onlyForTenantTypes: ['HOSPITAL'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Configurar centro médico',
+    group: 'Administración',
+    icon: 'hospital',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Abra la práctica de su centro y su primera sede, con dirección y punto en el mapa.',
+    module: 'M14 practice',
+  },
+  {
     // Carril 16. Distinta de «Directorio de laboratorios», que es la vitrina
     // del paciente: aquélla sólo muestra unidades publicadas y verificadas,
     // ofertas activas y precios públicos. Ésta lee el mismo dominio **sin** esos
