@@ -8,7 +8,7 @@ import type { PatientSettlementFields } from '../../../core/data-access/insuranc
  * Cerrado a cuatro valores porque son los que el value set `VS_SERVICE_REQUEST_CATEGORY`
  * distingue hoy (`SRQ-LAB`, `SRQ-IMAGING`, y la categoría procedimiento de los centros
  * médicos); todo lo demás —incluido «sin categoría», que hoy es el caso normal porque C2
- * (quien llena `category` en el contrato) no corrió esta noche— cae en `OTHER` y se ve en
+ * (quien llena `category` en el contrato) no corrió— cae en `OTHER` y se ve en
  * la pestaña «Otros».
  */
 export const ANALYSIS_CATEGORIES = ['LAB', 'IMAGING', 'PROCEDURE', 'OTHER'] as const;

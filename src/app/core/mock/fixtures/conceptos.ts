@@ -946,7 +946,7 @@ export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
 
 /*
  * Procedimientos de ejemplo de «Centros médicos» (CONTRATO, «Datos de la maqueta»). Llevan el id
- * que todos los carriles derivan con `uuid('<semilla>')`, no el de `definir`, para que la orden, el
+ * que todos los módulos derivan con `uuid('<semilla>')`, no el de `definir`, para que la orden, el
  * centro y la búsqueda hablen del mismo concepto.
  */
 function definirConId(valueSet: string, entradas: readonly (readonly [seed: string, display: string])[]): void {
