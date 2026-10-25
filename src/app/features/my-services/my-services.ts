@@ -11,7 +11,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { ServicesCatalogClient } from '../../core/data-access/services-catalog/services-catalog.client';
@@ -54,6 +54,8 @@ import {
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { withDisplayCurrency } from '../../core/money/display-currency';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
+import { ServiceTerms } from './service-terms/service-terms';
 
 /**
  * Servicios por página. La grilla se arma en una, dos o tres columnas según el
@@ -161,6 +163,8 @@ function entero(texto: string): number | null {
   selector: 'app-my-services',
   imports: [
     AppButton,
+    AppButtonLink,
+    RouterLink,
     Badge,
     Alert,
     ContentDialog,
@@ -170,6 +174,7 @@ function entero(texto: string): number | null {
     PageHeader,
     Select,
     ServiceIcon,
+    ServiceTerms,
     Switch,
     Skeleton,
     ViewStateHost,
@@ -562,6 +567,16 @@ export class MyServices {
         this.errorDelPrecio.set(mensajeDelServidor(error));
       },
     });
+  }
+
+  /* ---- términos y condiciones (carril 22) --------------------------------- */
+
+  /** El servicio cuyos términos se están mirando, o `null` con el diálogo cerrado. */
+  protected readonly terminosDe = signal<ServiceCatalogItem | null>(null);
+
+  protected terminosGuardados(servicio: ServiceCatalogItem): void {
+    this.reemplazar(servicio);
+    this.terminosDe.set(servicio);
   }
 
   /** Cambia una tarjeta de la lista sin recargar la página entera. */
