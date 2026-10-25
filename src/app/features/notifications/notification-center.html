@@ -57,11 +57,18 @@
      garantizado que el arreglo de una se aplicara a la mitad. -->
 <ng-template #bandeja>
   <app-view-state-host [state]="estado()" (retry)="recargar()">
+    <div vsh-empty class="avisos__vacio">
+      <app-empty-state [title]="tituloVacio()" [description]="descripcionVacio()" variant="empty">
+        <a app-button empty-actions variant="outline" size="sm" routerLink="/settings">
+          Ir a preferencias
+        </a>
+      </app-empty-state>
+    </div>
     @if (hayFiltrosSinResultados()) {
       <div class="avisos__vacio">
         <app-empty-state
           title="Todavía no aparecen avisos de esta categoría"
-          description="Cargá más notificaciones para seguir buscando."
+          description="Cargue más notificaciones para seguir buscando."
           variant="empty"
         />
       </div>
