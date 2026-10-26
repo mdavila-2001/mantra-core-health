@@ -6,7 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { AuditPage } from './audit-page';
 
-const SCREEN = '/superadmin/portal/gobierno/auditoria';
+const SCREEN = '/superadmin/portal/governance/audit';
 const ACTOR = '00000000-0000-4000-8000-000000000001';
 
 const logEntry = {
@@ -33,7 +33,7 @@ describe('AuditPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/gobierno/auditoria', component: AuditPage }]),
+        provideRouter([{ path: 'superadmin/portal/governance/audit', component: AuditPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);

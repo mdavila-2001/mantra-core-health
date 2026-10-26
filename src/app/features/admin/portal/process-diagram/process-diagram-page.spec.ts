@@ -8,7 +8,7 @@ import { graph, page, processSummary } from '../portal.fixture';
 import { ProcessDiagramPage } from './process-diagram-page';
 import { buildLanes, summarize } from './process-graph.model';
 
-const RUTA = '/superadmin/portal/sistemas/flujos/diagrama';
+const RUTA = '/superadmin/portal/systems/flows/diagram';
 
 describe('ProcessDiagramPage', () => {
   let harness: RouterTestingHarness;
@@ -19,7 +19,7 @@ describe('ProcessDiagramPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/sistemas/flujos/diagrama', component: ProcessDiagramPage }]),
+        provideRouter([{ path: 'superadmin/portal/systems/flows/diagram', component: ProcessDiagramPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);

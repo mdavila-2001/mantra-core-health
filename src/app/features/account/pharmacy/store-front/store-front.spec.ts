@@ -122,7 +122,7 @@ describe('StoreFront', () => {
         provideHttpClientTesting(),
         provideRouter([
           { path: 'my-account/pharmacy', component: StoreFront },
-          { path: 'my-account/cotizaciones', children: [] },
+          { path: 'my-account/quotations', children: [] },
         ]),
       ],
     });
@@ -312,7 +312,7 @@ describe('StoreFront', () => {
     }
 
     it('`?tab=cotizaciones` termina en Cotizaciones', async () => {
-      expect(await abrirCon('cotizaciones')).toBe('/my-account/cotizaciones');
+      expect(await abrirCon('cotizaciones')).toBe('/my-account/quotations');
     });
 
     it('`?tab=comprar` termina en la tienda, sin la query', async () => {

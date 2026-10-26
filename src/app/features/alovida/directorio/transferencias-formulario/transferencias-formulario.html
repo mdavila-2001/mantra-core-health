@@ -4,7 +4,7 @@
       <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
           <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
           <li><a aria-disabled="true" data-sin-destino="">Organizaciones</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
-          <li><a routerLink="/directorio/membresias-listado">Membresías</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/provider-directory/memberships-list">Membresías</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
           <li><span aria-current="page">Transferencias</span></li>
       </ol>
         <div class="app-page-header__titulo"><h1>Transferir la membresía entre sucursales</h1></div>
@@ -15,9 +15,9 @@
       </div>
     </div>
     <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Membresías">
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/directorio/membresias-listado">Membresías</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/directorio/asignaciones-de-sucursal-formulario">Asignaciones de sucursal</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/directorio/roles-formulario">Roles</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/provider-directory/memberships-list">Membresías</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/provider-directory/branch-assignments-form">Asignaciones de sucursal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/provider-directory/roles-form">Roles</a>
     <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Transferencias</a>
     </div>
     <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
@@ -74,7 +74,7 @@
       </div>
       <div class="app-form-actions" app-form-actions="">
         <p class="app-form-actions__nota">Se guarda con su nombre y la hora: es una escritura auditada.</p>
-        <a app-button="" data-variante="secundario" routerLink="/directorio/membresias-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <a app-button="" data-variante="secundario" routerLink="/provider-directory/memberships-list"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
         <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8.5h13l-3.5-3.5"></path><path d="M20 15.5H7l3.5 3.5"></path></svg>Transferir</button>
       </div>
     </form>

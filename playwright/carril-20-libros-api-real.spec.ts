@@ -33,7 +33,7 @@ const ADMIN_EMAIL = process.env['E2E_BOOTSTRAP_ADMIN_EMAIL'] ?? '';
 const ADMIN_PASSWORD = process.env['E2E_BOOTSTRAP_ADMIN_PASSWORD'] ?? '';
 const DEPARTAMENTO_SC = '16fe92e8-bec7-577d-9e63-4a0d8ff3b0e4';
 const MUNICIPIO = '5132db42-8cb1-52d6-88f5-0e9a04bdc94c';
-const RUTA = '/administration/accounting/libros';
+const RUTA = '/administration/accounting/books';
 const EVIDENCIA = '../docs/progress/evidence/lane-20';
 const YEAR = new Date().getUTCFullYear();
 

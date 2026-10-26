@@ -109,7 +109,7 @@ async function pick(page: Page, testId: string, option: RegExp, search?: string)
 test('Auditoría: los filtros de la URL viajan a la API y cada pestaña lee su bitácora', async () => {
   const { page } = session;
   const log = await responseOf(page, 'GET', /\/audit\/log$/, () =>
-    openPortal(page, 'gobierno/auditoria?result=SUCCESS'),
+    openPortal(page, 'governance/audit?result=SUCCESS'),
   );
   expect(log.status()).toBe(200);
   expect(new URL(log.url()).searchParams.get('result')).toBe('SUCCESS');
@@ -131,7 +131,7 @@ test('Auditoría: los filtros de la URL viajan a la API y cada pestaña lee su b
 test('Usuarios y roles: lista, cajón de una persona y permisos de un rol', async () => {
   const { page } = session;
   const list = await responseOf(page, 'GET', /\/authz\/internal-users$/, () =>
-    openPortal(page, 'gobierno/usuarios'),
+    openPortal(page, 'governance/users'),
   );
   expect(list.status()).toBe(200);
   const users = (await list.json()) as { items: { id: string; displayName: string }[] };
@@ -150,7 +150,7 @@ test('Usuarios y roles: lista, cajón de una persona y permisos de un rol', asyn
     await session.api.get('/authz/roles', { headers: session.authHeaders() })
   ).json()) as { id: string }[];
   const permissions = await responseOf(page, 'GET', /\/authz\/roles\/[^/]+\/permissions$/, () =>
-    openPortal(page, `gobierno/usuarios?view=role-permissions&role=${roles[0]!.id}`),
+    openPortal(page, `governance/users?view=role-permissions&role=${roles[0]!.id}`),
   );
   expect(permissions.status()).toBe(200);
   await expect(page.getByTestId('portal-role-permissions-table')).toBeVisible();
@@ -163,7 +163,7 @@ test('Usuarios y roles: asignar (rechazo 422 explicado y éxito) y revocar con c
   const userId = await registerSyntheticUser(api).finally(() => api.dispose());
   try {
     await responseOf(page, 'GET', /\/role-assignments$/, () =>
-      openPortal(page, `gobierno/usuarios?user=${userId}`),
+      openPortal(page, `governance/users?user=${userId}`),
     );
     await expect(page.getByTestId('portal-user-access')).toContainText('Todavía no tiene asignaciones');
 
@@ -217,7 +217,7 @@ test('Usuarios y roles: asignar (rechazo 422 explicado y éxito) y revocar con c
 test('Deriva de permisos: recuentos, roles sin sembrar y rutas sin roles', async () => {
   const { page } = session;
   const drift = await responseOf(page, 'GET', /\/admin\/catalog\/permission-drift$/, () =>
-    openPortal(page, 'gobierno/deriva-permisos'),
+    openPortal(page, 'governance/permission-drift'),
   );
   expect(drift.status()).toBe(200);
   const body = (await drift.json()) as { usedNotSeeded: { role: string }[]; routes: { total: number } };
@@ -238,7 +238,7 @@ test('médico y paciente no llegan al gobierno de acceso, ni por la dirección n
     await expectDenied(
       browser,
       actor,
-      ['gobierno/auditoria', 'gobierno/usuarios', 'gobierno/deriva-permisos'],
+      ['governance/audit', 'governance/users', 'governance/permission-drift'],
       '/audit/log',
     );
   }

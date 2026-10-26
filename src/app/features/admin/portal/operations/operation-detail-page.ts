@@ -44,7 +44,7 @@ import { DecisionTree } from './decision-tree';
 import { OperationContract } from './operation-contract';
 import { OperationData } from './operation-data';
 
-const LIST_ROUTE = portalUrl('sistemas/operaciones');
+const LIST_ROUTE = portalUrl('systems/operations');
 /** Las pestañas de la ficha, por su código en `?vista=`. */
 const VIEWS = ['resumen', 'contrato', 'datos', 'acceso', 'pruebas', 'arbol'] as const;
 
@@ -84,9 +84,9 @@ export class OperationDetailPage {
   protected readonly method = metodoHttp;
   protected readonly risk = riesgo;
   protected readonly processUrl = (code: string): string =>
-    `${portalUrl('procesos')}/${encodeURIComponent(code)}`;
+    `${portalUrl('processes')}/${encodeURIComponent(code)}`;
   protected readonly tableUrl = (schema: string, table: string): string =>
-    `${portalUrl('catalogo/tablas')}/${encodeURIComponent(schema)}/${encodeURIComponent(table)}`;
+    `${portalUrl('catalog/tables')}/${encodeURIComponent(schema)}/${encodeURIComponent(table)}`;
 
   private readonly id = paramValue(pathParamsSignal(this.route), 'id');
   private readonly view = paramValue(queryParamsSignal(this.route), 'vista');

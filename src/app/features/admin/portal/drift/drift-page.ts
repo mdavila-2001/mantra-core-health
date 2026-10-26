@@ -124,7 +124,7 @@ export class DriftPage {
           this.findings.set(
             list.length === 0
               ? empty(
-                  { label: 'Ver el mapa de rutas', route: portalUrl('sistemas/flujos') },
+                  { label: 'Ver el mapa de rutas', route: portalUrl('systems/flows') },
                   'El cruce del mapa de rutas no encontró nada que mirar.',
                 )
               : ready(list),

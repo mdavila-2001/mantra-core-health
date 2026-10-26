@@ -42,7 +42,7 @@ import { RolePermissionsPanel } from './role-permissions-panel';
 import { UserAccessDrawer } from './user-access-drawer';
 
 const PAGE_SIZE = 50;
-const SCREEN = portalUrl('gobierno/usuarios');
+const SCREEN = portalUrl('governance/users');
 const VIEWS = ['users', 'role-permissions', 'permissions'] as const;
 const URL_KEYS = ['view', 'q', 'roleCode', 'user', 'role'] as const;
 
@@ -123,7 +123,7 @@ export class AccessPage {
       this.filters().q !== '' || this.filters().roleCode !== ''
         ? empty({ label: 'Ver todos los usuarios internos', route: SCREEN }, 'Nadie coincide con la búsqueda o el rol elegidos.')
         : empty(
-            { label: 'Ver la deriva de permisos', route: portalUrl('gobierno/deriva-permisos') },
+            { label: 'Ver la deriva de permisos', route: portalUrl('governance/permission-drift') },
             'Todavía nadie tiene un rol de plataforma ni un rol de ámbito global.',
           ),
   );

@@ -1374,7 +1374,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
-    path: 'my-account/cotizaciones',
+    path: 'my-account/quotations',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
@@ -1979,7 +1979,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // menú sólo puede mirar el tipo de la organización activa, y es lo que
     // mira. El paciente queda afuera también por rol: su membresía en el
     // tenant por defecto no lo vuelve personal de nadie.
-    path: 'laboratorio/recepcion',
+    path: 'laboratory/reception',
     label: 'Recepción de muestras',
     // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
     // de laboratorio, como los del mostrador de la farmacia.
@@ -2003,7 +2003,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // y no una con dos reglas: `isVisibleTo` no sabe decir «este rol **o**
     // este tipo de organización», y enseñárselo para una sola pantalla sería
     // una regla nueva en el corazón del menú.
-    path: 'laboratorio/cola',
+    path: 'laboratory/queue',
     label: 'Cola de trabajo',
     // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
     // de laboratorio, como los del mostrador de la farmacia.

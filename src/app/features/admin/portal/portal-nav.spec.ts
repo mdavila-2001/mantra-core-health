@@ -14,42 +14,42 @@ describe('portal-nav', () => {
   it('el centro sólo se ilumina en su ruta exacta', () => {
     expect(isActive(item(''), '/superadmin/portal')).toBe(true);
     expect(isActive(item(''), '/superadmin/portal/')).toBe(true);
-    expect(isActive(item(''), '/superadmin/portal/procesos')).toBe(false);
+    expect(isActive(item(''), '/superadmin/portal/processes')).toBe(false);
   });
 
   it('una ficha ilumina la pantalla de la que cuelga', () => {
     expect(
       isActive(
-        item('sistemas/operaciones'),
-        '/superadmin/portal/sistemas/operaciones/Foo_bar?vista=contratos',
+        item('systems/operations'),
+        '/superadmin/portal/systems/operations/Foo_bar?vista=contratos',
       ),
     ).toBe(true);
     expect(
-      isActive(item('catalogo/tablas'), '/superadmin/portal/catalogo/tablas/iam/users/ficha'),
+      isActive(item('catalog/tables'), '/superadmin/portal/catalog/tables/iam/users/ficha'),
     ).toBe(true);
   });
 
   it('la más específica gana: el mapa de rutas no se ilumina en el diagrama', () => {
-    const url = '/superadmin/portal/sistemas/flujos/diagrama?flujo=scheduling';
-    expect(isActive(item('sistemas/flujos/diagrama'), url)).toBe(true);
-    expect(isActive(item('sistemas/flujos'), url)).toBe(false);
+    const url = '/superadmin/portal/systems/flows/diagram?flujo=scheduling';
+    expect(isActive(item('systems/flows/diagram'), url)).toBe(true);
+    expect(isActive(item('systems/flows'), url)).toBe(false);
     expect(
-      isActive(item('sistemas/flujos'), '/superadmin/portal/sistemas/flujos?senal=SIN_PRUEBAS'),
+      isActive(item('systems/flows'), '/superadmin/portal/systems/flows?senal=SIN_PRUEBAS'),
     ).toBe(true);
   });
 
   it('sólo hay una pantalla activa por dirección', () => {
     for (const url of [
       '/superadmin/portal',
-      '/superadmin/portal/sistemas/flujos/diagrama',
-      '/superadmin/portal/catalogo/tablas/a/b',
+      '/superadmin/portal/systems/flows/diagram',
+      '/superadmin/portal/catalog/tables/a/b',
     ]) {
       expect(PORTAL_NAV.flatMap((g) => g.items).filter((i) => isActive(i, url))).toHaveLength(1);
     }
   });
 
   it('las migas dicen portal, grupo y pantalla; el centro sólo «Portal»', () => {
-    expect(portalCrumbs('/superadmin/portal/procesos/scheduling').map((c) => c.label)).toEqual([
+    expect(portalCrumbs('/superadmin/portal/processes/scheduling').map((c) => c.label)).toEqual([
       'Portal',
       'Procesos',
       'Procesos',
@@ -61,19 +61,19 @@ describe('portal-nav', () => {
   });
 
   it('groupOf devuelve el grupo abierto por la ruta activa', () => {
-    expect(groupOf('/superadmin/portal/linaje')?.id).toBe('linaje');
+    expect(groupOf('/superadmin/portal/lineage')?.id).toBe('lineage');
     expect(groupOf('/otra/cosa')).toBeNull();
   });
 
   it('el gobierno de acceso declara auditoría, usuarios y roles y deriva de permisos', () => {
-    const governance = PORTAL_NAV.find((g) => g.id === 'gobierno')!;
+    const governance = PORTAL_NAV.find((g) => g.id === 'governance')!;
     expect(governance.items.map((i) => i.path)).toEqual([
-      'gobierno/auditoria',
-      'gobierno/usuarios',
-      'gobierno/deriva-permisos',
+      'governance/audit',
+      'governance/users',
+      'governance/permission-drift',
     ]);
-    expect(groupOf('/superadmin/portal/gobierno/usuarios?user=x')?.id).toBe('gobierno');
-    expect(portalCrumbs('/superadmin/portal/gobierno/auditoria?view=data-access').map((c) => c.label)).toEqual([
+    expect(groupOf('/superadmin/portal/governance/users?user=x')?.id).toBe('governance');
+    expect(portalCrumbs('/superadmin/portal/governance/audit?view=data-access').map((c) => c.label)).toEqual([
       'Portal',
       'Gobierno y acceso',
       'Auditoría',

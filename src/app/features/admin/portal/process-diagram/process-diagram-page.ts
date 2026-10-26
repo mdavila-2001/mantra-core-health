@@ -49,12 +49,12 @@ export class ProcessDiagramPage {
   protected readonly flow = paramValue(queryParamsSignal(this.route), 'flujo');
   protected readonly graph = signal<ViewState<Grafo>>(loading());
   protected readonly processUrl = computed(
-    () => `${portalUrl('procesos')}/${encodeURIComponent(this.flow())}`,
+    () => `${portalUrl('processes')}/${encodeURIComponent(this.flow())}`,
   );
   protected readonly operationUrl = (id: string): string =>
-    `${portalUrl('sistemas/operaciones')}/${encodeURIComponent(id)}`;
+    `${portalUrl('systems/operations')}/${encodeURIComponent(id)}`;
   protected readonly tableUrl = (schema: string, table: string): string =>
-    `${portalUrl('catalogo/tablas')}/${encodeURIComponent(schema)}/${encodeURIComponent(table)}`;
+    `${portalUrl('catalog/tables')}/${encodeURIComponent(schema)}/${encodeURIComponent(table)}`;
 
   private pending: Subscription | null = null;
 
@@ -79,7 +79,7 @@ export class ProcessDiagramPage {
     if (code === '') {
       this.graph.set(
         empty(
-          { label: 'Ver la lista de procesos', route: portalUrl('procesos') },
+          { label: 'Ver la lista de procesos', route: portalUrl('processes') },
           'Elija un proceso arriba para ver su diagrama.',
         ),
       );

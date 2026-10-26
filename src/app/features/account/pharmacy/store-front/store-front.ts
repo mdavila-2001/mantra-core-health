@@ -44,7 +44,7 @@ import { StoreResults } from '../search/store-results';
 import { RecentOrders } from './recent-orders';
 
 /** La pestaña de Cotizaciones del hub viejo, que ahora es su propia pantalla. */
-const COTIZACIONES_ROUTE = '/my-account/cotizaciones';
+const COTIZACIONES_ROUTE = '/my-account/quotations';
 
 /** Lo que la búsqueda en curso le pide al servicio. */
 interface Consulta {

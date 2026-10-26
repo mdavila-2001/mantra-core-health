@@ -159,7 +159,7 @@ test.beforeEach(async ({ page }) => {
 
 test('Cotizaciones con resultados en tres anchos y dos temas', async ({ page }) => {
   test.setTimeout(240_000);
-  await irA(page, '/my-account/cotizaciones');
+  await irA(page, '/my-account/quotations');
   await estable(page);
   await buscar(page, 'paracetamol');
   await expect(page.getByTestId('cotizaciones-resultados')).toContainText(
@@ -190,7 +190,7 @@ for (const tema of TEMAS) {
   }) => {
     test.setTimeout(240_000);
     await page.emulateMedia({ colorScheme: tema });
-    await irA(page, '/my-account/cotizaciones');
+    await irA(page, '/my-account/quotations');
     await estable(page);
 
     await expect(page.getByTestId('cotizaciones-sin-termino')).toBeVisible();
@@ -217,7 +217,7 @@ for (const tema of TEMAS) {
   test(`Cotizaciones (${tema}): estados transitorios y precio no publicado`, async ({ page }) => {
     test.setTimeout(240_000);
     await page.emulateMedia({ colorScheme: tema });
-    await irA(page, '/my-account/cotizaciones');
+    await irA(page, '/my-account/quotations');
     await estable(page);
 
     // «Precio no publicado»: el arancel odontológico trae doce filas sin
@@ -288,7 +288,7 @@ for (const tema of TEMAS) {
     await irA(page, '/directory');
     await estable(page);
     await fallar([{ patron: '/profiles/patients/me', modo: 'error' }]);
-    await irA(page, '/my-account/cotizaciones');
+    await irA(page, '/my-account/quotations');
     await estable(page);
     await buscar(page, 'paracetamol');
     await page.getByLabel('Ordenar por').selectOption({ label: 'Cercanía' });
@@ -341,7 +341,7 @@ for (const tema of TEMAS) {
   }) => {
     test.setTimeout(240_000);
     await page.emulateMedia({ colorScheme: tema });
-    await irA(page, '/my-account/cotizaciones');
+    await irA(page, '/my-account/quotations');
     await estable(page);
     const casos = [
       { termino: 'consulta medica general', archivo: 'arancel-uma', espera: 'UMA' },
@@ -441,7 +441,7 @@ test('teclado: Directorio y Cotizaciones se usan sin mouse', async ({ page }) =>
   await expect(page).toHaveURL(/\/directory\/[^?]+/);
   pasos.push('Directorio: foco en el título del primer resultado + Enter → abre la ficha');
 
-  await irA(page, '/my-account/cotizaciones');
+  await irA(page, '/my-account/quotations');
   await estable(page);
   const campo = page.getByTestId('cotizaciones-busqueda').locator('input');
   await campo.focus();
