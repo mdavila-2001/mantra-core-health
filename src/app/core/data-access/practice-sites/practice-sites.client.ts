@@ -64,21 +64,6 @@ export class PracticeSitesClient {
   }
 
   /**
-   * `GET /practices/:practiceId/sites` — las sedes de una organización.
-   *
-   * Responde la pregunta inversa a {@link PracticeSitesClient.listSitesOfPractitioner}:
-   * no «dónde atiende esta persona» sino «qué sedes tiene este centro». Acepta
-   * la respuesta como página `{ items }` o como arreglo pelado.
-   */
-  listSitesOfPractice(practiceId: string): Observable<readonly PracticeSite[]> {
-    return this.http
-      .get<PracticeSitePage | readonly PracticeSite[]>(
-        this.url(`/practices/${encodeURIComponent(practiceId)}/sites`),
-      )
-      .pipe(map((body) => ('items' in body ? body.items : body)));
-  }
-
-  /**
    * `GET /practitioners/me/role-assignments` — Carril 18: mis vinculaciones
    * con organizaciones, en cualquier estado (pendiente, activa, suspendida,
    * rechazada, finalizada). No implica acceso a los pacientes de esas
