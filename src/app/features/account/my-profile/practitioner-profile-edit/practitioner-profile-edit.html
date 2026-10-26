@@ -349,39 +349,55 @@
               </div>
             </section>
 
-            <!-- ─── Lo que se muestra y no se corrige acá ──────────────────
-                 «Editar muestre TODOS los campos» (C-05). El documento y el
-                 departamento que lo emitió son del alta, y el contrato de
-                 corrección del perfil no los acepta —el propio tipo de la
-                 lectura lo dice: «no editable desde el perfil: tiene su
-                 circuito propio»—. Hasta hoy el editor no los mostraba, así
-                 que quien venía a corregirlos no encontraba ni el dato ni el
-                 motivo.
-
-                 Renglones de ficha y no campos deshabilitados: un control
-                 apagado invita a buscar cómo encenderlo, y acá no hay forma. -->
+            <!-- ─── Su documento (P28) ─────────────────────────────────────
+                 «Editar muestre TODOS los campos» (C-05). El número, el
+                 departamento que lo emitió y el sexo al nacer son del alta y se
+                 corrigen acá. El número tiene una excepción: con la identidad
+                 ya verificada, lo verificado es ESE número y la API rechaza
+                 cambiarlo (409). Entonces se muestra como renglón de ficha, no
+                 como campo deshabilitado —un control apagado invita a buscar
+                 cómo encenderlo—, y se dice por qué. -->
             @if (soloLectura(); as fijos) {
               <section class="edicion__fijos" data-testid="edicion-documento">
                 <h3 class="edicion__subtitulo">Su documento</h3>
-                <p class="edicion__nota">
-                  Sale de su documento de identidad y no se corrige desde el perfil.
-                </p>
-                <dl class="edicion__fijo">
-                  <dt>Documento de identidad</dt>
-                  <dd>
-                    {{ fijos.documento || 'Sin registrar' }}
-                    @if (fijos.departamento) {
-                      <span class="edicion__fijo-sufijo">{{ fijos.departamento }}</span>
-                    }
-                  </dd>
-                </dl>
+                @if (documentoBloqueado()) {
+                  <p class="edicion__nota" data-testid="edicion-documento-bloqueado">
+                    Su identidad está verificada con este documento, así que el número ya no se
+                    corrige desde el perfil. Si tiene un error, pida una nueva verificación de
+                    identidad.
+                  </p>
+                  <dl class="edicion__fijo">
+                    <dt>Documento de identidad</dt>
+                    <dd>
+                      {{ fijos.documento || 'Sin registrar' }}
+                      @if (fijos.departamento) {
+                        <span class="edicion__fijo-sufijo">{{ fijos.departamento }}</span>
+                      }
+                    </dd>
+                  </dl>
+                } @else {
+                  <p class="edicion__nota">
+                    Corríjalo si lo escribió mal al registrarse. Una vez verificada su identidad, el
+                    número ya no se podrá cambiar desde acá.
+                  </p>
+                  <app-form-field
+                    label="Número de documento de identidad"
+                    [required]="true"
+                    [errorMessage]="errorDocumento() || errorDelServidor('nationalId')"
+                  >
+                    <app-input
+                      data-testid="edicion-numero-documento"
+                      [(value)]="numeroDocumento"
+                      [hasError]="!!(errorDocumento() || errorDelServidor('nationalId'))"
+                    />
+                  </app-form-field>
+                }
               </section>
             }
 
-            <!-- Lo que del documento SÍ se corrige (P28): el departamento que lo
-                 emitió y el sexo al nacer. El número queda arriba, de solo
-                 lectura. Sección aparte a propósito: «Tu documento» no lleva
-                 ningún control. -->
+            <!-- Lo demás del documento que se corrige (P28): el departamento
+                 que lo emitió y el sexo al nacer, también con la identidad
+                 verificada — no son lo que la verificación comprobó. -->
             @if (soloLectura()) {
               <section class="edicion__fijos" data-testid="edicion-datos-del-documento">
                 <h3 class="edicion__subtitulo">Datos que sí puede corregir</h3>
