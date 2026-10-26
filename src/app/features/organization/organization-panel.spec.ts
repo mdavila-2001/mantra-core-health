@@ -164,6 +164,18 @@ describe('OrganizationPanel', () => {
     expect(texto()).toContain('Su gente');
   });
 
+  it('ofrece ir a «Médicos del centro», donde se invita y se aprueba por procedimiento', () => {
+    montar();
+    responder([organizacion()]);
+
+    const enlace = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-testid="organization-affiliations-link"]',
+    );
+
+    expect(enlace).not.toBeNull();
+    expect(enlace?.getAttribute('href')).toBe('/administration/my-organization/affiliations');
+  });
+
   /**
    * El `staff` ve su organización y no la edita: es la distinción que decide
    * si la pantalla ofrece guardar. Los datos siguen a la vista —saber qué tiene

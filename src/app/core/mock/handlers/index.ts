@@ -12,6 +12,7 @@ import { registerDiagnosisVerification } from './diagnosis-verification.handlers
 import { registerMedicalNotes } from './medical-notes.handlers';
 import { registrarDirectorio } from './directory.handlers';
 import { registerHealthcareServices } from './healthcare-services.handlers';
+import { registerRoleAssignments } from './role-assignments.handlers';
 import { registrarEncuestas } from './surveys-forms.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
@@ -59,6 +60,7 @@ export function crearRouterSimulado(): MockRouter {
   // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
   // ante patrones equivalentes gana el registrado primero.
   registerHealthcareServices(router);
+  registerRoleAssignments(router);
   registrarPracticas(router);
   registrarClinica(router);
   registerReceivedServices(router);

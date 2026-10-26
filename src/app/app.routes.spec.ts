@@ -243,6 +243,29 @@ describe('rutas del armazón', () => {
     });
   });
 
+  /** Las dos pantallas del médico de CM-07 cuelgan de «Mi perfil»: sólo las abre quien atiende. */
+  it('«Invitaciones y solicitudes» y «Procedimientos que hago» son de quien atiende y llevan el guard', () => {
+    for (const path of ['my-account/affiliations', 'my-account/my-procedures']) {
+      const route = hijas.find((r) => r.path === path);
+
+      expect(route, path).toBeDefined();
+      expect((route?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
+      expect(route?.data?.[ROLES_ROUTE_DATA], path).toEqual(['CLINICIAN', 'PRACTITIONER']);
+    }
+  });
+
+  /**
+   * «Médicos del centro» (CM-07) cuelga de «Mi organización», que declara `ANY_ROLE`: el rol que importa es la
+   * membresía en la organización, que el guard no ve, así que la ruta lleva el guard para heredar lo que la
+   * sección declare y la autoridad queda en la API.
+   */
+  it('«Médicos del centro» cuelga de «Mi organización» y lleva el guard de sección', () => {
+    const ruta = hijas.find((r) => r.path === 'administration/my-organization/affiliations');
+
+    expect(ruta).toBeDefined();
+    expect((ruta?.canActivate ?? []).includes(seccionRolesGuard)).toBe(true);
+  });
+
   /**
    * Las direcciones viejas tienen que llevar a algún lado real.
    *
