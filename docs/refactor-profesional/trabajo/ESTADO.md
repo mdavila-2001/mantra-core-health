@@ -1,5 +1,30 @@
 # Estado
 
+## Contabilidad: llave Doctor / Contador — 2026-10-26
+
+`/administration/accounting` tiene una sola llave «Versión: Doctor | Contador». **Doctor** (por omisión) muestra el
+resumen y tres registros (gastos, activos, deudas) con un glosario de tres palabras. **Contador** suma las pestañas
+Transacciones y Cuentas, el glosario completo (Debe, Haber, Transacción, Cuenta) y «Informes contables» con los enlaces
+a la vista contable y al balance y libro diario (antes, «Para su contador» al pie del Resumen; ahora también desde
+Registros). La elección se recuerda en el navegador (`mantra.contabilidad.version`). Es lo que se ve, no un permiso: la
+API sigue siendo la autoridad. Los textos nuevos pasaron por las reglas de `copywriting` y `copy-editing` de
+`coreyhaines31/marketingskills` (lenguaje del cliente, una idea por línea, sin muletillas) y por las de `onboarding`
+(una acción clara por pantalla, sin callejones sin salida).
+
+**Verificado en navegador** (Chromium contra `ng serve` con la maqueta, 14 verificaciones con
+[`playwright/contabilidad-version.mjs`](../../../playwright/contabilidad-version.mjs); capturas en
+`evidencias/contabilidad-version-2026-10-26/`): rótulos de pestañas y términos del glosario por versión; la versión
+sobrevive a recargar; volver a Doctor desde «Cuentas» cae en «Gastos»; sin desborde horizontal a 390 px (en ese ancho
+la llave se cortaba en «Conta…» y se le reservó ancho); claro y oscuro. **No se verificó** contra la API real (la
+contabilidad simple sólo existe en la maqueta), ni con otros roles, ni en otros navegadores. Las pantallas
+`.../cockpit` y `.../books` no cambian y no llevan la llave.
+
+**Gates** (2026-10-26, sobre `mockup`): `tsc -p tsconfig.app.json` sin errores · `eslint --max-warnings=0` sobre
+`src/app/features/accounting` 0 · 92 pruebas de las 7 specs del módulo contable pasan (9 nuevas). No se corrió la
+suite entera ni los `check-*.mjs`.
+
+---
+
 ## «Servicios recibidos» en la historia — 2026-10-25
 
 La historia del paciente (`/my-account/medical-record`, 6.ª pestaña), la ficha del médico (última pestaña) y el

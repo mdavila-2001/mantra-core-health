@@ -125,22 +125,36 @@ export function montoEditable(monto: string): string {
   return monto.replace('.', ',');
 }
 
+/** Una palabra del glosario. `soloContador`: sólo se explica en la versión Contador. */
+export interface TerminoDelGlosario {
+  readonly termino: string;
+  readonly significado: string;
+  readonly soloContador?: true;
+}
+
 /** «¿Qué significa cada cosa?», arriba de los registros. */
-export const GLOSARIO: readonly { readonly termino: string; readonly significado: string }[] = [
+export const GLOSARIO: readonly TerminoDelGlosario[] = [
   { termino: 'Gasto', significado: 'Dinero que paga para que el consultorio funcione. Resta de su ganancia.' },
   { termino: 'Activo', significado: 'Algo que el consultorio tiene y usa por años, como un equipo. Suma a lo que vale su consultorio.' },
   { termino: 'Deuda', significado: 'Dinero que usted debe pagar a otros, como un préstamo o un proveedor.' },
   {
     termino: 'Transacción',
     significado: 'Dinero que pasa de una cuenta a otra, por ejemplo de la caja al banco.',
+    soloContador: true,
   },
-  { termino: 'Debe', significado: 'La cuenta a la que llega el dinero.' },
-  { termino: 'Haber', significado: 'La cuenta de la que sale el dinero.' },
+  { termino: 'Debe', significado: 'La cuenta a la que llega el dinero.', soloContador: true },
+  { termino: 'Haber', significado: 'La cuenta de la que sale el dinero.', soloContador: true },
   {
     termino: 'Cuenta',
     significado: 'Una categoría para ordenar el dinero: Caja, Banco, Alquiler, Insumos. Cada registro va a una cuenta.',
+    soloContador: true,
   },
 ];
+
+/** Lo que se explica en cada versión: la del doctor sólo trae las tres palabras que usa. */
+export function glosarioDe(esContador: boolean): readonly TerminoDelGlosario[] {
+  return esContador ? GLOSARIO : GLOSARIO.filter((item) => item.soloContador !== true);
+}
 
 export const EXPLICACION_DE_TRANSACCIONES =
   'Movimientos de dinero entre dos de sus cuentas; por ejemplo, depositar en el banco el efectivo de la caja. «Debe» es la cuenta a la que llega el dinero y «Haber», la cuenta de la que sale.';

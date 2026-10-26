@@ -23,6 +23,13 @@ import {
 } from '../../../core/data-access/simulator-only';
 import { FlujoDeDinero } from '../flujo/flujo-de-dinero';
 import { ContabilidadSimple } from '../registros/registros';
+import {
+  AYUDA_DE_VERSION,
+  OPCIONES_DE_VERSION,
+  guardarVersion,
+  versionGuardada,
+  type VersionContable,
+} from '../version-contable';
 import type {
   BalanceSheet,
   FinancialStatementLine,
@@ -45,6 +52,7 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -232,6 +240,7 @@ interface Dinero {
     PageHeader,
     RouterLink,
     SectionHeading,
+    SegmentedControl,
     Select,
     Tab,
     Tabs,
@@ -262,6 +271,22 @@ export class Resumen {
   readonly pestana = signal(0);
   /** Subpestañas del Resumen: ingresos y gastos, pendientes, bienes y deudas, flujo de dinero. */
   readonly subpestana = signal(0);
+
+  /**
+   * Doctor o Contador (26/10/2026): una sola llave para toda la pantalla. La
+   * versión Doctor es la de por omisión; la Contador suma lo que sólo lleva
+   * quien tiene los libros. Es lo que se ve, no un permiso: la API es quien
+   * autoriza.
+   */
+  readonly version = signal<VersionContable>(versionGuardada());
+  readonly esContador = computed(() => this.version() === 'contador');
+  protected readonly opcionesDeVersion = OPCIONES_DE_VERSION;
+  protected readonly ayudaDeLaVersion = computed(() => AYUDA_DE_VERSION[this.version()]);
+
+  protected elegirVersion(version: VersionContable): void {
+    this.version.set(version);
+    guardarVersion(version);
+  }
   /** La contabilidad simple no está en la API real: sólo en la maqueta. */
   protected readonly simpleAccountingAvailable = simulatorAvailable();
   protected readonly simpleAccountingUnavailable = unavailableMessage('Los registros de la contabilidad simple');

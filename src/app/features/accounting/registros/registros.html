@@ -61,6 +61,9 @@
       <p class="registros__bajada">
         Aquí anota el dinero del consultorio que no pasa por la facturación: lo que gasta, lo que
         compra y lo que debe. Con esto el sistema calcula su ganancia y cuánto vale su consultorio.
+        @if (esContador()) {
+          La versión Contador suma las transacciones entre cuentas y el plan de cuentas.
+        }
       </p>
     </div>
   </header>
@@ -68,7 +71,7 @@
   <details class="registros__glosario" data-testid="registros-glosario">
     <summary>¿Qué significa cada cosa?</summary>
     <dl>
-      @for (item of glosario; track item.termino) {
+      @for (item of glosario(); track item.termino) {
         <div class="registros__termino">
           <dt>{{ item.termino }}</dt>
           <dd>{{ item.significado }}</dd>
@@ -127,89 +130,91 @@
       </app-tab>
     }
 
-    <app-tab [label]="'Transacciones' + cuantos(transacciones())">
-      <div class="registros__panel">
-        <p class="registros__explicacion">{{ explicacionDeTransacciones }}</p>
-        <div class="registros__barra">
-          <app-filter-bar
-            class="registros__buscador"
-            searchLabel="Buscar en transacciones"
-            searchPlaceholder="Descripción, cuenta o fecha"
-            [searchInUrl]="false"
-            [searchValue]="busqueda()['TX']"
-            (searchChanged)="buscar('TX', $event)"
+    @if (esContador()) {
+      <app-tab [label]="'Transacciones' + cuantos(transacciones())">
+        <div class="registros__panel">
+          <p class="registros__explicacion">{{ explicacionDeTransacciones }}</p>
+          <div class="registros__barra">
+            <app-filter-bar
+              class="registros__buscador"
+              searchLabel="Buscar en transacciones"
+              searchPlaceholder="Descripción, cuenta o fecha"
+              [searchInUrl]="false"
+              [searchValue]="busqueda()['TX']"
+              (searchChanged)="buscar('TX', $event)"
+            />
+            <button
+              app-button
+              type="button"
+              data-testid="nueva-transaccion"
+              (clicked)="modal.set({ tipo: 'transaccion', transaccion: null })"
+            >
+              Nueva transacción
+            </button>
+          </div>
+          <app-data-table
+            [state]="paginaDeTransacciones()"
+            [columns]="columnasDeTransaccion()"
+            [trackBy]="porId"
+            caption="Transacciones: de qué cuenta sale y a cuál llega el dinero"
+            (retry)="cargarTransacciones()"
+            data-testid="tabla-transacciones"
           />
-          <button
-            app-button
-            type="button"
-            data-testid="nueva-transaccion"
-            (clicked)="modal.set({ tipo: 'transaccion', transaccion: null })"
-          >
-            Nueva transacción
-          </button>
+          @if (totalDe('TX') > 0) {
+            <app-pagination
+              [totalItems]="totalDe('TX')"
+              [page]="pagina()['TX']"
+              (pageChange)="irAPagina('TX', $event)"
+              [pageSize]="tamano()['TX']"
+              (pageSizeChange)="cambiarTamano('TX', $event)"
+              data-testid="paginacion-transacciones"
+            />
+          }
         </div>
-        <app-data-table
-          [state]="paginaDeTransacciones()"
-          [columns]="columnasDeTransaccion()"
-          [trackBy]="porId"
-          caption="Transacciones: de qué cuenta sale y a cuál llega el dinero"
-          (retry)="cargarTransacciones()"
-          data-testid="tabla-transacciones"
-        />
-        @if (totalDe('TX') > 0) {
-          <app-pagination
-            [totalItems]="totalDe('TX')"
-            [page]="pagina()['TX']"
-            (pageChange)="irAPagina('TX', $event)"
-            [pageSize]="tamano()['TX']"
-            (pageSizeChange)="cambiarTamano('TX', $event)"
-            data-testid="paginacion-transacciones"
-          />
-        }
-      </div>
-    </app-tab>
+      </app-tab>
 
-    <app-tab [label]="'Cuentas' + cuantos(cuentas())">
-      <div class="registros__panel">
-        <p class="registros__explicacion">{{ explicacionDeCuentas }}</p>
-        <div class="registros__barra">
-          <app-filter-bar
-            class="registros__buscador"
-            searchLabel="Buscar una cuenta"
-            searchPlaceholder="Código, nombre o tipo"
-            [searchInUrl]="false"
-            [searchValue]="busqueda()['CUENTAS']"
-            (searchChanged)="buscar('CUENTAS', $event)"
+      <app-tab [label]="'Cuentas' + cuantos(cuentas())">
+        <div class="registros__panel">
+          <p class="registros__explicacion">{{ explicacionDeCuentas }}</p>
+          <div class="registros__barra">
+            <app-filter-bar
+              class="registros__buscador"
+              searchLabel="Buscar una cuenta"
+              searchPlaceholder="Código, nombre o tipo"
+              [searchInUrl]="false"
+              [searchValue]="busqueda()['CUENTAS']"
+              (searchChanged)="buscar('CUENTAS', $event)"
+            />
+            <button
+              app-button
+              type="button"
+              data-testid="nueva-cuenta"
+              (clicked)="modal.set({ tipo: 'cuenta', cuenta: null })"
+            >
+              Nueva cuenta
+            </button>
+          </div>
+          <app-data-table
+            [state]="paginaDeCuentas()"
+            [columns]="columnasDeCuenta()"
+            [trackBy]="porId"
+            caption="Cuentas"
+            (retry)="cargarCuentas()"
+            data-testid="tabla-cuentas"
           />
-          <button
-            app-button
-            type="button"
-            data-testid="nueva-cuenta"
-            (clicked)="modal.set({ tipo: 'cuenta', cuenta: null })"
-          >
-            Nueva cuenta
-          </button>
+          @if (totalDe('CUENTAS') > 0) {
+            <app-pagination
+              [totalItems]="totalDe('CUENTAS')"
+              [page]="pagina()['CUENTAS']"
+              (pageChange)="irAPagina('CUENTAS', $event)"
+              [pageSize]="tamano()['CUENTAS']"
+              (pageSizeChange)="cambiarTamano('CUENTAS', $event)"
+              data-testid="paginacion-cuentas"
+            />
+          }
         </div>
-        <app-data-table
-          [state]="paginaDeCuentas()"
-          [columns]="columnasDeCuenta()"
-          [trackBy]="porId"
-          caption="Cuentas"
-          (retry)="cargarCuentas()"
-          data-testid="tabla-cuentas"
-        />
-        @if (totalDe('CUENTAS') > 0) {
-          <app-pagination
-            [totalItems]="totalDe('CUENTAS')"
-            [page]="pagina()['CUENTAS']"
-            (pageChange)="irAPagina('CUENTAS', $event)"
-            [pageSize]="tamano()['CUENTAS']"
-            (pageSizeChange)="cambiarTamano('CUENTAS', $event)"
-            data-testid="paginacion-cuentas"
-          />
-        }
-      </div>
-    </app-tab>
+      </app-tab>
+    }
   </app-tabs>
 </app-card>
 }
