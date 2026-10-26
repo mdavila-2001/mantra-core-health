@@ -383,6 +383,45 @@ describe('Glossary', () => {
     expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
   });
 
+  it('la vista por omisión son tarjetas y el selector ofrece Tarjetas y Tabla', async () => {
+    await responderLanding();
+
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(1);
+    expect(html().querySelector('[data-testid="glosario-tabla"]')).toBeNull();
+    expect(textos('[data-testid="glosario-vista"] [role="radio"]')).toEqual(['Tarjetas', 'Tabla']);
+  });
+
+  it('?view=table muestra una tabla con término, categoría, definición y código, y sigue paginada', async () => {
+    await responderLanding([TERMINO, TERMINO_B], 40);
+    // Cambiar de vista no es otro resultado: no vuelve a pedir la página.
+    await irA({ view: 'table' });
+    http.expectNone((r) => r.url.endsWith('/terminology/concepts'));
+
+    const tabla = html().querySelector('[data-testid="glosario-tabla"]');
+    expect(tabla).not.toBeNull();
+    expect(textos('[data-testid="glosario-tabla"] thead th')).toEqual([
+      'Término',
+      'Categoría',
+      'Definición breve',
+      'Fuente / código',
+    ]);
+    expect(html().querySelectorAll('[data-testid="glosario-tabla"] tbody tr').length).toBe(2);
+    expect(tabla?.textContent).toContain('Hipertensión esencial');
+    expect(tabla?.textContent).toContain('Enfermedades');
+    expect(tabla?.textContent).toContain('Presión arterial persistentemente alta.');
+    expect(tabla?.textContent).toContain('I10');
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(0);
+    expect(html().querySelector('app-pagination')).not.toBeNull();
+  });
+
+  it('un valor de ?view desconocido cae en tarjetas', async () => {
+    await responderLanding();
+    await irA({ view: 'otra-cosa' });
+
+    expect(html().querySelector('[data-testid="glosario-tabla"]')).toBeNull();
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(1);
+  });
+
   it('un enlace con una categoría que no existe lo dice, y no pide nada', async () => {
     await responderLanding();
     await irA({ category: 'glossary-category-inventada' });

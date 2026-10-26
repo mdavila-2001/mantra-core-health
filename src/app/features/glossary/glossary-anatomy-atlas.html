@@ -360,16 +360,35 @@
 
     <footer class="atlas3d__creditos" data-testid="atlas3d-creditos">
       <h2 class="atlas3d__subtitulo">Créditos y licencias</h2>
-      <ul class="atlas3d__lista">
-        @for (fuente of sources; track fuente.name) {
-          <li>
-            <strong>{{ fuente.name }}</strong> —
-            <a [href]="fuente.licenseUrl" target="_blank" rel="noopener noreferrer">{{ fuente.license }}</a>.
-            {{ fuente.attribution }}
-            <a [href]="'https://doi.org/' + fuente.citationDoi" target="_blank" rel="noopener noreferrer">doi:{{ fuente.citationDoi }}</a>
-          </li>
-        }
-      </ul>
+      <div class="atlas3d__tabla-caja">
+        <table class="atlas3d__tabla" data-testid="atlas3d-fuentes">
+          <caption class="atlas3d__tabla-titulo">Fuentes del atlas, su licencia y su cita</caption>
+          <thead>
+            <tr>
+              <th scope="col">Fuente</th>
+              <th scope="col">Licencia</th>
+              <th scope="col">Cita</th>
+              <th scope="col">DOI</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (fuente of sources; track fuente.name) {
+              <tr>
+                <th scope="row">{{ fuente.name }}</th>
+                <td>
+                  <a [href]="fuente.licenseUrl" target="_blank" rel="noopener noreferrer">{{ fuente.license }}</a>
+                </td>
+                <td>{{ fuente.attribution }}</td>
+                <td>
+                  <a [href]="'https://doi.org/' + fuente.citationDoi" target="_blank" rel="noopener noreferrer"
+                    >{{ fuente.citationDoi }}</a
+                  >
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
       <p class="atlas3d__atribucion">
         Las mallas se redujeron y cuantizaron para la web; como obra derivada de BodyParts3D se distribuyen bajo la misma
         licencia CC-BY-SA 2.1 JP. <a routerLink="/glossary">Volver al glosario</a>
