@@ -3,6 +3,7 @@ import { ROLE_ASSIGNMENT_STATUS_CODE } from '../../data-access/role-assignments/
 import type { RoleAssignmentRow } from '../../data-access/role-assignments/role-assignments.types';
 import { MEDICAL, professionalById } from './people';
 import { CARGO, STATUS } from './concepts';
+import { PRACTICE_CM_NORTE, PRACTICE_CM_SUR, PROCEDURE_COLONOSCOPY, PROCEDURE_UPPER_ENDOSCOPY, SITE_CM_NORTE_1, SITE_CM_SUR_1, SITES_BY_PRACTICE } from './healthcare-services';
 import { reply, validation } from '../mock-router';
 import { Coleccion, iso, nuevoId, uuid } from '../mock-store';
 
@@ -11,12 +12,7 @@ import { Coleccion, iso, nuevoId, uuid } from '../mock-store';
     compartidos con los demás carriles de centros médicos (`CONTRATO.md`).
     ========================================================================== */
 
-export const PRACTICE_CM_NORTE = uuid('practice-cm-norte');
-export const PRACTICE_CM_SUR = uuid('practice-cm-sur');
-export const SITE_CM_NORTE_1 = uuid('site-cm-norte-1');
-export const SITE_CM_SUR_1 = uuid('site-cm-sur-1');
-export const PROC_ENDOSCOPIA_ALTA = uuid('proc-endoscopia-alta');
-export const PROC_COLONOSCOPIA = uuid('proc-colonoscopia');
+export { PRACTICE_CM_NORTE, PRACTICE_CM_SUR, SITE_CM_NORTE_1, SITE_CM_SUR_1 };
 
 const BOB_CURRENCY = uuid('concept-currency-bob');
 const CLINIC_TYPE = uuid('concept-practice-type-clinic');
@@ -28,27 +24,31 @@ export const CM_PRACTICES = [
   { id: PRACTICE_CM_SUR, code: 'CMSUR', name: 'Centro Médico Sur', status: 'ACTIVE', typeConceptId: CLINIC_TYPE, statusConceptId: ACTIVE_STATUS, currencyConceptId: BOB_CURRENCY, timeZone: 'America/La_Paz' },
 ];
 
-/** Las sedes de ejemplo de los dos centros, para `GET /practices/:practiceId/sites`. */
-export const CM_SITES = [
-  { id: SITE_CM_NORTE_1, practiceId: PRACTICE_CM_NORTE, code: 'NORTE-1', name: 'Sede Norte 1', addressText: 'Av. Banzer km 5, Santa Cruz de la Sierra' },
-  { id: SITE_CM_SUR_1, practiceId: PRACTICE_CM_SUR, code: 'SUR-1', name: 'Sede Sur 1', addressText: 'Av. Santos Dumont 410, Santa Cruz de la Sierra' },
-].map((site) => ({ ...site, timeZone: 'America/La_Paz', latitude: null, longitude: null, status: 'ACTIVE' }));
+/** Un procedimiento publicado por una sede, tal como lo conoce el catálogo (CM-06). */
+export interface KnownOffer {
+  readonly id: string;
+  readonly practiceSiteId: string;
+  readonly serviceConceptId: string;
+  readonly serviceDisplay: string;
+  readonly active: boolean;
+}
 
-/** Lo que publica cada sede, mientras el catálogo del centro (CM-06) no esté en la base. */
-export const PUBLISHED_PROCEDURES = [
-  { site: SITE_CM_NORTE_1, practiceId: PRACTICE_CM_NORTE, concept: PROC_ENDOSCOPIA_ALTA, display: 'Endoscopia digestiva alta', active: true },
-  { site: SITE_CM_NORTE_1, practiceId: PRACTICE_CM_NORTE, concept: PROC_COLONOSCOPIA, display: 'Colonoscopia', active: true },
-  { site: SITE_CM_NORTE_1, practiceId: PRACTICE_CM_NORTE, concept: uuid('proc-retirado'), display: 'Procedimiento retirado del catálogo', active: false },
-  { site: SITE_CM_SUR_1, practiceId: PRACTICE_CM_SUR, concept: PROC_COLONOSCOPIA, display: 'Colonoscopia', active: true },
-  { site: SITE_CM_SUR_1, practiceId: PRACTICE_CM_SUR, concept: PROC_ENDOSCOPIA_ALTA, display: 'Endoscopia digestiva alta', active: true },
-].map((p) => ({
-  id: uuid(`healthcare-service-${p.site}-${p.concept}`),
-  practiceId: p.practiceId,
-  practiceSiteId: p.site,
-  serviceConceptId: p.concept,
-  serviceDisplay: p.display,
-  active: p.active,
-}));
+let findOffer: (id: string) => KnownOffer | undefined = () => undefined;
+
+/**
+ * De dónde salen los procedimientos publicados. Lo fija `registerRoleAssignments` con la colección del doble de
+ * CM-06; no se importa acá para no cerrar un ciclo con `practice.handlers`, que delega en este archivo.
+ */
+export function useOfferLookup(find: (id: string) => KnownOffer | undefined): void {
+  findOffer = find;
+}
+
+/** El procedimiento si la sede lo publica y lo tiene activo; si no, `undefined`. */
+export function publishedOffer(practiceId: string, practiceSiteId: string, healthcareServiceId: string): KnownOffer | undefined {
+  const offer = findOffer(healthcareServiceId);
+  const siteBelongs = SITES_BY_PRACTICE[practiceId]?.some((site) => site.id === practiceSiteId) === true;
+  return offer !== undefined && offer.active && offer.practiceSiteId === practiceSiteId && siteBelongs ? offer : undefined;
+}
 
 const PRACTICE_NAMES: Readonly<Record<string, string>> = {
   [PRACTICE_CM_NORTE]: 'Centro Médico Norte',
@@ -69,14 +69,14 @@ const STATUS_CONCEPT: Readonly<Record<StatusCode, string>> = {
 
 type StoredRow = RoleAssignmentRow & { readonly createdAt: string };
 
-function row(id: string, practiceId: string, practiceSiteId: string, concept: string, display: string, code: StatusCode, initiatedBy: RoleAssignmentRow['initiatedBy'], profileId = MEDICAL.id, days = -1): StoredRow {
+function row(id: string, offerId: string, practiceId: string, practiceSiteId: string, concept: string, display: string, code: StatusCode, initiatedBy: RoleAssignmentRow['initiatedBy'], profileId = MEDICAL.id, days = -1): StoredRow {
   return {
     id: uuid(id),
     practitionerProfileId: profileId,
     practitionerName: professionalById(profileId)?.displayName ?? 'Profesional',
     practiceId,
     practiceSiteId,
-    healthcareServiceId: uuid(`healthcare-service-${practiceSiteId}-${concept}`),
+    healthcareServiceId: offerId,
     serviceConceptId: concept,
     serviceDisplay: display,
     statusConceptId: STATUS_CONCEPT[code],
@@ -87,8 +87,9 @@ function row(id: string, practiceId: string, practiceSiteId: string, concept: st
 }
 
 export const affiliations = new Coleccion<StoredRow>([
-  row('ra-cm-norte-endoscopia', PRACTICE_CM_NORTE, SITE_CM_NORTE_1, PROC_ENDOSCOPIA_ALTA, 'Endoscopia digestiva alta', 'ROLE_ASG_INVITED', 'PRACTICE'),
-  row('ra-cm-sur-colonoscopia', PRACTICE_CM_SUR, SITE_CM_SUR_1, PROC_COLONOSCOPIA, 'Colonoscopia', 'ROLE_ASG_ACTIVE', 'PRACTITIONER', MEDICAL.id, -7),
+  row('ra-cm-norte-endoscopia', uuid('offer-cm-norte-endoscopia'), PRACTICE_CM_NORTE, SITE_CM_NORTE_1, PROCEDURE_UPPER_ENDOSCOPY, 'Endoscopia digestiva alta', 'ROLE_ASG_INVITED', 'PRACTICE'),
+  // La sede Sur nace sin procedimientos publicados (spec de CM-06): la oferta existe cuando el centro la publica.
+  row('ra-cm-sur-colonoscopia', uuid('offer-cm-sur-colonoscopia'), PRACTICE_CM_SUR, SITE_CM_SUR_1, PROCEDURE_COLONOSCOPY, 'Colonoscopia', 'ROLE_ASG_ACTIVE', 'PRACTITIONER', MEDICAL.id, -7),
 ]).persistirEn('mock.practice.afiliaciones-cm');
 
 /** La fila tal como viaja: sin el sello interno de creación. */
@@ -103,7 +104,7 @@ export function changeStatus(id: string, code: StatusCode): StoredRow | undefine
 
 /** Crea una fila nueva en el estado dado, para un procedimiento de una sede. */
 export function createAffiliation(practiceId: string, practiceSiteId: string, healthcareServiceId: string, profileId: string, code: StatusCode, initiatedBy: RoleAssignmentRow['initiatedBy']): StoredRow | undefined {
-  const offer = PUBLISHED_PROCEDURES.find((p) => p.id === healthcareServiceId && p.practiceSiteId === practiceSiteId && p.practiceId === practiceId);
+  const offer = publishedOffer(practiceId, practiceSiteId, healthcareServiceId);
   if (offer === undefined) return undefined;
   return affiliations.agregar({
     id: nuevoId('ra-cm'),
@@ -140,7 +141,7 @@ export function myAffiliations(profileId: string) {
 
 /** `POST .../self-request` con un procedimiento: la fila queda pendiente del centro. */
 export function requestAffiliation(practiceId: string, practiceSiteId: string | undefined, healthcareServiceId: string, profileId: string) {
-  const offer = PUBLISHED_PROCEDURES.find((p) => p.id === healthcareServiceId);
+  const offer = findOffer(healthcareServiceId);
   const created = createAffiliation(practiceId, practiceSiteId ?? offer?.practiceSiteId ?? '', healthcareServiceId, profileId, 'ROLE_ASG_PENDING', 'PRACTITIONER');
   return created === undefined ? validation('Ese procedimiento no lo publica la sede') : reply(201, { ...toRow(created), status: created.statusConceptId, createdAt: created.createdAt });
 }
