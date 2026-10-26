@@ -4,7 +4,10 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import type { GlossaryNeighborhood } from '../../core/data-access/terminology/terminology.types';
+import type {
+  GlossaryNeighbor,
+  GlossaryNeighborhood,
+} from '../../core/data-access/terminology/terminology.types';
 import { GlossaryNetwork } from './glossary-network';
 
 /**
@@ -54,6 +57,7 @@ describe('GlossaryNetwork', () => {
         provideHttpClientTesting(),
         provideRouter([
           { path: 'glossary/network', component: GlossaryNetwork },
+          { path: 'glossary/compare', children: [] },
           { path: 'glossary/:conceptId', children: [] },
         ]),
       ],
@@ -100,18 +104,18 @@ describe('GlossaryNetwork', () => {
     await abrir();
 
     expect(html().querySelector('#ruta-foco-titulo')?.textContent?.trim()).toBe('Tos');
-    const titulos = [...html().querySelectorAll('.ruta__grupo-titulo')].map((h) =>
+    const titulos = [...html().querySelectorAll('.relation-groups__title')].map((h) =>
       (h.textContent ?? '').replace(/\s+/g, ' ').trim(),
     );
     expect(titulos).toEqual(['Enfermedades que lo presentan', 'Tratamientos 1']);
-    const zona = html().querySelector('.ruta__zona--siguiente .ruta__zona-titulo');
+    const zona = html().querySelector('.ruta__zona--siguiente .relation-groups__heading');
     expect(zona?.textContent?.trim()).toBe('Diagnóstico, estudio y tratamiento');
   });
 
   it('muestra las etiquetas completas, sin recortar el nombre', async () => {
     await abrir();
 
-    const botones = [...html().querySelectorAll<HTMLButtonElement>('.ruta__vecino')];
+    const botones = [...html().querySelectorAll<HTMLButtonElement>('.relation-groups__neighbor')];
     expect(botones.map((b) => b.textContent?.trim())).toContain('Dextrometorfano');
     expect(botones.every((b) => !(b.textContent ?? '').includes('…'))).toBe(true);
   });
@@ -134,7 +138,7 @@ describe('GlossaryNetwork', () => {
     await harness.fixture.whenStable();
     harness.fixture.detectChanges();
 
-    expect(html().querySelectorAll('.ruta__zona--siguiente .ruta__vecino')).toHaveLength(48);
+    expect(html().querySelectorAll('.ruta__zona--siguiente .relation-groups__neighbor')).toHaveLength(48);
     expect(html().textContent).toContain('Mostrar menos');
     expect(html().textContent).not.toContain('Ver todos');
   });
@@ -143,7 +147,7 @@ describe('GlossaryNetwork', () => {
     await abrir();
     const router = TestBed.inject(Router);
 
-    html().querySelector<HTMLButtonElement>('.ruta__vecino')!.click();
+    html().querySelector<HTMLButtonElement>('.relation-groups__neighbor')!.click();
     await harness.fixture.whenStable();
 
     expect(router.url).toBe('/glossary/network?focus=d-00');
@@ -172,5 +176,102 @@ describe('GlossaryNetwork', () => {
     harness.fixture.detectChanges();
 
     expect(html().querySelector('.ruta__mapa')).toBeNull();
+  });
+
+  // --- Filtros (TAREA-41 F5.2) ----------------------------------------------
+
+  const conEvidencia = (
+    id: string,
+    display: string,
+    extra: Partial<GlossaryNeighbor>,
+  ): GlossaryNeighbor => ({ conceptId: id, slug: id, display, category: enfermedad, ...extra });
+
+  const CON_EVIDENCIA: GlossaryNeighborhood = {
+    ...VECINDARIO,
+    groups: [
+      {
+        type: 'SYMPTOM',
+        direction: 'incoming',
+        total: 3,
+        items: [
+          conEvidencia('n-1', 'Neumonía', { strength: 0.9, evidenceTier: 'NATIONAL_STANDARD' }),
+          conEvidencia('n-2', 'Asma', { strength: 0.2, evidenceTier: 'STATISTICAL_LITERATURE' }),
+          conEvidencia('n-3', 'Bronquitis', {}),
+        ],
+      },
+    ],
+  };
+
+  async function abrirCon(url: string, vecindarioDe: GlossaryNeighborhood): Promise<void> {
+    await harness.navigateByUrl(url, GlossaryNetwork);
+    vecindario().flush(vecindarioDe);
+    await harness.fixture.whenStable();
+    harness.fixture.detectChanges();
+  }
+
+  function nombres(): string[] {
+    return [...html().querySelectorAll('.relation-groups__neighbor')].map((b) => b.textContent?.trim() ?? '');
+  }
+
+  it('por defecto oculta la bibliografía estadística (T4), deja los vecinos sin evidencia y lo dice', async () => {
+    await abrirCon(`/glossary/network?focus=${TOS}`, CON_EVIDENCIA);
+
+    expect(nombres()).toEqual(['Neumonía', 'Bronquitis']);
+    expect(html().querySelector('.ruta__filtros-resumen')?.textContent?.trim()).toBe(
+      'Los filtros ocultan 1 de los 3 términos cargados.',
+    );
+  });
+
+  it('lee los filtros de la URL: con evidence=1,2,3,4 y unrated=exclude', async () => {
+    await abrirCon(`/glossary/network?focus=${TOS}&evidence=1,2,3,4&unrated=exclude`, CON_EVIDENCIA);
+
+    expect(nombres()).toEqual(['Neumonía', 'Asma']);
+  });
+
+  it('marcar un nivel escribe el filtro en la URL y conserva el término central', async () => {
+    await abrirCon(`/glossary/network?focus=${TOS}`, CON_EVIDENCIA);
+    const router = TestBed.inject(Router);
+
+    const t4 = [...html().querySelectorAll<HTMLInputElement>('.ruta__filtros input[type="checkbox"]')].find(
+      (input) => input.closest('app-checkbox')?.textContent?.includes('Bibliografía estadística'),
+    );
+    expect(t4).toBeDefined();
+    t4!.click();
+    await harness.fixture.whenStable();
+
+    expect(router.url).toBe(`/glossary/network?focus=${TOS}&evidence=1,2,3,4`);
+  });
+
+  it('ocultar un tipo de relación saca su columna y cuenta sus términos', async () => {
+    await abrirCon(`/glossary/network?focus=${TOS}&hide=diseases`, VECINDARIO);
+
+    const titulos = [...html().querySelectorAll('.relation-groups__title')].map((h) =>
+      (h.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    );
+    expect(titulos).toEqual(['Tratamientos 1']);
+    expect(html().querySelector('.ruta__filtros-resumen')?.textContent?.trim()).toBe(
+      'Los filtros ocultan 8 de los 9 términos cargados.',
+    );
+  });
+
+  // --- Comparar con… (TAREA-41 F5.3) ----------------------------------------
+
+  it('«Comparar con…» abre un buscador y lleva al comparador con los dos términos', async () => {
+    await abrir();
+    const router = TestBed.inject(Router);
+
+    const boton = html().querySelector<HTMLButtonElement>('.ruta__foco-comparar')!;
+    expect(boton.getAttribute('aria-expanded')).toBe('false');
+    boton.click();
+    harness.fixture.detectChanges();
+    expect(boton.getAttribute('aria-expanded')).toBe('true');
+
+    (harness.routeDebugElement!.componentInstance as { compareWith(o: unknown): void }).compareWith({
+      value: NEUMONIA,
+      label: 'Neumonía',
+    });
+    await harness.fixture.whenStable();
+
+    expect(router.url).toBe(`/glossary/compare?a=${TOS}&b=${NEUMONIA}`);
   });
 });
