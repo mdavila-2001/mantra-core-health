@@ -135,6 +135,23 @@ export class LocationPicker {
   readonly punto = input<PuntoGeo | null>(null);
 
   /**
+   * Si la localidad SALE del punto y de nada más (pedido del cliente del
+   * 26/10/2026): el punto con el que nace también elige, y el mapa y el select
+   * quedan en sólo lectura aunque `readonly` no lo diga. Lo usa
+   * `app-map-location-picker`, que monta este control recién cuando hay punto.
+   */
+  readonly desdePunto = input(false);
+
+  /**
+   * El distrito o la zona que devolvió el geocodificador, para la ficha. Vacío
+   * no se dibuja: no se inventa un barrio.
+   */
+  readonly zona = input<string | null>(null);
+
+  /** Sólo lectura de verdad: pedida, o porque la localidad la decide el punto. */
+  protected readonly bloqueado = computed(() => this.readonly() || this.desdePunto());
+
+  /**
    * El departamento elegido a mano, cuando todavía no hay municipio.
    *
    * Es un estado propio y no derivado porque hay un momento —entre pulsar el
@@ -219,11 +236,12 @@ export class LocationPicker {
       // El punto con el que el selector NACE no elige nada: viene de un
       // borrador, de volver a la página o de editar una dirección guardada, y
       // ahí la localidad ya la eligió la persona. Sólo un punto NUEVO elige.
-      if (this.puntoTraducido === undefined) {
+      if (this.puntoTraducido === undefined && !this.desdePunto()) {
         this.puntoTraducido = punto;
         return;
       }
-      if (!this.isBrowser || this.readonly() || punto === null) return;
+      if (!this.isBrowser || punto === null) return;
+      if (this.readonly() && !this.desdePunto()) return;
       if (this.ramas().length === 0 || punto === this.puntoTraducido) return;
       this.puntoTraducido = punto;
       void this.elegirPorPunto(punto);
@@ -247,6 +265,9 @@ export class LocationPicker {
    * llegar el catálogo no le pisa la corrección.
    */
   private puntoTraducido: PuntoGeo | null | undefined = undefined;
+
+  /** Si el último punto traducido no cayó dentro de ningún municipio. */
+  protected readonly fueraDeMunicipio = signal(false);
 
   /**
    * El municipio que eligió el PUNTO, justo antes de elegirlo. Sirve para que
@@ -273,6 +294,7 @@ export class LocationPicker {
       punto,
       geometria.PROYECCION_DE_BOLIVIA,
     );
+    this.fueraDeMunicipio.set(contorno === null);
     if (contorno === null) return;
     for (const rama of this.ramas()) {
       if (rama.sigla !== contorno.sigla) continue;
