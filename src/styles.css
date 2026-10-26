@@ -444,6 +444,35 @@ h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 600; }
 h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; }
 h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 
+/* enlaces de texto sin clase: los de un párrafo, una alerta o un pie.
+   Sin esta regla salen con el azul del navegador (y el violeta al visitarlos),
+   que no es del sistema y en oscuro no contrasta.
+
+   Alcance, a propósito angosto:
+   · `[href]` — un `<a>` sin destino no es un enlace y no se le pinta como tal;
+   · `:not([class])` — quien pone clase decide su aspecto (tarjetas, navegación,
+     chips...); esta regla es sólo para el texto suelto;
+   · `:not([app-button], [app-link])` — esos tienen la suya, en `alovida.css` y
+     en el átomo `app-link`, y esta no debe competir con ellas.
+   `:where()` la deja en especificidad cero: cualquier regla de componente o de
+   contenedor (`.pie a`, `.alerta a`) le gana sin pelearse.
+
+   No hace falta una regla `:visited`: un `color` de autor le gana al violeta del
+   navegador en todos los estados, también en el visitado. El peso se hereda,
+   que es lo que corresponde dentro de un texto corrido. */
+:where(a[href]:not([class], [app-button], [app-link])) {
+    color: var(--text-link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: color var(--dur-fast) var(--ease-standard);
+}
+
+:where(a[href]:not([class], [app-button], [app-link]):hover) {
+    color: var(--brand-primary-hover);
+    text-decoration-thickness: 2px;
+}
+
 /* solo para lectores de pantalla: texto que completa un nombre accesible sin
    ocupar espacio visual (p. ej. «(obligatorio)» junto al asterisco) */
 .sr-only {

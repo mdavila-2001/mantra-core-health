@@ -8,6 +8,17 @@ import { LINK_VARIANTS, type LinkVariant } from './link.types';
 
 const LINK_CSS = 'src/app/shared/components/atoms/link/link.css';
 
+/** El cuerpo de la primera regla cuyo selector empieza en `selector`. */
+function cuerpo(css: string, selector: string): string {
+  const desde = css.indexOf(selector);
+  expect(desde, `no está la regla ${selector}`).toBeGreaterThanOrEqual(0);
+  return css.slice(css.indexOf('{', desde) + 1, css.indexOf('}', desde));
+}
+
+function declaracion(bloque: string, propiedad: string): string | undefined {
+  return new RegExp(`(?:^|[\\s;])${propiedad}:\\s*([^;]+);`).exec(bloque)?.[1]?.trim();
+}
+
 /** Host real: el selector es de atributo, el componente vive EN un <a>. */
 @Component({
   imports: [Link],
@@ -179,17 +190,6 @@ describe('Link', () => {
     const global = readFileSync('src/styles/alovida.css', 'utf8');
     const atomo = readFileSync(LINK_CSS, 'utf8');
 
-    /** El cuerpo de la primera regla cuyo selector empieza en `selector`. */
-    function cuerpo(css: string, selector: string): string {
-      const desde = css.indexOf(selector);
-      expect(desde, `no está la regla ${selector}`).toBeGreaterThanOrEqual(0);
-      return css.slice(css.indexOf('{', desde) + 1, css.indexOf('}', desde));
-    }
-
-    function declaracion(bloque: string, propiedad: string): string | undefined {
-      return new RegExp(`(?:^|[\\s;])${propiedad}:\\s*([^;]+);`).exec(bloque)?.[1]?.trim();
-    }
-
     const COMPARTIDAS = [
       'font-weight',
       'text-decoration',
@@ -219,6 +219,46 @@ describe('Link', () => {
     it('ninguna regla global `a[app-link]` suelta le gana al átomo', () => {
       // Una por línea y sin `:where(` delante: `a[app-link] {` o `a[app-link]:hover {`.
       expect(global).not.toMatch(/^a\[app-link\][^{]*\{/m);
+    });
+  });
+
+  /**
+   * Los `<a>` de texto suelto (sin clase) se estilan con la regla base de
+   * `styles.css`. Sin ella salen con el azul y el violeta del navegador. El
+   * alcance es lo que se vigila: `[href]` para no pintar de enlace lo que no lo
+   * es, `:not([class])` para no pisar a quien se estila solo, y `:where()` para
+   * que cualquier regla de componente le gane.
+   */
+  describe('regla base para anclas sin clase', () => {
+    const base = readFileSync('src/styles.css', 'utf8');
+    const SELECTOR = ':where(a[href]:not([class], [app-button], [app-link])) {';
+    const atomo = readFileSync(LINK_CSS, 'utf8');
+
+    it('existe, con color de enlace del sistema y subrayado en reposo', () => {
+      const regla = cuerpo(base, SELECTOR);
+
+      expect(declaracion(regla, 'color')).toBe('var(--text-link)');
+      expect(declaracion(regla, 'text-decoration')).toBe('underline');
+    });
+
+    it('subraya igual que el átomo: mismo grosor, mismo desplazamiento y mismo engrosado en hover', () => {
+      const regla = cuerpo(base, SELECTOR);
+      const hover = cuerpo(base, `${SELECTOR.slice(0, -3)}:hover) {`);
+      const hoverAtomo = cuerpo(atomo, ':host(:hover) {');
+
+      for (const propiedad of ['text-decoration-thickness', 'text-underline-offset']) {
+        expect(declaracion(regla, propiedad), propiedad).toBe(
+          declaracion(cuerpo(atomo, ':host {'), propiedad),
+        );
+      }
+      expect(declaracion(hover, 'text-decoration-thickness')).toBe(
+        declaracion(hoverAtomo, 'text-decoration-thickness'),
+      );
+    });
+
+    it('no hay otra regla `a[href]:not(...)` fuera de `:where()` que gane por especificidad', () => {
+      expect(base).not.toMatch(/^a(\[href\])?:not\(/m);
+      expect(base).not.toMatch(/^a\s*[{,:]/m);
     });
   });
 });
