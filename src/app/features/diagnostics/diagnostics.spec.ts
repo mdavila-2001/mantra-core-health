@@ -164,7 +164,7 @@ describe('Diagnostics', () => {
       const state = componente['cola']();
       expect(state.status).toBe('empty');
       if (state.status === 'empty') {
-        expect(state.nextAction.route).toBe('/laboratorio/recepcion');
+        expect(state.nextAction.route).toBe('/laboratory/reception');
       }
       const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(text).toContain('¿De dónde salen estas órdenes?');

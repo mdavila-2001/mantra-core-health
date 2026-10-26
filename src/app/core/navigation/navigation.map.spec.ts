@@ -419,8 +419,8 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/pharmacy-profile',
       'administration/pharmacy-branches',
       'administration/laboratory',
-      'laboratorio/recepcion',
-      'laboratorio/cola',
+      'laboratory/reception',
+      'laboratory/queue',
       'administration/laboratory-results',
       'administration/laboratory-prices',
       'administration/center-schedule',
@@ -437,7 +437,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
   });
 
   it('la cola del laboratorio la ve su personal con sólo `USER`, y no el paciente ni otra organización', () => {
-    const queue = APP_SECTIONS.find((s) => s.path === 'laboratorio/cola')!;
+    const queue = APP_SECTIONS.find((s) => s.path === 'laboratory/queue')!;
     expect(isVisibleTo(queue, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
     expect(isVisibleTo(queue, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
     expect(isVisibleTo(queue, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
@@ -473,7 +473,7 @@ describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
       'my-account/medical-record',
       'my-account/diagnostic-results',
       'my-account/diagnostic-orders',
-      'my-account/cotizaciones',
+      'my-account/quotations',
       'my-account/questionnaires',
     ]);
     for (const seccion of conMarca) {

@@ -29,8 +29,8 @@ function jwt(payload: Record<string, unknown>): string {
 
 const MENU_DEL_LABORATORIO = [
   '/administration/laboratory',
-  '/laboratorio/recepcion',
-  '/laboratorio/cola',
+  '/laboratory/reception',
+  '/laboratory/queue',
   '/administration/laboratory-results',
   '/administration/laboratory-prices',
   '/administration/center-schedule',

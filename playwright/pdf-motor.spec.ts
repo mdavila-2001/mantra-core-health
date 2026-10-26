@@ -90,7 +90,7 @@ test('el balance contable exportado trae la tabla y no el rótulo del botón', a
 
   await entrar(page, MEDICA);
   // Los libros viven en la pestaña «Registros»; «Resumen» no tiene el botón.
-  await irA(page, '/administration/accounting/libros');
+  await irA(page, '/administration/accounting/books');
   await estable(page);
   await page.getByRole('button', { name: 'Ver los libros contables de la práctica' }).click();
 

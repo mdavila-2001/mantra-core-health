@@ -520,7 +520,7 @@
       "nombre": "my-account_diagnostic-orders"
     },
     {
-      "ruta": "/my-account/cotizaciones",
+      "ruta": "/my-account/quotations",
       "nombre": "my-account_cotizaciones"
     },
     {
@@ -612,11 +612,11 @@
       "nombre": "administration_laboratory"
     },
     {
-      "ruta": "/laboratorio/recepcion",
+      "ruta": "/laboratory/reception",
       "nombre": "laboratorio_recepcion"
     },
     {
-      "ruta": "/laboratorio/cola",
+      "ruta": "/laboratory/queue",
       "nombre": "laboratorio_cola"
     },
     {
@@ -734,7 +734,7 @@
       "nombre": "my-account_diagnostic-orders"
     },
     {
-      "ruta": "/my-account/cotizaciones",
+      "ruta": "/my-account/quotations",
       "nombre": "my-account_cotizaciones"
     },
     {
@@ -956,7 +956,7 @@
       "nombre": "my-account_diagnostic-orders"
     },
     {
-      "ruta": "/my-account/cotizaciones",
+      "ruta": "/my-account/quotations",
       "nombre": "my-account_cotizaciones"
     },
     {

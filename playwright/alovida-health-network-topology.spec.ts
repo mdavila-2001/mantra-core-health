@@ -8,7 +8,7 @@ test('la red de salud conserva sus seis actores y el centro en escritorio y móv
   mkdirSync(evidenceDirectory, { recursive: true });
 
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/inicio');
+  await page.goto('/home');
   const diagram = page.getByRole('group', { name: 'Topología estrella de la red de salud AloVida' });
   await expect(diagram).toBeVisible();
   await expect(diagram.locator('article')).toHaveCount(6);

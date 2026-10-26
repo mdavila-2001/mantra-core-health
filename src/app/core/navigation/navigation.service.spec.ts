@@ -187,7 +187,7 @@ describe('NavigationService', () => {
         // dos mitades del mismo circuito y ninguna exige rol — el filtro real
         // es tener perfil de paciente, que la pantalla resuelve.
         '/my-account/diagnostic-orders',
-        '/my-account/cotizaciones',
+        '/my-account/quotations',
         // «Mis cuestionarios» ya NO entra (2026-09-25): pedido del propietario
         // mientras se decide qué hacer con la sección — declara
         // `fueraDelMenuPara: [ANY_ROLE]`, no una restricción de rol. Sigue sin
@@ -872,7 +872,7 @@ describe('NavigationService', () => {
         '/my-account/medical-record',
         '/my-account/diagnostic-results',
         '/my-account/diagnostic-orders',
-        '/my-account/cotizaciones',
+        '/my-account/quotations',
         '/my-account/pharmacy',
       ]) {
         expect(rutas, rutaNoPermitida).not.toContain(rutaNoPermitida);

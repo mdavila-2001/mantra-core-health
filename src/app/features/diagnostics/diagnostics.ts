@@ -34,7 +34,7 @@ import { CLINICAL_RECORD_ROUTE } from '../clinical-record/clinical-record.routes
 const TOPE = 50;
 
 /** La recepción de muestras del laboratorio (`navigation.map.ts`). */
-const LAB_RECEPTION_ROUTE = '/laboratorio/recepcion';
+const LAB_RECEPTION_ROUTE = '/laboratory/reception';
 
 /** Lo que se muestra cuando un concepto no tiene etiqueta en el catálogo. */
 const SIN_DATO = '—';

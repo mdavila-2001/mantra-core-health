@@ -60,16 +60,16 @@ export class AlovidaShell {
 
   /** Los diez módulos del nav, en el orden de la bóveda. */
   readonly navegacion: readonly EntradaNav[] = [
-    { rotulo: 'Inicio', icono: 'inicio', segmento: 'inicio' },
-    { rotulo: 'Identidad y accesos', icono: 'accesos', segmento: 'accesos' },
-    { rotulo: 'Datos compartidos', icono: 'datos', segmento: 'datos-compartidos' },
-    { rotulo: 'Terminología', icono: 'terminologia', segmento: 'terminologia' },
-    { rotulo: 'Organizaciones', icono: 'organizaciones', segmento: 'directorio' },
-    { rotulo: 'Personas', icono: 'personas', segmento: 'personas' },
-    { rotulo: 'Agenda', icono: 'agenda', segmento: 'agenda' },
-    { rotulo: 'Historia clínica', icono: 'historia', segmento: 'historia-clinica' },
-    { rotulo: 'Facturación', icono: 'facturacion', segmento: 'facturacion' },
-    { rotulo: 'Auditoría', icono: 'auditoria', segmento: 'auditoria' },
+    { rotulo: 'Inicio', icono: 'inicio', segmento: 'home' },
+    { rotulo: 'Identidad y accesos', icono: 'accesos', segmento: 'access-control' },
+    { rotulo: 'Datos compartidos', icono: 'datos', segmento: 'shared-data' },
+    { rotulo: 'Terminología', icono: 'terminologia', segmento: 'vocabulary' },
+    { rotulo: 'Organizaciones', icono: 'organizaciones', segmento: 'provider-directory' },
+    { rotulo: 'Personas', icono: 'personas', segmento: 'people' },
+    { rotulo: 'Agenda', icono: 'agenda', segmento: 'schedule' },
+    { rotulo: 'Historia clínica', icono: 'historia', segmento: 'medical-records' },
+    { rotulo: 'Facturación', icono: 'facturacion', segmento: 'billing' },
+    { rotulo: 'Auditoría', icono: 'auditoria', segmento: 'audit' },
   ];
 
   /** Primer segmento de la URL: es el módulo que se está mirando. */
