@@ -14,6 +14,7 @@ import {
   output,
   PLATFORM_ID,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -338,6 +339,23 @@ export class PaginatedForm {
   private readonly indice = signal(0);
 
   /**
+   * Hacia dónde se movió la persona en el último cambio de página. Decide de qué
+   * lado entra la página nueva: al avanzar llega desde la derecha y al volver,
+   * desde la izquierda, que es como se lee «siguiente» y «anterior».
+   */
+  protected readonly direction = signal<'forward' | 'back'>('forward');
+
+  /**
+   * Paridad del paso. La página se anima al entrar, y para repetir la entrada en
+   * cada paso sin destruir y recrear la sección (que arrastraría a los campos)
+   * se alterna entre dos `@keyframes` idénticos: cambiar el nombre de la
+   * animación es lo que la reinicia.
+   */
+  protected readonly alternateStep = computed(() => this.indice() % 2 === 1);
+
+  private lastIndex = 0;
+
+  /**
    * Hasta dónde se llegó alguna vez. Base 0.
    *
    * Es lo que separa un paso «al que se puede volver» de uno «que todavía no
@@ -452,6 +470,14 @@ export class PaginatedForm {
     // Si el formulario encoge, el índice puede quedar apuntando a una página que
     // ya no existe: se ve como una pantalla en blanco con «paso 4 de 3».
     // Reanuda el formulario desde el paso guardado si se especificó initialStep.
+    effect(() => {
+      const actual = this.indice();
+      untracked(() => {
+        this.direction.set(actual < this.lastIndex ? 'back' : 'forward');
+        this.lastIndex = actual;
+      });
+    });
+
     let pasoInicialAplicado = false;
     effect(() => {
       const inicio = this.initialStep();

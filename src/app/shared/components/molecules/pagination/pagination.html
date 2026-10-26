@@ -13,27 +13,41 @@
     Anterior
   </button>
 
-  <ul class="pagination__pages">
-    @for (slot of pageSlots(); track $index) {
-      <li>
-        @if (slot === gap) {
-          <!-- Un salto no es una página: no se pulsa y no se anuncia. -->
-          <span class="pagination__gap" aria-hidden="true">…</span>
-        } @else {
-          <button
-            app-button
-            size="sm"
-            [variant]="slot === currentPage() ? 'secondary' : 'ghost'"
-            [attr.aria-label]="'Página ' + slot"
-            [attr.aria-current]="slot === currentPage() ? 'page' : null"
-            (clicked)="goTo(slot)"
-          >
-            {{ slot }}
-          </button>
-        }
-      </li>
-    }
-  </ul>
+  <!-- La marca de la página actual es UNA pieza que se desliza hasta el número
+       elegido (pulse.md §7): el ojo sigue el salto en vez de buscar qué botón
+       cambió de borde. Es decoración —el estado lo dice `aria-current`— y vive
+       fuera de la `<ul>` para no contar como ítem de la lista. -->
+  <div class="pagination__track">
+    <span
+      class="pagination__marker"
+      [class.pagination__marker--ready]="markerReady()"
+      [style.transform]="markerTransform()"
+      [style.width.px]="markerWidth()"
+      [style.height.px]="markerHeight()"
+      aria-hidden="true"
+    ></span>
+    <ul #pages class="pagination__pages">
+      @for (slot of pageSlots(); track $index) {
+        <li>
+          @if (slot === gap) {
+            <!-- Un salto no es una página: no se pulsa y no se anuncia. -->
+            <span class="pagination__gap" aria-hidden="true">…</span>
+          } @else {
+            <button
+              app-button
+              size="sm"
+              variant="ghost"
+                [attr.aria-label]="'Página ' + slot"
+              [attr.aria-current]="slot === currentPage() ? 'page' : null"
+              (clicked)="goTo(slot)"
+            >
+              {{ slot }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  </div>
 
   <button
     app-button
@@ -62,7 +76,11 @@
 
 <!-- El rango cambia con cada salto de página: se anuncia, pero sin interrumpir. -->
 <p class="pagination__range tabular-nums" aria-live="polite">
-  {{ rangeStart() }}–{{ rangeEnd() }} de {{ totalItems() }}
+  <!-- El rango se reemplaza en cada salto y entra con un fundido corto: el
+       párrafo (la región viva) se queda; sólo cambia lo de adentro. -->
+  @for (rango of [rangeLabel()]; track rango) {
+    <span class="pagination__range-value" animate.enter="pagination__range-value--enter">{{ rango }}</span>
+  }
 </p>
 
 @if (showPageSize()) {

@@ -189,6 +189,11 @@
   height: 40svh;
   aspect-ratio: 16 / 9;
   overflow: visible;
+  /* Los grosores se declaran en unidades del viewBox (1920 × 1080), y en el
+     teléfono la tira se pinta a ~0,31× contra ~0,83× en una ventana de 1440:
+     sin compensar, el trazo mide menos de un píxel y la onda se pierde. Este
+     factor (0,83 / 0,31) la deja con el mismo cuerpo en los dos tamaños. */
+  --ecg-k: 2.4;
   /* Se apaga hacia los dos bordes: la tira sale de la nada y vuelve a ella,
      como en la pantalla de un monitor, en vez de cortarse contra el marco. */
   mask-image: linear-gradient(90deg, transparent, #000000 7%, #000000 93%, transparent);
@@ -202,6 +207,7 @@
     width: 100%;
     height: 100%;
     aspect-ratio: auto;
+    --ecg-k: 1;
   }
 }
 
@@ -214,11 +220,30 @@
 /* La tira entera, tenue, que se DIBUJA al entrar: el monitor se enciende. */
 .auth-stage__ecg-base {
   stroke: url(#auth-stage-ink);
-  stroke-width: 2.2;
+  stroke-width: calc(2.2px * var(--ecg-k));
   opacity: 0.5;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
-  animation: auth-stage-ecg-draw 1.8s var(--ease-out) 0.2s forwards;
+  animation:
+    auth-stage-ecg-draw 1.8s var(--ease-out) 0.2s forwards,
+    auth-stage-ecg-breathe var(--beat) ease-in-out calc(var(--beat-start) + 1.8s) infinite;
+}
+
+/* El trazo quieto respira con el monitor: sube un poco cuando el cometa
+   llega al pico R (32,9 % del ciclo, ver más abajo) y se asienta después.
+   Es la capa de ambiente —sutil, 0,5 → 0,68—; lo protagonista sigue siendo
+   el cometa. */
+@keyframes auth-stage-ecg-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  33% {
+    opacity: 0.68;
+  }
+  60% {
+    opacity: 0.52;
+  }
 }
 
 @keyframes auth-stage-ecg-draw {
@@ -247,29 +272,29 @@
 }
 
 .auth-stage__ecg-aura {
-  --len: 190px;
+  --len: 320px;
   stroke: var(--c-aqua-400);
-  stroke-width: 20;
+  stroke-width: calc(20px * var(--ecg-k));
   opacity: 0.12;
 }
 
 .auth-stage__ecg-halo {
-  --len: 150px;
+  --len: 220px;
   stroke: var(--c-aqua-300);
-  stroke-width: 7;
+  stroke-width: calc(7px * var(--ecg-k));
   opacity: 0.4;
 }
 
 .auth-stage__ecg-comet {
   --len: 110px;
   stroke: url(#auth-stage-ink);
-  stroke-width: 3.4;
+  stroke-width: calc(3.4px * var(--ecg-k));
 }
 
 .auth-stage__ecg-spark {
   --len: 6px;
   stroke: #ffffff;
-  stroke-width: 7;
+  stroke-width: calc(7px * var(--ecg-k));
 }
 
 @keyframes auth-stage-ecg-sweep {
@@ -287,7 +312,7 @@
 .auth-stage__wave {
   fill: none;
   stroke: var(--c-aqua-100);
-  stroke-width: 1.6;
+  stroke-width: calc(1.6px * var(--ecg-k));
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;

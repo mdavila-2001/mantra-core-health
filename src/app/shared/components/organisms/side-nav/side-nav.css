@@ -60,7 +60,8 @@
     line-height: var(--lh-body);
     transition:
         background var(--dur-fast) var(--ease-standard),
-        color var(--dur-fast) var(--ease-standard);
+        color var(--dur-fast) var(--ease-standard),
+        transform var(--dur-base) var(--ease-spring);
 }
 
 .side-nav__link:hover {
@@ -184,5 +185,19 @@
 
     .side-nav__overlay {
         display: none;
+    }
+}
+
+/* Pulsación (pulse.md §7): el ítem se tiñe y se corre 1 px hacia adentro, como
+   un interruptor que cede. Con resorte a la vuelta. */
+.side-nav__link:active {
+    background: var(--pulse-press-tint);
+    transform: translateX(1px);
+    transition-duration: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .side-nav__link:active {
+        transform: none;
     }
 }
