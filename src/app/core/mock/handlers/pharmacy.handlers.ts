@@ -12,6 +12,7 @@ import {
   ID_ORDER_WITH_DELIVERY,
   ID_ORDER_WITH_INSURANCE,
 } from '../fixtures/pharmacy-orders';
+import { horarioDeFarmacias } from './pharmacy-opening-hours.handlers';
 import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_TYPES } from '../mock-session';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
@@ -30,6 +31,8 @@ const BOB = c('BOB', 'Boliviano');
 
 interface FarmaciaSimulada {
   readonly id: string;
+  /** Slug de la ficha pública (`/pharmacies-directory/:slug`). */
+  readonly slug: string;
   readonly code: string;
   readonly name: string;
   readonly siteId: string;
@@ -67,6 +70,7 @@ const FARMACIAS: readonly FarmaciaSimulada[] = showcases
     const corpus = DEL_CORPUS.get(v.slug);
     return {
       id: v.tenantId,
+      slug: v.slug,
       code: v.slug.toUpperCase().replace(/-/g, '_'),
       name: v.displayName,
       siteId: corpus?.siteId ?? uuid(`pharmacy-site-${v.slug}`),
@@ -444,6 +448,10 @@ const CATEGORIAS_INICIALES = ['Medicamentos', 'Dermocosmética', 'Cuidado person
 const categorias = new Coleccion<CategoriaSimulada>(
   FARMACIAS.flatMap((f) => CATEGORIAS_INICIALES.map((name) => ({ id: uuid(`pharmacy-category-${f.id}-${name}`), pharmacyId: f.id, name }))),
 );
+
+/* ---- P34 · 24 h y turnos de guardia: `pharmacy-opening-hours.handlers.ts` -- */
+
+const HORARIO = horarioDeFarmacias(FARMACIAS);
 
 interface ActividadSimulada {
   readonly id: string;
@@ -1302,6 +1310,9 @@ export function registrarFarmacia(router: MockRouter): void {
     return resumenDe(f.id);
   });
 
+  // P34 · 24 h, turnos y «abiertas ahora»: mismo contrato que la API.
+  HORARIO.registrar(router, distanciaKm);
+
   // «Farmacia» · pestaña Comprar (25/09/2026): sedes sueltas, con su
   // ubicación, sin exigir productos de antemano. Reusa `FARMACIAS` y
   // `distanciaKm` tal cual los usa `/pharmacy-inventory/availability` — es
@@ -1312,8 +1323,10 @@ export function registrarFarmacia(router: MockRouter): void {
     const lngTexto = query.get('lng');
     const origen = latTexto === null || lngTexto === null ? null : { lat: Number(latTexto), lng: Number(lngTexto) };
     const limit = Number(query.get('limit') ?? 50) || 50;
+    const soloAbiertas = query.get('openNow') === 'true';
     const items = FARMACIAS
       .filter((f) => contiene(f.name, q) || contiene(f.siteName, q))
+      .filter((f) => !soloAbiertas || HORARIO.open24hDe(f.siteId) === true || HORARIO.turnoVigente(f.siteId) !== undefined)
       .map((f) => ({
         siteId: f.siteId,
         siteName: f.siteName,
@@ -1326,6 +1339,8 @@ export function registrarFarmacia(router: MockRouter): void {
         homeDeliveryAvailable: f.homeDelivery,
         pickupAvailable: true,
         productCount: productos.filtrar((p) => p.pharmacyId === f.id).length,
+        open24h: HORARIO.open24hDe(f.siteId),
+        onCallUntil: HORARIO.turnoVigente(f.siteId)?.endsAt ?? null,
       }))
       .sort(
         (a, b) =>
