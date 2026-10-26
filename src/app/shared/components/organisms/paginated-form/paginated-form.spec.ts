@@ -1125,3 +1125,65 @@ describe('PaginatedForm dentro de un formulario padre', () => {
     expect(fixture.componentInstance.childSubmissions).toBe(0);
   });
 });
+
+/** Un campo `custom` que no expone `aria-invalid` (como las casillas de nombre) antes que uno común. */
+@Component({
+  imports: [PaginatedForm, CustomField, ReactiveFormsModule],
+  template: `
+    <app-paginated-form [paginas]="paginas" [form]="form" label="Alta" submitLabel="Crear">
+      <ng-template appCampoPersonalizado="nombre">
+        <input data-testid="nombre-propio" [formControl]="form.controls.nombre" />
+      </ng-template>
+    </app-paginated-form>
+  `,
+})
+class HostConCustom {
+  readonly paginas: readonly PaginaDeFormulario[] = [
+    {
+      titulo: 'Quién',
+      campos: [
+        { key: 'nombre', label: 'Nombre', control: 'custom', required: true },
+        { key: 'apellido', label: 'Apellido paterno', control: 'text', required: true },
+      ],
+    },
+    { titulo: 'Fin', campos: [{ key: 'fin', label: 'Fin', control: 'text' }] },
+  ];
+  readonly form = new FormGroup({
+    nombre: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    apellido: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    fin: new FormControl('', { nonNullable: true }),
+  });
+}
+
+describe('PaginatedForm · el foco al campo con error', () => {
+  it('va al primer campo con error en orden de página, aunque sea un `custom` sin aria-invalid', async () => {
+    TestBed.configureTestingModule({ imports: [HostConCustom] });
+    const fixture = TestBed.createComponent(HostConCustom);
+    fixture.detectChanges();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    raiz.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // No «Apellido paterno», que sí expone aria-invalid: el nombre va antes.
+    expect(document.activeElement?.getAttribute('data-testid')).toBe('nombre-propio');
+    expect(raiz.querySelector('[data-campo="nombre"]')).not.toBeNull();
+  });
+
+  it('el foco que llega por un error no abre el globo de descripción hasta que la persona actúa', async () => {
+    TestBed.configureTestingModule({ imports: [HostConCustom] });
+    const fixture = TestBed.createComponent(HostConCustom);
+    fixture.detectChanges();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    raiz.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const campo = raiz.querySelector('[data-campo="nombre"]')!;
+    expect(campo.hasAttribute('data-foco-por-error')).toBe(true);
+    (document.activeElement as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'a' }));
+    expect(campo.hasAttribute('data-foco-por-error')).toBe(false);
+  });
+});

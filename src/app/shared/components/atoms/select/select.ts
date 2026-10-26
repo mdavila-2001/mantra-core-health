@@ -108,6 +108,14 @@ export class Select<T> implements ControlValueAccessor {
   readonly ariaLabel = input<string>('');
   readonly searchable = input<boolean | undefined>(undefined);
 
+  /**
+   * El valor elegido puede ocupar **dos** renglones antes de cortar con «…».
+   * Opt-in: por omisión el valor va en uno, como siempre (filtros, tamaño de
+   * página). Lo piden las altas, donde una opción larga elegida («S.R.L. ·
+   * Sociedad de Responsabilidad Limitada») se cortaba justo en lo que dice.
+   */
+  readonly multilineValue = input<boolean>(false);
+
   readonly focused = output<FocusEvent>();
   readonly blurred = output<FocusEvent>();
 

@@ -484,6 +484,18 @@ describe('la cara de aseguradora del menú y las organizaciones médicas', () =>
     expect(isVisibleTo(seccion(path), ['SUPERADMIN'], ['t-1'], 'PROVIDER')).toBe(true);
   });
 
+  it('un PROVIDER genérico la sigue viendo: es intencional, no un olvido', () => {
+    // `SIN_CARA_DE_ASEGURADORA` (navigation.payer.ts) cierra la cara de
+    // aseguradora a las organizaciones médicas, a la farmacia y al laboratorio.
+    // `PROVIDER` queda afuera de esa lista a propósito: es el tipo del tenant
+    // por defecto y de cuentas de plataforma, y sacárselo cambiaría lo que ven
+    // hoy sin que ninguna revisión lo pidiera. Si eso cambia, esta prueba se
+    // invierte en el mismo PR.
+    for (const path of DE_ASEGURADORA) {
+      expect(isVisibleTo(seccion(path), ['USER'], ['t-1'], 'PROVIDER'), path).toBe(true);
+    }
+  });
+
   it('«Solicitudes de seguro», la cara del prestador, la sigue viendo una clínica', () => {
     const presentadas = seccion('administration/insurance-claims');
     for (const tipo of MEDICAS) {

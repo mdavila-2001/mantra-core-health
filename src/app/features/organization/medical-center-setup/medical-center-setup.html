@@ -15,7 +15,10 @@
       description="Podrá abrir su práctica y su primera sede cuando la plataforma la verifique. Mientras tanto, revise que los datos de su organización estén completos."
       data-testid="medical-center-setup-unverified"
     >
-      <a app-link empty-actions [routerLink]="rutaMiOrganizacion">Ver los datos de su organización</a>
+      <!-- Un reloj y no la bandeja vacía: no falta nada que cargar, falta que
+           la plataforma termine de revisar. -->
+      <app-nav-icon empty-icon name="clock" />
+      <a app-link empty-actions [routerLink]="proximaAccion().route">{{ proximaAccion().label }}</a>
     </app-empty-state>
 
     @if (created(); as done) {

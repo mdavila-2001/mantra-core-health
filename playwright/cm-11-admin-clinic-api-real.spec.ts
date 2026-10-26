@@ -210,6 +210,8 @@ async function elegirClinica(page: Page): Promise<void> {
   await page.getByRole('combobox', { name: /Tipo de organización/ }).click();
   const dialogo = page.locator('dialog.select-dialog[open]');
   // «Clínica» va justo después de «Hospital», como en el alta pública.
+  // `allTextContents` no espera: se lee la lista recién cuando el diálogo la pintó.
+  await expect(dialogo.getByRole('option', { name: 'Clínica', exact: true })).toBeVisible();
   const rotulos = await dialogo.getByRole('option').allTextContents();
   const limpios = rotulos.map((r) => r.trim());
   expect(limpios).toContain('Clínica');

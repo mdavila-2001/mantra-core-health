@@ -1092,7 +1092,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: [ANY_ROLE],
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Configurar su organización',
+    label: 'Configurar práctica',
     group: 'Administración',
     icon: 'hospital',
     requiresTenant: true,

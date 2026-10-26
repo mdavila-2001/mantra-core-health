@@ -13,7 +13,7 @@ import type {
   NewOrganizationPractice,
 } from '../../../core/data-access/practice-onboarding/practice-onboarding.types';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { RUTA_MI_ORGANIZACION, setupErrorMessage, MedicalCenterSetup } from './medical-center-setup';
+import { RUTA_MI_ORGANIZACION, RUTA_PANEL, setupErrorMessage, MedicalCenterSetup } from './medical-center-setup';
 
 const TENANT = 'tenant-centro';
 
@@ -51,7 +51,15 @@ describe('MedicalCenterSetup', () => {
       imports: [MedicalCenterSetup],
       providers: [
         provideRouter([]),
-        { provide: SessionStore, useValue: { activeTenantId: activeTenant } },
+        {
+          provide: SessionStore,
+          useValue: {
+            activeTenantId: activeTenant,
+            roles: signal(['USER']),
+            tenants: signal([TENANT]),
+            activeTenantType: signal('CLINIC'),
+          },
+        },
         { provide: PracticeOnboardingClient, useValue: { createPractice } },
         {
           provide: DirectoryClient,
@@ -147,12 +155,21 @@ describe('MedicalCenterSetup · organización todavía no verificada (S3)', () =
   async function armar(
     activa: string | null,
     respuesta: () => Observable<readonly { id: string; isVerified: boolean }[]>,
+    roles: readonly string[] = ['USER'],
   ): Promise<ComponentFixture<MedicalCenterSetup>> {
     await TestBed.configureTestingModule({
       imports: [MedicalCenterSetup],
       providers: [
         provideRouter([]),
-        { provide: SessionStore, useValue: { activeTenantId: signal(activa) } },
+        {
+          provide: SessionStore,
+          useValue: {
+            activeTenantId: signal(activa),
+            roles: signal(roles),
+            tenants: signal(activa === null ? [] : [activa]),
+            activeTenantType: signal('MEDICAL_OFFICE'),
+          },
+        },
         { provide: PracticeOnboardingClient, useValue: { createPractice: vi.fn() } },
         { provide: DirectoryClient, useValue: { listMyOrganizations: respuesta } },
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
@@ -172,6 +189,27 @@ describe('MedicalCenterSetup · organización todavía no verificada (S3)', () =
     const accion = vacio?.querySelector('a');
     expect(accion?.getAttribute('href')).toBe(RUTA_MI_ORGANIZACION);
     expect(raiz.querySelector('[data-testid="medical-center-setup-form"]')).toBeNull();
+  });
+
+  it('a un médico que administra su consultorio no lo manda a una pantalla que lo rebota', async () => {
+    // «Mi organización» tiene `hiddenFor: ['PATIENT', 'PRACTITIONER']` y su
+    // guard rebota: para él, la próxima acción es el panel.
+    const f = await armar(TENANT_NUEVO, () => of([{ id: TENANT_NUEVO, isVerified: false }]), [
+      'PRACTITIONER',
+    ]);
+    const accion = (f.nativeElement as HTMLElement).querySelector(
+      '[data-testid="medical-center-setup-unverified"] a',
+    );
+    expect(accion?.getAttribute('href')).toBe(RUTA_PANEL);
+    expect(accion?.textContent).toContain('Volver al panel');
+  });
+
+  it('el aviso se lee como pendiente: lleva el reloj, no la bandeja vacía', async () => {
+    const f = await armar(TENANT_NUEVO, () => of([{ id: TENANT_NUEVO, isVerified: false }]));
+    const icono = (f.nativeElement as HTMLElement).querySelector(
+      '[data-testid="medical-center-setup-unverified"] app-nav-icon[empty-icon]',
+    );
+    expect(icono?.getAttribute('name')).toBe('clock');
   });
 
   it('verificada, muestra el formulario y no el aviso', async () => {

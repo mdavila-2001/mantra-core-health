@@ -17,7 +17,6 @@ import {
   type NewTenant,
   type TenantTypeCode,
 } from '../../../../core/data-access/directory/directory.types';
-import { IamClient } from '../../../../core/data-access/iam/iam.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
@@ -29,13 +28,13 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { searchConceptOptions } from '../concept-search';
+import { crearBuscadorDePersonas } from '../people-search';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
 
 /** Largos que declara `CreateTenantDto`. */
@@ -127,25 +126,10 @@ const CAMPOS_DE_CORREDOR = ['brokerCode', 'licenseNumber'] as const;
 })
 export class OrganizationNew {
   private readonly directory = inject(DirectoryClient);
-  private readonly iam = inject(IamClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
-
-  /** Si ya se avisó que la búsqueda de personas no está en la API. */
-  private busquedaNoDisponibleAvisada = false;
-
-  /**
-   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
-   * §2): se dice qué falta, una sola vez y no en cada tecla.
-   */
-  private avisarBusquedaNoDisponible(error: unknown): void {
-    const aviso = unavailableMessageOf(error);
-    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
-    this.busquedaNoDisponibleAvisada = true;
-    this.toast.warning(aviso);
-  }
 
   /** El último escalón se reemplaza: desde el alta, se vuelve al listado. */
   protected readonly breadcrumbs = computed<readonly BreadcrumbItem[]>(() => {
@@ -508,8 +492,8 @@ export class OrganizationNew {
   protected readonly owner = toSignal(this.form.controls.owner.valueChanges, {
     initialValue: null,
   });
-  protected readonly candidatosOwner = signal<readonly ReferenceOption[]>([]);
-  protected readonly buscandoOwner = signal(false);
+  /** La búsqueda de owner: errores distintos del vacío y la última tecla manda. */
+  protected readonly owners = crearBuscadorDePersonas(CANDIDATOS_POR_BUSQUEDA);
 
   protected readonly ownerFaltante = computed(() => this.enviado() && this.owner() === null);
 
@@ -544,40 +528,6 @@ export class OrganizationNew {
       state.issues.some((issue) => issue.code === 'CONFLICT' || issue.field === 'code')
     );
   });
-
-  /**
-   * Busca usuarios y los traduce a opciones. El `hint` distingue una cuenta
-   * sin verificar: elegir de owner a alguien que nunca activó su correo es un
-   * error que conviene ver antes de guardar.
-   */
-  protected buscarOwner(texto: string): void {
-    if (texto === '') {
-      this.candidatosOwner.set([]);
-      return;
-    }
-
-    this.buscandoOwner.set(true);
-    this.iam.searchUsers({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        this.candidatosOwner.set(
-          pagina.items.map((usuario) => ({
-            value: usuario.id,
-            label: usuario.displayName,
-            ...(usuario.emailVerified ? {} : { hint: 'Correo sin verificar' }),
-          })),
-        );
-        this.buscandoOwner.set(false);
-      },
-      error: (error: unknown) => {
-        // El combobox muestra «sin resultados»; el error general de la
-        // pantalla se reserva para el envío. Salvo que la búsqueda no exista
-        // en la API: eso se dice, una vez.
-        this.candidatosOwner.set([]);
-        this.buscandoOwner.set(false);
-        this.avisarBusquedaNoDisponible(error);
-      },
-    });
-  }
 
   protected submit(): void {
     if (this.enviando()) {

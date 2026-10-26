@@ -29,7 +29,11 @@
     (focus)="handleFocus($event)"
     (blur)="handleBlur($event)"
   >
-    <span class="select-value" [class.is-placeholder]="selectedIndex() < 0">
+    <span
+      class="select-value"
+      [class.select-value--dos-renglones]="multilineValue()"
+      [class.is-placeholder]="selectedIndex() < 0"
+    >
       {{ selectedLabel() }}
     </span>
   </button>

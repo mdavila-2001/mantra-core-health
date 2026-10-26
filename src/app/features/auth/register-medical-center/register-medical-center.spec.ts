@@ -176,10 +176,10 @@ describe('RegisterMedicalCenter', () => {
     expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
   });
 
-  it('hasta que el catálogo responde no ofrece nada: la lista entera sale sólo del fallo', async () => {
-    // Un catálogo que todavía no respondió: lo que se ve es lo que decide la
-    // respuesta, no un valor de arranque. Sin el manejo del error, el caso de
-    // arriba se quedaría así, vacío.
+  it('mientras el catálogo no responde ofrece la lista de respaldo, y su fallo la conserva sin romper', async () => {
+    // C2 de la segunda revisión: con un catálogo lento el grupo no puede quedar
+    // vacío. El fallo tiene que estar manejado: un error sin `error` en la
+    // suscripción sale como excepción no capturada y la prueba cae.
     const pendiente = new Subject<{ options: { code: string; conceptId: string }[] }>();
     const contexto = TestBed.inject(SystemContextClient) as unknown as {
       dynamicEnum: (destino: string) => unknown;
@@ -189,9 +189,9 @@ describe('RegisterMedicalCenter', () => {
       destino === DESTINO_TIPO ? pendiente.asObservable() : original(destino);
     await rearmar();
 
-    expect(opcionesDeTipo()).toEqual([]);
+    expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
 
-    pendiente.error(new Error('catálogo caído'));
+    expect(() => pendiente.error(new Error('catálogo caído'))).not.toThrow();
     expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
   });
 

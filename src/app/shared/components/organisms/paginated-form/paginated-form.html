@@ -51,6 +51,7 @@
               [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
               [class.paginated-form__campo--completo]="campo.ancho === 'completo'"
+              [attr.data-campo]="campo.key"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
               [description]="campo.description ?? ''"
@@ -72,6 +73,9 @@
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
               [class.paginated-form__campo--completo]="campo.ancho === 'completo'"
               [class.paginated-form__campo--opciones-en-rejilla]="campo.opcionesEn === 'rejilla'"
+              [style.--paginated-form-opciones-anchas]="campo.opcionesEn === 'rejilla' ? columnas(campo).ancha : null"
+              [style.--paginated-form-opciones-medias]="campo.opcionesEn === 'rejilla' ? columnas(campo).media : null"
+              [attr.data-campo]="campo.key"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
               [description]="campo.description ?? ''"
@@ -87,6 +91,7 @@
                     [placeholder]="campo.placeholder ?? campo.description ?? 'Seleccionar opción'"
                     [hasError]="errorDe(campo) !== ''"
                     [searchable]="campo.searchable ?? true"
+                    [multilineValue]="campo.valorEnDosRenglones ?? false"
                   >
                     <!-- El desplegable dibuja su glifo igual que el campo de
                        texto, y por la misma razón: dentro del marco, para
@@ -253,7 +258,11 @@
     </section>
   }
 
-  <nav class="paginated-form__acciones" aria-label="Avance del formulario">
+  <nav
+    class="paginated-form__acciones"
+    aria-label="Avance del formulario"
+    appApilarAlEnvolver="paginated-form__acciones--apiladas"
+  >
     @if (cancelLabel()) {
       <button app-button variant="ghost" type="button" (clicked)="cancelado.emit()">
         {{ cancelLabel() }}
@@ -275,6 +284,7 @@
         app-button
         type="button"
         [variant]="iconOnlyNav() ? 'primary' : 'ghost'"
+        [class.paginated-form__atras-texto]="!iconOnlyNav()"
         [iconOnly]="iconOnlyNav()"
         [attr.aria-label]="iconOnlyNav() ? 'Atrás' : null"
         [appTooltip]="iconOnlyNav() ? 'Atrás' : ''"

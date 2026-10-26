@@ -79,6 +79,17 @@ describe('ChildOrganizationNew', () => {
     interno<{ patchValue: (v: object) => void }>('form').patchValue(valores);
   }
 
+  /** Pulsa «Siguiente» hasta la página con ese título (o hasta que no avance). */
+  function irALaPagina(titulo: string): void {
+    const raiz = fixture.nativeElement as HTMLElement;
+    for (let intento = 0; intento < 6; intento += 1) {
+      fixture.detectChanges();
+      if (raiz.querySelector('.paginated-form__titulo')?.textContent?.trim() === titulo) return;
+      raiz.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')?.click();
+    }
+    fixture.detectChanges();
+  }
+
   it('manda el tipo elegido, que no se hereda de la madre', () => {
     // Una red puede tener un hospital y una farmacia: suponer el tipo de la
     // madre sería adivinar, y el contrato lo exige por eso.
@@ -178,5 +189,23 @@ describe('ChildOrganizationNew', () => {
     ).get('jurisdiccion');
     expect(jurisdiccion.enabled).toBe(true);
     expect(jurisdiccion.errors).toEqual({ required: true });
+  });
+
+  it('una clínica sin jurisdicción: «Siguiente» no pasa de «Dónde opera» y el mensaje se ve', () => {
+    completar();
+    interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('CLINIC');
+    pick({ pais: PAIS });
+    irALaPagina('Dónde opera');
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!
+      .click();
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('.paginated-form__titulo')?.textContent?.trim()).toBe('Dónde opera');
+    expect(raiz.textContent).toContain(
+      'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
+    );
+    http.expectNone(`/tenants/${TENANT_ID}/child-tenants`);
   });
 });

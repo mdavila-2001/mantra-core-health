@@ -210,10 +210,9 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
 
   it('§2 · buscar personas va a la API real: la API ya publica POST /iam/users/search', () => {
     // Hasta el PR #1001 de la API esta ruta era «sólo simulador» y no salía.
-    // La instantánea del contrato (`core/mock/contract/`) todavía no la
-    // declara, así que se comprueba la request y no `contractViolations`.
+    // El contrato (`api-contract.generated.ts`) la declara desde que se
+    // regeneró con el openapi de esa API: el cuerpo se valida contra su DTO.
     TestBed.inject(IamClient).searchUsers({ query: 'ana' }).subscribe();
-    const req = http.expectOne((r) => r.method === 'POST' && r.url === '/iam/users/search');
-    expect(req.request.body).toEqual({ q: 'ana' });
+    expect(cuerpoAceptado('POST', '/iam/users/search')).toEqual({ q: 'ana' });
   });
 });

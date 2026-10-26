@@ -137,12 +137,14 @@ export class RegisterMedicalCenter {
   /**
    * Los tipos de institución que la API publica, de los cinco médicos.
    *
-   * Arranca **vacío**: hasta que el catálogo responda no se ofrece nada, y es
-   * la respuesta —o su fallo— la que decide qué se ofrece. Así el fallo del
-   * catálogo tiene un camino propio que se puede comprobar, y no se confunde
-   * con un valor de arranque que ya traía la lista entera.
+   * Arranca con la lista de respaldo —los cinco—: con un catálogo lento, un
+   * grupo obligatorio vacío pedía «Elija el tipo de institución.» sin nada que
+   * elegir. Cuando el catálogo responde se queda con los que publica, y
+   * `ofrecerTipos` vacía lo elegido si dejó de ofrecerse.
    */
-  private readonly tiposDeOrganizacion = signal<readonly SelectOption<MedicalOrganizationType>[]>([]);
+  private readonly tiposDeOrganizacion = signal<readonly SelectOption<MedicalOrganizationType>[]>(
+    medicalOrganizationTypeOptions(null),
+  );
 
   readonly form = new FormGroup({
     tenantType: new FormControl('', {
@@ -218,6 +220,7 @@ export class RegisterMedicalCenter {
             options: this.tiposSocietarios(),
             required: true,
             testId: 'medical-center-signup-legal-entity-type',
+            valorEnDosRenglones: true,
             mensajeDeError: 'Elija el tipo societario.',
           },
         ],

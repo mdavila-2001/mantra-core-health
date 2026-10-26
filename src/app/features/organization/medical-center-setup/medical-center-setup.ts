@@ -1,14 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { APP_SECTIONS } from '../../../core/navigation/navigation.map';
+import { isVisibleTo } from '../../../core/navigation/navigation.types';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { PracticeOnboardingClient } from '../../../core/data-access/practice-onboarding/practice-onboarding.client';
@@ -55,6 +58,9 @@ export function setupErrorMessage(error: unknown): string {
 /** Adónde lleva el estado «todavía no verificada»: la ficha de la propia organización. */
 export const RUTA_MI_ORGANIZACION = '/administration/my-organization';
 
+/** La salida cuando esa ficha no es para esta sesión (un médico que administra su consultorio). */
+export const RUTA_PANEL = '/dashboard';
+
 /**
  * **Configurar su organización** (CM-11): la organización médica ya verificada
  * abre su práctica y su primera sede, con dirección y punto en el mapa.
@@ -90,6 +96,7 @@ export const RUTA_MI_ORGANIZACION = '/administration/my-organization';
     EmptyState,
     Link,
     MapLocationPicker,
+    NavIcon,
     PageHeader,
     PaginatedForm,
     RouterLink,
@@ -111,7 +118,21 @@ export class MedicalCenterSetup {
    */
   protected readonly estado = signal<ViewState<true>>(loading());
 
-  protected readonly rutaMiOrganizacion = RUTA_MI_ORGANIZACION;
+  /**
+   * La próxima acción del S3: la ficha de la organización **si esta sesión la
+   * puede abrir**. «Mi organización» lleva `hiddenFor: ['PATIENT',
+   * 'PRACTITIONER']` y su guard rebota: un médico que administra su
+   * consultorio entraría acá y su única salida lo devolvería. Para él, el panel.
+   */
+  protected readonly proximaAccion = computed(() => {
+    const ficha = APP_SECTIONS.find((s) => `/${s.path}` === RUTA_MI_ORGANIZACION);
+    const alcanzable =
+      ficha !== undefined &&
+      isVisibleTo(ficha, this.session.roles(), this.session.tenants(), this.session.activeTenantType());
+    return alcanzable
+      ? { label: 'Ver los datos de su organización', route: RUTA_MI_ORGANIZACION }
+      : { label: 'Volver al panel', route: RUTA_PANEL };
+  });
 
   readonly form = new FormGroup({
     practiceName: new FormControl('', {
@@ -227,7 +248,7 @@ export class MedicalCenterSetup {
         this.estado.set(
           activa !== undefined && !activa.isVerified
             ? empty(
-                { label: 'Ver los datos de su organización', route: RUTA_MI_ORGANIZACION },
+                this.proximaAccion(),
                 'Podrá abrir su práctica y su primera sede cuando la plataforma la verifique.',
               )
             : ready(true),

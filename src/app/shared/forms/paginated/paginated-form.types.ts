@@ -372,6 +372,13 @@ export interface CampoDeFormulario {
    * para rótulos cortos; con oraciones largas, `columna` se lee mejor.
    */
   readonly opcionesEn?: 'columna' | 'rejilla';
+
+  /**
+   * Un campo `select` muestra el valor elegido en hasta dos renglones antes
+   * de cortar (`multilineValue` de `app-select`). Para opciones largas que se
+   * cortarían justo en lo que dicen; por omisión, un renglón.
+   */
+  readonly valorEnDosRenglones?: boolean;
 }
 
 /** Una página: el rótulo de su sección y hasta cuatro campos. */

@@ -254,9 +254,9 @@ async function quieta(page: Page): Promise<void> {
   });
 }
 
-async function foto(page: Page, nombre: string, completa = true): Promise<void> {
+async function foto(page: Page, nombre: string): Promise<void> {
   await quieta(page);
-  await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: completa, animations: 'disabled' });
+  await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: true, animations: 'disabled' });
 }
 
 /**
@@ -433,8 +433,21 @@ test.describe('correcto: alta completa por tipo de institución', () => {
         await expect(page.locator(`a[href="${ruta}"]`), ruta).toHaveCount(0);
       }
       await expect(page.locator('a[href="/administration/insurance-claims"]').first()).toBeAttached();
+      if (ancho >= 1280) {
+        // El rótulo del menú entra en un renglón: mide lo mismo que «Mi perfil».
+        const enlace = page.locator('a[href="/administration/medical-center-setup"]').first();
+        if (!(await enlace.isVisible())) {
+          // El grupo del menú es un <details>: se abre por su <summary>.
+          await page.locator('details.app-side-nav__group', { has: enlace }).locator('summary').first().click();
+        }
+        await expect(enlace).toBeVisible();
+        await expect(enlace).toContainText('Configurar práctica');
+        const alto = (await enlace.boundingBox())?.height ?? 0;
+        const altoDeUnRenglon = (await page.locator('a[href="/my-account"]').first().boundingBox())?.height;
+        if (altoDeUnRenglon !== undefined) expect(alto).toBeLessThanOrEqual(altoDeUnRenglon + 1);
+      }
       await sinDesbordeHorizontal(page);
-      await foto(page, `${ancho}-correcto-${tipo.codigo}-4-sesion-del-owner`, false);
+      await foto(page, `${ancho}-correcto-${tipo.codigo}-4-sesion-del-owner`);
 
       // La puerta que el tipo abre: la ruta sólo existe para una organización
       // médica. La organización nace sin verificar, y la pantalla lo dice al
@@ -455,7 +468,7 @@ test.describe('correcto: alta completa por tipo de institución', () => {
       // El código que guarda la base para «sin verificar».
       expect(fila.split(' | ')[2]).toBe('directory:TENANT_UNVERIFIED');
       await sinDesbordeHorizontal(page);
-      await foto(page, `${ancho}-correcto-${tipo.codigo}-5-configurar-organizacion`, false);
+      await foto(page, `${ancho}-correcto-${tipo.codigo}-5-configurar-organizacion`);
       expect(vigia.problemas).toEqual([]);
 
       resultados.push({
@@ -590,7 +603,7 @@ test.describe('límite', () => {
           await expect(page.getByRole('columnheader', { name: encabezado, exact: true })).toBeInViewport();
         }
       }
-      await foto(page, `${vista.width}-limite-300-listado-de-organizaciones`, false);
+      await foto(page, `${vista.width}-limite-300-listado-de-organizaciones`);
     }
     expect(vigia.problemas).toEqual([]);
   });
@@ -647,7 +660,7 @@ test.describe('límite', () => {
     await expect(error).toBeInViewport();
     await expect(page.getByTestId('medical-center-signup-password')).toBeFocused();
     await expect(page.getByTestId('medical-center-signup-success')).toHaveCount(0);
-    await foto(page, '1440-limite-clave-7', false);
+    await foto(page, '1440-limite-clave-7');
     expect(enviadas).toHaveLength(0);
     expect(vigia.problemas).toEqual([]);
 
@@ -692,7 +705,7 @@ test.describe('error', () => {
     await expect(grupo.getByRole('radio').first()).toBeFocused();
     await mensaje.scrollIntoViewIfNeeded();
     await sinDesbordeHorizontal(page);
-    await foto(page, '390-error-sin-tipo', false);
+    await foto(page, '390-error-sin-tipo');
     expect(enviadas).toHaveLength(0);
     expect(vigia.problemas).toEqual([]);
 
@@ -734,7 +747,7 @@ test.describe('error', () => {
     expect(Math.abs((icono?.y ?? 0) - (texto?.y ?? 999))).toBeLessThan(8);
     expect(icono?.x ?? 999).toBeLessThan(texto?.x ?? 0);
     await aviso.scrollIntoViewIfNeeded();
-    await foto(page, '1440-error-correo-duplicado', false);
+    await foto(page, '1440-error-correo-duplicado');
     expect(vigia.problemas).toEqual([]);
 
     resultados.push({
@@ -748,6 +761,31 @@ test.describe('error', () => {
 });
 
 /* ------------------------------------------------------------ viewports */
+
+test('con el catálogo de tipos demorado, el grupo ofrece los cinco desde el principio', async ({ page }) => {
+  const vigia = vigilar(page);
+  await page.setViewportSize(ESCRITORIO);
+  let liberar: () => void = () => undefined;
+  const demora = new Promise<void>((listo) => (liberar = listo));
+  await page.route(
+    (url) => url.pathname === '/system-context/dynamic-enums' && url.searchParams.get('target') === 'directory.tenants.tenant_type_concept_id',
+    async (route) => {
+      await demora;
+      await route.continue();
+    },
+  );
+  await page.goto('/auth/register/medical-center', { waitUntil: 'domcontentloaded' });
+  await esperarAplicacionLista(page);
+  const grupo = page.getByTestId('medical-center-signup-tenant-type');
+  // El catálogo todavía no respondió: igual hay cinco opciones para elegir.
+  await expect(grupo.getByRole('radio')).toHaveCount(5);
+  await expect(page.getByText('Elija el tipo de institución.')).toHaveCount(0);
+  await foto(page, '1440-catalogo-demorado');
+  liberar();
+  await expect(grupo.getByRole('radio')).toHaveCount(5);
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  expect(vigia.problemas).toEqual([]);
+});
 
 test('la primera página se ve entera en los anchos de referencia, con «Siguiente» sin desplazar', async ({
   page,
@@ -769,7 +807,11 @@ test('la primera página se ve entera en los anchos de referencia, con «Siguien
       const radios = [...document.querySelectorAll('[data-testid="medical-center-signup-tenant-type"] app-radio')].map(
         (radio) => Math.round(radio.getBoundingClientRect().top),
       );
+      const rotulos = [...document.querySelectorAll('[data-testid="medical-center-signup-tenant-type"] .radio-label')].map(
+        (rotulo) => Math.round(rotulo.getBoundingClientRect().height),
+      );
       return {
+        rotulosEnUnRenglon: Math.max(...rotulos) - Math.min(...rotulos) <= 1,
         scrollY: window.scrollY,
         abajo: caja.bottom,
         alto: window.innerHeight,
@@ -789,8 +831,12 @@ test('la primera página se ve entera en los anchos de referencia, con «Siguien
       // van en rejilla —menos filas que opciones—.
       expect(medidas.columnas, vista.label).toBeGreaterThanOrEqual(2);
       expect(medidas.filasDeRadios, vista.label).toBeLessThan(medidas.radios);
+      // Sin huérfanas ni pistas vacías: las cinco en una fila donde entran
+      // (desde 1280), 3 + 2 donde no (1024). Ningún rótulo parte en dos.
+      expect(medidas.filasDeRadios, vista.label).toBe(vista.width >= 1280 ? 1 : 2);
     }
-    await foto(page, `${vista.label}-pagina-1-vacia`, false);
+    expect(medidas.rotulosEnUnRenglon, `${vista.label}: ningún rótulo de tipo parte en dos líneas`).toBe(true);
+    await foto(page, `${vista.label}-pagina-1-vacia`);
   }
   expect(vigia.problemas).toEqual([]);
 });
@@ -808,6 +854,43 @@ test('la segunda página reparte la cuenta en columnas y sus acciones no se sale
     await sinDesbordeHorizontal(page);
     await accionesDentro(page);
     await expect(page.getByTestId('paginated-form-atras')).toBeVisible();
+    // El puntero queda donde estaba «Siguiente»: sin moverlo, el botón de abajo
+    // mide con su elevación de `:hover` y no con su caja en reposo.
+    await page.mouse.move(0, 0);
+    await quieta(page);
+    const acciones = await page.evaluate(() => {
+      const barra = document.querySelector('.paginated-form__acciones')!;
+      const atras = document.querySelector('[data-testid="paginated-form-atras"]')!;
+      const envio = document.querySelector('[data-testid="medical-center-signup-submit"], .paginated-form__acciones > button:last-child')!;
+      const rejilla = document.querySelector('.paginated-form__campos')!.getBoundingClientRect();
+      const campos = [...document.querySelectorAll('.paginated-form__campo')].map((c) => c.getBoundingClientRect());
+      const texto = document.createRange();
+      texto.selectNodeContents(atras);
+      return {
+        apiladas: barra.classList.contains('paginated-form__acciones--apiladas'),
+        ancho: barra.getBoundingClientRect().width,
+        atras: atras.getBoundingClientRect().toJSON() as DOMRect,
+        envio: envio.getBoundingClientRect().toJSON() as DOMRect,
+        textoAtras: texto.getBoundingClientRect().left,
+        rejilla: { left: rejilla.left, width: rejilla.width },
+        ultimo: campos.at(-1)!.width,
+      };
+    });
+    if (vista.width < 672) {
+      // Envueltas: apiladas, el envío arriba y las dos a todo el ancho.
+      expect(acciones.apiladas, vista.label).toBe(true);
+      expect(acciones.envio.top, vista.label).toBeLessThan(acciones.atras.top);
+      expect(Math.abs(acciones.envio.width - acciones.ancho), vista.label).toBeLessThanOrEqual(1);
+      expect(Math.abs(acciones.atras.width - acciones.ancho), vista.label).toBeLessThanOrEqual(1);
+    } else {
+      // En un renglón, el TEXTO de «Atrás» alineado con el borde de los campos.
+      expect(acciones.apiladas, vista.label).toBe(false);
+      expect(Math.abs(acciones.textoAtras - acciones.rejilla.left), vista.label).toBeLessThanOrEqual(2);
+    }
+    if (vista.width >= 672 && vista.width < 1120) {
+      // Dos columnas: la contraseña, tercera, cruza la fila en vez de quedar sola.
+      expect(Math.abs(acciones.ultimo - acciones.rejilla.width), vista.label).toBeLessThanOrEqual(1);
+    }
     if (vista.width >= 1120) {
       const filas = await page.evaluate(
         () =>
@@ -820,7 +903,7 @@ test('la segunda página reparte la cuenta en columnas y sus acciones no se sale
       expect(filas, `${vista.label}: nombre, correo y contraseña en un renglón`).toBe(1);
     }
     await page.getByTestId('paginated-form-atras').scrollIntoViewIfNeeded();
-    await foto(page, `${vista.label}-pagina-2-acciones`, false);
+    await foto(page, `${vista.label}-pagina-2-acciones`);
   }
   expect(vigia.problemas).toEqual([]);
 });
