@@ -189,6 +189,63 @@ describe('Select', () => {
       expect(document.activeElement).toBe(boton(fixture));
     });
 
+    it('elegir libera la página en el acto: el modal no sigue abierto mientras sale el panel', async () => {
+      // Con animación de salida posible (en jsdom no existe `animate`) el panel
+      // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
+      // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
+      // Una salida que nunca termina deja a la vista si elegir espera por ella.
+      const original = HTMLElement.prototype.animate;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>(() => undefined),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+      try {
+        const fixture = crear<string>([
+          { value: 'a', label: 'A' },
+          { value: 'b', label: 'B' },
+        ]);
+        await fixture.whenStable();
+        await abrir(fixture);
+
+        filas(fixture)[1].click();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.value()).toBe('b');
+        expect(dialogo(fixture)).toBeNull();
+        expect(boton(fixture).getAttribute('aria-expanded')).toBe('false');
+      } finally {
+        HTMLElement.prototype.animate = original;
+      }
+    });
+
+    it('descartar sí anima la salida: Escape espera a que el panel se vaya', async () => {
+      const original = HTMLElement.prototype.animate;
+      let terminar: () => void = () => undefined;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>((resolve) => {
+          terminar = resolve;
+        }),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+      try {
+        const fixture = crear<string>([{ value: 'a', label: 'A' }]);
+        await fixture.whenStable();
+        await abrir(fixture);
+
+        await tecla(fixture, 'Escape');
+        expect(dialogo(fixture)).not.toBeNull();
+
+        terminar();
+        await Promise.resolve();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(dialogo(fixture)).toBeNull();
+        expect(fixture.componentInstance.value()).toBeNull();
+      } finally {
+        HTMLElement.prototype.animate = original;
+      }
+    });
+
     it('marca la elegida con aria-selected', async () => {
       const fixture = crear<string>(
         [

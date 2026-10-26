@@ -23,6 +23,7 @@ interface FormApi {
   addMember(): void;
   missing(): string | null;
   save(): void;
+  tab: { (): number; set(value: number): void };
 }
 
 /**
@@ -91,6 +92,70 @@ describe('MedicalGroupForm', () => {
     isClosed: false,
     createdAt: '2026-10-25T10:00:00.000Z',
     members: [],
+  });
+
+  /** Abre una pestaña por su rótulo: `app-tab` no dibuja el panel cerrado. */
+  function pestana(rotulo: string): void {
+    const boton = Array.from(el.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(
+      (b) => b.textContent?.trim() === rotulo,
+    );
+    if (boton === undefined) throw new Error(`No hay una pestaña «${rotulo}»`);
+    boton.click();
+    harness.detectChanges();
+  }
+
+  it('es UNA tarjeta con tres pestañas y el botón de crear fuera de ellas', () => {
+    expect(el.querySelectorAll('app-card')).toHaveLength(1);
+    const rotulos = Array.from(el.querySelectorAll('[role="tab"]')).map((b) => b.textContent?.trim());
+    expect(rotulos).toEqual(['Servicio y paciente', 'Fecha y lugar', 'Equipo']);
+
+    for (const rotulo of rotulos) {
+      pestana(rotulo!);
+      expect(el.querySelector('[data-testid="medical-group-form-save"]')).not.toBeNull();
+    }
+  });
+
+  it('cada pestaña dibuja sus campos y los valores sobreviven a cerrarla', () => {
+    pestana('Fecha y lugar');
+    const lugar = () => el.querySelector<HTMLInputElement>('[data-testid="medical-group-form-location"]');
+    lugar()!.value = 'Sala 3';
+    lugar()!.dispatchEvent(new Event('input'));
+    harness.detectChanges();
+
+    pestana('Equipo');
+    expect(el.querySelector('[data-testid="medical-group-form-member-0"]')).not.toBeNull();
+    expect(lugar()).toBeNull();
+
+    pestana('Fecha y lugar');
+    expect(lugar()!.value).toBe('Sala 3');
+  });
+
+  it('al guardar con un pendiente en otra pestaña, lleva hasta ella', async () => {
+    pestana('Equipo');
+    form.save();
+    await settle();
+    expect(form.tab()).toBe(0);
+
+    form.selectedService.set(SERVICE);
+    pestana('Equipo');
+    form.save();
+    await settle();
+    expect(form.tab()).toBe(1);
+    expect(el.querySelector('[data-testid="medical-group-form-error"]')?.textContent).toContain(
+      'fecha y la hora',
+    );
+
+    form.scheduledAt.set(FUTURE);
+    form.locationText.set('Sala 3');
+    form.updateMember(form.team()[0]!.key, { roleTitle: 'Anestesiólogo' });
+    form.tab.set(0);
+    form.save();
+    await settle();
+    expect(form.tab()).toBe(2);
+    expect(el.querySelector('[data-testid="medical-group-form-error"]')?.textContent).toContain(
+      'Elija al profesional de cada cargo.',
+    );
+    http.expectNone('/medical-groups');
   });
 
   it('sin lo obligatorio no manda nada y dice qué falta', async () => {

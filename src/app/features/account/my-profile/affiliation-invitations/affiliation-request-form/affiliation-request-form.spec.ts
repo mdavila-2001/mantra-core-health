@@ -2,15 +2,16 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { HealthcareServicesClient } from '../../../../../core/data-access/healthcare-services/healthcare-services.client';
 import { PracticeSitesClient } from '../../../../../core/data-access/practice-sites/practice-sites.client';
-import { RoleAssignmentsClient } from '../../../../../core/data-access/role-assignments/role-assignments.client';
 import { ServicesCatalogClient } from '../../../../../core/data-access/services-catalog/services-catalog.client';
 import { AffiliationRequestForm } from './affiliation-request-form';
 
 const SITE = { id: 'site-1', practiceId: 'pr-1', code: 'S1', name: 'Sede Sur 1', timeZone: null, addressText: null, latitude: null, longitude: null, status: 'ACTIVE' };
 const PROCEDURES = [
-  { id: 'hs-1', practiceSiteId: 'site-1', serviceConceptId: 'c-1', serviceDisplay: 'Colonoscopia', active: true },
-  { id: 'hs-2', practiceSiteId: 'site-1', serviceConceptId: 'c-2', serviceDisplay: 'Endoscopia digestiva alta', active: true },
+  { id: 'hs-1', practiceSiteId: 'site-1', serviceConceptId: 'c-1', serviceDisplay: 'Colonoscopia', serviceCatalogId: null, price: null, currencyConceptId: null, referencePrice: null, referenceUnit: null, overMargin: null, visibleInSearch: true, active: true },
+  { id: 'hs-2', practiceSiteId: 'site-1', serviceConceptId: 'c-2', serviceDisplay: 'Endoscopia digestiva alta', serviceCatalogId: null, price: null, currencyConceptId: null, referencePrice: null, referenceUnit: null, overMargin: null, visibleInSearch: true, active: true },
+  { id: 'hs-3', practiceSiteId: 'site-1', serviceConceptId: 'c-3', serviceDisplay: 'Retirado', serviceCatalogId: null, price: null, currencyConceptId: null, referencePrice: null, referenceUnit: null, overMargin: null, visibleInSearch: true, active: false },
 ];
 const RESULT = { id: 'ra', practiceId: 'pr-1', practitionerProfileId: 'pp', status: 's', createdAt: new Date() };
 
@@ -33,8 +34,8 @@ describe('AffiliationRequestForm', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: ServicesCatalogClient, useValue: { listPractices: () => of([{ id: 'pr-1', code: 'CMS', name: 'Centro Médico Sur' }]) } },
-        { provide: PracticeSitesClient, useValue: { listSitesOfPractice: () => of([SITE]), selfRequestAffiliation } },
-        { provide: RoleAssignmentsClient, useValue: { listPublishedProcedures: () => of(PROCEDURES) } },
+        { provide: PracticeSitesClient, useValue: { selfRequestAffiliation } },
+        { provide: HealthcareServicesClient, useValue: { listSites: () => of([SITE]), listOffers: () => of(PROCEDURES) } },
       ],
     });
     fixture = TestBed.createComponent(AffiliationRequestForm);

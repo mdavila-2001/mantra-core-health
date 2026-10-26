@@ -35,6 +35,7 @@ import {
   type RouteColumn,
   type RouteColumnKey,
 } from './glossary-clinical-route';
+import { neighborEvidenceView } from './glossary-neighbor-evidence.logic';
 
 /** Vecinos por grupo en la primera lectura: alcanza para ver de qué se trata cada columna. */
 const SAMPLE_PER_GROUP = 8;
@@ -164,6 +165,8 @@ export class GlossaryNetwork {
   protected choose(option: ReferenceOption | null): void {
     if (option !== null && option.value !== this.focusId()) this.focusOn(option.value);
   }
+
+  protected readonly evidenceOf = neighborEvidenceView;
 
   protected visibleItems(column: RouteColumn): readonly GlossaryNeighbor[] {
     return this.isOpen(column) ? column.items : column.items.slice(0, VISIBLE_PER_COLUMN);

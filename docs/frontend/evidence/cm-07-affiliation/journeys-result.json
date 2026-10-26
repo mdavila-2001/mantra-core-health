@@ -1,40 +1,50 @@
 {
-  "fecha": "2026-10-25T19:43:26.791Z",
+  "fecha": "2026-10-26T00:56:40.728Z",
   "results": [
     {
-      "name": "centro ve la fila de ejemplo INVITED de Norte con su estado e iniciador",
+      "name": "centro ve la fila INVITED de ejemplo con estado e iniciador",
       "ok": true,
       "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente de aceptación del médico Invitado por el centro"
     },
     {
-      "name": "centro: INVITED no ofrece Aprobar",
+      "name": "la sede viene del catálogo de CM-06",
       "ok": true,
       "detail": ""
     },
     {
-      "name": "las casillas son solo los procedimientos publicados y activos de la sede (retirado no aparece)",
-      "ok": true,
-      "detail": "Endoscopia digestiva alta | Colonoscopia"
-    },
-    {
-      "name": "tras recargar, la invitación nueva sigue ahí como «Pendiente de aceptación del médico»",
-      "ok": true,
-      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente de aceptación del médico Invitado por el centro Valeria Rojas Mendoza Colonoscopia Pendiente de aceptación del médico Invitado por el centro"
-    },
-    {
-      "name": "la médica ve las dos invitaciones de Norte",
-      "ok": true,
-      "detail": "2"
-    },
-    {
-      "name": "tras recargar queda 1 invitación (la aceptada ya no se ofrece)",
+      "name": "INVITED no ofrece Aprobar",
       "ok": true,
       "detail": ""
     },
     {
-      "name": "«Procedimientos que hago» agrupa por centro y sede y marca Colonoscopia de Norte Activa",
+      "name": "las casillas son los procedimientos que publica la sede en el catálogo",
       "ok": true,
-      "detail": "Agregar un procedimiento Centro Médico Norte Sede Norte 1 Endoscopia digestiva alta Invitado por el centro Pendiente de aceptación del médico Colonoscopia Invitado por el centro Activa Centro Médico Sur Sede Sur 1 Colonoscopia Pedido por el médico Activa"
+      "detail": "Endoscopía digestiva alta | Colonoscopía"
+    },
+    {
+      "name": "tras recargar hay 2 invitaciones pendientes de aceptación",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente de aceptación del médico Invitado por el centro Valeria Rojas Mendoza Colonoscopía Pendiente de aceptación del médico Invitado por"
+    },
+    {
+      "name": "la médica ve las dos invitaciones",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tras aceptar y recargar queda 1 invitación",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tras rechazar y recargar no quedan invitaciones",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "«Procedimientos que hago» agrupa por centro y sede (sede del catálogo) y marca Colonoscopía Activa",
+      "ok": true,
+      "detail": "Agregar un procedimiento Centro Médico Norte Centro Médico Norte · Sede principal Endoscopia digestiva alta Invitado por el centro Rechazada Colonoscopía Invitado por el centro Activa Centro Médico Sur Centro Médico Sur · Sede principal Colonoscopia Pedido por el médico Activa"
     },
     {
       "name": "muestra lo de Sur (Colonoscopia Activa)",
@@ -42,19 +52,24 @@
       "detail": ""
     },
     {
-      "name": "tras recargar, lo pedido en Sur queda «Pendiente del centro» (nunca Activa solo)",
+      "name": "lo rechazado figura «Rechazada», no se oculta",
       "ok": true,
-      "detail": "Agregar un procedimiento Centro Médico Norte Sede Norte 1 Endoscopia digestiva alta Invitado por el centro Pendiente de aceptación del médico Colonoscopia Invitado por el centro Activa Centro Médico Sur Sede Sur 1 Colonoscopia Pedido por el médico Activa Endoscopia digestiva alta Pedido por el médico Pendiente del centro"
+      "detail": ""
     },
     {
-      "name": "centro ve la solicitud pedida por el médico",
+      "name": "tras recargar, lo pedido queda «Pendiente del centro» (nunca Activa solo)",
       "ok": true,
-      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Colonoscopia Activa Pedido por el médico Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente del centro Aprobar Rechazar Pedido por el médico"
+      "detail": "Agregar un procedimiento Centro Médico Norte Centro Médico Norte · Sede principal Endoscopia digestiva alta Invitado por el centro Rechazada Colonoscopía Invitado por el centro Activa Endoscopía digestiva alta Pedido por el médico Pendiente del centro Centro Médico Sur Centro Médico Sur · Sede principal Colonoscopia Pedido por el médico Activa"
     },
     {
-      "name": "tras recargar, la solicitud figura «Rechazada»",
+      "name": "centro ve la solicitud con Aprobar y Rechazar",
       "ok": true,
-      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Colonoscopia Activa Pedido por el médico Valeria Rojas Mendoza Endoscopia digestiva alta Rechazada Pedido por el médico"
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Rechazada Invitado por el centro Valeria Rojas Mendoza Colonoscopía Activa Invitado por el centro Valeria Rojas Mendoza Endoscopía digestiva alta Pendiente del centro Aprobar Recha"
+    },
+    {
+      "name": "tras recargar la solicitud figura «Rechazada» y ya no ofrece Aprobar",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Rechazada Invitado por el centro Valeria Rojas Mendoza Colonoscopía Activa Invitado por el centro Valeria Rojas Mendoza Endoscopía digestiva alta Rechazada Pedido por el médico"
     },
     {
       "name": "sin errores de consola ni de página (se excluye el aviso CSP del script en línea que inyecta ng serve)",
@@ -62,20 +77,5 @@
       "detail": ""
     }
   ],
-  "errors": [
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash (",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash ("
-  ]
+  "errors": []
 }

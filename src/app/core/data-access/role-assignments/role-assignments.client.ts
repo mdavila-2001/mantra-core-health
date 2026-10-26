@@ -1,17 +1,19 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { EMPTY, expand, map, reduce, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos } from '../wire';
-import type {
-  PracticeInvitationInput,
-  RoleAssignmentRow,
-  SiteProcedure,
-} from './role-assignments.types';
+import type { PracticeInvitationInput, RoleAssignmentRow } from './role-assignments.types';
 
 /** Lo que viaja: los textos opcionales llegan `null`. */
 type WireRow = { readonly [K in keyof RoleAssignmentRow]: RoleAssignmentRow[K] | null };
+
+/**
+ * Una página de `GET /practices/:practiceId/role-assignments`. La API real responde
+ * `{ items, count, limit, nextCursor }` (paginada por cursor); se acepta también el arreglo pelado.
+ */
+type WirePage = readonly WireRow[] | { readonly items: readonly WireRow[]; readonly nextCursor?: string | null };
 
 function toRow(wire: WireRow): RoleAssignmentRow {
   // `healthcareServiceId`, `serviceConceptId` y `serviceDisplay` son `string | null` en la vista:
@@ -36,11 +38,33 @@ export class RoleAssignmentsClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  /** `GET /practices/:practiceId/role-assignments` — los médicos del centro, con estado e iniciador. */
+  /**
+   * `GET /practices/:practiceId/role-assignments` — los médicos del centro, con estado e iniciador.
+   *
+   * La API pagina por cursor: se siguen las páginas hasta agotarlas, porque la pantalla agrupa por sede y no
+   * puede mostrar una lista que termina a la mitad.
+   */
   listForPractice(practiceId: string): Observable<readonly RoleAssignmentRow[]> {
+    return this.listPage(practiceId, null).pipe(
+      expand((page) => (page.nextCursor === null ? EMPTY : this.listPage(practiceId, page.nextCursor))),
+      reduce((all, page) => [...all, ...page.rows], [] as readonly RoleAssignmentRow[]),
+    );
+  }
+
+  private listPage(
+    practiceId: string,
+    cursor: string | null,
+  ): Observable<{ readonly rows: readonly RoleAssignmentRow[]; readonly nextCursor: string | null }> {
+    const params = cursor === null ? new HttpParams() : new HttpParams().set('cursor', cursor);
     return this.http
-      .get<readonly WireRow[]>(this.url(`/practices/${encodeURIComponent(practiceId)}/role-assignments`))
-      .pipe(map((rows) => rows.map(toRow)));
+      .get<WirePage>(this.url(`/practices/${encodeURIComponent(practiceId)}/role-assignments`), { params })
+      .pipe(
+        map((body) =>
+          'items' in body
+            ? { rows: body.items.map(toRow), nextCursor: body.nextCursor ?? null }
+            : { rows: body.map(toRow), nextCursor: null },
+        ),
+      );
   }
 
   /** `POST /practices/:practiceId/role-assignments/invitations` — el centro invita; una fila `INVITED` por procedimiento. */
@@ -71,23 +95,6 @@ export class RoleAssignmentsClient {
   /** `POST /role-assignments/:roleId/reject` — el centro rechaza una solicitud; la fila queda `REJECTED`. */
   reject(roleId: string): Observable<RoleAssignmentRow> {
     return this.ofPractice(roleId, 'reject');
-  }
-
-  /**
-   * `GET /practices/:practiceId/healthcare-services?practiceSiteId=` — los procedimientos que **publica** la sede.
-   *
-   * Es la misma ruta del catálogo del centro (CM-06). Mientras ese cliente no
-   * esté en la base, este lector mínimo es la única fuente de las casillas: solo
-   * pide y filtra por `active`, no escribe nada.
-   */
-  listPublishedProcedures(practiceId: string, practiceSiteId: string): Observable<readonly SiteProcedure[]> {
-    const params = new HttpParams().set('practiceSiteId', practiceSiteId);
-    return this.http
-      .get<{ readonly items: readonly SiteProcedure[] }>(
-        this.url(`/practices/${encodeURIComponent(practiceId)}/healthcare-services`),
-        { params },
-      )
-      .pipe(map((body) => body.items.filter((procedure) => procedure.active)));
   }
 
   private mine(roleId: string, action: 'accept' | 'decline'): Observable<RoleAssignmentRow> {

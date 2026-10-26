@@ -21,7 +21,7 @@ import { procedimientoPorConceptId, servicios } from './practice.handlers';
     - `overMargin` es siempre `null` (A-1/A-2): el aviso no se calcula acá.
    ========================================================================== */
 
-const offers = new Coleccion<HealthcareServiceOffer>(initialHealthcareServiceOffers());
+export const offers = new Coleccion<HealthcareServiceOffer>(initialHealthcareServiceOffers());
 // Sobrevive a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. Sin esto, lo
 // publicado en pantalla desaparece al recargar y se ve igual que un guardado fallido.
 offers.persistirEn('mock.practice.healthcare-services');

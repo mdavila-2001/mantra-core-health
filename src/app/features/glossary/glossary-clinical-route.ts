@@ -4,6 +4,7 @@ import type {
   GlossaryNeighborhood,
   GlossaryRelationType,
 } from '../../core/data-access/terminology/terminology.types';
+import { compareNeighbors } from './glossary-neighbor-evidence.logic';
 
 /* ============================================================================
     La ruta clínica: cómo se reparte el vecindario de un término en columnas.
@@ -221,7 +222,7 @@ export function buildClinicalRoute(neighborhood: GlossaryNeighborhood): Clinical
         key,
         title: titleOf(key, focusColumn),
         zone: zoneOf(key, focusColumn),
-        items: [...column.items.values()].sort((a, b) => a.display.localeCompare(b.display, 'es')),
+        items: [...column.items.values()].sort(compareNeighbors),
         complete: column.complete,
         sources: [...column.sources.values()],
       },
