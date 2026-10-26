@@ -11,13 +11,11 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-import type {
-  AgendaResource,
-  WalkInPatient,
-} from '../../../core/data-access/scheduling/scheduling.types';
 import {
   MODALIDADES,
+  type AgendaResource,
   type ModalidadDeAtencion,
+  type WalkInPatient,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
@@ -42,6 +40,7 @@ import { DatePicker } from '../../../shared/components/organisms/date-picker/dat
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../agenda.routes';
 import { agendaResourcesMy } from '../my-resource';
+import { avisoDeTeleconsulta, rechazoPorTelemedicina } from '../telemedicina';
 
 /**
  * Duraciones ofrecidas, en minutos.
@@ -433,13 +432,22 @@ export class AppointmentNew {
     return `Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.${donde}`;
   });
 
+  /** El aviso de teleconsulta fuera de franja; sólo la cita directa la valida la API. */
+  protected readonly sinTelemedicina = avisoDeTeleconsulta(
+    this.scheduling,
+    this.agendaElegida,
+    this.comienza,
+    () => this.modo() === 'registrado' && this.modalidad() === 'TELECONSULTA',
+  );
+
   protected readonly puedeGuardar = computed(
     () =>
       !this.guardando() &&
       this.hayPaciente() &&
       this.comienza() !== null &&
       this.minutos() !== null &&
-      this.agendaElegida() !== null,
+      this.agendaElegida() !== null &&
+      this.sinTelemedicina() === null,
   );
 
   /**
@@ -713,7 +721,8 @@ export class AppointmentNew {
         },
         error: (error: unknown) => {
           this.guardando.set(false);
-          this.error.set(this.mensajeDeError(errorToViewState<never>(error)));
+          const estado = errorToViewState<never>(error);
+          this.error.set(rechazoPorTelemedicina(error) ?? this.mensajeDeError(estado));
         },
       });
   }

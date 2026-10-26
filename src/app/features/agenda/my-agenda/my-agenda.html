@@ -232,8 +232,7 @@
                   (quitarOcupado)="quitarOcupado($event)"
                 />
 
-                <!-- LA TARJETA (AG-5): tocar un rato libre del día la abre con
-                     esa franja ya puesta. -->
+                <!-- LA TARJETA (AG-5): un rato libre la abre con su franja puesta. -->
                 @if (ratoParaCrear(); as rato) {
                   @if (recurso(); as elRecurso) {
                     <app-day-card
@@ -243,6 +242,7 @@
                       [hastaInicial]="rato.hasta"
                       [cupoId]="rato.cupoId"
                       [ratosTomados]="ratosTomadosDelDia()"
+                      [franjas]="franjasParaTelemedicina()"
                       (creada)="tarjetaCreo(dia)"
                       (cerrada)="cerrarTarjeta()"
                     />

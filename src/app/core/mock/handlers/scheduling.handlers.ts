@@ -327,6 +327,37 @@ function withIdempotency(request: MockRequest, execute: () => MockReply): MockRe
   return result;
 }
 
+/**
+ * Si el instante cae en una franja con telemedicina de alguna plantilla no
+ * retirada y vigente ese día (`validFrom`/`validTo`, inclusive) del recurso. La franja es de pared y se mide en la hora local, como
+ * el generador de cupos; el fin es exclusivo.
+ */
+function teleconsultaEnFranja(resourceId: string, instante: Date): boolean {
+  const minuto = instante.getHours() * 60 + instante.getMinutes();
+  const aMinutos = (hora: string): number => {
+    const [h, m] = hora.split(':');
+    return Number(h) * 60 + Number(m);
+  };
+  const fecha = `${instante.getFullYear()}-${String(instante.getMonth() + 1).padStart(2, '0')}-${String(instante.getDate()).padStart(2, '0')}`;
+  return plantillas
+    .filtrar(
+      (t) =>
+        t.resourceId === resourceId &&
+        !t.retired &&
+        t.validFrom.slice(0, 10) <= fecha &&
+        (t.validTo === undefined || fecha <= t.validTo.slice(0, 10)),
+    )
+    .some((t) =>
+      t.rules.some(
+        (r) =>
+          r.telemedicineEnabled === true &&
+          r.dayOfWeek === instante.getDay() &&
+          aMinutos(r.startTime) <= minuto &&
+          minuto < aMinutos(r.endTime),
+      ),
+    );
+}
+
 export function registrarAgenda(router: MockRouter): void {
   router.get('/scheduling/resources', ({ query }) => {
     const tenantId = texto(query, 'tenantId');
@@ -806,6 +837,25 @@ export function registrarAgenda(router: MockRouter): void {
       }
     }
 
+    // La teleconsulta sólo cabe en una franja vigente con telemedicina: el
+    // mismo 422 que `CreateDirectAppointmentUseCase` (reason
+    // `TELEMEDICINE_NOT_ENABLED`). Las demás modalidades no miran franjas.
+    if (
+      datos.channel === 'TELECONSULTA' &&
+      !teleconsultaEnFranja(datos.resourceId ?? '', new Date(startAt))
+    ) {
+      // `reason` en el primer nivel, como lo deja el filtro de excepciones.
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message:
+          'Ese horario no atiende por telemedicina. Habilítela en la franja de su horario de atención o elija otra modalidad.',
+        error: 'Unprocessable Entity',
+        reason: 'TELEMEDICINE_NOT_ENABLED',
+        details: { resourceId: datos.resourceId ?? '', startAt },
+      });
+    }
+
     const endAt = masMinutos(startAt, datos.durationMinutes ?? 30);
     const pisados = cupos.filtrar(
       (c) => c.resourceId === datos.resourceId && c.startAt < endAt && c.endAt > startAt,
@@ -1097,7 +1147,12 @@ export function registrarAgenda(router: MockRouter): void {
   router.get('/scheduling/resources/:id/templates', ({ params }) => {
     const items = plantillas
       .filtrar((t) => t.resourceId === params['id'])
-      .map(({ resourceId: _r, ...t }) => t);
+      // La API devuelve `telemedicineEnabled` siempre, como booleano: la
+      // columna es anulable y el `null` se lee como «no».
+      .map(({ resourceId: _r, ...t }) => ({
+        ...t,
+        rules: t.rules.map((r) => ({ ...r, telemedicineEnabled: r.telemedicineEnabled === true })),
+      }));
     return { items, count: items.length };
   });
 
