@@ -7,7 +7,10 @@
  * nada sobre el fondo ni sobre el ancho. Las que hagan falta se agregan a mano al
  * JSON, con un id del backend simulado.
  *
- *   node scripts/corr-rutas.mjs
+ *   node scripts/corr-rutas.mjs            regenera playwright/corr-rutas.json
+ *   node scripts/corr-rutas.mjs --check    no escribe: sale 1 si el JSON no es el que
+ *                                          saldría hoy del mapa de navegación
+ *                                          (lo usa scripts/check-correcciones.mjs)
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -15,13 +18,17 @@ const MAPA = 'src/app/core/navigation/navigation.map.ts';
 const ROUTES = 'src/app/app.routes.ts';
 const DESTINO = 'playwright/corr-rutas.json';
 
+// Un checkout con CRLF deja sin entradas al parser del mapa, que busca `{\n`, y el
+// filtro de roles le da al médico las pantallas de farmacia y de aseguradora.
+const readSource = (path) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+
 // Los comentarios guardan rutas históricas para explicar cambios. No son
 // pantallas del mapa vigente y no deben entrar al auditor.
-const fuente = readFileSync(MAPA, 'utf8')
+const fuente = readSource(MAPA)
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/(^|\s)\/\/[^\n]*/gm, '$1')
   .replace(/},[ \t]*\{/g, '},\n  {');
-const routesSource = readFileSync(ROUTES, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/gm, '$1');
+const routesSource = readSource(ROUTES).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/gm, '$1');
 const redirectedRoutes = new Set(
   [...(routesSource.match(/SECCIONES_REDIRIGIDAS[\s\S]*?=\s*\{([\s\S]*?)\n\};/)?.[1] ?? '').matchAll(/^\s*'([^']+)':/gm)].map(([, path]) => `/${path}`),
 );
@@ -120,7 +127,28 @@ catalogo['34-paciente'] = routesForRoles(['PATIENT']);
 // The seeded administration actor is SECURITY_ADMIN; SUPERADMIN paths need a
 // separate actor and must not be treated as available in this audit.
 catalogo['34-administrador'] = routesForRoles(['SECURITY_ADMIN']);
-writeFileSync(DESTINO, `${JSON.stringify(catalogo, null, 2)}\n`);
+const generated = `${JSON.stringify(catalogo, null, 2)}\n`;
+if (process.argv.includes('--check')) {
+  const current = readFileSync(DESTINO, 'utf8').replace(/\r\n/g, '\n');
+  if (current === generated) {
+    console.log('corr-rutas.json está al día con el mapa de navegación.');
+    process.exit(0);
+  }
+  const before = JSON.parse(current);
+  const lines = ['34', '34-paciente', '34-administrador'].map((key) => {
+    // La identidad de una entrada es ruta + nombre: renombrar una foto también
+    // deja sin comparar las mediciones viejas.
+    const label = (entry) => (entry.nombre === entry.ruta.replace(/[/?=&]+/g, '_').replace(/^_/, '') ? entry.ruta : `${entry.ruta} «${entry.nombre}»`);
+    const old = new Set((before[key] ?? []).map(label));
+    const now = new Set(catalogo[key].map(label));
+    const added = [...now].filter((ruta) => !old.has(ruta));
+    const removed = [...old].filter((ruta) => !now.has(ruta));
+    return `  ${key}: +${added.length}${added.length ? ` (${added.join(', ')})` : ''} -${removed.length}${removed.length ? ` (${removed.join(', ')})` : ''}`;
+  });
+  console.error(`corr-rutas.json está desactualizado respecto del mapa de navegación:\n${lines.join('\n')}`);
+  process.exit(1);
+}
+writeFileSync(DESTINO, generated);
 console.log(
   `Carril 34: inventario ${rutas.length}; médica ${catalogo['34'].length}; paciente ${catalogo['34-paciente'].length}; administración ${catalogo['34-administrador'].length}`,
 );
