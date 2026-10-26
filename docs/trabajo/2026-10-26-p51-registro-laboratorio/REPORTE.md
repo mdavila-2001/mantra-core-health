@@ -93,3 +93,20 @@ Detalle en `evidencia/integracion.txt`, `evidencia/unitarios.txt`,
 - **D-4** `description`/`locationUrl` con las reglas de `pharmacy.branches[]`, guardadas en
   `directory.branches`.
 - **D-5** el punto 6 (no operar sin papeles) queda fuera de este cierre.
+
+## Actualización — punto 6 (D-5) cerrado
+
+> **AVANCE: 4 / 4 — 100 %** de este agregado (además de las 7 / 8 previas).
+
+| ID | Qué se logró | Comando | Resultado |
+|---|---|---|---|
+| H2.S1.M1 | `PharmacyOperatingRequirementsService` parametrizado por clase (`PHARMACY`/`LABORATORY`); laboratorio = SEPREC + licencia + SEDES | `yarn test src/modules/directory src/modules/diagnostic_units` | PASS 378/378 |
+| H2.S1.M2 | Verificación de la plataforma: laboratorio sin papeles → 422 `details.missing`; con papeles → 200 y papeles VERIFICADO | `yarn test:integration '(imaging-center\|laboratory)-registration'` | PASS 16/16 |
+| H2.S1.M3 | `GET /tenants/:id/laboratory-readiness` (403 otra org, 401 sin sesión, 422 si no es laboratorio) | ídem | PASS |
+| H2.S1.M4 | `verify-and-publish` de unidad de laboratorio con org. sin verificar → 422 `TENANT_NOT_VERIFIED` | ídem + unitarios | PASS |
+
+Farmacia (P50) sin regresión: `pharmacy-registration.int-spec.ts` 3/3. Typecheck API EXIT 0 (con heap de 6 GB). OpenAPI y referencia de endpoints regenerados. Commits: `85d4efdd`, `4e4cea5d`.
+
+Decisiones: «laboratorio» = `DIAGNOSTIC_CENTER` con unidad de laboratorio clínico; los tres papeles no dependen del tipo societario; la unidad se publica solo con la organización verificada (sin dependencia circular entre módulos).
+
+No cubierto: la verificación por autoridad externa (`identity-verification-effects.service.ts`, `verifyTenant`) no evalúa papeles (tampoco en farmacia); no hay pantalla de requisitos en el frontend; el escenario de integración deja una organización como residuo declarado (WORM `audit.audit_log`) y solo corre contra una base descartable.
