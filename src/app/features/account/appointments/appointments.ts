@@ -60,6 +60,7 @@ import type { CalendarAppointment } from './appointment-calendar/appointment-cal
 import {
   CAMPAIGN_PARAM,
   CAMPAIGN_TITLE_PARAM,
+  FLEXIBLE_BOOKING_SLOT,
   PROFESSIONAL_PARAM,
   SERVICE_BOOKING_SLOT,
   SERVICE_PARAM,
@@ -295,6 +296,11 @@ interface HorarioVisible {
    * con la oferta, la sede y el inicio.
    */
   readonly ofertaId?: string;
+  /**
+   * Una hora de un horario flexible, sin turnos fijos (P36). Como la de un
+   * servicio, no es un cupo: se reserva por agenda e inicio.
+   */
+  readonly flexible?: boolean;
 }
 
 /**
@@ -1412,20 +1418,44 @@ export class Appointments {
     let ultimoFallo: unknown = null;
     forkJoin(
       enFoco.map((recurso) =>
-        this.scheduling
-          .listSlots({
+        forkJoin([
+          this.scheduling.listSlots({
             resourceId: recurso.id,
             from: desde,
             to: hasta,
             onlyAvailable: true,
             limit: TOPE_DE_HORARIOS,
-          })
-          .pipe(
-            map((pagina) =>
-              pagina.items
+          }),
+          // P36 · las horas del horario flexible de la misma agenda. Vacío si
+          // publicó turnos fijos. Que esta lectura falle no esconde los turnos
+          // fijos: se avisa como lista incompleta y se sigue.
+          this.scheduling.getFlexibleAvailability(recurso.id, { from: desde, to: hasta }).pipe(
+            map((disponibilidad) => disponibilidad.items),
+            catchError(() => {
+              this.horariosIncompletos.set(true);
+              return of([]);
+            }),
+          ),
+        ]).pipe(
+          map(([pagina, flexibles]) => {
+            const sede = conSede ? nombreDeSede(recurso) : '';
+            return [
+              ...pagina.items
                 .filter((cupo) => cupo.remainingCapacity > 0)
-                .map((cupo) => this.aHorarioVisible(cupo, conSede ? nombreDeSede(recurso) : '')),
-            ),
+                .map((cupo) => this.aHorarioVisible(cupo, sede)),
+              ...flexibles.map(
+                (hora): HorarioVisible => ({
+                  id: `${FLEXIBLE_BOOKING_SLOT}|${recurso.id}|${hora.startAt.toISOString()}`,
+                  desde: hora.startAt,
+                  hasta: hora.endAt,
+                  resourceId: recurso.id,
+                  lugaresLibres: 1,
+                  sede,
+                  flexible: true,
+                }),
+              ),
+            ];
+          }),
             // Que una sede no conteste no puede esconder los horarios de la
             // otra: se anota la falla y se sigue con lo que sí llegó.
             catchError((error: unknown) => {
@@ -1798,6 +1828,7 @@ export class Appointments {
   protected rutaDeReserva(horario: HorarioVisible): string {
     // Un horario de servicio no es un cupo: no hay id que mandar. La pantalla de
     // reserva lo reencuentra por la oferta, la sede y el inicio.
+    if (horario.flexible === true) return reservaDelPortalRoute(FLEXIBLE_BOOKING_SLOT);
     return reservaDelPortalRoute(
       horario.ofertaId === undefined ? horario.id : RESERVA_DE_SERVICIO,
     );
@@ -1813,6 +1844,7 @@ export class Appointments {
       desde: horario.desde.toISOString(),
       hasta: horario.hasta.toISOString(),
       ...(horario.ofertaId === undefined ? {} : { oferta: horario.ofertaId }),
+      ...(horario.flexible === true ? { flexible: '1' } : {}),
     };
   }
 

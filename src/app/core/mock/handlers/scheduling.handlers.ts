@@ -1121,6 +1121,7 @@ export function registrarAgenda(router: MockRouter): void {
         name: nueva.name,
         ruleCount: nueva.rules.length,
         statusConceptId: nueva.statusConceptId,
+        flexibleHours: nueva.flexibleHours === true,
       },
     };
   });
@@ -1192,23 +1193,18 @@ export function registrarAgenda(router: MockRouter): void {
       // TODAS las franjas del día, no la primera: con hora de almuerzo un día
       // son dos franjas (mañana y tarde), igual que en el generador real, que
       // recorre cada regla. Con `find` la tarde desaparecía en silencio.
+      // Horario flexible (P36): no hay grilla; las horas se calculan al leer y
+      // el cupo nace al retener (`flexible-hours.handlers.ts`), como en la API.
       for (const regla of t.rules.filter(
-        (r) => r.dayOfWeek === d.getDay() && r.bookingMode !== 'SERVICES',
+        (r) => t.flexibleHours !== true && r.dayOfWeek === d.getDay() && r.bookingMode !== 'SERVICES',
       )) {
         const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
         const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
         const apertura = hi * 60 + mi;
         const cierre = hf * 60 + mf;
-        // Horario flexible (P36): la franja entera es UN bloque abierto y el
-        // paciente pide dentro de ella la hora que quiera. La capacidad es una
-        // suposición de la maqueta —una consulta cada 15 min como techo— hasta
-        // que el backend defina el modo; está anotado en P36.
-        const flexible = t.flexibleHours === true;
-        const dur = flexible ? cierre - apertura : (regla.slotMinutes ?? t.slotMinutes);
-        const paso = flexible ? dur : dur + (regla.gapMinutes ?? 0);
-        const capacidad = flexible
-          ? Math.max(1, Math.floor(dur / 15))
-          : (regla.capacityPerSlot ?? 1);
+        const dur = regla.slotMinutes ?? t.slotMinutes;
+        const paso = dur + (regla.gapMinutes ?? 0);
+        const capacidad = regla.capacityPerSlot ?? 1;
         if (dur <= 0) continue;
         for (let m = apertura; m + dur <= cierre; m += paso) {
           const inicio = new Date(d);

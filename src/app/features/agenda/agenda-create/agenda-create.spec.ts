@@ -51,6 +51,8 @@ interface Testable {
   limpiarCampos(): Promise<void>;
   /** Horario flexible y almuerzo (propietario, 18/09). */
   readonly flexible: WritableSignal<boolean>;
+  /** P36 · lo que se reserva por paciente en horario flexible. */
+  readonly minutosPorPaciente: WritableSignal<number>;
   readonly conAlmuerzo: WritableSignal<boolean>;
   readonly almuerzoDesde: WritableSignal<string>;
   readonly almuerzoHasta: WritableSignal<string>;
@@ -1306,6 +1308,32 @@ describe('AgendaCreate', () => {
       const reglas = cuerpo['rules'] as Record<string, unknown>[];
       expect(reglas[0]).not.toHaveProperty('slotMinutes');
       expect(reglas[0]).not.toHaveProperty('gapMinutes');
+      // P36: ni capacidad por turno —la API rechaza la franja que la declara—.
+      expect(reglas[0]).not.toHaveProperty('capacityPerSlot');
+      // Lo que se reserva por paciente viaja una vez, en la plantilla.
+      expect(cuerpo['slotMinutes']).toBe(30);
+    });
+
+    it('P36 · en horario flexible se elige cuánto se reserva por paciente y viaja en la plantilla', () => {
+      crear();
+      encenderLunes();
+      acc.flexible.set(true);
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-minutos-por-paciente"]'),
+      ).not.toBeNull();
+
+      acc.minutosPorPaciente.set(20);
+      expect(cuerpoDeLaPlantilla()['slotMinutes']).toBe(20);
+    });
+
+    it('P36 · con turnos fijos no se pregunta el tiempo por paciente', () => {
+      crear();
+      encenderLunes();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-minutos-por-paciente"]'),
+      ).toBeNull();
     });
 
     it('en horario flexible la tabla no pregunta duración ni descanso', () => {

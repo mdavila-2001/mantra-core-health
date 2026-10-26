@@ -71,9 +71,11 @@ import type {
   ServiceHold,
   ServiceOffering,
   ServiceOfferingChanges,
+  FlexibleAvailability,
+  FlexibleAvailabilityQuery,
+  FlexibleHold,
+  NewFlexibleHold,
 } from './scheduling.types';
-import { SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS } from './scheduling.types';
-import { withSimulatorExtensions } from '../simulator-only';
 
 /**
  * Cliente de `scheduling` (M41): la lectura de la agenda y el ciclo de la
@@ -290,35 +292,33 @@ export class SchedulingClient {
   ): Observable<ScheduleTemplateCreated> {
     return this.http.post<ScheduleTemplateCreated>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
-      withSimulatorExtensions(
-        {
-          name: template.name,
-          rules: template.rules.map((rule) => ({
-            dayOfWeek: rule.dayOfWeek,
-            startTime: rule.startTime,
-            endTime: rule.endTime,
-            ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
-            ...(rule.capacityPerSlot === undefined
-              ? {}
-              : { capacityPerSlot: rule.capacityPerSlot }),
-            // Omitido y no `0`: la columna es anulable y el servidor distingue
-            // «no lo declaró» de «declaró cero». Este cuerpo se arma campo por
-            // campo a propósito —para no filtrar nada que el DTO no acepte— y
-            // por eso agregar uno al tipo NO alcanza: hay que nombrarlo acá.
-            ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
-            // Ídem: sólo si el médico lo cambió. Ausente ≡ solo consultas.
-            ...(rule.bookingMode === undefined ? {} : { bookingMode: rule.bookingMode }),
-          })),
-          ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
-          ...(template.bookingPolicyId === undefined
+      {
+        name: template.name,
+        rules: template.rules.map((rule) => ({
+          dayOfWeek: rule.dayOfWeek,
+          startTime: rule.startTime,
+          endTime: rule.endTime,
+          ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
+          ...(rule.capacityPerSlot === undefined
             ? {}
-            : { bookingPolicyId: template.bookingPolicyId }),
-          ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
-          ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
-          ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
-        },
-        SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS,
-      ),
+            : { capacityPerSlot: rule.capacityPerSlot }),
+          // Omitido y no `0`: la columna es anulable y el servidor distingue
+          // «no lo declaró» de «declaró cero». Este cuerpo se arma campo por
+          // campo a propósito —para no filtrar nada que el DTO no acepte— y
+          // por eso agregar uno al tipo NO alcanza: hay que nombrarlo acá.
+          ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
+          // Ídem: sólo si el médico lo cambió. Ausente ≡ solo consultas.
+          ...(rule.bookingMode === undefined ? {} : { bookingMode: rule.bookingMode }),
+        })),
+        ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
+        ...(template.bookingPolicyId === undefined
+          ? {}
+          : { bookingPolicyId: template.bookingPolicyId }),
+        ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
+        ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
+        // P36: sólo si el médico lo eligió. Ausente ≡ turnos fijos.
+        ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
+      },
     );
   }
 
@@ -1032,9 +1032,83 @@ export class SchedulingClient {
       );
   }
 
+  /**
+   * `GET /scheduling/resources/:id/flexible-availability` — las horas que se
+   * pueden pedir en el horario flexible de una agenda (P36).
+   *
+   * Vacía si la agenda no publicó un horario flexible. Es una lectura: retener
+   * ({@link placeFlexibleHold}) la vuelve a decidir en el servidor.
+   */
+  getFlexibleAvailability(
+    resourceId: string,
+    query: FlexibleAvailabilityQuery,
+  ): Observable<FlexibleAvailability> {
+    const params = new HttpParams()
+      .set('from', query.from.toISOString())
+      .set('to', query.to.toISOString());
+    return this.http
+      .get<WireFlexibleAvailability>(
+        this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/flexible-availability`),
+        { params },
+      )
+      .pipe(
+        map((body) => ({
+          ...body,
+          items: body.items.map((item) => ({
+            templateId: item.templateId,
+            startAt: new Date(item.startAt),
+            endAt: new Date(item.endAt),
+          })),
+        })),
+      );
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/flexible-holds` — retiene la hora pedida de
+   * un horario flexible (P36).
+   *
+   * Crea el cupo con el tiempo por paciente de la plantilla. Se confirma con
+   * {@link confirmHold} o {@link requestHold}, igual que una consulta. Un 409
+   * dice que la hora ya no está libre: se vuelve a leer la disponibilidad.
+   */
+  placeFlexibleHold(resourceId: string, hold: NewFlexibleHold): Observable<FlexibleHold> {
+    return this.http
+      .post<WireFlexibleHold>(
+        this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/flexible-holds`),
+        {
+          startAt: hold.startAt.toISOString(),
+          ...(hold.patientProfileId === undefined
+            ? {}
+            : { patientProfileId: hold.patientProfileId }),
+        },
+      )
+      .pipe(
+        map((body) => ({
+          ...body,
+          expiresAt: new Date(body.expiresAt),
+          startAt: new Date(body.startAt),
+          endAt: new Date(body.endAt),
+        })),
+      );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+type WireFlexibleHold = Omit<FlexibleHold, 'expiresAt' | 'startAt' | 'endAt'> & {
+  readonly expiresAt: string;
+  readonly startAt: string;
+  readonly endAt: string;
+};
+
+interface WireFlexibleAvailability extends Omit<FlexibleAvailability, 'items'> {
+  readonly items: readonly {
+    readonly templateId: string;
+    readonly startAt: string;
+    readonly endAt: string;
+  }[];
 }
 
 type WireHold = Omit<SlotHold, 'expiresAt'> & { readonly expiresAt: string };

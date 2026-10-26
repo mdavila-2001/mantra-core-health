@@ -26,8 +26,7 @@ import { agendaResourcesMy } from '../my-resource';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
 import { calculateSlots, type Calculation, type CalculatedDay } from './agenda-slots';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { simulatorAvailable } from '../../../core/data-access/simulator-only';
-import { loading, ready, validation } from '../../../core/view-state/view-state';
+import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -453,6 +452,19 @@ export class AgendaCreate {
   protected readonly flexible = signal(false);
 
   /**
+   * Cuánto se reserva por paciente en horario flexible (P36).
+   *
+   * Sin turnos fijos el paciente elige la hora, pero la consulta igual ocupa un
+   * rato: es lo que impide que dos pacientes pidan la misma hora. Se pregunta
+   * una vez para toda la agenda y viaja como `slotMinutes` de la plantilla.
+   */
+  protected readonly minutosPorPaciente = signal<number>(DURACION_POR_OMISION);
+
+  protected elegirMinutosPorPaciente(minutos: number | null): void {
+    if (minutos !== null) this.minutosPorPaciente.set(minutos);
+  }
+
+  /**
    * La hora de almuerzo, una para toda la semana.
    *
    * No es una columna más de la tabla: el almuerzo es de la persona, no del
@@ -751,6 +763,7 @@ export class AgendaCreate {
       this.semana.at(indice).patchValue({ activo: false });
     }
     this.flexible.set(plantilla.flexibleHours === true);
+    this.minutosPorPaciente.set(plantilla.slotMinutes ?? DURACION_POR_OMISION);
     this.conAlmuerzo.set(false);
     for (const [indice, dia] of DIAS.entries()) {
       // Un día con almuerzo vuelve como DOS franjas: el horario es de la
@@ -1010,6 +1023,7 @@ export class AgendaCreate {
     });
     this.fechaDeFin.set(null);
     this.flexible.set(false);
+    this.minutosPorPaciente.set(DURACION_POR_OMISION);
     this.conAlmuerzo.set(false);
     this.almuerzoDesde.set(ALMUERZO_POR_OMISION.desde);
     this.almuerzoHasta.set(ALMUERZO_POR_OMISION.hasta);
@@ -1036,20 +1050,6 @@ export class AgendaCreate {
 
     const tenantId = this.organizacion();
     if (tenantId === null) return;
-
-    // `flexibleHours` es P36: la API real no lo recibe y sin él publicaría
-    // turnos fijos sin duración. Se frena acá, antes de retirar el vigente.
-    if (this.flexible() && !simulatorAvailable()) {
-      this.estado.set(
-        validation([
-          {
-            message:
-              'El horario flexible todavía no está disponible: el servidor aún no lo recibe. Elija citas de duración fija para publicar.',
-          },
-        ]),
-      );
-      return;
-    }
 
     this.estado.set(loading());
     this.crearRecurso(tenantId);
@@ -1205,7 +1205,9 @@ export class AgendaCreate {
             // Sólo si no es lo de siempre: ausente ≡ consultas, y escribir un valor
             // que nadie eligió borraría la diferencia entre «no lo dijo» y «dijo consultas».
             ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
-            ...opcEntero('capacityPerSlot', capacidad),
+            // Ni capacidad: en horario flexible no hay turnos que llenar, y la
+            // API rechaza la franja que la declara (P36).
+            ...(flexible ? {} : opcEntero('capacityPerSlot', capacidad)),
           }) as ScheduleRule,
       );
     });
@@ -1218,7 +1220,8 @@ export class AgendaCreate {
         rules,
         // El contrato lo pide también a nivel plantilla; va el de la primera
         // franja, que es el que gobierna cuando una regla no trae el suyo.
-        slotMinutes: rules[0]?.slotMinutes,
+        // En horario flexible, lo que se reserva por paciente (P36).
+        slotMinutes: flexible ? this.minutosPorPaciente() : rules[0]?.slotMinutes,
         ...(flexible ? { flexibleHours: true } : {}),
         ...(policyId === null ? {} : { bookingPolicyId: policyId }),
         ...opcFecha('validTo', this.fechaDeFin()),
