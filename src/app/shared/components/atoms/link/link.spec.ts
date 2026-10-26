@@ -167,4 +167,58 @@ describe('Link', () => {
       expect(base).toContain('text-decoration: underline');
     });
   });
+
+  /**
+   * Las plantillas que llevan `app-link` sin montar el átomo (las maquetas
+   * ALOVIDA) se estilan con `:where(a[app-link])` de `styles/alovida.css`. Esa
+   * copia tiene que decir lo mismo que `link.css` y no puede ganarle: cuando la
+   * regla global era `a[app-link]` a secas pisaba al `:host` del átomo y dejaba
+   * sin efecto el subrayado y las variantes.
+   */
+  describe('respaldo global para anclas sin el átomo', () => {
+    const global = readFileSync('src/styles/alovida.css', 'utf8');
+    const atomo = readFileSync(LINK_CSS, 'utf8');
+
+    /** El cuerpo de la primera regla cuyo selector empieza en `selector`. */
+    function cuerpo(css: string, selector: string): string {
+      const desde = css.indexOf(selector);
+      expect(desde, `no está la regla ${selector}`).toBeGreaterThanOrEqual(0);
+      return css.slice(css.indexOf('{', desde) + 1, css.indexOf('}', desde));
+    }
+
+    function declaracion(bloque: string, propiedad: string): string | undefined {
+      return new RegExp(`(?:^|[\\s;])${propiedad}:\\s*([^;]+);`).exec(bloque)?.[1]?.trim();
+    }
+
+    const COMPARTIDAS = [
+      'font-weight',
+      'text-decoration',
+      'text-decoration-thickness',
+      'text-underline-offset',
+    ];
+
+    it('repite en reposo el peso y el subrayado del átomo', () => {
+      const respaldo = cuerpo(global, ':where(a[app-link]) {');
+      const base = cuerpo(atomo, ':host {');
+
+      for (const propiedad of COMPARTIDAS) {
+        expect(declaracion(respaldo, propiedad), propiedad).toBeDefined();
+        expect(declaracion(respaldo, propiedad), propiedad).toBe(declaracion(base, propiedad));
+      }
+    });
+
+    it('repite en hover el engrosado del subrayado', () => {
+      const respaldo = cuerpo(global, ':where(a[app-link]:hover) {');
+      const hover = cuerpo(atomo, ':host(:hover) {');
+
+      expect(declaracion(respaldo, 'text-decoration-thickness')).toBe(
+        declaracion(hover, 'text-decoration-thickness'),
+      );
+    });
+
+    it('ninguna regla global `a[app-link]` suelta le gana al átomo', () => {
+      // Una por línea y sin `:where(` delante: `a[app-link] {` o `a[app-link]:hover {`.
+      expect(global).not.toMatch(/^a\[app-link\][^{]*\{/m);
+    });
+  });
 });

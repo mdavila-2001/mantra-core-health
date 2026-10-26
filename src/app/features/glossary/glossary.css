@@ -20,11 +20,6 @@
   text-align: end;
 }
 
-.glosario__mapa-enlace a {
-  color: var(--st-link, #175cd3);
-  font-weight: 600;
-}
-
 .glosario {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
