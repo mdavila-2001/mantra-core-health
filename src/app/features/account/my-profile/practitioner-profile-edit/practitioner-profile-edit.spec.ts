@@ -47,6 +47,9 @@ const PERFIL_BASE = {
   birthDate: '1990-01-01',
   mobilePhone: '+591 70000000',
   personalEmail: 'ana@ejemplo.bo',
+  // El punto del domicilio es obligatorio desde el 26/10/2026: sin él no se
+  // guarda «Contacto». Uno ya guardado vale sin volver a confirmarlo.
+  homeAddress: { lines: 'Av. Banzer 3er anillo', latitude: -17.78, longitude: -63.18 },
   displayName: 'Dra. Salas',
   professionalTitle: 'Cardióloga',
   professionalBio: 'Bio actual.',
@@ -140,6 +143,14 @@ describe('PractitionerProfileEdit', () => {
     for (const pendiente of http.match((r) => r.method === 'GET' && r.url === SEDES)) {
       if (!pendiente.cancelled) {
         pendiente.flush({ items: [], count: 0 });
+      }
+    }
+    // Los mapas de «Contacto» nacen con el punto guardado y piden su calle al
+    // mostrarse (26/10/2026): las pruebas que sólo miran la pestaña la dan por
+    // atendida acá.
+    for (const pendiente of http.match((r) => r.url.startsWith('/public/geo/reverse'))) {
+      if (!pendiente.cancelled) {
+        pendiente.flush({ found: false, attribution: '© OpenStreetMap' });
       }
     }
     // Igual con la firma y el sello: sólo las pruebas de abajo hablan de ellos.
@@ -351,16 +362,82 @@ describe('PractitionerProfileEdit', () => {
       req.flush(PERFIL_BASE);
     });
 
-    it('quitar el punto lo manda como null en los dos extremos', () => {
+    it('quitar el punto del domicilio no se guarda: es obligatorio (26/10/2026)', () => {
       montarYCargar();
       señal<number>('pestana').set(1);
 
-      señal<unknown>('gpsDomicilio').set(null);
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')(null);
       interno<() => void>('guardarPresentacion')();
 
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('errorGpsDomicilio')()).toBe(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+
+      // Al confirmar otro punto, el aviso se va y el par viaja.
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')({ lat: -16.5, lng: -68.15 });
+      expect(señal<string>('errorGpsDomicilio')()).toBe('');
+    });
+
+    it('sin punto guardado, «Contacto» no se guarda hasta marcarlo', () => {
+      montarYCargar({ homeAddress: { lines: 'Av. Banzer' } });
+      señal<number>('pestana').set(1);
+      señal<string>('correoTrabajo').set('ana@hospital.bo');
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('errorGpsDomicilio')()).not.toBe('');
+    });
+
+    it('lo deducido del punto confirmado llena la calle y el municipio; sin tocar el mapa, queda lo guardado', () => {
+      montarYCargar();
+      const localidad = {
+        punto: { lat: -16.5, lng: -68.15 },
+        calle: 'Av. Arce 2631, Sopocachi',
+        calleSola: 'Av. Arce 2631',
+        zona: 'Sopocachi',
+        municipioConceptId: 'mun-lpz',
+      };
+      // El mapa siembra el punto guardado y deduce: eso no reescribe nada.
+      interno<(l: unknown) => void>('aplicarLocalidadDomicilio')({
+        ...localidad,
+        punto: { lat: -17.78, lng: -63.18 },
+      });
+      expect(señal<string>('direccion')()).toBe('Av. Banzer 3er anillo');
+
+      // Un punto nuevo, todavía sin confirmar: tampoco.
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')(null);
+      interno<(l: unknown) => void>('aplicarLocalidadDomicilio')(localidad);
+      expect(señal<string>('direccion')()).toBe('');
+
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')({ lat: -16.5, lng: -68.15 });
+      expect(señal<string>('direccion')()).toBe('Av. Arce 2631, Sopocachi');
+      expect(señal<string | null>('municipioResidencia')()).toBe('mun-lpz');
+
+      señal<number>('pestana').set(1);
+      interno<() => void>('guardarPresentacion')();
       const req = http.expectOne('/profiles/practitioners/me');
-      expect(req.request.body).toEqual({ homeLatitude: null, homeLongitude: null });
+      expect(req.request.body).toEqual({
+        residenceMunicipalityConceptId: 'mun-lpz',
+        homeAddressLines: 'Av. Arce 2631, Sopocachi',
+        homeLatitude: -16.5,
+        homeLongitude: -68.15,
+      });
       req.flush(PERFIL_BASE);
+    });
+
+    it('el trabajo toma la línea de su punto, o la zona si el mapa no tiene calle', () => {
+      montarYCargar();
+      interno<(p: unknown) => void>('confirmarGpsTrabajo')({ lat: -17.8, lng: -63.2 });
+      interno<(l: unknown) => void>('aplicarLocalidadTrabajo')({
+        punto: { lat: -17.8, lng: -63.2 },
+        calle: null,
+        calleSola: null,
+        zona: 'Equipetrol',
+        municipioConceptId: null,
+      });
+      expect(señal<string>('direccionTrabajo')()).toBe('Equipetrol');
     });
 
     it('el título se elige de la MISMA lista cerrada que el registro', () => {
@@ -1105,14 +1182,19 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, homeAddress: { lines: 'Av. Brasil 1234' } });
   });
 
-  it('Contacto ofrece una dirección de trabajo separada del domicilio', () => {
+  it('Contacto abre con el mapa del domicilio primero, y las direcciones no se escriben', () => {
     const fixture = montarConVista();
     señal<number>('pestana').set(1);
     fixture.detectChanges();
 
-    expect(
-      panelAbierto(fixture).querySelector('[data-testid="edicion-direccion-trabajo"]'),
-    ).not.toBeNull();
+    const panel = panelAbierto(fixture);
+    const formulario = panel.querySelector('form.edicion__formulario')!;
+    const primero = formulario.querySelector('app-map-location-picker, app-form-field');
+    expect(primero?.getAttribute('pinid')).toBe('edicion-domicilio');
+    // Ni casillas de dirección ni el selector manual de municipio.
+    expect(panel.querySelector('[data-testid="edicion-direccion"]')).toBeNull();
+    expect(panel.querySelector('[data-testid="edicion-direccion-trabajo"]')).toBeNull();
+    expect(panel.querySelector('app-location-picker[testid="edicion-residencia"]')).toBeNull();
   });
 
   it('siembra la dirección laboral y su punto sin mezclarlos con el domicilio', () => {
@@ -3144,7 +3226,8 @@ describe('PractitionerProfileEdit', () => {
       // D-03 cubre los dos teléfonos. El correo de trabajo se corrige acá (#645) y la
       // dirección donde atiende también se queda (24/09/2026).
       expect(panel.querySelector('input[data-testid="edicion-correo-trabajo"]')).not.toBeNull();
-      expect(panel.querySelector('[data-testid="edicion-direccion-trabajo"]')).not.toBeNull();
+      // Desde el 26/10/2026 sale de su punto en el mapa, no de una casilla.
+      expect(panel.querySelector('app-map-location-picker[pinid="edicion-trabajo"]')).not.toBeNull();
       expect(panel.querySelector('[data-testid="edicion-correo-acceso"]')).toBeNull();
     });
 
