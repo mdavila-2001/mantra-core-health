@@ -473,7 +473,12 @@ export interface AvailabilityProduct {
   readonly strengthText: string | null;
   readonly packageSizeText: string | null;
   readonly medication: PharmacyConcept | null;
-  readonly availableQuantity: number;
+  /**
+   * Unidades disponibles en la sede; `null` si la sede no lleva inventario por
+   * lotes y la farmacia declaró «hay» sin conteo (regla única de existencias
+   * por sede de la API, A1).
+   */
+  readonly availableQuantity: number | null;
   readonly price: AvailabilityPrice | null;
 }
 
