@@ -20,14 +20,15 @@
   >
     <!-- Los accesos al mapa y al atlas van en el MISMO renglón que el buscador
          y los filtros, a la derecha, con ícono y texto (pedido del cliente,
-         26/10/2026). Siguen siendo enlaces —`routerLink`, abrir en otra
-         pestaña— con la piel de un botón contorneado. -->
+         26/10/2026). Navegan, así que son `a[app-button]`: el ancla nativa con
+         la piel del botón contorneado. -->
     <nav filter-bar-action class="glosario__herramientas" aria-label="Otras formas de explorar el glosario">
       <!-- Con el renglón angosto el rótulo se acorta a «Mapa» y «Atlas 3D»
            (las palabras de `__largo` se ocultan) para que el buscador y los
            desplegables no se corten; el nombre entero queda en `title`. -->
       <a
-        class="glosario__herramienta"
+        app-button
+        variant="outline"
         routerLink="/glossary/network"
         title="Mapa de relaciones"
         data-testid="glosario-mapa"
@@ -36,7 +37,8 @@
         <span>Mapa<span class="glosario__largo"> de relaciones</span></span>
       </a>
       <a
-        class="glosario__herramienta"
+        app-button
+        variant="outline"
         routerLink="/glossary/anatomy-atlas"
         title="Atlas anatómico 3D"
         data-testid="glosario-atlas-3d"
