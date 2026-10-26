@@ -1,0 +1,18 @@
+Diagnóstico del «Servicio de ambulancia» duplicado (2026-10-26, ~16:00 UTC)
+
+1. El arreglo existe en el código:
+   git branch -r --contains bbd0de7b  →  origin/dev, origin/test   (NO origin/master)
+   bbd0de7b fix(registro-paciente): el servicio de ambulancia ya no repite título ni ayuda
+   Merge a dev: PR #1353, 2026-10-26 01:06 +0100.  origin/master: último commit 2026-10-21.
+
+2. Lo que sirve el demo:
+   curl https://demo.alovidasalud.arauzsoftware.com/auth/register/patient → main-RAPPMPQL.js
+   chunk-PAYP4VIT.js contiene:
+   {key:"trustedAmbulanceService",label:"Servicio de ambulancia",hint:"Al elegir uno, se completan nombre y teléfono. Puede editarlos.",...,control:"custom",icono:"hospital"}
+   → la declaración ANTERIOR al arreglo (con label y hint), que es la que dibuja el título dos veces.
+
+3. Con el código de esta rama (dev + este trabajo), en el navegador:
+   «Servicio de ambulancia» aparece 1 vez en 390/768/1440, claro y oscuro (ver navegador.txt).
+
+Conclusión: no es la versión de quien probó; el servidor demo no está desplegado con dev/test de hoy.
+Hace falta volver a desplegar el demo desde la rama que incluye el arreglo.

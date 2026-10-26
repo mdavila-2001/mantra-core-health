@@ -8,6 +8,7 @@ import {
   empezarElAlta,
   avanzarHasta,
   elegirLocalidadDeResidencia,
+  marcarYConfirmarCasa,
 } from './support/registro-paciente';
 
 const EVIDENCE_DIR = path.resolve('artifacts/playwright/auditoria');
@@ -70,6 +71,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
 
     // Paso 2: residencia y mapa
     await elegirLocalidadDeResidencia(page);
+    await marcarYConfirmarCasa(page);
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso2-residencia-mapa.png') });
     await page.getByTestId('paginated-form-continuar').click();
 
@@ -98,6 +100,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
   test('TC-04 [Edge Case] Formato Inválido de Correo y Clave Corta en Registro', async ({ page }) => {
     await empezarElAlta(page, '1234567');
     await elegirLocalidadDeResidencia(page);
+    await marcarYConfirmarCasa(page);
     await page.getByTestId('paginated-form-continuar').click();
     await completarContacto(page);
     await avanzarHasta(page, PASOS_DEL_ALTA.resto);

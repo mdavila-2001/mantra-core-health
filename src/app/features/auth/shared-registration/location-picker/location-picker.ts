@@ -8,6 +8,7 @@ import {
   inject,
   input,
   model,
+  output,
   signal,
 } from '@angular/core';
 
@@ -21,6 +22,7 @@ import { CARGADOR_DE_PROVINCIAS } from '@shared/components/organisms/map/provinc
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import {
   findOutline,
+  municipalityAt,
   provinceOfMunicipality,
   type LocalityDetail,
 } from '@shared/geo/locality-detail';
@@ -213,6 +215,20 @@ export class LocationPicker {
     // la primera vez que hace falta (los contornos pesan ~107 kB y el mapa ya
     // los pide por su cuenta, así que el módulo se comparte).
     effect(() => {
+      const punto = this.punto();
+      // El punto con el que el selector NACE no elige nada: viene de un
+      // borrador, de volver a la página o de editar una dirección guardada, y
+      // ahí la localidad ya la eligió la persona. Sólo un punto NUEVO elige.
+      if (this.puntoTraducido === undefined) {
+        this.puntoTraducido = punto;
+        return;
+      }
+      if (!this.isBrowser || this.readonly() || punto === null) return;
+      if (this.ramas().length === 0 || punto === this.puntoTraducido) return;
+      this.puntoTraducido = punto;
+      void this.elegirPorPunto(punto);
+    });
+    effect(() => {
       const elegido = this.value();
       const sigla = this.rama()?.sigla;
       const municipio = this.municipio();
@@ -221,6 +237,57 @@ export class LocationPicker {
       if (this.provincias().has(elegido)) return;
       void this.deducirProvincia(elegido, sigla, municipio.ine, municipio.nombre);
     });
+  }
+
+  /**
+   * El último punto GPS que ya se tradujo a municipio.
+   *
+   * El efecto reacciona al **punto**, no a la lista de ramas: si la persona
+   * corrige el municipio a mano después de compartir su ubicación, que vuelva a
+   * llegar el catálogo no le pisa la corrección.
+   */
+  private puntoTraducido: PuntoGeo | null | undefined = undefined;
+
+  /**
+   * El municipio que eligió el PUNTO, justo antes de elegirlo. Sirve para que
+   * quien monta el selector distinga esa elección de una hecha a mano (el alta
+   * no reemplaza la calle del punto por el nombre del municipio que el mismo
+   * punto eligió).
+   */
+  readonly municipioPorPunto = output<string>();
+
+  /**
+   * Del punto GPS al municipio, sin salir a la red (pedido del cliente del
+   * 26/10/2026: «cuando se dé click en la ubicación GPS, lo resalte en el
+   * mapa»). Busca el contorno que contiene el punto y elige ese municipio —y
+   * con él su departamento—; el mapa lo pinta y lo acerca. Si el punto cae
+   * fuera de todo contorno conocido no se toca nada: no se adivina.
+   */
+  private async elegirPorPunto(punto: PuntoGeo): Promise<void> {
+    const geometria = await import(
+      '@shared/components/organisms/department-map/bolivia-municipalities.geometry'
+    );
+    if (this.punto() !== punto) return;
+    const contorno = municipalityAt(
+      geometria.CONTORNOS_DE_MUNICIPIOS,
+      punto,
+      geometria.PROYECCION_DE_BOLIVIA,
+    );
+    if (contorno === null) return;
+    for (const rama of this.ramas()) {
+      if (rama.sigla !== contorno.sigla) continue;
+      const municipio =
+        rama.municipios.find((m) => m.ine === contorno.ine) ??
+        rama.municipios.find(
+          (m) => findOutline([contorno], rama.sigla, m.ine, m.nombre) !== null,
+        );
+      if (municipio !== undefined && municipio.conceptId !== this.value()) {
+        this.departmentManual.set(rama.conceptId);
+        this.municipioPorPunto.emit(municipio.conceptId);
+        this.value.set(municipio.conceptId);
+      }
+      return;
+    }
   }
 
   private async deducirProvincia(

@@ -38,6 +38,8 @@ const DEPARTAMENTO_SANTA_CRUZ = '51fcbf8e-b4ea-5ba9-8aec-0df7be617c69';
 
 /** Un concepto de `VS_BO_MUNICIPALITY`: Sacaba, código INE 031001. */
 const MUNICIPIO_SACABA = 'ee4f2681-6c58-5f4c-8f83-8d19de56099a';
+/** Fuera de todo contorno de municipio: ver `confirmarCasa`. */
+const PUNTO_CASA_NEUTRO = { lat: 0.5, lng: -30 };
 
 /** Otro del mismo departamento, para poder corregir la localidad elegida. */
 const MUNICIPIO_QUILLACOLLO = '3b90e5c7-1a44-5f2d-8c76-9e0b4d17af52';
@@ -344,6 +346,21 @@ describe('RegisterPatient', () => {
   }
 
   /**
+   * El punto de la casa, confirmado: desde el 26/10/2026 es obligatorio, así
+   * que sin él ninguna prueba pasa de «Lugares donde vive».
+   *
+   * Va un punto que **no cae en ningún municipio dibujado** a propósito: el
+   * selector de localidad elige el municipio que contiene el punto, y estas
+   * pruebas eligen el suyo en pantalla. Lo que el punto hace con el municipio
+   * tiene sus propias pruebas.
+   */
+  function confirmarCasa(): void {
+    component.gpsDomicilio.set(PUNTO_CASA_NEUTRO);
+    component.direccionConfirmada.set(true);
+    fixture.detectChanges();
+  }
+
+  /**
    * Todo lo de {@link completar} **menos la localidad**, para las pruebas que
    * la eligen en pantalla —mapa y select— y no por el método.
    */
@@ -375,6 +392,7 @@ describe('RegisterPatient', () => {
       billingTaxId: extra.billingTaxId ?? '',
       billingLegalName: extra.billingLegalName ?? '',
     });
+    confirmarCasa();
   }
 
   /**
@@ -425,6 +443,9 @@ describe('RegisterPatient', () => {
     // expedición dejaron de poder llegar separadas.
     issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
     residenceMunicipalityConceptId: MUNICIPIO_SACABA,
+    // El punto de la casa, obligatorio desde el 26/10/2026 (ver `confirmarCasa`).
+    homeLatitude: PUNTO_CASA_NEUTRO.lat,
+    homeLongitude: PUNTO_CASA_NEUTRO.lng,
   };
 
   /**
@@ -1390,9 +1411,9 @@ describe('RegisterPatient', () => {
     expect(enviado).not.toContain('gender');
     expect(enviado).not.toContain('occupationConceptId');
     expect(enviado).not.toContain('occupationFreeText');
-    // Y los del alta completa: calle, coordenadas, trabajo, tutor, seguros, NIT.
+    // Y los del alta completa: calle, trabajo, tutor, seguros, NIT. Las
+    // coordenadas de la casa ya no: son obligatorias desde el 26/10/2026.
     expect(enviado).not.toContain('homeAddressLines');
-    expect(enviado).not.toContain('homeLatitude');
     expect(enviado).not.toContain('workEmployerConceptId');
     expect(enviado).not.toContain('workEmployerFreeText');
     expect(enviado).not.toContain('workMunicipalityConceptId');
@@ -1431,16 +1452,20 @@ describe('RegisterPatient', () => {
    * mire. Hasta que lo confirma, no viaja — que es justamente lo que el par de
    * coordenadas en pantalla no permitía comprobar.
    */
-  it('no manda la ubicación capturada mientras no se confirme en el mapa', () => {
+  it('la ubicación capturada no viaja mientras no se confirme: el alta espera la confirmación', () => {
     completar();
+    component.quitarUbicacion();
     component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    fixture.detectChanges();
     component.submit();
+    http.expectNone('/iam/auth/register-patient');
 
+    component.confirmarDireccionActual();
+    fixture.detectChanges();
+    component.submit();
     const req = http.expectOne('/iam/auth/register-patient');
-    const enviado = Object.keys(req.request.body as Record<string, unknown>);
-    expect(enviado).not.toContain('homeLatitude');
-    expect(enviado).not.toContain('homeLongitude');
-
+    expect(req.request.body.homeLatitude).toBe(-17.7833);
+    expect(req.request.body.homeLongitude).toBe(-63.1821);
     req.flush(RESPUESTA);
   });
 
@@ -1457,27 +1482,27 @@ describe('RegisterPatient', () => {
     req.flush(RESPUESTA);
   });
 
-  it('sin punto capturado no hay nada que confirmar', () => {
+  it('sin punto capturado no hay nada que confirmar, y el alta no sale', () => {
     completar();
+    component.quitarUbicacion();
     component.confirmarDireccionActual();
     expect(component.direccionConfirmada()).toBe(false);
+    fixture.detectChanges();
 
     component.submit();
-    const req = http.expectOne('/iam/auth/register-patient');
-    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain('homeLatitude');
-    req.flush(RESPUESTA);
+    http.expectNone('/iam/auth/register-patient');
   });
 
-  it('el punto capturado y sin confirmar no viaja, y no frena el envío', () => {
+  it('mover el pin confirmado suelta la confirmación y el control vuelve a faltar', () => {
     completar();
-    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
-    component.submit();
+    const control = component.formPaciente.controls.gpsDomicilio;
+    expect(control.value).toEqual(PUNTO_CASA_NEUTRO);
 
-    const req = http.expectOne('/iam/auth/register-patient');
-    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
-      'homeLatitude',
-    );
-    req.flush(RESPUESTA);
+    component.fijarPuntoDomicilio({ lat: -17.7833, lng: -63.1821 });
+    responderCalle(SIN_CALLE);
+
+    expect(control.value).toBeNull();
+    expect(control.hasError('required')).toBe(true);
   });
 
   /**
@@ -1528,29 +1553,67 @@ describe('RegisterPatient', () => {
     expect(component.pinesDomicilio()).toEqual([]);
   });
 
-  it('tocar el mapa pone el pin del domicilio sin confirmarlo, y no viaja hasta que se confirme', () => {
+  /** Responde la calle que pidió el último punto del domicilio. */
+  function responderCalle(cuerpo: object | 'caido'): void {
+    const req = http.expectOne('/public/geo/reverse');
+    if (cuerpo === 'caido') {
+      req.flush({ message: 'caído' }, { status: 503, statusText: 'Service Unavailable' });
+    } else {
+      req.flush(cuerpo);
+    }
+    fixture.detectChanges();
+  }
+
+  const SIN_CALLE = { found: false, attribution: '© OpenStreetMap' };
+  const CALLE_SCZ = {
+    found: true,
+    line: 'Calle 24 de Septiembre, Bartos',
+    city: 'Santa Cruz de la Sierra',
+    attribution: '© OpenStreetMap',
+  };
+
+  /**
+   * Desde el 26/10/2026 el punto de la casa es OBLIGATORIO: un pin sin
+   * confirmar no deja enviar el alta (antes la enviaba sin coordenadas).
+   */
+  it('tocar el mapa pone el pin del domicilio sin confirmarlo, y sin confirmar no se envía el alta', () => {
     completar();
     component.marcarDomicilioEnMapa();
 
     component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+    responderCalle(SIN_CALLE);
 
     expect(component.gpsDomicilio()).toEqual({ lat: -16.5, lng: -68.15 });
     expect(component.marcandoDomicilio()).toBe(false);
     expect(component.direccionConfirmada()).toBe(false);
     // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
     expect(component.pinesDomicilio()[0].titulo).toBe('El punto que marcó');
+    expect(component.formPaciente.controls.gpsDomicilio.hasError('required')).toBe(true);
 
     component.submit();
-    const sinConfirmar = http.expectOne('/iam/auth/register-patient');
-    expect(Object.keys(sinConfirmar.request.body as Record<string, unknown>)).not.toContain(
-      'homeLatitude',
+    http.expectNone('/iam/auth/register-patient');
+  });
+
+  it('sin punto de casa confirmado no se pasa de «Lugares donde vive», y se dice por qué', () => {
+    completar();
+    component.quitarUbicacion();
+    fixture.detectChanges();
+
+    avanzarHasta('residence');
+    const html = fixture.nativeElement as HTMLElement;
+    html.querySelector<HTMLElement>('[data-testid="paginated-form-continuar"]')?.click();
+    fixture.detectChanges();
+
+    expect(component.claveVisible()).toBe('residence');
+    expect(html.textContent).toContain(
+      'Marque su casa en el mapa y pulse «Confirmar dirección actual».',
     );
-    sinConfirmar.flush(RESPUESTA);
   });
 
   it('el punto marcado a mano viaja igual que el del navegador una vez confirmado', () => {
     completar();
     component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+    responderCalle(SIN_CALLE);
     component.confirmarDireccionActual();
     component.submit();
 
@@ -1566,6 +1629,7 @@ describe('RegisterPatient', () => {
     expect(component.direccionConfirmada()).toBe(true);
 
     component.fijarPuntoDomicilio({ lat: -17.79, lng: -63.19 });
+    responderCalle(SIN_CALLE);
 
     expect(component.gpsDomicilio()).toEqual({ lat: -17.79, lng: -63.19 });
     expect(component.direccionConfirmada()).toBe(false);
@@ -1582,9 +1646,12 @@ describe('RegisterPatient', () => {
     trabajo.setValue('Calle Libertad #120');
 
     component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+    // El proveedor no conoce calle en ese punto: queda en blanco y se dice.
+    responderCalle(SIN_CALLE);
 
     expect(domicilio.value).toBe('');
     expect(component.domicilioPorReescribir()).toBe(true);
+    expect(component.calleDelPunto()).toBe('sin-calle');
     expect(trabajo.value).toBe('Calle Libertad #120');
     expect(component.trabajoPorReescribir()).toBe(false);
     // Vaciar no es teclear: el campo no queda como tocado por la persona.
@@ -1592,6 +1659,137 @@ describe('RegisterPatient', () => {
 
     domicilio.setValue('Av. Banzer #42, 3er anillo');
     expect(component.domicilioPorReescribir()).toBe(false);
+  });
+
+  /* ---- La calle desde el punto (pedido del cliente del 26/10/2026) ---- */
+
+  it('el punto del mapa pide la calle a la API y la escribe en «Calle»', () => {
+    const domicilio = component.formPaciente.controls.homeAddressLines;
+
+    component.fijarPuntoDomicilio({ lat: -17.7833, lng: -63.1821 });
+    expect(component.calleDelPunto()).toBe('buscando');
+    const req = http.expectOne('/public/geo/reverse');
+    // El punto va en el cuerpo, no en la URL: es el domicilio de alguien.
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ latitude: -17.7833, longitude: -63.1821 });
+    req.flush(CALLE_SCZ);
+    fixture.detectChanges();
+
+    expect(domicilio.value).toBe('Calle 24 de Septiembre, Bartos');
+    expect(component.calleDelPunto()).toBe('escrita');
+    expect(component.domicilioPorReescribir()).toBe(false);
+    // Lo escribió el formulario, no la persona.
+    expect(domicilio.dirty).toBe(false);
+  });
+
+  it('la ubicación del navegador también pide la calle', () => {
+    const geo = {
+      getCurrentPosition: (ok: PositionCallback) =>
+        ok({ coords: { latitude: -17.7833, longitude: -63.1821 } } as GeolocationPosition),
+    };
+    Object.defineProperty(navigator, 'geolocation', { value: geo, configurable: true });
+
+    component.usarMiUbicacion();
+    responderCalle(CALLE_SCZ);
+
+    expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+      'Calle 24 de Septiembre, Bartos',
+    );
+  });
+
+  it('lo que la persona escribió a mano no lo pisa la calle del punto', () => {
+    const domicilio = component.formPaciente.controls.homeAddressLines;
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    domicilio.setValue('Mi casa, portón verde');
+    const geo = {
+      getCurrentPosition: (ok: PositionCallback) =>
+        ok({ coords: { latitude: -17.7834, longitude: -63.1822 } } as GeolocationPosition),
+    };
+    Object.defineProperty(navigator, 'geolocation', { value: geo, configurable: true });
+
+    component.usarMiUbicacion();
+    responderCalle(CALLE_SCZ);
+
+    expect(domicilio.value).toBe('Mi casa, portón verde');
+  });
+
+  it('con el proveedor caído lo dice, deja la calle vacía y el alta sigue', () => {
+    component.fijarPuntoDomicilio({ lat: -17.7833, lng: -63.1821 });
+    responderCalle('caido');
+
+    expect(component.calleDelPunto()).toBe('caida');
+    expect(component.formPaciente.controls.homeAddressLines.value).toBe('');
+  });
+
+  it('una respuesta que llega tarde, con el pin ya movido, se descarta', () => {
+    component.fijarPuntoDomicilio({ lat: -17.7833, lng: -63.1821 });
+    const vieja = http.expectOne('/public/geo/reverse');
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+    const nueva = http.expectOne('/public/geo/reverse');
+
+    // El punto nuevo cancela el pedido del anterior: no se gasta su respuesta.
+    expect(vieja.cancelled).toBe(true);
+    expect(component.formPaciente.controls.homeAddressLines.value).toBe('');
+    nueva.flush(SIN_CALLE);
+    expect(component.calleDelPunto()).toBe('sin-calle');
+  });
+
+  it('elegir después el municipio no reemplaza la calle del punto por su nombre', () => {
+    const domicilio = component.formPaciente.controls.homeAddressLines;
+    // Con el árbol cargado, para que «Sacaba» SÍ se pudiera sembrar: si no, la
+    // prueba pasaría sólo porque el formulario no conoce el nombre.
+    component.ramasMunicipios.set([
+      {
+        conceptId: 'd-cb',
+        sigla: 'CB',
+        nombre: 'Cochabamba',
+        municipios: [{ conceptId: MUNICIPIO_SACABA, nombre: 'Sacaba', ine: '030201' }],
+      },
+    ]);
+    component.elegirMunicipio(MUNICIPIO_SACABA);
+    expect(domicilio.value, 'sin punto, siembra el municipio').toBe('Sacaba');
+    component.fijarPuntoDomicilio({ lat: -17.7833, lng: -63.1821 });
+    responderCalle(CALLE_SCZ);
+
+    // Lo avisa `app-location-picker` cuando es el punto el que elige.
+    (component as unknown as { municipioDelPunto: string }).municipioDelPunto = MUNICIPIO_SACABA;
+    component.elegirMunicipio(MUNICIPIO_SACABA);
+
+    expect(domicilio.value).toBe('Calle 24 de Septiembre, Bartos');
+  });
+
+  it('elegir A MANO otro municipio sí reemplaza la calle del punto, que ya no corresponde', () => {
+    const domicilio = component.formPaciente.controls.homeAddressLines;
+    component.ramasMunicipios.set([
+      {
+        conceptId: 'd-cb',
+        sigla: 'CB',
+        nombre: 'Cochabamba',
+        municipios: [
+          { conceptId: MUNICIPIO_SACABA, nombre: 'Sacaba', ine: '030201' },
+          { conceptId: MUNICIPIO_QUILLACOLLO, nombre: 'Quillacollo', ine: '030401' },
+        ],
+      },
+    ]);
+    component.fijarPuntoDomicilio({ lat: -17.4, lng: -66.04 });
+    responderCalle(CALLE_SCZ);
+    (component as unknown as { municipioDelPunto: string }).municipioDelPunto = MUNICIPIO_SACABA;
+
+    component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
+
+    expect(domicilio.value).toBe('Quillacollo');
+  });
+
+  it('si la persona ya escribió su calle, el punto no la pisa y el aviso no dice que la escribió', () => {
+    component.formPaciente.controls.homeAddressLines.setValue('Mi casa, portón verde');
+    component.fijarPuntoDomicilio({ lat: -17.7833, lng: -63.1821 });
+    // Tocar el mapa vacía lo escrito (D-06), así que se vuelve a escribir antes
+    // de que llegue la calle.
+    component.formPaciente.controls.homeAddressLines.setValue('Mi casa, portón verde');
+    responderCalle(CALLE_SCZ);
+
+    expect(component.formPaciente.controls.homeAddressLines.value).toBe('Mi casa, portón verde');
+    expect(component.calleDelPunto()).toBe('conservada');
   });
 
   it('tocar el mapa del trabajo vacía la dirección del trabajo', () => {
@@ -1677,6 +1875,31 @@ describe('RegisterPatient', () => {
     expect(enviado).not.toContain('workLatitude');
 
     req.flush(RESPUESTA);
+  });
+
+  /**
+   * Pedido del cliente del 26/10/2026: «Otra empresa» va PRIMERA en el
+   * buscador —como «Otra ocupación»— y no desaparece al teclear, aunque el
+   * catálogo la sirva al final.
+   */
+  it('«Otra empresa» va primera y sigue a la vista mientras se busca', () => {
+    responderEmpresas();
+
+    expect(component.empresasFiltradas().map((o) => o.label)).toEqual([
+      'Otra empresa (la escribo)',
+      'Entel',
+    ]);
+
+    component.busquedaEmpresa.set('ent');
+    expect(component.empresasFiltradas().map((o) => o.label)).toEqual([
+      'Otra empresa (la escribo)',
+      'Entel',
+    ]);
+
+    component.busquedaEmpresa.set('no existe');
+    expect(component.empresasFiltradas().map((o) => o.label)).toEqual([
+      'Otra empresa (la escribo)',
+    ]);
   });
 
   /* ---- El lugar de trabajo, que vuelve al alta (AC-03-1, P-03-4) ---- */
