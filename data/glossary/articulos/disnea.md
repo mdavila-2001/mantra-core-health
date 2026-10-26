@@ -65,3 +65,13 @@ Para la intensidad en un momento dado se usan escalas visuales analógicas (una 
 La medición objetiva de la función complementa a las escalas. La espirometría mide el volumen y el flujo de aire; la oximetría de pulso, la saturación de oxígeno; las pruebas de marcha de seis minutos y de esfuerzo cardiopulmonar miden la tolerancia al ejercicio. Una característica importante es que la correlación entre la intensidad de la disnea y los parámetros fisiológicos es sólo moderada: personas con el mismo grado de obstrucción bronquial pueden tener una disnea muy distinta, y la disnea mejora a veces con intervenciones que no modifican la espirometría, como la rehabilitación.
 
 Hay razones prácticas para medirla de forma sistemática. La disnea es, en la enfermedad pulmonar obstructiva crónica y en la insuficiencia cardíaca, un predictor independiente de mortalidad y de hospitalización; de hecho, el índice BODE para la EPOC (índice de masa corporal, obstrucción, disnea y capacidad de ejercicio) incluye la escala de disnea en su fórmula. Documentar la disnea en cada consulta permite detectar un deterioro precoz, ajustar el tratamiento y evaluar si una intervención funcionó, y es una buena práctica reconocida en las guías de EPOC, como la de GOLD, y de insuficiencia cardíaca.
+
+## [references]
+
+- Dificultad respiratoria (enciclopedia médica) | https://medlineplus.gov/spanish/ency/article/003075.htm | MedlinePlus
+- Problemas respiratorios | https://medlineplus.gov/spanish/breathingproblems.html | MedlinePlus
+- Dyspnea (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK499965/ | NCBI Bookshelf
+- Dyspnea, Orthopnea, and Paroxysmal Nocturnal Dyspnea (Clinical Methods) | https://www.ncbi.nlm.nih.gov/books/NBK213/ | NCBI Bookshelf
+- Shortness of breath | https://www.nhs.uk/symptoms/shortness-of-breath/ | NHS
+- Disnea (Manual MSD, profesionales) | https://www.msdmanuals.com/es/professional/trastornos-pulmonares/s%C3%ADntomas-de-los-trastornos-pulmonares/disnea | Manual MSD
+- Enfermedad pulmonar obstructiva crónica (EPOC) (nota descriptiva) | https://www.who.int/es/news-room/fact-sheets/detail/chronic-obstructive-pulmonary-disease-(copd) | OMS
