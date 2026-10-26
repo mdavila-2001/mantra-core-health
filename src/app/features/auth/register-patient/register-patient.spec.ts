@@ -2052,6 +2052,40 @@ describe('RegisterPatient', () => {
     });
 
     /**
+     * El motor de páginas envuelve cada campo `custom` en un `app-form-field`
+     * con el `label`/`hint`/`description` que el campo declare, y la plantilla de
+     * la ambulancia lleva el suyo: declarar los textos en las dos partes dibujaba
+     * «Servicio de ambulancia» y su ayuda por duplicado.
+     *
+     * Además se comprueba lo que quitar el segundo envoltorio rompería sin hacer
+     * ruido: el selector sólo recibe su etiqueta y su descripción por inyección
+     * del `app-form-field` que tiene encima, así que sin él queda sin nombre.
+     */
+    it('el servicio de ambulancia muestra su título y su ayuda una sola vez, y el selector conserva su etiqueta', () => {
+      responderCatalogo();
+      completar();
+      avanzarHasta('contact');
+
+      const html = fixture.nativeElement as HTMLElement;
+      const texto = html.textContent ?? '';
+      const veces = (fragmento: string) => texto.split(fragmento).length - 1;
+      expect(veces('Servicio de ambulancia')).toBe(1);
+      expect(veces('Al elegir uno, se completan nombre y teléfono. Puede editarlos.')).toBe(1);
+
+      const control = html.querySelector<HTMLElement>(
+        '[data-testid="registro-ambulancia-servicio"] [role="combobox"]',
+      );
+      expect(control, 'el selector de ambulancia no se dibujó').not.toBeNull();
+      const etiqueta = html.querySelector(`label[for="${control?.id}"]`);
+      expect(etiqueta?.textContent?.trim()).toBe('Servicio de ambulancia');
+      const descritoPor = (control?.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
+      expect(descritoPor.length).toBeGreaterThanOrEqual(2);
+      for (const id of descritoPor) {
+        expect(html.querySelector(`#${id}`), `aria-describedby apunta a #${id}`).not.toBeNull();
+      }
+    });
+
+    /**
      * Sin catálogo el campo pasa a proyectado, para que la pantalla pueda poner
      * ahí el aviso con su «Reintentar»: un desplegable vacío no tiene dónde
      * decir que no cargó. El alta sigue en pie — el campo es opcional.
