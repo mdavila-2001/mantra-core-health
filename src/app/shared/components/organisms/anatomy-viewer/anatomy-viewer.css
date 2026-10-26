@@ -26,8 +26,9 @@
 }
 
 .anatomy-viewer__canvas:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  /* `--focus-ring` es un color, no una sombra: como `box-shadow` no pintaba nada. */
+  outline: 3px solid var(--focus-ring);
+  outline-offset: -3px;
 }
 
 .anatomy-viewer__aviso {

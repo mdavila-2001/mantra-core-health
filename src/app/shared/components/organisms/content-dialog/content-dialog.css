@@ -21,7 +21,7 @@
       la de tarjeta: un modal no es una tarjeta más de la página.
     - **El encabezado y el pie se quedan quietos** y el cuerpo se recorre entre
       los dos, con su barra de desplazamiento fina y sus sombras de corte.
-    - **Entra desde abajo y con escala**, apenas: 0,18 s. Lo justo para que se
+    - **Entra desde abajo y con escala**, apenas: `--dur-base`. Lo justo para que se
       lea de dónde salió. Con `prefers-reduced-motion` la regla global lo
       vuelve instantáneo, que para un modal es exactamente lo correcto.
     ========================================================================== */
@@ -46,7 +46,7 @@
 }
 
 .content-dialog[open]::backdrop {
-    animation: content-dialog-backdrop-in 0.18s ease both;
+    animation: content-dialog-backdrop-in var(--dur-base) var(--ease-out) both;
 }
 
 .content-dialog__panel {

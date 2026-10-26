@@ -3,14 +3,17 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 import { ThemeService } from '../../../../core/tokens/theme.service';
 import { PointerScene } from '../../../motion/pointer-scene.directive';
+import { AccountIcon } from '../../atoms/account-icon/account-icon';
+import { ACCOUNT_ICON_NAMES } from '../../atoms/account-icon/account-icon.types';
+import { BrandMark } from '../../atoms/brand-mark/brand-mark';
 import { AppButton } from '../../atoms/button/button';
 import { AuthStage } from '../auth-stage/auth-stage';
 
 /** Las tres medidas del hueco del formulario. Ver `AuthSplit.contentWidth`. */
 export type AuthSplitWidth = 'form' | 'wide' | 'full';
 
-/** Las dos puestas en escena. Ver `AuthSplit.scene`. */
-export type AuthSplitScene = 'split' | 'stage';
+/** Las tres puestas en escena. Ver `AuthSplit.scene`. */
+export type AuthSplitScene = 'split' | 'stage' | 'calm';
 
 /**
  * Estructura partida de las pantallas de acceso: columna de marca a la
@@ -43,7 +46,7 @@ export type AuthSplitScene = 'split' | 'stage';
  */
 @Component({
   selector: 'app-auth-split',
-  imports: [AppButton, AuthStage, PointerScene],
+  imports: [AccountIcon, AppButton, AuthStage, BrandMark, PointerScene],
   templateUrl: './auth-split.html',
   styleUrls: ['./auth-split.css', './auth-split-light-stage.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,8 +102,20 @@ export class AuthSplit {
    * su propia tarjeta opaca (el acceso): el escenario es oscuro en los dos
    * temas, como lo era la columna de marca, y un texto suelto encima no se
    * leería en claro.
+   *
+   * `calm` es la tercera, y la que pide quien se cansa de mirar: **superficie
+   * del tema y nada que se mueva solo**. Sin aurora, sin constelación, sin
+   * escenario ni paralaje; la columna de marca es del color de la página, con
+   * el glifo, el titular, un latido que se dibuja una vez y las puertas de la
+   * red. Lo que sí se mueve responde a la mano —el hover de cada ícono, la
+   * entrada escalonada—, que es el movimiento que informa en vez de distraer.
+   * Como todo sale de tokens, en oscuro es la superficie oscura del tema, no un
+   * escenario aparte.
    */
   readonly scene = input<AuthSplitScene>('split');
+
+  /** Las seis puertas de la red que la escena `calm` muestra bajo el titular. */
+  protected readonly roles = ACCOUNT_ICON_NAMES;
 
   /**
    * El titular y la bajada, envueltos en una lista de un solo elemento para

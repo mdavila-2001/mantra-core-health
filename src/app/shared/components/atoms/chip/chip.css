@@ -24,7 +24,8 @@
     transition:
         background var(--dur-fast) var(--ease-standard),
         border-color var(--dur-fast) var(--ease-standard),
-        box-shadow var(--dur-fast) var(--ease-standard);
+        box-shadow var(--dur-fast) var(--ease-standard),
+        transform var(--dur-base) var(--ease-spring);
 }
 
 /* ---- tamaños: `md` es la escala del badge subida a área táctil ----------- */
@@ -90,4 +91,17 @@
     width: 1.1em;
     height: 1.1em;
     flex-shrink: 0;
+}
+
+/* Pulsación (pulse.md §7): el chip que se elige se hunde al instante y vuelve
+   con resorte. Uno que sólo informa no se mueve. */
+:host(.chip--selectable:active) {
+    transform: scale(var(--pulse-press-scale));
+    transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host(.chip--selectable:active) {
+        transform: none;
+    }
 }
