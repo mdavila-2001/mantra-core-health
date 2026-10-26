@@ -14,17 +14,6 @@
   display: block;
 }
 
-.glosario__mapa-enlace {
-  width: min(100% - 2rem, 76rem);
-  margin: 0.75rem auto 0;
-  text-align: end;
-}
-
-.glosario__mapa-enlace a {
-  color: var(--st-link, #175cd3);
-  font-weight: 600;
-}
-
 .glosario {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -34,14 +23,79 @@
 
 /* --- Buscador ------------------------------------------------------------- */
 
+/* Un solo renglón (pedido del cliente, 26/10/2026): buscador, «Categoría»,
+   «Etiqueta» y, a la derecha, los accesos al mapa y al atlas. Sin el tope de
+   62rem de antes: con los accesos al final, el renglón usa todo el ancho y el
+   buscador se queda con lo que sobra. */
 .glosario__buscador {
   display: block;
-  /* El renglón ya no es sólo el campo de texto: lleva además «Categoría» y
-     «Etiqueta». Con el tope viejo de 34rem los tres entraban apretados y el
-     texto de ejemplo del buscador se cortaba en «Por ejemplo «hiper». Sigue
-     habiendo tope, porque un renglón de mil píxeles tampoco ayuda a escribir
-     «hipertensión». */
-  max-inline-size: 62rem;
+  /* Se mide el renglón, no la ventana: el menú lateral abierto o cerrado
+     cambia el ancho disponible sin cambiar el viewport. */
+  container: glosario-filtros / inline-size;
+}
+
+.glosario__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Enlace con la piel del botón contorneado del sistema (`btn--outline`), a la
+   altura de los controles del renglón: 44 px en el teléfono, 40 desde 780 px
+   —la misma medida del buscador y de los desplegables—. No es un
+   `button[app-button]` porque navega: sigue siendo un `<a>` con su menú
+   contextual y su «abrir en otra pestaña». */
+.glosario__herramienta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-block-size: 44px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.glosario__herramienta:hover {
+  background: var(--bg-inset);
+}
+
+.glosario__herramienta:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.glosario__herramienta app-nav-icon {
+  flex: none;
+  color: var(--brand-primary);
+}
+
+/* Por debajo de ~1060 px de renglón, los rótulos cortos: «Mapa» y «Atlas 3D».
+   Con los largos, el buscador y «Categoría» se cortaban en «Anato…». */
+@container glosario-filtros (max-width: 1060px) {
+  .glosario__largo {
+    display: none;
+  }
+}
+
+@media (min-width: 780px) {
+  /* En el renglón los dos accesos no se parten en dos líneas: lo que falte
+     de ancho lo cede el buscador. */
+  .glosario__herramientas {
+    flex-wrap: nowrap;
+  }
+
+  .glosario__herramienta {
+    min-block-size: 40px;
+  }
 }
 
 /* --- Títulos -------------------------------------------------------------- */
@@ -461,6 +515,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .glosario__herramienta,
   .glosario__tarjeta,
   .glosario__entrada,
   .glosario__entrada-leer svg {

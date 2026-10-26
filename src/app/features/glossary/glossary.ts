@@ -26,6 +26,7 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Chip } from '../../shared/components/atoms/chip/chip';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../shared/components/molecules/card/card';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import {
@@ -120,6 +121,7 @@ export interface TarjetaDeCategoria {
     Chip,
     FilterBar,
     GlossaryCategoryIcon,
+    NavIcon,
     PageHeader,
     Pagination,
     RouterLink,
