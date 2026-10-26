@@ -1,7 +1,7 @@
 import { expect, request, test, type Page, type Response } from '@playwright/test';
 
 import { urlDeApi } from './support/actores';
-import { elegirLocalidadDeResidencia } from './support/registro-paciente';
+import { elegirLocalidadDeResidencia, marcarYConfirmarCasa } from './support/registro-paciente';
 
 /**
  * Las altas públicas contra la **API real**, en tres escenarios cada una:
@@ -124,6 +124,7 @@ async function altaPaciente(page: Page, datos: DatosPaciente): Promise<Response>
   await continuar(page);
   await enLaPagina(page, 'Lugares donde vive');
   await elegirLocalidadDeResidencia(page);
+  await marcarYConfirmarCasa(page);
   await continuar(page);
   await enLaPagina(page, 'Datos de contacto');
   await page.getByTestId('registro-telefono').fill('70012345');

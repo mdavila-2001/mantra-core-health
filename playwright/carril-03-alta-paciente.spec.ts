@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { elegirOpcion } from './support/registro-paciente';
+import { elegirOpcion, marcarYConfirmarCasa } from './support/registro-paciente';
 
 /**
  * Carril 03 — el alta de paciente de punta a punta, en sus cinco pasos.
@@ -60,6 +60,7 @@ async function llegarAlContacto(page: Page, documento: string): Promise<void> {
   await page.getByTestId('registration-residence-mapa-SC').click();
   await expect(page.getByTestId('registration-residence-municipio')).toBeVisible();
   await elegirOpcion(page, 'registration-residence-municipio', { index: 1 });
+  await marcarYConfirmarCasa(page);
   await continuar(page);
 
   await esperarPaso(page, 3, 'Datos de contacto y emergencia');

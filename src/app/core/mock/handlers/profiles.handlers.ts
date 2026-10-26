@@ -57,7 +57,7 @@ import {
     Perfiles: pacientes, profesionales, guía y afiliaciones.
     ========================================================================== */
 
-function pacienteDeSesion(request: MockRequest): PacienteSimulado | undefined {
+export function pacienteDeSesion(request: MockRequest): PacienteSimulado | undefined {
   const pid = request.user?.patientProfileId;
   if (pid !== undefined) return patientById(pid);
   // Un profesional también puede tener su propio perfil de paciente.

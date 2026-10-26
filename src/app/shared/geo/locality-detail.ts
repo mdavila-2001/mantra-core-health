@@ -76,3 +76,52 @@ export function provinceOfMunicipality(
   const punto = unproject(contorno.x, contorno.y, proyeccion);
   return provinceIn(provincias, punto)?.properties.nombre ?? null;
 }
+
+/** Lo mínimo del contorno para decidir si un punto cae adentro. */
+export interface MunicipalityOutline extends MunicipalityOutlineRef {
+  /** Trazado SVG absoluto (`M`, `L`, `Z`) en coordenadas del `viewBox`. */
+  readonly d: string;
+}
+
+/** Los anillos de un trazado `M…L…Z` como listas de vértices. */
+function ringsOf(d: string): readonly (readonly [number, number])[][] {
+  const anillos: [number, number][][] = [];
+  for (const tramo of d.split('M').filter((t) => t.trim() !== '')) {
+    const cifras = tramo.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+    const anillo: [number, number][] = [];
+    for (let i = 0; i + 1 < cifras.length; i += 2) anillo.push([cifras[i]!, cifras[i + 1]!]);
+    if (anillo.length >= 3) anillos.push(anillo);
+  }
+  return anillos;
+}
+
+/** Par-impar (ray casting): si el punto cae dentro del anillo. */
+function insideRing(x: number, y: number, anillo: readonly (readonly [number, number])[]): boolean {
+  let dentro = false;
+  for (let i = 0, j = anillo.length - 1; i < anillo.length; j = i++) {
+    const [xi, yi] = anillo[i]!;
+    const [xj, yj] = anillo[j]!;
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) dentro = !dentro;
+  }
+  return dentro;
+}
+
+/**
+ * El municipio donde cae un punto GPS, o `null` si no cae en ninguno.
+ *
+ * Es lo que permite que «Usar mi ubicación» marque también el municipio en el
+ * mapa (pedido del cliente del 26/10/2026), sin salir a la red: el punto se
+ * proyecta al `viewBox` de las siluetas y se busca el contorno que lo contiene.
+ * Los contornos están simplificados a ~2 km, así que un punto pegado a un
+ * límite puede caer en el vecino: por eso el municipio queda **elegido, no
+ * bloqueado** — la persona lo corrige en el desplegable si hace falta.
+ */
+export function municipalityAt<T extends MunicipalityOutline>(
+  contornos: readonly T[],
+  punto: PuntoGeo,
+  proyeccion: ProjectionOfBolivia,
+): T | null {
+  const x = (punto.lng - proyeccion.lng0) * proyeccion.coseno * proyeccion.escala;
+  const y = (proyeccion.lat1 - punto.lat) * proyeccion.escala;
+  return contornos.find((c) => ringsOf(c.d).some((anillo) => insideRing(x, y, anillo))) ?? null;
+}
