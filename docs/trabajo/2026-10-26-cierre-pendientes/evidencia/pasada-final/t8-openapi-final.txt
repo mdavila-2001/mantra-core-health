@@ -1,0 +1,4 @@
+OpenAPI generado: 1436 paths, 1584 operaciones, 1479 esquemas.
+  → /home/user/wt/final/mantra-core-health-api/openapi/openapi.json
+  → /home/user/wt/final/mantra-core-health-api/openapi/openapi.yaml
+exit=0
