@@ -177,7 +177,7 @@ export function reviewInventoryCsv(
 
 /** Lo que ya tiene el producto, dicho como una línea, para no mandar lo que no cambia. */
 function isSameAsCurrent(line: PharmacyInventoryLine, product: PharmacyProduct): boolean {
-  const sameStock = line.stock === undefined || line.stock === (product.stock ?? 0);
+  const sameStock = line.stock === undefined || line.stock === product.stock;
   const sameMinimum =
     line.minStock === undefined || line.minStock === (product.minStock ?? INVENTORY_DEFAULT_MINIMUM);
   const sameAvailability = line.inStock === undefined || line.inStock === (product.inStock !== false);
@@ -224,7 +224,8 @@ export function inventoryCsvRows(products: readonly PharmacyProduct[]): readonly
     .map((product) => ({
       code: product.productCode,
       name: productName(product),
-      stock: String(product.stock ?? 0),
+      // Sin conteo (`null`) se exporta vacío: la farmacia no lleva cantidades.
+      stock: product.stock === null || product.stock === undefined ? '' : String(product.stock),
       minimum: String(product.minStock ?? INVENTORY_DEFAULT_MINIMUM),
       available: product.inStock === false ? 'no' : 'sí',
     }));
