@@ -83,10 +83,10 @@ Cada uno con una prueba que falla sin el arreglo y verificación nueva en navega
 | A6 | — | **Arreglado en la segunda pasada** (ver arriba) | — | — |
 
 Kill test del frontend: con `organization-verify.html` y `chart-notes.client.ts` revertidos, las dos pruebas
-nuevas fallan (`salidas/a1-a6-front-tests.txt`). Pruebas dirigidas de los 9 specs tocados: 306/307; la que
-falla (`specialty-form-block` «guardar registra la nota… y relee», espera `objectiveText` en el POST) falla
-igual **sin** los cambios de esta pasada: es de antes (P39 dejó de plegar las filas en `objectiveText`) y no
-se tocó.
+nuevas fallan (`salidas/a1-a6-front-tests.txt`). Pruebas dirigidas de los 9 specs tocados: 306/307 antes de
+traer la rama; la que fallaba (`specialty-form-block` «guardar registra la nota… y relee») fallaba igual
+**sin** los cambios de esta pasada y la arregló P39 en la rama (`84cd1a122`). Tras traer la rama: 307/307 y
+`yarn typecheck` EXIT 0.
 
 ## Defectos abiertos (no arreglados: grandes o de antes de esta noche)
 
@@ -106,7 +106,7 @@ se tocó.
 | A12 | P47 | El alta rápida de producto (pestaña «Nuevo producto» de la pantalla vieja) tenía campos sin etiqueta visible; con el arreglo 3 esa pantalla ya no se usa contra la API real | `p47-nuevo-form.png` | — |
 | A13 | P34 | «Horario y turnos» usa `input type=date/time` nativos (mm/dd/yyyy en el navegador) en vez de `app-date-picker` | `p34-horario-*` | Coherencia con el sistema de diseño. De antes; no se tocó |
 | A14 | — | «Alta de membresía» (`membership-new.html`) tiene el mismo `<form (ngSubmit)>` sin `FormsModule` que rompía A2: el envío nativo recarga la página | Leído en el código, no ejercitado en navegador | Mismo patrón; fuera del alcance de A2, anotado |
-| A15 | P39 | `specialty-form-block.spec.ts` «guardar registra la nota… y relee» falla en la rama (espera `objectiveText` en el POST) | `yarn ng test --include …specialty-form-block.spec.ts` (`salidas/a1-a6-front-tests.txt`) | P39 llevó las filas a `entries` y la prueba sigue fijando el plegado viejo |
+| A15 | P39 | `specialty-form-block.spec.ts` «guardar registra la nota… y relee» fallaba (esperaba `objectiveText` en el POST) | `salidas/a1-a6-front-tests.txt` | **Arreglado en la rama** por P39 (`84cd1a122`); tras traerla, 307/307 |
 | A16 | P40 | En móvil, el modal «Pedir un análisis» desborda a la derecha (los selectores se cortan) | `p40/a3-firmado-m-oscuro.png` | Ancho del modal de la consulta; de antes del selector nuevo |
 | A17 | P50 | «Verificar» es un bloque pegado a la izquierda con una columna vacía, contra la regla 6 del `CLAUDE.md` | `p50/a2-error-d.png` | Composición de la pantalla, de antes |
 

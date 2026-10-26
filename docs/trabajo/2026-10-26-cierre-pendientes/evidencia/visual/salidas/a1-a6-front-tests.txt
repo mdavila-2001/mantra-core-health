@@ -15,3 +15,7 @@ $ kill test: specs nuevos con organization-verify.html y chart-notes.client.ts r
 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
  Test Files  2 failed (2)
       Tests  2 failed | 13 passed (15)
+
+$ tras traer la rama remota: yarn typecheck → exit 0; yarn ng test --include <los mismos 9 specs>
+ Test Files  9 passed (9)
+      Tests  307 passed (307)
