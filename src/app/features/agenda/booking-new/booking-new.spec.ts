@@ -631,4 +631,92 @@ describe('BookingNew', () => {
       expect(harness.routeNativeElement!.querySelector('[data-testid="reserva-servicio"]')).toBeNull();
     });
   });
+
+  /* ==========================================================================
+     P36 · una hora de horario flexible, sin turnos fijos
+     ========================================================================== */
+
+  describe('cuando se reserva una hora de horario flexible (P36)', () => {
+    const INICIO = '2026-08-12T13:10:00.000Z';
+    const FIN = '2026-08-12T13:30:00.000Z';
+    const RUTA_FLEXIBLE = `/schedule/book/flexible?recurso=r-1&desde=${INICIO}&hasta=${FIN}&flexible=1`;
+
+    function horas(inicio: string = INICIO) {
+      return {
+        resourceId: 'r-1',
+        stepMinutes: 15,
+        items: [{ templateId: 'tpl-flex', startAt: inicio, endAt: FIN }],
+      };
+    }
+
+    async function montarFlexible(disponibles = horas()): Promise<void> {
+      await montar(RUTA_FLEXIBLE);
+      const lectura = http.expectOne((r) => r.url === '/scheduling/resources/r-1/flexible-availability');
+      // La ventana rodea la hora: la API sólo ofrece la hora si la consulta cabe entera.
+      const DOS_HORAS = 2 * 60 * 60 * 1000;
+      expect(lectura.request.params.get('from')).toBe(new Date(Date.parse(INICIO) - DOS_HORAS).toISOString());
+      lectura.flush(disponibles);
+      // Una hora flexible no es un cupo de la grilla: no se pide la lista de cupos.
+      http.expectNone((r) => r.url === '/scheduling/slots');
+      harness.detectChanges();
+    }
+
+    it('relee las horas libres y muestra la hora pedida con su fin', async () => {
+      await montarFlexible();
+      const cupo = interno<() => { startAt: Date; endAt: Date } | null>('cupoListo')();
+      expect(cupo?.startAt.toISOString()).toBe(INICIO);
+      expect(cupo?.endAt.toISOString()).toBe(FIN);
+    });
+
+    it('si la hora ya no está libre, sale como vacío con salida', async () => {
+      await montarFlexible(horas('2026-08-12T15:00:00.000Z'));
+      expect(interno<() => { status: string }>('cupo')().status).toBe('empty');
+      expect(harness.routeNativeElement!.textContent).toContain('otra cita la ocupó');
+    });
+
+    it('retener crea el cupo con el endpoint flexible y manda la hora y el paciente', async () => {
+      await montarFlexible();
+      crudo<{ set: (v: ReferenceOption) => void }>('paciente').set(PACIENTE);
+      interno<() => void>('retener')();
+
+      http.expectNone((r) => r.url.startsWith('/scheduling/slots/'));
+      const req = http.expectOne('/scheduling/resources/r-1/flexible-holds');
+      expect(req.request.body).toEqual({ startAt: INICIO, patientProfileId: 'pp-1' });
+      req.flush({
+        id: 'h-1',
+        holdToken: 'tok-f',
+        expiresAt: '2026-08-12T13:05:00.000Z',
+        bookableSlotId: 'slot-nuevo',
+        startAt: INICIO,
+        endAt: FIN,
+      });
+
+      const retencion = interno<() => { holdToken: string; remainingCapacity: number } | null>('retencion')();
+      expect(retencion?.holdToken).toBe('tok-f');
+      expect(retencion?.remainingCapacity).toBe(0);
+    });
+
+    it('un 409 al retener dice que la hora ya no está y relee las horas libres', async () => {
+      await montarFlexible();
+      crudo<{ set: (v: ReferenceOption) => void }>('paciente').set(PACIENTE);
+      interno<() => void>('retener')();
+
+      http.expectOne('/scheduling/resources/r-1/flexible-holds').flush(
+        {
+          code: 'CONFLICT',
+          message: 'Esa hora ya no está disponible. Elija otra.',
+          timestamp: '2026-08-12T12:00:00.000Z',
+          path: '/scheduling/resources/r-1/flexible-holds',
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+      harness.detectChanges();
+
+      expect(interno<() => string | null>('errorMessage')()).toContain('ya no está disponible');
+      http
+        .expectOne((r) => r.url === '/scheduling/resources/r-1/flexible-availability')
+        .flush({ resourceId: 'r-1', stepMinutes: 15, items: [] });
+      expect(interno<() => unknown>('retencion')()).toBeNull();
+    });
+  });
 });

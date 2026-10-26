@@ -713,6 +713,8 @@ export interface SimulatedOrder {
    */
   readonly previousDiagnosticReportId?: string;
   readonly duplicateOverrideReason?: string;
+  /** P40 (C2): las notas médicas que motivan la orden, en el orden citado. */
+  readonly basedOnNoteIds?: readonly string[];
 }
 
 export const orderList = new Coleccion<SimulatedOrder>(

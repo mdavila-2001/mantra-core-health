@@ -480,6 +480,80 @@ describe('SchedulingClient', () => {
     expect(creada?.id).toBe('tpl-1');
   });
 
+  describe('horario flexible (P36)', () => {
+    it('createTemplate manda flexibleHours a la API real y el tiempo por paciente en la plantilla', () => {
+      client
+        .createTemplate('res-1', {
+          name: 'Lunes flexible',
+          rules: [{ dayOfWeek: 1, startTime: '08:00', endTime: '12:00' }],
+          slotMinutes: 20,
+          flexibleHours: true,
+        })
+        .subscribe();
+
+      const req = http.expectOne('/scheduling/resources/res-1/templates');
+      expect(req.request.body).toEqual({
+        name: 'Lunes flexible',
+        rules: [{ dayOfWeek: 1, startTime: '08:00', endTime: '12:00' }],
+        slotMinutes: 20,
+        flexibleHours: true,
+      });
+      req.flush({
+        id: 'tpl-1',
+        name: 'Lunes flexible',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        flexibleHours: true,
+      });
+    });
+
+    it('getFlexibleAvailability pide la ventana en ISO y devuelve fechas', () => {
+      let horas: Date[] = [];
+      client
+        .getFlexibleAvailability('res/1', { from: DESDE, to: HASTA })
+        .subscribe((d) => (horas = d.items.map((i) => i.endAt)));
+
+      const req = http.expectOne(
+        (r) => r.url === '/scheduling/resources/res%2F1/flexible-availability',
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('from')).toBe(DESDE.toISOString());
+      expect(req.request.params.get('to')).toBe(HASTA.toISOString());
+      req.flush({
+        resourceId: 'res/1',
+        stepMinutes: 15,
+        items: [
+          {
+            templateId: 'tpl-1',
+            startAt: '2026-08-10T12:00:00.000Z',
+            endAt: '2026-08-10T12:20:00.000Z',
+          },
+        ],
+      });
+      expect(horas).toEqual([new Date('2026-08-10T12:20:00.000Z')]);
+    });
+
+    it('placeFlexibleHold manda la hora y el paciente, sin opcionales en undefined', () => {
+      let token = '';
+      client
+        .placeFlexibleHold('res-1', { startAt: new Date('2026-08-10T12:10:00.000Z') })
+        .subscribe((h) => (token = h.holdToken));
+
+      const req = http.expectOne('/scheduling/resources/res-1/flexible-holds');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ startAt: '2026-08-10T12:10:00.000Z' });
+      req.flush({
+        id: 'hold-1',
+        holdToken: 'tok',
+        expiresAt: '2026-08-10T12:05:00.000Z',
+        bookableSlotId: 'slot-1',
+        startAt: '2026-08-10T12:10:00.000Z',
+        endAt: '2026-08-10T12:30:00.000Z',
+      });
+      expect(token).toBe('tok');
+    });
+  });
+
   it('generateSlots escapa la plantilla y manda sólo la ventana', () => {
     let resultado: SlotsGenerated | undefined;
     client
