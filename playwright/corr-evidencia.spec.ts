@@ -487,7 +487,7 @@ async function prepareNotificationState(page: Page, ruta: string): Promise<void>
     await expect(marcarTodas).toHaveCount(0);
     await pestanas.nth(1).click();
     await expect(page.locator('.view-state-host__loading')).toHaveCount(0);
-    await expect(page.getByText('No hay notificaciones sin leer.')).toBeVisible();
+    await expect(page.getByText('No tiene notificaciones sin leer')).toBeVisible();
     await expect(page.locator('app-empty-state')).toBeVisible();
     return;
   }
@@ -723,6 +723,21 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
           // La medición y la foto usan el viewport declarado
           // (375/768/1440), igual al que usaría una persona.
+          // El celeste del fondo (REQ-08-002) late un instante después de que el
+          // puntero actúa —un clic en una pestaña basta— y vuelve a 0 en reposo. Medir
+          // dentro de ese pulso daba «fondo no blanco» según el momento exacto del
+          // clic, no según la pantalla. Se mide en reposo: si pasados 6 s el velo sigue
+          // encendido, es un tinte permanente y la medición lo reporta como tal.
+          await activePage
+            .waitForFunction(
+              () =>
+                (['::before', '::after'] as const).every(
+                  (pseudo) => Number(getComputedStyle(document.body, pseudo).opacity || '0') < 0.01,
+                ),
+              undefined,
+              { timeout: 6_000 },
+            )
+            .catch(() => undefined);
           const m = await medir(activePage);
           const expectedUrl = new URL(destino ?? ruta, BASE);
           const actualUrl = new URL(activePage.url());

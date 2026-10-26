@@ -130,13 +130,16 @@ Las rutas de «Fuente» son `origin/mockup:docs/progress/evidence/lane-NN/REPORT
 
 La medición es fresca si el último commit que toca el **alcance** del
 carril es ancestro del commit medido. El alcance es la unión de lo común (estilos
-globales, `index.html`, rutas, navegación, componentes compartidos, el propio
-arnés de medición) y los directorios propios del carril, sin `*.spec.ts`,
-`*.test.*`, `*.generated.ts` ni el índice de componentes: lo que no cambia lo que
-se ve no invalida. Está en `scripts/lib/correcciones-carriles.json`; una prueba
-comprueba que cada ruta del alcance coincide con archivos versionados.
+globales, `index.html`, rutas, navegación, componentes compartidos) y los
+directorios propios del carril, sin `*.spec.ts`, `*.test.*`, `*.generated.ts` ni el
+índice de componentes: lo que no cambia lo que se ve no invalida. Está en
+`scripts/lib/correcciones-carriles.json`; una prueba comprueba que cada ruta del
+alcance coincide con archivos versionados.
 
-Un registro de regresión usa el mismo alcance. Una medición sin commit (evidencia
+Una **medición visual** suma al alcance el arnés (`corr-evidencia.spec.ts`,
+`corr-rutas.json`, `support/simulador.ts`): si cambia lo que se mide, las fotos
+viejas dejan de valer. Un registro de regresión (typecheck, suite…) usa el alcance
+sin el arnés. Una medición sin commit (evidencia
 heredada de antes del manifiesto) sólo puede **refutarse** por fecha: si es
 anterior al último cambio de código, `FALLA`; si no, queda `FALTA`, porque la
 fecha no basta para afirmar que describe el código actual.

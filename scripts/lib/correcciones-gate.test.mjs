@@ -60,7 +60,7 @@ const CONFIG = {
   umbrales: { fotoMinBytes: 100 },
   viewportsClaros: ['375', '768', '1440'],
   viewportOscuro: '1440',
-  comunes: { codigo: ['src/styles.css'], excluir: [':(exclude,glob)**/*.spec.ts'] },
+  comunes: { codigo: ['src/styles.css'], arnes: ['playwright/corr-rutas.json'], excluir: [':(exclude,glob)**/*.spec.ts'] },
   regresion: { exigidas: ['typecheck', 'lint-dirigido', 'specs-dirigidos', 'build', 'suite', 'route-health'] },
   decisiones: [],
   carriles: {
@@ -262,6 +262,16 @@ describe('escenario completo y fresco', () => {
     const scenario = passingScenario();
     commit(scenario.repo, 'src/app/features/zzz/z.ts', 'export const z = 2;\n');
     expectVerdict(run(scenario), VERDICT.PASS);
+  });
+
+  it('un cambio en el arnés de medición invalida la medición visual pero no un typecheck ya registrado', () => {
+    const scenario = passingScenario();
+    commit(scenario.repo, 'playwright/corr-rutas.json', '{}\n', 'cambia el arnés');
+    const outcome = run(scenario);
+    assert.equal(outcome.state('frescura.commit'), STATE.FAIL);
+    assert.equal(outcome.state('acabado.premium'), STATE.FAIL);
+    assert.equal(outcome.state('regresion.typecheck'), STATE.OK);
+    assert.equal(outcome.state('regresion.build'), STATE.OK);
   });
 
   it('un cambio sólo en un .spec.ts del alcance tampoco la invalida (no cambia lo que se ve)', () => {
@@ -892,6 +902,7 @@ describe('CLI', () => {
     const repo = cliRepo(scenario);
     const head = sh(repo, 'rev-parse', 'HEAD');
     writeEvidence(scenario.root, '90', ROUTES[90], { commitSha: head });
+    writePremium(scenario.root, '90', { commitSha: head });
     for (const name of ['typecheck', 'lint-dirigido', 'build']) writeRecord(scenario.root, name, { command: name, commit: head });
     writeRecord(scenario.root, 'specs-dirigidos', { command: 'specs', commit: head, summary: VITEST(3, 0) });
     writeRecord(scenario.root, 'suite', { command: 'suite', commit: head, summary: VITEST(10, 0) });

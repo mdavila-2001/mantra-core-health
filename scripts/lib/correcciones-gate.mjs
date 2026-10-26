@@ -90,7 +90,6 @@ function limit(list, max = 6) {
 }
 
 export function stripAnsi(text) {
-  // eslint-disable-next-line no-control-regex
   return text.replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, '');
 }
 
@@ -262,9 +261,16 @@ export function createGit(cwd, ref = 'HEAD') {
   };
 }
 
-export function scopeOf(config, laneId) {
+/**
+ * El alcance de un carril: lo común más lo propio, sin lo que no cambia lo que se
+ * ve. `withHarness` suma el arnés de medición (spec y lista de rutas): cambia lo
+ * que una *medición visual* quiere decir, pero no invalida un `typecheck` o una
+ * suite que corrieron sobre el producto.
+ */
+export function scopeOf(config, laneId, { withHarness = false } = {}) {
   const lane = config.carriles[laneId];
-  return [...new Set([...config.comunes.codigo, ...lane.codigo]), ...config.comunes.excluir];
+  const paths = [...config.comunes.codigo, ...lane.codigo, ...(withHarness ? (config.comunes.arnes ?? []) : [])];
+  return [...new Set(paths), ...config.comunes.excluir];
 }
 
 function short(sha) {
@@ -370,6 +376,7 @@ function sha256(path) {
 }
 
 function evaluateActor({ laneId, evidence, routes, config, scope, git }) {
+  // `scope` ya incluye el arnés de medición: ver evaluateLane.
   const out = new Map();
   const set = (id, state, details) => out.set(id, result(id, state, details));
 
@@ -809,6 +816,7 @@ export function evaluateCoherence({ laneId, rules, config }) {
 export function evaluateLane({ laneId, config, routesByKey, root, git, specText, inventoryCheck, rules }) {
   const lane = config.carriles[laneId];
   const scope = scopeOf(config, laneId);
+  const visualScope = scopeOf(config, laneId, { withHarness: true });
   const criteria = new Map();
 
   const actors = Object.entries(lane.actores).map(([actor, routeKey]) => ({ actor, routeKey, routes: routesByKey[routeKey] ?? [] }));
@@ -829,13 +837,13 @@ export function evaluateLane({ laneId, config, routesByKey, root, git, specText,
     if (routes.length === 0) {
       return { actor, results: new Map([['evidencia.presente', result('evidencia.presente', STATE.FAIL, [`corr-rutas.json no tiene rutas para ${actor}`])]]) };
     }
-    return { actor, evidence, results: evaluateActor({ laneId, evidence, routes, config, scope, git }) };
+    return { actor, evidence, results: evaluateActor({ laneId, evidence, routes, config, scope: visualScope, git }) };
   });
   const merged = mergeActorResults(perActor);
   for (const [id, value] of merged) criteria.set(id, value);
 
   for (const entry of evaluateRegression({ laneId, root, scope, git, config })) criteria.set(entry.id, entry);
-  if (lane.premium) criteria.set('acabado.premium', evaluatePremium({ laneId, root, scope, git }));
+  if (lane.premium) criteria.set('acabado.premium', evaluatePremium({ laneId, root, scope: visualScope, git }));
   if (lane.muta) criteria.set('mutacion.cadena', evaluateMutation({ laneId, root, scope, git }));
   criteria.set('revision.independiente', evaluateReview({ laneId, root, scope, git }));
   criteria.set('coherencia.entre-carriles', evaluateCoherence({ laneId, rules, config }));
