@@ -100,17 +100,29 @@ export class Dialog {
     afterNextRender(() => this.showModal());
   }
 
-  /** Cierra devolviendo el resultado. Lo llama el servicio y los botones. */
+  /**
+   * Cierra devolviendo el resultado. Lo llama el servicio y los botones.
+   *
+   * **Confirmar no usa la salida del panel (140 ms); descartar sí.** Mientras el
+   * panel sale el `<dialog>` sigue siendo modal: la página de atrás está inerte y
+   * un clic o el tecleo hacia lo que sigue se pierde. Confirmar es el final: la
+   * página se libera en el acto (mismo criterio que `app-select`).
+   */
   close(confirmed: boolean): void {
-    // Salida corta; sin animación posible (jsdom, movimiento reducido) cierra en el acto.
-    const panel = this.dialogRef().nativeElement.querySelector<HTMLElement>('.dialog__panel');
-    cerrarConSalida(panel, () => {
+    const cerrar = (): void => {
       this.closeNative();
       this.resolved.emit({
         confirmed,
         ...(confirmed && this.reasonConfig() !== null ? { reason: this.reason().trim() } : {}),
       });
-    });
+    };
+    if (confirmed) {
+      cerrar();
+      return;
+    }
+    // Salida corta; sin animación posible (jsdom, movimiento reducido) cierra en el acto.
+    const panel = this.dialogRef().nativeElement.querySelector<HTMLElement>('.dialog__panel');
+    cerrarConSalida(panel, cerrar);
   }
 
   protected handleCancel(): void {
