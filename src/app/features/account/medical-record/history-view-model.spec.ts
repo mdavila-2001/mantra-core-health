@@ -392,6 +392,32 @@ const ORDEN: PatientOrder = {
   createdAt: new Date(2026, 2, 1, 10, 25),
 };
 
+describe('ordenes de la línea · categoría (P40)', () => {
+  function categoriaDe(orden: PatientOrder): string {
+    const [atencion] = atencionesDeLaHistoria(
+      resumen(),
+      { notas: [], ordenes: [orden], citas: [] },
+      etiqueta,
+      codigo,
+    );
+    return atencion!.ordenes[0]!.categoria;
+  }
+
+  it('con concepto, manda la etiqueta del catálogo', () => {
+    expect(categoriaDe({ ...ORDEN, category: 'LAB' })).toBe('Análisis de laboratorio');
+  });
+
+  it('sin concepto, usa la category que sirve la API', () => {
+    const { categoryConceptId: _c, ...sinConcepto } = ORDEN;
+    expect(categoriaDe({ ...sinConcepto, category: 'OTHER' })).toBe('Otro estudio');
+  });
+
+  it('sin concepto ni category, no inventa una', () => {
+    const { categoryConceptId: _c, ...sinConcepto } = ORDEN;
+    expect(categoriaDe(sinConcepto)).toBe('');
+  });
+});
+
 describe('atencionesDeLaHistoria', () => {
   it('reparte cada hecho en la atención que lo registró', () => {
     const [atencion] = atencionesDeLaHistoria(

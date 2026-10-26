@@ -45,7 +45,7 @@ import { PatientInsuranceSettlement } from '../../../shared/components/molecules
 import { OrderPerformerSummary } from './order-performer-summary/order-performer-summary';
 import {
   ANALYSIS_CATEGORIES,
-  categoriaDeAnalisis,
+  tipoDeOrden,
   etiquetaDeCategoria,
   type AnalysisCategory,
   type PatientOrderRow,
@@ -238,7 +238,7 @@ export class DiagnosticOrders {
 
   private aFila(item: PatientOrder, etiquetas: ConceptLabels): PatientOrderRow {
     const categoriaOpcion = item.categoryConceptId ? etiquetas.get(item.categoryConceptId) : undefined;
-    const categoria = categoriaDeAnalisis(categoriaOpcion?.code);
+    const categoria = tipoDeOrden(item.category, categoriaOpcion?.code);
     const estadoOpcion = etiquetas.get(item.statusConceptId);
     return {
       id: item.id,

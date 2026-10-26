@@ -580,6 +580,11 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     motherLastName: p.motherLastName,
     birthDate: p.birthDate,
     nationalId: p.nationalId,
+    // P28: ningún profesional simulado tiene una aserción de identidad, igual
+    // que un médico recién registrado contra la API real: el número del
+    // documento se puede corregir. El 409 de abajo existe por si una edición
+    // lo marca verificado.
+    identityVerified: false,
     issuerAdministrativeAreaConceptId: p.departamentoId,
     residenceMunicipalityConceptId: p.municipioId,
     // Facturación, igual que el paciente: sin cédula no hay NIT que derivar,
@@ -1354,6 +1359,31 @@ export function registrarPerfiles(router: MockRouter): void {
     const p = profesionalDeSesion(request);
     if (p === undefined) return notFound();
     const cambios = cuerpo<Record<string, unknown>>(request);
+    // P28: mismo contrato que la API — el número del documento no se vacía, y
+    // con la identidad verificada no se corrige (409 con su `reason`).
+    const documento = cambios['nationalId'];
+    if (documento !== undefined) {
+      const actual = perfilProfesionalDe(p);
+      if (typeof documento !== 'string' || !/^[A-Za-z0-9.-]{1,40}$/.test(documento)) {
+        return validation('El documento no es válido', [
+          {
+            field: 'nationalId',
+            message: 'El documento sólo admite letras, dígitos, punto y guion',
+          },
+        ]);
+      }
+      if (documento !== actual.nationalId && actual.identityVerified === true) {
+        // `reason` en el nivel superior, como lo arma `DomainException`.
+        return reply(409, {
+          statusCode: 409,
+          code: 'CONFLICT',
+          message:
+            'El documento no se puede corregir desde el perfil: su identidad ya está verificada, o en verificación, con ese número',
+          error: 'Conflict',
+          reason: 'NATIONAL_ID_LOCKED_BY_VERIFIED_IDENTITY',
+        });
+      }
+    }
     const anotados = cambiosDelPerfilProfesional(cambios);
     if (edicionesDeProfesional.has(p.id)) {
       edicionesDeProfesional.actualizar(p.id, anotados);

@@ -2175,8 +2175,8 @@ export class MyAgenda implements OnInit {
    * ## Por qué pregunta antes
    *
    * Retirar no se deshace desde la pantalla: para volver atrás hay que publicar
-   * el horario de nuevo. Y aunque no haya citas comprometidas —el servidor lo
-   * rechaza con 409 si las hay—, se sueltan cupos que ya estaban ofrecidos.
+   * el horario de nuevo. Y aunque las citas comprometidas se conserven —ya no
+   * frenan el retiro (P23)—, se sueltan cupos que ya estaban ofrecidos.
    */
   protected async retirarHorario(): Promise<void> {
     const actual = this.estado();

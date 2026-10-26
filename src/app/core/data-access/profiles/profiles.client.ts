@@ -580,9 +580,12 @@ export class ProfilesClient {
       readonly lastName: string;
       readonly motherLastName: string;
       readonly birthDate: string;
-      /* P28: el sexo al nacer y el departamento emisor se corrigen; el número
-         del documento no (tiene su circuito de verificación). */
+      /* P28: el sexo al nacer, el departamento emisor y el número del
+         documento se corrigen. El número sólo mientras la identidad no está
+         verificada (`identityVerified`): si no, la API responde 409
+         `NATIONAL_ID_LOCKED_BY_VERIFIED_IDENTITY`. No se puede vaciar. */
       readonly sexAtBirth: BirthSexCode;
+      readonly nationalId: string;
       readonly issuerAdministrativeAreaConceptId: string;
       readonly phone: string;
       /* Los cinco contactos que el alta declara por separado. El correo de
