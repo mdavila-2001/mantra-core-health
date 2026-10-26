@@ -1,3 +1,4 @@
+import { matchesFileAccept } from '../../../shared/forms/file-accept';
 import { environment } from '../../../../environments/environment';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -1248,6 +1249,17 @@ describe('RegisterPractitioner', () => {
     });
 
     describe('los respaldos de la habilitación viajan a la API (P29)', () => {
+      it('el selector de los respaldos sólo acepta PDF, como la API que los recibe', () => {
+        const accept = (component as unknown as { formatosDeRespaldo: string }).formatosDeRespaldo;
+        expect(matchesFileAccept(archivoDe('matricula.jpg', 'image/jpeg', 1024), accept)).toBe(
+          false,
+        );
+        expect(matchesFileAccept(archivoDe('sedes.png', 'image/png', 1024), accept)).toBe(false);
+        expect(matchesFileAccept(archivoDe('matricula.pdf', 'application/pdf', 1024), accept)).toBe(
+          true,
+        );
+      });
+
       it('sube el PDF de la matrícula y el del SEDES y manda cada fileId en el alta', () => {
         completarProfesional();
         const matricula = archivoDe('matricula.pdf', 'application/pdf', 1024);
