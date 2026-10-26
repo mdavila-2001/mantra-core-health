@@ -70,8 +70,7 @@ Ya existen en el build. Formalizarlos con
 `scripts/check-bundle-budget.mjs` los convierte en un paso con resultado
 explícito.
 
-Ver [presupuestos](budgets.md) — incluida la decisión pendiente sobre el aviso de
-16,70 kB.
+Ver [presupuestos](budgets.md).
 
 ### 3 · Campo (RUM) — el único que da INP
 
@@ -110,8 +109,3 @@ Umbrales de alerta propuestos —**a fijar con datos, no antes**:
 
 Las dos de errores son las que más valen: **un pico de S8 significa que la API no
 responde para los usuarios**, que es la clase de incidente que hoy nadie detecta.
-
-## Estado
-
-`HIGH`, dependiente del `BLOCKER` de despliegue. Registrado en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

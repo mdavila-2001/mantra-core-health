@@ -100,6 +100,36 @@
       </button>
     </form>
 
+    <!-- Sólo en desarrollo y local (`ngDevMode`): la cuenta que siembra la API
+         local. Las credenciales se ven escritas, no solo se rellenan: quien
+         las necesita en otro lado (un cliente HTTP, otro navegador) las copia. -->
+    @if (localHint(); as cuenta) {
+      <aside class="login__local" aria-labelledby="login-local-titulo" data-testid="login-local-hint">
+        <p class="login__local-titulo" id="login-local-titulo">Cuenta de administración local</p>
+        <dl class="login__local-datos">
+          <div>
+            <dt>Correo</dt>
+            <dd><code data-testid="login-local-correo">{{ cuenta.identifier }}</code></dd>
+          </div>
+          <div>
+            <dt>Contraseña</dt>
+            <dd><code data-testid="login-local-clave">{{ cuenta.password }}</code></dd>
+          </div>
+        </dl>
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="login-local-usar"
+          (clicked)="usarCuentaLocal(cuenta)"
+        >
+          Usar estas credenciales
+        </button>
+        <p class="login__local-nota">Existe sólo en el entorno local y de desarrollo.</p>
+      </aside>
+    }
+
     <div class="login__footer">
       <p class="login__pie">
         <a app-link routerLink="/auth/forgot-password" data-testid="login-recuperar">¿Olvidó su contraseña?</a>

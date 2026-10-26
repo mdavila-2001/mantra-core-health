@@ -2096,9 +2096,9 @@ describe('Agenda', () => {
    * y `:308`). Es una brecha del contrato, no una funcionalidad: el freno del
    * cliente **no reemplaza** la validacion del servidor (regla 95.6.1), y por
    * eso aca se ejercita el camino del 409 contra un doble del endpoint,
-   * declarado como tal. Lo que queda pendiente de verificar contra el servidor
-   * real es que el 409 exista; lo que queda verificado es que si llega, la
-   * pantalla lo trata bien y no deja la segunda cita cambiada.
+   * declarado como tal. Esta prueba no demuestra que el servidor real devuelva
+   * el 409; demuestra que si llega, la pantalla lo trata bien y no deja la
+   * segunda cita cambiada.
    */
   describe('una sola consulta a la vez (C-11)', () => {
     /** Dos citas de la ventana: una en curso y otra confirmada. */

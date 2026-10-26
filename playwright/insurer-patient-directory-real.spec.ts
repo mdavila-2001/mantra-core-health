@@ -97,7 +97,7 @@ test('directorio y conversación persistida con API real @real-directory', async
   }
   await expect(page.getByTestId('directory-count')).toContainText('12');
   await page.screenshot({
-    path: path.resolve('docs/trabajo/2026-10-05-directorio-pacientes/evidencia/directory-real-data.png'),
+    path: path.resolve('artifacts/evidencia/2026-10-05-directorio-pacientes/evidencia/directory-real-data.png'),
   });
   await page
     .getByRole('combobox', { name: 'Filas por página' })
@@ -135,7 +135,7 @@ test('directorio y conversación persistida con API real @real-directory', async
   await expect(page).toHaveURL(new RegExp(`/messaging/${first}$`));
   await expect(page.getByTestId('hilo-texto')).toBeVisible();
   await page.screenshot({
-    path: path.resolve('docs/trabajo/2026-10-05-directorio-pacientes/evidencia/directory-real-chat.png'),
+    path: path.resolve('artifacts/evidencia/2026-10-05-directorio-pacientes/evidencia/directory-real-chat.png'),
   });
   await page.goto(directory);
   await search.fill(fixture.marker);

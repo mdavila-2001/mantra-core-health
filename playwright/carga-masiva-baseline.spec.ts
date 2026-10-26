@@ -36,8 +36,7 @@ test.describe('Carga masiva · baseline (pantalla de hoy, backend simulado)', ()
 
     await expect(page.getByTestId('carga-perfil')).toBeVisible();
 
-    // Perfil «Conceptos» es la única opción hoy (§1 del contrato: el segundo
-    // perfil, «designaciones», está pendiente de Q-9).
+    // Perfil «Conceptos» es la única opción (§1 del contrato).
     await page
       .getByTestId('carga-perfil')
       .locator('select')
@@ -72,8 +71,7 @@ test.describe('Carga masiva · baseline (pantalla de hoy, backend simulado)', ()
     const { erroresDeConsola, peticionesFallidas } = vigilante;
     // El dev server inyecta sus propios scripts en línea (recarga en vivo y
     // el anti-parpadeo del tema) y la CSP de la aplicación los bloquea
-    // (`src/server/security-headers.ts:222-223`; ya documentado por Justin en
-    // `docs/trabajo/2026-09-25-justin-pantalla/REPORTE.md:130`). Es del
+    // (`src/server/security-headers.ts:222-223`). Es del
     // servidor de desarrollo, no de esta pantalla — clase ENVIRONMENT.
     const consolaInesperada = erroresDeConsola.filter(
       (e) => !/Content Security Policy/.test(e),

@@ -1,0 +1,3724 @@
+[
+ {
+  "netterId": "ENT_07c69cd29cc696",
+  "name": "Periné — arterias y venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_0a942374aab9d5",
+  "name": "Arteria(s) — escrotal posterior",
+  "queries": [
+   "posterior scrotal artery"
+  ],
+  "uberon": "UBERON:8920051",
+  "matchedText": "posterior scrotal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0ee79ea0125587",
+  "name": "Testículo — arterias y venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_12dc42acb7e0d4",
+  "name": "Arteria(s) — testicular",
+  "queries": [
+   "testicular artery"
+  ],
+  "uberon": "UBERON:0001187",
+  "matchedText": "testicular artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_31f36f4fd36b13",
+  "name": "Pene — arteria",
+  "queries": [
+   "artery of penis",
+   "penile artery",
+   "deep artery of penis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«Pene — arteria» es una agrupación; no designa una arteria concreta."
+ },
+ {
+  "netterId": "ENT_3635bfbf14b5b1",
+  "name": "Clítoris — arteria — profunda",
+  "queries": [
+   "deep artery of clitoris"
+  ],
+  "uberon": "UBERON:0008322",
+  "matchedText": "deep artery of clitoris",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_38b98af04b58ee",
+  "name": "Pelvis — arterias y venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_39fe37e01ad202",
+  "name": "Pelvis — arterias y venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_41fb0ba3d13630",
+  "name": "Periné — arterias y venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_5b2094171de3b4",
+  "name": "Arteria(s) — sacra — media",
+  "queries": [
+   "median sacral artery"
+  ],
+  "uberon": "UBERON:0005464",
+  "matchedText": "median sacral artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_661b7a8c627740",
+  "name": "Arteria(s) — rectal — inferior",
+  "queries": [
+   "inferior rectal artery"
+  ],
+  "uberon": "UBERON:0001357",
+  "matchedText": "inferior rectal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_88eee2c55536a0",
+  "name": "Arteria(s) — rectal — media",
+  "queries": [
+   "middle rectal artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_95f6ce1d972f9c",
+  "name": "Útero — arterias y venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_980ab45006abc1",
+  "name": "Clítoris — arteria — dorsal",
+  "queries": [
+   "dorsal artery of clitoris"
+  ],
+  "uberon": "UBERON:0008323",
+  "matchedText": "dorsal artery of clitoris",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_999b91fda983b0",
+  "name": "Arteria(s) — sacra — lateral",
+  "queries": [
+   "lateral sacral artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_9f4baa136109db",
+  "name": "Próstata — aporte arterial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_ca8f30bdbc3132",
+  "name": "Atlas de anatomía hur — arteria pudenda interna",
+  "queries": [
+   "internal pudendal artery"
+  ],
+  "uberon": "UBERON:0007315",
+  "matchedText": "internal pudendal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d96bcb16ab6193",
+  "name": "Arteria(s) — recto y conducto anal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_df8cee1077240f",
+  "name": "Organo — pelvis femenina, arterias y venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_ffcd5e6a11698d",
+  "name": "Recto — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_58e3f8d1f62a18",
+  "name": "Articulación(es) — mujer",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_08470c0b02fc7b",
+  "name": "Espacio(s) — postanal — profundo",
+  "queries": [
+   "deep postanal space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_0ec84a4890f8c0",
+  "name": "Peritoneo — suelo fosa pararrectal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_1b259ba239a05a",
+  "name": "Espacio(s) — prerrectal",
+  "queries": [
+   "prerectal space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_1c93c70c6516d0",
+  "name": "Atla — espacio retropúbico",
+  "queries": [
+   "retropubic space",
+   "space of Retzius"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_1eebcb1fb9c029",
+  "name": "Fosa — acetabular",
+  "queries": [
+   "acetabular fossa"
+  ],
+  "uberon": "UBERON:0014445",
+  "matchedText": "acetabular fossa",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_207a25dd94e6c5",
+  "name": "Fosa — receso — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_335fb9eb5ee966",
+  "name": "Cuerpo(s) — fosa isquioanal",
+  "queries": [
+   "ischioanal fossa",
+   "ischiorectal fossa"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_377ac56ec4ab1b",
+  "name": "Espacio(s) — perianal",
+  "queries": [
+   "perianal space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_37eddf664ac5ad",
+  "name": "Espacio(s) — extraperitoneal, tejido fibroadiposo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3c084258515539",
+  "name": "Espacio(s) — varón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3c85fa4b247d1b",
+  "name": "Fosa — navicular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_568f2a0d5bb063",
+  "name": "Fosa — vestibular",
+  "queries": [
+   "vestibular fossa",
+   "fossa of vestibule of vagina"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_5a4a3a82c995cd",
+  "name": "Espacio(s) — perianal",
+  "queries": [
+   "perianal space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_65390cc75e1e49",
+  "name": "Espacio(s) — rectovaginal",
+  "queries": [
+   "rectovaginal space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_65751a1c1bfcb5",
+  "name": "Peritoneo — espacios potenciales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_6d2286543bd32e",
+  "name": "Fosa — comunicacion — posterior derecha-izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_7ddc36e4fbef17",
+  "name": "Espacio(s) — retrovesical",
+  "queries": [
+   "retrovesical space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_8155d8695eb341",
+  "name": "Espacio(s) — submucoso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_81c141d95decc4",
+  "name": "Fosa — suelo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_8656371c0124f2",
+  "name": "Fosa — tabique fibroso transverso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_8ceb5bd09c0f8b",
+  "name": "Fosa — techo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_996e7eedf650bb",
+  "name": "Fosa — ilíaca",
+  "queries": [
+   "iliac fossa"
+  ],
+  "uberon": "UBERON:0011015",
+  "matchedText": "iliac fossa",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9bd393cfe169e2",
+  "name": "Fosa — cuerpo adiposo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_a3280363e5eb34",
+  "name": "Espacio(s) — rectocervical",
+  "queries": [
+   "rectocervical space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_a66058d5d3bd90",
+  "name": "Fosa — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_a6c3df3d06a180",
+  "name": "Espacio(s) — retropúbico (prevesical) (de Retzius)",
+  "queries": [
+   "retropubic space",
+   "space of Retzius",
+   "prevesical space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_b0035b219ce0d0",
+  "name": "Espacio(s) — perineopélvicos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_b9cb428e4836d8",
+  "name": "Fosa — receso — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_bf89a40fec9343",
+  "name": "Espacio(s) — retroprostático",
+  "queries": [
+   "retroprostatic space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_c70c3bd041534a",
+  "name": "Fosa — pus",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c8e99ba6b65521",
+  "name": "Espacio(s) — postanal — superficial",
+  "queries": [
+   "superficial postanal space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_d66d1c23ee9698",
+  "name": "Fosa — preanal derecha-izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e08833e55fa96c",
+  "name": "Fosa — pararrectal",
+  "queries": [
+   "pararectal fossa"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_f4be2d9a52da8f",
+  "name": "Espacio(s) — presacro",
+  "queries": [
+   "presacral space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_f956f91661d643",
+  "name": "Espacio(s) — perineal — superficial",
+  "queries": [
+   "superficial perineal space",
+   "superficial perineal pouch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_fd2ed9d95c8c49",
+  "name": "Fosa — paravesical",
+  "queries": [
+   "paravesical fossa"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_153dda18833a79",
+  "name": "Periné — absceso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Condición o signo clínico indexado, no estructura anatómica."
+ },
+ {
+  "netterId": "ENT_175bbf66102686",
+  "name": "Conducto — imágenes sagitales de RM",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_1e0eed7d697c20",
+  "name": "Conducto — cervical",
+  "queries": [
+   "cervical canal",
+   "endocervical canal",
+   "canal of cervix",
+   "cervical cavity"
+  ],
+  "uberon": "UBERON:0013761",
+  "matchedText": "cervical cavity",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3cc625aec1fd55",
+  "name": "Conducto — inicio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_500dce68b4257c",
+  "name": "Conducto — quirúrgico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_51456c4b14a31e",
+  "name": "Conducto — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_ce6e522a522e11",
+  "name": "Conducto — venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_dfe852594415b1",
+  "name": "Conducto — anal",
+  "queries": [
+   "anal canal"
+  ],
+  "uberon": "UBERON:0000159",
+  "matchedText": "anal canal",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f2889ff1225eac",
+  "name": "Conducto — muscular mucosa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_43108497439d9a",
+  "name": "Atla — conducto anal",
+  "queries": [
+   "anal canal"
+  ],
+  "uberon": "UBERON:0000159",
+  "matchedText": "anal canal",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4a1002ff3912e4",
+  "name": "Muscular mucosa — recto y conducto anal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_4cb073d30be593",
+  "name": "Recto — conducto anal",
+  "queries": [
+   "anal canal"
+  ],
+  "uberon": "UBERON:0000159",
+  "matchedText": "anal canal",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_803e4cc5b68fb5",
+  "name": "Atlas de anatomía hun — conducto pudendo",
+  "queries": [
+   "pudendal canal",
+   "Alcock's canal"
+  ],
+  "uberon": "UBERON:0039418",
+  "matchedText": "pudendal canal",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_068deb7a024d1b",
+  "name": "Uréter",
+  "queries": [
+   "ureter"
+  ],
+  "uberon": "UBERON:0000056",
+  "matchedText": "ureter",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_16ef433e8f3136",
+  "name": "Ano",
+  "queries": [
+   "anus"
+  ],
+  "uberon": "UBERON:0001245",
+  "matchedText": "anus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1775d44ad00463",
+  "name": "Epidídimo",
+  "queries": [
+   "epididymis"
+  ],
+  "uberon": "UBERON:0001301",
+  "matchedText": "epididymis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_18af549605ed54",
+  "name": "Cistouretrografias, varón y mujer",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_1900697a9f9656",
+  "name": "Semilunar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_41bfb6f3767421",
+  "name": "Reborde pelvis",
+  "queries": [
+   "pelvic brim"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_429654b6c07bd7",
+  "name": "Acetábulo",
+  "queries": [
+   "acetabulum"
+  ],
+  "uberon": "UBERON:0001269",
+  "matchedText": "acetabulum",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_51b42861a4fb31",
+  "name": "Pelvis",
+  "queries": [
+   "pelvis"
+  ],
+  "uberon": "UBERON:0002355",
+  "matchedText": "pelvis",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6c20c2c721829f",
+  "name": "Red testicular, area",
+  "queries": [
+   "rete testis"
+  ],
+  "uberon": "UBERON:0003959",
+  "matchedText": "rete testis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8395ec89830138",
+  "name": "Escroto",
+  "queries": [
+   "scrotum"
+  ],
+  "uberon": "UBERON:0001300",
+  "matchedText": "scrotum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8aea2cf9cb67ac",
+  "name": "Ovario",
+  "queries": [
+   "ovary"
+  ],
+  "uberon": "UBERON:0000992",
+  "matchedText": "ovary",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8b908a8c705a48",
+  "name": "Pecten",
+  "queries": [
+   "anal pecten",
+   "pecten of anal canal"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_981a7ff0219eb7",
+  "name": "Dermis anal",
+  "queries": [
+   "dermis of anus",
+   "anal dermis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_98b9c73457486e",
+  "name": "Anexos",
+  "queries": [
+   "uterine adnexa",
+   "adnexa of uterus"
+  ],
+  "uberon": "UBERON:0036292",
+  "matchedText": "uterine adnexa",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9cd7b309bc63ca",
+  "name": "Mesometrio",
+  "queries": [
+   "mesometrium"
+  ],
+  "uberon": "UBERON:0003885",
+  "matchedText": "mesometrium",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_abdc3423ac4921",
+  "name": "Paradidimo",
+  "queries": [
+   "paradidymis"
+  ],
+  "uberon": "UBERON:0013248",
+  "matchedText": "paradidymis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b2a950b5088c57",
+  "name": "Uretra",
+  "queries": [
+   "urethra"
+  ],
+  "uberon": "UBERON:0000057",
+  "matchedText": "urethra",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b4d667478a089c",
+  "name": "Gubernáculo",
+  "queries": [
+   "gubernaculum",
+   "gubernaculum testis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«Gubernáculo» en la sección de homologías puede referirse a ambos sexos; UBERON solo ofrece gubernaculum testis (masculino). Ambiguo."
+ },
+ {
+  "netterId": "ENT_bdb7af13561812",
+  "name": "Miometrio",
+  "queries": [
+   "myometrium"
+  ],
+  "uberon": "UBERON:0001296",
+  "matchedText": "myometrium",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c2ae9d94622658",
+  "name": "Mesosálpinx",
+  "queries": [
+   "mesosalpinx"
+  ],
+  "uberon": "UBERON:0012331",
+  "matchedText": "mesosalpinx",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c5639ec10e818c",
+  "name": "Relieve labioescrotal",
+  "queries": [
+   "labioscrotal swelling",
+   "labioscrotal fold"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_c69a8d691c3424",
+  "name": "Cóccix",
+  "queries": [
+   "coccyx"
+  ],
+  "uberon": "UBERON:0001350",
+  "matchedText": "coccyx",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_dac9a84b387a75",
+  "name": "Cérvix o cuello uterino",
+  "queries": [
+   "uterine cervix",
+   "cervix"
+  ],
+  "uberon": "UBERON:0000002",
+  "matchedText": "uterine cervix",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e36823e5b0b1c5",
+  "name": "Folículo",
+  "queries": [
+   "ovarian follicle",
+   "follicle"
+  ],
+  "uberon": "UBERON:0001305",
+  "matchedText": "ovarian follicle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ed3efbdb0e1359",
+  "name": "Musculatura anorrectal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_f3d3f9e811a56d",
+  "name": "Mesoovario",
+  "queries": [
+   "mesovarium"
+  ],
+  "uberon": "UBERON:0001342",
+  "matchedText": "mesovarium",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2284bfb19a9a24",
+  "name": "Mayor — fascia profunda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4d428e252b398f",
+  "name": "Pene — fascia — superficial",
+  "queries": [
+   "superficial fascia of penis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_511422104c8d7b",
+  "name": "Pelvis — fascias arco tendinoso",
+  "queries": [
+   "tendinous arch of pelvic fascia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_7c68c13e10aecd",
+  "name": "Vejiga urinaria — fascia",
+  "queries": [
+   "vesical fascia",
+   "fascia of urinary bladder"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_8209323c86ef44",
+  "name": "Fibras — fasciales vesicocervicales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b8273241921992",
+  "name": "Tabique — fascia profunda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ba7aed0b1edccd",
+  "name": "Atla — fascia obturador",
+  "queries": [
+   "obturator fascia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_c3bb9bd00e4187",
+  "name": "Atla — tendinoso fascias pelvis",
+  "queries": [
+   "tendinous arch of pelvic fascia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_c47c9aa1009f12",
+  "name": "Pene — fascia — profunda",
+  "queries": [
+   "deep fascia of penis",
+   "Buck's fascia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_daabfce38811a2",
+  "name": "Testículo — fascia espermática externa",
+  "queries": [
+   "external spermatic fascia"
+  ],
+  "uberon": "UBERON:0034690",
+  "matchedText": "external spermatic fascia",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1e211e744c7422",
+  "name": "Abertura — anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_28d484ad5ed21a",
+  "name": "Abertura — superior pelvis, diámetros",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_47ff26af8f8147",
+  "name": "Abertura — transverso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_6a70fcfb69f8aa",
+  "name": "Abertura lateral (agujero de Luschka) — sacro — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b1477523e4b46f",
+  "name": "Abertura — mujer",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b243ae74f12f1d",
+  "name": "Abertura — varón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c19c06885cdde2",
+  "name": "Agujero — ciático — mayor",
+  "queries": [
+   "greater sciatic foramen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_ef11ff3bbdaaf6",
+  "name": "Agujero — ciático — menor",
+  "queries": [
+   "lesser sciatic foramen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_1394db899472b4",
+  "name": "Glándula(s) — anales",
+  "queries": [
+   "anal gland",
+   "gland of anal canal"
+  ],
+  "uberon": "UBERON:0004760",
+  "matchedText": "gland of anal canal",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_273bcf370e01dd",
+  "name": "Glándula(s) — conducto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4a06061a564064",
+  "name": "Glándula(s) — orificio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c734fcfc5a7c83",
+  "name": "Glándula(s) — primordio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_cd50353ff7cf58",
+  "name": "Glándula(s) — bulbouretral (de Cowper}",
+  "queries": [
+   "bulbourethral gland"
+  ],
+  "uberon": "UBERON:0002366",
+  "matchedText": "bulbourethral gland",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e899f61e710cc4",
+  "name": "Piel — glándulas sudoríparas y pelo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_60b94a18e35e1d",
+  "name": "Peroné — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_669ddf90c4d459",
+  "name": "Fémur — cuello",
+  "queries": [
+   "neck of femur",
+   "femoral neck"
+  ],
+  "uberon": "UBERON:0007119",
+  "matchedText": "neck of femur",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0ae077e00a585e",
+  "name": "Ligamento(s) (cont.} — umbilical — medio",
+  "queries": [
+   "median umbilical ligament"
+  ],
+  "uberon": "UBERON:0006638",
+  "matchedText": "median umbilical ligament",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_28612d19b3c00b",
+  "name": "Ligamento(s) (cont.} — periné",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_294b7f5b2100ff",
+  "name": "Clítoris — ligamento suspensorio",
+  "queries": [
+   "suspensory ligament of clitoris"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_398b5f9efd24f9",
+  "name": "Ligamento(s) — ancho",
+  "queries": [
+   "broad ligament of uterus",
+   "broad ligament"
+  ],
+  "uberon": "UBERON:0012332",
+  "matchedText": "broad ligament of uterus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3eddfa0efde5a3",
+  "name": "Ligamento(s) — mesometrio",
+  "queries": [
+   "mesometrium"
+  ],
+  "uberon": "UBERON:0003885",
+  "matchedText": "mesometrium",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4f7826b35b6490",
+  "name": "Ligamento(s) (cont.} — umbilical — medial",
+  "queries": [
+   "medial umbilical ligament"
+  ],
+  "uberon": "UBERON:0006607",
+  "matchedText": "medial umbilical ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6012afe4ee0bb6",
+  "name": "Ligamento(s) (cont.} — sacroespinoso",
+  "queries": [
+   "sacrospinous ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_799fae10a62b5c",
+  "name": "Ovario — ligamento",
+  "queries": [
+   "ovarian ligament",
+   "ligament of ovary"
+  ],
+  "uberon": "UBERON:0008847",
+  "matchedText": "ovarian ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_84883d9a04790b",
+  "name": "Ligamento(s) (cont.} — rectouterino (uterosacro)",
+  "queries": [
+   "rectouterine ligament",
+   "uterosacral ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_9fdc8a3a59d6a9",
+  "name": "Ligamento(s) (cont.} — útero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_b3e6c1d7fdef4a",
+  "name": "Ligamento(s) — cardinal",
+  "queries": [
+   "cardinal ligament",
+   "transverse cervical ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_b628507daef67b",
+  "name": "Ligamento(s) (cont.} — sacrouterino",
+  "queries": [
+   "uterosacral ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_c677f93f2221d5",
+  "name": "Ligamento(s) (cont.} — acetábulo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ceda902c5cb697",
+  "name": "Ligamento(s) (cont.} — sacrotuberoso",
+  "queries": [
+   "sacrotuberous ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_db85ba53ef8555",
+  "name": "Vejiga urinaria — ligamento lateral",
+  "queries": [
+   "lateral ligament of bladder",
+   "lateral ligament of urinary bladder"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_0793cafe3c1e79",
+  "name": "Izquierdos — vesicales, vía linfática",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_10c54a2e97a37e",
+  "name": "Genitales — nódulos y vasos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_15608597833ffe",
+  "name": "Nódulo(s) linfático(s) — ferneninos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_323fe302fd5cee",
+  "name": "Pelvis — nódulos y vasos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_3e8205a27be58a",
+  "name": "Nódulo(s) linfático(s) — masculinos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_421eca936db2e3",
+  "name": "Periné — vasos y nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_5c58c582590be5",
+  "name": "Atla — vías linfaticas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_78e30b33bf2feb",
+  "name": "Uretra — vía linfática",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_8c9988d03cc2ed",
+  "name": "Nódulo(s) linfático(s) — periné femenino",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_931532b33a7d88",
+  "name": "Izquierdos — vías linfáticas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_a1b304f1f4f35e",
+  "name": "Nódulo(s) linfático(s) — obturador",
+  "queries": [
+   "obturator lymph node"
+  ],
+  "uberon": "UBERON:0035171",
+  "matchedText": "obturator lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_da40101f5071e8",
+  "name": "Atla — nódulos y vasos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_e2f123e2cd16ae",
+  "name": "Nódulo(s) linfático(s) — pelvis y genitales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_07a23bda7c4d8f",
+  "name": "Atla — fibras músculo longitudinal — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_1607c2607cdf12",
+  "name": "Músculo(s) — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_17103fb088e0b5",
+  "name": "Músculo(s) — ano — externo",
+  "queries": [
+   "external anal sphincter"
+  ],
+  "uberon": "UBERON:0001367",
+  "matchedText": "external anal sphincter",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2cb71d98845fc5",
+  "name": "Atla — músculos prerrectales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_32fc388d9dedc9",
+  "name": "Fibras — músculo prerrectal (de Luschka)",
+  "queries": [
+   "prerectal muscle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_35927e931c901a",
+  "name": "Músculo(s) — isquiococcigeo",
+  "queries": [
+   "ischiococcygeus",
+   "coccygeus muscle"
+  ],
+  "uberon": "UBERON:0001327",
+  "matchedText": "ischiococcygeus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3886e61b059a1f",
+  "name": "Músculo(s) — isquiocavernoso",
+  "queries": [
+   "ischiocavernosus muscle"
+  ],
+  "uberon": "UBERON:0001339",
+  "matchedText": "ischiocavernosus muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3b8558fa5361ff",
+  "name": "Músculo(s) — subcutáneo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_45cac07cde6007",
+  "name": "Vagina — extensiones musculofasciales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_489e643c132345",
+  "name": "Músculo(s) — rectal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4f512d1983df0f",
+  "name": "Músculo(s) — externo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_54f2cb86f6878e",
+  "name": "Músculo(s) — uretrovaginal",
+  "queries": [
+   "urethrovaginal sphincter"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_5649b5389cda63",
+  "name": "Músculo(s) — coccígeo (isquiococcigeo)",
+  "queries": [
+   "coccygeus muscle",
+   "ischiococcygeus"
+  ],
+  "uberon": "UBERON:0001327",
+  "matchedText": "coccygeus muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5fe4dd0b10e5a1",
+  "name": "Uretra — extensiones musculofasciales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_70066459b315e1",
+  "name": "Próstata — banda músculo esquelético",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_7ee7192972901b",
+  "name": "Músculo(s) — piel ano",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_875316f6c20599",
+  "name": "Músculo(s) — compresor uretra",
+  "queries": [
+   "compressor urethrae"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_a039a2dd424c9e",
+  "name": "Músculo(s) — interno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b3951b4f3d25c0",
+  "name": "Músculo(s) — femenina",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ba47f4b17b5af1",
+  "name": "Músculo(s) — cabeza larga",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c4acf24f530dcd",
+  "name": "Músculo(s) — porción superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c5dbcbd010d718",
+  "name": "Músculo(s) — bulboespojoso",
+  "queries": [
+   "bulbospongiosus muscle"
+  ],
+  "uberon": "UBERON:0011389",
+  "matchedText": "bulbospongiosus muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c903585ab31b14",
+  "name": "Músculo(s) — unión",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_cb1f611d03f592",
+  "name": "Músculo(s) — interno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_cee1af86c4ca46",
+  "name": "Músculo(s) — porción profunda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d13288e11c0c1e",
+  "name": "Próstata — músculo esfínter uretra, visión anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d6ecc7cda935be",
+  "name": "Músculo(s) — glúteo — mayor",
+  "queries": [
+   "gluteus maximus"
+  ],
+  "uberon": "UBERON:0001370",
+  "matchedText": "gluteus maximus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e2627f4dca42ae",
+  "name": "Músculo(s) — anorrectal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e337cde90abc8e",
+  "name": "Músculo(s) — iliococcigeo",
+  "queries": [
+   "iliococcygeus muscle"
+  ],
+  "uberon": "UBERON:0011511",
+  "matchedText": "iliococcygeus muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f67b1cc55d8a8b",
+  "name": "Músculo(s) — uretra",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_f9a4c384da2f14",
+  "name": "Músculo(s) — visión periférica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_01754306f44e83",
+  "name": "Colon — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_06a59b0d55b5b9",
+  "name": "Nervio(s) — masculinas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_0bbf27595ce1fc",
+  "name": "Pene — nervio dorsal",
+  "queries": [
+   "dorsal nerve of penis"
+  ],
+  "uberon": "UBERON:0019197",
+  "matchedText": "dorsal nerve of penis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_357acc278dafbf",
+  "name": "Nervio(s) — genital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3d8742c502d361",
+  "name": "Nervio(s) — hipogástrico",
+  "queries": [
+   "hypogastric nerve"
+  ],
+  "uberon": "UBERON:0005303",
+  "matchedText": "hypogastric nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_469b446ba1bdb9",
+  "name": "Nervio(s) — cutáneos anteriores",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_494a113a8b7018",
+  "name": "Nervio(s) — masculinos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_5678dfe3c4b848",
+  "name": "Clítoris — nervio dorsal",
+  "queries": [
+   "dorsal nerve of clitoris"
+  ],
+  "uberon": "UBERON:0019198",
+  "matchedText": "dorsal nerve of clitoris",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_61d856b8ac8c9f",
+  "name": "Periné — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_727df028349fa7",
+  "name": "Nervio(s) — anal inferior",
+  "queries": [
+   "inferior rectal nerve",
+   "inferior anal nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_8def8139f4f738",
+  "name": "Atla — vísceras, nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_90414f2d44f052",
+  "name": "Nervio(s) — ramo labial anterior",
+  "queries": [
+   "anterior labial nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_b69bdf4c71c561",
+  "name": "Nervio(s) — genitales externos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_c2efe3f9d61eca",
+  "name": "Nervio(s) — femeninas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_c8a700c316da78",
+  "name": "Nervio(s) — anococcigeo",
+  "queries": [
+   "anococcygeal nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_d29d2f5326ac8a",
+  "name": "Nervio(s) — pélvico",
+  "queries": [
+   "pelvic nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_df107f08636be7",
+  "name": "Atlas de anatomía hur — nervio pudendo",
+  "queries": [
+   "pudendal nerve"
+  ],
+  "uberon": "UBERON:0011390",
+  "matchedText": "pudendal nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e5e1af7e1a2848",
+  "name": "Periné — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_0bf8d1222ea980",
+  "name": "Orificio (cont — vaginal",
+  "queries": [
+   "vaginal orifice"
+  ],
+  "uberon": "UBERON:0012317",
+  "matchedText": "vaginal orifice",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0cc33dadf54388",
+  "name": "Próstata — primordio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_14c9ab32ed1814",
+  "name": "Testículo — descenso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_1523b225699c78",
+  "name": "Túnica — vaginal, lámina — visceral",
+  "queries": [
+   "visceral layer of tunica vaginalis",
+   "visceral layer of tunica vaginalis testis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_1c1c339b4faded",
+  "name": "Vejiga urinaria — interior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_1fb671ce100653",
+  "name": "Recto — via linfatica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_2274e5da359996",
+  "name": "Próstata — drenaje linfático",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_23808ae58a71f7",
+  "name": "Atla — uterovaginal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_24bf0545176d71",
+  "name": "Vejiga urinaria — orificio ureteral",
+  "queries": [
+   "ureteral orifice",
+   "ureteric orifice"
+  ],
+  "uberon": "UBERON:0012303",
+  "matchedText": "ureteral orifice",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_274e8e3114bf30",
+  "name": "Testículo — vías linfáticas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_287e172cc2ddac",
+  "name": "Testículo",
+  "queries": [
+   "testis"
+  ],
+  "uberon": "UBERON:0000473",
+  "matchedText": "testis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3252e9d9c1fb84",
+  "name": "Recto — muscular mucosa",
+  "queries": [
+   "muscularis mucosa of rectum",
+   "muscularis mucosae of rectum"
+  ],
+  "uberon": "UBERON:0012497",
+  "matchedText": "muscularis mucosae of rectum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_32de425cb271e8",
+  "name": "Vejiga urinaria — cuerpo",
+  "queries": [
+   "body of urinary bladder"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_33f9b229b94a1d",
+  "name": "Purkinje — vejiga urinaria y uréter inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3409443108926e",
+  "name": "Vejiga urinaria — trigono",
+  "queries": [
+   "trigone of urinary bladder"
+  ],
+  "uberon": "UBERON:0001257",
+  "matchedText": "trigone of urinary bladder",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3f552b75715097",
+  "name": "Próstata — inferoposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_4304b5a0ce3ca2",
+  "name": "Útero — cambios edad y patrón muscular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_434d9a27ef9466",
+  "name": "Recto — longitudinal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_4351ea15ec9166",
+  "name": "Testículo — septos",
+  "queries": [
+   "septula testis",
+   "testis septum",
+   "septum of testis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_4559da97d5c6c1",
+  "name": "Recto — circular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_4ee4bf578ac4f8",
+  "name": "Útero — sección frontal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_5058d73172755b",
+  "name": "Trigono — vejiga urinaria",
+  "queries": [
+   "trigone of urinary bladder"
+  ],
+  "uberon": "UBERON:0001257",
+  "matchedText": "trigone of urinary bladder",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_51fc77eac40393",
+  "name": "Recto — imagenes sagitales de RM",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_523f2f96246719",
+  "name": "Útero — imágenes sagitales de RM",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_5313b236f090ea",
+  "name": "Próstata — imágenes sagitales de RM",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_543117f673028f",
+  "name": "Próstata — medio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_56431e232e01fc",
+  "name": "Pared — vagina",
+  "queries": [
+   "vaginal wall",
+   "wall of vagina"
+  ],
+  "uberon": "UBERON:0036523",
+  "matchedText": "vaginal wall",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5f24fcbfe5215a",
+  "name": "Atla — ramas vaginales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_65f222b43cd662",
+  "name": "Útero — cuello o cérvix",
+  "queries": [
+   "uterine cervix"
+  ],
+  "uberon": "UBERON:0000002",
+  "matchedText": "uterine cervix",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6bd624e65cbc82",
+  "name": "Vagina — horizontal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_6dbb38ab39a812",
+  "name": "Vejiga urinaria — cuello",
+  "queries": [
+   "neck of urinary bladder"
+  ],
+  "uberon": "UBERON:0001258",
+  "matchedText": "neck of urinary bladder",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6e5e45649138cf",
+  "name": "Atlas de anatomía hum — vaginal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_70d2b98d7f28c2",
+  "name": "Recto — marginal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_717656246b51e8",
+  "name": "Vagina",
+  "queries": [
+   "vagina"
+  ],
+  "uberon": "UBERON:0000996",
+  "matchedText": "vagina",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7306c4957f139a",
+  "name": "Vejiga urinaria — vértice",
+  "queries": [
+   "apex of urinary bladder"
+  ],
+  "uberon": "UBERON:8600048",
+  "matchedText": "apex of urinary bladder",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_782fe852f85b63",
+  "name": "Vejiga urinaria — varón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_78619d0e4ab077",
+  "name": "Útero — orificio — interno",
+  "queries": [
+   "internal os of uterus",
+   "internal uterine orifice"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_7fa0ab8a985c58",
+  "name": "Vagina — vestíbulo",
+  "queries": [
+   "vestibule of vagina"
+  ],
+  "uberon": "UBERON:0008330",
+  "matchedText": "vestibule of vagina",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8010bd3a514bc2",
+  "name": "Atlas de anatomía hum — uterovaginal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_824cbf0257978f",
+  "name": "Túnica — vaginal, lámina — parietal",
+  "queries": [
+   "parietal layer of tunica vaginalis",
+   "parietal layer of tunica vaginalis testis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_8498d43dad8dba",
+  "name": "Orificio (cont — utero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_84bad149f2edcf",
+  "name": "Próstata — uretra prostática",
+  "queries": [
+   "prostatic urethra"
+  ],
+  "uberon": "UBERON:0001335",
+  "matchedText": "prostatic urethra",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_852af4ab309070",
+  "name": "Testículo — esquema",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_878a8b951bfc5e",
+  "name": "Útero — orificio — externo",
+  "queries": [
+   "external os of uterus",
+   "external uterine orifice"
+  ],
+  "uberon": "UBERON:0013760",
+  "matchedText": "external os of uterus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8a76ab56cc0781",
+  "name": "Drenaje linfático, próstata",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_8bbd619202b30d",
+  "name": "Fornix — vaginal",
+  "queries": [
+   "vaginal fornix",
+   "fornix of vagina"
+  ],
+  "uberon": "UBERON:0000051",
+  "matchedText": "vaginal fornix",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8c001bf2ef8d01",
+  "name": "Útero — grados de retroversión",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_8c1a0ccef0a6d0",
+  "name": "Histerosalpingografía, útero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_9136b869d4ffaa",
+  "name": "Vagina — estructuras soporte",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_926526c8aed832",
+  "name": "Útero — anteflexión",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_9ddcf4a7fe8685",
+  "name": "Recto — pliegues transversos",
+  "queries": [
+   "transverse rectal fold",
+   "transverse fold of rectum"
+  ],
+  "uberon": "UBERON:0035377",
+  "matchedText": "transverse rectal fold",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a025d5f3e83da4",
+  "name": "Vagina — imagenes sagitales de RM",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_a4525678ee2b98",
+  "name": "Testículo — lobulillos",
+  "queries": [
+   "lobule of testis",
+   "testis lobule"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_a63b2980cc45cf",
+  "name": "Próstata — istmo",
+  "queries": [
+   "isthmus of prostate"
+  ],
+  "uberon": "UBERON:0001329",
+  "matchedText": "isthmus of prostate",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a695aca9cc5cc5",
+  "name": "Vejiga urinaria — cistouretrografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_a7b0050271b88f",
+  "name": "Próstata — cápsula",
+  "queries": [
+   "prostatic capsule",
+   "capsule of prostate gland"
+  ],
+  "uberon": "UBERON:0035316",
+  "matchedText": "prostatic capsule",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a9d6f6521a8565",
+  "name": "Pliegue(s) — rectouterino (uterosacro)",
+  "queries": [
+   "rectouterine fold"
+  ],
+  "uberon": "UBERON:0007136",
+  "matchedText": "rectouterine fold",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ab2a9cfa17ad34",
+  "name": "Vagina — vertical",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_ab45d721429928",
+  "name": "Atlas de anatomía hun — femenino y útero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ad05fbcfd27222",
+  "name": "Próstata — lateral hiperplásico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_ba52d487a0d055",
+  "name": "Útero — cuerpo",
+  "queries": [
+   "body of uterus"
+  ],
+  "uberon": "UBERON:0009853",
+  "matchedText": "body of uterus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c56932b98388e9",
+  "name": "Vejiga urinaria — orientación y soporte",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_c892ea4489a74c",
+  "name": "Testículo — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_ce9ca4726db124",
+  "name": "Próstata — hiperplásico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_d015301e875ee2",
+  "name": "Útero — retraido",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_d159c6cf66f7b1",
+  "name": "Vagina — cuatro quintos superiores",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_d2e305f2e967bc",
+  "name": "Próstata — estroma fibromuscular",
+  "queries": [
+   "fibromuscular stroma of prostate",
+   "anterior fibromuscular stroma of prostate"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_d30740251e2a81",
+  "name": "Útero",
+  "queries": [
+   "uterus"
+  ],
+  "uberon": "UBERON:0000995",
+  "matchedText": "uterus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d3afe8e2c08b80",
+  "name": "Úvula — vejiga urinaria",
+  "queries": [
+   "uvula of urinary bladder",
+   "vesical uvula"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_d4147d2a190457",
+  "name": "Testículo — imágenes sagitales de RM",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_d64221cd730d0f",
+  "name": "Atla — vaginal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d75e1026fd13f2",
+  "name": "Testículo — túnica alougínea",
+  "queries": [
+   "tunica albuginea of testis"
+  ],
+  "uberon": "UBERON:0006643",
+  "matchedText": "tunica albuginea of testis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d84de4141b5ce3",
+  "name": "Testículo — apéndice",
+  "queries": [
+   "appendix testis"
+  ],
+  "uberon": "UBERON:0006651",
+  "matchedText": "appendix testis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_dae754fd5eef36",
+  "name": "Atlas de anatomía hum — vaginal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_dec5eff57648fb",
+  "name": "Fondo de saco — uterovesical",
+  "queries": [
+   "vesicouterine pouch",
+   "uterovesical pouch"
+  ],
+  "uberon": "UBERON:0011049",
+  "matchedText": "vesicouterine pouch",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e6895d881d33e2",
+  "name": "Recto — in situ",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_ec8cfbc8dfa93f",
+  "name": "Vejiga urinaria — imágenes sagitales de RM",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_efebff03655782",
+  "name": "Recto — terminacion",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_f28cbab11183e2",
+  "name": "Vejiga urinaria — úvula",
+  "queries": [
+   "uvula of urinary bladder",
+   "vesical uvula"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_f7860c5d958bad",
+  "name": "Sección transversal — testículo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+ },
+ {
+  "netterId": "ENT_36ba3448ebd270",
+  "name": "Plexo — venoso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3c5668815cbfe6",
+  "name": "Plexo — iliaco — comun",
+  "queries": [
+   "common iliac plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_4658da93a5b687",
+  "name": "Plexo — gástrico",
+  "queries": [
+   "gastric plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_51f2cca1c294d2",
+  "name": "Atla — plexo venoso rectal interno",
+  "queries": [
+   "internal rectal venous plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_5fed92a4f3b6db",
+  "name": "Plexo — perianal — externo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_7df13128d79103",
+  "name": "Plexo — pélvico",
+  "queries": [
+   "pelvic plexus",
+   "inferior hypogastric plexus"
+  ],
+  "uberon": "UBERON:0002014",
+  "matchedText": "pelvic plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7ee1cfdcce9c8d",
+  "name": "Plexo — comunicación perimuscular e interno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_861f19698fab38",
+  "name": "Plexo — perianal — interno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_8c8816a2ea90cf",
+  "name": "Plexo — conducto deferente",
+  "queries": [
+   "deferential plexus",
+   "plexus of ductus deferens"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_8e55b214b19aef",
+  "name": "Plexo — uretérico",
+  "queries": [
+   "ureteric plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_9d2598415d3746",
+  "name": "Plexo — ovárico",
+  "queries": [
+   "ovarian plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_bc54ed05657c7f",
+  "name": "Plexo — frénico",
+  "queries": [
+   "phrenic plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_d16e9decea969d",
+  "name": "Plexo — prevesical",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d22d7f7869f9c5",
+  "name": "Plexo — venoso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_111fdfffe9616b",
+  "name": "Pelvis — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_156c78867cbfed",
+  "name": "Isquion — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_22fa0c54029aef",
+  "name": "Sinfisis pubis — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_30bdee53c34297",
+  "name": "Articulación(es) — radiografia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_34a4a5925b0063",
+  "name": "Periné — disección — profunda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_3be0f121189306",
+  "name": "radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_3fb39720a988f5",
+  "name": "Espina — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_42cf21d6371bbe",
+  "name": "Trocánter — menor, radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_440a2faae6dc25",
+  "name": "Periné — disección superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_481598856d162f",
+  "name": "Abertura — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_49e4a37cb41176",
+  "name": "Acetábulo — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_549a2f1b2fc82e",
+  "name": "Orificio (cont — pelvis, radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_62d9f908459611",
+  "name": "Trocánter — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_6598c0ec14d8d2",
+  "name": "Abertura lateral (agujero de Luschka) — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_6a48e95d639fec",
+  "name": "Periné — disección — superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_8428f8a8838086",
+  "name": "Ángulo — subpúbico, radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_914853af5379c2",
+  "name": "Fémur — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_94877b58ebba4d",
+  "name": "Tuberosidad — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_9dd7f21f6636fd",
+  "name": "Resonancia magnética (RM) — pelvis",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_a73f9d0c3e473c",
+  "name": "Sacro (S1-5) — radiografia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_acdfe995752fca",
+  "name": "Colon — aire radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_c8b591caf8da24",
+  "name": "Atla — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_cc42d2aa9490ff",
+  "name": "Radiografía — pelvis masculina y femenina",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_e7691a99910bff",
+  "name": "Sacro (S1-5) — ala, radiografia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_fe7e8339fd2889",
+  "name": "Exploraciones pelvis",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_2bdf16144ec10b",
+  "name": "Tendon — obturador interno",
+  "queries": [
+   "tendon of obturator internus"
+  ],
+  "uberon": "UBERON:0034988",
+  "matchedText": "tendon of obturator internus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_045f838772e424",
+  "name": "Vasos — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_0d23ee4295c318",
+  "name": "Vasos — profundos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_0fcd213cf06245",
+  "name": "Vasos — internos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_2086b9a6fc7d3b",
+  "name": "Vasos — femorales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_2c78f0ff29d341",
+  "name": "Vasos — comunes",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_57f657183feeba",
+  "name": "Vasos — ováricos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_6e822761effb90",
+  "name": "Vasos — cordón espermático",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_6f14d384a469f7",
+  "name": "Vasos — ramas tubáricas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_88b5a8024b7a4d",
+  "name": "Vasos — externos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_a4e60b77eb0270",
+  "name": "Vasos — masculinos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_b33603f58911b7",
+  "name": "Vasos — superficiales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_c349de786904f7",
+  "name": "Vasos — pelvis y genitales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_e0b969a45ab539",
+  "name": "Vasos — periné femenino",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_fc622fec7b5cb5",
+  "name": "Vasos — profundos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_4abe51166219e3",
+  "name": "Recto — venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+ },
+ {
+  "netterId": "ENT_8895c67fcac466",
+  "name": "Atlas de anatomía hur — vena pudenda interna",
+  "queries": [
+   "internal pudendal vein"
+  ],
+  "uberon": "UBERON:0018252",
+  "matchedText": "internal pudendal vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c78e72f3d3ef11",
+  "name": "Vena(s) — perineal",
+  "queries": [
+   "perineal vein"
+  ],
+  "uberon": "UBERON:0001362",
+  "matchedText": "perineal vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d5074a53d23781",
+  "name": "Pene — vena — lateral superficial",
+  "queries": [
+   "superficial lateral vein of penis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+ },
+ {
+  "netterId": "ENT_e990255663895c",
+  "name": "Clítoris — vena dorsal profunda",
+  "queries": [
+   "deep dorsal vein of clitoris"
+  ],
+  "uberon": "UBERON:0006690",
+  "matchedText": "deep dorsal vein of clitoris",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ }
+]

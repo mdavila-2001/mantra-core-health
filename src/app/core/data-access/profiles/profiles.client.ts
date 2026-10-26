@@ -362,9 +362,9 @@ export class ProfilesClient {
    * No crea nada todavía: a esa cuenta le llega una notificación y el vínculo
    * nace recién cuando la acepta. `404` es «no hay cuenta con ese CI».
    *
-   * La publica la API desde mdavila-2001/mantra-core-health-api#493 **sólo con
-   * `nationalId`**: `patientProfileId` lo entiende hoy el simulador de
-   * `mockup`, y queda pendiente en la API junto con la búsqueda por nombre.
+   * La publica la API desde mdavila-2001/mantra-core-health-api#493, con
+   * `nationalId` o con el `patientProfileId` que devuelve la búsqueda por
+   * nombre (`dependent-candidates`).
    */
   requestDependentLink(target: DependentLinkTarget): Observable<DependentLinkRequestSent> {
     return this.http.post<DependentLinkRequestSent>(
@@ -378,8 +378,7 @@ export class ProfilesClient {
    * coincide con lo escrito.
    *
    * Devuelve pocas (el servidor tope), con el CI enmascarado, y nada por debajo
-   * de tres letras: es una búsqueda de personas, no un listado. **Pendiente en
-   * la API**; hoy la responde el simulador de `mockup`.
+   * de tres letras: es una búsqueda de personas, no un listado.
    */
   searchDependentCandidates(query: string): Observable<readonly DependentCandidate[]> {
     return this.http
@@ -581,9 +580,12 @@ export class ProfilesClient {
       readonly lastName: string;
       readonly motherLastName: string;
       readonly birthDate: string;
-      /* P28: el sexo al nacer y el departamento emisor se corrigen; el número
-         del documento no (tiene su circuito de verificación). */
+      /* P28: el sexo al nacer, el departamento emisor y el número del
+         documento se corrigen. El número sólo mientras la identidad no está
+         verificada (`identityVerified`): si no, la API responde 409
+         `NATIONAL_ID_LOCKED_BY_VERIFIED_IDENTITY`. No se puede vaciar. */
       readonly sexAtBirth: BirthSexCode;
+      readonly nationalId: string;
       readonly issuerAdministrativeAreaConceptId: string;
       readonly phone: string;
       /* Los cinco contactos que el alta declara por separado. El correo de
@@ -618,12 +620,12 @@ export class ProfilesClient {
          títulos. `[]` quita el último. Hasta el 02/10/2026 el perfil los leía
          (`OwnPractitionerProfile.languages`) y nadie los escribía.
 
-         VERIFICADO CONTRA EL DTO (09/10/2026, informe B C13):
-         `UpdateOwnPractitionerProfileDto` de `origin/dev` NO declara
-         `languages` ni `insuranceBillingFrequency`, y valida con
-         `forbidNonWhitelisted`. Son extensiones de la maqueta
-         (`PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS`): contra la API real no
-         viajan, y si el `PATCH` no tenía otra cosa el error nombra qué falta. */
+         `UpdateOwnPractitionerProfileDto` declara `languages` con esta misma
+         forma y la reemplaza entera (`MAX_PRACTITIONER_LANGUAGES`). La que
+         sigue sin declarar es `insuranceBillingFrequency`, extensión de la
+         maqueta (`PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS`): contra la API
+         real no viaja, y si el `PATCH` no tenía otra cosa el error nombra qué
+         falta. */
       readonly languages: readonly PractitionerLanguage[];
     }>,
   ): Observable<OwnPractitionerProfile> {
@@ -874,7 +876,7 @@ export class ProfilesClient {
    * Sin `profileId`: el sujeto sale de la sesión, como el resto del
    * autoservicio. Hasta el 13/09/2026 `isPrimary` sólo podía fijarse al
    * agregar, así que una especialidad cargada después del alta quedaba
-   * adicional para siempre; ver `docs/progress/BLOCKERS.md`.
+   * adicional para siempre.
    *
    * Es idempotente: marcar la que ya lo es devuelve la misma especialidad.
    *
@@ -946,12 +948,9 @@ export class ProfilesClient {
      propietario el 13/09/2026: «que en la tabla se pueda eliminar registros,
      editar registros o descargar elementos».
 
-     **De los cinco, sólo `removeOwnCredential` existe hoy en la API.** Los
-     otros cuatro los atiende el simulador de la rama `mockup` —que es el
-     backend de esta rama, `mockBackend: true` fijo— y están escritos con la
-     forma REST que le toca a cada recurso, para que publicarlos del lado del
-     servidor no obligue a tocar la pantalla. El hueco queda anotado en
-     `docs/progress/BLOCKERS.md`, no escondido acá. */
+     Los cinco existen en la API (`PATCH`/`DELETE` de títulos, especialidades
+     y matrículas propias, sólo mientras siguen pendientes de verificación) y
+     el simulador de `mockup` los atiende con la misma forma. */
 
   /**
    * `PATCH /profiles/practitioners/me/credentials/:id` — corrige un título

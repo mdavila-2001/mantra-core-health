@@ -838,3 +838,91 @@ describe('las rutas de alta pública', () => {
     expect(rutaDe('auth/register/practitioner')?.data?.['tipoDeCuenta']).toBeUndefined();
   });
 });
+
+/**
+ * El portal de plataforma se mudó a «Superadministración» (17/10/2026).
+ *
+ * Las direcciones viejas están en favoritos y en el historial de quien ya
+ * entró, así que tienen que seguir sirviendo: terminan en la nueva y no se
+ * llevan puesto ni el identificador de la ficha ni el query que traían. Sin
+ * guards, por lo mismo que «Mis puntos»: `redirectTo` se resuelve antes que
+ * cualquier guard, y qué ve cada rol lo decide la ruta de destino.
+ */
+describe('la mudanza del portal de plataforma a «Superadministración»', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  /** Navega y devuelve la ruta y el query donde terminó. */
+  async function terminaEn(url: string): Promise<{ ruta: string; query: Record<string, unknown> }> {
+    const ok = await router.navigateByUrl(url);
+    expect(ok, url).not.toBe(false);
+    return {
+      ruta: location.path().split('?')[0] ?? '',
+      query: { ...router.parseUrl(location.path()).queryParams },
+    };
+  }
+
+  it('la sección redirigida conserva también el fragmento (#ancla)', async () => {
+    await router.navigateByUrl('/administration/data-catalog?schema=iam#tabla');
+    expect(location.path(true)).toBe('/superadmin/data-catalog?schema=iam#tabla');
+  });
+
+  it.each([
+    ['/administration/data-catalog', '/superadmin/data-catalog'],
+    ['/administration/web-analytics', '/superadmin/web-analytics'],
+    ['/administration/qa-lab', '/superadmin/qa-lab'],
+    ['/administration/operations', '/superadmin/operations'],
+  ])('la sección %s termina en %s y conserva el query', async (vieja, nueva) => {
+    expect(await terminaEn(`${vieja}?pestana=1&q=cardiolog%C3%ADa`)).toEqual({
+      ruta: nueva,
+      query: { pestana: '1', q: 'cardiología' },
+    });
+  });
+
+  it('la ficha del catálogo conserva el identificador y el query', async () => {
+    expect(await terminaEn('/administration/data-catalog/abc-123?pestana=2')).toEqual({
+      ruta: '/superadmin/data-catalog/abc-123',
+      query: { pestana: '2' },
+    });
+  });
+
+  it('el plan de QA conserva el identificador', async () => {
+    expect(await terminaEn('/administration/qa-lab/plans/p-9')).toEqual({
+      ruta: '/superadmin/qa-lab/plans/p-9',
+      query: {},
+    });
+  });
+
+  it('`/superadmin` abre la portada del dominio: Observabilidad', async () => {
+    expect(await terminaEn('/superadmin')).toEqual({
+      ruta: '/superadmin/observability',
+      query: {},
+    });
+  });
+
+  it('las rutas nuevas llevan el guard de rol y las viejas no (un redirect no admite guard)', () => {
+    const armazon = routes.find(
+      (r) => r.path === '' && r.component !== undefined && r.children !== undefined,
+    );
+    const hijas = armazon?.children ?? [];
+
+    for (const path of ['superadmin/data-catalog/:objectId', 'superadmin/qa-lab/plans/:planId']) {
+      const ruta = hijas.find((r) => r.path === path);
+
+      expect(ruta, path).toBeDefined();
+      expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
+    }
+    for (const path of ['administration/data-catalog/:objectId', 'administration/qa-lab/plans/:planId']) {
+      const ruta = hijas.find((r) => r.path === path);
+
+      expect(ruta?.redirectTo, path).toBeDefined();
+      expect(ruta?.canActivate, path).toBeUndefined();
+    }
+  });
+});

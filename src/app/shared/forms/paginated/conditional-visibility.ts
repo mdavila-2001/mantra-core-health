@@ -12,6 +12,9 @@
  *   de arriba;
  * - si el padre es de varias respuestas (una lista), basta con que la incluya;
  * - si `equals` es una lista, basta con que coincida uno de sus valores;
+ * - con `filled` el campo se ve en cuanto el padre tiene **cualquier** valor
+ *   (ni `null`, ni vacío): es lo que pone la calle debajo de una localidad ya
+ *   elegida, donde el padre es un identificador que no se puede enumerar;
  * - si el padre no está entre los campos, la condición se ignora y el campo se
  *   ve: perder una condición es preferible a esconder una pregunta para
  *   siempre.
@@ -23,7 +26,10 @@
 /** La condición, por la clave con la que se lee el valor del padre. */
 export interface ConditionVisible {
   readonly key: string;
-  readonly equals: string | boolean | readonly (string | boolean)[];
+  /** El valor (o los valores) que muestran el campo. Se ignora si hay `filled`. */
+  readonly equals?: string | boolean | readonly (string | boolean)[];
+  /** Muestra el campo cuando el padre tiene algún valor, sea cual sea. */
+  readonly filled?: boolean;
 }
 
 /** Lo mínimo que esta función necesita saber de un campo. */
@@ -33,10 +39,21 @@ export interface ConditionalField {
 }
 
 /** Si un valor contestado cumple la condición. */
-export function conditionMeets(valor: unknown, equals: ConditionVisible['equals']): boolean {
+export function conditionMeets(
+  valor: unknown,
+  equals: NonNullable<ConditionVisible['equals']>,
+): boolean {
   const esperados: readonly unknown[] = Array.isArray(equals) ? equals : [equals];
   const respuestas: readonly unknown[] = Array.isArray(valor) ? valor : [valor];
   return esperados.some((esperado) => respuestas.includes(esperado));
+}
+
+/** Si el valor del padre cumple la condición completa, `filled` incluido. */
+function conditionHolds(valor: unknown, condicion: ConditionVisible): boolean {
+  if (condicion.filled === true) {
+    return valor !== null && valor !== undefined && valor !== '' && valor !== false;
+  }
+  return condicion.equals === undefined || conditionMeets(valor, condicion.equals);
 }
 
 /**
@@ -63,7 +80,7 @@ export function hiddenFields(
     if (condicion !== undefined && padre !== undefined && !camino.has(padre.key)) {
       resultado =
         visible(padre, new Set([...camino, campo.key])) &&
-        conditionMeets(valorDe(condicion.key), condicion.equals);
+        conditionHolds(valorDe(condicion.key), condicion);
     }
     memo.set(campo.key, resultado);
     return resultado;

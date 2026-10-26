@@ -1,6 +1,7 @@
 /* ============================================================================
-    CM-11 · alta de centro médico y configuración de su práctica y sede, en un
-    navegador, contra la **maqueta**.
+    CM-11 · alta de organización médica y configuración de su práctica y sede,
+    en un navegador, contra la **maqueta**. Contra la API real, con el tipo de
+    institución por caso: `cm-11-organizacion-medica-api-real.spec.ts`.
 
     Cubre lo que `visual-quality-gate` pide para una pantalla nueva: el recorrido
     completo, sin desborde horizontal, a ancho de escritorio y de teléfono. Las
@@ -78,12 +79,13 @@ for (const view of VIEWPORTS) {
   test.describe(`centro médico · ${view.label}`, () => {
     test.use({ viewport: { width: view.width, height: view.height } });
 
-    test('la tarjeta «Centro médico» está en el selector de organizaciones', async ({ page }) => {
-      await page.goto('/auth/register/organization-type', { waitUntil: 'domcontentloaded' });
+    test('la tarjeta «Organización médica» está en el selector de cuentas', async ({ page }) => {
+      await page.goto('/auth/register', { waitUntil: 'domcontentloaded' });
       await esperarAplicacionLista(page);
       const tarjeta = page.getByTestId('account-type-medical-center');
       await expect(tarjeta).toBeVisible();
       await expect(tarjeta).toHaveAttribute('href', '/auth/register/medical-center');
+      await expect(tarjeta).toContainText('Organización médica');
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-01-organization-type-selector`);
     });
@@ -97,22 +99,25 @@ for (const view of VIEWPORTS) {
       await page.goto('/auth/register/medical-center', { waitUntil: 'domcontentloaded' });
       await esperarAplicacionLista(page);
       await expect(
-        page.getByRole('heading', { level: 1, name: 'Registre su centro médico' }),
+        page.getByRole('heading', { level: 1, name: 'Registre su organización médica' }),
       ).toBeVisible();
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-02-signup-page-1-empty`);
 
-      // Página 1 · el centro. Sin completar, «Siguiente» no avanza.
+      // Página 1 · la organización. Sin completar, «Siguiente» no avanza.
       await page.getByTestId('paginated-form-continuar').click();
       await expect(page.getByTestId('medical-center-signup-legal-name')).toBeVisible();
       await foto(page, `${view.label}-03-signup-page-1-errors`);
 
-      await escribir(page, 'medical-center-signup-legal-name', `Centro Médico Norte ${Date.now()}`);
-      await page
-        .getByTestId('medical-center-signup-legal-entity-type')
-        .locator('xpath=self::select | .//select')
-        .first()
-        .selectOption({ index: 1 });
+      await expect(page.getByText('Elija el tipo de institución.')).toBeVisible();
+
+      const tipo = page.getByTestId('medical-center-signup-tenant-type');
+      await tipo.getByText('Clínica', { exact: true }).click();
+      await expect(tipo.getByRole('radio', { name: 'Clínica', exact: true })).toBeChecked();
+      await escribir(page, 'medical-center-signup-legal-name', `Clínica Norte ${Date.now()}`);
+      // `app-select` es un combobox propio que abre un `<dialog>`, no un `<select>` nativo.
+      await page.getByTestId('medical-center-signup-legal-entity-type').getByRole('combobox').click();
+      await page.locator('dialog.select-dialog[open]').getByRole('option').nth(1).click();
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-04-signup-page-1-filled`);
       await page.getByTestId('paginated-form-continuar').click();

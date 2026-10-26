@@ -14,10 +14,8 @@ import { servicesBlocks, type HistoryService } from './history-received-services
     **si dos carriles coinciden en una función, cada uno agrega la suya y C8
     unifica**. Meter dos manos en `bloquesDeHistoria` produce un conflicto de
     merge sobre un generador de documentos clínicos, que es el peor sitio donde
-    resolver un conflicto a mano.
-
-    // TODO C8: fundir estas dos secciones dentro de `bloquesDeHistoria` cuando
-    // C5 haya aterrizado, y dejar un solo `downloadHistoryPdf`.
+    resolver un conflicto a mano. Las dos secciones se insertan en los bloques
+    de `bloquesDeHistoria` por el nombre de la sección, no por posición.
 
     ## Todo llega ya en palabras
 

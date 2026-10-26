@@ -196,8 +196,8 @@ export interface BookingInsuranceClaim {
  * registro posterior, así que se puede citar de nuevo a alguien desde una cita
  * que todavía no abrió su consulta.
  *
- * Contrato compartido de C0/C4; la persistencia y lectura reales de este
- * vínculo siguen pendientes de backend P42. El simulador conserva el origen.
+ * Contrato compartido de C0/C4; la API lo persiste y lo devuelve en la
+ * lectura de la cita (P42).
  */
 export interface FollowUpOrigin {
   /** La reserva de la que nace esta reconsulta. */
@@ -206,7 +206,7 @@ export interface FollowUpOrigin {
   readonly encounterId: string | null;
   /**
    * La respuesta del formulario médico de esa consulta de la que sale la
-   * reconsulta. En la cita es obligatoria; pendiente de backend (P43).
+   * reconsulta. En la cita es obligatoria (P43).
    */
   readonly formInstanceId?: string;
 }
@@ -225,8 +225,7 @@ export interface FollowUpOrigin {
  * Ausente o `null` es un estado corriente: la cita de origen puede haber
  * quedado sin cupo. Ahí el sello va solo, sin la frase.
  *
- * Pendiente de backend **P42**: la lectura tiene que resolverlo en
- * `BookingItemDto`. Hoy sólo lo sirve el simulador.
+ * La API lo resuelve en `BookingItemDto` (`followUpOf`, P42).
  */
 export interface FollowUpOriginRef extends FollowUpOrigin {
   readonly startAt?: Date | null;
@@ -639,16 +638,16 @@ export interface NewScheduleTemplate {
   /**
    * Horario flexible: la plantilla declara cuándo se atiende, pero **no lo
    * corta en turnos fijos** — el paciente pide la hora que quiera dentro de la
-   * franja (propietario, 18/09).
+   * franja (propietario, 18/09; P36).
    *
-   * **Todavía no existe en la API real** (P36 de `PENDIENTES-BACKEND.md`): hoy
-   * sólo lo entiende el simulador de `mockup`. Ausente ≡ turnos fijos.
+   * Con `true`, las franjas no llevan `slotMinutes`, `gapMinutes` ni
+   * `capacityPerSlot` (la API responde 422 si vienen) y `slotMinutes` de la
+   * plantilla es **lo que se reserva por paciente**. Generar cupos no crea
+   * ninguno: las horas se leen con {@link FlexibleAvailability} y el cupo nace
+   * al retener ({@link FlexibleHold}). Ausente ≡ turnos fijos.
    */
   readonly flexibleHours?: boolean;
 }
-/** Claves de {@link NewScheduleTemplate} que el DTO real no declara (P36): sólo van a la maqueta. */
-export const SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS: readonly string[] = ['flexibleHours'];
-
 
 export interface ScheduleTemplateCreated {
   readonly id: string;
@@ -656,6 +655,8 @@ export interface ScheduleTemplateCreated {
   /** Franjas creadas. */
   readonly ruleCount: number;
   readonly statusConceptId: string;
+  /** Horario flexible, tal como quedó publicado (P36). */
+  readonly flexibleHours?: boolean;
 }
 
 /** Cuerpo de `POST /scheduling/templates/:id/generate-slots` (UC-41-03). */
@@ -674,6 +675,11 @@ export interface SlotsGenerated {
   readonly templateId: string;
   readonly created: number;
   readonly skipped: number;
+  /**
+   * Turnos que no se generaron porque pisaban un compromiso del profesional: una
+   * cita viva —la que el retiro del horario anterior conservó— o tiempo ocupado.
+   */
+  readonly omittedByCommitments?: number;
 }
 
 /**
@@ -690,13 +696,7 @@ export interface SlotsGenerated {
  * no para dibujar la pantalla.
  */
 export type AvailabilityExceptionType =
-  | 'ABSENCE'
-  | 'HOLIDAY'
-  | 'VACATION'
-  | 'CONFERENCE'
-  | 'ERRAND'
-  | 'EXTRA'
-  | 'OTHER';
+  'ABSENCE' | 'HOLIDAY' | 'VACATION' | 'CONFERENCE' | 'ERRAND' | 'EXTRA' | 'OTHER';
 export const AVAILABILITY_EXCEPTION_TYPES: readonly AvailabilityExceptionType[] = [
   'ABSENCE',
   'HOLIDAY',
@@ -777,12 +777,30 @@ export interface AvailabilityExceptionUpdated {
   readonly blockedSlots: number;
 }
 
+/**
+ * Una cita que un bloqueo alcanza, tal como la API la lista en el 422/409 de
+ * «hay citas: confirme» (`failureCode: BOOKINGS_REQUIRE_CONFIRMATION`).
+ */
+export interface AffectedBooking {
+  readonly bookingId: string;
+  readonly startAt: string;
+  readonly endAt: string;
+  readonly patientName: string | null;
+  /** Solicitud sin responder: se rechaza en vez de cancelarse. */
+  readonly pending: boolean;
+}
+
 /** Cuerpo de `POST /scheduling/resources/:id/close-slots`. */
 export interface CloseSlotsRequest {
   readonly exceptionType: AvailabilityExceptionType;
   readonly reason?: string;
   /** Al menos uno: no hay «cerrar todos» a propósito. */
   readonly slotIds: readonly string[];
+  /**
+   * La persona ya vio las citas de esos cupos y confirmó cancelarlas. Sin
+   * esto, un cupo con paciente responde 409 con `affectedBookings`.
+   */
+  readonly cancelAffectedBookings?: boolean;
 }
 
 export interface SlotsClosed {
@@ -791,6 +809,8 @@ export interface SlotsClosed {
   readonly exceptionId: string;
   readonly from: string;
   readonly to: string;
+  /** Citas canceladas al cerrar, con aviso a cada paciente. */
+  readonly cancelledBookings: number;
 }
 
 export interface AvailabilityExceptionTypeList {
@@ -805,12 +825,19 @@ export interface NewAvailabilityException {
   readonly reason?: string;
   /** `true` cuando la excepción **añade** disponibilidad extraordinaria. */
   readonly isAvailable?: boolean;
+  /**
+   * La persona ya vio las citas que el bloqueo alcanza y confirmó. Sin esto,
+   * un rato con citas responde 422 con `affectedBookings` y no bloquea.
+   */
+  readonly cancelAffectedBookings?: boolean;
 }
 
 export interface AvailabilityExceptionCreated {
   readonly id: string;
   /** Slots libres que quedaron bloqueados por la excepción. */
   readonly blockedSlots: number;
+  /** Citas canceladas por el bloqueo, con aviso a cada paciente. */
+  readonly cancelledBookings: number;
 }
 
 /* ==========================================================================
@@ -923,9 +950,35 @@ export interface RetiredTemplate {
    * Cupos conservados por tener una cita detrás.
    *
    * Distinto de cero **no es un error**: es el historial que el retiro respeta
-   * a propósito, y la pantalla tiene que decirlo en vez de callarlo.
+   * a propósito, y la pantalla tiene que decirlo en vez de callarlo. Quedan
+   * cerrados: sostienen su cita, pero el horario retirado no los vuelve a
+   * ofrecer (P23).
    */
   readonly keptSlots: number;
+  /** Citas confirmadas o presentadas que siguen vivas en los cupos conservados. */
+  readonly liveBookings: number;
+  /** Ids (nunca nombres) de esas citas, hasta un tope. */
+  readonly liveBookingIds: readonly string[];
+  /** Hay más citas vivas que las listadas en `liveBookingIds`. */
+  readonly truncated: boolean;
+  /**
+   * Citas canceladas por el retiro, con aviso a cada paciente. Mayor que 0
+   * sólo cuando se retiró con `affectedBookings: 'cancel'` (24/10/2026).
+   */
+  readonly cancelledBookings?: number;
+}
+
+/**
+ * `GET /scheduling/templates/:id/live-bookings`: las citas vivas de un
+ * horario, la vista previa que se muestra antes de retirarlo.
+ */
+export interface TemplateLiveBookings {
+  readonly templateId: string;
+  readonly total: number;
+  /** Las que un retiro con cancelación cancelaría (o rechazaría, si están pendientes). */
+  readonly bookings: readonly AffectedBooking[];
+  /** Pacientes ya recibidos: el retiro con cancelación no procede mientras estén. */
+  readonly present: readonly AffectedBooking[];
 }
 
 /** Una plantilla publicada, con sus franjas. */
@@ -1029,7 +1082,7 @@ export interface NewDirectAppointment {
    * **Ausente es una cita puntual corriente**, que es lo que agendan
    * `appointment-new` y el mostrador: los rechazos propios de la reconsulta
    * —403, 404, 422 y 409— sólo corren cuando este campo viaja.
-   * El simulador asigna `APT-RECONSULTA`; la escritura real depende de P42.
+   * El simulador asigna `APT-RECONSULTA`; la API guarda el vínculo (P42).
    */
   readonly followUpOf?: FollowUpOrigin;
 }
@@ -1262,4 +1315,57 @@ export interface ServiceHold {
   readonly endAt: Date;
   /** Cupos de consulta que este turno retiró de la agenda del profesional. */
   readonly retractedSlots: number;
+}
+
+/* ---- horario flexible, sin turnos fijos (P36) ---------------------------- */
+
+/** Query de `GET /scheduling/resources/:id/flexible-availability`. */
+export interface FlexibleAvailabilityQuery {
+  readonly from: Date;
+  readonly to: Date;
+}
+
+/** Una hora que se puede pedir en un horario flexible. */
+export interface FlexibleStart {
+  /** La plantilla flexible que la ofrece. */
+  readonly templateId: string;
+  readonly startAt: Date;
+  /** Hasta cuándo se reserva: inicio más el tiempo por paciente. */
+  readonly endAt: Date;
+}
+
+/**
+ * Las horas libres del horario flexible de una agenda.
+ *
+ * Vacía si la agenda no publicó un horario flexible: sus turnos son fijos y se
+ * leen con `listSlots`. Es una lectura: retener la vuelve a decidir.
+ */
+export interface FlexibleAvailability {
+  readonly resourceId: string;
+  /** Cada cuántos minutos se ofrece una hora. */
+  readonly stepMinutes: number;
+  readonly items: readonly FlexibleStart[];
+}
+
+/** Lo que pide retener una hora de un horario flexible. */
+export interface NewFlexibleHold {
+  readonly startAt: Date;
+  readonly patientProfileId?: string;
+}
+
+/**
+ * La retención de una hora de un horario flexible.
+ *
+ * Se confirma con las mismas rutas que una consulta (`confirmHold` /
+ * `requestHold`): el cupo que nace al retener es una reserva más.
+ */
+export interface FlexibleHold {
+  readonly id: string;
+  /** Token de un solo uso. Se entrega una sola vez. */
+  readonly holdToken: string;
+  readonly expiresAt: Date;
+  /** El cupo que nació para esta hora. */
+  readonly bookableSlotId: string;
+  readonly startAt: Date;
+  readonly endAt: Date;
 }

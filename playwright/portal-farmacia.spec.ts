@@ -7,7 +7,7 @@
     la lista releída, no en un aviso.
 
     Con `--workers=1`. Antes de correrlo hay que tener `ng serve` en :4200.
-    Las capturas van a `docs/trabajo/2026-09-29-farmacia-cuenta/evidencia/B/`.
+    Las capturas van a `artifacts/evidencia/2026-09-29-farmacia-cuenta/evidencia/B/`.
     ========================================================================== */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -20,7 +20,7 @@ import { entrar, irA } from './support/sesion';
 
 const EVIDENCIA = process.env['E2E_EVIDENCE_DIR']
   ? join(process.env['E2E_EVIDENCE_DIR'], 'pharmacy')
-  : join('docs', 'trabajo', '2026-09-29-farmacia-cuenta', 'evidencia', 'B');
+  : join('artifacts', 'evidencia', '2026-09-29-farmacia-cuenta', 'evidencia', 'B');
 
 /** Los ocho renglones del menú de la farmacia, en el orden que pidió el propietario. */
 const MENU = [

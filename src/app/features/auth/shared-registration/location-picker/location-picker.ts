@@ -1,4 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  PLATFORM_ID,
+  computed,
+  effect,
+  inject,
+  input,
+  model,
+  signal,
+} from '@angular/core';
 
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { Select as AppSelect } from '../../../../shared/components/atoms/select/select';
@@ -6,6 +17,13 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { DepartmentMap, type DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 import type { PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
+import { CARGADOR_DE_PROVINCIAS } from '@shared/components/organisms/map/provinces';
+import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
+import {
+  findOutline,
+  provinceOfMunicipality,
+  type LocalityDetail,
+} from '@shared/geo/locality-detail';
 
 /**
  * «¿En qué localidad?»: el mapa de departamentos y el select de municipio.
@@ -48,7 +66,7 @@ import type { PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
  */
 @Component({
   selector: 'app-location-picker',
-  imports: [DepartmentMap, AppSelect, FormField],
+  imports: [DepartmentMap, AppSelect, AppInput, FormField],
   templateUrl: './location-picker.html',
   styleUrl: './location-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,6 +111,19 @@ export class LocationPicker {
 
   /** Prefijo de los `data-testid` de las dos partes. */
   readonly testId = input('location');
+
+  /**
+   * Si al elegir la localidad se dibuja la ficha con lo que se deduce de ella:
+   * departamento, provincia y municipio, ya llenos.
+   *
+   * Es de las altas —donde el mapa va primero y el resto del domicilio se
+   * escribe **después** de ubicarse—. La ficha del médico monta este mismo
+   * control sólo para mirar y no la pide.
+   */
+  readonly ficha = input(false);
+
+  /** Rótulo de la ficha, para que cada alta diga de qué lugar habla. */
+  readonly fichaTitulo = input('Su ubicación');
 
   /**
    * El lugar exacto, si quien monta el control lo tiene (el punto que se
@@ -169,6 +200,82 @@ export class LocationPicker {
     const rama = this.ramas().find((r) => r.conceptId === departamento);
     if (rama === undefined) return [];
     return rama.municipios.map((m) => ({ value: m.conceptId, label: m.nombre }));
+  });
+
+  private readonly cargadorDeProvincias = inject(CARGADOR_DE_PROVINCIAS);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /** La provincia ya deducida, por municipio. `undefined` es «todavía no». */
+  private readonly provincias = signal<ReadonlyMap<string, string | null>>(new Map());
+
+  constructor() {
+    // La provincia no está en el catálogo: se deduce del dibujo, que se baja
+    // la primera vez que hace falta (los contornos pesan ~107 kB y el mapa ya
+    // los pide por su cuenta, así que el módulo se comparte).
+    effect(() => {
+      const elegido = this.value();
+      const sigla = this.rama()?.sigla;
+      const municipio = this.municipio();
+      if (!this.ficha() || !this.isBrowser) return;
+      if (elegido === null || sigla === undefined || municipio === null) return;
+      if (this.provincias().has(elegido)) return;
+      void this.deducirProvincia(elegido, sigla, municipio.ine, municipio.nombre);
+    });
+  }
+
+  private async deducirProvincia(
+    conceptId: string,
+    sigla: string,
+    ine: string,
+    nombre: string,
+  ): Promise<void> {
+    const [geometria, provincias] = await Promise.all([
+      import('@shared/components/organisms/department-map/bolivia-municipalities.geometry'),
+      this.cargadorDeProvincias(),
+    ]);
+    const contorno = findOutline(geometria.CONTORNOS_DE_MUNICIPIOS, sigla, ine, nombre);
+    const provincia = provinceOfMunicipality(
+      provincias,
+      contorno,
+      geometria.PROYECCION_DE_BOLIVIA,
+    );
+    this.provincias.update((previas) => new Map(previas).set(conceptId, provincia));
+  }
+
+  /** La rama (departamento) del municipio elegido, o `null`. */
+  private readonly rama = computed<RamaDepartamento | null>(() => {
+    const elegido = this.value();
+    if (elegido === null) return null;
+    return this.ramas().find((r) => r.municipios.some((m) => m.conceptId === elegido)) ?? null;
+  });
+
+  private readonly municipio = computed(() => {
+    const elegido = this.value();
+    return this.rama()?.municipios.find((m) => m.conceptId === elegido) ?? null;
+  });
+
+  /**
+   * Lo que la ficha muestra: departamento y municipio salen del catálogo y la
+   * provincia, del dibujo. `null` mientras no hay localidad.
+   *
+   * `provincia: undefined` no existe en el tipo: mientras se deduce, la ficha
+   * muestra «Buscando…» (ver {@link provinciaPendiente}) y no un hueco.
+   */
+  protected readonly detalle = computed<LocalityDetail | null>(() => {
+    const rama = this.rama();
+    const municipio = this.municipio();
+    if (rama === null || municipio === null) return null;
+    return {
+      departamento: rama.nombre,
+      provincia: this.provincias().get(municipio.conceptId) ?? null,
+      municipio: municipio.nombre,
+    };
+  });
+
+  /** Si la provincia todavía se está deduciendo. */
+  protected readonly provinciaPendiente = computed(() => {
+    const elegido = this.value();
+    return elegido !== null && this.detalle() !== null && !this.provincias().has(elegido);
   });
 
   /**

@@ -60,38 +60,6 @@ Compila en los 25 sitios que usan el botón y **cambia el aspecto de todos**. Ve
 sesión, sin datos, y prerenderizada. Dos capturas —una por tema— cubrirían casi
 todo el sistema de diseño.
 
-## Propuesta
-
-### Con Playwright, que ya haría falta para [E2E](e2e-tests.md)
-
-```ts
-// PROPUESTA, no implementada
-test('vitrina · tema claro', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/design-system');
-  await expect(page).toHaveScreenshot('vitrina-claro.png', { fullPage: true });
-});
-
-test('vitrina · tema oscuro', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/design-system');
-  await expect(page).toHaveScreenshot('vitrina-oscuro.png', { fullPage: true });
-});
-```
-
-**Una sola dependencia cubre E2E y regresión visual.** Es el argumento que decide
-la herramienta.
-
-### Qué capturar, en orden de valor
-
-| # | Superficie | Por qué |
-|---|---|---|
-| 1 | `/design-system`, dos temas | Los 48 componentes de una vez |
-| 2 | `/design-system` con `prefers-reduced-motion` | Verifica que nada quede invisible |
-| 3 | `/auth`, dos temas, dos anchos | La pantalla más vista |
-| 4 | `ViewStateGallery`, los nueve estados | El contrato del M34, visualmente |
-| 5 | `/dashboard` con sesión simulada | La única pantalla autenticada |
-
 ## Las dificultades conocidas
 
 Una suite visual mal montada falla al azar y se termina ignorando:
@@ -107,12 +75,3 @@ Una suite visual mal montada falla al azar y se termina ignorando:
 
 La última es la que hace cara la práctica: sin un flujo claro para aprobar
 capturas nuevas, cada cambio de diseño se vuelve una discusión.
-
-## Estado
-
-`MEDIUM` en [el análisis de brechas](../reports/documentation-gap-analysis.md).
-
-**Sin ella, la métrica «regresiones visuales no aprobadas: 0» del plan maestro no
-se puede verificar.** Está declarado así en
-[el informe final](../reports/final-validation.md): la métrica no se cumple por
-ausencia de instrumento, no por incumplimiento conocido.

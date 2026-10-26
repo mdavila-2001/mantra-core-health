@@ -22,6 +22,9 @@
           <app-badge [variant]="reviewStatus(ficha.reviewStatus).tone" data-testid="object-review-status">
             Ficha: {{ reviewStatus(ficha.reviewStatus).label }} · revisión {{ ficha.currentRevisionNo }}
           </app-badge>
+          @if (esImportada()) {
+            <app-badge variant="warning" data-testid="object-origin">Importado de la bóveda · pendiente de revisión</app-badge>
+          }
           @if (ficha.approvedRevisionNo !== null && !ficha.approvalIsCurrent) {
             <span class="ficha-objeto__nota">
               La revisión {{ ficha.approvedRevisionNo }} estaba aprobada; la vigente todavía no.
@@ -49,18 +52,29 @@
           <app-tab label="Ficha">
             <div class="ficha-objeto__columnas">
               <section aria-label="Justificación de negocio">
-                <h3 class="ficha-objeto__titulo">Justificación</h3>
-                @if (hechosNegocio().length > 0) {
-                  <app-fact-list [hechos]="hechosNegocio()" etiqueta="Justificación de negocio" />
-                  @if (o.annotation?.content?.openQuestions?.length) {
+                @if (esPlantilla()) {
+                  <app-alert tone="warning" title="Texto de plantilla" data-testid="object-template-warning">
+                    Este texto lo generó la bóveda a partir de una plantilla: sirve de borrador, pero no explica por qué existe
+                    esta tabla. Redáctelo antes de enviarlo a revisión.
+                  </app-alert>
+                }
+                @if (o.annotation) {
+                  <h3 class="ficha-objeto__titulo">Negocio</h3>
+                  <app-fact-list [hechos]="hechosNegocio()" etiqueta="Negocio" />
+                  <h3 class="ficha-objeto__titulo">Por qué existe</h3>
+                  <app-fact-list [hechos]="hechosExistencia()" etiqueta="Por qué existe" />
+                  <h3 class="ficha-objeto__titulo">Quién responde</h3>
+                  <app-fact-list [hechos]="hechosGobierno()" etiqueta="Responsables y sensibilidad" />
+                  @if (o.annotation.content.openQuestions.length) {
                     <h4 class="ficha-objeto__subtitulo">Preguntas abiertas</h4>
                     <ul class="ficha-objeto__lista">
-                      @for (q of o.annotation!.content.openQuestions; track q.question) {
+                      @for (q of o.annotation.content.openQuestions; track q.question) {
                         <li>{{ q.question }}@if (q.owner) { — {{ q.owner }} }</li>
                       }
                     </ul>
                   }
                 } @else {
+                  <h3 class="ficha-objeto__titulo">Negocio</h3>
                   <p class="ficha-objeto__vacio">Nadie explicó todavía por qué existe esta tabla.</p>
                 }
                 @if (faltantes().length > 0) {
@@ -68,8 +82,13 @@
                 }
               </section>
               <section aria-label="Hechos técnicos">
-                <h3 class="ficha-objeto__titulo">Técnica (observada)</h3>
-                <app-fact-list [hechos]="hechosTecnicos()" etiqueta="Hechos técnicos" />
+                <h3 class="ficha-objeto__titulo">Sistema</h3>
+                <app-fact-list [hechos]="hechosTecnicos()" etiqueta="Hechos técnicos observados" />
+                @if (notaDeBoveda(); as nota) {
+                  <h4 class="ficha-objeto__subtitulo">Lo que dice la bóveda</h4>
+                  <p class="ficha-objeto__nota" data-testid="object-vault-system">{{ nota.excerpt }}</p>
+                  <p class="ficha-objeto__nota">Fuente: <code>{{ nota.reference }}</code></p>
+                }
                 @if (o.governance; as g) {
                   <h4 class="ficha-objeto__subtitulo">Registro de gobierno</h4>
                   <p class="ficha-objeto__nota">
@@ -103,6 +122,26 @@
                               @if (c.isUnique && !c.isPrimaryKey) { <app-badge variant="info">Única</app-badge> }
                               @if (c.foreignKey; as fk) {
                                 <span class="ficha-objeto__nota">→ {{ fk.targetSchema }}.{{ fk.targetTable }}({{ fk.targetColumns.join(', ') }})</span>
+                                <button app-button type="button" variant="ghost" size="sm" data-testid="object-fk-note" (clicked)="verNotaFk(c.id)">
+                                  Nota de la bóveda
+                                </button>
+                                @if (notasFk()[c.id]; as estado) {
+                                  @switch (estado.status) {
+                                    @case ('ready') {
+                                      @for (n of estado.data; track n.id) {
+                                        <span class="ficha-objeto__nota" data-testid="object-fk-note-text">{{ n.excerpt }}</span>
+                                      } @empty {
+                                        <span class="ficha-objeto__nota" data-testid="object-fk-note-text">La bóveda no tiene una nota de esta clave foránea.</span>
+                                      }
+                                    }
+                                    @case ('loading') {
+                                      <span class="ficha-objeto__nota">Leyendo la nota…</span>
+                                    }
+                                    @default {
+                                      <span class="ficha-objeto__nota">No pudimos leer la nota. Vuelva a intentarlo.</span>
+                                    }
+                                  }
+                                }
                               }
                             </td>
                           </tr>
@@ -132,6 +171,9 @@
                     <strong>{{ evidenceLabel(e.kind) }}</strong> · <code>{{ e.reference }}</code>
                     @if (e.sourceRevision) { · {{ e.sourceRevision }} }
                     <span class="ficha-objeto__nota">{{ e.createdAt | date: 'short' }}</span>
+                    @if (e.excerpt) {
+                      <div class="ficha-objeto__nota">{{ e.excerpt }}</div>
+                    }
                   </li>
                 }
               </ul>
@@ -168,7 +210,11 @@
             }
           </app-tab>
 
-          <app-tab label="Impacto">
+          <app-tab label="Relaciones">
+            <p class="ficha-objeto__nota">
+              Las relaciones salen de las claves foráneas observadas en la base: de esta tabla hacia otras («De qué depende») y
+              de otras hacia ella («Qué depende de esta tabla»), hasta tres niveles. No son relaciones de negocio declaradas.
+            </p>
             <app-segmented-control
               ariaLabel="Dirección del impacto"
               [options]="opcionesDireccion"
@@ -186,7 +232,7 @@
                         @if (n.depth > 0) {
                           <li>
                             <span class="ficha-objeto__profundidad">nivel {{ n.depth }}</span>
-                            <a [routerLink]="['/administration/data-catalog', n.objectId]">{{ nombreNodo(n) }}</a>
+                            <a [routerLink]="['/superadmin/data-catalog', n.objectId]">{{ nombreNodo(n) }}</a>
                             <span class="ficha-objeto__nota">
                               {{ n.reviewStatus ? reviewStatus(n.reviewStatus).label : 'sin ficha' }} · {{ n.owner ?? 'sin responsable' }}
                             </span>

@@ -49,8 +49,7 @@
   <form class="agenda-create" (ngSubmit)="publicar()" [formGroup]="formGeneral">
     <!-- Sin avisos arriba del formulario (propietario, 19/09/2026): ni el de
          alcance («consulta y cita, no cirugías») ni el de «los turnos ya
-         abiertos no se cierran solos». La limitación de `M41 scheduling` sigue
-         anotada en `PENDIENTES-BACKEND.md`. -->
+         abiertos no se cierran solos». -->
 
     @if (publicaSoloLaPropia()) {
       <p class="agenda-create__titular">
@@ -153,6 +152,22 @@
           (valueChange)="flexible.set($event === 'si')"
         />
       </div>
+
+      <!-- P36 · sin turnos fijos el paciente elige la hora, pero la consulta
+           igual ocupa un rato: es lo que impide que dos pidan la misma. -->
+      @if (flexible()) {
+        <app-form-field
+          label="Tiempo que se reserva por paciente"
+          hint="El paciente elige la hora; desde ahí queda reservado este tiempo."
+        >
+          <app-select
+            data-testid="agenda-create-minutos-por-paciente"
+            [options]="opcionesDeDuracion"
+            [value]="minutosPorPaciente()"
+            (valueChange)="elegirMinutosPorPaciente($event)"
+          />
+        </app-form-field>
+      }
 
       <!-- LA TABLA. El pedido original la describe así: «una tabla donde cada
            día de la semana es una fila, las columnas que son selects son:

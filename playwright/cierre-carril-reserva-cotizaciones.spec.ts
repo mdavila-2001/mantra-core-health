@@ -25,8 +25,8 @@ const PACIENTE: Actor = {
 const PROFESIONAL_SINTETICA = 'Valeria Rojas Mendoza';
 
 const SALIDA = join(
-  'docs',
-  'trabajo',
+  'artifacts',
+  'evidencia',
   '2026-09-24-cerrar-carril-reserva-cotizaciones',
   'evidencia',
   'h6',

@@ -853,9 +853,7 @@ export function pendienteDeAseguradoras(): { monto: string; solicitudes: number 
 }
 
 /* ---- con qué aseguradoras trabaja un profesional ----------------------------
-   `GET /practitioners/:id/insurance-networks`. La API real todavía no la sirve
-   (`docs/pendientes-backend-seguros-del-medico.md`); la forma es la que pide
-   ahí el contrato.
+   `GET /practitioners/:id/insurance-networks`, con la forma de la API.
 
    Dos fuentes, y ninguna inventa nada sobre alguien real:
 

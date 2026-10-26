@@ -41,9 +41,8 @@ const TARJETAS_DEL_ESQUELETO = 6;
  * ## Dos estados y no uno
  *
  * La ficha y su catálogo se piden por separado y cada uno tiene el suyo. Con un
- * solo estado combinado, una lectura de catálogo que falle —hoy es P30/P31 de
- * `PENDIENTES-BACKEND.md`, así que contra la API real todavía falla— se llevaría
- * puesta también la ficha, y quien mira no podría ni ver dónde queda la clínica.
+ * solo estado combinado, una lectura de catálogo que falle se llevaría puesta
+ * también la ficha, y quien mira no podría ni ver dónde queda la clínica.
  */
 @Directive()
 export abstract class PublicCatalogDetail<T> implements OnInit {

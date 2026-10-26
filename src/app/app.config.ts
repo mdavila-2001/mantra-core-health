@@ -150,6 +150,20 @@ export const appConfig: ApplicationConfig = {
           );
       },
     },
+    // Los avisos push de la cuenta que se va no deben seguir llegando a este
+    // navegador (dispositivo compartido). Import dinámico por el presupuesto del
+    // paquete inicial, igual que el limpiador de arriba.
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () =>
+          void import('./core/notifications/web-push.service').then((m) =>
+            injector.get(m.WebPushService).forgetBrowser(),
+          );
+      },
+    },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se
     // esperara, alguien con sesión válida vería un parpadeo al login mientras
     // el canje del refresh token está en vuelo. En el servidor no hay

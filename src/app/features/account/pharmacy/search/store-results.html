@@ -7,6 +7,11 @@
         @if (sede.addressText) {
           <p class="sede__direccion">{{ sede.addressText }}</p>
         }
+        @if (aperturaDe(sede); as apertura) {
+          <app-badge [variant]="apertura.tono" size="sm" data-testid="tienda-apertura">
+            {{ apertura.texto }}
+          </app-badge>
+        }
       </div>
 
       <div class="sede__datos">

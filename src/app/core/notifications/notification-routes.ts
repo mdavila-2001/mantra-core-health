@@ -64,6 +64,9 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   // id concreto por el mismo motivo que PRESCRIPTION/ENCOUNTER: la lista de
   // órdenes no acepta ancla todavía.
   SERVICE_REQUEST: () => '/my-account/diagnostic-orders',
+  // Su médico la derivó (24/10/2026): el aviso abre la ficha del profesional
+  // recomendado, donde reserva la cita de siempre.
+  PRACTITIONER_PROFILE: (id) => `/directory/${id}`,
 };
 
 /**

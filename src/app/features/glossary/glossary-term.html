@@ -2,7 +2,7 @@
 
 <div class="termino">
   <p class="termino__volver">
-    <a routerLink="/glossary">← Volver al glosario</a>
+    <a class="termino__enlace" routerLink="/glossary">← Volver al glosario</a>
   </p>
 
   <app-view-state-host [state]="termino()" (retry)="recargar()">
@@ -18,12 +18,12 @@
           </p>
         }
 
-        <div class="termino__cabecera" [class.termino__cabecera--con-foto]="!!termino.image">
+        <div class="termino__cabecera" [class.termino__cabecera--con-foto]="!!imagen()">
           <!-- Imagen médica con su atribución y licencia SIEMPRE visibles
                —nunca sin crédito—. La miniatura abre la imagen entera en un
-               modal. Sin imagen, el ícono de la categoría hace de marcador:
-               ninguna foto de stock la reemplaza. -->
-          @if (termino.image; as imagen) {
+               modal. Sin imagen —la del término o la de su artículo— va la
+               portada ilustrada: ninguna foto de stock la reemplaza. -->
+          @if (imagen(); as imagen) {
             <figure class="termino__imagen">
               <button
                 type="button"
@@ -43,7 +43,7 @@
                 {{ imagen.attribution }} — licencia {{ imagen.license }}
                 @if (imagen.sourcePage; as pagina) {
                   ·
-                  <a [href]="pagina" target="_blank" rel="noopener noreferrer">ver en la fuente</a>
+                  <a class="termino__enlace" [href]="pagina" target="_blank" rel="noopener noreferrer">ver en la fuente</a>
                 }
               </figcaption>
             </figure>
@@ -61,7 +61,7 @@
                     {{ imagen.attribution }} — licencia {{ imagen.license }}
                     @if (imagen.sourcePage; as pagina) {
                       ·
-                      <a [href]="pagina" target="_blank" rel="noopener noreferrer"
+                      <a class="termino__enlace" [href]="pagina" target="_blank" rel="noopener noreferrer"
                         >ver en la fuente</a
                       >
                     }
@@ -70,9 +70,11 @@
               </app-content-dialog>
             }
           } @else {
-            <div class="termino__imagen-marcador" aria-hidden="true">
-              <app-glossary-category-icon [category]="termino.category?.internalCode ?? ''" />
-            </div>
+            <app-glossary-term-cover
+              class="termino__portada"
+              [category]="termino.category?.internalCode ?? ''"
+              [system]="pictograma()"
+            />
           }
 
           <div class="termino__intro">
@@ -142,7 +144,7 @@
                 <p class="termino__medicamento-fuente" data-testid="termino-fuente-definicion">
                   Fuente de la definición:
                   @if (origen.url; as url) {
-                    <a [href]="url" target="_blank" rel="noopener noreferrer">{{ origen.nombre }}</a>
+                    <a class="termino__enlace" [href]="url" target="_blank" rel="noopener noreferrer">{{ origen.nombre }}</a>
                   } @else {
                     {{ origen.nombre }}
                   }
@@ -268,7 +270,7 @@
                     <li>
                       <p class="termino__producto">
                         @if (producto.url; as url) {
-                          <a [href]="url" target="_blank" rel="noopener noreferrer">{{
+                          <a class="termino__enlace" [href]="url" target="_blank" rel="noopener noreferrer">{{
                             producto.name
                           }}</a>
                         } @else {
@@ -315,7 +317,7 @@
               <p class="termino__medicamento-fuente" data-testid="termino-cita-cima">
                 {{ citaCima(ficha) }}
                 @if (ficha.sourceUrl; as url) {
-                  <a [href]="url" target="_blank" rel="noopener noreferrer">Ver la ficha técnica</a>
+                  <a class="termino__enlace" [href]="url" target="_blank" rel="noopener noreferrer">Ver la ficha técnica</a>
                 }
               </p>
             </app-tab>
@@ -390,7 +392,7 @@
                 }
                 @if (origen.url; as url) {
                   ·
-                  <a [href]="url" target="_blank" rel="noopener noreferrer">ir a la fuente</a>
+                  <a class="termino__enlace" [href]="url" target="_blank" rel="noopener noreferrer">ir a la fuente</a>
                 }
               </p>
               @if (origen.licencia; as licencia) {

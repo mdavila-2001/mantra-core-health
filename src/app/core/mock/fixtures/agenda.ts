@@ -37,7 +37,7 @@ export interface PlantillaSimulada {
   readonly validTo?: string;
   readonly bookingPolicyId: string;
   readonly statusConceptId: string;
-  /** Sin turnos fijos: un bloque abierto por franja (P36). */
+  /** Sin turnos fijos (P36): no genera cupos; las horas se calculan al leer. */
   readonly flexibleHours?: boolean;
 }
 
@@ -225,23 +225,10 @@ export const RECURSO_MEDICA = recursoDe(MEDICAL);
 export const RECURSO_CONSULTORIO_MEDICA = uuid(`resource-consultorio-${MEDICAL.id}`);
 
 /**
- * El tipo de cita de una **reconsulta** (C4).
- *
- * Se deriva acá y no se lee de `TIPO_CITA` porque `VS_APPOINTMENT_TYPE` todavía
- * no la declara: `concepts.ts` tiene `APT-PRIMERA`, `APT-CONTROL` y
- * `APT-URGENCIA`, y ese archivo es de C0, que no publicó.
- *
- * El id que sale de acá es **exactamente** el que produciría `definir()` allá
- * —misma semilla `concept-<código>`, `concepts.ts:69—`, así que el día que la
- * entrada exista el identificador coincide y no hay nada que migrar. Lo único
- * que falta hasta entonces es la etiqueta del catálogo, y por eso la pantalla
- * escribe «Reconsulta» literal en vez de buscarla: un uuid crudo en la agenda
- * sería peor que una palabra fija.
- *
- * // TODO C8: reemplazar por `TIPO_CITA['APT-RECONSULTA']` cuando C0 agregue
- * `['APT-RECONSULTA', 'Reconsulta']` al value set.
+ * El tipo de cita de una **reconsulta** (C4): la entrada `APT-RECONSULTA` de
+ * `VS_APPOINTMENT_TYPE` (`concepts.ts`).
  */
-export const TIPO_CITA_RECONSULTA = uuid('concept-APT-RECONSULTA');
+export const TIPO_CITA_RECONSULTA = APPOINTMENT_TYPE['APT-RECONSULTA']!;
 
 export const plantillas = new Coleccion<PlantillaSimulada>([
   {

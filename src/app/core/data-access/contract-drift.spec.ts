@@ -106,17 +106,39 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     );
   });
 
-  it('C8 · una pregunta de opción no se declara a medias', async () => {
-    const error = await firstValueFrom(
-      TestBed.inject(FormsClient).createFieldDefinition({
+  it('C8 · una pregunta de opción viaja con sus opciones', () => {
+    TestBed.inject(FormsClient)
+      .createFieldDefinition({
         code: 'fuma',
         name: '¿Fuma?',
         dataType: 'code',
         options: ['Sí', 'No'],
+        multiple: false,
+        allowOther: true,
+      })
+      .subscribe();
+    expect(cuerpoAceptado('POST', '/forms/field-definitions')).toEqual({
+      code: 'fuma',
+      name: '¿Fuma?',
+      dataType: 'code',
+      options: ['Sí', 'No'],
+      multiple: false,
+      allowOther: true,
+    });
+  });
+
+  it('C8 · una cuadrícula no se declara a medias', async () => {
+    const error = await firstValueFrom(
+      TestBed.inject(FormsClient).createFieldDefinition({
+        code: 'sintomas',
+        name: 'Síntomas',
+        dataType: 'code',
+        options: ['Nunca', 'A veces'],
+        rows: ['Disnea', 'Edema'],
       }),
     ).catch((e: unknown) => e);
     http.expectNone('/forms/field-definitions');
-    expect(unavailableMessageOf(error)).toContain('Guardar las opciones de una pregunta');
+    expect(unavailableMessageOf(error)).toContain('Guardar las filas de la cuadrícula de una pregunta');
   });
 
   it('C8 · una pregunta de texto sí se declara', () => {
@@ -126,12 +148,19 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     cuerpoAceptado('POST', '/forms/field-definitions');
   });
 
-  it('C13 · quitar todos los idiomas tampoco manda un PATCH vacío', async () => {
+  it('C13 · quitar todos los idiomas manda la lista vacía', () => {
+    TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({ languages: [] }).subscribe();
+    expect(cuerpoAceptado('PATCH', '/profiles/practitioners/me')).toEqual({ languages: [] });
+  });
+
+  it('C13 · sólo la frecuencia de facturación no manda un PATCH vacío', async () => {
     const error = await firstValueFrom(
-      TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({ languages: [] }),
+      TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({
+        insuranceBillingFrequency: 'MONTHLY',
+      } as never),
     ).catch((e: unknown) => e);
     http.expectNone('/profiles/practitioners/me');
-    expect(unavailableMessageOf(error)).toContain('Los idiomas de atención');
+    expect(unavailableMessageOf(error)).toContain('La frecuencia de facturación a seguros');
   });
 
   it('C13 · con otros cambios, la frecuencia de facturación se queda afuera y el resto viaja', () => {
@@ -146,14 +175,12 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     });
   });
 
-  it('C13 · los idiomas con dato no viajan y el error los nombra', async () => {
-    const error = await firstValueFrom(
-      TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({
-        languages: [{ languageConceptId: UUID, proficiencyConceptId: UUID }] as never,
-      }),
-    ).catch((e: unknown) => e);
-    http.expectNone('/profiles/practitioners/me');
-    expect(unavailableMessageOf(error)).toContain('Los idiomas de atención');
+  it('C13 · los idiomas con dato viajan enteros', () => {
+    const languages = [
+      { languageConceptId: UUID, proficiencyConceptId: UUID, clinicalInterpretationAllowed: true },
+    ];
+    TestBed.inject(ProfilesClient).updateOwnPractitionerProfile({ languages } as never).subscribe();
+    expect(cuerpoAceptado('PATCH', '/profiles/practitioners/me')).toEqual({ languages });
   });
 
   it('C14 · la búsqueda filtrada por sangre o idioma no sale sin filtrar', async () => {
@@ -164,7 +191,7 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     expect(unavailableMessageOf(error)).toContain('grupo sanguíneo');
   });
 
-  it('C15 · la sucursal se crea sin descripción ni enlace de mapa', () => {
+  it('C15 · la sucursal conserva la descripción y el enlace de mapa admitidos por la API', () => {
     TestBed.inject(DirectoryClient)
       .createBranch(UUID, {
         code: 'S1',
@@ -176,7 +203,45 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     expect(cuerpoAceptado('POST', `/tenants/${UUID}/branches`)).toEqual({
       code: 'S1',
       name: 'Centro',
+      description: 'Planta baja',
+      locationUrl: 'https://x',
     });
+  });
+
+  it('P50 · el alta de farmacia sale con claves que el DTO real declara', () => {
+    TestBed.inject(IamClient)
+      .registerPharmacyOrganization({
+        code: 'FARM-1023456029',
+        legalName: 'Farmacia Central S.R.L.',
+        legalEntityType: 'SRL',
+        countryConceptId: UUID,
+        jurisdictionConceptId: UUID,
+        taxIdentifier: '1023456029',
+        legalAddress: 'Av. Cristo Redentor 1234',
+        headquarters: { latitude: -17.78, longitude: -63.18 },
+        branches: [
+          {
+            name: 'Sucursal Equipetrol',
+            latitude: -17.76,
+            longitude: -63.19,
+            description: 'Frente a la plaza',
+            locationUrl: 'https://maps.example/x',
+          },
+        ],
+        owner: { email: 'legal@farmacia.test', password: 'secreto12', displayName: 'Mariana Siles' },
+        legalRepresentative: {
+          fullName: 'Mariana Siles',
+          email: 'legal@farmacia.test',
+          idNumber: '4872190 SC',
+        },
+      })
+      .subscribe();
+    const cuerpo = cuerpoAceptado('POST', '/iam/auth/register-organization') as {
+      organization: { pharmacy: unknown };
+    };
+    expect(cuerpo.organization.pharmacy).toEqual(
+      expect.objectContaining({ address: 'Av. Cristo Redentor 1234' }),
+    );
   });
 
   it('§2 · buscar personas no sale a una ruta que la API no publica', async () => {

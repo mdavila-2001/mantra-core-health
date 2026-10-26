@@ -195,7 +195,13 @@ export interface TenantSearchQuery {
  * Códigos de tipo de organización que declara `CreateTenantDto`.
  *
  * Comparado con `dynamic-enums` el 2026-08-11: los diez códigos coinciden con
- * `directory.tenants.tenant_type_concept_id`. Se mantiene literal a propósito
+ * `directory.tenants.tenant_type_concept_id`. El 2026-10-26 la API sumó
+ * `CLINIC` al DTO, al catálogo (concepto `420eddfc-…`) y a sus tipos
+ * territoriales: son once, y `CLINIC` va después de `HOSPITAL`, en el mismo
+ * orden que `MEDICAL_ORGANIZATION_TYPES` del alta pública, que es un
+ * subconjunto de esta lista (lo fija `directory.types.spec.ts`). `DIAGNOSTIC_CENTER`
+ * existe en la API pero no está acá: sólo nace por el alta pública (ver
+ * `onlyForTenantTypes` en `navigation.types.ts`). Se mantiene literal a propósito
  * —ver la nota de `organization-new.ts`—, porque este set literal se
  * reemplaza por el catálogo real. Hoy es la única fuente que el frontend
  * puede leer: el DTO los enumera (`@IsIn(TENANT_TYPE_CODES)`) y el backend
@@ -208,6 +214,7 @@ export const TENANT_TYPE_CODES = [
   'UNIVERSITY',
   'PHARMACY',
   'HOSPITAL',
+  'CLINIC',
   'MEDICAL_OFFICE',
   'NURSING',
   'HEALTH_OTHER',
@@ -228,6 +235,7 @@ export const TERRITORIAL_TENANT_TYPES: readonly TenantTypeCode[] = [
   'UNIVERSITY',
   'PHARMACY',
   'HOSPITAL',
+  'CLINIC',
   'MEDICAL_OFFICE',
   'NURSING',
   'HEALTH_OTHER',
@@ -246,6 +254,7 @@ export const TENANT_TYPE_LABELS: Readonly<Record<TenantTypeCode, string>> = {
   UNIVERSITY: 'Universidad',
   PHARMACY: 'Farmacia',
   HOSPITAL: 'Hospital',
+  CLINIC: 'Clínica',
   MEDICAL_OFFICE: 'Consultorio médico',
   NURSING: 'Centro de enfermería',
   HEALTH_OTHER: 'Otro servicio de salud',
@@ -407,8 +416,6 @@ export interface BranchList {
 /** Tipos de sede que acepta el alta. */
 export type BranchTypeCode = 'CLINIC' | 'OFFICE';
 
-/** Claves de {@link NewBranch} que `CreateBranchDto` no declara (P54): sólo van a la maqueta. */
-export const BRANCH_SIMULATOR_EXTENSIONS: readonly string[] = ['description', 'locationUrl'];
 
 /**
  * Alta de una sucursal (`POST /tenants/{id}/branches`, UC-04-04).

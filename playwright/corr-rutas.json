@@ -26,7 +26,7 @@
     },
     {
       "ruta": "/my-account/edit",
-      "nombre": "perfil-enlaza-al-consultorio",
+      "nombre": "profile-where-i-practice",
       "accion": "editar-perfil-consultorio"
     },
     {
@@ -133,6 +133,10 @@
       "nombre": "questionnaires"
     },
     {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
       "ruta": "/administration/accounting",
       "nombre": "administration_accounting"
     },
@@ -203,8 +207,16 @@
   ],
   "35": [
     {
-      "ruta": "/notification-center",
-      "nombre": "notificaciones"
+      "ruta": "/notification-center?evidenceState=all",
+      "nombre": "notificaciones-todas"
+    },
+    {
+      "ruta": "/notification-center?evidenceState=unread",
+      "nombre": "notificaciones-sin-leer"
+    },
+    {
+      "ruta": "/notification-center?evidenceState=empty",
+      "nombre": "notificaciones-vacio"
     }
   ],
   "36": [
@@ -288,6 +300,12 @@
     {
       "ruta": "/directory",
       "nombre": "directorio-sigue-vivo"
+    }
+  ],
+  "41": [
+    {
+      "ruta": "/administration/accounting",
+      "nombre": "contabilidad-pagos-confirmados"
     }
   ],
   "42": [
@@ -452,6 +470,34 @@
     {
       "ruta": "/administration/moderation",
       "nombre": "administration_moderation"
+    },
+    {
+      "ruta": "/administration/health-context",
+      "nombre": "administration_health-context"
+    },
+    {
+      "ruta": "/administration/geolocation",
+      "nombre": "administration_geolocation"
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "nombre": "administration_services-catalog"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
+      "ruta": "/administration/medical-center-setup",
+      "nombre": "administration_medical-center-setup"
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "nombre": "administration_medical-laboratory"
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "nombre": "administration_clinical-forms"
     },
     {
       "ruta": "/billing",
@@ -896,6 +942,26 @@
     {
       "ruta": "/administration/moderation",
       "nombre": "administration_moderation"
+    },
+    {
+      "ruta": "/administration/geolocation",
+      "nombre": "administration_geolocation"
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "nombre": "administration_services-catalog"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "nombre": "administration_medical-laboratory"
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "nombre": "administration_clinical-forms"
     },
     {
       "ruta": "/administration/accounting",

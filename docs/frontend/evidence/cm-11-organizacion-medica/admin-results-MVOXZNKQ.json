@@ -1,0 +1,116 @@
+[
+  {
+    "caso": "error",
+    "ancho": "1440",
+    "accion": "CLINIC con país y sin jurisdicción: «Siguiente» en «Dónde opera»",
+    "request": "sin request (la UI no deja pasar)",
+    "status": "sin request",
+    "sql": "count(*) where code='CLIN-ERR-1440-MVOXZNKQ' = 0"
+  },
+  {
+    "caso": "error (API directa)",
+    "ancho": "1440",
+    "accion": "POST /admin/tenants CLINIC sin jurisdictionConceptId",
+    "request": {
+      "tenantType": "CLINIC",
+      "jurisdictionConceptId": "(ausente)"
+    },
+    "status": 422,
+    "sql": "count(*) where code='CLIN-ERR-1440-MVOXZNKQ' = 0 · {\"code\":\"PRECONDITION_FAILED\",\"message\":\"Un tenant de tipo CLINIC exige país y jurisdicción\",\"correlationId\":\"c63d648a-19f4-4e6d-8bb8-c49e71c19f29\",\"details\":{\""
+  },
+  {
+    "caso": "límite (301)",
+    "ancho": "1440",
+    "accion": "razón social de 301 caracteres: «Siguiente» en «Identificación»; y POST directo",
+    "request": "sin request desde la UI · POST directo con legalName de 301",
+    "status": 400,
+    "sql": "count(*) where code='CLIN-LIM-1440-MVOXZNKQ-API' = 0"
+  },
+  {
+    "caso": "límite (300)",
+    "ancho": "1440",
+    "accion": "razón social de 300 caracteres exactos, CLINIC completa",
+    "request": {
+      "code": "CLIN-LIM-1440-MVOXZNKQ",
+      "legalName": "(300 caracteres)",
+      "ownerUserId": "fbc7943a-3e86-450c-af72-bed6591775e6",
+      "tenantType": "CLINIC",
+      "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
+      "jurisdictionConceptId": "790554f9-c1e3-564f-81b3-dc59d2ca0272"
+    },
+    "status": 201,
+    "sql": "CLIN-LIM-1440-MVOXZNKQ | 420eddfc-a569-5b2e-b720-7d7de91cb874 | CLINIC | 300"
+  },
+  {
+    "caso": "correcto",
+    "ancho": "1440",
+    "accion": "CLINIC con país BO y jurisdicción JUR_BO → recarga → listado",
+    "request": {
+      "code": "CLIN-OK-1440-MVOXZNKQ",
+      "legalName": "Clínica Norte 1440 MVOXZNKQ S.R.L.",
+      "ownerUserId": "fbc7943a-3e86-450c-af72-bed6591775e6",
+      "tenantType": "CLINIC",
+      "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
+      "jurisdictionConceptId": "790554f9-c1e3-564f-81b3-dc59d2ca0272"
+    },
+    "status": 201,
+    "sql": "CLIN-OK-1440-MVOXZNKQ | 420eddfc-a569-5b2e-b720-7d7de91cb874 | CLINIC | 34"
+  },
+  {
+    "caso": "error",
+    "ancho": "390",
+    "accion": "CLINIC con país y sin jurisdicción: «Siguiente» en «Dónde opera»",
+    "request": "sin request (la UI no deja pasar)",
+    "status": "sin request",
+    "sql": "count(*) where code='CLIN-ERR-390-MVOXZNKQ' = 0"
+  },
+  {
+    "caso": "error (API directa)",
+    "ancho": "390",
+    "accion": "POST /admin/tenants CLINIC sin jurisdictionConceptId",
+    "request": {
+      "tenantType": "CLINIC",
+      "jurisdictionConceptId": "(ausente)"
+    },
+    "status": 422,
+    "sql": "count(*) where code='CLIN-ERR-390-MVOXZNKQ' = 0 · {\"code\":\"PRECONDITION_FAILED\",\"message\":\"Un tenant de tipo CLINIC exige país y jurisdicción\",\"correlationId\":\"328bd379-8da5-43d7-b8d3-0cc9e9bb1dc8\",\"details\":{\""
+  },
+  {
+    "caso": "límite (301)",
+    "ancho": "390",
+    "accion": "razón social de 301 caracteres: «Siguiente» en «Identificación»; y POST directo",
+    "request": "sin request desde la UI · POST directo con legalName de 301",
+    "status": 400,
+    "sql": "count(*) where code='CLIN-LIM-390-MVOXZNKQ-API' = 0"
+  },
+  {
+    "caso": "límite (300)",
+    "ancho": "390",
+    "accion": "razón social de 300 caracteres exactos, CLINIC completa",
+    "request": {
+      "code": "CLIN-LIM-390-MVOXZNKQ",
+      "legalName": "(300 caracteres)",
+      "ownerUserId": "a9259907-d368-443c-8441-b2d3a9fa3e45",
+      "tenantType": "CLINIC",
+      "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
+      "jurisdictionConceptId": "790554f9-c1e3-564f-81b3-dc59d2ca0272"
+    },
+    "status": 201,
+    "sql": "CLIN-LIM-390-MVOXZNKQ | 420eddfc-a569-5b2e-b720-7d7de91cb874 | CLINIC | 300"
+  },
+  {
+    "caso": "correcto",
+    "ancho": "390",
+    "accion": "CLINIC con país BO y jurisdicción JUR_BO → recarga → listado",
+    "request": {
+      "code": "CLIN-OK-390-MVOXZNKQ",
+      "legalName": "Clínica Norte 390 MVOXZNKQ S.R.L.",
+      "ownerUserId": "a9259907-d368-443c-8441-b2d3a9fa3e45",
+      "tenantType": "CLINIC",
+      "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
+      "jurisdictionConceptId": "790554f9-c1e3-564f-81b3-dc59d2ca0272"
+    },
+    "status": 201,
+    "sql": "CLIN-OK-390-MVOXZNKQ | 420eddfc-a569-5b2e-b720-7d7de91cb874 | CLINIC | 33"
+  }
+]

@@ -102,32 +102,34 @@ interface DatosPaciente {
   readonly password: string;
 }
 
+/**
+ * El alta del paciente en sus cinco pasos (1a6f35365, 21/10/2026): identidad,
+ * domicilio, contacto, trabajo y «resto de datos». Los obligatorios son los
+ * mismos de antes —nombre, apellido, documento con su expedición, fecha, sexo,
+ * localidad, celular, correo y contraseña—; sólo cambió en qué página viven.
+ */
 async function altaPaciente(page: Page, datos: DatosPaciente): Promise<Response> {
   await page.goto('/auth/register/patient', { waitUntil: 'domcontentloaded' });
+  await enLaPagina(page, 'Identidad y ocupación');
   await escribirNombre(page, 'registro', 'Lucía', 'Mamani');
-  await continuar(page);
-  await enLaPagina(page, 'Su documento');
   await page.getByTestId('registro-documento').fill(datos.documento);
   const depto = page.getByTestId('registro-departamento-ci').locator('select');
   await expect(depto.locator('option').nth(1)).toBeAttached({ timeout: 20_000 });
   await depto.selectOption({ index: 1 });
-  await continuar(page);
-  await enLaPagina(page, 'Cuéntenos');
   const fecha = page.getByPlaceholder('DD/MM/AAAA');
   await fecha.click();
   await page.keyboard.type('15031988', { delay: 60 });
   await expect(fecha).toHaveValue('15/03/1988');
   await page.getByTestId('registro-genero').locator('select').selectOption({ index: 1 });
   await continuar(page);
-  await enLaPagina(page, 'contactamos');
-  await page.getByTestId('registro-telefono').fill('70012345');
-  await continuar(page);
-  await enLaPagina(page, 'Dónde vive');
+  await enLaPagina(page, 'Lugares donde vive');
   await elegirLocalidadDeResidencia(page);
-  await continuarHasta(page, 'Su acceso');
+  await continuar(page);
+  await enLaPagina(page, 'Datos de contacto');
+  await page.getByTestId('registro-telefono').fill('70012345');
+  await continuarHasta(page, 'Resto de datos');
   await page.getByTestId('registro-correo').fill(datos.correo);
   await page.getByTestId('registro-password').fill(datos.password);
-  await continuarHasta(page, 'Datos de facturación');
   return enviar(page, '/iam/auth/register-patient');
 }
 

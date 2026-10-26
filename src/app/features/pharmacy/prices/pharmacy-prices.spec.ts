@@ -10,6 +10,8 @@ import type {
   PharmacyProductChanges,
 } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { PharmacyPrices } from './pharmacy-prices';
+import { afterAll, beforeAll } from 'vitest';
+import { environment } from '../../../../environments/environment';
 
 /**
  * La pestaña «Precios» de la farmacia: se edita en la tabla, se manda sólo lo
@@ -52,6 +54,11 @@ interface Internal {
 }
 
 describe('PharmacyPrices', () => {
+  // Las escrituras de farmacia son «sólo simulador»: sin esto la petición no sale.
+  const originalMockBackend = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
+
   let fixture: ComponentFixture<PharmacyPrices>;
   let sent: { productId: string; changes: PharmacyProductChanges }[];
   let reply: (productId: string) => Observable<PharmacyProduct>;

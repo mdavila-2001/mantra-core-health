@@ -33,7 +33,7 @@ import { entrar, estable } from './support/sesion';
  * mecanismo que hace que la columna exista sin pasar por ese selector.
  */
 
-const SALIDA = join('docs', 'trabajo', '2026-09-20-notas-cuadricula-e-internacion', 'evidencia', 'api-real');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-20-notas-cuadricula-e-internacion', 'evidencia', 'api-real');
 
 test.describe('C-14/C-23 · contra la API real', () => {
   let hayApi = false;

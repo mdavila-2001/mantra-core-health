@@ -1,0 +1,61 @@
+<app-card class="abiertas" padding="lg" data-testid="abiertas-ahora">
+  <div class="abiertas__cabecera">
+    <div>
+      <h2 class="abiertas__titulo">Abiertas ahora</h2>
+      <p class="abiertas__nota" data-testid="abiertas-hora">
+        @if (horaDeLaConsulta(); as hora) {
+          A las {{ hora }}, hora de Bolivia.
+        }
+        Horario y turnos declarados por cada farmacia.
+      </p>
+    </div>
+    <app-segmented-control
+      ariaLabel="Qué farmacias abiertas mostrar"
+      [options]="modos"
+      [value]="modo()"
+      (valueChange)="elegirModo($event)"
+    />
+  </div>
+
+  <app-view-state-host [state]="estado()" (retry)="cargar()">
+    <ul class="abiertas__lista" data-testid="abiertas-lista">
+      @for (sede of sedes(); track sede.siteId) {
+        <li class="abiertas__sede">
+          <div class="abiertas__datos">
+            <a class="abiertas__nombre" [routerLink]="['/pharmacies-directory', sede.pharmacySlug]">
+              {{ sede.pharmacyName }}
+            </a>
+            <span class="abiertas__secundario">
+              {{ sede.siteName }}
+              @if (sede.addressText) { · {{ sede.addressText }} }
+              @if (sede.distanceKm !== null) { · {{ sede.distanceKm }} km }
+            </span>
+          </div>
+          <app-badge [variant]="sede.open24h ? 'success' : 'info'" size="sm" data-testid="abiertas-rotulo">
+            {{ rotuloDe(sede) }}
+          </app-badge>
+        </li>
+      }
+    </ul>
+
+    @if (falloAlCargarMas()) {
+      <p class="abiertas__nota" role="alert">No se pudieron traer más. Pruebe de nuevo.</p>
+    }
+    @if (siguiente() !== null) {
+      <div class="abiertas__mas">
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="abiertas-ver-mas"
+          [isLoading]="cargandoMas()"
+          [disabled]="cargandoMas()"
+          (clicked)="verMas()"
+        >
+          Ver más
+        </button>
+      </div>
+    }
+  </app-view-state-host>
+</app-card>

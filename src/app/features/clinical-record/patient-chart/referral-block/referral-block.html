@@ -1,0 +1,82 @@
+<app-card variant="outlined" padding="lg" class="derivacion">
+  <!-- Sin título ni bajada propios: el modal de la consulta ya dice «Derivar a
+       otro profesional» y explica que se le avisa a la persona en su campana.
+       Repetirlo acá era el mismo texto dos veces, a dos dedos de distancia. -->
+  @if (sinEncuentro()) {
+    <!-- Sin encuentro no hay derivación con aviso: el encuentro es lo que
+         demuestra que usted atendió a esta persona. Se dice qué falta en vez
+         de ofrecer un formulario que guardaría y no avisaría a nadie. -->
+    <app-alert
+      tone="info"
+      title="Abra el encuentro para derivar"
+      data-testid="derivacion-sin-encuentro"
+    >
+      Abra el encuentro de esta consulta, arriba, y acá va a poder derivar. Así la persona recibe su
+      aviso.
+    </app-alert>
+  } @else {
+    @if (derivadoA(); as nombre) {
+      <app-alert tone="success" title="Derivación enviada" data-testid="derivacion-exito">
+        Le avisamos a la persona que le recomienda consultar con {{ nombre }}. Ya puede ver su ficha
+        y reservar desde su portal.
+      </app-alert>
+    }
+
+    @if (yaDerivado()) {
+      <app-alert
+        tone="warning"
+        title="Ya la derivó a este profesional"
+        data-testid="derivacion-duplicada"
+      >
+        En este encuentro ya hay una derivación equivalente. No hace falta otra.
+      </app-alert>
+    }
+
+    @if (errorDelRegistro(); as mensaje) {
+      <app-alert tone="error" data-testid="derivacion-error">{{ mensaje }}</app-alert>
+    }
+
+    <app-view-state-host [state]="directorio()" (retry)="recargar()">
+      <form class="derivacion__formulario" (submit)="$event.preventDefault()">
+        <app-form-field
+          label="Profesional recomendado"
+          hint="Busque por nombre o título. No aparece usted."
+        >
+          <app-reference-combobox
+            data-testid="derivacion-profesional"
+            [value]="elegido()"
+            [selected]="profesionalElegido()"
+            [options]="opciones()"
+            [minQueryLength]="0"
+            label="Profesional recomendado"
+            placeholder="Ej. Dra. Mendoza"
+            emptyMessage="No encontramos a nadie con ese nombre en el directorio"
+            (searched)="buscar($event)"
+            (valueChange)="elegir($event)"
+          />
+        </app-form-field>
+
+        <app-form-field label="Motivo" hint="Opcional. Se lo mostramos a la persona en su aviso.">
+          <app-textarea
+            data-testid="derivacion-motivo"
+            [rows]="3"
+            [maxLength]="topeDelMotivo"
+            [value]="motivo()"
+            (valueChange)="escribirMotivo($event)"
+          />
+        </app-form-field>
+
+        <button
+          app-button
+          variant="primary"
+          data-testid="derivacion-enviar"
+          [isLoading]="enviando()"
+          [disabled]="!puedeEnviar()"
+          (clicked)="derivar()"
+        >
+          Derivar y avisar a la persona
+        </button>
+      </form>
+    </app-view-state-host>
+  }
+</app-card>

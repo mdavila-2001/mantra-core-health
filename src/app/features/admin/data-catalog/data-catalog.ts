@@ -17,6 +17,7 @@ import type {
   MissingFilter,
   ReviewStatus,
   Scan,
+  SchemaDescription,
   SchemaSummary,
 } from '../../../core/data-access/admin-portal/data-catalog.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -55,6 +56,17 @@ interface ObjectRow extends CatalogObjectSummary {
   readonly fichaTone: ReturnType<typeof reviewStatus>['tone'];
   readonly owner: string;
   readonly rows: string;
+}
+
+/** Una fila de la tabla de schemas: el texto ya armado, la tabla sólo lo pinta. */
+interface SchemaRow {
+  readonly schemaName: string;
+  readonly module: string;
+  readonly domain: string;
+  readonly tables: string;
+  readonly annotated: string;
+  readonly approved: string;
+  readonly description: SchemaDescription | null;
 }
 
 /** Las cinco dimensiones que el servidor mide por separado; nunca se promedian. */
@@ -109,7 +121,11 @@ export class DataCatalog {
   protected readonly schema = signal<string | null>(null);
   protected readonly revision = signal<ReviewStatus | 'NONE' | null>(null);
   protected readonly faltante = signal<MissingFilter | null>(null);
-  protected readonly schemas = signal<readonly SchemaSummary[]>([]);
+  protected readonly estadoSchemas = signal<ViewState<readonly SchemaSummary[]>>(loading());
+  protected readonly schemas = computed<readonly SchemaSummary[]>(() => {
+    const estado = this.estadoSchemas();
+    return estado.status === 'ready' ? estado.data : [];
+  });
   protected readonly opcionesSchema = computed<readonly SelectOption<string | null>[]>(() => [
     { value: null, label: 'Todos los schemas' },
     ...this.schemas().map((s) => ({ value: s.schemaName, label: `${s.schemaName} (${s.objects})` })),
@@ -117,6 +133,7 @@ export class DataCatalog {
   protected readonly opcionesRevision: readonly SelectOption<ReviewStatus | 'NONE' | null>[] = [
     { value: null, label: 'Cualquier estado de ficha' },
     { value: 'NONE', label: 'Sin ficha' },
+    { value: 'AUTO_DETECTED', label: 'Auto-detectada' },
     { value: 'DRAFT', label: 'Borrador' },
     { value: 'NEEDS_REVIEW', label: 'En revisión' },
     { value: 'APPROVED', label: 'Aprobada' },
@@ -168,6 +185,37 @@ export class DataCatalog {
   ]);
   protected readonly byId = (row: ObjectRow) => row.id;
 
+  // ------------------------------------------------------------ esquemas
+  protected readonly esquemaElegido = signal<string | null>(null);
+  protected readonly esquema = computed(() => this.schemas().find((x) => x.schemaName === this.esquemaElegido()) ?? null);
+  protected readonly filasEsquemas = computed<ViewState<readonly SchemaRow[]>>(() => {
+    const estado = this.estadoSchemas();
+    if (estado.status !== 'ready') return estado as ViewState<readonly SchemaRow[]>;
+    if (estado.data.length === 0) {
+      return empty({ label: 'Use «Solicitar escaneo» arriba a la derecha.' }, 'Todavía no hay schemas catalogados: el catálogo se llena con un escaneo técnico.');
+    }
+    return ready(
+      estado.data.map((x) => ({
+        schemaName: x.schemaName,
+        module: x.description ? `M${String(x.description.moduleNumber).padStart(2, '0')} · ${x.description.title}` : 'Sin módulo en la bóveda',
+        domain: x.description?.domain ?? '—',
+        tables: entero(x.objects),
+        annotated: entero(x.annotated),
+        approved: entero(x.approved),
+        description: x.description,
+      })),
+    );
+  });
+  protected readonly columnasEsquemas: readonly ColumnDef<SchemaRow>[] = [
+    { key: 'schemaName', header: 'Schema', priority: 1 },
+    { key: 'module', header: 'Módulo (bóveda)', priority: 1 },
+    { key: 'domain', header: 'Dominio', priority: 3 },
+    { key: 'tables', header: 'Tablas y vistas', priority: 2, align: 'end' },
+    { key: 'annotated', header: 'Con ficha', priority: 2, align: 'end' },
+    { key: 'approved', header: 'Aprobadas', priority: 2, align: 'end' },
+  ];
+  protected readonly porSchema = (row: SchemaRow) => row.schemaName;
+
   // ------------------------------------------------------------ escaneos
   protected readonly escaneos = signal<ViewState<readonly Scan[]>>(loading());
   protected readonly pidiendoEscaneo = signal(false);
@@ -176,10 +224,28 @@ export class DataCatalog {
   private claveEscaneo = claveIdempotente('scan');
 
   constructor() {
-    this.catalog.listSchemas().subscribe({ next: (s) => this.schemas.set(s), error: () => this.schemas.set([]) });
+    this.cargarSchemas();
     this.cargarCobertura();
     this.cargar();
     this.cargarEscaneos();
+  }
+
+  protected cargarSchemas(): void {
+    this.estadoSchemas.set(loading());
+    this.catalog.listSchemas().subscribe({
+      next: (lista) => this.estadoSchemas.set(ready(lista)),
+      error: (e: unknown) => this.estadoSchemas.set(errorToViewState<readonly SchemaSummary[]>(e)),
+    });
+  }
+
+  protected elegirEsquema(fila: SchemaRow): void {
+    this.esquemaElegido.set(fila.schemaName);
+  }
+
+  /** Del schema a sus tablas: filtra el inventario y vuelve a esa pestaña. */
+  protected verTablas(schemaName: string): void {
+    this.cambiarSchema(schemaName);
+    this.pestana.set(0);
   }
 
   protected cargarCobertura(): void {
@@ -253,7 +319,7 @@ export class DataCatalog {
   }
 
   protected abrir(row: ObjectRow): void {
-    void this.router.navigate(['/administration/data-catalog', row.id]);
+    void this.router.navigate(['/superadmin/data-catalog', row.id]);
   }
 
   protected cargarEscaneos(): void {
@@ -281,7 +347,7 @@ export class DataCatalog {
             ? 'Escaneo aceptado. El worker lo ejecuta en segundo plano; el estado se actualiza en «Escaneos».'
             : 'Ese escaneo ya estaba aceptado.',
         );
-        this.pestana.set(1);
+        this.pestana.set(2);
         this.cargarEscaneos();
       },
       error: (e: unknown) => {

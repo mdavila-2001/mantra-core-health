@@ -1,0 +1,120 @@
+<app-page-header
+  title="Auditoría"
+  subtitle="Quién hizo qué y cuándo, con su riesgo para la seguridad de la salud. Sin rango de fechas se ven los últimos 30 días; mirar esta bitácora también queda registrado."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="audit" variant="outlined" padding="md" data-testid="portal-audit">
+  <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+    <app-tab label="Acciones">
+      <div class="audit__section">
+        <app-governance-filter-form
+          [fields]="logFields()"
+          [values]="values()"
+          (applied)="apply($event)"
+          (cleared)="clear()"
+        />
+        <app-data-table
+          data-testid="portal-audit-log-table"
+          caption="Acciones registradas en la bitácora"
+          [state]="log.state()"
+          [columns]="logColumns()"
+          [trackBy]="byId"
+          [rowLabel]="logRowName"
+          [cursor]="log.cursor()"
+          stackedOnMobile
+          fitContainer
+          (cursorChanged)="log.move($event)"
+          (retry)="log.reload()"
+        />
+      </div>
+    </app-tab>
+
+    <app-tab label="Accesos a datos sensibles">
+      <div class="audit__section">
+        <app-governance-filter-form
+          [fields]="dataAccessFields()"
+          [values]="values()"
+          (applied)="apply($event)"
+          (cleared)="clear()"
+        />
+        <app-data-table
+          data-testid="portal-audit-access-table"
+          caption="Accesos a datos sensibles"
+          [state]="access.state()"
+          [columns]="accessColumns()"
+          [trackBy]="byId"
+          [rowLabel]="accessRowName"
+          [cursor]="access.cursor()"
+          stackedOnMobile
+          fitContainer
+          (cursorChanged)="access.move($event)"
+          (retry)="access.reload()"
+        />
+      </div>
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<ng-template #logWhenCell let-row>
+  <div class="audit__cell">
+    <span class="audit__when"><span class="audit__nowrap">{{ day(row.recordedAt) }}</span>, <span class="audit__nowrap">{{ hour(row.recordedAt) }}</span></span>
+    <span class="audit__badges">
+      <app-badge size="sm" [variant]="risk(row.healthRisk).tone">{{ risk(row.healthRisk).label }}</app-badge>
+      <app-badge size="sm" [variant]="result(row.result).tone">{{ result(row.result).label }}</app-badge>
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #accessWhenCell let-row>
+  <div class="audit__cell">
+    <span class="audit__when"><span class="audit__nowrap">{{ day(row.recordedAt) }}</span>, <span class="audit__nowrap">{{ hour(row.recordedAt) }}</span></span>
+    <span class="audit__badges">
+      <app-badge size="sm" [variant]="operation(row.operation).tone">{{ operation(row.operation).label }}</app-badge>
+      <app-badge size="sm" [variant]="risk(row.healthRisk).tone">{{ risk(row.healthRisk).label }}</app-badge>
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #actionCell let-row>
+  <div class="audit__cell">
+    <span class="audit__action">
+      @if (row.method) {
+        <app-badge size="sm" [variant]="method(row.method).tone">{{ method(row.method).label }}</app-badge>
+      }
+      <span class="audit__route">@for (s of segments(headline(row)); track $index) {{{ s }}<wbr />}</span>
+    </span>
+    @if (business(row); as code) {
+      <span class="audit__secondary">{{ code }}</span>
+    }
+    <span class="audit__secondary">Entidad: {{ row.entity }}</span>
+  </div>
+</ng-template>
+
+<ng-template #resourceCell let-row>
+  <div class="audit__cell">
+    <span class="audit__resource">{{ resource(row.resourceType).label }}</span>
+    <span class="audit__secondary">{{ purpose(row.purpose).label }}</span>
+    @if (row.patientProfileId) {
+      <span class="audit__secondary">Sobre los datos de un paciente</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #actorCell let-row>
+  <div class="audit__cell">
+    <span class="audit__actor">{{ actorName(row.userId) }}</span>
+    @if (values().userId !== row.userId) {
+      <a
+        app-link
+        class="audit__filter-link"
+        [routerLink]="[]"
+        [queryParams]="{ userId: row.userId }"
+        queryParamsHandling="merge"
+        data-testid="portal-audit-actor-filter"
+      >
+        Sólo esta persona
+      </a>
+    }
+  </div>
+</ng-template>

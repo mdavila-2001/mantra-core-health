@@ -149,8 +149,7 @@ habrá que sostener.
 ALOVIDA).
 
 Sin eso, esta página describe buenas prácticas pero **no puede afirmar
-cumplimiento**. Es una limitación real y está registrada como brecha `MEDIUM` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
+cumplimiento**.
 
 Es una definición que corresponde al proyecto, no a este repositorio, y hace
 falta antes de la primera pantalla con PHI.

@@ -538,9 +538,9 @@ export const PRIVATE_UNIVERSITIES: readonly InstitutionOption[] = [
  * contrato sigue siendo texto de hasta cien caracteres.
  *
  * Por eso el valor de cada opción es **el nombre**, no un id: lo que viaja al
- * backend es exactamente lo que viajaba antes. El día que exista el catálogo,
- * esto pasa a ser un mapeo y las pantallas lo heredan sin cambiar dónde se
- * guarda la respuesta. Queda anotado en `docs/progress/BLOCKERS.md`.
+ * backend es exactamente lo que viajaba antes, y un catálogo del servidor
+ * podría mapearse sobre estos nombres sin cambiar dónde se guarda la
+ * respuesta.
  *
  * ## Por qué hay una salida a texto libre
  *

@@ -25,10 +25,10 @@ export interface InboxSite {
 /**
  * Aplana las sedes de las farmacias de la organización.
  *
- * `isHeadOffice` todavía no lo declara el backend real (TODO(model): concepto
- * `PHARM_SITE_TYPE_HEAD_OFFICE` en el tipo de sede). Mientras no llegue, la
- * regla de {@link siteByDefault} cae a la única sede o a la de código más
- * bajo — nunca se deduce la matriz de la dirección legal, que es otra cosa.
+ * `isHeadOffice` no lo declara el backend real (el tipo de sede no tiene un
+ * concepto de casa matriz). Sin él, la regla de {@link siteByDefault} cae a
+ * la única sede o a la de código más bajo — nunca se deduce la matriz de la
+ * dirección legal, que es otra cosa.
  */
 export function pharmaciesSites(farmacias: readonly PharmacyDetail[]): readonly InboxSite[] {
   return farmacias.flatMap((farmacia) =>
@@ -131,8 +131,7 @@ const BACK_DAYS: Readonly<Record<'7d' | '30d', number>> = { '7d': 6, '30d': 29 }
  * Si un pedido cerrado entra en el recorte elegido.
  *
  * **Se mide por la fecha de creación**, que es la única que el contrato del
- * pedido trae. TODO(FAR-E2): cuando la API publique cuándo se cerró, medir por
- * ésa — hoy un pedido creado ayer y retirado hoy cuenta como de ayer.
+ * pedido trae: un pedido creado ayer y retirado hoy cuenta como de ayer.
  */
 export function closedInCrop(
   creadoEl: Date,

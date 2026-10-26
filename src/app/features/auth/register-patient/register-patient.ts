@@ -49,6 +49,7 @@ import type {
   BirthSexCode,
   PatientRegistration,
 } from '../../../core/data-access/iam/iam.types';
+import { campoDistrito, componerDireccion } from '../shared-registration/address-line';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -56,8 +57,8 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import {
-  INVALID_NATIONAL_ID_MESSAGE,
-  validateBolivianNationalId,
+  INVALID_IDENTITY_DOCUMENT_MESSAGE,
+  identityDocumentValidators,
 } from '../shared-registration/national-id';
 import { LocationPicker } from '../shared-registration/location-picker/location-picker';
 import { Link } from '../../../shared/components/atoms/link/link';
@@ -553,6 +554,14 @@ const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
   ['09', 'PA'],
 ]);
 
+/** El borrador antiguo de `localStorage` (formato versión 1). */
+interface BorradorLocal {
+  readonly version: number;
+  readonly pasoIndice?: number;
+  readonly formValores?: Record<string, unknown>;
+  readonly [extra: string]: unknown;
+}
+
 @Component({
   selector: 'app-register-patient',
   imports: [
@@ -692,7 +701,7 @@ export class RegisterPatient {
     {
       nationalId: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, validateBolivianNationalId],
+        validators: [...identityDocumentValidators],
       }),
       // El nombre va en sus cuatro partes, no en un campo libre: es como lo emite
       // el documento de identidad y como se comparan dos personas al buscar
@@ -777,6 +786,8 @@ export class RegisterPatient {
       // Calle y número del domicilio. Las coordenadas van aparte: no se
       // escriben, se confirman sobre el mapa.
       homeAddressLines: new FormControl('', { nonNullable: true }),
+      // Distrito o zona: viaja dentro de la línea de dirección.
+      homeDistrict: new FormControl('', { nonNullable: true }),
       // **La localidad de residencia es obligatoria (AC-03-3)** y por eso vive
       // en el formulario y no en un signal suelto: el motor valida de a una
       // página, y un dato fuera del `FormGroup` no lo puede frenar. El signal
@@ -792,6 +803,7 @@ export class RegisterPatient {
       // Opcional, las tres.
       workMunicipalityConceptId: new FormControl<string | null>(null),
       workAddressLines: new FormControl('', { nonNullable: true }),
+      workDistrict: new FormControl('', { nonNullable: true }),
       // El nombre escrito a mano, sólo para «Otra empresa». Sin validador
       // propio: el campo entero es opcional, y exigirlo convertiría la salida
       // de la lista en una trampa.
@@ -1342,7 +1354,7 @@ export class RegisterPatient {
           testId: 'registro-documento',
           icono: 'patients',
           ancho: 'mitad',
-          mensajeDeError: INVALID_NATIONAL_ID_MESSAGE,
+          mensajeDeError: INVALID_IDENTITY_DOCUMENT_MESSAGE,
         },
         this.campoDepartamentoEmisor('registro-departamento-ci'),
         {
@@ -1390,9 +1402,10 @@ export class RegisterPatient {
           required: true,
           mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
         },
+        campoDistrito('homeDistrict', 'registro-domicilio-distrito', 'residenceMunicipalityConceptId'),
         {
           key: 'homeAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
+          label: 'Calle (opcional)',
           hint: 'Como la escribiría en un sobre.',
           description:
             'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
@@ -1401,6 +1414,7 @@ export class RegisterPatient {
           placeholder: 'Av. Banzer, 3er anillo #42',
           testId: 'registro-domicilio-calle',
           icono: 'route',
+          showWhen: { key: 'residenceMunicipalityConceptId', filled: true },
         },
         {
           key: 'gpsDomicilio',
@@ -1408,6 +1422,7 @@ export class RegisterPatient {
           hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
           description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
           control: 'custom',
+          showWhen: { key: 'residenceMunicipalityConceptId', filled: true },
         },
       ],
     },
@@ -1507,15 +1522,17 @@ export class RegisterPatient {
           label: '',
           control: 'custom',
         },
+        campoDistrito('workDistrict', 'registration-work-district', 'workMunicipalityConceptId'),
         {
           key: 'workAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
+          label: 'Calle (opcional)',
           hint: 'Calle y número de su trabajo.',
           description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
           control: 'text',
           placeholder: 'Calle Libertad #120',
           testId: 'registration-work-address',
           icono: 'route',
+          showWhen: { key: 'workMunicipalityConceptId', filled: true },
         },
         {
           key: 'gpsTrabajo',
@@ -1523,6 +1540,7 @@ export class RegisterPatient {
           hint: 'El punto exacto de su lugar de trabajo.',
           description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
           control: 'custom',
+          showWhen: { key: 'workMunicipalityConceptId', filled: true },
         },
       ],
     },
@@ -2443,10 +2461,13 @@ export class RegisterPatient {
       const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
       const titulo = paginas[indice]?.titulo ?? clave;
       const raw = this.formPaciente.getRawValue();
-      const valores = {
+      // La contraseña nunca se escribe en el almacenamiento del navegador.
+      const valores: Record<string, unknown> = {
         ...raw,
         birthDate: raw.birthDate instanceof Date ? raw.birthDate.toISOString() : null,
       };
+      delete valores['password'];
+      delete valores['confirmPassword'];
       const extraData = {
         nombresExtra: this.nombresExtra(),
         empresaSeleccionada: this.empresaSeleccionada(),
@@ -2486,17 +2507,47 @@ export class RegisterPatient {
     }
   }
 
+  /**
+   * Lee el borrador antiguo de `localStorage` (sólo la versión 1) y lo deja
+   * limpio: los borradores viejos guardaban la contraseña en claro, así que se
+   * borra y se reescribe la clave sin ella.
+   */
+  private leerBorradorLocal(): BorradorLocal | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    try {
+      const serializado = localStorage.getItem(this.STORAGE_KEY);
+      const parseado = serializado ? JSON.parse(serializado) : null;
+      // Sólo la versión 1 del formato antiguo; otra cosa es basura o futuro.
+      const legacy: BorradorLocal | null =
+        parseado && typeof parseado === 'object' && parseado.version === 1 ? parseado : null;
+      if (legacy?.formValores && typeof legacy.formValores === 'object') {
+        // Borradores viejos guardaban la contraseña en claro: se borra y se
+        // reescribe la clave limpia, para que no se reinyecte ni se quede.
+        const tenia = 'password' in legacy.formValores || 'confirmPassword' in legacy.formValores;
+        delete legacy.formValores['password'];
+        delete legacy.formValores['confirmPassword'];
+        if (tenia) localStorage.setItem(this.STORAGE_KEY, JSON.stringify(legacy));
+      } else if (parseado && !legacy) {
+        localStorage.removeItem(this.STORAGE_KEY);
+      }
+      return legacy;
+    } catch {
+      return null;
+    }
+  }
+
   /** Restaura el avance previo del formulario desde caché si existe. */
   restaurarBorrador(draftParam?: OnboardingDraft): void {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
-      const serializado = localStorage.getItem(this.STORAGE_KEY);
-      const legacy = serializado ? JSON.parse(serializado) : null;
-      const draft = draftParam;
+      const legacy = this.leerBorradorLocal();
+      const draft = draftParam ?? (legacy ? undefined : this.draftService.detectDraft('patient') ?? undefined);
 
-      const rawValores = draft ? draft.data : (legacy?.formValores ?? this.draftService.detectDraft('patient')?.data);
+      const rawValores = draft ? draft.data : legacy?.formValores;
       if (rawValores) {
         const valores = { ...rawValores } as Record<string, unknown>;
+        delete valores['password'];
+        delete valores['confirmPassword'];
         if (typeof valores['birthDate'] === 'string' && valores['birthDate']) {
           const d = new Date(valores['birthDate']);
           valores['birthDate'] = !Number.isNaN(d.getTime()) ? d : null;
@@ -2523,7 +2574,7 @@ export class RegisterPatient {
         this.formPaciente.patchValue(valores);
       }
 
-      const extra = (draft ? draft.extraData : (legacy ?? this.draftService.detectDraft('patient')?.extraData)) ?? {};
+      const extra = (draft ? draft.extraData : legacy) ?? {};
       if (Array.isArray(extra['nombresExtra'])) {
         this.nombresExtra.set(extra['nombresExtra'] as readonly string[]);
       }
@@ -2598,6 +2649,7 @@ export class RegisterPatient {
   });
 
   constructor() {
+    this.leerBorradorLocal();
     const detectado = this.draftService.detectDraft('patient');
     if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
       this.borradorDetectado.set(detectado);
@@ -2999,9 +3051,9 @@ export class RegisterPatient {
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const sexoAlNacer = raw.sexAtBirth;
     const municipio = raw.residenceMunicipalityConceptId;
-    const calleDomicilio = raw.homeAddressLines.trim();
+    const calleDomicilio = componerDireccion(raw.homeAddressLines, raw.homeDistrict);
     const municipioTrabajo = raw.workMunicipalityConceptId;
-    const calleTrabajo = raw.workAddressLines.trim();
+    const calleTrabajo = componerDireccion(raw.workAddressLines, raw.workDistrict);
     const empresa = this.empresaSeleccionada();
     const otraEmpresa = raw.workEmployerFreeText.trim();
     // Sólo viaja lo confirmado sobre el mapa: un punto capturado y no mirado es

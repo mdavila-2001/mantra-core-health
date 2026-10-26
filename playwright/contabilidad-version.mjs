@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const BASE = process.argv[2] ?? 'http://localhost:4333';
-const SALIDA = fileURLToPath(new URL('../evidencias/contabilidad-version-2026-10-26-test', import.meta.url));
+const SALIDA = fileURLToPath(new URL('../evidencias/contabilidad-version-2026-10-26-dev', import.meta.url));
 const veredictos = [];
 const ok = (nombre, cond, detalle = '') => {
   veredictos.push({ nombre, cond: Boolean(cond), detalle });

@@ -170,8 +170,7 @@ export interface NewReportVersion {
  *
  * Es el **único** camino que hace que el paciente vea el resultado en «Mis
  * resultados»: registra el evento de liberación con esta visibilidad, en la
- * misma transacción que la versión y el informe (ver D-E en
- * `docs/progress/DECISIONS.md`).
+ * misma transacción que la versión y el informe (decisión D-E).
  */
 export interface ReleaseReportVersion {
   /** Por defecto `VISIBLE`. */

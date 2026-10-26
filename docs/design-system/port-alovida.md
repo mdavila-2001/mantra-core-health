@@ -180,19 +180,6 @@ de secciones: cambió cómo se pinta, no de dónde sale.
 El organismo `app-shell` sigue existiendo y no se tocó — lo usa la vitrina del
 sistema de diseño para mostrarlo aislado.
 
-## Lo que falta
-
-De las 755 vistas que declaran las fichas MD, **126 están portadas**: las que
-tenían maqueta HTML. Las otras ~629 existen sólo como especificación en prosa,
-repartidas en los módulos V00–V01 y V07–V64.
-
-El nav lateral las declara igual, sin destino (`data-sin-destino`): están en el
-mapa de la plataforma y todavía no se maquetaron. Es deliberado — esconderlas
-haría creer que la plataforma es más chica de lo que es, y darles una ruta
-falsa mandaría a un 404.
-
-El orden para construirlas está en `🗺️ Orden de trabajo.md` en la bóveda.
-
 ## Cómo regenerar
 
 ```bash

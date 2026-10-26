@@ -1,0 +1,1146 @@
+{
+ "UBERON:0000303": {
+  "labelEs": "músculo aductor largo",
+  "definitionEs": "Músculo aductor que se fija a la cadera y al fémur. En los seres humanos, forma parte del grupo aductor del muslo, que, como su nombre indica, aduce el muslo. El músculo aductor largo forma la pared medial del triángulo femoral[WP, generalized]."
+ },
+ "UBERON:0000313": {
+  "labelEs": "porción de tejido cartilaginoso de la tibia",
+  "definitionEs": "Cartílago perteneciente a la tibia."
+ },
+ "UBERON:0000368": {
+  "labelEs": "músculo aductor corto",
+  "definitionEs": "El aductor corto es un músculo del muslo situado inmediatamente detrás del pectíneo y del aductor largo. Tiene una forma algo triangular y se origina mediante un origen estrecho en las caras externas de las ramas superior e inferior del pubis, entre el grácil y el obturador externo. Sus fibras, que se dirigen hacia atrás, lateralmente y hacia abajo, se insertan, mediante una aponeurosis, en la línea que va del trocánter menor a la línea áspera y en la parte superior de la línea áspera, inmediatamente detrás del pectíneo y de la parte superior del aductor largo.[WP]."
+ },
+ "UBERON:0000370": {
+  "labelEs": "músculo aductor mayor",
+  "definitionEs": "Músculo aductor que se fija al hueso pélvico y al fémur. En los seres humanos, el aductor mayor es un músculo grande y triangular, situado en la cara medial del muslo. La porción que se origina en la rama isquiopúbica (una pequeña parte de la rama inferior del pubis y la rama inferior del isquion) se denomina «porción aductora» ('adductor magnesius portion'), y la porción que se origina en la tuberosidad del isquion se denomina «porción isquiotibial». La porción isquiotibial no se considera parte del grupo de músculos isquiotibiales, pero es adyacente a él.[WP,generalized]."
+ },
+ "UBERON:0000372": {
+  "labelEs": "músculo extensor corto de los dedos del pie",
+  "definitionEs": "Músculo de la cara superior del pie que contribuye a extender los dedos 2 a 4."
+ },
+ "UBERON:0000376": {
+  "labelEs": "estilopodio del miembro posterior",
+  "definitionEs": "Parte del miembro posterior comprendida entre la pelvis y la rodilla, que corresponde al fémur."
+ },
+ "UBERON:0000950": {
+  "labelEs": "músculo grácil",
+  "definitionEs": "El músculo más superficial de la cara medial del muslo. Es delgado y aplanado, ancho en su parte superior y estrecho y afilado en la inferior. Se origina mediante una aponeurosis delgada en los bordes anteriores de la mitad inferior de la sínfisis del pubis y de la mitad superior del arco del pubis."
+ },
+ "UBERON:0000979": {
+  "labelEs": "tibia",
+  "definitionEs": "El principal hueso endocondral preaxial del zeugopodio posterior[Phenoscape]."
+ },
+ "UBERON:0000980": {
+  "labelEs": "trocánter",
+  "definitionEs": "Prominencia ósea cercana al extremo del fémur que normalmente sirve como punto de inserción de músculos de la cadera y del muslo[MP,modified]."
+ },
+ "UBERON:0000981": {
+  "labelEs": "fémur",
+  "definitionEs": "Hueso largo endocondral que conecta la cintura pélvica con el esqueleto del zeugopodio posterior.[VSAO, modified]."
+ },
+ "UBERON:0000983": {
+  "labelEs": "región del metatarso",
+  "definitionEs": "Región del metapodio que forma parte de un pie."
+ },
+ "UBERON:0001267": {
+  "labelEs": "nervio femoral",
+  "definitionEs": "El nervio femoral, la rama más grande del plexo lumbar, se origina de las divisiones ventrales del segundo, tercer y cuarto nervios lumbares. Desciende a través de las fibras del psoas mayor, emerge del músculo en la parte inferior de su borde lateral y desciende entre este y el ilíaco, por detrás de la fascia ilíaca; a continuación pasa por debajo del ligamento inguinal, hacia el muslo, y se divide en una división anterior y otra posterior. Por debajo del ligamento inguinal, está separado de la arteria femoral por una porción del psoas mayor. [WP,unvetted]."
+ },
+ "UBERON:0001323": {
+  "labelEs": "nervio tibial",
+  "definitionEs": "El nervio tibial es una rama del nervio ciático. El nervio tibial atraviesa la fosa poplítea para pasar por debajo del arco del sóleo. En la fosa poplítea, el nervio emite ramos para los músculos gastrocnemio, poplíteo, sóleo y plantar, un ramo articular para la articulación de la rodilla y un ramo cutáneo que se convertirá en el nervio sural. Al nervio sural se le unen fibras del nervio peroneo común y desciende por la pantorrilla para inervar la cara lateral del pie. Por debajo del músculo sóleo, el nervio se sitúa cerca de la tibia e inerva el tibial posterior, el flexor largo de los dedos y el flexor largo del dedo gordo. El nervio pasa al pie discurriendo por detrás del maléolo medial. Aquí queda sujeto por el retináculo de los músculos flexores junto con la arteria tibial posterior. [WP,unvetted]."
+ },
+ "UBERON:0001324": {
+  "labelEs": "nervio fibular común",
+  "definitionEs": "Nervio que surge en la división terminal del nervio ciático en la fosa poplítea y que se extiende hasta el cuello del peroné, inervando finalmente el músculo peroneo[MP]."
+ },
+ "UBERON:0001361": {
+  "labelEs": "vena femoral",
+  "definitionEs": "En el cuerpo humano, la vena femoral es un vaso sanguíneo que acompaña a la arteria femoral en la vaina femoral. Comienza en el conducto aductor (también conocido como conducto de Hunter) y es una continuación de la vena poplítea. Termina en el borde inferior del ligamento inguinal, donde se convierte en la vena ilíaca externa. [WP,unvetted]."
+ },
+ "UBERON:0001363": {
+  "labelEs": "vena safena mayor",
+  "definitionEs": "La vena safena mayor (VSM), también llamada vena safena magna, es la gran vena superficial (subcutánea) de la pierna y del muslo. Se ha atribuido el origen de la palabra «safena» tanto al término 'safaina' (griego) como a 'el safin' (árabe). [WP,unvetted]."
+ },
+ "UBERON:0001374": {
+  "labelEs": "músculo bíceps femoral",
+  "definitionEs": "El bíceps femoral es un músculo de la parte posterior del muslo. Como su nombre indica, tiene dos partes, una de las cuales (la cabeza larga) forma parte del grupo muscular de los isquiotibiales. [WP,unvetted]."
+ },
+ "UBERON:0001375": {
+  "labelEs": "músculo semitendinoso",
+  "definitionEs": "El semitendinoso es un músculo de la parte posterior del muslo; es uno de los isquiotibiales. [WP,unvetted]."
+ },
+ "UBERON:0001377": {
+  "labelEs": "músculo cuádriceps femoral",
+  "definitionEs": "Uno de los músculos pertenecientes al grupo formado por el recto femoral y las tres cabezas del vasto (lateral, medial, intermedio)."
+ },
+ "UBERON:0001378": {
+  "labelEs": "músculo recto femoral",
+  "definitionEs": "El músculo recto femoral es uno de los cuatro músculos cuádriceps del cuerpo humano. (Los otros son el vasto medial, el vasto intermedio y el vasto lateral. Los cuatro se unen para formar el tendón del cuádriceps, que se inserta en la rótula y continúa como ligamento rotuliano.) El recto femoral está situado en el centro de la parte anterior del muslo; tiene forma fusiforme y sus fibras superficiales se disponen de forma bipenniforme, mientras que las fibras profundas discurren rectas hacia abajo hasta la aponeurosis profunda. [WP,unvetted]."
+ },
+ "UBERON:0001379": {
+  "labelEs": "músculo vasto lateral",
+  "definitionEs": "El vasto lateral (vasto externo) es la parte más grande del cuádriceps femoral. Se origina mediante una amplia aponeurosis, que se fija a la parte superior de la línea intertrocantérea, a los bordes anterior e inferior del trocánter mayor, al labio lateral de la tuberosidad glútea y a la mitad superior del labio lateral de la línea áspera; esta aponeurosis cubre los tres cuartos superiores del músculo, y de su cara profunda se originan muchas fibras. Algunas fibras adicionales se originan en el tendón del glúteo mayor y en el tabique intermuscular lateral entre el vasto lateral y la cabeza corta del bíceps femoral. Las fibras forman una gran masa carnosa, que se fija a una fuerte aponeurosis situada en la cara profunda de la parte inferior del músculo: esta aponeurosis se contrae y engruesa formando un tendón plano que se inserta en el borde lateral de la rótula, se fusiona con el tendón del cuádriceps femoral y da una expansión a la cápsula de la articulación de la rodilla. [WP,unvetted]."
+ },
+ "UBERON:0001380": {
+  "labelEs": "músculo vasto medial",
+  "definitionEs": "El vasto medial, a menudo llamado músculo «en lágrima», es un músculo del cuádriceps de localización medial. [WP,unvetted]."
+ },
+ "UBERON:0001381": {
+  "labelEs": "músculo semimembranoso",
+  "definitionEs": "El semimembranoso es un músculo de la parte posterior del muslo. Es el más medial de los tres músculos isquiotibiales. [WP,unvetted]."
+ },
+ "UBERON:0001382": {
+  "labelEs": "músculo pectíneo",
+  "definitionEs": "Músculo aductor que se fija al hueso pélvico y al fémur. En los seres humanos, el músculo pectíneo es un músculo plano y cuadrangular, situado en la parte anterior de la cara superior y medial del muslo. Puede clasificarse en el compartimento medial del muslo (cuando se destaca la función) o en el compartimento anterior del muslo (cuando se destaca el nervio). [WP,generalized]."
+ },
+ "UBERON:0001385": {
+  "labelEs": "músculo tibial anterior",
+  "definitionEs": "Músculo que se origina en los dos tercios superiores de la cara lateral de la tibia y se inserta en los huesos cuneiforme medial y primer metatarsiano del pie. Actúa invirtiendo el pie. Está situado en la cara lateral de la tibia; es grueso y carnoso en su parte superior y tendinoso en la inferior. Este músculo se superpone a los vasos tibiales anteriores y al nervio peroneo profundo en la parte superior de la pierna. [WP,unvetted]. El M. tibialis cranialis es un músculo que flexiona el tarsometatarso. Se origina en la cara craneodistal del fémur y en el tibiotarso proximal y se inserta en la cara craneal del tarsometatarso[EvoWiki]."
+ },
+ "UBERON:0001386": {
+  "labelEs": "músculo extensor largo de los dedos",
+  "definitionEs": "Músculo penniforme de la parte anterolateral del miembro posterior responsable de la extensión de los dedos y de la flexión dorsal del tobillo."
+ },
+ "UBERON:0001387": {
+  "labelEs": "músculo fibular largo",
+  "definitionEs": "Músculo superficial del compartimento lateral de la pierna que actúa evertiendo el tobillo y realizando su flexión plantar. Está situado en la parte superior de la cara lateral de la pierna y es el más superficial de los tres músculos peroneos. Está inervado por el nervio fibular superficial (nervio peroneo superficial). [WP,unvetted]."
+ },
+ "UBERON:0001388": {
+  "labelEs": "músculo gastrocnemio",
+  "definitionEs": "El músculo más superficial del grupo del tríceps sural, en la porción posterior de la parte inferior del miembro posterior."
+ },
+ "UBERON:0001389": {
+  "labelEs": "músculo sóleo",
+  "definitionEs": "Músculo profundo del grupo del tríceps sural, en el compartimento posterior superficial de la pierna."
+ },
+ "UBERON:0001391": {
+  "labelEs": "músculo poplíteo",
+  "definitionEs": "El músculo poplíteo de la pierna se utiliza para desbloquear la rodilla rotando lateralmente el fémur sobre la tibia durante un movimiento en cadena cerrada (como uno con el pie en contacto con el suelo). [WP,unvetted]."
+ },
+ "UBERON:0001392": {
+  "labelEs": "músculo flexor largo del dedo gordo",
+  "definitionEs": "Músculo profundo del compartimento posterior del miembro posterior, inervado por el nervio tibial, que se origina en el peroné y se inserta en la falange distal del dedo 1 del pie."
+ },
+ "UBERON:0001441": {
+  "labelEs": "esqueleto del miembro posterior",
+  "definitionEs": "Subdivisión del esqueleto formada por todos los elementos esqueléticos de una región del miembro posterior."
+ },
+ "UBERON:0001445": {
+  "labelEs": "esqueleto del pie",
+  "definitionEs": "Subdivisión del esqueleto que es el conjunto de todos los elementos esqueléticos de un pie, que es la sección distal del esqueleto del miembro posterior formada por el mesopodio, el metapodio y el acropodio (p. ej., incluidos el tobillo, la planta y los dedos)[Phenoscape]."
+ },
+ "UBERON:0001446": {
+  "labelEs": "peroné",
+  "definitionEs": "El principal hueso endocondral postaxial del zeugopodio posterior[Phenoscape]."
+ },
+ "UBERON:0001447": {
+  "labelEs": "hueso del tarso",
+  "definitionEs": "Hueso que forma parte del esqueleto del tarso. Ejemplos: calcáneo, astrágalo, centrales."
+ },
+ "UBERON:0001448": {
+  "labelEs": "hueso metatarsiano",
+  "definitionEs": "El metatarso o huesos metatarsianos son un grupo de cinco huesos largos del pie situados entre los huesos del tarso del retropié y del mediopié y las falanges de los dedos. Al carecer de nombres individuales, los huesos metatarsianos se numeran desde el lado medial (lado del dedo gordo): primero, segundo, tercero, cuarto y quinto metatarsiano. Los metatarsianos son análogos a los huesos metacarpianos de la mano. [WP,unvetted]."
+ },
+ "UBERON:0001449": {
+  "labelEs": "falange del pie",
+  "definitionEs": "Falange que forma parte de un autopodio del miembro posterior[Automatically generated definition]."
+ },
+ "UBERON:0001450": {
+  "labelEs": "calcáneo",
+  "definitionEs": "El hueso postaxial de la serie proximal del tarso[Phenoscape]."
+ },
+ "UBERON:0001451": {
+  "labelEs": "hueso navicular",
+  "definitionEs": "Hueso del tarso de forma oval situado entre el astrágalo y los 3 huesos cuneiformes."
+ },
+ "UBERON:0001452": {
+  "labelEs": "hueso tarsiano distal 1",
+  "definitionEs": "Hueso endocondral del tarso que se articula con los centrales y con el metatarsiano 1."
+ },
+ "UBERON:0001453": {
+  "labelEs": "hueso tarsiano distal 2",
+  "definitionEs": "Hueso endocondral del tarso que se articula con los centrales y con el metatarsiano 2."
+ },
+ "UBERON:0001454": {
+  "labelEs": "hueso tarsiano distal 3",
+  "definitionEs": "Hueso endocondral del tarso que se articula con los centrales y con el metatarsiano 3."
+ },
+ "UBERON:0001455": {
+  "labelEs": "hueso cuboides",
+  "definitionEs": "Hueso del tarso que se forma a partir de los tarsianos distales 4 y 5. [WP,modified]."
+ },
+ "UBERON:0001465": {
+  "labelEs": "rodilla",
+  "definitionEs": "Segmento del miembro posterior que corresponde a la articulación que conecta un estilopodio y un zeugopodio del miembro posterior."
+ },
+ "UBERON:0001466": {
+  "labelEs": "dedo del pie",
+  "definitionEs": "Dedo que forma parte de un pie."
+ },
+ "UBERON:0001485": {
+  "labelEs": "articulación de la rodilla",
+  "definitionEs": "La articulación de la rodilla une el muslo con la pierna y consta de dos articulaciones: una entre el fémur y la tibia, y otra entre el fémur y la rótula. Es la articulación más grande y más compleja del cuerpo humano. La rodilla es un trocoginglimo móvil (es decir, una articulación en bisagra con pivote), que permite la flexión y la extensión, así como una ligera rotación medial y lateral[WP,unvetted]."
+ },
+ "UBERON:0001487": {
+  "labelEs": "articulación del pie",
+  "definitionEs": "Articulación esquelética que forma parte de un pie [Automatically generated definition]."
+ },
+ "UBERON:0001488": {
+  "labelEs": "articulación del tobillo",
+  "definitionEs": "Articulación que conecta los esqueletos del autopodio y del zeugopodio del miembro posterior."
+ },
+ "UBERON:0001498": {
+  "labelEs": "músculo del pie",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un pie [Automatically generated definition]."
+ },
+ "UBERON:0001504": {
+  "labelEs": "músculo lumbrical del pie",
+  "definitionEs": "Los lumbricales son cuatro pequeños músculos esqueléticos, accesorios de los tendones del flexor largo de los dedos y numerados desde el lado medial del pie; se originan en estos tendones, hasta sus ángulos de división, surgiendo cada uno de dos tendones, excepto el primero."
+ },
+ "UBERON:0001510": {
+  "labelEs": "piel de la rodilla",
+  "definitionEs": "Zona de piel que forma parte de una rodilla [Automatically generated definition]."
+ },
+ "UBERON:0001511": {
+  "labelEs": "piel de la pierna",
+  "definitionEs": "Zona de piel que forma parte de una pierna [Automatically generated definition]."
+ },
+ "UBERON:0001512": {
+  "labelEs": "piel del tobillo",
+  "definitionEs": "Zona de piel que forma parte de un tobillo [Automatically generated definition]."
+ },
+ "UBERON:0001513": {
+  "labelEs": "piel del pie",
+  "definitionEs": "Zona de piel que forma parte de un pie [Automatically generated definition]."
+ },
+ "UBERON:0001537": {
+  "labelEs": "arteria tibial anterior",
+  "definitionEs": "La arteria tibial anterior del miembro inferior lleva sangre desde la arteria poplítea al compartimento anterior de la pierna y a la cara dorsal del pie. A lo largo de su recorrido está acompañada por una vena profunda, la vena tibial anterior. Cruza la cara anterior de la articulación del tobillo, punto en el que se convierte en la arteria dorsal del pie. [WP,unvetted]."
+ },
+ "UBERON:0001538": {
+  "labelEs": "arteria tibial posterior",
+  "definitionEs": "La arteria tibial posterior del miembro inferior lleva sangre desde la arteria poplítea al compartimento posterior de la pierna y a la cara plantar del pie. A lo largo de su recorrido está acompañada por una vena profunda, la vena tibial posterior. [WP,unvetted]."
+ },
+ "UBERON:0001539": {
+  "labelEs": "arteria dorsal del pie",
+  "definitionEs": "Vaso sanguíneo del miembro inferior que lleva sangre oxigenada a la cara dorsal del pie. Surge en la cara anterior de la articulación del tobillo y es una continuación de la arteria tibial anterior. Termina en la parte proximal del primer espacio intermetatarsiano, donde se divide en dos ramas, la primera arteria metatarsiana dorsal y la arteria plantar profunda. A lo largo de su recorrido está acompañada por una vena profunda, la vena dorsal del pie. [WP,unvetted]."
+ },
+ "UBERON:0001541": {
+  "labelEs": "arteria plantar medial",
+  "definitionEs": "La arteria plantar medial (arteria plantar interna), mucho más pequeña que la lateral, avanza a lo largo de la cara medial del pie. Al principio está situada por encima del abductor del dedo gordo y después entre este y el flexor corto de los dedos, a los que irriga. En la base del primer hueso metatarsiano, donde su calibre está muy reducido, discurre a lo largo del borde medial del primer dedo y se anastomosa con la primera arteria metatarsiana dorsal. Pequeñas ramas digitales superficiales acompañan a los ramos digitales del nervio plantar medial y se unen a las arterias metatarsianas plantares de los tres primeros espacios. [WP,unvetted]."
+ },
+ "UBERON:0001543": {
+  "labelEs": "nódulo linfático poplíteo",
+  "definitionEs": "Los nódulos linfáticos que drenan las piernas; contenidos en la fosa poplítea."
+ },
+ "UBERON:0001545": {
+  "labelEs": "vena tibial anterior",
+  "definitionEs": "Vena del miembro inferior que lleva sangre desde el compartimento anterior de la pierna a la vena poplítea, que se forma cuando se une con la vena tibial posterior. Como la mayoría de las venas profundas, la vena tibial anterior está acompañada a lo largo de su recorrido por una arteria del mismo nombre, la arteria tibial anterior. [WP,unvetted]."
+ },
+ "UBERON:0001546": {
+  "labelEs": "vena tibial posterior",
+  "definitionEs": "Vena del miembro inferior que lleva sangre desde el compartimento posterior y la cara plantar del pie a la vena poplítea, que forma cuando se une con la vena tibial anterior. Como la mayoría de las venas profundas, la vena tibial posterior está acompañada a lo largo de su recorrido por una arteria del mismo nombre, la arteria tibial posterior. [WP,unvetted]."
+ },
+ "UBERON:0001547": {
+  "labelEs": "vena safena menor",
+  "definitionEs": "La vena safena menor (también vena safena parva) es una vena relativamente grande de la parte posterior superficial de la pierna. [WP,unvetted]."
+ },
+ "UBERON:0001551": {
+  "labelEs": "vena del zeugopodio del miembro posterior",
+  "definitionEs": null
+ },
+ "UBERON:0001553": {
+  "labelEs": "arteria tarsiana medial",
+  "definitionEs": "Las arterias tarsianas mediales son dos o tres pequeñas ramas que se ramifican en el borde medial del pie y se unen a la red maleolar medial."
+ },
+ "UBERON:0001665": {
+  "labelEs": "músculo tríceps sural",
+  "definitionEs": "El tríceps sural es un par de músculos situados en la pantorrilla: el gastrocnemio y el sóleo. Ambos músculos se insertan en el calcáneo, el hueso del talón del pie humano, y forman la mayor parte de la musculatura de la parte posterior de la pierna, conocida comúnmente como músculo de la pantorrilla. El tríceps sural está conectado al pie a través del tendón de Aquiles y tiene 3 cabezas que derivan de las 2 masas musculares principales. La porción superficial (el gastrocnemio) da lugar a 2 cabezas que se fijan a la base del fémur, directamente por encima de la rodilla. La masa muscular profunda (el sóleo) forma la cabeza restante, que se fija a la zona posterosuperior de la tibia. El tríceps sural está inervado por el nervio tibial, concretamente por las raíces nerviosas L5-S2. [WP,unvetted]."
+ },
+ "UBERON:0001666": {
+  "labelEs": "músculo flexor largo de los dedos",
+  "definitionEs": "El flexor largo de los dedos está situado en el lado tibial de la pierna. En su origen es delgado y puntiagudo, pero aumenta gradualmente de tamaño a medida que desciende. Este músculo sirve para flexionar el segundo, tercer, cuarto y quinto dedos (flexión de las falanges II-V). [WP,unvetted]."
+ },
+ "UBERON:0001667": {
+  "labelEs": "músculo tibial posterior",
+  "definitionEs": "El tibial posterior es el más central de todos los músculos de la pierna y se encuentra en el compartimento posterior de la pierna. Es el músculo estabilizador clave de la parte inferior de la pierna. [WP,unvetted]."
+ },
+ "UBERON:0002103": {
+  "labelEs": "miembro posterior",
+  "definitionEs": "Miembro (libre) que está conectado a una región de la cintura pélvica. La extensión de esta estructura incluye las regiones del autopodio, del estilopodio y del zeugopodio cuando están presentes, pero excluye la cintura pélvica y sus partes."
+ },
+ "UBERON:0002387": {
+  "labelEs": "pie",
+  "definitionEs": "Porción distal del miembro posterior, que incluye la región del tarso, la región del metatarso y los dedos."
+ },
+ "UBERON:0002395": {
+  "labelEs": "astrágalo",
+  "definitionEs": "Hueso proximal del tarso resultante de la fusión del intermedio y el fibular."
+ },
+ "UBERON:0002446": {
+  "labelEs": "rótula",
+  "definitionEs": "Hueso sesamoideo grande que se encuentra en la región femoral distal/tibial proximal del miembro posterior de los tetrápodos. La rótula es el lugar de inserción de tendones proximales del miembro posterior.[PHENOSCAPE:ad]."
+ },
+ "UBERON:0002455": {
+  "labelEs": "arterias digitales plantares comunes",
+  "definitionEs": null
+ },
+ "UBERON:0002463": {
+  "labelEs": "músculo del compartimento posterior del estilopodio del miembro posterior",
+  "definitionEs": "Cualquiera de los músculos posteriores del muslo. [WP,modified]."
+ },
+ "UBERON:0002475": {
+  "labelEs": "nervio safeno",
+  "definitionEs": "El ramo cutáneo más grande del nervio femoral. [WP,unvetted]."
+ },
+ "UBERON:0002503": {
+  "labelEs": "trocánter mayor",
+  "definitionEs": "El trocánter mayor (gran trocánter) del fémur es una eminencia grande, irregular y cuadrilátera, y forma parte del sistema esquelético. Está dirigido un poco lateralmente y hacia atrás y, en el adulto, se encuentra aproximadamente 1 cm más bajo que la cabeza. Debido a que el estrecho inferior de la pelvis es mayor en la mujer que en el hombre, la distancia entre los trocánteres mayores es mayor en la mujer. Tiene dos caras y cuatro bordes. [WP,unvetted]."
+ },
+ "UBERON:0002504": {
+  "labelEs": "trocánter menor",
+  "definitionEs": "El trocánter menor (pequeño trocánter) del fémur es una eminencia cónica, cuyo tamaño varía entre distintos sujetos [WP,unvetted]."
+ },
+ "UBERON:0003467": {
+  "labelEs": "hueso sesamoideo del gastrocnemio",
+  "definitionEs": "Pequeño hueso sesamoideo situado detrás de un cóndilo del fémur."
+ },
+ "UBERON:0003530": {
+  "labelEs": "piel de los dedos del pie",
+  "definitionEs": "Zona de piel que forma parte de un dedo del pie [Automatically generated definition]."
+ },
+ "UBERON:0003532": {
+  "labelEs": "piel del miembro posterior",
+  "definitionEs": "Zona de piel que forma parte de un miembro posterior [Automatically generated definition]."
+ },
+ "UBERON:0003631": {
+  "labelEs": "dedo 1 del pie",
+  "definitionEs": "1.er dedo del autopodio posterior."
+ },
+ "UBERON:0003632": {
+  "labelEs": "dedo 2 del pie",
+  "definitionEs": "2.º dedo del autopodio posterior."
+ },
+ "UBERON:0003633": {
+  "labelEs": "dedo 3 del pie",
+  "definitionEs": "3.er dedo del autopodio posterior."
+ },
+ "UBERON:0003634": {
+  "labelEs": "dedo 4 del pie",
+  "definitionEs": "4.º dedo del autopodio posterior."
+ },
+ "UBERON:0003635": {
+  "labelEs": "dedo 5 del pie",
+  "definitionEs": "5.º dedo del autopodio posterior."
+ },
+ "UBERON:0003640": {
+  "labelEs": "falange del dedo 1 del pie",
+  "definitionEs": "Falange que forma parte de un dedo 1 del pie [Automatically generated definition]."
+ },
+ "UBERON:0003641": {
+  "labelEs": "falange del dedo 2 del pie",
+  "definitionEs": "Falange que forma parte de un dedo 2 del pie [Automatically generated definition]."
+ },
+ "UBERON:0003642": {
+  "labelEs": "falange del dedo 3 del pie",
+  "definitionEs": "Falange que forma parte de un dedo 3 del pie [Automatically generated definition]."
+ },
+ "UBERON:0003650": {
+  "labelEs": "hueso metatarsiano del dedo 1",
+  "definitionEs": "Hueso metatarsiano que está conectado distalmente (distally_connected_to) a una falange proximal del dedo 1 del pie."
+ },
+ "UBERON:0003651": {
+  "labelEs": "hueso metatarsiano del dedo 2",
+  "definitionEs": "Hueso metatarsiano que está conectado distalmente (distally_connected_to) a una falange proximal del dedo 2 del pie."
+ },
+ "UBERON:0003652": {
+  "labelEs": "hueso metatarsiano del dedo 3",
+  "definitionEs": "Hueso metatarsiano que está conectado distalmente (distally_connected_to) a una falange proximal del dedo 3 del pie[Automatically generated definition]."
+ },
+ "UBERON:0003653": {
+  "labelEs": "hueso metatarsiano del dedo 4",
+  "definitionEs": "Hueso metatarsiano que está conectado distalmente (distally_connected_to) a una falange proximal del dedo 4 del pie."
+ },
+ "UBERON:0003654": {
+  "labelEs": "hueso metatarsiano del dedo 5",
+  "definitionEs": "Hueso metatarsiano que está conectado distalmente (distally_connected_to) a una falange proximal del dedo 5 del pie."
+ },
+ "UBERON:0003663": {
+  "labelEs": "músculo del miembro posterior",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un miembro posterior [Automatically generated definition]."
+ },
+ "UBERON:0003669": {
+  "labelEs": "fascia lata",
+  "definitionEs": "La fascia profunda del muslo. [WP,unvetted]."
+ },
+ "UBERON:0003671": {
+  "labelEs": "ligamento cruzado anterior de la articulación de la rodilla",
+  "definitionEs": "Ligamento estabilizador principal de la rodilla que une las superficies del fémur y de la tibia."
+ },
+ "UBERON:0003676": {
+  "labelEs": "ligamento rotuliano",
+  "definitionEs": "La porción central del tendón común del cuádriceps femoral. Se fija al vértice de la RÓTULA y a la parte inferior del tubérculo de la TIBIA."
+ },
+ "UBERON:0003680": {
+  "labelEs": "ligamento cruzado posterior de la articulación de la rodilla",
+  "definitionEs": null
+ },
+ "UBERON:0003696": {
+  "labelEs": "articulación metatarsofalángica",
+  "definitionEs": "Las articulaciones metatarsofalángicas son las articulaciones entre los huesos metatarsianos del pie y los huesos proximales de los dedos. Son articulaciones condíleas, lo que significa que una superficie elíptica o redondeada (de los huesos metatarsianos) se aproxima a cavidades poco profundas (de las falanges proximales). Los ligamentos son el plantar y dos colaterales."
+ },
+ "UBERON:0003698": {
+  "labelEs": "articulación subastragalina",
+  "definitionEs": "Articulación del pie que conecta el astrágalo y el calcáneo."
+ },
+ "UBERON:0003701": {
+  "labelEs": "tendón calcáneo",
+  "definitionEs": "El tendón de Aquiles es un tendón de la parte posterior de la pierna. Sirve para fijar los músculos plantar, gastrocnemio (pantorrilla) y sóleo al hueso calcáneo (talón)."
+ },
+ "UBERON:0003823": {
+  "labelEs": "zeugopodio del miembro posterior",
+  "definitionEs": "El segmento medio del miembro libre pélvico, entre los segmentos del autopodio y del estilopodio. Incluye como partes el esqueleto zeugopodial del miembro posterior, que incluye como partes la tibia y el peroné, o sus precursores cartilaginosos, o variantes evolutivas."
+ },
+ "UBERON:0003862": {
+  "labelEs": "falange del dedo 4 del pie",
+  "definitionEs": "Falange que forma parte de un dedo 4 del pie [Automatically generated definition]."
+ },
+ "UBERON:0003863": {
+  "labelEs": "falange del dedo 5 del pie",
+  "definitionEs": "Falange que forma parte de un dedo 5 del pie [Automatically generated definition]."
+ },
+ "UBERON:0003866": {
+  "labelEs": "falange media del pie",
+  "definitionEs": "Falange media que forma parte de un dedo del pie [Automatically generated definition]."
+ },
+ "UBERON:0003867": {
+  "labelEs": "falange distal del pie",
+  "definitionEs": "Falange distal que forma parte de un dedo del pie [Automatically generated definition]."
+ },
+ "UBERON:0003868": {
+  "labelEs": "falange proximal del pie",
+  "definitionEs": "Falange proximal que forma parte de un dedo del pie [Automatically generated definition]."
+ },
+ "UBERON:0004252": {
+  "labelEs": "músculo del estilopodio del miembro posterior",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un estilopodio del miembro posterior (muslo)[Automatically generated definition]."
+ },
+ "UBERON:0004256": {
+  "labelEs": "músculo del zeugopodio del miembro posterior",
+  "definitionEs": "Cualquier órgano muscular que forma parte de un zeugopodio del miembro posterior (pierna) [Automatically generated definition]."
+ },
+ "UBERON:0004262": {
+  "labelEs": "piel del muslo",
+  "definitionEs": "Zona de piel que forma parte de un estilopodio del miembro posterior [Automatically generated definition]."
+ },
+ "UBERON:0004315": {
+  "labelEs": "falange distal del dedo 1 del pie",
+  "definitionEs": "Falange distal que forma parte de un dedo 1 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004316": {
+  "labelEs": "falange distal del dedo 2 del pie",
+  "definitionEs": "Falange distal que forma parte de un dedo 2 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004317": {
+  "labelEs": "falange distal del dedo 3 del pie",
+  "definitionEs": "Falange distal que forma parte de un dedo 3 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004318": {
+  "labelEs": "falange distal del dedo 4 del pie",
+  "definitionEs": "Falange distal que forma parte de un dedo 4 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004319": {
+  "labelEs": "falange distal del dedo 5 del pie",
+  "definitionEs": "Falange distal que forma parte de un dedo 5 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004324": {
+  "labelEs": "falange media del dedo 2 del pie",
+  "definitionEs": "Falange media que forma parte de un dedo 2 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004325": {
+  "labelEs": "falange media del dedo 3 del pie",
+  "definitionEs": "Falange media que forma parte de un dedo 3 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004326": {
+  "labelEs": "falange media del dedo 4 del pie",
+  "definitionEs": "Falange media que forma parte de un dedo 4 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004327": {
+  "labelEs": "falange media del dedo 5 del pie",
+  "definitionEs": "Falange media que forma parte de un dedo 5 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004332": {
+  "labelEs": "falange proximal del dedo 1 del pie",
+  "definitionEs": "Falange proximal que forma parte de un dedo 1 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004333": {
+  "labelEs": "falange proximal del dedo 2 del pie",
+  "definitionEs": "Falange proximal que forma parte de un dedo 2 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004334": {
+  "labelEs": "falange proximal del dedo 3 del pie",
+  "definitionEs": "Falange proximal que forma parte de un dedo 3 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004335": {
+  "labelEs": "falange proximal del dedo 4 del pie",
+  "definitionEs": "Falange proximal que forma parte de un dedo 4 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004336": {
+  "labelEs": "falange proximal del dedo 5 del pie",
+  "definitionEs": "Falange proximal que forma parte de un dedo 5 del pie [Automatically generated definition]."
+ },
+ "UBERON:0004383": {
+  "labelEs": "epífisis de la tibia",
+  "definitionEs": "Epífisis que forma parte de una tibia [Automatically generated definition]."
+ },
+ "UBERON:0004384": {
+  "labelEs": "epífisis del fémur",
+  "definitionEs": "Epífisis que forma parte de un fémur [Automatically generated definition]."
+ },
+ "UBERON:0004388": {
+  "labelEs": "epífisis del peroné",
+  "definitionEs": "Epífisis que forma parte de un peroné [Automatically generated definition]."
+ },
+ "UBERON:0004389": {
+  "labelEs": "epífisis del hueso metatarsiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metatarsiano [Automatically generated definition]."
+ },
+ "UBERON:0004395": {
+  "labelEs": "epífisis del primer hueso metatarsiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metatarsiano del dedo 1 [Automatically generated definition]."
+ },
+ "UBERON:0004396": {
+  "labelEs": "epífisis del segundo hueso metatarsiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metatarsiano del dedo 2 [Automatically generated definition]."
+ },
+ "UBERON:0004397": {
+  "labelEs": "epífisis del tercer hueso metatarsiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metatarsiano del dedo 3 [Automatically generated definition]."
+ },
+ "UBERON:0004398": {
+  "labelEs": "epífisis del cuarto hueso metatarsiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metatarsiano del dedo 4 [Automatically generated definition]."
+ },
+ "UBERON:0004399": {
+  "labelEs": "epífisis del quinto hueso metatarsiano",
+  "definitionEs": "Epífisis que forma parte de un hueso metatarsiano del dedo 5 [Automatically generated definition]."
+ },
+ "UBERON:0004405": {
+  "labelEs": "epífisis distal de la tibia",
+  "definitionEs": "Epífisis distal que forma parte de una tibia [Automatically generated definition]."
+ },
+ "UBERON:0004406": {
+  "labelEs": "epífisis distal del fémur",
+  "definitionEs": "Epífisis distal que forma parte de un fémur [Automatically generated definition]."
+ },
+ "UBERON:0004410": {
+  "labelEs": "epífisis distal del peroné",
+  "definitionEs": "Epífisis distal que forma parte de un peroné [Automatically generated definition]."
+ },
+ "UBERON:0004412": {
+  "labelEs": "epífisis proximal del fémur",
+  "definitionEs": "Epífisis proximal que forma parte de un fémur [Automatically generated definition]."
+ },
+ "UBERON:0004415": {
+  "labelEs": "epífisis proximal del hueso metatarsiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metatarsiano [Automatically generated definition]."
+ },
+ "UBERON:0004427": {
+  "labelEs": "epífisis proximal del primer hueso metatarsiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metatarsiano del dedo 1 [Automatically generated definition]."
+ },
+ "UBERON:0004428": {
+  "labelEs": "epífisis proximal del segundo hueso metatarsiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metatarsiano del dedo 2 [Automatically generated definition]."
+ },
+ "UBERON:0004429": {
+  "labelEs": "epífisis proximal del tercer hueso metatarsiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metatarsiano del dedo 3 [Automatically generated definition]."
+ },
+ "UBERON:0004430": {
+  "labelEs": "epífisis proximal del cuarto hueso metatarsiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metatarsiano del dedo 4 [Automatically generated definition]."
+ },
+ "UBERON:0004431": {
+  "labelEs": "epífisis proximal del quinto hueso metatarsiano",
+  "definitionEs": "Epífisis proximal que forma parte de un hueso metatarsiano del dedo 5 [Automatically generated definition]."
+ },
+ "UBERON:0004454": {
+  "labelEs": "región del tarso",
+  "definitionEs": "Segmento mesopodial del pie, que incluye el esqueleto del tarso y los tejidos asociados."
+ },
+ "UBERON:0004463": {
+  "labelEs": "musculatura del estilopodio del miembro posterior",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un estilopodio del miembro posterior (muslo)[Automatically generated definition]."
+ },
+ "UBERON:0004482": {
+  "labelEs": "musculatura del miembro inferior",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un miembro posterior [Automatically generated definition]."
+ },
+ "UBERON:0004488": {
+  "labelEs": "musculatura del pie",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un pie [Automatically generated definition]."
+ },
+ "UBERON:0004498": {
+  "labelEs": "tejido muscular esquelético del cuádriceps femoral",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un cuádriceps femoral [Automatically generated definition]."
+ },
+ "UBERON:0004499": {
+  "labelEs": "tejido muscular esquelético del tibial anterior",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un tibial anterior [Automatically generated definition]."
+ },
+ "UBERON:0004540": {
+  "labelEs": "arteria digital plantar propia",
+  "definitionEs": null
+ },
+ "UBERON:0004554": {
+  "labelEs": "arteria digital del miembro posterior",
+  "definitionEs": "Arteria digital que forma parte de un miembro posterior [Automatically generated definition]."
+ },
+ "UBERON:0005277": {
+  "labelEs": "piel dorsal del dedo del pie",
+  "definitionEs": "Piel dorsal de dedo que forma parte de un dedo del pie."
+ },
+ "UBERON:0005279": {
+  "labelEs": "lecho ungueal del dedo del pie",
+  "definitionEs": "Lecho ungueal que forma parte de un dedo del pie."
+ },
+ "UBERON:0005445": {
+  "labelEs": "segmento del pie",
+  "definitionEs": "Segmento del autopodio que forma parte de un pie."
+ },
+ "UBERON:0006067": {
+  "labelEs": "musculatura del zeugopodio del miembro posterior",
+  "definitionEs": "Cualquier conjunto de músculos que forma parte de un zeugopodio del miembro posterior."
+ },
+ "UBERON:0006138": {
+  "labelEs": "arteria digital plantar",
+  "definitionEs": null
+ },
+ "UBERON:0006139": {
+  "labelEs": "vena digital plantar",
+  "definitionEs": "Las venas digitales plantares se originan de plexos situados en las caras plantares de los dedos y, tras enviar venas intercapitulares que se unen a las venas digitales dorsales, se unen para formar cuatro venas metatarsianas."
+ },
+ "UBERON:0006145": {
+  "labelEs": "arteria digital dorsal del pie",
+  "definitionEs": "Las arterias digitales dorsales del pie son arterias pequeñas que irrigan los dedos del pie."
+ },
+ "UBERON:0006497": {
+  "labelEs": "músculo interóseo del pie",
+  "definitionEs": "Cualquiera de los músculos interóseos del pie. Incluye los interóseos plantares y dorsales."
+ },
+ "UBERON:0006499": {
+  "labelEs": "músculo interóseo dorsal del pie",
+  "definitionEs": "Los músculos más superiores de la planta del pie, que abducen del segundo al cuarto dedo. Estos cuatro músculos actúan también a través de las expansiones dorsales para oponerse a la extensión de las articulaciones metatarsofalángicas y a la flexión de las articulaciones interfalángicas."
+ },
+ "UBERON:0006502": {
+  "labelEs": "músculo interóseo plantar del pie",
+  "definitionEs": "Cualquiera de tres músculos con origen en los huesos metatarsianos tercero, cuarto y quinto, con inserción en la falange proximal de los mismos dedos, con inervación del nervio plantar lateral y cuya acción aduce los tres dedos laterales."
+ },
+ "UBERON:0006659": {
+  "labelEs": "ligamento cruzado de la rodilla",
+  "definitionEs": "Uno de un par de ligamentos dispuestos como una letra X.[1] Se encuentran en varias articulaciones del cuerpo, como la rodilla. De forma similar a los cordeles de una escalera de Jacob de juguete, los ligamentos cruzados estabilizan la articulación a la vez que permiten una amplitud de movimiento muy grande[WP]."
+ },
+ "UBERON:0006767": {
+  "labelEs": "cabeza del fémur",
+  "definitionEs": "La superficie articular hemisférica del extremo superior del hueso del muslo[Stedman, 26th ed]. La cabeza del fémur es la parte más alta del hueso del muslo. Está sostenida por el cuello del fémur. La cabeza es globular y forma algo más de un hemisferio; está dirigida hacia arriba, medialmente y un poco hacia delante, y la mayor parte de su convexidad está por encima y por delante. Su superficie es lisa y está recubierta de cartílago en estado fresco, excepto sobre una depresión ovoide, la fosita de la cabeza del fémur, que está situada un poco por debajo y por detrás del centro de la cabeza y da inserción al ligamento de la cabeza del fémur. Si se produce una fractura del cuello del fémur, la irrigación sanguínea a través del ligamento pasa a ser crucial. En cirugía ortopédica, la cabeza del fémur es importante porque puede sufrir necrosis avascular y la consiguiente osteocondritis disecante. La cabeza se extirpa en la cirugía de reemplazo total de cadera [WP]."
+ },
+ "UBERON:0006862": {
+  "labelEs": "diáfisis del fémur",
+  "definitionEs": "Diáfisis que forma parte de un fémur[Automatically generated definition]."
+ },
+ "UBERON:0006863": {
+  "labelEs": "metáfisis proximal del fémur",
+  "definitionEs": "Metáfisis proximal que forma parte de un fémur."
+ },
+ "UBERON:0006864": {
+  "labelEs": "metáfisis distal del fémur",
+  "definitionEs": "Metáfisis distal que forma parte de un fémur."
+ },
+ "UBERON:0006865": {
+  "labelEs": "metáfisis del fémur",
+  "definitionEs": "Metáfisis que forma parte de un fémur."
+ },
+ "UBERON:0007119": {
+  "labelEs": "cuello del fémur",
+  "definitionEs": "El cuello del fémur es una apófisis ósea piramidal aplanada que conecta la cabeza del fémur con el cuerpo del fémur y forma con este último un ángulo amplio abierto medialmente."
+ },
+ "UBERON:0007319": {
+  "labelEs": "vena safena medial",
+  "definitionEs": null
+ },
+ "UBERON:0007321": {
+  "labelEs": "vena safena lateral",
+  "definitionEs": null
+ },
+ "UBERON:0007721": {
+  "labelEs": "articulación interfalángica del pie",
+  "definitionEs": "Las articulaciones interfalángicas del pie (articulaciones de las falanges) son articulaciones gínglimo, y cada una tiene un ligamento plantar y dos colaterales. La disposición de estos ligamentos es similar a la de las articulaciones metatarsofalángicas: los tendones extensores ocupan el lugar de los ligamentos dorsales."
+ },
+ "UBERON:0007724": {
+  "labelEs": "articulación interfalángica del dedo 1 del pie",
+  "definitionEs": "Articulación interfalángica del pie que forma parte de un dedo 1 del pie."
+ },
+ "UBERON:0007725": {
+  "labelEs": "articulación interfalángica del dedo 2 del pie",
+  "definitionEs": "Articulación interfalángica del pie que forma parte de un dedo 2 del pie."
+ },
+ "UBERON:0007726": {
+  "labelEs": "articulación interfalángica del dedo 3 del pie",
+  "definitionEs": "Articulación interfalángica del pie que forma parte de un dedo 3 del pie."
+ },
+ "UBERON:0007727": {
+  "labelEs": "articulación interfalángica del dedo 4 del pie",
+  "definitionEs": "Articulación interfalángica del pie que forma parte de un dedo 4 del pie."
+ },
+ "UBERON:0007728": {
+  "labelEs": "articulación interfalángica del dedo 5 del pie",
+  "definitionEs": "Articulación interfalángica del pie que forma parte de un dedo 5 del pie."
+ },
+ "UBERON:0007750": {
+  "labelEs": "articulación metatarsofalángica del dedo 1 del pie",
+  "definitionEs": "Articulación esquelética que conecta un hueso metatarsiano y conecta una falange distal del dedo 1 del pie."
+ },
+ "UBERON:0007753": {
+  "labelEs": "articulación metatarsofalángica del dedo 2 del pie",
+  "definitionEs": "Articulación esquelética que conecta un hueso metatarsiano y conecta una falange distal del dedo 2 del pie."
+ },
+ "UBERON:0007756": {
+  "labelEs": "articulación metatarsofalángica del dedo 3 del pie",
+  "definitionEs": "Articulación esquelética que conecta un hueso metatarsiano y conecta una falange distal del dedo 3 del pie."
+ },
+ "UBERON:0007759": {
+  "labelEs": "articulación metatarsofalángica del dedo 4 del pie",
+  "definitionEs": "Articulación esquelética que conecta un hueso metatarsiano y conecta una falange distal del dedo 4 del pie."
+ },
+ "UBERON:0007762": {
+  "labelEs": "articulación metatarsofalángica del dedo 5 del pie",
+  "definitionEs": "Articulación esquelética que conecta un hueso metatarsiano y conecta una falange distal del dedo 5 del pie."
+ },
+ "UBERON:0008000": {
+  "labelEs": "hueso sesamoideo del pie",
+  "definitionEs": "Hueso sesamoideo que forma parte de un pie."
+ },
+ "UBERON:0008338": {
+  "labelEs": "planta del pie",
+  "definitionEs": "La planta es la parte inferior del pie."
+ },
+ "UBERON:0008447": {
+  "labelEs": "articulación intertarsiana",
+  "definitionEs": "Las articulaciones intertarsianas son las articulaciones del tarso. Las articulaciones intertarsianas específicas son: articulación astragalocalcánea, articulación astragalocalcaneonavicular, articulación calcaneocuboidea, articulación cuneonavicular, articulación cuboideonavicular, articulación intercuneiforme, articulación cuneocuboidea."
+ },
+ "UBERON:0008464": {
+  "labelEs": "músculo abductor del dedo gordo",
+  "definitionEs": "El abductor del dedo gordo se sitúa a lo largo del borde medial del pie y cubre los orígenes de los vasos y nervios plantares. Se origina en la apófisis medial de la tuberosidad del calcáneo, en el ligamento lacinado, en la aponeurosis plantar y en el tabique intermuscular entre él y el flexor corto de los dedos. Las fibras terminan en un tendón, que se inserta, junto con el tendón medial del flexor corto del dedo gordo, en el lado tibial de la base de la primera falange del dedo gordo."
+ },
+ "UBERON:0008772": {
+  "labelEs": "epífisis proximal de la tibia",
+  "definitionEs": "Epífisis proximal que forma parte de una tibia."
+ },
+ "UBERON:0008775": {
+  "labelEs": "epífisis proximal del peroné",
+  "definitionEs": "Epífisis proximal que forma parte de un peroné."
+ },
+ "UBERON:0008784": {
+  "labelEs": "segmento del miembro inferior",
+  "definitionEs": "Segmento de miembro que forma parte de un miembro posterior."
+ },
+ "UBERON:0008786": {
+  "labelEs": "tercer trocánter",
+  "definitionEs": "La parte superior de la tuberosidad glútea suele alargarse formando una cresta rugosa, sobre la cual se desarrolla ocasionalmente un tubérculo redondeado, más o menos marcado, el tercer trocánter."
+ },
+ "UBERON:0009005": {
+  "labelEs": "articulación femorotibial",
+  "definitionEs": "Una de las dos flexiones principales de una pierna típica; corresponde al fémur y a la tibia."
+ },
+ "UBERON:0009567": {
+  "labelEs": "uña del dedo del pie",
+  "definitionEs": "Uña que forma parte de un dedo del pie."
+ },
+ "UBERON:0009879": {
+  "labelEs": "esqueleto del tarso",
+  "definitionEs": "Subdivisión del esqueleto formada por elementos endocondrales distales a los elementos esqueléticos zeugopodiales, que constituyen la región proximal del esqueleto del autopodio posterior[PHENOSCAPE:ad]."
+ },
+ "UBERON:0009980": {
+  "labelEs": "cóndilo del fémur",
+  "definitionEs": "Cóndilo que forma parte de una epífisis distal del fémur."
+ },
+ "UBERON:0009984": {
+  "labelEs": "cóndilo medial del fémur",
+  "definitionEs": "El cóndilo medial es una de las dos prominencias del extremo inferior del fémur. El cóndilo medial es más grande que el cóndilo lateral (externo) debido a la mayor carga de peso causada por la situación del centro de gravedad medial a la rodilla. En la cara posterior del cóndilo, la línea áspera (una cresta que desciende por la cara posterior del cuerpo del fémur) se convierte en la cresta supracondílea medial. La protrusión más externa de la cara medial del cóndilo medial se denomina «epicóndilo medial» y puede palparse deslizando los dedos medialmente desde la rótula con la rodilla en flexión."
+ },
+ "UBERON:0009985": {
+  "labelEs": "cóndilo lateral del fémur",
+  "definitionEs": "El cóndilo lateral es una de las dos prominencias del extremo inferior del fémur. Es el más prominente y el más ancho tanto en su diámetro anteroposterior como en el transversal."
+ },
+ "UBERON:0009986": {
+  "labelEs": "epicóndilo lateral del fémur",
+  "definitionEs": "El epicóndilo lateral del fémur, más pequeño y menos prominente que el epicóndilo medial, da inserción al ligamento colateral peroneo de la articulación de la rodilla. Directamente por debajo de él hay una pequeña depresión de la que parte un surco liso y bien marcado que se curva oblicuamente hacia arriba y hacia atrás hasta el extremo posterior del cóndilo."
+ },
+ "UBERON:0009987": {
+  "labelEs": "epicóndilo medial del fémur",
+  "definitionEs": "El epicóndilo medial del fémur es una protrusión ósea situada en la cara medial del extremo distal del hueso. Situado por encima del cóndilo medial, presenta una elevación, el tubérculo del aductor, que sirve para la inserción de la parte superficial, o «inserción tendinosa», del aductor mayor. Esta parte tendinosa forma aquí un tabique intermuscular que constituye la separación medial entre los flexores y los extensores del muslo. Por detrás de él, y proximalmente al cóndilo medial, hay una impresión rugosa que da origen a la cabeza medial del gastrocnemio."
+ },
+ "UBERON:0009990": {
+  "labelEs": "cóndilo medial de la tibia",
+  "definitionEs": "El cóndilo medial es la porción medial del extremo superior de la tibia. Es el lugar de inserción del músculo semimembranoso[WP]."
+ },
+ "UBERON:0009991": {
+  "labelEs": "cóndilo lateral de la tibia",
+  "definitionEs": "El cóndilo lateral es la porción lateral del extremo superior de la tibia. Sirve de inserción al músculo bíceps femoral[WP]."
+ },
+ "UBERON:0010524": {
+  "labelEs": "músculo fibular tercero",
+  "definitionEs": "Músculo situado en el miembro inferior que se origina en el tercio inferior de la cara anterior del peroné, en la parte inferior de la membrana interósea y en un tabique intermuscular entre él y el peroneo corto, y que se inserta en la cara dorsal de la base del hueso metatarsiano del 5.º dedo. Está inervado por el nervio fibular profundo. Su acción es una flexión dorsal débil de la articulación del tobillo y la eversión del pie en la articulación del tobillo."
+ },
+ "UBERON:0010526": {
+  "labelEs": "músculo fibular corto",
+  "definitionEs": "El músculo peroneo corto (o fibular corto) se encuentra cubierto por el peroneo largo y es un músculo más corto y más pequeño."
+ },
+ "UBERON:0010545": {
+  "labelEs": "esqueleto del metatarso",
+  "definitionEs": "Segmento de miembro formado por los huesos largos del pie. Los metatarsianos son análogos a los huesos metacarpianos de la mano."
+ },
+ "UBERON:0010696": {
+  "labelEs": "esqueleto del acropodio del pie",
+  "definitionEs": "La subdivisión del esqueleto formada por todos los elementos esqueléticos del extremo más distal del autopodio del pie, es decir, los huesos del pie o sus precursores cartilaginosos[cjm]."
+ },
+ "UBERON:0010721": {
+  "labelEs": "hueso tarsiano distal",
+  "definitionEs": "Hay tres huesos cuneiformes en el pie humano: el cuneiforme medial, el cuneiforme intermedio, también conocido como medio, y el cuneiforme lateral. Están situados entre el hueso navicular y los huesos metatarsianos primero, segundo y tercero, y son mediales respecto al hueso cuboides[WP, unvetted, human specific]."
+ },
+ "UBERON:0010724": {
+  "labelEs": "tubérculo lateral del astrágalo",
+  "definitionEs": "Tubérculo óseo accesorio que, si está presente, se sitúa por detrás del astrágalo."
+ },
+ "UBERON:0011022": {
+  "labelEs": "músculo flexor corto del dedo gordo",
+  "definitionEs": "Músculo que se origina en el hueso cuboides y se divide en dos porciones, que se insertan en los lados medial y lateral de la base de la primera falange del dedo gordo, con un hueso sesamoideo presente en cada tendón en su inserción."
+ },
+ "UBERON:0011088": {
+  "labelEs": "ligamento de la articulación de la rodilla",
+  "definitionEs": "Ligamento que forma parte de una articulación de la rodilla."
+ },
+ "UBERON:0011112": {
+  "labelEs": "articulación tibioperonea",
+  "definitionEs": "Articulación que conecta la tibia y el peroné."
+ },
+ "UBERON:0011113": {
+  "labelEs": "articulación tibioperonea inferior",
+  "definitionEs": "La articulación tibioperonea inferior (sindesmosis tibioperonea) está formada por la superficie rugosa y convexa de la cara medial del extremo inferior del peroné y por una superficie rugosa y cóncava de la cara lateral de la tibia. En su parte inferior, en una extensión de unos 4 mm, estas superficies son lisas y están cubiertas de cartílago, que se continúa con el de la articulación del tobillo. Los ligamentos son: ligamento anterior del maléolo lateral, ligamento posterior del maléolo lateral, ligamento transverso inferior de la sindesmosis tibioperonea y ligamento interóseo."
+ },
+ "UBERON:0011117": {
+  "labelEs": "articulación tibioperonea superior",
+  "definitionEs": "La articulación tibioperonea superior es una articulación artrodial entre el cóndilo lateral de la tibia y la cabeza del peroné. Las superficies contiguas de los huesos presentan carillas planas y ovales cubiertas de cartílago y unidas entre sí por una cápsula articular y por ligamentos anterior y posterior. Cuando el término «articulación tibioperonea» se utiliza sin modificador, se refiere a la superior, y no a la articulación tibioperonea inferior."
+ },
+ "UBERON:0011118": {
+  "labelEs": "articulación tarsometatarsiana",
+  "definitionEs": "Las articulaciones tarsometatarsianas son articulaciones artrodiales del pie."
+ },
+ "UBERON:0011133": {
+  "labelEs": "articulación intermetatarsiana",
+  "definitionEs": "Articulación que conecta dos metatarsianos adyacentes."
+ },
+ "UBERON:0011166": {
+  "labelEs": "articulación femororrotuliana",
+  "definitionEs": null
+ },
+ "UBERON:0011278": {
+  "labelEs": "uña del dedo 1 del pie",
+  "definitionEs": "Uña que forma parte de un dedo 1 del pie."
+ },
+ "UBERON:0011279": {
+  "labelEs": "uña del dedo 2 del pie",
+  "definitionEs": "Uña que forma parte de un dedo 2 del pie."
+ },
+ "UBERON:0011280": {
+  "labelEs": "uña del dedo 3 del pie",
+  "definitionEs": "Uña que forma parte de un dedo 3 del pie."
+ },
+ "UBERON:0011281": {
+  "labelEs": "uña del dedo 4 del pie",
+  "definitionEs": "Uña que forma parte de un dedo 4 del pie."
+ },
+ "UBERON:0011282": {
+  "labelEs": "uña del dedo 5 del pie",
+  "definitionEs": "Uña que forma parte de un dedo 5 del pie."
+ },
+ "UBERON:0011905": {
+  "labelEs": "músculo plantar",
+  "definitionEs": "El plantar es una estructura vestigial y uno de los músculos superficiales del compartimento crural posterior de la pierna. Está inervado por el nervio tibial (S1, S2). Está compuesto por un vientre muscular delgado y un tendón largo y delgado. Mide aproximadamente 2-4 pulgadas de longitud y está ausente en el 7-10 % de la población humana. Es uno de los flexores plantares del compartimento superior de la pierna, junto con el gastrocnemio y el sóleo. El plantar se considera un músculo poco importante; actúa principalmente con el gastrocnemio[WP]."
+ },
+ "UBERON:0011907": {
+  "labelEs": "cabeza medial del músculo gastrocnemio",
+  "definitionEs": "Falta la definición del término UBERON:0011907. Sustitúyala utilizando la referencia vinculada."
+ },
+ "UBERON:0011908": {
+  "labelEs": "cabeza lateral del músculo gastrocnemio",
+  "definitionEs": "Falta la definición del término UBERON:0011908. Sustitúyala utilizando la referencia vinculada."
+ },
+ "UBERON:0011962": {
+  "labelEs": "articulación transversa del tarso",
+  "definitionEs": "La articulación transversa del tarso está formada por la articulación del calcáneo con el cuboides y la articulación del astrágalo con el navicular. El movimiento que tiene lugar en esta articulación es más amplio que el de las demás articulaciones del tarso y consiste en una especie de rotación mediante la cual el pie puede flexionarse o extenderse ligeramente, a la vez que la planta se lleva medialmente (inversión) o lateralmente."
+ },
+ "UBERON:0011963": {
+  "labelEs": "articulación astragalocalcaneonavicular",
+  "definitionEs": "La articulación astragalocalcaneonavicular es una articulación artrodial: la cabeza redondeada del astrágalo se aloja en la concavidad formada por la cara posterior del navicular, la superficie articular anterior del calcáneo y la cara superior del ligamento calcaneonavicular plantar. Esta articulación tiene dos ligamentos: la cápsula articular y el astragalonavicular dorsal."
+ },
+ "UBERON:0011964": {
+  "labelEs": "articulación calcaneocuboidea",
+  "definitionEs": "Articulación calcaneocuboidea (articulación del calcáneo con el cuboides). Los ligamentos que unen el calcáneo con el cuboides son cinco, a saber: la cápsula articular, el calcaneocuboideo dorsal, parte del bifurcado, el plantar largo y el calcaneocuboideo plantar."
+ },
+ "UBERON:0011970": {
+  "labelEs": "ligamento astragaloperoneo",
+  "definitionEs": "Ligamento esquelético que conecta el peroné con el astrágalo. Ejemplos: ligamentos astragaloperoneos anterior y posterior."
+ },
+ "UBERON:0011971": {
+  "labelEs": "ligamento calcaneoperoneo",
+  "definitionEs": "Ligamento esquelético que conecta el peroné con el calcáneo."
+ },
+ "UBERON:0011972": {
+  "labelEs": "ligamento medial de la articulación del tobillo",
+  "definitionEs": "Ligamento esquelético que conecta una tibia y conecta un esqueleto del tarso."
+ },
+ "UBERON:0012078": {
+  "labelEs": "fosita de la cabeza del fémur",
+  "definitionEs": "La superficie de la cabeza del fémur es lisa y está recubierta de cartílago en estado fresco, excepto sobre una depresión ovoide, la fosita de la cabeza del fémur, que está situada un poco por debajo y por detrás del centro de la cabeza y da inserción al ligamento redondo."
+ },
+ "UBERON:0012291": {
+  "labelEs": "maléolo lateral del peroné",
+  "definitionEs": "Maléolo es el nombre de la prominencia ósea situada a cada lado del tobillo."
+ },
+ "UBERON:0012356": {
+  "labelEs": "región del acropodio del pie",
+  "definitionEs": "El segmento del pie que es distal a la región del metatarso y que está formado por los dedos del pie."
+ },
+ "UBERON:0013069": {
+  "labelEs": "región poplítea",
+  "definitionEs": "Depresión en la cara ventral del fémur, a la altura de la articulación de la rodilla, entre los cóndilos."
+ },
+ "UBERON:0013121": {
+  "labelEs": "epífisis proximal de la falange del pie",
+  "definitionEs": null
+ },
+ "UBERON:0013122": {
+  "labelEs": "epífisis distal de la falange del pie",
+  "definitionEs": null
+ },
+ "UBERON:0013144": {
+  "labelEs": "vena del plexo venoso genicular",
+  "definitionEs": null
+ },
+ "UBERON:0013145": {
+  "labelEs": "vena safena accesoria",
+  "definitionEs": null
+ },
+ "UBERON:0013279": {
+  "labelEs": "diáfisis del peroné",
+  "definitionEs": "Diáfisis que forma parte de un peroné[Automatically generated definition]."
+ },
+ "UBERON:0013280": {
+  "labelEs": "diáfisis de la tibia",
+  "definitionEs": "Diáfisis que forma parte de una tibia."
+ },
+ "UBERON:0013633": {
+  "labelEs": "cresta intertrocantérea",
+  "definitionEs": "La cresta intertrocantérea es una cresta ósea situada en la cara posterior de la cabeza del fémur, que se extiende oblicuamente hacia abajo y medialmente desde el vértice del trocánter mayor hasta el trocánter menor."
+ },
+ "UBERON:0013634": {
+  "labelEs": "línea intertrocantérea",
+  "definitionEs": "La línea intertrocantérea (o línea espiral del fémur) es una línea situada en la cara anterior del extremo proximal del fémur que se extiende entre el trocánter menor y el trocánter mayor, forma la base del cuello del fémur y sigue aproximadamente la dirección del cuerpo del fémur."
+ },
+ "UBERON:0013725": {
+  "labelEs": "ligamento astragaloperoneo anterior",
+  "definitionEs": "El ligamento astragaloperoneo anterior es un ligamento del tobillo. Va desde el borde anterior del maléolo peroneo, hacia delante y medialmente, hasta el hueso astrágalo, por delante de su carilla articular lateral. Es uno de los ligamentos laterales del tobillo e impide que el pie se deslice hacia delante con respecto a la espinilla."
+ },
+ "UBERON:0013726": {
+  "labelEs": "ligamento astragaloperoneo posterior",
+  "definitionEs": "El ligamento astragaloperoneo posterior discurre casi horizontalmente desde la depresión situada en la parte medial y posterior del maléolo peroneo (maléolo lateral) hasta un tubérculo prominente de la cara posterior del astrágalo, inmediatamente lateral al surco del tendón del flexor largo del dedo gordo."
+ },
+ "UBERON:0013750": {
+  "labelEs": "metáfisis de la tibia",
+  "definitionEs": "Metáfisis que forma parte de una tibia."
+ },
+ "UBERON:0013774": {
+  "labelEs": "diáfisis del hueso metatarsiano",
+  "definitionEs": "Diáfisis que forma parte de un hueso metatarsiano."
+ },
+ "UBERON:0013778": {
+  "labelEs": "piel de la planta del pie",
+  "definitionEs": "Zona de piel que forma parte de una piel del pie."
+ },
+ "UBERON:0014378": {
+  "labelEs": "músculo intrínseco del pie",
+  "definitionEs": "Cualquiera de los músculos intrínsecos del pie."
+ },
+ "UBERON:0014379": {
+  "labelEs": "músculo aductor del dedo gordo",
+  "definitionEs": "El aductor del dedo gordo (aductor oblicuo del dedo gordo) se origina mediante dos cabezas, oblicua y transversa, y es responsable de la aducción del dedo gordo. Está inervado por el nervio plantar lateral. Evolucionó a partir del músculo contrahens I a medida que los pulgares y los dedos gordos de los antepasados del ser humano se volvieron oponibles."
+ },
+ "UBERON:0014380": {
+  "labelEs": "músculo flexor corto de los dedos",
+  "definitionEs": "El flexor corto de los dedos se sitúa en el centro de la planta del pie, inmediatamente por encima de la parte central de la aponeurosis plantar, a la que está firmemente unido. Su cara profunda está separada de los vasos y nervios plantares laterales por una delgada capa de fascia."
+ },
+ "UBERON:0014507": {
+  "labelEs": "articulación interfalángica distal del dedo 3 del pie",
+  "definitionEs": "Articulación interfalángica distal que forma parte del 3.er dedo del pie."
+ },
+ "UBERON:0014672": {
+  "labelEs": "articulación interfalángica distal del dedo 2 del pie",
+  "definitionEs": null
+ },
+ "UBERON:0014674": {
+  "labelEs": "articulación interfalángica distal del dedo 4 del pie",
+  "definitionEs": null
+ },
+ "UBERON:0014675": {
+  "labelEs": "articulación interfalángica distal del dedo 5 del pie",
+  "definitionEs": null
+ },
+ "UBERON:0014847": {
+  "labelEs": "músculo vasto intermedio",
+  "definitionEs": "El vasto intermedio (crural) se origina en las caras anterior y lateral del cuerpo del fémur en sus dos tercios superiores, situado por debajo del recto femoral, y en la parte inferior del tabique intermuscular lateral. Sus fibras terminan en una aponeurosis superficial, que forma la parte profunda del tendón del cuádriceps femoral. El vasto medial y el vasto intermedio parecen estar unidos de forma inseparable, pero cuando se ha reclinado el recto femoral se observa un estrecho intervalo que se extiende hacia arriba desde el borde medial de la rótula entre los dos músculos, y la separación puede continuarse hasta la parte inferior de la línea intertrocantérea, donde, sin embargo, los dos músculos son con frecuencia continuos."
+ },
+ "UBERON:0014848": {
+  "labelEs": "tendón del cuádriceps femoral",
+  "definitionEs": null
+ },
+ "UBERON:0014871": {
+  "labelEs": "epífisis distal de la falange distal del dedo 1 del pie",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del dedo 1 del pie."
+ },
+ "UBERON:0014872": {
+  "labelEs": "epífisis distal de la falange distal del dedo 2 del pie",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del dedo 2 del pie."
+ },
+ "UBERON:0014873": {
+  "labelEs": "epífisis distal de la falange distal del dedo 3 del pie",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del dedo 3 del pie."
+ },
+ "UBERON:0014874": {
+  "labelEs": "epífisis distal de la falange distal del dedo 4 del pie",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del dedo 4 del pie."
+ },
+ "UBERON:0014875": {
+  "labelEs": "epífisis distal de la falange distal del dedo 5 del pie",
+  "definitionEs": "Epífisis distal que forma parte de una falange distal del dedo 5 del pie."
+ },
+ "UBERON:0015180": {
+  "labelEs": "cuello del astrágalo",
+  "definitionEs": "El cuello del astrágalo está dirigido hacia delante y medialmente, y comprende la porción estrechada del hueso entre el cuerpo y la cabeza oval. Sus caras superior y medial son rugosas, para la inserción de ligamentos; su cara lateral es cóncava y se continúa por abajo con el surco profundo para el ligamento astragalocalcáneo interóseo."
+ },
+ "UBERON:0015488": {
+  "labelEs": "nervio sural",
+  "definitionEs": "El nervio sural (nervio safeno corto), formado por la unión del nervio cutáneo sural medial con el ramo comunicante peroneo del nervio cutáneo sural lateral, desciende cerca del borde lateral del tendón calcáneo, junto a la vena safena menor, hasta el intervalo entre el maléolo lateral y el calcáneo. Avanza por debajo del maléolo lateral y se continúa como nervio cutáneo dorsal lateral a lo largo de la cara lateral del pie y del dedo pequeño (a través de un nervio digital dorsal), comunicándose en el dorso del pie con el nervio cutáneo dorsal intermedio, rama del peroneo superficial. En la pierna, sus ramos se comunican con los del cutáneo femoral posterior."
+ },
+ "UBERON:0015875": {
+  "labelEs": "talón",
+  "definitionEs": "La parte del pie que es la proyección del calcáneo."
+ },
+ "UBERON:0016398": {
+  "labelEs": "nódulo linfático del miembro inferior",
+  "definitionEs": "Nódulo linfático que forma parte de un miembro posterior."
+ },
+ "UBERON:0016400": {
+  "labelEs": "cuerpo adiposo infrarrotuliano",
+  "definitionEs": "El cuerpo adiposo infrarrotuliano, también conocido como almohadilla grasa de Hoffa, es una porción cilíndrica de grasa situada por debajo y por detrás de la rótula, dentro de la rodilla."
+ },
+ "UBERON:0016928": {
+  "labelEs": "metáfisis del peroné",
+  "definitionEs": "Metáfisis que forma parte de un peroné."
+ },
+ "UBERON:0018673": {
+  "labelEs": "cuello del peroné",
+  "definitionEs": null
+ },
+ "UBERON:0019201": {
+  "labelEs": "músculo gemelo de la cadera",
+  "definitionEs": "Uno de los dos pequeños fascículos musculares, accesorios del tendón del obturador interno, que se aloja en un surco entre ellos."
+ },
+ "UBERON:0019202": {
+  "labelEs": "músculo gemelo inferior",
+  "definitionEs": "Músculo gemelo que se origina en la parte superior de la tuberosidad del isquion, inmediatamente por debajo del surco del tendón del obturador interno. Se fusiona con la parte inferior del tendón del obturador interno y se inserta con él en la cara medial del trocánter mayor."
+ },
+ "UBERON:0019203": {
+  "labelEs": "músculo gemelo superior",
+  "definitionEs": "El más pequeño de los dos músculos gemelos, que se origina en la cara externa de la espina del isquion, se fusiona con la parte superior del tendón del obturador interno y se inserta con él en la cara medial del trocánter mayor[WP]."
+ },
+ "UBERON:0034927": {
+  "labelEs": "arteria arqueada del pie",
+  "definitionEs": "La arteria arqueada del pie (arteria metatarsiana) se origina un poco por delante de la arteria tarsiana lateral; se dirige lateralmente, sobre las bases de los huesos metatarsianos, por debajo de los tendones del extensor corto de los dedos, con una dirección que depende de su punto de origen, y se anastomosa con las arterias tarsiana lateral y plantar lateral. Este vaso emite las arterias metatarsianas dorsales segunda, tercera y cuarta. No está presente en todos los individuos."
+ },
+ "UBERON:0035110": {
+  "labelEs": "nervio plantar lateral",
+  "definitionEs": "Nervio plantar que inerva el lado lateral de la parte plantar del pie, incluido el dedo 5 del pie."
+ },
+ "UBERON:0035111": {
+  "labelEs": "nervio plantar medial",
+  "definitionEs": "Nervio plantar que inerva el lado medial de la parte plantar del pie, incluido el dedo 1 del pie."
+ },
+ "UBERON:0035133": {
+  "labelEs": "arco longitudinal del pie",
+  "definitionEs": "Región curvada del esqueleto del pie formada por los huesos del tarso y del metatarso."
+ },
+ "UBERON:0035195": {
+  "labelEs": "arteria metatarsiana plantar",
+  "definitionEs": "Las arterias metatarsianas plantares (ramas digitales) son cuatro y avanzan entre los huesos metatarsianos, en contacto con los interóseos. Cada una se divide en un par de arterias digitales plantares que irrigan los lados adyacentes de los dedos. Cerca de sus puntos de división, cada una envía hacia arriba una rama perforante anterior que se une a la arteria metatarsiana dorsal correspondiente. La primera arteria metatarsiana plantar (arteria principal del dedo gordo) nace de la unión entre las arterias plantar lateral y plantar profunda y envía una rama digital al lado medial del primer dedo. La rama digital para el lado lateral del quinto dedo nace de la arteria plantar lateral cerca de la base del quinto hueso metatarsiano."
+ },
+ "UBERON:0035207": {
+  "labelEs": "nervio fibular profundo",
+  "definitionEs": "Ramo del nervio peroneo común. Inerva el tobillo y los dedos del pie."
+ },
+ "UBERON:0035526": {
+  "labelEs": "nervio fibular superficial",
+  "definitionEs": "Ramo del nervio fibular común que inerva los músculos fibular largo y fibular corto y, a través de sus ramos, inerva partes de la región dorsal del pie."
+ },
+ "UBERON:0038853": {
+  "labelEs": "nódulo linfático poplíteo superficial",
+  "definitionEs": null
+ },
+ "UBERON:0038854": {
+  "labelEs": "nódulo linfático poplíteo profundo",
+  "definitionEs": null
+ },
+ "UBERON:0038861": {
+  "labelEs": "nódulo linfático tibial",
+  "definitionEs": null
+ },
+ "UBERON:0038864": {
+  "labelEs": "nódulo linfático fibular",
+  "definitionEs": null
+ },
+ "UBERON:8300003": {
+  "labelEs": "miembro posterior derecho",
+  "definitionEs": "Miembro posterior que se encuentra en el lado derecho de un complejo pélvico."
+ },
+ "UBERON:8300004": {
+  "labelEs": "miembro posterior izquierdo",
+  "definitionEs": "Miembro posterior que se encuentra en el lado izquierdo de un complejo pélvico."
+ },
+ "UBERON:8480048": {
+  "labelEs": "pantorrilla",
+  "definitionEs": "La cara posterior de la extremidad inferior que se extiende desde la rodilla hasta el pie."
+ },
+ "UBERON:8480049": {
+  "labelEs": "región anterior de la pierna",
+  "definitionEs": "La cara frontal de la extremidad inferior que se extiende desde la rodilla hasta el pie."
+ },
+ "UBERON:8480050": {
+  "labelEs": "piel de la pantorrilla",
+  "definitionEs": "Piel de la parte posterior de la pierna."
+ },
+ "UBERON:8600065": {
+  "labelEs": "vena circunfleja femoral lateral",
+  "definitionEs": "Vena tributaria de la vena femoral que drena la sangre de las zonas anterior y media del muslo."
+ },
+ "UBERON:8600082": {
+  "labelEs": "vena circunfleja ilíaca superficial",
+  "definitionEs": "Vena tributaria de la vena safena mayor que drena la sangre de la región inguinal y de la pared abdominal anterior."
+ },
+ "UBERON:8600083": {
+  "labelEs": "vena fibular",
+  "definitionEs": "Vena tributaria de la vena tibial posterior que drena la sangre del compartimento lateral de la pierna."
+ }
+}

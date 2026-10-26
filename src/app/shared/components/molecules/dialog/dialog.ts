@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
+import { FormsModule } from '@angular/forms';
+import { Input } from '../../atoms/input/input';
 import { Textarea } from '../../atoms/textarea/textarea';
 import { FormField } from '../form-field/form-field';
 import { nextControlId } from '@shared/forms/form-control.context';
@@ -34,7 +36,7 @@ import {
  */
 @Component({
   selector: 'app-dialog',
-  imports: [AppButton, FormField, Textarea],
+  imports: [AppButton, FormField, FormsModule, Input, Textarea],
   templateUrl: './dialog.html',
   styleUrl: './dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,6 +98,21 @@ export class Dialog {
       : '',
   );
 
+  /* ---- frase de confirmación, cuando el diálogo la exige ------------------ */
+
+  protected readonly phraseRequired = computed(() => this.config().confirmPhrase ?? null);
+  protected readonly phrase = signal('');
+  private readonly phraseTouched = signal(false);
+  protected readonly phraseIsValid = computed(() => {
+    const exigida = this.phraseRequired();
+    return exigida === null || this.phrase().trim() === exigida;
+  });
+  protected readonly phraseError = computed(() =>
+    this.phraseTouched() && !this.phraseIsValid()
+      ? `Escribí exactamente «${this.phraseRequired()}» para confirmar.`
+      : '',
+  );
+
   constructor() {
     afterNextRender(() => this.showModal());
   }
@@ -135,6 +152,10 @@ export class Dialog {
    * perder lo escrito y obligaría a empezar de nuevo.
    */
   protected handleConfirm(): void {
+    if (!this.phraseIsValid()) {
+      this.phraseTouched.set(true);
+      return;
+    }
     if (!this.reasonIsValid()) {
       this.reasonTouched.set(true);
       return;

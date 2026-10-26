@@ -151,10 +151,6 @@ export const serverRoutes: ServerRoute[] = [
    * leerla y mandaría «no encontramos lo que buscás» ya pintado, que es peor
    * que el cascarón: una promoción vigente llegaría al destinatario como un
    * enlace roto.
-   *
-   * **Cuando el backend publique la campaña esto pasa a `Server`**, y por las
-   * mismas razones que las fichas por slug: un enlace compartido en un mensaje
-   * tiene que llegar con su título y su precio adentro.
    */
   { path: 'promotions/:campaignId', renderMode: RenderMode.Client },
   {

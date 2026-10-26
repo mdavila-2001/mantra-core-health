@@ -27,7 +27,7 @@ import { entrar, irA } from './support/sesion';
  */
 const SALIDA = process.env['E2E_EVIDENCE_DIR']
   ? join(process.env['E2E_EVIDENCE_DIR'], 'clinical-form')
-  : join('docs', 'trabajo', '2026-09-26-formulario-medico', 'evidencia');
+  : join('artifacts', 'evidencia', '2026-09-26-formulario-medico', 'evidencia');
 const DOCTORA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',

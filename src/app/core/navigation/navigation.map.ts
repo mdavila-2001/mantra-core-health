@@ -1,5 +1,7 @@
+import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/iam/medical-center-registration.client';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
+import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import type { AppSection } from './navigation.types';
 
 /* ============================================================================
@@ -991,52 +993,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Trabaje la cola de contenido reportado y las apelaciones.',
     module: 'M19 community',
   },
-  {
-    // Portal administrativo · catálogo de datos (API módulo 67). Los roles son
-    // los mismos que exige `GET /admin/catalog/*`: la guarda evita llegar a
-    // una pantalla que sólo devolvería 403; la autoridad sigue siendo la API.
-    path: 'administration/data-catalog',
-    label: 'Catálogo de datos',
-    group: 'Administración',
-    icon: 'book',
-    roles: ['SECURITY_ADMIN', 'PLATFORM_ADMIN', 'GOVERNANCE_ADMIN', 'DATA_PLATFORM_ADMIN', 'DPO'],
-    availability: 'disponible',
-    summary: 'Qué tablas existen, por qué existen, quién responde por ellas y con qué evidencia.',
-    module: 'M67 data_catalog',
-  },
-  {
-    // Analítica de producto y RUM sobre `telemetry` (`/admin/analytics`).
-    path: 'administration/web-analytics',
-    label: 'Analítica web',
-    group: 'Administración',
-    icon: 'chart',
-    roles: ['PLATFORM_ADMIN', 'SECURITY_ADMIN', 'DATA_PLATFORM_ADMIN', 'MARKETING_MANAGER', 'DPO'],
-    availability: 'disponible',
-    summary: 'Tráfico, embudos, Core Web Vitals y salud del pipeline de eventos.',
-    module: 'M28 telemetry',
-  },
-  {
-    // QA Lab: lectura del laboratorio (M36) y runner en el servidor (M68).
-    path: 'administration/qa-lab',
-    label: 'QA Lab',
-    group: 'Administración',
-    icon: 'flask',
-    roles: ['QA_ADMIN', 'QA_ENGINEER', 'RELEASE_MANAGER', 'PLATFORM_ADMIN'],
-    availability: 'disponible',
-    summary: 'Suites, planes de ejecución con aprobación y resultados con evidencia.',
-    module: 'M36 qa_lab · M68 qa_execution',
-  },
-  {
-    // Consola de operación y preparación para producción (`/admin/ops`).
-    path: 'administration/operations',
-    label: 'Operación',
-    group: 'Administración',
-    icon: 'monitor',
-    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
-    availability: 'disponible',
-    summary: 'Preparación para producción con evidencia, incidentes, SLO y backups.',
-    module: 'M11 system_ops · M46 platform_ops',
-  },
+  ...SECCIONES_DE_PLATAFORMA,
   {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
     // resolve`— y doce comandos, así que la sección entra como panel de
@@ -1125,13 +1082,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M14 practice',
   },
   {
-    // CM-11 · la organización registrada como centro médico (`HOSPITAL`) abre su
-    // práctica y su primera sede. Cuelga de `administration/` como el resto de
-    // la configuración: una raíz propia se iría al proxy. La API decide quién
-    // puede (membresía OWNER/ADMIN de esa organización y organización
+    // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
+    // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al
+    // proxy. La API decide quién puede (membresía OWNER/ADMIN de esa organización
     // verificada); acá sólo se ofrece la puerta a quien tiene ese tipo de cuenta.
     path: 'administration/medical-center-setup',
-    onlyForTenantTypes: ['HOSPITAL'],
+    onlyForTenantTypes: MEDICAL_ORGANIZATION_TYPES,
     roles: [ANY_ROLE],
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
@@ -1446,11 +1402,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
     // Pedido del propietario (2026-09-25): sacar el renglón de la vista del
-    // paciente mientras se decide qué hacer con la sección — todavía no está
-    // definido. `fueraDelMenuPara` es lo que "apaga una sección de momento
-    // sin perder el código" (mismo mecanismo que «Ajustes»/«Chats» más abajo):
-    // la ruta, el guard y la pantalla siguen enteros, sólo deja de ocupar
-    // renglón. Ver docs/pendiente-decision-cuestionarios.md.
+    // paciente. `fueraDelMenuPara` es lo que "apaga una sección sin perder el
+    // código" (mismo mecanismo que «Ajustes»/«Chats» más abajo): la ruta, el
+    // guard y la pantalla siguen enteros, sólo deja de ocupar renglón.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
@@ -1644,8 +1598,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // del menú lateral, se llega por la billetera de la barra superior.
     //
     // Módulo 17 porque lo que suma son cobros al paciente; el contrato
-    // (`GET /patient-spending/me`) todavía no existe en la API — P43 en
-    // `PENDIENTES-BACKEND.md`.
+    // (`GET /patient-spending/me`, P44) sólo lo sirve el simulador.
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/spending',
     label: 'Mis gastos',
@@ -1663,8 +1616,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // médico, la farmacia y facturación, las que emitieron. El lado lo decide
     // el backend por la sesión.
     //
-    // Hoy la lee del SIAT **simulado** (FACT-SIAT-MOCK): la API todavía no
-    // publica facturas — P53 en `PENDIENTES-BACKEND.md`.
+    // La lee del SIAT **simulado** (FACT-SIAT-MOCK,
+    // `GET /billing/simulated/my-invoices`, P53).
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/invoices',
     label: 'Mis facturas',
@@ -1683,8 +1636,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // menú, que tiene listas cerradas fijadas por specs. Qué solicitudes ve
     // cada cuenta lo decide el backend por la sesión.
     //
-    // Hoy la sirve el simulador sobre la misma tabla que dictamina la
-    // aseguradora en «Solicitudes recibidas» — P56 en `PENDIENTES-BACKEND.md`.
+    // La sirve `GET /insurance/my-claims`, sobre la misma tabla que dictamina
+    // la aseguradora en «Solicitudes recibidas» (P56).
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/requests',
     label: 'Mis solicitudes',
@@ -1904,6 +1857,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     requiresTenant: true,
     availability: 'disponible',
     summary: 'El precio de venta de cada producto, tal como lo ven los pacientes.',
+    module: 'M24 pharmacy',
+  },
+  {
+    // P34 (26/10/2026): qué sucursales abren las 24 h y sus turnos de guardia.
+    // Lo ven los pacientes al elegir farmacia y en «Abiertas ahora».
+    path: 'administration/pharmacy-hours',
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Horario y turnos',
+    group: 'General',
+    icon: 'clock',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Qué sucursales abren las 24 horas y sus turnos de guardia.',
     module: 'M24 pharmacy',
   },
   {

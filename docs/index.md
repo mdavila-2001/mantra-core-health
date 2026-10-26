@@ -150,7 +150,6 @@ acuse**. → [reglas de negocio](business/business-rules.md#reglas-de-privacidad
 | [Línea base](reports/baseline.md) | El estado inicial, reproducible |
 | [Auditoría de estructura](reports/graphify-audit.md) | El grafo, y las derivas |
 | [Inventario funcional](reports/frontend-inventory.md) | |
-| [**Análisis de brechas**](reports/documentation-gap-analysis.md) | **47 hallazgos, priorizados** |
 | [Validación de regresiones](reports/regression-validation.md) | |
 | [**Preparación productiva**](reports/production-readiness.md) | **El veredicto** |
 | [Validación final](reports/final-validation.md) | |
@@ -158,14 +157,8 @@ acuse**. → [reglas de negocio](business/business-rules.md#reglas-de-privacidad
 
 ## Lo previo, que se conserva
 
-`docs/auditoria/` es trabajo del equipo y **no se modificó**:
-
-- [Diagnóstico (fases 0–1)](auditoria/01-diagnostico.md)
-- [Fases ejecutadas 2–6](auditoria/02-fases-ejecutadas.md)
-
-Igual que `README.md`, `ESTADO-FRONTEND.md`, `AVANCE-FRONTEND-*.md`,
-`COORDINACION-AGENTES.md` y `PENDIENTES-BACKEND.md`, que esta documentación
-**cita pero no reemplaza**.
+`README.md` es trabajo del equipo: esta documentación lo **cita pero no lo
+reemplaza**.
 
 ## Cómo se lee esta documentación
 

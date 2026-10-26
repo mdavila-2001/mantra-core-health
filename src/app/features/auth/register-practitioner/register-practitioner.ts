@@ -58,6 +58,7 @@ import {
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { componerDireccion } from '../shared-registration/address-line';
 import { LocationPicker } from '../shared-registration/location-picker/location-picker';
 import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
 import {
@@ -84,12 +85,9 @@ import {
   type HealthFilter,
 } from '../../../core/profession/university-registry';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
-import {
-  MAX_ATTACHMENT_BYTES,
-  SUPPORT_FILE_FORMATS,
-} from '../shared-registration/doctor-credentials';
+import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
 import { passwordValidators } from '../shared-registration/password-policy';
-import { validateBolivianNationalId } from '../shared-registration/national-id';
+import { identityDocumentValidators } from '../shared-registration/national-id';
 import {
   EMPTY_STUDY,
   isStudyMissingNumber,
@@ -384,9 +382,7 @@ interface TituloDeclarado {
  *   `ciudadAlCambiarDeUniversidad`). Lo pidió el propietario el 03/10/2026
  *   («debe mostrar la ciudad por defecto»). Las de varias sedes y las del
  *   padrón importado no proponen nada, y ahí se escribe.
- *   `profiles.professional_credentials` **no tiene columna de ciudad**; se
- *   pregunta porque el propietario la pidió y el hueco queda declarado en
- *   `docs/handoff/`, no inventado acá.
+ *   Viaja en el título como `issuingCityText`.
  */
 type CampoDeEstudio = 'universidad' | 'pais' | 'ciudad';
 
@@ -412,8 +408,16 @@ type ClaveDeRespaldo = 'professional-title' | 'license' | 'sedes';
 /** Tope de peso por adjunto. El mismo que la foto de perfil. */
 const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
 
-/** Formatos que se aceptan como respaldo de un título o de una matrícula. */
-const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
+/**
+ * Formatos que se aceptan como respaldo de la matrícula y del SEDES: sólo PDF.
+ *
+ * Desde P29 estos archivos se suben a `POST /iam/auth/upload-registration-document`,
+ * que sólo admite PDF (422 `PRECONDITION_FAILED` con `detectedMimeType`). Con el
+ * selector abierto a JPG y PNG (`SUPPORT_FILE_FORMATS`), una foto de la matrícula
+ * pasaba todo el alta y la cuenta fallaba en el último paso con «problema de
+ * configuración de nuestra parte». Se ve en la evidencia visual de P29 (26/10/2026).
+ */
+const FORMATOS_DE_RESPALDO = 'application/pdf';
 
 /**
  * Por qué se pide lo que se pide, paso por paso.
@@ -1069,7 +1073,7 @@ export class RegisterPractitioner {
     // a una persona verificable. Además del formato válido, ahora tiene que estar.
     nationalId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, validateBolivianNationalId],
+      validators: [...identityDocumentValidators],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     sedesLicenseNumber: new FormControl('', {
@@ -1174,6 +1178,16 @@ export class RegisterPractitioner {
     // localidad es la que ubica, y esto es lo que hace falta para llegar a la
     // puerta.
     homeAddressLines: new FormControl('', { nonNullable: true }),
+    // Distrito o zona: sin columna propia, viaja dentro de la línea de
+    // dirección (ver `componerDireccion`).
+    homeDistrict: new FormControl('', { nonNullable: true }),
+    // Espejo de `municipioProfesional` y `municipioConsultorio`: los dos
+    // campos de localidad son `custom` y su valor vive en señales, pero la
+    // calle y el punto del mapa sólo aparecen con localidad elegida
+    // (`showWhen`), y esa condición lee el formulario. Los escribe
+    // `elegirMunicipioProfesional` / `elegirMunicipioConsultorio`.
+    municipio: new FormControl<string | null>(null),
+    municipioConsultorio: new FormControl<string | null>(null),
     // Dirección habitual de trabajo, distinta de la casa y del consultorio
     // que declara como propio.
     workAddressLines: new FormControl('', { nonNullable: true }),
@@ -1185,6 +1199,7 @@ export class RegisterPractitioner {
       validators: [telefonoCompleto],
     }),
     officeAddressLines: new FormControl('', { nonNullable: true }),
+    officeDistrict: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
     // La firma y el sello: **imágenes**, no una firma electrónica. Opcionales.
     signatureImageBase64: new FormControl<string | null>(null),
@@ -1235,6 +1250,14 @@ export class RegisterPractitioner {
   private readonly fileIdTituloPrincipal = signal<string | null>(null);
   readonly respaldoMatricula = signal<RespaldoDeclarado | null>(null);
   readonly respaldoSedes = signal<RespaldoDeclarado | null>(null);
+  /**
+   * El fileId de cada respaldo de habilitación ya subido (P29). Se recuerda
+   * para que un reintento del alta no vuelva a subir —ni intente reclamar dos
+   * veces— el mismo PDF, y se olvida cuando la persona cambia el archivo.
+   */
+  private readonly fileIdDeHabilitacion = signal<
+    Partial<Record<'license' | 'sedes', string>>
+  >({});
 
   /** El error del último adjunto rechazado, si hubo. */
   readonly errorAdjunto = signal<string | null>(null);
@@ -1498,6 +1521,7 @@ export class RegisterPractitioner {
     this.attachmentFiles.update((current) => ({ ...current, [key]: files }));
     const file = files[0];
     if (key === 'professional-title') this.fileIdTituloPrincipal.set(null);
+    else this.fileIdDeHabilitacion.update((actual) => ({ ...actual, [key]: undefined }));
     this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
     this.errorAdjunto.set(null);
   }
@@ -1662,6 +1686,12 @@ export class RegisterPractitioner {
    */
   readonly municipioProfesional = signal<string | null>(null);
 
+  /** Guarda la localidad del domicilio en la señal **y** en el control espejo. */
+  elegirMunicipioProfesional(conceptId: string | null): void {
+    this.municipioProfesional.set(conceptId);
+    this.formProfesional.controls.municipio.setValue(conceptId);
+  }
+
   /**
    * El punto del domicilio, ya confirmado sobre el mapa.
    *
@@ -1682,6 +1712,12 @@ export class RegisterPractitioner {
    * el alta de paciente tiene para su casa y su trabajo.
    */
   readonly municipioConsultorio = signal<string | null>(null);
+
+  /** Lo mismo, para el consultorio. */
+  elegirMunicipioConsultorio(conceptId: string | null): void {
+    this.municipioConsultorio.set(conceptId);
+    this.formProfesional.controls.municipioConsultorio.setValue(conceptId);
+  }
 
   /** El punto del consultorio, ya confirmado sobre el mapa. */
   readonly gpsConsultorio = signal<Coordinates | null>(null);
@@ -2535,7 +2571,7 @@ export class RegisterPractitioner {
   private consultorioPropio(): NewOwnSite | null {
     const raw = this.formProfesional.getRawValue();
     const nombre = raw.officeName.trim();
-    const calle = raw.officeAddressLines.trim();
+    const calle = componerDireccion(raw.officeAddressLines, raw.officeDistrict);
     const telefono = raw.officeContactPhone.trim();
     const municipio = this.municipioConsultorio();
     const punto = this.gpsConsultorio();
@@ -2781,7 +2817,56 @@ export class RegisterPractitioner {
    * progreso disponible para reintentar sin reclamar dos veces el mismo PDF.
    */
   private subirPdfDeTitulosPendientes(): Observable<void> {
-    return concat(this.uploadTitlePdfs(), this.uploadSpecialtyPdfs()).pipe(
+    return concat(
+      this.uploadTitlePdfs(),
+      this.uploadSpecialtyPdfs(),
+      this.uploadLicensePdfs(),
+    ).pipe(
+      toArray(),
+      map(() => undefined),
+    );
+  }
+
+  /**
+   * Sube el PDF de la matrícula y el del SEDES (P29), y recuerda cada fileId.
+   *
+   * Hasta el 26/10/2026 el alta no tenía dónde llevarlos: el selector aceptaba
+   * el archivo, lo mostraba con su nombre y su peso, y al crear la cuenta lo
+   * tiraba en silencio. Sólo se sube el del SEDES si se escribió su número:
+   * sin la habilitación la API no tiene fila donde dejarlo y respondería 422.
+   */
+  private uploadLicensePdfs(): Observable<void> {
+    const raw = this.formProfesional.getRawValue();
+    const claves = (['license', 'sedes'] as const).filter((clave) =>
+      clave === 'license' ? raw.licenseNumber.trim() !== '' : raw.sedesLicenseNumber.trim() !== '',
+    );
+    return from(claves).pipe(
+      concatMap((clave) => {
+        const archivo = this.attachmentFiles()[clave]?.[0];
+        if (archivo === undefined || this.fileIdDeHabilitacion()[clave] !== undefined) {
+          return of(undefined);
+        }
+        return this.iam.uploadRegistrationDocument(archivo).pipe(
+          filter(
+            (evento): evento is HttpResponse<UploadedRegistrationDocument> =>
+              evento instanceof HttpResponse,
+          ),
+          map((respuesta) => {
+            const documento = respuesta.body;
+            if (!documento?.fileId || documento.fileId.trim() === '') {
+              throw new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.');
+            }
+            this.fileIdDeHabilitacion.update((actual) => ({
+              ...actual,
+              [clave]: documento.fileId,
+            }));
+            return undefined;
+          }),
+          throwIfEmpty(
+            () => new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.'),
+          ),
+        );
+      }),
       toArray(),
       map(() => undefined),
     );
@@ -2933,7 +3018,7 @@ export class RegisterPractitioner {
     const fechaInscripcion = raw.licenseIssueDate;
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
-    const calleDomicilio = raw.homeAddressLines.trim();
+    const calleDomicilio = componerDireccion(raw.homeAddressLines, raw.homeDistrict);
     const gpsDomicilio = this.gpsDomicilio();
     const calleTrabajo = raw.workAddressLines.trim();
     const gpsTrabajo = this.gpsTrabajo();
@@ -2942,6 +3027,7 @@ export class RegisterPractitioner {
     const foto = raw.profilePhotoBase64;
     const firmaImagen = raw.signatureImageBase64;
     const selloImagen = raw.sealImageBase64;
+    const respaldos = this.fileIdDeHabilitacion();
 
     return {
       // `email` del DTO es el campo de LOGIN de la API, y desde este cambio el
@@ -2999,6 +3085,11 @@ export class RegisterPractitioner {
       sedesLicenseNumber: raw.sedesLicenseNumber.trim(),
       ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),
       ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
+      // Los respaldos de la habilitación (P29), ya subidos por `uploadLicensePdfs`.
+      ...(respaldos.license === undefined ? {} : { licenseFileId: respaldos.license }),
+      ...(respaldos.sedes === undefined || raw.sedesLicenseNumber.trim() === ''
+        ? {}
+        : { sedesLicenseFileId: respaldos.sedes }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
       // Los cuatro contactos por separado. `phone` ya no viaja: era el campo
       // único que mezclaba el número privado con el del consultorio, y la API

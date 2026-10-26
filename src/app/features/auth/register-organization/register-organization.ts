@@ -129,7 +129,7 @@ function grupoDeGerente() {
  * ## El tipo de tenant es fijo
  *
  * A diferencia del alta administrativa (`OrganizationNew`), que ofrece los
- * diez tipos de `TENANT_TYPE_CODES`, acá no hay nada que elegir: esta
+ * once tipos de `TENANT_TYPE_CODES`, acá no hay nada que elegir: esta
  * pantalla sólo da de alta aseguradoras, así que el cliente manda
  * `tenantType: 'PAYER'` fijo y el bloque `payer` **siempre** viaja completo.
  *

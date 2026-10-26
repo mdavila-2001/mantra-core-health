@@ -23,7 +23,7 @@ import { entrar, estable, irA } from './support/sesion';
  * una persona real.**
  */
 
-const SALIDA = join('docs', 'trabajo', '2026-09-20-notas-cuadricula-e-internacion', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-20-notas-cuadricula-e-internacion', 'evidencia');
 
 const MEDICA: Actor = {
   rol: 'doctora',

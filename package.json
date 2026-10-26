@@ -26,6 +26,10 @@
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:colores-sueltos": "node scripts/check-colores-sueltos.mjs",
     "check:max-lines": "node scripts/check-max-lines.mjs",
+    "check:correcciones": "node scripts/check-correcciones.mjs",
+    "test:correcciones": "node --test scripts/lib/correcciones-gate.test.mjs",
+    "check:admin-portal-contract": "node scripts/check-admin-portal-contract.mjs && node --test scripts/lib/admin-portal-contract.test.mjs",
+    "contract:refresh": "node scripts/refresh-api-contract.mjs",
     "gates:diseno": "node scripts/check-tokens.mjs; node scripts/check-css-tokens.mjs; node scripts/check-contrast.mjs; node scripts/check-colores-sueltos.mjs; node scripts/check-max-lines.mjs",
     "hooks:instalar": "sh scripts/instalar-hooks.sh",
     "mock-contract:check": "node scripts/gen-mock-contract.mjs --check",
@@ -61,6 +65,7 @@
     "mock:glossary:shards": "node scripts/glossary-shards.mjs",
     "mock:glossary:articles": "node scripts/glossary-articles.mjs",
     "mock:anatomy": "node scripts/gen-anatomy-fixture.mjs",
+    "mock:anatomy-ontology": "node scripts/gen-anatomy-ontology-fixture.mjs",
     "mock:institutions": "node scripts/gen-institutions-fixture.mjs",
     "emoji:catalog": "node scripts/gen-emoji-catalog.mjs",
     "mock:markdown-catalogs": "node scripts/gen-markdown-catalogs-fixture.mjs"
@@ -94,6 +99,7 @@
     "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4",
+    "three": "0.180.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
@@ -106,6 +112,7 @@
     "@types/leaflet": "^1.9.22",
     "@types/node": "^20.17.19",
     "@types/qrcode": "^1.5.6",
+    "@types/three": "0.180.0",
     "@vitest/coverage-v8": "^4.1.10",
     "angular-eslint": "^21.2.0",
     "axe-core": "^4.12.1",

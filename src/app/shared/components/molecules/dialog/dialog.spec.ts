@@ -306,6 +306,61 @@ describe('DialogService', () => {
     });
   });
 
+  describe('frase de confirmación', () => {
+    const FRASE: DialogConfig = { ...CONFIRMACION, confirmPhrase: 'GUARDAR' };
+
+    function campoDeFrase(): HTMLInputElement {
+      const campo = dialogo().querySelector('[data-testid="dialogo-frase"]');
+      if (!(campo instanceof HTMLInputElement)) throw new Error('el diálogo no pide frase');
+      return campo;
+    }
+
+    function escribir(texto: string): void {
+      const campo = campoDeFrase();
+      campo.value = texto;
+      campo.dispatchEvent(new Event('input'));
+      TestBed.inject(ApplicationRef).tick();
+    }
+
+    it('sin frase pedida no dibuja el campo', async () => {
+      const respuesta = service.confirm(CONFIRMACION);
+      await esperarRender();
+      expect(dialogo().querySelector('[data-testid="dialogo-frase"]')).toBeNull();
+      boton('Cancelar').click();
+      await respuesta;
+    });
+
+    it('no confirma sin la frase: queda abierto y explica qué escribir', async () => {
+      let resuelto = false;
+      const respuesta = service.confirm(FRASE).then((valor) => {
+        resuelto = true;
+        return valor;
+      });
+      await esperarRender();
+
+      boton('Confirmar').click();
+      await esperarRender();
+      expect(resuelto).toBe(false);
+      expect(dialogo().textContent).toContain('«GUARDAR»');
+
+      escribir('guardar');
+      boton('Confirmar').click();
+      await esperarRender();
+      expect(resuelto).toBe(false);
+
+      boton('Cancelar').click();
+      await expect(respuesta).resolves.toBe(false);
+    });
+
+    it('con la frase exacta (aunque con espacios alrededor) confirma', async () => {
+      const respuesta = service.confirm(FRASE);
+      await esperarRender();
+      escribir('  GUARDAR ');
+      boton('Confirmar').click();
+      await expect(respuesta).resolves.toBe(true);
+    });
+  });
+
   describe('limpieza y foco', () => {
     it('al cerrar no queda ningún nodo colgado del body', async () => {
       const respuesta = service.confirm(CONFIRMACION);

@@ -6,7 +6,8 @@ import { commentList, CONCEPT, postList, reviewList, showcaseBySlug, showcases, 
 import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
 import { affiliationList, PROFESSIONALS, professionalById } from '../fixtures/people';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
-import { notFound, type MockRouter } from '../mock-router';
+import { addDecimalStrings } from '../../money/decimal-strings';
+import { notFound, validation, type MockRouter } from '../mock-router';
 import { ahora, contiene, iso, isoDia, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -246,6 +247,10 @@ interface SucursalPublica {
   readonly addressText: string | null;
   readonly phone: string | null;
   readonly openingHours: string | null;
+  /** Lo que la cadena escribió de la sucursal (P54); el corpus no lo trae. */
+  readonly description: string | null;
+  /** El enlace de mapa de la sucursal (P54); el corpus no lo trae. */
+  readonly locationUrl: string | null;
   readonly location: { lat: number; lng: number } | null;
   /**
    * Con cuánta precisión se conoce ese punto, en palabras.
@@ -277,6 +282,8 @@ function sucursalOficial(f: OfficialSheet): SucursalPublica {
     addressText: f.address,
     phone: f.phone,
     openingHours: null,
+    description: null,
+    locationUrl: null,
     location: f.lat === null || f.lng === null ? null : { lat: f.lat, lng: f.lng },
     locationAccuracy: null,
     isCurrent: true,
@@ -296,6 +303,8 @@ function sucursalesDe(vitrina: SimulatedShowcase): readonly SucursalPublica[] {
         addressText: vitrina.address === '' ? null : vitrina.address,
         phone: null,
         openingHours: null,
+        description: null,
+        locationUrl: null,
         location: { lat: vitrina.lat, lng: vitrina.lng },
         locationAccuracy: null,
         isCurrent: true,
@@ -313,6 +322,8 @@ function sucursalesDe(vitrina: SimulatedShowcase): readonly SucursalPublica[] {
       addressText: f.addressText,
       phone: f.phone,
       openingHours: f.openingHours,
+      description: null,
+      locationUrl: null,
       location: { lat: f.lat, lng: f.lng },
       locationAccuracy: PRECISION_LABEL[f.locationPrecision],
       isCurrent: f.slug === vitrina.slug,
@@ -379,19 +390,61 @@ function disponibilidadDe(
     });
   }
 
-  const total = encontrados.reduce((suma, linea) => suma + Number(linea.price ?? 0), 0);
+  // Como la API: suma exacta (sin coma flotante), y `null` si no encontró
+  // nada, si a alguno le falta precio o si mezclan monedas.
+  const conPrecio = encontrados.filter((linea) => linea.price !== null);
+  const monedas = new Set(conPrecio.map((linea) => linea.currency));
+  const totalConocido = encontrados.length > 0 && conPrecio.length === encontrados.length && monedas.size === 1;
   return {
     branch: sucursal,
     matches: encontrados,
     missing: faltantes,
     complete: renglones.length > 0 && faltantes.length === 0,
-    totalAmount: encontrados.length === 0 ? null : total.toFixed(2),
-    currency: encontrados[0]?.currency ?? null,
+    totalAmount: totalConocido ? addDecimalStrings(conPrecio.map((linea) => linea.price)) : null,
+    currency: totalConocido ? (conPrecio[0]?.currency ?? null) : null,
     distanceKm:
       origen === null || sucursal.location === null
         ? null
         : distanciaKm(origen.lat, origen.lng, sucursal.location.lat, sucursal.location.lng),
   };
+}
+
+/** Los topes de la API (`public-pharmacy-branches.domain.ts`). */
+const RENGLONES_MAXIMOS = 20;
+const LARGO_MAXIMO_DE_RENGLON = 120;
+
+/**
+ * El cuerpo de la búsqueda de una receta, validado como la API, o el motivo
+ * del 400. Los renglones vacíos y repetidos (sin tildes) se colapsan igual que
+ * en el servidor.
+ */
+function leerPedidoDeReceta(
+  body: unknown,
+): { renglones: string[]; origen: { lat: number; lng: number } | null } | string {
+  const cuerpo = (body ?? {}) as { items?: unknown; lat?: unknown; lng?: unknown };
+  const claves = Object.keys(cuerpo).filter((clave) => !['items', 'lat', 'lng'].includes(clave));
+  if (claves.length > 0) return `property ${claves[0]} should not exist`;
+  const items = cuerpo.items;
+  if (!Array.isArray(items) || items.length === 0 || items.length > RENGLONES_MAXIMOS) {
+    return `items must contain between 1 and ${RENGLONES_MAXIMOS} elements`;
+  }
+  if (items.some((item) => typeof item !== 'string' || item.length > LARGO_MAXIMO_DE_RENGLON)) {
+    return `each value in items must be a string shorter than or equal to ${LARGO_MAXIMO_DE_RENGLON} characters`;
+  }
+  const { lat, lng } = cuerpo;
+  if ((lat === undefined) !== (lng === undefined)) return 'lat and lng must travel together';
+  if (lat !== undefined && (typeof lat !== 'number' || typeof lng !== 'number' || Math.abs(lat) > 90 || Math.abs(lng) > 180)) {
+    return 'lat must be a latitude string or number';
+  }
+  const vistos = new Set<string>();
+  const renglones: string[] = [];
+  for (const item of items as string[]) {
+    const limpio = item.trim();
+    if (limpio === '' || vistos.has(sinTildes(limpio))) continue;
+    vistos.add(sinTildes(limpio));
+    renglones.push(limpio);
+  }
+  return { renglones, origen: lat === undefined ? null : { lat: lat as number, lng: lng as number } };
 }
 
 export function registrarPublico(router: MockRouter, directorio: OfficialDirectory = new OfficialDirectory()): void {
@@ -555,9 +608,9 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
   });
 
   /* ---- las opiniones de una ficha, con quién las dio ----------------------
-     Contrato del simulador: la API real todavía no lo publica (ver
-     «Opiniones públicas de una ficha» en PENDIENTES-BACKEND.md). Cuelga de
-     `/public/profiles/:prefijo/:slug/…` por lo mismo que los servicios. */
+     Mismo contrato que `GET /public/profiles/:prefijo/:slug/reviews` de la
+     API. Cuelga de `/public/profiles/:prefijo/:slug/…` por lo mismo que los
+     servicios. */
 
   router.get('/public/profiles/:prefix/:slug/reviews', async ({ params, query }) => {
     const v = showcaseBySlug(params['slug']!);
@@ -594,7 +647,7 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
     return paginaPublica(items, query, 20);
   });
 
-  /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------
+  /* ---- lo que cada ficha OFRECE (P30 y P31) ---------------------------------
      Las dos cuelgan de `/public/profiles/:prefijo/:slug/…` y no de `/o/:slug/…`
      por lo mismo que la ficha: `/o` es también una ruta del router, y el proxy
      de desarrollo enruta comparando el comienzo de la ruta. */
@@ -631,20 +684,19 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
     return paginaPublica(sucursalesDe(v), query, 50);
   });
 
-  router.get('/public/profiles/f/:slug/branch-availability', async ({ params, query }) => {
+  // POST y no GET (P37, D-2): los renglones de una receta son datos de salud y
+  // en la URL quedarían en historiales y logs. Mismo cuerpo y mismos 400 que la
+  // API (`PublicPrescriptionAvailabilityDto`).
+  router.post('/public/profiles/f/:slug/branch-availability', async ({ params, body }) => {
+    const pedido = leerPedidoDeReceta(body);
+    if (typeof pedido === 'string') return validation(pedido, [{ field: 'items', message: pedido }]);
+
     const v = showcaseBySlug(params['slug']!);
     // Sin catálogo publicado no hay disponibilidad que calcular.
     if (v === undefined && (await directorio.bySlug(params['slug']!))?.kind === 'PHARMACY') return { items: [], count: 0, generatedAt: ahora() };
     if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
 
-    const renglones = (texto(query, 'items') ?? '')
-      .split('|')
-      .map((renglon) => renglon.trim())
-      .filter((renglon) => renglon !== '');
-    const lat = query.get('lat');
-    const lng = query.get('lng');
-    const origen = lat === null || lng === null ? null : { lat: Number(lat), lng: Number(lng) };
-
+    const { renglones, origen } = pedido;
     const items = sucursalesDe(v)
       .map((sucursal) => disponibilidadDe(sucursal, renglones, origen))
       // Primero las que tienen todo; entre ésas, la más cercana. Es el mismo

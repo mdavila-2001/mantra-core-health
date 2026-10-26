@@ -53,9 +53,10 @@ const ROTULO_SIN_CAMPO = 'Nota';
 /**
  * Las filas como texto de la nota: una línea «campo: valor» por fila.
  *
- * La API de notas de esta base no tiene todavía un campo para filas
- * estructuradas (P39 no llegó a `test`), así que viajan en el texto de lo
- * observado (`objectiveText`), que la API acepta hoy tal como está.
+ * Desde P39 la nota guarda las filas estructuradas (`entries`) y la pantalla
+ * las manda así. Esta forma de texto queda para leer las notas guardadas
+ * antes, cuando las filas viajaban en `objectiveText` (ver
+ * {@link entradasDelTexto}).
  */
 export function textoDeLasEntradas(entradas: readonly EntradaAdicional[]): string {
   return entradas.map((entrada) => `${entrada.label}: ${entrada.value}`).join('\n');

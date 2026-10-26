@@ -4,6 +4,8 @@
    kilométricas no es acotar la tarjeta sino la medida de lectura de cada
    párrafo. Sólo distribución. */
 
+@import '../../shared/styles/enlace-chip.css';
+
 :host {
   display: block;
 }
@@ -266,29 +268,30 @@
   font-size: var(--fs-caption);
 }
 
-/* El ícono de categoría hace de marcador permanente cuando el término no tiene
-   imagen — que hoy es siempre. No es un relleno temporal: reemplaza a
-   cualquier foto de stock que este glosario no va a usar. */
-.termino__imagen-marcador {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  block-size: 8rem;
-  margin: 0;
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-inset);
-  color: var(--text-muted);
-}
-
-.termino__imagen-marcador app-glossary-category-icon {
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-}
-
-.termino__imagen-marcador app-glossary-category-icon svg {
+/* Sin foto, la portada ocupa el lugar de la imagen: la columna nunca queda
+   vacía y el dibujo no se estira más allá de la medida de una foto. */
+.termino__portada {
   inline-size: 100%;
-  block-size: 100%;
+  max-inline-size: 26rem;
+}
+
+/* Enlaces sueltos de la ficha: el color y el subrayado del sistema, no el azul
+   y el violeta de «visitado» del navegador. */
+.termino__enlace,
+.termino__enlace:visited {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.termino__enlace:hover {
+  color: var(--brand-primary-hover);
+}
+
+.termino__enlace:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .termino__sin-traducir-parcial {

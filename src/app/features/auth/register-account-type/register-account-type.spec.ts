@@ -40,8 +40,8 @@ describe('RegisterAccountType', () => {
     // superficie que ve un paciente o un profesional se dice «médico».
     // «Farmacia» es la sexta, agregada con `RegisterPharmacy` (carril A,
     // 2026-09-29): es la primera cuenta nueva desde imagenología que sí sale
-    // a la red. «Centro médico» es la séptima (CM-11): sale a la red como
-    // `register-organization` con un tipo de salud que ya existe.
+    // a la red. «Organización médica» es la séptima (CM-11): sale a la red
+    // como `register-organization` con el tipo de institución que se elige.
     expect(titulos).toEqual([
       'Paciente',
       'Médico',
@@ -49,7 +49,7 @@ describe('RegisterAccountType', () => {
       'Laboratorio',
       'Imagenología',
       'Farmacia',
-      'Centro médico',
+      'Organización médica',
     ]);
   });
 

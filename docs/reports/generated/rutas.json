@@ -186,7 +186,7 @@
         "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -217,6 +217,7 @@
         "ProceduresClient",
         "ProfilesClient",
         "QuotationsClient",
+        "ReferralsClient",
         "SchedulingClient",
         "SystemContextClient",
         "TerminologyClient",
@@ -313,6 +314,7 @@
       "rolesExclusivos": false,
       "componente": "Glossary",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -416,7 +418,7 @@
         "ProfilesClient",
         "SystemContextClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -634,81 +636,6 @@
       "parametrizada": false
     },
     {
-      "ruta": "/administration/data-catalog",
-      "etiqueta": "Catálogo de datos",
-      "grupo": "Administración",
-      "roles": [
-        "SECURITY_ADMIN",
-        "PLATFORM_ADMIN",
-        "GOVERNANCE_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "DPO"
-      ],
-      "rolesExclusivos": false,
-      "componente": "DataCatalog",
-      "apis": [
-        "DataCatalogClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/web-analytics",
-      "etiqueta": "Analítica web",
-      "grupo": "Administración",
-      "roles": [
-        "PLATFORM_ADMIN",
-        "SECURITY_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "MARKETING_MANAGER",
-        "DPO"
-      ],
-      "rolesExclusivos": false,
-      "componente": "WebAnalytics",
-      "apis": [
-        "WebAnalyticsClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/qa-lab",
-      "etiqueta": "QA Lab",
-      "grupo": "Administración",
-      "roles": [
-        "QA_ADMIN",
-        "QA_ENGINEER",
-        "RELEASE_MANAGER",
-        "PLATFORM_ADMIN"
-      ],
-      "rolesExclusivos": false,
-      "componente": "QaLab",
-      "apis": [
-        "QaLabClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/operations",
-      "etiqueta": "Operación",
-      "grupo": "Administración",
-      "roles": [
-        "PLATFORM_ADMIN",
-        "SRE",
-        "SECURITY_ADMIN",
-        "RELEASE_MANAGER",
-        "GOVERNANCE_ADMIN"
-      ],
-      "rolesExclusivos": false,
-      "componente": "Operations",
-      "apis": [
-        "OpsConsoleClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
       "ruta": "/administration/health-context",
       "etiqueta": "Contexto sanitario",
       "grupo": "Administración",
@@ -866,7 +793,7 @@
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -971,7 +898,7 @@
         "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1098,7 +1025,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1202,7 +1129,7 @@
         "RoleAssignmentsClient",
         "ServicesCatalogClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1295,7 +1222,7 @@
         "PharmacyOrdersClient",
         "PharmacyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1435,7 +1362,7 @@
         "AccountingClient",
         "SimpleAccountingClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -1462,23 +1389,6 @@
       "componente": "BrokerDetail",
       "apis": [
         "InsuranceClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": true
-    },
-    {
-      "ruta": "/administration/data-catalog/:objectId",
-      "seccion": "Catálogo de datos",
-      "roles": [
-        "SECURITY_ADMIN",
-        "PLATFORM_ADMIN",
-        "GOVERNANCE_ADMIN",
-        "DATA_PLATFORM_ADMIN",
-        "DPO"
-      ],
-      "componente": "CatalogObjectDetail",
-      "apis": [
-        "DataCatalogClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2516,22 +2426,6 @@
       "parametrizada": true
     },
     {
-      "ruta": "/administration/qa-lab/plans/:planId",
-      "seccion": "QA Lab",
-      "roles": [
-        "QA_ADMIN",
-        "QA_ENGINEER",
-        "RELEASE_MANAGER",
-        "PLATFORM_ADMIN"
-      ],
-      "componente": "QaPlanDetail",
-      "apis": [
-        "QaLabClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": true
-    },
-    {
       "ruta": "/administration/services-catalog/import",
       "seccion": "Catálogo de servicios",
       "roles": [
@@ -2600,10 +2494,35 @@
       ],
       "componente": "GlossaryTerm",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": true
+    },
+    {
+      "ruta": "/glossary/anatomy-atlas",
+      "seccion": "Glosario",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GlossaryAnatomyAtlas",
+      "apis": [
+        "AnatomyAtlasClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
     },
     {
       "ruta": "/glossary/network",
@@ -2623,6 +2542,7 @@
       ],
       "componente": "GlossaryNetwork",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -2697,6 +2617,7 @@
         "PracticeSitesClient",
         "ProceduresClient",
         "ProfilesClient",
+        "ReferralsClient",
         "SchedulingClient",
         "SystemContextClient",
         "TerminologyClient",
@@ -2818,7 +2739,7 @@
         "ProfilesClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": true
     },
     {
@@ -2845,7 +2766,7 @@
       "apis": [
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": true
     },
     {
@@ -2886,7 +2807,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2925,7 +2846,7 @@
       "apis": [
         "ProfilesClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -3064,7 +2985,7 @@
       "apis": [
         "SchedulingClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -3112,6 +3033,39 @@
       ],
       "estado": "conectada",
       "parametrizada": false
+    },
+    {
+      "ruta": "/superadmin/data-catalog/:objectId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "CatalogObjectDetail",
+      "apis": [
+        "DataCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/superadmin/flows/:flowId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "FlowDetailPage",
+      "apis": [
+        "FlowsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/superadmin/qa-lab/plans/:planId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "QaPlanDetail",
+      "apis": [
+        "QaLabClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
     }
   ],
   "portadas": [

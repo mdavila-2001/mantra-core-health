@@ -246,6 +246,7 @@ const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
   lastName: TAB_EDITOR.personales,
   motherLastName: TAB_EDITOR.personales,
   birthDate: TAB_EDITOR.personales,
+  nationalId: TAB_EDITOR.personales,
   professionalTitle: TAB_EDITOR.personales,
   professionalBio: TAB_EDITOR.personales,
   homeAddressLines: TAB_EDITOR.contacto,
@@ -326,6 +327,9 @@ function leerRechazo(error: unknown): {
   return { porCampo, sinCampo };
 }
 
+/** El formato del documento que acepta el alta (`RegisterPractitionerDto.nationalId`). */
+const FORMATO_DOCUMENTO = /^[A-Za-z0-9.-]+$/;
+
 /** «a», «a y b», «a, b y c». */
 const enumerar = (partes: readonly string[]): string =>
   new Intl.ListFormat('es', { type: 'conjunction' }).format(partes);
@@ -386,6 +390,7 @@ const CAMPOS_POR_PESTANA: Readonly<Record<number, readonly string[]>> = {
     'motherLastName',
     'birthDate',
     'sexAtBirth',
+    'nationalId',
     'issuerAdministrativeAreaConceptId',
   ],
   [TAB_EDITOR.contacto]: [
@@ -597,11 +602,33 @@ export class PractitionerProfileEdit {
   private readonly departamentos = inject(BoDepartmentsCatalog);
 
   /* -- P28 (ID-13): lo que del documento SÍ se corrige --------------------
-     El sexo al nacer y el departamento que emitió el documento. El número del
-     documento sigue de solo lectura: tiene su propio circuito de verificación
-     y la API no lo acepta en este `PATCH`. */
+     El sexo al nacer, el departamento que emitió el documento y —mientras la
+     identidad no esté verificada— el número. Verificada, la API lo rechaza con
+     409: lo verificado es ese número, así que la pantalla lo muestra fijo y
+     dice por qué. */
   protected readonly opcionesSexoAlNacer = BIRTH_SEX_OPTIONS;
   protected readonly sexoAlNacer = signal<BirthSexCode | null>(null);
+  /** El número del documento, tal como se está editando. */
+  protected readonly numeroDocumento = signal('');
+  /** Con la identidad verificada el número no se corrige desde acá. */
+  protected readonly documentoBloqueado = computed(
+    () => this.datos()?.identityVerified === true,
+  );
+  /**
+   * El error local del número: el mismo formato que el alta, y no vacío
+   * (el alta del profesional lo exige).
+   */
+  protected readonly errorDocumento = computed(() => {
+    if (this.documentoBloqueado()) return '';
+    const valor = this.numeroDocumento().trim();
+    if (valor === '') {
+      return (this.datos()?.nationalId ?? '') === '' ? '' : 'El documento no puede quedar vacío.';
+    }
+    if (valor.length > 40) return 'El documento admite hasta 40 caracteres.';
+    return FORMATO_DOCUMENTO.test(valor)
+      ? ''
+      : 'El documento sólo admite letras, dígitos, punto y guion.';
+  });
   protected readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
   protected readonly departamentoEmisor = signal<string | null>(null);
 
@@ -1949,6 +1976,7 @@ export class PractitionerProfileEdit {
       // ofrecía. Se siembran desde el perfil, igual que el resto.
       this.fechaNacimiento.set(perfil.birthDate ?? null);
       this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
+      this.numeroDocumento.set(perfil.nationalId ?? '');
       this.departamentoEmisor.set(perfil.issuerAdministrativeAreaConceptId ?? null);
       const nacimiento = this.fechaNacimiento();
       this.textoNacimientoGuardado =
@@ -2256,6 +2284,7 @@ export class PractitionerProfileEdit {
       workEmail: string;
       birthDate: string;
       sexAtBirth: BirthSexCode;
+      nationalId: string;
       issuerAdministrativeAreaConceptId: string;
       residenceMunicipalityConceptId: string;
       homeAddressLines: string;
@@ -2281,6 +2310,21 @@ export class PractitionerProfileEdit {
     const sexo = this.sexoAlNacer();
     if (sexo !== null && sexo !== original.sexAtBirth) {
       cambios.sexAtBirth = sexo;
+    }
+    // El número viaja sólo si cambió y la identidad no está verificada. Si
+    // no es válido no se guarda nada de esta pestaña: el error queda pintado
+    // en su campo.
+    if (pestana === TAB_EDITOR.personales && this.errorDocumento() !== '') {
+      this.toasts.error(this.errorDocumento(), 'Perfil');
+      return;
+    }
+    const documento = this.numeroDocumento().trim();
+    if (
+      !this.documentoBloqueado() &&
+      documento !== '' &&
+      documento !== (original.nationalId ?? '')
+    ) {
+      cambios.nationalId = documento;
     }
     const departamento = this.departamentoEmisor();
     if (
@@ -2642,8 +2686,7 @@ export class PractitionerProfileEdit {
    * `FilesClient.upload` y su identificador viaja como `fileId`. Hasta el
    * 13/09/2026 el contrato no tenía ese campo —`NewJurisdictionAuthorization`
    * no lo declaraba— así que este formulario aceptaba el PDF, lo mostraba con
-   * su nombre y su peso, y lo **tiraba en silencio** al guardar: el defecto que
-   * el bloqueo de `docs/progress/BLOCKERS.md` describía. Ya no.
+   * su nombre y su peso, y lo **tiraba en silencio** al guardar. Ya no.
    *
    * Si la subida falla **no se crea la matrícula**: una matrícula sin el carnet
    * que la persona creyó haber adjuntado es peor que un error, porque nadie se
@@ -2947,12 +2990,10 @@ export class PractitionerProfileEdit {
       era una tabla de sólo lectura: para corregir el número de un título mal
       tecleado no quedaba otra que cargarlo de nuevo y convivir con los dos.
 
-      **De las cinco operaciones, sólo el retiro del título existe en la API.**
-      Las otras cuatro las atiende el simulador de la rama `mockup`, que es el
-      backend de esta rama (`mockBackend: true` fijo). El hueco del servidor
-      está anotado en `docs/progress/BLOCKERS.md`: acá no se esconde, y el
-      cliente ya pide la ruta REST que le corresponde a cada recurso, así que
-      publicarlas del otro lado no obliga a tocar esta pantalla.
+      Las cinco operaciones existen en la API (corregir y retirar títulos,
+      especialidades y matrículas propias mientras siguen pendientes de
+      verificación), con la ruta REST que le corresponde a cada recurso; el
+      simulador de `mockup` las atiende con la misma forma.
      ====================================================================== */
 
   /** Qué fila está bajando su archivo, para apagar sólo ese botón. */

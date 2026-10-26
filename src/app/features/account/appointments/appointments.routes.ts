@@ -33,6 +33,13 @@ export function reservaDelPortalRoute(slotId: string): string {
 export const SERVICE_BOOKING_SLOT = 'servicio';
 
 /**
+ * El «id de cupo» de una hora de horario flexible (P36). Tampoco es un cupo: la
+ * API la calcula al leer y el cupo nace al retenerla. La pantalla de reserva la
+ * reencuentra por `recurso` y `desde`, con `flexible=1`.
+ */
+export const FLEXIBLE_BOOKING_SLOT = 'flexible';
+
+/**
  * Query param con el código de una campaña preventiva del seguro (Tarea 4).
  *
  * Lo pone el widget de beneficios (`patient-campaigns-widget`) y lo lee

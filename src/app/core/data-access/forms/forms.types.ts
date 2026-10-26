@@ -136,15 +136,12 @@ export type TechnicalDataType =
 
 /**
  * Claves de la definición de campo que el DTO de `origin/dev` no declara
- * (informe B, C8; `docs/pendientes-backend-formularios.md`). La maqueta las
- * guarda; contra la API real no viajan, y como sin ellas la pregunta quedaría
- * rota —una de opción sin opciones—, el cliente no la manda a medias.
+ * (informe B, C8): las de la cuadrícula. Las opciones, la respuesta múltiple,
+ * la ayuda y «Otro» sí las declara y viajan. La maqueta guarda también la
+ * cuadrícula; contra la API real no viaja, y como sin ella la pregunta
+ * quedaría rota —una cuadrícula sin filas—, el cliente no la manda a medias.
  */
 export const FIELD_DEFINITION_SIMULATOR_EXTENSIONS: readonly string[] = [
-  'options',
-  'multiple',
-  'description',
-  'allowOther',
   'rows',
   'requireEachRow',
   'oneResponsePerColumn',
@@ -159,10 +156,6 @@ export const FIELD_DEFINITION_UPDATE_SIMULATOR_EXTENSIONS: readonly string[] = [
 ];
 
 const FIELD_DEFINITION_EXTENSION_LABELS: Readonly<Record<string, string>> = {
-  options: 'las opciones',
-  multiple: 'la respuesta múltiple',
-  description: 'la ayuda bajo la pregunta',
-  allowOther: 'la opción «Otro»',
   rows: 'las filas de la cuadrícula',
   requireEachRow: 'la obligación de responder cada fila',
   oneResponsePerColumn: 'el uso único de cada columna',
@@ -191,8 +184,6 @@ export interface CreateFieldDefinitionInput {
    * Las respuestas ofrecidas, para un campo `code`.
    *
    * Texto libre y no un `valueSetId`: ver {@link ChartTemplateField.options}.
-   * **El backend real todavía no acepta esta clave** — ver
-   * `docs/pendientes-backend-formularios.md`.
    */
   readonly options?: readonly string[];
   /** Si el campo de elección admite varias respuestas. */

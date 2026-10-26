@@ -12,7 +12,7 @@
       6. en 375 / 768 / 1440, claro y oscuro, el modal no se desborda.
 
     Con `--workers=1`. Antes hay que tener `ng serve` y apuntar `E2E_BASE_URL`.
-    Las capturas van a `docs/trabajo/2026-10-01-catalogo-universal/evidencia/`.
+    Las capturas van a `artifacts/evidencia/2026-10-01-catalogo-universal/evidencia/`.
     ========================================================================== */
 
 import { mkdirSync } from 'node:fs';
@@ -23,7 +23,7 @@ import { test, expect, type Locator, type Page } from '@playwright/test';
 import { farmacia, type Actor } from './support/actores';
 import { entrar } from './support/sesion';
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-10-01-catalogo-universal', 'evidencia');
+const EVIDENCIA = join('artifacts', 'evidencia', '2026-10-01-catalogo-universal', 'evidencia');
 const SUFIJO = String(Date.now()).slice(-6);
 
 const VIEWPORTS = [

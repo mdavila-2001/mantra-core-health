@@ -151,12 +151,20 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'administration/pharmacy-import',
   'administration/pharmacy-inventory',
   'administration/pharmacy-prices',
+  'administration/pharmacy-hours',
   'administration/pharmacy-branches',
   'administration/laboratory',
   'administration/laboratory-results',
   'administration/laboratory-prices',
   'administration/laboratory-branches',
   'tutorials',
+  // 17/10/2026 · las cuatro secciones de plataforma se mudaron a
+  // `superadmin/*`. Siguen registradas —sus rutas redirigen—, pero ofrecerlas
+  // acá dibujaría cada una dos veces: la vieja, que sólo redirige, y la nueva.
+  'administration/data-catalog',
+  'administration/web-analytics',
+  'administration/qa-lab',
+  'administration/operations',
 ];
 
 /**
@@ -279,6 +287,25 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
       'billing',
     ],
     catchAllGroups: ['Administración', 'Facturación'],
+  },
+  {
+    id: 'plataforma',
+    label: 'Superadministración',
+    tagline: 'La plataforma misma: cuánto se usa, qué datos guarda y por qué, qué flujos existen y cómo se prueban.',
+    icon: 'shield',
+    // `warning` y no otro: es el único tono que las demás zonas no usan, y cada
+    // pareja fondo/tinta ya está medida contra WCAG en claro y en oscuro.
+    tone: 'warning',
+    paths: [
+      'superadmin/observability',
+      'superadmin/data-catalog',
+      'superadmin/portal',
+      'superadmin/flows',
+      'superadmin/qa-lab',
+      'superadmin/web-analytics',
+      'superadmin/operations',
+    ],
+    catchAllGroups: ['Superadministración'],
   },
 ];
 

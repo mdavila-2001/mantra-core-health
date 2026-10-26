@@ -189,11 +189,12 @@ export class OnboardingDraftService {
   ): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const draftId = this.getOrCreateDraftId(formType);
+    // El id de telemetría es otro, efímero y en memoria: nunca el `draftId`,
+    // que es la llave con la que se lee y se borra el borrador del servidor.
     const event: OnboardingTelemetryEvent = {
       eventType,
       formType,
-      draftId,
+      draftId: this.telemetrySessionId(formType),
       stepIndex,
       stepKey: options?.stepKey,
       fieldKey: options?.fieldKey,
@@ -205,6 +206,18 @@ export class OnboardingDraftService {
 
     this.telemetryQueue.push(event);
     this.telemetrySubject.next();
+  }
+
+  private readonly telemetrySessions = new Map<OnboardingFormType, string>();
+
+  /** Id aleatorio por pestaña y formulario, sin relación con el `draftId`. */
+  private telemetrySessionId(formType: OnboardingFormType): string {
+    let id = this.telemetrySessions.get(formType);
+    if (!id) {
+      id = `t-${generarUuid()}`;
+      this.telemetrySessions.set(formType, id);
+    }
+    return id;
   }
 
   private flushTelemetry(): void {

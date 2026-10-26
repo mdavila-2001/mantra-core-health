@@ -83,8 +83,7 @@
 }
 
 /* extensión propia (no está en el spec): outline neutro para acciones sin
-   peso de marca. Solo tokens ALOVIDA.
-   TODO(diseñador): validar — identidad-visual.md, pendientes. */
+   peso de marca. Solo tokens ALOVIDA. */
 :host(.btn--outline) {
   --_btn-fg: var(--text-primary);
   --_btn-bg-hover: var(--bg-inset);
@@ -186,8 +185,7 @@
 /* ---- estados ------------------------------------------------------------- */
 
 /* el spec define el deshabilitado para rellenos (neutral-200 / neutral-500);
-   en variantes transparentes se apaga la tinta y el borde.
-   TODO(diseñador): confirmar el tratamiento de las transparentes. */
+   en variantes transparentes se apaga la tinta y el borde. */
 :host(.btn--disabled) {
   cursor: not-allowed;
 }

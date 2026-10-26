@@ -281,4 +281,159 @@ describe('PharmacyClient', () => {
 
     expect(outcome).toBe(true);
   });
+
+  /*
+   * P47 §3-5 (2026-10-26): lo que administra la farmacia ya está en la API.
+   * Estas pruebas corren sin el simulador: la petición tiene que salir a la red
+   * con el cuerpo entero, no filtrarse como extensión de la maqueta.
+   */
+  it('manda precio, categoría, existencias, estado e imágenes también a la API real (P47 §3-5)', () => {
+    const changes = {
+      unitPrice: 12.5,
+      category: 'Medicamentos',
+      description: null,
+      inStock: false,
+      status: 'DRAFT' as const,
+      imageFileIds: ['f-1'],
+    };
+    client.updateProduct(FIXTURE_IDS.farmaciaAndina, FIXTURE_IDS.productoAmoxicilina, changes).subscribe();
+
+    const req = http.expectOne(
+      (r) => r.url === `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/products/${FIXTURE_IDS.productoAmoxicilina}`,
+    );
+    expect(req.request.body).toEqual(changes);
+    req.flush({ id: FIXTURE_IDS.productoAmoxicilina });
+  });
+
+  it('el alta con venta viaja entera a la API real (P47 §3-5)', () => {
+    const draft = {
+      productCode: 'AMX-1',
+      genericName: 'Amoxicilina',
+      unitPrice: 12.5,
+      category: 'Medicamentos',
+      inStock: true,
+      stock: 10,
+      minStock: 3,
+    };
+    client.publishProduct(FIXTURE_IDS.farmaciaAndina, draft).subscribe();
+
+    const req = http.expectOne((r) => r.url === `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/products`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(draft);
+    req.flush({ id: 'nuevo' });
+  });
+
+  it('crea, renombra y elimina categorías contra la API real (P47 D8)', () => {
+    const base = `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/categories`;
+    client.createCategory(FIXTURE_IDS.farmaciaAndina, 'Vitaminas').subscribe();
+    const created = http.expectOne((r) => r.url === base);
+    expect(created.request.method).toBe('POST');
+    expect(created.request.body).toEqual({ name: 'Vitaminas' });
+    created.flush({ id: 'c-1', name: 'Vitaminas', productCount: 0 });
+
+    client.renameCategory(FIXTURE_IDS.farmaciaAndina, 'c-1', 'Suplementos').subscribe();
+    const renamed = http.expectOne((r) => r.url === `${base}/c-1`);
+    expect(renamed.request.method).toBe('PATCH');
+    expect(renamed.request.body).toEqual({ name: 'Suplementos' });
+    renamed.flush({ id: 'c-1', name: 'Suplementos', productCount: 0 });
+
+    client.deleteCategory(FIXTURE_IDS.farmaciaAndina, 'c-1').subscribe();
+    const deleted = http.expectOne((r) => r.url === `${base}/c-1`);
+    expect(deleted.request.method).toBe('DELETE');
+    deleted.flush({ ok: true });
+  });
+
+  it('guarda el inventario en lote con un único PATCH contra la API real (P47 D7)', () => {
+    let updated: number | null = null;
+    const lines = [
+      { productId: 'p-1', stock: 4, minStock: 2 },
+      { productId: 'p-2', inStock: false },
+    ];
+    client.updateInventory(FIXTURE_IDS.farmaciaAndina, lines).subscribe((r) => (updated = r.updated));
+
+    const req = http.expectOne((r) => r.url === `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/inventory`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ lines });
+    req.flush({ updated: 2 });
+    expect(updated).toBe(2);
+  });
+
+  describe('P34 · 24 h y turnos', () => {
+    it('pide sólo las abiertas con openNow=true, y no lo manda si no se pidió', () => {
+      client.nearbySites({ openNow: true }).subscribe();
+      const con = http.expectOne((r) => r.url === '/pharmacy/sites');
+      expect(con.request.params.get('openNow')).toBe('true');
+      con.flush({ items: [], count: 0 });
+
+      client.nearbySites({}).subscribe();
+      const sin = http.expectOne((r) => r.url === '/pharmacy/sites');
+      expect(sin.request.params.has('openNow')).toBe(false);
+      sin.flush({ items: [], count: 0 });
+    });
+
+    it('open-now: modo, ciudad, origen y cursor viajan; any y vacíos no', () => {
+      client
+        .openNow({
+          mode: 'on-call',
+          city: ' La Paz ',
+          origin: { lat: -16.5, lng: -68.15 },
+          cursor: 'c1',
+          limit: 6,
+        })
+        .subscribe();
+      const req = http.expectOne((r) => r.url === '/public/pharmacies/open-now');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('mode')).toBe('on-call');
+      expect(req.request.params.get('city')).toBe('La Paz');
+      expect(req.request.params.get('lat')).toBe('-16.5');
+      expect(req.request.params.get('lng')).toBe('-68.15');
+      expect(req.request.params.get('cursor')).toBe('c1');
+      expect(req.request.params.get('limit')).toBe('6');
+      req.flush({
+        items: [],
+        nextCursor: null,
+        asOf: '',
+        asOfLocal: '',
+        timeZone: 'America/La_Paz',
+      });
+
+      client.openNow({ mode: 'any', city: '  ' }).subscribe();
+      const vacio = http.expectOne((r) => r.url === '/public/pharmacies/open-now');
+      expect(vacio.request.params.keys()).toEqual([]);
+      vacio.flush({
+        items: [],
+        nextCursor: null,
+        asOf: '',
+        asOfLocal: '',
+        timeZone: 'America/La_Paz',
+      });
+    });
+
+    it('lee el horario y declara 24 h con PUT, null incluido', () => {
+      client.getOpeningHours('ph-1').subscribe();
+      const lectura = http.expectOne('/pharmacies/ph-1/opening-hours');
+      expect(lectura.request.method).toBe('GET');
+      lectura.flush({ pharmacyId: 'ph-1', asOf: '', sites: [] });
+
+      client.setOpen24h('ph-1', 's-1', null).subscribe();
+      const put = http.expectOne('/pharmacies/ph-1/sites/s-1/open-24h');
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ open24h: null });
+      put.flush({});
+    });
+
+    it('carga y cancela un turno', () => {
+      const draft = { startsAt: '2026-10-26T20:00:00-04:00', endsAt: '2026-10-27T08:00:00-04:00' };
+      client.createOnCallShift('ph-1', 's-1', draft).subscribe();
+      const alta = http.expectOne('/pharmacies/ph-1/sites/s-1/on-call-shifts');
+      expect(alta.request.method).toBe('POST');
+      expect(alta.request.body).toEqual(draft);
+      alta.flush({});
+
+      client.cancelOnCallShift('ph-1', 'sh-1').subscribe();
+      const baja = http.expectOne('/pharmacies/ph-1/on-call-shifts/sh-1/cancel');
+      expect(baja.request.method).toBe('POST');
+      baja.flush({});
+    });
+  });
 });

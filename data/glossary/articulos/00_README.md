@@ -47,3 +47,20 @@ Párrafos separados por una línea en blanco.
 Dosis, contraindicaciones, interacciones y valores de referencia de laboratorio exigen fuente con
 procedencia y revisión humana (regla 97.5.4): no se redactan sin ella. Tampoco se inventan definiciones
 para los términos importados de CIE-10 / CIMA / MedlinePlus: su texto viene de su fuente.
+
+## Artículos de investigación (2026-10-25)
+
+Además de los artículos de autoría manual de arriba, hay **un artículo por cada término con texto propio** de
+`enfermedades-atencion-primaria.ndjson` y `analisis-frecuentes.ndjson` (306). Salieron de una investigación
+asistida (literatura revisada por pares y fuentes institucionales, ≥ 4 fuentes por término) y siguen
+**pendientes de revisión médica**.
+
+- Cada uno trae, además de las secciones clínicas, «Conceptos relacionados» y «Qué dice la evidencia».
+- **No llevan ilustración.** El compilador exige al menos una por artículo; estos se compilaron con la opción
+  explícita `--sin-imagen` (apagada por omisión):
+  `node scripts/glossary-articulos-alovida.mjs --min 350 --sin-imagen --only <slugs>`.
+  Cuando un término tenga su ilustración original, se añade la línea `image:` y deja de necesitar la excepción.
+- Qué estaba mal en cada definición, las incertidumbres y las referencias están en
+  `data/glossary/investigacion/definiciones-2026-10-25.json` y, resumido, en
+  `docs/data/glosario-investigacion-definiciones.md`.
+- No hay dosis, posología, puntos de corte ni valores de referencia (regla 97.5.4).

@@ -439,10 +439,10 @@ describe('RegisterPatient', () => {
    */
   describe('las páginas del alta de paciente', () => {
     /**
-     * AC-03-2, el tope que no se relaja. Diez páginas: el tope es de **campos
-     * por página**, no de páginas, y apretar el orden pedido en menos pasos es
-     * exactamente lo que este motor vino a deshacer. Los tres nombres siguen
-     * yendo en un campo proyectado para que los apellidos entren en la misma.
+     * El alta se recorre en cinco pasos (el propietario consolidó las diez
+     * páginas originales el 21/10/2026). Este número se fija a propósito: sumar
+     * o partir un paso es una decisión de producto. Qué pregunta cada paso lo
+     * fija la prueba de contenido por página, más abajo.
      */
     it('el formulario se organiza exactamente en 5 pasos consolidados', () => {
       const paginas = component.paginasPaciente();
@@ -497,6 +497,7 @@ describe('RegisterPatient', () => {
       ]);
       expect(porClave('residence')).toEqual([
         'residenceMunicipalityConceptId',
+        'homeDistrict',
         'homeAddressLines',
         'gpsDomicilio',
       ]);
@@ -516,6 +517,7 @@ describe('RegisterPatient', () => {
       expect(porClave('work')).toEqual([
         'workEmployerConceptId',
         'workMunicipalityConceptId',
+        'workDistrict',
         'workAddressLines',
         'gpsTrabajo',
       ]);
@@ -534,6 +536,11 @@ describe('RegisterPatient', () => {
      * dónde guardarse: la zona en residencia y en trabajo (AC-03-10). La prueba
      * está para que aparezca **con su columna**, no de contrabando: el día que
      * alguien agregue el campo sin el destino, esto se pone rojo.
+     *
+     * La relación del contacto (AC-03-11) **salió** de esta lista: su columna
+     * `profiles.related_persons.relationship_concept_id` existe, su conjunto de
+     * valores también, y desde esta entrega se pregunta. Su prueba es la de más
+     * abajo.
      */
     it('no pregunta la zona, que no tiene dónde guardarse', () => {
       const claves = component
@@ -1882,17 +1889,17 @@ describe('RegisterPatient', () => {
         email: '',
       });
 
-      // La cédula son sólo dígitos (ver `national-id.ts`).
+      // Mismo `@Matches` que el DTO: letras, dígitos, punto y guion.
       expect(component.formPaciente.controls.nationalId.invalid).toBe(true);
     });
 
-    it('valida la cédula de verdad: de 5 a 9 dígitos y no un relleno', () => {
+    it('valida el documento: letras, dígitos, punto y guion, mínimo 4', () => {
       const control = component.formPaciente.controls.nationalId;
-      for (const invalida of ['QA-123', '1234', '1234567890', '1.234.567', '0000000', '4444444']) {
+      for (const invalida of ['123', 'QA 123', 'CI#1234', '']) {
         control.setValue(invalida);
-        expect(control.invalid, `«${invalida}» no es una cédula`).toBe(true);
+        expect(control.invalid, `«${invalida}» no es un documento`).toBe(true);
       }
-      for (const valida of ['12345', '1234567', '12345678', '123456789']) {
+      for (const valida of ['1234', '1234567', 'CI-E2E-123', 'AB.123']) {
         control.setValue(valida);
         expect(control.valid, `«${valida}» sí lo es`).toBe(true);
       }
@@ -2255,6 +2262,9 @@ describe('RegisterPatient', () => {
     it('deja el campo editable y sin marcar como tocado', () => {
       cargarArbol();
       component.elegirMunicipio(MUNICIPIO_SACABA);
+      // La calle sólo se ve (y se habilita) con la localidad elegida: el motor
+      // reacciona en el siguiente ciclo de detección.
+      fixture.detectChanges();
       const control = component.formPaciente.controls.homeAddressLines;
 
       expect(control.touched).toBe(false);
@@ -2713,6 +2723,47 @@ describe('RegisterPatient', () => {
       expect(datos.formValores.name).toBe('Carlos');
       expect(datos.formValores.lastName).toBe('Montaño');
       expect(datos.pasoClave).toBe('residence');
+    });
+
+    it('nunca escribe la contraseña en localStorage', () => {
+      component.formPaciente.controls.name.setValue('Carlos');
+      component.formPaciente.controls.password.setValue('secreto12');
+      component.recordarPaso({ titulo: '¿Dónde vive?', clave: 'residence', campos: [] });
+
+      const guardado = localStorage.getItem(component.STORAGE_KEY)!;
+      expect(guardado).not.toContain('secreto12');
+      expect(JSON.parse(guardado).formValores.password).toBeUndefined();
+    });
+
+    it('un borrador viejo con contraseña se limpia y no se reinyecta', () => {
+      localStorage.setItem(
+        component.STORAGE_KEY,
+        JSON.stringify({
+          version: 1,
+          pasoIndice: 1,
+          formValores: { name: 'Ana', password: 'viejo-secreto', confirmPassword: 'viejo-secreto' },
+        }),
+      );
+
+      component.restaurarBorrador();
+
+      expect(component.formPaciente.controls.name.value).toBe('Ana');
+      expect(component.formPaciente.controls.password.value).toBe('');
+      const guardado = localStorage.getItem(component.STORAGE_KEY)!;
+      expect(guardado).not.toContain('viejo-secreto');
+      expect(JSON.parse(guardado).formValores.name).toBe('Ana');
+    });
+
+    it('ignora y descarta un borrador local de otra versión', () => {
+      localStorage.setItem(
+        component.STORAGE_KEY,
+        JSON.stringify({ version: 2, formValores: { name: 'Zoe', password: 'x-secreto' } }),
+      );
+
+      component.restaurarBorrador();
+
+      expect(component.formPaciente.controls.name.value).not.toBe('Zoe');
+      expect(localStorage.getItem(component.STORAGE_KEY) ?? '').not.toContain('x-secreto');
     });
 
     it('restaura el avance previo desde localStorage', () => {

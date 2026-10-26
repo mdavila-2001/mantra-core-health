@@ -238,7 +238,7 @@ const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: stri
  * Vive acá —al lado de la colección— y se exporta porque **dos superficies
  * preguntan lo mismo**: `GET /practitioners/:id/sites`, que exige sesión, y la
  * ficha pública, que es anónima. Antes sólo existía la primera, y por eso la
- * ficha no sabía decir dónde atiende nadie (P16 de `PENDIENTES-BACKEND.md`).
+ * ficha no sabía decir dónde atiende nadie (P16).
  *
  * El propio va primero a propósito: es el único que no depende de que una
  * organización lo haya aceptado, así que es el que un profesional recién
@@ -394,7 +394,7 @@ export function registrarPracticas(router: MockRouter): void {
      me aceptaron», y sin él las dos cosas se dibujaban idénticas, con el mismo
      botón «Retirar» al lado — cuando retirar lo propio y desvincularse de un
      hospital no son el mismo acto. La maqueta ya lo calculaba y lo tiraba justo
-     antes de responder. Ver P32 de `PENDIENTES-BACKEND.md`. */
+     antes de responder (P32). */
   router.get('/practitioners/:id/sites', ({ params }) => {
     // La misma regla que usa la ficha pública: una sola, y acá con sesión.
     const items = sedesDe(params['id']!);
@@ -424,10 +424,10 @@ export function registrarPracticas(router: MockRouter): void {
     return { status: 201, body: { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO } };
   });
 
-  /* Corregir el consultorio propio. La API todavía no lo tiene —es la mitad
-     del P28 de `PENDIENTES-BACKEND.md`— y sin esto un error de tipeo en el
-     nombre o una mudanza obligaban a retirarlo y volver a crearlo, lo que
-     cambia el id que la agenda referencia. */
+  /* Corregir el consultorio propio, como `PATCH /practitioners/me/sites/:id`
+     de la API (P32). Sin esto un error de tipeo en el nombre o una mudanza
+     obligaban a retirarlo y volver a crearlo, lo que cambia el id que la
+     agenda referencia. */
   router.patch('/practitioners/me/sites/:id', (request) => {
     const sitio = sitiosPropios.get(request.params['id']!);
     if (sitio === undefined) return notFound('Consultorio no encontrado');
@@ -453,8 +453,7 @@ export function registrarPracticas(router: MockRouter): void {
   /* El QR bancario de una sede. Ruta propia y no parte del `PATCH` de arriba:
      aquél corrige el consultorio **propio** y esto se configura también en la
      clínica donde el profesional atiende sin ser dueño de la sede — lo que se
-     guarda no es la sede, es con qué cobra él en ella. Ver P33 de
-     `PENDIENTES-BACKEND.md`. */
+     guarda no es la sede, es con qué cobra él en ella (P33). */
   router.put('/practitioners/me/sites/:id/bank-qr', (request) => {
     const sitio = sitiosPropios.get(request.params['id']!);
     if (sitio === undefined) return notFound('Consultorio no encontrado');
@@ -478,10 +477,9 @@ export function registrarPracticas(router: MockRouter): void {
   });
 
   /* SIMULADOR: el logo del consultorio. La API real no tiene esta ruta ni este
-     campo (ver `docs/pendientes-backend-perfil-profesional.md`); las pantallas
-     no la llaman directo sino por `LogoDelConsultorioClient`, así que el día
-     que exista el backend se borra este bloque y se retoca esa fachada. Sólo el
-     consultorio **propio** lleva logo: en una clínica ajena no es mío. */
+     campo; las pantallas no la llaman directo sino por
+     `LogoDelConsultorioClient`. Sólo el consultorio **propio** lleva logo: en
+     una clínica ajena no es mío. */
   router.put('/practitioners/me/sites/:id/logo', (request) => {
     const sitio = sitiosPropios.get(request.params['id']!);
     if (sitio === undefined || sitio.practiceId !== PRACTICE_CONSULTORIO) {

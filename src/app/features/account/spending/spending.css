@@ -530,7 +530,8 @@
     grid-column: span 5;
   }
 
-  .spending__recent {
+  .spending__recent,
+  .spending__truncated {
     grid-column: 1 / -1;
   }
 }
