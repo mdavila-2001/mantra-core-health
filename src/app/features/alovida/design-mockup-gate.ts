@@ -172,17 +172,22 @@ function spanishPathsOf(currentPath: string): readonly string[] {
 }
 
 /**
- * Redirección exacta que conserva el `?q=` y compañía.
+ * Redirección exacta que conserva el `?q=` y compañía, y el `#ancla`.
  *
  * Un `redirectTo` de texto descarta la consulta de la URL original: un
  * `/search/practitioners-list?q=cardio` guardado llegaría al directorio sin
- * la búsqueda.
+ * la búsqueda. El fragmento también es parte del enlace —un `#cierre` pegado
+ * en un mensaje—, y `createUrlTree` lo suelta si no se le pasa.
  */
 function redirectKeepingQuery(legacyPath: string, target: string): Route {
   return {
     path: legacyPath,
     pathMatch: 'full',
-    redirectTo: ({ queryParams }) => inject(Router).createUrlTree([target], { queryParams }),
+    redirectTo: ({ queryParams, fragment }) =>
+      inject(Router).createUrlTree([target], {
+        queryParams,
+        ...(fragment === null || fragment === undefined ? {} : { fragment }),
+      }),
   };
 }
 
