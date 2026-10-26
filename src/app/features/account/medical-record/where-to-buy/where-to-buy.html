@@ -234,6 +234,9 @@
                                   {{ stop.pharmacy }} · {{ stop.site }}
                                 </span>
                                 <span class="purchase__secondary">Aquí: {{ coveredBy(stop) }}</span>
+                                @if (stop.staleStockNotice; as notice) {
+                                  <span class="purchase__stale-stock" data-testid="where-to-buy-stop-stale-stock">{{ notice }}</span>
+                                }
                                 @if (stop.distance !== null) {
                                   <span class="purchase__secondary">
                                     {{ stop.distance }} en línea recta
@@ -294,6 +297,10 @@
                             Total no disponible: falta algún precio publicado
                           }
                         </span>
+                        <!-- REQ-19-011: existencias viejas no se presentan como certeza. -->
+                        @if (branch.staleStockNotice; as notice) {
+                          <p class="purchase__stale-stock" data-testid="where-to-buy-stale-stock">{{ notice }}</p>
+                        }
                         @if (withInsurance()) {
                           <!-- T-E2 · F2.2.2: evaluada sólo sobre lo aprobado. -->
                           <p class="purchase__coverage" data-testid="where-to-buy-insurance-coverage">
@@ -369,18 +376,8 @@
                         }
                       </div>
                       <div class="purchase__actions">
-                        @if (withInsurance()) {
-                          <app-badge [variant]="branch.insured.complete ? 'success' : 'warning'">
-                            {{
-                              branch.insured.complete
-                                ? 'Tiene todo lo aprobado'
-                                : 'Le falta algo aprobado'
-                            }}
-                          </app-badge>
-                        } @else {
-                          <app-badge [variant]="branch.complete ? 'success' : 'warning'">
-                            {{ branch.complete ? 'Tiene todo' : 'Le falta algo' }}
-                          </app-badge>
+                        @if (branchStatusOf(branch, withInsurance()); as status) {
+                          <app-badge data-testid="where-to-buy-branch-status" [variant]="status.tono">{{ status.etiqueta }}</app-badge>
                         }
                         <button
                           app-button
