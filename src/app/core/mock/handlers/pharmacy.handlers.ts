@@ -1327,7 +1327,7 @@ export function registrarFarmacia(router: MockRouter): void {
   });
 
   // P34 · 24 h, turnos y «abiertas ahora»: mismo contrato que la API.
-  HORARIO.registrar(router, distanciaKm);
+  HORARIO.registrar(router, haversineKm);
 
   // «Farmacia» · pestaña Comprar (25/09/2026): sedes sueltas, con su
   // ubicación, sin exigir productos de antemano. Reusa `FARMACIAS` y
