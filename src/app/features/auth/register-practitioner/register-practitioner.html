@@ -971,10 +971,12 @@
               } @else {
                 <app-location-picker
                   testId="registration-practitioner-residence"
+                  [ficha]="true"
+                  fichaTitulo="Su domicilio"
                   [ramas]="ramasMunicipios()"
                   [value]="municipioProfesional()"
                   [punto]="gpsDomicilio()"
-                  (valueChange)="municipioProfesional.set($event)"
+                  (valueChange)="elegirMunicipioProfesional($event)"
                   mapLabel="Mapa de Bolivia: elija el departamento donde vive"
                   municipalityLabel="Localidad de residencia (opcional)"
                   municipalityHint="Sólo se ofrecen las del departamento que eligió."
@@ -1000,10 +1002,12 @@
               } @else {
                 <app-location-picker
                   testId="registration-practitioner-office"
+                  [ficha]="true"
+                  fichaTitulo="Su consultorio"
                   [ramas]="ramasMunicipios()"
                   [value]="municipioConsultorio()"
                   [punto]="gpsConsultorio()"
-                  (valueChange)="municipioConsultorio.set($event)"
+                  (valueChange)="elegirMunicipioConsultorio($event)"
                   mapLabel="Mapa de Bolivia: elija el departamento donde está su consultorio"
                   municipalityLabel="Localidad del consultorio (opcional)"
                   municipalityHint="Sólo se ofrecen las del departamento que eligió."
