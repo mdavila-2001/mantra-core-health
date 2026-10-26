@@ -3,7 +3,7 @@
     <h2 id="centros-titulo" class="centros__titulo">Dónde hacerse sus procedimientos</h2>
     <p class="centros__nota" data-testid="medical-centers-origin">
       @if (origin(); as punto) {
-        Distancias en línea recta, medidas desde {{ punto.etiqueta ?? 'el punto que eligió' }}. Puede
+        Distancias en línea recta, medidas desde {{ punto.label ?? 'el punto que eligió' }}. Puede
         cambiar el punto en la pestaña Farmacias.
       } @else {
         Sin un punto de partida no se calculan distancias. Puede elegirlo en la pestaña Farmacias: su

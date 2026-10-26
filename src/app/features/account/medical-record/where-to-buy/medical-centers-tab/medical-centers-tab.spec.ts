@@ -157,7 +157,7 @@ describe('MedicalCentersTab', () => {
     expect(sinOrigen.params.has('lng')).toBe(false);
     expect(texto()).toContain('Sin un punto de partida no se calculan distancias');
 
-    fixture.componentRef.setInput('origin', { lat: -17.78, lng: -63.18, etiqueta: 'su casa' });
+    fixture.componentRef.setInput('origin', { lat: -17.78, lng: -63.18, label: 'su casa' });
     fixture.detectChanges();
     const conOrigen = responderBusqueda([centro('a', { distanceKm: 3.2 })]);
 
