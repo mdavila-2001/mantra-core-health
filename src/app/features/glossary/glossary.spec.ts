@@ -175,6 +175,26 @@ describe('Glossary', () => {
     http.expectNone((r) => r.url.endsWith('/terminology/concepts'));
   });
 
+  it('los accesos al mapa y al atlas van en el renglón de los filtros, con ícono y texto', async () => {
+    await responderLanding();
+    // Pedido del cliente (26/10/2026): un solo renglón —buscador, filtros y
+    // accesos— y cada acceso con su ícono al lado del texto. Siguen siendo
+    // enlaces: navegan, no son botones.
+    const barra = html().querySelector('[data-testid="glosario-filtros"]');
+    const mapa = barra?.querySelector<HTMLAnchorElement>('a[data-testid="glosario-mapa"]');
+    const atlas = barra?.querySelector<HTMLAnchorElement>('a[data-testid="glosario-atlas-3d"]');
+
+    expect(mapa?.getAttribute('href')).toBe('/glossary/network');
+    expect(atlas?.getAttribute('href')).toBe('/glossary/anatomy-atlas');
+    expect(mapa?.closest('.filter-bar__controls')).not.toBeNull();
+    expect(mapa?.querySelector('app-nav-icon svg')).not.toBeNull();
+    expect(atlas?.querySelector('app-nav-icon svg')).not.toBeNull();
+    expect(mapa?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Mapa de relaciones');
+    expect(atlas?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Atlas anatómico 3D');
+    expect(mapa?.getAttribute('title')).toBe('Mapa de relaciones');
+    expect(atlas?.getAttribute('title')).toBe('Atlas anatómico 3D');
+  });
+
   it('la rejilla ofrece una tarjeta por categoría con el conteo real del servidor', async () => {
     await responderLanding();
 
