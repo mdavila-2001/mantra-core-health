@@ -46,16 +46,16 @@ import type { StepperStep } from '../../../../shared/components/molecules/steppe
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { drawQr } from '../../../../shared/utils/qr/draw-qr';
-import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
+import { MY_MEDICAL_RECORD_ROUTE } from '../../medical-record/medical-record.routes';
 import { NOTA_DE_DATOS_DE_EJEMPLO } from '../new-order/new-order.fixtures';
 import { CLAVE_DEL_TRASPASO, type TraspasoDeLaReceta } from '../new-order/new-order.handoff';
-import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders.routes';
+import { MY_PHARMACY_ORDERS_ROUTE } from '../pharmacy-orders.routes';
 import { contenidoDelQrDeEjemplo, TARJETA_DE_EJEMPLO } from './checkout.fixtures';
 import { resumirPedido, type RenglonACobrar } from './checkout.summary';
 import { OrderSummary } from './order-summary/order-summary';
 
 /** La orden médica, para volver sin perder el borrador. */
-const RUTA_DE_LA_ORDEN = `${MIS_PEDIDOS_ROUTE}/new`;
+const RUTA_DE_LA_ORDEN = `${MY_PHARMACY_ORDERS_ROUTE}/new`;
 
 /** Lado del QR de ejemplo: el mismo que el QR de pago de `order-payment`. */
 const LADO_DEL_QR = 176;
@@ -170,11 +170,11 @@ export class Checkout {
   protected readonly estado = computed<ViewState<DatosDelCheckout>>(() => {
     const borrador = this.borrador;
     if (borrador === null) {
-      return notFound({ label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE });
+      return notFound({ label: 'Ir a mi historia clínica', route: MY_MEDICAL_RECORD_ROUTE });
     }
     if (borrador.lineas.length === 0) {
       return empty(
-        { label: 'Volver a mis pedidos', route: MIS_PEDIDOS_ROUTE },
+        { label: 'Volver a mis pedidos', route: MY_PHARMACY_ORDERS_ROUTE },
         'Este pedido no tiene medicamentos para confirmar.',
       );
     }
@@ -328,7 +328,7 @@ export class Checkout {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (pedido) => {
-          void this.router.navigate([MIS_PEDIDOS_ROUTE, pedido.id]);
+          void this.router.navigate([MY_PHARMACY_ORDERS_ROUTE, pedido.id]);
         },
         error: (error: unknown) => {
           this.enviando.set(false);

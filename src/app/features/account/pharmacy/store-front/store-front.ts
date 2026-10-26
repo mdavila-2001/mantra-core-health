@@ -24,7 +24,7 @@ import { PageHeader } from '../../../../shared/components/organisms/page-header/
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { SearchOriginPicker } from '../../../nearby-places/search-origin-picker/search-origin-picker';
 import type { SearchOrigin } from '../../../nearby-places/search-origin-picker/search-origin-picker.types';
-import { MIS_PEDIDOS_ROUTE } from '../../pharmacy-orders/pharmacy-orders.routes';
+import { MY_PHARMACY_ORDERS_ROUTE } from '../../pharmacy-orders/pharmacy-orders.routes';
 import { PHARMACY_PRESCRIPTIONS_ROUTE, PHARMACY_ROUTE } from '../pharmacy.routes';
 import { PHARMACY_TESTIDS } from '../pharmacy.testids';
 import { ProductResults } from '../search/product-results';
@@ -121,7 +121,7 @@ export class StoreFront {
   protected readonly sinPerfilDePaciente = this.perfil === null;
   protected readonly testids = PHARMACY_TESTIDS;
   protected readonly rutaDeRecetas = PHARMACY_PRESCRIPTIONS_ROUTE;
-  protected readonly rutaDePedidos = MIS_PEDIDOS_ROUTE;
+  protected readonly rutaDePedidos = MY_PHARMACY_ORDERS_ROUTE;
 
   protected readonly termino = signal('');
   protected readonly modo = signal<SearchMode>('products');

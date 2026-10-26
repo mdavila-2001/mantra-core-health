@@ -31,7 +31,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
+import { MY_APPOINTMENTS_ROUTE } from '../../account/appointments/appointments.routes';
 import {
   SymptomObservationsStore,
   comoMotivoDeConsulta,
@@ -147,7 +147,7 @@ export class BookingNew {
   protected readonly esAutoservicio = this.entrada === 'PORTAL';
 
   /** Adónde se vuelve: a la agenda de la organización o a los turnos propios. */
-  protected readonly rutaDeVuelta = this.esAutoservicio ? MIS_TURNOS_ROUTE : AGENDA_ROUTE;
+  protected readonly rutaDeVuelta = this.esAutoservicio ? MY_APPOINTMENTS_ROUTE : AGENDA_ROUTE;
 
   /**
    * Qué se espera en el campo de motivo, dicho para quien lo va a llenar.
@@ -237,7 +237,7 @@ export class BookingNew {
     this.slotId === '' || this.resourceId === null || this.desde === null || this.hasta === null;
 
   protected readonly rutaDeAgenda = AGENDA_ROUTE;
-  protected readonly rutaDeMisTurnos = MIS_TURNOS_ROUTE;
+  protected readonly rutaDeMisTurnos = MY_APPOINTMENTS_ROUTE;
 
   /* ---- el cupo, revalidado al entrar ------------------------------------- */
 
@@ -452,7 +452,7 @@ export class BookingNew {
             this.cupo.set(
               empty(
                 this.esAutoservicio
-                  ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
+                  ? { label: 'Elegir otro horario', route: MY_APPOINTMENTS_ROUTE }
                   : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
                 this.esAutoservicio
                   ? 'Ese horario ya no está disponible: alguien lo tomó primero. Elija otro de la lista.'
@@ -585,7 +585,7 @@ export class BookingNew {
             this.cupo.set(
               empty(
                 this.esAutoservicio
-                  ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
+                  ? { label: 'Elegir otro horario', route: MY_APPOINTMENTS_ROUTE }
                   : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
                 'Ese horario ya no está disponible: otra cita lo ocupó. Elija otro de la lista.',
               ),
@@ -660,7 +660,7 @@ export class BookingNew {
           if (precargada !== null && motivo !== '') {
             this.observaciones.marcarUsada(precargada.id);
           }
-          void this.router.navigateByUrl(MIS_TURNOS_ROUTE);
+          void this.router.navigateByUrl(MY_APPOINTMENTS_ROUTE);
           return;
         }
         void this.router.navigate([AGENDA_ROUTE], {

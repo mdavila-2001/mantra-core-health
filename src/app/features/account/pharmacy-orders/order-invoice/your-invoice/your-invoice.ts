@@ -15,7 +15,7 @@ import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../../shared/components/atoms/button/button-link';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
-import { MIS_PEDIDOS_ROUTE } from '../../pharmacy-orders.routes';
+import { MY_PHARMACY_ORDERS_ROUTE } from '../../pharmacy-orders.routes';
 import { NOTA_DE_EJEMPLO } from '../order-invoice.fixtures';
 import { ROTULOS_DE_FACTURA, type DocumentoDeFactura } from '../order-invoice.types';
 import { displayCurrency } from '../../../../../core/money/display-currency';
@@ -56,9 +56,9 @@ export class YourInvoice {
   protected readonly labels = ROTULOS_DE_FACTURA;
   protected readonly note = NOTA_DE_EJEMPLO;
 
-  protected readonly invoicePath = computed(() => `${MIS_PEDIDOS_ROUTE}/${this.orderId()}/invoice`);
+  protected readonly invoicePath = computed(() => `${MY_PHARMACY_ORDERS_ROUTE}/${this.orderId()}/invoice`);
   protected readonly receiptPath = computed(
-    () => `${MIS_PEDIDOS_ROUTE}/${this.orderId()}/receipt`,
+    () => `${MY_PHARMACY_ORDERS_ROUTE}/${this.orderId()}/receipt`,
   );
 
   /** Por qué todavía no hay factura, dicho según dónde está el pedido. */

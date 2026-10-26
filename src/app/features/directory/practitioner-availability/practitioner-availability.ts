@@ -25,7 +25,7 @@ import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { reservaDelPortalRoute } from '../../account/appointments/appointments.routes';
+import { portalBookingRoute } from '../../account/appointments/appointments.routes';
 
 /** Milisegundos de un día. */
 const UN_DIA_MS = 24 * 60 * 60 * 1000;
@@ -231,7 +231,7 @@ export class PractitionerAvailability {
   /**
    * Abre la reserva con la sede y el cupo ya elegidos.
    *
-   * Ruta del **portal** (`reservaDelPortalRoute`) y no la del mostrador
+   * Ruta del **portal** (`portalBookingRoute`) y no la del mostrador
    * (`bookingNewRoute`): quien mira esta ficha es siempre un paciente —la
    * sección hereda esa restricción de la Guía—, y `/schedule/book/:slotId`
    * está reservada a `SCHEDULING_ADMIN/AGENT/PRACTITIONER`. Usar la del
@@ -248,7 +248,7 @@ export class PractitionerAvailability {
     }
     this.reservaPendienteId.set(cupo.id);
     void this.router
-      .navigate([reservaDelPortalRoute(cupo.id)], {
+      .navigate([portalBookingRoute(cupo.id)], {
         queryParams: {
           recurso: sede.recurso.id,
           desde: cupo.startAt.toISOString(),

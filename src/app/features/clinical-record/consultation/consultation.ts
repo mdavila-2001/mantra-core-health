@@ -50,9 +50,9 @@ import {
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import {
   BOOKING_QUERY_PARAM,
-  CITA_QUERY_PARAM,
+  APPOINTMENT_QUERY_PARAM,
   CLINICAL_RECORD_ROUTE,
-  MOTIVO_QUERY_PARAM,
+  REASON_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record.routes';
 import { writeFailureMessage } from '../write-message';
@@ -309,7 +309,7 @@ export class Consultation {
    * sembrado, el campo es de quien escribe.
    */
   private readonly motivoDeLaCita = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get(MOTIVO_QUERY_PARAM) ?? '')),
+    this.route.queryParamMap.pipe(map((params) => params.get(REASON_QUERY_PARAM) ?? '')),
     { initialValue: '' },
   );
 
@@ -318,7 +318,7 @@ export class Consultation {
    * editable: ata el encuentro a su turno, y su ausencia es corriente.
    */
   protected readonly citaDeOrigen = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get(CITA_QUERY_PARAM))),
+    this.route.queryParamMap.pipe(map((params) => params.get(APPOINTMENT_QUERY_PARAM))),
     { initialValue: null },
   );
 

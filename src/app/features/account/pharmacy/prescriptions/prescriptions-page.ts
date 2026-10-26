@@ -16,7 +16,7 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
+import { MY_MEDICAL_RECORD_ROUTE } from '../../medical-record/medical-record.routes';
 import { PHARMACY_TESTIDS } from '../pharmacy.testids';
 
 /** Mismo tope que la historia clínica: es la misma lectura del resumen. */
@@ -93,7 +93,7 @@ export class PrescriptionsPage {
 
   protected readonly sinPerfilDePaciente = this.perfil === null;
   protected readonly testids = PHARMACY_TESTIDS;
-  protected readonly rutaDeHistoria = MI_HISTORIA_ROUTE;
+  protected readonly rutaDeHistoria = MY_MEDICAL_RECORD_ROUTE;
 
   private readonly recetas = signal<ViewState<readonly RecetaVisible[]>>(loading());
 
@@ -141,7 +141,7 @@ export class PrescriptionsPage {
           const recetas = agrupar(carga.filas, carga.etiquetas);
           return recetas.length === 0
             ? empty(
-                { label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE },
+                { label: 'Ir a mi historia clínica', route: MY_MEDICAL_RECORD_ROUTE },
                 'Todavía no tiene recetas registradas. Las que le den sus médicos aparecen acá.',
               )
             : ready(recetas);

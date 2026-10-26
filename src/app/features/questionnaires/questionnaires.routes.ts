@@ -9,9 +9,9 @@
  */
 
 /** La sección: el listado de encuestas del profesional. */
-export const ENCUESTAS_ROUTE = '/questionnaires';
+export const QUESTIONNAIRES_ROUTE = '/questionnaires';
 
 /** La ficha de una encuesta: cuestionario, vigencia y respuestas. */
-export function encuestaRoute(surveyId: string): string {
-  return `${ENCUESTAS_ROUTE}/${surveyId}`;
+export function questionnaireRoute(surveyId: string): string {
+  return `${QUESTIONNAIRES_ROUTE}/${surveyId}`;
 }
