@@ -1,0 +1,40 @@
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+▲ [WARNING] NG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102 [plugin angular-compiler]
+    src/app/features/admin/portal/governance/filter-form.ts:50:25:
+      50 │                 [value]="draft()[field.key] ?? ''"
+         ╵                          ~~~~~~~~~~~~~~~~~~~~~~~~
+▲ [WARNING] NG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102 [plugin angular-compiler]
+    src/app/features/admin/portal/governance/filter-form.ts:58:25:
+      58 │                 [value]="draft()[field.key] ?? ''"
+         ╵                          ~~~~~~~~~~~~~~~~~~~~~~~~
+▲ [WARNING] NG8113: DatePipe is not used within the template of PortalHub [plugin angular-compiler]
+    src/app/features/admin/portal/hub/portal-hub.ts:19:12:
+      19 │   imports: [DatePipe, RouterLink, MetricCard, PageHeader, ViewStat...
+         ╵             ~~~~~~~~
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+      135 │ ..., AppButton, Badge, BodyMap, Card, Chip, EmergencyPanel, FormF...
+          ╵                                 ~~~~
+ RUN  v4.1.10 /home/user/wt/p34/mantra-core-health
+ Test Files  11 passed (11)
+      Tests  183 passed (183)
+   Start at  06:14:49
+   Duration  10.95s (transform 10.62s, setup 4.22s, import 15.56s, tests 4.98s, environment 10.50s)

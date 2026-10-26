@@ -1,0 +1,8 @@
+# Después de unir la rama compartida (incluye P36: horario flexible, patch v4252) — mantra_p23 con los patches v4252, v4253, v4255 y v4260 aplicados
+$ yarn test src/modules/scheduling
+Test Suites: 34 passed, 34 total
+Tests:       719 passed, 719 total
+$ yarn test:integration p23-cambiar-horario-con-citas fx4-retirar-horario-publicado
+Tests:       18 passed, 18 total
+$ node tools/inventario/{flujos,endpoints}.mjs --verificar | grep scheduling
+(sin salida: scheduling al día)
