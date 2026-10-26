@@ -1,3 +1,5 @@
+import type { CoverageValidity } from '../profiles/profiles.types';
+
 /**
  * Tipos de la vista para `insurance` (módulo 26): el catálogo de la aseguradora
  * y sus brokers. **No son los DTOs de la API**: las fechas ya son `Date` y los
@@ -608,6 +610,41 @@ export interface MyClaimDecision {
   readonly reason: string | null;
 }
 
+/** Motivos cerrados por los que un paciente objeta un cobro (REQ-16-032). */
+export type PatientObjectionReason = 'AMOUNT_DIFFERS' | 'SERVICE_NOT_RECEIVED' | 'NOT_INFORMED';
+
+/** Cómo entra cada servicio al cobro: con seguro, o el total como particular. */
+export type PatientChargeKind = 'INSURED_SHARE' | 'PRIVATE_FULL';
+
+/** Un servicio del desglose: lo que cubre el plan y lo que paga cada parte. Cadenas decimales. */
+export interface MyClaimBreakdownLine {
+  readonly key: string;
+  readonly service: string;
+  readonly billedAmount: string;
+  readonly coveragePercent: string;
+  readonly copayAmount: string;
+  readonly patientAmount: string;
+  readonly insurerAmount: string;
+  readonly chargeKind: PatientChargeKind;
+  readonly authorizationStatus: PriorAuthorizationQuoteStatus | null;
+}
+
+/** El desglose completo del cobro al paciente. El front no lo recalcula. */
+export interface MyClaimBreakdown {
+  readonly currencyCode: string | null;
+  readonly patientTotal: string;
+  readonly insurerTotal: string;
+  readonly lines: readonly MyClaimBreakdownLine[];
+}
+
+/** La objeción que el paciente presentó sobre un cobro. */
+export interface MyClaimObjection {
+  readonly id: string;
+  readonly reason: PatientObjectionReason;
+  readonly submittedAt: Date;
+  readonly status: 'OPEN' | 'RESOLVED';
+}
+
 /** Una solicitud de «Mis solicitudes». */
 export interface MyClaim {
   readonly id: string;
@@ -629,6 +666,10 @@ export interface MyClaim {
   readonly status: InsuranceConcept | null;
   /** `null` mientras la aseguradora no decidió. */
   readonly decision: MyClaimDecision | null;
+  /** El desglose del cobro al paciente. `null` fuera de su vista y mientras la API no lo entregue (P63). */
+  readonly breakdown: MyClaimBreakdown | null;
+  /** La objeción del paciente, si la presentó. `null` si no. */
+  readonly patientObjection: MyClaimObjection | null;
 }
 
 export interface MyClaimList {
@@ -947,4 +988,103 @@ export interface InsurerPatientPage {
   readonly total: number;
   readonly limit: number;
   readonly nextCursor: string | null;
+}
+
+/* ============================================================================
+    Cotización previa del cobro con seguro (REQ-16-026). Espejo de los DTO de la
+    API (`claim-quote.dto.ts`). Todos los importes son cadenas decimales: el
+    front no suma ni redondea (REQ-16-031).
+    ========================================================================== */
+
+/** Estado de la aprobación previa de una línea cotizada. */
+export type PriorAuthorizationQuoteStatus =
+  | 'NOT_REQUIRED'
+  | 'APPROVED'
+  | 'MISSING'
+  | 'PENDING'
+  | 'DENIED'
+  | 'EXPIRED'
+  | 'MISMATCH'
+  | 'AMOUNT_EXCEEDED';
+
+/** Rótulo en usted de cada estado de aprobación previa. */
+export const ROTULO_DE_AUTORIZACION: Readonly<Record<PriorAuthorizationQuoteStatus, string>> = {
+  NOT_REQUIRED: 'No requiere aprobación previa',
+  APPROVED: 'Aprobación previa vigente',
+  MISSING: 'Falta la aprobación previa',
+  PENDING: 'Aprobación previa en trámite',
+  DENIED: 'Aprobación previa rechazada',
+  EXPIRED: 'Aprobación previa vencida',
+  MISMATCH: 'La aprobación no corresponde a este cobro',
+  AMOUNT_EXCEEDED: 'El monto supera lo aprobado',
+};
+
+/** Una línea a cotizar: servicio y monto facturado. */
+export interface ClaimQuoteLineInput {
+  readonly lineSequence: number;
+  readonly serviceConceptId?: string;
+  readonly quantity?: string;
+  readonly billedAmount: string;
+}
+
+/** Cuerpo de `POST /insurance-claims/quote` (`ClaimQuoteDto`). */
+export interface ClaimQuoteInput {
+  readonly insuranceCarrierId: string;
+  readonly patientCoverageId: string;
+  readonly priorAuthorizationRequestId?: string;
+  readonly lines: readonly ClaimQuoteLineInput[];
+}
+
+/** Lo que el plan decide para una línea, y el motivo si no alcanza. */
+export interface ClaimQuoteLineResult {
+  readonly lineSequence: number;
+  readonly serviceConceptId: string | null;
+  readonly billedAmount: string;
+  readonly covered: boolean;
+  readonly coveragePercent: string | null;
+  readonly copayAmount: string | null;
+  readonly deductibleAmount: string | null;
+  readonly requiresPriorAuthorization: boolean;
+  readonly priorAuthorizationStatus: PriorAuthorizationQuoteStatus | null;
+  readonly patientAmount: string | null;
+  readonly insurerAmount: string | null;
+  readonly reason: string | null;
+  readonly message: string | null;
+}
+
+/** Respuesta de `POST /insurance-claims/quote` (`ClaimQuoteResultDto`). */
+export interface ClaimQuoteResult {
+  readonly canSubmit: boolean;
+  readonly currencyConceptId: string | null;
+  readonly totalBilledAmount: string | null;
+  readonly totalPatientAmount: string | null;
+  readonly totalInsurerAmount: string | null;
+  readonly lines: readonly ClaimQuoteLineResult[];
+}
+
+/** Cuerpo de `POST /insurance-claims` (`CreateClaimDto`). */
+export interface CreateClaimInput extends ClaimQuoteInput {
+  readonly billingProviderEntityId: string;
+  readonly claimIdentifier: string;
+  readonly currencyConceptId?: string;
+  readonly idempotencyKey?: string;
+}
+
+/** Respuesta de `POST /insurance-claims` (`CreatedClaimDto`). */
+export interface CreatedClaim {
+  readonly id: string;
+  readonly status: string;
+  readonly lineIds?: readonly string[];
+}
+
+/** Cobertura vigente de una persona, para el personal. Solo existe en la maqueta (P62). */
+export interface PatientCoverageOption {
+  readonly id: string;
+  readonly insuranceCarrierId: string;
+  readonly carrierName: string;
+  readonly planName: string | null;
+  readonly policyIdentifier: string | null;
+  readonly memberIdentifier: string | null;
+  readonly validityStatus: CoverageValidity;
+  readonly currencyCode: string | null;
 }

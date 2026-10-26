@@ -154,4 +154,118 @@ describe('MyRequests', () => {
     componente.onFiltrosCambiaron({ q: 'mitad' });
     expect(componente.totalFiltrado()).toBe(1);
   });
+
+  /* ---- desglose y objeción del paciente (REQ-16-031 y 032) ---------------- */
+
+  type ConDesglose = WireClaim & { breakdown: unknown; patientObjection: unknown };
+
+  /** Una solicitud del paciente con su desglose del servidor (500 Bs, copago 50, 80 %). */
+  function conDesglose(n: number, objecion: unknown = null): ConDesglose {
+    return {
+      ...claim(n, 'Consulta de especialidad', null, null),
+      breakdown: {
+        currencyCode: 'BOB',
+        patientTotal: '140.00',
+        insurerTotal: '360.00',
+        lines: [
+          {
+            key: '1',
+            service: 'Consulta de especialidad',
+            billedAmount: '500.00',
+            coveragePercent: '80',
+            copayAmount: '50.00',
+            patientAmount: '140.00',
+            insurerAmount: '360.00',
+            chargeKind: 'INSURED_SHARE',
+            authorizationStatus: 'NOT_REQUIRED',
+          },
+        ],
+      },
+      patientObjection: objecion,
+    };
+  }
+
+  /** Abre el detalle de una fila como lo hace el menú de acciones. */
+  function abrirDetalle(fila: WireClaim): void {
+    const componente = fixture.componentInstance as unknown as {
+      ejecutarAccion(codigo: string, fila: unknown): void;
+    };
+    componente.ejecutarAccion('ver', fila);
+    fixture.detectChanges();
+  }
+
+  function enDetalle(testId: string): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`);
+  }
+
+  it('el desglose muestra las cifras del servidor tal cual, sin recalcular', () => {
+    responder('PATIENT', [conDesglose(1)]);
+    abrirDetalle(conDesglose(1));
+
+    expect(enDetalle('mis-solicitudes-desglose')?.textContent).toContain('140.00 Bs');
+    expect(enDetalle('mis-solicitudes-desglose')?.textContent).toContain('360.00 Bs');
+    expect(enDetalle('mis-solicitudes-desglose')?.textContent).toContain('50.00 Bs');
+  });
+
+  it('el desglose y la objeción no aparecen fuera de la vista del paciente', () => {
+    const sinDesglose: ConDesglose = { ...conDesglose(1), breakdown: null, patientObjection: null };
+    responder('PRACTITIONER', [sinDesglose]);
+    abrirDetalle(conDesglose(1));
+
+    expect(enDetalle('mis-solicitudes-desglose')).toBeNull();
+    expect(enDetalle('mis-solicitudes-objetar')).toBeNull();
+  });
+
+  it('objetar sin motivo no envía nada a la API', () => {
+    responder('PATIENT', [conDesglose(1)]);
+    abrirDetalle(conDesglose(1));
+    enDetalle('mis-solicitudes-objetar')!.click();
+    fixture.detectChanges();
+
+    expect(enDetalle('mis-solicitudes-objecion-modal')).not.toBeNull();
+    const componente = fixture.componentInstance as unknown as { puedeObjetar(): boolean };
+    expect(componente.puedeObjetar()).toBe(false);
+    http.expectNone((r) => r.url.endsWith('/disputes'));
+  });
+
+  it('presentar la objeción la marca en la lista, en el detalle, y bloquea volver a objetarla', () => {
+    responder('PATIENT', [conDesglose(1)]);
+    abrirDetalle(conDesglose(1));
+    enDetalle('mis-solicitudes-objetar')!.click();
+    fixture.detectChanges();
+
+    const componente = fixture.componentInstance as unknown as {
+      motivo: { set(valor: unknown): void };
+      presentarObjecion(): void;
+    };
+    componente.motivo.set('AMOUNT_DIFFERS');
+    fixture.detectChanges();
+    componente.presentarObjecion();
+
+    const envio = http.expectOne((r) => r.url === '/insurance-claims/c-1/disputes');
+    expect(envio.request.body).toEqual({ initiatedBy: 'PATIENT', objectionReason: 'AMOUNT_DIFFERS' });
+    envio.flush({ id: 'obj-1', status: 'OPEN', createdAt: new Date().toISOString() }, { status: 201, statusText: 'Created' });
+    fixture.detectChanges();
+
+    expect(enDetalle('mis-solicitudes-objecion-sello')?.textContent).toContain('Objeción presentada');
+    expect(enDetalle('mis-solicitudes-objetar')).toBeNull();
+    // La solicitud sin dictamen vive en la pestaña «En espera»: ahí se ve la etiqueta.
+    (fixture.componentInstance as unknown as { elegirPestana(i: number): void }).elegirPestana(1);
+    fixture.detectChanges();
+    expect(texto()).toContain('Cobro en revisión');
+  });
+
+  it('una solicitud ya objetada abre con la objeción existente, sin el botón de objetar', () => {
+    const objetada = conDesglose(1, {
+      id: 'obj-9',
+      reason: 'SERVICE_NOT_RECEIVED',
+      submittedAt: new Date().toISOString(),
+      status: 'OPEN',
+    });
+    responder('PATIENT', [objetada]);
+    abrirDetalle(objetada);
+
+    expect(enDetalle('mis-solicitudes-objecion-sello')).not.toBeNull();
+    expect(enDetalle('mis-solicitudes-objetar')).toBeNull();
+  });
 });

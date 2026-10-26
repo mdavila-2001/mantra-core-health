@@ -1,0 +1,42 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.cq {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  overflow-wrap: anywhere;
+}
+.cq__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+}
+.cq__cobertura {
+  margin: 0;
+  font-weight: 600;
+}
+.cq__secundario,
+.cq__ayuda,
+.cq__enviado {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+.cq__campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--sp-3);
+}
+.cq__servicio {
+  grid-column: 1 / -1;
+}
+.cq__acciones {
+  display: flex;
+  justify-content: flex-end;
+}

@@ -3,7 +3,15 @@ import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } 
 import { conflict, forbidden, notFound, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_LABORATORIO, type MockUser } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, uuid } from '../mock-store';
-import { nombreDeAseguradora, perteneceALaAseguradora } from './insurance.handlers';
+import {
+  abrirDisputaDeProveedor,
+  nombreDeAseguradora,
+  perteneceALaAseguradora,
+} from './insurance.handlers';
+import type {
+  MyClaimBreakdown,
+  PatientObjectionReason,
+} from '../../data-access/insurance/insurance.types';
 
 /* ============================================================================
     Solicitudes recibidas por la aseguradora — `GET /insurance/received-claims`.
@@ -392,7 +400,80 @@ function disciplinaDelCentro(
 }
 
 /** Lo que ve cada cuenta de una solicitud: lo justo para entender la decisión. */
-function comoMiSolicitud(s: SolicitudSimulada, vista: VistaDeMisSolicitudes) {
+/** Una solicitud con la objeción del paciente, si la hay. */
+type SolicitudConObjecion = SolicitudSimulada & { patientObjection: ObjecionDelPaciente | null };
+
+/** La objeción tal como se guarda: fechas en texto ISO, como el resto de la maqueta. */
+interface ObjecionDelPaciente {
+  readonly id: string;
+  readonly reason: PatientObjectionReason;
+  readonly submittedAt: string;
+  readonly status: 'OPEN' | 'RESOLVED';
+}
+
+/** Motivos cerrados de la objeción (REQ-16-032): sin texto libre, por PHI. */
+const MOTIVOS_DE_OBJECION: readonly PatientObjectionReason[] = [
+  'AMOUNT_DIFFERS',
+  'SERVICE_NOT_RECEIVED',
+  'NOT_INFORMED',
+];
+
+/** Cobertura del plan, en porcentaje (la maqueta reparte así). */
+const COBERTURA_POR_PLAN: Readonly<Record<string, number>> = {
+  'Plan Integral': 80,
+  'Plan Familiar': 50,
+  'Plan Oro': 100,
+};
+
+/** Copago fijo de un servicio cubierto, 20.00 Bs en centavos. */
+const COPAGO_FIJO_CENTAVOS = 2000;
+
+/** Estado de la aprobación previa según el servicio (maqueta). */
+function aprobacionDe(servicio: string): 'NOT_REQUIRED' | 'APPROVED' | 'PENDING' {
+  if (/ecograf|tomograf|imagen/i.test(servicio)) return 'PENDING';
+  if (/cirug|quir|internaci/i.test(servicio)) return 'APPROVED';
+  return 'NOT_REQUIRED';
+}
+
+/**
+ * El desglose del cobro al paciente: lo que cubre el plan, el copago y lo que
+ * paga cada parte. Es el mismo reparto de la cotización (propietario,
+ * 2026-10-23): paciente = copago + (monto − copago) × (100 − %) / 100,
+ * redondeado a favor de la persona. En centavos enteros, sin `Number()` sobre dinero.
+ */
+function desgloseDe(s: SolicitudConObjecion): MyClaimBreakdown {
+  const plan = s.planName.split(' · ')[1] ?? '';
+  const cobertura = COBERTURA_POR_PLAN[plan] ?? 80;
+  let totalPaciente = 0;
+  let totalAseguradora = 0;
+  const lineas = s.lines.map((linea) => {
+    const monto = centavos(linea.billedAmount.amount);
+    const copago = cobertura === 100 ? 0 : Math.min(COPAGO_FIJO_CENTAVOS, monto);
+    const paciente = copago + Math.floor(((monto - copago) * (100 - cobertura)) / 100);
+    const aseguradora = monto - paciente;
+    totalPaciente += paciente;
+    totalAseguradora += aseguradora;
+    return {
+      key: String(linea.sequence),
+      service: linea.display,
+      billedAmount: linea.billedAmount.amount,
+      coveragePercent: String(cobertura),
+      copayAmount: importe(copago),
+      patientAmount: importe(paciente),
+      insurerAmount: importe(aseguradora),
+      chargeKind: cobertura > 0 ? ('INSURED_SHARE' as const) : ('PRIVATE_FULL' as const),
+      authorizationStatus: aprobacionDe(linea.display),
+    };
+  });
+  return {
+    currencyCode: 'BOB',
+    patientTotal: importe(totalPaciente),
+    insurerTotal: importe(totalAseguradora),
+    lines: lineas,
+  };
+}
+
+function comoMiSolicitud(s: SolicitudConObjecion, vista: VistaDeMisSolicitudes) {
   return {
     id: s.id,
     claimIdentifier: s.claimIdentifier,
@@ -413,6 +494,9 @@ function comoMiSolicitud(s: SolicitudSimulada, vista: VistaDeMisSolicitudes) {
       s.decision === null
         ? null
         : { outcome: s.decision.outcome, decidedAt: s.decision.decidedAt, reason: s.decision.reason },
+    // El desglose y la objeción son del paciente: el prestador no los ve aquí.
+    breakdown: vista === 'PATIENT' ? desgloseDe(s) : null,
+    patientObjection: vista === 'PATIENT' ? s.patientObjection : null,
   };
 }
 
@@ -427,9 +511,12 @@ export function registerInsurerReceivedClaims(
 ): void {
   // Se siembra una vez, al primer pedido; los dictámenes y las anulaciones
   // sobreviven a la recarga para que «no se puede revertir» se pueda comprobar.
-  let tabla: Coleccion<SolicitudSimulada> | null = null;
-  const solicitudes = (): Coleccion<SolicitudSimulada> =>
-    (tabla ??= new Coleccion(sembrar(), persistir ? 'mock.insurerReceivedClaims' : undefined));
+  let tabla: Coleccion<SolicitudConObjecion> | null = null;
+  const solicitudes = (): Coleccion<SolicitudConObjecion> =>
+    (tabla ??= new Coleccion(
+      sembrar().map((s): SolicitudConObjecion => ({ ...s, patientObjection: null })),
+      persistir ? 'mock.insurerReceivedClaims' : undefined,
+    ));
 
   const emitirFactura = (
     semilla: string,
@@ -470,6 +557,45 @@ export function registerInsurerReceivedClaims(
       items: mias.slice(0, TOPE_DE_SOLICITUDES).map((s) => comoMiSolicitud(s, alcance.vista)),
       truncated: mias.length > TOPE_DE_SOLICITUDES,
     };
+  });
+
+  /**
+   * Disputa de un reclamo (REQ-16-032). Un actor que es solo paciente objeta
+   * su cobro: propiedad por el mismo alcance de «Mis solicitudes» (ajeno e
+   * inexistente, mismo 403), idempotente, con motivo cerrado. Cualquier otro
+   * actor abre la apelación del prestador.
+   */
+  router.post('/insurance-claims/:id/disputes', (request) => {
+    const usuario = request.user;
+    if (usuario === null) return unauthorized('Sin sesión');
+    const soloPaciente = usuario.roles.length > 0 && usuario.roles.every((rol) => rol === 'PATIENT');
+    if (!soloPaciente) return abrirDisputaDeProveedor(request);
+
+    const alcance = alcanceDeMisSolicitudes(usuario, request.headers.get('X-Tenant-Id'));
+    const actual = solicitudes().get(request.params['id']!);
+    if (actual === undefined || !alcance.incluye(actual)) return forbidden();
+
+    if (actual.patientObjection !== null) {
+      return {
+        status: 201,
+        body: { id: actual.patientObjection.id, status: 'OPEN', createdAt: actual.patientObjection.submittedAt },
+      };
+    }
+    const datos = cuerpo<{ objectionReason?: string }>(request);
+    const motivo = datos.objectionReason ?? 'NOT_INFORMED';
+    if (!(MOTIVOS_DE_OBJECION as readonly string[]).includes(motivo)) {
+      return validation('Motivo de objeción inválido', [
+        { field: 'objectionReason', message: 'AMOUNT_DIFFERS, SERVICE_NOT_RECEIVED o NOT_INFORMED' },
+      ]);
+    }
+    const objecion: ObjecionDelPaciente = {
+      id: uuid(`objection-${actual.id}`),
+      reason: motivo as PatientObjectionReason,
+      submittedAt: ahora(),
+      status: 'OPEN',
+    };
+    solicitudes().actualizar(actual.id, { patientObjection: objecion });
+    return { status: 201, body: { id: objecion.id, status: objecion.status, createdAt: objecion.submittedAt } };
   });
 
   router.post('/insurance/received-claims/:id/decision', (request) => {
