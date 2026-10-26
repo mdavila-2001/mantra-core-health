@@ -11,6 +11,7 @@ import { environment } from '../../../../environments/environment';
 import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Resumen } from './resumen';
+import { CLAVE_DE_VERSION } from '../version-contable';
 
 /* ============================================================================
     El resumen llano de Contabilidad.
@@ -157,7 +158,10 @@ function responderTablero(
 }
 
 describe('Resumen contable', () => {
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    globalThis.localStorage?.removeItem(CLAVE_DE_VERSION);
+  });
 
   describe('los tres tramos', () => {
     it('pide el estado de resultados SEIS veces, cada una con su ventana', () => {
@@ -630,6 +634,109 @@ describe('Resumen contable', () => {
       expect(raiz.querySelector('[data-testid="simple-accounting-unavailable"]')).not.toBeNull();
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
       http.verify();
+    });
+  });
+
+  describe('la llave Doctor / Contador', () => {
+    const tablero = (): ReturnType<typeof montar> => {
+      const montado = montar();
+      responderPracticas(montado.http, montado.fixture);
+      responderTablero(montado.http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      montado.fixture.detectChanges();
+      return montado;
+    };
+
+    const raizDe = (fixture: { nativeElement: unknown }): HTMLElement => fixture.nativeElement as HTMLElement;
+
+    const opciones = (fixture: { nativeElement: unknown }): HTMLElement[] =>
+      Array.from(raizDe(fixture).querySelectorAll('[data-testid="contabilidad-version"] [role="radio"]'));
+
+    const marcada = (fixture: { nativeElement: unknown }): string | undefined =>
+      opciones(fixture)
+        .find((o) => o.getAttribute('aria-checked') === 'true')
+        ?.textContent?.trim();
+
+    it('ofrece las dos versiones y abre en Doctor, sin las herramientas del contador', () => {
+      const { fixture } = tablero();
+
+      expect(opciones(fixture).map((o) => o.textContent?.trim())).toEqual(['Doctor', 'Contador']);
+      expect(marcada(fixture)).toBe('Doctor');
+      expect(raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]')).toBeNull();
+      expect(raizDe(fixture).textContent).not.toContain('Para su contador');
+    });
+
+    it('en Contador aparecen la vista contable y el balance, y al volver a Doctor se van', () => {
+      const { fixture } = tablero();
+
+      opciones(fixture)[1]!.click();
+      fixture.detectChanges();
+
+      expect(marcada(fixture)).toBe('Contador');
+      const herramientas = raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]');
+      expect(herramientas).not.toBeNull();
+      const enlaces = Array.from(herramientas!.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+      expect(enlaces).toEqual([
+        '/administration/accounting/cockpit',
+        '/administration/accounting/books',
+      ]);
+
+      opciones(fixture)[0]!.click();
+      fixture.detectChanges();
+      expect(marcada(fixture)).toBe('Doctor');
+      expect(raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]')).toBeNull();
+    });
+
+    it('recuerda la versión que la persona dejó puesta', () => {
+      globalThis.localStorage.setItem(CLAVE_DE_VERSION, 'contador');
+      const { fixture } = tablero();
+      expect(marcada(fixture)).toBe('Contador');
+
+      opciones(fixture)[0]!.click();
+      fixture.detectChanges();
+      expect(globalThis.localStorage.getItem(CLAVE_DE_VERSION)).toBe('doctor');
+    });
+
+    it('un valor guardado que no es una versión se ignora y vale Doctor', () => {
+      globalThis.localStorage.setItem(CLAVE_DE_VERSION, 'administrador');
+      const { fixture } = tablero();
+      expect(marcada(fixture)).toBe('Doctor');
+    });
+
+    it('en Registros, Doctor trae gastos, activos y deudas; Contador suma transacciones y cuentas', () => {
+      const original = environment.mockBackend;
+      Object.assign(environment, { mockBackend: true });
+      onTestFinished(() => {
+        Object.assign(environment, { mockBackend: original });
+      });
+      const { fixture } = tablero();
+      fixture.componentInstance.pestana.set(1);
+      fixture.detectChanges();
+
+      const rotulosDeRegistros = (): string[] =>
+        Array.from(
+          raizDe(fixture).querySelectorAll('[data-testid="contabilidad-registros"] .tabs__bar [role="tab"]'),
+        ).map((t) => (t.textContent ?? '').replace(/\s*\(\d+\)\s*$/u, '').trim());
+      const terminos = (): string[] =>
+        Array.from(raizDe(fixture).querySelectorAll('[data-testid="registros-glosario"] dt')).map(
+          (t) => t.textContent?.trim() ?? '',
+        );
+
+      expect(rotulosDeRegistros()).toEqual(['Gastos', 'Activos', 'Deudas']);
+      expect(terminos()).toEqual(['Gasto', 'Activo', 'Deuda']);
+
+      opciones(fixture)[1]!.click();
+      fixture.detectChanges();
+
+      expect(rotulosDeRegistros()).toEqual(['Gastos', 'Activos', 'Deudas', 'Transacciones', 'Cuentas']);
+      expect(terminos()).toEqual([
+        'Gasto',
+        'Activo',
+        'Deuda',
+        'Transacción',
+        'Debe',
+        'Haber',
+        'Cuenta',
+      ]);
     });
   });
 

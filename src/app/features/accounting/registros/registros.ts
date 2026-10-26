@@ -50,11 +50,12 @@ import {
   diaLegible,
   EXPLICACION_DE_CUENTAS,
   EXPLICACION_DE_TRANSACCIONES,
-  GLOSARIO,
+  glosarioDe,
   NOMBRE_DE_CLASE,
   rotuloDeCuenta,
   TEXTOS,
 } from './registros.formato';
+import type { VersionContable } from '../version-contable';
 import { TransaccionDialog } from './transaccion-dialog';
 
 /** Una fila de la tabla de gastos, activos o deudas, ya en palabras. */
@@ -179,6 +180,16 @@ export class ContabilidadSimple {
    */
   readonly parte = input<ParteDeLaContabilidad>('todo');
 
+  /**
+   * Qué versión de la pantalla se lee. En «doctor», los registros son los tres
+   * que un médico anota —gastos, activos y deudas— y el glosario trae sólo esas
+   * palabras; «contador» suma las transacciones (debe y haber) y el plan de
+   * cuentas. Las dos versiones leen y guardan los mismos datos: es qué se ve,
+   * no qué se puede. Quién puede escribir lo resuelve la API.
+   */
+  readonly version = input<VersionContable>('doctor');
+  protected readonly esContador = computed(() => this.version() === 'contador');
+
   private readonly contabilidad = inject(SimpleAccountingClient);
   private readonly dialogos = inject(DialogService);
   private readonly avisos = inject(ToastService);
@@ -190,7 +201,7 @@ export class ContabilidadSimple {
   protected readonly textos = TEXTOS;
   protected readonly kinds = KINDS;
   protected readonly modal = signal<Modal | null>(null);
-  protected readonly glosario = GLOSARIO;
+  protected readonly glosario = computed(() => glosarioDe(this.esContador()));
   protected readonly explicacionDeTransacciones = EXPLICACION_DE_TRANSACCIONES;
   protected readonly explicacionDeCuentas = EXPLICACION_DE_CUENTAS;
 
@@ -365,6 +376,15 @@ export class ContabilidadSimple {
     effect(() => {
       this.practiceId();
       untracked(() => this.cargarTodo());
+    });
+
+    // Transacciones y Cuentas sólo existen en la versión Contador. Si se vuelve
+    // a Doctor estando en una de ellas, se vuelve a la primera pestaña: dejar
+    // el índice apuntando a una pestaña que ya no está deja el panel en blanco.
+    effect(() => {
+      if (!this.esContador() && this.pestana() >= KINDS.length) {
+        untracked(() => this.pestana.set(0));
+      }
     });
   }
 
