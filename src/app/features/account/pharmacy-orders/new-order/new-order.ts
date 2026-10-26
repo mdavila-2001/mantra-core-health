@@ -39,7 +39,7 @@ import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
+import { MY_MEDICAL_RECORD_ROUTE } from '../../medical-record/medical-record.routes';
 import {
   DATOS_DE_EJEMPLO_DE_LA_RECETA,
   NOTA_DE_DATOS_DE_EJEMPLO,
@@ -203,7 +203,7 @@ export class NewOrder {
   /** Vuelve a la consulta de sedes de la misma receta. */
   protected readonly rutaDeVuelta =
     this.borrador === null
-      ? MI_HISTORIA_ROUTE
+      ? MY_MEDICAL_RECORD_ROUTE
       : `/my-account/medical-record/where-to-buy/${this.borrador.requestId}`;
 
   /* ---- los datos de ejemplo (T-E1) ----------------------------------------- */
@@ -219,7 +219,7 @@ export class NewOrder {
   protected readonly estado = computed<ViewState<BorradorDePedido>>(() => {
     const borrador = this.borrador;
     if (borrador === null) {
-      return notFound({ label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE });
+      return notFound({ label: 'Ir a mi historia clínica', route: MY_MEDICAL_RECORD_ROUTE });
     }
     if (borrador.lineas.length === 0) {
       return empty(

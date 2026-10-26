@@ -63,7 +63,7 @@ import {
   PROFESSIONAL_PARAM,
   SERVICE_BOOKING_SLOT,
   SERVICE_PARAM,
-  reservaDelPortalRoute,
+  portalBookingRoute,
 } from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 import { splitUpcomingAndPast } from './upcoming-and-past';
@@ -1798,7 +1798,7 @@ export class Appointments {
   protected rutaDeReserva(horario: HorarioVisible): string {
     // Un horario de servicio no es un cupo: no hay id que mandar. La pantalla de
     // reserva lo reencuentra por la oferta, la sede y el inicio.
-    return reservaDelPortalRoute(
+    return portalBookingRoute(
       horario.ofertaId === undefined ? horario.id : RESERVA_DE_SERVICIO,
     );
   }

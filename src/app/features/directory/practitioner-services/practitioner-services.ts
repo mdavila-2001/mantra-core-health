@@ -11,7 +11,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { pedirConProfesionalRoute } from '../../account/appointments/appointments.routes';
+import { bookWithPractitionerRoute } from '../../account/appointments/appointments.routes';
 
 /**
  * Los servicios que un profesional deja pedir, en su ficha (v4.2.40).
@@ -82,7 +82,7 @@ export class PractitionerServices {
 
   /** A «Agendar una cita», con este profesional y este servicio ya elegidos. */
   protected destino(oferta: ServiceOffering) {
-    return pedirConProfesionalRoute(this.practitionerProfileId(), oferta.id);
+    return bookWithPractitionerRoute(this.practitionerProfileId(), oferta.id);
   }
 
   private cargar(perfil: string): void {

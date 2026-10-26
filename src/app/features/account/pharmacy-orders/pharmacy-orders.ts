@@ -21,7 +21,7 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { MI_HISTORIA_ROUTE } from '../medical-record/medical-record.routes';
+import { MY_MEDICAL_RECORD_ROUTE } from '../medical-record/medical-record.routes';
 import { modalityLabel, toOrderStatusPresentation } from './order-status';
 import { displayCurrency } from '../../../core/money/display-currency';
 
@@ -97,7 +97,7 @@ export class PharmacyOrders {
             empty(
               // La salida es la historia clínica: un pedido nace de una receta,
               // así que la puerta correcta es donde viven las recetas.
-              { label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE },
+              { label: 'Ir a mi historia clínica', route: MY_MEDICAL_RECORD_ROUTE },
               'Todavía no envió ningún pedido. Desde una receta de su historia clínica puede ver qué farmacias la tienen y mandarles su pedido.',
             ),
           );

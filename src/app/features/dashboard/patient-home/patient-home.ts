@@ -33,8 +33,8 @@ import { FirstStepsCard } from './first-steps/first-steps-card';
 import { FirstStepsStore } from './first-steps/first-steps.store';
 import { greetingFor, firstNameOf } from './patient-home.copy';
 import { PatientTipCard } from './patient-tip/patient-tip-card';
-import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
-import { MI_HISTORIA_ROUTE } from '../../account/medical-record/medical-record.routes';
+import { MY_APPOINTMENTS_ROUTE } from '../../account/appointments/appointments.routes';
+import { MY_MEDICAL_RECORD_ROUTE } from '../../account/medical-record/medical-record.routes';
 import { SymptomCheck } from '../../symptom-check/symptom-check';
 import { PatientCampaignsWidget } from '../../insurance/patient-campaigns/patient-campaigns-widget';
 
@@ -130,8 +130,8 @@ export class PatientHome {
   private readonly scheduling = inject(SchedulingClient);
   private readonly clinical = inject(ClinicalClient);
 
-  protected readonly misTurnos = MIS_TURNOS_ROUTE;
-  protected readonly miHistoria = MI_HISTORIA_ROUTE;
+  protected readonly misTurnos = MY_APPOINTMENTS_ROUTE;
+  protected readonly miHistoria = MY_MEDICAL_RECORD_ROUTE;
 
   private readonly tutorialEngine = inject(TutorialEngine);
   private readonly tutorialRegistry = inject(TutorialRegistry);
@@ -253,7 +253,7 @@ export class PatientHome {
     if (perfil === null) {
       this.estado.set(
         empty(
-          { label: 'Ir a mis citas', route: MIS_TURNOS_ROUTE },
+          { label: 'Ir a mis citas', route: MY_APPOINTMENTS_ROUTE },
           'Su cuenta todavía no tiene una ficha de paciente.',
         ),
       );

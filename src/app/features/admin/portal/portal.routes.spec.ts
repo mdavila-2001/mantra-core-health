@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { PORTAL_NAV } from './portal-nav';
-import { PORTAL_RUTAS } from './portal.routes';
+import { PORTAL_ROUTES } from './portal.routes';
 
-const PANTALLAS = PORTAL_RUTAS.filter((r) => r.redirectTo === undefined);
-const HEREDADAS = PORTAL_RUTAS.filter((r) => r.redirectTo !== undefined);
+const PANTALLAS = PORTAL_ROUTES.filter((r) => r.redirectTo === undefined);
+const HEREDADAS = PORTAL_ROUTES.filter((r) => r.redirectTo !== undefined);
 
-describe('PORTAL_RUTAS', () => {
+describe('PORTAL_ROUTES', () => {
   it('cada pantalla que el menú ofrece tiene su ruta: ningún ítem lleva a «no encontrada»', () => {
     const rutas = new Set(PANTALLAS.map((r) => r.path));
     const faltan = PORTAL_NAV.flatMap((g) => g.items)

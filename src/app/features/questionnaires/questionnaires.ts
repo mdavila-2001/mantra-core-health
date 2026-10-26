@@ -28,7 +28,7 @@ import type { SegmentedOption } from '../../shared/components/molecules/segmente
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
-import { encuestaRoute } from './questionnaires.routes';
+import { questionnaireRoute } from './questionnaires.routes';
 
 /** Largo máximo del título, el mismo que valida el backend. */
 const MAX_TITULO = 200;
@@ -332,7 +332,7 @@ export class SurveysHome {
       ...encuesta,
       palabra: presentacion.palabra,
       tono: presentacion.tono,
-      ruta: encuestaRoute(encuesta.id),
+      ruta: questionnaireRoute(encuesta.id),
       buscable: normalizar(`${encuesta.title} ${encuesta.description ?? ''}`),
     };
   }

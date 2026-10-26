@@ -21,9 +21,9 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
+import { MY_APPOINTMENTS_ROUTE } from '../appointments/appointments.routes';
 import { MedicalAspects } from './medical-aspects/medical-aspects';
-import { responderCuestionarioRoute } from './questionnaires.routes';
+import { answerQuestionnaireRoute } from './questionnaires.routes';
 
 /* ---- FT-22 · las dos pestañas -------------------------------------------- */
 
@@ -136,7 +136,7 @@ export class Questionnaires {
   }
 
   /** A dónde manda el estado vacío: a los turnos, que es de donde salen. */
-  protected readonly rutaDeTurnos = MIS_TURNOS_ROUTE;
+  protected readonly rutaDeTurnos = MY_APPOINTMENTS_ROUTE;
 
   private readonly estado = signal<ViewState<readonly CuestionarioVisible[]>>(loading());
 
@@ -197,7 +197,7 @@ export class Questionnaires {
       vence: invitacion.expiresAt,
       respondido: invitacion.answeredAt,
       sePuedeResponder: invitacion.status === 'PENDING',
-      ruta: responderCuestionarioRoute(invitacion.id),
+      ruta: answerQuestionnaireRoute(invitacion.id),
     };
   }
 }

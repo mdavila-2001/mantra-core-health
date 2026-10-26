@@ -5,8 +5,8 @@ import type { NavIconName } from '../../../../core/navigation/navigation.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
-import { MIS_TURNOS_ROUTE } from '../../../account/appointments/appointments.routes';
-import { MI_HISTORIA_ROUTE } from '../../../account/medical-record/medical-record.routes';
+import { MY_APPOINTMENTS_ROUTE } from '../../../account/appointments/appointments.routes';
+import { MY_MEDICAL_RECORD_ROUTE } from '../../../account/medical-record/medical-record.routes';
 import { PHARMACY_ROUTE } from '../../../account/pharmacy/pharmacy.routes';
 import { FirstStepsStore } from './first-steps.store';
 
@@ -88,16 +88,16 @@ export class FirstStepsCard {
         title: 'Pedir una cita',
         hint: 'Elija día y hora sin hacer filas ni llamar.',
         icon: 'calendar',
-        route: MIS_TURNOS_ROUTE,
-        done: this.hasAppointment() || this.store.hasVisited(`${MIS_TURNOS_ROUTE}/book`),
+        route: MY_APPOINTMENTS_ROUTE,
+        done: this.hasAppointment() || this.store.hasVisited(`${MY_APPOINTMENTS_ROUTE}/book`),
       },
       {
         id: 'historia',
         title: 'Mirar su historia clínica',
         hint: 'Sus consultas, recetas y estudios, todo junto.',
         icon: 'heart',
-        route: MI_HISTORIA_ROUTE,
-        done: this.store.hasVisited(MI_HISTORIA_ROUTE),
+        route: MY_MEDICAL_RECORD_ROUTE,
+        done: this.store.hasVisited(MY_MEDICAL_RECORD_ROUTE),
       },
       {
         id: 'farmacia',

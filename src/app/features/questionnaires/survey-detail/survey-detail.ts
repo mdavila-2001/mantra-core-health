@@ -28,7 +28,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { SurveyForm } from '../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { QuestionEditor, ETIQUETA_TIPO as ETIQUETAS } from './question-editor/question-editor';
-import { ENCUESTAS_ROUTE } from '../questionnaires.routes';
+import { QUESTIONNAIRES_ROUTE } from '../questionnaires.routes';
 
 /**
  * Piso de respuestas para mostrar un agregado o habilitar el CSV.
@@ -119,7 +119,7 @@ export class SurveyDetailScreen {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** A dónde vuelve quien entró a una encuesta: al listado del que salió. */
-  protected readonly rutaDeLasEncuestas = ENCUESTAS_ROUTE;
+  protected readonly rutaDeLasEncuestas = QUESTIONNAIRES_ROUTE;
   /** Etiqueta legible de un tipo de respuesta. La usa el resumen de abajo. */
   protected etiquetaDe(tipo: AnswerType): string {
     return ETIQUETAS[tipo];

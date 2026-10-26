@@ -7,7 +7,7 @@ import type { PatientCampaign } from '../../../core/data-access/insurance/insura
 import {
   CAMPAIGN_PARAM,
   CAMPAIGN_TITLE_PARAM,
-  MIS_TURNOS_ROUTE,
+  MY_APPOINTMENTS_ROUTE,
 } from '../../account/appointments/appointments.routes';
 import { LAB_RESOURCE, RESOURCE_PARAM } from '../../account/appointments/appointments';
 import { campaignAction, daysLeft, PatientCampaignsWidget } from './patient-campaigns-widget';
@@ -219,7 +219,7 @@ describe('PatientCampaignsWidget', () => {
         title: 'Un título',
       } as PatientCampaign);
 
-      expect(lab.route).toBe(MIS_TURNOS_ROUTE);
+      expect(lab.route).toBe(MY_APPOINTMENTS_ROUTE);
       expect(lab.queryParams[RESOURCE_PARAM]).toBe(LAB_RESOURCE);
       expect(lab.queryParams[CAMPAIGN_PARAM]).toBe('X');
       expect(lab.queryParams['seccion']).toBe('pedir');

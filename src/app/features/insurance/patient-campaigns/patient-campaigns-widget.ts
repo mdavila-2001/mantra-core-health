@@ -29,7 +29,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import {
   CAMPAIGN_PARAM,
   CAMPAIGN_TITLE_PARAM,
-  MIS_TURNOS_ROUTE,
+  MY_APPOINTMENTS_ROUTE,
 } from '../../account/appointments/appointments.routes';
 
 /**
@@ -65,7 +65,7 @@ export function campaignAction(campaign: PatientCampaign): CampaignAction {
     case 'DIAGNOSTIC_IMAGING':
       return {
         label: 'Agendar estudio',
-        route: MIS_TURNOS_ROUTE,
+        route: MY_APPOINTMENTS_ROUTE,
         queryParams: {
           [SECTION_PARAM]: SECTION_REQUEST,
           [RESOURCE_PARAM]: LAB_RESOURCE,
@@ -76,7 +76,7 @@ export function campaignAction(campaign: PatientCampaign): CampaignAction {
     case 'VACCINATION':
       return {
         label: 'Agendar vacunación',
-        route: MIS_TURNOS_ROUTE,
+        route: MY_APPOINTMENTS_ROUTE,
         queryParams: {
           [SECTION_PARAM]: SECTION_REQUEST,
           [CAMPAIGN_PARAM]: campaign.code,
@@ -87,7 +87,7 @@ export function campaignAction(campaign: PatientCampaign): CampaignAction {
     default:
       return {
         label: 'Agendar chequeo preventivo',
-        route: MIS_TURNOS_ROUTE,
+        route: MY_APPOINTMENTS_ROUTE,
         queryParams: {
           [SECTION_PARAM]: SECTION_REQUEST,
           [RESOURCE_PARAM]: LAB_RESOURCE,

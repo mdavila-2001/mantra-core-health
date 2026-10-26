@@ -53,7 +53,7 @@ function legacyPortalRedirect([legacyPath, currentPath]: readonly [string, strin
  * las fichas cuelgan de la pantalla de la que salen, para que el menú ilumine
  * la correcta. Los roles los hereda del marco: la API decide cada petición.
  */
-export const PORTAL_RUTAS: Routes = [
+export const PORTAL_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',

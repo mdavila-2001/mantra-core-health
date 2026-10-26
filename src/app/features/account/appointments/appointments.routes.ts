@@ -6,7 +6,7 @@
     ========================================================================== */
 
 /** Los turnos de quien está adentro: los suyos, no los de la organización. */
-export const MIS_TURNOS_ROUTE = '/my-account/appointments';
+export const MY_APPOINTMENTS_ROUTE = '/my-account/appointments';
 
 /**
  * La reserva de un cupo concreto **desde el portal** (canal `PORTAL`).
@@ -20,8 +20,8 @@ export const MIS_TURNOS_ROUTE = '/my-account/appointments';
  * (`recurso`, `desde`, `hasta`) porque son lo que permite **volver a leer** el
  * cupo al recargar: no existe `GET /scheduling/slots/:id`.
  */
-export function reservaDelPortalRoute(slotId: string): string {
-  return `${MIS_TURNOS_ROUTE}/book/${slotId}`;
+export function portalBookingRoute(slotId: string): string {
+  return `${MY_APPOINTMENTS_ROUTE}/book/${slotId}`;
 }
 
 /**
@@ -65,12 +65,12 @@ export const SERVICE_PARAM = 'servicio';
  * @param practitionerProfileId - Con quién se pide.
  * @param offeringId - Qué servicio; ausente ≡ una consulta.
  */
-export function pedirConProfesionalRoute(practitionerProfileId: string, offeringId?: string): {
+export function bookWithPractitionerRoute(practitionerProfileId: string, offeringId?: string): {
   readonly path: string;
   readonly queryParams: Record<string, string>;
 } {
   return {
-    path: MIS_TURNOS_ROUTE,
+    path: MY_APPOINTMENTS_ROUTE,
     queryParams: {
       seccion: 'pedir',
       [PROFESSIONAL_PARAM]: practitionerProfileId,

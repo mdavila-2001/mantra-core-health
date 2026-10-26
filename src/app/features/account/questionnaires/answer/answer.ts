@@ -23,7 +23,7 @@ import type {
   ValorDeRespuesta,
 } from '../../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { MIS_CUESTIONARIOS_ROUTE } from '../questionnaires.routes';
+import { MY_QUESTIONNAIRES_ROUTE } from '../questionnaires.routes';
 
 /**
  * Responder un cuestionario.
@@ -65,7 +65,7 @@ export class QuestionnaireAnswer {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** A dónde vuelve quien entró a responder: al listado del que salió. */
-  protected readonly rutaDeMisCuestionarios = MIS_CUESTIONARIOS_ROUTE;
+  protected readonly rutaDeMisCuestionarios = MY_QUESTIONNAIRES_ROUTE;
 
   private readonly invitationId = this.route.snapshot.paramMap.get('invitationId') ?? '';
 
@@ -144,7 +144,7 @@ export class QuestionnaireAnswer {
       next: () => {
         this.enviando.set(false);
         this.toast.success('Gracias por responder el cuestionario.');
-        void this.router.navigateByUrl(MIS_CUESTIONARIOS_ROUTE);
+        void this.router.navigateByUrl(MY_QUESTIONNAIRES_ROUTE);
       },
       error: (error: unknown) => {
         this.enviando.set(false);

@@ -39,7 +39,7 @@ export function requestAccessRoute(profileId: string): string {
 }
 
 /** El parámetro con el que la agenda precarga el motivo de consulta. */
-export const MOTIVO_QUERY_PARAM = 'motivo';
+export const REASON_QUERY_PARAM = 'motivo';
 
 /**
  * El parámetro que ata el encuentro al turno que lo originó.
@@ -51,7 +51,7 @@ export const MOTIVO_QUERY_PARAM = 'motivo';
  * Sólo viaja cuando la reserva tiene cita clínica detrás. Su ausencia es
  * corriente y no rompe nada: el encuentro se abre igual, sin el vínculo.
  */
-export const CITA_QUERY_PARAM = 'cita';
+export const APPOINTMENT_QUERY_PARAM = 'cita';
 
 /** Reserva de agenda de origen para Reconsulta; distinta de la cita clínica del check-in. */
 export const BOOKING_QUERY_PARAM = 'booking';
