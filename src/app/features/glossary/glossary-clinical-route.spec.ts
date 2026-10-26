@@ -151,6 +151,26 @@ describe('buildClinicalRoute', () => {
     expect(ruta.neighborCount).toBe(0);
     expect([...ruta.findings, ...ruta.next, ...ruta.context]).toHaveLength(0);
   });
+
+  it('tampoco pone a un homónimo del término central, aunque venga de otra fuente', () => {
+    const neighborhood = vecindario(ENFERMEDAD, [
+      {
+        type: 'RELATED_TERM',
+        direction: 'outgoing',
+        total: 2,
+        items: [vecino('j18-otra-fuente', '  NEUMONÍA, microorganismo  no especificado ', OTRO), vecino('r1', 'Neumonía bacteriana', OTRO)],
+      },
+      { type: 'DISEASE', direction: 'outgoing', total: 1, items: [vecino('j18-tercera', 'Neumonia, microorganismo no especificado', ENFERMEDAD)] },
+    ]);
+    const ruta = buildClinicalRoute({
+      ...neighborhood,
+      focus: { ...neighborhood.focus, display: 'Neumonía, microorganismo no especificado' },
+    });
+
+    const displays = [...ruta.findings, ...ruta.next, ...ruta.context].flatMap((c) => c.items.map((i) => i.display));
+    expect(displays).toEqual(['Neumonía bacteriana']);
+    expect(ruta.neighborCount).toBe(1);
+  });
 });
 
 describe('mergeFullGroups', () => {
