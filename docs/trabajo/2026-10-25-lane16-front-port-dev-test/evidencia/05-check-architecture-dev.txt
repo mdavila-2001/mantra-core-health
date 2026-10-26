@@ -1,0 +1,10 @@
+
+✗ check-architecture
+
+  1 dependencia(s) circular(es):
+      src/app/features/account/medical-record/where-to-buy/medical-centers-tab/medical-centers-tab.ts
+      → src/app/features/account/medical-record/where-to-buy/where-to-buy.ts
+  2 archivo(s) hacen peticiones fuera de core/data-access/:
+      src/app/core/onboarding/onboarding-draft.client.ts
+      src/app/features/assets-liabilities/expandable-detail.ts
+

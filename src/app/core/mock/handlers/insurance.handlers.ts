@@ -4,7 +4,8 @@ import { conceptById } from '../fixtures/concepts';
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
 import { MEDICAL, PATIENTS, PACIENTE, professionalById } from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
-import { TENANT_ASEGURADORA } from '../mock-session';
+import type { PriorAuthorizationQuoteStatus } from '../../data-access/insurance/insurance.types';
+import { IDS, TENANT_ASEGURADORA } from '../mock-session';
 import { procedimientoPorConceptId } from './practice.handlers';
 import type { CreateAdjudicationInput } from '../../data-access/insurance/insurance.types';
 import {
@@ -1068,6 +1069,209 @@ function brokersDelMercado(indice: number, slug: string) {
   return [conChat(independientes[semilla(`broker-${slug}`) % independientes.length]!)];
 }
 
+/* ---- cobro con seguro: cotización previa (REQ-16-026) ------------------------
+   La maqueta calcula el reparto con la misma regla que la API (propietario,
+   2026-10-23): paciente = copago + (monto − copago) × (100 − %cob) / 100,
+   redondeado a centavos a favor de la persona; aseguradora = monto − paciente.
+   Todo en centavos enteros: ningún importe pasa por `Number()` como decimal.
+   Deducible y tope anual quedan fuera de esta pasada (decisión del propietario).
+   ------------------------------------------------------------------------- */
+
+type PlanDelCatalogo = NonNullable<ReturnType<typeof localizarPlan>>['plan'];
+
+/**
+ * Ids de aprobación previa de prueba de la maqueta. Cualquier cobro que los
+ * reciba queda APROBADO o PENDIENTE; cualquier otro id, no corresponde. Son
+ * constantes para que la pantalla pueda ofrecerlos sin conocer ids de persona.
+ */
+export const APROBACION_DE_PRUEBA = '00000000-0000-4000-8000-0000000000a1';
+export const PENDIENTE_DE_PRUEBA = '00000000-0000-4000-8000-0000000000a2';
+
+/** Una línea cotizada, con la forma de `ClaimQuoteLineResultDto`. */
+export interface LineaCotizada {
+  readonly lineSequence: number;
+  readonly serviceConceptId: string | null;
+  readonly billedAmount: string;
+  readonly covered: boolean;
+  readonly coveragePercent: string | null;
+  readonly copayAmount: string | null;
+  readonly deductibleAmount: null;
+  readonly requiresPriorAuthorization: boolean;
+  readonly priorAuthorizationStatus: PriorAuthorizationQuoteStatus | null;
+  readonly patientAmount: string | null;
+  readonly insurerAmount: string | null;
+  readonly reason: string | null;
+  readonly message: string | null;
+}
+
+/** Un importe decimal en texto, a centavos enteros. Trunca la fracción de centavo. */
+function centavosDe(valor: string): number {
+  const [entero = '0', decimales = ''] = valor.trim().split('.');
+  const signo = entero.startsWith('-') ? -1 : 1;
+  return signo * (Math.abs(Number(entero)) * 100 + Number(`${decimales}00`.slice(0, 2)));
+}
+
+/** Centavos enteros de vuelta a un importe decimal en texto, siempre con dos decimales. */
+function importeDe(centavos: number): string {
+  const signo = centavos < 0 ? '-' : '';
+  const absoluto = Math.abs(centavos);
+  return `${signo}${Math.floor(absoluto / 100)}.${String(absoluto % 100).padStart(2, '0')}`;
+}
+
+/** Un porcentaje en texto (`80`, `72.5`) a puntos básicos (`8000`, `7250`). */
+function puntosBasicosDe(porcentaje: string): number {
+  const [entero = '0', decimales = ''] = porcentaje.trim().split('.');
+  return Number(entero) * 100 + Number(`${decimales}00`.slice(0, 2));
+}
+
+/**
+ * Categoría de cobertura de un servicio, por su nombre en el nomenclador.
+ * Es una heurística de la maqueta: la API decide por el concepto del servicio.
+ */
+function categoriaDeServicio(serviceConceptId: string | undefined): string {
+  const texto = procedimientoPorConceptId(serviceConceptId ?? '')?.display ?? '';
+  if (/intern|hospital|quir[uú]rg|cirug/i.test(texto)) return 'HOSPITALIZATION';
+  if (/laborator|hemograma|perfil|radiograf|ecograf|tomograf|imagen/i.test(texto)) return 'LAB';
+  if (/medicament|farmac/i.test(texto)) return 'PHARMACY';
+  return 'CONSULTATION';
+}
+
+/** El id de perfil que la maqueta le da a una persona (`IDS` de la sesión). */
+function perfilDe(personaId: string): string | undefined {
+  return (IDS as Readonly<Record<string, { readonly patientProfileId?: string } | undefined>>)[
+    personaId
+  ]?.patientProfileId;
+}
+
+/**
+ * La cobertura de un paciente de la maqueta, con su aseguradora y su plan del
+ * catálogo. `coverage-<id>` es el mismo id que muestra su ficha.
+ */
+function coberturaDeLaMaqueta(coverageId: string) {
+  const paciente = PATIENTS.find((p) => coverageId === `coverage-${p.id}`);
+  if (paciente === undefined || paciente.aseguradora === undefined || paciente.plan === undefined) {
+    return undefined;
+  }
+  const aseguradora = ASEGURADORAS.find((a) => a.name === paciente.aseguradora);
+  const detalle =
+    aseguradora === undefined
+      ? undefined
+      : catalogoAdministrable.todos().find((d) => d.id === aseguradora.id);
+  const plan: PlanDelCatalogo | undefined = detalle?.products
+    .flatMap((producto) => producto.plans)
+    .find((item) => item.name === paciente.plan);
+  if (aseguradora === undefined || plan === undefined) return undefined;
+  return { paciente, aseguradora, plan };
+}
+
+/** Una línea cotizada, con la misma forma que `ClaimQuoteLineResultDto`. */
+export function cotizarLinea(
+  linea: { readonly lineSequence: number; readonly serviceConceptId?: string; readonly billedAmount: string },
+  plan: PlanDelCatalogo,
+  priorAuthorizationRequestId: string | undefined,
+): LineaCotizada {
+  const categoria = categoriaDeServicio(linea.serviceConceptId);
+  const beneficio = plan.benefits.find((b) => b.category.code === categoria && b.effectiveTo === null);
+  const base = {
+    lineSequence: linea.lineSequence,
+    serviceConceptId: linea.serviceConceptId ?? null,
+    billedAmount: linea.billedAmount,
+    deductibleAmount: null,
+  };
+  if (beneficio === undefined) {
+    return {
+      ...base,
+      covered: false,
+      coveragePercent: null,
+      copayAmount: null,
+      requiresPriorAuthorization: false,
+      priorAuthorizationStatus: null,
+      patientAmount: null,
+      insurerAmount: null,
+      reason: 'SERVICE_NOT_COVERED',
+      message: 'El plan no cubre este servicio.',
+    };
+  }
+
+  const monto = centavosDe(linea.billedAmount);
+  const copago = Math.min(beneficio.copayAmount ? centavosDe(beneficio.copayAmount) : 0, monto);
+  const coberturaBp = puntosBasicosDe(beneficio.coveragePercent ?? '0');
+  const paciente = copago + Math.floor(((monto - copago) * (10000 - coberturaBp)) / 10000);
+  const aseguradora = monto - paciente;
+
+  const requiere = beneficio.requiresPriorAuthorization === true;
+  let estado: PriorAuthorizationQuoteStatus = 'NOT_REQUIRED';
+  let motivo: string | null = null;
+  if (requiere) {
+    if (priorAuthorizationRequestId === undefined) {
+      estado = 'MISSING';
+      motivo = 'PRIOR_AUTHORIZATION_REQUIRED';
+    } else if (priorAuthorizationRequestId === APROBACION_DE_PRUEBA) {
+      estado = 'APPROVED';
+    } else if (priorAuthorizationRequestId === PENDIENTE_DE_PRUEBA) {
+      estado = 'PENDING';
+      motivo = 'PRIOR_AUTHORIZATION_PENDING';
+    } else {
+      estado = 'MISMATCH';
+      motivo = 'PRIOR_AUTHORIZATION_MISMATCH';
+    }
+  }
+
+  return {
+    ...base,
+    covered: true,
+    coveragePercent: beneficio.coveragePercent,
+    copayAmount: importeDe(copago),
+    requiresPriorAuthorization: requiere,
+    priorAuthorizationStatus: estado,
+    patientAmount: importeDe(paciente),
+    insurerAmount: importeDe(aseguradora),
+    reason: motivo,
+    message: null,
+  };
+}
+
+/** Totales en centavos: nulos si alguna línea no tiene reparto calculable. */
+export function totalesDeLaCotizacion(lineas: readonly LineaCotizada[]) {
+  const sumar = (campo: 'billedAmount' | 'patientAmount' | 'insurerAmount') => {
+    let total = 0;
+    for (const linea of lineas) {
+      const valor = linea[campo];
+      if (valor === null) return null;
+      total += centavosDe(valor);
+    }
+    return importeDe(total);
+  };
+  return {
+    canSubmit: lineas.every((linea) => linea.reason === null),
+    currencyConceptId: null,
+    totalBilledAmount: sumar('billedAmount'),
+    totalPatientAmount: sumar('patientAmount'),
+    totalInsurerAmount: sumar('insurerAmount'),
+    lines: lineas,
+  };
+}
+
+/**
+ * La referencia clínica de una línea de reclamo: el estudio diagnóstico o la
+ * dispensación que la respalda, con su número de la maqueta. Un servicio sin
+ * referencia clínica no inventa una (REQ-16-014 a 018).
+ */
+function referenciaDeLinea(
+  claimIdentifier: string,
+  sequence: number,
+  servicio: string,
+): { readonly referenceType: 'DIAGNOSTIC_STUDY' | 'MEDICATION_DISPENSATION' | null; readonly reference: string | null } {
+  const sufijo = claimIdentifier.slice(-4);
+  if (/laborator|perfil|hemograma|ecograf|radiograf|tomograf|estudio/i.test(servicio)) {
+    return { referenceType: 'DIAGNOSTIC_STUDY', reference: `EST-${sufijo}-${sequence}` };
+  }
+  if (/medicament|farmac|dispens|receta/i.test(servicio)) {
+    return { referenceType: 'MEDICATION_DISPENSATION', reference: `DSP-${sufijo}-${sequence}` };
+  }
+  return { referenceType: null, reference: null };
+}
+
 export function registrarSeguros(router: MockRouter): void {
   // El sobre `{ carriers }` no es decorativo: `InsuranceClient.listCarrierCatalog`
   // mapea `body.carriers`, y devolver el array pelado le dejaba `undefined`.
@@ -1389,20 +1593,23 @@ export function registrarSeguros(router: MockRouter): void {
     return { items: pagina.items, nextCursor: pagina.nextCursor };
   });
 
+  /**
+   * Envío del cobro a la aseguradora (REQ-16-026). Acepta solo las claves de
+   * `CreateClaimDto`: la maqueta valida el cuerpo igual que la API, así que
+   * una clave ajena responde 400.
+   */
   router.post('/insurance-claims', (request) => {
     const datos = cuerpo<{
-      patientProfileId?: string;
       insuranceCarrierId?: string;
-      policyIdentifier?: string;
-      lines?: { service: string; billedAmount: string }[];
+      patientCoverageId?: string;
+      claimIdentifier?: string;
+      lines?: { lineSequence: number; serviceConceptId?: string; billedAmount: string }[];
     }>(request);
-    const carrierIndex = Math.max(
-      0,
-      ASEGURADORAS.findIndex((a) => a.id === datos.insuranceCarrierId),
-    );
-    const lineas = (datos.lines ?? [{ service: 'Consulta', billedAmount: '250.00' }]).map((l) => ({
-      service: l.service,
-      billed: l.billedAmount,
+    const cobertura = coberturaDeLaMaqueta(datos.patientCoverageId ?? '');
+    if (cobertura === undefined) return notFound('Cobertura no encontrada');
+    const lineas = (datos.lines ?? []).map((linea) => ({
+      service: procedimientoPorConceptId(linea.serviceConceptId ?? '')?.display ?? 'Servicio',
+      billed: linea.billedAmount,
       approved: null,
       decision: 'PENDING',
       clause: null,
@@ -1410,19 +1617,73 @@ export function registrarSeguros(router: MockRouter): void {
     }));
     const nueva = solicitudes.agregar({
       id: nuevoId('claim'),
-      claimIdentifier: `CLM-2026-${String(200 + solicitudes.tamano).padStart(4, '0')}`,
-      patientProfileId: datos.patientProfileId ?? PACIENTE.id,
-      carrierIndex,
-      policyIdentifier: datos.policyIdentifier ?? 'POL-NUEVA',
-      billed: lineas.reduce((s, l) => s + Number(l.billed), 0).toFixed(2),
+      claimIdentifier:
+        datos.claimIdentifier ?? `CLM-2026-${String(200 + solicitudes.tamano).padStart(4, '0')}`,
+      patientProfileId: cobertura.paciente.id,
+      carrierIndex: Math.max(0, ASEGURADORAS.findIndex((a) => a.id === datos.insuranceCarrierId)),
+      policyIdentifier: `POL-${cobertura.paciente.patientCode.slice(4)}`,
+      billed: importeDe(lineas.reduce((total, linea) => total + centavosDe(linea.billed), 0)),
       approved: null,
       submittedAt: ahora(),
       status: c('SUBMITTED', 'Enviada'),
       hasOpenDispute: false,
       lineas,
     });
-    return { status: 201, body: itemDeSolicitud(nueva) };
+    return { status: 201, body: { id: nueva.id, status: 'SUBMITTED' } };
   });
+
+  /**
+   * Coberturas de una persona, para quien atiende (P62). Solo maqueta: la API
+   * todavía no expone esta lectura al personal.
+   */
+  router.get('/patient-coverages/by-patient/:patientProfileId', ({ params }) => {
+    const paciente = PATIENTS.find((p) => p.id === params['patientProfileId'] || perfilDe(p.id) === params['patientProfileId']);
+    if (paciente === undefined) return notFound('Persona no encontrada');
+    const cobertura = coberturaDeLaMaqueta(`coverage-${paciente.id}`);
+    if (cobertura === undefined) return { status: 200, body: { items: [] } };
+    return {
+      status: 200,
+      body: {
+        items: [
+          {
+            id: `coverage-${paciente.id}`,
+            insuranceCarrierId: cobertura.aseguradora.id,
+            carrierName: cobertura.aseguradora.name,
+            planName: cobertura.plan.name,
+            policyIdentifier: `POL-${paciente.patientCode.slice(4)}`,
+            memberIdentifier: `AF-${paciente.patientCode.slice(4)}`,
+            validityStatus: 'CURRENT',
+            currencyCode: 'BOB',
+          },
+        ],
+      },
+    };
+  });
+
+  /**
+   * Cotización previa del cobro (REQ-16-026): reparto por línea y si se puede
+   * enviar. No guarda nada. Aprobaciones de la maqueta: el id determinista
+   * `prior-auth-approved-<persona>` queda APROBADO y `prior-auth-pending-<persona>`,
+   * PENDIENTE; cualquier otro id, MISMATCH.
+   */
+  router.post('/insurance-claims/quote', (request) => {
+    const datos = cuerpo<{
+      insuranceCarrierId?: string;
+      patientCoverageId?: string;
+      priorAuthorizationRequestId?: string;
+      lines?: { lineSequence: number; serviceConceptId?: string; billedAmount: string }[];
+    }>(request);
+    const cobertura = coberturaDeLaMaqueta(datos.patientCoverageId ?? '');
+    if (cobertura === undefined) return notFound('Cobertura no encontrada');
+    if (datos.insuranceCarrierId !== cobertura.aseguradora.id) {
+      return preconditionFailed('La cobertura no pertenece a la aseguradora indicada');
+    }
+    const lineas = (datos.lines ?? []).map((linea) =>
+      cotizarLinea(linea, cobertura.plan, datos.priorAuthorizationRequestId),
+    );
+    return { status: 200, body: totalesDeLaCotizacion(lineas) };
+  });
+
 
   /**
    * Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2): el ítem
@@ -1536,8 +1797,7 @@ export function registrarSeguros(router: MockRouter): void {
         denialReason: l.decision === 'DENIED' ? c('NOT_COVERED', 'No cubierto') : null,
         policyClauseReference: l.clause,
         denialRationale: l.rationale,
-        referenceType: null,
-        reference: null,
+        ...referenciaDeLinea(s.claimIdentifier, i + 1, l.service),
         duplicateStudy: duplicateStudyDe(s.claimIdentifier, l.service),
       })),
       lineBilledTotal: money(s.billed),
@@ -1639,23 +1899,6 @@ export function registrarSeguros(router: MockRouter): void {
     solicitudes.actualizar(claim.id, { eobPublishedAt: ahora() });
     return { status: 201, body: { id: uuid(`eob-${claim.id}`) } };
   });
-
-  router.post('/insurance-claims/:id/disputes', (request) => {
-    const s = solicitudes.get(request.params['id']!);
-    if (s === undefined) return notFound();
-    solicitudes.actualizar(s.id, { hasOpenDispute: true });
-    return {
-      status: 201,
-      body: {
-        id: nuevoId('dispute'),
-        disputeType: c('APPEAL', 'Apelación'),
-        disputeReason: c('COVERAGE', 'Discrepancia de cobertura'),
-        status: c('OPEN', 'Abierta'),
-        submittedAt: ahora(),
-        filingDeadline: iso(30),
-      },
-    };
-  });
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
@@ -1666,6 +1909,14 @@ solicitudes.persistirEn('mock.insurance.solicitudes');
  * reusados en el informe en vez de un segundo juego que se desalinee del que
  * ya lee `GET /insurance-claims`.
  */
+/**
+ * Quita un reclamo creado por una prueba: la maqueta vuelve a su siembra para el
+ * resto de los archivos del mismo worker. Solo lo usan las pruebas.
+ */
+export function quitarReclamoDeLaMaqueta(id: string): boolean {
+  return solicitudes.borrar(id);
+}
+
 export function reclamosDePaciente(patientProfileId: string): readonly SolicitudSimulada[] {
   return solicitudes.filtrar((s) => s.patientProfileId === patientProfileId);
 }
@@ -1673,4 +1924,25 @@ export function reclamosDePaciente(patientProfileId: string): readonly Solicitud
 /** El nombre de la aseguradora de una solicitud, por su índice en `ASEGURADORAS`. */
 export function nombreDeAseguradora(carrierIndex: number): string {
   return ASEGURADORAS[carrierIndex]!.name;
+}
+
+/**
+ * Disputa de un reclamo abierta por el prestador (apelación). La atiende la ruta de
+ * «Mis solicitudes», que decide por el actor: aquí no se mira quién pide.
+ */
+export function abrirDisputaDeProveedor(request: MockRequest) {
+  const s = solicitudes.get(request.params['id']!);
+  if (s === undefined) return notFound();
+  solicitudes.actualizar(s.id, { hasOpenDispute: true });
+  return {
+    status: 201,
+    body: {
+      id: nuevoId('dispute'),
+      disputeType: c('APPEAL', 'Apelación'),
+      disputeReason: c('COVERAGE', 'Discrepancia de cobertura'),
+      status: c('OPEN', 'Abierta'),
+      submittedAt: ahora(),
+      filingDeadline: iso(30),
+    },
+  };
 }
