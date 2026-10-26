@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "umbrales": {
+    "fotoMinBytes": 8192
+  },
+  "viewportsClaros": ["375", "768", "1440"],
+  "viewportOscuro": "1440",
+  "comunes": {
+    "codigo": [
+      "src/styles.css",
+      "src/styles",
+      "src/index.html",
+      "src/app/app.routes.ts",
+      "src/app/core/navigation",
+      "src/app/core/layout",
+      "src/app/shared/components",
+      "src/app/features/shell-layout",
+      "playwright/corr-evidencia.spec.ts",
+      "playwright/corr-rutas.json",
+      "playwright/support/simulador.ts"
+    ],
+    "excluir": [
+      ":(exclude,glob)**/*.spec.ts",
+      ":(exclude,glob)**/*.test.*",
+      ":(exclude,glob)**/*.generated.ts",
+      ":(exclude)src/app/features/component-stock"
+    ]
+  },
+  "regresion": {
+    "exigidas": ["typecheck", "lint-dirigido", "specs-dirigidos", "build", "suite", "route-health"]
+  },
+  "decisiones": [],
+  "carriles": {
+    "31": {
+      "titulo": "Retirar la pantalla «Consulta médica»",
+      "actores": { "medica": "31" },
+      "codigo": ["src/app/features/dashboard", "src/app/features/agenda"],
+      "muta": false
+    },
+    "32": {
+      "titulo": "«Mi consultorio propio» en Administración",
+      "actores": { "medica": "32" },
+      "codigo": ["src/app/features/practice", "src/app/features/dashboard", "src/app/features/account/my-profile"],
+      "muta": false
+    },
+    "33": {
+      "titulo": "«Mis organizaciones» dentro de «Organización médica»",
+      "actores": { "medica": "33" },
+      "codigo": ["src/app/features/admin/medical-organization"],
+      "muta": true
+    },
+    "34": {
+      "titulo": "Auditoría global de la regla visual (tres actores)",
+      "actores": { "medica": "34", "paciente": "34-paciente", "administrador": "34-administrador" },
+      "codigo": ["src/app/features"],
+      "inventarioGenerado": true,
+      "premium": true,
+      "muta": false
+    },
+    "35": {
+      "titulo": "Centro de notificaciones con pestañas",
+      "actores": { "medica": "35" },
+      "codigo": ["src/app/features/notifications"],
+      "muta": false
+    },
+    "36": {
+      "titulo": "Verificaciones de identidad unificadas",
+      "actores": { "medica": "36" },
+      "codigo": ["src/app/features/identity-verification", "src/app/features/identity-assurance"],
+      "muta": false
+    },
+    "37": {
+      "titulo": "Perfil médico en lectura",
+      "actores": { "medica": "37" },
+      "codigo": ["src/app/features/account/my-profile"],
+      "muta": false
+    },
+    "38": {
+      "titulo": "Editor del perfil médico con campos del alta",
+      "actores": { "medica": "38" },
+      "codigo": [
+        "src/app/features/account/my-profile",
+        "src/app/features/auth/register-practitioner",
+        "src/app/features/auth/shared-registration"
+      ],
+      "muta": true
+    },
+    "39": {
+      "titulo": "Credenciales con adjunto",
+      "actores": { "medica": "39" },
+      "codigo": [
+        "src/app/features/account/my-profile/practitioner-profile-edit",
+        "src/app/features/auth/shared-registration"
+      ],
+      "muta": true
+    },
+    "40": {
+      "titulo": "Sacar la vitrina «perfil público» del editor",
+      "actores": { "medica": "40" },
+      "codigo": [
+        "src/app/features/account/my-profile",
+        "src/app/features/public-profile",
+        "src/app/features/directory"
+      ],
+      "muta": false
+    }
+  }
+}
