@@ -46,8 +46,13 @@
   gap: var(--sp-4);
 }
 
+/* Una columna explícita de `minmax(0, 1fr)`: la implícita es `auto`, que crece
+   hasta el ancho mínimo de su contenido. Un desplegable con una opción larga
+   elegida («S.R.L. · Sociedad de Responsabilidad Limitada») empujaba así el
+   campo —y los de abajo— fuera de la tarjeta a 390 px. */
 .paginated-form__campos {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
 }
 

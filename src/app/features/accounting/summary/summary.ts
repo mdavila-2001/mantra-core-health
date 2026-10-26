@@ -22,6 +22,13 @@ import {
   unavailableMessage,
 } from '../../../core/data-access/simulator-only';
 import { SimpleAccounting } from '../records/records';
+import {
+  VERSION_HELP,
+  VERSION_OPTIONS,
+  saveVersion,
+  savedVersion,
+  type AccountingVersion,
+} from '../accounting-version';
 import type {
   BalanceSheet,
   FinancialStatementLine,
@@ -44,6 +51,7 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -230,6 +238,7 @@ interface Dinero {
     PageHeader,
     RouterLink,
     SectionHeading,
+    SegmentedControl,
     Select,
     Tab,
     Tabs,
@@ -260,6 +269,22 @@ export class Summary {
   readonly tab = signal(0);
   /** Subpestañas del Resumen: 0 = Movimientos · 1 = Pendientes · 2 = Patrimonio. */
   readonly subtab = signal(0);
+
+  /**
+   * Doctor o Contador (26/10/2026): una sola llave para toda la pantalla. La
+   * versión Doctor es la de por omisión; la Contador suma lo que sólo lleva
+   * quien tiene los libros. Es lo que se ve, no un permiso: la API es quien
+   * autoriza.
+   */
+  readonly version = signal<AccountingVersion>(savedVersion());
+  readonly isAccountant = computed(() => this.version() === 'contador');
+  protected readonly versionOptions = VERSION_OPTIONS;
+  protected readonly versionHelp = computed(() => VERSION_HELP[this.version()]);
+
+  protected chooseVersion(version: AccountingVersion): void {
+    this.version.set(version);
+    saveVersion(version);
+  }
   /** La contabilidad simple no está en la API real: sólo en la maqueta. */
   protected readonly simpleAccountingAvailable = simulatorAvailable();
   protected readonly simpleAccountingUnavailable = unavailableMessage('Los registros de la contabilidad simple');

@@ -404,7 +404,8 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
     // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
     // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». CM-11 suma
-    // «Configurar centro médico», sólo para una organización `HOSPITAL`.
+    // «Configurar centro médico», sólo para una organización médica: los
+    // cinco tipos del alta pública (`MEDICAL_ORGANIZATION_TYPES`).
     // P34 (26/10/2026) suma «Horario y turnos» a la farmacia.
     expect(flagged.map((s) => s.path)).toEqual([
       'administration/medical-center-setup',
@@ -430,7 +431,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       const tipos = section.path.includes('pharmacy')
         ? ['PHARMACY']
         : section.path.includes('medical-center')
-          ? ['HOSPITAL']
+          ? ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']
           : ['DIAGNOSTIC_CENTER'];
       expect(section.onlyForTenantTypes, section.path).toEqual(tipos);
     }
@@ -441,6 +442,15 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(queue, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
     expect(isVisibleTo(queue, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
     expect(isVisibleTo(queue, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
+  });
+
+  it('«Configurar centro médico» la ve toda organización médica, y no una farmacia ni un laboratorio', () => {
+    const setup = APP_SECTIONS.find((s) => s.path === 'administration/medical-center-setup')!;
+    for (const tipo of ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']) {
+      expect(isVisibleTo(setup, ['USER'], ['t-1'], tipo), tipo).toBe(true);
+    }
+    expect(isVisibleTo(setup, ['USER'], ['t-1'], 'PHARMACY')).toBe(false);
+    expect(isVisibleTo(setup, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 });
 
