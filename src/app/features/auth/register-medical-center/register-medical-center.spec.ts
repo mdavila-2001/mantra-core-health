@@ -2,15 +2,22 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
+import { MEDICAL_ORGANIZATION_TYPES } from '../../../core/data-access/iam/medical-center-registration.client';
 import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-center';
 
 const RUTA_ALTA = '/iam/auth/register-organization';
 
+const DESTINO_TIPO = 'directory.tenants.tenant_type_concept_id';
+
+/** El catálogo `tenant-type` como lo publica la API, con tipos que no son médicos. */
+const TIPOS_PUBLICADOS = ['PROVIDER', 'HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'PHARMACY', 'PAYER', 'HEALTH_OTHER'];
+
 const CATALOGOS: Record<string, { code: string; conceptId: string }[]> = {
+  [DESTINO_TIPO]: TIPOS_PUBLICADOS.map((code) => ({ code, conceptId: `tt-${code}` })),
   'directory.tenants.country_concept_id': [{ code: 'BO', conceptId: 'c-bo' }],
   'profiles.jurisdiction_authorizations.jurisdiction_concept_id': [
     { code: 'JURISDICTION_NATIONAL', conceptId: 'j-nac' },
@@ -22,18 +29,24 @@ describe('RegisterMedicalCenter', () => {
   let http: HttpTestingController;
   let navegaciones: string[];
   let catalogoCaido: boolean;
+  /** Los códigos del catálogo de tipos; `null` hace fallar su lectura. */
+  let tiposDelCatalogo: readonly string[] | null;
 
   /** Acceso al estado protegido, que la plantilla usa y el spec necesita leer. */
   interface Interno {
     registered: () => boolean;
     errorMessage: () => string | null;
-    paginas: () => readonly { campos: readonly unknown[] }[];
+    paginas: () => readonly {
+      titulo: string;
+      campos: readonly { key: string; options?: readonly { value: string; label: string }[] }[];
+    }[];
   }
   const interno = (): Interno => fixture.componentInstance as unknown as Interno;
 
   beforeEach(async () => {
     navegaciones = [];
     catalogoCaido = false;
+    tiposDelCatalogo = TIPOS_PUBLICADOS;
 
     await TestBed.configureTestingModule({
       imports: [RegisterMedicalCenter],
@@ -44,8 +57,14 @@ describe('RegisterMedicalCenter', () => {
         {
           provide: SystemContextClient,
           useValue: {
-            dynamicEnum: (destino: string) =>
-              of({ options: catalogoCaido ? [] : (CATALOGOS[destino] ?? []) }),
+            dynamicEnum: (destino: string) => {
+              if (destino === DESTINO_TIPO) {
+                return tiposDelCatalogo === null
+                  ? throwError(() => new Error('catálogo caído'))
+                  : of({ options: tiposDelCatalogo.map((code) => ({ code, conceptId: `tt-${code}` })) });
+              }
+              return of({ options: catalogoCaido ? [] : (CATALOGOS[destino] ?? []) });
+            },
           },
         },
         {
@@ -70,8 +89,9 @@ describe('RegisterMedicalCenter', () => {
 
   afterEach(() => http.verify());
 
-  function completar(): void {
+  function completar(tenantType = 'HOSPITAL'): void {
     fixture.componentInstance.form.setValue({
+      tenantType,
       legalName: 'Centro Médico Norte S.R.L.',
       legalEntityType: 'SRL',
       ownerName: 'Marta Rojas',
@@ -80,7 +100,17 @@ describe('RegisterMedicalCenter', () => {
     });
   }
 
-  it('envía el tipo de salud existente con país y jurisdicción resueltos por código', () => {
+  /** Las opciones del tipo de institución que la pantalla ofrece. */
+  const opcionesDeTipo = () =>
+    interno().paginas()[0]!.campos.find((campo) => campo.key === 'tenantType')?.options ?? [];
+
+  /** Vuelve a armar la pantalla, para que lea el catálogo con otro estado. */
+  async function rearmar(): Promise<void> {
+    fixture = TestBed.createComponent(RegisterMedicalCenter);
+    await fixture.whenStable();
+  }
+
+  it('envía el tipo elegido con país y jurisdicción resueltos por código', () => {
     completar();
     fixture.componentInstance.submit();
 
@@ -99,20 +129,94 @@ describe('RegisterMedicalCenter', () => {
     req.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: true });
   });
 
+  it.each([
+    ['HOSPITAL', 'Hospital'],
+    ['CLINIC', 'Clínica'],
+    ['MEDICAL_OFFICE', 'Consultorio médico'],
+    ['NURSING', 'Centro de enfermería'],
+    ['HEALTH_OTHER', 'Otra institución de salud'],
+  ])('«%s» viaja con su código en tenantType y se rotula «%s»', (codigo, rotulo) => {
+    expect(opcionesDeTipo()).toContainEqual({ value: codigo, label: rotulo });
+
+    completar(codigo);
+    fixture.componentInstance.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    expect(req.request.body.organization.tenantType).toBe(codigo);
+    req.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
+  });
+
+  it('ofrece los cinco tipos médicos del catálogo, en orden, y ninguno ajeno', () => {
+    expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
+  });
+
+  it('un tipo que la API no publica en su catálogo no se ofrece', async () => {
+    tiposDelCatalogo = ['HOSPITAL', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER', 'PHARMACY'];
+    await rearmar();
+
+    expect(opcionesDeTipo().map((o) => o.value)).toEqual([
+      'HOSPITAL',
+      'MEDICAL_OFFICE',
+      'NURSING',
+      'HEALTH_OTHER',
+    ]);
+  });
+
+  it('si el catálogo de tipos no se puede leer, ofrece la lista tipada entera', async () => {
+    tiposDelCatalogo = null;
+    await rearmar();
+
+    expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
+  });
+
+  it('sin tipo de institución no sale a la red y lo marca', () => {
+    completar('');
+    fixture.componentInstance.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(fixture.componentInstance.form.controls.tenantType.touched).toBe(true);
+    expect(fixture.componentInstance.form.controls.tenantType.hasError('required')).toBe(true);
+  });
+
+  it('un código que no es de organización médica no se envía', () => {
+    completar('PHARMACY');
+    fixture.componentInstance.submit();
+
+    http.expectNone(RUTA_ALTA);
+  });
+
   it('con campos obligatorios vacíos no sale a la red y los marca', () => {
     fixture.componentInstance.submit();
 
     http.expectNone(RUTA_ALTA);
+    expect(fixture.componentInstance.form.controls.tenantType.touched).toBe(true);
     expect(fixture.componentInstance.form.controls.legalName.touched).toBe(true);
     expect(fixture.componentInstance.form.controls.password.touched).toBe(true);
   });
 
-  it('se sirve de a cuatro campos como tope: el centro y la cuenta', () => {
+  it('se sirve de a cuatro campos como tope: la organización y la cuenta', () => {
     const paginas = interno().paginas();
 
     expect(paginas).toHaveLength(2);
-    expect(paginas.map((p) => p.campos.length)).toEqual([2, 3]);
+    expect(paginas.map((p) => p.titulo)).toEqual(['La organización', 'Su cuenta']);
+    expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
+      ['tenantType', 'legalName', 'legalEntityType'],
+      ['ownerName', 'email', 'password'],
+    ]);
     expect(Math.max(...paginas.map((p) => p.campos.length))).toBeLessThanOrEqual(4);
+  });
+
+  it('la razón social admite 300 caracteres y rechaza 301, como la API', () => {
+    const razonSocial = fixture.componentInstance.form.controls.legalName;
+    razonSocial.setValue('A'.repeat(300));
+    expect(razonSocial.valid).toBe(true);
+    razonSocial.setValue('A'.repeat(301));
+    expect(razonSocial.hasError('maxlength')).toBe(true);
+
+    // El mensaje dice el tope, no «escriba la razón social»: el campo no está vacío.
+    razonSocial.markAsTouched();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No puede pasar de 300 caracteres.');
   });
 
   it('una contraseña corta no se envía', () => {
@@ -123,7 +227,7 @@ describe('RegisterMedicalCenter', () => {
     http.expectNone(RUTA_ALTA);
   });
 
-  it('al terminar dice que el centro queda pendiente de verificación', () => {
+  it('al terminar dice que la organización queda pendiente de verificación', () => {
     completar();
     fixture.componentInstance.submit();
     http

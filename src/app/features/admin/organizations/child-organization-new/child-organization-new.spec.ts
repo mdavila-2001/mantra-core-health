@@ -68,8 +68,15 @@ describe('ChildOrganizationNew', () => {
       code: 'FILIAL-NORTE',
       legalName: 'Filial Norte S.R.L.',
       tipo: null,
+      pais: null,
+      jurisdiccion: null,
+      administrador: ADMIN,
     });
-    crudo<{ set: (v: ReferenceOption) => void }>('administrador').set(ADMIN);
+  }
+
+  /** Lo elegido en los buscadores vive en el grupo: así lo valida el motor. */
+  function pick(valores: Record<string, ReferenceOption | null>): void {
+    interno<{ patchValue: (v: object) => void }>('form').patchValue(valores);
   }
 
   it('manda el tipo elegido, que no se hereda de la madre', () => {
@@ -77,8 +84,7 @@ describe('ChildOrganizationNew', () => {
     // madre sería adivinar, y el contrato lo exige por eso.
     completar();
     interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('PHARMACY');
-    crudo<{ set: (v: ReferenceOption) => void }>('pais').set(PAIS);
-    crudo<{ set: (v: ReferenceOption) => void }>('jurisdiccion').set(JURISDICCION);
+    pick({ pais: PAIS, jurisdiccion: JURISDICCION });
     interno<() => void>('submit')();
 
     const pedido = http.expectOne(`/tenants/${TENANT_ID}/child-tenants`);
@@ -128,11 +134,49 @@ describe('ChildOrganizationNew', () => {
       code: 'FILIAL-NORTE',
       legalName: 'Filial Norte S.R.L.',
       tipo: null,
+      pais: null,
+      jurisdiccion: null,
+      administrador: null,
     });
     interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('PAYER');
     interno<() => void>('submit')();
 
     http.expectNone(`/tenants/${TENANT_ID}/child-tenants`);
     expect(crudo<() => boolean>('adminFaltante').call(fixture.componentInstance)).toBe(true);
+  });
+  it('ofrece «Clínica» y la manda como CLINIC, con país y jurisdicción', () => {
+    const opciones = crudo<readonly { value: string; label: string }[]>('opcionesDeTipo');
+    expect(opciones).toContainEqual({ value: 'CLINIC', label: 'Clínica' });
+
+    completar();
+    interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('CLINIC');
+    pick({ pais: PAIS, jurisdiccion: JURISDICCION });
+    interno<() => void>('submit')();
+
+    const req = http.expectOne(`/tenants/${TENANT_ID}/child-tenants`);
+    expect(req.request.body).toEqual({
+      code: 'FILIAL-NORTE',
+      legalName: 'Filial Norte S.R.L.',
+      adminUserId: 'u-1',
+      tenantType: 'CLINIC',
+      countryConceptId: 'c-bo',
+      jurisdictionConceptId: 'c-jur-bo',
+    });
+    req.flush(RESPUESTA);
+  });
+
+  it('una clínica sin jurisdicción no se envía y el control lo marca', () => {
+    completar();
+    interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('CLINIC');
+    pick({ pais: PAIS });
+    interno<() => void>('submit')();
+
+    http.expectNone(`/tenants/${TENANT_ID}/child-tenants`);
+    expect(crudo<() => boolean>('jurisdiccionFaltante').call(fixture.componentInstance)).toBe(true);
+    const jurisdiccion = interno<{ get: (n: string) => { enabled: boolean; errors: object | null } }>(
+      'form',
+    ).get('jurisdiccion');
+    expect(jurisdiccion.enabled).toBe(true);
+    expect(jurisdiccion.errors).toEqual({ required: true });
   });
 });

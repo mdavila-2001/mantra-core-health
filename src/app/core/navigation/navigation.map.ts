@@ -1,3 +1,4 @@
+import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/iam/medical-center-registration.client';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
@@ -1081,13 +1082,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M14 practice',
   },
   {
-    // CM-11 · la organización registrada como centro médico (`HOSPITAL`) abre su
-    // práctica y su primera sede. Cuelga de `administration/` como el resto de
-    // la configuración: una raíz propia se iría al proxy. La API decide quién
-    // puede (membresía OWNER/ADMIN de esa organización y organización
+    // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
+    // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al
+    // proxy. La API decide quién puede (membresía OWNER/ADMIN de esa organización
     // verificada); acá sólo se ofrece la puerta a quien tiene ese tipo de cuenta.
     path: 'administration/medical-center-setup',
-    onlyForTenantTypes: ['HOSPITAL'],
+    onlyForTenantTypes: MEDICAL_ORGANIZATION_TYPES,
     roles: [ANY_ROLE],
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],

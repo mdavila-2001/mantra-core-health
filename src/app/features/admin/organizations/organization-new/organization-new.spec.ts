@@ -79,11 +79,22 @@ describe('OrganizationNew', () => {
       timeZone: '',
     });
     interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PHARMACY' });
-    crudo<{ set: (v: unknown) => void }>('owner').set(OWNER);
+    // Owner, país y jurisdicción se eligen en buscadores, pero viven en el
+    // grupo: es lo que deja al motor validarlos página por página.
     // Una farmacia es territorial: sin país y jurisdicción el backend la
     // rechaza con 422, así que el formulario los exige.
-    crudo<{ set: (v: unknown) => void }>('pais').set(PAIS);
-    crudo<{ set: (v: unknown) => void }>('jurisdiccion').set(JURISDICCION);
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      owner: OWNER,
+      pais: PAIS,
+      jurisdiccion: JURISDICCION,
+    });
+  }
+
+  /** Un control del grupo, por nombre. */
+  function control(nombre: string): { valid: boolean; enabled: boolean; errors: object | null } {
+    return interno<{ get: (n: string) => { valid: boolean; enabled: boolean; errors: object | null } }>(
+      'form',
+    ).get(nombre);
   }
 
   function enviar() {
@@ -96,7 +107,7 @@ describe('OrganizationNew', () => {
     enviar();
 
     interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PHARMACY' });
-    crudo<{ set: (v: unknown) => void }>('owner').set(null);
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ owner: null });
     enviar();
 
     // El `http.verify()` del afterEach falla si algo salió a la red.
@@ -125,7 +136,7 @@ describe('OrganizationNew', () => {
 
   it('un tipo territorial sin país no se envía', () => {
     completar();
-    crudo<{ set: (v: unknown) => void }>('pais').set(null);
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ pais: null });
     enviar();
 
     expect(interno<() => { status: string }>('state')().status).toBe('ready');
@@ -251,5 +262,85 @@ describe('OrganizationNew', () => {
 
     // `expectOne` falla si hubo dos.
     http.expectOne('/admin/tenants').flush(RESPUESTA);
+  });
+  /**
+   * `CLINIC` (Clínica) llegó con la API que lo agrega a `CreateTenantDto` y lo
+   * declara territorial: se ofrece después de «Hospital», como en el alta
+   * pública, y viaja con país y jurisdicción.
+   */
+  it('ofrece «Clínica» después de «Hospital» en el selector de tipo', () => {
+    const opciones = crudo<readonly { value: string; label: string }[]>('opcionesDeTipo');
+    const valores = opciones.map((o) => o.value);
+
+    expect(opciones).toContainEqual({ value: 'CLINIC', label: 'Clínica' });
+    expect(valores.indexOf('CLINIC')).toBe(valores.indexOf('HOSPITAL') + 1);
+  });
+
+  it('una clínica viaja con tenantType CLINIC, país y jurisdicción', () => {
+    completar({ code: 'CLINICA-NORTE', legalName: 'Clínica Norte S.R.L.' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'CLINIC' });
+    enviar();
+
+    const req = http.expectOne('/admin/tenants');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      code: 'CLINICA-NORTE',
+      legalName: 'Clínica Norte S.R.L.',
+      ownerUserId: 'u-1',
+      tenantType: 'CLINIC',
+      countryConceptId: 'c-pe',
+      jurisdictionConceptId: 'c-jur-bo',
+    });
+
+    req.flush({ ...RESPUESTA, code: 'CLINICA-NORTE', legalName: 'Clínica Norte S.R.L.' });
+  });
+
+  it('una clínica sin jurisdicción no se envía y el campo dice qué falta', () => {
+    completar();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      tipo: 'CLINIC',
+      jurisdiccion: null,
+    });
+    enviar();
+
+    // `http.verify()` del afterEach: nada salió a la red.
+    expect(interno<() => { status: string }>('state')().status).toBe('ready');
+    expect(interno<() => boolean>('jurisdiccionFaltante')()).toBe(true);
+    // El control vive en el grupo y está encendido para un tipo territorial:
+    // es lo que hace que el motor bloquee «Siguiente» en «Dónde opera».
+    expect(control('jurisdiccion').enabled).toBe(true);
+    expect(control('jurisdiccion').errors).toEqual({ required: true });
+
+    const wherePage = interno<() => readonly { titulo: string; campos: readonly { key: string; mensajeDeError?: string }[] }[]>(
+      'paginas',
+    )().find((p) => p.titulo === 'Dónde opera');
+    expect(wherePage?.campos.find((c) => c.key === 'jurisdiccion')?.mensajeDeError).toBe(
+      'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
+    );
+  });
+
+  it('un tipo no territorial apaga país y jurisdicción: no lo bloquean ni viajan', () => {
+    completar();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      tipo: 'BROKER',
+      pais: null,
+      jurisdiccion: null,
+      brokerCode: 'CORR-1',
+      licenseNumber: 'LIC-9',
+    });
+
+    expect(control('pais').enabled).toBe(false);
+    expect(control('jurisdiccion').enabled).toBe(false);
+
+    enviar();
+    const req = http.expectOne('/admin/tenants');
+    expect(req.request.body).toEqual({
+      code: 'FARMACIA-SUR',
+      legalName: 'Farmacia del Sur S.R.L.',
+      ownerUserId: 'u-1',
+      tenantType: 'BROKER',
+      broker: { brokerCode: 'CORR-1', licenseNumber: 'LIC-9' },
+    });
+    req.flush(RESPUESTA);
   });
 });

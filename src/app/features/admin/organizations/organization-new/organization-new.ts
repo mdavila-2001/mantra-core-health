@@ -35,6 +35,7 @@ import { CustomField } from '../../../../shared/components/organisms/paginated-f
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { searchConceptOptions } from '../concept-search';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
 
 /** Largos que declara `CreateTenantDto`. */
@@ -67,6 +68,8 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  * Y **se quedan**, ahora que `dynamic-enums` existe. Se comparó (2026-08-11,
  * contra la API viva) `directory.tenants.tenant_type_concept_id` con la lista
  * de `CreateTenantDto`: **los diez códigos coinciden, en los dos sentidos**.
+ * El 2026-10-26 la API sumó `CLINIC` (Clínica) a los dos lados y a sus tipos
+ * territoriales; la lista lo sigue: son once.
  *
  * Reemplazarla por una lectura habría cambiado una lista tipada por una obtenida
  * en tiempo de ejecución, y esa lista **no es sólo un selector**: alimenta
@@ -82,7 +85,7 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  *
  * ## País y jurisdicción se ofrecen porque sin ellos no hay alta
  *
- * Verificado contra la API viva: para los ocho tipos territoriales el backend
+ * Verificado contra la API viva: para los nueve tipos territoriales el backend
  * responde `422 · «exige país y jurisdicción»`. Se resuelven con un buscador
  * sobre la búsqueda de conceptos de `terminology` — el mismo trato que
  * cualquier referencia: se elige una etiqueta, se guarda un uuid.
@@ -211,6 +214,13 @@ export class OrganizationNew {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_LICENCIA)],
     }),
+
+    /* -- Buscadores (`custom`): en el grupo para que el motor los valide por
+       página. Como señales sueltas, una clínica sin jurisdicción llegaba al
+       final y «Registrar» no hacía nada, sin mensaje (2026-10-26). -------- */
+    pais: new FormControl<ReferenceOption | null>(null, [Validators.required]),
+    jurisdiccion: new FormControl<ReferenceOption | null>(null, [Validators.required]),
+    owner: new FormControl<ReferenceOption | null>(null, [Validators.required]),
   });
 
   constructor() {
@@ -241,9 +251,13 @@ export class OrganizationNew {
       if (tipo === 'BROKER') control.enable({ emitEvent: false });
       else control.disable({ emitEvent: false });
     }
+    const territorial = tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
+    for (const key of ['pais', 'jurisdiccion'] as const) {
+      const control = this.form.controls[key];
+      if (territorial) control.enable({ emitEvent: false });
+      else control.disable({ emitEvent: false });
+    }
   }
-
-
 
   /** El tipo elegido, como señal, para que las páginas reaccionen a él. */
   protected readonly tipo = toSignal(this.form.controls.tipo.valueChanges, {
@@ -323,6 +337,7 @@ export class OrganizationNew {
                   hint: 'Busque por nombre; el código acompaña para distinguir homónimos.',
                   control: 'custom' as const,
                   required: true,
+                  mensajeDeError: 'Elija el país donde opera la organización.',
                 },
                 {
                   key: 'jurisdiccion',
@@ -330,6 +345,8 @@ export class OrganizationNew {
                   hint: 'La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO».',
                   control: 'custom' as const,
                   required: true,
+                  mensajeDeError:
+                    'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
                 },
               ],
             },
@@ -407,6 +424,7 @@ export class OrganizationNew {
             hint: 'Busque por nombre o correo. Debe existir antes del alta.',
             control: 'custom' as const,
             required: true,
+            mensajeDeError: 'Elija el usuario que queda como owner.',
           },
         ],
       },
@@ -446,11 +464,15 @@ export class OrganizationNew {
 
   /* ---- país y jurisdicción: obligatorios para los tipos territoriales ---- */
 
-  protected readonly pais = signal<ReferenceOption | null>(null);
+  protected readonly pais = toSignal(this.form.controls.pais.valueChanges, {
+    initialValue: null,
+  });
   protected readonly candidatosPais = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoPais = signal(false);
 
-  protected readonly jurisdiccion = signal<ReferenceOption | null>(null);
+  protected readonly jurisdiccion = toSignal(this.form.controls.jurisdiccion.valueChanges, {
+    initialValue: null,
+  });
   protected readonly candidatosJurisdiccion = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoJurisdiccion = signal(false);
 
@@ -462,52 +484,30 @@ export class OrganizationNew {
   );
 
   protected buscarPais(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosPais, this.buscandoPais);
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosPais,
+      this.buscandoPais,
+    );
   }
 
   protected buscarJurisdiccion(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosJurisdiccion, this.buscandoJurisdiccion);
-  }
-
-  /**
-   * Busca conceptos y los traduce a opciones, con el **código como pista**:
-   * la búsqueda es sobre el catálogo entero —estas dos columnas no tienen
-   * binding en `dynamic-enums`, comprobado— así que «Bolivia» también trae la
-   * moneda: el código `JUR_BO`
-   * contra `BOB` es lo que permite elegir el correcto.
-   */
-  private buscarConcepto(
-    texto: string,
-    destino: { set: (opciones: readonly ReferenceOption[]) => void },
-    cargando: { set: (valor: boolean) => void },
-  ): void {
-    if (texto === '') {
-      destino.set([]);
-      return;
-    }
-
-    cargando.set(true);
-    this.terminology.searchConcepts({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        destino.set(
-          pagina.items.map((concepto) => ({
-            value: concepto.conceptId,
-            label: concepto.display,
-            hint: concepto.code,
-          })),
-        );
-        cargando.set(false);
-      },
-      error: () => {
-        destino.set([]);
-        cargando.set(false);
-      },
-    });
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosJurisdiccion,
+      this.buscandoJurisdiccion,
+    );
   }
 
   /* ---- owner: se elige, nunca se tipea ---------------------------------- */
 
-  protected readonly owner = signal<ReferenceOption | null>(null);
+  protected readonly owner = toSignal(this.form.controls.owner.valueChanges, {
+    initialValue: null,
+  });
   protected readonly candidatosOwner = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoOwner = signal(false);
 
@@ -579,10 +579,6 @@ export class OrganizationNew {
     });
   }
 
-  protected cambiarTipo(tipo: TenantTypeCode | null): void {
-    this.form.controls.tipo.setValue(tipo);
-  }
-
   protected submit(): void {
     if (this.enviando()) {
       return;
@@ -616,15 +612,9 @@ export class OrganizationNew {
   }
 
   private puedeEnviar(): boolean {
-    if (this.form.invalid || this.tipo() === null || this.owner() === null) {
-      return false;
-    }
-    if (this.esTerritorial() && (this.pais() === null || this.jurisdiccion() === null)) {
-      return false;
-    }
-    // Los bloques por tipo ya entran en `this.form.invalid`: el efecto de
-    // arriba apaga el que no corresponde, y un control apagado no cuenta.
-    return true;
+    // Owner, país, jurisdicción y los bloques por tipo entran en la validez del
+    // grupo: `aplicarTipo` apaga lo que el tipo no pide, y lo apagado no cuenta.
+    return this.form.valid && this.tipo() !== null;
   }
 
   /**

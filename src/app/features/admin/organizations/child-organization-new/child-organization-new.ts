@@ -29,6 +29,7 @@ import { CustomField } from '../../../../shared/components/organisms/paginated-f
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
+import { searchConceptOptions } from '../concept-search';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 
 /** Largos que declara `CreateChildTenantDto`. */
@@ -125,11 +126,43 @@ export class ChildOrganizationNew {
     tipo: new FormControl<TenantTypeCode | null>(null, {
       validators: [Validators.required],
     }),
+
+    /*
+     * Lo que se elige en un buscador vive también en el grupo, por la misma
+     * razón que el tipo: el motor valida un campo `custom` cuando el grupo
+     * tiene un control con su `key`. Como señales sueltas, «Dónde opera» se
+     * daba por completa sin jurisdicción y «Crear sub-organización» no hacía
+     * nada, sin petición ni mensaje. País y jurisdicción se apagan en los
+     * tipos que no son territoriales.
+     */
+    pais: new FormControl<ReferenceOption | null>(null, { validators: [Validators.required] }),
+    jurisdiccion: new FormControl<ReferenceOption | null>(null, {
+      validators: [Validators.required],
+    }),
+    administrador: new FormControl<ReferenceOption | null>(null, {
+      validators: [Validators.required],
+    }),
   });
 
   protected readonly tipo = toSignal(this.form.controls.tipo.valueChanges, {
     initialValue: this.form.controls.tipo.value,
   });
+
+  constructor() {
+    // `valueChanges` y no un `effect`: el cambio de tipo tiene que apagar o
+    // encender país y jurisdicción antes de cualquier envío, no en la cola.
+    this.form.controls.tipo.valueChanges.subscribe((tipo) => this.applyTenantType(tipo));
+    this.applyTenantType(this.form.controls.tipo.value);
+  }
+
+  /** Enciende país y jurisdicción sólo para los tipos territoriales. */
+  private applyTenantType(tipo: TenantTypeCode | null): void {
+    const territorial = tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
+    for (const control of [this.form.controls.pais, this.form.controls.jurisdiccion]) {
+      if (territorial) control.enable({ emitEvent: false });
+      else control.disable({ emitEvent: false });
+    }
+  }
   private readonly enviado = signal(false);
 
   protected readonly opcionesDeTipo: readonly SelectOption<TenantTypeCode>[] =
@@ -197,6 +230,7 @@ export class ChildOrganizationNew {
                   hint: 'Busque por nombre; el código acompaña para distinguir homónimos.',
                   control: 'custom' as const,
                   required: true,
+                  mensajeDeError: 'Elija el país donde opera la sub-organización.',
                 },
                 {
                   key: 'jurisdiccion',
@@ -204,6 +238,8 @@ export class ChildOrganizationNew {
                   hint: 'La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO».',
                   control: 'custom' as const,
                   required: true,
+                  mensajeDeError:
+                    'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
                 },
               ],
             },
@@ -219,6 +255,7 @@ export class ChildOrganizationNew {
             hint: 'Busque por nombre o correo y elija de la lista.',
             control: 'custom' as const,
             required: true,
+            mensajeDeError: 'Elija la cuenta que va a administrarla.',
           },
         ],
       },
@@ -234,7 +271,9 @@ export class ChildOrganizationNew {
 
   /* ---- administrador de la filial: se elige, nunca se tipea -------------- */
 
-  protected readonly administrador = signal<ReferenceOption | null>(null);
+  protected readonly administrador = toSignal(this.form.controls.administrador.valueChanges, {
+    initialValue: this.form.controls.administrador.value,
+  });
   protected readonly candidatosAdmin = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoAdmin = signal(false);
 
@@ -244,11 +283,15 @@ export class ChildOrganizationNew {
 
   /* ---- país y jurisdicción: obligatorios para los tipos territoriales ---- */
 
-  protected readonly pais = signal<ReferenceOption | null>(null);
+  protected readonly pais = toSignal(this.form.controls.pais.valueChanges, {
+    initialValue: this.form.controls.pais.value,
+  });
   protected readonly candidatosPais = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoPais = signal(false);
 
-  protected readonly jurisdiccion = signal<ReferenceOption | null>(null);
+  protected readonly jurisdiccion = toSignal(this.form.controls.jurisdiccion.valueChanges, {
+    initialValue: this.form.controls.jurisdiccion.value,
+  });
   protected readonly candidatosJurisdiccion = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoJurisdiccion = signal(false);
 
@@ -315,47 +358,23 @@ export class ChildOrganizationNew {
   }
 
   protected buscarPais(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosPais, this.buscandoPais);
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosPais,
+      this.buscandoPais,
+    );
   }
 
   protected buscarJurisdiccion(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosJurisdiccion, this.buscandoJurisdiccion);
-  }
-
-  /**
-   * Busca conceptos y los traduce a opciones, con el código como pista.
-   *
-   * @param texto - Lo que se escribió en el buscador.
-   * @param destino - Dónde dejar los candidatos.
-   * @param cargando - Bandera de búsqueda en curso.
-   */
-  private buscarConcepto(
-    texto: string,
-    destino: { set: (opciones: readonly ReferenceOption[]) => void },
-    cargando: { set: (valor: boolean) => void },
-  ): void {
-    if (texto === '') {
-      destino.set([]);
-      return;
-    }
-
-    cargando.set(true);
-    this.terminology.searchConcepts({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        destino.set(
-          pagina.items.map((concepto) => ({
-            value: concepto.conceptId,
-            label: concepto.display,
-            hint: concepto.code,
-          })),
-        );
-        cargando.set(false);
-      },
-      error: () => {
-        destino.set([]);
-        cargando.set(false);
-      },
-    });
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosJurisdiccion,
+      this.buscandoJurisdiccion,
+    );
   }
 
   protected submit(): void {
