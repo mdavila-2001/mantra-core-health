@@ -47,6 +47,12 @@ import {
   ofertaDelCupo,
 } from './service-offerings.handlers';
 
+/** El motivo con el que la API cancela al cambiar el horario (`SCHEDULE_CHANGE_CANCELLATION_REASON`). */
+const MOTIVO_CAMBIO_DE_HORARIO = 'Cambio en el horario de atención del profesional';
+
+/** Cuántas citas vivas nombra la respuesta del retiro (`MAX_BOOKINGS_IN_NOTICE`). */
+const MAX_CITAS_EN_EL_AVISO = 10;
+
 /* ============================================================================
     Agenda: recursos, cupos, reservas, plantillas, bloqueos y lista de espera.
     Las escrituras cambian el estado en memoria, así que un flujo entero
@@ -405,6 +411,10 @@ export function registrarAgenda(router: MockRouter): void {
   router.post('/scheduling/slots/:id/holds', ({ params }) => {
     const cupo = cupos.get(params['id']!);
     if (cupo === undefined) return notFound('Cupo no encontrado');
+    // Cerrado por un bloqueo o conservado de un horario retirado: la API
+    // responde 422 antes de mirar la capacidad (`slotHoldRefusal`).
+    if (cupo.statusConceptId === STATUS['ST-CLOSED'])
+      return preconditionFailed('El slot está bloqueado', { slotId: cupo.id });
     if (cupo.remainingCapacity <= 0)
       return conflict('El cupo ya no tiene lugar', { slotId: cupo.id });
     return {
@@ -1136,41 +1146,117 @@ export function registrarAgenda(router: MockRouter): void {
   });
 
   /**
-   * Retira un horario publicado.
-   *
-   * **Responde 409 con las citas comprometidas**, igual que el contrato: sin
-   * eso la maqueta dejaba retirar cualquier horario y el camino del error —el
-   * que impide mover turnos de pacientes sin avisar— no se podía ni ver ni
-   * probar.
+   * Las citas de un horario como las ve el retiro: las que se pueden cancelar
+   * (confirmadas y solicitudes sin responder) y las de pacientes ya recibidos,
+   * que lo frenan. Igual que `BlockedBookingsCanceller.describe` de la API: sin
+   * filtro de fecha.
    */
-  router.delete('/scheduling/templates/:id', ({ params }) => {
+  function citasDelHorario(templateId: string) {
+    const delHorario = new Map(
+      cupos.filtrar((c) => c.scheduleTemplateId === templateId).map((c) => [c.id, c]),
+    );
+    const deSusCupos = reservas.filtrar((r) => delHorario.has(r.bookableSlotId));
+    const describir = (r: ReservaSimulada) => {
+      const cupo = delHorario.get(r.bookableSlotId)!;
+      return {
+        bookingId: r.id,
+        startAt: cupo.startAt,
+        endAt: cupo.endAt,
+        patientName: r.patientName === '' ? null : r.patientName,
+        pending: estadoEs(r, 'BK-REQUESTED'),
+      };
+    };
+    return {
+      delHorario,
+      deSusCupos,
+      cancelables: deSusCupos.filter((r) => estadoEs(r, 'BK-CONFIRMED', 'BK-REQUESTED')),
+      presentes: deSusCupos.filter((r) => estadoEs(r, 'BK-CHECKED-IN', 'BK-IN-PROGRESS')),
+      describir,
+    };
+  }
+
+  /** `GET /scheduling/templates/:id/live-bookings`: la vista previa del retiro. */
+  router.get('/scheduling/templates/:id/live-bookings', ({ params }) => {
     const t = plantillas.get(params['id']!);
-    if (t === undefined) return notFound();
-    const delHorario = new Set(
-      cupos.filtrar((c) => c.scheduleTemplateId === t.id).map((c) => c.id),
-    );
-    const comprometidas = reservas.filtrar(
-      (r) =>
-        delHorario.has(r.bookableSlotId) &&
-        r.startAt > ahora() &&
-        estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS'),
-    );
-    if (comprometidas.length > 0) {
-      return conflict(
-        `El horario tiene ${comprometidas.length} ${comprometidas.length === 1 ? 'cita comprometida' : 'citas comprometidas'}: resuélvalas antes de cambiarlo.`,
-        { bookingIds: comprometidas.map((r) => r.id) },
-      );
+    if (t === undefined) return notFound('Plantilla no encontrada');
+    const { cancelables, presentes, describir } = citasDelHorario(t.id);
+    return {
+      templateId: t.id,
+      total: cancelables.length + presentes.length,
+      bookings: cancelables.map(describir),
+      present: presentes.map(describir),
+    };
+  });
+
+  /**
+   * Retira un horario publicado — el mismo contrato que la API (P23).
+   *
+   * Antes respondía **409** con cualquier cita comprometida; la API dejó de
+   * hacerlo en M4 (26/09/2026) y la maqueta seguía frenando, así que «Cambiar mi
+   * horario» era imposible justo acá, con 42 citas de demostración. Ahora:
+   *
+   * - Por omisión **conserva** las citas: sus cupos quedan, cerrados, y la
+   *   respuesta las cuenta en `liveBookings`/`liveBookingIds`.
+   * - Con `?affectedBookings=cancel` cancela las confirmadas y rechaza las
+   *   solicitudes con el motivo «cambio de horario», salvo que haya un paciente
+   *   ya recibido (422, como la API).
+   * - Suelta (borra) los cupos sin ninguna cita, pasada o presente; los que
+   *   tienen historia se conservan **cerrados**: un horario retirado no vuelve a
+   *   ofrecer turnos con su hora y su duración viejas.
+   */
+  router.delete('/scheduling/templates/:id', (request) => {
+    const t = plantillas.get(request.params['id']!);
+    if (t === undefined) return notFound('Plantilla no encontrada');
+
+    let cancelledBookings = 0;
+    if (request.query.get('affectedBookings') === 'cancel') {
+      const { cancelables, presentes } = citasDelHorario(t.id);
+      if (presentes.length > 0) {
+        return preconditionFailed(
+          'Hay un paciente ya recibido en ese rato. Atiéndalo o cancele su cita desde la agenda antes de bloquear.',
+          { resourceId: t.resourceId, bookingIds: presentes.map((r) => r.id) },
+        );
+      }
+      for (const r of cancelables) {
+        const estado = estadoEs(r, 'BK-REQUESTED') ? 'BK-REJECTED' : 'BK-CANCELLED';
+        cambiarEstado(r.id, estado, {
+          statusReason: {
+            reasonText: MOTIVO_CAMBIO_DE_HORARIO,
+            actorKind: 'PROVIDER',
+            toStateConceptId: BOOKING_STATUS[estado]!,
+            changedAt: ahora(),
+          },
+        });
+        const cupo = cupos.get(r.bookableSlotId);
+        if (cupo !== undefined) cupos.actualizar(cupo.id, { remainingCapacity: cupo.capacity });
+      }
+      cancelledBookings = cancelables.length;
+    }
+
+    const { delHorario, deSusCupos } = citasDelHorario(t.id);
+    const conHistoria = new Set(deSusCupos.map((r) => r.bookableSlotId));
+    let releasedSlots = 0;
+    for (const c of delHorario.values()) {
+      if (conHistoria.has(c.id)) {
+        cupos.actualizar(c.id, { statusConceptId: STATUS['ST-CLOSED']! });
+      } else {
+        cupos.borrar(c.id);
+        releasedSlots++;
+      }
     }
     plantillas.actualizar(t.id, { retired: true, statusConceptId: STATUS['ST-ARCHIVED']! });
-    const libres = cupos.filtrar(
-      (c) => c.scheduleTemplateId === t.id && c.remainingCapacity > 0 && c.startAt > ahora(),
-    );
-    for (const c of libres) cupos.borrar(c.id);
+
+    const vivas = deSusCupos.filter((r) => estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN'));
+    const muestra = vivas.slice(0, MAX_CITAS_EN_EL_AVISO);
     return {
       id: t.id,
       statusConceptId: STATUS['ST-ARCHIVED']!,
-      releasedSlots: libres.length,
-      keptSlots: cupos.filtrar((c) => c.scheduleTemplateId === t.id).length,
+      releasedSlots,
+      keptSlots: conHistoria.size,
+      liveBookings: vivas.length,
+      liveBookingIds: muestra.map((r) => r.id),
+      truncated: vivas.length > muestra.length,
+      cancelledBookings,
     };
   });
 
@@ -1189,6 +1275,14 @@ export function registrarAgenda(router: MockRouter): void {
     const hasta = new Date(datos.to ?? masMinutos(ahora(), 60 * 24 * 14));
     let created = 0;
     let skipped = 0;
+    let omittedByCommitments = 0;
+    // Las citas vivas del profesional: un turno nuevo que las pisa no se genera
+    // (`commitments` de la API). Es lo que impide que el horario nuevo ofrezca
+    // las 08:00 encima de la cita que el retiro del viejo conservó (P23).
+    const comprometidas = reservas.filtrar(
+      (r) =>
+        r.resourceId === t.resourceId && estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS'),
+    );
     for (let d = new Date(desde); d <= hasta; d.setDate(d.getDate() + 1)) {
       // TODAS las franjas del día, no la primera: con hora de almuerzo un día
       // son dos franjas (mañana y tarde), igual que en el generador real, que
@@ -1210,10 +1304,23 @@ export function registrarAgenda(router: MockRouter): void {
           const inicio = new Date(d);
           inicio.setHours(Math.floor(m / 60), m % 60, 0, 0);
           const id = uuid(`slot-${t.id}-${inicio.toISOString()}`);
+          const fin = new Date(inicio.getTime() + dur * 60_000).toISOString();
+          if (cupos.has(id)) {
+            skipped++;
+            continue;
+          }
+          if (comprometidas.some((r) => r.startAt < fin && r.endAt > inicio.toISOString())) {
+            omittedByCommitments++;
+            continue;
+          }
+          // Un cupo del mismo instante en otro horario VIGENTE de la agenda. Los
+          // de un horario retirado no cuentan: quedaron cerrados y no se ofrecen.
           if (
-            cupos.has(id) ||
             cupos.filtrar(
-              (c) => c.resourceId === t.resourceId && c.startAt === inicio.toISOString(),
+              (c) =>
+                c.resourceId === t.resourceId &&
+                c.startAt === inicio.toISOString() &&
+                plantillas.get(c.scheduleTemplateId ?? '')?.retired !== true,
             ).length > 0
           ) {
             skipped++;
@@ -1224,7 +1331,7 @@ export function registrarAgenda(router: MockRouter): void {
             resourceId: t.resourceId,
             scheduleTemplateId: t.id,
             startAt: inicio.toISOString(),
-            endAt: new Date(inicio.getTime() + dur * 60_000).toISOString(),
+            endAt: fin,
             capacity: capacidad,
             remainingCapacity: capacidad,
             statusConceptId: STATUS['ST-ACTIVE']!,
@@ -1234,7 +1341,7 @@ export function registrarAgenda(router: MockRouter): void {
         }
       }
     }
-    return { templateId: t.id, created, skipped };
+    return { templateId: t.id, created, skipped, omittedByCommitments };
   });
 
   router.post('/scheduling/resources/:id/shift-slots', (request) => {

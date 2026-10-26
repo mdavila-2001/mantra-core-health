@@ -3055,12 +3055,12 @@ describe('PractitionerProfileEdit', () => {
   });
 
   /**
-   * Lo que el alta pregunta, el editor muestra y nadie puede corregir acá.
+   * Lo que el alta pregunta y el editor muestra, y cuándo no se corrige acá.
    *
-   * «Editar muestre TODOS los campos» (C-05). El documento y su departamento no
-   * se pueden escribir —el contrato del perfil no los acepta—, y hasta el
-   * 21/09/2026 el editor sencillamente no los mostraba: quien venía a
-   * corregirlos no encontraba ni el dato ni el motivo.
+   * «Editar muestre TODOS los campos» (C-05). Hasta el 21/09/2026 el editor no
+   * mostraba el documento: quien venía a corregirlo no encontraba ni el dato ni
+   * el motivo. Desde P28 (26/10/2026) el número se corrige mientras la
+   * identidad no está verificada; verificada, vuelve a ser un renglón fijo.
    *
    * Las pruebas cubren las formas de romperlo: que el dato desaparezca, que
    * alguien le ponga un control, y que alguien lo mande en el `PATCH` creyendo
@@ -3073,13 +3073,60 @@ describe('PractitionerProfileEdit', () => {
       email: 'dra.salas@alovida.mock',
     };
 
-    it('«Datos personales» muestra el documento, sin control para escribirlo', () => {
-      const fixture = montarConVista(CON_IDENTIDAD);
+    it('con la identidad verificada, «Datos personales» muestra el documento sin control para escribirlo, y dice por qué', () => {
+      const fixture = montarConVista({ ...CON_IDENTIDAD, identityVerified: true });
 
       const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-documento"]');
       expect(bloque).not.toBeNull();
       expect(bloque?.textContent).toContain('5414404');
       expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
+      expect(bloque?.querySelector('[data-testid="edicion-documento-bloqueado"]')).not.toBeNull();
+    });
+
+    it('con la identidad sin verificar, el número es un campo con el valor guardado (P28)', () => {
+      const fixture = montarConVista({ ...CON_IDENTIDAD, identityVerified: false });
+
+      const campo = panelAbierto(fixture).querySelector<HTMLInputElement>(
+        '[data-testid="edicion-documento"] input',
+      );
+      expect(campo).not.toBeNull();
+      expect(campo?.value).toBe('5414404');
+    });
+
+    it('corregir el número lo manda en el PATCH, recortado', () => {
+      montarYCargar({ ...CON_IDENTIDAD, identityVerified: false });
+
+      señal<string>('numeroDocumento').set(' 5414405 ');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ nationalId: '5414405' });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('un número vacío o con caracteres que el alta no acepta no se guarda y se marca en su campo', () => {
+      const fixture = montarConVista({ ...CON_IDENTIDAD, identityVerified: false });
+
+      for (const malo of ['', "54'14"]) {
+        señal<string>('numeroDocumento').set(malo);
+        interno<() => void>('guardarPresentacion')();
+        http.expectNone('/profiles/practitioners/me');
+        fixture.detectChanges();
+        const campo = panelAbierto(fixture).querySelector('[data-testid="edicion-documento"] input');
+        expect(campo?.getAttribute('aria-invalid'), malo).toBe('true');
+      }
+    });
+
+    it('con la identidad verificada el número no viaja aunque la señal cambie', () => {
+      montarYCargar({ ...CON_IDENTIDAD, identityVerified: true, sexAtBirth: 'FEMALE' });
+
+      señal<string>('numeroDocumento').set('9999999');
+      señal<string | null>('sexoAlNacer').set('MALE');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ sexAtBirth: 'MALE' });
+      req.flush(PERFIL_BASE);
     });
 
     it('«Contacto» no ofrece celular ni fijo del trabajo (D-03); el correo y la dirección del trabajo sí', () => {
@@ -3118,10 +3165,10 @@ describe('PractitionerProfileEdit', () => {
       req.flush(PERFIL_BASE);
     });
 
-    /* P28 (ID-13): del documento se corrigen el departamento emisor y el sexo al
-       nacer; el número, no. */
+    /* P28 (ID-13): el departamento emisor y el sexo al nacer se corrigen
+       siempre, también con la identidad verificada. */
     it('«Datos personales» ofrece corregir el departamento emisor y el sexo al nacer, fuera del bloque de solo lectura', () => {
-      const fixture = montarConVista({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE' });
+      const fixture = montarConVista({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE', identityVerified: true });
 
       const panel = panelAbierto(fixture);
       expect(panel.querySelector('[data-testid="edicion-datos-del-documento"]')).not.toBeNull();
@@ -3133,7 +3180,7 @@ describe('PractitionerProfileEdit', () => {
       ).toHaveLength(0);
     });
 
-    it('guardar manda sexAtBirth y el departamento sólo si cambiaron, y nunca el número', () => {
+    it('guardar manda sexAtBirth y el departamento sólo si cambiaron, y el número no viaja si no se tocó', () => {
       montarYCargar({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE' });
 
       señal<string | null>('sexoAlNacer').set('MALE');

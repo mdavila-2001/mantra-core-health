@@ -1129,14 +1129,15 @@ export class AgendaCreate {
    * seguía terminando a las 08:30. La cita no acababa a la hora que decía el
    * horario nuevo, que es exactamente lo que se reportó.
    *
-   * Retirar **no borra**: el contrato suelta los cupos libres y conserva los que
-   * tienen una cita detrás. Por eso el retiro va primero y la plantilla nueva
-   * sólo se crea si aquél salió bien; al revés quedarían dos horarios vigentes
-   * sobre la misma agenda.
+   * Retirar **no borra**: el contrato suelta los cupos libres y conserva,
+   * cerrados, los que tienen una cita detrás. Por eso el retiro va primero y la
+   * plantilla nueva sólo se crea si aquél salió bien; al revés quedarían dos
+   * horarios vigentes sobre la misma agenda.
    *
-   * El **409** —el horario tiene citas comprometidas— se muestra tal cual y no
-   * se publica nada: quien atiende tiene que resolver esas citas primero, y
-   * decidirlo por él sería mover turnos de pacientes sin avisar.
+   * Las citas vivas **no frenan** el cambio (P23): antes de retirar se le
+   * pregunta a quien atiende si cancelarlas con aviso o conservarlas, y el
+   * horario nuevo no genera turnos encima de las que se conservan. Un error del
+   * retiro se muestra tal cual y no se publica nada.
    */
   private retirarVigenteYCrear(resourceId: string, policyId: string | null): void {
     const anterior = this.vigente();
