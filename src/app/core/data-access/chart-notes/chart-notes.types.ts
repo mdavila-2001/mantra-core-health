@@ -86,7 +86,10 @@ export interface AppendClinicalNoteVersionInput {
 export interface ListChartNotesParams {
   /** De quién. Obligatorio: no hay listado de notas sin persona. */
   readonly patientProfileId: string;
-  /** Sólo las de esta consulta, si se quiere acotar. */
+  /**
+   * Sólo las de esta consulta, si se quiere acotar. Lo acota el cliente: la
+   * API no acepta este filtro (400), así que se aplica sobre la página leída.
+   */
   readonly encounterId?: string;
   /** Tope. La API aplica 50 si no se pide otro. */
   readonly limit?: number;

@@ -400,8 +400,10 @@ describe('SpecialtyFormBlock', () => {
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
     http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
     const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
-    // Se piden las del encuentro, no todas las de la persona.
-    expect(notas.request.params.get('encounterId')).toBe('enc-1');
+    // Las del encuentro: la API rechaza `encounterId` (400, A3), así que el
+    // pedido no lo lleva y la nota de «enc-otro» de abajo se descarta en el
+    // cliente — eso lo sigue fijando la aserción de lo que se muestra.
+    expect(notas.request.params.has('encounterId')).toBe(false);
     notas.flush({
       items: [
         {
@@ -1732,7 +1734,8 @@ describe('SpecialtyFormBlock', () => {
     function elegirLibre(notasYaRegistradas: readonly Record<string, unknown>[] = []): void {
       interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_FORMULARIO_LIBRE);
       const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
-      expect(notas.request.params.get('encounterId')).toBe('enc-1');
+      // Sin `encounterId`: la API lo rechaza con 400 (A3); se acota en el cliente.
+      expect(notas.request.params.has('encounterId')).toBe(false);
       notas.flush({ items: notasYaRegistradas, limit: 50, truncated: false });
       fixture.detectChanges();
     }
