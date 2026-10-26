@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
-import { PracticeSitesClient } from '../../../core/data-access/practice-sites/practice-sites.client';
+import { HealthcareServicesClient } from '../../../core/data-access/healthcare-services/healthcare-services.client';
 import { RoleAssignmentsClient } from '../../../core/data-access/role-assignments/role-assignments.client';
 import type { RoleAssignmentRow } from '../../../core/data-access/role-assignments/role-assignments.types';
 import { ServicesCatalogClient } from '../../../core/data-access/services-catalog/services-catalog.client';
@@ -55,8 +55,8 @@ describe('PractitionerAffiliations', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: ServicesCatalogClient, useValue: { listPractices: () => of([{ id: 'pr-1', code: 'CMN', name: 'Centro Médico Norte' }]) } },
-        { provide: PracticeSitesClient, useValue: { listSitesOfPractice: () => of([SITE]) } },
-        { provide: RoleAssignmentsClient, useValue: { listForPractice, approve, reject, listPublishedProcedures: () => of([]) } },
+        { provide: HealthcareServicesClient, useValue: { listSites: () => of([SITE]), listOffers: () => of([]) } },
+        { provide: RoleAssignmentsClient, useValue: { listForPractice, approve, reject } },
         { provide: ProfilesClient, useValue: { listPractitioners: () => of({ items: [], nextCursor: null }) } },
       ],
     });
