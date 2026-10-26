@@ -6,6 +6,7 @@
 
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="contacto-form">
   <app-form-field
+    icon="patients"
     label="Nombre de la persona"
     hint="Con quién se contacta a esta persona si hace falta."
     [required]="true"
@@ -19,6 +20,7 @@
   </app-form-field>
 
   <app-form-field
+    icon="calendar"
     label="Fecha de nacimiento"
     hint="Opcional. Ayuda a distinguirla de un homónimo."
   >
