@@ -1,0 +1,12 @@
+DB_NAME=mantra_p44 yarn test:integration test/integration/patient-spending.int-spec.ts
+  console.log
+    P44 limpieza: filas con la marca P44-1ea131bb restantes = 0
+
+      at Object.log (test/integration/patient-spending.int-spec.ts:440:13)
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        14.215 s, estimated 17 s
+Ran all test suites matching test/integration/patient-spending.int-spec.ts.
+EXIT=0
