@@ -85,6 +85,15 @@ export type {
 export { PageHeader } from './page-header/page-header';
 export type { PageHeaderAction } from './page-header/page-header';
 
+/* Relaciones del glosario agrupadas: mapa, ficha y comparador (TAREA-41 F5.5). */
+export { RelationGroups } from './relation-groups/relation-groups';
+export type {
+  RelationColumnFooterContext,
+  RelationColumnView,
+  RelationGroupsTone,
+  RelationNavigation,
+} from './relation-groups/relation-groups.types';
+
 export { MAIN_CONTENT_ID, Shell } from './shell/shell';
 export { NAV_STORAGE_KEY, ShellService } from './shell/shell-service';
 

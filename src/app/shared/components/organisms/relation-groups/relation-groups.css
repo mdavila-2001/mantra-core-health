@@ -1,0 +1,111 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.relation-groups__zone {
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+  min-inline-size: 0;
+}
+
+.relation-groups__heading {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Móvil primero: una columna; se abren solas cuando entran de 14 rem. */
+.relation-groups__columns {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: var(--relation-groups-columns, repeat(auto-fit, minmax(min(100%, 14rem), 1fr)));
+  align-items: start;
+}
+
+.relation-groups__group {
+  display: grid;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-block-start: 3px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+/* La zona se lee también por el borde, nunca sólo por él: cada una tiene título. */
+:host(.relation-groups--findings) .relation-groups__group {
+  border-block-start-color: var(--st-secondary-bd);
+}
+
+:host(.relation-groups--next) .relation-groups__group {
+  border-block-start-color: var(--st-primary-bd);
+}
+
+.relation-groups__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.relation-groups__count {
+  flex: none;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.relation-groups__list {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.relation-groups__neighbor {
+  display: block;
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  line-height: 1.35;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+a.relation-groups__neighbor {
+  color: var(--text-link);
+}
+
+.relation-groups__neighbor:hover {
+  background: var(--bg-hover);
+}
+
+.relation-groups__evidence {
+  padding: 0 var(--sp-3) var(--sp-1);
+}
+
+.relation-groups__empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

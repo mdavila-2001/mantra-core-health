@@ -1063,6 +1063,17 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Comparador diferencial (TAREA-41 F5.3): dos términos lado a lado. Va
+    // antes de `glossary/:conceptId` para no leerse como un término.
+    path: 'glossary/compare',
+    title: `${APP_TITLE} - Comparar términos del glosario`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-compare')
+        .then((m) => m.GlossaryCompare)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un término del glosario. Es ruta y no panel porque un término
     // se comparte: «mirá qué quiere decir esto» es un enlace, y un panel no
     // tiene enlace. Cuelga de `/glossary`, así que el rastro de migas y la

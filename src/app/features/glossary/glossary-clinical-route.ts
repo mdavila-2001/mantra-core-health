@@ -4,7 +4,7 @@ import type {
   GlossaryNeighborhood,
   GlossaryRelationType,
 } from '../../core/data-access/terminology/terminology.types';
-import { compareNeighbors } from './glossary-neighbor-evidence.logic';
+import { compareNeighbors } from '@shared/components/molecules/relation-evidence/relation-evidence.logic';
 
 /* ============================================================================
     La ruta clínica: cómo se reparte el vecindario de un término en columnas.
@@ -38,6 +38,13 @@ export type RouteColumnKey =
   | 'related';
 
 export type RouteZone = 'findings' | 'next' | 'context';
+
+/** Las zonas en el orden en que se leen, con su título: el mismo en el mapa y en la ficha. */
+export const ROUTE_ZONES: readonly { readonly zone: RouteZone; readonly title: string }[] = [
+  { zone: 'findings', title: 'Lo que se observa' },
+  { zone: 'next', title: 'Diagnóstico, estudio y tratamiento' },
+  { zone: 'context', title: 'Más relaciones' },
+];
 
 /** De dónde sale una columna: los grupos que hay que pedir enteros para completarla. */
 export interface RouteGroupRef {

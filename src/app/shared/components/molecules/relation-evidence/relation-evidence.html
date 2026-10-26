@@ -1,0 +1,19 @@
+@if (evidence(); as evidence) {
+  <p class="relation-evidence" [class.relation-evidence--excluded]="evidence.excluded">
+    @if (evidence.strengthPercent !== null) {
+      <span class="relation-evidence__strength" aria-hidden="true">
+        <span class="relation-evidence__bar" [style.inline-size.%]="evidence.strengthPercent"></span>
+      </span>
+    }
+    @if (evidence.frequencyLabel) {
+      <span class="relation-evidence__frequency">{{ evidence.frequencyLabel }}</span>
+    }
+    @if (evidence.tierLabel) {
+      <span
+        class="relation-evidence__seal"
+        tabindex="0"
+        [appTooltip]="evidence.tierDescription ?? evidence.tierLabel"
+      >{{ evidence.tierLabel }}</span>
+    }
+  </p>
+}
