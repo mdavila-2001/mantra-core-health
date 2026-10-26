@@ -7,7 +7,7 @@ import { ChartNotesClient } from './chart-notes.client';
 
 const originalMockBackend = environment.mockBackend;
 
-describe('ChartNotesClient payload compatibility', () => {
+describe('ChartNotesClient payload (P39)', () => {
   let client: ChartNotesClient;
   let http: HttpTestingController;
 
@@ -22,10 +22,11 @@ describe('ChartNotesClient payload compatibility', () => {
     Object.assign(environment, { mockBackend: originalMockBackend });
   });
 
+  // P39: la API declara `entries` en `CreateNoteDto` y `AddVersionDto`, así
+  // que las filas viajan estructuradas y el texto libre no se toca.
   for (const operation of ['create', 'append'] as const) {
-    it(`${operation}: real API preserves text and serializes rows without entries`, () => {
+    it(`${operation}: real API receives the structured rows untouched`, () => {
       const input = {
-        ...(operation === 'create' ? { patientProfileId: 'synthetic-patient' } : {}),
         authorProfileId: 'synthetic-author',
         subjectiveText: 'Synthetic text', objectiveText: 'Existing observation',
         entries: [{ label: 'Synthetic field', value: 'Synthetic value' }],
@@ -36,36 +37,42 @@ describe('ChartNotesClient payload compatibility', () => {
       expect(request.request.method).toBe(operation === 'create' ? 'POST' : 'PUT');
       expect(request.request.body).toEqual({
         ...(operation === 'create' ? { patientProfileId: 'synthetic-patient' } : {}),
-        authorProfileId: 'synthetic-author',
-        subjectiveText: 'Synthetic text', objectiveText: 'Existing observation\nSynthetic field: Synthetic value',
+        ...input,
       });
-      expect(input.entries).toHaveLength(1);
       request.flush({});
     });
   }
 
-  it('omits empty entries without erasing existing objective text', () => {
-    client.createNote({ patientProfileId: 'p', authorProfileId: 'a', entries: [], objectiveText: 'Synthetic' }).subscribe();
-    const request = http.expectOne('/charts/notes');
-    expect(request.request.body).toEqual({ patientProfileId: 'p', authorProfileId: 'a', objectiveText: 'Synthetic' });
-    request.flush({});
-  });
-
-  it('serializes rows when there is no prior objective text', () => {
+  it('does not fold the rows into objectiveText anymore', () => {
     client.createNote({ patientProfileId: 'p', authorProfileId: 'a', entries: [{ label: 'Field', value: 'Value' }] }).subscribe();
     const request = http.expectOne('/charts/notes');
-    expect(request.request.body.objectiveText).toBe('Field: Value');
-    expect(request.request.body).not.toHaveProperty('entries');
+    expect(request.request.body).not.toHaveProperty('objectiveText');
+    expect(request.request.body.entries).toEqual([{ label: 'Field', value: 'Value' }]);
     request.flush({});
   });
 
-  it('preserves the original structured demo payload', () => {
-    Object.assign(environment, { mockBackend: true });
+  it('sends the same body to the simulator and to the real API', () => {
     const input = { patientProfileId: 'p', authorProfileId: 'a', entries: [{ label: 'Field', value: 'Value' }] };
     client.createNote(input).subscribe();
-    const request = http.expectOne('/charts/notes');
-    expect(request.request.body).toBe(input);
-    request.flush({});
+    const real = http.expectOne('/charts/notes');
+    Object.assign(environment, { mockBackend: true });
+    client.createNote(input).subscribe();
+    const simulated = http.expectOne('/charts/notes');
+    expect(simulated.request.body).toEqual(real.request.body);
+    real.flush({});
+    simulated.flush({});
+  });
+
+  it('listNotes keeps the rows of each note as served', () => {
+    let rows: unknown;
+    client.listNotes({ patientProfileId: 'p' }).subscribe((page) => (rows = page.items[0]?.entries));
+    http
+      .expectOne((r) => r.url === '/charts/notes' && r.params.get('patientProfileId') === 'p')
+      .flush({
+        items: [{ noteId: 'n', lifecycleStatusConceptId: 'c', releasedToPatient: false, createdAt: '2026-10-26T00:00:00.000Z', entries: [{ label: 'Field', value: 'Value' }] }],
+        count: 1, limit: 50, nextCursor: null,
+      });
+    expect(rows).toEqual([{ label: 'Field', value: 'Value' }]);
   });
 
   it('signVersion manda el perfil de quien firma: SignVersionDto lo exige (informe B, C5)', () => {

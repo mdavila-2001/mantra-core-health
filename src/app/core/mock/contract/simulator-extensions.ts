@@ -1,5 +1,4 @@
 import { CARE_PLAN_SIMULATOR_EXTENSIONS } from '../../data-access/chart-care-plans/chart-care-plans.types';
-import { CHART_NOTE_SIMULATOR_EXTENSIONS } from '../../data-access/chart-notes/chart-notes.types';
 import {
   FIELD_DEFINITION_SIMULATOR_EXTENSIONS,
   FIELD_DEFINITION_UPDATE_SIMULATOR_EXTENSIONS,
@@ -28,9 +27,6 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // P47 · catálogo de la farmacia (informe B, C1 y C2).
   'POST /pharmacies/:pharmacyId/products': PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
   'PATCH /pharmacies/:pharmacyId/products/:productId': PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
-  // P39 · filas campo/valor de la nota médica (C6).
-  'POST /charts/notes': CHART_NOTE_SIMULATOR_EXTENSIONS,
-  'PUT /charts/notes/:noteId/versions': CHART_NOTE_SIMULATOR_EXTENSIONS,
   // Motivo escrito del plan de cuidados (C7).
   'POST /charts/care-plans': CARE_PLAN_SIMULATOR_EXTENSIONS,
   // Preguntas de cuadrícula del constructor (C8).

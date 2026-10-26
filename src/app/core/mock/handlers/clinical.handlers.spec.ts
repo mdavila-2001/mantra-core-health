@@ -386,6 +386,23 @@ describe('/charts/notes · contrato tras mudar el handler', () => {
     expect(noteList.get(bien.body.noteId)?.entries).toEqual([{ label: 'Peso', value: '68 kg' }]);
   });
 
+  it('rechaza HTML en una fila como la API (P39) y deja pasar «<140»', () => {
+    const conMarcado = call<MockReply>('POST', '/charts/notes', {
+      patientProfileId: PACIENTE.id,
+      entries: [{ label: 'Campo', value: '<b>negrita</b>' }],
+    });
+    expect(conMarcado.status).toBe(400);
+    expect(
+      (conMarcado.body as { details: { violations: readonly string[] } }).details.violations[0],
+    ).toMatch(/^value\b/);
+
+    const comparacion = createNote({
+      patientProfileId: PACIENTE.id,
+      entries: [{ label: 'Presión', value: 'PA < 140 y > 90' }],
+    });
+    expect(comparacion.status).toBe(201);
+  });
+
   it('lista las notas de una persona, firma la vigente y no deja pisar una firmada sin motivo', () => {
     const creada = createNote({
       patientProfileId: PACIENTE.id,
