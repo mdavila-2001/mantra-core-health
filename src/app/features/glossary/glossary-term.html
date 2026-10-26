@@ -367,19 +367,34 @@
             </app-tab>
           }
 
-          @if (gruposDeRelaciones().length > 0) {
+          @if (mostrarRelacionados()) {
             <app-tab label="Relacionados">
               <app-glossary-data-flow [termino]="termino" />
-              @for (grupo of gruposDeRelaciones(); track grupo.label) {
-                <h2 class="termino__subtitulo">{{ grupo.label }}</h2>
-                <ul class="termino__relaciones">
-                  @for (relacion of grupo.relaciones; track relacion.conceptId) {
-                    <li>
-                      <a [routerLink]="['/glossary', relacion.conceptId]">{{ relacion.display }}</a>
-                    </li>
-                  }
-                </ul>
-              }
+              <app-view-state-host [state]="vecindario()" (retry)="recargarRelaciones()">
+                @if (zonasDeRelaciones().length === 0) {
+                  <app-empty-state
+                    title="Sin relaciones publicadas"
+                    description="Este término todavía no tiene relaciones con otros términos del glosario."
+                  />
+                } @else {
+                  <div class="termino__relaciones">
+                    @for (zona of zonasDeRelaciones(); track zona.zone) {
+                      <app-relation-groups
+                        [heading]="zona.title"
+                        [headingId]="'termino-relaciones-' + zona.zone"
+                        [headingLevel]="2"
+                        [tone]="zona.zone"
+                        [columns]="zona.columns"
+                      />
+                    }
+                  </div>
+                  <a
+                    class="termino__mapa-enlace"
+                    [routerLink]="['/glossary/network']"
+                    [queryParams]="{ focus: termino.conceptId }"
+                  >Ver todas sus relaciones en el mapa</a>
+                }
+              </app-view-state-host>
             </app-tab>
           }
 
