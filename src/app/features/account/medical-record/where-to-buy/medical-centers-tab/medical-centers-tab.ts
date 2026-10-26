@@ -33,14 +33,14 @@ const CENTER_LIMIT = 20;
 
 /**
  * Desde dónde se miden las distancias. Es un tipo propio y no el
- * `PuntoDeReferencia` de `where-to-buy.ts`: importarlo sería un ciclo
- * hijo↔padre. Ese tipo es asignable a éste.
+ * `ReferencePoint` de `where-to-buy.route.ts`: la pestaña sólo necesita
+ * esto. Ese tipo es asignable a éste.
  */
 export interface MedicalCentersOrigin {
   readonly lat: number;
   readonly lng: number;
   /** Cómo se llama el punto («su casa», una ciudad), si lo tiene. */
-  readonly etiqueta?: string;
+  readonly label?: string;
 }
 
 /** Una orden de procedimiento sin resultado: de acá salen los procedimientos buscados. */
