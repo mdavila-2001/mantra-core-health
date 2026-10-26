@@ -118,33 +118,48 @@ Lo que reescribe al pasar:
 
 | En la maqueta | En el front |
 | --- | --- |
-| `href="V04-02-membresias-listado.html"` | `routerLink="/directorio/membresias-listado"` |
+| `href="V04-02-membresias-listado.html"` | `routerLink="/provider-directory/memberships-list"` |
 | `href="?estado=paso2"` | `routerLink="." [queryParams]="{ estado: 'paso2' }"` |
 | `href="#"` | sin destino, `aria-disabled="true"`, `data-sin-destino` |
 | `src="../imagenes/x.svg"` | `/alovida/imagenes/x.svg` |
 | `{{` y `@if` en texto | escapados, para que Angular no los compile |
 
 **Archivos generados** (no se editan a mano; el generador los pisa):
-`alovida.routes.ts`, `alovida-nav.data.ts`, `vistas.manifest.json`,
-`marcos.crudos.json`, y los `.html`/`.ts` de cada pantalla.
+`alovida.routes.ts`, `alovida-nav.data.ts`, `alovida-legacy-paths.ts`,
+`vistas.manifest.json`, `marcos.crudos.json`, y los `.html`/`.ts` de cada pantalla.
 `shell/` **no** se genera: los dos marcos se escriben a mano.
 
 ## Las rutas
 
-| Segmento | Módulo de la bóveda | Marco |
-| --- | --- | --- |
-| `/inicio` | `landing` | lienzo propio, sin marco |
-| `/buscar/*` | V65 buscador | `AlovidaPublicShell` |
-| `/datos-compartidos/*` | V02 common | `AlovidaShell` |
-| `/terminologia/*` | V03 terminology | `AlovidaShell` |
-| `/directorio/*` | V04 directory | `AlovidaShell` |
-| `/personas/*` | V05 profiles | `AlovidaShell` |
-| `/accesos/*` | V06 authz | `AlovidaShell` |
+Las direcciones están en inglés (TAREA-29) y **no salen del nombre del archivo
+de la bóveda**: salen de la tabla explícita de
+`scripts/port-vistas-alovida.rutas.mjs` (`SEGMENTO_DE_MODULO` y
+`SEGMENTO_DE_SLUG`). Los nombres de carpeta de `features/alovida/` siguen siendo
+los de la bóveda. Si la bóveda trae una pantalla sin traducción, el generador se
+detiene en vez de publicar una ruta en castellano.
 
-> **`/directorio`, no `/organizaciones`.** El proxy de desarrollo desvía a la API
-> todo lo que empieza con `/org`, así que una ruta con ese nombre nunca llegaría
-> al router: la respondería el backend con un 404. Es la misma trampa que
-> documenta `proxy.conf.json`, y ya mordió antes con `/administracion`.
+| Segmento | Antes | Módulo de la bóveda | Marco |
+| --- | --- | --- | --- |
+| `/home` | `/inicio` | `landing` | lienzo propio, sin marco |
+| `/search/*` | `/buscar/*` | V65 buscador | `AlovidaPublicShell` |
+| `/shared-data/*` | `/datos-compartidos/*` | V02 common | `AlovidaShell` |
+| `/vocabulary/*` | `/terminologia/*` | V03 terminology | `AlovidaShell` |
+| `/provider-directory/*` | `/directorio/*` | V04 directory | `AlovidaShell` |
+| `/people/*` | `/personas/*` | V05 profiles | `AlovidaShell` |
+| `/access-control/*` | `/accesos/*` | V06 authz | `AlovidaShell` |
+
+> **El segmento de módulo no puede ser la traducción obvia.** El proxy de
+> desarrollo desvía a la API todo lo que empieza con un prefijo de
+> `proxy.conf.json`: `/terminology` (V03), `/org…` (V04), `/profiles` (V05) y
+> `/common` (V02) se las comería la API y la pantalla quedaría en blanco, y
+> `/directory` ya es una sección real del menú. De ahí `vocabulary`,
+> `provider-directory`, `people` y `shared-data`. `node scripts/check-route-prefixes.mjs`
+> lo comprueba también sobre `alovida.routes.ts`.
+
+Las direcciones en castellano de antes siguen abriendo: el generador emite
+`alovida-legacy-paths.ts` (dirección vieja → nueva, con las raíces de módulo) y
+`design-mockup-gate.ts` las redirige conservando el query, en los dos modos del
+gate. `playwright/rutas-alovida-ingles.spec.ts` lo comprueba en un navegador.
 
 Cada módulo cuelga de su propio segmento y monta el marco ahí, en lugar de
 agrupar todo bajo una ruta de path vacío. Es a propósito: el armazón de la
@@ -172,5 +187,11 @@ node scripts/sync-alovida.mjs        # la hoja normativa
 node scripts/port-vistas-alovida.mjs # las 126 pantallas y sus rutas
 ```
 
-Las dos leen de la bóveda por ruta absoluta. Si la bóveda se mueve, se ajustan
-las constantes `ORIGEN` y `VAULT` al principio de cada script.
+> **El generador reescribe los componentes.** Las pantallas portadas ya tienen
+> ediciones a mano (varias de `buscar/` leen la API), y una corrida completa las
+> pisa. Para cambiar sólo una dirección se edita la tabla y se reescriben los
+> enlaces de las plantillas con ella, como hizo TAREA-29.
+
+El generador lee de la bóveda por ruta absoluta; se fijan con `ALOVIDA_VAULT` y
+`ALOVIDA_FRONT`. El de la hoja normativa (`sync-alovida.mjs`) sigue con las
+constantes `ORIGEN` y `DESTINO` al principio del script.

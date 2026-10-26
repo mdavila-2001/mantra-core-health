@@ -78,6 +78,12 @@ describe('el gate de maquetas con la API real (production-api)', () => {
     expect(location.path()).toBe('/search/practitioners?q=cardio');
   });
 
+  it('el #ancla de una dirección vieja de la bóveda sobrevive a la redirección', async () => {
+    await router.navigateByUrl('/directorio/organizaciones-listado?q=clinica#tabla');
+
+    expect(location.path(true)).toBe('/administration/organizations?q=clinica#tabla');
+  });
+
   it('la ficha de la bóveda con slug abre la ficha pública real', async () => {
     await router.navigateByUrl('/search/pharmacy-profile-detail/farmacia-central');
 

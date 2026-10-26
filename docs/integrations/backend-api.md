@@ -874,7 +874,7 @@ ataría una respuesta cacheada `public, max-age=60` a una sesión.
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/public/search/practitioners` | `BuscarProfesionalesListado` |
-| `GET` | `/public/nearby` | `BuscarCercaniaDetalle` (`/buscar/mapa`) |
+| `GET` | `/public/nearby` | `BuscarCercaniaDetalle` (`/search/map`) |
 | `GET` | `/public/profiles/:prefijo/:slug` | `perfilPublicoResolver` (`/p/:slug`…) |
 | `GET` | `/public/comments/:commentId/replies` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
 | `GET` | `/public/posts` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
@@ -909,7 +909,7 @@ Lo que sirve esa pantalla es `PublicMarketplaceClient`, abajo.
 
 ### `PublicMarketplaceClient` — 2 lecturas anónimas
 
-La **vitrina pública de medicamentos** (`/buscar/medicamentos`). Misma familia
+La **vitrina pública de medicamentos** (`/search/medications`). Misma familia
 que `PublicDirectoryClient` —anónima, sin `Authorization`, cacheable— pero
 contra otro módulo de la API: el catálogo de farmacia, no el índice de
 perfiles.
