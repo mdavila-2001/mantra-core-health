@@ -28,7 +28,7 @@ import { AppButtonLink } from '../../../../../shared/components/atoms/button/but
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../../../shared/components/atoms/link/link';
 import { ViewStateHost } from '../../../../../shared/components/organisms/view-state-host/view-state-host';
-import type { PuntoDeReferencia } from '../where-to-buy';
+import type { ReferencePoint } from '../where-to-buy.route';
 import { directionsUrl } from '../where-to-buy.route';
 
 /** La guía de clínicas y hospitales, sin cercanía. */
@@ -90,7 +90,7 @@ export class MedicalCentersTab {
   /** Si la pestaña está a la vista; hasta entonces no se consulta nada. */
   readonly active = input(false);
   /** El punto de partida elegido en Farmacias, o `null`. */
-  readonly origin = input<PuntoDeReferencia | null>(null);
+  readonly origin = input<ReferencePoint | null>(null);
 
   protected readonly clinicsDirectoryRoute = CLINICS_DIRECTORY_ROUTE;
   protected readonly state = signal<ViewState<MedicalCentersView>>(loading());
@@ -209,7 +209,7 @@ function conceptIdsOf(result: ProcedureCentersResult): string[] {
   return [...new Set(result.procedures.map((procedure) => procedure.conceptId))];
 }
 
-function originKey(origin: PuntoDeReferencia | null): string {
+function originKey(origin: ReferencePoint | null): string {
   return origin === null ? 'none' : `${origin.lat},${origin.lng}`;
 }
 

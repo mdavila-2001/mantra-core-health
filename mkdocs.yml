@@ -214,6 +214,7 @@ nav:
       - Credenciales locales: testing/credenciales-locales.md
       - Regresión visual: testing/visual-regression.md
       - Recorrido visual: testing/recorrido-visual.md
+      - Gate de cierre de correcciones: testing/gate-correcciones.md
       - Recorrido con usuarios reales: testing/recorrido-con-usuarios-reales.md
       - De contrato: testing/contract-tests.md
       - De accesibilidad: testing/accessibility-tests.md

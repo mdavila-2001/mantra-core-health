@@ -16,7 +16,12 @@
  * dar tres paradas donde alcanzaban dos. Con el tope de sedes de la consulta
  * (veinte) y las paradas acotadas a la cantidad de renglones, recorrer las
  * combinaciones es barato.
+ *
+ * También viven acá las piezas geográficas que comparten las tres pestañas: el
+ * punto de referencia desde el que se mide y cómo se escribe una distancia.
  */
+
+import type { GeoPoint } from '../../../../core/data-access/pharmacy/pharmacy.types';
 
 /** Una sede, reducida a lo que el recorrido necesita saber de ella. */
 export interface RouteCandidate {
@@ -147,4 +152,20 @@ function* combinations<T>(items: readonly T[], size: number, start = 0): Generat
       yield [items[index]!, ...rest];
     }
   }
+}
+
+/** Un lugar con nombre desde donde medir distancias. */
+export interface ReferencePoint {
+  readonly label: string;
+  readonly lat: number;
+  readonly lng: number;
+}
+
+export function geoPointOf(point: ReferencePoint): GeoPoint {
+  return { lat: point.lat, lng: point.lng };
+}
+
+/** «1,2 km»: un decimal y coma, como el resto de la pantalla. */
+export function formatKm(km: number): string {
+  return `${km.toFixed(1).replace('.', ',')} km`;
 }

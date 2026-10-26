@@ -15,6 +15,7 @@ import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { ActivateAccount } from './features/auth/activate-account/activate-account';
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
+import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
 import { NotFound } from './features/not-found/not-found';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
 import {
@@ -906,6 +907,7 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.MedicalArticles)
         .catch(() => chunkFallido()),
   },
+  ...affiliationRoutes({ practitionerOnly: soloDeQuienAtiende, chunkFailed: chunkFallido }),
   {
     // La importación por archivo. No es una sección del menú: cuelga de
     // Terminología, que es donde alguien va a buscarla, y se alcanza desde ahí
@@ -1077,6 +1079,17 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/glossary/glossary-network')
         .then((m) => m.GlossaryNetwork)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Comparador diferencial (TAREA-41 F5.3): dos términos lado a lado. Va
+    // antes de `glossary/:conceptId` para no leerse como un término.
+    path: 'glossary/compare',
+    title: `${APP_TITLE} - Comparar términos del glosario`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-compare')
+        .then((m) => m.GlossaryCompare)
         .catch(() => chunkFallido()),
   },
   {

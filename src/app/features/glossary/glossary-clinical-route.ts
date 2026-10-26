@@ -4,7 +4,7 @@ import type {
   GlossaryNeighborhood,
   GlossaryRelationType,
 } from '../../core/data-access/terminology/terminology.types';
-import { compareNeighbors } from './glossary-neighbor-evidence.logic';
+import { compareNeighbors } from '@shared/components/molecules/relation-evidence/relation-evidence.logic';
 
 /* ============================================================================
     La ruta clínica: cómo se reparte el vecindario de un término en columnas.
@@ -38,6 +38,13 @@ export type RouteColumnKey =
   | 'related';
 
 export type RouteZone = 'findings' | 'next' | 'context';
+
+/** Las zonas en el orden en que se leen, con su título: el mismo en el mapa y en la ficha. */
+export const ROUTE_ZONES: readonly { readonly zone: RouteZone; readonly title: string }[] = [
+  { zone: 'findings', title: 'Lo que se observa' },
+  { zone: 'next', title: 'Diagnóstico, estudio y tratamiento' },
+  { zone: 'context', title: 'Más relaciones' },
+];
 
 /** De dónde sale una columna: los grupos que hay que pedir enteros para completarla. */
 export interface RouteGroupRef {
@@ -219,6 +226,21 @@ function zoneOf(key: RouteColumnKey, focusColumn: RouteColumnKey | null): RouteZ
 }
 
 /**
+ * La clave con que se comparan dos nombres: sin mayúsculas, tildes ni espacios
+ * de más. El glosario reúne fuentes distintas y un mismo nombre aparece en
+ * varios conceptos (CIE-10 J18 «Neumonía, microorganismo no especificado» y su
+ * homónimo de otro catálogo, por ejemplo).
+ */
+function displayKey(display: string): string {
+  return display
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Reparte el vecindario en la ruta clínica.
  *
  * @param neighborhood - Lo que devolvió la API (muestras o grupos enteros).
@@ -227,6 +249,7 @@ function zoneOf(key: RouteColumnKey, focusColumn: RouteColumnKey | null): RouteZ
 export function buildClinicalRoute(neighborhood: GlossaryNeighborhood): ClinicalRoute {
   const focusCode = neighborhood.focus.category?.internalCode;
   const focusColumn = (focusCode && COLUMN_BY_CATEGORY[focusCode]) || null;
+  const focusKey = displayKey(neighborhood.focus.display);
 
   const byColumn = new Map<
     RouteColumnKey,
@@ -245,6 +268,8 @@ export function buildClinicalRoute(neighborhood: GlossaryNeighborhood): Clinical
     const groupComplete = group.items.length >= group.total;
     for (const neighbor of group.items) {
       if (neighbor.conceptId === neighborhood.focus.conceptId) continue;
+      // Un homónimo de otra fuente se lee como el propio término repetido.
+      if (displayKey(neighbor.display) === focusKey) continue;
       if (group.type === 'RELATED_TERM' && typed.has(neighbor.conceptId)) continue;
       if (group.type !== 'RELATED_TERM') typed.add(neighbor.conceptId);
       all.add(neighbor.conceptId);

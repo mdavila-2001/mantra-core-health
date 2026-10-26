@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 
 /**
@@ -26,6 +28,18 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  *   CORR_RUTA=/notifications  una sola ruta (opcional)
  *   CORR_USUARIO=paciente     cuenta del simulador (default `medica`)
  *   E2E_BASE_URL              default http://localhost:4200
+ *   CORR_EVIDENCE_DESTINATION carpeta de salida (default
+ *                             artifacts/evidencia/correcciones/lane-<N>, ignorada por git)
+ *
+ * ## Qué deja, además de la matriz
+ *
+ * `MANIFIESTO.json` (`MANIFIESTO-antes.json` en la línea base): una entrada por
+ * celda con los veredictos por columna, los errores de consola, el tamaño y el
+ * SHA-256 de la foto, más el **commit** del árbol medido, los archivos
+ * versionados con cambios sin confirmar y el commit del **build servido** (el
+ * sello que la maqueta guarda en `sessionStorage`). Es lo que
+ * `scripts/check-correcciones.mjs` compara contra el código del carril: sin
+ * commit no hay forma de saber si una foto describe la pantalla de hoy.
  */
 
 const LANE = process.env['CORR_LANE'] ?? '';
@@ -36,7 +50,9 @@ const USUARIO = process.env['CORR_USUARIO'] ?? 'medica';
 const ROUTE_KEY =
   LANE === '34' && USUARIO !== 'medica' ? `${LANE}-${USUARIO}` : LANE;
 
-const BASE_DESTINATION = join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
+const BASE_DESTINATION = process.env['CORR_EVIDENCE_DESTINATION']
+  ? resolve(process.env['CORR_EVIDENCE_DESTINATION'])
+  : join('artifacts', 'evidencia', 'correcciones', `lane-${LANE}`);
 // Las dos pasadas de usuario deben conservar matrices y fotos independientes.
 const DESTINO = USUARIO === 'medica' ? BASE_DESTINATION : join(BASE_DESTINATION, USUARIO);
 const FOTOS = join(DESTINO, 'fotos', FASE);
@@ -44,16 +60,22 @@ const FOTOS = join(DESTINO, 'fotos', FASE);
 interface Ruta {
   readonly ruta: string;
   readonly nombre: string;
+  /** URL final esperada para una sección que conserva evidencia de su alias. */
+  readonly destino?: string;
+  /** Respuesta acotada para capturar un estado vacío sin cambiar la aplicación. */
+  readonly fixture?: 'empty-memberships';
   readonly accion?:
     | 'crear-consultorio'
     | 'editar-perfil-consultorio'
-    | 'panel-consultorio';
+    | 'panel-consultorio'
+    | 'practitioner-practice-tab'
+    | 'practitioner-credentials-tab';
   /**
    * `no-encontrado` para una ruta que este carril **borró**: la prueba pasa si
    * la aplicación ya no la sirve. Sin esto, borrar una pantalla dejaría la
    * matriz en rojo para siempre y el rojo dejaría de significar algo.
    */
-  readonly esperado?: 'pantalla' | 'no-encontrado';
+  readonly esperado?: 'pantalla' | 'no-encontrado' | 'redirige';
 }
 
 const RUTAS: readonly Ruta[] = (
@@ -72,6 +94,43 @@ const VIEWPORTS = [
 const HOLGURA_MAX_PX = 2;
 const ANCHO_MIN = 0.85;
 const FOTO_MIN_BYTES = 8 * 1024;
+
+async function createSampleAttachment(page: Page): Promise<Buffer> {
+  const base64 = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1000;
+    canvas.height = 650;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('No se pudo crear el adjunto de muestra');
+
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.strokeStyle = '#125B80';
+    context.lineWidth = 12;
+    context.strokeRect(24, 24, canvas.width - 48, canvas.height - 48);
+    context.fillStyle = '#125B80';
+    context.fillRect(36, 36, canvas.width - 72, 108);
+    context.fillStyle = '#fff';
+    context.font = 'bold 36px sans-serif';
+    context.fillText('MUESTRA SINTÉTICA · SIN VALIDEZ LEGAL', 68, 102);
+    context.fillStyle = '#173B4B';
+    context.font = 'bold 42px sans-serif';
+    context.fillText('Matrícula profesional', 68, 218);
+    context.font = '28px sans-serif';
+    context.fillText('Nombre: Dra. Valeria Rojas (dato de prueba)', 68, 286);
+    context.fillText('Registro: MP-12345', 68, 344);
+    context.fillText('Autoridad: Ministerio de Salud', 68, 402);
+    context.fillText('Documento generado sólo para evidencia visual.', 68, 520);
+    context.strokeStyle = '#9FD8D0';
+    context.lineWidth = 4;
+    context.beginPath();
+    context.moveTo(68, 452);
+    context.lineTo(930, 452);
+    context.stroke();
+    return canvas.toDataURL('image/png').split(',')[1];
+  });
+  return Buffer.from(base64 ?? '', 'base64');
+}
 
 function isPublicRoute(routePath: string): boolean {
   return routePath === '/posts' || routePath.startsWith('/auth/');
@@ -239,6 +298,74 @@ async function medir(page: Page): Promise<Medicion> {
   });
 }
 
+interface RowResult {
+  /** La fila tal como queda en `MATRIZ-visual.md`. */
+  readonly row: string;
+  readonly ok: boolean;
+  /** Regla de fondo que se aplicó a la celda en oscuro; `null` si no se midió el fondo. */
+  readonly requiresWhiteBackground: boolean | null;
+  readonly parts: {
+    readonly background: string;
+    readonly centering: string;
+    readonly width: string;
+    readonly scroll: string;
+    readonly console: string;
+  };
+}
+
+interface ManifestCell {
+  readonly route: string;
+  readonly name: string;
+  readonly viewport: string;
+  readonly theme: string;
+  readonly expected: string;
+  readonly loaded: boolean;
+  readonly ok: boolean;
+  readonly requiresWhiteBackground: boolean | null;
+  readonly parts: RowResult['parts'];
+  readonly row: string;
+  readonly consoleErrors: readonly string[];
+  readonly photo: string;
+  readonly photoBytes: number;
+  readonly photoSha256: string;
+}
+
+function git(...args: string[]): string {
+  try {
+    // Sin `.trim()`: `git status --porcelain` empieza con « M » y el espacio es una columna.
+    return execFileSync('git', args, { encoding: 'utf8' });
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * El commit con el que se compiló la maqueta que se está midiendo.
+ *
+ * `MockStore` guarda en `sessionStorage` su sello `{ build, filas }`, y `build`
+ * es `buildInfo.commit`. Leerlo es la única forma de saber desde el navegador
+ * qué código sirve el puerto: un `dist/` viejo se ve igual que uno nuevo.
+ */
+async function readServedBuilds(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const builds = new Set<string>();
+    for (const almacen of [sessionStorage, localStorage]) {
+      for (let i = 0; i < almacen.length; i += 1) {
+        try {
+          const valor: unknown = JSON.parse(almacen.getItem(almacen.key(i) ?? '') ?? 'null');
+          if (valor && typeof valor === 'object' && 'build' in valor) {
+            const build = (valor as { build: unknown }).build;
+            if (typeof build === 'string' && /^[0-9a-f]{7,40}$/.test(build)) builds.add(build);
+          }
+        } catch {
+          // Un valor que no es JSON no es un sello.
+        }
+      }
+    }
+    return [...builds];
+  });
+}
+
 function fila(
   ruta: string,
   vp: string,
@@ -247,27 +374,41 @@ function fila(
   consola: number,
   foto: string,
   esperado: Ruta['esperado'],
-): { texto: string; ok: boolean } {
+): RowResult {
   if (esperado === 'no-encontrado') {
     // Se borró a propósito: lo que se comprueba es que ya no está.
     const borrada = !m.cargo;
+    const fondoBorrada = borrada ? 'BORRADA (esperado)' : 'FAIL (todavía carga)';
     return {
-      texto: `| \`${ruta}\` | ${vp} | ${tema} | ${borrada ? 'BORRADA (esperado)' : 'FAIL (todavía carga)'} | — | — | — | — | \`${foto}\` |`,
+      row: `| \`${ruta}\` | ${vp} | ${tema} | ${fondoBorrada} | — | — | — | — | \`${foto}\` |`,
       ok: borrada,
+      requiresWhiteBackground: null,
+      parts: { background: fondoBorrada, centering: '—', width: '—', scroll: '—', console: '—' },
+    };
+  }
+  if (esperado === 'redirige') {
+    return {
+      row: `| \`${ruta}\` | ${vp} | ${tema} | REDIRIGE (esperado) | — | — | — | PASS | \`${foto}\` |`,
+      ok: true,
+      requiresWhiteBackground: null,
+      parts: { background: 'REDIRIGE (esperado)', centering: '—', width: '—', scroll: '—', console: 'PASS' },
     };
   }
   if (!m.cargo) {
     return {
-      texto: `| \`${ruta}\` | ${vp} | ${tema} | SIN CARGAR | | | | | \`${foto}\` |`,
+      row: `| \`${ruta}\` | ${vp} | ${tema} | SIN CARGAR | | | | | \`${foto}\` |`,
       ok: false,
+      requiresWhiteBackground: null,
+      parts: { background: 'SIN CARGAR', centering: '', width: '', scroll: '', console: '' },
     };
   }
   // Blanco es blanco **y sin imagen encima**: el degradado de `fondo-vista.svg`
   // sobre un color blanco se seguiría viendo celeste, que es lo que el
   // propietario rechazó.
   const esBlanco = m.fondo === 'rgb(255, 255, 255)' && !m.fondoImagen;
+  const exigeFondoBlanco = LANE === '36' || tema === 'claro';
   const fondo =
-    tema === 'oscuro'
+    !exigeFondoBlanco
       ? esBlanco
         ? 'FAIL (se perdió la superficie oscura)'
         : 'PASS (oscuro conservado)'
@@ -292,7 +433,66 @@ function fila(
   const scroll = m.scrollHorizontal ? 'FAIL' : 'PASS';
   const cons = consola === 0 ? 'PASS' : `FAIL (${consola})`;
   const texto = `| \`${ruta}\` | ${vp} | ${tema} | ${fondo} | ${centrado} | ${ancho} | ${scroll} | ${cons} | \`${foto}\` |`;
-  return { texto, ok: ![fondo, centrado, ancho, scroll, cons].some((x) => x.startsWith('FAIL')) };
+  return {
+    row: texto,
+    ok: ![fondo, centrado, ancho, scroll, cons].some((x) => x.startsWith('FAIL')),
+    requiresWhiteBackground: exigeFondoBlanco,
+    parts: { background: fondo, centering: centrado, width: ancho, scroll, console: cons },
+  };
+}
+
+/**
+ * Produce los tres estados visuales de CORR-35 recorriendo la interfaz real.
+ * El query param sólo selecciona el escenario del capturador; no es una opción
+ * de producto ni una fixture de datos. El estado vacío se obtiene marcando
+ * toda la bandeja como leída y entrando a «Sin leer».
+ */
+async function prepareNotificationState(page: Page, ruta: string): Promise<void> {
+  const url = new URL(ruta, BASE);
+  if (url.pathname !== '/notification-center') return;
+
+  const escenario = url.searchParams.get('evidenceState');
+  const titulos = page.locator('.avisos__titulo');
+  const esperarBandejaLista = async (): Promise<void> => {
+    // Al cambiar de pestaña se conserva el contenido previo y se dispara otra
+    // consulta. Esperar sólo una fila visible puede aceptar el esqueleto o
+    // contenido viejo; la foto debe esperar al cierre del estado de carga.
+    await expect(page.locator('.view-state-host__loading')).toHaveCount(0);
+    await expect(titulos.first()).toBeVisible();
+    await expect(titulos.first()).toHaveText(/\S+/);
+  };
+  if (!escenario || escenario === 'all') {
+    await esperarBandejaLista();
+    return;
+  }
+
+  const pestanas = page.locator('[data-testid="avisos-pestanas"] [role="tab"]');
+  await expect(pestanas).toHaveCount(6);
+
+  if (escenario === 'unread') {
+    await pestanas.nth(1).click();
+    await esperarBandejaLista();
+    // El simulador devuelve a la médica cinco avisos sin leer (`notif-med-1`, `-2`,
+    // `-3`, `-6` y `-7` en `notifications.handlers.ts`; el séptimo entró después de
+    // que esta espera dijera cuatro). Esperar esa respuesta evita fotografiar el
+    // esqueleto o una lista transitoria. Si el fixture cambia, cambia este número.
+    await expect(titulos).toHaveCount(5);
+    return;
+  }
+
+  if (escenario === 'empty') {
+    const marcarTodas = page.getByTestId('avisos-marcar-todas');
+    await expect(marcarTodas).toBeVisible();
+    await marcarTodas.click();
+    await expect(marcarTodas).toHaveCount(0);
+    await pestanas.nth(1).click();
+    await expect(page.locator('.view-state-host__loading')).toHaveCount(0);
+    await expect(page.getByText('No tiene notificaciones sin leer')).toBeVisible();
+    await expect(page.locator('app-empty-state')).toBeVisible();
+    return;
+  }
+
+  throw new Error(`Escenario de notificaciones desconocido: ${escenario}`);
 }
 
 test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
@@ -302,6 +502,8 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
     test.setTimeout(20 * 60_000);
     mkdirSync(FOTOS, { recursive: true });
     const filas: string[] = [];
+    const cells: ManifestCell[] = [];
+    const servedBuilds = new Set<string>();
     const errores: string[] = [];
     let rojos = 0;
 
@@ -346,9 +548,12 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           });
         }
 
+        if (LANE === '36') {
+          await page.clock.install({ time: new Date('2026-10-14T12:00:00-04:00') });
+        }
         await entrarAlSimulador(page, USUARIO, BASE);
 
-        for (const { ruta, nombre, esperado } of RUTAS) {
+        for (const { ruta, nombre, esperado, destino, fixture } of RUTAS) {
           const activePage = isPublicRoute(ruta) ? publicPage : page;
           const consoleState = consoleByPage.get(activePage);
           if (!consoleState) throw new Error(`No hay contador de consola para ${ruta}`);
@@ -361,6 +566,66 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           await activePage.setViewportSize({ width: vp.width, height: vp.height });
           await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(activePage);
+          await prepareNotificationState(activePage, ruta);
+          // La preferencia del menú se restaura después de hidratar. Esperar a
+          // que el ancho fijo del menú coincida con el espacio reservado por
+          // el marco evita capturas con contenido debajo de la barra lateral.
+          await activePage.waitForFunction(
+            () => {
+              if (window.innerWidth <= 900) return true;
+              const shell = document.querySelector('.app-shell');
+              const nav = document.querySelector('.app-side-nav');
+              if (!shell || !nav) return true;
+              const padding = Number.parseFloat(getComputedStyle(shell).paddingLeft);
+              const width = nav.getBoundingClientRect().width;
+              return Number.isFinite(padding) && Math.abs(padding - width) <= 2;
+            },
+            undefined,
+            { timeout: 5_000 },
+          );
+          if (LANE === '36' && ruta.startsWith('/my-account/identity')) {
+            await expect(activePage.getByText('Desconocido', { exact: true })).toHaveCount(0);
+            const esSeguimiento = ruta.includes('tab=cases') || ruta.includes('/cases');
+            if (esSeguimiento) {
+              const tabla = activePage.getByTestId('tabla');
+              await expect(tabla.getByText('Pendiente', { exact: true })).toBeVisible();
+              await expect(tabla.getByText('Aprobado', { exact: true })).toBeVisible();
+              await expect(tabla.getByText('Rechazado', { exact: true })).toBeVisible();
+              await expect(activePage.locator('body')).not.toContainText(/\b2025\b/);
+            }
+            if (ruta.includes('/cases/')) {
+              await expect(activePage.getByTestId('content-dialog-title')).toHaveText(
+                'Detalle del trámite',
+              );
+              expect(new URL(activePage.url()).searchParams.get('case')).toBe(
+                ruta.split('/').at(-1),
+              );
+            } else if (esperado === 'redirige' && ruta.endsWith('/cases')) {
+              expect(new URL(activePage.url()).searchParams.get('tab')).toBe('cases');
+            }
+          }
+          if (fixture === 'empty-memberships') {
+            // Fixture de evidencia: deja asentado el estado vacío después de
+            // que terminó la consulta simulada, sin agregar parámetros de
+            // prueba ni ramas especiales al cliente de producción.
+            await activePage.evaluate(() => {
+              const angular = (window as Window & {
+                ng?: { getComponent(host: Element): unknown };
+              }).ng;
+              const host = document.querySelector('app-memberships-tab');
+              if (!angular || !host) throw new Error('No se encontró el componente de vinculaciones');
+              const componente = angular.getComponent(host) as {
+                vinculaciones?: { set(value: readonly unknown[]): void };
+                falloDeVinculaciones?: { set(value: null): void };
+              } | null;
+              if (!componente?.vinculaciones || !componente.falloDeVinculaciones) {
+                throw new Error('No se pudo preparar la fixture de vinculaciones vacías');
+              }
+              componente.falloDeVinculaciones.set(null);
+              componente.vinculaciones.set([]);
+            });
+            await expect(activePage.getByText('Todavía no tiene vinculaciones')).toBeVisible();
+          }
           const routeEntry = RUTAS.find((entry) => entry.ruta === ruta && entry.nombre === nombre);
           if (routeEntry?.accion === 'crear-consultorio') {
             await activePage.getByTestId('sede-agregar').click();
@@ -372,6 +637,54 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           if (routeEntry?.accion === 'editar-perfil-consultorio') {
             await activePage.getByRole('tab', { name: 'Dónde atiendo' }).click();
             await expect(activePage.getByTestId('sedes-propias')).toBeVisible();
+            // El bloque se monta al abrir la pestaña y su lectura termina un
+            // poco después. Esperar sólo el contenedor capturaba el vacío
+            // transitorio aunque la cuenta demo ya tuviera sus cuatro sedes.
+            await expect(activePage.getByText('Centro Médico Equipetrol')).toBeVisible();
+          }
+          if (routeEntry?.accion === 'practitioner-practice-tab') {
+            const tab = activePage.getByRole('tab', { name: 'Dónde atiendo' });
+            await tab.click();
+            await expect(tab).toHaveAttribute('aria-selected', 'true');
+            await expect(activePage.getByTestId('perfil-sedes')).toBeVisible();
+            await expect(activePage.getByTestId('practice-site-contact-phone').first()).toBeVisible();
+          }
+          if (routeEntry?.accion === 'practitioner-credentials-tab') {
+            const tab = activePage.getByRole('tab', { name: 'Credenciales' });
+            await tab.click();
+            await expect(tab).toHaveAttribute('aria-selected', 'true');
+            const tip = activePage
+              .locator('app-toast')
+              .filter({ hasText: 'Acá se separa lo que declaró' });
+            await expect(tip).toBeVisible();
+            await tip.getByTestId('toast-cerrar').click();
+            await expect(tip).toBeHidden();
+          }
+          if (LANE === '37') {
+            await activePage.evaluate(() => {
+              document.querySelectorAll<HTMLElement>('*').forEach((element) => {
+                element.scrollTop = 0;
+                element.scrollLeft = 0;
+              });
+              window.scrollTo(0, 0);
+            });
+            if (vp.width > 768) {
+              await activePage.locator('.app-header').evaluate((element) => {
+                element.scrollIntoView({ block: 'start', behavior: 'instant' });
+              });
+            }
+            await activePage.waitForTimeout(500);
+            if (routeEntry?.accion === 'practitioner-practice-tab') {
+              await expect(
+                activePage.getByRole('tab', { name: 'Dónde atiendo' }),
+              ).toHaveAttribute('aria-selected', 'true');
+              await expect(activePage.getByTestId('practice-site-contact-phone').first()).toBeVisible();
+            }
+            if (routeEntry?.accion === 'practitioner-credentials-tab') {
+              await expect(
+                activePage.getByRole('tab', { name: 'Credenciales' }),
+              ).toHaveAttribute('aria-selected', 'true');
+            }
           }
           if (routeEntry?.accion === 'panel-consultorio') {
             const accesos = activePage.getByTestId('panel-accesos');
@@ -394,36 +707,115 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             await activePage.waitForTimeout(400);
           }
           if (ruta.includes('with-file=1')) {
+            await activePage.getByRole('button', { name: 'Agregar matrícula' }).click();
             const input = activePage.getByTestId('matricula-archivo');
             await expect(input).toBeVisible();
             await input.setInputFiles({
               name: 'matricula.png',
               mimeType: 'image/png',
-              buffer: Buffer.from(
-                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLSDwAAAABJRU5ErkJggg==',
-                'base64',
-              ),
+              buffer: await createSampleAttachment(activePage),
             });
             await expect(activePage.getByText('matricula.png')).toBeVisible();
-            await expect(activePage.locator('app-file-preview img')).toBeVisible();
+            const preview = activePage.locator('app-file-preview img');
+            await expect(preview).toBeVisible();
+            await preview.scrollIntoViewIfNeeded();
           }
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
           // La medición y la foto usan el viewport declarado
           // (375/768/1440), igual al que usaría una persona.
+          // El celeste del fondo (REQ-08-002) late un instante después de que el
+          // puntero actúa —un clic en una pestaña basta— y vuelve a 0 en reposo. Medir
+          // dentro de ese pulso daba «fondo no blanco» según el momento exacto del
+          // clic, no según la pantalla. Se mide en reposo: si pasados 6 s el velo sigue
+          // encendido, es un tinte permanente y la medición lo reporta como tal.
+          await activePage
+            .waitForFunction(
+              () =>
+                (['::before', '::after'] as const).every(
+                  (pseudo) => Number(getComputedStyle(document.body, pseudo).opacity || '0') < 0.01,
+                ),
+              undefined,
+              { timeout: 6_000 },
+            )
+            .catch(() => undefined);
           const m = await medir(activePage);
-          const expectedPath = new URL(ruta, BASE).pathname.replace(/\/$/, '') || '/';
-          const actualPath = new URL(activePage.url()).pathname.replace(/\/$/, '') || '/';
-          const routeLoaded = expectedPath === actualPath;
-          // La foto representa el viewport medido. Capturar documentos de casi
-          // 200 000 px de alto producía una franja ilegible y ocultaba el primer
-          // pantallazo que realmente recibe la persona.
-          await activePage.screenshot({ path: foto });
+          const expectedUrl = new URL(destino ?? ruta, BASE);
+          const actualUrl = new URL(activePage.url());
+          const expectedPath = expectedUrl.pathname.replace(/\/$/, '') || '/';
+          const actualPath = actualUrl.pathname.replace(/\/$/, '') || '/';
+          const routeLoaded =
+            expectedPath === actualPath &&
+            [...expectedUrl.searchParams].every(([key, value]) => actualUrl.searchParams.get(key) === value);
+          // La foto encuadra el organismo del carril 33 dentro del viewport
+          // medido para que la tabla y el vacío queden visibles sin capturar un
+          // documento largo con el menú fijo superpuesto.
+          if (LANE === '33') {
+            const target = fixture === 'empty-memberships'
+              ? activePage.getByText('Todavía no tiene vinculaciones')
+              : activePage.locator('app-data-table tbody tr').first();
+            if (vp.width > 768) {
+              await target.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+            }
+          }
+          if (LANE === '33' && vp.width <= 768) {
+            // El contenido queda debajo del formulario en móvil. Capturar todo
+            // el documento deja ver la tabla; resetear los contenedores evita
+            // que el encabezado fijo quede congelado a mitad de la foto.
+            await activePage.evaluate(() => {
+              document.querySelectorAll<HTMLElement>('*').forEach((element) => {
+                element.scrollTop = 0;
+                element.scrollLeft = 0;
+              });
+            });
+          }
+          const fullPage =
+            (LANE === '33' && vp.width <= 768) ||
+            (LANE === '37' && vp.width <= 768);
+          await activePage.screenshot({ path: foto, fullPage, animations: 'disabled' });
+          await activePage.screenshot({
+            path: foto,
+            fullPage: LANE === '33' && vp.width <= 768,
+            animations: 'disabled',
+          });
+          if (LANE === '38' && nombre === 'practitioner-profile-editor' && vp.width === 1440 && tema === 'claro') {
+            // La cuenta demo sólo trae especialidades verificadas, que por
+            // diseño no se pueden editar. Abrimos el editor real sobre la fila
+            // cargada para dejar evidencia directa del formulario corregido.
+            await activePage.evaluate(() => {
+              const angular = (window as Window & {
+                ng?: {
+                  getComponent(host: Element): Record<string, unknown> | null;
+                  applyChanges(component: unknown): void;
+                };
+              }).ng;
+              const host = document.querySelector('app-practitioner-profile-edit');
+              const component = angular && host ? angular.getComponent(host) : null;
+              const filas = component?.['filasEspecialidades'] as (() => unknown[]) | undefined;
+              const editar = component?.['editarEspecialidad'] as ((fila: unknown) => void) | undefined;
+              const fila = filas?.()[0];
+              if (!fila || !editar) throw new Error('No hay una especialidad demo para abrir el editor');
+              if (!angular || !component) throw new Error('No se encontró el editor de perfil');
+              editar.call(component, fila);
+              angular.applyChanges(component);
+              const nativeDialog = document.querySelector<HTMLDialogElement>(
+                '[data-testid="edicion-dialogo"] dialog',
+              );
+              if (!nativeDialog) throw new Error('El diálogo de edición no se montó');
+              if (!nativeDialog.open) nativeDialog.showModal();
+            });
+            const dialogoEspecialidad = activePage.getByTestId('edicion-dialogo');
+            await expect(dialogoEspecialidad.locator('dialog')).toBeVisible();
+            await expect(dialogoEspecialidad.getByTestId('edicion-especialidad')).toBeVisible();
+            await expect(dialogoEspecialidad.locator('app-switch')).toHaveCount(0);
+            await activePage.waitForTimeout(400);
+            await activePage.screenshot({ path: join(FOTOS, 'specialty-edit-dialog-1440-claro.png') });
+          }
           const bytes = statSync(foto).size;
           if (bytes < FOTO_MIN_BYTES && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: foto vacía (${bytes} B)`);
           }
           if (!routeLoaded && esperado !== 'no-encontrado') {
-            errores.push(`${ruta} @ ${vp.nombre}/${tema}: redirigió a ${actualPath}`);
+            errores.push(`${ruta} @ ${vp.nombre}/${tema}: terminó en ${actualUrl.pathname}${actualUrl.search}`);
           }
           if (!m.cargo && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: la ruta no cargó el área de contenido`);
@@ -435,11 +827,29 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             tema,
             routeMeasurement,
             consoleState.count,
-            foto.replace(`${DESTINO}/`, ''),
+            // Relativa a la matriz y con `/`: en Windows `join` arma la ruta con `\`.
+            relative(DESTINO, foto).split(sep).join('/'),
             esperado,
           );
-          filas.push(f.texto);
+          filas.push(f.row);
           if (!f.ok) rojos += 1;
+          for (const build of await readServedBuilds(activePage)) servedBuilds.add(build);
+          cells.push({
+            route: ruta,
+            name: nombre,
+            viewport: vp.nombre,
+            theme: tema,
+            expected: esperado ?? 'pantalla',
+            loaded: routeMeasurement.cargo,
+            ok: f.ok,
+            requiresWhiteBackground: f.requiresWhiteBackground,
+            parts: f.parts,
+            row: f.row,
+            consoleErrors: [...consoleState.details],
+            photo: relative(DESTINO, foto).split(sep).join('/'),
+            photoBytes: bytes,
+            photoSha256: createHash('sha256').update(readFileSync(foto)).digest('hex'),
+          });
           if (consoleState.details.length > 0) {
             errores.push(
               `${ruta} @ ${vp.nombre}/${tema}: consola: ${consoleState.details.join(' | ')}`,
@@ -466,6 +876,34 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
     writeFileSync(
       join(DESTINO, `MATRIZ-visual${FASE === 'antes' ? '-antes' : ''}.md`),
       matriz,
+      'utf8',
+    );
+
+    const sufijo = FASE === 'antes' ? '-antes' : '';
+    writeFileSync(
+      join(DESTINO, `MANIFIESTO${sufijo}.json`),
+      `${JSON.stringify(
+        {
+          version: 1,
+          lane: LANE,
+          phase: FASE,
+          user: USUARIO,
+          generatedAt: new Date().toISOString(),
+          commit: git('rev-parse', 'HEAD').trim(),
+          branch: git('rev-parse', '--abbrev-ref', 'HEAD').trim(),
+          dirty: git('status', '--porcelain', '--untracked-files=no')
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => line.slice(3).trim()),
+          baseUrl: BASE,
+          servedBuilds: [...servedBuilds],
+          thresholds: { maxGapPx: HOLGURA_MAX_PX, minWidthRatio: ANCHO_MIN, minPhotoBytes: FOTO_MIN_BYTES },
+          cells,
+          errors: errores,
+        },
+        null,
+        2,
+      )}\n`,
       'utf8',
     );
 

@@ -14,11 +14,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import {
-  ChatStore,
-  editable,
-  type MensajeDelHilo,
-} from '../../../core/messaging/chat.store';
+import { ChatStore, editable, type MensajeDelHilo } from '../../../core/messaging/chat.store';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
 import type {
   ConversationListItem,
@@ -35,6 +31,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Composer } from './composer/composer';
+import { trackArrivals } from './live-arrivals';
 import { EmojiPicker } from './composer/emoji-picker';
 import { ContactPanel } from './contact-panel/contact-panel';
 import { FilePreview } from '../../../shared/components/molecules/file-preview/file-preview';
@@ -291,6 +288,9 @@ export class Thread {
 
   /** El mensaje al que saltó una cita, para destellarlo. */
   protected readonly destellando = signal<string | null>(null);
+
+  /** Las burbujas ajenas que llegaron en vivo (ALOVIDA Pulse): ver `trackArrivals`. */
+  protected readonly llegadas = trackArrivals(this.store);
 
   /** Si está abierta la búsqueda dentro de la conversación. */
   protected readonly buscando = signal(false);
