@@ -83,20 +83,20 @@ test.describe('Carril 19 — dónde conseguir lo de mi receta', () => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await openWhereToBuy(page);
 
-    const branches = page.getByTestId('compra-sedes');
+    const branches = page.getByTestId('where-to-buy-branches');
     const noneComplete = page.getByTestId('where-to-buy-none-complete');
     await expect(branches.or(noneComplete).first()).toBeVisible({ timeout: 30_000 });
 
     // Sin pedir las incompletas, ninguna tarjeta dice lo que le falta.
-    await expect(branches.getByTestId('compra-faltantes')).toHaveCount(0);
+    await expect(branches.getByTestId('where-to-buy-missing')).toHaveCount(0);
 
     const showIncomplete = page.getByTestId('where-to-buy-show-partial');
     if ((await showIncomplete.count()) > 0) {
       await expect(showIncomplete).toHaveAttribute('aria-pressed', 'false');
       await showIncomplete.click();
       await expect(showIncomplete).toHaveAttribute('aria-pressed', 'true');
-      await expect(branches.getByTestId('compra-faltantes').first()).toBeVisible();
-      await expect(branches.getByTestId('compra-faltantes').first()).toContainText('Le falta');
+      await expect(branches.getByTestId('where-to-buy-missing').first()).toBeVisible();
+      await expect(branches.getByTestId('where-to-buy-missing').first()).toContainText('Le falta');
     }
 
     const directions = page.getByTestId('where-to-buy-directions');
@@ -125,7 +125,7 @@ test.describe('Carril 19 — dónde conseguir lo de mi receta', () => {
     });
     await expect(panel.getByRole('link', { name: 'Ver clínicas y hospitales' }).first()).toBeVisible();
     // Ninguna tarjeta de centro ni ninguna sucursal: la maqueta no tiene oferta que las respalde.
-    await expect(panel.locator('.compra__sede')).toHaveCount(0);
+    await expect(panel.locator('.purchase__branch')).toHaveCount(0);
 
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
