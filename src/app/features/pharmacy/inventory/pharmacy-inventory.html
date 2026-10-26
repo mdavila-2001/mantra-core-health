@@ -121,6 +121,7 @@
     inputMode="numeric"
     [ariaLabel]="'Existencias de ' + name(product)"
     [value]="stockOf(product)"
+    placeholder="Sin conteo"
     (valueChange)="setStock(product, $event)"
     [step]="1"
     [testId]="'inventory-stock-' + product.productCode"

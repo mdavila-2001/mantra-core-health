@@ -281,4 +281,80 @@ describe('PharmacyClient', () => {
 
     expect(outcome).toBe(true);
   });
+
+  /*
+   * P47 §3-5 (2026-10-26): lo que administra la farmacia ya está en la API.
+   * Estas pruebas corren sin el simulador: la petición tiene que salir a la red
+   * con el cuerpo entero, no filtrarse como extensión de la maqueta.
+   */
+  it('manda precio, categoría, existencias, estado e imágenes también a la API real (P47 §3-5)', () => {
+    const changes = {
+      unitPrice: 12.5,
+      category: 'Medicamentos',
+      description: null,
+      inStock: false,
+      status: 'DRAFT' as const,
+      imageFileIds: ['f-1'],
+    };
+    client.updateProduct(FIXTURE_IDS.farmaciaAndina, FIXTURE_IDS.productoAmoxicilina, changes).subscribe();
+
+    const req = http.expectOne(
+      (r) => r.url === `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/products/${FIXTURE_IDS.productoAmoxicilina}`,
+    );
+    expect(req.request.body).toEqual(changes);
+    req.flush({ id: FIXTURE_IDS.productoAmoxicilina });
+  });
+
+  it('el alta con venta viaja entera a la API real (P47 §3-5)', () => {
+    const draft = {
+      productCode: 'AMX-1',
+      genericName: 'Amoxicilina',
+      unitPrice: 12.5,
+      category: 'Medicamentos',
+      inStock: true,
+      stock: 10,
+      minStock: 3,
+    };
+    client.publishProduct(FIXTURE_IDS.farmaciaAndina, draft).subscribe();
+
+    const req = http.expectOne((r) => r.url === `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/products`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(draft);
+    req.flush({ id: 'nuevo' });
+  });
+
+  it('crea, renombra y elimina categorías contra la API real (P47 D8)', () => {
+    const base = `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/categories`;
+    client.createCategory(FIXTURE_IDS.farmaciaAndina, 'Vitaminas').subscribe();
+    const created = http.expectOne((r) => r.url === base);
+    expect(created.request.method).toBe('POST');
+    expect(created.request.body).toEqual({ name: 'Vitaminas' });
+    created.flush({ id: 'c-1', name: 'Vitaminas', productCount: 0 });
+
+    client.renameCategory(FIXTURE_IDS.farmaciaAndina, 'c-1', 'Suplementos').subscribe();
+    const renamed = http.expectOne((r) => r.url === `${base}/c-1`);
+    expect(renamed.request.method).toBe('PATCH');
+    expect(renamed.request.body).toEqual({ name: 'Suplementos' });
+    renamed.flush({ id: 'c-1', name: 'Suplementos', productCount: 0 });
+
+    client.deleteCategory(FIXTURE_IDS.farmaciaAndina, 'c-1').subscribe();
+    const deleted = http.expectOne((r) => r.url === `${base}/c-1`);
+    expect(deleted.request.method).toBe('DELETE');
+    deleted.flush({ ok: true });
+  });
+
+  it('guarda el inventario en lote con un único PATCH contra la API real (P47 D7)', () => {
+    let updated: number | null = null;
+    const lines = [
+      { productId: 'p-1', stock: 4, minStock: 2 },
+      { productId: 'p-2', inStock: false },
+    ];
+    client.updateInventory(FIXTURE_IDS.farmaciaAndina, lines).subscribe((r) => (updated = r.updated));
+
+    const req = http.expectOne((r) => r.url === `/pharmacies/${FIXTURE_IDS.farmaciaAndina}/inventory`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ lines });
+    req.flush({ updated: 2 });
+    expect(updated).toBe(2);
+  });
 });
