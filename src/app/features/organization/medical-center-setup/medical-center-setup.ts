@@ -17,7 +17,6 @@ import { isVisibleTo } from '../../../core/navigation/navigation.types';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Link } from '../../../shared/components/atoms/link/link';
-import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { PracticeOnboardingClient } from '../../../core/data-access/practice-onboarding/practice-onboarding.client';
@@ -74,7 +73,7 @@ export const RUTA_MI_ORGANIZACION = '/administration/my-organization';
 export const RUTA_PANEL = '/dashboard';
 
 /**
- * **Configurar su organización** (CM-11): la organización médica ya verificada
+ * **Configurar práctica** (CM-11): la organización médica ya verificada
  * abre su práctica y su primera sede, con dirección y punto en el mapa.
  *
  * El nombre es neutro a propósito: la ven un hospital, una clínica, un
@@ -110,7 +109,6 @@ export const RUTA_PANEL = '/dashboard';
     EmptyState,
     Link,
     MapLocationPicker,
-    NavIcon,
     PageHeader,
     PaginatedForm,
     RouterLink,

@@ -156,7 +156,7 @@ for (const view of VIEWPORTS) {
       await page.goto('/administration/medical-center-setup', { waitUntil: 'domcontentloaded' });
       await esperarAplicacionLista(page);
       await expect(
-        page.getByRole('heading', { level: 1, name: 'Configurar su organización' }),
+        page.getByRole('heading', { level: 1, name: 'Configurar práctica' }),
       ).toBeVisible();
       // El hospital de la maqueta está verificado: se ofrece el formulario, no el S3.
       await expect(page.getByTestId('medical-center-setup-form')).toBeVisible();

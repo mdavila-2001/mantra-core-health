@@ -31,7 +31,7 @@ export interface PlantillaSimulada {
   readonly resourceId: string;
   readonly retired: boolean;
   readonly name: string;
-  readonly rules: readonly { dayOfWeek: number; startTime: string; endTime: string; slotMinutes?: number; capacityPerSlot?: number; gapMinutes?: number; bookingMode?: 'CONSULTATIONS' | 'SERVICES' | 'MIXED' }[];
+  readonly rules: readonly { dayOfWeek: number; startTime: string; endTime: string; slotMinutes?: number; capacityPerSlot?: number; gapMinutes?: number; bookingMode?: 'CONSULTATIONS' | 'SERVICES' | 'MIXED'; telemedicineEnabled?: boolean }[];
   readonly slotMinutes: number;
   readonly validFrom: string;
   readonly validTo?: string;
@@ -252,6 +252,10 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
       slotMinutes: 30,
       capacityPerSlot: 1,
       ...(dayOfWeek === 3 ? { bookingMode: 'MIXED' as const } : {}),
+      // Los viernes por la mañana también atiende por videollamada: la única
+      // franja de la maqueta con telemedicina, para que se vea la marca y el
+      // rechazo de la teleconsulta fuera de franja.
+      ...(dayOfWeek === 5 ? { telemedicineEnabled: true } : {}),
     })),
     slotMinutes: 30,
     validFrom: isoDia(-60),

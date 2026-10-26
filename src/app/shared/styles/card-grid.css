@@ -77,7 +77,10 @@
   font: inherit;
   text-align: start;
   text-decoration: none;
-  transition: border-color var(--dur-fast) var(--ease-standard);
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-base) var(--pulse-ease),
+    transform var(--dur-base) var(--pulse-ease);
 }
 
 /* El realce sólo donde hay adónde ir: una tarjeta quieta que se ilumina al
@@ -187,4 +190,30 @@ button.rejilla__tarjeta:hover .rejilla__icono {
   object-fit: cover;
   border-radius: var(--r-md) var(--r-md) 0 0;
   background: var(--bg-inset);
+}
+
+/* Elevación Pulse (pulse.md §1) en las tarjetas que llevan a algún lado:
+   se levantan con puntero fino y se hunden al pulsarlas. */
+@media (hover: hover) and (pointer: fine) {
+  a.rejilla__tarjeta:hover,
+  button.rejilla__tarjeta:hover {
+    box-shadow: var(--pulse-lift);
+    transform: translateY(var(--pulse-lift-distance));
+  }
+}
+
+a.rejilla__tarjeta:active,
+button.rejilla__tarjeta:active {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(0) scale(0.995);
+  transition-duration: var(--dur-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a.rejilla__tarjeta:hover,
+  button.rejilla__tarjeta:hover,
+  a.rejilla__tarjeta:active,
+  button.rejilla__tarjeta:active {
+    transform: none;
+  }
 }

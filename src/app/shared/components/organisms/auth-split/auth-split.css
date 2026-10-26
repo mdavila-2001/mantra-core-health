@@ -233,12 +233,9 @@
   align-items: center;
   gap: var(--sp-2);
   margin: 0;
-  padding: var(--sp-1) var(--sp-3) var(--sp-1) var(--sp-2);
+  /* Sólo el glifo: la píldora es un azulejo con aire parejo, no un rótulo. */
+  padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-full);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--fs-body);
-  letter-spacing: 0.02em;
   color: var(--text-primary);
   /* La marca va sobre su propia superficie y no directamente sobre la aurora.
      No es adorno: en oscuro los velos son colores CLAROS —los tokens de marca
@@ -252,13 +249,6 @@
   border: 1px solid color-mix(in srgb, var(--border-default) 45%, transparent);
 }
 
-.auth-split__marca-mini-glifo {
-  width: 30px;
-  height: 22px;
-  background: var(--brand-primary);
-  -webkit-mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
-  mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
-}
 
 /* El ícono del modo activo crece apenas: con tres botones chicos y sin texto,
    el cambio de fondo solo no alcanza para ver cuál quedó elegido. */
@@ -910,5 +900,284 @@
   .auth-split--stage .auth-split__slot::before,
   .auth-split--stage .auth-split__wordmark img {
     animation: none !important;
+  }
+}
+
+/* ==========================================================================
+    `calm` — la entrada que no se mueve sola.
+
+    Superficie del tema y tokens, nada más: en claro es blanca y en oscuro es la
+    superficie oscura del tema, no un escenario aparte. Ninguna capa decorativa
+    se anima en bucle; lo que se mueve lo hace UNA vez al entrar —el glifo
+    late, el trazo se dibuja, las puertas de la red se asientan una tras otra—
+    o responde a la mano. Es la diferencia entre una pantalla que acompaña y una
+    que compite con el formulario por la atención.
+   ========================================================================== */
+.auth-split--calm {
+  background: var(--bg-surface);
+}
+
+/* Mismas entradas que el resto de la escena, que ya nacen quietas. */
+.auth-split--calm .auth-split__panel {
+  background: var(--bg-surface);
+}
+
+@media (min-width: 1024px) {
+  .auth-split--calm .auth-split__brand {
+    /* La columna no pinta nada propio: es la misma superficie, separada de la
+       del formulario por un filete. */
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    align-items: center;
+    padding: var(--sp-12) clamp(var(--sp-8), 5vw, 6rem);
+    border-inline-end: 1px solid var(--border-default);
+  }
+
+  /* Una trama de puntos, muy tenue, que se desvanece hacia el rincón opuesto:
+     le da al blanco una textura sin pintarlo de otro color. Es estática. */
+  .auth-split--calm .auth-split__brand::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--brand-primary) 18%, transparent) 1.2px,
+      transparent 1.7px
+    );
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(110% 80% at 12% 8%, #000, transparent 72%);
+    mask-image: radial-gradient(110% 80% at 12% 8%, #000, transparent 72%);
+    pointer-events: none;
+  }
+
+  .auth-split--calm .auth-split__brand-content {
+    max-width: 32rem;
+    translate: none;
+  }
+
+  .auth-split--calm .auth-split__panel {
+    padding: var(--sp-6) clamp(var(--sp-6), 4vw, var(--sp-16));
+  }
+}
+
+.auth-split--calm .auth-split__claim {
+  margin: var(--sp-6) 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 3.4vw, 3.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  color: var(--text-primary);
+  text-shadow: none;
+}
+
+.auth-split--calm .auth-split__tagline {
+  max-inline-size: 28rem;
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+/* La onda del latido. Ocupa más que el bloque de texto y la columna la recorta
+   en su borde: así la línea llega hasta el filete que la separa del formulario,
+   que es lo que la hace leer como «cruza la pantalla» y no como un dibujito
+   debajo del titular. */
+.auth-split__ecg {
+  display: block;
+  inline-size: min(52rem, 160%);
+  max-inline-size: none;
+  block-size: auto;
+  margin-block-start: var(--sp-6);
+  color: var(--brand-secondary);
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* La línea: se traza una vez, de izquierda a derecha, y se queda. */
+.auth-split__ecg-base,
+.auth-split__ecg-pulse {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth-split__ecg-base {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-opacity: 0.7;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: auth-ecg-draw 1400ms var(--ease-out) 420ms forwards;
+}
+
+/* El pulso: un tramo corto y más claro que recorre la línea y vuelve a salir,
+   como el cometa del monitor. Arranca cuando la línea terminó de dibujarse.
+   `0` de opacidad hasta entonces para que no se vea sobre un trazo a medias. */
+.auth-split__ecg-pulse {
+  stroke: var(--brand-primary);
+  stroke-width: 3;
+  stroke-dasharray: 70 930;
+  stroke-dashoffset: 70;
+  opacity: 0;
+  animation: auth-ecg-pulse 5.2s linear 2.2s infinite;
+}
+
+@keyframes auth-ecg-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes auth-ecg-pulse {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 70;
+  }
+  62% {
+    opacity: 1;
+    stroke-dashoffset: -1000;
+  }
+  63%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -1000;
+  }
+}
+
+/* ==========================================================================
+    La franja de onda de las altas (`calm` a ancho completo).
+
+    Detrás de la barra superior, a todo el ancho, sin ocupar lugar, en los dos
+    temas (el color sale de `--brand-secondary`). Mismas animaciones que la onda
+    de `calm`
+    (`auth-ecg-draw`, `auth-ecg-pulse`): una sola firma, un solo ritmo.
+   ========================================================================== */
+.auth-split__banda {
+  display: none;
+}
+
+.auth-split--calm.auth-split--full .auth-split__banda {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 4.5rem;
+  color: var(--brand-secondary);
+  pointer-events: none;
+}
+
+/* El selector de tema es chrome sobre la franja: con fondo de superficie la línea
+   pasa por DETRÁS de los botones y no por encima de su ícono. */
+.auth-split--calm.auth-split--full .auth-split__theme {
+  background: var(--bg-surface);
+  border-radius: var(--r-full);
+}
+
+/* El panel de `calm` pinta su propio fondo y taparía la franja que va detrás.
+   A ancho completo lo dejamos transparente: el blanco (o la superficie oscura)
+   lo sigue poniendo `.auth-split`, así que no cambia nada de lo que se ve. */
+.auth-split--calm.auth-split--full .auth-split__panel {
+  background: transparent;
+}
+
+.auth-split__banda-base,
+.auth-split__banda-pulse {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth-split__banda-base {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-opacity: 0.4;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: auth-ecg-draw 1800ms var(--ease-out) 300ms forwards;
+}
+
+.auth-split__banda-pulse {
+  stroke: var(--brand-primary);
+  stroke-width: 2.5;
+  stroke-dasharray: 70 930;
+  stroke-dashoffset: 70;
+  opacity: 0;
+  animation: auth-ecg-pulse 5.2s linear 2.4s infinite;
+}
+
+/* Las puertas de la red: seis azulejos que se asientan de a uno. */
+.auth-split__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: var(--sp-8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.auth-split__role {
+  display: grid;
+  place-items: center;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--brand-primary);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring),
+    background-color var(--dur-base) var(--ease-out);
+  animation: auth-role-in var(--dur-slow) var(--ease-spring) calc(780ms + var(--i, 0) * 70ms) both;
+}
+
+.auth-split__role app-account-icon {
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+}
+
+.auth-split__role:hover {
+  border-color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 8%, var(--bg-surface));
+  transform: translateY(-3px);
+}
+
+@keyframes auth-role-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-3)) scale(0.9);
+  }
+}
+
+/* Quien pidió menos movimiento recibe la composición terminada: el trazo ya
+   dibujado, el glifo sin latir y los azulejos en su sitio. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-split__role {
+    animation: none !important;
+  }
+
+  .auth-split__ecg-base {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+
+  .auth-split__ecg-pulse {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .auth-split__banda-base {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+
+  .auth-split__banda-pulse {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .auth-split__role:hover {
+    transform: none;
   }
 }

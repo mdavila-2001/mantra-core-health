@@ -485,3 +485,97 @@ describe('handlers de reconsulta (cita directa con followUpOf)', () => {
     expect(agendarReconsulta(origen).status).toBe(201);
   });
 });
+
+/**
+ * Telemedicina por franja (v4.2.61): la plantilla guarda y devuelve
+ * `telemedicineEnabled` por franja, y la cita directa por `TELECONSULTA` sólo
+ * entra en una franja vigente que la tenga — si no, 422 con `reason`
+ * `TELEMEDICINE_NOT_ENABLED`, como `CreateDirectAppointmentUseCase`.
+ *
+ * La médica del fixture atiende por telemedicina sólo los viernes de 8 a 12.
+ */
+describe('handlers de telemedicina por franja', () => {
+  const router = new MockRouter();
+  registrarAgenda(router);
+  const medica = buscarUsuario('medica')!;
+
+  function pedir<T>(method: MockMethod, path: string, body: unknown = {}): { status: number; body: T } {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    const resultado = match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user: medica,
+    });
+    if (resultado !== null && typeof resultado === 'object' && 'status' in resultado && 'body' in resultado) {
+      return resultado as { status: number; body: T };
+    }
+    return { status: 200, body: resultado as T };
+  }
+
+  /** El próximo día de la semana pedido (a partir de mañana), a la hora local dada. */
+  function proximo(diaDeLaSemana: number, hora: number, minuto = 0): string {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + 1);
+    while (fecha.getDay() !== diaDeLaSemana) fecha.setDate(fecha.getDate() + 1);
+    fecha.setHours(hora, minuto, 0, 0);
+    return fecha.toISOString();
+  }
+
+  function citaDirecta(startAt: string, channel: string) {
+    return pedir<{ code?: string; reason?: string; bookingId?: string }>(
+      'POST',
+      '/scheduling/appointments/direct',
+      {
+        patientProfileId: PACIENTE.id,
+        resourceId: RECURSO_MEDICA,
+        startAt,
+        durationMinutes: 30,
+        channel,
+      },
+    );
+  }
+
+  it('guarda telemedicineEnabled por franja y el GET lo devuelve siempre como booleano', () => {
+    const recurso = 'recurso-spec-telemedicina';
+    const creada = pedir<{ id: string }>('POST', `/scheduling/resources/${recurso}/templates`, {
+      name: 'Con telemedicina',
+      rules: [
+        { dayOfWeek: 1, startTime: '09:00', endTime: '13:00', telemedicineEnabled: true },
+        { dayOfWeek: 2, startTime: '09:00', endTime: '13:00' },
+      ],
+    });
+    expect(creada.status).toBe(201);
+
+    const { body } = pedir<{ items: readonly { id: string; rules: readonly Record<string, unknown>[] }[] }>(
+      'GET',
+      `/scheduling/resources/${recurso}/templates`,
+    );
+    const reglas = body.items.find((t) => t.id === creada.body.id)!.rules;
+    expect(reglas.map((r) => r['telemedicineEnabled'])).toEqual([true, false]);
+  });
+
+  it('correcto — teleconsulta dentro de la franja con telemedicina: 201', () => {
+    expect(citaDirecta(proximo(5, 9), 'TELECONSULTA').status).toBe(201);
+  });
+
+  it('límite — el fin de la franja es exclusivo: a las 12:00 ya no hay telemedicina', () => {
+    const respuesta = citaDirecta(proximo(5, 12), 'TELECONSULTA');
+    expect(respuesta.status).toBe(422);
+    expect(respuesta.body).toMatchObject({ code: 'PRECONDITION_FAILED', reason: 'TELEMEDICINE_NOT_ENABLED' });
+  });
+
+  it('inválido — teleconsulta en una franja sin telemedicina: 422 TELEMEDICINE_NOT_ENABLED', () => {
+    const respuesta = citaDirecta(proximo(1, 9), 'TELECONSULTA');
+    expect(respuesta.status).toBe(422);
+    expect(respuesta.body.reason).toBe('TELEMEDICINE_NOT_ENABLED');
+  });
+
+  it('la misma hora en presencial no mira la telemedicina: 201', () => {
+    expect(citaDirecta(proximo(1, 9, 30), 'PRESENCIAL').status).toBe(201);
+  });
+});

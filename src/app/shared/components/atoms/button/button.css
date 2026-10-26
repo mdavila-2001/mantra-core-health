@@ -39,12 +39,16 @@
 
 /* Se levanta apenas y proyecta sombra: dice «esto responde» antes del clic.
    1 px es a propósito — más que eso, en una fila de botones, se lee como que
-   algo se desacomodó. */
-:host(:hover) {
-  background: var(--_btn-bg-hover);
-  color: var(--_btn-fg-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+   algo se desacomodó.
+   Sólo con puntero fino: en táctil el hover se queda pegado después del toque
+   y el botón parecería seguir levantado (pulse.md §7). */
+@media (hover: hover) and (pointer: fine) {
+  :host(:hover) {
+    background: var(--_btn-bg-hover);
+    color: var(--_btn-fg-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
 }
 
 /* Y se hunde al presionar (escala 0,97: responde en menos de 100 ms). La

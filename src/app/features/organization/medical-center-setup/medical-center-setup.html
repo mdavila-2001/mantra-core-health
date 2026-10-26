@@ -1,5 +1,5 @@
 <app-page-header
-  title="Configurar su organización"
+  title="Configurar práctica"
   subtitle="Abra la práctica de su organización con su primera sede. Después podrá publicar sus procedimientos y afiliar a sus médicos."
 />
 
@@ -16,14 +16,28 @@
       data-testid="medical-center-setup-unverified"
     >
       <!-- Un reloj y no la bandeja vacía: no falta nada que cargar, falta que
-           la plataforma termine de revisar. -->
-      <app-nav-icon empty-icon name="clock" />
+           la plataforma termine de revisar. Un `<svg>` proyectado y no un
+           `app-nav-icon`: el medallón le da al svg la mitad de su disco, y el
+           host del ícono lo dejaba en 20 px dentro de un disco de 54. -->
+      <svg
+        empty-icon
+        data-testid="medical-center-setup-unverified-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="8.6" />
+        <path d="M12 7.4V12l3 1.8" />
+      </svg>
       <a app-link empty-actions [routerLink]="proximaAccion().route">{{ proximaAccion().label }}</a>
     </app-empty-state>
 
     @if (created(); as done) {
       <div class="setup__done" data-testid="medical-center-setup-exito">
-        <h2 class="setup__done-title">Su organización quedó configurada</h2>
+        <h2 class="setup__done-title">Su práctica quedó configurada</h2>
         <p class="setup__done-text">
           La sede «{{ form.controls.siteName.value.trim() }}» ya tiene su dirección y su punto en el mapa.
         </p>
@@ -46,7 +60,7 @@
       <app-paginated-form
         [paginas]="pages"
         [form]="form"
-        label="Configurar su organización"
+        label="Configurar práctica"
         submitLabel="Guardar la configuración"
         [pending]="saving()"
         (enviado)="save()"

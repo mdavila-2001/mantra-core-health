@@ -45,6 +45,41 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+  --step-dx: 28px;
+  animation: paginated-form-step-a var(--dur-slow) var(--ease-out) both;
+}
+
+/* Volver entra desde el otro lado. */
+.paginated-form__pagina[data-direction='back'] {
+  --step-dx: -28px;
+}
+
+/* Dos `@keyframes` idénticos, uno por paridad de paso: alternar el nombre es lo
+   que reinicia la entrada en cada cambio de página sin recrear la sección. El
+   final es el estilo propio del elemento, así que no queda ningún `transform`
+   que cree un bloque contenedor sobre los desplegables. */
+.paginated-form__pagina--alt {
+  animation-name: paginated-form-step-b;
+}
+
+@keyframes paginated-form-step-a {
+  from {
+    opacity: 0;
+    transform: translateX(var(--step-dx));
+  }
+}
+
+@keyframes paginated-form-step-b {
+  from {
+    opacity: 0;
+    transform: translateX(var(--step-dx));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paginated-form__pagina {
+    animation: none;
+  }
 }
 
 /* Una columna explícita de `minmax(0, 1fr)`: la implícita es `auto`, que crece
@@ -117,8 +152,10 @@
 /* Opciones en rejilla (`opcionesEn: 'rejilla'`): desde 780 px el grupo de
    radios reparte sus opciones en columnas FIJAS —las que calcula
    `columnasDeOpciones`, sin huérfanas—, según el ancho del CAMPO (consulta de
-   contenedor): en uno ancho, todas en una fila; en uno mediano, de a tres o de
-   a dos. Por debajo de 30 rem de campo, una columna, como en el teléfono. El
+   contenedor): en uno ancho (1100 px: el rótulo más largo de los cinco tipos
+   necesita ~205 px y a 1060 sólo tenía 199; con 1100 sobra para que un zoom
+   o una fuente de reemplazo no lo partan), todas en una fila; en
+   uno mediano, de a tres o de a dos. Por debajo de 30 rem de campo, una columna, como en el teléfono. El
    grupo apila por su cuenta (`radio-group.css`); acá sólo se le cambia la
    caja, que es del organismo porque la decisión es de la página. */
 .paginated-form__campo--opciones-en-rejilla {
@@ -134,7 +171,7 @@
     }
   }
 
-  @container opciones (min-width: 64rem) {
+  @container opciones (min-width: 1100px) {
     .paginated-form__campo--opciones-en-rejilla app-radio-group {
       grid-template-columns: repeat(var(--paginated-form-opciones-anchas, 1), minmax(0, 1fr));
     }
@@ -194,18 +231,21 @@
 }
 
 /* «Atrás» con texto es un botón fantasma: su relleno dejaba el rótulo ~20 px
-   a la derecha del borde de los campos. Se corre lo que mide su relleno para
-   que el TEXTO quede alineado con la columna; el fondo al apuntar sobresale,
-   que es lo esperable de un botón fantasma. */
+   a la derecha del borde de los campos. Quien lo necesita declara cuánto mide
+   ese relleno con `--paginated-form-atras-sangria` (las altas, que viven en
+   una tarjeta de 32 px de relleno: `register-medical-center.css`). Por omisión
+   vale 0: un formulario en una tarjeta `sm` o `embedded` en un diálogo no se
+   corre, ni sobresale, ni se recorta. El fondo al apuntar sobresale, que es lo
+   esperable de un botón fantasma. */
 .paginated-form__acciones:not(.paginated-form__acciones--apiladas) > .paginated-form__atras-texto:first-child {
-  margin-inline-start: calc(var(--sp-5) * -1);
+  margin-inline-start: calc(var(--paginated-form-atras-sangria, 0px) * -1);
 }
 
 /* Cuando los botones no entran en un renglón (lo mide `ApilarAlEnvolver`):
-   apilados, la primaria primero —arriba— y todos a lo ancho. `column-reverse`
-   porque en el DOM la primaria va última. */
+   apilados y a lo ancho. La directiva sube la primaria al principio del DOM,
+   así que el orden visual y el del teclado son el mismo: sin `column-reverse`. */
 .paginated-form__acciones--apiladas {
-  flex-direction: column-reverse;
+  flex-direction: column;
   align-items: stretch;
 }
 
