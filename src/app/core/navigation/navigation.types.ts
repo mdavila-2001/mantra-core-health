@@ -142,6 +142,7 @@ export const NAV_ICON_NAMES = [
   'download',
   'merge',
   'clock',
+  'grid', 'table', 'network', 'cube', // glosario; el porqué, en nav-icon.types.ts
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 

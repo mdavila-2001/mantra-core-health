@@ -25,7 +25,9 @@ import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Chip } from '../../shared/components/atoms/chip/chip';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../shared/components/molecules/card/card';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
@@ -63,8 +65,8 @@ export type VistaDelGlosario = 'grid' | 'table';
 
 /** Las dos vistas del selector, en el orden en que se ofrecen. */
 export const VISTAS_DEL_GLOSARIO: readonly SegmentedOption<VistaDelGlosario>[] = Object.freeze([
-  { value: 'grid', label: 'Tarjetas', description: 'Ver los resultados como tarjetas' },
-  { value: 'table', label: 'Tabla', description: 'Ver los resultados como tabla' },
+  { value: 'grid', label: 'Tarjetas', icon: 'grid', description: 'Ver los resultados como tarjetas' },
+  { value: 'table', label: 'Tabla', icon: 'table', description: 'Ver los resultados como tabla' },
 ]);
 
 /** Tope de páginas para ofrecer el select «ir a la página»; ver `permiteSaltar`. */
@@ -127,10 +129,12 @@ export interface TarjetaDeCategoria {
 @Component({
   selector: 'app-glossary',
   imports: [
+    AppButtonLink,
     Card,
     Chip,
     FilterBar,
     GlossaryCategoryIcon,
+    NavIcon,
     PageHeader,
     Pagination,
     RouterLink,
