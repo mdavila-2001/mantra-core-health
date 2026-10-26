@@ -89,6 +89,18 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
     });
   });
 
+  describe('antigüedad de las existencias (REQ-19-011)', () => {
+    it('correcto — cada sede trae stockUpdatedAt, y hay sedes al día y desactualizadas', () => {
+      const disponibilidad = cuerpoDe<{ items: readonly { stockUpdatedAt: string }[] }>(
+        pedir('GET', '/pharmacy-inventory/availability', new URLSearchParams({ products: IBUPROFENO_ID })),
+      );
+      const ageHours = disponibilidad.items.map((i) => (Date.now() - Date.parse(i.stockUpdatedAt)) / 3_600_000);
+      expect(ageHours.every((hours) => Number.isFinite(hours))).toBe(true);
+      expect(ageHours.some((hours) => hours < 24)).toBe(true);
+      expect(ageHours.some((hours) => hours >= 24)).toBe(true);
+    });
+  });
+
   describe('stock 0 y receta (H3.S2.M3)', () => {
     it('correcto — la amoxicilina (stock 0) no aparece en /prices', () => {
       const precios = cuerpoDe<{ items: readonly { productId: string }[] }>(
