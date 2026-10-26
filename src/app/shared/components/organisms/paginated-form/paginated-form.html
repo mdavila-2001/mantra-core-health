@@ -39,6 +39,7 @@
       <div
         class="paginated-form__campos"
         [class.paginated-form__campos--dos-columnas]="actual.disposicion === 'dos-columnas'"
+        [class.paginated-form__campos--tres-columnas]="actual.disposicion === 'tres-columnas'"
       >
         @for (campo of actual.campos; track campo.key) {
           <!-- Un campo condicional («¿cuál?») sólo existe en pantalla cuando su
@@ -49,6 +50,7 @@
               class="paginated-form__campo"
               [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
+              [class.paginated-form__campo--completo]="campo.ancho === 'completo'"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
               [description]="campo.description ?? ''"
@@ -68,6 +70,8 @@
               class="paginated-form__campo"
               [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
+              [class.paginated-form__campo--completo]="campo.ancho === 'completo'"
+              [class.paginated-form__campo--opciones-en-rejilla]="campo.opcionesEn === 'rejilla'"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
               [description]="campo.description ?? ''"

@@ -8,6 +8,7 @@ import {
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
   isDevMode,
   output,
@@ -18,6 +19,7 @@ import {
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { mensajeDeError, mensajeDeFechaRechazada } from '../../../forms/paginated/error-message';
+import { enfocarPrimerInvalido } from '../../../forms/paginated/focus-first-invalid';
 import { hiddenFields } from '../../../forms/paginated/conditional-visibility';
 import { isMainQuestion } from '../../../forms/paginated/paginate-fields';
 import {
@@ -197,6 +199,8 @@ type RespuestaSiNo = 'si' | 'no' | '';
 export class PaginatedForm {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly dialogs = inject(DialogService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   readonly paginas = input.required<readonly PaginaDeFormulario[]>();
 
@@ -738,6 +742,7 @@ export class PaginatedForm {
       if (fallo !== -1) {
         this.indice.set(fallo);
         this.rechazada.emit(this.paginasActivas()[fallo]);
+        this.enfocarError();
       }
       return;
     }
@@ -790,7 +795,15 @@ export class PaginatedForm {
       control.markAsTouched();
       if (control.invalid || this.fechaRechazada(campo)) valida = false;
     }
-    if (!valida) this.rechazada.emit(pagina);
-    return valida;
+    if (valida) return true;
+    this.rechazada.emit(pagina);
+    this.enfocarError();
+    return false;
+  }
+
+  /** El foco, al primer campo con error de la página (ver `enfocarPrimerInvalido`). */
+  private enfocarError(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    enfocarPrimerInvalido(this.host.nativeElement, this.injector);
   }
 }

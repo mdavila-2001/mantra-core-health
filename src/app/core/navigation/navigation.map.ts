@@ -1,4 +1,5 @@
-import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/iam/medical-center-registration.client';
+import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.types';
+import { SIN_CARA_DE_ASEGURADORA } from './navigation.payer';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
@@ -773,7 +774,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'umbrella',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -835,7 +836,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'chart',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -855,7 +856,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'clipboard',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -872,7 +873,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Pacientes de la aseguradora',
     group: 'Administración',
     icon: 'patients',
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     platformAccessRoles: ['SUPERADMIN', 'SECURITY_ADMIN'],
@@ -894,7 +895,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'megaphone',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -1091,12 +1092,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: [ANY_ROLE],
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Configurar centro médico',
+    label: 'Configurar su organización',
     group: 'Administración',
     icon: 'hospital',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Abra la práctica de su centro y su primera sede, con dirección y punto en el mapa.',
+    summary: 'Abra la práctica de su organización y su primera sede, con dirección y punto en el mapa.',
     module: 'M14 practice',
   },
   {

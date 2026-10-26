@@ -404,7 +404,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
     // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
     // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». CM-11 suma
-    // «Configurar centro médico», sólo para una organización médica: los
+    // «Configurar su organización», sólo para una organización médica: los
     // cinco tipos del alta pública (`MEDICAL_ORGANIZATION_TYPES`).
     expect(flagged.map((s) => s.path)).toEqual([
       'administration/medical-center-setup',
@@ -442,13 +442,53 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(queue, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
   });
 
-  it('«Configurar centro médico» la ve toda organización médica, y no una farmacia ni un laboratorio', () => {
+  it('«Configurar su organización» la ve toda organización médica, y no una farmacia ni un laboratorio', () => {
     const setup = APP_SECTIONS.find((s) => s.path === 'administration/medical-center-setup')!;
     for (const tipo of ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']) {
       expect(isVisibleTo(setup, ['USER'], ['t-1'], tipo), tipo).toBe(true);
     }
     expect(isVisibleTo(setup, ['USER'], ['t-1'], 'PHARMACY')).toBe(false);
     expect(isVisibleTo(setup, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
+  });
+});
+
+/**
+ * Revisión visual del PR #1441 (M5): una clínica veía el menú de la
+ * aseguradora. Las cinco pantallas que son de quien **paga** salen para las
+ * cinco organizaciones médicas; la aseguradora y la plataforma no cambian, y
+ * «Solicitudes de seguro» —la cara del prestador— se queda.
+ */
+describe('la cara de aseguradora del menú y las organizaciones médicas', () => {
+  const MEDICAS = ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER'] as const;
+  const DE_ASEGURADORA = [
+    'administration/insurance',
+    'administration/insurance-analytics',
+    'administration/received-claims',
+    'administration/insurance-patients',
+    'administration/insurance-campaigns',
+  ];
+  const seccion = (path: string) => APP_SECTIONS.find((s) => s.path === path)!;
+
+  it.each(DE_ASEGURADORA)('%s no se le ofrece a ninguna organización médica', (path) => {
+    for (const tipo of MEDICAS) {
+      expect(isVisibleTo(seccion(path), ['USER'], ['t-1'], tipo), tipo).toBe(false);
+    }
+  });
+
+  it.each(DE_ASEGURADORA)('%s la sigue viendo la dueña de una aseguradora (PAYER)', (path) => {
+    expect(isVisibleTo(seccion(path), ['USER'], ['t-1'], 'PAYER')).toBe(true);
+  });
+
+  it.each(DE_ASEGURADORA)('%s la sigue viendo el SUPERADMIN de la plataforma', (path) => {
+    expect(isVisibleTo(seccion(path), ['SUPERADMIN'], ['t-1'], null)).toBe(true);
+    expect(isVisibleTo(seccion(path), ['SUPERADMIN'], ['t-1'], 'PROVIDER')).toBe(true);
+  });
+
+  it('«Solicitudes de seguro», la cara del prestador, la sigue viendo una clínica', () => {
+    const presentadas = seccion('administration/insurance-claims');
+    for (const tipo of MEDICAS) {
+      expect(isVisibleTo(presentadas, ['USER'], ['t-1'], tipo), tipo).toBe(true);
+    }
   });
 });
 

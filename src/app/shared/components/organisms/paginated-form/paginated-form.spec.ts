@@ -339,6 +339,53 @@ describe('PaginatedForm', () => {
       expect(host.rechazadas[0].titulo).toBe('Identidad');
     });
 
+    it('lleva el foco al primer campo con error, no lo deja en «Siguiente»', async () => {
+      botonContinuar().focus();
+      botonContinuar().click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const activo = document.activeElement as HTMLElement | null;
+      expect(activo?.tagName).toBe('INPUT');
+      expect(activo?.getAttribute('aria-invalid')).toBe('true');
+      expect(activo?.closest('app-form-field')?.textContent).toContain('Documento');
+    });
+
+    it('en un grupo de radios con error enfoca su primera opción', async () => {
+      host.paginas.set([
+        {
+          titulo: 'Tipo',
+          campos: [
+            {
+              key: 'documento',
+              label: 'Tipo de documento',
+              control: 'radio',
+              required: true,
+              options: [
+                { value: 'ci', label: 'Cédula' },
+                { value: 'pas', label: 'Pasaporte' },
+              ],
+            },
+          ],
+        },
+        PAGINAS[1]!,
+      ]);
+      fixture.detectChanges();
+
+      botonContinuar().click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const grupo = (fixture.nativeElement as HTMLElement).querySelector('app-radio-group')!;
+      const activo = document.activeElement as HTMLInputElement | null;
+      expect(grupo.getAttribute('aria-invalid')).toBe('true');
+      expect(activo?.type).toBe('radio');
+      expect(grupo.contains(activo)).toBe(true);
+      // El mensaje describe al grupo: es lo que el lector anuncia al llegar.
+      const error = (fixture.nativeElement as HTMLElement).querySelector('.form-field-error')!;
+      expect(grupo.getAttribute('aria-describedby')).toContain(error.id);
+    });
+
     it('no emite `rechazada` cuando la página es válida', () => {
       host.form.controls.documento.setValue('1234567');
 
@@ -346,6 +393,47 @@ describe('PaginatedForm', () => {
       fixture.detectChanges();
 
       expect(host.rechazadas).toHaveLength(0);
+    });
+  });
+
+  describe('la disposición a lo ancho (§5)', () => {
+    const ANCHA: readonly PaginaDeFormulario[] = [
+      {
+        titulo: 'Identidad',
+        disposicion: 'tres-columnas',
+        campos: [
+          {
+            key: 'documento',
+            label: 'Tipo',
+            control: 'radio',
+            ancho: 'completo',
+            opcionesEn: 'rejilla',
+            options: [{ value: 'a', label: 'A' }],
+          },
+          { key: 'correo', label: 'Correo', control: 'email' },
+          { key: 'clave', label: 'Contraseña', control: 'password' },
+        ],
+      },
+    ];
+
+    it('marca la página de tres columnas y el campo que cruza la fila con sus opciones en rejilla', () => {
+      host.paginas.set(ANCHA);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('.paginated-form__campos--tres-columnas')).not.toBeNull();
+      const campos = [...raiz.querySelectorAll('.paginated-form__campo')];
+      expect(campos[0]!.classList).toContain('paginated-form__campo--completo');
+      expect(campos[0]!.classList).toContain('paginated-form__campo--opciones-en-rejilla');
+      expect(campos[1]!.classList).not.toContain('paginated-form__campo--completo');
+      expect(campos[1]!.classList).not.toContain('paginated-form__campo--opciones-en-rejilla');
+    });
+
+    it('sin disposición no agrega ninguna de esas clases', () => {
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('.paginated-form__campos--tres-columnas')).toBeNull();
+      expect(raiz.querySelector('.paginated-form__campo--completo')).toBeNull();
+      expect(raiz.querySelector('.paginated-form__campo--opciones-en-rejilla')).toBeNull();
     });
   });
 

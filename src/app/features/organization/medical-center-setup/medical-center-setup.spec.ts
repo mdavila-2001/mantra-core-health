@@ -6,13 +6,14 @@ import { of, throwError, type Observable } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import { PracticeOnboardingClient } from '../../../core/data-access/practice-onboarding/practice-onboarding.client';
 import type {
   CreatedOrganizationPractice,
   NewOrganizationPractice,
 } from '../../../core/data-access/practice-onboarding/practice-onboarding.types';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { setupErrorMessage, MedicalCenterSetup } from './medical-center-setup';
+import { RUTA_MI_ORGANIZACION, setupErrorMessage, MedicalCenterSetup } from './medical-center-setup';
 
 const TENANT = 'tenant-centro';
 
@@ -26,6 +27,8 @@ describe('MedicalCenterSetup', () => {
   let fixture: ComponentFixture<MedicalCenterSetup>;
   let createPractice: ReturnType<typeof vi.fn<(t: string, p: NewOrganizationPractice) => Observable<CreatedOrganizationPractice>>>;
   const activeTenant = signal<string | null>(TENANT);
+  /** Lo que responde `GET /tenants/me`: la organización activa, verificada o no. */
+  let misOrganizaciones: () => Observable<readonly { id: string; isVerified: boolean }[]>;
 
   const interno = (): Internal => fixture.componentInstance as unknown as Internal;
 
@@ -42,6 +45,7 @@ describe('MedicalCenterSetup', () => {
   beforeEach(async () => {
     activeTenant.set(TENANT);
     createPractice = vi.fn(() => of({ practiceId: 'pr-1', practiceSiteId: 'site-1' }));
+    misOrganizaciones = () => of([{ id: TENANT, isVerified: true }]);
 
     await TestBed.configureTestingModule({
       imports: [MedicalCenterSetup],
@@ -49,6 +53,10 @@ describe('MedicalCenterSetup', () => {
         provideRouter([]),
         { provide: SessionStore, useValue: { activeTenantId: activeTenant } },
         { provide: PracticeOnboardingClient, useValue: { createPractice } },
+        {
+          provide: DirectoryClient,
+          useValue: { listMyOrganizations: () => misOrganizaciones() },
+        },
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
       ],
     }).compileComponents();
@@ -120,7 +128,7 @@ describe('MedicalCenterSetup', () => {
 
   it.each([
     [403, 'Solo quien administra esta organización'],
-    [409, 'ya tiene un centro con ese nombre'],
+    [409, 'Su organización ya usa ese nombre'],
     [422, 'todavía no fue verificada'],
   ])('un %s se explica en castellano y deja corregir', (status, fragmento) => {
     createPractice.mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
@@ -133,10 +141,69 @@ describe('MedicalCenterSetup', () => {
   });
 });
 
+describe('MedicalCenterSetup · organización todavía no verificada (S3)', () => {
+  const TENANT_NUEVO = 'tenant-nuevo';
+
+  async function armar(
+    activa: string | null,
+    respuesta: () => Observable<readonly { id: string; isVerified: boolean }[]>,
+  ): Promise<ComponentFixture<MedicalCenterSetup>> {
+    await TestBed.configureTestingModule({
+      imports: [MedicalCenterSetup],
+      providers: [
+        provideRouter([]),
+        { provide: SessionStore, useValue: { activeTenantId: signal(activa) } },
+        { provide: PracticeOnboardingClient, useValue: { createPractice: vi.fn() } },
+        { provide: DirectoryClient, useValue: { listMyOrganizations: respuesta } },
+        { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+      ],
+    }).compileComponents();
+    const f = TestBed.createComponent(MedicalCenterSetup);
+    await f.whenStable();
+    return f;
+  }
+
+  it('al entrar dice que falta la verificación, con la próxima acción, y no ofrece el formulario', async () => {
+    const f = await armar(TENANT_NUEVO, () => of([{ id: TENANT_NUEVO, isVerified: false }]));
+    const raiz = f.nativeElement as HTMLElement;
+
+    const vacio = raiz.querySelector('[data-testid="medical-center-setup-unverified"]');
+    expect(vacio?.textContent).toContain('todavía no fue verificada');
+    const accion = vacio?.querySelector('a');
+    expect(accion?.getAttribute('href')).toBe(RUTA_MI_ORGANIZACION);
+    expect(raiz.querySelector('[data-testid="medical-center-setup-form"]')).toBeNull();
+  });
+
+  it('verificada, muestra el formulario y no el aviso', async () => {
+    const f = await armar(TENANT_NUEVO, () => of([{ id: TENANT_NUEVO, isVerified: true }]));
+    const raiz = f.nativeElement as HTMLElement;
+
+    expect(raiz.querySelector('[data-testid="medical-center-setup-form"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="medical-center-setup-unverified"]')).toBeNull();
+  });
+
+  it('si la organización activa no está entre las propias, no afirma nada: deja el formulario y decide la API', async () => {
+    const f = await armar(TENANT_NUEVO, () => of([{ id: 'otra', isVerified: false }]));
+    const raiz = f.nativeElement as HTMLElement;
+
+    expect(raiz.querySelector('[data-testid="medical-center-setup-form"]')).not.toBeNull();
+  });
+
+  it('si la lectura falla, muestra el error con su código y no el formulario', async () => {
+    const f = await armar(TENANT_NUEVO, () =>
+      throwError(() => new HttpErrorResponse({ status: 500, error: { correlationId: 'req-42' } })),
+    );
+    const raiz = f.nativeElement as HTMLElement;
+
+    expect(raiz.querySelector('[data-testid="medical-center-setup-form"]')).toBeNull();
+    expect(raiz.textContent).toContain('Algo salió mal');
+  });
+});
+
 describe('setupErrorMessage', () => {
   it('un fallo inesperado no filtra el detalle', () => {
     expect(setupErrorMessage(new HttpErrorResponse({ status: 500 }))).toBe(
-      'No pudimos guardar el centro. Intente de nuevo en unos segundos.',
+      'No pudimos guardar la configuración. Intente de nuevo en unos segundos.',
     );
   });
 });

@@ -50,10 +50,19 @@
   cursor: pointer;
 }
 
+/* Hasta DOS renglones antes de cortar con «…». En un teléfono, una opción
+   larga elegida («S.R.L. · Sociedad de Responsabilidad Limitada») quedaba en
+   «S.R.L. · Sociedad de Responsabilida…», que es justo la parte que dice qué
+   se eligió. Un valor que entra en un renglón se ve igual que antes: el
+   relleno vertical cabe dentro del alto mínimo del control (44 / 40 px). */
 .select-value {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  padding-block: var(--sp-2);
+  overflow-wrap: anywhere;
 }
 
 .select-value.is-placeholder {
