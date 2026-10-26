@@ -445,6 +445,50 @@ describe('ScheduleGrid', () => {
       expect(leyenda?.textContent).toContain('Otros servicios: cirugías, toma de muestras');
     });
 
+    it('una franja con telemedicina lleva la marca, y lo dice en su rótulo, la celda y el globo', () => {
+      montar(
+        [
+          regla(5, '08:00:00', '12:00:00', { slotMinutes: 30, telemedicineEnabled: true }),
+          regla(1, '08:00:00', '12:00:00', { slotMinutes: 30, telemedicineEnabled: false }),
+        ],
+        { sede: 'Sede Centro' },
+      );
+      const [lunes, viernes] = bloques().sort((a, b) =>
+        a.getAttribute('aria-label')!.localeCompare(b.getAttribute('aria-label')!),
+      );
+      // La marca: palabra e ícono, sólo en la franja que la tiene.
+      const marca = viernes.querySelector('[data-testid="horario-bloque-telemedicina"]');
+      expect(marca?.textContent?.trim()).toBe('Telemedicina');
+      expect(marca?.querySelector('app-nav-icon')).not.toBeNull();
+      expect(lunes.querySelector('[data-testid="horario-bloque-telemedicina"]')).toBeNull();
+      // El nombre accesible no depende del ícono.
+      expect(viernes.getAttribute('aria-label')).toBe(
+        'viernes de 08:00 a 12:00: atiende en Sede Centro, también por telemedicina',
+      );
+      expect(lunes.getAttribute('aria-label')).not.toContain('telemedicina');
+      expect(celda(9, 4).getAttribute('aria-label')).toContain('también por telemedicina');
+      expect(celda(9, 0).getAttribute('aria-label')).not.toContain('telemedicina');
+
+      viernes.dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+      const globo =
+        fixture.nativeElement.querySelector('[data-testid="horario-globo"]')?.textContent ?? '';
+      expect(globo).toContain('Telemedicina');
+      expect(globo).toContain('también por videollamada');
+    });
+
+    it('sin el campo, la franja no muestra telemedicina: ausente ≡ no', () => {
+      montar([regla(1, '08:00:00', '12:00:00', { slotMinutes: 30 })]);
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="horario-bloque-telemedicina"]'),
+      ).toBeNull();
+      bloques()[0].dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+      const globo =
+        fixture.nativeElement.querySelector('[data-testid="horario-globo"]')?.textContent ?? '';
+      expect(globo).not.toContain('Telemedicina');
+    });
+
     it('sin otros servicios no hay leyenda que leer', () => {
       montar([regla(1, '08:00:00', '12:00:00', { slotMinutes: 30 })]);
       expect(fixture.nativeElement.querySelector('[data-testid="horario-leyenda"]')).toBeNull();

@@ -28,6 +28,7 @@ import type {
   Booking,
   PublishedTemplate,
 } from '../../../core/data-access/scheduling/scheduling.types';
+import { franjasVigentes, type FranjaVigente } from '../telemedicina';
 import { describeApiFailure, fieldErrorsOf } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { BlockCancellations, cancelledBookingsText } from '../block-cancellations';
@@ -869,6 +870,9 @@ export class MyAgenda implements OnInit {
         // atendiendo.
         const vigente = pagina.items.find((plantilla) => !plantilla.retired);
         this.historicos.set(pagina.items.filter((p) => p.retired));
+        // Para la telemedicina cuentan TODAS las vigentes, no sólo la que se
+        // dibuja: es el mismo recorte con el que la API acepta la teleconsulta.
+        this.franjasParaTelemedicina.set(franjasVigentes(pagina.items));
 
         // Sin plantillas no es un fallo: el recurso existe y todavía no publicó
         // horario. Es el estado de quien creó la agenda y no la completó.
@@ -1680,6 +1684,13 @@ export class MyAgenda implements OnInit {
     // y sólo aparecían en «Horarios de otros servicios».
     return e.status === 'ready' || e.status === 'stale' ? (e.data?.rules ?? []) : [];
   });
+
+  /**
+   * Las franjas de todos los horarios no retirados, para que la tarjeta del
+   * día sepa si una hora admite teleconsulta. `null` hasta leerlas: la
+   * tarjeta no avisa nada mientras no se sabe.
+   */
+  protected readonly franjasParaTelemedicina = signal<readonly FranjaVigente[] | null>(null);
 
   /** Cómo se llama el horario vigente, para el globo de detalle de la grilla. */
   protected readonly nombreDelHorario = computed(() => {

@@ -143,6 +143,8 @@ type DiaGroup = FormGroup<{
   respiro: FormControl<number>;
   /** Qué admite la franja (v4.2.40). Por omisión, sólo consultas: lo de siempre. */
   modo: FormControl<FranjaModo>;
+  /** Si la franja admite teleconsulta. Por omisión no: un horario es presencial. */
+  telemedicina: FormControl<boolean>;
 }>;
 
 /** Lo que se muestra de un día en la semana visual. */
@@ -765,6 +767,7 @@ export class AgendaCreate {
     this.flexible.set(plantilla.flexibleHours === true);
     this.minutosPorPaciente.set(plantilla.slotMinutes ?? DURACION_POR_OMISION);
     this.conAlmuerzo.set(false);
+    const conTelemedicina = new Set<number>();
     for (const [indice, dia] of DIAS.entries()) {
       // Un día con almuerzo vuelve como DOS franjas: el horario es de la
       // primera apertura al último cierre, y el hueco entre ellas es el
@@ -784,13 +787,16 @@ export class AgendaCreate {
         // ausente y cero son cosas distintas.
         respiro: primera.gapMinutes ?? 0,
         modo: primera.bookingMode ?? 'CONSULTATIONS',
+        telemedicina: primera.telemedicineEnabled === true,
       });
+      if (primera.telemedicineEnabled === true) conTelemedicina.add(indice);
       if (reglas.length > 1 && !this.conAlmuerzo()) {
         this.conAlmuerzo.set(true);
         this.almuerzoDesde.set(sinSegundos(primera.endTime));
         this.almuerzoHasta.set(sinSegundos(reglas[1].startTime));
       }
     }
+    this.diasConTelemedicinaPublicada.set(conTelemedicina);
     if (plantilla.validTo !== undefined) {
       this.formGeneral.controls.tieneFin.setValue('si');
       this.fechaDeFin.set(new Date(plantilla.validTo));
@@ -860,6 +866,28 @@ export class AgendaCreate {
     return this.calcularDia(indice, DIAS[indice].largo).turnos.length;
   }
 
+  /**
+   * Los días que, en el horario que se está cambiando, ya atendían por
+   * telemedicina. Sólo ahí apagarla se escribe como `false`: en un día que
+   * nunca la tuvo, «no la activó» es lo mismo que no decir nada.
+   */
+  private readonly diasConTelemedicinaPublicada = signal<ReadonlySet<number>>(new Set());
+
+  /**
+   * El campo `telemedicineEnabled` de las franjas de un día, o nada.
+   *
+   * Misma convención que `bookingMode` y `gapMinutes`: no se escribe un valor
+   * que nadie eligió. `true` cuando el médico la activó; `false` sólo cuando la
+   * apaga en un día que la tenía publicada.
+   */
+  private telemedicinaDe(
+    indice: number,
+    activa: boolean,
+  ): { readonly telemedicineEnabled?: boolean } {
+    if (activa) return { telemedicineEnabled: true };
+    return this.diasConTelemedicinaPublicada().has(indice) ? { telemedicineEnabled: false } : {};
+  }
+
   /** Si la franja del día es sólo de servicios: no tiene turnos fijos que contar. */
   protected soloServicios(indice: number): boolean {
     return this.semana.at(indice).getRawValue().modo === 'SERVICES';
@@ -913,6 +941,7 @@ export class AgendaCreate {
         duracion: modelo.duracion,
         respiro: modelo.respiro,
         modo: modelo.modo,
+        telemedicina: modelo.telemedicina,
       });
     }
     this.versionDeLaSemana.update((v) => v + 1);
@@ -945,6 +974,7 @@ export class AgendaCreate {
         ...(flexible ? {} : { slotMinutes: v.duracion }),
         ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
         ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
+        ...this.telemedicinaDe(dia.indice, v.telemedicina),
         ...(Number.isFinite(capacidad) && capacidad > 0 ? { capacityPerSlot: capacidad } : {}),
       }));
     });
@@ -1206,6 +1236,9 @@ export class AgendaCreate {
             // Sólo si no es lo de siempre: ausente ≡ consultas, y escribir un valor
             // que nadie eligió borraría la diferencia entre «no lo dijo» y «dijo consultas».
             ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
+            // Telemedicina: `true` si la activó; `false` sólo si la apaga en una
+            // franja que ya la tenía. Ausente ≡ sin telemedicina.
+            ...this.telemedicinaDe(dia.indice, v.telemedicina),
             // Ni capacidad: en horario flexible no hay turnos que llenar, y la
             // API rechaza la franja que la declara (P36).
             ...(flexible ? {} : opcEntero('capacityPerSlot', capacidad)),
@@ -1418,6 +1451,9 @@ function nuevoDia(_dayOfWeek: number): DiaGroup {
     // Sólo consultas por omisión: es lo que toda franja era antes, así que abrir el
     // formulario no cambia el significado de ningún horario ya publicado.
     modo: new FormControl<FranjaModo>('CONSULTATIONS', { nonNullable: true }),
+    // Sin telemedicina por omisión: un horario es presencial hasta que el
+    // médico diga lo contrario, franja por franja.
+    telemedicina: new FormControl(false, { nonNullable: true }),
   });
 }
 

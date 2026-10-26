@@ -143,6 +143,14 @@
               >
                 <span class="grilla__bloque-horas">{{ bloque.desde }} – {{ bloque.hasta }}</span>
                 <span class="grilla__bloque-detalle">{{ bloque.detalle }}</span>
+                <!-- Telemedicina: ícono y palabra, no sólo el ícono. El nombre
+                     accesible ya lo lleva la etiqueta del bloque y de la celda. -->
+                @if (bloque.telemedicina) {
+                  <span class="grilla__bloque-tele" data-testid="horario-bloque-telemedicina">
+                    <app-nav-icon name="camera" aria-hidden="true" />
+                    Telemedicina
+                  </span>
+                }
               </div>
             }
             <!-- Los bloqueos van por encima de la franja: un rato cerrado manda
