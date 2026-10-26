@@ -1245,6 +1245,14 @@ export class RegisterPractitioner {
   private readonly fileIdTituloPrincipal = signal<string | null>(null);
   readonly respaldoMatricula = signal<RespaldoDeclarado | null>(null);
   readonly respaldoSedes = signal<RespaldoDeclarado | null>(null);
+  /**
+   * El fileId de cada respaldo de habilitación ya subido (P29). Se recuerda
+   * para que un reintento del alta no vuelva a subir —ni intente reclamar dos
+   * veces— el mismo PDF, y se olvida cuando la persona cambia el archivo.
+   */
+  private readonly fileIdDeHabilitacion = signal<
+    Partial<Record<'license' | 'sedes', string>>
+  >({});
 
   /** El error del último adjunto rechazado, si hubo. */
   readonly errorAdjunto = signal<string | null>(null);
@@ -1508,6 +1516,7 @@ export class RegisterPractitioner {
     this.attachmentFiles.update((current) => ({ ...current, [key]: files }));
     const file = files[0];
     if (key === 'professional-title') this.fileIdTituloPrincipal.set(null);
+    else this.fileIdDeHabilitacion.update((actual) => ({ ...actual, [key]: undefined }));
     this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
     this.errorAdjunto.set(null);
   }
@@ -2803,7 +2812,56 @@ export class RegisterPractitioner {
    * progreso disponible para reintentar sin reclamar dos veces el mismo PDF.
    */
   private subirPdfDeTitulosPendientes(): Observable<void> {
-    return concat(this.uploadTitlePdfs(), this.uploadSpecialtyPdfs()).pipe(
+    return concat(
+      this.uploadTitlePdfs(),
+      this.uploadSpecialtyPdfs(),
+      this.uploadLicensePdfs(),
+    ).pipe(
+      toArray(),
+      map(() => undefined),
+    );
+  }
+
+  /**
+   * Sube el PDF de la matrícula y el del SEDES (P29), y recuerda cada fileId.
+   *
+   * Hasta el 26/10/2026 el alta no tenía dónde llevarlos: el selector aceptaba
+   * el archivo, lo mostraba con su nombre y su peso, y al crear la cuenta lo
+   * tiraba en silencio. Sólo se sube el del SEDES si se escribió su número:
+   * sin la habilitación la API no tiene fila donde dejarlo y respondería 422.
+   */
+  private uploadLicensePdfs(): Observable<void> {
+    const raw = this.formProfesional.getRawValue();
+    const claves = (['license', 'sedes'] as const).filter((clave) =>
+      clave === 'license' ? raw.licenseNumber.trim() !== '' : raw.sedesLicenseNumber.trim() !== '',
+    );
+    return from(claves).pipe(
+      concatMap((clave) => {
+        const archivo = this.attachmentFiles()[clave]?.[0];
+        if (archivo === undefined || this.fileIdDeHabilitacion()[clave] !== undefined) {
+          return of(undefined);
+        }
+        return this.iam.uploadRegistrationDocument(archivo).pipe(
+          filter(
+            (evento): evento is HttpResponse<UploadedRegistrationDocument> =>
+              evento instanceof HttpResponse,
+          ),
+          map((respuesta) => {
+            const documento = respuesta.body;
+            if (!documento?.fileId || documento.fileId.trim() === '') {
+              throw new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.');
+            }
+            this.fileIdDeHabilitacion.update((actual) => ({
+              ...actual,
+              [clave]: documento.fileId,
+            }));
+            return undefined;
+          }),
+          throwIfEmpty(
+            () => new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.'),
+          ),
+        );
+      }),
       toArray(),
       map(() => undefined),
     );
@@ -2964,6 +3022,7 @@ export class RegisterPractitioner {
     const foto = raw.profilePhotoBase64;
     const firmaImagen = raw.signatureImageBase64;
     const selloImagen = raw.sealImageBase64;
+    const respaldos = this.fileIdDeHabilitacion();
 
     return {
       // `email` del DTO es el campo de LOGIN de la API, y desde este cambio el
@@ -3021,6 +3080,11 @@ export class RegisterPractitioner {
       sedesLicenseNumber: raw.sedesLicenseNumber.trim(),
       ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),
       ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
+      // Los respaldos de la habilitación (P29), ya subidos por `uploadLicensePdfs`.
+      ...(respaldos.license === undefined ? {} : { licenseFileId: respaldos.license }),
+      ...(respaldos.sedes === undefined || raw.sedesLicenseNumber.trim() === ''
+        ? {}
+        : { sedesLicenseFileId: respaldos.sedes }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
       // Los cuatro contactos por separado. `phone` ya no viaja: era el campo
       // único que mezclaba el número privado con el del consultorio, y la API

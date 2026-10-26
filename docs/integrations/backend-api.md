@@ -1672,7 +1672,7 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `PATCH` | `/profiles/practitioners/me/specialties/:specialtyId/primary` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/promotions/me` | [`PromotionsClient`](../../src/app/core/data-access/promotions/promotions.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/public/profiles/:prefijo/:slug/reviews` | [`PublicDirectoryClient`](../../src/app/core/data-access/public-directory/public-directory.client.ts) | Fuente frontend; no certifica API real |
-| `GET` | `/public/profiles/f/:slug/branch-availability` | [`PublicCatalogClient`](../../src/app/core/data-access/public-catalog/public-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/public/profiles/f/:slug/branch-availability` | [`PublicCatalogClient`](../../src/app/core/data-access/public-catalog/public-catalog.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/scheduling/appointments/walk-in` | [`SchedulingClient`](../../src/app/core/data-access/scheduling/scheduling.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/terminology/import-template` | [`TerminologyClient`](../../src/app/core/data-access/terminology/terminology.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/terminology/value-sets/$glossary-facets` | [`TerminologyClient`](../../src/app/core/data-access/terminology/terminology.client.ts) | Fuente frontend; no certifica API real |

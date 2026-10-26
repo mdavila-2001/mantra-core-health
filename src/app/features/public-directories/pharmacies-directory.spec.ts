@@ -15,6 +15,8 @@ import { PharmaciesDirectory } from './pharmacies-directory';
 
 /** La búsqueda que hace este directorio. La otra —clínicas— es de su hermano. */
 const BUSQUEDA = '/public/search/pharmacies';
+/** P34 · la sección «Abiertas ahora», que pide su propia lectura. */
+const ABIERTAS = '/public/pharmacies/open-now';
 
 const RAMAS: readonly RamaDepartamento[] = [
   {
@@ -82,6 +84,28 @@ describe('PharmaciesDirectory · la ficha vive dentro del panel', () => {
       totalHint: FICHAS.length,
       generatedAt: new Date().toISOString(),
     });
+    http.expectOne((peticion) => peticion.url.endsWith(ABIERTAS)).flush({
+      items: [
+        {
+          siteId: 's-1',
+          siteName: 'Sucursal Centro',
+          pharmacyName: 'Farmacia Vida',
+          pharmacySlug: 'farmacia-vida',
+          addressText: null,
+          city: null,
+          latitude: null,
+          longitude: null,
+          distanceKm: null,
+          open24h: true,
+          onCall: null,
+          timeZone: 'America/La_Paz',
+        },
+      ],
+      nextCursor: null,
+      asOf: '2026-10-26T07:00:00.000Z',
+      asOfLocal: '2026-10-26T03:00:00-04:00',
+      timeZone: 'America/La_Paz',
+    });
     fixture.detectChanges();
   });
 
@@ -116,5 +140,20 @@ describe('PharmaciesDirectory · la ficha vive dentro del panel', () => {
       // El atributo y no la propiedad: `href` resuelto traería el origen.
       expect(enlace.getAttribute('href')).toMatch(/^\/pharmacies-directory\//u);
     }
+  });
+
+  it('P34 · «Abiertas ahora» va arriba, con la hora de Bolivia y la ficha de la farmacia', () => {
+    const pantalla = fixture.nativeElement as HTMLElement;
+    const seccion = pantalla.querySelector('[data-testid="abiertas-ahora"]');
+    expect(seccion).not.toBeNull();
+    expect(pantalla.querySelector('[data-testid="abiertas-hora"]')?.textContent).toContain(
+      'A las 03:00, hora de Bolivia',
+    );
+    expect(pantalla.querySelector('[data-testid="abiertas-rotulo"]')?.textContent?.trim()).toBe(
+      'Abierta 24 h',
+    );
+    expect(
+      seccion?.querySelector('a.abiertas__nombre')?.getAttribute('href'),
+    ).toBe('/pharmacies-directory/farmacia-vida');
   });
 });

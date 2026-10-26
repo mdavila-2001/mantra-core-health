@@ -6,7 +6,7 @@ import { buscarUsuario } from '../mock-session';
 import { crearRouterSimulado } from './index';
 import { spendingMovementsFor } from './patient-spending.handlers';
 
-/** `GET /patient-spending/me` del backend simulado (P43). */
+/** `GET /patient-spending/me` del backend simulado (P44): la misma forma que la API. */
 describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
   const router = crearRouterSimulado();
   const paciente = buscarUsuario('paciente')!;
@@ -30,6 +30,8 @@ describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
     const page = pedir(paciente, { from: '2025-01-01', to: '2026-12-31' }) as PatientSpendingResponseDto;
 
     expect(page.currency).toBe('BOB');
+    // Como la API: dice si recortó; la maqueta nunca llega al tope.
+    expect(page.truncated).toBe(false);
     expect(page.items.length).toBeGreaterThan(24);
     const fechas = page.items.map((item) => item.occurredAt);
     expect([...fechas].sort().reverse()).toEqual(fechas);
