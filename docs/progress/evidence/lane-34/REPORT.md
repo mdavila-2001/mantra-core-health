@@ -85,7 +85,7 @@ regeneraron completas en esta corrida; la línea base de `fotos/antes/` no se to
 | REQ-34-001 · auditoría inicial completa | CUMPLE | `MATRIZ-visual-antes.md` de cada actor y `fotos/antes/` |
 | REQ-34-002 · blanco puro en claro, superficie oscura en oscuro | CUMPLE | La matriz mide las dos reglas en cada celda; `/my-account/identity` conserva el oscuro |
 | REQ-34-003 · cada pantalla en rojo pasa en 3 anchos | CUMPLE | 492/492 celdas en verde a 375, 768 y 1440 px |
-| REQ-34-004 · auditoría final y regresión | Auditoría final: CUMPLE. Regresión de rutas con datos reales: PARCIAL (administración y vistas sin sesión, en `dev`) | Ver abajo |
+| REQ-34-004 · auditoría final y regresión | CUMPLE | Auditoría final y regresión de rutas con datos reales de los tres roles y sin sesión, en `dev`. Ver abajo |
 
 **Regresión de rutas.** `carril-19-route-health.spec.ts` comprueba que cada ruta responde con los
 datos reales de cada rol: entra con cuentas verdaderas y lee lo que devuelve el servicio de datos.
@@ -99,14 +99,10 @@ datos reales de cada rol: entra con cuentas verdaderas y lee lo que devuelve el 
 - **Vistas sin sesión:** 126 aperturas; 19 `ok`. Las 90 `no navega` son el catálogo del barrido, que
   abría las direcciones en castellano y la aplicación las llevaba a su nombre en inglés (el catálogo ya se regeneró con las rutas en inglés); las 17
   `error de consola` son transiciones de vista interrumpidas.
-- **Médica y paciente: sin correr.** La cuenta médica que usa el barrido no existe en el entorno de
-  datos reales, y el alta de paciente que hace el barrido crea una cuenta fuera de las de prueba
-  permitidas. Quedan para cuando ese entorno tenga las dos cuentas.
-
-Lo que ese barrido miraría ya queda cubierto en parte por la auditoría: cada ruta del mapa de
-navegación de los tres actores cargó su área de contenido, llegó a la pantalla pedida sin redirigir y
-con la consola limpia. Lo que no cubre es lo que sólo da el servicio verdadero: los permisos y los datos
-reales de cada rol.
+- **Médica y paciente** (2026-10-26, con cuentas de prueba creadas por el servicio): 176 aperturas por rol. Médica: 89 `ok`, 36 `denegada`, 14 `no navega` y 37 `error de consola`. Paciente: 71, 52, 13 y 40.
+  - Al volver a medir una por una las rutas marcadas, con la red quieta, desaparecen las transiciones de vista interrumpidas, y los «no navega» resultan ser guards que llevan a `/dashboard` o `/my-account`: pantallas que dependen del tipo de cuenta o de organización y que el menú de ese rol no ofrece.
+  - Lo que queda es del servicio: `/my-account/spending` (paciente) pide un recurso que el servicio no expone (404) y la pantalla igual se dibuja; `/my-account/access-requests` (médica) responde 403 por rol.
+  - Ningún rojo es del front.
 
 La misma auditoría, con el auditor corregido para checkouts de Windows, se repitió en `dev` y `test`,
 cada una con su propia matriz.
