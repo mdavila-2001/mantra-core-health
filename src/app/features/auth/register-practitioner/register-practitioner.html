@@ -13,6 +13,7 @@
     <div class="registro">
       @if (registered()) {
         <div class="registro__header">
+          <app-registration-badge type="practitioner" celebrate />
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
             ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
@@ -30,6 +31,7 @@
         </button>
       } @else {
         <div class="registro__header">
+          <app-registration-badge type="practitioner" />
           <h1 class="registro__title">Crear cuenta de profesional</h1>
         </div>
 

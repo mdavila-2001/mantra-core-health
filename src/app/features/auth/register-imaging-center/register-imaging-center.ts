@@ -63,6 +63,7 @@ import {
 } from '../shared-registration/diagnostic-center-enrollment';
 import { NameFields } from '../shared-registration/name-fields/name-fields';
 import { nameGroup, completeName } from '../shared-registration/name-fields/person-name';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /* ============================================================================
     Alta del centro de imagenología — «MODULO ANALISIS MEDICOS (RAYOS X,
@@ -432,7 +433,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  */
 @Component({
   selector: 'app-register-imaging-center',
-  imports: [
+  imports: [RegistrationBadge, 
     BranchBulkImport,
     FileInput,
     NgTemplateOutlet,

@@ -21,6 +21,7 @@
     <div class="registro">
       @if (registered()) {
         <div class="registro__header">
+          <app-registration-badge type="pharmacy" celebrate />
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-farmacia-exito">
             ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
@@ -42,6 +43,7 @@
         </button>
       } @else {
         <div class="registro__header">
+          <app-registration-badge type="pharmacy" />
           <h1 class="registro__title">Registre su farmacia</h1>
           <p class="registro__subtitle">
             Necesitamos lo básico para crear su cuenta. Puede volver atrás en cualquier paso, y

@@ -2,6 +2,7 @@
   <div class="registro">
     @if (registered()) {
       <div class="registro__header">
+        <app-registration-badge type="clinic" celebrate />
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="medical-center-signup-success">
           ¡Bienvenido a AloVida! Su organización médica ya tiene cuenta
         </h1>
@@ -26,6 +27,7 @@
       </button>
     } @else {
       <div class="registro__header">
+        <app-registration-badge type="clinic" />
         <h1 class="registro__title">Registre su organización médica</h1>
         <p class="registro__subtitle">
           Cree la cuenta de su hospital, clínica, consultorio, centro de enfermería u otra institución de

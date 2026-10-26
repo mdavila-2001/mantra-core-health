@@ -76,6 +76,7 @@ import {
   type LocalityFromPoint,
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 
 /* ============================================================================
@@ -179,7 +180,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  */
 @Component({
   selector: 'app-register-pharmacy',
-  imports: [
+  imports: [RegistrationBadge, 
     BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,

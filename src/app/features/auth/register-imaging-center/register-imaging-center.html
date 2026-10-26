@@ -23,6 +23,7 @@
     <div class="registro">
       @if (enviada()) {
         <div class="registro__header">
+          <app-registration-badge type="imaging" celebrate />
           <h1
             appAnuncio
             [asertivo]="false"
@@ -49,6 +50,7 @@
         </button>
       } @else {
         <div class="registro__header">
+          <app-registration-badge type="imaging" />
           <h1 class="registro__title">Registre su centro de imagenología</h1>
           <!-- Sin contar los pasos: el indicador de arriba ya dice «Paso 1 de
                N» y lo calcula solo. Un número escrito acá se desincroniza el
