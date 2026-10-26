@@ -5,7 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
-import { simulatorAvailable, simulatorOnly } from '../simulator-only';
+import { simulatorOnly } from '../simulator-only';
 import type {
   AccountActivation,
   ActivationResult,
@@ -278,6 +278,14 @@ export class IamClient {
       ...(registration.licenseIssueDate === undefined
         ? {}
         : { licenseIssueDate: registration.licenseIssueDate }),
+      // Los respaldos de la habilitación (P29): sin repetirlos acá se
+      // descartarían en silencio, que es justo el defecto que vienen a cerrar.
+      ...(registration.licenseFileId === undefined
+        ? {}
+        : { licenseFileId: registration.licenseFileId }),
+      ...(registration.sedesLicenseFileId === undefined
+        ? {}
+        : { sedesLicenseFileId: registration.sedesLicenseFileId }),
       ...(registration.professionalTitle === undefined
         ? {}
         : { professionalTitle: registration.professionalTitle }),
@@ -481,9 +489,9 @@ export class IamClient {
    * tipo— y no `payer` ni `pharmacy`. Campo por campo y no con un spread del
    * registro, por lo mismo que el resto del cliente: `forbidNonWhitelisted`
    * rechaza toda clave que el DTO no declare. Las sucursales viajan como
-   * `branches: [{ name, address: { lines, latitude?, longitude? } }]`
-   * (`DiagnosticUnitBranchDto`, P51); `description` y `locationUrl` no tienen
-   * columna en la API (P54), así que sólo salen hacia el simulador.
+   * `branches: [{ name, address: { lines, latitude?, longitude? },
+   * description?, locationUrl? }]` (`DiagnosticUnitBranchDto`, P51): la API
+   * las crea como sedes de la unidad y como sucursales del portal.
    */
   registerLaboratoryOrganization(
     registration: LaboratoryOrganizationRegistration,
@@ -522,10 +530,10 @@ export class IamClient {
                       ? {}
                       : { latitude: branch.location.latitude, longitude: branch.location.longitude }),
                   },
-                  ...(!simulatorAvailable() || branch.description === undefined
+                  ...(branch.description === undefined
                     ? {}
                     : { description: branch.description }),
-                  ...(!simulatorAvailable() || branch.locationUrl === undefined
+                  ...(branch.locationUrl === undefined
                     ? {}
                     : { locationUrl: branch.locationUrl }),
                 })),

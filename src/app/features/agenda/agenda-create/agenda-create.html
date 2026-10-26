@@ -153,6 +153,22 @@
         />
       </div>
 
+      <!-- P36 · sin turnos fijos el paciente elige la hora, pero la consulta
+           igual ocupa un rato: es lo que impide que dos pidan la misma. -->
+      @if (flexible()) {
+        <app-form-field
+          label="Tiempo que se reserva por paciente"
+          hint="El paciente elige la hora; desde ahí queda reservado este tiempo."
+        >
+          <app-select
+            data-testid="agenda-create-minutos-por-paciente"
+            [options]="opcionesDeDuracion"
+            [value]="minutosPorPaciente()"
+            (valueChange)="elegirMinutosPorPaciente($event)"
+          />
+        </app-form-field>
+      }
+
       <!-- LA TABLA. El pedido original la describe así: «una tabla donde cada
            día de la semana es una fila, las columnas que son selects son:
            Desde, Hasta, Tamaño del slot». Antes esto eran fichas por día y un

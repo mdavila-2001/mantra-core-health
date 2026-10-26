@@ -1,7 +1,7 @@
 import { reservas } from '../fixtures/agenda';
 import { STATUS } from '../fixtures/concepts';
 import { PACIENTE } from '../fixtures/people';
-import { notFound, type MockRouter } from '../mock-router';
+import { forbidden, notFound, preconditionFailed, type MockRouter } from '../mock-router';
 import { plantillasVigentes } from './clinical.handlers';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
 
@@ -213,7 +213,7 @@ export function registrarEncuestas(router: MockRouter): void {
   /** Rechaza tocar una versión publicada, con el mismo código que el backend. */
   const soloBorrador = (e: EncuestaSimulada) =>
     e.published
-      ? { status: 422, body: { message: 'La versión ya está publicada: cree una versión nueva para corregir el cuestionario.' } }
+      ? preconditionFailed('La versión ya está publicada: cree una versión nueva para corregir el cuestionario.')
       : null;
 
   router.patch('/surveys/templates/:id', (request) => {
@@ -590,7 +590,7 @@ export function registrarEncuestas(router: MockRouter): void {
     // Los del estandar no se tocan: son la parte que hace comparable una ficha
     // entre consultorios.
     if (!campo.own) {
-      return { status: 403, body: { message: 'Un campo del formulario estandar no se puede modificar.' } };
+      return forbidden('Un campo del formulario estandar no se puede modificar.');
     }
     const datos = cuerpo<{ required?: boolean }>(request);
     plantilla.fields = plantilla.fields.map((f) =>
@@ -608,7 +608,7 @@ export function registrarEncuestas(router: MockRouter): void {
     if (plantilla === undefined) return notFound('Campo no encontrado');
     const campo = plantilla.fields.find((f) => f.assignmentId === assignmentId)!;
     if (!campo.own) {
-      return { status: 403, body: { message: 'Un campo del formulario estandar no se puede quitar.' } };
+      return forbidden('Un campo del formulario estandar no se puede quitar.');
     }
     plantilla.fields = plantilla.fields
       .filter((f) => f.assignmentId !== assignmentId)

@@ -37,7 +37,7 @@ export interface PlantillaSimulada {
   readonly validTo?: string;
   readonly bookingPolicyId: string;
   readonly statusConceptId: string;
-  /** Sin turnos fijos: un bloque abierto por franja (P36). */
+  /** Sin turnos fijos (P36): no genera cupos; las horas se calculan al leer. */
   readonly flexibleHours?: boolean;
 }
 

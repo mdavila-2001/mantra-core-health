@@ -42,7 +42,7 @@ function administra(request: MockRequest): boolean {
 }
 
 /** Un 422 de regla de negocio, con la forma del `PreconditionFailedException` de la API. */
-function preconditionFailed422(message: string, details: unknown = {}) {
+export function preconditionFailed422(message: string, details: unknown = {}) {
   return reply(422, { statusCode: 422, code: 'PRECONDITION_FAILED', message, error: 'Unprocessable Entity', details });
 }
 
@@ -73,7 +73,7 @@ function duracionDe(o: SimulatedOffer): ServiceDuration {
 }
 
 /** Los recursos (sedes) de un profesional. */
-function sedesDe(practitionerProfileId: string): readonly RecursoSimulado[] {
+export function sedesDe(practitionerProfileId: string): readonly RecursoSimulado[] {
   return recursos.filtrar((r) => r.resourceRefId === practitionerProfileId);
 }
 
@@ -113,16 +113,26 @@ function franjasDeServicios(sedes: readonly RecursoSimulado[], desde: number, ha
   });
 }
 
-/** Un cupo de servicio que nadie confirmó y cuya retención ya venció. */
+/**
+ * Un cupo que nació al retener y no sale de una grilla: el de un servicio, o el
+ * de una hora de horario flexible (P36). Ocupa tiempo mientras está tomado y,
+ * al soltarse, se borra en vez de reabrirse.
+ */
+export function esADemanda(c: CupoSimulado): boolean {
+  if (c.serviceOfferingId !== undefined && c.serviceOfferingId !== null) return true;
+  return c.scheduleTemplateId !== null && plantillas.get(c.scheduleTemplateId)?.flexibleHours === true;
+}
+
+/** Un cupo a demanda que nadie confirmó y cuya retención ya venció. */
 function retencionVencida(c: CupoSimulado): boolean {
-  if (c.serviceOfferingId === undefined || c.serviceOfferingId === null) return false;
+  if (!esADemanda(c)) return false;
   if (c.heldUntil === undefined || c.heldUntil === null) return false;
   const tieneReserva = reservas.todos().some((r) => r.bookableSlotId === c.id);
   return !tieneReserva && new Date(c.heldUntil).getTime() <= Date.now();
 }
 
 /** Borra las retenciones vencidas y devuelve las consultas que habían retraído. */
-function purgarRetencionesVencidas(sedes: readonly RecursoSimulado[]): void {
+export function purgarRetencionesVencidas(sedes: readonly RecursoSimulado[]): void {
   const ids = new Set(sedes.map((s) => s.id));
   const vencidas = cupos.filtrar((c) => ids.has(c.resourceId) && retencionVencida(c));
   if (vencidas.length === 0) return;
@@ -134,7 +144,7 @@ function purgarRetencionesVencidas(sedes: readonly RecursoSimulado[]): void {
  * Todo lo que ocupa el tiempo del profesional en un rango, en todas sus sedes:
  * consultas confirmadas, bloqueos, y los turnos de servicio vivos con sus colchones.
  */
-function ocupadoDelProfesional(sedes: readonly RecursoSimulado[], desde: number, hasta: number): Bracket[] {
+export function ocupadoDelProfesional(sedes: readonly RecursoSimulado[], desde: number, hasta: number): Bracket[] {
   const ids = new Set(sedes.map((s) => s.id));
   const desdeAncho = desde - MARGEN_DE_COLCHONES_MS;
   const hastaAncho = hasta + MARGEN_DE_COLCHONES_MS;
@@ -154,12 +164,13 @@ function ocupadoDelProfesional(sedes: readonly RecursoSimulado[], desde: number,
     if (enRango(inicio, fin)) ocupado.push({ desde: inicio, hasta: fin });
   }
   for (const c of cupos.todos()) {
-    if (!ids.has(c.resourceId) || c.serviceOfferingId === undefined || c.serviceOfferingId === null) continue;
+    if (!ids.has(c.resourceId) || !esADemanda(c)) continue;
     if (c.remainingCapacity > 0 || retencionVencida(c)) continue;
     const inicio = new Date(c.startAt).getTime();
     const fin = new Date(c.endAt).getTime();
     if (!enRango(inicio, fin)) continue;
-    const oferta = offers.get(c.serviceOfferingId);
+    // Una hora flexible (P36) no tiene oferta: ocupa su rato, sin colchones.
+    const oferta = c.serviceOfferingId == null ? undefined : offers.get(c.serviceOfferingId);
     ocupado.push(busyBracket(inicio, fin, { preparacion: oferta?.prepMinutes ?? 0, limpieza: oferta?.cleanupMinutes ?? 0 }));
   }
   return ocupado;
@@ -204,7 +215,7 @@ function reabrirConsultas(sedes: readonly RecursoSimulado[]): void {
  */
 export function liberarCupoDeServicio(slotId: string): boolean {
   const cupo = cupos.get(slotId);
-  if (cupo === undefined || cupo.serviceOfferingId === undefined || cupo.serviceOfferingId === null) return false;
+  if (cupo === undefined || !esADemanda(cupo)) return false;
   const sedes = recursos.filtrar((r) => r.id === cupo.resourceId);
   const profesional = sedes[0]?.resourceRefId;
   cupos.borrar(cupo.id);

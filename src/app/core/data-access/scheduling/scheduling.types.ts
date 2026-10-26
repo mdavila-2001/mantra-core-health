@@ -638,15 +638,16 @@ export interface NewScheduleTemplate {
   /**
    * Horario flexible: la plantilla declara cuándo se atiende, pero **no lo
    * corta en turnos fijos** — el paciente pide la hora que quiera dentro de la
-   * franja (propietario, 18/09).
+   * franja (propietario, 18/09; P36).
    *
-   * **No existe en la API real** (P36): sólo lo entiende el simulador de
-   * `mockup`. Ausente ≡ turnos fijos.
+   * Con `true`, las franjas no llevan `slotMinutes`, `gapMinutes` ni
+   * `capacityPerSlot` (la API responde 422 si vienen) y `slotMinutes` de la
+   * plantilla es **lo que se reserva por paciente**. Generar cupos no crea
+   * ninguno: las horas se leen con {@link FlexibleAvailability} y el cupo nace
+   * al retener ({@link FlexibleHold}). Ausente ≡ turnos fijos.
    */
   readonly flexibleHours?: boolean;
 }
-/** Claves de {@link NewScheduleTemplate} que el DTO real no declara (P36): sólo van a la maqueta. */
-export const SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS: readonly string[] = ['flexibleHours'];
 
 export interface ScheduleTemplateCreated {
   readonly id: string;
@@ -654,6 +655,8 @@ export interface ScheduleTemplateCreated {
   /** Franjas creadas. */
   readonly ruleCount: number;
   readonly statusConceptId: string;
+  /** Horario flexible, tal como quedó publicado (P36). */
+  readonly flexibleHours?: boolean;
 }
 
 /** Cuerpo de `POST /scheduling/templates/:id/generate-slots` (UC-41-03). */
@@ -672,6 +675,11 @@ export interface SlotsGenerated {
   readonly templateId: string;
   readonly created: number;
   readonly skipped: number;
+  /**
+   * Turnos que no se generaron porque pisaban un compromiso del profesional: una
+   * cita viva —la que el retiro del horario anterior conservó— o tiempo ocupado.
+   */
+  readonly omittedByCommitments?: number;
 }
 
 /**
@@ -942,9 +950,17 @@ export interface RetiredTemplate {
    * Cupos conservados por tener una cita detrás.
    *
    * Distinto de cero **no es un error**: es el historial que el retiro respeta
-   * a propósito, y la pantalla tiene que decirlo en vez de callarlo.
+   * a propósito, y la pantalla tiene que decirlo en vez de callarlo. Quedan
+   * cerrados: sostienen su cita, pero el horario retirado no los vuelve a
+   * ofrecer (P23).
    */
   readonly keptSlots: number;
+  /** Citas confirmadas o presentadas que siguen vivas en los cupos conservados. */
+  readonly liveBookings: number;
+  /** Ids (nunca nombres) de esas citas, hasta un tope. */
+  readonly liveBookingIds: readonly string[];
+  /** Hay más citas vivas que las listadas en `liveBookingIds`. */
+  readonly truncated: boolean;
   /**
    * Citas canceladas por el retiro, con aviso a cada paciente. Mayor que 0
    * sólo cuando se retiró con `affectedBookings: 'cancel'` (24/10/2026).
@@ -1299,4 +1315,57 @@ export interface ServiceHold {
   readonly endAt: Date;
   /** Cupos de consulta que este turno retiró de la agenda del profesional. */
   readonly retractedSlots: number;
+}
+
+/* ---- horario flexible, sin turnos fijos (P36) ---------------------------- */
+
+/** Query de `GET /scheduling/resources/:id/flexible-availability`. */
+export interface FlexibleAvailabilityQuery {
+  readonly from: Date;
+  readonly to: Date;
+}
+
+/** Una hora que se puede pedir en un horario flexible. */
+export interface FlexibleStart {
+  /** La plantilla flexible que la ofrece. */
+  readonly templateId: string;
+  readonly startAt: Date;
+  /** Hasta cuándo se reserva: inicio más el tiempo por paciente. */
+  readonly endAt: Date;
+}
+
+/**
+ * Las horas libres del horario flexible de una agenda.
+ *
+ * Vacía si la agenda no publicó un horario flexible: sus turnos son fijos y se
+ * leen con `listSlots`. Es una lectura: retener la vuelve a decidir.
+ */
+export interface FlexibleAvailability {
+  readonly resourceId: string;
+  /** Cada cuántos minutos se ofrece una hora. */
+  readonly stepMinutes: number;
+  readonly items: readonly FlexibleStart[];
+}
+
+/** Lo que pide retener una hora de un horario flexible. */
+export interface NewFlexibleHold {
+  readonly startAt: Date;
+  readonly patientProfileId?: string;
+}
+
+/**
+ * La retención de una hora de un horario flexible.
+ *
+ * Se confirma con las mismas rutas que una consulta (`confirmHold` /
+ * `requestHold`): el cupo que nace al retener es una reserva más.
+ */
+export interface FlexibleHold {
+  readonly id: string;
+  /** Token de un solo uso. Se entrega una sola vez. */
+  readonly holdToken: string;
+  readonly expiresAt: Date;
+  /** El cupo que nació para esta hora. */
+  readonly bookableSlotId: string;
+  readonly startAt: Date;
+  readonly endAt: Date;
 }
