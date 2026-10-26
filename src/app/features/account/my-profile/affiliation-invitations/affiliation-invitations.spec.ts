@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { MyRoleAssignment } from '../../../../core/data-access/practice-sites/practice-sites.types';
+import { HealthcareServicesClient } from '../../../../core/data-access/healthcare-services/healthcare-services.client';
 import { RoleAssignmentsClient } from '../../../../core/data-access/role-assignments/role-assignments.client';
 import { ServicesCatalogClient } from '../../../../core/data-access/services-catalog/services-catalog.client';
 import { AffiliationInvitations, isProcedureAffiliation } from './affiliation-invitations';
@@ -50,8 +51,9 @@ describe('AffiliationInvitations', () => {
     });
     TestBed.configureTestingModule({
       providers: [
-        { provide: PracticeSitesClient, useValue: { listMyRoleAssignments, listSitesOfPractice: () => of([]), selfRequestAffiliation: vi.fn() } },
-        { provide: RoleAssignmentsClient, useValue: { accept, decline, listPublishedProcedures: () => of([]) } },
+        { provide: PracticeSitesClient, useValue: { listMyRoleAssignments, selfRequestAffiliation: vi.fn() } },
+        { provide: RoleAssignmentsClient, useValue: { accept, decline } },
+        { provide: HealthcareServicesClient, useValue: { listSites: () => of([]), listOffers: () => of([]) } },
         { provide: ServicesCatalogClient, useValue: { listPractices: () => of([]) } },
       ],
     });
