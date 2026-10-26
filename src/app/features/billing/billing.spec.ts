@@ -70,6 +70,7 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     const originalEnvironment = {
       mockBackend: environment.mockBackend,
       billingSiatDemo: environment.billingSiatDemo,
+      billingSimulatedApi: environment.billingSimulatedApi,
     };
 
     afterEach(() => {
@@ -78,13 +79,26 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     });
 
     it('se abre en la maqueta y se cierra si se fuerza la API real', () => {
-      Object.assign(environment, { mockBackend: true, billingSiatDemo: true });
+      // `development` trae `billingSimulatedApi: true` (cobro respaldado por la API
+      // real, que abre la puerta sin maqueta): acá se prueba el otro camino, el de
+      // la maqueta, y por eso se apaga.
+      Object.assign(environment, { mockBackend: true, billingSiatDemo: true, billingSimulatedApi: false });
       TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
       http = TestBed.inject(HttpTestingController);
       const disponible = TestBed.inject(SIMULATED_AVAILABLE_INVOICING);
       expect(disponible()).toBe(true);
       forcedRealApi.set(true);
       expect(disponible()).toBe(false);
+    });
+
+    it('con el cobro respaldado por la API real queda abierta, sin maqueta y aunque se fuerce la API real', () => {
+      Object.assign(environment, { mockBackend: false, billingSiatDemo: false, billingSimulatedApi: true });
+      TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+      http = TestBed.inject(HttpTestingController);
+      const disponible = TestBed.inject(SIMULATED_AVAILABLE_INVOICING);
+      expect(disponible()).toBe(true);
+      forcedRealApi.set(true);
+      expect(disponible()).toBe(true);
     });
   });
 
