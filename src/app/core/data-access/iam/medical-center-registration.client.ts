@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import type { TenantTypeCode } from '../directory/directory.types';
 import type { RegisteredOrganization } from './iam.types';
 
 /**
@@ -17,6 +18,10 @@ import type { RegisteredOrganization } from './iam.types';
  *
  * `CLINIC` llega con la API que lo agrega al DTO y al catálogo; mientras una
  * API no lo publique, la pantalla no lo ofrece.
+ *
+ * Es un **subconjunto** de `TENANT_TYPE_CODES` (el alta administrativa) y en su
+ * mismo orden: el `satisfies` impide que acá aparezca un código que el alta
+ * administrativa no conoce, y `directory.types.spec.ts` fija el orden.
  */
 export const MEDICAL_ORGANIZATION_TYPES = [
   'HOSPITAL',
@@ -24,7 +29,7 @@ export const MEDICAL_ORGANIZATION_TYPES = [
   'MEDICAL_OFFICE',
   'NURSING',
   'HEALTH_OTHER',
-] as const;
+] as const satisfies readonly TenantTypeCode[];
 
 /** Un tipo de organización médica: lo que viaja en `tenantType`. */
 export type MedicalOrganizationType = (typeof MEDICAL_ORGANIZATION_TYPES)[number];
