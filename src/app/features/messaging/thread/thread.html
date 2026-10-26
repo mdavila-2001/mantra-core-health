@@ -144,6 +144,7 @@
               [class.is-propio]="linea.propio"
               [class.is-abre]="linea.abreBloque"
               [class.is-destello]="destellando() === linea.clave"
+              [class.pulse-arrive]="!linea.propio && llegadas().has(linea.clave)"
               [class.is-fallado]="linea.mensaje.estado === 'fallado'"
               [class.is-sticker]="esSticker(linea.mensaje)"
               [class.tiene-reacciones]="(linea.mensaje.reactions?.length ?? 0) > 0"
