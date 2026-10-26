@@ -351,6 +351,30 @@ describe('AnalysisOrderBlock', () => {
     expect(changed).toHaveBeenCalledTimes(1);
   });
 
+  it('A3: sale de un formulario libre firmado: manda basedOnNoteIds y no formInstanceId', () => {
+    fixture.detectChanges();
+    responderCatalogos();
+    responderCircuito();
+
+    componente['estudio'].set('code-hemograma');
+    componente['categoria'].set('cat-lab');
+    componente['notaDelFormularioLibre'].set('nota-libre-1');
+    componente['pedir']();
+    responderChequeo(false);
+
+    const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+    expect(req.request.body.basedOnNoteIds).toEqual(['nota-libre-1']);
+    expect('formInstanceId' in req.request.body).toBe(false);
+    req.flush({
+      id: 'sr-1',
+      patientProfileId: 'p-1',
+      status: 'st-activa',
+      intent: 'st-orden',
+      createdAt: '2026-08-14T10:00:00.000Z',
+    });
+    responderCircuito({ ...CIRCUITO_VACIO, orders: [ORDEN] });
+  });
+
   /**
    * Antiduplicación de estudios (v4.2.17, T-26). Cuatro casos, sobre el mismo
    * `pedir()` de arriba: el chequeo encuentra un duplicado y abre el diálogo

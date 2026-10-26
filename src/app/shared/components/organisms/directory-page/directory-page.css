@@ -316,18 +316,9 @@ app-filter-bar + .mercado__faceta {
   color: var(--text-secondary);
 }
 
-.directorio__mas {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-3);
+.directorio__paginas {
+  justify-content: center;
   margin-block-start: var(--sp-6);
-}
-
-.directorio__progreso {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--fs-body);
 }
 
 /* La grilla, que es el pedido concreto del cliente («Grilla de directorio de
@@ -487,4 +478,9 @@ app-filter-bar + .mercado__faceta {
     opacity: 0;
     transform: translateY(-6px);
   }
+}
+
+/* Al cambiar de página se sube a la grilla, debajo de la barra fija del armazón. */
+.directorio__grilla {
+  scroll-margin-block-start: calc(var(--h-header) + var(--sp-4));
 }

@@ -213,9 +213,9 @@ export interface PractitionerLicense {
   readonly validFrom?: Date;
   readonly validTo?: Date;
   /**
-   * El carnet del colegio adjuntado al cargarla. Mismo hueco y misma fecha que
-   * {@link PractitionerCredential.fileId}: el alta lo acepta, la lectura
-   * todavía no lo devuelve fuera del simulador.
+   * El carnet del colegio adjuntado al cargarla. La API lo devuelve sólo al
+   * titular (`GET /profiles/practitioners/me/summary`), igual que
+   * {@link PractitionerCredential.fileId}; la ficha que ve un tercero no lo trae.
    */
   readonly fileId?: string;
 }
@@ -387,8 +387,16 @@ export interface OwnPractitionerProfile {
   readonly birthDate?: Date;
   /** Sexo asignado al nacer. Sólo en la lectura propia (ID-13). */
   readonly sexAtBirth?: BirthSexCode;
-  /** Su documento. No editable desde el perfil: tiene su circuito propio. */
+  /**
+   * Su documento. Se corrige desde el perfil mientras `identityVerified` no es
+   * `true` (P28); verificada la identidad, la API responde 409.
+   */
   readonly nationalId?: string;
+  /**
+   * Si su identidad está verificada (aserción vigente). Sólo en la lectura
+   * propia. Con `true` el número del documento queda de solo lectura.
+   */
+  readonly identityVerified?: boolean;
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly residenceMunicipalityConceptId?: string;
 

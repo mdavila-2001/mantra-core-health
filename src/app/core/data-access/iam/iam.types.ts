@@ -373,6 +373,14 @@ export interface PractitionerRegistration {
   readonly regulatoryAuthority?: string;
   /** Fecha de inscripción de la matrícula, ISO `YYYY-MM-DD`. */
   readonly licenseIssueDate?: string;
+  /**
+   * El PDF de la matrícula, ya subido con `IamClient.uploadRegistrationDocument`
+   * (P29). Hasta el 26/10/2026 el alta no tenía dónde llevarlo y el archivo
+   * elegido en «Respaldos de la habilitación» se tiraba en silencio.
+   */
+  readonly licenseFileId?: string;
+  /** El PDF del registro del SEDES, mismas reglas. La API exige `sedesLicenseNumber`. */
+  readonly sedesLicenseFileId?: string;
   readonly professionalTitle?: string;
   /**
    * Forma anterior de declarar el teléfono, hoy el del trabajo.
@@ -686,6 +694,8 @@ export interface RegisteredOrganization {
   readonly representativesRegistered?: number;
   /** Sólo para `DIAGNOSTIC_CENTER` con bloque `diagnosticUnit`: la unidad que nació con el alta. */
   readonly diagnosticUnitId?: string;
+  /** Sólo para `PHARMACY`: la farmacia (`pharmacy.pharmacies`) que nació con el alta (P50). */
+  readonly pharmacyId?: string;
 }
 
 /**
@@ -694,7 +704,7 @@ export interface RegisteredOrganization {
  * Sólo lo que el mapa confirma: una sucursal sin punto no viaja (la del
  * enlace de ubicación cuenta como punto cuando lo trae escrito).
  * `description` y `locationUrl` los suma la carga masiva de sucursales
- * (2026-09-30); la API todavía no los conoce (P54).
+ * (2026-09-30); la API los guarda en `directory.branches`.
  */
 export interface PharmacyBranchRegistration {
   readonly name: string;
@@ -731,9 +741,11 @@ export interface PharmacyOrganizationRegistration {
   /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
   readonly countryConceptId: string;
   readonly jurisdictionConceptId: string;
+  /** El NIT: viaja como `organization.taxIdentifier` y numera el documento tributario. */
   readonly taxIdentifier: string;
+  /** Dirección legal: es la de la casa central (`organization.pharmacy.address`). */
   readonly legalAddress: string;
-  /** Coordenadas de la central, ambas o ninguna. */
+  /** Coordenadas de la central, ambas o ninguna. Obligatorias para operar, no para registrarse. */
   readonly headquarters?: { readonly latitude: number; readonly longitude: number };
   readonly branches?: readonly PharmacyBranchRegistration[];
   /**
@@ -751,11 +763,10 @@ export interface PharmacyOrganizationRegistration {
     readonly displayName: string;
   };
   /**
-   * Nombre completo y correo del representante legal (1.8, 1.8.2): los dos
-   * únicos datos obligatorios de la persona. `idNumber` y
-   * `powerOfAttorneyFileId` son opcionales acá —a diferencia del alta de
-   * aseguradora— porque el registro de procesos de farmacia no pide la
-   * cédula del representante como dato de alta.
+   * Nombre completo, cédula y correo del representante legal (1.8, 1.8.2).
+   * `powerOfAttorneyFileId` es opcional para registrarse —a diferencia del
+   * alta de aseguradora, la API no lo exige a una farmacia (P50)— y
+   * obligatorio para operar, salvo en una unipersonal.
    */
   readonly legalRepresentative: {
     readonly fullName: string;
@@ -782,9 +793,12 @@ export interface DiagnosticUnitBranchRegistration {
   readonly name: string;
   readonly addressLines: readonly string[];
   readonly location?: RegistrationCoordinates;
-  /** Suma de la carga masiva de sucursales (2026-09-30); la API todavía no la conoce (P54). */
+  /**
+   * Suma de la carga masiva de sucursales (2026-09-30). La API la guarda en la
+   * fila de `directory.branches` de la sucursal (P51, D-4; hasta 1000 caracteres).
+   */
   readonly description?: string;
-  /** El enlace de mapa tal como lo pegaron; ídem. */
+  /** El enlace de mapa tal como lo pegaron; la API sólo acepta `http(s)` (400 si no). */
   readonly locationUrl?: string;
 }
 
@@ -796,9 +810,8 @@ export interface DiagnosticUnitBranchRegistration {
  * `DIAGNOSTIC_CENTER` es el código que la API emite para un laboratorio
  * (`TENANT_TYPES` de `mock-session.ts`). A diferencia de la farmacia, el DTO
  * real **sí** tiene bloque propio para este tipo: `diagnosticUnit`
- * (`DiagnosticUnitProfileDto`, con `name` y `primarySite.address`). Se usa ése
- * y no uno inventado; lo único que el cliente le suma es `branches`, que el
- * DTO no declara (P51).
+ * (`DiagnosticUnitProfileDto`, con `name`, `primarySite.address` y
+ * `branches[]`). Se usa ése y no uno inventado (P51 cerrado el 26/10/2026).
  *
  * Mismo criterio de obligatoriedad que la farmacia (D2): sólo lo básico para
  * nacer. Los seis papeles, el punto de la central, las sucursales y las tres
@@ -834,7 +847,10 @@ export interface LaboratoryOrganizationRegistration {
     readonly password: string;
     readonly displayName: string;
   };
-  /** Nombre y correo; el poder sólo si se adjuntó (el proceso 4.1 no pide la cédula). */
+  /**
+   * Nombre, correo y cédula. El poder es obligatorio salvo para `UNIPERSONAL`:
+   * la API responde 422 `powerOfAttorneyFileId` si falta (P51, D-3).
+   */
   readonly legalRepresentative: {
     readonly fullName: string;
     readonly email: string;

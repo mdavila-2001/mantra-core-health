@@ -1149,6 +1149,23 @@ export class MyAgenda implements OnInit {
     return fin;
   }
 
+  /**
+   * P36 · el horario flexible del día mirado, en palabras («09:00 a 13:00»), o
+   * `null` si ese día no tiene horario flexible. Un horario flexible no crea
+   * cupos: sin esto, el día decía «No atiende este día» aunque atendiera
+   * (A5, visto en navegador contra la API real el 26/10/2026).
+   */
+  protected horarioFlexibleDe(dia: Date): string | null {
+    const actual = this.estado();
+    if (actual.status !== 'ready' || actual.data.flexibleHours !== true) return null;
+    const franjas = actual.data.rules
+      .filter((regla) => regla.dayOfWeek === dia.getDay())
+      .slice()
+      .sort((a, b) => a.startTime.localeCompare(b.startTime))
+      .map((regla) => `${regla.startTime.slice(0, 5)} a ${regla.endTime.slice(0, 5)}`);
+    return franjas.length === 0 ? null : franjas.join(' y de ');
+  }
+
   /** Cuánto dura un turno según el horario publicado; 30 si no lo declara. */
   private duracionDelTurno(dia: Date): number {
     const actual = this.estado();
@@ -2175,8 +2192,8 @@ export class MyAgenda implements OnInit {
    * ## Por qué pregunta antes
    *
    * Retirar no se deshace desde la pantalla: para volver atrás hay que publicar
-   * el horario de nuevo. Y aunque no haya citas comprometidas —el servidor lo
-   * rechaza con 409 si las hay—, se sueltan cupos que ya estaban ofrecidos.
+   * el horario de nuevo. Y aunque las citas comprometidas se conserven —ya no
+   * frenan el retiro (P23)—, se sueltan cupos que ya estaban ofrecidos.
    */
   protected async retirarHorario(): Promise<void> {
     const actual = this.estado();

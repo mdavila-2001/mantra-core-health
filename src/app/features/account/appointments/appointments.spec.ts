@@ -832,6 +832,7 @@ describe('Appointments', () => {
 
   /** Los cupos que devuelve cada sede, indexados por el recurso que se pidió. */
   function cuposPorRecurso(): Map<string | null, TestRequest> {
+    sinHorasFlexibles();
     return new Map(
       http
         .match((r) => r.url === '/scheduling/slots')
@@ -849,6 +850,16 @@ describe('Appointments', () => {
     http
       .match((r) => r.url === '/scheduling/service-offerings')
       .forEach((pedido) => pedido.flush({ items: [] }));
+  }
+
+  /**
+   * Cada agenda pide también sus horas de horario flexible (P36). Estos tests son
+   * de turnos fijos: se responde que no hay, que deja la lista como era.
+   */
+  function sinHorasFlexibles(): void {
+    http
+      .match((r) => r.url.endsWith('/flexible-availability'))
+      .forEach((pedido) => pedido.flush({ resourceId: '', stepMinutes: 15, items: [] }));
   }
 
   function paginaDeCupos(items: readonly unknown[]) {
@@ -1111,11 +1122,45 @@ describe('Appointments', () => {
       crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
       interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
       sinServicios();
+      sinHorasFlexibles();
       http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([cupo('h-1', 'r-centro', HORA_TEMPRANO)]));
 
       const [horario] = interno<() => readonly object[]>('horariosListos')();
       expect(interno<(h: object) => string>('rutaDeReserva')(horario)).toContain('h-1');
       expect(interno<(h: object) => Record<string, string>>('paramsDeReserva')(horario)).not.toHaveProperty('oferta');
+    });
+
+    it('A6 · las horas flexibles se agrupan por día en un acordeón, no una fila por hora', async () => {
+      montar();
+      responderArranque([]);
+      crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
+      interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+      sinServicios();
+      http
+        .match((r) => r.url.endsWith('/flexible-availability'))
+        .forEach((pedido) =>
+          pedido.flush({
+            resourceId: 'r-centro',
+            stepMinutes: 15,
+            items: [
+              { templateId: 't', startAt: '2026-09-02T13:00:00Z', endAt: '2026-09-02T13:30:00Z' },
+              { templateId: 't', startAt: '2026-09-02T13:15:00Z', endAt: '2026-09-02T13:45:00Z' },
+              { templateId: 't', startAt: '2026-09-03T13:00:00Z', endAt: '2026-09-03T13:30:00Z' },
+            ],
+          }),
+        );
+      http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
+      await abrirPedir();
+
+      const grupos = interno<() => readonly { horas: readonly object[] }[]>('gruposFlexibles')();
+      expect(grupos.map((g) => g.horas.length)).toEqual([2, 1]);
+      expect(interno<() => readonly object[]>('horariosFijos')()).toEqual([]);
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="turnos-flexibles"]')).not.toBeNull();
+      expect(raiz.querySelectorAll('app-accordion-panel').length).toBe(2);
+      // Cada hora es un botón con su nombre completo para el lector de pantalla.
+      const hora = raiz.querySelector('[data-testid="turnos-hora-flexible"]');
+      expect(hora?.getAttribute('aria-label')).toMatch(/^Pedir el .+ a las \d{2}:\d{2}$/);
     });
 
     it('volver a «Consulta» vuelve a pedir los cupos de la grilla', () => {
@@ -1152,6 +1197,7 @@ describe('Appointments', () => {
       await abrirPedir();
       // Una sola sede en foco: ahí la espera sí se ofrecería para una consulta.
       interno<(sede: string | null) => void>('elegirSede')('sede-centro');
+      sinHorasFlexibles();
       http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
       fixture.detectChanges();
       expect(interno<() => string | null>('recursoParaEspera')()).toBe('r-centro');
@@ -1211,6 +1257,7 @@ describe('Appointments', () => {
       http
         .expectOne((r) => r.url === '/scheduling/service-offerings')
         .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
+      sinHorasFlexibles();
       http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
       fixture.detectChanges();
 
@@ -1228,6 +1275,7 @@ describe('Appointments', () => {
     sinServicios();
 
     expect(interno<() => boolean>('preguntaPorSede')()).toBe(false);
+    sinHorasFlexibles();
     http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
   });
 
@@ -1327,6 +1375,7 @@ describe('Appointments', () => {
     expect(interno<() => string | null>('recursoParaEspera')()).toBeNull();
 
     interno<(sede: string | null) => void>('elegirSede')('sede-norte');
+    sinHorasFlexibles();
     http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
 
     expect(interno<() => string | null>('recursoParaEspera')()).toBe('r-norte');
@@ -1592,6 +1641,10 @@ function montarCancelacion(opts: Opciones) {
           searchBookings,
           listResources,
           listSlots,
+          // P36 · sin horario flexible publicado: la lista es la de los turnos fijos.
+          getFlexibleAvailability: vi
+            .fn()
+            .mockReturnValue(of({ resourceId: '', stepMinutes: 15, items: [] })),
           cancelBooking,
           rescheduleBooking,
           listWaitlist,

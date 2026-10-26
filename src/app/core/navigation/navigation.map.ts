@@ -1861,6 +1861,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M24 pharmacy',
   },
   {
+    // P34 (26/10/2026): qué sucursales abren las 24 h y sus turnos de guardia.
+    // Lo ven los pacientes al elegir farmacia y en «Abiertas ahora».
+    path: 'administration/pharmacy-hours',
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Horario y turnos',
+    group: 'General',
+    icon: 'clock',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Qué sucursales abren las 24 horas y sus turnos de guardia.',
+    module: 'M24 pharmacy',
+  },
+  {
     // La bandeja del mostrador de farmacia (carril FAR-I3). La membresía manda
     // (claim `tenants`), no un rol del token: no existe un rol de farmacia minorista.
     path: 'administration/pharmacy-orders',

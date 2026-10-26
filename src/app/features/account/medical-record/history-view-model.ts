@@ -457,17 +457,29 @@ function notaDeLaLinea(nota: ChartNote): TimelineNote {
   };
 }
 
+/** Las tres categorías de análisis de C2 (P40), en palabras. */
+const CATEGORIA_EN_PALABRAS: Readonly<Record<NonNullable<PatientOrder['category']>, string>> = {
+  LAB: 'Laboratorio',
+  IMAGING: 'Imagenología',
+  OTHER: 'Otro estudio',
+};
+
 /**
  * Una orden del portal, en la línea.
  *
- * La categoría se traduce del `categoryConceptId` contra el catálogo: la API
- * no publica la categoría ya resuelta (`category`, C2).
+ * La categoría se nombra con la etiqueta del `categoryConceptId` en el
+ * catálogo —es la más precisa: «Estudio cardiológico» dice más que «Otro»—, y
+ * si la orden no trae el concepto, con la `category` que sirve la API (P40).
+ * Sin ninguna de las dos, la orden no declara categoría y no se inventa una:
+ * ya no se deduce nada del nombre ni del código del estudio.
  */
 function ordenDeLaLinea(orden: PatientOrder, etiqueta: ResolverEtiqueta): TimelineOrder {
+  const delCatalogo = orden.categoryConceptId === undefined ? '' : etiqueta(orden.categoryConceptId);
   return {
     id: orden.id,
     estudio: etiqueta(orden.codeConceptId),
-    categoria: orden.categoryConceptId === undefined ? '' : etiqueta(orden.categoryConceptId),
+    categoria:
+      delCatalogo !== '' || orden.category === undefined ? delCatalogo : CATEGORIA_EN_PALABRAS[orden.category],
     estado: etiqueta(orden.statusConceptId),
     cuando: orden.createdAt,
     resultadoDisponible: orden.hasReleasedResult,

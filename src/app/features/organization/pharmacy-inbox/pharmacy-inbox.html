@@ -67,12 +67,6 @@
   </div>
 </div>
 
-@if (sinMatrizMarcada()) {
-  <p class="bandeja__nota" data-testid="bandeja-sin-matriz">
-    Ninguna sede está marcada como casa matriz: se abrió con la primera. Cámbiela en «Sede».
-  </p>
-}
-
 @if (posiblementeCortado()) {
   <app-alert tone="info" title="Hay más pedidos de los que se ven" data-testid="bandeja-cortado">
     Elija una sede para acotar la bandeja.

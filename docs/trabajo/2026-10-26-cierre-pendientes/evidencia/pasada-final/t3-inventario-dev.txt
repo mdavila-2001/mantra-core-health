@@ -1,0 +1,7 @@
+== origin/dev (worktree limpio, modelo hermano en origin/dev)
+El inventario escrito no coincide con el código (31 archivo(s)):
+endpoints --verificar exit=1
+Los flujos escritos no coinciden con el código (18 archivo(s)):
+flujos --verificar exit=1
+El catálogo escrito no coincide con el modelo y el código (20 archivo(s)):
+catalogo --verificar exit=1

@@ -321,7 +321,7 @@ export interface CareEpisodeRegistration {
   readonly createdAt: Date;
 }
 
-/** Una fila de la nota médica de C1; sólo la guarda el simulador (P39). */
+/** Una fila de la nota médica de C1 (P39: `entries_json` de la versión). */
 export interface MedicalNoteEntry {
   readonly label: string;
   readonly value: string;
@@ -336,7 +336,10 @@ export interface ChartNote {
   readonly currentVersionId?: string;
   readonly versionNumber?: number;
   readonly authorProfileId?: string;
-  /** Filas estructuradas de C1; sólo las sirve el simulador: la API no las declara (P39). */
+  /**
+   * Filas estructuradas de C1 de la versión vigente (P39). Ausente en las
+   * notas SOAP de antes de C1, que se leen por su texto.
+   */
   readonly entries?: readonly MedicalNoteEntry[];
   readonly chiefComplaintText?: string;
   readonly subjectiveText?: string;

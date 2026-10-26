@@ -1,0 +1,6 @@
+          name          |              description               |           location_url           
+------------------------+----------------------------------------+----------------------------------
+ Sucursal Sur Sintética | Toma de muestras de 7 a 11 (sintético) | https://example.org/sucursal-sur
+ Casa central           |                                        | 
+(2 rows)
+

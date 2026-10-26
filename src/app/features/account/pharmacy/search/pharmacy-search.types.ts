@@ -73,6 +73,10 @@ export interface StoreHit {
   readonly fromAmount: string | null;
   readonly currency: string | null;
   readonly productCount: number;
+  /** P34 · la sede declaró que abre las 24 h (`null`/ausente: no declarado). */
+  readonly open24h?: boolean | null;
+  /** P34 · fin del turno de guardia vigente; sólo viaja si está de turno ahora. */
+  readonly onCallUntil?: string | null;
 }
 
 /**
