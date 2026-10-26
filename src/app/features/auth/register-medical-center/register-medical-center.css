@@ -12,3 +12,10 @@
     align-self: flex-start;
   }
 }
+
+/* «Atrás» (fantasma) alinea su TEXTO con el borde de los campos: el relleno
+   horizontal de un botón `md` es `--sp-5`. Sólo esta alta lo declara; el
+   organismo, por omisión, no corre nada. */
+app-paginated-form {
+  --paginated-form-atras-sangria: var(--sp-5);
+}

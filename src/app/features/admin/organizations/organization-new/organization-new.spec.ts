@@ -91,8 +91,8 @@ describe('OrganizationNew', () => {
   }
 
   /** Un control del grupo, por nombre. */
-  function control(nombre: string): { valid: boolean; enabled: boolean; errors: object | null } {
-    return interno<{ get: (n: string) => { valid: boolean; enabled: boolean; errors: object | null } }>(
+  function control(nombre: string): { valid: boolean; enabled: boolean; touched: boolean; errors: object | null } {
+    return interno<{ get: (n: string) => { valid: boolean; enabled: boolean; touched: boolean; errors: object | null } }>(
       'form',
     ).get(nombre);
   }
@@ -151,7 +151,8 @@ describe('OrganizationNew', () => {
     enviar();
 
     expect(interno<() => { status: string }>('state')().status).toBe('ready');
-    expect(interno<() => boolean>('paisFaltante')()).toBe(true);
+    expect(control('pais').touched).toBe(true);
+    expect(control('pais').errors).toEqual({ required: true });
   });
 
   it('una aseguradora exige su bloque: sin él no se envía', () => {
@@ -334,7 +335,6 @@ describe('OrganizationNew', () => {
 
     // `http.verify()` del afterEach: nada salió a la red.
     expect(interno<() => { status: string }>('state')().status).toBe('ready');
-    expect(interno<() => boolean>('jurisdiccionFaltante')()).toBe(true);
     // El control vive en el grupo y está encendido para un tipo territorial:
     // es lo que hace que el motor bloquee «Siguiente» en «Dónde opera».
     expect(control('jurisdiccion').enabled).toBe(true);

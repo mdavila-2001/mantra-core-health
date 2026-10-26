@@ -207,9 +207,12 @@ describe('MedicalCenterSetup · organización todavía no verificada (S3)', () =
   it('el aviso se lee como pendiente: lleva el reloj, no la bandeja vacía', async () => {
     const f = await armar(TENANT_NUEVO, () => of([{ id: TENANT_NUEVO, isVerified: false }]));
     const icono = (f.nativeElement as HTMLElement).querySelector(
-      '[data-testid="medical-center-setup-unverified"] app-nav-icon[empty-icon]',
+      '[data-testid="medical-center-setup-unverified-icon"]',
     );
-    expect(icono?.getAttribute('name')).toBe('clock');
+    // El reloj: un círculo y una aguja. La bandeja vacía es un `path` y un `polyline`.
+    expect(icono?.tagName.toLowerCase()).toBe('svg');
+    expect(icono?.querySelector('circle')).not.toBeNull();
+    expect(icono?.querySelector('polyline')).toBeNull();
   });
 
   it('verificada, muestra el formulario y no el aviso', async () => {

@@ -147,7 +147,6 @@ export class ChildOrganizationNew {
       else control.disable({ emitEvent: false });
     }
   }
-  private readonly enviado = signal(false);
 
   protected readonly opcionesDeTipo: readonly SelectOption<TenantTypeCode>[] =
     TENANT_TYPE_CODES.map((code) => ({ value: code, label: TENANT_TYPE_LABELS[code] }));
@@ -251,7 +250,6 @@ export class ChildOrganizationNew {
     return tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
   });
 
-  protected readonly tipoFaltante = computed(() => this.enviado() && this.tipo() === null);
 
   /* ---- administrador de la filial: se elige, nunca se tipea -------------- */
 
@@ -261,9 +259,6 @@ export class ChildOrganizationNew {
   /** La búsqueda del administrador: errores distintos del vacío y la última tecla manda. */
   protected readonly administradores = crearBuscadorDePersonas(CANDIDATOS_POR_BUSQUEDA);
 
-  protected readonly adminFaltante = computed(
-    () => this.enviado() && this.administrador() === null,
-  );
 
   /* ---- país y jurisdicción: obligatorios para los tipos territoriales ---- */
 
@@ -278,13 +273,6 @@ export class ChildOrganizationNew {
   });
   protected readonly candidatosJurisdiccion = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoJurisdiccion = signal(false);
-
-  protected readonly paisFaltante = computed(
-    () => this.enviado() && this.esTerritorial() && this.pais() === null,
-  );
-  protected readonly jurisdiccionFaltante = computed(
-    () => this.enviado() && this.esTerritorial() && this.jurisdiccion() === null,
-  );
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
@@ -339,8 +327,6 @@ export class ChildOrganizationNew {
     if (this.enviando()) {
       return;
     }
-
-    this.enviado.set(true);
 
     if (!this.puedeEnviar()) {
       this.form.markAllAsTouched();

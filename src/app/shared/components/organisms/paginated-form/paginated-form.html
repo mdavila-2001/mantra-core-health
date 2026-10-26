@@ -316,6 +316,7 @@
       [attr.aria-label]="nextAsIcon() ? 'Siguiente' : null"
       [appTooltip]="nextAsIcon() ? 'Siguiente' : ''"
       [attr.data-testid]="esUltima() ? submitTestId() : 'paginated-form-continuar'"
+      data-accion-primaria
     >
       @if (nextAsIcon()) {
         <app-nav-icon name="arrow-right" />
