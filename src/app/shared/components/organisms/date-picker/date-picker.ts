@@ -1327,20 +1327,35 @@ export class DatePicker {
     this.isOpen.set(true);
   }
 
-  protected close(): void {
+  /**
+   * Cierra el diálogo. `conSalida` anima la salida del panel (140 ms) antes de
+   * cerrar; es lo que corresponde al descartar (Escape, velo, «Cancelar»).
+   *
+   * **Confirmar no usa la salida.** Mientras el panel sale el `<dialog>` sigue
+   * siendo modal: la página de atrás está inerte, un clic no entra y lo que se
+   * escribe en el campo de al lado se pierde; al acabar la salida el foco vuelve
+   * al campo de la fecha y le roba el que ya tenía el siguiente. Confirmar es el
+   * final: la página se libera en el acto (mismo criterio que `app-select`).
+   */
+  protected close(conSalida = true): void {
     if (!this.isOpen()) {
       return;
     }
     const dialog = this.dialog()?.nativeElement;
-    // Salida corta hacia el control; sin animación posible cierra en el acto.
-    cerrarConSalida(dialog?.querySelector<HTMLElement>('.date-picker-panel'), () => {
+    const cerrar = (): void => {
       if (dialog?.open && typeof dialog.close === 'function') {
         dialog.close();
       }
       this.isOpen.set(false);
       const el = this.inputEl()?.nativeElement ?? this.trigger()?.nativeElement;
       el?.focus();
-    });
+    };
+    if (!conSalida) {
+      cerrar();
+      return;
+    }
+    // Salida corta hacia el control; sin animación posible cierra en el acto.
+    cerrarConSalida(dialog?.querySelector<HTMLElement>('.date-picker-panel'), cerrar);
   }
 
   protected handleBackdropClick(event: MouseEvent): void {
@@ -1360,7 +1375,7 @@ export class DatePicker {
       this.value.set(draft);
       this.parseError.set(false);
     }
-    this.close();
+    this.close(false);
   }
 
   protected selectDay(day: CalendarDay): void {
