@@ -20,10 +20,13 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
@@ -38,8 +41,10 @@ import {
 
 /**
  * **Consulta de un grupo médico** (FT-21, carril 21) — el mismo formulario del
- * alta, lleno y sin editar, con el estado y las NOTAS DEL EJERCICIO arriba a
- * la izquierda.
+ * alta, lleno y sin editar, en UNA tarjeta centrada con pestañas (Resumen,
+ * Equipo, Horario y Notas del ejercicio; `composition-rules.md` §5). El estado
+ * y lo que pide una respuesta van arriba de las pestañas, a la vista desde
+ * cualquiera de ellas.
  *
  * Las acciones aparecen sólo cuando la API las aceptaría, leyendo lo que ella
  * misma devuelve (`status`, `isRealized`, `canEditExerciseNotes`, `isClosed` y
@@ -60,11 +65,14 @@ import {
     Alert,
     AppButton,
     Badge,
+    Card,
     ContentDialog,
     DatePicker,
     FactList,
     FormField,
     PageHeader,
+    Tab,
+    Tabs,
     Textarea,
     ViewStateHost,
   ],
@@ -85,6 +93,9 @@ export class MedicalGroupDetail {
   protected readonly statusLabel = GROUP_STATUS_LABEL;
   protected readonly invitationLabel = INVITATION_STATUS_LABEL;
   protected readonly formatAmount = formatAmount;
+
+  /** La pestaña a la vista. Como `app-tab` no dibuja el cerrado, el estado vive acá. */
+  protected readonly tab = signal(0);
 
   private readonly reloads = signal(0);
   protected readonly state = signal<ViewState<MedicalGroup>>(loading());
