@@ -85,10 +85,7 @@ import {
   type HealthFilter,
 } from '../../../core/profession/university-registry';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
-import {
-  MAX_ATTACHMENT_BYTES,
-  SUPPORT_FILE_FORMATS,
-} from '../shared-registration/doctor-credentials';
+import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
 import { passwordValidators } from '../shared-registration/password-policy';
 import { identityDocumentValidators } from '../shared-registration/national-id';
 import {
@@ -411,8 +408,16 @@ type ClaveDeRespaldo = 'professional-title' | 'license' | 'sedes';
 /** Tope de peso por adjunto. El mismo que la foto de perfil. */
 const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
 
-/** Formatos que se aceptan como respaldo de un título o de una matrícula. */
-const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
+/**
+ * Formatos que se aceptan como respaldo de la matrícula y del SEDES: sólo PDF.
+ *
+ * Desde P29 estos archivos se suben a `POST /iam/auth/upload-registration-document`,
+ * que sólo admite PDF (422 `PRECONDITION_FAILED` con `detectedMimeType`). Con el
+ * selector abierto a JPG y PNG (`SUPPORT_FILE_FORMATS`), una foto de la matrícula
+ * pasaba todo el alta y la cuenta fallaba en el último paso con «problema de
+ * configuración de nuestra parte». Se ve en la evidencia visual de P29 (26/10/2026).
+ */
+const FORMATOS_DE_RESPALDO = 'application/pdf';
 
 /**
  * Por qué se pide lo que se pide, paso por paso.

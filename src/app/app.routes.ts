@@ -295,11 +295,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // promociones. La carga masiva y las demás pantallas del portal de la farmacia
   // (resumen, categorías, importación, inventario) son de `features/pharmacy/`.
   'administration/pharmacy-catalog': () =>
-    environment.mockBackend
-      ? import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts)
-      : import('./features/organization/pharmacy-catalog/pharmacy-catalog').then(
-          (m) => m.PharmacyCatalog,
-        ),
+    import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts),
   'administration/pharmacy': () =>
     import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
   'administration/pharmacy-categories': () =>

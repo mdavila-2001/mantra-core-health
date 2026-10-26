@@ -1,0 +1,15 @@
+                  id                  |        name         
+--------------------------------------+---------------------
+ 94aa5e6a-8ce2-4b34-8158-04f5273d5240 | Ortopedia sintética
+(1 row)
+
+ product_code |      categoria      | imagenes 
+--------------+---------------------+----------
+ VIS-ORT-01   | Ortopedia sintética |        1
+(1 row)
+
+ product_code | stock_quantity | min_stock_quantity 
+--------------+----------------+--------------------
+ VIS-ORT-01   |              3 |                  5
+(1 row)
+
