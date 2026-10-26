@@ -1,0 +1,17 @@
+$ yarn ng test --include <9 specs tocados> (dirigidos)
+       × guardar registra la nota y un documento con todos los archivos de la fila, y relee 210ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 8 passed (9)
+      Tests  1 failed | 306 passed (307)
+
+$ el mismo spec de specialty-form-block SIN los cambios de esta pasada (línea de base)
+ FAIL   mantra-core-health  src/app/features/clinical-record/patient-chart/specialty-form-block/specialty-form-block.spec.ts > SpecialtyFormBlock > el formulario libre > guardar registra la nota y un documento con todos los archivos de la fila, y relee
+ Test Files  1 failed (1)
+      Tests  1 failed | 67 passed (68)
+
+$ kill test: specs nuevos con organization-verify.html y chart-notes.client.ts revertidos
+     × listNotes no manda encounterId (la API lo rechaza con 400) y acota por consulta acá (A3) 11ms
+     × el envío nativo del formulario no recarga la página (A2) 68ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  2 failed | 13 passed (15)
