@@ -9,6 +9,7 @@ import type {
   PublicGeoPoint,
   PublicOfferedService,
   PublicPharmacyBranch,
+  PublicPrescriptionAvailabilityRequest,
   PublicPharmacyProduct,
 } from './public-catalog.types';
 
@@ -91,13 +92,17 @@ export class PublicCatalogClient {
   }
 
   /**
-   * `GET /public/profiles/f/:slug/branch-availability` — qué sucursal tiene lo
+   * `POST /public/profiles/f/:slug/branch-availability` — qué sucursal tiene lo
    * de una receta, y a cuánto.
    *
    * Los renglones viajan como **texto**, que es lo que una persona tiene en la
    * mano: una receta en papel no trae ids de producto. El punto de origen es
-   * opcional —sin él no hay distancias, pero la búsqueda sirve igual— y va en
-   * la consulta y no en el cuerpo porque esto es una lectura.
+   * opcional —sin él no hay distancias, pero la búsqueda sirve igual—.
+   *
+   * Va por `POST` aunque sea una lectura (P37, decisión D-2): un renglón de
+   * receta es un dato de salud, y en la URL quedaría en el historial del
+   * navegador, en los proxies y en el log de acceso de cada salto. En el cuerpo
+   * no se registra, y la API no guarda nada.
    *
    * El orden lo decide el servidor: primero las que tienen todo, y entre ésas
    * la más cercana. La pantalla no reordena, para que las dos superficies digan
@@ -108,14 +113,14 @@ export class PublicCatalogClient {
     renglones: readonly string[],
     origen: PublicGeoPoint | null = null,
   ): Observable<readonly PublicBranchAvailability[]> {
-    let params = new HttpParams().set('items', renglones.join('|'));
-    if (origen !== null) {
-      params = params.set('lat', String(origen.lat)).set('lng', String(origen.lng));
-    }
+    const cuerpo: PublicPrescriptionAvailabilityRequest =
+      origen === null
+        ? { items: [...renglones] }
+        : { items: [...renglones], lat: origen.lat, lng: origen.lng };
     return this.http
-      .get<{ readonly items: readonly PublicBranchAvailability[] }>(
+      .post<{ readonly items: readonly PublicBranchAvailability[] }>(
         apiUrl(this.baseUrl, `/public/profiles/f/${encodeURIComponent(slug)}/branch-availability`),
-        { params },
+        cuerpo,
       )
       .pipe(map((body) => body.items));
   }

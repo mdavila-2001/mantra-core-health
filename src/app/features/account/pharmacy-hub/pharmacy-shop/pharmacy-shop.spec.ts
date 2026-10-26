@@ -185,6 +185,28 @@ describe('PharmacyShop', () => {
     expect(nearbySites).not.toHaveBeenCalled();
   });
 
+  it('P34 · muestra «Abierta 24 h» y el filtro «Abiertas ahora» lo pide al servidor', async () => {
+    await montar();
+    nearbySites.mockImplementation(() =>
+      of({ items: [{ ...SITIO, open24h: true, onCallUntil: null }], count: 1 }),
+    );
+    // Recarga con el filtro, que es lo que vuelve a pedir la lista.
+    raiz().querySelector<HTMLElement>('[data-testid="tienda-solo-abiertas"]')?.click();
+    await asentar();
+
+    expect(nearbySites).toHaveBeenLastCalledWith(expect.objectContaining({ openNow: true }));
+    expect(
+      raiz().querySelector('[data-testid="tienda-apertura"]')?.textContent?.trim(),
+    ).toBe('Abierta 24 h');
+  });
+
+  it('P34 · sin 24 h ni turno no dibuja insignia (no declarado no es «cerrada»)', async () => {
+    await montar();
+    await asentar();
+    expect(nearbySites).toHaveBeenCalledWith(expect.not.objectContaining({ openNow: true }));
+    expect(raiz().querySelector('[data-testid="tienda-apertura"]')).toBeNull();
+  });
+
   it('lista farmacias y al elegir una muestra su catálogo', async () => {
     await montar();
     await asentar();
