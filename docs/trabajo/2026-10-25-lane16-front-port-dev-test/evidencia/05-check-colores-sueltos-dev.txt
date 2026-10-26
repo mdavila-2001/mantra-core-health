@@ -1,0 +1,31 @@
+
+✗ check-colores-sueltos — 8 archivo(s) con más colores literales que su techo
+
+  src/app/features/admin/web-analytics/web-analytics.css: 39 (techo 0)
+      176: border-block-end: 1px solid var(--border-subtle, #e2e8f0);
+      188: color: var(--text-secondary, #64748b);
+      196: color: var(--text-primary, #0f172a);
+  src/app/shared/components/organisms/map/map.css: 12 (techo 0)
+      148: background: var(--tono-bg, var(--brand-primary, #007788));
+      149: color: var(--tono-fg, #ffffff);
+      150: border: 1.5px solid var(--tono-bd, #ffffff);
+  src/app/features/dashboard/patient-home/first-steps/first-steps-card.css: 10 (techo 0)
+      13: var(--bg-surface, #fff);
+      93: background: var(--bg-surface, #fff);
+      132: color: #fff;
+  src/app/shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner.css: 7 (techo 0)
+      7: border: 1px solid var(--st-info-bd, #93c5fd);
+      8: background: var(--st-info-bg, #eff6ff);
+      9: color: var(--st-info-fg, #1e3a8a);
+  src/app/features/admin/portal/portal-shell.css: 1 (techo 0)
+      238: background: rgb(10 28 39 / 55%);
+  src/app/features/dashboard/patient-home/patient-tip/patient-tip-card.css: 1 (techo 0)
+      26: color: var(--c-amber-900, #312c24);
+  src/app/shared/components/molecules/result-card/result-card.css: 1 (techo 0)
+      608: background: linear-gradient(transparent, rgb(0 0 0 / 0.18));
+  src/app/shared/components/organisms/drawer-panel/drawer-panel.css: 1 (techo 0)
+      19: background: rgb(10 28 39 / 55%);
+
+  Usá un token (`var(--st-error-fg)`, `var(--brand-primary)`…); ver docs/design-system/tokens.md.
+  Si falta el token, se agrega en styles.css con su par de contraste en check-contrast.mjs.
+
