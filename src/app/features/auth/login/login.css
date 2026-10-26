@@ -57,6 +57,15 @@
   transform-style: preserve-3d;
 }
 
+/* En claro el escenario es blanco y menta: la caída larga en negro que despega
+   la tarjeta del latido nocturno acá se lee como una mancha gris, y el canto
+   aqua y el filo blanco no tienen contra qué recortarse. Queda solo la
+   elevación del sistema, que en claro ya está teñida de petróleo: la tarjeta
+   flota con la misma sombra que el resto de las superficies elevadas. */
+:host-context(:root[data-tema='claro']) .login {
+  box-shadow: var(--shadow-lg);
+}
+
 /* Mientras se escribe, la tarjeta se queda quieta. Un campo de texto que se
    mueve cuando la mano va al teclado es exactamente el momento en que el
    efecto pasa de gracioso a molesto. */

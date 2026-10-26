@@ -188,6 +188,11 @@
       <!-- Con la lectura caída, vacío no quiere decir que no atiende. -->
       @if (incompleteLoad()) {
         <p>Este día no se pudo cargar. Vuelva a cargarlo desde el aviso de arriba.</p>
+      } @else if (horarioFlexible(); as flexible) {
+        <p data-testid="dia-horario-flexible">
+          Atiende con horario flexible de {{ flexible }}: los pacientes eligen la hora. Todavía no
+          hay citas pedidas.
+        </p>
       } @else {
         <p>No atiende este día.</p>
       }

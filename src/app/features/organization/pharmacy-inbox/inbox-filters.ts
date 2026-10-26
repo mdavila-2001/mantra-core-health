@@ -22,17 +22,6 @@ export interface InboxSite {
   readonly esMatriz: boolean;
 }
 
-/** La sede con la que abre la bandeja, y si hubo que adivinarla. */
-export interface SiteByDefault {
-  /** `null` si la organización no tiene ninguna sede publicada. */
-  readonly id: string | null;
-  /**
-   * `true` cuando hay varias sedes y ninguna está marcada como casa matriz:
-   * se abrió con la de código más bajo y la pantalla lo dice.
-   */
-  readonly sinMatrizMarcada: boolean;
-}
-
 /**
  * Aplana las sedes de las farmacias de la organización.
  *
@@ -57,20 +46,21 @@ export function pharmaciesSites(farmacias: readonly PharmacyDetail[]): readonly 
  * La sede con la que abre el tablero: la casa matriz; si no hay marcada, la
  * única sede; si hay varias sin matriz, **todas** (`id: null`): el mostrador
  * de una cadena que no marcó su casa matriz no debe abrir mirando una sola
- * sucursal y esconder los pedidos de las demás.
+ * sucursal y esconder los pedidos de las demás. Devuelve `null` también cuando
+ * la organización no tiene ninguna sede publicada.
  */
-export function siteByDefault(sedes: readonly InboxSite[]): SiteByDefault {
+export function siteByDefault(sedes: readonly InboxSite[]): string | null {
   const matriz = sedes.find((sede) => sede.esMatriz);
   if (matriz !== undefined) {
-    return { id: matriz.id, sinMatrizMarcada: false };
+    return matriz.id;
   }
   const [primera, ...resto] = [...sedes].sort((a, b) =>
     a.code.localeCompare(b.code, 'es', { numeric: true }),
   );
   if (primera === undefined) {
-    return { id: null, sinMatrizMarcada: false };
+    return null;
   }
-  return { id: resto.length > 0 ? null : primera.id, sinMatrizMarcada: false };
+  return resto.length > 0 ? null : primera.id;
 }
 
 /**
@@ -87,7 +77,7 @@ export function chosenSite(
   if (deLaUrl !== null && sedes.some((sede) => sede.id === deLaUrl)) {
     return deLaUrl;
   }
-  return siteByDefault(sedes).id;
+  return siteByDefault(sedes);
 }
 
 /** Los recortes de fecha que ofrece la columna «Cerrados». */

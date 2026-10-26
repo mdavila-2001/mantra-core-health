@@ -45,7 +45,6 @@ import {
   cropLabel,
   urlCrop,
   chosenSite,
-  siteByDefault,
   pharmaciesSites,
   type ClosedCrop,
   type InboxSite,
@@ -179,9 +178,6 @@ export class PharmacyInbox {
     urlCrop(this.route.snapshot.queryParamMap.get(PARAM_CERRADOS)),
   );
 
-  /** Si se abrió con una sede adivinada por no haber casa matriz marcada. */
-  protected readonly sinMatrizMarcada = signal(false);
-
   /** Si volvieron tantos pedidos como el tope: puede haber más de los que se ven. */
   protected readonly posiblementeCortado = signal(false);
 
@@ -279,7 +275,6 @@ export class PharmacyInbox {
 
   protected cambiarSede(valor: string | null): void {
     this.sedeActual.set(valor ?? SITES_ALL);
-    this.sinMatrizMarcada.set(false);
     // Cambiar de vista es acusar recibo: lo que sonaba era de la sede anterior.
     this.destacados.set(new Set());
     this.descartarAviso();
@@ -402,10 +397,8 @@ export class PharmacyInbox {
 
   private alResolverSedes(sedes: readonly InboxSite[]): void {
     this.sedes.set(sedes);
-    const porDefecto = siteByDefault(sedes);
     const elegida = chosenSite(this.route.snapshot.queryParamMap.get(PARAM_SEDE), sedes);
     this.sedeActual.set(elegida ?? SITES_ALL);
-    this.sinMatrizMarcada.set(porDefecto.sinMatrizMarcada && elegida === porDefecto.id);
     this.cargar();
   }
 

@@ -631,8 +631,40 @@
             <p class="turnos__estado" role="status">Buscando horarios libres…</p>
           }
           @case ('ready') {
+            @if (gruposFlexibles().length > 0) {
+              <!-- P36 · horario flexible: las horas por día, no una fila por
+                   hora (A6). El primer día viene abierto. -->
+              <app-accordion class="turnos__flexibles" data-testid="turnos-flexibles">
+                @for (grupo of gruposFlexibles(); track grupo.clave; let primero = $first) {
+                  <app-accordion-panel [heading]="grupo.titulo" [level]="4" [expanded]="primero">
+                    <ul class="turnos__horas" [attr.aria-label]="grupo.titulo">
+                      @for (horario of grupo.horas; track horario.id) {
+                        <li>
+                          <a
+                            app-button
+                            variant="secondary"
+                            size="sm"
+                            data-testid="turnos-hora-flexible"
+                            [attr.aria-label]="
+                              'Pedir el ' +
+                              (horario.desde | date: 'EEEE d MMM') +
+                              ' a las ' +
+                              (horario.desde | date: 'HH:mm')
+                            "
+                            [routerLink]="rutaDeReserva(horario)"
+                            [queryParams]="paramsDeReserva(horario)"
+                          >
+                            {{ horario.desde | date: 'HH:mm' }}
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  </app-accordion-panel>
+                }
+              </app-accordion>
+            }
             <ul class="turnos__horarios">
-              @for (horario of horariosListos(); track horario.id) {
+              @for (horario of horariosFijos(); track horario.id) {
                 <li class="turnos__horario">
                   <div class="turnos__cuando">
                     <span class="turnos__fecha">{{ horario.desde | date: 'EEEE d MMM' }}</span>

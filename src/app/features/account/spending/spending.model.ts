@@ -32,6 +32,8 @@ const CATEGORY_PRESENTATION: Readonly<Record<string, { label: string; icon: NavI
   SPEND_IMAGING: { label: 'Imagenología', icon: 'scan' },
   SPEND_PROCEDURE: { label: 'Procedimientos', icon: 'scalpel' },
   SPEND_INSURANCE_PREMIUM: { label: 'Seguro de salud', icon: 'umbrella' },
+  // Lo que la API no puede atribuir a ninguna de las otras: ícono genérico.
+  SPEND_OTHER: { label: 'Otros gastos', icon: 'folder' },
 };
 
 const FALLBACK_ICON: NavIconName = 'folder';
@@ -113,6 +115,11 @@ export interface TrendPoint {
 
 export interface SpendingDashboard {
   readonly currencyLabel: string;
+  /**
+   * La API recortó la lista por su tope: las sumas no son el total del rango
+   * y la pantalla lo dice.
+   */
+  readonly truncated: boolean;
   readonly currentYear: number;
   readonly previousYear: number;
   readonly currentMonthLabel: string;
@@ -337,6 +344,7 @@ export function buildDashboard(
 
   return {
     currencyLabel: displayCurrency(response.currency),
+    truncated: response.truncated === true,
     currentYear: year,
     previousYear: year - 1,
     currentMonthLabel: monthLabel(year, month),

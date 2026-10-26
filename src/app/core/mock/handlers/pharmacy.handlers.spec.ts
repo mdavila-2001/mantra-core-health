@@ -89,6 +89,18 @@ describe('handlers de farmacia: coherencia de precio y disponibilidad', () => {
     });
   });
 
+  describe('antigüedad de las existencias (REQ-19-011)', () => {
+    it('correcto — cada sede trae stockUpdatedAt, y hay sedes al día y desactualizadas', () => {
+      const disponibilidad = cuerpoDe<{ items: readonly { stockUpdatedAt: string }[] }>(
+        pedir('GET', '/pharmacy-inventory/availability', new URLSearchParams({ products: IBUPROFENO_ID })),
+      );
+      const ageHours = disponibilidad.items.map((i) => (Date.now() - Date.parse(i.stockUpdatedAt)) / 3_600_000);
+      expect(ageHours.every((hours) => Number.isFinite(hours))).toBe(true);
+      expect(ageHours.some((hours) => hours < 24)).toBe(true);
+      expect(ageHours.some((hours) => hours >= 24)).toBe(true);
+    });
+  });
+
   describe('stock 0 y receta (H3.S2.M3)', () => {
     it('correcto — la amoxicilina (stock 0) no aparece en /prices', () => {
       const precios = cuerpoDe<{ items: readonly { productId: string }[] }>(
@@ -482,7 +494,7 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
       expect(gestion().find((p) => p.id === a)!.inStock).toBe(true);
     });
 
-    it('«hay» sobre un producto con cero unidades le da existencias para que de verdad esté disponible', () => {
+    it('«hay» sobre un producto con cero unidades lo deja «sin conteo» para que de verdad esté disponible', () => {
       const a = crear('B-INV-BOOL-B', { stock: 0 });
       expect(gestion().find((p) => p.id === a)!.inStock).toBe(false);
 
@@ -490,23 +502,24 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
 
       const ahora = gestion().find((p) => p.id === a)!;
       expect(ahora.inStock).toBe(true);
-      expect(ahora.stock).toBeGreaterThan(0);
+      // Como la API (P47): sin conteo es `null`, no un número inventado.
+      expect(ahora.stock).toBeNull();
     });
 
-    it('mezclar cantidades y booleano en una misma línea es un 400: diría dos cosas a la vez', () => {
+    it('mezclar cantidades y booleano en una misma línea es un 422: diría dos cosas a la vez', () => {
       const a = crear('B-INV-BOOL-C');
 
       const resultado = pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, {
         lines: [{ productId: a, stock: 4, inStock: true }],
       });
 
-      expect(estado(resultado)).toBe(400);
+      expect(estado(resultado)).toBe(422);
     });
 
-    it('una línea que no dice qué cambiar es un 400, y un booleano que no lo es también', () => {
+    it('una línea que no dice qué cambiar es un 422; un booleano que no lo es, un 400 de forma', () => {
       const a = crear('B-INV-BOOL-D');
 
-      expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a }] }))).toBe(400);
+      expect(estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a }] }))).toBe(422);
       expect(
         estado(pedir('PATCH', `/pharmacies/${PHARMACY_ID}/inventory`, { lines: [{ productId: a, inStock: 'quizás' }] })),
       ).toBe(400);
@@ -540,7 +553,8 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
         lines: [{ productId: 'no-existe', stock: 1, minStock: 1 }],
       });
 
-      expect(estado(resultado)).toBe(400);
+      // Como la API: la forma es válida, lo que no cabe es el producto (422).
+      expect(estado(resultado)).toBe(422);
     });
   });
 
@@ -715,5 +729,129 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
       expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/catalog-requests`, { name: 'Medicamento Local 10 mg' }, new URLSearchParams()))).toBe(201);
       expect(estado(pedir('POST', `/pharmacies/${PHARMACY_ID}/catalog-requests`, { name: '' }, new URLSearchParams()))).toBe(400);
     });
+  });
+});
+
+/**
+ * P34 · el simulador sirve el mismo contrato que la API para 24 h y turnos:
+ * `GET /public/pharmacies/open-now` paginado, `/pharmacy/sites?openNow=true`, y
+ * las escrituras del portal con sus 400/409/422.
+ */
+describe('handlers de farmacia: 24 h y turnos (P34)', () => {
+  const router = crearRouterSimulado();
+  const paciente = buscarUsuario('paciente')!;
+
+  function pedir(method: MockMethod, path: string, query = new URLSearchParams(), body: unknown = {}) {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query,
+      body,
+      headers: new HttpHeaders(),
+      user: paciente,
+    } satisfies MockRequest);
+  }
+  const estado = (r: unknown): number => (isMockReply(r) ? r.status : 200);
+  const cuerpoDe = <T>(r: unknown): T => (isMockReply(r) ? r.body : r) as T;
+
+  interface Abierta {
+    siteId: string;
+    open24h: boolean;
+    onCall: { endsAt: string; endsAtLocal: string } | null;
+  }
+
+  it('correcto — open-now trae sólo 24 h o de turno, con la hora de Bolivia', () => {
+    const pagina = cuerpoDe<{ items: Abierta[]; timeZone: string; asOfLocal: string }>(
+      pedir('GET', '/public/pharmacies/open-now'),
+    );
+    expect(pagina.items.length).toBeGreaterThan(0);
+    expect(pagina.items.every((i) => i.open24h || i.onCall !== null)).toBe(true);
+    expect(pagina.timeZone).toBe('America/La_Paz');
+    expect(pagina.asOfLocal).toMatch(/-04:00$/);
+    const deTurno = pagina.items.find((i) => i.onCall !== null);
+    expect(deTurno?.onCall?.endsAtLocal).toMatch(/-04:00$/);
+  });
+
+  it('límite — open-now pagina con cursor sin repetir', () => {
+    const primera = cuerpoDe<{ items: Abierta[]; nextCursor: string | null }>(
+      pedir('GET', '/public/pharmacies/open-now', new URLSearchParams({ limit: '1' })),
+    );
+    expect(primera.items.length).toBe(1);
+    if (primera.nextCursor !== null) {
+      const segunda = cuerpoDe<{ items: Abierta[] }>(
+        pedir('GET', '/public/pharmacies/open-now', new URLSearchParams({ limit: '1', cursor: primera.nextCursor })),
+      );
+      expect(segunda.items[0]?.siteId).not.toBe(primera.items[0]?.siteId);
+    }
+  });
+
+  it('inválido — mode desconocido y lat sin lng son 400', () => {
+    expect(estado(pedir('GET', '/public/pharmacies/open-now', new URLSearchParams({ mode: 'todas' })))).toBe(400);
+    expect(estado(pedir('GET', '/public/pharmacies/open-now', new URLSearchParams({ lat: '-16.5' })))).toBe(400);
+  });
+
+  it('correcto — /pharmacy/sites?openNow=true deja sólo las abiertas, con open24h y onCallUntil', () => {
+    const sedes = cuerpoDe<{ items: { open24h: boolean | null; onCallUntil: string | null }[] }>(
+      pedir('GET', '/pharmacy/sites', new URLSearchParams({ openNow: 'true' })),
+    );
+    expect(sedes.items.length).toBeGreaterThan(0);
+    expect(sedes.items.every((s) => s.open24h === true || s.onCallUntil !== null)).toBe(true);
+  });
+
+  it('portal — declara 24 h, carga un turno, rechaza el solapado, el vencido y el sin desplazamiento, y cancela', () => {
+    const farmacias = cuerpoDe<{ items: { id: string }[] }>(pedir('GET', '/pharmacy/pharmacies'));
+    const pharmacyId = farmacias.items[farmacias.items.length - 1]!.id;
+    const horario = cuerpoDe<{ sites: { siteId: string }[] }>(
+      pedir('GET', `/pharmacies/${pharmacyId}/opening-hours`),
+    );
+    const siteId = horario.sites[0]!.siteId;
+
+    const declarada = cuerpoDe<{ open24h: boolean | null }>(
+      pedir('PUT', `/pharmacies/${pharmacyId}/sites/${siteId}/open-24h`, undefined, { open24h: false }),
+    );
+    expect(declarada.open24h).toBe(false);
+    expect(estado(pedir('PUT', `/pharmacies/${pharmacyId}/sites/${siteId}/open-24h`, undefined, {}))).toBe(400);
+
+    const ahora = Date.now();
+    const desde = new Date(ahora + 24 * 3_600_000).toISOString();
+    const hasta = new Date(ahora + 36 * 3_600_000).toISOString();
+    const alta = pedir('POST', `/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`, undefined, {
+      startsAt: desde,
+      endsAt: hasta,
+    });
+    expect(estado(alta)).toBe(201);
+    const turno = cuerpoDe<{ id: string; current: boolean }>(alta);
+    expect(turno.current).toBe(false);
+
+    expect(
+      estado(
+        pedir('POST', `/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`, undefined, {
+          startsAt: desde,
+          endsAt: hasta,
+        }),
+      ),
+    ).toBe(409);
+    expect(
+      estado(
+        pedir('POST', `/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`, undefined, {
+          startsAt: new Date(ahora - 10 * 3_600_000).toISOString(),
+          endsAt: new Date(ahora - 3_600_000).toISOString(),
+        }),
+      ),
+    ).toBe(422);
+    expect(
+      estado(
+        pedir('POST', `/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`, undefined, {
+          startsAt: '2026-12-01T20:00:00',
+          endsAt: '2026-12-02T08:00:00',
+        }),
+      ),
+    ).toBe(400);
+
+    expect(estado(pedir('POST', `/pharmacies/${pharmacyId}/on-call-shifts/${turno.id}/cancel`))).toBe(200);
+    expect(estado(pedir('POST', `/pharmacies/${pharmacyId}/on-call-shifts/${turno.id}/cancel`))).toBe(422);
   });
 });

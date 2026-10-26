@@ -100,8 +100,12 @@ export class DirectoryClient {
    * `POST /admin/tenants/{id}/verification` — activa la organización (UC-04-02).
    * Pide `SECURITY_ADMIN`, no `SUPERADMIN`.
    *
-   * Va sin la cabecera de organización, como el alta: es superficie de
-   * plataforma y el actor no tiene por qué pertenecer a lo que verifica.
+   * Declara como organización **la que se verifica** (`deLaOrganizacion`), no
+   * la activa de quien verifica: el interceptor ponía la activa y la API
+   * respondía 403 «tenants propietarios contradictorios» (ruta ≠ cabecera) a
+   * la plataforma, que verifica organizaciones ajenas por definición (visto en
+   * navegador contra la API real, defecto A2 del 26/10/2026). La autorización
+   * la sigue decidiendo la API (`SECURITY_ADMIN` sobre ese tenant).
    */
   verifyTenant(
     tenantId: string,
@@ -111,6 +115,7 @@ export class DirectoryClient {
       .post<WireTenantCreated>(
         this.url(`/admin/tenants/${tenantId}/verification`),
         stripUndefined(confirmation),
+        { headers: deLaOrganizacion(tenantId) },
       )
       .pipe(map(toTenantCreated));
   }

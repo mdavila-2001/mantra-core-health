@@ -26,16 +26,22 @@ import { avisarFichaAlPaciente } from './clinical.handlers';
     observación tiene su respectivo ID … es una tabla de valores donde los
     campos son más dinámicos y laxos … llamadas notas médicas».
 
-    El contrato es el de `chart.clinical_note_*` con una columna más —las
-    filas— que el backend todavía no tiene (P39). Acá se valida lo que el
-    backend va a validar, para que la pantalla no se acostumbre a un servidor
-    que acepta cualquier cosa.
+    El contrato es el de `chart.clinical_note_*` con las filas en la
+    versión (`entries_json`, P39). Acá se valida lo mismo que valida la API
+    (`NoteEntryInputDto` de `chart/dto/notes.dto.ts`): hasta 40 filas, campo
+    ≤ 60 y valor ≤ 500 ya recortados, sin campos repetidos y sin HTML.
    ========================================================================== */
 
 /** Hasta cuántas filas admite una nota. Más que eso ya es un formulario. */
 const TOPE_DE_FILAS = 40;
 const TOPE_DEL_ROTULO = 60;
 const TOPE_DEL_VALOR = 500;
+
+/**
+ * Una etiqueta de marcado (`<b>`, `</p>`, `<!--`). La misma regla que
+ * `IsPlainText` de la API: `<140` o `PA < 140 y > 90` no son HTML.
+ */
+const MARCADO = /<[/!?]?[a-z][^>]*>|<!--/iu;
 
 /** Lo que se manda al abrir una nota o al agregarle una versión. */
 interface CuerpoDeNota {
@@ -106,6 +112,12 @@ function validarFilas(entradas: CuerpoDeNota['entries']): {
         field: 'label',
         message: `Fila ${index + 1}: el campo admite hasta ${TOPE_DEL_ROTULO} caracteres.`,
       });
+    }
+    if (MARCADO.test(label)) {
+      problemas.push({ index, field: 'label', message: `Fila ${index + 1}: el campo no admite HTML.` });
+    }
+    if (MARCADO.test(value)) {
+      problemas.push({ index, field: 'value', message: `Fila ${index + 1}: el valor no admite HTML.` });
     }
     if (value.length === 0) {
       problemas.push({ index, field: 'value', message: `Fila ${index + 1}: falta el valor.` });

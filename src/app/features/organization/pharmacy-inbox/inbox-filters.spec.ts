@@ -16,25 +16,19 @@ function sede(code: string, esMatriz = false): InboxSite {
 
 describe('sedePorDefecto', () => {
   it('prefiere la casa matriz, esté donde esté en la lista', () => {
-    expect(siteByDefault([sede('S1'), sede('S2', true), sede('S3')])).toEqual({
-      id: 'id-S2',
-      sinMatrizMarcada: false,
-    });
+    expect(siteByDefault([sede('S1'), sede('S2', true), sede('S3')])).toBe('id-S2');
   });
 
   it('con una sola sede la usa y no avisa de nada', () => {
-    expect(siteByDefault([sede('S1')])).toEqual({ id: 'id-S1', sinMatrizMarcada: false });
+    expect(siteByDefault([sede('S1')])).toBe('id-S1');
   });
 
   it('con varias y ninguna matriz, abre con todas las sedes', () => {
-    expect(siteByDefault([sede('S10'), sede('S2'), sede('S3')])).toEqual({
-      id: null,
-      sinMatrizMarcada: false,
-    });
+    expect(siteByDefault([sede('S10'), sede('S2'), sede('S3')])).toBeNull();
   });
 
   it('sin sedes no hay default', () => {
-    expect(siteByDefault([])).toEqual({ id: null, sinMatrizMarcada: false });
+    expect(siteByDefault([])).toBeNull();
   });
 });
 

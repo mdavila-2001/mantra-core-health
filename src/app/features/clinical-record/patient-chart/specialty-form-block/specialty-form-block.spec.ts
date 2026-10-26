@@ -400,8 +400,10 @@ describe('SpecialtyFormBlock', () => {
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
     http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
     const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
-    // Se piden las del encuentro, no todas las de la persona.
-    expect(notas.request.params.get('encounterId')).toBe('enc-1');
+    // Las del encuentro: la API rechaza `encounterId` (400, A3), así que el
+    // pedido no lo lleva y la nota de «enc-otro» de abajo se descarta en el
+    // cliente — eso lo sigue fijando la aserción de lo que se muestra.
+    expect(notas.request.params.has('encounterId')).toBe(false);
     notas.flush({
       items: [
         {
@@ -1732,7 +1734,8 @@ describe('SpecialtyFormBlock', () => {
     function elegirLibre(notasYaRegistradas: readonly Record<string, unknown>[] = []): void {
       interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_FORMULARIO_LIBRE);
       const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
-      expect(notas.request.params.get('encounterId')).toBe('enc-1');
+      // Sin `encounterId`: la API lo rechaza con 400 (A3); se acota en el cliente.
+      expect(notas.request.params.has('encounterId')).toBe(false);
       notas.flush({ items: notasYaRegistradas, limit: 50, truncated: false });
       fixture.detectChanges();
     }
@@ -1798,8 +1801,13 @@ describe('SpecialtyFormBlock', () => {
         patientProfileId: 'pac-1',
         authorProfileId: 'hp-1',
         encounterId: 'enc-1',
-        objectiveText: "Presión arterial: 128/84 mmHg\nAnálisis con el que vino: Adjunto: hemograma.jpg, orina.jpg, perfil.jpg",
+        // P39: la API guarda las filas estructuradas; ya no se aplanan en `objectiveText`.
+        entries: [
+          { label: 'Presión arterial', value: '128/84 mmHg' },
+          { label: 'Análisis con el que vino', value: 'Adjunto: hemograma.jpg, orina.jpg, perfil.jpg' },
+        ],
       });
+      expect(nota.request.body).not.toHaveProperty('objectiveText');
       nota.flush({ noteId: 'n-1', versionId: 'v-1' });
 
       const subidas = http.match('/common/files/upload');

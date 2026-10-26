@@ -295,11 +295,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // promociones. La carga masiva y las demás pantallas del portal de la farmacia
   // (resumen, categorías, importación, inventario) son de `features/pharmacy/`.
   'administration/pharmacy-catalog': () =>
-    environment.mockBackend
-      ? import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts)
-      : import('./features/organization/pharmacy-catalog/pharmacy-catalog').then(
-          (m) => m.PharmacyCatalog,
-        ),
+    import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts),
   'administration/pharmacy': () =>
     import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
   'administration/pharmacy-categories': () =>
@@ -310,6 +306,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/pharmacy/inventory/pharmacy-inventory').then((m) => m.PharmacyInventory),
   'administration/pharmacy-prices': () =>
     import('./features/pharmacy/prices/pharmacy-prices').then((m) => m.PharmacyPrices),
+  // P34 · 24 h y turnos de guardia de cada sucursal (26/10/2026).
+  'administration/pharmacy-hours': () =>
+    import('./features/pharmacy/opening-hours/pharmacy-opening-hours').then(
+      (m) => m.PharmacyOpeningHoursPage,
+    ),
   // Las sucursales de la organización activa (01/10/2026): una sola pantalla
   // para la farmacia y el laboratorio, cada una en su menú.
   'administration/pharmacy-branches': () =>

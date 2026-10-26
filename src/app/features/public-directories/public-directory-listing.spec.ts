@@ -96,6 +96,14 @@ function montar(fichas: readonly PublicSearchResult[]): {
     totalHint: fichas.length,
     generatedAt: new Date().toISOString(),
   });
+  // P34 · la sección «Abiertas ahora» hace su propia lectura; acá no importa.
+  http.expectOne((peticion) => peticion.url.endsWith('/public/pharmacies/open-now')).flush({
+    items: [],
+    nextCursor: null,
+    asOf: new Date().toISOString(),
+    asOfLocal: '',
+    timeZone: 'America/La_Paz',
+  });
   fixture.detectChanges();
   return { fixture, parametros, http };
 }

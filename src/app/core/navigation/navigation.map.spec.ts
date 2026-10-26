@@ -406,6 +406,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». CM-11 suma
     // «Configurar práctica», sólo para una organización médica: los
     // cinco tipos del alta pública (`MEDICAL_ORGANIZATION_TYPES`).
+    // P34 (26/10/2026) suma «Horario y turnos» a la farmacia.
     expect(flagged.map((s) => s.path)).toEqual([
       'administration/medical-center-setup',
       'administration/pharmacy',
@@ -414,6 +415,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/pharmacy-import',
       'administration/pharmacy-inventory',
       'administration/pharmacy-prices',
+      'administration/pharmacy-hours',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',

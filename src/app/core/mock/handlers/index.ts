@@ -1,6 +1,7 @@
 import { MockRouter } from '../mock-router';
 import { registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
+import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
@@ -62,6 +63,7 @@ export function crearRouterSimulado(): MockRouter {
   registerSignatureAndSeal(router);
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);
+  registrarHorarioFlexible(router);
   // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
   // ante patrones equivalentes gana el registrado primero.
   registerHealthcareServices(router);

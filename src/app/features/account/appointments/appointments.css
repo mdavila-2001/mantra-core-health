@@ -221,6 +221,21 @@
   padding: var(--sp-4);
 }
 
+/* P36 · las horas flexibles de un día: botones chicos que se acomodan solos. */
+.turnos__flexibles {
+  display: block;
+  margin-block-end: var(--sp-3);
+}
+
+.turnos__horas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 /* Las citas y la lista de espera son filas de LECTURA, no opciones: superficie
    tonal sin borde y esquina de tarjeta, para que la pantalla no sea una pila de
    cajas. Los horarios (`.turnos__horario`) sí son opciones a elegir y conservan

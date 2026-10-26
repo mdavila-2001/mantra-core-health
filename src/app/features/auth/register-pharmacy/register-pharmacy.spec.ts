@@ -25,6 +25,7 @@ interface CuerpoDelAlta {
     readonly legalDocuments?: Record<string, string>;
     readonly executives?: Record<string, { fullName: string; phone: string; email: string }>;
     readonly pharmacy?: {
+      readonly address?: string;
       readonly latitude?: number;
       readonly longitude?: number;
       readonly branches?: readonly { name: string; latitude: number; longitude: number }[];
@@ -132,10 +133,12 @@ describe('RegisterPharmacy', () => {
       password: 'secreto12',
       displayName: 'Mariana Siles',
     });
-    // Nada de lo opcional viaja si no se cargó: ni documentos, ni gerencias, ni central.
+    // Nada de lo opcional viaja si no se cargó: ni documentos, ni gerencias,
+    // ni punto de la central. La dirección legal sí: es la de la casa
+    // central, que la API crea en toda alta de farmacia (P50).
     expect('legalDocuments' in cuerpo.organization).toBe(false);
     expect('executives' in cuerpo.organization).toBe(false);
-    expect('pharmacy' in cuerpo.organization).toBe(false);
+    expect(cuerpo.organization.pharmacy).toEqual({ address: 'Av. Cañoto esq. Ballivián 234' });
 
     req.flush(RESPUESTA_201);
   });
@@ -172,6 +175,7 @@ describe('RegisterPharmacy', () => {
 
     const req = http.expectOne(RUTA_ALTA);
     expect((req.request.body as CuerpoDelAlta).organization.pharmacy).toEqual({
+      address: 'Av. Cañoto esq. Ballivián 234',
       latitude: -17.78,
       longitude: -63.18,
     });

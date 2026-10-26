@@ -44,6 +44,7 @@ import { AccountDialog } from './account-dialog';
 import { errorReason } from './errors';
 import { RecordDialog } from './record-dialog';
 import { readableDay, CLASS_NAME, accountLabel, TEXTS } from './records.format';
+import type { AccountingVersion } from '../accounting-version';
 import { TransactionDialog } from './transaction-dialog';
 
 /** Una fila de la tabla de gastos, activos o deudas, ya en palabras. */
@@ -153,6 +154,16 @@ export class SimpleAccounting {
    * antes de la separación.
    */
   readonly parte = input<AccountingPart>('todo');
+
+  /**
+   * Qué versión de la pantalla se lee. En «doctor», los registros son los tres
+   * que un médico anota —gastos, activos y deudas—; «contador» suma las
+   * transacciones (debe y haber) y el plan de cuentas. Las dos versiones leen y
+   * guardan los mismos datos: es qué se ve, no qué se puede. Quién puede
+   * escribir lo resuelve la API.
+   */
+  readonly version = input<AccountingVersion>('doctor');
+  protected readonly isAccountant = computed(() => this.version() === 'contador');
 
   private readonly accounting = inject(SimpleAccountingClient);
   private readonly dialogs = inject(DialogService);
@@ -278,6 +289,15 @@ export class SimpleAccounting {
     effect(() => {
       this.practiceId();
       untracked(() => this.loadAll());
+    });
+
+    // Transacciones y Cuentas sólo existen en la versión Contador. Si se vuelve
+    // a Doctor estando en una de ellas, se vuelve a la primera pestaña: dejar
+    // el índice apuntando a una pestaña que ya no está deja el panel en blanco.
+    effect(() => {
+      if (!this.isAccountant() && this.tab() >= KINDS.length) {
+        untracked(() => this.tab.set(0));
+      }
     });
   }
 

@@ -1,0 +1,12 @@
+  ● P50 · alta pública de farmacia (integración) › escenario 1 · el cuerpo del front → 201 con farmacia, central enlazada y sucursal
+
+    thrown: "Exceeded timeout of 180000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      119 |   }
+      120 |
+    > 121 |   beforeAll(async () => {
+          |   ^
+--
+  ● P50 · alta pública de farmacia (integración) › escenario 2 · el bloque pharmacy con otro tipo de organización → 422, sin cuenta
+

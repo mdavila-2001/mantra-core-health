@@ -1,3 +1,4 @@
+import { matchesFileAccept } from '../../../shared/forms/file-accept';
 import { environment } from '../../../../environments/environment';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -1245,6 +1246,110 @@ describe('RegisterPractitioner', () => {
 
       expect(component.respaldoMatricula()).toBeNull();
       expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
+    });
+
+    describe('los respaldos de la habilitación viajan a la API (P29)', () => {
+      it('el selector de los respaldos sólo acepta PDF, como la API que los recibe', () => {
+        const accept = (component as unknown as { formatosDeRespaldo: string }).formatosDeRespaldo;
+        expect(matchesFileAccept(archivoDe('matricula.jpg', 'image/jpeg', 1024), accept)).toBe(
+          false,
+        );
+        expect(matchesFileAccept(archivoDe('sedes.png', 'image/png', 1024), accept)).toBe(false);
+        expect(matchesFileAccept(archivoDe('matricula.pdf', 'application/pdf', 1024), accept)).toBe(
+          true,
+        );
+      });
+
+      it('sube el PDF de la matrícula y el del SEDES y manda cada fileId en el alta', () => {
+        completarProfesional();
+        const matricula = archivoDe('matricula.pdf', 'application/pdf', 1024);
+        const sedes = archivoDe('sedes.pdf', 'application/pdf', 2048);
+        component.updateSupportFiles('license', [matricula]);
+        component.updateSupportFiles('sedes', [sedes]);
+        component.submit();
+
+        const primera = http.expectOne('/iam/auth/upload-registration-document');
+        expect((primera.request.body as FormData).get('file')).toBe(matricula);
+        primera.flush({ fileId: 'pdf-matricula' });
+        const segunda = http.expectOne('/iam/auth/upload-registration-document');
+        expect((segunda.request.body as FormData).get('file')).toBe(sedes);
+        segunda.flush({ fileId: 'pdf-sedes' });
+
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body).toMatchObject({
+          licenseNumber: 'MP-12345',
+          licenseFileId: 'pdf-matricula',
+          sedesLicenseNumber: 'T.I. 538/14',
+          sedesLicenseFileId: 'pdf-sedes',
+        });
+        alta.flush(RESPUESTA_PRO);
+      });
+
+      it('sin archivo el alta no sube nada ni manda los campos', () => {
+        completarProfesional();
+        component.submit();
+
+        http.expectNone('/iam/auth/upload-registration-document');
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body).not.toHaveProperty('licenseFileId');
+        expect(alta.request.body).not.toHaveProperty('sedesLicenseFileId');
+        alta.flush(RESPUESTA_PRO);
+      });
+
+      it('si la subida falla no se crea la cuenta: el archivo no se pierde en silencio', () => {
+        completarProfesional();
+        component.updateSupportFiles('license', [
+          archivoDe('matricula.pdf', 'application/pdf', 1024),
+        ]);
+        component.submit();
+
+        http
+          .expectOne('/iam/auth/upload-registration-document')
+          .flush({ message: 'No es un PDF' }, { status: 422, statusText: 'Unprocessable Entity' });
+
+        http.expectNone('/iam/auth/register-practitioner');
+        expect(component.respaldoMatricula()?.archivo).toBe('matricula.pdf');
+      });
+
+      it('al reintentar no vuelve a subir el PDF ya confirmado', () => {
+        completarProfesional();
+        component.updateSupportFiles('license', [
+          archivoDe('matricula.pdf', 'application/pdf', 1024),
+        ]);
+        component.submit();
+        http.expectOne('/iam/auth/upload-registration-document').flush({ fileId: 'pdf-matricula' });
+        http
+          .expectOne('/iam/auth/register-practitioner')
+          .flush({ message: 'caída' }, { status: 503, statusText: 'Service Unavailable' });
+
+        component.submit();
+
+        http.expectNone('/iam/auth/upload-registration-document');
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body.licenseFileId).toBe('pdf-matricula');
+        alta.flush(RESPUESTA_PRO);
+      });
+
+      it('cambiar el archivo olvida el fileId anterior y sube el nuevo', () => {
+        completarProfesional();
+        component.updateSupportFiles('license', [archivoDe('vieja.pdf', 'application/pdf', 1024)]);
+        component.submit();
+        http.expectOne('/iam/auth/upload-registration-document').flush({ fileId: 'pdf-viejo' });
+        http
+          .expectOne('/iam/auth/register-practitioner')
+          .flush({ message: 'caída' }, { status: 503, statusText: 'Service Unavailable' });
+
+        const nueva = archivoDe('nueva.pdf', 'application/pdf', 1024);
+        component.updateSupportFiles('license', [nueva]);
+        component.submit();
+
+        const upload = http.expectOne('/iam/auth/upload-registration-document');
+        expect((upload.request.body as FormData).get('file')).toBe(nueva);
+        upload.flush({ fileId: 'pdf-nuevo' });
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body.licenseFileId).toBe('pdf-nuevo');
+        alta.flush(RESPUESTA_PRO);
+      });
     });
 
     it('una segunda profesión guarda su universidad, su país y su ciudad', () => {

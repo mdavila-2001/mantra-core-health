@@ -2,6 +2,8 @@ import { displayCurrency } from '../../../../core/money/display-currency';
 import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { aperturaDe } from '../../../../core/data-access/pharmacy/opening-hours';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { pharmacyStoreRoute } from '../pharmacy.routes';
 import { PHARMACY_TESTIDS } from '../pharmacy.testids';
@@ -20,7 +22,7 @@ import type { StoreHit } from './pharmacy-search.types';
  */
 @Component({
   selector: 'app-store-results',
-  imports: [AppButtonLink, RouterLink],
+  imports: [AppButtonLink, Badge, RouterLink],
   templateUrl: './store-results.html',
   styleUrl: './store-results.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +36,14 @@ export class StoreResults {
   protected readonly testids = PHARMACY_TESTIDS;
 
   protected readonly porId = (sede: StoreHit): string => sede.id;
+
+  /**
+   * P34 · la insignia «Abierta 24 h» / «De turno hasta …». Estaba sólo en
+   * `PharmacyShop`, que desde la tienda nueva ya no tiene ruta: en «Farmacia»
+   * la API la mandaba (`open24h`, `onCallUntil`) y nadie la pintaba (visto en
+   * navegador contra la API real el 26/10/2026).
+   */
+  protected readonly aperturaDe = aperturaDe;
 
   /** La tienda de la farmacia; `site` viaja por `queryParams` (ver `ProductResults`). */
   protected rutaDeTienda(sede: StoreHit): string {
