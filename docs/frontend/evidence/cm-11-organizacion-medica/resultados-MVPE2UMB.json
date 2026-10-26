@@ -4,126 +4,126 @@
     "accion": "Elegir «Hospital», completar las dos páginas y enviar; después entrar con la cuenta",
     "request": {
       "organization": {
-        "code": "CM-HOSPITAL-PRUEBA-MVPAK7IS",
-        "legalName": "Hospital Prueba MVPAK7IS",
+        "code": "CM-HOSPITAL-PRUEBA-MVPE2UMB",
+        "legalName": "Hospital Prueba MVPE2UMB",
         "legalEntityType": "SRL",
         "tenantType": "HOSPITAL",
         "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
         "jurisdictionConceptId": "b393fed1-81e1-5f5c-b3a0-b55dfaff86d6"
       },
       "owner": {
-        "email": "org.hospital.mvpak7is@alovida.test",
+        "email": "org.hospital.mvpe2umb@alovida.test",
         "password": "***",
         "displayName": "Marta Rojas"
       }
     },
     "status": 201,
-    "sql": "CM-HOSPITAL-PRUEBA-MVPAK7IS | HOSPITAL | directory:TENANT_UNVERIFIED | 24"
+    "sql": "CM-HOSPITAL-PRUEBA-MVPE2UMB | HOSPITAL | directory:TENANT_UNVERIFIED | 24"
   },
   {
     "caso": "Correcto · Clínica",
     "accion": "Elegir «Clínica», completar las dos páginas y enviar; después entrar con la cuenta",
     "request": {
       "organization": {
-        "code": "CM-CLINICA-PRUEBA-MVPAK7IS",
-        "legalName": "Clínica Prueba MVPAK7IS",
+        "code": "CM-CLINICA-PRUEBA-MVPE2UMB",
+        "legalName": "Clínica Prueba MVPE2UMB",
         "legalEntityType": "SRL",
         "tenantType": "CLINIC",
         "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
         "jurisdictionConceptId": "b393fed1-81e1-5f5c-b3a0-b55dfaff86d6"
       },
       "owner": {
-        "email": "org.clinic.mvpak7is@alovida.test",
+        "email": "org.clinic.mvpe2umb@alovida.test",
         "password": "***",
         "displayName": "Marta Rojas"
       }
     },
     "status": 201,
-    "sql": "CM-CLINICA-PRUEBA-MVPAK7IS | CLINIC | directory:TENANT_UNVERIFIED | 23"
+    "sql": "CM-CLINICA-PRUEBA-MVPE2UMB | CLINIC | directory:TENANT_UNVERIFIED | 23"
   },
   {
     "caso": "Correcto · Consultorio médico",
     "accion": "Elegir «Consultorio médico», completar las dos páginas y enviar; después entrar con la cuenta",
     "request": {
       "organization": {
-        "code": "CM-CONSULTORIO-MEDICO-PRUEBA-MVPAK7IS",
-        "legalName": "Consultorio médico Prueba MVPAK7IS",
+        "code": "CM-CONSULTORIO-MEDICO-PRUEBA-MVPE2UMB",
+        "legalName": "Consultorio médico Prueba MVPE2UMB",
         "legalEntityType": "SRL",
         "tenantType": "MEDICAL_OFFICE",
         "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
         "jurisdictionConceptId": "b393fed1-81e1-5f5c-b3a0-b55dfaff86d6"
       },
       "owner": {
-        "email": "org.medical_office.mvpak7is@alovida.test",
+        "email": "org.medical_office.mvpe2umb@alovida.test",
         "password": "***",
         "displayName": "Marta Rojas"
       }
     },
     "status": 201,
-    "sql": "CM-CONSULTORIO-MEDICO-PRUEBA-MVPAK7IS | MEDICAL_OFFICE | directory:TENANT_UNVERIFIED | 34"
+    "sql": "CM-CONSULTORIO-MEDICO-PRUEBA-MVPE2UMB | MEDICAL_OFFICE | directory:TENANT_UNVERIFIED | 34"
   },
   {
     "caso": "Correcto · Centro de enfermería",
     "accion": "Elegir «Centro de enfermería», completar las dos páginas y enviar; después entrar con la cuenta",
     "request": {
       "organization": {
-        "code": "CM-CENTRO-DE-ENFERMERIA-PRUEBA-MVPAK7IS",
-        "legalName": "Centro de enfermería Prueba MVPAK7IS",
+        "code": "CM-CENTRO-DE-ENFERMERIA-PRUEBA-MVPE2UMB",
+        "legalName": "Centro de enfermería Prueba MVPE2UMB",
         "legalEntityType": "SRL",
         "tenantType": "NURSING",
         "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
         "jurisdictionConceptId": "b393fed1-81e1-5f5c-b3a0-b55dfaff86d6"
       },
       "owner": {
-        "email": "org.nursing.mvpak7is@alovida.test",
+        "email": "org.nursing.mvpe2umb@alovida.test",
         "password": "***",
         "displayName": "Marta Rojas"
       }
     },
     "status": 201,
-    "sql": "CM-CENTRO-DE-ENFERMERIA-PRUEBA-MVPAK7IS | NURSING | directory:TENANT_UNVERIFIED | 36"
+    "sql": "CM-CENTRO-DE-ENFERMERIA-PRUEBA-MVPE2UMB | NURSING | directory:TENANT_UNVERIFIED | 36"
   },
   {
     "caso": "Correcto · Otra institución de salud",
     "accion": "Elegir «Otra institución de salud», completar las dos páginas y enviar; después entrar con la cuenta",
     "request": {
       "organization": {
-        "code": "CM-OTRA-INSTITUCION-DE-SALUD-PRUEBA-MVPAK7IS",
-        "legalName": "Otra institución de salud Prueba MVPAK7IS",
+        "code": "CM-OTRA-INSTITUCION-DE-SALUD-PRUEBA-MVPE2UMB",
+        "legalName": "Otra institución de salud Prueba MVPE2UMB",
         "legalEntityType": "SRL",
         "tenantType": "HEALTH_OTHER",
         "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
         "jurisdictionConceptId": "b393fed1-81e1-5f5c-b3a0-b55dfaff86d6"
       },
       "owner": {
-        "email": "org.health_other.mvpak7is@alovida.test",
+        "email": "org.health_other.mvpe2umb@alovida.test",
         "password": "***",
         "displayName": "Marta Rojas"
       }
     },
     "status": 201,
-    "sql": "CM-OTRA-INSTITUCION-DE-SALUD-PRUEBA-MVPAK7IS | HEALTH_OTHER | directory:TENANT_UNVERIFIED | 41"
+    "sql": "CM-OTRA-INSTITUCION-DE-SALUD-PRUEBA-MVPE2UMB | HEALTH_OTHER | directory:TENANT_UNVERIFIED | 41"
   },
   {
     "caso": "Límite · razón social 300 + contraseña 8",
     "accion": "Razón social de 300 caracteres y contraseña de 8, tipo «Consultorio médico»",
     "request": {
       "organization": {
-        "code": "CM-CONSULTORIO-BORDE-MVPAK7IS-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        "legalName": "Consultorio Borde MVPAK7IS AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "code": "CM-CONSULTORIO-BORDE-MVPE2UMB-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "legalName": "Consultorio Borde MVPE2UMB AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
         "legalEntityType": "SRL",
         "tenantType": "MEDICAL_OFFICE",
         "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
         "jurisdictionConceptId": "b393fed1-81e1-5f5c-b3a0-b55dfaff86d6"
       },
       "owner": {
-        "email": "org.borde.mvpak7is@alovida.test",
+        "email": "org.borde.mvpe2umb@alovida.test",
         "password": "***",
         "displayName": "Marta Rojas"
       }
     },
     "status": 201,
-    "sql": "CM-CONSULTORIO-BORDE-MVPAK7IS-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | MEDICAL_OFFICE | directory:TENANT_UNVERIFIED | 300"
+    "sql": "CM-CONSULTORIO-BORDE-MVPE2UMB-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | MEDICAL_OFFICE | directory:TENANT_UNVERIFIED | 300"
   },
   {
     "caso": "Límite · razón social 301",
@@ -151,15 +151,15 @@
     "accion": "Alta «Centro de enfermería» con el correo de un alta anterior",
     "request": {
       "organization": {
-        "code": "CM-CLINICA-DUPLICADA-MVPAK7IS",
-        "legalName": "Clinica Duplicada MVPAK7IS",
+        "code": "CM-CLINICA-DUPLICADA-MVPE2UMB",
+        "legalName": "Clinica Duplicada MVPE2UMB",
         "legalEntityType": "SRL",
         "tenantType": "NURSING",
         "countryConceptId": "9294e8fb-a776-5c37-b868-229e5794f401",
         "jurisdictionConceptId": "b393fed1-81e1-5f5c-b3a0-b55dfaff86d6"
       },
       "owner": {
-        "email": "org.hospital.mvpak7is@alovida.test",
+        "email": "org.hospital.mvpe2umb@alovida.test",
         "password": "***",
         "displayName": "Marta Rojas"
       }

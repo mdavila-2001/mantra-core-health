@@ -8,7 +8,7 @@
     - **Correcto**, por tipo: UI → `POST /iam/auth/register-organization` con el
       `tenantType` del tipo elegido → 201 → fila en `directory.tenants` cuyo
       concepto de tipo es ese código → login real de la cuenta nueva en la UI →
-      el menú ofrece «Configurar su organización», que sólo existe para una
+      el menú ofrece «Configurar práctica», que sólo existe para una
       organización médica (lo decide el tipo que viaja en el token), y no
       ofrece la cara de aseguradora. Al entrar a configurarla, como la
       organización nace sin verificar, la pantalla lo dice (S3) en vez de
@@ -306,6 +306,31 @@ async function sinDesbordeHorizontal(page: Page): Promise<void> {
   expect(camposFuera, 'ningún campo debe salirse de la rejilla del formulario').toEqual([]);
 }
 
+/** Las acciones del formulario en el orden en que se ven: de arriba abajo y de izquierda a derecha. */
+async function ordenVisualDeAcciones(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll('.paginated-form__acciones > button')]
+      .map((boton) => ({ id: boton.getAttribute('data-testid') ?? '', r: boton.getBoundingClientRect() }))
+      .sort((a, b) => (Math.abs(a.r.top - b.r.top) > 4 ? a.r.top - b.r.top : a.r.left - b.r.left))
+      .map((boton) => boton.id),
+  );
+}
+
+/** Las acciones en el orden en que el tabulador las alcanza desde el último campo (la contraseña). */
+async function ordenDeFocoEnAcciones(page: Page): Promise<string[]> {
+  await page.getByTestId('medical-center-signup-password').focus();
+  const recorrido: string[] = [];
+  for (let intento = 0; intento < 6; intento += 1) {
+    await page.keyboard.press('Tab');
+    const id = await page.evaluate(() => {
+      const activo = document.activeElement;
+      return activo?.closest('.paginated-form__acciones') ? (activo.getAttribute('data-testid') ?? '') : null;
+    });
+    if (id !== null && id !== '' && !recorrido.includes(id)) recorrido.push(id);
+  }
+  return recorrido;
+}
+
 async function abrirAlta(page: Page): Promise<void> {
   await page.goto('/auth/register/medical-center', { waitUntil: 'domcontentloaded' });
   await esperarAplicacionLista(page);
@@ -432,7 +457,9 @@ test.describe('correcto: alta completa por tipo de institución', () => {
       for (const ruta of RUTAS_DE_ASEGURADORA) {
         await expect(page.locator(`a[href="${ruta}"]`), ruta).toHaveCount(0);
       }
-      await expect(page.locator('a[href="/administration/insurance-claims"]').first()).toBeAttached();
+      // «Solicitudes de seguro» exige BILLING_OPERATOR o SECURITY_ADMIN en la API
+      // (la dueña, `USER`, recibe 403 ROLE_INSUFFICIENT): no se le ofrece.
+      await expect(page.locator('a[href="/administration/insurance-claims"]')).toHaveCount(0);
       if (ancho >= 1280) {
         // El rótulo del menú entra en un renglón: mide lo mismo que «Mi perfil».
         const enlace = page.locator('a[href="/administration/medical-center-setup"]').first();
@@ -454,7 +481,7 @@ test.describe('correcto: alta completa por tipo de institución', () => {
       // entrar (S3, con su próxima acción) en vez de ofrecer el formulario.
       await page.goto('/administration/medical-center-setup', { waitUntil: 'domcontentloaded' });
       await esperarAplicacionLista(page);
-      await expect(page.getByRole('heading', { level: 1, name: 'Configurar su organización' })).toBeVisible({
+      await expect(page.getByRole('heading', { level: 1, name: 'Configurar práctica' })).toBeVisible({
         timeout: 30_000,
       });
       const sinVerificar = page.getByTestId('medical-center-setup-unverified');
@@ -465,6 +492,15 @@ test.describe('correcto: alta completa por tipo de institución', () => {
         '/administration/my-organization',
       );
       await expect(page.getByTestId('medical-center-setup-form')).toHaveCount(0);
+      // El medallón mide lo que el de los otros estados vacíos (disco de ~54 px
+      // con el dibujo a la mitad): no 20 px con un reloj de 9.
+      const medallon = await sinVerificar.evaluate((raiz) => {
+        const disco = raiz.querySelector('.empty-state__medal')!.getBoundingClientRect();
+        const dibujo = raiz.querySelector('.empty-state__slot svg')!.getBoundingClientRect();
+        return { disco: disco.width, dibujo: dibujo.width };
+      });
+      expect(medallon.disco, 'el disco del medallón').toBeGreaterThanOrEqual(48);
+      expect(medallon.dibujo, 'el reloj ocupa la mitad del disco').toBeGreaterThanOrEqual(medallon.disco * 0.45);
       // El código que guarda la base para «sin verificar».
       expect(fila.split(' | ')[2]).toBe('directory:TENANT_UNVERIFIED');
       await sinDesbordeHorizontal(page);
@@ -831,9 +867,10 @@ test('la primera página se ve entera en los anchos de referencia, con «Siguien
       // van en rejilla —menos filas que opciones—.
       expect(medidas.columnas, vista.label).toBeGreaterThanOrEqual(2);
       expect(medidas.filasDeRadios, vista.label).toBeLessThan(medidas.radios);
-      // Sin huérfanas ni pistas vacías: las cinco en una fila donde entran
-      // (desde 1280), 3 + 2 donde no (1024). Ningún rótulo parte en dos.
-      expect(medidas.filasDeRadios, vista.label).toBe(vista.width >= 1280 ? 1 : 2);
+      // Sin huérfanas ni pistas vacías: las cinco en una fila donde entran con
+      // holgura (campo de 1100 px: desde 1366), 3 + 2 donde no (1024, 1280).
+      // Ningún rótulo parte en dos.
+      expect(medidas.filasDeRadios, vista.label).toBe(vista.width >= 1366 ? 1 : 2);
     }
     expect(medidas.rotulosEnUnRenglon, `${vista.label}: ningún rótulo de tipo parte en dos líneas`).toBe(true);
     await foto(page, `${vista.label}-pagina-1-vacia`);
@@ -861,7 +898,7 @@ test('la segunda página reparte la cuenta en columnas y sus acciones no se sale
     const acciones = await page.evaluate(() => {
       const barra = document.querySelector('.paginated-form__acciones')!;
       const atras = document.querySelector('[data-testid="paginated-form-atras"]')!;
-      const envio = document.querySelector('[data-testid="medical-center-signup-submit"], .paginated-form__acciones > button:last-child')!;
+      const envio = document.querySelector('.paginated-form__acciones > [data-accion-primaria]')!;
       const rejilla = document.querySelector('.paginated-form__campos')!.getBoundingClientRect();
       const campos = [...document.querySelectorAll('.paginated-form__campo')].map((c) => c.getBoundingClientRect());
       const texto = document.createRange();
@@ -876,6 +913,17 @@ test('la segunda página reparte la cuenta en columnas y sus acciones no se sale
         ultimo: campos.at(-1)!.width,
       };
     });
+    // WCAG 2.4.3 / 1.3.2: el tabulador recorre las acciones en el orden en que se ven
+    // (arriba→abajo, izquierda→derecha), apiladas o en un renglón.
+    const esperado = await ordenVisualDeAcciones(page);
+    expect(await ordenDeFocoEnAcciones(page), `${vista.label}: el orden de foco es el visual`).toEqual(
+      esperado,
+    );
+    expect(esperado, vista.label).toEqual(
+      vista.width < 672
+        ? ['paginated-form-continuar', 'paginated-form-atras']
+        : ['paginated-form-atras', 'paginated-form-continuar'],
+    );
     if (vista.width < 672) {
       // Envueltas: apiladas, el envío arriba y las dos a todo el ancho.
       expect(acciones.apiladas, vista.label).toBe(true);
@@ -904,6 +952,38 @@ test('la segunda página reparte la cuenta en columnas y sus acciones no se sale
     }
     await page.getByTestId('paginated-form-atras').scrollIntoViewIfNeeded();
     await foto(page, `${vista.label}-pagina-2-acciones`);
+  }
+  expect(vigia.problemas).toEqual([]);
+});
+
+test('redimensionar de 390 a 1024 y volver: sin errores y con el orden de lectura correcto', async ({ page }) => {
+  const vigia = vigilar(page);
+  // «ResizeObserver loop completed with undelivered notifications» llega como
+  // `pageerror` y el `ErrorHandler` global lo registra en consola: ninguno de
+  // los dos se permite.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await abrirAlta(page);
+  await paginaOrganizacion(page, 'Hospital', `Redimensiona ${RUN}`);
+  await continuar(page);
+  await expect(page.getByTestId('medical-center-signup-owner-name')).toBeVisible();
+
+  for (const [ancho, alto, apiladas] of [
+    [390, 844, true],
+    [1024, 768, false],
+    [390, 844, true],
+    [320, 640, true],
+    [1440, 900, false],
+    [390, 844, true],
+  ] as const) {
+    await page.setViewportSize({ width: ancho, height: alto });
+    await expect(page.locator('.paginated-form__acciones--apiladas')).toHaveCount(apiladas ? 1 : 0);
+    await page.waitForTimeout(250);
+    const esperado = apiladas
+      ? ['paginated-form-continuar', 'paginated-form-atras']
+      : ['paginated-form-atras', 'paginated-form-continuar'];
+    expect(await ordenVisualDeAcciones(page), `${ancho}: orden visual`).toEqual(esperado);
+    expect(await ordenDeFocoEnAcciones(page), `${ancho}: orden de foco`).toEqual(esperado);
+    await accionesDentro(page);
   }
   expect(vigia.problemas).toEqual([]);
 });

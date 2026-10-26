@@ -47,17 +47,20 @@ test.skip(process.env['E2E_API_REAL'] !== '1', 'Omitido: hace falta el front en 
 
 /**
  * Errores de consola de estas altas que ya existían y no toca este cambio:
- * borradores con 429, telemetría con 400 y el aviso de desarrollo de la página
- * de 5 campos del profesional. Registrados en el issue #1451; se dejan pasar
- * NOMBRADOS, uno por uno, y cualquier otro error hace caer la prueba.
+ * borradores con 429 o 404, telemetría con 400 y el aviso de desarrollo de la página
+ * de 5 campos del profesional. Registrados en el issue #1451. Se dejan pasar
+ * NOMBRADOS: el mensaje del `console.error` del navegador («Failed to load
+ * resource…») sólo vale si viene de uno de esos dos recursos —se filtra por la
+ * URL de la ubicación del mensaje—, y cualquier otro 400/429 hace caer la prueba.
  */
+const RECURSOS_1451 = [/\/iam\/onboarding-drafts\//, /\/telemetry\/onboarding-events/];
 const PREEXISTENTES_1451 = [
   /onboarding-drafts\/.* → 429 · RATE_LIMITED/,
+  /onboarding-drafts\/.* → 404 · NOT_FOUND · «Borrador no encontrado»/,
   /telemetry\/onboarding-events → 400 · VALIDATION_FAILED/,
-  /status of 429 \(Too Many Requests\)/,
-  /status of 400 \(Bad Request\)/,
   /\[app-paginated-form\] La página «Su nombre y su cédula» trae 5 campos/,
 ];
+const ESTADO_DE_RECURSO = /status of (429|404|400)/;
 
 /** Errores de consola, excepciones y requests caídas (sin las que corta una navegación). */
 function vigilar(page: Page): string[] {
@@ -65,6 +68,12 @@ function vigilar(page: Page): string[] {
   page.on('console', (m) => {
     if (m.type() !== 'error') return;
     if (PREEXISTENTES_1451.some((patron) => patron.test(m.text()))) return;
+    if (
+      ESTADO_DE_RECURSO.test(m.text()) &&
+      RECURSOS_1451.some((recurso) => recurso.test(m.location().url))
+    ) {
+      return;
+    }
     problemas.push(`console: ${m.text()}`);
   });
   page.on('pageerror', (e) => problemas.push(`pageerror: ${e.message}`));

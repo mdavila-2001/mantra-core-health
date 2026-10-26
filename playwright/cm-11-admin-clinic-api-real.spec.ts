@@ -536,3 +536,75 @@ for (const vista of VIEWPORTS) {
     expect(altas.length, 'dos altas por ancho: la de 300 y la correcta').toBe(2);
   });
 }
+
+/* ---- tres botones: Cancelar + Atrás + envío, apilados --------------------- */
+
+for (const ancho of [320, 390] as const) {
+  test(`«Clasificación» con tres acciones a ${ancho} px: apiladas o en un renglón, el orden de lectura es el visual`, async ({
+    page,
+  }) => {
+    const errores: string[] = [];
+    page.on('pageerror', (e) => errores.push(`pageerror: ${e.message}`));
+    page.on('console', (m) => {
+      if (m.type() === 'error') errores.push(`console: ${m.text()}`);
+    });
+    await page.setViewportSize({ width: ancho, height: 700 });
+    await entrar(page, administrador());
+    await abrirFormulario(page);
+    await identificacion(page, `CLIN-3B-${ancho}-${RUN}`, `Tres botones ${ancho} ${RUN}`);
+    await continuar(page).click();
+    await expect(pageTitle(page)).toHaveText('Clasificación');
+
+    const barra = page.locator('.paginated-form__acciones');
+    await expect(barra.locator('> button')).toHaveCount(3);
+    const apiladas = await barra.evaluate((nav) => nav.classList.contains('paginated-form__acciones--apiladas'));
+    // A 320 no entran las tres en un renglón; a 390 sí. Cualquiera de los dos
+    // estados tiene que leerse igual de bien.
+    if (ancho === 320) expect(apiladas, 'a 320 px las tres envuelven y se apilan').toBe(true);
+
+    const cajas = await barra.evaluate((nav) => ({
+      ancho: nav.getBoundingClientRect().width,
+      botones: [...nav.querySelectorAll(':scope > button')].map((b) => ({
+        id: b.getAttribute('data-testid') ?? (b.textContent ?? '').trim(),
+        top: b.getBoundingClientRect().top,
+        left: b.getBoundingClientRect().left,
+        width: b.getBoundingClientRect().width,
+        primaria: b.hasAttribute('data-accion-primaria'),
+      })),
+    }));
+    const visual = [...cajas.botones]
+      .sort((a, b) => (Math.abs(a.top - b.top) > 4 ? a.top - b.top : a.left - b.left))
+      .map((b) => b.id);
+    if (apiladas) {
+      // La primaria, arriba y primera en el DOM; las tres a todo el ancho, una por renglón.
+      expect(cajas.botones[0]?.primaria, 'la primaria es la primera del DOM').toBe(true);
+      expect(visual).toEqual(cajas.botones.map((b) => b.id));
+      for (const boton of cajas.botones) {
+        expect(Math.abs(boton.width - cajas.ancho), boton.id).toBeLessThanOrEqual(1);
+        expect(boton.left).toBeGreaterThanOrEqual(0);
+      }
+      expect(new Set(cajas.botones.map((b) => Math.round(b.top))).size).toBe(3);
+    } else {
+      // En un renglón: Cancelar, Atrás y, a la derecha, la primaria, en el orden del DOM.
+      expect(cajas.botones.at(-1)?.primaria, 'la primaria es la última').toBe(true);
+      expect(visual).toEqual(cajas.botones.map((b) => b.id));
+    }
+
+    // El tabulador las recorre en ese mismo orden.
+    await page.getByRole('combobox', { name: /Tipo de organización/ }).focus();
+    const recorrido: string[] = [];
+    for (let i = 0; i < 6; i += 1) {
+      await page.keyboard.press('Tab');
+      const id = await page.evaluate(() => {
+        const a = document.activeElement;
+        return a?.closest('.paginated-form__acciones') ? (a.getAttribute('data-testid') ?? (a.textContent ?? '').trim()) : null;
+      });
+      if (id !== null && !recorrido.includes(id)) recorrido.push(id);
+    }
+    expect(recorrido).toEqual(visual);
+    await assertNoHorizontalOverflow(page);
+    await barra.scrollIntoViewIfNeeded();
+    await foto(page, `admin-${ancho}-tres-acciones-apiladas`);
+    expect(errores).toEqual([]);
+  });
+}

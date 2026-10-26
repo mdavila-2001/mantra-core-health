@@ -120,8 +120,11 @@ describe('ChildOrganizationNew', () => {
     interno<() => void>('submit')();
 
     http.expectNone(`/tenants/${TENANT_ID}/child-tenants`);
-    // Y la pantalla marca qué falta, en vez de quedarse muda.
-    expect(crudo<() => boolean>('paisFaltante').call(fixture.componentInstance)).toBe(true);
+    // Y la pantalla marca qué falta, en vez de quedarse muda: el control queda
+    // tocado y con su error (lo que el motor pinta).
+    const pais = interno<{ get: (n: string) => { touched: boolean; errors: object | null } }>('form').get('pais');
+    expect(pais.touched).toBe(true);
+    expect(pais.errors).toEqual({ required: true });
   });
 
   it('un tipo no territorial no manda país ni jurisdicción', () => {
@@ -153,7 +156,9 @@ describe('ChildOrganizationNew', () => {
     interno<() => void>('submit')();
 
     http.expectNone(`/tenants/${TENANT_ID}/child-tenants`);
-    expect(crudo<() => boolean>('adminFaltante').call(fixture.componentInstance)).toBe(true);
+    const admin = interno<{ get: (n: string) => { touched: boolean; errors: object | null } }>('form').get('administrador');
+    expect(admin.touched).toBe(true);
+    expect(admin.errors).toEqual({ required: true });
   });
   it('ofrece «Clínica» y la manda como CLINIC, con país y jurisdicción', () => {
     const opciones = crudo<readonly { value: string; label: string }[]>('opcionesDeTipo');
@@ -183,7 +188,6 @@ describe('ChildOrganizationNew', () => {
     interno<() => void>('submit')();
 
     http.expectNone(`/tenants/${TENANT_ID}/child-tenants`);
-    expect(crudo<() => boolean>('jurisdiccionFaltante').call(fixture.componentInstance)).toBe(true);
     const jurisdiccion = interno<{ get: (n: string) => { enabled: boolean; errors: object | null } }>(
       'form',
     ).get('jurisdiccion');

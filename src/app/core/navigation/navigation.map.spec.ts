@@ -404,7 +404,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
     // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
     // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». CM-11 suma
-    // «Configurar su organización», sólo para una organización médica: los
+    // «Configurar práctica», sólo para una organización médica: los
     // cinco tipos del alta pública (`MEDICAL_ORGANIZATION_TYPES`).
     expect(flagged.map((s) => s.path)).toEqual([
       'administration/medical-center-setup',
@@ -442,7 +442,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(queue, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
   });
 
-  it('«Configurar su organización» la ve toda organización médica, y no una farmacia ni un laboratorio', () => {
+  it('«Configurar práctica» la ve toda organización médica, y no una farmacia ni un laboratorio', () => {
     const setup = APP_SECTIONS.find((s) => s.path === 'administration/medical-center-setup')!;
     for (const tipo of ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']) {
       expect(isVisibleTo(setup, ['USER'], ['t-1'], tipo), tipo).toBe(true);
@@ -496,11 +496,32 @@ describe('la cara de aseguradora del menú y las organizaciones médicas', () =>
     }
   });
 
-  it('«Solicitudes de seguro», la cara del prestador, la sigue viendo una clínica', () => {
+  it('«Solicitudes de seguro», la cara del prestador, la ve el personal de facturación de una clínica', () => {
+    // La API la sirve sólo a BILLING_OPERATOR y SECURITY_ADMIN (ROLE_INSUFFICIENT
+    // para un `USER`): el personal que factura la necesita —y la agenda abre
+    // sus solicitudes—, así que ocultarla por tipo de organización la cerraría
+    // también a ellos, porque el guard mira la misma regla.
     const presentadas = seccion('administration/insurance-claims');
     for (const tipo of MEDICAS) {
-      expect(isVisibleTo(presentadas, ['USER'], ['t-1'], tipo), tipo).toBe(true);
+      expect(isVisibleTo(presentadas, ['BILLING_OPERATOR'], ['t-1'], tipo), tipo).toBe(true);
+      expect(isVisibleTo(presentadas, ['SECURITY_ADMIN'], ['t-1'], tipo), tipo).toBe(true);
+      expect(isVisibleTo(presentadas, ['SUPERADMIN'], ['t-1'], tipo), tipo).toBe(true);
     }
+  });
+
+  it('«Solicitudes de seguro» no se le ofrece a la dueña de una clínica (USER): la API le daría 403', () => {
+    const presentadas = seccion('administration/insurance-claims');
+    for (const tipo of MEDICAS) {
+      expect(isVisibleTo(presentadas, ['USER'], ['t-1'], tipo), tipo).toBe(false);
+    }
+  });
+
+  it('fuera de las organizaciones médicas «Solicitudes de seguro» no cambia', () => {
+    const presentadas = seccion('administration/insurance-claims');
+    expect(isVisibleTo(presentadas, ['USER'], ['t-1'], 'PAYER')).toBe(true);
+    expect(isVisibleTo(presentadas, ['USER'], ['t-1'], 'PROVIDER')).toBe(true);
+    expect(isVisibleTo(presentadas, ['USER'], ['t-1'], null)).toBe(true);
+    expect(isVisibleTo(presentadas, ['USER'], ['t-1'], 'PHARMACY')).toBe(false);
   });
 });
 

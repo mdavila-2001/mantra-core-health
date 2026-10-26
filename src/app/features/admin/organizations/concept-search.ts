@@ -1,3 +1,5 @@
+import type { Subscription } from 'rxjs';
+
 import type { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
@@ -17,6 +19,14 @@ interface Writable<T> {
  * correcto. Un error deja la lista vacía: el combobox dice «sin resultados» y
  * el error general de la pantalla queda para el envío.
  */
+/**
+ * La búsqueda en vuelo de cada buscador, por su señal de resultados: una nueva
+ * cancela la anterior, así que una respuesta vieja que llega tarde no pisa la
+ * de lo que se escribió después (la misma carrera que `people-search.ts`
+ * resuelve con `switchMap`). `WeakMap`: el buscador y su entrada se van juntos.
+ */
+const enVuelo = new WeakMap<object, Subscription>();
+
 export function searchConceptOptions(
   terminology: TerminologyClient,
   text: string,
@@ -24,13 +34,17 @@ export function searchConceptOptions(
   results: Writable<readonly ReferenceOption[]>,
   loading: Writable<boolean>,
 ): void {
+  enVuelo.get(results)?.unsubscribe();
+  enVuelo.delete(results);
+
   if (text === '') {
     results.set([]);
+    loading.set(false);
     return;
   }
 
   loading.set(true);
-  terminology.searchConcepts({ query: text, limit }).subscribe({
+  const suscripcion = terminology.searchConcepts({ query: text, limit }).subscribe({
     next: (page) => {
       results.set(
         page.items.map((concept) => ({
@@ -46,4 +60,6 @@ export function searchConceptOptions(
       loading.set(false);
     },
   });
+  // Una respuesta síncrona ya terminó: no queda nada que cancelar.
+  if (!suscripcion.closed) enVuelo.set(results, suscripcion);
 }

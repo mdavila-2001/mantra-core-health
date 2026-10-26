@@ -809,6 +809,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // quien paga, y ésta es la pantalla de quien reclama.
     path: 'administration/insurance-claims',
     hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Una organización médica la ve sólo quien factura: la dueña (`USER`) la
+    // veía y la API le contestaba 403 `ROLE_INSUFFICIENT`.
+    rolesEnTipos: {
+      tipos: MEDICAL_ORGANIZATION_TYPES,
+      roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
+    },
     label: 'Solicitudes de seguro',
     group: 'Administración',
     icon: 'clipboard',
