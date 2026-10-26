@@ -59,6 +59,14 @@ import type {
   InsurerPatientPage,
   InsurerPatientQuery,
   PatientDirectoryOptions,
+  ClaimQuoteInput,
+  ClaimQuoteResult,
+  CreateClaimInput,
+  CreatedClaim,
+  PatientCoverageOption,
+  MyClaimBreakdown,
+  MyClaimObjection,
+  PatientObjectionReason,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -148,12 +156,15 @@ type WireReceivedClaim = Omit<
   readonly invoice: WireReceivedClaimInvoice | null;
 };
 
-type WireMyClaim = Omit<MyClaim, 'submittedAt' | 'serviceDate' | 'decision'> & {
+type WireMyClaim = Omit<MyClaim, 'submittedAt' | 'serviceDate' | 'decision' | 'breakdown' | 'patientObjection'> & {
   readonly submittedAt: string | null;
   /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
   readonly serviceDate: string | null;
   readonly decision:
     (Omit<NonNullable<MyClaim['decision']>, 'decidedAt'> & { readonly decidedAt: string }) | null;
+  /** Extensión de la maqueta (P63): la API real todavía no los entrega. */
+  readonly breakdown?: MyClaimBreakdown | null;
+  readonly patientObjection?: (Omit<MyClaimObjection, 'submittedAt'> & { readonly submittedAt: string }) | null;
 };
 
 type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
@@ -548,6 +559,9 @@ export class InsuranceClient {
    * pedirla; el lado (paciente, médico, laboratorio, imagenología) lo resuelve
    * el servidor por la sesión — el cliente no manda ningún id.
    *
+   * `breakdown` y `patientObjection` son extensión de la maqueta en la respuesta (P63):
+   * el `MyClaimDto` real todavía no los trae, y la pantalla los toma como `null`.
+   *
    * @returns Las solicitudes, de la más reciente a la más antigua.
    */
   listMyClaims(): Observable<MyClaimList> {
@@ -649,11 +663,60 @@ export class InsuranceClient {
     body: {
       readonly claimAdjudicationVersionId?: string;
       readonly initiatedBy: 'PROVIDER' | 'PATIENT';
+      /** Motivo cerrado de la objeción del paciente (REQ-16-032). Sin texto libre: es un dato de salud. */
+      readonly objectionReason?: PatientObjectionReason;
     },
   ): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url(`/insurance-claims/${encodeURIComponent(claimId)}/disputes`),
       body,
+    );
+  }
+
+  /**
+   * `POST /insurance-claims/quote` — cotización previa del cobro (REQ-16-026).
+   *
+   * No guarda nada: el servidor calcula la parte de la persona y la de la
+   * aseguradora desde el beneficio vigente de cada servicio, y dice si el
+   * cobro se puede enviar.
+   *
+   * @param body - Cobertura, servicios y montos a cotizar.
+   * @returns El reparto por línea y si el cobro se puede enviar.
+   */
+  quoteClaim(body: ClaimQuoteInput): Observable<ClaimQuoteResult> {
+    return this.http.post<ClaimQuoteResult>(this.url('/insurance-claims/quote'), body);
+  }
+
+  /**
+   * `POST /insurance-claims` — envía el cobro a la aseguradora (REQ-16-026).
+   *
+   * El servidor vuelve a validar todo lo que la cotización mostró: el cliente
+   * no manda la parte de la persona.
+   *
+   * @param body - Reclamo con su identificador y clave de idempotencia.
+   * @returns El reclamo creado.
+   */
+  createClaim(body: CreateClaimInput): Observable<CreatedClaim> {
+    return this.http.post<CreatedClaim>(this.url('/insurance-claims'), body);
+  }
+
+  /**
+   * Coberturas de una persona, para quien atiende (P62). Solo existe en la
+   * maqueta: la API todavía no expone esta lectura al personal. Contra la API
+   * real responde «no disponible» en vez de fallar en silencio.
+   *
+   * @param patientProfileId - Persona cuyas coberturas se leen.
+   * @returns Las coberturas registradas, con su vigencia.
+   */
+  listCoveragesOfPatient(
+    patientProfileId: string,
+  ): Observable<readonly PatientCoverageOption[]> {
+    return simulatorOnly('Ver los seguros de la persona', this.url('/patient-coverages/by-patient'), () =>
+      this.http
+        .get<{ readonly items: readonly PatientCoverageOption[] }>(
+          this.url(`/patient-coverages/by-patient/${encodeURIComponent(patientProfileId)}`),
+        )
+        .pipe(map((cuerpo) => cuerpo.items)),
     );
   }
 
@@ -805,6 +868,11 @@ function toMyClaim(body: WireMyClaim): MyClaim {
       body.decision === null
         ? null
         : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+    breakdown: body.breakdown ?? null,
+    patientObjection:
+      body.patientObjection == null
+        ? null
+        : { ...body.patientObjection, submittedAt: new Date(body.patientObjection.submittedAt) },
   };
 }
 

@@ -32,7 +32,7 @@ import { portalUrl } from '../portal-nav';
 import { paramValue, patchQuery, pathParamsSignal, queryParamsSignal } from '../support/route-query';
 import { ProcessStages } from './process-stages';
 
-const LIST_ROUTE = portalUrl('procesos');
+const LIST_ROUTE = portalUrl('processes');
 const VIEWS = ['resumen', 'etapas', 'estados'] as const;
 
 function facts(p: ProcesoDetalle): readonly Hecho[] {
@@ -78,8 +78,8 @@ export class ProcessDetailPage {
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly listUrl = LIST_ROUTE;
-  protected readonly diagramUrl = portalUrl('sistemas/flujos/diagrama');
-  protected readonly operationsUrl = portalUrl('sistemas/operaciones');
+  protected readonly diagramUrl = portalUrl('systems/flows/diagram');
+  protected readonly operationsUrl = portalUrl('systems/operations');
   protected readonly code = paramValue(pathParamsSignal(this.route), 'code');
   private readonly view = paramValue(queryParamsSignal(this.route), 'vista');
   protected readonly tabIndex = computed(() =>
@@ -100,7 +100,7 @@ export class ProcessDetailPage {
   protected readonly tableUrl = (qualified: string): string | null => {
     const dot = qualified.indexOf('.');
     return dot > 0
-      ? `${portalUrl('catalogo/tablas')}/${encodeURIComponent(qualified.slice(0, dot))}/${encodeURIComponent(qualified.slice(dot + 1))}`
+      ? `${portalUrl('catalog/tables')}/${encodeURIComponent(qualified.slice(0, dot))}/${encodeURIComponent(qualified.slice(dot + 1))}`
       : null;
   };
 

@@ -1,0 +1,41 @@
+# Recortada: primeras 40 líneas (el chequeo falla por deuda previa de otros archivos)
+warning: exhaustive rename detection was skipped due to too many files.
+warning: you may want to set your diff.renameLimit variable to at least 2944 and retry the command.
+check-english-identifiers: 573 identificador(es) nuevo(s) en castellano.
+  playwright/atlas-anatomico-3d.spec.ts:36 — "entrarComoMedica" («como» es una palabra del castellano)
+    async function entrarComoMedica(pagina: Page): Promise<void> {
+  playwright/atlas-anatomico-3d.spec.ts:60 — "tocarUnaPieza" («una» es una palabra del castellano)
+    async function tocarUnaPieza(pagina: Page): Promise<string> {
+  playwright/atlas-anatomico-3d.spec.ts:82 — "lienzoConDibujo" («con» es una palabra del castellano)
+    async function lienzoConDibujo(pagina: Page): Promise<{ piezas: number; verdes: number; ocres: number }> {
+  playwright/body-map-realistic.spec.ts:53 — "TODOS_LOS_ERRORES" («los» es una palabra del castellano)
+    const TODOS_LOS_ERRORES: Record<string, string[]> = {};
+  playwright/body-map-realistic.spec.ts:59 — "nuevos" («nuevos» es una palabra del castellano)
+    function nuevos(errores: readonly string[]): string[] {
+  playwright/body-map-realistic.spec.ts:198 — "cuenta" («cuenta» es una palabra del castellano)
+    for (const cuenta of CUENTAS) {
+  playwright/carril-03-alta-paciente.spec.ts:24 — "escribirFecha" («fecha» es una palabra del castellano)
+    async function escribirFecha(page: Page, digitos: string): Promise<void> {
+  playwright/carril-03-alta-paciente.spec.ts:25 — "fecha" («fecha» es una palabra del castellano)
+    const fecha = page.getByPlaceholder('DD/MM/AAAA');
+  playwright/carril-03-alta-paciente.spec.ts:97 — "artifacts/playwright/carril-03-correo-sin-dominio.png" («correo» es una palabra del castellano)
+    path: 'artifacts/playwright/carril-03-correo-sin-dominio.png',
+  playwright/carril-04-visuales-alta-paciente.spec.ts:34 — "escribirFecha" («fecha» es una palabra del castellano)
+    async function escribirFecha(page: Page, digitos: string): Promise<void> {
+  playwright/carril-04-visuales-alta-paciente.spec.ts:35 — "fecha" («fecha» es una palabra del castellano)
+    const fecha = page.getByPlaceholder('DD/MM/AAAA');
+  playwright/carril-04-visuales-alta-paciente.spec.ts:86 — "camposSinGlifo" («sin» es una palabra del castellano)
+    async function camposSinGlifo(page: Page): Promise<string[]> {
+  playwright/carril-04-visuales-alta-paciente.spec.ts:289 — "fecha" («fecha» es una palabra del castellano)
+    const fecha = page.getByPlaceholder('DD/MM/AAAA');
+  playwright/carril-05-perfil-doctor.spec.ts:17 — "PESTANAS_DEL_MEDICO" («del» es una palabra del castellano)
+    const PESTANAS_DEL_MEDICO = [
+  playwright/carril-05-perfil-doctor.spec.ts:42 — "codigo" («codigo» es una palabra del castellano)
+    const codigo = ficha
+  playwright/carril-07-referral-from-consultation.spec.ts:104 — "apellidoColega" («apellido» es una palabra del castellano)
+    const apellidoColega = `Zambrana${corrida}`;
+  playwright/carril-07-referral-from-consultation.spec.ts:105 — "correoColega" («correo» es una palabra del castellano)
+    const correoColega = `colega.derivar.${corrida}@alovida.test`;
+  playwright/carril-07-referral-from-consultation.spec.ts:114 — "paciente" («paciente» es una palabra del castellano)
+    const paciente = { identificador: `PDER${corrida}`, clave, token: '', perfil: '' };
+  playwright/carril-07-referral-from-consultation.spec.ts:147 — "agenda" («agenda» es una palabra del castellano)

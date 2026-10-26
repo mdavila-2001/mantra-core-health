@@ -34,7 +34,7 @@ import { hasAny, patchQuery, queryFilters, queryParamsSignal } from '../support/
 
 const PAGE_SIZE = 25;
 const FILTER_KEYS = ['q', 'schema', 'orm', 'appendOnly'] as const;
-const LIST_ROUTE = portalUrl('catalogo/tablas');
+const LIST_ROUTE = portalUrl('catalog/tables');
 
 function tableQuery(
   f: Readonly<Record<(typeof FILTER_KEYS)[number], string>>,

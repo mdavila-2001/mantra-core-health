@@ -9,7 +9,7 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { ReviewPage } from './review-page';
 import { MIN_REJECTION_LENGTH, reviewFailure } from './review.model';
 
-const RUTA = '/superadmin/portal/sistemas/revision';
+const RUTA = '/superadmin/portal/systems/review';
 
 const RESUMEN = {
   id: 'o1',
@@ -103,7 +103,7 @@ describe('ReviewPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/sistemas/revision', component: ReviewPage }]),
+        provideRouter([{ path: 'superadmin/portal/systems/review', component: ReviewPage }]),
         { provide: DialogService, useValue: dialogs },
       ],
     });

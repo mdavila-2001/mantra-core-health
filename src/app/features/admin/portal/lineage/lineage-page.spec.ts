@@ -8,7 +8,7 @@ import { lineage, page, tableLineage, tableSummary } from '../portal.fixture';
 import { LineagePage, lineageMetrics } from './lineage-page';
 import { groupByEffect } from './table-lineage-drawer';
 
-const RUTA = '/superadmin/portal/linaje';
+const RUTA = '/superadmin/portal/lineage';
 
 describe('LineagePage', () => {
   let harness: RouterTestingHarness;
@@ -19,7 +19,7 @@ describe('LineagePage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/linaje', component: LineagePage }]),
+        provideRouter([{ path: 'superadmin/portal/lineage', component: LineagePage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);

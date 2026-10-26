@@ -7,7 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { lineage, page, term } from '../portal.fixture';
 import { DomainsPage } from './domains-page';
 
-const RUTA = '/superadmin/portal/catalogo/dominios';
+const RUTA = '/superadmin/portal/catalog/domains';
 
 describe('DomainsPage', () => {
   let harness: RouterTestingHarness;
@@ -18,7 +18,7 @@ describe('DomainsPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/catalogo/dominios', component: DomainsPage }]),
+        provideRouter([{ path: 'superadmin/portal/catalog/domains', component: DomainsPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -42,7 +42,7 @@ describe('DomainsPage', () => {
     const tabla = documento().querySelector('[data-testid="portal-glossary-table"]')!;
     expect(tabla.textContent).toContain('Dato de salud identificable.');
     const enlace = [...tabla.querySelectorAll('a')].find((a) => a.textContent?.includes('clinical.observations'))!;
-    expect(enlace.getAttribute('href')).toBe('/superadmin/portal/catalogo/tablas/clinical/observations');
+    expect(enlace.getAttribute('href')).toBe('/superadmin/portal/catalog/tables/clinical/observations');
   });
 
   it('sin coincidencias lo dice con el término buscado y ofrece volver', async () => {
@@ -58,6 +58,6 @@ describe('DomainsPage', () => {
     harness.detectChanges();
     const enlaces = [...documento().querySelectorAll<HTMLAnchorElement>('[data-testid="portal-domain-link"]')];
     expect(enlaces.map((a) => a.textContent?.trim())).toEqual(['Financiero y ERP', 'Agenda']);
-    expect(enlaces[1]!.getAttribute('href')).toBe('/superadmin/portal/catalogo/tablas?q=Agenda');
+    expect(enlaces[1]!.getAttribute('href')).toBe('/superadmin/portal/catalog/tables?q=Agenda');
   });
 });

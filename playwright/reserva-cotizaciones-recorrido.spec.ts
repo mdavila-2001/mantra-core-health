@@ -28,7 +28,7 @@ test('paciente recorre directorio y cotizaciones sin errores de navegador', asyn
   vigilante.limpiar();
   await abrir(page, '/directory', 'Directorio de médicos');
 
-  await abrir(page, '/my-account/cotizaciones', 'Cotizaciones');
+  await abrir(page, '/my-account/quotations', 'Cotizaciones');
   const resultados = page.getByTestId('cotizaciones-resultados');
   await page.getByTestId('cotizaciones-busqueda').locator('input').fill('paracetamol');
   await page.getByLabel('Ordenar por').selectOption({ label: 'Cercanía' });

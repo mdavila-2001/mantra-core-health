@@ -20,7 +20,7 @@
     app-button
     page-actions
     variant="outline"
-    routerLink="/administration/accounting/libros"
+    routerLink="/administration/accounting/books"
     data-testid="ir-a-los-libros"
   >
     Balance y libro diario
@@ -383,7 +383,7 @@
             @if (bandeja().ocultos > 0) {
               <p class="tabla__pie">
                 Se muestran los {{ bandeja().filas.length }} más recientes de {{ bandeja().total }}.
-                <a app-link routerLink="/administration/accounting/libros">Ver todos en el libro diario</a>
+                <a app-link routerLink="/administration/accounting/books">Ver todos en el libro diario</a>
               </p>
             }
           } @else {

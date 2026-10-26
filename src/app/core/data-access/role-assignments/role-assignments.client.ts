@@ -1,14 +1,10 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos } from '../wire';
-import type {
-  PracticeInvitationInput,
-  RoleAssignmentRow,
-  SiteProcedure,
-} from './role-assignments.types';
+import type { PracticeInvitationInput, RoleAssignmentRow } from './role-assignments.types';
 
 /** Lo que viaja: los textos opcionales llegan `null`. */
 type WireRow = { readonly [K in keyof RoleAssignmentRow]: RoleAssignmentRow[K] | null };
@@ -71,23 +67,6 @@ export class RoleAssignmentsClient {
   /** `POST /role-assignments/:roleId/reject` — el centro rechaza una solicitud; la fila queda `REJECTED`. */
   reject(roleId: string): Observable<RoleAssignmentRow> {
     return this.ofPractice(roleId, 'reject');
-  }
-
-  /**
-   * `GET /practices/:practiceId/healthcare-services?practiceSiteId=` — los procedimientos que **publica** la sede.
-   *
-   * Es la misma ruta del catálogo del centro (CM-06). Mientras ese cliente no
-   * esté en la base, este lector mínimo es la única fuente de las casillas: solo
-   * pide y filtra por `active`, no escribe nada.
-   */
-  listPublishedProcedures(practiceId: string, practiceSiteId: string): Observable<readonly SiteProcedure[]> {
-    const params = new HttpParams().set('practiceSiteId', practiceSiteId);
-    return this.http
-      .get<{ readonly items: readonly SiteProcedure[] }>(
-        this.url(`/practices/${encodeURIComponent(practiceId)}/healthcare-services`),
-        { params },
-      )
-      .pipe(map((body) => body.items.filter((procedure) => procedure.active)));
   }
 
   private mine(roleId: string, action: 'accept' | 'decline'): Observable<RoleAssignmentRow> {

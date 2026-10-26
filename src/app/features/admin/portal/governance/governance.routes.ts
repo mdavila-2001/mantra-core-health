@@ -9,17 +9,17 @@ import { APP_TITLE } from '../../../../core/navigation/navigation.types';
  */
 export const PORTAL_GOVERNANCE_ROUTES: Routes = [
   {
-    path: 'gobierno/auditoria',
+    path: 'governance/audit',
     title: `${APP_TITLE} - Auditoría`,
     loadComponent: () => import('./audit/audit-page').then((m) => m.AuditPage),
   },
   {
-    path: 'gobierno/usuarios',
+    path: 'governance/users',
     title: `${APP_TITLE} - Usuarios y roles`,
     loadComponent: () => import('./access/access-page').then((m) => m.AccessPage),
   },
   {
-    path: 'gobierno/deriva-permisos',
+    path: 'governance/permission-drift',
     title: `${APP_TITLE} - Deriva de permisos`,
     loadComponent: () =>
       import('./permission-drift/permission-drift-page').then((m) => m.PermissionDriftPage),

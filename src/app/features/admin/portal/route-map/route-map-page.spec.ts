@@ -7,7 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { mapRow, page, processSummary } from '../portal.fixture';
 import { RouteMapPage } from './route-map-page';
 
-const RUTA = '/superadmin/portal/sistemas/flujos';
+const RUTA = '/superadmin/portal/systems/flows';
 
 describe('RouteMapPage', () => {
   let harness: RouterTestingHarness;
@@ -18,7 +18,7 @@ describe('RouteMapPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/sistemas/flujos', component: RouteMapPage }]),
+        provideRouter([{ path: 'superadmin/portal/systems/flows', component: RouteMapPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -49,7 +49,7 @@ describe('RouteMapPage', () => {
     const enlace = [...harness.routeNativeElement!.querySelectorAll<HTMLAnchorElement>('a')].find(
       (a) => a.textContent?.trim() === 'Agenda',
     )!;
-    expect(enlace.getAttribute('href')).toBe('/superadmin/portal/sistemas/flujos/diagrama?flujo=scheduling');
+    expect(enlace.getAttribute('href')).toBe('/superadmin/portal/systems/flows/diagram?flujo=scheduling');
   });
 
   it('distingue «sin dato» de «ningún cliente la llama»', async () => {

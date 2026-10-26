@@ -1,3 +1,4 @@
+import { tonoDeEstadoDeReclamo } from '../insurance-status-tone';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -85,6 +86,7 @@ const PAGE_SIZE = 25;
 })
 export class InsuranceClaims {
   private readonly auth = inject(AuthService);
+  protected readonly tonoDeEstado = tonoDeEstadoDeReclamo;
   private readonly insurance = inject(InsuranceClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);

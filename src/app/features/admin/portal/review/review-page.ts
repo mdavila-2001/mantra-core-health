@@ -41,7 +41,7 @@ import { ReviewDrawer } from './review-drawer';
 
 const PAGE_SIZE = 25;
 const FILTER_KEYS = ['q', 'schema'] as const;
-const REVIEW_ROUTE = portalUrl('sistemas/revision');
+const REVIEW_ROUTE = portalUrl('systems/review');
 
 /** Una ficha en revisión con el texto ya armado: la tabla sólo lo pinta. */
 interface ReviewRow {

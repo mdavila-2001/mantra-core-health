@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, signal, type OnInit } from '@angular/core';
 import { catchError, forkJoin, of } from 'rxjs';
 
+import { HealthcareServicesClient } from '../../../../core/data-access/healthcare-services/healthcare-services.client';
+import type { PracticeSiteOption } from '../../../../core/data-access/healthcare-services/healthcare-services.types';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
-import type { MyRoleAssignment, PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
+import type { MyRoleAssignment } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import {
   roleAssignmentInitiatorText,
   roleAssignmentStatusText,
@@ -70,6 +72,7 @@ function group(rows: readonly MyRoleAssignment[], siteNames: ReadonlyMap<string,
 })
 export class MyProcedures implements OnInit {
   private readonly practiceSites = inject(PracticeSitesClient);
+  private readonly services = inject(HealthcareServicesClient);
   private readonly toasts = inject(ToastService);
 
   protected readonly state = signal<ViewState<readonly CenterGroup[]>>(loading());
@@ -112,7 +115,7 @@ export class MyProcedures implements OnInit {
   /** Las sedes se nombran con una consulta por centro; si una falla, queda «Sede» y la lista sigue. */
   private withSiteNames(rows: readonly MyRoleAssignment[]): void {
     const practiceIds = [...new Set(rows.map((row) => row.practiceId))];
-    const finish = (siteLists: readonly (readonly PracticeSite[])[]): void => {
+    const finish = (siteLists: readonly (readonly PracticeSiteOption[])[]): void => {
       const names = new Map(siteLists.flat().map((site) => [site.id, site.name] as const));
       const centers = group(rows, names);
       this.centers.set(centers);
@@ -126,6 +129,6 @@ export class MyProcedures implements OnInit {
       finish([]);
       return;
     }
-    forkJoin(practiceIds.map((id) => this.practiceSites.listSitesOfPractice(id).pipe(catchError(() => of([] as readonly PracticeSite[]))))).subscribe(finish);
+    forkJoin(practiceIds.map((id) => this.services.listSites(id).pipe(catchError(() => of([] as readonly PracticeSiteOption[]))))).subscribe(finish);
   }
 }

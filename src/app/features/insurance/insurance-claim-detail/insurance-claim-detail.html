@@ -62,7 +62,7 @@
           <dt>Estado</dt>
           <dd>
             @if (detail.header.status) {
-              <app-badge variant="info" size="sm">{{ detail.header.status.display }}</app-badge>
+              <app-badge [variant]="tonoDeEstado(detail.header.status.code)" size="sm">{{ detail.header.status.display }}</app-badge>
             } @else {
               Sin estado
             }
@@ -503,6 +503,10 @@
         >
           {{ detail.header.hasOpenDispute ? 'Reclamar otra vez' : 'Reclamar' }}
         </button>
+
+        @if (errorDeReclamo(); as error) {
+          <app-alert tone="error" data-testid="claim-dispute-error">{{ error }}</app-alert>
+        }
 
         <p class="claim__note">
           El dictamen anterior no se borra ni se modifica: las versiones son

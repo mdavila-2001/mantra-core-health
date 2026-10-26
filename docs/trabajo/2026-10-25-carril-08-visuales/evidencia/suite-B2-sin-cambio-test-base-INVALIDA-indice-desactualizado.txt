@@ -1,0 +1,130 @@
+# Salida recortada: resumen y líneas FAIL (la salida completa pesa 592938 bytes)
+ FAIL   mantra-core-health  src/app/features/billing/billing.spec.ts > Billing · facturación contra el SIAT SIMULADO > la puerta por omisión > se abre en la maqueta y se cierra si se fuerza la API real
+AssertionError: expected true to be false // Object.is equality
+ FAIL   mantra-core-health  src/app/features/design-system-sample/design-system-sample.spec.ts > DesignSystemSample > el selector de tema sigue expuesto: es la única UI del ThemeService
+AssertionError: expected <button …(8)></button>
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > cambiar las opciones de un campo propio guarda la lista entera
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > el cambio se ve en la pantalla antes de que el servidor conteste
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > un cambio que llega mientras el anterior viaja espera y sale después, no se pierde
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > si el guardado falla se relee del servidor, porque la pantalla ya no sabe qué quedó
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > duplicar declara una definición NUEVA con lo mismo y la cuelga debajo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > la descripción se sirve como la ayuda bajo el campo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > con «Otro» se sirve a la vista aunque tenga muchas opciones: un desplegable no tiene dónde escribir
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > una cuadrícula se sirve como cuadrícula, con sus filas y sus columnas
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > la cuadrícula de casillas admite varias por fila
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > el control de una cuadrícula nace como objeto y no en cadena
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > las dos restricciones de la cuadrícula validan en la vista previa
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > un sí/no se sirve con los dos botones y arranca sin responder
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > los topes de un campo de varias validan en la vista previa
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > muestra de dónde salió el formulario, que es lo que explica el bloqueo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > el aviso de bloqueo va igual cuando la plantilla no declara procedencia
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > los campos del estándar se siguen mostrando, no se esconden por bloqueados
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > soltar una tarjeta sobre otra manda el orden entero, como las flechas
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > soltar una tarjeta sobre sí misma no pide nada
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > sólo es arrastrable la tarjeta cuyo agarre está apretado
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > mis formularios (REQ-27-001/002/008) > al entrar lista sólo los que su organización extendió, con versión y especialidad
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > mis formularios (REQ-27-001/002/008) > la fila entera abre la edición del formulario
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > mis formularios (REQ-27-001/002/008) > sin formularios propios lo dice y ofrece cargar uno del catálogo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > mis formularios (REQ-27-001/002/008) > al volver de un formulario recién extendido, aparece en la lista sin releer el catálogo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > el catálogo se resuelve sin pedir nada más al escribir: filtra lo ya leído
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > la búsqueda ignora tildes y encuentra por especialidad y por organismo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > el filtro de especialidad sólo ofrece las que tienen formulario
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > sin rótulos de especialidad el listado sigue en pie, con el filtro sin opciones
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > arranca en la especialidad de quien entra, con las fichas generales al lado
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > «Ver todas las especialidades» quita el filtro y no se vuelve a poner solo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > un enlace que ya trae filtro no se pisa con la especialidad propia
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > agrupa por especialidad: la propia primero, las generales al final y la base antes
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > buscador y filtros del catálogo > lo vacío del filtro no es lo vacío del catálogo
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > descargar el formulario en PDF > manda a imprimir el formulario abierto, con sus páginas y su conteo de campos
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > descargar el formulario en PDF > sin formulario abierto no baja nada
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > vista previa de una ficha con condiciones > pagina por sección y lleva la condición con la clave del padre
+ FAIL   mantra-core-health  src/app/features/form-builder/form-builder.spec.ts > FormBuilder > vista previa de una ficha con condiciones > el «¿a qué?» aparece al contestar «sí» y se va con el «no»
+Error: Cannot configure the test module when the test module has already been instantiated. Make sure you are not using `inject` before `TestBed.configureTestingModule`.
+ FAIL   mantra-core-health  src/app/core/mock/handlers/received-services.handlers.spec.ts > handlers de servicios recibidos: GET /clinical/patients/:id/received-services > acceso > un paciente no lee los servicios de otro
+AssertionError: expected false to be 403 // Object.is equality
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el listado > empieza cargando y pide la primera página por cursor, sin filtros
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el listado > muestra la campaña con su código, su patología y el estado «Activa» (CA-4.1)
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el listado > rotula el tipo en castellano, nunca con el código de la API
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el listado > rotula «Vencida» una campaña activa cuya vigencia ya terminó
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el listado > cada estado se dice con su texto, no sólo con un color
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el listado > usa un estado vacío explícito cuando no hay campañas
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el listado > un fallo del servidor se dice y no deja la tabla en blanco
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el listado > un filtro en la URL vuelve a pedir con ese filtro, desde la primera página
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > cambio de estado > un borrador sólo ofrece «Activar»
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > cambio de estado > una activa ofrece «Pausar» y «Finalizar»; una finalizada, nada
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > cambio de estado > una activa cuya vigencia terminó sólo se puede finalizar, no pausar
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > cambio de estado > «Pausar» hace PATCH al estado PAUSED y recarga el listado
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > cambio de estado > «Finalizar» no se puede deshacer: pide confirmación antes de escribir
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > cambio de estado > «No» cancela la confirmación sin escribir nada
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > cambio de estado > un fallo al cambiar el estado no deja la fila trabada
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > se abre con «Nueva campaña» y trae los valores por omisión del caso habitual
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > «Cancelar» lo cierra y no manda nada
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > validación en tiempo real (CA-4.6) > un código inválido se marca apenas se toca el campo, sin esperar al en
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > validación en tiempo real (CA-4.6) > un código válido no muestra error
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > validación en tiempo real (CA-4.6) > fechas invertidas: el formulario es inválido y el error se dice en la f
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > validación en tiempo real (CA-4.6) > porcentaje fuera de 0..100 o con más de dos decimales es inválido
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > validación en tiempo real (CA-4.6) > el porcentaje es obligatorio
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > validación en tiempo real (CA-4.6) > sin nombre de aliado no es válido, ni con sólo espacios
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > validación en tiempo real (CA-4.6) > enviar un formulario inválido no manda nada y marca los errores
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > aliados > arranca con uno, se pueden sumar y quitar, pero nunca queda sin aliados
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > envío > CA-4.1: manda la campaña de referencia tal cual y la deja activa
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > envío > sin patología ni descripción no las manda
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > envío > sin «Activar al crear» la campaña se guarda como borrador
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > envío > un código repetido (409) se dice en el campo y el formulario conserva lo escrito
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > envío > sin permiso (403) lo dice tal cual y no cierra el formulario
+ FAIL   mantra-core-health  src/app/features/insurance/insurance-campaigns/insurance-campaigns.spec.ts > InsuranceCampaigns > el formulario de alta > envío > un segundo envío mientras el primero está en vuelo no duplica la petición
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > anular la factura pide motivo y lo manda
+ FAIL   mantra-core-health  src/app/features/organization/pharmacy-inbox/pharmacy-inbox.spec.ts > PharmacyInbox with the tenant API list > sin casa matriz marcada abre con la primera sede y lo dice
+AssertionError: expected null to be '00000000-0000-4000-8000-0000000000a1' // Object.is equality
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > crea una categoría con POST y relee la lista
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > un nombre repetido es un 409 que se dice en el modal
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > renombra con PATCH
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > eliminar una con productos es un 409 que queda a la vista en la pantalla
+ FAIL   mantra-core-health  src/app/features/pharmacy/categories/pharmacy-categories.spec.ts > PharmacyCategories > elimina una sin productos con DELETE y relee
+ FAIL   mantra-core-health  src/app/features/pharmacy/import/pharmacy-import.spec.ts > PharmacyImport > modo > «sólo actualizar» rechaza el código que no existe, con un mensaje claro, y actualiza el que sí
+AssertionError: expected { brandName: 'Ya está' } to deeply equal { brandName: 'Ya está', inStock: true }
+ FAIL   mantra-core-health  src/app/features/pharmacy/import/pharmacy-import.spec.ts > PharmacyImport > categorías de la farmacia > publica la categoría con la grafía de la farmacia aunque el archivo la traiga sin tilde ni mayúscula
+AssertionError: expected { Object (productCode, brandName) } to match object { productCode: 'C-1', …(1) }
+ FAIL   mantra-core-health  src/app/features/pharmacy/import/pharmacy-import.spec.ts > PharmacyImport > paso 4 · publicar y resultado > publica fila por fila, en serie, y cuenta lo que la API rechazó
+AssertionError: expected { productCode: 'A-1', …(2) } to deeply equal { productCode: 'A-1', …(3) }
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > avisa que con la sincronización pasará a sólo lectura
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > no lista los retirados: no tienen inventario que llevar
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > guarda sólo lo que cambió, en un único PATCH, y relee la tabla
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > volver al valor de origen deja la fila como no editada
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > no manda nada si hay un valor inválido, y dice de qué producto
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > una alerta es sin stock o en el umbral o debajo, y lo escrito manda
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > «sólo con alertas» deja a la vista lo que está en alerta
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > buscar por nombre o código deja a la vista sólo lo que coincide
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > cambiar a «Hay / no hay» muestra un interruptor por producto y no las cantidades
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > la forma elegida se recuerda para la próxima vez
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > guarda sólo el booleano —sin existencias— en el mismo PATCH
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > volver a lo que ya estaba deja la fila como no editada
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > «sólo los que no tengo» filtra por el booleano
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > cantidades y booleano pendientes viajan juntos; si una fila tiene las dos, mandan las cantidades
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > hay / no hay > descartar suelta también lo escrito en «hay / no hay»
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > CSV > «Subir» y «Exportar» esperan a que la tabla esté leída: el archivo se revisa contra ella
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/pharmacy-inventory.spec.ts > PharmacyInventory > CSV > «Subir CSV» abre el diálogo con el catálogo leído
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > alta desde el modal > el alta manda el id del catálogo y la presentación, nunca los datos del producto
+AssertionError: expected { productCode: '700002', …(2) } to deeply equal { productCode: '700002', …(4) }
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > alta desde el modal > guardar un borrador manda status DRAFT
+AssertionError: expected undefined to be 'DRAFT' // Object.is equality
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > alta desde el modal > «no encuentro mi medicamento» manda la solicitud y no publica ningún producto
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > editar un producto del catálogo guarda lo suyo y NO manda nombre, concentración ni receta
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > editar abre el modal con el producto y guarda con PATCH, sin tocar el código
+AssertionError: expected { brandName: 'Paracetamol Bagó', …(4) } to match object { brandName: 'Paracetamol Bagó', …(4) }
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > publica un borrador con PATCH status PUBLISHED
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > «marcar sin stock» avisa a la API y relee el catálogo
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > en lote > publica lo seleccionado en serie: la segunda sale cuando vuelve la primera
+ FAIL   mantra-core-health  src/app/features/pharmacy/products/pharmacy-products.spec.ts > PharmacyProducts > en lote > retirar en lote pide confirmación una sola vez y sigue aunque uno falle
+ FAIL   mantra-core-health  src/app/features/admin/patients/patient-list/patient-list.spec.ts > PatientList > el texto buscado no va a la URL > inválido — un enlace viejo con `?q=` busca lo que traía y lo saca de la URL
+ FAIL   mantra-core-health  src/app/features/admin/patients/patient-list/patient-list.spec.ts > PatientList > elegir un filtro de catálogo viaja a la consulta con su clave real
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > revisa el archivo sin mandar nada: dice qué cambia y qué no vale
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > «Aplicar» manda un único PATCH con las filas válidas y avisa que terminó
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > un archivo sólo con «disponible» manda el booleano, sin cantidades
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > si el archivo no cambia nada lo dice y no deja aplicar
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > un archivo que no sirve entero se explica y no se revisa fila por fila
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > si el servidor rechaza, el diálogo queda abierto con el motivo y no avisa que terminó
+ FAIL   mantra-core-health  src/app/shared/components/molecules/breadcrumb/breadcrumb.spec.ts > Breadcrumb > estructura > es una lista ordenada dentro de una navegación nombrada
+ Test Files  14 failed | 828 passed (842)
+      Tests  115 failed | 11726 passed (11841)
+   Duration  128.09s (transform 184.37s, setup 7.30s, import 64.51s, tests 421.04s, environment 1405.59s)

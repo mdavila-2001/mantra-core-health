@@ -31,7 +31,7 @@ import type { ColumnDef } from '../../../../../shared/components/organisms/data-
 import { portalUrl } from '../../portal-nav';
 import { permissionEffect, roleScope } from '../governance-labels';
 
-const SCREEN = portalUrl('gobierno/usuarios');
+const SCREEN = portalUrl('governance/users');
 
 /**
  * Los permisos activos de un rol, con su efecto y su ámbito. El rol elegido

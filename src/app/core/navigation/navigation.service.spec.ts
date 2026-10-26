@@ -187,7 +187,7 @@ describe('NavigationService', () => {
         // dos mitades del mismo circuito y ninguna exige rol — el filtro real
         // es tener perfil de paciente, que la pantalla resuelve.
         '/my-account/diagnostic-orders',
-        '/my-account/cotizaciones',
+        '/my-account/quotations',
         // «Mis cuestionarios» ya NO entra (2026-09-25): pedido del propietario
         // — declara `fueraDelMenuPara: [ANY_ROLE]`, no una restricción de rol.
         // Sigue sin exigir rol y se sigue alcanzando por su ruta y por «Tus

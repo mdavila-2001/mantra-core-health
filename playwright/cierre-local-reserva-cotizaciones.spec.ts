@@ -33,7 +33,7 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     mkdirSync(SALIDA, { recursive: true });
 
     await entrar(page, PACIENTE);
-    await irA(page, '/my-account/cotizaciones');
+    await irA(page, '/my-account/quotations');
     await estable(page);
     await expect(page.getByRole('heading', { name: 'Cotizaciones' })).toBeVisible();
 
@@ -73,7 +73,7 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/directory\?especialidad=/);
 
-    await irA(page, '/my-account/cotizaciones');
+    await irA(page, '/my-account/quotations');
     await estable(page);
     const busqueda = page.getByTestId('cotizaciones-busqueda').locator('input');
     await busqueda.focus();
@@ -193,7 +193,7 @@ test.describe('Cierre local · reserva y Cotizaciones', () => {
     };
 
     const directorioMs = await medir('/directory', 'Directorio de médicos');
-    const cotizacionesMs = await medir('/my-account/cotizaciones', 'Cotizaciones');
+    const cotizacionesMs = await medir('/my-account/quotations', 'Cotizaciones');
     console.info(JSON.stringify({ directorioMs, cotizacionesMs }));
   });
 

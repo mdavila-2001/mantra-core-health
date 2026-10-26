@@ -2,7 +2,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
-import { buscarUsuario } from '../mock-session';
+import { buscarUsuario, IDS } from '../mock-session';
 
 interface ClaimDetail {
   readonly header: { readonly id: string; readonly status: { readonly code: string }; readonly approvedTotal: { readonly amount: string } | null };
@@ -43,8 +43,15 @@ describe('dictamen y EOB del simulador de seguros', () => {
   }
 
   function createClaim(amounts: readonly string[]): ClaimDetail {
+    // El cobro directo exige una cobertura vigente de la persona (API #671): se lee la de ejemplo.
+    const coverage = call<{ items: { id: string; insuranceCarrierId: string }[] }>(
+      'GET',
+      `/patient-coverages/by-patient/${IDS.paciente.patientProfileId}`,
+    ).body.items[0]!;
     const created = call<{ id: string }>('POST', '/insurance-claims', {
-      lines: amounts.map((billedAmount, index) => ({ service: `Servicio ${index + 1}`, billedAmount })),
+      insuranceCarrierId: coverage.insuranceCarrierId,
+      patientCoverageId: coverage.id,
+      lines: amounts.map((billedAmount, index) => ({ lineSequence: index + 1, billedAmount })),
     });
     expect(created.status).toBe(201);
     return call<ClaimDetail>('GET', `/insurance-claims/${created.body.id}`).body;

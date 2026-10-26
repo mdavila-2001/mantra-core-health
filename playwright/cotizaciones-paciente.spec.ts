@@ -21,7 +21,7 @@ test.describe('Cotizaciones del paciente', () => {
         pedidosDeOrdenes.push(pedido.url());
       }
     });
-    await irA(page, '/my-account/cotizaciones');
+    await irA(page, '/my-account/quotations');
     await estable(page);
 
     await expect(page.getByRole('heading', { name: 'Cotizaciones' })).toBeVisible();
