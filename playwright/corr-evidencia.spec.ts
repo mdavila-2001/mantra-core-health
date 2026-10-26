@@ -332,7 +332,8 @@ interface ManifestCell {
 
 function git(...args: string[]): string {
   try {
-    return execFileSync('git', args, { encoding: 'utf8' }).trim();
+    // Sin `.trim()`: `git status --porcelain` empieza con « M » y el espacio es una columna.
+    return execFileSync('git', args, { encoding: 'utf8' });
   } catch {
     return '';
   }
@@ -871,12 +872,12 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           phase: FASE,
           user: USUARIO,
           generatedAt: new Date().toISOString(),
-          commit: git('rev-parse', 'HEAD'),
-          branch: git('rev-parse', '--abbrev-ref', 'HEAD'),
+          commit: git('rev-parse', 'HEAD').trim(),
+          branch: git('rev-parse', '--abbrev-ref', 'HEAD').trim(),
           dirty: git('status', '--porcelain', '--untracked-files=no')
             .split('\n')
-            .map((line) => line.slice(3).trim())
-            .filter(Boolean),
+            .filter(Boolean)
+            .map((line) => line.slice(3).trim()),
           baseUrl: BASE,
           servedBuilds: [...servedBuilds],
           thresholds: { maxGapPx: HOLGURA_MAX_PX, minWidthRatio: ANCHO_MIN, minPhotoBytes: FOTO_MIN_BYTES },
