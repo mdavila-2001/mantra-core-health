@@ -4,7 +4,6 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { MAX_TELEFONOS_EXTRA, RegisterPatient } from './register-patient';
-import { chooseSelectOptionNow, selectOptionLabelsNow } from '../../../../testing/select';
 import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
 import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
