@@ -104,6 +104,7 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { BoProfessionsCatalog } from '../../../core/data-access/terminology/bo-professions.service';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /**
  * `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend.
@@ -618,7 +619,7 @@ function sinTildes(texto: string): string {
 
 @Component({
   selector: 'app-register-practitioner',
-  imports: [
+  imports: [RegistrationBadge, 
     FileDropTarget,
     FileInput,
     SignatureOrSeal,

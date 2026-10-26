@@ -104,6 +104,7 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
 import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
 import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -582,7 +583,7 @@ interface BorradorLocal {
 
 @Component({
   selector: 'app-register-patient',
-  imports: [
+  imports: [RegistrationBadge, 
     RouterLink,
     AppButton,
     NavIcon,

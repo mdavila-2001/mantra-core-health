@@ -21,8 +21,8 @@ visitador en `mockup`: sus pantallas quedan sin comparar.
 | 1 | Barra de avance «latido» (ECG) sobre el paso a paso de todos los asistentes | `paginated-form`, `progress` | Franja 1 (PR #1465 / #1466) |
 | 2 | Sello animado del tipo de cuenta en la cabecera de cada alta, ayuda en beige, tarjeta con borde | `features/auth` | **Franja 2** (este PR) |
 | 3 | «Crear cuenta» separado de «Registre su organización» (`/auth/register/organization-type`) | `register-account-type`, rutas, login | **Franja 2** (este PR) |
-| 4 | Íconos a la izquierda de los campos (cuestionarios, alta de paciente, plantillas, permisos) | formularios | Pendiente |
-| 5 | Pestaña «Flujo de dinero» y textos nuevos en Contabilidad | `features/accounting` | Pendiente |
+| 4 | Íconos a la izquierda de los campos (115 campos en 41 pantallas) | `app-form-field icon` | **Franja 3** |
+| 5 | Pestaña «Flujo de dinero», textos llanos y registros con glosario, buscador y paginación | `features/accounting` | **Franja 4** |
 | 6 | Citas como tarjetas con franja de color; «Abrir sesión y ver pago» | agenda, mis citas | Pendiente |
 | 7 | Directorio de médicos: filtros laterales, contador, orden, grilla/lista | `/directory` | Pendiente |
 | 8 | Catálogo de formularios estándar en el constructor | `/form-builder` | Pendiente |
@@ -39,3 +39,12 @@ Cada imagen: **izquierda `mockup` · centro `dev` antes · derecha esta rama**.
 - `franja2_auth_register.jpg` — «Crear cuenta» con las cuentas de persona.
 - `franja2_auth_register_laboratory.jpg`, `_pharmacy`, `_practitioner`, `_patient`,
   `_medical-center` — sello en la cabecera, línea ECG y ayuda en beige.
+
+## Franja 3 — evidencia
+
+- `franja3_my-account_questionnaires.jpg`, `franja3_administration_patients_new.jpg` — íconos a
+  la izquierda de cada campo (izquierda `mockup` · centro `dev` antes · derecha esta rama).
+
+## Franja 4 — evidencia
+
+- `franja4_administration_accounting.jpg` — Contabilidad con «Ingresos y gastos · Pendientes · Bienes y deudas · Flujo de dinero» y la redacción llana (izquierda `mockup` · centro `dev` antes · derecha esta rama).

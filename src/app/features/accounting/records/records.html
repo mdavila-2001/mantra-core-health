@@ -1,4 +1,4 @@
-<!-- ═══ Los tres números ═══════════════════════════════════════════════════
+<!-- ═══ Las tres cifras ════════════════════════════════════════════════════
      Lo primero que el doctor quiere saber, y en el orden en que lo pidió:
      a cuántos atendió, cuánto cobró y cuánto le deben las aseguradoras. Los
      dos importes van separados a propósito: lo cobrado ya está en la mano, lo
@@ -6,11 +6,11 @@
 @if (parte() !== 'registros') {
 <section class="numeros" aria-labelledby="titulo-numeros">
   <div class="numeros__cabecera">
-    <app-section-heading icono="chart" titulo="Su práctica en tres números" id="titulo-numeros" />
+    <app-section-heading icono="chart" titulo="Su consultorio en tres cifras" id="titulo-numeros" />
     <app-segmented-control
       [options]="periods"
       [value]="period()"
-      ariaLabel="Período de los números"
+      ariaLabel="Período de las cifras"
       (valueChange)="choosePeriod($event)"
     />
   </div>
@@ -27,15 +27,15 @@
           </p>
         </app-card>
         <app-card variant="elevated" class="numero numero--destacado" data-testid="numero-cobrado">
-          <p class="numero__rotulo">Cobró</p>
+          <p class="numero__rotulo">Cobrado</p>
           <p class="numero__cifra">{{ amount(n.collected) }}</p>
-          <p class="numero__pie">consultas pagadas del período</p>
+          <p class="numero__pie">por consultas pagadas en el período</p>
         </app-card>
         <app-card variant="outlined" class="numero" data-testid="numero-aseguradoras">
-          <p class="numero__rotulo">Espera de las aseguradoras</p>
+          <p class="numero__rotulo">Por cobrar a aseguradoras</p>
           <p class="numero__cifra">{{ amount(n.expectedFromInsurers) }}</p>
           <p class="numero__pie">
-            a hoy, en {{ n.pendingClaims }}
+            a la fecha, en {{ n.pendingClaims }}
             {{ n.pendingClaims === 1 ? 'solicitud pendiente' : 'solicitudes pendientes' }}
           </p>
         </app-card>
@@ -45,13 +45,41 @@
 </section>
 }
 
-<!-- ═══ Tus registros ═══════════════════════════════════════════════════════
-     Una tarjeta, cinco pestañas (regla 6). Las cinco son la misma tabla del
-     sistema con el mismo modal: gasto, activo y deuda con su tipo; la
-     transacción, debe y haber; y las cuentas, que son también los tipos. -->
+<!-- ═══ Sus registros ════════════════════════════════════════════════════════
+     Una tarjeta, cinco pestañas (regla 6). Arriba, qué es esta pantalla y qué
+     significa cada cosa, dicho para un médico (propietario, 17/10/2026). Cada
+     pestaña tiene la disciplina de tablas de la casa: qué está viendo,
+     buscador, tabla y paginación. -->
 @if (parte() !== 'numeros') {
 <app-card variant="outlined" padding="lg" class="registros" data-testid="contabilidad-registros">
-  <app-section-heading card-header icono="billing" titulo="Sus registros" />
+  <header class="registros__intro">
+    <span class="registros__icono" aria-hidden="true">
+      <app-nav-icon name="book" />
+    </span>
+    <div class="registros__intro-texto">
+      <h2 class="registros__titulo">Sus registros</h2>
+      <p class="registros__bajada">
+        Aquí anota el dinero del consultorio que no pasa por la facturación: lo que gasta, lo que
+        compra y lo que debe. Con esto el sistema calcula su ganancia y cuánto vale su consultorio.
+        @if (isAccountant()) {
+          La versión Contador suma las transacciones entre cuentas y el plan de cuentas.
+        }
+      </p>
+    </div>
+  </header>
+
+  <details class="registros__glosario" data-testid="registros-glosario">
+    <summary>¿Qué significa cada cosa?</summary>
+    <dl>
+      @for (item of glosario(); track item.termino) {
+        <div class="registros__termino">
+          <dt>{{ item.termino }}</dt>
+          <dd>{{ item.significado }}</dd>
+        </div>
+      }
+    </dl>
+  </details>
+
   <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
     @for (kind of kinds; track kind) {
       <app-tab
@@ -61,7 +89,16 @@
         "
       >
         <div class="registros__panel">
+          <p class="registros__explicacion">{{ texts[kind].explicacion }}</p>
           <div class="registros__barra">
+            <app-filter-bar
+              class="registros__buscador"
+              [searchLabel]="'Buscar en ' + texts[kind].plural"
+              searchPlaceholder="Tipo, descripción o fecha"
+              [searchInUrl]="false"
+              [searchValue]="busqueda()[kind]"
+              (searchChanged)="buscar(kind, $event)"
+            />
             <button
               app-button
               type="button"
@@ -72,13 +109,23 @@
             </button>
           </div>
           <app-data-table
-            [state]="rowsOf(kind)"
+            [state]="paginaDeRegistros(kind)"
             [columns]="recordColumns()"
             [trackBy]="byId"
             [caption]="texts[kind].tipo"
             (retry)="loadRecords(kind)"
             [attr.data-testid]="'tabla-' + kind"
           />
+          @if (totalDe(kind) > 0) {
+            <app-pagination
+              [totalItems]="totalDe(kind)"
+              [page]="pagina()[kind]"
+              (pageChange)="irAPagina(kind, $event)"
+              [pageSize]="tamano()[kind]"
+              (pageSizeChange)="cambiarTamano(kind, $event)"
+              [attr.data-testid]="'paginacion-' + kind"
+            />
+          }
         </div>
       </app-tab>
     }
@@ -86,7 +133,16 @@
     @if (isAccountant()) {
       <app-tab [label]="'Transacciones' + count(transactions())">
         <div class="registros__panel">
+          <p class="registros__explicacion">{{ explicacionDeTransacciones }}</p>
           <div class="registros__barra">
+            <app-filter-bar
+              class="registros__buscador"
+              searchLabel="Buscar en transacciones"
+              searchPlaceholder="Descripción, cuenta o fecha"
+              [searchInUrl]="false"
+              [searchValue]="busqueda()['TX']"
+              (searchChanged)="buscar('TX', $event)"
+            />
             <button
               app-button
               type="button"
@@ -97,22 +153,38 @@
             </button>
           </div>
           <app-data-table
-            [state]="transactionsRows()"
+            [state]="paginaDeTransacciones()"
             [columns]="transactionColumns()"
             [trackBy]="byId"
-            caption="Transacciones: debe y haber"
+            caption="Transacciones: de qué cuenta sale y a cuál llega el dinero"
             (retry)="loadTransactions()"
             data-testid="tabla-transacciones"
           />
+          @if (totalDe('TX') > 0) {
+            <app-pagination
+              [totalItems]="totalDe('TX')"
+              [page]="pagina()['TX']"
+              (pageChange)="irAPagina('TX', $event)"
+              [pageSize]="tamano()['TX']"
+              (pageSizeChange)="cambiarTamano('TX', $event)"
+              data-testid="paginacion-transacciones"
+            />
+          }
         </div>
       </app-tab>
 
       <app-tab [label]="'Cuentas' + count(accounts())">
         <div class="registros__panel">
+          <p class="registros__explicacion">{{ explicacionDeCuentas }}</p>
           <div class="registros__barra">
-            <p class="registros__nota">
-              Las generales vienen cargadas y se pueden renombrar; las suyas, también borrar.
-            </p>
+            <app-filter-bar
+              class="registros__buscador"
+              searchLabel="Buscar una cuenta"
+              searchPlaceholder="Código, nombre o tipo"
+              [searchInUrl]="false"
+              [searchValue]="busqueda()['CUENTAS']"
+              (searchChanged)="buscar('CUENTAS', $event)"
+            />
             <button
               app-button
               type="button"
@@ -123,13 +195,23 @@
             </button>
           </div>
           <app-data-table
-            [state]="accountsRows()"
+            [state]="paginaDeCuentas()"
             [columns]="accountColumns()"
             [trackBy]="byId"
             caption="Cuentas"
             (retry)="loadAccounts()"
             data-testid="tabla-cuentas"
           />
+          @if (totalDe('CUENTAS') > 0) {
+            <app-pagination
+              [totalItems]="totalDe('CUENTAS')"
+              [page]="pagina()['CUENTAS']"
+              (pageChange)="irAPagina('CUENTAS', $event)"
+              [pageSize]="tamano()['CUENTAS']"
+              (pageSizeChange)="cambiarTamano('CUENTAS', $event)"
+              data-testid="paginacion-cuentas"
+            />
+          }
         </div>
       </app-tab>
     }
