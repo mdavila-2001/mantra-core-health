@@ -1,4 +1,7 @@
-import { FilePreview } from '../../../../shared/components/molecules/file-preview/file-preview';
+import { Menu } from '../../../../shared/components/molecules/menu/menu';
+import { MenuItem } from '../../../../shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '../../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { FileDropTarget } from '../../../../shared/forms/file-drop-target';
 import {
   ChangeDetectionStrategy,
@@ -25,12 +28,8 @@ import { EmojiPicker } from './emoji-picker';
 import { StickerPicker } from './sticker-picker/sticker-picker';
 import { Recorder } from './recorder';
 import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
-
-/** Lo más grande que se deja adjuntar. Más que esto no sube por el móvil. */
-const TOPE_DE_ARCHIVO = 20 * 1024 * 1024;
-
-/** Lo que el chat acepta adjuntar. */
-const TIPOS_ACEPTADOS = ['image/', 'audio/', 'video/', 'application/pdf'];
+import { AttachmentPreview } from './attachment-preview/attachment-preview';
+import { type AttachmentDraft, createDraft, partitionFiles } from './attachment-draft';
 
 /**
  * La barra de escribir — carril P2 y P9.
@@ -52,12 +51,16 @@ const TIPOS_ACEPTADOS = ['image/', 'audio/', 'video/', 'application/pdf'];
 @Component({
   selector: 'app-composer',
   imports: [
-    FilePreview,
+    AttachmentPreview,
     FileDropTarget,
     FormsModule,
     Recorder,
     EmojiPicker,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     StickerPicker,
+    Tooltip,
   ],
   templateUrl: './composer.html',
   styleUrl: './composer.css',
@@ -76,9 +79,7 @@ export class Composer {
   private readonly archivo = viewChild<ElementRef<HTMLInputElement>>('archivo');
 
   protected readonly texto = signal('');
-  protected readonly panel = signal<'ninguno' | 'emojis' | 'adjuntar' | 'plantillas'>(
-    'ninguno',
-  );
+  protected readonly panel = signal<'ninguno' | 'emojis' | 'plantillas'>('ninguno');
 
   /**
    * Qué pestaña del panel de figuritas está abierta.
@@ -90,8 +91,23 @@ export class Composer {
   protected readonly solapa = signal<'emojis' | 'stickers'>('emojis');
   protected readonly error = signal('');
 
-  /** El archivo elegido, esperando la leyenda y el envío. */
-  protected readonly adjunto = signal<File | null>(null);
+  /**
+   * Lo elegido para mandar, con su pie de foto. Mientras no esté vacía, la
+   * vista previa tapa el hilo (ver `AttachmentPreview`).
+   */
+  protected readonly adjuntos = signal<readonly AttachmentDraft[]>([]);
+
+  /**
+   * Lo que quedó afuera de lo elegido, para decirlo **dentro** de la vista
+   * previa: el aviso del composer queda tapado por ella.
+   */
+  protected readonly avisoDeAdjuntos = signal('');
+
+  /**
+   * El borrador que heredó lo escrito en el campo. Sólo si ése sale se vacía
+   * el campo: si se lo quitó de la vista previa, la frase sigue ahí.
+   */
+  private heredoElTexto: string | null = null;
 
   /** Las plantillas de fábrica más las propias (carril P9). */
   protected readonly plantillasDisponibles = this.plantillas.todas;
@@ -108,9 +124,7 @@ export class Composer {
    */
   private readonly borradorEnEspera = signal<string | null>(null);
 
-  protected readonly puedeEnviar = computed(
-    () => this.texto().trim() !== '' || this.adjunto() !== null,
-  );
+  protected readonly puedeEnviar = computed(() => this.texto().trim() !== '');
 
   constructor() {
     // Al cambiar de conversación se recupera lo que se había escrito ahí:
@@ -118,7 +132,7 @@ export class Composer {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(() => {
       this.texto.set(this.store.borrador());
       this.panel.set('ninguno');
-      this.limpiarAdjunto();
+      this.limpiarAdjuntos();
     });
 
     // El modo edición nace en el hilo (`store.editar()`), así que el campo
@@ -133,7 +147,7 @@ export class Composer {
           }
           this.texto.set(mensaje.bodyText ?? '');
           this.panel.set('ninguno');
-          this.limpiarAdjunto();
+          this.limpiarAdjuntos();
           this.enfocar();
           return;
         }
@@ -153,7 +167,7 @@ export class Composer {
       }
     });
 
-    inject(DestroyRef).onDestroy(() => this.limpiarAdjunto());
+    inject(DestroyRef).onDestroy(() => this.limpiarAdjuntos());
   }
 
   protected alEscribir(valor: string): void {
@@ -195,15 +209,6 @@ export class Composer {
       return;
     }
 
-    const archivo = this.adjunto();
-    if (archivo !== null) {
-      this.store.enviarAdjunto(archivo, this.texto());
-      this.limpiarAdjunto();
-      this.texto.set('');
-      this.store.guardarBorrador('');
-      this.enviado.emit();
-      return;
-    }
     if (this.texto().trim() === '') {
       return;
     }
@@ -213,7 +218,7 @@ export class Composer {
     this.enfocar();
   }
 
-  protected alternar(cual: 'emojis' | 'adjuntar' | 'plantillas'): void {
+  protected alternar(cual: 'emojis' | 'plantillas'): void {
     this.panel.set(this.panel() === cual ? 'ninguno' : cual);
   }
 
@@ -277,35 +282,70 @@ export class Composer {
 
   protected alElegir(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
+    const archivos = Array.from(entrada.files ?? []);
     entrada.value = '';
-    if (archivo === undefined) {
+    // Editando no se adjunta, tampoco soltando un archivo sobre la barra: la
+    // edición cambia un mensaje que ya salió, y el pie de foto se llevaría
+    // ese texto a un mensaje nuevo.
+    if (archivos.length === 0 || this.editando() !== null) {
       return;
     }
-    if (archivo.size > TOPE_DE_ARCHIVO) {
-      this.error.set('El archivo pesa más de 20 MB.');
-      return;
-    }
-    if (!TIPOS_ACEPTADOS.some((tipo) => archivo.type.startsWith(tipo))) {
-      this.error.set('Puede mandar imágenes, videos, audios y PDF.');
+    const { accepted, rejection } = partitionFiles(archivos);
+    if (accepted.length === 0) {
+      this.error.set(rejection ?? '');
       return;
     }
     this.error.set('');
-    this.ponerAdjunto(archivo);
+    this.avisoDeAdjuntos.set(rejection ?? '');
+    this.ponerAdjuntos(accepted);
   }
 
-  private ponerAdjunto(archivo: File): void {
-    this.limpiarAdjunto();
-    this.adjunto.set(archivo);
+  /**
+   * Abre la vista previa con lo elegido.
+   *
+   * Lo que ya estaba escrito en el campo pasa a ser el pie de foto del primer
+   * archivo, como en WhatsApp: escribir «le mando el análisis» y después
+   * adjuntarlo es un solo mensaje, no dos.
+   */
+  private ponerAdjuntos(archivos: readonly File[]): void {
+    const leyenda = this.texto().trim();
+    this.panel.set('ninguno');
+    const borradores = archivos.map((archivo, indice) => createDraft(archivo, indice === 0 ? leyenda : ''));
+    this.heredoElTexto = leyenda === '' ? null : borradores[0].id;
+    this.adjuntos.set(borradores);
+  }
+
+  /**
+   * Manda cada archivo como un mensaje, con su pie de foto como texto: el
+   * contrato de siempre del store (`enviarAdjunto`), uno por adjunto.
+   */
+  protected enviarAdjuntos(): void {
+    const borradores = this.adjuntos();
+    if (borradores.length === 0) {
+      return;
+    }
+    for (const borrador of borradores) {
+      this.store.enviarAdjunto(borrador.file, borrador.caption);
+    }
+    const salioElTexto = borradores.some((borrador) => borrador.id === this.heredoElTexto);
+    this.limpiarAdjuntos();
+    if (salioElTexto) {
+      this.texto.set('');
+      this.store.guardarBorrador('');
+    }
+    this.enviado.emit();
     this.enfocar();
   }
 
-  protected limpiarAdjunto(): void {
-    this.adjunto.set(null);
+  /** Cierra la vista previa sin mandar nada. Lo escrito en el campo queda. */
+  protected descartarAdjuntos(): void {
+    this.limpiarAdjuntos();
   }
 
-  protected nombreDelAdjunto(): string {
-    return this.adjunto()?.name ?? '';
+  protected limpiarAdjuntos(): void {
+    this.adjuntos.set([]);
+    this.avisoDeAdjuntos.set('');
+    this.heredoElTexto = null;
   }
 
   /* --- Audio --------------------------------------------------------------- */
