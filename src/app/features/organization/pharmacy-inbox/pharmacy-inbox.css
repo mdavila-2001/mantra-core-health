@@ -35,12 +35,6 @@
   font-weight: 600;
 }
 
-.bandeja__nota {
-  margin: 0 0 var(--sp-4);
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
 /* De qué fechas es la columna de cerrados: justo bajo el título. */
 .bandeja__recorte {
   margin: 0;

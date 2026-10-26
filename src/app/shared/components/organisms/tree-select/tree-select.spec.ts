@@ -277,4 +277,70 @@ describe('TreeSelect', () => {
 
     expect(fixture.componentInstance.value()).toBeNull();
   });
+
+  describe('elegir libera la página; descartar anima la salida', () => {
+    // Con animación de salida posible (en jsdom no existe `animate`) el panel
+    // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
+    // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
+    // Una salida que nunca termina deja a la vista si el gesto espera por ella.
+    let animarOriginal: typeof HTMLElement.prototype.animate;
+    let terminarSalida: () => void;
+
+    beforeEach(() => {
+      animarOriginal = HTMLElement.prototype.animate;
+      terminarSalida = () => undefined;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>((resolve) => {
+          terminarSalida = resolve;
+        }),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+    });
+
+    afterEach(() => {
+      HTMLElement.prototype.animate = animarOriginal;
+    });
+
+    it('elegir una hoja cierra en el acto, sin esperar la salida del panel', async () => {
+      await abrir();
+      ramas()[0].querySelector<HTMLButtonElement>('.branch-toggle')!.click();
+      await fixture.whenStable();
+
+      hojas()[0].querySelector<HTMLButtonElement>('.leaf-button')!.click();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.value()).toBe('cb-sacaba');
+      expect(dialog()).toBeNull();
+      expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('«Quitar elección» también cierra en el acto', async () => {
+      fixture.componentRef.setInput('value', 'cb-sacaba');
+      await fixture.whenStable();
+      await abrir();
+
+      const quitar = Array.from<HTMLElement>(
+        fixture.nativeElement.querySelectorAll('.dialog-actions button'),
+      ).find((boton) => boton.textContent!.includes('Quitar'))!;
+      quitar.click();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.value()).toBeNull();
+      expect(dialog()).toBeNull();
+    });
+
+    it('descartar sí anima la salida: Escape espera a que el panel se vaya', async () => {
+      await abrir();
+
+      await tecla('Escape');
+      expect(dialog()).not.toBeNull();
+
+      terminarSalida();
+      await Promise.resolve();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(dialog()).toBeNull();
+      expect(fixture.componentInstance.value()).toBeNull();
+    });
+  });
 });

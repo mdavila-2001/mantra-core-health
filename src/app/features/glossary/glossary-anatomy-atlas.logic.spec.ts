@@ -5,6 +5,8 @@ import {
   groupRelations,
   meshesOf,
   ontologyUrl,
+  pageOf,
+  pageRelationGroups,
   partVisibleFor,
   relatedMeshes,
   relatedStructureIds,
@@ -160,5 +162,43 @@ describe('glossary-anatomy-atlas.logic', () => {
       };
       expect(relatedMeshes(LOBULOS, ficha, 'male', COMPUESTAS)).toEqual(['FMA7318']);
     });
+  });
+});
+
+describe('pageOf', () => {
+  const lista = Array.from({ length: 25 }, (_, i) => i + 1);
+
+  it('devuelve la página pedida, de a `size`', () => {
+    expect(pageOf(lista, 1, 10)).toEqual(lista.slice(0, 10));
+    expect(pageOf(lista, 3, 10)).toEqual([21, 22, 23, 24, 25]);
+  });
+
+  it('acota una página fuera de rango a la última o a la primera', () => {
+    expect(pageOf(lista, 99, 10)).toEqual([21, 22, 23, 24, 25]);
+    expect(pageOf(lista, 0, 10)).toEqual(lista.slice(0, 10));
+  });
+
+  it('una lista vacía da una página vacía', () => {
+    expect(pageOf([], 1, 10)).toEqual([]);
+  });
+});
+
+describe('pageRelationGroups', () => {
+  const item = (id: string) => ({ id, label: id, hasMesh: false, highlighted: false, inCatalog: true });
+  const grupos = [
+    { name: 'conectado con', items: [item('a'), item('b'), item('c')] },
+    { name: 'forma parte de', items: [item('d'), item('e')] },
+  ];
+
+  it('cuenta filas entre todos los grupos, no grupos', () => {
+    expect(pageRelationGroups(grupos, 1, 4).map((g) => [g.name, g.items.length])).toEqual([
+      ['conectado con', 3],
+      ['forma parte de', 1],
+    ]);
+  });
+
+  it('un grupo partido entre dos páginas continúa en la siguiente', () => {
+    const segunda = pageRelationGroups(grupos, 2, 4);
+    expect(segunda.map((g) => [g.name, g.items.map((i) => i.id)])).toEqual([['forma parte de', ['e']]]);
   });
 });

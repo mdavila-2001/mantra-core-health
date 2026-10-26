@@ -349,6 +349,8 @@ function tarjetaDeSede(sede: PharmacySite, desde: Desde | null): StoreHit {
     fromAmount: desde?.amount ?? null,
     currency: desde?.currency ?? null,
     productCount: sede.productCount,
+    open24h: sede.open24h ?? null,
+    onCallUntil: sede.onCallUntil ?? null,
   };
 }
 
