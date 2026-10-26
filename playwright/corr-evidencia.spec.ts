@@ -472,9 +472,11 @@ async function prepareNotificationState(page: Page, ruta: string): Promise<void>
   if (escenario === 'unread') {
     await pestanas.nth(1).click();
     await esperarBandejaLista();
-    // El simulador de la evidencia devuelve cuatro avisos sin leer. Esperar
-    // esa respuesta evita fotografiar el esqueleto o una lista transitoria.
-    await expect(titulos).toHaveCount(4);
+    // El simulador devuelve a la médica cinco avisos sin leer (`notif-med-1`, `-2`,
+    // `-3`, `-6` y `-7` en `notifications.handlers.ts`; el séptimo entró después de
+    // que esta espera dijera cuatro). Esperar esa respuesta evita fotografiar el
+    // esqueleto o una lista transitoria. Si el fixture cambia, cambia este número.
+    await expect(titulos).toHaveCount(5);
     return;
   }
 
