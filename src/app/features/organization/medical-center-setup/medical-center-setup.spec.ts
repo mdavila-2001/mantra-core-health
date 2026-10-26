@@ -1,19 +1,46 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { of, throwError, type Observable } from 'rxjs';
+import { NEVER, of, throwError, type Observable } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
+import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
+import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
 import { PracticeOnboardingClient } from '../../../core/data-access/practice-onboarding/practice-onboarding.client';
 import type {
   CreatedOrganizationPractice,
   NewOrganizationPractice,
 } from '../../../core/data-access/practice-onboarding/practice-onboarding.types';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../../auth/shared-registration/map-location-picker/map-location-picker';
 import { RUTA_MI_ORGANIZACION, RUTA_PANEL, setupErrorMessage, MedicalCenterSetup } from './medical-center-setup';
+
+/** Un recorte del catálogo de municipios: alcanza para nombrar la ciudad del punto. */
+const MUNICIPIOS = [
+  {
+    conceptId: 'dep-scz',
+    sigla: 'SC',
+    nombre: 'Santa Cruz',
+    municipios: [{ conceptId: 'mun-scz', nombre: 'Santa Cruz de la Sierra', ine: '070101' }],
+  },
+];
+
+/**
+ * El selector de ubicación pide la calle y el catálogo de municipios: la calle
+ * no responde (lo deducido se emite a mano por `localidad`) y el catálogo trae
+ * el recorte de arriba.
+ */
+const PROVEEDORES_DE_UBICACION = [
+  { provide: ReverseGeocodingClient, useValue: { streetAt: () => NEVER } },
+  { provide: BoMunicipalitiesCatalog, useValue: { listar: () => of(MUNICIPIOS) } },
+];
 
 const TENANT = 'tenant-centro';
 
@@ -66,6 +93,7 @@ describe('MedicalCenterSetup', () => {
           useValue: { listMyOrganizations: () => misOrganizaciones() },
         },
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+        ...PROVEEDORES_DE_UBICACION,
       ],
     }).compileComponents();
 
@@ -134,6 +162,88 @@ describe('MedicalCenterSetup', () => {
     expect(root.querySelector('[data-testid="medical-center-setup-site-id"]')?.textContent).toContain('site-1');
   });
 
+  describe('la sede: sólo el punto, todo lo demás sale de él (26/10/2026)', () => {
+    const PUNTO = { lat: -17.7833, lng: -63.1821 };
+
+    function localidad(
+      calle: string | null,
+      zona: string | null = null,
+      municipioConceptId: string | null = null,
+    ): LocalityFromPoint {
+      return { punto: PUNTO, calle, calleSola: calle, zona, municipioConceptId };
+    }
+
+    /** Completa la primera página y pasa a «La sede», donde está el mapa. */
+    function irALaSede(): MapLocationPicker {
+      const form = fixture.componentInstance.form;
+      form.controls.practiceName.setValue('Centro Médico Norte');
+      form.controls.siteName.setValue('Sede Norte');
+      fixture.detectChanges();
+      (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!
+        .click();
+      fixture.detectChanges();
+      return fixture.debugElement.query(By.directive(MapLocationPicker))
+        .componentInstance as MapLocationPicker;
+    }
+
+    it('el mapa es el primer y único campo de la página, obligatorio; dirección y ciudad no se escriben', () => {
+      const sede = fixture.componentInstance['pages'].find((p) => p.titulo === 'La sede')!;
+      expect(sede.campos.map((c) => c.key)).toEqual(['point']);
+      expect(sede.campos[0]).toMatchObject({
+        control: 'custom',
+        required: true,
+        mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      });
+
+      irALaSede();
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="medical-center-setup-address"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="medical-center-setup-city"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="medical-center-site-map"]')).not.toBeNull();
+    });
+
+    it('lo deducido del punto llena la dirección y la ciudad, y con el punto confirmado se envía', () => {
+      const selector = irALaSede();
+
+      selector.localidad.emit(localidad('Calle Guapay 3861, Equipetrol', 'Equipetrol', 'mun-scz'));
+      selector.confirmado.emit(PUNTO);
+      fixture.componentInstance.save();
+
+      expect(createPractice).toHaveBeenCalledWith(TENANT, {
+        name: 'Centro Médico Norte',
+        site: {
+          name: 'Sede Norte',
+          addressText: 'Calle Guapay 3861, Equipetrol',
+          latitude: -17.7833,
+          longitude: -63.1821,
+          cityText: 'Santa Cruz de la Sierra',
+        },
+      });
+    });
+
+    it('sin calle, la dirección dice la zona y el municipio, o el punto: nunca una calle inventada', () => {
+      const selector = irALaSede();
+      const form = fixture.componentInstance.form;
+
+      selector.localidad.emit(localidad(null, 'Equipetrol', 'mun-scz'));
+      expect(form.controls.addressText.value).toBe('Equipetrol, Santa Cruz de la Sierra');
+
+      selector.localidad.emit(localidad(null));
+      expect(form.controls.addressText.value).toBe('Punto GPS -17.78330, -63.18210');
+      expect(form.controls.cityText.value).toBe('');
+    });
+
+    it('un punto confirmado nunca deja la dirección obligatoria vacía y escondida', () => {
+      const selector = irALaSede();
+
+      selector.confirmado.emit(PUNTO);
+
+      expect(fixture.componentInstance.form.controls.addressText.value).toBe('Punto GPS -17.78330, -63.18210');
+      expect(fixture.componentInstance.form.valid).toBe(true);
+    });
+  });
+
   it.each([
     [403, 'Solo quien administra esta organización'],
     [409, 'Su organización ya usa ese nombre'],
@@ -173,6 +283,7 @@ describe('MedicalCenterSetup · organización todavía no verificada (S3)', () =
         { provide: PracticeOnboardingClient, useValue: { createPractice: vi.fn() } },
         { provide: DirectoryClient, useValue: { listMyOrganizations: respuesta } },
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+        ...PROVEEDORES_DE_UBICACION,
       ],
     }).compileComponents();
     const f = TestBed.createComponent(MedicalCenterSetup);

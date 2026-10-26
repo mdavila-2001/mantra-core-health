@@ -70,30 +70,21 @@
           (rechazada)="alRechazarPagina($event)"
           data-testid="registro-organizacion-form"
         >
+          <!-- El punto es lo único que se marca: la dirección, el departamento,
+               el municipio y la zona salen de él y se muestran sin editarse
+               (pedido del cliente del 26/10/2026). -->
           <ng-template appCampoPersonalizado="gpsCasaMatriz">
-            @if (direccionPorReescribir()) {
-              <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                   anuncia sin robar el foco, que sigue en el mapa. -->
-              <app-alert
-                appAnuncio
-                [asertivo]="false"
-                [enfocar]="false"
-                tone="info"
-                data-testid="registro-organizacion-direccion-reescribir"
-              >
-                {{ avisoReescribir }}
-              </app-alert>
-            }
             <app-map-location-picker
               pinId="casa-matriz"
               etiquetaConfirmada="Casa matriz"
               etiquetaQuitar="Quitar la ubicación de la casa matriz"
               etiquetaMapa="La casa matriz en el mapa"
+              etiquetaFicha="La dirección de la casa matriz"
               indicacionMarcar="Toque el mapa en el lugar exacto de la casa matriz."
               [ids]="idsUbicacionCasaMatriz"
               [inicial]="gpsCasaMatriz()"
-              (confirmado)="gpsCasaMatriz.set($event)"
-              (puntoElegido)="vaciarDireccionPorElMapa()"
+              (confirmado)="fijarGpsCasaMatriz($event)"
+              (localidad)="escribirLocalidadCasaMatriz($event)"
             />
           </ng-template>
           <ng-template appCampoPersonalizado="constitutionFileId">
