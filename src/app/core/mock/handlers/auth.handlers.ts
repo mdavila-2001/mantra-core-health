@@ -728,8 +728,12 @@ export function registrarAuth(router: MockRouter): void {
 
   router.put('/iam/onboarding-drafts/:formType/:draftId', ({ params, body }) => {
     const clave = `${params['formType']}_${params['draftId']}`;
+    const nuevo = !mockBorradoresOnboarding.has(clave);
     mockBorradoresOnboarding.set(clave, body);
-    return { ok: true, savedAt: new Date().toISOString() };
+    // Como la API: el PUT que crea devuelve el secreto una sola vez.
+    return nuevo
+      ? { ok: true, savedAt: new Date().toISOString(), draftSecret: `mock-${params['draftId']}` }
+      : { ok: true, savedAt: new Date().toISOString() };
   });
 
   router.delete('/iam/onboarding-drafts/:formType/:draftId', ({ params }) => {

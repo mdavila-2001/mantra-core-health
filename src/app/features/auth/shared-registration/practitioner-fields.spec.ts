@@ -20,12 +20,19 @@ const context = {
 };
 
 describe('practitionerFields', () => {
-  it('mantiene las páginas del alta y el tope de cuatro campos del motor', () => {
+  it('agrupa el alta en nueve páginas, con el correo y la contraseña juntos', () => {
     const pages = practitionerFields(context);
 
-    expect(pages.length).toBeGreaterThan(10);
-    // Nombre y cédula comparten página (cinco preguntas): la única excepción al tope.
-    expect(pages.every((page) => page.campos.length <= (page.clave === 'name' ? 5 : 4))).toBe(true);
+    // Eran quince; el propietario pidió juntarlas (26/10/2026).
+    expect(pages.length).toBe(9);
+    expect(pages.every((page) => page.campos.length <= 6)).toBe(true);
+    const access = pages.find((page) => page.clave === 'access')?.campos.map((c) => c.key);
+    expect(access).toContain('personalEmail');
+    expect(access).toContain('password');
+    // La autoridad emisora ya no se pregunta.
+    expect(pages.flatMap((page) => page.campos).map((c) => c.key)).not.toContain(
+      'regulatoryAuthority',
+    );
     expect(pages[0].clave).toBe('name');
     expect(pages.map((page) => page.clave)).toContain('specialties');
   });
