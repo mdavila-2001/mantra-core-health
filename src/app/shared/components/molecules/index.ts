@@ -102,6 +102,9 @@ export { Radio } from './radio/radio';
 export { RadioGroup } from './radio-group/radio-group';
 
 export { ReferenceCombobox } from './reference-combobox/reference-combobox';
+
+/* Evidencia de una relación del glosario: barra, frecuencia y sello (TAREA-41 F5). */
+export { RelationEvidence } from './relation-evidence/relation-evidence';
 export {
   REFERENCE_COMBOBOX_DEBOUNCE_MS,
   REFERENCE_COMBOBOX_MIN_QUERY_LENGTH,

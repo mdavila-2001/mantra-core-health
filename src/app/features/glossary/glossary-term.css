@@ -298,10 +298,20 @@
   font-style: italic;
 }
 
+/* Relaciones: mismas zonas, columnas y sellos que el mapa (organismo compartido). */
 .termino__relaciones {
-  margin: 0;
-  padding-inline-start: var(--sp-5);
-  color: var(--text-secondary);
+  display: grid;
+  gap: var(--sp-6);
+  min-inline-size: 0;
+}
+
+.termino__mapa-enlace {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  margin-block-start: var(--sp-4);
+  color: var(--text-link);
+  font-weight: 600;
 }
 
 .termino__subtitulo {
