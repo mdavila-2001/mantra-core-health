@@ -7,7 +7,10 @@ import {
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
-import { ahora, cuerpo, nuevoId } from '../mock-store';
+import { buildInfo } from '../../../../environments/env.generated';
+import { MEDICAL, PROFESSIONALS } from '../fixtures/people';
+import { ahora, cuerpo, iso, nuevoId, uuid } from '../mock-store';
+import { servicios } from './practice.handlers';
 
 /* ============================================================================
     Grupos médicos (FT-21, carril 21) en la maqueta.
@@ -67,6 +70,120 @@ interface SimGroup {
 }
 
 const groups = new Map<string, SimGroup>();
+
+/* ---- datos de arranque y persistencia ------------------------------------
+   Sin esto la maqueta arranca vacía y sólo se puede probar el alta: ninguna
+   invitación que responder, ninguna cita realizada para cargarle notas, ningún
+   expediente cerrado, y todo lo hecho se pierde al recargar. Se guarda en
+   `sessionStorage` sellado con el build (mismo criterio que `Coleccion`) para
+   poder comprobar «guardado → recarga → sigue ahí». */
+
+const STORAGE_KEY = 'mock.medical-groups';
+
+const COLLEAGUE = PROFESSIONALS[4]!;
+const OTHER_COLLEAGUE = PROFESSIONALS[2]!;
+
+function seedMember(
+  group: string,
+  n: number,
+  who: { id: string; displayName?: string },
+  roleTitle: string,
+  agreedPaymentAmount: string,
+  invitationStatus: SimMember['invitationStatus'],
+  isCreator = false,
+): SimMember {
+  return {
+    id: uuid(`mg-member-${group}-${n}`),
+    practitionerProfileId: who.id,
+    practitionerName: who.displayName ?? null,
+    roleTitle,
+    agreedPaymentAmount,
+    isCreator,
+    invitationStatus,
+    ...(invitationStatus === 'PENDING' ? {} : { respondedAt: iso(-3) }),
+  };
+}
+
+function seedGroups(): SimGroup[] {
+  const base = {
+    termsText: DEFAULT_TERMS,
+    patientName: null,
+  };
+  const mk = (
+    key: string,
+    creator: { id: string; displayName?: string },
+    days: number,
+    place: string,
+    status: SimGroup['status'],
+    team: [{ id: string; displayName?: string }, string, string, SimMember['invitationStatus']][],
+    extra: Partial<SimGroup> = {},
+  ): SimGroup => ({
+    id: uuid(`mg-${key}`),
+    serviceCatalogId: uuid(`service-ECO-DOPPLER`),
+    serviceName: 'Ecocardiograma Doppler',
+    requestingPractitionerId: creator.id,
+    scheduledAt: iso(days, 10),
+    locationText: place,
+    status,
+    createdAt: iso(days - 20),
+    members: [
+      seedMember(key, 0, creator, 'Responsable del grupo', '0.00', 'ACCEPTED', true),
+      ...team.map(([who, role, pay, state], i) => seedMember(key, i + 1, who, role, pay, state)),
+    ],
+    ...base,
+    ...extra,
+  });
+  return [
+    mk('recibida', COLLEAGUE, 4, 'Sala de procedimientos, Hospital San Lucas', 'PENDING_TEAM', [
+      [MEDICAL, 'Cardiólogo de apoyo', '450.00', 'PENDING'],
+    ]),
+    mk('enviada', MEDICAL, 6, 'Quirófano 2, Clínica Los Olivos', 'PENDING_TEAM', [
+      [OTHER_COLLEAGUE, 'Anestesiólogo', '500.00', 'PENDING'],
+    ]),
+    mk('realizado', MEDICAL, -2, 'Gabinete de cardiología', 'SCHEDULED', [
+      [COLLEAGUE, 'Técnico de ecografía', '200.00', 'ACCEPTED'],
+    ]),
+    mk('cerrado', COLLEAGUE, -30, 'Consultorio Dra. Rojas', 'CLOSED', [
+      [MEDICAL, 'Cardiólogo', '350.00', 'ACCEPTED'],
+    ], { exerciseNotesText: 'Control realizado y registrado.', exerciseNotesUpdatedAt: iso(-29) }),
+  ];
+}
+
+function loadGroups(): void {
+  let rows: SimGroup[] | null = null;
+  try {
+    const raw = typeof sessionStorage === 'undefined' ? null : sessionStorage.getItem(STORAGE_KEY);
+    if (raw !== null) {
+      const saved = JSON.parse(raw) as { build?: unknown; groups?: unknown };
+      if (saved.build === buildInfo.commit && Array.isArray(saved.groups)) {
+        rows = saved.groups as SimGroup[];
+      }
+    }
+  } catch {
+    rows = null;
+  }
+  for (const group of rows ?? seedGroups()) groups.set(group.id, group);
+}
+
+function persistGroups(): void {
+  try {
+    if (typeof sessionStorage === 'undefined') return;
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ build: buildInfo.commit, groups: [...groups.values()] }),
+    );
+  } catch {
+    // Cuota llena o almacenamiento bloqueado: se sigue en memoria.
+  }
+}
+
+/** Cada escritura se guarda y responde con la ficha ya actualizada. */
+function saved(group: SimGroup, me: string): unknown {
+  persistGroups();
+  return toDto(group, me);
+}
+
+loadGroups();
 
 interface NewGroupBody {
   readonly serviceCatalogId: string;
@@ -163,10 +280,14 @@ export function registerMedicalGroups(router: MockRouter): void {
 
   router.get('/medical-groups/patients/:patientProfileId/conditions', () => []);
 
-  // La maqueta no modela organizaciones con varios médicos: nadie para invitar,
-  // que es lo mismo que la API responde a un consultorio propio sin colegas.
+  // Dos colegas de la misma organización para poder armar un equipo en la maqueta.
   router.get('/medical-groups/eligible-members', (request) =>
-    practitionerOf(request) === null ? forbidden() : [],
+    practitionerOf(request) === null
+      ? forbidden()
+      : [COLLEAGUE, OTHER_COLLEAGUE].map((p) => ({
+          practitionerProfileId: p.id,
+          name: p.displayName ?? null,
+        })),
   );
 
   router.get('/medical-groups/:id', (request) => {
@@ -197,7 +318,8 @@ export function registerMedicalGroups(router: MockRouter): void {
     const group: SimGroup = {
       id,
       serviceCatalogId: body.serviceCatalogId,
-      serviceName: 'Servicio del catálogo',
+      // El nombre sale del catálogo de la maqueta, como lo resuelve la API real.
+      serviceName: servicios.get(body.serviceCatalogId)?.name ?? 'Servicio del catálogo',
       requestingPractitionerId: me,
       ...(body.patientProfileId ? { patientProfileId: body.patientProfileId } : {}),
       patientName: body.patientProfileId ? 'Paciente de la maqueta' : null,
@@ -233,6 +355,7 @@ export function registerMedicalGroups(router: MockRouter): void {
       ],
     };
     groups.set(id, group);
+    persistGroups();
     return reply(201, toDto(group, me));
   });
 
@@ -252,7 +375,7 @@ export function registerMedicalGroups(router: MockRouter): void {
     member.invitationStatus = decision === 'ACCEPTED' ? 'ACCEPTED' : 'REJECTED';
     member.respondedAt = ahora();
     if (group.members.every((m) => m.invitationStatus === 'ACCEPTED')) group.status = 'SCHEDULED';
-    return toDto(group, me);
+    return saved(group, me);
   });
 
   router.post('/medical-groups/:id/reschedule-requests', (request) => {
@@ -276,7 +399,7 @@ export function registerMedicalGroups(router: MockRouter): void {
       group.proposedRescheduleAt = proposedAt;
       group.proposedByPractitionerId = me;
     }
-    return toDto(group, me);
+    return saved(group, me);
   });
 
   router.post('/medical-groups/:id/reschedule-requests/respond', (request) => {
@@ -294,7 +417,7 @@ export function registerMedicalGroups(router: MockRouter): void {
     group.status = 'SCHEDULED';
     delete group.proposedRescheduleAt;
     delete group.proposedByPractitionerId;
-    return toDto(group, me);
+    return saved(group, me);
   });
 
   router.patch('/medical-groups/:id/exercise-notes', (request) => {
@@ -309,6 +432,6 @@ export function registerMedicalGroups(router: MockRouter): void {
     const { notesText } = cuerpo<{ notesText: string }>(request);
     group.exerciseNotesText = notesText ?? '';
     group.exerciseNotesUpdatedAt = ahora();
-    return toDto(group, me);
+    return saved(group, me);
   });
 }
