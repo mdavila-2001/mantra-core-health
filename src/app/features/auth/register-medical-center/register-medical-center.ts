@@ -30,6 +30,7 @@ import {
   DESTINO_TIPO_DE_ORGANIZACION,
   medicalOrganizationTypeOptions,
 } from './medical-organization-types';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /** Dónde se leen el país y la jurisdicción: los mismos catálogos públicos del alta de laboratorio. */
 const DESTINO_PAIS = 'directory.tenants.country_concept_id';
@@ -90,7 +91,7 @@ export function signupErrorMessage(error: unknown): string {
  */
 @Component({
   selector: 'app-register-medical-center',
-  imports: [Alert, AnnounceOnAppear, AppButton, AuthSplit, Link, PaginatedForm, RouterLink],
+  imports: [RegistrationBadge, Alert, AnnounceOnAppear, AppButton, AuthSplit, Link, PaginatedForm, RouterLink],
   templateUrl: './register-medical-center.html',
   styleUrls: ['../shared-registration/registration.css', './register-medical-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

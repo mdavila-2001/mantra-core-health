@@ -2,6 +2,7 @@
   <div class="registro">
     @if (registered()) {
       <div class="registro__header">
+        <app-registration-badge type="insurer" celebrate />
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-organizacion-exito">
           ¡Bienvenido a AloVida! Su salud en un solo lugar
         </h1>
@@ -23,6 +24,7 @@
       </button>
     } @else {
       <div class="registro__header">
+        <app-registration-badge type="insurer" />
         <h1 class="registro__title">Registre su aseguradora</h1>
         <p class="registro__subtitle">
           Cree la cuenta de su organización, adjunte sus documentos legales y dela de alta en un solo

@@ -21,6 +21,7 @@
     <div class="registro">
       @if (registered()) {
         <div class="registro__header">
+          <app-registration-badge type="laboratory" celebrate />
           <h1
             appAnuncio
             [asertivo]="false"
@@ -47,6 +48,7 @@
         </button>
       } @else {
         <div class="registro__header">
+          <app-registration-badge type="laboratory" />
           <h1 class="registro__title">Registre su laboratorio</h1>
           <!-- Sin contar los pasos: el indicador de arriba ya dice «Paso 1 de
                N» y lo calcula solo. Un número escrito acá se desincroniza el

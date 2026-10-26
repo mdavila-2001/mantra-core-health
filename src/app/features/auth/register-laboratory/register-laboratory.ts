@@ -72,6 +72,7 @@ import {
   nameGroup,
   completeName,
 } from '../shared-registration/name-fields/person-name';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -289,7 +290,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  */
 @Component({
   selector: 'app-register-laboratory',
-  imports: [
+  imports: [RegistrationBadge, 
     BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,
