@@ -328,21 +328,17 @@ describe('RegisterPractitioner', () => {
       // teléfonos con los que compartía pantalla.
       expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
       expect(camposDe('access')).toEqual(['workMobilePhone', 'workLandline', 'email']);
-      // Las mismas tres piezas que el alta de paciente: la localidad, la calle
-      // y el punto del mapa. Era sólo la localidad mientras el DTO del
-      // profesional no tuvo dónde poner las otras dos.
-      expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
+      // Como en el alta de paciente, la dirección es UN bloque: el mapa primero
+      // y, ya lleno, el formulario con calle, distrito, municipio, provincia y
+      // departamento.
+      expect(camposDe('residence')).toEqual(['municipio']);
       expect(camposDe('workplace-location')).toEqual(['workAddressLines', 'gpsTrabajo']);
       // El consultorio propio: contacto y ubicación en dos páginas opcionales. Es un calco del
       // lugar de trabajo del alta de paciente, con el nombre que le da el
       // dominio — quien ejerce puede atender en varios lugares, y éste es el
       // único que no depende de que otro lo acepte.
       expect(camposDe('own-office-contact')).toEqual(['officeName', 'officeContactPhone']);
-      expect(camposDe('own-office')).toEqual([
-        'municipioConsultorio',
-        'officeAddressLines',
-        'gpsConsultorio',
-      ]);
+      expect(camposDe('own-office')).toEqual(['municipioConsultorio']);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
         'sedesLicenseNumber',
@@ -1073,6 +1069,45 @@ describe('RegisterPractitioner', () => {
     expect(req.request.body.ownSite).toBeUndefined();
 
     req.flush(RESPUESTA_PRO);
+  });
+
+  /**
+   * No hay columna de distrito: lo que la persona escribió no se tira, va
+   * pegado a la calle de cada dirección.
+   */
+  it('el distrito del domicilio viaja pegado a su calle', () => {
+    completarProfesional();
+    component.formProfesional.patchValue({ homeAddressLines: 'Calle Norte 10' });
+    component.distritoDomicilio.set('3');
+
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.homeAddressLines).toBe('Calle Norte 10, Distrito 3');
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('el distrito del consultorio viaja pegado a su calle, dentro de la sede propia', () => {
+    completarProfesional();
+    component.formProfesional.patchValue({ officeAddressLines: 'Calle Libertad #120' });
+    component.distritoConsultorio.set('Distrito 7');
+    component.municipioConsultorio.set('mun-1');
+
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.ownSite.address.lines).toEqual(['Calle Libertad #120, Distrito 7']);
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('la calle escrita en el bloque de dirección llega a su formulario, domicilio y consultorio por separado', () => {
+    component.escribirCalleDomicilio('Calle Norte 10');
+    component.escribirCalleConsultorio('Calle Libertad #120');
+
+    expect(component.formProfesional.controls.homeAddressLines.value).toBe('Calle Norte 10');
+    expect(component.domicilioEscrito()).toBe('Calle Norte 10');
+    expect(component.formProfesional.controls.officeAddressLines.value).toBe('Calle Libertad #120');
+    expect(component.consultorioEscrito()).toBe('Calle Libertad #120');
   });
 
   /**

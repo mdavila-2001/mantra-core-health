@@ -71,7 +71,8 @@ async function completarPaso1(page: Page): Promise<void> {
 }
 
 async function completarPaso2(page: Page): Promise<void> {
-  await page.getByTestId('registration-residence-mapa-SC').click();
+  await page.getByTestId('registration-residence-a-mano').click();
+  await elegirOpcion(page, 'registration-residence-departamento', { label: 'Santa Cruz' });
   await elegirOpcion(page, 'registration-residence-municipio', { index: 1 });
   await continuar(page);
   await esperarPaso(page, 3);

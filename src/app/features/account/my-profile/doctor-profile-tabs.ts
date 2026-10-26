@@ -186,8 +186,6 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
 
   /* 6 · ¿Dónde vivís? */
   municipio: DOCTOR_TAB.contacto,
-  homeAddressLines: DOCTOR_TAB.contacto,
-  gpsDomicilio: DOCTOR_TAB.contacto,
 
   /* 7 · Tu consultorio propio.
      Los cuatro siguen en «Dónde atiendo», y desde el 20/09/2026 el mapa dice
@@ -197,8 +195,6 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
      donde los cuatro se ven y se corrigen con su propio control (C-02). */
   officeName: DOCTOR_TAB.dondeAtiendo,
   municipioConsultorio: DOCTOR_TAB.dondeAtiendo,
-  officeAddressLines: DOCTOR_TAB.dondeAtiendo,
-  gpsConsultorio: DOCTOR_TAB.dondeAtiendo,
   officeContactPhone: DOCTOR_TAB.dondeAtiendo,
 
   /* 8 · Tu título profesional y foto */

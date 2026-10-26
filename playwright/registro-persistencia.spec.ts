@@ -135,14 +135,13 @@ test('el GPS del domicilio, confirmado sobre el mapa, persiste contra la API', a
 
   await empezarElAlta(page, documento);
 
-  // `empezarElAlta` deja la pantalla en «Lugares donde vive».
-  await elegirLocalidadDeResidencia(page);
-
-  await page.getByTestId('registro-usar-ubicacion').click();
-  const mapa = page.getByTestId('registro-mapa-domicilio');
+  // `empezarElAlta` deja la pantalla en «Lugares donde vive». Con el mapa
+  // primero, el punto del navegador llena el formulario (municipio incluido) y
+  // tocarlo es confirmarlo: no hay un segundo paso.
+  await page.getByTestId('registration-residence-usar-ubicacion').click();
+  const mapa = page.getByTestId('registration-residence-mapa');
   await expect(mapa.locator('.leaflet-marker-icon').first()).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId('registro-confirmar-direccion').click();
-  await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
+  await expect(page.getByTestId('registration-residence-formulario')).toBeVisible();
 
   await avanzarUnPaso(page, PASOS_DEL_ALTA.contacto);
   await completarContacto(page);

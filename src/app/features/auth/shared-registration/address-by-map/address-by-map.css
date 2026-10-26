@@ -1,0 +1,62 @@
+.direccion-mapa {
+  display: grid;
+  gap: var(--sp-3);
+  inline-size: 100%;
+}
+
+/* El alto lo fija el organismo (`.mapa`); acá sólo el ancho, que es de este
+   componente. A Bolivia entera le sienta más alto que al mapa de un pin. */
+.direccion-mapa__mapa {
+  inline-size: 100%;
+  /* Bolivia entera necesita más plano que un barrio: ver `--mapa-alto` en
+     `map.css`. */
+  --mapa-alto: 440px;
+}
+
+.direccion-mapa__indicacion {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.direccion-mapa__aviso {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.direccion-mapa__error {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--c-error-500);
+}
+
+.direccion-mapa__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.direccion-mapa__formulario {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* Una columna en el teléfono; dos cuando entran. La calle ocupa la fila entera. */
+.direccion-mapa__grilla {
+  display: grid;
+  gap: var(--sp-3);
+  align-items: start;
+}
+
+@media (min-width: 40rem) {
+  .direccion-mapa__grilla {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .direccion-mapa__ancho {
+    grid-column: 1 / -1;
+  }
+}

@@ -280,30 +280,11 @@ export function practitionerFields(
       icon: 'home',
       // La **zona** sigue sin preguntarse, y eso no cambió: `common.addresses`
       // no tiene columna de zona para ninguno de los dos registros.
-      hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
+      hint: 'Marque su lugar en el mapa y la dirección se completa sola.',
       campos: [
         {
           key: 'municipio',
           label: '',
-          control: 'custom',
-        },
-        {
-          key: 'homeAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
-          hint: 'Como la escribiría en un sobre.',
-          description:
-            'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
-          control: 'text',
-          autocomplete: 'street-address',
-          placeholder: 'Av. Banzer, 3er anillo #42',
-          testId: 'registration-practitioner-home-address',
-          icono: 'route',
-        },
-        {
-          key: 'gpsDomicilio',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'Si la comparte, quien le busca llega sin llamarle.',
-          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
           control: 'custom',
         },
       ],
@@ -381,25 +362,6 @@ export function practitionerFields(
         {
           key: 'municipioConsultorio',
           label: '',
-          control: 'custom',
-        },
-        {
-          key: 'officeAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
-          hint: 'Calle y número del consultorio.',
-          description:
-            'Es la dirección que ve un paciente antes de ir. El punto del mapa no la escribe solo.',
-          control: 'text',
-          placeholder: 'Calle Libertad #120, piso 2',
-          testId: 'registration-practitioner-office-address',
-          icono: 'route',
-        },
-        {
-          key: 'gpsConsultorio',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'Con el punto, un paciente llega sin preguntar.',
-          description:
-            'Marque el punto exacto del consultorio y confírmelo. Se confirma aparte del de su casa.',
           control: 'custom',
         },
       ],

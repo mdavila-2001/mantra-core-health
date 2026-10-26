@@ -135,24 +135,32 @@ export async function avanzarHasta(page: Page, titulo: string): Promise<void> {
 
 /**
  * Completa la localidad de residencia —única obligatoria de «Lugares donde
- * vive»— eligiendo Santa Cruz en el mapa y su primera ciudad en el select
- * acotado (FT-03-R03/R06). Sin esto el motor no deja pasar al paso de
+ * vive»— por la salida «completar a mano» de la dirección: departamento y
+ * después su primer municipio. Sin esto el motor no deja pasar al paso de
  * contacto: `residenceMunicipalityConceptId` es `required`.
+ *
+ * El camino de la persona es el otro —tocar el mapa y que el formulario
+ * aparezca lleno—, pero un clic sobre el plano de Leaflet depende del zoom y
+ * de los mosaicos; para los recorridos que sólo necesitan pasar de página, la
+ * salida a mano es determinista. El toque sobre el mapa lo prueba
+ * `direccion-por-mapa.mjs`.
  */
 export async function elegirLocalidadDeResidencia(page: Page): Promise<void> {
-  await page.getByTestId('registration-residence-mapa-SC').click();
+  await page.getByTestId('registration-residence-a-mano').click();
+  await elegirOpcion(page, 'registration-residence-departamento', { label: 'Santa Cruz' });
   await expect(page.getByTestId('registration-residence-municipio')).toBeVisible();
   await elegirOpcion(page, 'registration-residence-municipio', { index: 1 });
 }
 
 /**
  * Elige la localidad de TRABAJO — opcional, mismo componente que la de
- * residencia (`app-location-picker`), pero con `testId="registration-work"`
- * (FT-03-R07). A diferencia de la residencia, no bloquea el avance: se elige
- * igual para probar de forma simétrica que el mapa y el select responden.
+ * residencia (`app-address-by-map`), pero con `testId="registration-work"`.
+ * A diferencia de la residencia, no bloquea el avance: se elige igual para
+ * probar de forma simétrica que el formulario responde.
  */
 export async function elegirLocalidadDeTrabajo(page: Page): Promise<void> {
-  await page.getByTestId('registration-work-mapa-SC').click();
+  await page.getByTestId('registration-work-a-mano').click();
+  await elegirOpcion(page, 'registration-work-departamento', { label: 'Santa Cruz' });
   await expect(page.getByTestId('registration-work-municipio')).toBeVisible();
   await elegirOpcion(page, 'registration-work-municipio', { index: 1 });
 }

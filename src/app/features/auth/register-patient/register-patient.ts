@@ -5,7 +5,6 @@ import {
   inject,
   PLATFORM_ID,
   signal,
-  type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
@@ -59,7 +58,7 @@ import {
   INVALID_IDENTITY_DOCUMENT_MESSAGE,
   identityDocumentValidators,
 } from '../shared-registration/national-id';
-import { LocationPicker } from '../shared-registration/location-picker/location-picker';
+import { AddressByMap, unirCalleYDistrito } from '../shared-registration/address-by-map/address-by-map';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -76,7 +75,6 @@ import type {
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { NOTICE_REWRITE_ADDRESS } from '../shared-registration/map-location-picker/map-location-picker';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
@@ -85,12 +83,10 @@ import {
   type HelpCard,
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { AppMap } from '../../../shared/components/organisms/map/map';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
-import type { PinMap } from '../../../shared/components/organisms/map/map-pin.types';
-import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
 import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
 import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
@@ -162,68 +158,6 @@ export interface Coordenadas {
   readonly lat: number;
   readonly lng: number;
 }
-
-/**
- * Las cuatro señales de una ubicación declarada sobre el mapa.
- *
- * Se agrupan para que `pedirUbicacion` sirva a las dos que el alta pregunta
- * —casa y trabajo— sin duplicar el trato del permiso del navegador. No es un
- * estado compartido: son dos juegos de señales distintos, y esto es sólo cómo
- * se los nombra al pasarlos.
- */
-interface DestinoDeUbicacion {
-  readonly punto: WritableSignal<Coordenadas | null>;
-  readonly pidiendo: WritableSignal<boolean>;
-  readonly confirmada: WritableSignal<boolean>;
-  readonly rechazado: WritableSignal<boolean>;
-  /** Si se pidió el mapa vacío para poner el pin a mano. */
-  readonly marcando: WritableSignal<boolean>;
-  /** Si el punto actual lo dio el navegador y no un toque sobre el plano. */
-  readonly delNavegador: WritableSignal<boolean>;
-}
-
-/**
- * El identificador del pin del domicilio en el mapa.
- *
- * `app-map` habla de sus pines por `id` y exige uno; acá hay un solo pin, así
- * que es una constante y no un dato. No es un uuid a propósito: nada del mapa
- * debe poder filtrar identificadores.
- */
-const PIN_DOMICILIO = 'domicilio';
-
-/** El pin del lugar de trabajo. Ver {@link PIN_DOMICILIO}. */
-const PIN_TRABAJO = 'trabajo';
-
-/**
- * Lo que se le dice a quien fijó un punto y espera que la calle se escriba
- * sola (AC-03-8 / AC-03-9).
- *
- * **La resolución del nombre de la dirección no está disponible, y decirlo es
- * el requisito.** Convertir un par de coordenadas en «Av. Banzer 3er anillo»
- * necesita un geocodificador externo, y la política de seguridad del servidor
- * no lo permite: `src/server/security-headers.ts` deja `connect-src` en
- * `'self'` y `img-src` sólo abierto a `tile.openstreetmap.org`, con una prueba
- * que lo fija (`security-headers.spec.ts`). Abrirla es decisión de
- * arquitectura —P-03-7 de la ficha, sin resolver: qué proveedor, con qué
- * licencia y quién paga— y no se toma desde este carril.
- *
- * Lo que AC-03-9 exige mientras tanto es exactamente esto: que el formulario lo
- * **diga** y **deje seguir**. Lo que nunca se hace es rellenar el campo con un
- * texto inventado: una dirección falsa en la ficha de un paciente es peor que
- * un campo vacío, porque nadie la vuelve a mirar.
- */
-const AVISO_SIN_GEOCODIFICACION =
-  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escríbala usted arriba.';
-
-/**
- * Cuánto se espera al navegador antes de dar la ubicación por perdida.
- *
- * Diez segundos: más que eso y la persona ya volvió a lo suyo.
- */
-const GPS_TIMEOUT_MS = 10_000;
-
-/** Ubicación de hasta cinco minutos: alcanza y evita volver a pedir el permiso. */
-const GPS_MAX_AGE_MS = 300_000;
 
 /**
  * El NIT, comprobado sobre el valor recortado.
@@ -568,7 +502,7 @@ interface BorradorLocal {
     AppButton,
     NavIcon,
     Tooltip,
-    LocationPicker,
+    AddressByMap,
     Link,
     Alert,
     AuthSplit,
@@ -577,7 +511,6 @@ interface BorradorLocal {
     CustomField,
     ReferenceCombobox,
     RegistrationHelp,
-    AppMap,
     FormField,
     Select,
     AppInput,
@@ -889,157 +822,26 @@ export class RegisterPatient {
     this.formPaciente.controls.residenceMunicipalityConceptId.setValue(conceptId);
     this.formPaciente.controls.residenceMunicipalityConceptId.markAsTouched();
     this.municipioPaciente.set(conceptId);
-    this.sembrarDireccion(this.formPaciente.controls.homeAddressLines, conceptId);
   }
 
   /** Lo mismo, para el lugar de trabajo. Opcional: no se marca como tocado. */
   elegirMunicipioDeTrabajo(conceptId: string | null): void {
     this.formPaciente.controls.workMunicipalityConceptId.setValue(conceptId);
     this.municipioTrabajo.set(conceptId);
-    this.sembrarDireccion(this.formPaciente.controls.workAddressLines, conceptId);
-  }
-
-  /**
-   * Lo último que el formulario sembró en cada «dirección 1».
-   *
-   * Es lo que permite distinguir **lo que puso el formulario de lo que escribió
-   * la persona**, que es la única pregunta que importa para saber si un
-   * prellenado puede reescribirse. El valor del control no alcanza: «Sacaba»
-   * puede haberlo puesto la elección de la localidad o haberlo tecleado alguien,
-   * y las dos cosas se tratan al revés.
-   *
-   * Se indexa por control y no por página porque son dos campos independientes
-   * —domicilio y trabajo— con su propia historia. Vacío significa «acá el
-   * formulario no escribió nada».
-   */
-  private readonly direccionSembrada = new WeakMap<FormControl<string>, string>();
-
-  /**
-   * Copia el nombre de la localidad elegida a su «dirección 1».
-   *
-   * ## Qué problema resuelve, y cuál NO
-   *
-   * El pedido es «copiar el nombre del lugar que se elige en el mapa a la
-   * dirección» (AC-03-8). La lectura literal —convertir el pin del GPS en «Av.
-   * Banzer 3er anillo»— exige un geocodificador externo y la política de
-   * seguridad del servidor no lo permite (ver {@link AVISO_SIN_GEOCODIFICACION});
-   * abrirla es una decisión de arquitectura que no se toma desde este carril.
-   *
-   * Lo que sí sabe el sistema, sin salir a la red, es **cómo se llama la
-   * localidad que la persona acaba de elegir**. Eso es lo que se copia: un
-   * arranque cierto de la dirección, sobre el que se sigue escribiendo la calle
-   * y el número.
-   *
-   * ## La regla: el formulario sólo reescribe lo que él mismo puso
-   *
-   * «Sólo si está vacío» no alcanza en cuanto se puede **corregir** la
-   * localidad, que es lo normal —se elige el departamento equivocado, se busca
-   * la ciudad y se cambia—. Con esa guarda sola, elegir Sacaba y corregir a
-   * Quillacollo dejaba el municipio nuevo con la dirección vieja: viajaba
-   * «Quillacollo» con «Sacaba» escrito al lado. Un domicilio que no existe es
-   * peor que un campo vacío, porque nadie lo vuelve a mirar.
-   *
-   * Por eso se recuerda lo sembrado ({@link direccionSembrada}) y se decide así:
-   *
-   * - **Vacío, o exactamente lo que sembró el formulario** → se re-siembra con
-   *   el nombre nuevo. Es un valor del que nadie es dueño.
-   * - **Distinto de lo sembrado** → lo escribió la persona y no se toca, ni para
-   *   corregir la localidad ni para nada.
-   * - **Al soltar la localidad** → el texto se conserva. Una navegación no
-   *   puede costar datos: el mapa de departamentos es un grupo de dos estados,
-   *   así que volver a pulsar el que ya estaba elegido lo suelta, y ese gesto
-   *   —el natural para «ahora elijo la ciudad»— borraría lo que la persona
-   *   tiene delante. Dejarlo no descuadra nada: elegir otra localidad lo
-   *   reescribe igual, la de residencia hace falta para enviar, y lo que queda
-   *   entretanto es un texto que se corrige tecleando.
-   *
-   * ## Dos cuidados que no cambian
-   *
-   * - **No se marca `touched` ni `dirty`**, tampoco al re-sembrar: no lo
-   *   escribió la persona, y marcarlo dispararía la validación y los mensajes
-   *   de un campo que nadie tocó.
-   * - **Sin nombre, no se escribe nada.** Si el catálogo no cargó todavía, el
-   *   municipio no se encuentra en el árbol y el campo queda como estaba. Nunca
-   *   se rellena con un identificador ni con un texto inventado.
-   *
-   * @param control - El control de «dirección 1» que corresponde.
-   * @param conceptId - La localidad elegida, o `null` si se soltó.
-   */
-  private sembrarDireccion(
-    control: FormControl<string>,
-    conceptId: string | null,
-  ): void {
-    // Soltar la localidad no borra: ver el porqué en la nota de arriba.
-    if (conceptId === null) {
-      return;
-    }
-
-    const actual = control.value.trim();
-    const sembrado = this.direccionSembrada.get(control);
-    // De lo que hay ahí no es dueño nadie: o está vacío, o es exactamente lo
-    // que puso el formulario la vez anterior.
-    const esNuestro = actual === '' || actual === sembrado;
-    if (!esNuestro) {
-      return;
-    }
-
-    const nombre = this.nombreDeMunicipio(conceptId);
-    if (nombre === null) {
-      return;
-    }
-
-    this.escribirDireccionSembrada(control, nombre);
-  }
-
-  /**
-   * Escribe en una «dirección 1» **en nombre del formulario**, y lo anota.
-   *
-   * Anotarlo es la mitad que hace que la regla funcione la vez siguiente: sin
-   * dejar registro de lo que se acaba de poner, el próximo cambio de localidad
-   * no sabría si ese texto es suyo o de la persona.
-   *
-   * @param control - El control de «dirección 1» que corresponde.
-   * @param valor - El nombre de la localidad, o `''` para limpiar.
-   */
-  private escribirDireccionSembrada(
-    control: FormControl<string>,
-    valor: string,
-  ): void {
-    // `emitEvent: false` no: el cambio tiene que llegar al `valueChanges` que
-    // limpia el error del envío anterior, igual que si se hubiera tecleado.
-    // Y sin `markAsTouched`/`markAsDirty`: no lo escribió la persona.
-    control.setValue(valor);
-    this.direccionSembrada.set(control, valor);
-  }
-
-  /**
-   * Cómo se llama el municipio de un concepto, según el árbol ya cargado.
-   *
-   * @param conceptId - El municipio buscado.
-   * @returns Su nombre, o `null` si el árbol todavía no lo tiene.
-   */
-  private nombreDeMunicipio(conceptId: string): string | null {
-    for (const rama of this.ramasMunicipios()) {
-      const municipio = rama.municipios.find((m) => m.conceptId === conceptId);
-      if (municipio !== undefined) {
-        return municipio.nombre;
-      }
-    }
-    return null;
   }
 
   /**
    * El error del municipio de residencia, para pasárselo al `app-form-field`
-   * que el propio `app-location-picker` dibuja.
+   * que el propio `app-address-by-map` dibuja.
    *
-   * No sale del motor: el campo del motor no tiene rótulo —lo ponen las dos
-   * partes del selector— y un error colgado de un rótulo vacío se lee flotando
-   * sobre el mapa, lejos del desplegable que hay que contestar.
+   * No sale del motor: el campo del motor no tiene rótulo —lo ponen las partes
+   * del bloque de dirección— y un error colgado de un rótulo vacío se lee
+   * flotando sobre el mapa, lejos del desplegable que hay que contestar.
    */
   readonly errorDeMunicipio = computed<string>(() => {
     const control = this.formPaciente.controls.residenceMunicipalityConceptId;
     void this.municipioPaciente();
-    return control.touched && control.invalid ? 'Elija su ciudad o municipio.' : '';
+    return control.touched && control.invalid ? 'Marque su lugar en el mapa o elija su municipio.' : '';
   });
 
   /**
@@ -1055,140 +857,54 @@ export class RegisterPatient {
    */
   readonly empresaSeleccionada = signal<string | null>(null);
   /**
-   * Las coordenadas que la persona compartió, si las compartió.
+   * El punto del domicilio sobre el mapa, o `null`.
    *
-   * Viven en un signal y no en el formulario porque no se escriben: las trae el
-   * navegador de una sola vez. Nulas mientras nadie pulse el botón.
+   * Lo fija `app-address-by-map` al tocar el mapa. Viven en un signal y no en el
+   * formulario porque no se escriben: salen de un toque sobre el plano.
    *
    * **Nunca se muestran como números.** Son la entrada del mapa, y lo que la
-   * persona ve es el pin sobre el plano: «-17,7833, -63,1821» no le dice a
-   * nadie si el punto está bien, y era exactamente lo que había que confirmar.
+   * persona ve es el pin sobre el plano y los datos que de él salen.
    */
   readonly gpsDomicilio = signal<Coordenadas | null>(null);
 
-  /** Si se está esperando al navegador ahora mismo. */
-  readonly pidiendoGps = signal(false);
-
   /**
-   * Si la persona ya dio por buena la ubicación del mapa.
+   * Si el punto del domicilio viaja en el alta.
    *
-   * Es el paso que hacía falta: el navegador acierta la manzana, no la puerta,
-   * así que entre «esto es lo que encontramos» y «esta es mi dirección» tiene
-   * que haber alguien mirando el plano y diciendo que sí. Hasta entonces el
-   * punto está capturado pero **no** viaja en el alta.
+   * Desde que el mapa es lo primero, **tocarlo es confirmarlo**: el formulario
+   * que aparece ya lleno es la confirmación, así que esto es `true` en cuanto
+   * hay punto. Se conserva como señal propia porque el borrador y el envío la
+   * leen por separado.
    */
   readonly direccionConfirmada = signal(false);
 
-  /**
-   * El pin del domicilio, tal como lo espera `app-map`.
-   *
-   * Vacío mientras no haya punto: el mapa acepta la lista vacía y se queda en
-   * su vista por defecto, que es lo que corresponde antes de pedir nada.
-   */
-  readonly pinesDomicilio = computed<readonly PinMap[]>(() => {
-    const punto = this.gpsDomicilio();
-    if (punto === null) return [];
-    return [
-      {
-        id: PIN_DOMICILIO,
-        lat: punto.lat,
-        lng: punto.lng,
-        titulo: this.direccionConfirmada()
-          ? 'Su dirección'
-          : this.gpsDomicilioDelNavegador()
-            ? 'Acá le encontramos'
-            : 'El punto que marcó',
-      },
-    ];
-  });
-
-  /** Si el navegador negó la ubicación, para poder decirlo sin frenar el alta. */
-  readonly gpsRechazado = signal(false);
-
-  /**
-   * Si la persona pidió el mapa vacío para poner el pin del domicilio a mano.
-   *
-   * Es la segunda puerta del selector —la primera es el navegador— y existe
-   * porque la casa casi nunca se declara desde la casa. Sólo importa mientras
-   * no hay punto: con un pin puesto el mapa está abierto igual y tocarlo lo
-   * corre.
-   */
-  readonly marcandoDomicilio = signal(false);
-
-  /** Si el punto del domicilio lo dio el navegador; sólo cambia cómo se llama el pin. */
-  readonly gpsDomicilioDelNavegador = signal(false);
-
-  /** Si el mapa del domicilio tiene que estar en pantalla: hay pin, o se está por poner. */
-  readonly mapaDomicilioAbierto = computed(
-    () => this.gpsDomicilio() !== null || this.marcandoDomicilio(),
-  );
-
-  /* ---- La misma ubicación, para el lugar de trabajo ------------------------
-     Cuatro señales gemelas de las de arriba, no una estructura compartida: el
-     alta pregunta DOS ubicaciones distintas —dónde vivís y dónde trabajás— y
-     cada una tiene su propio estado de «pedida / capturada / confirmada /
-     negada». Lo que sí se comparte es el comportamiento: las dos pasan por
-     {@link pedirUbicacion}, así que arreglar el permiso del navegador se hace
-     una vez. */
-
+  /** Lo mismo, para el lugar de trabajo. */
   readonly gpsTrabajo = signal<Coordenadas | null>(null);
-  readonly pidiendoGpsTrabajo = signal(false);
   readonly direccionTrabajoConfirmada = signal(false);
-  readonly gpsTrabajoRechazado = signal(false);
-  readonly marcandoTrabajo = signal(false);
-  readonly gpsTrabajoDelNavegador = signal(false);
-  readonly mapaTrabajoAbierto = computed(
-    () => this.gpsTrabajo() !== null || this.marcandoTrabajo(),
-  );
 
-  readonly pinesTrabajo = computed<readonly PinMap[]>(() => {
-    const punto = this.gpsTrabajo();
-    if (punto === null) return [];
-    return [
-      {
-        id: PIN_TRABAJO,
-        lat: punto.lat,
-        lng: punto.lng,
-        titulo: this.direccionTrabajoConfirmada()
-          ? 'Su lugar de trabajo'
-          : this.gpsTrabajoDelNavegador()
-            ? 'Acá le encontramos'
-            : 'El punto que marcó',
-      },
-    ];
-  });
+  /**
+   * El distrito de cada dirección, escrito por la persona.
+   *
+   * No hay columna de distrito: viaja pegado a la calle (ver
+   * {@link unirCalleYDistrito}).
+   */
+  readonly distritoDomicilio = signal('');
+  readonly distritoTrabajo = signal('');
 
   /** Las listas fijas, expuestas a la plantilla. */
   protected readonly opcionesSexo = OPCIONES_SEXO;
 
-  /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
-  protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
-
   /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
+   * La calle del domicilio y del trabajo, espejadas del formulario.
    *
-   * Es la misma regla que `app-map-location-picker` avisa con `puntoElegido`,
-   * aplicada a las dos copias en línea de esta pantalla: tocar el mapa deja
-   * «Línea de dirección 1» en blanco y lo dice al lado. El aviso acompaña al
-   * campo vacío, no a la persona: en cuanto vuelve a escribir, se va solo.
+   * El dato vive en `homeAddressLines` / `workAddressLines`; esto lo copia a un
+   * signal para que `app-address-by-map` lo reciba como entrada.
    */
-  private readonly domicilioVaciadoPorElMapa = signal(false);
-  private readonly trabajoVaciadoPorElMapa = signal(false);
-  private readonly domicilioEscrito = toSignal(
-    this.formPaciente.controls.homeAddressLines.valueChanges,
-    { initialValue: '' },
-  );
-  private readonly trabajoEscrito = toSignal(
-    this.formPaciente.controls.workAddressLines.valueChanges,
-    { initialValue: '' },
-  );
-  readonly domicilioPorReescribir = computed(
-    () => this.domicilioVaciadoPorElMapa() && this.domicilioEscrito().trim() === '',
-  );
-  readonly trabajoPorReescribir = computed(
-    () => this.trabajoVaciadoPorElMapa() && this.trabajoEscrito().trim() === '',
-  );
-  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
+  readonly domicilioEscrito = toSignal(this.formPaciente.controls.homeAddressLines.valueChanges, {
+    initialValue: '',
+  });
+  readonly trabajoEscrito = toSignal(this.formPaciente.controls.workAddressLines.valueChanges, {
+    initialValue: '',
+  });
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -1218,9 +934,9 @@ export class RegisterPatient {
    *
    * Se guardan **tal como los devuelve el catálogo** —departamento con sus
    * municipios— y no traducidos a los grupos de `app-tree-select`: quien los
-   * dibuja ahora es `app-location-picker`, que necesita la rama entera para
-   * poder acotar el select de ciudad al departamento pulsado en el mapa
-   * (AC-03-7).
+   * dibuja ahora es `app-address-by-map`, que necesita la rama entera para
+   * poder acotar el select de municipio al departamento del punto tocado en
+   * el mapa (AC-03-7).
    */
   private readonly municipios = inject(BoMunicipalitiesCatalog);
   readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
@@ -1389,33 +1105,14 @@ export class RegisterPatient {
       titulo: 'Lugares donde vive',
       clave: 'residence',
       icon: 'home',
-      hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
+      hint: 'Marque su lugar en el mapa y la dirección se completa sola; su municipio hace falta.',
       campos: [
         {
           key: 'residenceMunicipalityConceptId',
           label: '',
           control: 'custom',
           required: true,
-          mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
-        },
-        {
-          key: 'homeAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
-          hint: 'Como la escribiría en un sobre.',
-          description:
-            'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
-          control: 'text',
-          autocomplete: 'street-address',
-          placeholder: 'Av. Banzer, 3er anillo #42',
-          testId: 'registro-domicilio-calle',
-          icono: 'route',
-        },
-        {
-          key: 'gpsDomicilio',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
-          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
-          control: 'custom',
+          mensajeDeError: 'Marque su lugar en el mapa o elija su municipio.',
         },
       ],
     },
@@ -1513,23 +1210,6 @@ export class RegisterPatient {
         {
           key: 'workMunicipalityConceptId',
           label: '',
-          control: 'custom',
-        },
-        {
-          key: 'workAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
-          hint: 'Calle y número de su trabajo.',
-          description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
-          control: 'text',
-          placeholder: 'Calle Libertad #120',
-          testId: 'registration-work-address',
-          icono: 'route',
-        },
-        {
-          key: 'gpsTrabajo',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'El punto exacto de su lugar de trabajo.',
-          description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
           control: 'custom',
         },
       ],
@@ -2231,184 +1911,35 @@ export class RegisterPatient {
 
   /* ---- Ubicación --------------------------------------------------------- */
 
-  private readonly documento = inject(DOCUMENT);
-
   /**
-   * Pide al navegador la ubicación del domicilio y la muestra en el mapa.
+   * El punto del domicilio, tal como lo entrega `app-address-by-map`.
    *
-   * Lo que devuelve el navegador **no se da por bueno solo**: queda dibujado
-   * como un pin sobre el plano y espera a que la persona lo confirme. Antes se
-   * escribía el par de coordenadas en pantalla —«-17,7833, -63,1821»—, que no
-   * le permite a nadie darse cuenta de si el punto cayó en su casa o a cuatro
-   * cuadras; sobre el mapa se ve de un vistazo.
-   *
-   * Nunca bloquea el alta: si el navegador no la da —porque no hay API, porque
-   * se corre en el servidor, o porque la persona dijo que no— se anota el
-   * rechazo y el formulario sigue como estaba. La ubicación es una comodidad,
-   * no un requisito.
+   * Tocar el mapa **es** confirmar: el formulario que aparece lleno es lo que
+   * la persona revisa. `null` es «marcar otro lugar desde cero».
    */
-  usarMiUbicacion(): void {
-    this.pedirUbicacion(this.destinoDomicilio);
-  }
-
-  /** Lo mismo, para el lugar de trabajo. Ver {@link usarMiUbicacion}. */
-  usarMiUbicacionDeTrabajo(): void {
-    this.pedirUbicacion(this.destinoTrabajo);
-  }
-
-  /**
-   * Abre el mapa vacío para poner el pin del domicilio a mano.
-   *
-   * No pide nada al navegador ni toca lo que hubiera: es la puerta para quien
-   * no quiere —o no puede— compartir dónde está ahora, que casi nunca es donde
-   * vive.
-   */
-  marcarDomicilioEnMapa(): void {
-    this.abrirMapa(this.destinoDomicilio);
+  fijarPuntoDomicilio(punto: Coordenadas | null): void {
+    this.gpsDomicilio.set(punto);
+    this.direccionConfirmada.set(punto !== null);
   }
 
   /** Lo mismo, para el trabajo. */
-  marcarTrabajoEnMapa(): void {
-    this.abrirMapa(this.destinoTrabajo);
+  fijarPuntoDeTrabajo(punto: Coordenadas | null): void {
+    this.gpsTrabajo.set(punto);
+    this.direccionTrabajoConfirmada.set(punto !== null);
   }
 
-  /**
-   * Un toque sobre el mapa del domicilio: el pin va ahí.
-   *
-   * Sirve para poner el primer pin sobre el mapa vacío y para correr uno que
-   * ya estaba, viniera del GPS o de otro toque. En los dos casos el punto queda
-   * **sin confirmar**: quien lo movió es quien tiene que mirarlo y decir que sí.
-   */
-  fijarPuntoDomicilio(punto: Coordenadas): void {
-    this.fijarPunto(this.destinoDomicilio, punto);
-    // D-06: el punto nuevo ya no es la calle que estaba escrita. Se vacía «en
-    // nombre del formulario», igual que al sembrar: no lo tecleó la persona.
-    this.escribirDireccionSembrada(this.formPaciente.controls.homeAddressLines, '');
-    this.domicilioVaciadoPorElMapa.set(true);
+  /** La calle del domicilio, escrita (o vaciada por el mapa) en el bloque de dirección. */
+  escribirCalleDomicilio(valor: string): void {
+    const control = this.formPaciente.controls.homeAddressLines;
+    control.setValue(valor);
+    control.markAsDirty();
   }
 
   /** Lo mismo, para el trabajo. */
-  fijarPuntoDeTrabajo(punto: Coordenadas): void {
-    this.fijarPunto(this.destinoTrabajo, punto);
-    this.escribirDireccionSembrada(this.formPaciente.controls.workAddressLines, '');
-    this.trabajoVaciadoPorElMapa.set(true);
-  }
-
-  /** Las seis señales del domicilio, con el nombre que espera {@link pedirUbicacion}. */
-  private get destinoDomicilio(): DestinoDeUbicacion {
-    return {
-      punto: this.gpsDomicilio,
-      pidiendo: this.pidiendoGps,
-      confirmada: this.direccionConfirmada,
-      rechazado: this.gpsRechazado,
-      marcando: this.marcandoDomicilio,
-      delNavegador: this.gpsDomicilioDelNavegador,
-    };
-  }
-
-  /** Las seis señales del trabajo. Ver {@link destinoDomicilio}. */
-  private get destinoTrabajo(): DestinoDeUbicacion {
-    return {
-      punto: this.gpsTrabajo,
-      pidiendo: this.pidiendoGpsTrabajo,
-      confirmada: this.direccionTrabajoConfirmada,
-      rechazado: this.gpsTrabajoRechazado,
-      marcando: this.marcandoTrabajo,
-      delNavegador: this.gpsTrabajoDelNavegador,
-    };
-  }
-
-  private abrirMapa(destino: DestinoDeUbicacion): void {
-    destino.marcando.set(true);
-    destino.rechazado.set(false);
-  }
-
-  private fijarPunto(destino: DestinoDeUbicacion, punto: Coordenadas): void {
-    // Mover el pin es empezar de nuevo la confirmación: lo confirmado valía
-    // para el punto anterior.
-    destino.confirmada.set(false);
-    destino.punto.set({ lat: punto.lat, lng: punto.lng });
-    destino.delNavegador.set(false);
-    destino.marcando.set(false);
-    destino.rechazado.set(false);
-  }
-
-  /**
-   * El pedido al navegador, con las cuatro señales de una ubicación.
-   *
-   * Existe porque el alta pide **dos** ubicaciones —casa y trabajo— y el
-   * permiso del navegador, el tiempo de espera y el trato del rechazo son los
-   * mismos para las dos. Escribirlo dos veces garantizaba que el arreglo del
-   * segundo caso se hiciera sólo en el primero.
-   *
-   * @param destino - Las cuatro señales de la ubicación que se está pidiendo.
-   */
-  private pedirUbicacion(destino: DestinoDeUbicacion): void {
-    const geo = this.documento.defaultView?.navigator?.geolocation;
-    if (!geo) {
-      destino.rechazado.set(true);
-      return;
-    }
-
-    destino.pidiendo.set(true);
-    // Volver a pedirla es empezar de nuevo: lo confirmado antes valía para el
-    // punto anterior, no para el que está por llegar.
-    destino.confirmada.set(false);
-    geo.getCurrentPosition(
-      (posicion) => {
-        destino.punto.set({
-          lat: posicion.coords.latitude,
-          lng: posicion.coords.longitude,
-        });
-        destino.delNavegador.set(true);
-        destino.marcando.set(false);
-        destino.rechazado.set(false);
-        destino.pidiendo.set(false);
-      },
-      () => {
-        destino.rechazado.set(true);
-        destino.pidiendo.set(false);
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: GPS_TIMEOUT_MS,
-        maximumAge: GPS_MAX_AGE_MS,
-      },
-    );
-  }
-
-  /**
-   * Da por buena la dirección que muestra el mapa.
-   *
-   * Es lo que convierte un punto capturado en un dato del alta: hasta que
-   * alguien mira el plano y dice que sí, lo que hay es una lectura del GPS, y
-   * el GPS acierta la manzana, no la puerta.
-   *
-   * Lo que **no** hace es escribir la calle: ver {@link AVISO_SIN_GEOCODIFICACION}.
-   */
-  confirmarDireccionActual(): void {
-    if (this.gpsDomicilio() === null) return;
-    this.direccionConfirmada.set(true);
-  }
-
-  /** Lo mismo, para el trabajo. */
-  confirmarDireccionDeTrabajo(): void {
-    if (this.gpsTrabajo() === null) return;
-    this.direccionTrabajoConfirmada.set(true);
-  }
-
-  /** Olvida la ubicación capturada, y con ella su confirmación; cierra el mapa. */
-  quitarUbicacion(): void {
-    this.gpsDomicilio.set(null);
-    this.direccionConfirmada.set(false);
-    this.marcandoDomicilio.set(false);
-  }
-
-  /** Lo mismo, para el trabajo. */
-  quitarUbicacionDeTrabajo(): void {
-    this.gpsTrabajo.set(null);
-    this.direccionTrabajoConfirmada.set(false);
-    this.marcandoTrabajo.set(false);
+  escribirCalleTrabajo(valor: string): void {
+    const control = this.formPaciente.controls.workAddressLines;
+    control.setValue(valor);
+    control.markAsDirty();
   }
 
   readonly state = signal<ViewState<null>>(ready(null));
@@ -2467,6 +1998,8 @@ export class RegisterPatient {
         direccionConfirmada: this.direccionConfirmada(),
         gpsTrabajo: this.gpsTrabajo(),
         direccionTrabajoConfirmada: this.direccionTrabajoConfirmada(),
+        distritoDomicilio: this.distritoDomicilio(),
+        distritoTrabajo: this.distritoTrabajo(),
       };
       // Compatibilidad con pruebas unitarias legacy
       const borrador = {
@@ -2588,6 +2121,12 @@ export class RegisterPatient {
       }
       if (typeof extra['direccionTrabajoConfirmada'] === 'boolean') {
         this.direccionTrabajoConfirmada.set(extra['direccionTrabajoConfirmada']);
+      }
+      if (typeof extra['distritoDomicilio'] === 'string') {
+        this.distritoDomicilio.set(extra['distritoDomicilio']);
+      }
+      if (typeof extra['distritoTrabajo'] === 'string') {
+        this.distritoTrabajo.set(extra['distritoTrabajo']);
       }
       const pasoIndice = draft?.stepIndex ?? legacy?.pasoIndice;
       if (typeof pasoIndice === 'number' && pasoIndice >= 0) {
@@ -3041,9 +2580,9 @@ export class RegisterPatient {
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const sexoAlNacer = raw.sexAtBirth;
     const municipio = raw.residenceMunicipalityConceptId;
-    const calleDomicilio = raw.homeAddressLines.trim();
+    const calleDomicilio = unirCalleYDistrito(raw.homeAddressLines, this.distritoDomicilio());
     const municipioTrabajo = raw.workMunicipalityConceptId;
-    const calleTrabajo = raw.workAddressLines.trim();
+    const calleTrabajo = unirCalleYDistrito(raw.workAddressLines, this.distritoTrabajo());
     const empresa = this.empresaSeleccionada();
     const otraEmpresa = raw.workEmployerFreeText.trim();
     // Sólo viaja lo confirmado sobre el mapa: un punto capturado y no mirado es

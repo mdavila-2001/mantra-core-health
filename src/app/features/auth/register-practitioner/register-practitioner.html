@@ -767,10 +767,6 @@
               </p>
             </ng-template>
 
-            <!-- La localidad de residencia: el mismo mapa de departamentos y
-                 el mismo select acotado que el alta de paciente
-                 (`app-location-picker`). Acá es opcional, así que un catálogo
-                 caído no frena el alta: se avisa y se sigue (AC-05-15). -->
             <!-- Las especialidades, todas iguales: desde el 23/09/2026 no hay
                  desplegable de «principal» (D-01). El registro del cliente
                  permite hasta cuatro (L0174), las mismas para cualquier profesión. -->
@@ -960,6 +956,11 @@
               }
             </ng-template>
 
+            <!-- La dirección de residencia, MAPA PRIMERO: se toca el lugar en el
+                 mapa de Bolivia y aparece, ya lleno, el formulario con calle,
+                 distrito, municipio, provincia y departamento. Opcional, así que
+                 un catálogo caído no frena el alta: se avisa y se sigue
+                 (AC-05-15). -->
             <ng-template appCampoPersonalizado="municipio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
@@ -969,26 +970,30 @@
                   </button>
                 </p>
               } @else {
-                <app-location-picker
+                <app-address-by-map
                   testId="registration-practitioner-residence"
+                  calleTestId="registration-practitioner-home-address"
+                  pinId="domicilio"
                   [ramas]="ramasMunicipios()"
-                  [value]="municipioProfesional()"
+                  [municipio]="municipioProfesional()"
+                  (municipioChange)="municipioProfesional.set($event)"
+                  [calle]="domicilioEscrito()"
+                  (calleChange)="escribirCalleDomicilio($event)"
+                  [distrito]="distritoDomicilio()"
+                  (distritoChange)="distritoDomicilio.set($event)"
                   [punto]="gpsDomicilio()"
-                  (valueChange)="municipioProfesional.set($event)"
-                  mapLabel="Mapa de Bolivia: elija el departamento donde vive"
-                  municipalityLabel="Localidad de residencia (opcional)"
-                  municipalityHint="Sólo se ofrecen las del departamento que eligió."
+                  (puntoChange)="gpsDomicilio.set($event)"
+                  etiquetaMapa="Mapa de Bolivia: toque el lugar donde vive"
+                  indicacion="Toque en el mapa el lugar donde vive. La dirección se completa sola."
+                  etiquetaDelPin="Su dirección"
+                  calleLabel="Calle y número (opcional)"
                 />
               }
             </ng-template>
 
-            <!-- El punto del domicilio sobre el mapa. Es el MISMO componente
-                 que usa el alta de paciente para su casa y su trabajo: pedir
-                 permiso al navegador, dibujar el pin, dejar que alguien mire el
-                 plano y diga que sí, y avisar en voz alta si no lo dice. -->
-            <!-- La localidad del consultorio: el mismo control que el
-                 domicilio, con su propio estado. Son dos lugares distintos y
-                 hay quien vive en una ciudad y atiende en otra. -->
+            <!-- El consultorio: el mismo bloque, con su propio estado. Son dos
+                 lugares distintos y hay quien vive en una ciudad y atiende en
+                 otra. -->
             <ng-template appCampoPersonalizado="municipioConsultorio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
@@ -998,41 +1003,27 @@
                   </button>
                 </p>
               } @else {
-                <app-location-picker
+                <app-address-by-map
                   testId="registration-practitioner-office"
+                  calleTestId="registration-practitioner-office-address"
+                  pinId="consultorio"
                   [ramas]="ramasMunicipios()"
-                  [value]="municipioConsultorio()"
+                  [municipio]="municipioConsultorio()"
+                  (municipioChange)="municipioConsultorio.set($event)"
+                  [calle]="consultorioEscrito()"
+                  (calleChange)="escribirCalleConsultorio($event)"
+                  [distrito]="distritoConsultorio()"
+                  (distritoChange)="distritoConsultorio.set($event)"
                   [punto]="gpsConsultorio()"
-                  (valueChange)="municipioConsultorio.set($event)"
-                  mapLabel="Mapa de Bolivia: elija el departamento donde está su consultorio"
-                  municipalityLabel="Localidad del consultorio (opcional)"
-                  municipalityHint="Sólo se ofrecen las del departamento que eligió."
+                  (puntoChange)="gpsConsultorio.set($event)"
+                  etiquetaMapa="Mapa de Bolivia: toque el lugar donde queda su consultorio"
+                  indicacion="Toque en el mapa donde queda su consultorio. La dirección se completa sola."
+                  etiquetaDelPin="Su consultorio"
+                  calleLabel="Calle y número del consultorio (opcional)"
+                  calleHint="Es la dirección que ve un paciente antes de ir."
+                  callePlaceholder="Calle Libertad #120, piso 2"
                 />
               }
-            </ng-template>
-
-            <!-- El punto del consultorio. Mismo componente que el domicilio, y
-                 con su propia confirmación: confirmar uno no confirma el otro. -->
-            <ng-template appCampoPersonalizado="gpsConsultorio">
-              <app-map-location-picker
-                pinId="consultorio"
-                etiquetaConfirmada="Su consultorio"
-                etiquetaQuitar="Quitar la ubicación de su consultorio"
-                etiquetaMapa="La ubicación de su consultorio en el mapa"
-                [ids]="idsUbicacionConsultorio"
-                (confirmado)="gpsConsultorio.set($event)"
-              />
-            </ng-template>
-
-            <ng-template appCampoPersonalizado="gpsDomicilio">
-              <app-map-location-picker
-                pinId="domicilio"
-                etiquetaConfirmada="Su dirección"
-                etiquetaQuitar="Quitar la ubicación de su domicilio"
-                etiquetaMapa="Su ubicación actual en el mapa"
-                [ids]="idsUbicacionDomicilio"
-                (confirmado)="gpsDomicilio.set($event)"
-              />
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsTrabajo">

@@ -14,7 +14,10 @@ app-map {
   position: relative;
   display: block;
   min-height: 320px;
-  height: 360px;
+  /* El alto se puede pedir desde fuera con `--mapa-alto` en el host: el mapa de
+     la dirección, que abre en Bolivia entera, necesita más plano que uno de
+     barrio. Sin la variable, 360 px como siempre. */
+  height: var(--mapa-alto, 360px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   overflow: hidden;

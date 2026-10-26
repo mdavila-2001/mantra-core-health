@@ -57,7 +57,10 @@ async function llegarAlContacto(page: Page, documento: string): Promise<void> {
   await continuar(page);
 
   await esperarPaso(page, 2, 'Lugares donde vive');
-  await page.getByTestId('registration-residence-mapa-SC').click();
+  // Por la salida «completar a mano» de la dirección: el toque sobre el plano
+  // lo prueba `direccion-por-mapa.spec.ts`.
+  await page.getByTestId('registration-residence-a-mano').click();
+  await elegirOpcion(page, 'registration-residence-departamento', { label: 'Santa Cruz' });
   await expect(page.getByTestId('registration-residence-municipio')).toBeVisible();
   await elegirOpcion(page, 'registration-residence-municipio', { index: 1 });
   await continuar(page);

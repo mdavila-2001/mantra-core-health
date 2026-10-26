@@ -1,0 +1,171 @@
+<div class="direccion-mapa" [attr.data-testid]="testId()">
+  <!-- El mapa va primero, siempre: es la forma de elegir. Sin punto muestra
+       Bolivia entera con sus provincias; al tocar, `centro` + `zoom` lo acercan
+       al lugar (el mismo acercamiento que el mapa hace con un pin). Seguir
+       tocando mueve el punto. -->
+  <app-map
+    class="direccion-mapa__mapa"
+    [attr.data-testid]="testId() + '-mapa'"
+    [pines]="pines()"
+    [centro]="punto()"
+    [zoom]="punto() === null ? null : zoomAlElegir"
+    [vistaDeBolivia]="true"
+    [seleccionable]="true"
+    [etiqueta]="etiquetaMapa()"
+    (pointPicked)="elegirPunto($event)"
+  />
+
+  <!-- Dónde cayó el último toque. Va aparte del formulario porque el toque que
+       no cae en Bolivia no lo abre. -->
+  @if (resolviendo()) {
+    <p class="direccion-mapa__aviso" role="status" [attr.data-testid]="testId() + '-buscando'">
+      Buscando el lugar que marcó…
+    </p>
+  } @else if (sinLugar()) {
+    <p class="direccion-mapa__aviso" role="status" [attr.data-testid]="testId() + '-sin-lugar'">
+      Ese punto no está en Bolivia. Toque un lugar dentro del país
+      @if (!conFormulario()) {
+        o complete la dirección a mano.
+      } @else {
+        o corrija el departamento y el municipio abajo.
+      }
+    </p>
+  }
+
+  @if (!conFormulario()) {
+    <p class="direccion-mapa__indicacion" [attr.data-testid]="testId() + '-indicacion'">
+      {{ indicacion() }}
+    </p>
+    <div class="direccion-mapa__acciones">
+      <button
+        app-button
+        type="button"
+        variant="secondary"
+        size="sm"
+        [attr.data-testid]="testId() + '-usar-ubicacion'"
+        [isLoading]="pidiendoGps()"
+        (clicked)="usarMiUbicacion()"
+      >
+        Usar mi ubicación
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [attr.data-testid]="testId() + '-a-mano'"
+        (clicked)="completarAMano()"
+      >
+        No puedo marcarlo: completar a mano
+      </button>
+    </div>
+    @if (gpsRechazado()) {
+      <p class="direccion-mapa__aviso">
+        No pudimos obtener su ubicación. Toque el mapa donde queda, o complete a mano.
+      </p>
+    }
+    @if (required() && errorMessage() !== '') {
+      <p class="direccion-mapa__error" role="alert" [attr.data-testid]="testId() + '-error'">
+        {{ errorMessage() }}
+      </p>
+    }
+  } @else {
+    <!-- El formulario que aparece solo, ya lleno con lo que sale del punto. -->
+    <div class="direccion-mapa__formulario" [attr.data-testid]="testId() + '-formulario'">
+      @if (punto() !== null && !resolviendo()) {
+        <p class="direccion-mapa__aviso">
+          Revise los datos. Para corregir el lugar, toque otro punto del mapa.
+        </p>
+      }
+
+      <div class="direccion-mapa__grilla">
+        <div class="direccion-mapa__ancho">
+          <app-form-field [label]="calleLabel()" [hint]="calleHint()">
+            <app-input
+              [testId]="calleTestId() ?? testId() + '-calle'"
+              autocomplete="street-address"
+              [placeholder]="callePlaceholder()"
+              [value]="calle()"
+              (valueChange)="escribirCalle($event)"
+            />
+          </app-form-field>
+          @if (calleVaciada() && calle().trim() === '') {
+            <p class="direccion-mapa__aviso" role="status" [attr.data-testid]="testId() + '-reescribir'">
+              {{ avisoReescribir }}
+            </p>
+          }
+        </div>
+
+        <app-form-field
+          label="Distrito (opcional)"
+          hint="Distrito o zona de la ciudad."
+        >
+          <app-input
+            [testId]="testId() + '-distrito'"
+            autocomplete="off"
+            placeholder="Distrito 5"
+            [value]="distrito()"
+            (valueChange)="escribirDistrito($event)"
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Municipio"
+          [description]="municipioDescription()"
+          [required]="required()"
+          [errorMessage]="errorMessage()"
+        >
+          <app-select
+            [options]="opcionesMunicipio()"
+            [value]="municipio()"
+            [disabled]="departamento() === null"
+            [hasError]="errorMessage() !== ''"
+            placeholder="Elija el municipio"
+            [attr.data-testid]="testId() + '-municipio'"
+            (valueChange)="elegirMunicipio($event)"
+          >
+            <!-- El glifo del campo, cuando quien monta el control lo proyecta. Se
+                 vuelve a proyectar hacia el átomo —`ngProjectAs`— para que caiga
+                 dentro del marco del desplegable, que es donde comparte borde,
+                 foco y estado de error. Sin nada que proyectar no se dibuja nada. -->
+            <ng-content select="[slot=icon-start]" ngProjectAs="[slot=icon-start]" />
+          </app-select>
+        </app-form-field>
+
+        <app-form-field label="Provincia" hint="Sale del punto del mapa.">
+          <app-input
+            [testId]="testId() + '-provincia'"
+            [readonly]="true"
+            placeholder="Se completa con el mapa"
+            [value]="provincia() ?? ''"
+          />
+        </app-form-field>
+
+        <app-form-field label="Departamento">
+          <app-select
+            [options]="opcionesDepartamento()"
+            [value]="departamento()"
+            placeholder="Elija el departamento"
+            [attr.data-testid]="testId() + '-departamento'"
+            (valueChange)="elegirDepartamento($event)"
+          />
+        </app-form-field>
+      </div>
+
+      <div class="direccion-mapa__acciones">
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          size="sm"
+          [attr.data-testid]="testId() + '-reiniciar'"
+          (clicked)="empezarDeNuevo()"
+        >
+          Marcar otro lugar desde cero
+        </button>
+      </div>
+    </div>
+  }
+
+  <p class="solo-lectores" role="status" [attr.data-testid]="testId() + '-anuncio'">{{ anuncio() }}</p>
+</div>

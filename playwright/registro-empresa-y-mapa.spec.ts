@@ -54,30 +54,27 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await empezarElAlta(page);
     await expect(page.getByRole('heading', { name: PASOS_DEL_ALTA.residencia })).toBeVisible();
 
-    // Antes de pedirla no hay mapa: sólo la invitación.
-    await expect(page.getByTestId('registro-mapa-domicilio')).toHaveCount(0);
-    await page.getByTestId('registro-usar-ubicacion').click();
+    // Con el mapa primero, el mapa de Bolivia está desde el comienzo y el
+    // formulario todavía no.
+    await expect(page.getByTestId('registration-residence-mapa')).toBeVisible();
+    await expect(page.getByTestId('registration-residence-formulario')).toHaveCount(0);
+    await page.getByTestId('registration-residence-usar-ubicacion').click();
 
-    // El mapa, con su pin. `.mapa__lienzo` es el elemento que monta Leaflet:
-    // si estuviera visible pero sin montar, el pin no existiría.
-    const mapa = page.getByTestId('registro-mapa-domicilio');
-    await expect(mapa).toBeVisible();
+    // El mapa, con su pin. `.leaflet-marker-icon` sólo existe si Leaflet montó.
+    const mapa = page.getByTestId('registration-residence-mapa');
     await expect(mapa.locator('.leaflet-marker-icon').first()).toBeVisible({ timeout: 15_000 });
 
     // Lo que se reemplazó: el par de coordenadas en pantalla. Ni el texto viejo
     // ni los números sueltos deben aparecer en ningún lado del campo.
-    const bloque = page.locator('.registro__ubicacion');
+    const bloque = page.getByTestId('registration-residence');
     await expect(bloque).not.toContainText('Ubicación guardada');
     await expect(bloque).not.toContainText('-17,7833');
     await expect(bloque).not.toContainText('-17.7833');
 
-    // Y el botón que pidió el cliente, con ese nombre.
-    const confirmar = page.getByTestId('registro-confirmar-direccion');
-    await expect(confirmar).toBeVisible();
-    await expect(confirmar).toHaveText(/Confirmar dirección actual/);
-
-    await confirmar.click();
-    await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
+    // El formulario sale lleno con lo que el punto dice, y ya no hay un botón
+    // de «Confirmar dirección actual»: tocar el mapa es confirmar.
+    await expect(page.getByTestId('registration-residence-formulario')).toBeVisible();
+    await expect(page.getByTestId('registro-confirmar-direccion')).toHaveCount(0);
 
     await page.screenshot({
       path: 'artifacts/playwright/registro-paciente-domicilio-confirmado.png',
@@ -88,8 +85,10 @@ test.describe('alta pública — la empresa y el mapa', () => {
   test('el paso del trabajo pregunta la empresa y dónde queda', async ({ page }) => {
     await llegarAlTrabajo(page);
 
-    // Dónde queda: el mismo mapa que la residencia y la calle, en el mismo paso.
-    await expect(page.getByTestId('registration-work-mapa-SC')).toBeVisible();
+    // Dónde queda: el mismo bloque que la residencia, con el mapa primero; la
+    // calle aparece con el formulario.
+    await expect(page.getByTestId('registration-work-mapa')).toBeVisible();
+    await page.getByTestId('registration-work-a-mano').click();
     await expect(page.getByTestId('registration-work-address')).toBeVisible();
 
     // La empresa, con su lupa.

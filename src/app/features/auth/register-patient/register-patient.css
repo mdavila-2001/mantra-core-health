@@ -76,61 +76,6 @@ app-location-picker:focus-within .registro__campo-icono {
   color: var(--brand-primary);
 }
 
-/* ==========================================================================
-    La ubicacion del domicilio.
-
-    Antes esto era una linea de texto con el par de coordenadas —«Ubicacion
-    guardada (-17,7833, -63,1821)»— y un boton de quitar. Un par de numeros no
-    le permite a nadie darse cuenta de si el punto cayo en su casa o a cuatro
-    cuadras, que es exactamente lo que hay que comprobar antes de guardarlo.
-    Ahora es el mapa del banco (`app-map`, Leaflet + OpenStreetMap) con el pin,
-    y debajo el boton que lo da por bueno.
-    ========================================================================== */
-.registro__ubicacion {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
-/* El mapa ocupa el ancho del campo y se apila con su texto y sus botones. */
-.registro__ubicacion:has(.registro__mapa) {
-  display: grid;
-  gap: var(--sp-2);
-}
-
-/* El alto lo fija el organismo (`.mapa`, 320px) y aca no se pelea: su regla es
-   global —encapsulacion None— y una de esta pantalla, que es emulada, no la
-   alcanzaria. Se declara el ancho, que es lo que si es de aca. */
-.registro__mapa {
-  inline-size: 100%;
-}
-
-.registro__ubicacion-estado {
-  margin: 0;
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
-.registro__ubicacion-acciones {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
-/* Nació como un `<span>` dentro del párrafo del botón; desde AC-03-9 también es
-   un `<p>` propio —el aviso de que la calle no se resuelve sola—, así que se le
-   quita el margen del navegador para que no abra un hueco entre el mapa y sus
-   botones. */
-.registro__ubicacion-aviso {
-  margin: 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
 /* Cada contacto de emergencia sumado con el «+»: un grupo a lo ancho, con su
    título, para que nombre, teléfono y relación se lean como de la misma
    persona. Adentro los tres datos van en columnas que se apilan al angostar. */

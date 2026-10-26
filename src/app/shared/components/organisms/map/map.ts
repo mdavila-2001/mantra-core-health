@@ -46,6 +46,15 @@ const CENTRO_POR_DEFECTO: Leaflet.LatLngTuple = [-17.7833, -63.1821];
 const ZOOM_POR_DEFECTO = 12;
 
 /**
+ * La caja que encierra a Bolivia, para el mapa que abre mostrando el país
+ * entero (`vistaDeBolivia`). Sur-oeste y nor-este, en `[lat, lng]`.
+ */
+const LIMITES_DE_BOLIVIA: Leaflet.LatLngBoundsLiteral = [
+  [-22.95, -69.7],
+  [-9.6, -57.4],
+];
+
+/**
  * Desde qué zoom se escriben los nombres de las provincias sobre el mapa. Más
  * lejos se pisan unas con otras —en 8 ya se encima el valle de Cochabamba,
  * medido en pantalla el 24/09/2026— y el plano se vuelve ilegible; los
@@ -174,6 +183,16 @@ export class AppMap implements OnDestroy {
    */
   readonly seleccionable = input(false);
 
+  /**
+   * Si, sin pines ni centro, el mapa abre mostrando **Bolivia entera** en vez
+   * de la ciudad por defecto.
+   *
+   * Es la vista de quien todavía no eligió dónde está: el país completo, con
+   * sus provincias, para tocar el lugar. En cuanto hay un `centro` o un pin,
+   * manda el encuadre de siempre —y es ahí donde el mapa se acerca al punto—.
+   */
+  readonly vistaDeBolivia = input(false);
+
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly documento = inject(DOCUMENT);
   private readonly injector = inject(Injector);
@@ -282,7 +301,11 @@ export class AppMap implements OnDestroy {
     if (ownZoom) {
       L.control.zoom({ zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(mapa);
     }
-    mapa.setView(CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO);
+    if (this.vistaDeBolivia() && this.centro() === null && this.pines().length === 0) {
+      mapa.fitBounds(LIMITES_DE_BOLIVIA);
+    } else {
+      mapa.setView(CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO);
+    }
     L.tileLayer(DEMO_TILES, {
       attribution: DEMO_ATTRIBUTION,
       maxZoom: ZOOM_MAXIMO,
@@ -534,6 +557,9 @@ export class AppMap implements OnDestroy {
       return;
     }
     if (pines.length === 0) {
+      if (this.vistaDeBolivia()) {
+        mapa.fitBounds(LIMITES_DE_BOLIVIA);
+      }
       return;
     }
     if (pines.length === 1) {

@@ -58,7 +58,7 @@ import {
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { LocationPicker } from '../shared-registration/location-picker/location-picker';
+import { AddressByMap, unirCalleYDistrito } from '../shared-registration/address-by-map/address-by-map';
 import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
 import {
   MapLocationPicker,
@@ -623,7 +623,7 @@ function sinTildes(texto: string): string {
     AppButton,
     NavIcon,
     Tooltip,
-    LocationPicker,
+    AddressByMap,
     MapLocationPicker,
     Link,
     Alert,
@@ -1661,11 +1661,11 @@ export class RegisterPractitioner {
   readonly municipioProfesional = signal<string | null>(null);
 
   /**
-   * El punto del domicilio, ya confirmado sobre el mapa.
+   * El punto del domicilio, fijado en el mapa.
    *
-   * Lo emite `app-map-location-picker` y llega **sólo confirmado**: el componente
-   * se guarda para sí el estado intermedio —capturado y sin confirmar— y avisa
-   * en pantalla que ese no se guarda. Acá no hace falta volver a preguntarlo.
+   * Lo emite `app-address-by-map`: tocar el mapa es confirmar, porque el
+   * formulario que aparece lleno es lo que la persona revisa. La ubicación del
+   * trabajo, en cambio, sigue pasando por `app-map-location-picker`.
    */
   readonly gpsDomicilio = signal<Coordinates | null>(null);
 
@@ -1681,30 +1681,43 @@ export class RegisterPractitioner {
    */
   readonly municipioConsultorio = signal<string | null>(null);
 
-  /** El punto del consultorio, ya confirmado sobre el mapa. */
+  /** El punto del consultorio, fijado en el mapa. */
   readonly gpsConsultorio = signal<Coordinates | null>(null);
 
-  /** Los identificadores de prueba del bloque de ubicación del consultorio. */
-  protected readonly idsUbicacionConsultorio: TestIds = {
-    mapa: 'registration-practitioner-office-map',
-    confirmada: 'registration-practitioner-office-location-confirmed',
-    avisoGeocodificacion: 'registration-practitioner-office-geocoding-notice',
-    quitar: 'registration-practitioner-office-location-remove',
-    confirmar: 'registration-practitioner-office-location-confirm',
-    usarUbicacion: 'registration-practitioner-office-location-use',
-    marcarEnMapa: 'registration-practitioner-office-location-pick',
-  };
+  /**
+   * El distrito del domicilio y del consultorio, escritos por la persona.
+   *
+   * No hay columna de distrito: viaja pegado a la calle (ver
+   * {@link unirCalleYDistrito}).
+   */
+  readonly distritoDomicilio = signal('');
+  readonly distritoConsultorio = signal('');
 
-  /** Los identificadores de prueba del bloque de ubicación del domicilio. */
-  protected readonly idsUbicacionDomicilio: TestIds = {
-    mapa: 'registration-practitioner-home-map',
-    confirmada: 'registration-practitioner-home-location-confirmed',
-    avisoGeocodificacion: 'registration-practitioner-home-geocoding-notice',
-    quitar: 'registration-practitioner-home-location-remove',
-    confirmar: 'registration-practitioner-home-location-confirm',
-    usarUbicacion: 'registration-practitioner-home-location-use',
-    marcarEnMapa: 'registration-practitioner-home-location-pick',
-  };
+  /**
+   * La calle del domicilio y del consultorio, espejadas del formulario para que
+   * `app-address-by-map` las reciba como entrada.
+   */
+  readonly domicilioEscrito = toSignal(this.formProfesional.controls.homeAddressLines.valueChanges, {
+    initialValue: '',
+  });
+  readonly consultorioEscrito = toSignal(
+    this.formProfesional.controls.officeAddressLines.valueChanges,
+    { initialValue: '' },
+  );
+
+  /** La calle del domicilio, escrita (o vaciada por el mapa) en el bloque de dirección. */
+  escribirCalleDomicilio(valor: string): void {
+    const control = this.formProfesional.controls.homeAddressLines;
+    control.setValue(valor);
+    control.markAsDirty();
+  }
+
+  /** Lo mismo, para el consultorio. */
+  escribirCalleConsultorio(valor: string): void {
+    const control = this.formProfesional.controls.officeAddressLines;
+    control.setValue(valor);
+    control.markAsDirty();
+  }
 
   /** Identificadores de prueba del mapa para la dirección laboral. */
   protected readonly idsUbicacionTrabajo: TestIds = {
@@ -2131,9 +2144,10 @@ export class RegisterPractitioner {
    * Municipios (VS_BO_MUNICIPALITY), colgados de su departamento.
    *
    * Se guardan tal como los devuelve el catálogo, sin traducir a los grupos de
-   * `app-tree-select`: quien los dibuja ahora es `app-location-picker`, que
-   * necesita la rama entera para acotar el select de ciudad al departamento
-   * pulsado en el mapa. Es el mismo control que monta el alta de paciente.
+   * `app-tree-select`: quien los dibuja ahora es `app-address-by-map`, que
+   * necesita la rama entera para acotar el select de municipio al departamento
+   * del punto tocado en el mapa. Es el mismo control que monta el alta de
+   * paciente.
    */
   private readonly municipios = inject(BoMunicipalitiesCatalog);
   readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
@@ -2352,6 +2366,8 @@ export class RegisterPractitioner {
         gpsDomicilio: this.gpsDomicilio(),
         gpsTrabajo: this.gpsTrabajo(),
         gpsConsultorio: this.gpsConsultorio(),
+        distritoDomicilio: this.distritoDomicilio(),
+        distritoConsultorio: this.distritoConsultorio(),
       };
       this.draftService.saveProgress(
         'practitioner',
@@ -2394,6 +2410,12 @@ export class RegisterPractitioner {
       }
       if (extra['gpsConsultorio'] !== undefined) {
         this.gpsConsultorio.set(extra['gpsConsultorio'] as Coordinates | null);
+      }
+      if (typeof extra['distritoDomicilio'] === 'string') {
+        this.distritoDomicilio.set(extra['distritoDomicilio']);
+      }
+      if (typeof extra['distritoConsultorio'] === 'string') {
+        this.distritoConsultorio.set(extra['distritoConsultorio']);
       }
       if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
         this.pasoGuardado.set(draft.stepIndex);
@@ -2533,7 +2555,7 @@ export class RegisterPractitioner {
   private consultorioPropio(): NewOwnSite | null {
     const raw = this.formProfesional.getRawValue();
     const nombre = raw.officeName.trim();
-    const calle = raw.officeAddressLines.trim();
+    const calle = unirCalleYDistrito(raw.officeAddressLines, this.distritoConsultorio());
     const telefono = raw.officeContactPhone.trim();
     const municipio = this.municipioConsultorio();
     const punto = this.gpsConsultorio();
@@ -2931,7 +2953,7 @@ export class RegisterPractitioner {
     const fechaInscripcion = raw.licenseIssueDate;
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
-    const calleDomicilio = raw.homeAddressLines.trim();
+    const calleDomicilio = unirCalleYDistrito(raw.homeAddressLines, this.distritoDomicilio());
     const gpsDomicilio = this.gpsDomicilio();
     const calleTrabajo = raw.workAddressLines.trim();
     const gpsTrabajo = this.gpsTrabajo();
