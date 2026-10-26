@@ -1,9 +1,9 @@
-<div class="compra">
-  <section class="compra__bloque" aria-labelledby="medical-centers-title">
-    <h2 id="medical-centers-title" class="compra__titulo">Dónde hacerse sus procedimientos</h2>
-    <p class="compra__nota" data-testid="medical-centers-origin">
-      @if (origin(); as punto) {
-        Distancias en línea recta, medidas desde {{ punto.etiqueta }}. Puede cambiar el punto en la
+<div class="purchase">
+  <section class="purchase__block" aria-labelledby="medical-centers-title">
+    <h2 id="medical-centers-title" class="purchase__title">Dónde hacerse sus procedimientos</h2>
+    <p class="purchase__note" data-testid="medical-centers-origin">
+      @if (origin(); as point) {
+        Distancias en línea recta, medidas desde {{ point.label }}. Puede cambiar el punto en la
         pestaña Farmacias.
       } @else {
         Sin un punto de partida no se calculan distancias. Puede elegirlo en la pestaña Farmacias: su
@@ -11,37 +11,37 @@
       }
     </p>
     <app-view-state-host [state]="state()" (retry)="load()">
-      @if (data(); as datos) {
-        <p class="compra__secundario" data-testid="medical-centers-procedures">
-          Procedimientos pendientes: {{ procedureNames(datos.procedures) }}
+      @if (data(); as data) {
+        <p class="purchase__secondary" data-testid="medical-centers-procedures">
+          Procedimientos pendientes: {{ procedureNames(data.procedures) }}
         </p>
-        <ul class="compra__sedes" data-testid="medical-centers-list">
-          @for (centro of visibleCenters(); track centro.id) {
-            <li class="compra__sede">
-              <div class="compra__sede-datos">
-                <span class="compra__principal">{{ centro.name }}</span>
-                @if (centro.address !== null) {
-                  <span class="compra__secundario">{{ centro.address }}</span>
+        <ul class="purchase__branches" data-testid="medical-centers-list">
+          @for (center of visibleCenters(); track center.id) {
+            <li class="purchase__branch">
+              <div class="purchase__branch-details">
+                <span class="purchase__primary">{{ center.name }}</span>
+                @if (center.address !== null) {
+                  <span class="purchase__secondary">{{ center.address }}</span>
                 }
-                @if (centro.distance !== null) {
-                  <span class="compra__secundario">{{ centro.distance }} en línea recta</span>
+                @if (center.distance !== null) {
+                  <span class="purchase__secondary">{{ center.distance }} en línea recta</span>
                 }
-                @if (!centro.complete) {
-                  <p class="compra__faltantes" data-testid="medical-centers-missing">
-                    Le falta: {{ centro.missing.join(', ') }}
+                @if (!center.complete) {
+                  <p class="purchase__missing" data-testid="medical-centers-missing">
+                    Le falta: {{ center.missing.join(', ') }}
                   </p>
                 }
               </div>
-              <div class="compra__acciones">
-                <app-badge [variant]="centro.complete ? 'success' : 'warning'">
-                  {{ centro.complete ? 'Tiene todos' : 'Le falta algo' }}
+              <div class="purchase__actions">
+                <app-badge [variant]="center.complete ? 'success' : 'warning'">
+                  {{ center.complete ? 'Tiene todos' : 'Le falta algo' }}
                 </app-badge>
-                @if (centro.directions; as enlace) {
+                @if (center.directions; as link) {
                   <a
                     app-link
-                    [href]="enlace"
+                    [href]="link"
                     [external]="true"
-                    [attr.aria-label]="'Cómo llegar a ' + centro.name + ' (abre en una pestaña nueva)'"
+                    [attr.aria-label]="'Cómo llegar a ' + center.name + ' (abre en una pestaña nueva)'"
                   >
                     Cómo llegar
                   </a>
@@ -52,7 +52,7 @@
         </ul>
         @if (partialCenterCount() > 0) {
           @if (!showPartialCenters() && visibleCenters().length === 0) {
-            <p class="compra__nota" data-testid="medical-centers-none-complete">
+            <p class="purchase__note" data-testid="medical-centers-none-complete">
               Ningún centro tiene hoy todos los procedimientos que le pidieron.
             </p>
           }
@@ -68,7 +68,7 @@
             {{ partialCentersLabel() }}
           </button>
         }
-        <p class="compra__nota">
+        <p class="purchase__note">
           La lista muestra los centros que declaran ofrecer el procedimiento. Confirme la
           disponibilidad y el turno con el centro antes de ir.
         </p>
