@@ -284,7 +284,7 @@ describe('Resumen contable', () => {
       // Ordenados de mayor a menor, con su parte del total.
       expect(gastos.map((g) => g.porcentaje)).toEqual([60, 30, 10]);
       // El desgaste se explica: no es plata que sale de la cuenta.
-      expect(gastos[0]?.aclaracion).toContain('No sale plata');
+      expect(gastos[0]?.aclaracion).toContain('No sale dinero');
       expect(gastos[1]?.aclaracion).toBeNull();
     });
 
@@ -545,41 +545,45 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
-      expect(subrotulos(fixture)).toEqual(['Movimientos', 'Pendientes', 'Patrimonio']);
+      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Bienes y deudas', 'Flujo de dinero']);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(texto).toContain('¿Cuánto hizo?');
+      expect(texto).toContain('¿Cuánto ganó?');
 
       fixture.componentInstance.subtab.set(1);
       fixture.detectChanges();
       const textoPendientes = (fixture.nativeElement as HTMLElement).textContent ?? '';
-      expect(textoPendientes).toContain('Lo que está pendiente');
+      expect(textoPendientes).toContain('Cobros y pagos pendientes');
     });
 
-    it('divide el resumen en subpestañas: Movimientos, Pendientes y Patrimonio', () => {
+    it('divide el resumen en ingresos, pendientes, activos y flujo de dinero', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
       fixture.detectChanges();
 
-      expect(fixture.componentInstance.subtab()).toBe(0);
-      let raiz = fixture.nativeElement as HTMLElement;
-      expect(raiz.textContent).toContain('¿Cuánto hizo?');
-      expect(raiz.textContent).not.toContain('Lo que está pendiente');
-      expect(raiz.textContent).not.toContain('Lo que tiene y lo que debe');
+      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Bienes y deudas', 'Flujo de dinero']);
 
+      // Movimientos
+      expect(fixture.componentInstance.subtab()).toBe(0);
+      let texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('¿Cuánto ganó?');
+      expect(texto).toContain('¿En qué gasta?');
+
+      // Pendientes
       fixture.componentInstance.subtab.set(1);
       fixture.detectChanges();
-      raiz = fixture.nativeElement as HTMLElement;
-      expect(raiz.textContent).not.toContain('¿Cuánto hizo?');
-      expect(raiz.textContent).toContain('Lo que está pendiente');
-      expect(raiz.textContent).not.toContain('Lo que tiene y lo que debe');
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Cobros y pagos pendientes');
 
+      // Patrimonio
       fixture.componentInstance.subtab.set(2);
       fixture.detectChanges();
-      raiz = fixture.nativeElement as HTMLElement;
-      expect(raiz.textContent).not.toContain('¿Cuánto hizo?');
-      expect(raiz.textContent).not.toContain('Lo que está pendiente');
-      expect(raiz.textContent).toContain('Lo que tiene y lo que debe');
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Bienes y deudas');
+      fixture.componentInstance.subtab.set(3);
+      fixture.detectChanges();
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Flujo de dinero');
     });
 
     it('el Resumen no trae la tarjeta de registros', () => {
@@ -610,8 +614,8 @@ describe('Resumen contable', () => {
 
       const raiz = fixture.nativeElement as HTMLElement;
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).not.toBeNull();
-      expect(raiz.textContent).not.toContain('¿Cuánto hizo?');
-      expect(raiz.textContent).not.toContain('Lo que está pendiente');
+      expect(raiz.textContent).not.toContain('¿Cuánto ganó?');
+      expect(raiz.textContent).not.toContain('Cobros y pagos pendientes');
       http.verify();
     });
 
