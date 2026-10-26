@@ -213,9 +213,9 @@ export interface PractitionerLicense {
   readonly validFrom?: Date;
   readonly validTo?: Date;
   /**
-   * El carnet del colegio adjuntado al cargarla. Mismo hueco y misma fecha que
-   * {@link PractitionerCredential.fileId}: el alta lo acepta, la lectura
-   * todavía no lo devuelve fuera del simulador.
+   * El carnet del colegio adjuntado al cargarla. La API lo devuelve sólo al
+   * titular (`GET /profiles/practitioners/me/summary`), igual que
+   * {@link PractitionerCredential.fileId}; la ficha que ve un tercero no lo trae.
    */
   readonly fileId?: string;
 }

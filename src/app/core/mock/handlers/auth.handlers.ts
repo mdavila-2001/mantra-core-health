@@ -263,9 +263,25 @@ export function registrarAuth(router: MockRouter): void {
       // como imágenes en base64 igual que `profilePhotoBase64`.
       signatureImageBase64?: string;
       sealImageBase64?: string;
+      // P29: los respaldos de la habilitación, como en la API.
+      licenseFileId?: string;
+      sedesLicenseNumber?: string;
+      sedesLicenseFileId?: string;
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
+    }
+    // Mismas dos precondiciones que `IamPractitionerSelfRegistrationService`.
+    if (datos.sedesLicenseFileId !== undefined && !datos.sedesLicenseNumber) {
+      return preconditionFailed('El archivo del registro del SEDES necesita su número de registro', {
+        field: 'sedesLicenseFileId',
+      });
+    }
+    if (datos.licenseFileId !== undefined && datos.licenseFileId === datos.sedesLicenseFileId) {
+      return preconditionFailed(
+        'La matrícula y el registro del SEDES no pueden compartir el mismo archivo',
+        { field: 'sedesLicenseFileId' },
+      );
     }
     const id = nuevoId('profesional-nuevo');
     const practitionerProfileId = uuid(`hpid-${id}`);

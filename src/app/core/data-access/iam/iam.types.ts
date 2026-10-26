@@ -373,6 +373,14 @@ export interface PractitionerRegistration {
   readonly regulatoryAuthority?: string;
   /** Fecha de inscripción de la matrícula, ISO `YYYY-MM-DD`. */
   readonly licenseIssueDate?: string;
+  /**
+   * El PDF de la matrícula, ya subido con `IamClient.uploadRegistrationDocument`
+   * (P29). Hasta el 26/10/2026 el alta no tenía dónde llevarlo y el archivo
+   * elegido en «Respaldos de la habilitación» se tiraba en silencio.
+   */
+  readonly licenseFileId?: string;
+  /** El PDF del registro del SEDES, mismas reglas. La API exige `sedesLicenseNumber`. */
+  readonly sedesLicenseFileId?: string;
   readonly professionalTitle?: string;
   /**
    * Forma anterior de declarar el teléfono, hoy el del trabajo.
