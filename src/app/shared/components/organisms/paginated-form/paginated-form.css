@@ -44,6 +44,41 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+  --step-dx: 28px;
+  animation: paginated-form-step-a var(--dur-slow) var(--ease-out) both;
+}
+
+/* Volver entra desde el otro lado. */
+.paginated-form__pagina[data-direction='back'] {
+  --step-dx: -28px;
+}
+
+/* Dos `@keyframes` idénticos, uno por paridad de paso: alternar el nombre es lo
+   que reinicia la entrada en cada cambio de página sin recrear la sección. El
+   final es el estilo propio del elemento, así que no queda ningún `transform`
+   que cree un bloque contenedor sobre los desplegables. */
+.paginated-form__pagina--alt {
+  animation-name: paginated-form-step-b;
+}
+
+@keyframes paginated-form-step-a {
+  from {
+    opacity: 0;
+    transform: translateX(var(--step-dx));
+  }
+}
+
+@keyframes paginated-form-step-b {
+  from {
+    opacity: 0;
+    transform: translateX(var(--step-dx));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paginated-form__pagina {
+    animation: none;
+  }
 }
 
 /* Una columna explícita de `minmax(0, 1fr)`: la implícita es `auto`, que crece

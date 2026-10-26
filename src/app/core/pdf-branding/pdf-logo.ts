@@ -55,6 +55,14 @@ export function logoDeDocumentos(): PdfLogo | null {
  * @returns El logo listo, o `null` si no se pudo preparar.
  */
 export async function prepararLogo(dataUrl: string): Promise<PdfLogo | null> {
+  return prepararImagenPdf(dataUrl, LADO_MAXIMO_PX);
+}
+
+/** Normaliza una ilustración del contenido con resolución apta para una página A4. */
+export async function prepararImagenPdf(
+  dataUrl: string,
+  ladoMaximoPx = 1600,
+): Promise<PdfLogo | null> {
   if (typeof document === 'undefined' || typeof Image === 'undefined') {
     return null;
   }
@@ -65,7 +73,7 @@ export async function prepararLogo(dataUrl: string): Promise<PdfLogo | null> {
     if (!(anchoNatural > 0) || !(altoNatural > 0)) {
       return null;
     }
-    const escala = Math.min(1, LADO_MAXIMO_PX / Math.max(anchoNatural, altoNatural));
+    const escala = Math.min(1, ladoMaximoPx / Math.max(anchoNatural, altoNatural));
     const ancho = Math.max(1, Math.round(anchoNatural * escala));
     const alto = Math.max(1, Math.round(altoNatural * escala));
 

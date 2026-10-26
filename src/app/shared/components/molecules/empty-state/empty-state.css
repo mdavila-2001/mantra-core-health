@@ -150,7 +150,7 @@
    ve ninguno. */
 @media (prefers-reduced-motion: no-preference) {
     :host {
-        animation: empty-state-entra 240ms ease-out both;
+        animation: empty-state-entra var(--dur-base) var(--ease-out) both;
     }
 }
 
