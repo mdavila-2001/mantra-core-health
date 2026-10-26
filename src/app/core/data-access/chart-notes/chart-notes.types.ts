@@ -12,14 +12,12 @@ import type { ChartNote, MedicalNoteEntry } from '../clinical/clinical.types';
     apreciación y plan— siguen en el contrato porque el backend los tiene
     (`chart.clinical_note_*`) y las notas viejas los traen. La pantalla nueva
     escribe las filas y, si hay texto libre, lo manda en `subjectiveText`.
-   ========================================================================== */
 
-/**
- * Las claves de la nota que `CreateNoteDto`/`AddVersionDto` no declaran
- * (P39): la maqueta las guarda, la API real todavía no. Ver
- * `withSimulatorExtensions()`.
- */
-export const CHART_NOTE_SIMULATOR_EXTENSIONS: readonly string[] = ['entries'];
+    Desde P39 (26/10/2026) la API guarda las filas en la versión de la nota
+    (`entries_json`) con los mismos límites que valida el simulador: hasta
+    40 filas, campo de hasta 60 caracteres, valor de hasta 500, los dos
+    obligatorios, sin campos repetidos y sin HTML.
+   ========================================================================== */
 
 /** Lo que se manda para abrir una nota nueva. */
 export interface CreateClinicalNoteInput {
@@ -31,7 +29,7 @@ export interface CreateClinicalNoteInput {
   readonly encounterId?: string;
   /** Qué clase de nota es; sin él, la que el servidor tome por omisión. */
   readonly noteTypeConceptId?: string;
-  /** Las filas campo/valor de C1. Sólo las guarda el simulador: la API no las declara (P39). */
+  /** Las filas campo/valor de C1, en orden (P39). */
   readonly entries?: readonly MedicalNoteEntry[];
   /** Motivo de consulta. */
   readonly chiefComplaintText?: string;
@@ -68,7 +66,7 @@ export interface ClinicalNoteVersionRef {
 export interface AppendClinicalNoteVersionInput {
   /** Quién escribe esta versión. */
   readonly authorProfileId: string;
-  /** Las filas campo/valor de C1. Sólo las guarda el simulador: la API no las declara (P39). */
+  /** Las filas campo/valor de C1, en orden (P39). */
   readonly entries?: readonly MedicalNoteEntry[];
   /** Por qué se corrige una nota ya firmada. Obligatorio sólo en ese caso (409 sin él). */
   readonly amendmentReasonText?: string;

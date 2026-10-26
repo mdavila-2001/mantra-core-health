@@ -466,6 +466,26 @@ describe('PharmacyProducts', () => {
     expectListing([product({})]);
   });
 
+  it('una categoría creada por la farmacia (fuera de las seis de partida) se guarda: la valida la API, no una lista fija', async () => {
+    const original = product({ category: 'Ortopedia' });
+    fixture = TestBed.createComponent(PharmacyProducts);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/pharmacy/pharmacies')).flush(DIRECTORY);
+    fixture.detectChanges();
+    expectListing([original]);
+    expectCategories(['Medicamentos', 'Ortopedia']);
+
+    await internal().onRowAction('edit', original);
+    fixture.detectChanges();
+    (dialog() as unknown as { save: () => void }).save();
+
+    const save = http.expectOne(`/pharmacies/${PHARMACY.id}/products/p-1`);
+    expect(save.request.body).toMatchObject({ category: 'Ortopedia' });
+    save.flush(product({ category: 'Ortopedia' }));
+    fixture.detectChanges();
+    expectListing([product({ category: 'Ortopedia' })]);
+  });
+
   it('retira un producto confirmado y relee el catálogo', async () => {
     mount();
 

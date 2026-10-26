@@ -10,6 +10,7 @@ import type {
 import { DirectoryPage } from '@shared/components/organisms/directory-page/directory-page';
 import type { SustantivoDelDirectorio } from '@shared/components/organisms/directory-page/directory-page.types';
 
+import { OpenNowPharmacies } from './open-now-pharmacies/open-now-pharmacies';
 import type { AccionDeLaFicha } from './public-directory-filters';
 import { PublicDirectoryListing } from './public-directory-listing';
 
@@ -24,17 +25,18 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
  *
  * ## Lo que este directorio NO promete
  *
- * El plan proponía un chip de «de turno». **No está**, y no por olvido: el
- * contrato público sirve nombre, titular, ciudad, foto, verificación y
- * puntuación, y nada sobre el turno de guardia. Un chip de «de turno» que
- * devolviera la lista entera mandaría a alguien a las tres de la mañana a una
- * farmacia cerrada. Cuando el dato exista, el chip es una línea.
+ * El buscador público (`/public/search/pharmacies`) sigue sin saber del turno
+ * de guardia: su índice son perfiles. Por eso «24 h» y «de turno» **no son un
+ * chip de este buscador** —filtraría por un dato que no tiene y mandaría a
+ * alguien a las tres de la mañana a una farmacia cerrada—, sino la sección
+ * «Abiertas ahora» de arriba (P34), que lee `GET /public/pharmacies/open-now`
+ * y decide con el reloj del servidor.
  *
  * Lo mismo con «obra social/convenio»: no hay campo, no hay chip.
  */
 @Component({
   selector: 'app-pharmacies-directory',
-  imports: [DirectoryPage],
+  imports: [DirectoryPage, OpenNowPharmacies],
   templateUrl: './pharmacies-directory.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

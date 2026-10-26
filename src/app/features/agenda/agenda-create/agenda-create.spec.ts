@@ -51,6 +51,8 @@ interface Testable {
   limpiarCampos(): Promise<void>;
   /** Horario flexible y almuerzo (propietario, 18/09). */
   readonly flexible: WritableSignal<boolean>;
+  /** P36 · lo que se reserva por paciente en horario flexible. */
+  readonly minutosPorPaciente: WritableSignal<number>;
   readonly conAlmuerzo: WritableSignal<boolean>;
   readonly almuerzoDesde: WritableSignal<string>;
   readonly almuerzoHasta: WritableSignal<string>;
@@ -204,6 +206,10 @@ describe('AgendaCreate', () => {
       statusConceptId: 'archived',
       releasedSlots: 24,
       keptSlots: 0,
+      liveBookings: 0,
+      liveBookingIds: [],
+      truncated: false,
+      cancelledBookings: 0,
     });
   }
 
@@ -283,6 +289,10 @@ describe('AgendaCreate', () => {
         statusConceptId: 'archived',
         releasedSlots: 24,
         keptSlots: 3,
+        liveBookings: 3,
+        liveBookingIds: ['b-1', 'b-2', 'b-3'],
+        truncated: false,
+        cancelledBookings: 0,
       });
 
       http
@@ -295,8 +305,10 @@ describe('AgendaCreate', () => {
     });
 
     /**
-     * El 409 son citas de pacientes. Publicar igual las movería sin avisar, así
-     * que no se publica nada y el mensaje del servidor se muestra tal cual.
+     * Si el retiro falla, no se publica nada y el mensaje del servidor se
+     * muestra tal cual. Desde M4 las citas vivas ya no lo frenan (P23); el 409
+     * sigue siendo el caso a probar porque es el de una API anterior, y el
+     * camino de error es el mismo para cualquier rechazo.
      */
     it('si el retiro responde 409, no crea la plantilla nueva', async () => {
       crearConHorarioVigente(VIGENTE);
@@ -1306,6 +1318,32 @@ describe('AgendaCreate', () => {
       const reglas = cuerpo['rules'] as Record<string, unknown>[];
       expect(reglas[0]).not.toHaveProperty('slotMinutes');
       expect(reglas[0]).not.toHaveProperty('gapMinutes');
+      // P36: ni capacidad por turno —la API rechaza la franja que la declara—.
+      expect(reglas[0]).not.toHaveProperty('capacityPerSlot');
+      // Lo que se reserva por paciente viaja una vez, en la plantilla.
+      expect(cuerpo['slotMinutes']).toBe(30);
+    });
+
+    it('P36 · en horario flexible se elige cuánto se reserva por paciente y viaja en la plantilla', () => {
+      crear();
+      encenderLunes();
+      acc.flexible.set(true);
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-minutos-por-paciente"]'),
+      ).not.toBeNull();
+
+      acc.minutosPorPaciente.set(20);
+      expect(cuerpoDeLaPlantilla()['slotMinutes']).toBe(20);
+    });
+
+    it('P36 · con turnos fijos no se pregunta el tiempo por paciente', () => {
+      crear();
+      encenderLunes();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-minutos-por-paciente"]'),
+      ).toBeNull();
     });
 
     it('en horario flexible la tabla no pregunta duración ni descanso', () => {

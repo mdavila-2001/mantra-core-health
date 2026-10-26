@@ -2,7 +2,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import type { ChartNote } from '../clinical/clinical.types';
 import type {
@@ -34,6 +33,10 @@ interface WireChartNotesPage extends Omit<ChartNotesPage, 'items'> {
  * clínica: `PUT /charts/notes/:id/versions` agrega, y la versión previa queda
  * con su número y su autor. Corregir después de firmar exige decir por qué
  * (`amendmentReasonText`); sin motivo el servidor responde 409.
+ *
+ * Las filas campo/valor de la nota (`entries`, P39) viajan tal cual: la API
+ * las guarda en la versión (`chart.clinical_note_versions.entries_json`) y las
+ * devuelve en el expediente y en `GET /charts/notes`.
  *
  * La lectura de la historia entera —notas, planes y documentos— sigue en
  * `ClinicalClient.readChart`. `listNotes` existe para el bloque que escribe:
@@ -73,7 +76,7 @@ export class ChartNotesClient {
    * @returns La nota y la versión recién creadas.
    */
   createNote(input: CreateClinicalNoteInput): Observable<ClinicalNoteVersionRef> {
-    return this.http.post<ClinicalNoteVersionRef>(this.url('/charts/notes'), notePayload(input));
+    return this.http.post<ClinicalNoteVersionRef>(this.url('/charts/notes'), input);
   }
 
   /**
@@ -89,7 +92,7 @@ export class ChartNotesClient {
   ): Observable<ClinicalNoteVersionRef> {
     return this.http.put<ClinicalNoteVersionRef>(
       this.url(`/charts/notes/${encodeURIComponent(noteId)}/versions`),
-      notePayload(input),
+      input,
     );
   }
 
@@ -125,17 +128,5 @@ function toNote({ signedAt, createdAt, ...resto }: WireChartNote): ChartNote {
     ...resto,
     ...(signedAt === undefined || signedAt === null ? {} : { signedAt: new Date(signedAt) }),
     createdAt: new Date(createdAt),
-  };
-}
-
-/** P39: la API vigente acepta SOAP; las filas estructuradas siguen siendo demo. */
-function notePayload(input: CreateClinicalNoteInput | AppendClinicalNoteVersionInput) {
-  if (environment.mockBackend) return input;
-  const { entries, ...payload } = input;
-  if (entries === undefined || entries.length === 0) return payload;
-  const rows = entries.map(({ label, value }) => `${label}: ${value}`).join('\n');
-  return {
-    ...payload,
-    objectiveText: [payload.objectiveText, rows].filter((text) => text !== undefined && text !== '').join('\n'),
   };
 }

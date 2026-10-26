@@ -5,7 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
-import { simulatorAvailable, simulatorOnly } from '../simulator-only';
+import { simulatorOnly } from '../simulator-only';
 import type {
   AccountActivation,
   ActivationResult,
@@ -278,6 +278,14 @@ export class IamClient {
       ...(registration.licenseIssueDate === undefined
         ? {}
         : { licenseIssueDate: registration.licenseIssueDate }),
+      // Los respaldos de la habilitación (P29): sin repetirlos acá se
+      // descartarían en silencio, que es justo el defecto que vienen a cerrar.
+      ...(registration.licenseFileId === undefined
+        ? {}
+        : { licenseFileId: registration.licenseFileId }),
+      ...(registration.sedesLicenseFileId === undefined
+        ? {}
+        : { sedesLicenseFileId: registration.sedesLicenseFileId }),
       ...(registration.professionalTitle === undefined
         ? {}
         : { professionalTitle: registration.professionalTitle }),
@@ -418,8 +426,12 @@ export class IamClient {
    * misma operación. Ver el JSDoc de {@link PharmacyOrganizationRegistration}
    * para por qué es un método aparte de {@link IamClient.registerOrganization}
    * en vez de generalizarlo: el bloque específico del tipo de tenant no
-   * coincide (`payer` siempre obligatorio para la aseguradora; la farmacia no
-   * tiene bloque propio en el DTO real).
+   * coincide (`payer` siempre obligatorio para la aseguradora; la farmacia
+   * manda su bloque `pharmacy`, `RegisterPharmacyBlockDto` en el DTO real).
+   * La API crea en la misma transacción la fila de la farmacia, su casa
+   * central y cada sucursal como sede dispensadora, y devuelve `pharmacyId`
+   * (P50). Los seis papeles y el punto de la central son opcionales para
+   * registrarse y obligatorios para que la plataforma la verifique.
    */
   registerPharmacyOrganization(
     registration: PharmacyOrganizationRegistration,
@@ -445,23 +457,22 @@ export class IamClient {
           ? {}
           : { legalDocuments: registration.legalDocuments }),
         ...(registration.executives === undefined ? {} : { executives: registration.executives }),
-        // `pharmacy`: el bloque `RegisterPharmacyBlockDto` del DTO real, con
-        // las coordenadas de la casa matriz y las sucursales (P49).
-        ...(registration.headquarters === undefined && registration.branches === undefined
-          ? {}
-          : {
-              pharmacy: {
-                ...(registration.headquarters === undefined
-                  ? {}
-                  : {
-                      latitude: registration.headquarters.latitude,
-                      longitude: registration.headquarters.longitude,
-                    }),
-                ...(registration.branches === undefined || registration.branches.length === 0
-                  ? {}
-                  : { branches: registration.branches.map((branch) => ({ ...branch })) }),
-              },
-            }),
+        // `pharmacy`: el bloque `RegisterPharmacyBlockDto` del DTO real (P50).
+        // Viaja siempre: la dirección legal es la de la casa central, que la
+        // API crea en toda alta de farmacia; el punto y las sucursales, si los
+        // hay.
+        pharmacy: {
+          address: registration.legalAddress,
+          ...(registration.headquarters === undefined
+            ? {}
+            : {
+                latitude: registration.headquarters.latitude,
+                longitude: registration.headquarters.longitude,
+              }),
+          ...(registration.branches === undefined || registration.branches.length === 0
+            ? {}
+            : { branches: registration.branches.map((branch) => ({ ...branch })) }),
+        },
       },
       owner: {
         email: registration.owner.email,
@@ -481,9 +492,9 @@ export class IamClient {
    * tipo— y no `payer` ni `pharmacy`. Campo por campo y no con un spread del
    * registro, por lo mismo que el resto del cliente: `forbidNonWhitelisted`
    * rechaza toda clave que el DTO no declare. Las sucursales viajan como
-   * `branches: [{ name, address: { lines, latitude?, longitude? } }]`
-   * (`DiagnosticUnitBranchDto`, P51); `description` y `locationUrl` no tienen
-   * columna en la API (P54), así que sólo salen hacia el simulador.
+   * `branches: [{ name, address: { lines, latitude?, longitude? },
+   * description?, locationUrl? }]` (`DiagnosticUnitBranchDto`, P51): la API
+   * las crea como sedes de la unidad y como sucursales del portal.
    */
   registerLaboratoryOrganization(
     registration: LaboratoryOrganizationRegistration,
@@ -522,10 +533,10 @@ export class IamClient {
                       ? {}
                       : { latitude: branch.location.latitude, longitude: branch.location.longitude }),
                   },
-                  ...(!simulatorAvailable() || branch.description === undefined
+                  ...(branch.description === undefined
                     ? {}
                     : { description: branch.description }),
-                  ...(!simulatorAvailable() || branch.locationUrl === undefined
+                  ...(branch.locationUrl === undefined
                     ? {}
                     : { locationUrl: branch.locationUrl }),
                 })),

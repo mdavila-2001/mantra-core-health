@@ -56,9 +56,9 @@ describe('alta pública de farmacia en el simulador', () => {
   });
 
   it('límite — legalRepresentative sin idNumber ni powerOfAttorneyFileId no es un 400', () => {
-    // A diferencia de la aseguradora, el registro de procesos de farmacia no
-    // pide la cédula del representante: el simulador lo relaja a propósito
-    // (ver el comentario del handler).
+    // Sólo en la compatibilidad declarada del simulador (alta sin país ni
+    // jurisdicción, `demoPortalRegistration`); el alta que arma el front hoy
+    // manda los dos conceptos y la cédula, ver los casos «API real (P50)».
     const { status } = call('POST', '/iam/auth/register-organization', CUERPO_MINIMO);
 
     expect(status).toBe(200);
@@ -115,6 +115,52 @@ describe('alta pública de farmacia en el simulador', () => {
     const { status } = call('POST', '/iam/auth/register-organization', cuerpo);
 
     expect(status).toBe(400);
+  });
+
+  /** El cuerpo que arma hoy `IamClient.registerPharmacyOrganization` (P50). */
+  const CUERPO_DEL_FRONT = {
+    organization: {
+      ...CUERPO_MINIMO.organization,
+      taxIdentifier: '1023456789',
+      countryConceptId: 'concepto-pais',
+      jurisdictionConceptId: 'concepto-jurisdiccion',
+      legalRepresentative: {
+        fullName: 'Mariana Siles',
+        email: 'legal@farmacia.test',
+        idNumber: '4872190 SC',
+      },
+      pharmacy: { address: 'Av. Cristo Redentor 1234', latitude: -17.78, longitude: -63.18 },
+    },
+    owner: CUERPO_MINIMO.owner,
+  };
+
+  it('correcto (API real, P50) — sin poder la farmacia se registra y recibe pharmacyId', () => {
+    const { status, body } = call('POST', '/iam/auth/register-organization', CUERPO_DEL_FRONT);
+
+    expect(status).toBe(200);
+    expect(typeof (body as { pharmacyId: string }).pharmacyId).toBe('string');
+  });
+
+  it('inválido (API real, P50) — sin la cédula del representante es 400, como el DTO', () => {
+    const { legalRepresentative } = CUERPO_DEL_FRONT.organization;
+    const { status } = call('POST', '/iam/auth/register-organization', {
+      ...CUERPO_DEL_FRONT,
+      organization: {
+        ...CUERPO_DEL_FRONT.organization,
+        legalRepresentative: { fullName: legalRepresentative.fullName, email: legalRepresentative.email },
+      },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('inválido (API real, P50) — el bloque pharmacy con otro tipo de organización es 422', () => {
+    const { status } = call('POST', '/iam/auth/register-organization', {
+      ...CUERPO_DEL_FRONT,
+      organization: { ...CUERPO_DEL_FRONT.organization, tenantType: 'HOSPITAL' },
+    });
+
+    expect(status).toBe(422);
   });
 
   it('inválido — el correo del owner repetido es 409, no un 200 silencioso', () => {

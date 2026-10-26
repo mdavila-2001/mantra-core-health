@@ -20,6 +20,9 @@ export function productStatus(product: PharmacyProduct): PharmacyProductStatus {
   return product.status ?? 'PUBLISHED';
 }
 
+/** Umbral de alerta mientras la farmacia no fija el suyo (el de la API). */
+export const DEFAULT_MIN_STOCK = 5;
+
 /** Cómo se llama cada estado en pantalla. */
 export const PRODUCT_STATUS_LABEL: Readonly<Record<PharmacyProductStatus, string>> = {
   PUBLISHED: 'Publicado',
@@ -27,9 +30,13 @@ export const PRODUCT_STATUS_LABEL: Readonly<Record<PharmacyProductStatus, string
   WITHDRAWN: 'Retirado',
 };
 
-/** Existencias y umbral con que se decide una alerta; sin dato no hay alerta. */
+/**
+ * Existencias y umbral con que se decide una alerta; sin conteo (`null`) o sin
+ * dato no hay alerta. Sin umbral propio vale {@link DEFAULT_MIN_STOCK}.
+ */
 export function isLowStock(product: PharmacyProduct): boolean {
   const stock = product.stock;
   const minimum = product.minStock;
-  return stock !== undefined && minimum !== undefined && stock > 0 && stock <= minimum;
+  if (stock === undefined || stock === null) return false;
+  return stock > 0 && stock <= (minimum ?? DEFAULT_MIN_STOCK);
 }
