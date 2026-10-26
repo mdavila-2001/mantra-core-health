@@ -6,73 +6,33 @@
 
 <app-view-state-host [state]="state()" (retry)="retry()">
   @if (group(); as group) {
+    <!-- UNA tarjeta con pestañas, centrada y a lo ancho del área de contenido
+         (composition-rules.md §5). Lo que exige una respuesta —la invitación,
+         el cambio de horario propuesto— va arriba de las pestañas para que se
+         vea desde cualquiera de ellas. -->
     <div class="consulta">
-      <!-- ─── Arriba a la izquierda: estado y NOTAS DEL EJERCICIO ───────────── -->
-      <aside class="consulta__lateral" aria-labelledby="consulta-estado-titulo">
-        <section class="consulta__estado">
-          <h2 id="consulta-estado-titulo" class="consulta__rotulo">Estado</h2>
+      <app-card class="consulta__tarjeta" variant="elevated" padding="lg">
+        <div class="consulta__cabecera">
+          <h2 class="consulta__titulo">{{ format(group.scheduledAt) }}</h2>
           <app-badge
             data-testid="medical-group-status"
             [variant]="statusLabel[group.status].variant"
             [value]="statusLabel[group.status].label"
           />
-          @if (group.status === 'RESCHEDULE_PENDING' && group.proposedRescheduleAt; as proposed) {
-            <p class="consulta__nota">
-              Horario propuesto: <strong>{{ format(proposed) }}</strong>
-            </p>
-          }
-          @if (group.isClosed) {
-            <p class="consulta__nota" data-testid="medical-group-closed">
-              El expediente está cerrado: pasó la semana posterior a la fecha y ya no se puede
-              modificar.
-            </p>
-          }
-        </section>
+        </div>
 
-        <section class="consulta__notas" aria-labelledby="consulta-notas-titulo">
-          <h2 id="consulta-notas-titulo" class="consulta__rotulo">Notas del ejercicio</h2>
-          @if (canEditNotes()) {
-            <app-form-field
-              label="Notas del procedimiento"
-              hint="Se pueden cargar o corregir hasta una semana después de la fecha."
-            >
-              <app-textarea
-                [rows]="5"
-                [value]="notesValue()"
-                (valueChange)="notesDraft.set($event)"
-              />
-            </app-form-field>
-            <button
-              app-button
-              type="button"
-              variant="primary"
-              data-testid="medical-group-save-notes"
-              [isLoading]="working()"
-              (clicked)="saveNotes()"
-            >
-              Guardar notas
-            </button>
-          } @else if (group.exerciseNotesText) {
-            <p class="consulta__texto" data-testid="medical-group-notes">
-              {{ group.exerciseNotesText }}
-            </p>
-            @if (group.exerciseNotesUpdatedAt; as updated) {
-              <p class="consulta__nota">Actualizadas el {{ format(updated) }}.</p>
-            }
-          } @else {
-            <p class="consulta__nota">
-              {{
-                group.isRealized
-                  ? 'No se cargaron notas.'
-                  : 'Se cargan después de realizado el procedimiento.'
-              }}
-            </p>
-          }
-        </section>
-      </aside>
+        @if (group.status === 'RESCHEDULE_PENDING' && group.proposedRescheduleAt; as proposed) {
+          <p class="consulta__nota">
+            Horario propuesto: <strong>{{ format(proposed) }}</strong>
+          </p>
+        }
+        @if (group.isClosed) {
+          <p class="consulta__nota" data-testid="medical-group-closed">
+            El expediente está cerrado: pasó la semana posterior a la fecha y ya no se puede
+            modificar.
+          </p>
+        }
 
-      <!-- ─── El formulario, lleno y sin editar ──────────────────────────────── -->
-      <div class="consulta__cuerpo">
         @if (actionError(); as error) {
           <app-alert tone="error" data-testid="medical-group-action-error">{{ error }}</app-alert>
         }
@@ -131,57 +91,145 @@
           </app-alert>
         }
 
-        <section class="consulta__bloque" aria-labelledby="consulta-datos-titulo">
-          <div class="consulta__encabezado">
-            <h2 id="consulta-datos-titulo">Datos del grupo</h2>
-            @if (canRequestReschedule()) {
-              <button
-                app-button
-                type="button"
-                variant="secondary"
-                data-testid="medical-group-request-reschedule"
-                (clicked)="openReschedule()"
-              >
-                Solicitar cambio de horario
-              </button>
-            }
-          </div>
-          <app-fact-list [hechos]="summary()" etiqueta="Datos del grupo" />
-        </section>
+        <app-tabs [(selectedIndex)]="tab" data-testid="medical-group-tabs">
+          <!-- ─── Resumen: los datos del grupo y sus términos ──────────────── -->
+          <app-tab label="Resumen">
+            <div class="consulta__panel" data-testid="medical-group-tab-resumen">
+              <section class="consulta__bloque" aria-labelledby="consulta-datos-titulo">
+                <h3 id="consulta-datos-titulo" class="consulta__subtitulo">Datos del grupo</h3>
+                <app-fact-list
+                  [hechos]="summary()"
+                  etiqueta="Datos del grupo"
+                  disposicion="columnas"
+                />
+              </section>
 
-        <section class="consulta__bloque" aria-labelledby="consulta-equipo-titulo">
-          <h2 id="consulta-equipo-titulo">Equipo y pago acordado</h2>
-          <ul class="consulta__equipo">
-            @for (member of group.members; track member.id) {
-              <li class="consulta__integrante" data-testid="medical-group-member">
-                <div class="consulta__integrante-fila">
-                  <strong>{{ member.roleTitle }}</strong>
-                  <app-badge
-                    [variant]="invitationLabel[member.invitationStatus].variant"
-                    [value]="
-                      member.isCreator
-                        ? 'Creó el grupo'
-                        : invitationLabel[member.invitationStatus].label
-                    "
-                  />
-                </div>
-                <span>{{ member.practitionerName ?? 'Profesional sin nombre cargado' }}</span>
-                <span>Pago acordado: Bs {{ formatAmount(member.agreedPaymentAmount) }}</span>
-                @if (member.additionalTermsText) {
-                  <span class="consulta__nota"
-                    >Términos del cargo: {{ member.additionalTermsText }}</span
-                  >
+              <section class="consulta__bloque" aria-labelledby="consulta-terminos-titulo">
+                <h3 id="consulta-terminos-titulo" class="consulta__subtitulo">
+                  Términos y condiciones
+                </h3>
+                <p class="consulta__texto" data-testid="medical-group-terms">
+                  {{ group.termsText }}
+                </p>
+              </section>
+            </div>
+          </app-tab>
+
+          <!-- ─── Equipo y pago acordado ───────────────────────────────────── -->
+          <app-tab [label]="'Equipo (' + group.members.length + ')'">
+            <div class="consulta__panel" data-testid="medical-group-tab-equipo">
+              <ul class="consulta__equipo" aria-label="Equipo y pago acordado">
+                @for (member of group.members; track member.id) {
+                  <li class="consulta__integrante" data-testid="medical-group-member">
+                    <div class="consulta__integrante-fila">
+                      <strong>{{ member.roleTitle }}</strong>
+                      <app-badge
+                        [variant]="invitationLabel[member.invitationStatus].variant"
+                        [value]="
+                          member.isCreator
+                            ? 'Creó el grupo'
+                            : invitationLabel[member.invitationStatus].label
+                        "
+                      />
+                    </div>
+                    <span>{{ member.practitionerName ?? 'Profesional sin nombre cargado' }}</span>
+                    <span>Pago acordado: Bs {{ formatAmount(member.agreedPaymentAmount) }}</span>
+                    @if (member.additionalTermsText) {
+                      <span class="consulta__nota"
+                        >Términos del cargo: {{ member.additionalTermsText }}</span
+                      >
+                    }
+                  </li>
                 }
-              </li>
-            }
-          </ul>
-        </section>
+              </ul>
+            </div>
+          </app-tab>
 
-        <section class="consulta__bloque" aria-labelledby="consulta-terminos-titulo">
-          <h2 id="consulta-terminos-titulo">Términos y condiciones</h2>
-          <p class="consulta__texto" data-testid="medical-group-terms">{{ group.termsText }}</p>
-        </section>
-      </div>
+          <!-- ─── Horario: dónde y cuándo, y el cambio de horario ──────────── -->
+          <app-tab label="Horario">
+            <div class="consulta__panel" data-testid="medical-group-tab-horario">
+              <p class="consulta__texto">
+                Programado para el <strong>{{ format(group.scheduledAt) }}</strong> en
+                {{ group.locationText }}.
+              </p>
+              @if (
+                group.status === 'RESCHEDULE_PENDING' && group.proposedRescheduleAt;
+                as proposed
+              ) {
+                <p class="consulta__texto">
+                  Hay un cambio propuesto para el <strong>{{ format(proposed) }}</strong
+                  >.
+                </p>
+                @if (!canAnswerReschedule()) {
+                  <p class="consulta__nota">Lo resuelve quien creó el grupo.</p>
+                }
+              }
+              @if (canRequestReschedule()) {
+                <div class="consulta__acciones">
+                  <button
+                    app-button
+                    type="button"
+                    variant="secondary"
+                    data-testid="medical-group-request-reschedule"
+                    (clicked)="openReschedule()"
+                  >
+                    Solicitar cambio de horario
+                  </button>
+                </div>
+              } @else if (group.status !== 'RESCHEDULE_PENDING') {
+                <p class="consulta__nota">
+                  El horario sólo se puede cambiar en un grupo programado y todavía no realizado.
+                </p>
+              }
+            </div>
+          </app-tab>
+
+          <!-- ─── Notas del ejercicio ──────────────────────────────────────── -->
+          <app-tab label="Notas del ejercicio">
+            <div class="consulta__panel" data-testid="medical-group-tab-notas">
+              @if (canEditNotes()) {
+                <div class="consulta__formulario">
+                  <app-form-field
+                    label="Notas del procedimiento"
+                    hint="Se pueden cargar o corregir hasta una semana después de la fecha."
+                  >
+                    <app-textarea
+                      [rows]="8"
+                      [value]="notesValue()"
+                      (valueChange)="notesDraft.set($event)"
+                    />
+                  </app-form-field>
+                  <button
+                    app-button
+                    type="button"
+                    variant="primary"
+                    data-testid="medical-group-save-notes"
+                    [isLoading]="working()"
+                    (clicked)="saveNotes()"
+                  >
+                    Guardar notas
+                  </button>
+                </div>
+              } @else if (group.exerciseNotesText) {
+                <p class="consulta__texto" data-testid="medical-group-notes">
+                  {{ group.exerciseNotesText }}
+                </p>
+                @if (group.exerciseNotesUpdatedAt; as updated) {
+                  <p class="consulta__nota">Actualizadas el {{ format(updated) }}.</p>
+                }
+              } @else {
+                <p class="consulta__nota">
+                  {{
+                    group.isRealized
+                      ? 'No se cargaron notas.'
+                      : 'Se cargan después de realizado el procedimiento.'
+                  }}
+                </p>
+              }
+            </div>
+          </app-tab>
+        </app-tabs>
+      </app-card>
     </div>
 
     @if (rescheduleOpen()) {
