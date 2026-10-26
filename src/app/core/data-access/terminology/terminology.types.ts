@@ -291,12 +291,52 @@ export interface GlossaryGraphNode {
 /** De qué lado de la relación está el término central. */
 export type GlossaryRelationDirection = 'outgoing' | 'incoming';
 
-/** Un término vecino en el mapa: lo justo para pintarlo y navegar a él. */
+/** Mejor nivel de evidencia de una relación, de T1 (norma nacional) a T4 (estadística). */
+export type GlossaryEvidenceTier =
+  | 'NATIONAL_STANDARD'
+  | 'CURATED_REFERENCE'
+  | 'COLLABORATIVE_KNOWLEDGE'
+  | 'STATISTICAL_LITERATURE';
+
+/**
+ * Frecuencia de un hallazgo en una enfermedad (escala HPO). `EXCLUDED` no es
+ * una relación positiva: la fuente **descarta** el hallazgo.
+ */
+export type GlossaryRelationFrequency =
+  | 'OBLIGATE'
+  | 'VERY_FREQUENT'
+  | 'FREQUENT'
+  | 'OCCASIONAL'
+  | 'VERY_RARE'
+  | 'EXCLUDED';
+
+/** A quién aplica una relación; cada campo viaja sólo si todas sus evidencias coinciden. */
+export interface GlossaryNeighborQualifiers {
+  readonly sex?: string;
+  readonly ageMinDays?: number;
+  readonly ageMaxDays?: number;
+  readonly pregnancy?: string;
+  readonly careLevel?: string;
+  readonly lineOfTherapy?: string;
+}
+
+/**
+ * Un término vecino en el mapa: lo justo para pintarlo y navegar a él.
+ *
+ * Los campos opcionales (TAREA-41 F1.5) salen de la evidencia de la relación y
+ * no llegan si la relación todavía no tiene evidencia cargada.
+ */
 export interface GlossaryNeighbor {
   readonly conceptId: string;
   readonly slug: string;
   readonly display: string;
   readonly category: GlossaryCategoryRef | null;
+  /** Fuerza de la relación, de 0 a 1. */
+  readonly strength?: number;
+  readonly frequency?: GlossaryRelationFrequency;
+  readonly evidenceTier?: GlossaryEvidenceTier;
+  readonly sourceCodes?: readonly string[];
+  readonly qualifiers?: GlossaryNeighborQualifiers;
 }
 
 /**

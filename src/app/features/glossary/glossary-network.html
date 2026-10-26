@@ -104,6 +104,21 @@
                                 >
                                   {{ neighbor.display }}
                                 </button>
+                                @if (evidenceOf(neighbor); as evidence) {
+                                  <p class="ruta__evidencia" [class.ruta__evidencia--descartada]="evidence.excluded">
+                                    @if (evidence.strengthPercent !== null) {
+                                      <span class="ruta__fuerza" aria-hidden="true">
+                                        <span class="ruta__fuerza-barra" [style.inline-size.%]="evidence.strengthPercent"></span>
+                                      </span>
+                                    }
+                                    @if (evidence.frequencyLabel) {
+                                      <span class="ruta__frecuencia">{{ evidence.frequencyLabel }}</span>
+                                    }
+                                    @if (evidence.tierLabel) {
+                                      <span class="ruta__sello">{{ evidence.tierLabel }}</span>
+                                    }
+                                  </p>
+                                }
                               </li>
                             }
                           </ul>
