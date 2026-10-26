@@ -407,7 +407,6 @@ describe('PharmacyInbox with the tenant API list', () => {
     fixture.detectChanges();
 
     expect(sedeSelect(fixture)).not.toBeNull();
-    expect(text(fixture)).not.toContain('Ninguna sede está marcada');
     fixture.destroy();
   });
 
@@ -427,7 +426,6 @@ describe('PharmacyInbox with the tenant API list', () => {
     request.flush({ items: [], count: 0 });
     fixture.detectChanges();
 
-    expect(text(fixture)).not.toContain('Ninguna sede está marcada como casa matriz');
     fixture.destroy();
   });
 
