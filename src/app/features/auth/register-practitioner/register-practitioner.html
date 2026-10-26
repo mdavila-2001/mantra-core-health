@@ -262,20 +262,34 @@
                     label="Ciudad de estudio"
                     [hint]="
                       ciudadesDelTitulo().length === 0
-                        ? 'Sale de la universidad que elija.'
+                        ? universidadDelTituloElegida() !== null
+                          ? 'Opcional. Escríbala como figura en su diploma.'
+                          : 'Sale de la universidad que elija.'
                         : ciudadesDelTitulo().length === 1
                           ? 'La sede de esa universidad.'
                           : 'Elija en qué sede estudió.'
                     "
                   >
-                    <app-select
-                      data-testid="registro-pro-titulo-ciudad"
-                      placeholder="Sale de la universidad"
-                      [options]="ciudadesDelTitulo()"
-                      [disabled]="ciudadesDelTitulo().length <= 1"
-                      [value]="ciudadDelTitulo()"
-                      (valueChange)="elegirCiudadDelTitulo($event)"
-                    />
+                    <!-- Si la universidad elegida no tiene sedes en el padrón
+                         (muchas del exterior), la ciudad se escribe: un
+                         desplegable bloqueado no dejaba completarla. -->
+                    @if (ciudadesDelTitulo().length === 0 && universidadDelTituloElegida() !== null) {
+                      <app-input
+                        testId="registro-pro-titulo-ciudad-otra"
+                        placeholder="Ciudad donde estudió"
+                        [value]="valorDeEstudio('professionalTitleCity')"
+                        (valueChange)="escribirEstudio('professionalTitleCity', $event)"
+                      />
+                    } @else {
+                      <app-select
+                        data-testid="registro-pro-titulo-ciudad"
+                        placeholder="Sale de la universidad"
+                        [options]="ciudadesDelTitulo()"
+                        [disabled]="ciudadesDelTitulo().length <= 1"
+                        [value]="ciudadDelTitulo()"
+                        (valueChange)="elegirCiudadDelTitulo($event)"
+                      />
+                    }
                   </app-form-field>
                 </div>
               </div>
@@ -696,15 +710,34 @@
                           </div>
 
                           <div class="registro-titulo__estudio-campo">
-                            <app-select
-                              [ariaLabel]="'Ciudad de ' + tipo.singular"
-                              placeholder="Ciudad: sale de la universidad"
-                              [options]="ciudadesDeFila(titulo)"
-                              [disabled]="ciudadesDeFila(titulo).length <= 1"
-                              [value]="titulo.ciudad || null"
-                              [attr.data-testid]="'registro-pro-titulo-ciudad-' + titulo.id"
-                              (valueChange)="elegirCiudadEnFila(titulo.id, $event)"
-                            />
+                            @if (
+                              ciudadesDeFila(titulo).length === 0 &&
+                              titulo.universidadElegida !== null
+                            ) {
+                              <label class="registro-titulo__campo">
+                                <span class="sr-only">Ciudad de {{ tipo.singular }}</span>
+                                <input
+                                  type="text"
+                                  class="registro-titulo__dato"
+                                  placeholder="Ciudad donde estudió"
+                                  [value]="titulo.ciudad"
+                                  [attr.data-testid]="'registro-pro-titulo-ciudad-otra-' + titulo.id"
+                                  (input)="
+                                    escribirDatoDeTitulo(titulo.id, 'ciudad', $any($event.target).value)
+                                  "
+                                />
+                              </label>
+                            } @else {
+                              <app-select
+                                [ariaLabel]="'Ciudad de ' + tipo.singular"
+                                placeholder="Ciudad: sale de la universidad"
+                                [options]="ciudadesDeFila(titulo)"
+                                [disabled]="ciudadesDeFila(titulo).length <= 1"
+                                [value]="titulo.ciudad || null"
+                                [attr.data-testid]="'registro-pro-titulo-ciudad-' + titulo.id"
+                                (valueChange)="elegirCiudadEnFila(titulo.id, $event)"
+                              />
+                            }
                           </div>
                         </div>
                         <app-file-input
@@ -898,20 +931,34 @@
                           label="Ciudad de estudio"
                           [hint]="
                             specialtyCityOptions($index).length === 0
-                              ? 'Sale de la universidad que elija.'
+                              ? estudio.pickedUniversity !== null
+                                ? 'Opcional. Escríbala como figura en su diploma.'
+                                : 'Sale de la universidad que elija.'
                               : specialtyCityOptions($index).length === 1
                                 ? 'La sede de esa universidad.'
                                 : 'Elija en qué sede estudió.'
                           "
                         >
-                          <app-select
-                            [attr.data-testid]="'registro-pro-especialidad-ciudad-' + $index"
-                            placeholder="Sale de la universidad"
-                            [options]="specialtyCityOptions($index)"
-                            [disabled]="specialtyCityOptions($index).length <= 1"
-                            [value]="estudio.city || null"
-                            (valueChange)="chooseSpecialtyCity($index, $event)"
-                          />
+                          @if (
+                            specialtyCityOptions($index).length === 0 &&
+                            estudio.pickedUniversity !== null
+                          ) {
+                            <app-input
+                              [testId]="'registro-pro-especialidad-ciudad-otra-' + $index"
+                              placeholder="Ciudad donde estudió"
+                              [value]="estudio.city"
+                              (valueChange)="writeSpecialtyStudy($index, 'city', $event)"
+                            />
+                          } @else {
+                            <app-select
+                              [attr.data-testid]="'registro-pro-especialidad-ciudad-' + $index"
+                              placeholder="Sale de la universidad"
+                              [options]="specialtyCityOptions($index)"
+                              [disabled]="specialtyCityOptions($index).length <= 1"
+                              [value]="estudio.city || null"
+                              (valueChange)="chooseSpecialtyCity($index, $event)"
+                            />
+                          }
                         </app-form-field>
                       </div>
                     </div>

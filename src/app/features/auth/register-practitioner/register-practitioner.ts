@@ -19,7 +19,17 @@ import { HttpResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { concat, concatMap, filter, from, map, of, throwIfEmpty, toArray, type Observable } from 'rxjs';
+import {
+  concat,
+  concatMap,
+  filter,
+  from,
+  map,
+  of,
+  throwIfEmpty,
+  toArray,
+  type Observable,
+} from 'rxjs';
 
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
@@ -116,11 +126,38 @@ import { BoProfessionsCatalog } from '../../../core/data-access/terminology/bo-p
  * `practitioner-profile-edit`. Un módulo de utilidades para esto costaría más
  * de leer que la función.
  */
-function fechaIso(fecha: Date): string {
+function fechaIso(entrada: Date | string): string {
+  // Un borrador restaurado trae la fecha como texto ISO (pasó por JSON): se
+  // vuelve a `Date` antes de leerla, en vez de reventar en `getFullYear`.
+  const fecha = entrada instanceof Date ? entrada : new Date(entrada);
   const anio = fecha.getFullYear();
   const mes = String(fecha.getMonth() + 1).padStart(2, '0');
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${anio}-${mes}-${dia}`;
+}
+
+/** Los campos de fecha del alta: el selector sólo entiende `Date`. */
+const CAMPOS_DE_FECHA = ['birthDate', 'licenseIssueDate'] as const;
+
+/**
+ * El borrador pasa por JSON y las fechas vuelven como texto. El selector de
+ * fecha las ignora (no son `Date`) pero el «obligatorio» las da por buenas, así
+ * que el alta llegaba al envío con un texto donde esperaba una fecha. Se
+ * convierten de vuelta, y una que no se pueda leer queda vacía.
+ */
+function revivirFechas(
+  datos: Record<string, unknown>,
+  claves: readonly string[],
+): Record<string, unknown> {
+  const copia = { ...datos };
+  for (const clave of claves) {
+    const valor = copia[clave];
+    if (typeof valor === 'string') {
+      const fecha = new Date(valor);
+      copia[clave] = Number.isNaN(fecha.getTime()) ? null : fecha;
+    }
+  }
+  return copia;
 }
 
 /**
@@ -462,18 +499,40 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
       texto: 'El «SC», «LP»… es parte del mismo carnet: por eso los dos se piden juntos.',
     },
   ],
-  credentials: [
+  access: [
     {
-      icono: 'shield',
-      titulo: 'Es lo que le habilita a atender',
+      icono: 'mail',
+      titulo: 'Con su correo personal va a entrar',
       texto:
-        'Comprobamos matrícula y colegio antes de que aparezca en el directorio. Es lo que le da certeza a quien le elige sin conocerle.',
+        'Use uno que siga teniendo si cambia de trabajo: es su identidad de acceso y por donde se recupera la cuenta si pierde la clave.',
     },
     {
-      icono: 'history',
-      titulo: 'Lo opcional puede dejarlo para después',
+      icono: 'lock',
+      titulo: 'Su contraseña, sólo suya',
       texto:
-        'La autoridad que la emitió y la fecha de inscripción no frenan su alta: se cargan cuando las tenga a mano, desde su perfil.',
+        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
+    },
+    {
+      icono: 'stethoscope',
+      titulo: 'Por qué le pedimos los dos',
+      texto:
+        'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. Los dos se guardan en su perfil. Qué clase de profesional es se pregunta más adelante, con su título.',
+    },
+  ],
+  residence: [
+    {
+      icono: 'pin',
+      titulo: 'Para ubicarle en el directorio',
+      texto:
+        'Un paciente busca por ciudad antes que por nombre. Con su localidad declarada aparece en la búsqueda de quien le tiene cerca.',
+    },
+  ],
+  'workplace-location': [
+    {
+      icono: 'phone',
+      titulo: 'Todo esto es del consultorio',
+      texto:
+        'Son los datos por los que le ubican en el trabajo, no los de su acceso. Puede dejarlos vacíos y cargarlos después desde su perfil.',
     },
   ],
   practice: [
@@ -490,20 +549,24 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
         'De él dependen el colegio que se le ofrece en la habilitación y las especialidades que va a poder elegir: un odontólogo no elige entre las 36 del catálogo, elige entre las suyas. Por eso se pregunta antes que las dos cosas.',
     },
   ],
-  profile: [
+  credentials: [
     {
-      icono: 'stethoscope',
-      titulo: 'Por qué le pedimos los dos',
+      icono: 'shield',
+      titulo: 'Es lo que le habilita a atender',
       texto:
-        'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. Los dos se guardan en su perfil. Qué clase de profesional es se pregunta más adelante, con su título.',
+        'Comprobamos matrícula y colegio antes de que aparezca en el directorio. Es lo que le da certeza a quien le elige sin conocerle.',
     },
-  ],
-  residence: [
     {
-      icono: 'pin',
-      titulo: 'Para ubicarle en el directorio',
+      icono: 'history',
+      titulo: 'Lo opcional puede dejarlo para después',
       texto:
-        'Un paciente busca por ciudad antes que por nombre. Con su localidad declarada aparece en la búsqueda de quien le tiene cerca.',
+        'La fecha de inscripción y los respaldos no frenan su alta: se cargan cuando los tenga a mano, desde su perfil.',
+    },
+    {
+      icono: 'folder',
+      titulo: 'Los verifica una persona, no un robot',
+      texto:
+        'Puede registrarse sin subirlos y cargarlos después desde su perfil. Mientras no estén, su matrícula figura como declarada y no como verificada.',
     },
   ],
   specialties: [
@@ -513,32 +576,6 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
       texto:
         'Un paciente busca por especialidad. Las que elija son las búsquedas en las que va a aparecer.',
     },
-  ],
-  'personal-contact': [
-    {
-      icono: 'mail',
-      titulo: 'Con su correo personal va a entrar',
-      texto:
-        'Use uno que siga teniendo si cambia de trabajo: es su identidad de acceso y por donde se recupera la cuenta si pierde la clave.',
-    },
-  ],
-  access: [
-    {
-      icono: 'phone',
-      titulo: 'Todo esto es del consultorio',
-      texto:
-        'Son los datos por los que le ubican en el trabajo, no los de su acceso. Puede dejarlos vacíos y cargarlos después desde su perfil.',
-    },
-  ],
-  'credential-files': [
-    {
-      icono: 'folder',
-      titulo: 'Los verifica una persona, no un robot',
-      texto:
-        'Puede registrarse sin subirlos y cargarlos después desde su perfil. Mientras no estén, su matrícula figura como declarada y no como verificada.',
-    },
-  ],
-  'academic-titles': [
     {
       icono: 'teach',
       titulo: 'Cuantos tengas, no sólo uno',
@@ -552,14 +589,6 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
       titulo: 'Son imágenes, no una firma electrónica',
       texto:
         'Suba la foto o el escaneo de su firma de puño y letra y de su sello. Se imprimen al pie de sus documentos junto a su nombre y matrícula. Puede saltear este paso y cargarlos después.',
-    },
-  ],
-  password: [
-    {
-      icono: 'lock',
-      titulo: 'Su contraseña, sólo suya',
-      texto:
-        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
     },
   ],
 };
@@ -935,7 +964,9 @@ export class RegisterPractitioner {
   ): readonly NewRegistrationCredential[] {
     const conceptId = conceptos.get(SPECIALTY_CREDENTIAL_CODE);
     if (conceptId === undefined) return [];
-    const labels = new Map(this.allSpecialtyOptions().map((option) => [option.value, option.label]));
+    const labels = new Map(
+      this.allSpecialtyOptions().map((option) => [option.value, option.label]),
+    );
     return this.specialtyStudies().flatMap((study, index) => {
       const number = study.number.trim();
       if (number === '') return [];
@@ -1255,9 +1286,7 @@ export class RegisterPractitioner {
    * para que un reintento del alta no vuelva a subir —ni intente reclamar dos
    * veces— el mismo PDF, y se olvida cuando la persona cambia el archivo.
    */
-  private readonly fileIdDeHabilitacion = signal<
-    Partial<Record<'license' | 'sedes', string>>
-  >({});
+  private readonly fileIdDeHabilitacion = signal<Partial<Record<'license' | 'sedes', string>>>({});
 
   /** El error del último adjunto rechazado, si hubo. */
   readonly errorAdjunto = signal<string | null>(null);
@@ -2130,10 +2159,7 @@ export class RegisterPractitioner {
     const universidad =
       eleccion === null || eleccion === CATALOG_OUTSIDE_INSTITUTION ? '' : eleccion;
     professionalTitleCity.setValue(
-      cityToChooseUniversity(
-        professionalTitleCity.value,
-        this.padron.citiesOf(pais, universidad),
-      ),
+      cityToChooseUniversity(professionalTitleCity.value, this.padron.citiesOf(pais, universidad)),
     );
     this.universidadDelTituloElegida.set(eleccion);
     this.universidadDelTituloTexto.set(universidad);
@@ -2381,7 +2407,10 @@ export class RegisterPractitioner {
     try {
       const paginas = this.paginasProfesional();
       const clave = this.claveVisible();
-      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const indice = Math.max(
+        0,
+        paginas.findIndex((p) => p.clave === clave),
+      );
       const titulo = paginas[indice]?.titulo ?? clave;
       const raw = this.formProfesional.getRawValue();
       const extraData = {
@@ -2415,7 +2444,7 @@ export class RegisterPractitioner {
       const draft = draftParam ?? this.draftService.detectDraft('practitioner');
       if (!draft) return;
       if (draft.data) {
-        this.formProfesional.patchValue(draft.data);
+        this.formProfesional.patchValue(revivirFechas(draft.data, CAMPOS_DE_FECHA));
       }
       const extra = (draft.extraData ?? {}) as Record<string, unknown>;
       if (Array.isArray(extra['nombresExtra'])) {
@@ -2530,9 +2559,7 @@ export class RegisterPractitioner {
       const colegio = titleCollege(valor);
       const actual = autoridad.value;
       const cambiar =
-        actual === ''
-          ? colegio !== PROFESSION_COLLEGE
-          : isCollege(actual) && actual !== colegio;
+        actual === '' ? colegio !== PROFESSION_COLLEGE : isCollege(actual) && actual !== colegio;
       if (cambiar) {
         autoridad.setValue(colegio);
       }
