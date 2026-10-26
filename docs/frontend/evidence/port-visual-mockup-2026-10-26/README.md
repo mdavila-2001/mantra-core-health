@@ -23,11 +23,11 @@ visitador en `mockup`: sus pantallas quedan sin comparar.
 | 3 | «Crear cuenta» separado de «Registre su organización» (`/auth/register/organization-type`) | `register-account-type`, rutas, login | **Franja 2** (este PR) |
 | 4 | Íconos a la izquierda de los campos (115 campos en 41 pantallas) | `app-form-field icon` | **Franja 3** |
 | 5 | Pestaña «Flujo de dinero», textos llanos y registros con glosario, buscador y paginación | `features/accounting` | **Franja 4** |
-| 6 | Citas como tarjetas con franja de color; «Abrir sesión y ver pago» | agenda, mis citas | Pendiente |
-| 7 | Directorio de médicos: filtros laterales, contador, orden, grilla/lista | `/directory` | Pendiente |
-| 8 | Catálogo de formularios estándar en el constructor | `/form-builder` | Pendiente |
-| 9 | Glosario: vista Tarjetas/Tabla; tabla de créditos del atlas | `features/glossary` | Pendiente |
-| 10 | Insignias «Verificado» verdes; panel de la médica con tonos cálidos; textos de proveedores de identidad | varios | Pendiente |
+| 6 | Citas como tarjetas con franja de color; «Abrir sesión y ver pago» | agenda, mis citas | **No se porta.** El estilo de `mockup` es el «Pulse» del 08/10, que `dev` reemplazó a propósito el 12/10 (carril F, superficies tonales). «Abrir sesión y ver pago» necesita `GET /billing/simulated/patient/charges` y `/payment-reports`, que la API no tiene |
+| 7 | Directorio de médicos: filtros laterales, contador, orden, grilla/lista | `/directory` | **No se porta.** En `dev` la grilla de especialidades es la portada del mismo listado con facetas (carril 18, REQ-18-002) |
+| 8 | Catálogo de formularios estándar en el constructor | `/form-builder` | **No se porta.** `dev` es más nuevo: «Mis formularios» por defecto y el catálogo detrás de «Cargar formulario» (25/10) |
+| 9 | Glosario: vista Tarjetas/Tabla; tabla de créditos del atlas | `features/glossary` | **Franja 5** |
+| 10 | Insignias «Verificado» verdes; panel de la médica con tonos cálidos; textos de proveedores de identidad | varios | **Franja 5**: textos del ingreso con proveedor. Las insignias y el panel de `dev` son más nuevos (separan «Verificada contra» de «Fuente de revisión»; tonos del carril F) |
 
 Lo que **no** se porta: el backend simulado (`core/mock`) y lo que en `mockup` manda datos nuevos
 a la API (p. ej. «dónde estudió cada especialidad» en el alta del médico), que necesita backend.
@@ -48,3 +48,8 @@ Cada imagen: **izquierda `mockup` · centro `dev` antes · derecha esta rama**.
 ## Franja 4 — evidencia
 
 - `franja4_administration_accounting.jpg` — Contabilidad con «Ingresos y gastos · Pendientes · Bienes y deudas · Flujo de dinero» y la redacción llana (izquierda `mockup` · centro `dev` antes · derecha esta rama).
+
+## Franja 5 — evidencia
+
+- `franja5_glossary_tabla.jpg` — glosario con el selector Tarjetas/Tabla en la vista Tabla.
+- `franja5_atlas_creditos.jpg` — créditos del atlas anatómico en tabla (fuente, licencia, cita, DOI).

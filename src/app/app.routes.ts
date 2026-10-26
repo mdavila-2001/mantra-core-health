@@ -1901,7 +1901,7 @@ export const routes: Routes = [
           (m) => m.LoginStartForm,
         ),
       ),
-      pantallaDeProveedoresDeIdentidad('login/callback', 'Procesar callback del proveedor', () =>
+      pantallaDeProveedoresDeIdentidad('login/callback', 'Completar el ingreso con el proveedor', () =>
         import('./features/auth-providers/login-callback-form/login-callback-form').then(
           (m) => m.LoginCallbackForm,
         ),

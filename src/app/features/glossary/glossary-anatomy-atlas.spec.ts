@@ -91,6 +91,21 @@ describe('GlossaryAnatomyAtlas', () => {
     expect(html().textContent).toContain('Descripción extendida');
   });
 
+  it('las fuentes van en una tabla con fuente, licencia, cita y DOI', async () => {
+    await harness.navigateByUrl('/glossary/anatomy-atlas');
+    responderCatalogo();
+    harness.detectChanges();
+    const tabla = html().querySelector('[data-testid="atlas3d-fuentes"]');
+    expect([...(tabla?.querySelectorAll('thead th') ?? [])].map((n) => n.textContent?.trim())).toEqual([
+      'Fuente',
+      'Licencia',
+      'Cita',
+      'DOI',
+    ]);
+    expect(tabla?.querySelectorAll('tbody tr').length).toBe(3);
+    expect(tabla?.querySelector('a[href^="https://doi.org/"]')).not.toBeNull();
+  });
+
   it('muestra los créditos y las licencias de las tres fuentes', async () => {
     await harness.navigateByUrl('/glossary/anatomy-atlas');
     responderCatalogo();
