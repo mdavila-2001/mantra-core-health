@@ -2,7 +2,7 @@ import { FileInput } from '../../../shared/components/molecules/file-input/file-
 import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal, PLATFORM_ID } from '@angular/core';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -36,11 +36,12 @@ import {
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
-  NOTICE_REWRITE_ADDRESS,
   MapLocationPicker,
   type Coordinates,
+  type LocalityFromPoint,
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
+import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { generateReadableCode } from '../../../core/readable-code/readable-code';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
@@ -292,7 +293,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'pin',
       titulo: 'El punto es lo que le hace aparecer',
       texto:
-        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa su centro queda fuera de esa lista, aunque la dirección esté escrita.',
+        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Por eso el punto es obligatorio: de él sale también la dirección, el municipio y la zona.',
     },
   ],
   sucursales: [
@@ -404,7 +405,10 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  *   orden, que es todo lo que el módulo hace.
  * - **SEPREC, licencia de funcionamiento y certificado del SEDES**: los tres
  *   que prueban que la empresa está registrada y **habilitada para operar**.
- * - **Dirección legal de la central**: sin dirección no hay a dónde ir.
+ * - **El punto de la central en el mapa**, y con él su dirección legal: sin
+ *   dirección no hay a dónde ir. Desde el pedido del cliente del 26/10/2026 la
+ *   persona sólo marca el punto; la calle, el municipio y la zona se deducen de
+ *   él y no se editan.
  * - **Representante legal y su correo**: es quien firma, y el correo es el
  *   usuario de la cuenta.
  *
@@ -422,9 +426,9 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  * - **NIT en PDF**: el número ya se pide escrito; el papel es respaldo.
  * - **Autorización de radioprotección**: no la necesita un centro que sólo
  *   hace ecografía o resonancia, que no usan radiación ionizante.
- * - **Punto en el mapa y sucursales**: el GPS depende de un permiso del
- *   navegador que se puede negar, y hay centros de un solo local. Se explica lo
- *   que se pierde sin ellos en vez de frenar el alta.
+ * - **Las sucursales**: hay centros de un solo local, y hoy no viajan con el
+ *   alta (se cargan desde el panel). El punto de la central no depende del
+ *   permiso del navegador: se puede marcar tocando el mapa.
  */
 @Component({
   selector: 'app-register-imaging-center',
@@ -511,7 +515,7 @@ export class RegisterImagingCenter {
       }
       const extra = (draft.extraData ?? {}) as Record<string, unknown>;
       if (extra['gpsCentral'] !== undefined) {
-        this.gpsCentral.set(extra['gpsCentral'] as Coordinates | null);
+        this.fijarGpsCentral(extra['gpsCentral'] as Coordinates | null);
       }
       if (Array.isArray(extra['sucursales'])) {
         this.sucursales.set(extra['sucursales'] as readonly SucursalDeclarada[]);
@@ -620,9 +624,19 @@ export class RegisterImagingCenter {
     // dónde guardarla (`legalDocuments` no la declara) y ofrecer un papel que se
     // tira es peor que no pedirlo. Se pide después, desde el panel (D-BR09-1).
     // --- 1.6 · dirección legal de la central -------------------------------
+    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
+    // la central, ver `escribirLocalidadCentral`. Sigue obligatoria porque la
+    // API la exige, y nunca queda vacía con un punto puesto.
     addressLines: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
+    }),
+    // **El punto de la central es obligatorio** (mismo pedido). Vive en el
+    // formulario porque el motor valida de a una página y sólo frena lo que
+    // está en el `FormGroup`. Lo escribe `fijarGpsCentral` con el punto
+    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    gpsCentral: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
     }),
     // --- 1.8 · representante legal -----------------------------------------
     // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
@@ -807,23 +821,16 @@ export class RegisterImagingCenter {
       titulo: 'Dónde está la central',
       clave: 'ubicacion',
       icon: 'pin' as const,
+      // Sólo el punto: la calle, el departamento, el municipio y la zona salen
+      // de él y el selector los muestra sin dejarlos editar.
       campos: [
         {
-          key: 'addressLines',
-          label: 'Dirección legal de la central',
-          hint: 'Calle, número y zona. Es la que figura en sus papeles.',
-          control: 'text' as const,
-          required: true,
-          icono: 'pin' as const,
-          placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
-          testId: 'registro-imagen-direccion',
-          mensajeDeError: 'Escriba la dirección legal de la central.',
-        },
-        {
           key: 'gpsCentral',
-          label: 'Ubicación en el mapa (opcional)',
-          hint: 'Sin el punto, su centro no aparece cuando alguien busca el más cercano.',
+          label: 'Ubicación de la central en el mapa',
+          hint: 'Marque el punto exacto de la central. De ahí sacamos la calle, el municipio y la zona.',
           control: 'custom' as const,
+          required: true,
+          mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
         },
       ],
     },
@@ -1038,47 +1045,38 @@ export class RegisterImagingCenter {
   /**
    * El punto de la central, ya confirmado sobre el mapa.
    *
-   * Fuera del formulario, como en las otras altas: `app-map-location-picker` emite
-   * **sólo lo confirmado** y se guarda para sí el estado intermedio.
+   * `app-map-location-picker` emite **sólo lo confirmado** y se guarda para sí
+   * el estado intermedio. La señal alimenta su `[inicial]`; el control
+   * homónimo del formulario es el que hace obligatorio el punto. Los dos los
+   * escribe {@link fijarGpsCentral}.
    */
   readonly gpsCentral = signal<Coordinates | null>(null);
 
-  /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
-   *
-   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
-   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
-   * vuelve a escribir, se va solo. Las sucursales llevan el suyo, por id.
-   */
-  private readonly direccionVaciadaPorElMapa = signal(false);
-  private readonly direccionEscrita = toSignal(this.form.controls.addressLines.valueChanges, {
-    initialValue: '',
-  });
-  readonly direccionPorReescribir = computed(
-    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
-  );
-  private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
-  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
-
-  /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
-  vaciarDireccionPorElMapa(): void {
+  /** El punto confirmado de la central (o `null`), en la señal y en el control obligatorio. */
+  fijarGpsCentral(punto: Coordinates | null): void {
+    this.gpsCentral.set(punto);
+    const control = this.form.controls.gpsCentral;
+    if (control.value !== punto) control.setValue(punto);
+    // Con punto, la dirección nunca queda vacía: es un obligatorio que no se
+    // ve, y un borrador viejo podría traer el punto sin ella.
     const direccion = this.form.controls.addressLines;
-    direccion.setValue('');
-    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
-    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
-    direccion.markAsUntouched();
-    this.direccionVaciadaPorElMapa.set(true);
+    if (punto !== null && direccion.value.trim() === '') direccion.setValue(pointLabel(punto));
   }
 
-  /** Lo mismo, para el mapa de una sucursal. */
-  vaciarDireccionDeSucursalPorElMapa(id: string): void {
-    this.actualizarSucursal(id, { direccion: '' });
-    this.sucursalesVaciadasPorElMapa.update((ids) => new Set([...ids, id]));
+  /**
+   * Lo deducido del punto de la central llena la dirección legal, que ya no
+   * se escribe a mano. Sin punto no se toca: el punto obligatorio, que sí se
+   * ve, es el que frena.
+   */
+  escribirLocalidadCentral(localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.form.controls.addressLines.setValue(addressFromPoint(localidad, null, MAX_DIRECCION));
   }
 
-  /** Si esa sucursal tiene la dirección en blanco porque tocaron su mapa. */
-  sucursalPorReescribir(sucursal: SucursalDeclarada): boolean {
-    return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
+  /** La dirección de una sucursal sale de su punto, como la de la central. */
+  escribirLocalidadDeSucursal(id: string, localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.actualizarSucursal(id, { direccion: addressFromPoint(localidad, null, MAX_DIRECCION) });
   }
 
   protected readonly idsUbicacionCentral: TestIds = {
@@ -1124,10 +1122,6 @@ export class RegisterImagingCenter {
    */
   escribirNombreDeSucursal(id: string, nombre: string | number | null): void {
     this.actualizarSucursal(id, { nombre: nombre === null ? '' : String(nombre) });
-  }
-
-  escribirDireccionDeSucursal(id: string, direccion: string | number | null): void {
-    this.actualizarSucursal(id, { direccion: direccion === null ? '' : String(direccion) });
   }
 
   escribirDescripcionDeSucursal(id: string, descripcion: string | number | null): void {

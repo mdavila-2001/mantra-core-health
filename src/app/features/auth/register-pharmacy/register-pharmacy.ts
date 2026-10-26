@@ -71,11 +71,12 @@ import {
   passwordValidators,
 } from '../shared-registration/password-policy';
 import {
-  NOTICE_REWRITE_ADDRESS,
   MapLocationPicker,
   type Coordinates,
+  type LocalityFromPoint,
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
+import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 
 /* ============================================================================
     Alta de farmacia — Módulo Farmacia §1 del registro de procesos
@@ -153,10 +154,14 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * ## Qué es obligatorio, y por qué (decisión D2 del carril)
  *
  * Frena el alta sólo lo más básico para nacer: **razón social, tipo de
- * sociedad, NIT, dirección legal de la central, nombre y correo del
- * representante legal, correo de acceso y contraseña**. El resto —los seis
- * papeles en PDF, el punto de la central en el mapa, las sucursales y las
- * tres gerencias— se completa después desde la Ficha de la farmacia.
+ * sociedad, NIT, el punto de la central en el mapa —del que sale su dirección
+ * legal—, nombre y correo del representante legal, correo de acceso y
+ * contraseña**. El resto —los seis papeles en PDF, las sucursales y las tres
+ * gerencias— se completa después desde la Ficha de la farmacia.
+ *
+ * El punto es obligatorio por pedido del cliente (26/10/2026): la persona sólo
+ * marca el punto, y la calle, el municipio y la zona se deducen de él, sin
+ * editarse.
  *
  * Es la regla explícita del propietario para este alta: «lo obligatorio es
  * lo más básico», a diferencia del alta de laboratorio (el molde de
@@ -234,9 +239,19 @@ export class RegisterPharmacy {
     healthAuthorityCertificateFileId: new FormControl('', { nonNullable: true }),
     powerOfAttorneyFileId: new FormControl('', { nonNullable: true }),
     // --- 1.6 · dirección legal de la central ---------------------------------
+    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
+    // la central, ver `escribirLocalidadCentral`. Sigue obligatoria porque la
+    // API la exige, y nunca queda vacía con un punto puesto.
     addressLines: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
+    }),
+    // **El punto de la central es obligatorio** (mismo pedido). Vive en el
+    // formulario porque el motor valida de a una página y sólo frena lo que
+    // está en el `FormGroup`. Lo escribe `fijarGpsCentral` con el punto
+    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    gpsCentral: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
     }),
     // --- 1.8, 1.8.2 · representante legal -------------------------------------
     // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
@@ -360,23 +375,16 @@ export class RegisterPharmacy {
         titulo: 'Dónde está la central',
         clave: 'ubicacion',
         icon: 'pin' as const,
+        // Sólo el punto: la calle, el departamento, el municipio y la zona
+        // salen de él y el selector los muestra sin dejarlos editar.
         campos: [
           {
-            key: 'addressLines',
-            label: 'Dirección legal de la central',
-            hint: 'Calle, número y zona. Es la que figura en sus papeles.',
-            control: 'text' as const,
-            required: true,
-            icono: 'pin' as const,
-            placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
-            testId: 'registro-farmacia-direccion',
-            mensajeDeError: 'Escriba la dirección legal de la central.',
-          },
-          {
             key: 'gpsCentral',
-            label: 'Ubicación en el mapa (opcional)',
-            hint: 'Sin el punto, su farmacia no aparece cuando alguien busca la más cercana.',
+            label: 'Ubicación de la central en el mapa',
+            hint: 'Marque el punto exacto de la central. De ahí sacamos la calle, el municipio y la zona.',
             control: 'custom' as const,
+            required: true,
+            mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
           },
         ],
       },
@@ -572,9 +580,12 @@ export class RegisterPharmacy {
 
   /* --- la ubicación de la central -------------------------------------------- */
 
+  /**
+   * El punto confirmado de la central. Alimenta el `[inicial]` del selector;
+   * el control homónimo del formulario es el que lo hace obligatorio. Los dos
+   * los escribe {@link fijarGpsCentral}.
+   */
   readonly gpsCentral = signal<Coordinates | null>(null);
-
-  private readonly direccionVaciadaPorElMapa = signal(false);
   /** El tipo societario elegido: decide si el poder del representante es obligatorio. */
   private readonly tipoSocietario = toSignal(this.form.controls.companyType.valueChanges, {
     initialValue: this.form.controls.companyType.value,
@@ -632,7 +643,7 @@ export class RegisterPharmacy {
       }
       const extra = (draft.extraData ?? {}) as Record<string, unknown>;
       if (extra['gpsCentral'] !== undefined) {
-        this.gpsCentral.set(extra['gpsCentral'] as Coordinates | null);
+        this.fijarGpsCentral(extra['gpsCentral'] as Coordinates | null);
       }
       if (Array.isArray(extra['sucursales'])) {
         this.sucursales.set(extra['sucursales'] as readonly SucursalDeFarmacia[]);
@@ -692,29 +703,31 @@ export class RegisterPharmacy {
     });
   }
 
-  private readonly direccionEscrita = toSignal(this.form.controls.addressLines.valueChanges, {
-    initialValue: '',
-  });
-  readonly direccionPorReescribir = computed(
-    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
-  );
-  private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
-  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
-
-  vaciarDireccionPorElMapa(): void {
+  /** El punto confirmado de la central (o `null`), en la señal y en el control obligatorio. */
+  fijarGpsCentral(punto: Coordinates | null): void {
+    this.gpsCentral.set(punto);
+    const control = this.form.controls.gpsCentral;
+    if (control.value !== punto) control.setValue(punto);
+    // Con punto, la dirección nunca queda vacía: es un obligatorio que no se
+    // ve, y un borrador viejo podría traer el punto sin ella.
     const direccion = this.form.controls.addressLines;
-    direccion.setValue('');
-    direccion.markAsUntouched();
-    this.direccionVaciadaPorElMapa.set(true);
+    if (punto !== null && direccion.value.trim() === '') direccion.setValue(pointLabel(punto));
   }
 
-  vaciarDireccionDeSucursalPorElMapa(id: string): void {
-    this.actualizarSucursal(id, { direccion: '' });
-    this.sucursalesVaciadasPorElMapa.update((ids) => new Set([...ids, id]));
+  /**
+   * Lo deducido del punto de la central llena la dirección legal, que ya no
+   * se escribe a mano. Sin punto no se toca: el punto obligatorio, que sí se
+   * ve, es el que frena.
+   */
+  escribirLocalidadCentral(localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.form.controls.addressLines.setValue(addressFromPoint(localidad, null, MAX_DIRECCION));
   }
 
-  sucursalPorReescribir(sucursal: SucursalDeFarmacia): boolean {
-    return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
+  /** La dirección de una sucursal sale de su punto, como la de la central. */
+  escribirLocalidadDeSucursal(id: string, localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.actualizarSucursal(id, { direccion: addressFromPoint(localidad, null, MAX_DIRECCION) });
   }
 
   protected readonly idsUbicacionCentral: TestIds = {
@@ -747,10 +760,6 @@ export class RegisterPharmacy {
 
   escribirNombreDeSucursal(id: string, nombre: string | number | null): void {
     this.actualizarSucursal(id, { nombre: nombre === null ? '' : String(nombre) });
-  }
-
-  escribirDireccionDeSucursal(id: string, direccion: string | number | null): void {
-    this.actualizarSucursal(id, { direccion: direccion === null ? '' : String(direccion) });
   }
 
   escribirDescripcionDeSucursal(id: string, descripcion: string | number | null): void {

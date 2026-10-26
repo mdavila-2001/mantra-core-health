@@ -145,34 +145,27 @@
               <app-name-fields [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-imagen-gerente-marketing" />
             </ng-template>
 
+            <!-- El punto es lo único que se marca: la calle, el departamento,
+                 el municipio y la zona salen de él y se muestran sin editarse
+                 (pedido del cliente del 26/10/2026). `[inicial]` devuelve el
+                 pin confirmado cuando el asistente recrea la página. -->
             <ng-template appCampoPersonalizado="gpsCentral">
-              @if (direccionPorReescribir()) {
-                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                     anuncia sin robar el foco, que sigue en el mapa. -->
-                <app-alert
-                  appAnuncio
-                  [asertivo]="false"
-                  [enfocar]="false"
-                  tone="info"
-                  data-testid="registro-imagen-direccion-reescribir"
-                >
-                  {{ avisoReescribir }}
-                </app-alert>
-              }
               <app-map-location-picker
                 pinId="imagenologia-central"
                 etiquetaConfirmada="Su centro"
                 etiquetaQuitar="Quitar la ubicación de la central"
                 etiquetaMapa="La ubicación de su centro en el mapa"
+                etiquetaFicha="La dirección de la central"
                 [ids]="idsUbicacionCentral"
-                (confirmado)="gpsCentral.set($event)"
-                (puntoElegido)="vaciarDireccionPorElMapa()"
+                [inicial]="gpsCentral()"
+                (confirmado)="fijarGpsCentral($event)"
+                (localidad)="escribirLocalidadCentral($event)"
               />
             </ng-template>
 
-            <!-- Las sucursales. Cada una trae su propio mapa, con su propio
-                 pin y su propia confirmación: confirmar una no confirma otra, y
-                 el mapa no se dibuja hasta que alguien pide la ubicación. -->
+            <!-- Las sucursales. Cada una trae su propio mapa, primero, con su
+                 propio pin y su propia confirmación: confirmar una no confirma
+                 otra. Su dirección sale del punto, como la de la central. -->
             <ng-template appCampoPersonalizado="sucursales">
               <div class="imagen-sucursales">
                 @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
@@ -194,6 +187,18 @@
                       </button>
                     </header>
 
+                    <app-map-location-picker
+                      [pinId]="sucursal.id"
+                      [inicial]="sucursal.gps"
+                      etiquetaConfirmada="Esta sucursal"
+                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
+                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
+                      etiquetaFicha="La dirección de esta sucursal"
+                      [ids]="idsDeSucursal(sucursal.id)"
+                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                      (localidad)="escribirLocalidadDeSucursal(sucursal.id, $event)"
+                    />
+
                     <app-form-field [label]="'Nombre de la sucursal ' + (i + 1)">
                       <app-input
                         [testId]="'registro-imagen-' + sucursal.id + '-nombre'"
@@ -212,28 +217,6 @@
                       />
                     </app-form-field>
 
-                    <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
-                      <app-input
-                        [testId]="'registro-imagen-' + sucursal.id + '-direccion'"
-                        placeholder="Av. San Martín 456"
-                        [value]="sucursal.direccion"
-                        (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
-                      />
-                    </app-form-field>
-                    @if (sucursalPorReescribir(sucursal)) {
-                      <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                           anuncia sin robar el foco, que sigue en el mapa. -->
-                      <app-alert
-                        appAnuncio
-                        [asertivo]="false"
-                        [enfocar]="false"
-                        tone="info"
-                        [attr.data-testid]="'registro-imagen-' + sucursal.id + '-direccion-reescribir'"
-                      >
-                        {{ avisoReescribir }}
-                      </app-alert>
-                    }
-
                     <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Opcional. El enlace de Google Maps u OpenStreetMap.">
                       <app-input
                         type="url"
@@ -243,17 +226,6 @@
                         (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
                       />
                     </app-form-field>
-
-                    <app-map-location-picker
-                      [pinId]="sucursal.id"
-                      [inicial]="sucursal.gps"
-                      etiquetaConfirmada="Esta sucursal"
-                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
-                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
-                      [ids]="idsDeSucursal(sucursal.id)"
-                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
-                      (puntoElegido)="vaciarDireccionDeSucursalPorElMapa(sucursal.id)"
-                    />
                   </section>
                 } @empty {
                   <p class="imagen-sucursales__vacio">
