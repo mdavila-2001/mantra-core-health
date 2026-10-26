@@ -14,12 +14,6 @@
   display: block;
 }
 
-.glosario__mapa-enlace {
-  width: min(100% - 2rem, 76rem);
-  margin: 0.75rem auto 0;
-  text-align: end;
-}
-
 .glosario {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -29,14 +23,44 @@
 
 /* --- Buscador ------------------------------------------------------------- */
 
+/* Un solo renglón (pedido del cliente, 26/10/2026): buscador, «Categoría»,
+   «Etiqueta» y, a la derecha, los accesos al mapa y al atlas. Sin el tope de
+   62rem de antes: con los accesos al final, el renglón usa todo el ancho y el
+   buscador se queda con lo que sobra. */
 .glosario__buscador {
   display: block;
-  /* El renglón ya no es sólo el campo de texto: lleva además «Categoría» y
-     «Etiqueta». Con el tope viejo de 34rem los tres entraban apretados y el
-     texto de ejemplo del buscador se cortaba en «Por ejemplo «hiper». Sigue
-     habiendo tope, porque un renglón de mil píxeles tampoco ayuda a escribir
-     «hipertensión». */
-  max-inline-size: 62rem;
+  /* Se mide el renglón, no la ventana: el menú lateral abierto o cerrado
+     cambia el ancho disponible sin cambiar el viewport. */
+  container: glosario-filtros / inline-size;
+}
+
+.glosario__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* El ícono de cada acceso, con el color de marca: el mismo trato que llevan
+   los íconos de la rejilla de categorías. */
+.glosario__herramientas app-nav-icon {
+  flex: none;
+  color: var(--brand-primary);
+}
+
+/* Por debajo de ~1140 px de renglón, los rótulos cortos: «Mapa» y «Atlas 3D».
+   Con los largos, el buscador y «Categoría» se cortaban en «Anato…». */
+@container glosario-filtros (max-width: 1140px) {
+  .glosario__largo {
+    display: none;
+  }
+}
+
+@media (min-width: 780px) {
+  /* En el renglón los dos accesos no se parten en dos líneas: lo que falte
+     de ancho lo cede el buscador. */
+  .glosario__herramientas {
+    flex-wrap: nowrap;
+  }
 }
 
 /* --- Títulos -------------------------------------------------------------- */

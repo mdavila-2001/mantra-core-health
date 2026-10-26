@@ -25,8 +25,9 @@ import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Chip } from '../../shared/components/atoms/chip/chip';
-import { Link } from '../../shared/components/atoms/link/link';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../shared/components/molecules/card/card';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import {
@@ -117,11 +118,12 @@ export interface TarjetaDeCategoria {
 @Component({
   selector: 'app-glossary',
   imports: [
+    AppButtonLink,
     Card,
     Chip,
     FilterBar,
     GlossaryCategoryIcon,
-    Link,
+    NavIcon,
     PageHeader,
     Pagination,
     RouterLink,
