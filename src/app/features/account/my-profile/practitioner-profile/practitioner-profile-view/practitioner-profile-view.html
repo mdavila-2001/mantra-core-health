@@ -344,12 +344,7 @@
           <a app-button variant="outline" size="sm" routerLink="/my-account/articles">
             Mis artículos
           </a>
-          <a app-button variant="outline" size="sm" routerLink="/my-account/affiliations" data-testid="profile-affiliations-link">
-            Invitaciones y solicitudes
-          </a>
-          <a app-button variant="outline" size="sm" routerLink="/my-account/my-procedures" data-testid="profile-my-procedures-link">
-            Procedimientos que hago
-          </a>
+          <app-profile-affiliation-links size="sm" />
         </p>
       </app-tab>
 
@@ -903,12 +898,7 @@
         <!-- Las pantallas del perfil, navegables DESDE el perfil. -->
         <div class="profesional__acciones">
           <a app-button variant="outline" routerLink="/my-account/articles"> Mis artículos </a>
-          <a app-button variant="outline" routerLink="/my-account/affiliations" data-testid="profile-affiliations-link">
-            Invitaciones y solicitudes
-          </a>
-          <a app-button variant="outline" routerLink="/my-account/my-procedures" data-testid="profile-my-procedures-link">
-            Procedimientos que hago
-          </a>
+          <app-profile-affiliation-links />
         </div>
       }
     </app-card>

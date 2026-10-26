@@ -20,6 +20,7 @@ import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../../shared/components/atoms/button/button-link';
+import { ProfileAffiliationLinks } from '../../affiliation-invitations/profile-affiliation-links/profile-affiliation-links';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../../shared/components/molecules/card/card';
@@ -102,6 +103,7 @@ interface FilaCredencial {
     LogoConsultorio,
     FirmaOSello,
     NavIcon,
+    ProfileAffiliationLinks,
     RouterLink,
     SpecialtyBadge,
     SpecialtyBadgeGrid,

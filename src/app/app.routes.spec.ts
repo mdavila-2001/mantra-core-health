@@ -199,7 +199,7 @@ describe('rutas del armazón', () => {
      * (feedback de la analista, barrido del 18/08/2026).
      */
     it('las hijas de «Mi perfil» que son de quien atiende lo declaran y llevan el guard', () => {
-      const DE_QUIEN_ATIENDE = ['my-account/edit', 'my-account/articles', 'my-account/affiliations', 'my-account/my-procedures'];
+      const DE_QUIEN_ATIENDE = ['my-account/edit', 'my-account/articles'];
 
       for (const path of DE_QUIEN_ATIENDE) {
         const ruta = hijas.find((r) => r.path === path);
@@ -209,6 +209,17 @@ describe('rutas del armazón', () => {
         expect(ruta?.data?.[ROLES_ROUTE_DATA], path).toEqual(['CLINICIAN', 'PRACTITIONER']);
       }
     });
+  });
+
+  /** Las dos pantallas del médico de CM-07 cuelgan de «Mi perfil»: sólo las abre quien atiende. */
+  it('«Invitaciones y solicitudes» y «Procedimientos que hago» son de quien atiende y llevan el guard', () => {
+    for (const path of ['my-account/affiliations', 'my-account/my-procedures']) {
+      const route = hijas.find((r) => r.path === path);
+
+      expect(route, path).toBeDefined();
+      expect((route?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
+      expect(route?.data?.[ROLES_ROUTE_DATA], path).toEqual(['CLINICIAN', 'PRACTITIONER']);
+    }
   });
 
   /**
