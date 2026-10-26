@@ -717,3 +717,127 @@ describe('handlers de farmacia: portal de la farmacia (P47)', () => {
     });
   });
 });
+
+/**
+ * P34 · el simulador sirve el mismo contrato que la API para 24 h y turnos:
+ * `GET /public/pharmacies/open-now` paginado, `/pharmacy/sites?openNow=true`, y
+ * las escrituras del portal con sus 400/409/422.
+ */
+describe('handlers de farmacia: 24 h y turnos (P34)', () => {
+  const router = crearRouterSimulado();
+  const paciente = buscarUsuario('paciente')!;
+
+  function pedir(method: MockMethod, path: string, query = new URLSearchParams(), body: unknown = {}) {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query,
+      body,
+      headers: new HttpHeaders(),
+      user: paciente,
+    } satisfies MockRequest);
+  }
+  const estado = (r: unknown): number => (isMockReply(r) ? r.status : 200);
+  const cuerpoDe = <T>(r: unknown): T => (isMockReply(r) ? r.body : r) as T;
+
+  interface Abierta {
+    siteId: string;
+    open24h: boolean;
+    onCall: { endsAt: string; endsAtLocal: string } | null;
+  }
+
+  it('correcto — open-now trae sólo 24 h o de turno, con la hora de Bolivia', () => {
+    const pagina = cuerpoDe<{ items: Abierta[]; timeZone: string; asOfLocal: string }>(
+      pedir('GET', '/public/pharmacies/open-now'),
+    );
+    expect(pagina.items.length).toBeGreaterThan(0);
+    expect(pagina.items.every((i) => i.open24h || i.onCall !== null)).toBe(true);
+    expect(pagina.timeZone).toBe('America/La_Paz');
+    expect(pagina.asOfLocal).toMatch(/-04:00$/);
+    const deTurno = pagina.items.find((i) => i.onCall !== null);
+    expect(deTurno?.onCall?.endsAtLocal).toMatch(/-04:00$/);
+  });
+
+  it('límite — open-now pagina con cursor sin repetir', () => {
+    const primera = cuerpoDe<{ items: Abierta[]; nextCursor: string | null }>(
+      pedir('GET', '/public/pharmacies/open-now', new URLSearchParams({ limit: '1' })),
+    );
+    expect(primera.items.length).toBe(1);
+    if (primera.nextCursor !== null) {
+      const segunda = cuerpoDe<{ items: Abierta[] }>(
+        pedir('GET', '/public/pharmacies/open-now', new URLSearchParams({ limit: '1', cursor: primera.nextCursor })),
+      );
+      expect(segunda.items[0]?.siteId).not.toBe(primera.items[0]?.siteId);
+    }
+  });
+
+  it('inválido — mode desconocido y lat sin lng son 400', () => {
+    expect(estado(pedir('GET', '/public/pharmacies/open-now', new URLSearchParams({ mode: 'todas' })))).toBe(400);
+    expect(estado(pedir('GET', '/public/pharmacies/open-now', new URLSearchParams({ lat: '-16.5' })))).toBe(400);
+  });
+
+  it('correcto — /pharmacy/sites?openNow=true deja sólo las abiertas, con open24h y onCallUntil', () => {
+    const sedes = cuerpoDe<{ items: { open24h: boolean | null; onCallUntil: string | null }[] }>(
+      pedir('GET', '/pharmacy/sites', new URLSearchParams({ openNow: 'true' })),
+    );
+    expect(sedes.items.length).toBeGreaterThan(0);
+    expect(sedes.items.every((s) => s.open24h === true || s.onCallUntil !== null)).toBe(true);
+  });
+
+  it('portal — declara 24 h, carga un turno, rechaza el solapado, el vencido y el sin desplazamiento, y cancela', () => {
+    const farmacias = cuerpoDe<{ items: { id: string }[] }>(pedir('GET', '/pharmacy/pharmacies'));
+    const pharmacyId = farmacias.items[farmacias.items.length - 1]!.id;
+    const horario = cuerpoDe<{ sites: { siteId: string }[] }>(
+      pedir('GET', `/pharmacies/${pharmacyId}/opening-hours`),
+    );
+    const siteId = horario.sites[0]!.siteId;
+
+    const declarada = cuerpoDe<{ open24h: boolean | null }>(
+      pedir('PUT', `/pharmacies/${pharmacyId}/sites/${siteId}/open-24h`, undefined, { open24h: false }),
+    );
+    expect(declarada.open24h).toBe(false);
+    expect(estado(pedir('PUT', `/pharmacies/${pharmacyId}/sites/${siteId}/open-24h`, undefined, {}))).toBe(400);
+
+    const ahora = Date.now();
+    const desde = new Date(ahora + 24 * 3_600_000).toISOString();
+    const hasta = new Date(ahora + 36 * 3_600_000).toISOString();
+    const alta = pedir('POST', `/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`, undefined, {
+      startsAt: desde,
+      endsAt: hasta,
+    });
+    expect(estado(alta)).toBe(201);
+    const turno = cuerpoDe<{ id: string; current: boolean }>(alta);
+    expect(turno.current).toBe(false);
+
+    expect(
+      estado(
+        pedir('POST', `/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`, undefined, {
+          startsAt: desde,
+          endsAt: hasta,
+        }),
+      ),
+    ).toBe(409);
+    expect(
+      estado(
+        pedir('POST', `/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`, undefined, {
+          startsAt: new Date(ahora - 10 * 3_600_000).toISOString(),
+          endsAt: new Date(ahora - 3_600_000).toISOString(),
+        }),
+      ),
+    ).toBe(422);
+    expect(
+      estado(
+        pedir('POST', `/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`, undefined, {
+          startsAt: '2026-12-01T20:00:00',
+          endsAt: '2026-12-02T08:00:00',
+        }),
+      ),
+    ).toBe(400);
+
+    expect(estado(pedir('POST', `/pharmacies/${pharmacyId}/on-call-shifts/${turno.id}/cancel`))).toBe(200);
+    expect(estado(pedir('POST', `/pharmacies/${pharmacyId}/on-call-shifts/${turno.id}/cancel`))).toBe(422);
+  });
+});
