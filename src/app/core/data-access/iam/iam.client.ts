@@ -5,7 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos, type ConNulos } from '../wire';
-import { simulatorAvailable, simulatorOnly } from '../simulator-only';
+import { simulatorAvailable } from '../simulator-only';
 import type {
   AccountActivation,
   ActivationResult,
@@ -702,7 +702,8 @@ export class IamClient {
    * cursor, sin total. Exige `SECURITY_ADMIN`. El texto viaja en el cuerpo y
    * no en la URL: un nombre o un correo en la query string queda en los logs
    * de acceso de cualquier proxy. El `GET /iam/users?q=` de antes sigue vivo
-   * en la API pero obsoleto.
+   * en la API pero obsoleto. La API real lo publica desde el PR #1001 de la
+   * API (responde 200 con la misma página que el GET).
    */
   searchUsers(query: UserSearchQuery = {}): Observable<UserPage> {
     // Clave a clave: el backend valida con `forbidNonWhitelisted` y un
@@ -713,13 +714,7 @@ export class IamClient {
     if (query.cursor !== undefined) filters['cursor'] = query.cursor;
     if (query.limit !== undefined) filters['limit'] = query.limit;
 
-    // Sólo simulador: `POST /iam/users/search` vive en una rama de la API que
-    // no llegó a dev (informe B, §2). Contra la API real el error dice qué no
-    // está disponible en vez de un 404 genérico.
-    const url = this.url('/iam/users/search');
-    return simulatorOnly('Buscar personas registradas', url, () =>
-      this.http.post<RespuestaPaginaUsuarios>(url, filters),
-    ).pipe(
+    return this.http.post<RespuestaPaginaUsuarios>(this.url('/iam/users/search'), filters).pipe(
       map((body) => ({
         ...body,
         items: body.items.map(toUserListItem),

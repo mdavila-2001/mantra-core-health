@@ -208,11 +208,12 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     });
   });
 
-  it('§2 · buscar personas no sale a una ruta que la API no publica', async () => {
-    const error = await firstValueFrom(
-      TestBed.inject(IamClient).searchUsers({ query: 'ana' }),
-    ).catch((e: unknown) => e);
-    http.expectNone('/iam/users/search');
-    expect(unavailableMessageOf(error)).toContain('Buscar personas registradas');
+  it('§2 · buscar personas va a la API real: la API ya publica POST /iam/users/search', () => {
+    // Hasta el PR #1001 de la API esta ruta era «sólo simulador» y no salía.
+    // La instantánea del contrato (`core/mock/contract/`) todavía no la
+    // declara, así que se comprueba la request y no `contractViolations`.
+    TestBed.inject(IamClient).searchUsers({ query: 'ana' }).subscribe();
+    const req = http.expectOne((r) => r.method === 'POST' && r.url === '/iam/users/search');
+    expect(req.request.body).toEqual({ q: 'ana' });
   });
 });

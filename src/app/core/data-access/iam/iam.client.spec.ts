@@ -224,6 +224,20 @@ describe('IamClient', () => {
     req.flush({ items: [], count: 0, limit: 10, nextCursor: null });
   });
 
+  it('searchUsers sale también contra la API real: ya no es «sólo simulador»', () => {
+    Object.assign(environment, { mockBackend: false });
+    try {
+      client.searchUsers({ query: 'ana' }).subscribe();
+
+      const req = http.expectOne('/iam/users/search');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ q: 'ana' });
+      req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    } finally {
+      Object.assign(environment, { mockBackend: true });
+    }
+  });
+
   it('searchUsers sin filtros (o con texto vacío) manda un cuerpo vacío', () => {
     client.searchUsers({ query: '' }).subscribe();
 
