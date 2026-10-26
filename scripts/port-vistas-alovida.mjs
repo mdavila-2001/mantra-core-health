@@ -27,25 +27,32 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, statSync }
 import { join, relative, basename, dirname } from 'node:path';
 import { JSDOM } from 'jsdom';
 
+import { ROUTE_SLUGS } from './alovida-route-names.mjs';
+
 const VAULT =
   '/Users/pablo/Documents/GitHub/mantra_core_technologies_health_docs/SALUD/Vistas/HTML';
 const FRONT = '/Users/pablo/Documents/GitHub/mantra-core-health';
 const SALIDA = join(FRONT, 'src/app/features/alovida');
 
-/* Los directorios de módulo se nombran «VNN-slug»; la ruta pública se queda
-   con el slug, que es lo que un humano lee en la barra de direcciones. */
+/* Los directorios de módulo se nombran «VNN-slug». `carpeta` es donde se
+   escriben los componentes (en castellano, como la maqueta); `segmento` es la
+   URL, en inglés por TAREA-29 —lo que un humano lee en la barra de
+   direcciones—. Ningún segmento puede empezar como un prefijo de
+   proxy.conf.json: lo verifica scripts/check-route-prefixes.mjs. */
 const MODULOS = {
-  'V02-common': { segmento: 'datos-compartidos', titulo: 'Datos compartidos' },
-  'V03-terminology': { segmento: 'terminologia', titulo: 'Terminología' },
-  /* «directorio» y no «organizaciones»: el proxy de desarrollo desvía todo lo
-     que empieza con `/org` hacia la API, así que una ruta llamada
-     `/organizaciones/...` nunca llega al router — la responde el backend con un
-     404. Es la misma trampa que documenta proxy.conf.json. */
-  'V04-directory': { segmento: 'directorio', titulo: 'Organizaciones' },
-  'V05-profiles': { segmento: 'personas', titulo: 'Personas' },
-  'V06-authz': { segmento: 'accesos', titulo: 'Identidad y accesos' },
-  'V65-buscador': { segmento: 'buscar', titulo: 'Buscador' },
-  landing: { segmento: 'inicio', titulo: 'Portada' },
+  'V02-common': { segmento: 'shared-data', carpeta: 'datos-compartidos', titulo: 'Datos compartidos' },
+  /* «vocabulary» y no «terminology»: `/terminology` es un prefijo de la API. */
+  'V03-terminology': { segmento: 'vocabulary', carpeta: 'terminologia', titulo: 'Terminología' },
+  /* «institutions» y no «organizations» ni «directory»: el proxy de desarrollo
+     desvía todo lo que empieza con `/org` hacia la API —una ruta así nunca
+     llega al router, la responde el backend con un 404— y `directory` ya es
+     el directorio público. */
+  'V04-directory': { segmento: 'institutions', carpeta: 'directorio', titulo: 'Organizaciones' },
+  'V05-profiles': { segmento: 'people', carpeta: 'personas', titulo: 'Personas' },
+  'V06-authz': { segmento: 'access', carpeta: 'accesos', titulo: 'Identidad y accesos' },
+  /* «explore» y no «search»: `/search` es la superficie pública real. */
+  'V65-buscador': { segmento: 'explore', carpeta: 'buscar', titulo: 'Buscador' },
+  landing: { segmento: 'home', carpeta: 'inicio', titulo: 'Portada' },
 };
 
 // --------------------------------------------------------------- utilidades
@@ -104,7 +111,8 @@ for (const archivo of archivos) {
   const { codigo, slug } = partirNombre(archivo);
   const esLanding = carpeta === 'landing';
   const slugFinal = esLanding ? 'portada' : sinTildes(slug);
-  const ruta = esLanding ? '/inicio' : `/${modulo.segmento}/${slugFinal}`;
+  const slugRuta = ROUTE_SLUGS[slugFinal] ?? slugFinal;
+  const ruta = esLanding ? '/home' : `/${modulo.segmento}/${slugRuta}`;
 
   rutaPorArchivo.set(archivo, ruta);
   vistas.push({
@@ -113,6 +121,7 @@ for (const archivo of archivos) {
     modulo,
     codigo,
     slug: slugFinal,
+    slugRuta,
     ruta,
     /* La subcarpeta nombra al actor: security-admin, clinician, publico… Es
        dato de la ficha, y se conserva para el cableado de permisos. */
@@ -130,7 +139,8 @@ for (const v of vistas) {
       if (!c.codigo) continue;
       rutaPorArchivo.delete(c.archivo);
       c.slug = `${c.codigo.toLowerCase()}-${c.slug}`;
-      c.ruta = `/${c.modulo.segmento}/${c.slug}`;
+      c.slugRuta = `${c.codigo.toLowerCase()}-${c.slugRuta}`;
+      c.ruta = `/${c.modulo.segmento}/${c.slugRuta}`;
       rutaPorArchivo.set(c.archivo, c.ruta);
       porRuta.set(c.ruta, c);
     }
@@ -164,8 +174,8 @@ function escaparParaAngular(html) {
 function portadaDeModulo(destino) {
   if (basename(destino) !== 'index.html') return null;
   const carpeta = basename(dirname(destino));
-  if (!MODULOS[carpeta]) return '/inicio';
-  return vistas.find((v) => v.carpeta === carpeta)?.ruta ?? '/inicio';
+  if (!MODULOS[carpeta]) return '/home';
+  return vistas.find((v) => v.carpeta === carpeta)?.ruta ?? '/home';
 }
 
 /** Reescribe enlaces e imágenes de la maqueta a lo que entiende el front. */
@@ -276,7 +286,7 @@ function titulo(documento) {
    mano una vez —son el nav y el header de la maqueta, con la navegación
    dirigida por datos— y el generador no tiene por qué pisarlos. */
 for (const modulo of Object.values(MODULOS)) {
-  rmSync(join(SALIDA, modulo.segmento), { recursive: true, force: true });
+  rmSync(join(SALIDA, modulo.carpeta), { recursive: true, force: true });
 }
 for (const archivo of ['vistas.manifest.json', 'marcos.crudos.json', 'alovida.routes.ts', 'alovida-nav.data.ts']) {
   rmSync(join(SALIDA, archivo), { force: true });
@@ -346,11 +356,11 @@ for (const vista of vistas) {
   /* `organizaciones/organizaciones-listado` no necesita llamarse
      OrganizacionesOrganizacionesListado: si el slug ya arranca con el nombre
      del módulo, alcanza con el slug. */
-  const baseNombre = vista.slug.startsWith(`${vista.modulo.segmento}-`)
+  const baseNombre = vista.slug.startsWith(`${vista.modulo.carpeta}-`)
     ? vista.slug
-    : `${vista.modulo.segmento}-${vista.slug}`;
+    : `${vista.modulo.carpeta}-${vista.slug}`;
   const nombre = pascal(baseNombre);
-  const carpetaSalida = join(SALIDA, vista.modulo.segmento, vista.slug);
+  const carpetaSalida = join(SALIDA, vista.modulo.carpeta, vista.slug);
   mkdirSync(carpetaSalida, { recursive: true });
 
   const selector = `app-alovida-${sinTildes(baseNombre)}`;
@@ -405,7 +415,7 @@ export class ${nombre} {}
     arquetipo,
     estado,
     marco: vista.carpeta === 'landing' ? 'lienzo' : esPublica ? 'publico' : 'privado',
-    importacion: `@features/alovida/${vista.modulo.segmento}/${vista.slug}/${vista.slug}`,
+    importacion: `@features/alovida/${vista.modulo.carpeta}/${vista.slug}/${vista.slug}`,
   });
   avisos.forEach((a) => avisosGlobales.push(`${relative(VAULT, vista.archivo)}: ${a}`));
 }
@@ -487,7 +497,7 @@ const datosDeRuta = (g) => (g.arquetipo ? `\n        data: { arquetipo: '${g.arq
 
 const rutaHija = (g) =>
   `      {
-        path: '${g.slug}',
+        path: '${g.slugRuta}',
         title: ${JSON.stringify(g.titulo)},${datosDeRuta(g)}
         loadComponent: () =>
           import('${g.importacion}').then((m) => m.${g.nombre}),
@@ -506,7 +516,7 @@ const grupoConMarco = (segmento, lista, marco) => `  {
     loadComponent: () =>
       import('@features/alovida/shell/${marco.archivo}').then((m) => m.${marco.clase}),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: '${lista[0].slug}' },
+      { path: '', pathMatch: 'full', redirectTo: '${lista[0].slugRuta}' },
 ${lista.map(rutaHija).join('\n')}
     ],
   },`;

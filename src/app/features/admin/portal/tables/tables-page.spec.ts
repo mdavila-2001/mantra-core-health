@@ -9,7 +9,7 @@ import { toColumnRow } from './table-columns';
 import { TableDetailPage } from './table-detail-page';
 import { TablesPage } from './tables-page';
 
-const LISTA = '/superadmin/portal/catalogo/tablas';
+const LISTA = '/superadmin/portal/catalog/tables';
 
 describe('TablesPage y TableDetailPage', () => {
   let harness: RouterTestingHarness;
@@ -21,8 +21,8 @@ describe('TablesPage y TableDetailPage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([
-          { path: 'superadmin/portal/catalogo/tablas', component: TablesPage },
-          { path: 'superadmin/portal/catalogo/tablas/:schema/:table', component: TableDetailPage },
+          { path: 'superadmin/portal/catalog/tables', component: TablesPage },
+          { path: 'superadmin/portal/catalog/tables/:schema/:table', component: TableDetailPage },
         ]),
       ],
     });
@@ -68,7 +68,7 @@ describe('TablesPage y TableDetailPage', () => {
     expect(ficha.textContent).toContain('Sin fuente');
     expect(ficha.textContent).toContain('Sólo admite altas (append-only)');
     const linaje = [...ficha.querySelectorAll('a')].find((a) => a.textContent?.includes('linaje'))!;
-    expect(linaje.getAttribute('href')).toBe('/superadmin/portal/linaje?tabla=scheduling.slots');
+    expect(linaje.getAttribute('href')).toBe('/superadmin/portal/lineage?tabla=scheduling.slots');
   });
 
   it('las relaciones llevan a la ficha de la otra tabla', async () => {

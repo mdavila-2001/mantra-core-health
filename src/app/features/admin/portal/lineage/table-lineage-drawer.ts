@@ -79,11 +79,11 @@ export class TableLineageDrawer {
   protected readonly sheetUrl = computed(() => {
     const parts = partirTabla(this.qualified());
     return parts
-      ? `${portalUrl('catalogo/tablas')}/${encodeURIComponent(parts.schema)}/${encodeURIComponent(parts.tabla)}`
+      ? `${portalUrl('catalog/tables')}/${encodeURIComponent(parts.schema)}/${encodeURIComponent(parts.tabla)}`
       : null;
   });
   protected readonly operationUrl = (id: string): string =>
-    `${portalUrl('sistemas/operaciones')}/${encodeURIComponent(id)}`;
+    `${portalUrl('systems/operations')}/${encodeURIComponent(id)}`;
 
   private pending: Subscription | null = null;
 
@@ -105,7 +105,7 @@ export class TableLineageDrawer {
     const parts = partirTabla(qualified);
     if (!parts) {
       // Una dirección escrita a mano sin `schema.tabla`: no hay tabla que buscar.
-      this.lineage.set(notFound({ label: 'Buscar la tabla', route: portalUrl('linaje') }));
+      this.lineage.set(notFound({ label: 'Buscar la tabla', route: portalUrl('lineage') }));
       return;
     }
     this.lineage.set(loading());

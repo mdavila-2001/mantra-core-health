@@ -25,7 +25,7 @@ export const PORTAL_BASE = '/superadmin/portal';
  */
 export const PORTAL_NAV: readonly PortalNavGroup[] = [
   {
-    id: 'inicio',
+    id: 'home',
     label: 'Inicio',
     icon: 'home',
     items: [
@@ -38,108 +38,108 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
     ],
   },
   {
-    id: 'sistemas',
+    id: 'systems',
     label: 'Sistemas',
     icon: 'route',
     items: [
       {
         label: 'Operaciones',
-        path: 'sistemas/operaciones',
+        path: 'systems/operations',
         summary: 'Todos los endpoints, con riesgo, tablas y pruebas',
       },
       {
         label: 'Mapa de rutas',
-        path: 'sistemas/flujos',
+        path: 'systems/flows',
         summary: 'Rutas por flujo, quién las llama y qué señales tienen',
       },
       {
         label: 'Diagrama',
-        path: 'sistemas/flujos/diagrama',
+        path: 'systems/flows/diagram',
         summary: 'El grafo de un proceso o módulo',
       },
       {
         label: 'Deriva',
-        path: 'sistemas/deriva',
+        path: 'systems/drift',
         summary: 'Dónde el frontend, la API y el contrato no coinciden',
       },
       {
         label: 'Revisión',
-        path: 'sistemas/revision',
+        path: 'systems/review',
         summary: 'Fichas del catálogo esperando una decisión',
       },
     ],
   },
   {
-    id: 'procesos',
+    id: 'processes',
     label: 'Procesos',
     icon: 'orders',
     items: [
       {
         label: 'Procesos',
-        path: 'procesos',
+        path: 'processes',
         summary: 'Qué hace el sistema, paso a paso y por quién',
       },
     ],
   },
   {
-    id: 'catalogo',
+    id: 'catalog',
     label: 'Catálogo y metadatos',
     icon: 'book',
     items: [
       {
         label: 'Tablas',
-        path: 'catalogo/tablas',
+        path: 'catalog/tables',
         summary: 'Las 1 230 tablas del modelo, con su ficha',
       },
       {
         label: 'Dominios y glosario',
-        path: 'catalogo/dominios',
+        path: 'catalog/domains',
         summary: 'Dominios de negocio y términos del glosario',
       },
     ],
   },
   {
-    id: 'linaje',
+    id: 'lineage',
     label: 'Linaje',
     icon: 'link',
     items: [
       {
         label: 'Linaje',
-        path: 'linaje',
+        path: 'lineage',
         summary: 'Qué operación toca qué tabla, y qué tabla depende de cuál',
       },
     ],
   },
   {
-    id: 'esquema',
+    id: 'schema',
     label: 'Esquema de datos',
     icon: 'folder',
     items: [
       {
         label: 'Esquema',
-        path: 'esquema',
+        path: 'schema',
         summary: 'Schemas, versión del modelo y deriva con la base',
       },
     ],
   },
   {
-    id: 'gobierno',
+    id: 'governance',
     label: 'Gobierno y acceso',
     icon: 'shield',
     items: [
       {
         label: 'Auditoría',
-        path: 'gobierno/auditoria',
+        path: 'governance/audit',
         summary: 'Quién hizo qué y cuándo, y quién leyó datos sensibles',
       },
       {
         label: 'Usuarios y roles',
-        path: 'gobierno/usuarios',
+        path: 'governance/users',
         summary: 'Usuarios internos, sus roles y los permisos de cada rol',
       },
       {
         label: 'Deriva de permisos',
-        path: 'gobierno/deriva-permisos',
+        path: 'governance/permission-drift',
         summary: 'Roles que las rutas exigen y nadie siembra, y rutas sin roles',
       },
     ],
@@ -162,7 +162,7 @@ export function isActive(item: PortalNavItem, url: string): boolean {
   if (item.exact) return actual === propia;
   if (actual === propia) return true;
   if (!actual.startsWith(`${propia}/`)) return false;
-  // `sistemas/flujos` no debe iluminarse en `sistemas/flujos/diagrama`, que tiene ítem propio
+  // `systems/flows` no debe iluminarse en `systems/flows/diagram`, que tiene ítem propio
   return !PORTAL_NAV.flatMap((g) => g.items).some(
     (otro) =>
       otro !== item &&

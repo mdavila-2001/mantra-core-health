@@ -44,7 +44,7 @@ import { paramValue, patchQuery, pathParamsSignal, queryParamsSignal } from '../
 import { TableColumns } from './table-columns';
 import { TableRelations } from './table-relations';
 
-const LIST_ROUTE = portalUrl('catalogo/tablas');
+const LIST_ROUTE = portalUrl('catalog/tables');
 const VIEWS = ['resumen', 'columnas', 'relaciones', 'operaciones', 'ddl'] as const;
 
 /** Un atributo de gobierno escrito: su valor si alguien lo declaró, o por qué no lo hay. */
@@ -101,13 +101,13 @@ export class TableDetailPage {
   protected readonly breadcrumbs = inject(NavigationService).breadcrumbs;
 
   protected readonly listUrl = LIST_ROUTE;
-  protected readonly lineageUrl = portalUrl('linaje');
+  protected readonly lineageUrl = portalUrl('lineage');
   protected readonly method = metodoHttp;
   protected readonly effect = operacionSobreTabla;
   protected readonly confidence = confianza;
   protected readonly purpose = purposeState;
   protected readonly operationUrl = (id: string): string =>
-    `${portalUrl('sistemas/operaciones')}/${encodeURIComponent(id)}`;
+    `${portalUrl('systems/operations')}/${encodeURIComponent(id)}`;
   protected readonly tableUrl = (schema: string, table: string): string =>
     `${LIST_ROUTE}/${encodeURIComponent(schema)}/${encodeURIComponent(table)}`;
 

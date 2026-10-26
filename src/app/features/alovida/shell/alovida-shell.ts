@@ -61,12 +61,12 @@ export class AlovidaShell {
 
   /** Los diez módulos del nav, en el orden de la bóveda. */
   readonly navegacion: readonly EntradaNav[] = [
-    { rotulo: 'Inicio', icono: 'inicio', segmento: 'inicio' },
-    { rotulo: 'Identidad y accesos', icono: 'accesos', segmento: 'accesos' },
-    { rotulo: 'Datos compartidos', icono: 'datos', segmento: 'datos-compartidos' },
-    { rotulo: 'Terminología', icono: 'terminologia', segmento: 'terminologia' },
-    { rotulo: 'Organizaciones', icono: 'organizaciones', segmento: 'directorio' },
-    { rotulo: 'Personas', icono: 'personas', segmento: 'personas' },
+    { rotulo: 'Inicio', icono: 'inicio', segmento: 'home' },
+    { rotulo: 'Identidad y accesos', icono: 'accesos', segmento: 'access' },
+    { rotulo: 'Datos compartidos', icono: 'datos', segmento: 'shared-data' },
+    { rotulo: 'Terminología', icono: 'terminologia', segmento: 'vocabulary' },
+    { rotulo: 'Organizaciones', icono: 'organizaciones', segmento: 'institutions' },
+    { rotulo: 'Personas', icono: 'personas', segmento: 'people' },
     { rotulo: 'Agenda', icono: 'agenda', segmento: 'agenda' },
     { rotulo: 'Historia clínica', icono: 'historia', segmento: 'historia-clinica' },
     { rotulo: 'Facturación', icono: 'facturacion', segmento: 'facturacion' },

@@ -8,7 +8,7 @@ import { drift, finding, findingDetail } from '../portal.fixture';
 import { DriftPage } from './drift-page';
 import { describeFindingItem, readDrift } from './drift.model';
 
-const RUTA = '/superadmin/portal/sistemas/deriva';
+const RUTA = '/superadmin/portal/systems/drift';
 
 describe('DriftPage', () => {
   let harness: RouterTestingHarness;
@@ -19,7 +19,7 @@ describe('DriftPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/sistemas/deriva', component: DriftPage }]),
+        provideRouter([{ path: 'superadmin/portal/systems/drift', component: DriftPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);

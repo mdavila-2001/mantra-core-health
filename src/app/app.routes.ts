@@ -16,8 +16,12 @@ import { ActivateAccount } from './features/auth/activate-account/activate-accou
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
-import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
-import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
+import { LEGACY_PORTAL_REDIRECTS, PORTAL_RUTAS } from './features/admin/portal/portal.routes';
+import {
+  designMockupRoutes,
+  legacyMockupRedirects,
+  profileSlugRedirects,
+} from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
@@ -453,7 +457,7 @@ const PANTALLAS_HIJAS: Routes = [
     // dirección abre el cockpit y esto queda un clic más adentro. **No** entra
     // al menú: la lista de secciones del médico es cerrada y hay un spec que
     // falla si alguien le agrega una (carril 9).
-    path: 'administration/accounting/libros',
+    path: 'administration/accounting/books',
     title: `${APP_TITLE} - Libros contables`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -1167,7 +1171,7 @@ function pantallaDeGeolocalizacion(
  * hijas, que es justo lo que se quiere.
  */
 const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
-  'superadmin/portal': PORTAL_RUTAS,
+  'superadmin/portal': [...PORTAL_RUTAS, ...LEGACY_PORTAL_REDIRECTS],
   messaging: [
     {
       // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
@@ -1424,6 +1428,11 @@ const RUTAS_HEREDADAS_DEL_BUSCADOR: Readonly<Record<string, string>> = {
 };
 
 /** Las landings públicas, que son las que viajan en los correos. */
+/** TAREA-29 · Internas renombradas al inglés. Sólo redirigen: el guard es de la ruta nueva. */
+const RUTAS_HEREDADAS_INTERNAS: Readonly<Record<string, string>> = {
+  'administration/accounting/libros': '/administration/accounting/books',
+};
+
 const RUTAS_HEREDADAS_PUBLICAS: Readonly<Record<string, string>> = {
   'auth/organizacion': '/auth/organization',
   'auth/registro': '/auth/register',
@@ -1505,8 +1514,8 @@ function rutasDeFichasPublicas(): Routes {
  * ## Por qué existen además de las que genera el portador de vistas
  *
  * `scripts/port-vistas-alovida.mjs` deriva el segmento del **nombre del archivo
- * de la maqueta**, así que la portada quedó en `/buscar/buscador-listado` y los
- * verticales en `/buscar/…-listado`. Sirve para recorrer la bóveda; no sirve
+ * de la maqueta** (en inglés desde TAREA-29), así que la portada quedó en
+ * `/explore/finder-list` y los verticales en `/explore/…-list`. Sirve para recorrer la bóveda; no sirve
  * como superficie pública. Estas URL son las que la ficha declara —`/search`,
  * `/search/practitioners`, `/search/map`—, las que se pegan en un mensaje y
  * las que un buscador indexa, y son cortas y estables porque un directorio
@@ -1516,9 +1525,9 @@ function rutasDeFichasPublicas(): Routes {
  *
  * Porque `alovida.routes.ts` es un **archivo generado**: escribirlas ahí las
  * borra la próxima vez que alguien porte una vista. Declaradas acá conviven
- * con el bloque generado —el router prueba estas primero y retrocede al
- * siguiente `buscar` cuando el segmento no coincide—, así que los enlaces de
- * la bóveda que todavía apuntan a `/buscar/buscador-listado` siguen abriendo.
+ * con el bloque generado, así que los enlaces de la bóveda que apuntan a
+ * `/explore/finder-list` siguen abriendo, y los viejos en castellano
+ * (`/buscar/buscador-listado`) los recoge `legacyMockupRedirects()` al final.
  * Hay una prueba que resuelve las dos formas y falla si eso deja de ser cierto.
  */
 function rutasDeBusquedaPublica(): Routes {
@@ -2323,9 +2332,12 @@ export const routes: Routes = [
   // secas existe en las dos partes, y acá gana la que redirige sólo cuando
   // ninguna pantalla real coincidió.
   ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),
+  ...rutasHeredadas(RUTAS_HEREDADAS_INTERNAS),
   // Las fichas de la bóveda con slug abren la ficha pública real, con o sin
   // maquetas. Ver `features/alovida/design-mockup-gate.ts`.
   ...profileSlugRedirects(),
+  // TAREA-29 · Las direcciones en castellano de la bóveda (`/personas/…`). Ver el gate.
+  ...legacyMockupRedirects(environment.designMockups),
   {
     // Antes esto redirigía a `/`, que mandaba al panel —o al login, vía el
     // guard— a quien escribiera mal una dirección, sin decirle que se había

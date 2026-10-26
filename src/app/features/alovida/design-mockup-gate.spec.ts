@@ -6,16 +6,17 @@ import {
   CONNECTED_CANONICAL_URLS,
   designMockupRoutes,
   mockupPaths,
+  legacyMockupRedirects,
   PROFILE_SLUG_PREFIXES,
   profileSlugRedirects,
   REAL_EQUIVALENTS,
 } from './design-mockup-gate';
+import { LEGACY_MOCKUP_PATHS } from './legacy-mockup-paths';
 
 /** Las direcciones de la bóveda que, con el gate apagado, no se registran (c). */
 function gatedPaths(): readonly string[] {
   const kept = new Set([...Object.keys(CONNECTED_CANONICAL_URLS), ...Object.keys(REAL_EQUIVALENTS)]);
-  // `buscar` a secas lo redirige `app.routes.ts` a `/search` antes de llegar acá.
-  return mockupPaths().filter((path) => path !== 'buscar' && !kept.has(path));
+  return mockupPaths().filter((path) => !kept.has(path));
 }
 
 describe('designMockupRoutes', () => {
@@ -47,7 +48,47 @@ describe('designMockupRoutes', () => {
     });
   });
 
+  describe('las direcciones viejas en castellano (TAREA-29)', () => {
+    it('cada una apunta a una dirección que el archivo generado declara', () => {
+      const declared = new Set(mockupPaths());
+
+      expect(Object.values(LEGACY_MOCKUP_PATHS).filter((path) => !declared.has(path))).toEqual([]);
+      // Ninguna dirección vieja sobrevive como ruta: si no, el mapa sobra.
+      expect(Object.keys(LEGACY_MOCKUP_PATHS).filter((path) => declared.has(path))).toEqual([]);
+    });
+
+    it('el archivo generado tiene una dirección vieja por cada ruta', () => {
+      const legacyTargets = new Set(Object.values(LEGACY_MOCKUP_PATHS));
+
+      expect(mockupPaths().filter((path) => !legacyTargets.has(path))).toEqual([]);
+    });
+
+    it('con maquetas, la vieja lleva a la maqueta con su ruta nueva', () => {
+      const paths = legacyMockupRedirects(true).map((route) => route.path);
+
+      expect(paths).toEqual(Object.keys(LEGACY_MOCKUP_PATHS));
+    });
+
+    it('con la API real, sólo se registran las que tienen destino real (a) o (b)', () => {
+      const real = new Set([...Object.keys(CONNECTED_CANONICAL_URLS), ...Object.keys(REAL_EQUIVALENTS)]);
+      const expected = Object.entries(LEGACY_MOCKUP_PATHS)
+        .filter(([, current]) => real.has(current))
+        .map(([legacy]) => legacy);
+
+      expect(legacyMockupRedirects(false).map((route) => route.path)).toEqual(expected);
+      expect(expected).toContain('personas/pacientes-listado');
+      expect(expected).not.toContain('accesos/permisos-listado');
+    });
+  });
+
   it('la ficha de la bóveda con slug abre la ficha pública real (en los dos modos)', () => {
+    expect(profileSlugRedirects()).toContainEqual(
+      expect.objectContaining({
+        path: 'explore/pharmacy-profile-detail/:slug',
+        pathMatch: 'full',
+        redirectTo: '/f/:slug',
+      }),
+    );
     expect(profileSlugRedirects()).toContainEqual(
       expect.objectContaining({
         path: 'buscar/perfil-farmacia-detalle/:slug',
@@ -88,12 +129,12 @@ describe('designMockupRoutes', () => {
     });
 
     it.each([
-      ['accesos/permisos-listado'],
-      ['datos-compartidos/archivos-listado'],
-      ['directorio/organizaciones-suspender'],
-      ['personas/profesionales-listado'],
-      ['terminologia/relaciones-listado'],
-      ['buscar/seguidos-y-guardados-listado'],
+      ['access/permissions-list'],
+      ['shared-data/files-list'],
+      ['institutions/organizations-suspend'],
+      ['people/practitioners-list'],
+      ['vocabulary/relationships-list'],
+      ['explore/followed-and-saved-list'],
     ])('%s (maqueta sin equivalente) no existe', (path) => {
       expect(tree.some((route) => route.path === path)).toBe(false);
     });

@@ -2974,7 +2974,7 @@
   ],
   "portadas": [
     {
-      "ruta": "/datos-compartidos/versiones-internas-escanear",
+      "ruta": "/shared-data/internal-versions-scan",
       "codigo": "V02-08",
       "actor": "security-admin",
       "componente": "DatosCompartidosVersionesInternasEscanear",
@@ -2982,7 +2982,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/versiones-internas-listado",
+      "ruta": "/shared-data/internal-versions-list",
       "codigo": "V02-08",
       "actor": "security-admin",
       "componente": "DatosCompartidosVersionesInternasListado",
@@ -2990,7 +2990,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-eliminar",
+      "ruta": "/shared-data/files-delete",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosEliminar",
@@ -2998,7 +2998,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-formulario",
+      "ruta": "/shared-data/files-form",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosFormulario",
@@ -3006,7 +3006,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-listado",
+      "ruta": "/shared-data/files-list",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosListado",
@@ -3014,7 +3014,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-obtener-enlace",
+      "ruta": "/shared-data/files-get-link",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosObtenerEnlace",
@@ -3022,7 +3022,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-subir",
+      "ruta": "/shared-data/files-upload",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosSubir",
@@ -3030,7 +3030,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/contenido-detalle",
+      "ruta": "/shared-data/content-detail",
       "codigo": "V02-02",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosContenidoDetalle",
@@ -3038,7 +3038,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/vinculos-formulario",
+      "ruta": "/shared-data/links-form",
       "codigo": "V02-03",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosVinculosFormulario",
@@ -3046,7 +3046,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/vinculos-listado",
+      "ruta": "/shared-data/links-list",
       "codigo": "V02-03",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosVinculosListado",
@@ -3054,7 +3054,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/versiones-formulario",
+      "ruta": "/shared-data/versions-form",
       "codigo": "V02-04",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosVersionesFormulario",
@@ -3062,7 +3062,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/versiones-listado",
+      "ruta": "/shared-data/versions-list",
       "codigo": "V02-04",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosVersionesListado",
@@ -3070,7 +3070,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/puntos-de-contacto-formulario",
+      "ruta": "/shared-data/contact-points-form",
       "codigo": "V02-05",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosPuntosDeContactoFormulario",
@@ -3078,7 +3078,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/puntos-de-contacto-listado",
+      "ruta": "/shared-data/contact-points-list",
       "codigo": "V02-05",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosPuntosDeContactoListado",
@@ -3086,7 +3086,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/puntos-de-contacto-verificar",
+      "ruta": "/shared-data/contact-points-verify",
       "codigo": "V02-05",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosPuntosDeContactoVerificar",
@@ -3094,7 +3094,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/direcciones-formulario",
+      "ruta": "/shared-data/addresses-form",
       "codigo": "V02-06",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosDireccionesFormulario",
@@ -3102,7 +3102,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/direcciones-listado",
+      "ruta": "/shared-data/addresses-list",
       "codigo": "V02-06",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosDireccionesListado",
@@ -3110,7 +3110,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/identificadores-formulario",
+      "ruta": "/shared-data/identifiers-form",
       "codigo": "V02-07",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosIdentificadoresFormulario",
@@ -3118,7 +3118,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/identificadores-listado",
+      "ruta": "/shared-data/identifiers-list",
       "codigo": "V02-07",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosIdentificadoresListado",
@@ -3126,7 +3126,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/derivados-formulario",
+      "ruta": "/shared-data/derivatives-form",
       "codigo": "V02-09",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosDerivadosFormulario",
@@ -3134,7 +3134,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/derivados-listado",
+      "ruta": "/shared-data/derivatives-list",
       "codigo": "V02-09",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosDerivadosListado",
@@ -3142,7 +3142,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-importar",
+      "ruta": "/vocabulary/versions-import",
       "codigo": "V03-01",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesImportar",
@@ -3150,7 +3150,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-listado",
+      "ruta": "/vocabulary/versions-list",
       "codigo": "V03-01",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesListado",
@@ -3158,7 +3158,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-publicar",
+      "ruta": "/vocabulary/versions-publish",
       "codigo": "V03-01",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesPublicar",
@@ -3166,7 +3166,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/expansion-de-conjunto-de-valores-formulario",
+      "ruta": "/vocabulary/value-set-expansion-form",
       "codigo": "V03-04",
       "actor": "security-admin",
       "componente": "TerminologiaExpansionDeConjuntoDeValoresFormulario",
@@ -3174,7 +3174,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/sistemas-de-codigos-formulario",
+      "ruta": "/vocabulary/code-systems-form",
       "codigo": "V03-05",
       "actor": "security-admin",
       "componente": "TerminologiaSistemasDeCodigosFormulario",
@@ -3182,7 +3182,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/sistemas-de-codigos-listado",
+      "ruta": "/vocabulary/code-systems-list",
       "codigo": "V03-05",
       "actor": "security-admin",
       "componente": "TerminologiaSistemasDeCodigosListado",
@@ -3190,7 +3190,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-de-sistema-formulario",
+      "ruta": "/vocabulary/system-versions-form",
       "codigo": "V03-06",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesDeSistemaFormulario",
@@ -3198,7 +3198,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-de-sistema-listado",
+      "ruta": "/vocabulary/system-versions-list",
       "codigo": "V03-06",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesDeSistemaListado",
@@ -3206,7 +3206,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/deprecacion-de-concepto-formulario",
+      "ruta": "/vocabulary/concept-deprecation-form",
       "codigo": "V03-08",
       "actor": "security-admin",
       "componente": "TerminologiaDeprecacionDeConceptoFormulario",
@@ -3214,7 +3214,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/designaciones-formulario",
+      "ruta": "/vocabulary/designations-form",
       "codigo": "V03-09",
       "actor": "security-admin",
       "componente": "TerminologiaDesignacionesFormulario",
@@ -3222,7 +3222,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/designaciones-listado",
+      "ruta": "/vocabulary/designations-list",
       "codigo": "V03-09",
       "actor": "security-admin",
       "componente": "TerminologiaDesignacionesListado",
@@ -3230,7 +3230,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/propiedades-formulario",
+      "ruta": "/vocabulary/properties-form",
       "codigo": "V03-10",
       "actor": "security-admin",
       "componente": "TerminologiaPropiedadesFormulario",
@@ -3238,7 +3238,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/propiedades-listado",
+      "ruta": "/vocabulary/properties-list",
       "codigo": "V03-10",
       "actor": "security-admin",
       "componente": "TerminologiaPropiedadesListado",
@@ -3246,7 +3246,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/relaciones-formulario",
+      "ruta": "/vocabulary/relationships-form",
       "codigo": "V03-11",
       "actor": "security-admin",
       "componente": "TerminologiaRelacionesFormulario",
@@ -3254,7 +3254,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/relaciones-listado",
+      "ruta": "/vocabulary/relationships-list",
       "codigo": "V03-11",
       "actor": "security-admin",
       "componente": "TerminologiaRelacionesListado",
@@ -3262,7 +3262,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/politicas-de-catalogo-formulario",
+      "ruta": "/vocabulary/catalog-policies-form",
       "codigo": "V03-12",
       "actor": "security-admin",
       "componente": "TerminologiaPoliticasDeCatalogoFormulario",
@@ -3270,7 +3270,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/politicas-de-catalogo-listado",
+      "ruta": "/vocabulary/catalog-policies-list",
       "codigo": "V03-12",
       "actor": "security-admin",
       "componente": "TerminologiaPoliticasDeCatalogoListado",
@@ -3278,7 +3278,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/conjuntos-de-valor-formulario",
+      "ruta": "/vocabulary/value-sets-form",
       "codigo": "V03-13",
       "actor": "security-admin",
       "componente": "TerminologiaConjuntosDeValorFormulario",
@@ -3286,7 +3286,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/conjuntos-de-valor-listado",
+      "ruta": "/vocabulary/value-sets-list",
       "codigo": "V03-13",
       "actor": "security-admin",
       "componente": "TerminologiaConjuntosDeValorListado",
@@ -3294,7 +3294,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/consulta-de-concepto-listado",
+      "ruta": "/vocabulary/concept-lookup-list",
       "codigo": "V03-02",
       "actor": "sesion-autenticada",
       "componente": "TerminologiaConsultaDeConceptoListado",
@@ -3302,7 +3302,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/traduccion-entre-catalogos-formulario",
+      "ruta": "/vocabulary/catalog-translation-form",
       "codigo": "V03-03",
       "actor": "sesion-autenticada",
       "componente": "TerminologiaTraduccionEntreCatalogosFormulario",
@@ -3310,7 +3310,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/conceptos-listado",
+      "ruta": "/vocabulary/concepts-list",
       "codigo": "V03-07",
       "actor": "sesion-autenticada",
       "componente": "TerminologiaConceptosListado",
@@ -3318,7 +3318,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/expansion-de-conjunto-de-valores-detalle",
+      "ruta": "/vocabulary/value-set-expansion-detail",
       "codigo": "V03-14",
       "actor": "sesion-autenticada",
       "componente": "TerminologiaExpansionDeConjuntoDeValoresDetalle",
@@ -3326,7 +3326,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-listado",
+      "ruta": "/institutions/organizations-list",
       "codigo": "V04-01",
       "actor": "security-admin",
       "componente": "DirectorioOrganizacionesListado",
@@ -3334,7 +3334,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-verificar",
+      "ruta": "/institutions/organizations-verify",
       "codigo": "V04-01",
       "actor": "security-admin",
       "componente": "DirectorioOrganizacionesVerificar",
@@ -3342,7 +3342,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/membresias-dar-de-baja",
+      "ruta": "/institutions/memberships-deactivate",
       "codigo": "V04-02",
       "actor": "security-admin",
       "componente": "DirectorioMembresiasDarDeBaja",
@@ -3350,7 +3350,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/membresias-formulario",
+      "ruta": "/institutions/memberships-form",
       "codigo": "V04-02",
       "actor": "security-admin",
       "componente": "DirectorioMembresiasFormulario",
@@ -3358,7 +3358,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/membresias-listado",
+      "ruta": "/institutions/memberships-list",
       "codigo": "V04-02",
       "actor": "security-admin",
       "componente": "DirectorioMembresiasListado",
@@ -3366,7 +3366,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/asignaciones-de-sucursal-formulario",
+      "ruta": "/institutions/branch-assignments-form",
       "codigo": "V04-03",
       "actor": "security-admin",
       "componente": "DirectorioAsignacionesDeSucursalFormulario",
@@ -3374,7 +3374,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/roles-formulario",
+      "ruta": "/institutions/roles-form",
       "codigo": "V04-04",
       "actor": "security-admin",
       "componente": "DirectorioRolesFormulario",
@@ -3382,7 +3382,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/transferencias-formulario",
+      "ruta": "/institutions/transfers-form",
       "codigo": "V04-05",
       "actor": "security-admin",
       "componente": "DirectorioTransferenciasFormulario",
@@ -3390,7 +3390,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/sucursales-formulario",
+      "ruta": "/institutions/branches-form",
       "codigo": "V04-06",
       "actor": "security-admin",
       "componente": "DirectorioSucursalesFormulario",
@@ -3398,7 +3398,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/sucursales-listado",
+      "ruta": "/institutions/branches-list",
       "codigo": "V04-06",
       "actor": "security-admin",
       "componente": "DirectorioSucursalesListado",
@@ -3406,7 +3406,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-hijas-formulario",
+      "ruta": "/institutions/child-organizations-form",
       "codigo": "V04-07",
       "actor": "security-admin",
       "componente": "DirectorioOrganizacionesHijasFormulario",
@@ -3414,7 +3414,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-formulario",
+      "ruta": "/institutions/organizations-form",
       "codigo": "V04-01",
       "actor": "superadmin",
       "componente": "DirectorioOrganizacionesFormulario",
@@ -3422,7 +3422,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-suspender",
+      "ruta": "/institutions/organizations-suspend",
       "codigo": "V04-01",
       "actor": "superadmin",
       "componente": "DirectorioOrganizacionesSuspender",
@@ -3430,7 +3430,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/pacientes-formulario",
+      "ruta": "/people/patients-form",
       "codigo": "V05-01",
       "actor": "security-admin",
       "componente": "PersonasPacientesFormulario",
@@ -3438,7 +3438,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/pacientes-fusionar",
+      "ruta": "/people/patients-merge",
       "codigo": "V05-01",
       "actor": "security-admin",
       "componente": "PersonasPacientesFusionar",
@@ -3446,7 +3446,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/pacientes-listado",
+      "ruta": "/people/patients-list",
       "codigo": "V05-01",
       "actor": "security-admin",
       "componente": "PersonasPacientesListado",
@@ -3454,7 +3454,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/pacientes-revertir",
+      "ruta": "/people/patients-revert",
       "codigo": "V05-01",
       "actor": "security-admin",
       "componente": "PersonasPacientesRevertir",
@@ -3462,7 +3462,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/vinculos-de-identidad-formulario",
+      "ruta": "/people/identity-links-form",
       "codigo": "V05-02",
       "actor": "security-admin",
       "componente": "PersonasVinculosDeIdentidadFormulario",
@@ -3470,7 +3470,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/vinculos-de-identidad-listado",
+      "ruta": "/people/identity-links-list",
       "codigo": "V05-02",
       "actor": "security-admin",
       "componente": "PersonasVinculosDeIdentidadListado",
@@ -3478,7 +3478,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/apoderados-de-portal-formulario",
+      "ruta": "/people/portal-proxies-form",
       "codigo": "V05-04",
       "actor": "security-admin",
       "componente": "PersonasApoderadosDePortalFormulario",
@@ -3486,7 +3486,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/apoderados-de-portal-listado",
+      "ruta": "/people/portal-proxies-list",
       "codigo": "V05-04",
       "actor": "security-admin",
       "componente": "PersonasApoderadosDePortalListado",
@@ -3494,7 +3494,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/personas-relacionadas-formulario",
+      "ruta": "/people/related-persons-form",
       "codigo": "V05-05",
       "actor": "security-admin",
       "componente": "PersonasRelacionadasFormulario",
@@ -3502,7 +3502,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/personas-relacionadas-listado",
+      "ruta": "/people/related-persons-list",
       "codigo": "V05-05",
       "actor": "security-admin",
       "componente": "PersonasRelacionadasListado",
@@ -3510,7 +3510,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/credenciales-listado",
+      "ruta": "/people/credentials-list",
       "codigo": "V05-06",
       "actor": "security-admin",
       "componente": "PersonasCredencialesListado",
@@ -3518,7 +3518,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/credenciales-verificar",
+      "ruta": "/people/credentials-verify",
       "codigo": "V05-06",
       "actor": "security-admin",
       "componente": "PersonasCredencialesVerificar",
@@ -3526,7 +3526,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/personas-listado",
+      "ruta": "/people/people-list",
       "codigo": "V05-07",
       "actor": "security-admin",
       "componente": "PersonasListado",
@@ -3534,7 +3534,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/personas-registrar-defuncion",
+      "ruta": "/people/people-record-death",
       "codigo": "V05-07",
       "actor": "security-admin",
       "componente": "PersonasRegistrarDefuncion",
@@ -3542,7 +3542,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/vinculos-de-cuenta-formulario",
+      "ruta": "/people/account-links-form",
       "codigo": "V05-08",
       "actor": "security-admin",
       "componente": "PersonasVinculosDeCuentaFormulario",
@@ -3550,7 +3550,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/vinculos-de-cuenta-listado",
+      "ruta": "/people/account-links-list",
       "codigo": "V05-08",
       "actor": "security-admin",
       "componente": "PersonasVinculosDeCuentaListado",
@@ -3558,7 +3558,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/profesionales-formulario",
+      "ruta": "/people/practitioners-form",
       "codigo": "V05-09",
       "actor": "security-admin",
       "componente": "PersonasProfesionalesFormulario",
@@ -3566,7 +3566,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/profesionales-listado",
+      "ruta": "/people/practitioners-list",
       "codigo": "V05-09",
       "actor": "security-admin",
       "componente": "PersonasProfesionalesListado",
@@ -3574,7 +3574,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/autorizaciones-de-jurisdiccion-formulario",
+      "ruta": "/people/jurisdiction-authorizations-form",
       "codigo": "V05-10",
       "actor": "security-admin",
       "componente": "PersonasAutorizacionesDeJurisdiccionFormulario",
@@ -3582,7 +3582,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/autorizaciones-de-jurisdiccion-listado",
+      "ruta": "/people/jurisdiction-authorizations-list",
       "codigo": "V05-10",
       "actor": "security-admin",
       "componente": "PersonasAutorizacionesDeJurisdiccionListado",
@@ -3590,7 +3590,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/especialidades-formulario",
+      "ruta": "/people/specialties-form",
       "codigo": "V05-11",
       "actor": "security-admin",
       "componente": "PersonasEspecialidadesFormulario",
@@ -3598,7 +3598,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/especialidades-listado",
+      "ruta": "/people/specialties-list",
       "codigo": "V05-11",
       "actor": "security-admin",
       "componente": "PersonasEspecialidadesListado",
@@ -3606,7 +3606,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/resumen-propio-listado",
+      "ruta": "/people/own-summary-list",
       "codigo": "V05-03",
       "actor": "sesion-autenticada",
       "componente": "PersonasResumenPropioListado",
@@ -3614,7 +3614,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/acceso-de-emergencia-formulario",
+      "ruta": "/access/emergency-access-form",
       "codigo": "V06-05",
       "actor": "clinical-approver",
       "componente": "AccesosAccesoDeEmergenciaFormulario",
@@ -3622,7 +3622,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/accesos-clinicos-del-paciente-formulario",
+      "ruta": "/access/patient-clinical-access-form",
       "codigo": "V06-06",
       "actor": "clinical-approver",
       "componente": "AccesosClinicosDelPacienteFormulario",
@@ -3630,7 +3630,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/accesos-clinicos-del-paciente-listado",
+      "ruta": "/access/patient-clinical-access-list",
       "codigo": "V06-06",
       "actor": "clinical-approver",
       "componente": "AccesosClinicosDelPacienteListado",
@@ -3638,7 +3638,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/relaciones-de-cuidado-formulario",
+      "ruta": "/access/care-relationships-form",
       "codigo": "V06-01",
       "actor": "clinician",
       "componente": "AccesosRelacionesDeCuidadoFormulario",
@@ -3646,7 +3646,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/relaciones-de-cuidado-listado",
+      "ruta": "/access/care-relationships-list",
       "codigo": "V06-01",
       "actor": "clinician",
       "componente": "AccesosRelacionesDeCuidadoListado",
@@ -3654,7 +3654,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/relaciones-de-cuidado-revocar",
+      "ruta": "/access/care-relationships-revoke",
       "codigo": "V06-01",
       "actor": "clinician",
       "componente": "AccesosRelacionesDeCuidadoRevocar",
@@ -3662,7 +3662,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/representaciones-legales-formulario",
+      "ruta": "/access/legal-representations-form",
       "codigo": "V06-02",
       "actor": "security-admin",
       "componente": "AccesosRepresentacionesLegalesFormulario",
@@ -3670,7 +3670,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/representaciones-legales-listado",
+      "ruta": "/access/legal-representations-list",
       "codigo": "V06-02",
       "actor": "security-admin",
       "componente": "AccesosRepresentacionesLegalesListado",
@@ -3678,7 +3678,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/representaciones-legales-revocar",
+      "ruta": "/access/legal-representations-revoke",
       "codigo": "V06-02",
       "actor": "security-admin",
       "componente": "AccesosRepresentacionesLegalesRevocar",
@@ -3686,7 +3686,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/accesos-clinicos-listado",
+      "ruta": "/access/clinical-access-list",
       "codigo": "V06-03",
       "actor": "security-admin",
       "componente": "AccesosClinicosListado",
@@ -3694,7 +3694,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/accesos-clinicos-revocar",
+      "ruta": "/access/clinical-access-revoke",
       "codigo": "V06-03",
       "actor": "security-admin",
       "componente": "AccesosClinicosRevocar",
@@ -3702,7 +3702,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/decisiones-evaluar",
+      "ruta": "/access/decisions-evaluate",
       "codigo": "V06-04",
       "actor": "security-admin",
       "componente": "AccesosDecisionesEvaluar",
@@ -3710,7 +3710,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/cache-invalidar",
+      "ruta": "/access/cache-invalidate",
       "codigo": "V06-07",
       "actor": "security-admin",
       "componente": "AccesosCacheInvalidar",
@@ -3718,7 +3718,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/categorias-de-permiso-formulario",
+      "ruta": "/access/permission-categories-form",
       "codigo": "V06-08",
       "actor": "security-admin",
       "componente": "AccesosCategoriasDePermisoFormulario",
@@ -3726,7 +3726,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/categorias-de-permiso-listado",
+      "ruta": "/access/permission-categories-list",
       "codigo": "V06-08",
       "actor": "security-admin",
       "componente": "AccesosCategoriasDePermisoListado",
@@ -3734,7 +3734,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-formulario",
+      "ruta": "/access/permissions-form",
       "codigo": "V06-09",
       "actor": "security-admin",
       "componente": "AccesosPermisosFormulario",
@@ -3742,7 +3742,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-listado",
+      "ruta": "/access/permissions-list",
       "codigo": "V06-09",
       "actor": "security-admin",
       "componente": "AccesosPermisosListado",
@@ -3750,7 +3750,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/alcance-de-recurso-formulario",
+      "ruta": "/access/resource-scope-form",
       "codigo": "V06-10",
       "actor": "security-admin",
       "componente": "AccesosAlcanceDeRecursoFormulario",
@@ -3758,7 +3758,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/alcance-de-recurso-listado",
+      "ruta": "/access/resource-scope-list",
       "codigo": "V06-10",
       "actor": "security-admin",
       "componente": "AccesosAlcanceDeRecursoListado",
@@ -3766,7 +3766,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/roles-formulario",
+      "ruta": "/access/roles-form",
       "codigo": "V06-11",
       "actor": "security-admin",
       "componente": "AccesosRolesFormulario",
@@ -3774,7 +3774,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/roles-listado",
+      "ruta": "/access/roles-list",
       "codigo": "V06-11",
       "actor": "security-admin",
       "componente": "AccesosRolesListado",
@@ -3782,7 +3782,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-de-campo-formulario",
+      "ruta": "/access/field-permissions-form",
       "codigo": "V06-12",
       "actor": "security-admin",
       "componente": "AccesosPermisosDeCampoFormulario",
@@ -3790,7 +3790,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-de-campo-listado",
+      "ruta": "/access/field-permissions-list",
       "codigo": "V06-12",
       "actor": "security-admin",
       "componente": "AccesosPermisosDeCampoListado",
@@ -3798,7 +3798,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-del-rol-formulario",
+      "ruta": "/access/role-permissions-form",
       "codigo": "V06-13",
       "actor": "security-admin",
       "componente": "AccesosPermisosDelRolFormulario",
@@ -3806,7 +3806,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-del-rol-listado",
+      "ruta": "/access/role-permissions-list",
       "codigo": "V06-13",
       "actor": "security-admin",
       "componente": "AccesosPermisosDelRolListado",
@@ -3814,7 +3814,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/politicas-de-acceso-formulario",
+      "ruta": "/access/access-policies-form",
       "codigo": "V06-14",
       "actor": "security-admin",
       "componente": "AccesosPoliticasDeAccesoFormulario",
@@ -3822,7 +3822,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/politicas-de-acceso-listado",
+      "ruta": "/access/access-policies-list",
       "codigo": "V06-14",
       "actor": "security-admin",
       "componente": "AccesosPoliticasDeAccesoListado",
@@ -3830,7 +3830,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/concesiones-de-permiso-formulario",
+      "ruta": "/access/permission-grants-form",
       "codigo": "V06-15",
       "actor": "security-admin",
       "componente": "AccesosConcesionesDePermisoFormulario",
@@ -3838,7 +3838,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/concesiones-de-permiso-listado",
+      "ruta": "/access/permission-grants-list",
       "codigo": "V06-15",
       "actor": "security-admin",
       "componente": "AccesosConcesionesDePermisoListado",
@@ -3846,7 +3846,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/asignaciones-de-rol-formulario",
+      "ruta": "/access/role-assignments-form",
       "codigo": "V06-16",
       "actor": "security-admin",
       "componente": "AccesosAsignacionesDeRolFormulario",
@@ -3854,7 +3854,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/asignaciones-de-rol-listado",
+      "ruta": "/access/role-assignments-list",
       "codigo": "V06-16",
       "actor": "security-admin",
       "componente": "AccesosAsignacionesDeRolListado",
@@ -3862,7 +3862,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/buscador-listado",
+      "ruta": "/explore/finder-list",
       "codigo": "V65-01",
       "actor": "publico",
       "componente": "BuscarBuscadorListado",
@@ -3870,7 +3870,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/profesionales-listado",
+      "ruta": "/explore/practitioners-list",
       "codigo": "V65-02",
       "actor": "publico",
       "componente": "BuscarProfesionalesListado",
@@ -3878,7 +3878,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/medicamentos-listado",
+      "ruta": "/explore/medications-list",
       "codigo": "V65-03",
       "actor": "publico",
       "componente": "BuscarMedicamentosListado",
@@ -3886,7 +3886,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/hospitales-listado",
+      "ruta": "/explore/hospitals-list",
       "codigo": "V65-04",
       "actor": "publico",
       "componente": "BuscarHospitalesListado",
@@ -3894,7 +3894,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/laboratorios-listado",
+      "ruta": "/explore/laboratories-list",
       "codigo": "V65-05",
       "actor": "publico",
       "componente": "BuscarLaboratoriosListado",
@@ -3902,7 +3902,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/aseguradoras-listado",
+      "ruta": "/explore/insurers-list",
       "codigo": "V65-06",
       "actor": "publico",
       "componente": "BuscarAseguradorasListado",
@@ -3910,7 +3910,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-profesional-detalle",
+      "ruta": "/explore/practitioner-profile-detail",
       "codigo": "V65-07",
       "actor": "publico",
       "componente": "BuscarPerfilProfesionalDetalle",
@@ -3918,7 +3918,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-organizacion-detalle",
+      "ruta": "/explore/organization-profile-detail",
       "codigo": "V65-08",
       "actor": "publico",
       "componente": "BuscarPerfilOrganizacionDetalle",
@@ -3926,7 +3926,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-farmacia-detalle",
+      "ruta": "/explore/pharmacy-profile-detail",
       "codigo": "V65-09",
       "actor": "publico",
       "componente": "BuscarPerfilFarmaciaDetalle",
@@ -3934,7 +3934,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-laboratorio-detalle",
+      "ruta": "/explore/laboratory-profile-detail",
       "codigo": "V65-10",
       "actor": "publico",
       "componente": "BuscarPerfilLaboratorioDetalle",
@@ -3942,7 +3942,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-aseguradora-detalle",
+      "ruta": "/explore/insurer-profile-detail",
       "codigo": "V65-11",
       "actor": "publico",
       "componente": "BuscarPerfilAseguradoraDetalle",
@@ -3950,7 +3950,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/cercania-detalle",
+      "ruta": "/explore/nearby-detail",
       "codigo": "V65-12",
       "actor": "publico",
       "componente": "BuscarCercaniaDetalle",
@@ -3958,7 +3958,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/seguidos-y-guardados-listado",
+      "ruta": "/explore/followed-and-saved-list",
       "codigo": "V65-13",
       "actor": "sesion-autenticada",
       "componente": "BuscarSeguidosYGuardadosListado",
@@ -3966,7 +3966,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/calificar-la-atencion-formulario",
+      "ruta": "/explore/rate-care-form",
       "codigo": "V65-14",
       "actor": "sesion-autenticada",
       "componente": "BuscarCalificarLaAtencionFormulario",
@@ -3974,7 +3974,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/inicio",
+      "ruta": "/home",
       "codigo": null,
       "actor": null,
       "componente": "InicioPortada",

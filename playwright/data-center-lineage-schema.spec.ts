@@ -34,11 +34,11 @@ test.afterAll(async () => {
 
 test('Linaje: busca una tabla y abre su linaje en el cajón', async () => {
   const { page } = session;
-  const metrics = await responseOf(page, 'GET', /\/admin\/portal\/linaje$/, () => openPortal(page, 'linaje?q=slots'));
+  const metrics = await responseOf(page, 'GET', /\/admin\/portal\/linaje$/, () => openPortal(page, 'lineage?q=slots'));
   expect(metrics.status()).toBe(200);
   await expect(page.getByTestId('portal-lineage-metrics')).toBeVisible();
   await expect(page.getByTestId('portal-lineage-tables')).toContainText('slots');
-  await capture(page, 'linaje');
+  await capture(page, 'lineage');
 
   const lineage = await responseOf(page, 'GET', /\/admin\/portal\/linaje\/tablas\/[^/]+\/[^/]+$/, () =>
     page.getByTestId('portal-lineage-link').first().click(),
@@ -53,11 +53,11 @@ test('Linaje: busca una tabla y abre su linaje en el cajón', async () => {
 
 test('Esquema: versión del modelo, deriva por schema y un schema en su cajón', async () => {
   const { page } = session;
-  const schemas = await responseOf(page, 'GET', /\/admin\/catalog\/schemas$/, () => openPortal(page, 'esquema'));
+  const schemas = await responseOf(page, 'GET', /\/admin\/catalog\/schemas$/, () => openPortal(page, 'schema'));
   expect(schemas.status()).toBe(200);
   const list = (await schemas.json()) as { schemaName: string }[];
   await expect(page.getByTestId('portal-schemas-coverage')).toContainText('Cálculo de cobertura');
-  await capture(page, 'esquema');
+  await capture(page, 'schema');
   test.skip(list.length === 0, 'El catálogo vivo no tiene schemas: falta un escaneo de la base. El vacío quedó capturado.');
 
   const objects = await responseOf(page, 'GET', /\/admin\/catalog\/objects$/, () =>
@@ -70,6 +70,6 @@ test('Esquema: versión del modelo, deriva por schema y un schema en su cajón',
 
 test('médico y paciente no entran a Linaje ni a Esquema, ni por la dirección ni por la API', async ({ browser }) => {
   for (const actor of await actorsWithoutPortal()) {
-    await expectDenied(browser, actor, ['linaje', 'esquema'], '/admin/portal/linaje');
+    await expectDenied(browser, actor, ['lineage', 'schema'], '/admin/portal/linaje');
   }
 });

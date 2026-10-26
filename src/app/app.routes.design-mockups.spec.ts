@@ -9,6 +9,7 @@ import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import {
   CONNECTED_CANONICAL_URLS,
   designMockupRoutes,
+  legacyMockupRedirects,
   REAL_EQUIVALENTS,
 } from './features/alovida/design-mockup-gate';
 
@@ -58,13 +59,16 @@ describe('el gate de maquetas con la API real (production-api)', () => {
   );
 
   it.each([
-    ['/accesos/permisos-listado'],
+    ['/access/permissions-list'],
+    ['/access'],
+    // TAREA-29: la dirección vieja de una maqueta sin equivalente tampoco abre.
     ['/accesos'],
-    ['/datos-compartidos/archivos-listado'],
-    ['/directorio/organizaciones-suspender'],
-    ['/personas/profesionales-listado'],
-    ['/terminologia/relaciones-listado'],
-    ['/buscar/seguidos-y-guardados-listado'],
+    ['/accesos/permisos-listado'],
+    ['/shared-data/files-list'],
+    ['/institutions/organizations-suspend'],
+    ['/people/practitioners-list'],
+    ['/vocabulary/relationships-list'],
+    ['/explore/followed-and-saved-list'],
   ])('%s (sin equivalente) cae en el 404', async (url) => {
     await router.navigateByUrl(url);
 
@@ -73,13 +77,31 @@ describe('el gate de maquetas con la API real (production-api)', () => {
   });
 
   it('la búsqueda guardada en la URL de la bóveda sobrevive a la redirección', async () => {
+    await router.navigateByUrl('/explore/practitioners-list?q=cardio');
+
+    expect(location.path()).toBe('/search/practitioners?q=cardio');
+  });
+
+  it.each([
+    ['/personas/pacientes-listado', '/administration/patients'],
+    ['/terminologia', '/administration/terminology'],
+    ['/inicio', '/'],
+    ['/buscar/buscador-listado', '/search'],
+  ])('TAREA-29: la dirección vieja %s va directo a %s', async (legacyUrl, target) => {
+    await router.navigateByUrl(legacyUrl);
+
+    expect(location.path() || '/').toBe(target);
+    expect(leafPath()).not.toBe('**');
+  });
+
+  it('TAREA-29: la búsqueda de una dirección vieja sobrevive', async () => {
     await router.navigateByUrl('/buscar/profesionales-listado?q=cardio');
 
     expect(location.path()).toBe('/search/practitioners?q=cardio');
   });
 
   it('la ficha de la bóveda con slug abre la ficha pública real', async () => {
-    await router.navigateByUrl('/buscar/perfil-farmacia-detalle/farmacia-central');
+    await router.navigateByUrl('/explore/pharmacy-profile-detail/farmacia-central');
 
     expect(location.path()).toBe('/f/farmacia-central');
   });
@@ -90,5 +112,17 @@ describe('el gate de maquetas en la maqueta (configuracion demo)', () => {
     for (const route of ALOVIDA_ROUTES) {
       expect(designMockupRoutes(true)).toContain(route);
     }
+  });
+
+  it('TAREA-29: la dirección vieja en castellano abre la maqueta con su ruta en inglés', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideRouter([...designMockupRoutes(true), ...legacyMockupRedirects(true)])],
+    });
+    const router = TestBed.inject(Router);
+    const location = TestBed.inject(Location);
+
+    await router.navigateByUrl('/personas/pacientes-listado?q=ana');
+
+    expect(location.path()).toBe('/people/patients-list?q=ana');
   });
 });

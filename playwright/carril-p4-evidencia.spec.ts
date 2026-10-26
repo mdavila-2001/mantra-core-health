@@ -85,7 +85,7 @@ test.describe('P4 · capturas de la superficie pública', () => {
     // lo real» degenere en «quitar el aviso». Las 126 pantallas portadas de la
     // bóveda siguen siendo marcado estático y tienen que seguir dichas como
     // tales.
-    await page.goto('/buscar/buscador-listado', { waitUntil: 'domcontentloaded' });
+    await page.goto('/explore/finder-list', { waitUntil: 'domcontentloaded' });
     await page.locator('h1').first().waitFor({ state: 'visible' });
     await expect(page.getByText('Referencia de diseño').first()).toBeVisible();
     await page.screenshot({

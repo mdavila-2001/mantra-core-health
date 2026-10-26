@@ -455,7 +455,7 @@ describe('rutas del armazón', () => {
  * Eso es un comportamiento del router, no una garantía que este repositorio
  * controle, y de él dependen dos cosas a la vez: que las URL limpias sean las
  * que se indexan, y que los enlaces de la bóveda que todavía apuntan a
- * `/buscar/buscador-listado` no se rompan. Si el retroceso dejara de ocurrir,
+ * `/explore/finder-list` no se rompan. Si el retroceso dejara de ocurrir,
  * media superficie pública devolvería la pantalla equivocada **sin ningún
  * error**: el router simplemente no navegaría.
  */
@@ -514,9 +514,9 @@ describe('rutas públicas del buscador', () => {
    * que depende que las dos formas convivan.
    */
   it('las URL de la bóveda conservan su destino en API real', async () => {
-    expect(await router.navigateByUrl('/buscar/buscador-listado')).toBe(true);
+    expect(await router.navigateByUrl('/explore/finder-list')).toBe(true);
     expect(location.path()).toBe('/search');
-    expect(await router.navigateByUrl('/buscar/perfil-profesional-detalle')).toBe(true);
+    expect(await router.navigateByUrl('/explore/practitioner-profile-detail')).toBe(true);
     expect(location.path()).toBe('/search/practitioners');
   });
 
@@ -695,6 +695,35 @@ describe('la ruta de Ajustes (TAREA-17 · TAREA-29)', () => {
     await router.navigateByUrl(oldUrl);
 
     expect(location.path()).toBe(newUrl);
+  });
+});
+
+describe('las rutas internas renombradas al inglés (TAREA-29)', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  it('`/administration/accounting/books` resuelve', async () => {
+    const ok = await router.navigateByUrl('/administration/accounting/books');
+    expect(ok).not.toBe(false);
+    expect(location.path()).toBe('/administration/accounting/books');
+  });
+
+  it('`/administration/accounting/libros` redirige a los libros en inglés', async () => {
+    await router.navigateByUrl('/administration/accounting/libros');
+
+    expect(location.path()).toBe('/administration/accounting/books');
+  });
+
+  it('una dirección vieja del portal llega a la nueva con su consulta', async () => {
+    await router.navigateByUrl('/superadmin/portal/sistemas/operaciones?riesgo=ALTO');
+
+    expect(location.path()).toBe('/superadmin/portal/systems/operations?riesgo=ALTO');
   });
 });
 

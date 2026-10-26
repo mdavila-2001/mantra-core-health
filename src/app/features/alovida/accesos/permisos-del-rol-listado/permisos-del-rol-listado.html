@@ -4,20 +4,20 @@
       <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
           <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
           <li><a aria-disabled="true" data-sin-destino="">Identidad y accesos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
-          <li><a routerLink="/accesos/roles-listado">Roles</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/access/roles-list">Roles</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
           <li><span aria-current="page">Permisos del rol</span></li>
       </ol>
         <div class="app-page-header__titulo"><h1>Permisos del rol</h1></div>
         <p class="caption">Qué permite y qué deniega este rol por sí mismo. Lo que hereda del rol padre no aparece acá, pero se suma en la decisión final.</p>
       </div>
       <div class="app-page-header__acciones">
-        <a app-button="" data-variante="primario" routerLink="/accesos/permisos-del-rol-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="14" r="3.5"></circle><path d="m10.6 11.5 7.4-7.4"></path><path d="m15.5 6.6 2 2"></path></svg>Asignar permisos al rol</a>
+        <a app-button="" data-variante="primario" routerLink="/access/role-permissions-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="14" r="3.5"></circle><path d="m10.6 11.5 7.4-7.4"></path><path d="m15.5 6.6 2 2"></path></svg>Asignar permisos al rol</a>
       </div>
     </div>
     <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Roles">
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/accesos/roles-listado">Roles</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/access/roles-list">Roles</a>
     <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Permisos del rol</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/accesos/permisos-de-campo-listado">Permisos de campo</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/access/field-permissions-list">Permisos de campo</a>
     </div>
     <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
       <p class="overline">Rol</p>
@@ -111,7 +111,7 @@
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="14" r="3.5"></circle><path d="m10.6 11.5 7.4-7.4"></path><path d="m15.5 6.6 2 2"></path></svg></span>
         <h2>Este rol todavía no tiene permisos propios</h2>
         <p>Un rol recién creado no permite nada por sí mismo: hereda lo que le da su rol padre y nada más. Asígnele acá los permisos que necesita el puesto, y marque con «denegar» lo que hay que quitarle aunque lo herede.</p>
-        <a app-button="" data-variante="secundario" routerLink="/accesos/permisos-del-rol-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="14" r="3.5"></circle><path d="m10.6 11.5 7.4-7.4"></path><path d="m15.5 6.6 2 2"></path></svg>Asignar permisos al rol</a>
+        <a app-button="" data-variante="secundario" routerLink="/access/role-permissions-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="14" r="3.5"></circle><path d="m10.6 11.5 7.4-7.4"></path><path d="m15.5 6.6 2 2"></path></svg>Asignar permisos al rol</a>
       </div>
       </div>
       <div data-estado="carga" hidden="">

@@ -40,7 +40,7 @@ test.afterAll(async () => {
 test('Tablas: el filtro del ORM viaja a la API y la ficha abre sus pestañas', async () => {
   const { page } = session;
   const list = await responseOf(page, 'GET', /\/admin\/portal\/catalogo\/tablas$/, () =>
-    openPortal(page, 'catalogo/tablas?orm=COINCIDE'),
+    openPortal(page, 'catalog/tables?orm=COINCIDE'),
   );
   expect(list.status()).toBe(200);
   expect(new URL(list.url()).searchParams.get('orm')).toBe('COINCIDE');
@@ -52,7 +52,7 @@ test('Tablas: el filtro del ORM viaja a la API y la ficha abre sus pestañas', a
   );
   expect(sheet.status()).toBe(200);
   await expect(page.getByTestId('portal-table-detail')).toBeVisible();
-  await expect(page.getByTestId('portal-item-catalogo/tablas')).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByTestId('portal-item-catalog/tables')).toHaveAttribute('aria-current', 'page');
   await capture(page, 'catalogo-tabla-ficha');
 
   await page.getByRole('tab', { name: 'Columnas' }).click();
@@ -64,7 +64,7 @@ test('Tablas: el filtro del ORM viaja a la API y la ficha abre sus pestañas', a
 test('Dominios y glosario: la búsqueda queda en la URL y un dominio lleva a sus tablas', async () => {
   const { page } = session;
   const glossary = await responseOf(page, 'GET', /\/admin\/portal\/glosario$/, () =>
-    openPortal(page, 'catalogo/dominios'),
+    openPortal(page, 'catalog/domains'),
   );
   expect(glossary.status()).toBe(200);
   const search = await responseWith(page, /\/admin\/portal\/glosario$/, { q: 'PHI' }, () =>
@@ -87,6 +87,6 @@ test('Dominios y glosario: la búsqueda queda en la URL y un dominio lleva a sus
 
 test('médico y paciente no entran al catálogo, ni por la dirección ni por la API', async ({ browser }) => {
   for (const actor of await actorsWithoutPortal()) {
-    await expectDenied(browser, actor, ['catalogo/tablas', 'catalogo/dominios'], '/admin/portal/catalogo/tablas');
+    await expectDenied(browser, actor, ['catalog/tables', 'catalog/domains'], '/admin/portal/catalogo/tablas');
   }
 });

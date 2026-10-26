@@ -12,24 +12,26 @@ import { inject } from '@angular/core';
 import { Router, type Route, type Routes } from '@angular/router';
 
 import { ALOVIDA_ROUTES } from './alovida.routes';
+import { LEGACY_MOCKUP_PATHS } from './legacy-mockup-paths';
 
 /**
  * (a) Pantallas portadas que **sí** leen la API, con la URL canónica que las
  * sirve.
  *
  * Se redirigen en vez de dejarse donde están porque la URL canónica es la
- * misma pantalla con `data.pantallaReal`: bajo `/buscar/…-listado` el marco
+ * misma pantalla con `data.pantallaReal`: bajo `/explore/…-list` el marco
  * las coronaba con el aviso «Referencia de diseño, no la aplicación» sobre
- * datos ciertos. `/buscar` a secas ya lo redirige `app.routes.ts`.
+ * datos ciertos. `/explore` a secas va al buscador, como antes `/buscar`.
  */
 export const CONNECTED_CANONICAL_URLS: Readonly<Record<string, string>> = {
-  'buscar/buscador-listado': '/search',
-  'buscar/profesionales-listado': '/search/practitioners',
-  'buscar/medicamentos-listado': '/search/medications',
-  'buscar/hospitales-listado': '/search/hospitals',
-  'buscar/laboratorios-listado': '/search/diagnostics',
-  'buscar/aseguradoras-listado': '/search/insurers',
-  'buscar/cercania-detalle': '/search/map',
+  explore: '/search',
+  'explore/finder-list': '/search',
+  'explore/practitioners-list': '/search/practitioners',
+  'explore/medications-list': '/search/medications',
+  'explore/hospitals-list': '/search/hospitals',
+  'explore/laboratories-list': '/search/diagnostics',
+  'explore/insurers-list': '/search/insurers',
+  'explore/nearby-detail': '/search/map',
 };
 
 /**
@@ -50,51 +52,51 @@ export const CONNECTED_CANONICAL_URLS: Readonly<Record<string, string>> = {
 export const REAL_EQUIVALENTS: Readonly<Record<string, string>> = {
   // La portada de marketing enlaza a maquetas; la entrada real es `/`, que
   // decide `homeGuard` según haya sesión.
-  inicio: '/',
+  home: '/',
 
   // V65 · Buscador. Las fichas reales leen `/public/profiles/:prefijo/:slug`.
-  'buscar/perfil-profesional-detalle': '/search/practitioners',
-  'buscar/perfil-organizacion-detalle': '/search/hospitals',
-  'buscar/perfil-farmacia-detalle': '/search/medications',
-  'buscar/perfil-laboratorio-detalle': '/search/diagnostics',
-  'buscar/perfil-aseguradora-detalle': '/search/insurers',
+  'explore/practitioner-profile-detail': '/search/practitioners',
+  'explore/organization-profile-detail': '/search/hospitals',
+  'explore/pharmacy-profile-detail': '/search/medications',
+  'explore/laboratory-profile-detail': '/search/diagnostics',
+  'explore/insurer-profile-detail': '/search/insurers',
   // Se califica desde la ficha del profesional: `RateEncounterDialog`.
-  'buscar/calificar-la-atencion-formulario': '/search/practitioners',
+  'explore/rate-care-form': '/search/practitioners',
 
   // V03 · Terminología → `TerminologyCatalog` (sistemas, conjuntos, versiones
   // y publicación) y `VersionImport`; la consulta de conceptos es el glosario.
-  terminologia: '/administration/terminology',
-  'terminologia/versiones-importar': '/administration/terminology/import',
-  'terminologia/versiones-listado': '/administration/terminology',
-  'terminologia/versiones-publicar': '/administration/terminology',
-  'terminologia/sistemas-de-codigos-listado': '/administration/terminology',
-  'terminologia/conjuntos-de-valor-listado': '/administration/terminology',
-  'terminologia/conceptos-listado': '/glossary',
-  'terminologia/consulta-de-concepto-listado': '/glossary',
+  vocabulary: '/administration/terminology',
+  'vocabulary/versions-import': '/administration/terminology/import',
+  'vocabulary/versions-list': '/administration/terminology',
+  'vocabulary/versions-publish': '/administration/terminology',
+  'vocabulary/code-systems-list': '/administration/terminology',
+  'vocabulary/value-sets-list': '/administration/terminology',
+  'vocabulary/concepts-list': '/glossary',
+  'vocabulary/concept-lookup-list': '/glossary',
 
   // V04 · Directorio → `OrganizationList` y las altas por organización
   // (`/administration/organizations/:tenantId/…`).
-  directorio: '/administration/organizations',
-  'directorio/organizaciones-listado': '/administration/organizations',
-  'directorio/organizaciones-formulario': '/administration/organizations/new',
-  'directorio/organizaciones-verificar': '/administration/organizations',
-  'directorio/organizaciones-hijas-formulario': '/administration/organizations',
-  'directorio/membresias-formulario': '/administration/organizations',
-  'directorio/membresias-listado': '/administration/organizations',
-  'directorio/sucursales-formulario': '/administration/organizations',
-  'directorio/sucursales-listado': '/administration/organizations',
+  institutions: '/administration/organizations',
+  'institutions/organizations-list': '/administration/organizations',
+  'institutions/organizations-form': '/administration/organizations/new',
+  'institutions/organizations-verify': '/administration/organizations',
+  'institutions/child-organizations-form': '/administration/organizations',
+  'institutions/memberships-form': '/administration/organizations',
+  'institutions/memberships-list': '/administration/organizations',
+  'institutions/branches-form': '/administration/organizations',
+  'institutions/branches-list': '/administration/organizations',
 
   // V05 · Personas → `PatientList`, `PatientNew`, `PatientMerge` (que también
   // revierte) y `PatientDetail` (personas relacionadas); el resumen propio lo
   // lee `MyProfile`.
-  personas: '/administration/patients',
-  'personas/pacientes-listado': '/administration/patients',
-  'personas/pacientes-formulario': '/administration/patients/new',
-  'personas/pacientes-fusionar': '/administration/patients/merge',
-  'personas/pacientes-revertir': '/administration/patients/merge',
-  'personas/personas-relacionadas-formulario': '/administration/patients',
-  'personas/personas-relacionadas-listado': '/administration/patients',
-  'personas/resumen-propio-listado': '/my-account',
+  people: '/administration/patients',
+  'people/patients-list': '/administration/patients',
+  'people/patients-form': '/administration/patients/new',
+  'people/patients-merge': '/administration/patients/merge',
+  'people/patients-revert': '/administration/patients/merge',
+  'people/related-persons-form': '/administration/patients',
+  'people/related-persons-list': '/administration/patients',
+  'people/own-summary-list': '/my-account',
 };
 
 /**
@@ -108,11 +110,11 @@ export const REAL_EQUIVALENTS: Readonly<Record<string, string>> = {
  * {@link profileSlugRedirects}, entre las direcciones heredadas del final.
  */
 export const PROFILE_SLUG_PREFIXES: Readonly<Record<string, string>> = {
-  'buscar/perfil-profesional-detalle': 'p',
-  'buscar/perfil-organizacion-detalle': 'o',
-  'buscar/perfil-farmacia-detalle': 'f',
-  'buscar/perfil-laboratorio-detalle': 'l',
-  'buscar/perfil-aseguradora-detalle': 's',
+  'explore/practitioner-profile-detail': 'p',
+  'explore/organization-profile-detail': 'o',
+  'explore/pharmacy-profile-detail': 'f',
+  'explore/laboratory-profile-detail': 'l',
+  'explore/insurer-profile-detail': 's',
 };
 
 /**
@@ -133,27 +135,54 @@ export function designMockupRoutes(designMockups: boolean): Routes {
 }
 
 /**
- * `/buscar/perfil-*-detalle/:slug` → la ficha pública real, en los dos modos.
+ * `/explore/*-profile-detail/:slug` → la ficha pública real, en los dos modos.
  *
  * Van aparte y no dentro de {@link designMockupRoutes} porque son direcciones
  * heredadas: `app.routes.ts` las declara con las demás, después de toda
  * pantalla y antes del comodín, para que nunca puedan tapar a una pantalla.
  */
 export function profileSlugRedirects(): Routes {
-  return Object.entries(PROFILE_SLUG_PREFIXES).map(
-    ([legacyPath, prefix]): Route => ({
-      path: `${legacyPath}/:slug`,
+  const legacyByCurrent = new Map(
+    Object.entries(LEGACY_MOCKUP_PATHS).map(([legacy, current]) => [current, legacy]),
+  );
+  return Object.entries(PROFILE_SLUG_PREFIXES).flatMap(([mockupPath, prefix]): Route[] => {
+    const legacy = legacyByCurrent.get(mockupPath);
+    return [mockupPath, ...(legacy === undefined ? [] : [legacy])].map((path) => ({
+      path: `${path}/:slug`,
       pathMatch: 'full',
       redirectTo: `/${prefix}/:slug`,
-    }),
-  );
+    }));
+  });
+}
+
+/**
+ * Las direcciones en castellano de la bóveda (TAREA-29) → adonde van hoy.
+ *
+ * Con el gate encendido llevan a la maqueta con su ruta nueva en inglés.
+ * Apagado van **directo** al destino real de esa maqueta —sin pasar por la
+ * ruta nueva: el router aplica una sola redirección absoluta— y las que no
+ * tienen equivalente (c) no se registran, igual que la ruta nueva: un enlace
+ * viejo a una maqueta gateada sigue siendo un 404, no una puerta trasera.
+ *
+ * Van entre las direcciones heredadas del final de `app.routes.ts`, por la
+ * misma razón que {@link profileSlugRedirects}.
+ */
+export function legacyMockupRedirects(designMockups: boolean): Routes {
+  const realTargets: Readonly<Record<string, string>> = {
+    ...CONNECTED_CANONICAL_URLS,
+    ...REAL_EQUIVALENTS,
+  };
+  return Object.entries(LEGACY_MOCKUP_PATHS).flatMap(([legacy, current]) => {
+    const target = designMockups ? `/${current}` : realTargets[current];
+    return target === undefined ? [] : [redirectKeepingQuery(legacy, target)];
+  });
 }
 
 /**
  * Redirección exacta que conserva el `?q=` y compañía.
  *
  * Un `redirectTo` de texto descarta la consulta de la URL original: un
- * `/buscar/profesionales-listado?q=cardio` guardado llegaría al directorio sin
+ * `/explore/practitioners-list?q=cardio` guardado llegaría al directorio sin
  * la búsqueda.
  */
 function redirectKeepingQuery(legacyPath: string, target: string): Route {

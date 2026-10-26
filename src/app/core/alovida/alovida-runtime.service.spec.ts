@@ -984,7 +984,7 @@ describe('AlovidaRuntimeService', () => {
           <form>
             <input required value="">
             <div class="app-form-actions">
-              <a routerLink="/accesos/roles-listado">Cancelar</a>
+              <a routerLink="/access/roles-list">Cancelar</a>
               <button type="button" app-button data-variante="primario">Guardar</button>
             </div>
           </form>
@@ -1003,7 +1003,7 @@ describe('AlovidaRuntimeService', () => {
           <div class="app-view-state-host">
             <div data-estado="paso1">
               <div class="app-form-actions">
-                <a routerLink="/accesos/roles-listado">Cancelar</a>
+                <a routerLink="/access/roles-list">Cancelar</a>
                 <a routerLink=".">Continuar</a>
               </div>
             </div>
@@ -1021,7 +1021,7 @@ describe('AlovidaRuntimeService', () => {
 
         $<HTMLElement>("[data-estado='paso2'] .app-form-actions button").click();
 
-        expect(navegar).toHaveBeenCalledWith('/accesos/roles-listado');
+        expect(navegar).toHaveBeenCalledWith('/access/roles-list');
       });
     });
 
@@ -1044,7 +1044,7 @@ describe('AlovidaRuntimeService', () => {
       marco(`
         <form>
           <div class="app-form-actions">
-            <a routerLink="/accesos/roles-listado">Cancelar</a>
+            <a routerLink="/access/roles-list">Cancelar</a>
             <button type="submit">Guardar</button>
           </div>
         </form>

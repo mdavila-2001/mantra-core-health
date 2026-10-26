@@ -7,7 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import type { SchemaSummary } from '../../../../core/data-access/admin-portal/data-catalog.types';
 import { SchemasPage, toSchemaRow } from './schemas-page';
 
-const RUTA = '/superadmin/portal/esquema';
+const RUTA = '/superadmin/portal/schema';
 
 const SCHEMA: SchemaSummary = {
   schemaName: 'scheduling',
@@ -49,7 +49,7 @@ describe('SchemasPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/esquema', component: SchemasPage }]),
+        provideRouter([{ path: 'superadmin/portal/schema', component: SchemasPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -84,7 +84,7 @@ describe('SchemasPage', () => {
     expect(cajon.textContent).toContain('Ofrece y reserva cupos.');
     expect(cajon.textContent).toContain('El último escaneo no vio objetos en este schema.');
     const tablas = [...cajon.querySelectorAll('a')].find((a) => a.textContent?.includes('catálogo del modelo'))!;
-    expect(tablas.getAttribute('href')).toBe('/superadmin/portal/catalogo/tablas?schema=scheduling');
+    expect(tablas.getAttribute('href')).toBe('/superadmin/portal/catalog/tables?schema=scheduling');
   });
 });
 

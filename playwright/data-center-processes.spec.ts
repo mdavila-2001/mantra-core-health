@@ -40,7 +40,7 @@ test.afterAll(async () => {
 test('Procesos: el tipo de la URL viaja a la API y cada fila lleva a su ficha', async () => {
   const { page } = session;
   const list = await responseWith(page, /\/admin\/portal\/flujos$/, { tipo: 'MODULO' }, () =>
-    openPortal(page, 'procesos?tipo=MODULO'),
+    openPortal(page, 'processes?tipo=MODULO'),
   );
   expect(list.status()).toBe(200);
   const body = (await list.json()) as { items: { tipo: string }[] };
@@ -54,7 +54,7 @@ test('Procesos: el tipo de la URL viaja a la API y cada fila lleva a su ficha', 
   );
   expect(detail.status()).toBe(200);
   await expect(page.getByTestId('portal-process-detail')).toBeVisible();
-  await expect(page.getByTestId('portal-item-procesos')).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByTestId('portal-item-processes')).toHaveAttribute('aria-current', 'page');
   await capture(page, 'procesos-ficha');
 
   await page.getByRole('tab', { name: 'Etapas' }).click();
@@ -70,12 +70,12 @@ test('la ficha salta a sus operaciones ya filtradas por el proceso', async () =>
   );
   expect(ops.status()).toBe(200);
   expect(new URL(ops.url()).searchParams.get('flujo')).toBeTruthy();
-  await expect(page).toHaveURL(/sistemas\/operaciones\?flujo=/);
+  await expect(page).toHaveURL(/systems\/operations\?flujo=/);
   await expect(page.getByTestId('portal-operations-table')).toBeVisible();
 });
 
 test('médico y paciente no entran a Procesos, ni por la dirección ni por la API', async ({ browser }) => {
   for (const actor of await actorsWithoutPortal()) {
-    await expectDenied(browser, actor, ['procesos'], '/admin/portal/flujos');
+    await expectDenied(browser, actor, ['processes'], '/admin/portal/flujos');
   }
 });

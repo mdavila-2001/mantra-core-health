@@ -53,7 +53,7 @@ export class SchemaDrawer {
 
   protected readonly observation = observationStatus;
   protected readonly review = reviewStatus;
-  protected readonly modelTablesUrl = portalUrl('catalogo/tablas');
+  protected readonly modelTablesUrl = portalUrl('catalog/tables');
   protected readonly objectUrl = (id: string): string => `${LIVE_CATALOG}/${encodeURIComponent(id)}`;
 
   protected readonly objects = pagedList<CatalogObjectSummary>(

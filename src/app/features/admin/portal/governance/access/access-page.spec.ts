@@ -7,7 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { AccessPage } from './access-page';
 
-const SCREEN = '/superadmin/portal/gobierno/usuarios';
+const SCREEN = '/superadmin/portal/governance/users';
 const USER = '00000000-0000-4000-8000-000000000001';
 const STRANGER = '00000000-0000-4000-8000-000000000009';
 const ASSIGNMENT = '00000000-0000-4000-8000-0000000000a1';
@@ -50,7 +50,7 @@ describe('AccessPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/gobierno/usuarios', component: AccessPage }]),
+        provideRouter([{ path: 'superadmin/portal/governance/users', component: AccessPage }]),
         { provide: DialogService, useValue: { confirm: () => Promise.resolve(confirmed) } },
       ],
     });

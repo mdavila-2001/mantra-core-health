@@ -18,10 +18,10 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const LISTADO = '/accesos/accesos-clinicos-listado';
-const FORMULARIO = '/accesos/accesos-clinicos-del-paciente-formulario';
-const REPETIDOR = '/terminologia/conjuntos-de-valor-formulario';
-const PROPIEDADES = '/terminologia/propiedades-listado';
+const LISTADO = '/access/clinical-access-list';
+const FORMULARIO = '/access/patient-clinical-access-form';
+const REPETIDOR = '/vocabulary/value-sets-form';
+const PROPIEDADES = '/vocabulary/properties-list';
 
 /**
  * `networkidle` no llega nunca contra `ng serve` —el canal de recarga en
@@ -75,7 +75,7 @@ test.describe('controles de las vistas portadas', () => {
 
     await page.locator("[data-estado='paso3'] .app-form-actions button").click();
 
-    await expect(page).toHaveURL(/\/accesos\/accesos-clinicos-del-paciente-listado$/);
+    await expect(page).toHaveURL(/\/access\/patient-clinical-access-list$/);
   });
 
   test('«Reintentar» saca a la pantalla del estado de error', async ({ page }) => {
