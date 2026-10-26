@@ -73,7 +73,7 @@ test.describe('Carril E3 · dónde comprar mi receta', () => {
     await estable(page);
     await expect(page.getByRole('heading', { name: /Dónde comprar mi receta/i })).toBeVisible();
     // La pantalla no llegó a los renglones: no hay nada que comprar.
-    await expect(page.getByTestId('compra-items')).toHaveCount(0);
+    await expect(page.getByTestId('where-to-buy-items')).toHaveCount(0);
 
     // Ni un uuid a la vista en lo que sí se pintó.
     const cuerpo = (await page.locator('main').first().textContent()) ?? '';
