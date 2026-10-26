@@ -1,6 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { ORDER_CATEGORY } from '../fixtures/concepts';
+import { noteList } from '../fixtures/clinic';
+import { ORDER_CATEGORY, STATUS } from '../fixtures/concepts';
 import { PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
@@ -27,7 +28,19 @@ describe('P40 · orden de análisis basada en notas (simulador)', () => {
   const bruno = PATIENTS[1]!;
   const notaDeAna = uuid(`note-${ana.id}-0`);
   const encuentroDeAna = uuid(`encounter-${ana.id}-0`);
-  const notaDeAnaOtraConsulta = uuid(`note-${ana.id}-1`);
+  /** La sembrada `note-<paciente>-1` es un borrador: no motiva órdenes. */
+  const notaEnBorrador = uuid(`note-${ana.id}-1`);
+  /** Una nota firmada de otra consulta de Ana, sembrada por la prueba. */
+  const notaDeAnaOtraConsulta = uuid('p40-nota-otra-consulta');
+  const firmada = noteList.filtrar((n) => n.noteId === uuid(`note-${ana.id}-0`))[0]!;
+  if (noteList.filtrar((n) => n.noteId === notaDeAnaOtraConsulta).length === 0) {
+    noteList.agregar({
+      ...firmada,
+      id: notaDeAnaOtraConsulta,
+      noteId: notaDeAnaOtraConsulta,
+      encounterId: uuid(`encounter-${ana.id}-1`),
+    });
+  }
   const notaDeBruno = uuid(`note-${bruno.id}-0`);
 
   interface Respuesta {
@@ -106,6 +119,13 @@ describe('P40 · orden de análisis basada en notas (simulador)', () => {
 
   it('NEGATIVO · una nota inexistente responde igual que una ajena', () => {
     const res = pedir({ basedOnNoteIds: [uuid('nota-que-no-existe')] });
+    expect(res.status).toBe(422);
+    expect(res.body['reason']).toBe('BASED_ON_NOTE_NOT_FOUND');
+  });
+
+  it('NEGATIVO · una nota en borrador da 422 BASED_ON_NOTE_NOT_FOUND', () => {
+    expect(firmada.lifecycleStatusConceptId).not.toBe(STATUS['ST-DRAFT']);
+    const res = pedir({ basedOnNoteIds: [notaEnBorrador] });
     expect(res.status).toBe(422);
     expect(res.body['reason']).toBe('BASED_ON_NOTE_NOT_FOUND');
   });

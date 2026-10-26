@@ -1,6 +1,6 @@
 import type { AnalysisCategory } from '../../data-access/diagnostics/diagnostics.types';
 import { noteList } from '../fixtures/clinic';
-import { ORDER_CATEGORY } from '../fixtures/concepts';
+import { ORDER_CATEGORY, STATUS } from '../fixtures/concepts';
 
 /* ============================================================================
     P40 (carril C2) en el doble: la categoría textual de la orden de análisis y
@@ -12,7 +12,7 @@ import { ORDER_CATEGORY } from '../fixtures/concepts';
       `SERVICE_REQUEST_CATEGORY_MISMATCH`). Laboratorio e imagen se nombran;
       cualquier otra categoría declarada es `OTHER`; sin concepto, ausente.
     - `basedOnNoteIds`: cada nota existe y es del mismo paciente (si no, 422
-      `BASED_ON_NOTE_NOT_FOUND`, igual para «no existe» que para «es de otro»)
+      `BASED_ON_NOTE_NOT_FOUND`, igual para «no existe», «es de otro» o «es un borrador»)
       y, si la orden tiene encuentro, del mismo encuentro (422
       `BASED_ON_NOTE_ENCOUNTER_MISMATCH`).
     ========================================================================== */
@@ -103,7 +103,14 @@ export function validarNotas(
   const ids = basedOnNoteIds as readonly string[];
   for (const noteId of ids) {
     const nota = noteList.filtrar((n) => n.noteId === noteId)[0];
-    if (nota === undefined || nota.patientProfileId !== patientProfileId) {
+    // Como la API: una nota en borrador todavía puede cambiar y no motiva una
+    // orden; responde igual que una inexistente. (La custodia por tenant del
+    // encuentro no se simula: el doble no guarda tenant en notas ni encuentros.)
+    if (
+      nota === undefined ||
+      nota.patientProfileId !== patientProfileId ||
+      nota.lifecycleStatusConceptId === STATUS['ST-DRAFT']
+    ) {
       return {
         status: 422,
         reason: 'BASED_ON_NOTE_NOT_FOUND',
