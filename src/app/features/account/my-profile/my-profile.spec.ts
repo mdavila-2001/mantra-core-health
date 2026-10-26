@@ -7,7 +7,10 @@ import { of } from 'rxjs';
 import { SessionStore } from '../../../core/auth/session.store';
 import { LoyaltyClient } from '../../../core/data-access/loyalty/loyalty.client';
 import { resolverEstadosDeCaso } from '../../../../testing/case-status';
+import { libretaInmediata } from '../../../../testing/address-book';
+import { PatientAddressBookClient } from '../../../core/data-access/profiles/patient-address-book.client';
 import { MyProfile } from './my-profile';
+
 
 /** base64url **sobre UTF-8**, como el token real. */
 function jwt(payload: Record<string, unknown>): string {
@@ -101,7 +104,7 @@ describe('MyProfile', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -308,6 +311,7 @@ describe('MyProfile', () => {
         'Seguros',
         'Tutores',
         'Mis puntos',
+        'Mis direcciones',
       ]);
 
       pestanas[3].click();
@@ -726,7 +730,7 @@ describe('MyProfile · orden del historial', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -796,6 +800,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         billeteraSinPrograma(),
+        ...libretaInmediata(),
       ],
     }).compileComponents();
 
@@ -882,7 +887,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
   describe('«Mis puntos» como última pestaña', () => {
     const PACIENTE = { sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'], pid: 'pp-1' };
 
-    it('sin tutores, la ficha oculta esa pestaña y «Mis puntos» queda al final', () => {
+    it('sin tutores, la ficha oculta esa pestaña y «Mis puntos» queda antes de «Mis direcciones»', () => {
       montar(PACIENTE);
       pintarLaFicha();
 
@@ -893,6 +898,7 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
         'Facturación',
         'Seguros',
         'Mis puntos',
+        'Mis direcciones',
       ]);
       // Se entra por «Datos personales», como siempre.
       expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
@@ -912,6 +918,31 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
       // Una sola cabecera en la pantalla: la de «Mi perfil».
       expect(raiz.querySelectorAll('app-page-header').length).toBe(1);
       expect(billetera?.textContent).toContain('Todavía no hay un programa');
+    });
+
+    it('la libreta no se pide mientras su pestaña está cerrada; sí al abrirla', () => {
+      const libreta = TestBed.inject(PatientAddressBookClient);
+      const lista = vi.spyOn(libreta, 'list');
+      montar(PACIENTE);
+      pintarLaFicha();
+      expect(lista).not.toHaveBeenCalled();
+
+      pestanasDeLaFicha()[5].click();
+      fixture.detectChanges();
+
+      expect(lista).toHaveBeenCalledTimes(1);
+    });
+
+    it('«?pestana=direcciones» abre la libreta de direcciones (26/10/2026)', async () => {
+      await TestBed.inject(Router).navigate(['/'], { queryParams: { pestana: 'direcciones' } });
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      // Sin tutores, «Mis direcciones» es la sexta: el índice se corre uno.
+      expect(pestanasDeLaFicha()[5].getAttribute('aria-selected')).toBe('true');
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="libreta-direcciones"]'),
+      ).not.toBeNull();
     });
 
     it('«?pestana=puntos» abre la billetera al entrar: la ruta vieja sigue llegando', async () => {
@@ -1002,7 +1033,7 @@ describe('MyProfile · foto de perfil', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
     }).compileComponents();
 
     TestBed.inject(SessionStore).start({
@@ -1197,7 +1228,7 @@ describe('MyProfile · foto de perfil', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
     });
     TestBed.inject(SessionStore).start({
       accessToken: jwt({
@@ -1269,7 +1300,7 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(false)],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -1371,7 +1402,7 @@ describe('MyProfile · los accesos de quien atiende', () => {
   it('el perfil ya no tiene enlaces sueltos a otras pantallas', () => {
     TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
     });
     TestBed.inject(SessionStore).start({
       accessToken: jwt({

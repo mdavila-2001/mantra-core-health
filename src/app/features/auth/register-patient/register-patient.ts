@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   PLATFORM_ID,
   signal,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
 import {
   AbstractControl,
   FormArray,
@@ -29,6 +31,10 @@ import {
   BoOccupationsCatalog,
   CODIGO_OCUPACION_OTRA,
 } from '../../../core/data-access/terminology/bo-occupations.service';
+import {
+  ReverseGeocodingClient,
+  type StreetFromPoint,
+} from '../../../core/data-access/geo/reverse-geocoding.client';
 import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import {
   AMBULANCE_DIRECTORY_SEED,
@@ -196,25 +202,34 @@ const PIN_DOMICILIO = 'domicilio';
 const PIN_TRABAJO = 'trabajo';
 
 /**
- * Lo que se le dice a quien fijó un punto y espera que la calle se escriba
- * sola (AC-03-8 / AC-03-9).
+ * Lo que se le dice a quien fijó un punto, según qué pasó con la calle
+ * (AC-03-8 / AC-03-9, y el pedido del cliente del 26/10/2026: «llene la línea
+ * de dirección»).
  *
- * **La resolución del nombre de la dirección no está disponible, y decirlo es
- * el requisito.** Convertir un par de coordenadas en «Av. Banzer 3er anillo»
- * necesita un geocodificador externo, y la política de seguridad del servidor
- * no lo permite: `src/server/security-headers.ts` deja `connect-src` en
- * `'self'` y `img-src` sólo abierto a `tile.openstreetmap.org`, con una prueba
- * que lo fija (`security-headers.spec.ts`). Abrirla es decisión de
- * arquitectura —P-03-7 de la ficha, sin resolver: qué proveedor, con qué
- * licencia y quién paga— y no se toma desde este carril.
+ * **P-03-7 quedó resuelta así:** la calle la pide la API
+ * (`POST /public/geo/reverse`, OpenStreetMap vía Nominatim) y no el navegador,
+ * así que la política de seguridad del front sigue con `connect-src 'self'`.
  *
- * Lo que AC-03-9 exige mientras tanto es exactamente esto: que el formulario lo
- * **diga** y **deje seguir**. Lo que nunca se hace es rellenar el campo con un
- * texto inventado: una dirección falsa en la ficha de un paciente es peor que
- * un campo vacío, porque nadie la vuelve a mirar.
+ * Lo que AC-03-9 sigue exigiendo cuando la calle no sale —el proveedor no la
+ * conoce o no respondió— es que el formulario lo **diga** y **deje seguir**.
+ * Nunca se rellena con un texto inventado: una dirección falsa en la ficha de
+ * un paciente es peor que un campo vacío, porque nadie la vuelve a mirar.
  */
-const AVISO_SIN_GEOCODIFICACION =
-  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escríbala usted arriba.';
+const AVISOS_DE_CALLE: Readonly<Record<EstadoDeCalle, string>> = {
+  'sin-pedir': '',
+  buscando: 'Buscando el nombre de la calle de este punto…',
+  escrita:
+    'Escribimos la calle a partir del punto (datos de © OpenStreetMap). Revísela y agregue el número si falta.',
+  conservada:
+    'Dejamos la calle que usted escribió. Revise que corresponda al punto del mapa.',
+  'sin-calle':
+    'No encontramos el nombre de la calle en este punto: escríbala usted arriba. El punto se guarda igual.',
+  caida:
+    'El punto del mapa se guarda tal cual, pero ahora no podemos convertirlo en el nombre de la calle: escríbala usted arriba.',
+};
+
+/** Qué pasó con la calle del último punto del domicilio. */
+type EstadoDeCalle = 'sin-pedir' | 'buscando' | 'escrita' | 'conservada' | 'sin-calle' | 'caida';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -423,15 +438,15 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
     },
     {
       icono: 'package',
-      titulo: 'El mapa es opcional',
+      titulo: 'Su casa en el mapa',
       texto:
-        'Si marca su punto en el mapa y lo confirma, la entrega de sus medicamentos llega sin que tenga que explicar dónde vive. Si no, su alta sigue igual.',
+        'Hace falta marcarla y confirmarla: con ese punto la entrega de sus medicamentos llega sin que tenga que explicar dónde vive.',
     },
     {
       icono: 'route',
-      titulo: 'La calle la escribe usted',
+      titulo: 'La calle sale del punto',
       texto:
-        'El punto del mapa no se convierte solo en el nombre de una calle: eso necesita un servicio que hoy no tenemos. Por eso la línea de dirección se escribe a mano, y por eso nunca va a encontrar ahí algo que no haya escrito.',
+        'Al marcar su casa escribimos el nombre de la calle con datos de OpenStreetMap. Revísela: si no la encontramos, o no es la suya, la corrige usted.',
     },
   ],
   work: [
@@ -459,7 +474,7 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'route',
       titulo: 'La calle la escribe usted',
       texto:
-        'Igual que en su domicilio: el punto del mapa se guarda tal cual, pero el nombre de la calle lo pone usted.',
+        'El punto del mapa del trabajo se guarda tal cual, pero el nombre de la calle lo pone usted.',
     },
   ],
   insurance: [
@@ -796,6 +811,14 @@ export class RegisterPatient {
       residenceMunicipalityConceptId: new FormControl<string | null>(null, {
         validators: [Validators.required],
       }),
+      // **El punto del domicilio es obligatorio** (pedido del cliente del
+      // 26/10/2026). Vive en el formulario por lo mismo que la localidad: el
+      // motor valida de a una página y sólo frena lo que está en el `FormGroup`.
+      // No se escribe: lo llena el efecto del constructor con el punto
+      // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+      gpsDomicilio: new FormControl<Coordenadas | null>(null, {
+        validators: [Validators.required],
+      }),
       // El lugar de trabajo **vuelve al alta** (AC-03-1). Revierte lo que
       // documenta `campoEmpresa`: se habían sacado municipio, calle y
       // coordenadas del trabajo porque casi nadie las completaba. El
@@ -925,14 +948,13 @@ export class RegisterPatient {
    *
    * El pedido es «copiar el nombre del lugar que se elige en el mapa a la
    * dirección» (AC-03-8). La lectura literal —convertir el pin del GPS en «Av.
-   * Banzer 3er anillo»— exige un geocodificador externo y la política de
-   * seguridad del servidor no lo permite (ver {@link AVISO_SIN_GEOCODIFICACION});
-   * abrirla es una decisión de arquitectura que no se toma desde este carril.
+   * Banzer 3er anillo»— la hace {@link traerCalleDelPunto} a través de la API
+   * (ver {@link AVISOS_DE_CALLE}).
    *
    * Lo que sí sabe el sistema, sin salir a la red, es **cómo se llama la
-   * localidad que la persona acaba de elegir**. Eso es lo que se copia: un
-   * arranque cierto de la dirección, sobre el que se sigue escribiendo la calle
-   * y el número.
+   * localidad que la persona acaba de elegir**. Eso es lo que se copia mientras
+   * no haya punto: un arranque cierto de la dirección, sobre el que se sigue
+   * escribiendo la calle y el número. Con punto, manda la calle del punto.
    *
    * ## La regla: el formulario sólo reescribe lo que él mismo puso
    *
@@ -984,6 +1006,17 @@ export class RegisterPatient {
     // que puso el formulario la vez anterior.
     const esNuestro = actual === '' || actual === sembrado;
     if (!esNuestro) {
+      return;
+    }
+    // La calle que salió del punto GPS dice más que el nombre del municipio
+    // que el mismo punto eligió. Si la persona elige OTRO a mano, la calle del
+    // punto ya no corresponde y se re-siembra como siempre.
+    if (
+      sembrado !== undefined &&
+      sembrado !== '' &&
+      sembrado === this.lineaDelPunto &&
+      conceptId === this.municipioDelPunto
+    ) {
       return;
     }
 
@@ -1166,7 +1199,91 @@ export class RegisterPatient {
   protected readonly opcionesSexo = OPCIONES_SEXO;
 
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
-  protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
+  /**
+   * El aviso del lugar de TRABAJO, donde la calle no se pide: el trabajo es
+   * opcional y su punto rara vez se marca. Ver {@link AVISOS_DE_CALLE}.
+   */
+  protected readonly avisoSinGeocodificacion = AVISOS_DE_CALLE.caida.replace(' ahora', '');
+
+  private readonly geocodificador = inject(ReverseGeocodingClient);
+
+  /** Qué pasó con la calle del último punto del domicilio. */
+  readonly calleDelPunto = signal<EstadoDeCalle>('sin-pedir');
+
+  /** El aviso que acompaña al mapa, según {@link calleDelPunto}. */
+  protected readonly avisoDeCalle = computed(() => AVISOS_DE_CALLE[this.calleDelPunto()]);
+
+  /**
+   * La última línea que escribió el geocodificador. Sirve para que elegir la
+   * localidad —que el GPS también hace— no la reemplace por el nombre del
+   * municipio: ver {@link sembrarDireccion}.
+   */
+  private lineaDelPunto: string | null = null;
+
+  /**
+   * Pide la calle del punto del domicilio y la escribe en «Calle» **en nombre
+   * del formulario**: si la persona ya había escrito la suya, no se toca, y si
+   * después la corrige, la corrección manda.
+   *
+   * Una respuesta que llega tarde —la persona ya movió el pin— se descarta.
+   */
+  private traerCalleDelPunto(punto: Coordenadas): void {
+    this.calleDelPunto.set('buscando');
+    this.pedidosDeCalle.next(punto);
+  }
+
+  /**
+   * Los pedidos de calle, uno vivo a la vez: un punto nuevo cancela el pedido
+   * del anterior (`switchMap`), cada uno tiene diez segundos, y todo se corta
+   * al salir de la pantalla. La API además limita y encola contra el proveedor.
+   */
+  private readonly pedidosDeCalle = new Subject<Coordenadas>();
+  /** Ver {@link pedidosDeCalle}. Se llama desde el constructor (`takeUntilDestroyed`). */
+  private escucharPedidosDeCalle(): void {
+    this.pedidosDeCalle
+      .pipe(
+      switchMap((punto) =>
+        this.geocodificador.streetAt(punto.lat, punto.lng).pipe(
+          timeout(10_000),
+          map((calle) => ({ punto, calle })),
+          catchError(() => of({ punto, calle: null })),
+        ),
+      ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ punto, calle }) => this.escribirCalleDelPunto(punto, calle));
+  }
+
+  private escribirCalleDelPunto(punto: Coordenadas, calle: StreetFromPoint | null): void {
+    if (this.gpsDomicilio() !== punto) return;
+    if (calle === null) {
+      this.calleDelPunto.set('caida');
+      return;
+    }
+    if (!calle.found || !calle.line) {
+      this.calleDelPunto.set('sin-calle');
+      return;
+    }
+    const control = this.formPaciente.controls.homeAddressLines;
+    const actual = control.value.trim();
+    const esNuestro = actual === '' || actual === this.direccionSembrada.get(control);
+    if (!esNuestro) {
+      // La persona ya escribió su calle: se respeta y se dice, sin mentir que
+      // se escribió otra.
+      this.calleDelPunto.set('conservada');
+      return;
+    }
+    this.lineaDelPunto = calle.line;
+    this.escribirDireccionSembrada(control, calle.line);
+    this.domicilioVaciadoPorElMapa.set(false);
+    this.calleDelPunto.set('escrita');
+  }
+
+  /**
+   * El municipio que eligió el PUNTO (lo avisa `app-location-picker`). Elegir
+   * ese municipio no reemplaza la calle del punto; elegir otro a mano, sí.
+   */
+  protected municipioDelPunto: string | null = null;
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
@@ -1393,7 +1510,7 @@ export class RegisterPatient {
       titulo: 'Lugares donde vive',
       clave: 'residence',
       icon: 'home',
-      hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
+      hint: 'Su localidad y el punto de su casa en el mapa hacen falta; la calle sale del punto y la puede corregir.',
       campos: [
         {
           key: 'residenceMunicipalityConceptId',
@@ -1408,7 +1525,7 @@ export class RegisterPatient {
           label: 'Calle (opcional)',
           hint: 'Como la escribiría en un sobre.',
           description:
-            'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
+            'Calle, número y referencia. Al marcar su casa en el mapa la escribimos; usted la corrige si hace falta.',
           control: 'text',
           autocomplete: 'street-address',
           placeholder: 'Av. Banzer, 3er anillo #42',
@@ -1418,10 +1535,12 @@ export class RegisterPatient {
         },
         {
           key: 'gpsDomicilio',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
+          label: 'Ubicación GPS',
+          hint: 'Marque su casa en el mapa y confírmela. Con el punto escribimos la calle.',
           description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
           control: 'custom',
+          required: true,
+          mensajeDeError: 'Marque su casa en el mapa y pulse «Confirmar dirección actual».',
           showWhen: { key: 'residenceMunicipalityConceptId', filled: true },
         },
       ],
@@ -2139,10 +2258,15 @@ export class RegisterPatient {
   readonly empresasFiltradas = computed<readonly ReferenceOption[]>(() => {
     const busqueda = this.busquedaEmpresa().trim().toLowerCase();
     const todas = this.opcionesEmpresa();
+    // «Otra empresa» va PRIMERA y no se filtra (pedido del cliente del
+    // 26/10/2026, igual que «Otra ocupación»): quien no encuentra la suya tiene
+    // que ver la salida sin bajar hasta el final ni borrar lo que tecleó.
+    const otra = todas.filter((o) => o.code === CODIGO_EMPRESA_OTRA);
+    const resto = todas.filter((o) => o.code !== CODIGO_EMPRESA_OTRA);
     const elegidas = busqueda
-      ? todas.filter((o) => o.label.toLowerCase().includes(busqueda))
-      : todas;
-    return elegidas.map((o) => ({ value: o.value, label: o.label }));
+      ? resto.filter((o) => o.label.toLowerCase().includes(busqueda))
+      : resto;
+    return [...otra, ...elegidas].map((o) => ({ value: o.value, label: o.label }));
   });
 
   /** La empresa elegida, para que el combobox la muestre al volver atrás. */
@@ -2295,6 +2419,8 @@ export class RegisterPatient {
     // nombre del formulario», igual que al sembrar: no lo tecleó la persona.
     this.escribirDireccionSembrada(this.formPaciente.controls.homeAddressLines, '');
     this.domicilioVaciadoPorElMapa.set(true);
+    this.sincronizarCasa();
+    this.traerCalleDelPunto(this.gpsDomicilio()!);
   }
 
   /** Lo mismo, para el trabajo. */
@@ -2374,6 +2500,9 @@ export class RegisterPatient {
         destino.marcando.set(false);
         destino.rechazado.set(false);
         destino.pidiendo.set(false);
+        if (destino.punto === this.gpsDomicilio) {
+          this.traerCalleDelPunto(this.gpsDomicilio()!);
+        }
       },
       () => {
         destino.rechazado.set(true);
@@ -2394,11 +2523,26 @@ export class RegisterPatient {
    * alguien mira el plano y dice que sí, lo que hay es una lectura del GPS, y
    * el GPS acierta la manzana, no la puerta.
    *
-   * Lo que **no** hace es escribir la calle: ver {@link AVISO_SIN_GEOCODIFICACION}.
+   * La calle la escribe el punto, no la confirmación: ver {@link traerCalleDelPunto}.
    */
   confirmarDireccionActual(): void {
     if (this.gpsDomicilio() === null) return;
     this.direccionConfirmada.set(true);
+    this.sincronizarCasa();
+  }
+
+  /**
+   * Copia el punto CONFIRMADO al control obligatorio `gpsDomicilio`.
+   *
+   * La corre un `effect` (cubre el borrador y el GPS del navegador, que llegan
+   * solos) y además, en el acto, cada acción de la persona sobre el punto: el
+   * `effect` espera a la próxima detección de cambios, y un envío inmediato
+   * vería el control atrasado.
+   */
+  private sincronizarCasa(): void {
+    const confirmado = this.direccionConfirmada() ? this.gpsDomicilio() : null;
+    const control = this.formPaciente.controls.gpsDomicilio;
+    if (control.value !== confirmado) control.setValue(confirmado);
   }
 
   /** Lo mismo, para el trabajo. */
@@ -2412,6 +2556,8 @@ export class RegisterPatient {
     this.gpsDomicilio.set(null);
     this.direccionConfirmada.set(false);
     this.marcandoDomicilio.set(false);
+    this.calleDelPunto.set('sin-pedir');
+    this.sincronizarCasa();
   }
 
   /** Lo mismo, para el trabajo. */
@@ -2667,6 +2813,12 @@ export class RegisterPatient {
     this.cargarParentescos();
 
     this.limpiarElErrorAlCorregir(this.formPaciente);
+    this.escucharPedidosDeCalle();
+
+    // El punto del domicilio, al control obligatorio: sólo el CONFIRMADO. Sin
+    // `emitEvent: false`: el cambio tiene que llegar al borrador y al aviso de
+    // error del motor, igual que un campo escrito.
+    effect(() => this.sincronizarCasa());
 
     this.formPaciente.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.guardarBorrador();

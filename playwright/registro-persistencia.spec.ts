@@ -4,6 +4,7 @@ import {
   PASOS_DEL_ALTA,
   completarContacto,
   elegirLocalidadDeResidencia,
+  marcarYConfirmarCasa,
   empezarElAlta,
   valorDelSelect,
 } from './support/registro-paciente';
@@ -54,6 +55,9 @@ test('el alta persiste contra la API: un login nuevo devuelve la misma localidad
 
   // `empezarElAlta` deja la pantalla en «Lugares donde vive».
   await elegirLocalidadDeResidencia(page);
+  // Obligatorio desde el 26/10/2026; antes de leer la ciudad, porque el punto
+  // puede elegir otra.
+  await marcarYConfirmarCasa(page);
   // El nombre de la ciudad que el select acotado ofreció para Santa Cruz:
   // se lee de la propia pantalla para comparar contra lo que devuelva la API,
   // en vez de asumir cuál es la primera ciudad del catálogo.

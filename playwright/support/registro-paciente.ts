@@ -146,6 +146,20 @@ export async function elegirLocalidadDeResidencia(page: Page): Promise<void> {
 }
 
 /**
+ * Marca la casa en el mapa y la confirma. Desde el 26/10/2026 el punto de la
+ * casa es obligatorio (pedido del cliente): sin esto el motor no deja pasar de
+ * «Lugares donde vive». Toca el centro del plano, que es la vista por defecto.
+ */
+export async function marcarYConfirmarCasa(page: Page): Promise<void> {
+  await page.getByTestId('registration-home-location-pick').click();
+  const mapa = page.getByTestId('registro-mapa-domicilio');
+  await expect(mapa.locator('.leaflet-container')).toBeVisible({ timeout: 15_000 });
+  await mapa.locator('.leaflet-container').click();
+  await page.getByTestId('registro-confirmar-direccion').click();
+  await expect(page.getByTestId('registro-direccion-confirmada')).toBeAttached();
+}
+
+/**
  * Elige la localidad de TRABAJO — opcional, mismo componente que la de
  * residencia (`app-location-picker`), pero con `testId="registration-work"`
  * (FT-03-R07). A diferencia de la residencia, no bloquea el avance: se elige
