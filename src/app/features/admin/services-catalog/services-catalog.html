@@ -28,7 +28,7 @@
 </app-page-header>
 
 <div class="catalogo">
-  <app-form-field label="Práctica" hint="El catálogo es propio de cada práctica.">
+  <app-form-field icon="building" label="Práctica" hint="El catálogo es propio de cada práctica.">
     <app-select
       [value]="practicaElegida()"
       (valueChange)="cambiarPractica($event)"
@@ -55,6 +55,7 @@
         description="El precio de referencia es sólo eso: cada médico cotiza el propio al armar el presupuesto."
       >
         <app-form-field
+          icon="labels"
           label="Código"
           [required]="true"
           [errorMessage]="
@@ -69,6 +70,7 @@
         </app-form-field>
 
         <app-form-field
+          icon="labels"
           label="Nombre"
           [required]="true"
           [errorMessage]="
@@ -81,6 +83,7 @@
         </app-form-field>
 
         <app-form-field
+          icon="tag"
           label="Precio de referencia"
           hint="Cada médico puede cotizar un precio distinto al armar el presupuesto."
           [required]="true"
