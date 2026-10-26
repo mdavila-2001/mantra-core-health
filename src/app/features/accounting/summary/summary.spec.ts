@@ -4,13 +4,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { NEVER } from 'rxjs';
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
 import { environment } from '../../../../environments/environment';
 import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Summary } from './summary';
+import { VERSION_STORAGE_KEY } from '../accounting-version';
 
 /* ============================================================================
     El resumen llano de Contabilidad.
@@ -157,6 +158,11 @@ function responderTablero(
 }
 
 describe('Resumen contable', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    globalThis.localStorage?.removeItem(VERSION_STORAGE_KEY);
+  });
+
   describe('los tres tramos', () => {
     it('pide el estado de resultados SEIS veces, cada una con su ventana', () => {
       vi.useFakeTimers({ toFake: ['Date'] });
@@ -627,6 +633,95 @@ describe('Resumen contable', () => {
       expect(raiz.querySelector('[data-testid="simple-accounting-unavailable"]')).not.toBeNull();
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
       http.verify();
+    });
+  });
+
+  describe('la llave Doctor / Contador', () => {
+    const tablero = (): ReturnType<typeof montar> => {
+      const montado = montar();
+      responderPracticas(montado.http, montado.fixture);
+      responderTablero(montado.http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      montado.fixture.detectChanges();
+      return montado;
+    };
+
+    const raizDe = (fixture: { nativeElement: unknown }): HTMLElement => fixture.nativeElement as HTMLElement;
+
+    const opciones = (fixture: { nativeElement: unknown }): HTMLElement[] =>
+      Array.from(raizDe(fixture).querySelectorAll('[data-testid="contabilidad-version"] [role="radio"]'));
+
+    const marcada = (fixture: { nativeElement: unknown }): string | undefined =>
+      opciones(fixture)
+        .find((o) => o.getAttribute('aria-checked') === 'true')
+        ?.textContent?.trim();
+
+    it('ofrece las dos versiones y abre en Doctor, sin las herramientas del contador', () => {
+      const { fixture } = tablero();
+
+      expect(opciones(fixture).map((o) => o.textContent?.trim())).toEqual(['Doctor', 'Contador']);
+      expect(marcada(fixture)).toBe('Doctor');
+      expect(raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]')).toBeNull();
+      expect(raizDe(fixture).textContent).not.toContain('Para su contador');
+    });
+
+    it('en Contador aparecen la vista contable y el balance, y al volver a Doctor se van', () => {
+      const { fixture } = tablero();
+
+      opciones(fixture)[1]!.click();
+      fixture.detectChanges();
+
+      expect(marcada(fixture)).toBe('Contador');
+      const herramientas = raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]');
+      expect(herramientas).not.toBeNull();
+      const enlaces = Array.from(herramientas!.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+      expect(enlaces).toEqual([
+        '/administration/accounting/cockpit',
+        '/administration/accounting/books',
+      ]);
+
+      opciones(fixture)[0]!.click();
+      fixture.detectChanges();
+      expect(marcada(fixture)).toBe('Doctor');
+      expect(raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]')).toBeNull();
+    });
+
+    it('recuerda la versión que la persona dejó puesta', () => {
+      globalThis.localStorage.setItem(VERSION_STORAGE_KEY, 'contador');
+      const { fixture } = tablero();
+      expect(marcada(fixture)).toBe('Contador');
+
+      opciones(fixture)[0]!.click();
+      fixture.detectChanges();
+      expect(globalThis.localStorage.getItem(VERSION_STORAGE_KEY)).toBe('doctor');
+    });
+
+    it('un valor guardado que no es una versión se ignora y vale Doctor', () => {
+      globalThis.localStorage.setItem(VERSION_STORAGE_KEY, 'administrador');
+      const { fixture } = tablero();
+      expect(marcada(fixture)).toBe('Doctor');
+    });
+
+    it('en Registros, Doctor trae gastos, activos y deudas; Contador suma transacciones y cuentas', () => {
+      const original = environment.mockBackend;
+      Object.assign(environment, { mockBackend: true });
+      onTestFinished(() => {
+        Object.assign(environment, { mockBackend: original });
+      });
+      const { fixture } = tablero();
+      fixture.componentInstance.tab.set(1);
+      fixture.detectChanges();
+
+      const rotulosDeRegistros = (): string[] =>
+        Array.from(
+          raizDe(fixture).querySelectorAll('[data-testid="contabilidad-registros"] .tabs__bar [role="tab"]'),
+        ).map((t) => (t.textContent ?? '').replace(/\s*\(\d+\)\s*$/u, '').trim());
+
+      expect(rotulosDeRegistros()).toEqual(['Gastos', 'Activos', 'Deudas']);
+
+      opciones(fixture)[1]!.click();
+      fixture.detectChanges();
+
+      expect(rotulosDeRegistros()).toEqual(['Gastos', 'Activos', 'Deudas', 'Transacciones', 'Cuentas']);
     });
   });
 

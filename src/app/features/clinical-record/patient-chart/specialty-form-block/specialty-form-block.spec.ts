@@ -1801,8 +1801,13 @@ describe('SpecialtyFormBlock', () => {
         patientProfileId: 'pac-1',
         authorProfileId: 'hp-1',
         encounterId: 'enc-1',
-        objectiveText: "Presión arterial: 128/84 mmHg\nAnálisis con el que vino: Adjunto: hemograma.jpg, orina.jpg, perfil.jpg",
+        // P39: la API guarda las filas estructuradas; ya no se aplanan en `objectiveText`.
+        entries: [
+          { label: 'Presión arterial', value: '128/84 mmHg' },
+          { label: 'Análisis con el que vino', value: 'Adjunto: hemograma.jpg, orina.jpg, perfil.jpg' },
+        ],
       });
+      expect(nota.request.body).not.toHaveProperty('objectiveText');
       nota.flush({ noteId: 'n-1', versionId: 'v-1' });
 
       const subidas = http.match('/common/files/upload');

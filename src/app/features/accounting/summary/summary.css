@@ -510,38 +510,94 @@
   line-height: var(--lh-caption);
 }
 
-/* ---- pie para quien lleva los libros ---------------------------------------
-   Separado con una línea y con la tinta bajada: está ahí para quien lo busca,
-   no para competir por la atención de quien no lo necesita. */
+/* ---- la llave Doctor / Contador ---------------------------------------------
+   Una fila: el rótulo, la llave y qué se ve con cada una. En pantalla angosta
+   la ayuda baja a su propio renglón en vez de comprimir la llave. */
 
-.bloque--pie {
-  margin-block-start: var(--sp-8);
-  padding-block-start: var(--sp-5);
-  border-block-start: 1px solid var(--border-subtle);
+.version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  margin-block-start: var(--sp-5);
 }
 
-.pie__titulo {
+/* Con el rótulo al lado, en 390 px la llave quedaba tan angosta que «Contador»
+   se cortaba con puntos suspensivos: se le reserva un ancho que lo deja entero. */
+.version app-segmented-control {
+  min-inline-size: 15rem;
+}
+
+.version__rotulo {
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.version__ayuda {
+  flex: 1 1 16rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* ---- informes contables (sólo en la versión Contador) ------------------------
+   A todo el ancho y con borde, como las demás tarjetas de la pantalla. */
+
+.herramientas {
+  margin-block-start: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+}
+
+.herramientas__titulo {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
-  color: var(--text-secondary);
 }
 
-.pie__bajada {
+.herramientas__bajada {
   margin: var(--sp-2) 0 var(--sp-3);
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   max-inline-size: 62ch;
 }
 
-.pie__acciones {
+.herramientas__acciones {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3);
   margin: 0;
+}
+
+/* Ancho: el texto a la izquierda y los dos accesos a la derecha, en una fila. */
+@media (min-width: 48rem) {
+  .herramientas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'titulo acciones'
+      'bajada acciones';
+    column-gap: var(--sp-6);
+    align-items: center;
+  }
+
+  .herramientas__titulo {
+    grid-area: titulo;
+  }
+
+  .herramientas__bajada {
+    grid-area: bajada;
+    margin-block-end: 0;
+  }
+
+  .herramientas__acciones {
+    grid-area: acciones;
+  }
 }
 
 /* La contabilidad simple va primero y separada de las cuatro preguntas del

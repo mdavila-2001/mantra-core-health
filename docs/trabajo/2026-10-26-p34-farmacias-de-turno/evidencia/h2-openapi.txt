@@ -1,0 +1,9 @@
+$ node tools/openapi/generate-openapi.mjs && node tools/docs/generate-endpoint-markdown.mjs
+OpenAPI generado: 1424 paths, 1570 operaciones, 1463 esquemas.
+  → /home/user/wt/p34/mantra-core-health-api/openapi/openapi.json
+  → /home/user/wt/p34/mantra-core-health-api/openapi/openapi.yaml
+Documentación generada: 1570 endpoints, 73 módulos, 74 archivos Markdown.
+
+$ node tools/openapi/check-breaking.mjs --base <openapi.json de HEAD> --head openapi/openapi.json
+Sin cambios incompatibles no aprobados en el contrato OpenAPI.
+EXIT=0
