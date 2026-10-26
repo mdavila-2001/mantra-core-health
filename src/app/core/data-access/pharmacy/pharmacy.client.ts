@@ -59,8 +59,8 @@ import {
  *
  * Del lado de la escritura sólo el catálogo de la propia farmacia
  * (`/pharmacies/:pharmacyId/products`): el alta, la edición y el retiro que usa
- * la pantalla «Catálogo de productos». La edición (`PATCH`) sólo existe en el
- * simulador por ahora (P47).
+ * la pantalla «Catálogo de productos», más las categorías, el inventario en
+ * lote y el resumen del portal de la farmacia (P47, en la API desde 2026-10-26).
  *
  * Los productos no se tipean: se buscan en el **catálogo universal de
  * medicamentos** ({@link searchCatalog}) y se dan de alta por su id.
@@ -329,12 +329,12 @@ export class PharmacyClient {
    * `PATCH /pharmacies/:pharmacyId/products/:productId` — edita un producto
    * del catálogo.
    *
-   * La API real **sí** publica esta ruta, pero `PharmacyUpdateProductDto` sólo
-   * acepta los datos del catálogo (`brandName`, `genericName`, `strengthText`,
-   * `packageSizeText`, `requiresPrescription`). Precio, categoría,
-   * descripción, disponibilidad, publicación, existencias e imágenes son
-   * extensión de la maqueta (P47): contra la API real no viajan, y si el
-   * cambio no tenía otra cosa, el error dice qué no está disponible.
+   * `PharmacyUpdateProductDto` declara los datos descriptivos y lo que
+   * administra la farmacia (precio, categoría, descripción, disponibilidad,
+   * estado, existencias e imágenes, P47 §3-5). Si algún día una clave vuelve a
+   * ser sólo de la maqueta ({@link PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS}),
+   * contra la API real no viaja y, si el cambio no tenía otra cosa, el error
+   * dice qué no está disponible.
    */
   updateProduct(
     pharmacyId: string,
@@ -370,17 +370,14 @@ export class PharmacyClient {
     );
   }
 
-  /** `GET /pharmacies/:id/categories` — las categorías de la farmacia (P47, sólo simulador). */
+  /** `GET /pharmacies/:id/categories` — las categorías de la farmacia (P47). */
   listCategories(pharmacyId: string): Observable<PharmacyCategoryPage> {
     return this.http.get<PharmacyCategoryPage>(this.categoriesUrl(pharmacyId));
   }
 
   /** `POST /pharmacies/:id/categories` — crea una categoría. 409 si el nombre ya existe. */
   createCategory(pharmacyId: string, name: string): Observable<PharmacyCategory> {
-    const url = this.categoriesUrl(pharmacyId);
-    return simulatorOnly('Crear una categoría de la farmacia', url, () =>
-      this.http.post<PharmacyCategory>(url, { name }),
-    );
+    return this.http.post<PharmacyCategory>(this.categoriesUrl(pharmacyId), { name });
   }
 
   /** `PATCH /pharmacies/:id/categories/:categoryId` — renombra; los productos siguen. */
@@ -390,34 +387,31 @@ export class PharmacyClient {
     name: string,
   ): Observable<PharmacyCategory> {
     const url = `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`;
-    return simulatorOnly('Renombrar una categoría de la farmacia', url, () =>
-      this.http.patch<PharmacyCategory>(url, { name }),
-    );
+    return this.http.patch<PharmacyCategory>(url, { name });
   }
 
   /** `DELETE /pharmacies/:id/categories/:categoryId` — 409 si tiene productos. */
   deleteCategory(pharmacyId: string, categoryId: string): Observable<PharmacyStatusResult> {
     const url = `${this.categoriesUrl(pharmacyId)}/${encodeURIComponent(categoryId)}`;
-    return simulatorOnly('Eliminar una categoría de la farmacia', url, () =>
-      this.http.delete<PharmacyStatusResult>(url),
-    );
+    return this.http.delete<PharmacyStatusResult>(url);
   }
 
   /**
    * `PATCH /pharmacies/:id/inventory` — guarda de una vez las existencias y el
-   * umbral de varios productos (P47, sólo simulador).
+   * umbral de varios productos, todo o nada (P47). Una línea con existencias e
+   * «hay» a la vez, vacía, repetida o de un producto ajeno es un 422.
    */
   updateInventory(
     pharmacyId: string,
     lines: readonly PharmacyInventoryLine[],
   ): Observable<{ readonly updated: number }> {
-    const url = this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/inventory`);
-    return simulatorOnly('Guardar las existencias de la farmacia', url, () =>
-      this.http.patch<{ readonly updated: number }>(url, { lines }),
+    return this.http.patch<{ readonly updated: number }>(
+      this.url(`/pharmacies/${encodeURIComponent(pharmacyId)}/inventory`),
+      { lines },
     );
   }
 
-  /** `GET /pharmacy/pharmacies/:id/summary` — los números del resumen (P47, sólo simulador). */
+  /** `GET /pharmacy/pharmacies/:id/summary` — los números del resumen (P47). */
   getSummary(pharmacyId: string): Observable<PharmacySummary> {
     return this.http.get<PharmacySummary>(
       this.url(`/pharmacy/pharmacies/${encodeURIComponent(pharmacyId)}/summary`),

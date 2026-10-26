@@ -192,7 +192,8 @@ interface ProductoSimulado {
   readonly requiresPrescription: boolean | null;
   /** `null` = sin precio publicado. */
   readonly price: string | null;
-  readonly stock: number;
+  /** Existencias declaradas; `null` = «sin conteo» (como `stock_quantity` en la API, P47). */
+  readonly stock: number | null;
   /** Retirado del catálogo (`DELETE`): borrado lógico, como en la API. */
   readonly retirado?: boolean;
   /**
@@ -201,9 +202,9 @@ interface ProductoSimulado {
    * no lleva un conteo, sólo avisa lo que le falta. Pisa al `stock`.
    */
   readonly sinStock?: boolean;
-  /** Categoría comercial de la vitrina (P47: no existe en la API). */
+  /** Categoría comercial de la vitrina, por nombre (P47). */
   readonly category?: string | null;
-  /** Descripción para el paciente (P47: no existe en la API). */
+  /** Descripción para el paciente (P47). */
   readonly description?: string | null;
   /** `DRAFT` no se publica: sólo lo ve la farmacia (P47). Sin él, publicado. */
   readonly estado?: 'PUBLISHED' | 'DRAFT';
@@ -248,7 +249,7 @@ function estadoDe(p: ProductoSimulado): 'PUBLISHED' | 'DRAFT' | 'WITHDRAWN' {
 
 /** Si la farmacia lo puede vender hoy: no lo marcó sin stock y le queda. */
 function hayStock(p: ProductoSimulado): boolean {
-  return p.sinStock !== true && p.stock > 0;
+  return p.sinStock !== true && (p.stock === null || p.stock > 0);
 }
 
 /** Las categorías de la vitrina, las mismas del mockup del cliente. */
@@ -260,8 +261,9 @@ const CATEGORIA_DE_FORMA: Readonly<Record<string, string>> = {
 };
 
 /**
- * Lo que `GET /pharmacy/products` devuelve de un producto. Los cuatro últimos
- * campos son una **extensión del simulador** (P47): la API real no los tiene.
+ * Lo que `GET /pharmacy/products` devuelve de un producto, con lo que
+ * administra la farmacia (P47): precio y moneda, «hay / no hay», categoría y
+ * descripción — el mismo contrato que la API.
  */
 function productoPublico(p: ProductoSimulado) {
   const { medicationConceptId: _m, price, stock: _s, retirado: _r, sinStock: _x, category: _c, description, estado: _e, minStock: _n, imageFileIds: _i, catalogProductId, catalogPresentationCode, ...resto } = p;
@@ -269,6 +271,7 @@ function productoPublico(p: ProductoSimulado) {
     ...resto,
     catalog: vinculoConElCatalogo(catalogProductId, catalogPresentationCode),
     unitPrice: price,
+    currency: price === null ? null : 'BOB',
     inStock: hayStock(p),
     category: categoriaDe(p),
     description: description ?? null,
@@ -338,7 +341,8 @@ function productoDeGestion(p: ProductoSimulado) {
     ...productoPublico(p),
     status: estadoDe(p),
     stock: p.stock,
-    minStock: p.minStock ?? MINIMO_POR_DEFECTO,
+    // Como la API: sin umbral propio viaja `null` y el portal usa el de por defecto.
+    minStock: p.minStock ?? null,
     imageFileIds: p.imageFileIds ?? [],
   };
 }
@@ -405,8 +409,11 @@ function nombreDeCategoriaInvalido() {
   ]);
 }
 
-/** Stock de un producto que la farmacia marca disponible sin dar un conteo. */
-const STOCK_SIN_CONTEO = 100;
+/**
+ * Existencias de un producto que la farmacia marca disponible sin dar un
+ * conteo: `null`, como `stock_quantity` en la API (P47), no un número inventado.
+ */
+const STOCK_SIN_CONTEO = null;
 
 const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
@@ -493,13 +500,13 @@ function resumenDe(pharmacyId: string) {
     const nombre = categoriaDe(p) ?? 'Sin categoría';
     cuentaPorCategoria.set(nombre, (cuentaPorCategoria.get(nombre) ?? 0) + 1);
   }
-  const valor = publicados.filter(hayStock).reduce((suma, p) => suma + p.stock * Number(p.price ?? 0), 0);
+  const valor = publicados.filter(hayStock).reduce((suma, p) => suma + (p.stock ?? 0) * Number(p.price ?? 0), 0);
   return {
     published: publicados.length,
     drafts: vivos.length - publicados.length,
     withdrawn: delCatalogo(pharmacyId).length - vivos.length,
     outOfStock: publicados.filter((p) => !hayStock(p)).length,
-    lowStock: publicados.filter((p) => hayStock(p) && p.stock <= (p.minStock ?? MINIMO_POR_DEFECTO)).length,
+    lowStock: publicados.filter((p) => hayStock(p) && p.stock !== null && p.stock <= (p.minStock ?? MINIMO_POR_DEFECTO)).length,
     inventoryValue: valor.toFixed(2),
     byCategory: [...cuentaPorCategoria.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es')).map(([category, count]) => ({ category, count })),
     recentActivity: actividad
@@ -1050,6 +1057,10 @@ export function registrarFarmacia(router: MockRouter): void {
     }
     const invalido = validarGestion(datos);
     if (invalido !== null) return invalido;
+    // Como la API (P47): existencias y «hay / no hay» juntas dirían dos cosas a la vez.
+    if (datos.stock !== undefined && datos.inStock !== undefined) {
+      return preconditionFailed('Mande las existencias o si hay, no las dos: dirían dos cosas a la vez', { field: 'inStock' });
+    }
     const derivados = entrada === undefined ? null : derivadosDelCatalogo(entrada, datos.catalogPresentationCode);
     const medicamento = derivados === null ? medicamentoDe(datos.genericName) : derivados.medication;
     const nuevo = productos.agregar({
@@ -1091,11 +1102,9 @@ export function registrarFarmacia(router: MockRouter): void {
     };
   });
 
-  // P47 · la edición del producto. La API real la publica desde el Hito 3, pero
-  // sólo persiste marca, genérico, concentración, empaque y receta (P47 §2):
-  // precio, categoría, descripción, estado, existencias e imágenes son del
-  // simulador y la API los rechaza con 400 hasta que P47 §3-5 se cierre. Acepta
-  // los mismos campos del alta menos el código, más el «no tengo» (`inStock`).
+  // P47 · la edición del producto, con el mismo contrato que la API: datos
+  // descriptivos, precio, categoría, descripción, estado, existencias e
+  // imágenes. Acepta los mismos campos del alta menos el código.
   router.patch('/pharmacies/:pharmacyId/products/:productId', (request) => {
     const producto = productos.get(request.params['productId']!);
     if (producto === undefined || producto.pharmacyId !== request.params['pharmacyId']) {
@@ -1131,6 +1140,10 @@ export function registrarFarmacia(router: MockRouter): void {
     }
     const invalido = validarGestion(datos);
     if (invalido !== null) return invalido;
+    // Como la API (P47): existencias y «hay / no hay» juntas dirían dos cosas a la vez.
+    if (datos.stock !== undefined && datos.inStock !== undefined) {
+      return preconditionFailed('Mande las existencias o si hay, no las dos: dirían dos cosas a la vez', { field: 'inStock' });
+    }
     const cambios: { -readonly [K in keyof ProductoSimulado]?: ProductoSimulado[K] } = {};
     const textos = ['brandName', 'genericName', 'strengthText', 'packageSizeText', 'category', 'description'] as const;
     for (const campo of textos) {
@@ -1144,7 +1157,7 @@ export function registrarFarmacia(router: MockRouter): void {
     if ('inStock' in datos) {
       cambios.sinStock = datos.inStock === false;
       // Volver a tenerlo sin conteo previo: queda con el stock «sin conteo».
-      if (datos.inStock === true && producto.stock <= 0) cambios.stock = STOCK_SIN_CONTEO;
+      if (datos.inStock === true && producto.stock === 0) cambios.stock = STOCK_SIN_CONTEO;
     }
     if (datos.stock !== undefined) {
       cambios.stock = datos.stock;
@@ -1201,21 +1214,30 @@ export function registrarFarmacia(router: MockRouter): void {
     if (!Array.isArray(lines) || lines.length === 0) {
       return validation('lines must contain at least 1 elements', [{ field: 'lines', message: 'No hay cambios para guardar.' }]);
     }
+    // Como la API: la forma de cada línea es un 400; lo que el catálogo no
+    // admite (producto ajeno o repetido, línea vacía, las dos formas a la vez)
+    // es un 422 con el detalle por línea.
     const errores: { field: string; message: string }[] = [];
+    const reglas: { field: string; message: string }[] = [];
+    const vistos = new Set<string>();
     lines.forEach((linea, i) => {
       const producto = productos.get(linea.productId);
       if (producto === undefined || producto.pharmacyId !== pharmacyId || producto.retirado === true) {
-        errores.push({ field: `lines.${i}.productId`, message: 'El producto no está en su catálogo.' });
+        reglas.push({ field: `lines.${i}.productId`, message: 'El producto no está en su catálogo' });
       }
+      if (vistos.has(linea.productId)) {
+        reglas.push({ field: `lines.${i}.productId`, message: 'El producto está repetido en el guardado' });
+      }
+      vistos.add(linea.productId);
       const traeCantidades = linea.stock !== undefined || linea.minStock !== undefined;
       if (linea.inStock === undefined && !traeCantidades) {
-        errores.push({ field: `lines.${i}`, message: 'La línea no dice qué cambiar: mande existencias, umbral o si hay.' });
+        reglas.push({ field: `lines.${i}`, message: 'La línea no dice qué cambiar: mande existencias, umbral o si hay' });
       }
       if (linea.inStock !== undefined && typeof linea.inStock !== 'boolean') {
         errores.push({ field: `lines.${i}.inStock`, message: 'Hay o no hay: un sí o un no.' });
       }
       if (linea.inStock !== undefined && linea.stock !== undefined) {
-        errores.push({ field: `lines.${i}.inStock`, message: 'Mande las existencias o si hay, no las dos: dirían dos cosas a la vez.' });
+        reglas.push({ field: `lines.${i}.inStock`, message: 'Mande las existencias o si hay, no las dos: dirían dos cosas a la vez' });
       }
       if (linea.stock !== undefined && !esEnteroEntre(linea.stock, 0, STOCK_MAXIMO)) {
         errores.push({ field: `lines.${i}.stock`, message: `Las existencias son un número entero de 0 a ${STOCK_MAXIMO}.` });
@@ -1225,6 +1247,7 @@ export function registrarFarmacia(router: MockRouter): void {
       }
     });
     if (errores.length > 0) return validation('lines are invalid', errores);
+    if (reglas.length > 0) return preconditionFailed('El inventario tiene líneas inválidas', { errors: reglas });
     for (const linea of lines) {
       const producto = productos.get(linea.productId)!;
       const cambios: { -readonly [K in keyof ProductoSimulado]?: ProductoSimulado[K] } = {};
@@ -1237,7 +1260,7 @@ export function registrarFarmacia(router: MockRouter): void {
       if (linea.inStock !== undefined) {
         cambios.sinStock = linea.inStock === false;
         // «Hay» sin conteo previo queda con el stock «sin conteo».
-        if (linea.inStock && producto.stock <= 0) cambios.stock = STOCK_SIN_CONTEO;
+        if (linea.inStock && producto.stock === 0) cambios.stock = STOCK_SIN_CONTEO;
       }
       productos.actualizar(producto.id, cambios);
     }
@@ -1422,7 +1445,7 @@ export function registrarFarmacia(router: MockRouter): void {
         missingProductIds: faltantes,
         totalAmount: total.toFixed(2),
         currency: BOB,
-        products: disponibles.map((p) => ({ productId: p.id, productCode: p.productCode, brandName: p.brandName, genericName: p.genericName, strengthText: p.strengthText, packageSizeText: p.packageSizeText, medication: p.medication, availableQuantity: p.stock, price: { unitAmount: p.price, patientAmount: p.price, currency: BOB, priceListCode: 'PUBLICO' } })),
+        products: disponibles.map((p) => ({ productId: p.id, productCode: p.productCode, brandName: p.brandName, genericName: p.genericName, strengthText: p.strengthText, packageSizeText: p.packageSizeText, medication: p.medication, availableQuantity: p.stock ?? 0, price: { unitAmount: p.price, patientAmount: p.price, currency: BOB, priceListCode: 'PUBLICO' } })),
       };
     }).sort((a, b) => Number(b.complete) - Number(a.complete) || (a.distanceKm ?? 0) - (b.distanceKm ?? 0) || a.pharmacyName.localeCompare(b.pharmacyName, 'es'));
     return { requestedProductIds: ids, items, count: items.length };
@@ -1469,7 +1492,7 @@ export function registrarFarmacia(router: MockRouter): void {
       rejectionReasonText: null,
       lineas: (datos.lines ?? []).map((l) => {
         const prod = productos.get(l.productId);
-        const hay = prod !== undefined && hayStock(prod) && prod.stock >= l.quantity;
+        const hay = prod !== undefined && hayStock(prod) && (prod.stock === null || prod.stock >= l.quantity);
         return { productId: l.productId, requestedQuantity: l.quantity, reservedQuantity: hay ? l.quantity : 0, fulfilledQuantity: 0, status: hay ? ('RESERVED' as const) : ('OUT_OF_STOCK' as const) };
       }),
       sustituciones: [],

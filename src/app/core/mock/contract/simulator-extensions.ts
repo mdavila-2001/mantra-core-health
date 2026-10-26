@@ -3,7 +3,6 @@ import {
   FIELD_DEFINITION_SIMULATOR_EXTENSIONS,
   FIELD_DEFINITION_UPDATE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/forms/forms.types';
-import { PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS } from '../../data-access/pharmacy/pharmacy.types';
 import {
   PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
@@ -23,9 +22,8 @@ import {
 
 /** `MÉTODO /ruta/:param` (como en `api-contract.generated.ts`) → claves extra. */
 export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> = {
-  // P47 · catálogo de la farmacia (informe B, C1 y C2).
-  'POST /pharmacies/:pharmacyId/products': PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
-  'PATCH /pharmacies/:pharmacyId/products/:productId': PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
+  // P47 · catálogo de la farmacia: desde 2026-10-26 el DTO de la API declara
+  // todas las claves del portal; ya no hay extensión que registrar.
   // Motivo escrito del plan de cuidados (C7).
   'POST /charts/care-plans': CARE_PLAN_SIMULATOR_EXTENSIONS,
   // Preguntas de cuadrícula del constructor (C8).
