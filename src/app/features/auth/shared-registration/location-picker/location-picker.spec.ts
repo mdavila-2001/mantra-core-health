@@ -5,6 +5,10 @@ import type { Select } from '../../../../shared/components/atoms/select/select';
 import { selectHasValue, selectOptionLabels, selectTrigger } from '../../../../../testing/select';
 
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
+import {
+  CARGADOR_DE_PROVINCIAS,
+  type ProvinciasDeBolivia,
+} from '../../../../shared/components/organisms/map/provinces';
 import { LocationPicker } from './location-picker';
 
 /**
@@ -227,6 +231,89 @@ describe('LocationPicker', () => {
       pulsarDepartamento('CB');
 
       expect(marcoDelSelect(html)).toEqual(['button.select-trigger', 'span.select-arrow']);
+    });
+  });
+
+  /**
+   * La ficha llena: pedido del cliente —elegir la ubicación con el mapa y que
+   * el resto del domicilio aparezca ya completo—. Departamento y municipio
+   * salen del catálogo; la provincia, del dibujo.
+   */
+  describe('ficha de la ubicación elegida', () => {
+    /** Una «provincia» que cubre todo el país: basta para probar que se deduce. */
+    const TODO_BOLIVIA: ProvinciasDeBolivia = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: { nombre: 'Provincia de prueba', departamento: 'Cochabamba', rotulo: [-66, -17] },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-70, -23],
+                [-57, -23],
+                [-57, -9],
+                [-70, -9],
+                [-70, -23],
+              ],
+            ],
+          },
+        },
+      ],
+    };
+
+    function montar(provincias: ProvinciasDeBolivia | null): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [LocationPicker],
+        providers: [{ provide: CARGADOR_DE_PROVINCIAS, useValue: () => Promise.resolve(provincias) }],
+      });
+      fixture = TestBed.createComponent(LocationPicker);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('ramas', RAMAS);
+      fixture.componentRef.setInput('ficha', true);
+      fixture.detectChanges();
+      html = fixture.nativeElement as HTMLElement;
+    }
+
+    const valoresDeLaFicha = (): readonly string[] =>
+      Array.from(
+        html.querySelectorAll<HTMLInputElement>('[data-testid="location-ficha"] input'),
+      ).map((campo) => campo.value);
+
+    it('sin localidad no dibuja la ficha', () => {
+      montar(TODO_BOLIVIA);
+      expect(html.querySelector('[data-testid="location-ficha"]')).toBeNull();
+    });
+
+    it('con la localidad elegida la ficha sale llena: departamento, provincia y municipio', async () => {
+      montar(TODO_BOLIVIA);
+      pulsarDepartamento('CB');
+      expect(html.querySelector('[data-testid="location-ficha"]')).toBeNull();
+      component.value.set('mun-sacaba');
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(valoresDeLaFicha()).toEqual(['Cochabamba', 'Provincia de prueba', 'Sacaba']);
+      });
+    });
+
+    it('si la provincia no se pudo deducir lo dice en vez de inventarla', async () => {
+      montar(null);
+      pulsarDepartamento('SC');
+      component.value.set('mun-warnes');
+
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(valoresDeLaFicha()).toEqual(['Santa Cruz', 'No disponible', 'Warnes']);
+      });
+    });
+
+    it('sin pedirla (`ficha` apagada) no dibuja nada, ni en sólo lectura', () => {
+      fixture.componentRef.setInput('readonly', true);
+      component.value.set('mun-scz');
+      fixture.detectChanges();
+      expect(html.querySelector('[data-testid="location-ficha"]')).toBeNull();
     });
   });
 });

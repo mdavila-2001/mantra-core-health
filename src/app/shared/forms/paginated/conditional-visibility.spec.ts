@@ -38,4 +38,16 @@ describe('visibilidad condicional (enableWhen =)', () => {
     expect(conditionMeets('true', true)).toBe(false);
     expect(conditionMeets(true, [false, true])).toBe(true);
   });
+
+  it('`filled` muestra el campo en cuanto el padre tiene algún valor', () => {
+    const campos = [
+      { key: 'localidad' },
+      { key: 'calle', showWhen: { key: 'localidad', filled: true } },
+    ];
+    const con = (localidad: unknown) => [...hiddenFields(campos, () => localidad)];
+    expect(con(null)).toEqual(['calle']);
+    expect(con('')).toEqual(['calle']);
+    expect(con(undefined)).toEqual(['calle']);
+    expect(con('geo:bo:municipality:030101')).toEqual([]);
+  });
 });

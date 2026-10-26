@@ -49,6 +49,7 @@ import type {
   BirthSexCode,
   PatientRegistration,
 } from '../../../core/data-access/iam/iam.types';
+import { campoDistrito, componerDireccion } from '../shared-registration/address-line';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -785,6 +786,8 @@ export class RegisterPatient {
       // Calle y número del domicilio. Las coordenadas van aparte: no se
       // escriben, se confirman sobre el mapa.
       homeAddressLines: new FormControl('', { nonNullable: true }),
+      // Distrito o zona: viaja dentro de la línea de dirección.
+      homeDistrict: new FormControl('', { nonNullable: true }),
       // **La localidad de residencia es obligatoria (AC-03-3)** y por eso vive
       // en el formulario y no en un signal suelto: el motor valida de a una
       // página, y un dato fuera del `FormGroup` no lo puede frenar. El signal
@@ -800,6 +803,7 @@ export class RegisterPatient {
       // Opcional, las tres.
       workMunicipalityConceptId: new FormControl<string | null>(null),
       workAddressLines: new FormControl('', { nonNullable: true }),
+      workDistrict: new FormControl('', { nonNullable: true }),
       // El nombre escrito a mano, sólo para «Otra empresa». Sin validador
       // propio: el campo entero es opcional, y exigirlo convertiría la salida
       // de la lista en una trampa.
@@ -1398,9 +1402,10 @@ export class RegisterPatient {
           required: true,
           mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
         },
+        campoDistrito('homeDistrict', 'registro-domicilio-distrito', 'residenceMunicipalityConceptId'),
         {
           key: 'homeAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
+          label: 'Calle (opcional)',
           hint: 'Como la escribiría en un sobre.',
           description:
             'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
@@ -1409,6 +1414,7 @@ export class RegisterPatient {
           placeholder: 'Av. Banzer, 3er anillo #42',
           testId: 'registro-domicilio-calle',
           icono: 'route',
+          showWhen: { key: 'residenceMunicipalityConceptId', filled: true },
         },
         {
           key: 'gpsDomicilio',
@@ -1416,6 +1422,7 @@ export class RegisterPatient {
           hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
           description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
           control: 'custom',
+          showWhen: { key: 'residenceMunicipalityConceptId', filled: true },
         },
       ],
     },
@@ -1515,15 +1522,17 @@ export class RegisterPatient {
           label: '',
           control: 'custom',
         },
+        campoDistrito('workDistrict', 'registration-work-district', 'workMunicipalityConceptId'),
         {
           key: 'workAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
+          label: 'Calle (opcional)',
           hint: 'Calle y número de su trabajo.',
           description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
           control: 'text',
           placeholder: 'Calle Libertad #120',
           testId: 'registration-work-address',
           icono: 'route',
+          showWhen: { key: 'workMunicipalityConceptId', filled: true },
         },
         {
           key: 'gpsTrabajo',
@@ -1531,6 +1540,7 @@ export class RegisterPatient {
           hint: 'El punto exacto de su lugar de trabajo.',
           description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
           control: 'custom',
+          showWhen: { key: 'workMunicipalityConceptId', filled: true },
         },
       ],
     },
@@ -3041,9 +3051,9 @@ export class RegisterPatient {
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const sexoAlNacer = raw.sexAtBirth;
     const municipio = raw.residenceMunicipalityConceptId;
-    const calleDomicilio = raw.homeAddressLines.trim();
+    const calleDomicilio = componerDireccion(raw.homeAddressLines, raw.homeDistrict);
     const municipioTrabajo = raw.workMunicipalityConceptId;
-    const calleTrabajo = raw.workAddressLines.trim();
+    const calleTrabajo = componerDireccion(raw.workAddressLines, raw.workDistrict);
     const empresa = this.empresaSeleccionada();
     const otraEmpresa = raw.workEmployerFreeText.trim();
     // Sólo viaja lo confirmado sobre el mapa: un punto capturado y no mirado es

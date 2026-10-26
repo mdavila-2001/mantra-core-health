@@ -174,10 +174,14 @@ describe('RegisterPractitioner', () => {
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       homeAddressLines: '',
+      homeDistrict: '',
+      municipio: null,
+      municipioConsultorio: null,
       workAddressLines: '',
       officeContactPhone: '',
       officeName: '',
       officeAddressLines: '',
+      officeDistrict: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
       // Obligatorio desde que dejó de ser «(opcional)»: es lo que dice qué
       // clase de profesional es, y de él dependen el colegio y las
@@ -328,10 +332,15 @@ describe('RegisterPractitioner', () => {
       // teléfonos con los que compartía pantalla.
       expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
       expect(camposDe('access')).toEqual(['workMobilePhone', 'workLandline', 'email']);
-      // Las mismas tres piezas que el alta de paciente: la localidad, la calle
-      // y el punto del mapa. Era sólo la localidad mientras el DTO del
-      // profesional no tuvo dónde poner las otras dos.
-      expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
+      // Las mismas piezas que el alta de paciente: la localidad primero, y con
+      // ella elegida, el distrito, la calle y el punto del mapa (los tres con
+      // `showWhen` sobre la localidad).
+      expect(camposDe('residence')).toEqual([
+        'municipio',
+        'homeDistrict',
+        'homeAddressLines',
+        'gpsDomicilio',
+      ]);
       expect(camposDe('workplace-location')).toEqual(['workAddressLines', 'gpsTrabajo']);
       // El consultorio propio: contacto y ubicación en dos páginas opcionales. Es un calco del
       // lugar de trabajo del alta de paciente, con el nombre que le da el
@@ -340,6 +349,7 @@ describe('RegisterPractitioner', () => {
       expect(camposDe('own-office-contact')).toEqual(['officeName', 'officeContactPhone']);
       expect(camposDe('own-office')).toEqual([
         'municipioConsultorio',
+        'officeDistrict',
         'officeAddressLines',
         'gpsConsultorio',
       ]);

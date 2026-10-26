@@ -45,4 +45,41 @@
       </app-select>
     </app-form-field>
   }
+
+  <!-- La ficha: lo que sale de la localidad elegida, ya lleno. No se escribe —
+       departamento, provincia y municipio se deducen—, y por eso va en sólo
+       lectura: un campo editable invitaría a contradecir al mapa. La calle y el
+       distrito se completan debajo, en los campos del formulario. -->
+  @if (ficha() && detalle(); as dato) {
+    <section
+      class="location-picker__ficha"
+      [attr.aria-label]="fichaTitulo()"
+      [attr.data-testid]="testId() + '-ficha'"
+    >
+      <h3 class="location-picker__ficha-titulo">{{ fichaTitulo() }}</h3>
+      <div class="location-picker__ficha-campos">
+        <app-form-field label="Departamento">
+          <app-input
+            [value]="dato.departamento"
+            [readonly]="true"
+            [testId]="testId() + '-ficha-departamento'"
+          />
+        </app-form-field>
+        <app-form-field label="Provincia">
+          <app-input
+            [value]="provinciaPendiente() ? 'Buscando…' : (dato.provincia ?? 'No disponible')"
+            [readonly]="true"
+            [testId]="testId() + '-ficha-provincia'"
+          />
+        </app-form-field>
+        <app-form-field label="Municipio">
+          <app-input
+            [value]="dato.municipio"
+            [readonly]="true"
+            [testId]="testId() + '-ficha-municipio'"
+          />
+        </app-form-field>
+      </div>
+    </section>
+  }
 </div>

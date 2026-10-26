@@ -682,6 +682,8 @@
               } @else {
                 <app-location-picker
                   testId="registration-residence"
+                  [ficha]="true"
+                  fichaTitulo="Su domicilio"
                   [ramas]="ramasMunicipios()"
                   [value]="municipioPaciente()"
                   [punto]="gpsDomicilio()"
@@ -710,6 +712,8 @@
               } @else {
                 <app-location-picker
                   testId="registration-work"
+                  [ficha]="true"
+                  fichaTitulo="Su lugar de trabajo"
                   [ramas]="ramasMunicipios()"
                   [value]="municipioTrabajo()"
                   [punto]="gpsTrabajo()"
