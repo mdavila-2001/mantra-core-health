@@ -298,6 +298,24 @@ describe('PractitionerProfileView', () => {
     expect(portada?.textContent).not.toContain('Código profesional');
   });
 
+  it('el dueño llega desde su perfil a «Invitaciones y solicitudes» y a «Procedimientos que hago»; el visitante no', () => {
+    const propio = montar(PERFIL, true);
+
+    expect(propio.querySelector('[data-testid="profile-affiliations-link"]')?.getAttribute('href')).toBe(
+      '/my-account/affiliations',
+    );
+    expect(propio.querySelector('[data-testid="profile-my-procedures-link"]')?.getAttribute('href')).toBe(
+      '/my-account/my-procedures',
+    );
+
+    fixture.destroy();
+    TestBed.resetTestingModule();
+    const ajeno = montar(PERFIL, false);
+
+    expect(ajeno.querySelector('[data-testid="profile-affiliations-link"]')).toBeNull();
+    expect(ajeno.querySelector('[data-testid="profile-my-procedures-link"]')).toBeNull();
+  });
+
   it('el dueño sí ve su código profesional: le sirve ante quien administra', () => {
     // Desde el rediseño del 2026-09-10 la ficha propia es la MISMA tarjeta del
     // paciente, así que el código no está en una portada: es un renglón más de
