@@ -70,7 +70,9 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     });
   });
 
-  it('C6 · las filas de la nota no viajan a la API real', () => {
+  it('C6 · las filas de la nota viajan a la API real tal cual (P39)', () => {
+    // P39: la API declara `entries` en CreateNoteDto; antes no existían y el
+    // cliente las quitaba. Ahora viajan enteras y la API las acepta.
     TestBed.inject(ChartNotesClient)
       .createNote({
         patientProfileId: UUID,
@@ -79,10 +81,15 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
         subjectiveText: 'Control',
       })
       .subscribe();
-    expect(cuerpoAceptado('POST', '/charts/notes')).not.toHaveProperty('entries');
+    expect(cuerpoAceptado('POST', '/charts/notes')).toEqual({
+      patientProfileId: UUID,
+      authorProfileId: UUID,
+      entries: [{ label: 'Presión', value: '120/80' }],
+      subjectiveText: 'Control',
+    });
   });
 
-  it('C1 · publicar un producto manda sólo lo que el DTO declara', () => {
+  it('C1 · publicar un producto manda lo que el DTO declara, precio e imágenes incluidos (P47)', () => {
     TestBed.inject(PharmacyClient)
       .publishProduct(UUID, {
         productCode: 'SKU-1',
@@ -91,19 +98,22 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
         imageFileIds: [UUID],
       })
       .subscribe();
+    // P47: el DTO real ya declara precio, estado e imágenes; viajan todos.
     expect(cuerpoAceptado('POST', `/pharmacies/${UUID}/products`)).toEqual({
       productCode: 'SKU-1',
+      unitPrice: 12,
+      status: 'PUBLISHED',
+      imageFileIds: [UUID],
     });
   });
 
-  it('C2 · cambiar sólo el precio no sale: dice qué no está disponible', async () => {
-    const error = await firstValueFrom(
-      TestBed.inject(PharmacyClient).updateProduct(UUID, UUID, { unitPrice: 15 }),
-    ).catch((e: unknown) => e);
-    http.expectNone(`/pharmacies/${UUID}/products/${UUID}`);
-    expect(unavailableMessageOf(error)).toBe(
-      'Cambiar el precio de un producto: todavía no está disponible. El servidor aún no ofrece esta función.',
-    );
+  it('C2 · cambiar sólo el precio sale como PATCH con el precio (P47)', () => {
+    // P47: la API publica `PATCH /pharmacies/:id/products/:productId` con el
+    // precio; antes no existía y el cliente lo frenaba sin pedir.
+    TestBed.inject(PharmacyClient).updateProduct(UUID, UUID, { unitPrice: 15 }).subscribe();
+    expect(cuerpoAceptado('PATCH', `/pharmacies/${UUID}/products/${UUID}`)).toEqual({
+      unitPrice: 15,
+    });
   });
 
   it('C8 · una pregunta de opción viaja con sus opciones', () => {
