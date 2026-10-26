@@ -50,6 +50,12 @@ export interface JournalTransaction {
   readonly totalAmount?: string;
   readonly postedAt?: Date;
   /**
+   * El concepto del asiento («Consultas del día», «Alquiler del consultorio»).
+   * Lo sirve el simulador; la API todavía no lo publica en el listado, y sin él
+   * el historial de comprobantes sólo puede mostrar el número.
+   */
+  readonly description?: string;
+  /**
    * Dónde está el documento en el flujo de seis pasos.
    *
    * Es distinto de `statusConceptId`, que es el concepto de terminología: éste
