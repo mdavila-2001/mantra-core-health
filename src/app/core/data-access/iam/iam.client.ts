@@ -278,6 +278,14 @@ export class IamClient {
       ...(registration.licenseIssueDate === undefined
         ? {}
         : { licenseIssueDate: registration.licenseIssueDate }),
+      // Los respaldos de la habilitación (P29): sin repetirlos acá se
+      // descartarían en silencio, que es justo el defecto que vienen a cerrar.
+      ...(registration.licenseFileId === undefined
+        ? {}
+        : { licenseFileId: registration.licenseFileId }),
+      ...(registration.sedesLicenseFileId === undefined
+        ? {}
+        : { sedesLicenseFileId: registration.sedesLicenseFileId }),
       ...(registration.professionalTitle === undefined
         ? {}
         : { professionalTitle: registration.professionalTitle }),
