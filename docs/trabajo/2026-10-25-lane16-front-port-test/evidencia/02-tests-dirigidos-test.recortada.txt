@@ -1,0 +1,5 @@
+# Salida recortada: resumen y fallos (la completa pesa ~700 KB)
+ FAIL   mantra-core-health  src/app/core/mock/fixtures/standard-sheets.spec.ts > las fichas clínicas estándar del simulador > son tantas como los JSON que siembra el backend
+ FAIL   mantra-core-health  src/app/features/insurance/received-claims/received-claims.spec.ts > ReceivedClaims > anular la factura pide motivo y lo manda
+ Test Files  2 failed | 116 passed (118)
+      Tests  2 failed | 1323 passed (1325)
