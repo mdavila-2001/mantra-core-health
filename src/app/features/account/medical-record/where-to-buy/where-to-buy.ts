@@ -647,6 +647,9 @@ export class WhereToBuy {
 
   protected readonly approvedCoverageLabel = approvedCoverageLabel;
 
+  /** El badge de la tarjeta: el mismo estado que el pin del mapa. */
+  protected readonly branchStatusOf = pinStatusOf;
+
   protected toggle(item: PrescriptionItem, include: boolean): void {
     const nextIncluded = new Set(this.included());
     if (include) {

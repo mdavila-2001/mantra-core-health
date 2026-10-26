@@ -21,6 +21,8 @@ import type { ConceptLabels } from '../../../../core/data-access/terminology/ter
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import type { PinStatus } from '../../../../shared/components/organisms/map/map-pin.types';
+import type { Tone } from '../../../../shared/components/tone/tone.types';
+import { staleStockNoticeOf } from './stock-freshness';
 import { directionsUrl, formatKm } from './where-to-buy.route';
 
 /** Las letras con las que el mapa y las tarjetas se refieren a la misma sede. */
@@ -102,6 +104,12 @@ export interface VisibleBranch {
   readonly lng: number | null;
   /** La misma sede evaluada sólo sobre lo aprobado por el seguro (demostración). */
   readonly insured: InsuredCoverage;
+  /**
+   * «Existencias informadas hace 3 días; confirme…» si la existencia de la
+   * sede ya no está al día, o `null` (al día o sin fecha). Con aviso, la
+   * tarjeta y el pin no afirman «Tiene todo» (REQ-19-009).
+   */
+  readonly staleStockNotice: string | null;
 }
 
 /**
@@ -177,16 +185,23 @@ export function pinSubtitleOf(branch: VisibleBranch, withInsurance: boolean): st
   return parts.length === 0 ? undefined : parts.join(' · ');
 }
 
-/** El estado del pin: el mismo criterio que el badge de la tarjeta. */
-export function pinStatusOf(branch: VisibleBranch, withInsurance: boolean): PinStatus {
-  if (withInsurance) {
-    return branch.insured.complete
-      ? { etiqueta: 'Tiene todo lo aprobado', tono: 'success' }
-      : { etiqueta: 'Le falta algo aprobado', tono: 'warning' };
+/**
+ * El estado de la sede: el badge de la tarjeta y el pin del mapa dicen lo
+ * mismo. Con existencias desactualizadas, «tiene todo» pasa al pasado y pierde
+ * el verde: es lo que se informó, no lo que se puede afirmar hoy (REQ-19-009).
+ */
+export function pinStatusOf(
+  branch: VisibleBranch,
+  withInsurance: boolean,
+): PinStatus & { readonly tono: Tone } {
+  const complete = withInsurance ? branch.insured.complete : branch.complete;
+  if (!complete) {
+    return { etiqueta: withInsurance ? 'Le falta algo aprobado' : 'Le falta algo', tono: 'warning' };
   }
-  return branch.complete
-    ? { etiqueta: 'Tiene todo', tono: 'success' }
-    : { etiqueta: 'Le falta algo', tono: 'warning' };
+  const scope = withInsurance ? ' lo aprobado' : '';
+  return branch.staleStockNotice === null
+    ? { etiqueta: `Tiene todo${scope}`, tono: 'success' }
+    : { etiqueta: `Tenía todo${scope}`, tono: 'info' };
 }
 
 /** «Cobertura de lo aprobado: 3 de 3». */
@@ -370,7 +385,8 @@ export function presentationOf(product: AvailabilityProduct | undefined): string
  * consulta que no pudo incluirlo todo. El orden del backend se conserva.
  *
  * Las coordenadas viajan crudas: la cartografía es del organismo de mapa
- * (FAR-I1), no de esta pantalla.
+ * (FAR-I1), no de esta pantalla. `now` es el reloj contra el que se mide la
+ * antigüedad de las existencias de cada sede.
  */
 export function evaluateBranches(
   response: AvailabilityResult,
@@ -378,6 +394,7 @@ export function evaluateBranches(
   withoutProduct: readonly string[],
   withoutProductItems: readonly PrescriptionItem[],
   approved: ReadonlySet<string>,
+  now: Date = new Date(),
 ): BranchResult {
   const nameByProduct = new Map(queryable.map((item) => [item.productId, item.medication]));
 
@@ -415,6 +432,7 @@ export function evaluateBranches(
       lat: branch.latitude,
       lng: branch.longitude,
       insured: insuredCoverageOf(branch, queryable, withoutProductItems, approved),
+      staleStockNotice: staleStockNoticeOf(branch.stockUpdatedAt, now),
     };
   });
 

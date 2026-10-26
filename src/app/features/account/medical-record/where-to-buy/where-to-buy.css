@@ -135,6 +135,15 @@
   color: var(--text-secondary);
 }
 
+/* REQ-19-011: el aviso de existencias viejas se lee antes que el resto del
+   detalle; tinta principal, no un color de estado suelto. */
+.purchase__stale-stock {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .purchase__actions {
   display: flex;
   flex-wrap: wrap;

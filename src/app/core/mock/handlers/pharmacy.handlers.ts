@@ -15,6 +15,7 @@ import {
 import { horarioDeFarmacias } from './pharmacy-opening-hours.handlers';
 import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_TYPES } from '../mock-session';
+import { haversineKm, withStockUpdatedAt } from './pharmacy-availability.mock';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -518,14 +519,6 @@ function resumenDe(pharmacyId: string) {
       .slice(0, 8)
       .map(({ id, at, kind, text }) => ({ id, at, kind, text })),
   };
-}
-
-function distanciaKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
-  const r = 6371;
-  const dLat = ((bLat - aLat) * Math.PI) / 180;
-  const dLng = ((bLng - aLng) * Math.PI) / 180;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return Math.round(2 * r * Math.asin(Math.sqrt(h)) * 10) / 10;
 }
 
 /* ---- pedidos ---------------------------------------------------------------- */
@@ -1334,11 +1327,11 @@ export function registrarFarmacia(router: MockRouter): void {
   });
 
   // P34 · 24 h, turnos y «abiertas ahora»: mismo contrato que la API.
-  HORARIO.registrar(router, distanciaKm);
+  HORARIO.registrar(router, haversineKm);
 
   // «Farmacia» · pestaña Comprar (25/09/2026): sedes sueltas, con su
   // ubicación, sin exigir productos de antemano. Reusa `FARMACIAS` y
-  // `distanciaKm` tal cual los usa `/pharmacy-inventory/availability` — es
+  // `haversineKm` tal cual los usa `/pharmacy-inventory/availability` — es
   // el mismo dato, sólo que acá se lista sin evaluarlo contra nada.
   router.get('/pharmacy/sites', ({ query }) => {
     const q = texto(query, 'search');
@@ -1358,7 +1351,7 @@ export function registrarFarmacia(router: MockRouter): void {
         addressText: f.addressText,
         latitude: f.lat,
         longitude: f.lng,
-        distanceKm: origen === null ? null : distanciaKm(origen.lat, origen.lng, f.lat, f.lng),
+        distanceKm: origen === null ? null : haversineKm(origen.lat, origen.lng, f.lat, f.lng),
         homeDeliveryAvailable: f.homeDelivery,
         pickupAvailable: true,
         productCount: productos.filtrar((p) => p.pharmacyId === f.id).length,
@@ -1437,7 +1430,7 @@ export function registrarFarmacia(router: MockRouter): void {
         addressText: f.addressText,
         latitude: f.lat,
         longitude: f.lng,
-        distanceKm: origen === null ? null : distanciaKm(origen.lat, origen.lng, f.lat, f.lng),
+        distanceKm: origen === null ? null : haversineKm(origen.lat, origen.lng, f.lat, f.lng),
         homeDeliveryAvailable: f.homeDelivery,
         pickupAvailable: true,
         complete: faltantes.length === 0,
@@ -1447,7 +1440,7 @@ export function registrarFarmacia(router: MockRouter): void {
         currency: BOB,
         products: disponibles.map((p) => ({ productId: p.id, productCode: p.productCode, brandName: p.brandName, genericName: p.genericName, strengthText: p.strengthText, packageSizeText: p.packageSizeText, medication: p.medication, availableQuantity: p.stock ?? 0, price: { unitAmount: p.price, patientAmount: p.price, currency: BOB, priceListCode: 'PUBLICO' } })),
       };
-    }).sort((a, b) => Number(b.complete) - Number(a.complete) || (a.distanceKm ?? 0) - (b.distanceKm ?? 0) || a.pharmacyName.localeCompare(b.pharmacyName, 'es'));
+    }).map(withStockUpdatedAt).sort((a, b) => Number(b.complete) - Number(a.complete) || (a.distanceKm ?? 0) - (b.distanceKm ?? 0) || a.pharmacyName.localeCompare(b.pharmacyName, 'es'));
     return { requestedProductIds: ids, items, count: items.length };
   });
 
