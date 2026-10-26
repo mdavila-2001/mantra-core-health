@@ -1,5 +1,5 @@
-import type { GlossaryNeighbor } from '../../core/data-access/terminology/terminology.types';
-import { compareNeighbors, neighborEvidenceView } from './glossary-neighbor-evidence.logic';
+import type { GlossaryNeighbor } from '@core/data-access/terminology/terminology.types';
+import { compareNeighbors, neighborEvidenceView } from './relation-evidence.logic';
 
 const neighbor = (display: string, extra: Partial<GlossaryNeighbor> = {}): GlossaryNeighbor => ({
   conceptId: display,
@@ -23,6 +23,7 @@ describe('neighborEvidenceView', () => {
       strengthPercent: 85,
       frequencyLabel: 'Muy frecuente',
       tierLabel: 'Norma nacional',
+      tierDescription: 'Nivel 1 de 4, el más alto. La relación consta en una norma nacional.',
       excluded: false,
     });
   });
@@ -44,8 +45,16 @@ describe('neighborEvidenceView', () => {
       strengthPercent: null,
       frequencyLabel: null,
       tierLabel: 'Bibliografía estadística',
+      tierDescription: expect.stringContaining('Nivel 4 de 4'),
       excluded: false,
     });
+  });
+
+  it('el globo del sello agrega las fuentes que trae la relación', () => {
+    const view = neighborEvidenceView(
+      neighbor('A', { evidenceTier: 'CURATED_REFERENCE', sourceCodes: ['FUENTE-A', 'FUENTE-B'] }),
+    );
+    expect(view?.tierDescription).toMatch(/^Nivel 2 de 4\..* Fuentes: FUENTE-A, FUENTE-B\.$/);
   });
 });
 

@@ -56,6 +56,47 @@ const FICHA = {
   ],
 };
 
+/** El vecindario del término: lo que pinta la pestaña «Relacionados» (TAREA-41 F5.5). */
+const VECINDARIO = {
+  focus: {
+    conceptId: FICHA.conceptId,
+    slug: FICHA.slug,
+    display: FICHA.display,
+    category: { internalCode: 'glossary-category-disease', name: 'Enfermedades' },
+    shortDefinition: '',
+  },
+  groups: [
+    {
+      type: 'SYMPTOM',
+      direction: 'outgoing',
+      total: 1,
+      items: [
+        {
+          conceptId: 'c-4',
+          slug: 'cefalea',
+          display: 'Cefalea',
+          category: { internalCode: 'glossary-category-signs-symptoms', name: 'Signos y síntomas' },
+          strength: 0.7,
+          frequency: 'FREQUENT',
+          evidenceTier: 'CURATED_REFERENCE',
+        },
+      ],
+    },
+    {
+      type: 'DISEASE',
+      direction: 'outgoing',
+      total: 1,
+      items: [{ conceptId: 'c-2', slug: 'insuficiencia-cardiaca', display: 'Insuficiencia cardíaca', category: null }],
+    },
+    {
+      type: 'RELATED_TERM',
+      direction: 'outgoing',
+      total: 1,
+      items: [{ conceptId: 'c-3', slug: 'presion-arterial', display: 'Presión arterial', category: null }],
+    },
+  ],
+};
+
 describe('GlossaryTerm', () => {
   let harness: RouterTestingHarness;
   let componente: GlossaryTerm;
@@ -79,6 +120,7 @@ describe('GlossaryTerm', () => {
     http
       .expectOne((r) => r.url.endsWith('/glossary-article'))
       .flush(null, { status: 404, statusText: 'Not Found' });
+    vecindario().flush(VECINDARIO);
   });
 
   afterEach(() => http.verify());
@@ -94,8 +136,15 @@ describe('GlossaryTerm', () => {
 
   function peticion() {
     return http.expectOne(
-      (r) => r.url.includes('/terminology/concepts/') && !r.url.endsWith('/glossary-article'),
+      (r) =>
+        r.url.includes('/terminology/concepts/') &&
+        !r.url.endsWith('/glossary-article') &&
+        !r.url.endsWith('/glossary-neighborhood'),
     );
+  }
+
+  function vecindario() {
+    return http.expectOne((r) => r.url.endsWith(`/concepts/${FICHA.conceptId}/glossary-neighborhood`));
   }
 
   /**
@@ -221,21 +270,29 @@ describe('GlossaryTerm', () => {
 
   // --- Relaciones clínicas tipadas -------------------------------------------
 
-  it('agrupa las relaciones por tipo, en orden clínico, y omite los grupos vacíos', () => {
+  it('reparte las relaciones en las mismas zonas y columnas que el mapa', async () => {
     peticion().flush(FICHA);
+    await harness.fixture.whenStable();
+    await abrirPestana('Relacionados');
 
-    const grupos =
-      interno<() => readonly { label: string; relaciones: readonly unknown[] }[]>(
-        'gruposDeRelaciones',
-      )();
+    const zonas = [...html().querySelectorAll('.termino__relaciones .relation-groups__heading')].map((h) =>
+      h.textContent?.trim(),
+    );
+    expect(zonas).toEqual(['Lo que se observa', 'Más relaciones']);
+    const columnas = [...html().querySelectorAll('.termino__relaciones .relation-groups__title')].map((h) =>
+      (h.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    );
+    expect(columnas).toEqual(['Síntomas y signos 1', 'Enfermedades relacionadas 1', 'Términos relacionados 1']);
+  });
 
-    // FICHA sólo trae DISEASE y RELATED_TERM: PROCEDURE, TREATMENT, ANATOMY y
-    // DIAGNOSTIC_TEST no deben aparecer con un encabezado vacío.
-    expect(grupos.map((g) => g.label)).toEqual([
-      'Enfermedades relacionadas',
-      'También se relaciona con',
-    ]);
-    expect(grupos[0].relaciones.length).toBe(1);
+  it('cada vecino lleva el mismo sello y la misma frecuencia que en el mapa', async () => {
+    peticion().flush(FICHA);
+    await harness.fixture.whenStable();
+    await abrirPestana('Relacionados');
+
+    const evidencia = html().querySelector('.termino__relaciones app-relation-evidence');
+    expect(evidencia?.textContent).toContain('Frecuente');
+    expect(evidencia?.querySelector('.relation-evidence__seal')?.textContent?.trim()).toBe('Referencia curada');
   });
 
   it('cada relación enlaza a la ficha del término relacionado por su conceptId', async () => {
@@ -248,13 +305,29 @@ describe('GlossaryTerm', () => {
     );
     expect(enlaces).toContain('/glossary/c-2');
     expect(enlaces).toContain('/glossary/c-3');
+    expect(html().querySelector('.termino__mapa-enlace')?.getAttribute('href')).toBe(
+      `/glossary/network?focus=${FICHA.conceptId}`,
+    );
+  });
+
+  it('si el vecindario falla, la pestaña lo dice y ofrece reintentar', async () => {
+    peticion().flush(FICHA);
+    interno<() => void>('recargarRelaciones')();
+    vecindario().flush({ message: 'caído' }, { status: 503, statusText: 'Service Unavailable' });
+    await harness.fixture.whenStable();
+    await abrirPestana('Relacionados');
+
+    expect(html().querySelector('.termino__relaciones')).toBeNull();
+    expect(rotulosDePestanas()).toContain('Relacionados');
   });
 
   it('sin relaciones, no dibuja ningún grupo', async () => {
     peticion().flush({ ...FICHA, relations: [] });
+    interno<() => void>('recargarRelaciones')();
+    vecindario().flush({ ...VECINDARIO, groups: [] });
     await harness.fixture.whenStable();
 
-    expect(interno<() => readonly unknown[]>('gruposDeRelaciones')().length).toBe(0);
+    expect(interno<() => readonly unknown[]>('zonasDeRelaciones')().length).toBe(0);
     expect(html().querySelector('.termino__relaciones')).toBeNull();
     expect(rotulosDePestanas()).not.toContain('Relacionados');
   });

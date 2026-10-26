@@ -15,10 +15,10 @@
           label="Término central"
           placeholder="Por ejemplo: tos, neumonía o cardiología"
           emptyMessage="No encontramos términos con ese nombre"
-          [options]="searchOptions()"
-          [loading]="searching()"
+          [options]="termSearch.options()"
+          [loading]="termSearch.searching()"
           [selected]="selectedOption()"
-          (searched)="search($event)"
+          (searched)="termSearch.search($event)"
           (selectionChange)="choose($event)"
         />
       </app-form-field>
@@ -49,11 +49,78 @@
     } @else {
       <app-view-state-host [state]="neighborhood()" (retry)="reload()">
         @if (data(); as data) {
-          @if (clinicalRoute(); as route) {
+          @if (filtered(); as filtered) {
+            <section class="ruta__filtros" aria-labelledby="ruta-filtros-titulo">
+              <details class="ruta__filtros-panel" [open]="!filtersAreDefault()">
+                <summary id="ruta-filtros-titulo">Filtrar relaciones</summary>
+                <div class="ruta__filtros-cuerpo">
+                  <fieldset class="ruta__filtro">
+                    <legend>Nivel de evidencia</legend>
+                    @for (option of tierOptions; track option.tier) {
+                      <app-checkbox
+                        [label]="option.label"
+                        [checked]="filters().tiers.has(option.tier)"
+                        (checkedChange)="toggleTier(option.tier, $event)"
+                      />
+                    }
+                    <app-checkbox
+                      label="Relaciones sin datos de evidencia"
+                      [checked]="filters().includeUnrated"
+                      (checkedChange)="toggleUnrated($event)"
+                    />
+                  </fieldset>
+
+                  <div class="ruta__filtro">
+                    <app-form-field
+                      label="Frecuencia mínima"
+                      hint="Se aplica sólo a las relaciones que informan con qué frecuencia se presentan."
+                    >
+                      <app-select
+                        [options]="frequencyOptions"
+                        [value]="frequencyChoice()"
+                        [searchable]="false"
+                        (valueChange)="chooseFrequency($event)"
+                      />
+                    </app-form-field>
+                  </div>
+
+                  @if (columnChoices().length > 0) {
+                    <fieldset class="ruta__filtro">
+                      <legend>Tipos de relación visibles</legend>
+                      @for (choice of columnChoices(); track choice.key) {
+                        <app-checkbox
+                          [label]="choice.title"
+                          [checked]="choice.visible"
+                          (checkedChange)="toggleColumn(choice.key, $event)"
+                        />
+                      }
+                    </fieldset>
+                  }
+                </div>
+              </details>
+
+              <div class="ruta__filtros-estado">
+                <p role="status" class="ruta__filtros-resumen">
+                  @if (filtered.hiddenCount === 0) {
+                    Se muestran todos los términos cargados.
+                  } @else if (filtered.hiddenCount === 1) {
+                    Los filtros ocultan 1 de los {{ filtered.totalCount }} términos cargados.
+                  } @else {
+                    Los filtros ocultan {{ filtered.hiddenCount }} de los {{ filtered.totalCount }} términos cargados.
+                  }
+                </p>
+                @if (!filtersAreDefault()) {
+                  <button app-button variant="secondary" size="sm" (click)="resetFilters()">
+                    Restablecer filtros
+                  </button>
+                }
+              </div>
+            </section>
+
             <div
               class="ruta__mapa"
-              [class.ruta__mapa--sin-hallazgos]="route.findings.length === 0"
-              [class.ruta__mapa--sin-siguiente]="route.next.length === 0"
+              [class.ruta__mapa--sin-hallazgos]="filtered.route.findings.length === 0"
+              [class.ruta__mapa--sin-siguiente]="filtered.route.next.length === 0"
             >
               <section class="ruta__foco" aria-labelledby="ruta-foco-titulo">
                 @if (data.focus.category) {
@@ -64,97 +131,63 @@
                   <p class="ruta__foco-definicion">{{ data.focus.shortDefinition }}</p>
                 }
                 <p class="ruta__foco-resumen">
-                  @switch (route.neighborCount) {
-                    @case (0) { Todavía no tiene relaciones publicadas. }
-                    @case (1) { Se muestra 1 término relacionado. }
-                    @default { Se muestran {{ route.neighborCount }} términos relacionados. }
+                  @if (filtered.totalCount === 0) {
+                    Todavía no tiene relaciones publicadas.
+                  } @else if (filtered.route.neighborCount === 0) {
+                    Los filtros ocultan todas sus relaciones cargadas.
+                  } @else if (filtered.route.neighborCount === 1) {
+                    Se muestra 1 término relacionado.
+                  } @else {
+                    Se muestran {{ filtered.route.neighborCount }} términos relacionados.
                   }
                 </p>
                 <a class="ruta__foco-enlace" [routerLink]="['/glossary', data.focus.conceptId]">Abrir la ficha completa</a>
+                <button
+                  type="button"
+                  class="ruta__foco-comparar"
+                  aria-controls="ruta-comparar"
+                  [attr.aria-expanded]="compareOpen()"
+                  (click)="compareOpen.set(!compareOpen())"
+                >
+                  Comparar con…
+                </button>
+                @if (compareOpen()) {
+                  <div id="ruta-comparar" class="ruta__comparar">
+                    <app-form-field
+                      label="Comparar con"
+                      hint="Elija otro término para ver qué comparten y qué los distingue."
+                    >
+                      <app-reference-combobox
+                        label="Comparar con"
+                        placeholder="Por ejemplo: bronquitis"
+                        emptyMessage="No encontramos términos con ese nombre"
+                        [options]="compareSearch.options()"
+                        [loading]="compareSearch.searching()"
+                        [selected]="null"
+                        (searched)="compareSearch.search($event)"
+                        (selectionChange)="compareWith($event)"
+                      />
+                    </app-form-field>
+                  </div>
+                }
               </section>
 
-              @for (zone of [
-                { key: 'hallazgos', title: 'Lo que se observa', columns: route.findings },
-                { key: 'siguiente', title: 'Diagnóstico, estudio y tratamiento', columns: route.next },
-                { key: 'contexto', title: 'Más relaciones', columns: route.context }
-              ]; track zone.key) {
+              @for (zone of zones(); track zone.key) {
                 @if (zone.columns.length > 0) {
-                  <section
-                    [class]="'ruta__zona ruta__zona--' + zone.key"
-                    [attr.aria-labelledby]="'ruta-zona-' + zone.key"
-                  >
-                    <h3 class="ruta__zona-titulo" [id]="'ruta-zona-' + zone.key">{{ zone.title }}</h3>
-                    <div class="ruta__columnas">
-                      @for (column of zone.columns; track column.key) {
-                        <section class="ruta__grupo" [attr.aria-labelledby]="'ruta-grupo-' + column.key">
-                          <h4 class="ruta__grupo-titulo" [id]="'ruta-grupo-' + column.key">
-                            {{ column.title }}
-                            @if (column.complete) {
-                              <span class="ruta__grupo-total">{{ column.items.length }}</span>
-                            }
-                          </h4>
-                          <ul class="ruta__vecinos">
-                            @for (neighbor of visibleItems(column); track neighbor.conceptId) {
-                              <li>
-                                <button
-                                  type="button"
-                                  class="ruta__vecino"
-                                  [attr.aria-label]="'Ver el mapa de ' + neighbor.display"
-                                  (click)="focusOn(neighbor.conceptId)"
-                                >
-                                  {{ neighbor.display }}
-                                </button>
-                                @if (evidenceOf(neighbor); as evidence) {
-                                  <p class="ruta__evidencia" [class.ruta__evidencia--descartada]="evidence.excluded">
-                                    @if (evidence.strengthPercent !== null) {
-                                      <span class="ruta__fuerza" aria-hidden="true">
-                                        <span class="ruta__fuerza-barra" [style.inline-size.%]="evidence.strengthPercent"></span>
-                                      </span>
-                                    }
-                                    @if (evidence.frequencyLabel) {
-                                      <span class="ruta__frecuencia">{{ evidence.frequencyLabel }}</span>
-                                    }
-                                    @if (evidence.tierLabel) {
-                                      <span class="ruta__sello">{{ evidence.tierLabel }}</span>
-                                    }
-                                  </p>
-                                }
-                              </li>
-                            }
-                          </ul>
-                          @if (failedColumn() === column.key) {
-                            <p class="ruta__grupo-aviso" role="alert">
-                              No pudimos traer la lista completa. Intente de nuevo.
-                            </p>
-                          }
-                          @if (isOpen(column) && !column.complete) {
-                            <p class="ruta__grupo-aviso">Se muestran los primeros {{ column.items.length }}.</p>
-                          }
-                          @if (hasMore(column)) {
-                            <button
-                              type="button"
-                              class="ruta__grupo-accion"
-                              [attr.aria-busy]="loadingColumn() === column.key"
-                              [disabled]="loadingColumn() === column.key"
-                              (click)="showAll(column)"
-                            >
-                              @if (loadingColumn() === column.key) {
-                                Trayendo la lista…
-                              } @else if (column.complete) {
-                                Ver los {{ column.items.length }}
-                              } @else {
-                                Ver todos
-                              }
-                            </button>
-                          } @else if (isOpen(column) && column.items.length > visibleLimit) {
-                            <button type="button" class="ruta__grupo-accion" (click)="showLess(column)">
-                              Mostrar menos
-                            </button>
-                          }
-                        </section>
-                      }
-                    </div>
-                  </section>
+                  <app-relation-groups
+                    class="ruta__zona"
+                    [class.ruta__zona--hallazgos]="zone.key === 'hallazgos'"
+                    [class.ruta__zona--siguiente]="zone.key === 'siguiente'"
+                    [class.ruta__zona--contexto]="zone.key === 'contexto'"
+                    [heading]="zone.title"
+                    [headingId]="'ruta-zona-' + zone.key"
+                    [tone]="zone.tone"
+                    [columns]="zone.columns"
+                    navigation="select"
+                    emptyColumnText="Ninguno de los primeros cumple los filtros."
+                    [columnFooter]="columnFooter"
+                    (neighborSelected)="focusOn($event)"
+                  />
                 }
               }
             </div>
@@ -169,3 +202,37 @@
     </p>
   </app-card>
 </main>
+
+<ng-template #columnFooter let-view>
+  @if (routeColumn(view); as column) {
+    @if (failedColumn() === column.key) {
+      <p class="ruta__grupo-aviso" role="alert">
+        No pudimos traer la lista completa. Intente de nuevo.
+      </p>
+    }
+    @if (isOpen(column) && !column.complete) {
+      <p class="ruta__grupo-aviso">Se muestran los primeros {{ column.items.length }}.</p>
+    }
+    @if (hasMore(column)) {
+      <button
+        type="button"
+        class="ruta__grupo-accion"
+        [attr.aria-busy]="loadingColumn() === column.key"
+        [disabled]="loadingColumn() === column.key"
+        (click)="showAll(column)"
+      >
+        @if (loadingColumn() === column.key) {
+          Trayendo la lista…
+        } @else if (column.complete) {
+          Ver los {{ column.items.length }}
+        } @else {
+          Ver todos
+        }
+      </button>
+    } @else if (isOpen(column) && column.items.length > visibleLimit) {
+      <button type="button" class="ruta__grupo-accion" (click)="showLess(column)">
+        Mostrar menos
+      </button>
+    }
+  }
+</ng-template>
