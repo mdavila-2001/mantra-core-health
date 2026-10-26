@@ -188,6 +188,56 @@ describe('IamClient', () => {
     });
   });
 
+  describe('registerPharmacyOrganization (P50)', () => {
+    const alta = {
+      code: 'FARM-1023456029',
+      legalName: 'Farmacia Central S.R.L.',
+      legalEntityType: 'SRL',
+      countryConceptId: 'pais',
+      jurisdictionConceptId: 'jurisdiccion',
+      taxIdentifier: '1023456029',
+      legalAddress: 'Av. Cristo Redentor 1234',
+      owner: { email: 'legal@farmacia.test', password: 'secreto12', displayName: 'Mariana Siles' },
+      legalRepresentative: {
+        fullName: 'Mariana Siles',
+        email: 'legal@farmacia.test',
+        idNumber: '4872190 SC',
+      },
+    } as const;
+
+    it('la dirección legal viaja como dirección de la casa central, con su punto y sus sucursales', () => {
+      client
+        .registerPharmacyOrganization({
+          ...alta,
+          headquarters: { latitude: -17.78, longitude: -63.18 },
+          branches: [{ name: 'Sucursal Equipetrol', latitude: -17.76, longitude: -63.19 }],
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.taxIdentifier).toBe('1023456029');
+      expect(req.request.body.organization.pharmacy).toEqual({
+        address: 'Av. Cristo Redentor 1234',
+        latitude: -17.78,
+        longitude: -63.18,
+        branches: [{ name: 'Sucursal Equipetrol', latitude: -17.76, longitude: -63.19 }],
+      });
+      // Sin poder: la farmacia lo presenta para operar, no para registrarse.
+      expect('powerOfAttorneyFileId' in req.request.body.organization.legalRepresentative).toBe(false);
+      req.flush({ tenantId: 't', pharmacyId: 'f' });
+    });
+
+    it('sin punto ni sucursales, el bloque viaja igual con la dirección', () => {
+      client.registerPharmacyOrganization(alta).subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.pharmacy).toEqual({
+        address: 'Av. Cristo Redentor 1234',
+      });
+      req.flush({ tenantId: 't', pharmacyId: 'f' });
+    });
+  });
+
   it('verifyEmail manda el token en el cuerpo', () => {
     client.verifyEmail('tok-123').subscribe();
 

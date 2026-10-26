@@ -208,6 +208,42 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     });
   });
 
+  it('P50 · el alta de farmacia sale con claves que el DTO real declara', () => {
+    TestBed.inject(IamClient)
+      .registerPharmacyOrganization({
+        code: 'FARM-1023456029',
+        legalName: 'Farmacia Central S.R.L.',
+        legalEntityType: 'SRL',
+        countryConceptId: UUID,
+        jurisdictionConceptId: UUID,
+        taxIdentifier: '1023456029',
+        legalAddress: 'Av. Cristo Redentor 1234',
+        headquarters: { latitude: -17.78, longitude: -63.18 },
+        branches: [
+          {
+            name: 'Sucursal Equipetrol',
+            latitude: -17.76,
+            longitude: -63.19,
+            description: 'Frente a la plaza',
+            locationUrl: 'https://maps.example/x',
+          },
+        ],
+        owner: { email: 'legal@farmacia.test', password: 'secreto12', displayName: 'Mariana Siles' },
+        legalRepresentative: {
+          fullName: 'Mariana Siles',
+          email: 'legal@farmacia.test',
+          idNumber: '4872190 SC',
+        },
+      })
+      .subscribe();
+    const cuerpo = cuerpoAceptado('POST', '/iam/auth/register-organization') as {
+      organization: { pharmacy: unknown };
+    };
+    expect(cuerpo.organization.pharmacy).toEqual(
+      expect.objectContaining({ address: 'Av. Cristo Redentor 1234' }),
+    );
+  });
+
   it('§2 · buscar personas no sale a una ruta que la API no publica', async () => {
     const error = await firstValueFrom(
       TestBed.inject(IamClient).searchUsers({ query: 'ana' }),

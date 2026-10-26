@@ -418,8 +418,12 @@ export class IamClient {
    * misma operación. Ver el JSDoc de {@link PharmacyOrganizationRegistration}
    * para por qué es un método aparte de {@link IamClient.registerOrganization}
    * en vez de generalizarlo: el bloque específico del tipo de tenant no
-   * coincide (`payer` siempre obligatorio para la aseguradora; la farmacia no
-   * tiene bloque propio en el DTO real).
+   * coincide (`payer` siempre obligatorio para la aseguradora; la farmacia
+   * manda su bloque `pharmacy`, `RegisterPharmacyBlockDto` en el DTO real).
+   * La API crea en la misma transacción la fila de la farmacia, su casa
+   * central y cada sucursal como sede dispensadora, y devuelve `pharmacyId`
+   * (P50). Los seis papeles y el punto de la central son opcionales para
+   * registrarse y obligatorios para que la plataforma la verifique.
    */
   registerPharmacyOrganization(
     registration: PharmacyOrganizationRegistration,
@@ -445,23 +449,22 @@ export class IamClient {
           ? {}
           : { legalDocuments: registration.legalDocuments }),
         ...(registration.executives === undefined ? {} : { executives: registration.executives }),
-        // `pharmacy`: el bloque `RegisterPharmacyBlockDto` del DTO real, con
-        // las coordenadas de la casa matriz y las sucursales (P49).
-        ...(registration.headquarters === undefined && registration.branches === undefined
-          ? {}
-          : {
-              pharmacy: {
-                ...(registration.headquarters === undefined
-                  ? {}
-                  : {
-                      latitude: registration.headquarters.latitude,
-                      longitude: registration.headquarters.longitude,
-                    }),
-                ...(registration.branches === undefined || registration.branches.length === 0
-                  ? {}
-                  : { branches: registration.branches.map((branch) => ({ ...branch })) }),
-              },
-            }),
+        // `pharmacy`: el bloque `RegisterPharmacyBlockDto` del DTO real (P50).
+        // Viaja siempre: la dirección legal es la de la casa central, que la
+        // API crea en toda alta de farmacia; el punto y las sucursales, si los
+        // hay.
+        pharmacy: {
+          address: registration.legalAddress,
+          ...(registration.headquarters === undefined
+            ? {}
+            : {
+                latitude: registration.headquarters.latitude,
+                longitude: registration.headquarters.longitude,
+              }),
+          ...(registration.branches === undefined || registration.branches.length === 0
+            ? {}
+            : { branches: registration.branches.map((branch) => ({ ...branch })) }),
+        },
       },
       owner: {
         email: registration.owner.email,

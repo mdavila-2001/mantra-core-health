@@ -303,6 +303,7 @@ export function registrarAuth(router: MockRouter): void {
         // valida con la misma forma que `payer` —ambas coordenadas o
         // ninguna, cada una en rango—.
         pharmacy?: {
+          address?: string;
           latitude?: number;
           longitude?: number;
           branches?: readonly { name?: string; latitude?: number; longitude?: number }[];
@@ -332,13 +333,11 @@ export function registrarAuth(router: MockRouter): void {
         // API. Esto sólo espeja el `ValidationPipe` para que el formulario
         // no pase en falso contra un backend simulado.
         //
-        // `idNumber` y `powerOfAttorneyFileId` NO son obligatorios acá —a
-        // diferencia de `RegisterOrganizationLegalRepresentativeDto` del
-        // backend real, que los exige siempre que el bloque viaja—: el
-        // registro de procesos de farmacia (Módulo Farmacia §1) no pide la
-        // cédula del representante como dato de alta, y esta relajación es
-        // deliberada del simulador (ver P49). No afecta al alta de
-        // aseguradora: su formulario siempre completa los dos.
+        // `idNumber` es obligatorio, como en
+        // `RegisterOrganizationLegalRepresentativeDto` del backend real (P50:
+        // se mantuvo la cédula en el alta de farmacia). El poder lo exige el
+        // servicio salvo UNIPERSONAL, y salvo en la farmacia, que lo presenta
+        // para operar y no para nacer (P50, D2).
         legalRepresentative?: {
           fullName?: string;
           idNumber?: string;
@@ -440,6 +439,18 @@ export function registrarAuth(router: MockRouter): void {
           details: { messages: mensajes },
         });
       }
+    }
+
+    // Mismo contrato que la API real (P50): `pharmacy` sólo corresponde a
+    // `PHARMACY`; con cualquier otro tipo es un 422 de negocio.
+    if (pharmacy !== undefined && datos.organization?.tenantType !== 'PHARMACY') {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'El bloque `pharmacy` sólo corresponde a un tenant de tipo PHARMACY',
+        error: 'Unprocessable Entity',
+        details: { tenantType: datos.organization?.tenantType ?? null },
+      });
     }
 
     const diagnosticUnit = datos.organization?.diagnosticUnit;
@@ -560,7 +571,11 @@ export function registrarAuth(router: MockRouter): void {
           { document: 'constitutionFileId' },
         );
       }
-      if (legalRepresentative !== undefined && !legalRepresentative.powerOfAttorneyFileId) {
+      if (
+        tipoDeOrganizacion !== 'PHARMACY' &&
+        legalRepresentative !== undefined &&
+        !legalRepresentative.powerOfAttorneyFileId
+      ) {
         return preconditionFailed(
           'Falta el poder notariado del representante legal: sólo una empresa unipersonal puede omitirlo',
           { document: 'powerOfAttorneyFileId' },
@@ -614,6 +629,8 @@ export function registrarAuth(router: MockRouter): void {
       ...(representativesRegistered === undefined ? {} : { representativesRegistered }),
       // Como la API: la unidad sólo nace si el alta declaró el bloque.
       ...(diagnosticUnit === undefined ? {} : { diagnosticUnitId: nuevoId('unidad-diagnostica') }),
+      // Como la API (P50): toda farmacia nace con su fila y su casa central.
+      ...(tipoDeOrganizacion === 'PHARMACY' ? { pharmacyId: nuevoId('farmacia') } : {}),
     };
   });
 
