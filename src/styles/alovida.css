@@ -616,10 +616,16 @@ app-shell-layout { display: block; }
 
 /* La cabecera de la barra: la marca y el botón que la recoge, en una fila.
    La línea que separaba la marca del menú pasó acá, que es lo que ahora cierra
-   el bloque de arriba. */
+   el bloque de arriba.
+
+   Los costados son `--e3`, el mismo margen de los renglones de abajo: el botón
+   de recoger termina donde terminan ellos. Con `--e5` la palabra tenía 98 px
+   para sus 89 y, en cuanto la barra mostraba una barra de desplazamiento
+   clásica (15–17 px, Windows o «mostrar siempre» en macOS), quedaba cortada en
+   «AloVidc». */
 .app-side-nav__cabecera {
   display: flex; align-items: center; gap: var(--e2);
-  padding: 0 var(--e5) var(--e5); margin-bottom: var(--e1);
+  padding: 0 var(--e3) var(--e5); margin-bottom: var(--e1);
   border-bottom: 1px solid rgba(255, 255, 255, .12);
 }
 .app-side-nav__marca {

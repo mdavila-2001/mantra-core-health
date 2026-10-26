@@ -22,7 +22,7 @@
  */
 
 /** El rótulo único: quien mira la pantalla sabe qué parte es maqueta. */
-export const NOTA_DE_DEMOSTRACION = 'Demostración';
+export const DEMO_NOTE = 'Demostración';
 
 /**
  * Los conceptos de la receta que el seguro aprueba, de ejemplo.
@@ -35,7 +35,7 @@ export const NOTA_DE_DEMOSTRACION = 'Demostración';
  * Recibe **toda** la receta, no sólo lo tildado: la aprobación es del renglón,
  * y destildar otro medicamento no la cambia.
  */
-export function aprobadosPorElSeguroDeEjemplo(conceptIds: readonly string[]): ReadonlySet<string> {
+export function sampleInsuranceApprovals(conceptIds: readonly string[]): ReadonlySet<string> {
   if (conceptIds.length <= 1) {
     return new Set(conceptIds);
   }

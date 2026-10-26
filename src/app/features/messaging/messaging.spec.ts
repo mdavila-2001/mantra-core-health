@@ -316,6 +316,29 @@ describe('Messaging', () => {
     expect(texto()).toContain('Dra. Quispe');
   });
 
+  it('Archivados y Bloqueados son chips del mismo carril que los filtros, con sus flechas', () => {
+    conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
+
+    const carril = fixture.nativeElement.querySelector('.mensajeria__chips') as HTMLElement;
+    expect(carril.contains(consultar('mensajeria-filtro-todos'))).toBe(true);
+    expect(carril.contains(consultar('mensajeria-archivados'))).toBe(true);
+    expect(carril.contains(consultar('mensajeria-bloqueados'))).toBe(true);
+    expect(consultar('mensajeria-filtros-anterior')).not.toBeNull();
+    expect(consultar('mensajeria-filtros-siguiente')).not.toBeNull();
+
+    // Es un chip que se prende y se apaga: el mismo clic vuelve a los chats.
+    const archivados = consultar('mensajeria-archivados');
+    expect(archivados?.getAttribute('aria-pressed')).toBe('false');
+    archivados?.click();
+    fixture.detectChanges();
+    expect(archivados?.getAttribute('aria-pressed')).toBe('true');
+    expect(consultar('mensajeria-filtro-todos')?.getAttribute('aria-pressed')).toBe('false');
+    archivados?.click();
+    fixture.detectChanges();
+    expect(archivados?.getAttribute('aria-pressed')).toBe('false');
+    expect(consultar('mensajeria-filtro-todos')?.getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('no borra la bandeja cuando un tic falla', () => {
     conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
 

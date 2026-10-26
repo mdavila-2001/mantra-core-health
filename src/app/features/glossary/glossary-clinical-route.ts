@@ -22,10 +22,15 @@ import { compareNeighbors } from './glossary-neighbor-evidence.logic';
     ========================================================================== */
 
 export type RouteColumnKey =
+  | 'criteria'
+  | 'riskFactors'
   | 'symptoms'
   | 'anatomy'
   | 'diseases'
   | 'tests'
+  | 'requiredTests'
+  | 'referral'
+  | 'complications'
   | 'treatments'
   | 'procedures'
   | 'specialties'
@@ -44,7 +49,7 @@ export interface RouteColumn {
   readonly key: RouteColumnKey;
   readonly title: string;
   readonly zone: RouteZone;
-  /** Vecinos sin repetir, en orden alfabético. */
+  /** Vecinos sin repetir: el más fuerte primero y, entre iguales, alfabético. */
   readonly items: readonly GlossaryNeighbor[];
   /** Si ya vinieron todos los vecinos de sus grupos (no hay «Ver todos»). */
   readonly complete: boolean;
@@ -61,11 +66,16 @@ export interface ClinicalRoute {
 
 /** El orden clínico de las columnas dentro de su zona. */
 const COLUMN_ORDER: readonly RouteColumnKey[] = [
+  'criteria',
   'symptoms',
+  'riskFactors',
   'anatomy',
   'diseases',
+  'requiredTests',
   'tests',
   'treatments',
+  'referral',
+  'complications',
   'procedures',
   'specialties',
   'equipment',
@@ -110,15 +120,39 @@ function columnByRelation(type: GlossaryRelationType, direction: RouteGroupRef['
       return outgoing ? 'specialties' : 'diseases';
     case 'DISEASE':
       return 'diseases';
+    case 'DIAGNOSTIC_CRITERION':
+    case 'REQUIRED_TEST':
+    case 'REFERRAL_CRITERION':
+    case 'COMPLICATION':
+      // Visto desde el hallazgo, el estudio o la complicación: la enfermedad.
+      return outgoing ? 'related' : 'diseases';
+    case 'RISK_FACTOR':
+      return outgoing ? 'diseases' : 'related';
     case 'RELATED_TERM':
       return 'related';
   }
 }
 
+/**
+ * Columnas de la capa normativa (TAREA-41 F2), vistas desde la enfermedad: lo
+ * que la norma dice de ella va junto y aparte de lo que dicen los catálogos,
+ * aunque el vecino sea, por categoría, un síntoma o un estudio. El factor de
+ * riesgo apunta a la enfermedad, así que desde ella llega entrante.
+ */
+const NORMATIVE_COLUMN: Partial<Record<GlossaryRelationType, { column: RouteColumnKey; direction: RouteGroupRef['direction'] }>> = {
+  DIAGNOSTIC_CRITERION: { column: 'criteria', direction: 'outgoing' },
+  REQUIRED_TEST: { column: 'requiredTests', direction: 'outgoing' },
+  REFERRAL_CRITERION: { column: 'referral', direction: 'outgoing' },
+  COMPLICATION: { column: 'complications', direction: 'outgoing' },
+  RISK_FACTOR: { column: 'riskFactors', direction: 'incoming' },
+};
+
 function columnOf(neighbor: GlossaryNeighbor, group: RouteGroupRef): RouteColumnKey {
   // «Término relacionado» es la relación más débil del corpus: va aparte
   // aunque el vecino sea una enfermedad, para no mezclarla con las tipadas.
   if (group.type === 'RELATED_TERM') return 'related';
+  const normative = NORMATIVE_COLUMN[group.type];
+  if (normative?.direction === group.direction) return normative.column;
   const byCategory = neighbor.category && COLUMN_BY_CATEGORY[neighbor.category.internalCode];
   return byCategory || columnByRelation(group.type, group.direction);
 }
@@ -126,6 +160,16 @@ function columnOf(neighbor: GlossaryNeighbor, group: RouteGroupRef): RouteColumn
 /** El título de una columna, que depende de qué es el término central. */
 function titleOf(key: RouteColumnKey, focusColumn: RouteColumnKey | null): string {
   switch (key) {
+    case 'criteria':
+      return 'Criterios diagnósticos de la norma';
+    case 'riskFactors':
+      return 'Factores de riesgo';
+    case 'requiredTests':
+      return 'Estudios que exige la norma';
+    case 'referral':
+      return 'Criterios de referencia';
+    case 'complications':
+      return 'Complicaciones';
     case 'symptoms':
       return focusColumn === 'symptoms' ? 'Síntomas relacionados' : 'Síntomas y signos';
     case 'anatomy':
@@ -167,9 +211,26 @@ function titleOf(key: RouteColumnKey, focusColumn: RouteColumnKey | null): strin
  * (los síntomas de un síntoma, las enfermedades de una enfermedad) no es ni
  * «lo que se observa» ni «lo que sigue»: va al contexto.
  */
+const FINDINGS_COLUMNS: ReadonlySet<RouteColumnKey> = new Set(['criteria', 'symptoms', 'riskFactors', 'anatomy']);
+
 function zoneOf(key: RouteColumnKey, focusColumn: RouteColumnKey | null): RouteZone {
   if (key === 'related' || key === focusColumn) return 'context';
-  return key === 'symptoms' || key === 'anatomy' ? 'findings' : 'next';
+  return FINDINGS_COLUMNS.has(key) ? 'findings' : 'next';
+}
+
+/**
+ * La clave con que se comparan dos nombres: sin mayúsculas, tildes ni espacios
+ * de más. El glosario reúne fuentes distintas y un mismo nombre aparece en
+ * varios conceptos (CIE-10 J18 «Neumonía, microorganismo no especificado» y su
+ * homónimo de otro catálogo, por ejemplo).
+ */
+function displayKey(display: string): string {
+  return display
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -181,6 +242,7 @@ function zoneOf(key: RouteColumnKey, focusColumn: RouteColumnKey | null): RouteZ
 export function buildClinicalRoute(neighborhood: GlossaryNeighborhood): ClinicalRoute {
   const focusCode = neighborhood.focus.category?.internalCode;
   const focusColumn = (focusCode && COLUMN_BY_CATEGORY[focusCode]) || null;
+  const focusKey = displayKey(neighborhood.focus.display);
 
   const byColumn = new Map<
     RouteColumnKey,
@@ -199,6 +261,8 @@ export function buildClinicalRoute(neighborhood: GlossaryNeighborhood): Clinical
     const groupComplete = group.items.length >= group.total;
     for (const neighbor of group.items) {
       if (neighbor.conceptId === neighborhood.focus.conceptId) continue;
+      // Un homónimo de otra fuente se lee como el propio término repetido.
+      if (displayKey(neighbor.display) === focusKey) continue;
       if (group.type === 'RELATED_TERM' && typed.has(neighbor.conceptId)) continue;
       if (group.type !== 'RELATED_TERM') typed.add(neighbor.conceptId);
       all.add(neighbor.conceptId);

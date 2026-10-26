@@ -497,6 +497,7 @@ describe('RegisterPatient', () => {
       ]);
       expect(porClave('residence')).toEqual([
         'residenceMunicipalityConceptId',
+        'homeDistrict',
         'homeAddressLines',
         'gpsDomicilio',
       ]);
@@ -516,6 +517,7 @@ describe('RegisterPatient', () => {
       expect(porClave('work')).toEqual([
         'workEmployerConceptId',
         'workMunicipalityConceptId',
+        'workDistrict',
         'workAddressLines',
         'gpsTrabajo',
       ]);
@@ -2260,6 +2262,9 @@ describe('RegisterPatient', () => {
     it('deja el campo editable y sin marcar como tocado', () => {
       cargarArbol();
       component.elegirMunicipio(MUNICIPIO_SACABA);
+      // La calle sólo se ve (y se habilita) con la localidad elegida: el motor
+      // reacciona en el siguiente ciclo de detección.
+      fixture.detectChanges();
       const control = component.formPaciente.controls.homeAddressLines;
 
       expect(control.touched).toBe(false);

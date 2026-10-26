@@ -263,6 +263,12 @@ export const GLOSSARY_RELATION_TYPES = [
   'DIAGNOSTIC_TEST',
   'SYMPTOM',
   'SPECIALTY',
+  // Capa normativa NNAC (TAREA-41 F2): relaciones con evidencia T1 de la norma.
+  'DIAGNOSTIC_CRITERION',
+  'REQUIRED_TEST',
+  'COMPLICATION',
+  'RISK_FACTOR',
+  'REFERRAL_CRITERION',
 ] as const;
 export type GlossaryRelationType = (typeof GLOSSARY_RELATION_TYPES)[number];
 

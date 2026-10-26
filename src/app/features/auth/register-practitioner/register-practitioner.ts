@@ -58,6 +58,7 @@ import {
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { componerDireccion } from '../shared-registration/address-line';
 import { LocationPicker } from '../shared-registration/location-picker/location-picker';
 import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
 import {
@@ -1172,6 +1173,16 @@ export class RegisterPractitioner {
     // localidad es la que ubica, y esto es lo que hace falta para llegar a la
     // puerta.
     homeAddressLines: new FormControl('', { nonNullable: true }),
+    // Distrito o zona: sin columna propia, viaja dentro de la línea de
+    // dirección (ver `componerDireccion`).
+    homeDistrict: new FormControl('', { nonNullable: true }),
+    // Espejo de `municipioProfesional` y `municipioConsultorio`: los dos
+    // campos de localidad son `custom` y su valor vive en señales, pero la
+    // calle y el punto del mapa sólo aparecen con localidad elegida
+    // (`showWhen`), y esa condición lee el formulario. Los escribe
+    // `elegirMunicipioProfesional` / `elegirMunicipioConsultorio`.
+    municipio: new FormControl<string | null>(null),
+    municipioConsultorio: new FormControl<string | null>(null),
     // Dirección habitual de trabajo, distinta de la casa y del consultorio
     // que declara como propio.
     workAddressLines: new FormControl('', { nonNullable: true }),
@@ -1183,6 +1194,7 @@ export class RegisterPractitioner {
       validators: [telefonoCompleto],
     }),
     officeAddressLines: new FormControl('', { nonNullable: true }),
+    officeDistrict: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
     // La firma y el sello: **imágenes**, no una firma electrónica. Opcionales.
     signatureImageBase64: new FormControl<string | null>(null),
@@ -1660,6 +1672,12 @@ export class RegisterPractitioner {
    */
   readonly municipioProfesional = signal<string | null>(null);
 
+  /** Guarda la localidad del domicilio en la señal **y** en el control espejo. */
+  elegirMunicipioProfesional(conceptId: string | null): void {
+    this.municipioProfesional.set(conceptId);
+    this.formProfesional.controls.municipio.setValue(conceptId);
+  }
+
   /**
    * El punto del domicilio, ya confirmado sobre el mapa.
    *
@@ -1680,6 +1698,12 @@ export class RegisterPractitioner {
    * el alta de paciente tiene para su casa y su trabajo.
    */
   readonly municipioConsultorio = signal<string | null>(null);
+
+  /** Lo mismo, para el consultorio. */
+  elegirMunicipioConsultorio(conceptId: string | null): void {
+    this.municipioConsultorio.set(conceptId);
+    this.formProfesional.controls.municipioConsultorio.setValue(conceptId);
+  }
 
   /** El punto del consultorio, ya confirmado sobre el mapa. */
   readonly gpsConsultorio = signal<Coordinates | null>(null);
@@ -2533,7 +2557,7 @@ export class RegisterPractitioner {
   private consultorioPropio(): NewOwnSite | null {
     const raw = this.formProfesional.getRawValue();
     const nombre = raw.officeName.trim();
-    const calle = raw.officeAddressLines.trim();
+    const calle = componerDireccion(raw.officeAddressLines, raw.officeDistrict);
     const telefono = raw.officeContactPhone.trim();
     const municipio = this.municipioConsultorio();
     const punto = this.gpsConsultorio();
@@ -2931,7 +2955,7 @@ export class RegisterPractitioner {
     const fechaInscripcion = raw.licenseIssueDate;
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
-    const calleDomicilio = raw.homeAddressLines.trim();
+    const calleDomicilio = componerDireccion(raw.homeAddressLines, raw.homeDistrict);
     const gpsDomicilio = this.gpsDomicilio();
     const calleTrabajo = raw.workAddressLines.trim();
     const gpsTrabajo = this.gpsTrabajo();
