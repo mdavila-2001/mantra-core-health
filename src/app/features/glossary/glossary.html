@@ -4,11 +4,6 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
-<p class="glosario__mapa-enlace">
-  <a app-link routerLink="/glossary/network">Explorar mapa de relaciones</a>
-  · <a app-link routerLink="/glossary/anatomy-atlas" data-testid="glosario-atlas-3d">Atlas anatómico 3D</a>
-</p>
-
 <div class="glosario">
   <!-- Buscador y filtros en el MISMO renglón, que es la disciplina compartida
        de los listados (ADR-0015, regla 5): el texto a la izquierda —con la
@@ -22,7 +17,35 @@
     searchPlaceholder="Por ejemplo «hipertensión», «disnea» o «paracetamol»"
     [searchLoading]="cargando()"
     data-testid="glosario-filtros"
-  />
+  >
+    <!-- Los accesos al mapa y al atlas van en el MISMO renglón que el buscador
+         y los filtros, a la derecha, con ícono y texto (pedido del cliente,
+         26/10/2026). Siguen siendo enlaces —`routerLink`, abrir en otra
+         pestaña— con la piel de un botón contorneado. -->
+    <nav filter-bar-action class="glosario__herramientas" aria-label="Otras formas de explorar el glosario">
+      <!-- Con el renglón angosto el rótulo se acorta a «Mapa» y «Atlas 3D»
+           (las palabras de `__largo` se ocultan) para que el buscador y los
+           desplegables no se corten; el nombre entero queda en `title`. -->
+      <a
+        class="glosario__herramienta"
+        routerLink="/glossary/network"
+        title="Mapa de relaciones"
+        data-testid="glosario-mapa"
+      >
+        <app-nav-icon name="network" />
+        <span>Mapa<span class="glosario__largo"> de relaciones</span></span>
+      </a>
+      <a
+        class="glosario__herramienta"
+        routerLink="/glossary/anatomy-atlas"
+        title="Atlas anatómico 3D"
+        data-testid="glosario-atlas-3d"
+      >
+        <app-nav-icon name="cube" />
+        <span>Atlas<span class="glosario__largo"> anatómico</span> 3D</span>
+      </a>
+    </nav>
+  </app-filter-bar>
 
   <!-- ── Rejilla de categorías ────────────────────────────────────────────
        Arriba de todo y siempre visible, también con un filtro puesto: es el
