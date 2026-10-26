@@ -504,7 +504,7 @@ export class DiagnosticOrders {
         }
         return;
       case 'cotizar':
-        void this.router.navigate(['/my-account/cotizaciones'], {
+        void this.router.navigate(['/my-account/quotations'], {
           queryParams: {
             q: fila.studyLabel,
             vertical: fila.type === 'IMAGING' ? 'IMAGENOLOGIA' : 'ANALISIS',

@@ -22,172 +22,172 @@ export interface ModuloAlovida {
 
 export const MODULOS_ALOVIDA: readonly ModuloAlovida[] = [
   {
-    segmento: "datos-compartidos",
+    segmento: "shared-data",
     rotulo: "Datos compartidos",
     secciones: [
       {
         etiqueta: "Archivos",
-        ruta: "/datos-compartidos/archivos-listado"
+        ruta: "/shared-data/files-list"
       },
       {
         etiqueta: "Puntos de contacto",
-        ruta: "/datos-compartidos/puntos-de-contacto-listado"
+        ruta: "/shared-data/contact-points-list"
       },
       {
         etiqueta: "Direcciones",
-        ruta: "/datos-compartidos/direcciones-listado"
+        ruta: "/shared-data/addresses-list"
       },
       {
         etiqueta: "Identificadores",
-        ruta: "/datos-compartidos/identificadores-listado"
+        ruta: "/shared-data/identifiers-list"
       },
       {
         etiqueta: "Operación interna",
-        ruta: "/datos-compartidos/versiones-internas-listado"
+        ruta: "/shared-data/internal-versions-list"
       }
     ]
   },
   {
-    segmento: "terminologia",
+    segmento: "vocabulary",
     rotulo: "Terminología",
     secciones: [
       {
         etiqueta: "Sistemas de códigos",
-        ruta: "/terminologia/sistemas-de-codigos-listado"
+        ruta: "/vocabulary/code-systems-list"
       },
       {
         etiqueta: "Conceptos",
-        ruta: "/terminologia/conceptos-listado"
+        ruta: "/vocabulary/concepts-list"
       },
       {
         etiqueta: "Conjuntos de valor",
-        ruta: "/terminologia/conjuntos-de-valor-listado"
+        ruta: "/vocabulary/value-sets-list"
       },
       {
         etiqueta: "Versiones",
-        ruta: "/terminologia/versiones-listado"
+        ruta: "/vocabulary/versions-list"
       },
       {
         etiqueta: "Políticas de catálogo",
-        ruta: "/terminologia/politicas-de-catalogo-listado"
+        ruta: "/vocabulary/catalog-policies-list"
       },
       {
         etiqueta: "Consulta de concepto",
-        ruta: "/terminologia/consulta-de-concepto-listado"
+        ruta: "/vocabulary/concept-lookup-list"
       },
       {
         etiqueta: "Traducción entre catálogos",
-        ruta: "/terminologia/traduccion-entre-catalogos-formulario"
+        ruta: "/vocabulary/catalog-translation-form"
       },
       {
         etiqueta: "Expansión de conjunto de valores",
-        ruta: "/terminologia/expansion-de-conjunto-de-valores-formulario"
+        ruta: "/vocabulary/value-set-expansion-form"
       }
     ]
   },
   {
-    segmento: "directorio",
+    segmento: "provider-directory",
     rotulo: "Organizaciones",
     secciones: [
       {
         etiqueta: "Organizaciones",
-        ruta: "/directorio/organizaciones-listado"
+        ruta: "/provider-directory/organizations-list"
       },
       {
         etiqueta: "Membresías",
-        ruta: "/directorio/membresias-listado"
+        ruta: "/provider-directory/memberships-list"
       },
       {
         etiqueta: "Sucursales",
-        ruta: "/directorio/sucursales-listado"
+        ruta: "/provider-directory/branches-list"
       },
       {
         etiqueta: "Organizaciones hijas",
-        ruta: "/directorio/organizaciones-hijas-formulario"
+        ruta: "/provider-directory/child-organizations-form"
       }
     ]
   },
   {
-    segmento: "personas",
+    segmento: "people",
     rotulo: "Personas",
     secciones: [
       {
         etiqueta: "Pacientes",
-        ruta: "/personas/pacientes-listado"
+        ruta: "/people/patients-list"
       },
       {
         etiqueta: "Personas",
-        ruta: "/personas/personas-listado"
+        ruta: "/people/persons-list"
       },
       {
         etiqueta: "Profesionales",
-        ruta: "/personas/profesionales-listado"
+        ruta: "/people/practitioners-list"
       },
       {
         etiqueta: "Credenciales",
-        ruta: "/personas/credenciales-listado"
+        ruta: "/people/credentials-list"
       }
     ]
   },
   {
-    segmento: "accesos",
+    segmento: "access-control",
     rotulo: "Identidad y accesos",
     secciones: [
       {
         etiqueta: "Relaciones de cuidado",
-        ruta: "/accesos/relaciones-de-cuidado-listado"
+        ruta: "/access-control/care-relationships-list"
       },
       {
         etiqueta: "Representaciones legales",
-        ruta: "/accesos/representaciones-legales-listado"
+        ruta: "/access-control/legal-representations-list"
       },
       {
         etiqueta: "Accesos clínicos",
-        ruta: "/accesos/accesos-clinicos-listado"
+        ruta: "/access-control/clinical-access-list"
       },
       {
         etiqueta: "Accesos del paciente",
-        ruta: "/accesos/accesos-clinicos-del-paciente-listado"
+        ruta: "/access-control/patient-clinical-access-list"
       },
       {
         etiqueta: "Acceso de emergencia",
-        ruta: "/accesos/acceso-de-emergencia-formulario"
+        ruta: "/access-control/emergency-access-form"
       },
       {
         etiqueta: "Decisiones",
-        ruta: "/accesos/decisiones-evaluar"
+        ruta: "/access-control/decisions-evaluate"
       },
       {
         etiqueta: "Caché del PDP",
-        ruta: "/accesos/cache-invalidar"
+        ruta: "/access-control/cache-invalidate"
       },
       {
         etiqueta: "Categorías de permiso",
-        ruta: "/accesos/categorias-de-permiso-listado"
+        ruta: "/access-control/permission-categories-list"
       },
       {
         etiqueta: "Permisos",
-        ruta: "/accesos/permisos-listado"
+        ruta: "/access-control/permissions-list"
       },
       {
         etiqueta: "Roles",
-        ruta: "/accesos/roles-listado"
+        ruta: "/access-control/roles-list"
       },
       {
         etiqueta: "Asignaciones de rol",
-        ruta: "/accesos/asignaciones-de-rol-listado"
+        ruta: "/access-control/role-assignments-list"
       },
       {
         etiqueta: "Concesiones de permiso",
-        ruta: "/accesos/concesiones-de-permiso-listado"
+        ruta: "/access-control/permission-grants-list"
       },
       {
         etiqueta: "Alcance de recurso",
-        ruta: "/accesos/alcance-de-recurso-listado"
+        ruta: "/access-control/resource-scope-list"
       },
       {
         etiqueta: "Políticas de acceso",
-        ruta: "/accesos/politicas-de-acceso-listado"
+        ruta: "/access-control/access-policies-list"
       }
     ]
   }

@@ -16,7 +16,11 @@ import { ActivateAccount } from './features/auth/activate-account/activate-accou
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { NotFound } from './features/not-found/not-found';
-import { designMockupRoutes, profileSlugRedirects } from './features/alovida/design-mockup-gate';
+import {
+  designMockupRoutes,
+  legacyMockupRedirects,
+  profileSlugRedirects,
+} from './features/alovida/design-mockup-gate';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
@@ -117,12 +121,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   // La recepción de muestras del laboratorio. Diferida: sólo la alcanza el
   // personal de un centro de diagnóstico.
-  'laboratorio/recepcion': () =>
+  'laboratory/reception': () =>
     import('./features/lab-reception/lab-reception').then((m) => m.LabReception),
   // La cola de trabajo del laboratorio para su propio personal: la misma
   // pantalla que «Laboratorio e imagen», bajo la sección que ve un centro de
   // diagnóstico (ver `navigation.map.ts`).
-  'laboratorio/cola': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
+  'laboratory/queue': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>
@@ -181,7 +185,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // cockpit, que es la vista del contador.
   //
   // Nada se borró, sólo cambió el orden: el cockpit está en
-  // `administration/accounting/cockpit` y los libros en `.../libros`, los dos
+  // `administration/accounting/cockpit` y los libros en `.../books`, los dos
   // enlazados al pie del resumen.
   'administration/accounting': () =>
     import('./features/accounting/summary/summary').then((m) => m.Summary),
@@ -222,7 +226,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/diagnostic-orders/diagnostic-orders').then(
       (m) => m.DiagnosticOrders,
     ),
-  'my-account/cotizaciones': () =>
+  'my-account/quotations': () =>
     import('./features/account/quotations/quotations').then((m) => m.Quotations),
   'my-account/pharmacy-orders': () =>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
@@ -438,7 +442,7 @@ const PANTALLAS_HIJAS: Routes = [
     // dirección abre el cockpit y esto queda un clic más adentro. **No** entra
     // al menú: la lista de secciones del médico es cerrada y hay un spec que
     // falla si alguien le agrega una (carril 9).
-    path: 'administration/accounting/libros',
+    path: 'administration/accounting/books',
     title: `${APP_TITLE} - Libros contables`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -1320,6 +1324,14 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // colgar de Contabilidad. La dirección vieja está en historiales y en
   // favoritos, así que redirige en vez de dar 404.
   'assets-liabilities': '/administration/accounting/assets-liabilities',
+  // TAREA-29: los libros contables pasaron de `.../libros` a `.../books`. Se
+  // enlazaban desde el resumen y el cockpit, así que están en historiales.
+  'administration/accounting/libros': '/administration/accounting/books',
+  // TAREA-29: las dos pantallas del personal de laboratorio y las cotizaciones
+  // del paciente, que salían en el menú, así que están en favoritos.
+  'laboratorio/recepcion': '/laboratory/reception',
+  'laboratorio/cola': '/laboratory/queue',
+  'my-account/cotizaciones': '/my-account/quotations',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
   'identidad/verificar': '/my-account/identity',
@@ -1353,13 +1365,12 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
  * ## `pathMatch: 'full'`, una por una, y no un redirect de prefijo sobre `buscar`
  *
  * Un `{ path: 'buscar', redirectTo: 'search' }` con coincidencia por prefijo
- * habría cubierto las siete de una línea — y se habría llevado puestas las
- * **doce** pantallas portadas que el archivo GENERADO
- * `features/alovida/alovida.routes.ts` declara bajo el mismo `buscar`
- * (`buscador-listado`, `seguidos-y-guardados-listado`,
- * `calificar-la-atencion-formulario`, las cinco fichas `perfil-*-detalle`…).
- * Ésas no son de esta tarea y la regla de arrastre dice que no se tocan, así
- * que cada redirect nombra su ruta exacta y ninguna otra.
+ * habría cubierto las siete de una línea — y habría mandado a `/search/…`
+ * las direcciones viejas de las pantallas portadas
+ * (`/buscar/buscador-listado`, `/buscar/perfil-profesional-detalle`…), que
+ * tienen su propia redirección exacta a su dirección en inglés
+ * (`legacyMockupRedirects`). Así que cada redirect nombra su ruta exacta y
+ * ninguna otra.
  */
 const RUTAS_HEREDADAS_DEL_BUSCADOR: Readonly<Record<string, string>> = {
   publicaciones: '/posts',
@@ -1454,8 +1465,8 @@ function rutasDeFichasPublicas(): Routes {
  * ## Por qué existen además de las que genera el portador de vistas
  *
  * `scripts/port-vistas-alovida.mjs` deriva el segmento del **nombre del archivo
- * de la maqueta**, así que la portada quedó en `/buscar/buscador-listado` y los
- * verticales en `/buscar/…-listado`. Sirve para recorrer la bóveda; no sirve
+ * de la maqueta**, así que la portada quedó en `/search/finder-list` y los
+ * verticales en `/search/…-list`. Sirve para recorrer la bóveda; no sirve
  * como superficie pública. Estas URL son las que la ficha declara —`/search`,
  * `/search/practitioners`, `/search/map`—, las que se pegan en un mensaje y
  * las que un buscador indexa, y son cortas y estables porque un directorio
@@ -1466,8 +1477,8 @@ function rutasDeFichasPublicas(): Routes {
  * Porque `alovida.routes.ts` es un **archivo generado**: escribirlas ahí las
  * borra la próxima vez que alguien porte una vista. Declaradas acá conviven
  * con el bloque generado —el router prueba estas primero y retrocede al
- * siguiente `buscar` cuando el segmento no coincide—, así que los enlaces de
- * la bóveda que todavía apuntan a `/buscar/buscador-listado` siguen abriendo.
+ * siguiente `search` cuando el segmento no coincide—, así que los enlaces de
+ * la bóveda que todavía apuntan a `/search/finder-list` siguen abriendo.
  * Hay una prueba que resuelve las dos formas y falla si eso deja de ser cierto.
  */
 function rutasDeBusquedaPublica(): Routes {
@@ -1493,18 +1504,6 @@ function rutasDeBusquedaPublica(): Routes {
             ),
         },
       ],
-    },
-    {
-      /* TAREA-29 · `/buscar` a secas tiene que seguir abriendo el buscador.
-         No alcanza con un `redirectTo` en la tabla del final: el archivo
-         GENERADO `features/alovida/alovida.routes.ts` declara su propio `buscar`
-         —con `{ path: '', redirectTo: 'buscador-listado' }` adentro— y lo
-         captura antes de que el router llegue ahí. Se declara acá, en el
-         bloque que va primero, y con el redirect en el hijo vacío para que
-         `/buscar/loQueSea` **no** coincida y siga retrocediendo a las doce
-         pantallas portadas que cuelgan de aquél. */
-      path: 'buscar',
-      children: [{ path: '', pathMatch: 'full', redirectTo: '/search' }],
     },
     {
       path: 'search',
@@ -1620,7 +1619,7 @@ function rutasDeBusquedaPublica(): Routes {
 
 export const routes: Routes = [
   // La superficie pública del buscador con sus URL limpias. Va **antes** del
-  // bloque generado: las dos declaran `buscar`, y la primera que coincide gana.
+  // bloque generado: las dos declaran `search`, y la primera que coincide gana.
   ...rutasDeBusquedaPublica(),
   // Las pantallas portadas desde la bóveda, con su propio marco ALOVIDA. Van
   // primero y con segmento propio: no compiten con el armazón de abajo, que
@@ -2267,13 +2266,16 @@ export const routes: Routes = [
   // que el router llegue a `auth/verify-email`, que es la que pinta algo.
   ...rutasHeredadas(RUTAS_HEREDADAS_PUBLICAS),
   // TAREA-29 · Las del buscador, por el mismo motivo y con el mismo orden.
-  // Además tienen que ir después del bloque generado de ALOVIDA: `buscar` a
-  // secas existe en las dos partes, y acá gana la que redirige sólo cuando
-  // ninguna pantalla real coincidió.
+  // Además tienen que ir después del bloque generado de ALOVIDA: `buscar/…`
+  // también es la dirección vieja de las maquetas, y acá gana la que redirige
+  // sólo cuando ninguna pantalla real coincidió.
   ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),
   // Las fichas de la bóveda con slug abren la ficha pública real, con o sin
   // maquetas. Ver `features/alovida/design-mockup-gate.ts`.
   ...profileSlugRedirects(),
+  // TAREA-29 · Las pantallas de la bóveda con su dirección en castellano de
+  // antes, hacia la nueva. Al final por lo mismo: nunca tapan una pantalla.
+  ...legacyMockupRedirects(),
   {
     // Antes esto redirigía a `/`, que mandaba al panel —o al login, vía el
     // guard— a quien escribiera mal una dirección, sin decirle que se había
