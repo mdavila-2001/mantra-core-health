@@ -6,6 +6,43 @@
   subtitle="Cuánto entró, en qué se le va, quién le debe y a quién le debe."
 />
 
+<!-- Doctor o Contador (26/10/2026): una sola llave. «Doctor» es lo que un
+     médico viene a mirar, en palabras de consultorio; «Contador» suma lo que
+     sólo lleva quien tiene los libros: transacciones, plan de cuentas, vista
+     contable y balance. Nada se borra al cambiar; cambia qué se ve. -->
+<div class="version" data-testid="contabilidad-version">
+  <span class="version__rotulo" id="rotulo-version">Versión</span>
+  <app-segmented-control
+    size="md"
+    [options]="versionOptions"
+    [value]="version()"
+    ariaLabel="Versión de la pantalla: Doctor o Contador"
+    (valueChange)="chooseVersion($event)"
+  />
+  <span class="version__ayuda" data-testid="contabilidad-version-ayuda">{{ versionHelp() }}</span>
+</div>
+
+@if (isAccountant()) {
+  <!-- Las herramientas de los libros, a un clic desde cualquiera de las dos
+       pestañas. Antes estaban al pie del Resumen, con el título «¿Lleva usted
+       la contabilidad?», y la pestaña Registros no las traía. -->
+  <section class="herramientas" aria-labelledby="titulo-contable" data-testid="contabilidad-herramientas">
+    <h2 class="herramientas__titulo" id="titulo-contable">Informes contables</h2>
+    <p class="herramientas__bajada">
+      Estado de resultados, documentos pendientes de aprobación, antigüedad de lo que le
+      deben y cierre del período.
+    </p>
+    <p class="herramientas__acciones">
+      <a app-button variant="outline" routerLink="/administration/accounting/cockpit">
+        Vista contable
+      </a>
+      <a app-button variant="outline" routerLink="/administration/accounting/books">
+        Balance y libro diario
+      </a>
+    </p>
+  </section>
+}
+
 <!-- La práctica sólo se pregunta si hay más de una. Con una sola, el selector
      es una pregunta cuya respuesta ya sabemos. -->
 @if (hasSeveralPractices()) {
@@ -34,7 +71,7 @@
              su lectura da 404 y el recuadro decía «No encontramos lo que busca». -->
         @if (simpleAccountingAvailable) {
           @if (chosenPractice(); as practica) {
-            <app-simple-accounting class="contabilidad-simple" parte="numeros" [practiceId]="practica" />
+            <app-simple-accounting class="contabilidad-simple" parte="numeros" [version]="version()" [practiceId]="practica" />
           }
         }
 
@@ -408,26 +445,6 @@
             </section>
           </app-tab>
         </app-tabs>
-
-            <!-- ═══ Para quien sí lleva los libros ════════════════════════════════
-                 Nada se borró: el cockpit y los libros están enteros, a un clic. Van
-                 al pie y con su nombre técnico, que es donde los busca quien los
-                 necesita — y donde no molestan a quien no. -->
-            <section class="bloque bloque--pie" aria-labelledby="titulo-contable">
-              <h2 class="pie__titulo" id="titulo-contable">¿Lleva usted la contabilidad?</h2>
-              <p class="pie__bajada">
-                El detalle contable está entero: el estado del ejercicio, los documentos
-                frenados en el flujo, la cartera por antigüedad y el cierre del período.
-              </p>
-              <p class="pie__acciones">
-                <a app-button variant="outline" routerLink="/administration/accounting/cockpit">
-                  Vista contable
-                </a>
-                <a app-button variant="outline" routerLink="/administration/accounting/books">
-                  Balance y libro diario
-                </a>
-              </p>
-            </section>
           }
         </app-view-state-host>
       </div>
@@ -443,7 +460,7 @@
           </app-alert>
         } @else {
           @if (chosenPractice(); as practica) {
-            <app-simple-accounting class="contabilidad-simple" parte="registros" [practiceId]="practica" />
+            <app-simple-accounting class="contabilidad-simple" parte="registros" [version]="version()" [practiceId]="practica" />
           }
         }
       </div>
