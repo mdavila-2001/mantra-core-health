@@ -251,6 +251,17 @@
         </app-view-state-host>
       </app-card>
 
+      <!-- ─── Médicos por procedimiento (CM-07) ─────────────────────────────
+           El centro invita médicos a sus sedes, procedimiento por procedimiento, y
+           aprueba lo que ellos piden. Va en su propia pantalla: acá sólo se llega. -->
+      <app-card variant="outlined" padding="lg" class="organizacion__bloque">
+        <h2 class="organizacion__titulo">Médicos del centro</h2>
+        <p>Invite a médicos a sus sedes o apruebe a quienes piden sumarse, procedimiento por procedimiento.</p>
+        <a app-button variant="outline" size="sm" routerLink="/administration/my-organization/affiliations" data-testid="organization-affiliations-link">
+          Gestionar médicos del centro
+        </a>
+      </app-card>
+
       <!-- ─── Solicitudes de médicos (TP-2) ─────────────────────────────────
            Nadie figura en una organización que no lo aceptó: acá es donde la
            organización acepta. Sólo quien la administra decide; al staff se le

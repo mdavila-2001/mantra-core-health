@@ -888,6 +888,41 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Afiliación del médico a centros médicos (CM-07): invitaciones que acepta o rechaza y solicitudes que
+    // hace. Cuelga de «Mi perfil» —se llega por el botón del perfil, no desde el menú— y sólo la abre quien
+    // atiende: «Mi perfil» no declara roles, así que la restricción va en la ruta.
+    path: 'my-account/affiliations',
+    title: `${APP_TITLE} - Invitaciones y solicitudes`,
+    ...soloDeQuienAtiende(),
+    loadComponent: () =>
+      import('./features/account/my-profile/affiliation-invitations/affiliation-invitations')
+        .then((m) => m.AffiliationInvitations)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // «Procedimientos que hago» (CM-07): por centro y sede, con el estado de cada uno. Misma razón que
+    // `my-account/affiliations`: cuelga de «Mi perfil» y sólo la abre quien atiende.
+    path: 'my-account/my-procedures',
+    title: `${APP_TITLE} - Procedimientos que hago`,
+    ...soloDeQuienAtiende(),
+    loadComponent: () =>
+      import('./features/account/my-profile/my-procedures/my-procedures')
+        .then((m) => m.MyProcedures)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // «Médicos del centro» (CM-07): el centro invita médicos a sus sedes y aprueba o rechaza lo que piden.
+    // Cuelga de «Mi organización» (que declara `ANY_ROLE`): el rol que importa es la membresía en la
+    // organización, que el guard no ve; la autoridad es la API. Se llega por el enlace del panel.
+    path: 'administration/my-organization/affiliations',
+    title: `${APP_TITLE} - Médicos del centro`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/organization/practitioner-affiliations/practitioner-affiliations')
+        .then((m) => m.PractitionerAffiliations)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La importación por archivo. No es una sección del menú: cuelga de
     // Terminología, que es donde alguien va a buscarla, y se alcanza desde ahí
     // o por enlace directo.

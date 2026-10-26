@@ -64,6 +64,8 @@
       "/admin/ops",
       "/tenants",
       "/practices",
+      "/medical-centers/",
+      "/role-assignments/",
       "/accounting",
       "/notifications",
       "/health-context",
