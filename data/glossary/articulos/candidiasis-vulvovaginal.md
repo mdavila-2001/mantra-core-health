@@ -4,61 +4,58 @@ slug: candidiasis-vulvovaginal
 
 ## [definition] Introducción
 
-La candidiasis vulvovaginal es una infección por hongos del género Candida que provoca inflamación de la vagina y de la vulva. Candida es una levadura que vive de forma habitual en la piel, el intestino y otras zonas del cuerpo sin causar daño; la infección aparece cuando se multiplica en exceso en el medio vaginal. Casi siempre la causa Candida albicans, aunque otras especies, llamadas en conjunto no albicans, pueden producirla con menos frecuencia.
+La candidiasis vulvovaginal es la inflamación de la vulva y la vagina causada por el sobrecrecimiento de levaduras del género Candida, casi siempre Candida albicans. Estas levaduras forman parte de la flora habitual de la piel, el intestino y la mucosa genital; la enfermedad aparece cuando proliferan hasta provocar síntomas. Las especies no albicans (la más frecuente, C. glabrata) causan una minoría de los casos.
 
-Es una de las formas de vaginitis, junto con la vaginosis bacteriana y la tricomoniasis, con las que comparte síntomas y que se tratan de manera diferente. No se clasifica como infección de transmisión sexual, porque puede aparecer sin relaciones sexuales, aunque puede pasar entre parejas.
-
-Debe distinguirse del término más amplio «candidiasis», que abarca también la afectación de la boca (muguet), el esófago, la piel y, en casos graves, la sangre. La candidiasis vulvovaginal es solo la localización genital.
+Es una de las causas de vaginitis, junto con la vaginosis bacteriana y la tricomoniasis, con las que comparte síntomas pero no tratamiento. No se considera una infección de transmisión sexual: puede aparecer sin relaciones sexuales y, desde el punto de vista infeccioso, no hace falta evitarlas ni tratar a una pareja sin síntomas. Tampoco equivale a «candidiasis» a secas, término más amplio que incluye boca, esófago, piel y, en casos graves, sangre.
 
 ## [classification] Clasificación
 
-Las guías clínicas distinguen dos grandes grupos:
-
-• Candidiasis no complicada: episodios esporádicos o poco frecuentes, de intensidad leve o moderada, probablemente por C. albicans y en una persona sin inmunodepresión.
-• Candidiasis complicada: la recurrente, la grave, la causada por especies no albicans o la que se presenta en personas con diabetes, VIH u otras formas de inmunodepresión, o que reciben medicamentos inmunosupresores.
+Las guías estadounidenses separan la forma no complicada (esporádica, leve o moderada, sin inmunodepresión) de la complicada (recurrente, grave, por especies no albicans o con diabetes, VIH u otra inmunodepresión). La guía británica de 2019 abandonó esos adjetivos y habla de candidiasis aguda (episodio inicial o aislado) y recurrente (episodios repetidos en un año, varios confirmados por microscopia o cultivo).
 
 ## [causes] Causas y factores de riesgo
 
-La mayoría de las mujeres sanas con un episodio no complicado no tiene un desencadenante identificable. Cuando lo hay, se describen el uso reciente de antibióticos de amplio espectro o de corticoides, el embarazo, la diabetes mal controlada, la exposición a estrógenos (por ejemplo, con algunos anticonceptivos hormonales), las duchas vaginales o los aerosoles íntimos, y las situaciones de inmunodepresión como la infección por VIH. En los casos recurrentes influyen con frecuencia factores del huésped y no solo la exposición al hongo.
+Muchos episodios aislados carecen de desencadenante identificable. Cuando lo hay, se describen los antibióticos recientes, la diabetes mal controlada, la inmunodepresión, los corticoides y los estrógenos, tanto endógenos como exógenos (embarazo, terapia hormonal y, posiblemente, los anticonceptivos combinados). En la forma recurrente se atribuye más peso a factores del huésped que a cepas más virulentas o a la reinfección: respuesta inmunitaria local alterada, variantes genéticas (como las de la lectina fijadora de manosa) y cierta asociación con la alergia.
 
 ## [symptoms] Síntomas
 
-El síntoma más característico es el picor intenso dentro y alrededor de la vagina. Pueden sumarse:
-
-• Ardor, enrojecimiento e hinchazón de la vulva.
-• Dolor al orinar o durante las relaciones sexuales.
-• Flujo espeso, blanco, de aspecto grumoso o como requesón, habitualmente sin mal olor.
-
-Ninguno de estos síntomas es exclusivo de la candidiasis: se solapan con los de otras vaginitis y con algunas infecciones de transmisión sexual, y los datos clínicos tampoco permiten distinguir con fiabilidad la causada por C. albicans de la debida a otras especies.
+El síntoma más característico es el picor vulvar, con flujo no maloliente y a menudo grumoso. Puede haber escozor, dolor en las relaciones, enrojecimiento, hinchazón y fisuras vulvares. Ninguno es exclusivo: se solapan con otras vaginitis y dermatosis vulvares, y la clínica no revela qué especie de Candida es la causante.
 
 ## [diagnosis] Diagnóstico
 
-Se basa en los síntomas y en la exploración (enrojecimiento y edema de la vulva, flujo espeso) y debe confirmarse con pruebas de laboratorio. En las mujeres con síntomas se recomienda el examen microscópico de una muestra de flujo, con o sin hidróxido de potasio; si es negativo y persisten las molestias, el cultivo u otras pruebas ayudan. El cultivo sigue siendo la prueba de referencia, y las guías estadounidenses señalan que muchas pruebas de PCR no cuentan con la autorización de la FDA para este uso. Detectar levaduras en una mujer sin síntomas no es, por sí solo, motivo de tratamiento. En los casos complicados o persistentes se aconseja cultivo con identificación de la especie y estudio de sensibilidad a los antifúngicos.
+Es un diagnóstico clínico que se apoya en la confirmación de laboratorio. Se recomienda explorar la vulva y examinar al microscopio una muestra de flujo; el cultivo, prueba de referencia, se reserva para las formas recurrentes, los resultados dudosos o la sospecha de especies no albicans, en las que además puede estudiarse la sensibilidad a los antifúngicos.
+
+Dos matices evitan errores frecuentes. Parte de las mujeres sin síntomas tiene levaduras en la vagina (colonización) y no necesita tratamiento. Y muchas de las que se autodiagnostican candidiasis padecen otro problema: dermatitis, liquen escleroso, vulvodinia, vaginosis citolítica u otra vaginitis.
 
 ## [treatment_overview] Enfoque del tratamiento
 
-El tratamiento estándar son los antifúngicos, sobre todo de la familia de los azoles, en forma de cremas, óvulos o tabletas vaginales, o por vía oral. En la forma no complicada suelen bastar ciclos cortos y, por lo general, no se requiere seguimiento ni tratar a la pareja. Los casos graves o recurrentes requieren pautas más largas, con una fase inicial para lograr la remisión y un tratamiento de mantenimiento, que es eficaz pero rara vez curativo. Las especies no albicans, que responden peor a los azoles habituales, pueden necesitar otros antifúngicos y valoración por un especialista. Durante el embarazo se prefieren los productos de aplicación local y se desaconseja la vía oral. Los probióticos y los remedios homeopáticos carecen de evidencia sólida. Las dosis y la duración las determina el profesional de salud.
+Los azoles (clotrimazol, fluconazol y afines) son el tratamiento de elección del episodio agudo, por vía vaginal u oral. En la forma no complicada, una revisión Cochrane concluyó que la curación clínica es probablemente similar con ambas vías y que la oral probablemente logra algo más de curación micológica; los efectos secundarios difieren (reacciones locales con la vaginal; molestias digestivas y cefalea con la oral). En la forma no complicada no suele requerirse seguimiento ni tratar a la pareja.
+
+La forma recurrente se trata con una fase de inducción para lograr la remisión seguida de una de mantenimiento prolongada. Según la revisión Cochrane, los antifúngicos orales o tópicos pueden reducir las recurrencias frente a placebo, aunque con evidencia de baja certeza y sin diferencias claras entre pautas. El mantenimiento controla la enfermedad, pero rara vez la cura. Las especies no albicans y las cepas con mala respuesta a los azoles pueden requerir alternativas como el ácido bórico y valoración especializada. Se han aprobado o estudiado antifúngicos nuevos (ibrexafungerp, oteseconazol). En el embarazo y la lactancia se prefieren los azoles tópicos y se evita la vía oral. Como cuidado general, se aconseja evitar jabones y toallitas perfumados. Las dosis y la duración las decide el profesional de salud.
 
 ## [associated_conditions] Conceptos relacionados
 
 • Vaginitis: grupo de afecciones que incluye la candidiasis, la vaginosis bacteriana y la tricomoniasis.
-• Diabetes mellitus: cuando está mal controlada favorece la infección y su recurrencia.
-• Infección por VIH e inmunodepresión: predisponen a formas complicadas.
-• Embarazo: situación en la que la infección es más frecuente y condiciona la elección del tratamiento.
-• Candida no albicans (por ejemplo, C. glabrata): especies menos frecuentes, asociadas a recurrencia y a menor respuesta a los azoles.
-• Candidiasis oral (muguet) y cutánea: otras localizaciones de la misma levadura.
+• Diabetes mellitus e inmunodepresión (incluido el VIH): predisponen a formas complicadas.
+• Embarazo: condiciona la elección del tratamiento.
+• Candida no albicans (por ejemplo, C. glabrata): especies menos frecuentes, asociadas a menor respuesta a los azoles.
+• Vulvodinia y vestibulodinia provocada: pueden confundirse con la candidiasis o coexistir con ella.
+• Muguet y candidiasis cutánea: otras localizaciones de la misma levadura.
 
 ## [considerations] Qué dice la evidencia
 
-La base clínica es una revisión de la evidencia que sustenta las guías de 2021 de los CDC sobre infecciones de transmisión sexual (Nyirjesy et al., 2022) y una revisión sistemática sobre la carga mundial de la forma recurrente (Denning et al., 2018). Hay consenso en que el cultivo sigue siendo la prueba de referencia, en que los azoles son el tratamiento de elección en la forma no complicada y en que no hay evidencia que respalde alternativas como los probióticos.
+La descripción se apoya en una guía británica de 2019 con grados de recomendación (Saxon et al.), en la revisión de evidencia de las guías de los CDC de 2021 (Nyirjesy et al., 2022), en tres revisiones Cochrane de ensayos aleatorizados (vías de administración, forma recurrente y probióticos), en una revisión sistemática de la carga mundial de la forma recurrente (Denning et al., 2018) y en una revisión sobre especies no albicans. Hay consenso en que el cultivo es la prueba de referencia, en que los azoles son la primera opción y en que no se trata la colonización asintomática.
 
-Es un campo en movimiento: se han aprobado o se estudian antifúngicos nuevos para la forma recurrente y el uso de fluconazol oral en el embarazo se ha asociado con efectos adversos, por lo que se prefiere la vía local. La definición de recurrente varía entre fuentes, y la revisión de Denning se centra en la frecuencia de la enfermedad, no en su tratamiento. Los síntomas y la distinción con otras vaginitis descansan en fuentes institucionales divulgativas.
+Lo discutido es más extenso. Los ensayos de la forma recurrente son pequeños, con riesgo de sesgo alto o incierto, y excluyen a embarazadas, diabéticas e inmunodeprimidas. Para los probióticos como complemento, Cochrane halló beneficio a corto plazo con evidencia de calidad baja o muy baja y sin efecto a largo plazo; la revisión de los CDC concluye que no hay evidencia que respalde las alternativas como los probióticos. La definición de recurrente varía entre guías y los datos sobre los antifúngicos nuevos son aún recientes.
 
 ## [references]
 
 - Candidiasis (MedlinePlus en español) | https://medlineplus.gov/spanish/candidiasis.html | MedlinePlus
 - Vulvovaginal Candidiasis (Guías de tratamiento de ITS) | https://www.cdc.gov/std/treatment-guidelines/candidiasis.htm | CDC
 - Vaginal yeast infections | https://www.womenshealth.gov/a-z-topics/vaginal-yeast-infections | Office on Women's Health (HHS)
-- An Update on the Roles of Non-albicans Candida Species in Vulvovaginitis | https://pmc.ncbi.nlm.nih.gov/articles/PMC6309050/ | Journal of Fungi (PMC)
-- Nyirjesy et al., 2022. Vulvovaginal Candidiasis: A Review of the Evidence for the 2021 CDC STI Treatment Guidelines. PMID 35416967, DOI 10.1093/cid/ciab1057 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A35416967%20AND%20SRC%3AMED&resultType=core&format=json | Clinical Infectious Diseases (Europe PMC)
-- Denning et al., 2018. Global burden of recurrent vulvovaginal candidiasis: a systematic review. PMID 30078662, DOI 10.1016/s1473-3099(18)30103-8 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A30078662%20AND%20SRC%3AMED&resultType=core&format=json | Lancet Infectious Diseases (Europe PMC)
+- Saxon et al., 2020. British Association for Sexual Health and HIV national guideline for the management of vulvovaginal candidiasis (2019). PMID 32883171, DOI 10.1177/0956462420943034 | https://doi.org/10.1177/0956462420943034 | International Journal of STD & AIDS
+- Nyirjesy et al., 2022. Vulvovaginal Candidiasis: A Review of the Evidence for the 2021 CDC STI Treatment Guidelines. PMID 35416967, DOI 10.1093/cid/ciab1057 | https://doi.org/10.1093/cid/ciab1057 | Clinical Infectious Diseases
+- Denison et al., 2020. Oral versus intra-vaginal imidazole and triazole anti-fungal treatment of uncomplicated vulvovaginal candidiasis (thrush). PMID 32845024, DOI 10.1002/14651858.CD002845.pub3 | https://doi.org/10.1002/14651858.CD002845.pub3 | Cochrane Database of Systematic Reviews
+- Cooke et al., 2022. Treatment for recurrent vulvovaginal candidiasis (thrush). PMID 35005777, DOI 10.1002/14651858.CD009151.pub2 | https://doi.org/10.1002/14651858.CD009151.pub2 | Cochrane Database of Systematic Reviews
+- Xie et al., 2017. Probiotics for vulvovaginal candidiasis in non-pregnant women. PMID 29168557, DOI 10.1002/14651858.CD010496.pub2 | https://doi.org/10.1002/14651858.CD010496.pub2 | Cochrane Database of Systematic Reviews
+- Denning et al., 2018. Global burden of recurrent vulvovaginal candidiasis: a systematic review. PMID 30078662, DOI 10.1016/s1473-3099(18)30103-8 | https://doi.org/10.1016/s1473-3099(18)30103-8 | Lancet Infectious Diseases
+- Makanjuola et al., 2018. An Update on the Roles of Non-albicans Candida Species in Vulvovaginitis. PMID 30384449, DOI 10.3390/jof4040121 | https://doi.org/10.3390/jof4040121 | Journal of Fungi

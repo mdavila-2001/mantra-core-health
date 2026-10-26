@@ -4,40 +4,46 @@ slug: acne
 
 ## [definition] Introducción
 
-El acné vulgar es una enfermedad inflamatoria crónica de la unidad pilosebácea, es decir, del folículo piloso y la glándula sebácea que desemboca en él. Se produce cuando el folículo se obstruye y se inflama, y da lugar a las lesiones conocidas popularmente como granos o espinillas. Es una de las afecciones cutáneas más frecuentes.
+El acné vulgar es una enfermedad inflamatoria crónica de la unidad pilosebácea, es decir, del folículo piloso y la glándula sebácea que desemboca en él. Se produce cuando el folículo se obstruye y se inflama, y da lugar a las lesiones conocidas como granos o espinillas. Es la dermatosis inflamatoria que más se trata en el mundo.
 
-Es más frecuente en la adolescencia y la juventud, pero no es exclusivo de esa etapa: puede presentarse a otras edades. No es grave, pero puede dejar secuelas visibles y afectar al ánimo.
+Es más habitual en la adolescencia y la juventud, pero puede persistir en la edad adulta o aparecer en ella; las revisiones recientes apuntan a una frecuencia creciente en adultos, sobre todo en mujeres. No es grave, pero puede dejar secuelas visibles y afectar al ánimo.
 
 ## [location] Dónde aparece
 
-Las lesiones se concentran en las zonas con mayor densidad de glándulas sebáceas: la cara, el cuello, el pecho, la espalda y los hombros. En la cara, la llamada zona T es la más afectada por los puntos blancos.
+Las lesiones se concentran en las zonas con mayor densidad de glándulas sebáceas: la cara, el cuello, el pecho, la espalda y los hombros.
 
 ## [classification] Clasificación
 
-Las lesiones se agrupan en dos tipos. Las no inflamatorias son los comedones: abiertos (los llamados puntos negros) y cerrados (puntos blancos). Las inflamatorias incluyen pápulas, pústulas, nódulos y quistes, que van de lesiones superficiales a otras profundas, firmes y dolorosas, con más riesgo de cicatriz.
+Las lesiones no inflamatorias son los comedones, abiertos (puntos negros) o cerrados (puntos blancos). Las inflamatorias incluyen pápulas, pústulas, nódulos y quistes, de superficiales a profundos, firmes y dolorosos, con más riesgo de cicatriz.
 
-Para orientar el tratamiento se distingue en términos generales entre acné leve o moderado y acné grave, en el que predominan los nódulos y las lesiones que cicatrizan. Además del acné vulgar existen otras formas, como el acné conglobata, el fulminante o el inducido por fármacos, que no deben confundirse con él.
+Para orientar el tratamiento se distingue entre acné leve o moderado y acné grave, con predominio de nódulos y lesiones que cicatrizan. La gravedad se define de formas distintas según el estudio, lo que dificulta comparar tratamientos. Existen otras formas (conglobata, fulminante, inducido por fármacos) que no deben confundirse con el acné vulgar.
 
 ## [causes] Causas
 
 La causa exacta no se conoce por completo, pero las revisiones describen cuatro mecanismos que se combinan:
 
-• Producción excesiva de sebo, en gran parte estimulada por las hormonas andrógenas.
-• Queratinización anómala del folículo: las células de la piel no se eliminan con normalidad y, junto con el sebo, forman un tapón.
-• Proliferación de Cutibacterium acnes (antes llamada Propionibacterium acnes), una bacteria que vive en los folículos ricos en sebo y cuyas enzimas liberan sustancias que favorecen los comedones y la inflamación.
-• Inflamación, cuando el sistema inmunitario responde a la bacteria y el folículo se rompe y libera su contenido en la dermis.
+• Producción excesiva de sebo, estimulada en gran parte por las hormonas andrógenas.
+• Queratinización anómala del folículo: las células de la piel y el sebo forman un tapón.
+• Proliferación de Cutibacterium acnes (antes Propionibacterium acnes), bacteria de los folículos ricos en sebo que favorece los comedones y la inflamación.
+• Inflamación, cuando el sistema inmunitario responde y el folículo se rompe y libera su contenido en la dermis.
 
-El orden exacto en que ocurren estos pasos y el peso de cada uno todavía se discuten. Influyen también la predisposición genética, los cambios hormonales (pubertad, ciclo menstrual, embarazo, menopausia), el síndrome de ovario poliquístico, ciertos medicamentos y algunos productos cosméticos grasos. El estrés no lo origina, aunque puede empeorarlo. La suciedad no lo causa, y MedlinePlus ve pocas pruebas de que el chocolate o los alimentos grasos lo provoquen.
+El orden y el peso de cada paso se discuten.
+
+## [risk_factors] Factores de riesgo
+
+Una revisión sistemática halló una asociación sólida del acné, o de su mayor gravedad, con los antecedentes familiares, la edad, el índice de masa corporal alto y el tipo de piel. También influyen los cambios hormonales (pubertad, ciclo menstrual, embarazo, menopausia), el síndrome de ovario poliquístico, ciertos medicamentos y algunos cosméticos grasos.
+
+Para el tabaco y la alimentación los resultados son inconsistentes. Un metaanálisis observacional asoció los lácteos con más acné, pero con sesgo de publicación y menor asociación al ajustar, de modo que no prueba causalidad. El estrés puede empeorarlo, pero no lo origina; la suciedad tampoco lo causa.
 
 ## [diagnosis] Diagnóstico
 
-La Academia Americana de Dermatología insiste en que el acné debe distinguirse de otras afecciones de aspecto parecido, como la rosácea, y en que un dermatólogo puede confirmar el diagnóstico y elegir el tratamiento.
+Es clínico: se basa en reconocer los tipos de lesión y su distribución. La Academia Americana de Dermatología insiste en distinguirlo de afecciones parecidas, como la rosácea, y en que un dermatólogo confirme el diagnóstico y elija el tratamiento.
 
 ## [treatment_overview] Tratamiento (visión general)
 
-El abordaje depende de la gravedad. Incluye cuidados de la piel (limpieza suave, productos que no obstruyan los poros, no manipular las lesiones), preparados de venta libre con ingredientes como el ácido salicílico o el peróxido de benzoílo, y tratamientos con receta: retinoides tópicos y antibióticos tópicos; antibióticos orales, tratamientos hormonales y isotretinoína en casos graves o persistentes. También hay procedimientos como terapias con luz o láser y extracción de comedones.
+El abordaje depende de la gravedad. Incluye cuidados de la piel (limpieza suave, productos que no obstruyan los poros, no manipular las lesiones), preparados de venta libre como el ácido salicílico o el peróxido de benzoílo, y tratamientos con receta: retinoides y antibióticos tópicos; antibióticos orales, tratamientos hormonales e isotretinoína en casos graves o persistentes. Hay también terapias con luz o láser, peelings y extracción de comedones.
 
-Las revisiones favorecen combinar tratamientos en lugar de usar uno solo, y recomiendan limitar el uso prolongado de antibióticos por la resistencia bacteriana. Todo tratamiento con receta, en especial el de la isotretinoína, requiere seguimiento médico.
+Se favorece combinar tratamientos de acción distinta: en un metaanálisis en red de ensayos aleatorizados, la combinación de un retinoide con peróxido de benzoílo destacó entre los tópicos para acné leve o moderado. Conviene limitar los antibióticos prolongados por la resistencia. Todo tratamiento con receta, en especial la isotretinoína, requiere seguimiento médico.
 
 ## [complications] Complicaciones
 
@@ -47,24 +53,30 @@ Las revisiones favorecen combinar tratamientos en lugar de usar uno solo, y reco
 
 ## [when_to_seek_care] Cuándo consultar
 
-Conviene acudir al médico o al dermatólogo si las medidas de cuidado y los productos de venta libre no mejoran el acné, si hay muchas lesiones o son profundas y dolorosas, si dejan cicatrices, si aparecen signos de infección (piel caliente, hinchada o enrojecida) o si el problema afecta al estado de ánimo.
+Conviene consultar si el cuidado de la piel y los productos de venta libre no mejoran el acné, si las lesiones son numerosas, profundas o dolorosas, si dejan cicatrices, si hay signos de infección (piel caliente, hinchada o enrojecida) o si afecta al ánimo.
 
 ## [associated_conditions] Conceptos relacionados
 
 • Síndrome de ovario poliquístico: el exceso de andrógenos puede causar acné junto con alteraciones menstruales y aumento del vello.
 • Rosácea: afección de aspecto parecido que debe distinguirse del acné.
-• Cicatrices atróficas e hiperpigmentación posinflamatoria: secuelas que justifican tratar de forma temprana el acné inflamatorio.
+• Cicatrices atróficas e hiperpigmentación posinflamatoria: secuelas que justifican tratar pronto el acné inflamatorio.
+• Isotretinoína y estado de ánimo: un metaanálisis no halló asociación global con depresión, pero los estudios retrospectivos y prospectivos discrepan.
 
 ## [considerations] Qué dice la evidencia
 
-Las recomendaciones terapéuticas provienen de la guía de la Academia Americana de Dermatología de 2024 (Reynolds et al.), elaborada con revisión sistemática y el método GRADE: 18 recomendaciones basadas en evidencia y 5 declaraciones de buena práctica. Recomienda con firmeza el peróxido de benzoílo, los retinoides tópicos, los antibióticos tópicos y la doxiciclina oral; la isotretinoína oral para acné grave, con cicatrices, con repercusión psicosocial o sin respuesta a otros tratamientos; y, de forma condicional, algunos tratamientos hormonales. Hay consenso en combinar fármacos de acción distinta y en limitar los antibióticos sistémicos.
+Las recomendaciones terapéuticas provienen de la guía de la Academia Americana de Dermatología de 2024 (Reynolds et al.), con revisión sistemática y método GRADE: 18 recomendaciones y 5 declaraciones de buena práctica. Recomienda con firmeza peróxido de benzoílo, retinoides tópicos, antibióticos tópicos y doxiciclina oral; la isotretinoína para acné grave, con cicatrices, con repercusión psicosocial o resistente; y, de forma condicional, otros fármacos, entre ellos hormonales. Un metaanálisis en red de 2022 (Mavranezouli et al.) respalda ciertas combinaciones, aunque la heterogeneidad en la valoración de la gravedad limita las comparaciones.
 
-La descripción de la patogenia (sebo, queratinización, Cutibacterium acnes e inflamación) procede de una revisión narrativa de 2023 (Vasam et al.), cuyas secciones sobre tecnologías emergentes se basan en estudios aún en fase de investigación. Se discuten el orden temporal de los mecanismos y el papel de la dieta. Lo que se dice aquí sobre mitos, autocuidado y consulta se apoya en fuentes divulgativas (MedlinePlus, NHS, AAD).
+Epidemiología y riesgo proceden de una revisión sistemática (Heng y Chew, 2020) y de una revisión sobre la carga de la enfermedad (Layton et al., 2021). La patogenia sale de una revisión narrativa (Vasam et al., 2023). Se discuten el orden de los mecanismos, la dieta (el metaanálisis de lácteos de Juhl et al. es observacional) y la isotretinoína y la depresión (Li et al.). Mitos, autocuidado y consulta se apoyan en fuentes divulgativas.
 
 ## [references]
 
 - Acné | https://medlineplus.gov/spanish/acne.html | MedlinePlus
 - Acne | https://www.aad.org/public/diseases/acne | American Academy of Dermatology
 - Acne | https://www.nhs.uk/conditions/acne/ | NHS
-- Vasam et al., 2023. Acne vulgaris: A review of the pathophysiology, treatment, and recent nanotechnology based advances. PMID 38076662. DOI 10.1016/j.bbrep.2023.101578 | https://pmc.ncbi.nlm.nih.gov/articles/PMC10709101/ | Biochem Biophys Rep (PubMed Central)
 - Reynolds et al., 2024. Guidelines of care for the management of acne vulgaris. PMID 38300170. DOI 10.1016/j.jaad.2023.12.017 | https://europepmc.org/article/MED/38300170 | J Am Acad Dermatol (Europe PMC)
+- Vasam et al., 2023. Acne vulgaris: A review of the pathophysiology, treatment, and recent nanotechnology based advances. PMID 38076662. DOI 10.1016/j.bbrep.2023.101578 | https://pmc.ncbi.nlm.nih.gov/articles/PMC10709101/ | Biochem Biophys Rep (PubMed Central)
+- Heng y Chew, 2020. Systematic review of the epidemiology of acne vulgaris. PMID 32238884. DOI 10.1038/s41598-020-62715-3 | https://europepmc.org/article/MED/32238884 | Sci Rep (Europe PMC)
+- Mavranezouli et al., 2022. A systematic review and network meta-analysis of topical pharmacological, oral pharmacological, physical and combined treatments for acne vulgaris. PMID 35789996. DOI 10.1111/bjd.21739 | https://europepmc.org/article/MED/35789996 | Br J Dermatol (Europe PMC)
+- Layton et al., 2021. Reviewing the global burden of acne: how could we improve care to reduce the burden? PMID 32770673. DOI 10.1111/bjd.19477 | https://europepmc.org/article/MED/32770673 | Br J Dermatol (Europe PMC)
+- Juhl et al., 2018. Dairy Intake and Acne Vulgaris: A Systematic Review and Meta-Analysis of 78,529 Children, Adolescents, and Young Adults. PMID 30096883. DOI 10.3390/nu10081049 | https://europepmc.org/article/MED/30096883 | Nutrients (Europe PMC)
+- Li et al., 2019. Use of isotretinoin and risk of depression in patients with acne: a systematic review and meta-analysis. PMID 30670500. DOI 10.1136/bmjopen-2018-021549 | https://europepmc.org/article/MED/30670500 | BMJ Open (Europe PMC)

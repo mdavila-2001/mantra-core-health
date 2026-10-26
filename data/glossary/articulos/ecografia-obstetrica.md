@@ -4,64 +4,66 @@ slug: ecografia-obstetrica
 
 ## [definition] Introducción
 
-La ecografía obstétrica, también llamada ecografía del embarazo o ecografía prenatal, es un estudio de imagen que emplea ondas sonoras para observar al embrión o al feto dentro del útero y, además, los órganos pélvicos de la mujer durante la gestación. No utiliza radiación ionizante, por lo que es el método de imagen preferido para vigilar el embarazo.
+La ecografía obstétrica, también llamada ecografía del embarazo o prenatal, es un estudio de imagen que emplea ondas sonoras, sin radiación ionizante, para observar al embrión o al feto, la placenta y el líquido amniótico dentro del útero. Según el momento de la gestación indica si el embarazo avanza, cuánto tiempo lleva, cuántos fetos hay, cómo crecen y cómo es su anatomía.
 
-Se diferencia de la ecografía pélvica ginecológica en que su objetivo principal es el embarazo en curso, no solo el estado del útero y los ovarios. También se distingue de las pruebas de laboratorio, como el análisis de embarazo en orina, que detectan la gestación pero no muestran dónde está ni cómo se desarrolla.
+Se diferencia de la ecografía pélvica ginecológica en que su objetivo es la gestación en curso: en el estudio de mitad del embarazo, las masas uterinas o anexiales se comunican, pero su valoración formal no forma parte del examen. Tampoco equivale al análisis de embarazo en orina, que detecta la gestación sin mostrar dónde está.
 
 ## [purpose] Para qué se solicita
 
-Los motivos varían según el momento del embarazo. En los primeros meses se utiliza para confirmar que la gestación es normal y está dentro del útero, calcular la edad del embarazo, comprobar los latidos del corazón, identificar si hay más de un feto y descartar problemas como un embarazo ectópico (fuera del útero) o señales de riesgo de pérdida. También permite revisar la placenta, el cuello uterino y los ovarios.
+Al inicio del embarazo confirma la viabilidad (definida por el latido fetal) y que la gestación está dentro del útero, lo que ayuda a descartar un embarazo ectópico. Permite fijar la edad gestacional, contar los fetos y, si hay más de uno, saber si comparten placenta y saco amniótico. Hacia el final del primer trimestre puede detectar malformaciones mayores y, donde se ofrece cribado de aneuploidías (alteraciones del número de cromosomas), medir la translucencia nucal.
 
-En etapas posteriores sirve para valorar el crecimiento, la posición del bebé, el volumen del líquido amniótico y la ubicación de la placenta, y para buscar anomalías del desarrollo. En ocasiones, si el bebé está bien colocado, permite conocer su sexo. También guía procedimientos diagnósticos, como el estudio del líquido amniótico.
+El estudio de mitad del embarazo se centra en la anatomía fetal, la placenta y el líquido amniótico, y sirve de referencia para ecografías posteriores. En algunos centros añade la medición vaginal del cuello uterino, con consentimiento adicional, para prevenir el parto prematuro. Más tarde vigila el crecimiento y la posición fetal y guía procedimientos diagnósticos.
 
 ## [how_it_works] Cómo funciona
 
-Un transductor, que es una sonda manual, envía ondas sonoras de alta frecuencia y recoge los ecos que rebotan en los tejidos. Un ordenador transforma esos ecos en una imagen en movimiento que se ve de inmediato. Cuando se necesita valorar el flujo de sangre en el cordón umbilical, el feto o la placenta, se añade un estudio Doppler.
+Un transductor, o sonda manual, emite ondas sonoras y recoge los ecos de los tejidos; un ordenador los convierte en una imagen en movimiento. El Doppler añade la valoración del flujo de sangre en el cordón, el feto o la placenta; concentra más energía, por lo que en las primeras semanas se reserva para indicaciones concretas.
 
 ## [preparation] Preparación general
 
-Para la vía abdominal, a menudo se pide tener la vejiga llena, de modo que se indica beber líquido un rato antes y no orinar hasta terminar. Conviene llevar ropa suelta de dos piezas, porque solo se descubre la parte baja del abdomen.
+Para la vía abdominal se suele pedir la vejiga llena: beber líquido un rato antes y no orinar hasta terminar. Antes de empezar, el profesional debe explicar los beneficios y las limitaciones del estudio.
 
 ## [procedure_description] Cómo se realiza
 
-La paciente se recuesta boca arriba, se aplica un gel transparente a base de agua sobre el vientre y el profesional desliza el transductor. El gel se siente frío y húmedo; puede haber cierta molestia por la vejiga llena. Al inicio del embarazo, o para evaluar el cuello uterino, a veces se utiliza una sonda por vía vaginal. Un radiólogo o un especialista interpreta las imágenes y el informe llega al profesional que atiende el embarazo, quien comunica los resultados.
+La paciente se recuesta boca arriba, se aplica un gel transparente sobre el vientre y el profesional desliza el transductor; el gel se siente frío. Al inicio del embarazo, o para evaluar el cuello uterino, a veces se usa una sonda vaginal. Un especialista interpreta las imágenes y el informe llega al profesional que atiende el embarazo.
 
 ## [interpretation] Qué busca la interpretación
 
-Un resultado normal significa que el feto, la placenta, el líquido amniótico y las estructuras cercanas se ven acordes con la edad del embarazo. Los hallazgos anormales pueden relacionarse con malformaciones, embarazo ectópico, crecimiento insuficiente, embarazo múltiple, pérdida del embarazo, alteraciones de la posición del bebé, problemas de la placenta o del líquido amniótico, o con otras afecciones de los órganos pélvicos. Un hallazgo aislado no establece por sí mismo un diagnóstico y debe valorarlo el equipo que atiende a la paciente.
+Un resultado normal significa que el feto, la placenta y el líquido amniótico se ven acordes con la edad del embarazo. Los hallazgos anormales pueden relacionarse con malformaciones, embarazo ectópico, crecimiento insuficiente, embarazo múltiple, pérdida del embarazo o problemas de la placenta o del líquido amniótico. Un tamaño medido una sola vez no equivale a crecimiento: valorarlo exige al menos dos estudios. Un hallazgo aislado no establece un diagnóstico y lo valora el equipo tratante.
 
 ## [risks] Riesgos
 
-La ecografía diagnóstica habitual no tiene efectos dañinos conocidos en el ser humano tras décadas de uso. Aun así, se recomienda emplearla cuando hay indicación médica, porque en ciertas circunstancias las ondas pueden afectar líquidos y tejidos.
+La ecografía diagnóstica parece segura en la práctica clínica: ningún estudio confirmado de forma independiente indica lo contrario. Aun así, la guía de la ISUOG pide limitar la exposición, usar la menor potencia útil (principio ALARA) y no realizarla solo por entretenimiento. En el primer trimestre la ecografía convencional no ofrece indicios de daño, pero el Doppler implica más energía y más posibles efectos biológicos.
 
 ## [additional_information] Limitaciones
 
-• No detecta todas las anomalías fetales: un resultado normal no garantiza un bebé sano.
-• Si hay sospecha de un problema, puede ser necesario completar con análisis de sangre, estudio del líquido amniótico, estudio de vellosidades coriónicas o derivación a un especialista en medicina materno-fetal.
-• La calidad de la imagen depende de la posición del bebé, y algunos datos, como el sexo, no siempre pueden determinarse.
+• No detecta todas las anomalías: algunas pasan inadvertidas incluso con el mejor equipo y otras aparecen más tarde. Un resultado normal no garantiza un bebé sano.
+• La detección varía mucho entre centros y profesionales.
+• Si hay sospecha de un problema, puede hacer falta completar con análisis de sangre, estudio del líquido amniótico o de vellosidades coriónicas, o derivar a medicina materno-fetal.
+• La imagen depende de la posición del bebé; algunos datos, como el sexo, no siempre se determinan.
 
 ## [considerations] Qué dice la evidencia
 
-Dos fuentes revisadas por pares delimitan el uso razonado del estudio. La guía de la ISUOG sobre biometría y crecimiento fetal (Salomon et al., 2019) establece que la datación ecográfica temprana es la forma más fiable de fijar la edad gestacional, que el tamaño en un momento dado no equivale a crecimiento (para el cual hacen falta estudios seriados) y que el Doppler y la valoración del líquido amniótico aportan información en fetos de riesgo. Es una guía de práctica clínica basada en consenso de expertos.
+Las pautas sobre qué examinar proceden de guías de la ISUOG, la sociedad internacional de ecografía en obstetricia y ginecología: estudio de 11 a 14 semanas (Bilardo et al., 2023), de mitad del embarazo (Salomon et al., 2022) y biometría fetal (Salomon et al., 2019). Son consensos de expertos, no ensayos. Los ensayos se resumen en dos revisiones Cochrane. La de ecografía temprana (Whitworth et al., 2015) halló mejor detección de embarazos múltiples y de anomalías mayores, y menos inducciones por embarazo prolongado (evidencia de calidad baja en este punto), sin cambios en la mortalidad perinatal.
 
-La revisión Cochrane de Bricker et al. (2015) concluyó que el estudio sistemático en el tercer trimestre no parece mejorar los resultados maternos ni neonatales en embarazos de bajo riesgo o no seleccionados, y señaló huecos de evidencia, entre ellos el efecto psicológico en la madre y el desarrollo neurológico del niño. Es discutido, por tanto, cuántas ecografías de rutina convienen y cuándo; las fuentes divulgativas y los países difieren, y por eso no se indican cifras. Lo relativo a cómo se realiza y se prepara el estudio proviene de MedlinePlus, RadiologyInfo y KidsHealth.
+La de ecografía sistemática tardía (Bricker et al., 2015), con 13 ensayos, no halló beneficio en embarazos de bajo riesgo y señaló falta de datos sobre el efecto psicológico materno y el neurodesarrollo. Hay consenso en la datación temprana, el estudio anatómico de mitad del embarazo y la seguridad con ALARA. Es discutido cuántos estudios de rutina convienen y si debe ofrecerse uno sistemático en el tercer trimestre; por eso no se indican cifras. La preparación y la técnica proceden de fuentes divulgativas.
 
 ## [associated_conditions] Conceptos relacionados
 
 • Embarazo normal: la ecografía lo confirma, lo data y vigila su evolución.
 • Aborto espontáneo: puede sospecharse o seguirse con este estudio.
 • Embarazo ectópico: la ecografía precoz ayuda a descartarlo.
-• Ecografía transvaginal: vía complementaria, útil sobre todo al inicio del embarazo.
-• Ecografía pélvica: estudio de los mismos órganos fuera del contexto de la gestación.
-• Doppler obstétrico: técnica que evalúa el flujo sanguíneo del cordón, el feto y la placenta.
-• Diagnóstico prenatal: pruebas que se plantean si la ecografía sugiere una anomalía, incluido el cribado del primer trimestre para síndrome de Down.
-• Test de embarazo en orina: detecta la gestación sin visualizarla.
+• Ecografía transvaginal: vía complementaria, útil al inicio y para medir el cuello uterino.
+• Ecografía pélvica: estudio de los mismos órganos fuera de la gestación.
+• Doppler obstétrico: evalúa el flujo sanguíneo del cordón, el feto y la placenta.
+• Diagnóstico prenatal: pruebas que se plantean si la ecografía sugiere una anomalía.
 
 ## [references]
 
 - Ecografía en el embarazo (enciclopedia médica de MedlinePlus) | https://medlineplus.gov/spanish/ency/article/003778.htm | MedlinePlus
-- Ecografía (prueba de laboratorio de MedlinePlus) | https://www.medlineplus.gov/spanish/pruebas-de-laboratorio/ecografia/ | MedlinePlus
 - Obstetric ultrasound (RadiologyInfo.org) | https://www.radiologyinfo.org/en/info/obstetricus | RadiologyInfo.org (ACR y RSNA)
 - Prenatal ultrasound (KidsHealth) | https://kidshealth.org/Partnership/en/parents/prenatal-ultrasound.html | Nemours KidsHealth
-- Salomon et al., 2019. ISUOG Practice Guidelines: ultrasound assessment of fetal biometry and growth. PMID 31169958. DOI 10.1002/uog.20272 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:10.1002/uog.20272&format=json&resultType=core | Ultrasound in Obstetrics & Gynecology (registro en Europe PMC)
-- Bricker, Medley y Pratt, 2015. Routine ultrasound in late pregnancy (after 24 weeks gestation). Cochrane Database Syst Rev. PMID 26121659. DOI 10.1002/14651858.CD001451.pub4 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:10.1002/14651858.CD001451.pub4&format=json&resultType=core | Cochrane (registro en Europe PMC)
+- Bilardo et al., 2023. ISUOG Practice Guidelines (updated): performance of 11-14-week ultrasound scan. PMID 36594739. DOI 10.1002/uog.26106 | https://europepmc.org/article/MED/36594739 | Ultrasound in Obstetrics & Gynecology
+- Salomon et al., 2022. ISUOG Practice Guidelines (updated): performance of the routine mid-trimester fetal ultrasound scan. PMID 35592929. DOI 10.1002/uog.24888 | https://europepmc.org/article/MED/35592929 | Ultrasound in Obstetrics & Gynecology
+- Salomon et al., 2019. ISUOG Practice Guidelines: ultrasound assessment of fetal biometry and growth. PMID 31169958. DOI 10.1002/uog.20272 | https://europepmc.org/article/MED/31169958 | Ultrasound in Obstetrics & Gynecology
+- Whitworth, Bricker y Mullan, 2015. Ultrasound for fetal assessment in early pregnancy. Cochrane Database Syst Rev. PMID 26171896. DOI 10.1002/14651858.CD007058.pub3 | https://europepmc.org/article/MED/26171896 | Cochrane Database of Systematic Reviews
+- Bricker, Medley y Pratt, 2015. Routine ultrasound in late pregnancy (after 24 weeks gestation). Cochrane Database Syst Rev. PMID 26121659. DOI 10.1002/14651858.CD001451.pub4 | https://europepmc.org/article/MED/26121659 | Cochrane Database of Systematic Reviews

@@ -4,54 +4,54 @@ slug: anticuerpos-antinucleares
 
 ## [definition] Introducción
 
-Los anticuerpos antinucleares (ANA) son autoanticuerpos, es decir, proteínas del sistema inmunitario que reconocen por error componentes del núcleo de las propias células. La prueba de ANA es un análisis de sangre que investiga si esos anticuerpos están presentes en el suero y, cuando lo están, suele informar también de su intensidad y del patrón con que se tiñen las células al microscopio.
+Los anticuerpos antinucleares (ANA) son autoanticuerpos, es decir, proteínas del sistema inmunitario que reconocen por error componentes del núcleo de las propias células. La prueba de ANA es un análisis de sangre que investiga si esos anticuerpos están presentes en el suero y, cuando lo están, suele informar también de su intensidad (título) y del patrón con que se tiñen las células al microscopio.
 
-Conviene distinguirla de otras pruebas parecidas. El ANA es una prueba de orientación general: indica que existe una reacción del sistema inmunitario contra estructuras nucleares, pero no dice contra cuál ni a qué enfermedad corresponde. Los anticuerpos dirigidos a una molécula concreta del núcleo (por ejemplo, contra el ADN de doble cadena o contra antígenos extraíbles del núcleo) se estudian en una segunda fase, solo si el ANA resulta positivo.
+El ANA es una prueba de orientación general: indica que existe una reacción del sistema inmunitario contra estructuras nucleares, pero no dice contra cuál ni a qué enfermedad corresponde. Los anticuerpos contra una molécula concreta del núcleo (como el ADN de doble cadena) se estudian en una segunda fase, solo si el ANA es positivo.
 
 ## [purpose] Para qué se solicita
 
-Se pide cuando una persona presenta síntomas que podrían deberse a una enfermedad autoinmune sistémica, como fiebre sin causa clara, erupciones en la piel, cansancio persistente, dolor en articulaciones o músculos, inflamación de ganglios o dolor abdominal. Sirve sobre todo como prueba de cribado: ayuda a decidir si merece la pena seguir investigando una enfermedad del tejido conectivo.
+Se pide ante síntomas que podrían deberse a una enfermedad autoinmune sistémica, como fiebre sin causa clara, erupciones en la piel, cansancio persistente o dolor en articulaciones o músculos. Sirve sobre todo como cribado: ayuda a decidir si merece la pena seguir investigando una enfermedad del tejido conectivo.
 
-Su utilidad es mayor para descartar que para confirmar. Casi todas las personas con lupus tienen un ANA positivo, de modo que un resultado negativo lo hace mucho menos probable; el positivo, en cambio, es poco específico.
+Su utilidad es mayor para descartar que para confirmar. La revisión sistemática de Leuchten et al. mostró que casi todos los pacientes con lupus eritematoso sistémico dan positivo en la inmunofluorescencia HEp-2, de modo que un negativo hace esa enfermedad mucho menos probable. El positivo es poco específico, aunque lo es menos cuanto más intensa es la reacción.
 
 ## [how_it_works] Cómo funciona
 
-La técnica de referencia es la inmunofluorescencia indirecta sobre células cultivadas (las llamadas células HEp-2). El suero de la persona se pone en contacto con esas células; si contiene anticuerpos antinucleares, se unen al núcleo y, al añadir un marcador fluorescente, el núcleo se ilumina bajo el microscopio. El laboratorio valora entonces dos cosas: la intensidad de la señal, que se expresa como título, y la forma en que se distribuye la fluorescencia, que se describe como patrón (homogéneo, moteado, centromérico y otros). El patrón orienta sobre qué anticuerpos específicos podrían estar implicados.
+La técnica de referencia es la inmunofluorescencia indirecta sobre células cultivadas (las llamadas células HEp-2). El suero de la persona se pone en contacto con esas células; si contiene anticuerpos antinucleares, se unen al núcleo y, al añadir un marcador fluorescente, el núcleo se ilumina bajo el microscopio. El laboratorio valora la intensidad de la señal, que se expresa como título, y la distribución de la fluorescencia, o patrón (homogéneo, moteado, centromérico y otros). El patrón orienta sobre los anticuerpos específicos implicados.
+
+Existen también lectores automatizados y ensayos en fase sólida, que pueden discrepar de la inmunofluorescencia.
 
 ## [preparation] Preparación
 
-No requiere una preparación especial. Se extrae sangre de una vena, normalmente en la parte interna del codo o en el dorso de la mano, y el procedimiento dura pocos minutos. Debe informarse de todos los medicamentos que se toman, porque algunos influyen en el resultado, y no suspender ninguno sin indicación médica.
+No requiere preparación especial: se extrae sangre de una vena y el procedimiento dura pocos minutos. Debe informarse de los medicamentos que se toman, porque algunos influyen en el resultado, y no suspender ninguno sin indicación médica.
 
 ## [risks] Riesgos
 
-Son los de cualquier extracción de sangre: molestia leve en el punto de punción y, en ocasiones, un pequeño hematoma.
+Los de cualquier extracción de sangre: molestia leve y, a veces, un pequeño hematoma.
 
 ## [interpretation] Qué busca la interpretación
 
-El resultado nunca se interpreta solo. Un ANA negativo hace menos probable una enfermedad autoinmune sistémica, sin descartarla del todo. Un ANA positivo indica que hay autoanticuerpos, pero no confirma ninguna enfermedad: lo habitual es que el médico lo valore junto con la historia clínica, la exploración física y, si procede, otras pruebas de sangre o de imagen. Con frecuencia se solicita entonces un panel de anticuerpos específicos para precisar el cuadro, y la evaluación suele corresponder a un especialista en reumatología.
+El resultado nunca se interpreta solo. Un ANA negativo hace menos probable una enfermedad autoinmune sistémica, sin descartarla del todo. Uno positivo indica que hay autoanticuerpos, pero no confirma ninguna enfermedad: se valora junto con la historia clínica, la exploración y otras pruebas. Suele pedirse entonces un panel de anticuerpos específicos y derivar a reumatología.
 
-Diagnósticos como el lupus exigen una combinación de manifestaciones clínicas y hallazgos de laboratorio, no solo el ANA.
+El lupus exige una combinación de manifestaciones clínicas y de laboratorio, no solo el ANA. Los criterios de clasificación de EULAR y ACR de 2019 usan el ANA positivo como puerta de entrada y, a partir de ahí, suman manifestaciones clínicas e inmunológicas.
 
 ## [additional_information] Limitaciones
 
-La principal limitación es la baja especificidad. Un porcentaje apreciable de personas sanas tiene ANA positivos, y es más frecuente con la edad, sobre todo a partir de edades avanzadas. También pueden dar positivo algunas infecciones virales (normalmente pasajeras), ciertos medicamentos, algunos tumores y los familiares de personas con lupus, que pueden tener anticuerpos sin enfermedad. En cambio, solo una minoría de los resultados positivos acaba correspondiendo a una enfermedad autoinmune. Por eso su interpretación depende siempre del contexto clínico.
+La principal limitación es la baja especificidad. Una proporción apreciable de personas sanas tiene ANA positivos: en las encuestas de Estados Unidos es más frecuente en mujeres y con la edad, y aumentó entre 1988 y 2012 sin explicación por peso, tabaco o alcohol. También pueden dar positivo algunas infecciones, ciertos medicamentos, algunos tumores y enfermedades no reumáticas, y los familiares de personas con lupus pueden tener anticuerpos sin enfermedad. Solo una minoría de los positivos corresponde a una enfermedad autoinmune.
 
-Otra limitación es que los valores de referencia y los criterios de positividad varían de un laboratorio a otro, de modo que el informe debe leerse siempre con las indicaciones del propio centro.
+Otra limitación es la variabilidad técnica: la lectura visual es subjetiva y el resultado depende del sustrato, de la dilución y del equipo. Por eso los criterios de positividad varían entre laboratorios y el informe debe leerse con las indicaciones del propio centro.
 
 ## [considerations] Qué dice la evidencia
 
-El respaldo principal es un consenso internacional de expertos (Agmon-Levin et al., 2014) que mantiene la inmunofluorescencia indirecta como método de referencia y pide describir con precisión los patrones nucleares y citoplasmáticos. Los criterios de clasificación del lupus de EULAR y ACR de 2019 (Aringer et al.) exigen un ANA positivo al menos una vez como condición de entrada, lo que explica su valor para descartar la enfermedad.
+El texto se apoya en consensos de expertos y revisiones sistemáticas. Dos consensos internacionales Delphi (Agmon-Levin et al., 2014; Bonroy et al., 2023, de EFLM, EASI e ICAP) sostienen la inmunofluorescencia sobre HEp-2 como método de referencia, piden describir con precisión los patrones y fijan pautas de calidad. La revisión sistemática con metarregresión de Leuchten et al. (2018) respalda la alta sensibilidad del ANA para el lupus y fundamenta su papel de criterio de entrada en los criterios EULAR/ACR de 2019 (Aringer et al.). La frecuencia en la población procede de encuestas nacionales (Satoh et al., 2012; Dinse et al., 2020), y la revisión narrativa de Grygiel-Górniak et al. (2018) resume los positivos en sanos y en enfermedades no reumáticas.
 
-Hay consenso en que el resultado debe leerse con la clínica y en que un positivo aislado es poco específico. Se discute la equivalencia entre la inmunofluorescencia y los métodos automatizados, y los puntos de corte varían entre laboratorios. La frecuencia de positivos en personas sanas procede de fuentes divulgativas (MedlinePlus, ACR) y de un diccionario médico; solo leí los resúmenes de los artículos citados, no su texto completo.
+Hay consenso en que el resultado se lee con la clínica, en que un positivo aislado es poco específico y en que la sensibilidad para lupus es muy alta. Se discute la equivalencia entre métodos, qué título es relevante y la causa del aumento de positivos. Síntomas, preparación y riesgos descansan en fuentes divulgativas (MedlinePlus, ACR, CUN). Solo se leyeron los resúmenes de los artículos.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Lupus eritematoso sistémico: es la enfermedad en la que más se usa el ANA, sobre todo para descartarla cuando el resultado es negativo.
-• Esclerosis sistémica (esclerodermia): enfermedad del tejido conectivo en la que el ANA suele ser positivo.
-• Síndrome de Sjögren: enfermedad autoinmune sistémica en cuya evaluación el ANA positivo es un hallazgo frecuente.
-• Lupus inducido por fármacos: cuadro provocado por ciertos medicamentos en el que también aparecen estos anticuerpos.
-
-
+• Lupus eritematoso sistémico: es la enfermedad en la que más se usa el ANA, sobre todo para descartarla si es negativo.
+• Esclerosis sistémica y síndrome de Sjögren: enfermedades autoinmunes en las que el ANA positivo es un hallazgo frecuente.
+• Lupus inducido por fármacos: cuadro provocado por ciertos medicamentos, con estos anticuerpos.
+• Anticuerpos antinucleares específicos: anti-ADN bicatenario, anti-Sm, anti-Ro, anti-La o anticentrómero se estudian en una segunda fase para precisar el anticuerpo implicado.
 
 ## [references]
 
@@ -59,5 +59,10 @@ Hay consenso en que el resultado debe leerse con la clínica y en que un positiv
 - Panel de anticuerpos antinucleares (enciclopedia médica) | https://medlineplus.gov/ency/article/003535.htm | MedlinePlus
 - Anticuerpos antinucleares (ANA) | https://rheumatology.org/patients/anticuerpos-antinucleares-ana/ | American College of Rheumatology
 - Anticuerpos antinucleares (ANA), diccionario médico | https://www.cun.es/diccionario-medico/terminos/anticuerpos-antinucleares-ana | Clínica Universidad de Navarra
-- Agmon-Levin et al., 2014. International recommendations for the assessment of autoantibodies to cellular antigens referred to as anti-nuclear antibodies. PMID 24126457. DOI 10.1136/annrheumdis-2013-203863 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:24126457%20OR%20EXT_ID:31385462&format=json&resultType=core&pageSize=3 | Annals of the Rheumatic Diseases
-- Aringer et al., 2019. 2019 EULAR/ACR Classification Criteria for Systemic Lupus Erythematosus. PMID 31385462. DOI 10.1002/art.40930 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:24126457%20OR%20EXT_ID:31385462&format=json&resultType=core&pageSize=3 | Arthritis & Rheumatology
+- Agmon-Levin et al., 2014. International recommendations for the assessment of autoantibodies to cellular antigens referred to as anti-nuclear antibodies. PMID 24126457. DOI 10.1136/annrheumdis-2013-203863 | https://europepmc.org/article/MED/24126457 | Annals of the Rheumatic Diseases
+- Aringer et al., 2019. 2019 EULAR/ACR Classification Criteria for Systemic Lupus Erythematosus. PMID 31385462. DOI 10.1002/art.40930 | https://europepmc.org/article/MED/31385462 | Arthritis & Rheumatology
+- Bonroy et al., 2023. Detection of antinuclear antibodies: recommendations from EFLM, EASI and ICAP. PMID 36989417. DOI 10.1515/cclm-2023-0209 | https://europepmc.org/article/MED/36989417 | Clinical Chemistry and Laboratory Medicine
+- Leuchten et al., 2018. Performance of Antinuclear Antibodies for Classifying Systemic Lupus Erythematosus: A Systematic Literature Review and Meta-Regression of Diagnostic Data. PMID 28544593. DOI 10.1002/acr.23292 | https://europepmc.org/article/MED/28544593 | Arthritis Care & Research
+- Satoh et al., 2012. Prevalence and sociodemographic correlates of antinuclear antibodies in the United States. PMID 22237992. DOI 10.1002/art.34380 | https://europepmc.org/article/MED/22237992 | Arthritis & Rheumatism
+- Dinse et al., 2020. Increasing Prevalence of Antinuclear Antibodies in the United States. PMID 32266792. DOI 10.1002/art.41214 | https://europepmc.org/article/MED/32266792 | Arthritis & Rheumatology
+- Grygiel-Górniak et al., 2018. Antinuclear antibodies in healthy people and non-rheumatic diseases - diagnostic and clinical implications. PMID 30237629. DOI 10.5114/reum.2018.77976 | https://europepmc.org/article/MED/30237629 | Reumatologia
