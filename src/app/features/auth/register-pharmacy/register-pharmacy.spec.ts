@@ -3,7 +3,15 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { NEVER, of } from 'rxjs';
+
+import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
+import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../shared-registration/map-location-picker/map-location-picker';
 
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
 import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
@@ -74,6 +82,10 @@ describe('RegisterPharmacy', () => {
         // El mapa (GPS de la central/sucursales) no debe cargar Leaflet de
         // verdad en jsdom: ver el mismo provider en `register-organization.spec.ts`.
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+        // El selector pide la calle y el catálogo de municipios; acá no
+        // responden: lo deducido se emite a mano por `localidad`.
+        { provide: ReverseGeocodingClient, useValue: { streetAt: () => NEVER } },
+        { provide: BoMunicipalitiesCatalog, useValue: { listar: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -93,7 +105,7 @@ describe('RegisterPharmacy', () => {
     http.verify();
   });
 
-  /** Sólo lo obligatorio de D2: razón social, tipo, NIT, dirección, representante, acceso. */
+  /** Sólo lo obligatorio de D2: razón social, tipo, NIT, punto y dirección, representante, acceso. */
   function completarObligatorio(): void {
     component.form.controls.legalName.setValue('Farmacia San Martín S.R.L.');
     component.form.controls.companyType.setValue('SRL');
@@ -105,6 +117,8 @@ describe('RegisterPharmacy', () => {
     // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
     component.form.controls.powerOfAttorneyFileId.setValue('file-poder');
     component.form.controls.password.setValue('secreto12');
+    // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
+    component.fijarGpsCentral({ lat: -17.78, lng: -63.18 });
   }
 
   it('sólo con lo obligatorio: el cuerpo trae PHARMACY y ninguna clave opcional vacía', () => {
@@ -133,12 +147,16 @@ describe('RegisterPharmacy', () => {
       password: 'secreto12',
       displayName: 'Mariana Siles',
     });
-    // Nada de lo opcional viaja si no se cargó: ni documentos, ni gerencias,
-    // ni punto de la central. La dirección legal sí: es la de la casa
-    // central, que la API crea en toda alta de farmacia (P50).
+    // Nada de lo opcional viaja si no se cargó: ni documentos ni gerencias.
+    // La dirección legal y el punto de la central sí: son de la casa central,
+    // que la API crea en toda alta de farmacia (P50), y el punto es obligatorio.
     expect('legalDocuments' in cuerpo.organization).toBe(false);
     expect('executives' in cuerpo.organization).toBe(false);
-    expect(cuerpo.organization.pharmacy).toEqual({ address: 'Av. Cañoto esq. Ballivián 234' });
+    expect(cuerpo.organization.pharmacy).toEqual({
+      address: 'Av. Cañoto esq. Ballivián 234',
+      latitude: -17.78,
+      longitude: -63.18,
+    });
 
     req.flush(RESPUESTA_201);
   });
@@ -170,16 +188,112 @@ describe('RegisterPharmacy', () => {
 
   it('el punto de la central viaja como pharmacy.latitude/longitude', () => {
     completarObligatorio();
-    component.gpsCentral.set({ lat: -17.78, lng: -63.18 });
+    component.fijarGpsCentral({ lat: -17.7, lng: -63.1 });
     component.submit();
 
     const req = http.expectOne(RUTA_ALTA);
     expect((req.request.body as CuerpoDelAlta).organization.pharmacy).toEqual({
       address: 'Av. Cañoto esq. Ballivián 234',
-      latitude: -17.78,
-      longitude: -63.18,
+      latitude: -17.7,
+      longitude: -63.1,
     });
     req.flush(RESPUESTA_201);
+  });
+
+  it('sin el punto de la central no sale a la red', () => {
+    completarObligatorio();
+    component.fijarGpsCentral(null);
+
+    component.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(component.form.controls.gpsCentral.invalid).toBe(true);
+  });
+
+  describe('la ubicación de la central sale del punto (26/10/2026)', () => {
+    const PUNTO = { lat: -17.7833, lng: -63.1821 };
+
+    function localidad(calle: string | null, zona: string | null = null): LocalityFromPoint {
+      return { punto: PUNTO, calle, calleSola: calle, zona, municipioConceptId: null };
+    }
+
+    function avanzarHasta(fragmento: string): void {
+      for (let paso = 0; paso < 12; paso += 1) {
+        const titulo =
+          fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
+        if (titulo.includes(fragmento)) return;
+        fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
+        fixture.detectChanges();
+      }
+      throw new Error(`No se alcanzó una página con título que contenga «${fragmento}»`);
+    }
+
+    function irALaUbicacion(): void {
+      fixture.detectChanges();
+      completarObligatorio();
+      component.fijarGpsCentral(null);
+      fixture.detectChanges();
+      avanzarHasta('Dónde está la central');
+    }
+
+    function selector(): MapLocationPicker {
+      return fixture.debugElement.query(By.directive(MapLocationPicker))
+        .componentInstance as MapLocationPicker;
+    }
+
+    it('el mapa es el primer campo de su página, obligatorio, y la dirección ya no se escribe', () => {
+      const pagina = component.paginas().find((p) => p.clave === 'ubicacion')!;
+      expect(pagina.campos[0]).toMatchObject({ key: 'gpsCentral', control: 'custom', required: true });
+      expect(pagina.campos.map((c) => c.key)).not.toContain('addressLines');
+
+      irALaUbicacion();
+      expect(fixture.nativeElement.querySelector('[data-testid="registro-farmacia-direccion"]')).toBeNull();
+    });
+
+    it('sin el punto confirmado no deja pasar, y lo dice', () => {
+      irALaUbicacion();
+
+      fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
+        'Dónde está la central',
+      );
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+    });
+
+    it('confirmar el punto en el mapa llena el control obligatorio', () => {
+      irALaUbicacion();
+
+      selector().confirmado.emit(PUNTO);
+
+      expect(component.form.controls.gpsCentral.value).toEqual(PUNTO);
+      expect(component.gpsCentral()).toEqual(PUNTO);
+    });
+
+    it('lo deducido del punto escribe la dirección legal; sin calle, la zona o el punto', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad('Calle Guapay 3861, Equipetrol', 'Equipetrol'));
+      expect(component.form.controls.addressLines.value).toBe('Calle Guapay 3861, Equipetrol');
+
+      selector().localidad.emit(localidad(null, 'Equipetrol'));
+      expect(component.form.controls.addressLines.value).toBe('Equipetrol');
+
+      selector().localidad.emit(localidad(null));
+      expect(component.form.controls.addressLines.value).toBe('Punto GPS -17.78330, -63.18210');
+    });
+
+    it('la dirección de una sucursal también sale de su punto', () => {
+      component.agregarSucursal();
+      const [sucursal] = component.sucursales();
+
+      component.escribirLocalidadDeSucursal(sucursal!.id, localidad('Av. San Martín 456, Equipetrol'));
+
+      expect(component.sucursales()[0]!.direccion).toBe('Av. San Martín 456, Equipetrol');
+    });
   });
 
   it('una sucursal con nombre y punto confirmado viaja en pharmacy.branches', () => {
@@ -487,6 +601,7 @@ describe('RegisterPharmacy', () => {
       expect(component.form.controls.legalName.value).toBe('Farmacia Central');
       expect(component.form.controls.taxId.value).toBe('987654321');
       expect(component.gpsCentral()).toEqual({ lat: -17.8, lng: -63.15 });
+      expect(component.form.controls.gpsCentral.value).toEqual({ lat: -17.8, lng: -63.15 });
       expect(component.pasoGuardado()).toBe(1);
     });
 
