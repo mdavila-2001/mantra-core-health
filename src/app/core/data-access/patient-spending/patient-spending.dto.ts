@@ -2,10 +2,11 @@
     Contrato de `GET /patient-spending/me`: lo que el paciente autenticado gastó
     en su salud, movimiento por movimiento, dentro de un rango de fechas.
 
-    **No existe en la API** (P44): lo sirve sólo el backend simulado de
-    `mockup`. El titular sale del token, así que la
-    ruta no lleva datos de la persona; el rango viaja como `from`/`to`
-    (`YYYY-MM-DD`, ambos inclusive).
+    Lo sirve la API (P44, `PatientSpendingController` del módulo `billing`):
+    un movimiento por factura emitida al paciente. El simulador sirve la misma
+    forma. El titular sale del token, así que la ruta no lleva datos de la
+    persona; el rango viaja como `from`/`to` (`YYYY-MM-DD`, ambos inclusive,
+    a lo sumo tres años; fuera de eso, 400).
 
     Se piden los **movimientos** y no los totales ya sumados: la pantalla
     compara el mes contra el anterior, el año contra el pasado y cada categoría
@@ -23,6 +24,7 @@ export interface SpendingConceptDto {
  * Un gasto de salud del paciente. Los importes son texto decimal exacto, en la
  * moneda de la respuesta; `paidAmount` es siempre
  * `grossAmount − coveredAmount − discountAmount`, lo que salió del bolsillo.
+ * Una nota de crédito llega con importes negativos: devuelve parte de un gasto.
  */
 export interface SpendingMovementDto {
   readonly id: string;
@@ -31,7 +33,8 @@ export interface SpendingMovementDto {
   readonly description: string;
   /**
    * `SPEND_CONSULTATION`, `SPEND_PHARMACY`, `SPEND_LABORATORY`,
-   * `SPEND_IMAGING`, `SPEND_PROCEDURE` o `SPEND_INSURANCE_PREMIUM`.
+   * `SPEND_IMAGING`, `SPEND_PROCEDURE`, `SPEND_INSURANCE_PREMIUM` o
+   * `SPEND_OTHER` (lo que la API no puede atribuir a ninguna de las otras).
    */
   readonly category: SpendingConceptDto;
   /** Quién cobró: la clínica, la farmacia, el laboratorio o la aseguradora. */
@@ -53,4 +56,10 @@ export interface PatientSpendingResponseDto {
   readonly to: string;
   /** Del más reciente al más antiguo. */
   readonly items: readonly SpendingMovementDto[];
+  /**
+   * `true` si la API recortó la lista por su tope (1 000 movimientos): las
+   * sumas sobre `items` no son el total del rango. Opcional para tolerar una
+   * respuesta que no lo traiga.
+   */
+  readonly truncated?: boolean;
 }
