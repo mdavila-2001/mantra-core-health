@@ -4,72 +4,77 @@ slug: hernia-de-disco-lumbar
 
 ## [definition] Introducción
 
-La hernia de disco lumbar es el desplazamiento del material gelatinoso del interior de un disco intervertebral de la zona baja de la espalda a través de una fisura del anillo fibroso que lo rodea. Los discos amortiguan el movimiento entre vértebras; si el núcleo se protruye o se rompe, puede contactar con una raíz nerviosa o con los nervios de la cola de caballo.
+La hernia de disco lumbar es el desplazamiento del material gelatinoso del interior de un disco intervertebral de la zona baja de la espalda a través de una fisura del anillo fibroso que lo rodea. El núcleo herniado puede contactar con una raíz nerviosa o con los nervios de la cola de caballo.
 
-La presencia de la hernia no implica por sí sola enfermedad: muchas hernias se descubren de forma casual y no producen síntomas. El cuadro clínico aparece cuando el material herniado irrita o comprime un nervio, lo que se denomina radiculopatía. En la región lumbar la mayoría de las hernias afectan a las raíces L5 o S1, y de ahí que a menudo se hable de ciática, que es un síntoma y no una enfermedad.
+La hernia no implica por sí sola enfermedad: muchas se descubren de forma casual y no producen síntomas. El cuadro aparece cuando el material herniado irrita o comprime un nervio (radiculopatía). Casi siempre se afectan las raíces L5 o S1, de ahí que se hable de ciática, que es un síntoma y no una enfermedad.
 
 ## [causes] Causas
 
-El origen suele ser una degeneración gradual del disco, con o sin una lesión o esfuerzo que precipite la rotura. Con los años el disco pierde capacidad de amortiguación y el anillo se debilita. El dolor local procede de las terminaciones nerviosas del propio disco; el dolor de la pierna, de la raíz afectada.
+El origen suele ser una degeneración gradual del disco, con o sin un esfuerzo que precipite la rotura. Con los años el anillo se debilita. El dolor local procede del propio disco; el de la pierna, de la raíz afectada.
 
 ## [risk_factors] Factores de riesgo
 
-• Edad media o avanzada y, según el material divulgativo, sexo masculino.
-• Tabaquismo.
-• Sobrepeso, con un índice de masa corporal más alto.
-• Trabajo con mucha carga sobre la zona lumbar: levantar pesos, doblarse o girar el tronco de forma repetida, o permanecer largo tiempo en la misma postura.
-• Sedentarismo.
+• Edad media, según la revisión sistemática más reciente; el material divulgativo añade el sexo masculino.
+• Tabaquismo e índice de masa corporal más alto.
+• Carga lumbar laboral acumulada: levantar pesos o doblarse hacia delante.
+• Sedentarismo, que figura en fuentes divulgativas pero no entre los factores destacados por esa revisión.
 
-Una revisión sistemática de 2025 añade que en mujeres influyen también los factores de riesgo cardiovascular.
+En mujeres influyen también los factores cardiovasculares, y la incidencia estimada varía mucho según la definición de caso.
 
 ## [symptoms] Síntomas
 
-El síntoma típico es un dolor que se irradia desde la zona lumbar o el glúteo hacia la pierna, habitualmente en un solo lado, a veces con hormigueo, adormecimiento o debilidad en el territorio del nervio afectado. Suele empeorar al toser, estornudar, sentarse o inclinarse hacia delante.
+El síntoma típico es un dolor que se irradia desde la zona lumbar o el glúteo hacia la pierna, habitualmente en un solo lado, a veces con hormigueo, adormecimiento o debilidad. Suele empeorar al toser, sentarse o inclinarse hacia delante.
 
 ## [red_flags] Signos de alarma
 
-La compresión de los nervios de la cola de caballo es una urgencia quirúrgica. Se manifiesta con retención o incontinencia de orina o de heces. También son motivo de valoración urgente la debilidad que empeora rápidamente y el déficit neurológico grave.
+La compresión de la cola de caballo es una urgencia. Se manifiesta con retención o incontinencia de orina o de heces. También motivan valoración urgente la debilidad que empeora con rapidez y el déficit neurológico grave. Por su rareza, a veces se pasa por alto y se retrasa el diagnóstico.
 
 ## [diagnosis] Diagnóstico
 
-Se sospecha por la historia y la exploración de fuerza, sensibilidad, reflejos y maniobras que tensan el nervio. La resonancia magnética o la tomografía permiten confirmar la hernia y su localización; la radiografía por sí sola no basta para diagnosticarla.
+Se sospecha por la historia y la exploración de fuerza, sensibilidad, reflejos y maniobras que tensan el nervio. La resonancia magnética o la tomografía permiten visualizar la hernia; la radiografía sola no basta.
 
-Como las hernias asintomáticas son frecuentes, la imagen debe correlacionarse siempre con la clínica antes de decidir un tratamiento invasivo. Una revisión sistemática de 2018 concluyó que la exactitud diagnóstica de las técnicas de imagen actuales sigue sin conocerse bien, porque los estudios disponibles son antiguos.
+Las alteraciones degenerativas del disco, incluidos abombamientos y protrusiones, son frecuentes en personas sin dolor y aumentan con la edad, por lo que la imagen debe interpretarse junto con la clínica antes de decidir un tratamiento invasivo. Una revisión de 2018 concluyó que se desconoce la exactitud de la imagen actual. Una guía clínica de 2026 recomienda, con certeza baja o muy baja, restringir la imagen a indicaciones concretas.
 
 ## [treatment_overview] Tratamiento
 
-El tratamiento inicial es conservador: mantenerse activo en lugar de guardar reposo prolongado, analgésicos o antiinflamatorios y fisioterapia con ejercicio. En el dolor neuropático rebelde pueden añadirse otros fármacos, y las infiltraciones con corticoides se usan en algunos casos, aunque su eficacia es discutida. La cirugía (discectomía) se plantea ante déficit neurológico persistente o progresivo, compresión de la cola de caballo o dolor radicular intenso que no cede. Un metaanálisis en red halló que la discectomía alivió el dolor de pierna y de espalda más que el tratamiento conservador en pacientes sin mejoría inicial.
+El tratamiento inicial es conservador: mantenerse activo en lugar de guardar reposo prolongado, analgésicos o antiinflamatorios y fisioterapia con ejercicio. En el dolor neuropático rebelde pueden añadirse otros fármacos, y las infiltraciones epidurales se usan en algunos casos, aunque la guía de 2026 solo las recomienda de forma condicional. Dos metaanálisis en red de 2025 sobre ciática, aguda y crónica, otorgan muy baja confianza a la eficacia de las intervenciones no quirúrgicas.
+
+La cirugía (discectomía) se plantea ante déficit neurológico persistente o progresivo, compresión de la cola de caballo o dolor radicular intenso que no cede. Un metaanálisis de ensayos de 2023 halló que la discectomía alivia el dolor de pierna más que el tratamiento no quirúrgico en personas con indicación quirúrgica, con certeza baja o muy baja y un beneficio que se atenúa con el tiempo. Un metaanálisis en red de 2019 halló una ventaja similar en hernias refractarias.
 
 ## [prognosis] Pronóstico
 
-La mayoría de las personas mejora con tratamiento conservador. El material herniado tiende a deshidratarse y reabsorberse con el tiempo, por lo que los síntomas suelen remitir con independencia de la intervención, aunque la recuperación completa puede tardar meses y el dolor puede persistir en algunos casos.
+La mayoría mejora con tratamiento conservador. Según fuentes divulgativas y de referencia clínica, el material herniado tiende a reabsorberse, por lo que los síntomas suelen remitir, aunque la recuperación puede tardar meses y el dolor persistir en algunos casos.
 
 ## [prevention] Prevención
 
-No hay medidas que garanticen evitarla. Las recomendaciones habituales actúan sobre los factores modificables (tabaco, exceso de peso, sedentarismo y sobrecarga lumbar): control del peso, ejercicio y técnicas adecuadas para levantar objetos. Quien hace trabajos físicos pesados puede necesitar adaptar su actividad para evitar recaídas.
+No hay medidas que garanticen evitarla. Las recomendaciones habituales actúan sobre los factores modificables: tabaco, peso, ejercicio y técnica al levantar objetos.
 
 ## [when_to_seek_care] Cuándo consultar
 
-Debe consultarse si el dolor irradiado a la pierna no mejora con medidas básicas, si hay debilidad o adormecimiento progresivos, o si el dolor impide la actividad habitual. Cualquier pérdida de control de la orina o de las heces exige atención urgente.
+Debe consultarse si el dolor irradiado no mejora con medidas básicas, si hay debilidad o adormecimiento progresivos o si impide la actividad habitual. Cualquier pérdida de control de la orina o las heces exige atención urgente.
 
 ## [associated_conditions] Conceptos relacionados
 
 • Ciática: dolor que sigue el trayecto del nervio ciático; la hernia es una de sus causas más habituales, pero no la única.
-• Radiculopatía lumbar: afectación de una raíz nerviosa por compresión o irritación, que puede ser la manifestación de la hernia.
+• Radiculopatía lumbar: afectación de una raíz nerviosa por compresión o irritación.
 • Lumbalgia inespecífica: dolor de espalda baja sin causa estructural clara; no debe atribuirse a una hernia solo por verla en la imagen.
-• Síndrome de cola de caballo: compresión de los nervios al final de la médula, urgencia quirúrgica.
+• Síndrome de cola de caballo: compresión de los nervios al final de la médula; la descompresión quirúrgica es el tratamiento definitivo, aunque su plazo óptimo se discute.
 
 ## [considerations] Qué dice la evidencia
 
-Lo expuesto se apoya en revisiones sistemáticas y metaanálisis sobre factores de riesgo, precisión de la imagen y resultados de la cirugía, y en material de referencia clínico y divulgativo. La evidencia sobre la cirugía procede de estudios comparativos y metaanálisis en los que parte de las comparaciones es indirecta, y por eso sus resultados se interpretan con cautela.
+Lo expuesto se apoya en revisiones sistemáticas y metaanálisis sobre factores de riesgo, imagen y tratamiento, en una guía de práctica clínica reciente sobre lumbalgia y ciática y en material de referencia divulgativo. La evidencia terapéutica procede de ensayos y metaanálisis, en parte con comparaciones indirectas, y casi toda tiene certeza baja o muy baja.
 
-Hay consenso en que la mayoría de las hernias sintomáticas mejora con tratamiento conservador y en que el síndrome de cola de caballo requiere cirugía urgente. Está menos resuelta la exactitud de las técnicas de imagen actuales y la definición homogénea de los casos, limitaciones que señalan los autores de las revisiones de 2018 y 2025.
+Hay consenso en que la mayoría de las hernias sintomáticas mejora con tratamiento conservador, en que la imagen debe correlacionarse con la clínica y en que la cola de caballo requiere descompresión quirúrgica. Se discuten el beneficio quirúrgico a largo plazo, el papel de las infiltraciones, la exactitud de la imagen actual, el plazo óptimo de descompresión y la definición homogénea de los casos. La reabsorción espontánea y el sexo o el sedentarismo como factores descansan sobre todo en fuentes divulgativas.
 
 ## [references]
 
 - Hincapié CA et al., 2025. Incidence of and risk factors for lumbar disc herniation with radiculopathy in adults: a systematic review. PMID 39453541 | https://europepmc.org/article/MED/39453541 | European Spine Journal
+- Liu C et al., 2023. Surgical versus non-surgical treatment for sciatica: systematic review and meta-analysis of randomised controlled trials. PMID 37076169 | https://europepmc.org/article/MED/37076169 | BMJ
 - Arts MP et al., 2019. Comparison of treatments for lumbar disc herniation: systematic review with network meta-analysis. PMID 30762743 | https://europepmc.org/article/MED/30762743 | Medicine (Baltimore)
 - Kim JH et al., 2018. Diagnostic accuracy of diagnostic imaging for lumbar disc herniation in adults with low back pain or sciatica is unknown; a systematic review. PMID 30151119 | https://europepmc.org/article/MED/30151119 | Chiropractic and Manual Therapies
+- Brinjikji W et al., 2015. Systematic literature review of imaging features of spinal degeneration in asymptomatic populations. PMID 25430861 | https://europepmc.org/article/MED/25430861 | AJNR American Journal of Neuroradiology
+- Aldera M et al., 2026. Saudi Clinical Practice Guideline for the Assessment and Management of Low Back Pain and Sciatica in Adults. PMID 41598467 | https://europepmc.org/article/MED/41598467 | Journal of Clinical Medicine
+- Zhu Z et al., 2025. Effectiveness of nonsurgical interventions for patients with acute and subacute sciatica: a systematic review with network meta-analysis. PMID 40434940 | https://europepmc.org/article/MED/40434940 | Journal of Orthopaedic and Sports Physical Therapy
+- Karikaran A et al., 2025. Cauda equina syndrome: a review of classification, diagnosis, treatment, and best practices. PMID 39937930 | https://europepmc.org/article/MED/39937930 | JBJS Reviews
 - Hernia discal | https://medlineplus.gov/spanish/ency/article/000442.htm | MedlinePlus
-- Hernia de disco | https://medlineplus.gov/spanish/herniateddisk.html | MedlinePlus
 - Hernia de disco lumbar | https://www.msdmanuals.com/es/professional/trastornos-de-los-tejidos-musculoesquelético-y-conectivo/dolor-de-cuello-y-espalda/hernia-de-disco-lumbar | Manual MSD
