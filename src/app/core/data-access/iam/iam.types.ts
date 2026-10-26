@@ -694,6 +694,8 @@ export interface RegisteredOrganization {
   readonly representativesRegistered?: number;
   /** Sólo para `DIAGNOSTIC_CENTER` con bloque `diagnosticUnit`: la unidad que nació con el alta. */
   readonly diagnosticUnitId?: string;
+  /** Sólo para `PHARMACY`: la farmacia (`pharmacy.pharmacies`) que nació con el alta (P50). */
+  readonly pharmacyId?: string;
 }
 
 /**
@@ -702,7 +704,7 @@ export interface RegisteredOrganization {
  * Sólo lo que el mapa confirma: una sucursal sin punto no viaja (la del
  * enlace de ubicación cuenta como punto cuando lo trae escrito).
  * `description` y `locationUrl` los suma la carga masiva de sucursales
- * (2026-09-30); la API todavía no los conoce (P54).
+ * (2026-09-30); la API los guarda en `directory.branches`.
  */
 export interface PharmacyBranchRegistration {
   readonly name: string;
@@ -739,9 +741,11 @@ export interface PharmacyOrganizationRegistration {
   /** País y jurisdicción (conceptos): la API los exige a toda organización territorial. */
   readonly countryConceptId: string;
   readonly jurisdictionConceptId: string;
+  /** El NIT: viaja como `organization.taxIdentifier` y numera el documento tributario. */
   readonly taxIdentifier: string;
+  /** Dirección legal: es la de la casa central (`organization.pharmacy.address`). */
   readonly legalAddress: string;
-  /** Coordenadas de la central, ambas o ninguna. */
+  /** Coordenadas de la central, ambas o ninguna. Obligatorias para operar, no para registrarse. */
   readonly headquarters?: { readonly latitude: number; readonly longitude: number };
   readonly branches?: readonly PharmacyBranchRegistration[];
   /**
@@ -759,11 +763,10 @@ export interface PharmacyOrganizationRegistration {
     readonly displayName: string;
   };
   /**
-   * Nombre completo y correo del representante legal (1.8, 1.8.2): los dos
-   * únicos datos obligatorios de la persona. `idNumber` y
-   * `powerOfAttorneyFileId` son opcionales acá —a diferencia del alta de
-   * aseguradora— porque el registro de procesos de farmacia no pide la
-   * cédula del representante como dato de alta.
+   * Nombre completo, cédula y correo del representante legal (1.8, 1.8.2).
+   * `powerOfAttorneyFileId` es opcional para registrarse —a diferencia del
+   * alta de aseguradora, la API no lo exige a una farmacia (P50)— y
+   * obligatorio para operar, salvo en una unipersonal.
    */
   readonly legalRepresentative: {
     readonly fullName: string;
