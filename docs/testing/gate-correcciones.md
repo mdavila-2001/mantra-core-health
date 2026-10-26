@@ -67,6 +67,17 @@ corepack yarn start:demo                      # o un build de demo servido está
 scripts/corr-evidencia.sh 35                  # CORR_USUARIO=paciente|administrador para el 34
 ```
 
+Dos condiciones del entorno de medición, porque cambian lo que el arnés ve:
+
+- La maqueta tiene que ser una compilación de desarrollo (`corepack yarn start:demo`
+  o `ng build --configuration development,demo` servida estática con respaldo a
+  `index.html`): las fixtures de los carriles 33 y 38 usan `window.ng`, que una
+  compilación optimizada no publica.
+- `public/glossary-data/` (ignorado por git, se genera con `yarn mock:glossary:shards`)
+  tiene que existir. Sin él la maqueta pide `glossary-data/manifest.json`, recibe un
+  404 y cae a la semilla; ese 404 llega a la consola y deja en rojo toda pantalla que
+  lee el glosario (perfil, editor, consultorio).
+
 `playwright/corr-evidencia.spec.ts` escribe la matriz y el manifiesto. El
 manifiesto lleva el commit del árbol medido, los archivos versionados con cambios
 sin confirmar y el commit del build que servía el puerto (el sello que la maqueta
