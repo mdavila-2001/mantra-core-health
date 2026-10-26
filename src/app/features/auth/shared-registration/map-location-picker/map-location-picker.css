@@ -72,3 +72,11 @@
     justify-self: start;
   }
 }
+
+/* Lo deducido del punto: la calle y la localidad, debajo del mapa. */
+.registro__deducido {
+  display: grid;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  padding-block-start: var(--sp-2);
+}
