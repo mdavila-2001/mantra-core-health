@@ -33,6 +33,8 @@
 | H2.S1.M1 | DTO/cliente/simulador: notas fuera, `truncated` aditivo | el simulador sirve el mismo contrato | `vitest` de los tres specs | HECHO |
 | H2.S1.M2 | Pantalla avisa si la lista llegó recortada | aviso visible con `truncated: true` | spec de la pantalla | HECHO |
 
+| H1.S1.M6 | Integración HTTP con la app completa | 401 sin token, 403 rol no paciente, 400 del pipe y del servicio, aislamiento entre pacientes, fila en `audit.data_access_log` | `MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 yarn test:integration test/integration/patient-spending-http.int-spec.ts` → 5/5 (`evidencia/api-integracion-http.txt`) | HECHO |
+
 ## Riesgos y bloqueos previstos
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
