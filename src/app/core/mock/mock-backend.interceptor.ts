@@ -136,7 +136,12 @@ function atender(
     }
   } catch (error: unknown) {
     console.error('[mock] el manejador falló', method, path, error);
-    respuesta = { status: 500, body: { statusCode: 500, message: 'Fallo del backend simulado' } };
+    // Con el `code` del contrato, como el filtro de excepciones de la API: sin
+    // él `readApiError` descarta el cuerpo y la pantalla no puede ramificar.
+    respuesta = {
+      status: 500,
+      body: { statusCode: 500, code: 'INTERNAL', message: 'Fallo del backend simulado' },
+    };
   }
 
   return timer(latencia(path)).pipe(mergeMap(() => emitir(request, respuesta)));

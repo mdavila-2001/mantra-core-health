@@ -47,6 +47,26 @@ describe('handlers del perfil propio y del alta de organización', () => {
       activity: { monthlyEncounters?: unknown; quality?: unknown };
     };
 
+  it('P28: el número del documento se corrige con el mismo contrato que la API', () => {
+    const leer = () =>
+      llamar('GET', '/profiles/practitioners/me/summary') as {
+        nationalId: string;
+        identityVerified: boolean;
+      };
+    const original = leer().nationalId;
+    expect(leer().identityVerified).toBe(false);
+    try {
+      expect(estado(llamar('PATCH', '/profiles/practitioners/me', { nationalId: '' }))).toBe(400);
+      expect(estado(llamar('PATCH', '/profiles/practitioners/me', { nationalId: "54'14" }))).toBe(400);
+      expect(leer().nationalId).toBe(original);
+
+      expect(estado(llamar('PATCH', '/profiles/practitioners/me', { nationalId: '5414405-1B' }))).toBe(200);
+      expect(leer().nationalId).toBe('5414405-1B');
+    } finally {
+      llamar('PATCH', '/profiles/practitioners/me', { nationalId: original });
+    }
+  });
+
   it('sin métricas inventadas: el simulador no fabrica la serie ni la calidad (ID-14)', () => {
     expect(perfil().activity.monthlyEncounters).toBeUndefined();
     expect(perfil().activity.quality).toBeUndefined();

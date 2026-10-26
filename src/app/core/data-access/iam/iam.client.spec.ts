@@ -697,6 +697,41 @@ describe('IamClient', () => {
       req.flush({});
     });
   });
+
+  describe('registerPractitioner: respaldos de la habilitación (P29)', () => {
+    const ALTA = {
+      email: 'dra@ejemplo.bo',
+      password: 'secreto12',
+      name: 'Ana',
+      lastName: 'Paz',
+      licenseNumber: 'MP-1',
+      sedesLicenseNumber: 'SEDES-1',
+    } as unknown as Parameters<IamClient['registerPractitioner']>[0];
+
+    it('manda el fileId de la matrícula y el del SEDES', () => {
+      client
+        .registerPractitioner({
+          ...ALTA,
+          licenseFileId: 'pdf-matricula',
+          sedesLicenseFileId: 'pdf-sedes',
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body.licenseFileId).toBe('pdf-matricula');
+      expect(req.request.body.sedesLicenseFileId).toBe('pdf-sedes');
+      req.flush({});
+    });
+
+    it('sin archivos no manda las claves', () => {
+      client.registerPractitioner(ALTA).subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body).not.toHaveProperty('licenseFileId');
+      expect(req.request.body).not.toHaveProperty('sedesLicenseFileId');
+      req.flush({});
+    });
+  });
 });
 
 describe('IamClient · precarga de firma/sello', () => {

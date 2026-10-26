@@ -26,7 +26,16 @@ describe('BlockCancellations · retirar un horario', () => {
     patientName: 'Rosa Quispe',
     pending: false,
   };
-  const retirado = { id: 'tpl-1', statusConceptId: 'retired', releasedSlots: 20, keptSlots: 1 };
+  const retirado = {
+    id: 'tpl-1',
+    statusConceptId: 'retired',
+    releasedSlots: 20,
+    keptSlots: 1,
+    liveBookings: 1,
+    liveBookingIds: ['b-1'],
+    truncated: false,
+    cancelledBookings: 0,
+  };
 
   beforeEach(() => {
     respuesta = true;
