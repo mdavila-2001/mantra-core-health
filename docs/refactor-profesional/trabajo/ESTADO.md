@@ -12,11 +12,11 @@ filtra.
 
 **Verificado en navegador** (Chromium contra `ng serve --configuration demo`, 12 verificaciones con
 [`playwright/contabilidad-version.mjs`](../../../playwright/contabilidad-version.mjs); capturas en
-`evidencias/contabilidad-version-2026-10-26-dev/`): pestañas de Registros por versión; la versión sobrevive a
+`evidencias/contabilidad-version-2026-10-26-test/`): pestañas de Registros por versión; la versión sobrevive a
 recargar; volver a Doctor desde «Cuentas» cae en «Gastos»; sin desborde horizontal a 390 px. **No se verificó** contra
 la API real (la contabilidad simple sólo existe con el simulador), ni con otros roles, ni en otros navegadores.
 
-**Gates** (2026-10-26, sobre `dev`): `tsc -p tsconfig.app.json` sin errores · `eslint --max-warnings=0` sobre
+**Gates** (2026-10-26, sobre `test`): `tsc -p tsconfig.app.json` sin errores · `eslint --max-warnings=0` sobre
 `src/app/features/accounting` 0 · 95 pruebas de las 7 specs del módulo contable pasan (7 nuevas). No se corrió la
 suite entera ni los `check-*.mjs`.
 
