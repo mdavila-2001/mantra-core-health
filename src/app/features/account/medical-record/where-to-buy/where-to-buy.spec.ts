@@ -630,6 +630,53 @@ describe('WhereToBuy', () => {
     expect(branches[1]?.textContent).toContain('Total no disponible');
   });
 
+  describe('existencias desactualizadas (REQ-19-011)', () => {
+    /** La sede completa del fixture, con sus existencias informadas hace `hours` horas. */
+    async function mountWithCenterStockAged(hours: number | null): Promise<void> {
+      await mount();
+      respondUntilProducts();
+      const [complete, partial] = DISPONIBILIDAD_FIXTURE.items;
+      const stockUpdatedAt =
+        hours === null ? undefined : new Date(Date.now() - hours * 3_600_000).toISOString();
+      http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush({
+        ...DISPONIBILIDAD_FIXTURE,
+        items: [{ ...complete!, stockUpdatedAt }, partial!],
+      });
+      harness.detectChanges();
+    }
+
+    function statusOf(branch: string): string | undefined {
+      return cardOf(branch)
+        ?.querySelector('[data-testid="where-to-buy-branch-status"]')
+        ?.textContent?.trim();
+    }
+
+    it('desactualizado: dice hace cuánto, pide confirmar y no afirma «Tiene todo»', async () => {
+      await mountWithCenterStockAged(72);
+
+      expect(
+        cardOf('Sucursal Centro')?.querySelector('[data-testid="where-to-buy-stale-stock"]')
+          ?.textContent,
+      ).toContain('Existencias informadas hace 3 días; confirme con la farmacia antes de ir.');
+      expect(statusOf('Sucursal Centro')).toBe('Tenía todo');
+      expect(cardOf('Sucursal Centro')?.textContent).not.toContain('Tiene todo');
+    });
+
+    it('fresco: sin aviso, y la sede completa sigue diciendo «Tiene todo»', async () => {
+      await mountWithCenterStockAged(2);
+
+      expect(queryAll('[data-testid="where-to-buy-stale-stock"]')).toHaveLength(0);
+      expect(statusOf('Sucursal Centro')).toBe('Tiene todo');
+    });
+
+    it('sin fecha: el comportamiento de siempre', async () => {
+      await mountWithCenterStockAged(null);
+
+      expect(queryAll('[data-testid="where-to-buy-stale-stock"]')).toHaveLength(0);
+      expect(statusOf('Sucursal Centro')).toBe('Tiene todo');
+    });
+  });
+
   it('el mapa recibe un pin por sede ubicable, y la sede sin coordenadas lo dice', async () => {
     await mount();
     respondUntilProducts();
