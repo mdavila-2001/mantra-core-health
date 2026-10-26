@@ -31,7 +31,7 @@
 | H2 (port a test) | EN CURSO | Se hace en otra rama y otro PR, con su propio reporte |
 
 ## Evidencia
-- Doble revisión de capturas (Playwright, maqueta, dev portada). Revisé 8 de las 26 capturas del spec y 2 vistas del diálogo completo; las otras 18 no se miraron y **no se incluyen** (se borraron).
+- Doble revisión de capturas (Playwright, maqueta, dev portada). Revisé 6 de las 26 capturas del spec y 2 vistas del diálogo completo (8 imágenes); las otras 20 no se miraron y **no se incluyen** (se borraron).
   - Primera pasada (criterio: la médica cotiza en «Pagos» y ve el reparto del servidor; el paciente ve su parte y objeta): `cotizacion-medico-cifras-1280-claro`, `…envio-1280-oscuro`, `desglose-paciente-1280-claro` y `-375-oscuro`, `objecion-modal-1280-claro`, `objecion-paciente-1280-oscuro`, `pagos-dialogo-1280-light` y `-dark` en [capturas/](./evidencia/capturas/). Los repartos suman (50,00 + 450,00 = 500,00; 66,88 + 46,89 = 113,77) y el diálogo convive con los totales de `PatientCharges` de dev.
   - Segunda pasada (postura de rechazo), nota por pantalla: **ACEPTABLE CON RESERVAS**, ninguna `RECHAZADA`.
     - S2 · Formato de dinero inconsistente en el mismo diálogo: el bloque nuevo muestra «50.00 Bs» y el de dev «Bs 180,00». No se corrigió: es un cambio de UI no pedido.
@@ -47,7 +47,7 @@
 - Playwright contra la **API real** (`carril-16-solicitudes-de-seguro.spec.ts`): requiere la semilla de la API local y no se ejecutó. Solo se corrió el spec del cobro contra la maqueta.
 - Contra la API real de dev, cotizar con seguro no funciona de punta a punta: `GET /patient-coverages/by-patient` no existe en la API y la sección avisa «no disponible». El desglose y la objeción del paciente tampoco aparecen: `GET /insurance/my-claims` no devuelve `breakdown` ni `patientObjection`. Son huecos de backend ya registrados; el port no los cierra.
 - No se desplegó ni se probó en el entorno `dev` publicado.
-- Las 18 capturas que no revisé.
+- Las 20 capturas del spec que no revisé.
 
 ## Desvíos del plan
 - Se agregaron H1.M7, H1.M8 y H1.M9 (el plan original no los traía): el port chocó con convenciones de dev que mockup no tiene.
