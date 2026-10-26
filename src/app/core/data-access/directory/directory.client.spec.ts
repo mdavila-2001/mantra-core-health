@@ -75,6 +75,23 @@ describe('DirectoryClient', () => {
     expect('parentTenantId' in filas[0]).toBe(false);
   });
 
+  it('verifyTenant declara como organización la que se verifica, no la activa (A2)', () => {
+    client.verifyTenant('t-verificar').subscribe();
+
+    const req = http.expectOne('/admin/tenants/t-verificar/verification');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-verificar');
+    req.flush({
+      id: 't-verificar',
+      code: 'FARM-1',
+      legalName: 'Farmacia',
+      status: 'c-activo',
+      verificationStatus: 'c-verificada',
+      parentTenantId: null,
+      createdAt: '2026-10-26T10:00:00.000Z',
+    });
+  });
+
   it('createTenant no manda las claves opcionales ausentes', () => {
     client
       .createTenant({

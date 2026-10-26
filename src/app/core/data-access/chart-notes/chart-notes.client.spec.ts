@@ -75,6 +75,24 @@ describe('ChartNotesClient payload (P39)', () => {
     expect(rows).toEqual([{ label: 'Field', value: 'Value' }]);
   });
 
+  it('listNotes no manda encounterId (la API lo rechaza con 400) y acota por consulta acá (A3)', () => {
+    let ids: readonly string[] = [];
+    client
+      .listNotes({ patientProfileId: 'p', encounterId: 'enc-1', limit: 50 })
+      .subscribe((page) => (ids = page.items.map((nota) => nota.noteId)));
+    const pedido = http.expectOne((r) => r.url === '/charts/notes');
+    expect(pedido.request.params.has('encounterId')).toBe(false);
+    expect(pedido.request.params.get('limit')).toBe('50');
+    pedido.flush({
+      items: [
+        { noteId: 'de-esta', encounterId: 'enc-1', lifecycleStatusConceptId: 'c', releasedToPatient: false, createdAt: '2026-10-26T00:00:00.000Z' },
+        { noteId: 'de-otra', encounterId: 'enc-2', lifecycleStatusConceptId: 'c', releasedToPatient: false, createdAt: '2026-10-25T00:00:00.000Z' },
+      ],
+      count: 2, limit: 50, nextCursor: null,
+    });
+    expect(ids).toEqual(['de-esta']);
+  });
+
   it('signVersion manda el perfil de quien firma: SignVersionDto lo exige (informe B, C5)', () => {
     client.signVersion('note-1', 'version-1', 'profile-1').subscribe({ error: () => undefined });
     const request = http.expectOne('/charts/notes/note-1/versions/version-1/sign');

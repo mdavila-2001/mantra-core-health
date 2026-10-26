@@ -223,6 +223,31 @@ describe('StoreFront', () => {
     expect(texto()).toContain('Sucursal Centro');
   });
 
+  it('A4 · «Abiertas ahora» sólo aparece en Farmacias y pide openNow=true al servidor', async () => {
+    entrarComoPaciente();
+    await montar();
+    responderContorno();
+    expect(raiz().querySelector('[data-testid="tienda-solo-abiertas"]')).toBeNull();
+
+    harness.routeDebugElement?.componentInstance.cambiarModo('stores');
+    harness.detectChanges();
+    const todas = http.expectOne((r) => r.url === '/pharmacy/sites');
+    expect(todas.request.params.has('openNow')).toBe(false);
+    todas.flush(SEDES);
+    harness.detectChanges();
+
+    const chip = raiz().querySelector<HTMLElement>('[data-testid="tienda-solo-abiertas"]');
+    expect(chip).not.toBeNull();
+    harness.routeDebugElement?.componentInstance.soloAbiertas.set(true);
+    harness.detectChanges();
+
+    const abiertas = http.expectOne((r) => r.url === '/pharmacy/sites');
+    expect(abiertas.request.params.get('openNow')).toBe('true');
+    abiertas.flush({ items: [], count: 0 });
+    harness.detectChanges();
+    expect(texto()).toContain('Ninguna farmacia declaró estar abierta');
+  });
+
   it('«Más cerca» sin origen lo dice y ofrece volver a ordenar por precio', async () => {
     entrarComoPaciente();
     await montar();

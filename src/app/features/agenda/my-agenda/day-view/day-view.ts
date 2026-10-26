@@ -275,6 +275,14 @@ export class DayView {
   /** Dónde se atiende, para las etiquetas del lector. `null` si no hay sede. */
   readonly sede = input<string | null>(null);
 
+  /**
+   * P36 · si el día tiene horario flexible, sus franjas en palabras
+   * («09:00 a 13:00»). Un horario flexible no publica cupos: el paciente pide
+   * la hora que quiere dentro de la franja. Sin cupos ni citas, el día lo dice
+   * en vez de «No atiende este día».
+   */
+  readonly horarioFlexible = input<string | null>(null);
+
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** El id de la ayuda de teclado que describe la línea del día. */
@@ -831,7 +839,12 @@ export class DayView {
     const cupos = bloques.filter((b) => b.tipo === 'cita' || b.tipo === 'libre');
     const conCita = bloques.filter((b) => b.tipo === 'cita').length;
     const ocupados = bloques.filter((b) => b.tipo === 'ocupado').length;
-    if (cupos.length === 0 && ocupados === 0) return 'No atiende este día.';
+    if (cupos.length === 0 && ocupados === 0) {
+      const flexible = this.horarioFlexible();
+      return flexible === null
+        ? 'No atiende este día.'
+        : `Horario flexible de ${flexible}: sin citas pedidas todavía.`;
+    }
     const partes: string[] = [];
     if (cupos.length > 0) {
       partes.push(

@@ -1,0 +1,4 @@
+$ MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 DB_NAME=mantra_p23 … yarn test:integration test/integration/p23-cambiar-horario-con-citas.int-spec.ts
+Test Suites: 1 passed, 1 total
+Tests:       9 passed, 9 total
+Time:        33.054 s, estimated 50 s
