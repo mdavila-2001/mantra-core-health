@@ -1,7 +1,50 @@
-import type { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, type Route, type Routes } from '@angular/router';
 
 import { APP_TITLE } from '../../../core/navigation/navigation.types';
 import { PORTAL_GOVERNANCE_ROUTES } from './governance/governance.routes';
+import { portalUrl } from './portal-nav';
+
+/**
+ * Las direcciones que tuvo el portal antes de pasar a inglés (TAREA-29), con
+ * la que las reemplaza. Siguen abriendo porque se comparten: un enlace a una
+ * operación pegado en un mensaje o guardado en favoritos no puede dar 404.
+ */
+const LEGACY_PORTAL_PATHS: Readonly<Record<string, string>> = {
+  'sistemas/operaciones': 'systems/operations',
+  'sistemas/operaciones/:id': 'systems/operations/:id',
+  'sistemas/flujos/diagrama': 'systems/flows/diagram',
+  'sistemas/flujos': 'systems/flows',
+  'sistemas/deriva': 'systems/drift',
+  'sistemas/revision': 'systems/review',
+  procesos: 'processes',
+  'procesos/:code': 'processes/:code',
+  'catalogo/tablas': 'catalog/tables',
+  'catalogo/tablas/:schema/:table': 'catalog/tables/:schema/:table',
+  'catalogo/dominios': 'catalog/domains',
+  linaje: 'lineage',
+  esquema: 'schemas',
+  'gobierno/auditoria': 'governance/audit',
+  'gobierno/usuarios': 'governance/users',
+  'gobierno/deriva-permisos': 'governance/permission-drift',
+};
+
+/**
+ * Redirección exacta que conserva los parámetros y la consulta: un
+ * `redirectTo` de texto descartaría el `?flujo=` o el `?user=` del enlace.
+ */
+function legacyPortalRedirect([legacyPath, currentPath]: readonly [string, string]): Route {
+  return {
+    path: legacyPath,
+    pathMatch: 'full',
+    redirectTo: ({ params, queryParams }) => {
+      const segments = currentPath
+        .split('/')
+        .map((segment) => (segment.startsWith(':') ? String(params[segment.slice(1)]) : segment));
+      return inject(Router).createUrlTree([portalUrl(''), ...segments], { queryParams });
+    },
+  };
+}
 
 /**
  * Las pantallas del portal, relativas a `superadmin/portal`. El marco las
@@ -18,73 +61,74 @@ export const PORTAL_RUTAS: Routes = [
     loadComponent: () => import('./hub/portal-hub').then((m) => m.PortalHub),
   },
   {
-    path: 'sistemas/operaciones',
+    path: 'systems/operations',
     title: `${APP_TITLE} - Operaciones`,
     loadComponent: () =>
       import('./operations/operations-page').then((m) => m.OperationsPage),
   },
   {
-    path: 'sistemas/operaciones/:id',
+    path: 'systems/operations/:id',
     title: `${APP_TITLE} - Operación`,
     loadComponent: () =>
       import('./operations/operation-detail-page').then((m) => m.OperationDetailPage),
   },
   {
-    path: 'sistemas/flujos/diagrama',
+    path: 'systems/flows/diagram',
     title: `${APP_TITLE} - Diagrama de un proceso`,
     loadComponent: () =>
       import('./process-diagram/process-diagram-page').then((m) => m.ProcessDiagramPage),
   },
   {
-    path: 'sistemas/flujos',
+    path: 'systems/flows',
     title: `${APP_TITLE} - Mapa de rutas`,
     loadComponent: () => import('./route-map/route-map-page').then((m) => m.RouteMapPage),
   },
   {
-    path: 'sistemas/deriva',
+    path: 'systems/drift',
     title: `${APP_TITLE} - Deriva`,
     loadComponent: () => import('./drift/drift-page').then((m) => m.DriftPage),
   },
   {
-    path: 'sistemas/revision',
+    path: 'systems/review',
     title: `${APP_TITLE} - Revisión del catálogo`,
     loadComponent: () => import('./review/review-page').then((m) => m.ReviewPage),
   },
   {
-    path: 'procesos',
+    path: 'processes',
     title: `${APP_TITLE} - Procesos`,
     loadComponent: () => import('./processes/processes-page').then((m) => m.ProcessesPage),
   },
   {
-    path: 'procesos/:code',
+    path: 'processes/:code',
     title: `${APP_TITLE} - Proceso`,
     loadComponent: () =>
       import('./processes/process-detail-page').then((m) => m.ProcessDetailPage),
   },
   {
-    path: 'catalogo/tablas',
+    path: 'catalog/tables',
     title: `${APP_TITLE} - Tablas del modelo`,
     loadComponent: () => import('./tables/tables-page').then((m) => m.TablesPage),
   },
   {
-    path: 'catalogo/tablas/:schema/:table',
+    path: 'catalog/tables/:schema/:table',
     title: `${APP_TITLE} - Ficha de una tabla`,
     loadComponent: () => import('./tables/table-detail-page').then((m) => m.TableDetailPage),
   },
   {
-    path: 'catalogo/dominios',
+    path: 'catalog/domains',
     title: `${APP_TITLE} - Dominios y glosario`,
     loadComponent: () => import('./domains/domains-page').then((m) => m.DomainsPage),
   },
   {
-    path: 'linaje',
+    path: 'lineage',
     title: `${APP_TITLE} - Linaje`,
     loadComponent: () => import('./lineage/lineage-page').then((m) => m.LineagePage),
   },
   {
-    path: 'esquema',
+    path: 'schemas',
     title: `${APP_TITLE} - Esquema`,
     loadComponent: () => import('./schemas/schemas-page').then((m) => m.SchemasPage),
   },
   ...PORTAL_GOVERNANCE_ROUTES,
+  ...Object.entries(LEGACY_PORTAL_PATHS).map(legacyPortalRedirect),
 ];

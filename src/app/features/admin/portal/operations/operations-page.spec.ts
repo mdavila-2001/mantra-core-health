@@ -7,7 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { operation, page, processSummary } from '../portal.fixture';
 import { OperationsPage } from './operations-page';
 
-const RUTA = '/superadmin/portal/sistemas/operaciones';
+const RUTA = '/superadmin/portal/systems/operations';
 
 describe('OperationsPage', () => {
   let harness: RouterTestingHarness;
@@ -18,7 +18,7 @@ describe('OperationsPage', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'superadmin/portal/sistemas/operaciones', component: OperationsPage }]),
+        provideRouter([{ path: 'superadmin/portal/systems/operations', component: OperationsPage }]),
       ],
     });
     http = TestBed.inject(HttpTestingController);

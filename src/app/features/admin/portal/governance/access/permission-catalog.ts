@@ -24,7 +24,7 @@ import { queryParamsSignal, queryFilters } from '../../support/route-query';
 const PAGE_SIZE = 50;
 /** Parámetro propio del buscador: no comparte el `q` de la lista de usuarios. */
 export const PERMISSION_SEARCH_PARAM = 'permissionQ';
-const SCREEN = portalUrl('gobierno/usuarios');
+const SCREEN = portalUrl('governance/users');
 
 /**
  * El catálogo de permisos, paginado por código, con su buscador en la URL.

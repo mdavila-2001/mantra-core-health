@@ -43,7 +43,7 @@ test.afterAll(async () => {
 test('Operaciones: el filtro de la URL viaja a la API y la ficha abre su árbol', async () => {
   const { page } = session;
   const list = await responseOf(page, 'GET', /\/admin\/portal\/operaciones$/, () =>
-    openPortal(page, 'sistemas/operaciones?riesgo=ALTO'),
+    openPortal(page, 'systems/operations?riesgo=ALTO'),
   );
   expect(list.status()).toBe(200);
   expect(new URL(list.url()).searchParams.get('riesgo')).toBe('ALTO');
@@ -69,7 +69,7 @@ test('Operaciones: el filtro de la URL viaja a la API y la ficha abre su árbol'
 test('Mapa de rutas: filtra por señal y salta al diagrama del proceso', async () => {
   const { page } = session;
   const map = await responseOf(page, 'GET', /\/admin\/portal\/flujos\/mapa$/, () =>
-    openPortal(page, 'sistemas/flujos?senal=SIN_PRUEBAS'),
+    openPortal(page, 'systems/flows?senal=SIN_PRUEBAS'),
   );
   expect(map.status()).toBe(200);
   expect(new URL(map.url()).searchParams.get('senal')).toBe('SIN_PRUEBAS');
@@ -81,7 +81,7 @@ test('Mapa de rutas: filtra por señal y salta al diagrama del proceso', async (
     table.locator('a[href*="diagrama?flujo="]').first().click(),
   );
   expect(graph.status()).toBe(200);
-  await expect(page).toHaveURL(/sistemas\/flujos\/diagrama\?flujo=/);
+  await expect(page).toHaveURL(/systems\/flows\/diagram\?flujo=/);
   await expect(page.getByTestId('portal-process-graph')).toBeVisible();
   await expect(page.getByTestId('portal-item-sistemas/flujos/diagrama')).toHaveAttribute('aria-current', 'page');
   await capture(page, 'sistemas-diagrama');
@@ -90,7 +90,7 @@ test('Mapa de rutas: filtra por señal y salta al diagrama del proceso', async (
 test('Deriva: un hallazgo abre sus casos en el cajón y la vista del modelo cuenta la deriva', async () => {
   const { page } = session;
   const findings = await responseOf(page, 'GET', /\/admin\/portal\/flujos\/hallazgos$/, () =>
-    openPortal(page, 'sistemas/deriva'),
+    openPortal(page, 'systems/drift'),
   );
   expect(findings.status()).toBe(200);
   const detail = await responseOf(page, 'GET', /\/admin\/portal\/flujos\/hallazgos\/[^/]+$/, () =>
@@ -111,7 +111,7 @@ test('Deriva: un hallazgo abre sus casos en el cajón y la vista del modelo cuen
 test('Revisión: lista sólo lo que espera decisión y no ofrece puertas que la API cerraría', async () => {
   const { page } = session;
   const queue = await responseOf(page, 'GET', /\/admin\/catalog\/objects$/, () =>
-    openPortal(page, 'sistemas/revision'),
+    openPortal(page, 'systems/review'),
   );
   expect(queue.status()).toBe(200);
   expect(new URL(queue.url()).searchParams.get('reviewStatus')).toBe('NEEDS_REVIEW');
@@ -152,7 +152,7 @@ test('médico y paciente no entran a Sistemas, ni por la dirección ni por la AP
     await expectDenied(
       browser,
       actor,
-      ['sistemas/operaciones', 'sistemas/flujos', 'sistemas/deriva', 'sistemas/revision'],
+      ['systems/operations', 'systems/flows', 'systems/drift', 'systems/review'],
       '/admin/portal/operaciones',
     );
   }

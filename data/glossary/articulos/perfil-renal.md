@@ -10,9 +10,9 @@ Es una prueba de cribado y seguimiento, no un diagnóstico. Un laboratorio puede
 
 ## [purpose] Para qué se pide
 
-Su finalidad es comprobar cómo filtran los riñones la sangre, si se acumulan desechos y si el equilibrio de sales y de ácidos está conservado. Se solicita cuando hay sospecha de enfermedad renal aguda o crónica, para seguir a personas con diabetes, hipertensión, enfermedad cardiovascular o antecedentes familiares de insuficiencia renal, y como parte de estudios de rutina.
+Su finalidad es comprobar cómo filtran los riñones la sangre, si se acumulan desechos y si el equilibrio de sales y de ácidos está conservado. Se solicita ante sospecha de enfermedad renal aguda o crónica, para seguir a personas con diabetes, hipertensión, enfermedad cardiovascular o antecedentes familiares de insuficiencia renal, y en estudios de rutina.
 
-La enfermedad renal temprana suele ser silenciosa, de modo que el análisis es la forma habitual de descubrirla. La guía KDIGO 2024 sobre enfermedad renal crónica incluye la evaluación y la estimación del riesgo como parte central del abordaje.
+La enfermedad renal temprana suele ser silenciosa, de modo que el análisis es la forma habitual de descubrirla. La guía KDIGO 2024 sobre enfermedad renal crónica sitúa la evaluación y la estimación del riesgo en el centro del abordaje, y los laboratorios europeos han publicado recomendaciones para aplicarla, con énfasis en la estandarización de la creatinina y de la cistatina C.
 
 ## [how_it_works] Cómo funciona
 
@@ -20,23 +20,23 @@ El riñón filtra los desechos de la sangre; cuando filtra menos, algunos de eso
 
 ## [preparation] Preparación y procedimiento
 
-Se obtiene una muestra de sangre de una vena. Puede pedirse ayuno de varias horas antes, y conviene avisar de los medicamentos y suplementos que se toman, porque pueden alterar los resultados.
+Se obtiene una muestra de sangre de una vena. Puede pedirse ayuno, y conviene avisar de medicamentos y suplementos, que pueden alterar los resultados.
 
 ## [risks] Riesgos
 
-Son los de cualquier extracción de sangre: pinchazo, molestia, pequeño hematoma o, rara vez, mareo.
+Los de cualquier extracción de sangre: molestia, pequeño hematoma o, rara vez, mareo.
 
 ## [interpretation] Qué busca la interpretación
 
 Lo que se busca es la combinación de datos: si la creatinina y el nitrógeno ureico indican menor eliminación de desechos, si los electrolitos y el bicarbonato están desajustados y si la TFGe calculada es compatible con una función renal disminuida. Los resultados se comparan con rangos de referencia que varían de un laboratorio a otro.
 
-La creatinina sola no es el mejor indicador de la función renal, porque depende de la masa muscular, la edad, la dieta rica en proteínas, el sexo, la actividad física y ciertos fármacos. Por eso se recurre a ecuaciones de estimación y, cuando hay dudas, a la cistatina C, que se ve menos afectada por esos factores. Un resultado alterado puede deberse a enfermedad renal, pero también a problemas respiratorios, a la diabetes y sus complicaciones o a efectos de medicamentos.
+La creatinina sola no es el mejor indicador de la función renal, porque depende de la masa muscular, la edad, la dieta rica en proteínas, el sexo, la actividad física y ciertos fármacos. Por eso se recurre a ecuaciones de estimación y, cuando hay dudas, a la cistatina C, que se ve menos afectada por esos factores. Las ecuaciones actuales, como la del Consorcio Europeo de Función Renal o la de CKD-EPI sin ajuste por raza, se desarrollaron frente al filtrado medido, y combinar creatinina y cistatina C mejora la exactitud de la estimación; cuando aun así no basta, la guía contempla medir el filtrado con un marcador exógeno. Un resultado alterado puede deberse a enfermedad renal, pero también a problemas respiratorios, a la diabetes y sus complicaciones o a efectos de medicamentos.
 
 ## [additional_information] Limitaciones
 
 El panel no valora el daño renal que se manifiesta con pérdida de albúmina por la orina, ni muestra la forma o el tamaño de los riñones, para lo que se usan análisis de orina, imagen (como la ecografía) y, en ocasiones, biopsia. Tampoco distingue por sí mismo entre una caída aguda y un deterioro crónico: hace falta comparar con resultados previos y repetir la prueba.
 
-Además, varias de sus determinaciones (glucosa, calcio, albúmina) están influidas por enfermedades ajenas al riñón. Por ese solapamiento, el panel renal no debe confundirse con el panel metabólico básico, que incluye menos componentes.
+El panel renal tampoco debe confundirse con el panel metabólico básico, que incluye menos componentes.
 
 ## [associated_conditions] Conceptos relacionados
 
@@ -49,15 +49,18 @@ Además, varias de sus determinaciones (glucosa, calcio, albúmina) están influ
 
 ## [considerations] Qué dice la evidencia
 
-La composición del panel procede de definiciones de uso en laboratorio clínico, no de ensayos, y la guía KDIGO 2024 de enfermedad renal crónica, con su resumen ejecutivo, dedica capítulos específicos a la evaluación y a la estimación del riesgo. Las revisiones sobre creatinina, cistatina C y TFGe documentan las limitaciones de la creatinina y el papel de las ecuaciones de estimación, como la del Consorcio Europeo de Función Renal.
+La composición del panel procede de definiciones de uso en laboratorio clínico, no de ensayos. Su interpretación sí tiene respaldo: la guía KDIGO 2024 de enfermedad renal crónica (con su resumen ejecutivo y el comentario de la Sociedad Europea de Mejores Prácticas Renales), las recomendaciones para laboratorios europeos y las revisiones sobre creatinina, cistatina C y TFGe documentan las limitaciones de la creatinina. Las ecuaciones se apoyan en estudios de desarrollo y validación frente al filtrado medido, como el de CKD-EPI sin raza de 2021.
 
-Se discute qué ecuación de TFGe debe usarse en cada población, si la cistatina C debe estar siempre disponible y qué componentes definen un «perfil renal», que varía entre laboratorios y países. La lista de componentes (con el nitrógeno ureico y el bicarbonato) se basa en el catálogo de un laboratorio comercial, una fuente no científica; la interpretación detallada exige las guías de nefrología.
+Hay acuerdo en que la creatinina sola es insuficiente, en que la estimación del filtrado es un cálculo y en que conviene estandarizar las mediciones. Se discute qué ecuación de TFGe debe usarse en cada población, cuándo exigir cistatina C o filtrado medido y qué componentes definen un «perfil renal», que varía entre laboratorios y países. La lista de componentes (con nitrógeno ureico y bicarbonato) se basa en el catálogo de un laboratorio comercial, una fuente no científica; la interpretación detallada exige las guías de nefrología.
 
 ## [references]
 
-- Levin et al., 2024. Executive summary of the KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease. PMID 38519239 | https://doi.org/10.1016/j.kint.2023.10.016 | Kidney International
-- Pottel et al., 2024. Exploring Renal Function Assessment: Creatinine, Cystatin C, and Estimated Glomerular Filtration Rate Focused on the European Kidney Function Consortium Equation. PMID 37909162 | https://doi.org/10.3343/alm.2023.0237 | Annals of Laboratory Medicine
-- Ávila et al., 2025. The Metabolism of Creatinine and Its Usefulness to Evaluate Kidney Function and Body Composition in Clinical Practice. PMID 39858438 | https://doi.org/10.3390/biom15010041 | Biomolecules
+- Levin et al., 2024. Executive summary of the KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease. PMID 38519239 | https://europepmc.org/article/MED/38519239 | Kidney International
+- KDIGO CKD Work Group, 2024. KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease. PMID 38490803 | https://europepmc.org/article/MED/38490803 | Kidney International
+- Cavalier et al., 2025. Recommendations for European laboratories based on the KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease. PMID 39584585 | https://europepmc.org/article/MED/39584585 | Clinical Chemistry and Laboratory Medicine
+- Inker et al., 2021. New Creatinine- and Cystatin C-Based Equations to Estimate GFR without Race. PMID 34554658 | https://europepmc.org/article/MED/34554658 | New England Journal of Medicine
+- Pottel et al., 2024. Exploring Renal Function Assessment: Creatinine, Cystatin C, and Estimated Glomerular Filtration Rate Focused on the European Kidney Function Consortium Equation. PMID 37909162 | https://europepmc.org/article/MED/37909162 | Annals of Laboratory Medicine
+- Ávila et al., 2025. The Metabolism of Creatinine and Its Usefulness to Evaluate Kidney Function and Body Composition in Clinical Practice. PMID 39858438 | https://europepmc.org/article/MED/39858438 | Biomolecules
 - Kidney Tests | https://medlineplus.gov/kidneytests.html | MedlinePlus
 - Basic metabolic panel | https://medlineplus.gov/ency/article/003462.htm | MedlinePlus
 - Renal Function Panel | https://www.labcorp.com/test-menu/34276/renal-function-panel | Labcorp

@@ -56,7 +56,7 @@ export class FindingDrawer {
     return s.status === 'ready' ? s.data.items.map(describeFindingItem) : [];
   });
   protected readonly operationUrl = (id: string): string =>
-    `${portalUrl('sistemas/operaciones')}/${encodeURIComponent(id)}`;
+    `${portalUrl('systems/operations')}/${encodeURIComponent(id)}`;
 
   private pending: Subscription | null = null;
 

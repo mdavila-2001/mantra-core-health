@@ -403,7 +403,7 @@ const CONTABILIDAD: TutorialDefinition = {
   // Los pasos explican el balance, el diario y cómo registrar un movimiento:
   // eso vive en los libros, que desde el 2026-09-12 están un clic adentro de
   // Contabilidad —la dirección de la sección abre el cockpit—.
-  route: '/administration/accounting/libros',
+  route: '/administration/accounting/books',
   roles: ['BILLING_ADMIN', 'ACCOUNTANT', 'PRACTITIONER'],
   estimatedMinutes: 3,
   level: 'intermedio',

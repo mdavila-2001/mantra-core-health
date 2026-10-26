@@ -29,6 +29,7 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { tonoDeEstadoDeReclamo } from '../insurance-status-tone';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -105,6 +106,9 @@ import { InsuranceContactChannels } from './insurance-contact-channels/insurance
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InsuranceClaimDetail {
+  protected readonly tonoDeEstado = tonoDeEstadoDeReclamo;
+  /** El error de «Reclamar» se dice junto al botón: el detalle sigue a la vista. */
+  protected readonly errorDeReclamo = signal<string | null>(null);
 
   private readonly auth = inject(AuthService);
   private readonly insurance = inject(InsuranceClient);
@@ -327,6 +331,7 @@ export class InsuranceClaimDetail {
     });
     if (!confirmed) return;
 
+    this.errorDeReclamo.set(null);
     this.claiming.set(true);
     this.insurance
       .openClaimDispute(detail.header.id, {
@@ -346,9 +351,11 @@ export class InsuranceClaimDetail {
           // figurar como reclamada y eso lo decide el servidor.
           this.load();
         },
-        error: (error: unknown) => {
+        error: () => {
           this.claiming.set(false);
-          this.state.set(errorToViewState<ClaimDetail>(error));
+          this.errorDeReclamo.set(
+            'No pudimos presentar el reclamo. Intente de nuevo. Si el problema continúa, consulte con su administrador.',
+          );
         },
       });
   }

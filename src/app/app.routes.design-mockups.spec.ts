@@ -58,13 +58,13 @@ describe('el gate de maquetas con la API real (production-api)', () => {
   );
 
   it.each([
-    ['/accesos/permisos-listado'],
-    ['/accesos'],
-    ['/datos-compartidos/archivos-listado'],
-    ['/directorio/organizaciones-suspender'],
-    ['/personas/profesionales-listado'],
-    ['/terminologia/relaciones-listado'],
-    ['/buscar/seguidos-y-guardados-listado'],
+    ['/access-control/permissions-list'],
+    ['/access-control'],
+    ['/shared-data/files-list'],
+    ['/provider-directory/organizations-suspend'],
+    ['/people/practitioners-list'],
+    ['/vocabulary/relationships-list'],
+    ['/search/followed-and-saved-list'],
   ])('%s (sin equivalente) cae en el 404', async (url) => {
     await router.navigateByUrl(url);
 
@@ -73,13 +73,13 @@ describe('el gate de maquetas con la API real (production-api)', () => {
   });
 
   it('la búsqueda guardada en la URL de la bóveda sobrevive a la redirección', async () => {
-    await router.navigateByUrl('/buscar/profesionales-listado?q=cardio');
+    await router.navigateByUrl('/search/practitioners-list?q=cardio');
 
     expect(location.path()).toBe('/search/practitioners?q=cardio');
   });
 
   it('la ficha de la bóveda con slug abre la ficha pública real', async () => {
-    await router.navigateByUrl('/buscar/perfil-farmacia-detalle/farmacia-central');
+    await router.navigateByUrl('/search/pharmacy-profile-detail/farmacia-central');
 
     expect(location.path()).toBe('/f/farmacia-central');
   });

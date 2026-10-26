@@ -4,67 +4,73 @@ slug: cancer-de-prostata
 
 ## [definition] Introducción
 
-El cáncer de próstata es un tumor maligno que se origina en las células de la próstata, la glándula del aparato reproductor masculino que se sitúa debajo de la vejiga y delante del recto, y que produce parte del líquido del semen. En la inmensa mayoría de los casos se trata de un adenocarcinoma, es decir, un cáncer de las células glandulares que fabrican ese líquido.
+El cáncer de próstata es un tumor maligno que se origina en las células de la próstata, la glándula masculina que se sitúa debajo de la vejiga y delante del recto y que produce parte del líquido del semen. Casi siempre es un adenocarcinoma, un cáncer de las células glandulares que fabrican ese líquido. Su comportamiento es muy variable: muchos tumores crecen despacio y nunca dan problemas, y otros se extienden con rapidez.
 
-No debe confundirse con otras dos afecciones frecuentes de la próstata: la hiperplasia prostática benigna, un aumento de tamaño de origen no canceroso, y la prostatitis, que es una inflamación. Ambas pueden causar síntomas urinarios parecidos y también pueden elevar el antígeno prostático específico (PSA), de modo que ninguna prueba aislada permite distinguirlas del cáncer.
+No debe confundirse con la hiperplasia prostática benigna, un aumento de tamaño no canceroso, ni con la prostatitis, una inflamación. Ambas pueden causar síntomas urinarios parecidos y elevar el antígeno prostático específico (PSA), de modo que ninguna prueba aislada las distingue del cáncer.
 
 ## [risk_factors] Factores de riesgo
 
-No se conoce una causa única. El riesgo aumenta con la edad, con los antecedentes familiares de la enfermedad y con la pertenencia a determinados grupos étnicos: las personas afroamericanas tienen mayor predisposición y, en ellas, el tumor puede aparecer antes o ser más agresivo. Tener uno de estos factores no significa que la enfermedad vaya a aparecer, y no tenerlos no la descarta. Los hábitos saludables (peso adecuado, no fumar, actividad física y buena alimentación) se asocian con menor riesgo de algunos tipos de este cáncer.
+No se conoce una causa única. El riesgo aumenta con la edad, con los antecedentes familiares y con la pertenencia a determinados grupos étnicos: las personas afroamericanas tienen mayor predisposición y, en ellas, el tumor puede aparecer antes o ser más agresivo. Los hábitos saludables (peso adecuado, no fumar, actividad física) se asocian con menor riesgo de algunos tipos.
 
 ## [symptoms] Síntomas
 
-Con frecuencia no hay síntomas, sobre todo al principio. Cuando aparecen pueden ser:
+Con frecuencia no hay síntomas al principio. Cuando aparecen pueden ser:
 
-• Dificultad para iniciar la micción, chorro débil o interrumpido.
-• Necesidad frecuente de orinar, en especial por la noche, o sensación de vaciado incompleto.
-• Dolor o ardor al orinar.
-• Sangre en la orina o en el semen.
+• Dificultad para iniciar la micción, chorro débil o sensación de vaciado incompleto.
+• Necesidad frecuente de orinar, en especial por la noche.
+• Dolor o ardor al orinar, o sangre en la orina o el semen.
 • Dolor persistente en la espalda, las caderas o la pelvis.
-• Molestias al eyacular.
+
+Estos síntomas son inespecíficos: en la mayoría de las personas que los tienen la causa es benigna.
 
 ## [diagnosis] Diagnóstico
 
-La sospecha suele surgir de un tacto rectal anormal, de un PSA que motiva estudio o de síntomas. El PSA es una proteína que producen tanto las células prostáticas normales como las tumorales; su aumento orienta, pero no confirma, porque la inflamación, la infección, el crecimiento benigno de la glándula e incluso procedimientos recientes pueden elevarlo, y no existe un umbral único que separe un resultado normal de uno anormal. Por eso un resultado alterado suele conducir a repetir la prueba, completar con exploración o imagen (ecografía o resonancia magnética) y, cuando procede, practicar una biopsia.
+La sospecha surge de un tacto rectal anormal, de un PSA que motiva estudio o de síntomas. El PSA lo producen tanto las células prostáticas normales como las tumorales; su aumento orienta, pero no confirma, porque la inflamación, la infección, el crecimiento benigno e incluso procedimientos recientes pueden elevarlo. Por eso un resultado alterado suele llevar a repetir la prueba, completar con imagen y, cuando procede, practicar una biopsia.
 
-La biopsia, con análisis del tejido por un patólogo, es la única forma de confirmar el diagnóstico. Para valorar la extensión pueden añadirse gammagrafía ósea, tomografía, resonancia o PET con marcadores específicos, según el caso.
+La resonancia magnética previa a la biopsia ha cambiado el proceso. En un ensayo aleatorizado, partir de la resonancia y biopsiar solo las zonas sospechosas detectó más tumores clínicamente relevantes que la biopsia estándar guiada por ecografía, con menos diagnósticos de tumores indolentes, y permitió evitar la biopsia en una parte de los pacientes. Una revisión Cochrane respalda su utilidad, aunque con certeza baja y sin que ninguna estrategia detecte todos los tumores relevantes.
+
+La biopsia, con análisis del tejido por un patólogo, es la única forma de confirmar el diagnóstico. La extensión se valora, según el caso, con gammagrafía ósea, tomografía, resonancia o PET.
 
 ## [treatment_overview] Enfoque del tratamiento
 
-La elección depende de la edad, del estado general de salud, del grado del tumor y de su extensión, y se comparte con la persona afectada. En términos generales existen estas opciones:
+La elección depende de la edad, la salud general, el grado y la extensión del tumor, y se comparte con la persona afectada. Las opciones generales son:
 
-• Observación sin tratamiento curativo inmediato: la vigilancia activa controla el tumor con exámenes y pruebas periódicas y se pasa a tratar si muestra signos de crecimiento; la espera vigilante reserva el tratamiento para aliviar síntomas y se plantea sobre todo en personas mayores o con otras enfermedades.
-• Cirugía para extirpar la próstata, a veces con ganglios cercanos.
-• Radioterapia externa o interna, y tratamientos con sustancias radiactivas.
+• Observación: la vigilancia activa controla el tumor con pruebas periódicas y trata si crece; la espera vigilante reserva el tratamiento para aliviar síntomas y se plantea sobre todo en personas mayores o con otras enfermedades.
+• Cirugía para extirpar la próstata.
+• Radioterapia externa o interna.
 • Terapia hormonal, que reduce o bloquea las hormonas masculinas que estimulan el tumor.
-• Quimioterapia, terapia dirigida e inmunoterapia, según el estadio y la extensión.
-• Medicamentos que protegen el hueso cuando hay metástasis óseas.
+• Quimioterapia, terapia dirigida e inmunoterapia en enfermedad extendida, y fármacos que protegen el hueso ante metástasis óseas.
+
+En el cáncer localizado, el ensayo británico ProtecT comparó monitorización activa, cirugía y radioterapia: tras quince años, la mortalidad por cáncer de próstata fue baja y similar en los tres grupos, aunque con más progresión y metástasis en la monitorización. Cada opción tiene efectos secundarios distintos.
 
 ## [prognosis] Pronóstico y detección precoz
 
-Como muchos tumores crecen lentamente, detectar la enfermedad antes de que dé síntomas no siempre mejora la salud ni prolonga la vida. El análisis de PSA puede encontrar cánceres precoces y se ha asociado a un efecto pequeño sobre la mortalidad en los ensayos, pero también detecta tumores indolentes (sobrediagnóstico), genera falsos positivos y puede conducir a biopsias con riesgo de infección, dolor o sangrado. Por eso las organizaciones médicas aconsejan conversar con el profesional de salud sobre beneficios y riesgos antes de decidir hacerse la prueba. 
+El pronóstico es muy favorable si la enfermedad está localizada y empeora con metástasis. La revisión Cochrane más reciente sobre el cribado con PSA concluye que probablemente reduce la mortalidad por este cáncer, con un efecto absoluto pequeño y un efecto incierto sobre la mortalidad total. El cribado aumenta además los diagnósticos, sobre todo de tumores localizados, lo que implica sobrediagnóstico, y genera falsos positivos y biopsias con riesgo de infección, dolor o sangrado. Por eso las organizaciones médicas aconsejan hablar con el profesional de salud sobre beneficios y riesgos antes de decidir hacerse la prueba.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Hiperplasia prostática benigna: aumento no canceroso de la próstata que causa síntomas urinarios similares y puede elevar el PSA.
-• Prostatitis: inflamación de la glándula que también puede alterar el PSA y causar molestias pélvicas.
-• Antígeno prostático específico (PSA): prueba de sangre que orienta, sin confirmar, la sospecha.
-• Biopsia de próstata: método que confirma el diagnóstico y permite asignar el grado.
-• Vigilancia activa y espera vigilante: estrategias de observación para tumores de evolución lenta.
-• Puntuación de Gleason y grupos de grado: sistema para describir la agresividad del tumor.
+• Hiperplasia prostática benigna: aumento no canceroso de la próstata con síntomas urinarios similares.
+• Prostatitis: inflamación que también puede alterar el PSA.
+• Antígeno prostático específico (PSA): análisis de sangre que orienta, sin confirmar, la sospecha.
+• Biopsia de próstata: confirma el diagnóstico y permite asignar el grado.
+• Sobrediagnóstico: detección de tumores que no habrían dado síntomas.
+• Puntuación de Gleason y grupos de grado: describen la agresividad del tumor.
 
 ## [considerations] Qué dice la evidencia
 
-Las pautas de diagnóstico y tratamiento del cáncer localizado proceden de una guía europea de consenso elaborada con revisión sistemática de la literatura (Cornford et al., 2024) y de una revisión de referencia sobre la biología y el manejo de la enfermedad (Rebello et al., 2021). Hay acuerdo en que la biopsia confirma el diagnóstico, en que la resonancia magnética ayuda a evitar biopsias innecesarias y en que la vigilancia activa es el abordaje adecuado para tumores de bajo riesgo.
+El diagnóstico y el tratamiento del cáncer localizado se apoyan en una guía europea de consenso con revisión sistemática (Cornford et al., 2024), una revisión de referencia (Rebello et al., 2021), dos ensayos aleatorizados (Hamdy et al., 2023; Kasivisvanathan et al., 2018) y revisiones Cochrane sobre la resonancia (Drost et al., 2019) y el cribado con PSA (Franco et al., 2026). Hay acuerdo en que la biopsia confirma el diagnóstico, en que la resonancia ayuda a reducir biopsias innecesarias y en que la vigilancia activa es adecuada en tumores de bajo riesgo.
 
-Se discute, y cambia con rapidez, a quién ofrecer el cribado con PSA: la guía europea propone una estrategia adaptada al riesgo y a la esperanza de vida, mientras el NCI recuerda que hallar el tumor antes de los síntomas puede no mejorar la salud. Sus propios autores advierten de que la evidencia evoluciona deprisa. Las descripciones de síntomas, factores de riesgo y diferencias con la hiperplasia y la prostatitis se apoyan en fuentes divulgativas institucionales (MedlinePlus, CDC, NIDDK), no en estudios primarios.
+Se discute a quién ofrecer el cribado: Cochrane describe un beneficio pequeño con daños por sobrediagnóstico, y la guía europea propone una estrategia adaptada al riesgo; la evidencia evoluciona deprisa. La certeza sobre la precisión de la resonancia es baja, y ProtecT reclutó pacientes de un solo país. Síntomas, factores de riesgo y diferencias con la hiperplasia y la prostatitis se apoyan en fuentes divulgativas (MedlinePlus, CDC, NIDDK), no en estudios primarios.
 
 ## [references]
 
 - Cáncer de próstata (MedlinePlus en español) | https://medlineplus.gov/spanish/prostatecancer.html | MedlinePlus
 - Prostate Cancer Treatment (PDQ) – Patient Version | https://www.cancer.gov/types/prostate/patient/prostate-treatment-pdq | NCI
-- Prostate-Specific Antigen (PSA) Test | https://www.cancer.gov/types/prostate/psa-fact-sheet | NCI
 - About Prostate Cancer | https://www.cdc.gov/prostate-cancer/about/index.html | CDC
 - Prostate Problems | https://www.niddk.nih.gov/health-information/urologic-diseases/prostate-problems | NIDDK
-- Cornford et al., 2024. EAU-EANM-ESTRO-ESUR-ISUP-SIOG Guidelines on Prostate Cancer, 2024 Update. Part I. PMID 38614820, DOI 10.1016/j.eururo.2024.03.027 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A38614820%20AND%20SRC%3AMED&resultType=core&format=json | European Urology (Europe PMC)
-- Rebello et al., 2021. Prostate cancer. PMID 33542230, DOI 10.1038/s41572-020-00243-0 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A33542230%20AND%20SRC%3AMED&resultType=core&format=json | Nature Reviews Disease Primers (Europe PMC)
+- Cornford et al., 2024. EAU-EANM-ESTRO-ESUR-ISUP-SIOG Guidelines on Prostate Cancer 2024 Update. Part I: Screening, Diagnosis, and Local Treatment. PMID 38614820 | https://europepmc.org/article/MED/38614820 | European Urology
+- Rebello et al., 2021. Prostate cancer. PMID 33542230 | https://europepmc.org/article/MED/33542230 | Nature Reviews Disease Primers
+- Hamdy et al., 2023. Fifteen-Year Outcomes after Monitoring, Surgery, or Radiotherapy for Prostate Cancer. PMID 36912538 | https://europepmc.org/article/MED/36912538 | New England Journal of Medicine
+- Kasivisvanathan et al., 2018. MRI-Targeted or Standard Biopsy for Prostate-Cancer Diagnosis. PMID 29552975 | https://europepmc.org/article/MED/29552975 | New England Journal of Medicine
+- Drost et al., 2019. Prostate MRI, with or without MRI-targeted biopsy, and systematic biopsy for detecting prostate cancer. PMID 31022301 | https://europepmc.org/article/MED/31022301 | Cochrane Database of Systematic Reviews
+- Franco et al., 2026. Prostate-specific antigen (PSA) test for prostate cancer screening. PMID 42134821 | https://europepmc.org/article/MED/42134821 | Cochrane Database of Systematic Reviews

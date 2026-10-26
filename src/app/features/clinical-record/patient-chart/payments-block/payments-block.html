@@ -4,6 +4,10 @@
      `app-view-state-host` por lo mismo que los demás bloques de la ficha —el
      anfitrión resuelve los nueve estados de una lectura que ocupa la pantalla
      entera, y esto vive dentro de un modal—, así que cada estado se dice acá. -->
+<!-- Cobro con seguro (REQ-16-026): depende de la cobertura de la persona, no de
+     la facturación simulada, así que se muestra en ambos casos. -->
+<app-claim-quote-section [patientProfileId]="patientProfileId()" />
+
 @if (facturacionSimulada) {
   <app-patient-charges [patientProfileId]="patientProfileId()" />
 } @else {

@@ -4,63 +4,68 @@ slug: electroencefalograma
 
 ## [definition] Introducción
 
-El electroencefalograma (EEG) es una prueba que registra la actividad eléctrica del cerebro. Las neuronas se comunican mediante señales eléctricas muy pequeñas; unos sensores colocados sobre el cuero cabelludo las captan, un equipo las amplifica y las muestra como trazos ondulados en una pantalla o en papel. No introduce nada en el organismo ni emite radiación: solo escucha lo que el cerebro produce por sí mismo.
+El electroencefalograma (EEG) es una prueba que registra la actividad eléctrica del cerebro. Las neuronas se comunican mediante señales eléctricas muy pequeñas; unos sensores sobre el cuero cabelludo las captan y un equipo las amplifica y las muestra como trazos ondulados. No introduce nada en el organismo ni emite radiación.
 
-Conviene distinguirlo de las pruebas de imagen, como la resonancia magnética o la tomografía: estas muestran la estructura del cerebro y el EEG muestra su funcionamiento, que puede estar alterado aunque la estructura se vea normal. Se complementan.
+A diferencia de la resonancia magnética o la tomografía, que muestran la estructura del cerebro, el EEG muestra su funcionamiento, que puede estar alterado aunque la estructura se vea normal. Se complementan.
 
 ## [purpose] Para qué se solicita
 
-El motivo más habitual es la sospecha o el seguimiento de convulsiones y epilepsia. En personas que ya tienen el diagnóstico, el registro ayuda a caracterizar el tipo de crisis y a orientar decisiones del tratamiento. Más allá de la epilepsia, las fuentes consultadas mencionan otros usos:
+El motivo más habitual es la sospecha o el seguimiento de convulsiones y epilepsia. Tras una primera crisis, puede apoyar el diagnóstico clínico, ayudar a clasificar el síndrome epiléptico y caracterizar las crisis para orientar el tratamiento. Las fuentes consultadas mencionan además otros usos:
 
-• Estudio de episodios de confusión, pérdida de memoria o cambios de conducta sin causa aclarada.
-• Evaluación de encefalitis (inflamación del cerebro) y de enfermedades que avanzan con rapidez, como ciertas demencias.
-• Valoración de traumatismos de cráneo, tumores y coma.
-• Estudio de trastornos del sueño.
+• Confusión, pérdida de memoria o cambios de conducta sin causa aclarada.
+• Encefalitis (inflamación del cerebro): en las series publicadas de la causada por anticuerpos contra el receptor NMDA, la mayoría de los registros era anormal y ciertos patrones se asociaron con peor evolución.
+• Demencias de avance rápido, traumatismos de cráneo, tumores, coma y trastornos del sueño.
 • Vigilancia durante algunas cirugías y apoyo en la determinación de muerte encefálica.
 
-Respecto a los desmayos de origen incierto, el EEG figura entre los usos descritos, pero conviene no sobrestimar su papel: un artículo sobre errores diagnósticos señala que la mayoría de las personas a quienes se diagnostica epilepsia por error tienen en realidad síncope o crisis no epilépticas de origen psicógeno.
+Ante desmayos de origen incierto, su papel es más limitado de lo que sugieren las listas divulgativas: la epilepsia se sobrediagnostica más de lo que se infradiagnostica y la mayoría de las personas mal diagnosticadas tienen crisis no epilépticas psicógenas o síncope.
 
 ## [how_it_works] Cómo funciona
 
-La señal registrada en el cuero cabelludo resume la actividad sincronizada de grandes grupos de neuronas de la corteza más superficial; las fuentes profundas pueden dejar muy poca huella, lo que explica parte de las limitaciones de la técnica. Los patrones cambian entre vigilia y sueño y según la persona tenga los ojos abiertos o cerrados.
+La señal del cuero cabelludo resume la actividad sincronizada de grandes grupos de neuronas de la corteza más superficial; las fuentes profundas dejan poca huella, lo que explica parte de las limitaciones de la técnica. Los patrones cambian entre vigilia y sueño.
 
 ## [procedure_description] Cómo se realiza
 
-Un técnico mide la cabeza y fija pequeños discos metálicos con pasta o adhesivo, conectados por cables al equipo de registro. La persona permanece sentada o recostada, quieta, porque el movimiento deforma el trazado. Durante el estudio pueden pedirle que abra y cierre los ojos, que respire profundamente durante un rato o que mire una luz intermitente: son maniobras de activación que facilitan la aparición de anomalías.
+Un técnico fija pequeños discos metálicos en la cabeza con pasta o adhesivo, conectados por cables al equipo. La persona permanece quieta, sentada o recostada, porque el movimiento deforma el trazado. Pueden pedirle que abra y cierre los ojos, respire profundamente o mire una luz intermitente (maniobras de activación que facilitan la aparición de anomalías).
 
-Existen varias modalidades, que se eligen según la pregunta clínica:
+Las modalidades se eligen según la pregunta clínica:
 
-• EEG de rutina: el estudio habitual, de corta duración.
+• EEG de rutina: el estudio habitual y breve.
 • EEG con privación de sueño o con sueño: aumenta la probabilidad de captar anomalías.
-• EEG ambulatorio: un registrador portátil graba durante la vida cotidiana, a lo largo de uno o más días.
-• Video-EEG: combina el registro con video y audio, normalmente en un hospital, para relacionar lo que se observa en la persona con lo que ocurre en el trazado.
+• EEG ambulatorio: un registrador portátil graba durante la vida cotidiana, uno o más días.
+• Video-EEG: añade video y audio, normalmente con ingreso hospitalario, para relacionar lo observado con el trazado. Una guía de la Liga Internacional contra la Epilepsia y la Federación Internacional de Neurofisiología Clínica fija sus indicaciones y estándares mínimos.
 
 ## [preparation] Preparación general
 
-Suele pedirse acudir con el cabello limpio y seco, sin acondicionador, aceites, lacas ni geles, que dificultan el contacto de los electrodos. Los centros pueden dar indicaciones sobre cafeína o sueño; conviene seguirlas. Se lleva la lista de medicamentos y no se suspende ninguno sin consultar. Tras privación de sueño puede no ser seguro conducir.
+Suele pedirse acudir con el cabello limpio y seco, sin acondicionador, aceites ni geles, que dificultan el contacto de los electrodos. Conviene seguir las indicaciones del centro sobre cafeína o sueño y no suspender ningún medicamento sin consultar. Tras privación de sueño puede no ser seguro conducir.
 
 ## [risks] Riesgos
 
-La prueba es muy segura y no duele. Puede haber mareo con la respiración profunda o irritación leve de la piel. En quienes tienen ciertos tipos de epilepsia, la respiración profunda o las luces intermitentes pueden desencadenar una crisis, algo poco frecuente; el personal está entrenado para atenderla.
+La prueba es muy segura y no duele. Puede haber mareo con la respiración profunda o irritación leve de la piel. En ciertos tipos de epilepsia, la respiración profunda o las luces intermitentes pueden desencadenar una crisis, algo poco frecuente que el personal sabe atender.
 
 ## [interpretation] Qué busca la interpretación
 
-El registro debe ser analizado por un especialista, por lo que el resultado puede tardar de unos días a varias semanas. Quien lo interpreta busca patrones anormales de la actividad eléctrica, entre ellos las descargas epileptiformes, y valora si se presentan en vigilia, durante el sueño o tras las maniobras de activación. Sus hallazgos se leen siempre junto con los síntomas, la historia clínica y otras pruebas.
+Un especialista analiza el registro (el resultado puede tardar días o semanas). Busca patrones anormales, entre ellos las descargas epileptiformes, y valora si aparecen en vigilia, durante el sueño o tras las maniobras de activación.
+
+La lectura no es mecánica: una revisión sistemática reciente halló que la concordancia entre lectores al identificar descargas epileptiformes es moderada en poblaciones clínicas no seleccionadas, mejor en epilepsia conocida y menor en la disfunción cerebral aguda. Los hallazgos se leen junto con los síntomas, la historia clínica y otras pruebas.
 
 ## [additional_information] Limitaciones
 
-Un EEG normal no descarta epilepsia: una proporción importante de personas con epilepsia tiene registros normales entre crisis, y repetir el estudio, usar sueño o prolongar el registro aumenta la posibilidad de detectar anomalías. A la inversa, una descarga de aspecto epileptiforme no equivale a epilepsia: puede aparecer en personas sanas, con mayor frecuencia en niños, y en quienes tienen otras lesiones cerebrales. Un EEG anormal tiene además muchas causas posibles (hemorragias, tumores, accidentes cerebrovasculares, fármacos, alcohol, infecciones, alteraciones del sueño o enfermedades del riñón y del hígado), y tampoco mide la inteligencia. Por todo ello el diagnóstico descansa en la valoración clínica y el EEG la apoya.
+Un EEG normal no descarta epilepsia: una proporción importante de personas con epilepsia tiene registros normales entre crisis, y repetir el estudio, usar sueño o prolongar el registro aumenta la posibilidad de detectar anomalías. A la inversa, una descarga de aspecto epileptiforme no equivale a epilepsia: puede aparecer en personas sanas, con mayor frecuencia en niños, y en quienes tienen otras lesiones cerebrales.
+
+Un EEG anormal tiene además muchas causas posibles (hemorragias, tumores, ictus, fármacos, alcohol, infecciones, enfermedades renales o hepáticas) y no mide la inteligencia. Leer como anormales las variantes normales o las fluctuaciones simples del ritmo de fondo es una causa frecuente de diagnóstico erróneo de epilepsia. El diagnóstico descansa, pues, en la valoración clínica, y el EEG la apoya.
 
 ## [considerations] Qué dice la evidencia
 
-El papel del EEG en la epilepsia se apoya en capítulos y revisiones de especialistas (Smith y Kennett, Epilepsy Society, 2015; Amin y Benbadis, 2019; Devinsky et al., 2018), no en ensayos que comparen estrategias. Hay acuerdo en que un registro normal no descarta epilepsia y en que un hallazgo epileptiforme aislado no la demuestra. El propio capítulo de la Epilepsy Society reconoce que las cifras de sensibilidad proceden de estudios con defectos metodológicos y que faltan datos de alta calidad.
+El papel del EEG en la epilepsia se apoya en una guía de práctica clínica sobre video-EEG (ILAE e IFCN, 2022), en revisiones narrativas (Hasan y Tatum, 2021; Amin y Benbadis, 2019; Devinsky et al., 2018), en una revisión sistemática sobre la reproducibilidad de la lectura (Brogger et al., 2026) y en un capítulo de la Epilepsy Society; no en ensayos que comparen estrategias. La guía reconoce que la evidencia de alto nivel es limitada. Hay acuerdo en que un registro normal no descarta epilepsia, en que un hallazgo epileptiforme aislado no la demuestra y en que el EEG no sustituye al juicio clínico.
 
-Las indicaciones fuera de la epilepsia (confusión, encefalitis, demencias de evolución rápida, desmayos) provienen de páginas divulgativas (MedlinePlus, NHS, Cleveland Clinic) que las enumeran sin graduar su evidencia, de modo que su peso real no está establecido aquí.
+Los usos fuera de la epilepsia descansan en páginas divulgativas (MedlinePlus, NHS, Cleveland Clinic) que no gradúan su evidencia; solo la encefalitis anti-NMDA cuenta con una revisión sistemática, basada en casos publicados y expuesta a sesgo de publicación.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Epilepsia y convulsiones: principal motivo de solicitud del estudio.
-• Síncope: pérdida transitoria de conciencia que puede confundirse con una crisis epiléptica.
+• Epilepsia y convulsiones: principal motivo de solicitud.
+• Síncope: pérdida transitoria de conciencia que puede confundirse con una crisis.
+• Crisis no epilépticas psicógenas: simulan crisis; el video-EEG las distingue.
+• Encefalitis: inflamación cerebral que el EEG ayuda a valorar.
 
 ## [references]
 
@@ -68,5 +73,9 @@ Las indicaciones fuera de la epilepsia (confusión, encefalitis, demencias de ev
 - Electroencephalogram (EEG) (NHS) | https://www.nhs.uk/conditions/electroencephalogram/ | NHS
 - Electroencephalogram (EEG) (Cleveland Clinic) | https://my.clevelandclinic.org/health/diagnostics/9656-electroencephalogram-eeg | Cleveland Clinic
 - Smith y Kennett, 2015. Neurophysiological investigation of epilepsy (Epilepsy Society, capítulo 20; sin DOI ni PMID) | https://epilepsysociety.org.uk/sites/default/files/2020-08/Chapter20SmithKennett2015.pdf | Epilepsy Society
-- Amin y Benbadis, 2019. The Role of EEG in the Erroneous Diagnosis of Epilepsy. PMID 31274692, DOI 10.1097/WNP.0000000000000572 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:31504429%20OR%20EXT_ID:33984268%20OR%20EXT_ID:35350465%20OR%20EXT_ID:33640070%20OR%20EXT_ID:38743805%20OR%20EXT_ID:34061140%20OR%20EXT_ID:31568151%20OR%20EXT_ID:31274692&format=json&pageSize=20 | J Clin Neurophysiol (Europe PMC)
-- Devinsky et al., 2018. Epilepsy. PMID 29722352, DOI 10.1038/nrdp.2018.24 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:41093604%20OR%20EXT_ID:41218835%20OR%20EXT_ID:29722352%20OR%20EXT_ID:40361853%20OR%20EXT_ID:35442602%20OR%20EXT_ID:37517924&format=json&pageSize=20 | Nat Rev Dis Primers (Europe PMC)
+- Amin y Benbadis, 2019. The Role of EEG in the Erroneous Diagnosis of Epilepsy. PMID 31274692, DOI 10.1097/WNP.0000000000000572 | https://doi.org/10.1097/WNP.0000000000000572 | J Clin Neurophysiol
+- Devinsky et al., 2018. Epilepsy. PMID 29722352, DOI 10.1038/nrdp.2018.24 | https://doi.org/10.1038/nrdp.2018.24 | Nat Rev Dis Primers
+- Tatum et al., 2022. Minimum standards for inpatient long-term video-EEG monitoring: a clinical practice guideline of the ILAE and IFCN. PMID 34955428, DOI 10.1016/j.clinph.2021.07.016 | https://doi.org/10.1016/j.clinph.2021.07.016 | Clin Neurophysiol
+- Hasan y Tatum, 2021. When should we obtain a routine EEG while managing people with epilepsy? PMID 34041475, DOI 10.1016/j.ebr.2021.100454 | https://doi.org/10.1016/j.ebr.2021.100454 | Epilepsy Behav Rep
+- Brogger et al., 2026. Interictal epileptiform discharges on scalp EEG: reproducibility of visual interpretation, a systematic review. PMID 42789278, DOI 10.1002/epi.70502 | https://doi.org/10.1002/epi.70502 | Epilepsia
+- Gillinder et al., 2019. EEG findings in NMDA encephalitis: a systematic review. PMID 30597400, DOI 10.1016/j.seizure.2018.12.015 | https://doi.org/10.1016/j.seizure.2018.12.015 | Seizure

@@ -8,7 +8,7 @@ import { page, processDetail, processSummary } from '../portal.fixture';
 import { ProcessDetailPage } from './process-detail-page';
 import { ProcessesPage } from './processes-page';
 
-const LISTA = '/superadmin/portal/procesos';
+const LISTA = '/superadmin/portal/processes';
 
 describe('ProcessesPage y ProcessDetailPage', () => {
   let harness: RouterTestingHarness;
@@ -20,8 +20,8 @@ describe('ProcessesPage y ProcessDetailPage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([
-          { path: 'superadmin/portal/procesos', component: ProcessesPage },
-          { path: 'superadmin/portal/procesos/:code', component: ProcessDetailPage },
+          { path: 'superadmin/portal/processes', component: ProcessesPage },
+          { path: 'superadmin/portal/processes/:code', component: ProcessDetailPage },
         ]),
       ],
     });
@@ -59,8 +59,8 @@ describe('ProcessesPage y ProcessDetailPage', () => {
     const ficha = documento().querySelector('[data-testid="portal-process-detail"]')!;
     expect(ficha.textContent).toContain('Ofrece y reserva cupos de atención.');
     const enlaces = [...ficha.querySelectorAll('a')].map((a) => a.getAttribute('href'));
-    expect(enlaces).toContain('/superadmin/portal/sistemas/flujos/diagrama?flujo=scheduling');
-    expect(enlaces).toContain('/superadmin/portal/sistemas/operaciones?flujo=scheduling');
+    expect(enlaces).toContain('/superadmin/portal/systems/flows/diagram?flujo=scheduling');
+    expect(enlaces).toContain('/superadmin/portal/systems/operations?flujo=scheduling');
   });
 
   it('`?vista=etapas` abre las etapas con sus operaciones y las tablas que tocan', async () => {
@@ -71,7 +71,7 @@ describe('ProcessesPage y ProcessDetailPage', () => {
     expect(etapas.textContent).toContain('Ofrecer cupos');
     expect(etapas.textContent).toContain('Crea un cupo');
     const tabla = [...etapas.querySelectorAll('a')].find((a) => a.textContent?.includes('scheduling.slots'))!;
-    expect(tabla.getAttribute('href')).toBe('/superadmin/portal/catalogo/tablas/scheduling/slots');
+    expect(tabla.getAttribute('href')).toBe('/superadmin/portal/catalog/tables/scheduling/slots');
   });
 
   it('`?vista=estados` marca los estados iniciales y finales', async () => {

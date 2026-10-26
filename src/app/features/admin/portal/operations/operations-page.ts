@@ -39,7 +39,7 @@ import { OPERATION_FILTER_KEYS, operationQuery } from '../support/operation-quer
 import { hasAny, queryFilters, queryParamsSignal } from '../support/route-query';
 
 const PAGE_SIZE = 25;
-const LIST_ROUTE = portalUrl('sistemas/operaciones');
+const LIST_ROUTE = portalUrl('systems/operations');
 
 /**
  * Operaciones: todos los endpoints de la API que el inventario detectó, con su

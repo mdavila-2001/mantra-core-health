@@ -4,61 +4,65 @@ slug: escabiosis
 
 ## [definition] Introducción
 
-La escabiosis, o sarna, es una infestación de la piel por el ácaro Sarcoptes scabiei variedad hominis, parásito microscópico exclusivo del ser humano. La hembra excava túneles en la capa superficial de la epidermis y deposita allí los huevos; la reacción de la piel provoca picor intenso, de predominio nocturno, y una erupción papulosa.
+La escabiosis, o sarna, es una infestación de la piel por el ácaro Sarcoptes scabiei variedad hominis, parásito microscópico propio del ser humano. La hembra excava túneles en la epidermis y deposita allí los huevos; la reacción de la piel causa picor intenso, de predominio nocturno, y una erupción papulosa.
 
-Se distingue la forma común de la sarna costrosa, que afecta sobre todo a personas inmunodeprimidas, alberga un número enorme de ácaros y es muy contagiosa. «Ácaros», que figuraba como sinónimo, designa un grupo amplio de organismos y no la enfermedad.
+Se distingue la forma común de la sarna costrosa, que aparece sobre todo en personas con defensas disminuidas, alberga un número enorme de ácaros y es muy contagiosa. «Ácaros» no es sinónimo: designa un grupo amplio de organismos, no la enfermedad.
 
 ## [causes] Causas y transmisión
 
-• Contacto estrecho y prolongado de piel con piel con una persona infestada, incluido el contacto sexual.
-• Ropa, toallas o sábanas recién usadas por una persona infestada: es una vía poco frecuente en la sarna común, pero más verosímil en la costrosa.
-• Convivencia en espacios hacinados o instituciones, donde se producen brotes.
-• Contagio antes de los síntomas: tras la primera infestación el picor y la erupción tardan varias semanas en aparecer, y en ese periodo la persona ya puede transmitir los ácaros.
+• Contacto estrecho y prolongado de piel con piel con una persona infestada; la guía europea la considera también una infección de transmisión sexual.
+• Ropa, toallas o sábanas recién usadas por una persona infestada: vía poco frecuente en la sarna común, más verosímil en la costrosa.
+• Convivencia en espacios hacinados o instituciones, donde hay brotes.
+• Contagio antes de los síntomas: el picor y la erupción tardan varias semanas en aparecer tras la primera infestación, y en ese periodo ya se transmiten los ácaros.
 
 Los animales domésticos no transmiten la escabiosis humana.
 
 ## [symptoms] Síntomas y signos
 
-El síntoma principal es el prurito intenso, de predominio nocturno. La erupción suele ser simétrica y se localiza en los espacios entre los dedos, las muñecas, los codos, las axilas, la cintura, las nalgas y los genitales; en adultos la cabeza y el cuello suelen respetarse. Los surcos, trayectos finos y sinuosos de pocos milímetros, son el signo más característico, aunque pueden ser sutiles. En lactantes la erupción puede afectar a la cara, el cuero cabelludo, las palmas y las plantas. Pueden aparecer nódulos pruriginosos que persisten meses, y el rascado abre la puerta a infecciones bacterianas.
+El síntoma principal es el prurito intenso, de predominio nocturno. La erupción suele ser simétrica y se localiza entre los dedos, en muñecas, codos, axilas, cintura, nalgas y genitales; en adultos la cabeza y el cuello suelen respetarse. Los surcos, trayectos finos y sinuosos, son el signo más característico, aunque pueden ser sutiles. En lactantes puede afectarse la cara y las plantas. En la sarna costrosa el picor puede ser leve o faltar, lo que retrasa el diagnóstico.
 
 ## [diagnosis] Diagnóstico
 
-Con frecuencia es clínico, a partir del picor, la distribución de las lesiones y los antecedentes de contacto. Se confirma al identificar el ácaro, sus huevos o sus excrementos mediante microscopía de un raspado cutáneo o con dermatoscopia, que muestra un patrón característico. Un resultado negativo no descarta la enfermedad, porque el número de ácaros en la sarna común es bajo. El diagnóstico clínico tiene baja especificidad, ya que la sarna se confunde con eccema, dermatitis de contacto, picaduras de insectos, impétigo u otras erupciones; además, el uso previo de corticoides tópicos puede modificar el aspecto de las lesiones.
+Con frecuencia es clínico, a partir del picor, la distribución de las lesiones y los antecedentes de contacto. Se confirma al identificar el ácaro, sus huevos o sus excrementos mediante microscopía de un raspado cutáneo o con dermatoscopia. Un resultado negativo no descarta la enfermedad, porque en la sarna común hay pocos ácaros. El diagnóstico clínico tiene baja especificidad: se confunde con eccema, dermatitis de contacto, picaduras, impétigo u otras erupciones, y los corticoides tópicos previos pueden modificar las lesiones. Los criterios de 2020 distinguen tres niveles de certeza: confirmado, clínico y sospechado.
 
 ## [treatment_overview] Tratamiento
 
-Los tratamientos son fármacos que matan al ácaro, en crema, loción o por vía oral, prescritos por un profesional; como no eliminan todos los huevos, a veces se repiten, y en lactantes y embarazadas la elección requiere criterio médico. Deben tratarse a la vez convivientes y contactos cercanos aunque no tengan síntomas, y lavar a temperatura alta o aislar varios días la ropa, las toallas y la ropa de cama recientes. El picor puede persistir semanas tras un tratamiento correcto sin indicar fracaso; se emplean medidas sintomáticas y se valora repetir el tratamiento si el picor persiste o aparecen surcos o lesiones nuevas. Las sobreinfecciones bacterianas requieren antisépticos o antibióticos. En comunidades con alta prevalencia, la OMS apoya el tratamiento masivo con ivermectina.
+Los tratamientos son fármacos que matan al ácaro, en crema, loción o por vía oral, prescritos por un profesional. La guía europea recomienda como opciones principales la permetrina tópica, la ivermectina oral y el benzoato de bencilo; en la sarna costrosa se combinan un escabicida tópico y ivermectina oral. A veces se repite el tratamiento, y en lactantes y embarazadas la elección requiere criterio médico. Se trata a la vez a convivientes y contactos cercanos aunque no tengan síntomas, y se lava a temperatura alta o se aísla varios días la ropa y la ropa de cama recientes. El picor puede persistir semanas tras un tratamiento correcto sin indicar fracaso; solo surcos o lesiones nuevas hacen valorar repetirlo. En comunidades con alta prevalencia, la OMS apoya el tratamiento masivo con ivermectina.
 
 ## [complications] Complicaciones
 
-La principal es la sobreinfección bacteriana por estreptococos y estafilococos, que da lugar a impétigo, abscesos y, en casos graves, infecciones invasivas. La OMS vincula además la sarna con la glomerulonefritis posestreptocócica y, posiblemente, con la fiebre reumática. El picor intenso afecta al sueño y a la salud mental, y la sarna costrosa mantiene la transmisión si el diagnóstico se retrasa.
+La principal es la sobreinfección bacteriana por estreptococos y estafilococos: impétigo, abscesos y, en casos graves, infecciones invasivas. La OMS vincula además la sarna con la glomerulonefritis posestreptocócica y, posiblemente, con la fiebre reumática. La sarna costrosa mantiene la transmisión si se retrasa el diagnóstico y puede ser mortal, a menudo por bacteriemia secundaria.
 
 ## [prevention] Prevención y control
 
-El control de brotes exige tratar a todos los contactos a la vez, evitar el contacto de piel con piel hasta terminar el tratamiento y avisar a quienes tuvieron contacto estrecho en los dos meses previos. Los ácaros sobreviven pocos días lejos de la piel humana.
+El control de brotes exige tratar a todos los contactos a la vez, evitar el contacto de piel con piel hasta terminar el tratamiento y avisar a quienes tuvieron contacto estrecho en los dos meses previos.
 
 ## [when_to_seek_care] Cuándo consultar
 
-Conviene consultar ante un picor intenso y persistente, sobre todo nocturno, si hay otros convivientes con síntomas parecidos, si aparecen costras gruesas, pus o fiebre, o si el picor no cede o surgen lesiones nuevas tras el tratamiento.
+Conviene consultar ante picor intenso y persistente, sobre todo nocturno, con convivientes sintomáticos, costras gruesas, pus o fiebre, o lesiones nuevas tras el tratamiento.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Impétigo: infección bacteriana de la piel que complica con frecuencia el rascado.
-• Dermatitis atópica y otros eccemas: se confunden con la sarna y pueden enmascararla.
-• Sarna costrosa: forma grave y muy contagiosa en personas inmunodeprimidas.
+• Impétigo: infección bacteriana que complica con frecuencia el rascado.
+• Dermatitis atópica y otros eccemas: se confunden con la sarna.
+• Sarna costrosa: forma grave y muy contagiosa; entre los factores asociados figuran los corticoides y el VIH, y una minoría de casos ocurre sin inmunodepresión conocida.
 • Picor posescabiótico: persistencia del prurito tras eliminar el ácaro.
 
 ## [considerations] Qué dice la evidencia
 
-Los criterios de consenso de la International Alliance for the Control of Scabies (Engelman y cols., 2020) proceden de un estudio Delphi modificado con 34 expertos, combinado con una revisión exhaustiva de la literatura y la consulta a un grupo más amplio. Distinguen tres niveles de certeza (confirmada, clínica y sospechada) y están pensados para la sarna común, no para la costrosa ni para valorar la respuesta al tratamiento. La revisión de Walton y Currie (2007) detalla por qué el diagnóstico es difícil: el raspado es específico pero poco sensible, el diagnóstico clínico es poco específico y la dermatoscopia carecía de grandes estudios de validación; al ser de 2007, no recoge avances posteriores.
+El cuadro clínico y el manejo se sostienen en guías de práctica clínica (europea de 2017; británica de 2025), en los criterios de consenso de Engelman y cols. (2020, Delphi más revisión de la literatura) y en revisiones sistemáticas. Una revisión Cochrane (Rosumeck y cols., 2018; 15 ensayos) halló, con certeza baja, que ivermectina oral y permetrina tópica curan de forma parecida a las pocas semanas. Un metaanálisis de 147 estudios (Mbuagbaw y cols., 2024) asoció repetir el tratamiento con ivermectina con menos fracasos y observó que el fracaso aumentó con los años, lo que sugiere menor sensibilidad del ácaro, aunque ningún estudio evaluó la resistencia. Walton y Currie (2007) explican la dificultad diagnóstica, pero son previos a los criterios de 2020.
 
-Lo referente al tratamiento, la transmisión por objetos y el control de brotes descansa en fichas de los CDC, la OMS y MedlinePlus, y en la página clínica de DermNet, que son fuentes informativas y no ensayos. El papel exacto del tratamiento masivo con ivermectina en zonas de baja prevalencia se describe en la OMS como menos claro y necesitado de más investigación.
+Hay consenso en el cuadro clínico, el tratamiento simultáneo de contactos y la vigilancia de la sobreinfección. Es más discutido el tratamiento masivo: Lake y cols. (2022) hallaron que reduce sarna e impétigo, con heterogeneidad muy alta, poblaciones pequeñas y durabilidad no establecida. Bergamin y cols. (2024) reúnen informes de casos de sarna costrosa, por lo que describen asociaciones, no riesgos. Las medidas domésticas descansan en fuentes informativas (CDC, OMS), no en ensayos.
 
 ## [references]
 
+- Salavastru CM et al., 2017. European guideline for the management of scabies. PMID 28639722. DOI 10.1111/jdv.14351 | https://europepmc.org/article/MED/28639722 | J Eur Acad Dermatol Venereol
+- Morris G et al., 2025. British Association for Sexual Health and HIV National Guideline on the Management of Scabies in adults 2025. PMID 40103364. DOI 10.1177/09564624251321264 | https://europepmc.org/article/MED/40103364 | Int J STD AIDS
+- Rosumeck S, Nast A, Dressler C, 2018. Ivermectin and permethrin for treating scabies. PMID 29608022. DOI 10.1002/14651858.CD012994 | https://europepmc.org/article/MED/29608022 | Cochrane Database of Systematic Reviews
+- Mbuagbaw L et al., 2024. Failure of scabies treatment: a systematic review and meta-analysis. PMID 37625798. DOI 10.1093/bjd/ljad308 | https://europepmc.org/article/MED/37625798 | British Journal of Dermatology
+- Lake SJ et al., 2022. Mass Drug Administration for the Control of Scabies: A Systematic Review and Meta-analysis. PMID 35088849. DOI 10.1093/cid/ciac042 | https://europepmc.org/article/MED/35088849 | Clinical Infectious Diseases
+- Bergamin G et al., 2024. A systematic review of immunosuppressive risk factors and comorbidities associated with the development of crusted scabies. PMID 38570134. DOI 10.1016/j.ijid.2024.107036 | https://europepmc.org/article/MED/38570134 | Int J Infect Dis
 - Engelman D et al., 2020. The 2020 International Alliance for the Control of Scabies Consensus Criteria for the Diagnosis of Scabies. PMID 32034956. DOI 10.1111/bjd.18943 | https://pmc.ncbi.nlm.nih.gov/articles/PMC7687112/ | British Journal of Dermatology
 - Walton SF, Currie BJ, 2007. Problems in Diagnosing Scabies, a Global Disease in Human and Animal Populations. PMID 17428886. DOI 10.1128/CMR.00042-06 | https://pmc.ncbi.nlm.nih.gov/articles/PMC1865595/ | Clinical Microbiology Reviews
 - About Scabies | https://www.cdc.gov/scabies/about/index.html | CDC
 - Sarna (nota descriptiva) | https://www.who.int/es/news-room/fact-sheets/detail/scabies | OMS
-- Sarna (MedlinePlus) | https://medlineplus.gov/spanish/scabies.html | MedlinePlus
-- Scabies | https://dermnetnz.org/topics/scabies | DermNet

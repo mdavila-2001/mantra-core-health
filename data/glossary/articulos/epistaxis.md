@@ -4,67 +4,75 @@ slug: epistaxis
 
 ## [definition] Introducción
 
-La epistaxis es la hemorragia que se origina en la mucosa de las fosas nasales y que sale por los orificios de la nariz o, cuando el sangrado es profundo, se desliza hacia la garganta. En el lenguaje cotidiano se llama sangrado de nariz o hemorragia nasal. Es muy común: una gran parte de las personas la sufre al menos una vez en la vida y pocas necesitan atención médica, porque la mayoría de los episodios es breve y se detiene sola o con medidas sencillas.
+La epistaxis es la hemorragia que se origina en la mucosa de las fosas nasales y que sale por los orificios de la nariz o, cuando el sangrado es profundo, se desliza hacia la garganta. En el lenguaje cotidiano se llama sangrado de nariz o hemorragia nasal. Es muy común: la guía de la AAO-HNSF estima que al menos el 60 % de la población estadounidense la sufre alguna vez, aunque casi todos los episodios ceden solos o con medidas sencillas.
 
-La epistaxis no es una enfermedad en sí misma, sino un signo, por eso su código (R04.0) pertenece al grupo de síntomas y signos. Puede ser un hecho trivial, como consecuencia de un rascado, o la manifestación de un problema local o general que conviene identificar cuando el sangrado es frecuente, intenso o difícil de controlar.
+No es una enfermedad sino un signo, y por eso su código (R04.0) pertenece al grupo de síntomas y signos. Puede ser trivial o delatar un problema local o general que conviene identificar si el sangrado es frecuente, intenso o difícil de controlar.
 
 ## [classification] Clasificación
 
 Se distingue según el origen.
 
-• Anterior: nace en el área de Kiesselbach, en la parte delantera del tabique, sale por la nariz y suele ceder con presión sostenida; es la forma habitual en niños y adultos jóvenes.
-• Posterior: procede de ramas profundas de la arteria esfenopalatina y fluye hacia la garganta, por lo que puede tragarse y es difícil de cuantificar; es menos frecuente, más aparatosa y más habitual en edades avanzadas.
+• Anterior: nace en el área de Kiesselbach, en la parte delantera del tabique, y suele ceder con presión sostenida; es la forma habitual en niños y adultos jóvenes.
+• Posterior: procede de ramas profundas de la arteria esfenopalatina y fluye hacia la garganta, por lo que es difícil de cuantificar; es menos frecuente, más aparatosa y más habitual en edades avanzadas.
 
 ## [causes] Causas
 
-• Locales: hurgarse la nariz (la más frecuente), aire seco, infecciones respiratorias, alergias nasales, golpes, desviación del tabique, cuerpos extraños en niños y sprays o fármacos inhalados.
+• Locales: hurgarse la nariz (la más frecuente), aire seco, infecciones respiratorias, alergias nasales, golpes, desviación del tabique, cuerpos extraños en niños y fármacos inhalados.
 • Generales: trastornos de la coagulación, plaquetas bajas y anticoagulantes o antiagregantes, que agravan cualquier sangrado.
 • Telangiectasia hemorrágica hereditaria (enfermedad de Rendu-Osler-Weber): malformaciones vasculares de la mucosa con sangrados recurrentes.
 • Tumores nasales o de los senos paranasales, poco frecuentes.
 
-La relación con la hipertensión arterial es matizada: según una fuente no causa epistaxis pero dificulta su control, y otra la menciona como posible hallazgo en quien sangra de forma repetida.
+La hipertensión arterial es un caso aparte: un metaanálisis y un estudio de cohortes coreano la asocian con más epistaxis y más atención hospitalaria, pero advierten de que la asociación no demuestra causalidad. Se la considera un factor que favorece el sangrado, más que una causa establecida.
 
 ## [symptoms] Cuadro clínico
 
-El sangrado puede ser un goteo o un flujo continuo, por un orificio o por ambos. Cuando es posterior, la persona puede notar sangre en la garganta, tragarla y llegar a vomitarla. Si la pérdida es importante pueden aparecer debilidad o mareo.
+El sangrado puede ser goteo o flujo continuo, por uno o ambos orificios. Si es posterior, se nota sangre en la garganta, que puede tragarse y provocar vómito. Una pérdida importante causa debilidad o mareo.
 
 ## [diagnosis] Evaluación
 
-En la mayoría de los casos bastan la historia y la exploración de la nariz para localizar el punto sangrante. Si el sangrado es recurrente o abundante, se pregunta por medicamentos, antecedentes familiares, traumatismos y trastornos de la coagulación, y pueden pedirse análisis, como hemograma o pruebas de coagulación, cuando el contexto lo sugiere; las fuentes consultadas no fijan un conjunto obligatorio. Si no cede o se sospecha un tumor, puede ser necesaria la valoración otorrinolaringológica.
+La guía recomienda distinguir al inicio a quien necesita atención inmediata y, retirados los coágulos, buscar el punto sangrante con rinoscopia anterior. Se indaga sobre trastornos hemorrágicos, anticoagulantes, antiagregantes y consumo de sustancias por vía nasal. Si el sangrado reaparece pese al tratamiento, o es siempre unilateral, se aconseja una endoscopia nasal para localizar el origen y descartar otra lesión.
+
+Los análisis, como el hemograma o las pruebas de coagulación, se piden cuando el contexto lo sugiere; las fuentes no fijan un conjunto obligatorio. Ante sangrados repetidos por ambos lados o antecedentes familiares, se buscan telangiectasias nasales u orales (telangiectasia hemorrágica hereditaria).
 
 ## [treatment_overview] Tratamiento y primeros auxilios
 
-La medida inicial es sentarse con el cuerpo inclinado hacia delante, respirar por la boca y comprimir firmemente la parte blanda de la nariz de manera sostenida durante varios minutos; evitar tumbarse reduce el riesgo de tragar sangre. El frío sobre el puente nasal se usa a menudo, aunque la evidencia que lo respalda es débil.
+La medida inicial es sentarse inclinado hacia delante, respirar por la boca y comprimir firmemente la parte blanda de la nariz de forma sostenida; no tumbarse reduce el riesgo de tragar sangre. El frío sobre el puente nasal se usa a menudo, con evidencia débil.
 
-Si no cede, el profesional puede cauterizar el punto sangrante, con una sustancia química o con otros métodos, o colocar un taponamiento nasal, a veces con ingreso hospitalario. Se pueden indicar cremas o geles para evitar las costras. El tratamiento depende de la causa y puede incluir el control de la presión arterial cuando está elevada.
+Si no cede, el profesional puede aplicar un vasoconstrictor tópico, cauterizar el punto sangrante o colocar un taponamiento nasal, reabsorbible en quien tiene un posible trastorno hemorrágico o toma anticoagulantes o antiagregantes. Cuando fracasan ambos, se valora la ligadura quirúrgica de la arteria o la embolización endovascular.
+
+En quien toma anticoagulantes o antiagregantes, la guía indica aplicar primero los tratamientos habituales, sin suspender ni revertir el fármaco de entrada salvo sangrado que ponga la vida en peligro. El ácido tranexámico, que frena la disolución del coágulo, se ha estudiado como complemento.
 
 ## [prevention] Prevención
 
-Mantener húmeda la mucosa con suero salino o geles acuosos, evitar hurgarse y sonarse con fuerza y, durante el día siguiente a un episodio, evitar esfuerzos intensos, bebidas calientes y alcohol.
+Mantener húmeda la mucosa con suero salino o geles acuosos, evitar hurgarse y sonarse con fuerza y, el día siguiente a un episodio, evitar esfuerzos intensos, bebidas calientes y alcohol.
 
 ## [when_to_seek_care] Cuándo consultar
 
-Requiere urgencias el sangrado prolongado o excesivo, el posterior a un golpe en la cabeza, el que ocurre con anticoagulantes o el acompañado de mareo, debilidad, dificultad para respirar o vómito con sangre. Conviene consultar si es frecuente, si hay posible fractura nasal, si ocurre en un niño muy pequeño o si hay síntomas de anemia.
+Requiere urgencias el sangrado prolongado o excesivo, el posterior a un golpe en la cabeza, el que ocurre con anticoagulantes o el acompañado de mareo, debilidad, dificultad para respirar o vómito con sangre. Conviene consultar si es frecuente, si hay posible fractura nasal, en niños muy pequeños o con síntomas de anemia.
 
 ## [associated_conditions] Conceptos relacionados
 
-• Hipertensión arterial: puede dificultar la hemostasia.
-• Rinitis alérgica: la inflamación crónica de la mucosa favorece el sangrado.
-• Anticoagulantes (warfarina): aumentan el riesgo y la duración del sangrado.
-• Telangiectasia hemorrágica hereditaria y trastornos de la coagulación: causas de sangrados recurrentes que requieren estudio.
-• Hemograma y tiempo de protrombina: análisis posibles en sangrados recurrentes.
+• Hipertensión arterial: asociada a más epistaxis, sin causalidad demostrada.
+• Rinitis alérgica: la inflamación de la mucosa favorece el sangrado.
+• Anticoagulantes (warfarina) y antiagregantes: aumentan el riesgo y la duración del sangrado.
+• Telangiectasia hemorrágica hereditaria y trastornos de la coagulación: causas de sangrados recurrentes.
+• Taponamiento nasal y cauterización: procedimientos cuando la presión no basta.
 
 ## [considerations] Qué dice la evidencia
 
-La guía de práctica clínica de la AAO-HNSF (Tunkel y cols., 2020) es la referencia más sólida: formula 14 declaraciones de acción que respaldan la compresión firme como primera medida, el taponamiento si esta falla (con material reabsorbible en personas con trastornos de la coagulación o anticoagulantes), la endoscopia y la cauterización dirigida en el sangrado recurrente o difícil, y el registro de los factores de riesgo, incluido el cribado de la telangiectasia hemorrágica hereditaria. La revisión de Pope y Hobbs (2005) es narrativa y, según su resumen, propone que combinar las técnicas endoscópicas con planes escalonados debería reducir las complicaciones y los ingresos.
+La guía de la AAO-HNSF (Tunkel y cols., 2020) es la referencia más sólida: 14 declaraciones de acción que respaldan la compresión firme como primera medida, el taponamiento si falla, la endoscopia y la cauterización dirigida en el sangrado recurrente, la ligadura o embolización si lo anterior fracasa y la búsqueda de telangiectasia hemorrágica hereditaria. El consenso británico (2017) reconoce la escasez de pruebas de alto nivel. Iqbal y cols. (2017) indican que el taponamiento rinde más en manos entrenadas y que no hay pruebas firmes para los antibióticos profilácticos; Pope y Hobbs (2005), narrativa, es sobre todo histórica.
 
-Descansan solo en fuentes divulgativas o en diccionarios médicos la distinción detallada entre sangrado anterior y posterior y la utilidad del frío local, que el NHS califica de evidencia débil. Es discutida la hipertensión: una fuente afirma que no causa epistaxis pero dificulta su control, y otra la menciona como posible hallazgo en quien sangra de forma repetida. Tampoco hay en las fuentes consultadas un conjunto de análisis de sangre obligatorio para todos los casos.
+La revisión Cochrane sobre ácido tranexámico (Joseph y cols., 2018) reunió seis ensayos en adultos: con evidencia moderada redujo las recaídas, pero la aplicación tópica única tiene datos de baja calidad y los efectos adversos graves no se midieron sistemáticamente. La hipertensión sigue discutida: Min y cols. (2017) y Byun y cols. (2020) hallan asociación en estudios observacionales heterogéneos. Solo fuentes divulgativas respaldan la distinción anterior/posterior y el frío local, de evidencia débil según el NHS.
 
 ## [references]
 
-- Tunkel DE et al., 2020. Clinical Practice Guideline: Nosebleed (Epistaxis). PMID 31910111. DOI 10.1177/0194599819890327 | https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID%3A31910111%20AND%20SRC%3AMED&format=json&resultType=core | Otolaryngology-Head and Neck Surgery (Europe PMC)
+- Tunkel DE et al., 2020. Clinical Practice Guideline: Nosebleed (Epistaxis). PMID 31910111. DOI 10.1177/0194599819890327 | https://europepmc.org/article/MED/31910111 | Otolaryngology-Head and Neck Surgery
+- National ENT Trainee Research Network, 2017. The British Rhinological Society multidisciplinary consensus recommendations on the hospital management of epistaxis. PMID 29280691. DOI 10.1017/S0022215117002018 | https://europepmc.org/article/MED/29280691 | Journal of Laryngology and Otology
+- Iqbal IZ et al., 2017. Intranasal packs and haemostatic agents for the management of adult epistaxis: systematic review. PMID 29280695. DOI 10.1017/S0022215117002055 | https://europepmc.org/article/MED/29280695 | Journal of Laryngology and Otology
+- Joseph J et al., 2018. Tranexamic acid for patients with nasal haemorrhage (epistaxis). PMID 30596479. DOI 10.1002/14651858.CD004328.pub3 | https://europepmc.org/article/MED/30596479 | Cochrane Database of Systematic Reviews
+- Min HJ et al., 2017. Association between Hypertension and Epistaxis: Systematic Review and Meta-analysis. PMID 28742425. DOI 10.1177/0194599817721445 | https://europepmc.org/article/MED/28742425 | Otolaryngology-Head and Neck Surgery
+- Byun H et al., 2020. Association of Hypertension With the Risk and Severity of Epistaxis. PMID 32910190. DOI 10.1001/jamaoto.2020.2906 | https://europepmc.org/article/MED/32910190 | JAMA Otolaryngology-Head and Neck Surgery
 - Pope L, Hobbs C, 2005. Epistaxis: an update on current management. PMID 15879044. DOI 10.1136/pgmj.2004.025007 | https://pmc.ncbi.nlm.nih.gov/articles/PMC1743269/ | Postgraduate Medical Journal
 - Hemorragia nasal (MedlinePlus, enciclopedia médica) | https://medlineplus.gov/spanish/ency/article/003106.htm | MedlinePlus
 - Epistaxis (Diccionario médico) | https://www.cun.es/diccionario-medico/terminos/epistaxis | Clínica Universidad de Navarra
 - Nosebleeds | https://www.nhs.uk/conditions/nosebleed/ | NHS
-- AAO-HNSF: ficha informativa de la guía sobre epistaxis | https://www.entnet.org/resource/aao-hnsf-updated-cpg-nosebleed-press-release-fact-sheet | AAO-HNSF
