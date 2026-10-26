@@ -88,7 +88,7 @@
           </p>
         } @else if (search().length >= 2) {
           <ul class="atlas3d__resultados" aria-label="Resultados de la búsqueda">
-            @for (entrada of results(); track entrada[0]) {
+            @for (entrada of resultsShown(); track entrada[0]) {
               <li>
                 <button type="button" class="atlas3d__opcion" (click)="openStructure(entrada[0])">
                   {{ displayName(entrada[1], entrada[2], entrada[0]) }}
@@ -101,6 +101,17 @@
               <li class="atlas3d__vacio">No encontramos estructuras con ese nombre. Pruebe con el nombre en inglés.</li>
             }
           </ul>
+          @if (results().length > pageSize.results) {
+            <app-pagination
+              class="atlas3d__paginas"
+              [totalItems]="results().length"
+              [(page)]="resultsPage"
+              [pageSize]="pageSize.results"
+              [showPageSize]="false"
+              [showPageJump]="false"
+              data-testid="atlas3d-resultados-paginas"
+            />
+          }
         }
 
         @if (structureState(); as estado) {
@@ -212,25 +223,43 @@
                 <app-tab label="Relaciones">
                   @if (relationGroups().length === 0) {
                     <p class="atlas3d__vacio">La ontología no declara relaciones para esta estructura.</p>
+                  } @else {
+                    <p class="atlas3d__resumen" data-testid="atlas3d-relaciones-total">
+                      {{ relationRows() }} relaci{{ relationRows() === 1 ? 'ón' : 'ones' }} en {{ relationGroups().length }}
+                      {{ relationGroups().length === 1 ? 'tipo' : 'tipos' }}.
+                    </p>
                   }
-                  @for (grupo of relationGroups(); track grupo.name) {
-                    <h3 class="atlas3d__subtitulo">{{ grupo.name }}</h3>
-                    <ul class="atlas3d__lista" data-testid="atlas3d-relacionadas">
-                      @for (item of grupo.items; track item.id) {
-                        <li>
-                          @if (item.inCatalog) {
-                            <button type="button" class="atlas3d__opcion" (click)="openStructure(item.id)">{{ item.label }}</button>
-                          } @else {
-                            <span>{{ item.label }}</span>
-                          }
-                          @if (item.highlighted) {
-                            <span class="atlas3d__con-pieza">resaltada en el modelo</span>
-                          } @else if (item.hasMesh) {
-                            <span class="atlas3d__sin-pieza">tiene pieza en una capa apagada</span>
-                          }
-                        </li>
-                      }
-                    </ul>
+                  @for (grupo of relationGroupsShown(); track grupo.name) {
+                    <section class="atlas3d__grupo" [attr.aria-label]="grupo.name">
+                      <h3 class="atlas3d__grupo-nombre">{{ grupo.name }}</h3>
+                      <ul class="atlas3d__relaciones" data-testid="atlas3d-relacionadas">
+                        @for (item of grupo.items; track item.id) {
+                          <li class="atlas3d__relacion">
+                            @if (item.inCatalog) {
+                              <button type="button" class="atlas3d__opcion" (click)="openStructure(item.id)">{{ item.label }}</button>
+                            } @else {
+                              <span class="atlas3d__relacion-texto">{{ item.label }}</span>
+                            }
+                            @if (item.highlighted) {
+                              <span class="atlas3d__etiqueta atlas3d__etiqueta--viva">en el modelo</span>
+                            } @else if (item.hasMesh) {
+                              <span class="atlas3d__etiqueta">capa apagada</span>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    </section>
+                  }
+                  @if (relationRows() > pageSize.relations) {
+                    <app-pagination
+                      class="atlas3d__paginas"
+                      [totalItems]="relationRows()"
+                      [(page)]="relationsPage"
+                      [pageSize]="pageSize.relations"
+                      [showPageSize]="false"
+                      [showPageJump]="false"
+                      data-testid="atlas3d-relaciones-paginas"
+                    />
                   }
                   <p class="atlas3d__atribucion">
                     Sólo relaciones declaradas por UBERON (o la partonomía de BodyParts3D para las piezas sin cruce). Una
@@ -239,10 +268,26 @@
                 </app-tab>
 
                 <app-tab label="Fuentes">
+                  <h3 class="atlas3d__grupo-nombre">De dónde sale cada dato</h3>
+                  <dl class="atlas3d__procedencia" data-testid="atlas3d-procedencia">
+                    <div>
+                      <dt>Nombre, definición y relaciones</dt>
+                      <dd>UBERON ({{ meta.uberonRelease }}), CC-BY 3.0. El castellano es traducción automática sin revisar.</dd>
+                    </div>
+                    <div>
+                      <dt>Pieza 3D</dt>
+                      <dd>BodyParts3D, CC-BY-SA 2.1 JP, reducida para la web.</dd>
+                    </div>
+                    <div>
+                      <dt>Código TA2</dt>
+                      <dd>FIPAT (Terminologia Anatomica 2), cruzado por FMA mediante Wikidata.</dd>
+                    </div>
+                  </dl>
+
+                  <h3 class="atlas3d__grupo-nombre">Referencias de la definición</h3>
                   @if (ficha.definition && ficha.definition.refs.length > 0) {
-                    <h3 class="atlas3d__subtitulo">Referencias de la definición (declaradas por UBERON)</h3>
-                    <ul class="atlas3d__lista">
-                      @for (ref of ficha.definition.refs; track ref.kind + ref.value) {
+                    <ul class="atlas3d__referencias" data-testid="atlas3d-referencias">
+                      @for (ref of referencesShown(); track ref.kind + ref.value) {
                         <li>
                           @if (referenceUrl(ref); as url) {
                             <a [href]="url" target="_blank" rel="noopener noreferrer">{{ referenceLabel(ref) }}</a>
@@ -252,6 +297,21 @@
                         </li>
                       }
                     </ul>
+                    @if (ficha.definition.refs.length > pageSize.references) {
+                      <app-pagination
+                        class="atlas3d__paginas"
+                        [totalItems]="ficha.definition.refs.length"
+                        [(page)]="referencesPage"
+                        [pageSize]="pageSize.references"
+                        [showPageSize]="false"
+                        [showPageJump]="false"
+                        data-testid="atlas3d-referencias-paginas"
+                      />
+                    }
+                  } @else {
+                    <p class="atlas3d__vacio" data-testid="atlas3d-sin-referencias">
+                      UBERON no declara referencias para la definición de esta estructura.
+                    </p>
                   }
                   <h3 class="atlas3d__subtitulo">Imágenes</h3>
                   <p class="atlas3d__vacio">
@@ -277,7 +337,7 @@
           <details class="atlas3d__femeninas">
             <summary>Estructuras femeninas sin pieza 3D ({{ femaleOnly().length }})</summary>
             <ul class="atlas3d__lista atlas3d__lista--larga">
-              @for (entrada of femaleOnly(); track entrada[0]) {
+              @for (entrada of femaleShown(); track entrada[0]) {
                 <li>
                   <button type="button" class="atlas3d__opcion" (click)="openStructure(entrada[0])">
                     {{ displayName(entrada[1], entrada[2], entrada[0]) }}
@@ -285,6 +345,14 @@
                 </li>
               }
             </ul>
+            <app-pagination
+              class="atlas3d__paginas"
+              [totalItems]="femaleOnly().length"
+              [(page)]="femalePage"
+              [pageSize]="pageSize.female"
+              [showPageSize]="false"
+              [showPageJump]="false"
+            />
           </details>
         }
       </section>
