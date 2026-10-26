@@ -225,8 +225,10 @@ describe('PointerScene', () => {
     };
 
     beforeEach(async () => {
-      vi.useFakeTimers();
       await montar({ reducido: false, punteroFino: false }, TouchHost);
+      // Después de montar (con el reloj falso Angular no llega a estabilizarse)
+      // y solo los temporizadores: los cuadros siguen en la cola de arriba.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     });
 
     it('el toque publica el punto tocado y enciende el efecto', () => {
