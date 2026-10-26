@@ -303,7 +303,7 @@ const WRITTEN_PATIENTS: readonly PacienteSimulado[] = [
   patient('p-guzman', { nombre: 'Elena', segundo: 'María', apellidos: ['Guzmán', 'Arauz'], nacimiento: '1972-07-08', sexo: 'FEMALE', ocupacion: 'occupation:bo:COMERCIANTE', ciudad: 2 }, 4),
   patient('p-torrez', { nombre: 'Pablo', apellidos: ['Torrez', 'Nina'], nacimiento: '1995-12-25', sexo: 'MALE', ocupacion: 'occupation:bo:INGENIERO', aseguradora: 'Seguros Andina' }, 5),
   patient('p-vaca', { nombre: 'Lucía', apellidos: ['Vaca', 'Díez'], nacimiento: '2001-03-19', sexo: 'FEMALE', ocupacion: 'occupation:bo:ESTUDIANTE', verificado: false }, 6),
-  patient('p-condori', { nombre: 'Ricardo', apellidos: ['Condori', 'Apaza'], nacimiento: '1949-01-10', sexo: 'MALE', ocupacion: 'occupation:bo:AGRICULTOR', ciudad: 1 }, 7),
+  patient('p-condori', { nombre: 'Ricardo', apellidos: ['Condori', 'Apaza'], nacimiento: '1949-01-10', sexo: 'MALE', ocupacion: 'occupation:bo:GANADERO', ciudad: 1 }, 7),
   patient('p-medina', { nombre: 'Valentina', apellidos: ['Medina', 'Roca'], nacimiento: '1988-08-02', sexo: 'FEMALE', ocupacion: 'occupation:bo:ABOGADO', aseguradora: 'Alianza Seguros', plan: 'Plan Oro' }, 8),
   patient('p-soliz', { nombre: 'Andrés', apellidos: ['Solíz', 'Rojas'], nacimiento: '1979-05-27', sexo: 'MALE', ocupacion: 'occupation:bo:CHOFER' }, 9),
   patient('p-quispe', { nombre: 'Marta', apellidos: ['Quispe', 'Huanca'], nacimiento: '1966-10-15', sexo: 'FEMALE', ocupacion: 'occupation:bo:EMPLEADA_HOGAR', ciudad: 2 }, 10),
@@ -328,13 +328,13 @@ const OCCUPATIONS_BY_AGE: Readonly<Record<string, readonly string[]>> = {
     'occupation:bo:INGENIERO',
     'occupation:bo:ABOGADO',
     'occupation:bo:CONTADOR',
-    'occupation:bo:AGRICULTOR',
+    'occupation:bo:GANADERO',
     'occupation:bo:CHOFER',
     'occupation:bo:ENFERMERO',
     'occupation:bo:EMPLEADO',
     'occupation:bo:EMPLEADA_HOGAR',
   ],
-  mayor: ['occupation:bo:JUBILADO', 'occupation:bo:EMPLEADA_HOGAR', 'occupation:bo:AGRICULTOR', 'occupation:bo:COMERCIANTE'],
+  mayor: ['occupation:bo:JUBILADO', 'occupation:bo:EMPLEADA_HOGAR', 'occupation:bo:GANADERO', 'occupation:bo:COMERCIANTE'],
 };
 
 function generatedPatient(indice: number): PacienteSimulado {

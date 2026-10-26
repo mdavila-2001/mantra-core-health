@@ -11,12 +11,13 @@ Fuente del catálogo del atlas anatómico 3D (`/glossary/anatomy-atlas`).
 | `netter-mapping-report.json` | aceptadas, sin cruce (con motivo), rechazadas por el generador | `scripts/gen-anatomy-ontology-fixture.mjs` |
 | `es/*.json` | nombre y definición en castellano | **traducción automática sin revisión humana** de lo que dice UBERON; la pantalla la rotula así y muestra el original |
 
-Límite conocido del criterio «humana = xref FMA»: deja afuera clases de UBERON
-que existen en el cuerpo humano pero no declaran el cruce con FMA (lo
-advirtieron los agentes por región: arteria esfenopalatina, fosa
-pterigopalatina, hueso frontal, entre otras). Esas entradas de Netter quedaron
-sin cruce con su motivo; ampliar el criterio (por ejemplo, con `in_taxon`
-Homo sapiens) y volver a cruzar es trabajo pendiente.
+Criterio de «humana»: una clase de UBERON es humana si declara un xref FMA, y
+sólo entonces. Por eso quedan afuera clases que existen en el cuerpo humano pero
+no declaran ese cruce (lo advirtieron los agentes por región: arteria
+esfenopalatina, fosa pterigopalatina, hueso frontal, entre otras). Las entradas
+de Netter que apuntan a ellas quedan sin cruce, cada una con su motivo en
+`netter-mapping-report.json`; la taxonomía (`in_taxon` Homo sapiens) no entra en
+el criterio.
 
 Regla: nada que la fuente no diga se completa. No hay inervación, irrigación,
 función ni relación que UBERON no declare; una definición de relleno de UBERON

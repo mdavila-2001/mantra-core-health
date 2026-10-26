@@ -128,6 +128,60 @@ describe('DatePicker', () => {
       expect(dialog()).toBeNull();
       expect(fixture.componentInstance.value()).toBeInstanceOf(Date);
     });
+
+    it('confirmar libera la página en el acto: el modal no sigue abierto mientras sale el panel', async () => {
+      // Con animación de salida posible (en jsdom no existe `animate`) el panel
+      // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
+      // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
+      // Una salida que nunca termina deja a la vista si confirmar espera por ella.
+      const original = HTMLElement.prototype.animate;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>(() => undefined),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+      try {
+        await abrir();
+        dias().find((day) => !day.classList.contains('other-month') && !day.disabled)!.click();
+        await fixture.whenStable();
+
+        const confirmar = [...fixture.nativeElement.querySelectorAll('.dialog-actions button')][1];
+        confirmar.click();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.value()).toBeInstanceOf(Date);
+        expect(dialog()).toBeNull();
+        expect(trigger().getAttribute('aria-expanded')).toBe('false');
+      } finally {
+        HTMLElement.prototype.animate = original;
+      }
+    });
+
+    it('descartar sí anima la salida: Cancelar espera a que el panel se vaya', async () => {
+      const original = HTMLElement.prototype.animate;
+      let terminar: () => void = () => undefined;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>((resolve) => {
+          terminar = resolve;
+        }),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+      try {
+        await abrir();
+
+        const cancelar = [...fixture.nativeElement.querySelectorAll('.dialog-actions button')][0];
+        cancelar.click();
+        await fixture.whenStable();
+        expect(dialog()).not.toBeNull();
+
+        terminar();
+        await Promise.resolve();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(dialog()).toBeNull();
+      } finally {
+        HTMLElement.prototype.animate = original;
+      }
+    });
   });
 
   describe('ingreso por teclado y máscara in-place', () => {
