@@ -134,7 +134,12 @@ describe('handlers de afiliación médico-centro', () => {
   });
 
   it('GET por práctica devuelve solo las filas de esa práctica, con los campos del contrato', () => {
-    const { body } = call<Record<string, unknown>[]>('GET', `/practices/${PRACTICE_CM_SUR}/role-assignments`, null, admin);
+    const page = call<{ items: Record<string, unknown>[]; count: number; nextCursor: string | null }>('GET', `/practices/${PRACTICE_CM_SUR}/role-assignments`, null, admin).body;
+    // La API real responde una página, no un arreglo.
+    expect(Array.isArray(page)).toBe(false);
+    expect(page.nextCursor).toBeNull();
+    const body = page.items;
+    expect(page.count).toBe(body.length);
     expect(body.length).toBeGreaterThan(0);
     expect(body.every((f) => f['practiceId'] === PRACTICE_CM_SUR)).toBe(true);
     expect(body[0]).toEqual(expect.objectContaining({ practitionerName: expect.any(String), serviceDisplay: expect.any(String), statusCode: expect.any(String), statusConceptId: expect.any(String), initiatedBy: expect.any(String) }));

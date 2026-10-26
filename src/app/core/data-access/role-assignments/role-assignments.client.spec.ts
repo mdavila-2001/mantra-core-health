@@ -31,13 +31,39 @@ describe('RoleAssignmentsClient', () => {
 
   afterEach(() => http.verify());
 
-  it('lista los médicos del centro sin renombrar los campos', () => {
+  it('lista los médicos del centro leyendo la página { items } de la API, sin renombrar los campos', () => {
     let rows: readonly RoleAssignmentRow[] = [];
     client.listForPractice('pr-1').subscribe((r) => (rows = r));
 
     const req = http.expectOne('/practices/pr-1/role-assignments');
     expect(req.request.method).toBe('GET');
-    req.flush([ROW]);
+    expect(req.request.params.has('cursor')).toBe(false);
+    req.flush({ items: [ROW], count: 1, limit: 50, nextCursor: null });
+
+    expect(rows).toEqual([ROW]);
+  });
+
+  it('sigue el cursor hasta agotar las páginas', () => {
+    let rows: readonly RoleAssignmentRow[] = [];
+    client.listForPractice('pr-1').subscribe((r) => (rows = r));
+
+    http.expectOne((r) => r.url === '/practices/pr-1/role-assignments' && !r.params.has('cursor')).flush({
+      items: [ROW],
+      count: 2,
+      limit: 1,
+      nextCursor: 'c-2',
+    });
+    const second = http.expectOne((r) => r.url === '/practices/pr-1/role-assignments' && r.params.get('cursor') === 'c-2');
+    second.flush({ items: [{ ...ROW, id: 'ra-2' }], count: 2, limit: 1, nextCursor: null });
+
+    expect(rows.map((r) => r.id)).toEqual(['ra-1', 'ra-2']);
+  });
+
+  it('acepta también el arreglo pelado', () => {
+    let rows: readonly RoleAssignmentRow[] = [];
+    client.listForPractice('pr-1').subscribe((r) => (rows = r));
+
+    http.expectOne('/practices/pr-1/role-assignments').flush([ROW]);
 
     expect(rows).toEqual([ROW]);
   });
@@ -46,9 +72,12 @@ describe('RoleAssignmentsClient', () => {
     let rows: readonly RoleAssignmentRow[] = [];
     client.listForPractice('pr-1').subscribe((r) => (rows = r));
 
-    http.expectOne('/practices/pr-1/role-assignments').flush([
-      { ...ROW, healthcareServiceId: null, serviceConceptId: null, serviceDisplay: null },
-    ]);
+    http.expectOne('/practices/pr-1/role-assignments').flush({
+      items: [{ ...ROW, healthcareServiceId: null, serviceConceptId: null, serviceDisplay: null }],
+      count: 1,
+      limit: 50,
+      nextCursor: null,
+    });
 
     expect(rows[0]!.healthcareServiceId).toBeNull();
     expect(rows[0]!.serviceDisplay).toBeNull();
