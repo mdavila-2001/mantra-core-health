@@ -2,18 +2,19 @@ import {
   affiliations,
   changeStatus,
   createAffiliation,
+  publishedOffer,
   toRow,
-  PUBLISHED_PROCEDURES,
-  CM_SITES,
+  useOfferLookup,
   type StatusCode,
 } from '../fixtures/role-assignments';
+import { offers } from './healthcare-services.handlers';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
-import { cuerpo, texto } from '../mock-store';
+import { cuerpo } from '../mock-store';
 
 /* ============================================================================
-    Afiliación médico-centro por procedimiento (CM-07). Ninguna row llega a
-    «activa» sin que actúe la other parte: el médico acepta lo que el centro
-    invitó, y el centro aprueba lo que el médico pidió. Una row por acción.
+    Afiliación médico-centro por procedimiento (CM-07). Ninguna fila llega a
+    «activa» sin que actúe la otra parte: el médico acepta lo que el centro
+    invitó, y el centro aprueba lo que el médico pidió. Una fila por acción.
     ========================================================================== */
 
 /** Pasa la fila a `destino` solo si hoy está en `desde`; si no, 409. */
@@ -32,6 +33,9 @@ function practitionerOf(request: MockRequest): string | undefined {
 }
 
 export function registerRoleAssignments(router: MockRouter): void {
+  // Los procedimientos publicados son los del doble de CM-06; las sedes y el catálogo los sirve él.
+  useOfferLookup((id) => offers.get(id));
+
   router.get('/practices/:practiceId/role-assignments', ({ params }) =>
     affiliations.filtrar((f) => f.practiceId === params['practiceId']).map(toRow),
   );
@@ -47,8 +51,7 @@ export function registerRoleAssignments(router: MockRouter): void {
       affiliations.filtrar((f) => f.practitionerProfileId === datos.practitionerProfileId && f.healthcareServiceId === serviceId && ['ROLE_ASG_INVITED', 'ROLE_ASG_PENDING', 'ROLE_ASG_ACTIVE'].includes(f.statusCode)).length > 0,
     );
     if (duplicate !== undefined) return conflict('El médico ya tiene una afiliación vigente para ese procedimiento');
-    const published = PUBLISHED_PROCEDURES.filter((p) => p.active && p.practiceId === practiceId && p.practiceSiteId === datos.practiceSiteId);
-    if (!ids.every((serviceId) => published.some((p) => p.id === serviceId))) return validation('Solo se puede invitar a procedimientos que la sede publica');
+    if (!ids.every((serviceId) => publishedOffer(practiceId, datos.practiceSiteId!, serviceId) !== undefined)) return validation('Solo se puede invitar a procedimientos que la sede publica');
     const rows = ids.map((serviceId) => createAffiliation(practiceId, datos.practiceSiteId!, serviceId, datos.practitionerProfileId!, 'ROLE_ASG_INVITED', 'PRACTICE')!);
     return { status: 201, body: { items: rows.map(toRow) } };
   });
@@ -61,13 +64,4 @@ export function registerRoleAssignments(router: MockRouter): void {
   );
   router.post('/role-assignments/:roleId/approve', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_ACTIVE'));
   router.post('/role-assignments/:roleId/reject', ({ params }) => transition(params['roleId']!, 'ROLE_ASG_PENDING', 'ROLE_ASG_REJECTED'));
-
-  // El arreglo pelado, como lo devuelve la API (CM-11).
-  router.get('/practices/:practiceId/sites', ({ params }) => CM_SITES.filter((site) => site.practiceId === params['practiceId']));
-
-  // Mismo contrato que CM-06 (`HealthcareServicesClient.listOffers`); transitorio hasta que CM-00 registre su doble.
-  router.get('/practices/:practiceId/healthcare-services', ({ params, query }) => {
-    const site = texto(query, 'practiceSiteId');
-    return { items: PUBLISHED_PROCEDURES.filter((p) => p.practiceId === params['practiceId'] && (site === null || p.practiceSiteId === site)) };
-  });
 }
