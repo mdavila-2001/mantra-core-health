@@ -204,6 +204,10 @@ describe('AgendaCreate', () => {
       statusConceptId: 'archived',
       releasedSlots: 24,
       keptSlots: 0,
+      liveBookings: 0,
+      liveBookingIds: [],
+      truncated: false,
+      cancelledBookings: 0,
     });
   }
 
@@ -283,6 +287,10 @@ describe('AgendaCreate', () => {
         statusConceptId: 'archived',
         releasedSlots: 24,
         keptSlots: 3,
+        liveBookings: 3,
+        liveBookingIds: ['b-1', 'b-2', 'b-3'],
+        truncated: false,
+        cancelledBookings: 0,
       });
 
       http
@@ -295,8 +303,10 @@ describe('AgendaCreate', () => {
     });
 
     /**
-     * El 409 son citas de pacientes. Publicar igual las movería sin avisar, así
-     * que no se publica nada y el mensaje del servidor se muestra tal cual.
+     * Si el retiro falla, no se publica nada y el mensaje del servidor se
+     * muestra tal cual. Desde M4 las citas vivas ya no lo frenan (P23); el 409
+     * sigue siendo el caso a probar porque es el de una API anterior, y el
+     * camino de error es el mismo para cualquier rechazo.
      */
     it('si el retiro responde 409, no crea la plantilla nueva', async () => {
       crearConHorarioVigente(VIGENTE);

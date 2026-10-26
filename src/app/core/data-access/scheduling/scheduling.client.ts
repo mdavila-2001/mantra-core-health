@@ -353,17 +353,12 @@ export class SchedulingClient {
   }
 
   /**
-   * `DELETE /scheduling/templates/:id` — retira un horario publicado.
+   * `DELETE /scheduling/templates/:id` — retira el horario.
    *
    * **Retira, no borra.** La plantilla queda en `TPL_RETIRED` y deja de
-   * publicarse; se sueltan los cupos que nadie reservó y se conservan los que
-   * tienen una cita detrás, viva o histórica.
-   *
-   * Responde **409** cuando el horario tiene citas comprometidas, con la lista
-   * de las que hay que resolver primero en `details.bookingIds`.
-   */
-  /**
-   * `DELETE /scheduling/templates/:id` — retira el horario.
+   * publicarse; se sueltan los cupos que nadie reservó y se conservan, cerrados,
+   * los que tienen una cita detrás, viva o histórica. Las citas vivas **no
+   * frenan** el retiro (P23).
    *
    * Por omisión conserva las citas vivas (contrato de M4). Con
    * `affectedBookings: 'cancel'` las cancela con el motivo «cambio de

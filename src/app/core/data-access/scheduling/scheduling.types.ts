@@ -672,6 +672,11 @@ export interface SlotsGenerated {
   readonly templateId: string;
   readonly created: number;
   readonly skipped: number;
+  /**
+   * Turnos que no se generaron porque pisaban un compromiso del profesional: una
+   * cita viva —la que el retiro del horario anterior conservó— o tiempo ocupado.
+   */
+  readonly omittedByCommitments?: number;
 }
 
 /**
@@ -942,9 +947,17 @@ export interface RetiredTemplate {
    * Cupos conservados por tener una cita detrás.
    *
    * Distinto de cero **no es un error**: es el historial que el retiro respeta
-   * a propósito, y la pantalla tiene que decirlo en vez de callarlo.
+   * a propósito, y la pantalla tiene que decirlo en vez de callarlo. Quedan
+   * cerrados: sostienen su cita, pero el horario retirado no los vuelve a
+   * ofrecer (P23).
    */
   readonly keptSlots: number;
+  /** Citas confirmadas o presentadas que siguen vivas en los cupos conservados. */
+  readonly liveBookings: number;
+  /** Ids (nunca nombres) de esas citas, hasta un tope. */
+  readonly liveBookingIds: readonly string[];
+  /** Hay más citas vivas que las listadas en `liveBookingIds`. */
+  readonly truncated: boolean;
   /**
    * Citas canceladas por el retiro, con aviso a cada paciente. Mayor que 0
    * sólo cuando se retiró con `affectedBookings: 'cancel'` (24/10/2026).
