@@ -559,14 +559,14 @@
                   }
                 }
 
-                <!-- ─── Mis puntos ───────────────────────────────────────────── -->
-                <!-- N-03: la billetera del programa de fidelidad, dentro de la
-                   misma tarjeta. Es la MISMA pantalla que sirve la ruta
+                <!-- ─── Mis puntos ─── N-03: la billetera del programa de fidelidad,
+                   dentro de la misma tarjeta. Es la MISMA pantalla que sirve la ruta
                    `/my-account/loyalty`, embebida: sin su cabecera, porque la
                    tarjeta ya tiene una. -->
                 <app-tab [label]="pestanas[5]">
                   <app-loyalty embebido data-testid="mi-perfil-puntos" />
                 </app-tab>
+                <app-tab [label]="pestanas[6]">@if (pestana() === pestanaDeDirecciones()) { <app-address-book /> }</app-tab>
               </app-tabs>
             }
           </app-view-state-host>

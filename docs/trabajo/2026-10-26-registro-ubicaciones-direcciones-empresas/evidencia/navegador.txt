@@ -1,0 +1,44 @@
+[390-light] sin GPS no avanza y lo dice: true
+[390-light] aviso de calle: Escribimos la calle a partir del punto (datos de © OpenStreetMap). Revísela y agregue el número si falta.
+[390-light] etiqueta: Departamento: Santa Cruz · Provincia: Andrés Ibáñez · Municipio: Santa Cruz de la Sierra
+[390-light] calle escrita desde el punto: Calle de demostración N.º 783 (simulada)
+[390-light] acercamiento: {"fondo":"rgb(225, 226, 226)","departamento":"rgb(204, 205, 205)","municipio":"rgb(11, 85, 126)","punto":"rgb(181, 83, 60)"}
+[390-light] tema aplicado: light
+[390-light] «Servicio de ambulancia» aparece 1 vez/veces
+[390-light] errores de consola/red: [E-d40df8b7-001] An ErrorEvent with no error occurred. See Error.cause for details: ResizeObserver loop completed with undelivered notifications. · 0.1.0 · /auth/register/patient | Error: An ErrorEvent with no error occurred. See Error.cause for details: ResizeObserver loop completed with undelivered notifications.
+    at errorListener (http://localhost:4300/@fs/home/user/mantra | [E-d40df8b7-001] Error: An ErrorEvent with no error occurred. See Error.cause for details: ResizeObserver loop completed with undelivered notifications.
+    at errorListener (http://localhost:4300/@fs
+[768-light] sin GPS no avanza y lo dice: true
+[768-light] aviso de calle: Escribimos la calle a partir del punto (datos de © OpenStreetMap). Revísela y agregue el número si falta.
+[768-light] etiqueta: Departamento: Santa Cruz · Provincia: Andrés Ibáñez · Municipio: Santa Cruz de la Sierra
+[768-light] calle escrita desde el punto: Calle de demostración N.º 783 (simulada)
+[768-light] acercamiento: {"fondo":"rgb(225, 226, 226)","departamento":"rgb(204, 205, 205)","municipio":"rgb(11, 85, 126)","punto":"rgb(181, 83, 60)"}
+[768-light] tema aplicado: light
+[768-light] «Servicio de ambulancia» aparece 1 vez/veces
+[768-light] errores de consola/red: [E-d40df8b7-001] An ErrorEvent with no error occurred. See Error.cause for details: ResizeObserver loop completed with undelivered notifications. · 0.1.0 · /auth/register/patient | Error: An ErrorEvent with no error occurred. See Error.cause for details: ResizeObserver loop completed with undelivered notifications.
+    at errorListener (http://localhost:4300/@fs/home/user/mantra | [E-d40df8b7-001] Error: An ErrorEvent with no error occurred. See Error.cause for details: ResizeObserver loop completed with undelivered notifications.
+    at errorListener (http://localhost:4300/@fs
+[1440-light] sin GPS no avanza y lo dice: true
+[1440-light] aviso de calle: Escribimos la calle a partir del punto (datos de © OpenStreetMap). Revísela y agregue el número si falta.
+[1440-light] etiqueta: Departamento: Santa Cruz · Provincia: Andrés Ibáñez · Municipio: Santa Cruz de la Sierra
+[1440-light] calle escrita desde el punto: Calle de demostración N.º 783 (simulada)
+[1440-light] acercamiento: {"fondo":"rgb(225, 226, 226)","departamento":"rgb(204, 205, 205)","municipio":"rgb(11, 85, 126)","punto":"rgb(181, 83, 60)"}
+[1440-light] tema aplicado: light
+[1440-light] «Servicio de ambulancia» aparece 1 vez/veces
+[1440-light] errores de consola/red: ninguno
+[390-dark] sin GPS no avanza y lo dice: true
+[390-dark] aviso de calle: Escribimos la calle a partir del punto (datos de © OpenStreetMap). Revísela y agregue el número si falta.
+[390-dark] etiqueta: Departamento: Santa Cruz · Provincia: Andrés Ibáñez · Municipio: Santa Cruz de la Sierra
+[390-dark] calle escrita desde el punto: Calle de demostración N.º 783 (simulada)
+[390-dark] acercamiento: {"fondo":"rgb(225, 226, 226)","departamento":"rgb(204, 205, 205)","municipio":"rgb(11, 85, 126)","punto":"rgb(181, 83, 60)"}
+[390-dark] tema aplicado: dark
+[390-dark] «Servicio de ambulancia» aparece 1 vez/veces
+[390-dark] errores de consola/red: ninguno
+[1440-dark] sin GPS no avanza y lo dice: true
+[1440-dark] aviso de calle: Escribimos la calle a partir del punto (datos de © OpenStreetMap). Revísela y agregue el número si falta.
+[1440-dark] etiqueta: Departamento: Santa Cruz · Provincia: Andrés Ibáñez · Municipio: Santa Cruz de la Sierra
+[1440-dark] calle escrita desde el punto: Calle de demostración N.º 783 (simulada)
+[1440-dark] acercamiento: {"fondo":"rgb(225, 226, 226)","departamento":"rgb(204, 205, 205)","municipio":"rgb(11, 85, 126)","punto":"rgb(181, 83, 60)"}
+[1440-dark] tema aplicado: dark
+[1440-dark] «Servicio de ambulancia» aparece 1 vez/veces
+[1440-dark] errores de consola/red: ninguno
