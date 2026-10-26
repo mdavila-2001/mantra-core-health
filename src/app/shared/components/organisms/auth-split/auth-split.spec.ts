@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
