@@ -76,6 +76,7 @@ import {
   type Coordinates,
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /* ============================================================================
     Alta de farmacia — Módulo Farmacia §1 del registro de procesos
@@ -174,7 +175,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  */
 @Component({
   selector: 'app-register-pharmacy',
-  imports: [
+  imports: [RegistrationBadge, 
     BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,

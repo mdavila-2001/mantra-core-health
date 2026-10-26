@@ -66,6 +66,7 @@ import {
   type NameValue,
 } from '../shared-registration/name-fields/person-name';
 import { codeFromAcronym, MAX_ACRONYM, MIN_ACRONYM, codeDriftAcronym } from './code-from-acronym';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -155,7 +156,7 @@ function grupoDeGerente() {
  */
 @Component({
   selector: 'app-register-organization',
-  imports: [
+  imports: [RegistrationBadge, 
     RouterLink,
     // El botón «Ir a iniciar sesión» de la confirmación es `<button app-button>`:
     // sin esta importación es un `<button>` nativo y su `(clicked)` —un output

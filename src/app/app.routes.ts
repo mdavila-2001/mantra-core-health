@@ -2204,6 +2204,15 @@ export const routes: Routes = [
     title: 'AloVida - Crear cuenta',
   },
   {
+    // La misma rejilla, con las organizaciones: es a donde lleva «Registre su
+    // organización» del acceso. Las altas de aseguradora, laboratorio,
+    // imagenología, farmacia y organización médica no se ofrecen en «Crear cuenta».
+    path: 'auth/register/organization-type',
+    component: RegisterAccountType,
+    data: { audience: 'organizations' },
+    title: 'AloVida - Registre su organización',
+  },
+  {
     path: 'auth/register/patient',
     // Diferida: el alta arrastra el árbol de municipios y el combobox de
     // ocupaciones, y con import directo eso viaja en el bundle inicial que
