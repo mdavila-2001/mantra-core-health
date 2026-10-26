@@ -13,6 +13,8 @@ import { CsvExportService } from '../../../shared/utils/csv-export/csv-export';
 import type { ProductFields, LoadMode } from '../catalog-rules/catalog.rules';
 import { chooseSelectOption, selectOptionLabels } from '../../../../testing/select';
 import { PharmacyImport } from './pharmacy-import';
+import { afterAll, beforeAll } from 'vitest';
+import { environment } from '../../../../environments/environment';
 
 /**
  * «Importación masiva» del catálogo de la farmacia.
@@ -93,6 +95,11 @@ interface Internal {
 }
 
 describe('PharmacyImport', () => {
+  // Las escrituras de farmacia son «sólo simulador»: sin esto la petición no sale.
+  const originalMockBackend = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
+
   let fixture: ComponentFixture<PharmacyImport>;
   let http: HttpTestingController;
   let download: ReturnType<typeof vi.fn>;

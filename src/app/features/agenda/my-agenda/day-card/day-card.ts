@@ -13,6 +13,7 @@ import {
 import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
+import { BlockCancellations, cancelledBookingsText } from '../../block-cancellations';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -89,6 +90,7 @@ export interface DayGap {
 })
 export class DayCard {
   private readonly scheduling = inject(SchedulingClient);
+  private readonly cancellations = inject(BlockCancellations);
   private readonly profiles = inject(ProfilesClient);
   private readonly toasts = inject(ToastService);
   private readonly dialogs = inject(DialogService);
@@ -200,11 +202,7 @@ export class DayCard {
       // persona necesita confirmar de un vistazo es lo que se sale de la norma.
       const porVideo = this.modality() === 'TELECONSULTA';
       const aDomicilio = this.modality() === 'DOMICILIO';
-      const donde = porVideo
-        ? ' Va por videollamada.'
-        : aDomicilio
-          ? ' Va a su domicilio.'
-          : '';
+      const donde = porVideo ? ' Va por videollamada.' : aDomicilio ? ' Va a su domicilio.' : '';
       return `Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.${donde}`;
     }
     if (this.reason().trim() !== '') {
@@ -308,9 +306,7 @@ export class DayCard {
 
     const paciente = this.patient();
     if (paciente !== null) {
-      const duracionMin = Math.round(
-        (rango.hasta.getTime() - rango.desde.getTime()) / 60_000,
-      );
+      const duracionMin = Math.round((rango.hasta.getTime() - rango.desde.getTime()) / 60_000);
       this.scheduling
         .createDirectAppointment({
           patientProfileId: paciente.value,
@@ -338,18 +334,24 @@ export class DayCard {
       return;
     }
 
-    this.scheduling
-      .createException(this.resourceId(), {
-        exceptionType: 'ABSENCE',
-        startAt: rango.desde.toISOString(),
-        endAt: rango.hasta.toISOString(),
-        reason: this.reason().trim(),
-      })
+    // Con citas en el rato, la API lista a quién alcanza y `BlockCancellations`
+    // pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
+    this.cancellations
+      .withConfirmation((confirmed) =>
+        this.scheduling.createException(this.resourceId(), {
+          exceptionType: 'ABSENCE',
+          startAt: rango.desde.toISOString(),
+          endAt: rango.hasta.toISOString(),
+          reason: this.reason().trim(),
+          ...(confirmed ? { cancelAffectedBookings: true } : {}),
+        }),
+      )
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.saving.set(false);
+          if (res === null) return;
           this.toasts.success(
-            'El paciente no ve nada en ese rato.',
+            `El paciente no ve nada en ese rato.${cancelledBookingsText(res.cancelledBookings)}`,
             'Tiempo ocupado guardado',
           );
           this.creada.emit();

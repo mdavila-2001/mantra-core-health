@@ -1,0 +1,5 @@
+                  id                  |               categoria               | con_formulario 
+--------------------------------------+---------------------------------------+----------------
+ 274c2ba4-986a-4ad4-adb0-b0d248996261 | clinical:SERVICE_REQUEST_CATEGORY_LAB | t
+(1 row)
+

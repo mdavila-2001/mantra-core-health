@@ -51,6 +51,8 @@ interface Testable {
   limpiarCampos(): Promise<void>;
   /** Horario flexible y almuerzo (propietario, 18/09). */
   readonly flexible: WritableSignal<boolean>;
+  /** P36 · lo que se reserva por paciente en horario flexible. */
+  readonly minutosPorPaciente: WritableSignal<number>;
   readonly conAlmuerzo: WritableSignal<boolean>;
   readonly almuerzoDesde: WritableSignal<string>;
   readonly almuerzoHasta: WritableSignal<string>;
@@ -189,12 +191,25 @@ describe('AgendaCreate', () => {
    * Contesta el retiro del horario vigente, que desde el arreglo del cierre de
    * turnos precede a toda publicación de un cambio.
    */
-  function retirarVigente(id = 'tpl-1'): void {
+  /**
+   * Desde el 24/10/2026 el retiro va precedido de la vista previa de citas
+   * vivas (`live-bookings`): sin ninguna, se retira como siempre. La decisión
+   * se toma en una promesa, así que el DELETE sale un tick después del GET.
+   */
+  async function retirarVigente(id = 'tpl-1'): Promise<void> {
+    http
+      .expectOne(`/scheduling/templates/${id}/live-bookings`)
+      .flush({ templateId: id, total: 0, bookings: [], present: [] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
     http.expectOne(`/scheduling/templates/${id}`).flush({
       id,
       statusConceptId: 'archived',
       releasedSlots: 24,
       keptSlots: 0,
+      liveBookings: 0,
+      liveBookingIds: [],
+      truncated: false,
+      cancelledBookings: 0,
     });
   }
 
@@ -255,10 +270,15 @@ describe('AgendaCreate', () => {
      * anterior; como `generate-slots` es idempotente **por instante de
      * inicio**, el cupo viejo de las 08:00 sobrevivía con su fin viejo.
      */
-    it('cambiar el horario retira el vigente ANTES de crear el nuevo', () => {
+    it('cambiar el horario retira el vigente ANTES de crear el nuevo', async () => {
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
 
+      // Primero la vista previa de citas vivas; sin ninguna, se retira directo.
+      http
+        .expectOne('/scheduling/templates/tpl-1/live-bookings')
+        .flush({ templateId: 'tpl-1', total: 0, bookings: [], present: [] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       const retiro = http.expectOne('/scheduling/templates/tpl-1');
       expect(retiro.request.method).toBe('DELETE');
       // Todavía no se creó nada: el orden es lo que impide dos horarios vivos.
@@ -269,6 +289,10 @@ describe('AgendaCreate', () => {
         statusConceptId: 'archived',
         releasedSlots: 24,
         keptSlots: 3,
+        liveBookings: 3,
+        liveBookingIds: ['b-1', 'b-2', 'b-3'],
+        truncated: false,
+        cancelledBookings: 0,
       });
 
       http
@@ -281,13 +305,19 @@ describe('AgendaCreate', () => {
     });
 
     /**
-     * El 409 son citas de pacientes. Publicar igual las movería sin avisar, así
-     * que no se publica nada y el mensaje del servidor se muestra tal cual.
+     * Si el retiro falla, no se publica nada y el mensaje del servidor se
+     * muestra tal cual. Desde M4 las citas vivas ya no lo frenan (P23); el 409
+     * sigue siendo el caso a probar porque es el de una API anterior, y el
+     * camino de error es el mismo para cualquier rechazo.
      */
-    it('si el retiro responde 409, no crea la plantilla nueva', () => {
+    it('si el retiro responde 409, no crea la plantilla nueva', async () => {
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
 
+      http
+        .expectOne('/scheduling/templates/tpl-1/live-bookings')
+        .flush({ templateId: 'tpl-1', total: 0, bookings: [], present: [] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       http.expectOne('/scheduling/templates/tpl-1').flush(
         {
           code: 'CONFLICT',
@@ -349,7 +379,7 @@ describe('AgendaCreate', () => {
 
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
-      retirarVigente();
+      await retirarVigente();
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
@@ -366,7 +396,7 @@ describe('AgendaCreate', () => {
       respuestaDelDialogo = true;
     });
 
-    it('reusa el recurso: cambiar el horario NO crea una segunda agenda', () => {
+    it('reusa el recurso: cambiar el horario NO crea una segunda agenda', async () => {
       crearConHorarioVigente(VIGENTE);
 
       acc.publicar();
@@ -375,7 +405,7 @@ describe('AgendaCreate', () => {
       // el defecto que este carril arregla — «Cambiar mi horario» dejaba al
       // médico con dos agendas y a los pacientes viendo los turnos de las dos.
       http.expectNone((r) => r.url === '/scheduling/resources' && r.method === 'POST');
-      retirarVigente();
+      await retirarVigente();
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
@@ -1288,6 +1318,32 @@ describe('AgendaCreate', () => {
       const reglas = cuerpo['rules'] as Record<string, unknown>[];
       expect(reglas[0]).not.toHaveProperty('slotMinutes');
       expect(reglas[0]).not.toHaveProperty('gapMinutes');
+      // P36: ni capacidad por turno —la API rechaza la franja que la declara—.
+      expect(reglas[0]).not.toHaveProperty('capacityPerSlot');
+      // Lo que se reserva por paciente viaja una vez, en la plantilla.
+      expect(cuerpo['slotMinutes']).toBe(30);
+    });
+
+    it('P36 · en horario flexible se elige cuánto se reserva por paciente y viaja en la plantilla', () => {
+      crear();
+      encenderLunes();
+      acc.flexible.set(true);
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-minutos-por-paciente"]'),
+      ).not.toBeNull();
+
+      acc.minutosPorPaciente.set(20);
+      expect(cuerpoDeLaPlantilla()['slotMinutes']).toBe(20);
+    });
+
+    it('P36 · con turnos fijos no se pregunta el tiempo por paciente', () => {
+      crear();
+      encenderLunes();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-minutos-por-paciente"]'),
+      ).toBeNull();
     });
 
     it('en horario flexible la tabla no pregunta duración ni descanso', () => {

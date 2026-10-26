@@ -88,6 +88,27 @@ describe('StoreResults', () => {
     expect(raiz().textContent).toContain('Elija desde dónde medir');
   });
 
+  it('P34 · una sede abierta 24 h lleva su insignia; una sin declarar, ninguna', () => {
+    host.items.set([
+      sede({ id: 's-1', siteId: 's-1', open24h: true }),
+      sede({ id: 's-2', siteId: 's-2', open24h: null, onCallUntil: null }),
+    ]);
+    fixture.detectChanges();
+
+    const insignias = raiz().querySelectorAll('[data-testid="tienda-apertura"]');
+    expect(insignias.length).toBe(1);
+    expect(insignias[0].textContent).toContain('Abierta 24 h');
+  });
+
+  it('P34 · una sede de turno dice hasta cuándo, en hora de Bolivia', () => {
+    const fin = new Date(Date.now() + 2 * 3_600_000).toISOString();
+    host.items.set([sede({ onCallUntil: fin })]);
+    fixture.detectChanges();
+
+    const insignia = raiz().querySelector('[data-testid="tienda-apertura"]');
+    expect(insignia?.textContent).toContain('De turno hasta');
+  });
+
   it('«Entrar» apunta a la tienda de esa farmacia, con la sede en la query', () => {
     host.items.set([sede()]);
     fixture.detectChanges();

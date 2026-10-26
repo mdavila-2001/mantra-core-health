@@ -189,10 +189,9 @@ describe('NavigationService', () => {
         '/my-account/diagnostic-orders',
         '/my-account/quotations',
         // «Mis cuestionarios» ya NO entra (2026-09-25): pedido del propietario
-        // mientras se decide qué hacer con la sección — declara
-        // `fueraDelMenuPara: [ANY_ROLE]`, no una restricción de rol. Sigue sin
-        // exigir rol y se sigue alcanzando por su ruta y por «Tus accesos»;
-        // ver `docs/pendiente-decision-cuestionarios.md`.
+        // — declara `fueraDelMenuPara: [ANY_ROLE]`, no una restricción de rol.
+        // Sigue sin exigir rol y se sigue alcanzando por su ruta y por «Tus
+        // accesos».
         // «Notificaciones» tampoco: es el otro destino fijo, y encabeza la
         // lista junto a «Mi perfil». La bandeja sigue sin exigir rol —es de la
         // persona y el backend sólo devuelve la propia—; lo que cambió es
@@ -575,6 +574,10 @@ describe('NavigationService', () => {
         'Atención',
         'Administración',
         'Facturación',
+        // 17/10/2026 · `SECURITY_ADMIN` alcanza las secciones de plataforma
+        // (catálogo, analítica, operación), que ahora forman su propio dominio.
+        // Va entre «Facturación» y «Mi cuenta», que sigue siendo el último.
+        'Superadministración',
         'Mi cuenta',
       ]);
     });

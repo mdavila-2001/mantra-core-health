@@ -61,8 +61,8 @@ export interface PrescriptionItem {
    * El producto publicado que responde a ese medicamento, o `null` si el
    * directorio no publica ninguno. Hoy es **un representante por
    * medicamento** (el primero publicado): si una sede tiene otra marca del
-   * mismo genérico, esta consulta no la ve. TODO(E3): cubrir multimarca
-   * cuando el carril E2 decida cómo agrupar productos por concepto.
+   * mismo genérico, esta consulta no la ve: el catálogo no agrupa productos
+   * por concepto.
    */
   readonly productId: string | null;
 }

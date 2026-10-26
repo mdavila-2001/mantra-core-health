@@ -50,7 +50,7 @@ const CAMPO_FALTANTE: Readonly<Record<string, string>> = {
 /**
  * Ficha de una tabla o vista del catálogo: hechos técnicos observados, la
  * justificación de negocio con su estado de revisión, columnas, evidencia,
- * historial, impacto estructural y cambios detectados. Una sola tarjeta con
+ * historial, relaciones entre tablas y cambios detectados. Una sola tarjeta con
  * pestañas (regla de composición §5).
  */
 @Component({
@@ -116,7 +116,7 @@ export class CatalogObjectDetail {
   });
 
   protected readonly breadcrumbs = computed(() => [
-    { label: 'Catálogo de datos', routerLink: '/administration/data-catalog' },
+    { label: 'Catálogo de datos', routerLink: '/superadmin/data-catalog' },
     { label: this.titulo() },
   ]);
 
@@ -135,21 +135,53 @@ export class CatalogObjectDetail {
     ];
   });
 
+  /** «Negocio»: qué es la tabla, dicho para quien no lee el esquema. */
   protected readonly hechosNegocio = computed<readonly Hecho[]>(() => {
     const c = this.objeto()?.annotation?.content;
     if (!c) return [];
     return [
       { etiqueta: 'Nombre de negocio', valor: c.businessName },
-      { etiqueta: 'Propósito', valor: c.purpose },
+      { etiqueta: 'Qué es', valor: c.definition },
+      { etiqueta: 'Para qué sirve', valor: c.purpose },
+    ];
+  });
+
+  /** «Por qué existe»: la justificación, el grano de fila y qué pasa si se elimina. */
+  protected readonly hechosExistencia = computed<readonly Hecho[]>(() => {
+    const c = this.objeto()?.annotation?.content;
+    if (!c) return [];
+    return [
       { etiqueta: 'Por qué existe', valor: c.existenceRationale },
       { etiqueta: 'Qué significa una fila', valor: c.rowGrain },
       { etiqueta: 'Qué pasa si se elimina', valor: c.deletionImpact },
+    ];
+  });
+
+  /** Quién responde por ella y qué tan sensible es. */
+  protected readonly hechosGobierno = computed<readonly Hecho[]>(() => {
+    const c = this.objeto()?.annotation?.content;
+    if (!c) return [];
+    return [
       { etiqueta: 'Dueño de negocio', valor: c.businessOwner },
       { etiqueta: 'Steward', valor: c.dataSteward },
       { etiqueta: 'Responsable técnico', valor: c.technicalOwner },
       { etiqueta: 'Sensibilidad', valor: sensitivityLabel(c.sensitivity) },
     ];
   });
+
+  /** La ficha se importó de la bóveda y todavía ninguna persona la tocó. */
+  protected readonly esImportada = computed(() => this.objeto()?.annotation?.origin === 'IMPORTED_VAULT');
+
+  /** El texto salió de una plantilla generada: sirve de borrador, no explica por qué existe. */
+  protected readonly esPlantilla = computed(() =>
+    (this.objeto()?.annotation?.content.openQuestions ?? []).some((q) => /plantilla/i.test(q.question)),
+  );
+
+  /** La parte «Sistema» de la nota de la bóveda, guardada como evidencia. */
+  protected readonly notaDeBoveda = computed(() => this.evidencia().find((e) => e.kind === 'VAULT_NOTE' && e.excerpt) ?? null);
+
+  /** Notas de la bóveda de las claves foráneas, por columna, leídas al pedirlas. */
+  protected readonly notasFk = signal<Readonly<Record<string, ViewState<readonly Evidence[]>>>>({});
 
   protected readonly faltantes = computed(() =>
     (this.objeto()?.coverage.missingFields ?? []).map((f) => CAMPO_FALTANTE[f] ?? f),
@@ -206,6 +238,16 @@ export class CatalogObjectDetail {
       next: (p) => this.cambios.set(p.items),
       error: (e: unknown) =>
         this.errorDeCambios.set(describeApiFailure(e, 'No pudimos traer los cambios estructurales.')),
+    });
+  }
+
+  /** Lee la evidencia de una columna la primera vez que se pide; después sólo se muestra. */
+  protected verNotaFk(columnId: string): void {
+    if (this.notasFk()[columnId]) return;
+    this.notasFk.update((n) => ({ ...n, [columnId]: loading() }));
+    this.catalog.listColumnEvidence(columnId).subscribe({
+      next: (e) => this.notasFk.update((n) => ({ ...n, [columnId]: ready(e) })),
+      error: (e: unknown) => this.notasFk.update((n) => ({ ...n, [columnId]: errorToViewState<readonly Evidence[]>(e) })),
     });
   }
 

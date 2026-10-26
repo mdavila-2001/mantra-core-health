@@ -35,8 +35,7 @@ interface TitleOption {
  * cien caracteres en el contrato, y aterriza en
  * `profiles.health_practitioner_profiles.professional_title`, **varchar
  * nullable**. No hay value set de títulos profesionales en la terminología, así
- * que lo que viaja es la etiqueta. El día que exista el concepto, esto pasa a
- * ser un mapeo y las dos pantallas lo heredan juntas.
+ * que lo que viaja es la etiqueta, y las dos pantallas comparten esta lista.
  */
 export const PROFESSIONAL_TITLE_OPTIONS: readonly TitleOption[] = [
   { value: 'Médico / Médica', label: 'Médico / Médica' },

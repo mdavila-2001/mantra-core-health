@@ -48,6 +48,24 @@
       </div>
     }
 
+    @if (phraseRequired(); as exigida) {
+      <div class="dialog__reason">
+        <app-form-field
+          [label]="'Escribí «' + exigida + '» para confirmar'"
+          [errorMessage]="phraseError()"
+          [required]="true"
+        >
+          <app-input
+            testId="dialogo-frase"
+            ariaLabel="Frase de confirmación"
+            [ngModel]="phrase()"
+            (ngModelChange)="phrase.set($event)"
+            [hasError]="phraseError() !== ''"
+          />
+        </app-form-field>
+      </div>
+    }
+
     <div class="dialog__actions">
       <!-- Cancelar va primero en el DOM: en una acción destructiva es el que
            recibe el foco inicial del navegador, que es lo que se busca. -->

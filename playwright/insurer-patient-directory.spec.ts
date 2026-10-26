@@ -4,7 +4,7 @@ import path from 'node:path';
 
 // UI aislada: no demuestra autorización ni persistencia de la API.
 const route = '/administration/insurance-patients';
-const evidence = path.resolve('docs/trabajo/2026-10-05-directorio-pacientes/evidencia');
+const evidence = path.resolve('artifacts/evidencia/2026-10-05-directorio-pacientes/evidencia');
 const patient = {
   patientProfileId: '11111111-1111-4111-8111-111111111111',
   fullName: 'Paciente Sintético de Prueba con Nombre Extenso',

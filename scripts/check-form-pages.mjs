@@ -68,31 +68,12 @@ const EXCEPCIONES = new Map([
     'es un constructor de agenda semanal, no un cuestionario: la rejilla de días, el horario de cada uno y la vista previa de los turnos que van a salir se leen juntos, y partirlos en páginas de cuatro escondería justamente lo que hay que comparar',
   ],
   [
+    'app/features/admin/practitioner-assisted-registration/practitioner-assisted-registration.html',
+    'es una ficha de una sola tarjeta con pestañas, por regla del cliente del 09/09/2026 (docs/components/composition-rules.md §5, CLAUDE.md punto 6): «tarjeta única con pestañas, centrada y a lo ancho». Las tres pestañas son las tres páginas del formulario —médico, documento y matrícula, habilitación y motivo— y un único envío fuera de ellas salta a la primera con error; paginar además con el motor volvería a partir en pasos lo que la regla pide ver junto',
+  ],
+  [
     'app/features/insurance/insurance-catalog/approval-rules-dialog.html',
     'son tres preguntas, no seis campos: si la cobertura requiere autorización previa, qué documentos hay que adjuntar y la cláusula de exclusión. Los documentos son UNA lista de opciones múltiples, que se dibuja con cuatro casillas porque no existe el átomo de grupo que sí tiene el radio — el verificador cuenta controles y acá cuatro controles son una sola respuesta',
-  ],
-  [
-    'app/features/auth/shared-registration/inline-name-fields/inline-name-fields.html',
-    'es un fragmento de campos de nombres proyectado como campo custom dentro de formularios paginados',
-  ],
-]);
-
-/**
- * Lo que **falta migrar**, con fecha y motivo.
- *
- * No es lo mismo que una excepción: una excepción dice «esto no es un
- * formulario lineal»; un pendiente dice «esto lo es y todavía no se hizo». Se
- * imprime siempre y en voz alta, y la lista **sólo puede encoger**: si una
- * pantalla de acá ya usa el motor, el verificador falla para que se la saque.
- *
- * Que no rompa el CI es deliberado: un check en rojo permanente se aprende a
- * ignorar, y entonces deja de proteger también a lo nuevo — que es lo que este
- * verificador existe para proteger.
- */
-const PENDIENTES = new Map([
-  [
-    'app/features/insurance/insurance-catalog/benefit-form-dialog.html',
-    '2026-09-12 · la consola de planes y coberturas lo trajo sin pasar por el motor: categoría, vigencia desde y hasta, porcentaje de cobertura, copago, deducible y tope anual son siete cosas que alguien contesta de corrido, así que es un formulario lineal y le toca el motor. Migrarlo cambia cómo se ve un diálogo modal —dos páginas y barra de avance dentro de la ventana— y eso es decisión de producto con prueba visual, no un arreglo al paso',
   ],
 ]);
 
@@ -163,21 +144,12 @@ for (const archivo of plantillas) {
   // desaparece de la cuenta al migrarse hace que el verificador cuente cada vez
   // menos a medida que el trabajo avanza.
   if (!html.includes('[formGroup]') && !html.includes('<app-paginated-form')) continue;
-  const pendiente = PENDIENTES.has(relativa);
-
-  if (html.includes('<app-paginated-form')) {
-    revisadas += 1;
-    if (pendiente) {
-      problemas.push(
-        `'${relativa}' ya usa el motor: sacalo de PENDIENTES para que la lista no mienta`,
-      );
-    }
-    continue;
-  }
 
   revisadas += 1;
+  if (html.includes('<app-paginated-form')) continue;
+
   const excedidos = gruposQueExceden(html);
-  if (excedidos.length > 0 && !pendiente) {
+  if (excedidos.length > 0) {
     for (const grupo of excedidos) {
       problemas.push(
         `'${relativa}' pide ${grupo.campos} campos de una vez en ${grupo.donde} y no usa <app-paginated-form>`,
@@ -203,8 +175,3 @@ if (problemas.length > 0) {
 
 console.log('✓ check-form-pages');
 console.log(`  ${revisadas} formularios, ninguno pide más de ${MAX_CAMPOS} campos de una vez`);
-
-if (PENDIENTES.size > 0) {
-  console.log(`\n  ${PENDIENTES.size} pendiente(s) de migrar:`);
-  for (const [ruta, motivo] of PENDIENTES) console.log(`    ${ruta}\n      ${motivo}`);
-}

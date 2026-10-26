@@ -62,7 +62,7 @@ interface SparkLine {
  * dónde, y cuánto le ahorraron el seguro y las promociones.
  *
  * Se llega por la billetera de la barra superior. Lee una sola vez
- * `GET /patient-spending/me` (P43, hoy sólo en la maqueta) con el rango del
+ * `GET /patient-spending/me` (P44) con el rango del
  * 1 de enero del año pasado a hoy, y todo lo demás son sumas sobre esa lista
  * (`spending.model.ts`).
  */

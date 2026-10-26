@@ -21,8 +21,8 @@ import type { PuntoGeo } from '../../../shared/components/organisms/map/map-pin.
  * escriba «S.R.L.» a mano deja de sumar con las que escribieron «SRL». La razón
  * la dio el propio cliente al pedir el campo.
  *
- * Cuando el backend publique el value set, esto pasa a ser un `*_concept_id` y
- * las opciones salen del catálogo de terminología, no de acá.
+ * La terminología no tiene un value set de tipos de sociedad, así que las
+ * opciones viven acá.
  */
 export const TIPOS_DE_SOCIEDAD = [
   'UNIPERSONAL',

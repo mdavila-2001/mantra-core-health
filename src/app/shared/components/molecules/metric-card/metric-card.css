@@ -1,0 +1,91 @@
+/* ============================================================================
+    MetricCard — la cifra del tablero. El tono pinta la loseta del ícono y
+    nunca el valor: el significado va en el rótulo y la pista, no sólo en el color.
+    ========================================================================== */
+
+:host {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-body);
+}
+
+.metric-card__tile {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--sp-10);
+  block-size: var(--sp-10);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+}
+
+:host(.metric-card--primary) .metric-card__tile {
+  background: var(--st-primary-bg);
+  color: var(--brand-primary);
+}
+:host(.metric-card--success) .metric-card__tile {
+  background: var(--st-success-bg);
+  color: var(--text-primary);
+}
+:host(.metric-card--warning) .metric-card__tile {
+  background: var(--st-warning-bg);
+  color: var(--text-primary);
+}
+:host(.metric-card--error) .metric-card__tile {
+  background: var(--st-error-bg);
+  color: var(--text-danger);
+}
+:host(.metric-card--info) .metric-card__tile {
+  background: var(--st-info-bg);
+  color: var(--text-primary);
+}
+
+.metric-card__tile app-nav-icon {
+  inline-size: var(--sp-5);
+  block-size: var(--sp-5);
+}
+
+.metric-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.metric-card__label {
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.metric-card__value {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.metric-card__value--empty {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.metric-card__hint {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

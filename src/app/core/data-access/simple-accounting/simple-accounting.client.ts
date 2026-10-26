@@ -24,7 +24,7 @@ import type {
  * elegida (`practiceId`), igual que el resto de la contabilidad del médico.
  * El servidor revalida la vinculación: este cliente no es la autoridad.
  *
- * **Contrato pendiente en la API**: hoy lo sirve sólo el simulador.
+ * **La API no publica este contrato**: lo sirve sólo el simulador.
  */
 @Injectable({ providedIn: 'root' })
 export class SimpleAccountingClient {

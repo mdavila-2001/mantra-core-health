@@ -105,7 +105,7 @@ export class QaLab {
 
   protected planCreado(plan: PlanDetail): void {
     this.pidiendoPlan.set(false);
-    void this.router.navigate(['/administration/qa-lab/plans', plan.id]);
+    void this.router.navigate(['/superadmin/qa-lab/plans', plan.id]);
   }
 
   protected abrirCorrida(id: string): void {

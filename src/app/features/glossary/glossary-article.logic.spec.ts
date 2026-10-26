@@ -8,6 +8,7 @@ import {
   bloquesDeTexto,
   enlaceSeguro,
   fechaLegible,
+  fuentesAgrupadas,
   fuentesDeLosDatos,
   imagenesVisibles,
   motivoDeExtracto,
@@ -246,6 +247,18 @@ describe('glossary-article.logic', () => {
     expect(fuentes).toEqual([
       { nombre: 'MedlinePlus en español (NLM)', url: 'https://x/1' },
       { nombre: 'otra', url: 'https://x/2' },
+    ]);
+  });
+
+  it('fuentesAgrupadas junta las fuentes que se repiten y cuenta sus datos', () => {
+    const datos = ['1', '2', '3'].map((n) => ({ label: n, value: n, source: 'mondo', sourceUrl: `https://m/${n}` }));
+    const fuentes = fuentesAgrupadas([
+      ...datos,
+      { label: 'x', value: 'x', source: 'icd10cm-tabular', sourceUrl: 'https://i/1' },
+    ]);
+    expect(fuentes).toEqual([
+      { nombre: 'mondo', url: 'https://m/1', cantidad: 3 },
+      { nombre: 'icd10cm-tabular', url: 'https://i/1', cantidad: 1 },
     ]);
   });
 });

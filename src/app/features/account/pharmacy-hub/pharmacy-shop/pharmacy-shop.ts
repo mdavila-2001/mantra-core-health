@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { catchError, map, of, startWith, switchMap, type Observable } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { aperturaDe } from '../../../../core/data-access/pharmacy/opening-hours';
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type {
   AvailabilitySite,
@@ -27,6 +28,7 @@ import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
@@ -83,6 +85,7 @@ interface ItemDeCarrito {
     Alert,
     AppButton,
     Badge,
+    Chip,
     FormField,
     RouterLink,
     SearchField,
@@ -111,6 +114,13 @@ export class PharmacyShop {
   protected readonly origen = signal<SearchOrigin | null>(null);
   protected readonly farmaciaElegida = signal<PharmacySite | null>(null);
   private readonly intentoSitios = signal(0);
+  /**
+   * P34 · sólo las abiertas ahora (24 h declaradas o de turno vigente). Lo
+   * filtra el servidor (`openNow=true`), no la lista ya truncada.
+   */
+  protected readonly soloAbiertas = signal(false);
+  /** La insignia «Abierta 24 h» / «De turno hasta …» de cada sede. */
+  protected readonly aperturaDe = aperturaDe;
 
   /** Los lugares que el paciente ya declaró, para ofrecer casa/trabajo como origen. */
   protected readonly lugaresGuardados = toSignal(
@@ -134,20 +144,30 @@ export class PharmacyShop {
         origen: this.origen(),
         intento: this.intentoSitios(),
         perfil: this.auth.patientProfileId(),
+        abiertas: this.soloAbiertas(),
       })),
     ).pipe(
-      switchMap(({ termino, origen, perfil }): Observable<ViewState<readonly PharmacySite[]>> => {
+      switchMap(({ termino, origen, perfil, abiertas }): Observable<ViewState<readonly PharmacySite[]>> => {
         // Sin perfil de paciente la pantalla entera muestra otra cosa (ver el
         // `@if` de la plantilla): no hay a nombre de quién listar farmacias.
         if (perfil === null) {
           return of(ready<readonly PharmacySite[]>([]));
         }
         return this.pharmacy
-          .nearbySites({ search: termino === '' ? undefined : termino, origin: origen ?? undefined })
+          .nearbySites({
+            search: termino === '' ? undefined : termino,
+            origin: origen ?? undefined,
+            ...(abiertas ? { openNow: true } : {}),
+          })
           .pipe(
             map((page) =>
               page.items.length === 0
-                ? empty({ label: 'Pruebe con otro nombre' }, 'No encontramos farmacias con ese nombre.')
+                ? abiertas
+                  ? empty(
+                      { label: 'Quite el filtro «Abiertas ahora» para ver todas' },
+                      'Ninguna farmacia declaró estar abierta las 24 h o de turno en este momento.',
+                    )
+                  : empty({ label: 'Pruebe con otro nombre' }, 'No encontramos farmacias con ese nombre.')
                 : ready(page.items),
             ),
             catchError((error: unknown) => of(errorToViewState<readonly PharmacySite[]>(error))),

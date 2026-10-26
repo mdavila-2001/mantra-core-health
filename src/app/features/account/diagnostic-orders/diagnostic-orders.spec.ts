@@ -43,6 +43,8 @@ interface OrdenDeApi {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
+  /** P40: la categoría textual que la API deriva de `categoryConceptId`. */
+  readonly category?: 'LAB' | 'IMAGING' | 'OTHER';
   readonly statusConceptId: string;
   readonly createdAt: string;
   readonly hasReleasedResult: boolean;
@@ -56,13 +58,26 @@ interface OrdenDeApi {
   readonly suggestedPracticeSiteName?: string | null;
 }
 
+/**
+ * La `category` que la API sirve para cada concepto de categoría de estas
+ * pruebas (P40): laboratorio e imagen se nombran, cualquier otra es `OTHER`.
+ */
+function categoriaDeApi(categoryConceptId: string | undefined): OrdenDeApi['category'] {
+  if (categoryConceptId === undefined) return undefined;
+  if (categoryConceptId === 'cat-lab') return 'LAB';
+  if (categoryConceptId === 'cat-img') return 'IMAGING';
+  return 'OTHER';
+}
+
 function orden(overrides: Partial<OrdenDeApi> = {}): OrdenDeApi {
+  const category = categoriaDeApi(overrides.categoryConceptId);
   return {
     id: id('order'),
     codeConceptId: id('concept-code'),
     statusConceptId: id('concept-status'),
     createdAt: '2026-08-14T10:00:00.000Z',
     hasReleasedResult: false,
+    ...(category === undefined ? {} : { category }),
     ...overrides,
   };
 }
@@ -81,8 +96,8 @@ function authDoble(patientProfileId: string | null) {
  * «Mis órdenes» — C9 (ADR-0015): reescritura completa sobre el diseño
  * anterior (agrupado por atención). Lo que fijan estas pruebas:
  *
- * 1. El tipo se deriva del **código** de `categoryConceptId` cuando llega
- *    (`SRQ-LAB`/`SRQ-IMAGING`), y cae en «Otros» sin categoría (C2 no corrió).
+ * 1. El tipo es la `category` que sirve la API (P40); el código del concepto
+ *    sólo separa los procedimientos. Sin categoría, «Otros».
  * 2. Los conteos de pestaña son consistentes: Todas = suma de las tres.
  * 3. Buscador y filtros son en cliente, y la URL va y vuelve.
  * 4. Ninguna acción de fila es sólo un ícono, y ninguna aparece sin su
@@ -186,6 +201,31 @@ describe('DiagnosticOrders', () => {
 
     const badge = harness.routeNativeElement?.querySelector('app-badge');
     expect(badge?.textContent?.trim()).toBe('Laboratorio');
+  });
+
+  it('P40: la pestaña sale de la category que manda la API, no del código del concepto', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    // Un código que la heurística vieja no conocía: igual es laboratorio,
+    // porque lo dice el servidor.
+    responder(
+      [orden({ categoryConceptId: 'cat-x', category: 'LAB' })],
+      [concepto('cat-x', 'CODIGO-NUEVO', 'Análisis de laboratorio')],
+    );
+
+    const badge = harness.routeNativeElement?.querySelector('app-badge');
+    expect(badge?.textContent?.trim()).toBe('Laboratorio');
+  });
+
+  it('P40: un código de laboratorio sin category no se adivina: cae en Otros', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    const o = orden({ categoryConceptId: 'cat-lab' });
+    const { category: _sinCategoria, ...sinCategoria } = o;
+    responder([sinCategoria], [concepto('cat-lab', 'SRQ-LAB', 'Laboratorio')]);
+
+    const badge = harness.routeNativeElement?.querySelector('app-badge');
+    expect(badge?.textContent?.trim()).toBe('Otros');
   });
 
   it('sin categoryConceptId (C2 no corrió), la orden cae en Otros', async () => {

@@ -64,7 +64,7 @@ Prerendered 4 static routes.
 ```
 
 Preexistente. **No rompe el build.** Ver
-[presupuestos](../performance/budgets.md#decisión-pendiente).
+[presupuestos](../performance/budgets.md).
 
 ## El generador de entorno es obligatorio
 
@@ -126,25 +126,3 @@ Consecuencias operativas:
 | `.dockerignore` los excluye | Es lo que evita *«Could not find the builder's node package»* |
 | Vite avisa que PnP está desaconsejado | Sin efecto medido: 804 pruebas pasan |
 | El editor necesita el SDK | `yarn dlx @yarnpkg/sdks vscode` |
-
-## Lo que falta
-
-| Elemento | Estado |
-|---|---|
-| Imagen de producción | **No existe** |
-| Build en CI | **No existe** |
-| Versionado del artefacto | **No existe.** `package.json` dice `0.0.0` |
-| Firma / SBOM | No existe |
-| Caché de build en CI | No aplica |
-
-### El versionado importa más de lo que parece
-
-`"version": "0.0.0"` y ningún identificador de build en el artefacto. **Nada en
-la aplicación dice qué versión está corriendo.**
-
-Consecuencia: ante un incidente, no se puede saber qué código está desplegado ni
-correlacionar un reporte con un commit.
-
-Es de las cosas más baratas de arreglar y de las que más rinden en operación.
-Registrado como brecha `HIGH` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

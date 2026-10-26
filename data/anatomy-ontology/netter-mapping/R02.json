@@ -1,0 +1,1415 @@
+[
+ {
+  "netterId": "ENT_2dd2ea061685ae",
+  "name": "Arteria(s) — asas anastomóticas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación genérica de asas anastomóticas sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_3dea67dee77663",
+  "name": "Arteria(s) — lumbar",
+  "queries": [
+   "lumbar artery"
+  ],
+  "uberon": "UBERON:0006636",
+  "matchedText": "lumbar artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4b50e2049f6a5b",
+  "name": "Arteria(s) — medular segmentaria — posterior",
+  "queries": [
+   "posterior segmental medullary artery",
+   "segmental medullary artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_60fdf0879e1bb0",
+  "name": "Arteria(s) — medular segmentaria — mayor",
+  "queries": [
+   "great anterior segmental medullary artery",
+   "artery of Adamkiewicz",
+   "great radicular artery",
+   "arteria radicularis magna"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON (arteria de Adamkiewicz no encontrada)"
+ },
+ {
+  "netterId": "ENT_733b51225d17cd",
+  "name": "Arteria(s) — medular segmentaria — anterior",
+  "queries": [
+   "anterior segmental medullary artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_a7a528ad05d470",
+  "name": "Arteria(s) — radicular — anterior",
+  "queries": [
+   "anterior radicular artery",
+   "radicular artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_b185e31975e2f3",
+  "name": "T6, visión — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto de índice/OCR sin estructura identificable"
+ },
+ {
+  "netterId": "ENT_b2179e78c9d9b3",
+  "name": "Médula — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación ambigua ('médula — arterias') sin clase única"
+ },
+ {
+  "netterId": "ENT_b270d4f1a6d6f8",
+  "name": "C2. V. Axis (C2) — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de arterias asociada a C2 sin clase única"
+ },
+ {
+  "netterId": "ENT_c5d9512443e475",
+  "name": "Sacro (S1-5) — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de arterias sacras sin clase única"
+ },
+ {
+  "netterId": "ENT_d61d8f34083f53",
+  "name": "Arteria(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada incompleta ('arteria derecha') sin estructura identificable"
+ },
+ {
+  "netterId": "ENT_d9c28979020b0b",
+  "name": "Duramadre — arterias espinales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación ambigua sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_f761f66e25b5a9",
+  "name": "Arteria(s) — médula espinal",
+  "queries": [
+   "spinal artery",
+   "spinal cord artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación genérica de arterias de la médula espinal; sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_fa6a61e543c242",
+  "name": "Arteria(s) — radicular — posterior",
+  "queries": [
+   "posterior radicular artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_0f736114126204",
+  "name": "Espacio(s) — disco intervertebral",
+  "queries": [
+   "intervertebral disc space",
+   "intervertebral space",
+   "intervertebral disk space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8ceed020ce3497",
+  "name": "Espacio(s) — torácico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "espacio torácico ambiguo sin clase identificable"
+ },
+ {
+  "netterId": "ENT_9f2fcda3df54cd",
+  "name": "Espacio(s) — grasa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "espacio graso ambiguo; no se puede determinar la estructura con seguridad"
+ },
+ {
+  "netterId": "ENT_035792affd037c",
+  "name": "Hernia — abordaje quirúrgico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo condicion_clinica_indexada: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_1bc39e3e3e2f28",
+  "name": "Hernia — lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo condicion_clinica_indexada: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_2ba1128ab77f29",
+  "name": "Hernia — manifestaciones clínicas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo condicion_clinica_indexada: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_4f3b7e3452fbf3",
+  "name": "Hernia — nivel y caracteristicas clínicas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo condicion_clinica_indexada: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_62a86a38a9920f",
+  "name": "Atlas de anatomía hun — hernia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo condicion_clinica_indexada: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_201553f4184dd5",
+  "name": "C2, ramo dorsal",
+  "queries": [
+   "dorsal ramus of second cervical nerve",
+   "C2 dorsal ramus",
+   "dorsal ramus of C2"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta para el ramo dorsal de C2"
+ },
+ {
+  "netterId": "ENT_4380a4a4f939c8",
+  "name": "C4, ramo dorsal",
+  "queries": [
+   "dorsal ramus of fourth cervical nerve",
+   "C4 dorsal ramus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta para el ramo dorsal de C4"
+ },
+ {
+  "netterId": "ENT_52d5b8eb2ee8f9",
+  "name": "Conducción antidrómica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "concepto fisiológico, no estructura anatómica"
+ },
+ {
+  "netterId": "ENT_56082f7af9aaf6",
+  "name": "Pedículo lumbar",
+  "queries": [
+   "pedicle of lumbar vertebra",
+   "lumbar vertebra pedicle",
+   "pedicle of vertebra"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "solo existe la clase genérica 'pedicle of vertebra'; la entrada es específica lumbar"
+ },
+ {
+  "netterId": "ENT_745c0f2bde66f8",
+  "name": "G3, ramo dorsal",
+  "queries": [
+   "dorsal ramus of third cervical nerve",
+   "third occipital nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "probable error de OCR ('G3'); estructura incierta"
+ },
+ {
+  "netterId": "ENT_75bb8f59636b9a",
+  "name": "Eferente parasimpático sacro",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "componente funcional (eferencia) sin clase estructural única"
+ },
+ {
+  "netterId": "ENT_a72f655a8ac33f",
+  "name": "Protrusión disco lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "condición clínica (protrusión discal), no estructura"
+ },
+ {
+  "netterId": "ENT_c328465b204e83",
+  "name": "Leptomeninges",
+  "queries": [
+   "leptomeninx",
+   "leptomeninges"
+  ],
+  "uberon": "UBERON:0000391",
+  "matchedText": "leptomeninx",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_db89666cc9c1d3",
+  "name": "Cola caballo",
+  "queries": [
+   "cauda equina"
+  ],
+  "uberon": "UBERON:0012337",
+  "matchedText": "cauda equina",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f935172dc39254",
+  "name": "Laringe",
+  "queries": [
+   "larynx"
+  ],
+  "uberon": "UBERON:0001737",
+  "matchedText": "larynx",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b8bf54a3a1b51d",
+  "name": "Atla — fascia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "OCR deficiente; estructura no identificable con seguridad"
+ },
+ {
+  "netterId": "ENT_bffb1ceab3d7db",
+  "name": "Atlas de anatomía hun — fascia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto de cabecera/OCR sin estructura identificable"
+ },
+ {
+  "netterId": "ENT_15e6e1a01693b6",
+  "name": "Abertura lateral (agujero de Luschka) — borde inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "OCR mezclado (agujero de Luschka con contexto vertebral); estructura incierta"
+ },
+ {
+  "netterId": "ENT_180297ba0acfdd",
+  "name": "C2. V. Axis (C2) — agujero intervertebral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agujero intervertebral específico de C2 sin clase exacta"
+ },
+ {
+  "netterId": "ENT_61d4575c995faa",
+  "name": "Abertura lateral (agujero de Luschka) — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "OCR mezclado; estructura incierta"
+ },
+ {
+  "netterId": "ENT_dc1f765c764c2f",
+  "name": "Abertura lateral (agujero de Luschka) — lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "OCR mezclado; estructura incierta"
+ },
+ {
+  "netterId": "ENT_df3505f8a2c293",
+  "name": "C2. V. Axis (C2) — agujero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada ambigua ('agujero' de C2)"
+ },
+ {
+  "netterId": "ENT_8e2f34fb648074",
+  "name": "Ganglio — cervical — medio",
+  "queries": [
+   "middle cervical ganglion"
+  ],
+  "uberon": "UBERON:0001990",
+  "matchedText": "middle cervical ganglion",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_99194665084516",
+  "name": "Ganglio — cervical — superior",
+  "queries": [
+   "superior cervical ganglion"
+  ],
+  "uberon": "UBERON:0001989",
+  "matchedText": "superior cervical ganglion",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_06b2a701fd4f55",
+  "name": "Dorso — huesos y ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de huesos y ligamentos del dorso"
+ },
+ {
+  "netterId": "ENT_28970eb142c92c",
+  "name": "C2. V. Axis (C2) — escotadura vertebral superior",
+  "queries": [
+   "superior vertebral notch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "escotadura específica de C2; sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_3fb41c03b7692a",
+  "name": "Atlas de anatomía hun — vértebras",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto de cabecera/OCR; agrupación de vértebras"
+ },
+ {
+  "netterId": "ENT_42580bb264bda3",
+  "name": "Cráneo — base",
+  "queries": [
+   "base of skull",
+   "cranial base",
+   "skull base"
+  ],
+  "uberon": "UBERON:0002517",
+  "matchedText": "base of skull",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6d935a937fb799",
+  "name": "Raíces — relación vértebras",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "relación topográfica, no estructura"
+ },
+ {
+  "netterId": "ENT_893d8d847f8631",
+  "name": "Línea — cráneo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada ambigua ('línea — cráneo')"
+ },
+ {
+  "netterId": "ENT_add4e77158f9e1",
+  "name": "Atlas de anatomía hur — vertebral, lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto de cabecera/OCR sin estructura identificable"
+ },
+ {
+  "netterId": "ENT_bf8a088f03a881",
+  "name": "Escotadura — vertebral — inferior, lumbar",
+  "queries": [
+   "inferior vertebral notch",
+   "inferior vertebral notch of lumbar vertebra"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c1ec6396e9b6fe",
+  "name": "C2. V. Axis (C2) — escotadura vertebral — inferior",
+  "queries": [
+   "inferior vertebral notch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "escotadura específica de C2; sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_cb618363b20659",
+  "name": "C2. V. Axis (C2) — escotadura vertebral inferior",
+  "queries": [
+   "inferior vertebral notch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "escotadura específica de C2; sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_d10351a7aa8ca0",
+  "name": "Cráneo — línea nucal superior",
+  "queries": [
+   "superior nuchal line"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta (solo existe 'superior nuchal line attachment site', no equivalente)"
+ },
+ {
+  "netterId": "ENT_e6a910e81df0af",
+  "name": "Escotadura — vertebral — superior, lumbar",
+  "queries": [
+   "superior vertebral notch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_ee41f4a099b425",
+  "name": "C2. V. Axis (C2) — escotadura vertebral — superior",
+  "queries": [
+   "superior vertebral notch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "escotadura específica de C2; sin coincidencia exacta"
+ },
+ {
+  "netterId": "ENT_544e32829afa09",
+  "name": "C2. V. Axis (C2) — ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de ligamentos de C2"
+ },
+ {
+  "netterId": "ENT_cfd60ba86b99ff",
+  "name": "Ligamento(s) (cont.} — supraespinoso",
+  "queries": [
+   "supraspinous ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_f10d4f1a2d77d6",
+  "name": "Ligamento(s) — coccigeo",
+  "queries": [
+   "coccygeal ligament",
+   "filum terminale externum"
+  ],
+  "uberon": "UBERON:0010270",
+  "matchedText": "filum terminale externum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_fb0ee923ce3ed5",
+  "name": "C2. V. Axis (C2) — ligamento amarillo",
+  "queries": [
+   "ligamentum flavum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "ligamento amarillo a nivel de C2; solo existe la clase genérica"
+ },
+ {
+  "netterId": "ENT_181369e9c28e35",
+  "name": "Músculo(s) — íntimo",
+  "queries": [
+   "innermost intercostal muscle"
+  ],
+  "uberon": "UBERON:0008617",
+  "matchedText": "innermost intercostal muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_212a7418758481",
+  "name": "Músculo(s) — lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_2a6ff4ec285ca4",
+  "name": "Músculo(s) — tórax",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_2b3fd41ca3f78c",
+  "name": "Músculo(s) — columna",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_2c4ebbbb4ed95f",
+  "name": "C2. V. Axis (C2) — musculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de músculos asociados a C2"
+ },
+ {
+  "netterId": "ENT_3220c50d2f7bbc",
+  "name": "Músculo(s) — cutáneo anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada ambigua ('cutáneo anterior'), probablemente nervio; incierta"
+ },
+ {
+  "netterId": "ENT_442726a61b0c5e",
+  "name": "Músculo(s) — cuello",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_61fcfd365d9569",
+  "name": "Músculo(s) — lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_6ffadaf3336256",
+  "name": "Músculo(s) — intertransverso lateral",
+  "queries": [
+   "lateral intertransversarius muscle",
+   "intertransversarii laterales lumborum",
+   "lateral intertransversarii"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8bb0c93d44647a",
+  "name": "Músculo(s) — fascia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada ambigua ('músculos — fascia')"
+ },
+ {
+  "netterId": "ENT_8d4f47ebb44e4b",
+  "name": "Músculo(s) — iliocostal",
+  "queries": [
+   "iliocostalis muscle",
+   "iliocostalis"
+  ],
+  "uberon": "UBERON:0002251",
+  "matchedText": "iliocostalis muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_925549c1f2a9ce",
+  "name": "Músculo(s) — espinoso",
+  "queries": [
+   "spinalis muscle",
+   "spinalis"
+  ],
+  "uberon": "UBERON:0011013",
+  "matchedText": "spinalis muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_abe9318cdef239",
+  "name": "Triángulo — musculo oblicuo interno abdomen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada de triángulo con mención muscular; estructura ambigua"
+ },
+ {
+  "netterId": "ENT_b098a7c5b7dfe2",
+  "name": "Músculo(s) — triángulo posterior cuello",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de músculos del triángulo posterior del cuello"
+ },
+ {
+  "netterId": "ENT_c0fd66e5f94266",
+  "name": "Músculo(s) — cuello",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_cc77fda28de3d8",
+  "name": "Músculo(s) — cuello",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_d23a8adde97c9f",
+  "name": "Musculo(s) — tendón origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada genérica ('tendón de origen')"
+ },
+ {
+  "netterId": "ENT_dbddcfbe92705d",
+  "name": "Músculo(s) — folículo piloso",
+  "queries": [
+   "arrector pili muscle"
+  ],
+  "uberon": "UBERON:0002033",
+  "matchedText": "arrector pili muscle",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e73a49a0f3f300",
+  "name": "Músculo(s) — cabeza",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_ead42a5f265cf3",
+  "name": "Músculo(s) — cervical",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación regional de músculos"
+ },
+ {
+  "netterId": "ENT_19307cc6d3d757",
+  "name": "Cóccix — nervios espinales",
+  "queries": [
+   "coccygeal nerve"
+  ],
+  "uberon": "UBERON:0009629",
+  "matchedText": "coccygeal nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2be982e2b450a1",
+  "name": "Nervio(s) — vértebras",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "relación topográfica nervios-vértebras, no estructura única"
+ },
+ {
+  "netterId": "ENT_2fbab4bf055b2d",
+  "name": "Nervio(s) — columna vertebral y médula espinal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de nervios"
+ },
+ {
+  "netterId": "ENT_54f3594e18805e",
+  "name": "Nervio(s) — coccigeo",
+  "queries": [
+   "coccygeal nerve"
+  ],
+  "uberon": "UBERON:0009629",
+  "matchedText": "coccygeal nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_65bd707de8deef",
+  "name": "C2. V. Axis (C2) — relación nervios espinales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "relación topográfica, no estructura"
+ },
+ {
+  "netterId": "ENT_79e8ccae434e3b",
+  "name": "Nervio(s) — tercero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada ambigua ('nervio tercero')"
+ },
+ {
+  "netterId": "ENT_7f511bb0299392",
+  "name": "Nervio(s) — ramo ventral",
+  "queries": [
+   "ventral ramus of spinal nerve"
+  ],
+  "uberon": "UBERON:0006838",
+  "matchedText": "ventral ramus of spinal nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_862c0b8dfc6b77",
+  "name": "Nervio(s) — ramo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada genérica ('ramo') sin estructura identificable"
+ },
+ {
+  "netterId": "ENT_944138b80bddbe",
+  "name": "Nervio(s) — braquial lateral superior",
+  "queries": [
+   "superior lateral cutaneous nerve of arm",
+   "upper lateral cutaneous nerve of arm",
+   "superior lateral brachial cutaneous nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_99b5110f16e152",
+  "name": "Atlas de anatomía hun — nervios espinales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto de cabecera/OCR; agrupación de nervios espinales"
+ },
+ {
+  "netterId": "ENT_9d8e52775735c2",
+  "name": "Nervio(s) — intercostal",
+  "queries": [
+   "intercostal nerve"
+  ],
+  "uberon": "UBERON:0003727",
+  "matchedText": "intercostal nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a087c8ab329429",
+  "name": "Nervio(s) — sexto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada ambigua ('nervio sexto')"
+ },
+ {
+  "netterId": "ENT_c61eb90811fc79",
+  "name": "Nervio(s) — occipital — mayor",
+  "queries": [
+   "greater occipital nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_def91d2068887a",
+  "name": "Nervio(s) — torácico",
+  "queries": [
+   "thoracic nerve",
+   "thoracic spinal nerve"
+  ],
+  "uberon": "UBERON:0003726",
+  "matchedText": "thoracic nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e88829c9d0cf4f",
+  "name": "Dorso — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de nervios del dorso"
+ },
+ {
+  "netterId": "ENT_ef0933568a1135",
+  "name": "Pleura — nervios espinales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "relación topográfica, no estructura única"
+ },
+ {
+  "netterId": "ENT_fffce195f71263",
+  "name": "Nervio(s) — visceral torácico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada ambigua ('nervio visceral torácico'); sin clase única segura"
+ },
+ {
+  "netterId": "ENT_a103a9c6b1cea4",
+  "name": "Ojo",
+  "queries": [
+   "eye",
+   "camera-type eye"
+  ],
+  "uberon": "UBERON:0000019",
+  "matchedText": "camera-type eye",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_29467bc4fe2312",
+  "name": "Intestino",
+  "queries": [
+   "intestine"
+  ],
+  "uberon": "UBERON:0000160",
+  "matchedText": "intestine",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_29667401962beb",
+  "name": "Pulmones",
+  "queries": [
+   "lung"
+  ],
+  "uberon": "UBERON:0002048",
+  "matchedText": "lung",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_44d41085f6432d",
+  "name": "Próstata — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "aspecto funcional (inervación), no estructura"
+ },
+ {
+  "netterId": "ENT_5cad7ce3088a5a",
+  "name": "Próstata",
+  "queries": [
+   "prostate gland"
+  ],
+  "uberon": "UBERON:0002367",
+  "matchedText": "prostate gland",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_825452941c82d0",
+  "name": "Recto — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "aspecto funcional (inervación), no estructura"
+ },
+ {
+  "netterId": "ENT_88ab6f13ee7d7f",
+  "name": "Vejiga urinaria — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "aspecto funcional (inervación), no estructura"
+ },
+ {
+  "netterId": "ENT_a7f3128085ca2e",
+  "name": "Duodeno — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sección transversal (vista), no estructura"
+ },
+ {
+  "netterId": "ENT_f5be5bc993b29d",
+  "name": "Sección transversal — duodeno descendente",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sección transversal (vista), no estructura"
+ },
+ {
+  "netterId": "ENT_0f3523d40841fc",
+  "name": "Plexo — pulmonar",
+  "queries": [
+   "pulmonary plexus"
+  ],
+  "uberon": "UBERON:0002009",
+  "matchedText": "pulmonary plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1f01fa0078ea60",
+  "name": "Plexo — venoso",
+  "queries": [
+   "venous plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "plexo venoso genérico en contexto medular; no se puede asegurar equivalencia exacta"
+ },
+ {
+  "netterId": "ENT_2078de79c1437e",
+  "name": "Plexo — arterial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada genérica ('plexo arterial') sin clase exacta"
+ },
+ {
+  "netterId": "ENT_460980997e37a1",
+  "name": "Plexo — cervical",
+  "queries": [
+   "cervical plexus"
+  ],
+  "uberon": "UBERON:0003725",
+  "matchedText": "cervical plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_47c73a70481d5a",
+  "name": "Plexo — subtrapecio",
+  "queries": [
+   "subtrapezial plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_7e3cdafc70b56c",
+  "name": "Plexo — pial",
+  "queries": [
+   "pial plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_0ca575e9a64037",
+  "name": "Ligamento(s) — amarillo, punción lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_1de0e059f4c151",
+  "name": "Punción lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_2176f7ed6e6d51",
+  "name": "Radiografía — anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_354b255c8f6615",
+  "name": "Apófisis — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_458b42d3abed2c",
+  "name": "Abertura lateral (agujero de Luschka) — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_5f4b1ad451b619",
+  "name": "Anestesia epidural, punción — lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_b06a344b87523a",
+  "name": "Radiografía — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_cfbde4fd88a052",
+  "name": "Cresta — punción lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_dab2fd0f234c02",
+  "name": "Saco — puncion lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_ec666669cd4e13",
+  "name": "C2. V. Axis (C2) — radiografias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_fa8095507e75ae",
+  "name": "Espacio(s) — punción lumbar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "tipo procedimiento_o_imagen: no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_0378688bdee8a6",
+  "name": "Piamadre — médula espinal",
+  "queries": [
+   "spinal pia mater",
+   "pia mater of spinal cord",
+   "spinal cord pia mater"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON para la piamadre espinal"
+ },
+ {
+  "netterId": "ENT_5cfea048a8055a",
+  "name": "Atla — tendón origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "OCR deficiente; estructura no identificable"
+ },
+ {
+  "netterId": "ENT_e5f329f4d9fb9f",
+  "name": "Masculo(s) — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "OCR deficiente; entrada genérica"
+ },
+ {
+  "netterId": "ENT_3f01203bb079e5",
+  "name": "Vena(s) — cervical — superficial",
+  "queries": [
+   "superficial cervical vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_94614921c3935e",
+  "name": "Vena(s) — segmento anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada ambigua ('venas — segmento anterior')"
+ },
+ {
+  "netterId": "ENT_cdf2d0dcade771",
+  "name": "Vena(s) — segmentaria",
+  "queries": [
+   "segmental vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_f9fa609a49e7b0",
+  "name": "Atlas de anatomía hun — venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "texto de cabecera/OCR; agrupación de venas"
+ }
+]

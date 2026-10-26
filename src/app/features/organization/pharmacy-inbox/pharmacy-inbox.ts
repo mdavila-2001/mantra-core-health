@@ -54,16 +54,14 @@ import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
  * Cada cuánto se refresca la bandeja sola. La campana ya avisa; esto es el
- * respaldo del mostrador que dejó la pestaña abierta. TODO(FAR-E2): será el
- * único mecanismo cuando el canal de la demo se vaya.
+ * respaldo del mostrador que dejó la pestaña abierta.
  */
 const SONDEO_MS = 20_000;
 
 /**
  * Cuántos pedidos se piden de una vez: el tope que la API acepta. Si vuelven
- * tantos, puede haber más y la pantalla lo dice en vez de cortar callada.
- * TODO(FAR-E2): cuando la API responda `hasMore`, usarlo en lugar de adivinar
- * por la cuenta.
+ * tantos, puede haber más y la pantalla lo dice en vez de cortar callada: la
+ * respuesta no trae `hasMore`, así que se deduce de la cuenta.
  */
 const LIMITE_DE_PEDIDOS = 500;
 

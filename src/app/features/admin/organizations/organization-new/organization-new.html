@@ -29,7 +29,7 @@
       placeholder="Nombre del país"
       emptyMessage="Ningún concepto coincide"
       (searched)="buscarPais($event)"
-      (selectionChange)="pais.set($event)"
+      (selectionChange)="form.controls.pais.setValue($event)"
     />
   </ng-template>
 
@@ -41,7 +41,7 @@
       placeholder="Nombre de la jurisdicción"
       emptyMessage="Ningún concepto coincide"
       (searched)="buscarJurisdiccion($event)"
-      (selectionChange)="jurisdiccion.set($event)"
+      (selectionChange)="form.controls.jurisdiccion.setValue($event)"
     />
   </ng-template>
 
@@ -53,7 +53,7 @@
       placeholder="Nombre o correo"
       emptyMessage="Ningún usuario coincide"
       (searched)="buscarOwner($event)"
-      (selectionChange)="owner.set($event)"
+      (selectionChange)="form.controls.owner.setValue($event)"
     />
   </ng-template>
 </app-paginated-form>

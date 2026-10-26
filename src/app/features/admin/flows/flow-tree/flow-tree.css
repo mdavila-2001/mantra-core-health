@@ -1,0 +1,113 @@
+.arbol__controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin-block-end: var(--e3);
+}
+
+.arbol,
+.arbol__ramas,
+.arbol__hijos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arbol__ramas,
+.arbol__hijos {
+  margin-inline-start: var(--e3);
+  padding-inline-start: var(--e3);
+  border-inline-start: 2px solid var(--border-subtle);
+}
+
+/* Un árbol profundo no cabe en un teléfono: el marco contiene el desborde y la sangría se achica. */
+.arbol__marco {
+  overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+  .arbol__ramas,
+  .arbol__hijos {
+    margin-inline-start: var(--sp-1);
+    padding-inline-start: var(--sp-2);
+  }
+}
+
+.arbol__nodo,
+.arbol__rama {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding-block: var(--e2);
+}
+
+.arbol__cabecera,
+.arbol__rama-cabecera,
+.arbol__caso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+}
+
+.arbol__plegar {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.arbol__plegar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.arbol__plegar--fin {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.arbol__titulo {
+  color: var(--text-primary);
+}
+
+.arbol__condicion {
+  color: var(--text-primary);
+}
+
+.arbol__secundario {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.arbol__gap {
+  margin: 0;
+  padding: var(--e2) var(--e3);
+  border-inline-start: 3px solid var(--aviso-tinta);
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-primary);
+}
+
+.arbol__endpoint,
+.arbol__caso code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
+.arbol__vacio {
+  color: var(--text-secondary);
+}

@@ -1,6 +1,7 @@
 import { MockRouter } from '../mock-router';
 import { registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
+import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
@@ -37,12 +38,17 @@ import { registrarSeguros } from './insurance.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
+import { registerGovernance } from './governance.handlers';
+import { registrarAltaDeMedicoAsistida } from './assisted-practitioner.handlers';
+import { registrarFlujos } from './flows.handlers';
+import { registrarTrafico } from './ops-traffic.handlers';
 import { registerPromotions } from './promotions.handlers';
 import { registerPatientSpending } from './patient-spending.handlers';
-import { registerMedicalGroups } from './medical-groups.handlers';
-import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
+import { registerPortalInventory } from './portal-inventory.handlers';
 import { registerReceivedServices } from './received-services.handlers';
+import { registerMedicalGroups } from './medical-groups.handlers';
 import { registerMedicalCenters } from './medical-centers.handlers';
+import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -57,6 +63,7 @@ export function crearRouterSimulado(): MockRouter {
   registerSignatureAndSeal(router);
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);
+  registrarHorarioFlexible(router);
   // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
   // ante patrones equivalentes gana el registrado primero.
   registerHealthcareServices(router);
@@ -94,8 +101,13 @@ export function crearRouterSimulado(): MockRouter {
   registrarVarios(router);
   registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
+  registerGovernance(router);
+  registrarTrafico(router);
+  registrarFlujos(router);
+  registrarAltaDeMedicoAsistida(router);
   registerPromotions(router);
   registerPatientSpending(router);
+  registerPortalInventory(router);
   registerMedicalGroups(router);
   registerMedicalCenters(router);
   registerOrganizationPracticeHandlers(router);

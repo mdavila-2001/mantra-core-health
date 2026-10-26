@@ -87,15 +87,18 @@
         }
 
         <p class="articulo__cita" data-testid="articulo-cita">
-          Fuente:
+          <span class="articulo__cita-rotulo">Fuente:</span>
           @if (enlaceSeguro(item.seccion.sourceUrl); as url) {
-            <a [href]="url" target="_blank" rel="noopener noreferrer">{{
+            <a class="enlace-chip" [href]="url" target="_blank" rel="noopener noreferrer">{{
               nombreDeFuente(item.seccion.source)
             }}</a>
           } @else {
-            {{ nombreDeFuente(item.seccion.source) }}
+            <span class="articulo__sello">{{ nombreDeFuente(item.seccion.source) }}</span>
           }
-          · {{ item.seccion.license }} · consultado el {{ fechaLegible(item.seccion.retrievedAt) }}
+          <span class="articulo__sello">{{ item.seccion.license }}</span>
+          <span class="articulo__cita-fecha">
+            consultado el {{ fechaLegible(item.seccion.retrievedAt) }}
+          </span>
         </p>
       </section>
     }
@@ -122,13 +125,13 @@
                   <span>
                     {{ imagen.author }} ·
                     @if (enlaceSeguro(imagen.licenseUrl); as url) {
-                      <a [href]="url" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
+                      <a class="articulo__enlace" [href]="url" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
                     } @else {
                       {{ imagen.license }}
                     }
                     @if (enlaceSeguro(imagen.sourcePage); as url) {
                       ·
-                      <a [href]="url" target="_blank" rel="noopener noreferrer">página de origen</a>
+                      <a class="articulo__enlace" [href]="url" target="_blank" rel="noopener noreferrer">página de origen</a>
                     }
                   </span>
                 </figcaption>
@@ -144,15 +147,23 @@
         <h2 class="articulo__titulo" id="articulo-datos" tabindex="-1">Datos</h2>
         <app-fact-list [hechos]="hechos()" />
         <p class="articulo__cita">
-          Fuente:
-          @for (fuente of fuentesDeDatos(); track fuente.url; let ultimo = $last) {
+          <span class="articulo__cita-rotulo">Fuente:</span>
+          @for (fuente of fuentesDeDatos(); track fuente.nombre) {
             @if (enlaceSeguro(fuente.url); as url) {
-              <a [href]="url" target="_blank" rel="noopener noreferrer">{{ fuente.nombre }}</a>
+              <a
+                class="enlace-chip"
+                [href]="url"
+                target="_blank"
+                rel="noopener noreferrer"
+                [attr.title]="fuente.cantidad > 1 ? fuente.cantidad + ' datos de esta fuente' : null"
+              >
+                {{ fuente.nombre }}
+                @if (fuente.cantidad > 1) {
+                  <span class="enlace-chip__cuenta">×{{ fuente.cantidad }}</span>
+                }
+              </a>
             } @else {
-              {{ fuente.nombre }}
-            }
-            @if (!ultimo) {
-              ·
+              <span class="articulo__sello">{{ fuente.nombre }}</span>
             }
           }
         </p>
@@ -162,10 +173,16 @@
     @if (referencias().length > 0) {
       <section class="articulo__seccion" aria-labelledby="articulo-referencias">
         <h2 class="articulo__titulo" id="articulo-referencias" tabindex="-1">Referencias</h2>
-        <ul class="articulo__referencias">
+        <ul class="enlace-chips articulo__referencias">
           @for (ref of referencias(); track ref.url) {
             <li>
-              <a [href]="ref.url" target="_blank" rel="noopener noreferrer">{{ ref.title }}</a>
+              <a
+                class="enlace-chip enlace-chip--largo"
+                [href]="ref.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                >{{ ref.title }}</a
+              >
             </li>
           }
         </ul>
@@ -181,13 +198,13 @@
       <figcaption class="articulo__pie">
         {{ imagen.author }} ·
         @if (enlaceSeguro(imagen.licenseUrl); as url) {
-          <a [href]="url" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
+          <a class="articulo__enlace" [href]="url" target="_blank" rel="noopener noreferrer">{{ imagen.license }}</a>
         } @else {
           {{ imagen.license }}
         }
         @if (enlaceSeguro(imagen.sourcePage); as url) {
           ·
-          <a [href]="url" target="_blank" rel="noopener noreferrer">página de origen</a>
+          <a class="articulo__enlace" [href]="url" target="_blank" rel="noopener noreferrer">página de origen</a>
         }
       </figcaption>
     </figure>

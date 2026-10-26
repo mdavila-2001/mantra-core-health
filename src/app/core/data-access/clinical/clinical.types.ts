@@ -19,7 +19,7 @@
     pantalla sólo quiera contar cuántas alergias hay.
     ========================================================================== */
 
-/** Decisión terminal de C3. Pendiente de backend P41. */
+/** Decisión terminal de C3 (P41). */
 export type DiagnosisOutcome = 'CONFIRMED' | 'REFUTED';
 
 /** Evidencia que respalda la decisión; C3 resuelve sus vínculos (P41). */
@@ -40,7 +40,7 @@ export interface DiagnosisVerification {
   readonly basedOn: DiagnosisEvidence | null;
 }
 
-/** Entrada de C3 para confirmar o rechazar; pendiente de backend P41. */
+/** Entrada de C3 para confirmar o rechazar (P41). */
 export interface NewDiagnosisVerification {
   readonly outcome: DiagnosisOutcome;
   /** Hasta 500 caracteres; se exige motivo o evidencia. */
@@ -61,7 +61,7 @@ export interface Condition {
   readonly categoryConceptId?: string;
   readonly clinicalStatusConceptId?: string;
   readonly verificationStatusConceptId?: string;
-  /** Decisión y evidencia de C3; pendiente de backend P41. */
+  /** Decisión y evidencia de C3 (P41); `null` si nunca se decidió. */
   readonly verification?: DiagnosisVerification | null;
   readonly severityConceptId?: string;
   readonly encounterId?: string;
@@ -104,8 +104,8 @@ export interface MedicationRequest {
    * El motivo escrito a mano, cuando no hay condición registrada detrás.
    *
    * Es lo que el cliente pidió para los casos psiquiátricos y para quien «sólo
-   * fue a que le receten». **Todavía no existe en el backend**: ver P24 en
-   * `PENDIENTES-BACKEND.md`.
+   * fue a que le receten». La API lo guarda en `medication_requests`
+   * (`indicationText`, P24).
    */
   readonly indicationText?: string;
   readonly prescriberProfileId?: string;
@@ -321,7 +321,7 @@ export interface CareEpisodeRegistration {
   readonly createdAt: Date;
 }
 
-/** Una fila de la nota médica de C1; pendiente de backend P39. */
+/** Una fila de la nota médica de C1 (P39: `entries_json` de la versión). */
 export interface MedicalNoteEntry {
   readonly label: string;
   readonly value: string;
@@ -336,7 +336,10 @@ export interface ChartNote {
   readonly currentVersionId?: string;
   readonly versionNumber?: number;
   readonly authorProfileId?: string;
-  /** Filas estructuradas de C1; lectura y escritura reales pendientes de backend P39. */
+  /**
+   * Filas estructuradas de C1 de la versión vigente (P39). Ausente en las
+   * notas SOAP de antes de C1, que se leen por su texto.
+   */
   readonly entries?: readonly MedicalNoteEntry[];
   readonly chiefComplaintText?: string;
   readonly subjectiveText?: string;
@@ -462,7 +465,7 @@ export interface NewMedicationRequest {
   readonly patientProfileId: string;
   /**
    * La respuesta del formulario médico de la que sale (instancia de `forms`).
-   * En la cita es obligatoria; pendiente de backend (P43).
+   * En la cita es obligatoria (P43).
    */
   readonly formInstanceId?: string;
   /** El medicamento, como uuid de concepto. Nunca texto tecleado. */
@@ -740,10 +743,8 @@ export interface ObservationRegistration {
  * tendría forma de comprobar que existe, ni al recargar.
  *
  * El tipo y sus dos métodos entran igual porque el contrato **sí** está
- * verificado, y así el día que el backend publique la lectura la pantalla es lo
- * único que falta. Hasta entonces, la ficha del vault lo dice con el mismo
- * aviso: «Tabla ⚠︎ — la pantalla necesita un listado que el backend todavía no
- * expone».
+ * verificado. La ficha del vault lo dice con el mismo aviso: «Tabla ⚠︎ — la
+ * pantalla necesita un listado que el backend todavía no expone».
  */
 export interface NewDiagnosticReport {
   readonly custodianTenantId: string;

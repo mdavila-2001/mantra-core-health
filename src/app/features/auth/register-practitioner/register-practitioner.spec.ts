@@ -1,3 +1,4 @@
+import { matchesFileAccept } from '../../../shared/forms/file-accept';
 import { environment } from '../../../../environments/environment';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -174,10 +175,14 @@ describe('RegisterPractitioner', () => {
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       homeAddressLines: '',
+      homeDistrict: '',
+      municipio: null,
+      municipioConsultorio: null,
       workAddressLines: '',
       officeContactPhone: '',
       officeName: '',
       officeAddressLines: '',
+      officeDistrict: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
       // Obligatorio desde que dejó de ser «(opcional)»: es lo que dice qué
       // clase de profesional es, y de él dependen el colegio y las
@@ -328,10 +333,15 @@ describe('RegisterPractitioner', () => {
       // teléfonos con los que compartía pantalla.
       expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
       expect(camposDe('access')).toEqual(['workMobilePhone', 'workLandline', 'email']);
-      // Las mismas tres piezas que el alta de paciente: la localidad, la calle
-      // y el punto del mapa. Era sólo la localidad mientras el DTO del
-      // profesional no tuvo dónde poner las otras dos.
-      expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
+      // Las mismas piezas que el alta de paciente: la localidad primero, y con
+      // ella elegida, el distrito, la calle y el punto del mapa (los tres con
+      // `showWhen` sobre la localidad).
+      expect(camposDe('residence')).toEqual([
+        'municipio',
+        'homeDistrict',
+        'homeAddressLines',
+        'gpsDomicilio',
+      ]);
       expect(camposDe('workplace-location')).toEqual(['workAddressLines', 'gpsTrabajo']);
       // El consultorio propio: contacto y ubicación en dos páginas opcionales. Es un calco del
       // lugar de trabajo del alta de paciente, con el nombre que le da el
@@ -340,6 +350,7 @@ describe('RegisterPractitioner', () => {
       expect(camposDe('own-office-contact')).toEqual(['officeName', 'officeContactPhone']);
       expect(camposDe('own-office')).toEqual([
         'municipioConsultorio',
+        'officeDistrict',
         'officeAddressLines',
         'gpsConsultorio',
       ]);
@@ -387,8 +398,7 @@ describe('RegisterPractitioner', () => {
         // GPS. No porque la columna haya aparecido: `common.addresses` ya la
         // tenía, y el alta de paciente escribe ahí desde siempre. Lo que
         // faltaba era que el DTO del profesional la recibiera, y eso es una
-        // línea de `RegisterPractitionerDto` copiada del de paciente —anotada
-        // en `PENDIENTES-BACKEND.md` como condición para el pase a `dev`—.
+        // línea de `RegisterPractitionerDto` copiada del de paciente.
         //
         // La zona sigue acá porque de ella sí no hay columna para nadie.
         'organizationName',
@@ -945,20 +955,20 @@ describe('RegisterPractitioner', () => {
     expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
   });
 
-  it('la cédula se valida de verdad: sólo dígitos, de 5 a 9, y no un relleno', () => {
+  it('el documento admite letras, dígitos, punto y guion, mínimo 4', () => {
     const control = component.formProfesional.controls.nationalId;
-    for (const invalida of ['QA-123', '1234', '1234567890', '1.234.567', '0000000', '9999999']) {
+    for (const invalida of ['123', 'QA 123', 'CI#1234']) {
       control.setValue(invalida);
-      expect(control.invalid, `«${invalida}» no es una cédula`).toBe(true);
+      expect(control.invalid, `«${invalida}» no es un documento`).toBe(true);
     }
-    for (const valida of ['12345', '1234567', '12345678', '123456789']) {
+    for (const valida of ['1234', '1234567', 'CI-E2E-123', 'AB.123']) {
       control.setValue(valida);
       expect(control.valid, `«${valida}» sí lo es`).toBe(true);
     }
   });
 
-  it('con la cédula inválida no se puede enviar el alta', () => {
-    completarProfesional({ nationalId: 'QA-123' });
+  it('con el documento inválido no se puede enviar el alta', () => {
+    completarProfesional({ nationalId: 'QA 123' });
 
     component.submit();
     http.expectNone('/iam/auth/register-practitioner');
@@ -1236,6 +1246,110 @@ describe('RegisterPractitioner', () => {
 
       expect(component.respaldoMatricula()).toBeNull();
       expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
+    });
+
+    describe('los respaldos de la habilitación viajan a la API (P29)', () => {
+      it('el selector de los respaldos sólo acepta PDF, como la API que los recibe', () => {
+        const accept = (component as unknown as { formatosDeRespaldo: string }).formatosDeRespaldo;
+        expect(matchesFileAccept(archivoDe('matricula.jpg', 'image/jpeg', 1024), accept)).toBe(
+          false,
+        );
+        expect(matchesFileAccept(archivoDe('sedes.png', 'image/png', 1024), accept)).toBe(false);
+        expect(matchesFileAccept(archivoDe('matricula.pdf', 'application/pdf', 1024), accept)).toBe(
+          true,
+        );
+      });
+
+      it('sube el PDF de la matrícula y el del SEDES y manda cada fileId en el alta', () => {
+        completarProfesional();
+        const matricula = archivoDe('matricula.pdf', 'application/pdf', 1024);
+        const sedes = archivoDe('sedes.pdf', 'application/pdf', 2048);
+        component.updateSupportFiles('license', [matricula]);
+        component.updateSupportFiles('sedes', [sedes]);
+        component.submit();
+
+        const primera = http.expectOne('/iam/auth/upload-registration-document');
+        expect((primera.request.body as FormData).get('file')).toBe(matricula);
+        primera.flush({ fileId: 'pdf-matricula' });
+        const segunda = http.expectOne('/iam/auth/upload-registration-document');
+        expect((segunda.request.body as FormData).get('file')).toBe(sedes);
+        segunda.flush({ fileId: 'pdf-sedes' });
+
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body).toMatchObject({
+          licenseNumber: 'MP-12345',
+          licenseFileId: 'pdf-matricula',
+          sedesLicenseNumber: 'T.I. 538/14',
+          sedesLicenseFileId: 'pdf-sedes',
+        });
+        alta.flush(RESPUESTA_PRO);
+      });
+
+      it('sin archivo el alta no sube nada ni manda los campos', () => {
+        completarProfesional();
+        component.submit();
+
+        http.expectNone('/iam/auth/upload-registration-document');
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body).not.toHaveProperty('licenseFileId');
+        expect(alta.request.body).not.toHaveProperty('sedesLicenseFileId');
+        alta.flush(RESPUESTA_PRO);
+      });
+
+      it('si la subida falla no se crea la cuenta: el archivo no se pierde en silencio', () => {
+        completarProfesional();
+        component.updateSupportFiles('license', [
+          archivoDe('matricula.pdf', 'application/pdf', 1024),
+        ]);
+        component.submit();
+
+        http
+          .expectOne('/iam/auth/upload-registration-document')
+          .flush({ message: 'No es un PDF' }, { status: 422, statusText: 'Unprocessable Entity' });
+
+        http.expectNone('/iam/auth/register-practitioner');
+        expect(component.respaldoMatricula()?.archivo).toBe('matricula.pdf');
+      });
+
+      it('al reintentar no vuelve a subir el PDF ya confirmado', () => {
+        completarProfesional();
+        component.updateSupportFiles('license', [
+          archivoDe('matricula.pdf', 'application/pdf', 1024),
+        ]);
+        component.submit();
+        http.expectOne('/iam/auth/upload-registration-document').flush({ fileId: 'pdf-matricula' });
+        http
+          .expectOne('/iam/auth/register-practitioner')
+          .flush({ message: 'caída' }, { status: 503, statusText: 'Service Unavailable' });
+
+        component.submit();
+
+        http.expectNone('/iam/auth/upload-registration-document');
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body.licenseFileId).toBe('pdf-matricula');
+        alta.flush(RESPUESTA_PRO);
+      });
+
+      it('cambiar el archivo olvida el fileId anterior y sube el nuevo', () => {
+        completarProfesional();
+        component.updateSupportFiles('license', [archivoDe('vieja.pdf', 'application/pdf', 1024)]);
+        component.submit();
+        http.expectOne('/iam/auth/upload-registration-document').flush({ fileId: 'pdf-viejo' });
+        http
+          .expectOne('/iam/auth/register-practitioner')
+          .flush({ message: 'caída' }, { status: 503, statusText: 'Service Unavailable' });
+
+        const nueva = archivoDe('nueva.pdf', 'application/pdf', 1024);
+        component.updateSupportFiles('license', [nueva]);
+        component.submit();
+
+        const upload = http.expectOne('/iam/auth/upload-registration-document');
+        expect((upload.request.body as FormData).get('file')).toBe(nueva);
+        upload.flush({ fileId: 'pdf-nuevo' });
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body.licenseFileId).toBe('pdf-nuevo');
+        alta.flush(RESPUESTA_PRO);
+      });
     });
 
     it('una segunda profesión guarda su universidad, su país y su ciudad', () => {

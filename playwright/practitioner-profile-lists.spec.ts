@@ -22,7 +22,7 @@ import { entrar, irA } from './support/sesion';
 test.use({ trace: 'off' });
 
 const SCREENSHOTS = resolve(
-  'docs/trabajo/2026-10-02-perfil-medico-ux-credenciales-especialidades/evidencia/capturas',
+  'artifacts/evidencia/2026-10-02-perfil-medico-ux-credenciales-especialidades/evidencia/capturas',
 );
 const VIEWPORTS = [
   { width: 390, height: 844 },

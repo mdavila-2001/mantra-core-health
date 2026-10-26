@@ -156,8 +156,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * sociedad, NIT, dirección legal de la central, nombre y correo del
  * representante legal, correo de acceso y contraseña**. El resto —los seis
  * papeles en PDF, el punto de la central en el mapa, las sucursales y las
- * tres gerencias— se completa después desde la Ficha de la farmacia, y va a
- * exigirse para operar cuando exista esa vía en el backend (`PENDIENTES-BACKEND.md`, P49).
+ * tres gerencias— se completa después desde la Ficha de la farmacia.
  *
  * Es la regla explícita del propietario para este alta: «lo obligatorio es
  * lo más básico», a diferencia del alta de laboratorio (el molde de

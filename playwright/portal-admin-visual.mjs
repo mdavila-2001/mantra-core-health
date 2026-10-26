@@ -44,10 +44,10 @@ const TEMAS = ['light', 'dark'];
  * y saber si lo que se ve en una nueva ya pasaba antes.
  */
 const RUTAS = process.env.RUTAS_JSON ? JSON.parse(process.env.RUTAS_JSON) : [
-  { id: 'data-catalog', ruta: '/administration/data-catalog', detalle: 'a[href^="/administration/data-catalog/"]' },
-  { id: 'web-analytics', ruta: '/administration/web-analytics', detalle: null },
-  { id: 'qa-lab', ruta: '/administration/qa-lab', detalle: 'a[href^="/administration/qa-lab/plans/"]' },
-  { id: 'operations', ruta: '/administration/operations', detalle: null },
+  { id: 'data-catalog', ruta: '/superadmin/data-catalog', detalle: 'a[href^="/superadmin/data-catalog/"]' },
+  { id: 'web-analytics', ruta: '/superadmin/web-analytics', detalle: null },
+  { id: 'qa-lab', ruta: '/superadmin/qa-lab', detalle: 'a[href^="/superadmin/qa-lab/plans/"]' },
+  { id: 'operations', ruta: '/superadmin/operations', detalle: null },
 ];
 
 /** Un barrido por ancho escribe su propio informe para no pisar al anterior. */

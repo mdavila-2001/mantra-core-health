@@ -807,9 +807,9 @@ export interface DirectMessage {
   /**
    * Las reacciones, agrupadas por emoji. Ausente o vacío = nadie reaccionó.
    *
-   * **Pendiente de backend** (`PLAN-CHAT-WHATSAPP.md` (§ «Retoques del 30/09»)): `community.reactions` sólo
-   * admite `POST`/`COMMENT`/`REVIEW`; reaccionar a un mensaje pide agregar
-   * `MESSAGE` al modelo. La maqueta lo simula con el mismo contrato.
+   * La API no las publica: `community.reactions` sólo admite
+   * `POST`/`COMMENT`/`REVIEW`, no `MESSAGE`. La maqueta lo simula con el mismo
+   * contrato.
    */
   readonly reactions?: readonly MessageReaction[];
   /**
@@ -817,8 +817,8 @@ export interface DirectMessage {
    *
    * Sólo llegan en los mensajes **propios**. Sin ellos la pantalla usa lo único
    * que la API publica hoy —`peerReadUpTo`— y dice «Leído» sin poder decir
-   * cuándo. **Pendiente de backend**: `message_receipts` ya guarda las dos
-   * horas; falta exponerlas.
+   * cuándo: `message_receipts` guarda las dos horas, pero la API no las
+   * expone.
    */
   readonly receipts?: readonly MessageReceipt[];
 }

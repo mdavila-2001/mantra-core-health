@@ -187,8 +187,8 @@ const sucursales = new Coleccion<{
   statusConceptId: string;
   timeZone: string;
   createdAt: string;
-  // Lo que la carga masiva de sucursales suma y la API todavía no guarda
-  // (`PENDIENTES-BACKEND.md`, P54). Opcionales: las sembradas no los traen.
+  // Lo que la carga masiva de sucursales suma (P54). Opcionales: las
+  // sembradas no los traen.
   latitude?: number;
   longitude?: number;
   description?: string;
@@ -522,8 +522,8 @@ export function registrarDirectorio(router: MockRouter): void {
     return { ...actualizado, parentTenantId: actualizado.parentTenantId ?? undefined };
   });
 
-  // El logo de una organización (PENDIENTES-BACKEND P58): la API real todavía no deja que el
-  // dueño lo cambie. Sólo owner/admin escribe; leerlo lo puede hacer cualquiera que vea la ficha.
+  // El logo de una organización (P58), como `GET`/`PUT /tenants/:id/logo` de la API. Sólo
+  // owner/admin escribe; leerlo lo puede hacer cualquiera que vea la ficha.
   router.get('/tenants/:id/logo', ({ params }) =>
     tenants.get(params['id']!) === undefined
       ? notFound('Organización no encontrada')

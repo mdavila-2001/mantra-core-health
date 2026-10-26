@@ -6,6 +6,9 @@
    presupuestos, procedimientos y laboratorios. No sabe de dominio. */
 export { AttachmentUploader } from './attachment-uploader/attachment-uploader';
 
+export { AnatomyViewer } from './anatomy-viewer/anatomy-viewer';
+export type { AnatomyViewerStatus } from './anatomy-viewer/anatomy-viewer';
+
 export { AuthLayout } from './auth-layout/auth-layout';
 
 export { BranchBulkImport } from './branch-bulk-import/branch-bulk-import';

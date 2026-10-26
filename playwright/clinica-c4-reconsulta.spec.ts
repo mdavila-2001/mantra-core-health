@@ -36,7 +36,7 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  *
  * Tampoco se ejecutó ninguno en esta sesión: el árbol no tiene
  * `scripts/pw-guard.mjs` (artefacto del carril C0) y el turno tenía prohibido
- * levantar servidores. Ver `docs/trabajo/2026-09-25-encuentro-clinico/c4/REPORTE.md`.
+ * levantar servidores.
  */
 
 const BASE = process.env['PW_BASE_URL'] ?? 'http://localhost:4214';

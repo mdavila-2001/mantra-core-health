@@ -17,6 +17,7 @@ import { ResendVerification } from './features/auth/resend-verification/resend-v
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
 import { NotFound } from './features/not-found/not-found';
+import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
 import {
   designMockupRoutes,
   legacyMockupRedirects,
@@ -26,7 +27,12 @@ import { perfilPublicoResolver } from './features/public-profile/public-profile.
 import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from './core/navigation/navigation.map';
+import {
+  RUTAS_HEREDADAS_CON_PARAMETRO,
+  rutasHeredadasConParametro,
+} from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
   ROLES_ROUTE_DATA,
@@ -196,12 +202,21 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/content-packs/content-packs').then((m) => m.ContentPacks),
   'administration/moderation': () =>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
-  'administration/data-catalog': () =>
+  // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
+  // vivían bajo `administration/*`; esas direcciones redirigen (ver
+  // `SECCIONES_REDIRIGIDAS`).
+  'superadmin/observability': () =>
+    import('./features/admin/observability/observability').then((m) => m.Observability),
+  'superadmin/data-catalog': () =>
     import('./features/admin/data-catalog/data-catalog').then((m) => m.DataCatalog),
-  'administration/web-analytics': () =>
+  // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
+  'superadmin/portal': () =>
+    import('./features/admin/portal/portal-shell').then((m) => m.PortalShell),
+  'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
+  'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
-  'administration/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
-  'administration/operations': () =>
+  'superadmin/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
+  'superadmin/operations': () =>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
@@ -280,11 +295,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // promociones. La carga masiva y las demás pantallas del portal de la farmacia
   // (resumen, categorías, importación, inventario) son de `features/pharmacy/`.
   'administration/pharmacy-catalog': () =>
-    environment.mockBackend
-      ? import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts)
-      : import('./features/organization/pharmacy-catalog/pharmacy-catalog').then(
-          (m) => m.PharmacyCatalog,
-        ),
+    import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts),
   'administration/pharmacy': () =>
     import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
   'administration/pharmacy-categories': () =>
@@ -295,6 +306,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/pharmacy/inventory/pharmacy-inventory').then((m) => m.PharmacyInventory),
   'administration/pharmacy-prices': () =>
     import('./features/pharmacy/prices/pharmacy-prices').then((m) => m.PharmacyPrices),
+  // P34 · 24 h y turnos de guardia de cada sucursal (26/10/2026).
+  'administration/pharmacy-hours': () =>
+    import('./features/pharmacy/opening-hours/pharmacy-opening-hours').then(
+      (m) => m.PharmacyOpeningHoursPage,
+    ),
   // Las sucursales de la organización activa (01/10/2026): una sola pantalla
   // para la farmacia y el laboratorio, cada una en su menú.
   'administration/pharmacy-branches': () =>
@@ -714,6 +730,7 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.AssistedRegistration)
         .catch(() => chunkFallido()),
   },
+  PRACTITIONER_ASSISTED_ROUTE,
   {
     path: 'administration/patients/:profileId',
     title: `${APP_TITLE} - Ficha de paciente`,
@@ -918,8 +935,8 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Detalle de un plan de QA. Hereda los roles de `administration/qa-lab`.
-    path: 'administration/qa-lab/plans/:planId',
+    // Detalle de un plan de QA. Hereda los roles de `superadmin/qa-lab`.
+    path: 'superadmin/qa-lab/plans/:planId',
     title: `${APP_TITLE} - Plan de QA`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -928,9 +945,19 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Un flujo del catálogo. Hereda los roles de `superadmin/flows` (prefijo más largo).
+    path: 'superadmin/flows/:flowId',
+    title: `${APP_TITLE} - Flujo`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/flows/flow-detail/flow-detail')
+        .then((m) => m.FlowDetailPage)
+        .catch(() => chunkFallido()),
+  },
+  {
     // Ficha de un objeto del catálogo. Hereda los roles de la sección
-    // `administration/data-catalog` (prefijo más largo).
-    path: 'administration/data-catalog/:objectId',
+    // `superadmin/data-catalog` (prefijo más largo).
+    path: 'superadmin/data-catalog/:objectId',
     title: `${APP_TITLE} - Ficha del catálogo`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
@@ -1032,6 +1059,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')
         .then((m) => m.BookingNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El atlas anatómico 3D cuelga del glosario: miga, menú y roles son los
+    // suyos, y la ruta va antes de `glossary/:conceptId` para no confundirse
+    // con un término. three.js entra sólo con esta pantalla.
+    path: 'glossary/anatomy-atlas',
+    title: `${APP_TITLE} - Atlas anatómico 3D`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-anatomy-atlas')
+        .then((m) => m.GlossaryAnatomyAtlas)
         .catch(() => chunkFallido()),
   },
   {
@@ -1146,6 +1185,7 @@ function pantallaDeGeolocalizacion(
  * hijas, que es justo lo que se quiere.
  */
 const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
+  'superadmin/portal': PORTAL_RUTAS,
   messaging: [
     {
       // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
@@ -1236,6 +1276,12 @@ export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> 
   // La ficha de la farmacia es el «Mi perfil» de la cuenta de farmacia
   // (01/10/2026): la cuenta es la organización, no una persona que la administra.
   'administration/pharmacy-profile': { ruta: '/my-account' },
+  // El portal de plataforma pasó al dominio «Superadministración» (17/10/2026).
+  // Query conservado: `?pestana=` y `?search=` viajaban en los favoritos.
+  'administration/data-catalog': { ruta: '/superadmin/data-catalog' },
+  'administration/web-analytics': { ruta: '/superadmin/web-analytics' },
+  'administration/qa-lab': { ruta: '/superadmin/qa-lab' },
+  'administration/operations': { ruta: '/superadmin/operations' },
 };
 
 /** A dónde manda una sección redirigida: la ruta y el query que le suma. */
@@ -1256,9 +1302,11 @@ export interface DestinoRedirigido {
  * puntos»—.
  */
 export function redireccionConQuery(destino: DestinoRedirigido): RedirectFunction {
-  return ({ queryParams }) =>
+  return ({ queryParams, fragment }) =>
     inject(Router).createUrlTree([destino.ruta], {
       queryParams: { ...queryParams, ...destino.query },
+      // El `#ancla` también es parte del enlace: un `redirectTo` de texto lo pierde.
+      ...(fragment === null || fragment === undefined ? {} : { fragment }),
     });
 }
 
@@ -1363,6 +1411,10 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // farmacia se elige ahora desde la tienda y el carrito, no desde una
   // pantalla de "cerca de mí" aparte. Sigue en historiales y en favoritos.
   'nearby-places': '/my-account/pharmacy',
+  // «Superadministración» (17/10/2026). La portada del dominio es
+  // Observabilidad; las hijas con parámetro de las cuatro secciones que se
+  // mudaron conservan el identificador (`:objectId`, `:planId`) y el query.
+  superadmin: '/superadmin/observability',
 };
 
 /**
@@ -2065,6 +2117,7 @@ export const routes: Routes = [
         }),
       },
       ...rutasHeredadas(RUTAS_HEREDADAS),
+      ...rutasHeredadasConParametro(RUTAS_HEREDADAS_CON_PARAMETRO),
     ],
   },
   {

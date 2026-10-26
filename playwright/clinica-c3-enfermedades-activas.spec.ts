@@ -66,7 +66,7 @@ test('el expediente muestra Enfermedades activas y el sello coloreado por estado
   await page.screenshot({
     path: process.env['E2E_EVIDENCE_DIR']
       ? `${process.env['E2E_EVIDENCE_DIR']}/active-diseases.png`
-      : 'docs/trabajo/2026-09-25-encuentro-clinico/c3/evidencia/visual/enfermedades-activas-runtime.png',
+      : 'artifacts/evidencia/2026-09-25-encuentro-clinico/c3/evidencia/visual/enfermedades-activas-runtime.png',
     fullPage: true,
   });
 

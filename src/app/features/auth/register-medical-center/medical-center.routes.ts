@@ -7,15 +7,16 @@ import type { Route } from '@angular/router';
  */
 
 /**
- * El alta pública de un centro médico: `register-organization` con
- * `tenantType: 'HOSPITAL'`, un tipo de salud que ya existe. Queda pendiente de
- * verificación; su práctica y su sede se abren después en
- * `administration/medical-center-setup`.
+ * El alta pública de una organización médica: `register-organization` con el
+ * tipo de institución que se elige (hospital, clínica, consultorio, centro de
+ * enfermería u otra). Queda pendiente de verificación; su práctica y su sede se
+ * abren después en `administration/medical-center-setup`. La ruta conserva su
+ * nombre para no romper enlaces ya publicados.
  */
 export const MEDICAL_CENTER_SIGNUP_ROUTE: Route = {
   path: 'auth/register/medical-center',
   loadComponent: () => import('./register-medical-center').then((m) => m.RegisterMedicalCenter),
-  title: 'AloVida - Registrar centro médico',
+  title: 'AloVida - Registrar organización médica',
 };
 
 /**

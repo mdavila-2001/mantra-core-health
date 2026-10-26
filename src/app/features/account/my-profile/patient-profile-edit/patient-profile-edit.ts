@@ -805,11 +805,11 @@ export class PatientProfileEdit {
    * «Sin especificar»: el backend los borra con `''` y lo declara en su
    * contrato.
    *
-   * TODO(API): la fecha de nacimiento, el sexo al nacer y el municipio **no se
-   * pueden borrar**. Sus validadores son `@IsISO8601`, `@IsIn` y `@IsUUID`, y
-   * ninguno admite la cadena vacía: un valor declarado se puede cambiar por
-   * otro, no quitar. Mientras siga así, dejarlos en blanco no manda nada en vez
-   * de provocar un `400` que la persona leería como un fallo del producto.
+   * La fecha de nacimiento, el sexo al nacer y el municipio **no se pueden
+   * borrar**: sus validadores son `@IsISO8601`, `@IsIn` y `@IsUUID`, y ninguno
+   * admite la cadena vacía. Un valor declarado se cambia por otro, no se
+   * quita, así que dejarlos en blanco no manda nada en vez de provocar un
+   * `400` que la persona leería como un fallo del producto.
    */
   /**
    * Qué pestaña tiene un campo que impide guardar, cuando no es la abierta.

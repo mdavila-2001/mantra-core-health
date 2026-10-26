@@ -75,13 +75,14 @@ export interface PharmacyProduct {
   readonly medication: PharmacyConcept | null;
   readonly requiresPrescription: boolean | null;
   /*
-   * Los cuatro de abajo son del catálogo que administra la farmacia y **sólo
-   * los sirve el simulador** (P47 de PENDIENTES-BACKEND): la API real no los
-   * manda, por eso son opcionales y cada pantalla tiene que tolerar que
-   * falten.
+   * Lo de abajo es del catálogo que administra la farmacia (P47 §3-5). La API
+   * lo sirve en la búsqueda y en la lectura de gestión; son opcionales porque
+   * otras lecturas que reutilizan este tipo no los traen.
    */
   /** Precio de venta vigente, como texto exacto. */
   readonly unitPrice?: string | null;
+  /** Moneda ISO 4217 del precio (`BOB`); `null` sin precio. */
+  readonly currency?: string | null;
   /** `false` si la farmacia marcó que no lo tiene. */
   readonly inStock?: boolean;
   /** Categoría comercial de la vitrina. */
@@ -89,36 +90,28 @@ export interface PharmacyProduct {
   /** Descripción para el paciente. */
   readonly description?: string | null;
   /*
-   * Lo que sólo ve quien administra el catálogo (`managed=true`). Extensión
-   * del simulador (P47), igual que lo de arriba.
+   * Lo que sólo ve quien administra el catálogo (`managed=true`, y la
+   * respuesta del `PATCH`).
    */
   /** Publicado, borrador o retirado. Sin él, es un producto publicado. */
   readonly status?: PharmacyProductStatus;
-  /** Existencias declaradas. */
-  readonly stock?: number;
-  /** Debajo de este número el inventario avisa. */
-  readonly minStock?: number;
+  /** Existencias declaradas; `null` = «sin conteo» (la farmacia sólo avisa si hay). */
+  readonly stock?: number | null;
+  /** Debajo de este número el inventario avisa; `null` = el de por defecto. */
+  readonly minStock?: number | null;
   /** Hasta {@link MAX_PRODUCT_IMAGES} archivos de `common.files`. */
   readonly imageFileIds?: readonly string[];
 }
 
 /**
- * Claves del producto que `PharmacyCreateProductDto` y
- * `PharmacyUpdateProductDto` de `origin/dev` no declaran (P47; informe B, C1 y
- * C2). La maqueta las guarda; contra la API real no viajan. El precio real
- * vive en `POST /pharmacies/:id/price-lists/:listId/prices`, que este portal
- * todavía no usa.
+ * Claves del producto que el DTO de la API no declara. Desde P47 §3-5
+ * (2026-10-26) `PharmacyCreateProductDto` y `PharmacyUpdateProductDto` declaran
+ * precio, categoría, descripción, disponibilidad, estado, existencias, umbral
+ * e imágenes: la lista queda vacía y todo viaja también a la API real. Se
+ * conserva para que el registro de extensiones y el cliente sigan hablando
+ * del mismo conjunto si vuelve a hacer falta una clave sólo de la maqueta.
  */
-export const PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS: readonly string[] = [
-  'unitPrice',
-  'category',
-  'description',
-  'inStock',
-  'status',
-  'stock',
-  'minStock',
-  'imageFileIds',
-];
+export const PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS: readonly string[] = [];
 
 const PHARMACY_PRODUCT_EXTENSION_LABELS: Readonly<Record<string, string>> = {
   unitPrice: 'el precio',
@@ -293,6 +286,10 @@ export interface PharmacySite {
   readonly homeDeliveryAvailable: boolean | null;
   readonly pickupAvailable: boolean | null;
   readonly productCount: number;
+  /** P34 · `true`/`false` declarado; `null` = no lo declaró (no es «cierra de noche»). */
+  readonly open24h?: boolean | null;
+  /** P34 · fin (UTC) del turno vigente, o `null`. Un turno vencido nunca viaja. */
+  readonly onCallUntil?: string | null;
 }
 
 /** La página de la lista de sedes. */
@@ -308,6 +305,8 @@ export interface PharmacySiteQuery {
   /** Con origen, la lista sale ordenada por cercanía. */
   readonly origin?: GeoPoint;
   readonly limit?: number;
+  /** P34 · sólo las abiertas ahora (24 h o de turno vigente). */
+  readonly openNow?: boolean;
 }
 
 /** Tipos de identificador que el alta de producto acepta. */
@@ -349,8 +348,8 @@ export interface PharmacyProductDraft {
   readonly coldChainRequired?: boolean;
   readonly identifiers?: readonly PharmacyProductIdentifier[];
   /*
-   * Extensión del simulador (P47): la API real rechaza estas claves con un
-   * 400 (`forbidNonWhitelisted`) hasta que el DTO las declare.
+   * Lo que administra la farmacia (P47 §3-5). Valen también con
+   * `catalogProductId`: no son datos del registro sanitario.
    */
   /** Precio de venta, en bolivianos. */
   readonly unitPrice?: number;
@@ -368,8 +367,8 @@ export interface PharmacyProductDraft {
 /**
  * Los cambios a un producto ya publicado (`PATCH`, P47). El código no se
  * edita: es la identidad del producto dentro de la farmacia. `null` borra el
- * dato; una clave ausente lo deja como está. La API real persiste las cinco
- * primeras claves (P47 §2).
+ * dato; una clave ausente lo deja como está. En un producto del catálogo
+ * universal las cinco primeras no se mandan (son del registro oficial).
  */
 export interface PharmacyProductChanges {
   readonly brandName?: string | null;
@@ -377,10 +376,7 @@ export interface PharmacyProductChanges {
   readonly strengthText?: string | null;
   readonly packageSizeText?: string | null;
   readonly requiresPrescription?: boolean | null;
-  /*
-   * Extensión del simulador (P47 §3-5): la API real rechaza estas claves con un
-   * 400 (`forbidNonWhitelisted`) hasta que el DTO las declare.
-   */
+  /* Lo que administra la farmacia (P47 §3-5). */
   readonly unitPrice?: number | null;
   readonly category?: string | null;
   readonly description?: string | null;
@@ -482,10 +478,9 @@ export interface PharmacySiteRead {
   readonly latitude: number | null;
   readonly longitude: number | null;
   /**
-   * Si es la casa matriz de su farmacia. Opcional: el backend real todavía no
-   * lo publica (TODO(model): concepto `PHARM_SITE_TYPE_HEAD_OFFICE` en el tipo
-   * de sede + el campo en `PharmacySiteReadDto`). Ausente se lee como «no
-   * marcada», nunca como «no es la matriz».
+   * Si es la casa matriz de su farmacia. Opcional: `PharmacySiteReadDto` no
+   * lo declara (el tipo de sede no tiene un concepto de casa matriz). Ausente
+   * se lee como «no marcada», nunca como «no es la matriz».
    */
   readonly isHeadOffice?: boolean;
 }

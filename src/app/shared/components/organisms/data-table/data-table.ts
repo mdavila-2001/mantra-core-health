@@ -105,6 +105,13 @@ export class DataTable<Row> {
   /** Rótulo de la tabla. Va en `<caption>`, aunque sea solo para lectores. */
   readonly caption = input<string>('');
 
+  /** Título visible de la tarjeta («Registros»); junto a `totalCount` arma «REGISTROS · n». */
+  readonly heading = input<string>('');
+  /** Total de registros del filtro vigente; `null` si el origen no lo conoce. */
+  readonly totalCount = input<number | null>(null);
+  /** Texto de la paginación por cursor («Página 2 de 7 · 338 registros»). */
+  readonly pageSummary = input<string>('');
+
   /**
    * Alto máximo de la caja de la tabla (p. ej. `'480px'`), con scroll
    * **vertical** dentro de esa caja. Por omisión `null`: apagado, sin

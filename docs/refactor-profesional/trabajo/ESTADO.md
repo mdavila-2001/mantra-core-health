@@ -12,11 +12,11 @@ filtra.
 
 **Verificado en navegador** (Chromium contra `ng serve --configuration demo`, 12 verificaciones con
 [`playwright/contabilidad-version.mjs`](../../../playwright/contabilidad-version.mjs); capturas en
-`evidencias/contabilidad-version-2026-10-26-test/`): pestañas de Registros por versión; la versión sobrevive a
+`evidencias/contabilidad-version-2026-10-26-dev/`): pestañas de Registros por versión; la versión sobrevive a
 recargar; volver a Doctor desde «Cuentas» cae en «Gastos»; sin desborde horizontal a 390 px. **No se verificó** contra
 la API real (la contabilidad simple sólo existe con el simulador), ni con otros roles, ni en otros navegadores.
 
-**Gates** (2026-10-26, sobre `test`): `tsc -p tsconfig.app.json` sin errores · `eslint --max-warnings=0` sobre
+**Gates** (2026-10-26, sobre `dev`): `tsc -p tsconfig.app.json` sin errores · `eslint --max-warnings=0` sobre
 `src/app/features/accounting` 0 · 95 pruebas de las 7 specs del módulo contable pasan (7 nuevas). No se corrió la
 suite entera ni los `check-*.mjs`.
 
@@ -36,9 +36,12 @@ lee lo mismo **sin importes**; la ficha monta el panel solo al abrir su pestaña
 `?seccion=recetas` sigue abriendo Recetas. **No se verificó** contra la API real (solo el simulador), ni con otros
 roles, ni en otros navegadores, ni el PDF descargado visto abierto (sus bloques se prueban por unidad).
 
-**Gates** (2026-10-25, sobre `test`): `tsc -p tsconfig.app.json` sin errores nuevos (44, todos en
-`component-index.generated.ts` y ya presentes en la base: 45) · `eslint --max-warnings=0` sobre lo tocado 0 · 198
-pruebas dirigidas de las 8 specs tocadas pasan. No se corrió la suite entera ni los `check-*.mjs`.
+**Gates** (2026-10-25): `tsc -p tsconfig.app.json` 0 · `eslint --max-warnings=0` sobre lo tocado 0 · pruebas en
+grupos por carpeta (la suite entera junta aborta en el entorno por un fallo de esbuild): 11.776 pasan y 6 fallan
+igual sobre la base sin este cambio (`billing` maqueta/API real, `patient-list` ×2, `received-claims`,
+`pharmacy-inbox`, `design-system-sample`). `check-api-contract-drift` y `check-doc-coverage` ya no nombran este
+cambio; el resto de sus hallazgos ya estaba. `check-max-lines`: los archivos con techo que se tocaron
+(`medical-record.ts`, `patient-chart.ts`, `patient-chart.html`) no crecen.
 
 ---
 
@@ -82,11 +85,3 @@ superadmin 10/10; lo que queda marcado está justificado en `HALLAZGOS.md` § «
 ## Bloqueos
 
 Ninguno. D-05 aprobada y ejecutada.
-
-## Para continuar
-
-1. `git -C mantra-core-health worktree add ../wt-<tuyo> -b justin/<tuyo> origin/mockup`
-   (o partir de esta rama si el PR sigue abierto).
-2. `corepack yarn install --immutable && corepack yarn start --port <libre>`.
-3. Leer `PLAN_SITUADO.md` § «Siguiente»; empezar por **N-07** (lector de pantalla y otros navegadores).
-4. Registrar cada incremento aquí, en `EVIDENCIAS.md` y, si decide algo, en `DECISIONES.md`.

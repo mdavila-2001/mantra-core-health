@@ -1,4 +1,4 @@
-import type { AbstractControl, ValidationErrors } from '@angular/forms';
+import { Validators, type AbstractControl, type ValidationErrors, type ValidatorFn } from '@angular/forms';
 
 /**
  * La cédula de identidad boliviana, validada de verdad.
@@ -69,3 +69,21 @@ export function validateBolivianNationalId(control: AbstractControl): Validation
   const reason = nationalIdError(value.trim());
   return reason === null ? null : { nationalId: reason };
 }
+
+/**
+ * Validación vigente del documento de identidad en las altas de paciente y de
+ * médico: el piso que tolera el backend (`@Matches` letras, dígitos, punto y
+ * guion, mínimo 4). Se mantiene así —y no la de {@link validateBolivianNationalId}—
+ * porque el documento también puede ser un pasaporte o un documento extranjero,
+ * y porque los recorridos E2E de las altas escriben `CI-…`. La cédula estricta
+ * queda disponible arriba, a la espera de la decisión de producto.
+ */
+export const MIN_IDENTITY_DOCUMENT = 4;
+export const IDENTITY_DOCUMENT_PATTERN = /^[A-Za-z0-9.-]+$/;
+export const INVALID_IDENTITY_DOCUMENT_MESSAGE =
+  'Ingrese su documento: letras, números, punto y guion.';
+export const identityDocumentValidators: readonly ValidatorFn[] = [
+  Validators.required,
+  Validators.minLength(MIN_IDENTITY_DOCUMENT),
+  Validators.pattern(IDENTITY_DOCUMENT_PATTERN),
+];

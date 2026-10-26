@@ -50,8 +50,8 @@ import type {
  * ## D-E: la liberación
  *
  * `releaseReportVersion` es el **único** camino que hace que un resultado
- * liberado aparezca en «Mis resultados» del paciente (ver
- * `docs/progress/DECISIONS.md`, D-E). El camino que colgaba de
+ * liberado aparezca en «Mis resultados» del paciente (decisión D-E). El
+ * camino que colgaba de
  * `ClinicalClient.releaseDiagnosticReport` quedó deprecado del lado del
  * backend: no se reintroduce acá una segunda forma de liberar.
  */

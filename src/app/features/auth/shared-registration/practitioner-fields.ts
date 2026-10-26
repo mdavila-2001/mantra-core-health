@@ -9,7 +9,8 @@ import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
-import { INVALID_NATIONAL_ID_MESSAGE } from './national-id';
+import { campoDistrito } from './address-line';
+import { INVALID_IDENTITY_DOCUMENT_MESSAGE } from './national-id';
 import { MESSAGE_SHORT_PASSWORD } from './password-policy';
 
 /**
@@ -155,7 +156,7 @@ export function practitionerFields(
         // pareja que en el alta de paciente, y por lo mismo — el número y
         // su expedición son un solo documento.
         ancho: 'mitad',
-        mensajeDeError: INVALID_NATIONAL_ID_MESSAGE,
+        mensajeDeError: INVALID_IDENTITY_DOCUMENT_MESSAGE,
       },
       context.departmentIssuerField('registro-pro-departamento-ci'),
     ],
@@ -287,9 +288,10 @@ export function practitionerFields(
           label: '',
           control: 'custom',
         },
+        campoDistrito('homeDistrict', 'registration-practitioner-home-district', 'municipio'),
         {
           key: 'homeAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
+          label: 'Calle (opcional)',
           hint: 'Como la escribiría en un sobre.',
           description:
             'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
@@ -298,6 +300,7 @@ export function practitionerFields(
           placeholder: 'Av. Banzer, 3er anillo #42',
           testId: 'registration-practitioner-home-address',
           icono: 'route',
+          showWhen: { key: 'municipio', filled: true },
         },
         {
           key: 'gpsDomicilio',
@@ -305,6 +308,7 @@ export function practitionerFields(
           hint: 'Si la comparte, quien le busca llega sin llamarle.',
           description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
           control: 'custom',
+          showWhen: { key: 'municipio', filled: true },
         },
       ],
     },
@@ -383,9 +387,14 @@ export function practitionerFields(
           label: '',
           control: 'custom',
         },
+        campoDistrito(
+          'officeDistrict',
+          'registration-practitioner-office-district',
+          'municipioConsultorio',
+        ),
         {
           key: 'officeAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
+          label: 'Calle (opcional)',
           hint: 'Calle y número del consultorio.',
           description:
             'Es la dirección que ve un paciente antes de ir. El punto del mapa no la escribe solo.',
@@ -393,6 +402,7 @@ export function practitionerFields(
           placeholder: 'Calle Libertad #120, piso 2',
           testId: 'registration-practitioner-office-address',
           icono: 'route',
+          showWhen: { key: 'municipioConsultorio', filled: true },
         },
         {
           key: 'gpsConsultorio',
@@ -401,6 +411,7 @@ export function practitionerFields(
           description:
             'Marque el punto exacto del consultorio y confírmelo. Se confirma aparte del de su casa.',
           control: 'custom',
+          showWhen: { key: 'municipioConsultorio', filled: true },
         },
       ],
     },
@@ -415,8 +426,9 @@ export function practitionerFields(
       // La universidad y el lugar de estudio SÍ se preguntan acá desde el
       // 09/09: el propietario los pidió en el alta, no en el perfil. Desde el
       // 02/10 país y universidad son desplegables en árbol (ver
-      // `CampoDeEstudio`). Siguen sin viajar —viven en `credentials`, detrás
-      // de la sesión— y el mapeo campo por campo está en `docs/handoff/`.
+      // `CampoDeEstudio`). Viajan dentro de cada título de `credentials`
+      // (`issuingInstitutionText`, `issuingCityText`, `issuingCountryText`),
+      // no como campos del perfil.
       hint: 'Lo que van a ver sus pacientes. Puede cambiarlo cuando quiera.',
       campos: [
         {

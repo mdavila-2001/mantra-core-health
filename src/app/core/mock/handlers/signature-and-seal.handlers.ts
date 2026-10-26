@@ -6,11 +6,9 @@ import { cuerpo, uuid } from '../mock-store';
  * SIMULADOR de la **firma** y el **sello** médicos de un profesional.
  *
  * Son **imágenes** —la firma manuscrita escaneada y el sello—, no una firma
- * electrónica: ni certificado ni criptografía. El backend real no tiene dónde
- * guardarlas (ver `docs/pendientes-backend-perfil-profesional.md`), así que las
- * dos rutas de abajo existen sólo en la rama `mockup`. Las pantallas y el PDF
- * no las llaman directo: pasan por `FirmaYSelloClient`, y el día que exista el
- * backend se borra este archivo y se retoca esa fachada.
+ * electrónica: ni certificado ni criptografía. Las dos rutas de abajo imitan
+ * `GET`/`PUT /profiles/practitioners/me/signature-assets` de la API. Las
+ * pantallas y el PDF no las llaman directo: pasan por `FirmaYSelloClient`.
  */
 
 interface SignatureAssets {

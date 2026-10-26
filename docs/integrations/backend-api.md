@@ -50,6 +50,7 @@ inyección»*.
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
+| `POST` | `/iam/users/assisted-practitioner-registration` | `PractitionerAssistedRegistration` (vía `AssistedPractitionerClient`) | No |
 | `POST` | `/iam/auth/register-organization` | `ActivateAccount` y 13 pantallas más | Sí |
 
 #### Las tres altas no son la misma operación con distintos campos
@@ -62,6 +63,7 @@ la contraseña de otra persona.
 | `/iam/auth/register-patient` · `register-practitioner` | la persona, sin sesión | su dueño, al registrarse | los ids del perfil |
 | `/iam/users` | un `SECURITY_ADMIN` | **quien crea la cuenta** | la cuenta creada |
 | `/iam/users/assisted-registration` | un `SECURITY_ADMIN` o `CLINICIAN` | su dueño, **al activar** | un **token de activación de un solo uso** |
+| `/iam/users/assisted-practitioner-registration` | un `SECURITY_ADMIN` | su dueño, **al activar** | el **token de un solo uso** y los ids del médico (matrícula `PENDING`) |
 
 `/iam/users` es la única de las tres que fija una clave desde afuera, y por eso
 la pantalla que la usa dice explícitamente que hay que entregarla por un canal
@@ -1347,9 +1349,6 @@ del backend es que alguien lo note. Los comentarios rastrean el origen
 («verificadas una por una contra `iam-auth.controller.ts`»), pero eso es
 trazabilidad, no verificación.
 
-Las dos están en [el análisis de brechas](../reports/documentation-gap-analysis.md),
-la segunda como `HIGH`.
-
 ---
 
 ## Verificación
@@ -1490,7 +1489,7 @@ alta), y el nombre del paciente viaja sólo al creador y a los miembros que acep
 
 ## Consumos incorporados en Hito 2
 
-Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no una API implementada ni un flujo real verificado. Para disponibilidad y divergencias con H1, consultar [la matriz contractual](../trabajo/2026-09-30-sincronizacion-frontend-dev-test/MATRIZ.md). Contabilidad simple, portal laboratorio, acciones received-claims y facturacion simulated siguen siendo contratos demo pendientes de backend. Los restantes consumidores requieren validar su implementacion y runtime por separado.
+Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no una API implementada ni un flujo real verificado. Contabilidad simple, portal laboratorio y las acciones de factura de received-claims son contratos que sólo sirve el simulador (`simulatorOnly()` en su cliente). Los restantes consumidores requieren validar su implementacion y runtime por separado.
 
 | Metodo | Ruta | Cliente y fuente | Evidencia |
 |---|---|---|---|
@@ -1527,6 +1526,7 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/admin/analytics/timeseries` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/analytics/web-vitals` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/admin/catalog/annotations/:annotationId/review` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/columns/:columnId/evidence` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` |
 | `GET` | `/admin/catalog/coverage` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/catalog/objects` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/catalog/objects/:id` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
@@ -1545,8 +1545,12 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/admin/ops/incidents` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/ops/readiness` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/ops/slos` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/traffic` | [`OpsTrafficClient`](../../src/app/core/data-access/admin-portal/ops-traffic.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`OpsConsoleController_trafficOverview`) |
+| `GET` | `/admin/ops/traffic/endpoints` | [`OpsTrafficClient`](../../src/app/core/data-access/admin-portal/ops-traffic.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`OpsConsoleController_trafficEndpoints`) |
 | `GET` | `/admin/qa/defects` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/qa/environments` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/flows` | [`FlowsClient`](../../src/app/core/data-access/admin-portal/flows.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`QaLabReadController_listFlows`) |
+| `GET` | `/admin/qa/flows/:flowId` | [`FlowsClient`](../../src/app/core/data-access/admin-portal/flows.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`QaLabReadController_flow`) |
 | `GET` | `/admin/qa/plans` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/admin/qa/plans` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/qa/plans/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
@@ -1668,7 +1672,7 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `PATCH` | `/profiles/practitioners/me/specialties/:specialtyId/primary` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/promotions/me` | [`PromotionsClient`](../../src/app/core/data-access/promotions/promotions.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/public/profiles/:prefijo/:slug/reviews` | [`PublicDirectoryClient`](../../src/app/core/data-access/public-directory/public-directory.client.ts) | Fuente frontend; no certifica API real |
-| `GET` | `/public/profiles/f/:slug/branch-availability` | [`PublicCatalogClient`](../../src/app/core/data-access/public-catalog/public-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/public/profiles/f/:slug/branch-availability` | [`PublicCatalogClient`](../../src/app/core/data-access/public-catalog/public-catalog.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/scheduling/appointments/walk-in` | [`SchedulingClient`](../../src/app/core/data-access/scheduling/scheduling.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/terminology/import-template` | [`TerminologyClient`](../../src/app/core/data-access/terminology/terminology.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/terminology/value-sets/$glossary-facets` | [`TerminologyClient`](../../src/app/core/data-access/terminology/terminology.client.ts) | Fuente frontend; no certifica API real |

@@ -242,9 +242,8 @@ describe('ShellLayout', () => {
       // consulta después de ver las órdenes y antes de los cuestionarios.
       '/my-account/quotations',
       // «Mis cuestionarios» YA NO está (2026-09-25, dc790b01): el propietario
-      // la sacó del menú mientras decide qué hacer con la sección
-      // (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la pantalla siguen vivas
-      // y se llega por URL — ver docs/pendiente-decision-cuestionarios.md.
+      // la sacó del menú (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la
+      // pantalla siguen vivas y se llega por URL.
       // El centro de notificaciones tampoco aparece acá: es el otro destino
       // fijo. Sigue sin exigir rol —cualquiera con sesión tiene bandeja—; lo
       // que cambió es dónde se dibuja.

@@ -17,7 +17,7 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  */
 
 const BASE = process.env['E2E_BASE_URL'] ?? 'http://localhost:4200';
-const FOTOS = join('docs', 'progress', 'evidence', 'sync-mockup-dev-2026-10-02');
+const FOTOS = join('artifacts', 'evidencia', 'sync-mockup-dev-2026-10-02');
 
 test.beforeAll(() => mkdirSync(FOTOS, { recursive: true }));
 

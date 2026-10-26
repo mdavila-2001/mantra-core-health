@@ -1,0 +1,54 @@
+<app-page-header
+  title="Tablas"
+  subtitle="Las tablas del modelo con su ficha: columnas, relaciones, índices, gobierno y qué operaciones las tocan."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="tables" data-testid="portal-tables">
+  <p class="tables__note">
+    Este es el catálogo del modelo, leído del código y del DDL. Lo que la base desplegada tiene hoy, y las fichas que
+    se revisan, están en el <a app-link [routerLink]="liveCatalogUrl">catálogo vivo</a>.
+  </p>
+
+  <app-filter-bar
+    searchLabel="Buscar tablas"
+    searchPlaceholder="schema.tabla o dominio"
+    [filters]="filterDefs"
+    [searchLoading]="list.state().status === 'loading'"
+  />
+
+  @if (filters().schema; as schema) {
+    <p class="tables__scope" data-testid="portal-tables-schema">
+      Sólo el schema <code>{{ schema }}</code>.
+      <button app-button variant="ghost" size="sm" (clicked)="clearSchema()">Ver todos los schemas</button>
+    </p>
+  }
+
+  <app-data-table
+    data-testid="portal-tables-table"
+    caption="Tablas del modelo"
+    heading="Tablas"
+    [totalCount]="list.total()"
+    [state]="list.state()"
+    [columns]="columns()"
+    [trackBy]="byId"
+    [rowLabel]="rowName"
+    [cursor]="list.cursor()"
+    stackedOnMobile
+    (cursorChanged)="list.move($event)"
+    (retry)="list.reload()"
+  />
+</div>
+
+<ng-template #nameCell let-row>
+  <a app-link class="tables__name" [routerLink]="detailUrl(row)" data-testid="portal-table-link">
+    <span class="tables__schema">{{ row.schema }}.</span>{{ row.tabla }}
+  </a>
+  @if (row.appendOnly) {
+    <span class="tables__secondary">No admite cambios (append-only)</span>
+  }
+</ng-template>
+
+<ng-template #ormCell let-row>
+  <app-badge size="sm" [variant]="orm(row.orm).tone">{{ orm(row.orm).label }}</app-badge>
+</ng-template>

@@ -1,0 +1,125 @@
+<ng-template #navegacion>
+  <nav class="portal__nav" aria-label="Secciones del portal">
+    @for (grupo of grupos; track grupo.id) {
+      <section class="portal__grupo">
+        <button
+          type="button"
+          class="portal__grupo-titulo"
+          [attr.aria-expanded]="estaAbierto(grupo)"
+          [attr.aria-controls]="'portal-grupo-' + grupo.id"
+          [attr.data-testid]="'portal-grupo-' + grupo.id"
+          (click)="alternar(grupo)"
+        >
+          <app-nav-icon class="portal__grupo-icono" [name]="grupo.icon" />
+          <span class="portal__grupo-nombre">{{ grupo.label }}</span>
+          <span class="portal__grupo-flecha" aria-hidden="true">{{
+            estaAbierto(grupo) ? '▾' : '▸'
+          }}</span>
+        </button>
+        @if (estaAbierto(grupo)) {
+          <ul class="portal__items" [id]="'portal-grupo-' + grupo.id">
+            @for (item of grupo.items; track item.path) {
+              <li>
+                <a
+                  class="portal__item"
+                  [class.portal__item--activo]="isActive(item, url())"
+                  [routerLink]="portalUrl(item.path)"
+                  [attr.aria-current]="isActive(item, url()) ? 'page' : null"
+                  [attr.data-testid]="'portal-item-' + (item.path || 'centro')"
+                >
+                  {{ item.label }}
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  </nav>
+</ng-template>
+
+<div class="portal" data-testid="portal-shell">
+  <aside class="portal__lateral" aria-label="Navegación del portal">
+    <p class="portal__marca">
+      <span class="portal__marca-nombre">Portal de inventario</span>
+      <span class="portal__marca-sub">AloVida · catálogo del sistema</span>
+    </p>
+    <ng-container [ngTemplateOutlet]="navegacion" />
+  </aside>
+
+  <div class="portal__principal">
+    <header class="portal__cabecera">
+      <button
+        type="button"
+        class="portal__hamburguesa"
+        data-testid="portal-menu"
+        aria-label="Abrir el menú del portal"
+        (click)="abrirMenuMovil()"
+      >
+        <span aria-hidden="true">☰</span>
+      </button>
+
+      <ol class="portal__migas" aria-label="Dónde estás">
+        @for (miga of migas(); track miga.label; let ultima = $last) {
+          <li class="portal__miga" [attr.aria-current]="ultima ? 'page' : null">
+            @if (miga.url && !ultima) {
+              <a [routerLink]="miga.url">{{ miga.label }}</a>
+            } @else {
+              {{ miga.label }}
+            }
+          </li>
+        }
+      </ol>
+
+      <app-portal-search class="portal__busqueda" />
+    </header>
+
+    @if (pantallaActiva(); as pantalla) {
+      <div class="portal__explicador">
+        <button
+          type="button"
+          class="portal__explicador-boton"
+          data-testid="portal-explicador"
+          [attr.aria-expanded]="explicadorAbierto()"
+          aria-controls="portal-explicacion"
+          (click)="alternarExplicador()"
+        >
+          <span aria-hidden="true">💡</span>
+          {{ explicadorAbierto() ? 'Ocultar qué muestra esta vista' : 'Qué muestra esta vista' }}
+        </button>
+        @if (explicadorAbierto()) {
+          <p class="portal__explicacion" id="portal-explicacion">
+            <strong>{{ pantalla.label }}.</strong> {{ pantalla.summary }}. Todo viene del inventario
+            que la API generó leyendo el código, el contrato y el modelo; lo que no se pudo
+            determinar se dice «sin dato» en lugar de suponerse.
+          </p>
+        }
+      </div>
+    }
+
+    <main class="portal__contenido" id="portal-contenido">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<!-- El menú en pantallas estrechas: un <dialog> modal, así el foco queda atrapado y se devuelve. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #dialogoMovil
+  class="portal__movil"
+  aria-label="Menú del portal"
+  data-testid="portal-menu-movil"
+  (cancel)="alCancelarMenu($event)"
+  (click)="$event.target === dialogoMovil ? cerrarMenuMovil() : null"
+>
+  <div class="portal__movil-panel">
+    <div class="portal__movil-cabecera">
+      <span class="portal__marca-nombre">Portal de inventario</span>
+      <button type="button" class="portal__cerrar" (click)="cerrarMenuMovil()">Cerrar</button>
+    </div>
+    @if (menuMovilAbierto()) {
+      <ng-container [ngTemplateOutlet]="navegacion" />
+    }
+  </div>
+</dialog>

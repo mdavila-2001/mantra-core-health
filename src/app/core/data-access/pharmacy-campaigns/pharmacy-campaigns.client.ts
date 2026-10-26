@@ -60,10 +60,8 @@ export type { ProductoDeCatalogo };
  * Mismo camino que la billetera de puntos (FAR-I6): las **reglas** se cumplen
  * de verdad —la vigencia se evalúa contra el reloj, una campaña vencida no
  * entrega precios ni por URL directa, el promocional siempre es menor que el
- * normal— y los **datos** son de demostración.
- *
- * TODO(FAR-E?): cuando existan las lecturas, cada método pasa a su endpoint.
- * Un solo commit: el ajuste vive acá y las pantallas no se enteran.
+ * normal— y los **datos** son de demostración. Todo el acceso a campañas
+ * pasa por este cliente: las pantallas no saben de dónde salen.
  *
  * ## Por qué el gate apaga las secciones enteras
  *

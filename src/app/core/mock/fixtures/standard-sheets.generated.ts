@@ -2,7 +2,7 @@
     Las fichas clínicas estándar, portadas del backend.
 
     **GENERADO por `scripts/gen-chart-templates-fixture.mjs`. No editar a mano.**
-    La fuente son los 370 JSON de
+    La fuente son los 374 JSON de
     `mantra-core-health-api/src/common/seed/data/clinical-forms/`, con su
     procedencia —norma, organismo, URL y licencia— tal como la declara cada uno.
 
@@ -65,7 +65,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "ANEST_CTRL_RECUPERACION",
     "name": "Recuperación posanestésica",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "ANESTESIOLOGIA",
     "provenance": {
@@ -74,7 +74,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
       "license": "Norma técnica estatal de acceso público",
       "retrievedAt": "2026-10-02",
-      "note": "Puntaje de Aldrete (publicado) para el alta de la sala de recuperación, dolor y náuseas."
+      "note": "Puntaje de Aldrete (publicado) para el alta de la sala de recuperación, dolor y náuseas. Ampliación internacional (2026-10-24): el puntaje PADSS de alta de cirugía ambulatoria desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -190,6 +190,75 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "section": "Evaluación: recuperación posanestésica"
       },
       {
+        "code": "padss_signos_vitales",
+        "name": "PADSS — signos vitales",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "0 — PA y pulso con variación > 40 % del basal preoperatorio",
+          "1 — PA y pulso con variación del 20 al 40 % del basal",
+          "2 — PA y pulso con variación < 20 % del basal"
+        ],
+        "multiple": false,
+        "description": "Para el alta domiciliaria de cirugía ambulatoria; la suma va de 0 a 10. Fuente: puntaje PADSS de alta posanestésica (Marshall SI, Chung F. Anesth Analg. 1999;88:508-17), según el arquetipo openEHR openEHR-EHR-OBSERVATION.padss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "padss_actividad",
+        "name": "PADSS — actividad",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "0 — No puede deambular",
+          "1 — Requiere ayuda",
+          "2 — Marcha estable, sin mareo, o igual al nivel preoperatorio"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje PADSS de alta posanestésica (Marshall SI, Chung F. Anesth Analg. 1999;88:508-17), según el arquetipo openEHR openEHR-EHR-OBSERVATION.padss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "padss_nauseas_vomitos",
+        "name": "PADSS — náuseas y vómitos",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "0 — Graves: persisten pese al tratamiento repetido",
+          "1 — Moderados: ceden con medicación parenteral",
+          "2 — Mínimos: ceden con medicación oral"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje PADSS de alta posanestésica (Marshall SI, Chung F. Anesth Analg. 1999;88:508-17), según el arquetipo openEHR openEHR-EHR-OBSERVATION.padss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "padss_dolor_aceptable",
+        "name": "PADSS — dolor aceptable para el paciente",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "1 — No",
+          "2 — Sí"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje PADSS de alta posanestésica (Marshall SI, Chung F. Anesth Analg. 1999;88:508-17), según el arquetipo openEHR openEHR-EHR-OBSERVATION.padss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "padss_sangrado",
+        "name": "PADSS — sangrado quirúrgico",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recuperación posanestésica",
+        "options": [
+          "0 — Grave: más de tres cambios de apósito",
+          "1 — Moderado: hasta dos cambios de apósito",
+          "2 — Mínimo: no requiere cambio de apósito"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje PADSS de alta posanestésica (Marshall SI, Chung F. Anesth Analg. 1999;88:508-17), según el arquetipo openEHR openEHR-EHR-OBSERVATION.padss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
         "code": "diagnostico",
         "name": "Diagnóstico (con código CIE-10 si se conoce)",
         "dataType": "text",
@@ -208,7 +277,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "ANEST_VALORACION_PREANESTESICA",
     "name": "Anestesiología — valoración preanestésica (ficha base)",
-    "version": 2,
+    "version": 3,
     "kind": "BASE",
     "specialty": "ANESTESIOLOGIA",
     "provenance": {
@@ -218,7 +287,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma sale la estructura común de la consulta: motivo, antecedentes patológicos, alergias, medicación habitual, examen físico dirigido, diagnóstico y conducta. Son agregados propios de la especialidad el procedimiento previsto, el ayuno en horas, la evaluación de la vía aérea (Mallampati, apertura bucal, movilidad cervical), las piezas dentarias en riesgo, las experiencias anestésicas previas y sus complicaciones, la clasificación ASA registrada como texto libre y el plan anestésico propuesto. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clasificación ASA, Mallampati, distancia tiromentoniana de Patil."
+      "note": "De la norma sale la estructura común de la consulta: motivo, antecedentes patológicos, alergias, medicación habitual, examen físico dirigido, diagnóstico y conducta. Son agregados propios de la especialidad el procedimiento previsto, el ayuno en horas, la evaluación de la vía aérea (Mallampati, apertura bucal, movilidad cervical), las piezas dentarias en riesgo, las experiencias anestésicas previas y sus complicaciones, la clasificación ASA registrada como texto libre y el plan anestésico propuesto. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: clasificación ASA, Mallampati, distancia tiromentoniana de Patil. Ampliación internacional (2026-10-24): factores del índice de riesgo cardíaco revisado de Lee desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -575,6 +644,24 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "text",
         "required": false,
         "section": "Evaluación"
+      },
+      {
+        "code": "rcri_factores",
+        "name": "Índice de riesgo cardíaco revisado (Lee): factores presentes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación",
+        "options": [
+          "Cirugía de alto riesgo: intraperitoneal, intratorácica o vascular suprainguinal (1 punto)",
+          "Cardiopatía isquémica: infarto previo, prueba de esfuerzo positiva, angina actual, uso de nitratos u onda Q en el ECG (1 punto)",
+          "Insuficiencia cardíaca (1 punto)",
+          "Enfermedad cerebrovascular: ACV o accidente isquémico transitorio previo (1 punto)",
+          "Diabetes en tratamiento con insulina (1 punto)",
+          "Creatinina preoperatoria elevada: ≥ 2 mg/dL (≥ 177 µmol/L) (1 punto)",
+          "Ninguno"
+        ],
+        "multiple": true,
+        "description": "Riesgo de complicación cardíaca mayor según Lee et al.: 0 factores 0,4 %; 1 factor 0,9 %; 2 factores 6,6 %; 3 o más ≥ 11 %. Fuente: índice de riesgo cardíaco revisado (Lee TH et al. Circulation. 1999;100(10):1043-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.revised_cardiac_risk_index.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "clasificacion_asa",
@@ -1353,7 +1440,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "CARDIO_CTRL_FA",
     "name": "Control de fibrilación auricular y anticoagulación",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "CARDIOLOGIA",
     "provenance": {
@@ -1362,7 +1449,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
       "license": "Norma técnica estatal de acceso público",
       "retrievedAt": "2026-10-02",
-      "note": "Estructura de la NT 022; riesgo embólico por CHA₂DS₂-VASc y de sangrado por HAS-BLED (puntajes publicados de uso libre)."
+      "note": "Estructura de la NT 022; riesgo embólico por CHA₂DS₂-VASc y de sangrado por HAS-BLED (puntajes publicados de uso libre). Ampliación internacional (2026-10-24): factores de la escala HAS-BLED desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -1488,6 +1575,27 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "integer",
         "required": true,
         "section": "Evaluación: fibrilación auricular"
+      },
+      {
+        "code": "has_bled_factores",
+        "name": "HAS-BLED: factores presentes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: fibrilación auricular",
+        "options": [
+          "Hipertensión: presión sistólica > 160 mmHg (1 punto)",
+          "Función renal alterada: diálisis crónica, trasplante renal o creatinina ≥ 200 µmol/L (1 punto)",
+          "Función hepática alterada: hepatopatía crónica (p. ej. cirrosis) o bilirrubina > 2 veces el límite superior con AST/ALT/FA > 3 veces el límite superior (1 punto)",
+          "Accidente cerebrovascular previo (1 punto)",
+          "Antecedente de sangrado o predisposición al sangrado (1 punto)",
+          "INR lábil: inestable, alto o poco tiempo en rango terapéutico (1 punto)",
+          "Edad avanzada: más de 65 años (1 punto)",
+          "Fármacos concomitantes: antiagregantes, antiinflamatorios no esteroideos (1 punto)",
+          "Alcohol: 8 o más unidades por semana (1 punto)",
+          "Ninguno"
+        ],
+        "multiple": true,
+        "description": "Cada factor suma 1 punto (0 a 9). Fuente: escala HAS-BLED (Pisters R et al. Chest. 2010;138(5):1093-100; Lip GY et al. J Am Coll Cardiol. 2011;57(2):173-80), según el arquetipo openEHR openEHR-EHR-OBSERVATION.has_bled.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "has_bled_puntaje",
@@ -4792,7 +4900,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "EMERG_ACV",
     "name": "Código ACV en emergencia",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "MEDICINA_EMERGENCIA",
     "provenance": {
@@ -4801,7 +4909,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.ninds.nih.gov/health-information/stroke/assess-and-treat/nih-stroke-scale",
       "license": "Dominio público (Gobierno de los EE. UU.)",
       "retrievedAt": "2026-10-02",
-      "note": "Hora de inicio, Cincinnati, NIHSS, glucemia e imagen para decidir trombólisis."
+      "note": "Hora de inicio, Cincinnati, NIHSS, glucemia e imagen para decidir trombólisis. Ampliación internacional (2026-10-24): los 15 ítems de la NIH Stroke Scale (traducción propia, no la versión certificada en castellano) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -4849,6 +4957,234 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "Alteración del habla"
         ],
         "multiple": true
+      },
+      {
+        "code": "nihss_1a_conciencia",
+        "name": "1a. Nivel de conciencia",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Alerta; responde con viveza",
+          "1 — No alerta, pero despierta con estímulos menores para obedecer, responder o reaccionar",
+          "2 — No alerta; requiere estímulos repetidos para atender, u obnubilado y requiere estímulos fuertes o dolorosos para moverse",
+          "3 — Responde sólo con reflejos motores o autonómicos, o sin respuesta, flácido y arrefléxico"
+        ],
+        "multiple": false,
+        "description": "El texto del valor 2 está truncado en el arquetipo; se completó con la redacción de la escala del NINDS («para moverse»). Los ítems «NE» no suman al total. Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_1b_preguntas",
+        "name": "1b. Preguntas (mes y edad)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Responde ambas preguntas correctamente",
+          "1 — Responde una pregunta correctamente",
+          "2 — No responde ninguna correctamente"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_1c_ordenes",
+        "name": "1c. Órdenes (abrir y cerrar ojos, apretar la mano)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Realiza ambas tareas correctamente",
+          "1 — Realiza una tarea correctamente",
+          "2 — No realiza ninguna correctamente"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_2_mirada",
+        "name": "2. Mirada conjugada",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Normal",
+          "1 — Parálisis parcial de la mirada en uno o ambos ojos, sin desviación forzada ni paresia total",
+          "2 — Desviación forzada o paresia total de la mirada que no se vence con la maniobra oculocefálica"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_3_campo_visual",
+        "name": "3. Campo visual",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Sin pérdida visual",
+          "1 — Hemianopsia parcial",
+          "2 — Hemianopsia completa",
+          "3 — Hemianopsia bilateral (ceguera, incluida la cortical)"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_4_paralisis_facial",
+        "name": "4. Parálisis facial",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Movimientos normales y simétricos",
+          "1 — Paresia menor (surco nasogeniano borrado, asimetría al sonreír)",
+          "2 — Paresia parcial (parálisis total o casi total de la parte inferior de la cara)",
+          "3 — Parálisis completa de uno o ambos lados (sin movimiento en la parte superior e inferior de la cara)"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_5a_brazo_izquierdo",
+        "name": "5a. Motor — brazo izquierdo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Sin caída; mantiene 90° (o 45°) los 10 segundos completos",
+          "1 — Caída; mantiene 90° (o 45°) pero cae antes de los 10 segundos, sin tocar la cama u otro apoyo",
+          "2 — Algún esfuerzo contra la gravedad; no alcanza o no mantiene 90° (o 45°) y cae a la cama, con algún esfuerzo contra la gravedad",
+          "3 — Sin esfuerzo contra la gravedad; el miembro cae",
+          "4 — Sin movimiento",
+          "NE — No evaluable: amputación o anquilosis"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_5b_brazo_derecho",
+        "name": "5b. Motor — brazo derecho",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Sin caída; mantiene 90° (o 45°) los 10 segundos completos",
+          "1 — Caída; mantiene 90° (o 45°) pero cae antes de los 10 segundos, sin tocar la cama u otro apoyo",
+          "2 — Algún esfuerzo contra la gravedad; no alcanza o no mantiene 90° (o 45°) y cae a la cama, con algún esfuerzo contra la gravedad",
+          "3 — Sin esfuerzo contra la gravedad; el miembro cae",
+          "4 — Sin movimiento",
+          "NE — No evaluable: amputación o anquilosis"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_6a_pierna_izquierda",
+        "name": "6a. Motor — pierna izquierda",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Sin caída; mantiene 30° los 5 segundos completos",
+          "1 — Caída; cae al final de los 5 segundos sin tocar la cama",
+          "2 — Algún esfuerzo contra la gravedad; cae a la cama antes de los 5 segundos, con algún esfuerzo contra la gravedad",
+          "3 — Sin esfuerzo contra la gravedad; cae a la cama de inmediato",
+          "4 — Sin movimiento",
+          "NE — No evaluable: amputación o anquilosis"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_6b_pierna_derecha",
+        "name": "6b. Motor — pierna derecha",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Sin caída; mantiene 30° los 5 segundos completos",
+          "1 — Caída; cae al final de los 5 segundos sin tocar la cama",
+          "2 — Algún esfuerzo contra la gravedad; cae a la cama antes de los 5 segundos, con algún esfuerzo contra la gravedad",
+          "3 — Sin esfuerzo contra la gravedad; cae a la cama de inmediato",
+          "4 — Sin movimiento",
+          "NE — No evaluable: amputación o anquilosis"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_7_ataxia",
+        "name": "7. Ataxia de miembros",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Ausente",
+          "1 — Presente en un miembro",
+          "2 — Presente en dos miembros",
+          "NE — No evaluable: amputación o anquilosis (explicar en observaciones)"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_8_sensibilidad",
+        "name": "8. Sensibilidad",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Normal; sin pérdida sensitiva",
+          "1 — Pérdida leve a moderada: siente el pinchazo menos agudo o romo del lado afectado, o no siente el dolor superficial pero sí que lo tocan",
+          "2 — Pérdida grave o total: no se da cuenta de que lo tocan en la cara, el brazo y la pierna"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_9_lenguaje",
+        "name": "9. Lenguaje",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Sin afasia; normal",
+          "1 — Afasia leve a moderada: pérdida evidente de fluidez o comprensión, sin limitación importante de las ideas expresadas",
+          "2 — Afasia grave: comunicación fragmentaria; el examinador no puede identificar el material presentado por la respuesta del paciente",
+          "3 — Mutismo o afasia global; sin lenguaje útil ni comprensión auditiva"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_10_disartria",
+        "name": "10. Disartria",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Normal",
+          "1 — Leve a moderada: arrastra algunas palabras y, en el peor caso, se le entiende con alguna dificultad",
+          "2 — Grave: el habla es ininteligible, sin relación o desproporcionada con una disfasia, o mutismo/anartria",
+          "NE — No evaluable: intubado u otra barrera física"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nihss_11_extincion",
+        "name": "11. Extinción e inatención (negligencia)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular agudo",
+        "options": [
+          "0 — Sin alteración",
+          "1 — Inatención visual, táctil, auditiva, espacial o personal, o extinción a la estimulación bilateral simultánea en una modalidad sensorial",
+          "2 — Hemiinatención profunda o extinción en más de una modalidad; no reconoce su propia mano o se orienta sólo hacia un lado del espacio"
+        ],
+        "multiple": false,
+        "description": "Fuente: NIH Stroke Scale (Brott T et al. Stroke. 1989;20:864-70; NINDS, dominio público), según el arquetipo openEHR openEHR-EHR-OBSERVATION.nihss.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "nihss",
@@ -5288,7 +5624,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "EMERG_DOLOR_TORACICO",
     "name": "Dolor torácico agudo en emergencia",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "MEDICINA_EMERGENCIA",
     "provenance": {
@@ -5297,7 +5633,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
       "license": "Norma técnica estatal de acceso público",
       "retrievedAt": "2026-10-02",
-      "note": "ECG en menos de 10 minutos, troponina y estratificación con el puntaje HEART (publicado, de uso libre)."
+      "note": "ECG en menos de 10 minutos, troponina y estratificación con el puntaje HEART (publicado, de uso libre). Ampliación internacional (2026-10-24): los cinco componentes del puntaje HEART (con la edad corregida respecto del arquetipo) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -5469,6 +5805,76 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "string",
         "required": false,
         "section": "Evaluación: dolor torácico"
+      },
+      {
+        "code": "heart_historia",
+        "name": "HEART — historia",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "0 — Historia inespecífica para síndrome coronario agudo",
+          "1 — Elementos mixtos (típicos y atípicos)",
+          "2 — Historia específica de síndrome coronario agudo"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje HEART (Six AJ et al. Neth Heart J. 2008;16:191-6; Backus BE et al. Int J Cardiol. 2013;168:2153-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.heart_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "heart_ecg",
+        "name": "HEART — electrocardiograma",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "0 — Normal",
+          "1 — Alteración inespecífica de la repolarización, sin desviación significativa del ST",
+          "2 — Desviación significativa del ST (depresión o elevación)"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje HEART (Six AJ et al. Neth Heart J. 2008;16:191-6; Backus BE et al. Int J Cardiol. 2013;168:2153-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.heart_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "heart_edad",
+        "name": "HEART — edad",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "0 — Menos de 45 años",
+          "1 — 45 a 64 años",
+          "2 — 65 años o más"
+        ],
+        "multiple": false,
+        "description": "El arquetipo dice «≤65 years or older»; se tradujo el criterio publicado: 65 años o más. Fuente: puntaje HEART (Six AJ et al. Neth Heart J. 2008;16:191-6; Backus BE et al. Int J Cardiol. 2013;168:2153-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.heart_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "heart_factores_de_riesgo",
+        "name": "HEART — factores de riesgo",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "0 — Ninguno conocido",
+          "1 — 1 a 2 factores de riesgo",
+          "2 — 3 o más factores, o enfermedad aterosclerótica conocida"
+        ],
+        "multiple": false,
+        "description": "Factores: diabetes, tabaquismo, hipertensión, hipercolesterolemia, obesidad, antecedente familiar. La enfermedad aterosclerótica conocida (infarto, revascularización, ACV o arteriopatía periférica) puntúa 2. Fuente: puntaje HEART (Six AJ et al. Neth Heart J. 2008;16:191-6; Backus BE et al. Int J Cardiol. 2013;168:2153-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.heart_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "heart_troponina",
+        "name": "HEART — troponina",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: dolor torácico",
+        "options": [
+          "0 — Menor que el nivel de discriminación del laboratorio",
+          "1 — Entre 1 y 3 veces el nivel de discriminación",
+          "2 — Más de 3 veces el nivel de discriminación"
+        ],
+        "multiple": false,
+        "description": "Suma 0 a 10: 0–3 riesgo bajo, 4–6 intermedio, 7–10 alto. Fuente: puntaje HEART (Six AJ et al. Neth Heart J. 2008;16:191-6; Backus BE et al. Int J Cardiol. 2013;168:2153-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.heart_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "heart_score",
@@ -6048,7 +6454,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "ENDO_CTRL_DM2",
     "name": "Control de diabetes mellitus tipo 2",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "ENDOCRINOLOGIA",
     "provenance": {
@@ -6057,7 +6463,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.who.int/publications/i/item/who-ucn-ncd-20.1",
       "license": "CC BY-NC-SA 3.0 IGO",
       "retrievedAt": "2026-10-02",
-      "note": "Visita de control de HEARTS-D: glucemia y HbA1c, hipoglucemias, pie, ojo y riñón, y factores de riesgo cardiovascular."
+      "note": "Visita de control de HEARTS-D: glucemia y HbA1c, hipoglucemias, pie, ojo y riñón, y factores de riesgo cardiovascular. Ampliación internacional (2026-10-24): grado de Wagner de la úlcera de pie diabético (traducción es-AR del CKM) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -6169,6 +6575,27 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "No evaluado"
         ],
         "multiple": false
+      },
+      {
+        "code": "dm_pie_wagner",
+        "name": "Úlcera de pie diabético — grado de Wagner",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: diabetes tipo 2",
+        "options": [
+          "0 — Piel intacta en pacientes en riesgo",
+          "1 — Úlceras superficiales con tejido subcutáneo expuesto",
+          "2 — Tendones y estructuras profundas expuestas",
+          "3 — Úlceras extendidas a los tejidos profundos, asociadas a absceso de tejidos blandos u osteomielitis",
+          "4 — Úlceras que incluyen al pie con gangrena parcial",
+          "5 — Úlceras del pie con tejido gangrenoso más extendido"
+        ],
+        "multiple": false,
+        "description": "Las definiciones son las descripciones de la traducción es-AR del CKM, con la ortografía corregida (subcutáneo, osteomielitis, pie). Fuente: clasificación de Wagner (Wagner FW. Foot Ankle. 1981;2:64-122), según el arquetipo openEHR openEHR-EHR-OBSERVATION.diabetic_wound_wagner.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Texto del CKM con una corrección propia de un defecto comprobado (ver docs/seed-research/clinical-forms.md).",
+        "showWhen": {
+          "field": "dm_pie",
+          "equals": "Úlcera o lesión presente"
+        }
       },
       {
         "code": "dm_hipoglucemias",
@@ -6721,7 +7148,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "ENDO_EVALUACION_BASE",
     "name": "Endocrinología — consulta inicial (ficha base)",
-    "version": 2,
+    "version": 3,
     "kind": "BASE",
     "specialty": "ENDOCRINOLOGIA",
     "provenance": {
@@ -6731,7 +7158,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común de la consulta: motivo, tiempo de evolución, antecedentes personales y familiares, examen físico con peso y talla, diagnóstico y conducta. Son agregados propios de la especialidad la anamnesis dirigida de síntomas tiroideos y de alteración de la glucemia (poliuria, polidipsia, polifagia), el registro del cambio de peso y del perímetro abdominal, y el examen de tiroides, piel y anexos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
+      "note": "De la norma salen la estructura común de la consulta: motivo, tiempo de evolución, antecedentes personales y familiares, examen físico con peso y talla, diagnóstico y conducta. Son agregados propios de la especialidad la anamnesis dirigida de síntomas tiroideos y de alteración de la glucemia (poliuria, polidipsia, polifagia), el registro del cambio de peso y del perímetro abdominal, y el examen de tiroides, piel y anexos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Ampliación internacional (2026-10-24): la escala de Ferriman-Gallwey modificada para el hirsutismo desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -6959,6 +7386,204 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "section": "Examen físico"
       },
       {
+        "code": "hirsutismo",
+        "name": "Hirsutismo (vello terminal en zonas de distribución masculina)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Examen físico"
+      },
+      {
+        "code": "fg_labio_superior",
+        "name": "Ferriman-Gallwey — labio superior",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Algunos pelos en el borde externo",
+          "2 — Bigote pequeño en el borde externo",
+          "3 — Bigote que llega a la mitad desde el borde externo",
+          "4 — Bigote que llega a la línea media"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_menton",
+        "name": "Ferriman-Gallwey — mentón",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Algunos pelos dispersos",
+          "2 — Pelos dispersos con pequeñas concentraciones",
+          "3 — Cobertura completa ligera",
+          "4 — Cobertura completa densa"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_torax",
+        "name": "Ferriman-Gallwey — tórax",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Pelos periareolares",
+          "2 — Pelos periareolares y en la línea media",
+          "3 — Fusión de las áreas periareolar y media, con tres cuartos de cobertura",
+          "4 — Cobertura completa"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_espalda_superior",
+        "name": "Ferriman-Gallwey — espalda superior",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Algunos pelos dispersos",
+          "2 — Más pelos, todavía dispersos",
+          "3 — Cobertura completa ligera",
+          "4 — Cobertura completa densa"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_espalda_inferior",
+        "name": "Ferriman-Gallwey — espalda inferior",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Mechón sacro",
+          "2 — Mechón sacro con alguna extensión lateral",
+          "3 — Tres cuartos de cobertura",
+          "4 — Cobertura completa"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_abdomen_superior",
+        "name": "Ferriman-Gallwey — abdomen superior",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Algunos pelos en la línea media",
+          "2 — Más pelos, todavía en la línea media",
+          "3 — Media cobertura",
+          "4 — Cobertura completa"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_abdomen_inferior",
+        "name": "Ferriman-Gallwey — abdomen inferior",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Algunos pelos en la línea media",
+          "2 — Una franja de pelo en la línea media",
+          "3 — Una banda de pelo en la línea media",
+          "4 — Crecimiento en V invertida"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_brazo",
+        "name": "Ferriman-Gallwey — brazo",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Crecimiento escaso, en no más de un cuarto de la superficie",
+          "2 — Más que escaso, cobertura todavía incompleta",
+          "3 — Cobertura completa ligera",
+          "4 — Cobertura completa densa"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_muslo",
+        "name": "Ferriman-Gallwey — muslo",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "0 — Sin vello excesivo",
+          "1 — Crecimiento escaso, en no más de un cuarto de la superficie",
+          "2 — Más que escaso, cobertura todavía incompleta",
+          "3 — Cobertura completa ligera",
+          "4 — Cobertura completa densa"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Ferriman-Gallwey modificada, 9 áreas (Ferriman D, Gallwey JD. J Clin Endocrinol Metab. 1961;21:1440-7; Hatch R et al. Am J Obstet Gynecol. 1981;140:815-30), según el arquetipo openEHR openEHR-EHR-OBSERVATION.hirsutism_scales.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
+        "code": "fg_total",
+        "name": "Ferriman-Gallwey modificada — puntaje total (0 a 36)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Examen físico",
+        "showWhen": {
+          "field": "hirsutismo",
+          "equals": true
+        }
+      },
+      {
         "code": "diagnostico_presuntivo",
         "name": "Diagnóstico presuntivo (lo que se sospecha)",
         "dataType": "string",
@@ -7138,6 +7763,273 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "code": "plan",
         "name": "Plan: tratamiento, estudios, interconsultas y destino",
         "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
+    "code": "ENFER_CTRL_VACUNACION",
+    "name": "Vacunación: registro de la dosis y de eventos adversos (ESAVI)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "ENFERMERIA",
+    "provenance": {
+      "sourceTitle": "Digital adaptation kit for immunizations: core data dictionary (SMART Guidelines)",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://github.com/WorldHealthOrganization/smart-immunizations",
+      "sourceVersion": "input/L2/IMMZ DAK_core data dictionary.xlsx",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-24",
+      "note": "Estructura de evaluación puntual del catálogo (NT 022) y elementos de datos de la actividad «Administer vaccine» (IMMZ.D) de la DAK de inmunizaciones de la OMS. No fija esquemas ni edades de vacunación: el calendario es el del programa nacional. Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Consulta",
+        "options": [
+          "Primera vez",
+          "Control"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "immz_enfermedad_prevenida",
+        "name": "Enfermedad que previene la vacuna aplicada",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: vacunación",
+        "options": [
+          "Fiebre tifoidea",
+          "Influenza",
+          "Sarampión",
+          "Tos ferina",
+          "Parotiditis",
+          "Varicela",
+          "Hepatitis A",
+          "Tuberculosis",
+          "Hepatitis B",
+          "Haemophilus influenzae tipo b",
+          "Tétanos",
+          "Rotavirus",
+          "Virus del papiloma humano",
+          "Encefalitis japonesa",
+          "Poliomielitis",
+          "Difteria",
+          "Enfermedad neumocócica",
+          "Rubéola",
+          "Dengue",
+          "Rabia",
+          "Enfermedad meningocócica",
+          "Cólera",
+          "Encefalitis transmitida por garrapatas",
+          "Fiebre amarilla",
+          "COVID-19"
+        ],
+        "multiple": true,
+        "description": "Fuente: elemento IMMZ.D.DE.126 «Disease targeted» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "immz_tipo_de_dosis",
+        "name": "Tipo de dosis",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: vacunación",
+        "options": [
+          "Serie primaria",
+          "Dosis cero (fuera de la serie habitual)",
+          "Dosis suplementaria",
+          "Refuerzo"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento IMMZ.D.DE.258 «Type of dose» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "immz_numero_de_dosis",
+        "name": "Número de dosis",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: vacunación",
+        "description": "Elemento IMMZ.D.DE.124 «Dose number» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72) Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "immz_lote",
+        "name": "Lote de la vacuna",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: vacunación",
+        "description": "Elemento IMMZ.D.DE.24 «Vaccine batch number» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72) Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "immz_contraindicaciones",
+        "name": "Posibles contraindicaciones o precauciones presentes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: vacunación",
+        "options": [
+          "Embarazo actual",
+          "Inmunocomprometido",
+          "Gravemente inmunocomprometido",
+          "Tratamiento inmunosupresor actual o reciente",
+          "Gravemente inmunosuprimido",
+          "Síndrome de inmunodeficiencia",
+          "Antecedente de anafilaxia",
+          "Reacción alérgica grave",
+          "Infección por VIH sintomática",
+          "Planea embarazarse en el próximo mes",
+          "Recibe hemoderivados",
+          "Enfermedad aguda grave",
+          "Tuberculosis activa",
+          "Lactancia",
+          "Espina bífida",
+          "Extrofia vesical",
+          "Gastroenteritis aguda",
+          "Fiebre moderada a alta",
+          "Antecedente de invaginación intestinal",
+          "Inmunocompetencia alterada",
+          "Hipersensibilidad a componentes de la vacuna",
+          "Toma antibióticos"
+        ],
+        "multiple": true,
+        "description": "Situaciones o condiciones en las que se aconseja evitar o diferir una vacuna determinada. Fuente: elemento IMMZ.D.DE.161 «Potential contraindications» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "immz_estado",
+        "name": "Estado de la vacunación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: vacunación",
+        "options": [
+          "Aplicada",
+          "Registrada por error",
+          "No aplicada"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento IMMZ.D.DE.1 «Immunization event status» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "immz_motivo_no_aplicada",
+        "name": "Motivo por el que no se aplicó",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: vacunación",
+        "options": [
+          "Inmunidad comprobada",
+          "Precaución médica",
+          "Falta de la vacuna",
+          "Objeción de la persona o su tutor",
+          "Rechazo del cuidador",
+          "Motivo no especificado",
+          "Alergia a la vacuna o a un componente",
+          "Inmunocomprometido",
+          "Enfermedad o condición crónica",
+          "Enfermedad aguda",
+          "Ya tuvo la enfermedad",
+          "Otros motivos"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento IMMZ.D.DE.5 «Reason vaccine was not administered» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "immz_estado",
+          "equals": "No aplicada"
+        }
+      },
+      {
+        "code": "immz_esavi",
+        "name": "Evento supuestamente atribuible a la vacunación (ESAVI)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: vacunación",
+        "description": "Elementos IMMZ.D.DE.95, DE.107 y DE.115 de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72) Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "immz_esavi_manifestacion",
+        "name": "Manifestación del evento",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: vacunación",
+        "options": [
+          "Reacción local grave",
+          "Convulsiones",
+          "Absceso",
+          "Sepsis",
+          "Encefalopatía",
+          "Síndrome de shock tóxico",
+          "Anafilaxia",
+          "Fiebre"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "description": "Fuente: elemento IMMZ.D.DE.95 «Reaction manifestation» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "immz_esavi",
+          "equals": true
+        }
+      },
+      {
+        "code": "immz_esavi_gravedad",
+        "name": "Gravedad del evento",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: vacunación",
+        "options": [
+          "No grave",
+          "Muerte",
+          "Puso en riesgo la vida",
+          "Discapacidad",
+          "Hospitalización",
+          "Anomalía congénita"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "description": "Fuente: elemento IMMZ.D.DE.107 «Type of reaction» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "immz_esavi",
+          "equals": true
+        }
+      },
+      {
+        "code": "immz_esavi_desenlace",
+        "name": "Desenlace del evento",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: vacunación",
+        "options": [
+          "Falleció",
+          "Recuperado",
+          "Recuperado con secuelas",
+          "En recuperación",
+          "No recuperado",
+          "Desconocido"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento IMMZ.D.DE.115 «Reaction outcome» de la Digital adaptation kit for immunizations: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-immunizations, commit bd7fa72). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "immz_esavi",
+          "equals": true
+        }
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
         "required": false,
         "section": "Conclusión y plan"
       }
@@ -8000,6 +8892,205 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "GASTRO_CTRL_COLITIS_ULCEROSA",
+    "name": "Control de colitis ulcerosa (puntaje de Mayo)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "GASTROENTEROLOGIA",
+    "provenance": {
+      "sourceTitle": "Mayo score (openEHR-EHR-OBSERVATION.mayo_score.v1), International Clinical Knowledge Manager",
+      "organization": "openEHR Foundation",
+      "url": "https://ckm.openehr.org/ckm/",
+      "sourceVersion": "rev. 1.0.0 (publicado); espejo github.com/openEHR/CKM-mirror",
+      "license": "Arquetipo CC BY-SA 4.0; el puntaje (Schroeder KW et al., NEJM 1987) se usa como categorías clínicas",
+      "retrievedAt": "2026-10-24",
+      "note": "Estructura de control crónico del catálogo (NT 022) y los cuatro ítems del puntaje de Mayo del arquetipo openEHR-EHR-OBSERVATION.mayo_score.v1 (traducción propia del inglés, no oficial). Puntaje total 0 a 12; el parcial, sin endoscopia, 0 a 9."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_control",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Seguimiento",
+        "options": [
+          "Primera evaluación de la condición",
+          "Control programado",
+          "Descompensación o consulta no programada",
+          "Control posterior a internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_del_diagnostico",
+        "name": "Fecha del diagnóstico de colitis ulcerosa",
+        "dataType": "date",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "tratamiento_actual",
+        "name": "Tratamiento actual (fármaco, dosis y frecuencia)",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "adherencia",
+        "name": "Adherencia al tratamiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Toma el tratamiento como está indicado",
+          "Olvida dosis algunas veces",
+          "Abandonó el tratamiento",
+          "Todavía sin tratamiento"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "efectos_adversos",
+        "name": "¿Tuvo efectos adversos del tratamiento?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "efectos_adversos_cuales",
+        "name": "¿Cuáles y con qué fármaco?",
+        "dataType": "text",
+        "required": true,
+        "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "evolucion_desde_ultimo_control",
+        "name": "Evolución desde el último control",
+        "dataType": "text",
+        "required": false,
+        "section": "Seguimiento"
+      },
+      {
+        "code": "mayo_frecuencia_deposiciones",
+        "name": "Mayo — frecuencia de deposiciones",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: colitis ulcerosa",
+        "options": [
+          "0 — Número normal de deposiciones",
+          "1 — 1 a 2 deposiciones más de lo normal",
+          "2 — 3 a 4 deposiciones más de lo normal",
+          "3 — 5 o más deposiciones más de lo normal"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Mayo para colitis ulcerosa (Schroeder KW et al. N Engl J Med. 1987;317:1625-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.mayo_score.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "mayo_sangrado_rectal",
+        "name": "Mayo — sangrado rectal (el más intenso del día)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: colitis ulcerosa",
+        "options": [
+          "0 — Sin sangre visible",
+          "1 — Hilos de sangre con las heces, menos de la mitad de las veces",
+          "2 — Sangre evidente con las heces la mayoría de las veces",
+          "3 — Sólo sangre"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Mayo para colitis ulcerosa (Schroeder KW et al. N Engl J Med. 1987;317:1625-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.mayo_score.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "mayo_endoscopia",
+        "name": "Mayo — hallazgo endoscópico",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: colitis ulcerosa",
+        "options": [
+          "0 — Normal o enfermedad inactiva",
+          "1 — Enfermedad leve (eritema, patrón vascular disminuido, friabilidad leve)",
+          "2 — Enfermedad moderada (eritema marcado, patrón vascular ausente, friabilidad, erosiones)",
+          "3 — Enfermedad grave (sangrado espontáneo, ulceración)"
+        ],
+        "multiple": false,
+        "description": "Sólo si hay endoscopia reciente; sin ella se informa el Mayo parcial (tres ítems). Fuente: puntaje de Mayo para colitis ulcerosa (Schroeder KW et al. N Engl J Med. 1987;317:1625-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.mayo_score.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "mayo_evaluacion_global",
+        "name": "Mayo — evaluación global del médico",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: colitis ulcerosa",
+        "options": [
+          "0 — Normal o enfermedad inactiva",
+          "1 — Enfermedad leve",
+          "2 — Enfermedad moderada",
+          "3 — Enfermedad grave"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Mayo para colitis ulcerosa (Schroeder KW et al. N Engl J Med. 1987;317:1625-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.mayo_score.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "mayo_total",
+        "name": "Mayo — puntaje total (0 a 12, o parcial 0 a 9)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: colitis ulcerosa"
+      },
+      {
+        "code": "cu_manifestaciones_extraintestinales",
+        "name": "Manifestaciones extraintestinales",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Evaluación: colitis ulcerosa"
+      },
+      {
+        "code": "cu_extraintestinales_cual",
+        "name": "¿Cuál?",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación: colitis ulcerosa",
+        "options": [
+          "Articular",
+          "Cutánea",
+          "Ocular",
+          "Hepatobiliar"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "showWhen": {
+          "field": "cu_manifestaciones_extraintestinales",
+          "equals": true
+        }
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Metas y plan"
+      },
+      {
+        "code": "proximo_control",
+        "name": "Próximo control",
+        "dataType": "date",
+        "required": false,
+        "section": "Metas y plan"
+      }
+    ]
+  },
+  {
     "code": "GASTRO_CTRL_ERGE_DISPEPSIA",
     "name": "Control de reflujo gastroesofágico y dispepsia",
     "version": 1,
@@ -8355,7 +9446,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "GASTRO_CTRL_HEPATOPATIA",
     "name": "Control de hepatopatía crónica y cirrosis",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "GASTROENTEROLOGIA",
     "provenance": {
@@ -8364,7 +9455,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
       "license": "Norma técnica estatal de acceso público",
       "retrievedAt": "2026-10-02",
-      "note": "Gravedad por Child-Pugh (puntaje publicado de uso libre), descompensaciones y tamizaje de hepatocarcinoma."
+      "note": "Gravedad por Child-Pugh (puntaje publicado de uso libre), descompensaciones y tamizaje de hepatocarcinoma. Ampliación internacional (2026-10-24): los cinco ítems de la clasificación de Child-Pugh desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -8449,6 +9540,76 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "Otra o no establecida"
         ],
         "multiple": false
+      },
+      {
+        "code": "child_pugh_bilirrubina",
+        "name": "Child-Pugh — bilirrubina total (µmol/L)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "1 — menor de 34 µmol/L",
+          "2 — de 34 a 50 µmol/L",
+          "3 — mayor de 50 µmol/L"
+        ],
+        "multiple": false,
+        "description": "Conversión de unidades: 1 mg/dL de bilirrubina = 17,1 µmol/L (34 µmol/L ≈ 2 mg/dL; 50 µmol/L ≈ 3 mg/dL). Fuente: clasificación de Child-Pugh (Child CG, Turcotte JG. 1964; Pugh RN et al. Br J Surg. 1973;60:646-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.child_pugh_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "child_pugh_albumina",
+        "name": "Child-Pugh — albúmina sérica (g/L)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "1 — mayor de 35 g/L",
+          "2 — de 28 a 35 g/L",
+          "3 — menor de 28 g/L"
+        ],
+        "multiple": false,
+        "description": "Conversión de unidades: 35 g/L = 3,5 g/dL; 28 g/L = 2,8 g/dL. Fuente: clasificación de Child-Pugh (Child CG, Turcotte JG. 1964; Pugh RN et al. Br J Surg. 1973;60:646-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.child_pugh_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "child_pugh_inr",
+        "name": "Child-Pugh — INR",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "1 — menor de 1,7",
+          "2 — de 1,7 a 2,3",
+          "3 — mayor de 2,3"
+        ],
+        "multiple": false,
+        "description": "Fuente: clasificación de Child-Pugh (Child CG, Turcotte JG. 1964; Pugh RN et al. Br J Surg. 1973;60:646-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.child_pugh_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "child_pugh_ascitis",
+        "name": "Child-Pugh — ascitis",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "1 — Ausente",
+          "2 — Leve",
+          "3 — Moderada a grave"
+        ],
+        "multiple": false,
+        "description": "Fuente: clasificación de Child-Pugh (Child CG, Turcotte JG. 1964; Pugh RN et al. Br J Surg. 1973;60:646-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.child_pugh_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "child_pugh_encefalopatia",
+        "name": "Child-Pugh — encefalopatía hepática",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: hepatopatía crónica",
+        "options": [
+          "1 — Ausente",
+          "2 — Grado I a II o controlada con medicación",
+          "3 — Grado III a IV o refractaria"
+        ],
+        "multiple": false,
+        "description": "La suma de los cinco ítems (5 a 15) da la clase: A 5–6, B 7–9, C 10–15. Fuente: clasificación de Child-Pugh (Child CG, Turcotte JG. 1964; Pugh RN et al. Br J Surg. 1973;60:646-9), según el arquetipo openEHR openEHR-EHR-OBSERVATION.child_pugh_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "child_pugh",
@@ -9124,7 +10285,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "GERIA_CTRL_CAIDAS",
     "name": "Evaluación de caídas",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "GERIATRIA",
     "provenance": {
@@ -9133,7 +10294,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.who.int/publications/i/item/WHO-FWC-ALC-19.1",
       "license": "CC BY-NC-SA 3.0 IGO",
       "retrievedAt": "2026-10-02",
-      "note": "Caídas, factores de riesgo modificables y consecuencias."
+      "note": "Caídas, factores de riesgo modificables y consecuencias. Ampliación internacional (2026-10-24): el índice de riesgo de caídas de Downton desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -9191,6 +10352,67 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "Incontinencia de urgencia"
         ],
         "multiple": true
+      },
+      {
+        "code": "downton_medicamentos",
+        "name": "Downton — medicamentos",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: caídas",
+        "options": [
+          "Ninguno (0 puntos)",
+          "Tranquilizantes o sedantes (1 punto)",
+          "Diuréticos (1 punto)",
+          "Antihipertensivos (no diuréticos) (1 punto)",
+          "Antiparkinsonianos (1 punto)",
+          "Antidepresivos (1 punto)",
+          "Otros medicamentos (0 puntos)"
+        ],
+        "multiple": true,
+        "description": "Fuente: índice de riesgo de caídas de Downton (Downton JH, Andrews K. Aging (Milano). 1991;3:219-28), según el arquetipo openEHR openEHR-EHR-OBSERVATION.downton_fall_risk_index.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "downton_deficits_sensoriales",
+        "name": "Downton — déficits sensoriales",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: caídas",
+        "options": [
+          "Ninguno (0 puntos)",
+          "Alteración visual (1 punto)",
+          "Alteración auditiva (1 punto)",
+          "Extremidades (amputación, ACV, neuropatía, etc.) (1 punto)"
+        ],
+        "multiple": true,
+        "description": "Fuente: índice de riesgo de caídas de Downton (Downton JH, Andrews K. Aging (Milano). 1991;3:219-28), según el arquetipo openEHR openEHR-EHR-OBSERVATION.downton_fall_risk_index.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "downton_estado_mental",
+        "name": "Downton — estado mental",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: caídas",
+        "options": [
+          "0 — Orientado",
+          "1 — Confuso"
+        ],
+        "multiple": false,
+        "description": "Fuente: índice de riesgo de caídas de Downton (Downton JH, Andrews K. Aging (Milano). 1991;3:219-28), según el arquetipo openEHR openEHR-EHR-OBSERVATION.downton_fall_risk_index.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "downton_marcha",
+        "name": "Downton — marcha",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: caídas",
+        "options": [
+          "0 — Normal",
+          "0 — Segura con ayudas para caminar",
+          "1 — Insegura con o sin ayudas",
+          "0 — Imposible"
+        ],
+        "multiple": false,
+        "description": "Más «caídas previas» (1 punto si hubo alguna). Fuente: índice de riesgo de caídas de Downton (Downton JH, Andrews K. Aging (Milano). 1991;3:219-28), según el arquetipo openEHR openEHR-EHR-OBSERVATION.downton_fall_risk_index.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "miedo_a_caer",
@@ -10179,7 +11401,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "GINOBS_CONTROL_PRENATAL",
     "name": "Control prenatal — Historia Clínica Perinatal (CLAP/SMR)",
-    "version": 2,
+    "version": 3,
     "kind": "SPECIFIC",
     "specialty": "GINECOLOGIA_OBSTETRICIA",
     "provenance": {
@@ -10189,7 +11411,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Publicación OPS/OMS de acceso abierto (CC BY-NC-SA 3.0 IGO)",
       "sourceVersion": "Historia clínica perinatal simplificada",
       "retrievedAt": "2026-08-14",
-      "note": "Transcripción de la sección de control prenatal. El formulario completo cubre además parto, puerperio y recién nacido. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
+      "note": "Transcripción de la sección de control prenatal. El formulario completo cubre además parto, puerperio y recién nacido. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Ampliación internacional (2026-10-24): signos de peligro de la verificación rápida desde la WHO Digital Adaptation Kit for antenatal care: data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-anc, commit 301a6b8); instantánea en tools/clinical-forms/who-dak/dak-snapshot.json. Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
     },
     "fields": [
       {
@@ -10424,6 +11646,31 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "section": "Laboratorio y prevención"
       },
       {
+        "code": "anc_signos_de_peligro",
+        "name": "Signos de peligro (verificación rápida al llegar)",
+        "dataType": "json",
+        "required": false,
+        "section": "Signos de alarma",
+        "options": [
+          "Sin signos de peligro",
+          "Sangrado vaginal",
+          "Cianosis central",
+          "Convulsiones",
+          "Fiebre",
+          "Parto inminente",
+          "Trabajo de parto",
+          "Aspecto de estar muy enferma",
+          "Cefalea intensa",
+          "Dolor intenso (no abdominal)",
+          "Vómitos intensos",
+          "Dolor abdominal intenso",
+          "Inconsciente",
+          "Alteraciones visuales"
+        ],
+        "multiple": true,
+        "description": "Se verifica antes de cada contacto: si hay algún signo de peligro, referencia urgente al hospital; si no, se sigue con el contacto habitual. Fuente: elemento ANC.B5.DE48 «Danger signs» de la WHO Digital Adaptation Kit for antenatal care: data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-anc, commit 301a6b8). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
         "code": "signos_de_alarma_obstetricos",
         "name": "Signos de alarma referidos",
         "dataType": "json",
@@ -10474,7 +11721,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "GINOBS_CTRL_PUERPERIO",
     "name": "Control de puerperio",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "GINECOLOGIA_OBSTETRICIA",
     "provenance": {
@@ -10483,7 +11730,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.who.int/publications/i/item/9789240045989",
       "license": "CC BY-NC-SA 3.0 IGO",
       "retrievedAt": "2026-10-02",
-      "note": "Contactos posnatales de la OMS: sangrado, infección, presión, lactancia, ánimo y anticoncepción."
+      "note": "Contactos posnatales de la OMS: sangrado, infección, presión, lactancia, ánimo y anticoncepción. Ampliación internacional (2026-10-24): signos de peligro, molestias, examen uterino y perineal o de la herida de cesárea, problemas de lactancia, indagación de depresión posnatal y método anticonceptivo posparto desde la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4); instantánea en tools/clinical-forms/who-dak/dak-snapshot.json. Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
     },
     "fields": [
       {
@@ -10516,6 +11763,80 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "integer",
         "required": true,
         "section": "Evaluación: puerperio"
+      },
+      {
+        "code": "puerperio_signos_de_peligro",
+        "name": "Signos de peligro de la mujer",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Sin signos de peligro",
+          "Sangrado vaginal anormal",
+          "Cianosis central",
+          "Convulsiones",
+          "Fiebre (37,5 °C o más)",
+          "Cefalea intensa",
+          "Dolor intenso (no abdominal)",
+          "Vómitos intensos",
+          "Dolor abdominal intenso",
+          "Inconsciente",
+          "Alteraciones visuales"
+        ],
+        "multiple": true,
+        "description": "Fuente: elemento PNC.B4a.DE.1 «Woman's danger signs» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "puerperio_molestias",
+        "name": "Molestias referidas en las últimas 24 horas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Ninguna",
+          "Entuertos (cólicos uterinos)",
+          "Cefalea",
+          "Cansancio",
+          "Dolor de espalda",
+          "Dolor perineal",
+          "Incontinencia urinaria",
+          "Incontinencia fecal",
+          "Náuseas",
+          "Vómitos",
+          "Sangrado vaginal excesivo",
+          "Secreciones fétidas",
+          "Edema de piernas",
+          "Dolor a la palpación en las piernas",
+          "Enrojecimiento de las piernas",
+          "Diarrea",
+          "Estreñimiento",
+          "Síntomas gripales",
+          "Fiebre",
+          "Mareos",
+          "Tos",
+          "Falta de aire",
+          "Dolor torácico"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B3a.DE.35 «Specific complaint for the last 24 hours» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "puerperio_preeclampsia_grave",
+        "name": "Síntomas de preeclampsia grave",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Sin síntomas de preeclampsia grave",
+          "Cefalea intensa",
+          "Alteraciones visuales",
+          "Dolor epigástrico",
+          "Mareos",
+          "Vómitos"
+        ],
+        "multiple": true,
+        "description": "Fuente: elemento PNC.B4a.DE.27 «Symptoms of severe pre-eclampsia» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
       },
       {
         "code": "presion_arterial_sistolica",
@@ -10564,6 +11885,90 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "multiple": false
       },
       {
+        "code": "puerperio_tono_uterino",
+        "name": "Tono del fondo uterino",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Contraído",
+          "Flácido",
+          "No evaluable"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento PNC.B4a.DE.90 «Fundal tone» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "puerperio_altura_uterina",
+        "name": "Altura del fondo uterino",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "1 a 2 cm por encima del ombligo",
+          "1 a 2 cm por debajo del ombligo",
+          "A mitad de camino entre el ombligo y la sínfisis",
+          "Intrapélvico"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4a.DE.94 «Fundal height» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "puerperio_examen_perineal",
+        "name": "Examen perineal",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Sin heridas",
+          "Heridas limpias y secas",
+          "Cerradas con puntos",
+          "Cerradas sin puntos",
+          "Dehiscencia",
+          "Hematoma",
+          "Enrojecimiento",
+          "Tumefacción",
+          "Calor local",
+          "Secreción fétida o purulenta",
+          "Secreción serosa"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4a.DE.113 «Perineal examination» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "tipo_parto",
+          "equals": "Vaginal"
+        }
+      },
+      {
+        "code": "puerperio_herida_cesarea",
+        "name": "Examen de la herida de la cesárea",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Examen de la herida no realizado",
+          "Limpia y seca",
+          "Cerrada con puntos",
+          "Cerrada sin puntos",
+          "Dehiscente",
+          "Hematoma",
+          "Enrojecimiento",
+          "Tumefacción",
+          "Calor local",
+          "Secreción fétida o purulenta",
+          "Secreción serosa"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4a.DE.144 «Caesarean section wound examination» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "tipo_parto",
+          "equals": "Cesárea"
+        }
+      },
+      {
         "code": "lactancia",
         "name": "Lactancia",
         "dataType": "string",
@@ -10575,6 +11980,28 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "Sin lactancia"
         ],
         "multiple": false
+      },
+      {
+        "code": "puerperio_problemas_mamas",
+        "name": "Problemas de lactancia o de las mamas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "Ninguno",
+          "Dolor mamario",
+          "Congestión mamaria",
+          "Pezones doloridos",
+          "Infección del pezón",
+          "Mastitis o absceso",
+          "Poca producción de leche",
+          "Problemas de posición",
+          "Problemas de agarre",
+          "Reflujo o regurgitación"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B3a.DE.23 «Breastfeeding/breast issues» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
       },
       {
         "code": "animo_puerperio",
@@ -10591,6 +12018,21 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "multiple": true
       },
       {
+        "code": "puerperio_tamizaje_depresion_ansiedad",
+        "name": "Indagación clínica de depresión y ansiedad posnatal",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "No realizada",
+          "Positiva (hay signos)",
+          "Negativa (no hay signos)",
+          "No se pudo determinar"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento PNC.B3a.DE.1 «Screening for postnatal depression and anxiety» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
         "code": "anticoncepcion_posparto",
         "name": "Anticoncepción",
         "dataType": "string",
@@ -10602,6 +12044,42 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "No desea"
         ],
         "multiple": false
+      },
+      {
+        "code": "puerperio_metodo_anticonceptivo",
+        "name": "Método anticonceptivo posparto elegido",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: puerperio",
+        "options": [
+          "DIU de cobre",
+          "DIU de levonorgestrel",
+          "Implante de etonogestrel (una varilla)",
+          "Implante de levonorgestrel (dos varillas)",
+          "DMPA intramuscular",
+          "DMPA subcutáneo",
+          "Enantato de noretisterona (NET-EN)",
+          "Píldora de progestágeno solo",
+          "Anticonceptivo oral combinado",
+          "Parche anticonceptivo combinado",
+          "Anillo vaginal combinado",
+          "Anillo vaginal de progesterona",
+          "Método de la amenorrea de la lactancia (MELA)",
+          "Preservativo masculino",
+          "Preservativo femenino",
+          "Vasectomía",
+          "Ligadura tubaria",
+          "No se entregó método"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento PNC.B3a.DE.147 «Method of postpartum contraception selected» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "anticoncepcion_posparto",
+          "equals": [
+            "Elegida e iniciada",
+            "Elegida, pendiente"
+          ]
+        }
       },
       {
         "code": "diagnostico",
@@ -11544,6 +13022,161 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "INFECTO_CTRL_ITS",
+    "name": "Infecciones de transmisión sexual: evaluación y control",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "INFECTOLOGIA",
+    "provenance": {
+      "sourceTitle": "WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary",
+      "organization": "Organización Mundial de la Salud (OMS)",
+      "url": "https://github.com/WorldHealthOrganization/smart-hiv",
+      "sourceVersion": "HIV_DAK_2023-Web_Annex_A.Data_dictionary_231117_CLEAN.xlsx",
+      "license": "CC BY-NC-SA 3.0 IGO",
+      "retrievedAt": "2026-10-24",
+      "note": "Estructura de cuadro agudo del catálogo (NT 022). Factores de riesgo de la DAK de planificación familiar y ITS (FP.DE.0183) y síndrome, pruebas y resultados de la DAK de VIH de la OMS (HIV.D.DE778, DE789, DE802, DE808). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_evaluacion",
+        "name": "Tipo de evaluación",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial",
+        "options": [
+          "Evaluación inicial",
+          "Reevaluación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "inicio_de_sintomas",
+        "name": "Inicio de los síntomas (fecha u hora)",
+        "dataType": "string",
+        "required": true,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "tratamiento_previo",
+        "name": "Tratamiento recibido antes de esta consulta",
+        "dataType": "text",
+        "required": false,
+        "section": "Evaluación inicial"
+      },
+      {
+        "code": "its_factores_de_riesgo",
+        "name": "Factores de riesgo de ITS",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: infección de transmisión sexual",
+        "options": [
+          "Mujer adolescente",
+          "Vive con VIH",
+          "Cambia con frecuencia de pareja sexual",
+          "Varias parejas sexuales",
+          "Trabajo sexual",
+          "Cliente de trabajo sexual",
+          "Separado de su pareja habitual por largos periodos",
+          "Relaciones sin preservativo con una pareja que tiene una ITS",
+          "ITS en el último año",
+          "Perforaciones de la piel con agujas no estériles (tatuajes, piercing, inyecciones)",
+          "Pareja con conductas de riesgo"
+        ],
+        "multiple": true,
+        "description": "Fuente: elemento FP.DE.0183 «STI risk assessment factors» de la WHO Digital Adaptation Kit for family planning and STIs: data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-fp, commit b69bbec). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "its_sindrome",
+        "name": "Síndrome o ITS diagnosticada",
+        "dataType": "json",
+        "required": true,
+        "section": "Evaluación: infección de transmisión sexual",
+        "options": [
+          "Síndrome de secreción uretral",
+          "Síndrome de flujo vaginal",
+          "Dolor abdominal bajo",
+          "Síndrome de úlcera genital",
+          "Secreción anorrectal",
+          "Muestra enviada a estudio"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento HIV.D.DE778 «Syndrome/STI diagnosed» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "its_pruebas",
+        "name": "ITS estudiadas",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: infección de transmisión sexual",
+        "options": [
+          "Neisseria gonorrhoeae",
+          "Chlamydia trachomatis",
+          "Trichomonas vaginalis",
+          "Sífilis (Treponema pallidum)",
+          "Virus del herpes simple (VHS-1, VHS-2)",
+          "Mycoplasma genitalium",
+          "Mpox",
+          "Hepatitis B",
+          "Hepatitis C"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento HIV.D.DE789 «STI tested for» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "its_resultado_sifilis",
+        "name": "Resultado de la prueba de sífilis",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: infección de transmisión sexual",
+        "options": [
+          "Positivo",
+          "Negativo",
+          "No concluyente"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento HIV.D.DE802 «Syphilis test result» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "its_pruebas",
+          "equals": "Sífilis (Treponema pallidum)"
+        }
+      },
+      {
+        "code": "its_resultado_gonorrea",
+        "name": "Resultado de la prueba de gonorrea",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: infección de transmisión sexual",
+        "options": [
+          "Positivo",
+          "Negativo",
+          "No concluyente"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento HIV.D.DE808 «Gonorrhoea test result» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "its_pruebas",
+          "equals": "Neisseria gonorrhoeae"
+        }
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión y plan"
+      },
+      {
+        "code": "plan",
+        "name": "Plan: tratamiento, estudios, interconsultas y destino",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión y plan"
+      }
+    ]
+  },
+  {
     "code": "INFECTO_CTRL_ITU",
     "name": "Infección urinaria: evaluación y control",
     "version": 1,
@@ -11814,7 +13447,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "INFECTO_CTRL_VIH",
     "name": "Control de VIH",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "INFECTOLOGIA",
     "provenance": {
@@ -11823,7 +13456,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.who.int/health-topics/hiv-aids",
       "license": "CC BY-NC-SA 3.0 IGO",
       "retrievedAt": "2026-10-02",
-      "note": "Estadio clínico de la OMS, carga viral, CD4, adherencia a la terapia antirretroviral y profilaxis."
+      "note": "Estadio clínico de la OMS, carga viral, CD4, adherencia a la terapia antirretroviral y profilaxis. Ampliación internacional (2026-10-24): motivos de mala adherencia, toxicidad limitante, motivo de la carga viral, fracaso terapéutico, signos de enfermedad grave, tamizaje de tuberculosis y hepatitis B y C desde la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735); instantánea en tools/clinical-forms/who-dak/dak-snapshot.json. Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
     },
     "fields": [
       {
@@ -11869,6 +13502,42 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "multiple": false
       },
       {
+        "code": "vih_motivos_mala_adherencia",
+        "name": "Motivos del problema de adherencia",
+        "dataType": "json",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Se olvidó",
+          "Toxicidad o efectos adversos",
+          "Falta de tiempo",
+          "Cambio de rutina",
+          "Costo del traslado",
+          "Distancia al establecimiento",
+          "Perdió o se le acabaron las pastillas",
+          "Desabastecimiento",
+          "Estaba demasiado enfermo",
+          "Cantidad de pastillas",
+          "Se sentía bien",
+          "Depresión",
+          "Consumo de alcohol",
+          "Consumo de otras sustancias",
+          "Estigma o temor a que se sepa el diagnóstico",
+          "Falta de alimentos",
+          "Mal sabor"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento HIV.D.DE197 «Reason(s) for adherence problem» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "adherencia",
+          "equals": [
+            "Olvida dosis algunas veces",
+            "Abandonó el tratamiento"
+          ]
+        }
+      },
+      {
         "code": "efectos_adversos",
         "name": "¿Tuvo efectos adversos del tratamiento?",
         "dataType": "boolean",
@@ -11881,6 +13550,34 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "text",
         "required": true,
         "section": "Seguimiento",
+        "showWhen": {
+          "field": "efectos_adversos",
+          "equals": true
+        }
+      },
+      {
+        "code": "vih_toxicidad_limitante",
+        "name": "Tipo de toxicidad que limita el tratamiento",
+        "dataType": "json",
+        "required": false,
+        "section": "Seguimiento",
+        "options": [
+          "Gastrointestinal (náuseas, diarrea, dolor abdominal, vómitos)",
+          "Cutánea (exantema, hipersensibilidad)",
+          "Neuropatía periférica",
+          "Sistema nervioso central (mareo, ansiedad, pesadillas, depresión)",
+          "Aumento de peso",
+          "Disfunción hepática (ictericia)",
+          "Hematológica (anemia, neutropenia)",
+          "Cansancio",
+          "Cefalea",
+          "Ósea (fracturas, osteopenia)",
+          "Metabólica (cambios de la grasa corporal, hiperglucemia, dislipidemia)",
+          "Renal (nefrolitiasis, insuficiencia renal)",
+          "Reacción adversa inesperada"
+        ],
+        "multiple": true,
+        "description": "Fuente: elemento HIV.D.DE466 «Type of treatment-limiting toxicity» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
         "showWhen": {
           "field": "efectos_adversos",
           "equals": true
@@ -11913,6 +13610,35 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "string",
         "required": true,
         "section": "Evaluación: VIH"
+      },
+      {
+        "code": "vih_motivo_carga_viral",
+        "name": "Motivo de la carga viral",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Control de rutina",
+          "Control dirigido (sospecha clínica)",
+          "Primera carga viral",
+          "Control después de la consejería reforzada de adherencia"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento HIV.D.DE391 «Reason for HIV viral load test» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "vih_fracaso_tratamiento",
+        "name": "Fracaso del tratamiento antirretroviral",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Fracaso clínico",
+          "Fracaso inmunológico",
+          "Fracaso virológico"
+        ],
+        "multiple": true,
+        "description": "Dejar en blanco si no hay fracaso. Fuente: elemento HIV.D.DE225 «Treatment failure» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
       },
       {
         "code": "cd4",
@@ -11957,6 +13683,93 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "Ninguno"
         ],
         "multiple": true
+      },
+      {
+        "code": "vih_signos_enfermedad_grave",
+        "name": "Signos de enfermedad grave",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Fiebre de 39 °C o más",
+          "Taquicardia",
+          "Taquipnea",
+          "No puede caminar sin ayuda",
+          "Letargo",
+          "Inconsciencia",
+          "Convulsiones",
+          "No puede beber (niño)",
+          "No puede mamar (lactante o niño)",
+          "Vómitos repetidos",
+          "Cefalea"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Cualquiera de estos signos indica triaje o referencia de urgencia. Fuente: elemento HIV.D.DE17 «Signs of serious illness» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "vih_sintomas_tb",
+        "name": "Síntomas de tuberculosis (tamizaje)",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Tos actual",
+          "Tos de 2 semanas o más",
+          "Fiebre de 39 °C o más",
+          "Pérdida de peso (referida)",
+          "Sudoración nocturna",
+          "Poca ganancia de peso (niño)",
+          "Juega menos (niño)",
+          "Dolor torácico",
+          "Hemoptisis",
+          "Letargo",
+          "Ninguno"
+        ],
+        "multiple": true,
+        "description": "La DAK lo marca como respuesta única; se ofrece como varias porque los síntomas pueden coexistir. Fuente: elemento HIV.D.DE973 «Symptoms of TB» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "vih_resultado_tamizaje_tb",
+        "name": "Resultado del tamizaje de tuberculosis",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Positivo",
+          "Negativo",
+          "No concluyente"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento HIV.D.DE986 «TB screening result» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "vih_hbsag",
+        "name": "HBsAg (hepatitis B)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Positivo",
+          "Negativo",
+          "Indeterminado"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento HIV.D.DE162 «HBsAg test result» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "vih_vhc",
+        "name": "Prueba de hepatitis C",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: VIH",
+        "options": [
+          "Positiva",
+          "Negativa",
+          "Indeterminada"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento HIV.D.DE170 «HCV test result» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
       },
       {
         "code": "metas_cumplidas",
@@ -13110,7 +14923,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "MEDFAM_CTRL_PLANIFICACION",
     "name": "Consejería en planificación familiar",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "MEDICINA_FAMILIAR",
     "provenance": {
@@ -13119,7 +14932,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.who.int/publications/i/item/9789241549158",
       "license": "CC BY-NC-SA 3.0 IGO",
       "retrievedAt": "2026-10-02",
-      "note": "Elegibilidad de cada método según los criterios médicos de la OMS (categorías 1 a 4)."
+      "note": "Elegibilidad de cada método según los criterios médicos de la OMS (categorías 1 a 4). Ampliación internacional (2026-10-24): motivo de la visita, intención de embarazo, motivo para dejar el método y problemas con el método desde la WHO Digital Adaptation Kit for family planning and STIs: data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-fp, commit b69bbec); instantánea en tools/clinical-forms/who-dak/dak-snapshot.json. Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
     },
     "fields": [
       {
@@ -13133,6 +14946,121 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "Control"
         ],
         "multiple": false
+      },
+      {
+        "code": "fp_motivo_visita",
+        "name": "Motivo de la visita",
+        "dataType": "json",
+        "required": false,
+        "section": "Consulta",
+        "options": [
+          "Dejar la anticoncepción",
+          "Consejería en anticoncepción",
+          "Iniciar anticoncepción",
+          "Continuar con el método actual",
+          "Anticoncepción de emergencia",
+          "Problemas o dudas con el método",
+          "Retiro del implante",
+          "Retiro del DIU",
+          "Cambio de método"
+        ],
+        "multiple": true,
+        "description": "Fuente: elemento FP.DE.0059 «Reason for visit» de la WHO Digital Adaptation Kit for family planning and STIs: data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-fp, commit b69bbec). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "fp_intencion_embarazo",
+        "name": "¿Desea un embarazo en el próximo año?",
+        "dataType": "string",
+        "required": false,
+        "section": "Consulta",
+        "options": [
+          "Sí, quiero quedar embarazada",
+          "Me da lo mismo",
+          "No, no quiero quedar embarazada",
+          "No está segura"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento FP.DE.0074 «Pregnancy intention» de la WHO Digital Adaptation Kit for family planning and STIs: data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-fp, commit b69bbec). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "fp_motivo_dejar_metodo",
+        "name": "Motivo para dejar el método",
+        "dataType": "json",
+        "required": false,
+        "section": "Consulta",
+        "options": [
+          "Efectos adversos",
+          "Desea un embarazo",
+          "Falla del método (embarazo no buscado)"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento FP.DE.0069 «Reason for stopping contraception or method» de la WHO Digital Adaptation Kit for family planning and STIs: data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-fp, commit b69bbec). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "fp_motivo_visita",
+          "equals": "Dejar la anticoncepción"
+        }
+      },
+      {
+        "code": "fp_problemas_metodo",
+        "name": "Problemas con el método",
+        "dataType": "json",
+        "required": false,
+        "section": "Consulta",
+        "options": [
+          "Sangrado abundante o prolongado",
+          "Sangrado irregular",
+          "Amenorrea",
+          "Sangrado vaginal inexplicado",
+          "Cólicos y dolor",
+          "Posible anemia",
+          "La pareja siente los hilos del DIU",
+          "Dolor intenso en el bajo vientre",
+          "Sospecha de perforación",
+          "Expulsión parcial del DIU",
+          "Expulsión completa del DIU",
+          "No se encuentran los hilos del DIU",
+          "Acné",
+          "Cefaleas comunes",
+          "Sensibilidad mamaria",
+          "Cambio de peso",
+          "Náuseas o mareos",
+          "Cardiopatía isquémica",
+          "Migraña",
+          "Olvido de píldoras",
+          "Inyección atrasada",
+          "Cambios de ánimo o del deseo sexual",
+          "Sospecha de embarazo",
+          "Problemas con el parche",
+          "Problemas con el anillo vaginal",
+          "Cambio en el momento de la menstruación",
+          "Sangrado o coágulos",
+          "Dolor que dura meses",
+          "Infección en el sitio de inserción o incisión",
+          "Absceso",
+          "Dificultad para usar el preservativo",
+          "Irritación genital",
+          "Preservativo mal usado, roto o deslizado",
+          "Dificultad para convencer a la pareja",
+          "El preservativo hace ruido",
+          "Trombosis venosa profunda",
+          "Embarazo ectópico",
+          "Infarto de miocardio",
+          "Enfermedad hepática",
+          "Enfermedad inflamatoria pélvica",
+          "Embolia pulmonar",
+          "Embarazo ectópico roto",
+          "Alergia grave al látex",
+          "Accidente cerebrovascular",
+          "Síndrome de shock tóxico"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento FP.DE.0216 «Issues and concerns» de la WHO Digital Adaptation Kit for family planning and STIs: data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-fp, commit b69bbec). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "fp_motivo_visita",
+          "equals": "Problemas o dudas con el método"
+        }
       },
       {
         "code": "metodo_actual",
@@ -14516,7 +16444,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "MEDINT_CTRL_MULTIMORBILIDAD",
     "name": "Control de multimorbilidad y polifarmacia",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "MEDICINA_INTERNA",
     "provenance": {
@@ -14525,7 +16453,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
       "license": "Norma técnica estatal de acceso público",
       "retrievedAt": "2026-10-02",
-      "note": "Revisión de problemas activos, fármacos (polifarmacia ≥ 5) y prioridades del paciente."
+      "note": "Revisión de problemas activos, fármacos (polifarmacia ≥ 5) y prioridades del paciente. Ampliación internacional (2026-10-24): índice de comorbilidad de Charlson (traducción al castellano del CKM, con una corrección documentada) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -14613,6 +16541,97 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         ],
         "multiple": true,
         "allowOther": true
+      },
+      {
+        "code": "charlson_grupo_etario",
+        "name": "Charlson — grupo etario",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: multimorbilidad",
+        "options": [
+          "0 — < 50 años",
+          "1 — 50-59 años",
+          "2 — 60-69 años",
+          "3 — 70-79 años",
+          "4 — ≥ 80 años"
+        ],
+        "multiple": false,
+        "description": "Fuente: índice de comorbilidad de Charlson (Charlson ME et al. J Chronic Dis. 1987;40(5):373-83), según el arquetipo openEHR openEHR-EHR-OBSERVATION.charlson_comorbidity_index.v2 (rev. 2.0.0, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM. Texto del CKM con una corrección propia de un defecto comprobado (ver docs/seed-research/clinical-forms.md)."
+      },
+      {
+        "code": "charlson_comorbilidades",
+        "name": "Charlson — comorbilidades presentes",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: multimorbilidad",
+        "options": [
+          "Infarto de miocardio (1 punto)",
+          "Insuficiencia cardíaca congestiva (1 punto)",
+          "Enfermedad vascular periférica (1 punto)",
+          "Enfermedad cerebrovascular (1 punto)",
+          "Demencia (1 punto)",
+          "Enfermedad pulmonar crónica (1 punto)",
+          "Enfermedad ulcerosa (1 punto)",
+          "Enfermedad del tejido conectivo (1 punto)",
+          "Hemiplejía (2 puntos)",
+          "Enfermedad renal moderada o severa (2 puntos)",
+          "Leucemia (2 puntos)",
+          "Linfoma (2 puntos)",
+          "SIDA (6 puntos)",
+          "Ninguna de estas"
+        ],
+        "multiple": true,
+        "description": "Fuente: índice de comorbilidad de Charlson (Charlson ME et al. J Chronic Dis. 1987;40(5):373-83), según el arquetipo openEHR openEHR-EHR-OBSERVATION.charlson_comorbidity_index.v2 (rev. 2.0.0, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "charlson_hepatopatia",
+        "name": "Charlson — enfermedad hepática",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: multimorbilidad",
+        "options": [
+          "0 — Ninguna",
+          "1 — Leve",
+          "3 — Moderada a severa"
+        ],
+        "multiple": false,
+        "description": "Leve: hepatitis crónica o cirrosis sin hipertensión portal. Moderada a grave: cirrosis con hipertensión portal, con o sin sangrado variceal. (Traducción propia de la descripción inglesa del arquetipo, «cirrhosis without portal hypertension or chronic hepatitis»; la traducción al castellano del CKM la lee como «ni hepatitis crónica» y no se usa.) Fuente: índice de comorbilidad de Charlson (Charlson ME et al. J Chronic Dis. 1987;40(5):373-83), según el arquetipo openEHR openEHR-EHR-OBSERVATION.charlson_comorbidity_index.v2 (rev. 2.0.0, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "charlson_diabetes",
+        "name": "Charlson — diabetes mellitus",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: multimorbilidad",
+        "options": [
+          "0 — Ausente o controlada con dieta",
+          "1 — No complicada",
+          "2 — Daño en órganos diana"
+        ],
+        "multiple": false,
+        "description": "Fuente: índice de comorbilidad de Charlson (Charlson ME et al. J Chronic Dis. 1987;40(5):373-83), según el arquetipo openEHR openEHR-EHR-OBSERVATION.charlson_comorbidity_index.v2 (rev. 2.0.0, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "charlson_tumor_solido",
+        "name": "Charlson — tumor sólido",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: multimorbilidad",
+        "options": [
+          "0 — Ninguno",
+          "2 — Localizado",
+          "6 — Metastásico"
+        ],
+        "multiple": false,
+        "description": "Fuente: índice de comorbilidad de Charlson (Charlson ME et al. J Chronic Dis. 1987;40(5):373-83), según el arquetipo openEHR openEHR-EHR-OBSERVATION.charlson_comorbidity_index.v2 (rev. 2.0.0, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "charlson_total",
+        "name": "Charlson — puntaje total",
+        "dataType": "integer",
+        "required": false,
+        "section": "Evaluación: multimorbilidad",
+        "description": "Suma de los puntos de cada ítem, incluido el grupo etario."
       },
       {
         "code": "numero_de_farmacos",
@@ -16845,7 +18864,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "NEUMO_CTRL_TB",
     "name": "Control de tratamiento de tuberculosis",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "NEUMOLOGIA",
     "provenance": {
@@ -16854,7 +18873,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.who.int/teams/global-tuberculosis-programme",
       "license": "CC BY-NC-SA 3.0 IGO",
       "retrievedAt": "2026-10-02",
-      "note": "Seguimiento del tratamiento: fase, baciloscopías de control, adherencia (tratamiento directamente observado) y reacciones adversas."
+      "note": "Seguimiento del tratamiento: fase, baciloscopías de control, adherencia (tratamiento directamente observado) y reacciones adversas. Ampliación internacional (2026-10-24): el resultado del tratamiento de tuberculosis desde la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735); instantánea en tools/clinical-forms/who-dak/dak-snapshot.json. Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
     },
     "fields": [
       {
@@ -16980,6 +18999,27 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "Terminado"
         ],
         "multiple": false
+      },
+      {
+        "code": "tb_resultado_tratamiento",
+        "name": "Resultado del tratamiento de tuberculosis",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: tuberculosis",
+        "options": [
+          "Fracaso",
+          "Curado",
+          "Tratamiento completo",
+          "Fallecido",
+          "Pérdida en el seguimiento",
+          "No evaluado"
+        ],
+        "multiple": false,
+        "description": "Definiciones de resultado de la OMS para la tuberculosis. Fuente: elemento HIV.D.DE1002 «TB treatment outcome» de la WHO Digital Adaptation Kit for HIV (2023), Web Annex A: core data dictionary (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-hiv, commit b1e7735). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud.",
+        "showWhen": {
+          "field": "tb_fase",
+          "equals": "Terminado"
+        }
       },
       {
         "code": "tb_mes",
@@ -17442,7 +19482,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "NEURO_CTRL_ACV",
     "name": "Accidente cerebrovascular: evaluación y seguimiento",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "NEUROLOGIA",
     "provenance": {
@@ -17451,7 +19491,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.ninds.nih.gov/health-information/stroke/assess-and-treat/nih-stroke-scale",
       "license": "Dominio público (Gobierno de los EE. UU.)",
       "retrievedAt": "2026-10-02",
-      "note": "Déficit por la escala NIHSS (dominio público), discapacidad por escala de Rankin modificada y prevención secundaria."
+      "note": "Déficit por la escala NIHSS (dominio público), discapacidad por escala de Rankin modificada y prevención secundaria. Ampliación internacional (2026-10-24): el puntaje ABCD² para el accidente isquémico transitorio desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -17576,6 +19616,93 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "No establecido"
         ],
         "multiple": false
+      },
+      {
+        "code": "abcd2_edad",
+        "name": "ABCD² — edad ≥ 60 años",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "0 — No",
+          "1 — Sí"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje ABCD² (Johnston SC et al. Lancet. 2007;369:283-92), según el arquetipo openEHR openEHR-EHR-OBSERVATION.abcd2_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "acv_tipo",
+          "equals": "Accidente isquémico transitorio"
+        }
+      },
+      {
+        "code": "abcd2_presion",
+        "name": "ABCD² — presión arterial inicial ≥ 140/90 mmHg",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "0 — No",
+          "1 — Sí"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje ABCD² (Johnston SC et al. Lancet. 2007;369:283-92), según el arquetipo openEHR openEHR-EHR-OBSERVATION.abcd2_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "acv_tipo",
+          "equals": "Accidente isquémico transitorio"
+        }
+      },
+      {
+        "code": "abcd2_clinica",
+        "name": "ABCD² — clínica",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "0 — Otros síntomas",
+          "1 — Trastorno del habla sin debilidad",
+          "2 — Debilidad unilateral"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje ABCD² (Johnston SC et al. Lancet. 2007;369:283-92), según el arquetipo openEHR openEHR-EHR-OBSERVATION.abcd2_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "acv_tipo",
+          "equals": "Accidente isquémico transitorio"
+        }
+      },
+      {
+        "code": "abcd2_duracion",
+        "name": "ABCD² — duración de los síntomas",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "0 — Menos de 10 minutos",
+          "1 — 10 a 59 minutos",
+          "2 — 60 minutos o más"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje ABCD² (Johnston SC et al. Lancet. 2007;369:283-92), según el arquetipo openEHR openEHR-EHR-OBSERVATION.abcd2_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "acv_tipo",
+          "equals": "Accidente isquémico transitorio"
+        }
+      },
+      {
+        "code": "abcd2_diabetes",
+        "name": "ABCD² — diabetes",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: accidente cerebrovascular",
+        "options": [
+          "0 — No",
+          "1 — Sí"
+        ],
+        "multiple": false,
+        "description": "Suma 0 a 7: riesgo precoz de ACV después de un accidente isquémico transitorio. Fuente: puntaje ABCD² (Johnston SC et al. Lancet. 2007;369:283-92), según el arquetipo openEHR openEHR-EHR-OBSERVATION.abcd2_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "acv_tipo",
+          "equals": "Accidente isquémico transitorio"
+        }
       },
       {
         "code": "rankin",
@@ -18231,7 +20358,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "NEURO_EVALUACION_BASE",
     "name": "Neurología — consulta inicial (ficha base)",
-    "version": 2,
+    "version": 3,
     "kind": "BASE",
     "specialty": "NEUROLOGIA",
     "provenance": {
@@ -18241,7 +20368,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común de la consulta y el apartado de examen del sistema nervioso: motivo, tiempo de evolución, antecedentes, examen, diagnóstico y conducta. Son agregados propios de la especialidad el desglose del examen neurológico en campos separados (estado de conciencia, pares craneales, fuerza muscular, sensibilidad, reflejos, coordinación y marcha) y la anamnesis dirigida de cefalea y episodios convulsivos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de coma de Glasgow, escala de fuerza MRC."
+      "note": "De la norma salen la estructura común de la consulta y el apartado de examen del sistema nervioso: motivo, tiempo de evolución, antecedentes, examen, diagnóstico y conducta. Son agregados propios de la especialidad el desglose del examen neurológico en campos separados (estado de conciencia, pares craneales, fuerza muscular, sensibilidad, reflejos, coordinación y marcha) y la anamnesis dirigida de cefalea y episodios convulsivos. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Instrumentos de uso libre incorporados: escala de coma de Glasgow, escala de fuerza MRC. Ampliación internacional (2026-10-24): la graduación de los reflejos osteotendinosos por sitio y lado (cluster exam_tendon_reflexes) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -18417,6 +20544,186 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "text",
         "required": false,
         "section": "Examen neurológico"
+      },
+      {
+        "code": "reflejo_bicipital_izquierdo",
+        "name": "Reflejo bicipital (C5–C6) — izquierdo",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Los sitios y la graduación (0, ±, 1+ a 5+) son los del arquetipo; la notación numérica es la que el propio arquetipo menciona en cada respuesta. Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_bicipital_derecho",
+        "name": "Reflejo bicipital (C5–C6) — derecho",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_braquiorradial_izquierdo",
+        "name": "Reflejo braquiorradial o estilorradial (C6) — izquierdo",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_braquiorradial_derecho",
+        "name": "Reflejo braquiorradial o estilorradial (C6) — derecho",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_tricipital_izquierdo",
+        "name": "Reflejo tricipital (C7) — izquierdo",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_tricipital_derecho",
+        "name": "Reflejo tricipital (C7) — derecho",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_rotuliano_izquierdo",
+        "name": "Reflejo rotuliano (L4) — izquierdo",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_rotuliano_derecho",
+        "name": "Reflejo rotuliano (L4) — derecho",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_aquileo_izquierdo",
+        "name": "Reflejo aquíleo (S1) — izquierdo",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "reflejo_aquileo_derecho",
+        "name": "Reflejo aquíleo (S1) — derecho",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen neurológico",
+        "options": [
+          "0 — Ausente",
+          "± — Dudoso",
+          "1+ — Disminuido",
+          "2+ — Normal",
+          "3+ — Vivo",
+          "4+ — Clonus agotable",
+          "5+ — Clonus inagotable"
+        ],
+        "multiple": false,
+        "description": "Fuente: graduación de los reflejos de estiramiento muscular (el arquetipo no trae referencia bibliográfica), según el arquetipo openEHR openEHR-EHR-CLUSTER.exam_tendon_reflexes.v0 (rev. 0.0.2-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "coordinacion_y_marcha",
@@ -59353,7 +61660,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "NUTRI_EVALUACION_BASE",
     "name": "Nutrición y Dietética — consulta inicial (ficha base)",
-    "version": 2,
+    "version": 3,
     "kind": "BASE",
     "specialty": "NUTRICION",
     "provenance": {
@@ -59363,7 +61670,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común (motivo, tiempo de evolución, antecedentes, examen con medidas antropométricas, diagnóstico y conducta) y el registro de peso y talla. Son agregados propios de la especialidad los hábitos alimentarios, el número de comidas al día, las intolerancias y alergias alimentarias, el consumo de líquidos, la actividad física y el objetivo nutricional acordado en consulta. Los valores se registran tal como se miden: la ficha no calcula ni interpreta índices. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
+      "note": "De la norma salen la estructura común (motivo, tiempo de evolución, antecedentes, examen con medidas antropométricas, diagnóstico y conducta) y el registro de peso y talla. Son agregados propios de la especialidad los hábitos alimentarios, el número de comidas al día, las intolerancias y alergias alimentarias, el consumo de líquidos, la actividad física y el objetivo nutricional acordado en consulta. Los valores se registran tal como se miden: la ficha no calcula ni interpreta índices. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Ampliación internacional (2026-10-24): la NRS 2002 (arquetipo del CKM noruego espejado) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -59529,6 +61836,101 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
             "Bajó"
           ]
         }
+      },
+      {
+        "code": "nrs_imc_menor_20_5",
+        "name": "NRS 2002 — ¿IMC menor de 20,5 kg/m²?",
+        "dataType": "string",
+        "required": false,
+        "section": "Antropometría",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "multiple": false,
+        "description": "Tamizaje inicial: si alguna de las cuatro preguntas es «sí», se completa el tamizaje final. Fuente: NRS 2002 (Kondrup J et al. Clin Nutr. 2003;22:415-21), recomendada por ESPEN, según el arquetipo openEHR openEHR-EHR-OBSERVATION.nutritional_risk_screening.v1 (rev. 1.1.1, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nrs_perdida_de_peso_3_meses",
+        "name": "NRS 2002 — ¿Perdió peso en los últimos 3 meses?",
+        "dataType": "string",
+        "required": false,
+        "section": "Antropometría",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "multiple": false,
+        "description": "Fuente: NRS 2002 (Kondrup J et al. Clin Nutr. 2003;22:415-21), recomendada por ESPEN, según el arquetipo openEHR openEHR-EHR-OBSERVATION.nutritional_risk_screening.v1 (rev. 1.1.1, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nrs_ingesta_reducida",
+        "name": "NRS 2002 — ¿Redujo la ingesta en la última semana?",
+        "dataType": "string",
+        "required": false,
+        "section": "Antropometría",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "multiple": false,
+        "description": "Fuente: NRS 2002 (Kondrup J et al. Clin Nutr. 2003;22:415-21), recomendada por ESPEN, según el arquetipo openEHR openEHR-EHR-OBSERVATION.nutritional_risk_screening.v1 (rev. 1.1.1, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nrs_enfermedad_grave",
+        "name": "NRS 2002 — ¿Está gravemente enfermo (p. ej. en terapia intensiva)?",
+        "dataType": "string",
+        "required": false,
+        "section": "Antropometría",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "multiple": false,
+        "description": "Fuente: NRS 2002 (Kondrup J et al. Clin Nutr. 2003;22:415-21), recomendada por ESPEN, según el arquetipo openEHR openEHR-EHR-OBSERVATION.nutritional_risk_screening.v1 (rev. 1.1.1, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nrs_estado_nutricional",
+        "name": "NRS 2002 — deterioro del estado nutricional",
+        "dataType": "string",
+        "required": false,
+        "section": "Antropometría",
+        "options": [
+          "0 — Ausente: estado nutricional normal",
+          "1 — Leve: pérdida de peso > 5 % en 3 meses o ingesta del 50 al 75 % de lo requerido en la última semana",
+          "2 — Moderado: pérdida de peso > 5 % en 2 meses, o IMC 18,5 a 20,5 con deterioro del estado general, o ingesta del 25 al 50 %",
+          "3 — Grave: pérdida de peso > 5 % en 1 mes (> 15 % en 3 meses), o IMC < 18,5 con deterioro del estado general, o ingesta del 0 al 25 %"
+        ],
+        "multiple": false,
+        "description": "Fuente: NRS 2002 (Kondrup J et al. Clin Nutr. 2003;22:415-21), recomendada por ESPEN, según el arquetipo openEHR openEHR-EHR-OBSERVATION.nutritional_risk_screening.v1 (rev. 1.1.1, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nrs_gravedad_enfermedad",
+        "name": "NRS 2002 — gravedad de la enfermedad (aumento de requerimientos)",
+        "dataType": "string",
+        "required": false,
+        "section": "Antropometría",
+        "options": [
+          "0 — Ausente: requerimientos normales",
+          "1 — Leve: p. ej. fractura de cadera, enfermedad crónica con complicaciones (cirrosis, EPOC, hemodiálisis, diabetes, cáncer)",
+          "2 — Moderada: p. ej. cirugía abdominal mayor, ACV, neumonía grave, neoplasia hematológica",
+          "3 — Grave: p. ej. traumatismo craneoencefálico, trasplante de médula ósea, paciente de terapia intensiva (APACHE II > 10)"
+        ],
+        "multiple": false,
+        "description": "Fuente: NRS 2002 (Kondrup J et al. Clin Nutr. 2003;22:415-21), recomendada por ESPEN, según el arquetipo openEHR openEHR-EHR-OBSERVATION.nutritional_risk_screening.v1 (rev. 1.1.1, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "nrs_edad_70_o_mas",
+        "name": "NRS 2002 — ¿70 años o más?",
+        "dataType": "string",
+        "required": false,
+        "section": "Antropometría",
+        "options": [
+          "0 — No",
+          "1 — Sí"
+        ],
+        "multiple": false,
+        "description": "Puntaje total de 0 a 7: estado nutricional + gravedad de la enfermedad + edad. Fuente: NRS 2002 (Kondrup J et al. Clin Nutr. 2003;22:415-21), recomendada por ESPEN, según el arquetipo openEHR openEHR-EHR-OBSERVATION.nutritional_risk_screening.v1 (rev. 1.1.1, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "numero_de_comidas_al_dia",
@@ -60210,7 +62612,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "OBST_TRABAJO_DE_PARTO",
     "name": "Trabajo de parto (guía de cuidados de la OMS)",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "OBSTETRICIA",
     "provenance": {
@@ -60219,7 +62621,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.who.int/publications/i/item/9789240017566",
       "license": "CC BY-NC-SA 3.0 IGO",
       "retrievedAt": "2026-10-02",
-      "note": "Variables de la Labour Care Guide de la OMS: bienestar materno y fetal y progreso del trabajo de parto."
+      "note": "Variables de la Labour Care Guide de la OMS: bienestar materno y fetal y progreso del trabajo de parto. Ampliación internacional (2026-10-24): los cinco ítems del puntaje de Bishop (con la estación corregida respecto del arquetipo) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -60263,6 +62665,79 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "0/5"
         ],
         "multiple": false
+      },
+      {
+        "code": "bishop_dilatacion",
+        "name": "Bishop — dilatación",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: trabajo de parto",
+        "options": [
+          "0 — Cerrado",
+          "1 — 1 a 2 cm",
+          "2 — 3 a 4 cm",
+          "3 — 5 cm o más"
+        ],
+        "multiple": false,
+        "description": "Para valorar la maduración cervical antes de una inducción; la suma va de 0 a 13. Fuente: puntaje de Bishop (Bishop EH. Obstet Gynecol. 1964;24:266-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.bishop_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "bishop_borramiento",
+        "name": "Bishop — borramiento",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: trabajo de parto",
+        "options": [
+          "0 — 0 a 30 %",
+          "1 — 40 a 50 %",
+          "2 — 60 a 70 %",
+          "3 — 80 % o más"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Bishop (Bishop EH. Obstet Gynecol. 1964;24:266-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.bishop_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "bishop_estacion",
+        "name": "Bishop — altura de la presentación (estación)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: trabajo de parto",
+        "options": [
+          "0 — −3",
+          "1 — −2",
+          "2 — −1 o 0",
+          "3 — +1 o +2"
+        ],
+        "multiple": false,
+        "description": "Puntaje de la estación corregido respecto del arquetipo, que trae invertidos −3 y −2. Fuente: puntaje de Bishop (Bishop EH. Obstet Gynecol. 1964;24:266-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.bishop_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "bishop_consistencia",
+        "name": "Bishop — consistencia del cuello",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: trabajo de parto",
+        "options": [
+          "0 — Firme",
+          "1 — Intermedia",
+          "2 — Blanda"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Bishop (Bishop EH. Obstet Gynecol. 1964;24:266-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.bishop_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "bishop_posicion",
+        "name": "Bishop — posición del cuello",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: trabajo de parto",
+        "options": [
+          "0 — Posterior",
+          "1 — Media",
+          "2 — Anterior"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Bishop (Bishop EH. Obstet Gynecol. 1964;24:266-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.bishop_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "contracciones_10min",
@@ -61473,7 +63948,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "ONCO_CTRL_PALIATIVOS",
     "name": "Control de cuidados paliativos",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "ONCOLOGIA",
     "provenance": {
@@ -61482,7 +63957,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://ecog-acrin.org/resources/ecog-performance-status/",
       "license": "De uso libre, citando la fuente",
       "retrievedAt": "2026-10-02",
-      "note": "Intensidad de síntomas, dolor por la escala de la OMS y estado funcional."
+      "note": "Intensidad de síntomas, dolor por la escala de la OMS y estado funcional. Ampliación internacional (2026-10-24): escala de Karnofsky desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -61566,6 +64041,28 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "4"
         ],
         "multiple": false
+      },
+      {
+        "code": "karnofsky",
+        "name": "Estado funcional de Karnofsky",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: enfermedad avanzada",
+        "options": [
+          "100 — Normal; sin quejas; sin evidencia de enfermedad",
+          "90 — Capaz de realizar su actividad normal; signos o síntomas menores de enfermedad",
+          "80 — Actividad normal con esfuerzo; algunos signos o síntomas de enfermedad",
+          "70 — Se vale por sí mismo; incapaz de realizar su actividad normal o trabajo activo",
+          "60 — Requiere asistencia ocasional, pero puede atender la mayoría de sus necesidades",
+          "50 — Requiere asistencia considerable y atención médica frecuente",
+          "40 — Incapacitado; requiere cuidados y asistencia especiales",
+          "30 — Gravemente incapacitado; está indicada la internación aunque la muerte no es inminente",
+          "20 — Muy enfermo; internación necesaria; tratamiento de soporte activo necesario",
+          "10 — Moribundo; procesos fatales que progresan rápidamente",
+          "0 — Fallecido"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala de Karnofsky (Karnofsky DA, Burchenal JH. 1949), según el arquetipo openEHR openEHR-EHR-OBSERVATION.karnofsky_performance_status_scale.v1 (rev. 1.0.2, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "dolor_intensidad",
@@ -62980,6 +65477,189 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
+    "code": "PATOL_INFORME_BIOPSIA_PROSTATA",
+    "name": "Informe de biopsia de próstata (Gleason y grupo ISUP)",
+    "version": 1,
+    "kind": "SPECIFIC",
+    "specialty": "PATOLOGIA_CLINICA",
+    "provenance": {
+      "sourceTitle": "Gleason score (openEHR-EHR-CLUSTER.gleason_score.v0), International Clinical Knowledge Manager",
+      "organization": "openEHR Foundation / Clinical Models UK",
+      "url": "https://ckm.openehr.org/ckm/",
+      "sourceVersion": "rev. 0.0.1-alpha (en desarrollo); espejo github.com/openEHR/CKM-mirror",
+      "license": "Arquetipo CC BY-SA 3.0; la gradación (Gleason; grupos ISUP, Epstein 2016) se usa como categorías clínicas",
+      "retrievedAt": "2026-10-24",
+      "note": "Estructura de informe del catálogo (indicación, resultado, conclusión) y gradación del cluster openEHR-EHR-CLUSTER.gleason_score.v0 (traducción propia, no oficial)."
+    },
+    "fields": [
+      {
+        "code": "indicacion_del_estudio",
+        "name": "Indicación del estudio",
+        "dataType": "text",
+        "required": true,
+        "section": "Solicitud"
+      },
+      {
+        "code": "diagnostico_presuntivo_solicitante",
+        "name": "Diagnóstico presuntivo del solicitante",
+        "dataType": "string",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "fecha_del_estudio",
+        "name": "Fecha del estudio",
+        "dataType": "date",
+        "required": false,
+        "section": "Solicitud"
+      },
+      {
+        "code": "cilindros_totales",
+        "name": "Cilindros examinados",
+        "dataType": "integer",
+        "required": false,
+        "section": "Resultado: biopsia de próstata"
+      },
+      {
+        "code": "cilindros_con_carcinoma",
+        "name": "Cilindros con carcinoma",
+        "dataType": "integer",
+        "required": false,
+        "section": "Resultado: biopsia de próstata"
+      },
+      {
+        "code": "carcinoma_presente",
+        "name": "Adenocarcinoma presente",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Resultado: biopsia de próstata"
+      },
+      {
+        "code": "gleason_primario",
+        "name": "Gleason — patrón primario (predominante)",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: biopsia de próstata",
+        "options": [
+          "1 — Grado 1",
+          "2 — Grado 2",
+          "3 — Grado 3",
+          "4 — Grado 4",
+          "5 — Grado 5"
+        ],
+        "multiple": false,
+        "description": "Fuente: sistema de Gleason con los grupos de grado ISUP (Epstein JI et al. Am J Surg Pathol. 2016;40:244-52), según el arquetipo openEHR openEHR-EHR-CLUSTER.gleason_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "carcinoma_presente",
+          "equals": true
+        }
+      },
+      {
+        "code": "gleason_secundario",
+        "name": "Gleason — patrón secundario",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: biopsia de próstata",
+        "options": [
+          "1 — Grado 1",
+          "2 — Grado 2",
+          "3 — Grado 3",
+          "4 — Grado 4",
+          "5 — Grado 5"
+        ],
+        "multiple": false,
+        "description": "Fuente: sistema de Gleason con los grupos de grado ISUP (Epstein JI et al. Am J Surg Pathol. 2016;40:244-52), según el arquetipo openEHR openEHR-EHR-CLUSTER.gleason_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "carcinoma_presente",
+          "equals": true
+        }
+      },
+      {
+        "code": "gleason_terciario",
+        "name": "Gleason — patrón terciario (si existe)",
+        "dataType": "string",
+        "required": false,
+        "section": "Resultado: biopsia de próstata",
+        "options": [
+          "1 — Grado 1",
+          "2 — Grado 2",
+          "3 — Grado 3",
+          "4 — Grado 4",
+          "5 — Grado 5"
+        ],
+        "multiple": false,
+        "description": "Fuente: sistema de Gleason con los grupos de grado ISUP (Epstein JI et al. Am J Surg Pathol. 2016;40:244-52), según el arquetipo openEHR openEHR-EHR-CLUSTER.gleason_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "carcinoma_presente",
+          "equals": true
+        }
+      },
+      {
+        "code": "gleason_puntaje",
+        "name": "Gleason — puntaje (primario + secundario)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Resultado: biopsia de próstata",
+        "showWhen": {
+          "field": "carcinoma_presente",
+          "equals": true
+        }
+      },
+      {
+        "code": "gleason_grupo_isup",
+        "name": "Grupo de grado ISUP",
+        "dataType": "string",
+        "required": true,
+        "section": "Resultado: biopsia de próstata",
+        "options": [
+          "1 — Grupo 1 (Gleason ≤ 6)",
+          "2 — Grupo 2 (Gleason 7 = 3 + 4)",
+          "3 — Grupo 3 (Gleason 7 = 4 + 3)",
+          "4 — Grupo 4 (Gleason 8)",
+          "5 — Grupo 5 (Gleason 9 a 10)"
+        ],
+        "multiple": false,
+        "description": "Fuente: sistema de Gleason con los grupos de grado ISUP (Epstein JI et al. Am J Surg Pathol. 2016;40:244-52), según el arquetipo openEHR openEHR-EHR-CLUSTER.gleason_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano.",
+        "showWhen": {
+          "field": "carcinoma_presente",
+          "equals": true
+        }
+      },
+      {
+        "code": "conclusion",
+        "name": "Conclusión",
+        "dataType": "text",
+        "required": true,
+        "section": "Conclusión"
+      },
+      {
+        "code": "recomendacion",
+        "name": "Recomendación",
+        "dataType": "text",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico",
+        "name": "Hay un hallazgo crítico",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Conclusión"
+      },
+      {
+        "code": "hallazgo_critico_comunicado",
+        "name": "¿A quién se comunicó y a qué hora?",
+        "dataType": "string",
+        "required": true,
+        "section": "Conclusión",
+        "showWhen": {
+          "field": "hallazgo_critico",
+          "equals": true
+        }
+      }
+    ]
+  },
+  {
     "code": "PATOL_INFORME_CITOLOGIA_CERVICAL",
     "name": "Informe de citología cervical",
     "version": 1,
@@ -63097,7 +65777,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "PEDIA_CONTROL_NINO_SANO",
     "name": "Pediatría — control de niño sano (ficha base)",
-    "version": 2,
+    "version": 3,
     "kind": "BASE",
     "specialty": "PEDIATRIA",
     "provenance": {
@@ -63107,7 +65787,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "Estructura del control periódico. Las curvas de crecimiento van en su propio formulario (PEDIA_CURVAS_CRECIMIENTO_OMS). v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
+      "note": "Estructura del control periódico. Las curvas de crecimiento van en su propio formulario (PEDIA_CURVAS_CRECIMIENTO_OMS). v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Ampliación internacional (2026-10-24): los estadios de Tanner desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -63316,6 +65996,54 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
             "Con retraso"
           ]
         }
+      },
+      {
+        "code": "tanner_mamas",
+        "name": "Tanner — desarrollo mamario",
+        "dataType": "string",
+        "required": false,
+        "section": "Vacunas y desarrollo",
+        "options": [
+          "Estadio 1 — prepuberal",
+          "Estadio 2 — botón mamario: elevación de la mama y la papila, aumento de la areola",
+          "Estadio 3 — mayor crecimiento de mama y areola, sin separación de sus contornos",
+          "Estadio 4 — areola y papila forman un montículo secundario sobre la mama",
+          "Estadio 5 — maduro: sólo se proyecta la papila"
+        ],
+        "multiple": false,
+        "description": "Para la evaluación del desarrollo puberal. Fuente: estadios de Tanner (Marshall WA, Tanner JM. Arch Dis Child. 1969;44:291-303 y 1970;45:13-23), según el arquetipo openEHR openEHR-EHR-OBSERVATION.tanner.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "tanner_genitales",
+        "name": "Tanner — genitales masculinos",
+        "dataType": "string",
+        "required": false,
+        "section": "Vacunas y desarrollo",
+        "options": [
+          "Estadio 1 — prepuberal",
+          "Estadio 2 — aumento de escroto y testículos; piel escrotal enrojecida y de textura distinta",
+          "Estadio 3 — crecimiento del pene (primero en longitud) y de los testículos",
+          "Estadio 4 — pene más grueso y desarrollo del glande; escroto más oscuro",
+          "Estadio 5 — genitales adultos"
+        ],
+        "multiple": false,
+        "description": "Fuente: estadios de Tanner (Marshall WA, Tanner JM. Arch Dis Child. 1969;44:291-303 y 1970;45:13-23), según el arquetipo openEHR openEHR-EHR-OBSERVATION.tanner.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "tanner_vello_pubico",
+        "name": "Tanner — vello púbico",
+        "dataType": "string",
+        "required": false,
+        "section": "Vacunas y desarrollo",
+        "options": [
+          "Estadio 1 — prepuberal (puede haber vello fino)",
+          "Estadio 2 — vello escaso, largo, algo pigmentado, en la base del pene o los labios",
+          "Estadio 3 — más oscuro, grueso y rizado, se extiende sobre el pubis",
+          "Estadio 4 — tipo adulto, en un área menor que el adulto; no llega a los muslos",
+          "Estadio 5 — adulto en tipo y cantidad, con límite superior horizontal"
+        ],
+        "multiple": false,
+        "description": "Fuente: estadios de Tanner (Marshall WA, Tanner JM. Arch Dis Child. 1969;44:291-303 y 1970;45:13-23), según el arquetipo openEHR openEHR-EHR-OBSERVATION.tanner.v1 (rev. 1.0.0, publicado; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "agudeza_visual",
@@ -64201,7 +66929,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "PEDIA_RECIEN_NACIDO",
     "name": "Atención del recién nacido",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "PEDIATRIA",
     "provenance": {
@@ -64210,7 +66938,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://www.who.int/publications/i/item/9789240045989",
       "license": "CC BY-NC-SA 3.0 IGO",
       "retrievedAt": "2026-10-02",
-      "note": "Apgar, antropometría, tamizajes y signos de peligro del recién nacido."
+      "note": "Apgar, antropometría, tamizajes y signos de peligro del recién nacido. Ampliación internacional (2026-10-24): ítems del puntaje de Apgar al minuto y a los 5 minutos (traducción al castellano del CKM) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas. Ampliación internacional (2026-10-24): examen físico del neonato, alimentación, posición para dormir, vitamina K y signos de peligro que faltaban desde la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4); instantánea en tools/clinical-forms/who-dak/dak-snapshot.json. Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
     },
     "fields": [
       {
@@ -64226,11 +66954,151 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "multiple": false
       },
       {
+        "code": "apgar_1min_respiracion",
+        "name": "Apgar al minuto — esfuerzo respiratorio",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Ausente",
+          "1 — Débil o irregular",
+          "2 — Normal"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "apgar_1min_frecuencia_cardiaca",
+        "name": "Apgar al minuto — frecuencia cardíaca",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Ausente",
+          "1 — <100 latidos por minuto",
+          "2 — ≥100 latidos por minuto"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "apgar_1min_tono",
+        "name": "Apgar al minuto — tono muscular",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Ausente (flácido)",
+          "1 — Tono reducido",
+          "2 — Tono normal"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "apgar_1min_reflejos",
+        "name": "Apgar al minuto — reflejos e irritabilidad",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Sin respuesta",
+          "1 — Respuesta reducida",
+          "2 — Respuesta normal"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "apgar_1min_color",
+        "name": "Apgar al minuto — color de la piel",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Completamente azul",
+          "1 — Cuerpo rosado; extremidades azules",
+          "2 — Completamente rosado"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
         "code": "apgar_1",
         "name": "Apgar al minuto",
         "dataType": "integer",
         "required": true,
         "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "apgar_5min_respiracion",
+        "name": "Apgar a los 5 minutos — esfuerzo respiratorio",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Ausente",
+          "1 — Débil o irregular",
+          "2 — Normal"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "apgar_5min_frecuencia_cardiaca",
+        "name": "Apgar a los 5 minutos — frecuencia cardíaca",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Ausente",
+          "1 — <100 latidos por minuto",
+          "2 — ≥100 latidos por minuto"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "apgar_5min_tono",
+        "name": "Apgar a los 5 minutos — tono muscular",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Ausente (flácido)",
+          "1 — Tono reducido",
+          "2 — Tono normal"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "apgar_5min_reflejos",
+        "name": "Apgar a los 5 minutos — reflejos e irritabilidad",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Sin respuesta",
+          "1 — Respuesta reducida",
+          "2 — Respuesta normal"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
+      },
+      {
+        "code": "apgar_5min_color",
+        "name": "Apgar a los 5 minutos — color de la piel",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "0 — Completamente azul",
+          "1 — Cuerpo rosado; extremidades azules",
+          "2 — Completamente rosado"
+        ],
+        "multiple": false,
+        "description": "Fuente: puntaje de Apgar (Apgar V. Curr Res Anesth Analg. 1953;32:260-7), según el arquetipo openEHR openEHR-EHR-OBSERVATION.apgar.v2 (rev. 2.0.5, publicado; CC BY-SA 4.0). Texto de la traducción al castellano (es) del CKM."
       },
       {
         "code": "apgar_5",
@@ -64268,11 +67136,211 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "section": "Evaluación: recién nacido"
       },
       {
+        "code": "rn_temperatura_al_tacto",
+        "name": "Temperatura al tacto",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Normal",
+          "Frío",
+          "Muy caliente (sobrecalentado: rubicundo, sudoroso o pelo húmedo)"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento PNC.B4b.DE.48 «Warmth» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_piel",
+        "name": "Piel",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Normal",
+          "Palidez",
+          "Cianosis",
+          "Signos de infección cutánea (pústulas, ampollas, tumefacción, enrojecimiento o induración)"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4b.DE.25 «Skin» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_ictericia_localizacion",
+        "name": "Ictericia: hasta dónde llega",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Cara",
+          "Tórax",
+          "Abdomen",
+          "Piernas",
+          "Brazos",
+          "Palmas",
+          "Plantas"
+        ],
+        "multiple": true,
+        "description": "Sólo si hay ictericia. Fuente: elemento PNC.B4b.DE.31 «Jaundice location» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_fontanelas",
+        "name": "Fontanelas",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Normales",
+          "Abombadas o tensas",
+          "Deprimidas"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento PNC.B4b.DE.80 «Fontanelles» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_ojos",
+        "name": "Ojos",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Normales",
+          "Tumefactos y con secreción purulenta",
+          "Opacidades",
+          "Escleras amarillas",
+          "Enrojecimiento",
+          "Reflejo rojo normal",
+          "Reflejo rojo anormal"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4b.DE.88 «Eyes» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_cordon_umbilical",
+        "name": "Cordón umbilical",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Normal (tres vasos, limpio y seco)",
+          "Ombligo o piel periumbilical enrojecidos o tumefactos",
+          "Secreción purulenta",
+          "Sangrado"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4b.DE.121 «Umbilical cord» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_malformaciones",
+        "name": "Malformaciones",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Ninguna evidente",
+          "Pie bot",
+          "Labio leporino",
+          "Paladar hendido",
+          "Aspecto inusual que genera preocupación",
+          "Tejido expuesto en cabeza, abdomen, espalda, periné o genitales"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4b.DE.52 «Malformation» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_genitales",
+        "name": "Genitales",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Aspecto habitual",
+          "Sangrado vaginal",
+          "Labios fusionados",
+          "Testículos no descendidos",
+          "Hipospadias",
+          "Hidrocele",
+          "Hernia inguinal",
+          "Genitales ambiguos"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4b.DE.128 «Genitalia» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_ano",
+        "name": "Ano",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Normal (permeable)",
+          "Ano imperforado",
+          "Aspecto anormal"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4b.DE.142 «Anus» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_espalda_columna",
+        "name": "Espalda y columna",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Normales",
+          "Hoyuelos o fositas",
+          "Apéndices cutáneos",
+          "Mechones de pelo",
+          "Anencefalia",
+          "Encefalocele",
+          "Espina bífida"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B4b.DE.152 «Back and spine» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
         "code": "lactancia_primera_hora",
         "name": "Lactancia en la primera hora",
         "dataType": "boolean",
         "required": false,
         "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "rn_alimentacion_actual",
+        "name": "Alimentación actual",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Lactancia exclusiva a demanda",
+          "Lactancia exclusiva con horario",
+          "Mixta (fórmula y leche materna)",
+          "Fórmula"
+        ],
+        "multiple": false,
+        "allowOther": true,
+        "description": "Fuente: elemento PNC.B3b.DE.45 «Feeding status» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
+      },
+      {
+        "code": "rn_posicion_para_dormir",
+        "name": "Posición en la que suele dormir",
+        "dataType": "json",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Boca arriba",
+          "De costado",
+          "Boca abajo",
+          "No se sabe"
+        ],
+        "multiple": true,
+        "description": "Fuente: elemento PNC.B3b.DE.87 «Sleeping position» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
       },
       {
         "code": "tamizajes_rn",
@@ -64301,9 +67369,18 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "Tiraje",
           "Fiebre o hipotermia",
           "Ictericia en las primeras 24 h",
+          "Respiración ruidosa (quejido, estridor)",
+          "Cianosis central",
+          "Respiración lenta, boqueo o apnea",
+          "Aleteo nasal",
+          "Distensión abdominal",
+          "Sólo se mueve al estimularlo o no se mueve",
+          "Secreción purulenta del muñón umbilical",
+          "Sangrado del muñón umbilical",
           "Ninguno"
         ],
-        "multiple": true
+        "multiple": true,
+        "description": "Ampliada (2026-10-24) con los signos de peligro del elemento PNC.B4b.DE.1 de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4); traducción propia, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
       },
       {
         "code": "vacunas_rn",
@@ -64311,6 +67388,20 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "boolean",
         "required": false,
         "section": "Evaluación: recién nacido"
+      },
+      {
+        "code": "rn_vitamina_k",
+        "name": "Vitamina K al nacer",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: recién nacido",
+        "options": [
+          "Sí",
+          "No",
+          "No se sabe"
+        ],
+        "multiple": false,
+        "description": "Fuente: elemento PNC.B3b.DE.24 «Vitamin K administered at birth» de la Digital adaptation kit for postnatal care: operational requirements for implementing WHO recommendations in digital systems (OMS, CC BY-NC-SA 3.0 IGO; https://github.com/WorldHealthOrganization/smart-dak-pnc, commit 1c490e4). Traducción propia del inglés, no oficial. Esta adaptación no fue creada por la Organización Mundial de la Salud (OMS); la OMS no es responsable de su contenido ni de su exactitud."
       },
       {
         "code": "diagnostico",
@@ -67740,7 +70831,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "REUMA_EVALUACION_BASE",
     "name": "Reumatología — consulta inicial (ficha base)",
-    "version": 2,
+    "version": 3,
     "kind": "BASE",
     "specialty": "REUMATOLOGIA",
     "provenance": {
@@ -67750,7 +70841,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma técnica estatal de acceso público",
       "sourceVersion": "V.02",
       "retrievedAt": "2026-08-14",
-      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad la caracterización del dolor articular y su ritmo, la rigidez matinal en minutos, el detalle de las articulaciones comprometidas y la tumefacción, y el compromiso cutáneo asociado. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
+      "note": "De la norma salen la estructura común del registro: motivo de consulta, tiempo de enfermedad, antecedentes, examen físico, diagnóstico y conducta. Son agregados propios de la especialidad la caracterización del dolor articular y su ritmo, la rigidez matinal en minutos, el detalle de las articulaciones comprometidas y la tumefacción, y el compromiso cutáneo asociado. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Ampliación internacional (2026-10-24): el puntaje de hipermovilidad de Beighton (arquetipo de Clinical Models UK espejado) desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -67897,6 +70988,27 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "text",
         "required": true,
         "section": "Examen"
+      },
+      {
+        "code": "beighton_hallazgos",
+        "name": "Beighton: maniobras positivas",
+        "dataType": "json",
+        "required": false,
+        "section": "Examen",
+        "options": [
+          "Meñique izquierdo: dorsiflexión pasiva mayor de 90° (1 punto)",
+          "Meñique derecho: dorsiflexión pasiva mayor de 90° (1 punto)",
+          "Pulgar izquierdo: aposición pasiva a la cara flexora del antebrazo (1 punto)",
+          "Pulgar derecho: aposición pasiva a la cara flexora del antebrazo (1 punto)",
+          "Codo izquierdo: hiperextensión mayor de 10° (1 punto)",
+          "Codo derecho: hiperextensión mayor de 10° (1 punto)",
+          "Rodilla izquierda: hiperextensión mayor de 10° (1 punto)",
+          "Rodilla derecha: hiperextensión mayor de 10° (1 punto)",
+          "Tronco: apoya las palmas en el suelo con las rodillas extendidas (1 punto)",
+          "Ninguna"
+        ],
+        "multiple": true,
+        "description": "Hipermovilidad articular: puntaje de 0 a 9. Fuente: puntaje de Beighton (Beighton P et al. Ann Rheum Dis. 1973;32:413-8), según el arquetipo openEHR openEHR-EHR-OBSERVATION.beighton_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 3.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "examenes_previos",
@@ -68453,7 +71565,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "TRANSV_EPICRISIS",
     "name": "Epicrisis / Resumen de egreso",
-    "version": 2,
+    "version": 3,
     "kind": "GENERAL",
     "specialty": "TRANSVERSAL",
     "provenance": {
@@ -68463,7 +71575,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "license": "Norma estatal de acceso público",
       "sourceVersion": "1995 de 1999",
       "retrievedAt": "2026-08-14",
-      "note": "Transcripción del contenido mínimo que la norma exige en el resumen de egreso. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
+      "note": "Transcripción del contenido mínimo que la norma exige en el resumen de egreso. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar. Ampliación internacional (2026-10-24): secciones del International Patient Summary de HL7 que la epicrisis no tenía (alergias, inmunizaciones, dispositivos, embarazo, estado funcional, directivas anticipadas y alertas). Sólo la estructura de secciones: no se usan los value sets SNOMED CT del IPS."
     },
     "fields": [
       {
@@ -68550,6 +71662,127 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "field": "hubo_complicaciones",
           "equals": true
         }
+      },
+      {
+        "code": "tiene_alergias",
+        "name": "¿Tiene alergias conocidas?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Resumen para la continuidad (IPS)",
+        "description": "Sección «Allergies and Intolerances (obligatoria)» del HL7 FHIR International Patient Summary (IPS), perfil Composition (uv-ips); https://github.com/HL7/fhir-ips, commit df27097; licencia FHIR de HL7 (CC0)."
+      },
+      {
+        "code": "tipo_de_alergia",
+        "name": "¿A qué es alérgico?",
+        "dataType": "json",
+        "required": true,
+        "section": "Resumen para la continuidad (IPS)",
+        "options": [
+          "Medicamentos",
+          "Alimentos",
+          "Látex",
+          "Picadura de insectos",
+          "Polen, polvo o ácaros"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "showWhen": {
+          "field": "tiene_alergias",
+          "equals": true
+        }
+      },
+      {
+        "code": "alergias_ips_detalle",
+        "name": "¿Cuál exactamente y qué reacción le produjo?",
+        "dataType": "text",
+        "required": false,
+        "section": "Resumen para la continuidad (IPS)",
+        "description": "Por ejemplo: penicilina → urticaria; AINE → broncoespasmo.",
+        "showWhen": {
+          "field": "tiene_alergias",
+          "equals": true
+        }
+      },
+      {
+        "code": "vacunas_en_internacion",
+        "name": "Se aplicaron vacunas durante la internación",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Resumen para la continuidad (IPS)",
+        "description": "Sección «Immunizations» del HL7 FHIR International Patient Summary (IPS), perfil Composition (uv-ips); https://github.com/HL7/fhir-ips, commit df27097; licencia FHIR de HL7 (CC0)."
+      },
+      {
+        "code": "vacunas_en_internacion_cuales",
+        "name": "¿Cuáles, con fecha y lote?",
+        "dataType": "text",
+        "required": true,
+        "section": "Resumen para la continuidad (IPS)",
+        "showWhen": {
+          "field": "vacunas_en_internacion",
+          "equals": true
+        }
+      },
+      {
+        "code": "dispositivos_medicos",
+        "name": "Porta o se le colocó un dispositivo médico",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Resumen para la continuidad (IPS)",
+        "description": "Sección «Medical Devices» del HL7 FHIR International Patient Summary (IPS), perfil Composition (uv-ips); https://github.com/HL7/fhir-ips, commit df27097; licencia FHIR de HL7 (CC0). Por ejemplo: marcapasos, prótesis, catéter, sonda."
+      },
+      {
+        "code": "dispositivos_medicos_cuales",
+        "name": "¿Cuál y desde cuándo?",
+        "dataType": "text",
+        "required": true,
+        "section": "Resumen para la continuidad (IPS)",
+        "showWhen": {
+          "field": "dispositivos_medicos",
+          "equals": true
+        }
+      },
+      {
+        "code": "embarazo_en_curso",
+        "name": "Cursa un embarazo",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Resumen para la continuidad (IPS)",
+        "description": "Sección «History of Pregnancy» del HL7 FHIR International Patient Summary (IPS), perfil Composition (uv-ips); https://github.com/HL7/fhir-ips, commit df27097; licencia FHIR de HL7 (CC0). El value set de estado de embarazo del IPS es SNOMED CT y no se usa."
+      },
+      {
+        "code": "estado_funcional_al_egreso",
+        "name": "Estado funcional al egreso",
+        "dataType": "text",
+        "required": false,
+        "section": "Resumen para la continuidad (IPS)",
+        "description": "Sección «Functional Status» del HL7 FHIR International Patient Summary (IPS), perfil Composition (uv-ips); https://github.com/HL7/fhir-ips, commit df27097; licencia FHIR de HL7 (CC0). Autonomía, movilidad, necesidad de ayuda o de cuidador."
+      },
+      {
+        "code": "directivas_anticipadas",
+        "name": "Tiene directivas anticipadas",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Resumen para la continuidad (IPS)",
+        "description": "Sección «Advance Directives» del HL7 FHIR International Patient Summary (IPS), perfil Composition (uv-ips); https://github.com/HL7/fhir-ips, commit df27097; licencia FHIR de HL7 (CC0)."
+      },
+      {
+        "code": "directivas_anticipadas_detalle",
+        "name": "¿Cuáles y dónde constan?",
+        "dataType": "text",
+        "required": true,
+        "section": "Resumen para la continuidad (IPS)",
+        "showWhen": {
+          "field": "directivas_anticipadas",
+          "equals": true
+        }
+      },
+      {
+        "code": "alertas_clinicas",
+        "name": "Alertas para quien continúe la atención",
+        "dataType": "text",
+        "required": false,
+        "section": "Resumen para la continuidad (IPS)",
+        "description": "Sección «Alerts» del HL7 FHIR International Patient Summary (IPS), perfil Composition (uv-ips); https://github.com/HL7/fhir-ips, commit df27097; licencia FHIR de HL7 (CC0). Riesgos o condiciones que el próximo profesional tiene que saber."
       },
       {
         "code": "condicion_al_egreso",
@@ -69344,7 +72577,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
   {
     "code": "UCI_CTRL_SEPSIS",
     "name": "Sepsis y shock séptico en cuidados intensivos",
-    "version": 1,
+    "version": 2,
     "kind": "SPECIFIC",
     "specialty": "MEDICINA_INTENSIVA",
     "provenance": {
@@ -69353,7 +72586,7 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
       "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
       "license": "Norma técnica estatal de acceso público",
       "retrievedAt": "2026-10-02",
-      "note": "Disfunción orgánica por SOFA (publicado, de uso libre), lactato y metas de la primera hora."
+      "note": "Disfunción orgánica por SOFA (publicado, de uso libre), lactato y metas de la primera hora. Ampliación internacional (2026-10-24): los seis componentes de la escala SOFA desde el CKM internacional de openEHR (https://github.com/openEHR/CKM-mirror, instantánea en tools/clinical-forms/openehr/ckm-snapshot.json; arquetipos CC BY-SA 3.0 o 4.0 según cada uno, sin vínculos SNOMED CT). Cada campo nuevo cita la publicación original en su ayuda; las traducciones propias están marcadas."
     },
     "fields": [
       {
@@ -69388,6 +72621,102 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "dataType": "string",
         "required": true,
         "section": "Evaluación: sepsis"
+      },
+      {
+        "code": "sofa_respiratorio",
+        "name": "SOFA — respiratorio (PaO₂/FiO₂)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: sepsis",
+        "options": [
+          "0 — PaO₂/FiO₂ ≥ 400 mmHg",
+          "1 — PaO₂/FiO₂ 300 a 399 mmHg",
+          "2 — PaO₂/FiO₂ < 300 mmHg",
+          "3 — Con ventilación mecánica y PaO₂/FiO₂ 100 a 199 mmHg",
+          "4 — Con ventilación mecánica y PaO₂/FiO₂ < 100 mmHg"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala SOFA (Vincent JL et al. Intensive Care Med. 1996;22:707-10), según el arquetipo openEHR openEHR-EHR-OBSERVATION.sofa_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "sofa_cardiovascular",
+        "name": "SOFA — cardiovascular",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: sepsis",
+        "options": [
+          "0 — PAM ≥ 70 mmHg",
+          "1 — PAM < 70 mmHg",
+          "2 — Dopamina ≤ 5 µg/kg/min o dobutamina a cualquier dosis",
+          "3 — Dopamina > 5 µg/kg/min, o noradrenalina o adrenalina ≤ 0,1 µg/kg/min",
+          "4 — Noradrenalina o adrenalina > 0,1 µg/kg/min"
+        ],
+        "multiple": false,
+        "description": "El arquetipo omite el criterio de dopamina > 15 µg/kg/min del puntaje 4 de la publicación original. Fuente: escala SOFA (Vincent JL et al. Intensive Care Med. 1996;22:707-10), según el arquetipo openEHR openEHR-EHR-OBSERVATION.sofa_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "sofa_neurologico",
+        "name": "SOFA — sistema nervioso (Glasgow)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: sepsis",
+        "options": [
+          "0 — Glasgow 15",
+          "1 — Glasgow 13 a 14",
+          "2 — Glasgow 10 a 12",
+          "3 — Glasgow 6 a 9",
+          "4 — Glasgow < 6"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala SOFA (Vincent JL et al. Intensive Care Med. 1996;22:707-10), según el arquetipo openEHR openEHR-EHR-OBSERVATION.sofa_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "sofa_renal",
+        "name": "SOFA — renal (creatinina o diuresis)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: sepsis",
+        "options": [
+          "0 — Creatinina < 1,2 mg/dL",
+          "1 — Creatinina 1,2 a 1,9 mg/dL",
+          "2 — Creatinina 2,0 a 3,4 mg/dL",
+          "3 — Creatinina 3,5 a 4,9 mg/dL o diuresis < 500 mL/24 h",
+          "4 — Creatinina ≥ 5,0 mg/dL o diuresis < 200 mL/24 h"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala SOFA (Vincent JL et al. Intensive Care Med. 1996;22:707-10), según el arquetipo openEHR openEHR-EHR-OBSERVATION.sofa_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "sofa_hepatico",
+        "name": "SOFA — hepático (bilirrubina)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: sepsis",
+        "options": [
+          "0 — Bilirrubina < 1,2 mg/dL",
+          "1 — Bilirrubina 1,2 a 1,9 mg/dL",
+          "2 — Bilirrubina 2,0 a 5,9 mg/dL",
+          "3 — Bilirrubina 6,0 a 11,9 mg/dL",
+          "4 — Bilirrubina ≥ 12,0 mg/dL"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala SOFA (Vincent JL et al. Intensive Care Med. 1996;22:707-10), según el arquetipo openEHR openEHR-EHR-OBSERVATION.sofa_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
+      },
+      {
+        "code": "sofa_coagulacion",
+        "name": "SOFA — coagulación (plaquetas)",
+        "dataType": "string",
+        "required": false,
+        "section": "Evaluación: sepsis",
+        "options": [
+          "0 — Plaquetas ≥ 150 000/µL",
+          "1 — Plaquetas < 150 000/µL",
+          "2 — Plaquetas < 100 000/µL",
+          "3 — Plaquetas < 50 000/µL",
+          "4 — Plaquetas < 20 000/µL"
+        ],
+        "multiple": false,
+        "description": "Fuente: escala SOFA (Vincent JL et al. Intensive Care Med. 1996;22:707-10), según el arquetipo openEHR openEHR-EHR-OBSERVATION.sofa_score.v0 (rev. 0.0.1-alpha, en desarrollo; CC BY-SA 4.0). Traducción propia del inglés del arquetipo: no es una versión oficial ni validada en castellano."
       },
       {
         "code": "sofa",

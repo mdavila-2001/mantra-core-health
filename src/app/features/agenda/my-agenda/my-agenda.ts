@@ -16,7 +16,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { calculateSlots } from '../agenda-create/agenda-slots';
-import { forkJoin } from 'rxjs';
+import { concatMap, from, toArray } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -30,6 +30,7 @@ import type {
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { describeApiFailure, fieldErrorsOf } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { BlockCancellations, cancelledBookingsText } from '../block-cancellations';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { BloqueDelDia, VisitaDelDia } from './day-view/day-view';
@@ -332,6 +333,7 @@ export class MyAgenda implements OnInit {
   });
 
   private readonly scheduling = inject(SchedulingClient);
+  private readonly cancellations = inject(BlockCancellations);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly router = inject(Router);
@@ -1000,37 +1002,54 @@ export class MyAgenda implements OnInit {
       : [{ startAt: pedido.desde, endAt: pedido.hasta }];
 
     this.bloqueando.set(true);
-    forkJoin(
-      intervalos.map((intervalo) =>
-        this.scheduling.createException(recurso.id, {
-          exceptionType: pedido.exceptionType,
-          startAt: intervalo.startAt.toISOString(),
-          endAt: intervalo.endAt.toISOString(),
-          reason: pedido.motivo,
-        }),
-      ),
-    ).subscribe({
-      next: (resultados) => {
-        this.bloqueando.set(false);
-        this.bloqueoAbierto.set(false);
-        const cerrados = resultados.reduce((suma, r) => suma + r.blockedSlots, 0);
-        this.toast.success(
-          cerrados === 0
-            ? 'No había horarios libres que cerrar en ese período.'
-            : `Se cerraron ${cerrados} ${cerrados === 1 ? 'horario libre' : 'horarios libres'}.`,
-          `Bloqueó ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
-        );
-        this.cargarMes();
-      },
-      error: (error: unknown) => {
-        this.bloqueando.set(false);
-        this.avisarFallo(error, 'bloquear ese período');
-        // Se recarga igual: si alguna de las llamadas entró antes del fallo, el
-        // mes tiene que mostrarlo. Un bloqueo a medias que no se ve es peor que
-        // uno que se ve y se corrige.
-        this.cargarMes();
-      },
-    });
+    // Un intervalo a la vez, no en paralelo: si varios días tienen citas, la
+    // persona responde un modal por día, en orden, en vez de ver varios
+    // superpuestos. Un día que decide no cancelar queda sin bloquear (`null`).
+    from(intervalos)
+      .pipe(
+        concatMap((intervalo) =>
+          this.cancellations.withConfirmation((confirmed) =>
+            this.scheduling.createException(recurso.id, {
+              exceptionType: pedido.exceptionType,
+              startAt: intervalo.startAt.toISOString(),
+              endAt: intervalo.endAt.toISOString(),
+              reason: pedido.motivo,
+              ...(confirmed ? { cancelAffectedBookings: true } : {}),
+            }),
+          ),
+        ),
+        toArray(),
+      )
+      .subscribe({
+        next: (resultados) => {
+          this.bloqueando.set(false);
+          const hechos = resultados.filter((r) => r !== null);
+          if (hechos.length === 0) {
+            // Todos los días tenían citas y en ninguno se confirmó: no se
+            // bloqueó nada, y el formulario sigue abierto por si cambia el rango.
+            return;
+          }
+          this.bloqueoAbierto.set(false);
+          const cerrados = hechos.reduce((suma, r) => suma + r.blockedSlots, 0);
+          const canceladas = hechos.reduce((suma, r) => suma + r.cancelledBookings, 0);
+          this.toast.success(
+            (cerrados === 0
+              ? 'No había horarios libres que cerrar en ese período.'
+              : `Se cerraron ${cerrados} ${cerrados === 1 ? 'horario libre' : 'horarios libres'}.`) +
+              cancelledBookingsText(canceladas),
+            `Bloqueó ${hechos.length} ${hechos.length === 1 ? 'día' : 'días'}`,
+          );
+          this.cargarMes();
+        },
+        error: (error: unknown) => {
+          this.bloqueando.set(false);
+          this.avisarFallo(error, 'bloquear ese período');
+          // Se recarga igual: si alguna de las llamadas entró antes del fallo, el
+          // mes tiene que mostrarlo. Un bloqueo a medias que no se ve es peor que
+          // uno que se ve y se corrige.
+          this.cargarMes();
+        },
+      });
   }
 
   /**
@@ -1077,21 +1096,35 @@ export class MyAgenda implements OnInit {
     const hasta = new Date(desde);
     hasta.setDate(hasta.getDate() + 1);
 
-    this.scheduling
-      .createException(recurso.id, {
-        // Este atajo pide **texto libre** y nada más, así que su motivo es
-        // literalmente «Otro»: mandarlo como `ABSENCE` etiquetaría de
-        // «Ausencia» algo que la persona escribió a mano, y el paciente vería
-        // una etiqueta que nadie eligió.
-        exceptionType: 'OTHER',
-        startAt: desde.toISOString(),
-        endAt: hasta.toISOString(),
-        reason: motivo,
-      })
+    // Con citas ese día, la API lista a quién alcanza y `BlockCancellations`
+    // pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
+    this.cancellations
+      .withConfirmation((confirmed) =>
+        this.scheduling.createException(recurso.id, {
+          // Este atajo pide **texto libre** y nada más, así que su motivo es
+          // literalmente «Otro»: mandarlo como `ABSENCE` etiquetaría de
+          // «Ausencia» algo que la persona escribió a mano, y el paciente vería
+          // una etiqueta que nadie eligió.
+          exceptionType: 'OTHER',
+          startAt: desde.toISOString(),
+          endAt: hasta.toISOString(),
+          reason: motivo,
+          ...(confirmed ? { cancelAffectedBookings: true } : {}),
+        }),
+      )
       .subscribe({
         // Se recarga el mes entero y no se agrega el bloqueo a mano: la API
         // además cerró cupos, así que la ocupación cambió y no sólo la lista.
-        next: () => this.cargarMes(),
+        next: (res) => {
+          if (res === null) return;
+          if (res.cancelledBookings > 0) {
+            this.toast.success(
+              cancelledBookingsText(res.cancelledBookings).trim(),
+              'Día bloqueado',
+            );
+          }
+          this.cargarMes();
+        },
         error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
       });
   }
@@ -1793,13 +1826,23 @@ export class MyAgenda implements OnInit {
     if (!seguro) return;
 
     this.operandoHorario.set(bloque.clave);
-    this.scheduling
-      .closeSlots(recurso.id, { exceptionType: 'ERRAND', slotIds: [bloque.clave] })
+    // Si el cupo tiene paciente, la API lo dice (409 con la cita) y
+    // `BlockCancellations` pregunta antes de cancelar; con el sí, se repite
+    // confirmado y al paciente le llega el aviso.
+    this.cancellations
+      .withConfirmation((confirmed) =>
+        this.scheduling.closeSlots(recurso.id, {
+          exceptionType: 'ERRAND',
+          slotIds: [bloque.clave],
+          ...(confirmed ? { cancelAffectedBookings: true } : {}),
+        }),
+      )
       .subscribe({
         next: (res) => {
           this.operandoHorario.set(null);
+          if (res === null) return;
           this.toast.success(
-            'No vuelve aunque republiques el horario.',
+            `No vuelve aunque republique el horario.${cancelledBookingsText(res.cancelledBookings)}`,
             `${res.closedSlots} ${res.closedSlots === 1 ? 'rato cerrado' : 'ratos cerrados'}`,
           );
           this.cargarMes();
@@ -2132,8 +2175,8 @@ export class MyAgenda implements OnInit {
    * ## Por qué pregunta antes
    *
    * Retirar no se deshace desde la pantalla: para volver atrás hay que publicar
-   * el horario de nuevo. Y aunque no haya citas comprometidas —el servidor lo
-   * rechaza con 409 si las hay—, se sueltan cupos que ya estaban ofrecidos.
+   * el horario de nuevo. Y aunque las citas comprometidas se conserven —ya no
+   * frenan el retiro (P23)—, se sueltan cupos que ya estaban ofrecidos.
    */
   protected async retirarHorario(): Promise<void> {
     const actual = this.estado();
@@ -2149,16 +2192,22 @@ export class MyAgenda implements OnInit {
     if (!confirmado) return;
 
     this.retirando.set(true);
-    this.scheduling.retireTemplate(actual.data.id).subscribe({
+    // Con citas vivas, `BlockCancellations` muestra a quién alcanzan y deja
+    // elegir: cancelarlas y avisar, o conservarlas (etapa C, 24/10/2026).
+    this.cancellations.retireTemplate(actual.data.id).subscribe({
       next: (retiro) => {
         this.retirando.set(false);
+        if (retiro === null) return;
+        const canceladas = retiro.cancelledBookings ?? 0;
         // Se dice cuántos se conservaron y no sólo cuántos se soltaron: un
         // número distinto de cero significa que hay pacientes citados en un
         // horario que el médico acaba de retirar, y eso tiene que verlo.
         this.toast.success(
-          retiro.keptSlots > 0
-            ? `Se dieron de baja ${retiro.releasedSlots} horarios libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
-            : `Se dieron de baja ${retiro.releasedSlots} horarios libres.`,
+          canceladas > 0
+            ? `Se dieron de baja ${retiro.releasedSlots} horarios libres.${cancelledBookingsText(canceladas)}`
+            : retiro.keptSlots > 0
+              ? `Se dieron de baja ${retiro.releasedSlots} horarios libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
+              : `Se dieron de baja ${retiro.releasedSlots} horarios libres.`,
           'Horario retirado',
         );
         this.cargar();

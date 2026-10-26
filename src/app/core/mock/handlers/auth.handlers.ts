@@ -1,4 +1,4 @@
-import { STATUS, CORPORATE_TYPE } from '../fixtures/concepts';
+import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
@@ -263,9 +263,25 @@ export function registrarAuth(router: MockRouter): void {
       // como imágenes en base64 igual que `profilePhotoBase64`.
       signatureImageBase64?: string;
       sealImageBase64?: string;
+      // P29: los respaldos de la habilitación, como en la API.
+      licenseFileId?: string;
+      sedesLicenseNumber?: string;
+      sedesLicenseFileId?: string;
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
+    }
+    // Mismas dos precondiciones que `IamPractitionerSelfRegistrationService`.
+    if (datos.sedesLicenseFileId !== undefined && !datos.sedesLicenseNumber) {
+      return preconditionFailed('El archivo del registro del SEDES necesita su número de registro', {
+        field: 'sedesLicenseFileId',
+      });
+    }
+    if (datos.licenseFileId !== undefined && datos.licenseFileId === datos.sedesLicenseFileId) {
+      return preconditionFailed(
+        'La matrícula y el registro del SEDES no pueden compartir el mismo archivo',
+        { field: 'sedesLicenseFileId' },
+      );
     }
     const id = nuevoId('profesional-nuevo');
     const practitionerProfileId = uuid(`hpid-${id}`);
@@ -298,12 +314,12 @@ export function registrarAuth(router: MockRouter): void {
         jurisdictionConceptId?: string;
         legalDocuments?: Partial<Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>>;
         payer?: { latitude?: number; longitude?: number };
-        // Bloque de farmacia (carril de farmacia, 2026-09-29): clave que el
-        // DTO real todavía no declara (ver `PENDIENTES-BACKEND.md`, P49). El
-        // simulador la valida igual, con la misma forma que `payer` —ambas
-        // coordenadas o ninguna, cada una en rango—, para que el alta
-        // pública de farmacia tenga contra qué ejercitarse.
+        // Bloque de farmacia (carril de farmacia, 2026-09-29;
+        // `RegisterPharmacyBlockDto` en el DTO real, P49). El simulador lo
+        // valida con la misma forma que `payer` —ambas coordenadas o
+        // ninguna, cada una en rango—.
         pharmacy?: {
+          address?: string;
           latitude?: number;
           longitude?: number;
           branches?: readonly { name?: string; latitude?: number; longitude?: number }[];
@@ -311,8 +327,8 @@ export function registrarAuth(router: MockRouter): void {
         // Bloque del centro de diagnóstico (carril A de la cuenta de
         // laboratorio, 2026-09-30): éste SÍ lo declara el DTO real
         // (`DiagnosticUnitProfileDto`), con la sede primaria y su dirección.
-        // `branches` es lo único que el cliente le suma y el DTO no tiene
-        // (ver `PENDIENTES-BACKEND.md`, P51).
+        // `branches` lo declara el DTO real (`DiagnosticUnitBranchDto`, P51),
+        // con `description` (≤ 1000) y `locationUrl` (sólo http/https).
         diagnosticUnit?: {
           diagnosticUnitTypeConceptId?: string;
           modalityConceptIds?: readonly string[];
@@ -323,9 +339,9 @@ export function registrarAuth(router: MockRouter): void {
           };
           branches?: readonly {
             name?: string;
-            addressLines?: readonly string[];
-            latitude?: number;
-            longitude?: number;
+            address?: { lines?: readonly string[]; latitude?: number; longitude?: number };
+            description?: string;
+            locationUrl?: string;
           }[];
         };
         // Representante legal y gerencias (subtarea 1.4). El mock NO prueba
@@ -333,13 +349,11 @@ export function registrarAuth(router: MockRouter): void {
         // API. Esto sólo espeja el `ValidationPipe` para que el formulario
         // no pase en falso contra un backend simulado.
         //
-        // `idNumber` y `powerOfAttorneyFileId` NO son obligatorios acá —a
-        // diferencia de `RegisterOrganizationLegalRepresentativeDto` del
-        // backend real, que los exige siempre que el bloque viaja—: el
-        // registro de procesos de farmacia (Módulo Farmacia §1) no pide la
-        // cédula del representante como dato de alta, y esta relajación es
-        // deliberada del simulador (ver P49). No afecta al alta de
-        // aseguradora: su formulario siempre completa los dos.
+        // `idNumber` es obligatorio, como en
+        // `RegisterOrganizationLegalRepresentativeDto` del backend real (P50:
+        // se mantuvo la cédula en el alta de farmacia). El poder lo exige el
+        // servicio salvo UNIPERSONAL, y salvo en la farmacia, que lo presenta
+        // para operar y no para nacer (P50, D2).
         legalRepresentative?: {
           fullName?: string;
           idNumber?: string;
@@ -443,6 +457,18 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
 
+    // Mismo contrato que la API real (P50): `pharmacy` sólo corresponde a
+    // `PHARMACY`; con cualquier otro tipo es un 422 de negocio.
+    if (pharmacy !== undefined && datos.organization?.tenantType !== 'PHARMACY') {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'El bloque `pharmacy` sólo corresponde a un tenant de tipo PHARMACY',
+        error: 'Unprocessable Entity',
+        details: { tenantType: datos.organization?.tenantType ?? null },
+      });
+    }
+
     const diagnosticUnit = datos.organization?.diagnosticUnit;
     if (diagnosticUnit !== undefined) {
       // Mismo contrato que la API real: `diagnosticUnit` sólo corresponde a
@@ -469,7 +495,13 @@ export function registrarAuth(router: MockRouter): void {
       diagnosticUnit.branches?.forEach((sucursal, indice) => {
         const prefijo = `organization.diagnosticUnit.branches.${indice}`;
         if (!sucursal.name) mensajes.push(`${prefijo}.name should not be empty`);
-        mensajes.push(...mensajesDeCoordenadas(prefijo, sucursal));
+        mensajes.push(...mensajesDeCoordenadas(`${prefijo}.address`, sucursal.address ?? {}));
+        if (sucursal.description !== undefined && sucursal.description.length > 1000) {
+          mensajes.push(`${prefijo}.description must be shorter than or equal to 1000 characters`);
+        }
+        if (sucursal.locationUrl !== undefined && !/^https?:\/\//i.test(sucursal.locationUrl)) {
+          mensajes.push('locationUrl debe ser http o https');
+        }
       });
       if (mensajes.length > 0) {
         return reply(400, {
@@ -478,6 +510,21 @@ export function registrarAuth(router: MockRouter): void {
           message: 'Validation failed',
           error: 'Bad Request',
           details: { messages: mensajes },
+        });
+      }
+      // Como `TenantTypeProfileService`: las sucursales son sólo de una unidad
+      // de laboratorio. Sin tipo declarado, la API lo infiere (P51, D-1): una
+      // modalidad de imagen la hace de imágenes; si no, es de laboratorio.
+      const tipoDeclarado = diagnosticUnit.diagnosticUnitTypeConceptId;
+      const esDeImagenes =
+        tipoDeclarado !== undefined && conceptById(tipoDeclarado)?.code === 'DU_TYPE_IMAGING';
+      if ((diagnosticUnit.branches?.length ?? 0) > 0 && esDeImagenes) {
+        return reply(422, {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'Las sucursales sólo se declaran en una unidad de laboratorio clínico',
+          error: 'Unprocessable Entity',
+          details: { diagnosticUnitTypeConceptId: tipoDeclarado },
         });
       }
     }
@@ -498,7 +545,7 @@ export function registrarAuth(router: MockRouter): void {
         (tipoDeOrganizacion === 'DIAGNOSTIC_CENTER' &&
           diagnosticUnit?.diagnosticUnitTypeConceptId === undefined &&
           diagnosticUnit?.modalityConceptIds === undefined));
-    if (tipoDeOrganizacion !== 'PAYER' && tipoDeOrganizacion !== 'PHARMACY' && tipoDeOrganizacion !== 'DIAGNOSTIC_CENTER' && tipoDeOrganizacion !== 'HOSPITAL') {
+    if (!['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER', 'HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER'].includes(tipoDeOrganizacion)) {
       return preconditionFailed('El tipo de organización no admite alta pública', {
         tenantType: tipoDeOrganizacion,
       });
@@ -561,7 +608,11 @@ export function registrarAuth(router: MockRouter): void {
           { document: 'constitutionFileId' },
         );
       }
-      if (legalRepresentative !== undefined && !legalRepresentative.powerOfAttorneyFileId) {
+      if (
+        tipoDeOrganizacion !== 'PHARMACY' &&
+        legalRepresentative !== undefined &&
+        !legalRepresentative.powerOfAttorneyFileId
+      ) {
         return preconditionFailed(
           'Falta el poder notariado del representante legal: sólo una empresa unipersonal puede omitirlo',
           { document: 'powerOfAttorneyFileId' },
@@ -615,6 +666,8 @@ export function registrarAuth(router: MockRouter): void {
       ...(representativesRegistered === undefined ? {} : { representativesRegistered }),
       // Como la API: la unidad sólo nace si el alta declaró el bloque.
       ...(diagnosticUnit === undefined ? {} : { diagnosticUnitId: nuevoId('unidad-diagnostica') }),
+      // Como la API (P50): toda farmacia nace con su fila y su casa central.
+      ...(tipoDeOrganizacion === 'PHARMACY' ? { pharmacyId: nuevoId('farmacia') } : {}),
     };
   });
 

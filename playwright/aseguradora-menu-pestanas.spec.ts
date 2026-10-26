@@ -18,7 +18,7 @@ import { entrar, irA } from './support/sesion';
  * Corre contra la maqueta de `mockup` (sin backend): `E2E_BASE_URL` apunta al
  * `ng serve`.
  */
-const SALIDA = join('docs', 'trabajo', '2026-10-01-aseguradora-menu-pestanas', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-10-01-aseguradora-menu-pestanas', 'evidencia');
 const ASEGURADORA: Actor = {
   rol: 'administrador',
   identificador: 'aseguradora@alovida.mock',

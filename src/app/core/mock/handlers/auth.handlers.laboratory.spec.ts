@@ -2,13 +2,14 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { registrarAuth } from './auth.handlers';
+import { conceptByCode } from '../fixtures/concepts';
 
 /**
  * El alta pública de laboratorio contra el simulador (carril A de la cuenta de
  * laboratorio, 2026-09-30): `POST /iam/auth/register-organization` con
  * `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit` que el DTO
- * real ya declara, más `diagnosticUnit.branches`, que el cliente le suma (ver
- * `PENDIENTES-BACKEND.md`, P51). Se ejercita el router directo, como el spec
+ * real ya declara, incluido `diagnosticUnit.branches` con descripción y enlace
+ * (P51). Se ejercita el router directo, como el spec
  * de farmacia, para no depender del `HttpClient` real ni de la pantalla.
  */
 describe('alta pública de laboratorio en el simulador', () => {
@@ -75,7 +76,10 @@ describe('alta pública de laboratorio en el simulador', () => {
         address: { lines: ['Av. Cañoto 234'], latitude: -17.78, longitude: -63.18 },
       },
       branches: [
-        { name: 'Equipetrol', addressLines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+        {
+          name: 'Equipetrol',
+          address: { lines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+        },
       ],
     });
 
@@ -87,7 +91,7 @@ describe('alta pública de laboratorio en el simulador', () => {
   it('límite — una sucursal sin punto en el mapa pasa: las coordenadas son ambas o ninguna', () => {
     const cuerpo = conUnidad({
       ...CUERPO_MINIMO.organization.diagnosticUnit,
-      branches: [{ name: 'Equipetrol', addressLines: [] }],
+      branches: [{ name: 'Equipetrol', address: { lines: [] } }],
     });
 
     const { status } = call('POST', '/iam/auth/register-organization', cuerpo);
@@ -124,27 +128,95 @@ describe('alta pública de laboratorio en el simulador', () => {
   it('inválido — una coordenada fuera de rango en una sucursal es 400', () => {
     const cuerpo = conUnidad({
       ...CUERPO_MINIMO.organization.diagnosticUnit,
-      branches: [{ name: 'Norte', addressLines: [], latitude: 200, longitude: -63.18 }],
+      branches: [{ name: 'Norte', address: { lines: [], latitude: 200, longitude: -63.18 } }],
     });
 
     const { status, body } = call('POST', '/iam/auth/register-organization', cuerpo);
 
     expect(status).toBe(400);
     expect(mensajes(body)).toContain(
-      'organization.diagnosticUnit.branches.0.latitude must not be greater than 90',
+      'organization.diagnosticUnit.branches.0.address.latitude must not be greater than 90',
     );
   });
 
   it('inválido — una sucursal sin nombre es 400', () => {
     const cuerpo = conUnidad({
       ...CUERPO_MINIMO.organization.diagnosticUnit,
-      branches: [{ name: '', addressLines: ['Av. San Martín 456'] }],
+      branches: [{ name: '', address: { lines: ['Av. San Martín 456'] } }],
     });
 
     const { status, body } = call('POST', '/iam/auth/register-organization', cuerpo);
 
     expect(status).toBe(400);
     expect(mensajes(body)).toContain('organization.diagnosticUnit.branches.0.name should not be empty');
+  });
+
+  it('correcto — una sucursal con descripción y enlace http(s) pasa (P51, D-4)', () => {
+    const { status } = call(
+      'POST',
+      '/iam/auth/register-organization',
+      conUnidad({
+        ...CUERPO_MINIMO.organization.diagnosticUnit,
+        branches: [
+          {
+            name: 'Equipetrol',
+            address: { lines: ['Calle 9'] },
+            description: 'Toma de muestras de 7 a 11',
+            locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
+          },
+        ],
+      }),
+    );
+
+    expect(status).toBe(200);
+  });
+
+  it('límite — una descripción de 1000 caracteres pasa y una de 1001 es 400', () => {
+    const conDescripcion = (description: string) =>
+      call(
+        'POST',
+        '/iam/auth/register-organization',
+        conUnidad({
+          ...CUERPO_MINIMO.organization.diagnosticUnit,
+          branches: [{ name: 'Norte', description }],
+        }),
+      );
+
+    expect(conDescripcion('a'.repeat(1000)).status).toBe(200);
+    const largo = conDescripcion('a'.repeat(1001));
+    expect(largo.status).toBe(400);
+    expect(mensajes(largo.body)).toContain(
+      'organization.diagnosticUnit.branches.0.description must be shorter than or equal to 1000 characters',
+    );
+  });
+
+  it('inválido — un enlace de mapa que no es http(s) es 400, como en la API', () => {
+    const { status, body } = call(
+      'POST',
+      '/iam/auth/register-organization',
+      conUnidad({
+        ...CUERPO_MINIMO.organization.diagnosticUnit,
+        branches: [{ name: 'Norte', locationUrl: 'javascript:alert(1)' }],
+      }),
+    );
+
+    expect(status).toBe(400);
+    expect(mensajes(body)).toContain('locationUrl debe ser http o https');
+  });
+
+  it('inválido — sucursales en una unidad declarada de imágenes es 422, como en la API', () => {
+    const imagenes = conceptByCode('DU_TYPE_IMAGING')!.id;
+    const { status } = call(
+      'POST',
+      '/iam/auth/register-organization',
+      conUnidad({
+        ...CUERPO_MINIMO.organization.diagnosticUnit,
+        diagnosticUnitTypeConceptId: imagenes,
+        branches: [{ name: 'Norte' }],
+      }),
+    );
+
+    expect(status).toBe(422);
   });
 
   it('inválido — diagnosticUnit con otro tipo de organización es 422, como en la API', () => {

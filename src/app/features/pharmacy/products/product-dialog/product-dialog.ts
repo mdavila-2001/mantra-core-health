@@ -419,7 +419,18 @@ export class ProductDialog implements OnInit {
     if (link === 'missing') {
       return;
     }
-    const review = reviewProduct(this.fields(), undefined, link ?? undefined);
+    // Las categorías válidas son las de ESTA farmacia (las que lista la API,
+    // incluidas las que creó ella), no las seis de partida: con éstas, una
+    // categoría propia se rechazaba antes de llegar a la API (P47, visto en
+    // navegador el 26/10/2026).
+    const allowed = this.categoryOptions()
+      .map((option) => option.value)
+      .filter((value) => value !== '');
+    const review = reviewProduct(
+      this.fields(),
+      allowed.length > 0 ? allowed : undefined,
+      link ?? undefined,
+    );
     if (!review.valido) {
       this.errors.set(review.errores);
       // Los errores del alta son de los datos generales o de la publicación:

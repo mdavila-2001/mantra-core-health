@@ -324,7 +324,7 @@ function quienDictamina(request: MockRequest): string {
    misma tabla** que dictamina la aseguradora —no de una copia—, así que un
    dictamen tomado en «Solicitudes recibidas» aparece acá en la próxima
    lectura, sin sincronización aparte. Contrato:
-   `docs/contracts/my-insurance-claims.md` (P56 en `PENDIENTES-BACKEND.md`).
+   `docs/contracts/my-insurance-claims.md` (P56).
 
    Cada cuenta ve sólo lo suyo, y sólo lo que necesita para entender la
    decisión: ni la factura entre prestador y aseguradora, ni los renglones, ni

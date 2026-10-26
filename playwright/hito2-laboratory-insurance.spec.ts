@@ -13,9 +13,9 @@ import { esperarAplicacionLista, irA } from './support/sesion';
  * Los handlers de la aplicación guardan metadatos en sessionStorage y los
  * bytes del PDF en IndexedDB: se comprueban ambos después de recargar.
  *
- * Esto NO certifica API real ni facturación fiscal: `/insurance/received-claims`
- * y el portal P52 del laboratorio tienen contratos pendientes en el backend.
- * Ver docs/contracts/insurer-received-claims.md y LabPortalClient.
+ * Esto NO certifica API real ni facturación fiscal: la factura de
+ * `/insurance/received-claims` y el portal P52 del laboratorio sólo existen en el
+ * simulador. Ver docs/contracts/insurer-received-claims.md y LabPortalClient.
  */
 
 const LAB_SUMMARY = '/administration/laboratory';

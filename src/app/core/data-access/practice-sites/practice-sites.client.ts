@@ -167,8 +167,8 @@ export class PracticeSitesClient {
    * Mismo molde que {@link PracticeSitesClient.setSiteBankQr}: el archivo ya
    * está subido (`FilesClient.upload`) y lo único que viaja es su id.
    *
-   * **Sólo simulador por ahora.** La API todavía no expone esta ruta; el
-   * contrato esperado está en `docs/pendientes-backend-perfil-profesional.md`.
+   * **Sólo simulador.** La API no expone esta ruta: ni `practice.practice_sites`
+   * ni `directory.tenants` tienen dónde guardar el logo del consultorio.
    * Ningún componente lo llama: pasan por `LogoDelConsultorioClient`.
    *
    * @param siteId - La sede propia cuyo logo se cambia.

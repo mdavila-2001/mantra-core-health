@@ -10,7 +10,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 
 const BASE = process.env.PW_BASE_URL ?? 'http://localhost:4221';
-const SALIDA = process.env.SALIDA ?? 'docs/trabajo/2026-09-25-diagnostico-ia-glosario/evidencia/d4';
+const SALIDA = process.env.SALIDA ?? 'artifacts/evidencia/2026-09-25-diagnostico-ia-glosario/evidencia/d4';
 mkdirSync(SALIDA, { recursive: true });
 
 const notas = [];

@@ -374,11 +374,14 @@ describe('RegisterLaboratory', () => {
     });
     // La fila sin nombre todavía no es una sucursal: no viaja.
     expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
-      { name: 'Equipetrol', addressLines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+      {
+        name: 'Equipetrol',
+        address: { lines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+      },
     ]);
   });
 
-  it('las sucursales subidas en lote viajan con descripción, enlace y el punto que traía el enlace', () => {
+  it('las sucursales subidas en lote viajan con su dirección, su punto, su descripción y su enlace (P51)', () => {
     completarLoObligatorio();
     component.agregarSucursalesEnLote([
       {
@@ -402,16 +405,20 @@ describe('RegisterLaboratory', () => {
     expect(component.nombresDeSucursales()).toEqual(['Norte', 'Sur']);
     const cuerpo = enviarConExito();
 
+    // `DiagnosticUnitBranchDto` declara `description` y `locationUrl` (P51,
+    // D-4): viajan contra la API real. Una descripción vacía no viaja.
     expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
       {
         name: 'Norte',
-        addressLines: ['Av. Banzer 100'],
-        latitude: -17.76,
-        longitude: -63.19,
+        address: { lines: ['Av. Banzer 100'], latitude: -17.76, longitude: -63.19 },
         description: 'Planta baja',
         locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
       },
-      { name: 'Sur', addressLines: [], locationUrl: 'https://maps.app.goo.gl/abc' },
+      {
+        name: 'Sur',
+        address: { lines: [] },
+        locationUrl: 'https://maps.app.goo.gl/abc',
+      },
     ]);
   });
 

@@ -11,7 +11,7 @@ import type { BirthSexCode } from '../iam/iam.types';
  * mostrador (nombre, documento, ocupación, tutor…) **no** la acepta este
  * endpoint —sólo el alta que la persona hace de sí misma— y por eso no está
  * declarada: el tipo tiene que impedir construir un cuerpo que la API rechaza
- * (ID-23). Su destino es el registro asistido (`PENDIENTES-BACKEND.md`, P22).
+ * (ID-23). Su destino es el registro asistido.
  */
 export interface NewPatientProfile {
   /** Único en toda la instalación; el DTO lo exige. */
@@ -92,7 +92,7 @@ export interface NewJurisdictionAuthorization {
    *
    * Existe desde el 13/09/2026 (modelo v4.2.11 + API). Hasta entonces el
    * contrato no tenía dónde llevarlo y el selector del formulario tiraba el
-   * archivo en silencio; ver `docs/progress/BLOCKERS.md`.
+   * archivo en silencio.
    */
   readonly fileId?: string;
 }
@@ -178,8 +178,8 @@ export interface PractitionerCredential {
    * a verlo, ni siquiera para quien lo subió. Lo pidió el propietario el
    * 13/09/2026 («descargar elementos»).
    *
-   * Hoy lo sirve el simulador de la rama `mockup`; el `PractitionerCredentialDto`
-   * de la API todavía no lo declara. Ver `docs/progress/BLOCKERS.md`.
+   * `PractitionerCredentialDto` lo declara en la lectura, igual que el
+   * simulador de `mockup`.
    */
   readonly fileId?: string;
 }
@@ -213,9 +213,9 @@ export interface PractitionerLicense {
   readonly validFrom?: Date;
   readonly validTo?: Date;
   /**
-   * El carnet del colegio adjuntado al cargarla. Mismo hueco y misma fecha que
-   * {@link PractitionerCredential.fileId}: el alta lo acepta, la lectura
-   * todavía no lo devuelve fuera del simulador.
+   * El carnet del colegio adjuntado al cargarla. La API lo devuelve sólo al
+   * titular (`GET /profiles/practitioners/me/summary`), igual que
+   * {@link PractitionerCredential.fileId}; la ficha que ve un tercero no lo trae.
    */
   readonly fileId?: string;
 }
@@ -224,11 +224,8 @@ export interface PractitionerLicense {
    Los tres `PATCH` que la tabla de «Configurar tu perfil» necesita para que
    «Editar» no sea borrar y volver a cargar.
 
-   **Ninguno existe todavía en la API.** Están escritos con la forma REST que le
-   corresponde a cada recurso —y el simulador de la rama `mockup` los atiende—
-   para que el día que el backend los publique no haya que rehacer la pantalla:
-   lo que cambia es quién responde, no qué se pide. Ver
-   `docs/progress/BLOCKERS.md`.
+   Los tres existen en la API con la forma REST que le corresponde a cada
+   recurso, y el simulador de `mockup` los atiende igual.
 
    Los tres son PARCIALES: lo que no viaja no se toca. Un `undefined` no borra
    —`stripUndefined` lo quita del cuerpo—, así que corregir el número de un
@@ -390,8 +387,16 @@ export interface OwnPractitionerProfile {
   readonly birthDate?: Date;
   /** Sexo asignado al nacer. Sólo en la lectura propia (ID-13). */
   readonly sexAtBirth?: BirthSexCode;
-  /** Su documento. No editable desde el perfil: tiene su circuito propio. */
+  /**
+   * Su documento. Se corrige desde el perfil mientras `identityVerified` no es
+   * `true` (P28); verificada la identidad, la API responde 409.
+   */
   readonly nationalId?: string;
+  /**
+   * Si su identidad está verificada (aserción vigente). Sólo en la lectura
+   * propia. Con `true` el número del documento queda de solo lectura.
+   */
+  readonly identityVerified?: boolean;
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly residenceMunicipalityConceptId?: string;
 
@@ -509,10 +514,9 @@ export interface PatientListItem {
    * El documento de identidad y el teléfono, que es lo que el médico usa para
    * reconocer y llamar a la persona (propietario, 19/09/2026).
    *
-   * **Opcionales porque hoy sólo los sirve la maqueta de `mockup`.** El
-   * listado de la API todavía no los devuelve (TODO: exponerlos en
-   * `profiles/dto` a partir de `person_identifiers` y del contacto). Donde
-   * falten, la celda lo dice con palabras en vez de dejar el hueco.
+   * **Opcionales porque sólo los sirve la maqueta de `mockup`:**
+   * `PatientListItemDto` no los declara. Donde falten, la celda lo dice con
+   * palabras en vez de dejar el hueco.
    */
   readonly nationalId?: string;
   readonly phone?: string;
@@ -1092,8 +1096,7 @@ export interface PractitionerListItem {
   readonly workplaces: readonly string[];
   /**
    * La media de las reseñas publicadas y cuántas son. **Opcionales: la API
-   * todavía no los manda en el listado** (PENDIENTES-BACKEND, P61) —sólo en
-   * la ficha—; sin ellos la tarjeta dice «Sin reseñas todavía», nunca una nota
+   * no los manda en el listado** (P61) —sólo en la ficha—; sin ellos la tarjeta dice «Sin reseñas todavía», nunca una nota
    * inventada.
    */
   readonly ratingAverage?: number | null;
@@ -1316,15 +1319,13 @@ export interface IncomingDependentLinkRequest {
 /**
  * Claves del `PATCH /profiles/practitioners/me` que
  * `UpdateOwnPractitionerProfileDto` no declara (informe B, C13): la maqueta
- * las guarda, la API real todavía no.
+ * las guarda, la API real no. Los idiomas (`languages`) sí los declara.
  */
 export const PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS: readonly string[] = [
-  'languages',
   'insuranceBillingFrequency',
 ];
 
 const PRACTITIONER_PROFILE_EXTENSION_LABELS: Readonly<Record<string, string>> = {
-  languages: 'Los idiomas de atención',
   insuranceBillingFrequency: 'La frecuencia de facturación a seguros',
 };
 

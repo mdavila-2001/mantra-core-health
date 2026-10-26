@@ -42,7 +42,7 @@ También entran por número de documento (`4567890`, `7654321`, `1112223`,
   que falta es un 400 con el cuerpo de `validationFailed`, antes de llegar al
   manejador. El catálogo (`api-contract.generated.ts`) sale del `openapi.json`
   de la API en `origin/dev` con `node scripts/gen-mock-contract.mjs <ruta>`; lo
-  que la maqueta acepta de más («pendiente de backend») se registra en
+  que la maqueta acepta de más (lo que el DTO de la API no declara) se registra en
   `simulator-extensions.ts`, con las mismas listas que usa el cliente para
   **no** mandarlo a la API real (`core/data-access/simulator-only.ts`).
 - `mock-store.ts`: `uuid(semilla)` determinista, fechas relativas a hoy,

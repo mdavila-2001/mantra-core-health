@@ -85,7 +85,7 @@ import {
     Sale a la red igual que el alta de farmacia (carril A de la cuenta de
     laboratorio, 30/09/2026): `POST /iam/auth/register-organization` con
     `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit`. Ver
-    `submit()` y `PENDIENTES-BACKEND.md`, P51.
+    `submit()`.
     ========================================================================== */
 
 /**
@@ -251,8 +251,13 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  * `diagnosticUnit` que su DTO ya declara para ese tipo: la central como sede
  * primaria, con su dirección y, si se confirmó, su punto en el mapa. Mismo
  * mecanismo que el alta de farmacia (`RegisterPharmacy`): `IamClient`,
- * `ViewState` y los PDF subidos antes por la pre-carga pública. Lo que la API
- * real todavía no acepta de este cuerpo está en `PENDIENTES-BACKEND.md`, P51.
+ * `ViewState` y los PDF subidos antes por la pre-carga pública. Las
+ * sucursales viajan en `diagnosticUnit.branches`, con descripción y enlace de
+ * mapa: la API las crea como sedes de toma de muestras de la unidad y como
+ * sucursales de la pestaña Sucursales (P51, verificado contra la API real en
+ * `laboratory-registration.int-spec.ts` del repo de la API). El tipo de
+ * unidad (`DU_TYPE_LAB`), la modalidad, el país y la jurisdicción salen del
+ * catálogo público por código (`DiagnosisCenterEnrollment`).
  *
  * ## De dónde sale cada pregunta
  *
@@ -270,8 +275,11 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  * ## Qué es obligatorio, y por qué (misma regla que la farmacia, D2)
  *
  * Frena el alta sólo lo más básico para nacer: **razón social, tipo de
- * sociedad (de la lista cerrada), NIT, dirección legal de la central, nombre y
- * correo del representante legal —que es el correo de acceso— y contraseña**.
+ * sociedad (de la lista cerrada), NIT, dirección legal de la central, nombre,
+ * cédula y correo del representante legal —que es el correo de acceso— y
+ * contraseña**, más el poder notariado salvo en una empresa unipersonal: la API
+ * exige la cédula (400) y el poder (422) y este formulario no puede exigir
+ * menos (P51, D-3).
  *
  * El resto —los seis papeles en PDF, el punto de la central, las sucursales y
  * los tres cargos— se puede completar después. Los papeles siguen siendo lo

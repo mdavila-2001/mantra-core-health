@@ -57,6 +57,7 @@
       "/surveys",
       "/clinical",
       "/authz",
+      "/audit/",
       "/consent",
       "/practitioners",
       "/practitioner-delegates",
@@ -67,6 +68,7 @@
       "/auth-providers",
       "/admin/tenants",
       "/admin/catalog",
+      "/admin/portal",
       "/admin/analytics",
       "/admin/qa",
       "/admin/ops",
@@ -112,6 +114,7 @@
       "/quotations",
       "/medical-groups",
       "/prescription-favorites",
+      "/referrals",
       "/insurance-carrier-catalog",
       "/insurance-marketplace",
       "/admin/content-packs",
@@ -140,9 +143,8 @@
       "`/ai` va al servicio de triage. Declarado acá SOLO para que",
       "check-api-prefixes.mjs vea el mismo prefijo en las tres fuentes (H3.S1);",
       "en `yarn start` real lo resuelve `proxy.conf.mjs`, que antepone su propia",
-      "entrada con `ALOVIDA_AI_TARGET` y por eso ésta nunca se alcanza. D-C",
-      "(qué servicio, con qué base legal y dónde corre) sigue sin resolver:",
-      "docs/progress/DECISIONS.md."
+      "entrada con `ALOVIDA_AI_TARGET` y por eso ésta nunca se alcanza. El",
+      "servicio que atiende el triage no está definido en este repositorio (D-C)."
     ],
     "context": [
       "/ai"
