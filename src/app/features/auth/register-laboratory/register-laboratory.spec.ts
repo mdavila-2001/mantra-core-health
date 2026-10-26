@@ -381,7 +381,7 @@ describe('RegisterLaboratory', () => {
     ]);
   });
 
-  it('las sucursales subidas en lote viajan con su dirección y su punto; descripción y enlace sólo van al simulador', () => {
+  it('las sucursales subidas en lote viajan con su dirección, su punto, su descripción y su enlace (P51)', () => {
     completarLoObligatorio();
     component.agregarSucursalesEnLote([
       {
@@ -405,14 +405,20 @@ describe('RegisterLaboratory', () => {
     expect(component.nombresDeSucursales()).toEqual(['Norte', 'Sur']);
     const cuerpo = enviarConExito();
 
-    // Contra la API real `description` y `locationUrl` no viajan: no tienen
-    // columna (P54) y `forbidNonWhitelisted` tiraría el alta con un 400.
+    // `DiagnosticUnitBranchDto` declara `description` y `locationUrl` (P51,
+    // D-4): viajan contra la API real. Una descripción vacía no viaja.
     expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
       {
         name: 'Norte',
         address: { lines: ['Av. Banzer 100'], latitude: -17.76, longitude: -63.19 },
+        description: 'Planta baja',
+        locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
       },
-      { name: 'Sur', address: { lines: [] } },
+      {
+        name: 'Sur',
+        address: { lines: [] },
+        locationUrl: 'https://maps.app.goo.gl/abc',
+      },
     ]);
   });
 

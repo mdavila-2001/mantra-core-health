@@ -29,6 +29,14 @@ import type {
   PharmacySummary,
   PharmacyStatusResult,
 } from './pharmacy.types';
+import type {
+  OnCallShift,
+  OnCallShiftDraft,
+  OpenNowPage,
+  OpenNowQuery,
+  PharmacyOpeningHours,
+  SiteOpeningHours,
+} from './opening-hours.types';
 import {
   PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
   pharmacyProductExtensionsLabel,
@@ -180,7 +188,84 @@ export class PharmacyClient {
     if (query.limit !== undefined) {
       params = params.set('limit', String(query.limit));
     }
+    if (query.openNow === true) {
+      params = params.set('openNow', 'true');
+    }
     return this.http.get<PharmacySitePage>(this.url('/pharmacy/sites'), { params });
+  }
+
+  /**
+   * `GET /public/pharmacies/open-now` (P34) — las farmacias abiertas **ahora**:
+   * 24 h declaradas o de turno vigente. Pública, sin sesión.
+   *
+   * Un turno vencido nunca viaja: lo filtra la consulta del servidor, no esta
+   * pantalla. `asOf`/`asOfLocal` dicen con qué instante se decidió.
+   */
+  openNow(query: OpenNowQuery = {}): Observable<OpenNowPage> {
+    let params = new HttpParams();
+    if (query.mode !== undefined && query.mode !== 'any') {
+      params = params.set('mode', query.mode);
+    }
+    if (query.city !== undefined && query.city.trim() !== '') {
+      params = params.set('city', query.city.trim());
+    }
+    if (query.origin !== undefined) {
+      params = params.set('lat', String(query.origin.lat)).set('lng', String(query.origin.lng));
+    }
+    if (query.cursor !== undefined) {
+      params = params.set('cursor', query.cursor);
+    }
+    if (query.limit !== undefined) {
+      params = params.set('limit', String(query.limit));
+    }
+    return this.http.get<OpenNowPage>(this.url('/public/pharmacies/open-now'), { params });
+  }
+
+  /**
+   * `GET /pharmacies/:pharmacyId/opening-hours` (P34) — el horario declarado
+   * de cada sede: 24 h y los turnos vigentes y próximos. Sólo su personal.
+   */
+  getOpeningHours(pharmacyId: string): Observable<PharmacyOpeningHours> {
+    return this.http.get<PharmacyOpeningHours>(this.url(`/pharmacies/${pharmacyId}/opening-hours`));
+  }
+
+  /**
+   * `PUT /pharmacies/:pharmacyId/sites/:siteId/open-24h` (P34) — declara si la
+   * sede abre 24 h. `null` vuelve a «no declarado».
+   */
+  setOpen24h(
+    pharmacyId: string,
+    siteId: string,
+    open24h: boolean | null,
+  ): Observable<SiteOpeningHours> {
+    return this.http.put<SiteOpeningHours>(
+      this.url(`/pharmacies/${pharmacyId}/sites/${siteId}/open-24h`),
+      { open24h },
+    );
+  }
+
+  /**
+   * `POST /pharmacies/:pharmacyId/sites/:siteId/on-call-shifts` (P34) — un
+   * turno de guardia. Las horas viajan **con** desplazamiento; 422 si la
+   * ventana no se acepta (vencido, > 72 h, > 62 días), 409 si se solapa.
+   */
+  createOnCallShift(
+    pharmacyId: string,
+    siteId: string,
+    draft: OnCallShiftDraft,
+  ): Observable<OnCallShift> {
+    return this.http.post<OnCallShift>(
+      this.url(`/pharmacies/${pharmacyId}/sites/${siteId}/on-call-shifts`),
+      draft,
+    );
+  }
+
+  /** `POST /pharmacies/:pharmacyId/on-call-shifts/:shiftId/cancel` (P34). */
+  cancelOnCallShift(pharmacyId: string, shiftId: string): Observable<OnCallShift> {
+    return this.http.post<OnCallShift>(
+      this.url(`/pharmacies/${pharmacyId}/on-call-shifts/${shiftId}/cancel`),
+      {},
+    );
   }
 
   /**

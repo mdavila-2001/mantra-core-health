@@ -286,6 +286,10 @@ export interface PharmacySite {
   readonly homeDeliveryAvailable: boolean | null;
   readonly pickupAvailable: boolean | null;
   readonly productCount: number;
+  /** P34 · `true`/`false` declarado; `null` = no lo declaró (no es «cierra de noche»). */
+  readonly open24h?: boolean | null;
+  /** P34 · fin (UTC) del turno vigente, o `null`. Un turno vencido nunca viaja. */
+  readonly onCallUntil?: string | null;
 }
 
 /** La página de la lista de sedes. */
@@ -301,6 +305,8 @@ export interface PharmacySiteQuery {
   /** Con origen, la lista sale ordenada por cercanía. */
   readonly origin?: GeoPoint;
   readonly limit?: number;
+  /** P34 · sólo las abiertas ahora (24 h o de turno vigente). */
+  readonly openNow?: boolean;
 }
 
 /** Tipos de identificador que el alta de producto acepta. */
