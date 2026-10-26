@@ -497,7 +497,7 @@ export function registrarAuth(router: MockRouter): void {
         (tipoDeOrganizacion === 'DIAGNOSTIC_CENTER' &&
           diagnosticUnit?.diagnosticUnitTypeConceptId === undefined &&
           diagnosticUnit?.modalityConceptIds === undefined));
-    if (tipoDeOrganizacion !== 'PAYER' && tipoDeOrganizacion !== 'PHARMACY' && tipoDeOrganizacion !== 'DIAGNOSTIC_CENTER' && tipoDeOrganizacion !== 'HOSPITAL') {
+    if (!['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER', 'HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER'].includes(tipoDeOrganizacion)) {
       return preconditionFailed('El tipo de organización no admite alta pública', {
         tenantType: tipoDeOrganizacion,
       });

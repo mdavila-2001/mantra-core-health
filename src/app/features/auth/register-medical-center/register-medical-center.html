@@ -3,14 +3,14 @@
     @if (registered()) {
       <div class="registro__header">
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="medical-center-signup-success">
-          ¡Bienvenido a AloVida! Su centro médico ya tiene cuenta
+          ¡Bienvenido a AloVida! Su organización médica ya tiene cuenta
         </h1>
         <p class="registro__subtitle">Concluyó el registro. Ya puede conectarse con su correo y la contraseña que eligió.</p>
         @if (verificationSent()) {
           <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar.</p>
         }
         <p class="registro__subtitle" data-testid="medical-center-signup-pending">
-          Su centro está pendiente de verificación. En cuanto la plataforma lo verifique, podrá abrir su
+          Su organización está pendiente de verificación. En cuanto la plataforma la verifique, podrá abrir su
           práctica y su primera sede desde «Configurar centro médico».
         </p>
       </div>
@@ -26,10 +26,10 @@
       </button>
     } @else {
       <div class="registro__header">
-        <h1 class="registro__title">Registre su centro médico</h1>
+        <h1 class="registro__title">Registre su organización médica</h1>
         <p class="registro__subtitle">
-          Cree la cuenta de su clínica u hospital. Después de que la plataforma la verifique, podrá abrir
-          su práctica y publicar los procedimientos que ofrece.
+          Cree la cuenta de su hospital, clínica, consultorio o centro de enfermería. Después de que la
+          plataforma la verifique, podrá abrir su práctica y publicar los procedimientos que ofrece.
         </p>
       </div>
 
@@ -43,8 +43,8 @@
         <app-paginated-form
           [paginas]="paginas()"
           [form]="form"
-          label="Crear cuenta del centro médico"
-          submitLabel="Crear cuenta del centro médico"
+          label="Crear cuenta de la organización médica"
+          submitLabel="Crear cuenta de la organización"
           [pending]="isSubmitting()"
           (enviado)="submit()"
           data-testid="medical-center-signup-form"

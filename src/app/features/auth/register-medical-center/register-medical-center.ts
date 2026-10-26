@@ -7,8 +7,10 @@ import { forkJoin, map, switchMap, type Observable } from 'rxjs';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
+  isMedicalOrganizationType,
   MedicalCenterRegistrationClient,
   type MedicalCenterRegistration,
+  type MedicalOrganizationType,
 } from '../../../core/data-access/iam/medical-center-registration.client';
 import { readApiError } from '../../../core/http/api-error';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -24,6 +26,10 @@ import {
   passwordValidators,
 } from '../shared-registration/password-policy';
 import { medicalCenterCodeFromName } from './medical-center-code';
+import {
+  DESTINO_TIPO_DE_ORGANIZACION,
+  medicalOrganizationTypeOptions,
+} from './medical-organization-types';
 
 /** Dónde se leen el país y la jurisdicción: los mismos catálogos públicos del alta de laboratorio. */
 const DESTINO_PAIS = 'directory.tenants.country_concept_id';
@@ -60,14 +66,19 @@ export function signupErrorMessage(error: unknown): string {
 }
 
 /**
- * **Alta de un centro médico** (CM-11): una clínica u hospital crea su cuenta.
+ * **Alta de una organización médica** (CM-11): un hospital, una clínica, un
+ * consultorio, un centro de enfermería u otra institución de salud crea su
+ * cuenta.
  *
  * ## Qué manda y por qué así
  *
- * `POST /iam/auth/register-organization` con `tenantType: 'HOSPITAL'`, un tipo
- * de salud que la API ya tiene: no hay un tipo nuevo en IAM. Como `HOSPITAL` es
- * territorial, la API exige país y jurisdicción; se leen de los catálogos
- * públicos y se resuelven **por código**, igual que el alta del laboratorio.
+ * `POST /iam/auth/register-organization` con el `tenantType` que eligió quien
+ * la registra (`HOSPITAL`, `CLINIC`, `MEDICAL_OFFICE`, `NURSING` o
+ * `HEALTH_OTHER`). Las opciones salen del catálogo público `tenant-type`,
+ * filtradas a esos cinco (ver `medicalOrganizationTypeOptions`). Los cinco son
+ * territoriales, así que la API exige país y jurisdicción; se leen de los
+ * catálogos públicos y se resuelven **por código**, igual que el alta del
+ * laboratorio.
  *
  * El código de la organización no se pide: sale de la razón social.
  *
@@ -90,11 +101,12 @@ export class RegisterMedicalCenter {
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
   private readonly router = inject(Router);
 
-  protected readonly claim = 'Sume su centro médico a la red';
+  protected readonly claim = 'Sume su organización médica a la red';
   protected readonly tagline =
     'Publique sus procedimientos y afilie a sus médicos para que los pacientes lo encuentren.';
 
   readonly form = new FormGroup({
+    tenantType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     legalName: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_LEGAL_NAME)],
@@ -116,32 +128,46 @@ export class RegisterMedicalCenter {
   protected readonly registered = signal(false);
   protected readonly verificationSent = signal(false);
 
+  /** Los tipos de institución que la API publica, de los cinco médicos. */
+  private readonly tiposDeOrganizacion = signal<readonly SelectOption<MedicalOrganizationType>[]>(
+    medicalOrganizationTypeOptions(null),
+  );
+
   /** Los tipos societarios de Bolivia, del mismo catálogo que las demás altas. */
   private readonly tiposSocietarios = signal<readonly SelectOption<string>[]>([]);
 
   /**
-   * Dos páginas, de a cuatro campos como tope: el centro y la cuenta de quien
-   * lo administra. `computed` porque el catálogo de tipos societarios llega
+   * Dos páginas, de a cuatro campos como tope: la organización y la cuenta de
+   * quien la administra. `computed` porque los catálogos de tipos llegan
    * después de que la pantalla se arma.
    */
   protected readonly paginas = computed(() =>
     paginateFields([
       {
-        titulo: 'El centro',
-        hint: 'Cómo se llama y qué figura jurídica tiene.',
+        titulo: 'La organización',
+        hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
         campos: [
+          {
+            key: 'tenantType',
+            label: 'Tipo de institución',
+            control: 'radio' as const,
+            options: this.tiposDeOrganizacion(),
+            required: true,
+            testId: 'medical-center-signup-tenant-type',
+            mensajeDeError: 'Elija el tipo de institución.',
+          },
           {
             key: 'legalName',
             label: 'Razón social',
             control: 'text' as const,
             required: true,
+            hint: `Hasta ${MAX_LEGAL_NAME} caracteres.`,
             testId: 'medical-center-signup-legal-name',
-            mensajeDeError: 'Escriba la razón social del centro.',
           },
           {
             key: 'legalEntityType',
             label: 'Tipo societario',
-            hint: 'La figura jurídica con la que está constituido el centro.',
+            hint: 'La figura jurídica con la que está constituida la organización.',
             control: 'select' as const,
             options: this.tiposSocietarios(),
             required: true,
@@ -152,7 +178,7 @@ export class RegisterMedicalCenter {
       },
       {
         titulo: 'Su cuenta',
-        hint: 'Quien administra el centro. Con estos datos inicia sesión.',
+        hint: 'Quien administra la organización. Con estos datos inicia sesión.',
         campos: [
           {
             key: 'ownerName',
@@ -187,6 +213,10 @@ export class RegisterMedicalCenter {
   );
 
   constructor() {
+    this.context.dynamicEnum(DESTINO_TIPO_DE_ORGANIZACION).subscribe({
+      next: (catalogo) => this.tiposDeOrganizacion.set(medicalOrganizationTypeOptions(catalogo)),
+      error: () => this.tiposDeOrganizacion.set(medicalOrganizationTypeOptions(null)),
+    });
     this.legalEntityTypes.listar().subscribe({
       next: (opciones) =>
         this.tiposSocietarios.set(this.legalEntityTypes.opcionesPorPais(opciones, 'BO')),
@@ -196,7 +226,8 @@ export class RegisterMedicalCenter {
 
   submit(): void {
     if (this.isSubmitting()) return;
-    if (this.form.invalid) {
+    const tipo = this.form.controls.tenantType.value;
+    if (this.form.invalid || !isMedicalOrganizationType(tipo)) {
       this.form.markAllAsTouched();
       return;
     }
@@ -204,7 +235,7 @@ export class RegisterMedicalCenter {
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
     this.catalogos()
-      .pipe(switchMap((ids) => this.client.register(this.datos(ids))))
+      .pipe(switchMap((ids) => this.client.register(this.datos(tipo, ids))))
       .subscribe({
         next: (resultado) => {
           this.isSubmitting.set(false);
@@ -238,10 +269,14 @@ export class RegisterMedicalCenter {
     });
   }
 
-  private datos(ids: { pais: string; jurisdiccion: string }): MedicalCenterRegistration {
+  private datos(
+    tipo: MedicalOrganizationType,
+    ids: { pais: string; jurisdiccion: string },
+  ): MedicalCenterRegistration {
     const f = this.form.getRawValue();
     return {
       code: medicalCenterCodeFromName(f.legalName),
+      tenantType: tipo,
       legalName: f.legalName.trim(),
       legalEntityType: f.legalEntityType,
       countryConceptId: ids.pais,
