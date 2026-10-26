@@ -49,3 +49,18 @@
 .toast-region:not(:empty) + .toast-region:not(:empty) {
     margin-top: var(--sp-2);
 }
+
+/* La salida de un aviso (pulse.md §7). Antes se esfumaba de golpe y la pila
+   saltaba: ahora vuelve por donde vino, más rápido de lo que entró.
+   `animate.leave` de Angular pone la clase y espera a que termine para
+   desmontarlo. */
+.toast-leaving {
+    animation: toast-out var(--pulse-dur-exit) var(--pulse-ease-exit) forwards;
+}
+
+@keyframes toast-out {
+    to {
+        opacity: 0;
+        transform: translateX(var(--sp-4));
+    }
+}

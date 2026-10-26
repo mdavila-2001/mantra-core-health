@@ -167,8 +167,30 @@ thead .data-table__cell {
     background: var(--bg-inset);
 }
 
+.data-table__row {
+    transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
 .data-table__row:hover {
     background: var(--bg-inset);
+}
+
+/* Fila que abre algo (pulse.md §7): al apuntarla aparece a la izquierda una
+   guía de marca —se lee como «por acá se entra»— y al pulsarla se tiñe. Un
+   `box-shadow` interior en la primera celda: no mueve ni una columna. */
+.data-table__row--navigable > :first-child {
+    transition: box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .data-table__row--navigable:hover > :first-child {
+        box-shadow: inset 2px 0 0 var(--brand-primary);
+    }
+}
+
+.data-table__row--navigable:active {
+    background: var(--pulse-press-tint);
+    transition-duration: 0s;
 }
 
 /* Una fila que navega tiene que decirlo antes del clic: el cambio de fondo al
