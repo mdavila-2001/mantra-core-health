@@ -38,6 +38,8 @@ const MENU_DE_LA_FARMACIA = [
   '/administration/pharmacy-import',
   '/administration/pharmacy-inventory',
   '/administration/pharmacy-prices',
+  // P34 (26/10/2026): 24 h y turnos de guardia.
+  '/administration/pharmacy-hours',
   '/administration/pharmacy-orders',
   '/administration/pharmacy-campaigns',
   '/administration/pharmacy-branches',
@@ -97,7 +99,7 @@ describe('Menú de la cuenta de farmacia', () => {
     );
   });
 
-  it('los nueve van planos: en un dominio aplanado, sin encabezado ni desplegable', () => {
+  it('los diez van planos (P34 sumó «Horario y turnos»): en un dominio aplanado, sin encabezado ni desplegable', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const grupos = service
@@ -113,6 +115,7 @@ describe('Menú de la cuenta de farmacia', () => {
       'Importación masiva',
       'Inventario',
       'Precios',
+      'Horario y turnos',
       'Solicitudes de retiro',
       'Promociones',
       'Sucursales',

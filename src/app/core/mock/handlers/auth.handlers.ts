@@ -1,4 +1,4 @@
-import { STATUS, CORPORATE_TYPE } from '../fixtures/concepts';
+import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
@@ -310,8 +310,8 @@ export function registrarAuth(router: MockRouter): void {
         // Bloque del centro de diagnóstico (carril A de la cuenta de
         // laboratorio, 2026-09-30): éste SÍ lo declara el DTO real
         // (`DiagnosticUnitProfileDto`), con la sede primaria y su dirección.
-        // `branches` ya lo declara el DTO real (`DiagnosticUnitBranchDto`, P51);
-        // `description` y `locationUrl` son extensión del simulador (P54).
+        // `branches` lo declara el DTO real (`DiagnosticUnitBranchDto`, P51),
+        // con `description` (≤ 1000) y `locationUrl` (sólo http/https).
         diagnosticUnit?: {
           diagnosticUnitTypeConceptId?: string;
           modalityConceptIds?: readonly string[];
@@ -469,6 +469,12 @@ export function registrarAuth(router: MockRouter): void {
         const prefijo = `organization.diagnosticUnit.branches.${indice}`;
         if (!sucursal.name) mensajes.push(`${prefijo}.name should not be empty`);
         mensajes.push(...mensajesDeCoordenadas(`${prefijo}.address`, sucursal.address ?? {}));
+        if (sucursal.description !== undefined && sucursal.description.length > 1000) {
+          mensajes.push(`${prefijo}.description must be shorter than or equal to 1000 characters`);
+        }
+        if (sucursal.locationUrl !== undefined && !/^https?:\/\//i.test(sucursal.locationUrl)) {
+          mensajes.push('locationUrl debe ser http o https');
+        }
       });
       if (mensajes.length > 0) {
         return reply(400, {
@@ -477,6 +483,21 @@ export function registrarAuth(router: MockRouter): void {
           message: 'Validation failed',
           error: 'Bad Request',
           details: { messages: mensajes },
+        });
+      }
+      // Como `TenantTypeProfileService`: las sucursales son sólo de una unidad
+      // de laboratorio. Sin tipo declarado, la API lo infiere (P51, D-1): una
+      // modalidad de imagen la hace de imágenes; si no, es de laboratorio.
+      const tipoDeclarado = diagnosticUnit.diagnosticUnitTypeConceptId;
+      const esDeImagenes =
+        tipoDeclarado !== undefined && conceptById(tipoDeclarado)?.code === 'DU_TYPE_IMAGING';
+      if ((diagnosticUnit.branches?.length ?? 0) > 0 && esDeImagenes) {
+        return reply(422, {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'Las sucursales sólo se declaran en una unidad de laboratorio clínico',
+          error: 'Unprocessable Entity',
+          details: { diagnosticUnitTypeConceptId: tipoDeclarado },
         });
       }
     }

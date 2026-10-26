@@ -281,4 +281,83 @@ describe('PharmacyClient', () => {
 
     expect(outcome).toBe(true);
   });
+
+  describe('P34 · 24 h y turnos', () => {
+    it('pide sólo las abiertas con openNow=true, y no lo manda si no se pidió', () => {
+      client.nearbySites({ openNow: true }).subscribe();
+      const con = http.expectOne((r) => r.url === '/pharmacy/sites');
+      expect(con.request.params.get('openNow')).toBe('true');
+      con.flush({ items: [], count: 0 });
+
+      client.nearbySites({}).subscribe();
+      const sin = http.expectOne((r) => r.url === '/pharmacy/sites');
+      expect(sin.request.params.has('openNow')).toBe(false);
+      sin.flush({ items: [], count: 0 });
+    });
+
+    it('open-now: modo, ciudad, origen y cursor viajan; any y vacíos no', () => {
+      client
+        .openNow({
+          mode: 'on-call',
+          city: ' La Paz ',
+          origin: { lat: -16.5, lng: -68.15 },
+          cursor: 'c1',
+          limit: 6,
+        })
+        .subscribe();
+      const req = http.expectOne((r) => r.url === '/public/pharmacies/open-now');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('mode')).toBe('on-call');
+      expect(req.request.params.get('city')).toBe('La Paz');
+      expect(req.request.params.get('lat')).toBe('-16.5');
+      expect(req.request.params.get('lng')).toBe('-68.15');
+      expect(req.request.params.get('cursor')).toBe('c1');
+      expect(req.request.params.get('limit')).toBe('6');
+      req.flush({
+        items: [],
+        nextCursor: null,
+        asOf: '',
+        asOfLocal: '',
+        timeZone: 'America/La_Paz',
+      });
+
+      client.openNow({ mode: 'any', city: '  ' }).subscribe();
+      const vacio = http.expectOne((r) => r.url === '/public/pharmacies/open-now');
+      expect(vacio.request.params.keys()).toEqual([]);
+      vacio.flush({
+        items: [],
+        nextCursor: null,
+        asOf: '',
+        asOfLocal: '',
+        timeZone: 'America/La_Paz',
+      });
+    });
+
+    it('lee el horario y declara 24 h con PUT, null incluido', () => {
+      client.getOpeningHours('ph-1').subscribe();
+      const lectura = http.expectOne('/pharmacies/ph-1/opening-hours');
+      expect(lectura.request.method).toBe('GET');
+      lectura.flush({ pharmacyId: 'ph-1', asOf: '', sites: [] });
+
+      client.setOpen24h('ph-1', 's-1', null).subscribe();
+      const put = http.expectOne('/pharmacies/ph-1/sites/s-1/open-24h');
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ open24h: null });
+      put.flush({});
+    });
+
+    it('carga y cancela un turno', () => {
+      const draft = { startsAt: '2026-10-26T20:00:00-04:00', endsAt: '2026-10-27T08:00:00-04:00' };
+      client.createOnCallShift('ph-1', 's-1', draft).subscribe();
+      const alta = http.expectOne('/pharmacies/ph-1/sites/s-1/on-call-shifts');
+      expect(alta.request.method).toBe('POST');
+      expect(alta.request.body).toEqual(draft);
+      alta.flush({});
+
+      client.cancelOnCallShift('ph-1', 'sh-1').subscribe();
+      const baja = http.expectOne('/pharmacies/ph-1/on-call-shifts/sh-1/cancel');
+      expect(baja.request.method).toBe('POST');
+      baja.flush({});
+    });
+  });
 });

@@ -93,7 +93,10 @@ export interface PublicPharmacyBranch {
    * del mismo tenant comparten ficha y por eso comparten `slug`.
    */
   readonly id: string;
-  /** El slug de su propia ficha pública. */
+  /**
+   * El slug de su ficha pública. Contra la API real todas las sedes de una
+   * cadena comparten el de la cadena; el simulador tiene una ficha por sede.
+   */
   readonly slug: string;
   /** «Farmacorp · San Miguel»: la cadena y la sucursal, que es como se nombra. */
   readonly name: string;
@@ -104,6 +107,14 @@ export interface PublicPharmacyBranch {
   readonly phone: string | null;
   /** «Lun a Sáb 08:00–22:00», tal como lo publica la cadena. `null` si no lo declara. */
   readonly openingHours: string | null;
+  /**
+   * Lo que la cadena escribió de esa sucursal en su pestaña Sucursales (P54):
+   * horario, piso, qué se atiende. `null` si no escribió nada. La API real no
+   * tiene horario estructurado, así que hoy el horario llega por acá.
+   */
+  readonly description: string | null;
+  /** El enlace de mapa que pegó la cadena, ya validado `http(s)` por la API. */
+  readonly locationUrl: string | null;
   /** Sin punto no hay pin ni distancia: la sucursal se lista igual, con su dirección. */
   readonly location: PublicGeoPoint | null;
   /**
@@ -116,7 +127,10 @@ export interface PublicPharmacyBranch {
    * fingida.
    */
   readonly locationAccuracy: string | null;
-  /** Si es la sucursal cuya ficha se está mirando. */
+  /**
+   * Si es la sucursal cuya ficha se está mirando. La API real lo pone en
+   * `true` sólo cuando la cadena tiene una única sucursal.
+   */
   readonly isCurrent: boolean;
 }
 
@@ -124,6 +138,19 @@ export interface PublicPharmacyBranch {
 export interface PublicGeoPoint {
   readonly lat: number;
   readonly lng: number;
+}
+
+/**
+ * Cuerpo de `POST /public/profiles/f/:slug/branch-availability` (P37).
+ *
+ * Los renglones van en el cuerpo y no en la URL: son datos de salud. `lat` y
+ * `lng` viajan juntas o no viajan; la API rechaza una sola con 400.
+ */
+export interface PublicPrescriptionAvailabilityRequest {
+  /** De 1 a 20 renglones de hasta 120 caracteres, como están en la receta. */
+  readonly items: readonly string[];
+  readonly lat?: number;
+  readonly lng?: number;
 }
 
 /** Un renglón de la receta que la sucursal **sí** tiene. */
