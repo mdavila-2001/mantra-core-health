@@ -9,7 +9,6 @@ import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
-import { campoDistrito } from './address-line';
 import { INVALID_IDENTITY_DOCUMENT_MESSAGE } from './national-id';
 import { MESSAGE_SHORT_PASSWORD } from './password-policy';
 
@@ -279,36 +278,21 @@ export function practitionerFields(
       titulo: '¿Dónde vive?',
       clave: 'residence',
       icon: 'home',
-      // La **zona** sigue sin preguntarse, y eso no cambió: `common.addresses`
-      // no tiene columna de zona para ninguno de los dos registros.
-      hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
+      // Pedido del cliente del 26/10/2026: lo único que se marca es el punto, y
+      // es obligatorio. Calle, zona, municipio y departamento salen de él (los
+      // muestra el selector, en sólo lectura) y los vuelca a sus controles
+      // `aplicarLocalidadDomicilio`: siguen en el formulario, pero ya no son
+      // campos de la página.
+      hint: 'Marque su casa en el mapa: con el punto sabemos la calle, la zona y la localidad.',
       campos: [
         {
-          key: 'municipio',
-          label: '',
-          control: 'custom',
-        },
-        campoDistrito('homeDistrict', 'registration-practitioner-home-district', 'municipio'),
-        {
-          key: 'homeAddressLines',
-          label: 'Calle (opcional)',
-          hint: 'Como la escribiría en un sobre.',
-          description:
-            'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
-          control: 'text',
-          autocomplete: 'street-address',
-          placeholder: 'Av. Banzer, 3er anillo #42',
-          testId: 'registration-practitioner-home-address',
-          icono: 'route',
-          showWhen: { key: 'municipio', filled: true },
-        },
-        {
           key: 'gpsDomicilio',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'Si la comparte, quien le busca llega sin llamarle.',
-          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
+          label: 'Ubicación GPS',
+          hint: 'Toque el mapa en la puerta de su casa, o use su ubicación actual, y confírmelo.',
+          description: 'Lo demás —calle, zona, municipio y departamento— sale del punto.',
           control: 'custom',
-          showWhen: { key: 'municipio', filled: true },
+          required: true,
+          mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
         },
       ],
     },
@@ -316,24 +300,14 @@ export function practitionerFields(
       titulo: '¿Dónde trabaja?',
       clave: 'workplace-location',
       icon: 'building',
-      hint: 'La dirección de su trabajo queda separada de su casa y de su consultorio propio.',
+      // Opcional como toda la página: la dirección del trabajo sale del punto.
+      hint: 'Opcional. Marque su lugar de trabajo en el mapa; la dirección sale del punto.',
       campos: [
-        {
-          key: 'workAddressLines',
-          label: 'Dirección del trabajo (opcional)',
-          hint: 'Calle, número y referencia del lugar donde trabaja.',
-          description: 'Se guarda como dirección laboral, separada de su domicilio.',
-          control: 'text',
-          autocomplete: 'street-address',
-          placeholder: 'Av. Principal 200, Hospital Central',
-          testId: 'registration-practitioner-work-address',
-          icono: 'route',
-        },
         {
           key: 'gpsTrabajo',
           label: 'Ubicación GPS del trabajo (opcional)',
           hint: 'Confirme el punto para guardar la ubicación laboral.',
-          description: 'Marque el lugar donde trabaja y confírmelo en el mapa.',
+          description: 'Se guarda como dirección laboral, separada de su domicilio.',
           control: 'custom',
         },
       ],
@@ -380,30 +354,10 @@ export function practitionerFields(
       titulo: 'Dónde queda su consultorio',
       clave: 'own-office',
       icon: 'pin',
-      hint: 'Opcional. Puede completar la dirección ahora o más adelante desde su perfil.',
+      // Opcional como el resto del consultorio, pero sólo con el punto: la
+      // calle, la zona y la localidad salen de él (26/10/2026).
+      hint: 'Opcional. Marque el consultorio en el mapa; la dirección sale del punto.',
       campos: [
-        {
-          key: 'municipioConsultorio',
-          label: '',
-          control: 'custom',
-        },
-        campoDistrito(
-          'officeDistrict',
-          'registration-practitioner-office-district',
-          'municipioConsultorio',
-        ),
-        {
-          key: 'officeAddressLines',
-          label: 'Calle (opcional)',
-          hint: 'Calle y número del consultorio.',
-          description:
-            'Es la dirección que ve un paciente antes de ir. El punto del mapa no la escribe solo.',
-          control: 'text',
-          placeholder: 'Calle Libertad #120, piso 2',
-          testId: 'registration-practitioner-office-address',
-          icono: 'route',
-          showWhen: { key: 'municipioConsultorio', filled: true },
-        },
         {
           key: 'gpsConsultorio',
           label: 'Ubicación GPS (opcional)',
@@ -411,7 +365,6 @@ export function practitionerFields(
           description:
             'Marque el punto exacto del consultorio y confírmelo. Se confirma aparte del de su casa.',
           control: 'custom',
-          showWhen: { key: 'municipioConsultorio', filled: true },
         },
       ],
     },
