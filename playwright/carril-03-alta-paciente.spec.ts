@@ -57,9 +57,6 @@ async function llegarAlContacto(page: Page, documento: string): Promise<void> {
   await continuar(page);
 
   await esperarPaso(page, 2, 'Lugares donde vive');
-  await page.getByTestId('registration-residence-mapa-SC').click();
-  await expect(page.getByTestId('registration-residence-municipio')).toBeVisible();
-  await elegirOpcion(page, 'registration-residence-municipio', { index: 1 });
   await marcarYConfirmarCasa(page);
   await continuar(page);
 
