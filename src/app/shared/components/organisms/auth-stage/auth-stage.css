@@ -414,7 +414,135 @@
   .auth-stage__ecg-spark,
   .auth-stage__wave,
   .auth-stage__flash,
-  .auth-stage__mote {
+  .auth-stage__mote,
+  .auth-stage__glow {
     display: none;
   }
+}
+
+/* ==========================================================================
+    Modo claro — el balance invertido.
+
+    En claro el escenario deja de ser un monitor nocturno: predomina el blanco
+    (`--bg-surface` → menta 50), la tinta es petróleo y en reposo NO hay ningún
+    celeste. El celeste aparece solo junto al puntero, en `.auth-stage__glow`.
+    Todo lo de arriba es el modo oscuro y no se toca: estas reglas solo PISAN,
+    así que el oscuro queda exactamente igual.
+
+    Ningún override declara `stroke-width`: los grosores (y su `--ecg-k`) son
+    los de arriba, y con ellos el pulso y su sincronía con `--beat`.
+    ========================================================================== */
+:host-context(:root[data-tema='claro']) {
+  background:
+    radial-gradient(60% 50% at 34% 16%, var(--c-mint-50), transparent 70%),
+    linear-gradient(160deg, var(--bg-surface), var(--c-mint-50) 60%, var(--c-sage-50));
+}
+
+/* En `screen` sobre blanco no aportan nada, y apagarlas ahorra pintado. */
+:host-context(:root[data-tema='claro']) .auth-stage__aurora,
+:host-context(:root[data-tema='claro']) .auth-stage__rays,
+:host-context(:root[data-tema='claro']) .auth-stage__flash {
+  display: none;
+}
+
+/* Las líneas blancas del papel desaparecen sobre blanco: van en petróleo. */
+:host-context(:root[data-tema='claro']) .auth-stage__monitor {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--c-petrol-500) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--c-petrol-500) 6%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(color-mix(in srgb, var(--c-petrol-500) 2.5%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--c-petrol-500) 2.5%, transparent) 1px,
+      transparent 1px
+    );
+}
+
+/* Motas neutras en reposo: gris petróleo, sin celeste. */
+:host-context(:root[data-tema='claro']) .auth-stage__mote {
+  background: radial-gradient(
+    circle,
+    var(--c-petrol-300),
+    color-mix(in srgb, var(--c-sage-700) 55%, transparent) 45%,
+    transparent 72%
+  );
+}
+
+/* La tira en tinta petróleo, sólida: sin el degradado `#auth-stage-ink`, que
+   está pensado para el fondo oscuro. */
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-base {
+  stroke: var(--c-petrol-400);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-comet {
+  stroke: var(--c-petrol-600);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-spark {
+  stroke: var(--c-petrol-700);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-aura {
+  stroke: var(--c-petrol-100);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-halo {
+  stroke: var(--c-petrol-200);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__wave {
+  stroke: var(--c-petrol-200);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__wave--echo {
+  stroke: var(--c-mint-500);
+}
+
+/* --- El resplandor del puntero: el único celeste del escenario claro. -----
+   Una caja del tamaño del escenario que se DESPLAZA hasta el puntero: el % de
+   `translate` es de su propia caja, así que `(x − 0,5) × 100 %` lleva su centro
+   a donde está la mano. Las motas que caen dentro del disco se ven celestes y
+   las de afuera siguen grises.
+
+   No repite el costo medido en la nota de `.auth-stage__orb`: es UNA capa que
+   cambia solo `transform` y `opacity`. El degradado se rasteriza una vez y
+   después solo se corre; no se reposiciona el `radial-gradient` (eso repinta
+   en cada cuadro) y no hay `mix-blend-mode` ni `filter`. Las variables
+   `--pointer-*` las publica `appPointerScene` en `app-auth-split`; en reposo
+   (`--pointer-on: 0`) no se ve. */
+.auth-stage__glow {
+  display: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__glow {
+  --glow-size: min(40vmax, 28rem);
+  display: block;
+  opacity: var(--pointer-on, 0);
+  transform: translate3d(
+    calc((var(--pointer-x, 0.5) - 0.5) * 100%),
+    calc((var(--pointer-y, 0.5) - 0.5) * 100%),
+    0
+  );
+  will-change: transform, opacity;
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__glow::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--glow-size);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--fondo-c),
+    color-mix(in srgb, var(--c-aqua-300) 30%, transparent) 50%,
+    transparent
+  );
 }

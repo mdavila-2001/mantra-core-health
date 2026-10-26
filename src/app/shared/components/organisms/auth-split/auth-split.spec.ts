@@ -163,6 +163,35 @@ describe('AuthSplit', () => {
         'Su salud, conectada',
       );
     });
+
+    it('con `stage` la marca trae los dos logos: el blanco y el petróleo del escenario claro', async () => {
+      host.scene.set('stage');
+      await fixture.whenStable();
+
+      const logos = Array.from(el().querySelectorAll<HTMLImageElement>('.auth-split__wordmark img'));
+      expect(logos.map((img) => img.getAttribute('src'))).toEqual([
+        '/alovida/imagenes/alovida-logo-blanco.svg',
+        '/alovida/imagenes/alovida-logo.svg',
+      ]);
+      expect(logos[1].classList).toContain('auth-split__wordmark-ink');
+      // Decorativos los dos: el nombre ya lo dice el texto de al lado.
+      expect(logos.every((img) => img.getAttribute('alt') === '')).toBe(true);
+    });
+
+    it('la hoja del escenario claro esconde el logo petróleo fuera de claro y nunca usa literales de color', () => {
+      const css = readFileSync(
+        'src/app/shared/components/organisms/auth-split/auth-split-light-stage.css',
+        'utf8',
+      );
+      expect(css).toMatch(/^\.auth-split__wordmark-ink \{\s*display: none;/m);
+      expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
+      // Todo lo demás es override de claro: el oscuro no cambia.
+      const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+\{/g) ?? [];
+      const unscoped = rules
+        .map((r) => r.replace('{', '').trim())
+        .filter((r) => !r.startsWith('@media') && !r.startsWith(":host-context(:root[data-tema='claro'])"));
+      expect(unscoped).toEqual(['.auth-split__wordmark-ink']);
+    });
   });
 });
 
