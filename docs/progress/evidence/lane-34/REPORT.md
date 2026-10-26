@@ -97,7 +97,7 @@ datos reales de cada rol: entra con cuentas verdaderas y lee lo que devuelve el 
   `error de consola`, todos respuestas del servicio a una cuenta que no es médica, aseguradora ni
   farmacia, o transiciones de vista interrumpidas. Ninguno es de fondo, ancho ni tema.
 - **Vistas sin sesión:** 126 aperturas; 19 `ok`. Las 90 `no navega` son el catálogo del barrido, que
-  todavía abre las direcciones en castellano y la aplicación las lleva a su nombre en inglés; las 17
+  abría las direcciones en castellano y la aplicación las llevaba a su nombre en inglés (el catálogo ya se regeneró con las rutas en inglés); las 17
   `error de consola` son transiciones de vista interrumpidas.
 - **Médica y paciente: sin correr.** La cuenta médica que usa el barrido no existe en el entorno de
   datos reales, y el alta de paciente que hace el barrido crea una cuenta fuera de las de prueba
