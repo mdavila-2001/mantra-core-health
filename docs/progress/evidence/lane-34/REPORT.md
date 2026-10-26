@@ -1,13 +1,14 @@
 # REPORT — Carril 34 · CORR-04
 
-## Veredicto: VERIFIED para la auditoría visual sobre la maqueta del 2026-10-22; route-health sin correr
+## Veredicto: VERIFIED para la auditoría visual sobre la maqueta del 2026-10-22; la regresión de rutas con datos reales queda fuera de esta rama
 
 La auditoría se repitió sobre `mockup` en `7135f1e56`, con el build SSR de producción: **492/492 celdas**,
 cero celdas rojas y cero errores de consola en los tres actores. La corrida anterior (464/464, 13 de
 octubre) medía una maqueta 258 commits más vieja.
 
-La regresión unitaria no suma rojos atribuibles a este cambio. El barrido route-health no se corrió:
-mide las rutas contra la API real y esta rama es sólo visual.
+La regresión unitaria no suma rojos atribuibles a este cambio. El barrido route-health no se corrió en
+esta rama: comprueba cada ruta con los datos reales de cada rol, y `mockup` trabaja sólo con el
+simulador. Ver «Cierre del 2026-10-25».
 
 ## Qué cambió en esta pasada
 
@@ -64,7 +65,7 @@ regeneraron completas en esta corrida; la línea base de `fotos/antes/` no se to
   `insurance-analytics.handlers`, `practitioner-detail`) que fallan en una corrida o en la otra. Las
   cuatro que sólo fallaron en esta rama pasan aisladas (43/43). Ninguna toca el CSS ni el generador.
 - `corepack yarn lint` → rojo previo en todo el repositorio; el archivo JS tocado pasa ESLint.
-- `playwright/carril-19-route-health.spec.ts` → no corrido: exige la API real.
+- `playwright/carril-19-route-health.spec.ts` → no corrido en esta rama (ver «Cierre del 2026-10-25»).
 
 ## Riesgos residuales
 
@@ -76,3 +77,36 @@ regeneraron completas en esta corrida; la línea base de `fotos/antes/` no se to
   decisión del 2026-10-05.
 - La suite completa, el lint global y los chequeos de tokens y arquitectura siguen en rojo por causas
   previas a este carril.
+
+## Cierre del 2026-10-25
+
+| Requisito | Estado | Con qué queda cubierto |
+|---|---|---|
+| REQ-34-001 · auditoría inicial completa | CUMPLE | `MATRIZ-visual-antes.md` de cada actor y `fotos/antes/` |
+| REQ-34-002 · blanco puro en claro, superficie oscura en oscuro | CUMPLE | La matriz mide las dos reglas en cada celda; `/my-account/identity` conserva el oscuro |
+| REQ-34-003 · cada pantalla en rojo pasa en 3 anchos | CUMPLE | 492/492 celdas en verde a 375, 768 y 1440 px |
+| REQ-34-004 · auditoría final y regresión | Auditoría final: CUMPLE. Regresión de rutas con datos reales: PARCIAL (administración y vistas sin sesión, en `dev`) | Ver abajo |
+
+**Regresión de rutas.** `carril-19-route-health.spec.ts` comprueba que cada ruta responde con los
+datos reales de cada rol: entra con cuentas verdaderas y lee lo que devuelve el servicio de datos.
+`mockup` no tiene ese servicio —todo lo contesta el simulador—, así que el barrido se corrió el
+2026-10-25 sobre `dev`, con datos reales:
+
+- **Administración:** 171 aperturas; 140 `ok`, 4 `denegada` (el guard rechaza lo que el rol no
+  alcanza), 11 `no navega` (portal de farmacia y directorios, que llevan a otra pantalla) y 16
+  `error de consola`, todos respuestas del servicio a una cuenta que no es médica, aseguradora ni
+  farmacia, o transiciones de vista interrumpidas. Ninguno es de fondo, ancho ni tema.
+- **Vistas sin sesión:** 126 aperturas; 19 `ok`. Las 90 `no navega` son el catálogo del barrido, que
+  todavía abre las direcciones en castellano y la aplicación las lleva a su nombre en inglés; las 17
+  `error de consola` son transiciones de vista interrumpidas.
+- **Médica y paciente: sin correr.** La cuenta médica que usa el barrido no existe en el entorno de
+  datos reales, y el alta de paciente que hace el barrido crea una cuenta fuera de las de prueba
+  permitidas. Quedan para cuando ese entorno tenga las dos cuentas.
+
+Lo que ese barrido miraría ya queda cubierto en parte por la auditoría: cada ruta del mapa de
+navegación de los tres actores cargó su área de contenido, llegó a la pantalla pedida sin redirigir y
+con la consola limpia. Lo que no cubre es lo que sólo da el servicio verdadero: los permisos y los datos
+reales de cada rol.
+
+La misma auditoría, con el auditor corregido para checkouts de Windows, se repitió en `dev` y `test`,
+cada una con su propia matriz.
