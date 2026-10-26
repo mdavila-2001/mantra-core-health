@@ -125,6 +125,10 @@
       "nombre": "my-quotations"
     },
     {
+      "ruta": "/my-medical-groups",
+      "nombre": "my-medical-groups"
+    },
+    {
       "ruta": "/questionnaires",
       "nombre": "questionnaires"
     },
@@ -135,6 +139,10 @@
     {
       "ruta": "/my-account",
       "nombre": "my-account"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
     },
     {
       "ruta": "/settings",
@@ -310,6 +318,10 @@
       "nombre": "directory"
     },
     {
+      "ruta": "/psychological-help",
+      "nombre": "psychological-help"
+    },
+    {
       "ruta": "/groups",
       "nombre": "groups"
     },
@@ -368,6 +380,10 @@
     {
       "ruta": "/my-quotations",
       "nombre": "my-quotations"
+    },
+    {
+      "ruta": "/my-medical-groups",
+      "nombre": "my-medical-groups"
     },
     {
       "ruta": "/questionnaires",
@@ -458,6 +474,18 @@
       "nombre": "my-account"
     },
     {
+      "ruta": "/my-account/privacy",
+      "nombre": "my-account_privacy"
+    },
+    {
+      "ruta": "/my-account/clinical-access",
+      "nombre": "my-account_clinical-access"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
+    },
+    {
       "ruta": "/my-account/appointments",
       "nombre": "my-account_appointments"
     },
@@ -475,7 +503,7 @@
     },
     {
       "ruta": "/my-account/quotations",
-      "nombre": "my-account_cotizaciones"
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",
@@ -567,11 +595,11 @@
     },
     {
       "ruta": "/laboratory/reception",
-      "nombre": "laboratorio_recepcion"
+      "nombre": "laboratory_reception"
     },
     {
       "ruta": "/laboratory/queue",
-      "nombre": "laboratorio_cola"
+      "nombre": "laboratory_queue"
     },
     {
       "ruta": "/administration/laboratory-results",
@@ -640,6 +668,10 @@
       "nombre": "directory"
     },
     {
+      "ruta": "/psychological-help",
+      "nombre": "psychological-help"
+    },
+    {
       "ruta": "/laboratory-directory",
       "nombre": "laboratory-directory"
     },
@@ -664,6 +696,18 @@
       "nombre": "my-account"
     },
     {
+      "ruta": "/my-account/privacy",
+      "nombre": "my-account_privacy"
+    },
+    {
+      "ruta": "/my-account/clinical-access",
+      "nombre": "my-account_clinical-access"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
+    },
+    {
       "ruta": "/my-account/appointments",
       "nombre": "my-account_appointments"
     },
@@ -681,7 +725,7 @@
     },
     {
       "ruta": "/my-account/quotations",
-      "nombre": "my-account_cotizaciones"
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",
@@ -866,6 +910,10 @@
       "nombre": "my-account"
     },
     {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
+    },
+    {
       "ruta": "/my-account/appointments",
       "nombre": "my-account_appointments"
     },
@@ -883,7 +931,7 @@
     },
     {
       "ruta": "/my-account/quotations",
-      "nombre": "my-account_cotizaciones"
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",
