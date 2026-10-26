@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 
 import { nextControlId } from '@shared/forms/form-control.context';
+import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import type {
   FranjaModo,
   PublishedRule,
@@ -50,6 +51,8 @@ export interface BloqueDelHorario {
    * dependan sólo del color para distinguir una franja de la otra.
    */
   readonly mode: FranjaModo;
+  /** Si admite teleconsulta (ausente ≡ no): marca, etiqueta y globo, nunca sólo un ícono. */
+  readonly telemedicina: boolean;
   /** Lo que se cuenta al pasar el mouse: rótulo y valor, en orden. */
   readonly datos: readonly { readonly rotulo: string; readonly valor: string }[];
 }
@@ -236,7 +239,7 @@ const SEPARACION_GLOBO = 8;
  */
 @Component({
   selector: 'app-schedule-grid',
-  imports: [],
+  imports: [NavIcon],
   templateUrl: './schedule-grid.html',
   styleUrl: './schedule-grid.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -430,9 +433,11 @@ export class ScheduleGrid {
           etiqueta:
             `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atiende` +
             QUE_ATIENDE[modo] +
-            (this.sede() ? ` en ${this.sede()}` : ''),
+            (this.sede() ? ` en ${this.sede()}` : '') +
+            (r.telemedicineEnabled === true ? ', también por telemedicina' : ''),
           detalle: detalleDe(modo, tamano),
           mode: modo,
+          telemedicina: r.telemedicineEnabled === true,
           datos: datosDe(r, fin - inicio, tamano, modo),
         };
       })
@@ -657,6 +662,7 @@ export class ScheduleGrid {
       partes.push(`atiende${QUE_ATIENDE[bloque.mode]} de ${bloque.desde} a ${bloque.hasta}`);
       const sede = this.sede();
       if (sede) partes.push(sede);
+      if (bloque.telemedicina) partes.push('también por telemedicina');
     } else {
       partes.push('sin atención');
     }
@@ -758,6 +764,10 @@ function datosDe(
     { rotulo: 'Horario', valor: `${hhmm(r.startTime)} – ${hhmm(r.endTime)}` },
     { rotulo: 'Duración', valor: enPalabras(duracion) },
     { rotulo: 'Atiende', valor: ROTULO_DEL_MODO[modo] },
+    // Sólo cuando la tiene: «no» en cada franja presencial sería ruido.
+    ...(r.telemedicineEnabled
+      ? [{ rotulo: 'Telemedicina', valor: 'Sí, también por videollamada' }]
+      : []),
   ];
   // Una franja sólo de servicios no se parte en turnos: cada servicio dura lo
   // que declara y el inicio lo elige el paciente. Contarle «turnos» mentiría.

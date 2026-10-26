@@ -309,6 +309,10 @@ export class SchedulingClient {
           ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
           // Ídem: sólo si el médico lo cambió. Ausente ≡ solo consultas.
           ...(rule.bookingMode === undefined ? {} : { bookingMode: rule.bookingMode }),
+          // Ídem: `true` si la activó, `false` si la apagó. Ausente ≡ sin telemedicina.
+          ...(rule.telemedicineEnabled === undefined
+            ? {}
+            : { telemedicineEnabled: rule.telemedicineEnabled }),
         })),
         ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
         ...(template.bookingPolicyId === undefined

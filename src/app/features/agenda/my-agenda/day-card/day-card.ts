@@ -29,6 +29,12 @@ import {
   MODALIDADES,
   type ModalidadDeAtencion,
 } from '../../../../core/data-access/scheduling/scheduling.types';
+import {
+  type FranjaVigente,
+  MENSAJE_SIN_TELEMEDICINA,
+  rechazoPorTelemedicina,
+  teleconsultaPermitidaEn,
+} from '../../telemedicina';
 
 /** Un rato ya tomado del día, para avisar el choque ANTES de guardar. */
 export interface DayGap {
@@ -121,6 +127,14 @@ export class DayCard {
   /** Lo que el día ya tiene tomado, para avisar el choque antes de guardar. */
   readonly ratosTomados = input<readonly DayGap[]>([]);
 
+  /**
+   * Las franjas del horario vigente, para saber si la hora admite teleconsulta.
+   *
+   * `null` cuando el contenedor no las tiene: entonces no se avisa ni se
+   * deshabilita nada, y decide el servidor (422 `TELEMEDICINE_NOT_ENABLED`).
+   */
+  readonly franjas = input<readonly FranjaVigente[] | null>(null);
+
   /** Se creó algo: el contenedor recarga el día. */
   readonly creada = output<void>();
 
@@ -151,8 +165,32 @@ export class DayCard {
    * —con flechas y un solo tabulador—, en vez de escribir otro control: son
    * tres opciones excluyentes, que es exactamente para lo que existe.
    */
-  protected readonly modalityOptions: readonly SegmentedOption<ModalidadDeAtencion>[] =
-    MODALIDADES.map((m) => ({ value: m.valor, label: m.nombre }));
+  protected readonly modalityOptions = computed<readonly SegmentedOption<ModalidadDeAtencion>[]>(
+    () => {
+      const sinTelemedicina = this.teleconsultaNoAdmitida();
+      return MODALIDADES.map((m) => ({
+        value: m.valor,
+        label: m.nombre,
+        // Fuera de una franja con telemedicina la videollamada no se ofrece:
+        // la API la rechazaría. Si ya estaba elegida, el aviso dice por qué.
+        ...(m.valor === 'TELECONSULTA' && sinTelemedicina ? { disabled: true } : {}),
+      }));
+    },
+  );
+
+  /** Si, con las franjas conocidas, la hora elegida NO admite teleconsulta. */
+  private readonly teleconsultaNoAdmitida = computed(() => {
+    const franjas = this.franjas();
+    const rango = this.range();
+    return franjas !== null && rango !== null && !teleconsultaPermitidaEn(franjas, rango.desde);
+  });
+
+  /** La teleconsulta quedó elegida en una hora que no la admite: no se guarda. */
+  protected readonly teleconsultaFueraDeFranja = computed(
+    () => this.modality() === 'TELECONSULTA' && this.teleconsultaNoAdmitida(),
+  );
+
+  protected readonly mensajeSinTelemedicina = MENSAJE_SIN_TELEMEDICINA;
 
   /** Si el alta salió de un cupo ya programado: la franja no se pregunta. */
   protected readonly fromSlot = computed(() => this.cupoId() !== null);
@@ -255,6 +293,7 @@ export class DayCard {
       rango !== null &&
       !this.saving() &&
       !this.blockedByGap() &&
+      !(this.patient() !== null && this.teleconsultaFueraDeFranja()) &&
       (this.patient() !== null || this.reason().trim() !== '')
     );
   });
@@ -422,6 +461,11 @@ export class DayCard {
    */
   private failure(error: unknown): void {
     this.saving.set(false);
+    const sinTelemedicina = rechazoPorTelemedicina(error);
+    if (sinTelemedicina !== null) {
+      this.error.set(sinTelemedicina);
+      return;
+    }
     const campos = Object.values(fieldErrorsOf(error));
     const delServidor =
       campos.length > 0

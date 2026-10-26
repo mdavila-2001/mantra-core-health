@@ -224,6 +224,74 @@ describe('TarjetaDelDia', () => {
       fixture.detectChanges();
       expect(inferencia()).toContain('Va a su domicilio');
     });
+
+    /* -- Telemedicina por franja ------------------------------------------- */
+
+    /** La opción «Por videollamada» del control segmentado. */
+    function opcionVideollamada(): HTMLButtonElement | undefined {
+      const botones = Array.from(
+        fixture.nativeElement.querySelectorAll('[data-testid="tarjeta-modalidad"] button'),
+      ) as HTMLButtonElement[];
+      return botones.find((b) => b.textContent?.includes('Por videollamada'));
+    }
+
+    it('fuera de una franja con telemedicina la videollamada se apaga y no se guarda', async () => {
+      await montar();
+      // Jueves 10/09: telemedicina sólo de 14 a 18; el rato tocado es 10:00.
+      fixture.componentRef.setInput('franjas', [
+        { dayOfWeek: 4, startTime: '08:00:00', endTime: '12:00:00' },
+        { dayOfWeek: 4, startTime: '14:00:00', endTime: '18:00:00', telemedicineEnabled: true },
+      ]);
+      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+      expect(opcionVideollamada()?.disabled).toBe(true);
+
+      // Si ya estaba elegida (p. ej. antes de cambiar la hora), se dice por qué.
+      api().modality.set('TELECONSULTA');
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="tarjeta-sin-telemedicina"]')?.textContent,
+      ).toContain('habilitada para telemedicina');
+      expect(api().canSave()).toBe(false);
+      api().save();
+      http.expectNone('/scheduling/appointments/direct');
+
+      // Moverla a la franja con telemedicina la vuelve a habilitar.
+      api().from.set('15:00');
+      api().hasta.set('15:30');
+      fixture.detectChanges();
+      expect(opcionVideollamada()?.disabled).toBe(false);
+      expect(api().canSave()).toBe(true);
+    });
+
+    it('sin franjas conocidas no adivina: la videollamada sigue ofrecida', async () => {
+      await montar();
+      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+      expect(opcionVideollamada()?.disabled).toBe(false);
+    });
+
+    it('el 422 TELEMEDICINE_NOT_ENABLED se explica con qué hacer', async () => {
+      await montar();
+      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      api().modality.set('TELECONSULTA');
+      fixture.detectChanges();
+
+      api().save();
+      http.expectOne('/scheduling/appointments/direct').flush(
+        {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'Ese horario no atiende por telemedicina.',
+          reason: 'TELEMEDICINE_NOT_ENABLED',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain(
+        'no está en una franja de su horario habilitada para telemedicina',
+      );
+    });
   });
 
   it('con solo MOTIVO infiere tiempo ocupado, y lo dice', async () => {
