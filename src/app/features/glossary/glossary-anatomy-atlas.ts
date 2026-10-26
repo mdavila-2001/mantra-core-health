@@ -45,6 +45,7 @@ import { SegmentedControl } from '../../shared/components/molecules/segmented-co
 import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
+import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import { AnatomyViewer } from '../../shared/components/organisms/anatomy-viewer/anatomy-viewer';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
@@ -59,14 +60,19 @@ import {
   missingAspectsLabel,
   normalizeSearch,
   ontologyUrl,
+  pageOf,
+  pageRelationGroups,
   partVisibleFor,
   relatedMeshes,
   searchIndex,
   sideLabel,
 } from './glossary-anatomy-atlas.logic';
 
-/** Resultados de búsqueda visibles a la vez. */
-const SEARCH_LIMIT = 25;
+/** Tope de coincidencias que se calculan; se muestran de a `PAGE_SIZE.results`. */
+const SEARCH_LIMIT = 500;
+
+/** Filas por página en cada lista del panel: el panel no crece con el catálogo. */
+const PAGE_SIZE = { results: 8, relations: 10, references: 6, female: 12 } as const;
 
 const SEX_OPTIONS: readonly SegmentedOption<AnatomySex>[] = [
   { value: 'male', label: 'Hombre' },
@@ -105,7 +111,7 @@ const REGION_NAMES: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'app-glossary-anatomy-atlas',
-  imports: [AnatomyViewer, Card, Checkbox, PageHeader, RouterLink, SearchField, SegmentedControl, Tab, Tabs, ViewStateHost],
+  imports: [AnatomyViewer, Card, Checkbox, PageHeader, Pagination, RouterLink, SearchField, SegmentedControl, Tab, Tabs, ViewStateHost],
   templateUrl: './glossary-anatomy-atlas.html',
   styleUrl: './glossary-anatomy-atlas.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -145,6 +151,11 @@ export class GlossaryAnatomyAtlas {
   protected readonly layers = signal<readonly AnatomyLayer[]>(DEFAULT_LAYERS);
   protected readonly tab = signal(0);
   protected readonly search = signal('');
+  protected readonly pageSize = PAGE_SIZE;
+  protected readonly resultsPage = signal(1);
+  protected readonly relationsPage = signal(1);
+  protected readonly referencesPage = signal(1);
+  protected readonly femalePage = signal(1);
 
   protected readonly partsState = signal<ViewState<readonly AnatomyPart[]>>(loading());
   private readonly indexState = signal<ViewState<AnatomyIndex>>(loading());
@@ -214,11 +225,24 @@ export class GlossaryAnatomyAtlas {
 
   protected readonly results = computed<AnatomyIndexEntry[]>(() => searchIndex(this.index()?.entries ?? [], this.search(), SEARCH_LIMIT));
 
+  protected readonly resultsShown = computed(() => pageOf(this.results(), this.resultsPage(), PAGE_SIZE.results));
+
+  protected readonly relationRows = computed(() => this.relationGroups().reduce((n, g) => n + g.items.length, 0));
+  protected readonly relationGroupsShown = computed(() =>
+    pageRelationGroups(this.relationGroups(), this.relationsPage(), PAGE_SIZE.relations),
+  );
+
+  protected readonly referencesShown = computed(() =>
+    pageOf(this.structure()?.definition?.refs ?? [], this.referencesPage(), PAGE_SIZE.references),
+  );
+
   protected readonly femaleOnly = computed(() =>
     ATLAS_3D_FEMALE_ONLY_IDS.map((id) => this.entryById().get(id))
       .filter((e): e is AnatomyIndexEntry => e !== undefined)
       .sort((a, b) => displayName(a[1], a[2], a[0]).localeCompare(displayName(b[1], b[2], b[0]), 'es')),
   );
+
+  protected readonly femaleShown = computed(() => pageOf(this.femaleOnly(), this.femalePage(), PAGE_SIZE.female));
 
   protected readonly viewerLabel = computed(() => {
     const visibles = this.layers().map((c) => LAYER_LABELS[c].toLowerCase()).join(', ');
@@ -249,6 +273,19 @@ export class GlossaryAnatomyAtlas {
     this.atlas.index().subscribe({
       next: (indice) => this.indexState.set(ready(indice)),
       error: (error: unknown) => this.indexState.set(errorToViewState(error)),
+    });
+
+    // Otra búsqueda o otra ficha vuelve a la primera página de sus listas.
+    effect(() => {
+      this.search();
+      untracked(() => this.resultsPage.set(1));
+    });
+    effect(() => {
+      this.structureId();
+      untracked(() => {
+        this.relationsPage.set(1);
+        this.referencesPage.set(1);
+      });
     });
 
     // La ficha sigue a la URL: abrir un enlace compartido abre la misma ficha.
