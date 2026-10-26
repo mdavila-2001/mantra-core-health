@@ -36,8 +36,11 @@ import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
@@ -66,6 +69,13 @@ interface TeamRow {
  * uno de sus diagnósticos. El equipo es el conjunto de cargos: cada uno con el
  * profesional invitado, el pago acordado y, si hace falta, términos propios.
  *
+ * ## Una tarjeta con pestañas
+ *
+ * El formulario es UNA `app-card` centrada con tres pestañas —Servicio y
+ * paciente, Fecha y lugar, Equipo— y el botón de crear fuera de ellas
+ * (`composition-rules.md` §5). Los valores viven en señales de este componente
+ * y no en los controles, porque `app-tab` no dibuja el panel cerrado.
+ *
  * ## Lo que reusa
  *
  * - Paciente y servicio: el mismo par buscador + tabla que el alta de
@@ -85,6 +95,7 @@ interface TeamRow {
   imports: [
     Alert,
     AppButton,
+    Card,
     DataTable,
     DatePicker,
     FormField,
@@ -92,6 +103,8 @@ interface TeamRow {
     PageHeader,
     SearchField,
     Select,
+    Tab,
+    Tabs,
     Textarea,
   ],
   templateUrl: './medical-group-form.html',
@@ -379,6 +392,16 @@ export class MedicalGroupForm {
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
 
+  /** La pestaña a la vista. Como `app-tab` no dibuja el cerrado, el estado vive acá. */
+  protected readonly tab = signal(0);
+
+  /** La pestaña donde vive el primer pendiente: 0 servicio, 1 fecha y lugar, 2 equipo. */
+  private readonly problemTab = computed(() => {
+    if (this.selectedService() === null) return 0;
+    if (this.scheduledAt() === null || this.locationText().trim() === '') return 1;
+    return 2;
+  });
+
   protected readonly missing = computed<string | null>(() => {
     if (this.selectedService() === null) return 'Elija el servicio de salud.';
     if (this.scheduledAt() === null) return 'Elija la fecha y la hora de realización.';
@@ -390,6 +413,8 @@ export class MedicalGroupForm {
     const problem = this.missing();
     if (problem !== null) {
       this.saveError.set(problem);
+      // El pendiente puede estar en una pestaña cerrada: se lleva a la persona hasta ahí.
+      this.tab.set(this.problemTab());
       return;
     }
     if (this.saving()) return;
