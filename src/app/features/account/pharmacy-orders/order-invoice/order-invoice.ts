@@ -19,7 +19,7 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders.routes';
+import { MY_PHARMACY_ORDERS_ROUTE } from '../pharmacy-orders.routes';
 import { HojaDeFactura } from './hoja-de-factura/hoja-de-factura';
 import { facturaDelPedido, NOTA_DE_EJEMPLO } from './order-invoice.fixtures';
 import { downloadInvoicePdf } from './order-invoice.pdf';
@@ -58,7 +58,7 @@ export class OrderInvoice {
 
   private readonly orderId = signal<string | null>(null);
 
-  protected readonly rutaDelPedido = computed(() => `${MIS_PEDIDOS_ROUTE}/${this.orderId() ?? ''}`);
+  protected readonly rutaDelPedido = computed(() => `${MY_PHARMACY_ORDERS_ROUTE}/${this.orderId() ?? ''}`);
   protected readonly rutaDelComprobante = computed(() => `${this.rutaDelPedido()}/receipt`);
 
   constructor() {
@@ -71,7 +71,7 @@ export class OrderInvoice {
   protected cargar(): void {
     const orderId = this.orderId();
     if (orderId === null || orderId === '') {
-      this.state.set(notFound({ label: 'Volver a mis pedidos', route: MIS_PEDIDOS_ROUTE }));
+      this.state.set(notFound({ label: 'Volver a mis pedidos', route: MY_PHARMACY_ORDERS_ROUTE }));
       return;
     }
     this.state.set(loading());
@@ -81,7 +81,7 @@ export class OrderInvoice {
         this.state.set(
           factura === null
             ? empty(
-                { label: 'Ver el pedido', route: `${MIS_PEDIDOS_ROUTE}/${pedido.id}` },
+                { label: 'Ver el pedido', route: `${MY_PHARMACY_ORDERS_ROUTE}/${pedido.id}` },
                 'Este pedido todavía no tiene factura.',
               )
             : ready(factura),

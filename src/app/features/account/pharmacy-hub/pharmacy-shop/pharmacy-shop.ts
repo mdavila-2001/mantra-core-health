@@ -33,7 +33,7 @@ import { SearchField } from '../../../../shared/components/molecules/search-fiel
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { SearchOriginPicker } from '../../../nearby-places/search-origin-picker/search-origin-picker';
 import type { SearchOrigin } from '../../../nearby-places/search-origin-picker/search-origin-picker.types';
-import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
+import { MY_MEDICAL_RECORD_ROUTE } from '../../medical-record/medical-record.routes';
 
 /** Letras mínimas para filtrar el catálogo; menos que esto no acota nada. */
 const LETRAS_MINIMAS_PRODUCTO = 2;
@@ -100,7 +100,7 @@ export class PharmacyShop {
   private readonly profiles = inject(ProfilesClient);
   private readonly router = inject(Router);
 
-  protected readonly rutaHistoriaClinica = MI_HISTORIA_ROUTE;
+  protected readonly rutaHistoriaClinica = MY_MEDICAL_RECORD_ROUTE;
 
   /** Sin perfil de paciente no hay a nombre de quién comprar. */
   protected readonly sinPerfilDePaciente = this.auth.patientProfileId() === null;

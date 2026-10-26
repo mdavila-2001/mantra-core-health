@@ -13,7 +13,7 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { MIS_PEDIDOS_ROUTE } from '../../pharmacy-orders/pharmacy-orders.routes';
+import { MY_PHARMACY_ORDERS_ROUTE } from '../../pharmacy-orders/pharmacy-orders.routes';
 import { presentacionDePedido } from '../../pharmacy-orders/pedido-status';
 import { PHARMACY_ROUTE } from '../pharmacy.routes';
 
@@ -56,7 +56,7 @@ export class RecentOrders {
   private readonly perfil = this.auth.patientProfileId();
 
   protected readonly sinPerfilDePaciente = this.perfil === null;
-  protected readonly rutaDePedidos = MIS_PEDIDOS_ROUTE;
+  protected readonly rutaDePedidos = MY_PHARMACY_ORDERS_ROUTE;
   protected readonly rutaDeLaTienda = PHARMACY_ROUTE;
 
   private readonly pedidos = signal<ViewState<readonly PedidoVisible[]>>(loading());

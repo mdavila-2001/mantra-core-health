@@ -21,7 +21,7 @@ import {
   RUTA_DEL_CHECKOUT,
   type TraspasoDeLaReceta,
 } from '../new-order/new-order.handoff';
-import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders.routes';
+import { MY_PHARMACY_ORDERS_ROUTE } from '../pharmacy-orders.routes';
 import { Checkout, traspasoValido } from './checkout';
 
 /**
@@ -490,7 +490,7 @@ describe('Checkout', () => {
       request.flush(pharmacyOrderDtoFixture());
       await fixture.whenStable();
 
-      expect(navegar).toHaveBeenCalledWith([MIS_PEDIDOS_ROUTE, pharmacyOrderDtoFixture().id]);
+      expect(navegar).toHaveBeenCalledWith([MY_PHARMACY_ORDERS_ROUTE, pharmacyOrderDtoFixture().id]);
       expect(client.borradorPreparado()).toBeNull();
     });
 

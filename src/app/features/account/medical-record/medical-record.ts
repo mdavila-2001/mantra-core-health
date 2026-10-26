@@ -57,7 +57,7 @@ import {
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import { descargarHistoriaConEncuentros } from '../../../shared/utils/clinical-pdf/historia-con-encuentros';
 import { textoDeValor } from '../../../shared/utils/form-values/form-values';
-import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
+import { MY_APPOINTMENTS_ROUTE } from '../appointments/appointments.routes';
 import { isHistoryEmpty, summaryHasContent } from './history-emptiness';
 import {
   atencionesDeLaHistoria,
@@ -212,7 +212,7 @@ export class MedicalRecord {
   protected readonly sinPerfilDePaciente = this.perfil === null;
 
   /** La salida cuando la cuenta no es de un paciente. */
-  protected readonly rutaDeTurnos = MIS_TURNOS_ROUTE;
+  protected readonly rutaDeTurnos = MY_APPOINTMENTS_ROUTE;
 
   /* ---- FT-20 · qué pestaña se está mirando -------------------------------- */
 
@@ -541,7 +541,7 @@ export class MedicalRecord {
     } else {
       // No es un vacío de datos ni un error: la pantalla no le corresponde a
       // esta cuenta, y el aviso lo dice con su propia salida.
-      this.historia.set(empty({ label: 'Ir a mis citas', route: MIS_TURNOS_ROUTE }));
+      this.historia.set(empty({ label: 'Ir a mis citas', route: MY_APPOINTMENTS_ROUTE }));
       this.formularios.set(ready([]));
     }
   }
@@ -585,7 +585,7 @@ export class MedicalRecord {
           this.historia.set(
             isHistoryEmpty(resumen, conServicios)
               ? empty(
-                  { label: 'Pedir una cita', route: MIS_TURNOS_ROUTE },
+                  { label: 'Pedir una cita', route: MY_APPOINTMENTS_ROUTE },
                   'Todavía no hay atenciones registradas en su historia.',
                 )
               : ready(resumen),

@@ -32,7 +32,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders/pharmacy-orders.routes';
+import { MY_PHARMACY_ORDERS_ROUTE } from '../pharmacy-orders/pharmacy-orders.routes';
 import {
   etiquetaDeMotivo,
   movimientoEnPalabras,
@@ -166,7 +166,7 @@ export class Loyalty {
             empty(
               // La salida es «Mis pedidos»: los puntos nacen de comprar, así
               // que la puerta correcta es donde vive la compra.
-              { label: 'Ver mis pedidos', route: MIS_PEDIDOS_ROUTE },
+              { label: 'Ver mis pedidos', route: MY_PHARMACY_ORDERS_ROUTE },
               // Ahora sí lo sabemos: la lectura real responde `enrolled: false`
               // cuando la persona no tiene membresía en el programa del tenant.
               `Todavía no hay un programa de ${this.nombreDelPrograma} activo para su cuenta. Cuando lo haya, va a sumar puntos con cada compra en las farmacias de la red.`,

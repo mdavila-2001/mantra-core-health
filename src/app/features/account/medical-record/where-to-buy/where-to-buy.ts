@@ -67,7 +67,7 @@ import { ViewStateHost } from '../../../../shared/components/organisms/view-stat
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { categoriaDeAnalisis } from '../../diagnostic-orders/diagnostic-orders.types';
 import { PHARMACY_CART_ROUTE } from '../../pharmacy/pharmacy.routes';
-import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
+import { MY_MEDICAL_RECORD_ROUTE } from '../medical-record.routes';
 import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
 import { MedicalCentersTab } from './medical-centers-tab/medical-centers-tab';
 import { coverageRoute, directionsUrl, type CoverageRoute } from './where-to-buy.route';
@@ -348,7 +348,7 @@ export class WhereToBuy {
   private readonly perfil = this.auth.patientProfileId();
 
   protected readonly sinPerfilDePaciente = this.perfil === null;
-  protected readonly rutaDeHistoria = MI_HISTORIA_ROUTE;
+  protected readonly rutaDeHistoria = MY_MEDICAL_RECORD_ROUTE;
 
   /**
    * Las salidas de las otras dos pestañas: qué me pidieron, y qué lugares hay
@@ -491,7 +491,7 @@ export class WhereToBuy {
       datos.aprobadosIncluidos === 0
     ) {
       return empty(
-        { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
+        { label: 'Volver a mi historia', route: MY_MEDICAL_RECORD_ROUTE },
         'Con el seguro, ninguno de los medicamentos que eligió está aprobado. Apague la variante con seguro para ver la receta completa.',
       );
     }
@@ -598,7 +598,7 @@ export class WhereToBuy {
     if (this.perfil === null) {
       // No es un vacío de datos ni un error: la pantalla no le corresponde a
       // esta cuenta, y el aviso lo dice con su propia salida.
-      this.lista.set(empty({ label: 'Ir a mi historia', route: MI_HISTORIA_ROUTE }));
+      this.lista.set(empty({ label: 'Ir a mi historia', route: MY_MEDICAL_RECORD_ROUTE }));
       this.resultados.set(ready(SIN_SEDES));
       return;
     }
@@ -746,7 +746,7 @@ export class WhereToBuy {
       .subscribe({
         next: (carga) => {
           if (carga === null) {
-            this.lista.set(notFound({ label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE }));
+            this.lista.set(notFound({ label: 'Volver a mi historia', route: MY_MEDICAL_RECORD_ROUTE }));
             this.resultados.set(ready(SIN_SEDES));
             return;
           }
@@ -816,7 +816,7 @@ export class WhereToBuy {
     if (incluidos.length === 0) {
       this.resultados.set(
         empty(
-          { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
+          { label: 'Volver a mi historia', route: MY_MEDICAL_RECORD_ROUTE },
           'Elija al menos un medicamento para consultar dónde comprarlo.',
         ),
       );
@@ -833,7 +833,7 @@ export class WhereToBuy {
     if (consultables.length === 0) {
       this.resultados.set(
         empty(
-          { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
+          { label: 'Volver a mi historia', route: MY_MEDICAL_RECORD_ROUTE },
           `No hay un producto publicado para: ${sinProducto.join(', ')}. El pedido completo no se puede enviar.`,
         ),
       );
@@ -858,7 +858,7 @@ export class WhereToBuy {
           if (respuesta.items.length === 0) {
             this.resultados.set(
               empty(
-                { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
+                { label: 'Volver a mi historia', route: MY_MEDICAL_RECORD_ROUTE },
                 'Ninguna sucursal puede confirmar hoy los medicamentos de su receta.',
               ),
             );

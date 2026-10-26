@@ -25,9 +25,9 @@ import {
 } from './booking-status';
 import {
   BOOKING_QUERY_PARAM,
-  CITA_QUERY_PARAM,
+  APPOINTMENT_QUERY_PARAM,
   consultationRoute,
-  MOTIVO_QUERY_PARAM,
+  REASON_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record/clinical-record.routes';
 import { ClinicalClient } from '../../core/data-access/clinical/clinical.client';
@@ -2931,10 +2931,10 @@ export class Agenda {
       appointmentId: cita.appointmentId ?? null,
       paramsDeLaAtencion: {
         [BOOKING_QUERY_PARAM]: cita.id,
-        ...(cita.reasonText === undefined ? {} : { [MOTIVO_QUERY_PARAM]: cita.reasonText }),
+        ...(cita.reasonText === undefined ? {} : { [REASON_QUERY_PARAM]: cita.reasonText }),
         ...(cita.appointmentId === undefined || cita.appointmentId === null
           ? {}
-          : { [CITA_QUERY_PARAM]: cita.appointmentId }),
+          : { [APPOINTMENT_QUERY_PARAM]: cita.appointmentId }),
       },
       rutaAtencion:
         paciente !== null && this.puedeVerExpedientes()

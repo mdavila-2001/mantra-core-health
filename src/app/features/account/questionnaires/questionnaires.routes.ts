@@ -12,9 +12,9 @@
  */
 
 /** La sección: el listado de cuestionarios del paciente. */
-export const MIS_CUESTIONARIOS_ROUTE = '/my-account/questionnaires';
+export const MY_QUESTIONNAIRES_ROUTE = '/my-account/questionnaires';
 
 /** La pantalla para responder un cuestionario concreto. */
-export function responderCuestionarioRoute(invitationId: string): string {
-  return `${MIS_CUESTIONARIOS_ROUTE}/${invitationId}`;
+export function answerQuestionnaireRoute(invitationId: string): string {
+  return `${MY_QUESTIONNAIRES_ROUTE}/${invitationId}`;
 }

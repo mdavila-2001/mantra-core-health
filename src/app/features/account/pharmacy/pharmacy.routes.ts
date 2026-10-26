@@ -5,7 +5,7 @@
  * `PHARMACY_ROUTE` es la sección existente («Farmacia», `roles: ['PATIENT']`),
  * hoy servida por `pharmacy-hub` y reemplazada por la tienda de Justin (H3);
  * `cart`, `stores/:pharmacyId` y `prescriptions` son sus pantallas hijas.
- * `MIS_PEDIDOS_ROUTE` ya existe en `pharmacy-orders.routes.ts` y no se toca.
+ * `MY_PHARMACY_ORDERS_ROUTE` ya existe en `pharmacy-orders.routes.ts` y no se toca.
  */
 export const PHARMACY_ROUTE = '/my-account/pharmacy';
 export const PHARMACY_CART_ROUTE = `${PHARMACY_ROUTE}/cart`;
