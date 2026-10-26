@@ -151,7 +151,7 @@ describe('MedicalCentersTab', () => {
     fixture.detectChanges();
     http.expectNone((r) => r.url === '/clinical/me/procedure-centers');
 
-    fixture.componentRef.setInput('origin', { etiqueta: 'su casa', lat: -16.5, lng: -68.1 });
+    fixture.componentRef.setInput('origin', { label: 'su casa', lat: -16.5, lng: -68.1 });
     fixture.detectChanges();
     const request = http.expectOne((r) => r.url === '/clinical/me/procedure-centers');
     expect(request.request.params.get('lat')).toBe('-16.5');
