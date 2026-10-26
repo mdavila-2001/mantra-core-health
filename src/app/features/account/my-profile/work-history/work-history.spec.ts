@@ -1,6 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, DeferBlockBehavior, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  DeferBlockBehavior,
+  DeferBlockState,
+  TestBed,
+} from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -780,6 +785,35 @@ const RAMAS: readonly RamaDepartamento[] = [
   },
 ];
 
+/** Un punto en Santa Cruz y lo que el mapa deduce de él. */
+const PUNTO_SEDE = { lat: -17.7833, lng: -63.1821 };
+const deducidoDe = (
+  punto: { lat: number; lng: number },
+  extra: Record<string, unknown> = {},
+) => ({
+  punto,
+  calle: 'Av. Brasil 1234, Equipetrol',
+  calleSola: 'Av. Brasil 1234',
+  zona: 'Equipetrol',
+  municipioConceptId: 'mun-scz',
+  ...extra,
+});
+
+/**
+ * Marca y confirma el punto de la sede, con lo que el mapa deduce de él: lo que
+ * hace `app-map-location-picker` (pedido del cliente del 26/10/2026).
+ */
+function marcarSede(
+  componente: Record<string, UnMiembro>,
+  punto = PUNTO_SEDE,
+  extra: Record<string, unknown> = {},
+): void {
+  (componente['aplicarLocalidadDeSede'] as unknown as (l: unknown) => void)(
+    deducidoDe(punto, extra),
+  );
+  (componente['confirmarPuntoDeSede'] as unknown as (p: unknown) => void)(punto);
+}
+
 async function montarConSedes(
   confirmar = true,
   secciones?: 'ambas' | 'consultorios' | 'historial',
@@ -850,16 +884,14 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.verify();
   });
 
-  it('registra un consultorio propio con dirección, municipio y departamento deducido', async () => {
+  it('registra un consultorio propio con dirección, ciudad, municipio y departamento sacados del punto', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     const componente = api(fixture);
 
     componente['abrirAltaDeSede']();
     componente['nombreDeSedeNueva'].set('  Consultorio Dra. Pérez ');
-    componente['direccionDeSede'].set('Av. Brasil 1234');
-    componente['ciudadDeSede'].set('La Paz');
-    componente['municipioDeSede'].set('mun-scz');
+    marcarSede(componente);
     fixture.detectChanges();
 
     expect(leer(componente, 'departamentoDeSede')).toBe('dep-sc');
@@ -869,10 +901,12 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     expect(req.request.body).toEqual({
       name: 'Consultorio Dra. Pérez',
       address: {
-        lines: ['Av. Brasil 1234'],
-        city: 'La Paz',
+        lines: ['Av. Brasil 1234, Equipetrol'],
+        city: 'Santa Cruz de la Sierra',
         municipalityConceptId: 'mun-scz',
         administrativeAreaConceptId: 'dep-sc',
+        latitude: -17.7833,
+        longitude: -63.1821,
       },
     });
     req.flush(sedeEnCable());
@@ -887,58 +921,33 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.verify();
   });
 
-  it('manda el punto del mapa como latitud y longitud, y omite la dirección si está vacía', async () => {
+  it('sin punto confirmado no se guarda; sin calle en el mapa viaja la zona, nunca una calle inventada', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     const componente = api(fixture);
 
     componente['abrirAltaDeSede']();
     componente['nombreDeSedeNueva'].set('Consultorio');
+    // Lo deducido de un punto que todavía no se confirmó no cuenta.
+    (componente['aplicarLocalidadDeSede'] as unknown as (l: unknown) => void)(
+      deducidoDe(PUNTO_SEDE),
+    );
     fixture.detectChanges();
-    componente['guardarSede']();
-
-    // Sin dirección no viaja `address`: una fila vacía en common.addresses no
-    // es «sin dirección».
-    const sinDireccion = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
-    expect(sinDireccion.request.body).toEqual({ name: 'Consultorio' });
-    sinDireccion.flush(sedeEnCable());
-    http.expectOne(SITIOS).flush({ items: [], count: 0 });
-
-    // D-06: tocar el mapa vacía la dirección — así que si nadie la vuelve a
-    // escribir después, `direccionDelFormulario()` sigue leyendo «vacía» y el
-    // punto se pierde igual que la calle. El aviso junto al campo
-    // (`sede-direccion-vaciada`) es lo que evita esto en la práctica.
-    componente['abrirAltaDeSede']();
-    componente['nombreDeSedeNueva'].set('Consultorio');
-    componente['direccionDeSede'].set('Calle 1');
-    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
-      lat: -16.5,
-      lng: -68.15,
-    });
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(false);
     expect(leer<string>(componente, 'direccionDeSede')).toBe('');
-    fixture.detectChanges();
     componente['guardarSede']();
+    http.expectNone((r) => r.url === SITIO_PROPIO && r.method === 'POST');
 
-    const sinRetipear = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
-    expect(sinRetipear.request.body).toEqual({ name: 'Consultorio' });
-    sinRetipear.flush(sedeEnCable());
-    http.expectOne(SITIOS).flush({ items: [], count: 0 });
-
-    // Quien sí vuelve a escribir la dirección (lo que el aviso le pide) manda
-    // la calle y el punto juntos.
-    componente['abrirAltaDeSede']();
-    componente['nombreDeSedeNueva'].set('Consultorio');
-    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
-      lat: -16.5,
-      lng: -68.15,
-    });
-    componente['direccionDeSede'].set('Calle 1');
+    marcarSede(componente, { lat: -16.5, lng: -68.15 }, { calle: null, calleSola: null });
     fixture.detectChanges();
     componente['guardarSede']();
 
     const conPunto = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
     expect(conPunto.request.body.address).toEqual({
-      lines: ['Calle 1'],
+      lines: ['Equipetrol, Santa Cruz de la Sierra'],
+      city: 'Santa Cruz de la Sierra',
+      municipalityConceptId: 'mun-scz',
+      administrativeAreaConceptId: 'dep-sc',
       latitude: -16.5,
       longitude: -68.15,
     });
@@ -1497,29 +1506,39 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     http.verify();
   });
 
-  it('corrige el nombre con un PATCH y NO manda dirección si el formulario la deja en blanco', async () => {
+  it('corrige sólo el nombre: con el mismo punto guardado, la dirección es la que ya tenía', async () => {
     const { fixture, http } = await montarConSedes();
-    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const ubicada = { ...PROPIA, latitude: -17.78, longitude: -63.18 };
+    http.expectOne(SITIOS).flush({ items: [ubicada], count: 1 });
     fixture.detectChanges();
     const componente = api(fixture);
 
-    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(ubicada);
     fixture.detectChanges();
-    // El formulario arranca con el nombre que ya tenía.
+    // El formulario arranca con el nombre que ya tenía, y el punto guardado
+    // vale sin volver a confirmarlo.
     expect(leer<string>(componente, 'nombreDeSedeNueva')).toBe('Consultorio Dra. Pérez');
+    expect(leer<boolean>(componente, 'sinPuntoDeSede')).toBe(false);
+    // El mapa vuelve a deducir del mismo punto al abrir: no reescribe nada.
+    (componente['aplicarLocalidadDeSede'] as unknown as (l: unknown) => void)(
+      deducidoDe({ lat: -17.78, lng: -63.18 }),
+    );
+    (componente['confirmarPuntoDeSede'] as unknown as (p: unknown) => void)({
+      lat: -17.78,
+      lng: -63.18,
+    });
+    expect(leer<string>(componente, 'direccionDeSede')).toBe('Av. Brasil 1234, La Paz');
 
     componente['nombreDeSedeNueva'].set('Consultorio Sur');
-    // Vaciarla a propósito: el formulario ya no abre en blanco, así que «en
-    // blanco» es una decisión de quien edita y no el estado inicial.
-    componente['direccionDeSede'].set('');
     await (componente['guardarSede'] as unknown as () => Promise<void>)();
 
     const req = http.expectOne(
       (r) => r.url === `${SITIO_PROPIO}/site-propia` && r.method === 'PATCH',
     );
-    // Sin calle escrita no viaja `address`: en blanco es «no la toques», que
-    // es exactamente lo que el PATCH hace con lo que no recibe.
-    expect(req.request.body).toEqual({ name: 'Consultorio Sur' });
+    expect(req.request.body).toEqual({
+      name: 'Consultorio Sur',
+      address: { lines: ['Av. Brasil 1234, La Paz'], latitude: -17.78, longitude: -63.18 },
+    });
     req.flush(sedeEnCable({ name: 'Consultorio Sur', isOwnSite: true }));
 
     http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
@@ -1528,15 +1547,13 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     http.verify();
   });
 
-  it('manda la dirección entera cuando sí se escribe una calle', async () => {
+  it('un punto nuevo reescribe la dirección entera con lo que sale de él', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
     const componente = api(fixture);
 
     (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
-    componente['direccionDeSede'].set('Calle Nueva 99');
-    componente['ciudadDeSede'].set('Santa Cruz');
-    componente['municipioDeSede'].set('mun-scz');
+    marcarSede(componente, PUNTO_SEDE, { calle: 'Calle Nueva 99, Equipetrol' });
     fixture.detectChanges();
     await (componente['guardarSede'] as unknown as () => Promise<void>)();
 
@@ -1546,10 +1563,12 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     expect(req.request.body).toEqual({
       name: 'Consultorio Dra. Pérez',
       address: {
-        lines: ['Calle Nueva 99'],
-        city: 'Santa Cruz',
+        lines: ['Calle Nueva 99, Equipetrol'],
+        city: 'Santa Cruz de la Sierra',
         municipalityConceptId: 'mun-scz',
         administrativeAreaConceptId: 'dep-sc',
+        latitude: -17.7833,
+        longitude: -63.1821,
       },
     });
     req.flush(sedeEnCable());
@@ -1798,27 +1817,38 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
     http.verify();
   });
 
-  it('D-06: tocar el mapa anuncia que hay que volver a escribir la dirección', async () => {
+  it('el punto va primero en el formulario, es obligatorio, y la dirección no se escribe', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     const componente = api(fixture);
 
     componente['abrirAltaDeSede']();
-    componente['direccionDeSede'].set('Calle 1');
     fixture.detectChanges();
-    expect(leer<boolean>(componente, 'avisoDireccionVaciada')).toBe(false);
-
-    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
-      lat: -16.5,
-      lng: -68.15,
-    });
+    const [bloque] = await fixture.getDeferBlocks();
+    await bloque!.render(DeferBlockState.Complete);
     fixture.detectChanges();
 
-    expect(leer<string>(componente, 'direccionDeSede')).toBe('');
-    expect(leer<boolean>(componente, 'avisoDireccionVaciada')).toBe(true);
+    const formulario: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="sede-formulario"]',
+    );
+    const primero = formulario.querySelector('app-map-location-picker, app-form-field');
+    expect(primero?.tagName.toLowerCase()).toBe('app-map-location-picker');
+    // Ni casilla de dirección ni de ciudad, ni el selector manual de municipio.
+    expect(formulario.querySelector('[data-testid="sede-direccion"]')).toBeNull();
+    expect(formulario.querySelector('app-location-picker')).toBeNull();
+    expect(formulario.textContent).not.toContain('Ciudad');
+
+    componente['nombreDeSedeNueva'].set('Consultorio');
+    fixture.detectChanges();
     expect(
-      fixture.nativeElement.querySelector('[data-testid="sede-direccion-vaciada"]'),
-    ).not.toBeNull();
+      fixture.nativeElement.querySelector('[data-testid="sede-punto-requerido"]')?.textContent,
+    ).toContain('Marque el lugar en el mapa y pulse «Confirmar dirección actual».');
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(false);
+
+    marcarSede(componente);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-punto-requerido"]')).toBeNull();
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(true);
     http.verify();
   });
 });
