@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -91,6 +92,7 @@ const CAMPOS_DEL_FORMULARIO: ReadonlySet<string> = new Set([
     InsurerProfileCard,
     OrganizationLogo,
     PageHeader,
+    RouterLink,
     ViewStateHost,
   ],
   templateUrl: './organization-panel.html',
