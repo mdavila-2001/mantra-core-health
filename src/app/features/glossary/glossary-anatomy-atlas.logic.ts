@@ -227,3 +227,22 @@ export function groupSentences(description: AnatomyExtendedDescription): Sentenc
 export function missingAspectsLabel(aspects: readonly AnatomyAspect[]): string {
   return aspects.map((a) => ASPECT_LABELS[a].toLowerCase()).join(', ');
 }
+
+/** Una página (1-based) de `items`; la página se acota al rango válido. */
+export function pageOf<T>(items: readonly T[], page: number, size: number): T[] {
+  const ultima = Math.max(1, Math.ceil(items.length / size));
+  const actual = Math.min(Math.max(1, page), ultima);
+  return items.slice((actual - 1) * size, actual * size);
+}
+
+/**
+ * Reparte los grupos de relaciones por páginas de `size` filas en total,
+ * sin partir el orden: un grupo que cae entre dos páginas continúa en la siguiente.
+ */
+export function pageRelationGroups(groups: readonly RelationGroup[], page: number, size: number): RelationGroup[] {
+  const filas = groups.flatMap((g) => g.items.map((item) => ({ name: g.name, item })));
+  const visibles = pageOf(filas, page, size);
+  const porGrupo = new Map<string, RelatedItem[]>();
+  for (const { name, item } of visibles) porGrupo.set(name, [...(porGrupo.get(name) ?? []), item]);
+  return [...porGrupo].map(([name, items]) => ({ name, items }));
+}
