@@ -61,6 +61,10 @@ describe('GlossaryTerm con artículo enciclopédico', () => {
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(`/glossary/${ID}`, GlossaryTerm);
+    // Las relaciones (TAREA-41 F5.5) se leen del vecindario, aparte: acá no importan.
+    http
+      .expectOne((r) => r.url.endsWith(`/concepts/${ID}/glossary-neighborhood`))
+      .flush({ focus: { conceptId: ID, slug: 'x', display: 'x', category: null, shortDefinition: '' }, groups: [] });
   });
 
   afterEach(() => http.verify());

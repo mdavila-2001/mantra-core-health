@@ -301,47 +301,20 @@
   font-style: italic;
 }
 
-/* «Relacionados»: un bloque por tipo de relación —título con su cantidad y los
-   términos como chips—, en columnas según el ancho, en vez de una lista de
-   enlaces azules uno bajo otro. */
-.termino__grupos {
+/* Relaciones: mismas zonas, columnas y sellos que el mapa (organismo compartido). */
+.termino__relaciones {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
-  gap: var(--sp-4);
-}
-
-.termino__grupo {
-  display: grid;
-  align-content: start;
-  gap: var(--sp-3);
+  gap: var(--sp-6);
   min-inline-size: 0;
-  padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-lg);
-  background: var(--bg-inset);
 }
 
-.termino__grupo-titulo {
-  display: flex;
+.termino__mapa-enlace {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  margin: 0;
-  font-size: var(--fs-body);
+  min-block-size: 2.75rem;
+  margin-block-start: var(--sp-4);
+  color: var(--text-link);
   font-weight: 600;
-  color: var(--text-primary);
-}
-
-.termino__grupo-cuenta {
-  min-inline-size: 1.5rem;
-  padding: 0 var(--sp-2);
-  border-radius: var(--r-full);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  text-align: center;
 }
 
 .termino__subtitulo {
