@@ -12,6 +12,16 @@
   max-inline-size: 28rem;
 }
 
+/* `anywhere` y no `break-word`: es el único que baja el ancho mínimo de la
+   celda, así que una razón social de 300 caracteres sin espacios parte en
+   renglones en vez de estirar la columna y sacar «Tipo» y «Estado» de la
+   vista. Va en la celda de esta pantalla, no en la tabla compartida. */
+.organizaciones__nombre,
+.organizaciones__comercial,
+.organizaciones__codigo {
+  overflow-wrap: anywhere;
+}
+
 .organizaciones__nombre {
   display: block;
 }

@@ -3,41 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type { TenantTypeCode } from '../directory/directory.types';
+import type { MedicalOrganizationType } from '../directory/directory.types';
 import type { RegisteredOrganization } from './iam.types';
-
-/**
- * Los tipos de **organización médica** que el alta pública deja elegir.
- *
- * Son los cinco tipos institucionales de salud de `register-organization`, en
- * el orden en que la pantalla los ofrece. No son un catálogo propio del front:
- * la API los declara (`@IsIn(TENANT_TYPE_CODES)`) y resuelve cada código a su
- * concepto. La pantalla igual lee el catálogo `tenant-type` y ofrece sólo los
- * que la API publica (ver `medicalOrganizationTypeOptions`); esta lista fija el
- * orden, el subconjunto y el tipo que el compilador controla.
- *
- * `CLINIC` llega con la API que lo agrega al DTO y al catálogo; mientras una
- * API no lo publique, la pantalla no lo ofrece.
- *
- * Es un **subconjunto** de `TENANT_TYPE_CODES` (el alta administrativa) y en su
- * mismo orden: el `satisfies` impide que acá aparezca un código que el alta
- * administrativa no conoce, y `directory.types.spec.ts` fija el orden.
- */
-export const MEDICAL_ORGANIZATION_TYPES = [
-  'HOSPITAL',
-  'CLINIC',
-  'MEDICAL_OFFICE',
-  'NURSING',
-  'HEALTH_OTHER',
-] as const satisfies readonly TenantTypeCode[];
-
-/** Un tipo de organización médica: lo que viaja en `tenantType`. */
-export type MedicalOrganizationType = (typeof MEDICAL_ORGANIZATION_TYPES)[number];
-
-/** Si un código es uno de los tipos de organización médica. */
-export function isMedicalOrganizationType(code: string): code is MedicalOrganizationType {
-  return (MEDICAL_ORGANIZATION_TYPES as readonly string[]).includes(code);
-}
 
 /** Lo que pide el alta de una organización médica. */
 export interface MedicalCenterRegistration {

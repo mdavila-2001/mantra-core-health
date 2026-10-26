@@ -128,6 +128,23 @@ describe('RadioGroup', () => {
     expect(label.hasAttribute('for')).toBe(false);
     expect(group.getAttribute('aria-labelledby')).toBe(label.id);
   });
+
+  it('dentro de un campo con error, el grupo queda descrito por el mensaje (ADR-0008)', async () => {
+    const conError = TestBed.createComponent(GroupWithErrorHost);
+    await conError.whenStable();
+
+    const group: HTMLElement = conError.nativeElement.querySelector('app-radio-group');
+    const error: HTMLElement = conError.nativeElement.querySelector('.form-field-error');
+
+    expect(error.id).not.toBe('');
+    expect(group.getAttribute('aria-describedby')).toBe(error.id);
+    expect(group.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('sin hint ni error no declara aria-describedby', () => {
+    const group = fixture.nativeElement.querySelector('app-radio-group');
+    expect(group.hasAttribute('aria-describedby')).toBe(false);
+  });
 });
 
 @Component({
@@ -142,4 +159,18 @@ describe('RadioGroup', () => {
 })
 class GroupInFieldHost {
   readonly tipo = signal<string | null>('paciente');
+}
+
+@Component({
+  imports: [FormField, RadioGroup, Radio],
+  template: `
+    <app-form-field label="Tipo de institución" errorMessage="Elija el tipo de institución.">
+      <app-radio-group [(value)]="tipo">
+        <app-radio value="HOSPITAL" label="Hospital" />
+      </app-radio-group>
+    </app-form-field>
+  `,
+})
+class GroupWithErrorHost {
+  readonly tipo = signal<string | null>(null);
 }

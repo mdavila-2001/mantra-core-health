@@ -8,8 +8,11 @@
     - **Correcto**, por tipo: UI → `POST /iam/auth/register-organization` con el
       `tenantType` del tipo elegido → 201 → fila en `directory.tenants` cuyo
       concepto de tipo es ese código → login real de la cuenta nueva en la UI →
-      el menú ofrece «Configurar centro médico», que sólo existe para una
-      organización médica (lo decide el tipo que viaja en el token).
+      el menú ofrece «Configurar su organización», que sólo existe para una
+      organización médica (lo decide el tipo que viaja en el token), y no
+      ofrece la cara de aseguradora. Al entrar a configurarla, como la
+      organización nace sin verificar, la pantalla lo dice (S3) en vez de
+      dejar completar el formulario para recibir el 422.
     - **Límite**: razón social de 300 caracteres exactos (201) y de 301 (la UI
       no envía; la API también la rechaza con 400); contraseña de 8 (201) y de
       7 (la UI no envía; la API también la rechaza con 400).
@@ -29,6 +32,14 @@
     Nunca espera `networkidle` (con `ng serve` no llega): espera selectores y
     respuestas concretas. Las rutas de alta y de login tienen límite por IP: se
     respeta con una pausa antes de cada envío, en vez de desactivarlo.
+
+    Cada prueba junta los errores de consola, los `pageerror` y las requests
+    fallidas, y exige cero (`visual-quality-gate`). Las capturas se toman
+    después de que terminen las animaciones finitas, y con `animations:
+    'disabled'` como segundo cinturón: una captura a mitad de la entrada no
+    prueba nada. No se emula `prefers-reduced-motion`: con él el router salta
+    cada transición de vista y Chromium anota un `AbortError` por navegación
+    (hallazgo aparte, fuera de esta pantalla).
     ========================================================================== */
 
 import { execFileSync } from 'node:child_process';
@@ -49,12 +60,28 @@ const EVIDENCIA = join('docs', 'frontend', 'evidence', 'cm-11-organizacion-medic
 
 const ESCRITORIO = { width: 1440, height: 900 } as const;
 const TELEFONO = { width: 390, height: 844 } as const;
+/**
+ * Los anchos de referencia. `sinScroll`: los monitores de escritorio en los
+ * que la primera página tiene que verse entera —con «Siguiente»— sin
+ * desplazar (los de las salas: 1024x768, 1280x720, 1366x768 y 1440x900).
+ */
 const VIEWPORTS = [
-  { label: '390x844', width: 390, height: 844 },
-  { label: '768x1024', width: 768, height: 1024 },
-  { label: '1024x768', width: 1024, height: 768 },
-  { label: '1440x900', width: 1440, height: 900 },
-  { label: '1920x1080', width: 1920, height: 1080 },
+  { label: '390x844', width: 390, height: 844, sinScroll: false },
+  { label: '768x1024', width: 768, height: 1024, sinScroll: false },
+  { label: '1024x768', width: 1024, height: 768, sinScroll: true },
+  { label: '1280x720', width: 1280, height: 720, sinScroll: true },
+  { label: '1366x768', width: 1366, height: 768, sinScroll: true },
+  { label: '1440x900', width: 1440, height: 900, sinScroll: true },
+  { label: '1920x1080', width: 1920, height: 1080, sinScroll: false },
+] as const;
+
+/** La cara de aseguradora del menú: una organización médica no la ve. */
+const RUTAS_DE_ASEGURADORA = [
+  '/administration/insurance',
+  '/administration/insurance-analytics',
+  '/administration/received-claims',
+  '/administration/insurance-patients',
+  '/administration/insurance-campaigns',
 ] as const;
 
 /** Los cinco tipos, con el rótulo que muestra la pantalla y el ancho al que se prueban. */
@@ -78,6 +105,12 @@ const resultados: Resultado[] = [];
 
 /** La cuenta del primer alta correcta: el caso del correo duplicado la reutiliza. */
 let correoRegistrado: string | null = null;
+
+/** La razón social de 300 del caso límite: la tira de «A» sin espacios estira lo que no parte. */
+let razonSocialLarga: string | null = null;
+
+const ADMIN_EMAIL = process.env['E2E_ADMIN_EMAIL'];
+const ADMIN_PASSWORD = process.env['E2E_ADMIN_PASSWORD'];
 
 test.describe.configure({ mode: 'serial' });
 test.skip(
@@ -170,8 +203,83 @@ function sinClave(req: Request): unknown {
   return { ...cuerpo, owner: { ...cuerpo.owner, password: '***' } };
 }
 
+/**
+ * Lo que la página dijo mal mientras se probaba: errores de consola,
+ * excepciones y requests que no llegaron. `permitido` deja pasar lo que la
+ * prueba provoca a propósito (el 409 del correo duplicado), nombrándolo.
+ */
+interface Vigia {
+  readonly problemas: string[];
+  permitir(patron: RegExp): void;
+}
+
+function vigilar(page: Page): Vigia {
+  const problemas: string[] = [];
+  const permitidos: RegExp[] = [];
+  const anotar = (texto: string) => {
+    if (!permitidos.some((patron) => patron.test(texto))) problemas.push(texto);
+  };
+  page.on('console', (m) => {
+    if (m.type() === 'error') anotar(`console: ${m.text()}`);
+  });
+  page.on('pageerror', (e) => anotar(`pageerror: ${e.message}`));
+  page.on('requestfailed', (r) => {
+    // `ERR_ABORTED` es la request que el propio navegador corta al navegar a
+    // otra página (p. ej. del alta al acceso): no llegó porque ya no hacía
+    // falta, no porque fallara.
+    const motivo = r.failure()?.errorText ?? '';
+    if (motivo.includes('ERR_ABORTED')) return;
+    anotar(`requestfailed: ${r.method()} ${r.url()} ${motivo}`);
+  });
+  return { problemas, permitir: (patron) => permitidos.push(patron) };
+}
+
+/**
+ * Espera a que terminen las animaciones finitas **que están corriendo**: las
+ * infinitas y las pausadas no terminan nunca (el panel del owner tiene una
+ * pausada hasta que entra en vista). Con un techo de 5 s, después del cual
+ * `animations: 'disabled'` de la captura las lleva a su estado final.
+ */
+async function quieta(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const corriendo = document.getAnimations().filter((animacion) => {
+      const iteraciones = animacion.effect?.getComputedTiming().iterations ?? 1;
+      return Number.isFinite(iteraciones) && animacion.playState === 'running';
+    });
+    const techo = new Promise((listo) => setTimeout(listo, 5_000));
+    await Promise.race([
+      Promise.all(corriendo.map((animacion) => animacion.finished.catch(() => undefined))),
+      techo,
+    ]);
+  });
+}
+
 async function foto(page: Page, nombre: string): Promise<void> {
-  await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: true });
+  await quieta(page);
+  await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: true, animations: 'disabled' });
+}
+
+/**
+ * Todo botón de acción del formulario —«Atrás», «Siguiente», el envío— queda
+ * dentro de la tarjeta y de la ventana. A 390 px «Atrás» se salía 7 px por la
+ * izquierda cuando el envío era largo (H1 de la revisión visual).
+ */
+async function accionesDentro(page: Page): Promise<void> {
+  const fuera = await page.evaluate(() => {
+    const tarjeta = document.querySelector('.registro')?.getBoundingClientRect();
+    if (tarjeta === undefined) return ['sin tarjeta'];
+    return [...document.querySelectorAll('.paginated-form__acciones button')]
+      .map((boton) => ({ texto: boton.textContent?.trim() ?? '', r: boton.getBoundingClientRect() }))
+      .filter(
+        ({ r }) =>
+          r.left < tarjeta.left - 1 ||
+          r.right > tarjeta.right + 1 ||
+          r.left < 0 ||
+          r.right > window.innerWidth,
+      )
+      .map(({ texto, r }) => `${texto}: ${Math.round(r.left)}–${Math.round(r.right)}`);
+  });
+  expect(fuera, 'ningún botón de acción fuera de la tarjeta ni de la ventana').toEqual([]);
 }
 
 /**
@@ -285,6 +393,7 @@ test.describe('correcto: alta completa por tipo de institución', () => {
         !(await tiposPublicados()).includes(tipo.codigo),
         `La API de este entorno no publica ${tipo.codigo} en el catálogo tenant-type: la pantalla no lo ofrece.`,
       );
+      const vigia = vigilar(page);
       await page.setViewportSize(tipo.viewport);
       const ancho = tipo.viewport.width;
       const razonSocial = `${tipo.rotulo} Prueba ${RUN}`;
@@ -298,6 +407,8 @@ test.describe('correcto: alta completa por tipo de institución', () => {
       await continuar(page);
       await paginaCuenta(page, correo, password);
       await sinDesbordeHorizontal(page);
+      await accionesDentro(page);
+      await expect(page.getByTestId('paginated-form-atras')).toBeInViewport({ ratio: 1 });
       await foto(page, `${ancho}-correcto-${tipo.codigo}-2-cuenta`);
 
       const respuesta = await enviar(page);
@@ -316,17 +427,49 @@ test.describe('correcto: alta completa por tipo de institución', () => {
 
       await entrarConLaCuentaNueva(page, correo, password);
       await expect(page.locator('a[href="/administration/medical-center-setup"]').first()).toBeAttached();
+      // M5: la cara de aseguradora no se le ofrece a una organización médica;
+      // «Solicitudes de seguro», la del prestador, sí.
+      for (const ruta of RUTAS_DE_ASEGURADORA) {
+        await expect(page.locator(`a[href="${ruta}"]`), ruta).toHaveCount(0);
+      }
+      await expect(page.locator('a[href="/administration/insurance-claims"]').first()).toBeAttached();
+      if (ancho >= 1280) {
+        // El rótulo del menú entra en un renglón: mide lo mismo que «Mi perfil».
+        const enlace = page.locator('a[href="/administration/medical-center-setup"]').first();
+        if (!(await enlace.isVisible())) {
+          // El grupo del menú es un <details>: se abre por su <summary>.
+          await page.locator('details.app-side-nav__group', { has: enlace }).locator('summary').first().click();
+        }
+        await expect(enlace).toBeVisible();
+        await expect(enlace).toContainText('Configurar práctica');
+        const alto = (await enlace.boundingBox())?.height ?? 0;
+        const altoDeUnRenglon = (await page.locator('a[href="/my-account"]').first().boundingBox())?.height;
+        if (altoDeUnRenglon !== undefined) expect(alto).toBeLessThanOrEqual(altoDeUnRenglon + 1);
+      }
       await sinDesbordeHorizontal(page);
       await foto(page, `${ancho}-correcto-${tipo.codigo}-4-sesion-del-owner`);
 
-      // La puerta que el tipo abre: la ruta sólo existe para una organización médica.
+      // La puerta que el tipo abre: la ruta sólo existe para una organización
+      // médica. La organización nace sin verificar, y la pantalla lo dice al
+      // entrar (S3, con su próxima acción) en vez de ofrecer el formulario.
       await page.goto('/administration/medical-center-setup', { waitUntil: 'domcontentloaded' });
       await esperarAplicacionLista(page);
-      await expect(page.getByRole('heading', { level: 1, name: 'Configurar centro médico' })).toBeVisible({
+      await expect(page.getByRole('heading', { level: 1, name: 'Configurar su organización' })).toBeVisible({
         timeout: 30_000,
       });
+      const sinVerificar = page.getByTestId('medical-center-setup-unverified');
+      await expect(sinVerificar).toBeVisible({ timeout: 30_000 });
+      await expect(sinVerificar).toContainText('todavía no fue verificada');
+      await expect(sinVerificar.getByRole('link', { name: 'Ver los datos de su organización' })).toHaveAttribute(
+        'href',
+        '/administration/my-organization',
+      );
+      await expect(page.getByTestId('medical-center-setup-form')).toHaveCount(0);
+      // El código que guarda la base para «sin verificar».
+      expect(fila.split(' | ')[2]).toBe('directory:TENANT_UNVERIFIED');
       await sinDesbordeHorizontal(page);
-      await foto(page, `${ancho}-correcto-${tipo.codigo}-5-configurar-centro`);
+      await foto(page, `${ancho}-correcto-${tipo.codigo}-5-configurar-organizacion`);
+      expect(vigia.problemas).toEqual([]);
 
       resultados.push({
         caso: `Correcto · ${tipo.rotulo}`,
@@ -343,6 +486,7 @@ test.describe('correcto: alta completa por tipo de institución', () => {
 
 test.describe('límite', () => {
   test('razón social de 300 caracteres exactos y contraseña de 8: 201', async ({ page }) => {
+    const vigia = vigilar(page);
     await page.setViewportSize(ESCRITORIO);
     const prefijo = `Consultorio Borde ${RUN} `;
     const razonSocial = prefijo + 'A'.repeat(300 - prefijo.length);
@@ -362,7 +506,37 @@ test.describe('límite', () => {
     const fila = filaDeOrganizacion(razonSocial);
     expect(fila.split(' | ')[1]).toBe('MEDICAL_OFFICE');
     expect(fila.split(' | ')[3]).toBe('300');
+    razonSocialLarga = razonSocial;
+    // L4: el botón del éxito va a su medida en escritorio, no a lo ancho.
+    const cta = await page.getByTestId('medical-center-signup-go-to-login').boundingBox();
+    expect(cta?.width ?? 0).toBeLessThan(400);
     await foto(page, '1440-limite-300-y-clave-8-exito');
+
+    // Una razón social de 300 con una tira larga sin espacios no estira la
+    // ficha de «Elija su organización» fuera de su tarjeta (ni a 390).
+    await entrarConLaCuentaNueva(page, correo, password);
+    for (const vista of [TELEFONO, ESCRITORIO]) {
+      await page.setViewportSize(vista);
+      await page.goto('/auth/organization', { waitUntil: 'domcontentloaded' });
+      await esperarAplicacionLista(page);
+      const opcion = page.getByTestId('tenant-opcion').first();
+      await expect(opcion).toContainText('AAAAAAAAAA');
+      const medidas = await page.evaluate(() => {
+        const tarjeta = document.querySelector('.tenant__card')!.getBoundingClientRect();
+        const ficha = document.querySelector('[data-testid="tenant-opcion"]')!.getBoundingClientRect();
+        return {
+          tarjeta: [tarjeta.left, tarjeta.right],
+          ficha: [ficha.left, ficha.right],
+          documento: document.documentElement.scrollWidth,
+          ventana: window.innerWidth,
+        };
+      });
+      expect(medidas.ficha[0]).toBeGreaterThanOrEqual(medidas.tarjeta[0]);
+      expect(medidas.ficha[1]).toBeLessThanOrEqual(medidas.tarjeta[1]);
+      expect(medidas.documento).toBeLessThanOrEqual(medidas.ventana);
+      await foto(page, `${vista.width}-limite-300-elija-su-organizacion`);
+    }
+    expect(vigia.problemas).toEqual([]);
 
     resultados.push({
       caso: 'Límite · razón social 300 + contraseña 8',
@@ -373,7 +547,69 @@ test.describe('límite', () => {
     });
   });
 
+  test('el listado de organizaciones no se estira con esa razón social de 300', async ({ page }) => {
+    test.skip(
+      ADMIN_EMAIL === undefined || ADMIN_PASSWORD === undefined || razonSocialLarga === null,
+      'Omitido: hacen falta E2E_ADMIN_EMAIL/PASSWORD y el alta de 300 de arriba. No es un verde.',
+    );
+    const vigia = vigilar(page);
+    await page.setViewportSize(ESCRITORIO);
+    await page.goto('/auth', { waitUntil: 'domcontentloaded' });
+    await esperarAplicacionLista(page);
+    await escribir(page, 'login-identifier', ADMIN_EMAIL ?? '');
+    await escribir(page, 'login-password', ADMIN_PASSWORD ?? '');
+    await page.waitForTimeout(PAUSA_DEL_LIMITADOR_MS);
+    await page.getByTestId('login-submit').click();
+    await page.waitForURL((u) => !u.pathname.startsWith('/auth') || u.pathname === '/auth/organization', {
+      timeout: 60_000,
+    });
+    if (new URL(page.url()).pathname === '/auth/organization') {
+      await page.getByTestId('tenant-opcion').first().click();
+      await page.waitForURL((u) => !u.pathname.startsWith('/auth'), { timeout: 60_000 });
+    }
+
+    for (const vista of [ESCRITORIO, TELEFONO]) {
+      await page.setViewportSize(vista);
+      await page.goto('/administration/organizations', { waitUntil: 'domcontentloaded' });
+      await esperarAplicacionLista(page);
+      const buscador = page.getByRole('textbox', { name: 'Buscar organizaciones' });
+      await buscador.fill(`Borde ${RUN}`);
+      await buscador.press('Enter');
+      await expect(page.getByText(razonSocialLarga ?? '', { exact: true }).first()).toBeVisible({
+        timeout: 30_000,
+      });
+      const medidas = await page.evaluate(() => {
+        const tabla = document.querySelector('app-data-table table') ?? document.querySelector('app-data-table');
+        const caja = tabla!.getBoundingClientRect();
+        const contenedor = document.querySelector('app-data-table')!.getBoundingClientRect();
+        return {
+          tabla: caja.right,
+          contenedor: contenedor.right,
+          documento: document.documentElement.scrollWidth,
+          ventana: window.innerWidth,
+        };
+      });
+      expect(medidas.documento).toBeLessThanOrEqual(medidas.ventana);
+      if (vista.width < 780) {
+        // En el teléfono la tabla compartida se desplaza dentro de su caja por
+        // diseño (`data-table.css`); lo que se exige es que el botón del detalle
+        // de la fila, que abre lo que no entra, siga a la vista.
+        await expect(page.locator('.data-table__detail-toggle').first()).toBeInViewport();
+      }
+      if (vista.width >= 780) {
+        expect(medidas.tabla).toBeLessThanOrEqual(medidas.contenedor + 1);
+        // «Tipo» y «Estado» siguen en la vista al lado del nombre largo.
+        for (const encabezado of ['Tipo', 'Estado']) {
+          await expect(page.getByRole('columnheader', { name: encabezado, exact: true })).toBeInViewport();
+        }
+      }
+      await foto(page, `${vista.width}-limite-300-listado-de-organizaciones`);
+    }
+    expect(vigia.problemas).toEqual([]);
+  });
+
   test('razón social de 301: la UI lo dice y no envía; la API también la rechaza', async ({ page }) => {
+    const vigia = vigilar(page);
     await page.setViewportSize(TELEFONO);
     const enviadas = espiarAltas(page);
     const prefijo = `Clinica Pasada ${RUN} `;
@@ -384,9 +620,12 @@ test.describe('límite', () => {
     await continuar(page);
     await expect(page.getByText('No puede pasar de 300 caracteres.')).toBeVisible();
     await expect(page.getByTestId('medical-center-signup-owner-name')).toHaveCount(0);
+    // El foco va al campo con el error, no se queda en «Siguiente».
+    await expect(page.getByTestId('medical-center-signup-legal-name')).toBeFocused();
     await sinDesbordeHorizontal(page);
     await foto(page, '390-limite-razon-social-301');
     expect(enviadas).toHaveLength(0);
+    expect(vigia.problemas).toEqual([]);
 
     const status = await altaDirecta(
       { code: `CM-PASADA-${RUN}`, legalName: razonSocial, tenantType: 'HOSPITAL' },
@@ -406,6 +645,7 @@ test.describe('límite', () => {
   });
 
   test('contraseña de 7: la UI lo dice y no envía; la API también la rechaza', async ({ page }) => {
+    const vigia = vigilar(page);
     await page.setViewportSize(ESCRITORIO);
     const enviadas = espiarAltas(page);
     const razonSocial = `Hospital Clave Corta ${RUN}`;
@@ -415,10 +655,14 @@ test.describe('límite', () => {
     await continuar(page);
     await paginaCuenta(page, `org.clave7.${RUN}@alovida.test`.toLowerCase(), 'Siete-7');
     await continuar(page);
-    await expect(page.getByText('La contraseña necesita al menos 8 caracteres.')).toBeVisible();
+    const error = page.getByText('La contraseña necesita al menos 8 caracteres.');
+    await expect(error).toBeVisible();
+    await expect(error).toBeInViewport();
+    await expect(page.getByTestId('medical-center-signup-password')).toBeFocused();
     await expect(page.getByTestId('medical-center-signup-success')).toHaveCount(0);
     await foto(page, '1440-limite-clave-7');
     expect(enviadas).toHaveLength(0);
+    expect(vigia.problemas).toEqual([]);
 
     const status = await altaDirecta(
       { code: `CM-CLAVE7-${RUN}`, legalName: razonSocial, tenantType: 'HOSPITAL' },
@@ -441,17 +685,29 @@ test.describe('límite', () => {
 
 test.describe('error', () => {
   test('sin tipo de institución: lo marca y no sale a la red', async ({ page }) => {
+    const vigia = vigilar(page);
     await page.setViewportSize(TELEFONO);
     const enviadas = espiarAltas(page);
 
     await abrirAlta(page);
     await paginaOrganizacion(page, null, `Sin Tipo ${RUN}`);
     await continuar(page);
-    await expect(page.getByText('Elija el tipo de institución.')).toBeVisible();
+    // El párrafo del error del campo: es el que lleva el `id` al que apunta el grupo.
+    const mensaje = page.locator('.form-field-error', { hasText: 'Elija el tipo de institución.' });
+    await expect(mensaje).toBeVisible();
     await expect(page.getByTestId('medical-center-signup-owner-name')).toHaveCount(0);
+    // M2: el grupo queda descrito por el mensaje y el foco va a su primera opción.
+    const grupo = page.getByTestId('medical-center-signup-tenant-type');
+    const idDelMensaje = await mensaje.getAttribute('id');
+    expect(idDelMensaje).not.toBeNull();
+    await expect(grupo).toHaveAttribute('aria-describedby', new RegExp(idDelMensaje ?? '-'));
+    await expect(grupo).toHaveAttribute('aria-invalid', 'true');
+    await expect(grupo.getByRole('radio').first()).toBeFocused();
+    await mensaje.scrollIntoViewIfNeeded();
     await sinDesbordeHorizontal(page);
     await foto(page, '390-error-sin-tipo');
     expect(enviadas).toHaveLength(0);
+    expect(vigia.problemas).toEqual([]);
 
     resultados.push({
       caso: 'Error · sin tipo de institución',
@@ -464,6 +720,10 @@ test.describe('error', () => {
 
   test('correo ya registrado: 409, mensaje en la UI y ninguna fila nueva', async ({ page }) => {
     test.skip(correoRegistrado === null, 'Ningún alta correcta dejó una cuenta que repetir.');
+    const vigia = vigilar(page);
+    // El 409 es lo que esta prueba provoca: Chromium lo anota en consola, y el
+    // registro de fallos de la API (sólo en desarrollo) también.
+    vigia.permitir(/status of 409|register-organization → 409 · CONFLICT/);
     await page.setViewportSize(ESCRITORIO);
     const razonSocial = `Clinica Duplicada ${RUN}`;
 
@@ -480,7 +740,15 @@ test.describe('error', () => {
     await expect(page.getByTestId('medical-center-signup-success')).toHaveCount(0);
     const fila = filaDeOrganizacion(razonSocial);
     expect(fila).toBe('');
+    // L5: el ícono del aviso va al lado del texto, no en su propio renglón.
+    const aviso = page.getByTestId('medical-center-signup-error');
+    const icono = await aviso.locator('.alert__icon').boundingBox();
+    const texto = await aviso.locator('.alert__content').boundingBox();
+    expect(Math.abs((icono?.y ?? 0) - (texto?.y ?? 999))).toBeLessThan(8);
+    expect(icono?.x ?? 999).toBeLessThan(texto?.x ?? 0);
+    await aviso.scrollIntoViewIfNeeded();
     await foto(page, '1440-error-correo-duplicado');
+    expect(vigia.problemas).toEqual([]);
 
     resultados.push({
       caso: 'Error · correo ya registrado',
@@ -494,12 +762,148 @@ test.describe('error', () => {
 
 /* ------------------------------------------------------------ viewports */
 
-test('la primera página se ve entera en los cinco anchos de referencia', async ({ page }) => {
+test('con el catálogo de tipos demorado, el grupo ofrece los cinco desde el principio', async ({ page }) => {
+  const vigia = vigilar(page);
+  await page.setViewportSize(ESCRITORIO);
+  let liberar: () => void = () => undefined;
+  const demora = new Promise<void>((listo) => (liberar = listo));
+  await page.route(
+    (url) => url.pathname === '/system-context/dynamic-enums' && url.searchParams.get('target') === 'directory.tenants.tenant_type_concept_id',
+    async (route) => {
+      await demora;
+      await route.continue();
+    },
+  );
+  await page.goto('/auth/register/medical-center', { waitUntil: 'domcontentloaded' });
+  await esperarAplicacionLista(page);
+  const grupo = page.getByTestId('medical-center-signup-tenant-type');
+  // El catálogo todavía no respondió: igual hay cinco opciones para elegir.
+  await expect(grupo.getByRole('radio')).toHaveCount(5);
+  await expect(page.getByText('Elija el tipo de institución.')).toHaveCount(0);
+  await foto(page, '1440-catalogo-demorado');
+  liberar();
+  await expect(grupo.getByRole('radio')).toHaveCount(5);
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  expect(vigia.problemas).toEqual([]);
+});
+
+test('la primera página se ve entera en los anchos de referencia, con «Siguiente» sin desplazar', async ({
+  page,
+}) => {
+  const vigia = vigilar(page);
   for (const vista of VIEWPORTS) {
     await page.setViewportSize({ width: vista.width, height: vista.height });
     await abrirAlta(page);
     await expect(page.getByTestId('medical-center-signup-tenant-type')).toBeVisible();
     await sinDesbordeHorizontal(page);
+    await quieta(page);
+
+    const medidas = await page.evaluate(() => {
+      const siguiente = document.querySelector('[data-testid="paginated-form-continuar"]')!;
+      const caja = siguiente.getBoundingClientRect();
+      const columnas = [...document.querySelectorAll('.paginated-form__campo')].map((campo) =>
+        Math.round(campo.getBoundingClientRect().left),
+      );
+      const radios = [...document.querySelectorAll('[data-testid="medical-center-signup-tenant-type"] app-radio')].map(
+        (radio) => Math.round(radio.getBoundingClientRect().top),
+      );
+      const rotulos = [...document.querySelectorAll('[data-testid="medical-center-signup-tenant-type"] .radio-label')].map(
+        (rotulo) => Math.round(rotulo.getBoundingClientRect().height),
+      );
+      return {
+        rotulosEnUnRenglon: Math.max(...rotulos) - Math.min(...rotulos) <= 1,
+        scrollY: window.scrollY,
+        abajo: caja.bottom,
+        alto: window.innerHeight,
+        columnas: new Set(columnas).size,
+        filasDeRadios: new Set(radios).size,
+        radios: radios.length,
+      };
+    });
+    if (vista.sinScroll) {
+      // Lo mide en la carga, sin desplazar: es lo que ve quien abre el alta.
+      expect(medidas.scrollY, vista.label).toBe(0);
+      expect(medidas.abajo, `${vista.label}: «Siguiente» dentro de la ventana`).toBeLessThanOrEqual(medidas.alto);
+      await expect(page.getByTestId('paginated-form-continuar')).toBeInViewport({ ratio: 1 });
+    }
+    if (vista.width >= 780) {
+      // §5: razón social y tipo societario comparten renglón, y los radios
+      // van en rejilla —menos filas que opciones—.
+      expect(medidas.columnas, vista.label).toBeGreaterThanOrEqual(2);
+      expect(medidas.filasDeRadios, vista.label).toBeLessThan(medidas.radios);
+      // Sin huérfanas ni pistas vacías: las cinco en una fila donde entran
+      // (desde 1280), 3 + 2 donde no (1024). Ningún rótulo parte en dos.
+      expect(medidas.filasDeRadios, vista.label).toBe(vista.width >= 1280 ? 1 : 2);
+    }
+    expect(medidas.rotulosEnUnRenglon, `${vista.label}: ningún rótulo de tipo parte en dos líneas`).toBe(true);
     await foto(page, `${vista.label}-pagina-1-vacia`);
   }
+  expect(vigia.problemas).toEqual([]);
+});
+
+test('la segunda página reparte la cuenta en columnas y sus acciones no se salen, en todos los anchos', async ({
+  page,
+}) => {
+  const vigia = vigilar(page);
+  for (const vista of [{ label: '320x640', width: 320, height: 640 }, ...VIEWPORTS]) {
+    await page.setViewportSize({ width: vista.width, height: vista.height });
+    await abrirAlta(page);
+    await paginaOrganizacion(page, 'Hospital', `Vista ${vista.label} ${RUN}`);
+    await continuar(page);
+    await expect(page.getByTestId('medical-center-signup-owner-name')).toBeVisible();
+    await sinDesbordeHorizontal(page);
+    await accionesDentro(page);
+    await expect(page.getByTestId('paginated-form-atras')).toBeVisible();
+    // El puntero queda donde estaba «Siguiente»: sin moverlo, el botón de abajo
+    // mide con su elevación de `:hover` y no con su caja en reposo.
+    await page.mouse.move(0, 0);
+    await quieta(page);
+    const acciones = await page.evaluate(() => {
+      const barra = document.querySelector('.paginated-form__acciones')!;
+      const atras = document.querySelector('[data-testid="paginated-form-atras"]')!;
+      const envio = document.querySelector('[data-testid="medical-center-signup-submit"], .paginated-form__acciones > button:last-child')!;
+      const rejilla = document.querySelector('.paginated-form__campos')!.getBoundingClientRect();
+      const campos = [...document.querySelectorAll('.paginated-form__campo')].map((c) => c.getBoundingClientRect());
+      const texto = document.createRange();
+      texto.selectNodeContents(atras);
+      return {
+        apiladas: barra.classList.contains('paginated-form__acciones--apiladas'),
+        ancho: barra.getBoundingClientRect().width,
+        atras: atras.getBoundingClientRect().toJSON() as DOMRect,
+        envio: envio.getBoundingClientRect().toJSON() as DOMRect,
+        textoAtras: texto.getBoundingClientRect().left,
+        rejilla: { left: rejilla.left, width: rejilla.width },
+        ultimo: campos.at(-1)!.width,
+      };
+    });
+    if (vista.width < 672) {
+      // Envueltas: apiladas, el envío arriba y las dos a todo el ancho.
+      expect(acciones.apiladas, vista.label).toBe(true);
+      expect(acciones.envio.top, vista.label).toBeLessThan(acciones.atras.top);
+      expect(Math.abs(acciones.envio.width - acciones.ancho), vista.label).toBeLessThanOrEqual(1);
+      expect(Math.abs(acciones.atras.width - acciones.ancho), vista.label).toBeLessThanOrEqual(1);
+    } else {
+      // En un renglón, el TEXTO de «Atrás» alineado con el borde de los campos.
+      expect(acciones.apiladas, vista.label).toBe(false);
+      expect(Math.abs(acciones.textoAtras - acciones.rejilla.left), vista.label).toBeLessThanOrEqual(2);
+    }
+    if (vista.width >= 672 && vista.width < 1120) {
+      // Dos columnas: la contraseña, tercera, cruza la fila en vez de quedar sola.
+      expect(Math.abs(acciones.ultimo - acciones.rejilla.width), vista.label).toBeLessThanOrEqual(1);
+    }
+    if (vista.width >= 1120) {
+      const filas = await page.evaluate(
+        () =>
+          new Set(
+            [...document.querySelectorAll('.paginated-form__campo')].map((campo) =>
+              Math.round(campo.getBoundingClientRect().top),
+            ),
+          ).size,
+      );
+      expect(filas, `${vista.label}: nombre, correo y contraseña en un renglón`).toBe(1);
+    }
+    await page.getByTestId('paginated-form-atras').scrollIntoViewIfNeeded();
+    await foto(page, `${vista.label}-pagina-2-acciones`);
+  }
+  expect(vigia.problemas).toEqual([]);
 });

@@ -48,12 +48,16 @@
   <ng-template appCampoPersonalizado="owner">
     <app-reference-combobox
       [selected]="owner()"
-      [options]="candidatosOwner()"
-      [loading]="buscandoOwner()"
+      [options]="owners.candidatos()"
+      [loading]="owners.buscando()"
       placeholder="Nombre o correo"
       emptyMessage="Ningún usuario coincide"
-      (searched)="buscarOwner($event)"
+      (searched)="owners.buscar($event)"
       (selectionChange)="form.controls.owner.setValue($event)"
     />
+    <!-- Un fallo de la búsqueda no es «ningún usuario coincide»: se dice. -->
+    @if (owners.error(); as fallo) {
+      <app-alert tone="error" class="busqueda-fallida" data-testid="alta-organizacion-owner-error">{{ fallo }}</app-alert>
+    }
   </ng-template>
 </app-paginated-form>

@@ -15,15 +15,12 @@
       `tenantType: 'CLINIC'` → 201 → fila en `directory.tenants` con el concepto
       de tipo `CLINIC` → recarga → aparece en el listado.
 
-    ## El owner se fija por fuera del buscador, y se dice
+    ## El owner se elige en la pantalla
 
-    El buscador de owner llama a `POST /iam/users/search`, que la API de `dev`
-    todavía no publica (`IamClient.searchUsers` es «sólo simulador»): contra la
-    API real la pantalla avisa «Buscar personas registradas: todavía no está
-    disponible» y no ofrece candidatos. El spec lo comprueba —el aviso es parte
-    de la evidencia— y después escribe el owner en el control del formulario
-    con las herramientas de depuración de Angular (`ng.getComponent`), con el
-    id de un usuario real. Todo lo demás pasa por la pantalla.
+    El buscador de owner llama a `POST /iam/users/search` (la API lo publica
+    desde el PR #1001 de la API): el spec escribe el nombre del owner recién
+    creado, espera la respuesta 200 de esa búsqueda y elige la opción en el
+    combobox, como lo haría una persona. Nada se escribe por fuera de la UI.
 
     Exige la API real, el front en `real-api`, acceso de lectura a su base y
     una cuenta SUPERADMIN:
@@ -55,6 +52,7 @@ const EVIDENCIA = join('docs', 'frontend', 'evidence', 'cm-11-organizacion-medic
 const RUTA_ALTA = '/admin/tenants';
 const RUTA_FORMULARIO = '/administration/organizations/new';
 const RUTA_LISTADO = '/administration/organizations';
+const RUTA_BUSQUEDA_DE_USUARIOS = '/iam/users/search';
 
 /** El concepto `CLINIC` del catálogo `tenant-type` (`TENANT_TYPE_CLINIC` de la API). */
 const CONCEPTO_CLINICA = '420eddfc-a569-5b2e-b720-7d7de91cb874';
@@ -212,6 +210,8 @@ async function elegirClinica(page: Page): Promise<void> {
   await page.getByRole('combobox', { name: /Tipo de organización/ }).click();
   const dialogo = page.locator('dialog.select-dialog[open]');
   // «Clínica» va justo después de «Hospital», como en el alta pública.
+  // `allTextContents` no espera: se lee la lista recién cuando el diálogo la pintó.
+  await expect(dialogo.getByRole('option', { name: 'Clínica', exact: true })).toBeVisible();
   const rotulos = await dialogo.getByRole('option').allTextContents();
   const limpios = rotulos.map((r) => r.trim());
   expect(limpios).toContain('Clínica');
@@ -240,8 +240,8 @@ async function elegirConcepto(
 }
 
 /**
- * Titularidad: se intenta por la pantalla (la API no publica la búsqueda y la
- * pantalla lo dice) y el owner se escribe en el control del formulario.
+ * Titularidad: sin owner «Siguiente» no pasa; después se busca al owner por su
+ * nombre (`POST /iam/users/search`, el texto en el cuerpo) y se lo elige.
  */
 async function fijarOwner(
   page: Page,
@@ -249,37 +249,38 @@ async function fijarOwner(
   primeraVez: boolean,
 ): Promise<void> {
   await expect(pageTitle(page)).toHaveText('Titularidad');
-  const buscador = campo(page, 'Usuario owner').getByRole('combobox');
-  await buscador.fill('admin');
-  if (primeraVez) {
-    // El aviso sale una vez por pantalla: «sin resultados» mentiría.
-    await expect(
-      page.getByText(/Buscar personas registradas: todavía no está disponible/).first(),
-    ).toBeVisible();
-    await foto(page, `admin-${page.viewportSize()?.width ?? 0}-owner-search-unavailable`);
-  }
   // Sin owner, «Siguiente» no pasa de Titularidad y el campo dice qué falta.
   await continuar(page).click();
   await expect(pageTitle(page)).toHaveText('Titularidad');
   await expect(page.getByText('Elija el usuario que queda como owner.')).toBeVisible();
 
-  await page.evaluate(({ id, displayName }) => {
-    interface Control {
-      setValue(valor: unknown): void;
-    }
-    const ng = (
-      window as unknown as {
-        ng: {
-          getComponent(e: Element): { form: { controls: { owner: Control } } };
-          applyChanges(c: unknown): void;
-        };
-      }
-    ).ng;
-    const pantalla = ng.getComponent(document.querySelector('app-organization-new')!);
-    pantalla.form.controls.owner.setValue({ value: id, label: displayName });
-    ng.applyChanges(pantalla);
-  }, owner);
+  const buscador = campo(page, 'Usuario owner').getByRole('combobox');
+  const [busqueda] = await Promise.all([
+    page.waitForResponse(
+      (r) =>
+        r.request().method() === 'POST' &&
+        new URL(r.url()).pathname === RUTA_BUSQUEDA_DE_USUARIOS &&
+        (r.request().postDataJSON() as { q?: string }).q === owner.displayName,
+      { timeout: 30_000 },
+    ),
+    buscador.fill(owner.displayName),
+  ]);
+  expect(busqueda.status(), 'POST /iam/users/search responde').toBe(200);
+  // El texto viaja en el cuerpo, no en la URL.
+  expect(new URL(busqueda.url()).search).toBe('');
+  const encontrados = ((await busqueda.json()) as { items: readonly { id: string }[] }).items;
+  expect(encontrados.map((u) => u.id)).toContain(owner.id);
+
+  const opcion = campo(page, 'Usuario owner')
+    .getByRole('option')
+    .filter({ hasText: owner.displayName });
+  await expect(opcion).toHaveCount(1, { timeout: 15_000 });
+  await opcion.click();
   await expect(buscador).toHaveValue(owner.displayName);
+  await expect(page.getByText('Elija el usuario que queda como owner.')).toHaveCount(0);
+  if (primeraVez) {
+    await foto(page, `admin-${page.viewportSize()?.width ?? 0}-owner-chosen`);
+  }
 }
 
 /** De «Dónde opera» al envío: owner, datos operativos y «Registrar organización». */
@@ -487,6 +488,14 @@ for (const vista of VIEWPORTS) {
 
       const fila = tenantRow(code);
       expect(fila).toBe(`${code} | ${CONCEPTO_CLINICA} | CLINIC | ${legalName.length}`);
+      // El owner elegido en la pantalla quedó con su membresía en la clínica.
+      const membresia = sql(
+        `select tipo.code from directory.tenant_memberships m
+           join directory.tenants t on t.id = m.tenant_id
+           join terminology.catalog_concepts tipo on tipo.id = m.tenant_role_concept_id
+          where t.code = ${literal(code)} and m.user_id = ${literal(ownerId)}`,
+      );
+      expect(membresia, 'una membresía del owner elegido').not.toBe('');
 
       // Recarga: lo que se ve sale de la API, no de lo que quedó en memoria.
       await page.waitForURL((u) => u.pathname === RUTA_LISTADO);
@@ -520,7 +529,7 @@ for (const vista of VIEWPORTS) {
         accion: 'CLINIC con país BO y jurisdicción JUR_BO → recarga → listado',
         request: enviado,
         status: respuesta.status(),
-        sql: fila,
+        sql: `${fila} · membresía del owner: ${membresia}`,
       });
     });
 

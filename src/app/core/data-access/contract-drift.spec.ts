@@ -218,6 +218,14 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     });
   });
 
+  it('§2 · buscar personas va a la API real: la API ya publica POST /iam/users/search', () => {
+    // Hasta el PR #1001 de la API esta ruta era «sólo simulador» y no salía.
+    // El contrato (`api-contract.generated.ts`) la declara desde que se
+    // regeneró con el openapi de esa API: el cuerpo se valida contra su DTO.
+    TestBed.inject(IamClient).searchUsers({ query: 'ana' }).subscribe();
+    expect(cuerpoAceptado('POST', '/iam/users/search')).toEqual({ q: 'ana' });
+  });
+
   it('P50 · el alta de farmacia sale con claves que el DTO real declara', () => {
     TestBed.inject(IamClient)
       .registerPharmacyOrganization({
@@ -252,13 +260,5 @@ describe('deriva de contratos — lo que el cliente manda a la API real', () => 
     expect(cuerpo.organization.pharmacy).toEqual(
       expect.objectContaining({ address: 'Av. Cristo Redentor 1234' }),
     );
-  });
-
-  it('§2 · buscar personas no sale a una ruta que la API no publica', async () => {
-    const error = await firstValueFrom(
-      TestBed.inject(IamClient).searchUsers({ query: 'ana' }),
-    ).catch((e: unknown) => e);
-    http.expectNone('/iam/users/search');
-    expect(unavailableMessageOf(error)).toContain('Buscar personas registradas');
   });
 });

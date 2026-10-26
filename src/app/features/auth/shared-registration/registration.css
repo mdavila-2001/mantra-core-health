@@ -107,8 +107,10 @@
   line-height: var(--lh-body);
 }
 
+/* Sin `display`: el aviso ya es una fila flexible (`alert.css`), con el ícono
+   al lado del texto. Un `display: block` acá le ganaba al del componente y
+   mandaba el ícono a su propio renglón. */
 .registro__alert {
-  display: block;
   margin-bottom: var(--sp-4);
 }
 

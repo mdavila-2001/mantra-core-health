@@ -1,9 +1,10 @@
 /* ============================================================================
     Formulario por partes — MOBILE-FIRST (§0.1).
 
-    La página es una columna en teléfono y sigue siéndolo en pantallas grandes:
-    con cuatro campos como tope, dos columnas dejarían una fila suelta y un
-    hueco, y la lectura en zigzag es justo lo que la paginación evita.
+    La página es una columna en teléfono y, por omisión, también en pantallas
+    grandes: con cuatro campos como tope, dos columnas dejarían una fila suelta
+    y un hueco, y la lectura en zigzag es justo lo que la paginación evita. Una
+    página que ocupa todo el ancho (§5) pide más carriles con `disposicion`.
     ========================================================================== */
 
 :host {
@@ -83,8 +84,60 @@
   }
 
   .paginated-form__campos > .paginated-form__campo--mitad,
-  .paginated-form__campos--dos-columnas > .paginated-form__campo {
+  .paginated-form__campos--dos-columnas > .paginated-form__campo,
+  .paginated-form__campos--tres-columnas > .paginated-form__campo {
     grid-column: auto;
+  }
+
+  /* `completo` cruza la fila también en una página de varias columnas: un
+     grupo de opciones encima de un par de casillas. Va después a propósito:
+     a igual especificidad, gana la última. */
+  .paginated-form__campos > .paginated-form__campo--completo {
+    grid-column: 1 / -1;
+  }
+}
+
+/* `tres-columnas`: la tercera llega desde 1120 px, el corte de
+   `composition-rules.md` §5 (una / dos desde 780 / tres desde 1120). Por
+   debajo va de a dos, y el último campo de una cantidad impar cruza la fila:
+   sin eso, con tres campos, «Contraseña» quedaba sola con su mitad vacía. */
+@media (min-width: 42rem) and (max-width: 69.99rem) {
+  .paginated-form__campos--tres-columnas
+    > .paginated-form__campo:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 70rem) {
+  .paginated-form__campos--tres-columnas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Opciones en rejilla (`opcionesEn: 'rejilla'`): desde 780 px el grupo de
+   radios reparte sus opciones en columnas FIJAS —las que calcula
+   `columnasDeOpciones`, sin huérfanas—, según el ancho del CAMPO (consulta de
+   contenedor): en uno ancho, todas en una fila; en uno mediano, de a tres o de
+   a dos. Por debajo de 30 rem de campo, una columna, como en el teléfono. El
+   grupo apila por su cuenta (`radio-group.css`); acá sólo se le cambia la
+   caja, que es del organismo porque la decisión es de la página. */
+.paginated-form__campo--opciones-en-rejilla {
+  container: opciones / inline-size;
+}
+
+@media (min-width: 780px) {
+  @container opciones (min-width: 30rem) {
+    .paginated-form__campo--opciones-en-rejilla app-radio-group {
+      display: grid;
+      grid-template-columns: repeat(var(--paginated-form-opciones-medias, 1), minmax(0, 1fr));
+      column-gap: var(--sp-4);
+    }
+  }
+
+  @container opciones (min-width: 64rem) {
+    .paginated-form__campo--opciones-en-rejilla app-radio-group {
+      grid-template-columns: repeat(var(--paginated-form-opciones-anchas, 1), minmax(0, 1fr));
+    }
   }
 }
 
@@ -127,12 +180,46 @@
        no está: `space-between` con un solo hijo lo dejaría a la izquierda, y el
        botón que hace avanzar tiene que estar siempre en el mismo sitio. */
   justify-content: flex-end;
+  /* Cuando los botones no entran en un renglón —«Atrás» más un envío largo
+     como «Crear cuenta de la organización» en un teléfono de 390—, el envío
+     baja al renglón siguiente en vez de empujar a «Atrás» fuera de la tarjeta.
+     Si entran, no cambia nada: es el mismo renglón de siempre. */
+  flex-wrap: wrap;
   gap: var(--sp-3);
   margin-block-start: var(--sp-6);
 }
 
 .paginated-form__acciones > :first-child:not(:last-child) {
   margin-inline-end: auto;
+}
+
+/* «Atrás» con texto es un botón fantasma: su relleno dejaba el rótulo ~20 px
+   a la derecha del borde de los campos. Se corre lo que mide su relleno para
+   que el TEXTO quede alineado con la columna; el fondo al apuntar sobresale,
+   que es lo esperable de un botón fantasma. */
+.paginated-form__acciones:not(.paginated-form__acciones--apiladas) > .paginated-form__atras-texto:first-child {
+  margin-inline-start: calc(var(--sp-5) * -1);
+}
+
+/* Cuando los botones no entran en un renglón (lo mide `ApilarAlEnvolver`):
+   apilados, la primaria primero —arriba— y todos a lo ancho. `column-reverse`
+   porque en el DOM la primaria va última. */
+.paginated-form__acciones--apiladas {
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+
+.paginated-form__acciones--apiladas > :first-child:not(:last-child) {
+  margin-inline-end: 0;
+}
+
+/* Un rótulo más ancho que la tarjeta entera parte en dos líneas dentro del
+   botón: `app-button` no parte por omisión, y un botón de una sola línea más
+   ancho que su renglón se sale igual aunque el renglón envuelva. */
+.paginated-form__acciones > button {
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: center;
 }
 
 /* ==========================================================================
