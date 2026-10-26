@@ -474,6 +474,10 @@
       "nombre": "administration_medical-organization"
     },
     {
+      "ruta": "/administration/medical-center-setup",
+      "nombre": "administration_medical-center-setup"
+    },
+    {
       "ruta": "/administration/medical-laboratory",
       "nombre": "administration_medical-laboratory"
     },
@@ -531,7 +535,7 @@
     },
     {
       "ruta": "/my-account/quotations",
-      "nombre": "my-account_cotizaciones"
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",
@@ -623,11 +627,11 @@
     },
     {
       "ruta": "/laboratory/reception",
-      "nombre": "laboratorio_recepcion"
+      "nombre": "laboratory_reception"
     },
     {
       "ruta": "/laboratory/queue",
-      "nombre": "laboratorio_cola"
+      "nombre": "laboratory_queue"
     },
     {
       "ruta": "/administration/laboratory-results",
@@ -753,7 +757,7 @@
     },
     {
       "ruta": "/my-account/quotations",
-      "nombre": "my-account_cotizaciones"
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",
@@ -979,7 +983,7 @@
     },
     {
       "ruta": "/my-account/quotations",
-      "nombre": "my-account_cotizaciones"
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",
