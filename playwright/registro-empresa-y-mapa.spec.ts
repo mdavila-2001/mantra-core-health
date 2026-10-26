@@ -4,6 +4,7 @@ import {
   completarContacto,
   empezarElAlta,
   elegirLocalidadDeResidencia,
+  marcarYConfirmarCasa,
   elegirLocalidadDeTrabajo,
   valorDelSelect,
 } from './support/registro-paciente';
@@ -35,6 +36,7 @@ const PUNTO_DE_PRUEBA = { latitude: -17.7833, longitude: -63.1821 };
 async function llegarAlTrabajo(page: Page): Promise<void> {
   await empezarElAlta(page);
   await elegirLocalidadDeResidencia(page);
+  await marcarYConfirmarCasa(page);
   await page.getByTestId('paginated-form-continuar').click();
   await completarContacto(page);
 }
@@ -54,6 +56,8 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await empezarElAlta(page);
     await expect(page.getByRole('heading', { name: PASOS_DEL_ALTA.residencia })).toBeVisible();
 
+    // El GPS se ofrece con la localidad elegida (el campo depende de ella).
+    await elegirLocalidadDeResidencia(page);
     // Antes de pedirla no hay mapa: sólo la invitación.
     await expect(page.getByTestId('registro-mapa-domicilio')).toHaveCount(0);
     await page.getByTestId('registro-usar-ubicacion').click();

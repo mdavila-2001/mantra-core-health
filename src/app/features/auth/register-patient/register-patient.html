@@ -428,7 +428,9 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsDomicilio">
-              @if (domicilioPorReescribir()) {
+              <!-- Mientras se busca la calle del punto, o cuando ya se escribió,
+                   no hay nada que reescribir a mano. -->
+              @if (domicilioPorReescribir() && calleDelPunto() !== 'buscando' && calleDelPunto() !== 'escrita') {
                 <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
                      anuncia sin robar el foco, que sigue en el mapa. -->
                 <app-alert
@@ -461,6 +463,19 @@
                     etiqueta="Su ubicación en el mapa"
                     (pointPicked)="fijarPuntoDomicilio($event)"
                   />
+
+                  <!-- AC-03-8/9 y pedido del 26/10/2026: qué pasó con la calle
+                       del punto. Se escribe sola cuando el proveedor la conoce;
+                       si no, se dice acá y el alta sigue. Nunca se inventa. -->
+                  @if (gpsDomicilio() !== null && avisoDeCalle(); as aviso) {
+                    <p
+                      class="registro__ubicacion-aviso"
+                      aria-live="polite"
+                      data-testid="registration-home-geocoding-notice"
+                    >
+                      {{ aviso }}
+                    </p>
+                  }
 
                   @if (gpsDomicilio() === null) {
                     <p
@@ -509,13 +524,6 @@
                          pantalla, con el mismo anuncio y el mismo identificador de prueba. -->
                     <p appAnuncio class="solo-lectores" data-testid="registro-direccion-confirmada">
                       Listo, guardamos esta dirección.
-                    </p>
-                    <!-- AC-03-9: el punto se guarda, pero el nombre de la
-                         calle no se resuelve. Se dice acá, al lado del mapa, y
-                         el alta sigue. Nunca se rellena la dirección con un
-                         texto inventado. -->
-                    <p class="registro__ubicacion-aviso" data-testid="registration-home-geocoding-notice">
-                      {{ avisoSinGeocodificacion }}
                     </p>
                     <div class="registro__ubicacion-acciones">
                       <button
@@ -688,6 +696,7 @@
                   [value]="municipioPaciente()"
                   [punto]="gpsDomicilio()"
                   (valueChange)="elegirMunicipio($event)"
+                  (municipioPorPunto)="municipioDelPunto = $event"
                   mapLabel="Mapa de Bolivia: elija el departamento donde vive"
                   municipalityLabel="Localidad de residencia"
                   municipalityHint="Sólo se ofrecen las del departamento que eligió."

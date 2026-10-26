@@ -9,6 +9,7 @@
     (valueChange)="chooseDepartment($event)"
     [municipio]="municipalityInMap()"
     [punto]="punto()"
+    [provincia]="detalle()?.provincia ?? null"
     [etiqueta]="mapLabel()"
     [testId]="testId() + '-mapa'"
   />

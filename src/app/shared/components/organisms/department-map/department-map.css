@@ -145,9 +145,12 @@
   height: auto;
   aspect-ratio: 1;
   overflow: hidden;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--c-neutral-300);
   border-radius: var(--r-lg);
-  background: var(--bg-surface);
+  /* Pedido del cliente (26/10/2026): el cuadrado, de fondo gris. Es fijo y no
+     sigue al tema a propósito: es un plano, y un plano se lee igual de día y
+     de noche; el negro y el petróleo de adentro contrastan con él en los dos. */
+  background: var(--c-neutral-50);
 }
 
 .department-map__acercamiento path {
@@ -155,29 +158,36 @@
   stroke-linejoin: round;
 }
 
-/* Los departamentos de alrededor, apagados como en el país. */
+/* Pedido del cliente (26/10/2026): el cuadrado gris, las líneas negras, el
+   municipio en azul petróleo y el punto rojo. Lo único con color es lo
+   elegido; todo lo demás es gris con trazo negro, para que el resaltado
+   resalte. Los de alrededor, un gris más claro que el elegido. */
 .department-map__acercamiento-otro {
-  fill: color-mix(in srgb, var(--bg-surface) 88%, var(--text-secondary));
-  stroke: var(--border-default);
+  fill: var(--c-neutral-50);
+  stroke: var(--c-neutral-900);
   stroke-width: 1.5;
 }
 
 .department-map__acercamiento-departamento {
-  fill: var(--brand-primary);
-  stroke: var(--text-primary);
+  fill: var(--c-neutral-100);
+  stroke: var(--c-neutral-900);
   stroke-width: 2.5;
 }
 
+/* Los municipios vecinos: líneas negras finas. */
 .department-map__acercamiento-vecino {
   fill: none;
-  stroke: color-mix(in srgb, var(--c-petrol-900) 35%, transparent);
+  stroke: var(--c-neutral-900);
   stroke-width: 0.75;
 }
 
+/* El resaltado: azul petróleo pleno con trazo negro grueso. No depende sólo
+   del color: el trazo lo separa aunque no se distingan los tonos, y el nombre
+   va abajo en palabras. */
 .department-map__acercamiento-municipio {
-  fill: color-mix(in oklab, var(--brand-primary) 30%, var(--c-petrol-900));
-  stroke: var(--text-primary);
-  stroke-width: 1.5;
+  fill: var(--c-petrol-500);
+  stroke: var(--c-neutral-900);
+  stroke-width: 2.5;
 }
 
 /* Los límites de provincia: finos y discontinuos, para no competir con el
