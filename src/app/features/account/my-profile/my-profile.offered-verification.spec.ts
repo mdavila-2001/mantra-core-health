@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { libretaInmediata } from '../../../../testing/address-book';
 import { resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { MyProfile } from './my-profile';
 
@@ -52,7 +53,7 @@ describe('MyProfile · con la verificación ofrecida', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);

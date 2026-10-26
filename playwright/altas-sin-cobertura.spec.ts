@@ -5,6 +5,7 @@ import {
   PASOS_DEL_ALTA,
   completarContacto,
   elegirLocalidadDeResidencia,
+  marcarYConfirmarCasa,
   empezarElAlta,
 } from './support/registro-paciente';
 
@@ -89,6 +90,8 @@ test.describe('altas públicas sin cobertura previa: paciente, laboratorio, imag
     await empezarElAlta(page, `CI-ALTA-${Date.now()}`);
 
     await elegirLocalidadDeResidencia(page);
+
+    await marcarYConfirmarCasa(page);
     await continuar(page);
     await completarContacto(page);
     await continuarHasta(page, PASOS_DEL_ALTA.resto);
