@@ -45,7 +45,7 @@ export type AuthSplitScene = 'split' | 'stage';
   selector: 'app-auth-split',
   imports: [AppButton, AuthStage, PointerScene],
   templateUrl: './auth-split.html',
-  styleUrl: './auth-split.css',
+  styleUrls: ['./auth-split.css', './auth-split-light-stage.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthSplit {

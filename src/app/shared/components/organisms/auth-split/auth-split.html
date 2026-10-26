@@ -8,6 +8,7 @@
   [class.auth-split--plain]="plainSurface()"
   [class.auth-split--stage]="scene() === 'stage'"
   appPointerScene
+  [pointerSceneTouch]="scene() === 'stage'"
 >
   @if (scene() === 'stage') {
     <!-- Escenario del latido (`scene="stage"`): una sola capa por detrás de
@@ -240,6 +241,16 @@
     <div class="auth-split__brand-content">
       <p class="auth-split__wordmark">
         <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
+        <!-- El mismo logo en tinta petróleo, para el escenario claro. Los dos
+             van en el DOM y la hoja elige por tema: con un binding al tema,
+             el servidor pintaría uno y el oscuro parpadearía al hidratar. -->
+        <img
+          class="auth-split__wordmark-ink"
+          src="/alovida/imagenes/alovida-logo.svg"
+          alt=""
+          width="38"
+          height="28"
+        />
         <span>AloVida</span>
       </p>
       @for (texto of claimKeyed(); track texto) {
