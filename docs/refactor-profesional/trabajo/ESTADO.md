@@ -1,5 +1,27 @@
 # Estado
 
+## Contabilidad: llave Doctor / Contador — 2026-10-26
+
+`/administration/accounting` tiene una sola llave «Versión: Doctor | Contador». **Doctor** (por omisión) muestra el
+resumen y tres registros: gastos, activos y deudas. **Contador** suma las pestañas Transacciones y Cuentas e
+«Informes contables», con los enlaces a la vista contable y al balance y libro diario (antes, «¿Lleva usted la
+contabilidad?» al pie del Resumen; ahora también desde Registros). La elección se recuerda en el navegador
+(`mantra.contabilidad.version`). Es lo que se ve, no un permiso: la API sigue siendo la autoridad. Portado desde
+`mockup`; el glosario «¿Qué significa cada cosa?» de esa rama todavía no existe en `dev`/`test`, así que aquí no se
+filtra.
+
+**Verificado en navegador** (Chromium contra `ng serve --configuration demo`, 12 verificaciones con
+[`playwright/contabilidad-version.mjs`](../../../playwright/contabilidad-version.mjs); capturas en
+`evidencias/contabilidad-version-2026-10-26-test/`): pestañas de Registros por versión; la versión sobrevive a
+recargar; volver a Doctor desde «Cuentas» cae en «Gastos»; sin desborde horizontal a 390 px. **No se verificó** contra
+la API real (la contabilidad simple sólo existe con el simulador), ni con otros roles, ni en otros navegadores.
+
+**Gates** (2026-10-26, sobre `test`): `tsc -p tsconfig.app.json` sin errores · `eslint --max-warnings=0` sobre
+`src/app/features/accounting` 0 · 95 pruebas de las 7 specs del módulo contable pasan (7 nuevas). No se corrió la
+suite entera ni los `check-*.mjs`.
+
+---
+
 ## «Servicios recibidos» en la historia — 2026-10-25
 
 La historia del paciente (`/my-account/medical-record`, 6.ª pestaña), la ficha del médico (última pestaña) y el

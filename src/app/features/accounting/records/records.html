@@ -83,54 +83,56 @@
       </app-tab>
     }
 
-    <app-tab [label]="'Transacciones' + count(transactions())">
-      <div class="registros__panel">
-        <div class="registros__barra">
-          <button
-            app-button
-            type="button"
-            data-testid="nueva-transaccion"
-            (clicked)="modal.set({ tipo: 'transaccion', transaccion: null })"
-          >
-            Nueva transacción
-          </button>
+    @if (isAccountant()) {
+      <app-tab [label]="'Transacciones' + count(transactions())">
+        <div class="registros__panel">
+          <div class="registros__barra">
+            <button
+              app-button
+              type="button"
+              data-testid="nueva-transaccion"
+              (clicked)="modal.set({ tipo: 'transaccion', transaccion: null })"
+            >
+              Nueva transacción
+            </button>
+          </div>
+          <app-data-table
+            [state]="transactionsRows()"
+            [columns]="transactionColumns()"
+            [trackBy]="byId"
+            caption="Transacciones: debe y haber"
+            (retry)="loadTransactions()"
+            data-testid="tabla-transacciones"
+          />
         </div>
-        <app-data-table
-          [state]="transactionsRows()"
-          [columns]="transactionColumns()"
-          [trackBy]="byId"
-          caption="Transacciones: debe y haber"
-          (retry)="loadTransactions()"
-          data-testid="tabla-transacciones"
-        />
-      </div>
-    </app-tab>
+      </app-tab>
 
-    <app-tab [label]="'Cuentas' + count(accounts())">
-      <div class="registros__panel">
-        <div class="registros__barra">
-          <p class="registros__nota">
-            Las generales vienen cargadas y se pueden renombrar; las suyas, también borrar.
-          </p>
-          <button
-            app-button
-            type="button"
-            data-testid="nueva-cuenta"
-            (clicked)="modal.set({ tipo: 'cuenta', cuenta: null })"
-          >
-            Nueva cuenta
-          </button>
+      <app-tab [label]="'Cuentas' + count(accounts())">
+        <div class="registros__panel">
+          <div class="registros__barra">
+            <p class="registros__nota">
+              Las generales vienen cargadas y se pueden renombrar; las suyas, también borrar.
+            </p>
+            <button
+              app-button
+              type="button"
+              data-testid="nueva-cuenta"
+              (clicked)="modal.set({ tipo: 'cuenta', cuenta: null })"
+            >
+              Nueva cuenta
+            </button>
+          </div>
+          <app-data-table
+            [state]="accountsRows()"
+            [columns]="accountColumns()"
+            [trackBy]="byId"
+            caption="Cuentas"
+            (retry)="loadAccounts()"
+            data-testid="tabla-cuentas"
+          />
         </div>
-        <app-data-table
-          [state]="accountsRows()"
-          [columns]="accountColumns()"
-          [trackBy]="byId"
-          caption="Cuentas"
-          (retry)="loadAccounts()"
-          data-testid="tabla-cuentas"
-        />
-      </div>
-    </app-tab>
+      </app-tab>
+    }
   </app-tabs>
 </app-card>
 }
