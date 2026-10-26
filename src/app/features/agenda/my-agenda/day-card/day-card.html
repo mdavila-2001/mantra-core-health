@@ -69,11 +69,22 @@
           data-testid="tarjeta-modalidad"
           ariaLabel="¿Cómo lo atiende?"
           size="md"
-          [options]="modalityOptions"
+          [options]="modalityOptions()"
           [value]="modality()"
           (valueChange)="modality.set($event)"
         />
       </div>
+      <!-- Teleconsulta en una hora sin telemedicina: la opción se apaga, y si
+           ya estaba elegida se dice por qué no se guarda. -->
+      @if (teleconsultaFueraDeFranja()) {
+        <app-alert
+          tone="warning"
+          title="Esta hora no admite teleconsulta"
+          data-testid="tarjeta-sin-telemedicina"
+        >
+          {{ mensajeSinTelemedicina }}
+        </app-alert>
+      }
     }
 
     <app-form-field

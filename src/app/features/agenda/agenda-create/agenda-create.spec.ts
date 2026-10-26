@@ -1355,10 +1355,112 @@ describe('AgendaCreate', () => {
       const encabezados = [...fixture.nativeElement.querySelectorAll('thead th')].map(
         (th: Element) => th.textContent?.trim(),
       );
-      // «Atiendo» sí está: qué admite la franja (consultas, servicios o ambos) no
-      // depende de si los turnos son fijos. Lo que NO aparece es duración ni descanso.
-      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta', 'Atiendo']);
+      // «Atiendo» y «Telemedicina» sí están: qué admite la franja (consultas,
+      // servicios o ambos, y si también por videollamada) no depende de si los
+      // turnos son fijos. Lo que NO aparece es duración ni descanso.
+      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta', 'Atiendo', 'Telemedicina']);
       expect(acc.resumen()).toContain('horario flexible sin citas de duración fija');
+    });
+
+    describe('telemedicina por franja', () => {
+      it('arranca apagada y NO se manda: ausente ≡ sin telemedicina', () => {
+        crear();
+        encenderLunes();
+
+        expect(acc.grupoDe(0).getRawValue().telemedicina).toBe(false);
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(reglas[0]).not.toHaveProperty('telemedicineEnabled');
+      });
+
+      it('el interruptor de la fila la activa y viaja como true en cada franja del día', () => {
+        crear();
+        encenderLunes();
+        // Con almuerzo el día son dos franjas: las dos llevan la telemedicina.
+        acc.semana.at(0).patchValue({ desde: '08:00', hasta: '18:00' });
+        acc.conAlmuerzo.set(true);
+        acc.almuerzoDesde.set('12:00');
+        acc.almuerzoHasta.set('14:00');
+        fixture.detectChanges();
+
+        const interruptor = fixture.nativeElement.querySelector(
+          '[data-testid="agenda-create-telemedicina-0"] input[role="switch"]',
+        ) as HTMLInputElement;
+        expect(interruptor).not.toBeNull();
+        expect(interruptor.checked).toBe(false);
+        expect(interruptor.getAttribute('aria-label')).toBe('Atiende por telemedicina, Lunes');
+        interruptor.click();
+        fixture.detectChanges();
+
+        expect(acc.grupoDe(0).getRawValue().telemedicina).toBe(true);
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(reglas).toHaveLength(2);
+        for (const regla of reglas) expect(regla['telemedicineEnabled']).toBe(true);
+      });
+
+      it('la vista previa marca la franja con telemedicina', () => {
+        crear();
+        encenderLunes();
+        acc.fijarDeLaFila(0, 'telemedicina', true);
+        const previa = (
+          acc as unknown as { reglasDeLaPrevia(): { telemedicineEnabled?: boolean }[] }
+        ).reglasDeLaPrevia();
+        expect(previa[0].telemedicineEnabled).toBe(true);
+      });
+
+      it('repetir una fila copia también la telemedicina', () => {
+        crear();
+        encenderLunes();
+        acc.alternarDia(1);
+        acc.fijarDeLaFila(0, 'telemedicina', true);
+        acc.filaARepetir.set(0);
+        acc.repetirFila();
+        expect(acc.grupoDe(1).getRawValue().telemedicina).toBe(true);
+      });
+
+      it('un horario vigente con telemedicina la carga, y apagarla viaja como false', async () => {
+        crearConHorarioVigente({
+          id: 'tpl-1',
+          name: 'Con telemedicina',
+          slotMinutes: 30,
+          statusConceptId: 'c',
+          rules: [
+            {
+              dayOfWeek: 2,
+              startTime: '15:00:00',
+              endTime: '19:00:00',
+              slotMinutes: 30,
+              telemedicineEnabled: true,
+            },
+            {
+              dayOfWeek: 4,
+              startTime: '15:00:00',
+              endTime: '19:00:00',
+              slotMinutes: 30,
+              telemedicineEnabled: false,
+            },
+          ],
+        });
+        expect(acc.grupoDe(1).getRawValue().telemedicina).toBe(true);
+        expect(acc.grupoDe(3).getRawValue().telemedicina).toBe(false);
+
+        // La apaga el martes, que la tenía publicada.
+        acc.fijarDeLaFila(1, 'telemedicina', false);
+        acc.publicar();
+        await retirarVigente();
+        const plantilla = http.expectOne('/scheduling/resources/res-1/templates');
+        const reglas = (plantilla.request.body as { rules: Record<string, unknown>[] }).rules;
+        plantilla.flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
+        http
+          .expectOne('/scheduling/templates/tpl-2/generate-slots')
+          .flush({ templateId: 'tpl-2', created: 1, skipped: 0 });
+
+        const martes = reglas.find((r) => r['dayOfWeek'] === 2);
+        const jueves = reglas.find((r) => r['dayOfWeek'] === 4);
+        // El martes la tenía y la apagó: se escribe `false`, no se omite.
+        expect(martes?.['telemedicineEnabled']).toBe(false);
+        // El jueves nunca la tuvo: no se escribe nada.
+        expect(jueves).not.toHaveProperty('telemedicineEnabled');
+      });
     });
 
     describe('qué se atiende en cada franja (v4.2.40)', () => {

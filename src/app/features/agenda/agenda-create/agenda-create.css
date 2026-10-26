@@ -387,7 +387,7 @@
 .agenda-create__tabla {
   width: 100%;
   border-collapse: collapse;
-  min-width: 44rem;
+  min-width: 50rem;
 }
 
 .agenda-create__tabla-caption {
@@ -405,12 +405,21 @@
   vertical-align: middle;
 }
 
-/* La columna «Descanso» («Desde», «Hasta», «Dura», Descanso, Turnos): sin un
-   mínimo propio, «Sin respiro» —la opción más larga— quedaba cortada en
-   «Sin respi» en los tres anchos, incluso con lugar de sobra en escritorio. */
-.agenda-create__tabla th:nth-child(5),
-.agenda-create__tabla td:nth-child(5) {
+/* «Dura» y «Descanso» (Día, Desde, Hasta, Atiendo, Telemedicina, Dura,
+   Descanso, Horarios): sin un mínimo propio, «Sin respiro» —la opción más
+   larga— quedaba cortada en «Sin respi» en los tres anchos, incluso con lugar
+   de sobra en escritorio. */
+.agenda-create__tabla th:nth-child(6),
+.agenda-create__tabla td:nth-child(6),
+.agenda-create__tabla th:nth-child(7),
+.agenda-create__tabla td:nth-child(7) {
   min-width: 8rem;
+}
+
+/* El interruptor de telemedicina, centrado bajo su encabezado. */
+.agenda-create__tabla th:nth-child(5),
+.agenda-create__fila-telemedicina {
+  text-align: center;
 }
 
 .agenda-create__tabla thead th {

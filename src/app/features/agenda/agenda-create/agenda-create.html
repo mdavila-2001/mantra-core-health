@@ -213,6 +213,7 @@
               <th scope="col">Desde</th>
               <th scope="col">Hasta</th>
               <th scope="col">Atiendo</th>
+              <th scope="col">Telemedicina</th>
               @if (!flexible()) {
                 <th scope="col">Dura</th>
                 <th scope="col">Descanso</th>
@@ -273,6 +274,18 @@
                       (valueChange)="fijarDeLaFila(dia.indice, 'modo', $event)"
                     />
                   </td>
+                  <td class="agenda-create__fila-telemedicina">
+                    <!-- Si en esta franja también atiende por videollamada.
+                         Apagado por omisión: sólo viaja si el médico lo enciende
+                         (o lo apaga donde ya estaba). La API rechaza la
+                         teleconsulta fuera de una franja con esto activo. -->
+                    <app-switch
+                      [checked]="grupoDe(dia.indice).controls['telemedicina'].value"
+                      [ariaLabel]="'Atiende por telemedicina, ' + dia.largo"
+                      [attr.data-testid]="'agenda-create-telemedicina-' + dia.indice"
+                      (checkedChange)="fijarDeLaFila(dia.indice, 'telemedicina', $event)"
+                    />
+                  </td>
                   @if (!flexible()) {
                     <td>
                       <app-select
@@ -303,7 +316,7 @@
                     </td>
                   }
                 } @else {
-                  <td [attr.colspan]="flexible() ? 3 : 6" class="agenda-create__fila-apagada">
+                  <td [attr.colspan]="flexible() ? 4 : 7" class="agenda-create__fila-apagada">
                     No atiende
                   </td>
                 }

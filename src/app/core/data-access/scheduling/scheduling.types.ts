@@ -624,6 +624,16 @@ export interface ScheduleRule {
    * cuando el médico no lo cambió, para no escribir un valor que nadie eligió.
    */
   readonly bookingMode?: FranjaModo;
+  /**
+   * Si la franja admite teleconsulta (citas por videollamada).
+   *
+   * **Ausente ≡ `false`**: por omisión un horario es presencial, y la API
+   * rechaza con 422 `TELEMEDICINE_NOT_ENABLED` la cita directa por
+   * `TELECONSULTA` que no cae en una franja vigente con esto encendido. El
+   * formulario manda `true` sólo cuando el médico lo activó, y `false` sólo
+   * cuando lo apaga en una franja que lo tenía: «no lo dijo» no se escribe.
+   */
+  readonly telemedicineEnabled?: boolean;
 }
 
 /** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
@@ -938,6 +948,11 @@ export interface PublishedRule {
   readonly gapMinutes?: number;
   /** Qué admite la franja. Ausente ≡ `CONSULTATIONS`. */
   readonly bookingMode?: FranjaModo;
+  /**
+   * Si la franja admite teleconsulta. El servidor lo devuelve siempre como
+   * booleano; acá es opcional para tolerar lecturas viejas. Ausente ≡ `false`.
+   */
+  readonly telemedicineEnabled?: boolean;
 }
 
 /** Lo que deja retirar un horario (`DELETE /scheduling/templates/:id`). */
