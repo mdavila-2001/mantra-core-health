@@ -136,8 +136,11 @@ if (process.argv.includes('--check')) {
   }
   const before = JSON.parse(current);
   const lines = ['34', '34-paciente', '34-administrador'].map((key) => {
-    const old = new Set((before[key] ?? []).map((entry) => entry.ruta));
-    const now = new Set(catalogo[key].map((entry) => entry.ruta));
+    // La identidad de una entrada es ruta + nombre: renombrar una foto también
+    // deja sin comparar las mediciones viejas.
+    const label = (entry) => (entry.nombre === entry.ruta.replace(/[/?=&]+/g, '_').replace(/^_/, '') ? entry.ruta : `${entry.ruta} «${entry.nombre}»`);
+    const old = new Set((before[key] ?? []).map(label));
+    const now = new Set(catalogo[key].map(label));
     const added = [...now].filter((ruta) => !old.has(ruta));
     const removed = [...old].filter((ruta) => !now.has(ruta));
     return `  ${key}: +${added.length}${added.length ? ` (${added.join(', ')})` : ''} -${removed.length}${removed.length ? ` (${removed.join(', ')})` : ''}`;
