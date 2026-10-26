@@ -1,7 +1,8 @@
 /* ============================================================================
-    Consulta de un grupo médico. Mobile-first: una columna; desde 1024 px el
-    estado y las notas del ejercicio quedan arriba a la izquierda, como pide
-    la ficha, y el formulario a la derecha.
+    Consulta de un grupo médico. UNA tarjeta centrada y a lo ancho del área de
+    contenido, sin medida propia: el tope lo pone `.app-main__inner` y nadie
+    más (composition-rules.md §5). Mobile-first: una columna; el equipo se
+    reparte en dos desde 780 px y en tres desde 1120 px.
     ========================================================================== */
 
 :host {
@@ -9,39 +10,69 @@
 }
 
 .consulta {
-  display: grid;
-  gap: var(--sp-6);
+  inline-size: 100%;
+  margin-inline: auto;
   margin-block-start: var(--sp-6);
 }
 
-.consulta__lateral,
-.consulta__cuerpo,
+/* Las propiedades `--card-body-*` atraviesan el encapsulado de la tarjeta:
+   ordenan su cuerpo en una pila con aire entre la cabecera, los avisos y las
+   pestañas. */
+.consulta__tarjeta {
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
+
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.consulta__cabecera,
+.consulta__acciones,
+.consulta__integrante-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.consulta__acciones {
+  justify-content: flex-start;
+}
+
+.consulta__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.consulta__subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.consulta__panel {
+  display: grid;
+  gap: var(--sp-6);
+  padding-block-start: var(--sp-4);
+}
+
 .consulta__bloque,
-.consulta__estado,
-.consulta__notas {
+.consulta__formulario {
   display: grid;
   align-content: start;
   gap: var(--sp-3);
 }
 
-.consulta__lateral {
-  gap: var(--sp-6);
+.consulta__formulario {
+  justify-items: start;
 }
 
-.consulta__cuerpo {
-  gap: var(--sp-6);
-}
-
-.consulta__rotulo {
-  margin: 0;
-  font-size: var(--fs-overline);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.consulta__estado app-badge {
-  justify-self: start;
+.consulta__formulario app-form-field {
+  inline-size: 100%;
 }
 
 .consulta__nota {
@@ -56,22 +87,9 @@
   overflow-wrap: anywhere;
 }
 
-.consulta__encabezado,
-.consulta__acciones,
-.consulta__integrante-fila {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-
-.consulta__acciones {
-  justify-content: flex-start;
-}
-
 .consulta__equipo {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   margin: 0;
   padding: 0;
@@ -80,6 +98,7 @@
 
 .consulta__integrante {
   display: grid;
+  align-content: start;
   gap: var(--sp-1);
   padding: var(--sp-4);
   border: 1px solid var(--border-default);
@@ -87,9 +106,14 @@
   overflow-wrap: anywhere;
 }
 
-@media (min-width: 1024px) {
-  .consulta {
-    grid-template-columns: minmax(16rem, 22rem) 1fr;
-    align-items: start;
+@media (min-width: 780px) {
+  .consulta__equipo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .consulta__equipo {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

@@ -252,21 +252,38 @@ export class Select<T> implements ControlValueAccessor {
     this.isOpen.set(true);
   }
 
-  protected close(): void {
+  /**
+   * Cierra el modal. `conSalida` anima la salida del panel (140 ms) antes de
+   * cerrar; es lo que corresponde al descartar (Escape, velo, «Cancelar»).
+   *
+   * **Elegir no usa la salida.** Mientras el panel sale el `<dialog>` sigue
+   * siendo modal: la página de atrás está inerte y ni un clic ni el foco entran.
+   * Quien elegía un colega y pasaba de inmediato al campo de al lado perdía lo
+   * que escribía —en «Crear grupo médico», medido en Chromium, un clic y el
+   * tecleo dentro de los ~300 ms siguientes se perdían, y el foco terminaba en
+   * el botón del desplegable porque al acabar la salida `trigger.focus()` se lo
+   * robaba al campo—. Elegir es el final: la página se libera en el acto.
+   */
+  protected close(conSalida = true): void {
     if (!this.isOpen()) {
       return;
     }
     // Cerrar el elemento antes de que el @if lo saque del DOM: un `<dialog>`
     // que se quita abierto deja el velo puesto y la página bloqueada.
     const dialog = this.dialog()?.nativeElement;
-    // Salida corta hacia el control; sin animación posible cierra en el acto.
-    cerrarConSalida(dialog?.querySelector<HTMLElement>('.select-panel'), () => {
+    const cerrar = (): void => {
       if (dialog?.open && typeof dialog.close === 'function') {
         dialog.close();
       }
       this.isOpen.set(false);
       this.trigger().nativeElement.focus();
-    });
+    };
+    if (!conSalida) {
+      cerrar();
+      return;
+    }
+    // Salida corta hacia el control; sin animación posible cierra en el acto.
+    cerrarConSalida(dialog?.querySelector<HTMLElement>('.select-panel'), cerrar);
   }
 
   /** Elige la opción `index` de `options()` y cierra: elegir ES el final. */
@@ -277,7 +294,7 @@ export class Select<T> implements ControlValueAccessor {
     }
     this.value.set(option.value);
     this.formBridge.emitChange(option.value);
-    this.close();
+    this.close(false);
   }
 
   /** Un clic en el velo cierra: es un clic sobre el `<dialog>` fuera del panel. */
