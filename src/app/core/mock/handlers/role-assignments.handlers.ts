@@ -36,9 +36,11 @@ export function registerRoleAssignments(router: MockRouter): void {
   // Los procedimientos publicados son los del doble de CM-06; las sedes y el catálogo los sirve él.
   useOfferLookup((id) => offers.get(id));
 
-  router.get('/practices/:practiceId/role-assignments', ({ params }) =>
-    affiliations.filtrar((f) => f.practiceId === params['practiceId']).map(toRow),
-  );
+  // Con la forma real de la API: una página `{ items, count, limit, nextCursor }`.
+  router.get('/practices/:practiceId/role-assignments', ({ params }) => {
+    const items = affiliations.filtrar((f) => f.practiceId === params['practiceId']).map(toRow);
+    return { items, count: items.length, limit: items.length, nextCursor: null };
+  });
 
   router.post('/practices/:practiceId/role-assignments/invitations', (request) => {
     const practiceId = request.params['practiceId']!;
