@@ -4,7 +4,11 @@ import type {
   ServiceRequestPerformerInput,
 } from './service-request-performer.types';
 
-/** Clasificación de C2; sólo la resuelve el simulador: la API no la declara (P40). */
+/**
+ * Clasificación de la orden de análisis (C2, P40). La API la deriva de
+ * `categoryConceptId` (laboratorio, imagen; cualquier otra categoría declarada
+ * es `OTHER`) y la acepta en el alta; ausente = la orden no declara categoría.
+ */
 export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
 
 /* ============================================================================
@@ -43,9 +47,13 @@ export interface DiagnosticOrder {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; sólo la sirve el simulador (P40). */
+  /** Categoría de análisis (P40); ausente = sin clasificar. */
   readonly category?: AnalysisCategory;
-  /** Notas médicas que motivan la orden de C2; sólo las sirve el simulador (P40). */
+  /**
+   * Notas médicas que motivan la orden, en el orden citado (P40). La API
+   * siempre la manda (vacía si no hay); opcional por las órdenes del simulador
+   * anteriores al campo.
+   */
   readonly basedOnNoteIds?: readonly string[];
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;
@@ -117,9 +125,17 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly codeConceptId: string;
   readonly encounterId?: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; sólo la sirve el simulador (P40). */
+  /**
+   * Categoría de análisis (P40). Sola, la API la guarda como su concepto; con
+   * `categoryConceptId`, tienen que coincidir (422
+   * `SERVICE_REQUEST_CATEGORY_MISMATCH`).
+   */
   readonly category?: AnalysisCategory;
-  /** Notas médicas que motivan la orden de C2; sólo las sirve el simulador (P40). */
+  /**
+   * Notas médicas que motivan la orden (P40): del mismo paciente y, con
+   * encuentro, de la misma consulta (422 `BASED_ON_NOTE_NOT_FOUND` /
+   * `BASED_ON_NOTE_ENCOUNTER_MISMATCH`). Hasta 20, sin repetidos.
+   */
   readonly basedOnNoteIds?: readonly string[];
   /**
    * La respuesta del formulario médico de la que sale (instancia de `forms`).
@@ -149,6 +165,10 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
 export interface DiagnosticOrderCreated {
   readonly id: string;
   readonly patientProfileId: string;
+  /** Categoría de análisis que quedó guardada (P40); ausente = sin clasificar. */
+  readonly category?: AnalysisCategory;
+  /** Notas vinculadas a la orden (P40). */
+  readonly basedOnNoteIds?: readonly string[];
   readonly status: string;
   readonly intent: string;
   readonly createdAt: Date;
@@ -311,7 +331,10 @@ export interface PatientOrder extends PatientSettlementFields, ServiceRequestPer
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; sólo la sirve el simulador (P40). */
+  /**
+   * Categoría de análisis (P40); ausente = sin clasificar. Las notas que
+   * motivan la orden no llegan al portal: una nota puede no estar liberada.
+   */
   readonly category?: AnalysisCategory;
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;

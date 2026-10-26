@@ -34,6 +34,7 @@ import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENA
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
 import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } from './service-request-performer.mock';
+import { categoriaDeLaOrden, esRechazo, resolverCategoria, validarNotas, type RechazoDeOrden } from './service-request-category.mock';
 
 /* ============================================================================
     Diagnóstico: órdenes e informes del circuito clínico, la cola de trabajo
@@ -43,6 +44,30 @@ import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } 
 
 function c(code: string, display: string) {
   return { code, display };
+}
+
+/** P40: el 422 o el 400 del alta, con `reason` como lo devuelve la API. */
+function rechazoDeOrden(rechazo: RechazoDeOrden) {
+  if (rechazo.status === 400) return validation(rechazo.message);
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message: rechazo.message,
+    error: 'Unprocessable Entity',
+    reason: rechazo.reason,
+    details: { reason: rechazo.reason },
+  });
+}
+
+/** P40: `category` sólo si la orden la declara — ausente no es `null`. */
+function categoriaPresente(categoryConceptId: string | undefined) {
+  const category = categoriaDeLaOrden(categoryConceptId);
+  return category === undefined ? {} : { category };
+}
+
+/** P40: lo que la ficha del personal lee de una orden de análisis. */
+function ordenDeAnalisis(o: { readonly categoryConceptId: string; readonly basedOnNoteIds?: readonly string[] }) {
+  return { ...categoriaPresente(o.categoryConceptId), basedOnNoteIds: [...(o.basedOnNoteIds ?? [])] };
 }
 
 const ROL_CONTENIDO = uuid('concept-result-content-role-report');
@@ -969,6 +994,9 @@ export function registrarDiagnostico(router: MockRouter): void {
       patientProfileId: string;
       codeConceptId: string;
       categoryConceptId?: string;
+      // P40 (C2): la categoría en texto y las notas que motivan la orden.
+      category?: unknown;
+      basedOnNoteIds?: unknown;
       priorityConceptId?: string;
       reasonText?: string;
       encounterId?: string;
@@ -982,6 +1010,13 @@ export function registrarDiagnostico(router: MockRouter): void {
     const patientProfileId = datos.patientProfileId ?? '';
     const codeConceptId = datos.codeConceptId ?? '';
     const conDecision = datos.previousDiagnosticReportId !== undefined;
+
+    // P40: el mismo orden que la API — la categoría antes de abrir la
+    // transacción, las notas antes de escribir nada.
+    const categoria = resolverCategoria(datos.category, datos.categoryConceptId);
+    if (esRechazo(categoria)) return rechazoDeOrden(categoria);
+    const notas = validarNotas(datos.basedOnNoteIds, patientProfileId, datos.encounterId);
+    if (esRechazo(notas)) return rechazoDeOrden(notas);
 
     // Sin decisión, el alta vuelve a correr el mismo detector que el
     // chequeo: la UI no es la barrera. Con decisión, se confía en lo que el
@@ -1003,7 +1038,8 @@ export function registrarDiagnostico(router: MockRouter): void {
       id: nuevoId('order'),
       patientProfileId,
       codeConceptId,
-      categoryConceptId: datos.categoryConceptId ?? '',
+      categoryConceptId: categoria.conceptId ?? '',
+      ...(notas.noteIds.length === 0 ? {} : { basedOnNoteIds: notas.noteIds }),
       priorityConceptId: datos.priorityConceptId ?? '',
       statusConceptId: reutilizada ? STATUS['ST-SATISFIED-BY-PRIOR']! : STATUS['ST-PENDING']!,
       requesterProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
@@ -1024,6 +1060,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       body: {
         id: nueva.id,
         patientProfileId: nueva.patientProfileId,
+        ...ordenDeAnalisis(nueva),
         status: reutilizada ? 'SATISFIED_BY_PRIOR' : 'ACTIVE',
         createdAt: nueva.createdAt,
       },
@@ -1076,7 +1113,9 @@ export function registrarDiagnostico(router: MockRouter): void {
     const limit = Number(query.get('limit') ?? 50) || 50;
     return {
       patientProfileId: id,
-      orders: orderList.filtrar((o) => o.patientProfileId === id).map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id })),
+      orders: orderList
+        .filtrar((o) => o.patientProfileId === id)
+        .map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id, ...ordenDeAnalisis(o) })),
       reports: informes.filtrar((r) => r.patientProfileId === id).map((r) => ({ id: r.id, patientProfileId: r.patientProfileId, serviceRequestId: r.serviceRequestId, codeConceptId: r.codeConceptId, categoryConceptId: r.categoryConceptId, lifecycleStatusConceptId: r.lifecycleStatusConceptId, currentVersionId: r.currentVersionId, currentReleasedVersionId: r.released ? r.currentVersionId : null, resultReleaseStatusConceptId: r.released ? STATUS['ST-PUBLISHED']! : STATUS['ST-PENDING']!, createdAt: r.createdAt })),
       limit,
       truncated: [],
@@ -1439,6 +1478,8 @@ export function registrarDiagnostico(router: MockRouter): void {
         encounterId: o.encounterId,
         codeConceptId: o.codeConceptId,
         categoryConceptId: o.categoryConceptId,
+        // P40: la categoría sí viaja al portal; las notas del médico no.
+        ...categoriaPresente(o.categoryConceptId),
         statusConceptId: o.statusConceptId,
         priorityConceptId: o.priorityConceptId,
         createdAt: o.createdAt,
