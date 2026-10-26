@@ -1,5 +1,10 @@
 <!-- La anatomía es la de los otros tres directorios y la pone
      `app-directory-page` (A7 del plan de UX). -->
+<!-- P34 · antes del buscador: es lo que se necesita de noche. -->
+@if (!embebido()) {
+  <app-open-now-pharmacies />
+}
+
 <app-directory-page
   [embebido]="embebido()"
   titulo="Directorio de farmacias"
