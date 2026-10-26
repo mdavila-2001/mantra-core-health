@@ -35,7 +35,7 @@ export const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'pin',
       titulo: 'El punto es lo que le hace aparecer',
       texto:
-        'Cuando un paciente busca dónde comprar su receta, la app ordena por cercanía. Sin el punto en el mapa su farmacia queda fuera de esa lista, aunque la dirección esté escrita.',
+        'Cuando un paciente busca dónde comprar su receta, la app ordena por cercanía. Por eso el punto es obligatorio: de él sale también la dirección, el municipio y la zona.',
     },
   ],
   sucursales: [

@@ -14,6 +14,11 @@ export interface StreetFromPoint {
   readonly found: boolean;
   /** «Calle Guapay 3861, Equipetrol»: calle, número y barrio, lo que haya. */
   readonly line?: string;
+  /** La calle sola, sin número ni barrio. */
+  readonly road?: string;
+  readonly houseNumber?: string;
+  /** El barrio, la zona o el distrito (lo primero que conozca el proveedor). */
+  readonly neighbourhood?: string;
   readonly city?: string;
   /** La atribución que exige la licencia de los datos (OpenStreetMap, ODbL). */
   readonly attribution: string;

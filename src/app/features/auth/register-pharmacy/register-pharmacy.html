@@ -109,34 +109,26 @@
               />
             </ng-template>
 
+            <!-- El punto es lo único que se marca: la calle, el departamento,
+                 el municipio y la zona salen de él y se muestran sin editarse
+                 (pedido del cliente del 26/10/2026). -->
             <ng-template appCampoPersonalizado="gpsCentral">
-              @if (direccionPorReescribir()) {
-                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                     anuncia sin robar el foco, que sigue en el mapa. -->
-                <app-alert
-                  appAnuncio
-                  [asertivo]="false"
-                  [enfocar]="false"
-                  tone="info"
-                  data-testid="registro-farmacia-direccion-reescribir"
-                >
-                  {{ avisoReescribir }}
-                </app-alert>
-              }
               <app-map-location-picker
                 pinId="farmacia-central"
                 etiquetaConfirmada="Su farmacia"
                 etiquetaQuitar="Quitar la ubicación de la central"
                 etiquetaMapa="La ubicación de su farmacia en el mapa"
+                etiquetaFicha="La dirección de la central"
                 [ids]="idsUbicacionCentral"
                 [inicial]="gpsCentral()"
-                (confirmado)="gpsCentral.set($event)"
-                (puntoElegido)="vaciarDireccionPorElMapa()"
+                (confirmado)="fijarGpsCentral($event)"
+                (localidad)="escribirLocalidadCentral($event)"
               />
             </ng-template>
 
-            <!-- Las sucursales. Cada una trae su propio mapa, con su propio pin
-                 y su propia confirmación. -->
+            <!-- Las sucursales. Cada una trae su propio mapa, primero, con su
+                 propio pin y su propia confirmación. Su dirección sale del
+                 punto, como la de la central. -->
             <ng-template appCampoPersonalizado="sucursales">
               <div class="farmacia-sucursales">
                 @if (avisoDeSucursalesIncompletas(); as aviso) {
@@ -173,6 +165,18 @@
                       </button>
                     </header>
 
+                    <app-map-location-picker
+                      [pinId]="sucursal.id"
+                      [inicial]="sucursal.gps"
+                      etiquetaConfirmada="Esta sucursal"
+                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
+                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
+                      etiquetaFicha="La dirección de esta sucursal"
+                      [ids]="idsDeSucursal(sucursal.id)"
+                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                      (localidad)="escribirLocalidadDeSucursal(sucursal.id, $event)"
+                    />
+
                     <app-form-field [label]="'Nombre de la sucursal ' + (i + 1)">
                       <app-input
                         [testId]="'registro-farmacia-' + sucursal.id + '-nombre'"
@@ -191,27 +195,7 @@
                       />
                     </app-form-field>
 
-                    <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
-                      <app-input
-                        [testId]="'registro-farmacia-' + sucursal.id + '-direccion'"
-                        placeholder="Av. San Martín 456"
-                        [value]="sucursal.direccion"
-                        (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
-                      />
-                    </app-form-field>
-                    @if (sucursalPorReescribir(sucursal)) {
-                      <app-alert
-                        appAnuncio
-                        [asertivo]="false"
-                        [enfocar]="false"
-                        tone="info"
-                        [attr.data-testid]="'registro-farmacia-' + sucursal.id + '-direccion-reescribir'"
-                      >
-                        {{ avisoReescribir }}
-                      </app-alert>
-                    }
-
-                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Pegue el enlace de Google Maps u OpenStreetMap con el punto, o márquelo en el mapa de abajo. Sin punto la sucursal no se registra.">
+                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Opcional. Si el enlace de Google Maps u OpenStreetMap trae el punto, lo ponemos en el mapa de arriba. Sin punto la sucursal no se registra.">
                       <app-input
                         type="url"
                         [testId]="'registro-farmacia-' + sucursal.id + '-url-ubicacion'"
@@ -220,17 +204,6 @@
                         (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
                       />
                     </app-form-field>
-
-                    <app-map-location-picker
-                      [pinId]="sucursal.id"
-                      [inicial]="sucursal.gps"
-                      etiquetaConfirmada="Esta sucursal"
-                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
-                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
-                      [ids]="idsDeSucursal(sucursal.id)"
-                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
-                      (puntoElegido)="vaciarDireccionDeSucursalPorElMapa(sucursal.id)"
-                    />
                   </section>
                 } @empty {
                   <p class="farmacia-sucursales__vacio">
