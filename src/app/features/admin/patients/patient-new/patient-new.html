@@ -16,6 +16,7 @@
     description="Con qué se lo busca y con qué se lo reconoce."
   >
     <app-form-field
+      icon="key"
       label="Código de paciente"
       hint="Único en la organización. Es con lo que se lo encuentra en el listado."
       [required]="true"
@@ -31,6 +32,7 @@
     </app-form-field>
 
     <app-form-field
+      icon="patients"
       label="Nombre visible"
       hint="Opcional. Sin él, la persona figura en las listas por su código."
       [errorMessage]="
@@ -48,6 +50,7 @@
     description="Lo que permite distinguirla de un homónimo."
   >
     <app-form-field
+      icon="calendar"
       label="Fecha de nacimiento"
       hint="Opcional. Se guarda tal como se elige, sin convertir de huso horario."
     >
@@ -64,6 +67,7 @@
          de saber qué conjunto de valores gobierna cada columna; con
          `dynamic-enums` publicado, se ofrecen como lo que son: selectores. -->
     <app-form-field
+      icon="patients"
       label="Género administrativo"
       hint="Opcional. Cómo consta la persona a efectos administrativos."
     >
@@ -75,6 +79,7 @@
     </app-form-field>
 
     <app-form-field
+      icon="patients"
       label="Sexo al nacer"
       hint="Opcional. Dato clínico; no sustituye al género administrativo."
     >
@@ -86,6 +91,7 @@
     </app-form-field>
 
     <app-form-field
+      icon="key"
       label="Código del índice maestro (MPI)"
       hint="Opcional. Solo si esta persona ya tiene identidad en el índice maestro."
       [errorMessage]="
