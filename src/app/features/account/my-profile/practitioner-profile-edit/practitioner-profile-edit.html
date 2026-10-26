@@ -644,51 +644,18 @@
               </p>
 
               <form class="edicion__formulario" (submit)="$event.preventDefault()">
-                @if (catalogoMunicipiosCaido()) {
-                  <p class="edicion__aviso">
-                    No pudimos traer el catálogo de municipios.
-                    <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
-                      Reintentar
-                    </button>
-                  </p>
-                } @else if (ramasMunicipios().length > 0) {
-                  <!-- Sin @defer a propósito: esta pantalla ya es un chunk perezoso
-                       (`/my-account/edit`), y un bloque diferido obliga a compilar
-                       el componente de forma asíncrona en los specs (ver la nota del
-                       repo sobre @defer en CI). -->
-                  <app-location-picker
-                    class="edicion__campo-ancho"
-                    testId="edicion-residencia"
-                    [ramas]="ramasMunicipios()"
-                    [value]="municipioResidencia()"
-                    (valueChange)="municipioResidencia.set($event)"
-                    mapLabel="Mapa de Bolivia: elija el departamento donde vive"
-                    municipalityLabel="Localidad de residencia (opcional)"
-                    municipalityHint="Sólo se ofrecen las del departamento que eligió."
-                  />
-                }
-
-                <!-- ALV-009: la calle va acá, con el resto de lo que se corrige —no
-                     en un formulario aparte que sólo agregaba direcciones sueltas
-                     que nadie volvía a leer. -->
-                <app-form-field
-                  class="edicion__campo-ancho"
-                  label="Dirección"
-                  [errorMessage]="errorDelServidor('homeAddressLines')"
-                  hint="Su domicilio particular."
-                >
-                  <app-input
-                    data-testid="edicion-direccion"
-                    [(value)]="direccion"
-                    placeholder="Av. Siempre Viva 742, entre calles..."
-                  />
-                </app-form-field>
-
-                <!-- El punto en el mapa, el mismo bloque que el alta ya usaba para
-                     `gpsDomicilio`: usar la ubicación del navegador, marcar a mano,
-                     mover el pin, confirmar y quitar. Abre con lo último que la
+                <!-- Pedido del cliente del 26/10/2026: cada dirección es un
+                     punto en el mapa, y es lo único que se marca. La calle, el
+                     mapa de Bolivia acercado, el departamento, la provincia, el
+                     municipio y la zona salen del punto y se muestran en sólo
+                     lectura. El del domicilio es obligatorio; uno ya guardado
+                     vale sin volver a confirmarlo. Abre con lo último que la
                      persona dejó, no siempre con lo guardado: ver
                      `gpsDomicilioInicial`. -->
+                <h3 class="edicion__subtitulo edicion__campo-ancho">
+                  Su domicilio <span aria-hidden="true">*</span>
+                  <span class="sr-only">(obligatorio)</span>
+                </h3>
                 <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-domicilio"
@@ -697,27 +664,26 @@
                   etiquetaMapa="La ubicación de su domicilio en el mapa"
                   etiquetaMarcar="Marcar mi domicilio en el mapa"
                   indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
+                  etiquetaFicha="Su domicilio"
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioInicial()"
-                  (confirmado)="gpsDomicilio.set($event)"
+                  (confirmado)="confirmarGpsDomicilio($event)"
+                  (localidad)="aplicarLocalidadDomicilio($event)"
                 />
+                @if (errorGpsDomicilio() || errorDelServidor('homeAddressLines'); as error) {
+                  <p
+                    class="edicion__error edicion__campo-ancho"
+                    role="alert"
+                    data-testid="edicion-domicilio-gps-error"
+                  >
+                    {{ error }}
+                  </p>
+                }
 
                 <!-- La dirección del trabajo sí se queda en «Contacto» (decisión del
                      24/09/2026): D-03 sacó de acá los teléfonos y el correo del
-                     trabajo, no la dirección donde atiende. -->
-                <app-form-field
-                  class="edicion__campo-ancho"
-                  label="Dirección del trabajo"
-                  [errorMessage]="errorDelServidor('workAddressLines')"
-                  hint="Dónde atiende en su lugar de trabajo; no es su domicilio personal."
-                >
-                  <app-input
-                    data-testid="edicion-direccion-trabajo"
-                    [(value)]="direccionTrabajo"
-                    placeholder="Calle Warnes 45, lugar de trabajo"
-                  />
-                </app-form-field>
-
+                     trabajo, no la dirección donde atiende. Opcional. -->
+                <h3 class="edicion__subtitulo edicion__campo-ancho">Su lugar de trabajo (opcional)</h3>
                 <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-trabajo"
@@ -726,10 +692,15 @@
                   etiquetaMapa="La ubicación de su trabajo en el mapa"
                   etiquetaMarcar="Marcar su lugar de trabajo en el mapa"
                   indicacionMarcar="Toque el mapa en la puerta del lugar de trabajo para poner el pin."
+                  etiquetaFicha="Su lugar de trabajo"
                   [ids]="idsGpsTrabajo"
                   [inicial]="gpsTrabajoInicial()"
-                  (confirmado)="gpsTrabajo.set($event)"
+                  (confirmado)="confirmarGpsTrabajo($event)"
+                  (localidad)="aplicarLocalidadTrabajo($event)"
                 />
+                @if (errorDelServidor('workAddressLines'); as error) {
+                  <p class="edicion__error edicion__campo-ancho" role="alert">{{ error }}</p>
+                }
 
                 <!-- Los tres teléfonos son el MISMO campo del alta: el país se
                      elige con su bandera y se escribe sólo el número nacional.
