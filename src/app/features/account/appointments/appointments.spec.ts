@@ -187,6 +187,8 @@ describe('Appointments', () => {
         'Próximas 1',
         'Anteriores 2',
       ]);
+      // Con citas, sí hay algo que ver de dos formas: vuelve el selector.
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-vistas"]')).not.toBeNull();
       const proximas = fixture.nativeElement.querySelector('[data-testid="turnos-lista-upcoming"]');
       const anteriores = fixture.nativeElement.querySelector('[data-testid="turnos-lista-past"]');
       // La fecha se pinta sin año; el 1 de marzo sólo existe en la futura.
@@ -628,6 +630,17 @@ describe('Appointments', () => {
     const estado = interno<() => { status: string; nextAction?: { label: string } }>('turnos')();
     expect(estado.status).toBe('empty');
     expect(estado.nextAction?.label).toBe('Elija una agenda');
+  });
+
+  it('sin turnos no muestra el título «Sus citas» ni el selector Lista/Calendario (27/10/2026)', () => {
+    montar();
+    responderArranque([]);
+    fixture.detectChanges();
+
+    const raiz: HTMLElement = fixture.nativeElement;
+    expect(raiz.querySelector('[data-testid="turnos-vistas"]')).toBeNull();
+    // El título queda para el lector de pantalla y como destino del foco.
+    expect(raiz.querySelector('#turnos-propios')?.classList).toContain('sr-only');
   });
 
   it('dice el estado en castellano, no el «display» en inglés del catálogo', () => {
