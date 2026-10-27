@@ -27,7 +27,7 @@ import type { CampoDeFormulario } from './paginated-form.types';
  */
 export function mensajeDeError(
   control: AbstractControl | null,
-  campo: Pick<CampoDeFormulario, 'label' | 'mensajeDeError'>,
+  campo: Pick<CampoDeFormulario, 'label' | 'mensajeDeError' | 'mensajeSiFalta'>,
 ): string {
   if (control === null || !control.touched || !control.invalid) {
     return '';
@@ -40,7 +40,7 @@ export function mensajeDeError(
   const errores = control.errors ?? {};
 
   if ('required' in errores) {
-    return 'Este dato es obligatorio.';
+    return campo.mensajeSiFalta ?? 'Este dato es obligatorio.';
   }
   if ('email' in errores) {
     return 'Revise el correo: falta el arroba o el dominio.';

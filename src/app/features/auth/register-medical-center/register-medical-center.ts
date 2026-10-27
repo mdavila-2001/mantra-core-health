@@ -1,6 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  Validators,
+  type AbstractControl,
+  type ValidationErrors,
+  type ValidatorFn,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, map, switchMap, type Observable } from 'rxjs';
 
@@ -8,9 +15,11 @@ import { LegalEntityTypesCatalog } from '../../../core/data-access/system-contex
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
   isMedicalOrganizationType,
+  type MedicalOrganizationType,
+} from '../../../core/data-access/directory/directory.types';
+import {
   MedicalCenterRegistrationClient,
   type MedicalCenterRegistration,
-  type MedicalOrganizationType,
 } from '../../../core/data-access/iam/medical-center-registration.client';
 import { readApiError } from '../../../core/http/api-error';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -23,6 +32,7 @@ import { PaginatedForm } from '../../../shared/components/organisms/paginated-fo
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   MESSAGE_SHORT_PASSWORD,
+  MIN_CHARACTERS_PASSWORD,
   passwordValidators,
 } from '../shared-registration/password-policy';
 import { medicalCenterCodeFromName } from './medical-center-code';
@@ -46,6 +56,25 @@ const AVISO_CATALOGO = 'No pudimos cargar los catálogos del alta. Revise su con
 const MAX_LEGAL_NAME = 300;
 const MAX_EMAIL = 320;
 const MAX_NAME = 200;
+
+/**
+ * El valor del control tiene que ser una de las opciones que la pantalla
+ * ofrece **ahora**.
+ *
+ * Las opciones llegan del catálogo después de pintar: si traen menos tipos que
+ * los que había —una API sin `CLINIC`—, un valor ya elegido quedaría marcado
+ * en el formulario sin un radio que lo muestre, y saldría igual a la red para
+ * volver con un 400. Vacío no es asunto de este validador: lo dice `required`.
+ *
+ * @param opciones - Lee las opciones vigentes; se consulta en cada validación.
+ */
+export function entreLasOpciones(opciones: () => readonly SelectOption<string>[]): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const valor: unknown = control.value;
+    if (valor === '' || valor === null) return null;
+    return opciones().some((opcion) => opcion.value === valor) ? null : { notOffered: true };
+  };
+}
 
 /** Un error de la API, en castellano y sin tecnicismos. */
 export function signupErrorMessage(error: unknown): string {
@@ -106,8 +135,23 @@ export class RegisterMedicalCenter {
   protected readonly tagline =
     'Publique sus procedimientos y afilie a sus médicos para que los pacientes lo encuentren.';
 
+  /**
+   * Los tipos de institución que la API publica, de los cinco médicos.
+   *
+   * Arranca con la lista de respaldo —los cinco—: con un catálogo lento, un
+   * grupo obligatorio vacío pedía «Elija el tipo de institución.» sin nada que
+   * elegir. Cuando el catálogo responde se queda con los que publica, y
+   * `ofrecerTipos` vacía lo elegido si dejó de ofrecerse.
+   */
+  private readonly tiposDeOrganizacion = signal<readonly SelectOption<MedicalOrganizationType>[]>(
+    medicalOrganizationTypeOptions(null),
+  );
+
   readonly form = new FormGroup({
-    tenantType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    tenantType: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, entreLasOpciones(() => untracked(this.tiposDeOrganizacion))],
+    }),
     legalName: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_LEGAL_NAME)],
@@ -129,11 +173,6 @@ export class RegisterMedicalCenter {
   protected readonly registered = signal(false);
   protected readonly verificationSent = signal(false);
 
-  /** Los tipos de institución que la API publica, de los cinco médicos. */
-  private readonly tiposDeOrganizacion = signal<readonly SelectOption<MedicalOrganizationType>[]>(
-    medicalOrganizationTypeOptions(null),
-  );
-
   /** Los tipos societarios de Bolivia, del mismo catálogo que las demás altas. */
   private readonly tiposSocietarios = signal<readonly SelectOption<string>[]>([]);
 
@@ -147,12 +186,18 @@ export class RegisterMedicalCenter {
       {
         titulo: 'La organización',
         hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
+        // El tipo cruza la página con sus opciones en rejilla, y la razón
+        // social y el tipo societario comparten renglón: es lo que hace que la
+        // página entre sin scroll en un monitor de 768 px de alto (§5).
+        disposicion: 'dos-columnas' as const,
         campos: [
           {
             key: 'tenantType',
             label: 'Tipo de institución',
             control: 'radio' as const,
             options: this.tiposDeOrganizacion(),
+            ancho: 'completo' as const,
+            opcionesEn: 'rejilla' as const,
             required: true,
             testId: 'medical-center-signup-tenant-type',
             mensajeDeError: 'Elija el tipo de institución.',
@@ -164,6 +209,9 @@ export class RegisterMedicalCenter {
             required: true,
             hint: `Hasta ${MAX_LEGAL_NAME} caracteres.`,
             testId: 'medical-center-signup-legal-name',
+            // Sólo el vacío lleva mensaje propio: el tope de 300 lo dice el
+            // motor con su número, que es lo que la persona necesita leer.
+            mensajeSiFalta: 'Escriba la razón social de la organización.',
           },
           {
             key: 'legalEntityType',
@@ -173,6 +221,7 @@ export class RegisterMedicalCenter {
             options: this.tiposSocietarios(),
             required: true,
             testId: 'medical-center-signup-legal-entity-type',
+            valorEnDosRenglones: true,
             mensajeDeError: 'Elija el tipo societario.',
           },
         ],
@@ -180,6 +229,7 @@ export class RegisterMedicalCenter {
       {
         titulo: 'Su cuenta',
         hint: 'Quien administra la organización. Con estos datos inicia sesión.',
+        disposicion: 'tres-columnas' as const,
         campos: [
           {
             key: 'ownerName',
@@ -205,6 +255,7 @@ export class RegisterMedicalCenter {
             control: 'password' as const,
             required: true,
             autocomplete: 'new-password',
+            hint: `Mínimo ${MIN_CHARACTERS_PASSWORD} caracteres.`,
             testId: 'medical-center-signup-password',
             mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
@@ -215,8 +266,8 @@ export class RegisterMedicalCenter {
 
   constructor() {
     this.context.dynamicEnum(DESTINO_TIPO_DE_ORGANIZACION).subscribe({
-      next: (catalogo) => this.tiposDeOrganizacion.set(medicalOrganizationTypeOptions(catalogo)),
-      error: () => this.tiposDeOrganizacion.set(medicalOrganizationTypeOptions(null)),
+      next: (catalogo) => this.ofrecerTipos(medicalOrganizationTypeOptions(catalogo)),
+      error: () => this.ofrecerTipos(medicalOrganizationTypeOptions(null)),
     });
     this.legalEntityTypes.listar().subscribe({
       next: (opciones) =>
@@ -248,6 +299,22 @@ export class RegisterMedicalCenter {
           this.errorMessage.set(signupErrorMessage(error));
         },
       });
+  }
+
+  /**
+   * Publica las opciones del tipo y revalida lo elegido contra ellas.
+   *
+   * Un valor que dejó de ofrecerse se vacía: la persona vuelve a ver el grupo
+   * sin marcar —y, si ya lo había tocado, con «Elija el tipo de institución.»—
+   * en vez de un valor invisible que la API rechazaría.
+   */
+  private ofrecerTipos(opciones: readonly SelectOption<MedicalOrganizationType>[]): void {
+    this.tiposDeOrganizacion.set(opciones);
+    const tipo = this.form.controls.tenantType;
+    if (tipo.value !== '' && !opciones.some((opcion) => opcion.value === tipo.value)) {
+      tipo.setValue('');
+    }
+    tipo.updateValueAndValidity();
   }
 
   goToLogin(): void {

@@ -1,0 +1,66 @@
+##### PASADA 1
+=== SQL/patches/2026-10-26_v4252_chart_note_entries.sql
+exit=0
+=== SQL/patches/2026-10-26_v4252_pharmacies_primary_practice_site.sql
+exit=0
+=== SQL/patches/2026-10-26_v4252_schedule_templates_flexible_hours.sql
+exit=0
+=== SQL/patches/2026-10-26_v4253_clinical_service_request_notes.sql
+exit=0
+=== SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql
+exit=0
+=== SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:30: NOTICE:  extension "btree_gist" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:91: NOTICE:  constraint "ck_pharmacy_on_call_shifts_window" of relation "pharmacy_on_call_shifts" does not exist, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:95: NOTICE:  constraint "ex_pharmacy_on_call_shifts_site_overlap" of relation "pharmacy_on_call_shifts" does not exist, skipping
+exit=0
+##### PASADA 2
+=== SQL/patches/2026-10-26_v4252_chart_note_entries.sql
+psql:SQL/patches/2026-10-26_v4252_chart_note_entries.sql:34: NOTICE:  column "entries_json" of relation "clinical_note_versions" already exists, skipping
+exit=0
+=== SQL/patches/2026-10-26_v4252_pharmacies_primary_practice_site.sql
+psql:SQL/patches/2026-10-26_v4252_pharmacies_primary_practice_site.sql:15: NOTICE:  column "primary_practice_site_id" of relation "pharmacies" already exists, skipping
+psql:SQL/patches/2026-10-26_v4252_pharmacies_primary_practice_site.sql:18: NOTICE:  relation "ix_pharmacies_primary_practice_site_id" already exists, skipping
+exit=0
+=== SQL/patches/2026-10-26_v4252_schedule_templates_flexible_hours.sql
+psql:SQL/patches/2026-10-26_v4252_schedule_templates_flexible_hours.sql:25: NOTICE:  column "flexible_hours" of relation "schedule_templates" already exists, skipping
+exit=0
+=== SQL/patches/2026-10-26_v4253_clinical_service_request_notes.sql
+psql:SQL/patches/2026-10-26_v4253_clinical_service_request_notes.sql:40: NOTICE:  relation "service_request_notes" already exists, skipping
+psql:SQL/patches/2026-10-26_v4253_clinical_service_request_notes.sql:60: NOTICE:  relation "ux_service_request_notes_request_note" already exists, skipping
+psql:SQL/patches/2026-10-26_v4253_clinical_service_request_notes.sql:62: NOTICE:  relation "ix_service_request_notes_service_request_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4253_clinical_service_request_notes.sql:64: NOTICE:  relation "ix_service_request_notes_clinical_note_header_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4253_clinical_service_request_notes.sql:66: NOTICE:  relation "ix_service_request_notes_created_by_user_id" already exists, skipping
+exit=0
+=== SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:45: NOTICE:  column "pharmacy_product_category_id" of relation "pharmacy_products" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:45: NOTICE:  column "description_text" of relation "pharmacy_products" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:45: NOTICE:  column "stock_quantity" of relation "pharmacy_products" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:45: NOTICE:  column "min_stock_quantity" of relation "pharmacy_products" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:45: NOTICE:  column "out_of_stock_declared" of relation "pharmacy_products" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:58: NOTICE:  relation "pharmacy_product_categories" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:68: NOTICE:  relation "pharmacy_product_images" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:108: NOTICE:  relation "ix_pharmacy_products_pharmacy_product_category_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:109: NOTICE:  relation "ix_pharmacy_product_categories_pharmacy_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:110: NOTICE:  relation "uq_pharmacy_product_categories_pharmacy_id_name_key" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:111: NOTICE:  relation "uq_pharmacy_product_categories_pharmacy_id_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:112: NOTICE:  relation "ix_pharmacy_product_categories_created_by_user_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:113: NOTICE:  relation "ix_pharmacy_product_categories_updated_by_user_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:114: NOTICE:  relation "ix_pharmacy_product_images_pharmacy_product_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:115: NOTICE:  relation "ix_pharmacy_product_images_image_file_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:116: NOTICE:  relation "uq_pharmacy_product_images_pharmacy_product_id_ordinal" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:117: NOTICE:  relation "uq_pharmacy_product_images_pharmacy_product_id_image_file_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4255_pharmacy_catalog.sql:118: NOTICE:  relation "ix_pharmacy_product_images_created_by_user_id" already exists, skipping
+exit=0
+=== SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:30: NOTICE:  extension "btree_gist" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:33: NOTICE:  column "open_24h" of relation "pharmacy_sites" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:48: NOTICE:  relation "pharmacy_on_call_shifts" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:81: NOTICE:  relation "ix_pharmacy_on_call_shifts_pharmacy_site_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:82: NOTICE:  relation "ix_pharmacy_on_call_shifts_source_concept_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:83: NOTICE:  relation "ix_pharmacy_on_call_shifts_status_concept_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:84: NOTICE:  relation "ix_pharmacy_on_call_shifts_created_by_user_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:85: NOTICE:  relation "ix_pharmacy_on_call_shifts_updated_by_user_id" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:86: NOTICE:  relation "ix_pharmacy_on_call_shifts_site_window" already exists, skipping
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:87: NOTICE:  relation "gist_pharmacy_on_call_shifts_window" already exists, skipping
+exit=0

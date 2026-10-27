@@ -1,10 +1,8 @@
 import { Validators, type AbstractControl, type ValidationErrors } from '@angular/forms';
 
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
-import { optionsRegulatoryAuthority } from '../../../core/profession/regulatory-authorities';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
-import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
@@ -161,12 +159,17 @@ export function practitionerFields(
     ],
   };
 
-  const remainingPages = paginateFields([
+  // Las páginas se juntaron por pedido del propietario (26/10/2026): eran
+  // quince y el alta se hacía eterna. Ahora son nueve, agrupadas por tema, y
+  // el correo de acceso va en la MISMA página que la contraseña: son las dos
+  // mitades del inicio de sesión. Ya no pasan por `paginateFields`, que las
+  // volvería a partir de a cuatro.
+  const remainingPages: readonly PaginaDeFormulario[] = [
     {
-      titulo: 'Cuéntenos un poco sobre usted',
-      clave: 'profile',
-      icon: 'stethoscope',
-      hint: 'Los dos hacen falta. Se guardan en su perfil profesional.',
+      titulo: 'Sus datos y su acceso',
+      clave: 'access',
+      icon: 'lock',
+      hint: 'Todo obligatorio. Con su correo personal y esta contraseña va a iniciar sesión. Nada de esto se publica en su ficha.',
       campos: [
         {
           key: 'sexAtBirth',
@@ -189,21 +192,13 @@ export function practitionerFields(
           minDate: new Date(1900, 0, 1),
           mensajeDeError: 'Indique su fecha de nacimiento.',
         },
-      ],
-    },
-    {
-      titulo: 'Cómo le contactamos en privado',
-      clave: 'personal-contact',
-      icon: 'phone',
-      hint: 'Los dos hacen falta, y con el correo entra. Nada de esto se publica en su ficha.',
-      campos: [
         {
           key: 'mobilePhone',
           label: 'Su celular personal',
           required: true,
           hint: 'Elija el país si su número no es de Bolivia.',
           description:
-            'Es el número por el que le contactamos a usted. El que ve un paciente es el de su consultorio, que se pide en la página siguiente.',
+            'Es el número por el que le contactamos a usted. El que ve un paciente es el de su consultorio, que se pide más adelante.',
           control: 'tel',
           autocomplete: 'tel',
           testId: 'registro-pro-celular-personal',
@@ -226,13 +221,49 @@ export function practitionerFields(
           icono: 'mail',
           mensajeDeError: 'Ingrese un correo válido.',
         },
+        {
+          key: 'password',
+          label: 'Contraseña',
+          hint: 'Al menos 8 caracteres.',
+          description:
+            'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
+          control: 'password',
+          required: true,
+          autocomplete: 'new-password',
+          placeholder: 'Su contraseña',
+          testId: 'registro-pro-password',
+          icono: 'lock',
+          mensajeDeError: MESSAGE_SHORT_PASSWORD,
+        },
       ],
     },
     {
-      titulo: 'El contacto de su trabajo',
-      clave: 'access',
-      icon: 'phone',
-      hint: 'Los datos del consultorio. Todo opcional: su acceso ya quedó definido.',
+      titulo: '¿Dónde vive?',
+      clave: 'residence',
+      icon: 'home',
+      // Pedido del cliente del 26/10/2026: lo único que se marca es el punto, y
+      // es obligatorio. Calle, zona, municipio y departamento salen de él (los
+      // muestra el selector, en sólo lectura) y los vuelca a sus controles
+      // `aplicarLocalidadDomicilio`: siguen en el formulario, pero ya no son
+      // campos de la página.
+      hint: 'Marque su casa en el mapa: con el punto sabemos la calle, la zona y la localidad.',
+      campos: [
+        {
+          key: 'gpsDomicilio',
+          label: 'Ubicación GPS',
+          hint: 'Toque el mapa en la puerta de su casa, o use su ubicación actual, y confírmelo.',
+          description: 'Lo demás —calle, zona, municipio y departamento— sale del punto.',
+          control: 'custom',
+          required: true,
+          mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+        },
+      ],
+    },
+    {
+      titulo: 'Su trabajo',
+      clave: 'workplace-location',
+      icon: 'building',
+      hint: 'Todo opcional: los datos del lugar donde trabaja, separados de su casa y de su consultorio propio.',
       campos: [
         {
           key: 'workMobilePhone',
@@ -272,41 +303,11 @@ export function practitionerFields(
           icono: 'mail',
           mensajeDeError: 'Ingrese un correo válido.',
         },
-      ],
-    },
-    {
-      titulo: '¿Dónde vive?',
-      clave: 'residence',
-      icon: 'home',
-      // Pedido del cliente del 26/10/2026: lo único que se marca es el punto, y
-      // es obligatorio. Calle, zona, municipio y departamento salen de él (los
-      // muestra el selector, en sólo lectura) y los vuelca a sus controles
-      // `aplicarLocalidadDomicilio`: siguen en el formulario, pero ya no son
-      // campos de la página.
-      hint: 'Marque su casa en el mapa: con el punto sabemos la calle, la zona y la localidad.',
-      campos: [
-        {
-          key: 'gpsDomicilio',
-          label: 'Ubicación GPS',
-          hint: 'Toque el mapa en la puerta de su casa, o use su ubicación actual, y confírmelo.',
-          description: 'Lo demás —calle, zona, municipio y departamento— sale del punto.',
-          control: 'custom',
-          required: true,
-          mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
-        },
-      ],
-    },
-    {
-      titulo: '¿Dónde trabaja?',
-      clave: 'workplace-location',
-      icon: 'building',
-      // Opcional como toda la página: la dirección del trabajo sale del punto.
-      hint: 'Opcional. Marque su lugar de trabajo en el mapa; la dirección sale del punto.',
-      campos: [
         {
           key: 'gpsTrabajo',
           label: 'Ubicación GPS del trabajo (opcional)',
           hint: 'Confirme el punto para guardar la ubicación laboral.',
+          // La dirección del trabajo sale del punto (26/10/2026).
           description: 'Se guarda como dirección laboral, separada de su domicilio.',
           control: 'custom',
         },
@@ -314,17 +315,11 @@ export function practitionerFields(
     },
     {
       titulo: 'Su consultorio propio',
-      clave: 'own-office-contact',
-      icon: 'building',
+      clave: 'own-office',
+      icon: 'pin',
       // **Opcional, y aun así el que más importa** (punto 12/13/22 del módulo
-      // médico del registro de procesos). Quien ejerce puede atender en
-      // varios lugares, pero los demás son de otro: para figurar en una
-      // clínica hace falta que esa clínica acepte la vinculación, y hasta que
-      // eso pase su agenda no tiene dónde publicarse. El consultorio propio
-      // es el único lugar que no depende de que nadie confirme nada.
-      //
-      // Por eso se pregunta acá y no sólo en el perfil: quien se registra
-      // para empezar a atender lo necesita el primer día.
+      // médico): es el único lugar donde atiende que no depende de que otro
+      // acepte la vinculación, y desde donde publica su agenda el primer día.
       hint: 'Opcional. Es el lugar que no depende de que otro le acepte, y desde donde va a poder publicar su agenda.',
       campos: [
         {
@@ -348,16 +343,6 @@ export function practitionerFields(
           icono: 'phone',
           mensajeDeError: 'El número está incompleto para el país elegido.',
         },
-      ],
-    },
-    {
-      titulo: 'Dónde queda su consultorio',
-      clave: 'own-office',
-      icon: 'pin',
-      // Opcional como el resto del consultorio, pero sólo con el punto: la
-      // calle, la zona y la localidad salen de él (26/10/2026).
-      hint: 'Opcional. Marque el consultorio en el mapa; la dirección sale del punto.',
-      campos: [
         {
           key: 'gpsConsultorio',
           label: 'Ubicación GPS (opcional)',
@@ -372,16 +357,10 @@ export function practitionerFields(
       titulo: 'Su título profesional y foto',
       clave: 'practice',
       icon: 'teach',
-      // Página propia y no pegada a las especialidades: es la que DECIDE qué
-      // especialidades se ofrecen, y verlas cambiar en la misma pantalla en
-      // la que se elige el título hace pensar que algo se perdió.
-      //
-      // La universidad y el lugar de estudio SÍ se preguntan acá desde el
-      // 09/09: el propietario los pidió en el alta, no en el perfil. Desde el
-      // 02/10 país y universidad son desplegables en árbol (ver
-      // `CampoDeEstudio`). Viajan dentro de cada título de `credentials`
-      // (`issuingInstitutionText`, `issuingCityText`, `issuingCountryText`),
-      // no como campos del perfil.
+      // Va antes de la habilitación y las especialidades: decide el colegio y
+      // la lista de especialidades que se ofrecen. País, universidad y ciudad
+      // viajan dentro de cada título de `credentials`
+      // (`issuingInstitutionText`, `issuingCityText`, `issuingCountryText`).
       hint: 'Lo que van a ver sus pacientes. Puede cambiarlo cuando quiera.',
       campos: [
         {
@@ -425,7 +404,10 @@ export function practitionerFields(
       titulo: 'Su habilitación para ejercer',
       clave: 'credentials',
       icon: 'shield',
-      hint: 'Sin matrícula y número de colegio no podemos darle de alta.',
+      // La autoridad emisora ya no se pregunta (propietario, 26/10/2026): el
+      // colegio se completa solo con el título profesional
+      // (`syncCollegeWithProfession`) y se puede corregir desde el perfil.
+      hint: 'Sin matrícula y registro del SEDES no podemos darle de alta. Los respaldos son opcionales.',
       campos: [
         {
           key: 'licenseNumber',
@@ -458,33 +440,11 @@ export function practitionerFields(
           mensajeDeError: 'Ingrese su número de registro del SEDES.',
         },
         {
-          key: 'regulatoryAuthority',
-          label: 'Autoridad que la emitió (opcional)',
-          hint: 'El Ministerio de Salud, el SEDES de su gobernación o el colegio de su profesión.',
-          control: 'select',
-          options: optionsRegulatoryAuthority(titulo),
-          placeholder: 'Sin especificar',
-          testId: 'registro-pro-autoridad',
-          icono: 'building',
-        },
-        {
           key: 'licenseIssueDate',
           label: 'Fecha de inscripción (opcional)',
           hint: 'Cuándo se registró, no cuándo vence.',
           control: 'date',
         },
-      ],
-    },
-    // Página propia y no dos campos más en la anterior: `MAX_CAMPOS_POR_PAGINA`
-    // ya está lleno ahí (cuatro), y un adjunto ocupa mucho más alto que un
-    // input. Va inmediatamente después para que cada archivo se vea al lado
-    // del número que respalda.
-    {
-      titulo: 'Los respaldos de su habilitación',
-      clave: 'credential-files',
-      icon: 'folder',
-      hint: 'Opcional al registrarse. Un administrativo los verifica después.',
-      campos: [
         {
           key: 'credentialAttachments',
           label: 'Respaldos',
@@ -493,26 +453,11 @@ export function practitionerFields(
       ],
     },
     {
-      titulo: 'Sus títulos',
-      clave: 'academic-titles',
-      icon: 'teach',
-      hint: 'Todos opcionales, y puede cargar más de uno de cada tipo.',
-      campos: [
-        {
-          key: 'academicTitles',
-          label: 'Títulos',
-          control: 'custom',
-        },
-      ],
-    },
-    {
-      titulo: 'Sus especialidades',
+      titulo: 'Sus especialidades y otros títulos',
       clave: 'specialties',
       icon: 'directory',
-      hint: 'Hasta cuatro. La lista completa está disponible para cualquier profesión.',
+      hint: 'Todo opcional. Hasta cuatro especialidades, y puede cargar más de un título de cada tipo.',
       campos: [
-        // Sin control propio: es una ranura que la plantilla llena con las
-        // casillas agregadas y su botón. Mismo mecanismo que `municipio`.
         {
           key: 'especialidadesExtra',
           label: '',
@@ -522,10 +467,15 @@ export function practitionerFields(
           // Lo que falta lo dicen el error de la casilla y el aviso del paso.
           mensajeDeError: '',
         },
+        {
+          key: 'academicTitles',
+          label: 'Títulos',
+          control: 'custom',
+        },
       ],
     },
     // La firma y el sello: **imágenes** escaneadas, no una firma electrónica.
-    // Opcional y saltable, como la foto: se cargan después desde el perfil.
+    // Opcional y saltable; es el último paso y desde acá se crea la cuenta.
     {
       titulo: 'Su firma y su sello',
       clave: 'signature-seal',
@@ -544,34 +494,7 @@ export function practitionerFields(
         },
       ],
     },
-    // La contraseña cierra el alta, sola. Estaba en el paso del correo de
-    // trabajo, mezclada con los teléfonos del consultorio: el mismo paso
-    // pedía datos de contacto —que son del trabajo y opcionales— y la clave
-    // de la cuenta, que no es ninguna de las dos cosas. Separarla también
-    // deja el gesto de «elegir contraseña» pegado al de terminar.
-    {
-      titulo: 'Su contraseña',
-      clave: 'password',
-      icon: 'lock',
-      hint: 'Lo último. Con ella y su correo personal va a iniciar sesión.',
-      campos: [
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          description:
-            'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
-          control: 'password',
-          required: true,
-          autocomplete: 'new-password',
-          placeholder: 'Su contraseña',
-          testId: 'registro-pro-password',
-          icono: 'lock',
-          mensajeDeError: MESSAGE_SHORT_PASSWORD,
-        },
-      ],
-    },
-  ]);
+  ];
 
   return [identityPage, ...remainingPages];
 }

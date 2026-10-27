@@ -223,7 +223,7 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
   /* 9 · Tu habilitación para ejercer */
   licenseNumber: DOCTOR_TAB.credenciales,
   sedesLicenseNumber: DOCTOR_TAB.credenciales,
-  regulatoryAuthority: DOCTOR_TAB.credenciales,
+  // La autoridad emisora ya no se pregunta en el alta (26/10/2026).
   licenseIssueDate: DOCTOR_TAB.credenciales,
 
   /* 10 · Los respaldos de tu habilitación */

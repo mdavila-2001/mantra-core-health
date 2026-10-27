@@ -57,16 +57,24 @@ export class ChartNotesClient {
    * @returns La página, con las fechas ya como `Date`.
    */
   listNotes(params: ListChartNotesParams): Observable<ChartNotesPage> {
+    // `encounterId` NO viaja: `ListChartNotesQueryDto` no lo declara y la
+    // lista blanca de la API responde 400 a todo el pedido (visto en navegador
+    // contra la API real, 26/10/2026, defecto A3: el formulario libre y la
+    // orden de análisis no podían leer las notas de la consulta). Cada nota
+    // trae su `encounterId`, así que el acotado por consulta se hace acá.
     let query = new HttpParams().set('patientProfileId', params.patientProfileId);
-    if (params.encounterId !== undefined) {
-      query = query.set('encounterId', params.encounterId);
-    }
     if (params.limit !== undefined) {
       query = query.set('limit', String(params.limit));
     }
-    return this.http
-      .get<WireChartNotesPage>(this.url('/charts/notes'), { params: query })
-      .pipe(map((page) => ({ ...page, items: page.items.map(toNote) })));
+    const encuentro = params.encounterId;
+    return this.http.get<WireChartNotesPage>(this.url('/charts/notes'), { params: query }).pipe(
+      map((page) => ({
+        ...page,
+        items: page.items
+          .filter((nota) => encuentro === undefined || nota.encounterId === encuentro)
+          .map(toNote),
+      })),
+    );
   }
 
   /**

@@ -9,6 +9,7 @@ import {
   UNIDAD,
   VIA,
 } from '../fixtures/concepts';
+import '../fixtures/tenant-types';
 import {
   MEDICAL,
   PACIENTE,
@@ -141,7 +142,8 @@ const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string]
   [/relationship/, 'VS_RELATED_PERSON_RELATIONSHIP', 'Parentesco'],
   [/language/, 'VS_LANGUAGE', 'Idioma'],
   [/nationality/, 'VS_NATIONALITY', 'Nacionalidad'],
-  [/tenant_type|organization_type/, 'VS_ORGANIZATION_TYPE', 'Tipo de organización'],
+  [/tenant_type/, 'VS_TENANT_TYPE', 'Tipo de organización'], // códigos reales: ver `tenant-types.ts`
+  [/organization_type/, 'VS_ORGANIZATION_TYPE', 'Tipo de organización'],
   // Subtarea 1.1: `directory.tenants.legal_entity_type_concept_id`. Va antes
   // que nada más pudiera casar por casualidad con "type" a secas.
   [/legal_entity_type/, 'VS_LEGAL_ENTITY_TYPE', 'Forma societaria'],
