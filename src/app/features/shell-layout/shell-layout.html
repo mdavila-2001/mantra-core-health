@@ -286,7 +286,11 @@
              no compite por la atención con «tu receta está lista». -->
         <!-- Emergencia salió de la cabecera (propietario, 27/10/2026): vive
              arriba del menú lateral, en todas las pantallas (ver
-             `app-side-nav__emergencia`). -->
+             `app-side-nav__emergencia`). En el teléfono el menú es un cajón y
+             quedaba a dos toques, así que ahí vuelve como ícono: una urgencia
+             tiene que estar a uno (propietario, 27/10/2026). Fuera de esos
+             anchos lo esconde `shell-layout.css`. -->
+        <app-panic-button class="app-header__emergencia" data-testid="header-emergencia" compacto />
 
         <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
              elegir: una cuenta sin dependientes no necesita conmutar nada, y un
