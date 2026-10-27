@@ -460,3 +460,14 @@ En el tratamiento, los inhibidores de SGLT2, los antagonistas no esteroideos de 
 Requieren atención médica urgente, mediante el servicio de emergencias, el dolor o la opresión torácica que dura más de unos minutos, se irradia al brazo, la mandíbula o la espalda o se acompaña de sudor frío, náuseas o falta de aire; la pérdida brusca de conocimiento; la falta de aire intensa de aparición brusca; las palpitaciones muy rápidas con mareo o desvanecimiento; y los síntomas de un ictus como debilidad de un lado, dificultad para hablar o caída de un lado de la cara. Ante una persona inconsciente que no respira con normalidad, se debe pedir ayuda al servicio de emergencias e iniciar las compresiones torácicas mientras se espera.
 
 Conviene consultar de forma programada si hay falta de aire inusual al esfuerzo, hinchazón de tobillos, cansancio que va a más, palpitaciones repetidas, mareos recurrentes, dolor torácico con el ejercicio, un soplo recién descubierto, antecedentes familiares de enfermedad cardíaca precoz o de muerte súbita en jóvenes, o cuando se quiere iniciar una actividad física intensa tras años de sedentarismo con factores de riesgo. Un chequeo periódico de la presión arterial, la glucosa y el colesterol forma parte de la prevención.
+
+## [references]
+
+- Enfermedades del corazón | https://medlineplus.gov/spanish/heartdiseases.html | MedlinePlus
+- Vista superior: válvulas cardíacas (ilustración) | https://medlineplus.gov/spanish/ency/esp_imagepages/18093.htm | MedlinePlus
+- How the Heart Works | https://www.nhlbi.nih.gov/health/heart | NHLBI (NIH)
+- Anatomy, Thorax, Heart (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK470256/ | NCBI Bookshelf
+- Physiology, Cardiac Cycle (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK459327/ | NCBI Bookshelf
+- Physiology, Cardiac Output (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK470455/ | NCBI Bookshelf
+- Enfermedades cardiovasculares | https://www.paho.org/es/temas/enfermedades-cardiovasculares | OPS
+- About Heart Disease | https://www.cdc.gov/heart-disease/about/index.html | CDC
