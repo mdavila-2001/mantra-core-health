@@ -6,7 +6,7 @@
 <!-- El filtro por aseguradora sólo se muestra al prestador: la aseguradora ve directamente sus solicitudes recibidas. -->
 @if (!isCarrier()) {
   <form class="claims__filters" (submit)="$event.preventDefault()">
-    <app-form-field label="Aseguradora" controlId="claims-carrier">
+    <app-form-field icon="shield" label="Aseguradora" controlId="claims-carrier">
       <app-select
         id="claims-carrier"
         data-testid="claims-carrier-filter"

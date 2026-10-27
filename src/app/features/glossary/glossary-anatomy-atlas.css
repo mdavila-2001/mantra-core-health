@@ -463,3 +463,54 @@
 .atlas3d__paginas ::ng-deep .pagination__nav {
   justify-content: center;
 }
+
+
+/* ─── Créditos en tabla (port de mockup, #1434) ─── */
+/* Fuentes como tabla ordenada, a la manera de una lista de referencias. */
+.atlas3d__tabla-caja {
+  inline-size: 100%;
+  overflow-x: hidden;
+}
+
+.atlas3d__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+
+.atlas3d__tabla-titulo {
+  padding-block-end: var(--sp-2);
+  text-align: start;
+  color: var(--text-secondary);
+}
+
+.atlas3d__tabla th,
+.atlas3d__tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  border-block-end: 1px solid var(--border-default);
+}
+
+.atlas3d__tabla thead th {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-block-end-color: var(--border-strong);
+}
+
+.atlas3d__tabla thead th:nth-child(1) {
+  inline-size: 22%;
+}
+
+.atlas3d__tabla thead th:nth-child(2) {
+  inline-size: 14%;
+}
+
+.atlas3d__tabla thead th:nth-child(4) {
+  inline-size: 22%;
+}

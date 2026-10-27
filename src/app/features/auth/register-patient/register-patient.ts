@@ -450,7 +450,7 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'route',
       titulo: 'La calle sale del punto',
       texto:
-        'Al marcar su casa escribimos el nombre de la calle con datos de OpenStreetMap. Revísela: si no la encontramos, o no es la suya, la corrige usted.',
+        'Al marcar su casa escribimos el nombre de la calle con datos de OpenStreetMap. Con el mismo punto sabemos su departamento, provincia, municipio y zona. Si algo no coincide, mueva el pin.',
     },
   ],
   work: [

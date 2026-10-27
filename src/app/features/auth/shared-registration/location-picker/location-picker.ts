@@ -20,6 +20,8 @@ import { DepartmentMap, type DepartamentoElegible } from '@shared/components/org
 import type { PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { CARGADOR_DE_PROVINCIAS } from '@shared/components/organisms/map/provinces';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
+import { provinceFromCatalog } from '@shared/geo/bo-provinces';
+import { provinceIn } from '@shared/components/organisms/map/provinces';
 import {
   findOutline,
   municipalityAt,
@@ -312,22 +314,47 @@ export class LocationPicker {
     }
   }
 
+  /**
+   * La provincia del municipio, en este orden:
+   *
+   * 1. **El catálogo** (el código del INE la lleva adentro): sin red, al
+   *    instante, y es el dato oficial. Cubre los 340 municipios.
+   * 2. **El punto del mapa** dentro de las 112 provincias dibujadas, si hay
+   *    punto (sólo para un municipio que el catálogo no conoce).
+   * 3. **El punto interior del contorno** del municipio, como antes.
+   *
+   * Antes sólo existía el 3, y cuando el archivo de provincias no bajaba la
+   * ficha decía «No disponible» aunque el municipio fuera Santa Cruz de la
+   * Sierra.
+   */
   private async deducirProvincia(
     conceptId: string,
     sigla: string,
     ine: string,
     nombre: string,
   ): Promise<void> {
-    const [geometria, provincias] = await Promise.all([
-      import('@shared/components/organisms/department-map/bolivia-municipalities.geometry'),
-      this.cargadorDeProvincias(),
-    ]);
-    const contorno = findOutline(geometria.CONTORNOS_DE_MUNICIPIOS, sigla, ine, nombre);
-    const provincia = provinceOfMunicipality(
-      provincias,
-      contorno,
-      geometria.PROYECCION_DE_BOLIVIA,
-    );
+    const delCatalogo = provinceFromCatalog(sigla, ine, nombre);
+    if (delCatalogo !== null) {
+      this.provincias.update((previas) => new Map(previas).set(conceptId, delCatalogo));
+      return;
+    }
+    let provincia: string | null = null;
+    try {
+      const [geometria, provincias] = await Promise.all([
+        import('@shared/components/organisms/department-map/bolivia-municipalities.geometry'),
+        this.cargadorDeProvincias(),
+      ]);
+      const punto = this.punto();
+      if (provincias !== null && punto !== null) {
+        provincia = provinceIn(provincias, punto)?.properties.nombre ?? null;
+      }
+      if (provincia === null) {
+        const contorno = findOutline(geometria.CONTORNOS_DE_MUNICIPIOS, sigla, ine, nombre);
+        provincia = provinceOfMunicipality(provincias, contorno, geometria.PROYECCION_DE_BOLIVIA);
+      }
+    } catch {
+      provincia = null;
+    }
     this.provincias.update((previas) => new Map(previas).set(conceptId, provincia));
   }
 

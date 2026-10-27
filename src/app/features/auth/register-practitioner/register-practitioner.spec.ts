@@ -65,7 +65,8 @@ function archivoDe(nombre: string, tipo: string, bytes: number): File {
 
 /** Las tres peticiones de catálogo que dispara el constructor. */
 const CATALOGO = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
-const CATALOGO_MUNICIPIOS = '/terminology/value-sets?code=VS_BO_MUNICIPALITY';
+/** Un punto de casa ya confirmado: el domicilio lo exige desde el 26/10/2026. */
+const PUNTO_CASA = { lat: -17.7833, lng: -63.1821 };
 const CATALOGO_ESPECIALIDADES = '/terminology/value-sets?code=VS_MEDICAL_SPECIALTY';
 
 describe('RegisterPractitioner', () => {
@@ -134,6 +135,13 @@ describe('RegisterPractitioner', () => {
       if (pendiente.cancelled) continue;
       pendiente.flush({ options: [] });
     }
+    // El mapa del domicilio nace con el punto confirmado de `completarProfesional`
+    // y pide su calle apenas se muestra su paso: las pruebas que sólo lo
+    // atraviesan la dan por atendida acá.
+    for (const pendiente of http.match((r) => r.url.startsWith('/public/geo/reverse'))) {
+      if (pendiente.cancelled) continue;
+      pendiente.flush({ found: false, attribution: '© OpenStreetMap' });
+    }
     http.verify();
   });
 
@@ -174,6 +182,10 @@ describe('RegisterPractitioner', () => {
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
+      // El punto del domicilio es obligatorio (26/10/2026): por defecto uno
+      // confirmado, para que las pruebas a las que no les importa sigan
+      // mandando el formulario. Ver `PUNTO_CASA`.
+      gpsDomicilio: PUNTO_CASA,
       homeAddressLines: '',
       homeDistrict: '',
       municipio: null,
@@ -224,6 +236,7 @@ describe('RegisterPractitioner', () => {
     // Las especialidades agregadas no son controles: viven en una señal, igual
     // que los nombres extra.
     component.especialidadesExtra.set(extra.especialidadesExtra ?? []);
+    component.gpsDomicilio.set(PUNTO_CASA);
   }
 
   /**
@@ -324,27 +337,17 @@ describe('RegisterPractitioner', () => {
         'personalEmail',
         'password',
       ]);
-      expect(camposDe('residence')).toEqual([
-        'municipio',
-        'homeDistrict',
-        'homeAddressLines',
-        'gpsDomicilio',
-      ]);
+      // Pedido del cliente del 26/10/2026: en cada ubicación lo único que se
+      // marca es el punto. La calle, la zona y el municipio salen de él: siguen
+      // en el formulario, pero ya no son campos de ninguna página.
+      expect(camposDe('residence')).toEqual(['gpsDomicilio']);
       expect(camposDe('workplace-location')).toEqual([
         'workMobilePhone',
         'workLandline',
         'email',
-        'workAddressLines',
         'gpsTrabajo',
       ]);
-      expect(camposDe('own-office')).toEqual([
-        'officeName',
-        'officeContactPhone',
-        'municipioConsultorio',
-        'officeDistrict',
-        'officeAddressLines',
-        'gpsConsultorio',
-      ]);
+      expect(camposDe('own-office')).toEqual(['officeName', 'officeContactPhone', 'gpsConsultorio']);
       // La autoridad emisora ya no se pregunta (26/10/2026): el colegio se
       // completa solo con el título profesional.
       expect(camposDe('credentials')).toEqual([
@@ -607,14 +610,14 @@ describe('RegisterPractitioner', () => {
 
       expect(filtradas.length).toBeGreaterThan(0);
       expect(filtradas.every((o) => o.label.toLowerCase().includes('odont'))).toBe(true);
-      // Ninguna petición NUEVA: quedan las cinco lecturas de catálogo que el
-      // componente hace al nacer —departamentos, municipios, especialidades,
-      // los tipos de título (1.6) y las profesiones COB-2023 de «Otra
-      // profesión» (04/10/2026)— y nada más. La lista de títulos profesionales
+      // Ninguna petición NUEVA: quedan las cuatro lecturas de catálogo que el
+      // componente hace al nacer —departamentos, especialidades, los tipos de
+      // título (1.6) y las profesiones COB-2023 de «Otra profesión»
+      // (04/10/2026)— y nada más. Los municipios ya no: los pide el mapa de
+      // cada ubicación, que deduce la localidad del punto (26/10/2026). La lista de títulos profesionales
       // sigue siendo cerrada y en memoria; si esto empezara a consultar, el
       // número subiría acá antes que en producción.
       expect(http.match(() => true).map((p) => p.request.url)).toEqual([
-        '/terminology/value-sets',
         '/terminology/value-sets',
         '/terminology/value-sets',
         '/system-context/dynamic-enums',
@@ -894,6 +897,9 @@ describe('RegisterPractitioner', () => {
       // privado.
       issuerAdministrativeAreaConceptId: 'dep-1',
       mobilePhone: '+591 70011111',
+      // El punto del domicilio, obligatorio desde el 26/10/2026.
+      homeLatitude: -17.7833,
+      homeLongitude: -63.1821,
     });
 
     req.flush(RESPUESTA_PRO);
@@ -2800,16 +2806,133 @@ describe('RegisterPractitioner', () => {
       // El registro sigue en pie: el 401 del catálogo no navega a ningún lado.
       expect(navegaciones).toEqual([]);
     });
+  });
 
-    it('sin catálogo de municipios el alta sigue: el campo es opcional', () => {
-      http
-        .expectOne(CATALOGO_MUNICIPIOS)
-        .flush(null, { status: 503, statusText: 'Service Unavailable' });
-      fixture.detectChanges();
+  describe('ubicaciones: sólo el punto se marca, lo demás sale de él (26/10/2026)', () => {
+    const PUNTO = { lat: -17.79, lng: -63.19 };
+    const localidad = (
+      punto: { lat: number; lng: number },
+      extra: Partial<{
+        calle: string | null;
+        calleSola: string | null;
+        zona: string | null;
+        municipioConceptId: string | null;
+      }> = {},
+    ) => ({
+      punto,
+      calle: 'Calle Warnes 45, Equipetrol',
+      calleSola: 'Calle Warnes 45',
+      zona: 'Equipetrol',
+      municipioConceptId: 'mun-scz',
+      ...extra,
+    });
 
-      expect(component.catalogoMunicipiosCaido()).toBe(true);
-      expect(component.ramasMunicipios()).toEqual([]);
-      expect(navegaciones).toEqual([]);
+    function campo(clave: string, key: string) {
+      return component
+        .paginasProfesional()
+        .find((pagina) => pagina.clave === clave)
+        ?.campos.find((c) => c.key === key);
+    }
+
+    it('el punto del domicilio va primero en su página y es obligatorio, con su error', () => {
+      const pagina = component.paginasProfesional().find((p) => p.clave === 'residence')!;
+      expect(pagina.campos[0]?.key).toBe('gpsDomicilio');
+      expect(pagina.campos[0]?.required).toBe(true);
+      expect(pagina.campos[0]?.mensajeDeError).toBe(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+      // Ninguna página ofrece escribir calle, zona o localidad a mano.
+      const claves = component.paginasProfesional().flatMap((p) => p.campos.map((c) => c.key));
+      for (const fijo of [
+        'municipio',
+        'homeDistrict',
+        'homeAddressLines',
+        'workAddressLines',
+        'municipioConsultorio',
+        'officeDistrict',
+        'officeAddressLines',
+      ]) {
+        expect(claves).not.toContain(fijo);
+      }
+      // El trabajo y el consultorio siguen siendo opcionales, como sus páginas.
+      expect(campo('workplace-location', 'gpsTrabajo')?.required).toBeFalsy();
+      expect(campo('own-office', 'gpsConsultorio')?.required).toBeFalsy();
+    });
+
+    it('sin punto confirmado el alta no sale; al confirmar, el control obligatorio se llena', () => {
+      completarProfesional();
+      component.confirmarGpsDomicilio(null);
+      const control = component.formProfesional.controls.gpsDomicilio;
+      expect(control.hasError('required')).toBe(true);
+
+      component.submit();
+      http.expectNone('/iam/auth/register-practitioner');
+
+      component.confirmarGpsDomicilio(PUNTO);
+      expect(control.value).toEqual(PUNTO);
+      expect(component.formProfesional.valid).toBe(true);
+    });
+
+    it('lo deducido del punto confirmado llena calle, zona y municipio del domicilio', () => {
+      completarProfesional();
+      component.aplicarLocalidadDomicilio(localidad(PUNTO));
+      // Sin confirmar, nada: la calle de un punto que nadie dio por bueno no se guarda.
+      component.confirmarGpsDomicilio(null);
+      expect(component.formProfesional.controls.homeAddressLines.value).toBe('');
+      expect(component.municipioProfesional()).toBeNull();
+
+      component.confirmarGpsDomicilio(PUNTO);
+
+      const raw = component.formProfesional.getRawValue();
+      expect(raw.homeAddressLines).toBe('Calle Warnes 45');
+      expect(raw.homeDistrict).toBe('Equipetrol');
+      expect(raw.municipio).toBe('mun-scz');
+      expect(component.municipioProfesional()).toBe('mun-scz');
+
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.homeAddressLines).toBe('Calle Warnes 45, Equipetrol');
+      expect(req.request.body.residenceMunicipalityConceptId).toBe('mun-scz');
+      expect(req.request.body.homeLatitude).toBe(-17.79);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('lo que llega después de confirmar también se vuelca, y quitar el punto lo vacía', () => {
+      completarProfesional();
+      component.confirmarGpsDomicilio(PUNTO);
+      component.aplicarLocalidadDomicilio(localidad(PUNTO, { calle: null, calleSola: null }));
+      // Sin calle en el mapa, la calle queda vacía: nunca se inventa.
+      expect(component.formProfesional.controls.homeAddressLines.value).toBe('');
+      expect(component.formProfesional.controls.homeDistrict.value).toBe('Equipetrol');
+
+      component.aplicarLocalidadDomicilio(localidad(PUNTO));
+      expect(component.formProfesional.controls.homeAddressLines.value).toBe('Calle Warnes 45');
+
+      component.confirmarGpsDomicilio(null);
+      expect(component.formProfesional.getRawValue()).toEqual(
+        expect.objectContaining({ homeAddressLines: '', homeDistrict: '', municipio: null }),
+      );
+    });
+
+    it('el trabajo guarda la línea entera de su punto', () => {
+      completarProfesional();
+      component.confirmarGpsTrabajo(PUNTO);
+      component.aplicarLocalidadTrabajo(localidad(PUNTO));
+      expect(component.formProfesional.controls.workAddressLines.value).toBe(
+        'Calle Warnes 45, Equipetrol',
+      );
+    });
+
+    it('el consultorio guarda calle, zona y municipio de su propio punto', () => {
+      completarProfesional();
+      component.aplicarLocalidadConsultorio(localidad(PUNTO, { municipioConceptId: 'mun-of' }));
+      component.confirmarGpsConsultorio(PUNTO);
+
+      expect(component.formProfesional.controls.officeAddressLines.value).toBe('Calle Warnes 45');
+      expect(component.formProfesional.controls.officeDistrict.value).toBe('Equipetrol');
+      expect(component.municipioConsultorio()).toBe('mun-of');
+      // El del domicilio no se toca.
+      expect(component.municipioProfesional()).toBeNull();
     });
   });
 
