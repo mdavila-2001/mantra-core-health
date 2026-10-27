@@ -141,6 +141,38 @@
 }
 
 
+/* ---------------------------------------------------------- habilitación
+   Matrícula, SEDES y colegio: cada registro es un renglón con su número, su
+   fecha de inscripción y su respaldo. En una tarjeta ancha, las tres casillas
+   en una fila; angosta, una debajo de la otra. Se mide el renglón y no la
+   ventana: el formulario comparte pantalla con la ayuda lateral. */
+
+.registro-habilitacion {
+  container: habilitacion / inline-size;
+  width: 100%;
+}
+
+.registro-habilitacion__grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+}
+
+@container habilitacion (min-width: 44rem) {
+  .registro-habilitacion__grilla {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: start;
+  }
+}
+
+.registro-habilitacion__icono {
+  color: var(--text-muted);
+}
+
 /* ---------------------------------------------------------------- respaldos
    Los adjuntos de la habilitación y de los títulos. Mismo lenguaje visual que
    `.registro-foto`: caja punteada, porque es una zona de carga y no un campo. */

@@ -459,32 +459,82 @@
             </ng-template>
 
             <!--
-              Respaldos de la habilitación. Cada archivo va pegado al número
-              que respalda, no en una bolsa común de adjuntos: quien verifica
-              tiene que saber cuál corresponde a cuál sin abrirlos.
+              Las tres habilitaciones —matrícula, SEDES y colegio de la
+              profesión—, cada una en SU renglón: número, fecha de inscripción y
+              respaldo. Una fecha o un archivo sueltos no dicen de cuál de los
+              tres registros son, y quien verifica tiene que saberlo sin
+              abrirlos. El rótulo, el asterisco y el error del número los pone
+              el motor; el renglón es el mismo para los tres.
             -->
-            <ng-template appCampoPersonalizado="credentialAttachments">
-              <div class="registro-respaldos">
-                @for (respaldo of respaldosDeHabilitacion(); track respaldo.clave) {
-                  <div class="registro-respaldo">
-                    <p class="registro-respaldo__titulo">{{ respaldo.etiqueta }}</p>
-                    <p class="registro-respaldo__dato">{{ respaldo.valor || 'Sin cargar' }}</p>
+            <ng-template #renglonDeHabilitacion let-renglon>
+              <div class="registro-habilitacion" [attr.data-habilitacion]="renglon.clave">
+                <div class="registro-habilitacion__grilla">
+                  <app-form-field class="registro-habilitacion__numero" [label]="renglon.rotuloNumero">
+                    <app-input
+                      [testId]="renglon.testId"
+                      autocomplete="off"
+                      [placeholder]="renglon.placeholder"
+                      [value]="valorDeHabilitacion(renglon.control)"
+                      [hasError]="habilitacionEnRojo(renglon.control)"
+                      (valueChange)="escribirHabilitacion(renglon.control, $event)"
+                    >
+                      <app-nav-icon
+                        slot="icon-start"
+                        [name]="renglon.icono"
+                        class="registro-habilitacion__icono"
+                      />
+                    </app-input>
+                  </app-form-field>
+                  <app-form-field
+                    class="registro-habilitacion__fecha"
+                    label="Fecha de inscripción (opcional)"
+                    hint="Cuándo se registró, no cuándo vence."
+                  >
+                    <app-date-picker
+                      [attr.data-testid]="'registro-pro-fecha-' + renglon.clave"
+                      [value]="fechaDeHabilitacion(renglon.fecha)"
+                      (valueChange)="escribirFechaDeHabilitacion(renglon.fecha, $event)"
+                      [maxDate]="hoy"
+                    />
+                  </app-form-field>
+                  <!-- Sin `hint`: la zona de carga ya dice «PDF · Máximo 5 MB». -->
+                  <app-form-field class="registro-habilitacion__respaldo" label="Respaldo (opcional)">
                     <app-file-input
-                      [files]="attachmentFiles()[respaldo.clave] ?? []"
+                      [files]="attachmentFiles()[renglon.clave] ?? []"
                       [accept]="formatosDeRespaldo"
                       [maxSizeBytes]="maxAttachmentBytes"
-                      [accessibleLabel]="respaldo.etiqueta"
-                      [testId]="'registro-pro-respaldo-' + respaldo.clave"
-                      [removeTestId]="'registro-pro-respaldo-quitar-' + respaldo.clave"
-                      (filesChange)="updateSupportFiles(respaldo.clave, $event)"
+                      [accessibleLabel]="'Respaldo de ' + renglon.etiqueta"
+                      [testId]="'registro-pro-respaldo-' + renglon.clave"
+                      [removeTestId]="'registro-pro-respaldo-quitar-' + renglon.clave"
+                      (filesChange)="updateSupportFiles(renglon.clave, $event)"
                     />
-                  </div>
-                }
-                <p class="registro-respaldos__ayuda">Sólo PDF. Máximo 5 MB por archivo.</p>
-                @if (errorAdjunto(); as error) {
-                  <p class="registro-respaldos__error" role="alert">{{ error }}</p>
-                }
+                  </app-form-field>
+                </div>
               </div>
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="licenseNumber">
+              <ng-container
+                [ngTemplateOutlet]="renglonDeHabilitacion"
+                [ngTemplateOutletContext]="{ $implicit: renglonDe('license') }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="sedesLicenseNumber">
+              <ng-container
+                [ngTemplateOutlet]="renglonDeHabilitacion"
+                [ngTemplateOutletContext]="{ $implicit: renglonDe('sedes') }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="collegeLicenseNumber">
+              <ng-container
+                [ngTemplateOutlet]="renglonDeHabilitacion"
+                [ngTemplateOutletContext]="{ $implicit: renglonDe('college') }"
+              />
+              @if (errorAdjunto(); as error) {
+                <p class="registro-respaldos__error" role="alert">{{ error }}</p>
+              }
             </ng-template>
 
             <!--
