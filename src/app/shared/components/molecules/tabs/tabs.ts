@@ -17,6 +17,7 @@ import {
   viewChildren,
 } from '@angular/core';
 
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { Tab } from './tab/tab';
 import {
   TABS_PARENT,
@@ -42,6 +43,7 @@ import {
  */
 @Component({
   selector: 'app-tabs',
+  imports: [NavIcon],
   templateUrl: './tabs.html',
   styleUrl: './tabs.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

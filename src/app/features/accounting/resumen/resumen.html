@@ -6,26 +6,43 @@
   subtitle="Cuánto ingresó, en qué gastó, qué le deben y qué tiene que pagar."
 />
 
-<!-- Doctor o Contador (26/10/2026): una sola llave. «Doctor» es lo que un
-     médico viene a mirar, en palabras de consultorio; «Contador» suma lo que
-     sólo lleva quien tiene los libros: transacciones, plan de cuentas, vista
-     contable y balance. Nada se borra al cambiar; cambia qué se ve. -->
-<div class="version" data-testid="contabilidad-version">
-  <span class="version__rotulo" id="rotulo-version">Versión</span>
-  <app-segmented-control
-    size="md"
-    [options]="opcionesDeVersion"
-    [value]="version()"
-    ariaLabel="Versión de la pantalla: Doctor o Contador"
-    (valueChange)="elegirVersion($event)"
-  />
-  <span class="version__ayuda" data-testid="contabilidad-version-ayuda">{{ ayudaDeLaVersion() }}</span>
+<!-- Una sola barra arriba (27/10/2026): de qué consultorio son las cifras y
+     cómo se leen. Antes eran dos bloques apilados —«Versión» y «Consultorio»—
+     y el médico tenía que pasar tres filas de controles antes de ver un
+     número. Doctor o Contador sigue siendo una sola llave: «Doctor» es lo que
+     un médico viene a mirar; «Contador» suma lo que sólo lleva quien tiene los
+     libros. Nada se borra al cambiar; cambia qué se ve. -->
+<div class="barra-superior" data-testid="contabilidad-barra">
+  <!-- La práctica sólo se pregunta si hay más de una. Con una sola, el selector
+       es una pregunta cuya respuesta ya sabemos. -->
+  @if (hayVariasPracticas()) {
+    <div class="eleccion">
+      <app-form-field icon="building" label="Consultorio">
+        <app-select
+          [options]="opcionesDePractica()"
+          [(value)]="practicaElegida"
+          placeholder="Elija un consultorio"
+        />
+      </app-form-field>
+    </div>
+  }
+
+  <div class="version" data-testid="contabilidad-version">
+    <span class="version__rotulo" id="rotulo-version">Ver como</span>
+    <app-segmented-control
+      size="md"
+      [options]="opcionesDeVersion"
+      [value]="version()"
+      ariaLabel="Ver la pantalla como Doctor o como Contador"
+      (valueChange)="elegirVersion($event)"
+    />
+    <span class="version__ayuda" data-testid="contabilidad-version-ayuda">{{ ayudaDeLaVersion() }}</span>
+  </div>
 </div>
 
 @if (esContador()) {
   <!-- Las herramientas de los libros, a un clic desde cualquiera de las dos
-       pestañas. Antes estaban al pie del Resumen, con el título «Para su
-       contador», y la pestaña Registros no las traía. -->
+       pestañas. -->
   <section class="herramientas" aria-labelledby="titulo-contable" data-testid="contabilidad-herramientas">
     <h2 class="herramientas__titulo" id="titulo-contable">Informes contables</h2>
     <p class="herramientas__bajada">
@@ -34,27 +51,15 @@
     </p>
     <p class="herramientas__acciones">
       <a app-button variant="outline" routerLink="/administration/accounting/cockpit">
+        <app-nav-icon name="chart" />
         Vista contable
       </a>
       <a app-button variant="outline" routerLink="/administration/accounting/books">
+        <app-nav-icon name="book" />
         Balance y libro diario
       </a>
     </p>
   </section>
-}
-
-<!-- La práctica sólo se pregunta si hay más de una. Con una sola, el selector
-     es una pregunta cuya respuesta ya sabemos. -->
-@if (hayVariasPracticas()) {
-  <div class="eleccion">
-    <app-form-field icon="building" label="Consultorio" hint="Las cifras corresponden a este consultorio">
-      <app-select
-        [options]="opcionesDePractica()"
-        [(value)]="practicaElegida"
-        placeholder="Elija un consultorio"
-      />
-    </app-form-field>
-  </div>
 }
 
 <!-- Dos pestañas, y cada cosa en la suya (30/09/2026): «Resumen» son los
@@ -64,21 +69,21 @@
      leían como una masa. El panel inactivo no se renderiza, así que cada
      pestaña sólo lee lo suyo. -->
 <app-tabs class="pestanas" [(selectedIndex)]="pestana">
-  <app-tab label="Resumen">
+  <app-tab label="Resumen" icon="chart">
     @if (pestana() === 0) {
       <div class="pestana">
         <!-- La contabilidad simple sólo existe en la maqueta: contra la API real
              su lectura da 404 y el recuadro decía «No encontramos lo que busca». -->
         @if (simpleAccountingAvailable) {
           @if (practicaElegida(); as practica) {
-            <app-contabilidad-simple class="contabilidad-simple" parte="numeros" [version]="version()" [practiceId]="practica" />
+            <app-contabilidad-simple class="contabilidad-simple" parte="numeros" [version]="version()" [practiceId]="practica" (anotado)="recargar()" />
           }
         }
 
         <app-view-state-host [state]="estadoDelDinero()" (retry)="recargar()" (refresh)="recargar()">
           @if (datos(); as d) {
             <app-tabs class="subpestanas" [(selectedIndex)]="subpestana">
-              <app-tab label="Ingresos y gastos">
+              <app-tab label="Ganancias" icon="chart">
                 <!-- ═══ 1 · ¿Cuánto hizo? ══════════════════════════════════════════
                      Los tres tramos a la vez y sin tocar nada: era la primera de las
                      cuatro cosas que el propietario pidió ver. -->
@@ -223,7 +228,7 @@
                 </section>
               </app-tab>
 
-              <app-tab label="Pendientes">
+              <app-tab label="Por cobrar y por pagar" icon="clock">
                 <!-- ═══ 3 · ¿Quién le debe y a quién le debe? ════════════════════════
                      Las dos preguntas van juntas y en paralelo: son la misma pregunta
                      mirada desde los dos lados, y ponerlas en pantallas distintas obliga
@@ -296,6 +301,7 @@
                                 [disabled]="saldando() !== null || settlementAccount() === null"
                                 (click)="saldar(p, 'cobro')"
                               >
+                                <app-nav-icon name="check" />
                                 Marcar como cobrada
                               </button>
                             </li>
@@ -351,6 +357,7 @@
                                 [disabled]="saldando() !== null || settlementAccount() === null"
                                 (click)="saldar(p, 'pago')"
                               >
+                                <app-nav-icon name="check" />
                                 Marcar como pagada
                               </button>
                             </li>
@@ -362,7 +369,7 @@
                 </section>
               </app-tab>
 
-              <app-tab label="Bienes y deudas">
+              <app-tab label="Lo que tiene y lo que debe" icon="briefcase">
                 <!-- ═══ 4 · ¿Qué tiene y qué debe? ═══════════════════════════════════
                      Activos y pasivos, que hasta el 19/09/2026 eran una entrada suelta
                      del menú. El propietario pidió que estuvieran dentro de Contabilidad:
@@ -439,6 +446,7 @@
                       routerLink="/administration/accounting/assets-liabilities"
                       data-testid="go-to-assets-liabilities"
                     >
+                      <app-nav-icon name="note" />
                       Registrar un equipo o un préstamo
                     </a>
                     <span class="patrimonio__nota">
@@ -449,7 +457,7 @@
                 </section>
               </app-tab>
 
-              <app-tab label="Flujo de dinero">
+              <app-tab label="Caja y banco" icon="wallet">
                 @if (subpestana() === 3) {
                   <section class="bloque" aria-labelledby="titulo-flujo-dinero">
                     <app-section-heading icono="wallet" titulo="Flujo de dinero" id="titulo-flujo-dinero" />
@@ -470,7 +478,7 @@
     }
   </app-tab>
 
-  <app-tab label="Registros">
+  <app-tab [label]="esContador() ? 'Registros' : 'Anotar gastos, equipos y deudas'" icon="note">
     @if (pestana() === 1) {
       <div class="pestana">
         @if (!simpleAccountingAvailable) {
