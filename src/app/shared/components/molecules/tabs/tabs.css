@@ -149,6 +149,25 @@
     font-weight: 700;
 }
 
+/* Ícono + texto: el dibujo ayuda a reconocer la sección de un vistazo y el
+   texto dice cuál es. Toma el color del rótulo, así que el estado activo lo
+   arrastra solo. */
+.tabs__icono {
+    display: inline-flex;
+    flex: none;
+    inline-size: 1.15em;
+    block-size: 1.15em;
+    margin-inline-end: var(--sp-2);
+    vertical-align: -0.2em;
+}
+
+.tabs__icono app-nav-icon,
+.tabs__icono svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+}
+
 .tabs__tab.is-selected::after {
     transform: scaleX(1);
 }
