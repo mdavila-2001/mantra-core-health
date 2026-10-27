@@ -18,11 +18,13 @@ export const VERSION_OPTIONS: readonly SegmentedOption<AccountingVersion>[] = [
   {
     value: 'doctor',
     label: 'Doctor',
+    icon: 'stethoscope',
     description: 'Versión Doctor: sus cifras y registros en palabras de consultorio',
   },
   {
     value: 'contador',
     label: 'Contador',
+    icon: 'book',
     description: 'Versión Contador: agrega transacciones, plan de cuentas y los libros',
   },
 ];
