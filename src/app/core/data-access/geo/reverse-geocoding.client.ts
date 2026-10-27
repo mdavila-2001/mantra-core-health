@@ -20,8 +20,24 @@ export interface StreetFromPoint {
   /** El barrio, la zona o el distrito (lo primero que conozca el proveedor). */
   readonly neighbourhood?: string;
   readonly city?: string;
+  /** El país del punto, ISO 3166-1 alfa-2 en mayúsculas («BO»). */
+  readonly countryCode?: string;
+  /**
+   * Las divisiones administrativas del punto, para cualquier país: 1 =
+   * departamento / estado / región, 2 = provincia, 3 = municipio / ciudad, y el
+   * distrito o zona. Un nivel que el proveedor no conoce no viene.
+   */
+  readonly adminAreas?: AdminAreas;
   /** La atribución que exige la licencia de los datos (OpenStreetMap, ODbL). */
   readonly attribution: string;
+}
+
+/** Ver {@link StreetFromPoint.adminAreas}. */
+export interface AdminAreas {
+  readonly level1?: string;
+  readonly level2?: string;
+  readonly level3?: string;
+  readonly district?: string;
 }
 
 /**
