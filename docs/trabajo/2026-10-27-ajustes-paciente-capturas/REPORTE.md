@@ -10,7 +10,7 @@
 | ID | Qué se logró | Verificación | Resultado |
 |---|---|---|---|
 | H1.M1 | «Mis citas»: el título «Sus citas» ya no se ve (queda para lector de pantalla y foco) y el selector Lista/Calendario se oculta sin citas | `appointments.spec.ts` (test nuevo + aserción en R-02) · `evidencia/*-citas.png` | PASS |
-| H1.M2 | «Dependientes»: los tres pasos quedan unidos por puntos | `evidencia/*-dependientes-sin-datos.png` | PASS |
+| H1.M2 | «Dependientes»: todos los textos del vacío cierran con punto final («Todavía no registró a nadie.»); se retiró la línea punteada de la primera interpretación | `dependents` specs 22/22 (`evidencia/tests-dependientes-punto-final.txt`) · `evidencia/*-dependientes-sin-datos.png` | PASS |
 | H1.M3 | Síntomas: sin las pestañas «Especialistas médicos / Recomendar medicamentos», sin el botón «Recomendar medicamentos» y sin «Guardar observación» | `symptom-check.spec.ts` (test nuevo) · capturas | PASS |
 | H1.M4 | Síntomas: «Conviene que vea a» usa la MISMA tarjeta del buscador de especialidades de `/directory` (`card-grid.css`: foto, ícono, nombre) + el porqué + «Empiece por acá» en la primera; la tarjeta entera lleva a quién atiende | `symptom-check.spec.ts` · `evidencia/*-sintomas-*.png` | PASS |
 | H1.M5 | «Sus primeros pasos»: sin tachado en los pasos hechos | `evidencia/*-primeros-pasos-abierta.png` | PASS |
@@ -60,7 +60,7 @@ demo; es previo a este cambio y la pantalla cae al motor local (se ve en las cap
 
 ## Decisiones y ambigüedades (confirmar con el cliente)
 
-1. **«Ponele los puntos» (Dependientes)**: se interpretó como unir los pasos 1→2→3 con puntos.
+1. **«Ponele los puntos» (Dependientes)**: confirmado por el cliente — es el punto final de los textos.
 2. **«Mejores recomendaciones médicas»**: se interpretó como la tarjeta del buscador con el porqué y la
    marca «Empiece por acá». No se muestran cantidades de médicos: el chequeo no tiene ese dato.
 3. **Lista/Calendario**: se oculta sólo sin citas; con citas sigue (el calendario es una función).

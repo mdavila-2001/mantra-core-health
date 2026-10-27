@@ -175,8 +175,7 @@
 
 .dependents__pasos {
   display: grid;
-  /* Más aire que una lista común: es el tramo que ocupan los puntos de abajo. */
-  gap: var(--sp-6);
+  gap: var(--sp-3);
   margin: var(--sp-4) auto 0;
   padding: 0;
   max-inline-size: 34rem;
@@ -185,7 +184,6 @@
 }
 
 .dependents__pasos li {
-  position: relative;
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -194,20 +192,6 @@
   border-radius: var(--r-lg);
   background: var(--bg-surface);
   color: var(--text-primary);
-}
-
-/* Pedido del cliente (27/10/2026): los pasos van unidos por puntos, para que
-   se lean como un recorrido 1 → 2 → 3 y no como tres avisos sueltos. Los
-   puntos cruzan el hueco entre tarjetas por debajo de cada número; el último
-   paso no tiene a quién unirse. Decorativos: el orden ya lo dice el `<ol>`. */
-.dependents__pasos li:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  inset-block-start: 100%;
-  /* Centrado bajo el número: padding de la tarjeta + medio número − medio trazo. */
-  inset-inline-start: calc(var(--sp-4) + 1rem - 2px);
-  block-size: var(--sp-6);
-  border-inline-start: 4px dotted var(--brand-primary);
 }
 
 .dependents__paso-numero {
