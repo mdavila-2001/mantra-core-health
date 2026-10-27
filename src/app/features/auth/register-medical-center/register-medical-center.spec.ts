@@ -323,7 +323,7 @@ describe('RegisterMedicalCenter', () => {
     http.expectNone(RUTA_ALTA);
   });
 
-  it('al terminar dice que la organización queda pendiente de verificación', () => {
+  it('al terminar dice que la organización queda en revisión', () => {
     completar();
     fixture.componentInstance.submit();
     http
@@ -334,7 +334,7 @@ describe('RegisterMedicalCenter', () => {
     expect(interno().registered()).toBe(true);
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('[data-testid="medical-center-signup-pending"]')?.textContent).toContain(
-      'pendiente de verificación',
+      'está en revisión',
     );
   });
 

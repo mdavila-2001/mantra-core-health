@@ -17,7 +17,8 @@
   claim="Sume su centro de imagenología a la red"
   tagline="Rayos X, ecografía, tomografía y resonancia: reciba las órdenes médicas de toda la red y factúrelas desde un solo lugar."
   contentWidth="full"
-  [plainSurface]="true"
+  [plainSurface]="!enviada()"
+  [scene]="enviada() ? 'stage' : 'split'"
 >
   <div class="registro-conjunto" [class.registro-conjunto--solo]="enviada()">
     <div class="registro">
@@ -33,9 +34,7 @@
             Recibimos la solicitud de su centro
           </h1>
           <p class="registro__subtitle">
-            Creamos la cuenta con el correo del representante legal y ya puede iniciar sesión. Vamos
-            a revisar los papeles que adjuntó; hasta que la solicitud se apruebe, el centro no
-            aparece en las búsquedas de pacientes.
+            Su centro está en revisión. Ya puede ingresar con su cuenta.
           </p>
         </div>
         <button
