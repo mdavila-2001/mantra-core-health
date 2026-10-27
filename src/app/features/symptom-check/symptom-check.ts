@@ -30,7 +30,7 @@ import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
-import { specialtyPhoto } from '@shared/utils/directory-photo';
+import { fotoDeEspecialidad } from '@shared/utils/foto-de-directorio';
 import {
   recomendarMedicamentos,
   type MedicamentoSugerido,
@@ -153,7 +153,7 @@ const VACIO: ReadonlyMap<string, string> = new Map();
   providers: [Dictado],
   // La tarjeta de especialidad es la del buscador de `/directory` (27/10/2026):
   // primero la hoja compartida, después la propia, para que la propia ajuste.
-  styleUrls: ['../../shared/styles/card-grid.css', './symptom-check.css'],
+  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './symptom-check.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SymptomCheck {
@@ -542,7 +542,7 @@ export class SymptomCheck {
   protected readonly explicacionDe = explicar;
 
   /** La foto de la tarjeta: la misma que esa especialidad tiene en `/directory`. */
-  protected readonly fotoDe = specialtyPhoto;
+  protected readonly fotoDe = fotoDeEspecialidad;
 
   /* --- Elegir sin escribir ---------------------------------------------- */
 

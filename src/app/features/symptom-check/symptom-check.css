@@ -496,7 +496,7 @@
 }
 
 /* ─── Especialidades recomendadas ─────────────────────────────────────────
-   La rejilla y la tarjeta son las de `shared/styles/card-grid.css`, las
+   La rejilla y la tarjeta son las de `shared/styles/rejilla-de-tarjetas.css`, las
    mismas del buscador de especialidades de `/directory` (pedido del cliente,
    27/10/2026). Acá sólo lo propio del chequeo: la marca de por cuál empezar y
    la acción escrita, porque la tarjeta suma el porqué y no un recuento. */
