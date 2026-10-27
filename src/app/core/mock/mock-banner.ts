@@ -50,17 +50,17 @@ import { MOCK_USERS } from './mock-session';
     </aside>
   `,
   styles: `
-    /* Franja libre debajo del header y antes del contenido. El dashboard usa
-       el pie para el campo de síntomas; fijar el aviso en una esquina inferior
-       terminaba tapándolo. Alineado a la derecha, queda fuera de la navegación
-       lateral y por encima del inicio del contenido. En angosto se conserva la
-       ubicación responsive existente, debajo del header. */
+    /* En escritorio, abajo a la izquierda: sobre el pie del menú lateral,
+       que es la única franja que ninguna pantalla usa. Arriba a la derecha
+       quedaba encima del contenido —tapaba la portada del panel del paciente
+       (propietario, 27/10/2026)— y abajo a la derecha, el campo de síntomas.
+       En angosto se conserva la ubicación responsive existente. */
     .mock {
       position: fixed;
-      inset-inline-start: auto;
-      inset-inline-end: 12px;
-      inset-block-start: calc(var(--h-header, 56px) + 8px);
-      inset-block-end: auto;
+      inset-inline-start: 12px;
+      inset-inline-end: auto;
+      inset-block-start: auto;
+      inset-block-end: 12px;
       z-index: 9999;
       max-inline-size: 22rem;
       padding: 10px 12px;
@@ -71,6 +71,12 @@ import { MOCK_USERS } from './mock-session';
       box-shadow: var(--shadow-lg);
     }
     .mock__corto { display: none; }
+    /* Plegado entra en el ancho del menú lateral (240 px): no se mete en el
+       contenido. */
+    .mock--plegado .mock__boton {
+      padding: 5px 9px;
+      font-size: 11px;
+    }
     /* En angosto no hay esquina libre abajo: el chat clava ahí el campo de
        escribir de borde a borde y el cartel lo tapaba. Se va arriba, bajo el
        header de la aplicación, y a la derecha, que es la franja que las

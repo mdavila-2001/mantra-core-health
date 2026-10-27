@@ -6,6 +6,7 @@ import {
   InjectionToken,
   computed,
   inject,
+  input,
   viewChild,
 } from '@angular/core';
 
@@ -46,6 +47,9 @@ export class PanicButton {
   private readonly confianza = inject(TrustedAmbulanceStore);
   private readonly marcar = inject(PHONE_DIALER);
   private readonly dialogo = viewChild<ElementRef<HTMLDialogElement>>('dialogo');
+
+  /** Sólo el ícono, sin la palabra: para la barra lateral recogida. El nombre accesible no cambia. */
+  readonly compacto = input(false);
 
   protected readonly ambulancia = this.confianza.ambulancia;
 
