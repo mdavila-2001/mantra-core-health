@@ -66,5 +66,13 @@ tablet y teléfono.
   el menú). Capturas `evidencia/em-*.png`, incluido el diálogo de números abierto desde el ícono.
 - **Aviso de demo en el teléfono:** no se movió. Sigue tapando el final del texto de la portada
   (pasaba igual antes de este cambio).
-- Ya pasaba antes, fuera de alcance: en `/my-account/spending` el menú lateral marca «Mi perfil»
-  como activo, porque compara por prefijo de `/my-account`.
+- **«Mi perfil» encendido en Mis gastos (resuelto, propietario 27/10/2026):** el menú marca el
+  renglón cuyo prefijo es el más largo, y «Mi perfil» es `/my-account`. Ahora, si la pantalla es
+  un atajo de la cabecera (`/my-account/spending`, `invoices`, `requests`, `promotions`), el menú
+  no marca nada: ya la marca la cabecera. El carrito sigue marcando «Farmacia». Verificado en
+  navegador (paciente): spending → menú `[]`, cabecera «Mis gastos y facturas»; cart → menú
+  «Farmacia», cabecera «Carrito»; `/my-account` → «Mi perfil». Captura
+  `evidencia/activo-spending.png`. En `/my-account/invoices` el paciente no ve nada marcado:
+  su atajo ahora es «Mis gastos», que lleva a otra ruta.
+- Consola durante la verificación: un 404 de `glossary-data/manifest.json`, ajeno a este cambio
+  (los datos del glosario se generan aparte y no están en este entorno local).
