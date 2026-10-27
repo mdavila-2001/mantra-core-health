@@ -555,6 +555,12 @@ export class MapLocationPicker {
   protected readonly errorLatitude = signal('');
   protected readonly errorLongitude = signal('');
 
+  /**
+   * El id del aviso «sólo operamos en…», para el `aria-describedby` del botón
+   * de confirmar deshabilitado: quien llega al botón con el teclado oye por qué.
+   */
+  protected readonly outsideNoticeId = nextControlId('location-outside-notice');
+
   /** El id del bloque de campos, para el `aria-controls` de su botón. */
   protected readonly coordinatesId = nextControlId('location-coordinates');
 

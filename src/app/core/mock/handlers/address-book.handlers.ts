@@ -210,6 +210,17 @@ export function registrarLibretaDeDirecciones(router: MockRouter): void {
         { field: 'latitude', message: 'Coordenada fuera de rango' },
       ]);
     }
+    // Un recuadro chico de zona rural en La Guardia (Santa Cruz),
+    // declarado: ahí la maqueta responde sin calle ni distrito, para poder
+    // mostrar «sin calle» y «sin distrito» sin vaciar ningún otro punto.
+    if (lat >= -17.95 && lat <= -17.9 && lng >= -63.35 && lng <= -63.28) {
+      return {
+        found: false,
+        countryCode: 'BO',
+        adminAreas: { level1: 'Santa Cruz (simulado)' },
+        attribution: 'Simulado en la maqueta: sin geocodificador',
+      };
+    }
     const numero = (Math.abs(Math.round(lat * 1000)) % 900) + 100;
     const distrito = (Math.abs(Math.round(lng * 100)) % 12) + 1;
     return {
