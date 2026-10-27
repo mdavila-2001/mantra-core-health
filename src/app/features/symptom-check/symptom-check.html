@@ -550,82 +550,40 @@
           </p>
         }
 
-        <!-- ─── Selector de opciones en la parte de arriba ─────────────────────── -->
-        <div class="sintomas__orientacion-header" data-testid="sintomas-orientacion-header">
-          <div class="sintomas__orientacion-tabs" role="tablist" aria-label="Opciones de orientación clínica">
-            <button
-              type="button"
-              role="tab"
-              class="sintomas__tab-btn"
-              [class.sintomas__tab-btn--activo]="vistaRecomendacion() === 'especialidades'"
-              [attr.aria-selected]="vistaRecomendacion() === 'especialidades'"
-              (click)="cambiarVistaRecomendacion('especialidades')"
-              data-testid="sintomas-tab-especialidades"
-            >
-              <svg
-                class="sintomas__tab-icono"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M4.5 3h15M6 3v6a6 6 0 0 0 12 0V3M12 15v6M9 21h6" />
-              </svg>
-              <span class="sintomas__tab-etiqueta">Especialistas médicos</span>
-              <span class="sintomas__tab-conteo">{{ recomendaciones().length }}</span>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
-              class="sintomas__tab-btn"
-              [class.sintomas__tab-btn--activo]="vistaRecomendacion() === 'medicamentos'"
-              [attr.aria-selected]="vistaRecomendacion() === 'medicamentos'"
-              (click)="cambiarVistaRecomendacion('medicamentos')"
-              data-testid="sintomas-tab-medicamentos"
-            >
-              <svg
-                class="sintomas__tab-icono"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="2" y="7" width="20" height="10" rx="5" />
-                <line x1="12" y1="7" x2="12" y2="17" />
-              </svg>
-              <span class="sintomas__tab-etiqueta">Recomendar medicamentos</span>
-              <span class="sintomas__tab-conteo">{{ medicamentosSugeridos().length }}</span>
-            </button>
-          </div>
-        </div>
-
         @if (vistaRecomendacion() === 'especialidades') {
           <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
-          <ul class="sintomas__lista">
-            @for (recomendacion of recomendaciones(); track recomendacion.nombre) {
-              <li class="sintomas__opcion">
-                <div class="sintomas__opcion-texto">
-                  <p class="sintomas__especialidad">{{ recomendacion.nombre }}</p>
-                  <!-- El porqué es lo que hace que esto no se sienta una caja
-                       negra. Sin él, la recomendación es una adivinanza con buena
-                       tipografía. -->
-                  <p class="sintomas__porque">{{ explicacionDe(recomendacion) }}</p>
-                </div>
+          <!-- Pedido del cliente (27/10/2026): la MISMA tarjeta del buscador de
+               especialidades de `/directory` —foto, ícono, nombre—, de
+               `shared/styles/rejilla-de-tarjetas.css`. La tarjeta entera lleva a quién
+               atiende, como allá; acá suma el porqué, que es lo que hace que la
+               recomendación no sea una caja negra, y marca por cuál empezar. -->
+          <ul class="rejilla sintomas__rejilla" data-testid="sintomas-recomendaciones">
+            @for (recomendacion of recomendaciones(); track recomendacion.nombre; let primera = $first) {
+              <li>
                 <button
-                  app-button
-                  variant="primary"
-                  size="sm"
                   type="button"
-                  (clicked)="verProfesionales(recomendacion.nombre)"
+                  class="rejilla__tarjeta sintomas__tarjeta"
+                  [class.sintomas__tarjeta--primera]="primera"
+                  [attr.data-testid]="'sintomas-especialidad-' + $index"
+                  [attr.aria-label]="
+                    'Ver quién atiende ' + recomendacion.nombre + '. ' + explicacionDe(recomendacion)
+                  "
+                  (click)="verProfesionales(recomendacion.nombre)"
                 >
-                  Ver quién atiende
+                  <img class="rejilla__foto" [src]="fotoDe(recomendacion.nombre)" alt="" loading="lazy" />
+                  <span class="sintomas__tarjeta-cabeza">
+                    <app-specialty-icon
+                      class="rejilla__icono"
+                      aria-hidden="true"
+                      [especialidad]="recomendacion.nombre"
+                    />
+                    @if (primera && recomendaciones().length > 1) {
+                      <app-badge variant="primary">Empiece por acá</app-badge>
+                    }
+                  </span>
+                  <span class="rejilla__nombre">{{ recomendacion.nombre }}</span>
+                  <span class="rejilla__resumen">{{ explicacionDe(recomendacion) }}</span>
+                  <span class="sintomas__tarjeta-accion" aria-hidden="true">Ver quién atiende →</span>
                 </button>
               </li>
             }
@@ -649,21 +607,24 @@
               >
                 Ver medicamentos sugeridos
               </button>
-              <a
-                app-button
-                variant="secondary"
-                size="sm"
-                data-testid="sintomas-boton-recomendar-medicamentos"
-                routerLink="/search/medications"
-                [queryParams]="medicamentosQueryParams()"
-              >
-                Recomendar medicamentos
-              </a>
             </div>
           </div>
         } @else {
           <!-- ─── Vista de Medicamentos Sugeridos con Posología de la IA ─── -->
           <div class="sintomas__medicamentos-seccion" data-testid="sintomas-medicamentos-seccion">
+            <!-- Sin las pestañas (27/10/2026), la vuelta tiene que estar a la
+                 vista: arriba, donde empieza la lectura. -->
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              class="sintomas__volver"
+              data-testid="sintomas-volver-a-especialistas"
+              (clicked)="cambiarVistaRecomendacion('especialidades')"
+            >
+              ← Volver a los especialistas
+            </button>
             <div class="sintomas__meds-intro">
               <div class="sintomas__meds-intro-texto">
                 <h3 class="sintomas__subtitulo sintomas__subtitulo--meds">
@@ -843,25 +804,9 @@
       </p>
     }
 
-  <!-- ─── Guardar la observación (propietario, 2026-10-08) ─────────────────
-       Queda en el dispositivo y viaja como motivo de consulta al pedir turno:
-       el modelo no tiene dónde guarde el paciente una observación libre. -->
-  @if (texto().trim() !== '' || sintomas().length > 0) {
-    <div class="sintomas__observacion">
-      <button
-        app-button
-        variant="secondary"
-        size="sm"
-        type="button"
-        data-testid="sintomas-guardar-observacion"
-        (clicked)="guardarObservacion()"
-      >
-        Guardar observación
-      </button>
-    </div>
-  }
+  <!-- «Guardar observación» salió a pedido del cliente (27/10/2026). Las que ya
+       estaban guardadas en el dispositivo se siguen viendo para poder borrarlas. -->
   <p class="sintomas__porque" role="status" data-testid="sintomas-observacion-aviso">{{ avisoDeObservacion() }}</p>
-
   @if (observaciones().length > 0) {
     <section class="sintomas__guardadas" aria-labelledby="sintomas-guardadas-titulo" data-testid="sintomas-observaciones">
       <h3 id="sintomas-guardadas-titulo" class="sintomas__subtitulo">Sus observaciones guardadas</h3>

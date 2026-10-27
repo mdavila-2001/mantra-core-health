@@ -35,83 +35,107 @@
         <span class="primeros-pasos__relleno" [style.inline-size.%]="percent()"></span>
       </span>
     </div>
+
+    <!-- Pedido del cliente (27/10/2026): la tarjeta se pliega para dejar sólo
+         el título y el avance. El botón dice qué hace y `aria-expanded` dice
+         el estado; `aria-controls` apunta a la lista que muestra u oculta. -->
+    <button
+      type="button"
+      class="primeros-pasos__plegar"
+      data-testid="primeros-pasos-plegar"
+      aria-controls="primeros-pasos-contenido"
+      [attr.aria-expanded]="!collapsed()"
+      [attr.aria-label]="collapsed() ? 'Mostrar sus primeros pasos' : 'Ocultar sus primeros pasos'"
+      [title]="collapsed() ? 'Mostrar los pasos' : 'Ocultar los pasos'"
+      (click)="toggleCollapsed()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6" /></svg>
+    </button>
   </header>
 
-  @if (complete()) {
-    <!-- El final que se festeja: la medalla y unas chispas que caen una vez.
-         Bajo «reducir movimiento» las chispas no se mueven (ver el CSS). -->
-    <div class="primeros-pasos__medalla" data-testid="primeros-pasos-medalla">
-      <span class="primeros-pasos__chispas" aria-hidden="true">
-        @for (n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track n) {
-          <i class="primeros-pasos__chispa" [style.--n]="n"></i>
-        }
-      </span>
-      <svg class="primeros-pasos__medalla-icono" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-        <path d="M22 4h20l-6 18H28z" class="primeros-pasos__cinta" />
-        <circle cx="32" cy="40" r="18" class="primeros-pasos__disco" />
-        <path d="M32 29l3.4 6.9 7.6 1.1-5.5 5.4 1.3 7.6L32 46.4 25.2 50l1.3-7.6L21 37l7.6-1.1z" class="primeros-pasos__estrella" />
-      </svg>
-      <p class="primeros-pasos__medalla-texto">
-        Completó los seis pasos. Ahora puede usar AloVida sin perderse.
-      </p>
-      <button app-button variant="ghost" size="sm" type="button" data-testid="primeros-pasos-ocultar" (clicked)="dismiss()">
-        Ocultar esta tarjeta
-      </button>
-    </div>
-  } @else {
-    <ol class="primeros-pasos__lista">
-      @for (step of steps(); track step.id) {
-        <li
-          class="primeros-pasos__paso"
-          [class.primeros-pasos__paso--hecho]="step.done"
-          [class.primeros-pasos__paso--siguiente]="step.id === nextId()"
-          [attr.data-testid]="'primeros-pasos-' + step.id"
-          [attr.data-hecho]="step.done"
-        >
-          <span class="primeros-pasos__marca" aria-hidden="true">
-            @if (step.done) {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-            } @else {
-              <app-nav-icon [name]="step.icon" />
-            }
-          </span>
-          <span class="primeros-pasos__texto">
-            <span class="primeros-pasos__nombre">
-              {{ step.title }}
+  <div
+    id="primeros-pasos-contenido"
+    class="primeros-pasos__contenido"
+    data-testid="primeros-pasos-contenido"
+    [hidden]="collapsed()"
+  >
+
+    @if (complete()) {
+      <!-- El final que se festeja: la medalla y unas chispas que caen una vez.
+           Bajo «reducir movimiento» las chispas no se mueven (ver el CSS). -->
+      <div class="primeros-pasos__medalla" data-testid="primeros-pasos-medalla">
+        <span class="primeros-pasos__chispas" aria-hidden="true">
+          @for (n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track n) {
+            <i class="primeros-pasos__chispa" [style.--n]="n"></i>
+          }
+        </span>
+        <svg class="primeros-pasos__medalla-icono" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <path d="M22 4h20l-6 18H28z" class="primeros-pasos__cinta" />
+          <circle cx="32" cy="40" r="18" class="primeros-pasos__disco" />
+          <path d="M32 29l3.4 6.9 7.6 1.1-5.5 5.4 1.3 7.6L32 46.4 25.2 50l1.3-7.6L21 37l7.6-1.1z" class="primeros-pasos__estrella" />
+        </svg>
+        <p class="primeros-pasos__medalla-texto">
+          Completó los seis pasos. Ahora puede usar AloVida sin perderse.
+        </p>
+        <button app-button variant="ghost" size="sm" type="button" data-testid="primeros-pasos-ocultar" (clicked)="dismiss()">
+          Ocultar esta tarjeta
+        </button>
+      </div>
+    } @else {
+      <ol class="primeros-pasos__lista">
+        @for (step of steps(); track step.id) {
+          <li
+            class="primeros-pasos__paso"
+            [class.primeros-pasos__paso--hecho]="step.done"
+            [class.primeros-pasos__paso--siguiente]="step.id === nextId()"
+            [attr.data-testid]="'primeros-pasos-' + step.id"
+            [attr.data-hecho]="step.done"
+          >
+            <span class="primeros-pasos__marca" aria-hidden="true">
               @if (step.done) {
-                <span class="visualmente-oculto">(hecho)</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+              } @else {
+                <app-nav-icon [name]="step.icon" />
               }
             </span>
-            <span class="primeros-pasos__pista">{{ step.hint }}</span>
-          </span>
-          @if (!step.done) {
-            @if (step.route; as destino) {
-              <a
-                app-button
-                [variant]="step.id === nextId() ? 'primary' : 'outline'"
-                size="sm"
-                class="primeros-pasos__ir"
-                [routerLink]="destino"
-              >
-                Ir
-                <app-nav-icon name="arrow-right" />
-              </a>
-            } @else {
-              <button
-                app-button
-                [variant]="step.id === nextId() ? 'primary' : 'outline'"
-                size="sm"
-                type="button"
-                class="primeros-pasos__ir"
-                data-testid="primeros-pasos-empezar-recorrido"
-                (clicked)="startTour.emit()"
-              >
-                Empezar
-              </button>
+            <span class="primeros-pasos__texto">
+              <span class="primeros-pasos__nombre">
+                {{ step.title }}
+                @if (step.done) {
+                  <span class="visualmente-oculto">(hecho)</span>
+                }
+              </span>
+              <span class="primeros-pasos__pista">{{ step.hint }}</span>
+            </span>
+            @if (!step.done) {
+              @if (step.route; as destino) {
+                <a
+                  app-button
+                  [variant]="step.id === nextId() ? 'primary' : 'outline'"
+                  size="sm"
+                  class="primeros-pasos__ir"
+                  [routerLink]="destino"
+                >
+                  Ir
+                  <app-nav-icon name="arrow-right" />
+                </a>
+              } @else {
+                <button
+                  app-button
+                  [variant]="step.id === nextId() ? 'primary' : 'outline'"
+                  size="sm"
+                  type="button"
+                  class="primeros-pasos__ir"
+                  data-testid="primeros-pasos-empezar-recorrido"
+                  (clicked)="startTour.emit()"
+                >
+                  Empezar
+                </button>
+              }
             }
-          }
-        </li>
-      }
-    </ol>
-  }
+          </li>
+        }
+      </ol>
+    }
+  </div>
 </section>

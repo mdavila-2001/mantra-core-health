@@ -149,7 +149,7 @@ describe('Dependents', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('Todavía no registró a nadie');
+    expect(texto()).toContain('Todavía no registró a nadie.');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dependents-nuevo"]'),
     ).not.toBeNull();

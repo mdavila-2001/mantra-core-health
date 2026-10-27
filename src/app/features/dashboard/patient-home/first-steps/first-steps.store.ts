@@ -13,9 +13,11 @@ interface FirstStepsMemory {
   readonly visited: readonly string[];
   /** Si cerró la tarjeta después de completarla. */
   readonly dismissed: boolean;
+  /** Si plegó la lista para dejar sólo el título y el avance. */
+  readonly collapsed: boolean;
 }
 
-const EMPTY: FirstStepsMemory = { visited: [], dismissed: false };
+const EMPTY: FirstStepsMemory = { visited: [], dismissed: false, collapsed: false };
 
 /**
  * «Primeros pasos» del paciente — qué secciones ya conoció.
@@ -50,6 +52,9 @@ export class FirstStepsStore {
 
   /** Si la persona cerró la tarjeta ya completa. */
   readonly dismissed = computed(() => this.memory().dismissed);
+
+  /** Si la persona plegó la lista. Se recuerda: plegarla y que vuelva abierta en cada visita molesta. */
+  readonly collapsed = computed(() => this.memory().collapsed);
 
   private tracking = false;
 
@@ -88,6 +93,11 @@ export class FirstStepsStore {
     this.save({ ...this.memory(), dismissed: true });
   }
 
+  /** Pliega o despliega la lista de pasos. */
+  toggleCollapsed(): void {
+    this.save({ ...this.memory(), collapsed: !this.memory().collapsed });
+  }
+
   private markVisited(url: string): void {
     const route = url.split(/[?#]/)[0];
     if (route === '' || this.memory().visited.includes(route)) {
@@ -119,6 +129,7 @@ function read(key: string): FirstStepsMemory {
     return {
       visited: Array.isArray(parsed.visited) ? parsed.visited.filter(isString) : [],
       dismissed: parsed.dismissed === true,
+      collapsed: parsed.collapsed === true,
     };
   } catch {
     // Un valor corrupto o un almacenamiento bloqueado no tumban el inicio:

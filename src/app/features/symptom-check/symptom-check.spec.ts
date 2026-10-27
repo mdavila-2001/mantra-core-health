@@ -623,22 +623,30 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     http.expectOne('/ai/v1/triage/analyze').flush({ symptoms: [], urgency: 'programada', source: 'catalog' });
     fixture.detectChanges();
     expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).not.toBeNull();
-    expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain('Medicina general');
+    expect(
+      html.querySelector('[data-testid="sintomas-recomendaciones"] .rejilla__nombre')?.textContent,
+    ).toContain('Medicina general');
 
     escribir('me siento rarisimo desde ayer');
     vi.advanceTimersByTime(600);
     http.expectOne('/ai/v1/triage/analyze').flush({ ...MANCHAS, source: 'model' });
     fixture.detectChanges();
-    const especialidades = [...html.querySelectorAll('.sintomas__especialidad')].map((e) => e.textContent?.trim());
+    const especialidades = [
+      ...html.querySelectorAll('[data-testid="sintomas-recomendaciones"] .rejilla__nombre'),
+    ].map((e) => e.textContent?.trim());
     expect(especialidades[0]).toBe('Medicina general');
     expect(especialidades).toContain('Dermatología');
-    expect(html.querySelector('.sintomas__porque')?.textContent).toContain('interpretamos con IA');
+    expect(
+      html.querySelector('[data-testid="sintomas-recomendaciones"] .rejilla__resumen')?.textContent,
+    ).toContain('interpretamos con IA');
 
     escribir('me brota algo raro en el lomo');
     vi.advanceTimersByTime(600);
     http.expectOne('/ai/v1/triage/analyze').flush({ ...MANCHAS, source: 'semantic' });
     fixture.detectChanges();
-    expect(html.querySelector('.sintomas__especialidad')?.textContent).toContain('Medicina general');
+    expect(
+      html.querySelector('[data-testid="sintomas-recomendaciones"] .rejilla__nombre')?.textContent,
+    ).toContain('Medicina general');
   });
 
   it('los síntomas reconocidos se muestran con su término del glosario médico y la forma llana', () => {
@@ -659,7 +667,9 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
     vi.advanceTimersByTime(600);
     http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
     fixture.detectChanges();
-    const especialidades = [...html.querySelectorAll('.sintomas__especialidad')].map((e) => e.textContent?.trim());
+    const especialidades = [
+      ...html.querySelectorAll('[data-testid="sintomas-recomendaciones"] .rejilla__nombre'),
+    ].map((e) => e.textContent?.trim());
     expect(especialidades[0]).toBe('Medicina general');
     expect(especialidades).toContain('Dermatología');
     expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).toBeNull();
@@ -846,17 +856,55 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     }
   });
 
-  it('muestra el botón de recomendar medicamentos cuando hay recomendaciones activas', () => {
+  it('recomienda con la tarjeta del buscador de especialidades, sin pestañas ni «Recomendar medicamentos» (27/10/2026)', () => {
     responderSexoPropio(http);
     (componente as unknown as { escribir(v: string): void }).escribir('dolor de cabeza');
     fixture.detectChanges();
     http.match(() => true);
 
     html = fixture.nativeElement as HTMLElement;
-    const botonMed = html.querySelector('[data-testid="sintomas-boton-recomendar-medicamentos"]');
-    expect(botonMed).not.toBeNull();
-    expect(botonMed?.textContent).toContain('Recomendar medicamentos');
-    expect(botonMed?.getAttribute('href')).toContain('/search/medications');
+    const rejilla = html.querySelector('[data-testid="sintomas-recomendaciones"]');
+    expect(rejilla?.classList).toContain('rejilla');
+    const tarjetas = rejilla?.querySelectorAll<HTMLButtonElement>('button.rejilla__tarjeta') ?? [];
+    expect(tarjetas.length).toBeGreaterThan(0);
+    // La misma anatomía que `/directory`: foto, ícono de la especialidad y nombre.
+    expect(tarjetas[0].querySelector('img.rejilla__foto')?.getAttribute('src')).toContain(
+      '/directorio/',
+    );
+    expect(tarjetas[0].querySelector('app-specialty-icon')).not.toBeNull();
+    expect(tarjetas[0].querySelector('.rejilla__nombre')?.textContent).toContain(
+      'Medicina general',
+    );
+    // Cada tarjeta dice por qué: la recomendación no es una caja negra.
+    expect(tarjetas[0].querySelector('.rejilla__resumen')?.textContent?.trim()).not.toBe('');
+
+    expect(html.querySelector('[role="tablist"]')).toBeNull();
+    expect(html.querySelector('[data-testid="sintomas-boton-recomendar-medicamentos"]')).toBeNull();
+    expect(html.querySelector('[data-testid="sintomas-guardar-observacion"]')).toBeNull();
+    expect(html.textContent).not.toContain('Recomendar medicamentos');
+    expect(html.textContent).not.toContain('Guardar observación');
+  });
+
+  it('desde las especialidades se ven los medicamentos sugeridos y se vuelve sin pestañas', () => {
+    responderSexoPropio(http);
+    (componente as unknown as { escribir(v: string): void }).escribir('dolor de cabeza');
+    fixture.detectChanges();
+    http.match(() => true);
+
+    html = fixture.nativeElement as HTMLElement;
+    const ver = [...html.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
+      b.textContent?.includes('Ver medicamentos sugeridos'),
+    );
+    ver?.click();
+    fixture.detectChanges();
+    expect(html.querySelector('[data-testid="sintomas-medicamentos-seccion"]')).not.toBeNull();
+    expect(html.querySelector('[data-testid="sintomas-recomendaciones"]')).toBeNull();
+
+    html
+      .querySelector<HTMLButtonElement>('[data-testid="sintomas-volver-a-especialistas"]')
+      ?.click();
+    fixture.detectChanges();
+    expect(html.querySelector('[data-testid="sintomas-recomendaciones"]')).not.toBeNull();
   });
 
   it('detecta «necesito ayuda» y ubica el soporte de crisis ABAJO del área de escritura', () => {
