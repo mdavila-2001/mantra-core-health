@@ -386,17 +386,23 @@
           }
         }
         @case ('empty') {
-          <app-alert tone="info" title="Todavía no tiene citas">
-            Cuando pida uno, lo va a ver acá con su fecha y su estado.
-          </app-alert>
-          <button
-            app-button
-            variant="primary"
-            data-testid="turnos-pedir-desde-vacio"
-            (clicked)="elegirSeccion('pedir')"
+          <!-- S3: el vacío lleva su próxima acción adentro, centrada bajo el
+               texto, y no un botón suelto pegado al borde del aviso. -->
+          <app-empty-state
+            class="turnos__vacio"
+            title="Todavía no tiene citas"
+            description="Cuando pida una, la va a ver acá con su fecha y su estado."
           >
-            Pedir una cita
-          </button>
+            <button
+              empty-actions
+              app-button
+              variant="primary"
+              data-testid="turnos-pedir-desde-vacio"
+              (clicked)="elegirSeccion('pedir')"
+            >
+              Pedir una cita
+            </button>
+          </app-empty-state>
         }
         @default {
           <app-alert tone="error" title="No pudimos traer sus citas">

@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -22,13 +23,34 @@ import { EmptyState } from '../../../shared/components/molecules/empty-state/emp
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { AccountClinicalAccess } from '../clinical-access/clinical-access';
 
 /** Qué se ve mientras se leen las cuatro listas. */
 type Estado =
   | { readonly status: 'cargando' }
   | { readonly status: 'listo' }
   | { readonly status: 'error'; readonly mensaje: string; readonly requestId: string | null };
+
+/**
+ * Las dos vistas de «Mi privacidad». Antes eran dos renglones del menú
+ * («Mi privacidad» y «Quién ve mi historia») que respondían la misma pregunta
+ * —quién puede ver o usar lo mío— desde dos lados. Ahora son una sola puerta.
+ */
+export type VistaPrivacidad = 'historia' | 'consentimientos';
+
+// Sin ícono: con los dos rótulos completos el conmutador entra en un teléfono
+// de 390 px; con ícono, el segundo se cortaba en «Mis consentimient…».
+const VISTAS: readonly SegmentedOption<VistaPrivacidad>[] = [
+  { value: 'historia', label: 'Quién ve mi historia' },
+  { value: 'consentimientos', label: 'Mis consentimientos' },
+];
+
+function vistaDe(valor: string | null): VistaPrivacidad {
+  return valor === 'consentimientos' ? 'consentimientos' : 'historia';
+}
 
 /** El rótulo de cada estado, en castellano y sin siglas. */
 const ROTULO_DE_ESTADO: Readonly<Record<ConsentRecordState, string>> = {
@@ -39,7 +61,12 @@ const ROTULO_DE_ESTADO: Readonly<Record<ConsentRecordState, string>> = {
 };
 
 /**
- * **Mi privacidad** (BR-20 · CL-78): los consentimientos que el titular dio, las
+ * **Mi privacidad** (BR-20 · CL-78 · CV-19): una sola puerta con dos vistas.
+ *
+ * - **Quién ve mi historia** (`?ver=historia`, la de entrada): la pantalla
+ *   `AccountClinicalAccess` incrustada, sin su propio encabezado. La dirección
+ *   vieja `/my-account/clinical-access` redirige acá.
+ * - **Mis consentimientos** (`?ver=consentimientos`): los consentimientos que el titular dio, las
  * autorizaciones de divulgación, sus objeciones y los consentimientos informados
  * que firmó en sus consultas.
  *
@@ -57,7 +84,19 @@ const ROTULO_DE_ESTADO: Readonly<Record<ConsentRecordState, string>> = {
  */
 @Component({
   selector: 'app-account-privacy',
-  imports: [AppButton, Alert, Badge, Card, DatePipe, EmptyState, PageHeader, Tab, Tabs],
+  imports: [
+    AccountClinicalAccess,
+    AppButton,
+    Alert,
+    Badge,
+    Card,
+    DatePipe,
+    EmptyState,
+    PageHeader,
+    SegmentedControl,
+    Tab,
+    Tabs,
+  ],
   templateUrl: './privacy.html',
   styleUrl: './privacy.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,7 +107,16 @@ export class AccountPrivacy {
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
 
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  protected readonly vistas = VISTAS;
+  /** La vista vive en el query (`?ver=`): un enlace guardado abre la misma. */
+  protected readonly vista = signal<VistaPrivacidad>(
+    vistaDe(this.route.snapshot.queryParamMap.get('ver')),
+  );
 
   protected readonly estado = signal<Estado>({ status: 'cargando' });
   protected readonly sinPermiso = signal(false);
@@ -90,6 +138,16 @@ export class AccountPrivacy {
 
   constructor() {
     this.cargar();
+  }
+
+  protected elegirVista(vista: VistaPrivacidad): void {
+    this.vista.set(vista);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ver: vista },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   protected cargar(): void {

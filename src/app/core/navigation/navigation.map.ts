@@ -1243,13 +1243,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // BR-20 · CL-78: los consentimientos, las autorizaciones de divulgación y las
     // objeciones del titular, con el retiro. Es del paciente: sin perfil de
     // paciente la pantalla lo dice.
+    //
+    // Desde el 27/10/2026 es también la puerta de «Quién ve mi historia»: los
+    // dos renglones contestaban la misma pregunta —quién puede ver o usar lo
+    // mío— y se leían como duplicados. La pantalla tiene dos vistas
+    // (`?ver=historia` y `?ver=consentimientos`).
     path: 'my-account/privacy',
     label: 'Mi privacidad',
     group: 'Mi cuenta',
     icon: 'shield',
+    representaEnElMenu: ['my-account/clinical-access'],
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Sus consentimientos, y retiralos cuando quiera.',
+    summary: 'Quién ve su historia clínica y qué permisos dio; revóquelos cuando quiera.',
     module: 'M07 consent',
   },
   {
@@ -1257,12 +1263,16 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // a las maquetas estáticas de `features/alovida/accesos`, que quedan fuera de
     // este menú (DECISIONES.md, BR-20).
     path: 'my-account/clinical-access',
+    // Sin renglón propio desde el 27/10/2026: es la vista `?ver=historia` de
+    // «Mi privacidad». La ruta redirige (`SECCIONES_REDIRIGIDAS`) y la sección
+    // queda registrada para que los enlaces guardados sigan resolviendo.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Quién ve mi historia',
     group: 'Mi cuenta',
     icon: 'results',
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Quién ve su historia clínica, y revocalo.',
+    summary: 'Quién ve su historia clínica, y revóquelo.',
     module: 'M06 authz',
   },
   {
