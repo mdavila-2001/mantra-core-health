@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Troponina cardíaca: marcador de daño del músculo del corazón</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">Dentro de la fibra cardíaca</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Dentro de la fibra cardíaca</text>
   <line x1="50" y1="120" x2="370" y2="120" stroke="var(--red)" stroke-width="6" stroke-linecap="round"/>
   <circle cx="70" cy="120" r="8" fill="var(--pur)"/>
   <circle cx="130" cy="120" r="8" fill="var(--pur)"/>
@@ -45,7 +45,7 @@
   <text x="210" y="390" text-anchor="middle" class="small muted">Las pruebas de alta sensibilidad</text>
   <text x="210" y="406" text-anchor="middle" class="small muted">detectan cantidades muy pequeñas</text>
   <rect x="416" y="60" width="364" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">Cómo se usa</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Cómo se usa</text>
   <rect x="440" y="105" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="442" y="135" width="22" height="48" rx="10" fill="var(--red)" opacity=".85"/>
   <rect x="437" y="97" width="32" height="12" rx="3" fill="var(--accent)"/>

@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Preeclampsia: la placenta y la presión arterial</text>
   <rect x="20" y="60" width="760" height="196" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="400.0" y="90" text-anchor="middle" class="title">Cómo se produce</text>
+  <text x="400.0" y="88" text-anchor="middle" class="title">Cómo se produce</text>
   <rect x="40" y="104" width="160" height="74" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
   <text x="120.0" y="138.0" text-anchor="middle" class="lab b">Placenta</text>
   <text x="120.0" y="155.0" text-anchor="middle" class="small muted">vasos mal formados</text>
@@ -36,7 +36,7 @@
   <text x="400" y="210" text-anchor="middle" class="small">Suele aparecer en la segunda mitad del embarazo o tras el parto</text>
   <text x="400" y="230" text-anchor="middle" class="small muted">Proteínas en la orina y análisis ayudan al diagnóstico</text>
   <rect x="20" y="272" width="300" height="168" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="170.0" y="302" text-anchor="middle" class="title">Prevención y control</text>
+  <text x="170.0" y="300" text-anchor="middle" class="h">Prevención y control</text>
   <text x="38" y="320" class="small">• Controles prenatales con presión</text>
   <text x="38" y="346" class="small">• Aspirina si lo indica el médico</text>
   <text x="38" y="372" class="small">• El parto resuelve la causa</text>

@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Impétigo: infección superficial y contagiosa de la piel</text>
   <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="200.0" y="90" text-anchor="middle" class="title">Alrededor de nariz y boca</text>
+  <text x="200.0" y="88" text-anchor="middle" class="h">Alrededor de nariz y boca</text>
   <ellipse cx="200" cy="260" rx="110" ry="140" fill="var(--skin)" stroke="var(--muted)"/>
   <ellipse cx="160" cy="220" rx="12" ry="8" fill="var(--ink)" stroke="none"/>
   <ellipse cx="240" cy="220" rx="12" ry="8" fill="var(--ink)" stroke="none"/>
@@ -32,7 +32,7 @@
   <text x="300" y="396" text-anchor="middle" class="small b">Costras color miel</text>
   <text x="200" y="428" text-anchor="middle" class="small muted">Empieza como granitos o ampollas que se rompen</text>
   <rect x="396" y="60" width="384" height="180" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="588.0" y="90" text-anchor="middle" class="title">Causa y contagio</text>
+  <text x="588.0" y="88" text-anchor="middle" class="h">Causa y contagio</text>
   <rect x="414" y="100" width="168" height="54" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
   <text x="498.0" y="132.0" text-anchor="middle" class="small">Estafilococo</text>
   <rect x="594" y="100" width="168" height="54" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
@@ -40,7 +40,7 @@
   <text x="588" y="184" text-anchor="middle" class="small">Se contagia al tocar las lesiones, toallas</text>
   <text x="588" y="202" text-anchor="middle" class="small">o ropa; más en niños y en verano</text>
   <rect x="396" y="256" width="384" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="588.0" y="286" text-anchor="middle" class="title">Qué hacer</text>
+  <text x="588.0" y="284" text-anchor="middle" class="h">Qué hacer</text>
   <text x="414" y="304" class="small">• Lavar con agua y jabón</text>
   <text x="414" y="328" class="small">• Antibiótico en crema o por boca</text>
   <text x="414" y="352" class="small">• Uñas cortas, no rascar</text>

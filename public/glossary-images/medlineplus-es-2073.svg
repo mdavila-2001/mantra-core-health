@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Trasplante de páncreas: volver a fabricar insulina</text>
   <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="220.0" y="90" text-anchor="middle" class="title">Cómo se conecta</text>
+  <text x="220.0" y="88" text-anchor="middle" class="title">Cómo se conecta</text>
   <path d="M120 100 C110 170 100 260 120 340 C130 390 170 425 220 425 C270 425 310 390 320 340 C340 260 330 170 320 100 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M220 110 L220 300 L170 380 M220 300 L270 380" fill="none" stroke="var(--red)" stroke-width="5"/>
   <path d="M240 330 C260 300 300 290 310 310 C318 330 290 340 270 352 C256 360 244 352 240 330 Z" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
@@ -31,7 +31,7 @@
   <text x="274" y="140" text-anchor="middle" class="small muted">Páncreas propio</text>
   <text x="274" y="156" text-anchor="middle" class="small muted">permanece</text>
   <rect x="436" y="60" width="344" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="90" text-anchor="middle" class="title">Qué hace el injerto</text>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Qué hace el injerto</text>
   <circle cx="470" cy="130" r="9" fill="var(--ok)" stroke="none"/>
   <circle cx="496" cy="130" r="9" fill="var(--ok)" stroke="none"/>
   <circle cx="522" cy="130" r="9" fill="var(--ok)" stroke="none"/>
@@ -43,7 +43,7 @@
   <text x="454" y="220" class="lab">La glucosa se regula sin</text>
   <text x="454" y="240" class="lab">inyecciones mientras funcione</text>
   <rect x="436" y="296" width="344" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="326" text-anchor="middle" class="title">Tipos</text>
+  <text x="608.0" y="324" text-anchor="middle" class="h">Tipos</text>
   <text x="454" y="360" class="lab">• Simultáneo con riñón (el más común)</text>
   <text x="454" y="386" class="lab">• Después de un trasplante renal</text>
   <text x="454" y="412" class="lab">• Solo páncreas</text>

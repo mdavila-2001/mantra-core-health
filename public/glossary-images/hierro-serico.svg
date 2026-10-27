@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Hierro sérico: el hierro que viaja en la sangre</text>
   <rect x="20" y="60" width="520" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="280.0" y="90" text-anchor="middle" class="title">El recorrido del hierro</text>
+  <text x="280.0" y="88" text-anchor="middle" class="title">El recorrido del hierro</text>
   <rect x="40" y="100" width="140" height="60" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
   <text x="110.0" y="127.0" text-anchor="middle" class="lab b">Intestino</text>
   <text x="110.0" y="144.0" text-anchor="middle" class="small muted">absorbe de la dieta</text>
@@ -41,7 +41,7 @@
   <line x1="130" y1="318" x2="205" y2="270" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)" stroke-dasharray="4 3"/>
   <text x="275" y="420" text-anchor="middle" class="small" style="fill:var(--red)">Lo que mide la prueba: hierro unido a transferrina</text>
   <rect x="556" y="60" width="224" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="668.0" y="90" text-anchor="middle" class="title">Interpretación</text>
+  <text x="668.0" y="88" text-anchor="middle" class="h">Interpretación</text>
   <rect x="585" y="105" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="587" y="135" width="22" height="48" rx="10" fill="var(--red)" opacity=".85"/>
   <rect x="582" y="97" width="32" height="12" rx="3" fill="var(--accent)"/>

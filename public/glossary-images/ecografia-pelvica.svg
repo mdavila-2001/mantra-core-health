@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Ecografía pélvica: imágenes con ondas de sonido</text>
   <rect x="20" y="60" width="440" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="240.0" y="90" text-anchor="middle" class="title">Corte lateral de la pelvis femenina</text>
+  <text x="240.0" y="88" text-anchor="middle" class="title">Corte lateral de la pelvis femenina</text>
   <path d="M70 120 C60 220 70 330 120 400 L380 400 C410 330 420 220 400 120" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <ellipse cx="170" cy="300" rx="55" ry="42" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="170" y="305" text-anchor="middle" class="lab">Vejiga</text>
@@ -34,7 +34,7 @@
   <path d="M78 269 Q128 299 178 269" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".7"/>
   <text x="240" y="426" text-anchor="middle" class="small muted">El gel elimina el aire entre piel y sonda</text>
   <rect x="476" y="60" width="304" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="628.0" y="90" text-anchor="middle" class="title">Dos vías de estudio</text>
+  <text x="628.0" y="88" text-anchor="middle" class="h">Dos vías de estudio</text>
   <rect x="494" y="106" width="268" height="58" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="628.0" y="132.0" text-anchor="middle" class="lab b">Transabdominal</text>
   <text x="628.0" y="149.0" text-anchor="middle" class="small muted">sobre el abdomen, vejiga llena</text>

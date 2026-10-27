@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Urticaria: habones por liberación de histamina</text>
   <rect x="20" y="60" width="440" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="240.0" y="90" text-anchor="middle" class="title">Corte de la piel</text>
+  <text x="240.0" y="88" text-anchor="middle" class="title">Corte de la piel</text>
   <path d="M40 140 L150 140 C170 110 230 110 250 140 L440 140" fill="none" stroke="var(--muted)" stroke-width="2"/>
   <path d="M40 140 L150 140 C170 110 230 110 250 140 L440 140 L440 170 L40 170 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="40" y="170" width="400" height="100" rx="0" fill="var(--organ)" stroke="none" opacity=".4"/>
@@ -39,10 +39,10 @@
   <text x="410" y="376" text-anchor="middle" class="small b">Angioedema:</text>
   <text x="410" y="392" text-anchor="middle" class="small">más profundo</text>
   <text x="60" y="196" class="small muted">Dermis</text>
-  <text x="250" y="290" class="small muted">Tejido subcutáneo</text>
+  <text x="60" y="292" class="small muted">Tejido subcutáneo</text>
   <text x="240" y="428" text-anchor="middle" class="small muted">Cada habón dura menos de 24 horas</text>
   <rect x="476" y="60" width="304" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="628.0" y="90" text-anchor="middle" class="title">Desencadenantes</text>
+  <text x="628.0" y="88" text-anchor="middle" class="h">Desencadenantes</text>
   <text x="494" y="110" class="small">• Infecciones virales</text>
   <text x="494" y="138" class="small">• Alimentos o fármacos</text>
   <text x="494" y="166" class="small">• Picaduras</text>

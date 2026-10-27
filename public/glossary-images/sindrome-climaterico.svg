@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Síndrome climatérico: la transición a la menopausia</text>
   <rect x="20" y="60" width="760" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="400.0" y="90" text-anchor="middle" class="title">Los estrógenos bajan con el tiempo</text>
+  <text x="400.0" y="88" text-anchor="middle" class="title">Los estrógenos bajan con el tiempo</text>
   <path d="M60 210 L740 210" fill="none" stroke="var(--line)" stroke-width="2" marker-end="url(#ar)"/>
   <path d="M60 110 C200 110 280 112 340 130 C400 150 420 200 480 196 C560 192 640 198 740 200" fill="none" stroke="var(--pur)" stroke-width="3"/>
   <path d="M440 120 L440 210" fill="none" stroke="var(--red)" stroke-width="2" stroke-dasharray="5 4"/>
@@ -27,7 +27,7 @@
   <text x="600" y="236" text-anchor="middle" class="small">Posmenopausia</text>
   <text x="130" y="136" text-anchor="middle" class="small muted">Estrógenos</text>
   <rect x="20" y="276" width="372" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="206.0" y="306" text-anchor="middle" class="title">Síntomas frecuentes</text>
+  <text x="206.0" y="304" text-anchor="middle" class="h">Síntomas frecuentes</text>
   <text x="38" y="324" class="small">• Sofocos y sudores</text>
   <text x="38" y="350" class="small">• Sueño alterado</text>
   <text x="38" y="376" class="small">• Cambios de ánimo</text>
@@ -35,7 +35,7 @@
   <text x="214" y="350" class="small">• Reglas irregulares</text>
   <text x="214" y="376" class="small">• Pérdida de hueso</text>
   <rect x="408" y="276" width="372" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="594.0" y="306" text-anchor="middle" class="title">Qué ayuda</text>
+  <text x="594.0" y="304" text-anchor="middle" class="h">Qué ayuda</text>
   <text x="426" y="324" class="small">• Ejercicio, sueño y alimentación</text>
   <text x="426" y="348" class="small">• Ropa en capas; evitar desencadenantes</text>
   <text x="426" y="372" class="small">• Tratamiento hormonal u otros</text>

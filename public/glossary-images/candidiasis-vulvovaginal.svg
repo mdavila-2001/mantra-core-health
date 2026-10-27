@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Candidiasis vulvovaginal: cuando la levadura crece de más</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">Un equilibrio que se rompe</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Un equilibrio que se rompe</text>
   <path d="M200 330 L170 400 L230 400 Z" fill="var(--muted)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M70 200 L330 260" fill="none" stroke="var(--muted)" stroke-width="5"/>
   <path d="M60 210 L140 210 L120 240 L80 240 Z" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="2"/>
@@ -43,14 +43,14 @@
   <text x="300" y="322" text-anchor="middle" class="small muted">levaduras</text>
   <text x="210" y="428" text-anchor="middle" class="small muted">No se considera una infección de transmisión sexual</text>
   <rect x="416" y="60" width="364" height="186" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">Factores que la favorecen</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Factores que la favorecen</text>
   <text x="434" y="110" class="small">• Antibióticos</text>
   <text x="434" y="136" class="small">• Embarazo</text>
   <text x="434" y="162" class="small">• Diabetes mal controlada</text>
   <text x="434" y="188" class="small">• Defensas bajas</text>
   <text x="434" y="214" class="small">• Humedad y ropa ajustada</text>
   <rect x="416" y="262" width="364" height="178" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="292" text-anchor="middle" class="title">Síntomas</text>
+  <text x="598.0" y="290" text-anchor="middle" class="h">Síntomas</text>
   <text x="434" y="312" class="small">• Picor y ardor vulvar</text>
   <text x="434" y="338" class="small">• Flujo blanco y grumoso</text>
   <text x="434" y="364" class="small">• Enrojecimiento e hinchazón</text>

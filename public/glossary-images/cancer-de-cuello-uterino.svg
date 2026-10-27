@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Cáncer de cuello uterino: una evolución lenta y prevenible</text>
   <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="170.0" y="90" text-anchor="middle" class="title">Dónde se origina</text>
+  <text x="170.0" y="88" text-anchor="middle" class="h">Dónde se origina</text>
   <path d="M100 130 C100 110 240 110 240 130 C240 190 210 230 190 250 L190 300 L150 300 L150 250 C130 230 100 190 100 130 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <path d="M100 140 C80 130 60 140 46 160 M240 140 C260 130 280 140 294 160" fill="none" stroke="var(--red)" stroke-width="4"/>
   <ellipse cx="46" cy="168" rx="14" ry="10" fill="var(--pur-l)" stroke="var(--pur)"/>
@@ -31,7 +31,7 @@
   <text x="244" y="290" class="lab b">uterino</text>
   <text x="170" y="428" text-anchor="middle" class="small muted">Trompas y ovarios a los lados</text>
   <rect x="336" y="60" width="444" height="210" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="558.0" y="90" text-anchor="middle" class="title">Cómo avanza</text>
+  <text x="558.0" y="88" text-anchor="middle" class="title">Cómo avanza</text>
   <rect x="352" y="104" width="128" height="70" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
   <text x="416.0" y="136.0" text-anchor="middle" class="lab b">Infección VPH</text>
   <text x="416.0" y="153.0" text-anchor="middle" class="small muted">persistente</text>
@@ -47,13 +47,13 @@
   <text x="556" y="222" text-anchor="middle" class="small">Suele tardar muchos años</text>
   <text x="556" y="248" text-anchor="middle" class="small muted">En etapas precoces no da síntomas</text>
   <rect x="336" y="286" width="214" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="443.0" y="316" text-anchor="middle" class="title">Prevención</text>
+  <text x="443.0" y="314" text-anchor="middle" class="h">Prevención</text>
   <text x="352" y="346" class="small">• Vacuna contra el VPH</text>
   <text x="352" y="370" class="small">• Prueba de VPH</text>
   <text x="352" y="394" class="small">• Citología (Papanicolau)</text>
   <text x="352" y="418" class="small">• Tratar lesiones previas</text>
   <rect x="566" y="286" width="214" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="673.0" y="316" text-anchor="middle" class="title">Síntomas tardíos</text>
+  <text x="673.0" y="314" text-anchor="middle" class="h">Síntomas tardíos</text>
   <text x="582" y="346" class="small">• Sangrado tras</text>
   <text x="593" y="370" class="small">relaciones</text>
   <text x="582" y="394" class="small">• Sangrado entre reglas</text>

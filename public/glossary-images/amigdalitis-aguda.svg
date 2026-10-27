@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Amigdalitis aguda: amígdalas inflamadas</text>
   <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="220.0" y="90" text-anchor="middle" class="title">Garganta vista con la boca abierta</text>
+  <text x="220.0" y="88" text-anchor="middle" class="title">Garganta vista con la boca abierta</text>
   <ellipse cx="220" cy="260" rx="170" ry="150" fill="var(--skin)" stroke="var(--muted)"/>
   <ellipse cx="220" cy="270" rx="130" ry="110" fill="var(--red)" stroke="none" opacity=".35"/>
   <path d="M120 380 C150 320 290 320 320 380 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
@@ -38,7 +38,7 @@
   <text x="300" y="342" text-anchor="middle" class="small b">Amígdala</text>
   <text x="220" y="428" text-anchor="middle" class="small muted">Puntos blancos: exudado (pus)</text>
   <rect x="436" y="60" width="344" height="230" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="90" text-anchor="middle" class="title">Causas y síntomas</text>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Causas y síntomas</text>
   <rect x="454" y="100" width="150" height="54" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="529.0" y="124.0" text-anchor="middle" class="lab b">Virus</text>
   <text x="529.0" y="141.0" text-anchor="middle" class="small muted">la mayoría</text>

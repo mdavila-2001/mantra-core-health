@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Otitis externa: inflamación del conducto auditivo</text>
   <rect x="20" y="60" width="440" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="240.0" y="90" text-anchor="middle" class="title">Corte del oído</text>
+  <text x="240.0" y="88" text-anchor="middle" class="title">Corte del oído</text>
   <path d="M80 130 C40 170 40 330 90 370 C110 350 104 300 120 280 L120 220 C110 190 110 150 80 130 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="120" y="220" width="200" height="60" rx="6" fill="var(--skin)" stroke="var(--muted)"/>
   <rect x="124" y="228" width="192" height="44" rx="20" fill="var(--red)" stroke="none" opacity=".4"/>
@@ -32,13 +32,13 @@
   <text x="100" y="400" class="small b">Dolor al tocar o tirar de la oreja</text>
   <text x="100" y="418" class="small">Picor, secreción, oído tapado</text>
   <rect x="476" y="60" width="304" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="628.0" y="90" text-anchor="middle" class="title">Causas</text>
+  <text x="628.0" y="88" text-anchor="middle" class="h">Causas</text>
   <text x="494" y="110" class="small">• Agua retenida al nadar</text>
   <text x="494" y="138" class="small">• Hisopos o rascado</text>
   <text x="494" y="166" class="small">• Audífonos o tapones</text>
   <text x="494" y="194" class="small">• Piel con eccema</text>
   <rect x="476" y="276" width="304" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="628.0" y="306" text-anchor="middle" class="title">Prevención y tratamiento</text>
+  <text x="628.0" y="304" text-anchor="middle" class="h">Prevención y tratamiento</text>
   <text x="494" y="324" class="small">• Gotas que indique el médico</text>
   <text x="494" y="350" class="small">• Secar el oído tras el baño</text>
   <text x="494" y="376" class="small">• No introducir hisopos</text>

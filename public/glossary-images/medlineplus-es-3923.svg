@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Reemplazo de cadera: partes de la prótesis</text>
   <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="170.0" y="90" text-anchor="middle" class="title">Cadera con artrosis</text>
+  <text x="170.0" y="88" text-anchor="middle" class="h">Cadera con artrosis</text>
   <path d="M60 110 C120 100 200 120 230 170 L200 210 C170 180 130 170 70 180 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
   <circle cx="190" cy="205" r="34" fill="var(--bone)" stroke="var(--muted)"/>
   <path d="M170 230 L210 230 L230 420 L180 420 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
@@ -28,7 +28,7 @@
   <text x="60" y="302" class="small">osteofitos</text>
   <line x1="118" y1="282" x2="160" y2="214" stroke="var(--muted)" stroke-width="1"/>
   <rect x="336" y="60" width="444" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="558.0" y="90" text-anchor="middle" class="title">Componentes artificiales</text>
+  <text x="558.0" y="88" text-anchor="middle" class="title">Componentes artificiales</text>
   <path d="M376 110 C436 100 516 120 546 170 L516 210 C486 180 446 170 386 180 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M470 200 A40 40 0 0 1 550 200 Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="2"/>
   <path d="M478 200 A32 32 0 0 1 542 200 Z" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>

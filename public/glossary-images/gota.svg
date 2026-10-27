@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Gota: cristales de urato en la articulación</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">Ataque típico: dedo gordo del pie</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Ataque típico: dedo gordo del pie</text>
   <path d="M60 330 C60 280 120 250 200 250 L300 240 C340 238 360 260 356 290 C352 320 330 340 300 345 L120 360 C80 362 60 350 60 330 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <circle cx="300" cy="290" r="34" fill="var(--red)" stroke="none" opacity=".35"/>
   <path d="M286 276 l14 22 M294 270 l10 30 M306 274 l-6 26 M312 282 l-18 14" fill="none" stroke="var(--panel)" stroke-width="2.5"/>
@@ -31,7 +31,7 @@
   <text x="210" y="400" text-anchor="middle" class="small">Dolor muy intenso que empieza de noche</text>
   <text x="210" y="418" text-anchor="middle" class="small muted">También rodilla, tobillo o muñeca</text>
   <rect x="416" y="60" width="364" height="190" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">Cómo se forma</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Cómo se forma</text>
   <rect x="430" y="104" width="106" height="64" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
   <text x="483.0" y="133.0" text-anchor="middle" class="lab b">Purinas</text>
   <text x="483.0" y="150.0" text-anchor="middle" class="small muted">de la dieta</text>
@@ -46,7 +46,7 @@
   <text x="598" y="200" text-anchor="middle" class="small">El riñón elimina el ácido úrico; si elimina</text>
   <text x="598" y="218" text-anchor="middle" class="small">poco o se produce mucho, se acumula</text>
   <rect x="416" y="266" width="364" height="174" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="296" text-anchor="middle" class="title">Desencadenantes y manejo</text>
+  <text x="598.0" y="294" text-anchor="middle" class="h">Desencadenantes y manejo</text>
   <text x="434" y="322" class="small">• Alcohol, sobre todo cerveza</text>
   <text x="434" y="346" class="small">• Carnes rojas y mariscos</text>
   <text x="434" y="370" class="small">• Bebidas azucaradas</text>

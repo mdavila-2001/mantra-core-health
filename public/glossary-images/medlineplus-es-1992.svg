@@ -39,7 +39,7 @@
   <text x="130" y="266" class="small">ilíacas</text>
   <line x1="160" y1="272" x2="186" y2="372" stroke="var(--muted)" stroke-width="1"/>
   <rect x="436" y="60" width="344" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="90" text-anchor="middle" class="title">El proceso</text>
+  <text x="608.0" y="88" text-anchor="middle" class="h">El proceso</text>
   <rect x="460" y="100" width="296" height="50" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="608.0" y="130.0" text-anchor="middle" class="lab">Donante vivo o fallecido</text>
   <line x1="608.0" y1="152" x2="608.0" y2="164" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>

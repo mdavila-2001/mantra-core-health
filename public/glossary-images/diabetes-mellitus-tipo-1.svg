@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Diabetes tipo 1: el cuerpo deja de fabricar insulina</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">Ataque autoinmune al páncreas</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Ataque autoinmune al páncreas</text>
   <path d="M50 160 C80 120 180 120 260 140 C320 150 360 170 350 200 C340 230 280 220 220 220 C150 220 60 220 50 160 Z" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
   <text x="120" y="175" text-anchor="middle" class="lab b">Páncreas</text>
   <circle cx="250" cy="180" r="26" fill="var(--panel)" stroke="var(--warn)" stroke-width="2"/>
@@ -38,14 +38,14 @@
   <text x="200" y="410" text-anchor="middle" class="lab b">Sin insulina, la glucosa no entra</text>
   <text x="200" y="428" text-anchor="middle" class="small">en las células y sube en la sangre</text>
   <rect x="416" y="60" width="364" height="190" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">Síntomas típicos</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Síntomas típicos</text>
   <text x="434" y="110" class="small">• Mucha sed y mucha orina</text>
   <text x="434" y="136" class="small">• Hambre con pérdida de peso</text>
   <text x="434" y="162" class="small">• Cansancio</text>
   <text x="434" y="188" class="small">• Visión borrosa</text>
   <text x="434" y="214" class="small">• Aliento afrutado: cetoacidosis</text>
   <rect x="416" y="266" width="364" height="174" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="296" text-anchor="middle" class="title">Tratamiento</text>
+  <text x="598.0" y="294" text-anchor="middle" class="h">Tratamiento</text>
   <text x="434" y="326" class="small">• Insulina de por vida</text>
   <text x="445" y="348" class="small">(inyecciones o bomba)</text>
   <text x="434" y="370" class="small">• Control de glucosa: capilar</text>

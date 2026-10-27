@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Artrosis de cadera: desgaste del cartílago</text>
   <rect x="20" y="60" width="250" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="145.0" y="90" text-anchor="middle" class="title">Sana</text>
+  <text x="145.0" y="88" text-anchor="middle" class="h">Sana</text>
   <path d="M30 110 C90 104 160 116 190 160 L166 196 C140 170 100 160 40 172 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M106 210 A44 44 0 0 1 194 210" fill="none" stroke="var(--accent)" stroke-width="8"/>
   <circle cx="150" cy="216" r="36" fill="var(--bone)" stroke="var(--muted)"/>
@@ -26,7 +26,7 @@
   <text x="145" y="384" text-anchor="middle" class="small">Cartílago grueso</text>
   <text x="145" y="400" text-anchor="middle" class="small">y espacio amplio</text>
   <rect x="286" y="60" width="250" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="411.0" y="90" text-anchor="middle" class="title">Con artrosis</text>
+  <text x="411.0" y="88" text-anchor="middle" class="h">Con artrosis</text>
   <path d="M296 110 C356 104 426 116 456 160 L432 196 C406 170 366 160 306 172 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M372 210 A44 44 0 0 1 460 210" fill="none" stroke="var(--accent)" stroke-width="3"/>
   <circle cx="416" cy="216" r="36" fill="var(--bone)" stroke="var(--muted)"/>
@@ -39,7 +39,7 @@
   <text x="411" y="396" text-anchor="middle" class="small">osteofitos</text>
   <text x="411" y="412" text-anchor="middle" class="small">y espacio estrecho</text>
   <rect x="552" y="60" width="228" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="666.0" y="90" text-anchor="middle" class="title">Qué se nota</text>
+  <text x="666.0" y="88" text-anchor="middle" class="h">Qué se nota</text>
   <text x="568" y="110" class="small">• Dolor en la ingle</text>
   <text x="579" y="134" class="small">o el muslo</text>
   <text x="568" y="158" class="small">• Rigidez al levantarse</text>

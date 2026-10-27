@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Estreñimiento: el tránsito por el colon se enlentece</text>
   <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="220.0" y="90" text-anchor="middle" class="title">El recorrido por el intestino grueso</text>
+  <text x="220.0" y="88" text-anchor="middle" class="title">El recorrido por el intestino grueso</text>
   <path d="M110 400 L110 160 C110 120 130 110 160 110 L280 110 C310 110 330 120 330 160 L330 330 C330 360 300 370 270 370 L230 370 L220 420" fill="none" stroke="var(--organ)" stroke-width="30" stroke-linejoin="round" opacity=".7"/>
   <circle cx="110" cy="340" r="10" fill="var(--warn)" stroke="none"/>
   <circle cx="110" cy="250" r="10" fill="var(--warn)" stroke="none"/>
@@ -35,7 +35,7 @@
   <line x1="228" y1="304" x2="236" y2="370" stroke="var(--muted)" stroke-width="1"/>
   <text x="60" y="430" class="small muted">Inicio</text>
   <rect x="436" y="60" width="344" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="90" text-anchor="middle" class="title">Medidas que ayudan</text>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Medidas que ayudan</text>
   <text x="454" y="110" class="small">• Más fibra: frutas, verduras,</text>
   <text x="465" y="136" class="small">legumbres e integrales</text>
   <text x="454" y="162" class="small">• Beber suficiente agua</text>

@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Radiografía de rodilla: los huesos de la articulación</text>
   <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="200.0" y="90" text-anchor="middle" class="title">Vista de frente</text>
+  <text x="200.0" y="88" text-anchor="middle" class="h">Vista de frente</text>
   <path d="M150 104 L230 104 L232 230 C250 240 262 255 258 272 L122 272 C118 255 130 240 148 230 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M128 290 L252 290 C258 302 250 312 236 316 L230 420 L160 420 L154 316 C140 312 122 302 128 290 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M262 312 L282 312 L280 420 L266 420 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
@@ -35,7 +35,7 @@
   <text x="60" y="152" class="small muted">se deduce por</text>
   <text x="60" y="168" class="small muted">el espacio</text>
   <rect x="396" y="60" width="384" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="588.0" y="90" text-anchor="middle" class="title">Proyecciones y hallazgos</text>
+  <text x="588.0" y="88" text-anchor="middle" class="h">Proyecciones y hallazgos</text>
   <rect x="414" y="100" width="110" height="64" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="469.0" y="137.0" text-anchor="middle" class="lab">Frontal</text>
   <text x="469" y="182" text-anchor="middle" class="small muted">de pie</text>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1071953
+image: wikidata-especialidad-q1071953.svg | La genética médica estudia las enfermedades con origen en el material hereditario. | Cromosoma con una región ampliada a la doble hélice de ADN, tres recuadros con los tipos de alteraciones genéticas y un árbol familiar sencillo con los miembros afectados coloreados.
 ---
 
 ## [definition] Introducción

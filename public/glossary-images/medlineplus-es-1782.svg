@@ -51,11 +51,11 @@
   <circle cx="672" cy="160" r="6" fill="var(--warn)" stroke="none"/>
   <text x="665" y="226" text-anchor="middle" class="small muted">Sangre nueva</text>
   <rect x="20" y="326" width="372" height="116" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="206.0" y="356" text-anchor="middle" class="title">Autólogo</text>
+  <text x="206.0" y="354" text-anchor="middle" class="h">Autólogo</text>
   <text x="206" y="382" text-anchor="middle" class="lab">Las células son del propio paciente</text>
   <text x="206" y="404" text-anchor="middle" class="small muted">Se recogen y congelan antes del tratamiento</text>
   <rect x="408" y="326" width="372" height="116" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="594.0" y="356" text-anchor="middle" class="title">Alogénico</text>
+  <text x="594.0" y="354" text-anchor="middle" class="h">Alogénico</text>
   <text x="594" y="382" text-anchor="middle" class="lab">Las células vienen de un donante compatible</text>
   <text x="594" y="404" text-anchor="middle" class="small muted">Riesgo de enfermedad de injerto contra huésped</text>
 

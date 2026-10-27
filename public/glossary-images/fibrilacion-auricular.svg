@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Fibrilación auricular: las aurículas tiemblan sin coordinación</text>
   <rect x="20" y="60" width="340" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="190.0" y="90" text-anchor="middle" class="title">Corazón</text>
+  <text x="190.0" y="88" text-anchor="middle" class="h">Corazón</text>
   <path d="M80 200 C70 140 120 110 170 120 C220 110 280 140 270 200 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <path d="M80 210 L270 210 C270 300 220 360 175 410 C130 360 80 300 80 210 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <path d="M100 170 l10 -14 l8 18 l10 -20 l8 22 l10 -18 l8 16 l10 -20 l8 22 l10 -16 l8 14 l10 -18 l8 16" fill="none" stroke="var(--warn)" stroke-width="2"/>
@@ -31,14 +31,14 @@
   <text x="290" y="246" class="small">posible</text>
   <text x="290" y="262" class="small">coágulo</text>
   <rect x="376" y="60" width="404" height="186" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="578.0" y="90" text-anchor="middle" class="title">Electrocardiograma</text>
+  <text x="578.0" y="88" text-anchor="middle" class="title">Electrocardiograma</text>
   <text x="392" y="140" class="small b">Normal</text>
   <path d="M460 142 l12 0 l4 -6 l4 6 l8 0 l4 8 l4 -40 l4 44 l4 -12 l14 0 l6 -8 l6 8 l10 0 l12 0 l4 -6 l4 6 l8 0 l4 8 l4 -40 l4 44 l4 -12 l14 0 l6 -8 l6 8 l10 0 l12 0 l4 -6 l4 6 l8 0 l4 8 l4 -40 l4 44 l4 -12 l14 0 l6 -8 l6 8 l10 0" fill="none" stroke="var(--ok)" stroke-width="2"/>
   <text x="392" y="210" class="small b">FA</text>
   <path d="M460 212 l14 0 l4 -38 l4 42 l4 -4 l6 2 l6 -3 l6 3 l5 -2 l4 -38 l4 42 l4 -4 l4 2 l6 -3 l6 3 l4 -2 l6 2 l6 -3 l6 3 l5 -2 l4 -38 l4 42 l4 -4 l4 2 l6 -3 l4 -38 l4 42 l4 -4 l6 2 l6 -3 l6 3 l5 -2 l6 2 l6 -3 l4 -38 l4 42 l4 -4 l6 2" fill="none" stroke="var(--red)" stroke-width="2"/>
   <text x="578" y="232" text-anchor="middle" class="small muted">Sin onda P y latidos a intervalos irregulares</text>
   <rect x="376" y="262" width="404" height="178" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="578.0" y="292" text-anchor="middle" class="title">Riesgos y tratamiento</text>
+  <text x="578.0" y="290" text-anchor="middle" class="title">Riesgos y tratamiento</text>
   <text x="394" y="312" class="small">• Ictus por coágulos</text>
   <text x="394" y="338" class="small">• Insuficiencia cardíaca</text>
   <text x="394" y="364" class="small">• Palpitaciones, cansancio</text>

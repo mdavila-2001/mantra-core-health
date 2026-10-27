@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Resonancia magnética de cerebro</text>
   <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="200.0" y="90" text-anchor="middle" class="title">El equipo</text>
+  <text x="200.0" y="88" text-anchor="middle" class="h">El equipo</text>
   <circle cx="200" cy="230" r="120" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="3"/>
   <circle cx="200" cy="230" r="58" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
   <rect x="40" y="236" width="320" height="18" rx="4" fill="var(--muted)" stroke="none"/>
@@ -26,7 +26,7 @@
   <text x="200" y="390" text-anchor="middle" class="lab">Mesa que entra al túnel</text>
   <text x="200" y="414" text-anchor="middle" class="small muted">Sin rayos X; hace ruido; 20 a 60 min</text>
   <rect x="396" y="60" width="384" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="588.0" y="90" text-anchor="middle" class="title">Qué se ve</text>
+  <text x="588.0" y="88" text-anchor="middle" class="h">Qué se ve</text>
   <g transform="translate(132 60) scale(.8)">
   <path d="M430 260 C420 170 490 110 580 112 C670 114 720 170 712 240 C706 280 680 296 640 296 L600 296 C590 300 580 320 586 360 L560 360 C556 330 548 306 520 300 C470 300 436 290 430 260 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <ellipse cx="650" cy="300" rx="46" ry="26" fill="var(--pur-l)" stroke="var(--pur)"/>

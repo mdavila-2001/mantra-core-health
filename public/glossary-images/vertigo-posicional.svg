@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Vértigo posicional paroxístico benigno (VPPB)</text>
   <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="220.0" y="90" text-anchor="middle" class="title">Oído interno: cristales fuera de lugar</text>
+  <text x="220.0" y="88" text-anchor="middle" class="title">Oído interno: cristales fuera de lugar</text>
   <ellipse cx="170" cy="300" rx="60" ry="44" fill="var(--pur-l)" stroke="var(--pur)"/>
   <text x="170" y="360" text-anchor="middle" class="small b">Utrículo</text>
   <circle cx="150" cy="300" r="4" fill="var(--warn)" stroke="none"/>
@@ -38,25 +38,25 @@
   <text x="220" y="404" text-anchor="middle" class="small">Al mover la cabeza, los cristales empujan</text>
   <text x="220" y="420" text-anchor="middle" class="small">el líquido del canal y engañan al cerebro</text>
   <rect x="436" y="60" width="344" height="186" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="90" text-anchor="middle" class="title">Cómo se presenta</text>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Cómo se presenta</text>
   <text x="454" y="110" class="small">• Giro intenso de segundos</text>
   <text x="454" y="136" class="small">• Al darse vuelta en la cama,</text>
   <text x="465" y="162" class="small">acostarse o mirar arriba</text>
   <text x="454" y="188" class="small">• Sin pérdida de audición</text>
   <text x="454" y="214" class="small">• Puede dar náuseas</text>
   <rect x="436" y="262" width="344" height="178" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="292" text-anchor="middle" class="title">Maniobra de reposicionamiento</text>
+  <text x="608.0" y="290" text-anchor="middle" class="h">Maniobra de reposicionamiento</text>
   <rect x="452" y="306" width="70" height="58" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
-  <text x="487.0" y="340.0" text-anchor="middle" class="lab">1</text>
+  <text x="487.0" y="340.0" text-anchor="middle" class="lab">Sentado</text>
   <line x1="524" y1="335.0" x2="532" y2="335.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
   <rect x="534" y="306" width="70" height="58" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
-  <text x="569.0" y="340.0" text-anchor="middle" class="lab">2</text>
+  <text x="569.0" y="340.0" text-anchor="middle" class="lab">Tumbar</text>
   <line x1="606" y1="335.0" x2="614" y2="335.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
   <rect x="616" y="306" width="70" height="58" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
-  <text x="651.0" y="340.0" text-anchor="middle" class="lab">3</text>
+  <text x="651.0" y="340.0" text-anchor="middle" class="lab">Girar</text>
   <line x1="688" y1="335.0" x2="696" y2="335.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
   <rect x="698" y="306" width="70" height="58" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
-  <text x="733.0" y="340.0" text-anchor="middle" class="lab">4</text>
+  <text x="733.0" y="340.0" text-anchor="middle" class="lab">Sentar</text>
   <text x="608" y="392" text-anchor="middle" class="small">Giros guiados de la cabeza devuelven</text>
   <text x="608" y="410" text-anchor="middle" class="small">los cristales al utrículo</text>
 

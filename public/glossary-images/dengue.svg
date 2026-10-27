@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Dengue: transmisión y señales de alarma</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">Ciclo de transmisión</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Ciclo de transmisión</text>
   <ellipse cx="210" cy="130" rx="22" ry="7" fill="var(--ink)" stroke="none"/>
   <circle cx="186" cy="130" r="6" fill="var(--ink)" stroke="none"/>
   <ellipse cx="208" cy="116" rx="14" ry="6" fill="var(--accent-l)" stroke="var(--muted)" transform="rotate(-25 208 116)"/>
@@ -44,7 +44,7 @@
   <text x="40" y="384" class="small">• Eliminar agua estancada</text>
   <text x="40" y="406" class="small">• Repelente, mosquiteros y ropa larga</text>
   <rect x="416" y="60" width="364" height="160" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">Fases de la enfermedad</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Fases de la enfermedad</text>
   <rect x="430" y="104" width="106" height="64" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
   <text x="483.0" y="133.0" text-anchor="middle" class="lab b">Febril</text>
   <text x="483.0" y="150.0" text-anchor="middle" class="small muted">fiebre alta</text>

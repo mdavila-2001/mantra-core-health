@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Radiografía de abdomen: una imagen simple con rayos X</text>
   <rect x="20" y="60" width="340" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="190.0" y="90" text-anchor="middle" class="title">Cómo se toma</text>
+  <text x="190.0" y="88" text-anchor="middle" class="h">Cómo se toma</text>
   <rect x="110" y="106" width="160" height="32" rx="8" fill="var(--accent)" stroke="none"/>
   <text x="190" y="127" text-anchor="middle" class="lab" style="fill:var(--on)">Tubo de rayos X</text>
   <polygon points="165,138 215,138 300,300 80,300" fill="var(--beam)" opacity=".4"/>
@@ -29,7 +29,7 @@
   <text x="190" y="378" text-anchor="middle" class="small">para ver niveles de líquido y gas</text>
   <text x="190" y="414" text-anchor="middle" class="small muted">Dura segundos; usa poca radiación</text>
   <rect x="376" y="60" width="404" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="578.0" y="90" text-anchor="middle" class="title">Qué se ve</text>
+  <text x="578.0" y="88" text-anchor="middle" class="title">Qué se ve</text>
   <rect x="400" y="104" width="170" height="290" rx="10" fill="#4f5a66" stroke="none"/>
   <rect x="476" y="116" width="18" height="26" rx="4" fill="#e9e4d6" stroke="none"/>
   <rect x="476" y="150" width="18" height="26" rx="4" fill="#e9e4d6" stroke="none"/>

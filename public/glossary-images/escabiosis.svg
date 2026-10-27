@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Escabiosis (sarna): un ácaro que excava la piel</text>
   <rect x="20" y="60" width="420" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="230.0" y="90" text-anchor="middle" class="title">El túnel en la piel</text>
+  <text x="230.0" y="88" text-anchor="middle" class="title">El túnel en la piel</text>
   <rect x="40" y="110" width="380" height="60" rx="2" fill="var(--skin)" stroke="var(--muted)"/>
   <rect x="40" y="170" width="380" height="90" rx="2" fill="var(--organ)" stroke="none" opacity=".4"/>
   <path d="M120 116 C140 140 200 150 260 140 C300 132 330 140 350 150" fill="none" stroke="var(--warn)" stroke-width="8" opacity=".55" stroke-linecap="round"/>
@@ -36,7 +36,7 @@
   <line x1="190" y1="218" x2="200" y2="150" stroke="var(--muted)" stroke-width="1"/>
   <text x="230" y="262" text-anchor="middle" class="small muted">La reacción alérgica da el picor</text>
   <rect x="20" y="296" width="420" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="230.0" y="326" text-anchor="middle" class="title">Dónde suele aparecer</text>
+  <text x="230.0" y="324" text-anchor="middle" class="title">Dónde suele aparecer</text>
   <text x="38" y="354" class="lab">• Entre los dedos</text>
   <text x="38" y="380" class="lab">• Muñecas y codos</text>
   <text x="38" y="406" class="lab">• Axilas y cintura</text>
@@ -44,7 +44,7 @@
   <text x="238" y="380" class="lab">• Alrededor del pezón</text>
   <text x="238" y="406" class="lab">• Bebés: palmas y plantas</text>
   <rect x="456" y="60" width="324" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="618.0" y="90" text-anchor="middle" class="title">Claves</text>
+  <text x="618.0" y="88" text-anchor="middle" class="h">Claves</text>
   <text x="474" y="110" class="small">• Picor intenso, peor de noche</text>
   <text x="474" y="136" class="small">• Contagio por contacto</text>
   <text x="485" y="162" class="small">piel con piel prolongado</text>

@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Sobrepeso: cómo se estima con el IMC</text>
   <rect x="20" y="60" width="760" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="400.0" y="90" text-anchor="middle" class="title">Índice de masa corporal en adultos</text>
+  <text x="400.0" y="88" text-anchor="middle" class="title">Índice de masa corporal en adultos</text>
   <rect x="250" y="100" width="300" height="50" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="400.0" y="130.0" text-anchor="middle" class="lab b">IMC = peso (kg) ÷ estatura (m)²</text>
   <rect x="60" y="180" width="120" height="40" rx="0" fill="var(--accent-l)" stroke="var(--line)"/>
@@ -34,12 +34,12 @@
   <path d="M360 168 L540 168" fill="none" stroke="var(--warn)" stroke-width="3"/>
   <text x="400" y="266" text-anchor="middle" class="small muted">El IMC es una estimación; no distingue músculo de grasa</text>
   <rect x="20" y="296" width="372" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="206.0" y="326" text-anchor="middle" class="title">También importa</text>
+  <text x="206.0" y="324" text-anchor="middle" class="h">También importa</text>
   <text x="38" y="344" class="small">• La cintura: grasa abdominal</text>
   <text x="38" y="370" class="small">• Presión, glucosa y lípidos</text>
   <text x="38" y="396" class="small">• En niños se usan tablas por edad</text>
   <rect x="408" y="296" width="372" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="594.0" y="326" text-anchor="middle" class="title">Qué ayuda</text>
+  <text x="594.0" y="324" text-anchor="middle" class="h">Qué ayuda</text>
   <text x="426" y="344" class="small">• Comida casera, menos ultraprocesados</text>
   <text x="426" y="370" class="small">• Moverse a diario y dormir bien</text>
   <text x="426" y="396" class="small">• Metas pequeñas y sostenibles</text>

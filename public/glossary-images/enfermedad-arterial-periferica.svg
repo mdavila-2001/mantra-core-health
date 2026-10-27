@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Enfermedad arterial periférica: arterias de las piernas estrechas</text>
   <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="170.0" y="90" text-anchor="middle" class="title">Dónde ocurre</text>
+  <text x="170.0" y="88" text-anchor="middle" class="h">Dónde ocurre</text>
   <path d="M120 100 L200 100 L196 250 L186 400 L150 400 L140 250 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M150 410 L190 410 L210 430 L140 430 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M168 104 L166 200 L164 260 L160 340 L156 404" fill="none" stroke="var(--red)" stroke-width="5"/>
@@ -29,7 +29,7 @@
   <text x="234" y="330" class="small muted">Pantorrilla:</text>
   <text x="234" y="346" class="small muted">dolor al andar</text>
   <rect x="336" y="60" width="444" height="180" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="558.0" y="90" text-anchor="middle" class="title">Arteria por dentro</text>
+  <text x="558.0" y="88" text-anchor="middle" class="title">Arteria por dentro</text>
   <rect x="360" y="110" width="396" height="70" rx="30" fill="var(--red-l)" stroke="var(--red)"/>
   <path d="M480 110 C520 150 580 150 620 110 Z M500 180 C540 155 570 155 600 180 Z" fill="var(--warn)" stroke="none" stroke-width="0" opacity=".8"/>
   <path d="M370 145 L470 145" fill="none" stroke="var(--red)" stroke-width="4" marker-end="url(#ar)"/>
@@ -37,7 +37,7 @@
   <text x="556" y="206" text-anchor="middle" class="small">La placa de aterosclerosis reduce el flujo</text>
   <text x="556" y="224" text-anchor="middle" class="small">y el músculo recibe menos sangre</text>
   <rect x="336" y="256" width="214" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="443.0" y="286" text-anchor="middle" class="title">Claudicación</text>
+  <text x="443.0" y="284" text-anchor="middle" class="h">Claudicación</text>
   <text x="352" y="304" class="small">• Dolor al caminar</text>
   <text x="352" y="328" class="small">• Cede al detenerse</text>
   <text x="352" y="352" class="small">• Factores: tabaco,</text>

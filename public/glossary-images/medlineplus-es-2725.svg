@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Radioterapia: radiación dirigida al tumor</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">Haces desde varios ángulos</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Haces desde varios ángulos</text>
   <ellipse cx="210" cy="260" rx="140" ry="90" fill="var(--skin)" stroke="var(--muted)"/>
   <circle cx="230" cy="255" r="22" fill="var(--pur)" stroke="var(--panel)" stroke-width="2"/>
   <line x1="60" y1="150" x2="230" y2="255" stroke="var(--warn)" stroke-width="6" opacity=".55"/>
@@ -33,7 +33,7 @@
   <text x="268" y="300" class="lab b">Tumor</text>
   <text x="210" y="420" text-anchor="middle" class="small">Dosis máxima donde se cruzan los haces</text>
   <rect x="416" y="60" width="364" height="236" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">Cómo actúa</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Cómo actúa</text>
   <rect x="436" y="108" width="100" height="70" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
   <text x="486.0" y="148.0" text-anchor="middle" class="lab">Radiación</text>
   <line x1="538" y1="143.0" x2="550" y2="143.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
@@ -46,7 +46,7 @@
   <text x="598" y="238" text-anchor="middle" class="small">por eso la dosis se divide en sesiones</text>
   <text x="598" y="266" text-anchor="middle" class="small muted">El efecto aparece en días o semanas</text>
   <rect x="416" y="312" width="364" height="128" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="342" text-anchor="middle" class="title">Modalidades</text>
+  <text x="598.0" y="340" text-anchor="middle" class="h">Modalidades</text>
   <rect x="436" y="350" width="156" height="70" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="514.0" y="382.0" text-anchor="middle" class="lab b">Externa</text>
   <text x="514.0" y="399.0" text-anchor="middle" class="small muted">acelerador lineal</text>

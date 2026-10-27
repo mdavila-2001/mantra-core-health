@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Anorexia nerviosa: un ciclo que se refuerza</text>
   <rect x="20" y="60" width="420" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="230.0" y="90" text-anchor="middle" class="title">El círculo del trastorno</text>
+  <text x="230.0" y="88" text-anchor="middle" class="title">El círculo del trastorno</text>
   <rect x="158.0" y="112.0" width="144" height="56" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
   <text x="230.0" y="137.0" text-anchor="middle" class="lab b">Miedo intenso</text>
   <text x="230.0" y="154.0" text-anchor="middle" class="small muted">a engordar</text>
@@ -35,14 +35,14 @@
   <path d="M126 205 A115 115 0 0 1 180 151" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
   <text x="230" y="260" text-anchor="middle" class="small muted">Se refuerza</text>
   <rect x="456" y="60" width="324" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="618.0" y="90" text-anchor="middle" class="title">Efectos en el cuerpo</text>
+  <text x="618.0" y="88" text-anchor="middle" class="h">Efectos en el cuerpo</text>
   <text x="474" y="112" class="lab">• Corazón lento, presión baja</text>
   <text x="474" y="142" class="lab">• Pérdida de la menstruación</text>
   <text x="474" y="172" class="lab">• Huesos frágiles</text>
   <text x="474" y="202" class="lab">• Frío, cansancio, mareo</text>
   <text x="474" y="232" class="lab">• Alteración de sales en sangre</text>
   <rect x="456" y="296" width="324" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="618.0" y="326" text-anchor="middle" class="title">Tiene tratamiento</text>
+  <text x="618.0" y="324" text-anchor="middle" class="h">Tiene tratamiento</text>
   <text x="474" y="356" class="small">• Equipo: médico, psicología,</text>
   <text x="485" y="378" class="small">nutrición y familia</text>
   <text x="474" y="400" class="small">• Recuperar el peso con seguridad</text>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1407263
+image: wikidata-especialidad-q1407263.svg | La psiquiatría forense une la evaluación de la salud mental con las preguntas de la justicia. | Cabeza que representa la salud mental unida por una flecha doble a una balanza de la justicia, junto a dos paneles con las tareas periciales y asistenciales de la psiquiatría forense.
 ---
 
 ## [definition] Introducción

@@ -34,7 +34,7 @@
   <text x="699.0" y="139.0" text-anchor="middle" class="small muted">horas después</text>
   <text x="400" y="196" text-anchor="middle" class="lab">Náuseas, vómitos, diarrea y cólicos; suele durar uno o dos días</text>
   <rect x="20" y="246" width="372" height="194" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="206.0" y="276" text-anchor="middle" class="title">Cuatro claves para prevenir</text>
+  <text x="206.0" y="274" text-anchor="middle" class="h">Cuatro claves para prevenir</text>
   <rect x="36" y="290" width="164" height="60" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
   <text x="118.0" y="317.0" text-anchor="middle" class="lab b">Limpiar</text>
   <text x="118.0" y="334.0" text-anchor="middle" class="small muted">manos y superficies</text>

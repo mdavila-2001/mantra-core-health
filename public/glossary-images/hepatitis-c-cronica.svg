@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Hepatitis C crónica: del virus a la cirrosis</text>
   <rect x="20" y="60" width="760" height="240" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="400.0" y="90" text-anchor="middle" class="title">Evolución posible del hígado sin tratamiento</text>
+  <text x="400.0" y="88" text-anchor="middle" class="title">Evolución posible del hígado sin tratamiento</text>
   <path d="M50 160 C70 120 190 115 200 140 C206 170 170 205 120 215 C80 220 44 200 50 160 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <path d="M240 160 C260 120 380 115 390 140 C396 170 360 205 310 215 C270 220 234 200 240 160 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <circle cx="280" cy="150" r="5" fill="var(--red)" stroke="none"/>
@@ -46,12 +46,12 @@
   <text x="695" y="264" text-anchor="middle" class="small muted">riesgo de cáncer</text>
   <text x="400" y="290" text-anchor="middle" class="small muted">Suele avanzar en silencio durante años</text>
   <rect x="20" y="316" width="372" height="124" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="206.0" y="346" text-anchor="middle" class="title">Contagio por sangre</text>
+  <text x="206.0" y="344" text-anchor="middle" class="h">Contagio por sangre</text>
   <text x="38" y="370" class="small">• Agujas o material compartido</text>
   <text x="38" y="392" class="small">• Tatuajes sin esterilizar</text>
   <text x="38" y="414" class="small">• Transfusiones antiguas; parto</text>
   <rect x="408" y="316" width="372" height="124" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="594.0" y="346" text-anchor="middle" class="title">Se puede curar</text>
+  <text x="594.0" y="344" text-anchor="middle" class="h">Se puede curar</text>
   <text x="426" y="370" class="small">• Antivirales orales unas semanas</text>
   <text x="426" y="392" class="small">• Análisis para detectar el virus</text>
   <text x="426" y="414" class="small">• Vigilar el hígado si hubo fibrosis</text>

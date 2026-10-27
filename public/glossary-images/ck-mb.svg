@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">CK-MB: una enzima que sale del músculo cardíaco dañado</text>
   <rect x="20" y="60" width="370" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="205.0" y="90" text-anchor="middle" class="title">De la célula a la sangre</text>
+  <text x="205.0" y="88" text-anchor="middle" class="h">De la célula a la sangre</text>
   <rect x="50" y="110" width="140" height="90" rx="16" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <text x="120" y="160" text-anchor="middle" class="lab b">Célula sana</text>
   <circle cx="70" cy="182" r="5" fill="var(--pur)"/>
@@ -40,7 +40,7 @@
   <text x="40" y="410" class="small muted">Abunda en el corazón; hay algo también</text>
   <text x="40" y="426" class="small muted">en el músculo esquelético.</text>
   <rect x="406" y="60" width="374" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="593.0" y="90" text-anchor="middle" class="title">Cómo cambia tras un infarto</text>
+  <text x="593.0" y="88" text-anchor="middle" class="h">Cómo cambia tras un infarto</text>
   <line x1="440" y1="330" x2="760" y2="330" stroke="var(--line)" stroke-width="2"/>
   <line x1="440" y1="330" x2="440" y2="120" stroke="var(--line)" stroke-width="2"/>
   <path d="M440 325 C480 322 500 160 540 150 C580 145 600 300 680 322 L760 325" fill="none" stroke="var(--pur)" stroke-width="3"/>

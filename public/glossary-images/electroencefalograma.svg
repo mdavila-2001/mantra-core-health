@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Electroencefalograma: registrar la actividad eléctrica del cerebro</text>
   <rect x="20" y="60" width="330" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="185.0" y="90" text-anchor="middle" class="title">Electrodos en el cuero cabelludo</text>
+  <text x="185.0" y="88" text-anchor="middle" class="h">Electrodos en el cuero cabelludo</text>
   <ellipse cx="185" cy="250" rx="120" ry="140" fill="var(--skin)" stroke="var(--muted)"/>
   <path d="M170 112 L185 96 L200 112" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <text x="185" y="128" text-anchor="middle" class="small muted">Nariz</text>
@@ -37,7 +37,7 @@
   <text x="185" y="412" text-anchor="middle" class="small muted">Gel o pasta conductora en cada electrodo</text>
   <path d="M290 270 C320 270 330 240 360 240" fill="none" stroke="var(--accent)" stroke-width="2"/>
   <rect x="366" y="60" width="414" height="230" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="573.0" y="90" text-anchor="middle" class="title">Señales amplificadas</text>
+  <text x="573.0" y="88" text-anchor="middle" class="title">Señales amplificadas</text>
   <polyline points="470,120.0 474,127.6 478,124.7 482,115.3 486,112.4 490,120.0 494,127.6 498,124.7 502,115.3 506,112.4 510,120.0 514,127.6 518,124.7 522,115.3 526,112.4 530,120.0 534,127.6 538,124.7 542,115.3 546,112.4 550,120.0 554,127.6 558,124.7 562,115.3 566,112.4 570,120.0 574,127.6 578,124.7 582,115.3 586,112.4 590,120.0 594,127.6 598,124.7 602,115.3 606,112.4 610,120.0 614,127.6 618,124.7 622,115.3 626,112.4 630,120.0 634,127.6 638,124.7 642,115.3 646,112.4 650,120.0 654,127.6 658,124.7 662,115.3 666,112.4 670,120.0 674,127.6 678,124.7 682,115.3 686,112.4 690,120.0 694,127.6 698,124.7 702,115.3 706,112.4 710,120.0 714,127.6 718,124.7 722,115.3 726,112.4 730,120.0 734,127.6 738,124.7 742,115.3 746,112.4 750,120.0 754,127.6 758,124.7" fill="none" stroke="var(--pur)" stroke-width="2"/>
   <text x="384" y="125" class="small">Ritmo de vigilia</text>
   <polyline points="470,172.0 474,180.7 478,186.6 482,187.8 486,184.1 490,176.5 494,167.5 498,159.9 502,156.2 506,157.4 510,163.3 514,172.0 518,180.7 522,186.6 526,187.8 530,184.1 534,176.5 538,167.5 542,159.9 546,156.2 550,157.4 554,163.3 558,172.0 562,180.7 566,186.6 570,187.8 574,184.1 578,176.5 582,167.5 586,159.9 590,156.2 594,157.4 598,163.3 602,172.0 606,180.7 610,186.6 614,187.8 618,184.1 622,176.5 626,167.5 630,159.9 634,156.2 638,157.4 642,163.3 646,172.0 650,180.7 654,186.6 658,187.8 662,184.1 666,176.5 670,167.5 674,159.9 678,156.2 682,157.4 686,163.3 690,172.0 694,180.7 698,186.6 702,187.8 706,184.1 710,176.5 714,167.5 718,159.9 722,156.2 726,157.4 730,163.3 734,172.0 738,180.7 742,186.6 746,187.8 750,184.1 754,176.5 758,167.5" fill="none" stroke="var(--pur)" stroke-width="2"/>
@@ -46,7 +46,7 @@
   <text x="384" y="229" class="small">Actividad rápida</text>
   <text x="573" y="276" text-anchor="middle" class="small muted">Cada línea refleja un grupo de electrodos</text>
   <rect x="366" y="306" width="414" height="134" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="573.0" y="336" text-anchor="middle" class="title">Para qué sirve</text>
+  <text x="573.0" y="334" text-anchor="middle" class="title">Para qué sirve</text>
   <text x="384" y="358" class="lab">• Epilepsia y convulsiones</text>
   <text x="384" y="382" class="lab">• Alteraciones de la conciencia</text>
   <text x="384" y="406" class="lab">• Trastornos del sueño</text>

@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Duelo: un proceso que oscila</text>
   <rect x="20" y="60" width="480" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="260.0" y="90" text-anchor="middle" class="title">Ir y venir entre dos tareas</text>
+  <text x="260.0" y="88" text-anchor="middle" class="title">Ir y venir entre dos tareas</text>
   <rect x="40" y="104" width="200" height="70" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
   <text x="140.0" y="136.0" text-anchor="middle" class="lab b">Mirar la pérdida</text>
   <text x="140.0" y="153.0" text-anchor="middle" class="small muted">llorar, recordar, extrañar</text>
@@ -30,7 +30,7 @@
   <text x="260" y="384" text-anchor="middle" class="small">Las olas de dolor suelen espaciarse y suavizarse</text>
   <text x="260" y="404" text-anchor="middle" class="small muted">No hay etapas fijas ni un plazo correcto</text>
   <rect x="516" y="60" width="264" height="196" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="648.0" y="90" text-anchor="middle" class="title">Reacciones comunes</text>
+  <text x="648.0" y="88" text-anchor="middle" class="h">Reacciones comunes</text>
   <text x="532" y="110" class="small">• Tristeza, enojo, culpa</text>
   <text x="532" y="136" class="small">• Cambios de sueño</text>
   <text x="543" y="162" class="small">y apetito</text>

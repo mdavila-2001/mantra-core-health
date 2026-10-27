@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Dermatitis del pañal: qué la causa y cómo prevenirla</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">Factores que dañan la piel</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Factores que dañan la piel</text>
   <path d="M110 170 L290 170 C300 260 260 330 200 340 C140 330 100 260 110 170 Z" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
   <ellipse cx="160" cy="220" rx="26" ry="16" fill="var(--red)" stroke="none" opacity=".35"/>
   <ellipse cx="240" cy="220" rx="26" ry="16" fill="var(--red)" stroke="none" opacity=".35"/>
@@ -33,7 +33,7 @@
   <line x1="300" y1="376" x2="250" y2="300" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
   <text x="200" y="428" text-anchor="middle" class="small muted">La barrera de la piel se debilita y se irrita</text>
   <rect x="416" y="60" width="364" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">Prevención y cuidado</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Prevención y cuidado</text>
   <text x="434" y="110" class="small">• Cambiar el pañal a menudo</text>
   <text x="434" y="136" class="small">• Limpiar con agua tibia, sin frotar</text>
   <text x="434" y="162" class="small">• Secar bien con toques</text>

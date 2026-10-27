@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Mamografía diagnóstica: estudiar un hallazgo concreto</text>
   <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="200.0" y="90" text-anchor="middle" class="title">Cómo se toma</text>
+  <text x="200.0" y="88" text-anchor="middle" class="h">Cómo se toma</text>
   <rect x="120" y="106" width="140" height="32" rx="8" fill="var(--accent)" stroke="none"/>
   <text x="190" y="127" text-anchor="middle" class="lab" style="fill:var(--on)">Tubo de rayos X</text>
   <polygon points="160,138 220,138 270,300 110,300" fill="var(--beam)" opacity=".45"/>
@@ -32,7 +32,7 @@
   <text x="200" y="400" text-anchor="middle" class="small muted">Proyecciones adicionales: con lupa</text>
   <text x="200" y="416" text-anchor="middle" class="small muted">o compresión localizada</text>
   <rect x="396" y="60" width="384" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="588.0" y="90" text-anchor="middle" class="title">Cuándo se pide</text>
+  <text x="588.0" y="88" text-anchor="middle" class="h">Cuándo se pide</text>
   <rect x="414" y="104" width="168" height="62" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
   <text x="498.0" y="132.0" text-anchor="middle" class="lab b">Detección</text>
   <text x="498.0" y="149.0" text-anchor="middle" class="small muted">mujer sin síntomas</text>

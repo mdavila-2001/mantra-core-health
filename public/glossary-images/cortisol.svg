@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Cortisol: hormona de las glándulas suprarrenales</text>
   <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="170.0" y="90" text-anchor="middle" class="title">El eje que lo regula</text>
+  <text x="170.0" y="88" text-anchor="middle" class="h">El eje que lo regula</text>
   <rect x="70" y="104" width="200" height="50" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="170.0" y="126.0" text-anchor="middle" class="lab b">Hipotálamo</text>
   <text x="170.0" y="143.0" text-anchor="middle" class="small muted">CRH</text>
@@ -37,14 +37,14 @@
   <path d="M280 300 C305 250 305 150 280 115" fill="none" stroke="var(--red)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
   <text x="170" y="424" text-anchor="middle" class="small" style="fill:var(--red)">El cortisol frena el eje (retroalimentación)</text>
   <rect x="336" y="60" width="444" height="180" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="558.0" y="90" text-anchor="middle" class="title">Varía a lo largo del día</text>
+  <text x="558.0" y="88" text-anchor="middle" class="title">Varía a lo largo del día</text>
   <line x1="370" y1="200" x2="750" y2="200" stroke="var(--line)" stroke-width="2"/>
   <path d="M370 180 C400 170 420 132 450 128 C520 132 600 170 680 190 C710 195 730 192 750 185" fill="none" stroke="var(--warn)" stroke-width="3"/>
   <text x="450" y="120" text-anchor="middle" class="small">Máximo al despertar</text>
   <text x="700" y="168" text-anchor="middle" class="small">Mínimo de noche</text>
   <text x="560" y="224" text-anchor="middle" class="small muted">Por eso importa la hora de la extracción</text>
   <rect x="336" y="256" width="444" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="558.0" y="286" text-anchor="middle" class="title">Qué ayuda a evaluar</text>
+  <text x="558.0" y="284" text-anchor="middle" class="title">Qué ayuda a evaluar</text>
   <rect x="360" y="318" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="362" y="348" width="22" height="48" rx="10" fill="var(--red)" opacity=".85"/>
   <rect x="357" y="310" width="32" height="12" rx="3" fill="var(--accent)"/>

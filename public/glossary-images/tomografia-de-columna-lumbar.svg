@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Tomografía de columna lumbar: cortes con rayos X</text>
   <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="200.0" y="90" text-anchor="middle" class="title">El tubo gira alrededor</text>
+  <text x="200.0" y="88" text-anchor="middle" class="h">El tubo gira alrededor</text>
   <circle cx="200" cy="240" r="120" fill="none" stroke="var(--line)" stroke-width="18"/>
   <path d="M200 120 A120 120 0 0 1 320 240" fill="none" stroke="var(--accent)" stroke-width="3" marker-end="url(#ar)" stroke-dasharray="6 4"/>
   <rect x="176" y="108" width="48" height="24" rx="6" fill="var(--accent)" stroke="none"/>
@@ -29,7 +29,7 @@
   <circle cx="200" cy="254" r="8" fill="var(--panel)" stroke="var(--muted)"/>
   <text x="200" y="420" text-anchor="middle" class="small muted">Corte transversal de la cintura</text>
   <rect x="396" y="60" width="384" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="588.0" y="90" text-anchor="middle" class="title">Un corte de vértebra lumbar</text>
+  <text x="588.0" y="88" text-anchor="middle" class="h">Un corte de vértebra lumbar</text>
   <ellipse cx="588" cy="160" rx="70" ry="46" fill="var(--bone)" stroke="var(--muted)"/>
   <ellipse cx="588" cy="160" rx="50" ry="32" fill="var(--accent-l)" stroke="var(--accent)" opacity=".7"/>
   <path d="M548 200 L530 270 L560 280 L575 230 M628 200 L646 270 L616 280 L601 230" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>

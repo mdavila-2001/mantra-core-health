@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Celulitis infecciosa: bacterias en las capas profundas de la piel</text>
   <rect x="20" y="60" width="440" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="240.0" y="90" text-anchor="middle" class="title">Corte de la piel</text>
+  <text x="240.0" y="88" text-anchor="middle" class="title">Corte de la piel</text>
   <rect x="40" y="130" width="400" height="36" rx="2" fill="var(--skin)" stroke="var(--muted)"/>
   <rect x="40" y="166" width="400" height="100" rx="0" fill="var(--organ)" stroke="none" opacity=".45"/>
   <rect x="40" y="266" width="400" height="124" rx="2" fill="var(--beam)" stroke="none" opacity=".45"/>
@@ -38,7 +38,7 @@
   <circle cx="160" cy="210" r="5" fill="var(--red)" stroke="none"/>
   <text x="240" y="418" text-anchor="middle" class="small muted">La infección se extiende sin borde nítido</text>
   <rect x="476" y="60" width="304" height="210" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="628.0" y="90" text-anchor="middle" class="title">Signos en la piel</text>
+  <text x="628.0" y="88" text-anchor="middle" class="h">Signos en la piel</text>
   <text x="494" y="110" class="small">• Enrojecimiento que crece</text>
   <text x="494" y="136" class="small">• Calor</text>
   <text x="494" y="162" class="small">• Hinchazón</text>

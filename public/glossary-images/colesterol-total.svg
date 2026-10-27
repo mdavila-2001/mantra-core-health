@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Colesterol total: la suma del colesterol de todas las partículas</text>
   <rect x="20" y="60" width="480" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="260.0" y="90" text-anchor="middle" class="title">Quién transporta el colesterol</text>
+  <text x="260.0" y="88" text-anchor="middle" class="title">Quién transporta el colesterol</text>
   <circle cx="100" cy="160" r="44" fill="var(--warn-l)" stroke="var(--muted)"/>
   <circle cx="120" cy="160" r="4" fill="var(--warn)"/>
   <circle cx="110" cy="177" r="4" fill="var(--warn)"/>
@@ -59,7 +59,7 @@
   <text x="260" y="392" text-anchor="middle" class="h">Colesterol total = todo junto</text>
   <text x="260" y="418" text-anchor="middle" class="small muted">No distingue la partícula que lo lleva</text>
   <rect x="516" y="60" width="264" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="648.0" y="90" text-anchor="middle" class="title">Para qué sirve</text>
+  <text x="648.0" y="88" text-anchor="middle" class="h">Para qué sirve</text>
   <rect x="560" y="110" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="562" y="140" width="22" height="48" rx="10" fill="var(--warn)" opacity=".85"/>
   <rect x="557" y="102" width="32" height="12" rx="3" fill="var(--accent)"/>

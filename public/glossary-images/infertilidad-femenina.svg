@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Infertilidad femenina: dónde puede estar la dificultad</text>
   <rect x="20" y="60" width="500" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="270.0" y="90" text-anchor="middle" class="title">Aparato reproductor femenino</text>
+  <text x="270.0" y="88" text-anchor="middle" class="title">Aparato reproductor femenino</text>
   <path d="M210 160 C210 140 310 140 310 160 C310 220 290 250 275 270 L275 320 L245 320 L245 270 C230 250 210 220 210 160 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <path d="M212 170 C170 150 140 160 110 190 M308 170 C350 150 380 160 410 190" fill="none" stroke="var(--red)" stroke-width="5"/>
   <ellipse cx="104" cy="210" rx="24" ry="16" fill="var(--pur-l)" stroke="var(--pur)"/>
@@ -35,7 +35,7 @@
   <line x1="370" y1="345" x2="290" y2="300" stroke="var(--muted)" stroke-width="1"/>
   <text x="260" y="420" text-anchor="middle" class="small muted">Cuello uterino: moco y paso de espermatozoides</text>
   <rect x="536" y="60" width="244" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="658.0" y="90" text-anchor="middle" class="title">Estudio básico</text>
+  <text x="658.0" y="88" text-anchor="middle" class="h">Estudio básico</text>
   <text x="552" y="110" class="small">• Tras 12 meses sin</text>
   <text x="563" y="134" class="small">embarazo (6 si es</text>
   <text x="563" y="158" class="small">mayor de 35 años)</text>

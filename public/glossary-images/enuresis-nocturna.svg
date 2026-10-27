@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Enuresis nocturna: por qué se moja la cama</text>
   <rect x="20" y="60" width="440" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="240.0" y="90" text-anchor="middle" class="title">Tres mecanismos que se combinan</text>
+  <text x="240.0" y="88" text-anchor="middle" class="title">Tres mecanismos que se combinan</text>
   <circle cx="170" cy="220" r="84" fill="var(--accent-l)" stroke="var(--accent)" opacity=".8"/>
   <circle cx="310" cy="220" r="84" fill="var(--pur-l)" stroke="var(--pur)" opacity=".8"/>
   <circle cx="240" cy="320" r="84" fill="var(--ok-l)" stroke="var(--ok)" opacity=".8"/>
@@ -30,7 +30,7 @@
   <text x="240" y="262" text-anchor="middle" class="lab b">Enuresis</text>
   <text x="240" y="428" text-anchor="middle" class="small muted">Influye la herencia; madura con la edad</text>
   <rect x="476" y="60" width="304" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="628.0" y="90" text-anchor="middle" class="title">Qué ayuda</text>
+  <text x="628.0" y="88" text-anchor="middle" class="h">Qué ayuda</text>
   <text x="494" y="110" class="small">• No culpar ni castigar</text>
   <text x="494" y="136" class="small">• Orinar antes de dormir</text>
   <text x="494" y="162" class="small">• Menos líquidos por la noche</text>

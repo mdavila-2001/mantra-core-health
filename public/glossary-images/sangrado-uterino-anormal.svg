@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Sangrado uterino anormal: causas según PALM-COEIN</text>
   <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="170.0" y="90" text-anchor="middle" class="title">El útero</text>
+  <text x="170.0" y="88" text-anchor="middle" class="h">El útero</text>
   <path d="M70 140 C70 110 250 110 250 140 C250 230 210 290 185 320 L185 380 L135 380 L135 320 C110 290 70 230 70 140 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <path d="M110 150 C110 140 210 140 210 150 C210 220 180 270 165 300 L155 300 C140 270 110 220 110 150 Z" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
   <ellipse cx="160" cy="190" rx="12" ry="16" fill="var(--warn)" stroke="none"/>
@@ -29,7 +29,7 @@
   <text x="160" y="250" text-anchor="middle" class="small">Endometrio</text>
   <text x="160" y="410" text-anchor="middle" class="small muted">Es un síntoma, no un diagnóstico</text>
   <rect x="336" y="60" width="214" height="290" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="443.0" y="90" text-anchor="middle" class="title">Estructurales</text>
+  <text x="443.0" y="88" text-anchor="middle" class="h">Estructurales</text>
   <circle cx="366" cy="116" r="16" fill="var(--warn)" stroke="none"/>
   <text x="366" y="121" text-anchor="middle" class="lab b on">P</text>
   <text x="392" y="121" class="lab">Pólipo</text>
@@ -44,7 +44,7 @@
   <text x="392" y="277" class="lab">Malignidad</text>
   <text x="443" y="330" text-anchor="middle" class="small muted">Se ven en la ecografía</text>
   <rect x="566" y="60" width="214" height="290" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="673.0" y="90" text-anchor="middle" class="title">No estructurales</text>
+  <text x="673.0" y="88" text-anchor="middle" class="h">No estructurales</text>
   <circle cx="596" cy="112" r="16" fill="var(--pur)" stroke="none"/>
   <text x="596" y="117" text-anchor="middle" class="lab b on">C</text>
   <text x="622" y="117" class="lab">Coagulación</text>

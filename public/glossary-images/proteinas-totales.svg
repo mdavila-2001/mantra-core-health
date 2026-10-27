@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Proteínas totales: albúmina más globulinas</text>
   <rect x="20" y="60" width="460" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="250.0" y="90" text-anchor="middle" class="title">Qué se suma</text>
+  <text x="250.0" y="88" text-anchor="middle" class="title">Qué se suma</text>
   <rect x="60" y="110" width="380" height="54" rx="8" fill="var(--tissue)" stroke="var(--line)"/>
   <rect x="60" y="110" width="220" height="54" rx="8" fill="var(--accent-l)" stroke="var(--accent)"/>
   <text x="170" y="142" text-anchor="middle" class="lab b">Albúmina</text>
@@ -35,7 +35,7 @@
   <text x="260" y="352" class="small">• Transporte y coagulación</text>
   <text x="250" y="410" text-anchor="middle" class="small muted">Cada grupo puede cambiar por separado</text>
   <rect x="496" y="60" width="284" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="638.0" y="90" text-anchor="middle" class="title">Qué ayuda a evaluar</text>
+  <text x="638.0" y="88" text-anchor="middle" class="h">Qué ayuda a evaluar</text>
   <rect x="526" y="105" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="528" y="135" width="22" height="48" rx="10" fill="var(--warn)" opacity=".85"/>
   <rect x="523" y="97" width="32" height="12" rx="3" fill="var(--accent)"/>

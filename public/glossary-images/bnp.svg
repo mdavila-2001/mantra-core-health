@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">BNP: la hormona del corazón sobrecargado</text>
   <rect x="20" y="60" width="270" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="155.0" y="90" text-anchor="middle" class="title">Dónde se produce</text>
+  <text x="155.0" y="88" text-anchor="middle" class="h">Dónde se produce</text>
   <path d="M155 315.0 C115.0 285.0 65.0 250.0 65.0 205.0 C65.0 165.0 110.0 150.0 155 185.0 C200.0 150.0 245.0 165.0 245.0 205.0 C245.0 250.0 195.0 285.0 155 315.0 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <text x="155" y="200" text-anchor="middle" class="lab b">Ventrículos</text>
   <line x1="70" y1="210" x2="40" y2="210" stroke="var(--warn)" stroke-width="3" marker-end="url(#ar)"/>
@@ -32,7 +32,7 @@
   <circle cx="95" cy="380" r="6" fill="var(--pur)"/>
   <text x="155" y="408" text-anchor="middle" class="lab" style="fill:var(--pur)">Libera BNP a la sangre</text>
   <rect x="306" y="60" width="188" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="400.0" y="90" text-anchor="middle" class="title">La muestra</text>
+  <text x="400.0" y="88" text-anchor="middle" class="h">La muestra</text>
   <rect x="386" y="120" width="26" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="388" y="150" width="22" height="48" rx="10" fill="var(--red)" opacity=".85"/>
   <rect x="383" y="112" width="32" height="12" rx="3" fill="var(--accent)"/>
@@ -44,7 +44,7 @@
   <text x="322" y="368" class="small">Existe una prueba</text>
   <text x="322" y="390" class="small">parecida: NT-proBNP.</text>
   <rect x="510" y="60" width="270" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="645.0" y="90" text-anchor="middle" class="title">Qué ayuda a evaluar</text>
+  <text x="645.0" y="88" text-anchor="middle" class="h">Qué ayuda a evaluar</text>
   <text x="528" y="120" class="lab">• Sospecha de insuficiencia</text>
   <text x="539" y="150" class="lab">cardíaca ante disnea</text>
   <text x="528" y="180" class="lab">• Gravedad y pronóstico</text>

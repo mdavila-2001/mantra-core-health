@@ -1,5 +1,6 @@
 ---
 slug: trastorno-de-panico
+image: trastorno-de-panico.svg | En el pánico, sensaciones físicas y miedo se alimentan en un círculo que escala en minutos. | Ciclo circular de cuatro recuadros: sensación física, interpretación catastrófica, miedo intenso y más síntomas, junto a las características del trastorno de pánico y sus tratamientos.
 ---
 
 ## [definition] Introducción

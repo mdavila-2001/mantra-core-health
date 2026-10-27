@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Hemorroides: cojinetes vasculares del canal anal</text>
   <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="220.0" y="90" text-anchor="middle" class="title">Corte del canal anal</text>
+  <text x="220.0" y="88" text-anchor="middle" class="title">Corte del canal anal</text>
   <path d="M120 100 L120 300 C120 340 160 380 180 420 M320 100 L320 300 C320 340 280 380 260 420" fill="none" stroke="var(--muted)" stroke-width="3"/>
   <rect x="122" y="100" width="196" height="200" rx="0" fill="var(--organ)" stroke="none" opacity=".35"/>
   <path d="M122 300 C150 340 290 340 318 300" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 4"/>
@@ -34,7 +34,7 @@
   <text x="330" y="350" class="small muted">Línea</text>
   <text x="330" y="366" class="small muted">dentada</text>
   <rect x="436" y="60" width="344" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="90" text-anchor="middle" class="title">Síntomas y cuidados</text>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Síntomas y cuidados</text>
   <text x="454" y="110" class="small">• Sangre roja brillante al defecar</text>
   <text x="454" y="136" class="small">• Picor o bulto anal</text>
   <text x="454" y="162" class="small">• Fibra y agua: heces blandas</text>

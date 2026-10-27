@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Pericarditis aguda: inflamación del saco que rodea el corazón</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">El pericardio</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">El pericardio</text>
   <path d="M210 405 C150 360 80 300 80 230 C80 160 140 125 210 165 C280 125 340 160 340 230 C340 300 270 360 210 405 Z" fill="var(--red-l)" stroke="var(--red)" stroke-width="4"/>
   <path d="M210 375 C160 335 105 285 105 230 C105 175 155 150 210 185 C265 150 315 175 315 230 C315 285 260 335 210 375 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
   <text x="210" y="270" text-anchor="middle" class="h">Corazón</text>
@@ -26,18 +26,15 @@
   <text x="320" y="136" text-anchor="middle" class="small">inflamado</text>
   <text x="210" y="428" text-anchor="middle" class="small muted">Puede acumularse líquido entre las hojas</text>
   <rect x="416" y="60" width="364" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">El dolor típico</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">El dolor típico</text>
   <text x="434" y="110" class="small">• En el pecho, punzante</text>
   <text x="434" y="136" class="small">• Empeora al acostarse</text>
   <text x="445" y="162" class="small">y al respirar hondo</text>
   <text x="434" y="188" class="small">• Mejora al sentarse e</text>
   <text x="445" y="214" class="small">inclinarse hacia delante</text>
   <text x="434" y="240" class="small">• A menudo tras un virus</text>
-  <path d="M700 150 C690 130 700 115 712 118 L716 200 L690 232" fill="none" stroke="var(--muted)" stroke-width="3"/>
-  <circle cx="708" cy="104" r="10" fill="var(--muted)" stroke="none"/>
-  <text x="712" y="252" text-anchor="middle" class="small muted">Inclinado</text>
   <rect x="416" y="296" width="174" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="503.0" y="326" text-anchor="middle" class="title">Tratamiento</text>
+  <text x="503.0" y="324" text-anchor="middle" class="h">Tratamiento</text>
   <text x="430" y="344" class="small">• Antiinflamatorios</text>
   <text x="430" y="366" class="small">• Colchicina</text>
   <text x="430" y="388" class="small">• Evitar deporte</text>

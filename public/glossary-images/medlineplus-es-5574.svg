@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Prótesis de extremidad: partes y adaptación</text>
   <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="210.0" y="90" text-anchor="middle" class="title">Prótesis por debajo de la rodilla</text>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Prótesis por debajo de la rodilla</text>
   <path d="M150 102 L230 102 L232 190 C232 220 212 236 190 236 C168 236 148 220 148 190 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M140 160 L240 160 L236 250 C230 270 150 270 144 250 Z" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2" opacity=".9"/>
   <path d="M152 172 L228 172" fill="none" stroke="var(--pur)" stroke-width="4"/>
@@ -39,13 +39,13 @@
   <text x="60" y="296" class="small">vacío, pin</text>
   <text x="60" y="312" class="small">o correas</text>
   <rect x="416" y="60" width="364" height="200" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="90" text-anchor="middle" class="title">Tipos</text>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Tipos</text>
   <text x="434" y="112" class="lab">• Transtibial y transfemoral</text>
   <text x="434" y="142" class="lab">• De brazo: estética, por cable</text>
   <text x="445" y="172" class="lab">o mioeléctrica (señal del músculo)</text>
   <text x="434" y="202" class="lab">• Deportivas y para el agua</text>
   <rect x="416" y="276" width="364" height="164" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="598.0" y="306" text-anchor="middle" class="title">El proceso</text>
+  <text x="598.0" y="304" text-anchor="middle" class="h">El proceso</text>
   <rect x="430" y="316" width="80" height="60" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
   <text x="470.0" y="343.0" text-anchor="middle" class="lab b">Muñón</text>
   <text x="470.0" y="360.0" text-anchor="middle" class="small muted">curado</text>

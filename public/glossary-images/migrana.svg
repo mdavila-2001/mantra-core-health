@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Migraña: fases de un ataque</text>
   <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="170.0" y="90" text-anchor="middle" class="title">Dolor típico</text>
+  <text x="170.0" y="88" text-anchor="middle" class="h">Dolor típico</text>
   <ellipse cx="170" cy="240" rx="90" ry="110" fill="var(--skin)" stroke="var(--muted)"/>
   <path d="M80 230 C70 200 70 260 80 270" fill="none" stroke="var(--muted)" stroke-width="2"/>
   <path d="M170 130 C230 130 262 190 260 240 C258 280 240 310 220 330 L170 330 Z" fill="var(--red)" stroke="none" stroke-width="0" opacity=".3"/>
@@ -28,7 +28,7 @@
   <text x="170" y="396" text-anchor="middle" class="small">pulsátil e intenso</text>
   <text x="170" y="420" text-anchor="middle" class="small muted">Empeora con el esfuerzo</text>
   <rect x="336" y="60" width="444" height="210" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="558.0" y="90" text-anchor="middle" class="title">Las fases</text>
+  <text x="558.0" y="88" text-anchor="middle" class="title">Las fases</text>
   <rect x="352" y="104" width="96" height="70" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
   <text x="400.0" y="136.0" text-anchor="middle" class="small b">Pródromo</text>
   <text x="400.0" y="153.0" text-anchor="middle" class="small muted">bostezos</text>
@@ -45,7 +45,7 @@
   <text x="556" y="222" text-anchor="middle" class="small">No todas las personas tienen aura</text>
   <text x="556" y="244" text-anchor="middle" class="small muted">Náuseas y molestia con luz y ruido</text>
   <rect x="336" y="286" width="214" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="443.0" y="316" text-anchor="middle" class="title">Desencadenantes</text>
+  <text x="443.0" y="314" text-anchor="middle" class="h">Desencadenantes</text>
   <text x="352" y="334" class="small">• Estrés, falta de sueño</text>
   <text x="352" y="358" class="small">• Saltarse comidas</text>
   <text x="352" y="382" class="small">• Cambios hormonales</text>

@@ -36,7 +36,7 @@
   <text x="304" y="372" class="small b">punta de la raíz</text>
   <text x="240" y="118" text-anchor="middle" class="small muted">Esmalte</text>
   <rect x="436" y="60" width="344" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="608.0" y="90" text-anchor="middle" class="title">Cómo se forma y se nota</text>
+  <text x="608.0" y="88" text-anchor="middle" class="h">Cómo se forma y se nota</text>
   <text x="454" y="112" class="small">• Caries profunda, fractura o golpe</text>
   <text x="454" y="138" class="small">• Las bacterias llegan a la pulpa</text>
   <text x="454" y="164" class="small">• Dolor intenso y pulsátil</text>

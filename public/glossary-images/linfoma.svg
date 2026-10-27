@@ -17,7 +17,7 @@
   <rect width="800" height="480" fill="var(--bg)"/>
   <text x="400" y="40" text-anchor="middle" class="title">Linfoma: cáncer de los linfocitos</text>
   <rect x="20" y="60" width="340" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="190.0" y="90" text-anchor="middle" class="title">Sistema linfático</text>
+  <text x="190.0" y="88" text-anchor="middle" class="h">Sistema linfático</text>
   <circle cx="190" cy="120" r="26" fill="var(--skin)" stroke="var(--muted)"/>
   <path d="M150 150 L230 150 L250 290 L230 300 L222 420 L196 420 L190 320 L184 420 L158 420 L150 300 L130 290 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
   <path d="M190 150 L190 300 M160 180 L120 280 M220 180 L260 280 M190 300 L170 400 M190 300 L210 400" fill="none" stroke="var(--ok)" stroke-width="1.5" opacity=".8"/>
@@ -39,7 +39,7 @@
   <text x="284" y="234" class="small">Bazo</text>
   <text x="190" y="436" text-anchor="middle" class="small muted">Ganglios hinchados sin dolor</text>
   <rect x="376" y="60" width="404" height="180" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="578.0" y="90" text-anchor="middle" class="title">Qué ocurre en el ganglio</text>
+  <text x="578.0" y="88" text-anchor="middle" class="title">Qué ocurre en el ganglio</text>
   <circle cx="470" cy="160" r="46" fill="var(--ok-l)" stroke="var(--ok)"/>
   <circle cx="454" cy="146" r="7" fill="var(--pur)" stroke="none"/>
   <circle cx="480" cy="140" r="7" fill="var(--pur)" stroke="none"/>
@@ -53,7 +53,7 @@
   <text x="540" y="172" class="small">y agranda el ganglio</text>
   <text x="578" y="224" text-anchor="middle" class="small b">Grandes tipos: Hodgkin y no Hodgkin</text>
   <rect x="376" y="256" width="404" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
-  <text x="578.0" y="286" text-anchor="middle" class="title">Síntomas para consultar</text>
+  <text x="578.0" y="284" text-anchor="middle" class="title">Síntomas para consultar</text>
   <text x="394" y="304" class="small">• Ganglio que crece y no baja</text>
   <text x="405" y="326" class="small">en semanas</text>
   <text x="394" y="348" class="small">• Fiebre sin causa</text>
