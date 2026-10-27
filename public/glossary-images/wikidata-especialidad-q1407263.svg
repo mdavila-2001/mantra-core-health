@@ -31,16 +31,16 @@
   <text x="400" y="180" text-anchor="middle" class="small" style="fill:var(--muted)">concreta de un juez o tribunal</text>
   <rect x="20" y="256" width="370" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="205.0" y="286" text-anchor="middle" class="title">Tarea pericial</text>
-  <text x="40" y="300" class="small">• Capacidad para decidir o testar</text>
-  <text x="40" y="326" class="small">• Responsabilidad penal</text>
-  <text x="40" y="352" class="small">• Incapacidad laboral o daño psíquico</text>
-  <text x="40" y="378" class="small">• Riesgo de violencia</text>
+  <text x="40" y="312" class="small">• Capacidad para decidir o testar</text>
+  <text x="40" y="338" class="small">• Responsabilidad penal</text>
+  <text x="40" y="364" class="small">• Incapacidad laboral o daño psíquico</text>
+  <text x="40" y="390" class="small">• Riesgo de violencia</text>
   <rect x="410" y="256" width="370" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="595.0" y="286" text-anchor="middle" class="title">Tarea asistencial</text>
-  <text x="430" y="300" class="small">• Atención en prisiones</text>
-  <text x="430" y="326" class="small">• Unidades psiquiátricas forenses</text>
-  <text x="430" y="352" class="small">• Tratamientos ordenados por un juez</text>
-  <text x="430" y="378" class="small">• Ética: imparcialidad y confidencialidad</text>
+  <text x="430" y="312" class="small">• Atención en prisiones</text>
+  <text x="430" y="338" class="small">• Unidades psiquiátricas forenses</text>
+  <text x="430" y="364" class="small">• Tratamientos ordenados por un juez</text>
+  <text x="430" y="390" class="small">• Ética: imparcialidad y confidencialidad</text>
 
   <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
 </svg>

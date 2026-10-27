@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Estomatología</title>
+  <desc id="d">A la izquierda, una boca abierta con los dientes, la lengua, la mucosa, una glándula salival y una pequeña llaga. A la derecha, las enfermedades de la mucosa oral que atiende la estomatología, como aftas, liquen plano, candidiasis o boca seca, la advertencia ante una llaga que no cura y su relación con enfermedades generales.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">La boca: más que dientes</text>
+  <ellipse cx="220" cy="230" rx="150" ry="120" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <ellipse cx="220" cy="230" rx="120" ry="92" fill="var(--organ)" opacity=".7"/>
+  <rect x="108.99833083806404" y="205.782954882742" width="18" height="18" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="124.52716032053527" y="177.66552182447106" width="18" height="18" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="153.22069576596138" y="156.14537024040146" width="18" height="18" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="190.71060651032263" y="144.49874812854802" width="18" height="18" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="231.28939348967734" y="144.49874812854802" width="18" height="18" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="268.7793042340386" y="156.14537024040146" width="18" height="18" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="297.4728396794647" y="177.66552182447103" width="18" height="18" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="313.001669161936" y="205.78295488274196" width="18" height="18" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+  <ellipse cx="220" cy="270" rx="60" ry="40" fill="var(--vessel)" opacity=".55"/>
+  <text x="220" y="276" text-anchor="middle" class="small" style="fill:var(--on)">Lengua</text>
+  <circle cx="110" cy="250" r="6" fill="var(--panel)" stroke="var(--warn)" stroke-width="2"/>
+  <text x="60" y="380" class="small">Mucosa</text>
+  <path d="M84 370 L120 290" fill="none" stroke="var(--muted)" stroke-width="1"/>
+  <text x="300" y="380" text-anchor="middle" class="small">Glándulas salivales</text>
+  <path d="M300 368 L340 300" fill="none" stroke="var(--muted)" stroke-width="1"/>
+  <circle cx="350" cy="290" r="10" fill="var(--nerve)"/>
+  <text x="220" y="130" text-anchor="middle" class="small">Dientes y encías</text>
+  <text x="220" y="424" text-anchor="middle" class="small muted">Llaga (afta)</text>
+  <path d="M200 412 L114 258" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Qué atiende</text>
+  <rect x="456" y="66" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="530.0" y="87.32" text-anchor="middle" class="small" style="fill:var(--ink)">Aftas recurrentes</text>
+  <rect x="612" y="66" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="686.0" y="87.32" text-anchor="middle" class="small" style="fill:var(--ink)">Liquen plano oral</text>
+  <rect x="456" y="110" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="530.0" y="131.32" text-anchor="middle" class="small" style="fill:var(--ink)">Candidiasis</text>
+  <rect x="612" y="110" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="686.0" y="131.32" text-anchor="middle" class="small" style="fill:var(--ink)">Boca seca</text>
+  <rect x="456" y="154" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="530.0" y="175.32" text-anchor="middle" class="small" style="fill:var(--ink)">Ardor bucal</text>
+  <rect x="612" y="154" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="686.0" y="175.32" text-anchor="middle" class="small" style="fill:var(--ink)">Leucoplasia</text>
+  <rect x="456" y="210" width="304" height="66" rx="10" fill="var(--warn-l)"/>
+  <text x="472" y="236" class="lab">Llaga que no cura en 2 o 3</text>
+  <text x="472" y="256" class="small">semanas: consultar (descartar cáncer)</text>
+  <text x="456" y="306" class="step">La boca refleja el cuerpo</text>
+  <text x="460" y="332" class="lab">• Anemias y carencias</text>
+  <text x="460" y="356" class="lab">• Enfermedades autoinmunes</text>
+  <text x="460" y="380" class="lab">• Efectos de medicamentos</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

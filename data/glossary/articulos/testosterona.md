@@ -1,5 +1,6 @@
 ---
 slug: testosterona
+image: testosterona.svg | La prueba total suma la testosterona unida a proteínas y la libre. | Silueta con las glándulas que producen testosterona y un recuadro con moléculas unidas a SHBG, unidas a albúmina y libres, junto a un tubo de sangre y los usos de la prueba.
 ---
 
 ## [definition] Introducción

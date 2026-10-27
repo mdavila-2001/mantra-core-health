@@ -1,5 +1,6 @@
 ---
 slug: mastopatia-fibroquistica
+image: mastopatia-fibroquistica.svg | Cambios benignos de la mama: quistes y zonas de tejido fibroso. | Mama de perfil con varios quistes llenos de líquido y bandas de fibrosis, junto a los síntomas habituales y los cambios que conviene consultar.
 ---
 
 ## [definition] Introducción

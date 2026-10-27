@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q11607623
+image: wikidata-especialidad-q11607623.svg | El médico general es el primer contacto: resuelve, sigue y deriva. | Diagrama de flujo con una persona que acude al médico general y tres salidas: resolver la mayoría de los problemas, hacer seguimiento en el tiempo y derivar al especialista.
 ---
 
 ## [definition] Introducción

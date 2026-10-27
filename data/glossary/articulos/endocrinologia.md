@@ -1,5 +1,6 @@
 ---
 slug: endocrinologia
+image: endocrinologia.svg | La endocrinología estudia las glándulas que fabrican hormonas y sus enfermedades. | Silueta humana con la hipófisis, la tiroides, las suprarrenales, el páncreas y las gónadas señaladas, junto a las enfermedades que atiende la endocrinología y sus herramientas.
 ---
 
 ## [definition] Introducción

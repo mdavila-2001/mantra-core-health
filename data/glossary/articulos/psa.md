@@ -1,5 +1,6 @@
 ---
 slug: psa
+image: psa.svg | El PSA lo fabrica la próstata y pasa en pequeña cantidad a la sangre. | Esquema de la vejiga y la próstata alrededor de la uretra, con el PSA que pasa a la sangre, y cuatro recuadros con causas que pueden elevarlo, entre ellas la hiperplasia benigna y el cáncer.
 ---
 
 ## [definition] Introducción

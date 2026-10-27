@@ -22,7 +22,7 @@
   <path d="M300 96 C340 96 360 120 350 140 L270 140 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
   <text x="400" y="120" text-anchor="end" class="small" style="fill:var(--muted)">Acromion</text>
   <path d="M180 140 L250 150 L200 360 L160 320 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
-  <text x="140" y="260" text-anchor="end" class="small" style="fill:var(--muted)">Escápula</text>
+  <text x="150" y="330" text-anchor="end" class="small" style="fill:var(--muted)">Escápula</text>
   <circle cx="290" cy="186" r="40" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
   <path d="M260 210 L276 420 H330 L326 210 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
   <text x="300" y="400" text-anchor="middle" class="small" style="fill:var(--muted)">Húmero</text>

@@ -1,5 +1,6 @@
 ---
 slug: retraso-del-desarrollo
+image: retraso-del-desarrollo.svg | El desarrollo se valora en cinco áreas: motora gruesa, fina, lenguaje, social y cognitiva. | Diagrama radial con un niño en el centro y cinco áreas del desarrollo alrededor, junto a señales de alarma y medidas de atención temprana.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: mastodinia
+image: mastodinia.svg | Dolor mamario cíclico y señales para consultar | Calendario de un ciclo con los días previos a la regla marcados como días de dolor, junto a las causas del dolor no cíclico y las señales que justifican consultar
 ---
 
 ## [definition] Introducción

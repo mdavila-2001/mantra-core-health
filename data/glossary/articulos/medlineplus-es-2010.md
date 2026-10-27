@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2010
+image: medlineplus-es-2010.svg | Conexiones del hígado trasplantado y claves del proceso | Hígado donado conectado a la vena cava, la vena porta, la arteria hepática y la vía biliar, junto a los tipos de donante, las indicaciones y los cuidados posteriores
 ---
 
 ## [definition] Introducción

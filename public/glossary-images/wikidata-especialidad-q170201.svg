@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Medicina veterinaria</title>
+  <desc id="d">A la izquierda, tres círculos superpuestos de una sola salud, animales, personas y ambiente, con las zoonosis en la intersección. A la derecha, los ámbitos de la veterinaria, animales de compañía, de producción, fauna silvestre y control de alimentos, y ejemplos de zoonosis que vigila, como rabia o brucelosis.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">Una sola salud</text>
+  <circle cx="160" cy="190" r="90" fill="var(--ok)" opacity=".35"/>
+  <circle cx="280" cy="190" r="90" fill="var(--accent)" opacity=".35"/>
+  <circle cx="220" cy="290" r="90" fill="var(--nerve)" opacity=".35"/>
+  <text x="130" y="170" text-anchor="middle" class="step">Animales</text>
+  <text x="310" y="170" text-anchor="middle" class="step">Personas</text>
+  <text x="220" y="330" text-anchor="middle" class="step">Ambiente</text>
+  <text x="220" y="236" text-anchor="middle" class="small">Zoonosis</text>
+  <text x="220" y="412" text-anchor="middle" class="small muted">La salud de unos afecta a los otros</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Qué abarca</text>
+  <rect x="456" y="66" width="304" height="46" rx="10" fill="var(--tissue)"/>
+  <text x="472" y="86" class="step">Compañía</text>
+  <text x="472" y="104" class="small muted">perros, gatos</text>
+  <rect x="456" y="122" width="304" height="46" rx="10" fill="var(--tissue)"/>
+  <text x="472" y="142" class="step">Producción</text>
+  <text x="472" y="160" class="small muted">bovinos, aves, camélidos</text>
+  <rect x="456" y="178" width="304" height="46" rx="10" fill="var(--tissue)"/>
+  <text x="472" y="198" class="step">Fauna silvestre</text>
+  <text x="472" y="216" class="small muted">conservación</text>
+  <rect x="456" y="234" width="304" height="46" rx="10" fill="var(--tissue)"/>
+  <text x="472" y="254" class="step">Alimentos</text>
+  <text x="472" y="272" class="small muted">carne, leche, huevos</text>
+  <text x="456" y="318" class="step">Zoonosis que vigila</text>
+  <rect x="456" y="332" width="148" height="32" rx="8" fill="var(--warn-l)"/>
+  <text x="530.0" y="352.32" text-anchor="middle" class="small" style="fill:var(--ink)">Rabia</text>
+  <rect x="612" y="332" width="148" height="32" rx="8" fill="var(--warn-l)"/>
+  <text x="686.0" y="352.32" text-anchor="middle" class="small" style="fill:var(--ink)">Brucelosis</text>
+  <rect x="456" y="374" width="148" height="32" rx="8" fill="var(--warn-l)"/>
+  <text x="530.0" y="394.32" text-anchor="middle" class="small" style="fill:var(--ink)">Hidatidosis</text>
+  <rect x="612" y="374" width="148" height="32" rx="8" fill="var(--warn-l)"/>
+  <text x="686.0" y="394.32" text-anchor="middle" class="small" style="fill:var(--ink)">Gripe aviar</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: hiperprolactinemia
+image: hiperprolactinemia.svg | El exceso de prolactina tiene causas diversas y altera la función sexual y reproductiva. | Hipófisis unida a cuatro recuadros de causas de prolactina alta y una lista de efectos en mujeres, en hombres y en ambos sexos.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Medicina neuromuscular</title>
+  <desc id="d">Arriba, el recorrido de la orden de movimiento en cinco pasos: neurona motora de la médula espinal, raíz y plexo, nervio periférico, unión neuromuscular y músculo, con un ejemplo de enfermedad en cada nivel, como la ELA, las neuropatías, la miastenia o las distrofias. Abajo, los síntomas típicos y las pruebas, como el electromiograma y el estudio genético.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="250" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="50" text-anchor="middle" class="title">Recorrido de la orden de movimiento</text>
+  <rect x="36" y="66" width="136" height="90" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="104" y="92" text-anchor="middle" class="step">Neurona motora</text>
+  <text x="104" y="112" text-anchor="middle" class="small">médula espinal</text>
+  <rect x="36" y="176" width="136" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="104.0" y="201.0" text-anchor="middle" class="small">ELA, AME</text>
+  <path d="M173 111 L183 111" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="184" y="66" width="136" height="90" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="252" y="92" text-anchor="middle" class="step">Raíz y plexo</text>
+  <text x="252" y="112" text-anchor="middle" class="small">salida de la médula</text>
+  <rect x="184" y="176" width="136" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="252.0" y="201.0" text-anchor="middle" class="small">Radiculopatía</text>
+  <path d="M321 111 L331 111" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="332" y="66" width="136" height="90" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="400" y="92" text-anchor="middle" class="step">Nervio</text>
+  <text x="400" y="112" text-anchor="middle" class="small">periférico</text>
+  <rect x="332" y="176" width="136" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="400.0" y="201.0" text-anchor="middle" class="small">Neuropatías</text>
+  <path d="M469 111 L479 111" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="480" y="66" width="136" height="90" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="548" y="92" text-anchor="middle" class="step">Unión</text>
+  <text x="548" y="112" text-anchor="middle" class="small">neuromuscular</text>
+  <rect x="480" y="176" width="136" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="548.0" y="201.0" text-anchor="middle" class="small">Miastenia</text>
+  <path d="M617 111 L627 111" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="628" y="66" width="136" height="90" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="696" y="92" text-anchor="middle" class="step">Músculo</text>
+  <text x="696" y="112" text-anchor="middle" class="small">esquelético</text>
+  <rect x="628" y="176" width="136" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="696.0" y="201.0" text-anchor="middle" class="small">Distrofias</text>
+  <text x="400" y="246" text-anchor="middle" class="small muted">Arriba: dónde ocurre; abajo: ejemplo de enfermedad</text>
+  <rect x="20" y="284" width="370" height="166" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205.0" y="314" text-anchor="middle" class="title">Síntomas típicos</text>
+  <text x="40" y="342" class="small">• Debilidad y cansancio muscular</text>
+  <text x="40" y="368" class="small">• Calambres y atrofia</text>
+  <text x="40" y="394" class="small">• Hormigueo o pérdida de sensibilidad</text>
+  <text x="40" y="420" class="small">• Párpados caídos, visión doble</text>
+  <rect x="410" y="284" width="370" height="166" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="595.0" y="314" text-anchor="middle" class="title">Pruebas</text>
+  <rect x="430" y="326" width="160" height="38" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="510.0" y="350.0" text-anchor="middle" class="small">Electromiograma</text>
+  <rect x="600" y="326" width="160" height="38" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="680.0" y="350.0" text-anchor="middle" class="small">Análisis (CK)</text>
+  <rect x="430" y="376" width="160" height="38" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="510.0" y="400.0" text-anchor="middle" class="small">Biopsia muscular</text>
+  <rect x="600" y="376" width="160" height="38" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="680.0" y="400.0" text-anchor="middle" class="small">Estudio genético</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: ecografia-testicular
+image: ecografia-testicular.svg | Estructuras que explora la ecografía testicular y sus motivos | Corte esquemático del escroto con el testículo, el epidídimo y el cordón con sus vasos, junto a los motivos de la prueba y el aviso de urgencia por torsión
 ---
 
 ## [definition] Introducción

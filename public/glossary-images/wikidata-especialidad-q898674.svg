@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Neonatología</title>
+  <desc id="d">A la izquierda, un recién nacido rodeado de los cuatro retos de la transición al nacer: respirar, reorganizar la circulación, mantener la temperatura y alimentarse, durante los primeros 28 días de vida. A la derecha, los problemas que atiende la neonatología y los niveles de cuidado, desde la estancia con la madre hasta la UCI neonatal.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">La transición al nacer</text>
+  <circle cx="220" cy="170" r="56" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+  <circle cx="200" cy="162" r="4" fill="var(--ink)"/>
+  <circle cx="240" cy="162" r="4" fill="var(--ink)"/>
+  <path d="M208 188 Q220 196 232 188" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <path d="M150 220 C150 260 290 260 290 220 L300 290 H140 Z" fill="var(--accent-l)" stroke="var(--line)" stroke-width="1.5"/>
+  <rect x="38" y="84" width="108" height="32" rx="8" fill="var(--accent)"/>
+  <text x="92.0" y="104.32" text-anchor="middle" class="small" style="fill:var(--on)">Respirar</text>
+  <rect x="294" y="84" width="108" height="32" rx="8" fill="var(--vessel)"/>
+  <text x="348.0" y="104.32" text-anchor="middle" class="small" style="fill:var(--on)">Circulación</text>
+  <rect x="38" y="304" width="108" height="32" rx="8" fill="var(--warn)"/>
+  <text x="92.0" y="324.32" text-anchor="middle" class="small" style="fill:var(--on)">Temperatura</text>
+  <rect x="294" y="304" width="108" height="32" rx="8" fill="var(--ok)"/>
+  <text x="348.0" y="324.32" text-anchor="middle" class="small" style="fill:var(--on)">Alimentarse</text>
+  <text x="220" y="360" text-anchor="middle" class="step">Primeros 28 días de vida</text>
+  <text x="220" y="382" text-anchor="middle" class="small muted">el periodo más frágil</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Qué atiende</text>
+  <rect x="456" y="66" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="530.0" y="87.32" text-anchor="middle" class="small" style="fill:var(--ink)">Prematuridad</text>
+  <rect x="612" y="66" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="686.0" y="87.32" text-anchor="middle" class="small" style="fill:var(--ink)">Ictericia</text>
+  <rect x="456" y="110" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="530.0" y="131.32" text-anchor="middle" class="small" style="fill:var(--ink)">Dificultad al respirar</text>
+  <rect x="612" y="110" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="686.0" y="131.32" text-anchor="middle" class="small" style="fill:var(--ink)">Infección</text>
+  <rect x="456" y="154" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="530.0" y="175.32" text-anchor="middle" class="small" style="fill:var(--ink)">Bajo peso</text>
+  <rect x="612" y="154" width="148" height="34" rx="8" fill="var(--accent-l)"/>
+  <text x="686.0" y="175.32" text-anchor="middle" class="small" style="fill:var(--ink)">Malformaciones</text>
+  <text x="456" y="226" class="step">Niveles de cuidado</text>
+  <rect x="456" y="242" width="304" height="36" rx="8" fill="var(--ok)" opacity=".85"/>
+  <text x="608" y="265" text-anchor="middle" class="lab" style="fill:var(--on)">Con la madre</text>
+  <rect x="456" y="288" width="304" height="36" rx="8" fill="var(--nerve)" opacity=".85"/>
+  <text x="608" y="311" text-anchor="middle" class="lab" style="fill:var(--on)">Cuidados intermedios</text>
+  <rect x="456" y="334" width="304" height="36" rx="8" fill="var(--warn)" opacity=".85"/>
+  <text x="608" y="357" text-anchor="middle" class="lab" style="fill:var(--on)">UCI neonatal</text>
+  <text x="608" y="400" text-anchor="middle" class="small muted">Piel con piel y lactancia</text>
+  <text x="608" y="418" text-anchor="middle" class="small muted">siempre que sea posible</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

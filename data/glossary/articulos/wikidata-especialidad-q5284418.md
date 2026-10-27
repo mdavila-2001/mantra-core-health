@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q5284418
+image: wikidata-especialidad-q5284418.svg | La obstetricia acompaña el embarazo, el parto y el puerperio. | Línea de tiempo con los tres trimestres del embarazo, el parto y el puerperio, con el útero y el feto creciendo, junto a los controles prenatales y los signos de urgencia.
 ---
 
 ## [definition] Introducción

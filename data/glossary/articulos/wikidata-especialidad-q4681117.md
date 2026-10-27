@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q4681117
+image: wikidata-especialidad-q4681117.svg | La psiquiatría de la adicción atiende a la vez la adicción y otros trastornos mentales. | Dos círculos superpuestos de adicción y otro trastorno mental que conducen a un tratamiento integrado, junto a los pasos de evaluación, abstinencia, psicoterapia, medicación y prevención de recaídas.
 ---
 
 ## [definition] Introducción

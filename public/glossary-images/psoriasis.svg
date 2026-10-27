@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Psoriasis: renovación acelerada de la piel</title>
+  <desc id="d">A la izquierda, la piel normal con pocas capas y una placa de psoriasis con muchas capas acumuladas, escamas y vasos dilatados, porque las células se renuevan en pocos días. A la derecha, una silueta con las zonas típicas, como codos, rodillas, cuero cabelludo y zona lumbar, y los escalones del tratamiento.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Qué pasa en la piel</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Zonas típicas y tratamiento</text>
+<text x="115" y="78" text-anchor="middle" class="step" style="fill:var(--ok)">Piel normal</text>
+<rect x="40" y="300" width="150" height="40" rx="4" fill="var(--organ-l)" stroke="var(--organ)"/>
+<text x="115" y="326" text-anchor="middle" class="small">Dermis</text>
+<rect x="44" y="282" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<rect x="44" y="264" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<rect x="44" y="246" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<text x="285" y="78" text-anchor="middle" class="step" style="fill:var(--bad)">Placa de psoriasis</text>
+<rect x="210" y="300" width="150" height="40" rx="4" fill="var(--organ-l)" stroke="var(--organ)"/>
+<text x="285" y="326" text-anchor="middle" class="small">Dermis</text>
+<rect x="214" y="282" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<rect x="214" y="264" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<rect x="214" y="246" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<rect x="214" y="228" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<rect x="214" y="210" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<rect x="214" y="192" width="142" height="16" rx="4" fill="var(--skin)" stroke="var(--line)"/>
+<rect x="214" y="174" width="142" height="16" rx="4" fill="var(--tissue)" stroke="var(--line)"/>
+<rect x="214" y="156" width="142" height="16" rx="4" fill="var(--tissue)" stroke="var(--line)"/>
+<line x1="230" y1="296" x2="230" y2="240" stroke="var(--vessel)" stroke-width="2"/>
+<line x1="258" y1="296" x2="258" y2="240" stroke="var(--vessel)" stroke-width="2"/>
+<line x1="286" y1="296" x2="286" y2="240" stroke="var(--vessel)" stroke-width="2"/>
+<line x1="314" y1="296" x2="314" y2="240" stroke="var(--vessel)" stroke-width="2"/>
+<line x1="342" y1="296" x2="342" y2="240" stroke="var(--vessel)" stroke-width="2"/>
+<text x="285" y="146" text-anchor="middle" class="small" style="fill:var(--muted)">Escamas</text>
+<text x="115" y="366" text-anchor="middle" class="small" style="fill:var(--muted)">Renovación</text>
+<text x="115" y="382" text-anchor="middle" class="small" style="fill:var(--muted)">en semanas</text>
+<text x="285" y="366" text-anchor="middle" class="small" style="fill:var(--bad)">Renovación</text>
+<text x="285" y="382" text-anchor="middle" class="small" style="fill:var(--bad)">en pocos días</text>
+<text x="200" y="414" text-anchor="middle" class="small" style="fill:var(--muted)">Enfermedad inmunitaria crónica, no contagiosa.</text>
+<circle cx="480" cy="85.4" r="15.4" fill="var(--skin)" stroke="var(--line)"/>
+<path d="M471.6 99.4 L445.0 109.2 C438.0 112.0 436.6 119.0 435.9 126.0 L429.6 189.0 L439.4 190.4 L447.8 134.4 L449.2 182.0 L447.8 280.0 L470.2 280.0 L477.2 196.0 L482.8 196.0 L489.8 280.0 L512.2 280.0 L510.8 182.0 L512.2 134.4 L520.6 190.4 L530.4 189.0 L524.1 126.0 C523.4 119.0 522.0 112.0 515.0 109.2 L488.4 99.4 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round"/>
+<circle cx="435" cy="130" r="9" fill="var(--bad)" opacity=".55"/>
+<circle cx="525" cy="130" r="9" fill="var(--bad)" opacity=".55"/>
+<circle cx="480" cy="84" r="9" fill="var(--bad)" opacity=".55"/>
+<circle cx="458" cy="238" r="9" fill="var(--bad)" opacity=".55"/>
+<circle cx="502" cy="238" r="9" fill="var(--bad)" opacity=".55"/>
+<text x="540" y="90" class="h">Zonas típicas</text>
+<text x="540" y="116" class="lab">• Codos y rodillas</text>
+<text x="540" y="138" class="lab">• Cuero cabelludo</text>
+<text x="540" y="160" class="lab">• Zona lumbar</text>
+<text x="540" y="182" class="lab">• Uñas</text>
+<text x="416" y="306" class="h">Tratamiento por escalones</text>
+<rect x="416" y="322" width="106" height="36" rx="8" fill="var(--accent)"/>
+<text x="469.0" y="344.3" text-anchor="middle" class="small" style="fill:var(--on)">Cremas</text>
+<rect x="532" y="322" width="106" height="36" rx="8" fill="var(--warn)"/>
+<text x="585.0" y="344.3" text-anchor="middle" class="small" style="fill:var(--on)">Fototerapia</text>
+<rect x="648" y="322" width="106" height="36" rx="8" fill="var(--purple)"/>
+<text x="701.0" y="344.3" text-anchor="middle" class="small" style="fill:var(--on)">Fármacos</text>
+<text x="416" y="386" class="small" style="fill:var(--muted)">Puede acompañarse de artritis psoriásica</text>
+<text x="416" y="402" class="small" style="fill:var(--muted)">y de mayor riesgo cardiovascular.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

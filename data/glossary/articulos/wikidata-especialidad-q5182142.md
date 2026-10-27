@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q5182142
+image: wikidata-especialidad-q5182142.svg | Suturas del cráneo y problemas que trata la cirugía craneofacial | Cráneo de bebé visto desde arriba con la fontanela y las suturas sagital, coronal y lambdoidea, junto a la craneosinostosis, las hendiduras faciales, los traumatismos y otros problemas que trata
 ---
 
 ## [definition] Introducción

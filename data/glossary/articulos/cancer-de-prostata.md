@@ -1,5 +1,6 @@
 ---
 slug: cancer-de-prostata
+image: cancer-de-prostata.svg | Localización de la próstata y pruebas para estudiar el cáncer | Corte lateral de la pelvis con la vejiga, la próstata, la uretra y un tumor en la zona posterior junto al recto, con la lista de pruebas diagnósticas
 ---
 
 ## [definition] Introducción

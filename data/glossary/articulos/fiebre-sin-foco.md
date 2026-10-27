@@ -1,5 +1,6 @@
 ---
 slug: fiebre-sin-foco
+image: fiebre-sin-foco.svg | Cómo se razona ante una fiebre sin causa evidente tras la exploración. | Diagrama de decisión que parte de la fiebre sin foco y se divide en dos ramas según la edad y el aspecto: bajo riesgo con vigilancia y alto riesgo con pruebas para buscar infección bacteriana.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q188449
+image: wikidata-especialidad-q188449.svg | La neurocirugía opera sobre el encéfalo, la columna, la médula y los nervios. | Esquema del encéfalo, la médula dentro de la columna y un nervio periférico, junto a las enfermedades que trata la neurocirugía y sus herramientas.
 ---
 
 ## [definition] Introducción

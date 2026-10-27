@@ -1,5 +1,6 @@
 ---
 slug: sindrome-metabolico
+image: sindrome-metabolico.svg | El síndrome metabólico reúne varios factores de riesgo cardiovascular. | Silueta con grasa abdominal y cinco etiquetas de los componentes del síndrome metabólico, junto a los riesgos asociados y las medidas que ayudan.
 ---
 
 ## [definition] Introducción

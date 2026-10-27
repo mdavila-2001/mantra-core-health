@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-4120
+image: medlineplus-es-4120.svg | Zonas del corazón que se operan y tipos de cirugía | Corazón visto de frente con la aorta, un injerto de bypass, una válvula y el sistema del ritmo señalados, junto a la lista de cirugías cardíacas y las formas de acceso
 ---
 
 ## [definition] Introducción

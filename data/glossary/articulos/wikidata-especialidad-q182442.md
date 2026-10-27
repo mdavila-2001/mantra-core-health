@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q182442
+image: wikidata-especialidad-q182442.svg | Escalera reconstructiva y vertientes de la cirugía plástica | Cinco peldaños de técnicas reconstructivas, del cierre directo a la microcirugía, junto a las dos vertientes de la especialidad: reconstructiva y estética
 ---
 
 ## [definition] Introducción

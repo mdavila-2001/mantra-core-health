@@ -46,10 +46,10 @@
   <text x="645" y="200" text-anchor="middle" class="small">Flujo verdoso y espumoso</text>
   <rect x="20" y="256" width="370" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="205.0" y="286" text-anchor="middle" class="title">Síntomas comunes</text>
-  <text x="40" y="300" class="small">• Cambio en el flujo vaginal</text>
-  <text x="40" y="326" class="small">• Picor, ardor o irritación</text>
-  <text x="40" y="352" class="small">• Molestias al orinar</text>
-  <text x="40" y="378" class="small">• Dolor en las relaciones</text>
+  <text x="40" y="312" class="small">• Cambio en el flujo vaginal</text>
+  <text x="40" y="338" class="small">• Picor, ardor o irritación</text>
+  <text x="40" y="364" class="small">• Molestias al orinar</text>
+  <text x="40" y="390" class="small">• Dolor en las relaciones</text>
   <rect x="410" y="256" width="370" height="184" rx="14" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
   <text x="595" y="286" text-anchor="middle" class="step" style="fill:var(--ok)">Qué hacer</text>
   <text x="430" y="314" class="small">• Consultar para identificar la causa</text>

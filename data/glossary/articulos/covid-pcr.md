@@ -1,5 +1,6 @@
 ---
 slug: covid-pcr
+image: covid-pcr.svg | Pasos de la prueba PCR para COVID-19 | Perfil de una cabeza con el hisopo en la nasofaringe y curvas de amplificación que cruzan antes o después un umbral según la cantidad de virus, o no lo cruzan si no se detecta
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: dislipidemia
+image: dislipidemia.svg | Partículas de grasa en la sangre y la placa que el exceso de LDL forma en las arterias. | Vaso sanguíneo con partículas de LDL, HDL y triglicéridos, y una arteria estrechada por una placa de grasa, junto a factores de riesgo y la detección con un análisis de sangre.
 ---
 
 ## [definition] Introducción

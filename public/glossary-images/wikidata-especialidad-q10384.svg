@@ -34,7 +34,7 @@
   <text x="200" y="254" text-anchor="middle" class="step">mayor</text>
   <text x="250" y="100" class="small muted">enfermedades,</text>
   <text x="250" y="116" class="small muted">fármacos</text>
-  <text x="200" y="424" text-anchor="middle" class="small muted">Busca conservar la autonomía</text>
+  <text x="200" y="432" text-anchor="middle" class="small muted">Busca conservar la autonomía</text>
   <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="598.0" y="50" text-anchor="middle" class="title">Síndromes geriátricos</text>
   <rect x="436" y="66" width="158" height="34" rx="8" fill="var(--warn-l)"/>
@@ -54,8 +54,8 @@
   <rect x="602" y="198" width="158" height="34" rx="8" fill="var(--warn-l)"/>
   <text x="681.0" y="219.32" text-anchor="middle" class="small" style="fill:var(--ink)">Inmovilidad</text>
   <text x="436" y="268" class="step">Cómo trabaja</text>
-  <text x="440" y="294" class="lab">• Equipo con enfermería, fisioterapia</text>
-  <text x="440" y="318" class="lab">• y trabajo social</text>
+  <text x="440" y="294" class="lab">• Equipo con enfermería y fisioterapia</text>
+  <text x="440" y="318" class="lab">• Trabajo social y familia</text>
   <text x="440" y="342" class="lab">• Revisa y simplifica medicamentos</text>
   <text x="440" y="366" class="lab">• Planifica según lo que la persona valora</text>
   <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>

@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q3673891
+image: wikidata-especialidad-q3673891.svg | La estomatología atiende la mucosa, las glándulas salivales y los huesos de la boca. | Boca abierta con dientes, lengua, mucosa, glándula salival y una llaga, junto a las enfermedades orales que atiende la estomatología y el aviso sobre llagas que no curan.
 ---
 
 ## [definition] Introducción

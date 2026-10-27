@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q16683088
+image: wikidata-especialidad-q16683088.svg | La oncourología trata los tumores del aparato urinario y de los genitales masculinos. | Aparato urinario con riñones, uréteres y vejiga, junto a la próstata y un testículo, y la lista de cánceres que atiende la oncourología, los signos para consultar y sus tratamientos.
 ---
 
 ## [definition] Introducción

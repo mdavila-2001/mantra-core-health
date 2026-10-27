@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q3259956
+image: wikidata-especialidad-q3259956.svg | La atención primaria es la base del sistema de salud y el primer contacto. | Pirámide con los niveles primario, secundario y terciario de atención, con la atención primaria en la base, y tarjetas con sus atributos: primer contacto, longitudinalidad, integralidad y coordinación.
 ---
 
 ## [definition] Introducción

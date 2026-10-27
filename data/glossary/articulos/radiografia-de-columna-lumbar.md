@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-columna-lumbar
+image: radiografia-de-columna-lumbar.svg | La radiografía lumbar muestra las vértebras L1 a L5 y el sacro. | Esquema del tubo de rayos X, el paciente y el detector en una proyección lateral, y una imagen de las cinco vértebras lumbares y el sacro con lo que la prueba permite ver.
 ---
 
 ## [definition] Introducción
