@@ -60,13 +60,13 @@ for (const vista of VISTAS) {
 
     const pestanas = page.getByRole('tab');
     await expect(pestanas.filter({ hasText: 'Resumen' })).toBeVisible({ timeout: 30_000 });
-    await expect(pestanas.filter({ hasText: 'Registros' })).toBeVisible();
+    await expect(pestanas.filter({ hasText: /Registros|Anotar gastos, equipos y deudas/ })).toBeVisible();
 
     /* ---- Resumen: tableros, subpestañas y ninguna tabla de carga ------ */
     await expect(page.getByTestId('contabilidad-numeros')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('heading', { name: '¿Cuánto hizo?' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Pendientes' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Pendientes' }).click();
+    await expect(page.getByRole('tab', { name: 'Por cobrar y por pagar' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Por cobrar y por pagar' }).click();
     await expect(page.getByRole('heading', { name: 'Lo que está pendiente' })).toBeVisible();
     await page.getByRole('tab', { name: 'Patrimonio' }).click();
     await expect(page.getByRole('heading', { name: 'Lo que tiene y lo que debe' })).toBeVisible();
@@ -76,7 +76,7 @@ for (const vista of VISTAS) {
     await foto(page, vista, `resumen-${vista.nombre}.png`);
 
     /* ---- Registros: tablas, ningún tablero ---------------------------- */
-    await page.getByRole('tab', { name: 'Registros', exact: true }).click();
+    await page.getByRole('tab', { name: /^(Registros|Anotar gastos, equipos y deudas)$/ }).click();
     const registros = page.getByTestId('contabilidad-registros');
     await expect(registros).toBeVisible({ timeout: 30_000 });
     await expect(registros.getByTestId('tabla-EXPENSE')).toContainText('Alquiler de septiembre', {

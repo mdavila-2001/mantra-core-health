@@ -64,7 +64,7 @@ for (const [nombre, ancho, alto, tema] of [
     await pg.screenshot({ path: `${OUT}/${nombre}-conta-ingresos.png`, fullPage: true });
     console.log(nombre, 'pagos confirmados en Ingresos y gastos:', await pg.getByText('Pagos recibidos y confirmados').count());
 
-    await pg.getByRole('tab', { name: 'Flujo de dinero' }).click();
+    await pg.getByRole('tab', { name: 'Caja y banco' }).click();
     await pg.getByTestId('flujo-cobros').waitFor({ timeout: 30000 });
     await sinCarga(pg);
     console.log(nombre, 'botón viejo:', await pg.getByText('Ver movimientos de caja y banco').count(), 'desborde:', await desborde());
@@ -108,8 +108,8 @@ for (const [nombre, ancho, alto, tema] of [
 
   if (SOLO === 'todo' || SOLO === 'conta' || SOLO === 'registros') {
     await pg.goto(`${B}/administration/accounting`);
-    await pg.getByRole('tab', { name: 'Registros' }).first().waitFor({ timeout: 60000 });
-    await pg.getByRole('tab', { name: 'Registros' }).first().click();
+    await pg.getByRole('tab', { name: /^(Registros|Anotar gastos, equipos y deudas)$/ }).first().waitFor({ timeout: 60000 });
+    await pg.getByRole('tab', { name: /^(Registros|Anotar gastos, equipos y deudas)$/ }).first().click();
     await pg.getByTestId('contabilidad-registros').waitFor({ timeout: 30000 });
     await sinCarga(pg);
     console.log(nombre, 'registros desborde:', await desborde());

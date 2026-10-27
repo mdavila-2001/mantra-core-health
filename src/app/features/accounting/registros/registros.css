@@ -20,6 +20,34 @@
 
 /* Tres tarjetas del mismo ancho mientras entren; en el teléfono, una debajo
    de la otra. */
+/* En 390 px la llave del período quedaba tan angosta que «Este mes» salía
+   con puntos suspensivos: se le reserva el ancho de sus dos rótulos. */
+.numeros__cabecera app-segmented-control {
+  min-inline-size: 13rem;
+}
+
+/* Los atajos: una fila de botones con ícono y texto bajo las tres cifras. */
+.atajos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  margin-block-start: var(--sp-5);
+}
+
+.atajos__titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.atajos__botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
 .numeros__fila {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
