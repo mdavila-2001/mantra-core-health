@@ -309,10 +309,12 @@
 }
 
 /* Que la consulta esté ocurriendo es el único punto de atención de la
-   pantalla, y por eso es lo único que se tiñe: bloque tonal en la gama de marca
-   con una franja, sin recuadro. El ámbar queda reservado a la acción principal. */
+   pantalla, y por eso es lo único que se tiñe: bloque tonal con una franja, sin
+   recuadro. Va en la gama aguamarina/menta, que es la que la línea gráfica da a
+   los estados activos; en petróleo-50 sumaba azul (27/10/2026). El ámbar queda
+   reservado a la acción principal. */
 .ahora--en-curso {
-  background: var(--st-primary-bg);
+  background: var(--st-secondary-bg);
   border-color: transparent;
 }
 
@@ -322,8 +324,8 @@
   margin: 0;
   padding: var(--sp-1) var(--sp-3);
   border-radius: var(--r-full);
-  background: var(--st-primary-bg);
-  color: var(--st-primary-fg);
+  background: var(--st-secondary-bg);
+  color: var(--st-secondary-fg);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   font-weight: 600;

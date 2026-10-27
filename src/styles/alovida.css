@@ -197,10 +197,11 @@
   /* CORRECCIÓN DE CONTRASTE (sync-alovida.mjs). La bóveda trae aguamarina al
      45 %: 1,48:1 sobre blanco, lejos del 3:1 de un indicador de foco (WCAG
      1.4.11). #33706C —el aqua-700 de v1.0— es sólido y da 5,71 sobre blanco
-     y 5,16 sobre marfil. Sobre el petróleo del nav no se vería (1,41), así
-     que ahí el anillo es menta: ver --anillo-foco-nav y .app-side-nav. */
+     y 5,16 sobre marfil. En claro el nav también es marfil (27/10/2026), así
+     que usa el mismo anillo; en oscuro el nav es petróleo y ahí el anillo es
+     menta: ver --anillo-foco-nav en el bloque oscuro y .app-side-nav. */
   --anillo-foco:  #33706C;
-  --anillo-foco-nav: #9FD8D0;
+  --anillo-foco-nav: #33706C;
 
   /* Estados: fondo tintado claro + tinta oscura del mismo tono */
   --ok-bg:        #DFEDE9;  --ok-tinta:     #27725C;
@@ -570,8 +571,8 @@ app-shell-layout { display: block; }
    tokens `--nav-*`). En oscuro, encima va un velo petróleo que garantiza el
    contraste del texto blanco sobre las zonas claras de la textura. */
 .app-side-nav {
-  /* El anillo de foco del resto de la página es oscuro y sobre el petróleo
-     desaparece; en el nav se usa la menta (5,05:1 sobre #0B557E). */
+  /* En oscuro el nav es petróleo y el anillo general ahí desaparece: el nav
+     usa su propio token (menta en oscuro, aqua-700 en claro sobre marfil). */
   --anillo-foco: var(--anillo-foco-nav);
   position: fixed; top: 0; left: 0; bottom: 56px; width: var(--w-nav); z-index: 30;
   overflow: hidden auto;
@@ -2092,6 +2093,7 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   --nav-halo-0:   rgba(86, 150, 190, 0);
 
   /* En oscuro la barra sigue siendo petróleo, con la tinta blanca de siempre. */
+  --anillo-foco-nav:     #9FD8D0;
   --nav-carril:          #041219;
   --nav-borde:           transparent;
   --nav-tinta:           #FFFFFF;

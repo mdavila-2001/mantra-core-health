@@ -267,7 +267,7 @@
 .app-side-nav__emergencia {
   padding: 0 var(--e3) var(--e3);
   margin-bottom: var(--e2);
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  border-bottom: 1px solid var(--nav-filete-suave);
 }
 
 .app-shell.is-nav-recogido .app-side-nav__emergencia {
