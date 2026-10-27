@@ -54,6 +54,19 @@ describe('PanicButton', () => {
     expect(html.querySelector('[data-testid="emergencia-sisme-santa-cruz"]')?.getAttribute('href')).toBe('tel:160');
   });
 
+  it('compacto queda en el ícono, sin perder el nombre ni el comportamiento', () => {
+    const { fixture, html } = montar(null);
+    fixture.componentRef.setInput('compacto', true);
+    fixture.detectChanges();
+    const boton = html.querySelector<HTMLButtonElement>('[data-testid="boton-emergencia"]')!;
+    expect(boton.textContent?.trim()).toBe('');
+    expect(boton.querySelector('svg')).not.toBeNull();
+    expect(boton.getAttribute('aria-label')).toBe('Emergencia: ver los números de ambulancia');
+    boton.click();
+    fixture.detectChanges();
+    expect(html.querySelector('[data-testid="dialogo-emergencia"]')?.hasAttribute('open')).toBe(true);
+  });
+
   it('cerrar deja el diálogo cerrado', () => {
     const { fixture, html } = montar(null);
     html.querySelector<HTMLButtonElement>('[data-testid="boton-emergencia"]')!.click();

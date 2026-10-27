@@ -1,0 +1,69 @@
+# Reporte — Cabecera fusionada y rediseñada
+
+- Fecha: 2026-10-27 · Rama: `claude/serene-ptolemy-l17o2g` (desde `dev`)
+- Pedido del propietario, sobre una captura de la cabecera del paciente:
+  1. Fusionar: Tutoriales → Ajustes · Mis facturas → Mis gastos · Promociones → Carrito.
+     Emergencia, tachada, sale de la cabecera.
+  2. Mejorar la cabecera de forma notoria. Los botones de demo («Datos de prueba» /
+     «Ver componentes») tapaban la portada del panel.
+
+## Qué cambió
+
+| Antes | Ahora |
+|---|---|
+| Emergencia en la cabecera | Encabeza el menú lateral, antes de cualquier destino. Con la barra recogida queda el ícono de teléfono (el nombre accesible sigue diciendo «Emergencia»). |
+| Tutoriales en la cabecera | Pestaña «Tutoriales» en Ajustes, con el enlace al centro de tutoriales. |
+| Mis facturas + Mis gastos (paciente) | Un único «Mis gastos» (nombre accesible «Mis gastos y facturas»); la pantalla ofrece «Ver mis facturas». Las cuentas que no son paciente conservan «Mis facturas» en la cabecera: no tienen «Mis gastos». |
+| Promociones + Carrito | Un único «Carrito»; «Mi carrito» ofrece «Ver promociones». |
+| Nueve rótulos sueltos de anchos distintos y la Red social con otro dibujo | Los destinos en **una sola barra** (≥ 1280 px, rediseño del paciente y del médico), con la pantalla actual destacada (`routerLinkActive` + `aria-current="page"`). Campana, tema y cuenta van aparte, después de un filete. |
+| Aviso de demo arriba a la derecha, sobre el contenido | En escritorio, abajo a la izquierda, dentro del ancho del menú lateral. |
+
+El tutorial de bienvenida se actualizó: el paso de Emergencia apunta a `nav-emergencia`,
+el de ayuda a `header-ajustes`.
+
+## Completado
+
+| Qué | Comando | Resultado |
+|---|---|---|
+| Typecheck | `yarn typecheck` | EXIT 0 |
+| Lint de lo tocado | `npx eslint <archivos tocados>` | EXIT 0 |
+| Pruebas dirigidas | `ng test --include` shell-layout, settings, spending, cart-page, panic-button, tutorials | 10 archivos, 190 pruebas, todas en verde |
+| Prueba visual | Playwright contra `ng serve --configuration demo`, sesión de paciente | Capturas en `evidencia/`; consola sin errores |
+
+Pruebas: las que fijaban Tutoriales, Promociones y «Mis facturas» del paciente en la
+cabecera se reescribieron al contrato nuevo (pedido explícito, no se debilitó nada), y se
+agregaron pruebas para Emergencia en el menú, el modo compacto del botón, la pestaña
+Tutoriales, «Ver mis facturas» y «Ver promociones».
+
+## A medias
+
+ninguna
+
+## Pendiente
+
+| Qué | Estado | Qué lo destraba |
+|---|---|---|
+| Revisión independiente (`NO_SELF_APPROVAL`) | TODO | Revisión humana del PR |
+| Llevar el cambio a `mockup` | TODO | Merge en `dev` y la propagación de siempre |
+
+## Evidencia
+
+`evidencia/`: panel en escritorio oscuro y claro, Ajustes (pestaña Tutoriales), Mis gastos
+(«Ver mis facturas»), carrito («Ver promociones»), barra recogida (Emergencia como ícono),
+tablet y teléfono.
+
+## No cubierto
+
+- No se corrió la suite completa (`yarn test`, unas 5000 pruebas) ni Playwright `yarn pw`.
+- Cuentas de médico y de administración: no se capturaron (sólo cubiertas por pruebas unitarias).
+- Tutorial de bienvenida: no se recorrió de punta a punta en navegador.
+
+## Riesgos y decisiones
+
+- **Emergencia en el teléfono:** el menú lateral es un cajón, así que en el teléfono ahora son
+  dos toques (abrir el menú y tocar Emergencia), no uno. Si en el teléfono tiene que seguir a un
+  toque, se puede dejar ahí sólo el ícono. Lo decide el propietario.
+- **Aviso de demo en el teléfono:** no se movió. Sigue tapando el final del texto de la portada
+  (pasaba igual antes de este cambio).
+- Ya pasaba antes, fuera de alcance: en `/my-account/spending` el menú lateral marca «Mi perfil»
+  como activo, porque compara por prefijo de `/my-account`.
