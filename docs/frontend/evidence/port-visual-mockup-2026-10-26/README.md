@@ -11,8 +11,9 @@ Resultado del barrido: **370 pantallas**. 146 iguales (<1 % de píxeles distinto
 diferencias leves y 80 claramente distintas. Las 101 que pasan del 3 % se revisaron a ojo:
 en la mayoría `dev` va por delante o sólo cambian los datos simulados.
 
-No se pudo entrar con `imagen@alovida.mock` en ninguna rama, ni con laboratorio, farmacia y
-visitador en `mockup`: sus pantallas quedan sin comparar.
+Las cuentas de organización (laboratorio, farmacia, imagenología, visitador) no entran al panel sino a su
+portada, así que se barrieron aparte siguiendo su menú: 75 pantallas más (puntos 11 y 12). En `dev`, la
+sesión simulada de `imagen@alovida.mock` vuelve al acceso; sus pantallas son las del laboratorio.
 
 ## Lo que `mockup` tiene y `dev` no
 
@@ -28,6 +29,8 @@ visitador en `mockup`: sus pantallas quedan sin comparar.
 | 8 | Catálogo de formularios estándar en el constructor | `/form-builder` | **No se porta.** `dev` es más nuevo: «Mis formularios» por defecto y el catálogo detrás de «Cargar formulario» (25/10) |
 | 9 | Glosario: vista Tarjetas/Tabla; tabla de créditos del atlas | `features/glossary` | **Franja 5** |
 | 10 | Insignias «Verificado» verdes; panel de la médica con tonos cálidos; textos de proveedores de identidad | varios | **Franja 5**: textos del ingreso con proveedor. Las insignias y el panel de `dev` son más nuevos (separan «Verificada contra» de «Fuente de revisión»; tonos del carril F) |
+| 11 | Recepción de muestras: «Sonido de alarma» y cartel de orden nueva; «Pidió …» bajo cada estudio | `features/lab-reception` | **Franja 6**. «Pidió …» sólo aparece cuando la API mande `requesterDisplayName` en la bandeja del laboratorio (P-LAB-SOLICITANTE, hoy no lo manda) |
+| 12 | «Horarios y equipos» del laboratorio e imagenología | `/administration/center-schedule` | **No se porta: necesita backend.** Usa `GET/PUT/PATCH /diagnostic-units/me/schedule`, que la API no tiene |
 
 Lo que **no** se porta: el backend simulado (`core/mock`) y lo que en `mockup` manda datos nuevos
 a la API (p. ej. «dónde estudió cada especialidad» en el alta del médico), que necesita backend.
@@ -53,3 +56,7 @@ Cada imagen: **izquierda `mockup` · centro `dev` antes · derecha esta rama**.
 
 - `franja5_glossary_tabla.jpg` — glosario con el selector Tarjetas/Tabla en la vista Tabla.
 - `franja5_atlas_creditos.jpg` — créditos del atlas anatómico en tabla (fuente, licencia, cita, DOI).
+
+## Franja 6 — evidencia
+
+- `franja6_laboratory_reception.jpg` — recepción de muestras con «Sonido de alarma» (izquierda `mockup` · centro `dev` antes · derecha esta rama).
