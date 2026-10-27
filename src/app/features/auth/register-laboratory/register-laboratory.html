@@ -15,7 +15,8 @@
   claim="Sume su laboratorio a la red"
   tagline="Reciba las órdenes médicas de toda la red y factúrelas desde un solo lugar."
   contentWidth="full"
-  [plainSurface]="true"
+  [plainSurface]="!registered()"
+  [scene]="registered() ? 'stage' : 'split'"
 >
   <div class="registro-conjunto" [class.registro-conjunto--solo]="registered()">
     <div class="registro">
@@ -30,11 +31,10 @@
           >
             ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con el correo del representante legal y la contraseña que eligió.</p>
           @if (verificationSent()) {
-            <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar a usar AloVida.</p>
+            <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección.</p>
           }
-          <p class="registro__subtitle">Su laboratorio está en revisión: en cuanto la plataforma lo apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya puede ingresar con su cuenta.</p>
+          <p class="registro__subtitle">Su laboratorio está en revisión. Ya puede ingresar con su cuenta.</p>
         </div>
         <button
           app-button

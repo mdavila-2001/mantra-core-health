@@ -41,6 +41,15 @@
   }
 }
 
+/* La confirmación es un aviso corto y un botón: lleva el mismo tope de
+   lectura que en las demás altas (`.registro--confirmacion` en
+   `shared-registration/registration.css`, que esta pantalla no carga). */
+.registro--confirmacion {
+  inline-size: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
 /* Acá vivía un alto fijo con el cuerpo scrolleando por dentro (`max-height:
    min(85dvh, 48rem)` desde 1024x900). Se fue por lo mismo que en el alta de
    paciente: con `contentWidth="full"` la tarjeta ocupa la ventana, y el tope la
