@@ -1,49 +1,52 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
   <title id="t">Ciclo de la educación al paciente</title>
-  <desc id="d">Cuatro fases en círculo alrededor del paciente y su familia: valorar necesidades, acordar objetivos, enseñar con método y material adecuados, y evaluar el aprendizaje con teach-back o demostración. Si el aprendizaje no se logra, el ciclo vuelve a empezar.</desc>
+  <desc id="d">Ciclo de cinco pasos alrededor del paciente y su familia: valorar necesidades, planificar objetivos, enseñar, evaluar y registrar. A la derecha, técnicas útiles y el método de enseñar y devolver para comprobar lo aprendido.</desc>
   <style>
-    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; --p:#7b3b6e; }
-    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; --p:#b77ab0; } }
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
     text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
-    .m { fill: var(--muted); }
-    .t { font-size: 20px; font-weight: 700; }
-    .h { font-size: 15px; font-weight: 700; }
-    .s { font-size: 14px; }
-    .n { font-size: 13px; }
-    .k { font-size: 24px; font-weight: 800; }
-    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
   </style>
-  <defs>
-    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
-  </defs>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
   <rect width="800" height="480" fill="var(--bg)"/>
-  <text x="400" y="34" text-anchor="middle" class="t">Ciclo de la educación al paciente</text>
-  <rect x="285" y="56" width="230" height="84" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
-  <text x="301" y="88" class="k" style="fill:var(--a)">1</text>
-  <text x="331" y="87" class="h">Valorar</text>
-  <text x="400" y="112" text-anchor="middle" class="n">Qué sabe, qué necesita,</text>
-  <text x="400" y="130" text-anchor="middle" class="n">qué barreras hay</text>
-  <rect x="555" y="198" width="230" height="84" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
-  <text x="571" y="230" class="k" style="fill:var(--b)">2</text>
-  <text x="601" y="229" class="h">Acordar objetivos</text>
-  <text x="670" y="254" text-anchor="middle" class="n">Pocos, concretos y</text>
-  <text x="670" y="272" text-anchor="middle" class="n">propios del paciente</text>
-  <rect x="285" y="340" width="230" height="84" rx="12" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
-  <text x="301" y="372" class="k" style="fill:var(--c)">3</text>
-  <text x="331" y="371" class="h">Enseñar</text>
-  <text x="400" y="396" text-anchor="middle" class="n">Método y material</text>
-  <text x="400" y="414" text-anchor="middle" class="n">adecuados a la persona</text>
-  <rect x="15" y="198" width="230" height="84" rx="12" fill="var(--d-l)" stroke="var(--d)" stroke-width="2"/>
-  <text x="31" y="230" class="k" style="fill:var(--d)">4</text>
-  <text x="61" y="229" class="h">Evaluar</text>
-  <text x="130" y="254" text-anchor="middle" class="n">Con «teach-back» o</text>
-  <text x="130" y="272" text-anchor="middle" class="n">demostración práctica</text>
-  <circle cx="400" cy="240" r="64" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
-  <text x="400" y="230" text-anchor="middle" class="h">Paciente</text><text x="400" y="250" text-anchor="middle" class="h">y familia</text><text x="400" y="270" text-anchor="middle" class="n m">al centro</text>
-  <path d="M517 98 Q670 98 670 194" class="ln" marker-end="url(#ar)"/>
-  <path d="M670 284 Q670 382 517 382" class="ln" marker-end="url(#ar)"/>
-  <path d="M283 382 Q130 382 130 288" class="ln" marker-end="url(#ar)"/>
-  <path d="M130 194 Q130 98 283 98" class="ln" marker-end="url(#ar)"/>
-  <text x="400" y="446" text-anchor="middle" class="n">Si la evaluación muestra que no aprendió, se vuelve a valorar y a enseñar de otro modo.</text>
-  <text x="400" y="470" text-anchor="middle" class="n m">Esquema ilustrativo. Ilustración original de AloVida.</text>
+<rect x="20" y="20" width="440" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="240.0" y="50" text-anchor="middle" class="title">Educación dentro del cuidado</text>
+<circle cx="240" cy="240" r="130" fill="none" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 5"/>
+<rect x="184" y="86" width="112" height="48" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="240.0" y="106.7" text-anchor="middle" class="small" style="fill:var(--on)">Valorar</text>
+<text x="240.0" y="121.7" text-anchor="middle" class="small" style="fill:var(--on)">necesidades</text>
+<rect x="308" y="176" width="112" height="48" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="364.0" y="196.7" text-anchor="middle" class="small" style="fill:var(--on)">Planificar</text>
+<text x="364.0" y="211.7" text-anchor="middle" class="small" style="fill:var(--on)">objetivos</text>
+<rect x="260" y="321" width="112" height="48" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="316.0" y="349.2" text-anchor="middle" class="small" style="fill:var(--on)">Enseñar</text>
+<rect x="108" y="321" width="112" height="48" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="164.0" y="341.7" text-anchor="middle" class="small" style="fill:var(--on)">Evaluar</text>
+<text x="164.0" y="356.7" text-anchor="middle" class="small" style="fill:var(--on)">(repetir)</text>
+<rect x="60" y="176" width="112" height="48" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="116.0" y="204.2" text-anchor="middle" class="small" style="fill:var(--on)">Registrar</text>
+<circle cx="240" cy="240" r="48" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="2"/>
+<text x="240" y="236" text-anchor="middle" class="step">Paciente</text>
+<text x="240" y="254" text-anchor="middle" class="small">y familia</text>
+<rect x="476" y="20" width="304" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="628.0" y="50" text-anchor="middle" class="title">Técnicas útiles</text>
+<text x="492" y="72" class="lab">• Lenguaje claro, sin jerga</text>
+<text x="492" y="96" class="lab">• Pocas ideas clave por vez</text>
+<text x="492" y="120" class="lab">• Demostrar y practicar</text>
+<text x="492" y="144" class="lab">• Material escrito o visual</text>
+<text x="492" y="168" class="lab">• Adaptar a cultura y edad</text>
+<rect x="492" y="212" width="272" height="110" rx="10" fill="var(--ok-l)" stroke-width="1"/>
+<text x="506" y="238" class="step">Enseñar y devolver</text>
+<text x="506" y="262" class="lab">La persona explica con sus</text>
+<text x="506" y="282" class="lab">palabras lo que entendió;</text>
+<text x="506" y="302" class="lab">así se detectan dudas.</text>
+<text x="492" y="350" class="lab">Objetivo: comprender, decidir</text>
+<text x="492" y="370" class="lab">y cuidarse con confianza.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
 </svg>

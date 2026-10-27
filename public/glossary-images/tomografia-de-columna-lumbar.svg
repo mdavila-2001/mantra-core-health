@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo funciona la tomografía de columna lumbar</title>
+  <desc id="d">A la izquierda, el anillo del tomógrafo con el tubo de rayos X que gira alrededor de la cintura del paciente. A la derecha, un corte transversal de una vértebra lumbar con el cuerpo vertebral, el disco, el canal raquídeo y las apófisis, y los usos del estudio.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Tomografía de columna lumbar: cortes con rayos X</text>
+  <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="90" text-anchor="middle" class="title">El tubo gira alrededor</text>
+  <circle cx="200" cy="240" r="120" fill="none" stroke="var(--line)" stroke-width="18"/>
+  <path d="M200 120 A120 120 0 0 1 320 240" fill="none" stroke="var(--accent)" stroke-width="3" marker-end="url(#ar)" stroke-dasharray="6 4"/>
+  <rect x="176" y="108" width="48" height="24" rx="6" fill="var(--accent)" stroke="none"/>
+  <text x="168" y="125" text-anchor="end" class="small">Tubo</text>
+  <rect x="176" y="352" width="48" height="20" rx="4" fill="var(--accent)" stroke="none"/>
+  <text x="240" y="382" class="small">Detectores</text>
+  <ellipse cx="200" cy="240" rx="80" ry="46" fill="var(--skin)" stroke="var(--muted)"/>
+  <ellipse cx="200" cy="222" rx="24" ry="18" fill="var(--bone)" stroke="var(--muted)"/>
+  <circle cx="200" cy="254" r="8" fill="var(--panel)" stroke="var(--muted)"/>
+  <text x="200" y="420" text-anchor="middle" class="small muted">Corte transversal de la cintura</text>
+  <rect x="396" y="60" width="384" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="90" text-anchor="middle" class="title">Un corte de vértebra lumbar</text>
+  <ellipse cx="588" cy="160" rx="70" ry="46" fill="var(--bone)" stroke="var(--muted)"/>
+  <ellipse cx="588" cy="160" rx="50" ry="32" fill="var(--accent-l)" stroke="var(--accent)" opacity=".7"/>
+  <path d="M548 200 L530 270 L560 280 L575 230 M628 200 L646 270 L616 280 L601 230" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
+  <circle cx="588" cy="236" r="20" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <path d="M560 280 L588 320 L616 280" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
+  <line x1="660" y1="150" x2="700" y2="130" stroke="var(--muted)" stroke-width="1"/>
+  <text x="704" y="134" class="small">Disco</text>
+  <line x1="608" y1="236" x2="700" y2="236" stroke="var(--muted)" stroke-width="1"/>
+  <text x="704" y="240" class="small">Canal</text>
+  <line x1="520" y1="170" x2="490" y2="150" stroke="var(--muted)" stroke-width="1"/>
+  <text x="486" y="146" text-anchor="end" class="small">Cuerpo</text>
+  <line x1="588" y1="316" x2="640" y2="330" stroke="var(--muted)" stroke-width="1"/>
+  <text x="644" y="334" class="small">Apófisis</text>
+  <text x="414" y="372" class="lab b">Útil para</text>
+  <text x="414" y="396" class="small">Fracturas, estenosis del canal, hernia de disco</text>
+  <text x="414" y="414" class="small">y planificar cirugía; los cortes se reconstruyen</text>
+  <text x="414" y="432" class="small">en otros planos</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

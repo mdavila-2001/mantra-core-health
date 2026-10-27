@@ -87,6 +87,28 @@ El cuidado en casa solo es apropiado cuando un profesional ya ha descartado una 
 
 No intente tratar por su cuenta un dolor de pecho nuevo, intenso o diferente del habitual, aunque crea saber la causa.
 
+## [what_to_expect] Qué esperar si acude a urgencias
+
+Al llegar a urgencias por dolor de pecho, lo habitual es que se le atienda con prioridad. En los primeros minutos suele hacerse un electrocardiograma, se toman la presión arterial, el pulso y el nivel de oxígeno, y se le hacen preguntas breves sobre el dolor. Es frecuente que se coloque una vía en una vena del brazo para sacar sangre y, si hace falta, administrar medicamentos.
+
+Si las pruebas muestran un infarto en curso, el equipo pone en marcha de inmediato el tratamiento para reabrir la arteria, que puede consistir en un cateterismo urgente o en medicamentos que disuelven el coágulo. En otros casos, se le mantiene en observación durante unas horas mientras se repiten el electrocardiograma y los análisis. Esta espera puede resultar larga e inquietante, pero forma parte de un proceso diseñado para no pasar por alto un problema que tarda en dar señales.
+
+Cuando se descarta una causa grave, se le dará el alta con una explicación del origen más probable del dolor, indicaciones sobre qué hacer y, a menudo, una cita para completar el estudio. Pida que le expliquen con claridad qué síntomas deberían hacerle volver.
+
+## [considerations] Cómo describir el dolor al profesional
+
+Una descripción precisa ayuda mucho a orientar el diagnóstico. Si puede, piense en estas preguntas antes de la consulta o mientras espera:
+
+• ¿Cuándo empezó y qué estaba haciendo en ese momento? ¿Apareció de golpe o poco a poco?
+• ¿Cómo es: opresión, peso, ardor, pinchazo, desgarro?
+• ¿Dónde se localiza exactamente y hacia dónde se extiende?
+• ¿Cuánto dura cada episodio y cuántas veces se ha repetido?
+• ¿Cambia al respirar hondo, al moverse, al presionar la zona, al comer o al acostarse?
+• ¿Mejora con el reposo?
+• ¿Qué otros síntomas lo acompañan?
+
+Lleve una lista de sus medicamentos y, si los tiene, informes o electrocardiogramas previos.
+
 ## [prevention] Reducir el riesgo de las causas graves
 
 Muchas de las causas graves de dolor de pecho, en especial las del corazón, están relacionadas con factores que se pueden modificar:

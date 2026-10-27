@@ -1,5 +1,6 @@
 ---
 slug: mamografia-diagnostica
+image: mamografia-diagnostica.svg | La mamografía diagnóstica estudia un síntoma o hallazgo concreto. | Mama comprimida entre la placa y el detector bajo un tubo de rayos X, junto a una comparación entre mamografía de detección y diagnóstica y los motivos para solicitarla.
 ---
 
 ## [definition] Introducción

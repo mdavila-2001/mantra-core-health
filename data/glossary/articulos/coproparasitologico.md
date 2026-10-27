@@ -1,5 +1,6 @@
 ---
 slug: coproparasitologico
+image: coproparasitologico.svg | La muestra de heces se concentra y se examina al microscopio en busca de parásitos. | Arriba, el recorrido de la muestra de heces: frasco con conservante, concentración en tubo, observación al microscopio e informe. Abajo, dibujos de huevos, quistes, larvas y trofozoítos, y la diferencia con el coprocultivo y la sangre oculta.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se hace una ecografía pélvica</title>
+  <desc id="d">Corte lateral de la pelvis femenina con la vejiga, el útero, el cuello uterino y un ovario, y un transductor sobre el abdomen que emite ondas de sonido. A la derecha, las vías transabdominal y transvaginal y lo que permite ver el estudio.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Ecografía pélvica: imágenes con ondas de sonido</text>
+  <rect x="20" y="60" width="440" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="240.0" y="90" text-anchor="middle" class="title">Corte lateral de la pelvis femenina</text>
+  <path d="M70 120 C60 220 70 330 120 400 L380 400 C410 330 420 220 400 120" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <ellipse cx="170" cy="300" rx="55" ry="42" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="170" y="305" text-anchor="middle" class="lab">Vejiga</text>
+  <path d="M230 330 C215 270 230 210 280 200 C330 195 345 250 320 300 C305 330 270 345 250 340 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <text x="282" y="262" text-anchor="middle" class="lab b">Útero</text>
+  <rect x="248" y="336" width="20" height="40" rx="6" fill="var(--organ)" stroke="var(--red)"/>
+  <text x="276" y="368" class="small">Cuello</text>
+  <ellipse cx="355" cy="205" rx="18" ry="12" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="355" y="180" text-anchor="middle" class="small">Ovario</text>
+  <rect x="96" y="158" width="64" height="26" rx="8" fill="var(--accent)" stroke="none"/>
+  <text x="128" y="150" text-anchor="middle" class="small">Transductor</text>
+  <path d="M108 218 Q128 230 148 218" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".7"/>
+  <path d="M93 244 Q128 264 163 244" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".7"/>
+  <path d="M78 269 Q128 299 178 269" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".7"/>
+  <text x="240" y="426" text-anchor="middle" class="small muted">El gel elimina el aire entre piel y sonda</text>
+  <rect x="476" y="60" width="304" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="628.0" y="90" text-anchor="middle" class="title">Dos vías de estudio</text>
+  <rect x="494" y="106" width="268" height="58" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="628.0" y="132.0" text-anchor="middle" class="lab b">Transabdominal</text>
+  <text x="628.0" y="149.0" text-anchor="middle" class="small muted">sobre el abdomen, vejiga llena</text>
+  <rect x="494" y="176" width="268" height="58" rx="10" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="628.0" y="202.0" text-anchor="middle" class="lab b">Transvaginal</text>
+  <text x="628.0" y="219.0" text-anchor="middle" class="small muted">sonda fina, más detalle</text>
+  <text x="494" y="266" class="h">Qué permite ver</text>
+  <text x="494" y="292" class="lab">• Útero, endometrio y ovarios</text>
+  <text x="494" y="318" class="lab">• Quistes, miomas y masas</text>
+  <text x="494" y="344" class="lab">• Vejiga; en hombres, próstata</text>
+  <text x="494" y="370" class="lab">• Embarazo inicial</text>
+  <text x="494" y="396" class="lab">• Sin radiación</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

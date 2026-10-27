@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Formación de la vitamina D y causas de su déficit</title>
+  <desc id="d">El sol actúa sobre la piel, que fabrica vitamina D; el hígado la transforma en 25-hidroxivitamina D y el riñón en la forma activa, que favorece la absorción de calcio y la mineralización ósea. Abajo, causas de déficit y consecuencias.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="250" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">De dónde sale la vitamina D activa</text>
+<circle cx="70" cy="100" r="24" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+<line x1="100.0" y1="100.0" x2="110.0" y2="100.0" stroke="var(--warn)" stroke-width="2"/>
+<line x1="91.21320343559643" y1="121.21320343559643" x2="98.2842712474619" y2="128.2842712474619" stroke="var(--warn)" stroke-width="2"/>
+<line x1="70.0" y1="130.0" x2="70.0" y2="140.0" stroke="var(--warn)" stroke-width="2"/>
+<line x1="48.78679656440357" y1="121.21320343559643" x2="41.7157287525381" y2="128.2842712474619" stroke="var(--warn)" stroke-width="2"/>
+<line x1="40.0" y1="100.0" x2="30.0" y2="100.0" stroke="var(--warn)" stroke-width="2"/>
+<line x1="48.78679656440357" y1="78.78679656440357" x2="41.71572875253809" y2="71.7157287525381" stroke="var(--warn)" stroke-width="2"/>
+<line x1="70.0" y1="70.0" x2="69.99999999999999" y2="60.0" stroke="var(--warn)" stroke-width="2"/>
+<line x1="91.21320343559643" y1="78.78679656440357" x2="98.2842712474619" y2="71.7157287525381" stroke="var(--warn)" stroke-width="2"/>
+<text x="70" y="158" text-anchor="middle" class="small">Sol (UVB)</text>
+<rect x="130" y="80" width="130" height="56" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="195.0" y="104.5" text-anchor="middle" class="lab" style="fill:var(--on)">Piel</text>
+<text x="195.0" y="120.5" text-anchor="middle" class="lab" style="fill:var(--on)">fabrica vitamina D</text>
+<line x1="261" y1="108.0" x2="293" y2="108.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="296" y="80" width="130" height="56" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="361.0" y="104.5" text-anchor="middle" class="lab" style="fill:var(--on)">Hígado</text>
+<text x="361.0" y="120.5" text-anchor="middle" class="lab" style="fill:var(--on)">25-hidroxi-vit. D</text>
+<line x1="427" y1="108.0" x2="459" y2="108.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="462" y="80" width="130" height="56" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="527.0" y="104.5" text-anchor="middle" class="lab" style="fill:var(--on)">Riñón</text>
+<text x="527.0" y="120.5" text-anchor="middle" class="lab" style="fill:var(--on)">forma activa</text>
+<text x="330" y="166" text-anchor="middle" class="small" style="fill:var(--accent)">Lo que mide el análisis</text>
+<line x1="330" y1="140" x2="330" y2="152" stroke="var(--accent)" stroke-width="1.5"/>
+<line x1="586" y1="108" x2="620" y2="108" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="626" y="64" width="134" height="40" rx="8" fill="var(--ok-l)" stroke-width="1"/>
+<text x="693.0" y="80.7" text-anchor="middle" class="small" style="fill:var(--ink)">Intestino:</text>
+<text x="693.0" y="95.7" text-anchor="middle" class="small" style="fill:var(--ink)">absorbe calcio</text>
+<rect x="626" y="116" width="134" height="40" rx="8" fill="var(--ok-l)" stroke-width="1"/>
+<text x="693.0" y="132.7" text-anchor="middle" class="small" style="fill:var(--ink)">Huesos:</text>
+<text x="693.0" y="147.7" text-anchor="middle" class="small" style="fill:var(--ink)">mineralización</text>
+<rect x="130" y="186" width="130" height="40" rx="8" fill="var(--tissue)" stroke-width="1"/>
+<text x="195" y="211" text-anchor="middle" class="small">También en la dieta</text>
+<line x1="195" y1="186" x2="195" y2="140" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<text x="400" y="256" text-anchor="middle" class="small" style="fill:var(--muted)">Pescado azul, huevo y alimentos enriquecidos aportan una parte.</text>
+<rect x="20" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="205.0" y="316" text-anchor="middle" class="title">Causas de déficit</text>
+<text x="36" y="336" class="lab">• Poca exposición al sol</text>
+<text x="36" y="358" class="lab">• Piel oscura o edad avanzada</text>
+<text x="36" y="380" class="lab">• Obesidad, malabsorción</text>
+<text x="36" y="402" class="lab">• Enfermedad renal o hepática</text>
+<rect x="406" y="286" width="374" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="593.0" y="316" text-anchor="middle" class="title">Consecuencias</text>
+<text x="422" y="336" class="lab">• Niños: raquitismo</text>
+<text x="422" y="358" class="lab">• Adultos: osteomalacia</text>
+<text x="422" y="380" class="lab">• Más riesgo de osteoporosis</text>
+<text x="422" y="402" class="lab">• Dolor óseo y debilidad muscular</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

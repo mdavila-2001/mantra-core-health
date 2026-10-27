@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Velocidad de sedimentación globular (VSG)</title>
+  <desc id="d">A la izquierda, tres tubos verticales de sangre: al inicio, con sedimentación normal y con sedimentación rápida, y una regla que mide la columna de plasma claro al cabo de una hora. A la derecha, glóbulos rojos apilados por la inflamación, las situaciones que ayuda a orientar y la advertencia de que es una prueba inespecífica.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Cómo se mide</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Qué indica</text>
+<rect x="60" y="80" width="30" height="250" rx="6" fill="var(--panel)" stroke="var(--muted)"/>
+<rect x="62" y="82" width="26" height="246" rx="5" fill="var(--vessel)"/>
+<text x="75" y="352" text-anchor="middle" class="small">Al</text>
+<text x="75" y="368" text-anchor="middle" class="small" style="fill:var(--muted)">inicio</text>
+<rect x="170" y="80" width="30" height="250" rx="6" fill="var(--panel)" stroke="var(--muted)"/>
+<rect x="172" y="122" width="26" height="206" rx="5" fill="var(--vessel)"/>
+<rect x="172" y="82" width="26" height="40" rx="5" fill="var(--yellow)" opacity=".45"/>
+<text x="185" y="352" text-anchor="middle" class="small">Sedimentación</text>
+<text x="185" y="368" text-anchor="middle" class="small" style="fill:var(--muted)">normal</text>
+<rect x="280" y="80" width="30" height="250" rx="6" fill="var(--panel)" stroke="var(--muted)"/>
+<rect x="282" y="192" width="26" height="136" rx="5" fill="var(--vessel)"/>
+<rect x="282" y="82" width="26" height="110" rx="5" fill="var(--yellow)" opacity=".45"/>
+<text x="295" y="352" text-anchor="middle" class="small">Sedimentación</text>
+<text x="295" y="368" text-anchor="middle" class="small" style="fill:var(--muted)">rápida</text>
+<text x="300" y="64" text-anchor="middle" class="small" style="fill:var(--muted)">Tubo vertical</text>
+<line x1="304" y1="82" x2="304" y2="192" stroke="var(--ink)" stroke-width="1.5"/>
+<line x1="298" y1="82" x2="310" y2="82" stroke="var(--ink)" stroke-width="1.5"/>
+<line x1="298" y1="192" x2="310" y2="192" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="316" y="130" class="small">mm</text>
+<text x="316" y="146" class="small">de</text>
+<text x="316" y="162" class="small">plasma</text>
+<text x="200" y="402" text-anchor="middle" class="lab">Se mide cuánto plasma claro queda</text>
+<text x="200" y="420" text-anchor="middle" class="lab">arriba al cabo de una hora.</text>
+<text x="416" y="76" class="h">Por qué cae más rápido</text>
+<ellipse cx="440" cy="108" rx="14" ry="9" fill="var(--vessel)" stroke="var(--panel)" stroke-width="1"/>
+<ellipse cx="446" cy="108" rx="14" ry="9" fill="var(--vessel)" stroke="var(--panel)" stroke-width="1"/>
+<ellipse cx="452" cy="108" rx="14" ry="9" fill="var(--vessel)" stroke="var(--panel)" stroke-width="1"/>
+<ellipse cx="458" cy="108" rx="14" ry="9" fill="var(--vessel)" stroke="var(--panel)" stroke-width="1"/>
+<text x="500" y="112" class="small">La inflamación aumenta proteínas</text>
+<text x="500" y="128" class="small">como el fibrinógeno: los glóbulos</text>
+<text x="500" y="144" class="small">rojos se apilan y pesan más.</text>
+<text x="416" y="186" class="h">Ayuda a orientar</text>
+<text x="416" y="212" class="lab">• Inflamación o infección</text>
+<text x="416" y="236" class="lab">• Arteritis de células gigantes</text>
+<text x="416" y="260" class="lab">• Polimialgia reumática</text>
+<text x="416" y="284" class="lab">• Seguimiento de enfermedades</text>
+<text x="427" y="308" class="lab">inflamatorias</text>
+<rect x="416" y="340" width="344" height="80" rx="10" fill="var(--warn-l)"/>
+<text x="432" y="364" class="lab">Es inespecífica: no dice la causa.</text>
+<text x="432" y="386" class="small">Influyen la edad, el sexo, la anemia</text>
+<text x="432" y="404" class="small">y el embarazo.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

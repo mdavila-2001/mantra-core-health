@@ -128,6 +128,37 @@ Además de las señales de alarma, se recomienda consultar con un profesional si
 • Podría tratarse de un embarazo y los vómitos impiden comer o beber.
 • Hay una enfermedad crónica que puede descompensarse.
 
+## [prevention] Prevención
+
+No todas las causas pueden evitarse, pero muchas de las más frecuentes sí:
+
+• Lavarse las manos con agua y jabón antes de preparar o comer alimentos y después de ir al baño o cambiar pañales. Es la medida más eficaz contra las gastroenteritis, que se contagian con facilidad en familias, escuelas y residencias.
+• Vacunar a los bebés contra el rotavirus según el calendario del país, ya que es una causa importante de vómitos y diarrea graves en la infancia.
+• Conservar los alimentos en frío, cocinar bien carnes y huevos, no romper la cadena de frío y desconfiar de comidas que estuvieron muchas horas a temperatura ambiente.
+• Beber agua segura, sobre todo en viajes.
+• Moderar el consumo de alcohol y evitar las comidas muy abundantes y grasosas.
+• Ante viajes con tendencia al mareo, planificar el asiento, descansar bien la noche anterior y consultar con antelación al farmacéutico o al médico si se necesita alguna medida preventiva.
+• Si un medicamento provoca náuseas, preguntar si conviene tomarlo con comida, en otro horario o cambiarlo, sin dejarlo por cuenta propia.
+
+## [prognosis] Evolución habitual
+
+La gran mayoría de los episodios agudos, como los causados por una gastroenteritis viral o una comida en mal estado, mejoran solos en uno o dos días. Lo habitual es que los vómitos sean lo primero en ceder y que la diarrea, si la hay, dure algo más. El apetito vuelve de forma gradual, y es normal sentir cansancio durante unos días. Las náuseas del embarazo suelen disminuir a medida que avanza el segundo trimestre, aunque en algunas mujeres duran más. Cuando los síntomas tienen una causa crónica, el pronóstico depende de esa causa, y muchas de ellas tienen tratamiento eficaz una vez identificadas. Si el cuadro no sigue esta evolución esperable, o empeora en lugar de mejorar, es momento de volver a consultar.
+
+## [considerations] Cómo describir el problema en la consulta
+
+La información que aporta el paciente o la familia es fundamental para encontrar la causa. Resulta útil anotar:
+
+• Desde cuándo empezaron los síntomas y si fueron de golpe o progresivos.
+• Cuántas veces se vomitó y cuánto se logró beber y orinar.
+• El aspecto del vómito: restos de comida, líquido claro, bilis amarillenta o verde, sangre o material oscuro.
+• La relación con las comidas, con los movimientos o con la hora del día.
+• Otros síntomas: diarrea, fiebre, dolor, mareo, dolor de cabeza, cambios en la visión.
+• Los medicamentos, suplementos o sustancias que se tomaron en los últimos días.
+• La fecha de la última menstruación, si corresponde.
+• Si otras personas del entorno tienen los mismos síntomas.
+
+Con estos datos, el profesional puede decidir con más seguridad si basta con cuidados en casa o si conviene hacer pruebas.
+
 ## [references]
 
 - Náuseas y vómitos — Temas de salud | https://medlineplus.gov/spanish/nauseaandvomiting.html | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.

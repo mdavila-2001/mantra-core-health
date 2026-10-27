@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cistitis aguda: bacterias que suben a la vejiga</title>
+  <desc id="d">Esquema del aparato urinario femenino con riñones, uréteres, vejiga inflamada y uretra corta por la que ascienden bacterias. A la derecha, los síntomas típicos y los signos que sugieren infección renal.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Infección de la vejiga</text>
+<path d="M130,78.0 C101.2,76.4 101.2,143.6 130,142.0 C147.6,140.4 139.6,118.0 134.8,110 C139.6,102.0 147.6,79.6 130,78.0 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M270,78.0 C298.8,76.4 298.8,143.6 270,142.0 C252.4,140.4 260.4,118.0 265.2,110 C260.4,102.0 252.4,79.6 270,78.0 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M140,140 Q160,220 180,262 M260,140 Q240,220 220,262" fill="none" stroke="var(--organ-d)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M140,280 Q140,250 200,250 Q260,250 260,280 Q260,340 200,345 Q140,340 140,280 Z" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="193" y="344" width="14" height="40" rx="4" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1"/>
+<ellipse cx="200" cy="376" rx="5" ry="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<ellipse cx="196" cy="356" rx="5" ry="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<ellipse cx="204" cy="330" rx="5" ry="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<ellipse cx="180" cy="300" rx="5" ry="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<ellipse cx="222" cy="292" rx="5" ry="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<ellipse cx="200" cy="280" rx="5" ry="3" fill="var(--purple)" stroke="none" stroke-width="1"/>
+<line x1="250" y1="380" x2="212" y2="360" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<text x="258" y="392" class="small">Bacterias suben</text>
+<text x="258" y="406" class="small">por la uretra</text>
+<text x="70" y="282" class="small">Pared</text>
+<text x="70" y="296" class="small">inflamada</text>
+<line x1="118" y1="288" x2="140" y2="288" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="200" y="74" text-anchor="middle" class="small">Riñones</text>
+<text x="200" y="430" text-anchor="middle" class="small" style="fill:var(--muted)">Uretra femenina corta: más riesgo</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Síntomas típicos</text>
+<rect x="416" y="54" width="166" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="499.0" y="75.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Ardor al orinar</text>
+<rect x="592" y="54" width="166" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="675.0" y="75.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Ganas frecuentes</text>
+<rect x="416" y="98" width="166" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="499.0" y="119.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Urgencia</text>
+<rect x="592" y="98" width="166" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="675.0" y="119.5" text-anchor="middle" class="lab" style="fill:var(--ink)">Molestia baja</text>
+<rect x="416" y="142" width="166" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="499.0" y="163.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Orina turbia</text>
+<rect x="592" y="142" width="166" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="675.0" y="163.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Sin fiebre</text>
+<text x="416" y="212" class="lab">Suele causarla E. coli de la flora intestinal.</text>
+<text x="416" y="232" class="lab">Tira de orina o urocultivo según el caso.</text>
+<rect x="416" y="256" width="344" height="154" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="428" y="278" class="step" style="fill:var(--warn)">Puede ser pielonefritis si hay:</text>
+<text x="428" y="302" class="lab">• Fiebre o escalofríos</text>
+<text x="428" y="326" class="lab">• Dolor lumbar o en el costado</text>
+<text x="428" y="350" class="lab">• Vómitos</text>
+<text x="428" y="374" class="lab">• Embarazo, varón o síntomas</text>
+<text x="428" y="398" class="lab">• que no mejoran</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

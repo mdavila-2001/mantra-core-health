@@ -98,6 +98,14 @@ El tratamiento eficaz de la tos es, sobre todo, el de su causa. Algunos ejemplos
 
 Cuando la tos persiste pese a tratar todas las causas posibles, existen especialistas y tratamientos para la tos crónica que pueden ayudar.
 
+## [considerations] Tos, contagio y vida diaria
+
+Cuando la tos se debe a una infección, las pequeñas gotas que se expulsan al toser pueden transmitir virus y bacterias a otras personas. Cubrirse la boca y la nariz con el pliegue del codo o con un pañuelo desechable, tirarlo después y lavarse las manos reduce mucho el contagio. Si tiene fiebre o se encuentra mal, quedarse en casa unos días protege a compañeros de trabajo, de clase y a las personas más vulnerables. En algunos contextos, como al visitar a personas mayores o enfermas, o en centros sanitarios, puede ser recomendable usar mascarilla mientras dure la tos.
+
+La tos prolongada también tiene consecuencias sobre la vida diaria. Puede alterar el sueño de quien tose y de su familia, provocar dolor en las costillas o en el abdomen por el esfuerzo repetido, ronquera, dolor de cabeza, escapes de orina, sobre todo en mujeres, y cansancio. Algunas personas sienten vergüenza al toser en público o evitan situaciones sociales. Todo esto es un motivo legítimo para consultar y buscar la causa, aunque la tos no parezca grave.
+
+Por último, conviene recordar que suprimir siempre la tos no es lo deseable: cuando hay flema, la tos ayuda a expulsarla y a mantener limpios los bronquios. Por eso los tratamientos que simplemente la frenan no se recomiendan en todos los casos, y su médico o farmacéutico le orientará sobre qué opción conviene en su situación.
+
 ## [special_populations] Niños, embarazo y personas mayores
 
 En los niños, la tos es muy frecuente, sobre todo en los primeros años de guardería o colegio, cuando encadenan infecciones virales. Suele ser benigna, pero los bebés pequeños tienen menos reservas y pueden empeorar rápido. Consulte pronto si un lactante tose y respira con dificultad, rechaza la alimentación, tiene fiebre en los primeros meses de vida, presenta pausas al respirar o cambia de color durante los accesos de tos. La vacunación frente a la tosferina, también durante el embarazo, protege a los recién nacidos. Ante una tos brusca tras jugar con objetos pequeños o comer frutos secos, piense en un cuerpo extraño.

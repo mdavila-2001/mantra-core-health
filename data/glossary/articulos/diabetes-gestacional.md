@@ -1,5 +1,6 @@
 ---
 slug: diabetes-gestacional
+image: diabetes-gestacional.svg | Las hormonas de la placenta aumentan la resistencia a la insulina durante el embarazo. | Útero con feto y placenta, cuyas hormonas reducen el efecto de la insulina; el páncreas no compensa y sube la glucosa. A la derecha, la prueba de detección del segundo trimestre, los riesgos y el tratamiento.
 ---
 
 ## [definition] Introducción
