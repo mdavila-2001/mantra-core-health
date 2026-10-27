@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Fases de un ataque de migraña</title>
+  <desc id="d">Cabeza con dolor pulsátil localizado en un lado. A la derecha, las cuatro fases de un ataque: pródromo, aura, cefalea y posdromo, junto a los desencadenantes habituales y las señales que obligan a acudir a urgencias.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Migraña: fases de un ataque</text>
+  <rect x="20" y="60" width="300" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="170.0" y="90" text-anchor="middle" class="title">Dolor típico</text>
+  <ellipse cx="170" cy="240" rx="90" ry="110" fill="var(--skin)" stroke="var(--muted)"/>
+  <path d="M80 230 C70 200 70 260 80 270" fill="none" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M170 130 C230 130 262 190 260 240 C258 280 240 310 220 330 L170 330 Z" fill="var(--red)" stroke="none" stroke-width="0" opacity=".3"/>
+  <path d="M218 200 A14 14 0 0 1 246 200" fill="none" stroke="var(--red)" stroke-width="2"/>
+  <path d="M206 200 A26 26 0 0 1 258 200" fill="none" stroke="var(--red)" stroke-width="2"/>
+  <path d="M194 200 A38 38 0 0 1 270 200" fill="none" stroke="var(--red)" stroke-width="2"/>
+  <text x="170" y="380" text-anchor="middle" class="small b">A menudo de un lado,</text>
+  <text x="170" y="396" text-anchor="middle" class="small">pulsátil e intenso</text>
+  <text x="170" y="420" text-anchor="middle" class="small muted">Empeora con el esfuerzo</text>
+  <rect x="336" y="60" width="444" height="210" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="558.0" y="90" text-anchor="middle" class="title">Las fases</text>
+  <rect x="352" y="104" width="96" height="70" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="400.0" y="136.0" text-anchor="middle" class="small b">Pródromo</text>
+  <text x="400.0" y="153.0" text-anchor="middle" class="small muted">bostezos</text>
+  <rect x="456" y="104" width="96" height="70" rx="10" fill="var(--pur-l)" stroke="var(--line)"/>
+  <text x="504.0" y="136.0" text-anchor="middle" class="small b">Aura</text>
+  <text x="504.0" y="153.0" text-anchor="middle" class="small muted">luces</text>
+  <rect x="560" y="104" width="96" height="70" rx="10" fill="var(--red-l)" stroke="var(--line)"/>
+  <text x="608.0" y="136.0" text-anchor="middle" class="small b">Cefalea</text>
+  <text x="608.0" y="153.0" text-anchor="middle" class="small muted">horas o días</text>
+  <rect x="664" y="104" width="96" height="70" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="712.0" y="136.0" text-anchor="middle" class="small b">Posdromo</text>
+  <text x="712.0" y="153.0" text-anchor="middle" class="small muted">cansancio</text>
+  <path d="M352 194 L760 194" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="556" y="222" text-anchor="middle" class="small">No todas las personas tienen aura</text>
+  <text x="556" y="244" text-anchor="middle" class="small muted">Náuseas y molestia con luz y ruido</text>
+  <rect x="336" y="286" width="214" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="443.0" y="316" text-anchor="middle" class="title">Desencadenantes</text>
+  <text x="352" y="334" class="small">• Estrés, falta de sueño</text>
+  <text x="352" y="358" class="small">• Saltarse comidas</text>
+  <text x="352" y="382" class="small">• Cambios hormonales</text>
+  <text x="352" y="406" class="small">• Alcohol</text>
+  <rect x="566" y="286" width="214" height="154" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="580" y="310" class="lab b" style="fill:var(--red)">Urgencias si</text>
+  <text x="580" y="334" class="small">• El peor dolor de tu vida</text>
+  <text x="580" y="356" class="small">• Debilidad o habla torpe</text>
+  <text x="580" y="378" class="small">• Fiebre y cuello rígido</text>
+  <text x="580" y="400" class="small">• Nueva tras los 50 años</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

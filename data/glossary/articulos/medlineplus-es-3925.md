@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-3925
+image: medlineplus-es-3925.svg | La prótesis sustituye las superficies dañadas del fémur y de la tibia. | Rodilla con prótesis formada por un componente femoral de metal, un inserto de plástico y una bandeja tibial de metal, junto a sus indicaciones, tipos y pasos de recuperación.
 ---
 
 ## [definition] Introducción

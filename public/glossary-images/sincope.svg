@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Síncope: mecanismo y tipos</title>
+  <desc id="d">Secuencia vertical: cae la presión o el pulso, llega menos sangre al cerebro, se pierde la conciencia y hay una recuperación rápida. A la derecha, los tipos vasovagal, ortostático y cardíaco y los signos de alarma.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Qué ocurre</text>
+<rect x="60" y="62" width="320" height="46" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="220.0" y="89.5" text-anchor="middle" class="lab" style="fill:var(--on)">Cae la presión o el pulso</text>
+<line x1="220.0" y1="109" x2="220.0" y2="127" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="60" y="130" width="320" height="46" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="220.0" y="157.6" text-anchor="middle" class="lab" style="fill:var(--on)">Llega menos sangre al cerebro</text>
+<line x1="220.0" y1="177" x2="220.0" y2="195" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="60" y="198" width="320" height="46" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="220.0" y="225.6" text-anchor="middle" class="lab" style="fill:var(--on)">Pérdida breve de conciencia y caída</text>
+<line x1="220.0" y1="245" x2="220.0" y2="263" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="60" y="266" width="320" height="46" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="220.0" y="293.6" text-anchor="middle" class="lab" style="fill:var(--on)">Recuperación rápida y completa</text>
+<text x="220" y="346" text-anchor="middle" class="lab">Al quedar tumbado, la sangre vuelve</text>
+<text x="220" y="366" text-anchor="middle" class="lab">al cerebro y la persona despierta.</text>
+<text x="220" y="404" text-anchor="middle" class="step">Primero: tumbar y elevar las piernas.</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Tipos</text>
+<rect x="456" y="56" width="304" height="44" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="470" y="74" class="step">Vasovagal</text>
+<text x="470" y="92" class="lab">calor, dolor, estar de pie</text>
+<rect x="456" y="108" width="304" height="44" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="470" y="126" class="step">Ortostático</text>
+<text x="470" y="144" class="lab">al levantarse, fármacos</text>
+<rect x="456" y="160" width="304" height="44" rx="8" fill="var(--vessel-l)" stroke-width="1"/>
+<text x="470" y="178" class="step">Cardíaco</text>
+<text x="470" y="196" class="lab">arritmias, válvulas</text>
+<rect x="456" y="222" width="304" height="164" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="468" y="244" class="step" style="fill:var(--warn)">Consultar urgente si ocurre:</text>
+<text x="468" y="270" class="lab">• Durante el esfuerzo o tumbado</text>
+<text x="468" y="296" class="lab">• Con dolor de pecho o palpitaciones</text>
+<text x="468" y="322" class="lab">• Sin aviso previo</text>
+<text x="468" y="348" class="lab">• Familia con muerte súbita</text>
+<text x="468" y="374" class="lab">• Golpe fuerte o tarda en despertar</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

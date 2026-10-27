@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Mecanismos de la enuresis nocturna</title>
+  <desc id="d">Tres círculos superpuestos con los mecanismos de la enuresis: mucha producción de orina por la noche, vejiga pequeña o hiperactiva y sueño profundo que impide despertar. A la derecha, las medidas que ayudan y los motivos para consultar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Enuresis nocturna: por qué se moja la cama</text>
+  <rect x="20" y="60" width="440" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="240.0" y="90" text-anchor="middle" class="title">Tres mecanismos que se combinan</text>
+  <circle cx="170" cy="220" r="84" fill="var(--accent-l)" stroke="var(--accent)" opacity=".8"/>
+  <circle cx="310" cy="220" r="84" fill="var(--pur-l)" stroke="var(--pur)" opacity=".8"/>
+  <circle cx="240" cy="320" r="84" fill="var(--ok-l)" stroke="var(--ok)" opacity=".8"/>
+  <text x="140" y="190" text-anchor="middle" class="small b">Mucha orina</text>
+  <text x="140" y="206" text-anchor="middle" class="small">de noche</text>
+  <text x="340" y="190" text-anchor="middle" class="small b">Vejiga</text>
+  <text x="340" y="206" text-anchor="middle" class="small">pequeña o activa</text>
+  <text x="240" y="360" text-anchor="middle" class="small b">Sueño profundo:</text>
+  <text x="240" y="376" text-anchor="middle" class="small">no despierta</text>
+  <text x="240" y="262" text-anchor="middle" class="lab b">Enuresis</text>
+  <text x="240" y="428" text-anchor="middle" class="small muted">Influye la herencia; madura con la edad</text>
+  <rect x="476" y="60" width="304" height="216" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="628.0" y="90" text-anchor="middle" class="title">Qué ayuda</text>
+  <text x="494" y="110" class="small">• No culpar ni castigar</text>
+  <text x="494" y="136" class="small">• Orinar antes de dormir</text>
+  <text x="494" y="162" class="small">• Menos líquidos por la noche</text>
+  <text x="494" y="188" class="small">• Calendario de noches secas</text>
+  <text x="494" y="214" class="small">• Alarma de enuresis</text>
+  <text x="494" y="240" class="small">• Fármacos si lo indica el médico</text>
+  <rect x="476" y="292" width="304" height="148" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="490" y="316" class="lab b" style="fill:var(--red)">Consultar si</text>
+  <text x="490" y="340" class="small">• Vuelve a mojarse tras meses seco</text>
+  <text x="490" y="362" class="small">• Mucha sed o dolor al orinar</text>
+  <text x="490" y="384" class="small">• Escapes también de día</text>
+  <text x="490" y="406" class="small">• Ronquidos o estreñimiento</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

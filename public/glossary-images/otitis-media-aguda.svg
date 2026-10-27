@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Otitis media aguda</title>
+  <desc id="d">A la izquierda, un corte del oído con el conducto auditivo, el tímpano abombado, el oído medio lleno de pus con los huesecillos y la trompa de Eustaquio que lo comunica con la garganta. A la derecha, causas, síntomas y manejo.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="50" text-anchor="middle" class="title">Oído medio con pus</text>
+  <path d="M40 180 C40 120 80 100 100 130 C110 150 100 170 110 190 C120 210 110 240 90 250 C60 260 40 230 40 180 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <rect x="100" y="180" width="90" height="30" rx="6" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <text x="140" y="236" text-anchor="middle" class="small" style="fill:var(--muted)">Conducto</text>
+  <text x="140" y="252" text-anchor="middle" class="small" style="fill:var(--muted)">auditivo</text>
+  <path d="M190 150 C196 170 196 220 190 240" fill="none" stroke="var(--vessel)" stroke-width="5"/>
+  <text x="190" y="132" text-anchor="middle" class="small" style="fill:var(--vessel)">Tímpano</text>
+  <text x="190" y="116" text-anchor="middle" class="small" style="fill:var(--vessel)">abombado</text>
+  <ellipse cx="250" cy="196" rx="54" ry="50" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
+  <circle cx="236" cy="186" r="5" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="256" cy="206" r="5" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="272" cy="184" r="5" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="240" cy="214" r="5" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <circle cx="262" cy="226" r="5" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
+  <text x="250" y="268" text-anchor="middle" class="small" style="fill:var(--warn)">Oído medio</text>
+  <path d="M232 180 l12 -10 l12 6 l10 -8" fill="none" stroke="var(--bone)" stroke-width="4"/>
+  <path d="M290 220 C320 260 350 300 380 360" fill="none" stroke="var(--organ)" stroke-width="14" stroke-linecap="round"/>
+  <text x="270" y="390" text-anchor="middle" class="small" style="fill:var(--organ-d)">Trompa de Eustaquio</text>
+  <text x="270" y="406" text-anchor="middle" class="small" style="fill:var(--muted)">hacia la garganta</text>
+  <circle cx="330" cy="120" r="22" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="1.5"/>
+  <path d="M314 110 c4 -14 26 -14 30 0" fill="none" stroke="var(--organ-d)" stroke-width="1.5"/>
+  <text x="330" y="82" text-anchor="middle" class="small" style="fill:var(--muted)">Oído interno</text>
+  <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="50" text-anchor="middle" class="title">Por qué y qué hacer</text>
+  <text x="476" y="78" class="small">• Suele seguir a un resfriado</text>
+  <text x="476" y="100" class="small">• La trompa se inflama y no drena</text>
+  <text x="476" y="122" class="small">• Más frecuente en niños pequeños</text>
+  <text x="476" y="160" class="step">Síntomas</text>
+  <text x="484" y="184" class="small">• Dolor de oído y fiebre</text>
+  <text x="484" y="206" class="small">• Irritabilidad y tocarse la oreja</text>
+  <text x="484" y="228" class="small">• Oír peor; a veces supura</text>
+  <rect x="476" y="262" width="284" height="160" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="492" y="288" class="step">Manejo habitual</text>
+  <text x="500" y="312" class="small">• Analgésicos para el dolor</text>
+  <text x="500" y="330" class="small">• Muchas mejoran solas</text>
+  <text x="500" y="348" class="small">• Antibiótico según edad y gravedad</text>
+  <text x="500" y="366" class="small">• Consultar si hay rigidez de cuello,</text>
+  <text x="500" y="384" class="small">• hinchazón detrás de la oreja</text>
+  <text x="500" y="402" class="small">• o mucho decaimiento</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -29,7 +29,7 @@
 <path d="M296 120 L316 110" fill="none" stroke="var(--bad)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
 <path d="M110 180 L88 190" fill="none" stroke="var(--bad)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
 <path d="M290 180 L312 190" fill="none" stroke="var(--bad)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="60" y="96" class="small" style="fill:var(--bad)">Contracciones</text>
+<text x="40" y="80" class="small" style="fill:var(--bad)">Contracciones</text>
 <text x="200" y="320" text-anchor="middle" class="lab">Las prostaglandinas del endometrio</text>
 <text x="200" y="340" text-anchor="middle" class="lab">contraen el útero y reducen su riego:</text>
 <text x="200" y="360" text-anchor="middle" class="lab">aparece el dolor tipo cólico.</text>

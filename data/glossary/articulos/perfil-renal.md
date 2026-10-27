@@ -1,5 +1,6 @@
 ---
 slug: perfil-renal
+image: perfil-renal.svg | Conjunto de análisis de sangre y orina que valora cómo funcionan los riñones. | Un riñón, un tubo de sangre y un frasco de orina, con la lista de pruebas que suele incluir el perfil: creatinina y filtrado, urea, electrolitos, calcio, fósforo, ácido úrico y proteínas en orina. A la derecha, para qué sirve y qué factores influyen.
 ---
 
 ## [definition] Introducción

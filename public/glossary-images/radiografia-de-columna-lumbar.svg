@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Radiografía de columna lumbar</title>
+  <desc id="d">A la izquierda, un esquema de la proyección lateral: el tubo de rayos X, el haz que atraviesa la zona lumbar del paciente y el detector al otro lado. A la derecha, una imagen esquemática de las cinco vértebras lumbares y el sacro, con lo que muestra la prueba y lo que no ve bien.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="50" text-anchor="middle" class="title">Proyección lateral</text>
+  <rect x="40" y="70" width="70" height="300" rx="10" fill="var(--accent)"/>
+  <text x="75" y="226" text-anchor="middle" class="small" style="fill:var(--on)" transform="rotate(-90 75 222)">Tubo</text>
+  <path d="M110 120 L300 90 L300 360 L110 320 Z" fill="var(--beam)" opacity=".4"/>
+  <circle cx="200" cy="100" r="22" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+  <path d="M180 124 H230 C240 200 240 290 230 360 H176 C170 290 170 200 180 124 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <rect x="300" y="70" width="34" height="300" rx="8" fill="var(--accent)"/>
+  <text x="317" y="226" text-anchor="middle" class="small" style="fill:var(--on)" transform="rotate(-90 317 222)">Detector</text>
+  <text x="200" y="400" text-anchor="middle" class="small">Se toman al menos frente y perfil</text>
+  <text x="200" y="418" text-anchor="middle" class="small muted">De pie o tumbado</text>
+  <rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="50" text-anchor="middle" class="title">Qué se ve</text>
+  <rect x="416" y="66" width="344" height="250" rx="10" fill="var(--ink)" opacity=".9"/>
+  <rect x="520" y="82" width="80" height="30" rx="6" fill="var(--bone)"/>
+  <text x="500" y="102" text-anchor="end" class="small" style="fill:var(--on)">L1</text>
+  <rect x="516" y="124" width="80" height="30" rx="6" fill="var(--bone)"/>
+  <text x="496" y="144" text-anchor="end" class="small" style="fill:var(--on)">L2</text>
+  <rect x="512" y="166" width="80" height="30" rx="6" fill="var(--bone)"/>
+  <text x="492" y="186" text-anchor="end" class="small" style="fill:var(--on)">L3</text>
+  <rect x="508" y="208" width="80" height="30" rx="6" fill="var(--bone)"/>
+  <text x="488" y="228" text-anchor="end" class="small" style="fill:var(--on)">L4</text>
+  <rect x="504" y="250" width="80" height="30" rx="6" fill="var(--bone)"/>
+  <text x="484" y="270" text-anchor="end" class="small" style="fill:var(--on)">L5</text>
+  <path d="M500 296 L620 296 L580 306 Z" fill="var(--bone)"/>
+  <rect x="520" y="288" width="80" height="22" rx="8" fill="var(--bone)"/>
+  <text x="640" y="120" class="small" style="fill:var(--on)">Hueso</text>
+  <text x="640" y="140" class="small" style="fill:var(--on)">Espacio del disco</text>
+  <text x="640" y="306" class="small" style="fill:var(--on)">Sacro</text>
+  <text x="436" y="346" class="lab">• Fracturas, desgaste, desalineación</text>
+  <text x="436" y="370" class="lab">• Los discos y nervios no se ven bien</text>
+  <text x="588" y="418" text-anchor="middle" class="small muted">Casi nunca hace falta en la lumbalgia reciente</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

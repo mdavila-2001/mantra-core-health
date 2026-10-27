@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-tobillo
+image: radiografia-de-tobillo.svg | La radiografía de tobillo muestra la tibia, el peroné y los huesos del pie que forman la articulación. | Radiografía esquemática del tobillo con la tibia, el peroné, los maléolos marcados, el astrágalo y el calcáneo, junto a los criterios para pedirla tras una torcedura y sus proyecciones.
 ---
 
 ## [definition] Introducción

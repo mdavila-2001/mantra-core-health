@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Quiste de ovario</title>
+  <desc id="d">Útero con las trompas y los dos ovarios, uno de ellos con un quiste lleno de líquido. A la derecha, los tipos de quistes, el papel de la ecografía y los síntomas de torsión o rotura que requieren urgencias.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="420" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="230.0" y="50" text-anchor="middle" class="title">Útero, trompas y ovarios</text>
+<path d="M170,150 Q220,120 270,150 Q280,230 236,280 L236,320 L204,320 L204,280 Q160,230 170,150 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M172,156 Q120,120 90,150 M268,156 Q320,120 350,150" fill="none" stroke="var(--organ-d)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="96" cy="190" rx="24" ry="16" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+<ellipse cx="340" cy="196" rx="48" ry="40" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+<circle cx="350" cy="196" r="32" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+<text x="96" y="230" text-anchor="middle" class="small">Ovario</text>
+<text x="340" y="262" text-anchor="middle" class="small" style="fill:var(--accent)">Ovario con quiste</text>
+<text x="220" y="346" text-anchor="middle" class="small">Útero</text>
+<rect x="40" y="366" width="380" height="56" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="52" y="388" class="lab">La mayoría son funcionales y desaparecen solos</text>
+<text x="52" y="408" class="lab">en uno a tres ciclos.</text>
+<rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="618.0" y="50" text-anchor="middle" class="title">Tipos</text>
+<rect x="476" y="56" width="284" height="44" rx="8" fill="var(--ok-l)" stroke-width="1"/>
+<text x="490" y="74" class="step">Funcional</text>
+<text x="490" y="92" class="lab">folicular o de cuerpo lúteo</text>
+<rect x="476" y="108" width="284" height="44" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="490" y="126" class="step">Endometrioma</text>
+<text x="490" y="144" class="lab">asociado a endometriosis</text>
+<rect x="476" y="160" width="284" height="44" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="490" y="178" class="step">Dermoide</text>
+<text x="490" y="196" class="lab">tejidos variados, benigno</text>
+<rect x="476" y="212" width="284" height="44" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="490" y="230" class="step">Cistoadenoma</text>
+<text x="490" y="248" class="lab">crece de la superficie</text>
+<text x="476" y="284" class="lab">Diagnóstico y control: ecografía.</text>
+<rect x="476" y="302" width="284" height="106" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="488" y="324" class="step" style="fill:var(--warn)">Urgencias (torsión o rotura):</text>
+<text x="488" y="348" class="lab">• Dolor súbito e intenso</text>
+<text x="488" y="372" class="lab">• Fiebre o vómitos con dolor</text>
+<text x="488" y="396" class="lab">• Mareo o desmayo</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

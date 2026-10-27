@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Sinusitis aguda</title>
+  <desc id="d">Rostro con los senos frontales, etmoidales y maxilares dibujados, uno de los maxilares con moco retenido. A la derecha, los síntomas, cuándo sospechar infección bacteriana y los signos de urgencia.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="220.0" y="50" text-anchor="middle" class="title">Senos paranasales</text>
+<ellipse cx="220" cy="230" rx="117.0" ry="150" fill="var(--skin)" stroke="var(--line)" stroke-width="2"/>
+<ellipse cx="175.0" cy="215.0" rx="7" ry="5" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<ellipse cx="265.0" cy="215.0" rx="7" ry="5" fill="var(--ink)" stroke="none" stroke-width="1"/>
+<path d="M220,227.0 L214,275.0 L224,278.0" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M187.0,312.5 Q220,323.0 253.0,312.5" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="186" cy="140" rx="22" ry="14" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+<ellipse cx="254" cy="140" rx="22" ry="14" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+<ellipse cx="160" cy="252" rx="30" ry="34" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
+<path d="M142,260 Q160,244 178,262 L178,280 Q160,286 142,280 Z" fill="var(--beam)" stroke="none" stroke-width="0" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="280" cy="252" rx="30" ry="34" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+<rect x="212" y="180" width="16" height="56" rx="4" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+<text x="70" y="120" class="small">Frontales</text>
+<line x1="124" y1="124" x2="166" y2="136" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="70" y="214" class="small">Maxilar con</text>
+<text x="70" y="230" class="small" style="fill:var(--warn)">moco retenido</text>
+<line x1="118" y1="234" x2="134" y2="246" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="330" y="174" class="small">Etmoidales</text>
+<line x1="328" y1="170" x2="230" y2="196" stroke="var(--muted)" stroke-width="1.5"/>
+<text x="320" y="320" class="small">Maxilar sano</text>
+<text x="220" y="420" text-anchor="middle" class="small" style="fill:var(--muted)">Se inflama la mucosa y se tapa el drenaje</text>
+<rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="608.0" y="50" text-anchor="middle" class="title">Claves</text>
+<text x="456" y="76" class="lab">• Suele seguir a un resfriado (viral)</text>
+<text x="456" y="100" class="lab">• Congestión y moco espeso</text>
+<text x="456" y="124" class="lab">• Dolor o presión en la cara</text>
+<text x="456" y="148" class="lab">• Menos olfato</text>
+<rect x="456" y="180" width="304" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="468" y="202" class="step">Sospechar bacteriana si</text>
+<text x="468" y="226" class="lab">• Más de 10 días sin mejorar</text>
+<text x="468" y="248" class="lab">• Empeora tras mejorar</text>
+<text x="468" y="270" class="lab">• Fiebre alta con dolor facial</text>
+<rect x="456" y="304" width="304" height="106" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="468" y="326" class="step" style="fill:var(--warn)">Urgencias si:</text>
+<text x="468" y="350" class="lab">• Hinchazón o enrojecimiento del ojo</text>
+<text x="468" y="374" class="lab">• Visión doble o dolor de cabeza fuerte</text>
+<text x="468" y="398" class="lab">• Rigidez de nuca o confusión</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

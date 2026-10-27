@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo se produce una intoxicación alimentaria</title>
+  <desc id="d">Secuencia de cuatro pasos: un alimento mal conservado, la multiplicación de microbios o toxinas, la irritación del estómago y el intestino, y los síntomas horas después. Abajo, las cuatro claves de prevención y las señales que requieren atención urgente.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Intoxicación alimentaria: del alimento a los síntomas</text>
+  <rect x="20" y="60" width="760" height="170" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="40" y="90" width="166" height="70" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="123.0" y="122.0" text-anchor="middle" class="lab b">Alimento</text>
+  <text x="123.0" y="139.0" text-anchor="middle" class="small muted">mal conservado</text>
+  <line x1="208" y1="125.0" x2="230" y2="125.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="232" y="90" width="166" height="70" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="315.0" y="122.0" text-anchor="middle" class="lab b">Toxinas o microbios</text>
+  <text x="315.0" y="139.0" text-anchor="middle" class="small muted">se multiplican</text>
+  <line x1="400" y1="125.0" x2="422" y2="125.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="424" y="90" width="166" height="70" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="507.0" y="122.0" text-anchor="middle" class="lab b">Estómago e intestino</text>
+  <text x="507.0" y="139.0" text-anchor="middle" class="small muted">se irritan</text>
+  <line x1="592" y1="125.0" x2="614" y2="125.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="616" y="90" width="166" height="70" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="699.0" y="122.0" text-anchor="middle" class="lab b">Síntomas</text>
+  <text x="699.0" y="139.0" text-anchor="middle" class="small muted">horas después</text>
+  <text x="400" y="196" text-anchor="middle" class="lab">Náuseas, vómitos, diarrea y cólicos; suele durar uno o dos días</text>
+  <rect x="20" y="246" width="372" height="194" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="206.0" y="276" text-anchor="middle" class="title">Cuatro claves para prevenir</text>
+  <rect x="36" y="290" width="164" height="60" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="118.0" y="317.0" text-anchor="middle" class="lab b">Limpiar</text>
+  <text x="118.0" y="334.0" text-anchor="middle" class="small muted">manos y superficies</text>
+  <rect x="212" y="290" width="164" height="60" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="294.0" y="317.0" text-anchor="middle" class="lab b">Separar</text>
+  <text x="294.0" y="334.0" text-anchor="middle" class="small muted">crudo y cocido</text>
+  <rect x="36" y="362" width="164" height="60" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="118.0" y="389.0" text-anchor="middle" class="lab b">Cocinar</text>
+  <text x="118.0" y="406.0" text-anchor="middle" class="small muted">a fondo</text>
+  <rect x="212" y="362" width="164" height="60" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="294.0" y="389.0" text-anchor="middle" class="lab b">Enfriar</text>
+  <text x="294.0" y="406.0" text-anchor="middle" class="small muted">pronto</text>
+  <rect x="408" y="246" width="372" height="194" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="422" y="270" class="lab b" style="fill:var(--red)">Consultar de urgencia si</text>
+  <text x="422" y="294" class="small">• Signos de deshidratación: poca orina,</text>
+  <text x="433" y="316" class="small">boca seca, mareo</text>
+  <text x="422" y="338" class="small">• Sangre en las heces o fiebre alta</text>
+  <text x="422" y="360" class="small">• Vómitos que no ceden</text>
+  <text x="422" y="382" class="small">• Visión doble o debilidad muscular</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>
