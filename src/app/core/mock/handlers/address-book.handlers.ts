@@ -209,9 +209,14 @@ export function registrarLibretaDeDirecciones(router: MockRouter): void {
         { field: 'latitude', message: 'Fuera de Bolivia' },
       ]);
     }
+    const numero = (Math.abs(Math.round(lat * 1000)) % 900) + 100;
+    const distrito = (Math.abs(Math.round(lng * 100)) % 12) + 1;
     return {
       found: true,
-      line: `Calle de demostración N.º ${Math.abs(Math.round(lat * 1000)) % 900 + 100} (simulada)`,
+      line: `Calle de demostración ${numero}, Distrito ${distrito} (simulada)`,
+      road: 'Calle de demostración',
+      houseNumber: String(numero),
+      neighbourhood: `Distrito ${distrito} (simulado)`,
       attribution: 'Simulado en la maqueta: sin geocodificador',
     };
   });

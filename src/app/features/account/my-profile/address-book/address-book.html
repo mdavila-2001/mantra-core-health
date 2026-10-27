@@ -107,55 +107,31 @@
     >
       <h4 class="libreta__subtitulo" tabindex="-1">{{ ed.id === null ? 'Nueva dirección' : 'Editar dirección' }}</h4>
 
+      <!-- Pedido del cliente del 26/10/2026: el punto va primero y es lo único
+           que se marca. La calle, el mapa de Bolivia acercado, el departamento,
+           la provincia, el municipio y la zona salen de él, en sólo lectura. -->
+      <app-map-location-picker
+        pinId="libreta-direccion"
+        etiquetaConfirmada="Esta dirección"
+        etiquetaQuitar="Quitar el punto de esta dirección"
+        etiquetaMapa="Mapa para marcar esta dirección"
+        etiquetaMarcar="Marcar esta dirección en el mapa"
+        indicacionMarcar="Toque el mapa en la puerta del lugar para poner el pin."
+        etiquetaFicha="Esta dirección"
+        [ids]="idsMapa"
+        [inicial]="puntoInicial()"
+        (confirmado)="confirmarPunto($event)"
+        (localidad)="aplicarLocalidad($event)"
+      />
+      @if (errorDePunto() || errorDeMunicipio(); as error) {
+        <p class="libreta__error" role="alert" data-testid="libreta-error-punto">{{ error }}</p>
+      }
+
       @if (ed.kind === 'SAVED') {
         <app-form-field label="Nombre" [required]="true" hint="Cómo la reconoce: «Oficina», «Casa de mi mamá»." [errorMessage]="errorDeNombre()">
           <app-input testId="libreta-nombre" placeholder="Casa de mi mamá" [(value)]="nombre" [hasError]="errorDeNombre() !== ''" />
         </app-form-field>
       }
-
-      @if (catalogoCaido()) {
-        <app-alert tone="error">
-          No pudimos traer el catálogo de ciudades, y la localidad hace falta.
-          <button app-button variant="ghost" size="sm" (clicked)="cargarMunicipios()">Reintentar</button>
-        </app-alert>
-      } @else {
-        <app-location-picker
-          testId="libreta-localidad"
-          [ficha]="true"
-          fichaTitulo="Esta dirección"
-          [ramas]="ramas()"
-          [(value)]="municipio"
-          [punto]="punto()"
-          mapLabel="Mapa de Bolivia: elija el departamento de esta dirección"
-          municipalityLabel="Localidad"
-          [required]="true"
-        />
-        <!-- El error va acá y no en el selector: sin departamento elegido el
-             selector no dibuja el campo de ciudad, y su mensaje no se vería. -->
-        @if (errorDeMunicipio(); as error) {
-          <p class="libreta__error" role="alert" data-testid="libreta-error-localidad">{{ error }}</p>
-        }
-      }
-
-      <app-form-field label="Punto en el mapa" hint="Toque el lugar exacto: con el punto escribimos la calle.">
-        <app-map
-          class="libreta__mapa"
-          data-testid="libreta-mapa"
-          [pines]="pines()"
-          [centro]="punto()"
-          [zoom]="16"
-          [seleccionable]="true"
-          etiqueta="Mapa para marcar esta dirección"
-          (pointPicked)="fijarPunto($event)"
-        />
-      </app-form-field>
-      @if (avisoDeCalle(); as aviso) {
-        <p class="libreta__ayuda" aria-live="polite" data-testid="libreta-aviso-calle">{{ aviso }}</p>
-      }
-
-      <app-form-field label="Calle" hint="Calle, número y referencia, como la escribiría en un sobre.">
-        <app-input testId="libreta-calle" autocomplete="street-address" placeholder="Av. Banzer, 3er anillo #42" [(value)]="calle" />
-      </app-form-field>
 
       @if (ed.id === null) {
         <label class="libreta__casilla">

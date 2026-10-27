@@ -1,7 +1,8 @@
 import {
   MEDICAL_ORGANIZATION_TYPES,
+  TENANT_TYPE_LABELS,
   type MedicalOrganizationType,
-} from '../../../core/data-access/iam/medical-center-registration.client';
+} from '../../../core/data-access/directory/directory.types';
 import type { DynamicEnum } from '../../../core/data-access/system-context/system-context.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 
@@ -9,23 +10,13 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 export const DESTINO_TIPO_DE_ORGANIZACION = 'directory.tenants.tenant_type_concept_id';
 
 /**
- * Cómo se nombra cada tipo en la pantalla.
- *
- * Texto de la interfaz, no del catálogo: el catálogo trae `displayEs`, pero
- * su redacción es la del modelo («Centro de cuidados de enfermería») y no la
- * que pidió el negocio para esta elección. El código es lo que viaja.
- */
-export const MEDICAL_ORGANIZATION_TYPE_LABELS: Readonly<Record<MedicalOrganizationType, string>> = {
-  HOSPITAL: 'Hospital',
-  CLINIC: 'Clínica',
-  MEDICAL_OFFICE: 'Consultorio médico',
-  NURSING: 'Centro de enfermería',
-  HEALTH_OTHER: 'Otra institución de salud',
-};
-
-/**
  * Las opciones del tipo de institución, en el orden de
  * `MEDICAL_ORGANIZATION_TYPES`.
+ *
+ * El rótulo es el de `TENANT_TYPE_LABELS` —texto de la interfaz, no del
+ * catálogo—: el catálogo trae `displayEs`, pero su redacción es la del modelo
+ * («Centro de cuidados de enfermería»), y un mismo tipo tiene que llamarse
+ * igual en el alta pública y en la administrativa. El código es lo que viaja.
  *
  * - **Con catálogo**, sólo los tipos que la API publica en `tenant-type`: una
  *   API que todavía no tiene `CLINIC` no lo ofrece, y nadie elige algo que el
@@ -43,5 +34,5 @@ export function medicalOrganizationTypeOptions(
   const publicados = new Set(catalogo?.options.map((opcion) => opcion.code) ?? []);
   const disponibles = MEDICAL_ORGANIZATION_TYPES.filter((tipo) => publicados.has(tipo));
   const tipos = disponibles.length === 0 ? MEDICAL_ORGANIZATION_TYPES : disponibles;
-  return tipos.map((tipo) => ({ value: tipo, label: MEDICAL_ORGANIZATION_TYPE_LABELS[tipo] }));
+  return tipos.map((tipo) => ({ value: tipo, label: TENANT_TYPE_LABELS[tipo] }));
 }

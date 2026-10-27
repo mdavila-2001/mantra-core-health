@@ -44,7 +44,7 @@ const terminos = async (p) =>
   (await p.locator('[data-testid="registros-glosario"] dt').allTextContents()).map((t) => t.trim());
 
 async function abrirRegistros(p) {
-  await p.getByRole('tab', { name: 'Registros' }).first().click();
+  await p.getByRole('tab', { name: /^(Registros|Anotar gastos, equipos y deudas)$/ }).first().click();
   await p.getByTestId('contabilidad-registros').waitFor({ timeout: 60_000 });
   await p.waitForTimeout(600);
 }

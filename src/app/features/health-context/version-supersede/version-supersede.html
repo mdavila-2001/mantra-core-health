@@ -41,6 +41,7 @@
       description="Solo se retira una versión publicada; un borrador se descarta por otro camino."
     >
       <app-form-field
+        icon="key"
         label="Identificador de la versión"
         [required]="true"
         [hint]="uuidHint"
@@ -65,6 +66,7 @@
 
       @if (exigeReemplazo()) {
         <app-form-field
+          icon="key"
           label="Versión que la reemplaza"
           [required]="true"
           [hint]="uuidHint"
@@ -81,6 +83,7 @@
       }
 
       <app-form-field
+        icon="note"
         label="Motivo"
         [required]="true"
         hint="Queda en la auditoría: un retiro sin por qué no se puede defender."

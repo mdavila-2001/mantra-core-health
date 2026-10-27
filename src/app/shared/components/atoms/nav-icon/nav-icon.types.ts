@@ -180,6 +180,17 @@ export const NAV_ICON_NAMES = [
   'download',
   'merge',
   'clock',
+
+  // Vistas y herramientas del glosario (26/10/2026). Pedido del cliente: los
+  // botones del glosario —el selector «Tarjetas / Tabla» y los accesos al mapa
+  // de relaciones y al atlas 3D— van con ícono y texto. `grid` y `table`
+  // nombran una forma de ver resultados; `network` es un grafo con un nodo al
+  // centro (no `share`, que ya significa compartir) y `cube`, el volumen del
+  // atlas en tres dimensiones.
+  'grid',
+  'table',
+  'network',
+  'cube',
 ] as const;
 
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];

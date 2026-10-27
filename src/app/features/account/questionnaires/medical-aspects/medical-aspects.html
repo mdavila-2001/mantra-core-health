@@ -30,6 +30,7 @@
 
     @for (campo of campos; track campo.clave) {
       <app-form-field
+        [icon]="campo.icono"
         class="aspectos__campo"
         [label]="campo.rotulo"
         [hint]="campo.ayuda"

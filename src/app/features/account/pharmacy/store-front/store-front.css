@@ -26,6 +26,7 @@
   }
 
   .tienda__busqueda,
+  .tienda__filtros,
   .tienda__origen,
   .tienda__atajos {
     grid-column: 1 / -1;
@@ -47,6 +48,18 @@
   flex-wrap: wrap;
   gap: var(--sp-3);
   align-items: center;
+}
+
+.tienda__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+}
+
+.tienda__filtros-nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
 .tienda__sin-perfil,

@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -10,6 +10,13 @@ import type {
   OnboardingHeatmapReport,
   OnboardingTelemetryEvent,
 } from './onboarding-draft.types';
+
+/** Cabecera con la que la API reconoce al dueño del borrador. */
+export const ONBOARDING_DRAFT_SECRET_HEADER = 'x-onboarding-draft-secret';
+
+function secretHeaders(secret: string | null | undefined): HttpHeaders {
+  return secret ? new HttpHeaders({ [ONBOARDING_DRAFT_SECRET_HEADER]: secret }) : new HttpHeaders();
+}
 
 @Injectable({
   providedIn: 'root',
@@ -24,16 +31,30 @@ export class OnboardingDraftClient {
     );
   }
 
-  saveDraft(draft: OnboardingDraft): Observable<{ ok: boolean; savedAt: string }> {
-    return this.http.put<{ ok: boolean; savedAt: string }>(
+  /**
+   * Crea o actualiza el borrador. Sin `secret` la API sólo crea, y devuelve
+   * `draftSecret` una única vez; con él, actualiza. Un id ya tomado sin el
+   * secreto correcto responde 404.
+   */
+  saveDraft(
+    draft: OnboardingDraft,
+    secret?: string | null,
+  ): Observable<{ ok: boolean; savedAt: string; draftSecret?: string }> {
+    return this.http.put<{ ok: boolean; savedAt: string; draftSecret?: string }>(
       this.url(`/iam/onboarding-drafts/${draft.formType}/${draft.draftId}`),
       draft,
+      { headers: secretHeaders(secret) },
     );
   }
 
-  deleteDraft(formType: OnboardingFormType, draftId: string): Observable<{ ok: boolean }> {
+  deleteDraft(
+    formType: OnboardingFormType,
+    draftId: string,
+    secret?: string | null,
+  ): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(
       this.url(`/iam/onboarding-drafts/${formType}/${draftId}`),
+      { headers: secretHeaders(secret) },
     );
   }
 

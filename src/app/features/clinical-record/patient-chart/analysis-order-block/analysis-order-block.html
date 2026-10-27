@@ -35,7 +35,10 @@
         <app-form-response-picker
           class="app-form-grid__ancho"
           [encounterId]="encounterId()"
+          [patientProfileId]="patientProfileId()"
+          [aceptaNotas]="true"
           [(seleccionada)]="respuestaDelFormulario"
+          [(notaSeleccionada)]="notaDelFormularioLibre"
         />
       }
       <app-form-field

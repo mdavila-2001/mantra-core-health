@@ -109,37 +109,40 @@
               <app-name-fields [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-lab-gerente-marketing" />
             </ng-template>
 
+            <!-- El punto es lo único que se marca: la calle, el departamento,
+                 el municipio y la zona salen de él y se muestran sin editarse
+                 (pedido del cliente del 26/10/2026). -->
             <ng-template appCampoPersonalizado="gpsCentral">
-              @if (direccionPorReescribir()) {
-                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                     anuncia sin robar el foco, que sigue en el mapa. -->
-                <app-alert
-                  appAnuncio
-                  [asertivo]="false"
-                  [enfocar]="false"
-                  tone="info"
-                  data-testid="registro-lab-direccion-reescribir"
-                >
-                  {{ avisoReescribir }}
-                </app-alert>
-              }
               <app-map-location-picker
                 pinId="laboratorio-central"
                 etiquetaConfirmada="Su laboratorio"
                 etiquetaQuitar="Quitar la ubicación de la central"
                 etiquetaMapa="La ubicación de su laboratorio en el mapa"
+                etiquetaFicha="La dirección de la central"
                 [ids]="idsUbicacionCentral"
                 [inicial]="gpsCentral()"
-                (confirmado)="gpsCentral.set($event)"
-                (puntoElegido)="vaciarDireccionPorElMapa()"
+                (confirmado)="fijarGpsCentral($event)"
+                (localidad)="escribirLocalidadCentral($event)"
               />
             </ng-template>
 
-            <!-- Las sucursales. Cada una trae su propio mapa, con su propio
-                 pin y su propia confirmación: confirmar una no confirma otra, y
-                 el mapa no se dibuja hasta que alguien pide la ubicación. -->
+            <!-- Las sucursales. Cada una trae su propio mapa, primero, con su
+                 propio pin y su propia confirmación: confirmar una no confirma
+                 otra. Su dirección sale del punto, como la de la central. -->
             <ng-template appCampoPersonalizado="sucursales">
               <div class="lab-sucursales">
+                @if (avisoDeSucursalesSinPunto(); as aviso) {
+                  <app-alert
+                    appAnuncio
+                    [asertivo]="false"
+                    [enfocar]="false"
+                    tone="warning"
+                    title="Sucursales sin ubicar"
+                    data-testid="registro-lab-sucursales-sin-punto"
+                  >
+                    {{ aviso }}
+                  </app-alert>
+                }
                 @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
                   <section class="lab-sucursal">
                     <header class="lab-sucursal__cabecera">
@@ -159,7 +162,19 @@
                       </button>
                     </header>
 
-                    <app-form-field [label]="'Nombre de la sucursal ' + (i + 1)">
+                    <app-map-location-picker
+                      [pinId]="sucursal.id"
+                      [inicial]="sucursal.gps"
+                      etiquetaConfirmada="Esta sucursal"
+                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
+                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
+                      etiquetaFicha="La dirección de esta sucursal"
+                      [ids]="idsDeSucursal(sucursal.id)"
+                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                      (localidad)="escribirLocalidadDeSucursal(sucursal.id, $event)"
+                    />
+
+                    <app-form-field icon="building" [label]="'Nombre de la sucursal ' + (i + 1)">
                       <app-input
                         [testId]="'registro-lab-' + sucursal.id + '-nombre'"
                         placeholder="Sucursal Equipetrol"
@@ -177,28 +192,6 @@
                       />
                     </app-form-field>
 
-                    <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
-                      <app-input
-                        [testId]="'registro-lab-' + sucursal.id + '-direccion'"
-                        placeholder="Av. San Martín 456"
-                        [value]="sucursal.direccion"
-                        (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
-                      />
-                    </app-form-field>
-                    @if (sucursalPorReescribir(sucursal)) {
-                      <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                           anuncia sin robar el foco, que sigue en el mapa. -->
-                      <app-alert
-                        appAnuncio
-                        [asertivo]="false"
-                        [enfocar]="false"
-                        tone="info"
-                        [attr.data-testid]="'registro-lab-' + sucursal.id + '-direccion-reescribir'"
-                      >
-                        {{ avisoReescribir }}
-                      </app-alert>
-                    }
-
                     <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Opcional. El enlace de Google Maps u OpenStreetMap.">
                       <app-input
                         type="url"
@@ -208,17 +201,6 @@
                         (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
                       />
                     </app-form-field>
-
-                    <app-map-location-picker
-                      [pinId]="sucursal.id"
-                      [inicial]="sucursal.gps"
-                      etiquetaConfirmada="Esta sucursal"
-                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
-                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
-                      [ids]="idsDeSucursal(sucursal.id)"
-                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
-                      (puntoElegido)="vaciarDireccionDeSucursalPorElMapa(sucursal.id)"
-                    />
                   </section>
                 } @empty {
                   <p class="lab-sucursales__vacio">

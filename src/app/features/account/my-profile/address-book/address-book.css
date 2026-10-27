@@ -101,12 +101,6 @@
   background: var(--bg-surface-alt);
 }
 
-.libreta__mapa {
-  display: block;
-  inline-size: 100%;
-  block-size: 18rem;
-}
-
 .libreta__casilla {
   display: inline-flex;
   align-items: center;

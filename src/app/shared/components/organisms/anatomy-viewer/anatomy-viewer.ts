@@ -213,7 +213,12 @@ class Motor {
   private readonly movimiento: MediaQueryList;
   private readonly esquemaOscuro: MediaQueryList;
   private pendiente = 0;
-  private encuadrado = false;
+  /**
+   * La persona ya movió la cámara. Mientras no lo haga, el encuadre sigue a lo
+   * que se carga y al tamaño del lienzo: encuadrar sólo con la primera capa
+   * —los órganos, que no llegan a la cabeza— dejaba el esqueleto cortado.
+   */
+  private camaraMovida = false;
   private estado: { capas: readonly AnatomyLayer[]; sexo: AnatomySex; elegidas: Set<string>; relacionadas: Set<string> } = {
     capas: [],
     sexo: 'male',
@@ -247,6 +252,9 @@ class Motor {
     this.controles.enableDamping = !this.movimiento.matches;
     this.controles.enablePan = true;
     this.controles.addEventListener('change', () => this.pedirDibujo());
+    this.controles.addEventListener('start', () => {
+      this.camaraMovida = true;
+    });
 
     this.rayo = new THREE.Raycaster();
     lienzo.addEventListener('pointerdown', this.alBajar);
@@ -329,10 +337,7 @@ class Motor {
       });
       this.escena.add(gltf.scene);
       this.listas.add(capa);
-      if (!this.encuadrado) {
-        this.encuadrado = true;
-        this.encuadrar();
-      }
+      if (!this.camaraMovida) this.encuadrar();
     });
     // Un fallo no queda guardado: volver a encender la capa reintenta.
     this.capasCargadas.set(capa, pedido);
@@ -385,16 +390,25 @@ class Motor {
     this.pedirDibujo();
   }
 
-  /** Centra la cámara en lo que haya cargado, de frente. */
+  /**
+   * Centra la cámara en lo que haya cargado, de frente.
+   *
+   * Se mide con todas las mallas cargadas, estén o no visibles: la vista no
+   * cambia de escala al apagar una capa. La distancia hace entrar el alto y el
+   * ancho en el lienzo —según su proporción— y suma la mitad de la profundidad,
+   * porque la cara más cercana al ojo se ve más grande que el centro.
+   */
   encuadrar(): void {
     const caja = new this.THREE.Box3();
-    for (const malla of this.mallas.values()) {
-      if (malla.visible || caja.isEmpty()) caja.expandByObject(malla);
-    }
+    for (const malla of this.mallas.values()) caja.expandByObject(malla);
     if (caja.isEmpty()) return;
+    this.camaraMovida = false;
     const centro = caja.getCenter(new this.THREE.Vector3());
     const tamano = caja.getSize(new this.THREE.Vector3());
-    const distancia = (Math.max(tamano.y, tamano.x) / 2 / Math.tan((this.camara.fov * Math.PI) / 360)) * 1.15;
+    const tangente = Math.tan((this.camara.fov * Math.PI) / 360);
+    const paraElAlto = tamano.y / 2 / tangente;
+    const paraElAncho = tamano.x / 2 / (tangente * this.camara.aspect);
+    const distancia = (Math.max(paraElAlto, paraElAncho) + tamano.z / 2) * 1.08;
     this.controles.target.copy(centro);
     this.camara.position.set(centro.x, centro.y, centro.z + distancia);
     this.camara.near = distancia / 100;
@@ -434,6 +448,7 @@ class Motor {
       default:
         return false;
     }
+    this.camaraMovida = true;
     this.camara.position.copy(this.controles.target).add(new this.THREE.Vector3().setFromSpherical(esfera));
     this.controles.update();
     this.pedirDibujo();
@@ -495,6 +510,7 @@ class Motor {
     this.renderer.setSize(ancho, alto, false);
     this.camara.aspect = ancho / alto;
     this.camara.updateProjectionMatrix();
+    if (!this.camaraMovida && this.mallas.size > 0) this.encuadrar();
     this.pedirDibujo();
   }
 

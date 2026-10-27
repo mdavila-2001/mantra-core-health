@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
 import { API_BASE_URL } from '../../../../core/data-access/api';
@@ -11,6 +12,10 @@ import {
 } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { CARGADOR_DE_PROVINCIAS } from '../../../../shared/components/organisms/map/provinces';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 import { AddressBook } from './address-book';
 
 const LIBRETA = '/profiles/patients/me/addresses';
@@ -77,6 +82,28 @@ describe('AddressBook («Mis direcciones»)', () => {
     fixture.detectChanges();
   }
 
+  /** El selector del mapa del formulario abierto. */
+  function mapa(): MapLocationPicker {
+    const el = fixture.debugElement.query(By.directive(MapLocationPicker));
+    expect(el, 'no hay mapa en el formulario').not.toBeNull();
+    return el.componentInstance as MapLocationPicker;
+  }
+
+  /** Lo que el mapa deduce de un punto: calle, zona y municipio. */
+  function deducido(
+    punto: { lat: number; lng: number },
+    extra: Partial<LocalityFromPoint> = {},
+  ): LocalityFromPoint {
+    return {
+      punto,
+      calle: 'Calle 24 de Septiembre, Bartos',
+      calleSola: 'Calle 24 de Septiembre',
+      zona: 'Bartos',
+      municipioConceptId: 'mun-scz',
+      ...extra,
+    };
+  }
+
   function boton(texto: string): HTMLButtonElement {
     const b = [...html.querySelectorAll<HTMLButtonElement>('button')].find((x) =>
       x.textContent?.includes(texto),
@@ -114,27 +141,40 @@ describe('AddressBook («Mis direcciones»)', () => {
     expect(items[0]?.textContent).toContain('Preferida');
   });
 
-  it('agregar: el punto pide la calle, y se guarda con nombre, localidad, calle y punto', () => {
+  it('el formulario abre con el mapa primero, y calle y localidad no se escriben', () => {
+    responderLibreta([CASA]);
+    boton('Agregar dirección').click();
+    fixture.detectChanges();
+
+    const formulario = html.querySelector('[data-testid="libreta-formulario"]')!;
+    const primero = formulario.querySelector('app-map-location-picker, app-form-field');
+    expect(primero?.tagName.toLowerCase()).toBe('app-map-location-picker');
+    // Ni casilla de calle ni selector manual de departamento y ciudad.
+    expect(html.querySelector('[data-testid="libreta-calle"]')).toBeNull();
+    expect(html.querySelector('app-location-picker[testid="libreta-localidad"]')).toBeNull();
+  });
+
+  it('agregar: se guarda con el nombre, y calle, localidad y punto salen del punto confirmado', () => {
     responderLibreta([CASA]);
     boton('Agregar dirección').click();
     fixture.detectChanges();
 
     const componente = fixture.componentInstance as unknown as {
-      fijarPunto(p: { lat: number; lng: number }): void;
       nombre: { set(v: string): void };
-      municipio: { set(v: string): void };
     };
     componente.nombre.set('Oficina');
-    componente.municipio.set('mun-scz');
-    componente.fijarPunto({ lat: -17.7833, lng: -63.1821 });
-    const calle = http.expectOne({ method: 'POST', url: '/public/geo/reverse' });
-    expect(calle.request.body).toEqual({ latitude: -17.7833, longitude: -63.1821 });
-    calle.flush({ found: true, line: 'Calle 24 de Septiembre, Bartos', attribution: 'OSM' });
+    const punto = { lat: -17.7833, lng: -63.1821 };
+    // Lo deducido de un punto sin confirmar no cuenta todavía.
+    mapa().localidad.emit(deducido(punto));
+    boton('Guardar dirección').click();
     fixture.detectChanges();
-    expect(html.querySelector('[data-testid="libreta-aviso-calle"]')?.textContent).toContain(
-      'OpenStreetMap',
+    http.expectNone({ method: 'POST', url: LIBRETA });
+    expect(html.querySelector('[data-testid="libreta-error-punto"]')?.textContent).toContain(
+      'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
     );
 
+    mapa().confirmado.emit(punto);
+    fixture.detectChanges();
     boton('Guardar dirección').click();
     const req = http.expectOne({ method: 'POST', url: LIBRETA });
     expect(req.request.body).toEqual({
@@ -152,7 +192,32 @@ describe('AddressBook («Mis direcciones»)', () => {
     expect(html.textContent).toContain('Oficina');
   });
 
-  it('sin nombre ni localidad no sale nada, y cada campo dice qué falta', () => {
+  it('un punto sin municipio conocido no se guarda, y sin calle en el mapa no se inventa una', () => {
+    responderLibreta([CASA]);
+    boton('Agregar dirección').click();
+    fixture.detectChanges();
+    (fixture.componentInstance as unknown as { nombre: { set(v: string): void } }).nombre.set(
+      'Oficina',
+    );
+    const punto = { lat: -17.7833, lng: -63.1821 };
+    mapa().confirmado.emit(punto);
+    mapa().localidad.emit(deducido(punto, { calle: null, calleSola: null, municipioConceptId: null }));
+    fixture.detectChanges();
+
+    boton('Guardar dirección').click();
+    fixture.detectChanges();
+    http.expectNone({ method: 'POST', url: LIBRETA });
+    expect(html.textContent).toContain('No encontramos el municipio de ese punto.');
+
+    mapa().localidad.emit(deducido(punto, { calle: null, calleSola: null }));
+    fixture.detectChanges();
+    boton('Guardar dirección').click();
+    const req = http.expectOne({ method: 'POST', url: LIBRETA });
+    expect(req.request.body.lines).toBe('');
+    req.flush([CASA]);
+  });
+
+  it('sin nombre ni punto no sale nada, y cada campo dice qué falta', () => {
     responderLibreta([CASA]);
     boton('Agregar dirección').click();
     fixture.detectChanges();
@@ -162,18 +227,22 @@ describe('AddressBook («Mis direcciones»)', () => {
 
     http.expectNone({ method: 'POST', url: LIBRETA });
     expect(html.textContent).toContain('Póngale un nombre');
-    expect(html.textContent).toContain('Elija el departamento y la ciudad.');
+    expect(html.textContent).toContain(
+      'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+    );
   });
 
   it('si la API rechaza, el formulario sigue abierto con lo escrito y dice por qué', () => {
     responderLibreta([CASA]);
     boton('Agregar dirección').click();
+    fixture.detectChanges();
     const componente = fixture.componentInstance as unknown as {
       nombre: { set(v: string): void; (): string };
-      municipio: { set(v: string): void };
     };
     componente.nombre.set('Oficina');
-    componente.municipio.set('mun-scz');
+    const punto = { lat: -17.7833, lng: -63.1821 };
+    mapa().confirmado.emit(punto);
+    mapa().localidad.emit(deducido(punto));
     fixture.detectChanges();
 
     boton('Guardar dirección').click();
@@ -188,6 +257,27 @@ describe('AddressBook («Mis direcciones»)', () => {
     expect(html.querySelector('[data-testid="libreta-formulario"]')).not.toBeNull();
     expect(componente.nombre()).toBe('Oficina');
     expect(html.querySelector('[data-testid="libreta-error"]')).not.toBeNull();
+  });
+
+  it('editar con el punto guardado no pide confirmarlo de nuevo, y conserva lo suyo si el mapa no deduce', () => {
+    responderLibreta([CASA]);
+    boton('Editar').click();
+    fixture.detectChanges();
+    // El mapa siembra el punto guardado y pide su calle: el proveedor no responde.
+    http
+      .expectOne({ method: 'POST', url: '/public/geo/reverse' })
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    fixture.detectChanges();
+
+    boton('Guardar dirección').click();
+    const req = http.expectOne({ method: 'PATCH', url: `${LIBRETA}/casa` });
+    expect(req.request.body).toEqual({
+      municipalityConceptId: 'mun-scz',
+      lines: 'Av. Banzer 3er anillo',
+      latitude: -17.78,
+      longitude: -63.18,
+    });
+    req.flush([CASA]);
   });
 
   it('no repite la ciudad cuando la calle ya la nombra', () => {

@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   type TemplateRef,
   untracked,
@@ -26,8 +27,11 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
@@ -38,12 +42,21 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
+import { FilterBar } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { amountBs } from '../summary/windows';
 import { AccountDialog } from './account-dialog';
 import { errorReason } from './errors';
 import { RecordDialog } from './record-dialog';
-import { readableDay, CLASS_NAME, accountLabel, TEXTS } from './records.format';
+import {
+  readableDay,
+  EXPLICACION_DE_CUENTAS,
+  EXPLICACION_DE_TRANSACCIONES,
+  glosarioDe,
+  CLASS_NAME,
+  accountLabel,
+  TEXTS,
+} from './records.format';
 import type { AccountingVersion } from '../accounting-version';
 import { TransactionDialog } from './transaction-dialog';
 
@@ -101,6 +114,17 @@ const WITHOUT_DELETE: readonly RowAction[] = [{ code: 'editar', label: 'Editar',
 
 const KINDS: readonly RecordKind[] = ['EXPENSE', 'ASSET', 'DEBT'];
 
+/** Cada tabla de la tarjeta, para su búsqueda y su página. */
+type Tabla = RecordKind | 'TX' | 'CUENTAS';
+const TAMANO_INICIAL = 10;
+const PORTABLAS = <T,>(valor: T): Record<Tabla, T> => ({
+  EXPENSE: valor,
+  ASSET: valor,
+  DEBT: valor,
+  TX: valor,
+  CUENTAS: valor,
+});
+
 /**
  * **La contabilidad simple del doctor** (28/09/2026), arriba del resumen de
  * «Contabilidad».
@@ -127,6 +151,9 @@ const KINDS: readonly RecordKind[] = ['EXPENSE', 'ASSET', 'DEBT'];
     Card,
     AccountDialog,
     DataTable,
+    FilterBar,
+    NavIcon,
+    Pagination,
     RecordDialog,
     RowActions,
     SectionHeading,
@@ -163,6 +190,30 @@ export class SimpleAccounting {
    * escribir lo resuelve la API.
    */
   readonly version = input<AccountingVersion>('doctor');
+
+  /**
+   * Avisa que se guardó un gasto, un activo o una deuda. El resumen lo usa
+   * para volver a leer sus cifras sin que el médico tenga que recargar.
+   */
+  readonly anotado = output<void>();
+
+  /**
+   * Los atajos de «¿Qué quiere anotar?» bajo las tres cifras: lo que un médico
+   * viene a hacer, a un clic y con ícono y texto, sin pasar por la pestaña de
+   * tablas. Abren el mismo formulario que el botón «Nuevo …» de cada tabla.
+   */
+  protected readonly atajos: readonly { kind: RecordKind; rotulo: string; icono: NavIconName }[] = [
+    { kind: 'EXPENSE', rotulo: 'Anotar un gasto', icono: 'receipt' },
+    { kind: 'ASSET', rotulo: 'Registrar un equipo', icono: 'package' },
+    { kind: 'DEBT', rotulo: 'Anotar una deuda', icono: 'billing' },
+  ];
+
+  /** El ícono de cada pestaña de registros, junto a su nombre. */
+  protected readonly iconoDe: Readonly<Record<RecordKind, NavIconName>> = {
+    EXPENSE: 'receipt',
+    ASSET: 'package',
+    DEBT: 'billing',
+  };
   protected readonly isAccountant = computed(() => this.version() === 'contador');
 
   private readonly accounting = inject(SimpleAccountingClient);
@@ -176,6 +227,15 @@ export class SimpleAccounting {
   protected readonly texts = TEXTS;
   protected readonly kinds = KINDS;
   protected readonly modal = signal<Modal | null>(null);
+  protected readonly glosario = computed(() => glosarioDe(this.isAccountant()));
+  protected readonly explicacionDeTransacciones = EXPLICACION_DE_TRANSACCIONES;
+  protected readonly explicacionDeCuentas = EXPLICACION_DE_CUENTAS;
+
+  /* ---- búsqueda y página de cada tabla ------------------------------------ */
+
+  protected readonly busqueda = signal<Record<Tabla, string>>(PORTABLAS(''));
+  protected readonly pagina = signal<Record<Tabla, number>>(PORTABLAS(1));
+  protected readonly tamano = signal<Record<Tabla, number>>(PORTABLAS(TAMANO_INICIAL));
 
   protected readonly summary = signal<ViewState<PractitionerSummary>>(loading());
   protected readonly accounts = signal<ViewState<readonly SimpleAccount[]>>(loading());
@@ -213,8 +273,8 @@ export class SimpleAccounting {
     () => [
       { key: 'fecha', header: 'Fecha', priority: 2 },
       { key: 'descripcion', header: 'Descripción', priority: 1 },
-      { key: 'debe', header: 'Debe', priority: 1 },
-      { key: 'haber', header: 'Haber', priority: 1 },
+      { key: 'debe', header: 'Debe (llega a)', priority: 1 },
+      { key: 'haber', header: 'Haber (sale de)', priority: 1 },
       { key: 'monto', header: 'Monto', priority: 1, align: 'end' },
       { key: 'acciones', header: 'Acciones', priority: 1, cell: this.accionesDeTransaccion() },
     ],
@@ -223,7 +283,7 @@ export class SimpleAccounting {
   protected readonly accountColumns = computed<readonly ColumnDef<AccountRow>[]>(() => [
     { key: 'codigo', header: 'Código', priority: 2 },
     { key: 'nombre', header: 'Nombre', priority: 1 },
-    { key: 'clase', header: 'Clase', priority: 1 },
+    { key: 'clase', header: 'Tipo', priority: 1 },
     { key: 'origen', header: 'Origen', priority: 3 },
     { key: 'acciones', header: 'Acciones', priority: 1, cell: this.accionesDeCuenta() },
   ]);
@@ -266,10 +326,63 @@ export class SimpleAccounting {
       codigo: cuenta.code,
       nombre: cuenta.name,
       clase: CLASS_NAME[cuenta.accountClass],
-      origen: cuenta.seeded ? 'General' : 'Suya',
+      origen: cuenta.seeded ? 'Del sistema' : 'Creada por usted',
       cuenta,
     })),
   );
+
+  /* ---- lo filtrado y la página visible de cada tabla ------------------------ */
+
+  private filasFiltradas(tabla: Tabla): readonly { readonly id: string }[] {
+    const estado: ViewState<readonly { readonly id: string }[]> =
+      tabla === 'TX'
+        ? this.transactionsRows()
+        : tabla === 'CUENTAS'
+          ? this.accountsRows()
+          : this.rowsOf(tabla);
+    const filas = dataOf(estado) ?? [];
+    const buscado = normalizar(this.busqueda()[tabla].trim());
+    if (buscado === '') return filas;
+    return filas.filter((fila) =>
+      Object.values(fila).some((valor) => typeof valor === 'string' && normalizar(valor).includes(buscado)),
+    );
+  }
+
+  /** La página visible; los estados que no son «listo» pasan igual. */
+  private paginaDe<T>(tabla: Tabla, estado: ViewState<readonly T[]>): ViewState<readonly T[]> {
+    if (estado.status !== 'ready') return estado;
+    const filtradas = this.filasFiltradas(tabla) as readonly T[];
+    const inicio = (this.pagina()[tabla] - 1) * this.tamano()[tabla];
+    return ready(filtradas.slice(inicio, inicio + this.tamano()[tabla]));
+  }
+
+  protected paginaDeRegistros(kind: RecordKind): ViewState<readonly RecordRow[]> {
+    return this.paginaDe(kind, this.rowsOf(kind));
+  }
+
+  protected readonly paginaDeTransacciones = computed(() =>
+    this.paginaDe('TX', this.transactionsRows()),
+  );
+
+  protected readonly paginaDeCuentas = computed(() => this.paginaDe('CUENTAS', this.accountsRows()));
+
+  protected totalDe(tabla: Tabla): number {
+    return this.filasFiltradas(tabla).length;
+  }
+
+  protected buscar(tabla: Tabla, termino: string): void {
+    this.busqueda.update((todas) => ({ ...todas, [tabla]: termino }));
+    this.pagina.update((todas) => ({ ...todas, [tabla]: 1 }));
+  }
+
+  protected irAPagina(tabla: Tabla, numero: number): void {
+    this.pagina.update((todas) => ({ ...todas, [tabla]: numero }));
+  }
+
+  protected cambiarTamano(tabla: Tabla, tamano: number): void {
+    this.tamano.update((todos) => ({ ...todos, [tabla]: tamano }));
+    this.pagina.update((todas) => ({ ...todas, [tabla]: 1 }));
+  }
 
   /** Cuántos hay de cada cosa, para el rótulo de la pestaña. */
   protected count(estado: ViewState<readonly unknown[]>): string {
@@ -306,8 +419,10 @@ export class SimpleAccounting {
   private loadAll(): void {
     const parte = this.parte();
     if (parte !== 'registros') this.loadSummary();
-    if (parte === 'numeros') return;
+    // Las cuentas también en el resumen: los atajos «Anotar un gasto»… abren
+    // el formulario, y su lista de tipos sale de estas cuentas.
     this.loadAccounts();
+    if (parte === 'numeros') return;
     for (const kind of KINDS) this.loadRecords(kind);
     this.loadTransactions();
   }
@@ -438,7 +553,9 @@ export class SimpleAccounting {
 
   protected savedRecord(registro: SimpleRecord): void {
     this.notices.success(TEXTS[registro.kind].guardado, 'Guardado');
-    this.loadRecords(registro.kind);
+    // En el resumen no hay tabla que refrescar: sólo se avisa.
+    if (this.parte() !== 'numeros') this.loadRecords(registro.kind);
+    this.anotado.emit();
   }
 
   protected savedTransaction(): void {
@@ -467,4 +584,12 @@ function map<T, U>(
   return estado.status === 'ready'
     ? ready(estado.data.map(fn))
     : (estado as ViewState<readonly U[]>);
+}
+
+/** Para buscar sin tildes ni mayúsculas. */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLowerCase();
 }

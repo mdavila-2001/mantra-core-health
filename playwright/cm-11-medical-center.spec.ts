@@ -39,7 +39,19 @@ async function noHorizontalOverflow(page: Page): Promise<void> {
  * superpone al contenido y la imagen no muestra lo que ve la persona.
  */
 async function foto(page: Page, nombre: string, completa = true): Promise<void> {
-  await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: completa });
+  // Sin captura a mitad de una animación: se espera a que terminen las finitas
+  // que están corriendo (una pausada no termina nunca), con un techo de 5 s.
+  await page.evaluate(async () => {
+    const corriendo = document.getAnimations().filter((animacion) => {
+      const iteraciones = animacion.effect?.getComputedTiming().iterations ?? 1;
+      return Number.isFinite(iteraciones) && animacion.playState === 'running';
+    });
+    await Promise.race([
+      Promise.all(corriendo.map((animacion) => animacion.finished.catch(() => undefined))),
+      new Promise((listo) => setTimeout(listo, 5_000)),
+    ]);
+  });
+  await page.screenshot({ path: join(EVIDENCIA, `${nombre}.png`), fullPage: completa, animations: 'disabled' });
 }
 
 async function escribir(page: Page, testId: string, texto: string): Promise<void> {
@@ -144,8 +156,11 @@ for (const view of VIEWPORTS) {
       await page.goto('/administration/medical-center-setup', { waitUntil: 'domcontentloaded' });
       await esperarAplicacionLista(page);
       await expect(
-        page.getByRole('heading', { level: 1, name: 'Configurar centro médico' }),
+        page.getByRole('heading', { level: 1, name: 'Configurar práctica' }),
       ).toBeVisible();
+      // El hospital de la maqueta está verificado: se ofrece el formulario, no el S3.
+      await expect(page.getByTestId('medical-center-setup-form')).toBeVisible();
+      await expect(page.getByTestId('medical-center-setup-unverified')).toHaveCount(0);
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-07-setup-page-1`, false);
 

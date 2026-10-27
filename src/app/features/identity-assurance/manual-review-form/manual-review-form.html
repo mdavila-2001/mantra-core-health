@@ -38,6 +38,7 @@
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <app-form-section legend="Qué caso" description="El expediente que pasa a manos de una persona.">
       <app-form-field
+        icon="shield"
         label="Caso de verificación"
         [required]="true"
         [hint]="uuidHint"
@@ -54,6 +55,7 @@
       description="Por qué se escala y quién la toma."
     >
       <app-form-field
+        icon="labels"
         label="Motivo de la revisión (concepto)"
         [required]="true"
         [hint]="uuidHint"
@@ -68,6 +70,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="patients"
         label="Revisor asignado"
         hint="Opcional: sin revisor, la toma quien la escala."
         [errorMessage]="

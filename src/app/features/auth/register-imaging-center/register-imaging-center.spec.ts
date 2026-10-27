@@ -5,7 +5,14 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { MapLocationPicker } from '../shared-registration/map-location-picker/map-location-picker';
+import { NEVER, of } from 'rxjs';
+
+import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
+import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { DIAGNOSIS_CODES } from '../shared-registration/diagnostic-center-enrollment';
 import {
   altaPendiente,
@@ -40,6 +47,14 @@ function archivo(nombre: string, tipo: string, bytes: number): File {
 
 const PDF = () => archivo('sedes.pdf', 'application/pdf', 120_000);
 
+/** El punto confirmado de la central en las pruebas. */
+const PUNTO_CENTRAL = { lat: -17.7833, lng: -63.1821 };
+
+/** Lo que `app-map-location-picker` emite por `localidad`. */
+function localidad(calle: string | null, zona: string | null = null): LocalityFromPoint {
+  return { punto: PUNTO_CENTRAL, calle, calleSola: calle, zona, municipioConceptId: null };
+}
+
 describe('RegisterImagingCenter', () => {
   let fixture: ComponentFixture<RegisterImagingCenter>;
   let component: RegisterImagingCenter;
@@ -53,6 +68,10 @@ describe('RegisterImagingCenter', () => {
         provideHttpClientTesting(),
         // Router real: la plantilla tiene `routerLink` y necesita su contexto.
         provideRouter([]),
+        // El selector de ubicación pide la calle y el catálogo de municipios;
+        // acá no responden: lo deducido se emite a mano por `localidad`.
+        { provide: ReverseGeocodingClient, useValue: { streetAt: () => NEVER } },
+        { provide: BoMunicipalitiesCatalog, useValue: { listar: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -85,6 +104,8 @@ describe('RegisterImagingCenter', () => {
     component.updateAttachment('seprecFile', [archivo('seprec.pdf', 'application/pdf', 10)]);
     component.updateAttachment('licenciaFile', [archivo('licencia.pdf', 'application/pdf', 10)]);
     component.updateAttachment('sedesFile', [archivo('sedes.pdf', 'application/pdf', 10)]);
+    // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
+    component.fijarGpsCentral(PUNTO_CENTRAL);
   }
 
   /** Atiende el envío completo: catálogo, una subida por papel y el alta. */
@@ -205,6 +226,23 @@ describe('RegisterImagingCenter', () => {
       },
     });
     expect(cuerpo.organization.payer).toBeUndefined();
+    // La central viaja con su dirección y su punto, que es obligatorio.
+    expect(cuerpo.organization.diagnosticUnit.primarySite.address).toEqual({
+      lines: ['Av. Cañoto esq. Ballivián 234'],
+      latitude: -17.7833,
+      longitude: -63.1821,
+    });
+  });
+
+  it('sin el punto de la central no sale', () => {
+    completarLoObligatorio();
+    component.fijarGpsCentral(null);
+
+    component.submit();
+
+    // `http.verify()` del `afterEach` prueba que no salió nada.
+    expect(component.enviada()).toBe(false);
+    expect(component.form.controls.gpsCentral.invalid).toBe(true);
   });
 
   it.each(Object.entries({
@@ -408,7 +446,8 @@ describe('RegisterImagingCenter', () => {
     const [primera, segunda] = component.sucursales();
 
     component.escribirNombreDeSucursal(primera!.id, 'Equipetrol');
-    component.escribirDireccionDeSucursal(primera!.id, 'Av. San Martín 456');
+    // La dirección no se escribe: sale de lo deducido del punto.
+    component.escribirLocalidadDeSucursal(primera!.id, localidad('Av. San Martín 456'));
     component.fijarGpsDeSucursal(primera!.id, { lat: -17.78, lng: -63.18 });
     component.quitarSucursal(segunda!.id);
 
@@ -472,9 +511,9 @@ describe('RegisterImagingCenter', () => {
     expect(form).not.toBeNull();
   });
 
-  /* --- el mapa vacía la dirección de la central (D-06) ------------------- */
+  /* --- la ubicación de la central: sólo el punto (26/10/2026) ------------ */
 
-  describe('el mapa vacía la dirección de la central', () => {
+  describe('la ubicación de la central sale del punto', () => {
     /** Avanza el asistente hasta la página cuyo título contiene `fragmento`. */
     function avanzarHasta(fragmento: string): void {
       for (let paso = 0; paso < 12; paso += 1) {
@@ -487,59 +526,30 @@ describe('RegisterImagingCenter', () => {
       throw new Error(`No se alcanzó una página con título que contenga «${fragmento}»`);
     }
 
-    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
-    function direccionEscritaYDejada(): HTMLInputElement {
+    function irALaUbicacion(): void {
       fixture.detectChanges();
       completarLoObligatorio();
+      component.fijarGpsCentral(null);
       fixture.detectChanges();
       avanzarHasta('Dónde está la central');
-      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
-        '[data-testid="registro-imagen-direccion"]',
-      );
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-      return campo;
     }
 
-    function tocarElMapa(): void {
-      const mapa = fixture.debugElement.query(By.directive(MapLocationPicker));
-      (mapa.componentInstance as MapLocationPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
-      fixture.detectChanges();
+    function selector(): MapLocationPicker {
+      return fixture.debugElement.query(By.directive(MapLocationPicker))
+        .componentInstance as MapLocationPicker;
     }
 
-    function errorDe(campo: HTMLElement): string {
-      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
-    }
+    it('el mapa es el primer campo de su página, obligatorio, y la dirección ya no se escribe', () => {
+      const pagina = component.paginas.find((p) => p.clave === 'ubicacion')!;
+      expect(pagina.campos[0]).toMatchObject({ key: 'gpsCentral', control: 'custom', required: true });
+      expect(pagina.campos.map((c) => c.key)).not.toContain('addressLines');
 
-    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
-      const campo = direccionEscritaYDejada();
-      expect(component.form.controls.addressLines.touched).toBe(true);
-
-      tocarElMapa();
-
-      expect(campo.value).toBe('');
-      expect(errorDe(campo)).toBe('');
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
-      ).not.toBeNull();
+      irALaUbicacion();
+      expect(fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion"]')).toBeNull();
     });
 
-    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
-
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-
-      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="registro-imagen-direccion-reescribir"]'),
-      ).not.toBeNull();
-    });
-
-    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
+    it('sin el punto confirmado no deja pasar, y lo dice', () => {
+      irALaUbicacion();
 
       fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
       fixture.detectChanges();
@@ -547,7 +557,31 @@ describe('RegisterImagingCenter', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Dónde está la central',
       );
-      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+    });
+
+    it('confirmar el punto en el mapa llena el control obligatorio', () => {
+      irALaUbicacion();
+
+      selector().confirmado.emit(PUNTO_CENTRAL);
+
+      expect(component.form.controls.gpsCentral.value).toEqual(PUNTO_CENTRAL);
+      expect(component.gpsCentral()).toEqual(PUNTO_CENTRAL);
+    });
+
+    it('lo deducido del punto escribe la dirección legal; sin calle, la zona o el punto', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad('Calle Guapay 3861, Equipetrol', 'Equipetrol'));
+      expect(component.form.controls.addressLines.value).toBe('Calle Guapay 3861, Equipetrol');
+
+      selector().localidad.emit(localidad(null, 'Equipetrol'));
+      expect(component.form.controls.addressLines.value).toBe('Equipetrol');
+
+      selector().localidad.emit(localidad(null));
+      expect(component.form.controls.addressLines.value).toBe('Punto GPS -17.78330, -63.18210');
     });
   });
 
@@ -593,6 +627,7 @@ describe('RegisterImagingCenter', () => {
       expect(component.form.controls.legalName.value).toBe('Resonancia Magnética Los Andes');
       expect(component.form.controls.taxId.value).toBe('987654321');
       expect(component.gpsCentral()).toEqual({ lat: -16.5, lng: -68.15 });
+      expect(component.form.controls.gpsCentral.value).toEqual({ lat: -16.5, lng: -68.15 });
       expect(component.pasoGuardado()).toBe(1);
     });
 

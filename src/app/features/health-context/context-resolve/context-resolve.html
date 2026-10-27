@@ -21,6 +21,7 @@
 
     @if (pegarIdentificadores()) {
       <app-form-field
+        icon="globe"
         label="Concepto de país"
         [required]="true"
         hint="Identificador del concepto (UUID)."
@@ -32,6 +33,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="labels"
         label="Concepto de dominio del contexto"
         [required]="true"
         hint="Identificador del concepto (UUID)."
@@ -42,16 +44,17 @@
         <app-input formControlName="domainId" type="text" />
       </app-form-field>
     } @else {
-      <app-form-field label="País" [required]="true">
+      <app-form-field icon="globe" label="País" [required]="true">
         <app-concept-select [target]="targetPais" [(value)]="country" />
       </app-form-field>
 
-      <app-form-field label="Dominio del contexto" [required]="true">
+      <app-form-field icon="labels" label="Dominio del contexto" [required]="true">
         <app-concept-select [target]="targetDominio" [(value)]="domain" />
       </app-form-field>
     }
 
     <app-form-field
+      icon="key"
       label="Clave del contexto"
       [required]="true"
       hint="La clave dentro del dominio, tal como se registró. Máx. 200 caracteres."

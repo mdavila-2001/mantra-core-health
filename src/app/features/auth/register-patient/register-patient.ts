@@ -55,7 +55,7 @@ import type {
   BirthSexCode,
   PatientRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { campoDistrito, componerDireccion } from '../shared-registration/address-line';
+import { componerDireccion } from '../shared-registration/address-line';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -66,7 +66,11 @@ import {
   INVALID_IDENTITY_DOCUMENT_MESSAGE,
   identityDocumentValidators,
 } from '../shared-registration/national-id';
-import { LocationPicker } from '../shared-registration/location-picker/location-picker';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+  type TestIds as IdsDeUbicacion,
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -92,7 +96,6 @@ import {
   type HelpCard,
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { AppMap } from '../../../shared/components/organisms/map/map';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
@@ -447,7 +450,7 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'route',
       titulo: 'La calle sale del punto',
       texto:
-        'Al marcar su casa escribimos el nombre de la calle con datos de OpenStreetMap. Revísela: si no la encontramos, o no es la suya, la corrige usted.',
+        'Al marcar su casa escribimos el nombre de la calle con datos de OpenStreetMap. Con el mismo punto sabemos su departamento, provincia, municipio y zona. Si algo no coincide, mueva el pin.',
     },
   ],
   work: [
@@ -585,7 +588,7 @@ interface BorradorLocal {
     AppButton,
     NavIcon,
     Tooltip,
-    LocationPicker,
+    MapLocationPicker,
     Link,
     Alert,
     AuthSplit,
@@ -594,7 +597,6 @@ interface BorradorLocal {
     CustomField,
     ReferenceCombobox,
     RegistrationHelp,
-    AppMap,
     FormField,
     Select,
     AppInput,
@@ -1511,38 +1513,31 @@ export class RegisterPatient {
       titulo: 'Lugares donde vive',
       clave: 'residence',
       icon: 'home',
-      hint: 'Su localidad y el punto de su casa en el mapa hacen falta; la calle sale del punto y la puede corregir.',
+      hint: 'Marque su casa en el mapa. La calle, el departamento, la provincia, el municipio y la zona salen solos del punto.',
       campos: [
+        // Pedido del cliente (26/10/2026): el punto es lo único que se elige,
+        // y es obligatorio. El resto se deduce de él y se muestra en sólo
+        // lectura dentro del mismo selector (calle, mapa de Bolivia acercado,
+        // departamento, provincia, municipio y zona). La calle y la zona viajan
+        // en sus controles, que llena el punto: ver `aplicarLocalidadDeCasa`.
+        {
+          key: 'gpsDomicilio',
+          label: 'Ubicación de su casa',
+          hint: 'Toque el mapa donde vive o use su ubicación actual, y confírmelo.',
+          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
+          control: 'custom',
+          required: true,
+          mensajeDeError: 'Marque su casa en el mapa y pulse «Confirmar dirección actual».',
+        },
+        // El municipio sale del punto. El campo sigue en la página sólo para
+        // que su validación —obligatoria— tenga dónde decir que falta.
         {
           key: 'residenceMunicipalityConceptId',
           label: '',
           control: 'custom',
           required: true,
-          mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
-        },
-        campoDistrito('homeDistrict', 'registro-domicilio-distrito', 'residenceMunicipalityConceptId'),
-        {
-          key: 'homeAddressLines',
-          label: 'Calle (opcional)',
-          hint: 'Como la escribiría en un sobre.',
-          description:
-            'Calle, número y referencia. Al marcar su casa en el mapa la escribimos; usted la corrige si hace falta.',
-          control: 'text',
-          autocomplete: 'street-address',
-          placeholder: 'Av. Banzer, 3er anillo #42',
-          testId: 'registro-domicilio-calle',
-          icono: 'route',
-          showWhen: { key: 'residenceMunicipalityConceptId', filled: true },
-        },
-        {
-          key: 'gpsDomicilio',
-          label: 'Ubicación GPS',
-          hint: 'Marque su casa en el mapa y confírmela. Con el punto escribimos la calle.',
-          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
-          control: 'custom',
-          required: true,
-          mensajeDeError: 'Marque su casa en el mapa y pulse «Confirmar dirección actual».',
-          showWhen: { key: 'residenceMunicipalityConceptId', filled: true },
+          mensajeDeError:
+            'No pudimos ubicar su municipio con ese punto. Mueva el pin dentro de Bolivia.',
         },
       ],
     },
@@ -1637,30 +1632,19 @@ export class RegisterPatient {
       campos: [
         this.campoEmpresa(),
         ...this.campoOtraEmpresa(),
+        // Igual que la casa: se marca el punto y el resto sale de él. Acá es
+        // opcional; si se marca, el municipio, la calle y la zona se llenan solos.
+        {
+          key: 'gpsTrabajo',
+          label: 'Ubicación de su trabajo (opcional)',
+          hint: 'Toque el mapa donde trabaja, o use su ubicación actual.',
+          description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
+          control: 'custom',
+        },
         {
           key: 'workMunicipalityConceptId',
           label: '',
           control: 'custom',
-        },
-        campoDistrito('workDistrict', 'registration-work-district', 'workMunicipalityConceptId'),
-        {
-          key: 'workAddressLines',
-          label: 'Calle (opcional)',
-          hint: 'Calle y número de su trabajo.',
-          description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
-          control: 'text',
-          placeholder: 'Calle Libertad #120',
-          testId: 'registration-work-address',
-          icono: 'route',
-          showWhen: { key: 'workMunicipalityConceptId', filled: true },
-        },
-        {
-          key: 'gpsTrabajo',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'El punto exacto de su lugar de trabajo.',
-          description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
-          control: 'custom',
-          showWhen: { key: 'workMunicipalityConceptId', filled: true },
         },
       ],
     },
@@ -2526,6 +2510,79 @@ export class RegisterPatient {
    *
    * La calle la escribe el punto, no la confirmación: ver {@link traerCalleDelPunto}.
    */
+  /* ---- El flujo del 26/10/2026: el punto y nada más -----------------------
+     El selector compartido (`app-map-location-picker`) abre el mapa, pide la
+     calle, acerca el mapa de Bolivia y deduce la localidad. Acá sólo se
+     guarda lo que avisa: el punto confirmado y lo deducido de él. */
+
+  protected readonly idsUbicacionCasa: IdsDeUbicacion = {
+    mapa: 'registro-mapa-domicilio',
+    confirmada: 'registro-direccion-confirmada',
+    avisoGeocodificacion: 'registration-home-geocoding-notice',
+    quitar: 'registration-home-location-remove',
+    confirmar: 'registro-confirmar-direccion',
+    usarUbicacion: 'registro-usar-ubicacion',
+    marcarEnMapa: 'registration-home-location-pick',
+  };
+
+  protected readonly idsUbicacionTrabajo: IdsDeUbicacion = {
+    mapa: 'registration-work-map',
+    confirmada: 'registration-work-location-confirmed',
+    avisoGeocodificacion: 'registration-work-geocoding-notice',
+    quitar: 'registration-work-location-remove',
+    confirmar: 'registration-work-location-confirm',
+    usarUbicacion: 'registration-work-location-use',
+    marcarEnMapa: 'registration-work-location-pick',
+  };
+
+  /** El punto de la casa, confirmado o soltado en el selector. */
+  confirmarCasa(punto: Coordenadas | null): void {
+    if (punto !== null) this.gpsDomicilio.set(punto);
+    this.direccionConfirmada.set(punto !== null);
+    this.sincronizarCasa();
+  }
+
+  /** El punto del trabajo, confirmado o soltado en el selector. */
+  confirmarTrabajo(punto: Coordenadas | null): void {
+    if (punto !== null) this.gpsTrabajo.set(punto);
+    this.direccionTrabajoConfirmada.set(punto !== null);
+  }
+
+  /**
+   * Lo deducido del punto de la casa llena los controles que viajan en el
+   * alta. No se editan a mano: si algo no es así, se mueve el pin.
+   */
+  aplicarLocalidadDeCasa(localidad: LocalityFromPoint | null): void {
+    const c = this.formPaciente.controls;
+    if (localidad === null) {
+      this.escribirDireccionSembrada(c.homeAddressLines, '');
+      c.homeDistrict.setValue('');
+      return;
+    }
+    const municipio = localidad.municipioConceptId;
+    if (municipio !== null && municipio !== c.residenceMunicipalityConceptId.value) {
+      this.elegirMunicipio(municipio);
+    }
+    this.escribirDireccionSembrada(c.homeAddressLines, localidad.calleSola ?? '');
+    c.homeDistrict.setValue(localidad.zona ?? '');
+  }
+
+  /** Lo mismo, para el lugar de trabajo. */
+  aplicarLocalidadDeTrabajo(localidad: LocalityFromPoint | null): void {
+    const c = this.formPaciente.controls;
+    if (localidad === null) {
+      this.escribirDireccionSembrada(c.workAddressLines, '');
+      c.workDistrict.setValue('');
+      return;
+    }
+    const municipio = localidad.municipioConceptId;
+    if (municipio !== null && municipio !== c.workMunicipalityConceptId.value) {
+      this.elegirMunicipioDeTrabajo(municipio);
+    }
+    this.escribirDireccionSembrada(c.workAddressLines, localidad.calleSola ?? '');
+    c.workDistrict.setValue(localidad.zona ?? '');
+  }
+
   confirmarDireccionActual(): void {
     if (this.gpsDomicilio() === null) return;
     this.direccionConfirmada.set(true);

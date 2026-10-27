@@ -9,6 +9,18 @@ import {
   signal,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
+
+import {
+  ReverseGeocodingClient,
+  type StreetFromPoint,
+} from '../../../../core/data-access/geo/reverse-geocoding.client';
+import {
+  BoMunicipalitiesCatalog,
+  type RamaDepartamento,
+} from '../../../../core/data-access/terminology/bo-municipalities.service';
+import { LocationPicker } from '../location-picker/location-picker';
 
 import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -81,6 +93,34 @@ export const NOTICE_WITHOUT_GEOCODING =
  * Vive acá y no en cada formulario para que las ocho instancias digan lo
  * mismo: el aviso es parte de la regla, no de cada pantalla.
  */
+/**
+ * Lo que se dedujo del punto: la calle (del geocodificador, vía la API), el
+ * distrito o zona, y el municipio del catálogo (por el contorno donde cae el
+ * punto, sin red). Lo recibe quien monta el selector para llenar sus campos,
+ * que el cliente pidió de sólo lectura (26/10/2026): la persona sólo elige el
+ * punto; todo lo demás se infiere de él.
+ */
+export interface LocalityFromPoint {
+  readonly punto: Coordinates;
+  /** La línea de dirección completa (calle, número y barrio), o `null`. */
+  readonly calle: string | null;
+  /** Sólo calle y número, para quien guarda la zona aparte; `null` si no hay. */
+  readonly calleSola: string | null;
+  readonly zona: string | null;
+  /** El `conceptId` del municipio en `VS_BO_MUNICIPALITY`, o `null`. */
+  readonly municipioConceptId: string | null;
+}
+
+/** Qué pasó con la calle del último punto. */
+export type StreetState = 'sin-pedir' | 'buscando' | 'escrita' | 'sin-calle' | 'caida';
+
+export const STREET_TEXT: Readonly<Record<Exclude<StreetState, 'escrita'>, string>> = {
+  'sin-pedir': '',
+  buscando: 'Buscando la calle de este punto…',
+  'sin-calle': 'El mapa no tiene un nombre de calle en este punto.',
+  caida: 'No pudimos traer el nombre de la calle ahora. El punto se guarda igual.',
+};
+
 export const NOTICE_REWRITE_ADDRESS = 'Vuelva a escribir la dirección para este punto.';
 
 /**
@@ -158,7 +198,7 @@ function formatCoordinate(valor: number): string {
  */
 @Component({
   selector: 'app-map-location-picker',
-  imports: [AppButton, Input, FormField, NavIcon, AppMap, AnnounceOnAppear],
+  imports: [AppButton, Input, FormField, NavIcon, AppMap, AnnounceOnAppear, LocationPicker],
   templateUrl: './map-location-picker.html',
   styleUrl: './map-location-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -170,13 +210,34 @@ export class MapLocationPicker {
   private seeded = false;
 
   constructor() {
+    this.listenStreetRequests();
+    // Quien monta el selector se entera de cada cambio de lo deducido.
+    effect(() => {
+      const punto = this.punto();
+      if (punto === null) {
+        this.localidad.emit(null);
+        return;
+      }
+      this.localidad.emit({
+        punto,
+        calle: this.streetState() === 'escrita' ? this.street() : null,
+        calleSola: this.streetState() === 'escrita' ? this.streetOnly() : null,
+        zona: this.zone(),
+        municipioConceptId: this.municipality(),
+      });
+    });
     // `effect` y no un valor inicial de la señal: el perfil llega por HTTP y el
     // componente ya está montado cuando aparece.
     effect(() => {
       const guardado = this.inicial();
       if (this.seeded || guardado === null) return;
       this.seeded = true;
+      // El padre puede devolver el mismo punto que este selector acaba de
+      // confirmar: no hay nada que sembrar ni que volver a buscar.
+      const actual = this.punto();
+      if (actual !== null && actual.lat === guardado.lat && actual.lng === guardado.lng) return;
       this.punto.set(guardado);
+      this.deduceFrom(guardado);
       // Confirmado de entrada: es un punto que la persona ya dio por bueno
       // alguna vez. Pedirle que lo vuelva a confirmar para no perderlo sería
       // convertir «no toqué el mapa» en «borrá mi ubicación».
@@ -261,6 +322,90 @@ export class MapLocationPicker {
   readonly puntoElegido = output<Coordinates>();
 
   /**
+   * Si debajo del mapa se muestra lo deducido del punto —calle, mapa de Bolivia
+   * acercado, departamento, provincia, municipio y zona—, todo en sólo lectura.
+   */
+  readonly detallar = input(true);
+
+  /** El título de la ficha de lo deducido. */
+  readonly etiquetaFicha = input('Lo que sale del punto');
+
+  /** Lo deducido del punto, cada vez que cambia; `null` sin punto. */
+  readonly localidad = output<LocalityFromPoint | null>();
+
+  private readonly geocoder = inject(ReverseGeocodingClient);
+
+  /** El catálogo de municipios, para traducir el punto a un municipio. */
+  protected readonly branches = toSignal(
+    inject(BoMunicipalitiesCatalog)
+      .listar()
+      .pipe(catchError(() => of([] as readonly RamaDepartamento[]))),
+    { initialValue: [] as readonly RamaDepartamento[] },
+  );
+
+  readonly streetState = signal<StreetState>('sin-pedir');
+  readonly street = signal<string | null>(null);
+  readonly streetOnly = signal<string | null>(null);
+  readonly zone = signal<string | null>(null);
+  readonly municipality = signal<string | null>(null);
+
+  /** Lo que muestra el campo «Calle», que no se edita. */
+  protected readonly streetText = computed(() => {
+    const estado = this.streetState();
+    return estado === 'escrita' ? (this.street() ?? '') : STREET_TEXT[estado];
+  });
+
+  private readonly streetRequests = new Subject<Coordinates>();
+
+  /** Un pedido vivo a la vez: un punto nuevo cancela el anterior. */
+  private listenStreetRequests(): void {
+    this.streetRequests
+      .pipe(
+        switchMap((punto) =>
+          this.geocoder.streetAt(punto.lat, punto.lng).pipe(
+            timeout(10_000),
+            map((calle): { punto: Coordinates; calle: StreetFromPoint | null } => ({ punto, calle })),
+            catchError(() => of({ punto, calle: null })),
+          ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ punto, calle }) => this.writeStreet(punto, calle));
+  }
+
+  private writeStreet(punto: Coordinates, calle: StreetFromPoint | null): void {
+    // Una respuesta que llega tarde —el pin ya se movió— se descarta.
+    if (this.punto() !== punto) return;
+    if (calle === null) {
+      this.streetState.set('caida');
+      return;
+    }
+    this.zone.set(calle.neighbourhood?.trim() || null);
+    if (!calle.found || !calle.line) {
+      this.streetState.set('sin-calle');
+      return;
+    }
+    this.street.set(calle.line);
+    const sola = [calle.road, calle.houseNumber].filter((x) => !!x?.trim()).join(' ');
+    this.streetOnly.set(sola !== '' ? sola : calle.line);
+    this.streetState.set('escrita');
+  }
+
+  /** Un punto nuevo: lo deducido del anterior ya no vale. */
+  private deduceFrom(punto: Coordinates): void {
+    this.street.set(null);
+    this.streetOnly.set(null);
+    this.zone.set(null);
+    this.municipality.set(null);
+    this.streetState.set('buscando');
+    this.streetRequests.next(punto);
+  }
+
+  protected chooseMunicipality(conceptId: string | null): void {
+    this.municipality.set(conceptId);
+  }
+
+  /**
    * Las coordenadas que la persona compartió, si las compartió.
    *
    * **Nunca se muestran como números.** Son la entrada del mapa, y lo que la
@@ -288,7 +433,7 @@ export class MapLocationPicker {
   readonly marking = signal(false);
 
   /** Si el mapa tiene que estar en pantalla: porque hay pin, o porque se está por poner. */
-  protected readonly openMap = computed(() => this.punto() !== null || this.marking());
+  protected readonly openMap = computed(() => true);
 
   /**
    * Si el punto actual lo dio el navegador (y no un toque sobre el plano).
@@ -402,7 +547,9 @@ export class MapLocationPicker {
     this.unconfirm();
     geo.getCurrentPosition(
       (posicion) => {
-        this.punto.set({ lat: posicion.coords.latitude, lng: posicion.coords.longitude });
+        const encontrado = { lat: posicion.coords.latitude, lng: posicion.coords.longitude };
+        this.punto.set(encontrado);
+        this.deduceFrom(encontrado);
         this.fromBrowser.set(true);
         this.marking.set(false);
         this.rejected.set(false);
@@ -440,6 +587,7 @@ export class MapLocationPicker {
     this.unconfirm();
     const elegido = { lat: punto.lat, lng: punto.lng };
     this.punto.set(elegido);
+    this.deduceFrom(elegido);
     this.fromBrowser.set(false);
     this.marking.set(false);
     this.rejected.set(false);
@@ -473,6 +621,11 @@ export class MapLocationPicker {
   /** Olvida la ubicación capturada, y con ella su confirmación; cierra el mapa. */
   removeLocation(): void {
     this.punto.set(null);
+    this.street.set(null);
+    this.streetOnly.set(null);
+    this.zone.set(null);
+    this.municipality.set(null);
+    this.streetState.set('sin-pedir');
     this.marking.set(false);
     this.openCoordinates.set(false);
     this.announcement.set('');

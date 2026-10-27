@@ -12,7 +12,7 @@ import { Tabs } from './tabs';
     <app-tabs [(selectedIndex)]="seccion">
       <app-tab label="Evolución">Dolor torácico de 2 horas</app-tab>
       <app-tab label="Laboratorio" [disabled]="sinLaboratorio()">Hemograma completo</app-tab>
-      <app-tab label="Órdenes">Radiografía de tórax</app-tab>
+      <app-tab label="Órdenes" icon="clipboard">Radiografía de tórax</app-tab>
     </app-tabs>
   `,
 })
@@ -50,6 +50,19 @@ describe('Tabs', () => {
     fixture = TestBed.createComponent(HostComponent);
     host = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  describe('ícono + texto', () => {
+    it('la pestaña con ícono lo dibuja delante del rótulo, oculto al lector', () => {
+      const [evolucion, , ordenes] = botones();
+      expect(evolucion!.querySelector('.tabs__icono')).toBeNull();
+      const icono = ordenes!.querySelector('.tabs__icono');
+      expect(icono).not.toBeNull();
+      expect(icono!.getAttribute('aria-hidden')).toBe('true');
+      expect(icono!.querySelector('svg')).not.toBeNull();
+      // El nombre accesible sigue siendo el texto: el dibujo no le suma nada.
+      expect(ordenes!.textContent?.trim()).toBe('Órdenes');
+    });
   });
 
   describe('ARIA cruzada', () => {

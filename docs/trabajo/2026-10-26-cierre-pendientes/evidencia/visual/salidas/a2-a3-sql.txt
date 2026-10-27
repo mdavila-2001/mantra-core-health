@@ -1,0 +1,12 @@
+-- A2: la organización verificada desde la UI (Laboratorio Sintético Visual 16003, dato sintético)
+                  id                  |             legal_name             |    verification_status_concept_id    |         updated_at         
+--------------------------------------+------------------------------------+--------------------------------------+----------------------------
+ 50d42f01-2112-4690-aab9-a08720428994 | Laboratorio Sintético Visual 16003 | 205bce05-3eb5-5785-8aa0-6120227dc4a5 | 2026-10-26 13:10:51.329+00
+(1 row)
+
+-- A3: la orden de Glicemia en ayunas basada en el formulario libre firmado
+          service_request_id          |       clinical_note_header_id        | ordinal |         created_at         
+--------------------------------------+--------------------------------------+---------+----------------------------
+ f2b2e513-602c-4f38-8a09-2d20630abfc6 | e035062d-3354-4711-88cd-ecc53f2f3b1b |       0 | 2026-10-26 13:23:14.215+00
+(1 row)
+

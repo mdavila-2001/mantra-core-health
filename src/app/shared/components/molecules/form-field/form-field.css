@@ -138,6 +138,24 @@
   opacity: 1;
 }
 
+/* El foco que llega solo, por un error (`FOCO_POR_ERROR` de
+   `focus-first-invalid.ts`), no abre el globo: se abriría sobre el rótulo,
+   que es justo lo que la persona tiene que leer. `:host-context` porque el
+   atributo lo lleva el campo de la página, que en un `custom` envuelve a
+   este. Vuelve a abrirse con la primera tecla o el primer clic. */
+:host-context([data-foco-por-error])
+  .form-field-container:hover
+  > .form-field-body
+  > .form-field-control
+  > .form-field-description,
+:host-context([data-foco-por-error])
+  .form-field-container:focus-within
+  > .form-field-body
+  > .form-field-control
+  > .form-field-description {
+  opacity: 0;
+}
+
 /* Hint */
 .form-field-hint {
   font-family: var(--font-body);
