@@ -10,6 +10,7 @@ import type {
   CarrierDetail,
   CarrierSummary,
   InsurerPatientPage,
+  MyClaimList,
   PractitionerInsuranceNetworkPage,
 } from './insurance.types';
 
@@ -329,6 +330,80 @@ describe('InsuranceClient', () => {
         products: [],
         networks: [],
       });
+  });
+
+  it('listCoveragesOfPatient sale a la API real (maqueta apagada) y devuelve solo los items', () => {
+    let items: unknown;
+    client.listCoveragesOfPatient('p/1').subscribe((value) => (items = value));
+
+    const request = http.expectOne((r) => r.url === '/patient-coverages/by-patient/p%2F1');
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      items: [
+        {
+          id: 'coverage-1',
+          insuranceCarrierId: 'carrier-1',
+          carrierName: 'Seguros Andina',
+          planName: 'Plan Integral',
+          validityStatus: 'CURRENT',
+          currencyCode: 'BOB',
+        },
+      ],
+    });
+
+    expect(items).toEqual([
+      expect.objectContaining({ id: 'coverage-1', validityStatus: 'CURRENT', currencyCode: 'BOB' }),
+    ]);
+  });
+
+  it('listMyClaims conserva el desglose y convierte la fecha de la objeción', () => {
+    let list: MyClaimList | undefined;
+    client.listMyClaims().subscribe((value) => (list = value));
+
+    const claim = {
+          id: 'claim-1',
+          claimIdentifier: 'CLM-1',
+          patientName: null,
+          practitioner: null,
+          providerName: 'Consultorio',
+          service: null,
+          additionalServiceCount: 0,
+          billedTotal: { amount: '500.00', currency: { code: 'BOB', display: 'Boliviano' } },
+          approvedTotal: null,
+          submittedAt: '2026-10-01T10:00:00.000Z',
+          serviceDate: null,
+          insurerName: 'Seguros Andina',
+          planName: 'Plan Integral',
+          status: null,
+          decision: null,
+          breakdown: {
+            currencyCode: 'BOB',
+            patientTotal: '50.00',
+            insurerTotal: '450.00',
+            lines: [],
+          },
+          patientObjection: {
+            id: 'd-1',
+            reason: 'AMOUNT_DIFFERS',
+            submittedAt: '2026-10-02T09:00:00.000Z',
+            status: 'OPEN',
+          },
+    };
+    http.expectOne((r) => r.url === '/insurance/my-claims').flush({
+      view: 'PATIENT',
+      truncated: false,
+      items: [
+        claim,
+        { ...claim, id: 'claim-2', breakdown: null, patientObjection: null },
+      ],
+    });
+
+    const [first, second] = list!.items;
+    expect(first!.breakdown?.patientTotal).toBe('50.00');
+    expect(first!.patientObjection?.reason).toBe('AMOUNT_DIFFERS');
+    expect(first!.patientObjection?.submittedAt).toEqual(new Date('2026-10-02T09:00:00.000Z'));
+    expect(second!.breakdown).toBeNull();
+    expect(second!.patientObjection).toBeNull();
   });
 
   it('crea un plan conservando fechas, moneda y la ruta escapada', () => {
