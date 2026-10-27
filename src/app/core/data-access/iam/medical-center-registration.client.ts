@@ -14,6 +14,14 @@ export interface MedicalCenterRegistration {
   readonly legalName: string;
   readonly legalEntityType: string;
   readonly tradeName?: string;
+  /** Los cinco papeles de la empresa, por el `fileId` de su pre-carga. */
+  readonly legalDocuments: {
+    readonly constitutionFileId: string;
+    readonly taxIdentifierFileId: string;
+    readonly commerceRegistryFileId: string;
+    readonly operatingLicenseFileId: string;
+    readonly healthAuthorityCertificateFileId: string;
+  };
   /** Concept id del país: los cinco tipos son territoriales y la API lo exige. */
   readonly countryConceptId: string;
   /** Concept id de la jurisdicción: ver `countryConceptId`. */
@@ -52,6 +60,13 @@ export class MedicalCenterRegistrationClient {
           legalEntityType: registration.legalEntityType,
           ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
           tenantType: registration.tenantType,
+          legalDocuments: {
+            constitutionFileId: registration.legalDocuments.constitutionFileId,
+            taxIdentifierFileId: registration.legalDocuments.taxIdentifierFileId,
+            commerceRegistryFileId: registration.legalDocuments.commerceRegistryFileId,
+            operatingLicenseFileId: registration.legalDocuments.operatingLicenseFileId,
+            healthAuthorityCertificateFileId: registration.legalDocuments.healthAuthorityCertificateFileId,
+          },
           countryConceptId: registration.countryConceptId,
           jurisdictionConceptId: registration.jurisdictionConceptId,
         },
