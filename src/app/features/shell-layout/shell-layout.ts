@@ -12,7 +12,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -67,6 +67,23 @@ function contiene(ruta: string, url: string): boolean {
   return url === ruta || url.startsWith(`${ruta}/`);
 }
 
+/**
+ * Pantallas cuyo destino es un atajo de la cabecera y no un renglón del menú.
+ *
+ * Todas cuelgan de `/my-account`, que es «Mi perfil»: por la regla del prefijo
+ * más largo, estar en «Mis gastos» encendía «Mi perfil» en la barra lateral, y
+ * la pantalla se marcaba en dos lugares a la vez (propietario, 27/10/2026). El
+ * atajo ya se marca arriba (`routerLinkActive`), así que en estas el menú no
+ * reclama nada. El carrito no está: es parte de «Farmacia», y ahí marcarla es
+ * correcto.
+ */
+const DESTINOS_DE_LA_CABECERA: readonly string[] = [
+  '/my-account/spending',
+  '/my-account/invoices',
+  '/my-account/requests',
+  '/my-account/promotions',
+];
+
 /** El panel. Constante y no literal suelto: lo miran dos cosas distintas acá. */
 const PANEL = '/dashboard';
 
@@ -102,6 +119,7 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     NgTemplateOutlet,
     AlovidaThemeToggleDirective,
     RouterLink,
+    RouterLinkActive,
     RouterOutlet,
     TutorialOverlay,
     TutorialTarget,
@@ -232,6 +250,16 @@ export class ShellLayout {
   protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
   protected readonly pharmacyTestids = PHARMACY_TESTIDS;
 
+  /**
+   * «Mis gastos» se marca también en «Mis facturas»: para el paciente es el
+   * mismo atajo desde la fusión del 27/10/2026, y sin esto la cabecera quedaba
+   * sin nada marcado al entrar por «Ver mis facturas».
+   */
+  protected readonly gastosActivo = computed(() => {
+    const url = this.urlActual();
+    return contiene('/my-account/spending', url) || contiene('/my-account/invoices', url);
+  });
+
   /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
   protected readonly etiquetaCarrito = computed(() => {
     const unidades = this.unidadesDelCarrito();
@@ -356,18 +384,24 @@ export class ShellLayout {
     // Los fijos entran en la cuenta: se dibujan fuera de los grupos, pero son
     // destinos del menú igual que el resto, y sin esto «Mi perfil» era la única
     // entrada de la barra que nunca se marcaba al estar parado en ella.
-    return (
-      [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
-        .flatMap((item) =>
-          [item.route, ...(representadas.get(item.route) ?? [])]
-            .filter((ruta) => contiene(ruta, url))
-            .map((ruta) => ({ renglon: item.route, largo: ruta.length })),
-        )
-        .reduce<{ renglon: string; largo: number } | null>(
-          (mejor, actual) => (mejor === null || actual.largo > mejor.largo ? actual : mejor),
-          null,
-        )?.renglon ?? null
-    );
+    const mejor = [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
+      .flatMap((item) =>
+        [item.route, ...(representadas.get(item.route) ?? [])]
+          .filter((ruta) => contiene(ruta, url))
+          .map((ruta) => ({ renglon: item.route, largo: ruta.length })),
+      )
+      .reduce<{ renglon: string; largo: number } | null>(
+        (mejor, actual) => (mejor === null || actual.largo > mejor.largo ? actual : mejor),
+        null,
+      );
+
+    // Un atajo de la cabecera más específico que el renglón que ganó le saca la
+    // marca: el padre del menú no representa una pantalla que se abre desde arriba.
+    const atajo = DESTINOS_DE_LA_CABECERA.find((ruta) => contiene(ruta, url));
+    if (mejor !== null && atajo !== undefined && atajo.length > mejor.largo) {
+      return null;
+    }
+    return mejor?.renglon ?? null;
   });
 
   private rutaLimpia(): string {
