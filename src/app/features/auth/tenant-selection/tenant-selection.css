@@ -77,6 +77,10 @@
   font-size: var(--fs-body-lg);
   line-height: var(--lh-body-lg);
   font-weight: 600;
+  /* Una razón social de 300 caracteres sin espacios parte donde haga falta
+     en vez de estirar la ficha fuera de la tarjeta. */
+  overflow-wrap: anywhere;
+  min-width: 0;
   cursor: pointer;
   transition:
     border-color var(--dur-fast) var(--ease-standard),

@@ -46,10 +46,13 @@ describe('UbicacionPicker', () => {
     return recibidos;
   }
 
-  it('sin punto ofrece las dos puertas —el navegador y el mapa— y ningún mapa todavía', () => {
+  // Pedido del cliente (26/10/2026): el mapa abre por defecto, listo para
+  // tocarlo, junto al botón de la ubicación actual.
+  it('sin punto el mapa ya está abierto para tocarlo, con el botón de la ubicación actual', () => {
+    expect(raiz().querySelector(`[data-testid="${IDS.mapa}"]`)).not.toBeNull();
+    expect(raiz().querySelector('.mapa--seleccionable')).not.toBeNull();
     expect(raiz().querySelector(`[data-testid="${IDS.usarUbicacion}"]`)).not.toBeNull();
-    expect(raiz().querySelector(`[data-testid="${IDS.marcarEnMapa}"]`)).not.toBeNull();
-    expect(raiz().querySelector(`[data-testid="${IDS.mapa}"]`)).toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.mapa}-deducido"]`)).toBeNull();
   });
 
   /**
@@ -180,8 +183,9 @@ describe('UbicacionPicker', () => {
     fixture.detectChanges();
 
     expect(component.marking()).toBe(false);
-    expect(raiz().querySelector(`[data-testid="${IDS.mapa}"]`)).toBeNull();
-    expect(raiz().querySelector(`[data-testid="${IDS.marcarEnMapa}"]`)).not.toBeNull();
+    // El mapa no se cierra: es el único control de la ubicación.
+    expect(raiz().querySelector(`[data-testid="${IDS.mapa}"]`)).not.toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.usarUbicacion}"]`)).not.toBeNull();
   });
 
   it('con un punto sin confirmar ofrece confirmarlo', () => {

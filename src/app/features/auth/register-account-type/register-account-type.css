@@ -1,255 +1,302 @@
 /* ============================================================================
     Elegir tipo de cuenta — MOBILE-FIRST (§0.1).
 
-    Una columna en teléfono y dos dentro del panel. La rejilla pone las
-    opciones excluyentes en igualdad: apiladas en vertical con distinto ancho,
-    la primera parece la recomendada — y ninguna lo es.
-    ========================================================================== */
+    La pantalla es la elección y nada más: superficie del tema, encabezado
+    centrado y las tarjetas repartidas a lo ancho. Una columna en teléfono, dos
+    desde 780 px y tres desde 1120 px sólo si hay tres o más tipos que repartir.
+
+    Antes era un panel de vidrio con sombra larga sobre un escenario oscuro, y
+    cuando el escenario se retiró el panel quedó flotando sin razón, con las
+    tarjetas pegadas a la izquierda y una columna vacía al lado. La rejilla
+    pone las opciones excluyentes en igualdad: apiladas con distinto ancho, la
+    primera parece la recomendada — y ninguna lo es.
+   ========================================================================== */
+
+:host {
+  display: block;
+}
 
 .tipos {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-6);
-    /* Panel de vidrio: la pantalla vive sobre el escenario del latido
-       (`scene="stage"`), que es oscuro en los dos temas, y sin superficie
-       propia el título en tinta quedaría ilegible en claro. Es la misma
-       receta que la tarjeta del acceso: 92 % de superficie —el punto en que
-       el fondo se insinúa y el contraste sigue siendo el de los tokens— y
-       vidrio real donde exista `backdrop-filter`. */
-    padding: var(--sp-6);
-    border: 1px solid var(--material-trazo);
-    border-radius: var(--r-2xl);
-    background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
-    backdrop-filter: blur(22px) saturate(1.35);
-    -webkit-backdrop-filter: blur(22px) saturate(1.35);
-    box-shadow:
-        var(--shadow-lg),
-        0 48px 120px -24px rgb(0 0 0 / 0.55),
-        0 0 0 1px color-mix(in srgb, var(--c-aqua-300) 22%, transparent),
-        inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  inline-size: 100%;
+  margin-inline: auto;
 }
 
-@media (min-width: 40.625rem) {
-    /* --bp-sm, como el acceso: más aire en cuanto hay lugar. */
-    .tipos {
-        padding: var(--sp-8);
-    }
-}
-
+/* ---- Encabezado: centrado, y entra antes que las tarjetas. ---------------- */
 .tipos__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  text-align: center;
+  animation: tipos-rise var(--dur-slow) var(--ease-out) both;
 }
 
 .tipos__title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--fs-h2);
-    line-height: var(--lh-h2);
-    /* En tinta, no en color de marca: coherente con login y con el registro. */
-    color: var(--text-primary);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: -0.02em;
+  /* En tinta, no en color de marca: coherente con login y con el registro. */
+  color: var(--text-primary);
 }
 
 .tipos__subtitle {
-    margin: 0;
-    font-family: var(--font-body);
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    color: var(--text-secondary);
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
 }
 
+@keyframes tipos-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-2));
+  }
+}
+
+/* ---- La rejilla. ----------------------------------------------------------- */
 .tipos__grid {
-    display: grid;
-    /* Tantas columnas como quepan de 12rem, sin partir nunca una tarjeta: una
-       en teléfono, dos dentro del panel. Era `repeat(3, 1fr)` desde tablet,
-       pero `1fr` no baja del ancho mínimo de su contenido y, dentro del panel
-       de vidrio, la tercera tarjeta («Aseguradora») se salía por la derecha
-       (medido a 1920 px). */
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-    gap: var(--sp-4);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 780px) {
+  .tipos__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-5);
+  }
+}
+
+/* Tres columnas sólo cuando hay tres o más tarjetas que repartir: con dos, la
+   tercera quedaba vacía. Ver `RegisterAccountType.columns`. */
+@media (min-width: 1120px) {
+  .tipos__grid[data-columns='3'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .tipos__item {
-    display: flex;
+  display: flex;
+  /* La entrada: cada tarjeta se asienta después de la anterior. `--i` lo pone
+     la plantilla con el índice. */
+  animation: tipos-asienta var(--dur-slow) var(--ease-spring) calc(140ms + var(--i, 0) * 80ms) both;
 }
 
+@keyframes tipos-asienta {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-4)) scale(0.97);
+  }
+}
+
+/* ---- La tarjeta: papel con filete, y un tono propio por tipo. -------------- */
 .tipos__card {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--sp-2);
-    padding: var(--sp-5);
-    /* Superficie tonal SIN borde: el panel ya es la única caja con trazo; las
-       opciones se leen por tono y no por línea (nada de caja dentro de caja). */
-    border: 0;
-    border-radius: var(--r-xl);
-    background: var(--bg-surface-alt);
-    text-decoration: none;
-    /* La tarjeta entera es el destino táctil: en un teléfono, apuntar sólo al
-       título deja la mitad del área muerta y se siente rota. */
-    cursor: pointer;
-    /* Sube con el muelle `suave` y se hunde con el `rápido`: una tarjeta con
-       masa. El tono cambia al instante (respuesta < 100 ms). */
-    transition:
-        background-color var(--dur-fast) var(--ease-standard),
-        box-shadow var(--dur-base) var(--ease-out),
-        transform var(--spring-suave-dur) var(--spring-suave);
+  /* El tono sale de los tríos `--st-*`, que traen su versión oscura. Por
+     omisión, el primario. */
+  --tone-bg: var(--st-primary-bg);
+  --tone-fg: var(--st-primary-fg);
+  --tone-bd: var(--st-primary-bd);
+
+  position: relative;
+  display: grid;
+  flex: 1;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--sp-4);
+  row-gap: var(--sp-1);
+  align-content: start;
+  padding: var(--sp-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  /* La tarjeta entera es el destino táctil: en un teléfono, apuntar sólo al
+     título deja la mitad del área muerta y se siente rota. */
+  cursor: pointer;
+  /* El resorte del sistema al levantar, la curva corta al hundir: una tarjeta
+     que sube con rebote y baja en seco es exactamente cómo se siente un
+     control con masa. */
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.tipos__card[data-tone='secondary'] {
+  --tone-bg: var(--st-secondary-bg);
+  --tone-fg: var(--st-secondary-fg);
+  --tone-bd: var(--st-secondary-bd);
+}
+
+.tipos__card[data-tone='success'] {
+  --tone-bg: var(--st-success-bg);
+  --tone-fg: var(--st-success-fg);
+  --tone-bd: var(--st-success-bd);
+}
+
+.tipos__card[data-tone='info'] {
+  --tone-bg: var(--st-info-bg);
+  --tone-fg: var(--st-info-fg);
+  --tone-bd: var(--st-info-bd);
 }
 
 .tipos__card:hover {
-    background: color-mix(in srgb, var(--brand-primary) 9%, var(--bg-surface-alt));
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+  border-color: var(--tone-bd);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
 }
 
 /* El hundido al pulsar. Sin esto la tarjeta se queda levantada mientras la
    ruta carga y no acusa recibo del toque, que es cuando la gente vuelve a
    tocar pensando que no funcionó. */
 .tipos__card:active {
-    transform: scale(0.98);
-    box-shadow: none;
-    transition-duration: var(--dur-fast), var(--dur-fast), var(--spring-rapido-dur);
-    transition-timing-function: var(--ease-standard), var(--ease-standard), var(--spring-rapido);
-}
-
-/* Sin borde, lo que dice «esto se pulsa» es la flecha: un chevron dibujado con
-   dos bordes, abajo a la derecha, que avanza un poco al apuntar. */
-.tipos__card {
-    position: relative;
-}
-
-.tipos__card::after {
-    content: '';
-    position: absolute;
-    inset-block-end: var(--sp-5);
-    inset-inline-end: var(--sp-5);
-    inline-size: 0.5rem;
-    block-size: 0.5rem;
-    border-block-start: 2px solid var(--brand-primary);
-    border-inline-end: 2px solid var(--brand-primary);
-    transform: rotate(45deg);
-    transition: translate var(--spring-rapido-dur) var(--spring-rapido);
-}
-
-.tipos__card:hover::after {
-    translate: 3px -3px;
+  transform: scale(0.985);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-standard);
 }
 
 .tipos__card:focus-visible {
-    outline: 2px solid var(--brand-primary);
-    outline-offset: 2px;
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
 }
 
-/* El movimiento es decoración: quien pidió menos movimiento no lo recibe. */
-@media (prefers-reduced-motion: reduce) {
-    .tipos__card {
-        transition: none;
-    }
-
-    .tipos__card:hover,
-    .tipos__card:active {
-        transform: none;
-    }
-}
-
+/* ---- El azulejo del ícono: es lo que distingue una tarjeta de otra. -------- */
 .tipos__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    margin-block-end: var(--sp-2);
-    border-radius: var(--r-lg);
-    background: var(--bg-surface);
-    color: var(--brand-primary);
-    transition: background-color var(--dur-fast) var(--ease-standard);
+  display: grid;
+  grid-row: 1 / span 3;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  border: 1px solid var(--tone-bd);
+  border-radius: var(--r-lg);
+  background: var(--tone-bg);
+  /* La tinta es la de marca en todos: el `--st-*-fg` de algunos tonos es un
+     gris apagado que, sobre su azulejo, hacía que unos íconos parecieran
+     desactivados. El tono vive en el fondo y el borde del azulejo. */
+  color: var(--brand-primary);
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-spring);
 }
 
 .tipos__icon app-account-icon {
-    width: 26px;
-    height: 26px;
+  inline-size: 1.9rem;
+  block-size: 1.9rem;
 }
 
-.tipos__card:hover .tipos__icon {
-    background: color-mix(in srgb, var(--brand-primary) 14%, var(--bg-surface));
-}
-
-/* La entrada de las tres, escalonada y con el mismo asentarse que la tarjeta
-   del acceso: la pantalla se lee de izquierda a derecha en vez de aparecer
-   entera. Nacen un punto por debajo de su tamaño, no desde un borde. */
-.tipos__item {
-    animation: tipos-asienta var(--spring-suave-dur) var(--spring-suave) both;
-}
-
-/* `--stage-content-delay` lo publica `app-auth-split` en `scene="stage"`: la
-   cascada espera a que el panel termine de ensamblarse. */
-.tipos__item:nth-child(1) {
-    animation-delay: calc(var(--stage-content-delay, 0ms) + 60ms);
-}
-.tipos__item:nth-child(2) {
-    animation-delay: calc(var(--stage-content-delay, 0ms) + 120ms);
-}
-.tipos__item:nth-child(n + 3) {
-    animation-delay: calc(var(--stage-content-delay, 0ms) + 180ms);
-}
-
-@keyframes tipos-asienta {
-    from {
-        opacity: 0;
-        transform: scale(0.97);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .tipos__item {
-        animation-delay: 0ms !important;
-    }
+.tipos__card:hover .tipos__icon,
+.tipos__card:focus-visible .tipos__icon {
+  background: color-mix(in srgb, var(--tone-fg) 14%, var(--tone-bg));
+  transform: rotate(-4deg) scale(1.06);
 }
 
 .tipos__card-title {
-    font-family: var(--font-display);
-    font-size: var(--fs-h4, var(--fs-h3));
-    line-height: var(--lh-h4, var(--lh-h3));
-    color: var(--text-primary);
+  align-self: end;
+  font-family: var(--font-display);
+  font-size: var(--fs-h4, var(--fs-h3));
+  line-height: var(--lh-h4, var(--lh-h3));
+  color: var(--text-primary);
 }
 
 .tipos__card-detail {
-    /* Deja libre el rincón de la flecha (abajo a la derecha). */
-    padding-inline-end: var(--sp-6);
-    font-family: var(--font-body);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
-    color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
 }
 
-.tipos__footer {
-    margin: 0;
-    font-family: var(--font-body);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
-    color: var(--text-secondary);
+/* La invitación, al pie: «Empezar» con su galón, que se corre al apuntar. */
+.tipos__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-block-start: var(--sp-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--brand-primary);
 }
 
-/* Las altas públicas en claro aprovechan el área disponible con la grilla del
-   sistema: una columna, dos desde 780 px y tres desde 1120 px. El tema oscuro
-   conserva la composición compacta de la escena del latido. */
-:host-context(:root[data-tema='claro']) .tipos__grid {
-  grid-template-columns: minmax(0, 1fr);
+.tipos__cta-arrow {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
+.tipos__card:hover .tipos__cta-arrow,
+.tipos__card:focus-visible .tipos__cta-arrow {
+  transform: translateX(5px);
+}
+
+/* ---- Pantalla ancha: el azulejo pasa arriba y la tarjeta se vuelve vertical. - */
 @media (min-width: 780px) {
-  :host-context(:root[data-tema='claro']) .tipos__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .tipos__card {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--sp-6);
+    row-gap: var(--sp-2);
+    min-block-size: 15rem;
+  }
+
+  .tipos__icon {
+    grid-row: auto;
+    inline-size: 4.25rem;
+    block-size: 4.25rem;
+    margin-block-end: var(--sp-3);
+  }
+
+  .tipos__icon app-account-icon {
+    inline-size: 2.4rem;
+    block-size: 2.4rem;
+  }
+
+  /* El pie queda abajo aunque el detalle sea corto: las tarjetas de una fila
+     miden lo mismo y su invitación se alinea. */
+  .tipos__cta {
+    margin-block-start: auto;
+    padding-block-start: var(--sp-3);
   }
 }
 
-@media (min-width: 1120px) {
-  :host-context(:root[data-tema='claro']) .tipos__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.tipos__footer {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+/* El movimiento es decoración: quien pidió menos movimiento recibe la pantalla
+   terminada y ningún cambio de posición al apuntar. El bloque global acorta
+   duraciones pero no los retardos, y la cascada quedaría invisible el tiempo
+   del retardo. */
+@media (prefers-reduced-motion: reduce) {
+  .tipos__header,
+  .tipos__item {
+    animation: none;
+  }
+
+  .tipos__card,
+  .tipos__icon,
+  .tipos__cta-arrow {
+    transition: none;
+  }
+
+  .tipos__card:hover,
+  .tipos__card:active,
+  .tipos__card:hover .tipos__icon,
+  .tipos__card:focus-visible .tipos__icon,
+  .tipos__card:hover .tipos__cta-arrow,
+  .tipos__card:focus-visible .tipos__cta-arrow {
+    transform: none;
   }
 }

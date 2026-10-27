@@ -21,6 +21,7 @@ import {
   simulatorAvailable,
   unavailableMessage,
 } from '../../../core/data-access/simulator-only';
+import { CashFlow } from '../cash-flow/cash-flow';
 import { SimpleAccounting } from '../records/records';
 import {
   VERSION_HELP,
@@ -47,6 +48,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -102,8 +104,8 @@ const PLAIN_NAME: Readonly<Record<string, string>> = {
  */
 const CLARIFICATION: Readonly<Record<string, string>> = {
   '5.5':
-    'No sale plata de su cuenta: es lo que sus equipos perdieron de valor este mes por usarlos.',
-  '5.6': 'Es sólo el interés del préstamo. La cuota que devuelve el capital no es un gasto.',
+    'No sale dinero de su cuenta: es el valor que sus equipos perdieron este mes por el uso.',
+  '5.6': 'Es solo el interés del préstamo. La parte de la cuota que devuelve el préstamo no es un gasto.',
 };
 
 /** Una línea de «en qué se te va la plata», lista para dibujar. */
@@ -234,7 +236,9 @@ interface Dinero {
     Card,
     SimpleAccounting,
     Chip,
+    CashFlow,
     FormField,
+    NavIcon,
     PageHeader,
     RouterLink,
     SectionHeading,
@@ -267,7 +271,7 @@ export class Summary {
   private readonly reload = signal(0);
   /** 0 = Resumen (tableros) · 1 = Registros (tablas con su alta). */
   readonly tab = signal(0);
-  /** Subpestañas del Resumen: 0 = Movimientos · 1 = Pendientes · 2 = Patrimonio. */
+  /** Subpestañas del Resumen: ingresos y gastos, pendientes, bienes y deudas, flujo de dinero. */
   readonly subtab = signal(0);
 
   /**
@@ -335,7 +339,7 @@ export class Summary {
     const semana = weekWindows(this.today);
     const mes = monthWindows(this.today);
     return [
-      this.bracket('hoy', 'Hoy', 'Lo de este día', d.hoy, d.hoyPrevio, dia.rotuloPrevio, false),
+      this.bracket('hoy', 'Hoy', 'Desde la medianoche', d.hoy, d.hoyPrevio, dia.rotuloPrevio, false),
       this.bracket(
         'semana',
         'Esta semana',

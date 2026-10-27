@@ -1633,8 +1633,8 @@ export function registrarSeguros(router: MockRouter): void {
   });
 
   /**
-   * Coberturas de una persona, para quien atiende (P62). Solo maqueta: la API
-   * todavía no expone esta lectura al personal.
+   * Seguros de una persona, para quien cobra. Con la forma de la API real: sin
+   * póliza ni afiliado.
    */
   router.get('/patient-coverages/by-patient/:patientProfileId', ({ params }) => {
     const paciente = PATIENTS.find((p) => p.id === params['patientProfileId'] || perfilDe(p.id) === params['patientProfileId']);
@@ -1650,8 +1650,6 @@ export function registrarSeguros(router: MockRouter): void {
             insuranceCarrierId: cobertura.aseguradora.id,
             carrierName: cobertura.aseguradora.name,
             planName: cobertura.plan.name,
-            policyIdentifier: `POL-${paciente.patientCode.slice(4)}`,
-            memberIdentifier: `AF-${paciente.patientCode.slice(4)}`,
             validityStatus: 'CURRENT',
             currencyCode: 'BOB',
           },

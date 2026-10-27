@@ -249,6 +249,28 @@ describe('DepartmentMap', () => {
     );
   });
 
+  it('la etiqueta es completa: departamento, provincia y municipio, cada uno con su nombre', async () => {
+    fixture.componentRef.setInput('value', 'dep-SC');
+    fixture.componentRef.setInput('municipio', '070101');
+    fixture.componentRef.setInput('provincia', 'Andrés Ibáñez');
+    await estabilizar();
+
+    const linea = html.querySelector('[data-testid="department-map-elegido"]')?.textContent ?? '';
+    expect(linea.replace(/\s+/g, ' ').trim()).toBe(
+      'Departamento: Santa Cruz · Provincia: Andrés Ibáñez · Municipio: Santa Cruz de la Sierra',
+    );
+  });
+
+  it('sin provincia deducida la etiqueta la omite, no la inventa', async () => {
+    fixture.componentRef.setInput('value', 'dep-SC');
+    fixture.componentRef.setInput('municipio', '070101');
+    await estabilizar();
+
+    const linea = html.querySelector('[data-testid="department-map-elegido"]')?.textContent ?? '';
+    expect(linea).not.toContain('Provincia');
+    expect(linea).toContain('Municipio:');
+  });
+
   it('busca el nombre sólo dentro del departamento elegido', async () => {
     // «San Pedro» existe en Santa Cruz y en Pando: con Pando elegido, no se
     // marca el de Santa Cruz (ni al revés).

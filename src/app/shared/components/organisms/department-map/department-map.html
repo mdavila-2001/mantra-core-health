@@ -137,10 +137,16 @@
          palabras. Es la que sirve cuando no se distinguen los colores y la que
          un lector de pantalla anuncia al cambiar. -->
     <p class="department-map__elegido" aria-live="polite" [attr.data-testid]="testId() + '-elegido'">
+      <!-- La etiqueta completa (pedido del cliente, 26/10/2026): cada nivel con
+           su nombre, para que no haya que adivinar si «Santa Cruz» es el
+           departamento o la ciudad. -->
       @if (nombreElegido(); as nombre) {
-        Departamento elegido: <strong>{{ nombre }}</strong>
+        Departamento: <strong>{{ nombre }}</strong>
+        @if (provincia(); as provincia) {
+          · Provincia: <strong>{{ provincia }}</strong>
+        }
         @if (municipioDibujable(); as municipio) {
-          · <strong>{{ municipio.nombre }}</strong>
+          · Municipio: <strong>{{ municipio.nombre }}</strong>
         }
       } @else {
         Todavía no eligió departamento.

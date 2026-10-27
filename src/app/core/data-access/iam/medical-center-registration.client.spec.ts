@@ -2,9 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { MEDICAL_ORGANIZATION_TYPES } from '../directory/directory.types';
 import {
-  isMedicalOrganizationType,
-  MEDICAL_ORGANIZATION_TYPES,
   MedicalCenterRegistrationClient,
   type MedicalCenterRegistration,
 } from './medical-center-registration.client';
@@ -30,25 +29,6 @@ describe('MedicalCenterRegistrationClient', () => {
   });
 
   afterEach(() => http.verify());
-
-  it('ofrece exactamente los cinco tipos institucionales de salud, en orden', () => {
-    expect(MEDICAL_ORGANIZATION_TYPES).toEqual([
-      'HOSPITAL',
-      'CLINIC',
-      'MEDICAL_OFFICE',
-      'NURSING',
-      'HEALTH_OTHER',
-    ]);
-  });
-
-  it('reconoce los cinco tipos y rechaza los que no son una organización médica', () => {
-    for (const tipo of MEDICAL_ORGANIZATION_TYPES) {
-      expect(isMedicalOrganizationType(tipo)).toBe(true);
-    }
-    for (const ajeno of ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER', 'PROVIDER', '', 'clinic']) {
-      expect(isMedicalOrganizationType(ajeno)).toBe(false);
-    }
-  });
 
   it.each(MEDICAL_ORGANIZATION_TYPES)('manda el tipo elegido tal cual: %s', (tipo) => {
     client.register({ ...REGISTRATION, tenantType: tipo }).subscribe();

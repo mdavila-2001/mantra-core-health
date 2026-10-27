@@ -31,8 +31,19 @@
 }
 
 .eleccion {
-  margin-block-start: var(--sp-5);
+  flex: 1 1 18rem;
   max-inline-size: 28rem;
+}
+
+/* ---- la barra de arriba: consultorio a la izquierda, «Ver como» a la derecha.
+   Una fila en escritorio; en teléfono se apila sin comprimir ninguno. */
+.barra-superior {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4) var(--sp-6);
+  margin-block-start: var(--sp-5);
 }
 
 .nota {
@@ -86,18 +97,14 @@
   gap: var(--sp-2);
   margin: 0;
   color: var(--text-primary);
-  font-size: var(--fs-overline);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--fs-body);
+  font-weight: 600;
 }
 
 .tramo__aclaracion {
   color: var(--text-tertiary);
   font-size: var(--fs-caption);
   font-weight: 400;
-  letter-spacing: normal;
-  text-transform: none;
 }
 
 .tramo__cifra {
@@ -430,10 +437,8 @@
 .patrimonio__rotulo {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-overline);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--fs-body);
+  font-weight: 600;
 }
 
 .patrimonio__cifra {
@@ -518,8 +523,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-3) var(--sp-4);
-  margin-block-start: var(--sp-5);
+  justify-content: flex-end;
+  gap: var(--sp-2) var(--sp-3);
+  /* sin el consultorio al lado (una sola práctica), la llave va a la derecha */
+  margin-inline-start: auto;
 }
 
 /* Con el rótulo al lado, en 390 px la llave quedaba tan angosta que «Contador»
@@ -529,16 +536,30 @@
 }
 
 .version__rotulo {
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: var(--fs-body);
   font-weight: 600;
 }
 
+/* La ayuda va en su propio renglón, debajo de la llave: al lado competía con
+   ella y en angosto la empujaba. */
 .version__ayuda {
-  flex: 1 1 16rem;
-  color: var(--text-secondary);
+  flex-basis: 100%;
+  color: var(--text-tertiary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
+  text-align: end;
+}
+
+@media (max-width: 47.99rem) {
+  .version {
+    justify-content: flex-start;
+    margin-inline-start: 0;
+  }
+
+  .version__ayuda {
+    text-align: start;
+  }
 }
 
 /* ---- informes contables (sólo en la versión Contador) ------------------------

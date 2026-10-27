@@ -1,4 +1,5 @@
-import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/iam/medical-center-registration.client';
+import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.types';
+import { SIN_CARA_DE_ASEGURADORA } from './navigation.payer';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
@@ -773,7 +774,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'umbrella',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -808,6 +809,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // quien paga, y ésta es la pantalla de quien reclama.
     path: 'administration/insurance-claims',
     hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Una organización médica la ve sólo quien factura: la dueña (`USER`) la
+    // veía y la API le contestaba 403 `ROLE_INSUFFICIENT`.
+    rolesEnTipos: {
+      tipos: MEDICAL_ORGANIZATION_TYPES,
+      roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
+    },
     label: 'Solicitudes de seguro',
     group: 'Administración',
     icon: 'clipboard',
@@ -835,7 +842,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'chart',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -855,7 +862,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'clipboard',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -872,7 +879,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Pacientes de la aseguradora',
     group: 'Administración',
     icon: 'patients',
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     platformAccessRoles: ['SUPERADMIN', 'SECURITY_ADMIN'],
@@ -894,7 +901,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     icon: 'megaphone',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -1091,12 +1098,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: [ANY_ROLE],
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Configurar centro médico',
+    label: 'Configurar práctica',
     group: 'Administración',
     icon: 'hospital',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Abra la práctica de su centro y su primera sede, con dirección y punto en el mapa.',
+    summary: 'Abra la práctica de su organización y su primera sede, con dirección y punto en el mapa.',
     module: 'M14 practice',
   },
   {
@@ -1243,13 +1250,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // BR-20 · CL-78: los consentimientos, las autorizaciones de divulgación y las
     // objeciones del titular, con el retiro. Es del paciente: sin perfil de
     // paciente la pantalla lo dice.
+    //
+    // Desde el 27/10/2026 es también la puerta de «Quién ve mi historia»: los
+    // dos renglones contestaban la misma pregunta —quién puede ver o usar lo
+    // mío— y se leían como duplicados. La pantalla tiene dos vistas
+    // (`?ver=historia` y `?ver=consentimientos`).
     path: 'my-account/privacy',
     label: 'Mi privacidad',
     group: 'Mi cuenta',
     icon: 'shield',
+    representaEnElMenu: ['my-account/clinical-access'],
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Sus consentimientos, y retiralos cuando quiera.',
+    summary: 'Quién ve su historia clínica y qué permisos dio; revóquelos cuando quiera.',
     module: 'M07 consent',
   },
   {
@@ -1257,12 +1270,16 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // a las maquetas estáticas de `features/alovida/accesos`, que quedan fuera de
     // este menú (DECISIONES.md, BR-20).
     path: 'my-account/clinical-access',
+    // Sin renglón propio desde el 27/10/2026: es la vista `?ver=historia` de
+    // «Mi privacidad». La ruta redirige (`SECCIONES_REDIRIGIDAS`) y la sección
+    // queda registrada para que los enlaces guardados sigan resolviendo.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Quién ve mi historia',
     group: 'Mi cuenta',
     icon: 'results',
     roles: ['PATIENT'],
     availability: 'disponible',
-    summary: 'Quién ve su historia clínica, y revocalo.',
+    summary: 'Quién ve su historia clínica, y revóquelo.',
     module: 'M06 authz',
   },
   {

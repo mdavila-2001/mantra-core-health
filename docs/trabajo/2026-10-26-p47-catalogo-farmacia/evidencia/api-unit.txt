@@ -1,0 +1,21 @@
+(node:18317) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "/home/user/wt/p47/mantra-core-health-api/src/common/seed/data/bolivia/insurance-carriers.dataset.json" (from /home/user/wt/p47/mantra-core-health-api/src/common/seed/bolivia-insurance.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "/home/user/wt/p47/mantra-core-health-api/src/common/seed/data/bolivia/insurance-carrier-contact-channels.dataset.json" (from /home/user/wt/p47/mantra-core-health-api/src/common/seed/bolivia-insurance.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+Jest: importing JSON without an import attribute is deprecated and will be a hard error in the next major. Update the import of "/home/user/wt/p47/mantra-core-health-api/src/common/seed/data/bolivia/fee-schedule.dataset.json" (from /home/user/wt/p47/mantra-core-health-api/src/common/seed/bolivia-fee-schedule.catalog.ts): use `with { type: 'json' }` for static imports, or pass `{ with: { type: 'json' } }` as the second argument to dynamic `import()`.
+(node:18316) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18425) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18439) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18781) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18793) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Test Suites: 47 passed, 47 total
+Tests:       534 passed, 534 total
+Snapshots:   0 total
+Time:        33.622 s, estimated 34 s
+Ran all test suites matching src/modules/pharmacy|src/modules/public|src/modules/pharmacy_inventory.

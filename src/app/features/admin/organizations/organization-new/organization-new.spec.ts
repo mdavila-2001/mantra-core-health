@@ -91,14 +91,25 @@ describe('OrganizationNew', () => {
   }
 
   /** Un control del grupo, por nombre. */
-  function control(nombre: string): { valid: boolean; enabled: boolean; errors: object | null } {
-    return interno<{ get: (n: string) => { valid: boolean; enabled: boolean; errors: object | null } }>(
+  function control(nombre: string): { valid: boolean; enabled: boolean; touched: boolean; errors: object | null } {
+    return interno<{ get: (n: string) => { valid: boolean; enabled: boolean; touched: boolean; errors: object | null } }>(
       'form',
     ).get(nombre);
   }
 
   function enviar() {
     interno<() => void>('submit')();
+  }
+
+  /** Pulsa «Siguiente» hasta la página con ese título (o hasta que no avance). */
+  function irALaPagina(titulo: string): void {
+    const raiz = fixture.nativeElement as HTMLElement;
+    for (let intento = 0; intento < 6; intento += 1) {
+      fixture.detectChanges();
+      if (raiz.querySelector('.paginated-form__titulo')?.textContent?.trim() === titulo) return;
+      raiz.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')?.click();
+    }
+    fixture.detectChanges();
   }
 
   it('sin tipo o sin owner no se envía nada: los dos son obligatorios', () => {
@@ -140,7 +151,8 @@ describe('OrganizationNew', () => {
     enviar();
 
     expect(interno<() => { status: string }>('state')().status).toBe('ready');
-    expect(interno<() => boolean>('paisFaltante')()).toBe(true);
+    expect(control('pais').touched).toBe(true);
+    expect(control('pais').errors).toEqual({ required: true });
   });
 
   it('una aseguradora exige su bloque: sin él no se envía', () => {
@@ -231,7 +243,7 @@ describe('OrganizationNew', () => {
   });
 
   it('la búsqueda de owner traduce usuarios a opciones con su aviso', () => {
-    interno<(t: string) => void>('buscarOwner')('maria');
+    crudo<{ buscar: (t: string) => void }>('owners').buscar('maria');
 
     http.expectOne((r) => r.url === '/iam/users/search').flush({
       items: [
@@ -249,10 +261,28 @@ describe('OrganizationNew', () => {
       nextCursor: null,
     });
 
-    const opciones = interno<() => readonly ReferenceOption[]>('candidatosOwner')();
+    const opciones = crudo<{ candidatos: () => readonly ReferenceOption[] }>('owners').candidatos();
     expect(opciones).toEqual([
       { value: 'u-1', label: 'María Condori', hint: 'Correo sin verificar' },
     ]);
+  });
+
+  it('un fallo de la búsqueda de owner se dice en la pantalla, no como «ningún usuario coincide»', () => {
+    crudo<{ buscar: (t: string) => void }>('owners').buscar('maria');
+    http
+      .expectOne((r) => r.url === '/iam/users/search')
+      .flush(
+        { code: 'INTERNAL', message: 'boom', correlationId: 'req-77' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    fixture.detectChanges();
+
+    const buscador = crudo<{ candidatos: () => readonly ReferenceOption[]; error: () => string | null }>(
+      'owners',
+    );
+    expect(buscador.candidatos()).toEqual([]);
+    expect(buscador.error()).toContain('No pudimos buscar personas');
+    expect(buscador.error()).toContain('req-77');
   });
 
   it('no se envía dos veces mientras la primera está en vuelo', () => {
@@ -305,7 +335,6 @@ describe('OrganizationNew', () => {
 
     // `http.verify()` del afterEach: nada salió a la red.
     expect(interno<() => { status: string }>('state')().status).toBe('ready');
-    expect(interno<() => boolean>('jurisdiccionFaltante')()).toBe(true);
     // El control vive en el grupo y está encendido para un tipo territorial:
     // es lo que hace que el motor bloquee «Siguiente» en «Dónde opera».
     expect(control('jurisdiccion').enabled).toBe(true);
@@ -315,6 +344,25 @@ describe('OrganizationNew', () => {
       'paginas',
     )().find((p) => p.titulo === 'Dónde opera');
     expect(wherePage?.campos.find((c) => c.key === 'jurisdiccion')?.mensajeDeError).toBe(
+      'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
+    );
+  });
+
+  it('una clínica sin jurisdicción: «Siguiente» no pasa de «Dónde opera» y el mensaje se ve', () => {
+    completar();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      tipo: 'CLINIC',
+      jurisdiccion: null,
+    });
+    irALaPagina('Dónde opera');
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!
+      .click();
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('.paginated-form__titulo')?.textContent?.trim()).toBe('Dónde opera');
+    expect(raiz.textContent).toContain(
       'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
     );
   });

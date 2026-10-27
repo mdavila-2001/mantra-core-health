@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, PLATFORM_ID, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -48,11 +48,12 @@ import {
   type EnrollmentDocumentKey,
 } from '../shared-registration/legal-documents';
 import {
-  NOTICE_REWRITE_ADDRESS,
   MapLocationPicker,
   type Coordinates,
+  type LocalityFromPoint,
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
+import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 import { joinNames } from '../../../core/profession/additional-names';
 import {
   esPaisMultizona,
@@ -66,6 +67,7 @@ import {
   type NameValue,
 } from '../shared-registration/name-fields/person-name';
 import { codeFromAcronym, MAX_ACRONYM, MIN_ACRONYM, codeDriftAcronym } from './code-from-acronym';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -155,7 +157,7 @@ function grupoDeGerente() {
  */
 @Component({
   selector: 'app-register-organization',
-  imports: [
+  imports: [RegistrationBadge, 
     RouterLink,
     // El botón «Ir a iniciar sesión» de la confirmación es `<button app-button>`:
     // sin esta importación es un `<button>` nativo y su `(clicked)` —un output
@@ -241,9 +243,19 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NIT)],
     }),
+    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
+    // la casa matriz, ver `escribirLocalidadCasaMatriz`. Sigue obligatoria
+    // porque la API la exige, y nunca queda vacía con un punto puesto.
     address: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
+    }),
+    // **El punto de la casa matriz es obligatorio** (mismo pedido). Vive en el
+    // formulario porque el motor valida de a una página y sólo frena lo que
+    // está en el `FormGroup`. Lo escribe `fijarGpsCasaMatriz` con el punto
+    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    gpsCasaMatriz: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
     }),
     // Siempre tiene un valor: para países de zona única lo asigna
     // `acomodarPaisYTipoSocietario` sin que la persona la vea; para
@@ -383,10 +395,10 @@ export class RegisterOrganization {
    * cuenta»: la única persona que inicia sesión por una aseguradora es su
    * representante legal, y su contraseña se pide en la misma sección que su
    * nombre y su correo. Para un país de zona única (Bolivia, Argentina…) el
-   * alta queda en **7 páginas**; para uno multizona (Estados Unidos, Brasil,
-   * México) el selector de zona horaria en «Datos de la aseguradora» suma un
-   * quinto campo a esa sección, que el motor parte en dos — **8 páginas**
-   * sólo ahí.
+   * alta queda en **7 páginas**. Para uno multizona (Estados Unidos, Brasil,
+   * México) el selector de zona horaria suma un campo a «Datos de la
+   * aseguradora»; desde que «Dirección» dejó de escribirse (26/10/2026) la
+   * sección sigue cabiendo en una página de cuatro, así que también son 7.
    *
    * `computed`, y no una constante: las opciones del tipo societario y de
    * zona horaria cambian con el país elegido (subtareas 1.1 y ésta).
@@ -443,6 +455,18 @@ export class RegisterOrganization {
         titulo: 'Datos de la aseguradora',
         hint: 'Lo que la plataforma necesita para facturarle y ubicarla.',
         campos: [
+          // El mapa va primero y es lo único de la ubicación que se marca: la
+          // dirección, el departamento, el municipio y la zona salen del punto
+          // y el selector los muestra sin dejarlos editar (26/10/2026).
+          {
+            key: 'gpsCasaMatriz',
+            label: 'Ubicación de la casa matriz en el mapa',
+            hint: 'Use su GPS o toque el plano. De ese punto sacamos la dirección, el municipio y la zona.',
+            control: 'custom' as const,
+            ancho: 'completo' as const,
+            required: true,
+            mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+          },
           {
             key: 'regulatorIdentifier',
             label: 'NIT',
@@ -451,25 +475,6 @@ export class RegisterOrganization {
             required: true,
             testId: 'registro-organizacion-nit',
             mensajeDeError: 'Escriba el NIT de la empresa.',
-          },
-          {
-            key: 'address',
-            label: 'Dirección',
-            hint: 'La de la casa matriz. Las de cada sucursal se cargan después.',
-            control: 'text' as const,
-            required: true,
-            testId: 'registro-organizacion-direccion',
-            mensajeDeError: 'Escriba la dirección (hasta 300 caracteres).',
-          },
-          // El mapa va pegado a «Dirección», como en las otras altas: cuando lo
-          // tocan, vacía el campo y lo dice arriba del plano, y ese aviso tiene
-          // que leerse junto al campo que vació (D-06).
-          {
-            key: 'gpsCasaMatriz',
-            label: 'Ubicación de la casa matriz en el mapa (opcional)',
-            hint: 'Use su GPS o toque el plano. Sin el punto, la aseguradora no aparece cuando alguien busca la más cercana.',
-            control: 'custom' as const,
-            ancho: 'completo' as const,
           },
           // Sólo en países multizona: uno de zona única (Bolivia, Argentina)
           // no tiene nada que preguntar acá — `acomodarPaisYTipoSocietario`
@@ -651,7 +656,7 @@ export class RegisterOrganization {
       }
       const extra = (draft.extraData ?? {}) as Record<string, unknown>;
       if (extra['gpsCasaMatriz'] !== undefined) {
-        this.gpsCasaMatriz.set(extra['gpsCasaMatriz'] as Coordinates | null);
+        this.fijarGpsCasaMatriz(extra['gpsCasaMatriz'] as Coordinates | null);
       }
       if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
         this.pasoGuardado.set(draft.stepIndex);
@@ -765,39 +770,33 @@ export class RegisterOrganization {
   /**
    * La ubicación de la casa matriz, si la persona la confirmó (subtarea 1.3).
    *
-   * Una señal y no un `FormControl`: el campo es `custom` (lo pinta
-   * `app-map-location-picker`, no un control de texto), y `app-paginated-form`
-   * tolera un campo `custom` sin control homónimo en el `FormGroup`. Pasarla
-   * como `[inicial]` al picker es lo que le permite sobrevivir a que el
-   * asistente destruya y recree esta página al navegar (misma lección que
-   * `documentosSubidos`, arriba).
+   * Pasarla como `[inicial]` al picker es lo que le permite sobrevivir a que
+   * el asistente destruya y recree esta página al navegar (misma lección que
+   * `documentosSubidos`, arriba). El control homónimo del formulario es el que
+   * hace obligatorio el punto y el que viaja; los dos los escribe
+   * {@link fijarGpsCasaMatriz}.
    */
   readonly gpsCasaMatriz = signal<Coordinates | null>(null);
 
-  /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
-   *
-   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
-   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
-   * vuelve a escribir, se va solo.
-   */
-  private readonly direccionVaciadaPorElMapa = signal(false);
-  private readonly direccionEscrita = toSignal(this.form.controls.address.valueChanges, {
-    initialValue: '',
-  });
-  readonly direccionPorReescribir = computed(
-    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
-  );
-  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
-
-  /** Tocaron el mapa de la casa matriz: la dirección escrita ya no vale (D-06). */
-  vaciarDireccionPorElMapa(): void {
+  /** El punto confirmado de la casa matriz (o `null`), en la señal y en el control obligatorio. */
+  fijarGpsCasaMatriz(punto: Coordinates | null): void {
+    this.gpsCasaMatriz.set(punto);
+    const control = this.form.controls.gpsCasaMatriz;
+    if (control.value !== punto) control.setValue(punto);
+    // Con punto, la dirección nunca queda vacía: es un obligatorio que no se
+    // ve, y un borrador viejo podría traer el punto sin ella.
     const direccion = this.form.controls.address;
-    direccion.setValue('');
-    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
-    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
-    direccion.markAsUntouched();
-    this.direccionVaciadaPorElMapa.set(true);
+    if (punto !== null && direccion.value.trim() === '') direccion.setValue(pointLabel(punto));
+  }
+
+  /**
+   * Lo deducido del punto de la casa matriz llena «Dirección», que ya no se
+   * escribe a mano. Sin punto no se toca: el punto obligatorio, que sí se ve,
+   * es el que frena.
+   */
+  escribirLocalidadCasaMatriz(localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.form.controls.address.setValue(addressFromPoint(localidad, null, MAX_DIRECCION));
   }
 
   protected readonly idsUbicacionCasaMatriz: TestIds = {
@@ -1024,7 +1023,7 @@ export class RegisterOrganization {
       ...raw.legalRepresentative.extraNames,
     ]);
     const apellidoMaterno = raw.legalRepresentative.motherLastName.trim();
-    const casaMatriz = this.gpsCasaMatriz();
+    const casaMatriz = raw.gpsCasaMatriz;
     const telefonoRepresentante = raw.legalRepresentativePhone.trim();
     const gerente = (g: { nombre: NameValue; phone: string; email: string }) => ({
       fullName: completeName(g.nombre),

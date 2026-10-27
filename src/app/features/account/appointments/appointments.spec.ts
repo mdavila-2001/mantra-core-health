@@ -1130,6 +1130,39 @@ describe('Appointments', () => {
       expect(interno<(h: object) => Record<string, string>>('paramsDeReserva')(horario)).not.toHaveProperty('oferta');
     });
 
+    it('A6 · las horas flexibles se agrupan por día en un acordeón, no una fila por hora', async () => {
+      montar();
+      responderArranque([]);
+      crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
+      interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+      sinServicios();
+      http
+        .match((r) => r.url.endsWith('/flexible-availability'))
+        .forEach((pedido) =>
+          pedido.flush({
+            resourceId: 'r-centro',
+            stepMinutes: 15,
+            items: [
+              { templateId: 't', startAt: '2026-09-02T13:00:00Z', endAt: '2026-09-02T13:30:00Z' },
+              { templateId: 't', startAt: '2026-09-02T13:15:00Z', endAt: '2026-09-02T13:45:00Z' },
+              { templateId: 't', startAt: '2026-09-03T13:00:00Z', endAt: '2026-09-03T13:30:00Z' },
+            ],
+          }),
+        );
+      http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
+      await abrirPedir();
+
+      const grupos = interno<() => readonly { horas: readonly object[] }[]>('gruposFlexibles')();
+      expect(grupos.map((g) => g.horas.length)).toEqual([2, 1]);
+      expect(interno<() => readonly object[]>('horariosFijos')()).toEqual([]);
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="turnos-flexibles"]')).not.toBeNull();
+      expect(raiz.querySelectorAll('app-accordion-panel').length).toBe(2);
+      // Cada hora es un botón con su nombre completo para el lector de pantalla.
+      const hora = raiz.querySelector('[data-testid="turnos-hora-flexible"]');
+      expect(hora?.getAttribute('aria-label')).toMatch(/^Pedir el .+ a las \d{2}:\d{2}$/);
+    });
+
     it('volver a «Consulta» vuelve a pedir los cupos de la grilla', () => {
       conServicios([OFERTA_ECO]);
       interno<(v: string | null) => void>('elegirQueQuiere')('of-eco');

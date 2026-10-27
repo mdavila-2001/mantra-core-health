@@ -8,6 +8,7 @@ import {
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
   isDevMode,
   output,
@@ -19,6 +20,8 @@ import {
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { mensajeDeError, mensajeDeFechaRechazada } from '../../../forms/paginated/error-message';
+import { enfocarCampoInvalido } from '../../../forms/paginated/focus-first-invalid';
+import { ApilarAlEnvolver, columnasDeOpciones } from '../../../forms/paginated/paginated-layout';
 import { hiddenFields } from '../../../forms/paginated/conditional-visibility';
 import { isMainQuestion } from '../../../forms/paginated/paginate-fields';
 import {
@@ -187,6 +190,7 @@ type RespuestaSiNo = 'si' | 'no' | '';
     Switch,
     Textarea,
     Tooltip,
+    ApilarAlEnvolver,
   ],
   templateUrl: './paginated-form.html',
   styleUrl: './paginated-form.css',
@@ -198,6 +202,8 @@ type RespuestaSiNo = 'si' | 'no' | '';
 export class PaginatedForm {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly dialogs = inject(DialogService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   readonly paginas = input.required<readonly PaginaDeFormulario[]>();
 
@@ -604,6 +610,9 @@ export class PaginatedForm {
     return campo.control as InputType;
   }
 
+  /** Cuántas columnas de opciones en rejilla, ancha y media (ver `columnasDeOpciones`). */
+  protected readonly columnas = columnasDeOpciones;
+
   /** Las dos respuestas de un campo de sí/no. */
   protected readonly siNo = SI_NO;
 
@@ -756,14 +765,13 @@ export class PaginatedForm {
     if (grupo.invalid || conFechaRechazada) {
       // Lleva a la primera página con algo mal: dejar a la persona en la última
       // con un botón que no responde es el peor final posible.
-      const fallo = this.paginasActivas().findIndex((pagina) =>
-        pagina.campos.some(
-          (campo) => this.form().get(campo.key)?.invalid === true || this.fechaRechazada(campo),
-        ),
-      );
+      const mal = (campo: CampoDeFormulario) =>
+        this.form().get(campo.key)?.invalid === true || this.fechaRechazada(campo);
+      const fallo = this.paginasActivas().findIndex((pagina) => pagina.campos.some(mal));
       if (fallo !== -1) {
         this.indice.set(fallo);
         this.rechazada.emit(this.paginasActivas()[fallo]);
+        this.enfocarError(this.paginasActivas()[fallo]!.campos.find(mal)?.key ?? null);
       }
       return;
     }
@@ -809,14 +817,22 @@ export class PaginatedForm {
     const pagina = this.paginasActivas()[posicion] ?? null;
     if (pagina === null) return true;
 
-    let valida = true;
+    let primero: string | null = null;
     for (const campo of pagina.campos) {
       const control = this.controlDe(campo);
       if (control === null) continue;
       control.markAsTouched();
-      if (control.invalid || this.fechaRechazada(campo)) valida = false;
+      if (control.invalid || this.fechaRechazada(campo)) primero ??= campo.key;
     }
-    if (!valida) this.rechazada.emit(pagina);
-    return valida;
+    if (primero === null) return true;
+    this.rechazada.emit(pagina);
+    this.enfocarError(primero);
+    return false;
+  }
+
+  /** El foco, al primer campo con error de la página (ver `enfocarCampoInvalido`). */
+  private enfocarError(clave: string | null): void {
+    if (!isPlatformBrowser(this.platformId) || clave === null) return;
+    enfocarCampoInvalido(this.host.nativeElement, clave, this.injector);
   }
 }

@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import type { Select } from '../../../../shared/components/atoms/select/select';
 import { selectHasValue, selectOptionLabels, selectTrigger } from '../../../../../testing/select';
 
+import type { PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import {
   CARGADOR_DE_PROVINCIAS,
@@ -263,7 +264,20 @@ describe('LocationPicker', () => {
       ],
     };
 
-    function montar(provincias: ProvinciasDeBolivia | null): void {
+    /** Un municipio que el catálogo oficial no conoce: obliga a deducir del dibujo. */
+    const RAMAS_CON_DESCONOCIDO: readonly RamaDepartamento[] = RAMAS.map((rama) =>
+      rama.sigla === 'SC'
+        ? {
+            ...rama,
+            municipios: [
+              ...rama.municipios,
+              { conceptId: 'mun-desconocido', nombre: 'Pueblo de prueba', ine: 'SC-PDP' },
+            ],
+          }
+        : rama,
+    );
+
+    function montar(provincias: ProvinciasDeBolivia | null, punto: PuntoGeo | null = null): void {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         imports: [LocationPicker],
@@ -271,8 +285,10 @@ describe('LocationPicker', () => {
       });
       fixture = TestBed.createComponent(LocationPicker);
       component = fixture.componentInstance;
-      fixture.componentRef.setInput('ramas', RAMAS);
+      fixture.componentRef.setInput('ramas', RAMAS_CON_DESCONOCIDO);
       fixture.componentRef.setInput('ficha', true);
+      // Un punto con el que el control NACE no elige municipio: sólo sirve de dato.
+      fixture.componentRef.setInput('punto', punto);
       fixture.detectChanges();
       html = fixture.nativeElement as HTMLElement;
     }
@@ -289,23 +305,50 @@ describe('LocationPicker', () => {
 
     it('con la localidad elegida la ficha sale llena: departamento, provincia y municipio', async () => {
       montar(TODO_BOLIVIA);
-      pulsarDepartamento('CB');
+      pulsarDepartamento('SC');
       expect(html.querySelector('[data-testid="location-ficha"]')).toBeNull();
-      component.value.set('mun-sacaba');
+      component.value.set('mun-warnes');
       await vi.waitFor(() => {
         fixture.detectChanges();
-        expect(valoresDeLaFicha()).toEqual(['Cochabamba', 'Provincia de prueba', 'Sacaba']);
+        // La provincia oficial, del código del INE (0702 = Warnes), no del dibujo.
+        expect(valoresDeLaFicha()).toEqual(['Santa Cruz', 'Warnes', 'Warnes']);
+      });
+    });
+
+    it('la provincia sale del catálogo aunque el archivo de provincias no baje', async () => {
+      montar(null);
+      pulsarDepartamento('SC');
+      component.value.set('mun-scz');
+
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(valoresDeLaFicha()).toEqual([
+          'Santa Cruz',
+          'Andrés Ibáñez',
+          'Santa Cruz de la Sierra',
+        ]);
+      });
+    });
+
+    it('un municipio fuera del catálogo se deduce del dibujo', async () => {
+      montar(TODO_BOLIVIA, { lat: -17.5, lng: -63.1 });
+      pulsarDepartamento('SC');
+      component.value.set('mun-desconocido');
+
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(valoresDeLaFicha()).toEqual(['Santa Cruz', 'Provincia de prueba', 'Pueblo de prueba']);
       });
     });
 
     it('si la provincia no se pudo deducir lo dice en vez de inventarla', async () => {
       montar(null);
       pulsarDepartamento('SC');
-      component.value.set('mun-warnes');
+      component.value.set('mun-desconocido');
 
       await vi.waitFor(() => {
         fixture.detectChanges();
-        expect(valoresDeLaFicha()).toEqual(['Santa Cruz', 'No disponible', 'Warnes']);
+        expect(valoresDeLaFicha()).toEqual(['Santa Cruz', 'No disponible', 'Pueblo de prueba']);
       });
     });
 
@@ -315,5 +358,85 @@ describe('LocationPicker', () => {
       fixture.detectChanges();
       expect(html.querySelector('[data-testid="location-ficha"]')).toBeNull();
     });
+  });
+
+  /* ---- El punto GPS elige el municipio (pedido del cliente del 26/10/2026) ---- */
+
+  /** Espera la geometría (import diferido) y la ronda de señales que dispara. */
+  async function esperarGeometria(): Promise<void> {
+    await import('@shared/components/organisms/department-map/bolivia-municipalities.geometry');
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('un punto GPS en la plaza de Santa Cruz elige Santa Cruz de la Sierra y su departamento', async () => {
+    const emitidos: (string | null)[] = [];
+    component.value.subscribe((v) => emitidos.push(v));
+
+    fixture.componentRef.setInput('punto', { lat: -17.7833, lng: -63.1821 });
+    fixture.detectChanges();
+    await esperarGeometria();
+
+    expect(component.value()).toBe('mun-scz');
+    expect(emitidos).toEqual(['mun-scz']);
+    const elegido = html.querySelector('[data-testid="location-mapa-elegido"]')?.textContent ?? '';
+    expect(elegido).toContain('Santa Cruz');
+    expect(elegido).toContain('Municipio:');
+    expect(elegido).toContain('Santa Cruz de la Sierra');
+  });
+
+  it('corregir el municipio a mano después del GPS no se pisa cuando el punto no cambia', async () => {
+    fixture.componentRef.setInput('punto', { lat: -17.7833, lng: -63.1821 });
+    fixture.detectChanges();
+    await esperarGeometria();
+
+    component.value.set('mun-warnes');
+    fixture.componentRef.setInput('ramas', [...RAMAS]);
+    fixture.detectChanges();
+    await esperarGeometria();
+
+    expect(component.value()).toBe('mun-warnes');
+  });
+
+  it('el punto con el que nace el selector no pisa la localidad ya elegida (borrador, editar)', async () => {
+    const otro = TestBed.createComponent(LocationPicker);
+    otro.componentRef.setInput('ramas', RAMAS);
+    otro.componentRef.setInput('value', 'mun-warnes');
+    otro.componentRef.setInput('punto', { lat: -17.7833, lng: -63.1821 });
+    otro.detectChanges();
+    await import('@shared/components/organisms/department-map/bolivia-municipalities.geometry');
+    await new Promise((r) => setTimeout(r));
+    otro.detectChanges();
+
+    expect(otro.componentInstance.value()).toBe('mun-warnes');
+  });
+
+  it('avisa qué municipio eligió el punto, antes de elegirlo', async () => {
+    const avisados: string[] = [];
+    component.municipioPorPunto.subscribe((id) => avisados.push(id));
+    fixture.componentRef.setInput('punto', { lat: -17.7833, lng: -63.1821 });
+    fixture.detectChanges();
+    await esperarGeometria();
+
+    expect(avisados).toEqual(['mun-scz']);
+  });
+
+  it('un punto fuera de todo municipio no elige nada', async () => {
+    fixture.componentRef.setInput('punto', { lat: -12.0464, lng: -77.0428 });
+    fixture.detectChanges();
+    await esperarGeometria();
+
+    expect(component.value()).toBeNull();
+  });
+
+  it('en sólo lectura el punto no cambia la localidad', async () => {
+    fixture.componentRef.setInput('readonly', true);
+    fixture.componentRef.setInput('punto', { lat: -17.7833, lng: -63.1821 });
+    fixture.detectChanges();
+    await esperarGeometria();
+
+    expect(component.value()).toBeNull();
   });
 });

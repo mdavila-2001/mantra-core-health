@@ -23,13 +23,17 @@
     >
       <app-reference-combobox
         [selected]="persona()"
-        [options]="candidatos()"
-        [loading]="buscando()"
+        [options]="personas.candidatos()"
+        [loading]="personas.buscando()"
         placeholder="Nombre o correo"
         emptyMessage="Ninguna cuenta coincide"
-        (searched)="buscarPersona($event)"
+        (searched)="personas.buscar($event)"
         (selectionChange)="persona.set($event)"
       />
+      <!-- Un fallo de la búsqueda no es «ninguna cuenta coincide»: se dice. -->
+      @if (personas.error(); as fallo) {
+        <app-alert tone="error" class="busqueda-fallida" data-testid="alta-membresia-persona-error">{{ fallo }}</app-alert>
+      }
     </app-form-field>
   </app-form-section>
 

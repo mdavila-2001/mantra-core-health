@@ -162,6 +162,7 @@
           <h2 card-header>Asociar a un servicio</h2>
           <form [formGroup]="formularioAsignacion" (ngSubmit)="asignar()">
             <app-form-field
+              icon="stethoscope"
               label="Servicio de salud"
               hint="Se le ofrecerá al paciente al cerrar una consulta de ese servicio."
               [required]="true"

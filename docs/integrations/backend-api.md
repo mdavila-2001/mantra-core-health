@@ -718,6 +718,33 @@ contrasta con la cabecera `X-Tenant-Id` y responde **403** si difieren. En el
 sujeto conviene omitirlo y dejar que lo resuelva el interceptor; en la geocerca
 tiene que ser el tenant activo de la sesión.
 
+### `ReverseGeocodingClient` — 1 operación · sin sesión
+
+Del punto del mapa a la línea de dirección (pedido del cliente del 26/10/2026:
+«llene la línea de dirección»). La API consulta a OpenStreetMap (Nominatim) y
+el navegador no: la política de seguridad sigue con `connect-src 'self'`. El
+punto va en el **cuerpo**, no en la URL, y sólo se acepta dentro de Bolivia.
+`found: false` es «no se conoce calle ahí»; un proveedor caído es 503.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/public/geo/reverse` | `RegisterPatient` (calle desde el punto), `AddressBook` |
+
+### `PatientAddressBookClient` — 5 operaciones · 4 comandos y una lectura
+
+La libreta de direcciones del propio paciente, para los envíos (26/10/2026,
+modelo v4.2.61). La persona sale de la sesión; un `:id` ajeno responde 404.
+Toda escritura devuelve la libreta releída, la preferida primero. El domicilio
+no se quita (422); corregir cierra la vigente y abre otra.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/profiles/patients/me/addresses` | `AddressBook` («Mi perfil» › «Mis direcciones») |
+| `POST` | `/profiles/patients/me/addresses` | `AddressBook` |
+| `PATCH` | `/profiles/patients/me/addresses/:id` | `AddressBook` |
+| `DELETE` | `/profiles/patients/me/addresses/:id` | `AddressBook` |
+| `PUT` | `/profiles/patients/me/addresses/:id/preferred` | `AddressBook` |
+
 ### `ProceduresClient` — 4 operaciones · carril 3
 
 El histórico de procedimientos quirúrgicos y odontológicos (M53).

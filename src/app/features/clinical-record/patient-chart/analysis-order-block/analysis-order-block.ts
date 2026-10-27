@@ -177,8 +177,18 @@ export class AnalysisOrderBlock {
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
+  /**
+   * El «Formulario libre — campo y valor» firmado del que sale, si se eligió
+   * ése en vez de una respuesta de `forms` (A3). Viaja como `basedOnNoteIds`
+   * (P40): la API lo ata a la nota y verifica que sea del mismo encuentro.
+   */
+  protected readonly notaDelFormularioLibre = signal<string | null>(null);
+
   protected readonly faltaRespuesta = computed(
-    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+    () =>
+      this.exigeRespuesta() &&
+      this.respuestaDelFormulario() === null &&
+      this.notaDelFormularioLibre() === null,
   );
 
   protected readonly targetEstudio = TARGET_ESTUDIO;
@@ -481,6 +491,9 @@ export class AnalysisOrderBlock {
       ...(this.respuestaDelFormulario() === null
         ? {}
         : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
+      ...(this.notaDelFormularioLibre() === null
+        ? {}
+        : { basedOnNoteIds: [this.notaDelFormularioLibre() ?? ''] }),
       // Los opcionales sin elegir se **omiten**: el backend valida con
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),

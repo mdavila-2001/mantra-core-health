@@ -61,17 +61,19 @@ import {
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
-  NOTICE_REWRITE_ADDRESS,
   MapLocationPicker,
   type Coordinates,
+  type LocalityFromPoint,
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
+import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { NameFields } from '../shared-registration/name-fields/name-fields';
 import {
   nameGroup,
   completeName,
 } from '../shared-registration/name-fields/person-name';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -182,7 +184,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'pin',
       titulo: 'El punto es lo que le hace aparecer',
       texto:
-        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa su laboratorio queda fuera de esa lista, aunque la dirección esté escrita.',
+        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Por eso el punto es obligatorio: de él sale también la dirección, el municipio y la zona.',
     },
   ],
   sucursales: [
@@ -275,21 +277,24 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
  * ## Qué es obligatorio, y por qué (misma regla que la farmacia, D2)
  *
  * Frena el alta sólo lo más básico para nacer: **razón social, tipo de
- * sociedad (de la lista cerrada), NIT, dirección legal de la central, nombre,
- * cédula y correo del representante legal —que es el correo de acceso— y
- * contraseña**, más el poder notariado salvo en una empresa unipersonal: la API
- * exige la cédula (400) y el poder (422) y este formulario no puede exigir
- * menos (P51, D-3).
+ * sociedad (de la lista cerrada), NIT, el punto de la central en el mapa
+ * —del que sale su dirección legal—, nombre, cédula y correo del representante
+ * legal —que es el correo de acceso— y contraseña**, más el poder notariado
+ * salvo en una empresa unipersonal: la API exige la cédula (400) y el poder
+ * (422) y este formulario no puede exigir menos (P51, D-3). El punto es
+ * obligatorio por pedido del cliente (26/10/2026): la persona sólo marca el
+ * punto, y la calle, el municipio y la zona se deducen de él, sin editarse.
+ * Lo mismo cada sucursal que se declare con nombre.
  *
- * El resto —los seis papeles en PDF, el punto de la central, las sucursales y
- * los tres cargos— se puede completar después. Los papeles siguen siendo lo
+ * El resto —los seis papeles en PDF, las sucursales y los tres cargos— se
+ * puede completar después. Los papeles siguen siendo lo
  * que habilita a un laboratorio a **atender** (sin certificado del SEDES no
  * puede), pero esa regla es de habilitación, no de alta, y hoy no la hace
  * cumplir ninguna capa (P51).
  */
 @Component({
   selector: 'app-register-laboratory',
-  imports: [
+  imports: [RegistrationBadge, 
     BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,
@@ -352,9 +357,19 @@ export class RegisterLaboratory {
     healthAuthorityCertificateFileId: new FormControl('', { nonNullable: true }),
     powerOfAttorneyFileId: new FormControl('', { nonNullable: true }),
     // --- 4.1.6 · dirección legal de la central -----------------------------
+    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
+    // la central, ver `escribirLocalidadCentral`. Sigue obligatoria porque la
+    // API la exige, y nunca queda vacía con un punto puesto.
     addressLines: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
+    }),
+    // **El punto de la central es obligatorio** (mismo pedido). Vive en el
+    // formulario porque el motor valida de a una página y sólo frena lo que
+    // está en el `FormGroup`. Lo escribe `fijarGpsCentral` con el punto
+    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    gpsCentral: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
     }),
     // --- 4.1.8 · representante legal ---------------------------------------
     // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
@@ -465,23 +480,16 @@ export class RegisterLaboratory {
         titulo: 'Dónde está la central',
         clave: 'ubicacion',
         icon: 'pin' as const,
+        // Sólo el punto: la calle, el departamento, el municipio y la zona
+        // salen de él y el selector los muestra sin dejarlos editar.
         campos: [
           {
-            key: 'addressLines',
-            label: 'Dirección legal de la central',
-            hint: 'Calle, número y zona. Es la que figura en sus papeles.',
-            control: 'text' as const,
-            required: true,
-            icono: 'pin' as const,
-            placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
-            testId: 'registro-lab-direccion',
-            mensajeDeError: 'Escriba la dirección legal de la central.',
-          },
-          {
             key: 'gpsCentral',
-            label: 'Ubicación en el mapa (opcional)',
-            hint: 'Sin el punto, su laboratorio no aparece cuando alguien busca el más cercano.',
+            label: 'Ubicación de la central en el mapa',
+            hint: 'Marque el punto exacto de la central. De ahí sacamos la calle, el municipio y la zona.',
             control: 'custom' as const,
+            required: true,
+            mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
           },
         ],
       },
@@ -695,19 +703,13 @@ export class RegisterLaboratory {
   /**
    * El punto de la central, ya confirmado sobre el mapa.
    *
-   * Fuera del formulario, como en el alta de profesional: `app-map-location-picker`
-   * emite **sólo lo confirmado** y se guarda para sí el estado intermedio.
+   * `app-map-location-picker` emite **sólo lo confirmado** y se guarda para sí
+   * el estado intermedio. La señal alimenta el `[inicial]` del selector (para
+   * sobrevivir a que el asistente recree la página); el control homónimo del
+   * formulario es el que hace obligatorio el punto. Los dos los escribe
+   * {@link fijarGpsCentral}.
    */
   readonly gpsCentral = signal<Coordinates | null>(null);
-
-  /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
-   *
-   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
-   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
-   * vuelve a escribir, se va solo. Las sucursales llevan el suyo, por id.
-   */
-  private readonly direccionVaciadaPorElMapa = signal(false);
   /** El tipo societario elegido: decide si el poder del representante es obligatorio. */
   private readonly tipoSocietario = toSignal(this.form.controls.companyType.valueChanges, {
     initialValue: this.form.controls.companyType.value,
@@ -765,7 +767,7 @@ export class RegisterLaboratory {
       }
       const extra = (draft.extraData ?? {}) as Record<string, unknown>;
       if (extra['gpsCentral'] !== undefined) {
-        this.gpsCentral.set(extra['gpsCentral'] as Coordinates | null);
+        this.fijarGpsCentral(extra['gpsCentral'] as Coordinates | null);
       }
       if (Array.isArray(extra['sucursales'])) {
         this.sucursales.set(extra['sucursales'] as readonly SucursalDeclarada[]);
@@ -825,34 +827,25 @@ export class RegisterLaboratory {
     });
   }
 
-  private readonly direccionEscrita = toSignal(this.form.controls.addressLines.valueChanges, {
-    initialValue: '',
-  });
-  readonly direccionPorReescribir = computed(
-    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
-  );
-  private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
-  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
-
-  /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
-  vaciarDireccionPorElMapa(): void {
+  /** El punto confirmado de la central (o `null`), en la señal y en el control obligatorio. */
+  fijarGpsCentral(punto: Coordinates | null): void {
+    this.gpsCentral.set(punto);
+    const control = this.form.controls.gpsCentral;
+    if (control.value !== punto) control.setValue(punto);
+    // Con punto, la dirección nunca queda vacía: es un obligatorio que no se
+    // ve, y un borrador viejo podría traer el punto sin ella.
     const direccion = this.form.controls.addressLines;
-    direccion.setValue('');
-    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
-    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
-    direccion.markAsUntouched();
-    this.direccionVaciadaPorElMapa.set(true);
+    if (punto !== null && direccion.value.trim() === '') direccion.setValue(pointLabel(punto));
   }
 
-  /** Lo mismo, para el mapa de una sucursal. */
-  vaciarDireccionDeSucursalPorElMapa(id: string): void {
-    this.actualizarSucursal(id, { direccion: '' });
-    this.sucursalesVaciadasPorElMapa.update((ids) => new Set([...ids, id]));
-  }
-
-  /** Si esa sucursal tiene la dirección en blanco porque tocaron su mapa. */
-  sucursalPorReescribir(sucursal: SucursalDeclarada): boolean {
-    return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
+  /**
+   * Lo deducido del punto de la central llena la dirección legal, que ya no
+   * se escribe a mano. Sin punto no se toca: el punto obligatorio, que sí se
+   * ve, es el que frena.
+   */
+  escribirLocalidadCentral(localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.form.controls.addressLines.setValue(addressFromPoint(localidad, null, MAX_DIRECCION));
   }
 
   protected readonly idsUbicacionCentral: TestIds = {
@@ -904,8 +897,10 @@ export class RegisterLaboratory {
     this.actualizarSucursal(id, { nombre: nombre === null ? '' : String(nombre) });
   }
 
-  escribirDireccionDeSucursal(id: string, direccion: string | number | null): void {
-    this.actualizarSucursal(id, { direccion: direccion === null ? '' : String(direccion) });
+  /** La dirección de una sucursal sale de su punto, como la de la central. */
+  escribirLocalidadDeSucursal(id: string, localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.actualizarSucursal(id, { direccion: addressFromPoint(localidad, null, MAX_DIRECCION) });
   }
 
   escribirDescripcionDeSucursal(id: string, descripcion: string | number | null): void {
@@ -954,6 +949,22 @@ export class RegisterLaboratory {
   fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
     this.actualizarSucursal(id, { gps });
   }
+
+  /**
+   * Las sucursales con nombre y sin punto confirmado. El punto es obligatorio
+   * en toda ubicación (26/10/2026): una sucursal declarada sin él no se envía
+   * en silencio ni se descarta, se nombra y se espera. Una sin nombre sigue sin
+   * contar como sucursal (ver `datos`).
+   */
+  readonly avisoDeSucursalesSinPunto = computed<string | null>(() => {
+    const nombres = this.sucursales()
+      .filter((s) => s.nombre.trim() !== '' && s.gps === null)
+      .map((s) => `«${s.nombre.trim()}»`);
+    if (nombres.length === 0) return null;
+    return nombres.length === 1
+      ? `Falta ubicar la sucursal ${nombres[0]}: márquela en el mapa y pulse «Confirmar dirección actual», o quítela.`
+      : `Faltan ubicar ${nombres.length} sucursales (${nombres.join(', ')}): márquelas en el mapa y pulse «Confirmar dirección actual», o quítelas.`;
+  });
 
   private actualizarSucursal(id: string, cambio: Partial<SucursalDeclarada>): void {
     this.sucursales.update((lista) =>
@@ -1009,6 +1020,12 @@ export class RegisterLaboratory {
     if (this.isSubmitting()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    const sinPunto = this.avisoDeSucursalesSinPunto();
+    if (sinPunto !== null) {
+      this.state.set(validation([{ field: 'sucursales', message: sinPunto }]));
       return;
     }
 

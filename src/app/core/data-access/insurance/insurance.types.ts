@@ -666,7 +666,7 @@ export interface MyClaim {
   readonly status: InsuranceConcept | null;
   /** `null` mientras la aseguradora no decidió. */
   readonly decision: MyClaimDecision | null;
-  /** El desglose del cobro al paciente. `null` fuera de su vista y mientras la API no lo entregue (P63). */
+  /** El desglose del cobro al paciente. `null` fuera de su vista y en las solicitudes que el servidor no desglosa. */
   readonly breakdown: MyClaimBreakdown | null;
   /** La objeción del paciente, si la presentó. `null` si no. */
   readonly patientObjection: MyClaimObjection | null;
@@ -1077,14 +1077,12 @@ export interface CreatedClaim {
   readonly lineIds?: readonly string[];
 }
 
-/** Cobertura vigente de una persona, para el personal. Solo existe en la maqueta (P62). */
+/** Seguro de una persona, para quien cobra. No lleva póliza ni afiliado: la API no los entrega. */
 export interface PatientCoverageOption {
   readonly id: string;
   readonly insuranceCarrierId: string;
   readonly carrierName: string;
   readonly planName: string | null;
-  readonly policyIdentifier: string | null;
-  readonly memberIdentifier: string | null;
   readonly validityStatus: CoverageValidity;
   readonly currencyCode: string | null;
 }

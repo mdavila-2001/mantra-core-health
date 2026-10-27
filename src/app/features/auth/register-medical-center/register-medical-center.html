@@ -2,6 +2,7 @@
   <div class="registro">
     @if (registered()) {
       <div class="registro__header">
+        <app-registration-badge type="clinic" celebrate />
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="medical-center-signup-success">
           ¡Bienvenido a AloVida! Su organización médica ya tiene cuenta
         </h1>
@@ -11,7 +12,7 @@
         }
         <p class="registro__subtitle" data-testid="medical-center-signup-pending">
           Su organización está pendiente de verificación. En cuanto la plataforma la verifique, podrá abrir su
-          práctica y su primera sede desde «Configurar centro médico».
+          práctica y su primera sede desde «Configurar práctica», en el menú.
         </p>
       </div>
       <button
@@ -26,10 +27,12 @@
       </button>
     } @else {
       <div class="registro__header">
+        <app-registration-badge type="clinic" />
         <h1 class="registro__title">Registre su organización médica</h1>
         <p class="registro__subtitle">
-          Cree la cuenta de su hospital, clínica, consultorio o centro de enfermería. Después de que la
-          plataforma la verifique, podrá abrir su práctica y publicar los procedimientos que ofrece.
+          Cree la cuenta de su hospital, clínica, consultorio, centro de enfermería u otra institución de
+          salud. Después de que la plataforma la verifique, podrá abrir su práctica y publicar los
+          procedimientos que ofrece.
         </p>
       </div>
 

@@ -68,3 +68,14 @@ La presión dentro de una cavidad se mide mediante un catéter lleno de líquido
 La calidad de la curva también depende de la respuesta dinámica del sistema: burbujas de aire, coágulos, tubos demasiado largos o blandos y catéteres de calibre muy pequeño amortiguan la señal y hacen que parezca más baja o más achatada; en el extremo opuesto, la oscilación del catéter produce picos artificiales, en particular en las presiones del ventrículo y de la aorta. Por eso se purga el sistema, se lava de forma continua y se verifica con una prueba de lavado rápido. En algunas determinaciones precisas, como la medición de un gradiente a través de una válvula, se prefieren catéteres con sensores de presión en la punta, que evitan algunos de estos artefactos.
 
 Una curva de presión se interpreta por su forma además de por su valor. Las ondas de la aurícula, con sus deflexiones características, informan sobre la contracción auricular, el cierre de la válvula auriculoventricular y el llenado; la curva del ventrículo muestra la fase de ascenso rápido de la sístole y el aumento de la presión al final de la diástole; la de la arteria tiene la muesca que corresponde al cierre de la válvula de salida. La respiración modifica las presiones intratorácicas, y por ello las mediciones se toman al final de una espiración tranquila, cuando la presión pleural es más cercana a la atmosférica. La interpretación se realiza en el contexto de la persona, de su estado de volumen, de su frecuencia cardíaca y de la sedación utilizada.
+
+## [references]
+
+- Cateterismo cardíaco (enciclopedia médica) | https://medlineplus.gov/spanish/ency/article/003419.htm | MedlinePlus
+- Cateterismo cardíaco derecho de Swan-Ganz | https://medlineplus.gov/spanish/ency/article/003870.htm | MedlinePlus
+- Angiografía coronaria | https://medlineplus.gov/spanish/ency/article/003876.htm | MedlinePlus
+- Angioplastia y colocación de stent en el corazón | https://medlineplus.gov/spanish/ency/article/007473.htm | MedlinePlus
+- Cardiac Catheterization | https://www.nhlbi.nih.gov/health/cardiac-catheterization | NHLBI (NIH)
+- Right Heart Catheterization (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK557404/ | NCBI Bookshelf
+- Cardiac Catheterization Risks and Complications (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK531461/ | NCBI Bookshelf
+- Angiography | https://www.nhs.uk/tests-and-treatments/coronary-angiography/ | NHS

@@ -513,6 +513,32 @@ import type { NavIconName } from './nav-icon.types';
           <circle cx="12" cy="12" r="8.6" />
           <path d="M12 7.4V12l3 1.8" />
         }
+        @case ('grid') {
+          <!-- Cuatro tarjetas: ver los resultados en rejilla. -->
+          <rect x="3.6" y="3.6" width="7" height="7" rx="1.4" />
+          <rect x="13.4" y="3.6" width="7" height="7" rx="1.4" />
+          <rect x="3.6" y="13.4" width="7" height="7" rx="1.4" />
+          <rect x="13.4" y="13.4" width="7" height="7" rx="1.4" />
+        }
+        @case ('table') {
+          <!-- Una planilla con cabecera y columnas: ver en tabla. -->
+          <rect x="3.6" y="4.4" width="16.8" height="15.2" rx="1.8" />
+          <path d="M3.6 9.4h16.8M3.6 14.4h16.8M9.6 9.4v10.2" />
+        }
+        @case ('network') {
+          <!-- Un nodo al centro unido a cuatro: el mapa de relaciones. -->
+          <circle cx="12" cy="12" r="2.4" />
+          <circle cx="5.2" cy="5.2" r="1.8" />
+          <circle cx="18.8" cy="5.2" r="1.8" />
+          <circle cx="5.2" cy="18.8" r="1.8" />
+          <circle cx="18.8" cy="18.8" r="1.8" />
+          <path d="m6.5 6.5 3.8 3.8M17.5 6.5l-3.8 3.8M6.5 17.5l3.8-3.8M17.5 17.5l-3.8-3.8" />
+        }
+        @case ('cube') {
+          <!-- Un cubo en perspectiva: lo que se mira en tres dimensiones. -->
+          <path d="M12 3.4 19.8 7.7v8.6L12 20.6l-7.8-4.3V7.7z" />
+          <path d="M4.2 7.7 12 12l7.8-4.3M12 12v8.6" />
+        }
 
         @default {
           <!-- Casita con puerta: el punto de partida, y el que se dibuja

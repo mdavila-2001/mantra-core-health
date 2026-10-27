@@ -33,6 +33,7 @@ export const PROFILE_TABS = [
   'Seguros',
   'Tutores',
   'Mis puntos',
+  'Mis direcciones',
 ] as const;
 
 /** Los índices con nombre, para no escribir `2` donde se quiere decir «Facturación». */
@@ -43,6 +44,7 @@ export const TAB = {
   seguros: 3,
   tutores: 4,
   puntos: 5,
+  direcciones: 6,
 } as const;
 
 /**
@@ -58,4 +60,19 @@ export function tabIndex(clave: string | null): number | null {
     return null;
   }
   return Object.hasOwn(TAB, clave) ? TAB[clave as keyof typeof TAB] : null;
+}
+
+/**
+ * La pestaña con la que se abre la ficha, según la que pidió la URL.
+ *
+ * «Tutores» sólo existe si hay tutores, y sin ella las que vienen después
+ * —«Mis puntos» y «Mis direcciones» (26/10/2026)— se corren un lugar. Pedir
+ * «Tutores» sin tenerlos abre la primera.
+ *
+ * @param pedida - El índice de {@link TAB} que pidió la URL.
+ * @param tieneTutores - Si la pestaña «Tutores» se dibuja.
+ */
+export function initialTabIndex(pedida: number, tieneTutores: boolean): number {
+  if (pedida === TAB.tutores && !tieneTutores) return TAB.personales;
+  return pedida > TAB.tutores && !tieneTutores ? pedida - 1 : pedida;
 }
