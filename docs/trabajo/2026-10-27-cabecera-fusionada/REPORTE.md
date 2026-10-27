@@ -72,7 +72,8 @@ tablet y teléfono.
   no marca nada: ya la marca la cabecera. El carrito sigue marcando «Farmacia». Verificado en
   navegador (paciente): spending → menú `[]`, cabecera «Mis gastos y facturas»; cart → menú
   «Farmacia», cabecera «Carrito»; `/my-account` → «Mi perfil». Captura
-  `evidencia/activo-spending.png`. En `/my-account/invoices` el paciente no ve nada marcado:
-  su atajo ahora es «Mis gastos», que lleva a otra ruta.
+  `evidencia/activo-spending.png`. En `/my-account/invoices` la cabecera marca «Mis gastos»
+  (propietario, 27/10/2026): es el mismo atajo desde la fusión. Verificado en navegador
+  (`evidencia/activo-invoices.png`); en Mis solicitudes «Mis gastos» no se marca.
 - Consola durante la verificación: un 404 de `glossary-data/manifest.json`, ajeno a este cambio
   (los datos del glosario se generan aparte y no están en este entorno local).

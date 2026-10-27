@@ -250,6 +250,16 @@ export class ShellLayout {
   protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
   protected readonly pharmacyTestids = PHARMACY_TESTIDS;
 
+  /**
+   * «Mis gastos» se marca también en «Mis facturas»: para el paciente es el
+   * mismo atajo desde la fusión del 27/10/2026, y sin esto la cabecera quedaba
+   * sin nada marcado al entrar por «Ver mis facturas».
+   */
+  protected readonly gastosActivo = computed(() => {
+    const url = this.urlActual();
+    return contiene('/my-account/spending', url) || contiene('/my-account/invoices', url);
+  });
+
   /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
   protected readonly etiquetaCarrito = computed(() => {
     const unidades = this.unidadesDelCarrito();
