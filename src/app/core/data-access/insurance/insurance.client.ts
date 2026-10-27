@@ -162,7 +162,7 @@ type WireMyClaim = Omit<MyClaim, 'submittedAt' | 'serviceDate' | 'decision' | 'b
   readonly serviceDate: string | null;
   readonly decision:
     (Omit<NonNullable<MyClaim['decision']>, 'decidedAt'> & { readonly decidedAt: string }) | null;
-  /** Extensión de la maqueta (P63): la API real todavía no los entrega. */
+  /** `null` fuera de la vista del paciente y en las solicitudes que el servidor no desglosa. */
   readonly breakdown?: MyClaimBreakdown | null;
   readonly patientObjection?: (Omit<MyClaimObjection, 'submittedAt'> & { readonly submittedAt: string }) | null;
 };
@@ -559,8 +559,8 @@ export class InsuranceClient {
    * pedirla; el lado (paciente, médico, laboratorio, imagenología) lo resuelve
    * el servidor por la sesión — el cliente no manda ningún id.
    *
-   * `breakdown` y `patientObjection` son extensión de la maqueta en la respuesta (P63):
-   * el `MyClaimDto` real todavía no los trae, y la pantalla los toma como `null`.
+   * `breakdown` y `patientObjection` solo vienen en la vista del paciente (el servidor
+   * desglosa las 50 solicitudes más recientes); en cualquier otro caso son `null`.
    *
    * @returns Las solicitudes, de la más reciente a la más antigua.
    */
@@ -701,9 +701,9 @@ export class InsuranceClient {
   }
 
   /**
-   * Coberturas de una persona, para quien atiende (P62). Solo existe en la
-   * maqueta: la API todavía no expone esta lectura al personal. Contra la API
-   * real responde «no disponible» en vez de fallar en silencio.
+   * `GET /patient-coverages/by-patient/:patientProfileId` — los seguros de una
+   * persona, para quien cobra (BILLING/FINANCE). El servidor responde 404 si la
+   * persona no tiene relación asistencial vigente con la organización activa.
    *
    * @param patientProfileId - Persona cuyas coberturas se leen.
    * @returns Las coberturas registradas, con su vigencia.
@@ -711,13 +711,11 @@ export class InsuranceClient {
   listCoveragesOfPatient(
     patientProfileId: string,
   ): Observable<readonly PatientCoverageOption[]> {
-    return simulatorOnly('Ver los seguros de la persona', this.url('/patient-coverages/by-patient'), () =>
-      this.http
-        .get<{ readonly items: readonly PatientCoverageOption[] }>(
-          this.url(`/patient-coverages/by-patient/${encodeURIComponent(patientProfileId)}`),
-        )
-        .pipe(map((cuerpo) => cuerpo.items)),
-    );
+    return this.http
+      .get<{ readonly items: readonly PatientCoverageOption[] }>(
+        this.url(`/patient-coverages/by-patient/${encodeURIComponent(patientProfileId)}`),
+      )
+      .pipe(map((cuerpo) => cuerpo.items));
   }
 
   /**
