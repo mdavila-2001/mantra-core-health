@@ -236,3 +236,22 @@
        seguridad si un rol suma un selector y las acciones no caben. */
   }
 }
+
+/*
+ * Renglones del menú con rótulo largo (27/10/2026). «Mi historia clínica» parte
+ * en dos líneas con la barra a 232 px o con la letra del rediseño. Con el
+ * interlineado heredado de párrafo y sin relleno vertical, el renglón doble
+ * crecía hasta rozar al de abajo y se leía como dos destinos. Interlineado de
+ * cuerpo, relleno propio y corte equilibrado: el renglón doble se lee como uno
+ * y respira igual que los de una línea (que no cambian de alto: el mínimo
+ * sigue mandando).
+ */
+.app-side-nav__item {
+  padding-block: var(--sp-1);
+  line-height: var(--lh-body);
+}
+
+.app-side-nav__item .side-nav__label {
+  min-inline-size: 0;
+  text-wrap: balance;
+}
