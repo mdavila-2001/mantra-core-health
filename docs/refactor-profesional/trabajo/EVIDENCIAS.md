@@ -1,5 +1,24 @@
 # Evidencias
 
+## Modales de la consulta: tarjeta doble, título repetido y tres columnas · 2026-10-27
+
+Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, sesión médica simulada, Chromium.
+Reporte del cliente: el modal «Prescribir medicación» dibujaba la tarjeta del bloque dentro del
+panel, repetía el título y repartía los campos a tres columnas de ~240 px con «Duración» sola.
+
+| Comprobación | Resultado |
+|---|---|
+| `playwright/modales-composicion.spec.ts` (las 9 casillas, 1440×900 y 390×844) | 2/2: ninguna rejilla del modal pasa de 2 columnas, ningún bloque deja su marco dentro del panel, desborde lateral ≤ 1 px |
+| Primera pasada | «Formulario médico» seguía enmarcado (dos bloques en el cuerpo) y desbordaba 49 px en 390; corregido |
+| `ng test` de medication/analysis-order/specialty-form/content-dialog/consultation | 12 archivos, 271/271 |
+| `yarn typecheck` · `eslint` de lo tocado | exit 0 · exit 0 |
+
+No se ejecutó: la suite completa de `yarn test`, el resto de los 75 modales uno por uno (las
+reglas viven en `alovida.css` bajo `.content-dialog__cuerpo` y alcanzan a todos), revisión
+independiente (`NO_SELF_APPROVAL`: queda para la revisión del PR).
+
+Capturas en `capturas/despues/modales-2026-10-27/`.
+
 ## Exploración de `/schedule` y menú móvil · 2026-10-05
 
 Entorno: Windows, Chromium, `http://localhost:3012`, sesión médica simulada. Recorrido manual con Playwright CLI; no equivale a una suite automatizada ni cubre permisos/API reales.
