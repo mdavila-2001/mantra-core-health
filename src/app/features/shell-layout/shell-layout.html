@@ -507,10 +507,12 @@
           <!-- Mis gastos: la billetera abre el tablero de lo que el paciente
                gastó en su salud (propietario, 27/09/2026). Primera de las tres
                porque es la única que no es una compra. -->
+          <!-- Sin `routerLinkActive`: también se marca en «Mis facturas», que
+               se fusionó acá y se abre con «Ver mis facturas» (27/10/2026). -->
           <a
             class="app-header__ajustes"
-            routerLinkActive="is-activo"
-            ariaCurrentWhenActive="page"
+            [class.is-activo]="gastosActivo()"
+            [attr.aria-current]="gastosActivo() ? 'page' : null"
             routerLink="/my-account/spending"
             data-testid="header-gastos"
             appTooltip="Mis gastos y facturas"

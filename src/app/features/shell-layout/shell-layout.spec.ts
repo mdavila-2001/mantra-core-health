@@ -1039,6 +1039,27 @@ describe('ShellLayout', () => {
         },
       );
 
+      it.each(['/my-account/spending', '/my-account/invoices'])(
+        'en %s la cabecera marca «Mis gastos»: Mis facturas se fusionó con él (27/10/2026)',
+        async (url) => {
+          abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+          await ir(url);
+
+          const gastos = raiz().querySelector('[data-testid="header-gastos"]');
+          expect(gastos?.classList).toContain('is-activo');
+          expect(gastos?.getAttribute('aria-current')).toBe('page');
+        },
+      );
+
+      it('fuera de gastos y facturas, «Mis gastos» no se marca', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        await ir('/my-account/requests');
+
+        const gastos = raiz().querySelector('[data-testid="header-gastos"]');
+        expect(gastos?.classList).not.toContain('is-activo');
+        expect(gastos?.getAttribute('aria-current')).toBeNull();
+      });
+
       it('el carrito sigue marcando «Farmacia»: es parte de ella', async () => {
         abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
         await ir('/my-account/pharmacy/cart');
