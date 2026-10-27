@@ -121,6 +121,37 @@ export const STREET_TEXT: Readonly<Record<Exclude<StreetState, 'escrita'>, strin
   caida: 'No pudimos traer el nombre de la calle ahora. El punto se guarda igual.',
 };
 
+/** Lo que dice «Distrito o zona» mientras no hay uno que mostrar. */
+export const ZONE_TEXT: Readonly<Record<Exclude<StreetState, 'sin-pedir'>, string>> = {
+  buscando: 'Buscando el distrito de este punto…',
+  escrita: 'El mapa no tiene un distrito o zona para este punto.',
+  'sin-calle': 'El mapa no tiene un distrito o zona para este punto.',
+  caida: 'No pudimos traer el distrito ahora. El punto se guarda igual.',
+};
+
+/**
+ * El recuadro de Bolivia, con ~0,5° de margen para los municipios de borde. Fuera de él no hay
+ * departamento, provincia ni municipio que deducir, y el mapa de Bolivia no
+ * tiene dónde dibujar el punto: se dice, en vez de pintarlo fuera del plano.
+ */
+export const BOLIVIA_BOUNDS = { minLat: -23.5, maxLat: -9.2, minLng: -70.0, maxLng: -57.0 } as const;
+
+export function isInBolivia(punto: Coordinates): boolean {
+  return (
+    punto.lat >= BOLIVIA_BOUNDS.minLat &&
+    punto.lat <= BOLIVIA_BOUNDS.maxLat &&
+    punto.lng >= BOLIVIA_BOUNDS.minLng &&
+    punto.lng <= BOLIVIA_BOUNDS.maxLng
+  );
+}
+
+/**
+ * Cuánto se espera a la API por la calle. La API serializa una consulta por
+ * segundo y, si el primer proveedor cae, pregunta a un segundo: con 10 s el
+ * front se rendía antes que ella y mostraba «no pudimos» con la calle en camino.
+ */
+const STREET_TIMEOUT_MS = 20_000;
+
 export const NOTICE_REWRITE_ADDRESS = 'Vuelva a escribir la dirección para este punto.';
 
 /**
@@ -355,6 +386,27 @@ export class MapLocationPicker {
     return estado === 'escrita' ? (this.street() ?? '') : STREET_TEXT[estado];
   });
 
+  /** Lo que muestra «Distrito o zona»: el del punto, o qué pasó con él. */
+  protected readonly zoneText = computed(() => {
+    const estado = this.streetState();
+    if (estado === 'sin-pedir') return '';
+    return this.zone() ?? ZONE_TEXT[estado];
+  });
+
+  /** Si el punto cae fuera de Bolivia (y con eso, fuera del catálogo de municipios). */
+  protected readonly outsideBolivia = computed(() => {
+    const punto = this.punto();
+    return punto !== null && !isInBolivia(punto);
+  });
+
+  /** Vuelve a pedir la calle del punto actual, tras una caída. */
+  protected retryStreet(): void {
+    const punto = this.punto();
+    if (punto === null) return;
+    this.streetState.set('buscando');
+    this.streetRequests.next(punto);
+  }
+
   private readonly streetRequests = new Subject<Coordinates>();
 
   /** Un pedido vivo a la vez: un punto nuevo cancela el anterior. */
@@ -363,7 +415,7 @@ export class MapLocationPicker {
       .pipe(
         switchMap((punto) =>
           this.geocoder.streetAt(punto.lat, punto.lng).pipe(
-            timeout(10_000),
+            timeout(STREET_TIMEOUT_MS),
             map((calle): { punto: Coordinates; calle: StreetFromPoint | null } => ({ punto, calle })),
             catchError(() => of({ punto, calle: null })),
           ),
