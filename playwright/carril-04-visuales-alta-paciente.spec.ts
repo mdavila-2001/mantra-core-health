@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { elegirOpcion } from './support/registro-paciente';
+import { elegirOpcion, marcarYConfirmarCasa } from './support/registro-paciente';
 
 /**
  * Carril 04 — correcciones visuales del alta de paciente (`/auth/register/patient`).
@@ -71,8 +71,7 @@ async function completarPaso1(page: Page): Promise<void> {
 }
 
 async function completarPaso2(page: Page): Promise<void> {
-  await page.getByTestId('registration-residence-mapa-SC').click();
-  await elegirOpcion(page, 'registration-residence-municipio', { index: 1 });
+  await marcarYConfirmarCasa(page);
   await continuar(page);
   await esperarPaso(page, 3);
 }

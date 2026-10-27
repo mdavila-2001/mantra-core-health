@@ -1,0 +1,178 @@
+---
+slug: medlineplus-es-2013
+---
+
+## [definition] Introducción
+
+El trasplante de pulmón es una cirugía mayor en la que se extirpan uno o ambos pulmones enfermos de una persona y se reemplazan por pulmones sanos procedentes de un donante. Se reserva para personas con una enfermedad pulmonar crónica, grave y progresiva que ya no responde a los tratamientos disponibles y que, sin el trasplante, tiene un pronóstico de vida limitado o una calidad de vida muy deteriorada. En la gran mayoría de los casos el órgano proviene de un donante fallecido; de forma excepcional, dos donantes vivos pueden ceder cada uno un lóbulo pulmonar para formar el injerto.
+
+El objetivo del trasplante es doble: prolongar la vida y mejorar la capacidad de la persona para respirar, moverse y realizar sus actividades cotidianas. No es una curación en sentido estricto. Quien recibe un pulmón nuevo cambia una enfermedad pulmonar terminal por una condición crónica distinta, la de ser receptor de un trasplante, que exige tomar medicamentos inmunosupresores de por vida, someterse a controles frecuentes y aprender a reconocer señales de rechazo o de infección. Por eso la decisión se toma después de una evaluación minuciosa, en la que participa un equipo multidisciplinario y en la que la propia persona y su familia tienen un papel central.
+
+Entre los trasplantes de órganos sólidos, el de pulmón se considera uno de los más exigentes. El pulmón es el único órgano interno que está en contacto permanente con el aire exterior, y por lo tanto con microorganismos, partículas y contaminantes, lo que lo hace especialmente vulnerable a las infecciones y al rechazo. Además, los pulmones de un donante se dañan con facilidad durante la muerte encefálica, la ventilación mecánica y el traslado, de modo que sólo una parte de los donantes de órganos ofrece pulmones aptos para trasplante. Esa escasez condiciona la manera en que se organizan las listas de espera en todo el mundo.
+
+Este artículo describe la historia del procedimiento, sus tipos, las enfermedades que pueden llevar a indicarlo, cómo se evalúa a un candidato, en qué consiste la cirugía, qué ocurre en el hospital y en los meses siguientes, cuáles son los riesgos y los beneficios, qué alternativas existen y cuándo un receptor debe buscar atención urgente. No sustituye la valoración de un profesional de la salud ni contiene pautas de dosificación de medicamentos.
+
+## [additional_information] Historia: de los experimentos al trasplante como tratamiento
+
+La idea de reemplazar un pulmón enfermo se exploró primero en el laboratorio. Durante las décadas de 1940 y 1950, investigadores como el soviético Vladímir Démijov y el francés Henri Métras demostraron en animales que era técnicamente posible extraer un pulmón e implantar otro, reconectando la arteria pulmonar, las venas pulmonares y el bronquio. Aquellos experimentos mostraron que el reto quirúrgico podía resolverse, pero también que el organismo receptor destruía el injerto en poco tiempo.
+
+El primer trasplante pulmonar en un ser humano lo realizó el cirujano estadounidense James Hardy, en la Universidad de Misisipi, en junio de 1963. El paciente sobrevivió dieciocho días. Durante los quince años siguientes se hicieron decenas de intentos en distintos países y casi todos fracasaron, por dos motivos principales: el rechazo del órgano, que los fármacos de la época no lograban controlar, y la mala cicatrización de la unión entre el bronquio del donante y el del receptor, que tendía a romperse o a cerrarse.
+
+El cambio llegó a comienzos de la década de 1980 con la combinación de mejores técnicas de circulación extracorpórea y la introducción de la ciclosporina, un inmunosupresor que permitió controlar el rechazo con mucha más eficacia. En 1981, el equipo de Bruce Reitz en la Universidad de Stanford realizó con éxito un trasplante combinado de corazón y pulmones a una mujer con hipertensión pulmonar. Poco después, el cirujano torácico Joel Cooper y su equipo del Hospital General de Toronto lograron el primer trasplante unipulmonar con supervivencia prolongada, en 1983, y el primer trasplante bipulmonar con éxito a largo plazo, en 1986. En 1988 el mismo grupo trasplantó con éxito ambos pulmones a una persona con fibrosis quística, una enfermedad que exige reemplazar los dos pulmones porque el que quedara infectado contaminaría al nuevo.
+
+Desde entonces el procedimiento se ha difundido por todo el mundo y ha ido refinándose: la técnica de trasplante bipulmonar secuencial, que implanta un pulmón tras otro, sustituyó a la antigua implantación en bloque; la preservación de órganos mejoró; se desarrollaron registros internacionales que permiten comparar resultados entre centros, y aparecieron herramientas como la perfusión pulmonar ex vivo, que permite evaluar y, en algunos casos, recuperar pulmones de donantes que antes se descartaban. En 2021, un equipo de Los Ángeles comunicó el primer trasplante pulmonar asistido por robot, una muestra de la tendencia hacia abordajes menos invasivos.
+
+## [additional_information] Terminología
+
+El término «trasplante» procede del latín trans (al otro lado) y plantare (plantar): literalmente, plantar algo en otro sitio. En español se aceptan tanto «trasplante» como «transplante», aunque la forma simplificada es la preferida en el uso general. Se habla indistintamente de «trasplante de pulmón», «trasplante pulmonar» o, en textos técnicos, de «injerto pulmonar» para referirse al órgano implantado.
+
+Algunos términos aparecen con frecuencia en este campo. El «donante» es la persona que cede el órgano, y el «receptor», quien lo recibe. El «injerto» es el órgano trasplantado. La «inmunosupresión» designa el tratamiento que reduce la respuesta del sistema inmunitario para que no ataque al injerto. La «disfunción primaria del injerto» es el mal funcionamiento del pulmón nuevo en los primeros días, y la «disfunción crónica del injerto pulmonar» agrupa las formas de deterioro tardío, la más conocida de las cuales es el síndrome de bronquiolitis obliterante. «Anastomosis» es la unión quirúrgica de dos conductos, como dos bronquios o dos vasos sanguíneos.
+
+## [classification] Tipos de trasplante de pulmón
+
+Existen varias modalidades, y la elección depende de la enfermedad de base, de la edad y el estado general del receptor, de la disponibilidad de órganos y de la experiencia del centro:
+
+• Trasplante unipulmonar: se reemplaza un solo pulmón. Puede emplearse en algunas enfermedades en las que el pulmón que queda no representa una amenaza para el nuevo, como ciertas formas de fibrosis pulmonar o de enfisema. Permite, en teoría, que los pulmones de un mismo donante beneficien a dos receptores.
+• Trasplante bipulmonar: se reemplazan ambos pulmones, habitualmente de forma secuencial, uno después del otro. Es imprescindible en enfermedades con infección crónica de ambos pulmones, como la fibrosis quística y las bronquiectasias difusas, y se prefiere con frecuencia en la hipertensión pulmonar y en muchos casos de enfermedad pulmonar obstructiva crónica.
+• Trasplante cardiopulmonar: se reemplazan en bloque el corazón y los pulmones. Hoy se reserva para situaciones poco frecuentes en las que tanto el corazón como los pulmones están dañados de manera irreversible, por ejemplo en algunas cardiopatías congénitas complejas con hipertensión pulmonar avanzada.
+• Trasplante lobular de donante vivo: dos personas sanas, generalmente familiares, donan cada una un lóbulo pulmonar, que se implanta en lugar de cada pulmón del receptor. Es una opción excepcional, que se ha utilizado sobre todo en niños y adultos de talla pequeña, y que implica una cirugía mayor para tres personas.
+• Retrasplante: es un nuevo trasplante en una persona cuyo primer injerto ha fallado. Se valora con criterios especialmente estrictos por la escasez de órganos y por los resultados, en general más modestos que los del primer trasplante.
+
+## [indications] Cuándo se plantea un trasplante de pulmón
+
+El trasplante se considera cuando una enfermedad pulmonar ha llegado a una fase avanzada, sigue empeorando a pesar del mejor tratamiento médico y quirúrgico posible, y la persona tiene, sin embargo, la fortaleza física y el apoyo necesarios para atravesar la operación y la recuperación. No se trata de un tratamiento de último minuto: los equipos de trasplante recomiendan que la derivación a un centro especializado se haga con tiempo suficiente, porque la evaluación lleva semanas o meses y porque quien llega demasiado deteriorado puede dejar de ser apto para la cirugía.
+
+Las enfermedades que con más frecuencia llevan a un trasplante pulmonar son:
+
+• Enfermedad pulmonar obstructiva crónica (EPOC), incluido el enfisema, en especial el asociado al déficit de alfa-1 antitripsina.
+• Enfermedades pulmonares intersticiales, con la fibrosis pulmonar idiopática como la más frecuente, en las que el tejido pulmonar se inflama y cicatriza de forma progresiva.
+• Fibrosis quística, una enfermedad genética que produce secreciones espesas, infecciones respiratorias repetidas y destrucción de las vías aéreas.
+• Hipertensión arterial pulmonar, en la que la presión de las arterias de los pulmones aumenta hasta sobrecargar el lado derecho del corazón.
+• Bronquiectasias no debidas a fibrosis quística, sarcoidosis avanzada y otras enfermedades menos comunes, como la linfangioleiomiomatosis.
+
+En los últimos años también se ha realizado trasplante pulmonar en casos seleccionados de lesión pulmonar aguda grave e irreversible, por ejemplo después de algunas neumonías graves, en personas jóvenes sin otras enfermedades que no logran recuperar la función pulmonar a pesar de un soporte prolongado. Son situaciones excepcionales que se deciden caso por caso.
+
+La valoración no depende de una sola prueba ni de un único número. El equipo integra la evolución de la enfermedad, la función pulmonar, la capacidad de ejercicio, la necesidad de oxígeno, las hospitalizaciones, el estado del corazón y de otros órganos, y la estimación de que el trasplante ofrezca más años y mejor calidad de vida que seguir sin él. Hay, además, circunstancias que pueden hacer desaconsejable el procedimiento o que obligan a corregirlas antes: el consumo activo de tabaco, alcohol u otras sustancias; una enfermedad grave de otros órganos que no pueda tratarse; un cáncer reciente; ciertas infecciones activas no controladas; una desnutrición o una obesidad marcadas; o la imposibilidad de seguir el tratamiento y los controles de manera fiable. Muchas de estas situaciones no son definitivas, y el equipo puede proponer un plan para resolverlas y volver a evaluar.
+
+## [how_it_works] Por qué un pulmón nuevo puede ser rechazado
+
+El sistema inmunitario está diseñado para reconocer lo que es propio del cuerpo y atacar lo ajeno. Las células de cada persona llevan en su superficie unas proteínas, los antígenos leucocitarios humanos (HLA), que funcionan como una especie de documento de identidad. Un pulmón de donante tiene antígenos diferentes de los del receptor, y los linfocitos de éste los detectan como extraños. Si no se controla esa respuesta, el sistema inmunitario infiltra el órgano y lo daña: eso es el rechazo.
+
+Antes del trasplante se comprueba la compatibilidad de grupo sanguíneo y se estudian los anticuerpos que el receptor ya tiene contra antígenos HLA, que pueden haberse formado por transfusiones, embarazos o trasplantes previos. Esa información ayuda a decidir si un pulmón concreto es adecuado para una persona concreta. Además del grupo sanguíneo, el tamaño importa: el pulmón donado tiene que caber en el tórax del receptor, por lo que se compara la talla y las dimensiones torácicas de ambos.
+
+Después de la cirugía, la inmunosupresión mantiene la respuesta inmunitaria lo bastante baja como para proteger el injerto, pero no tanto como para dejar al organismo sin defensas. Ese equilibrio es delicado y cambia con el tiempo: suele ser más intenso al principio y se ajusta después según la evolución, los niveles de los fármacos en sangre, la función del injerto y la aparición de efectos adversos. El pulmón, por estar expuesto al exterior, añade una dificultad: cualquier infección respiratoria puede desencadenar o agravar el rechazo, y a la vez la inmunosupresión facilita las infecciones.
+
+## [preparation] La evaluación y la lista de espera
+
+El camino comienza con la derivación del neumólogo tratante a un centro de trasplante. Allí, un equipo formado por neumólogos, cirujanos torácicos, anestesiólogos, cardiólogos, especialistas en enfermedades infecciosas, personal de enfermería coordinador, nutricionistas, fisioterapeutas, psicólogos o psiquiatras y trabajadores sociales estudia a fondo a la persona candidata. La evaluación suele requerir varias consultas a lo largo de semanas o meses.
+
+Entre los estudios habituales se encuentran:
+
+• Pruebas de función pulmonar, de capacidad de ejercicio y de intercambio de gases.
+• Estudios de imagen del tórax, como radiografías y tomografía computarizada, y en ocasiones estudios de ventilación y perfusión que muestran cómo se reparte el aire y la sangre entre ambos pulmones.
+• Evaluación del corazón: electrocardiograma, ecocardiograma y, cuando hace falta, cateterismo cardíaco para medir presiones y descartar enfermedad coronaria.
+• Análisis de sangre para conocer el grupo sanguíneo, el tipo de tejido (tipificación HLA), los anticuerpos preexistentes, la función de riñones e hígado y la presencia de infecciones como hepatitis o VIH.
+• Pruebas de detección de cáncer acordes con la edad y el sexo, revisión odontológica y actualización del calendario de vacunas, ya que muchas vacunas no pueden aplicarse después con la misma eficacia o seguridad.
+• Valoración nutricional, de la densidad ósea, del estado psicológico y de la red de apoyo familiar y social.
+
+Si la evaluación es favorable, la persona se incluye en la lista de espera. En la mayoría de los sistemas la prioridad no depende sólo del tiempo de espera, sino también de la gravedad de la enfermedad, de la urgencia y de la probabilidad de que el trasplante tenga éxito. La duración de la espera es imprevisible: depende de la disponibilidad de donantes, del grupo sanguíneo, del tamaño corporal y de los anticuerpos del receptor, y puede extenderse desde semanas hasta años.
+
+La espera no es un tiempo pasivo. Durante ella se pide a la persona que siga participando en un programa de rehabilitación pulmonar para mantener la fuerza muscular, que cuide su alimentación y su peso según las indicaciones del equipo, que se mantenga sin tabaco ni alcohol, que tome la medicación como está indicada, que acuda a todos los controles y que comunique cualquier cambio en su salud o en su medicación. También tiene que estar localizable en todo momento y tener previsto cómo llegar al hospital con rapidez, porque cuando aparece un pulmón compatible el aviso llega sin anticipación. Algunos centros piden que el receptor viva cerca del hospital durante la espera o los primeros meses posteriores.
+
+## [procedure_description] Cómo se realiza la cirugía
+
+Cuando se identifica un donante adecuado, el equipo extractor evalúa los pulmones en el hospital de origen, los extrae, los enfría y los conserva en una solución especial para el traslado. En algunos centros, los pulmones dudosos pueden pasar antes por un circuito de perfusión ex vivo, en el que se ventilan y se perfunden fuera del cuerpo durante unas horas para comprobar si funcionan bien. Mientras tanto, se llama al receptor, que debe acudir en ayunas. Al llegar se completan los últimos análisis y la preparación, y en ocasiones la operación se suspende en el último momento porque el pulmón no resulta apto: es una experiencia frustrante pero frecuente, que los equipos explican de antemano.
+
+La intervención se realiza con anestesia general. En el trasplante unipulmonar, la incisión se hace en el costado del tórax correspondiente. En el bipulmonar se suele emplear una incisión transversal por debajo de las mamas que abre ambos lados del tórax, o bien dos incisiones laterales separadas. El cirujano extirpa el pulmón enfermo, coloca el pulmón del donante y realiza tres uniones: la del bronquio, la de la arteria pulmonar y la de las venas pulmonares con la aurícula izquierda. Luego restablece el flujo de sangre y la ventilación del nuevo pulmón. En el trasplante bipulmonar secuencial, se completa todo el primer lado antes de comenzar el segundo, de modo que el pulmón ya implantado sostiene la respiración mientras se trabaja en el otro.
+
+Según el estado del paciente y la tolerancia durante la operación, el equipo puede necesitar un soporte circulatorio o respiratorio temporal, como la circulación extracorpórea o la oxigenación por membrana extracorpórea (ECMO), que oxigenan la sangre y la bombean fuera del cuerpo mientras los pulmones no pueden hacerlo. Al terminar se dejan tubos de drenaje torácico para evacuar aire, sangre y líquido. La duración de la cirugía es de varias horas y es mayor en el trasplante de ambos pulmones que en el de uno solo. Si el corazón también está afectado, el procedimiento puede consistir en un trasplante cardiopulmonar.
+
+## [what_to_expect] Qué esperar en el hospital
+
+Después de la operación, el receptor pasa a la unidad de cuidados intensivos, donde permanece conectado a un respirador hasta que el nuevo pulmón funciona bien y puede respirar por sí mismo. En los primeros días se vigilan de cerca la oxigenación, la presión arterial, la función renal, el equilibrio de líquidos, el dolor y los signos de infección o de rechazo. Se realizan radiografías de tórax con frecuencia y, a menudo, broncoscopias, que permiten ver por dentro la unión de los bronquios, aspirar secreciones y tomar muestras.
+
+La rehabilitación empieza muy pronto. Los fisioterapeutas ayudan a la persona a sentarse, levantarse, caminar y hacer ejercicios respiratorios, porque la movilización precoz reduce las complicaciones y acelera la recuperación. El nuevo pulmón no tiene la inervación que tenía en el donante, por lo que el reflejo de la tos queda disminuido por debajo de la unión bronquial; por eso se enseña a toser de forma voluntaria y eficaz para eliminar secreciones.
+
+Durante la internación, el equipo de enfermería y de farmacia enseña a la persona y a su familia a manejar la medicación, a reconocer síntomas de alarma, a medir en casa parámetros como la temperatura o la función pulmonar con un espirómetro portátil cuando el centro lo indica, y a organizar los controles. La estancia hospitalaria suele durar de una a varias semanas y puede prolongarse si surgen complicaciones. Es habitual que la persona note desde muy pronto que respira con menos esfuerzo, aunque la recuperación completa de la fuerza y la resistencia lleva meses.
+
+## [risks] Riesgos y complicaciones
+
+El trasplante de pulmón es una cirugía de alto riesgo, y conocer sus complicaciones forma parte de la decisión informada. Además de los riesgos propios de cualquier anestesia y de toda cirugía mayor, como sangrado, trombosis o reacciones a fármacos, existen complicaciones específicas:
+
+• Disfunción primaria del injerto: en las primeras horas o días, el pulmón nuevo puede funcionar mal por la lesión sufrida durante la donación, la preservación y la reperfusión. En sus formas graves puede requerir soporte prolongado con respirador o con ECMO.
+• Rechazo agudo: es más frecuente en los primeros meses. Puede no dar síntomas o manifestarse con tos, cansancio, fiebre, falta de aire o descenso de la función pulmonar. Suele responder al ajuste del tratamiento inmunosupresor.
+• Rechazo mediado por anticuerpos: una forma en la que el daño lo producen anticuerpos dirigidos contra el injerto. Su diagnóstico y tratamiento son más complejos.
+• Infecciones: bacterianas, víricas y por hongos, favorecidas por la inmunosupresión y por la exposición directa del pulmón al aire. Algunas, como la infección por citomegalovirus, son típicas de los receptores de trasplante, y por eso los centros aplican estrategias de prevención y vigilancia.
+• Complicaciones de las uniones quirúrgicas: estrechamiento o mala cicatrización del bronquio, o problemas en las uniones vasculares, que a veces requieren procedimientos por broncoscopia.
+• Disfunción crónica del injerto pulmonar: es el principal factor que limita la supervivencia a largo plazo. Su forma más conocida, el síndrome de bronquiolitis obliterante, consiste en una cicatrización progresiva de las vías aéreas pequeñas que reduce de manera gradual la capacidad respiratoria.
+• Efectos de la medicación a largo plazo: los inmunosupresores pueden afectar la función renal y favorecer la hipertensión arterial, la diabetes, el aumento del colesterol, la pérdida de masa ósea y un mayor riesgo de algunos cánceres, en especial de piel y linfomas.
+
+Ninguna de estas complicaciones es inevitable, y muchas se detectan a tiempo gracias a los controles periódicos. Por eso los programas de trasplante insisten tanto en la adherencia al seguimiento.
+
+## [recovery] Recuperación y vida después del trasplante
+
+La recuperación se extiende durante meses. En las primeras semanas tras el alta, los controles son muy frecuentes, con análisis de sangre, pruebas de función pulmonar, radiografías y broncoscopias programadas, y algunos centros piden al receptor que permanezca cerca del hospital durante los primeros meses. Con el tiempo, si todo evoluciona bien, las visitas se espacian, pero el seguimiento por el equipo de trasplante es de por vida.
+
+La medicación inmunosupresora debe tomarse todos los días, a las horas indicadas y sin interrupciones. El equipo la ajusta según los niveles en sangre, la función del injerto y los efectos adversos; nunca debe modificarse por cuenta propia, ni combinarse con otros fármacos, suplementos o productos de herbolario sin consultar, porque muchas sustancias alteran sus niveles. A ella se suman, en general, fármacos para prevenir infecciones y para controlar los efectos secundarios.
+
+La rehabilitación pulmonar continúa después del alta y es clave para recuperar la fuerza y la tolerancia al esfuerzo. Muchas personas pueden retomar con el tiempo actividades que habían abandonado, como caminar largas distancias, viajar, trabajar o estudiar. La vida cotidiana incorpora hábitos de protección: higiene de manos rigurosa, evitar el contacto con personas con infecciones respiratorias en los primeros tiempos, precauciones con los alimentos, protección solar por el riesgo de cáncer de piel, abstención total del tabaco y del vapeo, y mantener al día las vacunas que el equipo indique.
+
+El impacto emocional también forma parte de la recuperación. Es frecuente sentir alegría y gratitud, pero también ansiedad por el rechazo, cambios de ánimo relacionados con la medicación o sentimientos complejos hacia la familia del donante. Los grupos de apoyo de pacientes trasplantados y el acompañamiento psicológico ayudan a atravesar esta etapa. En muchos países existen vías para que los receptores puedan escribir, de forma anónima, a la familia del donante.
+
+## [prognosis] Pronóstico
+
+Los resultados del trasplante pulmonar han mejorado con las décadas, aunque siguen siendo más modestos que los de otros trasplantes de órganos sólidos. Según la enciclopedia médica MedlinePlus, aproximadamente cuatro de cada cinco receptores siguen vivos un año después del trasplante, unos tres de cada cinco a los cinco años y alrededor de dos de cada cinco a los diez años. La supervivencia varía según la enfermedad que motivó el trasplante, la edad, el estado general del receptor y la experiencia del centro.
+
+El mayor riesgo de muerte se concentra en el primer año, por complicaciones quirúrgicas, disfunción del injerto, infecciones y rechazo. A largo plazo, la disfunción crónica del injerto es la principal limitación. Aun así, para la mayoría de las personas trasplantadas la calidad de vida mejora de manera notable: respiran mejor, dejan de necesitar oxígeno o lo necesitan mucho menos, y recuperan una autonomía que la enfermedad avanzada les había quitado.
+
+## [benefits] Beneficios
+
+El beneficio principal es la posibilidad de vivir más y mejor en personas cuya enfermedad pulmonar, sin trasplante, seguiría avanzando. Las organizaciones de pacientes y los servicios de salud que lo describen destacan la mejoría de la capacidad de ejercicio, la independencia del oxígeno suplementario en muchos casos, la reducción de las hospitalizaciones por exacerbaciones y la posibilidad de retomar proyectos personales, familiares y laborales. Para personas jóvenes con fibrosis quística o con hipertensión pulmonar, el trasplante puede significar años de vida activa que la enfermedad no les habría permitido.
+
+El beneficio no es igual para todos. Por eso la evaluación busca identificar a quienes tienen más probabilidades de obtenerlo y de que los pulmones disponibles, un recurso escaso, rindan el mayor provecho posible. Una conversación franca con el equipo sobre las expectativas realistas, la carga del tratamiento posterior y los riesgos es parte esencial de la decisión.
+
+## [alternatives] Alternativas
+
+Antes de llegar al trasplante, y a veces como puente o en lugar de él, existen otras opciones que dependen de la enfermedad de base:
+
+• Tratamiento médico optimizado de la enfermedad: broncodilatadores e inhaladores en la EPOC, antifibróticos en la fibrosis pulmonar, terapias específicas en la hipertensión arterial pulmonar o moduladores de la proteína afectada en algunas personas con fibrosis quística, que han cambiado de forma notable la evolución de esa enfermedad.
+• Oxigenoterapia domiciliaria y ventilación no invasiva, que alivian la falta de aire y pueden mejorar la supervivencia en situaciones concretas.
+• Rehabilitación pulmonar, que mejora la tolerancia al esfuerzo y la calidad de vida aunque no cambie la función pulmonar.
+• Procedimientos para reducir el volumen pulmonar en algunas personas con enfisema, ya sea con cirugía o con válvulas colocadas por broncoscopia.
+• Cuidados paliativos, centrados en el alivio de los síntomas y en la calidad de vida, que pueden acompañar a cualquier otra estrategia y no implican renunciar a tratamientos.
+
+Cuando el trasplante no es posible o la persona decide no someterse a él, el equipo de salud sigue ofreciendo tratamiento y acompañamiento. Rechazar el trasplante es una decisión legítima que merece respeto.
+
+## [special_populations] Situaciones especiales
+
+En niños, el trasplante pulmonar es poco frecuente y se realiza en pocos centros con experiencia pediátrica. Las causas más habituales son la fibrosis quística, algunas enfermedades congénitas del pulmón y la hipertensión pulmonar. A los retos médicos se suman el crecimiento, el desarrollo escolar y emocional, y la transición, en la adolescencia, hacia una mayor responsabilidad sobre la propia medicación, una etapa en la que la adherencia suele resentirse y requiere apoyo específico.
+
+En personas mayores, la edad por sí sola no excluye el trasplante, pero aumenta la probabilidad de otras enfermedades y de fragilidad. Los centros valoran la edad fisiológica y la reserva funcional más que la edad del documento, y cada programa fija sus propios límites.
+
+El embarazo después de un trasplante pulmonar es posible en algunas mujeres, pero conlleva riesgos para la madre, para el injerto y para el feto, en parte por la medicación. Se recomienda planificarlo con el equipo de trasplante y con obstetricia de alto riesgo, y no suspender ni cambiar ningún fármaco sin indicación.
+
+El acceso al trasplante pulmonar es muy desigual entre países. La Organización Mundial de la Salud señala que el desarrollo de la donación y el trasplante en el mundo está marcado por diferencias en legislación, infraestructura, cobertura sanitaria y conocimiento de la población. El trasplante de pulmón requiere un centro con cirugía torácica, cuidados intensivos, laboratorio de inmunología y un programa de donación activo, por lo que en muchos países de la región sólo unos pocos hospitales lo ofrecen y algunas personas deben ser derivadas a otras ciudades o países. La donación de órganos, regulada por la ley de cada país, es la base sin la cual el trasplante no existe; manifestar en vida la voluntad de donar y conversarla con la familia facilita que esa decisión se respete.
+
+## [when_to_seek_care] Cuándo buscar atención
+
+Una persona con una enfermedad pulmonar crónica que empeora a pesar del tratamiento, que necesita cada vez más oxígeno o que ingresa con frecuencia al hospital puede preguntar a su neumólogo si es candidata a una evaluación para trasplante. Plantearlo con tiempo es importante, porque la derivación tardía es una de las causas por las que algunas personas pierden la oportunidad.
+
+Quien ya ha recibido un trasplante debe comunicarse sin demora con su equipo, o acudir a un servicio de urgencias, ante señales como:
+
+• Fiebre, escalofríos o sensación de enfermedad general.
+• Aumento de la falta de aire, tos nueva o que empeora, o cambios en el color o la cantidad de las flemas.
+• Descenso de los valores de función pulmonar medidos en casa, si el centro los indicó.
+• Dolor en el pecho, sangre en la tos o hinchazón de las piernas.
+• Vómitos o diarrea que impidan tomar la medicación inmunosupresora, u olvido de varias tomas.
+• Enrojecimiento, secreción o dolor creciente en la herida quirúrgica.
+
+Ante una dificultad respiratoria intensa, confusión o desmayo se debe solicitar atención de emergencia de inmediato e informar al personal que se trata de un receptor de trasplante pulmonar.
+
+## [references]
+
+- Trasplante de pulmón (tema de salud) | https://medlineplus.gov/spanish/lungtransplantation.html | MedlinePlus en español, Biblioteca Nacional de Medicina de EE. UU.
+- Trasplante de pulmón (enciclopedia médica) | https://medlineplus.gov/spanish/ency/article/003010.htm | MedlinePlus en español, Biblioteca Nacional de Medicina de EE. UU.
+- Tratamientos para las enfermedades pulmonares | https://www.nhlbi.nih.gov/es/salud/tratamientos-pulmonares | Instituto Nacional del Corazón, los Pulmones y la Sangre (NHLBI)
+- Lung transplantation | https://www.nhsbt.nhs.uk/organ-transplantation/lung/ | NHS Blood and Transplant
+- Lung Transplant | https://www.lung.org/lung-health-diseases/lung-procedures-and-tests/lung-transplant | American Lung Association
+- Transplantation | https://www.who.int/health-topics/transplantation | Organización Mundial de la Salud

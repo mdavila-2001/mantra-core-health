@@ -149,6 +149,13 @@ export class DepartmentMap {
    */
   readonly punto = input<PuntoGeo | null>(null);
 
+  /**
+   * El nombre de la provincia del municipio, para la etiqueta completa
+   * («Departamento · Provincia · Municipio»). La deduce quien monta el mapa
+   * (`app-location-picker`); sin ella la etiqueta la omite, no la inventa.
+   */
+  readonly provincia = input<string | null>(null);
+
   /** Los contornos, una vez que llegaron. */
   private readonly contornos = signal<readonly ContornoDeMunicipio[] | null>(null);
 

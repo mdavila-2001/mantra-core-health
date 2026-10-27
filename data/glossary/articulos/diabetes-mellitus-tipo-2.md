@@ -79,3 +79,13 @@ La OMS, en su nota descriptiva de noviembre de 2024, indica que el número de pe
 La frecuencia de la diabetes tipo 2 aumenta con la edad, pero cada vez se diagnostica más en personas jóvenes, incluidos adolescentes, en paralelo con la epidemia de obesidad. Es más frecuente en ciertos grupos étnicos: poblaciones de ascendencia sudasiática, africana, hispana o latina, indígena americana, de las islas del Pacífico y aborigen. En muchos países de América Latina, la prevalencia ha aumentado de forma sostenida, en relación con la urbanización, el cambio de la alimentación y la reducción de la actividad física. Para conocer la situación de un país concreto conviene consultar la encuesta nacional del ministerio de salud o los datos de la OPS.
 
 Un fenómeno que merece atención es la brecha de diagnóstico: millones de personas viven con la diabetes sin saberlo, y llegan al diagnóstico con complicaciones ya establecidas. También lo es la disparidad en el acceso a medicamentos esenciales, a la insulina cuando se necesita, a los equipos de monitoreo y a los cuidados de los pies y de los ojos.
+
+## [references]
+
+- Diabetes tipo 2 | https://medlineplus.gov/spanish/diabetestype2.html | MedlinePlus
+- Diabetes tipo 2 (enciclopedia médica) | https://medlineplus.gov/spanish/ency/article/000313.htm | MedlinePlus
+- Diabetes (nota descriptiva) | https://www.who.int/es/news-room/fact-sheets/detail/diabetes | OMS
+- Diabetes | https://www.paho.org/es/temas/diabetes | OPS
+- Diabetes tipo 2 | https://www.niddk.nih.gov/health-information/informacion-de-la-salud/diabetes/informacion-general/que-es/diabetes-tipo-2 | NIDDK (NIH)
+- Type 2 Diabetes (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK513253/ | NCBI Bookshelf
+- Type 2 diabetes | https://www.nhs.uk/conditions/type-2-diabetes/ | NHS

@@ -177,7 +177,7 @@ describe('XML de factura · contra el XSD oficial', () => {
     expect(() => readInvoiceXml('<raiz><detalle></detalle></raiz>')).toThrow(/antes de <cabecera>/);
   });
 
-  describe('sector 17 · Hospitales/Clínicas (preparado, no activo · CA-1)', () => {
+  describe('sector 17 · Hospitales/Clínicas', () => {
     it('está transcrito con los campos obligatorios del médico y del quirófano', () => {
       const obligatorios = HOSPITAL_CLINIC_SCHEMA.detalle.filter((c) => !c.nillable).map((c) => c.nombre);
       expect(obligatorios).toEqual(
@@ -186,9 +186,9 @@ describe('XML de factura · contra el XSD oficial', () => {
       expect(HOSPITAL_CLINIC_SCHEMA.cabecera.map((c) => c.nombre)).toContain('modalidadServicio');
     });
 
-    it('queda inactivo y con el motivo declarado', () => {
-      expect(sectorSchema(17)?.activo).toBe(false);
-      expect(sectorSchema(17)?.motivoInactivo).toMatch(/CA-1/);
+    it('está activo (H5)', () => {
+      expect(sectorSchema(17)?.activo).toBe(true);
+      expect(sectorSchema(17)?.motivoInactivo).toBeNull();
       expect(sectorSchema(1)?.activo).toBe(true);
     });
   });

@@ -134,25 +134,45 @@ export async function avanzarHasta(page: Page, titulo: string): Promise<void> {
 }
 
 /**
- * Completa la localidad de residencia —única obligatoria de «Lugares donde
- * vive»— eligiendo Santa Cruz en el mapa y su primera ciudad en el select
- * acotado (FT-03-R03/R06). Sin esto el motor no deja pasar al paso de
- * contacto: `residenceMunicipalityConceptId` es `required`.
+ * La localidad de residencia ya no se elige a mano (pedido del cliente del
+ * 26/10/2026): sale del punto de la casa. Se deja el nombre para los specs que
+ * la llaman; el trabajo lo hace {@link marcarYConfirmarCasa}.
  */
 export async function elegirLocalidadDeResidencia(page: Page): Promise<void> {
-  await page.getByTestId('registration-residence-mapa-SC').click();
-  await expect(page.getByTestId('registration-residence-municipio')).toBeVisible();
-  await elegirOpcion(page, 'registration-residence-municipio', { index: 1 });
+  await expect(page.getByTestId('registro-mapa-domicilio')).toBeVisible();
 }
 
 /**
- * Elige la localidad de TRABAJO — opcional, mismo componente que la de
- * residencia (`app-location-picker`), pero con `testId="registration-work"`
- * (FT-03-R07). A diferencia de la residencia, no bloquea el avance: se elige
- * igual para probar de forma simétrica que el mapa y el select responden.
+ * Toca el centro de un mapa de ubicación (abierto por defecto) y espera a que
+ * el selector deduzca la localidad del punto: la ficha con el municipio.
+ */
+async function marcarPuntoEnMapa(page: Page, testIdMapa: string): Promise<void> {
+  const mapa = page.getByTestId(testIdMapa);
+  await expect(mapa.locator('.leaflet-container')).toBeVisible({ timeout: 15_000 });
+  await mapa.locator('.leaflet-container').click();
+  await expect(page.getByTestId(`${testIdMapa}-localidad-ficha-municipio`)).toBeVisible({
+    timeout: 15_000,
+  });
+}
+
+/**
+ * Marca la casa en el mapa y la confirma. El punto de la casa es obligatorio y
+ * es lo único que se elige: la calle, el departamento, la provincia, el
+ * municipio y la zona salen de él. Toca el centro del plano, que es la vista
+ * por defecto.
+ */
+export async function marcarYConfirmarCasa(page: Page): Promise<void> {
+  await marcarPuntoEnMapa(page, 'registro-mapa-domicilio');
+  await page.getByTestId('registro-confirmar-direccion').click();
+  await expect(page.getByTestId('registro-direccion-confirmada')).toBeAttached();
+}
+
+/**
+ * Marca el lugar de TRABAJO —opcional— en su mapa y lo confirma: la localidad
+ * de trabajo sale del punto, igual que la de la casa.
  */
 export async function elegirLocalidadDeTrabajo(page: Page): Promise<void> {
-  await page.getByTestId('registration-work-mapa-SC').click();
-  await expect(page.getByTestId('registration-work-municipio')).toBeVisible();
-  await elegirOpcion(page, 'registration-work-municipio', { index: 1 });
+  await marcarPuntoEnMapa(page, 'registration-work-map');
+  await page.getByTestId('registration-work-location-confirm').click();
+  await expect(page.getByTestId('registration-work-location-confirmed')).toBeAttached();
 }

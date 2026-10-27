@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 
 import { AuthzClient } from '../../../core/data-access/authz/authz.client';
 import type {
@@ -48,6 +48,7 @@ const ROTULO_DE_ESTADO: Readonly<Record<AccessState, string>> = {
   imports: [AppButton, Alert, Badge, Card, DatePipe, EmptyState, PageHeader, Tab, Tabs],
   templateUrl: './clinical-access.html',
   styleUrl: './clinical-access.css',
+  host: { '[class.is-incrustada]': 'incrustada()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountClinicalAccess {
@@ -55,6 +56,12 @@ export class AccountClinicalAccess {
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
+
+  /**
+   * Incrustada dentro de «Mi privacidad»: sin encabezado propio, porque el de
+   * la pantalla anfitriona ya dice dónde está la persona.
+   */
+  readonly incrustada = input(false);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 

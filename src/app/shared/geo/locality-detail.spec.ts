@@ -1,6 +1,7 @@
 import type { ProvinciasDeBolivia } from '../components/organisms/map/provinces';
 import {
   findOutline,
+  municipalityAt,
   provinceOfMunicipality,
   unproject,
   type MunicipalityOutlineRef,
@@ -74,5 +75,41 @@ describe('locality-detail', () => {
       expect(provinceOfMunicipality(null, CONTORNOS[0], PROYECCION)).toBeNull();
       expect(provinceOfMunicipality(PROVINCIAS, null, PROYECCION)).toBeNull();
     });
+  });
+});
+
+describe('municipalityAt', () => {
+  // Dos cuadrados vecinos de 100 × 100 en el viewBox; con PROYECCION el punto
+  // (lng -69, lat -11) cae en (100, 100).
+  const CUADRADOS = [
+    { ine: '000001', sigla: 'SC', nombre: 'Oeste', x: 50, y: 50, d: 'M0 0L100 0L100 100L0 100Z' },
+    { ine: '000002', sigla: 'SC', nombre: 'Este', x: 150, y: 50, d: 'M100 0L200 0L200 100L100 100Z' },
+    // Un municipio de dos islas: el punto en la segunda también cuenta.
+    { ine: '000003', sigla: 'SC', nombre: 'Islas', x: 350, y: 50, d: 'M300 0L320 0L320 20L300 20ZM380 80L400 80L400 100L380 100Z' },
+  ];
+
+  it('devuelve el contorno que contiene el punto', () => {
+    expect(municipalityAt(CUADRADOS, { lng: -69.5, lat: -10.5 }, PROYECCION)?.nombre).toBe('Oeste');
+    expect(municipalityAt(CUADRADOS, { lng: -68.5, lat: -10.5 }, PROYECCION)?.nombre).toBe('Este');
+  });
+
+  it('mira todos los anillos de un municipio partido', () => {
+    expect(municipalityAt(CUADRADOS, { lng: -66.1, lat: -10.9 }, PROYECCION)?.nombre).toBe('Islas');
+  });
+
+  it('fuera de todo contorno no inventa un municipio', () => {
+    expect(municipalityAt(CUADRADOS, { lng: -60, lat: -15 }, PROYECCION)).toBeNull();
+  });
+
+  it('con la geometría real: la plaza de Santa Cruz, Cobija y Lima', async () => {
+    const { CONTORNOS_DE_MUNICIPIOS, PROYECCION_DE_BOLIVIA } = await import(
+      '../components/organisms/department-map/bolivia-municipalities.geometry'
+    );
+    const en = (lat: number, lng: number) =>
+      municipalityAt(CONTORNOS_DE_MUNICIPIOS, { lat, lng }, PROYECCION_DE_BOLIVIA);
+
+    expect(en(-17.7833, -63.1821)).toMatchObject({ ine: '070101', sigla: 'SC' });
+    expect(en(-11.0267, -68.7692)?.nombre).toBe('Cobija');
+    expect(en(-12.0464, -77.0428)).toBeNull();
   });
 });

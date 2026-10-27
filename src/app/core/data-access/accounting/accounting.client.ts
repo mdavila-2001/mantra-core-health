@@ -476,6 +476,8 @@ interface WireAsiento {
   readonly currencyConceptId: string | null;
   readonly totalAmount: string | null;
   readonly postedAt: string | null;
+  /** El concepto. Lo sirve el simulador; la API todavía no. */
+  readonly description?: string | null;
 }
 
 interface WireAsientoDetalle extends WireAsiento {

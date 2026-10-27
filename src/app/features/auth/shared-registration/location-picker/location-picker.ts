@@ -8,6 +8,7 @@ import {
   inject,
   input,
   model,
+  output,
   signal,
 } from '@angular/core';
 
@@ -19,8 +20,11 @@ import { DepartmentMap, type DepartamentoElegible } from '@shared/components/org
 import type { PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { CARGADOR_DE_PROVINCIAS } from '@shared/components/organisms/map/provinces';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
+import { provinceFromCatalog } from '@shared/geo/bo-provinces';
+import { provinceIn } from '@shared/components/organisms/map/provinces';
 import {
   findOutline,
+  municipalityAt,
   provinceOfMunicipality,
   type LocalityDetail,
 } from '@shared/geo/locality-detail';
@@ -133,6 +137,23 @@ export class LocationPicker {
   readonly punto = input<PuntoGeo | null>(null);
 
   /**
+   * Si la localidad SALE del punto y de nada más (pedido del cliente del
+   * 26/10/2026): el punto con el que nace también elige, y el mapa y el select
+   * quedan en sólo lectura aunque `readonly` no lo diga. Lo usa
+   * `app-map-location-picker`, que monta este control recién cuando hay punto.
+   */
+  readonly desdePunto = input(false);
+
+  /**
+   * El distrito o la zona que devolvió el geocodificador, para la ficha. Vacío
+   * no se dibuja: no se inventa un barrio.
+   */
+  readonly zona = input<string | null>(null);
+
+  /** Sólo lectura de verdad: pedida, o porque la localidad la decide el punto. */
+  protected readonly bloqueado = computed(() => this.readonly() || this.desdePunto());
+
+  /**
    * El departamento elegido a mano, cuando todavía no hay municipio.
    *
    * Es un estado propio y no derivado porque hay un momento —entre pulsar el
@@ -213,6 +234,21 @@ export class LocationPicker {
     // la primera vez que hace falta (los contornos pesan ~107 kB y el mapa ya
     // los pide por su cuenta, así que el módulo se comparte).
     effect(() => {
+      const punto = this.punto();
+      // El punto con el que el selector NACE no elige nada: viene de un
+      // borrador, de volver a la página o de editar una dirección guardada, y
+      // ahí la localidad ya la eligió la persona. Sólo un punto NUEVO elige.
+      if (this.puntoTraducido === undefined && !this.desdePunto()) {
+        this.puntoTraducido = punto;
+        return;
+      }
+      if (!this.isBrowser || punto === null) return;
+      if (this.readonly() && !this.desdePunto()) return;
+      if (this.ramas().length === 0 || punto === this.puntoTraducido) return;
+      this.puntoTraducido = punto;
+      void this.elegirPorPunto(punto);
+    });
+    effect(() => {
       const elegido = this.value();
       const sigla = this.rama()?.sigla;
       const municipio = this.municipio();
@@ -223,22 +259,102 @@ export class LocationPicker {
     });
   }
 
+  /**
+   * El último punto GPS que ya se tradujo a municipio.
+   *
+   * El efecto reacciona al **punto**, no a la lista de ramas: si la persona
+   * corrige el municipio a mano después de compartir su ubicación, que vuelva a
+   * llegar el catálogo no le pisa la corrección.
+   */
+  private puntoTraducido: PuntoGeo | null | undefined = undefined;
+
+  /** Si el último punto traducido no cayó dentro de ningún municipio. */
+  protected readonly fueraDeMunicipio = signal(false);
+
+  /**
+   * El municipio que eligió el PUNTO, justo antes de elegirlo. Sirve para que
+   * quien monta el selector distinga esa elección de una hecha a mano (el alta
+   * no reemplaza la calle del punto por el nombre del municipio que el mismo
+   * punto eligió).
+   */
+  readonly municipioPorPunto = output<string>();
+
+  /**
+   * Del punto GPS al municipio, sin salir a la red (pedido del cliente del
+   * 26/10/2026: «cuando se dé click en la ubicación GPS, lo resalte en el
+   * mapa»). Busca el contorno que contiene el punto y elige ese municipio —y
+   * con él su departamento—; el mapa lo pinta y lo acerca. Si el punto cae
+   * fuera de todo contorno conocido no se toca nada: no se adivina.
+   */
+  private async elegirPorPunto(punto: PuntoGeo): Promise<void> {
+    const geometria = await import(
+      '@shared/components/organisms/department-map/bolivia-municipalities.geometry'
+    );
+    if (this.punto() !== punto) return;
+    const contorno = municipalityAt(
+      geometria.CONTORNOS_DE_MUNICIPIOS,
+      punto,
+      geometria.PROYECCION_DE_BOLIVIA,
+    );
+    this.fueraDeMunicipio.set(contorno === null);
+    if (contorno === null) return;
+    for (const rama of this.ramas()) {
+      if (rama.sigla !== contorno.sigla) continue;
+      const municipio =
+        rama.municipios.find((m) => m.ine === contorno.ine) ??
+        rama.municipios.find(
+          (m) => findOutline([contorno], rama.sigla, m.ine, m.nombre) !== null,
+        );
+      if (municipio !== undefined && municipio.conceptId !== this.value()) {
+        this.departmentManual.set(rama.conceptId);
+        this.municipioPorPunto.emit(municipio.conceptId);
+        this.value.set(municipio.conceptId);
+      }
+      return;
+    }
+  }
+
+  /**
+   * La provincia del municipio, en este orden:
+   *
+   * 1. **El catálogo** (el código del INE la lleva adentro): sin red, al
+   *    instante, y es el dato oficial. Cubre los 340 municipios.
+   * 2. **El punto del mapa** dentro de las 112 provincias dibujadas, si hay
+   *    punto (sólo para un municipio que el catálogo no conoce).
+   * 3. **El punto interior del contorno** del municipio, como antes.
+   *
+   * Antes sólo existía el 3, y cuando el archivo de provincias no bajaba la
+   * ficha decía «No disponible» aunque el municipio fuera Santa Cruz de la
+   * Sierra.
+   */
   private async deducirProvincia(
     conceptId: string,
     sigla: string,
     ine: string,
     nombre: string,
   ): Promise<void> {
-    const [geometria, provincias] = await Promise.all([
-      import('@shared/components/organisms/department-map/bolivia-municipalities.geometry'),
-      this.cargadorDeProvincias(),
-    ]);
-    const contorno = findOutline(geometria.CONTORNOS_DE_MUNICIPIOS, sigla, ine, nombre);
-    const provincia = provinceOfMunicipality(
-      provincias,
-      contorno,
-      geometria.PROYECCION_DE_BOLIVIA,
-    );
+    const delCatalogo = provinceFromCatalog(sigla, ine, nombre);
+    if (delCatalogo !== null) {
+      this.provincias.update((previas) => new Map(previas).set(conceptId, delCatalogo));
+      return;
+    }
+    let provincia: string | null = null;
+    try {
+      const [geometria, provincias] = await Promise.all([
+        import('@shared/components/organisms/department-map/bolivia-municipalities.geometry'),
+        this.cargadorDeProvincias(),
+      ]);
+      const punto = this.punto();
+      if (provincias !== null && punto !== null) {
+        provincia = provinceIn(provincias, punto)?.properties.nombre ?? null;
+      }
+      if (provincia === null) {
+        const contorno = findOutline(geometria.CONTORNOS_DE_MUNICIPIOS, sigla, ine, nombre);
+        provincia = provinceOfMunicipality(provincias, contorno, geometria.PROYECCION_DE_BOLIVIA);
+      }
+    } catch {
+      provincia = null;
+    }
     this.provincias.update((previas) => new Map(previas).set(conceptId, provincia));
   }
 

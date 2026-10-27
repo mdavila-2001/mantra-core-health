@@ -54,6 +54,7 @@
       description="Solo se cierra un viaje en curso; la sesión queda libre para el siguiente."
     >
       <app-form-field
+        icon="key"
         label="Identificador del viaje"
         [required]="true"
         [hint]="uuidHint"
@@ -70,6 +71,7 @@
       description="Opcionales: si el dispositivo no las reportó, el viaje se cierra sin ellas."
     >
       <app-form-field
+        icon="route"
         label="Distancia recorrida (metros)"
         [errorMessage]="
           form.controls.distanceM.touched && form.controls.distanceM.invalid
@@ -81,6 +83,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="history"
         label="Duración (segundos)"
         [errorMessage]="
           form.controls.durationS.touched && form.controls.durationS.invalid

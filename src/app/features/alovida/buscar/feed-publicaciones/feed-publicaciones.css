@@ -87,7 +87,15 @@
 
 .feed__esqueleto .app-skeleton {
   display: block;
-  block-size: 16rem;
+  /* Mobile-first: 8rem evita tres bloques de 256 px apilados en la carga.
+     Sube a 16rem donde el feed tiene dos columnas y el espacio lo justifica. */
+  block-size: 8rem;
   inline-size: 100%;
   border-radius: var(--r-card);
+}
+
+@media (min-width: 900px) {
+  .feed__esqueleto .app-skeleton {
+    block-size: 16rem;
+  }
 }

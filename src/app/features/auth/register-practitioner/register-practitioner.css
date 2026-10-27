@@ -320,6 +320,11 @@
 .registro-titulo__estudio-campo,
 .registro__estudio-campo {
   display: grid;
+  /* `minmax(0, 1fr)` y no la pista `auto` implícita: con `auto` la pista
+     tomaba el ancho mínimo del contenido —el nombre de la universidad en una
+     sola línea— y el desplegable se salía de su columna, encima de la ciudad
+     («Alice-Salomon-Fachhochschule für Sozialarbeit…»). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   min-width: 0;
 }
