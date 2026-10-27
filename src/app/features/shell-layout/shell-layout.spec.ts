@@ -68,6 +68,13 @@ describe('ShellLayout', () => {
           // N-01: los dos destinos que se mudaron a la cabecera.
           { path: 'tutorials', children: [] },
           { path: 'messaging', children: [] },
+          // Atajos de la cabecera que cuelgan de `/my-account` (27/10/2026), y
+          // el carrito, que cuelga de «Farmacia».
+          { path: 'my-account/spending', children: [] },
+          { path: 'my-account/invoices', children: [] },
+          { path: 'my-account/requests', children: [] },
+          { path: 'my-account/promotions', children: [] },
+          { path: 'my-account/pharmacy/cart', children: [] },
           // Dos de los cuatro directorios y una ficha: no ocupan renglón desde
           // el 08/09/2026, y son con lo que se comprueba que la portada se
           // marca por ellos.
@@ -1018,6 +1025,25 @@ describe('ShellLayout', () => {
         await ir('/settings');
 
         expect(marcadas()).toEqual([]);
+      });
+
+      it.each(['/my-account/spending', '/my-account/invoices', '/my-account/requests', '/my-account/promotions'])(
+        'en %s, que se abre desde la cabecera, «Mi perfil» no se marca (27/10/2026)',
+        async (url) => {
+          // Cuelgan de `/my-account` y, por el prefijo más largo, encendían
+          // «Mi perfil»: la pantalla quedaba marcada arriba y en la barra.
+          abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+          await ir(url);
+
+          expect(marcadas()).toEqual([]);
+        },
+      );
+
+      it('el carrito sigue marcando «Farmacia»: es parte de ella', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        await ir('/my-account/pharmacy/cart');
+
+        expect(marcadas()).toEqual(['/my-account/pharmacy']);
       });
 
       it('en una pantalla que no está en el menú, gana el ancestro más cercano', async () => {
