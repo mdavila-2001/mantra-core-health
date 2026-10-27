@@ -41,6 +41,9 @@
         (click)="select(i)"
         (keydown)="handleTablistKeydown($event, i)"
       >
+        @if (tab.icon(); as icono) {
+          <span class="tabs__icono" aria-hidden="true"><app-nav-icon [name]="icono" /></span>
+        }
         <span class="tabs__rotulo" [class.tabs__rotulo--contado]="esContado(tab.label())">{{ tab.label() }}</span>
       </button>
     }
