@@ -16,6 +16,8 @@ import type { DynamicEnumOption } from './system-context.types';
  * 3. Filtra por país y traduce por **código**, no por `display`.
  * 4. Un país sin figuras en el diccionario cae a Bolivia en vez de un
  *    desplegable vacío.
+ * 5. Un catálogo vacío (falló, vino sin opciones o es SSR) se reemplaza por
+ *    las figuras del diccionario, en vez de un desplegable vacío.
  */
 
 const RUTA = `/system-context/dynamic-enums?target=${CAMPO_TIPO_SOCIETARIO}`;
@@ -141,6 +143,24 @@ describe('LegalEntityTypesCatalog', () => {
     ];
 
     expect(todas.some((o) => o.value === 'CODIGO_QUE_NO_EXISTE')).toBe(false);
+  });
+
+  it('sin opciones del catálogo ofrece las 27 figuras bolivianas del diccionario, traducidas', () => {
+    const { catalogo } = montar();
+
+    const respaldo = catalogo.opcionesPorPais([], 'BO', 'es');
+
+    expect(respaldo).toHaveLength(27);
+    expect(respaldo[0]).toEqual({ value: 'UNIPERSONAL', label: 'Empresa Unipersonal' });
+    expect(respaldo.find((o) => o.value === 'FUNDACION')?.label).toBe('Fundación');
+  });
+
+  it('sin opciones del catálogo y con un país sin figuras, el respaldo cae a Bolivia', () => {
+    const { catalogo } = montar();
+
+    const respaldo = catalogo.opcionesPorPais([], 'ZZ', 'es');
+
+    expect(respaldo.map((o) => o.value)).toEqual(catalogo.opcionesPorPais([], 'BO', 'es').map((o) => o.value));
   });
 
   it('paises() ofrece Bolivia primero', () => {
