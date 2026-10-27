@@ -198,15 +198,16 @@ export function registrarLibretaDeDirecciones(router: MockRouter): void {
   /**
    * La calle de un punto. La maqueta no sale a ningún geocodificador, así que
    * contesta una calle **declarada simulada** —con la atribución que lo dice—
-   * en vez de inventar una que parezca real. Fuera de Bolivia, 400 como la API.
+   * en vez de inventar una que parezca real. Acepta cualquier punto del planeta,
+   * como la API (mantra-core-health-api#1027); fuera de rango, 400.
    */
   router.post('/public/geo/reverse', (request) => {
     const c = cuerpo<Record<string, unknown>>(request);
     const lat = c['latitude'];
     const lng = c['longitude'];
-    if (typeof lat !== 'number' || typeof lng !== 'number' || lat > -9.2 || lat < -23.5 || lng < -70 || lng > -57) {
-      return validation('El punto no está en Bolivia', [
-        { field: 'latitude', message: 'Fuera de Bolivia' },
+    if (typeof lat !== 'number' || typeof lng !== 'number' || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      return validation('El punto no es una coordenada válida', [
+        { field: 'latitude', message: 'Coordenada fuera de rango' },
       ]);
     }
     const numero = (Math.abs(Math.round(lat * 1000)) % 900) + 100;
@@ -217,6 +218,14 @@ export function registrarLibretaDeDirecciones(router: MockRouter): void {
       road: 'Calle de demostración',
       houseNumber: String(numero),
       neighbourhood: `Distrito ${distrito} (simulado)`,
+      // El país, como la API: dentro del recuadro de Bolivia se declara «BO»;
+      // afuera no se sabe sin geocodificador, y no se inventa.
+      ...(lat >= -23.5 && lat <= -9.2 && lng >= -70 && lng <= -57
+        ? {
+            countryCode: 'BO',
+            adminAreas: { district: `Distrito ${distrito} (simulado)` },
+          }
+        : {}),
       attribution: 'Simulado en la maqueta: sin geocodificador',
     };
   });
