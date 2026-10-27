@@ -111,13 +111,15 @@
     @if (loading() && !loaded()) {
       <p class="dependents__estado" role="status">Buscando a quiénes representa…</p>
     } @else if (dependents().length === 0) {
+      <!-- Pedido del cliente (27/10/2026): todos los textos de este vacío
+           cierran con punto final, el título incluido. -->
       <!-- Rediseño del paciente (22/10/2026): lo mismo que decía el párrafo,
            ahora en tres pasos numerados, que se siguen sin releer. No lleva
            botón propio: «Registrar dependiente» ya está arriba, y dos puertas
            para la misma intención confunden (criterio humano, regla 2). -->
       <app-empty-state
         class="dependents__vacio"
-        title="Todavía no registró a nadie"
+        title="Todavía no registró a nadie."
         description="Un hijo, su mamá o su papá: alguien a quien le pide las citas usted."
       >
         <svg
