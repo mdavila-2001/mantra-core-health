@@ -5,8 +5,13 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { MapLocationPicker } from '../shared-registration/map-location-picker/map-location-picker';
-import { lastValueFrom, of } from 'rxjs';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
+import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
+import { NEVER, lastValueFrom, of } from 'rxjs';
 import type {
   PdfUploader,
   UploadedDocument,
@@ -30,8 +35,9 @@ const CATALOGOS_DE_PRUEBA = {
     Lo que esta pantalla promete, y por lo tanto lo que se prueba:
 
     1. Que pregunta los dieciocho puntos del proceso 4.1 y ninguno inventado.
-    2. Que frena sólo lo básico para nacer (D2, igual que la farmacia) y NO
-       frena el resto: los seis papeles, el mapa, las sucursales y los cargos.
+    2. Que frena sólo lo básico para nacer (D2, igual que la farmacia) —con el
+       punto de la central, obligatorio desde el 26/10/2026— y NO frena el
+       resto: los seis papeles, las sucursales y los cargos.
     3. Que el alta sale a `POST /iam/auth/register-organization` con
        `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit`, y que
        ninguna otra petición sale sin que la prueba la espere.
@@ -41,6 +47,9 @@ const CATALOGOS_DE_PRUEBA = {
     ========================================================================== */
 
 const RUTA_ALTA = '/iam/auth/register-organization';
+
+/** El punto confirmado de la central en las pruebas. */
+const PUNTO_CENTRAL = { lat: -17.7833, lng: -63.1821 };
 
 /** Lo que la API responde a un alta aceptada (201). */
 const ALTA_ACEPTADA = {
@@ -81,6 +90,10 @@ describe('RegisterLaboratory', () => {
         // Router real: la plantilla tiene `routerLink` y necesita su contexto.
         provideRouter([]),
         { provide: DiagnosisCenterEnrollment, useValue: { catalogs: () => of(CATALOGOS_DE_PRUEBA) } },
+        // El selector de ubicación pide la calle y el catálogo de municipios;
+        // acá no responden: lo deducido se emite a mano por `localidad`.
+        { provide: ReverseGeocodingClient, useValue: { streetAt: () => NEVER } },
+        { provide: BoMunicipalitiesCatalog, useValue: { listar: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -126,6 +139,8 @@ describe('RegisterLaboratory', () => {
       powerOfAttorneyFileId: 'file-poder',
       password: 'secreto12',
     });
+    // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
+    component.fijarGpsCentral(PUNTO_CENTRAL);
   }
 
   /* --- lo que pregunta --------------------------------------------------- */
@@ -204,7 +219,10 @@ describe('RegisterLaboratory', () => {
       name: 'Laboratorio Clínico del Sur S.R.L.',
       diagnosticUnitTypeConceptId: 'concepto-DU_TYPE_LAB',
       modalityConceptIds: ['concepto-DU_MODALITY_LAB'],
-      primarySite: { name: 'Casa central', address: { lines: ['Av. Cañoto esq. Ballivián 234'] } },
+      primarySite: {
+        name: 'Casa central',
+        address: { lines: ['Av. Cañoto esq. Ballivián 234'], latitude: -17.7833, longitude: -63.1821 },
+      },
     });
     expect(cuerpo.owner).toEqual({
       email: 'ana.paz@labsur.test',
@@ -232,6 +250,7 @@ describe('RegisterLaboratory', () => {
     'companyType',
     'taxId',
     'addressLines',
+    'gpsCentral',
     'legalRepName',
     'legalRepIdNumber',
     'legalRepEmail',
@@ -241,7 +260,12 @@ describe('RegisterLaboratory', () => {
     // `patchValue` y no `controls[clave].setValue`: el tipo de sociedad se
     // vacía con `null`, el nombre del representante vaciando su primer nombre,
     // y los demás con la cadena vacía.
-    const vacio = clave === 'companyType' ? null : clave === 'legalRepName' ? { name: '' } : '';
+    const vacio =
+      clave === 'companyType' || clave === 'gpsCentral'
+        ? null
+        : clave === 'legalRepName'
+          ? { name: '' }
+          : '';
     component.form.patchValue({ [clave]: vacio });
 
     component.submit();
@@ -356,14 +380,13 @@ describe('RegisterLaboratory', () => {
 
   it('el punto de la central y las sucursales con nombre viajan en diagnosticUnit', () => {
     completarLoObligatorio();
-    component.gpsCentral.set({ lat: -17.7833, lng: -63.1821 });
     component.agregarSucursal();
     component.agregarSucursal();
     const [conMapa, sinNombre] = component.sucursales();
     component.escribirNombreDeSucursal(conMapa!.id, 'Equipetrol');
-    component.escribirDireccionDeSucursal(conMapa!.id, 'Av. San Martín 456');
+    component.escribirLocalidadDeSucursal(conMapa!.id, localidad({ lat: -17.76, lng: -63.19 }, 'Av. San Martín 456'));
     component.fijarGpsDeSucursal(conMapa!.id, { lat: -17.76, lng: -63.19 });
-    component.escribirDireccionDeSucursal(sinNombre!.id, 'Calle sin nombre de sucursal');
+    component.escribirLocalidadDeSucursal(sinNombre!.id, localidad({ lat: -17.7, lng: -63.1 }, 'Calle sin sucursal'));
 
     const cuerpo = enviarConExito();
 
@@ -403,6 +426,11 @@ describe('RegisterLaboratory', () => {
     ]);
 
     expect(component.nombresDeSucursales()).toEqual(['Norte', 'Sur']);
+    // «Sur» vino sin punto: hasta que se marque en el mapa, no se envía.
+    component.submit();
+    expect(component.errorMessage()).toContain('«Sur»');
+    const sur = component.sucursales()[1]!;
+    component.fijarGpsDeSucursal(sur.id, { lat: -17.8, lng: -63.2 });
     const cuerpo = enviarConExito();
 
     // `DiagnosticUnitBranchDto` declara `description` y `locationUrl` (P51,
@@ -416,7 +444,7 @@ describe('RegisterLaboratory', () => {
       },
       {
         name: 'Sur',
-        address: { lines: [] },
+        address: { lines: [], latitude: -17.8, longitude: -63.2 },
         locationUrl: 'https://maps.app.goo.gl/abc',
       },
     ]);
@@ -464,7 +492,7 @@ describe('RegisterLaboratory', () => {
     const [primera, segunda] = component.sucursales();
 
     component.escribirNombreDeSucursal(primera!.id, 'Equipetrol');
-    component.escribirDireccionDeSucursal(primera!.id, 'Av. San Martín 456');
+    component.escribirLocalidadDeSucursal(primera!.id, localidad({ lat: -17.78, lng: -63.18 }, 'Av. San Martín 456'));
     component.fijarGpsDeSucursal(primera!.id, { lat: -17.78, lng: -63.18 });
     component.quitarSucursal(segunda!.id);
 
@@ -531,9 +559,23 @@ describe('RegisterLaboratory', () => {
     expect(form).not.toBeNull();
   });
 
-  /* --- el mapa vacía la dirección de la central (D-06) ------------------- */
+  it('una sucursal con nombre y sin punto confirmado frena el envío y se nombra', () => {
+    completarLoObligatorio();
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    component.escribirNombreDeSucursal(sucursal!.id, 'Equipetrol');
 
-  describe('el mapa vacía la dirección de la central', () => {
+    component.submit();
+
+    // `http.verify()` del `afterEach` prueba que no salió nada.
+    expect(component.registered()).toBe(false);
+    expect(component.avisoDeSucursalesSinPunto()).toContain('«Equipetrol»');
+    expect(component.errorMessage()).toContain('Confirmar dirección actual');
+  });
+
+  /* --- la ubicación de la central: sólo el punto (26/10/2026) ------------ */
+
+  describe('la ubicación de la central sale del punto', () => {
     /** Avanza el asistente hasta la página cuyo título contiene `fragmento`. */
     function avanzarHasta(fragmento: string): void {
       for (let paso = 0; paso < 12; paso += 1) {
@@ -546,59 +588,31 @@ describe('RegisterLaboratory', () => {
       throw new Error(`No se alcanzó una página con título que contenga «${fragmento}»`);
     }
 
-    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
-    function direccionEscritaYDejada(): HTMLInputElement {
+    function selector(): MapLocationPicker {
+      return fixture.debugElement.query(By.directive(MapLocationPicker))
+        .componentInstance as MapLocationPicker;
+    }
+
+    function irALaUbicacion(): void {
       fixture.detectChanges();
       completarLoObligatorio();
+      component.form.controls.gpsCentral.setValue(null);
       fixture.detectChanges();
       avanzarHasta('Dónde está la central');
-      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
-        '[data-testid="registro-lab-direccion"]',
-      );
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-      return campo;
     }
 
-    function tocarElMapa(): void {
-      const mapa = fixture.debugElement.query(By.directive(MapLocationPicker));
-      (mapa.componentInstance as MapLocationPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
-      fixture.detectChanges();
-    }
+    it('el mapa es el primer campo de su página, obligatorio, y la dirección ya no se escribe', () => {
+      const pagina = component.paginas().find((p) => p.clave === 'ubicacion')!;
+      expect(pagina.campos[0]).toMatchObject({ key: 'gpsCentral', control: 'custom', required: true });
+      expect(pagina.campos.map((c) => c.key)).not.toContain('addressLines');
 
-    function errorDe(campo: HTMLElement): string {
-      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
-    }
-
-    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
-      const campo = direccionEscritaYDejada();
-      expect(component.form.controls.addressLines.touched).toBe(true);
-
-      tocarElMapa();
-
-      expect(campo.value).toBe('');
-      expect(errorDe(campo)).toBe('');
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="registro-lab-direccion-reescribir"]'),
-      ).not.toBeNull();
+      irALaUbicacion();
+      expect(fixture.nativeElement.querySelector('[data-testid="registro-lab-direccion"]')).toBeNull();
+      expect(fixture.debugElement.query(By.directive(MapLocationPicker))).not.toBeNull();
     });
 
-    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
-
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-
-      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="registro-lab-direccion-reescribir"]'),
-      ).not.toBeNull();
-    });
-
-    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
+    it('sin el punto confirmado no deja pasar, y lo dice', () => {
+      irALaUbicacion();
 
       fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
       fixture.detectChanges();
@@ -606,7 +620,46 @@ describe('RegisterLaboratory', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Dónde está la central',
       );
-      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+    });
+
+    it('confirmar el punto lo guarda en el control obligatorio, y quitarlo lo vacía', () => {
+      irALaUbicacion();
+
+      selector().confirmado.emit(PUNTO_CENTRAL);
+      expect(component.form.controls.gpsCentral.value).toEqual(PUNTO_CENTRAL);
+      expect(component.gpsCentral()).toEqual(PUNTO_CENTRAL);
+
+      selector().confirmado.emit(null);
+      expect(component.form.controls.gpsCentral.valid).toBe(false);
+    });
+
+    it('lo deducido del punto escribe la dirección legal', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad(PUNTO_CENTRAL, 'Calle Guapay 3861, Equipetrol', 'Equipetrol'));
+
+      expect(component.form.controls.addressLines.value).toBe('Calle Guapay 3861, Equipetrol');
+    });
+
+    it('sin calle, la dirección dice la zona o el punto, nunca una calle inventada', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad(PUNTO_CENTRAL, null, 'Equipetrol'));
+      expect(component.form.controls.addressLines.value).toBe('Equipetrol');
+
+      selector().localidad.emit(localidad(PUNTO_CENTRAL, null, null));
+      expect(component.form.controls.addressLines.value).toBe('Punto GPS -17.78330, -63.18210');
+    });
+
+    it('un punto restaurado sin dirección no deja un obligatorio invisible vacío', () => {
+      component.form.controls.addressLines.setValue('');
+      component.fijarGpsCentral(PUNTO_CENTRAL);
+
+      expect(component.form.controls.addressLines.value).toBe('Punto GPS -17.78330, -63.18210');
+      expect(component.form.controls.addressLines.valid).toBe(true);
     });
   });
 
@@ -769,6 +822,7 @@ describe('RegisterLaboratory', () => {
       expect(component.form.controls.legalName.value).toBe('BioLab Central');
       expect(component.form.controls.taxId.value).toBe('987654321');
       expect(component.gpsCentral()).toEqual({ lat: -17.78, lng: -63.18 });
+      expect(component.form.controls.gpsCentral.value).toEqual({ lat: -17.78, lng: -63.18 });
       expect(component.pasoGuardado()).toBe(2);
     });
 
@@ -779,3 +833,12 @@ describe('RegisterLaboratory', () => {
     });
   });
 });
+
+/** Lo que `app-map-location-picker` emite por `localidad`. */
+function localidad(
+  punto: { lat: number; lng: number },
+  calle: string | null,
+  zona: string | null = null,
+): LocalityFromPoint {
+  return { punto, calle, calleSola: calle, zona, municipioConceptId: null };
+}

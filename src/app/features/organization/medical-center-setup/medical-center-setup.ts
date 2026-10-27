@@ -1,8 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import {
+  BoMunicipalitiesCatalog,
+  type RamaDepartamento,
+} from '../../../core/data-access/terminology/bo-municipalities.service';
 import { PracticeOnboardingClient } from '../../../core/data-access/practice-onboarding/practice-onboarding.client';
 import type { CreatedOrganizationPractice } from '../../../core/data-access/practice-onboarding/practice-onboarding.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -14,7 +20,13 @@ import { paginateFields } from '../../../shared/forms/paginated/paginate-fields'
 import {
   MapLocationPicker,
   type Coordinates,
+  type LocalityFromPoint,
 } from '../../auth/shared-registration/map-location-picker/map-location-picker';
+import {
+  addressFromPoint,
+  municipalityName,
+  pointLabel,
+} from '../../auth/shared-registration/address-from-point';
 
 const MAX_NAME = 200;
 const MAX_ADDRESS = 500;
@@ -50,7 +62,9 @@ export function setupErrorMessage(error: unknown): string {
  *
  * Sin la sede no hay dónde colgar el catálogo de procedimientos ni un punto
  * desde el cual ordenar la búsqueda por cercanía, por eso el punto en el mapa
- * es obligatorio.
+ * es obligatorio. Y es lo único de la ubicación que se marca (pedido del
+ * cliente del 26/10/2026): la dirección y la ciudad se deducen del punto y el
+ * selector las muestra sin dejarlas editar.
  *
  * La pantalla no decide quién puede: muestra lo que la API respondió. Ocultar
  * el botón a quien no administra no sería seguridad, así que se deja intentar
@@ -67,6 +81,14 @@ export class MedicalCenterSetup {
   private readonly session = inject(SessionStore);
   private readonly client = inject(PracticeOnboardingClient);
 
+  /** El catálogo de municipios, para nombrar la ciudad del punto. */
+  private readonly municipalities = toSignal(
+    inject(BoMunicipalitiesCatalog)
+      .listar()
+      .pipe(catchError(() => of([] as readonly RamaDepartamento[]))),
+    { initialValue: [] as readonly RamaDepartamento[] },
+  );
+
   readonly form = new FormGroup({
     practiceName: new FormControl('', {
       nonNullable: true,
@@ -76,6 +98,9 @@ export class MedicalCenterSetup {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_NAME)],
     }),
+    // Dirección y ciudad no se escriben: las llena `writeLocality` con lo
+    // deducido del punto. La dirección sigue obligatoria porque la API la
+    // exige, y nunca queda vacía con un punto puesto (ver `setPoint`).
     addressText: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(2), Validators.maxLength(MAX_ADDRESS)],
@@ -130,32 +155,16 @@ export class MedicalCenterSetup {
     },
     {
       titulo: 'La sede',
-      hint: 'Dónde queda: la dirección y el punto exacto en el mapa.',
+      hint: 'Dónde queda: marque el punto exacto en el mapa; la dirección sale de ahí.',
       campos: [
-        {
-          key: 'addressText',
-          label: 'Dirección',
-          control: 'text' as const,
-          required: true,
-          autocomplete: 'street-address',
-          testId: 'medical-center-setup-address',
-          mensajeDeError: 'Escriba la dirección de la sede.',
-        },
-        {
-          key: 'cityText',
-          label: 'Ciudad',
-          control: 'text' as const,
-          autocomplete: 'address-level2',
-          testId: 'medical-center-setup-city',
-        },
         {
           key: 'point',
           label: 'Ubicación de la sede en el mapa',
-          hint: 'Use su GPS o toque el plano. Sin el punto, el centro no aparece cuando alguien busca el más cercano.',
+          hint: 'Use su GPS o toque el plano. De ese punto sacamos la dirección, el municipio y la zona.',
           control: 'custom' as const,
           ancho: 'completo' as const,
           required: true,
-          mensajeDeError: 'Marque la sede en el mapa.',
+          mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
         },
       ],
     },
@@ -164,6 +173,21 @@ export class MedicalCenterSetup {
   protected setPoint(point: Coordinates | null): void {
     this.form.controls.point.setValue(point);
     this.form.controls.point.markAsTouched();
+    // Con punto, la dirección nunca queda vacía: es un obligatorio que no se ve.
+    const address = this.form.controls.addressText;
+    if (point !== null && address.value.trim() === '') address.setValue(pointLabel(point));
+  }
+
+  /**
+   * Lo deducido del punto llena la dirección y la ciudad, que ya no se
+   * escriben. Sin punto no se toca nada: el punto obligatorio, que sí se ve,
+   * es el que frena.
+   */
+  protected writeLocality(locality: LocalityFromPoint | null): void {
+    if (locality === null) return;
+    const city = municipalityName(this.municipalities(), locality.municipioConceptId);
+    this.form.controls.addressText.setValue(addressFromPoint(locality, city, MAX_ADDRESS));
+    this.form.controls.cityText.setValue((city ?? '').slice(0, MAX_CIUDAD));
   }
 
   save(): void {

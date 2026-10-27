@@ -430,197 +430,23 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsDomicilio">
-              <!-- Mientras se busca la calle del punto, o cuando ya se escribió,
-                   no hay nada que reescribir a mano. -->
-              @if (domicilioPorReescribir() && calleDelPunto() !== 'buscando' && calleDelPunto() !== 'escrita') {
-                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                     anuncia sin robar el foco, que sigue en el mapa. -->
-                <app-alert
-                  appAnuncio
-                  [asertivo]="false"
-                  [enfocar]="false"
-                  tone="info"
-                  data-testid="registro-domicilio-reescribir"
-                >
-                  {{ avisoReescribir }}
-                </app-alert>
-              }
-              @if (mapaDomicilioAbierto()) {
-                <div class="registro__ubicacion">
-                  <!-- El mapa reemplazó al par de coordenadas. Un «-17,7833, -63,1821»
-                       no le dice a nadie si el punto cayó en su casa; el pin sobre el
-                       plano se lee de un vistazo, que es justo lo que hay que
-                       confirmar.
-
-                       Y es también el selector: tocar el plano pone el pin, o lo corre
-                       si ya había uno. Sin pin todavía, `centro` va en `null` y el
-                       organismo abre su vista por defecto. -->
-                  <app-map
-                    class="registro__mapa"
-                    data-testid="registro-mapa-domicilio"
-                    [pines]="pinesDomicilio()"
-                    [centro]="gpsDomicilio()"
-                    [zoom]="17"
-                    [seleccionable]="true"
-                    etiqueta="Su ubicación en el mapa"
-                    (pointPicked)="fijarPuntoDomicilio($event)"
-                  />
-
-                  <!-- AC-03-8/9 y pedido del 26/10/2026: qué pasó con la calle
-                       del punto. Se escribe sola cuando el proveedor la conoce;
-                       si no, se dice acá y el alta sigue. Nunca se inventa. -->
-                  @if (gpsDomicilio() !== null && avisoDeCalle(); as aviso) {
-                    <p
-                      class="registro__ubicacion-aviso"
-                      aria-live="polite"
-                      data-testid="registration-home-geocoding-notice"
-                    >
-                      {{ aviso }}
-                    </p>
-                  }
-
-                  @if (gpsDomicilio() === null) {
-                    <p
-                      class="registro__ubicacion-estado"
-                      data-testid="registration-home-location-pick-hint"
-                    >
-                      Toque el mapa en el lugar donde vive para poner el pin.
-                    </p>
-                    <div class="registro__ubicacion-acciones">
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        data-testid="registro-usar-ubicacion"
-                        [isLoading]="pidiendoGps()"
-                        (clicked)="usarMiUbicacion()"
-                      >
-                        Usar mi ubicación
-                      </button>
-                      <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
-                           quitar: el botón sólo cierra el mapa, y así se llama. -->
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Cerrar el mapa de su domicilio"
-                        data-testid="registration-home-location-remove"
-                        (clicked)="quitarUbicacion()"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                        Cerrar el mapa
-                      </button>
-                    </div>
-                    @if (gpsRechazado()) {
-                      <p class="registro__ubicacion-aviso">
-                        No pudimos obtener su ubicación. Puede marcar el punto tocando el mapa.
-                      </p>
-                    }
-                  } @else if (direccionConfirmada()) {
-                    <!-- D-07 (pedido del cliente del 22/09/2026): «Listo, guardamos…» no se
-                         muestra: el pin ya se llama por su nombre y los botones cambian, así
-                         que el texto aclaraba lo obvio. Sigue en el DOM sólo para lectores de
-                         pantalla, con el mismo anuncio y el mismo identificador de prueba. -->
-                    <p appAnuncio class="solo-lectores" data-testid="registro-direccion-confirmada">
-                      Listo, guardamos esta dirección.
-                    </p>
-                    <div class="registro__ubicacion-acciones">
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        [isLoading]="pidiendoGps()"
-                        (clicked)="usarMiUbicacion()"
-                      >
-                        Volver a ubicarme
-                      </button>
-                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
-                           la que quitar, y junto al «−» del zoom del plano el aro con un
-                           menos se lee como «alejar». -->
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Quitar la ubicación de su domicilio"
-                        data-testid="registration-home-location-remove"
-                        (clicked)="quitarUbicacion()"
-                      >
-                        <app-nav-icon name="remove" />
-                        Quitar la ubicación
-                      </button>
-                    </div>
-                  } @else {
-                    <div class="registro__ubicacion-acciones">
-                      <button
-                        app-button
-                        variant="primary"
-                        size="sm"
-                        data-testid="registro-confirmar-direccion"
-                        (clicked)="confirmarDireccionActual()"
-                      >
-                        Confirmar dirección actual
-                      </button>
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        [isLoading]="pidiendoGps()"
-                        (clicked)="usarMiUbicacion()"
-                      >
-                        Volver a ubicarme
-                      </button>
-                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
-                           la que quitar, y junto al «−» del zoom del plano el aro con un
-                           menos se lee como «alejar». -->
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Quitar la ubicación de su domicilio"
-                        data-testid="registration-home-location-remove"
-                        (clicked)="quitarUbicacion()"
-                      >
-                        <app-nav-icon name="remove" />
-                        Quitar la ubicación
-                      </button>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <!-- Dos puertas, ninguna obligatoria: la ubicación del navegador,
-                     para quien está ahora mismo en su casa; y el mapa vacío, para
-                     quien no —la casa se declara desde el trabajo, o desde el
-                     teléfono de otro— o para quien negó el permiso. -->
-                <p class="registro__ubicacion">
-                  <button
-                    app-button
-                    variant="secondary"
-                    size="sm"
-                    data-testid="registro-usar-ubicacion"
-                    [isLoading]="pidiendoGps()"
-                    (clicked)="usarMiUbicacion()"
-                  >
-                    Usar mi ubicación
-                  </button>
-                  <button
-                    app-button
-                    variant="outline"
-                    size="sm"
-                    data-testid="registration-home-location-pick"
-                    (clicked)="marcarDomicilioEnMapa()"
-                  >
-                    Marcar en el mapa
-                  </button>
-                  @if (gpsRechazado()) {
-                    <span class="registro__ubicacion-aviso">
-                      No pudimos obtener su ubicación. Puede marcarla en el mapa, o seguir sin esto.
-                    </span>
-                  }
-                </p>
-              }
+              <!-- Pedido del cliente (26/10/2026): el mapa abierto para tocarlo y
+                   el botón de la ubicación actual. Con el punto, el selector
+                   escribe la calle, acerca el mapa de Bolivia y deduce
+                   departamento, provincia, municipio y zona, en sólo lectura. -->
+              <app-map-location-picker
+                pinId="domicilio"
+                etiquetaConfirmada="Su casa"
+                etiquetaQuitar="Quitar la ubicación de su domicilio"
+                etiquetaMapa="Su ubicación en el mapa"
+                indicacionMarcar="Toque el mapa en el lugar donde vive, o use su ubicación actual."
+                etiquetaPedir="Usar mi ubicación actual"
+                etiquetaFicha="Su domicilio"
+                [ids]="idsUbicacionCasa"
+                [inicial]="gpsDomicilio()"
+                (confirmado)="confirmarCasa($event)"
+                (localidad)="aplicarLocalidadDeCasa($event)"
+              />
             </ng-template>
 
             <!-- El parentesco del contacto de emergencia (AC-03-11) es un
@@ -681,6 +507,9 @@
                  continuar: sin él, un fallo de red dejaría el alta trabada sin
                  explicación. -->
             <ng-template appCampoPersonalizado="residenceMunicipalityConceptId">
+              <!-- La localidad sale del punto de la casa (ver el mapa de arriba).
+                   Acá sólo queda el aviso de catálogo caído: sin catálogo no hay
+                   cómo traducir el punto a un municipio. -->
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
                   No pudimos traer el catálogo de ciudades, y su localidad hace falta para
@@ -689,25 +518,6 @@
                     Reintentar
                   </button>
                 </p>
-              } @else {
-                <app-location-picker
-                  testId="registration-residence"
-                  [ficha]="true"
-                  fichaTitulo="Su domicilio"
-                  [ramas]="ramasMunicipios()"
-                  [value]="municipioPaciente()"
-                  [punto]="gpsDomicilio()"
-                  (valueChange)="elegirMunicipio($event)"
-                  (municipioPorPunto)="municipioDelPunto = $event"
-                  mapLabel="Mapa de Bolivia: elija el departamento donde vive"
-                  municipalityLabel="Localidad de residencia"
-                  municipalityHint="Sólo se ofrecen las del departamento que eligió."
-                  municipalityDescription="La localidad donde vive. El departamento sale de ella, así que no se pregunta aparte."
-                  [required]="true"
-                  [errorMessage]="errorDeMunicipio()"
-                >
-                  <app-nav-icon slot="icon-start" name="pin" class="registro__campo-icono" />
-                </app-location-picker>
               }
             </ng-template>
 
@@ -720,22 +530,6 @@
                     Reintentar
                   </button>
                 </p>
-              } @else {
-                <app-location-picker
-                  testId="registration-work"
-                  [ficha]="true"
-                  fichaTitulo="Su lugar de trabajo"
-                  [ramas]="ramasMunicipios()"
-                  [value]="municipioTrabajo()"
-                  [punto]="gpsTrabajo()"
-                  (valueChange)="elegirMunicipioDeTrabajo($event)"
-                  mapLabel="Mapa de Bolivia: elija el departamento donde trabaja"
-                  municipalityLabel="Localidad de trabajo (opcional)"
-                  municipalityHint="Sólo se ofrecen las del departamento que eligió."
-                  municipalityDescription="La localidad donde trabaja, que puede no ser la misma en la que vive."
-                >
-                  <app-nav-icon slot="icon-start" name="pin" class="registro__campo-icono" />
-                </app-location-picker>
               }
             </ng-template>
 
@@ -743,173 +537,19 @@
                  permiso del navegador que el domicilio, con su propio estado:
                  son dos puntos distintos y confirmar uno no confirma el otro. -->
             <ng-template appCampoPersonalizado="gpsTrabajo">
-              @if (trabajoPorReescribir()) {
-                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                     anuncia sin robar el foco, que sigue en el mapa. -->
-                <app-alert
-                  appAnuncio
-                  [asertivo]="false"
-                  [enfocar]="false"
-                  tone="info"
-                  data-testid="registration-work-address-reescribir"
-                >
-                  {{ avisoReescribir }}
-                </app-alert>
-              }
-              @if (mapaTrabajoAbierto()) {
-                <div class="registro__ubicacion">
-                  <app-map
-                    class="registro__mapa"
-                    data-testid="registration-work-map"
-                    [pines]="pinesTrabajo()"
-                    [centro]="gpsTrabajo()"
-                    [zoom]="17"
-                    [seleccionable]="true"
-                    etiqueta="El lugar donde trabaja, en el mapa"
-                    (pointPicked)="fijarPuntoDeTrabajo($event)"
-                  />
-
-                  @if (gpsTrabajo() === null) {
-                    <p
-                      class="registro__ubicacion-estado"
-                      data-testid="registration-work-location-pick-hint"
-                    >
-                      Toque el mapa en el lugar donde trabaja para poner el pin.
-                    </p>
-                    <div class="registro__ubicacion-acciones">
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        data-testid="registration-work-location-use"
-                        [isLoading]="pidiendoGpsTrabajo()"
-                        (clicked)="usarMiUbicacionDeTrabajo()"
-                      >
-                        Usar mi ubicación
-                      </button>
-                      <!-- D-05: ícono + nombre. Sin punto todavía no hay ubicación que
-                           quitar: el botón sólo cierra el mapa, y así se llama. -->
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Cerrar el mapa de su lugar de trabajo"
-                        data-testid="registration-work-location-remove"
-                        (clicked)="quitarUbicacionDeTrabajo()"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                        Cerrar el mapa
-                      </button>
-                    </div>
-                    @if (gpsTrabajoRechazado()) {
-                      <p class="registro__ubicacion-aviso">
-                        No pudimos obtener su ubicación. Puede marcar el punto tocando el mapa.
-                      </p>
-                    }
-                  } @else if (direccionTrabajoConfirmada()) {
-                    <!-- D-07: ver la copia del domicilio. -->
-                    <p appAnuncio class="solo-lectores" data-testid="registration-work-location-confirmed">
-                      Listo, guardamos este punto.
-                    </p>
-                    <p
-                      class="registro__ubicacion-aviso"
-                      data-testid="registration-work-geocoding-notice"
-                    >
-                      {{ avisoSinGeocodificacion }}
-                    </p>
-                    <div class="registro__ubicacion-acciones">
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        [isLoading]="pidiendoGpsTrabajo()"
-                        (clicked)="usarMiUbicacionDeTrabajo()"
-                      >
-                        Volver a ubicarme
-                      </button>
-                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
-                           la que quitar, y junto al «−» del zoom del plano el aro con un
-                           menos se lee como «alejar». -->
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Quitar la ubicación de su lugar de trabajo"
-                        data-testid="registration-work-location-remove"
-                        (clicked)="quitarUbicacionDeTrabajo()"
-                      >
-                        <app-nav-icon name="remove" />
-                        Quitar la ubicación
-                      </button>
-                    </div>
-                  } @else {
-                    <div class="registro__ubicacion-acciones">
-                      <button
-                        app-button
-                        variant="primary"
-                        size="sm"
-                        data-testid="registration-work-location-confirm"
-                        (clicked)="confirmarDireccionDeTrabajo()"
-                      >
-                        Confirmar este punto
-                      </button>
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        [isLoading]="pidiendoGpsTrabajo()"
-                        (clicked)="usarMiUbicacionDeTrabajo()"
-                      >
-                        Volver a ubicarme
-                      </button>
-                      <!-- D-05: ícono + nombre. No califica como excepción: no hay lista de
-                           la que quitar, y junto al «−» del zoom del plano el aro con un
-                           menos se lee como «alejar». -->
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Quitar la ubicación de su lugar de trabajo"
-                        data-testid="registration-work-location-remove"
-                        (clicked)="quitarUbicacionDeTrabajo()"
-                      >
-                        <app-nav-icon name="remove" />
-                        Quitar la ubicación
-                      </button>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <p class="registro__ubicacion">
-                  <button
-                    app-button
-                    variant="secondary"
-                    size="sm"
-                    data-testid="registration-work-location-use"
-                    [isLoading]="pidiendoGpsTrabajo()"
-                    (clicked)="usarMiUbicacionDeTrabajo()"
-                  >
-                    Usar mi ubicación
-                  </button>
-                  <button
-                    app-button
-                    variant="outline"
-                    size="sm"
-                    data-testid="registration-work-location-pick"
-                    (clicked)="marcarTrabajoEnMapa()"
-                  >
-                    Marcar en el mapa
-                  </button>
-                  @if (gpsTrabajoRechazado()) {
-                    <span class="registro__ubicacion-aviso">
-                      No pudimos obtener su ubicación. Puede marcarla en el mapa, o seguir sin esto.
-                    </span>
-                  }
-                </p>
-              }
+              <app-map-location-picker
+                pinId="trabajo"
+                etiquetaConfirmada="Su lugar de trabajo"
+                etiquetaQuitar="Quitar la ubicación de su trabajo"
+                etiquetaMapa="La ubicación de su trabajo en el mapa"
+                indicacionMarcar="Toque el mapa en el lugar donde trabaja, o use su ubicación actual."
+                etiquetaPedir="Usar mi ubicación actual"
+                etiquetaFicha="Su lugar de trabajo"
+                [ids]="idsUbicacionTrabajo"
+                [inicial]="gpsTrabajo()"
+                (confirmado)="confirmarTrabajo($event)"
+                (localidad)="aplicarLocalidadDeTrabajo($event)"
+              />
             </ng-template>
           </app-paginated-form>
         </div>

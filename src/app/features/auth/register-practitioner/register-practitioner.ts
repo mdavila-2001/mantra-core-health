@@ -22,10 +22,6 @@ import { Router, RouterLink } from '@angular/router';
 import { concat, concatMap, filter, from, map, of, throwIfEmpty, toArray, type Observable } from 'rxjs';
 
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
-import {
-  BoMunicipalitiesCatalog,
-  type RamaDepartamento,
-} from '../../../core/data-access/terminology/bo-municipalities.service';
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
@@ -59,13 +55,14 @@ import {
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { componerDireccion } from '../shared-registration/address-line';
-import { LocationPicker } from '../shared-registration/location-picker/location-picker';
 import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
 import {
   MapLocationPicker,
   type Coordinates,
+  type LocalityFromPoint,
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
+import { confirmedLocality } from '../shared-registration/point-locality';
 import { joinNames } from '../../../core/profession/additional-names';
 import {
   PROFESSION_COLLEGE,
@@ -504,7 +501,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'pin',
       titulo: 'Para ubicarle en el directorio',
       texto:
-        'Un paciente busca por ciudad antes que por nombre. Con su localidad declarada aparece en la búsqueda de quien le tiene cerca.',
+        'Un paciente busca por ciudad antes que por nombre. Con el punto de su casa sabemos su localidad, y aparece en la búsqueda de quien le tiene cerca.',
     },
   ],
   specialties: [
@@ -588,11 +585,11 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
  * queda acá es lo que el motor no puede saber —qué se pregunta, en qué orden y
  * contra qué endpoint va—.
  *
- * El municipio de residencia va como campo `custom` —lo dibuja un árbol con
- * búsqueda que esta pantalla proyecta y el motor no conoce—, y el departamento
- * emisor pasa a serlo sólo si su catálogo no cargó, para poder mostrar ahí el
- * «Reintentar». El motor les reserva el sitio con su rótulo y su error, y no
- * aprende nada de terminología ni de árboles.
+ * Cada ubicación es un campo `custom` —el mapa con su punto, que esta pantalla
+ * proyecta y el motor no conoce—, y el departamento emisor pasa a serlo sólo
+ * si su catálogo no cargó, para poder mostrar ahí el «Reintentar». El motor les
+ * reserva el sitio con su rótulo y su error, y no aprende nada de terminología
+ * ni de mapas.
  */
 /**
  * Las sedes de una universidad como opciones del desplegable de ciudad.
@@ -630,7 +627,6 @@ function sinTildes(texto: string): string {
     AppButton,
     NavIcon,
     Tooltip,
-    LocationPicker,
     MapLocationPicker,
     Link,
     Alert,
@@ -1175,22 +1171,25 @@ export class RegisterPractitioner {
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
       validators: [Validators.required],
     }),
-    // La calle del domicilio. Opcional, como en el alta de paciente: la
-    // localidad es la que ubica, y esto es lo que hace falta para llegar a la
-    // puerta.
+    // **El punto del domicilio es obligatorio** (pedido del cliente del
+    // 26/10/2026) y es lo único que se marca. Vive en el formulario para que
+    // el motor frene la página sin él; no se escribe: lo llena
+    // `confirmarGpsDomicilio` con el punto CONFIRMADO, y vuelve a `null` si se
+    // quita o se mueve el pin.
+    gpsDomicilio: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
+    }),
+    // Lo que sale del punto, en sólo lectura: la calle, el distrito o zona (que
+    // viaja dentro de la línea de dirección, ver `componerDireccion`) y el
+    // municipio. Ya no son campos de ninguna página —los muestra el selector
+    // del mapa— y sin validadores, para que nada invisible frene el alta. Los
+    // escriben `aplicarLocalidad*`.
     homeAddressLines: new FormControl('', { nonNullable: true }),
-    // Distrito o zona: sin columna propia, viaja dentro de la línea de
-    // dirección (ver `componerDireccion`).
     homeDistrict: new FormControl('', { nonNullable: true }),
-    // Espejo de `municipioProfesional` y `municipioConsultorio`: los dos
-    // campos de localidad son `custom` y su valor vive en señales, pero la
-    // calle y el punto del mapa sólo aparecen con localidad elegida
-    // (`showWhen`), y esa condición lee el formulario. Los escribe
-    // `elegirMunicipioProfesional` / `elegirMunicipioConsultorio`.
     municipio: new FormControl<string | null>(null),
     municipioConsultorio: new FormControl<string | null>(null),
     // Dirección habitual de trabajo, distinta de la casa y del consultorio
-    // que declara como propio.
+    // que declara como propio. También sale de su punto.
     workAddressLines: new FormControl('', { nonNullable: true }),
     // El consultorio propio: su nombre y su calle. Ver la página
     // «Tu consultorio propio» y el JSDoc de `datosProfesional`.
@@ -1199,6 +1198,7 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [telefonoCompleto],
     }),
+    // La calle y la zona del consultorio: salen de su punto, como las de la casa.
     officeAddressLines: new FormControl('', { nonNullable: true }),
     officeDistrict: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
@@ -1679,18 +1679,18 @@ export class RegisterPractitioner {
   }
 
   /**
-   * El municipio de residencia.
+   * El municipio de residencia, deducido del punto del domicilio.
    *
-   * Sigue fuera del `FormGroup` porque es un campo `custom` de verdad: lo
-   * dibuja un árbol con búsqueda que esta pantalla proyecta y el motor no
-   * conoce.
+   * Ya no se elige (26/10/2026): lo encuentra `app-map-location-picker` por el
+   * contorno donde cae el punto, y llega con lo demás en
+   * {@link aplicarLocalidadDomicilio}.
    */
   readonly municipioProfesional = signal<string | null>(null);
 
   /** Guarda la localidad del domicilio en la señal **y** en el control espejo. */
-  elegirMunicipioProfesional(conceptId: string | null): void {
+  private elegirMunicipioProfesional(conceptId: string | null): void {
     this.municipioProfesional.set(conceptId);
-    this.formProfesional.controls.municipio.setValue(conceptId);
+    this.escribirSiCambia('municipio', conceptId);
   }
 
   /**
@@ -1706,22 +1706,119 @@ export class RegisterPractitioner {
   readonly gpsTrabajo = signal<Coordinates | null>(null);
 
   /**
-   * La localidad del consultorio propio.
+   * La localidad del consultorio propio, deducida de su punto.
    *
    * Separada de la del domicilio a propósito: son dos lugares distintos, y hay
-   * quien vive en una ciudad y atiende en otra. Es el mismo par de señales que
-   * el alta de paciente tiene para su casa y su trabajo.
+   * quien vive en una ciudad y atiende en otra.
    */
   readonly municipioConsultorio = signal<string | null>(null);
 
   /** Lo mismo, para el consultorio. */
-  elegirMunicipioConsultorio(conceptId: string | null): void {
+  private elegirMunicipioConsultorio(conceptId: string | null): void {
     this.municipioConsultorio.set(conceptId);
-    this.formProfesional.controls.municipioConsultorio.setValue(conceptId);
+    this.escribirSiCambia('municipioConsultorio', conceptId);
+  }
+
+  /**
+   * Escribe un control de lo deducido sólo si el valor cambia.
+   *
+   * El selector avisa lo deducido cada vez que se monta su paso, aunque sea lo
+   * mismo de antes. Reescribir igual dispararía `valueChanges`, y eso borra el
+   * aviso de un envío fallido (`limpiarElErrorAlCorregir`) sin que la persona
+   * haya corregido nada.
+   */
+  private escribirSiCambia(
+    clave:
+      | 'homeAddressLines'
+      | 'homeDistrict'
+      | 'municipio'
+      | 'municipioConsultorio'
+      | 'workAddressLines'
+      | 'officeAddressLines'
+      | 'officeDistrict',
+    valor: string | null,
+  ): void {
+    const control = this.formProfesional.get(clave);
+    if (control !== null && control.value !== valor) control.setValue(valor);
   }
 
   /** El punto del consultorio, ya confirmado sobre el mapa. */
   readonly gpsConsultorio = signal<Coordinates | null>(null);
+
+  /**
+   * Lo último que cada selector dedujo de su punto, confirmado o no.
+   *
+   * Se guarda aparte porque la calle suele llegar **antes** de que la persona
+   * confirme: al confirmar se vuelca lo que ya estaba (ver `confirmedLocality`).
+   */
+  private readonly localidadDomicilio = signal<LocalityFromPoint | null>(null);
+  private readonly localidadTrabajo = signal<LocalityFromPoint | null>(null);
+  private readonly localidadConsultorio = signal<LocalityFromPoint | null>(null);
+
+  /**
+   * El punto confirmado (o `null`) del domicilio: la señal, el control
+   * obligatorio y lo que sale de él, en el acto. Un `effect` esperaría a la
+   * próxima detección de cambios y un «Siguiente» inmediato vería el control
+   * atrasado.
+   */
+  confirmarGpsDomicilio(punto: Coordinates | null): void {
+    this.gpsDomicilio.set(punto);
+    const control = this.formProfesional.controls.gpsDomicilio;
+    if (control.value !== punto) control.setValue(punto);
+    this.volcarDomicilio();
+  }
+
+  confirmarGpsTrabajo(punto: Coordinates | null): void {
+    this.gpsTrabajo.set(punto);
+    this.volcarTrabajo();
+  }
+
+  confirmarGpsConsultorio(punto: Coordinates | null): void {
+    this.gpsConsultorio.set(punto);
+    this.volcarConsultorio();
+  }
+
+  /** Lo que el selector del domicilio dedujo de su punto. */
+  aplicarLocalidadDomicilio(localidad: LocalityFromPoint | null): void {
+    this.localidadDomicilio.set(localidad);
+    this.volcarDomicilio();
+  }
+
+  aplicarLocalidadTrabajo(localidad: LocalityFromPoint | null): void {
+    this.localidadTrabajo.set(localidad);
+    this.volcarTrabajo();
+  }
+
+  aplicarLocalidadConsultorio(localidad: LocalityFromPoint | null): void {
+    this.localidadConsultorio.set(localidad);
+    this.volcarConsultorio();
+  }
+
+  /**
+   * Calle (sólo calle y número), zona y municipio del domicilio, del punto
+   * confirmado. Sin punto confirmado quedan vacíos: lo escrito antes describía
+   * otro lugar. Si el mapa no tiene calle ahí, la calle queda vacía —es
+   * opcional— y nunca se inventa.
+   */
+  private volcarDomicilio(): void {
+    const localidad = confirmedLocality(this.localidadDomicilio(), this.gpsDomicilio());
+    this.escribirSiCambia('homeAddressLines', localidad?.calleSola ?? '');
+    this.escribirSiCambia('homeDistrict', localidad?.zona ?? '');
+    this.elegirMunicipioProfesional(localidad?.municipioConceptId ?? null);
+  }
+
+  /** El trabajo no guarda zona aparte: va la línea entera (calle y barrio). */
+  private volcarTrabajo(): void {
+    const localidad = confirmedLocality(this.localidadTrabajo(), this.gpsTrabajo());
+    this.escribirSiCambia('workAddressLines', localidad?.calle ?? localidad?.zona ?? '');
+  }
+
+  private volcarConsultorio(): void {
+    const localidad = confirmedLocality(this.localidadConsultorio(), this.gpsConsultorio());
+    this.escribirSiCambia('officeAddressLines', localidad?.calleSola ?? '');
+    this.escribirSiCambia('officeDistrict', localidad?.zona ?? '');
+    this.elegirMunicipioConsultorio(localidad?.municipioConceptId ?? null);
+  }
 
   /** Los identificadores de prueba del bloque de ubicación del consultorio. */
   protected readonly idsUbicacionConsultorio: TestIds = {
@@ -2167,18 +2264,6 @@ export class RegisterPractitioner {
   readonly catalogoDepartamentosCaido = signal(false);
 
   /**
-   * Municipios (VS_BO_MUNICIPALITY), colgados de su departamento.
-   *
-   * Se guardan tal como los devuelve el catálogo, sin traducir a los grupos de
-   * `app-tree-select`: quien los dibuja ahora es `app-location-picker`, que
-   * necesita la rama entera para acotar el select de ciudad al departamento
-   * pulsado en el mapa. Es el mismo control que monta el alta de paciente.
-   */
-  private readonly municipios = inject(BoMunicipalitiesCatalog);
-  readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
-  readonly catalogoMunicipiosCaido = signal(false);
-
-  /**
    * Las especialidades (VS_MEDICAL_SPECIALTY) y su catálogo.
    *
    * Se guardan CON su código además del par value/label: el código es lo que
@@ -2417,6 +2502,10 @@ export class RegisterPractitioner {
       if (!draft) return;
       if (draft.data) {
         this.formProfesional.patchValue(draft.data);
+        // Los municipios deducidos viajan desde sus señales: vuelven con el control.
+        const raw = this.formProfesional.getRawValue();
+        this.municipioProfesional.set(raw.municipio);
+        this.municipioConsultorio.set(raw.municipioConsultorio);
       }
       const extra = (draft.extraData ?? {}) as Record<string, unknown>;
       if (Array.isArray(extra['nombresExtra'])) {
@@ -2426,7 +2515,12 @@ export class RegisterPractitioner {
         this.especialidadesExtra.set(extra['especialidadesExtra'] as readonly string[]);
       }
       if (extra['gpsDomicilio'] !== undefined) {
-        this.gpsDomicilio.set(extra['gpsDomicilio'] as Coordinates | null);
+        // La señal y el control obligatorio, juntos. Sin volcar lo deducido: la
+        // calle y la localidad ya volvieron con `data`, y el selector las vuelve
+        // a deducir del mismo punto al mostrarse.
+        const punto = extra['gpsDomicilio'] as Coordinates | null;
+        this.gpsDomicilio.set(punto);
+        this.formProfesional.controls.gpsDomicilio.setValue(punto);
       }
       if (extra['gpsTrabajo'] !== undefined) {
         this.gpsTrabajo.set(extra['gpsTrabajo'] as Coordinates | null);
@@ -2488,7 +2582,6 @@ export class RegisterPractitioner {
     this.draftService.trackEvent('start', 'practitioner', 0);
 
     this.cargarDepartamentos();
-    this.cargarMunicipios();
     this.cargarEspecialidades();
     this.cargarTiposDeCredencial();
     this.cargarProfesiones();
@@ -2635,26 +2728,6 @@ export class RegisterPractitioner {
     });
   }
 
-  /**
-   * Trae el árbol de municipios, para «dónde vivís».
-   *
-   * Mismo criterio que los departamentos ante un fallo: el campo es opcional y
-   * el alta sigue. Lo que llega ya viene agrupado por departamento; acá sólo se
-   * traduce a la forma que espera `app-tree-select`.
-   */
-  protected cargarMunicipios(): void {
-    this.municipios.listar().subscribe({
-      next: (ramas) => {
-        this.catalogoMunicipiosCaido.set(false);
-        this.ramasMunicipios.set(ramas);
-      },
-      error: () => {
-        this.ramasMunicipios.set([]);
-        this.catalogoMunicipiosCaido.set(true);
-      },
-    });
-  }
-
   /** Las especialidades, para elegirlas EN el alta. Un fallo no bloquea: son opcionales. */
   protected cargarEspecialidades(): void {
     this.especialidades.listar().subscribe({
@@ -2685,15 +2758,6 @@ export class RegisterPractitioner {
    */
   protected reintentarDepartamentos(): void {
     this.departamentos.olvidar();
-    this.cargarDepartamentos();
-  }
-
-  /** Reintenta la lectura del árbol de municipios. Ver `reintentarDepartamentos`. */
-  protected reintentarMunicipios(): void {
-    this.municipios.olvidar();
-    this.cargarMunicipios();
-    // El árbol arrastra el catálogo de departamentos, que `olvidar()` también
-    // limpia: se recarga para que el desplegable de emisión no quede vacío.
     this.cargarDepartamentos();
   }
 

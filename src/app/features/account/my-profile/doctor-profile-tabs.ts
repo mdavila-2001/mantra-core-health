@@ -184,9 +184,10 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
      (D-03). El correo de trabajo se corrige en «Contacto» desde el 24/09/2026. */
   email: DOCTOR_TAB.contacto,
 
-  /* 6 · ¿Dónde vivís? */
-  municipio: DOCTOR_TAB.contacto,
-  homeAddressLines: DOCTOR_TAB.contacto,
+  /* 6 · ¿Dónde vivís?
+     Desde el 26/10/2026 el alta pregunta sólo el punto: la calle y el
+     municipio salen de él (ya no son campos del alta) y se ven y se corrigen,
+     moviendo el punto, en la misma pestaña. */
   gpsDomicilio: DOCTOR_TAB.contacto,
 
   /* 7 · Tu consultorio propio.
@@ -196,8 +197,7 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
      no el municipio suelto— y ahora monta además el bloque del consultorio,
      donde los cuatro se ven y se corrigen con su propio control (C-02). */
   officeName: DOCTOR_TAB.dondeAtiendo,
-  municipioConsultorio: DOCTOR_TAB.dondeAtiendo,
-  officeAddressLines: DOCTOR_TAB.dondeAtiendo,
+  // La calle y el municipio del consultorio salen de su punto (26/10/2026).
   gpsConsultorio: DOCTOR_TAB.dondeAtiendo,
   officeContactPhone: DOCTOR_TAB.dondeAtiendo,
 

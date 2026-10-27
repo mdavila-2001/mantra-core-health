@@ -23,9 +23,6 @@ import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.c
 import { BIRTH_SEX_OPTIONS } from '../../../../core/data-access/iam/birth-sex.options';
 import type { BirthSexCode } from '../../../../core/data-access/iam/iam.types';
 import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
-import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
-import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
-import { LocationPicker } from '../../../auth/shared-registration/location-picker/location-picker';
 import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
@@ -91,8 +88,10 @@ import {
 import {
   MapLocationPicker,
   type Coordinates,
+  type LocalityFromPoint,
   type TestIds,
 } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
+import { confirmedLocality } from '../../../auth/shared-registration/point-locality';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import {
@@ -229,6 +228,9 @@ const BLOQUE_DE_RECURSO: Readonly<Record<RecursoEditable, string>> = {
   especialidad: 'Especialidades',
   matricula: 'Matrículas',
 };
+
+/** Lo que se dice cuando falta el punto del domicilio, que es obligatorio. */
+const MENSAJE_SIN_PUNTO = 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».';
 
 /**
  * En qué pestaña del editor se ve cada campo del `PATCH` del perfil que la
@@ -521,7 +523,6 @@ function soloFecha(fecha: Date): string {
     SignatureOrSeal,
     FormField,
     Input,
-    LocationPicker,
     NavIcon,
     PageHeader,
     Pagination,
@@ -598,7 +599,6 @@ export class PractitionerProfileEdit {
       this.pestana() === TAB_EDITOR.facturacion,
   );
 
-  private readonly municipios = inject(BoMunicipalitiesCatalog);
   private readonly departamentos = inject(BoDepartmentsCatalog);
 
   /* -- P28 (ID-13): lo que del documento SÍ se corrige --------------------
@@ -636,11 +636,11 @@ export class PractitionerProfileEdit {
 
   /** Fecha de nacimiento: se ve en la ficha, ahora también se edita. */
   protected readonly fechaNacimiento = signal<Date | null>(null);
-  /** Localidad de residencia (concept id de `VS_BO_MUNICIPALITY`). */
+  /**
+   * Localidad de residencia (concept id de `VS_BO_MUNICIPALITY`). Ya no se
+   * elige: sale del punto del domicilio (26/10/2026), ver `volcarDomicilio`.
+   */
   protected readonly municipioResidencia = signal<string | null>(null);
-  /** El árbol de departamentos y municipios, para el picker de residencia. */
-  protected readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
-  protected readonly catalogoMunicipiosCaido = signal(false);
 
   protected readonly perfil = signal<ViewState<OwnPractitionerProfile>>(loading());
 
@@ -933,6 +933,9 @@ export class PractitionerProfileEdit {
   protected readonly direccion = signal('');
   /** Dirección laboral, separada del domicilio personal. */
   protected readonly direccionTrabajo = signal('');
+  // Desde el 26/10/2026 las dos direcciones **no se escriben**: salen del
+  // punto de cada mapa (ver `volcarDomicilio`). Siguen siendo señales porque
+  // lo guardado se muestra y viaja igual que antes.
 
   /**
    * El punto del domicilio en el mapa — lo que el alta ya preguntaba
@@ -965,6 +968,68 @@ export class PractitionerProfileEdit {
     const elegido = this.gpsTrabajo();
     return elegido === undefined ? this.gpsTrabajoGuardado() : elegido;
   });
+
+  /**
+   * El aviso de «Contacto» sin punto del domicilio: es obligatorio (pedido del
+   * cliente del 26/10/2026). Un punto ya guardado cuenta —no se pide volver a
+   * confirmarlo—; sólo frena si no hay ninguno, o si se movió sin confirmar.
+   */
+  protected readonly errorGpsDomicilio = signal('');
+
+  /**
+   * Lo último que cada mapa dedujo de su punto, confirmado o no: la calle suele
+   * llegar antes de que la persona confirme, y al confirmar se vuelca.
+   */
+  private readonly localidadDomicilio = signal<LocalityFromPoint | null>(null);
+  private readonly localidadTrabajo = signal<LocalityFromPoint | null>(null);
+
+  protected confirmarGpsDomicilio(punto: Coordinates | null): void {
+    this.gpsDomicilio.set(punto);
+    if (punto !== null) this.errorGpsDomicilio.set('');
+    this.volcarDomicilio();
+  }
+
+  protected confirmarGpsTrabajo(punto: Coordinates | null): void {
+    this.gpsTrabajo.set(punto);
+    this.volcarTrabajo();
+  }
+
+  protected aplicarLocalidadDomicilio(localidad: LocalityFromPoint | null): void {
+    this.localidadDomicilio.set(localidad);
+    this.volcarDomicilio();
+  }
+
+  protected aplicarLocalidadTrabajo(localidad: LocalityFromPoint | null): void {
+    this.localidadTrabajo.set(localidad);
+    this.volcarTrabajo();
+  }
+
+  /**
+   * La calle y el municipio del domicilio, sacados del punto confirmado.
+   *
+   * Sin tocar el mapa (`undefined`) queda lo guardado: abrir el editor no
+   * reescribe la dirección con la del geocodificador. Un punto quitado o
+   * movido sin confirmar deja la calle vacía —describía otro lugar—, y sin
+   * calle en el mapa va la zona o nada: nunca una calle inventada. El
+   * municipio no se vacía nunca: el contrato no admite borrarlo.
+   */
+  private volcarDomicilio(): void {
+    const punto = this.gpsDomicilio();
+    if (punto === undefined) return;
+    const localidad = confirmedLocality(this.localidadDomicilio(), punto);
+    if (punto !== null && localidad === null) return;
+    this.direccion.set(localidad?.calle ?? localidad?.zona ?? '');
+    if (localidad?.municipioConceptId) this.municipioResidencia.set(localidad.municipioConceptId);
+  }
+
+  /** Lo mismo para el trabajo, que no guarda municipio. */
+  private volcarTrabajo(): void {
+    const punto = this.gpsTrabajo();
+    if (punto === undefined) return;
+    const localidad = confirmedLocality(this.localidadTrabajo(), punto);
+    if (punto !== null && localidad === null) return;
+    this.direccionTrabajo.set(localidad?.calle ?? localidad?.zona ?? '');
+  }
 
   protected readonly idsGpsDomicilio: TestIds = {
     mapa: 'edicion-domicilio-mapa',
@@ -2015,9 +2080,7 @@ export class PractitionerProfileEdit {
           : { lat: latTrabajo, lng: lngTrabajo },
       );
       this.gpsTrabajo.set(undefined);
-      if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
-        this.cargarMunicipios();
-      }
+      this.errorGpsDomicilio.set('');
       return;
     }
 
@@ -2026,23 +2089,6 @@ export class PractitionerProfileEdit {
       this.razonSocial.set(perfil.taxHolderName ?? '');
       this.frecuenciaFacturacionSeguro.set(perfil.insuranceBillingFrequency ?? null);
     }
-  }
-
-  /**
-   * Trae el árbol de municipios para «dónde vivís». Mismo criterio que el
-   * alta ante un fallo: el campo es opcional y el resto del formulario sigue.
-   */
-  protected cargarMunicipios(): void {
-    this.municipios.listar().subscribe({
-      next: (ramas) => {
-        this.catalogoMunicipiosCaido.set(false);
-        this.ramasMunicipios.set(ramas);
-      },
-      error: () => {
-        this.ramasMunicipios.set([]);
-        this.catalogoMunicipiosCaido.set(true);
-      },
-    });
   }
 
   /** Trae los departamentos para «departamento que emitió tu documento». Un fallo no rompe el resto. */
@@ -2054,11 +2100,6 @@ export class PractitionerProfileEdit {
         ),
       error: () => this.opcionesDepartamento.set([]),
     });
-  }
-
-  protected reintentarMunicipios(): void {
-    this.municipios.olvidar();
-    this.cargarMunicipios();
   }
 
   /** DatePicker conserva texto inválido sin emitir un valor de fecha. */
@@ -2267,6 +2308,12 @@ export class PractitionerProfileEdit {
     const correoTrabajo = this.correoTrabajo().trim();
     const correoTrabajoCambio = correoTrabajo !== correoDeTrabajoDe(original);
     if (pestana === TAB_EDITOR.contacto && !this.contactoValido(correoTrabajo, correoTrabajoCambio)) {
+      return;
+    }
+    // El punto del domicilio es obligatorio (26/10/2026): uno guardado vale.
+    if (pestana === TAB_EDITOR.contacto && this.gpsDomicilioInicial() === null) {
+      this.errorGpsDomicilio.set(MENSAJE_SIN_PUNTO);
+      this.toasts.error(MENSAJE_SIN_PUNTO, 'Perfil');
       return;
     }
 

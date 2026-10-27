@@ -56,10 +56,10 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await empezarElAlta(page);
     await expect(page.getByRole('heading', { name: PASOS_DEL_ALTA.residencia })).toBeVisible();
 
-    // El GPS se ofrece con la localidad elegida (el campo depende de ella).
+    // Pedido del cliente (26/10/2026): el mapa ya está abierto antes de pedir
+    // nada, con el botón de la ubicación actual al lado.
     await elegirLocalidadDeResidencia(page);
-    // Antes de pedirla no hay mapa: sólo la invitación.
-    await expect(page.getByTestId('registro-mapa-domicilio')).toHaveCount(0);
+    await expect(page.getByTestId('registro-mapa-domicilio').locator('.leaflet-container')).toBeVisible();
     await page.getByTestId('registro-usar-ubicacion').click();
 
     // El mapa, con su pin. `.mapa__lienzo` es el elemento que monta Leaflet:
@@ -92,9 +92,9 @@ test.describe('alta pública — la empresa y el mapa', () => {
   test('el paso del trabajo pregunta la empresa y dónde queda', async ({ page }) => {
     await llegarAlTrabajo(page);
 
-    // Dónde queda: el mismo mapa que la residencia y la calle, en el mismo paso.
-    await expect(page.getByTestId('registration-work-mapa-SC')).toBeVisible();
-    await expect(page.getByTestId('registration-work-address')).toBeVisible();
+    // Dónde queda: el mismo mapa que la residencia, abierto para tocarlo. La
+    // calle y la localidad salen del punto (26/10/2026).
+    await expect(page.getByTestId('registration-work-map').locator('.leaflet-container')).toBeVisible();
 
     // La empresa, con su lupa.
     const empresa = page.getByTestId('registro-empresa');
