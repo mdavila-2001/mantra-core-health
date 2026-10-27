@@ -2,21 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { afterAll, beforeAll } from 'vitest';
 
-import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/auth/auth.service';
 import { unavailableInApiError } from '../../../core/data-access/simulator-only';
 import { ServicesCatalogClient } from '../../../core/data-access/services-catalog/services-catalog.client';
 import type { ClaimQuoteResult } from '../../../core/data-access/insurance/insurance.types';
 import { ClaimQuoteSection } from './claim-quote-section';
-
-// Cotizar y leer los seguros de la persona, y el desglose y la objeción de «Mis solicitudes», son
-// funciones que hoy sólo sirve la maqueta (P62 y P63): contra la API real `simulatorOnly()` no manda la
-// petición. En esta rama la maqueta viene apagada: se enciende acá, sólo para este archivo.
-const mockBackendOriginal = environment.mockBackend;
-beforeAll(() => Object.assign(environment, { mockBackend: true }));
-afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 const COBERTURA = {
   id: 'coverage-paciente',
