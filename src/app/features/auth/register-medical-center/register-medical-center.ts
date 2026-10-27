@@ -62,8 +62,8 @@ const MAX_NAME = 200;
  * ofrece **ahora**.
  *
  * Las opciones llegan del catálogo después de pintar: si traen menos tipos que
- * los que había —una API sin `CLINIC`—, un valor ya elegido quedaría marcado
- * en el formulario sin un radio que lo muestre, y saldría igual a la red para
+ * los que había —una API sin `CLINIC`—, un valor ya elegido quedaría puesto
+ * en el formulario sin una opción que lo muestre, y saldría igual a la red para
  * volver con un 400. Vacío no es asunto de este validador: lo dice `required`.
  *
  * @param opciones - Lee las opciones vigentes; se consulta en cada validación.
@@ -139,8 +139,8 @@ export class RegisterMedicalCenter {
    * Los tipos de institución que la API publica, de los cinco médicos.
    *
    * Arranca con la lista de respaldo —los cinco—: con un catálogo lento, un
-   * grupo obligatorio vacío pedía «Elija el tipo de institución.» sin nada que
-   * elegir. Cuando el catálogo responde se queda con los que publica, y
+   * desplegable obligatorio vacío pedía «Elija el tipo de institución.» sin
+   * nada que elegir. Cuando el catálogo responde se queda con los que publica, y
    * `ofrecerTipos` vacía lo elegido si dejó de ofrecerse.
    */
   private readonly tiposDeOrganizacion = signal<readonly SelectOption<MedicalOrganizationType>[]>(
@@ -186,18 +186,15 @@ export class RegisterMedicalCenter {
       {
         titulo: 'La organización',
         hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
-        // El tipo cruza la página con sus opciones en rejilla, y la razón
-        // social y el tipo societario comparten renglón: es lo que hace que la
-        // página entre sin scroll en un monitor de 768 px de alto (§5).
-        disposicion: 'dos-columnas' as const,
+        // Los tres campos comparten un renglón, como la página de la cuenta:
+        // el tipo de institución es un desplegable, igual que el societario.
+        disposicion: 'tres-columnas' as const,
         campos: [
           {
             key: 'tenantType',
             label: 'Tipo de institución',
-            control: 'radio' as const,
+            control: 'select' as const,
             options: this.tiposDeOrganizacion(),
-            ancho: 'completo' as const,
-            opcionesEn: 'rejilla' as const,
             required: true,
             testId: 'medical-center-signup-tenant-type',
             mensajeDeError: 'Elija el tipo de institución.',
@@ -272,7 +269,9 @@ export class RegisterMedicalCenter {
     this.legalEntityTypes.listar().subscribe({
       next: (opciones) =>
         this.tiposSocietarios.set(this.legalEntityTypes.opcionesPorPais(opciones, 'BO')),
-      error: () => this.tiposSocietarios.set([]),
+      // Sin catálogo el servicio ofrece las figuras de su diccionario: un
+      // desplegable vacío dejaba el alta sin poder terminarse.
+      error: () => this.tiposSocietarios.set(this.legalEntityTypes.opcionesPorPais([], 'BO')),
     });
   }
 
@@ -304,8 +303,8 @@ export class RegisterMedicalCenter {
   /**
    * Publica las opciones del tipo y revalida lo elegido contra ellas.
    *
-   * Un valor que dejó de ofrecerse se vacía: la persona vuelve a ver el grupo
-   * sin marcar —y, si ya lo había tocado, con «Elija el tipo de institución.»—
+   * Un valor que dejó de ofrecerse se vacía: la persona vuelve a ver el
+   * desplegable sin elegir —y, si ya lo había tocado, con «Elija el tipo de institución.»—
    * en vez de un valor invisible que la API rechazaría.
    */
   private ofrecerTipos(opciones: readonly SelectOption<MedicalOrganizationType>[]): void {

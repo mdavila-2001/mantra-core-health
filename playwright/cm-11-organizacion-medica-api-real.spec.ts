@@ -337,8 +337,8 @@ async function abrirAlta(page: Page): Promise<void> {
   await expect(
     page.getByRole('heading', { level: 1, name: 'Registre su organización médica' }),
   ).toBeVisible();
-  // El catálogo de tipos llega después de pintar: se espera a la primera opción.
-  await expect(page.getByTestId('medical-center-signup-tenant-type').getByRole('radio').first()).toBeAttached({
+  // El tipo de institución es un `app-select`: se espera a que su combobox esté listo.
+  await expect(page.getByTestId('medical-center-signup-tenant-type').getByRole('combobox')).toBeVisible({
     timeout: 20_000,
   });
 }
@@ -350,10 +350,14 @@ async function escribir(page: Page, testId: string, texto: string): Promise<void
   await expect(campo).toHaveValue(texto);
 }
 
+/** El tipo de institución también es un `app-select`: combobox que abre un `<dialog>`. */
 async function elegirTipo(page: Page, rotulo: string): Promise<void> {
-  const grupo = page.getByTestId('medical-center-signup-tenant-type');
-  await grupo.getByText(rotulo, { exact: true }).click();
-  await expect(grupo.getByRole('radio', { name: rotulo, exact: true })).toBeChecked();
+  const combobox = page.getByTestId('medical-center-signup-tenant-type').getByRole('combobox');
+  await combobox.click();
+  const dialogo = page.locator('dialog.select-dialog[open]');
+  await dialogo.getByRole('option', { name: rotulo, exact: true }).click();
+  await expect(dialogo).toHaveCount(0);
+  await expect(combobox).toContainText(rotulo);
 }
 
 /** `app-select` es un combobox propio que abre un `<dialog>`, no un `<select>` nativo. */
@@ -732,13 +736,13 @@ test.describe('error', () => {
     const mensaje = page.locator('.form-field-error', { hasText: 'Elija el tipo de institución.' });
     await expect(mensaje).toBeVisible();
     await expect(page.getByTestId('medical-center-signup-owner-name')).toHaveCount(0);
-    // M2: el grupo queda descrito por el mensaje y el foco va a su primera opción.
-    const grupo = page.getByTestId('medical-center-signup-tenant-type');
+    // M2: el desplegable queda descrito por el mensaje, inválido y con el foco.
+    const combobox = page.getByTestId('medical-center-signup-tenant-type').getByRole('combobox');
     const idDelMensaje = await mensaje.getAttribute('id');
     expect(idDelMensaje).not.toBeNull();
-    await expect(grupo).toHaveAttribute('aria-describedby', new RegExp(idDelMensaje ?? '-'));
-    await expect(grupo).toHaveAttribute('aria-invalid', 'true');
-    await expect(grupo.getByRole('radio').first()).toBeFocused();
+    await expect(combobox).toHaveAttribute('aria-describedby', new RegExp(idDelMensaje ?? '-'));
+    await expect(combobox).toHaveAttribute('aria-invalid', 'true');
+    await expect(combobox).toBeFocused();
     await mensaje.scrollIntoViewIfNeeded();
     await sinDesbordeHorizontal(page);
     await foto(page, '390-error-sin-tipo');
@@ -798,7 +802,7 @@ test.describe('error', () => {
 
 /* ------------------------------------------------------------ viewports */
 
-test('con el catálogo de tipos demorado, el grupo ofrece los cinco desde el principio', async ({ page }) => {
+test('con el catálogo de tipos demorado, el desplegable ofrece los cinco desde el principio', async ({ page }) => {
   const vigia = vigilar(page);
   await page.setViewportSize(ESCRITORIO);
   let liberar: () => void = () => undefined;
@@ -812,13 +816,19 @@ test('con el catálogo de tipos demorado, el grupo ofrece los cinco desde el pri
   );
   await page.goto('/auth/register/medical-center', { waitUntil: 'domcontentloaded' });
   await esperarAplicacionLista(page);
-  const grupo = page.getByTestId('medical-center-signup-tenant-type');
+  const combobox = page.getByTestId('medical-center-signup-tenant-type').getByRole('combobox');
+  const dialogo = page.locator('dialog.select-dialog[open]');
   // El catálogo todavía no respondió: igual hay cinco opciones para elegir.
-  await expect(grupo.getByRole('radio')).toHaveCount(5);
-  await expect(page.getByText('Elija el tipo de institución.')).toHaveCount(0);
+  await combobox.click();
+  await expect(dialogo.getByRole('option')).toHaveCount(5);
   await foto(page, '1440-catalogo-demorado');
+  await page.keyboard.press('Escape');
+  await expect(dialogo).toHaveCount(0);
+  await expect(page.getByText('Elija el tipo de institución.')).toHaveCount(0);
   liberar();
-  await expect(grupo.getByRole('radio')).toHaveCount(5);
+  await combobox.click();
+  await expect(dialogo.getByRole('option')).toHaveCount(5);
+  await page.keyboard.press('Escape');
   await page.unrouteAll({ behavior: 'ignoreErrors' });
   expect(vigia.problemas).toEqual([]);
 });
@@ -840,20 +850,11 @@ test('la primera página se ve entera en los anchos de referencia, con «Siguien
       const columnas = [...document.querySelectorAll('.paginated-form__campo')].map((campo) =>
         Math.round(campo.getBoundingClientRect().left),
       );
-      const radios = [...document.querySelectorAll('[data-testid="medical-center-signup-tenant-type"] app-radio')].map(
-        (radio) => Math.round(radio.getBoundingClientRect().top),
-      );
-      const rotulos = [...document.querySelectorAll('[data-testid="medical-center-signup-tenant-type"] .radio-label')].map(
-        (rotulo) => Math.round(rotulo.getBoundingClientRect().height),
-      );
       return {
-        rotulosEnUnRenglon: Math.max(...rotulos) - Math.min(...rotulos) <= 1,
         scrollY: window.scrollY,
         abajo: caja.bottom,
         alto: window.innerHeight,
         columnas: new Set(columnas).size,
-        filasDeRadios: new Set(radios).size,
-        radios: radios.length,
       };
     });
     if (vista.sinScroll) {
@@ -863,16 +864,10 @@ test('la primera página se ve entera en los anchos de referencia, con «Siguien
       await expect(page.getByTestId('paginated-form-continuar')).toBeInViewport({ ratio: 1 });
     }
     if (vista.width >= 780) {
-      // §5: razón social y tipo societario comparten renglón, y los radios
-      // van en rejilla —menos filas que opciones—.
-      expect(medidas.columnas, vista.label).toBeGreaterThanOrEqual(2);
-      expect(medidas.filasDeRadios, vista.label).toBeLessThan(medidas.radios);
-      // Sin huérfanas ni pistas vacías: las cinco en una fila donde entran con
-      // holgura (campo de 1100 px: desde 1366), 3 + 2 donde no (1024, 1280).
-      // Ningún rótulo parte en dos.
-      expect(medidas.filasDeRadios, vista.label).toBe(vista.width >= 1366 ? 1 : 2);
+      // §5: tipo de institución, razón social y tipo societario en un renglón
+      // desde 1120 px; de a dos por debajo, con el último cruzando la fila.
+      expect(medidas.columnas, vista.label).toBe(vista.width >= 1120 ? 3 : 2);
     }
-    expect(medidas.rotulosEnUnRenglon, `${vista.label}: ningún rótulo de tipo parte en dos líneas`).toBe(true);
     await foto(page, `${vista.label}-pagina-1-vacia`);
   }
   expect(vigia.problemas).toEqual([]);
