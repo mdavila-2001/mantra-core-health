@@ -40,20 +40,20 @@
 <text x="608.0" y="50" text-anchor="middle" class="title">Qué puede causar</text>
 <rect x="456" y="60" width="130" height="40" rx="8" fill="var(--ok-l)" stroke-width="1"/>
 <text x="521.0" y="84.2" text-anchor="middle" class="small" style="fill:var(--ink)">Sin síntomas</text>
-<text x="596" y="78" class="small">la mayoría; hallazgo en ecografía</text>
+<text x="596" y="78" class="small">la mayoría de los casos</text>
 <rect x="456" y="112" width="130" height="40" rx="8" fill="var(--accent-l)" stroke-width="1"/>
 <text x="521.0" y="136.2" text-anchor="middle" class="small" style="fill:var(--ink)">Cólico biliar</text>
-<text x="596" y="130" class="small">dolor tras comidas grasas</text>
+<text x="596" y="130" class="small">dolor tras comer graso</text>
 <rect x="456" y="164" width="130" height="40" rx="8" fill="var(--accent-l)" stroke-width="1"/>
 <text x="521.0" y="188.2" text-anchor="middle" class="small" style="fill:var(--ink)">Colecistitis</text>
-<text x="596" y="182" class="small">vesícula inflamada, fiebre</text>
+<text x="596" y="182" class="small">inflamación y fiebre</text>
 <rect x="456" y="216" width="130" height="40" rx="8" fill="var(--accent-l)" stroke-width="1"/>
 <text x="521.0" y="240.2" text-anchor="middle" class="small" style="fill:var(--ink)">Coledocolitiasis</text>
 <text x="596" y="234" class="small">cálculo en colédoco</text>
 <text x="596" y="250" class="small">ictericia</text>
 <rect x="456" y="268" width="130" height="40" rx="8" fill="var(--accent-l)" stroke-width="1"/>
 <text x="521.0" y="292.2" text-anchor="middle" class="small" style="fill:var(--ink)">Pancreatitis</text>
-<text x="596" y="286" class="small">dolor intenso hacia la espalda</text>
+<text x="596" y="286" class="small">dolor fuerte en cinturón</text>
 <text x="456" y="346" class="lab">Factores: sexo femenino, embarazo,</text>
 <text x="456" y="366" class="lab">obesidad o pérdida rápida de peso.</text>
 <text x="456" y="400" class="step">Diagnóstico: ecografía abdominal.</text>

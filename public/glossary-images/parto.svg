@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Las tres etapas del parto vaginal</title>
+  <desc id="d">Tres esquemas simplificados del útero: en la dilatación el cuello se abre con el bebé encajado; en el expulsivo el bebé desciende por el canal del parto; en el alumbramiento sale la placenta y se vigila el sangrado.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --warn:#c0392b; --ok:#1f8a5b; --beam:#f2c46d; --violet:#7b5ea7; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --warn:#ef7467; --ok:#4cc38a; --beam:#8a6f2f; --violet:#b39ddb; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="42" text-anchor="middle" class="title">Las tres etapas del parto vaginal</text>
+  <rect x="20" y="64" width="246" height="340" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="143" y="92" text-anchor="middle" class="step">1 · Dilatación</text>
+  <path d="M143 120 C70 120 60 220 90 270 C105 296 125 306 135 312 L151 312 C161 306 181 296 196 270 C226 220 216 120 143 120 Z" fill="var(--tissue)" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="143" cy="275" r="26" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+  <ellipse cx="143" cy="200" rx="34" ry="44" fill="var(--beam)" opacity=".7"/>
+  <path d="M130 312 L120 340 M156 312 L166 340" stroke="var(--violet)" stroke-width="3"/>
+  <text x="143" y="364" text-anchor="middle" class="lab">El cuello del útero</text>
+  <text x="143" y="382" text-anchor="middle" class="lab">se acorta y se abre</text>
+  <rect x="277" y="64" width="246" height="340" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="92" text-anchor="middle" class="step">2 · Expulsivo</text>
+  <path d="M400 120 C330 120 320 200 350 240 C365 260 380 270 385 280 L415 280 C420 270 435 260 450 240 C480 200 470 120 400 120 Z" fill="var(--tissue)" stroke="var(--violet)" stroke-width="3"/>
+  <path d="M385 280 L375 340 M415 280 L425 340" stroke="var(--violet)" stroke-width="3"/>
+  <circle cx="400" cy="300" r="22" fill="var(--beam)" stroke="var(--warn)" stroke-width="2"/>
+  <ellipse cx="400" cy="230" rx="28" ry="40" fill="var(--beam)" opacity=".7"/>
+  <path d="M470 220 V300" stroke="var(--accent)" stroke-width="3"/>
+  <path d="M462 290 L470 304 L478 290" fill="none" stroke="var(--accent)" stroke-width="3"/>
+  <text x="400" y="364" text-anchor="middle" class="lab">El bebé desciende por</text>
+  <text x="400" y="382" text-anchor="middle" class="lab">el canal del parto y nace</text>
+  <rect x="534" y="64" width="246" height="340" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="657" y="92" text-anchor="middle" class="step">3 · Alumbramiento</text>
+  <path d="M657 130 C610 130 600 190 620 230 C632 252 645 262 650 268 L664 268 C669 262 682 252 694 230 C714 190 704 130 657 130 Z" fill="var(--tissue)" stroke="var(--violet)" stroke-width="3"/>
+  <ellipse cx="657" cy="300" rx="34" ry="16" fill="var(--warn)" opacity=".55"/>
+  <path d="M657 300 C640 320 690 320 670 340" fill="none" stroke="var(--warn)" stroke-width="3"/>
+  <text x="657" y="364" text-anchor="middle" class="lab">Sale la placenta; se</text>
+  <text x="657" y="382" text-anchor="middle" class="lab">vigila el sangrado</text>
+  <text x="400" y="436" text-anchor="middle" class="lab">Después: contacto piel con piel, inicio de la lactancia y vigilancia de madre y bebé.</text>
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema simplificado, sin escala. Ilustración original de AloVida.</text>
+</svg>

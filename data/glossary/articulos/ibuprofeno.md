@@ -126,6 +126,22 @@ Consulte con su médico o farmacéutico si el dolor dura más de unos días, si 
 
 Busque atención urgente si presenta heces negras o con sangre, vómitos con sangre, dolor abdominal intenso, dificultad para respirar, sibilancias, hinchazón de la cara, los labios o la garganta, una erupción extensa con ampollas, una disminución importante de la orina o dolor en el pecho.
 
+## [pregnancy_lactation] Embarazo y lactancia
+
+Durante el embarazo, el ibuprofeno y el resto de los antiinflamatorios no esteroideos requieren especial cuidado. En la última etapa de la gestación no deben utilizarse, porque pueden afectar al corazón y a los riñones del bebé, reducir el líquido amniótico y prolongar el parto o aumentar el sangrado. En etapas anteriores solo deben usarse si un profesional lo considera necesario, durante el menor tiempo posible. Si está embarazada o cree que puede estarlo, consulte siempre antes de tomarlo, también en el caso de geles o cremas, y pregunte por la alternativa más adecuada para el dolor o la fiebre.
+
+Durante la lactancia, el ibuprofeno pasa a la leche materna en cantidades muy pequeñas y, en general, se considera compatible con dar el pecho en tratamientos cortos. Aun así, conviene consultar con su médico, matrona o farmacéutico antes de tomarlo, sobre todo si el bebé es prematuro o tiene algún problema de salud.
+
+Algunas mujeres que intentan quedarse embarazadas deben saber también que el uso prolongado de antiinflamatorios puede afectar temporalmente a la ovulación; coméntelo con su profesional si busca un embarazo.
+
+## [presentations] Presentaciones
+
+El ibuprofeno se comercializa en muchas formas, que permiten adaptarlo a cada situación: comprimidos recubiertos, comprimidos efervescentes, cápsulas blandas, granulados en sobre, suspensiones orales para niños, supositorios, geles y cremas para uso sobre la piel, y soluciones para inyección de uso hospitalario. Algunas presentaciones combinan el ibuprofeno con otros principios activos, como descongestionantes o cafeína. Cada presentación tiene una concentración distinta, por lo que no son intercambiables sin más: lea siempre el prospecto del producto concreto que vaya a usar.
+
+## [special_populations] Personas mayores y otras situaciones
+
+En las personas mayores, los efectos adversos del ibuprofeno sobre el estómago, los riñones y el corazón son más frecuentes, y a menudo toman otros medicamentos que pueden potenciarlos. Por eso, en ellas suele preferirse usarlo durante periodos cortos, con revisión de su tratamiento habitual y, a veces, con un protector de estómago indicado por el médico. Las personas que practican deporte de resistencia deben evitar tomarlo de forma preventiva antes de pruebas largas, sobre todo con calor, porque la deshidratación aumenta el riesgo de daño renal.
+
 ## [references]
 
 - Ibuprofeno | https://medlineplus.gov/spanish/druginfo/meds/a682159-es.html | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.

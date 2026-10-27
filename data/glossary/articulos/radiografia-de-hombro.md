@@ -1,5 +1,6 @@
 ---
 slug: radiografia-de-hombro
+image: radiografia-de-hombro.svg | La radiografía de hombro muestra los huesos de la articulación. | Persona de pie frente a un detector mientras un tubo de rayos X emite el haz, y una placa esquemática con clavícula, acromion, escápula y húmero.
 ---
 
 ## [definition] Introducción

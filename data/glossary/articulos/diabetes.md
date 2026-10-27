@@ -128,6 +128,10 @@ Si ya tiene diabetes, consulte si sus valores de glucosa están a menudo fuera d
 
 Busque atención urgente si presenta vómitos persistentes, dolor abdominal, respiración rápida, aliento con olor afrutado, somnolencia o confusión; si una hipoglucemia no mejora con las medidas indicadas o la persona pierde el conocimiento; o si aparecen síntomas de infarto o ictus, como dolor en el pecho, debilidad de un lado del cuerpo o dificultad para hablar.
 
+## [self_care] Vivir con diabetes en el día a día
+
+El control de la diabetes se apoya en gran parte en lo que la persona hace cada día. Algunas recomendaciones útiles son revisar los pies a diario en busca de heridas, rozaduras o cambios de color, usar calzado cómodo, mantener las revisiones de la vista y los dientes, llevar siempre encima algo para tratar una posible hipoglucemia si su tratamiento puede causarla, y tener a mano información sobre su diabetes por si necesita atención. Durante una enfermedad aguda, como una gripe o una gastroenteritis, la glucosa puede alterarse: su equipo le dará unas «normas para días de enfermedad» que conviene conocer de antemano. Además, el apoyo emocional es importante, porque convivir con una enfermedad crónica puede resultar agotador; hablar de ello con su equipo o con otras personas con diabetes puede ayudar.
+
 ## [references]
 
 - Diabetes | https://medlineplus.gov/spanish/diabetes.html | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.

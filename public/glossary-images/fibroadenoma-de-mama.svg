@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Fibroadenoma de mama</title>
+  <desc id="d">A la izquierda, un corte lateral de la mama con un nódulo ovalado de bordes lisos que se desplaza bajo los dedos. A la derecha, sus características benignas, los pasos para confirmarlo y el manejo habitual.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Nódulo benigno de la mama</text>
+  <path d="M70 80 C150 80 240 120 290 200 C320 250 320 290 296 320 C260 370 170 380 110 360 L70 350 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <line x1="70" y1="80" x2="70" y2="350" stroke="var(--bone)" stroke-width="6"/>
+  <circle cx="306" cy="280" r="9" fill="var(--organ-d)" stroke="none" stroke-width="2"/>
+  <path d="M300 280 Q210.0 222.0 120 180" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="120" cy="180" r="11" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+  <path d="M300 280 Q215.0 282.0 130 300" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="130" cy="300" r="11" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+  <path d="M300 280 Q265.0 282.0 230 300" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="230" cy="300" r="11" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
+  <ellipse cx="200" cy="210" rx="34" ry="26" fill="var(--violet-l)" stroke="var(--violet)" stroke-width="2.5"/>
+  <path d="M178 210 h44 M200 192 v36" fill="none" stroke="var(--violet)" stroke-width="1" opacity=".4"/>
+  <text x="200" y="126" text-anchor="middle" class="small" style="fill:var(--violet)">Bordes lisos y bien definidos</text>
+  <line x1="200" y1="132" x2="200" y2="182" stroke="var(--violet)" stroke-width="1"/>
+  <path d="M238 204 l16 0 m-4 -4 l4 4 l-4 4 M162 204 l-16 0 m4 -4 l-4 4 l4 4" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+  <text x="200" y="400" text-anchor="middle" class="lab">Se mueve bajo los dedos</text>
+  <text x="200" y="418" text-anchor="middle" class="small" style="fill:var(--muted)">como una canica de goma</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Características</text>
+  <text x="436" y="80" class="small">• Tumor benigno: no es cáncer</text>
+  <text x="436" y="106" class="small">• Frecuente entre los 15 y 35 años</text>
+  <text x="436" y="132" class="small">• Firme, liso, móvil y sin dolor</text>
+  <text x="436" y="158" class="small">• Puede cambiar con las hormonas</text>
+  <text x="436" y="200" class="step">Cómo se confirma</text>
+  <rect x="436" y="216" width="96" height="50" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="484.0" y="246.0" text-anchor="middle" class="lab">Exploración</text>
+  <rect x="548" y="216" width="96" height="50" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="596.0" y="246.0" text-anchor="middle" class="lab">Ecografía</text>
+  <rect x="660" y="216" width="100" height="50" rx="10" fill="var(--violet-l)" stroke="var(--line)"/>
+  <text x="710.0" y="237.5" text-anchor="middle" class="lab">Biopsia</text>
+  <text x="710.0" y="254.5" text-anchor="middle" class="lab">si hay dudas</text>
+  <line x1="532" y1="241" x2="546" y2="241" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <line x1="644" y1="241" x2="658" y2="241" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
+  <rect x="436" y="296" width="324" height="126" rx="10" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+  <text x="452" y="322" class="step">Manejo habitual</text>
+  <text x="460" y="346" class="small">• Vigilancia con controles</text>
+  <text x="460" y="368" class="small">• Extirpación si crece o molesta</text>
+  <text x="460" y="390" class="small">• Consultar ante cualquier bulto nuevo</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

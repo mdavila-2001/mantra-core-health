@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Tipos de histerectomía</title>
+  <desc id="d">Cuatro esquemas del útero con trompas, ovarios y vagina. En cada uno se marca con línea discontinua lo que se extirpa: subtotal, solo el cuerpo del útero; total, útero y cuello; con anexos, además trompas y ovarios; y radical, con tejidos vecinos y parte de la vagina. Debajo, las cuatro vías de acceso.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Tipos de histerectomía según lo que se extirpa</text>
+<rect x="40" y="66" width="166" height="244" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+<text x="123" y="92" text-anchor="middle" class="step">Subtotal</text>
+<path d="M99.6 135.6 C76.19999999999999 127.8 60.599999999999994 135.6 52.8 151.2" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M146.4 135.6 C169.8 127.8 185.4 135.6 193.2 151.2" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="51.239999999999995" cy="163.68" rx="12.48" ry="8.58" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<ellipse cx="194.76" cy="163.68" rx="12.48" ry="8.58" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<path d="M96.48 132.48 C96.48 120 149.52 120 149.52 132.48 C149.52 159.0 137.04 174.6 133.92 182.4 L112.08 182.4 C108.96 174.6 96.48 159.0 96.48 132.48 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity=".35"/>
+<rect x="112.08" y="182.4" width="21.84" height="12.48" rx="4" fill="var(--organ)"/>
+<path d="M113.64 194.88 L110.52 221.4 L135.48 221.4 L132.36 194.88" fill="var(--skin)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="123" y="270" text-anchor="middle" class="small">Cuerpo del útero;</text>
+<text x="123" y="286" text-anchor="middle" class="small">queda el cuello</text>
+<rect x="222" y="66" width="166" height="244" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+<text x="305" y="92" text-anchor="middle" class="step">Total</text>
+<path d="M281.6 135.6 C258.2 127.8 242.6 135.6 234.8 151.2" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M328.4 135.6 C351.8 127.8 367.4 135.6 375.2 151.2" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="233.24" cy="163.68" rx="12.48" ry="8.58" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<ellipse cx="376.76" cy="163.68" rx="12.48" ry="8.58" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<path d="M278.48 132.48 C278.48 120 331.52 120 331.52 132.48 C331.52 159.0 319.04 174.6 315.92 182.4 L294.08 182.4 C290.96 174.6 278.48 159.0 278.48 132.48 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity=".35"/>
+<rect x="294.08" y="182.4" width="21.84" height="12.48" rx="4" fill="var(--organ)" stroke-dasharray="4 3" opacity=".35"/>
+<path d="M295.64 194.88 L292.52 221.4 L317.48 221.4 L314.36 194.88" fill="var(--skin)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="305" y="270" text-anchor="middle" class="small">Útero y cuello</text>
+<text x="305" y="286" text-anchor="middle" class="small">uterino</text>
+<rect x="404" y="66" width="166" height="244" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+<text x="487" y="92" text-anchor="middle" class="step">Con anexos</text>
+<path d="M463.6 135.6 C440.2 127.8 424.6 135.6 416.8 151.2" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity=".35"/>
+<path d="M510.4 135.6 C533.8 127.8 549.4 135.6 557.2 151.2" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity=".35"/>
+<ellipse cx="415.24" cy="163.68" rx="12.48" ry="8.58" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5" stroke-dasharray="4 3" opacity=".35"/>
+<ellipse cx="558.76" cy="163.68" rx="12.48" ry="8.58" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5" stroke-dasharray="4 3" opacity=".35"/>
+<path d="M460.48 132.48 C460.48 120 513.52 120 513.52 132.48 C513.52 159.0 501.04 174.6 497.92 182.4 L476.08 182.4 C472.96 174.6 460.48 159.0 460.48 132.48 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity=".35"/>
+<rect x="476.08" y="182.4" width="21.84" height="12.48" rx="4" fill="var(--organ)" stroke-dasharray="4 3" opacity=".35"/>
+<path d="M477.64 194.88 L474.52 221.4 L499.48 221.4 L496.36 194.88" fill="var(--skin)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="487" y="270" text-anchor="middle" class="small">Además trompas</text>
+<text x="487" y="286" text-anchor="middle" class="small">y ovarios</text>
+<rect x="586" y="66" width="166" height="244" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+<text x="669" y="92" text-anchor="middle" class="step">Radical</text>
+<path d="M645.6 135.6 C622.2 127.8 606.6 135.6 598.8 151.2" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity=".35"/>
+<path d="M692.4 135.6 C715.8 127.8 731.4 135.6 739.2 151.2" fill="none" stroke="var(--organ)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity=".35"/>
+<ellipse cx="597.24" cy="163.68" rx="12.48" ry="8.58" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<ellipse cx="740.76" cy="163.68" rx="12.48" ry="8.58" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5"/>
+<path d="M642.48 132.48 C642.48 120 695.52 120 695.52 132.48 C695.52 159.0 683.04 174.6 679.92 182.4 L658.08 182.4 C654.96 174.6 642.48 159.0 642.48 132.48 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity=".35"/>
+<rect x="658.08" y="182.4" width="21.84" height="12.48" rx="4" fill="var(--organ)" stroke-dasharray="4 3" opacity=".35"/>
+<path d="M659.64 194.88 L656.52 221.4 L681.48 221.4 L678.36 194.88" fill="var(--skin)" stroke="var(--organ)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="652" y="192" width="34" height="24" rx="4" fill="var(--bad-l)" stroke="var(--bad)" opacity=".5" stroke-dasharray="4 3"/>
+<text x="669" y="270" text-anchor="middle" class="small">Útero, tejidos vecinos</text>
+<text x="669" y="286" text-anchor="middle" class="small">y parte de la vagina</text>
+<text x="40" y="334" class="small" style="fill:var(--muted)">En gris discontinuo: lo que se extirpa.</text>
+<text x="40" y="364" class="h">Vías de acceso</text>
+<text x="40" y="392" class="lab" style="fill:var(--accent)">Abdominal</text>
+<text x="40" y="410" class="small" style="fill:var(--muted)">incisión en el vientre</text>
+<text x="222" y="392" class="lab" style="fill:var(--accent)">Vaginal</text>
+<text x="222" y="410" class="small" style="fill:var(--muted)">sin cicatriz externa</text>
+<text x="404" y="392" class="lab" style="fill:var(--accent)">Laparoscópica</text>
+<text x="404" y="410" class="small" style="fill:var(--muted)">pequeñas incisiones</text>
+<text x="586" y="392" class="lab" style="fill:var(--accent)">Robótica</text>
+<text x="586" y="410" class="small" style="fill:var(--muted)">laparoscopia asistida</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

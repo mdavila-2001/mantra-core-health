@@ -1,5 +1,6 @@
 ---
 slug: lipasa
+image: lipasa.svg | La lipasa es la enzima del páncreas que digiere las grasas. | Páncreas con su conducto, una gota de grasa que la lipasa rompe en fragmentos y la nota de que pasa a la sangre en la pancreatitis, junto a un tubo de sangre y las causas de elevación.
 ---
 
 ## [definition] Introducción

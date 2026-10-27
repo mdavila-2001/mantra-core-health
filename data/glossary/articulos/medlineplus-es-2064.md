@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2064
+image: medlineplus-es-2064.svg | Un órgano sano de un donante sustituye al que dejó de funcionar; después hay que evitar el rechazo. | Silueta humana con los órganos que se trasplantan: pulmones, corazón, hígado, páncreas, riñones e intestino. A la derecha, el paso de donante a receptor y una balanza entre el rechazo y los fármacos inmunosupresores.
 ---
 
 ## [definition] Introducción

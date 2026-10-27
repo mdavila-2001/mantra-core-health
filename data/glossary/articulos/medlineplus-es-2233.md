@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-2233
+image: medlineplus-es-2233.svg | Los injertos crean un camino nuevo para que la sangre pase más allá de la obstrucción. | Corazón con dos arterias coronarias obstruidas y dos injertos que las rodean: la arteria mamaria interna y un segmento de vena safena unido a la aorta. A la derecha, los pasos principales de la operación.
 ---
 
 ## [definition] Introducción

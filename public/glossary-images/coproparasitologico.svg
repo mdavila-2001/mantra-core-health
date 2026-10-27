@@ -34,7 +34,7 @@
 <rect x="488" y="68" width="22" height="46" rx="4" fill="var(--muted)" stroke-width="1" transform="rotate(-20 499 91)"/>
 <rect x="480" y="134" width="56" height="6" rx="2" fill="var(--muted)" stroke-width="1"/>
 <rect x="498" y="114" width="8" height="18" rx="2" fill="var(--ink)" stroke-width="1"/>
-<text x="515" y="194" text-anchor="middle" class="small">Microscopio</text>
+<text x="515" y="202" text-anchor="middle" class="small">Microscopio</text>
 <line x1="590" y1="130" x2="640" y2="130" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="650" y="96" width="110" height="60" rx="8" fill="var(--accent-l)" stroke-width="1"/>
 <text x="705" y="122" text-anchor="middle" class="step">Informe</text>

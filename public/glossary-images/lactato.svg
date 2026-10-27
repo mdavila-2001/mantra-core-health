@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Lactato en sangre</title>
+  <desc id="d">Arriba, tres pasos: muestra de sangre arterial o venosa, medición del lactato y orientación sobre falta de oxígeno en los tejidos, sepsis o shock. Abajo a la izquierda, una célula en la que la glucosa se convierte en piruvato; con oxígeno pasa a la mitocondria y produce mucha energía, sin oxígeno se transforma en lactato que sale a la sangre. Abajo a la derecha, situaciones en las que sube.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="30" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="52" cy="54" r="13" fill="var(--accent)"/>
+  <text x="52" y="59" text-anchor="middle" class="step on">1</text>
+  <text x="72" y="59" class="step">Muestra</text>
+  <text x="46" y="84" class="small">Sangre arterial</text>
+  <text x="46" y="103" class="small">o venosa</text>
+  <path d="M260 78.0 L283 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="287" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="309" cy="54" r="13" fill="var(--accent)"/>
+  <text x="309" y="59" text-anchor="middle" class="step on">2</text>
+  <text x="329" y="59" class="step">Se mide</text>
+  <text x="303" y="84" class="small">El lactato, producto</text>
+  <text x="303" y="103" class="small">del metabolismo sin oxígeno</text>
+  <path d="M517 78.0 L540 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="544" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="566" cy="54" r="13" fill="var(--accent)"/>
+  <text x="566" y="59" text-anchor="middle" class="step on">3</text>
+  <text x="586" y="59" class="step">Orienta sobre</text>
+  <text x="560" y="84" class="small">Falta de oxígeno en</text>
+  <text x="560" y="103" class="small">tejidos, sepsis, shock</text>
+  <rect x="30" y="150" width="520" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="290.0" y="180" text-anchor="middle" class="title">De dónde sale el lactato</text>
+  <rect x="60" y="190" width="460" height="230" rx="40" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="80" y="212" class="small muted">Célula</text>
+  <rect x="80" y="280" width="100" height="40" rx="10" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="130.0" y="305.0" text-anchor="middle" class="lab">Glucosa</text>
+  <path d="M182 300 L228 300" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="230" y="280" width="100" height="40" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="280.0" y="305.0" text-anchor="middle" class="lab">Piruvato</text>
+  <path d="M330 286 L380 240" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <path d="M330 314 L380 360" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <ellipse cx="440" cy="236" rx="60" ry="30" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="440" y="232" text-anchor="middle" class="small">Mitocondria</text>
+  <text x="440" y="248" text-anchor="middle" class="small">mucha energía</text>
+  <rect x="390" y="340" width="100" height="40" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="440.0" y="365.0" text-anchor="middle" class="lab">Lactato</text>
+  <text x="356" y="256" text-anchor="end" class="small" style="fill:var(--ok)">Con O2</text>
+  <text x="356" y="356" text-anchor="end" class="small" style="fill:var(--bad)">Sin O2</text>
+  <path d="M492 360 L530 360" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <text x="450" y="404" text-anchor="middle" class="small">Pasa a la sangre</text>
+  <rect x="570" y="150" width="200" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="670.0" y="180" text-anchor="middle" class="title">Sube en</text>
+  <rect x="586" y="190" width="168" height="36" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="670.0" y="213.0" text-anchor="middle" class="small">Sepsis</text>
+  <rect x="586" y="238" width="168" height="36" rx="10" fill="var(--bad-l)" stroke="var(--line)"/>
+  <text x="670.0" y="261.0" text-anchor="middle" class="small">Shock</text>
+  <rect x="586" y="286" width="168" height="36" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="670.0" y="309.0" text-anchor="middle" class="small">Ejercicio intenso</text>
+  <rect x="586" y="334" width="168" height="36" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="670.0" y="357.0" text-anchor="middle" class="small">Insuf. hepática</text>
+  <rect x="586" y="382" width="168" height="36" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="670.0" y="405.0" text-anchor="middle" class="small">Algunos fármacos</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Hemocultivo: de la extracción al antibiograma</title>
+  <desc id="d">Arriba, un brazo con dos puntos de punción y dos sets de frascos, cada uno con un frasco aerobio y otro anaerobio. Abajo, los pasos en el laboratorio: incubación, alarma de crecimiento, tinción de Gram, identificación y antibiograma.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="190" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Extracción: dos sets de dos sitios distintos</text>
+<path d="M60,140 Q120,120 210,126 L210,154 Q120,160 60,160 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M90,138 L190,138" fill="none" stroke="var(--vessel)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="110" cy="138" r="6" fill="none" stroke="var(--ink)" stroke-width="2"/>
+<circle cx="170" cy="138" r="6" fill="none" stroke="var(--ink)" stroke-width="2"/>
+<text x="110" y="184" text-anchor="middle" class="small">Punción 1</text>
+<text x="176" y="198" text-anchor="middle" class="small">Punción 2</text>
+<line x1="222" y1="132" x2="276" y2="118" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="290" y="94" width="46" height="76" rx="10" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+<rect x="293" y="128" width="40" height="39" rx="8" fill="var(--vessel)" stroke-width="1" opacity=".75"/>
+<rect x="300" y="84" width="26" height="14" rx="3" fill="var(--accent)" stroke-width="1"/>
+<text x="313" y="192" text-anchor="middle" class="small">Aerobio</text>
+<rect x="380" y="94" width="46" height="76" rx="10" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+<rect x="383" y="128" width="40" height="39" rx="8" fill="var(--vessel)" stroke-width="1" opacity=".75"/>
+<rect x="390" y="84" width="26" height="14" rx="3" fill="var(--purple)" stroke-width="1"/>
+<text x="403" y="192" text-anchor="middle" class="small">Anaerobio</text>
+<text x="358" y="76" text-anchor="middle" class="step">Set 1</text>
+<path d="M200,160 Q360,214 506,170" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ar)"/>
+<rect x="520" y="94" width="46" height="76" rx="10" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+<rect x="523" y="128" width="40" height="39" rx="8" fill="var(--vessel)" stroke-width="1" opacity=".75"/>
+<rect x="530" y="84" width="26" height="14" rx="3" fill="var(--accent)" stroke-width="1"/>
+<text x="543" y="192" text-anchor="middle" class="small">Aerobio</text>
+<rect x="610" y="94" width="46" height="76" rx="10" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>
+<rect x="613" y="128" width="40" height="39" rx="8" fill="var(--vessel)" stroke-width="1" opacity=".75"/>
+<rect x="620" y="84" width="26" height="14" rx="3" fill="var(--purple)" stroke-width="1"/>
+<text x="633" y="192" text-anchor="middle" class="small">Anaerobio</text>
+<text x="588" y="76" text-anchor="middle" class="step">Set 2</text>
+<text x="700" y="110" text-anchor="middle" class="small">Piel</text>
+<text x="700" y="126" text-anchor="middle" class="small">desinfectada</text>
+<text x="700" y="142" text-anchor="middle" class="small">con cuidado</text>
+<rect x="20" y="226" width="760" height="214" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="400.0" y="256" text-anchor="middle" class="title">En el laboratorio</text>
+<rect x="40" y="262" width="126" height="60" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="103.0" y="288.7" text-anchor="middle" class="small" style="fill:var(--on)">Incubación</text>
+<text x="103.0" y="303.7" text-anchor="middle" class="small" style="fill:var(--on)">varios días</text>
+<line x1="167" y1="292.0" x2="185" y2="292.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="188" y="262" width="126" height="60" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="251.0" y="288.7" text-anchor="middle" class="small" style="fill:var(--on)">Alarma de</text>
+<text x="251.0" y="303.7" text-anchor="middle" class="small" style="fill:var(--on)">crecimiento</text>
+<line x1="315" y1="292.0" x2="333" y2="292.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="336" y="262" width="126" height="60" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="399.0" y="288.7" text-anchor="middle" class="small" style="fill:var(--on)">Tinción</text>
+<text x="399.0" y="303.7" text-anchor="middle" class="small" style="fill:var(--on)">de Gram</text>
+<line x1="463" y1="292.0" x2="481" y2="292.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="484" y="262" width="126" height="60" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="547.0" y="288.7" text-anchor="middle" class="small" style="fill:var(--on)">Identificación</text>
+<text x="547.0" y="303.7" text-anchor="middle" class="small" style="fill:var(--on)">del germen</text>
+<line x1="611" y1="292.0" x2="629" y2="292.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="632" y="262" width="126" height="60" rx="8" fill="var(--accent)" stroke-width="1"/>
+<text x="695.0" y="296.2" text-anchor="middle" class="small" style="fill:var(--on)">Antibiograma</text>
+<text x="400" y="358" text-anchor="middle" class="lab">Detecta bacterias u hongos en la sangre (bacteriemia) en fiebre o sospecha de sepsis.</text>
+<text x="400" y="382" text-anchor="middle" class="lab">Se toma antes del antibiótico siempre que sea posible.</text>
+<text x="400" y="410" text-anchor="middle" class="small" style="fill:var(--muted)">Un solo frasco positivo con germen de la piel puede ser contaminación.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

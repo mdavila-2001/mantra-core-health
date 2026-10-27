@@ -123,6 +123,14 @@ Busque atención urgente si:
 • Se trata de un bebé o un niño pequeño que está decaído, no moja los pañales, llora sin lágrimas o rechaza beber.
 • La persona afectada es mayor, está embarazada, tiene las defensas bajas o una enfermedad crónica importante y empeora.
 
+## [diagnosis] Diarrea crónica: por qué conviene estudiarla
+
+Cuando la diarrea dura más de unas semanas o aparece y desaparece durante meses, deja de considerarse un episodio pasajero y merece un estudio ordenado. El profesional preguntará por la frecuencia y el aspecto de las heces, si flotan o son grasientas, si hay sangre o moco, si la diarrea despierta por la noche, si se relaciona con algún alimento, qué medicamentos se toman y si hay antecedentes familiares de enfermedad celíaca, inflamatoria intestinal o cáncer de colon. Llevar un diario de síntomas y comidas durante unas semanas puede ser de gran ayuda en la consulta. La mayoría de las causas de diarrea crónica tienen tratamiento eficaz una vez identificadas.
+
+## [complications] Posibles complicaciones
+
+La complicación más importante es la deshidratación, que puede afectar a los riñones y, en casos graves, causar confusión, caída de la presión arterial o desmayo. También pueden alterarse las sales minerales de la sangre, lo que provoca calambres, debilidad o alteraciones del ritmo del corazón. En algunas infecciones bacterianas, los gérmenes pueden pasar a la sangre o afectar a los riñones. Tras ciertas gastroenteritis, el intestino puede quedar sensible durante semanas, con molestias digestivas o intolerancia temporal a la lactosa.
+
 ## [references]
 
 - Diarrea | https://medlineplus.gov/spanish/diarrhea.html | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.

@@ -1,5 +1,6 @@
 ---
 slug: ige-total
+image: ige-total.svg | La IgE total suma todos los anticuerpos IgE, que se fijan a mastocitos y participan en la alergia. | Tubo de sangre y un mastocito con anticuerpos IgE en su superficie que se unen a un alérgeno y liberan histamina. A la derecha, en qué situaciones puede estar elevada la IgE total, sus límites y qué pruebas identifican el alérgeno.
 ---
 
 ## [definition] Introducción

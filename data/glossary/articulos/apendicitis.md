@@ -142,6 +142,14 @@ Busque atención médica urgente si presenta:
 
 No tome laxantes, no se aplique calor y evite comer hasta que le valoren. Si ya ha sido operado, consulte si aparece fiebre, enrojecimiento o supuración de las heridas, dolor que aumenta, vómitos persistentes o incapacidad para expulsar gases o heces.
 
+## [what_to_expect] Qué esperar en urgencias
+
+Cuando una persona acude a urgencias con sospecha de apendicitis, suele seguir un recorrido bastante parecido. Primero se valora la gravedad, se toman la temperatura, la presión arterial y el pulso, y se pregunta por el dolor. Después, un médico hace la entrevista y la exploración y decide qué pruebas pedir.
+
+Mientras se esperan los resultados es habitual que se coloque una vía en una vena para administrar sueros y analgésicos, y que se pida no comer ni beber. Si los resultados confirman la apendicitis, el equipo de cirugía explicará el tipo de intervención propuesta, sus beneficios y riesgos, y la persona o su familia firmarán un consentimiento. Es un buen momento para preguntar todas las dudas: cuánto durará la operación, qué tipo de anestesia se empleará, cuántos días de ingreso se esperan y qué cuidados habrá después.
+
+Si los resultados no son concluyentes, es posible que se quede en observación unas horas, que se repitan los análisis o la exploración, o que se pida otra prueba de imagen. Esta espera vigilada es una práctica habitual y segura, que evita tanto operaciones innecesarias como retrasos en el diagnóstico. También puede ocurrir que, tras descartar la apendicitis, se le dé el alta con instrucciones claras sobre qué síntomas deben hacerle volver.
+
 ## [references]
 
 - Apendicitis | https://medlineplus.gov/spanish/appendicitis.html | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cirugía plástica y estética</title>
+  <desc id="d">A la izquierda, dos herramientas básicas de la cirugía plástica: el injerto de piel, que se traslada sin su riego, y el colgajo, que se desplaza con sus vasos sanguíneos, y los principios comunes. A la derecha, ejemplos de cirugía reconstructiva y estética.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">Dos herramientas básicas</text>
+  <text x="120" y="76" text-anchor="middle" class="step">Injerto de piel</text>
+  <rect x="40" y="100" width="160" height="30" rx="0" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+  <rect x="40" y="130" width="160" height="50" rx="0" fill="var(--organ)" stroke="var(--line)" stroke-width="1" opacity=".55"/>
+  <rect x="90" y="100" width="60" height="30" rx="0" fill="var(--tissue)" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>
+  <path d="M170 220 h-50 v24 h50 Z" fill="var(--skin)" stroke="var(--organ-d)" stroke-width="1.5"/>
+  <line x1="146" y1="216" x2="128" y2="136" stroke="var(--accent)" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="120" y="270" text-anchor="middle" class="small">Se traslada sin</text>
+  <text x="120" y="286" text-anchor="middle" class="small">su propio riego</text>
+  <text x="310" y="76" text-anchor="middle" class="step">Colgajo</text>
+  <rect x="230" y="100" width="170" height="30" rx="0" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+  <rect x="230" y="130" width="170" height="50" rx="0" fill="var(--organ)" stroke="var(--line)" stroke-width="1" opacity=".55"/>
+  <rect x="250" y="100" width="50" height="30" rx="0" fill="var(--tissue)" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>
+  <path d="M310 100 h60 v30 h-60 Z" fill="var(--skin)" stroke="var(--organ-d)" stroke-width="2"/>
+  <path d="M340 130 C340 150 330 160 320 170" fill="none" stroke="var(--vessel)" stroke-width="3"/>
+  <path d="M300 112 C290 90 300 80 314 92" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="315" y="220" text-anchor="middle" class="small">Se gira o traslada</text>
+  <text x="315" y="236" text-anchor="middle" class="small">con sus vasos</text>
+  <text x="315" y="252" text-anchor="middle" class="small" style="fill:var(--vessel)">sanguíneos</text>
+  <rect x="40" y="316" width="360" height="106" rx="10" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="220" y="342" text-anchor="middle" class="step">Principios comunes</text>
+  <text x="56" y="366" class="small">• Respetar el riego sanguíneo de los tejidos</text>
+  <text x="56" y="386" class="small">• Cerrar sin tensión siguiendo las líneas de la piel</text>
+  <text x="56" y="406" class="small">• Buscar función y aspecto natural</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Dos grandes campos</text>
+  <rect x="456" y="66" width="304" height="160" rx="10" fill="var(--accent-l)" stroke="none" stroke-width="2"/>
+  <text x="472" y="92" class="step">Reconstructiva</text>
+  <text x="480" y="116" class="small">• Quemaduras y heridas</text>
+  <text x="480" y="140" class="small">• Labio y paladar hendidos</text>
+  <text x="480" y="164" class="small">• Tras cirugía de cáncer</text>
+  <text x="480" y="188" class="small">• Mano y nervios</text>
+  <rect x="456" y="240" width="304" height="182" rx="10" fill="var(--violet-l)" stroke="none" stroke-width="2"/>
+  <text x="472" y="266" class="step">Estética</text>
+  <text x="480" y="290" class="small">• Cambiar forma o contorno</text>
+  <text x="480" y="314" class="small">• Nariz, párpados, mamas, abdomen</text>
+  <text x="480" y="338" class="small">• Elección personal en personas sanas</text>
+  <text x="480" y="362" class="small">• Requiere expectativas realistas</text>
+  <text x="480" y="386" class="small">• y un cirujano acreditado</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

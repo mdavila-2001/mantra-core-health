@@ -41,7 +41,7 @@
 <rect x="532" y="100" width="106" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
 <text x="585.0" y="121.2" text-anchor="middle" class="small" style="fill:var(--ink)">Saltar comidas</text>
 <rect x="648" y="100" width="106" height="34" rx="8" fill="var(--accent-l)" stroke-width="1"/>
-<text x="701.0" y="121.2" text-anchor="middle" class="small" style="fill:var(--ink)">Tensión cervical</text>
+<text x="701.0" y="121.2" text-anchor="middle" class="small" style="fill:var(--ink)">Cuello tenso</text>
 <text x="416" y="166" class="lab">Ayuda: descanso, ejercicio, analgésico ocasional.</text>
 <text x="416" y="186" class="small" style="fill:var(--muted)">Abusar de analgésicos puede cronificarla.</text>
 <rect x="416" y="206" width="344" height="178" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>

@@ -29,7 +29,7 @@
 <text x="70" y="158" text-anchor="middle" class="small">Sol (UVB)</text>
 <rect x="130" y="80" width="130" height="56" rx="8" fill="var(--accent)" stroke-width="1"/>
 <text x="195.0" y="104.5" text-anchor="middle" class="lab" style="fill:var(--on)">Piel</text>
-<text x="195.0" y="120.5" text-anchor="middle" class="lab" style="fill:var(--on)">fabrica vitamina D</text>
+<text x="195.0" y="120.5" text-anchor="middle" class="lab" style="fill:var(--on)">fabrica vit. D</text>
 <line x1="261" y1="108.0" x2="293" y2="108.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="296" y="80" width="130" height="56" rx="8" fill="var(--accent)" stroke-width="1"/>
 <text x="361.0" y="104.5" text-anchor="middle" class="lab" style="fill:var(--on)">Hígado</text>
@@ -53,15 +53,15 @@
 <text x="400" y="256" text-anchor="middle" class="small" style="fill:var(--muted)">Pescado azul, huevo y alimentos enriquecidos aportan una parte.</text>
 <rect x="20" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="205.0" y="316" text-anchor="middle" class="title">Causas de déficit</text>
-<text x="36" y="336" class="lab">• Poca exposición al sol</text>
-<text x="36" y="358" class="lab">• Piel oscura o edad avanzada</text>
-<text x="36" y="380" class="lab">• Obesidad, malabsorción</text>
-<text x="36" y="402" class="lab">• Enfermedad renal o hepática</text>
+<text x="36" y="346" class="lab">• Poca exposición al sol</text>
+<text x="36" y="368" class="lab">• Piel oscura o edad avanzada</text>
+<text x="36" y="390" class="lab">• Obesidad, malabsorción</text>
+<text x="36" y="412" class="lab">• Enfermedad renal o hepática</text>
 <rect x="406" y="286" width="374" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="593.0" y="316" text-anchor="middle" class="title">Consecuencias</text>
-<text x="422" y="336" class="lab">• Niños: raquitismo</text>
-<text x="422" y="358" class="lab">• Adultos: osteomalacia</text>
-<text x="422" y="380" class="lab">• Más riesgo de osteoporosis</text>
-<text x="422" y="402" class="lab">• Dolor óseo y debilidad muscular</text>
+<text x="422" y="346" class="lab">• Niños: raquitismo</text>
+<text x="422" y="368" class="lab">• Adultos: osteomalacia</text>
+<text x="422" y="390" class="lab">• Más riesgo de osteoporosis</text>
+<text x="422" y="412" class="lab">• Dolor óseo y debilidad muscular</text>
 <text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
 </svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Tecnología asistencial</title>
+  <desc id="d">Seis recuadros con iconos sencillos de los tipos de tecnología de apoyo: movilidad con sillas de ruedas y bastones, visión con lupas y lectores, audición con audífonos, comunicación con tableros y aplicaciones de voz, cuidado personal con barras y asientos, y memoria con pastilleros y alarmas.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Tipos de tecnología de apoyo</text>
+  <rect x="40" y="76" width="224" height="160" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+  <g transform="translate(152 134)"><circle cx="0" cy="8" r="20" fill="none" stroke="var(--accent)" stroke-width="5"/><path d="M-6 -30 V8 H18 L24 26" fill="none" stroke="var(--ink)" stroke-width="5"/><circle cx="-6" cy="-36" r="6" fill="var(--ink)"/></g>
+  <text x="152" y="194" text-anchor="middle" class="step">Movilidad</text>
+  <text x="152" y="216" text-anchor="middle" class="small">Silla, andador, bastón</text>
+  <rect x="288" y="76" width="224" height="160" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+  <g transform="translate(400 134)"><circle cx="-6" cy="-6" r="20" fill="var(--accent-l)" stroke="var(--ink)" stroke-width="5"/><path d="M8 8 L26 26" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/></g>
+  <text x="400" y="194" text-anchor="middle" class="step">Visión</text>
+  <text x="400" y="216" text-anchor="middle" class="small">Lupas, lectores</text>
+  <rect x="536" y="76" width="224" height="160" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+  <g transform="translate(648 134)"><path d="M-14 -24 C10 -34 24 -10 10 6 C2 14 6 24 -6 26" fill="none" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/><path d="M20 -14 Q30 0 20 14" fill="none" stroke="var(--accent)" stroke-width="3"/></g>
+  <text x="648" y="194" text-anchor="middle" class="step">Audición</text>
+  <text x="648" y="216" text-anchor="middle" class="small">Audífonos, avisos</text>
+  <rect x="40" y="252" width="224" height="160" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+  <g transform="translate(152 310)"><rect x="-26" y="-24" width="52" height="36" rx="8" fill="var(--accent-l)" stroke="var(--ink)" stroke-width="4"/><path d="M-8 12 L-14 26 L4 12" fill="var(--ink)"/><path d="M-14 -8 h28 M-14 2 h18" stroke="var(--ink)" stroke-width="3"/></g>
+  <text x="152" y="370" text-anchor="middle" class="step">Comunicación</text>
+  <text x="152" y="392" text-anchor="middle" class="small">Tableros, apps de voz</text>
+  <rect x="288" y="252" width="224" height="160" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+  <g transform="translate(400 310)"><path d="M-28 -26 V20 H28" fill="none" stroke="var(--muted)" stroke-width="4"/><path d="M-18 -10 H18" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/><path d="M-10 4 h20 v14 h-20 z" fill="var(--bone)"/></g>
+  <text x="400" y="370" text-anchor="middle" class="step">Cuidado personal</text>
+  <text x="400" y="392" text-anchor="middle" class="small">Barras, asientos</text>
+  <rect x="536" y="252" width="224" height="160" rx="12" fill="var(--tissue)" stroke="var(--line)"/>
+  <g transform="translate(648 310)"><rect x="-28" y="-14" width="56" height="26" rx="5" fill="var(--panel)" stroke="var(--ink)" stroke-width="3"/><path d="M-14 -14 V12 M0 -14 V12 M14 -14 V12" stroke="var(--ink)" stroke-width="2"/><circle cx="-21" cy="0" r="4" fill="var(--warn)"/><circle cx="7" cy="0" r="4" fill="var(--warn)"/></g>
+  <text x="648" y="370" text-anchor="middle" class="step">Memoria</text>
+  <text x="648" y="392" text-anchor="middle" class="small">Pastilleros, alarmas</text>
+  <text x="400" y="446" text-anchor="middle" class="small muted">Se eligen según la persona, su entorno y sus metas</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Ilustración original de AloVida.</text>
+</svg>

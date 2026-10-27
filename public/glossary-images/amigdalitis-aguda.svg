@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Amigdalitis aguda vista en la garganta</title>
+  <desc id="d">Garganta vista con la boca abierta, con la úvula en el centro, la lengua abajo y las dos amígdalas rojas e inflamadas con puntos blancos de exudado. A la derecha, las causas virales y bacterianas, los síntomas y las señales de urgencia.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Amigdalitis aguda: amígdalas inflamadas</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="90" text-anchor="middle" class="title">Garganta vista con la boca abierta</text>
+  <ellipse cx="220" cy="260" rx="170" ry="150" fill="var(--skin)" stroke="var(--muted)"/>
+  <ellipse cx="220" cy="270" rx="130" ry="110" fill="var(--red)" stroke="none" opacity=".35"/>
+  <path d="M120 380 C150 320 290 320 320 380 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <text x="220" y="368" text-anchor="middle" class="small">Lengua</text>
+  <path d="M205 170 C205 215 235 215 235 170" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <text x="220" y="155" text-anchor="middle" class="small">Úvula</text>
+  <ellipse cx="140" cy="270" rx="38" ry="52" fill="var(--red)" stroke="var(--red)" opacity=".85"/>
+  <ellipse cx="130" cy="250" rx="7" ry="5" fill="var(--panel)" stroke="none"/>
+  <ellipse cx="148" cy="266" rx="7" ry="5" fill="var(--panel)" stroke="none"/>
+  <ellipse cx="134" cy="284" rx="7" ry="5" fill="var(--panel)" stroke="none"/>
+  <ellipse cx="152" cy="294" rx="7" ry="5" fill="var(--panel)" stroke="none"/>
+  <ellipse cx="300" cy="270" rx="38" ry="52" fill="var(--red)" stroke="var(--red)" opacity=".85"/>
+  <ellipse cx="290" cy="250" rx="7" ry="5" fill="var(--panel)" stroke="none"/>
+  <ellipse cx="308" cy="266" rx="7" ry="5" fill="var(--panel)" stroke="none"/>
+  <ellipse cx="294" cy="284" rx="7" ry="5" fill="var(--panel)" stroke="none"/>
+  <ellipse cx="312" cy="294" rx="7" ry="5" fill="var(--panel)" stroke="none"/>
+  <text x="140" y="342" text-anchor="middle" class="small b">Amígdala</text>
+  <text x="300" y="342" text-anchor="middle" class="small b">Amígdala</text>
+  <text x="220" y="428" text-anchor="middle" class="small muted">Puntos blancos: exudado (pus)</text>
+  <rect x="436" y="60" width="344" height="230" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="90" text-anchor="middle" class="title">Causas y síntomas</text>
+  <rect x="454" y="100" width="150" height="54" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="529.0" y="124.0" text-anchor="middle" class="lab b">Virus</text>
+  <text x="529.0" y="141.0" text-anchor="middle" class="small muted">la mayoría</text>
+  <rect x="614" y="100" width="150" height="54" rx="10" fill="var(--warn-l)" stroke="var(--warn)"/>
+  <text x="689.0" y="124.0" text-anchor="middle" class="lab b">Estreptococo</text>
+  <text x="689.0" y="141.0" text-anchor="middle" class="small muted">necesita antibiótico</text>
+  <text x="454" y="186" class="small">• Dolor de garganta y al tragar</text>
+  <text x="454" y="210" class="small">• Fiebre</text>
+  <text x="454" y="234" class="small">• Ganglios del cuello dolorosos</text>
+  <text x="454" y="258" class="small">• Mal aliento</text>
+  <rect x="436" y="306" width="344" height="134" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="450" y="330" class="lab b" style="fill:var(--red)">Consultar de urgencia si</text>
+  <text x="450" y="354" class="small">• Dificultad para respirar o babeo</text>
+  <text x="450" y="376" class="small">• No poder abrir la boca</text>
+  <text x="450" y="398" class="small">• Hinchazón de un solo lado</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

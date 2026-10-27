@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Ecocardiograma</title>
+  <desc id="d">A la izquierda, un tórax con el corazón y sus cuatro cavidades, y un transductor de ultrasonido apoyado sobre el pecho que emite ondas. A la derecha, lo que muestra la prueba y sus modalidades transtorácica, transesofágica y de estrés.</desc>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c96a1b; --warn-l:#f8e0c8; --beam:#f2c46d; --on:#ffffff; --organ:#e7a598; --organ-d:#b8665a; --skin:#f1d3bd; --nerve:#d9a521; --fluid:#f1df8f; --violet:#7b5ea7; --violet-l:#e2d8f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --ok:#4cc38a; --ok-l:#1d4434; --warn:#f0a35e; --warn-l:#4a3320; --beam:#8a6f2f; --on:#0f1720; --organ:#9a5a50; --organ-d:#d58b7e; --skin:#7a5e4c; --nerve:#e6c35c; --fluid:#8c7a32; --violet:#b39ddb; --violet-l:#3a2f4f; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">Ultrasonido sobre el pecho</text>
+  <path d="M60 420 L60 200 C60 120 120 90 200 90 C280 90 340 120 340 200 L340 420 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M190 170 C150 150 120 180 128 230 C136 290 200 330 220 350 C250 320 300 280 300 220 C302 170 250 150 210 176 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+  <line x1="214" y1="180" x2="214" y2="340" stroke="var(--organ-d)" stroke-width="2"/>
+  <line x1="132" y1="250" x2="296" y2="250" stroke="var(--organ-d)" stroke-width="2"/>
+  <text x="172" y="226" text-anchor="middle" class="small">AD</text>
+  <text x="256" y="226" text-anchor="middle" class="small">AI</text>
+  <text x="172" y="296" text-anchor="middle" class="small">VD</text>
+  <text x="250" y="296" text-anchor="middle" class="small">VI</text>
+  <path d="M262 106 l30 -14 l12 22 l-30 14 Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="1"/>
+  <line x1="300" y1="100" x2="340" y2="74" stroke="var(--accent)" stroke-width="3"/>
+  <text x="352" y="70" text-anchor="end" class="small" style="fill:var(--accent)">Transductor</text>
+  <path d="M261 156 A30 30 0 0 1 248 139" fill="none" stroke="var(--beam)" stroke-width="3"/>
+  <path d="M250 175 A52 52 0 0 1 227 146" fill="none" stroke="var(--beam)" stroke-width="3"/>
+  <path d="M239 194 A74 74 0 0 1 206 152" fill="none" stroke="var(--beam)" stroke-width="3"/>
+  <text x="200" y="390" text-anchor="middle" class="small">Gel y sonda sobre el tórax: sin radiación</text>
+  <text x="200" y="410" text-anchor="middle" class="small" style="fill:var(--muted)">ni dolor</text>
+  <rect x="436" y="20" width="344" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="50" text-anchor="middle" class="title">Qué muestra</text>
+  <text x="456" y="80" class="lab">• Tamaño de las cavidades</text>
+  <text x="456" y="106" class="lab">• Fuerza con que bombea el corazón</text>
+  <text x="456" y="132" class="lab">• Apertura y cierre de las válvulas</text>
+  <text x="456" y="158" class="lab">• Flujo de la sangre (Doppler)</text>
+  <text x="456" y="184" class="lab">• Líquido en el pericardio</text>
+  <text x="456" y="230" class="step">Modalidades</text>
+  <rect x="456" y="246" width="304" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="472" y="267" class="lab">Transtorácica</text>
+  <text x="472" y="285" class="small" style="fill:var(--muted)">sonda sobre el pecho</text>
+  <rect x="456" y="304" width="304" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="472" y="325" class="lab">Transesofágica</text>
+  <text x="472" y="343" class="small" style="fill:var(--muted)">sonda por el esófago</text>
+  <rect x="456" y="362" width="304" height="50" rx="8" fill="var(--tissue)" stroke="none" stroke-width="2"/>
+  <text x="472" y="383" class="lab">De estrés</text>
+  <text x="472" y="401" class="small" style="fill:var(--muted)">con ejercicio o fármaco</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

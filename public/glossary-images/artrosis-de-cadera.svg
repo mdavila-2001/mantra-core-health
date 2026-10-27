@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cadera sana y cadera con artrosis</title>
+  <desc id="d">Comparación entre una cadera sana, con cartílago grueso y espacio articular amplio, y una cadera con artrosis, con cartílago fino, osteofitos y espacio estrecho entre la cabeza del fémur y la pelvis. A la derecha, los síntomas y el tratamiento escalonado.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Artrosis de cadera: desgaste del cartílago</text>
+  <rect x="20" y="60" width="250" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="145.0" y="90" text-anchor="middle" class="title">Sana</text>
+  <path d="M30 110 C90 104 160 116 190 160 L166 196 C140 170 100 160 40 172 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M106 210 A44 44 0 0 1 194 210" fill="none" stroke="var(--accent)" stroke-width="8"/>
+  <circle cx="150" cy="216" r="36" fill="var(--bone)" stroke="var(--muted)"/>
+  <path d="M114 216 A36 36 0 0 1 186 216" fill="none" stroke="var(--accent)" stroke-width="6"/>
+  <path d="M132 246 L170 246 L178 350 L136 350 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
+  <text x="145" y="384" text-anchor="middle" class="small">Cartílago grueso</text>
+  <text x="145" y="400" text-anchor="middle" class="small">y espacio amplio</text>
+  <rect x="286" y="60" width="250" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="411.0" y="90" text-anchor="middle" class="title">Con artrosis</text>
+  <path d="M296 110 C356 104 426 116 456 160 L432 196 C406 170 366 160 306 172 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M372 210 A44 44 0 0 1 460 210" fill="none" stroke="var(--accent)" stroke-width="3"/>
+  <circle cx="416" cy="216" r="36" fill="var(--bone)" stroke="var(--muted)"/>
+  <path d="M380 216 A36 36 0 0 1 452 216" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 6"/>
+  <path d="M398 246 L436 246 L444 350 L402 350 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M362 210 l8 -14 l8 14 z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M454 210 l8 -14 l8 14 z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
+  <path d="M378 248 l8 -14 l8 14 z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5"/>
+  <text x="411" y="380" text-anchor="middle" class="small">Cartílago fino,</text>
+  <text x="411" y="396" text-anchor="middle" class="small">osteofitos</text>
+  <text x="411" y="412" text-anchor="middle" class="small">y espacio estrecho</text>
+  <rect x="552" y="60" width="228" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="666.0" y="90" text-anchor="middle" class="title">Qué se nota</text>
+  <text x="568" y="110" class="small">• Dolor en la ingle</text>
+  <text x="579" y="134" class="small">o el muslo</text>
+  <text x="568" y="158" class="small">• Rigidez al levantarse</text>
+  <text x="568" y="182" class="small">• Cojera</text>
+  <text x="568" y="206" class="small">• Cuesta calzarse</text>
+  <text x="568" y="256" class="lab b">Tratamiento</text>
+  <text x="568" y="282" class="small">• Ejercicio y fisioterapia</text>
+  <text x="568" y="306" class="small">• Control del peso</text>
+  <text x="568" y="330" class="small">• Analgésicos</text>
+  <text x="568" y="354" class="small">• Bastón si hace falta</text>
+  <text x="568" y="378" class="small">• Prótesis si es grave</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

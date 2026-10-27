@@ -36,11 +36,11 @@
 <text x="240" y="254" text-anchor="middle" class="small">y familia</text>
 <rect x="476" y="20" width="304" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="628.0" y="50" text-anchor="middle" class="title">Técnicas útiles</text>
-<text x="492" y="72" class="lab">• Lenguaje claro, sin jerga</text>
-<text x="492" y="96" class="lab">• Pocas ideas clave por vez</text>
-<text x="492" y="120" class="lab">• Demostrar y practicar</text>
-<text x="492" y="144" class="lab">• Material escrito o visual</text>
-<text x="492" y="168" class="lab">• Adaptar a cultura y edad</text>
+<text x="492" y="80" class="lab">• Lenguaje claro, sin jerga</text>
+<text x="492" y="104" class="lab">• Pocas ideas clave por vez</text>
+<text x="492" y="128" class="lab">• Demostrar y practicar</text>
+<text x="492" y="152" class="lab">• Material escrito o visual</text>
+<text x="492" y="176" class="lab">• Adaptar a cultura y edad</text>
 <rect x="492" y="212" width="272" height="110" rx="10" fill="var(--ok-l)" stroke-width="1"/>
 <text x="506" y="238" class="step">Enseñar y devolver</text>
 <text x="506" y="262" class="lab">La persona explica con sus</text>

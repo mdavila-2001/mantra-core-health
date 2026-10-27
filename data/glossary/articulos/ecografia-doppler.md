@@ -130,6 +130,10 @@ Busque atención médica urgente si presenta:
 
 Consulte en una cita ordinaria si tiene dolor en las piernas al caminar que cede al parar, varices molestas, heridas en las piernas que no cicatrizan o dudas sobre los resultados de una ecografía Doppler que ya se ha hecho.
 
+## [benefits] Ventajas de la prueba
+
+La ecografía Doppler es rápida, no invasiva, no utiliza radiación ionizante y suele estar disponible en muchos centros. Permite ver la circulación en tiempo real, mientras la persona respira, cambia de postura o hace maniobras, algo que otras pruebas no ofrecen. Además, puede repetirse cuantas veces sea necesario para seguir la evolución de un coágulo, una placa o un vaso tratado, y en muchos casos el resultado orienta el tratamiento el mismo día.
+
 ## [references]
 
 - Ecografía Doppler | https://medlineplus.gov/spanish/pruebas-de-laboratorio/ecografia-doppler/ | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.

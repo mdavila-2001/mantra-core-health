@@ -52,12 +52,11 @@
 <text x="675.0" y="163.6" text-anchor="middle" class="lab" style="fill:var(--ink)">Sin fiebre</text>
 <text x="416" y="212" class="lab">Suele causarla E. coli de la flora intestinal.</text>
 <text x="416" y="232" class="lab">Tira de orina o urocultivo según el caso.</text>
-<rect x="416" y="256" width="344" height="154" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<rect x="416" y="256" width="344" height="130" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
 <text x="428" y="278" class="step" style="fill:var(--warn)">Puede ser pielonefritis si hay:</text>
 <text x="428" y="302" class="lab">• Fiebre o escalofríos</text>
 <text x="428" y="326" class="lab">• Dolor lumbar o en el costado</text>
 <text x="428" y="350" class="lab">• Vómitos</text>
-<text x="428" y="374" class="lab">• Embarazo, varón o síntomas</text>
-<text x="428" y="398" class="lab">• que no mejoran</text>
+<text x="428" y="374" class="lab">• Embarazo o síntomas persistentes</text>
 <text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
 </svg>

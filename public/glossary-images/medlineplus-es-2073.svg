@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo funciona el trasplante de páncreas</title>
+  <desc id="d">Silueta del abdomen con el páncreas donado colocado en la parte baja, unido a los vasos ilíacos y al intestino, mientras el páncreas propio permanece en su lugar. A la derecha, el injerto libera insulina a la sangre y jugos al intestino, y los tipos de trasplante.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Trasplante de páncreas: volver a fabricar insulina</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="90" text-anchor="middle" class="title">Cómo se conecta</text>
+  <path d="M120 100 C110 170 100 260 120 340 C130 390 170 425 220 425 C270 425 310 390 320 340 C340 260 330 170 320 100 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M220 110 L220 300 L170 380 M220 300 L270 380" fill="none" stroke="var(--red)" stroke-width="5"/>
+  <path d="M240 330 C260 300 300 290 310 310 C318 330 290 340 270 352 C256 360 244 352 240 330 Z" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
+  <rect x="232" y="352" width="46" height="14" rx="6" fill="var(--warn)" stroke="none"/>
+  <path d="M150 230 C120 250 130 290 160 300 C190 310 200 280 180 270" fill="none" stroke="var(--organ)" stroke-width="10"/>
+  <line x1="300" y1="300" x2="340" y2="250" stroke="var(--muted)" stroke-width="1"/>
+  <text x="320" y="230" class="lab b">Páncreas</text>
+  <text x="320" y="246" class="lab b">donado</text>
+  <text x="122" y="212" class="small">Intestino</text>
+  <text x="220" y="408" text-anchor="middle" class="small">Vasos ilíacos</text>
+  <text x="274" y="140" text-anchor="middle" class="small muted">Páncreas propio</text>
+  <text x="274" y="156" text-anchor="middle" class="small muted">permanece</text>
+  <rect x="436" y="60" width="344" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="90" text-anchor="middle" class="title">Qué hace el injerto</text>
+  <circle cx="470" cy="130" r="9" fill="var(--ok)" stroke="none"/>
+  <circle cx="496" cy="130" r="9" fill="var(--ok)" stroke="none"/>
+  <circle cx="522" cy="130" r="9" fill="var(--ok)" stroke="none"/>
+  <circle cx="548" cy="130" r="9" fill="var(--ok)" stroke="none"/>
+  <circle cx="574" cy="130" r="9" fill="var(--ok)" stroke="none"/>
+  <text x="600" y="134" class="lab">Insulina a la sangre</text>
+  <path d="M470 170 L590 170" fill="none" stroke="var(--warn)" stroke-width="4"/>
+  <text x="600" y="175" class="lab">Jugos al intestino</text>
+  <text x="454" y="220" class="lab">La glucosa se regula sin</text>
+  <text x="454" y="240" class="lab">inyecciones mientras funcione</text>
+  <rect x="436" y="296" width="344" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="326" text-anchor="middle" class="title">Tipos</text>
+  <text x="454" y="360" class="lab">• Simultáneo con riñón (el más común)</text>
+  <text x="454" y="386" class="lab">• Después de un trasplante renal</text>
+  <text x="454" y="412" class="lab">• Solo páncreas</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

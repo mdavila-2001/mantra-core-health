@@ -1,5 +1,6 @@
 ---
 slug: ferritina
+image: ferritina.svg | La ferritina guarda hierro dentro de las células y su nivel en sangre refleja esas reservas. | Tubo de sangre y una molécula de ferritina dibujada como una cubierta con hierro en su interior; se indica que se almacena en hígado, bazo y médula ósea. A la derecha, qué sugiere un valor bajo o alto y por qué la inflamación también la eleva.
 ---
 
 ## [definition] Introducción

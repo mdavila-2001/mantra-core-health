@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cómo actúa el paracetamol</title>
+  <desc id="d">A la izquierda, en el cerebro, el paracetamol reduce las prostaglandinas, lo que disminuye la señal de dolor y devuelve el termostato del hipotálamo hacia su punto habitual, bajando la fiebre. A la derecha, en el hígado, la mayor parte se transforma en compuestos que se eliminan por la orina; una pequeña parte tóxica se neutraliza con glutatión, y un exceso de medicamento agota esta defensa y daña el hígado.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#e3eefa; --brain:#f1d3dc; --brain-d:#c98ea0; --liver:#c7745f; --liver-l:#f3d4c9; --ok:#1f8a5b; --alert:#c0392b; --pill:#ffffff; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22344a; --brain:#4d3240; --brain-d:#a8738a; --liver:#b56b57; --liver-l:#4a2e27; --ok:#4cc38a; --alert:#ef7467; --pill:#2d3a48; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <rect x="20" y="20" width="370" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="205" y="50" text-anchor="middle" class="title">En el cerebro: alivia y baja la fiebre</text>
+  <path d="M110 110 C110 85 170 75 205 88 C240 74 300 86 305 115 C335 122 340 168 318 185 C322 214 282 230 255 218 C232 236 180 234 165 214 C130 222 102 198 112 172 C86 156 90 120 110 110 Z" fill="var(--brain)" stroke="var(--brain-d)" stroke-width="2"/>
+  <rect x="180" y="160" width="60" height="26" rx="8" fill="var(--accent)"/>
+  <text x="210" y="178" text-anchor="middle" class="small" style="fill:var(--on)">Hipotálamo</text>
+  <g transform="translate(70 270)">
+    <rect x="0" y="0" width="56" height="24" rx="12" fill="var(--pill)" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="28" y1="0" x2="28" y2="24" stroke="var(--accent)" stroke-width="2"/>
+  </g>
+  <text x="98" y="316" text-anchor="middle" class="small">Paracetamol</text>
+  <path d="M130 270 C150 240 170 220 190 200" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="200" y="250" width="170" height="60" rx="10" fill="var(--accent-l)"/>
+  <text x="285" y="272" text-anchor="middle" class="lab">Menos prostaglandinas</text>
+  <text x="285" y="292" text-anchor="middle" class="small muted">en el sistema nervioso</text>
+  <rect x="40" y="340" width="150" height="70" rx="10" fill="var(--accent-l)"/>
+  <text x="115" y="366" text-anchor="middle" class="h">Menos dolor</text>
+  <text x="115" y="388" text-anchor="middle" class="small">señal más débil</text>
+  <rect x="210" y="340" width="160" height="70" rx="10" fill="var(--accent-l)"/>
+  <text x="290" y="366" text-anchor="middle" class="h">Baja la fiebre</text>
+  <text x="290" y="388" text-anchor="middle" class="small">«termostato» se reajusta</text>
+  <text x="205" y="440" text-anchor="middle" class="small muted">Efecto antiinflamatorio muy débil</text>
+
+  <rect x="406" y="20" width="374" height="440" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="593" y="50" text-anchor="middle" class="title">En el hígado: se elimina</text>
+  <path d="M440 120 C470 80 640 70 720 95 C760 110 750 160 700 190 C640 225 540 230 480 205 C440 188 425 150 440 120 Z" fill="var(--liver-l)" stroke="var(--liver)" stroke-width="2"/>
+  <text x="593" y="150" text-anchor="middle" class="h">Hígado</text>
+  <rect x="426" y="250" width="160" height="62" rx="10" fill="var(--panel)" stroke="var(--ok)" stroke-width="2"/>
+  <text x="506" y="274" text-anchor="middle" class="lab">Mayor parte</text>
+  <text x="506" y="294" text-anchor="middle" class="small">sale por la orina</text>
+  <rect x="600" y="250" width="160" height="62" rx="10" fill="var(--panel)" stroke="var(--ok)" stroke-width="2"/>
+  <text x="680" y="274" text-anchor="middle" class="lab">Pequeña parte tóxica</text>
+  <text x="680" y="294" text-anchor="middle" class="small">la neutraliza el glutatión</text>
+  <path d="M540 215 L515 245" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M645 215 L670 245" stroke="var(--muted)" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="436" y="336" width="314" height="78" rx="10" fill="var(--liver-l)" stroke="var(--alert)" stroke-width="2"/>
+  <text x="593" y="362" text-anchor="middle" class="h" style="fill:var(--alert)">Si se toma de más</text>
+  <text x="593" y="382" text-anchor="middle" class="small">se agota la defensa y se daña el hígado:</text>
+  <text x="593" y="400" text-anchor="middle" class="small">es una urgencia aunque no haya síntomas</text>
+  <text x="593" y="440" text-anchor="middle" class="small muted">Siga siempre el prospecto y a su farmacéutico</text>
+</svg>

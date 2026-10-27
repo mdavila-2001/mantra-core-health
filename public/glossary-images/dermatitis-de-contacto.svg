@@ -49,15 +49,15 @@
 <text x="400" y="82" text-anchor="middle" class="small">Sustancia</text>
 <rect x="20" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="205.0" y="316" text-anchor="middle" class="title">Cómo se ve</text>
-<text x="36" y="336" class="lab">• Enrojecimiento y picor</text>
-<text x="36" y="358" class="lab">• Ampollas o descamación</text>
-<text x="36" y="380" class="lab">• Limitada a la zona de contacto</text>
-<text x="36" y="402" class="lab">• Piel engrosada si se repite</text>
+<text x="36" y="346" class="lab">• Enrojecimiento y picor</text>
+<text x="36" y="368" class="lab">• Ampollas o descamación</text>
+<text x="36" y="390" class="lab">• Limitada a la zona de contacto</text>
+<text x="36" y="412" class="lab">• Piel engrosada si se repite</text>
 <rect x="406" y="286" width="374" height="154" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="593.0" y="316" text-anchor="middle" class="title">Qué ayuda</text>
-<text x="422" y="336" class="lab">• Identificar y evitar el agente</text>
-<text x="422" y="358" class="lab">• Guantes y cremas barrera</text>
-<text x="422" y="380" class="lab">• Corticoide tópico si se indica</text>
-<text x="422" y="402" class="lab">• Pruebas del parche si es alérgica</text>
+<text x="422" y="346" class="lab">• Identificar y evitar el agente</text>
+<text x="422" y="368" class="lab">• Guantes y cremas barrera</text>
+<text x="422" y="390" class="lab">• Corticoide tópico si se indica</text>
+<text x="422" y="412" class="lab">• Pruebas del parche si es alérgica</text>
 <text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
 </svg>

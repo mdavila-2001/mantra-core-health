@@ -119,6 +119,30 @@ Consulte con un profesional si una inflamación no mejora en unos días, si se r
 
 Busque atención urgente si presenta dificultad para respirar o tragar, hinchazón de la cara o la lengua, fiebre alta con mal estado general, una herida con enrojecimiento que se extiende rápido, una articulación caliente y muy dolorosa con fiebre, dolor abdominal intenso o una pierna hinchada y dolorosa de forma repentina.
 
+## [associated_conditions] Enfermedades relacionadas con la inflamación
+
+La inflamación forma parte de un número enorme de enfermedades, tanto agudas como crónicas. Conocer algunas de ellas ayuda a entender por qué los médicos prestan tanta atención a este proceso:
+
+• Enfermedades reumáticas inflamatorias, como la artritis reumatoide, la espondiloartritis o la artritis psoriásica, en las que las articulaciones se inflaman de forma persistente y pueden deformarse si no se tratan.
+• Enfermedades inflamatorias intestinales, como la enfermedad de Crohn y la colitis ulcerosa, que causan diarrea, dolor abdominal y, a veces, sangrado.
+• Asma y otras enfermedades respiratorias, en las que la inflamación de los bronquios dificulta el paso del aire.
+• Enfermedades de la piel, como la dermatitis atópica o la psoriasis.
+• Arteriosclerosis, en la que la inflamación de la pared de las arterias contribuye a la formación de placas que pueden provocar infartos e ictus.
+• Hígado graso con inflamación, relacionado con el sobrepeso y la diabetes.
+• Enfermedades autoinmunes sistémicas, como el lupus, que pueden afectar a varios órganos a la vez.
+
+En muchas de estas enfermedades, controlar la inflamación es uno de los objetivos principales del tratamiento, porque así se alivian los síntomas y se previenen lesiones permanentes.
+
+## [prognosis] Evolución esperada
+
+La inflamación aguda suele tener una evolución favorable: en la mayoría de los casos, al desaparecer la causa, los síntomas disminuyen en pocos días y el tejido se repara por completo o deja una pequeña cicatriz. El calor y el enrojecimiento son los primeros en ceder; la hinchazón y la pérdida de función pueden tardar algo más, sobre todo en lesiones de músculos, tendones o ligamentos.
+
+En la inflamación crónica, la evolución depende de la enfermedad de base y de la rapidez con la que se inicie el tratamiento. Hoy existen terapias muy eficaces para muchas enfermedades inflamatorias que, hace unas décadas, causaban discapacidad, y gran parte de las personas que las padecen pueden llevar una vida activa con un seguimiento adecuado. Mantener las revisiones, tomar los tratamientos como se han indicado y comunicar al equipo los cambios en los síntomas son claves para un buen pronóstico.
+
+## [additional_information] La fiebre y la inflamación
+
+La fiebre es una de las manifestaciones generales más frecuentes de la inflamación. Algunas de las sustancias que liberan las células de defensa llegan al cerebro y actúan sobre el hipotálamo, la zona que funciona como termostato del cuerpo, elevando la temperatura de referencia. Por eso se siente frío y aparecen escalofríos al comienzo de la fiebre: el cuerpo trata de calentarse hasta alcanzar el nuevo nivel. Una temperatura algo elevada dificulta la multiplicación de algunos microbios y favorece el trabajo de las defensas, aunque también produce malestar. Bajar la fiebre con medicamentos alivia los síntomas, pero no cura la causa; lo importante es averiguar por qué se ha producido y vigilar las señales de alarma.
+
 ## [references]
 
 - Sistema inmunitario | https://medlineplus.gov/spanish/immunesystem.html | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.

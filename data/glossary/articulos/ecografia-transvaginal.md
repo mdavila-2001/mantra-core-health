@@ -1,5 +1,6 @@
 ---
 slug: ecografia-transvaginal
+image: ecografia-transvaginal.svg | La sonda vaginal se acerca al útero y los ovarios para verlos con detalle. | Esquema del útero, las trompas y los ovarios con una sonda de ecografía en la vagina, junto a una lista de cómo se hace la prueba y sus usos.
 ---
 
 ## [definition] Introducción

@@ -1,5 +1,6 @@
 ---
 slug: fibroadenoma-de-mama
+image: fibroadenoma-de-mama.svg | El fibroadenoma es un nódulo benigno, liso y móvil de la mama. | Corte lateral de la mama con un nódulo ovalado de bordes lisos y flechas que indican que se mueve, junto a sus características, la secuencia exploración, ecografía y biopsia, y el manejo.
 ---
 
 ## [definition] Introducción

@@ -17,36 +17,36 @@
   <rect width="800" height="480" fill="var(--bg)"/>
 <rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="200.0" y="50" text-anchor="middle" class="title">Localización en el estómago</text>
-<path d="M208,142 L200,70" fill="none" stroke="var(--organ-d)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M208,142 L200,70" fill="none" stroke="var(--organ)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M215,140 C280,120 305,200 275,260 C245,315 155,305 125,262 L105,258 L105,234 L128,236 C170,254 218,242 228,202 C232,172 218,154 202,146 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<ellipse cx="250" cy="265" rx="24" ry="14" fill="var(--vessel)" stroke="var(--organ-d)" stroke-width="1.5"/>
-<text x="212" y="64" class="small">Esófago</text>
+<path d="M208,154 L200,82" fill="none" stroke="var(--organ-d)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M208,154 L200,82" fill="none" stroke="var(--organ)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M215,152 C280,132 305,212 275,272 C245,327 155,317 125,274 L105,270 L105,246 L128,248 C170,266 218,254 228,214 C232,184 218,166 202,158 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="250" cy="277" rx="24" ry="14" fill="var(--vessel)" stroke="var(--organ-d)" stroke-width="1.5"/>
+<text x="220" y="84" class="small">Esófago</text>
 <text x="300" y="170" class="small">Fondo</text>
 <text x="54" y="212" class="small">Píloro</text>
 <text x="58" y="252" class="small">Duodeno</text>
 <text x="270" y="322" class="lab">Tumor en</text>
 <text x="270" y="338" class="lab">la pared</text>
-<line x1="262" y1="282" x2="282" y2="312" stroke="var(--muted)" stroke-width="1.5"/>
+<line x1="262" y1="292" x2="282" y2="312" stroke="var(--muted)" stroke-width="1.5"/>
 <text x="200" y="380" text-anchor="middle" class="lab" style="fill:var(--muted)">La mayoría nace en la capa interna</text>
 <text x="200" y="398" text-anchor="middle" class="lab" style="fill:var(--muted)">(adenocarcinoma).</text>
 <rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="588.0" y="50" text-anchor="middle" class="title">Claves</text>
-<rect x="416" y="52" width="344" height="122" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
-<text x="428" y="74" class="step">Factores de riesgo</text>
-<text x="428" y="98" class="lab">• Infección por Helicobacter pylori</text>
-<text x="428" y="120" class="lab">• Tabaco, dieta muy salada o ahumada</text>
-<text x="428" y="142" class="lab">• Familiares con cáncer gástrico</text>
-<text x="428" y="164" class="lab">• Gastritis atrófica, edad avanzada</text>
-<rect x="416" y="192" width="344" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
-<text x="428" y="214" class="step">Síntomas (a menudo tardíos)</text>
-<text x="428" y="238" class="lab">• Molestia o dolor en la parte alta del abdomen</text>
-<text x="428" y="260" class="lab">• Sensación de llenarse muy pronto</text>
-<text x="428" y="282" class="lab">• Pérdida de peso, anemia, cansancio</text>
-<rect x="416" y="316" width="344" height="78" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
-<text x="428" y="338" class="step" style="fill:var(--warn)">Consultar pronto si:</text>
-<text x="428" y="360" class="lab">• Vómitos con sangre o heces negras</text>
-<text x="428" y="382" class="lab">• Dificultad para tragar</text>
+<rect x="416" y="60" width="344" height="122" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="428" y="82" class="step">Factores de riesgo</text>
+<text x="428" y="106" class="lab">• Infección por Helicobacter pylori</text>
+<text x="428" y="128" class="lab">• Tabaco, dieta muy salada o ahumada</text>
+<text x="428" y="150" class="lab">• Familiares con cáncer gástrico</text>
+<text x="428" y="172" class="lab">• Gastritis atrófica, edad avanzada</text>
+<rect x="416" y="196" width="344" height="100" rx="10" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="428" y="218" class="step">Síntomas (a menudo tardíos)</text>
+<text x="428" y="242" class="lab">• Dolor o molestia en la parte alta del vientre</text>
+<text x="428" y="264" class="lab">• Sensación de llenarse muy pronto</text>
+<text x="428" y="286" class="lab">• Pérdida de peso, anemia, cansancio</text>
+<rect x="416" y="310" width="344" height="78" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="428" y="332" class="step" style="fill:var(--warn)">Consultar pronto si:</text>
+<text x="428" y="354" class="lab">• Vómitos con sangre o heces negras</text>
+<text x="428" y="376" class="lab">• Dificultad para tragar</text>
 <text x="588" y="426" text-anchor="middle" class="small" style="fill:var(--muted)">Diagnóstico: endoscopia con biopsia.</text>
 <text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
 </svg>

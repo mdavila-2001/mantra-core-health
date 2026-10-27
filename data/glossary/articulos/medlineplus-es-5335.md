@@ -1,5 +1,6 @@
 ---
 slug: medlineplus-es-5335
+image: medlineplus-es-5335.svg | El oxígeno suplementario se administra con distintos dispositivos según la necesidad. | Esquema de la tráquea y los pulmones con alvéolos y una lista de dispositivos de oxigenoterapia, desde la cánula nasal hasta la ventilación con presión.
 ---
 
 ## [definition] Introducción

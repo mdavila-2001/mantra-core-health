@@ -25,10 +25,11 @@
   <path d="M106 380 L170 384" fill="none" stroke="var(--muted)" stroke-width="1"/>
   <text x="176" y="388" class="step" style="fill:var(--warn)">Apéndice</text>
   <text x="200" y="120" text-anchor="middle" class="small muted">Intestino grueso</text>
-  <path d="M190 232 Q150 320 128 350" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
-  <text x="212" y="270" text-anchor="middle" class="small">El dolor empieza</text>
-  <text x="212" y="286" text-anchor="middle" class="small">junto al ombligo</text>
-  <text x="212" y="302" text-anchor="middle" class="small">y baja a la derecha</text>
+  <path d="M178 222 Q134 262 126 345" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+  <text x="158" y="262" class="small">El dolor empieza</text>
+  <text x="158" y="278" class="small">en el ombligo</text>
+  <text x="158" y="294" class="small">y baja hacia</text>
+  <text x="158" y="310" class="small">la derecha</text>
   <text x="200" y="434" text-anchor="middle" class="small muted">Derecha del paciente = izquierda del dibujo</text>
   <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="598.0" y="50" text-anchor="middle" class="title">Cómo se produce</text>
