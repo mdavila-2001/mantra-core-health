@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Etapas y ciclos del sueño</title>
+  <desc id="d">Gráfica escalonada de una noche de sueño, de la hora de acostarse a la mañana. La línea baja de la vigilia al sueño ligero y al sueño profundo, y sube al sueño REM, repitiendo varios ciclos. El sueño profundo es mayor al principio de la noche y el sueño REM se alarga hacia la mañana. Debajo, cuatro consejos de higiene del sueño: horarios regulares, luz natural por la mañana, menos pantallas de noche y un dormitorio oscuro y fresco.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --rem:#7b4bb7; --deep:#1e3a6b; --light:#6aa7e8; --wake:#d9822b; --ok:#1f8a5b; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --rem:#a98ad8; --deep:#8fb3ea; --light:#4f86c2; --wake:#e8a560; --ok:#4cc38a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="760" height="290" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="50" text-anchor="middle" class="title">Una noche de sueño: ciclos que se repiten</text>
+
+  <!-- ejes -->
+  <text x="130" y="94" text-anchor="end" class="lab" style="fill:var(--wake)">Vigilia</text>
+  <text x="130" y="134" text-anchor="end" class="lab" style="fill:var(--rem)">Sueño REM</text>
+  <text x="130" y="174" text-anchor="end" class="lab" style="fill:var(--light)">Sueño ligero</text>
+  <text x="130" y="234" text-anchor="end" class="lab" style="fill:var(--deep)">Sueño profundo</text>
+  <g stroke="var(--line)" stroke-dasharray="3 5">
+    <line x1="140" y1="90" x2="760" y2="90"/><line x1="140" y1="130" x2="760" y2="130"/>
+    <line x1="140" y1="170" x2="760" y2="170"/><line x1="140" y1="230" x2="760" y2="230"/>
+  </g>
+  <!-- hipnograma -->
+  <path d="M140 90 H160 V170 H180 V230 H240 V170 H260 V130 H280 V170 H300 V230 H340 V170 H370 V130 H400 V170 H420 V230 H440 V170 H480 V130 H530 V170 H560 V90 H566 V170 H600 V130 H660 V170 H690 V130 H740 V90 H760" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round"/>
+  <!-- realces -->
+  <rect x="180" y="226" width="60" height="8" fill="var(--deep)"/>
+  <rect x="300" y="226" width="40" height="8" fill="var(--deep)"/>
+  <rect x="420" y="226" width="20" height="8" fill="var(--deep)"/>
+  <rect x="260" y="126" width="20" height="8" fill="var(--rem)"/>
+  <rect x="370" y="126" width="30" height="8" fill="var(--rem)"/>
+  <rect x="480" y="126" width="50" height="8" fill="var(--rem)"/>
+  <rect x="600" y="126" width="60" height="8" fill="var(--rem)"/>
+  <rect x="690" y="126" width="50" height="8" fill="var(--rem)"/>
+  <line x1="140" y1="256" x2="760" y2="256" stroke="var(--muted)" stroke-width="2"/>
+  <text x="140" y="276" class="small muted">Al acostarse</text>
+  <text x="760" y="276" text-anchor="end" class="small muted">Por la mañana</text>
+  <text x="250" y="296" text-anchor="middle" class="small" style="fill:var(--deep)">Más sueño profundo al inicio</text>
+  <text x="640" y="296" text-anchor="middle" class="small" style="fill:var(--rem)">Más sueño REM hacia el final</text>
+  <text x="563" y="82" text-anchor="middle" class="small muted">despertar breve</text>
+
+  <!-- consejos -->
+  <rect x="20" y="326" width="760" height="110" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="40" y="354" class="step" style="fill:var(--ok)">Higiene del sueño</text>
+  <text x="40" y="382" class="lab">• Horarios regulares, también el fin de semana</text>
+  <text x="40" y="406" class="lab">• Luz natural y actividad durante el día</text>
+  <text x="420" y="382" class="lab">• Menos pantallas y cafeína por la noche</text>
+  <text x="420" y="406" class="lab">• Dormitorio oscuro, silencioso y fresco</text>
+  <text x="40" y="428" class="small muted">Ronquidos con pausas o somnolencia de día: consultar.</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala; los ciclos varían entre personas. Ilustración original de AloVida.</text>
+</svg>

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Tiempo de tromboplastina parcial activado (TTPa)</title>
+  <desc id="d">Arriba, tres pasos: sangre en un tubo con citrato, mezcla del plasma con activador, fosfolípidos y calcio en el analizador, y medición de los segundos que tarda en formarse el coágulo. Abajo a la izquierda, la cascada de la coagulación con la vía intrínseca y la vía común, que explora el TTPa, y la vía extrínseca, que explora el TP. Abajo a la derecha, para qué se pide.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="30" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="52" cy="54" r="13" fill="var(--accent)"/>
+  <text x="52" y="59" text-anchor="middle" class="step on">1</text>
+  <text x="72" y="59" class="step">Muestra</text>
+  <text x="46" y="84" class="small">Sangre en tubo con</text>
+  <text x="46" y="103" class="small">citrato (tapón azul)</text>
+  <path d="M260 78.0 L283 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="287" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="309" cy="54" r="13" fill="var(--accent)"/>
+  <text x="309" y="59" text-anchor="middle" class="step on">2</text>
+  <text x="329" y="59" class="step">En el analizador</text>
+  <text x="303" y="84" class="small">Plasma + activador +</text>
+  <text x="303" y="103" class="small">fosfolípidos + calcio</text>
+  <path d="M517 78.0 L540 78.0" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="544" y="30" width="226" height="96" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <circle cx="566" cy="54" r="13" fill="var(--accent)"/>
+  <text x="566" y="59" text-anchor="middle" class="step on">3</text>
+  <text x="586" y="59" class="step">Resultado</text>
+  <text x="560" y="84" class="small">Segundos que tarda</text>
+  <text x="560" y="103" class="small">en formarse el coágulo</text>
+  <rect x="30" y="150" width="500" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="280.0" y="180" text-anchor="middle" class="title">Qué parte de la coagulación explora</text>
+  <rect x="60" y="200" width="200" height="96" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="160" y="224" text-anchor="middle" class="step">Vía intrínseca</text>
+  <text x="160" y="248" text-anchor="middle" class="small">Factores XII, XI,</text>
+  <text x="160" y="266" text-anchor="middle" class="small">IX y VIII</text>
+  <rect x="300" y="200" width="200" height="96" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+  <text x="400" y="224" text-anchor="middle" class="step">Vía extrínseca</text>
+  <text x="400" y="248" text-anchor="middle" class="small">Factor VII</text>
+  <text x="400" y="266" text-anchor="middle" class="small muted">(la explora el TP)</text>
+  <path d="M160 298 L250 328" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <path d="M400 298 L310 328" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <rect x="170" y="330" width="220" height="56" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="280" y="352" text-anchor="middle" class="step">Vía común</text>
+  <text x="280" y="370" text-anchor="middle" class="small">X, V, II, fibrinógeno</text>
+  <path d="M280 388 L280 410" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+  <text x="280" y="430" text-anchor="middle" class="small">Coágulo de fibrina</text>
+  <rect x="52" y="190" width="216" height="116" rx="12" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 4"/>
+  <rect x="550" y="150" width="220" height="300" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="660.0" y="180" text-anchor="middle" class="title">Para qué se pide</text>
+  <rect x="566" y="190" width="188" height="38" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="660.0" y="214.0" text-anchor="middle" class="small">Estudiar sangrados</text>
+  <rect x="566" y="240" width="188" height="38" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="660.0" y="264.0" text-anchor="middle" class="small">Controlar heparina</text>
+  <rect x="566" y="290" width="188" height="38" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="660.0" y="314.0" text-anchor="middle" class="small">Antes de cirugía</text>
+  <rect x="566" y="340" width="188" height="38" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="660.0" y="364.0" text-anchor="middle" class="small">Buscar inhibidores</text>
+  <text x="660" y="412" text-anchor="middle" class="small muted">Se interpreta junto</text>
+  <text x="660" y="430" text-anchor="middle" class="small muted">con el TP</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

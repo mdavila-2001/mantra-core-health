@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Causa del vértigo posicional paroxístico benigno</title>
+  <desc id="d">Oído interno con el utrículo y los canales semicirculares, y cristales sueltos que se han desplazado a uno de los canales. A la derecha, cómo se presenta el vértigo breve con los cambios de posición y la maniobra de reposicionamiento en cuatro pasos que devuelve los cristales a su sitio.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Vértigo posicional paroxístico benigno (VPPB)</text>
+  <rect x="20" y="60" width="400" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="90" text-anchor="middle" class="title">Oído interno: cristales fuera de lugar</text>
+  <ellipse cx="170" cy="300" rx="60" ry="44" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="170" y="360" text-anchor="middle" class="small b">Utrículo</text>
+  <circle cx="150" cy="300" r="4" fill="var(--warn)" stroke="none"/>
+  <circle cx="162" cy="308" r="4" fill="var(--warn)" stroke="none"/>
+  <circle cx="176" cy="300" r="4" fill="var(--warn)" stroke="none"/>
+  <circle cx="188" cy="310" r="4" fill="var(--warn)" stroke="none"/>
+  <path d="M210 280 C220 160 330 150 340 240 C346 300 290 320 230 300" fill="none" stroke="var(--accent)" stroke-width="10" opacity=".7"/>
+  <path d="M200 270 C170 160 250 120 290 140" fill="none" stroke="var(--ok)" stroke-width="10" opacity=".5"/>
+  <path d="M140 280 C80 250 70 180 120 160" fill="none" stroke="var(--red)" stroke-width="10" opacity=".4"/>
+  <circle cx="330" cy="220" r="5" fill="var(--warn)" stroke="none"/>
+  <circle cx="338" cy="232" r="5" fill="var(--warn)" stroke="none"/>
+  <circle cx="326" cy="240" r="5" fill="var(--warn)" stroke="none"/>
+  <line x1="340" y1="230" x2="370" y2="200" stroke="var(--muted)" stroke-width="1"/>
+  <text x="360" y="186" text-anchor="middle" class="small b">Cristales</text>
+  <text x="360" y="202" text-anchor="middle" class="small">sueltos</text>
+  <text x="350" y="330" text-anchor="middle" class="small">Canal</text>
+  <text x="350" y="346" text-anchor="middle" class="small">semicircular</text>
+  <text x="220" y="404" text-anchor="middle" class="small">Al mover la cabeza, los cristales empujan</text>
+  <text x="220" y="420" text-anchor="middle" class="small">el líquido del canal y engañan al cerebro</text>
+  <rect x="436" y="60" width="344" height="186" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="90" text-anchor="middle" class="title">Cómo se presenta</text>
+  <text x="454" y="110" class="small">• Giro intenso de segundos</text>
+  <text x="454" y="136" class="small">• Al darse vuelta en la cama,</text>
+  <text x="465" y="162" class="small">acostarse o mirar arriba</text>
+  <text x="454" y="188" class="small">• Sin pérdida de audición</text>
+  <text x="454" y="214" class="small">• Puede dar náuseas</text>
+  <rect x="436" y="262" width="344" height="178" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="608.0" y="292" text-anchor="middle" class="title">Maniobra de reposicionamiento</text>
+  <rect x="452" y="306" width="70" height="58" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="487.0" y="340.0" text-anchor="middle" class="lab">1</text>
+  <line x1="524" y1="335.0" x2="532" y2="335.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="534" y="306" width="70" height="58" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="569.0" y="340.0" text-anchor="middle" class="lab">2</text>
+  <line x1="606" y1="335.0" x2="614" y2="335.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="616" y="306" width="70" height="58" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="651.0" y="340.0" text-anchor="middle" class="lab">3</text>
+  <line x1="688" y1="335.0" x2="696" y2="335.0" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="698" y="306" width="70" height="58" rx="10" fill="var(--ok-l)" stroke="var(--ok)"/>
+  <text x="733.0" y="340.0" text-anchor="middle" class="lab">4</text>
+  <text x="608" y="392" text-anchor="middle" class="small">Giros guiados de la cabeza devuelven</text>
+  <text x="608" y="410" text-anchor="middle" class="small">los cristales al utrículo</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

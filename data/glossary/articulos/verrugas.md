@@ -1,5 +1,6 @@
 ---
 slug: verrugas
+image: verrugas.svg | El virus del papiloma humano hace crecer en exceso la capa superficial de la piel. | Corte de la piel con una verruga elevada y la epidermis engrosada por el virus del papiloma humano. A la derecha, los tipos común, plantar, plana y filiforme, y las medidas de manejo.
 ---
 
 ## [definition] Introducción

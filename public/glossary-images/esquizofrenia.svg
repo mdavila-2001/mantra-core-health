@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Esquizofrenia: síntomas y tratamiento</title>
+  <desc id="d">A la izquierda, tres recuadros agrupan los síntomas: positivos, como alucinaciones e ideas delirantes; negativos, como menor expresión emocional y aislamiento; y cognitivos, de atención, memoria y planificación. A la derecha, una cabeza de perfil con el cerebro, los factores que influyen y el tratamiento combinado con antipsicóticos, psicoterapia y apoyo social.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Tres grupos de síntomas</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Curso y tratamiento</text>
+<rect x="40" y="66" width="320" height="96" rx="10" fill="var(--bad-l)"/>
+<text x="56" y="90" class="h" style="fill:var(--vessel)">Positivos</text>
+<text x="180" y="90" class="small">• Alucinaciones</text>
+<text x="180" y="112" class="small">• Ideas delirantes</text>
+<text x="180" y="134" class="small">• Pensamiento confuso</text>
+<rect x="40" y="174" width="320" height="96" rx="10" fill="var(--accent-l)"/>
+<text x="56" y="198" class="h" style="fill:var(--accent)">Negativos</text>
+<text x="180" y="198" class="small">• Poca expresión emocional</text>
+<text x="180" y="220" class="small">• Falta de motivación</text>
+<text x="180" y="242" class="small">• Aislamiento social</text>
+<rect x="40" y="282" width="320" height="74" rx="10" fill="var(--purple-l)"/>
+<text x="56" y="306" class="h" style="fill:var(--purple)">Cognitivos</text>
+<text x="180" y="306" class="small">• Atención y memoria</text>
+<text x="180" y="328" class="small">• Planificar y organizar</text>
+<text x="200" y="400" text-anchor="middle" class="small" style="fill:var(--muted)">Comienza a menudo al final de la</text>
+<text x="200" y="416" text-anchor="middle" class="small" style="fill:var(--muted)">adolescencia o en la juventud.</text>
+<path d="M446.0 241.0 L446.0 196.0 C419.0 160 428.0 88.0 500 79.0 C554.0 79.0 572.0 124.0 570.2 151.0 L582.8 174.4 L568.4 179.8 L570.2 199.6 C563.0 214.0 536.0 210.4 527.0 214.0 L527.0 241.0 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M458 112 C470 90 520 88 540 108 C560 112 566 140 548 152 C540 170 500 170 486 160 C462 160 446 132 458 112 Z" fill="var(--purple-l)" stroke="var(--purple)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="500" y="135" text-anchor="middle" class="small" style="fill:var(--purple)">Cerebro</text>
+<text x="620" y="92" class="h">Influyen</text>
+<text x="620" y="118" class="small">• Genética</text>
+<text x="620" y="138" class="small">• Desarrollo</text>
+<text x="631" y="158" class="small">cerebral</text>
+<text x="620" y="178" class="small">• Estrés y</text>
+<text x="631" y="198" class="small">drogas</text>
+<text x="416" y="296" class="h">Tratamiento combinado</text>
+<rect x="416" y="312" width="106" height="40" rx="8" fill="var(--accent)"/>
+<text x="469.0" y="336.3" text-anchor="middle" class="small" style="fill:var(--on)">Antipsicóticos</text>
+<rect x="532" y="312" width="106" height="40" rx="8" fill="var(--ok)"/>
+<text x="585.0" y="336.3" text-anchor="middle" class="small" style="fill:var(--on)">Psicoterapia</text>
+<rect x="648" y="312" width="106" height="40" rx="8" fill="var(--warn)"/>
+<text x="701.0" y="336.3" text-anchor="middle" class="small" style="fill:var(--on)">Apoyo social</text>
+<text x="416" y="384" class="small" style="fill:var(--muted)">Con tratamiento continuo muchas personas</text>
+<text x="416" y="400" class="small" style="fill:var(--muted)">llevan una vida estable y con proyectos.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

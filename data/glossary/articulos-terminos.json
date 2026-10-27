@@ -6,6 +6,9 @@
   "cie10es-dx-k04-7",
   "cie10es-dx-k04-6"
  ],
+ "accidente-cerebrovascular": [
+  "medlineplus-es-2176"
+ ],
  "accidente-cerebrovascular-isquemico": [
   "medlineplus-es-6249"
  ],
@@ -26,6 +29,9 @@
  ],
  "albumina": [
   "inlasa-lac-003"
+ ],
+ "alergia": [
+  "medlineplus-es-1734"
  ],
  "alopecia-androgenica": [
   "cie10es-dx-l64"
@@ -48,14 +54,24 @@
   "inlasa-lac-004",
   "medlineplus-lab-prueba-de-amilasa"
  ],
+ "amoxicilina": [
+  "amoxicilina",
+  "cima-vtm-27658006"
+ ],
  "anafilaxia": [
   "medlineplus-es-6258"
+ ],
+ "analgesicos": [
+  "wikidata-tratamiento-q173235"
  ],
  "analisis-de-orina": [
   "medlineplus-es-6356"
  ],
  "analisis-de-sangre": [
   "medlineplus-es-6352"
+ ],
+ "anemia": [
+  "medlineplus-es-1743"
  ],
  "anemia-ferropenica": [
   "cie10es-dx-d50-9",
@@ -76,6 +92,10 @@
  "anorexia-nerviosa": [
   "cie10es-dx-f50-0"
  ],
+ "ansiedad": [
+  "medlineplus-es-1752",
+  "wikidata-sintoma-q255241"
+ ],
  "anticuerpos-antinucleares": [
   "medlineplus-lab-prueba-de-anticuerpos-antinucleares",
   "inlasa-linm-005"
@@ -83,6 +103,9 @@
  "antigeno-de-estreptococo": [
   "wikidata-prueba-q7294224",
   "medlineplus-lab-prueba-de-estreptococos-a"
+ ],
+ "apendicitis": [
+  "medlineplus-es-1754"
  ],
  "apendicitis-aguda": [
   "cie10es-dx-k35"
@@ -98,6 +121,10 @@
  ],
  "artrosis-de-rodilla": [
   "cie10es-dx-m17"
+ ],
+ "asma": [
+  "cie10es-dx-j45",
+  "medlineplus-es-1760"
  ],
  "ast-tgo": [
   "medlineplus-lab-prueba-de-ast"
@@ -131,6 +158,9 @@
  "calcio": [
   "inlasa-lac-007",
   "medlineplus-lab-prueba-de-calcio-en-la-sangre"
+ ],
+ "cancer": [
+  "medlineplus-es-1794"
  ],
  "cancer-de-colon": [
   "medlineplus-es-1831",
@@ -184,8 +214,14 @@
   "cie10es-dx-l03",
   "cie10es-dx-l03-9"
  ],
+ "cerebro": [
+  "wikidata-anatomia-q1073"
+ ],
  "cervicalgia": [
   "cie10es-dx-m54-2"
+ ],
+ "cesarea": [
+  "medlineplus-es-3160"
  ],
  "chikungunya": [
   "medlineplus-es-6346"
@@ -333,6 +369,9 @@
  "diarrea": [
   "medlineplus-es-1858"
  ],
+ "dieta": [
+  "wikidata-tratamiento-q474191"
+ ],
  "dimero-d": [
   "inlasa-lac-017"
  ],
@@ -356,6 +395,9 @@
  "diverticulitis": [
   "medlineplus-es-1863",
   "cie10es-dx-k57"
+ ],
+ "dolor": [
+  "medlineplus-es-2072"
  ],
  "dolor-abdominal": [
   "medlineplus-es-3062"
@@ -468,9 +510,16 @@
  "esguince-de-tobillo": [
   "cie10es-dx-s93-4"
  ],
+ "espirometria": [
+  "espirometria",
+  "wikidata-prueba-q653305"
+ ],
  "esquizofrenia": [
   "cie10es-dx-f20",
   "medlineplus-es-2136"
+ ],
+ "estomago": [
+  "wikidata-anatomia-q1029907"
  ],
  "estradiol": [
   "inlasa-lac-062",
@@ -479,6 +528,10 @@
  "estrenimiento": [
   "cie10es-dx-k59-0",
   "medlineplus-es-1835"
+ ],
+ "estres": [
+  "medlineplus-es-2175",
+  "wikidata-sintoma-q123414"
  ],
  "examen-general-de-orina": [
   "inlasa-lac-019"
@@ -517,6 +570,9 @@
  ],
  "fiebre-sin-foco": [
   "cie10es-dx-r50-9"
+ ],
+ "fisioterapia": [
+  "wikidata-tratamiento-q186005"
  ],
  "fisioterapia-respiratoria": [
   "fisioterapia-respiratoria"
@@ -642,6 +698,10 @@
  "hierro-serico": [
   "inlasa-lac-031"
  ],
+ "higado": [
+  "higado",
+  "wikidata-anatomia-q9368"
+ ],
  "higado-graso": [
   "medlineplus-es-6466"
  ],
@@ -680,6 +740,12 @@
   "historia-clinica",
   "medlineplus-es-3893"
  ],
+ "hueso": [
+  "wikidata-anatomia-q265868"
+ ],
+ "ibuprofeno": [
+  "cima-vtm-38268001"
+ ],
  "ictericia": [
   "ictericia",
   "medlineplus-es-4453"
@@ -697,6 +763,9 @@
  ],
  "infarto-agudo-de-miocardio": [
   "cie10es-dx-i21"
+ ],
+ "infeccion": [
+  "wikidata-sintoma-q166231"
  ],
  "infeccion-por-helicobacter-pylori": [
   "medlineplus-es-6079"
@@ -906,6 +975,10 @@
  "mononucleosis": [
   "medlineplus-es-1978"
  ],
+ "nauseas-y-vomitos": [
+  "cie10es-dx-r11-0",
+  "cie10es-dx-r11-1"
+ ],
  "nefrologia": [
   "nefrologia"
  ],
@@ -958,6 +1031,10 @@
   "medlineplus-lab-prueba-de-papanicolaou",
   "inlasa-ldic-001"
  ],
+ "paracetamol": [
+  "paracetamol",
+  "cima-vtm-90332006"
+ ],
  "paralisis-facial-de-bell": [
   "cie10es-dx-g51-0",
   "medlineplus-es-1769"
@@ -965,6 +1042,9 @@
  "parasitosis-intestinal": [
   "cie10es-dx-b82-9",
   "cie10es-dx-b82"
+ ],
+ "parto": [
+  "medlineplus-es-1995"
  ],
  "pediatria": [
   "pediatria"
@@ -1035,6 +1115,10 @@
   "cie10es-dx-l40",
   "medlineplus-es-2112"
  ],
+ "pulmon": [
+  "pulmon",
+  "wikidata-anatomia-q7886"
+ ],
  "quiste-de-ovario": [
   "medlineplus-es-2069",
   "cie10es-dx-n83-2"
@@ -1046,6 +1130,9 @@
  "radiografia-de-torax": [
   "radiografia-de-torax",
   "wikidata-prueba-q1283318"
+ ],
+ "receta-medica": [
+  "receta-medica"
  ],
  "reflujo-gastroesofagico": [
   "medlineplus-es-1916",
@@ -1067,6 +1154,10 @@
  "rinitis-alergica": [
   "medlineplus-es-4747"
  ],
+ "rinon": [
+  "rinon",
+  "wikidata-anatomia-q9377"
+ ],
  "salbutamol": [
   "cima-vtm-91143003",
   "salbutamol"
@@ -1074,6 +1165,10 @@
  "sangrado-uterino-anormal": [
   "cie10es-dx-n93-9",
   "cie10es-dx-n93"
+ ],
+ "sangre": [
+  "wikidata-anatomia-q7873",
+  "medlineplus-es-6038"
  ],
  "sangre-oculta-en-heces": [
   "inlasa-lep-019"
@@ -1116,6 +1211,9 @@
  ],
  "sodio": [
   "medlineplus-lab-prueba-de-sodio-en-la-sangre"
+ ],
+ "sueno": [
+  "wikidata-tratamiento-q35831"
  ],
  "t3-total": [
   "inlasa-lac-068",
@@ -1209,9 +1307,15 @@
   "medlineplus-lab-examen-de-nitrogeno-ureico-en-sangre-nus",
   "inlasa-lac-038"
  ],
+ "urocultivo": [
+  "urocultivo"
+ ],
  "urticaria": [
   "cie10es-dx-l50",
   "medlineplus-es-1959"
+ ],
+ "vacunacion": [
+  "medlineplus-es-1970"
  ],
  "vaginitis-aguda": [
   "cie10es-dx-n76-0"

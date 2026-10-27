@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Injerto óseo</title>
+  <desc id="d">A la izquierda, un hueso largo con un defecto rellenado por fragmentos de injerto que con los meses se integran en el hueso sano. A la derecha, los cuatro orígenes del injerto, autoinjerto, aloinjerto, xenoinjerto y sintético, y sus tres propiedades biológicas: osteogénesis, osteoinducción y osteoconducción.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d6bf; --organ:#e6a3a0; --vessel:#c0392b; --vein:#3d5fa8; --nerve:#d39b1c; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c2571a; --warn-l:#f8dccb; --purple:#7a4fb0; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4636; --organ:#8f4f4c; --vessel:#ef7467; --vein:#7e9be0; --nerve:#e0b54a; --ok:#4cc38a; --ok-l:#1d3d2f; --warn:#f0965f; --warn-l:#4a2d1d; --purple:#b48ee6; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .op { font-size: 26px; font-weight: 700; fill: var(--muted); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="380" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="50" text-anchor="middle" class="title">Rellenar un defecto del hueso</text>
+  <rect x="150" y="70" width="100" height="330" rx="30" fill="var(--bone)" stroke="var(--line)"/>
+  <rect x="150" y="200" width="100" height="70" rx="4" fill="var(--panel)" stroke="var(--warn)" stroke-width="2" stroke-dasharray="6 4"/>
+  <rect x="162" y="210" width="16" height="12" rx="3" fill="var(--nerve)"/>
+  <rect x="192" y="224" width="16" height="12" rx="3" fill="var(--nerve)"/>
+  <rect x="218" y="208" width="16" height="12" rx="3" fill="var(--nerve)"/>
+  <rect x="172" y="244" width="16" height="12" rx="3" fill="var(--nerve)"/>
+  <rect x="206" y="248" width="16" height="12" rx="3" fill="var(--nerve)"/>
+  <rect x="228" y="234" width="16" height="12" rx="3" fill="var(--nerve)"/>
+  <text x="270" y="232" class="step" style="fill:var(--nerve)">Injerto</text>
+  <text x="270" y="250" class="small muted">en el hueco</text>
+  <text x="130" y="130" text-anchor="end" class="small">Hueso sano</text>
+  <rect x="40" y="320" width="100" height="90" rx="10" fill="var(--tissue)"/>
+  <text x="90" y="344" text-anchor="middle" class="small">Con los</text>
+  <text x="90" y="362" text-anchor="middle" class="small">meses se</text>
+  <text x="90" y="380" text-anchor="middle" class="small">integra</text>
+  <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="50" text-anchor="middle" class="title">Origen y función</text>
+  <rect x="436" y="66" width="130" height="36" rx="8" fill="var(--ok)"/>
+  <text x="501.0" y="88.68" text-anchor="middle" class="lab" style="fill:var(--on)">Autoinjerto</text>
+  <text x="578" y="89" class="small">del propio paciente</text>
+  <rect x="436" y="112" width="130" height="36" rx="8" fill="var(--accent)"/>
+  <text x="501.0" y="134.68" text-anchor="middle" class="lab" style="fill:var(--on)">Aloinjerto</text>
+  <text x="578" y="135" class="small">de un donante humano</text>
+  <rect x="436" y="158" width="130" height="36" rx="8" fill="var(--purple)"/>
+  <text x="501.0" y="180.68" text-anchor="middle" class="lab" style="fill:var(--on)">Xenoinjerto</text>
+  <text x="578" y="181" class="small">de origen animal tratado</text>
+  <rect x="436" y="204" width="130" height="36" rx="8" fill="var(--muted)"/>
+  <text x="501.0" y="226.68" text-anchor="middle" class="lab" style="fill:var(--on)">Sintético</text>
+  <text x="578" y="227" class="small">material de laboratorio</text>
+  <text x="436" y="274" class="step">Tres propiedades</text>
+  <text x="440" y="300" class="small">• Osteogénesis: aporta células que forman hueso</text>
+  <text x="440" y="324" class="small">• Osteoinducción: estimula su formación</text>
+  <text x="440" y="348" class="small">• Osteoconducción: sirve de andamio</text>
+  <text x="598" y="400" text-anchor="middle" class="small muted">Usos: fracturas que no consolidan,</text>
+  <text x="598" y="418" text-anchor="middle" class="small muted">columna, implantes dentales</text>
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

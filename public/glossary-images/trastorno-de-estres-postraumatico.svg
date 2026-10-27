@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Grupos de síntomas del estrés postraumático</title>
+  <desc id="d">Un hecho traumático del que salen cuatro grupos de síntomas: revivir el suceso con recuerdos o pesadillas, evitar lo que lo recuerda, cambios en el ánimo y el pensamiento, y estado de alerta excesiva. Abajo, el tratamiento eficaz y cuándo buscar ayuda urgente.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Trastorno de estrés postraumático: cuatro grupos de síntomas</text>
+  <rect x="20" y="60" width="760" height="290" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="300" y="80" width="200" height="56" rx="10" fill="var(--tissue)" stroke="var(--muted)"/>
+  <text x="400.0" y="105.0" text-anchor="middle" class="lab b">Hecho traumático</text>
+  <text x="400.0" y="122.0" text-anchor="middle" class="small muted">vivido o presenciado</text>
+  <line x1="400" y1="138" x2="121" y2="176" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="36" y="180" width="170" height="120" rx="12" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="121" y="210" text-anchor="middle" class="lab b">Revivir</text>
+  <text x="121" y="244" text-anchor="middle" class="small">Recuerdos intrusivos</text>
+  <text x="121" y="264" text-anchor="middle" class="small">Pesadillas</text>
+  <line x1="400" y1="138" x2="307" y2="176" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="222" y="180" width="170" height="120" rx="12" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="307" y="210" text-anchor="middle" class="lab b">Evitar</text>
+  <text x="307" y="244" text-anchor="middle" class="small">Lugares, personas</text>
+  <text x="307" y="264" text-anchor="middle" class="small">o conversaciones</text>
+  <line x1="400" y1="138" x2="493" y2="176" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="408" y="180" width="170" height="120" rx="12" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="493" y="210" text-anchor="middle" class="lab b">Ánimo y pensamiento</text>
+  <text x="493" y="244" text-anchor="middle" class="small">Culpa, miedo</text>
+  <text x="493" y="264" text-anchor="middle" class="small">Desapego</text>
+  <line x1="400" y1="138" x2="679" y2="176" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="594" y="180" width="170" height="120" rx="12" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <text x="679" y="210" text-anchor="middle" class="lab b">Alerta excesiva</text>
+  <text x="679" y="244" text-anchor="middle" class="small">Sobresaltos</text>
+  <text x="679" y="264" text-anchor="middle" class="small">Insomnio, irritabilidad</text>
+  <text x="400" y="330" text-anchor="middle" class="lab">Cuando duran más de un mes y afectan la vida diaria</text>
+  <rect x="20" y="366" width="372" height="74" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="38" y="396" class="lab b">Tratamiento eficaz</text>
+  <text x="38" y="418" class="small">Psicoterapia centrada en el trauma; fármacos</text>
+  <rect x="408" y="366" width="372" height="74" rx="14" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="426" y="396" class="lab b" style="fill:var(--red)">Ayuda urgente</text>
+  <text x="426" y="418" class="small">Si hay ideas de hacerse daño</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

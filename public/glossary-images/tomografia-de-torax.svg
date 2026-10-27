@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Tomografía computarizada de tórax</title>
+  <desc id="d">A la izquierda, el tomógrafo con su anillo, el tubo de rayos X que gira alrededor de la persona tumbada y la camilla que avanza para obtener cortes finos del tórax. A la derecha, un corte axial esquemático con los pulmones oscuros, el corazón, la aorta y la columna, y lo que ayuda a estudiar: nódulos, embolia pulmonar, infecciones y enfisema.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="400" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="220.0" y="50" text-anchor="middle" class="title">El tomógrafo</text>
+  <circle cx="250" cy="200" r="110" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="2"/>
+  <circle cx="250" cy="200" r="58" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <rect x="40" y="250" width="340" height="14" rx="6" fill="var(--bone)"/>
+  <rect x="60" y="232" width="250" height="18" rx="9" fill="var(--tissue)" stroke="var(--line)"/>
+  <circle cx="300" cy="230" r="13" fill="var(--tissue)" stroke="var(--line)"/>
+  <rect x="238" y="96" width="24" height="16" rx="3" fill="var(--ink)"/>
+  <path d="M250 112 L232 270 M250 112 L268 270" stroke="var(--beam)" stroke-width="2"/>
+  <path d="M150 96 A110 110 0 0 1 350 96" fill="none" stroke="var(--warn)" stroke-width="3" marker-end="url(#ar)"/>
+  <text x="250" y="80" text-anchor="middle" class="small">El tubo gira alrededor</text>
+  <text x="250" y="340" text-anchor="middle" class="small">La camilla avanza por el anillo</text>
+  <rect x="90" y="370" width="18" height="40" rx="3" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <rect x="114" y="370" width="18" height="40" rx="3" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <rect x="138" y="370" width="18" height="40" rx="3" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <rect x="162" y="370" width="18" height="40" rx="3" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <rect x="186" y="370" width="18" height="40" rx="3" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="220" y="394" class="small">= cortes finos</text>
+  <text x="220" y="410" class="small">del tórax</text>
+  <text x="220" y="436" text-anchor="middle" class="small muted">A veces con contraste por vena</text>
+  <rect x="440" y="20" width="340" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="610.0" y="50" text-anchor="middle" class="title">Un corte axial</text>
+  <ellipse cx="610" cy="180" rx="140" ry="100" fill="var(--ink)"/>
+  <path d="M500 130 C480 180 490 240 540 250 C580 250 586 200 574 150 C560 110 520 106 500 130 Z M720 130 C740 180 730 240 680 250 C640 250 636 200 646 150 C660 110 700 106 720 130 Z" fill="#3a4654"/>
+  <ellipse cx="612" cy="196" rx="34" ry="30" fill="#cfd6df" opacity=".75"/>
+  <circle cx="630" cy="150" r="12" fill="#cfd6df" opacity=".9"/>
+  <rect x="596" y="246" width="30" height="26" rx="6" fill="#ffffff" opacity=".9"/>
+  <text x="530" y="300" text-anchor="middle" class="small">Pulmones</text>
+  <text x="610" y="300" text-anchor="middle" class="small">Corazón</text>
+  <text x="690" y="300" text-anchor="middle" class="small">Columna</text>
+  <text x="700" y="92" class="small">Aorta</text>
+  <path d="M530 288 L526 220" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <path d="M610 288 L612 222" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <path d="M690 288 L624 262" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <path d="M698 90 L640 146" stroke="var(--muted)" stroke-width="1.2" fill="none"/>
+  <text x="460" y="336" class="step">Ayuda a estudiar</text>
+  <rect x="460" y="350" width="146" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="533.0" y="372.0" text-anchor="middle" class="small">Nódulos y tumores</text>
+  <rect x="614" y="350" width="146" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="687.0" y="372.0" text-anchor="middle" class="small">Embolia pulmonar</text>
+  <rect x="460" y="394" width="146" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="533.0" y="416.0" text-anchor="middle" class="small">Infecciones</text>
+  <rect x="614" y="394" width="146" height="34" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="687.0" y="416.0" text-anchor="middle" class="small">Enfisema</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

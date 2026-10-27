@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Neuropatía diabética en los pies</title>
+  <desc id="d">Dos piernas con los pies sombreados en forma de calcetín, donde empiezan el hormigueo y la pérdida de sensibilidad, que luego sube. A la derecha, un nervio dañado por la glucosa alta mantenida, los cuidados de los pies y los signos que justifican consultar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Neuropatía diabética: los nervios largos se dañan primero</text>
+  <rect x="20" y="60" width="360" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="200.0" y="90" text-anchor="middle" class="title">Distribución en calcetín</text>
+  <path d="M110 100 L160 100 L156 360 C180 370 200 390 190 410 L106 410 L112 360 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M113 300 L157 300 L156 360 C180 370 200 390 190 410 L106 410 L112 360 Z" fill="var(--pur)" stroke="none" stroke-width="0" opacity=".45"/>
+  <path d="M112 240 L158 240 L157 300 L113 300 Z" fill="var(--pur)" stroke="none" stroke-width="0" opacity=".18"/>
+  <path d="M230 100 L280 100 L276 360 C300 370 320 390 310 410 L226 410 L232 360 Z" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M233 300 L277 300 L276 360 C300 370 320 390 310 410 L226 410 L232 360 Z" fill="var(--pur)" stroke="none" stroke-width="0" opacity=".45"/>
+  <path d="M232 240 L278 240 L277 300 L233 300 Z" fill="var(--pur)" stroke="none" stroke-width="0" opacity=".18"/>
+  <text x="200" y="130" text-anchor="middle" class="small muted">Piernas</text>
+  <text x="60" y="280" class="small b">Empieza</text>
+  <text x="60" y="296" class="small">en los pies</text>
+  <text x="60" y="312" class="small">y sube</text>
+  <text x="200" y="432" text-anchor="middle" class="small muted">Hormigueo, ardor o pérdida de sensibilidad</text>
+  <rect x="396" y="60" width="384" height="160" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="588.0" y="90" text-anchor="middle" class="title">Por qué ocurre</text>
+  <path d="M420 140 L760 140" fill="none" stroke="var(--warn)" stroke-width="10" stroke-linecap="round" opacity=".6"/>
+  <circle cx="470" cy="140" r="9" fill="var(--red)" stroke="var(--panel)" stroke-width="2"/>
+  <circle cx="560" cy="140" r="9" fill="var(--red)" stroke="var(--panel)" stroke-width="2"/>
+  <circle cx="650" cy="140" r="9" fill="var(--red)" stroke="var(--panel)" stroke-width="2"/>
+  <text x="420" y="120" class="small b">Nervio</text>
+  <text x="588" y="180" text-anchor="middle" class="small">La glucosa alta mantenida daña el nervio</text>
+  <text x="588" y="198" text-anchor="middle" class="small">y los vasos pequeños que lo nutren</text>
+  <rect x="396" y="236" width="184" height="204" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="488.0" y="266" text-anchor="middle" class="title">Cuidar los pies</text>
+  <text x="410" y="284" class="small">• Mirarlos cada día</text>
+  <text x="410" y="310" class="small">• Calzado cómodo</text>
+  <text x="410" y="336" class="small">• No ir descalzo</text>
+  <text x="410" y="362" class="small">• Secar entre dedos</text>
+  <text x="410" y="388" class="small">• Control de glucosa</text>
+  <rect x="596" y="236" width="184" height="204" rx="10" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="610" y="260" class="lab b" style="fill:var(--red)">Consultar si</text>
+  <text x="610" y="284" class="small">• Herida o ampolla</text>
+  <text x="610" y="306" class="small">• Cambio de color</text>
+  <text x="610" y="328" class="small">• Pie caliente</text>
+  <text x="621" y="350" class="small">e hinchado</text>
+  <text x="610" y="372" class="small">• Mareo al pararse</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

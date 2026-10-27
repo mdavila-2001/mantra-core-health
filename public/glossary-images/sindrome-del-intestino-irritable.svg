@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Síndrome del intestino irritable</title>
+  <desc id="d">A la izquierda, el colon con zonas de espasmo y gases, y en el centro el eje intestino-cerebro, que conecta ambos órganos; se indica que las pruebas no muestran lesiones. A la derecha, los síntomas de dolor que mejora al defecar, alteración del ritmo intestinal e hinchazón, los signos que obligan a consultar y las medidas que ayudan.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --skin:#f1d9c6; --organ:#e8a598; --vessel:#c0392b; --vein:#3d6fb6; --ok:#1f8a5b; --ok-l:#cdebdc; --warn:#c77d12; --warn-l:#f8e3bf; --bad:#b83a2e; --bad-l:#f6d3cf; --beam:#f2c46d; --on:#ffffff; --purple:#7b4fb0; --purple-l:#e2d6f2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --skin:#5a4537; --organ:#9a5a50; --vessel:#ef7467; --vein:#7aa3e0; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a84a; --warn-l:#4a3a1c; --bad:#ef7467; --bad-l:#4a2522; --beam:#8a6f2f; --on:#0f1720; --purple:#b495e0; --purple-l:#352a47; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="20" y="20" width="440" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="240.0" y="50" text-anchor="middle" class="title">Intestino y cerebro conectados</text>
+  <path d="M120 360 V170 Q120 130 160 130 H320 Q360 130 360 170 V330 Q360 370 320 370 L240 370 Q220 370 220 390 V420" fill="none" stroke="var(--organ)" stroke-width="34" stroke-linecap="round" opacity=".65"/>
+  <path d="M102 254 q9 -10 18 0 q9 10 18 0 M102 266 q9 -10 18 0 q9 10 18 0" fill="none" stroke="var(--bad)" stroke-width="2.5"/>
+  <path d="M218 122 q11 -10 22 0 q11 10 22 0 M218 138 q11 -10 22 0 q11 10 22 0" fill="none" stroke="var(--bad)" stroke-width="2.5"/>
+  <path d="M342 214 q9 -10 18 0 q9 10 18 0 M342 226 q9 -10 18 0 q9 10 18 0" fill="none" stroke="var(--bad)" stroke-width="2.5"/>
+  <ellipse cx="240" cy="250" rx="54" ry="34" fill="var(--purple-l)" stroke="var(--purple)"/>
+  <text x="240" y="246" text-anchor="middle" class="small">Eje</text>
+  <text x="240" y="262" text-anchor="middle" class="small">intestino-cerebro</text>
+  <text x="240" y="100" text-anchor="middle" class="small muted">Colon (intestino grueso)</text>
+  <text x="66" y="264" text-anchor="middle" class="small">Espasmos</text>
+  <text x="66" y="280" text-anchor="middle" class="small">y gases</text>
+  <text x="330" y="410" text-anchor="middle" class="small muted">Sin lesión visible</text>
+  <text x="330" y="426" text-anchor="middle" class="small muted">en las pruebas</text>
+  <rect x="480" y="20" width="300" height="430" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="630.0" y="50" text-anchor="middle" class="title">Claves</text>
+  <text x="500" y="74" class="step">Síntomas</text>
+  <text x="500" y="98" class="small">• Dolor que mejora al defecar</text>
+  <text x="500" y="120" class="small">• Diarrea, estreñimiento o ambos</text>
+  <text x="500" y="142" class="small">• Hinchazón</text>
+  <text x="500" y="186" text-anchor="fill:var(--bad)" class="step">Consultar si hay</text>
+  <text x="500" y="210" class="small">• Sangre en las heces</text>
+  <text x="500" y="232" class="small">• Pérdida de peso o fiebre</text>
+  <text x="500" y="254" class="small">• Inicio después de los 50</text>
+  <text x="500" y="298" class="step">Qué ayuda</text>
+  <rect x="500" y="310" width="126" height="34" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="563.0" y="332.0" text-anchor="middle" class="small">Ajustes de dieta</text>
+  <rect x="634" y="310" width="126" height="34" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="697.0" y="332.0" text-anchor="middle" class="small">Fibra soluble</text>
+  <rect x="500" y="354" width="126" height="34" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="563.0" y="376.0" text-anchor="middle" class="small">Manejo del estrés</text>
+  <rect x="634" y="354" width="126" height="34" rx="10" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="697.0" y="376.0" text-anchor="middle" class="small">Fármacos</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

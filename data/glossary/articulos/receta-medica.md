@@ -107,6 +107,10 @@ A menudo se confunden tres documentos distintos:
 
 Si las indicaciones de la receta difieren de las del prospecto, no hay que elegir por cuenta propia: el profesional puede haber adaptado el tratamiento a la situación de la persona, pero conviene confirmarlo con él o con el farmacéutico.
 
+## [scope] Medicamentos sin receta
+
+Los medicamentos de venta libre o sin receta están pensados para tratar problemas leves y pasajeros, como un dolor de cabeza ocasional, una congestión nasal o una acidez puntual, durante poco tiempo. Que no requieran receta no significa que sean inocuos: pueden causar efectos adversos, combinarse mal con otros tratamientos o esconder un problema que necesita atención. Conviene pedir consejo al farmacéutico, leer siempre el prospecto, respetar la duración máxima que indica y consultar con un médico si los síntomas persisten, empeoran o se repiten con frecuencia. También es importante mencionarlos en las consultas, porque el profesional que receta necesita conocer todo lo que la persona toma.
+
 ## [importance] Un poco de historia
 
 La práctica de escribir indicaciones para preparar remedios es muy antigua: se conservan tablillas, papiros y manuscritos de distintas civilizaciones con fórmulas para tratar enfermedades. Durante siglos, la receta fue sobre todo una fórmula que el boticario debía preparar mezclando ingredientes. De esa época proviene el símbolo «Rp/» o «Rx» que aún encabeza muchas recetas, abreviatura del latín recipe, que significa «toma».

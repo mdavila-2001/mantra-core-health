@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cálculo del IMC y categorías de peso</title>
+  <desc id="d">Fórmula del índice de masa corporal, el peso dividido por la estatura al cuadrado, y una barra de categorías para adultos: bajo peso, normal, sobrepeso y obesidad, con el tramo del sobrepeso resaltado. Abajo, otros datos que importan y las medidas que ayudan.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Sobrepeso: cómo se estima con el IMC</text>
+  <rect x="20" y="60" width="760" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400.0" y="90" text-anchor="middle" class="title">Índice de masa corporal en adultos</text>
+  <rect x="250" y="100" width="300" height="50" rx="10" fill="var(--accent-l)" stroke="var(--accent)"/>
+  <text x="400.0" y="130.0" text-anchor="middle" class="lab b">IMC = peso (kg) ÷ estatura (m)²</text>
+  <rect x="60" y="180" width="120" height="40" rx="0" fill="var(--accent-l)" stroke="var(--line)"/>
+  <text x="120.0" y="205" text-anchor="middle" class="lab">Bajo peso</text>
+  <rect x="180" y="180" width="180" height="40" rx="0" fill="var(--ok-l)" stroke="var(--line)"/>
+  <text x="270.0" y="205" text-anchor="middle" class="lab">Normal</text>
+  <rect x="360" y="180" width="180" height="40" rx="0" fill="var(--warn-l)" stroke="var(--line)"/>
+  <text x="450.0" y="205" text-anchor="middle" class="lab b">Sobrepeso</text>
+  <rect x="540" y="180" width="200" height="40" rx="0" fill="var(--red-l)" stroke="var(--line)"/>
+  <text x="640.0" y="205" text-anchor="middle" class="lab">Obesidad</text>
+  <text x="180" y="240" text-anchor="middle" class="small b">18,5</text>
+  <text x="360" y="240" text-anchor="middle" class="small b">25</text>
+  <text x="540" y="240" text-anchor="middle" class="small b">30</text>
+  <path d="M360 168 L540 168" fill="none" stroke="var(--warn)" stroke-width="3"/>
+  <text x="400" y="266" text-anchor="middle" class="small muted">El IMC es una estimación; no distingue músculo de grasa</text>
+  <rect x="20" y="296" width="372" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="206.0" y="326" text-anchor="middle" class="title">También importa</text>
+  <text x="38" y="344" class="small">• La cintura: grasa abdominal</text>
+  <text x="38" y="370" class="small">• Presión, glucosa y lípidos</text>
+  <text x="38" y="396" class="small">• En niños se usan tablas por edad</text>
+  <rect x="408" y="296" width="372" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="594.0" y="326" text-anchor="middle" class="title">Qué ayuda</text>
+  <text x="426" y="344" class="small">• Comida casera, menos ultraprocesados</text>
+  <text x="426" y="370" class="small">• Moverse a diario y dormir bien</text>
+  <text x="426" y="396" class="small">• Metas pequeñas y sostenibles</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>
