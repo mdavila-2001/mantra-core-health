@@ -1,12 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
+import { RouterLink } from '@angular/router';
+
 import { AuthService } from '@core/auth/auth.service';
 import { PatientSpendingClient } from '@core/data-access/patient-spending/patient-spending.client';
 import { errorToViewState } from '@core/http/error-to-view-state';
 import { NavigationService } from '@core/navigation/navigation.service';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
+import { AppButtonLink } from '@shared/components/atoms/button/button-link';
 import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
@@ -70,10 +73,12 @@ interface SparkLine {
   selector: 'app-spending',
   imports: [
     Alert,
+    AppButtonLink,
     Card,
     DatePipe,
     NavIcon,
     PageHeader,
+    RouterLink,
     SegmentedControl,
     SpendingYearChart,
     ViewStateHost,

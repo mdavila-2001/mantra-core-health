@@ -227,8 +227,53 @@
    18/09/2026 porque «se leía como con zoom». Lo que se gana acá es la palabra,
    no el tamaño. */
 @media (min-width: 1280px) {
+  /* Una sola barra para todos los destinos (27/10/2026): antes eran nueve
+     rótulos sueltos de anchos distintos, y la Red social, una pastilla con
+     otro dibujo. Juntos sobre un mismo fondo se leen como lo que son —los
+     lugares a los que se va— y el de la pantalla actual se destaca. */
   .app-shell--redesign .app-header__rapidos-lista {
-    gap: var(--e1);
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--filete);
+    border-radius: var(--r-menu);
+    background: var(--sup-inset);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__red-social {
+    flex-direction: column;
+    gap: 2px;
+    block-size: auto;
+    min-inline-size: 3.75rem;
+    padding: 3px var(--e2);
+    border: 0;
+    border-radius: var(--r-ctrl);
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-weight: 500;
+  }
+
+  .app-shell--redesign .app-header__red-social-texto {
+    display: block;
+    font-size: var(--fs-caption);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__red-social:hover,
+  .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes:hover {
+    background: var(--sup-tarjeta);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .is-activo {
+    background: var(--sup-tarjeta);
+    color: var(--petroleo);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .is-activo .app-header__rapidos-label,
+  .app-shell--redesign .app-header__rapidos-lista .is-activo .app-header__red-social-texto {
+    font-weight: 700;
   }
 
   .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes {
@@ -237,7 +282,7 @@
     inline-size: auto;
     min-inline-size: 3.75rem;
     block-size: auto;
-    padding: var(--e1) var(--e2);
+    padding: 3px var(--e2);
     border-radius: var(--r-ctrl);
   }
 
