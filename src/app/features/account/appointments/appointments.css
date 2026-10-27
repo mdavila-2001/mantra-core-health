@@ -22,20 +22,6 @@
   gap: var(--sp-3);
 }
 
-/* El selector de vista es un componente del sistema (FT-04): acá sólo se dice
-   que no se estire más allá de su contenido en la cabecera. */
-.turnos__vistas {
-  flex: none;
-}
-
-/* En teléfono «Tus citas» y el conmutador no entran lado a lado: el control se
-   encogía hasta cortar «Calen…». Baja a su propia fila, entero. */
-@media (max-width: 40rem) {
-  .turnos__vistas {
-    flex-basis: 100%;
-  }
-}
-
 /* ─── FT-05 · la barra de búsqueda y filtros ────────────────────────────────
    Una rejilla que decide por el ancho de SU contenedor, no de la ventana: el
    espacio real depende de si el menú lateral está abierto. Con una fila flex que

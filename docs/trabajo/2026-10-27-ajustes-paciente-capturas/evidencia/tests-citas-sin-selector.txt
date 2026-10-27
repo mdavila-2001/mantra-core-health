@@ -1,0 +1,95 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                                 | Names                                                                            |  Raw size
+spec-app-features-account-appointments-appointments.js                              | spec-app-features-account-appointments-appointments                              | 952.15 kB | 
+styles.css                                                                          | styles                                                                           | 183.31 kB | 
+chunk-S2DA2ZFF.js                                                                   | -                                                                                |  65.08 kB | 
+spec-app-features-account-appointments-appointment-calendar-appointment-calendar.js | spec-app-features-account-appointments-appointment-calendar-appointment-calendar |   8.62 kB | 
+chunk-JBWBLPNK.js                                                                   | -                                                                                |   5.19 kB | 
+spec-app-features-account-appointments-upcoming-and-past.js                         | spec-app-features-account-appointments-upcoming-and-past                         |   2.97 kB | 
+init-testbed.js                                                                     | init-testbed                                                                     |   1.21 kB | 
+setup-test-setup.js                                                                 | setup-test-setup                                                                 | 984 bytes | 
+vitest-mock-patch.js                                                                | vitest-mock-patch                                                                | 974 bytes | 
+chunk-ZGJ6BAGI.js                                                                   | -                                                                                | 755 bytes | 
+
+                                                                                    | Initial total                                                                    |   1.22 MB
+
+Lazy chunk files                                                                    | Names                                                                            |  Raw size
+paciente.css                                                                        | paciente                                                                         |  21.44 kB | 
+
+Application bundle generation complete. [142.887 seconds] - 2026-10-27T21:40:27.401Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/governance/filter-form.ts:50:25:
+[37m      50 │                 [value]="[32mdraft()[field.key] ?? ''[37m"
+         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/governance/filter-form.ts:58:25:
+[37m      58 │                 [value]="[32mdraft()[field.key] ?? ''[37m"
+         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: DatePipe is not used within the template of PortalHub[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/hub/portal-hub.ts:19:12:
+[37m      19 │   imports: [[32mDatePipe[37m, RouterLink, MetricCard, PageHeader, ViewStat...
+         ╵             [32m~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:142:4:
+[37m      142 │     [32mCard[37m,
+          ╵     [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m141 passed[39m[22m[90m (141)[39m
+[2m   Start at [22m 21:40:29
+[2m   Duration [22m 6.32s[2m (transform 2.99s, setup 1.54s, import 3.24s, tests 3.17s, environment 3.82s)[22m
+
+exit=0
