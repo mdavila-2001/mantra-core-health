@@ -21,6 +21,14 @@
  *            de los términos que todavía no tienen una ilustración original revisada. Con ella, una
  *            línea `image:` cuyo .svg todavía no existe se omite con un aviso en vez de abortar.
  *   --only   procesa sólo esos slugs (para validar un lote sin tocar el resto).
+ *
+ * Términos donde se muestra (`data/glossary/articulos-terminos.json`): el slug de un artículo casi
+ * nunca es el del término que la gente abre. «Ecografía» en la pantalla es `medlineplus-lab-ecografia`
+ * (y su duplicado `wikidata-prueba-q234904`), no `ecografia`. Ese archivo dice, por artículo, en qué
+ * términos visibles se muestra: `{ "<slug del artículo>": ["<slug del término>", …] }`. El artículo se
+ * escribe bajo el id de cada uno, y el API recibe la misma tabla (al revés) en
+ * `glossary-article-aliases.json`. Un slug que no esté en `public/glossary-seed/shards/` o que dos
+ * artículos reclamen es error.
  *   --api    carpeta del repo del API (por omisión `../mantra-core-health-api` si existe): se le
  *            escribe `src/common/seed/data/glossary/glossary-articles.json`, de donde el seed siembra
  *            la propiedad `glossary-article` del concepto de cada slug. Con `--only` no se escribe
@@ -44,6 +52,47 @@ const PISO = Number(opcion('--min') ?? 2000);
 const API = resolve(opcion('--api') ?? join(RAIZ, '..', 'mantra-core-health-api'));
 const SOLO = opcion('--only')?.split(',').filter(Boolean);
 const SIN_IMAGEN = process.argv.includes('--sin-imagen');
+const TERMINOS = join(RAIZ, 'data', 'glossary', 'articulos-terminos.json');
+const SHARDS = join(RAIZ, 'public', 'glossary-seed', 'shards');
+
+/** Los slugs de todos los términos visibles de la maqueta (los shards por categoría). */
+function slugsVisibles() {
+  const slugs = new Set();
+  for (const categoria of readdirSync(SHARDS, { withFileTypes: true })) {
+    if (!categoria.isDirectory()) continue;
+    for (const archivo of readdirSync(join(SHARDS, categoria.name))) {
+      if (!archivo.endsWith('.json')) continue;
+      const datos = JSON.parse(readFileSync(join(SHARDS, categoria.name, archivo), 'utf8'));
+      for (const fila of Array.isArray(datos) ? datos : (datos.items ?? [])) slugs.add(fila.slug);
+    }
+  }
+  return slugs;
+}
+
+/**
+ * La tabla artículo → términos visibles, validada: cada término existe y lo reclama un solo artículo.
+ * Devuelve también la inversa (término → artículo), que es la que necesita el API.
+ */
+export function leerTerminos(tabla, visibles, articulos) {
+  const porArticulo = new Map();
+  const alias = {};
+  for (const [articulo, terminos] of Object.entries(tabla)) {
+    if (!articulos.has(articulo)) throw new Error(`articulos-terminos.json: «${articulo}» no tiene archivo .md`);
+    if (!Array.isArray(terminos)) throw new Error(`articulos-terminos.json: «${articulo}» debe ser una lista`);
+    for (const termino of terminos) {
+      if (!visibles.has(termino)) throw new Error(`articulos-terminos.json: el término «${termino}» (de ${articulo}) no existe en el glosario`);
+      if (termino !== articulo && articulos.has(termino)) {
+        throw new Error(`articulos-terminos.json: «${termino}» (de ${articulo}) ya tiene su propio artículo`);
+      }
+      if (alias[termino] !== undefined && alias[termino] !== articulo) {
+        throw new Error(`articulos-terminos.json: «${termino}» lo reclaman ${alias[termino]} y ${articulo}`);
+      }
+      if (termino !== articulo) alias[termino] = articulo;
+    }
+    porArticulo.set(articulo, [...new Set(terminos)]);
+  }
+  return { porArticulo, alias };
+}
 
 /** Identificador corto de la fuente; `glossary-article.logic.ts` lo traduce a un nombre legible. */
 export const FUENTE = 'alovida-curated';
@@ -217,8 +266,17 @@ function main() {
     .filter((n) => n.endsWith('.md') && n !== '00_README.md')
     .filter((n) => SOLO === undefined || SOLO.includes(n.replace(/\.md$/, '')))
     .sort();
+  const todos = new Set(
+    readdirSync(ORIGEN).filter((n) => n.endsWith('.md') && n !== '00_README.md').map((n) => n.replace(/\.md$/, '')),
+  );
+  const { porArticulo, alias } = leerTerminos(
+    existsSync(TERMINOS) ? JSON.parse(readFileSync(TERMINOS, 'utf8')) : {},
+    slugsVisibles(),
+    todos,
+  );
   const cubetas = new Map();
   const paraLaApi = {};
+  let enTerminos = 0;
   let total = 0;
   const cortos = [];
   for (const nombre of archivos) {
@@ -228,10 +286,14 @@ function main() {
     }
     const n = palabrasDelArticulo(articulo);
     if (n < PISO) cortos.push(`${articulo.conceptRef.slug} (${n})`);
-    const id = conceptIdOf(articulo.conceptRef.slug);
-    const hh = id.slice(0, 2).toLowerCase();
-    if (!cubetas.has(hh)) cubetas.set(hh, {});
-    cubetas.get(hh)[id] = articulo;
+    const destinos = new Set([articulo.conceptRef.slug, ...(porArticulo.get(articulo.conceptRef.slug) ?? [])]);
+    for (const destino of destinos) {
+      const id = conceptIdOf(destino);
+      const hh = id.slice(0, 2).toLowerCase();
+      if (!cubetas.has(hh)) cubetas.set(hh, {});
+      cubetas.get(hh)[id] = articulo;
+    }
+    enTerminos += destinos.size - 1;
     paraLaApi[articulo.conceptRef.slug] = articulo;
     total += n;
     console.log(`${articulo.conceptRef.slug}: ${articulo.sections.length} secciones, ${articulo.images.length} imágenes, ${n} palabras`);
@@ -250,8 +312,8 @@ function main() {
     const existentes = existsSync(ruta) ? JSON.parse(readFileSync(ruta, 'utf8')) : {};
     writeFileSync(ruta, JSON.stringify({ ...existentes, ...nuevos }));
   }
-  console.log(`glossary-articulos-alovida: ${archivos.length} artículos en ${cubetas.size} cubetas → ${DESTINO}`);
-  if (SOLO === undefined) escribirParaLaApi(paraLaApi);
+  console.log(`glossary-articulos-alovida: ${archivos.length} artículos (${enTerminos} términos visibles más vía articulos-terminos.json) en ${cubetas.size} cubetas → ${DESTINO}`);
+  if (SOLO === undefined) escribirParaLaApi(paraLaApi, alias);
   else console.log('glossary-articulos-alovida: con --only no se regenera el archivo del API.');
 }
 
@@ -274,7 +336,7 @@ export function textoParaLaApi(articulos) {
   return ['{', ...filas, '}', ''].join('\n');
 }
 
-function escribirParaLaApi(articulos) {
+function escribirParaLaApi(articulos, alias) {
   const seed = join(API, 'src', 'common', 'seed');
   if (!existsSync(seed)) {
     console.log(`glossary-articulos-alovida: no hay repo del API en ${API}; se omite el archivo del API (--api <carpeta>).`);
@@ -285,6 +347,10 @@ function escribirParaLaApi(articulos) {
   const destino = join(carpeta, 'glossary-articles.json');
   writeFileSync(destino, textoParaLaApi(articulos));
   console.log(`glossary-articulos-alovida: ${Object.keys(articulos).length} artículos → ${destino}`);
+  const ordenado = Object.fromEntries(Object.keys(alias).sort().map((termino) => [termino, alias[termino]]));
+  const destinoAlias = join(carpeta, 'glossary-article-aliases.json');
+  writeFileSync(destinoAlias, `${JSON.stringify(ordenado, null, 2)}\n`);
+  console.log(`glossary-articulos-alovida: ${Object.keys(ordenado).length} términos con artículo prestado → ${destinoAlias}`);
   if (existsSync(join(seed, 'glossary-articles.generated.ts'))) {
     console.warn(
       'glossary-articulos-alovida: el API todavía tiene glossary-articles.generated.ts (formato anterior); ' +
