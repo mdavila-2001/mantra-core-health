@@ -19,8 +19,8 @@
   <text x="220.0" y="50" text-anchor="middle" class="title">Infección que sube al riñón</text>
   <path d="M110 80 C160 78 162 202 110 200 C70 198 80 160 94 140 C80 120 70 82 110 80 Z" fill="var(--organ-d)" stroke="var(--organ-d)" stroke-width="1.5"/>
   <path d="M330 80 C280 82 278 200 330 200 C370 198 380 170 364 140 C380 110 370 78 330 80 Z" fill="var(--vessel)" stroke="var(--vessel)" stroke-width="1.5" opacity=".7"/>
-  <text x="110" y="226" text-anchor="middle" class="small">Riñón sano</text>
-  <text x="330" y="226" text-anchor="middle" class="small" style="fill:var(--vessel)">Riñón infectado</text>
+  <text x="110" y="72" text-anchor="middle" class="small">Riñón sano</text>
+  <text x="330" y="72" text-anchor="middle" class="small" style="fill:var(--vessel)">Riñón infectado</text>
   <path d="M96 140 C90 220 140 280 190 330" fill="none" stroke="var(--fluid)" stroke-width="5"/>
   <path d="M318 140 C320 220 260 280 230 330" fill="none" stroke="var(--fluid)" stroke-width="5"/>
   <path d="M150 330 C150 300 270 300 270 330 C270 380 240 396 210 396 C180 396 150 380 150 330 Z" fill="var(--fluid)" stroke="var(--warn)" stroke-width="2"/>

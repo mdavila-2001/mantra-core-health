@@ -41,6 +41,7 @@
   <text x="484" y="270" text-anchor="end" class="small" style="fill:var(--on)">L5</text>
   <path d="M500 296 L620 296 L580 306 Z" fill="var(--bone)"/>
   <rect x="520" y="288" width="80" height="22" rx="8" fill="var(--bone)"/>
+  <path d="M636 116 L602 100 M636 136 L600 118 M636 302 L602 298" fill="none" stroke="var(--bone)" stroke-width="1"/>
   <text x="640" y="120" class="small" style="fill:var(--on)">Hueso</text>
   <text x="640" y="140" class="small" style="fill:var(--on)">Espacio del disco</text>
   <text x="640" y="306" class="small" style="fill:var(--on)">Sacro</text>

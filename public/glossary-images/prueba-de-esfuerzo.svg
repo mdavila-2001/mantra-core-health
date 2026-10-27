@@ -30,8 +30,8 @@
   <text x="120" y="162" text-anchor="middle" class="small">Electrocardiograma</text>
   <rect x="60" y="190" width="40" height="30" rx="6" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1.5"/>
   <text x="80" y="240" text-anchor="middle" class="small">Presión</text>
-  <text x="380" y="280" text-anchor="end" class="small" style="fill:var(--muted)">Cinta</text>
-  <text x="380" y="296" text-anchor="end" class="small" style="fill:var(--muted)">o bicicleta</text>
+  <text x="430" y="280" text-anchor="end" class="small" style="fill:var(--muted)">Cinta</text>
+  <text x="430" y="296" text-anchor="end" class="small" style="fill:var(--muted)">o bicicleta</text>
   <text x="230" y="414" text-anchor="middle" class="small">La carga aumenta por etapas</text>
   <rect x="456" y="20" width="324" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="618.0" y="50" text-anchor="middle" class="title">Qué busca</text>

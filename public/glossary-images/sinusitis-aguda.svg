@@ -30,8 +30,8 @@
 <rect x="212" y="180" width="16" height="56" rx="4" fill="var(--accent-l)" stroke="var(--accent)" stroke-width="1"/>
 <text x="70" y="120" class="small">Frontales</text>
 <line x1="124" y1="124" x2="166" y2="136" stroke="var(--muted)" stroke-width="1.5"/>
-<text x="70" y="214" class="small">Maxilar con</text>
-<text x="70" y="230" class="small" style="fill:var(--warn)">moco retenido</text>
+<text x="36" y="214" class="small">Maxilar con</text>
+<text x="36" y="230" class="small" style="fill:var(--warn)">moco retenido</text>
 <line x1="118" y1="234" x2="134" y2="246" stroke="var(--muted)" stroke-width="1.5"/>
 <text x="330" y="174" class="small">Etmoidales</text>
 <line x1="328" y1="170" x2="230" y2="196" stroke="var(--muted)" stroke-width="1.5"/>

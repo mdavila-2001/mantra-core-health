@@ -44,15 +44,15 @@
   <circle cx="250" cy="314" r="26" fill="var(--warn-l)" stroke="var(--line)" stroke-width="1.5"/>
   <text x="250" y="320" text-anchor="middle" class="big">2</text>
   <text x="250" y="366" text-anchor="middle" class="lab">Factores de riesgo</text>
-  <text x="250" y="384" text-anchor="middle" class="small" style="fill:var(--muted)">presión, lípidos, glucosa</text>
+  <text x="250" y="384" text-anchor="middle" class="small" style="fill:var(--muted)">presión y lípidos</text>
   <circle cx="396" cy="314" r="26" fill="var(--accent-l)" stroke="var(--line)" stroke-width="1.5"/>
   <text x="396" y="320" text-anchor="middle" class="big">3</text>
   <text x="396" y="366" text-anchor="middle" class="lab">Tabaco y dieta</text>
-  <text x="396" y="384" text-anchor="middle" class="small" style="fill:var(--muted)">dejar de fumar, comer sano</text>
+  <text x="396" y="384" text-anchor="middle" class="small" style="fill:var(--muted)">hábitos sanos</text>
   <circle cx="542" cy="314" r="26" fill="var(--violet-l)" stroke="var(--line)" stroke-width="1.5"/>
   <text x="542" y="320" text-anchor="middle" class="big">4</text>
   <text x="542" y="366" text-anchor="middle" class="lab">Emociones</text>
-  <text x="542" y="384" text-anchor="middle" class="small" style="fill:var(--muted)">ansiedad, ánimo, estrés</text>
+  <text x="542" y="384" text-anchor="middle" class="small" style="fill:var(--muted)">ánimo y estrés</text>
   <circle cx="688" cy="314" r="26" fill="var(--tissue)" stroke="var(--line)" stroke-width="1.5"/>
   <text x="688" y="320" text-anchor="middle" class="big">5</text>
   <text x="688" y="366" text-anchor="middle" class="lab">Medicación</text>

@@ -19,7 +19,7 @@
   <text x="400.0" y="50" text-anchor="middle" class="title">Del hogar al laboratorio</text>
   <rect x="44" y="80" width="156" height="70" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
   <text x="122.0" y="111.5" text-anchor="middle" class="lab">Kit en casa</text>
-  <text x="122.0" y="128.5" text-anchor="middle" class="lab">tomar una pequeña muestra</text>
+  <text x="122.0" y="128.5" text-anchor="middle" class="lab">tomar una muestra</text>
   <line x1="202" y1="115" x2="226" y2="115" stroke="var(--muted)" stroke-width="2" marker-end="url(#ah)"/>
   <rect x="230" y="80" width="156" height="70" rx="10" fill="var(--accent-l)" stroke="var(--line)"/>
   <text x="308.0" y="111.5" text-anchor="middle" class="lab">Tubo con líquido</text>
@@ -36,9 +36,9 @@
   <text x="400" y="212" text-anchor="middle" class="small" style="fill:var(--muted)">Prueba inmunológica (FIT) que reconoce la hemoglobina humana</text>
   <rect x="20" y="256" width="370" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="205.0" y="286" text-anchor="middle" class="title">Para qué sirve</text>
-  <path d="M60 340 C60 300 120 296 140 300 L280 300 C320 300 330 330 330 360 C330 400 300 410 280 410" fill="none" stroke="var(--organ)" stroke-width="18" stroke-linecap="round"/>
-  <circle cx="240" cy="300" r="8" fill="var(--vessel)" stroke="none" stroke-width="2"/>
-  <text x="200" y="340" text-anchor="middle" class="small" style="fill:var(--vessel)">Pólipo que sangra</text>
+  <path d="M60 364 C60 324 120 320 140 324 L280 324 C320 324 330 354 330 384 C330 414 300 424 280 424" fill="none" stroke="var(--organ)" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="240" cy="324" r="8" fill="var(--vessel)" stroke="none" stroke-width="2"/>
+  <text x="200" y="354" text-anchor="middle" class="small" style="fill:var(--vessel)">Pólipo que sangra</text>
   <text x="205" y="380" text-anchor="middle" class="small">Cribado del cáncer de colon</text>
   <text x="205" y="398" text-anchor="middle" class="small" style="fill:var(--muted)">en personas sin síntomas</text>
   <rect x="410" y="256" width="370" height="184" rx="14" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>

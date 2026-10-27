@@ -43,16 +43,16 @@
   <text x="708" y="226" text-anchor="middle" class="small" style="fill:var(--vessel)">Imagen borrosa</text>
   <rect x="20" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="205.0" y="316" text-anchor="middle" class="title">Cómo se nota</text>
-  <text x="40" y="330" class="small">• Alejar el texto para leerlo</text>
-  <text x="40" y="354" class="small">• Necesitar más luz</text>
-  <text x="40" y="378" class="small">• Cansancio visual al leer</text>
-  <text x="40" y="402" class="small">• Aparece hacia los 40-45 años</text>
+  <text x="40" y="340" class="small">• Alejar el texto para leerlo</text>
+  <text x="40" y="364" class="small">• Necesitar más luz</text>
+  <text x="40" y="388" class="small">• Cansancio visual al leer</text>
+  <text x="40" y="412" class="small">• Aparece hacia los 40-45 años</text>
   <rect x="410" y="286" width="370" height="154" rx="14" fill="var(--panel)" stroke="var(--line)"/>
   <text x="595.0" y="316" text-anchor="middle" class="title">Cómo se corrige</text>
-  <text x="430" y="330" class="small">• Gafas de lectura o multifocales</text>
-  <text x="430" y="354" class="small">• Lentes de contacto</text>
-  <text x="430" y="378" class="small">• Algunas cirugías en casos elegidos</text>
-  <text x="430" y="402" class="small">• Es normal con la edad: no es enfermedad</text>
+  <text x="430" y="340" class="small">• Gafas de lectura o multifocales</text>
+  <text x="430" y="364" class="small">• Lentes de contacto</text>
+  <text x="430" y="388" class="small">• Algunas cirugías en casos elegidos</text>
+  <text x="430" y="412" class="small">• Es normal con la edad: no es enfermedad</text>
 
   <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
 </svg>

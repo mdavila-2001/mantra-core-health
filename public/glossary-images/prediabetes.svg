@@ -29,17 +29,17 @@
 <text x="400" y="196" text-anchor="middle" class="small" style="fill:var(--muted)">Se detecta con glucemia en ayunas, hemoglobina glicada (HbA1c) o curva de glucosa.</text>
 <rect x="20" y="236" width="370" height="204" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="205.0" y="266" text-anchor="middle" class="title">Más riesgo si</text>
-<text x="36" y="286" class="lab">• Sobrepeso, sobre todo abdominal</text>
-<text x="36" y="310" class="lab">• Poca actividad física</text>
-<text x="36" y="334" class="lab">• Familiares con diabetes</text>
-<text x="36" y="358" class="lab">• Diabetes gestacional previa</text>
-<text x="36" y="382" class="lab">• Hipertensión o colesterol alto</text>
+<text x="36" y="296" class="lab">• Sobrepeso, sobre todo abdominal</text>
+<text x="36" y="320" class="lab">• Poca actividad física</text>
+<text x="36" y="344" class="lab">• Familiares con diabetes</text>
+<text x="36" y="368" class="lab">• Diabetes gestacional previa</text>
+<text x="36" y="392" class="lab">• Hipertensión o colesterol alto</text>
 <rect x="406" y="236" width="374" height="204" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="593.0" y="266" text-anchor="middle" class="title">Se puede revertir</text>
-<text x="422" y="286" class="lab">• Perder algo de peso ayuda mucho</text>
-<text x="422" y="310" class="lab">• Unos 150 min de actividad por semana</text>
-<text x="422" y="334" class="lab">• Más verdura, fibra y menos azúcar</text>
-<text x="422" y="358" class="lab">• Dormir bien y no fumar</text>
-<text x="422" y="382" class="lab">• Control de glucosa periódico</text>
+<text x="422" y="296" class="lab">• Perder algo de peso ayuda mucho</text>
+<text x="422" y="320" class="lab">• Unos 150 min de actividad por semana</text>
+<text x="422" y="344" class="lab">• Más verdura, fibra y menos azúcar</text>
+<text x="422" y="368" class="lab">• Dormir bien y no fumar</text>
+<text x="422" y="392" class="lab">• Control de glucosa periódico</text>
 <text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
 </svg>

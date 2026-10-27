@@ -32,22 +32,22 @@
 <text x="200" y="410" text-anchor="middle" class="step">Los antibióticos no sirven.</text>
 <rect x="416" y="20" width="364" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
 <text x="598.0" y="50" text-anchor="middle" class="title">Evolución habitual</text>
-<rect x="436" y="62" width="76" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
-<text x="474" y="86" text-anchor="middle" class="small">Días 1-2</text>
-<text x="474" y="108" text-anchor="middle" class="small">garganta</text>
-<text x="474" y="124" text-anchor="middle" class="small">irritada</text>
-<rect x="520" y="62" width="76" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
-<text x="558" y="86" text-anchor="middle" class="small">Días 2-4</text>
-<text x="558" y="108" text-anchor="middle" class="small">moco</text>
-<text x="558" y="124" text-anchor="middle" class="small">estornudos</text>
-<rect x="604" y="62" width="76" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
-<text x="642" y="86" text-anchor="middle" class="small">Días 4-7</text>
-<text x="642" y="108" text-anchor="middle" class="small">tos</text>
-<text x="642" y="124" text-anchor="middle" class="small">congestión</text>
-<rect x="688" y="62" width="76" height="70" rx="8" fill="var(--ok-l)" stroke-width="1"/>
-<text x="726" y="86" text-anchor="middle" class="small">7-10 días</text>
-<text x="726" y="108" text-anchor="middle" class="small">se</text>
-<text x="726" y="124" text-anchor="middle" class="small">resuelve</text>
+<rect x="436" y="62" width="74" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="473" y="86" text-anchor="middle" class="small">Días 1-2</text>
+<text x="473" y="108" text-anchor="middle" class="small">garganta</text>
+<text x="473" y="124" text-anchor="middle" class="small">irritada</text>
+<rect x="516" y="62" width="74" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="553" y="86" text-anchor="middle" class="small">Días 2-4</text>
+<text x="553" y="108" text-anchor="middle" class="small">moco</text>
+<text x="553" y="124" text-anchor="middle" class="small">estornudos</text>
+<rect x="596" y="62" width="74" height="70" rx="8" fill="var(--accent-l)" stroke-width="1"/>
+<text x="633" y="86" text-anchor="middle" class="small">Días 4-7</text>
+<text x="633" y="108" text-anchor="middle" class="small">tos</text>
+<text x="633" y="124" text-anchor="middle" class="small">congestión</text>
+<rect x="676" y="62" width="74" height="70" rx="8" fill="var(--ok-l)" stroke-width="1"/>
+<text x="713" y="86" text-anchor="middle" class="small">7-10 días</text>
+<text x="713" y="108" text-anchor="middle" class="small">se</text>
+<text x="713" y="124" text-anchor="middle" class="small">resuelve</text>
 <text x="436" y="160" class="lab">Alivio: reposo, líquidos, lavado nasal.</text>
 <text x="436" y="180" class="small" style="fill:var(--muted)">La tos puede durar más.</text>
 <rect x="436" y="200" width="324" height="164" rx="10" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>

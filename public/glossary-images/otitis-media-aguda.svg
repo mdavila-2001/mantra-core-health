@@ -22,8 +22,8 @@
   <text x="140" y="236" text-anchor="middle" class="small" style="fill:var(--muted)">Conducto</text>
   <text x="140" y="252" text-anchor="middle" class="small" style="fill:var(--muted)">auditivo</text>
   <path d="M190 150 C196 170 196 220 190 240" fill="none" stroke="var(--vessel)" stroke-width="5"/>
-  <text x="190" y="132" text-anchor="middle" class="small" style="fill:var(--vessel)">Tímpano</text>
-  <text x="190" y="116" text-anchor="middle" class="small" style="fill:var(--vessel)">abombado</text>
+  <text x="190" y="116" text-anchor="middle" class="small" style="fill:var(--vessel)">Tímpano</text>
+  <text x="190" y="132" text-anchor="middle" class="small" style="fill:var(--vessel)">abombado</text>
   <ellipse cx="250" cy="196" rx="54" ry="50" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="2"/>
   <circle cx="236" cy="186" r="5" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>
   <circle cx="256" cy="206" r="5" fill="var(--fluid)" stroke="var(--warn)" stroke-width="1"/>

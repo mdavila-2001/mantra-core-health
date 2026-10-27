@@ -36,8 +36,8 @@
   <path d="M368 80 C372 200 372 280 368 360" fill="none" stroke="var(--nerve)" stroke-width="6"/>
   <path d="M358 262 C370 264 372 278 360 280 Z" fill="var(--violet)" stroke="none" stroke-width="2"/>
   <text x="345" y="390" text-anchor="middle" class="small" style="fill:var(--muted)">Corte lateral</text>
-  <text x="262" y="110" text-anchor="end" class="small" style="fill:var(--muted)">Vértebra</text>
-  <text x="262" y="285" text-anchor="end" class="small" style="fill:var(--violet)">Disco</text>
+  <text x="262" y="246" text-anchor="end" class="small" style="fill:var(--muted)">Vértebra</text>
+  <text x="262" y="300" text-anchor="end" class="small" style="fill:var(--violet)">Disco</text>
   <text x="140" y="300" text-anchor="middle" class="lab">Sin radiación:</text>
   <text x="140" y="318" text-anchor="middle" class="small">usa imán y ondas</text>
   <text x="140" y="336" text-anchor="middle" class="small">de radio</text>
