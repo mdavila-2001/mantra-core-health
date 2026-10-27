@@ -60,9 +60,10 @@ tablet y teléfono.
 
 ## Riesgos y decisiones
 
-- **Emergencia en el teléfono:** el menú lateral es un cajón, así que en el teléfono ahora son
-  dos toques (abrir el menú y tocar Emergencia), no uno. Si en el teléfono tiene que seguir a un
-  toque, se puede dejar ahí sólo el ícono. Lo decide el propietario.
+- **Emergencia en el teléfono (resuelto, propietario 27/10/2026):** donde el menú es un cajón
+  (≤ 900 px) Emergencia vuelve a la cabecera como ícono circular rojo, a un toque. Medido con
+  Playwright: 360, 390 y 900 px visible y sin desborde horizontal; en 1440 px oculto (ya está en
+  el menú). Capturas `evidencia/em-*.png`, incluido el diálogo de números abierto desde el ícono.
 - **Aviso de demo en el teléfono:** no se movió. Sigue tapando el final del texto de la portada
   (pasaba igual antes de este cambio).
 - Ya pasaba antes, fuera de alcance: en `/my-account/spending` el menú lateral marca «Mi perfil»
