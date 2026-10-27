@@ -324,6 +324,12 @@ const LATENCIA_POR_PREFIJO: readonly (readonly [string, number])[] = [
   ['/terminology', 40],
   ['/scheduling/slots', 40],
   ['/profiles', 90],
+  // La calle de un punto: el estado «Buscando la calle de este punto…» tiene
+  // que llegar a verse (y a capturarse), como la subida de documentos. 2,5 s
+  // es un supuesto, no una medición: la API real espacia las consultas a una
+  // por segundo y, si el primer proveedor cae, prueba un segundo. Con 800 ms
+  // la respuesta llegaba en medio de la captura.
+  ['/public/geo/reverse', 2500],
   // Cada parte de una subida de resultados: con la latencia por omisión, un
   // archivo de un giga (128 partes) tardaría 15 s sólo en esperas simuladas.
   ['/diagnostics/lab/result-uploads', 25],

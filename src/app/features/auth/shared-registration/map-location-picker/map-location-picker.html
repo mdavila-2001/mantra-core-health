@@ -75,6 +75,7 @@
         size="sm"
         [attr.data-testid]="ids().confirmar"
         [disabled]="outsideOperatingCountries()"
+        [attr.aria-describedby]="outsideOperatingCountries() ? outsideNoticeId : null"
         (clicked)="confirmAddressActual()"
       >
         Confirmar dirección actual
@@ -226,6 +227,7 @@
         <app-alert
           tone="warning"
           [title]="'Por el momento sólo operamos en ' + operatingCountriesName"
+          [id]="outsideNoticeId"
           [attr.data-testid]="ids().mapa + '-fuera-de-bolivia'"
         >
           El punto que marcó está fuera de {{ operatingCountriesName }}. Mueva el pin a una dirección

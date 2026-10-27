@@ -44,6 +44,9 @@ function campo(page: Page, testId: string) {
 }
 
 async function capturar(page: Page, nombre: string): Promise<void> {
+  // La botonera del modo demo flota encima del contenido y tapaba justo lo
+  // que hay que mirar; en la captura no aporta nada.
+  await page.addStyleTag({ content: 'app-mock-banner { display: none !important; }' });
   // El bloque entero, no la ventana: en móvil la ventana cortaba la ficha y
   // el aviso a la mitad (segunda pasada de la revisión visual).
   const bloque = page.locator(`[data-testid="${MAPA}-deducido"]`);
@@ -97,6 +100,31 @@ for (const tema of TEMAS) {
         await capturar(page, `bolivia-${tema}-${vp.nombre}`);
       });
 
+      test('mientras busca lo dice, y donde no hay calle ni distrito lo dice sin inventarlos', async ({
+        page,
+      }) => {
+        await empezarElAlta(page);
+        // Zona rural en La Guardia (Santa Cruz): el doble de demo
+        // responde sin calle ni distrito.
+        await ponerPinEnCoordenadas(page, '-17,92', '-63,31');
+        await expect(campo(page, 'registration-home-geocoding-notice')).toHaveValue(/Buscando/);
+        await expect(campo(page, `${MAPA}-distrito`)).toHaveValue(/Buscando/);
+        await capturar(page, `buscando-${tema}-${vp.nombre}`);
+        // La captura tiene que haber salido ANTES de la respuesta: si el estado
+        // ya cambió, la imagen puede mostrar otro y la prueba no lo vería.
+        await expect(campo(page, 'registration-home-geocoding-notice')).toHaveValue(/Buscando/, {
+          timeout: 0,
+        });
+
+        await expect(campo(page, 'registration-home-geocoding-notice')).toHaveValue(
+          /no tiene un nombre de calle/,
+        );
+        await expect(campo(page, `${MAPA}-distrito`)).toHaveValue(/no tiene un distrito/);
+        await expect(page.getByTestId(`${MAPA}-fuera-de-bolivia`)).toHaveCount(0);
+        await expect(page.getByTestId(`${MAPA}-localidad-ficha-municipio`)).toBeVisible();
+        await capturar(page, `sin-distrito-${tema}-${vp.nombre}`);
+      });
+
       test('fuera de Bolivia, avisa y no dibuja el mapa de Bolivia', async ({ page }) => {
         await empezarElAlta(page);
         await ponerPinEnCoordenadas(page, '40,4168', '-3,7038');
@@ -105,10 +133,10 @@ for (const tema of TEMAS) {
         await expect(aviso).toBeVisible();
         await expect(aviso).toContainText('Por el momento sólo operamos en Bolivia');
         // El aviso dice «para continuar»: confirmar ese punto no se puede.
-        await expect(page.getByTestId('registro-confirmar-direccion')).toHaveAttribute(
-          'aria-disabled',
-          'true',
-        );
+        const confirmar = page.getByTestId('registro-confirmar-direccion');
+        await expect(confirmar).toHaveAttribute('aria-disabled', 'true');
+        // Quien llega al botón con el teclado oye por qué está deshabilitado.
+        await expect(confirmar).toHaveAccessibleDescription(/sólo operamos en Bolivia/);
         await expect(page.getByTestId(`${MAPA}-localidad-mapa`)).toHaveCount(0);
         await expect(campo(page, 'registration-home-geocoding-notice')).toHaveValue(
           /Calle de demostración/,
