@@ -114,3 +114,12 @@ La evidencia es sólida. La revisión Cochrane de McCarthy y colaboradores (2015
 
 Los beneficios no son permanentes: tienden a atenuarse en un año si el ejercicio no se mantiene. Por eso se estudian programas de mantenimiento, grupos comunitarios, aplicaciones y llamadas de seguimiento. Aun así, con la rehabilitación disponible, sólo una pequeña proporción de quienes se beneficiarían la reciben, por falta de plazas, de derivación y de transporte; esa brecha es una de las principales prioridades de las sociedades científicas.
 
+## [references]
+
+- Rehabilitación pulmonar | https://medlineplus.gov/spanish/pulmonaryrehabilitation.html | MedlinePlus
+- Pulmonary Rehabilitation | https://www.nhlbi.nih.gov/health/pulmonary-rehabilitation | NHLBI (NIH)
+- Pulmonary Rehabilitation (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK563166/ | NCBI Bookshelf
+- Drenaje postural | https://medlineplus.gov/spanish/ency/patientinstructions/000051.htm | MedlinePlus
+- Uso del espirómetro de incentivo | https://medlineplus.gov/spanish/ency/patientinstructions/000451.htm | MedlinePlus
+- Chronic obstructive pulmonary disease (COPD): treatment | https://www.nhs.uk/conditions/chronic-obstructive-pulmonary-disease-copd/treatment/ | NHS
+- EPOC (enfermedad pulmonar obstructiva crónica) | https://medlineplus.gov/spanish/copd.html | MedlinePlus

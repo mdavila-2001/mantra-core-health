@@ -345,3 +345,14 @@ Las organizaciones de salud pública proponen respuestas como la inclusión de l
 Un componente adicional es el diagnóstico: en lugares sin espirometría el asma se infradiagnostica o se confunde con infecciones respiratorias repetidas, en particular en los niños, y el uso del salbutamol puede darse sin que exista un plan de seguimiento. La disponibilidad del fármaco es necesaria, pero no suficiente: se requiere un sistema que garantice el diagnóstico, el tratamiento de fondo y la educación.
 
 En los países de ingresos altos, la desigualdad adopta otras formas, ligadas a los seguros, a la calidad de la vivienda y a la exposición a la contaminación del aire, que se relacionan con las diferencias en la frecuencia y la gravedad del asma entre grupos de población. El inhalador es un medicamento de bolsillo, pero el asma depende en parte de factores sociales que ningún inhalador resuelve.
+
+## [references]
+
+- Inhalación oral de albuterol (salbutamol) | https://medlineplus.gov/spanish/druginfo/meds/a682145-es.html | MedlinePlus
+- Albuterol (StatPearls) | https://www.ncbi.nlm.nih.gov/books/NBK482272/ | NCBI Bookshelf
+- Salbutamol: inhaler to relieve asthma and breathlessness | https://www.nhs.uk/medicines/salbutamol-inhaler/ | NHS
+- Centro de información de medicamentos (CIMA): fichas técnicas y prospectos | https://cima.aemps.es/cima/publico/home.html | AEMPS
+- Asma (nota descriptiva) | https://www.who.int/es/news-room/fact-sheets/detail/asthma | OMS
+- Asma | https://medlineplus.gov/spanish/asthma.html | MedlinePlus
+- Global Strategy for Asthma Management and Prevention (informes) | https://ginasthma.org/reports/ | Global Initiative for Asthma (GINA)
+- WHO Model Lists of Essential Medicines | https://www.who.int/groups/expert-committee-on-selection-and-use-of-essential-medicines/essential-medicines-lists | OMS
