@@ -63,4 +63,4 @@ demo; es previo a este cambio y la pantalla cae al motor local (se ve en las cap
 1. **«Ponele los puntos» (Dependientes)**: confirmado por el cliente — es el punto final de los textos.
 2. **«Mejores recomendaciones médicas»**: se interpretó como la tarjeta del buscador con el porqué y la
    marca «Empiece por acá». No se muestran cantidades de médicos: el chequeo no tiene ese dato.
-3. **Lista/Calendario**: se oculta sólo sin citas; con citas sigue (el calendario es una función).
+3. **Lista/Calendario**: el cliente pidió sacarlo también con citas. Ya no se ofrece; las citas se ven siempre en lista. El calendario queda en el componente, alcanzable sólo con `?vista=calendario` en la URL (`evidencia/tests-citas-sin-selector.txt`: 141/141).

@@ -18,7 +18,7 @@
     tarjeta del buscador (foto, ícono, nombre, por qué) con la primera marcada como «Empiece por
     acá». No se agregan cantidades de médicos (el chequeo no tiene ese recuento: sería inventado).
   - «Sus citas» + Lista/Calendario: el título queda sólo para lector de pantalla (el encabezado
-    «Mis citas» ya lo dice) y el selector se oculta cuando no hay ninguna cita.
+    «Mis citas» ya lo dice) y el selector se oculta (primero sólo sin citas; después, a pedido del cliente, siempre).
 
 ## H1 — Ajustes visuales del paciente
 **CA:** Dado un paciente, cuando abre cada pantalla, entonces ve los seis cambios pedidos.

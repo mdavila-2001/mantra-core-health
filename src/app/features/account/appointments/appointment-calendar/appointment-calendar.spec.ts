@@ -41,6 +41,7 @@ function eventos(fixture: ComponentFixture<AppointmentCalendar>): HTMLButtonElem
 }
 
 describe('AppointmentCalendar', () => {
+  afterEach(() => vi.useRealTimers());
   it('dibuja seis semanas completas para que la grilla no cambie de alto', () => {
     const { fixture } = montar([]);
 
@@ -122,6 +123,10 @@ describe('AppointmentCalendar', () => {
   });
 
   it('al cambiar de mes la cita de hoy deja de verse, y «Hoy» la trae de vuelta', () => {
+    // Fecha fija, como en dev: con la de hoy, a fin de mes la grilla del mes
+    // siguiente todavía muestra la semana de hoy y la cita no desaparece.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 15, 12));
     const { fixture } = montar([turno()]);
     expect(eventos(fixture)).toHaveLength(1);
 
@@ -138,6 +143,7 @@ describe('AppointmentCalendar', () => {
     hoy?.click();
     fixture.detectChanges();
     expect(eventos(fixture)).toHaveLength(1);
+    vi.useRealTimers();
   });
 
   it('cada día se anuncia con su fecha y cuántas citas tiene', () => {

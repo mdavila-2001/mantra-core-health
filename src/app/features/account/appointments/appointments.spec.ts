@@ -187,8 +187,8 @@ describe('Appointments', () => {
         'Próximas 1',
         'Anteriores 2',
       ]);
-      // Con citas, sí hay algo que ver de dos formas: vuelve el selector.
-      expect(fixture.nativeElement.querySelector('[data-testid="turnos-vistas"]')).not.toBeNull();
+      // Sin selector Lista/Calendario también con citas (pedido del cliente, 27/10/2026).
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-vistas"]')).toBeNull();
       const proximas = fixture.nativeElement.querySelector('[data-testid="turnos-lista-upcoming"]');
       const anteriores = fixture.nativeElement.querySelector('[data-testid="turnos-lista-past"]');
       // La fecha se pinta sin año; el 1 de marzo sólo existe en la futura.

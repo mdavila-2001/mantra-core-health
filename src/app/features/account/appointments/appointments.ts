@@ -49,8 +49,6 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
-import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -382,7 +380,6 @@ const SEDE_CUALQUIERA = 'cualquiera';
     ReferenceCombobox,
     RouterLink,
     SearchField,
-    SegmentedControl,
     Select,
   ],
   templateUrl: './appointments.html',
@@ -487,17 +484,6 @@ export class Appointments {
   protected readonly seleccionado = signal<string | null>(
     this.route.snapshot.queryParamMap.get(PARAM_DE_TURNO),
   );
-
-  /** Las dos formas de mirar la misma colección (FT-04). */
-  protected readonly vistasDisponibles: readonly SegmentedOption<VistaDeTurnos>[] = [
-    { value: 'lista', label: 'Lista', icon: 'orders', description: 'Ver sus citas como lista' },
-    {
-      value: 'calendario',
-      label: 'Calendario',
-      icon: 'calendar',
-      description: 'Ver sus citas en un calendario',
-    },
-  ];
 
   protected elegirVista(vista: VistaDeTurnos): void {
     void this.router.navigate([], {
