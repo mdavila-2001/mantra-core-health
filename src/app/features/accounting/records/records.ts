@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   type TemplateRef,
   untracked,
@@ -27,6 +28,7 @@ import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
@@ -188,6 +190,30 @@ export class SimpleAccounting {
    * escribir lo resuelve la API.
    */
   readonly version = input<AccountingVersion>('doctor');
+
+  /**
+   * Avisa que se guardó un gasto, un activo o una deuda. El resumen lo usa
+   * para volver a leer sus cifras sin que el médico tenga que recargar.
+   */
+  readonly anotado = output<void>();
+
+  /**
+   * Los atajos de «¿Qué quiere anotar?» bajo las tres cifras: lo que un médico
+   * viene a hacer, a un clic y con ícono y texto, sin pasar por la pestaña de
+   * tablas. Abren el mismo formulario que el botón «Nuevo …» de cada tabla.
+   */
+  protected readonly atajos: readonly { kind: RecordKind; rotulo: string; icono: NavIconName }[] = [
+    { kind: 'EXPENSE', rotulo: 'Anotar un gasto', icono: 'receipt' },
+    { kind: 'ASSET', rotulo: 'Registrar un equipo', icono: 'package' },
+    { kind: 'DEBT', rotulo: 'Anotar una deuda', icono: 'billing' },
+  ];
+
+  /** El ícono de cada pestaña de registros, junto a su nombre. */
+  protected readonly iconoDe: Readonly<Record<RecordKind, NavIconName>> = {
+    EXPENSE: 'receipt',
+    ASSET: 'package',
+    DEBT: 'billing',
+  };
   protected readonly isAccountant = computed(() => this.version() === 'contador');
 
   private readonly accounting = inject(SimpleAccountingClient);
@@ -393,8 +419,10 @@ export class SimpleAccounting {
   private loadAll(): void {
     const parte = this.parte();
     if (parte !== 'registros') this.loadSummary();
-    if (parte === 'numeros') return;
+    // Las cuentas también en el resumen: los atajos «Anotar un gasto»… abren
+    // el formulario, y su lista de tipos sale de estas cuentas.
     this.loadAccounts();
+    if (parte === 'numeros') return;
     for (const kind of KINDS) this.loadRecords(kind);
     this.loadTransactions();
   }
@@ -525,7 +553,9 @@ export class SimpleAccounting {
 
   protected savedRecord(registro: SimpleRecord): void {
     this.notices.success(TEXTS[registro.kind].guardado, 'Guardado');
-    this.loadRecords(registro.kind);
+    // En el resumen no hay tabla que refrescar: sólo se avisa.
+    if (this.parte() !== 'numeros') this.loadRecords(registro.kind);
+    this.anotado.emit();
   }
 
   protected savedTransaction(): void {

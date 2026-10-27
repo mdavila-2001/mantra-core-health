@@ -64,7 +64,7 @@ test('el doctor ve sus tres números y lleva gastos, activos, deudas, transaccio
   // Tableros y registros son dos pestañas: en «Resumen» no hay tablas…
   await expect(page.getByTestId('contabilidad-registros')).toHaveCount(0);
   // …y en «Registros» no hay tableros.
-  await page.getByRole('tab', { name: 'Registros', exact: true }).click();
+  await page.getByRole('tab', { name: /^(Registros|Anotar gastos, equipos y deudas)$/ }).click();
   await expect(page.getByTestId('contabilidad-numeros')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: '¿Cuánto hizo?' })).toHaveCount(0);
   const registros = page.getByTestId('contabilidad-registros');
@@ -181,7 +181,7 @@ test('el doctor ve sus tres números y lleva gastos, activos, deudas, transaccio
 
   /* ---- 6 · recarga: lo guardado sigue ahí ------------------------------ */
   await page.reload();
-  await page.getByRole('tab', { name: 'Registros', exact: true }).click();
+  await page.getByRole('tab', { name: /^(Registros|Anotar gastos, equipos y deudas)$/ }).click();
   const tras = page.getByTestId('contabilidad-registros');
   await expect(tras.getByTestId('tabla-EXPENSE')).toContainText('Perfil lipídico derivado', {
     timeout: 30_000,

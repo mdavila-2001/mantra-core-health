@@ -6,7 +6,7 @@
 @if (parte() !== 'registros') {
 <section class="numeros" aria-labelledby="titulo-numeros">
   <div class="numeros__cabecera">
-    <app-section-heading icono="chart" titulo="Su consultorio en tres cifras" id="titulo-numeros" />
+    <app-section-heading icono="chart" titulo="Sus pacientes y lo que cobró" id="titulo-numeros" />
     <app-segmented-control
       [options]="periods"
       [value]="period()"
@@ -42,6 +42,26 @@
       </div>
     }
   </app-view-state-host>
+
+  <!-- Lo que el médico viene a hacer, a un clic: ícono y texto, nunca sólo
+       uno de los dos. -->
+  <div class="atajos" role="group" aria-labelledby="titulo-atajos" data-testid="contabilidad-atajos">
+    <p class="atajos__titulo" id="titulo-atajos">¿Qué quiere anotar?</p>
+    <div class="atajos__botones">
+      @for (a of atajos; track a.kind) {
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          [attr.data-testid]="'atajo-' + a.kind"
+          (clicked)="newRecord(a.kind)"
+        >
+          <app-nav-icon [name]="a.icono" />
+          {{ a.rotulo }}
+        </button>
+      }
+    </div>
+  </div>
 </section>
 }
 
@@ -83,6 +103,7 @@
   <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
     @for (kind of kinds; track kind) {
       <app-tab
+        [icon]="iconoDe[kind]"
         [label]="
           (kind === 'EXPENSE' ? 'Gastos' : kind === 'ASSET' ? 'Activos' : 'Deudas') +
           count(records()[kind])
@@ -105,6 +126,7 @@
               [attr.data-testid]="'nuevo-' + kind"
               (clicked)="newRecord(kind)"
             >
+              <app-nav-icon name="note" />
               {{ texts[kind].nuevo }}
             </button>
           </div>
@@ -131,7 +153,7 @@
     }
 
     @if (isAccountant()) {
-      <app-tab [label]="'Transacciones' + count(transactions())">
+      <app-tab icon="merge" [label]="'Transacciones' + count(transactions())">
         <div class="registros__panel">
           <p class="registros__explicacion">{{ explicacionDeTransacciones }}</p>
           <div class="registros__barra">
@@ -149,6 +171,7 @@
               data-testid="nueva-transaccion"
               (clicked)="modal.set({ tipo: 'transaccion', transaccion: null })"
             >
+              <app-nav-icon name="note" />
               Nueva transacción
             </button>
           </div>
@@ -173,7 +196,7 @@
         </div>
       </app-tab>
 
-      <app-tab [label]="'Cuentas' + count(accounts())">
+      <app-tab icon="book" [label]="'Cuentas' + count(accounts())">
         <div class="registros__panel">
           <p class="registros__explicacion">{{ explicacionDeCuentas }}</p>
           <div class="registros__barra">
@@ -191,6 +214,7 @@
               data-testid="nueva-cuenta"
               (clicked)="modal.set({ tipo: 'cuenta', cuenta: null })"
             >
+              <app-nav-icon name="note" />
               Nueva cuenta
             </button>
           </div>

@@ -538,14 +538,19 @@ describe('Resumen contable', () => {
         (t as HTMLElement).textContent?.trim() ?? '',
       );
 
-    it('son dos pestañas —Resumen y Registros— y abre en Resumen', () => {
+    it('son dos pestañas —Resumen y, en Doctor, «Anotar gastos, equipos y deudas»— y abre en Resumen', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
       fixture.detectChanges();
 
-      expect(rotulos(fixture)).toEqual(['Resumen', 'Registros']);
-      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Bienes y deudas', 'Flujo de dinero']);
+      expect(rotulos(fixture)).toEqual(['Resumen', 'Anotar gastos, equipos y deudas']);
+      expect(subrotulos(fixture)).toEqual([
+        'Ganancias',
+        'Por cobrar y por pagar',
+        'Lo que tiene y lo que debe',
+        'Caja y banco',
+      ]);
       const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
       expect(texto).toContain('¿Cuánto ganó?');
 
@@ -561,7 +566,12 @@ describe('Resumen contable', () => {
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
       fixture.detectChanges();
 
-      expect(subrotulos(fixture)).toEqual(['Ingresos y gastos', 'Pendientes', 'Bienes y deudas', 'Flujo de dinero']);
+      expect(subrotulos(fixture)).toEqual([
+        'Ganancias',
+        'Por cobrar y por pagar',
+        'Lo que tiene y lo que debe',
+        'Caja y banco',
+      ]);
 
       // Movimientos
       expect(fixture.componentInstance.subtab()).toBe(0);

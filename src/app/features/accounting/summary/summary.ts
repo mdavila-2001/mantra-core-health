@@ -48,6 +48,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -237,6 +238,7 @@ interface Dinero {
     Chip,
     CashFlow,
     FormField,
+    NavIcon,
     PageHeader,
     RouterLink,
     SectionHeading,
