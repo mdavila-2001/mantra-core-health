@@ -48,12 +48,16 @@
   <ng-template appCampoPersonalizado="administrador">
     <app-reference-combobox
       [selected]="administrador()"
-      [options]="candidatosAdmin()"
-      [loading]="buscandoAdmin()"
+      [options]="administradores.candidatos()"
+      [loading]="administradores.buscando()"
       placeholder="Nombre o correo"
       emptyMessage="Ninguna cuenta coincide"
-      (searched)="buscarAdministrador($event)"
+      (searched)="administradores.buscar($event)"
       (selectionChange)="form.controls.administrador.setValue($event)"
     />
+    <!-- Un fallo de la búsqueda no es «ninguna cuenta coincide»: se dice. -->
+    @if (administradores.error(); as fallo) {
+      <app-alert tone="error" class="busqueda-fallida" data-testid="alta-suborganizacion-admin-error">{{ fallo }}</app-alert>
+    }
   </ng-template>
 </app-paginated-form>

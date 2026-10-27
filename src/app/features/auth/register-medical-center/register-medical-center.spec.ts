@@ -2,11 +2,11 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
-import { MEDICAL_ORGANIZATION_TYPES } from '../../../core/data-access/iam/medical-center-registration.client';
+import { MEDICAL_ORGANIZATION_TYPES } from '../../../core/data-access/directory/directory.types';
 import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-center';
 
 const RUTA_ALTA = '/iam/auth/register-organization';
@@ -38,7 +38,14 @@ describe('RegisterMedicalCenter', () => {
     errorMessage: () => string | null;
     paginas: () => readonly {
       titulo: string;
-      campos: readonly { key: string; options?: readonly { value: string; label: string }[] }[];
+      disposicion?: string;
+      campos: readonly {
+        key: string;
+        ancho?: string;
+        opcionesEn?: string;
+        hint?: string;
+        options?: readonly { value: string; label: string }[];
+      }[];
     }[];
   }
   const interno = (): Interno => fixture.componentInstance as unknown as Interno;
@@ -169,6 +176,71 @@ describe('RegisterMedicalCenter', () => {
     expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
   });
 
+  it('mientras el catálogo no responde ofrece la lista de respaldo, y su fallo la conserva sin romper', async () => {
+    // C2 de la segunda revisión: con un catálogo lento el grupo no puede quedar
+    // vacío. El fallo tiene que estar manejado: un error sin `error` en la
+    // suscripción sale como excepción no capturada y la prueba cae.
+    const pendiente = new Subject<{ options: { code: string; conceptId: string }[] }>();
+    const contexto = TestBed.inject(SystemContextClient) as unknown as {
+      dynamicEnum: (destino: string) => unknown;
+    };
+    const original = contexto.dynamicEnum;
+    contexto.dynamicEnum = (destino: string) =>
+      destino === DESTINO_TIPO ? pendiente.asObservable() : original(destino);
+    await rearmar();
+
+    expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
+
+    expect(() => pendiente.error(new Error('catálogo caído'))).not.toThrow();
+    expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
+  });
+
+  it('un catálogo que responde sin ninguno de los cinco ofrece la lista tipada entera', async () => {
+    tiposDelCatalogo = ['PROVIDER', 'PHARMACY', 'PAYER'];
+    await rearmar();
+
+    expect(opcionesDeTipo().map((o) => o.value)).toEqual([...MEDICAL_ORGANIZATION_TYPES]);
+  });
+
+  it('un tipo ya marcado que el catálogo deja de ofrecer se vacía y no sale a la red', async () => {
+    const pendiente = new Subject<{ options: { code: string; conceptId: string }[] }>();
+    const contexto = TestBed.inject(SystemContextClient) as unknown as {
+      dynamicEnum: (destino: string) => unknown;
+    };
+    const original = contexto.dynamicEnum;
+    contexto.dynamicEnum = (destino: string) =>
+      destino === DESTINO_TIPO ? pendiente.asObservable() : original(destino);
+    await rearmar();
+
+    // La persona eligió «Clínica» (p. ej. con la lista de respaldo) y después
+    // llega un catálogo que no la publica.
+    completar('CLINIC');
+    fixture.componentInstance.form.controls.tenantType.markAsTouched();
+    pendiente.next({
+      options: ['HOSPITAL', 'MEDICAL_OFFICE'].map((code) => ({ code, conceptId: `tt-${code}` })),
+    });
+
+    const tipo = fixture.componentInstance.form.controls.tenantType;
+    expect(opcionesDeTipo().map((o) => o.value)).toEqual(['HOSPITAL', 'MEDICAL_OFFICE']);
+    expect(tipo.value).toBe('');
+    expect(tipo.hasError('required')).toBe(true);
+    expect(fixture.componentInstance.form.invalid).toBe(true);
+
+    fixture.componentInstance.submit();
+    http.expectNone(RUTA_ALTA);
+  });
+
+  it('un valor que no está entre las opciones vigentes es inválido aunque no esté vacío', async () => {
+    tiposDelCatalogo = ['HOSPITAL', 'MEDICAL_OFFICE'];
+    await rearmar();
+
+    const tipo = fixture.componentInstance.form.controls.tenantType;
+    tipo.setValue('CLINIC');
+    expect(tipo.hasError('notOffered')).toBe(true);
+    tipo.setValue('HOSPITAL');
+    expect(tipo.valid).toBe(true);
+  });
+
   it('sin tipo de institución no sale a la red y lo marca', () => {
     completar('');
     fixture.componentInstance.submit();
@@ -204,6 +276,30 @@ describe('RegisterMedicalCenter', () => {
       ['ownerName', 'email', 'password'],
     ]);
     expect(Math.max(...paginas.map((p) => p.campos.length))).toBeLessThanOrEqual(4);
+  });
+
+  it('la página 1 cruza el tipo a lo ancho, con sus opciones en rejilla, y la 2 va en tres columnas', () => {
+    const [organizacion, cuenta] = interno().paginas();
+    const tipo = organizacion!.campos.find((c) => c.key === 'tenantType')!;
+
+    expect(organizacion!.disposicion).toBe('dos-columnas');
+    expect(tipo.ancho).toBe('completo');
+    expect(tipo.opcionesEn).toBe('rejilla');
+    expect(cuenta!.disposicion).toBe('tres-columnas');
+  });
+
+  it('la contraseña avisa su mínimo antes de equivocarse, como el alta de usuarios', () => {
+    const clave = interno().paginas()[1]!.campos.find((c) => c.key === 'password')!;
+    expect(clave.hint).toBe('Mínimo 8 caracteres.');
+  });
+
+  it('la razón social vacía tiene su propio mensaje', () => {
+    const razonSocial = fixture.componentInstance.form.controls.legalName;
+    razonSocial.markAsTouched();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Escriba la razón social de la organización.',
+    );
   });
 
   it('la razón social admite 300 caracteres y rechaza 301, como la API', () => {

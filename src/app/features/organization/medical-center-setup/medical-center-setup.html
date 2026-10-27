@@ -1,54 +1,86 @@
 <app-page-header
-  title="Configurar centro médico"
+  title="Configurar práctica"
   subtitle="Abra la práctica de su organización con su primera sede. Después podrá publicar sus procedimientos y afiliar a sus médicos."
 />
 
 <app-card class="setup" padding="lg" data-testid="medical-center-setup-card">
-  @if (created(); as done) {
-    <div class="setup__done" data-testid="medical-center-setup-exito">
-      <h2 class="setup__done-title">Su centro médico quedó configurado</h2>
-      <p class="setup__done-text">
-        La sede «{{ form.controls.siteName.value.trim() }}» ya tiene su dirección y su punto en el mapa.
-      </p>
-      <dl class="setup__ids">
-        <div>
-          <dt>Práctica</dt>
-          <dd data-testid="medical-center-setup-practice-id">{{ done.practiceId }}</dd>
-        </div>
-        <div>
-          <dt>Sede</dt>
-          <dd data-testid="medical-center-setup-site-id">{{ done.practiceSiteId }}</dd>
-        </div>
-      </dl>
-    </div>
-  } @else {
-    @if (errorMessage(); as message) {
-      <app-alert tone="error" data-testid="medical-center-setup-error">{{ message }}</app-alert>
-    }
-
-    <app-paginated-form
-      [paginas]="pages"
-      [form]="form"
-      label="Configurar centro médico"
-      submitLabel="Guardar centro médico"
-      [pending]="saving()"
-      (enviado)="save()"
-      data-testid="medical-center-setup-form"
+  <app-view-state-host [state]="estado()" (retry)="cargarVerificacion()">
+    <!-- S3: la organización todavía no fue verificada. Se dice al entrar, con
+         su próxima acción, en vez de dejar completar el formulario para
+         recibir el 422 al final. -->
+    <app-empty-state
+      vsh-empty
+      variant="empty"
+      title="Su organización todavía no fue verificada"
+      description="Podrá abrir su práctica y su primera sede cuando la plataforma la verifique. Mientras tanto, revise que los datos de su organización estén completos."
+      data-testid="medical-center-setup-unverified"
     >
-      <ng-template appCampoPersonalizado="point">
-        <app-map-location-picker
-          pinId="medical-center-site"
-          etiquetaConfirmada="Sede del centro médico"
-          etiquetaQuitar="Quitar la ubicación de la sede"
-          etiquetaMapa="La sede en el mapa"
-          indicacionMarcar="Toque el mapa en el lugar exacto de la sede."
-          [ids]="pointIds"
-          etiquetaFicha="La dirección de la sede"
-          [inicial]="form.controls.point.value"
-          (confirmado)="setPoint($event)"
-          (localidad)="writeLocality($event)"
-        />
-      </ng-template>
-    </app-paginated-form>
-  }
+      <!-- Un reloj y no la bandeja vacía: no falta nada que cargar, falta que
+           la plataforma termine de revisar. Un `<svg>` proyectado y no un
+           `app-nav-icon`: el medallón le da al svg la mitad de su disco, y el
+           host del ícono lo dejaba en 20 px dentro de un disco de 54. -->
+      <svg
+        empty-icon
+        data-testid="medical-center-setup-unverified-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="8.6" />
+        <path d="M12 7.4V12l3 1.8" />
+      </svg>
+      <a app-link empty-actions [routerLink]="proximaAccion().route">{{ proximaAccion().label }}</a>
+    </app-empty-state>
+
+    @if (created(); as done) {
+      <div class="setup__done" data-testid="medical-center-setup-exito">
+        <h2 class="setup__done-title">Su práctica quedó configurada</h2>
+        <p class="setup__done-text">
+          La sede «{{ form.controls.siteName.value.trim() }}» ya tiene su dirección y su punto en el mapa.
+        </p>
+        <dl class="setup__ids">
+          <div>
+            <dt>Práctica</dt>
+            <dd data-testid="medical-center-setup-practice-id">{{ done.practiceId }}</dd>
+          </div>
+          <div>
+            <dt>Sede</dt>
+            <dd data-testid="medical-center-setup-site-id">{{ done.practiceSiteId }}</dd>
+          </div>
+        </dl>
+      </div>
+    } @else {
+      @if (errorMessage(); as message) {
+        <app-alert tone="error" data-testid="medical-center-setup-error">{{ message }}</app-alert>
+      }
+
+      <app-paginated-form
+        [paginas]="pages"
+        [form]="form"
+        label="Configurar práctica"
+        submitLabel="Guardar la configuración"
+        [pending]="saving()"
+        (enviado)="save()"
+        data-testid="medical-center-setup-form"
+      >
+        <ng-template appCampoPersonalizado="point">
+          <app-map-location-picker
+            pinId="medical-center-site"
+            etiquetaConfirmada="Sede de su organización"
+            etiquetaQuitar="Quitar la ubicación de la sede"
+            etiquetaMapa="La sede en el mapa"
+            indicacionMarcar="Toque el mapa en el lugar exacto de la sede."
+            [ids]="pointIds"
+            etiquetaFicha="La dirección de la sede"
+            [inicial]="form.controls.point.value"
+            (confirmado)="setPoint($event)"
+            (localidad)="writeLocality($event)"
+          />
+        </ng-template>
+      </app-paginated-form>
+    }
+  </app-view-state-host>
 </app-card>

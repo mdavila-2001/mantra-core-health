@@ -2,3 +2,20 @@
    `../registro-compartido/registro.css`, que esta pantalla declara junto a esta
    hoja en sus `styleUrls`. */
 
+
+/* El botón del éxito: a lo ancho en el teléfono, donde es la acción del
+   pulgar, y a su medida desde 780 px. Estirado a los 1214 px de la tarjeta se
+   leía como una barra, no como un botón. */
+@media (min-width: 780px) {
+  .registro__submit {
+    width: auto;
+    align-self: flex-start;
+  }
+}
+
+/* «Atrás» (fantasma) alinea su TEXTO con el borde de los campos: el relleno
+   horizontal de un botón `md` es `--sp-5`. Sólo esta alta lo declara; el
+   organismo, por omisión, no corre nada. */
+app-paginated-form {
+  --paginated-form-atras-sangria: var(--sp-5);
+}

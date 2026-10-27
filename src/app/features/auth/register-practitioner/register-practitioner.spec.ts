@@ -294,33 +294,28 @@ describe('RegisterPractitioner', () => {
     }
 
     it('presenta los bloques en el orden pedido (AC-05-1)', () => {
+      // Nueve páginas desde el 26/10/2026 (pedido del propietario): eran
+      // quince y el alta se hacía eterna. Se juntaron por tema.
       expect(component.paginasProfesional().map((pagina) => pagina.clave)).toEqual([
         // Nombre y cédula comparten página, como en el alta de paciente.
         'name',
-        'profile',
-        'personal-contact',
+        // Datos personales, celular, correo de acceso y contraseña: el correo
+        // y la contraseña van JUNTOS, son las dos mitades del inicio de sesión.
         'access',
         'residence',
+        // Contacto y dirección del trabajo en una sola página.
         'workplace-location',
-        'own-office-contact',
-        // El consultorio propio es una sede del profesional, separada de la
-        // dirección laboral que se declara arriba.
+        // Contacto y ubicación del consultorio propio, en una sola página.
         'own-office',
         // El título profesional va ANTES de la habilitación: de él dependen el
-        // colegio que se ofrece ahí y la lista de especialidades. Preguntarlo
-        // después dejaba las dos cosas eligiéndose a ciegas.
+        // colegio y la lista de especialidades.
         'practice',
+        // La habilitación con sus respaldos al lado.
         'credentials',
-        // Los respaldos van pegados a la habilitación que respaldan, y los
-        // demás títulos justo después: es el orden del registro de procesos.
-        'credential-files',
-        'academic-titles',
+        // Especialidades y demás títulos: la formación, junta.
         'specialties',
-        // La firma y el sello (imágenes, opcionales) van justo antes de cerrar.
+        // La firma y el sello (imágenes, opcionales) cierran el alta.
         'signature-seal',
-        // La contraseña cierra el alta, sola: dejó de compartir página con los
-        // teléfonos del consultorio y el correo de trabajo.
-        'password',
       ]);
     });
 
@@ -333,50 +328,52 @@ describe('RegisterPractitioner', () => {
         'issuerAdministrativeAreaConceptId',
       ]);
       expect(camposDe('document')).toBeUndefined();
-      // AC-05-7: el sexo entra al formulario, y va antes de la fecha de
-      // nacimiento, como pide el orden.
-      // La ocupación se quitó del alta de profesional: lo que dice qué clase de
-      // profesional es, es el TÍTULO, y se pregunta en su propia página. En el
-      // alta de paciente la ocupación sigue, que es donde tiene sentido.
-      expect(camposDe('profile')).toEqual(['sexAtBirth', 'birthDate']);
-      // Los cinco contactos que pide el registro, repartidos en dos páginas: lo
-      // privado por un lado y lo del trabajo junto al acceso, que es el correo
-      // laboral (AC-05-6). La contraseña ya no vive acá: tiene página propia al
-      // final, porque no es un dato de contacto ni es opcional como los dos
-      // teléfonos con los que compartía pantalla.
-      expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
-      expect(camposDe('access')).toEqual(['workMobilePhone', 'workLandline', 'email']);
+      // El correo de acceso y la contraseña en la MISMA página (26/10/2026).
+      // AC-05-7: el sexo sigue antes de la fecha de nacimiento.
+      expect(camposDe('access')).toEqual([
+        'sexAtBirth',
+        'birthDate',
+        'mobilePhone',
+        'personalEmail',
+        'password',
+      ]);
       // Pedido del cliente del 26/10/2026: en cada ubicación lo único que se
-      // marca es el punto, y va primero (y solo) en su página. La calle, la
-      // zona y el municipio salen de él: siguen en el formulario, pero ya no
-      // son campos de ninguna página.
+      // marca es el punto. La calle, la zona y el municipio salen de él: siguen
+      // en el formulario, pero ya no son campos de ninguna página.
       expect(camposDe('residence')).toEqual(['gpsDomicilio']);
-      expect(camposDe('workplace-location')).toEqual(['gpsTrabajo']);
-      // El consultorio propio: contacto y ubicación en dos páginas opcionales. Es un calco del
-      // lugar de trabajo del alta de paciente, con el nombre que le da el
-      // dominio — quien ejerce puede atender en varios lugares, y éste es el
-      // único que no depende de que otro lo acepte.
-      expect(camposDe('own-office-contact')).toEqual(['officeName', 'officeContactPhone']);
-      expect(camposDe('own-office')).toEqual(['gpsConsultorio']);
+      expect(camposDe('workplace-location')).toEqual([
+        'workMobilePhone',
+        'workLandline',
+        'email',
+        'gpsTrabajo',
+      ]);
+      expect(camposDe('own-office')).toEqual(['officeName', 'officeContactPhone', 'gpsConsultorio']);
+      // La autoridad emisora ya no se pregunta (26/10/2026): el colegio se
+      // completa solo con el título profesional.
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
         'sedesLicenseNumber',
-        'regulatoryAuthority',
         'licenseIssueDate',
+        'credentialAttachments',
       ]);
       expect(camposDe('practice')).toEqual([
         'profilePhotoBase64',
         'professionalTitle',
-        // Universidad, país y ciudad entran como UN campo proyectado, igual
-        // que los tres nombres: son tres casillas y la página ya está en el
-        // tope de cuatro.
         'professionalTitleEducation',
         'professionalTitleFile',
       ]);
-      expect(camposDe('specialties')).toEqual(['especialidadesExtra']);
-      expect(camposDe('password')).toEqual(['password']);
-      expect(camposDe('credential-files')).toEqual(['credentialAttachments']);
-      expect(camposDe('academic-titles')).toEqual(['academicTitles']);
+      expect(camposDe('specialties')).toEqual(['especialidadesExtra', 'academicTitles']);
+      expect(camposDe('signature-seal')).toEqual(['signatureImageBase64', 'sealImageBase64']);
+      for (const vieja of [
+        'profile',
+        'personal-contact',
+        'own-office-contact',
+        'credential-files',
+        'academic-titles',
+        'password',
+      ]) {
+        expect(camposDe(vieja), `«${vieja}» se fusionó con otra página`).toBeUndefined();
+      }
     });
 
     /**
@@ -475,30 +472,18 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene quince páginas, y sólo la de nombre y cédula pasa de cuatro preguntas', () => {
-    // Dieciséis páginas porque el límite es de **campos por página**, no de
-    // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
-    // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
-    // de contactos privados —separada de la del acceso al dejar de mezclar el
-    // número personal con el del consultorio—, las dos de respaldos y títulos
-    // —que no caben en la de habilitación, ya llena— y la contraseña, que
-    // cierra el alta sola.
-    //
-    // La página laboral separa dirección/GPS de casa y sede propia, conforme a
-    // MED-03. El consultorio propio (08/09/2026) conserva su página porque sus cuatro campos
-    // no caben en la de residencia, que ya tiene tres, y meterlos ahí además
-    // mezclaría dos lugares distintos en una pregunta.
+  it('tiene nueve páginas, ninguna con más de seis preguntas', () => {
+    // Antes eran quince, de a cuatro campos como mucho (AC-05-2). El
+    // propietario pidió juntarlas (26/10/2026): ahora se agrupan por tema, y
+    // las páginas largas lo son por campos opcionales o que se abren solos
+    // (`showWhen`).
     const paginas = component.paginasProfesional();
-
-    // Nombre y cédula se juntaron (propietario, 22/10/2026): cinco preguntas,
-    // la única excepción al tope. Cualquier otra página sigue en cuatro.
-    expect(paginas.length).toBe(15);
+    expect(paginas.length).toBe(9);
     for (const pagina of paginas) {
-      const tope = pagina.clave === 'name' ? 5 : 4;
       expect(
         pagina.campos.length,
         `«${pagina.titulo}» pide ${pagina.campos.length}`,
-      ).toBeLessThanOrEqual(tope);
+      ).toBeLessThanOrEqual(6);
     }
   });
 
@@ -1592,10 +1577,7 @@ describe('RegisterPractitioner', () => {
         component.especialidadesExtra.set(['e-cardio', 'e-pedia']);
         component.writeSpecialtyStudy(0, 'number', 'ESP-77');
         component.chooseSpecialtyCountry(0, 'Bolivia');
-        component.chooseSpecialtyUniversity(
-          0,
-          component.specialtyUniversityOptions(0)[0].value,
-        );
+        component.chooseSpecialtyUniversity(0, component.specialtyUniversityOptions(0)[0].value);
         component.updateSpecialtyFiles(0, [archivoDe('cardio.pdf', 'application/pdf', 2048)]);
 
         completarProfesional({ especialidadesExtra: ['e-cardio', 'e-pedia'] });
@@ -2091,8 +2073,12 @@ describe('RegisterPractitioner', () => {
       // País y universidad del padrón son desplegables: una opción de la lista
       // no necesita tope. La ciudad no viaja todavía, así que tampoco.
       expect(desplegable(`registro-pro-titulo-pais-${id}`)).not.toBeNull();
+      // Con «Otra…» universidad el padrón no conoce sedes: la ciudad se
+      // escribe, y como no viaja, no lleva tope.
       expect(
-        enElPaso<HTMLInputElement>(`registro-pro-titulo-ciudad-${id}`)?.hasAttribute('maxlength'),
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-ciudad-otra-${id}`)?.hasAttribute(
+          'maxlength',
+        ),
       ).toBe(false);
     });
 
@@ -2185,9 +2171,9 @@ describe('RegisterPractitioner', () => {
         // La sede principal queda elegida. La UMSS tiene varias sedes, así que
         // se puede cambiar, pero sólo por otra de sus sedes.
         expect(elegidoEn('registro-pro-titulo-ciudad')).toBe('Cochabamba');
-        expect(
-          etiquetasDe('registro-pro-titulo-ciudad').filter((t) => t !== ''),
-        ).toContain('Punata');
+        expect(etiquetasDe('registro-pro-titulo-ciudad').filter((t) => t !== '')).toContain(
+          'Punata',
+        );
 
         // Un médico no ve la UPSA (no dicta Medicina): el filtro de salud ya
         // actúa sobre el título elegido.
@@ -2955,10 +2941,10 @@ describe('RegisterPractitioner', () => {
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
     const SELLO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBD';
 
-    it('el paso existe, es saltable y va antes de la contraseña', () => {
+    it('el paso existe, es saltable y cierra el alta', () => {
       const claves = component.paginasProfesional().map((pagina) => pagina.clave);
       expect(claves).toContain('signature-seal');
-      expect(claves.indexOf('signature-seal')).toBe(claves.indexOf('password') - 1);
+      expect(claves.at(-1)).toBe('signature-seal');
       const pagina = component.paginasProfesional().find((p) => p.clave === 'signature-seal')!;
       // Ninguno de los dos campos es obligatorio: se puede seguir sin cargar nada.
       expect(pagina.campos.map((c) => c.key)).toEqual(['signatureImageBase64', 'sealImageBase64']);
@@ -3373,6 +3359,25 @@ describe('RegisterPractitioner', () => {
       });
     });
   });
+
+  describe('borrador restaurado', () => {
+    it('la fecha vuelve como Date y no revienta al enviar (a.getFullYear is not a function)', () => {
+      component.restaurarBorrador({
+        draftId: 'd-1',
+        formType: 'practitioner',
+        stepIndex: 1,
+        data: { birthDate: '1990-05-10T04:00:00.000Z', licenseIssueDate: 'no-es-fecha' },
+        createdAt: '2026-10-26T00:00:00.000Z',
+        updatedAt: '2026-10-26T00:00:00.000Z',
+        percentComplete: 10,
+      });
+      const fecha = component.formProfesional.controls.birthDate.value;
+      expect(fecha).toBeInstanceOf(Date);
+      expect(fecha?.getFullYear()).toBe(1990);
+      // Un texto que no es fecha queda vacío en vez de llegar al envío.
+      expect(component.formProfesional.controls.licenseIssueDate.value).toBeNull();
+    });
+  });
 });
 
 describe('RegisterPractitioner con mockBackend', () => {
@@ -3427,4 +3432,6 @@ describe('RegisterPractitioner con mockBackend', () => {
     // que los 5 s por defecto de Vitest. Con 20 s pasa, aislada y dentro de la
     // suite; no se debilitó ninguna aserción.
   }, 20_000);
+
 });
+

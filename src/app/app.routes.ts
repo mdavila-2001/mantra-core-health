@@ -226,10 +226,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/security/security').then((m) => m.AccountSecurity),
   'my-account/privacy': () =>
     import('./features/account/privacy/privacy').then((m) => m.AccountPrivacy),
-  'my-account/clinical-access': () =>
-    import('./features/account/clinical-access/clinical-access').then(
-      (m) => m.AccountClinicalAccess,
-    ),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
@@ -1273,6 +1269,8 @@ function rutasDeSecciones(): Routes {
  */
 export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> = {
   'my-account/loyalty': { ruta: '/my-account', query: { pestana: 'puntos' } },
+  // «Quién ve mi historia» es una vista de «Mi privacidad» (27/10/2026).
+  'my-account/clinical-access': { ruta: '/my-account/privacy', query: { ver: 'historia' } },
   // La ficha de la farmacia es el «Mi perfil» de la cuenta de farmacia
   // (01/10/2026): la cuenta es la organización, no una persona que la administra.
   'administration/pharmacy-profile': { ruta: '/my-account' },

@@ -1,0 +1,15 @@
+psql:SQL/patches/2026-10-26_v4252_pharmacies_primary_practice_site.sql:15: NOTICE:  column "primary_practice_site_id" of relation "pharmacies" already exists, skipping
+ALTER TABLE
+psql:SQL/patches/2026-10-26_v4252_pharmacies_primary_practice_site.sql:18: NOTICE:  relation "ix_pharmacies_primary_practice_site_id" already exists, skipping
+CREATE INDEX
+DO
+exit 0
+psql:SQL/patches/2026-10-26_v4252_pharmacies_primary_practice_site.sql:15: NOTICE:  column "primary_practice_site_id" of relation "pharmacies" already exists, skipping
+ALTER TABLE
+psql:SQL/patches/2026-10-26_v4252_pharmacies_primary_practice_site.sql:18: NOTICE:  relation "ix_pharmacies_primary_practice_site_id" already exists, skipping
+CREATE INDEX
+DO
+exit 0
+ primary_practice_site_id       | uuid                     |           |          | 
+    "ix_pharmacies_primary_practice_site_id" btree (primary_practice_site_id)
+    "fk_pharmacies_primary_practice_site_id" FOREIGN KEY (primary_practice_site_id) REFERENCES practice.practice_sites(id)

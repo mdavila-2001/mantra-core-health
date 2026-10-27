@@ -386,17 +386,23 @@
           }
         }
         @case ('empty') {
-          <app-alert tone="info" title="Todavía no tiene citas">
-            Cuando pida uno, lo va a ver acá con su fecha y su estado.
-          </app-alert>
-          <button
-            app-button
-            variant="primary"
-            data-testid="turnos-pedir-desde-vacio"
-            (clicked)="elegirSeccion('pedir')"
+          <!-- S3: el vacío lleva su próxima acción adentro, centrada bajo el
+               texto, y no un botón suelto pegado al borde del aviso. -->
+          <app-empty-state
+            class="turnos__vacio"
+            title="Todavía no tiene citas"
+            description="Cuando pida una, la va a ver acá con su fecha y su estado."
           >
-            Pedir una cita
-          </button>
+            <button
+              empty-actions
+              app-button
+              variant="primary"
+              data-testid="turnos-pedir-desde-vacio"
+              (clicked)="elegirSeccion('pedir')"
+            >
+              Pedir una cita
+            </button>
+          </app-empty-state>
         }
         @default {
           <app-alert tone="error" title="No pudimos traer sus citas">
@@ -631,8 +637,40 @@
             <p class="turnos__estado" role="status">Buscando horarios libres…</p>
           }
           @case ('ready') {
+            @if (gruposFlexibles().length > 0) {
+              <!-- P36 · horario flexible: las horas por día, no una fila por
+                   hora (A6). El primer día viene abierto. -->
+              <app-accordion class="turnos__flexibles" data-testid="turnos-flexibles">
+                @for (grupo of gruposFlexibles(); track grupo.clave; let primero = $first) {
+                  <app-accordion-panel [heading]="grupo.titulo" [level]="4" [expanded]="primero">
+                    <ul class="turnos__horas" [attr.aria-label]="grupo.titulo">
+                      @for (horario of grupo.horas; track horario.id) {
+                        <li>
+                          <a
+                            app-button
+                            variant="secondary"
+                            size="sm"
+                            data-testid="turnos-hora-flexible"
+                            [attr.aria-label]="
+                              'Pedir el ' +
+                              (horario.desde | date: 'EEEE d MMM') +
+                              ' a las ' +
+                              (horario.desde | date: 'HH:mm')
+                            "
+                            [routerLink]="rutaDeReserva(horario)"
+                            [queryParams]="paramsDeReserva(horario)"
+                          >
+                            {{ horario.desde | date: 'HH:mm' }}
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  </app-accordion-panel>
+                }
+              </app-accordion>
+            }
             <ul class="turnos__horarios">
-              @for (horario of horariosListos(); track horario.id) {
+              @for (horario of horariosFijos(); track horario.id) {
                 <li class="turnos__horario">
                   <div class="turnos__cuando">
                     <span class="turnos__fecha">{{ horario.desde | date: 'EEEE d MMM' }}</span>

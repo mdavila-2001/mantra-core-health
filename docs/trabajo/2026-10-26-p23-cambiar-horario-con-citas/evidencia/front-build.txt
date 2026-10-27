@@ -1,0 +1,4 @@
+$ (mantra-core-health, tras unir la rama compartida) NODE_OPTIONS=--max-old-space-size=6144 yarn ng build
+Application bundle generation complete. [226.357 seconds] - 2026-10-26T08:45:28.697Z
+EXIT=0
+(sólo advertencias de presupuesto, previas; el gancho pre-push murió antes con «all goroutines are asleep - deadlock» bajo carga, por eso se publicó con SALTAR_BUILD=1 tras esta construcción en verde)

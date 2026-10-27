@@ -1,5 +1,10 @@
-import { MEDICAL_ORGANIZATION_TYPES } from '../iam/medical-center-registration.client';
-import { TENANT_TYPE_CODES, TENANT_TYPE_LABELS, TERRITORIAL_TENANT_TYPES } from './directory.types';
+import {
+  isMedicalOrganizationType,
+  MEDICAL_ORGANIZATION_TYPES,
+  TENANT_TYPE_CODES,
+  TENANT_TYPE_LABELS,
+  TERRITORIAL_TENANT_TYPES,
+} from './directory.types';
 
 /**
  * Las tres listas del alta administrativa de organizaciones y su relación con
@@ -53,6 +58,31 @@ describe('tipos de organización del alta administrativa', () => {
   it('todo tipo de organización médica es territorial en el alta administrativa', () => {
     for (const tipo of MEDICAL_ORGANIZATION_TYPES) {
       expect(TERRITORIAL_TENANT_TYPES).toContain(tipo);
+    }
+  });
+
+  it('«Otra institución de salud» se llama igual en las dos altas', () => {
+    expect(TENANT_TYPE_LABELS.HEALTH_OTHER).toBe('Otra institución de salud');
+  });
+});
+
+describe('tipos de organización médica', () => {
+  it('ofrece exactamente los cinco tipos institucionales de salud, en orden', () => {
+    expect(MEDICAL_ORGANIZATION_TYPES).toEqual([
+      'HOSPITAL',
+      'CLINIC',
+      'MEDICAL_OFFICE',
+      'NURSING',
+      'HEALTH_OTHER',
+    ]);
+  });
+
+  it('reconoce los cinco tipos y rechaza los que no son una organización médica', () => {
+    for (const tipo of MEDICAL_ORGANIZATION_TYPES) {
+      expect(isMedicalOrganizationType(tipo)).toBe(true);
+    }
+    for (const ajeno of ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER', 'PROVIDER', '', 'clinic']) {
+      expect(isMedicalOrganizationType(ajeno)).toBe(false);
     }
   });
 });

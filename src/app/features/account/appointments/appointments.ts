@@ -46,6 +46,9 @@ import { ReferenceCombobox } from '../../../shared/components/molecules/referenc
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { Accordion } from '../../../shared/components/molecules/accordion/accordion';
+import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
@@ -273,6 +276,13 @@ interface EsperaVisible {
   readonly anotadaEl: Date;
 }
 
+/** Las horas flexibles de un mismo día (A6). */
+interface GrupoDeHorasFlexibles {
+  readonly clave: string;
+  readonly titulo: string;
+  readonly horas: readonly HorarioVisible[];
+}
+
 /** Un horario que se puede pedir. */
 interface HorarioVisible {
   readonly id: string;
@@ -374,12 +384,15 @@ const SEDE_CUALQUIERA = 'cualquiera';
 @Component({
   selector: 'app-appointments',
   imports: [
+    Accordion,
+    AccordionPanel,
     Alert,
     AppButton,
     AppButtonLink,
     AppointmentCalendar,
     Badge,
     DatePipe,
+    EmptyState,
     FormField,
     PageHeader,
     DatePicker,
@@ -1224,6 +1237,38 @@ export class Appointments {
     const dia = this.diaDeHorarios();
     if (dia === null) return todos;
     return todos.filter((horario) => mismoDia(horario.desde, dia));
+  });
+
+  /** Los horarios de turno fijo (o de servicio), uno por fila como siempre. */
+  protected readonly horariosFijos = computed<readonly HorarioVisible[]>(() =>
+    this.horariosListos().filter((horario) => horario.flexible !== true),
+  );
+
+  /**
+   * P36 · las horas de un horario flexible, **agrupadas por día** (A6). Un
+   * horario flexible ofrece una hora cada 15 minutos durante semanas: en filas
+   * eran ≈180 renglones seguidos. Por día, en un acordeón con el primero
+   * abierto, y cada hora como un botón chico.
+   */
+  protected readonly gruposFlexibles = computed<readonly GrupoDeHorasFlexibles[]>(() => {
+    const grupos = new Map<string, HorarioVisible[]>();
+    for (const horario of this.horariosListos()) {
+      if (horario.flexible !== true) continue;
+      const d = horario.desde;
+      const clave = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const lista = grupos.get(clave) ?? [];
+      lista.push(horario);
+      grupos.set(clave, lista);
+    }
+    return [...grupos.entries()].map(([clave, horas]) => ({
+      clave,
+      titulo: `${horas[0].desde.toLocaleDateString('es-BO', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short',
+      })} · ${horas.length === 1 ? '1 hora libre' : `${horas.length} horas libres`}`,
+      horas,
+    }));
   });
 
   constructor() {

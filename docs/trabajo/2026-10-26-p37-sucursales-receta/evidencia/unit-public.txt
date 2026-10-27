@@ -1,0 +1,6 @@
+
+Test Suites: 7 passed, 7 total
+Tests:       73 passed, 73 total
+Snapshots:   0 total
+Time:        10.109 s, estimated 12 s
+Ran all test suites matching src/modules/public|src/architecture.

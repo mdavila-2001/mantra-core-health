@@ -79,14 +79,69 @@ describe('OnboardingDraftService', () => {
     expect(detectado?.data['password']).toBeUndefined();
   });
 
-  it('elimina el borrador al invocar clearDraft', () => {
+  it('elimina el borrador al invocar clearDraft, con el secreto que dio la API', () => {
     service.saveProgress('patient', 0, 'inicio', 'Paso 1', { name: 'Juan' });
+    localStorage.setItem('alovida.onboarding.draft_secret.patient', 'secreto-1');
     expect(service.detectDraft('patient')).not.toBeNull();
 
     service.clearDraft('patient', { immediate: true });
     expect(service.detectDraft('patient')).toBeNull();
+    expect(localStorage.getItem('alovida.onboarding.draft_secret.patient')).toBeNull();
 
-    const req = http.expectOne((r) => r.method === 'DELETE' && r.url.includes('/iam/onboarding-drafts/patient/'));
+    const req = http.expectOne(
+      (r) => r.method === 'DELETE' && r.url.includes('/iam/onboarding-drafts/patient/'),
+    );
+    expect(req.request.headers.get('x-onboarding-draft-secret')).toBe('secreto-1');
     req.flush({ ok: true });
+  });
+
+  it('sin secreto no pide borrar nada: la API respondería 404', () => {
+    service.saveProgress('patient', 0, 'inicio', 'Paso 1', { name: 'Juan' });
+    service.clearDraft('patient', { immediate: true });
+    expect(service.detectDraft('patient')).toBeNull();
+    http.expectNone((r) => r.method === 'DELETE');
+  });
+
+  it('el primer guardado crea, guarda el secreto y el siguiente lo manda', () => {
+    vi.useFakeTimers();
+    service.saveProgress('practitioner', 0, 'name', 'Paso 1', { name: 'Ana' });
+    vi.advanceTimersByTime(500);
+    const crear = http.expectOne((r) => r.method === 'PUT');
+    expect(crear.request.headers.has('x-onboarding-draft-secret')).toBe(false);
+    crear.flush({ ok: true, savedAt: 'x', draftSecret: 'secreto-2' });
+
+    service.saveProgress('practitioner', 1, 'access', 'Paso 2', { name: 'Ana' });
+    vi.advanceTimersByTime(500);
+    const actualizar = http.expectOne((r) => r.method === 'PUT');
+    expect(actualizar.request.headers.get('x-onboarding-draft-secret')).toBe('secreto-2');
+    actualizar.flush({ ok: true, savedAt: 'y' });
+    vi.useRealTimers();
+  });
+
+  it('ante un 404 empieza otro borrador remoto en vez de insistir con el mismo id', () => {
+    vi.useFakeTimers();
+    const idViejo = service.getOrCreateDraftId('practitioner');
+    service.saveProgress('practitioner', 0, 'name', 'Paso 1', { name: 'Ana' });
+    vi.advanceTimersByTime(500);
+    http
+      .expectOne((r) => r.method === 'PUT' && r.url.endsWith(idViejo))
+      .flush({ message: 'Borrador no encontrado' }, { status: 404, statusText: 'Not Found' });
+
+    const idNuevo = service.getOrCreateDraftId('practitioner');
+    expect(idNuevo).not.toBe(idViejo);
+    vi.useRealTimers();
+  });
+
+  it('no guarda las imágenes en base64: una foto superaba el tope de 64 KiB (413)', () => {
+    const foto = 'data:image/png;base64,' + 'A'.repeat(100_000);
+    service.saveProgress('practitioner', 0, 'practice', 'Foto', {
+      name: 'Ana',
+      profilePhotoBase64: foto,
+      signatureImageBase64: foto,
+    });
+    const detectado = service.detectDraft('practitioner');
+    expect(detectado?.data['name']).toBe('Ana');
+    expect(detectado?.data['profilePhotoBase64']).toBeUndefined();
+    expect(detectado?.data['signatureImageBase64']).toBeUndefined();
   });
 });

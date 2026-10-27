@@ -1,14 +1,24 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../../core/data-access/terminology/bo-municipalities.service';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { APP_SECTIONS } from '../../../core/navigation/navigation.map';
+import { isVisibleTo } from '../../../core/navigation/navigation.types';
+import { empty, loading, ready } from '../../../core/view-state/view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
+import { Link } from '../../../shared/components/atoms/link/link';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { PracticeOnboardingClient } from '../../../core/data-access/practice-onboarding/practice-onboarding.client';
 import type { CreatedOrganizationPractice } from '../../../core/data-access/practice-onboarding/practice-onboarding.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -46,19 +56,39 @@ export function setupErrorMessage(error: unknown): string {
       case 400:
         return 'Revise los datos: alguno no es válido.';
       case 403:
-        return 'Solo quien administra esta organización puede configurar el centro médico.';
+        return 'Solo quien administra esta organización puede configurarla.';
       case 409:
-        return 'Su organización ya tiene un centro con ese nombre. Elija otro nombre.';
+        return 'Su organización ya usa ese nombre. Elija otro nombre.';
       case 422:
-        return 'Su organización todavía no fue verificada. Podrá configurar su centro cuando la plataforma la verifique.';
+        return 'Su organización todavía no fue verificada. Podrá configurarla cuando la plataforma la verifique.';
     }
   }
-  return 'No pudimos guardar el centro. Intente de nuevo en unos segundos.';
+  return 'No pudimos guardar la configuración. Intente de nuevo en unos segundos.';
 }
 
+/** Adónde lleva el estado «todavía no verificada»: la ficha de la propia organización. */
+export const RUTA_MI_ORGANIZACION = '/administration/my-organization';
+
+/** La salida cuando esa ficha no es para esta sesión (un médico que administra su consultorio). */
+export const RUTA_PANEL = '/dashboard';
+
 /**
- * **Configurar centro médico** (CM-11): la organización ya verificada abre su
- * práctica y su primera sede, con dirección y punto en el mapa.
+ * **Configurar práctica** (CM-11): la organización médica ya verificada
+ * abre su práctica y su primera sede, con dirección y punto en el mapa.
+ *
+ * El nombre es neutro a propósito: la ven un hospital, una clínica, un
+ * consultorio, un centro de enfermería y «otra institución de salud», y
+ * «centro médico» sólo le cabe a algunos.
+ *
+ * ## Antes del formulario, si ya está verificada
+ *
+ * `GET /tenants/me` trae `isVerified` de cada organización del actor —lo
+ * resuelve la API, no se decodifica un concepto acá—. Si la organización activa
+ * todavía no fue verificada, la pantalla lo dice al entrar (S3, con la ficha de
+ * la organización como próxima acción) en vez de dejar completar dos páginas
+ * para recibir el 422 al final. Si la organización activa no figura en esa
+ * lista —la plataforma mirando otra—, se muestra el formulario: el dato no
+ * alcanza para afirmar nada, y la API sigue decidiendo.
  *
  * Sin la sede no hay dónde colgar el catálogo de procedimientos ni un punto
  * desde el cual ordenar la búsqueda por cercanía, por eso el punto en el mapa
@@ -72,7 +102,18 @@ export function setupErrorMessage(error: unknown): string {
  */
 @Component({
   selector: 'app-medical-center-setup',
-  imports: [Alert, Card, CustomField, PageHeader, PaginatedForm, MapLocationPicker],
+  imports: [
+    Alert,
+    Card,
+    CustomField,
+    EmptyState,
+    Link,
+    MapLocationPicker,
+    PageHeader,
+    PaginatedForm,
+    RouterLink,
+    ViewStateHost,
+  ],
   templateUrl: './medical-center-setup.html',
   styleUrl: './medical-center-setup.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,6 +121,7 @@ export function setupErrorMessage(error: unknown): string {
 export class MedicalCenterSetup {
   private readonly session = inject(SessionStore);
   private readonly client = inject(PracticeOnboardingClient);
+  private readonly directory = inject(DirectoryClient);
 
   /** El catálogo de municipios, para nombrar la ciudad del punto. */
   private readonly municipalities = toSignal(
@@ -88,6 +130,29 @@ export class MedicalCenterSetup {
       .pipe(catchError(() => of([] as readonly RamaDepartamento[]))),
     { initialValue: [] as readonly RamaDepartamento[] },
   );
+
+  /**
+   * Si la organización activa puede configurarse: `ready` muestra el
+   * formulario y `empty` (S3) dice que falta la verificación. Ver la nota de la
+   * clase.
+   */
+  protected readonly estado = signal<ViewState<true>>(loading());
+
+  /**
+   * La próxima acción del S3: la ficha de la organización **si esta sesión la
+   * puede abrir**. «Mi organización» lleva `hiddenFor: ['PATIENT',
+   * 'PRACTITIONER']` y su guard rebota: un médico que administra su
+   * consultorio entraría acá y su única salida lo devolvería. Para él, el panel.
+   */
+  protected readonly proximaAccion = computed(() => {
+    const ficha = APP_SECTIONS.find((s) => `/${s.path}` === RUTA_MI_ORGANIZACION);
+    const alcanzable =
+      ficha !== undefined &&
+      isVisibleTo(ficha, this.session.roles(), this.session.tenants(), this.session.activeTenantType());
+    return alcanzable
+      ? { label: 'Ver los datos de su organización', route: RUTA_MI_ORGANIZACION }
+      : { label: 'Volver al panel', route: RUTA_PANEL };
+  });
 
   readonly form = new FormGroup({
     practiceName: new FormControl('', {
@@ -128,19 +193,20 @@ export class MedicalCenterSetup {
     marcarEnMapa: 'medical-center-site-location-pick',
   };
 
-  /** Dos páginas, de a cuatro campos como tope: el centro y su primera sede. */
+  /** Dos páginas, de a cuatro campos como tope: la organización y su primera sede. */
   protected readonly pages = paginateFields([
     {
-      titulo: 'El centro',
-      hint: 'Cómo se llama el centro y su primera sede.',
+      titulo: 'Su organización',
+      hint: 'Cómo la van a encontrar los pacientes y cómo se llama su primera sede.',
       campos: [
         {
           key: 'practiceName',
-          label: 'Nombre del centro médico',
+          label: 'Nombre de la organización',
+          hint: 'El nombre con el que atiende, como lo va a ver el paciente.',
           control: 'text' as const,
           required: true,
           testId: 'medical-center-setup-practice-name',
-          mensajeDeError: 'Escriba el nombre del centro médico.',
+          mensajeDeError: 'Escriba el nombre de la organización.',
         },
         {
           key: 'siteName',
@@ -169,6 +235,35 @@ export class MedicalCenterSetup {
       ],
     },
   ]);
+
+  constructor() {
+    this.cargarVerificacion();
+  }
+
+  /** Lee si la organización activa ya fue verificada. También es el «Reintentar» del S9. */
+  protected cargarVerificacion(): void {
+    const tenantId = this.session.activeTenantId();
+    if (tenantId === null) {
+      // Sin organización activa no hay nada que preguntar: `save()` ya lo dice.
+      this.estado.set(ready(true));
+      return;
+    }
+    this.estado.set(loading());
+    this.directory.listMyOrganizations().subscribe({
+      next: (organizaciones) => {
+        const activa = organizaciones.find((organizacion) => organizacion.id === tenantId);
+        this.estado.set(
+          activa !== undefined && !activa.isVerified
+            ? empty(
+                this.proximaAccion(),
+                'Podrá abrir su práctica y su primera sede cuando la plataforma la verifique.',
+              )
+            : ready(true),
+        );
+      },
+      error: (error: unknown) => this.estado.set(errorToViewState<true>(error)),
+    });
+  }
 
   protected setPoint(point: Coordinates | null): void {
     this.form.controls.point.setValue(point);

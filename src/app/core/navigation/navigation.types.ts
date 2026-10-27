@@ -14,6 +14,7 @@
 
 // `core→core` está permitido (`scripts/check-architecture.mjs`): el tipo de
 // organización es del dominio `directory`, no de `shared/`.
+import { exigeRolEnTipo } from './navigation.payer';
 import type { TenantTypeCode } from '../data-access/directory/directory.types';
 import type { NavGroup } from './navigation.groups';
 
@@ -395,6 +396,16 @@ export interface AppSection {
   readonly onlyForTenantTypes?: readonly string[];
 
   /**
+   * En esos tipos de organización la sección exige uno de esos roles, sin el
+   * comodín de `ANY_ROLE` (`SUPERADMIN` la salva). Ver `exigeRolEnTipo` en
+   * `navigation.payer.ts`: nació con «Solicitudes de seguro».
+   */
+  readonly rolesEnTipos?: {
+    readonly tipos: readonly string[];
+    readonly roles: readonly string[];
+  };
+
+  /**
    * Roles para los que la sección **sigue existiendo y funcionando, pero no
    * ocupa una entrada de primer nivel** en el menú.
    *
@@ -584,6 +595,9 @@ export function isVisibleTo(
   ) {
     return false;
   }
+
+  // Ciertos tipos de organización piden un rol de verdad: `rolesEnTipos`.
+  if (exigeRolEnTipo(section, roles, activeTenantType)) return false;
 
   // La membresía se pregunta **antes** que el rol y no la salva el comodín: no
   // es permiso, es que el dato exista. Ver {@link AppSection.requiresTenant}.

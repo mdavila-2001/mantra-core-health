@@ -76,8 +76,8 @@ import {
   type LocalityFromPoint,
   type TestIds,
 } from '../shared-registration/map-location-picker/map-location-picker';
-import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 
 /* ============================================================================
     Alta de farmacia — Módulo Farmacia §1 del registro de procesos

@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -35,7 +35,7 @@ describe('AccountPrivacy (BR-20)', () => {
   let confirmar: boolean;
   const avisos: string[] = [];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     confirmar = true;
     avisos.length = 0;
     TestBed.configureTestingModule({
@@ -54,6 +54,9 @@ describe('AccountPrivacy (BR-20)', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
+    // Estas pruebas miran la vista de consentimientos; la de entrada es
+    // «Quién ve mi historia» y tiene sus propias pruebas más abajo.
+    await TestBed.inject(Router).navigate([], { queryParams: { ver: 'consentimientos' } });
     fixture = TestBed.createComponent(AccountPrivacy);
     fixture.detectChanges();
   });
@@ -77,14 +80,22 @@ describe('AccountPrivacy (BR-20)', () => {
     expect(texto).toContain('Investigación');
     expect(texto).toContain('Retirado');
     // Sólo el vigente ofrece «Retirar».
-    expect(fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-activo"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-retirado"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-activo"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-retirado"]'),
+    ).toBeNull();
   });
 
   it('retirar confirma, llama a la ruta del titular y RELEE la lista (el registro queda «Retirado»)', async () => {
     responderLecturas([ACTIVO]);
 
-    (fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-activo"]') as HTMLElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="consentimiento-retirar-c-activo"]',
+      ) as HTMLElement
+    ).click();
     await fixture.whenStable();
 
     const retiro = http.expectOne('/consent/me/consents/c-activo/withdraw');
@@ -94,7 +105,9 @@ describe('AccountPrivacy (BR-20)', () => {
     // Se relee: lo que prueba el retiro es la fila releída.
     responderLecturas([{ ...ACTIVO, state: 'WITHDRAWN', withdrawnAt: '2026-09-26T10:00:00.000Z' }]);
     expect(fixture.nativeElement.textContent).toContain('Retirado');
-    expect(fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-activo"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-activo"]'),
+    ).toBeNull();
     expect(avisos).toContain('Retiró el consentimiento.');
   });
 
@@ -102,7 +115,11 @@ describe('AccountPrivacy (BR-20)', () => {
     confirmar = false;
     responderLecturas([ACTIVO]);
 
-    (fixture.nativeElement.querySelector('[data-testid="consentimiento-retirar-c-activo"]') as HTMLElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="consentimiento-retirar-c-activo"]',
+      ) as HTMLElement
+    ).click();
     await fixture.whenStable();
 
     http.expectNone('/consent/me/consents/c-activo/withdraw');
@@ -140,8 +157,73 @@ describe('AccountPrivacy (BR-20)', () => {
     }
     fixture.detectChanges();
 
-    const alerta = fixture.nativeElement.querySelector('[data-testid="privacidad-error"]') as HTMLElement;
+    const alerta = fixture.nativeElement.querySelector(
+      '[data-testid="privacidad-error"]',
+    ) as HTMLElement;
     expect(alerta.textContent).toContain('Reintentar');
     expect(alerta.textContent).toContain('req-77');
+  });
+});
+
+/**
+ * «Mi privacidad» es la única puerta del menú para los dos temas: entra por
+ * «Quién ve mi historia» y el conmutador lleva a los consentimientos, dejando
+ * la vista en el query para que el enlace sea compartible.
+ */
+describe('AccountPrivacy · las dos vistas', () => {
+  let fixture: ComponentFixture<AccountPrivacy>;
+  let http: HttpTestingController;
+  let router: Router;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: DialogService, useValue: { confirm: () => Promise.resolve(true) } },
+        { provide: ToastService, useValue: { success: () => undefined, warning: () => undefined } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
+    await router.navigate([]);
+    fixture = TestBed.createComponent(AccountPrivacy);
+    fixture.detectChanges();
+    // Las lecturas de consentimientos salen igual: se piden al entrar.
+    for (const pedido of http.match((req) => req.url.startsWith('/consent/me/'))) {
+      pedido.flush({ items: [] });
+    }
+  });
+
+  afterEach(() => http.verify());
+
+  it('sin `?ver=` abre «Quién ve mi historia», sin un segundo encabezado', () => {
+    http.expectOne('/authz/me/access').flush({ careRelationships: [], grants: [] });
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('app-account-clinical-access')).not.toBeNull();
+    expect(raiz.querySelectorAll('app-page-header').length).toBe(1);
+    expect(raiz.textContent).toContain('Ningún profesional está vinculado a su historia');
+  });
+
+  it('el conmutador lleva a los consentimientos y lo deja en el query', async () => {
+    http.expectOne('/authz/me/access').flush({ careRelationships: [], grants: [] });
+    fixture.detectChanges();
+
+    const opciones = fixture.nativeElement.querySelectorAll(
+      '[data-testid="privacidad-vistas"] [role="radio"], [data-testid="privacidad-vistas"] button',
+    ) as NodeListOf<HTMLElement>;
+    const consentimientos = Array.from(opciones).find((b) =>
+      b.textContent?.includes('Mis consentimientos'),
+    );
+    consentimientos?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(router.url).toContain('ver=consentimientos');
+    expect(fixture.nativeElement.querySelector('app-account-clinical-access')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Todavía no dio ningún consentimiento');
   });
 });

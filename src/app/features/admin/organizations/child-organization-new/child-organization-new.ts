@@ -12,7 +12,6 @@ import {
   type NewChildTenant,
   type TenantTypeCode,
 } from '../../../../core/data-access/directory/directory.types';
-import { IamClient } from '../../../../core/data-access/iam/iam.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -23,13 +22,13 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { unavailableMessageOf } from '../../../../core/data-access/simulator-only';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { searchConceptOptions } from '../concept-search';
+import { crearBuscadorDePersonas } from '../people-search';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 
 /** Largos que declara `CreateChildTenantDto`. */
@@ -71,25 +70,10 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
 })
 export class ChildOrganizationNew {
   private readonly directory = inject(DirectoryClient);
-  private readonly iam = inject(IamClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
-
-  /** Si ya se avisó que la búsqueda de personas no está en la API. */
-  private busquedaNoDisponibleAvisada = false;
-
-  /**
-   * «Sin resultados» mentiría si la búsqueda no existe en la API (informe B,
-   * §2): se dice qué falta, una sola vez y no en cada tecla.
-   */
-  private avisarBusquedaNoDisponible(error: unknown): void {
-    const aviso = unavailableMessageOf(error);
-    if (aviso === null || this.busquedaNoDisponibleAvisada) return;
-    this.busquedaNoDisponibleAvisada = true;
-    this.toast.warning(aviso);
-  }
 
   /**
    * La organización madre, del segmento `:tenantId`.
@@ -163,7 +147,6 @@ export class ChildOrganizationNew {
       else control.disable({ emitEvent: false });
     }
   }
-  private readonly enviado = signal(false);
 
   protected readonly opcionesDeTipo: readonly SelectOption<TenantTypeCode>[] =
     TENANT_TYPE_CODES.map((code) => ({ value: code, label: TENANT_TYPE_LABELS[code] }));
@@ -267,19 +250,15 @@ export class ChildOrganizationNew {
     return tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
   });
 
-  protected readonly tipoFaltante = computed(() => this.enviado() && this.tipo() === null);
 
   /* ---- administrador de la filial: se elige, nunca se tipea -------------- */
 
   protected readonly administrador = toSignal(this.form.controls.administrador.valueChanges, {
     initialValue: this.form.controls.administrador.value,
   });
-  protected readonly candidatosAdmin = signal<readonly ReferenceOption[]>([]);
-  protected readonly buscandoAdmin = signal(false);
+  /** La búsqueda del administrador: errores distintos del vacío y la última tecla manda. */
+  protected readonly administradores = crearBuscadorDePersonas(CANDIDATOS_POR_BUSQUEDA);
 
-  protected readonly adminFaltante = computed(
-    () => this.enviado() && this.administrador() === null,
-  );
 
   /* ---- país y jurisdicción: obligatorios para los tipos territoriales ---- */
 
@@ -294,13 +273,6 @@ export class ChildOrganizationNew {
   });
   protected readonly candidatosJurisdiccion = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoJurisdiccion = signal(false);
-
-  protected readonly paisFaltante = computed(
-    () => this.enviado() && this.esTerritorial() && this.pais() === null,
-  );
-  protected readonly jurisdiccionFaltante = computed(
-    () => this.enviado() && this.esTerritorial() && this.jurisdiccion() === null,
-  );
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
@@ -331,32 +303,6 @@ export class ChildOrganizationNew {
     );
   });
 
-  protected buscarAdministrador(texto: string): void {
-    if (texto === '') {
-      this.candidatosAdmin.set([]);
-      return;
-    }
-
-    this.buscandoAdmin.set(true);
-    this.iam.searchUsers({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        this.candidatosAdmin.set(
-          pagina.items.map((usuario) => ({
-            value: usuario.id,
-            label: usuario.displayName,
-            ...(usuario.emailVerified ? {} : { hint: 'Correo sin verificar' }),
-          })),
-        );
-        this.buscandoAdmin.set(false);
-      },
-      error: (error: unknown) => {
-        this.candidatosAdmin.set([]);
-        this.buscandoAdmin.set(false);
-        this.avisarBusquedaNoDisponible(error);
-      },
-    });
-  }
-
   protected buscarPais(texto: string): void {
     searchConceptOptions(
       this.terminology,
@@ -381,8 +327,6 @@ export class ChildOrganizationNew {
     if (this.enviando()) {
       return;
     }
-
-    this.enviado.set(true);
 
     if (!this.puedeEnviar()) {
       this.form.markAllAsTouched();
