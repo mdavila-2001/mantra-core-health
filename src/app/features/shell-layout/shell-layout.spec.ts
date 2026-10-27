@@ -1426,11 +1426,17 @@ describe('ShellLayout', () => {
       );
     });
 
-    it('Emergencia salió de la cabecera y encabeza el menú lateral (27/10/2026)', () => {
+    it('Emergencia encabeza el menú lateral y, para el teléfono, queda como ícono en la cabecera (27/10/2026)', () => {
       abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
       fixture.detectChanges();
 
-      expect(raiz().querySelector('.app-header [data-testid="boton-emergencia"]')).toBeNull();
+      // En la cabecera sólo el ícono: la hoja lo muestra donde el menú es un
+      // cajón (≤ 900 px), para que una urgencia siga a un toque.
+      const enCabecera = raiz().querySelector('.app-header [data-testid="header-emergencia"]');
+      const botonCabecera = enCabecera?.querySelector('[data-testid="boton-emergencia"]');
+      expect(botonCabecera?.querySelector('svg')).not.toBeNull();
+      expect(botonCabecera?.textContent?.trim()).toBe('');
+      expect(botonCabecera?.getAttribute('aria-label')).toMatch(/^Emergencia/);
       const enMenu = raiz().querySelector('#app-side-nav [data-testid="boton-emergencia"]');
       expect(enMenu).not.toBeNull();
       // Antes que cualquier destino: una urgencia no compite.

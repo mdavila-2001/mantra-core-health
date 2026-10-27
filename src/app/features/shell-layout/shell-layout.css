@@ -292,3 +292,17 @@
     display: none;
   }
 }
+
+/* Emergencia como ícono en la cabecera, sólo donde el menú es un cajón
+   (≤ 900 px, el mismo corte de `.app-side-nav__recoger`). Arriba de ese ancho
+   ya está a la vista, encabezando el menú lateral. */
+.app-header__emergencia {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app-header__emergencia {
+    display: inline-flex;
+    flex: none;
+  }
+}
