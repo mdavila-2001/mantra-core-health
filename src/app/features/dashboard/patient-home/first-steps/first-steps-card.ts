@@ -134,6 +134,13 @@ export class FirstStepsCard {
   /** Oculta la tarjeta: sólo se ofrece cuando ya está todo hecho. */
   readonly dismissed = this.store.dismissed;
 
+  /** Si la lista está plegada (pedido del cliente, 27/10/2026). */
+  protected readonly collapsed = this.store.collapsed;
+
+  protected toggleCollapsed(): void {
+    this.store.toggleCollapsed();
+  }
+
   protected dismiss(): void {
     this.store.dismiss();
   }

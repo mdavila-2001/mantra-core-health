@@ -1,0 +1,112 @@
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                                       | Names                                                                  |  Raw size
+spec-app-features-symptom-check-symptom-check.js                          | spec-app-features-symptom-check-symptom-check                          | 605.72 kB | 
+spec-app-features-account-appointments-appointments.js                    | spec-app-features-account-appointments-appointments                    | 544.74 kB | 
+styles.css                                                                | styles                                                                 | 183.31 kB | 
+chunk-XTWF2NC7.js                                                         | -                                                                      | 129.44 kB | 
+spec-app-features-account-dependents-notification-bell-actions.js         | spec-app-features-account-dependents-notification-bell-actions         | 107.83 kB | 
+chunk-IEB3BYSW.js                                                         | -                                                                      |  84.63 kB | 
+chunk-NGIGJAFC.js                                                         | -                                                                      |  69.43 kB | 
+chunk-T3UK2Y77.js                                                         | -                                                                      |  61.26 kB | 
+chunk-BB62XPHQ.js                                                         | -                                                                      |  56.12 kB | 
+spec-app-features-account-dependents-dependents.js                        | spec-app-features-account-dependents-dependents                        |  56.02 kB | 
+spec-app-features-dashboard-patient-home-first-steps-first-steps-card.js  | spec-app-features-dashboard-patient-home-first-steps-first-steps-card  |  45.86 kB | 
+chunk-732Q24IU.js                                                         | -                                                                      |  39.15 kB | 
+chunk-WZRQ5RZU.js                                                         | -                                                                      |  37.90 kB | 
+chunk-K4FSXRQG.js                                                         | -                                                                      |  23.49 kB | 
+chunk-MRUOK6ZB.js                                                         | -                                                                      |  18.52 kB | 
+chunk-32IGV24Y.js                                                         | -                                                                      |  14.59 kB | 
+chunk-3NEAN4DS.js                                                         | -                                                                      |  11.09 kB | 
+chunk-KQOF3XQO.js                                                         | -                                                                      |  10.07 kB | 
+spec-app-features-account-dependents-dependent-form-dialog.js             | spec-app-features-account-dependents-dependent-form-dialog             |   7.49 kB | 
+chunk-HZXEPMDQ.js                                                         | -                                                                      |   5.27 kB | 
+chunk-QLBY6TIO.js                                                         | -                                                                      |   4.39 kB | 
+chunk-D5Q6C54F.js                                                         | -                                                                      |   3.40 kB | 
+chunk-KMJRSJD7.js                                                         | -                                                                      |   2.86 kB | 
+spec-app-features-dashboard-patient-home-first-steps-first-steps.store.js | spec-app-features-dashboard-patient-home-first-steps-first-steps.store |   2.36 kB | 
+init-testbed.js                                                           | init-testbed                                                           |   1.21 kB | 
+setup-test-setup.js                                                       | setup-test-setup                                                       | 984 bytes | 
+vitest-mock-patch.js                                                      | vitest-mock-patch                                                      | 974 bytes | 
+
+                                                                          | Initial total                                                          |   2.13 MB
+
+Lazy chunk files                                                          | Names                                                                  |  Raw size
+paciente.css                                                              | paciente                                                               |  20.24 kB | 
+
+Application bundle generation complete. [193.439 seconds] - 2026-10-27T16:12:37.056Z
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Alert is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+[37m      93 │     [32mAlert[37m,
+         ╵     [32m~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of MedicalArticles[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+[37m      105 │     [32mRouterLink[37m,
+          ╵     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of Questionnaires[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+[37m      88 │     [32mAppButtonLink[37m,
+         ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/governance/filter-form.ts:50:25:
+[37m      50 │                 [value]="[32mdraft()[field.key] ?? ''[37m"
+         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: NG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/governance/filter-form.ts:58:25:
+[37m      58 │                 [value]="[32mdraft()[field.key] ?? ''[37m"
+         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: DatePipe is not used within the template of PortalHub[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/admin/portal/hub/portal-hub.ts:19:12:
+[37m      19 │   imports: [[32mDatePipe[37m, RouterLink, MetricCard, PageHeader, ViewStat...
+         ╵             [32m~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Link is not used within the template of Groups[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AppButtonLink is not used within the template of SurveysHome[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+[37m      132 │     [32mAppButtonLink[37m,
+          ╵     [32m~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: Card is not used within the template of SymptomCheck[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/symptom-check/symptom-check.ts:142:4:
+[37m      142 │     [32mCard[37m,
+          ╵     [32m~~~~[0m
+
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/user/mantra-core-health[39m
+
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m201 passed[39m[22m[90m (201)[39m
+[2m   Start at [22m 16:12:37
+[2m   Duration [22m 11.93s[2m (transform 9.96s, setup 4.32s, import 13.87s, tests 13.38s, environment 10.68s)[22m
+
+exit=0

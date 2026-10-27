@@ -485,15 +485,7 @@
   box-shadow: var(--sombra-1);
 }
 
-/* ---- guardar la observación --------------------------------------------- */
-
-.sintomas__observacion {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-block-start: var(--sp-4);
-}
+/* ---- observaciones guardadas ------------------------------------------- */
 
 .sintomas__guardadas {
   margin-block-start: var(--sp-4);
@@ -503,81 +495,39 @@
   margin-block-start: var(--sp-3);
 }
 
-/* ─── Selector de opciones en la parte de arriba ────────────────────────── */
-.sintomas__orientacion-header {
-  margin-block-start: var(--sp-4);
-  margin-block-end: var(--sp-4);
+/* ─── Especialidades recomendadas ─────────────────────────────────────────
+   La rejilla y la tarjeta son las de `shared/styles/card-grid.css`, las
+   mismas del buscador de especialidades de `/directory` (pedido del cliente,
+   27/10/2026). Acá sólo lo propio del chequeo: la marca de por cuál empezar y
+   la acción escrita, porque la tarjeta suma el porqué y no un recuento. */
+.sintomas__rejilla {
+  margin-block-start: var(--sp-3);
 }
 
-.sintomas__orientacion-tabs {
-  display: inline-flex;
+.sintomas__tarjeta-cabeza {
+  display: flex;
   align-items: center;
-  gap: var(--sp-2, 8px);
-  padding: 4px;
-  background: var(--sup-inset, #EFF5F3);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-menu, 12px);
-  max-inline-size: 100%;
-  overflow-x: auto;
+  justify-content: space-between;
+  gap: var(--sp-2);
 }
 
-.sintomas__tab-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2, 8px);
-  padding: 8px 16px;
-  border: 0;
-  border-radius: calc(var(--r-menu, 12px) - 3px);
-  background: transparent;
-  color: var(--tinta-2);
-  font-family: inherit;
-  font-size: var(--fs-cuerpo-sm, 0.875rem);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-  white-space: nowrap;
+/* La primera es la recomendada: un borde de marca, además de la insignia con
+   palabras, para que no dependa sólo del color. */
+.sintomas__tarjeta--primera {
+  border-color: var(--brand-primary);
 }
 
-.sintomas__tab-btn:hover {
-  color: var(--tinta);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.sintomas__tab-btn:focus-visible {
-  outline: 2px solid var(--anillo-foco, var(--aguamarina));
-  outline-offset: 2px;
-}
-
-.sintomas__tab-btn--activo {
-  background: var(--sup-tarjeta) !important;
-  color: var(--petroleo) !important;
+.sintomas__tarjeta-accion {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-2);
+  color: var(--brand-primary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   font-weight: 600;
-  box-shadow: var(--sombra-1, 0 1px 3px rgba(0, 0, 0, 0.08));
 }
 
-.sintomas__tab-icono {
-  width: 1.125rem;
-  height: 1.125rem;
-  flex-shrink: 0;
-}
-
-.sintomas__tab-conteo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 999px;
-  background: var(--filete);
-  color: var(--tinta-2);
-}
-
-.sintomas__tab-btn--activo .sintomas__tab-conteo {
-  background: rgba(79, 179, 169, 0.18);
-  color: var(--petroleo);
+.sintomas__volver {
+  margin-block-end: var(--sp-3);
 }
 
 /* ─── Callout complementario en vista de especialistas ───────────────────── */
