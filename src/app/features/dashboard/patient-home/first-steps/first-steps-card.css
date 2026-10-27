@@ -37,6 +37,63 @@
   color: var(--text-secondary, var(--c-petrol-700));
 }
 
+/* El botón de plegar va en la esquina de arriba a la derecha, donde se busca
+   el control de una tarjeta, a cualquier ancho: en el teléfono la cabecera se
+   parte en dos renglones y, en el flujo, el botón caía solo en un tercero.
+   La cabecera le deja su lugar. 44 px de objetivo táctil (WCAG 2.5.8 pide 24;
+   el sistema usa 44). */
+.primeros-pasos__cabecera {
+  padding-inline-end: calc(44px + var(--sp-3));
+}
+
+.primeros-pasos__plegar {
+  position: absolute;
+  inset-block-start: var(--sp-4);
+  inset-inline-end: var(--sp-4);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface, #fff);
+  color: var(--brand-primary);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+.primeros-pasos__plegar:hover {
+  border-color: var(--brand-primary);
+  background: var(--bg-inset);
+}
+
+.primeros-pasos__plegar svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+/* Desplegada, la flecha apunta arriba: «tocá para subirla». */
+.primeros-pasos__plegar[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primeros-pasos__plegar,
+  .primeros-pasos__plegar svg {
+    transition: none;
+  }
+}
+
+/* Plegada, la cabecera no deja el margen de la lista que ya no está. */
+.primeros-pasos:has(.primeros-pasos__contenido[hidden]) .primeros-pasos__cabecera {
+  margin-block-end: 0;
+}
+
 .primeros-pasos__avance {
   display: grid;
   gap: var(--sp-2);
@@ -154,9 +211,10 @@
   color: var(--text-primary, var(--c-petrol-900));
 }
 
+/* Sin tachado (pedido del cliente, 27/10/2026): lo hecho ya lo dicen la
+   tilde verde y el «(hecho)» del lector de pantalla; tachado se leía como
+   cancelado. Queda sólo un tono más suave. */
 .primeros-pasos__paso--hecho .primeros-pasos__nombre {
-  text-decoration: line-through;
-  text-decoration-color: var(--c-mint-600);
   color: var(--text-secondary, var(--c-petrol-700));
 }
 

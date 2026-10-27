@@ -24,11 +24,13 @@ import { BODY_ZONES, type BodyZone } from './zones.data';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
+import { SpecialtyIcon } from '@shared/components/atoms/specialty-icon/specialty-icon';
 import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
+import { specialtyPhoto } from '@shared/utils/directory-photo';
 import {
   recomendarMedicamentos,
   type MedicamentoSugerido,
@@ -132,11 +134,26 @@ const VACIO: ReadonlyMap<string, string> = new Map();
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, Badge, BodyMap, Card, Chip, EmergencyPanel, FormField, RouterLink, Spinner, Textarea],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    BodyMap,
+    Card,
+    Chip,
+    EmergencyPanel,
+    FormField,
+    RouterLink,
+    SpecialtyIcon,
+    Spinner,
+    Textarea,
+  ],
   templateUrl: './symptom-check.html',
   // El dictado vive y muere con la pantalla: ver `Dictado`.
   providers: [Dictation],
-  styleUrl: './symptom-check.css',
+  // La tarjeta de especialidad es la del buscador de `/directory` (27/10/2026):
+  // primero la hoja compartida, después la propia, para que la propia ajuste.
+  styleUrls: ['../../shared/styles/card-grid.css', './symptom-check.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SymptomCheck {
@@ -407,32 +424,15 @@ export class SymptomCheck {
    * Lo negado a secas («no tengo fiebre») no cuenta: ahí la pantalla ya dice
    * qué entendió y pide lo que sí se siente.
    */
-  /* ---- guardar la observación (propietario, 2026-10-08) ------------------ */
+  /* ---- observaciones guardadas (propietario, 2026-10-08) -----------------
+     «Guardar observación» salió a pedido del cliente (27/10/2026); las ya
+     guardadas se siguen mostrando para poder borrarlas. */
 
   /** Las observaciones guardadas en este dispositivo, la más nueva primero. */
   protected readonly observaciones = this.observacionesStore.lista;
 
-  /** Lo que se le confirma a quien guardó: dónde quedó y adónde va a viajar. */
+  /** Lo que se le confirma a quien borró una observación. */
   protected readonly avisoDeObservacion = signal('');
-
-  /**
-   * Guarda lo que la persona describió y los síntomas reconocidos, con su término del glosario.
-   * Queda en este dispositivo y viaja como motivo de consulta cuando pide un turno (ver el store).
-   */
-  protected guardarObservacion(): void {
-    const sintomas = this.sintomas().map((s) => ({
-      id: s.id,
-      nombre: nameForShow(s),
-      codigo: glossaryCode(s.id),
-    }));
-    if (this.texto().trim() === '' && sintomas.length === 0) {
-      return;
-    }
-    this.observacionesStore.guardar(this.texto(), sintomas);
-    this.avisoDeObservacion.set(
-      'Guardamos su observación en este dispositivo. Cuando solicite una cita, se la enviaremos al profesional como motivo de consulta.',
-    );
-  }
 
   protected borrarObservacion(id: string): void {
     this.observacionesStore.borrar(id);
@@ -557,6 +557,9 @@ export class SymptomCheck {
   });
 
   protected readonly explicacionDe = explain;
+
+  /** La foto de la tarjeta: la misma que esa especialidad tiene en `/directory`. */
+  protected readonly fotoDe = specialtyPhoto;
 
   /* --- Elegir sin escribir ---------------------------------------------- */
 

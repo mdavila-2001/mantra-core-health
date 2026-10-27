@@ -47,7 +47,10 @@
   @if (!enPedirTurno()) {
     <section class="turnos__bloque" aria-labelledby="turnos-propios">
       <div class="turnos__cabecera">
-        <h2 id="turnos-propios" class="turnos__titulo" tabindex="-1">Sus citas</h2>
+        <!-- 27/10/2026 · pedido del cliente: el título no se ve. «Mis citas»
+             ya lo dice el encabezado; queda para el lector de pantalla y como
+             destino del foco al volver de «Pedir una cita». -->
+        <h2 id="turnos-propios" class="turnos__titulo sr-only" tabindex="-1">Sus citas</h2>
 
         <!-- Lista y calendario son la MISMA colección vista de dos formas
              (corrección #10). La elegida vive en la URL, así que el enlace se
@@ -56,14 +59,18 @@
              FT-04 · el control es uno solo del sistema de diseño y no dos botones
              sueltos: con el inactivo en `ghost` la otra vista no se veía como
              botón y no se descubría que existiera. -->
-        <app-segmented-control
-          class="turnos__vistas"
-          data-testid="turnos-vistas"
-          [options]="vistasDisponibles"
-          [value]="vista()"
-          ariaLabel="Cómo ver sus citas"
-          (valueChange)="elegirVista($event)"
-        />
+        <!-- Sin ninguna cita no hay nada que ver de dos formas (pedido del
+             cliente, 27/10/2026): el selector aparece con la primera. -->
+        @if (todosLosTurnos().length > 0) {
+          <app-segmented-control
+            class="turnos__vistas"
+            data-testid="turnos-vistas"
+            [options]="vistasDisponibles"
+            [value]="vista()"
+            ariaLabel="Cómo ver sus citas"
+            (valueChange)="elegirVista($event)"
+          />
+        }
       </div>
 
       <!-- ─── FT-05 · Buscar y filtrar tus citas ────────────────────────────
