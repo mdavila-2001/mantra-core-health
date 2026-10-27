@@ -17,6 +17,11 @@ No se ejecutó: la suite completa de `yarn test`, el resto de los 75 modales uno
 reglas viven en `alovida.css` bajo `.content-dialog__cuerpo` y alcanzan a todos), revisión
 independiente (`NO_SELF_APPROVAL`: queda para la revisión del PR).
 
+Rejilla «Qué va a registrar» (misma prueba): la última casilla llega al borde derecho (hueco ≤ 1 px)
+con 8 casillas en 1440 y 390; la cifra «N en la historia» pasó a una pastilla bajo la descripción.
+`ng test` de `consultation/`: 3 archivos, 22/22. `check-contrast` 0; `check-css-tokens`,
+`check-colores-sueltos` y `check-max-lines` fallan igual en la base, en archivos no tocados.
+
 Capturas en `capturas/despues/modales-2026-10-27/`.
 
 ## Exploración de `/schedule` y menú móvil · 2026-10-05

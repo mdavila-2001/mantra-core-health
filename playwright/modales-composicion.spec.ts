@@ -111,6 +111,17 @@ for (const ancho of ANCHOS) {
     await page.setViewportSize({ width: ancho.width, height: ancho.height });
     await abrirLaConsulta(page);
 
+    // La rejilla que abre los modales: la última fila llega al borde derecho,
+    // sin casillas sueltas con huecos al lado.
+    const rejilla = page.getByTestId('consulta-rejilla');
+    await rejilla.screenshot({ path: join(SALIDA, `${ancho.nombre}-rejilla.png`) });
+    const hueco = await rejilla.evaluate((ul) => {
+      const ultima = ul.lastElementChild;
+      if (!ultima) return 0;
+      return Math.round(ul.getBoundingClientRect().right - ultima.getBoundingClientRect().right);
+    });
+    expect.soft(hueco, 'hueco a la derecha de la última casilla').toBeLessThanOrEqual(1);
+
     const casillas = page.locator('[data-testid^="consulta-casilla-"]');
     const ids = await casillas.evaluateAll((els) =>
       els.map((e) => e.getAttribute('data-testid') ?? ''),
