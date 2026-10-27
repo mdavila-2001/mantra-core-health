@@ -2,7 +2,7 @@
   claim="Su salud, en un solo lugar"
   tagline="Lleve su historia clínica, sus citas y sus estudios siempre con usted."
   contentWidth="full"
-  scene="calm"
+  [scene]="registered() ? 'stage' : 'calm'"
 >
   <!-- El alta y la columna que la explica son una sola cosa en pantalla ancha:
        la pregunta a la izquierda y por qué se hace a la derecha. En teléfono la
@@ -17,9 +17,8 @@
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
             ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con {{ accessHint }} y la contraseña que eligió.</p>
           @if (verificationSent()) {
-            <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar a usar AloVida.</p>
+            <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección.</p>
           }
         </div>
         <button
