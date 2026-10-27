@@ -745,6 +745,29 @@ describe('IamClient', () => {
       expect(req.request.body).not.toHaveProperty('sedesLicenseFileId');
       req.flush({});
     });
+
+    it('manda la fecha del SEDES y el registro del colegio con su fecha y su respaldo', () => {
+      client
+        .registerPractitioner({
+          ...ALTA,
+          sedesLicenseIssueDate: '2016-07-11',
+          collegeLicenseNumber: 'CMB-4410',
+          collegeName: 'Colegio Médico de Bolivia',
+          collegeLicenseIssueDate: '2015-09-20',
+          collegeLicenseFileId: 'pdf-colegio',
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body).toMatchObject({
+        sedesLicenseIssueDate: '2016-07-11',
+        collegeLicenseNumber: 'CMB-4410',
+        collegeName: 'Colegio Médico de Bolivia',
+        collegeLicenseIssueDate: '2015-09-20',
+        collegeLicenseFileId: 'pdf-colegio',
+      });
+      req.flush({});
+    });
   });
 });
 

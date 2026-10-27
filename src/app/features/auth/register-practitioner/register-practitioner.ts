@@ -1,6 +1,7 @@
 import { environment } from '../../../../environments/environment';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
+import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { SignatureOrSeal } from '../../../shared/components/molecules/signature-or-seal/signature-or-seal';
 import {
   ChangeDetectionStrategy,
@@ -11,7 +12,7 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
 import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
 import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
@@ -46,6 +47,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -135,7 +137,12 @@ function fechaIso(entrada: Date | string): string {
 }
 
 /** Los campos de fecha del alta: el selector sólo entiende `Date`. */
-const CAMPOS_DE_FECHA = ['birthDate', 'licenseIssueDate'] as const;
+const CAMPOS_DE_FECHA = [
+  'birthDate',
+  'licenseIssueDate',
+  'sedesLicenseIssueDate',
+  'collegeLicenseIssueDate',
+] as const;
 
 /**
  * El borrador pasa por JSON y las fechas vuelven como texto. El selector de
@@ -431,14 +438,67 @@ type ClaveDeEstudioDelTitulo =
   | 'professionalTitleCountry'
   | 'professionalTitleCity';
 
-/** Un respaldo suelto: el de la matrícula y el del registro del SEDES. */
+/** Un respaldo suelto: el del título, la matrícula, el SEDES o el colegio. */
 interface RespaldoDeclarado {
   readonly archivo: string;
   readonly pesoBytes: number;
 }
 
-/** Cuál respaldo suelto se está tocando: el del título, la matrícula o el SEDES. */
-type ClaveDeRespaldo = 'professional-title' | 'license' | 'sedes';
+/** Cuál respaldo suelto se está tocando: el del título o el de una habilitación. */
+type ClaveDeRespaldo = 'professional-title' | ClaveDeHabilitacion;
+
+/** Las tres habilitaciones del alta: matrícula, SEDES y colegio de la profesión. */
+type ClaveDeHabilitacion = 'license' | 'sedes' | 'college';
+
+/** El control del número de cada habilitación. */
+type ControlDeHabilitacion = 'licenseNumber' | 'sedesLicenseNumber' | 'collegeLicenseNumber';
+
+/** El control de la fecha de inscripción de cada habilitación. */
+type FechaDeHabilitacion = 'licenseIssueDate' | 'sedesLicenseIssueDate' | 'collegeLicenseIssueDate';
+
+/** Un renglón de la página de habilitación: número, fecha y respaldo de UN registro. */
+interface RenglonDeHabilitacion {
+  readonly clave: ClaveDeHabilitacion;
+  readonly control: ControlDeHabilitacion;
+  readonly fecha: FechaDeHabilitacion;
+  /** El rótulo del registro, el mismo que pone el motor sobre el renglón. */
+  readonly etiqueta: string;
+  /** El rótulo de la casilla del número: dice qué número es, sin el registro al lado. */
+  readonly rotuloNumero: string;
+  readonly placeholder: string;
+  readonly testId: string;
+  readonly icono: NavIconName;
+}
+
+/**
+ * De qué control sale cada habilitación. El rótulo, el placeholder y el ícono
+ * del número vienen de `practitionerFields`, que es la definición compartida.
+ */
+const HABILITACIONES: readonly {
+  readonly clave: ClaveDeHabilitacion;
+  readonly control: ControlDeHabilitacion;
+  readonly fecha: FechaDeHabilitacion;
+  readonly rotuloNumero: string;
+}[] = [
+  {
+    clave: 'license',
+    control: 'licenseNumber',
+    fecha: 'licenseIssueDate',
+    rotuloNumero: 'Número de matrícula',
+  },
+  {
+    clave: 'sedes',
+    control: 'sedesLicenseNumber',
+    fecha: 'sedesLicenseIssueDate',
+    rotuloNumero: 'Número de registro',
+  },
+  {
+    clave: 'college',
+    control: 'collegeLicenseNumber',
+    fecha: 'collegeLicenseIssueDate',
+    rotuloNumero: 'Número de colegiado',
+  },
+];
 
 /** Tope de peso por adjunto. El mismo que la foto de perfil. */
 const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
@@ -651,6 +711,8 @@ function sinTildes(texto: string): string {
   imports: [RegistrationBadge, 
     FileDropTarget,
     FileInput,
+    DatePicker,
+    NgTemplateOutlet,
     SignatureOrSeal,
     RouterLink,
     AppButton,
@@ -1108,6 +1170,19 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [Validators.required],
     }),
+    // El registro del colegio de la profesión. Obligatorio sólo cuando el
+    // título elegido tiene un colegio conocido: el validador lee el título del
+    // mismo grupo y `syncCollegeWithProfession` lo vuelve a correr al cambiarlo.
+    collegeLicenseNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        (control) =>
+          titleCollege(String(control.parent?.get('professionalTitle')?.value ?? '')) ===
+          PROFESSION_COLLEGE
+            ? null
+            : Validators.required(control),
+      ],
+    }),
     // Quién emitió la matrícula y con qué título ejerce: los dos salen de una
     // lista cerrada — ver `OPCIONES_AUTORIDAD_REGULADORA` y
     // `OPCIONES_TITULO_PROFESIONAL`. Siguen siendo controles de texto porque lo
@@ -1197,6 +1272,8 @@ export class RegisterPractitioner {
       validators: [Validators.required],
     }),
     licenseIssueDate: new FormControl<Date | null>(null),
+    sedesLicenseIssueDate: new FormControl<Date | null>(null),
+    collegeLicenseIssueDate: new FormControl<Date | null>(null),
     // El departamento de expedición es parte del mismo carnet que el número:
     // si uno es obligatorio, el otro también, o el documento queda a medias.
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
@@ -1282,40 +1359,82 @@ export class RegisterPractitioner {
   private readonly fileIdTituloPrincipal = signal<string | null>(null);
   readonly respaldoMatricula = signal<RespaldoDeclarado | null>(null);
   readonly respaldoSedes = signal<RespaldoDeclarado | null>(null);
+  readonly respaldoColegio = signal<RespaldoDeclarado | null>(null);
   /**
    * El fileId de cada respaldo de habilitación ya subido (P29). Se recuerda
    * para que un reintento del alta no vuelva a subir —ni intente reclamar dos
    * veces— el mismo PDF, y se olvida cuando la persona cambia el archivo.
    */
-  private readonly fileIdDeHabilitacion = signal<Partial<Record<'license' | 'sedes', string>>>({});
+  private readonly fileIdDeHabilitacion = signal<Partial<Record<ClaveDeHabilitacion, string>>>({});
 
   /** El error del último adjunto rechazado, si hubo. */
   readonly errorAdjunto = signal<string | null>(null);
 
   /**
-   * Los dos respaldos de la habilitación, con el número que respalda cada uno.
+   * Los tres renglones de la habilitación —matrícula, SEDES y colegio—, cada
+   * uno con su número, su fecha de inscripción y su respaldo.
    *
-   * Trae el valor del formulario para que la pantalla muestre «MP-12345» al
-   * lado de su archivo: un adjunto sin el número al lado obliga a abrirlo para
-   * saber de cuál es.
+   * Un archivo o una fecha sueltos no dicen de cuál de los tres registros son
+   * (propietario, 27/10/2026): por eso cada uno va en el renglón de su número.
+   * El rótulo y el placeholder salen de la definición compartida del alta, que
+   * es la que conoce el título elegido.
    */
-  readonly respaldosDeHabilitacion = computed(() => {
-    const raw = this.formProfesional.getRawValue();
-    return [
-      {
-        clave: 'license' as ClaveDeRespaldo,
-        etiqueta: 'Matrícula profesional',
-        valor: raw.licenseNumber.trim(),
-        adjunto: this.respaldoMatricula,
-      },
-      {
-        clave: 'sedes' as ClaveDeRespaldo,
-        etiqueta: 'Registro del SEDES',
-        valor: raw.sedesLicenseNumber.trim(),
-        adjunto: this.respaldoSedes,
-      },
-    ];
+  readonly renglonesDeHabilitacion = computed<readonly RenglonDeHabilitacion[]>(() => {
+    const campos = new Map(
+      this.paginasProfesional()
+        .flatMap((pagina) => pagina.campos)
+        .map((campo) => [campo.key, campo] as const),
+    );
+    return HABILITACIONES.map(({ clave, control, fecha, rotuloNumero }) => {
+      const campo = campos.get(control);
+      return {
+        clave,
+        control,
+        fecha,
+        rotuloNumero,
+        etiqueta: campo?.label ?? '',
+        placeholder: campo?.placeholder ?? '',
+        testId: campo?.testId ?? `registro-pro-${clave}`,
+        icono: campo?.icono ?? 'shield',
+      };
+    });
   });
+
+  /** El renglón de una habilitación, para la plantilla proyectada bajo su número. */
+  renglonDe(clave: ClaveDeHabilitacion): RenglonDeHabilitacion | undefined {
+    return this.renglonesDeHabilitacion().find((renglon) => renglon.clave === clave);
+  }
+
+  /** El número escrito de una habilitación. */
+  valorDeHabilitacion(control: ControlDeHabilitacion): string {
+    return this.formProfesional.controls[control].value;
+  }
+
+  /** Escribe el número de una habilitación desde su renglón. */
+  escribirHabilitacion(control: ControlDeHabilitacion, valor: string | number | null): void {
+    this.formProfesional.controls[control].setValue(valor === null ? '' : String(valor));
+  }
+
+  /** Si el número de una habilitación va en rojo: obligatorio y vacío, ya tocado. */
+  habilitacionEnRojo(control: ControlDeHabilitacion): boolean {
+    const campo = this.formProfesional.controls[control];
+    return campo.touched && campo.invalid;
+  }
+
+  /** La fecha de inscripción de una habilitación. */
+  fechaDeHabilitacion(fecha: FechaDeHabilitacion): Date | null {
+    return this.formProfesional.controls[fecha].value;
+  }
+
+  /** Escribe la fecha de inscripción de una habilitación. */
+  escribirFechaDeHabilitacion(fecha: FechaDeHabilitacion, valor: Date | null): void {
+    const control = this.formProfesional.controls[fecha];
+    control.setValue(valor);
+    control.markAsDirty();
+  }
+
+  /** El día de hoy: una inscripción no puede ser del futuro. */
+  protected readonly hoy = 'today';
 
   /** Agrega una fila vacía del tipo pedido, lista para escribir y adjuntar. */
   agregarTitulo(tipo: CodigoDeTitulo): void {
@@ -1572,6 +1691,7 @@ export class RegisterPractitioner {
   /** El signal donde vive cada respaldo suelto. */
   private destinoDelRespaldo(cual: ClaveDeRespaldo) {
     if (cual === 'professional-title') return this.respaldoTituloProfesional;
+    if (cual === 'college') return this.respaldoColegio;
     return cual === 'license' ? this.respaldoMatricula : this.respaldoSedes;
   }
 
@@ -2392,13 +2512,12 @@ export class RegisterPractitioner {
    *   set devuelve nombre y código —no la dirección ni el municipio del
    *   establecimiento—, así que el autocompletado de AC-05-9 no es alcanzable
    *   desde una pantalla sin sesión aunque el campo existiera.
-   * - **Las tres matrículas por separado** (AC-05-5). Siguen siendo **dos**
-   *   números —`licenseNumber` (Ministerio, jurisdicción nacional) y
-   *   `sedesLicenseNumber` (SEDES, jurisdicción departamental)— y **una**
-   *   autoridad. El tercero, el registro del colegio profesional, todavía no
-   *   tiene dónde ir: sería una tercera fila de `common.identifiers`, y eso es
-   *   esquema. Lo que sí se corrigió es que el segundo dejara de archivarse
-   *   como título de grado: es una habilitación y vive con la matrícula.
+   * - **Las tres matrículas por separado** (AC-05-5). Desde el 27/10/2026 son
+   *   **tres** números, cada uno con su fecha y su respaldo: `licenseNumber`
+   *   (Ministerio, jurisdicción nacional), `sedesLicenseNumber` (SEDES,
+   *   departamental) y `collegeLicenseNumber` (el colegio de la profesión,
+   *   que sale del título). La API guarda los tres como filas de
+   *   `profiles.jurisdiction_authorizations`.
    * - **Lugar de estudio** (AC-05-13). La universidad se guarda por credencial
    *   y se elige de un padrón acotado al país; el país y la ciudad se siguen
    *   preguntando, pero no viajan porque el alta no define esos campos. Los PDFs de credenciales ahora se precargan y se
@@ -2645,6 +2764,10 @@ export class RegisterPractitioner {
       // Primero el espejo: de acá leen las etiquetas del colegio en el grafo
       // de señales.
       this.tituloProfesionalElegido.set(valor);
+      // Si el registro del colegio es obligatorio depende del título.
+      this.formProfesional.controls.collegeLicenseNumber.updateValueAndValidity({
+        emitEvent: false,
+      });
 
       // El colegio sigue a la profesión: la opción «Colegio de la profesión»
       // lleva el nombre del colegio de ese título. Vacía, se llena sólo si el
@@ -2920,17 +3043,19 @@ export class RegisterPractitioner {
   }
 
   /**
-   * Sube el PDF de la matrícula y el del SEDES (P29), y recuerda cada fileId.
+   * Sube el PDF de la matrícula, el del SEDES y el del colegio (P29), y
+   * recuerda cada fileId.
    *
    * Hasta el 26/10/2026 el alta no tenía dónde llevarlos: el selector aceptaba
    * el archivo, lo mostraba con su nombre y su peso, y al crear la cuenta lo
-   * tiraba en silencio. Sólo se sube el del SEDES si se escribió su número:
-   * sin la habilitación la API no tiene fila donde dejarlo y respondería 422.
+   * tiraba en silencio. Sólo se sube el de cada registro si se escribió su
+   * número: sin la habilitación la API no tiene fila donde dejarlo y
+   * respondería 422.
    */
   private uploadLicensePdfs(): Observable<void> {
     const raw = this.formProfesional.getRawValue();
-    const claves = (['license', 'sedes'] as const).filter((clave) =>
-      clave === 'license' ? raw.licenseNumber.trim() !== '' : raw.sedesLicenseNumber.trim() !== '',
+    const claves = HABILITACIONES.filter(({ control }) => raw[control].trim() !== '').map(
+      ({ clave }) => clave,
     );
     return from(claves).pipe(
       concatMap((clave) => {
@@ -3108,6 +3233,11 @@ export class RegisterPractitioner {
     const autoridad = raw.regulatoryAuthority.trim();
     const fechaNacimiento = raw.birthDate;
     const fechaInscripcion = raw.licenseIssueDate;
+    const sedes = raw.sedesLicenseNumber.trim();
+    const fechaSedes = raw.sedesLicenseIssueDate;
+    const registroColegio = raw.collegeLicenseNumber.trim();
+    const fechaColegio = raw.collegeLicenseIssueDate;
+    const colegio = titleCollege(this.tituloProfesionalElegido());
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
     const calleDomicilio = componerDireccion(raw.homeAddressLines, raw.homeDistrict);
@@ -3179,9 +3309,26 @@ export class RegisterPractitioner {
       ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
       // Los respaldos de la habilitación (P29), ya subidos por `uploadLicensePdfs`.
       ...(respaldos.license === undefined ? {} : { licenseFileId: respaldos.license }),
-      ...(respaldos.sedes === undefined || raw.sedesLicenseNumber.trim() === ''
+      ...(respaldos.sedes === undefined || sedes === ''
         ? {}
         : { sedesLicenseFileId: respaldos.sedes }),
+      ...(fechaSedes === null || sedes === ''
+        ? {}
+        : { sedesLicenseIssueDate: fechaIso(fechaSedes) }),
+      // El registro del colegio de la profesión, con su fecha y su respaldo.
+      // Nada de esto viaja sin el número: la API no tendría fila donde dejarlo.
+      ...(registroColegio === ''
+        ? {}
+        : {
+            collegeLicenseNumber: registroColegio,
+            ...(colegio === PROFESSION_COLLEGE ? {} : { collegeName: colegio }),
+            ...(fechaColegio === null
+              ? {}
+              : { collegeLicenseIssueDate: fechaIso(fechaColegio) }),
+            ...(respaldos.college === undefined
+              ? {}
+              : { collegeLicenseFileId: respaldos.college }),
+          }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
       // Los cuatro contactos por separado. `phone` ya no viaja: era el campo
       // único que mezclaba el número privado con el del consultorio, y la API
