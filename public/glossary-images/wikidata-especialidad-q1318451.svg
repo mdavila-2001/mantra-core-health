@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Medicina transfusional: cadena de la sangre</title>
+  <desc id="d">Una cadena de cinco pasos: la persona donante, el análisis del grupo y de infecciones, la separación en glóbulos rojos, plasma y plaquetas, la prueba cruzada de compatibilidad y la transfusión al paciente correcto. Debajo, los grupos sanguíneos ABO y la gestión de la sangre del paciente.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; --xray:#18212b; --xbone:#dfe6ee; --xtxt:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Medicina transfusional: de la donación al paciente</text>
+<circle cx="90" cy="91.0" r="11.0" fill="var(--skin)" stroke="var(--line)"/>
+<path d="M84.0 101.0 L65.0 108.0 C60.0 110.0 59.0 115.0 58.5 120.0 L54.0 165.0 L61.0 166.0 L67.0 126.0 L68.0 160.0 L67.0 230.0 L83.0 230.0 L88.0 170.0 L92.0 170.0 L97.0 230.0 L113.0 230.0 L112.0 160.0 L113.0 126.0 L119.0 166.0 L126.0 165.0 L121.5 120.0 C121.0 115.0 120.0 110.0 115.0 108.0 L96.0 101.0 Z" fill="var(--skin)" stroke="var(--line)" stroke-width="1.5" stroke-linejoin="round"/>
+<text x="90" y="250" text-anchor="middle" class="step">1 · Donante</text>
+<text x="90" y="268" text-anchor="middle" class="small" style="fill:var(--muted)">tras una entrevista</text>
+<line x1="150" y1="160" x2="186" y2="160" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="190" y="120" width="120" height="80" rx="8" fill="var(--accent)"/>
+<text x="250.0" y="149.3" text-anchor="middle" class="small" style="fill:var(--on)">2 · Análisis</text>
+<text x="250.0" y="164.3" text-anchor="middle" class="small" style="fill:var(--on)">grupo e</text>
+<text x="250.0" y="179.3" text-anchor="middle" class="small" style="fill:var(--on)">infecciones</text>
+<line x1="314" y1="160" x2="350" y2="160" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<text x="500" y="84" text-anchor="middle" class="step">3 · Componentes</text>
+<rect x="388" y="96" width="8" height="14" rx="2" fill="var(--muted)"/>
+<path d="M370 108 H414 V184 Q414 198 400 198 H384 Q370 198 370 184 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M373 135 H411 V184 Q411 195 400 195 H384 Q373 195 373 184 Z" fill="var(--vessel)" stroke="none" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="392" y="218" text-anchor="middle" class="small">Glóbulos rojos</text>
+<rect x="496" y="96" width="8" height="14" rx="2" fill="var(--muted)"/>
+<path d="M478 108 H522 V184 Q522 198 508 198 H492 Q478 198 478 184 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M481 135 H519 V184 Q519 195 508 195 H492 Q481 195 481 184 Z" fill="var(--yellow)" stroke="none" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="500" y="218" text-anchor="middle" class="small">Plasma</text>
+<rect x="604" y="96" width="8" height="14" rx="2" fill="var(--muted)"/>
+<path d="M586 108 H630 V184 Q630 198 616 198 H600 Q586 198 586 184 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M589 135 H627 V184 Q627 195 616 195 H600 Q589 195 589 184 Z" fill="var(--warn)" stroke="none" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="608" y="218" text-anchor="middle" class="small">Plaquetas</text>
+<line x1="660" y1="160" x2="696" y2="160" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="700" y="120" width="60" height="80" rx="8" fill="var(--purple)"/>
+<text x="730.0" y="149.3" text-anchor="middle" class="small" style="fill:var(--on)">4</text>
+<text x="730.0" y="164.3" text-anchor="middle" class="small" style="fill:var(--on)">Prueba</text>
+<text x="730.0" y="179.3" text-anchor="middle" class="small" style="fill:var(--on)">cruzada</text>
+<text x="400" y="270" text-anchor="middle" class="lab">5 · Transfusión al paciente correcto, con vigilancia</text>
+<rect x="40" y="300" width="720" height="120" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+<text x="56" y="326" class="h">Grupos sanguíneos ABO y Rh</text>
+<circle cx="80" cy="370" r="22" fill="var(--accent)"/>
+<text x="80" y="375" text-anchor="middle" class="step" style="fill:var(--on)">O</text>
+<circle cx="144" cy="370" r="22" fill="var(--vessel)"/>
+<text x="144" y="375" text-anchor="middle" class="step" style="fill:var(--on)">A</text>
+<circle cx="208" cy="370" r="22" fill="var(--ok)"/>
+<text x="208" y="375" text-anchor="middle" class="step" style="fill:var(--on)">B</text>
+<circle cx="272" cy="370" r="22" fill="var(--purple)"/>
+<text x="272" y="375" text-anchor="middle" class="step" style="fill:var(--on)">AB</text>
+<text x="340" y="352" class="h">Gestión de la sangre del paciente</text>
+<text x="340" y="376" class="small">Tratar la anemia antes de operar y reducir el</text>
+<text x="340" y="394" class="small">sangrado para evitar transfusiones innecesarias.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

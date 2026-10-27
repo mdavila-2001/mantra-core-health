@@ -28,10 +28,10 @@
 <path d="M306 196 C326 200 340 220 336 250 C332 280 312 300 300 330" fill="none" stroke="var(--organ-l)" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
 <ellipse cx="220" cy="200" rx="12" ry="9" fill="var(--bad)"/>
 <ellipse cx="330" cy="232" rx="9" ry="7" fill="var(--bad)"/>
-<text x="140" y="170" text-anchor="middle" class="lab">Estómago</text>
-<text x="200" y="252" text-anchor="middle" class="small" style="fill:var(--bad)">Úlcera gástrica</text>
+<text x="180" y="150" text-anchor="middle" class="lab">Estómago</text>
+<text x="200" y="228" text-anchor="middle" class="small" style="fill:var(--bad)">Úlcera gástrica</text>
 <text x="240" y="340" text-anchor="end" class="small" style="fill:var(--muted)">Duodeno</text>
-<text x="350" y="210" text-anchor="end" class="small" style="fill:var(--bad)">Úlcera</text>
+<text x="318" y="240" text-anchor="end" class="small" style="fill:var(--bad)">Úlcera</text>
 <rect x="40" y="360" width="320" height="64" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
 <text x="56" y="384" class="small">Herida abierta en la mucosa que el</text>
 <text x="56" y="402" class="small">ácido no deja cicatrizar.</text>

@@ -21,7 +21,7 @@
 <rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
 <text x="400.0" y="50" text-anchor="middle" class="title">Trastorno bipolar: cambios del estado de ánimo</text>
 <line x1="60" y1="200" x2="740" y2="200" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="6 4"/>
-<text x="64" y="192" class="small" style="fill:var(--muted)">Ánimo estable</text>
+<text x="64" y="222" class="small" style="fill:var(--muted)">Ánimo estable</text>
 <path d="M60 200 C110 200 130 90 180 90 C230 90 240 200 290 200 C330 200 340 300 390 300 C440 300 450 200 500 200 C540 200 560 130 600 130 C640 130 650 200 700 200 L740 200" fill="none" stroke="var(--purple)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="180" y="76" text-anchor="middle" class="step" style="fill:var(--warn)">Manía</text>
 <text x="390" y="326" text-anchor="middle" class="step" style="fill:var(--accent)">Depresión</text>

@@ -41,8 +41,8 @@
 <circle cx="277.5" cy="162.7" r="3" fill="var(--panel)" opacity=".8"/>
 <text x="200" y="196" text-anchor="middle" class="small" style="fill:var(--muted)">Centro más claro</text>
 <text x="200" y="212" text-anchor="middle" class="small" style="fill:var(--muted)">(piel casi normal)</text>
-<text x="300" y="96" class="small" style="fill:var(--bad)">Borde rojo,</text>
-<text x="300" y="112" class="small" style="fill:var(--bad)">con escamas</text>
+<text x="276" y="96" class="small" style="fill:var(--bad)">Borde rojo,</text>
+<text x="276" y="112" class="small" style="fill:var(--bad)">con escamas</text>
 <text x="200" y="362" text-anchor="middle" class="lab">Mancha en anillo que crece hacia afuera</text>
 <text x="200" y="382" text-anchor="middle" class="lab">y pica. No la causa un gusano: es un hongo.</text>
 <text x="200" y="414" text-anchor="middle" class="small" style="fill:var(--muted)">Se confirma con raspado si hay dudas.</text>

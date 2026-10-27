@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Campo de la neurología</title>
+  <desc id="d">Esquema del sistema nervioso con el encéfalo, el cerebelo, la médula espinal, los nervios que salen de ella y un músculo. A la derecha, las enfermedades que atiende la neurología, como ictus, epilepsia o Parkinson, las señales de ictus y cómo trabaja el neurólogo.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Neurología: el sistema nervioso de punta a punta</text>
+  <rect x="20" y="60" width="380" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="210.0" y="88" text-anchor="middle" class="h">Estructuras que estudia</text>
+  <g transform="translate(0 22)">
+  <path d="M130 150 C120 100 180 80 210 84 C250 88 280 110 276 150 C272 180 250 190 230 190 L200 190 C170 190 136 180 130 150 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <ellipse cx="250" cy="196" rx="26" ry="14" fill="var(--pur-l)" stroke="var(--pur)"/>
+  </g>
+  <path d="M210 212 L210 400" fill="none" stroke="var(--warn)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M210 250 C180 256 140 264 100 270 M210 250 C240 256 280 264 320 270" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M210 296 C180 302 140 310 100 316 M210 296 C240 302 280 310 320 316" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M210 342 C180 348 140 356 100 362 M210 342 C240 348 280 356 320 362" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <path d="M210 388 C180 394 140 402 100 408 M210 388 C240 394 280 402 320 408" fill="none" stroke="var(--warn)" stroke-width="2"/>
+  <rect x="300" y="396" width="50" height="30" rx="8" fill="var(--red-l)" stroke="var(--red)"/>
+  <text x="200" y="158" text-anchor="middle" class="lab b">Encéfalo</text>
+  <text x="286" y="240" class="small">Cerebelo</text>
+  <text x="224" y="290" class="small b">Médula</text>
+  <text x="60" y="300" class="small b">Nervios</text>
+  <text x="326" y="388" text-anchor="middle" class="small b">Músculo</text>
+  <rect x="416" y="60" width="364" height="220" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="88" text-anchor="middle" class="h">Qué atiende</text>
+  <text x="434" y="108" class="small">• Ictus</text>
+  <text x="434" y="134" class="small">• Epilepsia</text>
+  <text x="434" y="160" class="small">• Migraña y cefaleas</text>
+  <text x="434" y="186" class="small">• Parkinson y temblores</text>
+  <text x="604" y="108" class="small">• Demencias</text>
+  <text x="604" y="134" class="small">• Esclerosis múltiple</text>
+  <text x="604" y="160" class="small">• Neuropatías</text>
+  <text x="604" y="186" class="small">• Enfermedad muscular</text>
+  <text x="598" y="246" text-anchor="middle" class="small b" style="fill:var(--red)">Ictus: cara torcida, brazo débil o habla</text>
+  <text x="598" y="264" text-anchor="middle" class="small b" style="fill:var(--red)">alterada, llamar a emergencias</text>
+  <rect x="416" y="296" width="364" height="144" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="598.0" y="324" text-anchor="middle" class="h">Cómo trabaja</text>
+  <text x="434" y="342" class="small">• Exploración neurológica</text>
+  <text x="434" y="366" class="small">• Resonancia y tomografía</text>
+  <text x="434" y="390" class="small">• EEG y electromiografía</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>

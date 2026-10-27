@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q11865729
+image: wikidata-especialidad-q11865729.svg | La podología previene y trata las afecciones del pie y del tobillo. | Planta del pie con señales en la uña encarnada, el juanete, los callos, una úlcera y el talón, junto a un esquema del estudio de la pisada y los tratamientos del podólogo.
 ---
 
 ## [definition] Introducción

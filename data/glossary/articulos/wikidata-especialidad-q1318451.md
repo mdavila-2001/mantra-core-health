@@ -1,5 +1,6 @@
 ---
 slug: wikidata-especialidad-q1318451
+image: wikidata-especialidad-q1318451.svg | La medicina transfusional garantiza que cada componente de la sangre llegue seguro al paciente correcto. | Secuencia desde la persona donante hasta la transfusión, con bolsas de glóbulos rojos, plasma y plaquetas, y círculos con los grupos sanguíneos O, A, B y AB.
 ---
 
 ## [definition] Introducción

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Campo de la oncología ginecológica</title>
+  <desc id="d">Útero de frente con el endometrio, las trompas, los ovarios, el cuello uterino, la vagina y la vulva señalados como lugares donde se originan los cánceres ginecológicos. A la derecha, las medidas de prevención y los síntomas por los que conviene consultar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#dbe8f6; --ok:#1f8a5b; --ok-l:#d9f0e5; --warn:#b7651a; --warn-l:#f8ebd0; --red:#c0392b; --red-l:#f7dcd8; --pur:#7b3b8e; --pur-l:#eadcf0; --skin:#f0cdb6; --organ:#e7a39a; --bone:#e3dccb; --tissue:#e9edf2; --beam:#f2c46d; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#22374f; --ok:#4cc38a; --ok-l:#1d3a2d; --warn:#e3a157; --warn-l:#3d2f1c; --red:#ef7467; --red-l:#43241f; --pur:#c08ad4; --pur-l:#36283f; --skin:#8a6a58; --organ:#9a5a52; --bone:#6b6556; --tissue:#2a3541; --beam:#8a6f2f; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .b { font-weight: 700; }
+    .on { fill: var(--on); }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Oncología ginecológica: cánceres del aparato reproductor femenino</text>
+  <rect x="20" y="60" width="420" height="380" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="230.0" y="88" text-anchor="middle" class="title">Dónde se originan</text>
+  <path d="M180 150 C180 126 280 126 280 150 C282 210 256 240 244 256 L244 300 L216 300 L216 256 C204 240 178 210 180 150 Z" fill="var(--organ)" stroke="var(--red)" stroke-width="2"/>
+  <path d="M182 160 C140 140 110 150 90 176 M278 160 C320 140 350 150 370 176" fill="none" stroke="var(--red)" stroke-width="5"/>
+  <ellipse cx="84" cy="196" rx="22" ry="15" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <ellipse cx="376" cy="196" rx="22" ry="15" fill="var(--pur-l)" stroke="var(--pur)"/>
+  <path d="M216 300 L206 380 L254 380 L244 300" fill="var(--skin)" stroke="var(--muted)" stroke-width="2"/>
+  <path d="M196 380 C190 410 270 410 264 380" fill="none" stroke="var(--warn)" stroke-width="4"/>
+  <text x="230" y="190" text-anchor="middle" class="small b">Endometrio</text>
+  <line x1="70" y1="210" x2="70" y2="240" stroke="var(--muted)" stroke-width="1"/>
+  <text x="70" y="256" text-anchor="middle" class="small b">Ovario</text>
+  <line x1="130" y1="150" x2="130" y2="112" stroke="var(--muted)" stroke-width="1"/>
+  <text x="130" y="104" text-anchor="middle" class="small b">Trompa</text>
+  <line x1="246" y1="280" x2="320" y2="290" stroke="var(--muted)" stroke-width="1"/>
+  <text x="324" y="294" class="small b">Cuello</text>
+  <line x1="254" y1="350" x2="320" y2="350" stroke="var(--muted)" stroke-width="1"/>
+  <text x="324" y="354" class="small b">Vagina</text>
+  <line x1="266" y1="396" x2="320" y2="410" stroke="var(--muted)" stroke-width="1"/>
+  <text x="324" y="414" class="small b">Vulva</text>
+  <rect x="456" y="60" width="324" height="180" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="88" text-anchor="middle" class="h">Prevención</text>
+  <text x="474" y="108" class="small">• Vacuna contra el VPH</text>
+  <text x="474" y="134" class="small">• Cribado de cuello uterino</text>
+  <text x="474" y="160" class="small">• Consejo genético si hay</text>
+  <text x="485" y="186" class="small">antecedentes familiares</text>
+  <rect x="456" y="256" width="324" height="184" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="618.0" y="284" text-anchor="middle" class="h">Consultar si hay</text>
+  <text x="474" y="302" class="small">• Sangrado tras la menopausia</text>
+  <text x="474" y="328" class="small">• Sangrado tras relaciones</text>
+  <text x="474" y="354" class="small">• Hinchazón abdominal persistente</text>
+  <text x="474" y="380" class="small">• Bulto o llaga en la vulva</text>
+
+  <text x="400" y="466" text-anchor="middle" class="small muted">Esquema ilustrativo de la especialidad. Ilustración original de AloVida.</text>
+</svg>
