@@ -12,7 +12,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -102,6 +102,7 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     NgTemplateOutlet,
     AlovidaThemeToggleDirective,
     RouterLink,
+    RouterLinkActive,
     RouterOutlet,
     TutorialOverlay,
     TutorialTarget,

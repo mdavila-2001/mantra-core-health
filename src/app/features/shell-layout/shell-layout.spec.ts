@@ -518,11 +518,10 @@ describe('ShellLayout', () => {
             '/my-account/pharmacy',
           ]),
         ).toBe(true);
-        // «Promociones» se mudó a la barra superior (25/09/2026).
+        // «Promociones» se mudó a la barra superior (25/09/2026) y de ahí se
+        // fusionó con el carrito (27/10/2026): se abre desde «Mi carrito».
         expect(enlaces).not.toContain('/my-account/promotions');
-        expect(
-          raiz().querySelector('[data-testid="header-promociones"]')?.getAttribute('href'),
-        ).toBe('/my-account/promotions');
+        expect(raiz().querySelector('[data-testid="header-promociones"]')).toBeNull();
         expect(
           seguidas(enlaces, [
             '/my-account/medical-record',
@@ -1149,17 +1148,15 @@ describe('ShellLayout', () => {
       expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
     });
 
-    it('el encabezado ofrece Tutoriales y Chats como enlaces, con globo y no como botón (N-01)', () => {
-      // Calcados de «Ajustes»: `<a routerLink>`, `aria-label` y `appTooltip`
-      // (ADR-0012 §3) — nunca un `<button>`, porque los dos llevan a una
-      // pantalla. Para ambos roles porque ninguno de los dos exige rol
-      // (`roles: [ANY_ROLE]` en `navigation.map.ts`).
+    it('el encabezado ofrece Chats como enlace, y Tutoriales ya no (se fusionó con Ajustes)', () => {
+      // Chats, calcado de «Ajustes»: `<a routerLink>`, `aria-label` y
+      // `appTooltip` (ADR-0012 §3) — nunca un `<button>`, porque lleva a una
+      // pantalla. Tutoriales salió de la cabecera el 27/10/2026: es una
+      // pestaña de Ajustes (ver `settings.spec`).
       const tutoriales = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-tutoriales"]');
       const chats = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-chats"]');
 
-      expect(tutoriales?.tagName).toBe('A');
-      expect(tutoriales?.getAttribute('href')).toBe('/tutorials');
-      expect(tutoriales?.getAttribute('aria-label')).toBe('Tutoriales');
+      expect(tutoriales).toBeNull();
 
       expect(chats?.tagName).toBe('A');
       expect(chats?.getAttribute('href')).toBe('/messaging');
@@ -1209,13 +1206,9 @@ describe('ShellLayout', () => {
             abrirSesion({ sub: 'u-1', roles, tenants: ['t-1'] });
           });
 
-          it('Tutoriales es un enlace a /tutorials con nombre accesible y globo', () => {
-            const tutoriales = enlace('header-tutoriales');
-            expect(tutoriales?.tagName).toBe('A');
-            expect(tutoriales?.getAttribute('href')).toBe('/tutorials');
-            expect(tutoriales?.getAttribute('aria-label')).toBe('Tutoriales');
-            expect(globo('header-tutoriales')).toEqual({ texto: 'Tutoriales', posicion: 'bottom' });
-            expect(tutoriales?.querySelector('app-nav-icon')).not.toBeNull();
+          it('Tutoriales ya no está en la cabecera: se llega por Ajustes (27/10/2026)', () => {
+            expect(enlace('header-tutoriales')).toBeNull();
+            expect(enlace('header-ajustes')?.getAttribute('href')).toBe('/settings');
           });
 
           it('Chats es un enlace a /messaging con nombre accesible y globo', () => {
@@ -1227,11 +1220,10 @@ describe('ShellLayout', () => {
             expect(chats?.querySelector('app-nav-icon')).not.toBeNull();
           });
 
-          it('los dos salieron de la barra pero siguen en la cabecera', () => {
+          it('ninguno de los dos vuelve a la barra lateral; Chats sigue en la cabecera', () => {
             const enBarra = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) => a.getAttribute('data-route'));
             expect(enBarra).not.toContain('/tutorials');
             expect(enBarra).not.toContain('/messaging');
-            expect(enlace('header-tutoriales')).not.toBeNull();
             expect(enlace('header-chats')).not.toBeNull();
           });
 
@@ -1382,7 +1374,8 @@ describe('ShellLayout', () => {
 
         expect(billetera()?.tagName).toBe('A');
         expect(billetera()?.getAttribute('href')).toBe('/my-account/spending');
-        expect(billetera()?.getAttribute('aria-label')).toBe('Mis gastos');
+        // Lleva también las facturas (fusión del 27/10/2026), y el nombre lo dice.
+        expect(billetera()?.getAttribute('aria-label')).toBe('Mis gastos y facturas');
         expect(billetera()?.querySelector('app-nav-icon')).not.toBeNull();
       });
 
@@ -1404,7 +1397,6 @@ describe('ShellLayout', () => {
      * laboratorio son `USER`)—, fuera del menú lateral.
      */
     it.each([
-      ['paciente', ['PATIENT']],
       ['profesional', ['PRACTITIONER']],
       ['facturación', ['BILLING']],
       ['organización (farmacia, laboratorio)', ['USER']],
@@ -1422,6 +1414,30 @@ describe('ShellLayout', () => {
         a.getAttribute('data-route'),
       );
       expect(rutas).not.toContain('/my-account/invoices');
+    });
+
+    it('al paciente «Mis facturas» le llega dentro de «Mis gastos», no como otro atajo (27/10/2026)', () => {
+      abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+      fixture.detectChanges();
+
+      expect(raiz().querySelector('[data-testid="header-facturas"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="header-gastos"]')?.getAttribute('href')).toBe(
+        '/my-account/spending',
+      );
+    });
+
+    it('Emergencia salió de la cabecera y encabeza el menú lateral (27/10/2026)', () => {
+      abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+      fixture.detectChanges();
+
+      expect(raiz().querySelector('.app-header [data-testid="boton-emergencia"]')).toBeNull();
+      const enMenu = raiz().querySelector('#app-side-nav [data-testid="boton-emergencia"]');
+      expect(enMenu).not.toBeNull();
+      // Antes que cualquier destino: una urgencia no compite.
+      const primerDestino = raiz().querySelector('#app-side-nav [data-testid="nav-enlace"]');
+      expect(
+        primerDestino && enMenu!.compareDocumentPosition(primerDestino) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
     });
 
     it.each([

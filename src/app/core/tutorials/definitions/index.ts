@@ -100,9 +100,9 @@ const BIENVENIDA_PACIENTE: TutorialDefinition = {
     {
       id: 'emergencia',
       title: 'Si es urgente',
-      body: 'El botón rojo «Emergencia» le muestra los números de ambulancia, bomberos y policía. Está siempre arriba, en todas las pantallas.',
-      target: 'header-emergencia',
-      placement: 'bottom',
+      body: 'El botón rojo «Emergencia» le muestra los números de ambulancia, bomberos y policía. Está siempre arriba del menú, en todas las pantallas.',
+      target: 'nav-emergencia',
+      placement: 'right',
     },
     {
       id: 'sintomas',
@@ -128,15 +128,15 @@ const BIENVENIDA_PACIENTE: TutorialDefinition = {
     {
       id: 'atajos',
       title: 'Atajos con nombre',
-      body: 'Arriba tiene los chats con su médico, sus facturas, sus gastos, promociones y su carrito. Cada uno dice qué es.',
+      body: 'Arriba tiene los chats con su médico, sus solicitudes, sus gastos con sus facturas y su carrito con las promociones. Cada uno dice qué es.',
       target: 'header-atajos',
       placement: 'bottom',
     },
     {
       id: 'ayuda',
       title: 'Si se pierde',
-      body: 'Toque «Tutoriales» para repetir este recorrido o aprender algo nuevo. ¡Listo, ya conoce AloVida!',
-      target: 'header-tutoriales',
+      body: 'En «Ajustes», pestaña «Tutoriales», puede repetir este recorrido o aprender algo nuevo. ¡Listo, ya conoce AloVida!',
+      target: 'header-ajustes',
       placement: 'bottom',
     },
   ],

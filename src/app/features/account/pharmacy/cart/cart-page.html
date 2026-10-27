@@ -1,4 +1,10 @@
-<app-page-header title="Mi carrito" subtitle="Revise las líneas antes de continuar." [breadcrumbs]="breadcrumbs()" />
+<app-page-header title="Mi carrito" subtitle="Revise las líneas antes de continuar." [breadcrumbs]="breadcrumbs()">
+  <!-- Promociones se fusionó con el carrito en la cabecera (propietario,
+       27/10/2026): son ofertas para comprar, así que se llega desde acá. -->
+  <a app-button page-actions variant="secondary" data-testid="cart-promociones" routerLink="/my-account/promotions">
+    Ver promociones
+  </a>
+</app-page-header>
 
 @if (cart(); as carrito) {
   <div class="cart-page" data-testid="pharmacy-cart-page">
