@@ -1,5 +1,6 @@
 ---
 slug: ck-mb
+image: ck-mb.svg | Liberación de CK-MB desde el músculo cardíaco dañado. | Célula cardíaca dañada que libera la enzima CK-MB a la sangre y una curva sin cifras que sube y luego baja tras un infarto.
 ---
 
 ## [definition] Introducción

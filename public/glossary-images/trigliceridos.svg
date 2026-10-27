@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Triglicéridos: de dónde vienen y para qué se miden</title>
+  <desc id="d">A la izquierda, las grasas de la comida pasan por el intestino y el exceso de azúcar y alcohol por el hígado; ambos forman triglicéridos que circulan en la sangre y se almacenan en el tejido adiposo. A la derecha, un tubo de sangre, causas de aumento y riesgos asociados.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Origen y destino</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">La prueba y qué orienta</text>
+<rect x="40" y="70" width="150" height="44" rx="8" fill="var(--warn)"/>
+<text x="115.0" y="88.7" text-anchor="middle" class="lab" style="fill:var(--on)">Grasas de la</text>
+<text x="115.0" y="104.7" text-anchor="middle" class="lab" style="fill:var(--on)">comida</text>
+<rect x="210" y="70" width="150" height="44" rx="8" fill="var(--purple)"/>
+<text x="285.0" y="88.7" text-anchor="middle" class="lab" style="fill:var(--on)">Exceso de azúcar</text>
+<text x="285.0" y="104.7" text-anchor="middle" class="lab" style="fill:var(--on)">y alcohol</text>
+<line x1="115" y1="114" x2="115" y2="150" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="285" y1="114" x2="285" y2="150" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<ellipse cx="115" cy="176" rx="60" ry="24" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="115" y="181" text-anchor="middle" class="lab">Intestino</text>
+<ellipse cx="285" cy="176" rx="60" ry="24" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5"/>
+<text x="285" y="181" text-anchor="middle" class="lab">Hígado</text>
+<text x="115" y="220" text-anchor="middle" class="small" style="fill:var(--muted)">quilomicrones</text>
+<text x="285" y="220" text-anchor="middle" class="small" style="fill:var(--muted)">VLDL</text>
+<line x1="130" y1="228" x2="180" y2="262" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="270" y1="228" x2="220" y2="262" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="110" y="266" width="180" height="40" rx="8" fill="var(--vessel)"/>
+<text x="200.0" y="290.7" text-anchor="middle" class="lab" style="fill:var(--on)">Triglicéridos en sangre</text>
+<line x1="200" y1="306" x2="200" y2="334" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<circle cx="150" cy="362" r="18" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2" opacity=".85"/>
+<circle cx="190" cy="372" r="18" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2" opacity=".85"/>
+<circle cx="230" cy="360" r="18" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2" opacity=".85"/>
+<circle cx="250" cy="392" r="18" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2" opacity=".85"/>
+<circle cx="170" cy="398" r="18" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2" opacity=".85"/>
+<circle cx="212" cy="402" r="18" fill="var(--yellow)" stroke="var(--warn)" stroke-width="2" opacity=".85"/>
+<text x="290" y="372" class="lab">Tejido</text>
+<text x="290" y="390" class="lab">adiposo:</text>
+<text x="290" y="408" class="lab">reserva</text>
+<text x="40" y="380" class="lab">Energía</text>
+<text x="40" y="398" class="lab">de reserva</text>
+<rect x="418" y="70" width="30" height="14" rx="3" fill="var(--accent)"/>
+<path d="M420 84 V150 a13 13 0 0 0 26 0 V84 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<path d="M421.5 110 V150 a11.5 11.5 0 0 0 23 0 V110 Z" fill="var(--yellow)"/>
+<text x="433" y="186" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre</text>
+<text x="470" y="92" class="lab">Suele pedirse en ayunas,</text>
+<text x="470" y="110" class="lab">porque la comida reciente</text>
+<text x="470" y="128" class="lab">lo eleva de forma pasajera.</text>
+<text x="470" y="154" class="small" style="fill:var(--muted)">Muy altos: suero lechoso.</text>
+<text x="416" y="214" class="h">Causas de aumento</text>
+<text x="416" y="242" class="lab">• Diabetes mal controlada</text>
+<text x="416" y="266" class="lab">• Alcohol</text>
+<text x="416" y="290" class="lab">• Obesidad</text>
+<text x="416" y="314" class="lab">• Hipotiroidismo</text>
+<text x="416" y="338" class="lab">• Algunos fármacos</text>
+<text x="626" y="214" class="h">Riesgos</text>
+<text x="626" y="242" class="lab">• Enfermedad</text>
+<text x="637" y="266" class="lab">cardiovascular</text>
+<text x="626" y="290" class="lab">• Pancreatitis</text>
+<text x="637" y="314" class="lab">(si son muy altos)</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

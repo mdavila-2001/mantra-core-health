@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Calcio en sangre: regulación y usos de la prueba</title>
+  <desc id="d">A la izquierda, el calcio de la sangre se intercambia con el hueso, el intestino y el riñón bajo el control de la parathormona y la vitamina D. A la derecha, un tubo de sangre con las fracciones total e iónica y una lista de lo que la prueba ayuda a estudiar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="360" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="200.0" y="50" text-anchor="middle" class="title">Cómo se regula el calcio</text>
+<rect x="396" y="20" width="384" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="588.0" y="50" text-anchor="middle" class="title">Qué ayuda a evaluar</text>
+<rect x="130" y="66" width="140" height="44" rx="8" fill="var(--accent)"/>
+<text x="200.0" y="84.7" text-anchor="middle" class="lab" style="fill:var(--on)">Calcio en</text>
+<text x="200.0" y="100.7" text-anchor="middle" class="lab" style="fill:var(--on)">la sangre</text>
+<rect x="40" y="150" width="90" height="60" rx="12" fill="var(--bone)" stroke="var(--line)"/>
+<text x="85" y="185" text-anchor="middle" class="lab">Hueso</text>
+<ellipse cx="200" cy="180" rx="46" ry="28" fill="var(--warn-l)" stroke="var(--warn)" stroke-width="1.5"/>
+<text x="200" y="185" text-anchor="middle" class="lab">Intestino</text>
+<ellipse cx="320" cy="180" rx="36" ry="26" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="1.5"/>
+<text x="320" y="185" text-anchor="middle" class="lab">Riñón</text>
+<line x1="95" y1="150" x2="150" y2="112" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="200" y1="152" x2="200" y2="114" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="310" y1="154" x2="250" y2="112" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<text x="85" y="230" text-anchor="middle" class="small" style="fill:var(--muted)">Depósito</text>
+<text x="200" y="230" text-anchor="middle" class="small" style="fill:var(--muted)">Absorción</text>
+<text x="320" y="230" text-anchor="middle" class="small" style="fill:var(--muted)">Elimina o ahorra</text>
+<rect x="40" y="268" width="150" height="44" rx="8" fill="var(--purple)"/>
+<text x="115.0" y="286.7" text-anchor="middle" class="lab" style="fill:var(--on)">Parathormona</text>
+<text x="115.0" y="302.7" text-anchor="middle" class="lab" style="fill:var(--on)">(paratiroides)</text>
+<rect x="210" y="268" width="150" height="44" rx="8" fill="var(--yellow)"/>
+<text x="285.0" y="286.7" text-anchor="middle" class="lab" style="fill:var(--ink)">Vitamina D</text>
+<text x="285.0" y="302.7" text-anchor="middle" class="lab" style="fill:var(--ink)">activa</text>
+<text x="200" y="342" text-anchor="middle" class="lab">Ajustan el calcio sanguíneo</text>
+<text x="200" y="366" text-anchor="middle" class="small" style="fill:var(--muted)">tomando del hueso, absorbiendo más</text>
+<text x="200" y="384" text-anchor="middle" class="small" style="fill:var(--muted)">o perdiendo menos por la orina.</text>
+<text x="200" y="418" text-anchor="middle" class="small" style="fill:var(--muted)">Casi todo el calcio está en huesos y dientes.</text>
+<rect x="418" y="70" width="30" height="14" rx="3" fill="var(--accent)"/>
+<path d="M420 84 V150 a13 13 0 0 0 26 0 V84 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<path d="M421.5 110 V150 a11.5 11.5 0 0 0 23 0 V110 Z" fill="var(--vessel)"/>
+<text x="433" y="186" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre</text>
+<text x="470" y="90" class="h">Calcio total</text>
+<text x="470" y="110" class="small" style="fill:var(--muted)">unido a albúmina + libre</text>
+<text x="470" y="138" class="h">Calcio iónico</text>
+<text x="470" y="158" class="small" style="fill:var(--muted)">fracción libre y activa</text>
+<text x="416" y="214" class="h">Ayuda a estudiar</text>
+<text x="416" y="242" class="lab">• Glándulas paratiroides</text>
+<text x="416" y="266" class="lab">• Enfermedad de los riñones</text>
+<text x="416" y="290" class="lab">• Huesos y déficit de vitamina D</text>
+<text x="416" y="314" class="lab">• Algunos tipos de cáncer</text>
+<text x="416" y="338" class="lab">• Calambres, hormigueo, arritmias</text>
+<text x="416" y="400" class="small" style="fill:var(--muted)">Se interpreta junto con la albúmina,</text>
+<text x="416" y="418" class="small" style="fill:var(--muted)">el fósforo y la parathormona.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,6 @@
 ---
 slug: artritis-reumatoide
+image: artritis-reumatoide.svg | La inflamación de la membrana sinovial daña el cartílago y el hueso de las articulaciones. | Comparación de dos articulaciones: una sana con cartílago liso y otra con la membrana sinovial inflamada y erosiones del hueso. A la derecha, una mano con los nudillos inflamados y los rasgos principales de la enfermedad.
 ---
 
 ## [definition] Introducción

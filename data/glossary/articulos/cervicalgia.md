@@ -1,5 +1,6 @@
 ---
 slug: cervicalgia
+image: cervicalgia.svg | La cervicalgia es el dolor en la zona de la columna cervical. | Columna cervical con siete vértebras numeradas, discos y músculos del cuello, junto a las causas frecuentes del dolor y un recuadro con las señales de alarma.
 ---
 
 ## [definition] Introducción

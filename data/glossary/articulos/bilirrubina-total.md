@@ -1,5 +1,6 @@
 ---
 slug: bilirrubina-total
+image: bilirrubina-total.svg | La bilirrubina total suma la forma indirecta y la directa. | Diagrama del recorrido de la bilirrubina desde los glóbulos rojos al hígado, la vesícula y el intestino, con un tubo de sangre y una nota sobre la ictericia.
 ---
 
 ## [definition] Introducción

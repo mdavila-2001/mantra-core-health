@@ -1,0 +1,1563 @@
+{
+ "aborto-espontaneo": [
+  "cie10es-dx-o03"
+ ],
+ "absceso-dental": [
+  "cie10es-dx-k04-7",
+  "cie10es-dx-k04-6"
+ ],
+ "accidente-cerebrovascular-isquemico": [
+  "medlineplus-es-6249"
+ ],
+ "accidente-isquemico-transitorio": [
+  "medlineplus-es-2203",
+  "cie10es-dx-g45-9",
+  "cie10es-dx-g45"
+ ],
+ "acido-urico": [
+  "inlasa-lac-001"
+ ],
+ "acne": [
+  "cie10es-dx-l70",
+  "medlineplus-es-1721"
+ ],
+ "administracion-de-medicamentos": [
+  "administracion-de-medicamentos"
+ ],
+ "albumina": [
+  "inlasa-lac-003"
+ ],
+ "alopecia-androgenica": [
+  "cie10es-dx-l64"
+ ],
+ "alopecia-areata": [
+  "cie10es-dx-l63"
+ ],
+ "alt-tgp": [
+  "medlineplus-lab-prueba-de-sangre-de-alt"
+ ],
+ "amenorrea": [
+  "cie10es-dx-n91-2",
+  "cie10es-dx-n91-0",
+  "cie10es-dx-n91-1"
+ ],
+ "amigdalitis-aguda": [
+  "cie10es-dx-j03"
+ ],
+ "amilasa": [
+  "inlasa-lac-004",
+  "medlineplus-lab-prueba-de-amilasa"
+ ],
+ "anafilaxia": [
+  "medlineplus-es-6258"
+ ],
+ "analisis-de-orina": [
+  "medlineplus-es-6356"
+ ],
+ "analisis-de-sangre": [
+  "medlineplus-es-6352"
+ ],
+ "anemia-ferropenica": [
+  "cie10es-dx-d50-9",
+  "cie10es-dx-d50"
+ ],
+ "anemia-por-deficit-de-b12": [
+  "cie10es-dx-d51",
+  "cie10es-dx-d51-9"
+ ],
+ "angina-de-pecho": [
+  "cie10es-dx-i20",
+  "medlineplus-es-1746"
+ ],
+ "angiografia": [
+  "angiografia",
+  "wikidata-prueba-q468414"
+ ],
+ "anorexia-nerviosa": [
+  "cie10es-dx-f50-0"
+ ],
+ "anticuerpos-antinucleares": [
+  "medlineplus-lab-prueba-de-anticuerpos-antinucleares",
+  "inlasa-linm-005"
+ ],
+ "antigeno-de-estreptococo": [
+  "wikidata-prueba-q7294224",
+  "medlineplus-lab-prueba-de-estreptococos-a"
+ ],
+ "apendicitis-aguda": [
+  "cie10es-dx-k35"
+ ],
+ "apnea-obstructiva-del-sueno": [
+  "wikidata-sintoma-q16606552"
+ ],
+ "artritis-reumatoide": [
+  "medlineplus-es-2128"
+ ],
+ "artrosis-de-cadera": [
+  "cie10es-dx-m16"
+ ],
+ "artrosis-de-rodilla": [
+  "cie10es-dx-m17"
+ ],
+ "ast-tgo": [
+  "medlineplus-lab-prueba-de-ast"
+ ],
+ "audiometria": [
+  "wikidata-prueba-q758881"
+ ],
+ "bilirrubina-total": [
+  "medlineplus-lab-examen-de-bilirrubina-en-sangre",
+  "inlasa-lac-005"
+ ],
+ "biopsia": [
+  "biopsia",
+  "medlineplus-es-5922"
+ ],
+ "bnp": [
+  "medlineplus-lab-pruebas-de-peptidos-natriureticos-bnp-nt-probnp"
+ ],
+ "bocio": [
+  "cie10es-dx-e04",
+  "cie10es-dx-e04-9"
+ ],
+ "bronquiolitis": [
+  "cie10es-dx-j21",
+  "cie10es-dx-j21-9"
+ ],
+ "bronquitis-aguda": [
+  "cie10es-dx-j20",
+  "medlineplus-es-5756"
+ ],
+ "calcio": [
+  "inlasa-lac-007",
+  "medlineplus-lab-prueba-de-calcio-en-la-sangre"
+ ],
+ "cancer-de-colon": [
+  "medlineplus-es-1831",
+  "cie10es-dx-c18",
+  "cie10es-dx-c18-9"
+ ],
+ "cancer-de-cuello-uterino": [
+  "medlineplus-es-1805"
+ ],
+ "cancer-de-mama": [
+  "medlineplus-es-1786"
+ ],
+ "cancer-de-prostata": [
+  "medlineplus-es-2110"
+ ],
+ "cancer-de-pulmon": [
+  "medlineplus-es-2012"
+ ],
+ "cancer-de-tiroides": [
+  "medlineplus-es-2195"
+ ],
+ "cancer-gastrico": [
+  "medlineplus-es-2172"
+ ],
+ "candidiasis-vulvovaginal": [
+  "cie10es-dx-b37-3"
+ ],
+ "cardiologia": [
+  "cardiologia"
+ ],
+ "caries-dental": [
+  "cie10es-dx-k02"
+ ],
+ "catarata": [
+  "medlineplus-es-1801",
+  "cie10es-dx-h26-9"
+ ],
+ "cateterismo-cardiaco": [
+  "cateterismo-cardiaco"
+ ],
+ "cefalea": [
+  "cefalea",
+  "cie10es-dx-r51",
+  "medlineplus-es-1933"
+ ],
+ "cefalea-tensional": [
+  "cie10es-dx-g44-2"
+ ],
+ "celulitis-infecciosa": [
+  "medlineplus-es-1803",
+  "cie10es-dx-l03",
+  "cie10es-dx-l03-9"
+ ],
+ "cervicalgia": [
+  "cie10es-dx-m54-2"
+ ],
+ "chikungunya": [
+  "medlineplus-es-6346"
+ ],
+ "ciatica": [
+  "cie10es-dx-m54-3",
+  "medlineplus-es-2137"
+ ],
+ "cirrosis-hepatica": [
+  "medlineplus-es-1824",
+  "cie10es-dx-k74-6",
+  "cie10es-dx-k74"
+ ],
+ "cistitis-aguda": [
+  "cie10es-dx-n30-0"
+ ],
+ "ck-mb": [
+  "inlasa-lac-012"
+ ],
+ "ck-total": [
+  "inlasa-lac-011",
+  "medlineplus-lab-creatina-cinasa"
+ ],
+ "clamidia": [
+  "medlineplus-es-1817"
+ ],
+ "cloro": [
+  "medlineplus-lab-prueba-de-cloruro-en-sangre"
+ ],
+ "colecistitis-aguda": [
+  "cie10es-dx-k81-0"
+ ],
+ "colelitiasis": [
+  "cie10es-dx-k80"
+ ],
+ "colesterol": [
+  "medlineplus-es-1819"
+ ],
+ "colesterol-total": [
+  "inlasa-lac-010"
+ ],
+ "colonoscopia": [
+  "medlineplus-es-4917"
+ ],
+ "columna-vertebral": [
+  "columna-vertebral"
+ ],
+ "conjuntivitis": [
+  "cie10es-dx-h10",
+  "medlineplus-es-4947"
+ ],
+ "convulsion-febril": [
+  "cie10es-dx-r56-0"
+ ],
+ "coprocultivo": [
+  "inlasa-lbc-008",
+  "wikidata-prueba-q2563658"
+ ],
+ "coproparasitologico": [
+  "inlasa-lep-015",
+  "inlasa-lep-014",
+  "medlineplus-lab-prueba-de-huevos-y-parasitos"
+ ],
+ "corazon": [
+  "corazon"
+ ],
+ "cortisol": [
+  "medlineplus-lab-prueba-de-cortisol"
+ ],
+ "covid-19": [
+  "cie10es-dx-u07-1"
+ ],
+ "covid-pcr": [
+  "inlasa-lvir-001"
+ ],
+ "crup": [
+  "medlineplus-es-6293"
+ ],
+ "cultivo-de-garganta": [
+  "inlasa-lbc-020"
+ ],
+ "deficit-de-vitamina-d": [
+  "cie10es-dx-e55-9",
+  "cie10es-dx-e55",
+  "medlineplus-es-6449"
+ ],
+ "dengue": [
+  "medlineplus-es-3105"
+ ],
+ "dengue-igg-igm": [
+  "inlasa-lvir-030",
+  "inlasa-lvir-037",
+  "medlineplus-lab-prueba-de-la-fiebre-del-dengue"
+ ],
+ "densitometria-osea": [
+  "medlineplus-lab-densitometria-osea",
+  "wikidata-prueba-q444351"
+ ],
+ "depresion": [
+  "medlineplus-es-1848"
+ ],
+ "dermatitis-atopica": [
+  "cie10es-dx-l20"
+ ],
+ "dermatitis-de-contacto": [
+  "cie10es-dx-l25",
+  "cie10es-dx-l25-9",
+  "cie10es-dx-l23",
+  "cie10es-dx-l24"
+ ],
+ "dermatitis-del-panal": [
+  "cie10es-dx-l22"
+ ],
+ "dermatitis-seborreica": [
+  "cie10es-dx-l21"
+ ],
+ "derrame-pleural": [
+  "cie10es-dx-j90"
+ ],
+ "deshidratacion": [
+  "cie10es-dx-e86-0",
+  "medlineplus-es-6052"
+ ],
+ "desnutricion": [
+  "medlineplus-es-5462"
+ ],
+ "diabetes": [
+  "medlineplus-es-1851"
+ ],
+ "diabetes-gestacional": [
+  "medlineplus-es-1852",
+  "cie10es-dx-o24-4"
+ ],
+ "diabetes-mellitus-tipo-1": [
+  "cie10es-dx-e10"
+ ],
+ "diabetes-mellitus-tipo-2": [
+  "cie10es-dx-e11",
+  "diabetes-mellitus-tipo-2"
+ ],
+ "dialisis": [
+  "dialisis",
+  "medlineplus-es-3790"
+ ],
+ "diarrea": [
+  "medlineplus-es-1858"
+ ],
+ "dimero-d": [
+  "inlasa-lac-017"
+ ],
+ "disfuncion-erectil": [
+  "medlineplus-es-1972"
+ ],
+ "dislipidemia": [
+  "cie10es-dx-e78",
+  "cie10es-dx-e78-5"
+ ],
+ "dismenorrea": [
+  "medlineplus-es-6416",
+  "cie10es-dx-n94-6",
+  "cie10es-dx-n94-4",
+  "cie10es-dx-n94-5"
+ ],
+ "disnea": [
+  "cie10es-dx-r06-0",
+  "disnea"
+ ],
+ "diverticulitis": [
+  "medlineplus-es-1863",
+  "cie10es-dx-k57"
+ ],
+ "dolor-abdominal": [
+  "medlineplus-es-3062"
+ ],
+ "dolor-de-pecho": [
+  "medlineplus-es-4745"
+ ],
+ "duelo": [
+  "medlineplus-es-1770"
+ ],
+ "ecocardiograma": [
+  "ecocardiograma"
+ ],
+ "ecografia": [
+  "medlineplus-lab-ecografia",
+  "wikidata-prueba-q234904"
+ ],
+ "ecografia-abdominal": [
+  "ecografia-abdominal"
+ ],
+ "ecografia-doppler": [
+  "medlineplus-lab-ecografia-doppler"
+ ],
+ "educacion-al-paciente": [
+  "educacion-al-paciente"
+ ],
+ "electrocardiograma": [
+  "electrocardiograma",
+  "medlineplus-lab-electrocardiograma",
+  "wikidata-prueba-q79785"
+ ],
+ "electroencefalograma": [
+  "wikidata-prueba-q4531136"
+ ],
+ "embarazo-normal": [
+  "medlineplus-es-2103",
+  "cie10es-dx-z34",
+  "cie10es-dx-z34-9"
+ ],
+ "embolia-pulmonar": [
+  "cie10es-dx-i26",
+  "medlineplus-es-2113"
+ ],
+ "endocrinologia": [
+  "endocrinologia"
+ ],
+ "endometriosis": [
+  "cie10es-dx-n80",
+  "medlineplus-es-1886"
+ ],
+ "endoscopia": [
+  "medlineplus-es-4514"
+ ],
+ "endoscopia-digestiva-alta": [
+  "endoscopia-digestiva-alta"
+ ],
+ "enfermedad-arterial-periferica": [
+  "medlineplus-es-4084"
+ ],
+ "enfermedad-celiaca": [
+  "cie10es-dx-k90-0",
+  "medlineplus-es-1802"
+ ],
+ "enfermedad-de-alzheimer": [
+  "cie10es-dx-g30",
+  "medlineplus-es-1736"
+ ],
+ "enfermedad-de-parkinson": [
+  "cie10es-dx-g20",
+  "medlineplus-es-2081"
+ ],
+ "enfermedad-inflamatoria-pelvica": [
+  "medlineplus-es-3045"
+ ],
+ "enfermedad-mano-pie-boca": [
+  "cie10es-dx-b08-4"
+ ],
+ "enfermedad-renal-cronica": [
+  "enfermedad-renal-cronica",
+  "medlineplus-es-5988"
+ ],
+ "enuresis-nocturna": [
+  "cie10es-dx-f98-0"
+ ],
+ "epicondilitis-lateral": [
+  "cie10es-dx-m77-1"
+ ],
+ "epididimitis": [
+  "cie10es-dx-n45-1"
+ ],
+ "epilepsia": [
+  "medlineplus-es-1888"
+ ],
+ "epistaxis": [
+  "cie10es-dx-r04-0"
+ ],
+ "epoc": [
+  "medlineplus-es-1836"
+ ],
+ "escabiosis": [
+  "cie10es-dx-b86"
+ ],
+ "escarlatina": [
+  "cie10es-dx-a38"
+ ],
+ "escoliosis": [
+  "cie10es-dx-m41",
+  "medlineplus-es-2139"
+ ],
+ "esguince-de-tobillo": [
+  "cie10es-dx-s93-4"
+ ],
+ "esquizofrenia": [
+  "cie10es-dx-f20",
+  "medlineplus-es-2136"
+ ],
+ "estradiol": [
+  "inlasa-lac-062",
+  "medlineplus-lab-prueba-de-estrogeno"
+ ],
+ "estrenimiento": [
+  "cie10es-dx-k59-0",
+  "medlineplus-es-1835"
+ ],
+ "examen-general-de-orina": [
+  "inlasa-lac-019"
+ ],
+ "factor-reumatoideo": [
+  "inlasa-linm-020",
+  "medlineplus-lab-prueba-de-factor-reumatoideo-fr"
+ ],
+ "faringitis-aguda": [
+  "cie10es-dx-j02"
+ ],
+ "fascitis-plantar": [
+  "cie10es-dx-m72-2"
+ ],
+ "fatiga": [
+  "medlineplus-es-5325",
+  "wikidata-sintoma-q15729017"
+ ],
+ "ferritina": [
+  "medlineplus-lab-prueba-de-sangre-de-ferritina",
+  "inlasa-lac-020"
+ ],
+ "fibrilacion-auricular": [
+  "medlineplus-es-4965"
+ ],
+ "fibroadenoma-de-mama": [
+  "cie10es-dx-d24"
+ ],
+ "fibromialgia": [
+  "cie10es-dx-m79-7",
+  "medlineplus-es-1903"
+ ],
+ "fiebre": [
+  "fiebre",
+  "medlineplus-es-1902"
+ ],
+ "fiebre-sin-foco": [
+  "cie10es-dx-r50-9"
+ ],
+ "fisioterapia-respiratoria": [
+  "fisioterapia-respiratoria"
+ ],
+ "fisura-anal": [
+  "cie10es-dx-k60-2",
+  "cie10es-dx-k60-0",
+  "cie10es-dx-k60-1"
+ ],
+ "fosfatasa-alcalina": [
+  "inlasa-lac-021",
+  "medlineplus-lab-fosfatasa-alcalina"
+ ],
+ "fosforo": [
+  "inlasa-lac-022",
+  "medlineplus-lab-prueba-de-fosfato-en-la-sangre"
+ ],
+ "fractura-de-muneca": [
+  "cie10es-dx-s52-5",
+  "cie10es-dx-s62-9"
+ ],
+ "fsh": [
+  "inlasa-lac-063",
+  "medlineplus-lab-prueba-de-niveles-de-la-hormona-foliculoestimulante-fsh"
+ ],
+ "gasometria-arterial": [
+  "wikidata-tratamiento-q648497"
+ ],
+ "gastritis": [
+  "cie10es-dx-k29-7",
+  "cie10es-dx-k29"
+ ],
+ "gastroenteritis-infecciosa": [
+  "cie10es-dx-a09",
+  "medlineplus-es-3057"
+ ],
+ "ggt": [
+  "medlineplus-lab-prueba-de-gamma-glutamil-transferasa-ggt",
+  "inlasa-lac-024"
+ ],
+ "gingivitis": [
+  "cie10es-dx-k05-0",
+  "cie10es-dx-k05-1"
+ ],
+ "glaucoma": [
+  "cie10es-dx-h40",
+  "medlineplus-es-1924"
+ ],
+ "glucosa-en-sangre": [
+  "inlasa-lac-025"
+ ],
+ "gonorrea": [
+  "medlineplus-es-3020"
+ ],
+ "gota": [
+  "cie10es-dx-m10",
+  "medlineplus-es-1925"
+ ],
+ "gripe": [
+  "medlineplus-es-1980"
+ ],
+ "grupo-sanguineo": [
+  "inlasa-lac-027",
+  "cie10es-dx-z67"
+ ],
+ "hcg-cuantitativa": [
+  "inlasa-lac-061"
+ ],
+ "hdl-colesterol": [
+  "inlasa-lac-009"
+ ],
+ "hemocultivo": [
+  "wikidata-prueba-q886695"
+ ],
+ "hemoglobina-glicosilada": [
+  "hemoglobina-glicosilada"
+ ],
+ "hemograma": [
+  "wikidata-prueba-q886518"
+ ],
+ "hemograma-completo": [
+  "hemograma-completo",
+  "inlasa-lac-030"
+ ],
+ "hemorroides": [
+  "medlineplus-es-1948"
+ ],
+ "hepatitis-a": [
+  "medlineplus-es-2270"
+ ],
+ "hepatitis-a-igm": [
+  "inlasa-linm-006"
+ ],
+ "hepatitis-b-antigeno-de-superficie": [
+  "inlasa-linm-016"
+ ],
+ "hepatitis-b-cronica": [
+  "cie10es-dx-b18-1",
+  "cie10es-dx-b18-0"
+ ],
+ "hepatitis-c-anticuerpos": [
+  "inlasa-linm-002"
+ ],
+ "hepatitis-c-cronica": [
+  "cie10es-dx-b18-2"
+ ],
+ "hernia-de-disco-lumbar": [
+  "medlineplus-es-2153",
+  "cie10es-dx-m51-2"
+ ],
+ "hernia-hiatal": [
+  "medlineplus-es-4371"
+ ],
+ "hernia-inguinal": [
+  "cie10es-dx-k40"
+ ],
+ "herpes-labial": [
+  "medlineplus-es-5148"
+ ],
+ "herpes-zoster": [
+  "cie10es-dx-b02"
+ ],
+ "hierro-serico": [
+  "inlasa-lac-031"
+ ],
+ "higado-graso": [
+  "medlineplus-es-6466"
+ ],
+ "hiperemesis-gravidica": [
+  "cie10es-dx-o21-0",
+  "cie10es-dx-o21-1"
+ ],
+ "hiperplasia-prostatica-benigna": [
+  "cie10es-dx-n40"
+ ],
+ "hiperprolactinemia": [
+  "cie10es-dx-e22-1"
+ ],
+ "hipertension-arterial": [
+  "hipertension-arterial"
+ ],
+ "hipertiroidismo": [
+  "medlineplus-es-6178"
+ ],
+ "hipoacusia": [
+  "cie10es-dx-h91-9",
+  "medlineplus-es-1939"
+ ],
+ "hipoglucemia": [
+  "medlineplus-es-1966"
+ ],
+ "hipotension-arterial": [
+  "cie10es-dx-i95",
+  "cie10es-dx-i95-9",
+  "medlineplus-es-2011"
+ ],
+ "hipotiroidismo": [
+  "medlineplus-es-6176"
+ ],
+ "historia-clinica": [
+  "historia-clinica",
+  "medlineplus-es-3893"
+ ],
+ "ictericia": [
+  "ictericia",
+  "medlineplus-es-4453"
+ ],
+ "ige-total": [
+  "inlasa-linm-039"
+ ],
+ "impetigo": [
+  "cie10es-dx-l01",
+  "cie10es-dx-l01-0",
+  "medlineplus-es-1971"
+ ],
+ "incontinencia-urinaria": [
+  "medlineplus-es-2211"
+ ],
+ "infarto-agudo-de-miocardio": [
+  "cie10es-dx-i21"
+ ],
+ "infeccion-por-helicobacter-pylori": [
+  "medlineplus-es-6079"
+ ],
+ "infeccion-por-vih": [
+  "medlineplus-es-1726",
+  "cie10es-dx-b20"
+ ],
+ "infeccion-urinaria": [
+  "medlineplus-es-2212"
+ ],
+ "infertilidad-femenina": [
+  "cie10es-dx-n97"
+ ],
+ "inflamacion": [
+  "wikidata-sintoma-q101991"
+ ],
+ "inr": [
+  "medlineplus-lab-prueba-de-tiempo-de-protrombina-e-inr-tpinr"
+ ],
+ "insomnio": [
+  "cie10es-dx-g47-0",
+  "medlineplus-es-6056"
+ ],
+ "insuficiencia-renal-aguda": [
+  "cie10es-dx-n17",
+  "cie10es-dx-n17-9"
+ ],
+ "insuficiencia-venosa-cronica": [
+  "cie10es-dx-i87-2"
+ ],
+ "intolerancia-a-la-lactosa": [
+  "medlineplus-es-1997"
+ ],
+ "intoxicacion-alimentaria": [
+  "medlineplus-es-1909"
+ ],
+ "intubacion-endotraqueal": [
+  "intubacion-endotraqueal"
+ ],
+ "lactato": [
+  "medlineplus-lab-prueba-de-lactato"
+ ],
+ "laringitis-aguda": [
+  "cie10es-dx-j04-0"
+ ],
+ "ldl-colesterol": [
+  "medlineplus-es-6784"
+ ],
+ "leucemia": [
+  "medlineplus-es-5621"
+ ],
+ "linfoma": [
+  "medlineplus-es-2017"
+ ],
+ "lipasa": [
+  "medlineplus-lab-prueba-de-lipasa",
+  "inlasa-lac-073"
+ ],
+ "litiasis-renal": [
+  "medlineplus-es-1991"
+ ],
+ "lumbalgia": [
+  "cie10es-dx-m54-5"
+ ],
+ "magnesio": [
+  "medlineplus-lab-prueba-de-magnesio-en-la-sangre"
+ ],
+ "mamografia": [
+  "mamografia",
+  "medlineplus-es-2021"
+ ],
+ "mastitis": [
+  "cie10es-dx-n61-0",
+  "cie10es-dx-o91-2",
+  "cie10es-dx-n61"
+ ],
+ "mastodinia": [
+  "cie10es-dx-n64-4"
+ ],
+ "mastopatia-fibroquistica": [
+  "cie10es-dx-n60-1"
+ ],
+ "medlineplus-es-1744": [
+  "medlineplus-es-1744"
+ ],
+ "medlineplus-es-1778": [
+  "medlineplus-es-1778"
+ ],
+ "medlineplus-es-1782": [
+  "medlineplus-es-1782"
+ ],
+ "medlineplus-es-1789": [
+  "medlineplus-es-1789"
+ ],
+ "medlineplus-es-1841": [
+  "medlineplus-es-1841"
+ ],
+ "medlineplus-es-1944": [
+  "medlineplus-es-1944"
+ ],
+ "medlineplus-es-1968": [
+  "medlineplus-es-1968"
+ ],
+ "medlineplus-es-1984": [
+  "medlineplus-es-1984"
+ ],
+ "medlineplus-es-1992": [
+  "medlineplus-es-1992"
+ ],
+ "medlineplus-es-1998": [
+  "medlineplus-es-1998"
+ ],
+ "medlineplus-es-2010": [
+  "medlineplus-es-2010"
+ ],
+ "medlineplus-es-2013": [
+  "medlineplus-es-2013"
+ ],
+ "medlineplus-es-2063": [
+  "medlineplus-es-2063"
+ ],
+ "medlineplus-es-2064": [
+  "medlineplus-es-2064"
+ ],
+ "medlineplus-es-2073": [
+  "medlineplus-es-2073"
+ ],
+ "medlineplus-es-2092": [
+  "medlineplus-es-2092"
+ ],
+ "medlineplus-es-2123": [
+  "medlineplus-es-2123"
+ ],
+ "medlineplus-es-2171": [
+  "medlineplus-es-2171"
+ ],
+ "medlineplus-es-2180": [
+  "medlineplus-es-2180"
+ ],
+ "medlineplus-es-2233": [
+  "medlineplus-es-2233"
+ ],
+ "medlineplus-es-2725": [
+  "medlineplus-es-2725"
+ ],
+ "medlineplus-es-3039": [
+  "medlineplus-es-3039"
+ ],
+ "medlineplus-es-3137": [
+  "medlineplus-es-3137"
+ ],
+ "medlineplus-es-3168": [
+  "medlineplus-es-3168"
+ ],
+ "medlineplus-es-3303": [
+  "medlineplus-es-3303"
+ ],
+ "medlineplus-es-3753": [
+  "medlineplus-es-3753"
+ ],
+ "medlineplus-es-3923": [
+  "medlineplus-es-3923"
+ ],
+ "medlineplus-es-3925": [
+  "medlineplus-es-3925"
+ ],
+ "medlineplus-es-4120": [
+  "medlineplus-es-4120"
+ ],
+ "medlineplus-es-4275": [
+  "medlineplus-es-4275"
+ ],
+ "medlineplus-es-5335": [
+  "medlineplus-es-5335"
+ ],
+ "medlineplus-es-5420": [
+  "medlineplus-es-5420"
+ ],
+ "medlineplus-es-5574": [
+  "medlineplus-es-5574"
+ ],
+ "medlineplus-es-5618": [
+  "medlineplus-es-5618"
+ ],
+ "medlineplus-es-5915": [
+  "medlineplus-es-5915"
+ ],
+ "medlineplus-es-5981": [
+  "medlineplus-es-5981"
+ ],
+ "melanoma": [
+  "medlineplus-es-2028"
+ ],
+ "microalbuminuria": [
+  "inlasa-lac-036"
+ ],
+ "migrana": [
+  "cie10es-dx-g43",
+  "medlineplus-es-3158"
+ ],
+ "miomas-uterinos": [
+  "medlineplus-es-2215",
+  "cie10es-dx-d25",
+  "cie10es-dx-d25-9"
+ ],
+ "mononucleosis": [
+  "medlineplus-es-1978"
+ ],
+ "nefrologia": [
+  "nefrologia"
+ ],
+ "neumologia": [
+  "neumologia"
+ ],
+ "neumonia": [
+  "neumonia",
+  "medlineplus-es-2094"
+ ],
+ "neuralgia-del-trigemino": [
+  "cie10es-dx-g50-0",
+  "medlineplus-es-2730"
+ ],
+ "neurologia": [
+  "neurologia"
+ ],
+ "neuropatia-diabetica": [
+  "medlineplus-es-1856"
+ ],
+ "nodulo-mamario": [
+  "cie10es-dx-n63",
+  "cie10es-dx-n63-0"
+ ],
+ "obesidad": [
+  "medlineplus-es-2059"
+ ],
+ "onicomicosis": [
+  "cie10es-dx-b35-1"
+ ],
+ "osteoporosis": [
+  "medlineplus-es-2067"
+ ],
+ "otitis-externa": [
+  "cie10es-dx-h60"
+ ],
+ "otitis-media-aguda": [
+  "cie10es-dx-h66-0"
+ ],
+ "oxigenoterapia": [
+  "oxigenoterapia"
+ ],
+ "pancreatitis-aguda": [
+  "cie10es-dx-k85"
+ ],
+ "panel-metabolico-basico": [
+  "medlineplus-lab-panel-metabolico-basico"
+ ],
+ "papanicolaou": [
+  "medlineplus-lab-prueba-de-papanicolaou",
+  "inlasa-ldic-001"
+ ],
+ "paralisis-facial-de-bell": [
+  "cie10es-dx-g51-0",
+  "medlineplus-es-1769"
+ ],
+ "parasitosis-intestinal": [
+  "cie10es-dx-b82-9",
+  "cie10es-dx-b82"
+ ],
+ "pediatria": [
+  "pediatria"
+ ],
+ "pediculosis": [
+  "medlineplus-es-1932"
+ ],
+ "perfil-hepatico": [
+  "medlineplus-lab-pruebas-funcionales-hepaticas"
+ ],
+ "pericarditis-aguda": [
+  "cie10es-dx-i30"
+ ],
+ "pielonefritis-aguda": [
+  "cie10es-dx-n10"
+ ],
+ "plan-de-cuidados-de-enfermeria": [
+  "plan-de-cuidados-de-enfermeria"
+ ],
+ "polineuropatia-periferica": [
+  "cie10es-dx-g62-9"
+ ],
+ "potasio": [
+  "medlineplus-lab-prueba-de-potasio-en-sangre"
+ ],
+ "prediabetes": [
+  "medlineplus-es-5785"
+ ],
+ "preeclampsia": [
+  "cie10es-dx-o14"
+ ],
+ "presbicia": [
+  "cie10es-dx-h52-4"
+ ],
+ "prevencion-de-ulceras-por-presion": [
+  "prevencion-de-ulceras-por-presion"
+ ],
+ "procalcitonina": [
+  "medlineplus-lab-prueba-de-procalcitonina"
+ ],
+ "prolactina": [
+  "medlineplus-lab-niveles-de-prolactina",
+  "inlasa-lac-074"
+ ],
+ "prostatitis": [
+  "cie10es-dx-n41",
+  "cie10es-dx-n41-0",
+  "cie10es-dx-n41-1",
+  "cie10es-dx-n41-9"
+ ],
+ "proteina-c-reactiva": [
+  "proteina-c-reactiva"
+ ],
+ "proteinas-totales": [
+  "inlasa-lac-040"
+ ],
+ "prueba-de-esfuerzo": [
+  "medlineplus-lab-pruebas-de-esfuerzo"
+ ],
+ "prueba-de-tolerancia-a-la-glucosa": [
+  "inlasa-lac-045"
+ ],
+ "psa": [
+  "medlineplus-lab-prueba-de-psa-antigeno-prostatico-especifico",
+  "inlasa-linm-018"
+ ],
+ "psoriasis": [
+  "cie10es-dx-l40",
+  "medlineplus-es-2112"
+ ],
+ "quiste-de-ovario": [
+  "medlineplus-es-2069",
+  "cie10es-dx-n83-2"
+ ],
+ "radiografia": [
+  "wikidata-prueba-q245341",
+  "medlineplus-es-3950"
+ ],
+ "radiografia-de-torax": [
+  "radiografia-de-torax",
+  "wikidata-prueba-q1283318"
+ ],
+ "reflujo-gastroesofagico": [
+  "medlineplus-es-1916",
+  "wikidata-sintoma-q16595080"
+ ],
+ "relacion-albumina-creatinina": [
+  "medlineplus-lab-cociente-de-microalbumina-y-creatinina"
+ ],
+ "resfrio-comun": [
+  "medlineplus-es-1832",
+  "cie10es-dx-j00"
+ ],
+ "resonancia-magnetica": [
+  "resonancia-magnetica"
+ ],
+ "retraso-del-desarrollo": [
+  "cie10es-dx-r62-0"
+ ],
+ "rinitis-alergica": [
+  "medlineplus-es-4747"
+ ],
+ "salbutamol": [
+  "cima-vtm-91143003",
+  "salbutamol"
+ ],
+ "sangrado-uterino-anormal": [
+  "cie10es-dx-n93-9",
+  "cie10es-dx-n93"
+ ],
+ "sangre-oculta-en-heces": [
+  "inlasa-lep-019"
+ ],
+ "sepsis": [
+  "medlineplus-es-3211"
+ ],
+ "sifilis": [
+  "medlineplus-es-3018"
+ ],
+ "signos-vitales": [
+  "medlineplus-es-6289",
+  "signos-vitales"
+ ],
+ "sincope": [
+  "medlineplus-es-1898"
+ ],
+ "sindrome-climaterico": [
+  "cie10es-dx-n95-1"
+ ],
+ "sindrome-de-ovario-poliquistico": [
+  "cie10es-dx-e28-2",
+  "medlineplus-es-5913"
+ ],
+ "sindrome-del-intestino-irritable": [
+  "medlineplus-es-1983"
+ ],
+ "sindrome-del-tunel-carpiano": [
+  "cie10es-dx-g56-0",
+  "medlineplus-es-1799"
+ ],
+ "sindrome-metabolico": [
+  "medlineplus-es-3529"
+ ],
+ "sinusitis-aguda": [
+  "cie10es-dx-j01"
+ ],
+ "sobrepeso": [
+  "cie10es-dx-e66-3"
+ ],
+ "sodio": [
+  "medlineplus-lab-prueba-de-sodio-en-la-sangre"
+ ],
+ "t3-total": [
+  "inlasa-lac-068",
+  "medlineplus-lab-pruebas-de-triyodotironina-t3"
+ ],
+ "t4-libre": [
+  "medlineplus-lab-prueba-de-tiroxina-t4"
+ ],
+ "tabaquismo": [
+  "cie10es-dx-f17",
+  "cie10es-dx-f17-2",
+  "cie10es-dx-z72-0"
+ ],
+ "tdah": [
+  "medlineplus-es-1762"
+ ],
+ "temblor-esencial": [
+  "cie10es-dx-g25-0"
+ ],
+ "tendinopatia-del-manguito-rotador": [
+  "medlineplus-es-5933"
+ ],
+ "test-de-embarazo-en-orina": [
+  "inlasa-lac-049",
+  "medlineplus-lab-prueba-de-embarazo"
+ ],
+ "testosterona": [
+  "inlasa-lac-075",
+  "medlineplus-lab-prueba-de-niveles-de-testosterona"
+ ],
+ "tina-corporal": [
+  "cie10es-dx-b35-4"
+ ],
+ "tomografia-computarizada": [
+  "medlineplus-es-3952",
+  "tomografia-computarizada"
+ ],
+ "tos": [
+  "cie10es-dx-r05",
+  "medlineplus-es-1839"
+ ],
+ "trastorno-adaptativo": [
+  "cie10es-dx-f43-2"
+ ],
+ "trastorno-bipolar": [
+  "cie10es-dx-f31",
+  "medlineplus-es-1772"
+ ],
+ "trastorno-de-ansiedad-generalizada": [
+  "cie10es-dx-f41-1"
+ ],
+ "trastorno-de-estres-postraumatico": [
+  "medlineplus-es-2099"
+ ],
+ "trastorno-de-panico": [
+  "medlineplus-es-2076"
+ ],
+ "trastorno-por-consumo-de-alcohol": [
+  "medlineplus-es-1733"
+ ],
+ "trastorno-temporomandibular": [
+  "medlineplus-es-2190",
+  "cie10es-dx-m26-6"
+ ],
+ "trigliceridos": [
+  "inlasa-lac-055",
+  "medlineplus-es-4278"
+ ],
+ "trombosis-venosa-profunda": [
+  "medlineplus-es-2269"
+ ],
+ "troponina": [
+  "medlineplus-lab-prueba-de-troponina",
+  "inlasa-lac-056"
+ ],
+ "tsh": [
+  "medlineplus-lab-prueba-de-tsh",
+  "inlasa-lac-071"
+ ],
+ "ttpa": [
+  "inlasa-lac-052",
+  "medlineplus-lab-prueba-de-tpt-tiempo-parcial-de-tromboplastina"
+ ],
+ "tuberculosis-pulmonar": [
+  "cie10es-dx-a15-0"
+ ],
+ "ulcera-peptica": [
+  "medlineplus-es-2083"
+ ],
+ "urea-en-sangre": [
+  "medlineplus-lab-examen-de-nitrogeno-ureico-en-sangre-nus",
+  "inlasa-lac-038"
+ ],
+ "urticaria": [
+  "cie10es-dx-l50",
+  "medlineplus-es-1959"
+ ],
+ "vaginitis-aguda": [
+  "cie10es-dx-n76-0"
+ ],
+ "varicela": [
+  "cie10es-dx-b01",
+  "medlineplus-es-1807"
+ ],
+ "varices": [
+  "medlineplus-es-2217"
+ ],
+ "vdrl": [
+  "wikidata-prueba-q1431052"
+ ],
+ "verrugas": [
+  "medlineplus-es-2225"
+ ],
+ "vertigo-posicional": [
+  "cie10es-dx-h81-1"
+ ],
+ "vih": [
+  "medlineplus-lab-prueba-de-vih",
+  "inlasa-linm-019",
+  "inlasa-linm-030"
+ ],
+ "vitamina-b12": [
+  "inlasa-lac-058"
+ ],
+ "vitamina-d": [
+  "inlasa-lac-072",
+  "medlineplus-lab-prueba-de-vitamina-d"
+ ],
+ "vsg": [
+  "medlineplus-lab-tasa-de-sedimentacion-eritrocitica",
+  "inlasa-lac-057"
+ ],
+ "wikidata-especialidad-q101929": [
+  "wikidata-especialidad-q101929"
+ ],
+ "wikidata-especialidad-q10344696": [
+  "wikidata-especialidad-q10344696"
+ ],
+ "wikidata-especialidad-q10379": [
+  "wikidata-especialidad-q10379"
+ ],
+ "wikidata-especialidad-q103824": [
+  "wikidata-especialidad-q103824"
+ ],
+ "wikidata-especialidad-q10384": [
+  "wikidata-especialidad-q10384"
+ ],
+ "wikidata-especialidad-q1046686": [
+  "wikidata-especialidad-q1046686"
+ ],
+ "wikidata-especialidad-q1049976": [
+  "wikidata-especialidad-q1049976"
+ ],
+ "wikidata-especialidad-q105650": [
+  "wikidata-especialidad-q105650"
+ ],
+ "wikidata-especialidad-q1071953": [
+  "wikidata-especialidad-q1071953"
+ ],
+ "wikidata-especialidad-q11180": [
+  "wikidata-especialidad-q11180"
+ ],
+ "wikidata-especialidad-q11607623": [
+  "wikidata-especialidad-q11607623"
+ ],
+ "wikidata-especialidad-q11865729": [
+  "wikidata-especialidad-q11865729"
+ ],
+ "wikidata-especialidad-q120569": [
+  "wikidata-especialidad-q120569"
+ ],
+ "wikidata-especialidad-q1207969": [
+  "wikidata-especialidad-q1207969"
+ ],
+ "wikidata-especialidad-q12128": [
+  "wikidata-especialidad-q12128"
+ ],
+ "wikidata-especialidad-q1221899": [
+  "wikidata-especialidad-q1221899"
+ ],
+ "wikidata-especialidad-q128406": [
+  "wikidata-especialidad-q128406"
+ ],
+ "wikidata-especialidad-q1318451": [
+  "wikidata-especialidad-q1318451"
+ ],
+ "wikidata-especialidad-q1365243": [
+  "wikidata-especialidad-q1365243"
+ ],
+ "wikidata-especialidad-q1406609": [
+  "wikidata-especialidad-q1406609"
+ ],
+ "wikidata-especialidad-q1407263": [
+  "wikidata-especialidad-q1407263"
+ ],
+ "wikidata-especialidad-q1413084": [
+  "wikidata-especialidad-q1413084"
+ ],
+ "wikidata-especialidad-q1423517": [
+  "wikidata-especialidad-q1423517"
+ ],
+ "wikidata-especialidad-q1430816": [
+  "wikidata-especialidad-q1430816"
+ ],
+ "wikidata-especialidad-q1480945": [
+  "wikidata-especialidad-q1480945"
+ ],
+ "wikidata-especialidad-q1498222": [
+  "wikidata-especialidad-q1498222"
+ ],
+ "wikidata-especialidad-q1501272": [
+  "wikidata-especialidad-q1501272"
+ ],
+ "wikidata-especialidad-q15218776": [
+  "wikidata-especialidad-q15218776"
+ ],
+ "wikidata-especialidad-q161437": [
+  "wikidata-especialidad-q161437"
+ ],
+ "wikidata-especialidad-q162555": [
+  "wikidata-especialidad-q162555"
+ ],
+ "wikidata-especialidad-q162606": [
+  "wikidata-especialidad-q162606"
+ ],
+ "wikidata-especialidad-q1650750": [
+  "wikidata-especialidad-q1650750"
+ ],
+ "wikidata-especialidad-q16683088": [
+  "wikidata-especialidad-q16683088"
+ ],
+ "wikidata-especialidad-q16683089": [
+  "wikidata-especialidad-q16683089"
+ ],
+ "wikidata-especialidad-q170201": [
+  "wikidata-especialidad-q170201"
+ ],
+ "wikidata-especialidad-q171171": [
+  "wikidata-especialidad-q171171"
+ ],
+ "wikidata-especialidad-q17145564": [
+  "wikidata-especialidad-q17145564"
+ ],
+ "wikidata-especialidad-q17147442": [
+  "wikidata-especialidad-q17147442"
+ ],
+ "wikidata-especialidad-q1741745": [
+  "wikidata-especialidad-q1741745"
+ ],
+ "wikidata-especialidad-q177635": [
+  "wikidata-especialidad-q177635"
+ ],
+ "wikidata-especialidad-q182442": [
+  "wikidata-especialidad-q182442"
+ ],
+ "wikidata-especialidad-q188449": [
+  "wikidata-especialidad-q188449"
+ ],
+ "wikidata-especialidad-q189553": [
+  "wikidata-especialidad-q189553"
+ ],
+ "wikidata-especialidad-q2027981": [
+  "wikidata-especialidad-q2027981"
+ ],
+ "wikidata-especialidad-q203337": [
+  "wikidata-especialidad-q203337"
+ ],
+ "wikidata-especialidad-q214963": [
+  "wikidata-especialidad-q214963"
+ ],
+ "wikidata-especialidad-q216685": [
+  "wikidata-especialidad-q216685"
+ ],
+ "wikidata-especialidad-q235007": [
+  "wikidata-especialidad-q235007"
+ ],
+ "wikidata-especialidad-q2358629": [
+  "wikidata-especialidad-q2358629"
+ ],
+ "wikidata-especialidad-q23688644": [
+  "wikidata-especialidad-q23688644"
+ ],
+ "wikidata-especialidad-q2440756": [
+  "wikidata-especialidad-q2440756"
+ ],
+ "wikidata-especialidad-q2522100": [
+  "wikidata-especialidad-q2522100"
+ ],
+ "wikidata-especialidad-q2624918": [
+  "wikidata-especialidad-q2624918"
+ ],
+ "wikidata-especialidad-q2678675": [
+  "wikidata-especialidad-q2678675"
+ ],
+ "wikidata-especialidad-q2699874": [
+  "wikidata-especialidad-q2699874"
+ ],
+ "wikidata-especialidad-q2861470": [
+  "wikidata-especialidad-q2861470"
+ ],
+ "wikidata-especialidad-q286452": [
+  "wikidata-especialidad-q286452"
+ ],
+ "wikidata-especialidad-q2964004": [
+  "wikidata-especialidad-q2964004"
+ ],
+ "wikidata-especialidad-q3149141": [
+  "wikidata-especialidad-q3149141"
+ ],
+ "wikidata-especialidad-q3259956": [
+  "wikidata-especialidad-q3259956"
+ ],
+ "wikidata-especialidad-q327657": [
+  "wikidata-especialidad-q327657"
+ ],
+ "wikidata-especialidad-q33226": [
+  "wikidata-especialidad-q33226"
+ ],
+ "wikidata-especialidad-q335057": [
+  "wikidata-especialidad-q335057"
+ ],
+ "wikidata-especialidad-q3505712": [
+  "wikidata-especialidad-q3505712"
+ ],
+ "wikidata-especialidad-q351870": [
+  "wikidata-especialidad-q351870"
+ ],
+ "wikidata-especialidad-q3673891": [
+  "wikidata-especialidad-q3673891"
+ ],
+ "wikidata-especialidad-q376680": [
+  "wikidata-especialidad-q376680"
+ ],
+ "wikidata-especialidad-q40821": [
+  "wikidata-especialidad-q40821"
+ ],
+ "wikidata-especialidad-q426449": [
+  "wikidata-especialidad-q426449"
+ ],
+ "wikidata-especialidad-q4313186": [
+  "wikidata-especialidad-q4313186"
+ ],
+ "wikidata-especialidad-q4531629": [
+  "wikidata-especialidad-q4531629"
+ ],
+ "wikidata-especialidad-q4681117": [
+  "wikidata-especialidad-q4681117"
+ ],
+ "wikidata-especialidad-q472607": [
+  "wikidata-especialidad-q472607"
+ ],
+ "wikidata-especialidad-q473867": [
+  "wikidata-especialidad-q473867"
+ ],
+ "wikidata-especialidad-q499500": [
+  "wikidata-especialidad-q499500"
+ ],
+ "wikidata-especialidad-q512285": [
+  "wikidata-especialidad-q512285"
+ ],
+ "wikidata-especialidad-q5182142": [
+  "wikidata-especialidad-q5182142"
+ ],
+ "wikidata-especialidad-q5284418": [
+  "wikidata-especialidad-q5284418"
+ ],
+ "wikidata-especialidad-q539690": [
+  "wikidata-especialidad-q539690"
+ ],
+ "wikidata-especialidad-q55190072": [
+  "wikidata-especialidad-q55190072"
+ ],
+ "wikidata-especialidad-q5625186": [
+  "wikidata-especialidad-q5625186"
+ ],
+ "wikidata-especialidad-q569965": [
+  "wikidata-especialidad-q569965"
+ ],
+ "wikidata-especialidad-q582071": [
+  "wikidata-especialidad-q582071"
+ ],
+ "wikidata-especialidad-q615057": [
+  "wikidata-especialidad-q615057"
+ ],
+ "wikidata-especialidad-q628764": [
+  "wikidata-especialidad-q628764"
+ ],
+ "wikidata-especialidad-q6393681": [
+  "wikidata-especialidad-q6393681"
+ ],
+ "wikidata-especialidad-q668064": [
+  "wikidata-especialidad-q668064"
+ ],
+ "wikidata-especialidad-q6806614": [
+  "wikidata-especialidad-q6806614"
+ ],
+ "wikidata-especialidad-q7002432": [
+  "wikidata-especialidad-q7002432"
+ ],
+ "wikidata-especialidad-q7208": [
+  "wikidata-especialidad-q7208"
+ ],
+ "wikidata-especialidad-q7218": [
+  "wikidata-especialidad-q7218"
+ ],
+ "wikidata-especialidad-q7320661": [
+  "wikidata-especialidad-q7320661"
+ ],
+ "wikidata-especialidad-q744029": [
+  "wikidata-especialidad-q744029"
+ ],
+ "wikidata-especialidad-q77604": [
+  "wikidata-especialidad-q77604"
+ ],
+ "wikidata-especialidad-q7867": [
+  "wikidata-especialidad-q7867"
+ ],
+ "wikidata-especialidad-q788926": [
+  "wikidata-especialidad-q788926"
+ ],
+ "wikidata-especialidad-q7900864": [
+  "wikidata-especialidad-q7900864"
+ ],
+ "wikidata-especialidad-q80015": [
+  "wikidata-especialidad-q80015"
+ ],
+ "wikidata-especialidad-q83042": [
+  "wikidata-especialidad-q83042"
+ ],
+ "wikidata-especialidad-q849994": [
+  "wikidata-especialidad-q849994"
+ ],
+ "wikidata-especialidad-q852143": [
+  "wikidata-especialidad-q852143"
+ ],
+ "wikidata-especialidad-q898674": [
+  "wikidata-especialidad-q898674"
+ ],
+ "wikidata-especialidad-q932510": [
+  "wikidata-especialidad-q932510"
+ ],
+ "wikidata-especialidad-q938196": [
+  "wikidata-especialidad-q938196"
+ ]
+}

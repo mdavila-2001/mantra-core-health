@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Articulación sana frente a artritis reumatoide</title>
+  <desc id="d">Comparación de dos articulaciones: una sana con cartílago liso y otra con la membrana sinovial inflamada y erosiones del hueso. A la derecha, una mano con los nudillos inflamados y los rasgos principales de la enfermedad.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --bone:#cfd6df; --tissue:#e9edf2; --vessel:#c0392b; --vessel-l:#f5d0cc; --ok:#1f8a5b; --ok-l:#d3efe2; --beam:#f2c46d; --on:#ffffff; --warn:#b85c00; --warn-l:#fdf0e1; --skin:#f3dccb; --organ:#e9a39b; --organ-d:#b8574e; --purple:#6b4fa0; --purple-l:#e3dcf2; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --bone:#566472; --tissue:#2a3541; --vessel:#ef7467; --vessel-l:#4a2a2a; --ok:#4cc38a; --ok-l:#1d3b2f; --beam:#8a6f2f; --on:#0f1720; --warn:#f0a050; --warn-l:#3a2a18; --skin:#4a3a30; --organ:#8f4f49; --organ-d:#e08a80; --purple:#b49be0; --purple-l:#2e2640; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .sub { font-size: 15px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .big { font-size: 22px; font-weight: 700; }
+  </style>
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="440" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="240.0" y="50" text-anchor="middle" class="title">Articulación sana y con artritis</text>
+<path d="M90,60 L90,170 Q130,200 170,170 L170,60 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M90,320 L90,230 Q130,205 170,230 L170,320 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M92,172 Q130,198 168,172" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M92,228 Q130,207 168,228" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M80,150 Q50,200 80,250" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M180,150 Q210,200 180,250" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M300,60 L300,170 Q340,200 380,170 L380,60 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M300,320 L300,230 Q340,205 380,230 L380,320 Z" fill="var(--bone)" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M302,172 Q340,198 378,172" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M302,228 Q340,207 378,228" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M292,150 Q240,200 292,250 Q310,200 292,150 Z" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M388,150 Q440,200 388,250 Q370,200 388,150 Z" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="310" cy="180" r="6" fill="var(--bg)" stroke="var(--vessel)" stroke-width="1"/>
+<circle cx="368" cy="224" r="6" fill="var(--bg)" stroke="var(--vessel)" stroke-width="1"/>
+<path d="M290,150 Q260,200 290,250" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M390,150 Q420,200 390,250" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="130" y="350" text-anchor="middle" class="step">Sana</text>
+<text x="340" y="350" text-anchor="middle" class="step">Artritis reumatoide</text>
+<text x="130" y="370" text-anchor="middle" class="small" style="fill:var(--muted)">cartílago liso</text>
+<text x="340" y="370" text-anchor="middle" class="small" style="fill:var(--muted)">sinovial inflamada (pannus)</text>
+<text x="340" y="388" text-anchor="middle" class="small" style="fill:var(--muted)">y erosiones del hueso</text>
+<text x="232" y="195" text-anchor="middle" class="small" style="fill:var(--accent)">Cartílago</text>
+<rect x="476" y="20" width="304" height="420" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="1"/>
+<text x="628.0" y="50" text-anchor="middle" class="title">Cómo se presenta</text>
+<rect x="515" y="76" width="18" height="70" rx="8" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+<circle cx="524" cy="130" r="6" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1"/>
+<circle cx="524" cy="104" r="5" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1"/>
+<rect x="539" y="76" width="18" height="70" rx="8" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+<circle cx="548" cy="130" r="6" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1"/>
+<circle cx="548" cy="104" r="5" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1"/>
+<rect x="563" y="76" width="18" height="70" rx="8" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+<circle cx="572" cy="130" r="6" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1"/>
+<circle cx="572" cy="104" r="5" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1"/>
+<rect x="587" y="76" width="18" height="70" rx="8" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+<circle cx="596" cy="130" r="6" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1"/>
+<circle cx="596" cy="104" r="5" fill="var(--vessel-l)" stroke="var(--vessel)" stroke-width="1"/>
+<rect x="512" y="140" width="96" height="60" rx="16" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+<rect x="608" y="150" width="14" height="40" rx="7" fill="var(--skin)" stroke="var(--line)" stroke-width="1"/>
+<text x="680" y="100" text-anchor="middle" class="small">Nudillos</text>
+<text x="680" y="116" text-anchor="middle" class="small">y dedos</text>
+<text x="496" y="236" class="lab">Autoinmune: las defensas atacan</text>
+<text x="496" y="258" class="lab">la membrana sinovial</text>
+<text x="496" y="280" class="lab">Afecta ambos lados por igual</text>
+<text x="496" y="302" class="lab">Rigidez matutina prolongada</text>
+<text x="496" y="324" class="lab">Fatiga; puede afectar otros órganos</text>
+<text x="496" y="368" class="step">Tratar pronto frena el daño:</text>
+<text x="496" y="390" class="lab">fármacos modificadores (FAME),</text>
+<text x="496" y="410" class="lab">ejercicio y control reumatológico.</text>
+<text x="400" y="466" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

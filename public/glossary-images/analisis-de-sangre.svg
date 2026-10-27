@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Recorrido de un análisis de sangre</title>
+  <desc id="d">Cuatro pasos de izquierda a derecha: extracción de sangre de una vena del pliegue del codo con torniquete y aguja; tubos con tapones de colores; centrífuga que separa el plasma de las células y analizador del laboratorio; informe con resultados que revisa el médico.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --skin:#f1dccb; --vein:#3d5a99; --blood:#c0392b; --plasma:#f2d36b; --ok:#1f8a5b; --cap1:#7b4bb7; --cap2:#d9822b; --cap3:#3b8fd6; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --skin:#5a4a40; --vein:#7f9ad6; --blood:#ef7467; --plasma:#b89a3a; --ok:#4cc38a; --cap1:#a98ad8; --cap2:#e8a560; --cap3:#7ab8ec; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .step { font-size: 14px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="40" text-anchor="middle" class="title">Del brazo al informe</text>
+
+  <!-- Paso 1 -->
+  <rect x="20" y="60" width="180" height="360" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="110" y="88" text-anchor="middle" class="step">1 · Extracción</text>
+  <rect x="70" y="110" width="80" height="250" rx="38" fill="var(--skin)"/>
+  <rect x="64" y="160" width="92" height="12" rx="4" fill="var(--accent)"/>
+  <text x="110" y="152" text-anchor="middle" class="small muted">Torniquete</text>
+  <path d="M110 180 V340" stroke="var(--vein)" stroke-width="7" stroke-linecap="round"/>
+  <line x1="160" y1="230" x2="114" y2="250" stroke="var(--ink)" stroke-width="3"/>
+  <rect x="158" y="220" width="30" height="16" rx="4" fill="var(--muted)" transform="rotate(-23 173 228)"/>
+  <text x="110" y="384" text-anchor="middle" class="lab">Vena del codo</text>
+  <text x="110" y="402" text-anchor="middle" class="small muted">pinchazo breve</text>
+
+  <!-- Paso 2 -->
+  <rect x="214" y="60" width="180" height="360" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="304" y="88" text-anchor="middle" class="step">2 · Tubos</text>
+  <g>
+    <rect x="240" y="130" width="28" height="22" rx="4" fill="var(--cap1)"/>
+    <rect x="243" y="152" width="22" height="150" rx="10" fill="var(--blood)"/>
+    <rect x="290" y="130" width="28" height="22" rx="4" fill="var(--cap2)"/>
+    <rect x="293" y="152" width="22" height="150" rx="10" fill="var(--blood)"/>
+    <rect x="340" y="130" width="28" height="22" rx="4" fill="var(--cap3)"/>
+    <rect x="343" y="152" width="22" height="150" rx="10" fill="var(--blood)"/>
+  </g>
+  <text x="304" y="330" text-anchor="middle" class="lab">El color del tapón</text>
+  <text x="304" y="348" text-anchor="middle" class="lab">indica el aditivo</text>
+  <text x="304" y="384" text-anchor="middle" class="small muted">cada tubo, otras pruebas</text>
+
+  <!-- Paso 3 -->
+  <rect x="408" y="60" width="180" height="360" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="498" y="88" text-anchor="middle" class="step">3 · Laboratorio</text>
+  <circle cx="498" cy="170" r="52" fill="none" stroke="var(--line)" stroke-width="3"/>
+  <path d="M498 118 A52 52 0 0 1 550 170" fill="none" stroke="var(--accent)" stroke-width="4"/>
+  <polygon points="550,170 543,158 557,158" fill="var(--accent)"/>
+  <text x="498" y="240" text-anchor="middle" class="small muted">Centrífuga</text>
+  <rect x="487" y="256" width="22" height="100" rx="10" fill="var(--blood)"/>
+  <rect x="487" y="256" width="22" height="46" rx="10" fill="var(--plasma)"/>
+  <text x="518" y="282" class="small">Plasma</text>
+  <text x="518" y="334" class="small">Células</text>
+  <text x="498" y="384" text-anchor="middle" class="lab">Analizadores</text>
+  <text x="498" y="402" text-anchor="middle" class="small muted">con controles de calidad</text>
+
+  <!-- Paso 4 -->
+  <rect x="602" y="60" width="178" height="360" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="691" y="88" text-anchor="middle" class="step">4 · Informe</text>
+  <rect x="632" y="112" width="118" height="200" rx="8" fill="var(--bg)" stroke="var(--line)"/>
+  <line x1="646" y1="136" x2="736" y2="136" stroke="var(--muted)" stroke-width="3"/>
+  <line x1="646" y1="164" x2="710" y2="164" stroke="var(--line)" stroke-width="6"/>
+  <circle cx="730" cy="164" r="5" fill="var(--ok)"/>
+  <line x1="646" y1="190" x2="704" y2="190" stroke="var(--line)" stroke-width="6"/>
+  <circle cx="730" cy="190" r="5" fill="var(--ok)"/>
+  <line x1="646" y1="216" x2="716" y2="216" stroke="var(--line)" stroke-width="6"/>
+  <circle cx="730" cy="216" r="5" fill="var(--cap2)"/>
+  <line x1="646" y1="242" x2="700" y2="242" stroke="var(--line)" stroke-width="6"/>
+  <circle cx="730" cy="242" r="5" fill="var(--ok)"/>
+  <text x="691" y="340" text-anchor="middle" class="lab">Lo interpreta</text>
+  <text x="691" y="358" text-anchor="middle" class="lab">su médico</text>
+  <text x="691" y="384" text-anchor="middle" class="small muted">junto con los síntomas</text>
+
+  <text x="400" y="464" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

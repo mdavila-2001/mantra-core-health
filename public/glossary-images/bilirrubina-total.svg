@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Bilirrubina total: del glóbulo rojo al intestino</title>
+  <desc id="d">Los glóbulos rojos viejos se destruyen y forman bilirrubina indirecta, que el hígado conjuga en bilirrubina directa; ésta pasa a la vesícula y al intestino y sale con las heces. Un tubo de sangre indica que la bilirrubina total suma ambas formas; si sube aparece ictericia.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#bcd6f2; --skin:#f3d9c4; --tissue:#e9edf2; --organ:#c9705f; --organ-l:#f4cfc6; --vessel:#c0392b; --vein:#3f6fb5; --bone:#cfd6df; --ok:#1f8a5b; --ok-l:#cdeedd; --warn:#c77700; --warn-l:#fbe3bf; --bad:#b83232; --bad-l:#f6d0d0; --purple:#7b4bb7; --purple-l:#e3d6f3; --yellow:#e8b923; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --skin:#5a4436; --tissue:#2a3541; --organ:#d98a79; --organ-l:#5a3530; --vessel:#ef7467; --vein:#7aa3e0; --bone:#566472; --ok:#4cc38a; --ok-l:#1f4434; --warn:#f0a43a; --warn-l:#4d3a1c; --bad:#f07a7a; --bad-l:#4f2626; --purple:#b48ae6; --purple-l:#3a2d4d; --yellow:#c9a43a; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .small { font-size: 12px; }
+    .step { font-size: 14px; font-weight: 700; }
+    .big { font-size: 16px; font-weight: 700; }
+    .w { fill: var(--on); }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+  </defs>
+<rect width="800" height="480" fill="var(--bg)"/>
+<rect x="20" y="20" width="760" height="420" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+<text x="400.0" y="50" text-anchor="middle" class="title">Recorrido de la bilirrubina</text>
+<ellipse cx="90" cy="130" rx="44" ry="26" fill="var(--vessel)"/>
+<text x="90" y="135" text-anchor="middle" class="small" style="fill:var(--on)">Glóbulo rojo</text>
+<text x="90" y="182" text-anchor="middle" class="small" style="fill:var(--muted)">Al envejecer se</text>
+<text x="90" y="198" text-anchor="middle" class="small" style="fill:var(--muted)">destruye (bazo)</text>
+<line x1="140" y1="130" x2="200" y2="130" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="204" y="104" width="140" height="52" rx="8" fill="var(--warn)"/>
+<text x="274.0" y="126.7" text-anchor="middle" class="lab" style="fill:var(--on)">Bilirrubina</text>
+<text x="274.0" y="142.7" text-anchor="middle" class="lab" style="fill:var(--on)">indirecta</text>
+<text x="274" y="178" text-anchor="middle" class="small" style="fill:var(--muted)">No conjugada</text>
+<line x1="348" y1="130" x2="410" y2="130" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M414 160 C414 100 470 92 540 96 C600 100 620 120 620 140 C620 170 580 190 540 196 C480 204 414 200 414 160 Z" fill="var(--organ-l)" stroke="var(--organ)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="516" y="140" text-anchor="middle" class="big">Hígado</text>
+<text x="516" y="160" text-anchor="middle" class="small" style="fill:var(--muted)">la conjuga</text>
+<line x1="624" y1="140" x2="670" y2="140" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="674" y="112" width="96" height="56" rx="8" fill="var(--yellow)"/>
+<text x="722.0" y="136.7" text-anchor="middle" class="lab" style="fill:var(--ink)">Bilirrubina</text>
+<text x="722.0" y="152.7" text-anchor="middle" class="lab" style="fill:var(--ink)">directa</text>
+<line x1="722" y1="170" x2="722" y2="230" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<ellipse cx="722" cy="262" rx="40" ry="26" fill="var(--ok-l)" stroke="var(--ok)" stroke-width="1.5"/>
+<text x="722" y="266" text-anchor="middle" class="small">Vesícula</text>
+<line x1="682" y1="262" x2="600" y2="262" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="440" y="240" width="156" height="44" rx="8" fill="var(--warn)"/>
+<text x="518.0" y="266.7" text-anchor="middle" class="lab" style="fill:var(--on)">Intestino → heces</text>
+<text x="518" y="304" text-anchor="middle" class="small" style="fill:var(--muted)">Da el color a las heces</text>
+<rect x="58" y="228" width="30" height="14" rx="3" fill="var(--accent)"/>
+<path d="M60 242 V308 a13 13 0 0 0 26 0 V242 Z" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+<path d="M61.5 268 V308 a11.5 11.5 0 0 0 23 0 V268 Z" fill="var(--vessel)"/>
+<text x="73" y="344" text-anchor="middle" class="small" style="fill:var(--muted)">Sangre</text>
+<text x="100" y="252" class="lab">Bilirrubina total =</text>
+<text x="100" y="272" class="lab">indirecta + directa</text>
+<text x="100" y="298" class="small" style="fill:var(--muted)">Se mide en el suero.</text>
+<rect x="40" y="360" width="720" height="66" rx="10" fill="var(--tissue)" stroke="var(--line)"/>
+<text x="60" y="386" class="lab">Si sube: piel y ojos amarillos (ictericia).</text>
+<text x="60" y="410" class="lab">Orienta a hemólisis, enfermedad del hígado u obstrucción biliar.</text>
+<text x="560" y="386" class="small" style="fill:var(--muted)">En recién nacidos se vigila</text>
+<text x="560" y="404" class="small" style="fill:var(--muted)">con especial cuidado.</text>
+<text x="400" y="464" text-anchor="middle" class="small" style="fill:var(--muted)">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>
