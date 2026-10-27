@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   DOCUMENT,
@@ -49,7 +50,7 @@ export class PanicButton {
   private readonly dialogo = viewChild<ElementRef<HTMLDialogElement>>('dialogo');
 
   /** Sólo el ícono, sin la palabra: para la barra lateral recogida. El nombre accesible no cambia. */
-  readonly compacto = input(false);
+  readonly compacto = input(false, { transform: booleanAttribute });
 
   protected readonly ambulancia = this.confianza.ambulancia;
 

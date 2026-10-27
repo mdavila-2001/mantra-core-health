@@ -60,10 +60,20 @@ tablet y teléfono.
 
 ## Riesgos y decisiones
 
-- **Emergencia en el teléfono:** el menú lateral es un cajón, así que en el teléfono ahora son
-  dos toques (abrir el menú y tocar Emergencia), no uno. Si en el teléfono tiene que seguir a un
-  toque, se puede dejar ahí sólo el ícono. Lo decide el propietario.
+- **Emergencia en el teléfono (resuelto, propietario 27/10/2026):** donde el menú es un cajón
+  (≤ 900 px) Emergencia vuelve a la cabecera como ícono circular rojo, a un toque. Medido con
+  Playwright: 360, 390 y 900 px visible y sin desborde horizontal; en 1440 px oculto (ya está en
+  el menú). Capturas `evidencia/em-*.png`, incluido el diálogo de números abierto desde el ícono.
 - **Aviso de demo en el teléfono:** no se movió. Sigue tapando el final del texto de la portada
   (pasaba igual antes de este cambio).
-- Ya pasaba antes, fuera de alcance: en `/my-account/spending` el menú lateral marca «Mi perfil»
-  como activo, porque compara por prefijo de `/my-account`.
+- **«Mi perfil» encendido en Mis gastos (resuelto, propietario 27/10/2026):** el menú marca el
+  renglón cuyo prefijo es el más largo, y «Mi perfil» es `/my-account`. Ahora, si la pantalla es
+  un atajo de la cabecera (`/my-account/spending`, `invoices`, `requests`, `promotions`), el menú
+  no marca nada: ya la marca la cabecera. El carrito sigue marcando «Farmacia». Verificado en
+  navegador (paciente): spending → menú `[]`, cabecera «Mis gastos y facturas»; cart → menú
+  «Farmacia», cabecera «Carrito»; `/my-account` → «Mi perfil». Captura
+  `evidencia/activo-spending.png`. En `/my-account/invoices` la cabecera marca «Mis gastos»
+  (propietario, 27/10/2026): es el mismo atajo desde la fusión. Verificado en navegador
+  (`evidencia/activo-invoices.png`); en Mis solicitudes «Mis gastos» no se marca.
+- Consola durante la verificación: un 404 de `glossary-data/manifest.json`, ajeno a este cambio
+  (los datos del glosario se generan aparte y no están en este entorno local).

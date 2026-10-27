@@ -70,6 +70,13 @@ describe('ShellLayout', () => {
           // N-01: los dos destinos que se mudaron a la cabecera.
           { path: 'tutorials', children: [] },
           { path: 'messaging', children: [] },
+          // Atajos de la cabecera que cuelgan de `/my-account` (27/10/2026), y
+          // el carrito, que cuelga de «Farmacia».
+          { path: 'my-account/spending', children: [] },
+          { path: 'my-account/invoices', children: [] },
+          { path: 'my-account/requests', children: [] },
+          { path: 'my-account/promotions', children: [] },
+          { path: 'my-account/pharmacy/cart', children: [] },
           // Dos de los cuatro directorios y una ficha: no ocupan renglón desde
           // el 08/09/2026, y son con lo que se comprueba que la portada se
           // marca por ellos.
@@ -1105,6 +1112,46 @@ describe('ShellLayout', () => {
         expect(marcadas()).toEqual([]);
       });
 
+      it.each(['/my-account/spending', '/my-account/invoices', '/my-account/requests', '/my-account/promotions'])(
+        'en %s, que se abre desde la cabecera, «Mi perfil» no se marca (27/10/2026)',
+        async (url) => {
+          // Cuelgan de `/my-account` y, por el prefijo más largo, encendían
+          // «Mi perfil»: la pantalla quedaba marcada arriba y en la barra.
+          abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+          await ir(url);
+
+          expect(marcadas()).toEqual([]);
+        },
+      );
+
+      it.each(['/my-account/spending', '/my-account/invoices'])(
+        'en %s la cabecera marca «Mis gastos»: Mis facturas se fusionó con él (27/10/2026)',
+        async (url) => {
+          abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+          await ir(url);
+
+          const gastos = raiz().querySelector('[data-testid="header-gastos"]');
+          expect(gastos?.classList).toContain('is-activo');
+          expect(gastos?.getAttribute('aria-current')).toBe('page');
+        },
+      );
+
+      it('fuera de gastos y facturas, «Mis gastos» no se marca', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        await ir('/my-account/requests');
+
+        const gastos = raiz().querySelector('[data-testid="header-gastos"]');
+        expect(gastos?.classList).not.toContain('is-activo');
+        expect(gastos?.getAttribute('aria-current')).toBeNull();
+      });
+
+      it('el carrito sigue marcando «Farmacia»: es parte de ella', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        await ir('/my-account/pharmacy/cart');
+
+        expect(marcadas()).toEqual(['/my-account/pharmacy']);
+      });
+
       it('en una pantalla que no está en el menú, gana el ancestro más cercano', async () => {
         // La ficha de un paciente no es entrada de menú: si no se marcara
         // ninguna, la sección dejaría de decir dónde está uno.
@@ -1426,11 +1473,17 @@ describe('ShellLayout', () => {
       );
     });
 
-    it('Emergencia salió de la cabecera y encabeza el menú lateral (27/10/2026)', () => {
+    it('Emergencia encabeza el menú lateral y, para el teléfono, queda como ícono en la cabecera (27/10/2026)', () => {
       abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
       fixture.detectChanges();
 
-      expect(raiz().querySelector('.app-header [data-testid="boton-emergencia"]')).toBeNull();
+      // En la cabecera sólo el ícono: la hoja lo muestra donde el menú es un
+      // cajón (≤ 900 px), para que una urgencia siga a un toque.
+      const enCabecera = raiz().querySelector('.app-header [data-testid="header-emergencia"]');
+      const botonCabecera = enCabecera?.querySelector('[data-testid="boton-emergencia"]');
+      expect(botonCabecera?.querySelector('svg')).not.toBeNull();
+      expect(botonCabecera?.textContent?.trim()).toBe('');
+      expect(botonCabecera?.getAttribute('aria-label')).toMatch(/^Emergencia/);
       const enMenu = raiz().querySelector('#app-side-nav [data-testid="boton-emergencia"]');
       expect(enMenu).not.toBeNull();
       // Antes que cualquier destino: una urgencia no compite.

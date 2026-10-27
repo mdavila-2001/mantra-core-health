@@ -286,7 +286,11 @@
              no compite por la atención con «tu receta está lista». -->
         <!-- Emergencia salió de la cabecera (propietario, 27/10/2026): vive
              arriba del menú lateral, en todas las pantallas (ver
-             `app-side-nav__emergencia`). -->
+             `app-side-nav__emergencia`). En el teléfono el menú es un cajón y
+             quedaba a dos toques, así que ahí vuelve como ícono: una urgencia
+             tiene que estar a uno (propietario, 27/10/2026). Fuera de esos
+             anchos lo esconde `shell-layout.css`. -->
+        <app-panic-button class="app-header__emergencia" data-testid="header-emergencia" compacto />
 
         <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
              elegir: una cuenta sin dependientes no necesita conmutar nada, y un
@@ -503,10 +507,12 @@
           <!-- Mis gastos: la billetera abre el tablero de lo que el paciente
                gastó en su salud (propietario, 27/09/2026). Primera de las tres
                porque es la única que no es una compra. -->
+          <!-- Sin `routerLinkActive`: también se marca en «Mis facturas», que
+               se fusionó acá y se abre con «Ver mis facturas» (27/10/2026). -->
           <a
             class="app-header__ajustes"
-            routerLinkActive="is-activo"
-            ariaCurrentWhenActive="page"
+            [class.is-activo]="gastosActivo()"
+            [attr.aria-current]="gastosActivo() ? 'page' : null"
             routerLink="/my-account/spending"
             data-testid="header-gastos"
             appTooltip="Mis gastos y facturas"
