@@ -11,6 +11,15 @@ import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-ce
 
 const RUTA_ALTA = '/iam/auth/register-organization';
 
+/** Los `fileId` que devolvería la pre-carga de cada documento. */
+const DOCUMENTOS = {
+  constitutionFileId: 'f-constitucion',
+  taxIdentifierFileId: 'f-nit',
+  commerceRegistryFileId: 'f-matricula',
+  operatingLicenseFileId: 'f-licencia',
+  healthAuthorityCertificateFileId: 'f-sedes',
+};
+
 const DESTINO_TIPO = 'directory.tenants.tenant_type_concept_id';
 
 /** El catálogo `tenant-type` como lo publica la API, con tipos que no son médicos. */
@@ -102,6 +111,7 @@ describe('RegisterMedicalCenter', () => {
       tenantType,
       legalName: 'Centro Médico Norte S.R.L.',
       legalEntityType: 'SRL',
+      ...DOCUMENTOS,
       ownerName: 'Marta Rojas',
       email: 'marta@centro.test',
       password: 'secreto12',
@@ -129,6 +139,7 @@ describe('RegisterMedicalCenter', () => {
         legalName: 'Centro Médico Norte S.R.L.',
         legalEntityType: 'SRL',
         tenantType: 'HOSPITAL',
+        legalDocuments: DOCUMENTOS,
         countryConceptId: 'c-bo',
         jurisdictionConceptId: 'j-nac',
       },
@@ -267,20 +278,25 @@ describe('RegisterMedicalCenter', () => {
     expect(fixture.componentInstance.form.controls.password.touched).toBe(true);
   });
 
-  it('se sirve de a cuatro campos como tope: la organización y la cuenta', () => {
+  it('se sirve de a cuatro campos como tope: la organización, sus documentos y la cuenta', () => {
     const paginas = interno().paginas();
 
-    expect(paginas).toHaveLength(2);
-    expect(paginas.map((p) => p.titulo)).toEqual(['La organización', 'Su cuenta']);
     expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
       ['tenantType', 'legalName', 'legalEntityType'],
+      ['constitutionFileId', 'taxIdentifierFileId', 'commerceRegistryFileId', 'operatingLicenseFileId'],
+      ['healthAuthorityCertificateFileId'],
       ['ownerName', 'email', 'password'],
     ]);
+    expect(paginas[0]!.titulo).toBe('La organización');
+    expect(paginas[1]!.titulo).toContain('Documentación legal obligatoria (PDF)');
+    expect(paginas[3]!.titulo).toBe('Su cuenta');
     expect(Math.max(...paginas.map((p) => p.campos.length))).toBeLessThanOrEqual(4);
   });
 
   it('el tipo de institución es un desplegable y las dos páginas van en tres columnas', () => {
-    const [organizacion, cuenta] = interno().paginas();
+    const paginas = interno().paginas();
+    const organizacion = paginas[0];
+    const cuenta = paginas[paginas.length - 1];
     const tipo = organizacion!.campos.find((c) => c.key === 'tenantType')!;
 
     expect(tipo.control).toBe('select');
@@ -304,8 +320,26 @@ describe('RegisterMedicalCenter', () => {
     expect(societario.options).toEqual([{ value: 'SRL', label: 'S.R.L.' }]);
   });
 
+  it('sin uno de los cinco documentos no sale a la red y lo marca', () => {
+    completar();
+    fixture.componentInstance.form.controls.operatingLicenseFileId.setValue('');
+    fixture.componentInstance.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(fixture.componentInstance.form.controls.operatingLicenseFileId.touched).toBe(true);
+    expect(fixture.componentInstance.form.controls.operatingLicenseFileId.invalid).toBe(true);
+  });
+
+  it('quitar un documento ya subido vacía su control', () => {
+    completar();
+    fixture.componentInstance.registrarDocumento('constitutionFileId', null);
+
+    expect(fixture.componentInstance.form.controls.constitutionFileId.value).toBe('');
+    expect(fixture.componentInstance.form.valid).toBe(false);
+  });
+
   it('la contraseña avisa su mínimo antes de equivocarse, como el alta de usuarios', () => {
-    const clave = interno().paginas()[1]!.campos.find((c) => c.key === 'password')!;
+    const clave = interno().paginas().at(-1)!.campos.find((c) => c.key === 'password')!;
     expect(clave.hint).toBe('Mínimo 8 caracteres.');
   });
 

@@ -13,6 +13,13 @@ const REGISTRATION: MedicalCenterRegistration = {
   tenantType: 'HOSPITAL',
   legalName: 'Centro Médico Norte S.R.L.',
   legalEntityType: 'SRL',
+  legalDocuments: {
+    constitutionFileId: 'f-constitucion',
+    taxIdentifierFileId: 'f-nit',
+    commerceRegistryFileId: 'f-matricula',
+    operatingLicenseFileId: 'f-licencia',
+    healthAuthorityCertificateFileId: 'f-sedes',
+  },
   countryConceptId: 'c-bo',
   jurisdictionConceptId: 'j-nac',
   owner: { email: 'marta@centro.test', password: 'S3cret-passw0rd', displayName: 'Marta Rojas' },
@@ -38,7 +45,7 @@ describe('MedicalCenterRegistrationClient', () => {
     req.flush({});
   });
 
-  it('envía el tipo, el país y la jurisdicción a register-organization', () => {
+  it('envía el tipo, los documentos, el país y la jurisdicción a register-organization', () => {
     client.register(REGISTRATION).subscribe();
 
     const req = http.expectOne((r) => r.url === '/iam/auth/register-organization');
@@ -49,6 +56,7 @@ describe('MedicalCenterRegistrationClient', () => {
         legalName: 'Centro Médico Norte S.R.L.',
         legalEntityType: 'SRL',
         tenantType: 'HOSPITAL',
+        legalDocuments: REGISTRATION.legalDocuments,
         countryConceptId: 'c-bo',
         jurisdictionConceptId: 'j-nac',
       },

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal, untracked } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   FormControl,
@@ -11,6 +12,8 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, map, switchMap, type Observable } from 'rxjs';
 
+import { IamClient } from '../../../core/data-access/iam/iam.client';
+import { uiLanguage } from '../../../core/i18n/ui-language';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
@@ -27,7 +30,13 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
+import type {
+  PdfUploader,
+  UploadedDocument,
+} from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
@@ -35,6 +44,11 @@ import {
   MIN_CHARACTERS_PASSWORD,
   passwordValidators,
 } from '../shared-registration/password-policy';
+import {
+  legalDocumentsFields,
+  RECORD_LEGAL_DOCUMENTS,
+  type DocumentLegalKey,
+} from '../shared-registration/legal-documents';
 import { medicalCenterCodeFromName } from './medical-center-code';
 import {
   DESTINO_TIPO_DE_ORGANIZACION,
@@ -120,13 +134,26 @@ export function signupErrorMessage(error: unknown): string {
  */
 @Component({
   selector: 'app-register-medical-center',
-  imports: [RegistrationBadge, Alert, AnnounceOnAppear, AppButton, AuthSplit, Link, PaginatedForm, RouterLink],
+  imports: [
+    RegistrationBadge,
+    Alert,
+    AnnounceOnAppear,
+    AppButton,
+    AuthSplit,
+    CustomField,
+    DropzonePdf,
+    Link,
+    NgTemplateOutlet,
+    PaginatedForm,
+    RouterLink,
+  ],
   templateUrl: './register-medical-center.html',
   styleUrls: ['../shared-registration/registration.css', './register-medical-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterMedicalCenter {
   private readonly client = inject(MedicalCenterRegistrationClient);
+  private readonly iam = inject(IamClient);
   private readonly context = inject(SystemContextClient);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
   private readonly router = inject(Router);
@@ -157,6 +184,16 @@ export class RegisterMedicalCenter {
       validators: [Validators.required, Validators.maxLength(MAX_LEGAL_NAME)],
     }),
     legalEntityType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // Los cinco papeles de la empresa (CM-11, como el alta de aseguradora):
+    // guardan el `fileId` de la pre-carga, no el archivo, y son obligatorios.
+    constitutionFileId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    taxIdentifierFileId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    commerceRegistryFileId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    operatingLicenseFileId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    healthAuthorityCertificateFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     ownerName: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NAME)],
@@ -177,8 +214,9 @@ export class RegisterMedicalCenter {
   private readonly tiposSocietarios = signal<readonly SelectOption<string>[]>([]);
 
   /**
-   * Dos páginas, de a cuatro campos como tope: la organización y la cuenta de
-   * quien la administra. `computed` porque los catálogos de tipos llegan
+   * La organización, sus documentos legales y la cuenta de quien la
+   * administra, de a cuatro campos como tope: el motor parte los cinco
+   * documentos en «(1 de 2)» y «(2 de 2)». `computed` porque los catálogos de tipos llegan
    * después de que la pantalla se arma.
    */
   protected readonly paginas = computed(() =>
@@ -222,6 +260,13 @@ export class RegisterMedicalCenter {
             mensajeDeError: 'Elija el tipo societario.',
           },
         ],
+      },
+      {
+        titulo: 'Documentación legal obligatoria (PDF)',
+        clave: 'documentos-legales',
+        icon: 'folder' as const,
+        hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
+        campos: legalDocumentsFields('BO', uiLanguage()),
       },
       {
         titulo: 'Su cuenta',
@@ -273,6 +318,52 @@ export class RegisterMedicalCenter {
       // desplegable vacío dejaba el alta sin poder terminarse.
       error: () => this.tiposSocietarios.set(this.legalEntityTypes.opcionesPorPais([], 'BO')),
     });
+  }
+
+  /* --- documentos legales (dropzone real, con `fileId`) ------------------ */
+
+  /** Cómo sube cada `app-dropzone-pdf`: la pre-carga pública de las demás altas. */
+  protected readonly subirDocumento: PdfUploader = (file) =>
+    this.iam.uploadRegistrationDocument(file);
+
+  protected readonly clavesDeDocumento: readonly DocumentLegalKey[] = RECORD_LEGAL_DOCUMENTS.map(
+    (documento) => documento.key,
+  );
+
+  /** Lo ya subido por cada dropzone, para sobrevivir a que el asistente destruya y recree la página. */
+  private readonly documentosSubidos = signal<Partial<Record<DocumentLegalKey, UploadedDocument>>>({});
+
+  registrarDocumento(clave: DocumentLegalKey, fileId: string | null): void {
+    const control = this.form.controls[clave];
+    control.setValue(fileId ?? '');
+    control.markAsTouched();
+    if (fileId === null) {
+      this.documentosSubidos.update((actual) => {
+        const { [clave]: _omitido, ...resto } = actual;
+        return resto;
+      });
+    }
+  }
+
+  protected recordarDocumento(clave: DocumentLegalKey, documento: UploadedDocument): void {
+    this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
+  }
+
+  protected documentoInicialDe(clave: DocumentLegalKey): UploadedDocument | null {
+    return this.documentosSubidos()[clave] ?? null;
+  }
+
+  protected esDocumentoInvalido(clave: DocumentLegalKey): boolean {
+    const control = this.form.controls[clave];
+    return control.touched && control.invalid;
+  }
+
+  /** El rótulo ya resuelto del documento, para pasárselo a su dropzone. */
+  protected etiquetaDeDocumento(clave: DocumentLegalKey): string {
+    const campo = this.paginas()
+      .flatMap((pagina) => pagina.campos)
+      .find((c) => c.key === clave);
+    return campo?.label ?? 'Documento';
   }
 
   submit(): void {
@@ -346,6 +437,13 @@ export class RegisterMedicalCenter {
       tenantType: tipo,
       legalName: f.legalName.trim(),
       legalEntityType: f.legalEntityType,
+      legalDocuments: {
+        constitutionFileId: f.constitutionFileId,
+        taxIdentifierFileId: f.taxIdentifierFileId,
+        commerceRegistryFileId: f.commerceRegistryFileId,
+        operatingLicenseFileId: f.operatingLicenseFileId,
+        healthAuthorityCertificateFileId: f.healthAuthorityCertificateFileId,
+      },
       countryConceptId: ids.pais,
       jurisdictionConceptId: ids.jurisdiccion,
       owner: {

@@ -48,8 +48,19 @@ import { join } from 'node:path';
 
 import { expect, request, test, type Page, type Request, type Response } from '@playwright/test';
 
+import { pdfDePrueba } from './helpers/documentos-legales';
 import { urlDeApi } from './support/actores';
 import { esperarAplicacionLista } from './support/sesion';
+
+/** Las claves de los cinco documentos legales del alta, en el orden de sus páginas. */
+const CLAVES_DE_DOCUMENTOS = [
+  'constitutionFileId',
+  'taxIdentifierFileId',
+  'commerceRegistryFileId',
+  'operatingLicenseFileId',
+  'healthAuthorityCertificateFileId',
+] as const;
+
 
 const API_REAL = process.env['E2E_API_REAL'] === '1';
 const PG_URL = process.env['E2E_PG_URL'] ?? '';
@@ -381,6 +392,18 @@ async function paginaOrganizacion(page: Page, rotulo: string | null, razonSocial
   await elegirTipoSocietario(page);
 }
 
+/** Los cinco PDF, en las dos páginas de «Documentación legal obligatoria (PDF)». Deja el asistente en «Su cuenta». */
+async function paginaDocumentos(page: Page): Promise<void> {
+  for (const tanda of [CLAVES_DE_DOCUMENTOS.slice(0, 4), CLAVES_DE_DOCUMENTOS.slice(4)]) {
+    for (const clave of tanda) {
+      const testId = `medical-center-signup-doc-${clave}`;
+      await page.getByTestId(testId).setInputFiles(pdfDePrueba(clave));
+      await expect(page.getByTestId(`${testId}-quitar`)).toBeVisible({ timeout: 15_000 });
+    }
+    await continuar(page);
+  }
+}
+
 async function paginaCuenta(page: Page, correo: string, password: string): Promise<void> {
   await expect(page.getByTestId('medical-center-signup-owner-name')).toBeVisible({ timeout: 20_000 });
   await escribir(page, 'medical-center-signup-owner-name', 'Marta Rojas');
@@ -434,6 +457,7 @@ test.describe('correcto: alta completa por tipo de institución', () => {
       await sinDesbordeHorizontal(page);
       await foto(page, `${ancho}-correcto-${tipo.codigo}-1-organizacion`);
       await continuar(page);
+      await paginaDocumentos(page);
       await paginaCuenta(page, correo, password);
       await sinDesbordeHorizontal(page);
       await accionesDentro(page);
@@ -538,6 +562,7 @@ test.describe('límite', () => {
     await abrirAlta(page);
     await paginaOrganizacion(page, 'Consultorio médico', razonSocial);
     await continuar(page);
+    await paginaDocumentos(page);
     await paginaCuenta(page, correo, password);
     const respuesta = await enviar(page);
 
@@ -693,6 +718,7 @@ test.describe('límite', () => {
     await abrirAlta(page);
     await paginaOrganizacion(page, 'Hospital', razonSocial);
     await continuar(page);
+    await paginaDocumentos(page);
     await paginaCuenta(page, `org.clave7.${RUN}@alovida.test`.toLowerCase(), 'Siete-7');
     await continuar(page);
     const error = page.getByText('La contraseña necesita al menos 8 caracteres.');
@@ -770,6 +796,7 @@ test.describe('error', () => {
     await abrirAlta(page);
     await paginaOrganizacion(page, 'Centro de enfermería', razonSocial);
     await continuar(page);
+    await paginaDocumentos(page);
     await paginaCuenta(page, correoRegistrado ?? '', 'Organizacion-2026');
     const respuesta = await enviar(page);
 
@@ -882,6 +909,7 @@ test('la segunda página reparte la cuenta en columnas y sus acciones no se sale
     await abrirAlta(page);
     await paginaOrganizacion(page, 'Hospital', `Vista ${vista.label} ${RUN}`);
     await continuar(page);
+    await paginaDocumentos(page);
     await expect(page.getByTestId('medical-center-signup-owner-name')).toBeVisible();
     await sinDesbordeHorizontal(page);
     await accionesDentro(page);
@@ -960,6 +988,7 @@ test('redimensionar de 390 a 1024 y volver: sin errores y con el orden de lectur
   await abrirAlta(page);
   await paginaOrganizacion(page, 'Hospital', `Redimensiona ${RUN}`);
   await continuar(page);
+  await paginaDocumentos(page);
   await expect(page.getByTestId('medical-center-signup-owner-name')).toBeVisible();
 
   for (const [ancho, alto, apiladas] of [

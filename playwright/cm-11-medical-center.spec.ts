@@ -16,10 +16,20 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
+import { pdfDePrueba } from './helpers/documentos-legales';
 import { CLAVE } from './support/actores';
 import { esperarAplicacionLista } from './support/sesion';
 
 const EVIDENCIA = join('docs', 'frontend', 'evidence', 'cm-11-medical-center-registration');
+/** Las claves de los cinco documentos legales del alta, en el orden de sus páginas. */
+const CLAVES_DE_DOCUMENTOS = [
+  'constitutionFileId',
+  'taxIdentifierFileId',
+  'commerceRegistryFileId',
+  'operatingLicenseFileId',
+  'healthAuthorityCertificateFileId',
+] as const;
+
 const VIEWPORTS = [
   { label: 'desktop', width: 1440, height: 900 },
   { label: 'phone', width: 390, height: 844 },
@@ -102,7 +112,7 @@ for (const view of VIEWPORTS) {
       await foto(page, `${view.label}-01-organization-type-selector`);
     });
 
-    test('el alta recorre sus dos páginas y termina pendiente de verificación', async ({ page }) => {
+    test('el alta recorre sus páginas, con los cinco PDF, y termina pendiente de verificación', async ({ page }) => {
       const errores: string[] = [];
       page.on('console', (m) => {
         if (m.type() === 'error') errores.push(m.text());
@@ -136,7 +146,22 @@ for (const view of VIEWPORTS) {
       await foto(page, `${view.label}-04-signup-page-1-filled`);
       await page.getByTestId('paginated-form-continuar').click();
 
-      // Página 2 · la cuenta.
+      // Páginas 2 y 3 · los cinco documentos legales, en PDF y obligatorios.
+      await page.getByTestId('paginated-form-continuar').click();
+      await expect(page.getByText('Este documento es obligatorio para continuar').first()).toBeVisible();
+      await foto(page, `${view.label}-04b-signup-documents-errors`);
+      for (const tanda of [CLAVES_DE_DOCUMENTOS.slice(0, 4), CLAVES_DE_DOCUMENTOS.slice(4)]) {
+        for (const clave of tanda) {
+          const testId = `medical-center-signup-doc-${clave}`;
+          await page.getByTestId(testId).setInputFiles(pdfDePrueba(clave));
+          await expect(page.getByTestId(`${testId}-quitar`)).toBeVisible({ timeout: 15_000 });
+        }
+        await noHorizontalOverflow(page);
+        await foto(page, `${view.label}-04c-signup-documents-${tanda.length === 4 ? '1' : '2'}-uploaded`);
+        await page.getByTestId('paginated-form-continuar').click();
+      }
+
+      // Página 4 · la cuenta.
       await escribir(page, 'medical-center-signup-owner-name', 'Marta Rojas');
       await escribir(page, 'medical-center-signup-email', `marta${Date.now()}@centro-norte.test`);
       await escribir(page, 'medical-center-signup-password', 'S3cret-passw0rd');
