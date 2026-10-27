@@ -73,7 +73,7 @@
 
 .publicacion__titular {
   margin: 0;
-  font-size: var(--fs-caption);
+  font-size: 12px;
   color: var(--tinta-2);
   white-space: nowrap;
   overflow: hidden;
@@ -82,7 +82,7 @@
 
 .publicacion__meta {
   margin: 1px 0 0;
-  font-size: var(--fs-caption);
+  font-size: 12px;
   color: var(--tinta-2);
   display: flex;
   align-items: center;
@@ -165,11 +165,19 @@
 .publicacion__imagen {
   display: block;
   inline-size: 100%;
-  /* A lo ancho de la columna del feed la imagen es protagonista: con 18rem
-     quedaba una franja que obligaba a abrir la publicación para verla. */
-  max-block-size: 30rem;
+  /* En móvil/tablet a columna única, 4/3 haría 480 px a 640 px de ancho —demasiado.
+     Se limita a 20rem (320 px) hasta el quiebre de dos columnas. */
+  max-block-size: 20rem;
   aspect-ratio: 4 / 3;
   object-fit: cover;
+}
+
+@media (min-width: 900px) {
+  .publicacion__imagen {
+    /* A lo ancho de la columna del feed la imagen es protagonista: con 18rem
+       quedaba una franja que obligaba a abrir la publicación para verla. */
+    max-block-size: 30rem;
+  }
 }
 
 .publicacion__medios[data-cantidad='una'] .publicacion__imagen {
@@ -196,16 +204,6 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-
-/* Mismo glifo de trazo que «Recomendar» (.publicacion__accion svg), a juego
-   con el texto de caption que lo acompaña acá: 20px se veía pesado en esta
-   fila chica. Antes era el emoji 👍, que no sigue el tema (color fijo de la
-   fuente del sistema) y se dibuja distinto en cada plataforma. */
-.publicacion__pulgar {
-  flex: none;
-  inline-size: 14px;
-  block-size: 14px;
 }
 
 /* Los contadores son botones y tienen que verse como el texto que eran: lo que
@@ -278,7 +276,7 @@
   border-radius: var(--r-full);
   background: rgb(0 0 0 / 0.55);
   color: #fff;
-  font-size: var(--fs-caption);
+  font-size: 12px;
   line-height: var(--lh-caption);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
