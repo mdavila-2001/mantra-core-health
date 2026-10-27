@@ -7,10 +7,20 @@ import { provideRouter, Router } from '@angular/router';
 import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { MapLocationPicker } from '../shared-registration/map-location-picker/map-location-picker';
+import { NEVER, of } from 'rxjs';
+
+import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
+import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { selectOptionLabels, selectTrigger } from '../../../../testing/select';
 import { RegisterOrganization } from './register-organization';
 import { nameExtraControl } from '../shared-registration/name-fields/person-name';
+
+/** El punto confirmado de la casa matriz en las pruebas. */
+const PUNTO_CASA_MATRIZ = { lat: -17.7833, lng: -63.1821 };
 
 const RESPUESTA = {
   tenantId: 't-1',
@@ -95,6 +105,10 @@ describe('RegisterOrganization', () => {
         // El mapa de la casa matriz (subtarea 1.3) no debe cargar Leaflet de
         // verdad en jsdom: ver el mismo provider en `design-system-sample.spec.ts`.
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+        // El selector pide la calle y el catálogo de municipios; acá no
+        // responden: lo deducido se emite a mano por `localidad`.
+        { provide: ReverseGeocodingClient, useValue: { streetAt: () => NEVER } },
+        { provide: BoMunicipalitiesCatalog, useValue: { listar: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -231,6 +245,8 @@ describe('RegisterOrganization', () => {
       sigla: 'ANDINA',
       regulatorIdentifier: 'NIT-123456',
       address: 'Av. Siempre Viva 123',
+      // El punto de la casa matriz es obligatorio (pedido del cliente del 26/10/2026).
+      gpsCasaMatriz: PUNTO_CASA_MATRIZ,
       // `incorporationCountry` se declara antes que `timeZone` en el form:
       // el valor explícito de acá siempre gana sobre el default que dispara
       // la suscripción al cambiar de país (ver `acomodarPaisYTipoSocietario`).
@@ -302,6 +318,7 @@ describe('RegisterOrganization', () => {
     expect(component.form.controls.sigla.touched).toBe(true);
     expect(component.form.controls.regulatorIdentifier.touched).toBe(true);
     expect(component.form.controls.address.touched).toBe(true);
+    expect(component.form.controls.gpsCasaMatriz.touched).toBe(true);
     // `http.verify()` del afterEach falla si algo hubiera salido a la red.
   });
 
@@ -356,6 +373,8 @@ describe('RegisterOrganization', () => {
           regulatorIdentifier: 'NIT-123456',
           sigla: 'ANDINA',
           address: 'Av. Siempre Viva 123',
+          latitude: -17.7833,
+          longitude: -63.1821,
         },
         legalDocuments: DOCUMENTOS_DE_PRUEBA,
         legalRepresentative: {
@@ -434,6 +453,8 @@ describe('RegisterOrganization', () => {
       regulatorIdentifier: 'NIT-123456',
       sigla: 'ANDINA',
       address: 'Av. Siempre Viva 123',
+      latitude: -17.7833,
+      longitude: -63.1821,
     });
 
     req.flush(RESPUESTA);
@@ -612,7 +633,7 @@ describe('RegisterOrganization', () => {
     it('con la casa matriz confirmada, el cuerpo del alta lleva latitude y longitude', () => {
       fixture.detectChanges();
       completar();
-      component.gpsCasaMatriz.set({ lat: -17.7833, lng: -63.1821 });
+      component.fijarGpsCasaMatriz({ lat: -17.7, lng: -63.1 });
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
@@ -621,27 +642,44 @@ describe('RegisterOrganization', () => {
         regulatorIdentifier: 'NIT-123456',
         sigla: 'ANDINA',
         address: 'Av. Siempre Viva 123',
-        latitude: -17.7833,
-        longitude: -63.1821,
+        latitude: -17.7,
+        longitude: -63.1,
       });
 
       req.flush(RESPUESTA);
     });
 
-    it('la sección "Datos de la aseguradora" ofrece las dos puertas del mapa', () => {
+    it('sin el punto de la casa matriz no sale a la red', () => {
       fixture.detectChanges();
       completar();
+      component.fijarGpsCasaMatriz(null);
+
+      component.submit();
+
+      // `http.verify()` del afterEach falla si algo hubiera salido a la red.
+      expect(component.form.controls.gpsCasaMatriz.invalid).toBe(true);
+    });
+
+    it('la sección "Datos de la aseguradora" abre el mapa de entrada, con la ubicación actual al lado', () => {
+      fixture.detectChanges();
+      completar();
+      component.fijarGpsCasaMatriz(null);
       fixture.detectChanges();
       avanzarHasta('Datos de la aseguradora');
 
+      // Las dos puertas: tocar el plano, que ya está abierto (pedido del
+      // cliente del 26/10/2026), o pedir la ubicación actual.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-casa-matriz-map"]'),
+      ).not.toBeNull();
       expect(
         fixture.nativeElement.querySelector(
-          '[data-testid="registro-organizacion-casa-matriz-location-use"]',
+          '[data-testid="registro-organizacion-casa-matriz-location-pick-indicacion"]',
         ),
       ).not.toBeNull();
       expect(
         fixture.nativeElement.querySelector(
-          '[data-testid="registro-organizacion-casa-matriz-location-pick"]',
+          '[data-testid="registro-organizacion-casa-matriz-location-use"]',
         ),
       ).not.toBeNull();
     });
@@ -649,7 +687,7 @@ describe('RegisterOrganization', () => {
     it('una casa matriz ya confirmada sobrevive a ir y volver de página', () => {
       fixture.detectChanges();
       completar();
-      component.gpsCasaMatriz.set({ lat: -17.7833, lng: -63.1821 });
+      component.fijarGpsCasaMatriz(PUNTO_CASA_MATRIZ);
       fixture.detectChanges();
       avanzarHasta('Datos de la aseguradora');
 
@@ -665,92 +703,44 @@ describe('RegisterOrganization', () => {
     });
   });
 
-  describe('el mapa vacía la dirección de la casa matriz (D-06)', () => {
-    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
-    function direccionEscritaYDejada(): HTMLInputElement {
+  describe('la ubicación de la casa matriz sale del punto (26/10/2026)', () => {
+    function localidad(calle: string | null, zona: string | null = null): LocalityFromPoint {
+      return { punto: PUNTO_CASA_MATRIZ, calle, calleSola: calle, zona, municipioConceptId: null };
+    }
+
+    function irALaUbicacion(): void {
       fixture.detectChanges();
       completar();
+      component.fijarGpsCasaMatriz(null);
       fixture.detectChanges();
       avanzarHasta('Datos de la aseguradora');
-      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
-        '[data-testid="registro-organizacion-direccion"]',
-      );
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-      return campo;
     }
 
-    function tocarElMapa(): void {
-      const mapa = fixture.debugElement.query(By.directive(MapLocationPicker));
-      (mapa.componentInstance as MapLocationPicker).puntoElegido.emit({
-        lat: -17.7833,
-        lng: -63.1821,
-      });
-      fixture.detectChanges();
+    function selector(): MapLocationPicker {
+      return fixture.debugElement.query(By.directive(MapLocationPicker))
+        .componentInstance as MapLocationPicker;
     }
 
-    function errorDe(campo: HTMLElement): string {
-      return (
-        campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ??
-        ''
-      );
-    }
+    it('el mapa es el primer campo de su página, obligatorio, y «Dirección» ya no se escribe', () => {
+      const pagina = component['paginas']().find((p) => p.titulo.includes('Datos de la aseguradora'))!;
+      expect(pagina.campos[0]).toMatchObject({ key: 'gpsCasaMatriz', control: 'custom', required: true });
+      expect(pagina.campos.map((c) => c.key)).not.toContain('address');
 
-    const AVISO = '[data-testid="registro-organizacion-direccion-reescribir"]';
-
-    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
-      const campo = direccionEscritaYDejada();
-      expect(component.form.controls.address.touched).toBe(true);
-
-      tocarElMapa();
-
-      expect(campo.value).toBe('');
-      expect(errorDe(campo)).toBe('');
-      expect(fixture.nativeElement.querySelector(AVISO)).not.toBeNull();
-    });
-
-    it('el aviso queda junto a «Dirección»: el mapa es el campo siguiente', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
-
-      const siguiente = campo.closest('app-form-field')?.nextElementSibling;
-      expect(siguiente?.querySelector(AVISO)).not.toBeNull();
-    });
-
-    it('en un país con varias zonas horarias, el mapa también queda pegado a «Dirección»', () => {
-      // Con la zona horaria son cinco campos y el motor parte la sección en dos
-      // páginas: el mapa tiene que caer en la de «Dirección», justo después.
-      fixture.detectChanges();
-      completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
-      component.form.controls.incorporationCountry.setValue('US');
-      fixture.detectChanges();
-      avanzarHasta('Datos de la aseguradora');
-      // Es el caso de varias zonas: la zona horaria está en esta página.
+      irALaUbicacion();
       expect(
-        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-zona"]'),
-      ).not.toBeNull();
-
-      const campo: HTMLElement = fixture.nativeElement.querySelector(
-        '[data-testid="registro-organizacion-direccion"]',
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-direccion"]'),
+      ).toBeNull();
+      // En el DOM también va primero: antes que el NIT.
+      const campos = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll(
+          'app-map-location-picker, [data-testid="registro-organizacion-nit"]',
+        ),
       );
-      const siguiente = campo.closest('app-form-field')?.nextElementSibling;
-      expect(siguiente?.querySelector('app-map-location-picker')).not.toBeNull();
+      expect(campos[0]?.tagName.toLowerCase()).toBe('app-map-location-picker');
     });
 
-    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
-
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-
-      expect(errorDe(campo)).toBe('Escriba la dirección (hasta 300 caracteres).');
-      expect(fixture.nativeElement.querySelector(AVISO)).not.toBeNull();
-    });
-
-    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
+    it('sin el punto confirmado no deja pasar, y lo dice', () => {
+      irALaUbicacion();
 
       fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
       fixture.detectChanges();
@@ -758,7 +748,31 @@ describe('RegisterOrganization', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Datos de la aseguradora',
       );
-      expect(errorDe(campo)).toBe('Escriba la dirección (hasta 300 caracteres).');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+    });
+
+    it('confirmar el punto en el mapa llena el control obligatorio', () => {
+      irALaUbicacion();
+
+      selector().confirmado.emit(PUNTO_CASA_MATRIZ);
+
+      expect(component.form.controls.gpsCasaMatriz.value).toEqual(PUNTO_CASA_MATRIZ);
+      expect(component.gpsCasaMatriz()).toEqual(PUNTO_CASA_MATRIZ);
+    });
+
+    it('lo deducido del punto escribe «Dirección»; sin calle, la zona o el punto', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad('Calle Guapay 3861, Equipetrol', 'Equipetrol'));
+      expect(component.form.controls.address.value).toBe('Calle Guapay 3861, Equipetrol');
+
+      selector().localidad.emit(localidad(null, 'Equipetrol'));
+      expect(component.form.controls.address.value).toBe('Equipetrol');
+
+      selector().localidad.emit(localidad(null));
+      expect(component.form.controls.address.value).toBe('Punto GPS -17.78330, -63.18210');
     });
   });
 
@@ -1428,9 +1442,10 @@ describe('RegisterOrganization', () => {
       component.form.controls.incorporationCountry.setValue('US');
       fixture.detectChanges();
 
-      // Una más que Bolivia: el selector de zona horaria es el quinto campo
-      // de «Datos de la aseguradora», y el motor parte esa sección en dos.
-      expect(totalDePaginas()).toBe(8);
+      // Las mismas que Bolivia: el selector de zona horaria suma un campo a
+      // «Datos de la aseguradora», pero desde que «Dirección» sale del punto
+      // (26/10/2026) la sección cabe en una página de cuatro.
+      expect(totalDePaginas()).toBe(7);
 
       avanzarHasta('Datos de la aseguradora');
       // `[data-testid]` va en el host `<app-select>`; el botón que hace de

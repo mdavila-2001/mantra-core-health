@@ -74,8 +74,10 @@
             etiquetaMapa="La sede en el mapa"
             indicacionMarcar="Toque el mapa en el lugar exacto de la sede."
             [ids]="pointIds"
+            etiquetaFicha="La dirección de la sede"
             [inicial]="form.controls.point.value"
             (confirmado)="setPoint($event)"
+            (localidad)="writeLocality($event)"
           />
         </ng-template>
       </app-paginated-form>

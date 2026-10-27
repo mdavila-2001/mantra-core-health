@@ -1,6 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { debounceTime, Subject } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { catchError, concatMap, debounceTime, EMPTY, Subject, tap } from 'rxjs';
 
 import { OnboardingDraftClient } from './onboarding-draft.client';
 import type {
@@ -12,6 +13,25 @@ import type {
 
 const STORAGE_PREFIX = 'alovida.onboarding.draft.';
 const DRAFT_ID_PREFIX = 'alovida.onboarding.draft_id.';
+const DRAFT_SECRET_PREFIX = 'alovida.onboarding.draft_secret.';
+
+/**
+ * Lo que nunca viaja en un borrador: las contraseñas, y las imágenes en base64
+ * (foto, firma, sello). Una sola foto supera el tope de 64 KiB del servidor y
+ * cada guardado terminaba en 413; además llenaba el `localStorage`.
+ */
+function sinDatosPesadosNiSecretos(
+  datos: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+  if (datos === undefined) return undefined;
+  const limpio: Record<string, unknown> = {};
+  for (const [clave, valor] of Object.entries(datos)) {
+    if (clave === 'password' || clave === 'confirmPassword') continue;
+    if (/base64$/i.test(clave)) continue;
+    limpio[clave] = valor;
+  }
+  return limpio;
+}
 
 function generarUuid(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -28,27 +48,51 @@ export class OnboardingDraftService {
   private readonly client = inject(OnboardingDraftClient);
 
   private readonly saveSubject = new Subject<OnboardingDraft>();
-  private readonly deleteSubject = new Subject<{ formType: OnboardingFormType; draftId: string }>();
+  private readonly deleteSubject = new Subject<{
+    formType: OnboardingFormType;
+    draftId: string;
+    secret: string | null;
+  }>();
   private readonly telemetryQueue: OnboardingTelemetryEvent[] = [];
   private readonly telemetrySubject = new Subject<void>();
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      this.saveSubject.pipe(debounceTime(400)).subscribe((draft) => {
-        this.client.saveDraft(draft).subscribe({
-          error: () => {
-            // Error silencioso: el borrador local ya está guardado de manera resiliente
-          },
-        });
-      });
+      // En serie (`concatMap`): el primer PUT crea el borrador y devuelve su
+      // secreto; si el segundo saliera antes de guardarlo, iría sin secreto
+      // sobre un id ya tomado y la API respondería 404.
+      this.saveSubject
+        .pipe(
+          debounceTime(400),
+          concatMap((draft) => {
+            const secret = this.readSecret(draft.formType);
+            return this.client.saveDraft(draft, secret).pipe(
+              tap((res) => {
+                if (res.draftSecret) this.writeSecret(draft.formType, res.draftSecret);
+              }),
+              catchError((error: unknown) => {
+                // 404: el borrador remoto venció o el id quedó huérfano (sin
+                // secreto). Se empieza otro: el local sigue intacto y el
+                // próximo guardado lo vuelve a crear en el servidor.
+                if (error instanceof HttpErrorResponse && error.status === 404) {
+                  this.rotateRemoteDraft(draft.formType);
+                }
+                // El resto falla en silencio: el borrador local ya está guardado.
+                return EMPTY;
+              }),
+            );
+          }),
+        )
+        .subscribe();
 
-      this.deleteSubject.pipe(debounceTime(400)).subscribe(({ formType, draftId }) => {
-        this.client.deleteDraft(formType, draftId).subscribe({
-          error: () => {
-            // Error silencioso al limpiar remoto
-          },
-        });
-      });
+      this.deleteSubject
+        .pipe(
+          debounceTime(400),
+          concatMap(({ formType, draftId, secret }) =>
+            this.client.deleteDraft(formType, draftId, secret).pipe(catchError(() => EMPTY)),
+          ),
+        )
+        .subscribe();
 
       this.telemetrySubject.pipe(debounceTime(800)).subscribe(() => {
         this.flushTelemetry();
@@ -113,12 +157,13 @@ export class OnboardingDraftService {
   ): OnboardingDraft {
     const draftId = this.getOrCreateDraftId(formType);
     const now = new Date().toISOString();
-    const percentComplete = Math.min(100, Math.round(((stepIndex + 1) / Math.max(1, totalSteps)) * 100));
+    const percentComplete = Math.min(
+      100,
+      Math.round(((stepIndex + 1) / Math.max(1, totalSteps)) * 100),
+    );
 
-    // Excluir contraseñas en claro del borrador serializado
-    const datosSeguros = { ...formData };
-    delete datosSeguros['password'];
-    delete datosSeguros['confirmPassword'];
+    // Sin contraseñas en claro ni imágenes en base64 (ver `sinDatosPesadosNiSecretos`).
+    const datosSeguros = sinDatosPesadosNiSecretos(formData) ?? {};
 
     const draft: OnboardingDraft = {
       draftId,
@@ -127,7 +172,7 @@ export class OnboardingDraftService {
       stepKey,
       stepTitle,
       data: datosSeguros,
-      extraData,
+      extraData: sinDatosPesadosNiSecretos(extraData),
       createdAt: now,
       updatedAt: now,
       percentComplete,
@@ -154,17 +199,21 @@ export class OnboardingDraftService {
     try {
       const draftKey = `${STORAGE_PREFIX}${formType}`;
       const idKey = `${DRAFT_ID_PREFIX}${formType}`;
+      const secretKey = `${DRAFT_SECRET_PREFIX}${formType}`;
       const draftId = localStorage.getItem(idKey);
+      const secret = localStorage.getItem(secretKey);
       localStorage.removeItem(draftKey);
       localStorage.removeItem(idKey);
+      localStorage.removeItem(secretKey);
 
-      if (draftId) {
+      // Sin secreto no hay borrador remoto que sea nuestro: la API respondería 404.
+      if (draftId && secret) {
         if (options?.immediate) {
-          this.client.deleteDraft(formType, draftId).subscribe({
+          this.client.deleteDraft(formType, draftId, secret).subscribe({
             error: () => undefined,
           });
         } else {
-          this.deleteSubject.next({ formType, draftId });
+          this.deleteSubject.next({ formType, draftId, secret });
         }
       }
     } catch {
@@ -206,6 +255,33 @@ export class OnboardingDraftService {
 
     this.telemetryQueue.push(event);
     this.telemetrySubject.next();
+  }
+
+  /** El secreto que la API entregó al crear el borrador remoto, si lo hay. */
+  private readSecret(formType: OnboardingFormType): string | null {
+    try {
+      return localStorage.getItem(`${DRAFT_SECRET_PREFIX}${formType}`);
+    } catch {
+      return null;
+    }
+  }
+
+  private writeSecret(formType: OnboardingFormType, secret: string): void {
+    try {
+      localStorage.setItem(`${DRAFT_SECRET_PREFIX}${formType}`, secret);
+    } catch {
+      // Sin almacenamiento no hay borrador remoto que retomar.
+    }
+  }
+
+  /** Nuevo id y sin secreto: el próximo guardado crea otro borrador remoto. */
+  private rotateRemoteDraft(formType: OnboardingFormType): void {
+    try {
+      localStorage.setItem(`${DRAFT_ID_PREFIX}${formType}`, generarUuid());
+      localStorage.removeItem(`${DRAFT_SECRET_PREFIX}${formType}`);
+    } catch {
+      // Ignorar
+    }
   }
 
   private readonly telemetrySessions = new Map<OnboardingFormType, string>();
