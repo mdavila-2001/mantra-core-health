@@ -41,6 +41,7 @@ describe('RegisterMedicalCenter', () => {
       disposicion?: string;
       campos: readonly {
         key: string;
+        control?: string;
         ancho?: string;
         opcionesEn?: string;
         hint?: string;
@@ -278,14 +279,29 @@ describe('RegisterMedicalCenter', () => {
     expect(Math.max(...paginas.map((p) => p.campos.length))).toBeLessThanOrEqual(4);
   });
 
-  it('la página 1 cruza el tipo a lo ancho, con sus opciones en rejilla, y la 2 va en tres columnas', () => {
+  it('el tipo de institución es un desplegable y las dos páginas van en tres columnas', () => {
     const [organizacion, cuenta] = interno().paginas();
     const tipo = organizacion!.campos.find((c) => c.key === 'tenantType')!;
 
-    expect(organizacion!.disposicion).toBe('dos-columnas');
-    expect(tipo.ancho).toBe('completo');
-    expect(tipo.opcionesEn).toBe('rejilla');
+    expect(tipo.control).toBe('select');
+    expect(tipo.opcionesEn).toBeUndefined();
+    expect(organizacion!.disposicion).toBe('tres-columnas');
     expect(cuenta!.disposicion).toBe('tres-columnas');
+  });
+
+  it('si el catálogo de tipos societarios falla, pide al servicio su respaldo en vez de dejarlo vacío', async () => {
+    const catalogo = TestBed.inject(LegalEntityTypesCatalog);
+    const pedidos: unknown[][] = [];
+    catalogo.listar = () => throwError(() => new Error('catálogo caído'));
+    catalogo.opcionesPorPais = (...args: unknown[]) => {
+      pedidos.push(args);
+      return [{ value: 'SRL', label: 'S.R.L.' }];
+    };
+    await rearmar();
+
+    const societario = interno().paginas()[0]!.campos.find((c) => c.key === 'legalEntityType')!;
+    expect(pedidos).toEqual([[[], 'BO']]);
+    expect(societario.options).toEqual([{ value: 'SRL', label: 'S.R.L.' }]);
   });
 
   it('la contraseña avisa su mínimo antes de equivocarse, como el alta de usuarios', () => {

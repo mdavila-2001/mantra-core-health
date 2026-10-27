@@ -123,9 +123,11 @@ for (const view of VIEWPORTS) {
 
       await expect(page.getByText('Elija el tipo de institución.')).toBeVisible();
 
-      const tipo = page.getByTestId('medical-center-signup-tenant-type');
-      await tipo.getByText('Clínica', { exact: true }).click();
-      await expect(tipo.getByRole('radio', { name: 'Clínica', exact: true })).toBeChecked();
+      // El tipo de institución es un `app-select`, como el tipo societario.
+      const tipo = page.getByTestId('medical-center-signup-tenant-type').getByRole('combobox');
+      await tipo.click();
+      await page.locator('dialog.select-dialog[open]').getByRole('option', { name: 'Clínica', exact: true }).click();
+      await expect(tipo).toContainText('Clínica');
       await escribir(page, 'medical-center-signup-legal-name', `Clínica Norte ${Date.now()}`);
       // `app-select` es un combobox propio que abre un `<dialog>`, no un `<select>` nativo.
       await page.getByTestId('medical-center-signup-legal-entity-type').getByRole('combobox').click();
