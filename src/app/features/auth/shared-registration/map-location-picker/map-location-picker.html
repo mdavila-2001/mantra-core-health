@@ -182,18 +182,52 @@
           [testId]="ids().avisoGeocodificacion"
         />
       </app-form-field>
-      <app-location-picker
-        [ramas]="branches()"
-        [value]="municipality()"
-        (valueChange)="chooseMunicipality($event)"
-        [punto]="punto()"
-        [desdePunto]="true"
-        [ficha]="true"
-        [fichaTitulo]="etiquetaFicha()"
-        [zona]="zone()"
-        mapLabel="Mapa de Bolivia acercado al punto elegido"
-        [testId]="ids().mapa + '-localidad'"
-      />
+      <app-form-field label="Distrito o zona" hint="Sale del punto del mapa.">
+        <app-input
+          [value]="zoneText()"
+          [readonly]="true"
+          [testId]="ids().mapa + '-distrito'"
+        />
+      </app-form-field>
+      @if (streetState() === 'caida') {
+        <div class="registro__ubicacion-acciones">
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            [attr.data-testid]="ids().mapa + '-reintentar-calle'"
+            (clicked)="retryStreet()"
+          >
+            Volver a buscar la calle
+          </button>
+        </div>
+      }
+      @if (outsideBolivia()) {
+        <!-- Fuera de Bolivia no hay municipio del catálogo que deducir, y el
+             mapa de Bolivia no tiene dónde dibujar el punto: se dice, en vez
+             de pintar el pin fuera del plano. -->
+        <p
+          class="registro__ubicacion-aviso"
+          role="status"
+          [attr.data-testid]="ids().mapa + '-fuera-de-bolivia'"
+        >
+          El punto está fuera de Bolivia, así que no hay departamento, provincia ni municipio que
+          deducir. Si su dirección es en Bolivia, mueva el pin al lugar correcto.
+        </p>
+      } @else {
+        <app-location-picker
+          [ramas]="branches()"
+          [value]="municipality()"
+          (valueChange)="chooseMunicipality($event)"
+          [punto]="punto()"
+          [desdePunto]="true"
+          [ficha]="true"
+          [fichaTitulo]="etiquetaFicha()"
+          mapLabel="Mapa de Bolivia acercado al punto elegido"
+          [testId]="ids().mapa + '-localidad'"
+        />
+      }
     </div>
   }
 </div>

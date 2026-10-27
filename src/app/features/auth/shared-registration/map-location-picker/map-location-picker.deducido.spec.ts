@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import {
   ReverseGeocodingClient,
@@ -141,5 +141,82 @@ describe('MapLocationPicker — lo deducido del punto', () => {
     expect(component.street()).toBeNull();
     expect(component.zone()).toBeNull();
     expect(raiz().querySelector('[data-testid="mapa-deducido"]')).toBeNull();
+  });
+  function campoDistrito(): HTMLInputElement {
+    return raiz().querySelector('[data-testid="mapa-distrito"]') as HTMLInputElement;
+  }
+
+  it('el distrito se ve siempre junto a la calle: buscando, con dato y sin dato', () => {
+    component.pinPunto({ lat: -17.78, lng: -63.18 });
+    fixture.detectChanges();
+    expect(campoDistrito().value).toContain('Buscando');
+    expect(campoDistrito().readOnly).toBe(true);
+    respuestas.next({
+      found: true,
+      line: 'Calle X, Equipetrol',
+      neighbourhood: 'Equipetrol',
+      attribution: 'OSM',
+    });
+    fixture.detectChanges();
+    expect(campoDistrito().value).toBe('Equipetrol');
+
+    component.pinPunto({ lat: -17.7, lng: -63.1 });
+    respuestas.next({ found: true, line: 'Calle Z', attribution: 'OSM' });
+    fixture.detectChanges();
+    expect(campoDistrito().value).toContain('no tiene un distrito');
+  });
+
+  it('si la API cae, lo dice en calle y distrito, y deja volver a buscar', () => {
+    let falla = true;
+    const geocoder = TestBed.inject(ReverseGeocodingClient) as unknown as {
+      streetAt: (lat: number, lng: number) => unknown;
+    };
+    geocoder.streetAt = (lat: number, lng: number) => {
+      pedidos.push({ lat, lng });
+      if (falla) return throwError(() => new Error('503'));
+      return of({
+        found: true,
+        line: 'Calle Q, Centro',
+        neighbourhood: 'Centro',
+        attribution: 'OSM',
+      });
+    };
+    component.pinPunto({ lat: -17.78, lng: -63.18 });
+    fixture.detectChanges();
+    expect(campoCalle().value).toContain('No pudimos traer');
+    expect(campoDistrito().value).toContain('No pudimos traer');
+
+    falla = false;
+    const reintentar = raiz().querySelector(
+      '[data-testid="mapa-reintentar-calle"] button, [data-testid="mapa-reintentar-calle"]',
+    ) as HTMLElement;
+    reintentar.click();
+    fixture.detectChanges();
+    expect(pedidos).toHaveLength(2);
+    expect(campoCalle().value).toBe('Calle Q, Centro');
+    expect(campoDistrito().value).toBe('Centro');
+  });
+
+  it('fuera de Bolivia no dibuja el mapa de Bolivia: lo dice, y la calle se sigue buscando', () => {
+    component.pinPunto({ lat: 40.4168, lng: -3.7038 });
+    fixture.detectChanges();
+    expect(pedidos).toEqual([{ lat: 40.4168, lng: -3.7038 }]);
+    expect(raiz().querySelector('[data-testid="mapa-fuera-de-bolivia"]')).not.toBeNull();
+    expect(raiz().querySelector('app-location-picker')).toBeNull();
+    respuestas.next({
+      found: true,
+      line: 'Calle Mayor 1, Sol',
+      neighbourhood: 'Sol',
+      attribution: 'OSM',
+    });
+    fixture.detectChanges();
+    expect(campoCalle().value).toBe('Calle Mayor 1, Sol');
+    expect(campoDistrito().value).toBe('Sol');
+    expect(component.municipality()).toBeNull();
+
+    component.pinPunto({ lat: -17.78, lng: -63.18 });
+    fixture.detectChanges();
+    expect(raiz().querySelector('[data-testid="mapa-fuera-de-bolivia"]')).toBeNull();
+    expect(raiz().querySelector('app-location-picker')).not.toBeNull();
   });
 });
