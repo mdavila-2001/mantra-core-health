@@ -46,6 +46,7 @@ import { ReferenceCombobox } from '../../../shared/components/molecules/referenc
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
@@ -380,6 +381,7 @@ const SEDE_CUALQUIERA = 'cualquiera';
     AppointmentCalendar,
     Badge,
     DatePipe,
+    EmptyState,
     FormField,
     PageHeader,
     DatePicker,

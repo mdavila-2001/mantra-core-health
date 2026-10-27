@@ -1,8 +1,10 @@
-<app-page-header
-  title="Quién ve mi historia"
-  subtitle="Los profesionales vinculados y los accesos concedidos a su historia clínica. Puede revocar cualquiera."
-  [breadcrumbs]="breadcrumbs()"
-/>
+@if (!incrustada()) {
+  <app-page-header
+    title="Quién ve mi historia"
+    subtitle="Los profesionales vinculados y los accesos concedidos a su historia clínica. Puede revocar cualquiera."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
 
 <div class="acceso">
   @if (cargando()) {
@@ -26,8 +28,13 @@
   } @else {
     @if (cuantosDeEmergencia() > 0) {
       <app-alert tone="warning" data-testid="acceso-aviso-emergencia">
-        Hay {{ cuantosDeEmergencia() }} acceso(s) de emergencia a su historia. Los concede un
-        profesional sin su consentimiento previo y quedan auditados.
+        @if (cuantosDeEmergencia() === 1) {
+          Hay 1 acceso de emergencia a su historia. Lo concede un profesional sin su
+          consentimiento previo y queda registrado.
+        } @else {
+          Hay {{ cuantosDeEmergencia() }} accesos de emergencia a su historia. Los concede un
+          profesional sin su consentimiento previo y quedan registrados.
+        }
       </app-alert>
     }
 
@@ -37,7 +44,7 @@
           @if (relaciones().length === 0) {
             <app-empty-state
               title="Ningún profesional está vinculado a su historia"
-              description="Cuando aceptes la solicitud de un profesional, lo va a ver acá."
+              description="Cuando acepte la solicitud de un profesional, lo va a ver acá."
             />
           } @else {
             <ul class="acceso__lista" data-testid="acceso-relaciones">
