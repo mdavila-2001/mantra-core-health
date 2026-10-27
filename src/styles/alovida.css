@@ -88,16 +88,49 @@
      AC-08-3 pide que siga exactamente como está. */
   --fondo-a: rgba(159, 216, 208, .40);
   --fondo-b: rgba(79, 179, 169, .24);
-  --fondo-c: rgba(122, 191, 232, .30);
+  /* Era celeste `rgba(122, 191, 232, …)`, un azul que no está en la paleta
+     (identidad-visual.md Parte 2: «azul petróleo saturado, no celeste de
+     stock»). Pasa a aguamarina, que es la misma familia de los otros tres. */
+  --fondo-c: rgba(79, 179, 169, .18);
   --fondo-d: rgba(159, 216, 208, .26);
 
-  /* Fondo del nav: viñeta y halo */
-  --nav-vineta-a: rgba(9, 62, 92, .72);
-  --nav-vineta-b: rgba(7, 47, 69, .82);
-  --nav-halo-a:   rgba(79, 179, 169, .30);
-  --nav-halo-b:   rgba(79, 179, 169, .16);
-  --nav-halo-c:   rgba(122, 191, 232, .06);
-  --nav-halo-0:   rgba(122, 191, 232, 0);
+  /* Fondo del nav: viñeta y halo.
+
+     En claro la barra es MARFIL, no petróleo (identidad-visual.md Parte 3:
+     `--bg-surface-alt` = marfil-400 para «secciones secundarias, sidebar»).
+     El cliente pidió el 27/10/2026 bajar el azul: una columna petróleo de
+     arriba abajo era la mancha más grande de la pantalla y rompía la regla de
+     proporción «blanco = base, petróleo = acción». La viñeta y el degradado
+     de profundidad se apagan; quedan la trama de puntos y el electro en menta
+     y aguamarina. En oscuro la barra vuelve a ser petróleo: ahí la línea
+     gráfica sí pide que las superficies sean la rampa del azul. */
+  --nav-vineta-a: rgba(248, 245, 240, 0);
+  --nav-vineta-b: rgba(248, 245, 240, 0);
+  --nav-profundidad: 0;
+  --nav-halo-a:   rgba(79, 179, 169, .14);
+  --nav-halo-b:   rgba(79, 179, 169, .07);
+  --nav-halo-c:   rgba(159, 216, 208, .04);
+  --nav-halo-0:   rgba(159, 216, 208, 0);
+
+  /* Tinta y estados de la barra. Son tokens propios —y no `--tinta-nav`—
+     porque `--tinta-nav` sigue significando «tinta sobre petróleo» para el
+     resto de la hoja (la perilla del interruptor de tema). */
+  --nav-carril:          #F8F5F0;
+  --nav-borde:           #CDD9D5;
+  --nav-tinta:           #242828;
+  --nav-palabra:         #0B557E;
+  --nav-item:            #4E5151;
+  --nav-item-sub:        #4E5151;
+  --nav-item-fuerte:     #242828;
+  --nav-grupo:           #4E5151;
+  --nav-grupo-fuerte:    #242828;
+  --nav-item-hover-bg:   rgba(79, 179, 169, .12);
+  --nav-item-activo-bg:  rgba(79, 179, 169, .18);
+  --nav-item-activo-luz: rgba(255, 255, 255, 0);
+  --nav-filete:          #CDD9D5;
+  --nav-filete-suave:    #E3EAE7;
+  --nav-control-fondo:   #FFFFFF;
+  --nav-control-borde:   #7D8786;
 
   /* Superficies
      `--sup-pagina` es **blanco** desde el 2026-09-10, por pedido del
@@ -109,7 +142,7 @@
   --sup-pagina:   #FFFFFF;
   --sup-tarjeta:  #FFFFFF;
   --sup-inset:    #F9F8F4;
-  --sup-nav:      #0B557E;
+  --sup-nav:      #F8F5F0;
 
   /* Tinta */
   --tinta:        #242828;
@@ -134,9 +167,16 @@
   --menta:        #9FD8D0;
   --ambar:        #E4A96B;
 
-  /* Azules profundos derivados del petróleo — jerarquía, textura y sombra
-     interior. No son colores nuevos: son el mismo tono, más oscuro. */
-  --tinta-marca:  #0A3E5C;
+  /* Azules profundos derivados del petróleo — textura y sombra interior.
+
+     `--tinta-marca` ya NO es azul: era `#0A3E5C`, un petróleo que no está en
+     la rampa, y teñía títulos, rótulos, celdas numéricas, selects y pestañas
+     —casi todo el texto fuerte de la aplicación—. La línea gráfica dice que
+     títulos y cuerpo van en `--text-primary` (neutral-500, Parte 3) y
+     styles.css lo repite: «el color es texto, no marca». Corrección pedida por
+     el cliente el 27/10/2026 («está muy azul»). El nombre se conserva para no
+     tocar los ~60 usos. */
+  --tinta-marca:  #242828;
   --petroleo-x:   #072F45;
   --petroleo-xx:  #052232;
   --sombra-azul:  rgba(11, 85, 126, .14);
@@ -523,13 +563,12 @@ app-shell-layout { display: block; }
    y el menú parecía cortado. */
 .app-shell {
   min-height: 100vh; padding-left: var(--w-nav); position: relative;
-  background: linear-gradient(90deg, var(--petroleo-x) 0 var(--w-nav), transparent var(--w-nav));
+  background: linear-gradient(90deg, var(--nav-carril) 0 var(--w-nav), transparent var(--w-nav));
 }
 
-/* Fondo del menú de navegación: la imagen azul del módulo. Encima va un velo
-   petróleo —el color de marca— que garantiza el contraste del texto blanco
-   sobre las zonas claras de la imagen; sin él, la banda de luz se come las
-   etiquetas. */
+/* Fondo del menú de navegación: marfil en claro, petróleo en oscuro (ver los
+   tokens `--nav-*`). En oscuro, encima va un velo petróleo que garantiza el
+   contraste del texto blanco sobre las zonas claras de la textura. */
 .app-side-nav {
   /* El anillo de foco del resto de la página es oscuro y sobre el petróleo
      desaparece; en el nav se usa la menta (5,05:1 sobre #0B557E). */
@@ -537,14 +576,16 @@ app-shell-layout { display: block; }
   position: fixed; top: 0; left: 0; bottom: 56px; width: var(--w-nav); z-index: 30;
   overflow: hidden auto;
   background-color: var(--sup-nav);
-  color: var(--tinta-nav);
+  color: var(--nav-tinta);
+  border-right: 1px solid var(--nav-borde);
   padding: var(--e6) 0 var(--e7);
   display: flex; flex-direction: column; gap: var(--e5);
   isolation: isolate;
 }
 
 /* Fondo del nav: viñeta + textura SVG + halo que sigue al puntero.
-   Los tres son azules más profundos que el petróleo del nav; nunca aclaran.
+   En oscuro, los tres son azules más profundos que el petróleo del nav. En
+   claro la viñeta y el degradado se apagan (`--nav-profundidad: 0`).
 
    Van en `fixed` con la misma geometría que el nav, no en `absolute`.
    El nav es `overflow: hidden auto`, así que un hijo absoluto con `inset: 0`
@@ -575,6 +616,8 @@ app-shell-layout { display: block; }
     calc(var(--puntero-yn, .5) * 16px - 8px), 0);
   transition: transform 220ms var(--curva);
 }
+/* El primer `rect` es el degradado petróleo de profundidad: sólo en oscuro. */
+.app-side-nav__textura rect:first-of-type { opacity: var(--nav-profundidad); }
 
 /* Las dos líneas del monitor son lo único vivo del nav por su cuenta: el
    trazo avanza en bucle, como un electro. Los tres `rect` de la textura
@@ -596,8 +639,7 @@ app-shell-layout { display: block; }
   .app-side-nav__textura { transition: none; transform: none; }
   .app-side-nav__textura path { animation: none; stroke-dasharray: none; }
 }
-/* El halo aclara, no oscurece: celeste de marca sobre el petróleo. */
-/* Halo del nav: chico y celeste. Sin `screen` —esa mezcla lo empujaba hacia
+/* Halo del nav: chico y aguamarina. Sin `screen` —esa mezcla lo empujaba hacia
    el blanco— y con caída larga, para que se lea como un reflejo y no como
    una linterna. */
 .app-side-nav__brillo {
@@ -626,7 +668,7 @@ app-shell-layout { display: block; }
 .app-side-nav__cabecera {
   display: flex; align-items: center; gap: var(--e2);
   padding: 0 var(--e3) var(--e5); margin-bottom: var(--e1);
-  border-bottom: 1px solid rgba(255, 255, 255, .12);
+  border-bottom: 1px solid var(--nav-filete);
 }
 .app-side-nav__marca {
   display: flex; align-items: center; gap: var(--e3); flex: 1 1 auto; min-width: 0;
@@ -642,9 +684,16 @@ app-shell-layout { display: block; }
   outline: 2px solid var(--aguamarina); outline-offset: 2px;
 }
 .app-side-nav__marca img { display: block; width: 34px; height: auto; flex: none; }
+/* El isotipo va en petróleo sobre el marfil y en blanco sobre el petróleo
+   nocturno. Las dos versiones están en el marcado; se muestra la del tema. */
+.app-side-nav__logo--oscuro { display: none !important; }
+:root[data-tema="oscuro"] .app-side-nav__logo--claro,
+:root[data-theme="dark"] .app-side-nav__logo--claro { display: none !important; }
+:root[data-tema="oscuro"] .app-side-nav__logo--oscuro,
+:root[data-theme="dark"] .app-side-nav__logo--oscuro { display: block !important; }
 .app-side-nav__palabra {
   font-family: var(--f-titulo); font-size: 22px; line-height: 28px; font-weight: 600;
-  letter-spacing: .01em; color: #fff;
+  letter-spacing: .01em; color: var(--nav-palabra);
   white-space: nowrap; overflow: hidden;
 }
 
@@ -665,14 +714,20 @@ app-shell-layout { display: block; }
    cerrado: necesita más cuerpo. En oscuro todo está apagado y el mismo borde
    gritaría más que los destinos, que son lo que de verdad hay que leer. */
 :root {
-  --nav-recoger-borde: rgba(255, 255, 255, .42);
-  --nav-recoger-fondo: rgba(255, 255, 255, .10);
-  --nav-recoger-tinta: rgba(255, 255, 255, .85);
+  /* En claro la barra es marfil: el botón es un control más, con el borde de
+     control de 3:1 (`--borde-ctrl`). */
+  --nav-recoger-borde: #7D8786;
+  --nav-recoger-fondo: #FFFFFF;
+  --nav-recoger-tinta: #4E5151;
+  --nav-recoger-hover-tinta: #242828;
+  --nav-recoger-hover-fondo: rgba(79, 179, 169, .12);
 }
 :root[data-tema="oscuro"], :root[data-theme="dark"] {
   --nav-recoger-borde: rgba(159, 216, 208, .48);
   --nav-recoger-fondo: rgba(159, 216, 208, .10);
   --nav-recoger-tinta: rgba(255, 255, 255, .78);
+  --nav-recoger-hover-tinta: #FFFFFF;
+  --nav-recoger-hover-fondo: rgba(159, 216, 208, .22);
 }
 .app-side-nav__recoger {
   display: inline-flex; align-items: center; justify-content: center;
@@ -685,9 +740,9 @@ app-shell-layout { display: block; }
 }
 .app-side-nav__recoger svg { width: 1.35rem; height: 1.35rem; }
 .app-side-nav__recoger:hover {
-  color: #fff;
+  color: var(--nav-recoger-hover-tinta);
   border-color: var(--aguamarina);
-  background: rgba(159, 216, 208, .22);
+  background: var(--nav-recoger-hover-fondo);
 }
 .app-side-nav__recoger:focus-visible {
   outline: 2px solid var(--aguamarina); outline-offset: 2px;
@@ -706,7 +761,7 @@ app-shell-layout { display: block; }
 .app-side-nav__fijos {
   display: flex; flex-direction: column; gap: 2px;
   padding-bottom: var(--e3); margin-bottom: var(--e2);
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  border-bottom: 1px solid var(--nav-filete-suave);
 }
 
 /* Un dominio aplanado («General», «Mi cuenta»): sus destinos se apilan como
@@ -722,7 +777,7 @@ app-shell-layout { display: block; }
   margin: 0 var(--e3);
   border-radius: var(--r-ctrl);
   list-style: none; cursor: pointer;
-  color: rgba(255, 255, 255, .5);
+  color: var(--nav-grupo);
   transition: color var(--mov-rapido) var(--curva), background-color var(--mov-rapido) var(--curva);
 }
 .app-side-nav__group-summary::-webkit-details-marker { display: none; }
@@ -730,13 +785,13 @@ app-shell-layout { display: block; }
   display: flex; flex: none; width: .95rem; height: .95rem; opacity: .8;
 }
 .app-side-nav__group-summary app-nav-icon svg { width: 100%; height: 100%; }
-.app-side-nav__group-summary:hover { color: rgba(255, 255, 255, .8); }
+.app-side-nav__group-summary:hover { color: var(--nav-grupo-fuerte); }
 .app-side-nav__group-summary:focus-visible {
   outline: 2px solid var(--aguamarina); outline-offset: -2px;
 }
 /* El grupo que contiene la pantalla actual se aclara aunque esté plegado: con
    cinco dominios cerrados, es lo único que dice en cuál estás parado. */
-.app-side-nav__group-summary.tiene-la-pantalla { color: rgba(255, 255, 255, .82); }
+.app-side-nav__group-summary.tiene-la-pantalla { color: var(--nav-grupo-fuerte); }
 .app-side-nav__group-summary.tiene-la-pantalla app-nav-icon { opacity: 1; }
 .app-side-nav__group-cuerpo { display: flex; flex-direction: column; gap: 2px; }
 .app-side-nav__eyebrow { padding: 0; color: inherit; flex: 1 1 auto; }
@@ -750,7 +805,7 @@ app-shell-layout { display: block; }
   min-height: var(--h-ctrl); padding: 0 var(--e6);
   margin: 0 var(--e3);
   border-radius: var(--r-ctrl);
-  color: rgba(255, 255, 255, .84);
+  color: var(--nav-item);
   text-decoration: none; font-size: var(--fs-body);
   transition: background-color var(--mov-rapido) var(--curva), color var(--mov-rapido) var(--curva);
 }
@@ -764,8 +819,8 @@ app-shell-layout { display: block; }
 }
 .app-side-nav__item app-nav-icon svg { width: 100%; height: 100%; }
 .app-side-nav__item:hover {
-  color: #fff;
-  background: rgba(159, 216, 208, .16);
+  color: var(--nav-item-fuerte);
+  background: var(--nav-item-hover-bg);
 }
 .app-side-nav__item:hover .icono,
 .app-side-nav__item:hover app-nav-icon {
@@ -775,9 +830,9 @@ app-shell-layout { display: block; }
 }
 .app-side-nav__item[aria-current="true"],
 .app-side-nav__item.is-activo {
-  color: #fff; font-weight: 600;
-  background: rgba(159, 216, 208, .22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+  color: var(--nav-item-fuerte); font-weight: 600;
+  background: var(--nav-item-activo-bg);
+  box-shadow: inset 0 1px 0 var(--nav-item-activo-luz);
 }
 .app-side-nav__item[aria-current="true"]::before,
 .app-side-nav__item.is-activo::before {
@@ -787,9 +842,9 @@ app-shell-layout { display: block; }
 .app-side-nav__sub { display: flex; flex-direction: column; gap: 2px; padding: var(--e1) 0 var(--e2); }
 .app-side-nav__sub .app-side-nav__item {
   padding-left: var(--e8); min-height: var(--h-ctrl-sm); font-size: 14px;
-  color: rgba(255, 255, 255, .72);
+  color: var(--nav-item-sub);
 }
-.app-side-nav__sub .app-side-nav__item.is-activo { color: #fff; }
+.app-side-nav__sub .app-side-nav__item.is-activo { color: var(--nav-item-fuerte); }
 /* La flecha del único escalón plegable que queda —el dominio—: gira al abrirse,
    y es la única señal de que el renglón despliega algo en vez de llevar a una
    pantalla. Va más chica que un ícono de destino, como su tipografía. */
@@ -861,9 +916,9 @@ app-shell-layout { display: block; }
      dominio que queda. */
   .app-shell.is-nav-recogido .app-side-nav__group-summary { position: relative; }
   .app-shell.is-nav-recogido .app-side-nav__group-summary.tiene-la-pantalla {
-    color: #fff;
-    background: rgba(159, 216, 208, .22);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+    color: var(--nav-item-fuerte);
+    background: var(--nav-item-activo-bg);
+    box-shadow: inset 0 1px 0 var(--nav-item-activo-luz);
   }
   .app-shell.is-nav-recogido .app-side-nav__group-summary.tiene-la-pantalla::before {
     content: ""; position: absolute; left: -6px; top: 6px; bottom: 6px;
@@ -2030,10 +2085,29 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 
   --nav-vineta-a: rgba(3, 20, 28, .70);
   --nav-vineta-b: rgba(1, 10, 15, .86);
+  --nav-profundidad: 1;
   --nav-halo-a:   rgba(87, 194, 183, .26);
   --nav-halo-b:   rgba(87, 194, 183, .13);
   --nav-halo-c:   rgba(86, 150, 190, .06);
   --nav-halo-0:   rgba(86, 150, 190, 0);
+
+  /* En oscuro la barra sigue siendo petróleo, con la tinta blanca de siempre. */
+  --nav-carril:          #041219;
+  --nav-borde:           transparent;
+  --nav-tinta:           #FFFFFF;
+  --nav-palabra:         #FFFFFF;
+  --nav-item:            rgba(255, 255, 255, .84);
+  --nav-item-sub:        rgba(255, 255, 255, .72);
+  --nav-item-fuerte:     #FFFFFF;
+  --nav-grupo:           rgba(255, 255, 255, .5);
+  --nav-grupo-fuerte:    rgba(255, 255, 255, .82);
+  --nav-item-hover-bg:   rgba(159, 216, 208, .16);
+  --nav-item-activo-bg:  rgba(159, 216, 208, .22);
+  --nav-item-activo-luz: rgba(255, 255, 255, .12);
+  --nav-filete:          rgba(255, 255, 255, .12);
+  --nav-filete-suave:    rgba(255, 255, 255, .08);
+  --nav-control-fondo:   rgba(255, 255, 255, .10);
+  --nav-control-borde:   rgba(255, 255, 255, .24);
 
   /* Superficies — neutros con sesgo al petróleo, nunca gris puro. */
   --sup-pagina:   #08161C;
@@ -2041,12 +2115,15 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   --sup-inset:    #0C1B22;
   --sup-nav:      #061821;
 
-  /* Tinta — celeste pálido, no blanco. Sobre el petróleo nocturno el blanco
-     puro vibra; un celeste desaturado se despega igual del fondo y descansa
-     la vista en una pantalla que se mira horas. */
-  --tinta:        #CFE7F2;
-  --tinta-2:      #A3C4D4;
-  --tinta-3:      #7C97A5;
+  /* Tinta — marfil, no celeste ni blanco. Sobre el petróleo nocturno el blanco
+     puro vibra; el marfil se despega igual del fondo y descansa la vista. Era
+     un celeste (`#CFE7F2`) que sumaba azul sobre azul; la línea gráfica
+     (Parte 4) pide justo lo contrario: «el marfil pasa de papel a tinta, ese
+     matiz cálido sobre el azul frío es lo que evita el dark mode genérico».
+     Secundaria y terciaria son salvia-200 y salvia-600, como en styles.css. */
+  --tinta:        #F6F3ED;
+  --tinta-2:      #E9EEED;
+  --tinta-3:      #A5B0AD;
   --tinta-nav:    #FFFFFF;
 
   /* Marca — el petróleo se aclara para seguir leyéndose sobre fondo oscuro.
@@ -2061,7 +2138,7 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   --menta:        #1C4A4C;
   --ambar:        #E4A96B;
 
-  --tinta-marca:  #BFE4F5;
+  --tinta-marca:  #F6F3ED;
   --petroleo-x:   #041219;
   --petroleo-xx:  #020B10;
   --sombra-azul:  rgba(0, 0, 0, .50);
@@ -2382,7 +2459,7 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   html[data-js].nav-abierto .marco-atenuado { filter: none; }
   /* El halo y la textura se apoyaban en una geometría `fixed` que el
      `transform` del cajón deja de contener bien. En el cajón el nav es
-     petróleo pleno: mismo hex, sin la capa decorativa. */
+     liso —marfil en claro, petróleo en oscuro—, sin la capa decorativa. */
   html[data-js] .app-side-nav__fondo,
   html[data-js] .app-side-nav__brillo,
   html[data-js] .app-side-nav::before { display: none; }
@@ -2481,11 +2558,11 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
      interruptor de tema, la campana y el avatar— y encima ahí arriba compite
      con la acción principal. Dentro del cajón recupera su nombre completo y
      queda al lado de lo que gobierna: la navegación de esa organización.
-     Lo muda `alovida.js`; acá va sólo cómo se ve sobre el petróleo. */
+     Lo muda `alovida.js`; acá va sólo cómo se ve sobre la barra. */
   html[data-js] .app-side-nav .app-tenant-switcher {
     width: calc(100% - var(--e6) * 2); margin: 0 var(--e6); max-width: none;
-    background: rgba(255, 255, 255, .10); border-color: rgba(255, 255, 255, .24);
-    color: var(--tinta-nav); box-shadow: none;
+    background: var(--nav-control-fondo); border-color: var(--nav-control-borde);
+    color: var(--nav-tinta); box-shadow: none;
   }
   html[data-js] .app-side-nav .app-tenant-switcher:hover { border-color: var(--menta); }
   html[data-js] .app-side-nav .app-tenant-switcher span { display: inline; }
@@ -2893,7 +2970,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 }
 .landing-ambiente span:nth-child(2) {
   width: 38vw; height: 38vw; right: -12vw; top: 2vw;
-  background: radial-gradient(circle, rgba(122, 191, 232, .60), transparent 66%);
+  background: radial-gradient(circle, rgba(159, 216, 208, .60), transparent 66%);
   transform: translate3d(calc(var(--raton-x, .5) * -56px + 28px), calc(var(--raton-y, .5) * 40px - 20px), 0);
 }
 
