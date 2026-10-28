@@ -70,6 +70,11 @@ export interface NodoDelRecorrido {
   readonly principal: string;
   readonly secundario: string;
   readonly estado: string;
+  /**
+   * El tono del estado, con la MISMA regla que la tabla (`estadoTono ?? 'info'`):
+   * «Enfermedad activa» no puede ser verde en una vista y roja en otra.
+   */
+  readonly tonoDelEstado?: Tone;
   readonly cuando: Date | null;
   /**
    * La atención en la que se registró, si el contrato la guarda y está a la
@@ -100,14 +105,19 @@ export interface AristaDelRecorrido {
 
 /** Medidas en píxeles CSS. Fijas: el trazado de las conexiones depende de ellas. */
 export const MEDIDAS = {
-  anchoColumna: 232,
+  // Ancho y alto pensados para nombres clínicos largos («Hipertensión arterial
+  // esencial», «Enalapril 10 mg comprimidos») en dos renglones: con 232 × 68 se
+  // cortaban en el primero aun a 1440 px.
+  anchoColumna: 248,
   separacionColumnas: 64,
   margenLateral: 24,
   altoCabecera: 76,
   altoRotuloCarril: 32,
-  altoNodo: 68,
-  separacionNodos: 8,
-  rellenoCarril: 12,
+  altoNodo: 86,
+  // Holgada a propósito: por este hueco cruzan las indicaciones entre
+  // columnas, cada una a su altura y a 6 px o más de las tarjetas.
+  separacionNodos: 20,
+  rellenoCarril: 16,
 } as const;
 
 export interface ColumnaUbicada {
@@ -412,6 +422,10 @@ export function ubicarRecorrido(
   const ubicadoPorId = new Map(ubicados.map((n) => [n.id, n]));
   const trazadas: AristaUbicada[] = [];
   const yaTrazadas = new Set<string>();
+  // Cada indicación tiene su carril: una bajada, un cruce y una curva propios.
+  // Con dos diagnósticos tratados, compartirlos juntaba las líneas en una sola
+  // y no se sabía qué receta iba con qué diagnóstico.
+  let indicaciones = 0;
   for (const original of aristas) {
     const arista: AristaDelRecorrido = {
       ...original,
@@ -428,7 +442,10 @@ export function ubicarRecorrido(
     trazadas.push({
       ...arista,
       clave,
-      trazo: arista.motivo === 'atencion' ? trazoDeAtencion(desde, hasta) : trazoDeIndicacion(desde, hasta),
+      trazo:
+        arista.motivo === 'atencion'
+          ? trazoDeAtencion(desde, hasta)
+          : trazoDeIndicacion(desde, hasta, indicaciones++),
     });
   }
 
@@ -462,34 +479,98 @@ function trazoDeAtencion(desde: NodoUbicado, hasta: NodoUbicado): string {
   ].join(' ');
 }
 
-/** Del diagnóstico a la receta que se indicó para él. */
-function trazoDeIndicacion(desde: NodoUbicado, hasta: NodoUbicado): string {
+/**
+ * Del diagnóstico a la receta que se indicó para él.
+ *
+ * En la misma columna, un corchete por la derecha. Entre columnas, un
+ * recorrido **ortogonal** por los huecos: sale del borde del diagnóstico,
+ * baja por el pasillo, cruza por la franja libre que hay justo encima de la
+ * fila de la receta y entra por su borde. Una curva directa pasaba por detrás
+ * de las tarjetas de en medio, y con «Atenciones» filtrado la flecha
+ * Hipertensión → Enalapril parecía salir de Atorvastatina: una conexión
+ * clínica falsa dibujada por la geometría.
+ */
+function trazoDeIndicacion(desde: NodoUbicado, hasta: NodoUbicado, carril: number): string {
   const m = MEDIDAS;
-  const x0 = desde.x + m.anchoColumna;
-  const y0 = desde.y + m.altoNodo / 2;
   if (desde.columna === hasta.columna) {
+    const x0 = desde.x + m.anchoColumna;
+    const y0 = desde.y + m.altoNodo / 2;
     const x1 = hasta.x + m.anchoColumna;
     const y1 = hasta.y + m.altoNodo / 2;
-    const comba = x0 + m.separacionColumnas / 2 - 4;
+    // Cada corchete se abre a su distancia: dos en la misma columna no se pisan.
+    const comba = x0 + 10 + (carril % 4) * 5;
     return `M ${x0} ${y0} C ${comba} ${y0}, ${comba} ${y1}, ${x1} ${y1}`;
   }
-  // Una receta anterior al diagnóstico (fechada hacia atrás, o un diagnóstico
-  // asentado después en otra consulta): la curva sale por la izquierda del
-  // diagnóstico y entra por la derecha de la receta, en vez de dar la vuelta
-  // por detrás de las columnas de en medio.
-  if (hasta.columna < desde.columna) {
-    const xa = desde.x;
-    const xb = hasta.x + m.anchoColumna;
-    const yb = hasta.y + m.altoNodo * 0.3;
-    const tiro = Math.max(40, (xa - xb) / 2);
-    return `M ${xa} ${y0} C ${xa - tiro} ${y0}, ${xb + tiro} ${yb}, ${xb} ${yb}`;
-  }
-  // Entre columnas entra por la izquierda, un poco arriba del centro, para no
-  // pisar la rama de su atención, que llega al centro.
-  const x1 = hasta.x;
+  return poligonal(puntosDeIndicacion(desde, hasta, carril));
+}
+
+/**
+ * Los vértices del recorrido ortogonal entre columnas. Exportado para las
+ * pruebas: son las que comprueban que no pase por detrás de ninguna tarjeta.
+ */
+export function puntosDeIndicacion(
+  desde: NodoUbicado,
+  hasta: NodoUbicado,
+  carril = 0,
+): readonly (readonly [number, number])[] {
+  const m = MEDIDAS;
+  // Cada carril se corre unos píxeles: la bajada del pasillo, el cruce sobre
+  // la fila y la entrada a la receta. Hasta cuatro indicaciones salen de una
+  // misma columna sin tocarse; el tronco de la atención va más afuera (−24).
+  const bajada = 6 + (carril % 4) * 4;
+  const entrada = 6 + (carril % 4) * 4;
+  const y0 = desde.y + m.altoNodo / 2;
+  // Entra un poco arriba del centro, para no pisar la rama de su atención.
   const y1 = hasta.y + m.altoNodo * 0.3;
-  const tirante = Math.max(40, (x1 - x0) / 2);
-  return `M ${x0} ${y0} C ${x0 + tirante} ${y0}, ${x1 - tirante} ${y1}, ${x1} ${y1}`;
+  // En el hueco sobre la fila de la receta: entre 6 y 14 px por encima, con
+  // un hueco de 20, así que nunca a menos de 6 px de una tarjeta.
+  const cruce = hasta.y - 6 - (carril % 3) * 4;
+  if (hasta.columna > desde.columna) {
+    const sale = desde.x + m.anchoColumna;
+    const entra = hasta.x;
+    return [
+      [sale, y0],
+      [sale + bajada, y0],
+      [sale + bajada, cruce],
+      [entra - entrada, cruce],
+      [entra - entrada, y1],
+      [entra, y1],
+    ];
+  }
+  // Hacia atrás: una receta fechada antes que su diagnóstico.
+  const sale = desde.x;
+  const entra = hasta.x + m.anchoColumna;
+  return [
+    [sale, y0],
+    [sale - bajada, y0],
+    [sale - bajada, cruce],
+    [entra + entrada, cruce],
+    [entra + entrada, y1],
+    [entra, y1],
+  ];
+}
+
+/** Una poligonal con las esquinas redondeadas, para que el ojo siga una línea. */
+function poligonal(puntos: readonly (readonly [number, number])[], radio = 8): string {
+  const partes = [`M ${puntos[0][0]} ${puntos[0][1]}`];
+  for (let i = 1; i < puntos.length - 1; i++) {
+    const [ax, ay] = puntos[i - 1];
+    const [bx, by] = puntos[i];
+    const [cx, cy] = puntos[i + 1];
+    const r = Math.min(
+      radio,
+      Math.hypot(bx - ax, by - ay) / 2,
+      Math.hypot(cx - bx, cy - by) / 2,
+    );
+    const haciaA = Math.hypot(bx - ax, by - ay) || 1;
+    const haciaC = Math.hypot(cx - bx, cy - by) || 1;
+    const antes = [bx - ((bx - ax) / haciaA) * r, by - ((by - ay) / haciaA) * r];
+    const despues = [bx + ((cx - bx) / haciaC) * r, by + ((cy - by) / haciaC) * r];
+    partes.push(`L ${antes[0]} ${antes[1]}`, `Q ${bx} ${by} ${despues[0]} ${despues[1]}`);
+  }
+  const [ux, uy] = puntos[puntos.length - 1];
+  partes.push(`L ${ux} ${uy}`);
+  return partes.join(' ');
 }
 
 /**

@@ -5,6 +5,7 @@ import {
   conectadosA,
   describirIntervalo,
   MEDIDAS,
+  puntosDeIndicacion,
   ubicarRecorrido,
   type AristaDelRecorrido,
   type NodoDelRecorrido,
@@ -194,6 +195,84 @@ describe('ubicarRecorrido · lo que el revisor encontró', () => {
     const trazo = plano.aristas[0].trazo;
     expect(trazo.startsWith(`M ${dx.x} `)).toBe(true);
     expect(trazo.endsWith(`${rx.x + MEDIDAS.anchoColumna} ${rx.y + MEDIDAS.altoNodo * 0.3}`)).toBe(true);
+  });
+});
+
+describe('trazado de las indicaciones entre columnas', () => {
+  /**
+   * El caso que encontró la revisión visual: con «Atenciones» filtrado, el
+   * diagnóstico queda en su propia fecha, lejos, y entre él y su receta hay
+   * otra receta. Una curva directa pasaba por detrás de ella y parecía que la
+   * flecha salía de ahí.
+   */
+  const plano = ubicarRecorrido(
+    [
+      nodo('hta', 'diagnosticos', new Date(2025, 8, 23)),
+      nodo('atorva', 'medicacion', new Date(2026, 9, 5)),
+      nodo('otra', 'medicacion', new Date(2026, 9, 5)),
+      nodo('enalapril', 'medicacion', new Date(2026, 9, 8)),
+    ],
+    [{ desde: 'hta', hasta: 'enalapril', motivo: 'indicacion' }],
+  );
+  const por = (id: string) => plano.nodos.find((n) => n.id === id)!;
+
+  it('no atraviesa ninguna tarjeta que no sea uno de sus extremos', () => {
+    const puntos = puntosDeIndicacion(por('hta'), por('enalapril'));
+    const otras = plano.nodos.filter((n) => n.id !== 'hta' && n.id !== 'enalapril');
+    for (let i = 0; i < puntos.length - 1; i++) {
+      const [[ax, ay], [bx, by]] = [puntos[i], puntos[i + 1]];
+      for (const n of otras) {
+        const dentroX = Math.max(ax, bx) > n.x && Math.min(ax, bx) < n.x + MEDIDAS.anchoColumna;
+        const dentroY = Math.max(ay, by) > n.y && Math.min(ay, by) < n.y + MEDIDAS.altoNodo;
+        expect(dentroX && dentroY, `el tramo ${i} cruza «${n.id}»`).toBe(false);
+      }
+    }
+  });
+
+  it('con dos indicaciones, cada una va por su propio carril', () => {
+    // Dos diagnósticos lejanos, cada uno con su receta en la misma fila de
+    // columnas posteriores: antes compartían el cruce y la bajada y no se
+    // sabía cuál iba a cuál.
+    const dos = ubicarRecorrido(
+      [
+        nodo('hta', 'diagnosticos', new Date(2025, 8, 23)),
+        nodo('dlp', 'diagnosticos', new Date(2025, 8, 23)),
+        nodo('atorva', 'medicacion', new Date(2026, 9, 5)),
+        nodo('enalapril', 'medicacion', new Date(2026, 9, 8)),
+      ],
+      [
+        { desde: 'hta', hasta: 'enalapril', motivo: 'indicacion' },
+        { desde: 'dlp', hasta: 'atorva', motivo: 'indicacion' },
+      ],
+    );
+    const n = (id: string) => dos.nodos.find((x) => x.id === id)!;
+    const a = puntosDeIndicacion(n('hta'), n('enalapril'), 0);
+    const b = puntosDeIndicacion(n('dlp'), n('atorva'), 1);
+    // Bajadas por x distintas y cruces a alturas distintas.
+    expect(a[1][0]).not.toBe(b[1][0]);
+    expect(a[2][1]).not.toBe(b[2][1]);
+    // Y los trazos que dibuja el plano son distintos entre sí.
+    const trazos = dos.aristas.map((x) => x.trazo);
+    expect(new Set(trazos).size).toBe(2);
+  });
+
+  it('el cruce deja al menos 6 px de aire con cualquier tarjeta', () => {
+    const puntos = puntosDeIndicacion(por('hta'), por('enalapril'), 2);
+    const horizontal = puntos[2][1];
+    for (const n of plano.nodos) {
+      const arriba = n.y + MEDIDAS.altoNodo;
+      const distancia = horizontal < n.y ? n.y - horizontal : horizontal - arriba;
+      if (horizontal >= n.y && horizontal <= arriba) {
+        throw new Error(`el cruce atraviesa «${n.id}»`);
+      }
+      expect(distancia).toBeGreaterThanOrEqual(6);
+    }
+  });
+
+  it('sale del borde del diagnóstico y entra por el borde de la receta', () => {
+    const puntos = puntosDeIndicacion(por('hta'), por('enalapril'));
+    expect(puntos[0]).toEqual([por('hta').x + MEDIDAS.anchoColumna, por('hta').y + MEDIDAS.altoNodo / 2]);
+    expect(puntos.at(-1)).toEqual([por('enalapril').x, por('enalapril').y + MEDIDAS.altoNodo * 0.3]);
   });
 });
 

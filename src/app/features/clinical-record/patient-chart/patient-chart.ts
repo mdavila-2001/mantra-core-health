@@ -853,7 +853,13 @@ export class PatientChart {
   protected readonly notas = computed<readonly FilaClinica[]>(() =>
     (this.datos()?.chart.notes ?? []).map((fila) => ({
       id: fila.noteId,
-      principal: fila.chiefComplaintText ?? this.label(fila.noteTypeConceptId),
+      // `||` y no `??`: el motivo puede llegar como texto vacío, y una fila sin
+      // nombre en la tabla no dice qué es. Sin motivo, el tipo de nota.
+      principal:
+        fila.chiefComplaintText?.trim() ||
+        (this.label(fila.noteTypeConceptId) === SIN_DATO
+          ? 'Nota clínica'
+          : this.label(fila.noteTypeConceptId)),
       secundario: fila.assessmentText ?? fila.subjectiveText ?? '',
       estado: this.label(fila.lifecycleStatusConceptId),
       cuando: fila.signedAt ?? fila.createdAt,
@@ -1120,11 +1126,21 @@ export class PatientChart {
         tipo,
         // Un nodo sin título es una caja muda: si el registro no trae nombre,
         // al menos dice qué es.
-        principal: fila.principal.trim() || ASPECTO_DEL_TIPO[tipo].singular,
+        principal:
+          fila.principal.trim() === '' || fila.principal === SIN_DATO
+            ? ASPECTO_DEL_TIPO[tipo].singular
+            : fila.principal,
         // Lo que se decidió sobre un diagnóstico (por qué se confirmó o se
         // descartó) es justo lo que el recorrido viene a contar.
-        secundario: fila.decision ? `Decisión: ${fila.decision}` : fila.secundario,
+        // «Sin registrar» como dato secundario es ruido en una tarjeta chica: la
+        // tabla de cada bloque tampoco lo muestra.
+        secundario: fila.decision
+          ? `Decisión: ${fila.decision}`
+          : fila.secundario === SIN_DATO
+            ? ''
+            : fila.secundario,
         estado: fila.estado === SIN_DATO ? '' : fila.estado,
+        tonoDelEstado: fila.estadoTono ?? 'info',
         cuando: fila.cuando,
         encuentroId: atencionDe.get(fila.id),
       }));
@@ -1546,7 +1562,7 @@ export class PatientChart {
   protected notasDelEncuentro(encounterId: string): string {
     const notas = (this.datos()?.chart.notes ?? [])
       .filter((fila) => fila.encounterId === encounterId)
-      .map((fila) => fila.chiefComplaintText ?? this.label(fila.noteTypeConceptId));
+      .map((fila) => fila.chiefComplaintText?.trim() || this.label(fila.noteTypeConceptId));
     return notas.length === 0 ? 'Sin notas en este encuentro' : notas.join(', ');
   }
 

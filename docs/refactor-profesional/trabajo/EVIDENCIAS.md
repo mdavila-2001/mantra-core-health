@@ -137,7 +137,7 @@ Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · base `origin/dev
 |---|---|
 | `tsc -p tsconfig.app.json --noEmit` | 0 errores |
 | `eslint src/app/features/clinical-record/patient-chart` | 0 errores (el `yarn lint` global trae errores preexistentes en specs ajenos) |
-| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **584 pruebas verdes** (las nuevas: `recorrido-clinico/` 45, `patient-chart.spec.ts` 8) |
+| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **593 pruebas verdes** (las nuevas: `recorrido-clinico/` 54, `patient-chart.spec.ts` 8) |
 | `yarn test` completo | **no se ejecutó** |
 | Navegador 1440 / 768 / 390 | desborde horizontal de la página: 0 px; el recorrido desplaza dentro de su lienzo |
 | «Secciones» sin cambios | 9 pestañas (Servicios incluida), «Nuevo diagnóstico» visible, menú de acciones Confirmar / Rechazar / Cambiar estado / Adjuntar |
@@ -158,5 +158,68 @@ atrás (7), nombres accesibles de grupos (8), intervalo por días de calendario 
 movimiento» (10), puntero y foco (11), `stackedOnMobile` y `accion` (12), texto del vacío (13),
 caption de la tabla (14) y JSDoc (15). Queda como está: (16) el token de la etiqueta del intervalo, y la vista
 en la URL (parte de 6), que se registra como pendiente. `visual-reviewer`: pendiente.
+
+`visual-reviewer`, primera vuelta: **FAIL** (59/100, 5 HIGH). Corregido después:
+
+| Hallazgo | Arreglo | Comprobado |
+|---|---|---|
+| H1 notas sin nombre en la Tabla | `chiefComplaintText` vacío cae al tipo de nota y, si tampoco hay, «Nota clínica» | `tabla-1440.png` |
+| H2 registros bajo una fecha que no es la suya | cada tarjeta muestra su fecha propia cuando difiere de la columna («Inicio 23 sept 2025», «Desde 8 oct 2026») | `recorrido-1440.png`, `recorrido-390.png` |
+| H3 no abre por el final | apertura sin animación y pegado al final ante cambios de tamaño hasta que la persona se mueve; se quitó `scrollbar-gutter`, que reservaba 15 px vacíos | medido: `scrollLeft` 1724 de 1724 al abrir; al redimensionar sigue al final; tras moverse la persona, respeta su posición. Las capturas de página completa de Chromium vuelven el lienzo al inicio: por eso las del recorrido son de ventana |
+| H4 teléfono ilegible | por debajo de 650 px el recorrido es vertical, lo más reciente arriba, con la indicación en texto («Para Hipertensión…») | `recorrido-390.png` |
+| H5 detalle a medio fundido | captura tomada con el modal asentado | `recorrido-abre-detalle.png` |
+| M1 líneas sobre los rótulos | rótulo con fondo y por encima de la capa de líneas | `recorrido-768.png` |
+| M2 nombres cortados | tarjeta de 248 × 86 px, nombre en dos renglones | `recorrido-1440.png` |
+| M3 grupo abierto atenuado | el control de grupo no ilumina camino | prueba de componente |
+| M4 «Sin registrar» como dato | se omite | `recorrido-1440.png` |
+| M5 filtro sólo dicho en la Tabla | el aviso también en Recorrido | — |
+| M6 chips cortados sin señal | borde derecho desvanecido en angosto | — |
+
+Sin cambio: M7 (no hay captura previa de «Secciones»: la regresión la cubren las pruebas y el recorrido
+de pestañas, alta y menú de arriba), M8 (las «mg» de los signos vitales vienen del dato simulado, ya
+existía), M9 (la columna «Ver» en el PDF ya pasaba en todas las tablas del expediente).
+
+`visual-reviewer`, segunda vuelta: **FAIL por puntuación** (82/100, 0 HIGH; los 5 HIGH anteriores,
+resueltos). Corregido después:
+
+| Hallazgo | Arreglo | Comprobado |
+|---|---|---|
+| N1 fecha propia contra el borde | formato corto («Desde 8 Oct»; de otro año, «Inicio Sept 2025»), la posología cede primero, `overflow: hidden` en la tarjeta; la fecha entera en el título y en el nombre accesible | `recorrido-camino-resaltado.png` |
+| N2 leyenda en vertical | la barra entera (leyenda y saltos) sólo en horizontal | `recorrido-390.png`, prueba de componente |
+| N3 ancho → angosto → ancho | se fija al final cada vez que se crea un lienzo; el ajuste propio no se confunde con un desplazamiento de la persona | medido: al abrir 1724/1724, al volver a ancho 1724/1724 |
+| N4 color del estado | el estado usa la regla de la tabla (`estadoTono ?? 'info'`) | `recorrido-1440.png`, prueba de componente |
+| N5 estados y consola | `tabla-filtro-oculta-todo.png`; `consola-y-red.txt`: 0 errores de consola, 0 peticiones fallidas o ≥ 400 en el expediente (un aviso NG0505 de hidratación, propio de `ng serve` sin SSR) | — |
+| N6, N7 capturas viejas o a medio animar | rehechas | `recorrido-sin-chip-atenciones.png`, `secciones-sin-cambios-1440.png` |
+| M3, M5 sin evidencia | grupo abierto con teclado y el puntero fuera: 0 nodos atenuados; aviso «Filtrado: no se muestran atenciones.» en Recorrido | `recorrido-grupo-abierto.png`, `recorrido-sin-chip-atenciones.png` |
+
+Encontrado al rehacer las capturas, y más grave que lo anterior: con «Atenciones» filtrado, la curva
+Hipertensión → Enalapril pasaba por detrás de Atorvastatina y parecía salir de ella. Las indicaciones
+entre columnas ahora van por un recorrido ortogonal por los huecos; una prueba comprueba que no cruza
+ninguna tarjeta (`recorrido-sin-chip-atenciones.png`).
+
+Sin cambio: N8 (mayúsculas de los meses: las cabeceras siguen la regla de las tablas de `dev`), N9
+(dos momentos del mismo día cuando uno es atención y el otro no), N10 (la tabla apilada en teléfono es
+el comportamiento de `app-data-table`). Los estados de carga y error los resuelve
+`app-view-state-host`, compartido; no se capturaron.
+
+`visual-reviewer`, tercera vuelta: **FAIL** (88/100, 1 HIGH). Corregido después:
+
+| Hallazgo | Arreglo | Comprobado |
+|---|---|---|
+| H-1 dos indicaciones comparten trazo | cada indicación tiene su carril: bajada, cruce y curva propios | prueba «con dos indicaciones, cada una va por su propio carril» |
+| M-1 cruce a 4 px de las tarjetas | separación entre filas de 20 px; el cruce queda a 6 px o más | prueba «el cruce deja al menos 6 px de aire» |
+| M-2 el recorrido ortogonal no se ve entero | captura del plano entero con «Atenciones» filtrado (para tomarla, el script quita el recorte del lienzo; el menú lateral fijo tapa el borde izquierdo) | `recorrido-sin-atenciones-entero.png` |
+| M-3 la red no estaba registrada | `consola-y-red.txt` lista las 356 peticiones del expediente con su estado: 0 fallidas, 0 ≥ 400. Las llamadas a la API las responde el backend simulado dentro de Angular y no pasan por la red | `consola-y-red.txt` |
+| L-1 fecha de otro año sin día | en vertical, siempre la fecha entera; con menos de 90 días de diferencia, con día aunque cambie el año | — |
+
+**No se pudo capturar en navegador el caso de dos indicaciones.** Para crear la segunda hace falta
+prescribir desde el expediente indicando un diagnóstico, y el formulario sólo ofrece «Otro motivo»:
+`medication-block` filtra los diagnósticos por `confirmadoEl`, y `patient-chart` no se lo pasa
+(`diagnosticosParaReceta`). Es un defecto de `dev` ajeno a este cambio; se reporta aparte. El caso
+queda cubierto por la prueba de geometría.
+
+Sin cambio: L-2 (corchete en la misma columna y poligonal entre columnas: misma línea punteada y
+misma flecha), L-3 (el chip apagado es de la primitiva `app-chip`; el aviso en texto lo compensa),
+L-4 (carga y error, de `app-view-state-host`).
 
 Capturas: `capturas/recorrido-clinico/`.

@@ -123,6 +123,11 @@
           El recorrido es una vista de pantalla: para exportar la historia a PDF, usá «Tabla» o
           «Secciones».
         </p>
+        @if (tiposOcultosEnPalabras() !== '') {
+          <p class="expediente__aviso-filtro" data-testid="expediente-aviso-filtro">
+            Filtrado: no se muestran {{ tiposOcultosEnPalabras() }}.
+          </p>
+        }
         <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
           <app-recorrido-clinico
             [nodos]="nodosDelRecorrido()"
