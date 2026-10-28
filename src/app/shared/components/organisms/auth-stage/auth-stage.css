@@ -424,8 +424,10 @@
     Modo claro — el balance invertido.
 
     En claro el escenario deja de ser un monitor nocturno: predomina el blanco
-    (`--bg-surface` → menta 50), la tinta es petróleo y en reposo NO hay ningún
-    celeste. El celeste aparece solo junto al puntero, en `.auth-stage__glow`.
+    (`--bg-surface` → menta 50), el latido es aguamarina, el papel y las motas
+    son salvia, y en reposo NO hay ningún celeste. Hasta el 27/10/2026 todo
+    esto era petróleo; el cliente pidió bajar el azul y la línea gráfica da la
+    aguamarina como «acento de vida» y la menta/salvia como apoyo. El celeste aparece solo junto al puntero, en `.auth-stage__glow`.
     Todo lo de arriba es el modo oscuro y no se toca: estas reglas solo PISAN,
     así que el oscuro queda exactamente igual.
 
@@ -445,57 +447,57 @@
   display: none;
 }
 
-/* Las líneas blancas del papel desaparecen sobre blanco: van en petróleo. */
+/* Las líneas blancas del papel desaparecen sobre blanco: van en salvia. */
 :host-context(:root[data-tema='claro']) .auth-stage__monitor {
   background-image:
-    linear-gradient(color-mix(in srgb, var(--c-petrol-500) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--c-sage-700) 9%, transparent) 1px, transparent 1px),
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--c-petrol-500) 6%, transparent) 1px,
+      color-mix(in srgb, var(--c-sage-700) 9%, transparent) 1px,
       transparent 1px
     ),
-    linear-gradient(color-mix(in srgb, var(--c-petrol-500) 2.5%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--c-sage-700) 4%, transparent) 1px, transparent 1px),
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--c-petrol-500) 2.5%, transparent) 1px,
+      color-mix(in srgb, var(--c-sage-700) 4%, transparent) 1px,
       transparent 1px
     );
 }
 
-/* Motas neutras en reposo: gris petróleo, sin celeste. */
+/* Motas neutras en reposo: menta y salvia, sin celeste. */
 :host-context(:root[data-tema='claro']) .auth-stage__mote {
   background: radial-gradient(
     circle,
-    var(--c-petrol-300),
+    var(--c-mint-500),
     color-mix(in srgb, var(--c-sage-700) 55%, transparent) 45%,
     transparent 72%
   );
 }
 
-/* La tira en tinta petróleo, sólida: sin el degradado `#auth-stage-ink`, que
+/* La tira en aguamarina, sólida: sin el degradado `#auth-stage-ink`, que
    está pensado para el fondo oscuro. */
 :host-context(:root[data-tema='claro']) .auth-stage__ecg-base {
-  stroke: var(--c-petrol-400);
+  stroke: var(--c-aqua-400);
 }
 
 :host-context(:root[data-tema='claro']) .auth-stage__ecg-comet {
-  stroke: var(--c-petrol-600);
+  stroke: var(--c-aqua-600);
 }
 
 :host-context(:root[data-tema='claro']) .auth-stage__ecg-spark {
-  stroke: var(--c-petrol-700);
+  stroke: var(--c-aqua-700);
 }
 
 :host-context(:root[data-tema='claro']) .auth-stage__ecg-aura {
-  stroke: var(--c-petrol-100);
+  stroke: var(--c-mint-100);
 }
 
 :host-context(:root[data-tema='claro']) .auth-stage__ecg-halo {
-  stroke: var(--c-petrol-200);
+  stroke: var(--c-mint-200);
 }
 
 :host-context(:root[data-tema='claro']) .auth-stage__wave {
-  stroke: var(--c-petrol-200);
+  stroke: var(--c-mint-300);
 }
 
 :host-context(:root[data-tema='claro']) .auth-stage__wave--echo {
