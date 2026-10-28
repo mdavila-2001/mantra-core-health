@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { OrganizationSelectContainer } from '../../../shared/components/molecules/organization-select/organization-select-container';
@@ -27,6 +27,7 @@ import { AffiliationDialog } from '../affiliation-dialog/affiliation-dialog';
       hint="Su consultorio, o una organización que ya aprobó su afiliación."
     >
       <app-organization-select-container
+        [disabled]="disabled()"
         (selected)="selected.emit($event)"
         (affiliationRequested)="affiliating.set(true)"
       />
@@ -39,6 +40,9 @@ import { AffiliationDialog } from '../affiliation-dialog/affiliation-dialog';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationField {
+  /** El campo no se puede cambiar, por ejemplo mientras se publica. */
+  readonly disabled = input(false);
+
   /** El médico eligió dónde publicar. «Afiliarme…» no emite: pedir no es elegir. */
   readonly selected = output<OrganizationChoice>();
 
