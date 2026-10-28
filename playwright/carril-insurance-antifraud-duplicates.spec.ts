@@ -332,7 +332,8 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
 
     // El Perfil lipídico de PACIENTE lo liberó TENANT_CLINICA — la misma
     // organización que `medica`: acá sí llega la conclusión clínica.
-    await pedirEstudio(ordenes, 'Perfil lipídico', 'Laboratorio');
+    // El catálogo de la maqueta (inlasa-tariffs.generated.ts) lo nombra sin tilde.
+    await pedirEstudio(ordenes, 'Perfil lipidico', 'Laboratorio');
 
     const dialogo = await esperarDialogoDuplicado(page);
     await expect(dialogo).not.toContainText('otra organización');
