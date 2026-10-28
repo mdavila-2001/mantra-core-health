@@ -102,6 +102,7 @@
       @if (manualOpen()) {
         <app-manual-payment-state
           [id]="manualPanelId"
+          [bookingId]="bookingId()"
           [current]="currentPaymentState()"
           [disabled]="review.busy()"
           (changed)="markManually($event)"
