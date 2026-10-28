@@ -40,7 +40,7 @@ export interface PrimaryPatientsPage {
 }
 
 /**
- * El médico de cabecera, de los dos lados (API v4.2.64).
+ * El médico de cabecera, de los dos lados (API v4.2.65).
  *
  * Todas las rutas son `me`: la API resuelve al paciente y al profesional de la
  * sesión. Elegir o quitar devuelve la elección **releída**, así la pantalla
