@@ -381,7 +381,9 @@ export class PaginatedForm {
   });
 
   readonly mostrarPasos = computed(
-    () => this.total() > 1 && (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
+    () =>
+      this.total() > 1 &&
+      (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
   );
 
   /**

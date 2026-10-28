@@ -375,7 +375,9 @@ describe('PaginatedForm', () => {
       fixture.detectChanges();
 
       expect(rotulos().join(' ')).toContain('Mapa dental');
-      expect(fixture.debugElement.query(By.css('[data-testid="widget-propio"]'))).not.toBeNull();
+      expect(
+        fixture.debugElement.query(By.css('[data-testid="widget-propio"]')),
+      ).not.toBeNull();
     });
   });
 
@@ -635,6 +637,12 @@ describe('PaginatedForm', () => {
       return el === null ? null : (el.nativeElement as HTMLButtonElement);
     }
 
+    function tituloC(): string {
+      return (
+        fixtureC.nativeElement as HTMLElement
+      ).querySelector('.paginated-form__titulo')!.textContent!.trim();
+    }
+
     it('con atrasEnPrimera aparece en la primera página y avisa en vez de retroceder', () => {
       hostC.atrasEnPrimera.set(true);
       fixtureC.detectChanges();
@@ -644,11 +652,7 @@ describe('PaginatedForm', () => {
       fixtureC.detectChanges();
 
       expect(hostC.salidasAtras).toBe(1);
-      expect(
-        (fixtureC.nativeElement as HTMLElement)
-          .querySelector('.paginated-form__titulo')!
-          .textContent!.trim(),
-      ).toBe('Identidad');
+      expect(tituloC()).toBe('Identidad');
     });
 
     it('en las páginas siguientes retrocede y no emite la salida', () => {
@@ -665,11 +669,7 @@ describe('PaginatedForm', () => {
       fixtureC.detectChanges();
 
       expect(hostC.salidasAtras).toBe(0);
-      expect(
-        (fixtureC.nativeElement as HTMLElement)
-          .querySelector('.paginated-form__titulo')!
-          .textContent!.trim(),
-      ).toBe('Identidad');
+      expect(tituloC()).toBe('Identidad');
     });
 
     it('apagado —lo normal— la primera página sigue sin «Atrás»', () => {
@@ -726,7 +726,9 @@ describe('PaginatedForm', () => {
       const input = fixtureC.debugElement.query(By.css('input[data-testid="campo-documento"]'))
         .nativeElement as HTMLInputElement;
 
-      expect(input.placeholder).toBe('El número de tu cédula de identidad, sin puntos ni guiones.');
+      expect(input.placeholder).toBe(
+        'El número de tu cédula de identidad, sin puntos ni guiones.',
+      );
     });
   });
 
@@ -767,7 +769,9 @@ const PAGINA_DE_CASILLAS: readonly PaginaDeFormulario[] = [
 
 @Component({
   imports: [PaginatedForm],
-  template: ` <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" /> `,
+  template: `
+    <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
+  `,
 })
 class HostDeCasillas {
   readonly paginas = PAGINA_DE_CASILLAS;
@@ -885,7 +889,9 @@ const PAGINAS_DE_SI_NO: readonly PaginaDeFormulario[] = [
 
 @Component({
   imports: [PaginatedForm],
-  template: ` <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" /> `,
+  template: `
+    <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
+  `,
 })
 class HostDeSiNo {
   readonly paginas = PAGINAS_DE_SI_NO;

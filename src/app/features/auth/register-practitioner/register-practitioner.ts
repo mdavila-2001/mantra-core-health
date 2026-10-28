@@ -358,7 +358,9 @@ type CampoEditableDeTitulo = 'nombre' | 'numero' | CampoDeEstudio;
 
 /** Los tres controles de dónde se estudió el título con el que ejerce. */
 type ClaveDeEstudioDelTitulo =
-  'professionalTitleUniversity' | 'professionalTitleCountry' | 'professionalTitleCity';
+  | 'professionalTitleUniversity'
+  | 'professionalTitleCountry'
+  | 'professionalTitleCity';
 
 /** Un respaldo suelto: el de la matrícula y el del registro del SEDES. */
 interface RespaldoDeclarado {
@@ -984,9 +986,7 @@ export class RegisterPractitioner {
 
   /** Quita una fila entera, con su adjunto. */
   quitarTitulo(id: string): void {
-    this.attachmentFiles.update((files) =>
-      Object.fromEntries(Object.entries(files).filter(([key]) => key !== id)),
-    );
+    this.attachmentFiles.update(files => Object.fromEntries(Object.entries(files).filter(([key]) => key !== id)));
     this.titulos.update((titulos) => titulos.filter((titulo) => titulo.id !== id));
     this.limpiarAvisoDeTitulos();
   }
@@ -1121,7 +1121,8 @@ export class RegisterPractitioner {
   ): Pick<TituloDeclarado, 'universidad' | 'universidadElegida'> {
     return {
       universidadElegida: eleccion,
-      universidad: eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
+      universidad:
+        eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
     };
   }
 
@@ -1145,22 +1146,17 @@ export class RegisterPractitioner {
   protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
 
   updateSupportFiles(key: ClaveDeRespaldo, files: readonly File[]): void {
-    this.attachmentFiles.update((current) => ({ ...current, [key]: files }));
+    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
     const file = files[0];
     this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
     this.errorAdjunto.set(null);
   }
 
   updateTitleFiles(id: string, files: readonly File[]): void {
-    this.attachmentFiles.update((current) => ({ ...current, [id]: files }));
+    this.attachmentFiles.update(current => ({ ...current, [id]: files }));
     const file = files[0];
-    this.titulos.update((titles) =>
-      titles.map((title) =>
-        title.id === id
-          ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null, fileId: null }
-          : title,
-      ),
-    );
+    this.titulos.update(titles => titles.map(title => title.id === id
+      ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null, fileId: null } : title));
     this.errorAdjunto.set(null);
   }
 
@@ -1169,6 +1165,7 @@ export class RegisterPractitioner {
     if (cual === 'professional-title') return this.respaldoTituloProfesional;
     return cual === 'license' ? this.respaldoMatricula : this.respaldoSedes;
   }
+
 
   /**
    * Foto de perfil en base64 para previsualizar y enviar en el alta.
@@ -2301,9 +2298,7 @@ export class RegisterPractitioner {
       const colegio = colegioDelTitulo(valor);
       const actual = autoridad.value;
       const cambiar =
-        actual === ''
-          ? colegio !== COLEGIO_DE_LA_PROFESION
-          : esColegio(actual) && actual !== colegio;
+        actual === '' ? colegio !== COLEGIO_DE_LA_PROFESION : esColegio(actual) && actual !== colegio;
       if (cambiar) {
         autoridad.setValue(colegio);
       }
@@ -2469,6 +2464,8 @@ export class RegisterPractitioner {
     this.cargarDepartamentos();
   }
 
+
+
   /* ---- Envío ------------------------------------------------------------- */
 
   /**
@@ -2527,7 +2524,9 @@ export class RegisterPractitioner {
     // catálogo se leía una sola vez en el constructor, así que quien caía acá
     // no tenía salida sin recargar la página.
     if (this.hayTitulosSinTipo()) {
-      this.state.set(validation([{ field: 'academicTitles', message: this.avisoCatalogoDeTipos }]));
+      this.state.set(
+        validation([{ field: 'academicTitles', message: this.avisoCatalogoDeTipos }]),
+      );
       return;
     }
 
@@ -2573,9 +2572,7 @@ export class RegisterPractitioner {
             this.recordarFileIdDelTitulo(titulo.id, documento.fileId);
             return undefined;
           }),
-          throwIfEmpty(
-            () => new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.'),
-          ),
+          throwIfEmpty(() => new Error('No pudimos confirmar la carga del PDF. Volvé a intentarlo.')),
         );
       }),
       toArray(),

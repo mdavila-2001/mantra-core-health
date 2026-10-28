@@ -33,7 +33,10 @@ import {
   type RamaDepartamento,
 } from '../../../core/data-access/terminology/bo-municipalities.service';
 import { RelatedPersonRelationshipsCatalog } from '../../../core/data-access/system-context/related-person-relationships.service';
-import type { BirthSexCode, PatientRegistration } from '../../../core/data-access/iam/iam.types';
+import type {
+  BirthSexCode,
+  PatientRegistration,
+} from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -121,7 +124,8 @@ interface DestinoDeUbicacion {
  * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
  * manzana. Tocar el plano corre el pin al punto exacto.
  */
-const AVISO_MOVER_PIN = 'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
+const AVISO_MOVER_PIN =
+  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
 
 /**
  * El identificador del pin del domicilio en el mapa.
@@ -730,7 +734,10 @@ export class RegisterPatient {
    * @param control - El control de «dirección 1» que corresponde.
    * @param conceptId - La localidad elegida, o `null` si se soltó.
    */
-  private sembrarDireccion(control: FormControl<string>, conceptId: string | null): void {
+  private sembrarDireccion(
+    control: FormControl<string>,
+    conceptId: string | null,
+  ): void {
     // Soltar la localidad no borra: ver el porqué en la nota de arriba.
     if (conceptId === null) {
       return;
@@ -763,7 +770,10 @@ export class RegisterPatient {
    * @param control - El control de «dirección 1» que corresponde.
    * @param valor - El nombre de la localidad, o `''` para limpiar.
    */
-  private escribirDireccionSembrada(control: FormControl<string>, valor: string): void {
+  private escribirDireccionSembrada(
+    control: FormControl<string>,
+    valor: string,
+  ): void {
     // `emitEvent: false` no: el cambio tiene que llegar al `valueChanges` que
     // limpia el error del envío anterior, igual que si se hubiera tecleado.
     // Y sin `markAsTouched`/`markAsDirty`: no lo escribió la persona.
@@ -1289,8 +1299,7 @@ export class RegisterPatient {
             key: 'workAddressLines',
             label: 'Línea de dirección 1 (opcional)',
             hint: 'Calle y número de tu trabajo.',
-            description:
-              'Sirve para ubicar tu lugar de trabajo cuando la empresa tiene varias sedes.',
+            description: 'Sirve para ubicar tu lugar de trabajo cuando la empresa tiene varias sedes.',
             control: 'text',
             placeholder: 'Calle Libertad #120',
             testId: 'registration-work-address',
@@ -1300,8 +1309,7 @@ export class RegisterPatient {
             key: 'gpsTrabajo',
             label: 'Ubicación GPS (opcional)',
             hint: 'El punto exacto de tu lugar de trabajo.',
-            description:
-              'El punto exacto de tu trabajo en el mapa. Se confirma aparte del de tu casa.',
+            description: 'El punto exacto de tu trabajo en el mapa. Se confirma aparte del de tu casa.',
             control: 'custom',
           },
         ],
@@ -1372,7 +1380,8 @@ export class RegisterPatient {
             key: 'billingLegalName',
             label: 'Nombre o Razón Social (opcional)',
             hint: 'A nombre de quién se emite la factura.',
-            description: 'Si declarás NIT, ingresá el nombre o razón social correspondiente.',
+            description:
+              'Si declarás NIT, ingresá el nombre o razón social correspondiente.',
             control: 'text',
             placeholder: 'Carlos Roca Aguilera',
             testId: 'registro-razon-social',
@@ -2493,7 +2502,9 @@ export class RegisterPatient {
         : { workLatitude: gpsTrabajo.lat, workLongitude: gpsTrabajo.lng }),
       // El nombre a mano sólo acompaña a «Otra empresa»: con cualquier otra
       // elegida sería un texto que contradice al concepto.
-      ...(this.empresaEsOtra() && otraEmpresa !== '' ? { workEmployerFreeText: otraEmpresa } : {}),
+      ...(this.empresaEsOtra() && otraEmpresa !== ''
+        ? { workEmployerFreeText: otraEmpresa }
+        : {}),
       // El teléfono del tutor sólo viaja con su nombre: el backend rechaza un
       // contacto sin dueño, y el formulario ya lo impide antes de llegar acá.
       ...(nombreTutor === '' ? {} : { guardianName: nombreTutor }),

@@ -90,7 +90,7 @@ export class AssistedRegistration {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-  /**
+/**
    * El formulario, servido de a una página.
    *
    * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
@@ -102,61 +102,18 @@ export class AssistedRegistration {
       titulo: 'Datos del paciente',
       hint: 'Lo mínimo para crear la cuenta; el resto lo completa su filiación.',
       campos: [
-        {
-          key: 'name',
-          testId: 'alta-paciente-nombre',
-          label: 'Nombre',
-          control: 'text',
-          required: true,
-          mensajeDeError: 'Escribí el nombre del paciente.',
-        },
-        {
-          key: 'middleName',
-          testId: 'alta-paciente-segundo-nombre',
-          label: 'Segundo nombre',
-          hint: 'Si no tiene, dejalo vacío.',
-          control: 'text',
-        },
-        {
-          key: 'lastName',
-          testId: 'alta-paciente-apellido-paterno',
-          label: 'Apellido paterno',
-          control: 'text',
-          required: true,
-          mensajeDeError: 'Escribí el apellido paterno del paciente.',
-        },
-        {
-          key: 'motherLastName',
-          testId: 'alta-paciente-apellido-materno',
-          label: 'Apellido materno',
-          hint: 'Si no lleva, dejalo vacío.',
-          control: 'text',
-        },
-        {
-          key: 'email',
-          testId: 'alta-paciente-correo',
-          label: 'Correo',
-          hint: 'Con este correo va a activar la cuenta e iniciar sesión.',
-          control: 'email',
-          required: true,
-          mensajeDeError: 'Ingresá un correo válido.',
-        },
+        { key: 'name', testId: 'alta-paciente-nombre', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre del paciente.' },
+        { key: 'middleName', testId: 'alta-paciente-segundo-nombre', label: 'Segundo nombre', hint: 'Si no tiene, dejalo vacío.', control: 'text' },
+        { key: 'lastName', testId: 'alta-paciente-apellido-paterno', label: 'Apellido paterno', control: 'text', required: true, mensajeDeError: 'Escribí el apellido paterno del paciente.' },
+        { key: 'motherLastName', testId: 'alta-paciente-apellido-materno', label: 'Apellido materno', hint: 'Si no lleva, dejalo vacío.', control: 'text' },
+        { key: 'email', testId: 'alta-paciente-correo', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
       ],
     },
     {
       titulo: 'Justificación',
       hint: 'Estás creando una cuenta a nombre de otra persona: queda registrado quién y por qué.',
       campos: [
-        {
-          key: 'reason',
-          testId: 'alta-paciente-motivo',
-          label: 'Motivo del registro asistido',
-          hint: 'Queda en la trazabilidad. Máximo 500 caracteres.',
-          control: 'textarea',
-          required: true,
-          mensajeDeError:
-            'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).',
-        },
+        { key: 'reason', testId: 'alta-paciente-motivo', label: 'Motivo del registro asistido', hint: 'Queda en la trazabilidad. Máximo 500 caracteres.', control: 'textarea', required: true, mensajeDeError: 'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).' },
       ],
     },
   ]);
@@ -218,8 +175,8 @@ export class AssistedRegistration {
   });
 
   /**
-   * «Atrás» en el primer paso: a la pantalla de la que se vino, o a `/administration/patients` si no
-   * hubo una (enlace directo, recarga).
+   * «Atrás» en el primer paso: a la pantalla de la que se vino, o a `/administration/patients`
+   * si no hubo una (enlace directo, recarga).
    */
   protected volver(): void {
     if (this.history.hasInternalHistory()) {
@@ -276,7 +233,8 @@ export class AssistedRegistration {
   }
 
   private datos(): AssistedPatientRegistration {
-    const { name, middleName, lastName, motherLastName, email, reason } = this.form.getRawValue();
+    const { name, middleName, lastName, motherLastName, email, reason } =
+      this.form.getRawValue();
     const segundoNombre = middleName.trim();
     const apellidoMaterno = motherLastName.trim();
 

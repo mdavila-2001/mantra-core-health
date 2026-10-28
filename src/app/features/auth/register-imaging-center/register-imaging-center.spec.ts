@@ -5,7 +5,11 @@ import { provideRouter, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { MODALIDADES, RegisterImagingCenter, TIPOS_DE_SOCIEDAD } from './register-imaging-center';
+import {
+  MODALIDADES,
+  RegisterImagingCenter,
+  TIPOS_DE_SOCIEDAD,
+} from './register-imaging-center';
 
 /* ============================================================================
     Lo que esta pantalla promete, y por lo tanto lo que se prueba:
@@ -22,6 +26,7 @@ import { MODALIDADES, RegisterImagingCenter, TIPOS_DE_SOCIEDAD } from './registe
 function archivo(nombre: string, tipo: string, bytes: number): File {
   return { name: nombre, type: tipo, size: bytes } as unknown as File;
 }
+
 
 const PDF = () => archivo('sedes.pdf', 'application/pdf', 120_000);
 

@@ -45,7 +45,13 @@ const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
  */
 @Component({
   selector: 'app-user-registration',
-  imports: [Alert, AnnounceOnAppear, AppButton, PageHeader, PaginatedForm],
+  imports: [
+    Alert,
+    AnnounceOnAppear,
+    AppButton,
+    PageHeader,
+    PaginatedForm,
+  ],
   templateUrl: './user-registration.html',
   styleUrl: './user-registration.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,7 +65,7 @@ export class UserRegistration {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-  /**
+/**
    * El formulario, servido de a una página.
    *
    * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
@@ -71,60 +77,17 @@ export class UserRegistration {
       titulo: 'Identificación',
       hint: 'Con qué entra y cómo se lo nombra.',
       campos: [
-        {
-          key: 'displayName',
-          testId: 'alta-usuario-nombre',
-          label: 'Nombre visible',
-          control: 'text',
-          required: true,
-          mensajeDeError: 'Escribí el nombre con el que se va a mostrar la cuenta.',
-        },
-        {
-          key: 'email',
-          testId: 'alta-usuario-correo',
-          label: 'Correo',
-          autocomplete: 'off',
-          hint: 'Es el identificador con el que va a iniciar sesión.',
-          control: 'email',
-          required: true,
-          mensajeDeError: 'Ingresá un correo válido.',
-        },
-        {
-          key: 'phone',
-          testId: 'alta-usuario-telefono',
-          label: 'Teléfono',
-          autocomplete: 'tel',
-          hint: 'Opcional. Queda como punto de contacto.',
-          control: 'text',
-          mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.',
-        },
+        { key: 'displayName', testId: 'alta-usuario-nombre', label: 'Nombre visible', control: 'text', required: true, mensajeDeError: 'Escribí el nombre con el que se va a mostrar la cuenta.' },
+        { key: 'email', testId: 'alta-usuario-correo', label: 'Correo', autocomplete: 'off', hint: 'Es el identificador con el que va a iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
+        { key: 'phone', testId: 'alta-usuario-telefono', label: 'Teléfono', autocomplete: 'tel', hint: 'Opcional. Queda como punto de contacto.', control: 'text', mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.' },
       ],
     },
     {
       titulo: 'Acceso',
       hint: 'La contraseña es provisional: entregala por un canal seguro.',
       campos: [
-        {
-          key: 'password',
-          testId: 'alta-usuario-clave',
-          label: 'Contraseña inicial',
-          autocomplete: 'new-password',
-          hint: 'Mínimo 8 caracteres.',
-          control: 'password',
-          required: true,
-          mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
-        },
-        {
-          key: 'initialRole',
-          testId: 'alta-usuario-rol',
-          label: 'Rol inicial',
-          hint: 'Los demás roles se conceden después.',
-          control: 'radio',
-          options: [
-            { value: 'USER', label: 'Usuario' },
-            { value: 'SECURITY_ADMIN', label: 'Administrador de seguridad' },
-          ],
-        },
+        { key: 'password', testId: 'alta-usuario-clave', label: 'Contraseña inicial', autocomplete: 'new-password', hint: 'Mínimo 8 caracteres.', control: 'password', required: true, mensajeDeError: 'La contraseña necesita al menos 8 caracteres.' },
+        { key: 'initialRole', testId: 'alta-usuario-rol', label: 'Rol inicial', hint: 'Los demás roles se conceden después.', control: 'radio', options: [{ value: 'USER', label: 'Usuario' }, { value: 'SECURITY_ADMIN', label: 'Administrador de seguridad' }] },
       ],
     },
   ]);
@@ -177,8 +140,8 @@ export class UserRegistration {
   });
 
   /**
-   * «Atrás» en el primer paso: a la pantalla de la que se vino, o a `/` si no
-   * hubo una (enlace directo, recarga).
+   * «Atrás» en el primer paso: a la pantalla de la que se vino, o a `/`
+   * si no hubo una (enlace directo, recarga).
    */
   protected volver(): void {
     if (this.history.hasInternalHistory()) {
@@ -222,7 +185,8 @@ export class UserRegistration {
   }
 
   private datos(): NewUser {
-    const { displayName, email, password, phone, initialRole: rol } = this.form.getRawValue();
+    const { displayName, email, password, phone, initialRole: rol } =
+      this.form.getRawValue();
     const telefono = phone.trim();
 
     return {

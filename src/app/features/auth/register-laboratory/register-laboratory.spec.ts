@@ -102,7 +102,9 @@ describe('RegisterLaboratory', () => {
   });
 
   it('pregunta los seis papeles del proceso, ni uno más', () => {
-    const papeles = Object.keys(component.form.controls).filter((clave) => clave.endsWith('File'));
+    const papeles = Object.keys(component.form.controls).filter((clave) =>
+      clave.endsWith('File'),
+    );
 
     expect(papeles.sort()).toEqual([
       'constitucionFile',
@@ -283,7 +285,9 @@ describe('RegisterLaboratory', () => {
   });
 
   it('mientras no se envía, el formulario está a la vista', () => {
-    const form = fixture.debugElement.query(By.css('[data-testid="registro-form-laboratorio"]'));
+    const form = fixture.debugElement.query(
+      By.css('[data-testid="registro-form-laboratorio"]'),
+    );
 
     expect(form).not.toBeNull();
   });

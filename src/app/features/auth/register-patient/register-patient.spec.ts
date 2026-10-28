@@ -511,7 +511,11 @@ describe('RegisterPatient', () => {
           .find((pagina) => pagina.clave === clave)
           ?.campos.map((campo) => campo.key);
 
-      expect(porClave('profile')).toEqual(['birthDate', 'sexAtBirth', 'occupationConceptId']);
+      expect(porClave('profile')).toEqual([
+        'birthDate',
+        'sexAtBirth',
+        'occupationConceptId',
+      ]);
       // La relación va la última del contacto y completa el tope de cuatro:
       // primero a quién llamamos, después qué es tuyo.
       expect(porClave('contact')).toEqual([
@@ -596,12 +600,12 @@ describe('RegisterPatient', () => {
     it('la localidad va como un único campo proyectado', () => {
       const campos = component.paginasPaciente().flatMap((pagina) => pagina.campos);
 
-      expect(campos.find((campo) => campo.key === 'residenceMunicipalityConceptId')?.control).toBe(
-        'custom',
-      );
-      expect(campos.find((campo) => campo.key === 'workMunicipalityConceptId')?.control).toBe(
-        'custom',
-      );
+      expect(
+        campos.find((campo) => campo.key === 'residenceMunicipalityConceptId')?.control,
+      ).toBe('custom');
+      expect(
+        campos.find((campo) => campo.key === 'workMunicipalityConceptId')?.control,
+      ).toBe('custom');
     });
 
     it('el motor está montado y sirve la primera página', () => {
@@ -892,9 +896,9 @@ describe('RegisterPatient', () => {
         if (clave === 'residenceMunicipalityConceptId') {
           component.elegirMunicipio(null);
         } else {
-          component.formPaciente
-            .get(clave)
-            ?.setValue(clave === 'birthDate' || clave === 'sexAtBirth' ? null : '');
+          component.formPaciente.get(clave)?.setValue(
+            clave === 'birthDate' || clave === 'sexAtBirth' ? null : '',
+          );
         }
 
         expect(
@@ -1644,7 +1648,9 @@ describe('RegisterPatient', () => {
     completar();
     component.formPaciente.controls.issuerAdministrativeAreaConceptId.setValue(null);
 
-    expect(component.formPaciente.controls.issuerAdministrativeAreaConceptId.invalid).toBe(true);
+    expect(component.formPaciente.controls.issuerAdministrativeAreaConceptId.invalid).toBe(
+      true,
+    );
 
     component.submit();
     http.expectNone('/iam/auth/register-patient');
@@ -1672,11 +1678,15 @@ describe('RegisterPatient', () => {
   it('marca el teléfono del tutor como inválido si falta el nombre', () => {
     completar({ guardianPhone: '+591 71234567' });
 
-    expect(component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre')).toBe(true);
+    expect(
+      component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre'),
+    ).toBe(true);
 
     // Y el error se va en cuanto se escribe el nombre.
     component.formPaciente.controls.guardianName.setValue('Rosa Quispe');
-    expect(component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre')).toBe(false);
+    expect(
+      component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre'),
+    ).toBe(false);
   });
 
   it('tras registrar muestra la confirmación y NO inicia sesión sola', () => {
@@ -1867,7 +1877,9 @@ describe('RegisterPatient', () => {
         // algo — a diferencia de una opción vacía.
         { value: 'c-otra', label: 'Brand new relationship' },
       ]);
-      expect(component.formPaciente.controls.guardianRelationshipConceptId.invalid).toBe(false);
+      expect(component.formPaciente.controls.guardianRelationshipConceptId.invalid).toBe(
+        false,
+      );
     });
 
     it('se dibuja en la página del contacto', () => {
@@ -1885,7 +1897,9 @@ describe('RegisterPatient', () => {
      * decir que no cargó. El alta sigue en pie — el campo es opcional.
      */
     it('cambia de `select` a proyectado si su catálogo se cae', () => {
-      http.expectOne(CATALOGO_PARENTESCOS).flush(null, { status: 500, statusText: 'Server Error' });
+      http
+        .expectOne(CATALOGO_PARENTESCOS)
+        .flush(null, { status: 500, statusText: 'Server Error' });
 
       const campo = component
         .paginasPaciente()
@@ -1897,7 +1911,9 @@ describe('RegisterPatient', () => {
     });
 
     it('«Reintentar» vuelve a la red: el fallo cacheado no dura toda la sesión', () => {
-      http.expectOne(CATALOGO_PARENTESCOS).flush(null, { status: 500, statusText: 'Server Error' });
+      http
+        .expectOne(CATALOGO_PARENTESCOS)
+        .flush(null, { status: 500, statusText: 'Server Error' });
 
       component['reintentarParentescos']();
 
@@ -1910,7 +1926,9 @@ describe('RegisterPatient', () => {
     it('manda el parentesco elegido junto al contacto', () => {
       responderCatalogo();
       completar({ guardianName: 'Rosa Quispe' });
-      component.formPaciente.controls.guardianRelationshipConceptId.setValue(PARENTESCO_MADRE);
+      component.formPaciente.controls.guardianRelationshipConceptId.setValue(
+        PARENTESCO_MADRE,
+      );
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-patient');
@@ -1942,7 +1960,9 @@ describe('RegisterPatient', () => {
     it('no manda el parentesco si no hay contacto de emergencia', () => {
       responderCatalogo();
       completar();
-      component.formPaciente.controls.guardianRelationshipConceptId.setValue(PARENTESCO_MADRE);
+      component.formPaciente.controls.guardianRelationshipConceptId.setValue(
+        PARENTESCO_MADRE,
+      );
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-patient');
@@ -2012,7 +2032,9 @@ describe('RegisterPatient', () => {
       component.formPaciente.controls.homeAddressLines.setValue('Av. Banzer #42');
       component.elegirMunicipio(MUNICIPIO_SACABA);
 
-      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Av. Banzer #42');
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+        'Av. Banzer #42',
+      );
     });
 
     /** Una dirección de puros espacios está vacía a todos los efectos. */
@@ -2129,7 +2151,9 @@ describe('RegisterPatient', () => {
 
       component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
 
-      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Quillacollo');
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+        'Quillacollo',
+      );
     });
 
     it('soltar la localidad NO borra lo que la persona escribió', () => {
@@ -2139,7 +2163,9 @@ describe('RegisterPatient', () => {
 
       component.elegirMunicipio(null);
 
-      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Av. Banzer #42');
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+        'Av. Banzer #42',
+      );
     });
 
     /** Re-sembrar tampoco marca el campo: sigue sin escribirlo la persona. */
@@ -2324,7 +2350,9 @@ describe('RegisterPatient', () => {
       elegirCiudad('El Torno');
 
       pulsarDepartamento('SC');
-      expect(direccion(), 'soltar el departamento no borra lo sembrado').toBe('El Torno');
+      expect(direccion(), 'soltar el departamento no borra lo sembrado').toBe(
+        'El Torno',
+      );
       pulsarDepartamento('SC');
       elegirCiudad('Warnes');
 

@@ -817,10 +817,7 @@ export class RegisterImagingCenter {
   protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
 
   attachmentLabel(key: ClaveDeAdjunto): string {
-    return (
-      this.paginas.flatMap((page) => page.campos).find((field) => field.key === key)?.label ??
-      'Documento'
-    );
+    return this.paginas.flatMap(page => page.campos).find(field => field.key === key)?.label ?? 'Documento';
   }
 
   isAttachmentRequired(key: ClaveDeAdjunto): boolean {
@@ -837,7 +834,7 @@ export class RegisterImagingCenter {
   }
 
   updateAttachment(key: ClaveDeAdjunto, files: readonly File[]): void {
-    this.attachmentFiles.update((current) => ({ ...current, [key]: files }));
+    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
     const file = files[0];
     const control = this.form.controls[key];
     control.setValue(file ? { archivo: file.name, pesoBytes: file.size } : null);
