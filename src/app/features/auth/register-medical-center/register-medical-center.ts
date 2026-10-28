@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   FormControl,
@@ -11,6 +13,8 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, map, switchMap, type Observable } from 'rxjs';
 
+import { IamClient } from '../../../core/data-access/iam/iam.client';
+import { uiLanguage } from '../../../core/i18n/ui-language';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
@@ -27,7 +31,13 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
+import type {
+  PdfUploader,
+  UploadedDocument,
+} from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
@@ -35,6 +45,11 @@ import {
   MIN_CHARACTERS_PASSWORD,
   passwordValidators,
 } from '../shared-registration/password-policy';
+import {
+  legalDocumentsFields,
+  RECORD_LEGAL_DOCUMENTS,
+  type DocumentLegalKey,
+} from '../shared-registration/legal-documents';
 import { medicalCenterCodeFromName } from './medical-center-code';
 import {
   DESTINO_TIPO_DE_ORGANIZACION,
@@ -54,6 +69,23 @@ const JURISDICTION_CODE = 'JURISDICTION_NATIONAL';
 const AVISO_CATALOGO = 'No pudimos cargar los catálogos del alta. Revise su conexión y vuelva a enviar.';
 
 const MAX_LEGAL_NAME = 300;
+
+/**
+ * Los documentos que un tipo societario puede omitir: las personas naturales
+ * no tienen escritura de constitución, y el profesional independiente ejerce
+ * con su NIT personal, sin matrícula de comercio. Es la misma regla que aplica
+ * la API (`assertLegalDocumentsForEntityType`, 422 nombrando el documento);
+ * decisión del propietario del 28/10/2026. El resto de los tipos sube los cinco.
+ */
+export const DOCUMENTOS_OPCIONALES_POR_TIPO: Readonly<Record<string, readonly DocumentLegalKey[]>> = {
+  UNIPERSONAL: ['constitutionFileId'],
+  PROFESIONAL_INDEPENDIENTE: ['constitutionFileId', 'commerceRegistryFileId'],
+};
+
+/** Los documentos que el tipo societario elegido puede omitir; ninguno si no hay tipo. */
+export function documentosOpcionales(tipoSocietario: string): readonly DocumentLegalKey[] {
+  return DOCUMENTOS_OPCIONALES_POR_TIPO[tipoSocietario] ?? [];
+}
 const MAX_EMAIL = 320;
 const MAX_NAME = 200;
 
@@ -62,8 +94,8 @@ const MAX_NAME = 200;
  * ofrece **ahora**.
  *
  * Las opciones llegan del catálogo después de pintar: si traen menos tipos que
- * los que había —una API sin `CLINIC`—, un valor ya elegido quedaría marcado
- * en el formulario sin un radio que lo muestre, y saldría igual a la red para
+ * los que había —una API sin `CLINIC`—, un valor ya elegido quedaría puesto
+ * en el formulario sin una opción que lo muestre, y saldría igual a la red para
  * volver con un 400. Vacío no es asunto de este validador: lo dice `required`.
  *
  * @param opciones - Lee las opciones vigentes; se consulta en cada validación.
@@ -120,13 +152,26 @@ export function signupErrorMessage(error: unknown): string {
  */
 @Component({
   selector: 'app-register-medical-center',
-  imports: [RegistrationBadge, Alert, AnnounceOnAppear, AppButton, AuthSplit, Link, PaginatedForm, RouterLink],
+  imports: [
+    RegistrationBadge,
+    Alert,
+    AnnounceOnAppear,
+    AppButton,
+    AuthSplit,
+    CustomField,
+    DropzonePdf,
+    Link,
+    NgTemplateOutlet,
+    PaginatedForm,
+    RouterLink,
+  ],
   templateUrl: './register-medical-center.html',
   styleUrls: ['../shared-registration/registration.css', './register-medical-center.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterMedicalCenter {
   private readonly client = inject(MedicalCenterRegistrationClient);
+  private readonly iam = inject(IamClient);
   private readonly context = inject(SystemContextClient);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
   private readonly router = inject(Router);
@@ -139,8 +184,8 @@ export class RegisterMedicalCenter {
    * Los tipos de institución que la API publica, de los cinco médicos.
    *
    * Arranca con la lista de respaldo —los cinco—: con un catálogo lento, un
-   * grupo obligatorio vacío pedía «Elija el tipo de institución.» sin nada que
-   * elegir. Cuando el catálogo responde se queda con los que publica, y
+   * desplegable obligatorio vacío pedía «Elija el tipo de institución.» sin
+   * nada que elegir. Cuando el catálogo responde se queda con los que publica, y
    * `ofrecerTipos` vacía lo elegido si dejó de ofrecerse.
    */
   private readonly tiposDeOrganizacion = signal<readonly SelectOption<MedicalOrganizationType>[]>(
@@ -157,6 +202,16 @@ export class RegisterMedicalCenter {
       validators: [Validators.required, Validators.maxLength(MAX_LEGAL_NAME)],
     }),
     legalEntityType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    // Los cinco papeles de la empresa (CM-11, como el alta de aseguradora):
+    // guardan el `fileId` de la pre-carga, no el archivo, y son obligatorios.
+    constitutionFileId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    taxIdentifierFileId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    commerceRegistryFileId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    operatingLicenseFileId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    healthAuthorityCertificateFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     ownerName: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NAME)],
@@ -168,6 +223,11 @@ export class RegisterMedicalCenter {
     password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
   });
 
+  /** El tipo societario elegido: decide qué documentos son opcionales. */
+  private readonly tipoSocietario = toSignal(this.form.controls.legalEntityType.valueChanges, {
+    initialValue: this.form.controls.legalEntityType.value,
+  });
+
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly registered = signal(false);
@@ -177,8 +237,9 @@ export class RegisterMedicalCenter {
   private readonly tiposSocietarios = signal<readonly SelectOption<string>[]>([]);
 
   /**
-   * Dos páginas, de a cuatro campos como tope: la organización y la cuenta de
-   * quien la administra. `computed` porque los catálogos de tipos llegan
+   * La organización, sus documentos legales y la cuenta de quien la
+   * administra, de a cuatro campos como tope: el motor parte los cinco
+   * documentos en «(1 de 2)» y «(2 de 2)». `computed` porque los catálogos de tipos llegan
    * después de que la pantalla se arma.
    */
   protected readonly paginas = computed(() =>
@@ -186,18 +247,15 @@ export class RegisterMedicalCenter {
       {
         titulo: 'La organización',
         hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
-        // El tipo cruza la página con sus opciones en rejilla, y la razón
-        // social y el tipo societario comparten renglón: es lo que hace que la
-        // página entre sin scroll en un monitor de 768 px de alto (§5).
-        disposicion: 'dos-columnas' as const,
+        // Los tres campos comparten un renglón, como la página de la cuenta:
+        // el tipo de institución es un desplegable, igual que el societario.
+        disposicion: 'tres-columnas' as const,
         campos: [
           {
             key: 'tenantType',
             label: 'Tipo de institución',
-            control: 'radio' as const,
+            control: 'select' as const,
             options: this.tiposDeOrganizacion(),
-            ancho: 'completo' as const,
-            opcionesEn: 'rejilla' as const,
             required: true,
             testId: 'medical-center-signup-tenant-type',
             mensajeDeError: 'Elija el tipo de institución.',
@@ -225,6 +283,13 @@ export class RegisterMedicalCenter {
             mensajeDeError: 'Elija el tipo societario.',
           },
         ],
+      },
+      {
+        titulo: 'Documentación legal obligatoria (PDF)',
+        clave: 'documentos-legales',
+        icon: 'folder' as const,
+        hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
+        campos: this.camposDeDocumentos(),
       },
       {
         titulo: 'Su cuenta',
@@ -264,7 +329,22 @@ export class RegisterMedicalCenter {
     ]),
   );
 
+  /**
+   * Los cinco campos de documento, con los que el tipo societario permite
+   * omitir marcados «(opcional)» y sin mensaje de obligatorio.
+   */
+  private camposDeDocumentos() {
+    const opcionales = documentosOpcionales(this.tipoSocietario());
+    return legalDocumentsFields('BO', uiLanguage()).map((campo) => {
+      if (!opcionales.some((clave) => clave === campo.key)) return campo;
+      const { required: _required, mensajeDeError: _mensaje, ...resto } = campo;
+      return { ...resto, label: `${campo.label} (opcional)` };
+    });
+  }
+
   constructor() {
+    // Cambiar el tipo societario cambia qué documentos son obligatorios.
+    this.form.controls.legalEntityType.valueChanges.subscribe((tipo) => this.exigirDocumentos(tipo));
     this.context.dynamicEnum(DESTINO_TIPO_DE_ORGANIZACION).subscribe({
       next: (catalogo) => this.ofrecerTipos(medicalOrganizationTypeOptions(catalogo)),
       error: () => this.ofrecerTipos(medicalOrganizationTypeOptions(null)),
@@ -272,8 +352,74 @@ export class RegisterMedicalCenter {
     this.legalEntityTypes.listar().subscribe({
       next: (opciones) =>
         this.tiposSocietarios.set(this.legalEntityTypes.opcionesPorPais(opciones, 'BO')),
-      error: () => this.tiposSocietarios.set([]),
+      // Sin catálogo el servicio ofrece las figuras de su diccionario: un
+      // desplegable vacío dejaba el alta sin poder terminarse.
+      error: () => this.tiposSocietarios.set(this.legalEntityTypes.opcionesPorPais([], 'BO')),
     });
+  }
+
+  /* --- documentos legales (dropzone real, con `fileId`) ------------------ */
+
+  /** Vuelve obligatorios los cinco documentos salvo los que el tipo societario permite omitir. */
+  private exigirDocumentos(tipoSocietario: string): void {
+    const opcionales = documentosOpcionales(tipoSocietario);
+    for (const clave of this.clavesDeDocumento) {
+      const control = this.form.controls[clave];
+      if (opcionales.includes(clave)) {
+        control.removeValidators(Validators.required);
+      } else {
+        control.addValidators(Validators.required);
+      }
+      control.updateValueAndValidity({ emitEvent: false });
+    }
+  }
+
+  protected esDocumentoObligatorio(clave: DocumentLegalKey): boolean {
+    return !documentosOpcionales(this.tipoSocietario()).includes(clave);
+  }
+
+  /** Cómo sube cada `app-dropzone-pdf`: la pre-carga pública de las demás altas. */
+  protected readonly subirDocumento: PdfUploader = (file) =>
+    this.iam.uploadRegistrationDocument(file);
+
+  protected readonly clavesDeDocumento: readonly DocumentLegalKey[] = RECORD_LEGAL_DOCUMENTS.map(
+    (documento) => documento.key,
+  );
+
+  /** Lo ya subido por cada dropzone, para sobrevivir a que el asistente destruya y recree la página. */
+  private readonly documentosSubidos = signal<Partial<Record<DocumentLegalKey, UploadedDocument>>>({});
+
+  registrarDocumento(clave: DocumentLegalKey, fileId: string | null): void {
+    const control = this.form.controls[clave];
+    control.setValue(fileId ?? '');
+    control.markAsTouched();
+    if (fileId === null) {
+      this.documentosSubidos.update((actual) => {
+        const { [clave]: _omitido, ...resto } = actual;
+        return resto;
+      });
+    }
+  }
+
+  protected recordarDocumento(clave: DocumentLegalKey, documento: UploadedDocument): void {
+    this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
+  }
+
+  protected documentoInicialDe(clave: DocumentLegalKey): UploadedDocument | null {
+    return this.documentosSubidos()[clave] ?? null;
+  }
+
+  protected esDocumentoInvalido(clave: DocumentLegalKey): boolean {
+    const control = this.form.controls[clave];
+    return control.touched && control.invalid;
+  }
+
+  /** El rótulo ya resuelto del documento, para pasárselo a su dropzone. */
+  protected etiquetaDeDocumento(clave: DocumentLegalKey): string {
+    const campo = this.paginas()
+      .flatMap((pagina) => pagina.campos)
+      .find((c) => c.key === clave);
+    return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 
   submit(): void {
@@ -304,8 +450,8 @@ export class RegisterMedicalCenter {
   /**
    * Publica las opciones del tipo y revalida lo elegido contra ellas.
    *
-   * Un valor que dejó de ofrecerse se vacía: la persona vuelve a ver el grupo
-   * sin marcar —y, si ya lo había tocado, con «Elija el tipo de institución.»—
+   * Un valor que dejó de ofrecerse se vacía: la persona vuelve a ver el
+   * desplegable sin elegir —y, si ya lo había tocado, con «Elija el tipo de institución.»—
    * en vez de un valor invisible que la API rechazaría.
    */
   private ofrecerTipos(opciones: readonly SelectOption<MedicalOrganizationType>[]): void {
@@ -347,6 +493,15 @@ export class RegisterMedicalCenter {
       tenantType: tipo,
       legalName: f.legalName.trim(),
       legalEntityType: f.legalEntityType,
+      legalDocuments: {
+        // Los opcionales que no se subieron no viajan: la API los omite sólo
+        // si el tipo societario lo permite, y un '' no es un uuid.
+        ...(f.constitutionFileId === '' ? {} : { constitutionFileId: f.constitutionFileId }),
+        taxIdentifierFileId: f.taxIdentifierFileId,
+        ...(f.commerceRegistryFileId === '' ? {} : { commerceRegistryFileId: f.commerceRegistryFileId }),
+        operatingLicenseFileId: f.operatingLicenseFileId,
+        healthAuthorityCertificateFileId: f.healthAuthorityCertificateFileId,
+      },
       countryConceptId: ids.pais,
       jurisdictionConceptId: ids.jurisdiccion,
       owner: {
