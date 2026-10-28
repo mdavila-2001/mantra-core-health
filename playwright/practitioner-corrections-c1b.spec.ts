@@ -63,7 +63,6 @@ interface Applicant {
   readonly document: string;
   readonly license: string;
   readonly sedesCredential: string;
-  readonly collegeLicense: string;
 }
 
 /** En el simulador cada corrida empieza de cero: alcanza con distinguir el tema. */
@@ -73,7 +72,6 @@ function simulatorApplicant(theme: Theme): Applicant {
     document: '7654321',
     license: 'MP-12345',
     sedesCredential: 'T.I. 538/14',
-    collegeLicense: 'CMB-4410',
   };
 }
 
@@ -85,7 +83,6 @@ function realApiApplicant(): Applicant {
     document: String(Date.now()).slice(-8),
     license: `MP-${run}`,
     sedesCredential: `T.I. ${run}`,
-    collegeLicense: `CMB-${run}`,
   };
 }
 
@@ -261,8 +258,7 @@ async function finishRegistration(page: Page, applicant: Applicant): Promise<voi
   await onPage(page, 'Su habilitación');
   await page.getByTestId('registro-pro-matricula').fill(applicant.license);
   await page.getByTestId('registro-pro-credencial').fill(applicant.sedesCredential);
-  // Para «Médico» el registro en el Colegio Médico es obligatorio.
-  await page.getByTestId('registro-pro-colegio').fill(applicant.collegeLicense);
+  // En esta rama el alta no pide el registro en el Colegio Médico.
 
   // «Siguiente» hasta que el alta termine. El último clic pre-carga el logo y
   // envía el alta; mientras eso viaja el botón se deshabilita y no se insiste.
