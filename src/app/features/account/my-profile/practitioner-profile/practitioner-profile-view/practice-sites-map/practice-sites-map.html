@@ -31,20 +31,27 @@
             @if (sede.direccion) {
               <span class="sedes__direccion">{{ sede.direccion }}</span>
             }
-            @if (sede.contactPhone; as contactPhone) {
-              <a
-                class="sedes__ruta"
-                [href]="'tel:' + contactPhone.replaceAll(' ', '')"
-                data-testid="practice-site-contact-phone"
-              >
-                Teléfono: {{ contactPhone }}
-              </a>
-            }
             @if (!sede.ubicada) {
               <span class="sedes__aviso">Sin ubicación cargada: no aparece en el mapa.</span>
             }
           </span>
         </button>
+
+        <!-- El teléfono es un enlace propio, hermano del botón y no hijo: un
+             `<a>` dentro de un `<button>` es contenido interactivo anidado, y
+             elegir la sede podía terminar en una llamada. Sólo llama quien
+             toca el enlace. El nombre accesible empieza por lo que hace y
+             conserva el texto visible, para quien lo pide por voz. -->
+        @if (sede.contactPhone; as contactPhone) {
+          <a
+            class="sedes__telefono"
+            [href]="'tel:' + contactPhone.replaceAll(' ', '')"
+            [attr.aria-label]="'Llamar a ' + sede.nombre + '. Teléfono: ' + contactPhone"
+            data-testid="practice-site-contact-phone"
+          >
+            Teléfono: {{ contactPhone }}
+          </a>
+        }
 
         @if (sede.comoLlegar; as ruta) {
           <a class="sedes__ruta" [href]="ruta" target="_blank" rel="noopener noreferrer">
