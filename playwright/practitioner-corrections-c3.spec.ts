@@ -117,7 +117,7 @@ async function openTomorrowDayCard(page: Page): Promise<Locator> {
 
 /** Elige a la paciente sintética en «¿Con quién?». */
 async function choosePatient(page: Page, card: Locator): Promise<void> {
-  await card.getByPlaceholder('Nombre o código del paciente').fill('Pérez Quiroga');
+  await card.getByRole('combobox', { name: '¿Con quién?' }).fill('Pérez Quiroga');
   await page.getByRole('option', { name: new RegExp(PATIENT_NAME) }).click();
   await expect(card.getByText('le avisamos al paciente')).toBeVisible();
 }
