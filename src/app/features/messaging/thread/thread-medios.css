@@ -619,12 +619,13 @@
   white-space: nowrap;
 }
 
-/* El área táctil llega a 44 px de alto sin agrandar la píldora: la barra ya
-   tiene 8 px arriba y abajo, y la píldora más alta la engordaba en 390. */
+/* El área táctil llega a 44 px de alto sin agrandar la píldora, que más alta
+   engordaba la barra en 390. El velo se mide desde la caja de relleno (la
+   píldora tiene 1 px de borde): 34 + 5 + 5. */
 .hilo__fijado-ver::after {
   content: '';
   position: absolute;
-  inset: -4px 0;
+  inset: -5px 0;
 }
 
 /* --- «Respondiendo como …», sobre el composer ---------------------------- */

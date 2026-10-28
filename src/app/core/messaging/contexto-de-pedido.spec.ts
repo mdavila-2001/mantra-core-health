@@ -9,7 +9,7 @@ import { contextoDePedido, numeroCortoDePedido, numeroDelTitulo } from './contex
  */
 describe('contextoDePedido', () => {
   const pedido = (extra: Partial<PedidoFarmacia> = {}): PedidoFarmacia => ({
-    id: '7f3c0a2e-9d41-4b7e-8c55-1a2b3c4d22be',
+    id: '22beca6b-3491-4509-a9ac-37fea06bd004',
     estado: 'ACEPTACION_PENDIENTE',
     creadoEl: new Date('2026-08-21T10:00:00'),
     venceEl: null,
@@ -35,8 +35,8 @@ describe('contextoDePedido', () => {
     ...extra,
   });
 
-  it('el número corto son los últimos cuatro caracteres del id, en mayúsculas', () => {
-    expect(numeroCortoDePedido('7f3c0a2e-9d41-4b7e-8c55-1a2b3c4d22be')).toBe('#22BE');
+  it('el número corto son los primeros cuatro caracteres del id, en mayúsculas', () => {
+    expect(numeroCortoDePedido('22beca6b-3491-4509-a9ac-37fea06bd004')).toBe('#22BE');
     expect(numeroCortoDePedido('p-1')).toBe('#P1');
   });
 
@@ -44,7 +44,7 @@ describe('contextoDePedido', () => {
     const contexto = contextoDePedido(pedido());
     expect(contexto.titulo).toBe('#22BE · Farmacia Vida · Sucursal Central');
     expect(contexto.detalle).toMatch(/^2 productos · 96,50 /u);
-    expect(contexto.ruta).toBe('/my-account/pharmacy-orders/7f3c0a2e-9d41-4b7e-8c55-1a2b3c4d22be');
+    expect(contexto.ruta).toBe('/my-account/pharmacy-orders/22beca6b-3491-4509-a9ac-37fea06bd004');
   });
 
   it('no lleva el estado: la tarjeta no se actualiza y el estado cambia', () => {

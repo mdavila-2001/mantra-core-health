@@ -127,6 +127,12 @@
 /* Un disco del color de la burbuja, del tamaño del glifo: tapa el texto de
    debajo sin el parche de degradado que se veía antes. */
 .hilo__mas-mensaje svg {
+  /* El glifo sí recibe el clic aunque el botón esté escondido: el área de
+     44 px que tapa el texto deja pasar los clics a un enlace de debajo, pero
+     el disco de 20 px —que es el objetivo— sigue siendo el botón. Sin esto un
+     clic directo sobre el chevron, sin pasar antes el puntero por la burbuja
+     (teclado virtual, automatización), caía en el texto. */
+  pointer-events: auto;
   box-sizing: border-box;
   inline-size: 20px;
   block-size: 20px;

@@ -9,8 +9,8 @@ export const RUTA_DEL_PEDIDO_DEL_PACIENTE = '/my-account/pharmacy-orders';
 const LARGO_DEL_NUMERO = 4;
 
 /**
- * El número corto de un pedido, «#22BE»: los últimos caracteres de su id, en
- * mayúsculas.
+ * El número corto de un pedido, «#22BE»: los primeros caracteres de su id, en
+ * mayúsculas —como el hash corto de un commit—.
  *
  * El contrato no trae un número de pedido legible, y el id entero (un uuid)
  * no se dice en voz alta ni se busca a ojo en un hilo. Cuatro caracteres
@@ -19,7 +19,7 @@ const LARGO_DEL_NUMERO = 4;
  */
 export function numeroCortoDePedido(id: string): string {
   const limpio = id.replace(/[^\da-z]/giu, '');
-  return `#${limpio.slice(-LARGO_DEL_NUMERO).toUpperCase()}`;
+  return `#${limpio.slice(0, LARGO_DEL_NUMERO).toUpperCase()}`;
 }
 
 /** Reconoce el número corto al principio de un título de tarjeta de pedido. */

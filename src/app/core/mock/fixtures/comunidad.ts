@@ -6,6 +6,7 @@ import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } 
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
 import { avatarSvg, Coleccion, imagenSvg, iso, portadaSvg, uuid } from '../mock-store';
 import { textoDeContexto } from '../../messaging/contexto-de-chat';
+import { numeroCortoDePedido } from '../../messaging/contexto-de-pedido';
 
 /* ============================================================================
     La red social: vitrinas públicas (personas y organizaciones), publicaciones,
@@ -634,11 +635,17 @@ const C4 = uuid('conv-paciente-soporte');
 const C5 = uuid('conv-paciente-dermatologo');
 const C6 = uuid('conv-equipo-cardio');
 const C7 = uuid('conv-paciente-farmacia-vida');
-/** La tarjeta del pedido 1, tal cual la arma `contextoDePedido`. */
+/**
+ * La tarjeta del pedido 1, **tal cual** la arma `contextoDePedido` con el
+ * pedido de la maqueta (`pharmacy.handlers.ts`): número corto, farmacia, sede,
+ * productos y total. Si difiere en un carácter, abrir el chat desde el pedido
+ * o desde el mostrador pone una segunda tarjeta del mismo pedido —el store
+ * sólo deja de repetirla si la última es idéntica—.
+ */
 const TARJETA_PEDIDO_1 = textoDeContexto({
   tipo: 'pedido',
-  titulo: 'Farmacia Vida · Sucursal Central',
-  detalle: '2 productos',
+  titulo: `${numeroCortoDePedido(uuid('pharmacy-order-1'))} · Farmacia Vida · Sucursal Central`,
+  detalle: '2 productos · 29,50 Bs',
   ruta: `/my-account/pharmacy-orders/${uuid('pharmacy-order-1')}`,
 });
 const PEDIATRA_V = vitrinaDe(PROFESIONALES[1]!.id)!.id;
