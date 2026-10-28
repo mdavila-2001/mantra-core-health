@@ -1,8 +1,9 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Request } from '@playwright/test';
 
+import { REAL_API, REAL_API_SKIP_REASON, uniqueSuffix } from './support/real-session';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 
 /**
@@ -14,13 +15,18 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  *    2:1 del perfil y del membrete, y el alta se completa con ella.
  * 2. Un médico existente lo cambia desde «Editar» y su perfil muestra el nuevo.
  * 3. El paciente no tiene ese bloque en su perfil: el logo es del consultorio.
+ * 4. Con la API real, el alta sube el logo como un archivo `multipart` y reclama
+ *    el `fileId` que devolvió esa carga en `ownSite.logoFileId`.
  *
- * Contra el simulador (cuentas `medica@` y `paciente@alovida.mock`). El
- * simulador no abre sesión para una cuenta creada durante la corrida, así que el
- * perfil del médico recién registrado no se puede abrir acá: que el alta lleve
- * `ownSite.logoFileId` y que el perfil lea el logo de la sede propia lo fijan
- * las pruebas unitarias del alta y de `PracticeLogoClient`, y el perfil con logo
- * se ve en (2), que lee el mismo campo de la misma sede.
+ * (1) a (3) corren contra el simulador (cuentas `medica@` y
+ * `paciente@alovida.mock`). El simulador no abre sesión para una cuenta creada
+ * durante la corrida, así que el perfil del médico recién registrado no se puede
+ * abrir acá; el perfil con logo se ve en (2), que lee el mismo campo de la misma
+ * sede. El simulador contesta dentro de la página (`mock-backend.interceptor.ts`)
+ * y sus peticiones no salen a la red, así que lo que viaja sólo se puede
+ * observar contra la API: eso es (4), que exige `E2E_API_REAL=1` con el front en
+ * modo real-api y se salta, con el motivo a la vista, sin él. Sin ella, la forma
+ * del cuerpo la fijan las pruebas unitarias del alta y de `PracticeLogoClient`.
  *
  * A 1280 y 360, en claro y oscuro. Las capturas quedan en
  * `docs/frontend/evidence/correcciones-medico-c1b/`, sin `fullPage`: cada una
@@ -46,6 +52,42 @@ const VIEWPORT_HEIGHT: Readonly<Record<number, number>> = { 360: 800, 1280: 900 
 
 /** Un punto de Santa Cruz de la Sierra, para el domicilio que el alta exige. */
 const HOME_POINT = { lat: -17.7833, lng: -63.1821 };
+
+/** La pre-carga anónima del logo y el alta que lo reclama (`iam.client.ts`, `practice-logo.client.ts`). */
+const LOGO_UPLOAD_PATH = '/iam/auth/upload-registration-logo';
+const REGISTRATION_PATH = '/iam/auth/register-practitioner';
+
+/** Los datos del alta que el backend no deja repetir entre dos cuentas. */
+interface Applicant {
+  readonly email: string;
+  readonly document: string;
+  readonly license: string;
+  readonly sedesCredential: string;
+  readonly collegeLicense: string;
+}
+
+/** En el simulador cada corrida empieza de cero: alcanza con distinguir el tema. */
+function simulatorApplicant(theme: Theme): Applicant {
+  return {
+    email: `ana.paz.logo.${theme}@example.test`,
+    document: '7654321',
+    license: 'MP-12345',
+    sedesCredential: 'T.I. 538/14',
+    collegeLicense: 'CMB-4410',
+  };
+}
+
+/** Contra la API la base sobrevive a la corrida: todo lo que no se repite lleva la marca de esta. */
+function realApiApplicant(): Applicant {
+  const run = uniqueSuffix();
+  return {
+    email: `ana.paz.logo.${run}@example.test`.toLowerCase(),
+    document: String(Date.now()).slice(-8),
+    license: `MP-${run}`,
+    sedesCredential: `T.I. ${run}`,
+    collegeLicense: `CMB-${run}`,
+  };
+}
 
 test.beforeAll(() => {
   mkdirSync(EVIDENCE_DIR, { recursive: true });
@@ -176,11 +218,11 @@ async function confirmPoint(
 }
 
 /** Las cuatro páginas obligatorias antes del consultorio propio. */
-async function fillUntilOwnOffice(page: Page, email: string): Promise<void> {
+async function fillUntilOwnOffice(page: Page, applicant: Applicant): Promise<void> {
   await onPage(page, 'Su nombre y su cédula');
   await page.getByTestId('registro-pro-nombre').fill('Ana');
   await page.getByTestId('registro-pro-apellido-paterno').fill('Paz');
-  await page.getByTestId('registro-pro-documento').fill('7654321');
+  await page.getByTestId('registro-pro-documento').fill(applicant.document);
   await pick(page, /Departamento de emisión/, 'Santa Cruz');
   await next(page);
 
@@ -191,7 +233,7 @@ async function fillUntilOwnOffice(page: Page, email: string): Promise<void> {
   await page.keyboard.type('12051985', { delay: 60 });
   await expect(birthDate).toHaveValue('12/05/1985');
   await page.getByTestId('registro-pro-celular-personal').fill('70012345');
-  await page.getByTestId('registro-pro-correo-personal').fill(email);
+  await page.getByTestId('registro-pro-correo-personal').fill(applicant.email);
   await page.getByTestId('registro-pro-password').fill('Medico-2026!');
   await next(page);
 
@@ -210,17 +252,17 @@ async function fillUntilOwnOffice(page: Page, email: string): Promise<void> {
 }
 
 /** Desde el título profesional hasta crear la cuenta: lo que sigue es opcional. */
-async function finishRegistration(page: Page): Promise<void> {
+async function finishRegistration(page: Page, applicant: Applicant): Promise<void> {
   await onPage(page, 'Su título profesional');
   await page.getByTestId('registro-pro-titulo').getByRole('combobox').fill('Médico');
   await page.getByRole('option', { name: 'Médico / Médica', exact: true }).click();
   await next(page);
 
   await onPage(page, 'Su habilitación');
-  await page.getByTestId('registro-pro-matricula').fill('MP-12345');
-  await page.getByTestId('registro-pro-credencial').fill('T.I. 538/14');
+  await page.getByTestId('registro-pro-matricula').fill(applicant.license);
+  await page.getByTestId('registro-pro-credencial').fill(applicant.sedesCredential);
   // Para «Médico» el registro en el Colegio Médico es obligatorio.
-  await page.getByTestId('registro-pro-colegio').fill('CMB-4410');
+  await page.getByTestId('registro-pro-colegio').fill(applicant.collegeLicense);
 
   // «Siguiente» hasta que el alta termine. El último clic pre-carga el logo y
   // envía el alta; mientras eso viaja el botón se deshabilita y no se insiste.
@@ -231,6 +273,11 @@ async function finishRegistration(page: Page): Promise<void> {
     await done.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => undefined);
   }
   await expect(done).toBeVisible({ timeout: 60_000 });
+}
+
+/** Un `POST` a esa ruta de la API, con el prefijo que tenga la URL base. */
+function isPostTo(path: string): (request: Request) => boolean {
+  return (request) => request.method() === 'POST' && new URL(request.url()).pathname.endsWith(path);
 }
 
 /* ------------------------------------------------------------------- perfil */
@@ -245,15 +292,21 @@ async function openPersonalData(page: Page): Promise<void> {
 /* -------------------------------------------------------------------- casos */
 
 test.describe('Correcciones del médico · el logo del consultorio', () => {
+  test.skip(
+    REAL_API,
+    'Omitido: corre contra el simulador (cuentas @alovida.mock); con E2E_API_REAL=1 corre (4). No es un verde.',
+  );
+
   for (const theme of THEMES) {
     test(`un médico nuevo se da de alta con el logo de su consultorio (${theme})`, async ({ page }) => {
       test.setTimeout(300_000);
+      const applicant = simulatorApplicant(theme);
       await useTheme(page, theme);
       await setWidth(page, 1280);
       await page.goto(`${BASE_URL}/auth/register/practitioner`, { waitUntil: 'domcontentloaded' });
       await esperarAQueSeAsiente(page);
 
-      await fillUntilOwnOffice(page, `ana.paz.logo.${theme}@example.test`);
+      await fillUntilOwnOffice(page, applicant);
       await page.getByTestId('registration-practitioner-office-name').fill('Consultorio Paz');
 
       const field = page.locator('[data-campo="officeLogo"]');
@@ -312,7 +365,7 @@ test.describe('Correcciones del médico · el logo del consultorio', () => {
       await setWidth(page, 1280);
 
       await next(page);
-      await finishRegistration(page);
+      await finishRegistration(page, applicant);
       await capture(page, page.getByTestId('registro-exito'), `registration-done-with-logo-${theme}-1280`);
     });
 
@@ -377,4 +430,53 @@ test.describe('Correcciones del médico · el logo del consultorio', () => {
       }
     });
   }
+});
+
+test.describe('Correcciones del médico · lo que el alta manda del logo (API real)', () => {
+  test.skip(!REAL_API, REAL_API_SKIP_REASON);
+
+  test('la carga sale en multipart y el alta reclama su fileId en ownSite.logoFileId', async ({
+    page,
+  }) => {
+    test.setTimeout(300_000);
+    const applicant = realApiApplicant();
+    await setWidth(page, 1280);
+    await page.goto(`${BASE_URL}/auth/register/practitioner`, { waitUntil: 'domcontentloaded' });
+    await esperarAQueSeAsiente(page);
+
+    await fillUntilOwnOffice(page, applicant);
+    await page.getByTestId('registration-practitioner-office-name').fill('Consultorio Paz');
+    await page.getByTestId('registration-practitioner-office-logo-input').setInputFiles({
+      name: 'logo.png',
+      mimeType: 'image/png',
+      buffer: await drawLogo(page, 'Consultorio Paz'),
+    });
+    await expect(
+      page.getByTestId('registration-practitioner-office-logo-preview').locator('img'),
+    ).toHaveAttribute('src', /^data:image\/png/);
+
+    // Sólo se observan: ni la petición ni la respuesta se tocan. La carga sale
+    // con el último «Siguiente», antes que el alta.
+    const uploadSent = page.waitForRequest(isPostTo(LOGO_UPLOAD_PATH), { timeout: 240_000 });
+    const registrationSent = page.waitForRequest(isPostTo(REGISTRATION_PATH), { timeout: 240_000 });
+    await next(page);
+    await finishRegistration(page, applicant);
+
+    // La carga: un formulario multipart, y la API lo acepta como logo.
+    const upload = await uploadSent;
+    expect(await upload.headerValue('content-type')).toMatch(/^multipart\/form-data; boundary=/);
+    const uploaded = await upload.response();
+    expect(uploaded, 'la carga del logo tuvo respuesta').not.toBeNull();
+    expect(uploaded!.status(), await uploaded!.text()).toBe(201);
+    const { fileId } = (await uploaded!.json()) as { readonly fileId?: string };
+    expect(fileId, 'la carga devolvió el id del archivo').toBeTruthy();
+
+    // El alta: reclama ese mismo archivo como logo de su consultorio propio.
+    const registration = await registrationSent;
+    const body = registration.postDataJSON() as {
+      readonly ownSite?: { readonly name?: string; readonly logoFileId?: string };
+    };
+    expect(body.ownSite?.name).toBe('Consultorio Paz');
+    expect(body.ownSite?.logoFileId).toBe(fileId);
+  });
 });

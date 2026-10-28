@@ -3492,6 +3492,10 @@ describe('RegisterPractitioner', () => {
       const error = field.querySelector('[data-testid="registration-practitioner-office-logo-error"]');
       expect(error?.getAttribute('role')).toBe('alert');
       expect(error?.textContent).toContain('PNG, JPG o WebP');
+      // Dentro de la página también: el motivo describe al selector.
+      expect(error?.id).toBeTruthy();
+      expect(input.getAttribute('aria-describedby')?.split(' ')).toContain(error?.id);
+      expect(input.getAttribute('aria-invalid')).toBe('true');
       expect(logoSelection().file()).toBeNull();
       http.expectNone(LOGO_UPLOAD);
     });

@@ -7,17 +7,18 @@
   />
 
   <div class="office-logo__actions">
+    <!-- El nombre del selector. El rótulo visible es el del campo del motor de
+         páginas, que no le llega (ver la nota de la clase). -->
+    <span class="sr-only" [id]="labelId()">Logo del consultorio</span>
     <app-file-input
       testId="registration-practitioner-office-logo-input"
       label="Subir logo"
-      accessibleLabel="Logo del consultorio"
       [files]="files()"
       [accept]="accept"
       [maxSizeBytes]="maxBytes"
       [maxFiles]="1"
       [showList]="false"
       [showFeedback]="false"
-      [hasError]="selection.error() !== null"
       (filesChange)="choose($event)"
       (rejected)="reject($event)"
     />
@@ -38,6 +39,7 @@
         class="office-logo__error"
         role="alert"
         data-testid="registration-practitioner-office-logo-error"
+        [id]="errorId"
       >
         {{ error }}
       </p>
