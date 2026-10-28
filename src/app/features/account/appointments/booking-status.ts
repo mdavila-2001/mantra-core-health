@@ -91,3 +91,28 @@ export function toBookingStatusPresentation(
   }
   return PRESENTACION_POR_CODIGO[sufijoDeCodigo(concepto.code)] ?? SIN_RESOLVER;
 }
+
+/**
+ * Los estados en que la cita ofrece «Comprobante de pago» (v4.2.64).
+ *
+ * Allowlist, con el mismo criterio que la de cancelar: una cita viva o ya
+ * atendida se puede pagar —hay quien paga al pedir y quien paga al salir—; una
+ * cancelada no (la API responde 422), y un estado desconocido tampoco ofrece
+ * nada.
+ */
+const CODIGOS_CON_COMPROBANTE: ReadonlySet<string> = new Set([
+  'BOOKING_REQUESTED',
+  'BOOKING_PENDING_CONFIRMATION',
+  'BOOKING_CONFIRMED',
+  'BOOKING_CHECKED_IN',
+  'BOOKING_COMPLETED',
+  'EV_BOOKING_DONE',
+]);
+
+/**
+ * Si un turno ofrece el comprobante de pago, por su código de estado. Mientras
+ * el código no se resolvió (`''`) no lo ofrece.
+ */
+export function admiteComprobante(codigo: string): boolean {
+  return codigo !== '' && CODIGOS_CON_COMPROBANTE.has(sufijoDeCodigo(codigo));
+}

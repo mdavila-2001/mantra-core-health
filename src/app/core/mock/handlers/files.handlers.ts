@@ -210,7 +210,19 @@ export function fileContent(fileId: string): unknown {
   const a = archivos.get(fileId);
   if (a === undefined) return undefined;
   // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
-  if (a.bytes !== undefined) return a.bytes;
+  //
+  // `instanceof` y no `!== undefined`: la colección se guarda en
+  // `sessionStorage` como JSON, y un `Blob` no sobrevive a eso — tras recargar
+  // vuelve como `{}`. Ahí queda la copia `data:` de la imagen, que sí se guarda.
+  if (a.bytes instanceof Blob) return a.bytes;
+  if (a.dataUrlReal !== undefined) {
+    return {
+      body: a.dataUrlReal,
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+      },
+    };
+  }
   // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
   // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
   // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
@@ -228,6 +240,30 @@ export function fileContent(fileId: string): unknown {
     headers: {
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
     },
+  };
+}
+
+/**
+ * Lo que una ruta de contexto necesita saber de un archivo para aceptarlo como
+ * adjunto: su tipo, su nombre, su tamaño y quién lo subió. `undefined` si no
+ * existe.
+ *
+ * Existe por los comprobantes de pago, que sólo admiten un archivo propio de
+ * ciertos tipos y hasta 5 MB — la misma pregunta que hace la API real.
+ */
+export function archivoAdjuntable(fileId: string):
+  | { readonly mimeType: string; readonly originalName: string; readonly sizeBytes: number; readonly uploaderUserId?: string }
+  | undefined {
+  const a = archivos.get(fileId);
+  if (a === undefined) return undefined;
+  // Los bytes sólo son un `Blob` en la visita en que se subieron (ver `fileContent`).
+  const bytes = a.bytes instanceof Blob ? a.bytes : undefined;
+  const mimeType = bytes?.type || (a.category === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');
+  return {
+    mimeType,
+    originalName: a.originalName,
+    sizeBytes: bytes?.size ?? 24_576,
+    ...(a.uploaderUserId === undefined ? {} : { uploaderUserId: a.uploaderUserId }),
   };
 }
 

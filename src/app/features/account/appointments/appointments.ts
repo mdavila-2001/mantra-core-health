@@ -56,6 +56,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
+import { PaymentReceiptsTrigger } from '../../agenda/payment-receipts/payment-receipts-trigger';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
 import {
@@ -67,7 +68,7 @@ import {
   SERVICE_PARAM,
   reservaDelPortalRoute,
 } from './appointments.routes';
-import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
+import { admiteComprobante, sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 import { splitUpcomingAndPast } from './upcoming-and-past';
 
 /**
@@ -262,6 +263,7 @@ interface TurnoVisible {
    * hace estallar `formatDate` donde nadie registró ese idioma.
    */
   readonly reconsultaDe: Date | null;
+  readonly pago: NonNullable<Booking['paymentState']> | null;
 }
 
 /** Una espera activa, ya lista para mostrarse (P8). */
@@ -393,6 +395,7 @@ const SEDE_CUALQUIERA = 'cualquiera';
     EmptyState,
     FormField,
     PageHeader,
+    PaymentReceiptsTrigger,
     DatePicker,
     ReferenceCombobox,
     RouterLink,
@@ -1699,6 +1702,7 @@ export class Appointments {
    * ofrece el botón. Mientras el código no se resolvió (`''`) tampoco: nunca se
    * ofrece cancelar sobre un estado que no se conoce.
    */
+  protected readonly admiteComprobante = admiteComprobante;
   protected esCancelable(turno: TurnoVisible): boolean {
     return turno.codigo !== '' && CODIGOS_CANCELABLES.has(sufijoDeCodigo(turno.codigo));
   }
@@ -1754,7 +1758,7 @@ export class Appointments {
   }
 
   /** Cómo nombrar el turno en la confirmación: por su fecha, o genérico. */
-  private nombreDelTurno(turno: TurnoVisible): string {
+  protected nombreDelTurno(turno: TurnoVisible): string {
     if (turno.cuando === null) {
       return 'esta cita';
     }
@@ -1904,6 +1908,7 @@ export class Appointments {
       demoraCuando: cita.delayNotice?.announcedAt ?? null,
       esReconsulta: esReconsulta(cita),
       reconsultaDe: cita.followUpOf?.startAt ?? null,
+      pago: cita.paymentState ?? null,
     };
   }
 

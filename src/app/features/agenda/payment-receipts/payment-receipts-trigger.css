@@ -1,0 +1,7 @@
+/* Insignia y botón en la misma línea que el resto de las acciones de la fila. */
+:host {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}

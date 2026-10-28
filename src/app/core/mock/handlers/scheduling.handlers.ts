@@ -129,11 +129,11 @@ function dentro(instante: string, from: string | null, to: string | null): boole
   return true;
 }
 
-function estadoEs(r: ReservaSimulada, ...estados: (keyof typeof BOOKING_STATUS)[]): boolean {
+export function estadoEs(r: ReservaSimulada, ...estados: (keyof typeof BOOKING_STATUS)[]): boolean {
   return estados.some((e) => BOOKING_STATUS[e] === r.statusConceptId);
 }
 
-function reservaVisible(request: MockRequest, r: ReservaSimulada): boolean {
+export function reservaVisible(request: MockRequest, r: ReservaSimulada): boolean {
   const user = request.user;
   if (user === null) return false;
   if (user.patientProfileId !== undefined && user.practitionerProfileId === undefined) {

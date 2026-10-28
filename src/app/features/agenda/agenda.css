@@ -285,6 +285,14 @@
   white-space: nowrap;
 }
 
+/* En el celular no entran estado, «Estado del pago» y «Comprobantes» en una
+   línea: se parten antes que empujar la página de costado. */
+@media (max-width: 40rem) {
+  .agenda__pago {
+    flex-wrap: wrap;
+  }
+}
+
 /* «con seguro» acompaña al estado: es un dato secundario y se lee como tal, no
    como una segunda etiqueta que compita con la primera. */
 .agenda__seguro {

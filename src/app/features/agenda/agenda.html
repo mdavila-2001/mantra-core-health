@@ -547,6 +547,7 @@
           </app-menu-item>
         }
       </app-menu>
+      <app-payment-receipts-trigger mode="revisor" [bookingId]="cita.id" [cita]="filaDe(cita)" (changed)="trasOperar()" />
     }
   </div>
 </ng-template>
@@ -715,4 +716,3 @@
       </p>
     }
 </ng-template>
-
