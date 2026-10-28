@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { Actor } from './support/actores';
+import { capturar } from './support/captura';
 import { entrar, esperarAplicacionLista, irA } from './support/sesion';
 
 /**
@@ -17,8 +18,14 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  * el simulador contesta dentro del navegador —no hay petición de red que
  * esperar— y persiste en `sessionStorage`, así que la recarga vuelve a leer lo
  * guardado y no lo que la pantalla recordaba. El tramo petición → respuesta se
- * verifica contra la API real (ver el reporte del PR).
+ * verifica contra la API real (`mis-verificaciones-api-real.spec.ts`).
+ *
+ * Las capturas son evidencia: sin transiciones de vista (`reducedMotion`), sin
+ * `fullPage` (el área de contenido tiene scroll propio y la recomposición
+ * dejaba el armazón a medias) y con el ancho real en el nombre
+ * (`support/captura.ts`). La ventana es alta para que entre la pantalla.
  */
+test.use({ reducedMotion: 'reduce' });
 
 const MEDICA: Actor = {
   rol: 'doctora',
@@ -34,9 +41,9 @@ const ASEGURADORA: Actor = {
 };
 
 const VIEWPORTS = [
-  { nombre: '390', ancho: 390, alto: 844 },
-  { nombre: '768', ancho: 768, alto: 1024 },
-  { nombre: '1440', ancho: 1440, alto: 900 },
+  { nombre: '390', ancho: 390, alto: 1800 },
+  { nombre: '768', ancho: 768, alto: 1500 },
+  { nombre: '1440', ancho: 1440, alto: 1200 },
 ] as const;
 
 const EVIDENCIA = 'docs/refactor-profesional/trabajo/capturas/e2e/verificaciones';
@@ -138,19 +145,22 @@ test.describe('Mis verificaciones', () => {
       expect(Math.abs(tarjeta.holguraIzquierda - tarjeta.holguraDerecha)).toBeLessThanOrEqual(2);
       expect(tarjeta.proporcion).toBeGreaterThanOrEqual(0.85);
       expect(await desbordaHorizontal(page)).toBe(false);
-      await page.screenshot({ path: `${EVIDENCIA}/hoja-de-ruta-${vp.nombre}.png`, fullPage: true });
+      await capturar(page, `${EVIDENCIA}/hoja-de-ruta-${vp.nombre}.png`);
 
       await page.getByRole('tab', { name: 'Solicitudes enviadas' }).click();
       await expect(page.getByTestId('verif-bandeja')).toBeVisible();
       await expect(page.getByTestId('verif-hilo-abierto')).toBeVisible();
       expect(await desbordaHorizontal(page)).toBe(false);
-      await page.screenshot({ path: `${EVIDENCIA}/bandeja-${vp.nombre}.png`, fullPage: true });
+      await capturar(page, `${EVIDENCIA}/bandeja-${vp.nombre}.png`);
 
       expect(errores()).toEqual([]);
     });
   }
 
-  test('retirar una solicitud: UI → persistencia → recarga → UI', async ({ page }) => {
+  test('retirar y volver a pedir: UI → persistencia → recarga → UI, con la historia', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1200 });
     const errores = juntarErrores(page);
     await entrar(page, MEDICA);
     await abrirVerificaciones(page);
@@ -167,57 +177,104 @@ test.describe('Mis verificaciones', () => {
     await expect(page.getByTestId('verif-aviso')).toContainText(
       'Retiró su solicitud a Seguros Andina',
     );
-    await expect(page.getByTestId('verif-hilo-abierto')).toContainText('Retiré la solicitud.');
 
     // Recarga completa: lo que se ve sale de lo guardado.
     await page.reload();
     await esperarAplicacionLista(page);
     // La pestaña va en la URL (`?tab=requests`): la recarga vuelve a la bandeja.
     await expect(page.getByTestId('verif-bandeja')).toBeVisible({ timeout: 30_000 });
-    await page
-      .getByTestId('verif-bandeja')
-      .getByRole('button', { name: /Seguros Andina/ })
-      .click();
+    await hilo.click();
     await expect(page.getByTestId('verif-hilo-abierto')).toContainText('Retiré la solicitud.');
     await expect(page.getByTestId('verif-volver-a-pedir')).toBeVisible();
 
-    // Y volver a pedir la reabre, también releída de la API.
+    // Volver a pedir crea otra solicitud: el retiro queda en la conversación.
     await page.getByTestId('verif-volver-a-pedir').click();
     await expect(page.getByTestId('verif-aviso')).toContainText('Volvimos a enviar');
-    await page.screenshot({ path: `${EVIDENCIA}/retirar-y-volver-a-pedir.png`, fullPage: true });
+    await page.reload();
+    await esperarAplicacionLista(page);
+    await hilo.click();
+    const abierto = page.getByTestId('verif-hilo-abierto');
+    await expect(abierto).toContainText('Retiré la solicitud.', { timeout: 30_000 });
+    await expect(abierto).toContainText('Esperando que Seguros Andina');
+    await expect(abierto.getByTestId('verif-mensaje-me')).toHaveCount(3);
+    await capturar(page, `${EVIDENCIA}/retirar-y-volver-a-pedir-1440.png`);
 
     expect(errores()).toEqual([]);
   });
 });
 
 test.describe('la aseguradora decide y el médico lo ve', () => {
-  test('rechazar con motivo llega a la conversación del médico', async ({ page }) => {
+  for (const vp of [VIEWPORTS[0], VIEWPORTS[2]]) {
+    test(`la bandeja de la aseguradora a ${vp.nombre} px: entra por su panel, centrada y sin desborde`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: vp.ancho, height: vp.alto });
+      const errores = juntarErrores(page);
+      await entrar(page, ASEGURADORA);
+      await irA(page, '/dashboard');
+      // La puerta real: la franja del panel, debajo del saludo.
+      await page.getByTestId('panel-profesionales-que-piden').getByRole('link').click();
+      await expect(page.getByTestId('aseguradora-grupo-por-decidir')).toBeVisible({
+        timeout: 30_000,
+      });
+      const tarjeta = await medirTarjeta(page, '.pedidos__tarjeta');
+      expect(Math.abs(tarjeta.holguraIzquierda - tarjeta.holguraDerecha)).toBeLessThanOrEqual(2);
+      expect(tarjeta.proporcion).toBeGreaterThanOrEqual(0.85);
+      expect(await desbordaHorizontal(page)).toBe(false);
+      await capturar(page, `${EVIDENCIA}/aseguradora-bandeja-${vp.nombre}.png`);
+      expect(errores()).toEqual([]);
+    });
+  }
+
+  test('rechazar con motivo llega a la conversación del médico, y volver a pedir no lo borra', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1200 });
     const errores = juntarErrores(page);
     await entrar(page, ASEGURADORA);
-    await irA(page, '/administration/received-claims');
-    await page.getByRole('button', { name: 'Profesionales que piden sumarse' }).first().click();
-    await expect(page.getByTestId('aseguradora-pedidos')).toBeVisible({ timeout: 30_000 });
-    await page.screenshot({ path: `${EVIDENCIA}/aseguradora-bandeja-1440.png`, fullPage: true });
+    await irA(page, '/administration/insurer-practitioner-requests');
+    const porDecidir = page.getByTestId('aseguradora-grupo-por-decidir');
+    // La médica demo: su solicitud pendiente a Seguros Andina.
+    const fila = porDecidir.locator('li').filter({ hasText: 'Valeria Rojas' }).first();
+    await expect(fila).toBeVisible({ timeout: 30_000 });
 
-    const tarjeta = await medirTarjeta(page, '.pedidos__tarjeta');
-    expect(Math.abs(tarjeta.holguraIzquierda - tarjeta.holguraDerecha)).toBeLessThanOrEqual(2);
-    expect(tarjeta.proporcion).toBeGreaterThanOrEqual(0.85);
-
-    await page.getByTestId('aseguradora-rechazar').first().click();
-    await page
+    await fila.getByTestId('aseguradora-rechazar').click();
+    await fila
       .getByTestId('aseguradora-motivo')
       .locator('textarea')
       .fill('Sin convenio vigente en su ciudad');
-    await page.getByTestId('aseguradora-confirmar-rechazo').click();
+    await capturar(page, `${EVIDENCIA}/aseguradora-motivo-1440.png`);
+    await fila.getByTestId('aseguradora-confirmar-rechazo').click();
     await expect(page.getByTestId('aseguradora-pedidos-aviso')).toContainText('Se rechazó');
 
     await page.reload();
     await esperarAplicacionLista(page);
-    await expect(page.getByTestId('aseguradora-pedidos')).toContainText(
+    await expect(page.getByTestId('aseguradora-grupo-decididas')).toContainText(
       '«Sin convenio vigente en su ciudad»',
       { timeout: 30_000 },
     );
-    await page.screenshot({ path: `${EVIDENCIA}/aseguradora-rechazo.png`, fullPage: true });
+    await capturar(page, `${EVIDENCIA}/aseguradora-decidida-1440.png`);
+
+    // El médico, en la misma pestaña: el simulador guarda en sessionStorage.
+    await page.context().clearCookies();
+    await page.evaluate(() => localStorage.clear());
+    await entrar(page, MEDICA);
+    await irA(page, '/my-account/verifications?tab=requests');
+    const hilo = page.getByTestId('verif-bandeja').getByRole('button', { name: /Seguros Andina/ });
+    await hilo.click();
+    const abierto = page.getByTestId('verif-hilo-abierto');
+    await expect(abierto).toContainText('«Sin convenio vigente en su ciudad»', { timeout: 30_000 });
+    await expect(abierto).toContainText('no aceptó la solicitud');
+    await capturar(page, `${EVIDENCIA}/medico-hilo-rechazado-1440.png`);
+
+    await page.getByTestId('verif-volver-a-pedir').click();
+    await expect(page.getByTestId('verif-aviso')).toContainText('Volvimos a enviar');
+    await page.reload();
+    await esperarAplicacionLista(page);
+    await hilo.click();
+    await expect(abierto).toContainText('«Sin convenio vigente en su ciudad»', { timeout: 30_000 });
+    await expect(abierto).toContainText('Esperando que Seguros Andina');
+    await capturar(page, `${EVIDENCIA}/medico-hilo-historia-1440.png`);
 
     expect(errores()).toEqual([]);
   });
@@ -275,7 +332,7 @@ test.describe('el alta de médico', () => {
       await expect(buscador).toHaveValue('');
 
       expect(await desbordaHorizontal(page)).toBe(false);
-      await page.screenshot({ path: `${EVIDENCIA}/alta-lugares-${vp.nombre}.png`, fullPage: true });
+      await capturar(page, `${EVIDENCIA}/alta-lugares-${vp.nombre}.png`);
       expect(errores()).toEqual([]);
     });
   }

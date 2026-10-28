@@ -378,7 +378,7 @@ export function practitionerFields(
       titulo: 'Dónde trabaja y con qué seguros',
       clave: 'workplaces',
       icon: 'building',
-      hint: 'Opcional. Cada institución y cada aseguradora que elija recibe un pedido y lo confirma: ése es su sello oficial.',
+      hint: 'Opcional. Cada aseguradora y cada institución que confirma vínculos recibe su pedido; su confirmación es el sello oficial.',
       campos: [
         {
           key: 'lugaresDeTrabajo',
