@@ -30,14 +30,67 @@
         <span class="tarjeta__franja-nota">La pone el cupo del horario publicado.</span>
       </p>
     } @else {
+      <!-- El error de la franja va en «Hasta», que es el que se corrige: el
+           campo lo enlaza en el `aria-describedby` del control y lo marca con
+           `aria-invalid`. Guardar sigue apagado mientras no cierre. -->
       <div class="tarjeta__rango">
         <app-form-field label="Desde" [required]="true">
           <app-input [(value)]="from" placeholder="10:00" />
         </app-form-field>
-        <app-form-field label="Hasta" [required]="true">
+        <app-form-field label="Hasta" [required]="true" [errorMessage]="endTimeError()">
           <app-input [(value)]="hasta" placeholder="10:45" />
         </app-form-field>
       </div>
+    }
+
+    <!-- La organización elegida decide en qué agenda queda lo creado. «Mi
+         consultorio» viene elegido; «Afiliarme…» abre su modal encima de éste,
+         que sigue abierto debajo. Desde un cupo no se pregunta: la cita va a
+         la agenda del cupo. -->
+    @if (!fromSlot()) {
+      <!-- La región viva está siempre y sólo cambia su texto: un `role="status"`
+           que aparece con el texto ya puesto no siempre se anuncia. Vacía no
+           ocupa lugar (ver `day-card.css`). -->
+      <div class="tarjeta__destination">
+        <app-organization-field (selected)="destination.choose($event)" />
+        <p
+          class="tarjeta__destination-status"
+          role="status"
+          data-testid="day-card-destination-status"
+        >
+          @if (destination.searchingIn(); as organizationName) {
+            Buscando su agenda en {{ organizationName }}…
+          }
+        </p>
+      </div>
+
+      @if (destination.missingIn(); as organizationName) {
+        <app-alert tone="warning" data-testid="day-card-destination-missing">
+          Publique su agenda en {{ organizationName }} para agendar ahí.
+        </app-alert>
+      }
+
+      @if (destination.failure(); as message) {
+        <app-alert
+          tone="error"
+          title="No se pudo buscar su agenda"
+          data-testid="day-card-destination-failure"
+        >
+          {{ message }}
+          <div alert-actions>
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="day-card-destination-retry"
+              (clicked)="destination.retry()"
+            >
+              Reintentar
+            </button>
+          </div>
+        </app-alert>
+      }
     }
 
     <app-form-field
@@ -54,38 +107,6 @@
         (selectionChange)="patient.set($event)"
       />
     </app-form-field>
-
-    <!-- La modalidad sólo existe si hay paciente: un rato ocupado del doctor no
-         se atiende «por videollamada», y ofrecerlo sería un control que no
-         significa nada. Aparece con el paciente, como la pregunta que sigue.
-
-         C-21 · alternancia y no radios: tres opciones excluyentes, que es para
-         lo que existe `segmented-control`. Se elige con flechas y un solo
-         tabulador, y anuncia su estado como `radiogroup`. -->
-    @if (patient() !== null) {
-      <div class="tarjeta__modalidad">
-        <span class="tarjeta__modalidad-titulo" id="tarjeta-modalidad">¿Cómo lo atiende?</span>
-        <app-segmented-control
-          data-testid="tarjeta-modalidad"
-          ariaLabel="¿Cómo lo atiende?"
-          size="md"
-          [options]="modalityOptions()"
-          [value]="modality()"
-          (valueChange)="modality.set($event)"
-        />
-      </div>
-      <!-- Teleconsulta en una hora sin telemedicina: la opción se apaga, y si
-           ya estaba elegida se dice por qué no se guarda. -->
-      @if (teleconsultaFueraDeFranja()) {
-        <app-alert
-          tone="warning"
-          title="Esta hora no admite teleconsulta"
-          data-testid="tarjeta-sin-telemedicina"
-        >
-          {{ mensajeSinTelemedicina }}
-        </app-alert>
-      }
-    }
 
     <app-form-field
       label="¿Qué pasa?"
@@ -112,10 +133,6 @@
         {{ mensaje }}
       </app-alert>
     }
-
-    <!-- El horario fijo semanal no vive acá: la tarjeta cubre lo puntual de UN
-         día. El enlace es para quien cayó buscando eso. -->
-    <a class="tarjeta__publicar" routerLink="/agenda">¿Horario fijo semanal? → Publicar agenda</a>
   </form>
 
   <!-- El pie se proyecta fuera del cuerpo con scroll: en un formulario largo el

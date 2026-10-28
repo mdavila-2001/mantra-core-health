@@ -285,6 +285,11 @@
        llega a AA con texto chico; con el 800 sube a 6,62:1. */
     --st-primary-bg: var(--c-petrol-50);  --st-primary-fg: var(--c-petrol-700);  --st-primary-bd: var(--c-petrol-200);
     --st-secondary-bg: var(--c-mint-50);  --st-secondary-fg: var(--c-mint-800);  --st-secondary-bd: var(--c-mint-300);
+    /* tertiary: la aguamarina, tercer tono de marca. Lo usa la grilla del horario
+       para «consultas y otros servicios». NO sigue el 50/700/200: con 50 sería el
+       mismo `info` de la píldora de telemedicina, que desaparecería encima de la
+       franja. Sube a 200/800/600: texto 6,23:1 sobre su fondo. */
+    --st-tertiary-bg: var(--c-aqua-200);  --st-tertiary-fg: var(--c-aqua-800);  --st-tertiary-bd: var(--c-aqua-600);
 
     /* Escala semántica de la matriz de consultas: contraste AA en ambos temas. */
     --heat-1-bg: var(--c-petrol-100); --heat-1-fg: var(--c-petrol-900);
@@ -357,6 +362,9 @@
            y el chip desaparecería sobre una tarjeta. Sube a 600/100/400. */
         --st-primary-bg: var(--c-petrol-600); --st-primary-fg: var(--c-petrol-100); --st-primary-bd: var(--c-petrol-400);
         --st-secondary-bg: var(--c-mint-800); --st-secondary-fg: var(--c-mint-200); --st-secondary-bd: var(--c-mint-600);
+        /* tertiary NO sigue el 800/200/600 por la misma razón que en claro: aqua-800
+           ES el `info` de oscuro. Sube a 700/50/400: texto 5,01:1. */
+        --st-tertiary-bg: var(--c-aqua-700); --st-tertiary-fg: var(--c-aqua-50); --st-tertiary-bd: var(--c-aqua-400);
 
         --heat-1-bg: var(--c-petrol-800); --heat-1-fg: var(--c-ivory-50);
         --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
@@ -409,6 +417,7 @@
 
     --st-primary-bg: var(--c-petrol-600); --st-primary-fg: var(--c-petrol-100); --st-primary-bd: var(--c-petrol-400);
     --st-secondary-bg: var(--c-mint-800); --st-secondary-fg: var(--c-mint-200); --st-secondary-bd: var(--c-mint-600);
+    --st-tertiary-bg: var(--c-aqua-700); --st-tertiary-fg: var(--c-aqua-50); --st-tertiary-bd: var(--c-aqua-400);
 
     --heat-1-bg: var(--c-petrol-800); --heat-1-fg: var(--c-ivory-50);
     --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);

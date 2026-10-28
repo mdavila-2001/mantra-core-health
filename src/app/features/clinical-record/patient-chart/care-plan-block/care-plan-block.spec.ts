@@ -270,4 +270,85 @@ describe('CarePlanBlock', () => {
       expect(componente.tieneCambiosPendientes()).toBe(true);
     });
   });
+
+  describe('la hoja de ruta', () => {
+    function texto(testId: string): string {
+      return (
+        (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`)
+          ?.textContent ?? ''
+      ).trim();
+    }
+
+    it('dibuja sólo los pasos escritos y cuenta «n de m»', () => {
+      dibujar();
+      interno<() => void>('agregarActividad')();
+      interno<() => void>('agregarActividad')();
+      interno<(clave: number, valor: string) => void>('fijarDetalle')(0, 'Caminar');
+      interno<(clave: number, valor: string) => void>('fijarDetalle')(2, 'Reconsulta');
+      fixture.detectChanges();
+
+      const vista = fixture.nativeElement as HTMLElement;
+      expect(vista.querySelectorAll('[data-testid="plan-vista-paso"]').length).toBe(2);
+      expect(texto('plan-contador-pasos')).toBe('2 de 3');
+    });
+
+    it('cuenta los datos obligatorios que faltan, el origen incluido en la cita', () => {
+      fixture.componentRef.setInput('exigeRespuesta', true);
+      dibujar();
+      expect(texto('plan-pendientes')).toBe('Faltan 3 datos obligatorios');
+
+      señal<string>('meta').set('Bajar la presión.');
+      señal<string>('motivo').set('Control de presión');
+      fixture.detectChanges();
+      expect(texto('plan-pendientes')).toBe('Falta 1 dato obligatorio');
+
+      señal<string | null>('respuestaDelFormulario').set('fi-1');
+      fixture.detectChanges();
+      expect(texto('plan-pendientes')).toBe('Lista para abrir');
+    });
+
+    /**
+     * La insignia sigue la regla del botón: con la vigencia invertida el plan
+     * no se puede abrir, y decir «Lista para abrir» sería una promesa falsa.
+     */
+    it('con la vigencia invertida no dice «Lista para abrir»', () => {
+      dibujar();
+      señal<string>('meta').set('Bajar la presión.');
+      señal<string>('motivo').set('Control de presión');
+      señal<Date | null>('desde').set(new Date(2026, 6, 1));
+      señal<Date | null>('hasta').set(new Date(2026, 0, 1));
+      fixture.detectChanges();
+
+      expect(texto('plan-pendientes')).toBe('Revisar la vigencia');
+      expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
+    });
+
+    it('el tramo resuelto se marca y lo dice dentro de su encabezado', () => {
+      dibujar();
+      const titulos = () =>
+        Array.from(
+          (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.ruta__tramo'),
+        );
+      const objetivo = () => titulos().find((t) => t.textContent?.includes('Objetivo'));
+
+      expect(objetivo()?.classList).not.toContain('ruta__tramo--listo');
+      expect(objetivo()?.querySelector('h3 .sr-only')?.textContent).toContain('falta, obligatorio');
+
+      señal<string>('meta').set('Bajar la presión.');
+      fixture.detectChanges();
+      expect(objetivo()?.classList).toContain('ruta__tramo--listo');
+      expect(objetivo()?.querySelector('h3 .sr-only')?.textContent).toContain('completo');
+    });
+
+    it('con un diagnóstico elegido, la ruta muestra su nombre como motivo', () => {
+      fixture.componentRef.setInput('diagnosticos', [{ id: 'cond-1', etiqueta: 'Hipertensión' }]);
+      dibujar();
+      señal<string | null>('diagnosticoElegido').set('cond-1');
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('.vista')?.textContent).toContain(
+        'Por Hipertensión',
+      );
+    });
+  });
 });

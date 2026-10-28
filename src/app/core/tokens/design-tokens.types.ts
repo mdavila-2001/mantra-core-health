@@ -110,8 +110,11 @@ export type StatusToken = `--st-${StatusType}-${StatusSlot}`;
  * Chips de marca: la MISMA receta tonal de los `--st-*` aplicada a las rampas
  * de marca. Comparten prefijo porque comparten recipe, pero **no son estados de
  * producto** — por eso viven aparte de `StatusType`.
+ *
+ * `tertiary` es la aguamarina: el tercer tono que pide la grilla del horario
+ * para «consultas y otros servicios», junto al primario y al secundario.
  */
-export const BRAND_TONES = ['primary', 'secondary'] as const;
+export const BRAND_TONES = ['primary', 'secondary', 'tertiary'] as const;
 export type BrandTone = (typeof BRAND_TONES)[number];
 export type BrandToneToken = `--st-${BrandTone}-${StatusSlot}`;
 

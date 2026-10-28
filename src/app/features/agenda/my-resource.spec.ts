@@ -86,3 +86,30 @@ describe('miRecursoDeAgenda', () => {
     expect(elegido).toBeNull();
   });
 });
+
+describe('agendas en otra organización', () => {
+  /** Un cliente que anota con qué se le pidió la lista. */
+  function recordingClient() {
+    const listResources = vi.fn(() => of({ items: [recurso('r-olivos', 'Olivos')], count: 1 }));
+    return { client: { listResources } as unknown as SchedulingClient, listResources };
+  }
+
+  it('con `scope`, la búsqueda se declara como esa organización', async () => {
+    const { client, listResources } = recordingClient();
+
+    const found = await firstValueFrom(
+      agendaResourceMy(client, 't-olivos', PERFIL, { tenantId: 't-olivos' }),
+    );
+
+    expect(found?.id).toBe('r-olivos');
+    expect(listResources).toHaveBeenCalledWith({ tenantId: 't-olivos' }, { tenantId: 't-olivos' });
+  });
+
+  it('sin `scope` pide como siempre: la organización la pone la sesión', async () => {
+    const { client, listResources } = recordingClient();
+
+    await firstValueFrom(agendaResourcesMy(client, 't-1', PERFIL));
+
+    expect(listResources).toHaveBeenCalledWith({ tenantId: 't-1' }, undefined);
+  });
+});

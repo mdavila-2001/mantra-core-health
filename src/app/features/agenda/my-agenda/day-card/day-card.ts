@@ -1,40 +1,31 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   input,
   output,
   signal,
 } from '@angular/core';
 
+import { SessionStore } from '../../../../core/auth/session.store';
 import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { BlockCancellations, cancelledBookingsText } from '../../block-cancellations';
+import { OrganizationField } from '../../organization-field/organization-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import {
-  MODALIDADES,
-  type ModalidadDeAtencion,
-} from '../../../../core/data-access/scheduling/scheduling.types';
-import {
-  type FranjaVigente,
-  MENSAJE_SIN_TELEMEDICINA,
-  rechazoPorTelemedicina,
-  teleconsultaPermitidaEn,
-} from '../../telemedicina';
+import { BookingDestination, type BookingTarget } from './booking-destination';
 
 /** Un rato ya tomado del día, para avisar el choque ANTES de guardar. */
 export interface DayGap {
@@ -53,6 +44,33 @@ export interface DayGap {
   readonly tipo: 'cita' | 'bloqueo';
 }
 
+/** Una franja ya resuelta a instantes del día mirado. */
+interface TimeRange {
+  readonly desde: Date;
+  readonly hasta: Date;
+}
+
+/**
+ * Desde cuántos minutos una sesión se confirma antes de guardarla.
+ *
+ * Más de 4 h casi nunca es lo que se quiso agendar: suele ser una hora de fin
+ * mal escrita. Se pregunta en vez de impedirlo, porque la sesión larga existe,
+ * hasta {@link MAX_APPOINTMENT_MINUTES} en una cita.
+ */
+const LONG_SESSION_MINUTES = 240;
+
+/**
+ * Lo más que puede durar una cita: la API rechaza con un 400 la cita puntual
+ * más larga (`durationMinutes`, máximo 480). El tiempo ocupado no tiene tope.
+ */
+const MAX_APPOINTMENT_MINUTES = 480;
+
+/** El error del campo «Hasta» cuando la franja escrita no cierra. */
+const END_NOT_AFTER_START = 'La hora de fin tiene que ser después de la de inicio';
+
+/** El error del campo «Hasta» cuando la cita pasa de {@link MAX_APPOINTMENT_MINUTES}. */
+const APPOINTMENT_TOO_LONG = 'Una cita no puede durar más de 8 horas';
+
 /**
  * LA TARJETA — el único gesto de creación del calendario (AG-5, parte 2).
  *
@@ -67,8 +85,21 @@ export interface DayGap {
  * Los tres tipos existen sólo en el modelo interno, jamás como menú. La
  * tercera inferencia —«abrir este rato para que reserven», la franja suelta—
  * espera el `gap_minutes` de AG-4: el respiro es parte de su diseño y
- * construirla sin él sería entregarla dos veces. Mientras tanto, el enlace
- * discreto a Publicar cubre a quien cayó acá buscando el horario semanal.
+ * construirla sin él sería entregarla dos veces.
+ *
+ * ## La cita se agenda presencial
+ *
+ * La tarjeta no pregunta por qué medio se atiende: la cita viaja sin `channel`
+ * y la API la registra presencial. La telemedicina se habilita por franja, en
+ * el horario publicado.
+ *
+ * ## La organización elige la agenda
+ *
+ * «Mi consultorio» viene elegido y guarda en la agenda que pasa el contenedor,
+ * como siempre. Con otra organización, lo creado va a la agenda del médico en
+ * esa organización ({@link BookingDestination}), hablándole a la API como esa
+ * organización; si no publicó ninguna ahí, se dice y no se guarda. Desde un
+ * cupo no se elige: la cita va a la agenda del cupo.
  *
  * ## Los choques, en vivo y en el servidor
  *
@@ -80,16 +111,7 @@ export interface DayGap {
  */
 @Component({
   selector: 'app-day-card',
-  imports: [
-    Alert,
-    AppButton,
-    ContentDialog,
-    FormField,
-    Input,
-    ReferenceCombobox,
-    RouterLink,
-    SegmentedControl,
-  ],
+  imports: [Alert, AppButton, ContentDialog, FormField, Input, OrganizationField, ReferenceCombobox],
   templateUrl: './day-card.html',
   styleUrl: './day-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -100,12 +122,21 @@ export class DayCard {
   private readonly profiles = inject(ProfilesClient);
   private readonly toasts = inject(ToastService);
   private readonly dialogs = inject(DialogService);
+  private readonly session = inject(SessionStore);
 
   /** El día sobre el que se crea. */
   readonly dia = input.required<Date>();
 
-  /** La agenda (recurso) donde ocurre. */
+  /** La agenda (recurso) de «Mi consultorio»: donde ocurre si no se elige otra organización. */
   readonly resourceId = input.required<string>();
+
+  /** En qué agenda queda lo que se guarda, según la organización elegida. */
+  protected readonly destination = new BookingDestination(
+    this.scheduling,
+    this.session.practitionerProfileId,
+    this.resourceId,
+    inject(DestroyRef),
+  );
 
   /** El rato tocado, para prellenar. */
   readonly desdeInicial = input.required<Date>();
@@ -124,16 +155,8 @@ export class DayCard {
    */
   readonly cupoId = input<string | null>(null);
 
-  /** Lo que el día ya tiene tomado, para avisar el choque antes de guardar. */
+  /** Lo que el día ya tiene tomado en la agenda de «Mi consultorio», para avisar el choque. */
   readonly ratosTomados = input<readonly DayGap[]>([]);
-
-  /**
-   * Las franjas del horario vigente, para saber si la hora admite teleconsulta.
-   *
-   * `null` cuando el contenedor no las tiene: entonces no se avisa ni se
-   * deshabilita nada, y decide el servidor (422 `TELEMEDICINE_NOT_ENABLED`).
-   */
-  readonly franjas = input<readonly FranjaVigente[] | null>(null);
 
   /** Se creó algo: el contenedor recarga el día. */
   readonly creada = output<void>();
@@ -147,53 +170,21 @@ export class DayCard {
   protected readonly hasta = signal('');
   protected readonly reason = signal('');
   protected readonly patient = signal<ReferenceOption | null>(null);
-  /**
-   * Por qué medio se atiende.
-   *
-   * Arranca en presencial porque es lo que pasa casi siempre; elegirlo
-   * igualmente lo GUARDA, en vez de mandarlo vacío: «nadie lo dijo» y «dijeron
-   * que es presencial» son cosas distintas en la historia del paciente.
-   */
-  protected readonly modality = signal<ModalidadDeAtencion>('PRESENCIAL');
-  protected readonly modalities = MODALIDADES;
-
-  /**
-   * Las modalidades como opciones del control segmentado.
-   *
-   * C-21 y C-10 (2026-09-20): el doctor pidió alternancia en vez de radios.
-   * Se reusa `segmented-control`, que es el `radiogroup` del sistema de diseño
-   * —con flechas y un solo tabulador—, en vez de escribir otro control: son
-   * tres opciones excluyentes, que es exactamente para lo que existe.
-   */
-  protected readonly modalityOptions = computed<readonly SegmentedOption<ModalidadDeAtencion>[]>(
-    () => {
-      const sinTelemedicina = this.teleconsultaNoAdmitida();
-      return MODALIDADES.map((m) => ({
-        value: m.valor,
-        label: m.nombre,
-        // Fuera de una franja con telemedicina la videollamada no se ofrece:
-        // la API la rechazaría. Si ya estaba elegida, el aviso dice por qué.
-        ...(m.valor === 'TELECONSULTA' && sinTelemedicina ? { disabled: true } : {}),
-      }));
-    },
-  );
-
-  /** Si, con las franjas conocidas, la hora elegida NO admite teleconsulta. */
-  private readonly teleconsultaNoAdmitida = computed(() => {
-    const franjas = this.franjas();
-    const rango = this.range();
-    return franjas !== null && rango !== null && !teleconsultaPermitidaEn(franjas, rango.desde);
-  });
-
-  /** La teleconsulta quedó elegida en una hora que no la admite: no se guarda. */
-  protected readonly teleconsultaFueraDeFranja = computed(
-    () => this.modality() === 'TELECONSULTA' && this.teleconsultaNoAdmitida(),
-  );
-
-  protected readonly mensajeSinTelemedicina = MENSAJE_SIN_TELEMEDICINA;
 
   /** Si el alta salió de un cupo ya programado: la franja no se pregunta. */
   protected readonly fromSlot = computed(() => this.cupoId() !== null);
+
+  /**
+   * Dónde queda lo que se guarda, o `null` mientras no haya agenda.
+   *
+   * **Desde un cupo, en la agenda de ese cupo**: el cupo ya es de una agenda,
+   * y el selector de organización ni se muestra. La regla vive acá y no sólo
+   * en la plantilla, por lo mismo que el bloqueo: esconder un control no es
+   * una regla.
+   */
+  private readonly target = computed<BookingTarget | null>(() =>
+    this.fromSlot() ? { resourceId: this.resourceId(), scope: {} } : this.destination.target(),
+  );
 
   /** La franja del cupo, en palabras, para mostrarla como dato. */
   protected readonly slotBand = computed(
@@ -235,13 +226,7 @@ export class DayCard {
    */
   protected readonly willHappen = computed<string | null>(() => {
     if (this.patient() !== null) {
-      // La modalidad entra en la frase sólo cuando NO es la de siempre: decir
-      // «en el consultorio» en cada cita presencial es ruido, y lo que la
-      // persona necesita confirmar de un vistazo es lo que se sale de la norma.
-      const porVideo = this.modality() === 'TELECONSULTA';
-      const aDomicilio = this.modality() === 'DOMICILIO';
-      const donde = porVideo ? ' Va por videollamada.' : aDomicilio ? ' Va a su domicilio.' : '';
-      return `Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.${donde}`;
+      return 'Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.';
     }
     if (this.reason().trim() !== '') {
       return 'Queda como tiempo ocupado suyo. El paciente no ve nada en ese rato.';
@@ -250,15 +235,20 @@ export class DayCard {
   });
 
   /**
-   * El choque con lo ya cargado del día, avisado en vivo.
+   * El rato ya tomado que pisa lo que se está por crear, si hay alguno: el
+   * choque con lo ya cargado del día, avisado en vivo.
    *
    * Sólo mira lo que la pantalla ya sabe — sin viaje extra—. El servidor cruza
    * además las otras sedes al guardar.
+   *
+   * **Sólo si se guarda en la agenda del día.** Lo cargado es de la agenda de
+   * «Mi consultorio» (o del cupo): con otra organización elegida, lo creado va
+   * a otra, y avisar un choque o un bloqueo de «Mi consultorio» sería avisar
+   * algo que no corresponde. Ahí la última palabra es la del servidor.
    */
-  /** El rato ya tomado que pisa lo que se está por crear, si hay alguno. */
   private readonly overlaps = computed<DayGap | null>(() => {
     const rango = this.range();
-    if (rango === null) return null;
+    if (rango === null || this.target()?.resourceId !== this.resourceId()) return null;
     return (
       this.ratosTomados().find(
         (rato) =>
@@ -287,13 +277,42 @@ export class DayCard {
    */
   protected readonly blockedByGap = computed(() => this.overlaps()?.tipo === 'bloqueo');
 
+  /**
+   * Si lo que se va a crear es una cita —hay paciente— y pasa del tope que
+   * acepta la API. El tiempo ocupado no tiene tope: una guardia larga existe.
+   */
+  private readonly appointmentTooLong = computed(() => {
+    const rango = this.range();
+    return (
+      this.patient() !== null && rango !== null && minutesOf(rango) > MAX_APPOINTMENT_MINUTES
+    );
+  });
+
+  /**
+   * El error del campo «Hasta», o `''` mientras no haya ninguno.
+   *
+   * Antes la franja invertida sólo apagaba Guardar, sin decir por qué. Se dice
+   * con las dos horas completas: mientras se escribe el «1» de «14:00» no hay
+   * nada mal, hay una hora a medio escribir. Lo mismo con la cita de más de
+   * 8 h, que la API rechazaría. Sobre un cupo no aplica: ahí no hay campos, la
+   * franja la pone el cupo.
+   */
+  protected readonly endTimeError = computed(() => {
+    const start = withTime(this.dia(), this.from());
+    const end = withTime(this.dia(), this.hasta());
+    if (this.fromSlot() || start === null || end === null) return '';
+    if (end.getTime() <= start.getTime()) return END_NOT_AFTER_START;
+    return this.appointmentTooLong() ? APPOINTMENT_TOO_LONG : '';
+  });
+
   protected readonly canSave = computed(() => {
     const rango = this.range();
     return (
       rango !== null &&
+      this.target() !== null &&
       !this.saving() &&
       !this.blockedByGap() &&
-      !(this.patient() !== null && this.teleconsultaFueraDeFranja()) &&
+      !this.appointmentTooLong() &&
       (this.patient() !== null || this.reason().trim() !== '')
     );
   });
@@ -330,60 +349,110 @@ export class DayCard {
   /**
    * Guardar: la inferencia decide qué se crea.
    *
+   * Una sesión de más de {@link LONG_SESSION_MINUTES} minutos se confirma
+   * antes; con «Volver» no se guarda nada y el modal queda como estaba. Una
+   * cita de más de {@link MAX_APPOINTMENT_MINUTES} ni se pregunta: no se guarda.
+   *
    * El 422 del servidor —la regla madre, con qué/cuándo/dónde— se muestra tal
    * cual: ese mensaje ya está escrito para una persona.
    */
   protected save(): void {
     const rango = this.range();
-    // `puedeGuardar()` ya incluye el bloqueo; se vuelve a mirar acá porque un
-    // botón deshabilitado no es una regla: esta función se puede invocar por
-    // teclado, por `submit` del formulario y desde una prueba.
-    if (rango === null || this.blockedByGap() || !this.canSave()) return;
+    const target = this.target();
+    // `canSave()` ya incluye el bloqueo, la agenda y el tope de la cita; se
+    // vuelve a mirar acá porque un botón deshabilitado no es una regla: esta
+    // función se puede invocar por teclado, por `submit` del formulario y
+    // desde una prueba.
+    if (rango === null || target === null || this.blockedByGap() || !this.canSave()) return;
 
+    if (!isLongSession(rango)) {
+      this.persist(target, rango);
+      return;
+    }
+    void this.confirmLongSession(rango).then((confirmed) => {
+      if (confirmed) this.persist(target, rango);
+    });
+  }
+
+  /** Pregunta antes de guardar una sesión larga, con su duración y su franja. */
+  private confirmLongSession(range: TimeRange): Promise<boolean> {
+    return this.dialogs.confirm({
+      title: `¿Está seguro de agendar una sesión de ${sessionLength(minutesOf(range))}?`,
+      message: `La sesión va de ${timeOf(range.desde)} a ${timeOf(range.hasta)}.`,
+      confirmLabel: 'Confirmar',
+      cancelLabel: 'Volver',
+    });
+  }
+
+  /**
+   * Crea lo que la inferencia decidió en la agenda elegida: la cita si hay
+   * paciente; si no, el tiempo ocupado.
+   */
+  private persist(target: BookingTarget, range: TimeRange): void {
     this.saving.set(true);
     this.error.set(null);
 
-    const paciente = this.patient();
-    if (paciente !== null) {
-      const duracionMin = Math.round((rango.hasta.getTime() - rango.desde.getTime()) / 60_000);
-      this.scheduling
-        .createDirectAppointment({
-          patientProfileId: paciente.value,
-          resourceId: this.resourceId(),
-          startAt: rango.desde.toISOString(),
-          durationMinutes: duracionMin,
-          ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
-          channel: this.modality(),
-        })
-        .subscribe({
-          next: (creado) => {
-            this.saving.set(false);
-            this.toasts.success(
-              creado.retractedSlots > 0
-                ? `Le avisamos al paciente. Esto quitó ${creado.retractedSlots} ${
-                    creado.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
-                  }.`
-                : 'Le avisamos al paciente. No tiene que confirmar nada.',
-              'Cita agendada',
-            );
-            this.creada.emit();
-          },
-          error: (error: unknown) => this.failure(error),
-        });
+    const chosen = this.patient();
+    if (chosen === null) {
+      this.createBusyTime(target, range);
       return;
     }
+    this.createAppointment(target, chosen, range);
+  }
 
-    // Con citas en el rato, la API lista a quién alcanza y `BlockCancellations`
-    // pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
+  private createAppointment(
+    target: BookingTarget,
+    patient: ReferenceOption,
+    range: TimeRange,
+  ): void {
+    this.scheduling
+      .createDirectAppointment(
+        {
+          patientProfileId: patient.value,
+          resourceId: target.resourceId,
+          startAt: range.desde.toISOString(),
+          durationMinutes: minutesOf(range),
+          ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
+        },
+        target.scope,
+      )
+      .subscribe({
+        next: (created) => {
+          this.saving.set(false);
+          this.toasts.success(
+            created.retractedSlots > 0
+              ? `Le avisamos al paciente. Esto quitó ${created.retractedSlots} ${
+                  created.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
+                }.`
+              : 'Le avisamos al paciente. No tiene que confirmar nada.',
+            'Cita agendada',
+          );
+          this.creada.emit();
+        },
+        error: (error: unknown) => this.failure(error),
+      });
+  }
+
+  /**
+   * El tiempo ocupado del doctor.
+   *
+   * Con citas en el rato, la API lista a quién alcanza y `BlockCancellations`
+   * pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
+   */
+  private createBusyTime(target: BookingTarget, range: TimeRange): void {
     this.cancellations
       .withConfirmation((confirmed) =>
-        this.scheduling.createException(this.resourceId(), {
-          exceptionType: 'ABSENCE',
-          startAt: rango.desde.toISOString(),
-          endAt: rango.hasta.toISOString(),
-          reason: this.reason().trim(),
-          ...(confirmed ? { cancelAffectedBookings: true } : {}),
-        }),
+        this.scheduling.createException(
+          target.resourceId,
+          {
+            exceptionType: 'ABSENCE',
+            startAt: range.desde.toISOString(),
+            endAt: range.hasta.toISOString(),
+            reason: this.reason().trim(),
+            ...(confirmed ? { cancelAffectedBookings: true } : {}),
+          },
+          target.scope,
+        ),
       )
       .subscribe({
         next: (res) => {
@@ -407,7 +476,7 @@ export class DayCard {
    * cualquier cosa que las escribiera terminaría en la cita. Acá se corta:
    * viniendo de un cupo, lo que se guarda es su franja, punto.
    */
-  private range(): { desde: Date; hasta: Date } | null {
+  private range(): TimeRange | null {
     if (this.fromSlot()) {
       return { desde: this.desdeInicial(), hasta: this.hastaInicial() };
     }
@@ -461,11 +530,6 @@ export class DayCard {
    */
   private failure(error: unknown): void {
     this.saving.set(false);
-    const sinTelemedicina = rechazoPorTelemedicina(error);
-    if (sinTelemedicina !== null) {
-      this.error.set(sinTelemedicina);
-      return;
-    }
     const campos = Object.values(fieldErrorsOf(error));
     const delServidor =
       campos.length > 0
@@ -503,4 +567,22 @@ function withTime(dia: Date, texto: string): Date | null {
   const fecha = new Date(dia);
   fecha.setHours(Number(partes[1]), Number(partes[2]), 0, 0);
   return fecha;
+}
+
+/** Cuántos minutos dura la franja. */
+function minutesOf(range: TimeRange): number {
+  return Math.round((range.hasta.getTime() - range.desde.getTime()) / 60_000);
+}
+
+/** Si la franja pasa de {@link LONG_SESSION_MINUTES} y se confirma antes de guardarla. */
+function isLongSession(range: TimeRange): boolean {
+  return minutesOf(range) > LONG_SESSION_MINUTES;
+}
+
+/** La duración dicha para una persona: «5 horas», o «4 h 30 min» si no son horas justas. */
+function sessionLength(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (rest > 0) return `${hours} h ${rest} min`;
+  return hours === 1 ? '1 hora' : `${hours} horas`;
 }
