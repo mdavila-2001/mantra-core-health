@@ -2,6 +2,7 @@ import { map, type Observable } from 'rxjs';
 
 import type { SchedulingClient } from '@core/data-access/scheduling/scheduling.client';
 import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
+import type { TenantScope } from '@core/data-access/scheduling/tenant-scope';
 
 /**
  * El recurso de agenda de quien tiene la sesión, o `null` si no publicó ninguno.
@@ -18,13 +19,18 @@ import type { AgendaResource } from '@core/data-access/scheduling/scheduling.typ
  * Lo necesitan «Mi agenda», «Consultas médicas» y «Evoluciones», y las tres hacen
  * exactamente la misma pareja de llamadas. La tercera copia es donde una de las
  * tres se queda con el criterio viejo.
+ *
+ * Para buscar en una organización que no es la activa —el modal del día, con
+ * otra organización elegida— se pasa `scope`: la API solo lista las agendas de
+ * la organización como la que se habla.
  */
 export function agendaResourceMy(
   scheduling: SchedulingClient,
   tenantId: string,
   practitionerProfileId: string,
+  scope?: TenantScope,
 ): Observable<AgendaResource | null> {
-  return agendaResourcesMy(scheduling, tenantId, practitionerProfileId).pipe(
+  return agendaResourcesMy(scheduling, tenantId, practitionerProfileId, scope).pipe(
     map((recursos) => recursos[0] ?? null),
   );
 }
@@ -57,8 +63,9 @@ export function agendaResourcesMy(
   scheduling: SchedulingClient,
   tenantId: string,
   practitionerProfileId: string,
+  scope?: TenantScope,
 ): Observable<readonly AgendaResource[]> {
   return scheduling
-    .listResources({ tenantId })
+    .listResources({ tenantId }, scope)
     .pipe(map((pagina) => pagina.items.filter((r) => r.resourceRefId === practitionerProfileId)));
 }

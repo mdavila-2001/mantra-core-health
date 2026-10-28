@@ -634,6 +634,8 @@ export interface ScheduleRule {
    * cuando lo apaga en una franja que lo tenía: «no lo dijo» no se escribe.
    */
   readonly telemedicineEnabled?: boolean;
+  /** Franja sin turnos fijos (v4.2.64): no lleva `slotMinutes`, `gapMinutes` ni `capacityPerSlot`. */
+  readonly flexibleHours?: boolean;
 }
 
 /** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
@@ -953,6 +955,8 @@ export interface PublishedRule {
    * booleano; acá es opcional para tolerar lecturas viejas. Ausente ≡ `false`.
    */
   readonly telemedicineEnabled?: boolean;
+  /** Franja sin turnos fijos; llega ya resuelta con `flexibleHours` de la plantilla. */
+  readonly flexibleHours?: boolean;
 }
 
 /** Lo que deja retirar un horario (`DELETE /scheduling/templates/:id`). */

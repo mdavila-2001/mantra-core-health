@@ -71,6 +71,10 @@ export type { SignatureOrSealType as TipoDeFirmaOSello } from './signature-or-se
 
 export { PracticeLogo as LogoConsultorio } from './practice-logo/practice-logo';
 
+export { LoadingState } from './loading-state/loading-state';
+export { LOADING_STATE_SIZES } from './loading-state/loading-state.types';
+export type { LoadingStateSize } from './loading-state/loading-state.types';
+
 /* `MenuItem` y `MenuTrigger` solo tienen sentido dentro de un `Menu`. */
 export { Menu } from './menu/menu';
 export { MenuItem } from './menu/menu-item/menu-item';

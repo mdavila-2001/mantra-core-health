@@ -421,7 +421,8 @@ export class ScheduleGrid {
       .map((r) => {
         const inicio = minutos(r.startTime);
         const fin = minutos(r.endTime);
-        const tamano = r.slotMinutes ?? this.slotMinutes();
+        // Una franja flexible no tiene turnos: no hereda el tamaño de la plantilla.
+        const tamano = r.flexibleHours === true ? null : (r.slotMinutes ?? this.slotMinutes());
         const modo = r.bookingMode ?? 'CONSULTATIONS';
         return {
           id: `${r.dayOfWeek}-${r.startTime}`,
@@ -719,10 +720,10 @@ export class ScheduleGrid {
     this.celdaConGlobo.set(null);
   }
 
-  /** «Martes 8 de septiembre», el título del globo en la semana en curso. */
+  /** «Martes 8 de septiembre» en la semana en curso; «Martes» en un horario sin fechas. */
   protected tituloDelGlobo(g: Globo): string {
     const nombre = g.dia.largo.charAt(0).toUpperCase() + g.dia.largo.slice(1);
-    if (!this.conFechas()) return `${nombre}s`;
+    if (!this.conFechas()) return nombre;
     return `${nombre} ${g.dia.fecha.getDate()} de ${MESES[g.dia.fecha.getMonth()]}`;
   }
 }

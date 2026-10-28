@@ -130,20 +130,20 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="legalRepName">
-              <app-name-fields
+              <app-inline-name-fields
                 [grupo]="form.controls.legalRepName"
                 [obligatorio]="true"
                 prefijoTestId="registro-imagen-representante"
               />
             </ng-template>
             <ng-template appCampoPersonalizado="generalManagerName">
-              <app-name-fields [grupo]="form.controls.generalManagerName" prefijoTestId="registro-imagen-gerente-general" />
+              <app-inline-name-fields [grupo]="form.controls.generalManagerName" prefijoTestId="registro-imagen-gerente-general" />
             </ng-template>
             <ng-template appCampoPersonalizado="salesManagerName">
-              <app-name-fields [grupo]="form.controls.salesManagerName" prefijoTestId="registro-imagen-gerente-comercial" />
+              <app-inline-name-fields [grupo]="form.controls.salesManagerName" prefijoTestId="registro-imagen-gerente-comercial" />
             </ng-template>
             <ng-template appCampoPersonalizado="marketingManagerName">
-              <app-name-fields [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-imagen-gerente-marketing" />
+              <app-inline-name-fields [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-imagen-gerente-marketing" />
             </ng-template>
 
             <!-- El punto es lo único que se marca: la calle, el departamento,

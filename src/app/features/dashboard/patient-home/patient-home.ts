@@ -38,6 +38,7 @@ import { MI_HISTORIA_ROUTE } from '../../account/medical-record/medical-record.r
 import { SymptomCheck } from '../../symptom-check/symptom-check';
 import { PatientCampaignsWidget } from '../../insurance/patient-campaigns/patient-campaigns-widget';
 import { PrimaryPractitionerCard } from '../../primary-practitioner/primary-practitioner-card/primary-practitioner-card';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántas filas se piden de la historia: acá sólo se muestra lo último. */
 const TOPE = 20;
@@ -122,6 +123,7 @@ const SIN_AGENDA: DondeYConQuien = { profesional: '', lugar: '' };
     RouterLink,
     SymptomCheck,
     TutorialTarget,
+    LoadingState,
   ],
   templateUrl: './patient-home.html',
   styleUrl: './patient-home.css',

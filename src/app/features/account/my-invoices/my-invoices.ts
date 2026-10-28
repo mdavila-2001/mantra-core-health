@@ -39,6 +39,7 @@ import { ROTULO_DE_ESTADO, ROTULO_DE_ORIGEN, TONO_DE_ESTADO } from '../../billin
 import { bs, dateAndTime, errorMessage } from '../../billing/on-screen-charges';
 import { SIMULATED_AVAILABLE_INVOICING } from '../../billing/invoicing-availability';
 import { downloadGraphicRepresentation, downloadXml } from '../../billing/graphic-representation';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 const TAMANO_INICIAL = 10;
 
@@ -81,6 +82,7 @@ const SUBTITULO: Readonly<Record<MyInvoicesView, string>> = {
     Pagination,
     RowActions,
     ViewStateHost,
+    LoadingState,
   ],
   templateUrl: './my-invoices.html',
   styleUrl: './my-invoices.css',

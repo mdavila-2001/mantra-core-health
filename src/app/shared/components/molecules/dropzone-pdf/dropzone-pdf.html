@@ -53,6 +53,10 @@
   }
 </p>
 
+@if (archivoParaVistaPrevia(); as archivo) {
+  <app-file-preview class="dropzone-pdf__vista-previa" [file]="archivo" />
+}
+
 @if (state().kind === 'error') {
   <p class="dropzone-pdf__error" role="alert" [attr.data-testid]="testId() + '-error'">
     {{ mensajeDeError() }}

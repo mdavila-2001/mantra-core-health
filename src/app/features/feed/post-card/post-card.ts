@@ -27,6 +27,7 @@ import { CommentMediaPicker } from '../../../shared/components/molecules/comment
 import { FilePreviewImage } from '../../../shared/components/molecules/file-preview-image/file-preview-image';
 import { ArticleBody } from '../../../shared/components/organisms/article-body/article-body';
 import { hasArticleStructure } from '../../../shared/text/article-markup';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántos comentarios raíz se piden por página del hilo. */
 const COMMENTS_PAGE_SIZE = 20;
@@ -87,7 +88,7 @@ export const REACCIONES_OFRECIDAS: readonly {
  */
 @Component({
   selector: 'app-post-card',
-  imports: [AppButton, ArticleBody, Badge, Card, CommentMediaPicker, DatePipe, FilePreviewImage, Textarea],
+  imports: [AppButton, ArticleBody, Badge, Card, CommentMediaPicker, DatePipe, FilePreviewImage, Textarea, LoadingState],
   templateUrl: './post-card.html',
   styleUrl: './post-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

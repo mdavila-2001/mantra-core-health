@@ -1,6 +1,6 @@
 <figure class="preview" aria-label="Vista previa del archivo">
   @if (loading()) {
-    <p role="status">Preparando vista previa…</p>
+    <app-loading-state message="Preparando vista previa…" />
   }
   @if (preview(); as source) {
     <img [src]="source" [alt]="'Vista previa de ' + file().name" (error)="imageFailed()" />
