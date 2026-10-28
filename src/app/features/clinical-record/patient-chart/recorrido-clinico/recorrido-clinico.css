@@ -84,7 +84,6 @@
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   overscroll-behavior-x: contain;
-  scrollbar-gutter: stable;
 }
 
 .recorrido__lienzo:focus-visible {
@@ -110,14 +109,21 @@
   background: var(--bg-hover);
 }
 
-/* Pegado al borde izquierdo visible: al desplazarse, el carril no pierde nombre. */
+/* Pegado al borde izquierdo visible: al desplazarse, el carril no pierde nombre.
+   Con fondo propio y por encima de la capa de líneas: sin eso, el tronco de una
+   atención le pasaba por encima al texto («OBSERVACIONES» tachado). */
 .recorrido__carril-rotulo {
   position: sticky;
+  z-index: 1;
   inset-inline-start: 0;
+  margin: var(--sp-1) var(--sp-2);
+  background: var(--bg-surface);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
+  padding: 2px var(--sp-3);
   font-size: var(--fs-overline);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -315,7 +321,7 @@
 
 .recorrido__nodo-cabeza {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--sp-2);
   min-inline-size: 0;
 }
@@ -337,10 +343,14 @@
   block-size: 14px;
 }
 
+/* Dos renglones: un nombre clínico cortado al primero obliga a abrir el
+   detalle para saber qué medicamento es. */
 .recorrido__nodo-principal {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   font-weight: 600;
   font-size: var(--fs-body);
   line-height: var(--lh-body);
@@ -394,4 +404,66 @@
 
 .recorrido__nodo--grupo .recorrido__nodo-principal {
   color: var(--t-fg);
+}
+
+/* La fecha propia del registro, cuando no es la de su columna. */
+.recorrido__nodo-fecha {
+  flex: none;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* La indicación en texto, sólo en la disposición vertical. */
+.recorrido__nodo-para {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--st-success-fg);
+  font-weight: 600;
+}
+
+/* -- Disposición vertical (teléfono) ----------------------------------------
+   Un momento por bloque, lo más reciente arriba. El tronco de la izquierda es
+   el eje del tiempo; los nodos se apilan en el flujo normal. */
+
+.recorrido-v {
+  position: relative;
+  display: grid;
+  gap: var(--sp-5);
+  margin: 0;
+  padding: 0 0 0 var(--sp-6);
+  list-style: none;
+}
+
+.recorrido-v::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--sp-2) 0;
+  inset-inline-start: calc(var(--sp-2) + 1px);
+  border-inline-start: 2px solid var(--border-strong);
+}
+
+.recorrido-v__cabecera {
+  position: relative;
+  margin-block-end: var(--sp-2);
+}
+
+.recorrido-v__cabecera .recorrido__fecha,
+.recorrido-v__cabecera .recorrido__contexto {
+  text-align: start;
+}
+
+.recorrido-v__hito {
+  inset-block-start: var(--sp-1);
+  inset-block-end: auto;
+  inset-inline-start: calc(var(--sp-6) * -1 + var(--sp-2) + 2px);
+}
+
+.recorrido-v__nodos {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.recorrido-v .recorrido__nodo {
+  position: static;
+  inline-size: 100%;
 }

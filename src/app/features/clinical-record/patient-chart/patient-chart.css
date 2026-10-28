@@ -285,6 +285,12 @@ app-card.expediente__activas {
   .expediente__filtro app-chip {
     flex: none;
   }
+
+  /* El borde derecho se desvanece: sin esa señal, una fila de chips cortada
+     contra el borde no dice que sigue. */
+  .expediente__filtro {
+    mask-image: linear-gradient(to right, #000 calc(100% - var(--sp-8)), transparent);
+  }
 }
 
 /* Qué deja afuera el filtro, o qué no exporta el recorrido. Texto y no un
