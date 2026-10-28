@@ -35,13 +35,14 @@
   --hilo-tick-sobre-superficie: var(--c-petrol-500);
 }
 
-/* Gemelo de `[data-theme="dark"]`, como los de `alovida.css`: es el único
-   atributo con el que la hoja de ALOVIDA oscurece la tarjeta. Con el tema
-   «del sistema» y sin atributo, la tarjeta del hilo sigue clara, así que acá
-   no hay variante por `prefers-color-scheme`: pintaría un tilde claro sobre
-   una tarjeta blanca. La versión sobre la burbuja propia no la necesita: es
-   la misma en los dos temas. */
-:host-context([data-theme='dark']) {
+/* Los mismos dos atributos con los que `alovida.css` oscurece la tarjeta:
+   `data-theme="dark"` (tema elegido) y `data-tema="oscuro"`, que
+   `ThemeService` escribe siempre con el tema ya resuelto —también en
+   «sistema»—. Colgarse sólo del primero dejaba el tilde profundo sobre la
+   tarjeta nocturna en «sistema» (2:1). La versión sobre la burbuja propia
+   no lo necesita: es la misma en los dos temas. */
+:host-context([data-theme='dark']),
+:host-context([data-tema='oscuro']) {
   --hilo-tick-sobre-superficie: var(--c-petrol-100);
 }
 

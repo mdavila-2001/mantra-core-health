@@ -315,8 +315,10 @@
 }
 
 .hilo__no-leidos span {
-  background: var(--chat-no-leido);
-  color: #fff;
+  /* El verde del chat con blanco daba 3.2:1 a 11 px; la pareja de «ok» del
+     sistema pasa AA en los dos temas (4.8:1 y 7.9:1). */
+  background: var(--ok-tinta);
+  color: var(--ok-bg);
   text-transform: none;
 }
 
