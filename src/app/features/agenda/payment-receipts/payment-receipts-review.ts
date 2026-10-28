@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { readApiError } from '../../../core/http/api-error';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { describeFailure } from '../../../core/data-access/scheduling/payment-receipt-format';
 import { PaymentReceiptsClient } from '../../../core/data-access/scheduling/payment-receipts.client';
 import type { PaymentReceipt } from '../../../core/data-access/scheduling/payment-receipts.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -12,7 +13,6 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { AlertTone } from '../../../shared/components/molecules/alert/alert.types';
 import { BookingPaymentStates } from './booking-payment-states';
-import { describeFailure } from './payment-receipt-format';
 
 /** La operación en vuelo: sobre qué comprobante y cuál, o el marcado a mano. */
 export type PaymentReviewAction =

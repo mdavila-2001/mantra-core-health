@@ -32,6 +32,10 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
  * de los bordes**, porque la API guarda el motivo recortado: «  a » pasaría su
  * validación y llegaría al paciente como «a». Mientras no se cumpla, el botón
  * queda deshabilitado; el error aparece en el campo en cuanto se lo deja.
+ *
+ * Mientras otra operación del modal está en vuelo (`blocked`) el botón también
+ * espera, y sólo el botón: el campo no se deshabilita, porque quitarle el foco
+ * a quien está escribiendo lo dejaría fuera de lo que estaba haciendo.
  */
 @Component({
   selector: 'app-payment-receipt-rejection-form',
@@ -46,6 +50,14 @@ export class PaymentReceiptRejectionForm {
 
   /** El rechazo está en vuelo: el botón espera y no sale otro. */
   readonly submitting = input(false);
+
+  /**
+   * Otra operación del modal está en vuelo —confirmar otra fila, marcar el
+   * pago—. El motivo se sigue pudiendo escribir, pero el envío espera a que
+   * termine: el modal hace una operación a la vez, y un envío que saliera
+   * ahora se perdería sin que nadie se enterara.
+   */
+  readonly blocked = input(false);
 
   /** El motivo, ya recortado. */
   readonly submitted = output<string>();
@@ -72,7 +84,9 @@ export class PaymentReceiptRejectionForm {
   /** El error se muestra después de dejar el campo, no mientras se empieza a escribir. */
   protected readonly visibleProblem = computed(() => (this.touched() ? this.problem() : null));
 
-  protected readonly canSubmit = computed(() => this.problem() === null && !this.submitting());
+  protected readonly canSubmit = computed(
+    () => this.problem() === null && !this.submitting() && !this.blocked(),
+  );
 
   constructor() {
     // Se abre para escribir: el foco va al campo, no al botón que lo abrió.

@@ -33,7 +33,7 @@ describe('PaymentReceiptViewer', () => {
   }
 
   it('una imagen se ve entera, con texto alternativo, y se descarga con nombre de reserva', () => {
-    const root = render(IMAGE, { status: 'ready', url: 'blob:foto' });
+    const root = render(IMAGE, { status: 'ready', url: 'blob:foto', previewable: true });
 
     const image = root.querySelector('img');
     expect(image?.getAttribute('src')).toBe('blob:foto');
@@ -44,10 +44,44 @@ describe('PaymentReceiptViewer', () => {
   });
 
   it('un PDF se ve en un marco y avisa que se puede descargar', () => {
-    const root = render({ ...IMAGE, mimeType: 'application/pdf' }, { status: 'ready', url: 'blob:pdf' });
+    const root = render(
+      { ...IMAGE, mimeType: 'application/pdf' },
+      { status: 'ready', url: 'blob:pdf', previewable: true },
+    );
 
     expect(root.querySelector('iframe')).not.toBeNull();
+    // Sin `sandbox`: con él, el visor de PDF de Chrome no dibuja nada.
+    expect(root.querySelector('iframe')?.hasAttribute('sandbox')).toBe(false);
     expect(root.textContent).toContain('use «Descargar»');
+  });
+
+  it('sólo acepta una URL de objeto: con cualquier otra no dibuja nada', () => {
+    for (const receipt of [IMAGE, { ...IMAGE, mimeType: 'application/pdf' }]) {
+      const root = render(receipt, {
+        status: 'ready',
+        url: 'https://otro.sitio/comprobante',
+        previewable: true,
+      });
+
+      expect(root.querySelector('iframe')).toBeNull();
+      expect(root.querySelector('img')).toBeNull();
+      expect(root.querySelector('[data-testid="payment-receipt-download"]')).toBeNull();
+      expect(root.querySelector('[data-testid="payment-receipt-unpreviewable"]')).toBeNull();
+    }
+  });
+
+  it('un formato que no se muestra no tiene vista previa: ofrece sólo «Descargar»', () => {
+    const root = render(
+      { ...IMAGE, mimeType: 'text/html', originalName: 'comprobante.html' },
+      { status: 'ready', url: 'blob:otro', previewable: false },
+    );
+
+    expect(root.querySelector('iframe')).toBeNull();
+    expect(root.querySelector('img')).toBeNull();
+    expect(root.querySelector('[data-testid="payment-receipt-download"]')?.getAttribute('href')).toBe('blob:otro');
+    expect(root.querySelector('[data-testid="payment-receipt-unpreviewable"]')?.textContent).toContain(
+      'Use «Descargar»',
+    );
   });
 
   it('mientras baja no hay descarga que ofrecer; si falla, ofrece reintentar', () => {

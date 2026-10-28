@@ -1,5 +1,5 @@
 import { HttpHeaders } from '@angular/common/http';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { reservas } from '../fixtures/agenda';
 import { BOOKING_STATUS } from '../fixtures/concepts';
@@ -111,7 +111,7 @@ describe('handlers de comprobantes de pago', () => {
     seedPaymentReceipts();
   });
 
-  it('la cita de hoy de la médica trae dos comprobantes pendientes, del más reciente al más viejo', () => {
+  it('la cita de la médica trae dos comprobantes pendientes, del más reciente al más viejo', () => {
     const answer = list();
 
     expect(answer.status).toBe(200);
@@ -297,5 +297,40 @@ describe('handlers de comprobantes de pago', () => {
     const answer = call<Blob>('GET', `${RECEIPTS_URL}/${uploaded.id}/content`, doctor);
 
     expect(answer.body.size).toBe(2048);
+  });
+
+  /*
+   * Las reservas sobreviven a F5. Si la cita sembrada dependiera del día, la
+   * pestaña que sigue abierta al día siguiente sumaría otra cada mañana a la
+   * agenda de la médica y a «Mis citas» de la paciente.
+   */
+  it('la cita sembrada es una sola: al otro día, la pestaña abierta no suma otra', async () => {
+    const original = reservas.get(RECEIPTS_BOOKING_ID)!;
+    const stored = Array.from({ length: sessionStorage.length }, (_, i) => sessionStorage.key(i)!).map(
+      (key) => [key, sessionStorage.getItem(key)!] as const,
+    );
+    vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 24 * 60 * 60 * 1000 });
+    try {
+      // Cargar la maqueta de nuevo, «mañana», con lo que guardó la pestaña.
+      vi.resetModules();
+      const nextDay = await import('./payment-receipts.handlers');
+      const scheduleFixture = await import('../fixtures/agenda');
+
+      expect(nextDay.RECEIPTS_BOOKING_ID).toBe(RECEIPTS_BOOKING_ID);
+      const seeded = scheduleFixture.reservas.filtrar(
+        (r) =>
+          r.patientProfileId === PACIENTE.id &&
+          r.reasonText === original.reasonText &&
+          new Date(r.startAt).getHours() === 13,
+      );
+      expect(seeded.map((r) => r.id)).toEqual([RECEIPTS_BOOKING_ID]);
+      // Y se queda en su día, como cualquier otra reserva guardada.
+      expect(seeded[0]!.startAt).toBe(original.startAt);
+    } finally {
+      vi.useRealTimers();
+      vi.resetModules();
+      sessionStorage.clear();
+      for (const [key, value] of stored) sessionStorage.setItem(key, value);
+    }
   });
 });

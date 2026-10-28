@@ -10,7 +10,7 @@
       <app-nav-icon name="arrow-left" />
       Volver a la lista
     </button>
-    @if (url(); as href) {
+    @if (downloadUrl(); as href) {
       <a
         app-button
         variant="secondary"
@@ -31,9 +31,15 @@
     @switch (file()?.status) {
       @case ('ready') {
         @if (frameUrl(); as frame) {
+          <!-- Sin «sandbox» a propósito: con él, el visor de PDF de Chrome no
+               dibuja nada. Lo que entra es una «blob:» de este modal. -->
           <iframe class="receipt-viewer__frame" [src]="frame" [title]="'Comprobante en PDF: ' + fileName()"></iframe>
-        } @else if (url(); as src) {
+        } @else if (previewUrl(); as src) {
           <img class="receipt-viewer__image" [src]="src" [alt]="heading()" />
+        } @else if (downloadUrl() !== null) {
+          <p class="receipt-viewer__unpreviewable" data-testid="payment-receipt-unpreviewable">
+            Este archivo no se puede mostrar acá. Use «Descargar» para verlo.
+          </p>
         }
       }
       @case ('failed') {
@@ -51,7 +57,7 @@
     }
   </div>
 
-  @if (isPdf() && url() !== null) {
+  @if (isPdf() && previewUrl() !== null) {
     <p class="receipt-viewer__hint">Si el PDF no se ve en este dispositivo, use «Descargar».</p>
   }
 </section>

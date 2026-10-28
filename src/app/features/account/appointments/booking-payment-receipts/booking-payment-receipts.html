@@ -19,8 +19,9 @@
       </p>
     }
     @case ('unknown-status') {
-      <!-- Sin el estado de la cita no se ofrece subir: lo mismo que «Cancelar»,
-           que tampoco se ofrece sobre un estado que no se conoce. -->
+      <!-- Sin el estado de la cita, o mientras llega su pago, no se ofrece
+           subir: lo mismo que «Cancelar», que tampoco se ofrece sobre un
+           estado que no se conoce. -->
     }
     @default {
       <form class="payment-upload__form" data-testid="booking-receipts-form" (submit)="submit($event)">

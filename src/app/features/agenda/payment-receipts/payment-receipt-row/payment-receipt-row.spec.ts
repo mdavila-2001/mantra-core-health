@@ -64,6 +64,37 @@ describe('PaymentReceiptRow', () => {
     expect(row.textContent).toContain('No la indicó');
   });
 
+  it('con la cita ya pagada, una pendiente no ofrece confirmar, pero sí rechazar', () => {
+    const row = render(RECEIPT, {
+      paymentState: {
+        state: 'PAID',
+        label: 'Pagada',
+        conceptId: 'c-pagada',
+        insuranceUsed: false,
+        markedByUserId: 'u-medica',
+        markedAt: new Date('2026-10-28T10:00:00.000Z'),
+      },
+    });
+
+    expect(row.querySelector('[data-testid="payment-receipt-confirm"]')).toBeNull();
+    expect(row.querySelector('[data-testid="payment-receipt-reject"]')).not.toBeNull();
+  });
+
+  it('con la cita pendiente o parcialmente pagada, confirmar sigue', () => {
+    const partial = render(RECEIPT, {
+      paymentState: {
+        state: 'PARTIALLY_PAID',
+        label: 'Pago parcial',
+        conceptId: 'c-parcial',
+        insuranceUsed: false,
+        markedByUserId: 'u-medica',
+        markedAt: new Date('2026-10-28T10:00:00.000Z'),
+      },
+    });
+
+    expect(partial.querySelector('[data-testid="payment-receipt-confirm"]')).not.toBeNull();
+  });
+
   it('mientras se escribe el motivo, la fila guarda sus botones', () => {
     const row = render(RECEIPT, { reviewable: false });
 
@@ -71,7 +102,7 @@ describe('PaymentReceiptRow', () => {
   });
 
   it('la miniatura de una imagen es su archivo; sin él, un esqueleto; un PDF, su ícono', () => {
-    const ready = render(RECEIPT, { file: { status: 'ready', url: 'blob:foto' } });
+    const ready = render(RECEIPT, { file: { status: 'ready', url: 'blob:foto', previewable: true } });
     expect(ready.querySelector('img')?.getAttribute('src')).toBe('blob:foto');
 
     const loading = render(RECEIPT);
@@ -79,6 +110,18 @@ describe('PaymentReceiptRow', () => {
 
     const pdf = render({ ...RECEIPT, mimeType: 'application/pdf' });
     expect(pdf.querySelector('[data-kind="pdf"]')?.textContent).toContain('PDF');
+  });
+
+  it('unos bytes que no se muestran no son miniatura: va el ícono de archivo', () => {
+    const row = render(
+      { ...RECEIPT, mimeType: 'text/html' },
+      { file: { status: 'ready', url: 'blob:otro', previewable: false } },
+    );
+
+    const thumbnail = row.querySelector('[data-testid="payment-receipt-view"]');
+    expect(thumbnail?.querySelector('img')).toBeNull();
+    expect(thumbnail?.querySelector('app-skeleton')).toBeNull();
+    expect(thumbnail?.querySelector('svg')).not.toBeNull();
   });
 
   it('cada botón emite lo suyo', () => {

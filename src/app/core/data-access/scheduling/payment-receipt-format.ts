@@ -1,18 +1,24 @@
-import type {
-  PaymentReceipt,
-  PaymentReceiptStatus,
-} from '../../../core/data-access/scheduling/payment-receipts.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { withDisplayCurrency } from '../../../core/money/display-currency';
-import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
+import { errorToViewState } from '../../http/error-to-view-state';
+import { withDisplayCurrency } from '../../money/display-currency';
+import type { PaymentReceipt, PaymentReceiptStatus } from './payment-receipts.types';
 
 /* ============================================================================
     Cómo se dice un comprobante de pago en pantalla.
 
-    Lo comparten el modal de quien atiende y el bloque del paciente: los dos
-    nombran el mismo comprobante, y dos redacciones de lo mismo terminan
-    diciendo cosas distintas.
+    Lo comparten el modal de quien atiende (agenda) y el bloque del paciente
+    («Mis citas»): los dos nombran el mismo comprobante, y dos redacciones de
+    lo mismo terminan diciendo cosas distintas. Vive acá, junto al contrato,
+    y no en una de las dos pantallas: ninguna es dueña de la otra.
     ========================================================================== */
+
+/**
+ * El tono de la insignia de una revisión.
+ *
+ * Literal y no el `BadgeVariant` de `shared/`: `core/` no importa de `shared/`
+ * (`check-architecture`). Los tres son tonos de `Tone`, así que la insignia
+ * los acepta tal cual.
+ */
+export type PaymentReceiptStatusTone = 'warning' | 'success' | 'error';
 
 /**
  * La palabra de cada revisión.
@@ -28,7 +34,9 @@ export const PAYMENT_RECEIPT_STATUS_LABELS: Readonly<Record<PaymentReceiptStatus
 };
 
 /** El tono de la insignia de cada revisión. */
-export const PAYMENT_RECEIPT_STATUS_VARIANTS: Readonly<Record<PaymentReceiptStatus, BadgeVariant>> = {
+export const PAYMENT_RECEIPT_STATUS_VARIANTS: Readonly<
+  Record<PaymentReceiptStatus, PaymentReceiptStatusTone>
+> = {
   PENDING: 'warning',
   CONFIRMED: 'success',
   REJECTED: 'error',

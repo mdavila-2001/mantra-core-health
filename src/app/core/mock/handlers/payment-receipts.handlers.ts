@@ -13,7 +13,7 @@ import {
   type MockRouter,
 } from '../mock-router';
 import type { MockUser } from '../mock-session';
-import { ahora, Coleccion, fecha, imagenSvg, isoDia, masMinutos, nuevoId, uuid } from '../mock-store';
+import { ahora, Coleccion, fecha, imagenSvg, masMinutos, nuevoId, uuid } from '../mock-store';
 import { attachableFileFacts, fileContent, pdfMinimo } from './files.handlers';
 import { representaA } from './profiles.handlers';
 
@@ -96,26 +96,30 @@ export const paymentReceipts = new Coleccion<SimulatedReceipt>([]).persistirEn(
   'mock.agenda.comprobantes',
 );
 
-/* ---- la cita de hoy con dos comprobantes por revisar ------------------------
+/* ---- la cita con dos comprobantes por revisar -------------------------------
 
-   Una cita propia y no una de las generadas: aquéllas reparten pacientes por
-   índice y cambian de día, y lo que hace falta mostrar es fijo —la médica ve en
-   su día de hoy una consulta confirmada de la paciente principal, que pagó por
-   adelantado y subió dos comprobantes—.
+   Ninguna de las reservas generadas sirve: aquéllas reparten pacientes por
+   índice (`reserva()` de `fixtures/agenda.ts`), así que cuál de hoy es de la
+   paciente principal con la médica —si alguna lo es— cambia con el día; la
+   única fija, la reconsulta de C4, es de mañana en adelante y la cuentan sus
+   propias pruebas. Lo que hace falta mostrar es fijo —la médica ve en su día
+   una consulta confirmada de la paciente principal, que pagó por adelantado y
+   subió dos comprobantes—, así que la cita se crea acá, **una sola vez**:
 
-   - Es a las 13:00, en el hueco entre las mañanas (hasta las 12, o las 13 de
+   - El id es fijo, sin fecha: las reservas sobreviven a F5 y una cita por día
+     se iría sumando a la agenda y a «Mis citas» de quien deja la pestaña
+     abierta. Nace hoy a las 13:00 y se queda en su día, como cualquier otra.
+   - Las 13:00 caen en el hueco entre las mañanas (hasta las 12, o las 13 de
      los sábados) y los estudios de la tarde (desde las 14): no pisa ningún cupo
      de las plantillas de la médica, ningún día.
    - Confirmada vale a cualquier hora: una reserva de la paciente principal no
      entra en la regla del cupo liberado (`released-slot.ts`), así que pasada la
-     hora sigue siendo lo que es.
-   - El id lleva la fecha: las reservas sobreviven a F5 y una de ayer no es la
-     de hoy. */
+     hora sigue siendo lo que es. */
 
-/** La cita de hoy de la paciente principal con la médica, con comprobantes. */
-export const RECEIPTS_BOOKING_ID = uuid(`booking-comprobantes-${isoDia(0)}`);
+/** La cita de la paciente principal con la médica que trae comprobantes. */
+export const RECEIPTS_BOOKING_ID = uuid('booking-comprobantes-de-pago');
 
-const RECEIPTS_SLOT_ID = uuid(`slot-comprobantes-${isoDia(0)}`);
+const RECEIPTS_SLOT_ID = uuid('slot-comprobantes-de-pago');
 
 /** La paciente principal tal como firma lo que sube. */
 const MAIN_PATIENT_ACTOR: ReceiptActor = {
@@ -124,43 +128,43 @@ const MAIN_PATIENT_ACTOR: ReceiptActor = {
 };
 
 /**
- * Deja la cita de hoy y sus dos comprobantes pendientes si no están.
+ * Deja la cita y sus dos comprobantes pendientes si no están.
  *
  * Idempotente: corre en cada carga del módulo y lo ya guardado no se pisa —un
- * comprobante que se confirmó sigue confirmado después de F5—. Exportada para
- * que las pruebas vuelvan al punto de partida.
+ * comprobante que se confirmó sigue confirmado después de F5—. El cupo, que no
+ * se guarda, se rehace con el horario de la cita guardada, no con el de hoy.
+ * Exportada para que las pruebas vuelvan al punto de partida.
  */
 export function seedPaymentReceipts(): void {
-  const startAt = fecha(0, 13, 0).toISOString();
-  const endAt = masMinutos(startAt, 30);
+  const booking = reservas.get(RECEIPTS_BOOKING_ID) ?? reservas.agregar(bookingForReceipts());
   if (!cupos.has(RECEIPTS_SLOT_ID)) {
     cupos.agregar({
       id: RECEIPTS_SLOT_ID,
       resourceId: RECURSO_MEDICA,
       scheduleTemplateId: null,
-      startAt,
-      endAt,
+      startAt: booking.startAt,
+      endAt: booking.endAt,
       capacity: 1,
       remainingCapacity: 0,
       statusConceptId: STATUS['ST-ACTIVE']!,
       serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
     });
   }
-  if (!reservas.has(RECEIPTS_BOOKING_ID)) {
-    reservas.agregar(bookingForReceipts(startAt, endAt));
-  }
   for (const seed of seededReceipts()) {
     if (!paymentReceipts.has(seed.id)) paymentReceipts.agregar(seed);
   }
 }
 
-function bookingForReceipts(startAt: string, endAt: string): ReservaSimulada {
+/** La cita, hoy a las 13:00: sólo cuando todavía no existe. */
+function bookingForReceipts(): ReservaSimulada {
+  const startAt = fecha(0, 13, 0).toISOString();
+  const endAt = masMinutos(startAt, 30);
   return {
     id: RECEIPTS_BOOKING_ID,
     patientProfileId: PACIENTE.id,
     resourceId: RECURSO_MEDICA,
     bookableSlotId: RECEIPTS_SLOT_ID,
-    appointmentId: uuid(`appointment-comprobantes-${isoDia(0)}`),
+    appointmentId: uuid('appointment-comprobantes-de-pago'),
     typeConceptId: APPOINTMENT_TYPE['APT-CONTROL']!,
     startAt,
     endAt,
@@ -202,8 +206,8 @@ function seededReceipts(): readonly SimulatedReceipt[] {
   return [
     {
       ...base,
-      id: uuid(`receipt-transferencia-${isoDia(0)}`),
-      fileId: uuid(`file-receipt-transferencia-${isoDia(0)}`),
+      id: uuid('receipt-transferencia'),
+      fileId: uuid('file-receipt-transferencia'),
       mimeType: 'image/png',
       originalName: 'transferencia-banco-union.png',
       amount: '150.00',
@@ -214,8 +218,8 @@ function seededReceipts(): readonly SimulatedReceipt[] {
     },
     {
       ...base,
-      id: uuid(`receipt-qr-${isoDia(0)}`),
-      fileId: uuid(`file-receipt-qr-${isoDia(0)}`),
+      id: uuid('receipt-qr'),
+      fileId: uuid('file-receipt-qr'),
       mimeType: 'application/pdf',
       originalName: 'comprobante-pago-qr.pdf',
       amount: '150.00',

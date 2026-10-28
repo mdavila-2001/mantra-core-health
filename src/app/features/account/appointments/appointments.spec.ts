@@ -1664,6 +1664,8 @@ function montarCancelacion(opts: Opciones) {
           rescheduleBooking,
           listWaitlist,
           enrollWaitlist,
+          // Corrección 11 · el bloque «Comprobante de pago» lee el pago de la cita.
+          getBooking: vi.fn((id: string) => of({ id })),
         },
       },
       { provide: TerminologyClient, useValue: { readConceptLabels } },
@@ -2078,6 +2080,7 @@ describe('Appointments · lista y calendario', () => {
       labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
     });
     const receipts = TestBed.inject(PaymentReceiptsClient) as unknown as { list: ReturnType<typeof vi.fn> };
+    const scheduling = TestBed.inject(SchedulingClient) as unknown as { getBooking: ReturnType<typeof vi.fn> };
 
     vista(comp).elegirVista('calendario');
     await fixture.whenStable();
@@ -2090,6 +2093,8 @@ describe('Appointments · lista y calendario', () => {
     const detail = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
     expect(detail.querySelector('[data-testid="booking-receipts"]')?.textContent).toContain('Comprobante de pago');
     expect(receipts.list).toHaveBeenCalledWith('b1');
+    // El pago lo lee el bloque: la pantalla no lo arrastra en su modelo de turno.
+    expect(scheduling.getBooking).toHaveBeenCalledWith('b1');
   });
 });
 
