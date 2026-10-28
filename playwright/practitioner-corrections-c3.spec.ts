@@ -25,6 +25,9 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  * 3. Una sesión de más de 4 h pregunta antes de guardar, y «Volver» deja el
  *    modal como estaba.
  * 4. Una cita de 30 min queda agendada, y la paciente la ve en «Mis citas».
+ * 5. El campo «Organización» empieza en «Mi consultorio», y «Afiliarme a otra
+ *    organización…» abre la solicitud encima del modal del día, que sigue
+ *    abierto con lo cargado. La paciente no tiene ese modal.
  *
  * ## Por qué mañana, y por el «+»
  *
@@ -56,6 +59,9 @@ const PATIENT_NAME = 'Ana Lucía Pérez Quiroga';
 const SHORT_APPOINTMENT_REASON = 'Control de presión de media hora';
 
 const END_BEFORE_START_ERROR = 'La hora de fin tiene que ser después de la de inicio';
+
+/** El encabezado del modal de afiliación (`affiliation-dialog.ts`). */
+const AFFILIATION_HEADING = 'Pedir afiliarme a un centro';
 
 const VIEWPORTS = [
   { name: '360', width: 360, height: 800 },
@@ -126,6 +132,16 @@ function saveButton(page: Page): Locator {
   return page.getByTestId('tarjeta-guardar');
 }
 
+/** El selector «Organización» del modal del día. */
+function organizationSelect(card: Locator): Locator {
+  return card.getByRole('combobox', { name: 'Organización' });
+}
+
+/** El modal de la solicitud de afiliación, que se abre encima del del día. */
+function affiliationDialog(page: Page): Locator {
+  return page.getByRole('dialog', { name: AFFILIATION_HEADING });
+}
+
 test('médica · el modal del día no pregunta el medio, dice qué hora está mal y confirma la sesión larga', async ({
   page,
 }) => {
@@ -176,6 +192,61 @@ test('médica · el modal del día no pregunta el medio, dice qué hora está ma
   }
 });
 
+test('médica · el modal del día empieza en «Mi consultorio» y pide afiliación sin cerrarse', async ({
+  page,
+}) => {
+  await entrarAlSimulador(page, 'medica', '');
+  await page.goto(SCHEDULE, { waitUntil: 'domcontentloaded' });
+
+  for (const { viewport, theme } of MATRIX) {
+    const cell = `${viewport.name}-${theme}`;
+    await applyCell(page, viewport, theme);
+    const card = await openTomorrowDayCard(page);
+
+    const select = organizationSelect(card);
+    await expect(select).toBeVisible();
+    await expect(select).toHaveText(/Mi consultorio/);
+    await select.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(EVIDENCE, `day-card-organization-default-${cell}.png`) });
+  }
+
+  // Las organizaciones donde ya está afiliada y, al final, la puerta para pedir otra.
+  await applyCell(page, VIEWPORTS[1], 'light');
+  const card = await openTomorrowDayCard(page);
+  await choosePatient(page, card);
+  const select = organizationSelect(card);
+  await select.click();
+  await expect(page.getByRole('option', { name: /Mi consultorio/ })).toBeVisible();
+  await expect(page.getByRole('option', { name: /Afiliarme a otra organización/ })).toBeVisible();
+  await page.screenshot({ path: join(EVIDENCE, 'day-card-organization-options-1280-light.png') });
+
+  // «Afiliarme…» abre la solicitud encima; el modal del día sigue abierto debajo.
+  await page.getByRole('option', { name: /Afiliarme a otra organización/ }).click();
+  const affiliation = affiliationDialog(page);
+  await expect(affiliation).toBeVisible();
+  await expect(affiliation.getByTestId('request-form')).toBeVisible();
+  await expect(card).toBeVisible();
+  await page.screenshot({ path: join(EVIDENCE, 'day-card-affiliation-1280-light.png') });
+
+  // Cancelar la solicitud deja el modal del día como estaba: pedir no es elegir.
+  await affiliation.getByTestId('request-cancel').click();
+  await expect(affiliation).toBeHidden();
+  await expect(card).toBeVisible();
+  await expect(select).toHaveText(/Mi consultorio/);
+  await expect(card.getByText('le avisamos al paciente')).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`${SCHEDULE}(\\?|$)`));
+  await page.screenshot({ path: join(EVIDENCE, 'day-card-after-affiliation-cancel-1280-light.png') });
+
+  // A 360 la solicitud también cabe encima del modal del día.
+  await applyCell(page, VIEWPORTS[0], 'light');
+  const narrowCard = await openTomorrowDayCard(page);
+  await organizationSelect(narrowCard).click();
+  await page.getByRole('option', { name: /Afiliarme a otra organización/ }).click();
+  await expect(affiliationDialog(page)).toBeVisible();
+  await expect(narrowCard).toBeVisible();
+  await page.screenshot({ path: join(EVIDENCE, 'day-card-affiliation-360-light.png') });
+});
+
 test('médica agenda una cita de 30 min y la paciente la ve en «Mis citas»', async ({ page }) => {
   await entrarAlSimulador(page, 'medica', '');
   await page.goto(SCHEDULE, { waitUntil: 'domcontentloaded' });
@@ -207,4 +278,15 @@ test('médica agenda una cita de 30 min y la paciente la ve en «Mis citas»', a
       path: join(EVIDENCE, `patient-sees-short-appointment-${viewport.name}-${theme}.png`),
     });
   }
+});
+
+test('paciente · la agenda del médico no le ofrece el modal del día', async ({ page }) => {
+  await entrarAlSimulador(page, 'paciente', '');
+  await page.goto(SCHEDULE, { waitUntil: 'domcontentloaded' });
+  await applyCell(page, VIEWPORTS[1], 'light');
+
+  // Ni el «+» que abre el modal del día ni su selector de organización.
+  await expect(page.getByTestId('dia-agregar')).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Organización' })).toHaveCount(0);
+  await page.screenshot({ path: join(EVIDENCE, 'patient-no-day-card-1280-light.png') });
 });
