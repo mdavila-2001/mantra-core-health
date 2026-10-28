@@ -12,7 +12,7 @@ import {
  * El departamento y el municipio los trae el catálogo; la **provincia** no está
  * en ningún catálogo del producto, así que se deduce del dibujo: el punto
  * interior del contorno del municipio (que cae lejos de su borde) se busca
- * entre las 112 provincias de `public/geo/bolivia-provincias.geojson`. Es la
+ * entre las 112 provincias de `public/maps/bolivia-provinces.geojson`. Es la
  * misma fuente que ya dibuja las provincias en el mapa, no un dato nuevo.
  */
 export interface LocalityDetail {
