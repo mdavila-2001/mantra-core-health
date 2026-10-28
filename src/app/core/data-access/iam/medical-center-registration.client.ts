@@ -14,11 +14,14 @@ export interface MedicalCenterRegistration {
   readonly legalName: string;
   readonly legalEntityType: string;
   readonly tradeName?: string;
-  /** Los cinco papeles de la empresa, por el `fileId` de su pre-carga. */
+  /**
+   * Los papeles de la empresa, por el `fileId` de su pre-carga. La escritura y
+   * la matrícula faltan sólo si el tipo societario las permite omitir.
+   */
   readonly legalDocuments: {
-    readonly constitutionFileId: string;
+    readonly constitutionFileId?: string;
     readonly taxIdentifierFileId: string;
-    readonly commerceRegistryFileId: string;
+    readonly commerceRegistryFileId?: string;
     readonly operatingLicenseFileId: string;
     readonly healthAuthorityCertificateFileId: string;
   };
@@ -61,9 +64,13 @@ export class MedicalCenterRegistrationClient {
           ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
           tenantType: registration.tenantType,
           legalDocuments: {
-            constitutionFileId: registration.legalDocuments.constitutionFileId,
+            ...(registration.legalDocuments.constitutionFileId === undefined
+              ? {}
+              : { constitutionFileId: registration.legalDocuments.constitutionFileId }),
             taxIdentifierFileId: registration.legalDocuments.taxIdentifierFileId,
-            commerceRegistryFileId: registration.legalDocuments.commerceRegistryFileId,
+            ...(registration.legalDocuments.commerceRegistryFileId === undefined
+              ? {}
+              : { commerceRegistryFileId: registration.legalDocuments.commerceRegistryFileId }),
             operatingLicenseFileId: registration.legalDocuments.operatingLicenseFileId,
             healthAuthorityCertificateFileId: registration.legalDocuments.healthAuthorityCertificateFileId,
           },

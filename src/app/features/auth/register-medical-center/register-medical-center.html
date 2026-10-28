@@ -47,7 +47,7 @@
         <app-dropzone-pdf
           [uploader]="subirDocumento"
           [label]="etiquetaDeDocumento(clave)"
-          [required]="true"
+          [required]="esDocumentoObligatorio(clave)"
           [hasError]="esDocumentoInvalido(clave)"
           [testId]="'medical-center-signup-doc-' + clave"
           [documentoInicial]="documentoInicialDe(clave)"
