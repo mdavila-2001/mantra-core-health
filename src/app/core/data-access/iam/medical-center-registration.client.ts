@@ -14,6 +14,17 @@ export interface MedicalCenterRegistration {
   readonly legalName: string;
   readonly legalEntityType: string;
   readonly tradeName?: string;
+  /**
+   * Los papeles de la empresa, por el `fileId` de su pre-carga. La escritura y
+   * la matrícula faltan sólo si el tipo societario las permite omitir.
+   */
+  readonly legalDocuments: {
+    readonly constitutionFileId?: string;
+    readonly taxIdentifierFileId: string;
+    readonly commerceRegistryFileId?: string;
+    readonly operatingLicenseFileId: string;
+    readonly healthAuthorityCertificateFileId: string;
+  };
   /** Concept id del país: los cinco tipos son territoriales y la API lo exige. */
   readonly countryConceptId: string;
   /** Concept id de la jurisdicción: ver `countryConceptId`. */
@@ -52,6 +63,17 @@ export class MedicalCenterRegistrationClient {
           legalEntityType: registration.legalEntityType,
           ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
           tenantType: registration.tenantType,
+          legalDocuments: {
+            ...(registration.legalDocuments.constitutionFileId === undefined
+              ? {}
+              : { constitutionFileId: registration.legalDocuments.constitutionFileId }),
+            taxIdentifierFileId: registration.legalDocuments.taxIdentifierFileId,
+            ...(registration.legalDocuments.commerceRegistryFileId === undefined
+              ? {}
+              : { commerceRegistryFileId: registration.legalDocuments.commerceRegistryFileId }),
+            operatingLicenseFileId: registration.legalDocuments.operatingLicenseFileId,
+            healthAuthorityCertificateFileId: registration.legalDocuments.healthAuthorityCertificateFileId,
+          },
           countryConceptId: registration.countryConceptId,
           jurisdictionConceptId: registration.jurisdictionConceptId,
         },
