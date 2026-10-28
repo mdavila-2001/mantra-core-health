@@ -23,16 +23,15 @@ export const DESTINO_SERVICIO: SurveyTargetType = 'SERVICE';
 /**
  * El destino «Todas mis consultas»: el tipo de atención «consulta».
  *
- * **PENDIENTE DEL CONTRATO.** La decisión es habilitar `CARE_TYPE` sólo para
- * consulta (hoy el backend responde 412). Lo que todavía no está definido es el
- * `targetId` —el DTO lo valida como UUID—, así que acá va un valor provisional
- * y estable. Cuando el backend fije el concepto de «consulta» se cambia
+ * El backend habilita `CARE_TYPE` sólo para consulta (`SURVEYS.CARE_TYPE_CONSULTATION`)
+ * y rechaza cualquier otro id con 422 `SURVEY_ASSIGNMENT_CARE_TYPE_UNSUPPORTED`.
+ * Es un concepto con id determinista (el mismo en todos los entornos). Se cambia
  * `ID_TIPO_ATENCION_CONSULTA` y nada más: ninguna pantalla lo escribe a mano.
  */
 export const TIPO_DESTINO_CONSULTAS: SurveyTargetType = 'CARE_TYPE';
 
-/** UUID provisional del tipo de atención «consulta». Ver {@link TIPO_DESTINO_CONSULTAS}. */
-export const ID_TIPO_ATENCION_CONSULTA = '00000000-0000-4000-8000-0000000000c1';
+/** Id del concepto «consulta» (`SURVEYS.CARE_TYPE_CONSULTATION` en la API). Ver {@link TIPO_DESTINO_CONSULTAS}. */
+export const ID_TIPO_ATENCION_CONSULTA = 'a0038828-6e68-55c5-aa59-d4c747035db6';
 
 /** Un destino listo para mandar en `POST /surveys/assignments`. */
 export interface DestinoDeEncuesta {
