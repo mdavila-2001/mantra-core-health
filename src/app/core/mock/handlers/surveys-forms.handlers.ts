@@ -183,13 +183,18 @@ const asignaciones = new Coleccion<AsignacionSimulada>([
   { id: uuid('assignment-teleconsulta'), surveyId: uuid('survey-teleconsulta'), surveyVersionId: uuid('survey-teleconsulta-v1'), targetType: 'SERVICE', targetId: uuid('service-TELE-CARDIO') },
 ]);
 
+/**
+ * Las respuestas recibidas de una encuesta, como las sirve la API: **sin la
+ * reserva** (`appointmentBookingId` ya no viaja) y con `submittedAt` redondeado
+ * al DÍA (medianoche UTC). Fecha y hora exactas junto a un comentario permitirían
+ * reconocer qué paciente lo escribió.
+ */
 function respuestasDe(e: EncuestaSimulada) {
   const invitados = reservas.todos().slice(0, 9);
-  return invitados.map((r, i) => ({
+  return invitados.map((_, i) => ({
     id: uuid(`response-${e.id}-${i}`),
     invitationId: uuid(`inv-resp-${e.id}-${i}`),
-    appointmentBookingId: r.id,
-    submittedAt: iso(-i * 3 - 1, 18),
+    submittedAt: `${diaDe(iso(-i * 3 - 1, 18))}T00:00:00.000Z`,
     answers: e.questions.map((q) => ({
       questionId: q.id,
       questionText: q.questionText,
@@ -351,8 +356,8 @@ function enviosPropios(): readonly EmisionSimulada[] {
         id: r.id,
         fuente: e.id,
         servicioId: null,
-        emitidaEl: diaDe(r.submittedAt),
-        respondidaEl: diaDe(r.submittedAt),
+        emitidaEl: r.submittedAt.slice(0, 10),
+        respondidaEl: r.submittedAt.slice(0, 10),
         respuestas: r.answers.map((a) => ({
           questionId: a.questionId,
           ...('valueNumber' in a ? { valueNumber: a.valueNumber } : {}),

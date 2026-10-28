@@ -318,8 +318,10 @@
               @for (respuesta of respuestas(); track respuesta.id) {
                 <li class="encuesta__respuesta">
                   <span class="encuesta__respuesta-fecha">
+                    <!-- Sólo el día, en UTC: el servidor lo redondea al día (medianoche UTC) y
+                         la hora exacta junto a un comentario reconocería a quien lo escribió. -->
                     @if (respuesta.submittedAt) {
-                      {{ respuesta.submittedAt | date: 'short' }}
+                      {{ respuesta.submittedAt | date: 'd MMM y' : 'UTC' }}
                     } @else {
                       Sin enviar
                     }
