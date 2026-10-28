@@ -420,7 +420,7 @@ export class ChatStore {
     const filas = this.conversaciones();
     const fallo = this.falloDeLaBandeja();
     if (fallo !== null) {
-      return filas.length === 0
+      return filas.length === 0 || fallo.status === 'forbidden'
         ? fallo
         : stale(filas, this.bandejaLeidaEn() ?? new Date(0));
     }
@@ -1156,7 +1156,9 @@ export class ChatStore {
           // Salvo un 403: ahí la API dijo que con este perfil no se leen, y
           // las filas —y sus no leídos en el ícono— se van con el permiso.
           const fallo = falloDeBandeja(error);
-
+          if (fallo.status === 'forbidden') {
+            this.conversaciones.set([]);
+          }
           this.falloDeLaBandeja.set(fallo);
           this.siPerdioElPermiso(error, propio);
         },
@@ -1949,6 +1951,9 @@ export class ChatStore {
     // vacaciones»): mandarla escribiendo como la farmacia la firmaría en
     // nombre de la farmacia. La de la vitrina se configura aparte en la API
     // (`/community/profiles/:profileId/auto-reply`) y la manda el servidor.
+    if (this.actuandoComoOrganizacion()) {
+      return;
+    }
     const propio = this.perfil();
     if (propio === null || mensaje.senderProfileId === propio) {
       return;
@@ -2051,7 +2056,9 @@ export class ChatStore {
 
   /** `false` si desde `marca` se cambió de identidad o de cuenta: se descarta. */
   private aperturaVigente(marca: MarcaDeApertura): boolean {
-    return marca !== null;
+    return (
+      marca.identidad === this.generacionDeIdentidad && marca.usuario === this.generacionDeUsuario
+    );
   }
 
   /**
@@ -2082,7 +2089,7 @@ export class ChatStore {
 
   /** Corta la apertura en curso, si hay, y libera `abriendo`. */
   private cancelarApertura(): void {
-    // MUT
+    this.apertura.unsubscribe();
     this.apertura = new Subscription();
     this.abriendo.set(false);
   }

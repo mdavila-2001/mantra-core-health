@@ -419,6 +419,9 @@ export class Messaging {
 
   private irAlHilo(conversationId: string): void {
     // La apertura terminó con la pantalla ya cerrada: no se navega.
+    if (this.destruida) {
+      return;
+    }
     this.limpiarBusqueda();
     // Sin `queryParams`: la dirección del hilo no hereda `escribirA` ni el
     // contexto, que ya se mandó.

@@ -183,6 +183,13 @@
         } @else if (vacio()) {
           <!-- S7 sigue siendo S7 aunque el filtro no deje filas: el aviso de
                antigüedad no se pierde por filtrar. -->
+          @if (bandeja.status === 'stale') {
+            <app-conversation-list
+              [conversaciones]="[]"
+              [estado]="bandeja"
+              (reintentar)="store.recargarBandeja()"
+            />
+          }
           @if (sinCoincidencias()) {
             <p class="mensajeria__sin-nada" role="status" data-testid="mensajeria-sin-coincidencias">
               @if (comoOrganizacion(); as nombre) {
@@ -208,6 +215,17 @@
           } @else {
             <!-- Hay chats, pero todos archivados: no es el S3 «Todavía no
                  tenés chats». La salida es abrir el cajón. -->
+            <p class="mensajeria__sin-nada" role="status" data-testid="mensajeria-todo-archivado">
+              {{ rotuloArchivadas() }}
+              <button
+                class="mensajeria__enlace"
+                type="button"
+                data-testid="mensajeria-ver-archivados"
+                (click)="alternarArchivados()"
+              >
+                Ver archivados
+              </button>
+            </p>
           }
         } @else {
           <app-conversation-list

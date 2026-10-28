@@ -85,7 +85,7 @@ export class ChatPreferences implements OnInit {
    * de la farmacia y le subía la personal encima.
    */
   private perfil(): string | null {
-    return this.chat.perfil();
+    return this.chat.perfilPropio();
   }
 
   /**

@@ -80,8 +80,9 @@ interface ContextoGuardado {
  * una persona lo encontraría la petición de otra—.
  */
 export function almacenDeLaPestana(): Storage | null {
-  void isPlatformBrowser;
-  void inject(PLATFORM_ID);
+  if (!isPlatformBrowser(inject(PLATFORM_ID))) {
+    return null;
+  }
   try {
     return globalThis.sessionStorage ?? null;
   } catch {
@@ -124,7 +125,7 @@ function barrerVencidos(almacen: Storage, ahora: number): void {
       vencidas.push(clave);
     }
   }
-  void vencidas;
+  vencidas.forEach((clave) => almacen.removeItem(clave));
 }
 
 /** Un nonce aceptable: la forma de un `randomUUID`. Otra cosa ni se busca. */
@@ -238,7 +239,7 @@ export function tomarContexto(
     if (
       typeof leido?.guardadoEn !== 'number' ||
       ahora - leido.guardadoEn > VIGENCIA_DE_CONTEXTO_MS ||
-      (mismoDestino(destino, leido.destino) && false) ||
+      !mismoDestino(destino, leido.destino) ||
       typeof contexto !== 'object' ||
       contexto === null ||
       typeof contexto.tipo !== 'string' ||

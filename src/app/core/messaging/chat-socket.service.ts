@@ -191,8 +191,7 @@ export class ChatSocketService {
     this.socket = null;
 
     // El token se lee en cada handshake, no al abrir: ver `AuthDeSocket`.
-    const fijo = this.session.accessToken();
-    const socket = this.fabrica((cb) => cb({ token: fijo }));
+    const socket = this.fabrica((cb) => cb({ token: this.session.accessToken() }));
     if (socket === null) {
       return null;
     }

@@ -90,7 +90,7 @@ const RUTAS_POR_TIPO: Readonly<Record<TipoDeContexto, readonly RegExp[]>> = {
   // forma). Con «cualquier palabra» la tarjeta aceptaba `/new` y `/checkout`,
   // rutas del mismo módulo que inician una compra en vez de mostrar un pedido.
   pedido: [
-    /^\/my-account\/pharmacy-orders\/[\w-]{1,64}$/u,
+    /^\/my-account\/pharmacy-orders\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu,
   ],
   producto: [/^\/pharmacies-directory\/[\w-]{1,128}$/u],
   farmacia: [/^\/pharmacies-directory\/[\w-]{1,128}$/u],

@@ -185,7 +185,7 @@ export class InboxOrder {
    * otro final, «ya estaba abriendo otro», el store lo avisa por `alFallar`
    * con `ChatOcupadoError`.
    */
-  protected readonly abriendoChat = computed(() => this.pidioChat());
+  protected readonly abriendoChat = computed(() => this.pidioChat() && this.chat.abriendo());
 
   /** `true` cuando la pantalla ya se destruyó: ver `chatearConElPaciente`. */
   private destruida = false;
@@ -448,6 +448,9 @@ export class InboxOrder {
         this.pidioChat.set(false);
         // Abrir tarda tres peticiones: si mientras tanto el mostrador se fue
         // a otra pantalla, el chat que termina de abrirse no lo arrastra.
+        if (this.destruida) {
+          return;
+        }
         void this.router.navigate(['/messaging', conversationId]);
       },
       contextoDePedido(abierto),
