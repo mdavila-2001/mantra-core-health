@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -33,6 +32,7 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { RequestInbox } from './request-inbox/request-inbox';
 import { conceptosDe } from '../my-profile/practitioner-profile/practitioner-profile';
 import {
   buildRoadmap,
@@ -80,11 +80,11 @@ const PESTANA = { ruta: 0, bandeja: 1 } as const;
     AppButton,
     AppButtonLink,
     Card,
-    DatePipe,
     EmptyState,
     FormField,
     NavIcon,
     PageHeader,
+    RequestInbox,
     RouterLink,
     Select,
     StatusSeal,
@@ -136,13 +136,8 @@ export class MyVerifications {
     return d === null ? [] : buildThreads(d.perfil.affiliations, d.seguros ?? []);
   });
 
-  /** La conversación abierta. Por omisión, la de la novedad más reciente. */
-  private readonly hiloElegidoId = signal<string | null>(null);
-  protected readonly hiloAbierto = computed<RequestThread | null>(() => {
-    const hilos = this.hilos();
-    const id = this.hiloElegidoId();
-    return hilos.find((h) => h.id === id) ?? hilos[0] ?? null;
-  });
+  /** La conversación abierta en la bandeja (`app-request-inbox`). */
+  protected readonly hiloElegidoId = signal<string | null>(null);
 
   protected readonly pendientes = computed(
     () => this.hilos().filter((h) => h.state === 'pending').length,
@@ -216,10 +211,6 @@ export class MyVerifications {
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
-  }
-
-  protected abrirHilo(id: string): void {
-    this.hiloElegidoId.set(id);
   }
 
   protected irABandeja(): void {
