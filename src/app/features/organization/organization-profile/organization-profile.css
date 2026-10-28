@@ -1,42 +1,81 @@
 /* «Mi perfil» de una organización que no es farmacia. Sólo tokens. */
 
+/* Ficha de una sola tarjeta: centrada y a lo ancho del área de contenido
+   (composition-rules §5). El tope lo pone `.app-main__inner`. */
 .perfil-organizacion {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.perfil-organizacion--logo {
+  margin-block-start: var(--sp-6);
+}
+
+.perfil-organizacion__encabezado {
   display: flex;
-  flex-direction: column;
-  gap: var(--sp-6);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-block-end: var(--sp-4);
 }
 
 .perfil-organizacion__titulo {
-  margin: 0 0 var(--sp-4);
+  margin: 0;
   font-size: var(--fs-body-lg);
   font-weight: 600;
   color: var(--text-primary);
 }
 
+.perfil-organizacion__alta {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* Los campos se reparten en columnas según el ancho, en vez de acotar la
+   ficha: una en móvil, dos desde 780 px, tres desde 1120 px. */
 .perfil-organizacion__datos {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--sp-1) var(--sp-6);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4) var(--sp-6);
   margin: 0;
+  padding-block-start: var(--sp-4);
 }
 
-.perfil-organizacion__datos dt {
-  color: var(--text-secondary);
+.perfil-organizacion__dato dt {
   font-size: var(--fs-caption);
+  color: var(--text-muted);
 }
 
-.perfil-organizacion__datos dd {
-  margin: 0 0 var(--sp-3);
+.perfil-organizacion__dato dd {
+  margin: 0;
   color: var(--text-primary);
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
-@media (min-width: 768px) {
-  .perfil-organizacion__datos {
-    grid-template-columns: max-content 1fr;
-  }
+.perfil-organizacion__cifra {
+  font-variant-numeric: tabular-nums;
+}
 
-  .perfil-organizacion__datos dd {
-    margin: 0;
+@media (min-width: 780px) {
+  .perfil-organizacion__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+@media (min-width: 1120px) {
+  .perfil-organizacion__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Lo que cada pestaña trae de otra ficha arranca separado de la tira. */
+app-tab > app-representative-and-managers,
+app-tab > app-legal-documents,
+app-tab > app-insurer-profile-card,
+app-tab > app-organization-logo,
+app-tab > app-empty-state {
+  display: block;
+  padding-block-start: var(--sp-4);
 }

@@ -13,43 +13,75 @@
 } @else {
   <app-page-header
     [title]="titulo()"
-    subtitle="Lo que su organización es en los papeles: sus datos y cómo se la encuentra."
+    subtitle="Lo que su organización es en los papeles: sus datos, quién la representa y su carpeta legal."
     [breadcrumbs]="breadcrumbs()"
   />
 
   <app-view-state-host [state]="organizaciones()" (retry)="cargar()">
     @if (organizacion(); as org) {
-      <div class="perfil-organizacion">
-        <app-organization-logo
-          [tenantId]="org.id"
-          [nombre]="org.tradeName || org.legalName"
-          [puedeEditar]="org.canAdminister"
-        />
+      <!-- UNA tarjeta con pestañas, centrada y a lo ancho (composition-rules §5). -->
+      <app-card class="perfil-organizacion" variant="outlined" padding="lg">
+        <div class="perfil-organizacion__encabezado">
+          <h2 class="perfil-organizacion__titulo">{{ org.tradeName || org.legalName }}</h2>
+          <app-badge
+            data-testid="perfil-organizacion-verificacion"
+            [variant]="org.isVerified ? 'success' : 'warning'"
+            [value]="org.isVerified ? 'Verificada' : 'Pendiente de verificación'"
+          />
+          <span class="perfil-organizacion__alta">
+            Registrada el {{ org.createdAt | date: 'd MMM y' }}
+          </span>
+        </div>
 
-        <app-card variant="outlined" padding="lg">
-          <h2 class="perfil-organizacion__titulo">Datos de la organización</h2>
-          <dl class="perfil-organizacion__datos" data-testid="perfil-organizacion-datos">
-            <dt>Razón social</dt>
-            <dd>{{ org.legalName }}</dd>
-            <dt>Nombre comercial</dt>
-            <dd>{{ org.tradeName || '—' }}</dd>
-            <dt>Zona horaria</dt>
-            <dd>{{ org.timeZone || '—' }}</dd>
-            @if (org.payer; as payer) {
-              <dt>Sigla</dt>
-              <dd>{{ payer.sigla || '—' }}</dd>
-              <dt>NIT</dt>
-              <dd>{{ payer.regulatorIdentifier || '—' }}</dd>
-              <dt>Dirección</dt>
-              <dd>{{ payer.address || '—' }}</dd>
+        <app-tabs [(selectedIndex)]="pestana" data-testid="perfil-organizacion-pestanas">
+          <app-tab label="Organización">
+            <dl class="perfil-organizacion__datos" data-testid="perfil-organizacion-datos">
+              @for (dato of datos(); track dato.etiqueta) {
+                <div class="perfil-organizacion__dato">
+                  <dt>{{ dato.etiqueta }}</dt>
+                  <dd [class.perfil-organizacion__cifra]="dato.cifra">{{ dato.valor }}</dd>
+                </div>
+              }
+            </dl>
+          </app-tab>
+
+          <app-tab label="Representante y gerentes">
+            <app-representative-and-managers
+              [state]="gente()"
+              [readOnly]="true"
+              (retry)="cargar()"
+            />
+          </app-tab>
+
+          <app-tab label="Documentos">
+            @if (sinPapeles()) {
+              <app-empty-state
+                variant="empty"
+                data-testid="perfil-organizacion-sin-papeles"
+                title="Todavía no hay documentos en la carpeta"
+                description="Los documentos legales que su organización presente al registrarse aparecen acá con su estado de revisión."
+              />
+            } @else {
+              <app-legal-documents [state]="papeles()" [readOnly]="true" (retry)="cargar()" />
             }
-          </dl>
-        </app-card>
+          </app-tab>
 
-        @if (org.payer?.carrierCode; as carrierCode) {
-          <app-insurer-profile-card [carrierCode]="carrierCode" />
-        }
-      </div>
+          @if (org.payer?.carrierCode; as carrierCode) {
+            <app-tab label="Aseguradora">
+              <app-insurer-profile-card [carrierCode]="carrierCode" [enmarcado]="false" />
+            </app-tab>
+          }
+
+          <app-tab label="Logo">
+            <app-organization-logo
+              [tenantId]="org.id"
+              [nombre]="org.tradeName || org.legalName"
+              [puedeEditar]="org.canAdminister"
+              [enmarcado]="false"
+            />
+          </app-tab>
+        </app-tabs>
+      </app-card>
     }
   </app-view-state-host>
 }

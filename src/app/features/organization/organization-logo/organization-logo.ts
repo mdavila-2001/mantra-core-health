@@ -60,6 +60,13 @@ export class OrganizationLogo {
   /** Si quien mira administra la organización. La API vuelve a comprobarlo al guardar. */
   readonly puedeEditar = input<boolean>(false);
 
+  /**
+   * Con su propio marco (el default) o sin él, para vivir dentro de la pestaña
+   * de una ficha que ya es una tarjeta: una tarjeta adentro de otra es justo
+   * lo que la regla de «una tarjeta con pestañas» evita.
+   */
+  readonly enmarcado = input(true);
+
   /** La imagen como `data:` URL, o `null` si no hay. */
   protected readonly vista = signal<string | null>(null);
   protected readonly ocupado = signal(false);
