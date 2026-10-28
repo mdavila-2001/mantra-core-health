@@ -1,0 +1,63 @@
+<section class="vista" aria-labelledby="plan-vista-titulo" data-testid="plan-vista">
+  <header class="vista__cabecera">
+    <h3 class="vista__titulo" id="plan-vista-titulo">
+      <app-nav-icon name="route" />
+      Hoja de ruta
+    </h3>
+    <span
+      class="vista__estado"
+      [class.vista__estado--listo]="estado().tipo === 'listo'"
+      data-testid="plan-pendientes"
+    >
+      {{ insignia() }}
+    </span>
+  </header>
+
+  <ol class="vista__pista">
+    <li class="vista__hito">
+      <span class="vista__nodo" aria-hidden="true"><app-nav-icon name="arrive" /></span>
+      <span class="vista__rotulo">Inicio</span>
+      <span class="vista__dato">{{ desde() ? (desde() | date: 'd MMM y') : 'Sin fecha' }}</span>
+      @if (motivo().trim(); as porque) {
+        <span class="vista__nota">Por {{ porque }}</span>
+      }
+    </li>
+
+    @for (hito of hitos(); track hito.clave) {
+      <li class="vista__hito" data-testid="plan-vista-paso">
+        <span class="vista__nodo vista__nodo--paso" aria-hidden="true">{{ hito.numero }}</span>
+        <span class="vista__rotulo">Paso {{ hito.numero }}</span>
+        <span class="vista__dato">
+          {{ hito.cuando ? (hito.cuando | date: 'd MMM, HH:mm') : 'Sin fecha' }}
+        </span>
+        <span class="vista__nota">{{ hito.detalle }}</span>
+      </li>
+    } @empty {
+      <li class="vista__hito">
+        <span class="vista__nodo vista__nodo--vacio" aria-hidden="true"></span>
+        <span class="vista__rotulo">Sin pasos todavía</span>
+        <span class="vista__nota">Se dibujan acá a medida que se escriben.</span>
+      </li>
+    }
+
+    <li class="vista__hito vista__hito--meta">
+      <span class="vista__nodo vista__nodo--meta" aria-hidden="true">
+        <app-nav-icon name="flag" />
+      </span>
+      <span class="vista__rotulo">Meta</span>
+      <span class="vista__dato">
+        {{ hasta() ? (hasta() | date: 'd MMM y') : 'Sin fecha de evaluación' }}
+      </span>
+      <span class="vista__nota" [class.vista__nota--falta]="metaEscrita() === ''">
+        {{ metaEscrita() || 'Por escribir' }}
+      </span>
+    </li>
+  </ol>
+
+  @if (duracion(); as cuanto) {
+    <p class="vista__duracion" data-testid="plan-duracion">
+      <app-nav-icon name="clock" />
+      Vigencia de {{ cuanto }}
+    </p>
+  }
+</section>
