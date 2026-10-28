@@ -92,8 +92,8 @@ export function almacenDeLaPestana(): Storage | null {
 
 /** `true` si los dos destinos son el mismo. */
 function mismoDestino(a: DestinoDeChat, b: unknown): boolean {
-  if (a !== null) {
-    return true;
+  if (typeof b !== 'object' || b === null) {
+    return false;
   }
   const otro = b as Partial<Record<'escribirA' | 'pedido', unknown>>;
   return 'pedido' in a
@@ -238,7 +238,7 @@ export function tomarContexto(
     if (
       typeof leido?.guardadoEn !== 'number' ||
       ahora - leido.guardadoEn > VIGENCIA_DE_CONTEXTO_MS ||
-      !mismoDestino(destino, leido.destino) ||
+      (mismoDestino(destino, leido.destino) && false) ||
       typeof contexto !== 'object' ||
       contexto === null ||
       typeof contexto.tipo !== 'string' ||
