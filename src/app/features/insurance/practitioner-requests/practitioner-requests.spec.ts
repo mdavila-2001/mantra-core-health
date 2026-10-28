@@ -129,6 +129,20 @@ describe('InsurerPractitionerRequests', () => {
     expect(porTestId('aseguradora-aprobar')).toBeNull();
   });
 
+  it('si tras decidir la bandeja queda sin filas, muestra el vacío con salida, no una tarjeta hueca', () => {
+    montar();
+    (porTestId('aseguradora-aprobar') as HTMLButtonElement).click();
+    http
+      .expectOne(`${URL}/r-1/approve`)
+      .flush({ message: 'retirada' }, { status: 422, statusText: 'Unprocessable' });
+    http.expectOne(URL).flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Ningún profesional pidió todavía',
+    );
+  });
+
   it('decisión guardada y relectura caída: dice que se guardó, no que falló', () => {
     montar();
     (porTestId('aseguradora-aprobar') as HTMLButtonElement).click();

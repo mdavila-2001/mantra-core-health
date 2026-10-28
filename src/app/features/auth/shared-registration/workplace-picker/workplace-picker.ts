@@ -11,7 +11,10 @@ import {
   signal,
 } from '@angular/core';
 
+import { HttpErrorResponse } from '@angular/common/http';
 import type { Subscription } from 'rxjs';
+
+import { readApiError } from '../../../../core/http/api-error';
 
 import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../../core/data-access/insurance/insurance.types';
@@ -65,12 +68,32 @@ export function lugaresDelBorrador(extra: Record<string, unknown>): {
   readonly institutions: readonly ChosenInstitution[];
   readonly insurerIds: readonly string[];
 } {
+  // El borrador es JSON del navegador: se valida la forma de cada entrada en
+  // vez de confiar en un `as`. Una institución sin slug viajaría `undefined`.
   const instituciones = extra['institucionesElegidas'];
   const aseguradoras = extra['aseguradorasElegidas'];
+  const esInstitucion = (x: unknown): x is ChosenInstitution =>
+    typeof x === 'object' &&
+    x !== null &&
+    typeof (x as ChosenInstitution).slug === 'string' &&
+    typeof (x as ChosenInstitution).name === 'string';
   return {
-    institutions: Array.isArray(instituciones) ? (instituciones as ChosenInstitution[]) : [],
-    insurerIds: Array.isArray(aseguradoras) ? (aseguradoras as string[]) : [],
+    institutions: Array.isArray(instituciones) ? instituciones.filter(esInstitucion) : [],
+    insurerIds: Array.isArray(aseguradoras)
+      ? aseguradoras.filter((id): id is string => typeof id === 'string')
+      : [],
   };
+}
+
+/**
+ * Las aseguradoras que la API rechazó por inactivas en un alta (422 con
+ * `details.carrierIds`). Pasa con un borrador viejo: la casilla ya no se ve y
+ * no se puede desmarcar, así que el alta las quita y deja reenviar.
+ */
+export function aseguradorasInactivas(error: unknown): readonly string[] {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 422) return [];
+  const ids = readApiError(error)?.details?.['carrierIds'];
+  return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string') : [];
 }
 
 /**
@@ -173,7 +196,8 @@ export class WorkplacePicker implements OnInit {
   protected buscar(texto: string): void {
     const q = texto.trim();
     this.busqueda?.unsubscribe();
-    if (q === '') {
+    // Desde dos letras, como dice la pista: con una sola la lista no orienta.
+    if (q.length < 2) {
       this.resultados.set([]);
       this.buscando.set(false);
       return;
@@ -258,10 +282,19 @@ export class WorkplacePicker implements OnInit {
     }
     this.catalogoFallido.set(false);
     this.insurance.listCarrierCatalog().subscribe({
-      next: (carriers) => this.catalogo.set(carriers),
+      next: (carriers) => {
+        this.catalogo.set(carriers);
+        // Lo restaurado de un borrador que ya no está en el catálogo no se ve
+        // como casilla y no se podría desmarcar: no viaja.
+        const vigentes = new Set(carriers.map((c) => c.id));
+        this.insurerIds.update((ids) => ids.filter((id) => vigentes.has(id)));
+      },
       error: () => {
         this.catalogo.set(null);
         this.catalogoFallido.set(true);
+        // Sin catálogo no hay casillas: lo marcado antes no se manda a ciegas
+        // (la alerta dice que se piden después, desde «Mis verificaciones»).
+        this.insurerIds.set([]);
       },
     });
   }

@@ -443,7 +443,6 @@ export function administraCatalogo(request: MockRequest): boolean {
   );
 }
 
-/** Exportado: es también el guardián de `GET /insurance/analytics/loss-ratio`. */
 /**
  * La aseguradora del catálogo con ese id, para quien necesita su nombre sin
  * conocer el arreglo (las solicitudes médico → aseguradora).
@@ -458,6 +457,7 @@ export function aseguradoraDelCatalogo(
 /** La compañía de la aseguradora de la sesión simulada (`TENANT_ASEGURADORA`). */
 export const CARRIER_DE_LA_SESION = uuid('carrier-andina');
 
+/** Exportado: es también el guardián de `GET /insurance/analytics/loss-ratio`. */
 export function perteneceALaAseguradora(request: MockRequest): boolean {
   return request.user?.tenants.includes(TENANT_ASEGURADORA) ?? false;
 }

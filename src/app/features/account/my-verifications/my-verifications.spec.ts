@@ -282,6 +282,42 @@ describe('MyVerifications', () => {
     expect(porTestId('verif-retirar')).toBeNull();
   });
 
+  it('un 422 al pedir dice que la aseguradora no recibe solicitudes, no que ya respondió', () => {
+    montar();
+    responder();
+    abrirBandeja();
+    componente().aseguradoraNueva.set('car-3');
+    componente().pedirAseguradora();
+    http
+      .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'POST')
+      .flush({ message: 'inactiva' }, { status: 422, statusText: 'Unprocessable' });
+    http
+      .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'GET')
+      .flush(SEGUROS);
+    fixture.detectChanges();
+
+    const aviso = porTestId('verif-aviso')?.textContent ?? '';
+    expect(aviso).toContain('no está recibiendo solicitudes');
+    expect(aviso).not.toContain('ya respondió');
+    expect(
+      (porTestId('verif-enviar-aseguradora') as HTMLButtonElement).disabled ||
+        porTestId('verif-enviar-aseguradora')?.getAttribute('aria-disabled') === 'true',
+    ).toBe(true);
+  });
+
+  it('un error que no es de red no culpa a la conexión', () => {
+    montar();
+    responder();
+    abrirBandeja();
+    componente().aseguradoraNueva.set('car-3');
+    componente().pedirAseguradora();
+    http
+      .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'POST')
+      .flush({ message: 'x' }, { status: 403, statusText: 'Forbidden' });
+    fixture.detectChanges();
+    expect(porTestId('verif-aviso')?.textContent).toContain('error 403');
+  });
+
   it('si el pedido se guardó pero la relectura falla, dice que se guardó', () => {
     montar();
     responder();
@@ -352,6 +388,20 @@ describe('MyVerifications', () => {
     expect(porTestId('verif-seguros-reintentar')).not.toBeNull();
     // La institución se sigue viendo; el vacío no se finge.
     expect(texto()).not.toContain('Todavía no envió ninguna solicitud');
+  });
+
+  it('si los estados del catálogo no se leen, la hoja de ruta lo avisa con reintento', () => {
+    montar();
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL);
+    for (const r of http.match((req) => req.url === '/terminology/concepts')) {
+      r.flush(null, { status: 500, statusText: 'Error' });
+    }
+    http.expectOne('/practitioners/me/insurer-requests').flush(SEGUROS);
+    http.expectOne('/insurance-carrier-catalog').flush(CATALOGO);
+    fixture.detectChanges();
+
+    expect(porTestId('verif-etiquetas-error')).not.toBeNull();
+    expect(porTestId('verif-etiquetas-reintentar')).not.toBeNull();
   });
 
   it('sin catálogo de aseguradoras, el campo dice por qué no se puede pedir', () => {

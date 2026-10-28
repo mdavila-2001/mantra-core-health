@@ -18,6 +18,18 @@ import { StatusSeal } from '../../../shared/components/organisms/status-seal/sta
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
+/** Sin filas, el vacío con su próxima acción (M34 · S3); con filas, la lista. */
+function estadoDeLaBandeja(
+  filas: readonly ReceivedInsurerRequest[],
+): ViewState<readonly ReceivedInsurerRequest[]> {
+  return filas.length === 0
+    ? empty(
+        { label: 'Volver a «Solicitudes recibidas»', route: '/administration/received-claims' },
+        'Ningún profesional pidió todavía trabajar con su aseguradora.',
+      )
+    : ready(filas);
+}
+
 /** El motivo tiene el mismo tope que la API. */
 const MAX_MOTIVO = 500;
 
@@ -108,18 +120,7 @@ export class InsurerPractitionerRequests {
   protected cargar(): void {
     this.state.set(loading());
     this.client.listReceived().subscribe({
-      next: (filas) =>
-        this.state.set(
-          filas.length === 0
-            ? empty(
-                {
-                  label: 'Volver a «Solicitudes recibidas»',
-                  route: '/administration/received-claims',
-                },
-                'Ningún profesional pidió todavía trabajar con su aseguradora.',
-              )
-            : ready(filas),
-        ),
+      next: (filas) => this.state.set(estadoDeLaBandeja(filas)),
       error: (error: unknown) => this.state.set(errorToViewState(error)),
     });
   }
@@ -193,7 +194,10 @@ export class InsurerPractitionerRequests {
         this.enviando.set(null);
         this.aviso.set({
           tono: 'error',
-          texto: 'No pudimos guardar la decisión. Revise su conexión y vuelva a intentarlo.',
+          texto:
+            error instanceof HttpErrorResponse && error.status !== 0
+              ? `No pudimos guardar la decisión (error ${error.status}). Vuelva a intentarlo en unos minutos.`
+              : 'No pudimos guardar la decisión. Revise su conexión y vuelva a intentarlo.',
         });
       },
     });
@@ -209,7 +213,9 @@ export class InsurerPractitionerRequests {
   ): void {
     this.client.listReceived().subscribe({
       next: (filas) => {
-        this.state.set(ready(filas));
+        // El mismo criterio que la carga: sin filas es el vacío con salida (S3),
+        // no una tarjeta sin grupos.
+        this.state.set(estadoDeLaBandeja(filas));
         this.enviando.set(null);
         this.aviso.set(aviso);
       },

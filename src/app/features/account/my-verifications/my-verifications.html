@@ -19,6 +19,23 @@
       >
         <!-- ─── Hoja de ruta ─────────────────────────────────────────── -->
         <app-tab [label]="pestanas[0]">
+          @if (etiquetasIlegibles()) {
+            <app-alert tone="warning" data-testid="verif-etiquetas-error">
+              No pudimos leer el estado de su perfil, su matrícula y sus títulos: por eso dicen «Sin
+              dato».
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                size="sm"
+                data-testid="verif-etiquetas-reintentar"
+                (clicked)="cargar()"
+              >
+                Reintentar
+              </button>
+            </app-alert>
+          }
+
           <div class="verif__resumen" data-testid="verif-resumen">
             <!-- Una sola frase: como ítems sueltos del flex se partía en tres renglones. -->
             <p class="verif__resumen-texto">

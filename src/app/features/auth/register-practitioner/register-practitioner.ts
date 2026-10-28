@@ -1,6 +1,7 @@
 import { environment } from '../../../../environments/environment';
 import {
   AYUDA_LUGARES,
+  aseguradorasInactivas,
   lugaresDelAlta,
   lugaresDelBorrador,
   WorkplacePicker,
@@ -3000,8 +3001,11 @@ export class RegisterPractitioner {
               this.limpiarBorrador();
               this.draftService.trackEvent('complete', 'practitioner', 4);
             },
-            error: (error: unknown) =>
-              this.state.set(registrationErrorToViewState(error, 'practitioner')),
+            error: (error: unknown) => {
+              const inactivas = aseguradorasInactivas(error);
+              this.aseguradorasElegidas.update((ids) => ids.filter((id) => !inactivas.includes(id)));
+              this.state.set(registrationErrorToViewState(error, 'practitioner'));
+            },
           });
         },
         error: (error: unknown) =>
