@@ -1525,7 +1525,7 @@ describe('AgendaCreate', () => {
         fixture.detectChanges();
 
         expect(acc.turnosDelDia(0)).toBe(0);
-        const celda = fixture.nativeElement.querySelector('.agenda-create__fila-turnos');
+        const celda = fixture.nativeElement.querySelector('.schedule-day-row__slots');
         expect(celda.textContent.trim()).toBe('—');
       });
 
@@ -1576,6 +1576,175 @@ describe('AgendaCreate', () => {
       crear();
       encenderLunes();
       expect(cuerpoDeLaPlantilla()).not.toHaveProperty('flexibleHours');
+    });
+
+    /* -- Horario flexible y descanso por día (v4.2.64, REQ-C2-004 a 006) ---- */
+
+    describe('horario flexible y descanso por día', () => {
+      /** Lunes de turnos con descanso de 10 y martes flexible, los dos de 9 a 13. */
+      function buildMixedWeek(): void {
+        acc.alternarDia(0);
+        acc.alternarDia(1);
+        acc.elegirRespiro(0, 10);
+        acc.fijarDeLaFila(1, 'flexible', true);
+        fixture.detectChanges();
+      }
+
+      function rowOf(index: number): HTMLElement {
+        return fixture.nativeElement.querySelectorAll('tbody tr')[index] as HTMLElement;
+      }
+
+      it('semana mixta: el lunes lleva su descanso y el martes sólo flexibleHours', () => {
+        crear();
+        buildMixedWeek();
+        acc.minutosPorPaciente.set(20);
+
+        expect(cuerpoDeLaPlantilla()).toStrictEqual({
+          name: 'Horario de Agenda de Dra. Elena Salas',
+          rules: [
+            {
+              dayOfWeek: 1,
+              startTime: '09:00',
+              endTime: '13:00',
+              slotMinutes: 30,
+              gapMinutes: 10,
+              capacityPerSlot: 1,
+            },
+            { dayOfWeek: 2, startTime: '09:00', endTime: '13:00', flexibleHours: true },
+          ],
+          // Lo que se reserva por paciente los días flexibles; la plantilla NO es flexible.
+          slotMinutes: 20,
+        });
+      });
+
+      it('toda la semana flexible: el cuerpo es el de antes, sin flexibleHours por franja', () => {
+        crear();
+        buildMixedWeek();
+        acc.flexible.set(true);
+        fixture.detectChanges();
+
+        expect(cuerpoDeLaPlantilla()).toStrictEqual({
+          name: 'Horario de Agenda de Dra. Elena Salas',
+          rules: [
+            { dayOfWeek: 1, startTime: '09:00', endTime: '13:00' },
+            { dayOfWeek: 2, startTime: '09:00', endTime: '13:00' },
+          ],
+          slotMinutes: 30,
+          flexibleHours: true,
+        });
+      });
+
+      it('marcar flexibles todos los días, uno por uno, publica lo mismo que el atajo', () => {
+        crear();
+        buildMixedWeek();
+        acc.fijarDeLaFila(0, 'flexible', true);
+        fixture.detectChanges();
+
+        const body = cuerpoDeLaPlantilla();
+        expect(body['flexibleHours']).toBe(true);
+        expect(body['rules']).toStrictEqual([
+          { dayOfWeek: 1, startTime: '09:00', endTime: '13:00' },
+          { dayOfWeek: 2, startTime: '09:00', endTime: '13:00' },
+        ]);
+      });
+
+      it('el descanso se oculta sólo en la fila flexible', () => {
+        crear();
+        buildMixedWeek();
+
+        const headers = [...fixture.nativeElement.querySelectorAll('thead th')].map(
+          (th: Element) => th.textContent?.trim(),
+        );
+        expect(headers).toContain('Descanso');
+        expect(headers).toContain('Horario flexible');
+        expect(rowOf(0).querySelector('[data-testid="schedule-day-gap-0"]')).not.toBeNull();
+        expect(rowOf(1).querySelector('[data-testid="schedule-day-gap-1"]')).toBeNull();
+        expect(rowOf(1).textContent).toContain('Sin citas de duración fija');
+        expect(acc.turnosDelDia(1)).toBe(0);
+      });
+
+      it('apagar el atajo devuelve los turnos fijos a todos los días', () => {
+        crear();
+        buildMixedWeek();
+        const screen = acc as unknown as { setWeekFlexible(flexible: boolean): void };
+        screen.setWeekFlexible(true);
+        screen.setWeekFlexible(false);
+
+        expect(acc.flexible()).toBe(false);
+        expect(acc.semana.at(1).getRawValue().flexible).toBe(false);
+      });
+
+      it('editar una plantilla mixta carga cada fila con lo suyo', () => {
+        crearConHorarioVigente({
+          id: 'tpl-1',
+          retired: false,
+          name: 'Horario',
+          statusConceptId: 'c',
+          slotMinutes: 20,
+          flexibleHours: false,
+          rules: [
+            {
+              dayOfWeek: 1,
+              startTime: '09:00:00',
+              endTime: '13:00:00',
+              slotMinutes: 30,
+              gapMinutes: 10,
+              flexibleHours: false,
+            },
+            { dayOfWeek: 2, startTime: '15:00:00', endTime: '19:00:00', flexibleHours: true },
+          ],
+        });
+
+        expect(acc.flexible()).toBe(false);
+        expect(acc.minutosPorPaciente()).toBe(20);
+        expect(acc.semana.at(0).getRawValue()).toMatchObject({
+          activo: true,
+          respiro: 10,
+          duracion: 30,
+          flexible: false,
+        });
+        expect(acc.semana.at(1).getRawValue()).toMatchObject({
+          activo: true,
+          desde: '15:00',
+          hasta: '19:00',
+          flexible: true,
+        });
+      });
+
+      it('editar una plantilla flexible deja flexibles todas las filas', () => {
+        crearConHorarioVigente({
+          id: 'tpl-1',
+          retired: false,
+          name: 'Horario',
+          statusConceptId: 'c',
+          slotMinutes: 30,
+          flexibleHours: true,
+          rules: [
+            { dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00', flexibleHours: true },
+            { dayOfWeek: 3, startTime: '09:00:00', endTime: '13:00:00', flexibleHours: true },
+          ],
+        });
+
+        const screen = acc as unknown as { isFlexibleDay(index: number): boolean };
+        expect(acc.flexible()).toBe(true);
+        expect([0, 2].every((index) => screen.isFlexibleDay(index))).toBe(true);
+      });
+
+      it('la vista previa dice flexible al martes y deja los turnos del lunes', () => {
+        crear();
+        buildMixedWeek();
+
+        const preview = (
+          acc as unknown as { reglasDeLaPrevia(): Record<string, unknown>[] }
+        ).reglasDeLaPrevia();
+        expect(preview[0]).toMatchObject({ dayOfWeek: 1, slotMinutes: 30, gapMinutes: 10 });
+        expect(preview[1]).toStrictEqual({
+          dayOfWeek: 2,
+          startTime: '09:00',
+          endTime: '13:00',
+          flexibleHours: true,
+        });
+      });
     });
 
     it('cada día se enciende con su botón «Sí» y se apaga con «No»', () => {
