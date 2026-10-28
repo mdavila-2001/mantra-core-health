@@ -98,4 +98,49 @@ describe('SurveysClient', () => {
       expect(cuestionario.questions).toEqual([]);
     });
   });
+
+  describe('GET /surveys/templates/:id/responses — fecha al día y sin reserva', () => {
+    const RESPUESTA = {
+      id: 'r-1',
+      invitationId: 'inv-1',
+      submittedAt: '2026-10-28T00:00:00.000Z',
+      answers: [],
+    };
+
+    it('acepta una respuesta SIN appointmentBookingId y no deja la clave declarada', async () => {
+      const pedido = firstValueFrom(client.listResponses('s-1'));
+      http.expectOne((r) => r.url.endsWith('/surveys/templates/s-1/responses')).flush([RESPUESTA]);
+
+      const [respuesta] = await pedido;
+      expect(respuesta?.submittedAt).toEqual(new Date('2026-10-28T00:00:00.000Z'));
+      expect('appointmentBookingId' in respuesta!).toBe(false);
+    });
+
+    it('una API anterior que manda la reserva en null tampoco la deja declarada', async () => {
+      const pedido = firstValueFrom(client.listResponses('s-1'));
+      http
+        .expectOne((r) => r.url.endsWith('/surveys/templates/s-1/responses'))
+        .flush([{ ...RESPUESTA, appointmentBookingId: null }]);
+
+      expect('appointmentBookingId' in (await pedido)[0]!).toBe(false);
+    });
+
+    it('si la reserva sí llega, se conserva (campo opcional, no prohibido)', async () => {
+      const pedido = firstValueFrom(client.listResponses('s-1'));
+      http
+        .expectOne((r) => r.url.endsWith('/surveys/templates/s-1/responses'))
+        .flush([{ ...RESPUESTA, appointmentBookingId: 'bk-1' }]);
+
+      expect((await pedido)[0]?.appointmentBookingId).toBe('bk-1');
+    });
+
+    it('un submittedAt null llega como null, no como 1970', async () => {
+      const pedido = firstValueFrom(client.listResponses('s-1'));
+      http
+        .expectOne((r) => r.url.endsWith('/surveys/templates/s-1/responses'))
+        .flush([{ ...RESPUESTA, submittedAt: null }]);
+
+      expect((await pedido)[0]?.submittedAt).toBeNull();
+    });
+  });
 });
