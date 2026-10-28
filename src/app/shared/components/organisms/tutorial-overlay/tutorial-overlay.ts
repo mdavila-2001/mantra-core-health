@@ -15,6 +15,7 @@ import { TutorialEngine } from '../../../../core/tutorials/tutorial.engine';
 import { trapTabKey } from '../../../a11y/modal-focus';
 import { AppButton } from '../../atoms/button/button';
 import { DialogService } from '../../molecules/dialog/dialog-service';
+import { LoadingState } from '../../molecules/loading-state/loading-state';
 
 /** Cuánto respira el recorte alrededor del elemento resaltado. */
 const AIRE = 6;
@@ -74,7 +75,7 @@ interface Geometria {
  */
 @Component({
   selector: 'app-tutorial-overlay',
-  imports: [AppButton],
+  imports: [AppButton, LoadingState],
   templateUrl: './tutorial-overlay.html',
   styleUrl: './tutorial-overlay.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

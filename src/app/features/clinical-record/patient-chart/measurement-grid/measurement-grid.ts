@@ -23,7 +23,7 @@ import type { ConceptLabels } from '../../../../core/data-access/terminology/ter
 import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
-import { Spinner } from '../../../../shared/components/atoms/spinner/spinner';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
@@ -113,7 +113,7 @@ const CELDA_VACIA = '—';
  */
 @Component({
   selector: 'app-measurement-grid',
-  imports: [Alert, AppButton, ConceptSelect, DatePipe, FormField, Input, Spinner],
+  imports: [Alert, AppButton, ConceptSelect, DatePipe, FormField, Input, LoadingState],
   templateUrl: './measurement-grid.html',
   styleUrl: './measurement-grid.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

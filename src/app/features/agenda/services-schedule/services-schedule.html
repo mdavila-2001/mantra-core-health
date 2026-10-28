@@ -35,7 +35,7 @@
 
     @switch (bookings().status) {
       @case ('loading') {
-        <p class="servicios-horario__nota" role="status">Buscando solicitudes…</p>
+        <app-loading-state class="servicios-horario__nota" message="Buscando solicitudes…" />
       }
       @case ('ready') {
         @if (awaiting().length === 0 && upcoming().length === 0) {
@@ -106,7 +106,7 @@
     </h3>
     @switch (offerings().status) {
       @case ('loading') {
-        <p class="servicios-horario__nota" role="status">Buscando sus servicios…</p>
+        <app-loading-state class="servicios-horario__nota" message="Buscando sus servicios…" />
       }
       @case ('error') {
         <app-alert tone="warning" title="No pudimos traer sus servicios" data-testid="services-schedule-offerings-error">

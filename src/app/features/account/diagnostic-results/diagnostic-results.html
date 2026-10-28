@@ -13,7 +13,7 @@
 } @else {
   @switch (resultados().status) {
     @case ('loading') {
-      <p class="resultados__estado" role="status">Buscando sus resultados…</p>
+      <app-loading-state class="resultados__estado" message="Buscando sus resultados…" />
     }
 
     @case ('empty') {

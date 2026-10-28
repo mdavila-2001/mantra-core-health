@@ -8,6 +8,7 @@ import type { LoadingStateSize } from './loading-state.types';
   imports: [LoadingState],
   template: `
     <app-loading-state
+      class="pantalla__cargando"
       [message]="message()"
       [detail]="detail()"
       [lines]="lines()"
@@ -75,5 +76,11 @@ describe('LoadingState', () => {
     host.size.set('block');
     await fixture.whenStable();
     expect(estado().classList).toContain('loading-state--block');
+    expect(estado().classList).not.toContain('loading-state--inline');
+  });
+
+  it('conserva la clase que le pone la pantalla', () => {
+    expect(estado().classList).toContain('pantalla__cargando');
+    expect(estado().classList).toContain('loading-state');
   });
 });

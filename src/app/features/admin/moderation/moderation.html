@@ -59,7 +59,10 @@
 }
 
 @if (!cargoAlgunaVez() && cargando()) {
-  <p class="moderacion__cargando" role="status">Cargando…</p>
+  <app-loading-state
+    class="moderacion__cargando"
+    message="Trayendo el contenido reportado y las apelaciones…"
+  />
 } @else if (vacio()) {
   <app-empty-state
     [title]="pestania() === 'cola' ? 'No hay nada en la cola' : 'No hay apelaciones abiertas'"

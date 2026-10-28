@@ -24,6 +24,7 @@ import {
 } from '../../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../../pharmacy-error-message';
 import { reviewInventoryCsv, type InventoryCsvReview } from '../inventory-csv';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántos problemas se listan antes de decir «y N más»: el resto está en el archivo. */
 const PROBLEMS_SHOWN = 20;
@@ -44,7 +45,7 @@ const PROBLEMS_SHOWN = 20;
  */
 @Component({
   selector: 'app-inventory-upload-dialog',
-  imports: [Alert, AppButton, ContentDialog, FileInput],
+  imports: [Alert, AppButton, ContentDialog, FileInput, LoadingState],
   templateUrl: './inventory-upload-dialog.html',
   styleUrl: './inventory-upload-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

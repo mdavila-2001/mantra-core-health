@@ -15,6 +15,6 @@
     <p class="mapa__provincia-actual" data-testid="mapa-provincia">{{ provincia }}</p>
   }
   @if (!listo()) {
-    <p class="mapa__espera">Cargando el mapa…</p>
+    <app-loading-state class="mapa__espera" message="Cargando el mapa…" />
   }
 </div>

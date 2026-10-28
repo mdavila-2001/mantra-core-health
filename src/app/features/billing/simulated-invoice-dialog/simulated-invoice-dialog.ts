@@ -26,6 +26,7 @@ import { ROTULO_DE_ESTADO, TONO_DE_ESTADO } from '../billing-summary';
 import { bs, dateAndTime, errorMessage, catalogWithoutMark, hasCurrentInvoice } from '../on-screen-charges';
 import { amountLiteral } from '../amount-in-words';
 import { downloadGraphicRepresentation, downloadXml } from '../graphic-representation';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * **El modal que emite la factura contra el SIAT simulado.**
@@ -52,7 +53,7 @@ import { downloadGraphicRepresentation, downloadXml } from '../graphic-represent
  */
 @Component({
   selector: 'app-simulated-invoice-dialog',
-  imports: [PaginatedForm, CustomField, ReactiveFormsModule, Alert, AppButton, Chip, ContentDialog, FormField, Input, Select],
+  imports: [PaginatedForm, CustomField, ReactiveFormsModule, Alert, AppButton, Chip, ContentDialog, FormField, Input, Select, LoadingState],
   templateUrl: './simulated-invoice-dialog.html',
   styleUrl: './simulated-invoice-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

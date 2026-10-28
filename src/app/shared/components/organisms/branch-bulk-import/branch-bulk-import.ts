@@ -25,6 +25,7 @@ import { AppButton } from '../../atoms/button/button';
 import { Alert } from '../../molecules/alert/alert';
 import { FileInput, type RejectedFile } from '../../molecules/file-input/file-input';
 import { ContentDialog } from '../content-dialog/content-dialog';
+import { LoadingState } from '../../molecules/loading-state/loading-state';
 
 /** Cuántas filas se listan antes de decir «y N más»: el resto está en el archivo. */
 const ROWS_SHOWN = 20;
@@ -43,7 +44,7 @@ type SampleRow = (typeof BRANCH_IMPORT_SAMPLE_ROWS)[number];
  */
 @Component({
   selector: 'app-branch-bulk-import',
-  imports: [Alert, AppButton, ContentDialog, FileInput],
+  imports: [Alert, AppButton, ContentDialog, FileInput, LoadingState],
   templateUrl: './branch-bulk-import.html',
   styleUrl: './branch-bulk-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
