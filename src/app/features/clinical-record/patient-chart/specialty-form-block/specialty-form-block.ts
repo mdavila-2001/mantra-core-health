@@ -58,6 +58,7 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -66,12 +67,7 @@ import {
   VALOR_ENMASCARADO,
 } from '../../../../shared/utils/clinical-pdf/clinical-pdf';
 import { Odontogram } from '../odontogram/odontogram';
-import {
-  fieldsOf,
-  templateByCoverage,
-  responsesOf,
-  type ResponseVisible,
-} from './form-reading';
+import { fieldsOf, templateByCoverage, responsesOf, type ResponseVisible } from './form-reading';
 import { esMapa, esVacio } from './form-values';
 import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
@@ -161,7 +157,8 @@ function rotuloFlexible(cuantos: number): string {
 }
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
-type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string' | 'una' | 'una-corta' | 'varias';
+type TipoDibujable =
+  'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string' | 'una' | 'una-corta' | 'varias';
 
 /** Hasta cuántas opciones cortas se ofrecen como botones en vez de desplegable. */
 const OPCIONES_COMO_BOTONES = 4;
@@ -292,6 +289,7 @@ interface PasoDelCierre {
     DatePicker,
     FormActions,
     FormField,
+    LoadingState,
     Input,
     Odontogram,
     ProceduresBlock,
@@ -830,9 +828,7 @@ export class SpecialtyFormBlock {
    * médicas de este encuentro, y su texto libre. Se leen aparte porque viven
    * en la nota y no en la instancia del formulario.
    */
-  private readonly lecturaDeAdicionales = signal<ViewState<readonly MedicalNoteEntry[]>>(
-    ready([]),
-  );
+  private readonly lecturaDeAdicionales = signal<ViewState<readonly MedicalNoteEntry[]>>(ready([]));
 
   protected readonly adicionalesGuardados = computed<readonly MedicalNoteEntry[]>(() => {
     const state = this.lecturaDeAdicionales();
