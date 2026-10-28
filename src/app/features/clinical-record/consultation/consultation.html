@@ -251,13 +251,19 @@
         />
       }
       @case ('derivacion') {
-        <!-- Derivar a otro profesional (pedido del propietario, 24/10/2026).
-             Atado al encuentro en curso: sin él el bloque lo dice y no ofrece
-             el formulario, porque sin encuentro no hay aviso a la persona. -->
+        <!-- Derivar a otro profesional (pedido del propietario, 24/10/2026)
+             o a una organización médica, por un servicio concreto (pedido del
+             cliente, 28/10/2026). Atado al encuentro en curso: sin él el
+             bloque lo dice y no ofrece el formulario, porque sin encuentro no
+             hay aviso a la persona. El modal queda abierto tras derivar: la
+             lista de abajo muestra la recién emitida cuando la relectura la
+             devuelve, y el contador de la casilla sale de esa misma lectura. -->
         <app-referral-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          (cambio)="altaRegistrada()"
+          [referrals]="referrals.state()"
+          (cambio)="referrals.reload()"
+          (retry)="referrals.reload()"
         />
       }
       @case ('planes') {

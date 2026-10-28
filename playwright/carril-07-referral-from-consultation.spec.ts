@@ -242,15 +242,15 @@ test('la médica deriva desde la consulta: busca a su colega, escribe el motivo 
   await page.getByTestId('consulta-casilla-derivacion').click();
   // El contenedor del modal no tiene caja propia; lo visible es el diálogo.
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByTestId('derivacion-sin-encuentro')).toHaveCount(0);
+  await expect(page.getByTestId('referral-no-encounter')).toHaveCount(0);
 
   /* -- 3 · busca a la colega por su apellido y la elige ---------------------- */
 
   const apellido = escenario.colega.nombre.split(' ')[1]!;
-  await page.getByTestId('derivacion-profesional').locator('input').fill(apellido);
+  await page.getByTestId('referral-practitioner').locator('input').fill(apellido);
   await page.getByRole('option', { name: new RegExp(apellido) }).click();
   await page
-    .getByTestId('derivacion-motivo')
+    .getByTestId('referral-reason')
     .locator('textarea')
     .fill('Control de la tiroides: conviene que la vea endocrinología');
   await page.screenshot({ path: testInfo.outputPath('derivar-formulario.png'), fullPage: true });
@@ -263,7 +263,7 @@ test('la médica deriva desde la consulta: busca a su colega, escribe el motivo 
 
   const [respuesta] = await Promise.all([
     page.waitForResponse((r) => r.url().endsWith('/referrals') && r.request().method() === 'POST'),
-    page.getByTestId('derivacion-enviar').click(),
+    page.getByTestId('referral-submit').click(),
   ]);
   expect(respuesta.status(), await respuesta.text()).toBe(201);
   const cuerpo = respuesta.request().postDataJSON() as Record<string, unknown>;

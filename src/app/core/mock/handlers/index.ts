@@ -6,6 +6,7 @@ import { registerPaymentReceipts } from './payment-receipts.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registerReferrals } from './referrals.handlers';
 import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
@@ -77,6 +78,7 @@ export function crearRouterSimulado(): MockRouter {
   registerRoleAssignments(router);
   registrarPracticas(router);
   registrarClinica(router);
+  registerReferrals(router);
   registerReceivedServices(router);
   registerProcedureCenters(router);
   registerMedicalNotes(router);

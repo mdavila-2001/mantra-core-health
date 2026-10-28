@@ -1,82 +1,203 @@
-<app-card variant="outlined" padding="lg" class="derivacion">
+<app-card variant="outlined" padding="lg" class="referral">
   <!-- Sin título ni bajada propios: el modal de la consulta ya dice «Derivar a
-       otro profesional» y explica que se le avisa a la persona en su campana.
-       Repetirlo acá era el mismo texto dos veces, a dos dedos de distancia. -->
-  @if (sinEncuentro()) {
+       otro profesional u organización» y explica que se le avisa a la persona.
+       UNA tarjeta: el formulario arriba y, debajo, lo que la persona ya tiene
+       derivado — que es donde aparece la recién emitida cuando se relee. -->
+  @if (noEncounter()) {
     <!-- Sin encuentro no hay derivación con aviso: el encuentro es lo que
          demuestra que usted atendió a esta persona. Se dice qué falta en vez
          de ofrecer un formulario que guardaría y no avisaría a nadie. -->
-    <app-alert
-      tone="info"
-      title="Abra el encuentro para derivar"
-      data-testid="derivacion-sin-encuentro"
-    >
+    <app-alert tone="info" title="Abra el encuentro para derivar" data-testid="referral-no-encounter">
       Abra el encuentro de esta consulta, arriba, y acá va a poder derivar. Así la persona recibe su
       aviso.
     </app-alert>
   } @else {
-    @if (derivadoA(); as nombre) {
-      <app-alert tone="success" title="Derivación enviada" data-testid="derivacion-exito">
-        Le avisamos a la persona que le recomienda consultar con {{ nombre }}. Ya puede ver su ficha
-        y reservar desde su portal.
+    @if (referredTo(); as name) {
+      <app-alert class="referral__notice" tone="success" title="Derivación enviada" data-testid="referral-success">
+        Le avisamos a la persona que la derivó a {{ name }}. Ya puede ver la ficha y reservar desde
+        su portal.
       </app-alert>
     }
 
-    @if (yaDerivado()) {
+    @if (duplicate()) {
       <app-alert
+        class="referral__notice"
         tone="warning"
-        title="Ya la derivó a este profesional"
-        data-testid="derivacion-duplicada"
+        title="Ya la derivó a este destino"
+        data-testid="referral-duplicate"
       >
         En este encuentro ya hay una derivación equivalente. No hace falta otra.
       </app-alert>
     }
 
-    @if (errorDelRegistro(); as mensaje) {
-      <app-alert tone="error" data-testid="derivacion-error">{{ mensaje }}</app-alert>
+    @if (submissionError(); as message) {
+      <app-alert class="referral__notice" tone="error" data-testid="referral-error">{{ message }}</app-alert>
     }
 
-    <app-view-state-host [state]="directorio()" (retry)="recargar()">
-      <form class="derivacion__formulario" (submit)="$event.preventDefault()">
-        <app-form-field
-          label="Profesional recomendado"
-          hint="Busque por nombre o título. No aparece usted."
-        >
-          <app-reference-combobox
-            data-testid="derivacion-profesional"
-            [value]="elegido()"
-            [selected]="profesionalElegido()"
-            [options]="opciones()"
-            [minQueryLength]="0"
+    <form class="referral__form app-form-grid" (submit)="$event.preventDefault()">
+      <app-form-field class="app-form-grid__ancho" label="¿A quién deriva?">
+        <app-segmented-control
+          data-testid="referral-kind"
+          ariaLabel="A quién deriva"
+          size="md"
+          [options]="targetKindOptions"
+          [value]="kind()"
+          (valueChange)="chooseKind($event)"
+        />
+      </app-form-field>
+
+      <!-- El buscador se vuelve a montar al derivar: el combobox guarda su
+           texto, y el de un destino que ya no está elegido no puede quedar
+           escrito. La clase de destino ya monta uno por rama. -->
+      @if (remountToggle()) {
+        <ng-container [ngTemplateOutlet]="targetSearch" />
+      } @else {
+        <ng-container [ngTemplateOutlet]="targetSearch" />
+      }
+      <ng-template #targetSearch>
+        @if (kind() === 'PRACTITIONER') {
+          <app-form-field
+            class="app-form-grid__ancho"
+            icon="stethoscope"
             label="Profesional recomendado"
-            placeholder="Ej. Dra. Mendoza"
-            emptyMessage="No encontramos a nadie con ese nombre en el directorio"
-            (searched)="buscar($event)"
-            (valueChange)="elegir($event)"
-          />
-        </app-form-field>
+            hint="Escriba al menos dos letras del nombre. No aparece usted."
+            [required]="true"
+            [errorMessage]="searchError() ?? ''"
+          >
+            <app-reference-combobox
+              data-testid="referral-practitioner"
+              [options]="targetOptions()"
+              [loading]="searching()"
+              [minQueryLength]="minQueryLength"
+              label="Profesional recomendado"
+              placeholder="Ej. Dra. Mendoza"
+              emptyMessage="No encontramos a nadie con ese nombre"
+              (searched)="search($event)"
+              (selectionChange)="choose($event)"
+            />
+          </app-form-field>
+        } @else {
+          <app-form-field
+            class="app-form-grid__ancho"
+            icon="hospital"
+            label="Organización médica"
+            hint="Escriba al menos dos letras del nombre de la clínica, el hospital o el laboratorio."
+            [required]="true"
+            [errorMessage]="searchError() ?? ''"
+          >
+            <app-reference-combobox
+              data-testid="referral-organization"
+              [options]="targetOptions()"
+              [loading]="searching()"
+              [minQueryLength]="minQueryLength"
+              label="Organización médica"
+              placeholder="Ej. Hospital San Lucas"
+              emptyMessage="No encontramos una organización con ese nombre"
+              (searched)="search($event)"
+              (selectionChange)="choose($event)"
+            />
+          </app-form-field>
+        }
+      </ng-template>
 
-        <app-form-field label="Motivo" hint="Opcional. Se lo mostramos a la persona en su aviso.">
-          <app-textarea
-            data-testid="derivacion-motivo"
-            [rows]="3"
-            [maxLength]="topeDelMotivo"
-            [value]="motivo()"
-            (valueChange)="escribirMotivo($event)"
-          />
-        </app-form-field>
+      <!-- Los servicios del destino: recién con un destino elegido. -->
+      <div class="referral__services" data-testid="referral-services">
+        @if (target(); as chosen) {
+          <app-view-state-host [state]="services()" (retry)="loadServices()">
+            <p vsh-skeleton class="referral__secondary">
+              Buscando los servicios de {{ chosen.displayName }}…
+            </p>
+            <app-form-field label="Servicio" [hint]="serviceHint()">
+              <app-select
+                data-testid="referral-service"
+                [options]="serviceOptions()"
+                [value]="selectedService()"
+                (valueChange)="selectedService.set($event)"
+              />
+            </app-form-field>
+          </app-view-state-host>
+        } @else {
+          <p class="referral__secondary">
+            Elija el destino y acá va a ver los servicios que ofrece, con su arancel.
+          </p>
+        }
+      </div>
 
-        <button
-          app-button
-          variant="primary"
-          data-testid="derivacion-enviar"
-          [isLoading]="enviando()"
-          [disabled]="!puedeEnviar()"
-          (clicked)="derivar()"
-        >
-          Derivar y avisar a la persona
-        </button>
-      </form>
-    </app-view-state-host>
+      <app-form-field label="Tipo de derivación" hint="Qué se le pide al destino.">
+        <app-select
+          data-testid="referral-type"
+          [options]="typeOptions"
+          [value]="referralType()"
+          (valueChange)="referralType.set($event)"
+        />
+      </app-form-field>
+
+      <app-form-field icon="calendar" label="Vigencia" hint="Opcional. Hasta cuándo vale.">
+        <app-date-picker
+          data-testid="referral-valid-until"
+          mode="date-only"
+          [minDate]="today"
+          [(value)]="validUntil"
+        />
+      </app-form-field>
+
+      <app-form-field
+        class="app-form-grid__ancho"
+        label="Motivo"
+        hint="Opcional. Se lo mostramos a la persona en su aviso."
+      >
+        <app-textarea
+          data-testid="referral-reason"
+          [rows]="3"
+          [maxLength]="reasonMaxLength"
+          [(value)]="reason"
+        />
+      </app-form-field>
+
+      <button
+        app-button
+        variant="primary"
+        data-testid="referral-submit"
+        [isLoading]="sending()"
+        [disabled]="!canSubmit()"
+        (clicked)="submit()"
+      >
+        Derivar y avisar a la persona
+      </button>
+    </form>
+  }
+
+  @if (list(); as state) {
+    <app-divider />
+
+    <section class="referral__list" aria-labelledby="referral-list-title">
+      <h3 id="referral-list-title" class="referral__title">Derivaciones de esta persona</h3>
+
+      <app-view-state-host [state]="state" (retry)="retry.emit()">
+        <p vsh-skeleton class="referral__secondary">Buscando las derivaciones…</p>
+        <ol class="referral__rows" data-testid="referral-list">
+          @for (row of rows(); track row.id) {
+            <li class="referral__row" data-testid="referral-row">
+              <div class="referral__heading">
+                <span class="referral__main">{{ row.type }} · {{ row.target }}</span>
+                <app-status-seal [variant]="row.variant" [label]="row.status" />
+              </div>
+              <span class="referral__secondary">
+                {{ row.service ?? 'Sin un servicio en particular' }}
+              </span>
+              <span class="referral__secondary">
+                Emitida el {{ row.createdAt | date: 'd MMM y' }}
+                @if (row.validUntil) {
+                  · vale hasta el {{ row.validUntil | date: 'd MMM y' }}
+                }
+              </span>
+              @if (row.reason) {
+                <span class="referral__reason">{{ row.reason }}</span>
+              }
+            </li>
+          }
+        </ol>
+      </app-view-state-host>
+    </section>
   }
 </app-card>
