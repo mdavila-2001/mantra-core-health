@@ -76,6 +76,7 @@ import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './ag
 import { MyAgenda } from './my-agenda/my-agenda';
 import { BookingPaymentStates } from './payment-receipts/booking-payment-states';
 import { PaymentReceiptsDialog } from './payment-receipts/payment-receipts-dialog/payment-receipts-dialog';
+import { PendingPayments } from './payment-receipts/pending-payments/pending-payments';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
 import { AgendaWindowNav } from './window-nav/window-nav';
 import { rangoDeVentana } from './window-nav/window-range';
@@ -518,6 +519,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
     AgendaWindowNav,
     MyAgenda,
     PaymentReceiptsDialog,
+    PendingPayments,
     WalkInForm,
   ],
   templateUrl: './agenda.html',
