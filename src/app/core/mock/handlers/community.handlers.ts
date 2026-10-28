@@ -588,13 +588,7 @@ export function registrarComunidad(router: MockRouter): void {
       dimensionScores: [],
       responses: [],
     });
-    // La ficha pública promedia lo que el servidor sabe: con la reseña nueva el
-    // total sube uno y el promedio se corre hacia su puntaje.
-    const antes = { promedio: destino.ratingAverage ?? 0, total: destino.ratingCount };
-    showcases.actualizar(destino.id, {
-      ratingCount: antes.total + 1,
-      ratingAverage: Math.round(((antes.promedio * antes.total + nueva.overallRating) / (antes.total + 1)) * 10) / 10,
-    });
+    // El promedio y el total de la ficha pública se calculan al leer (`calificacionDe`).
     return { status: 201, body: { id: nueva.id, overallRating: nueva.overallRating, verified: true, dimensionCount: 0 } };
   });
 
