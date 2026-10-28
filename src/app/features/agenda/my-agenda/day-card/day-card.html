@@ -30,15 +30,21 @@
         <span class="tarjeta__franja-nota">La pone el cupo del horario publicado.</span>
       </p>
     } @else {
+      <!-- El error de la franja va en «Hasta», que es el que se corrige: el
+           campo lo enlaza en el `aria-describedby` del control y lo marca con
+           `aria-invalid`. Guardar sigue apagado mientras no cierre. -->
       <div class="tarjeta__rango">
         <app-form-field label="Desde" [required]="true">
           <app-input [(value)]="from" placeholder="10:00" />
         </app-form-field>
-        <app-form-field label="Hasta" [required]="true">
+        <app-form-field label="Hasta" [required]="true" [errorMessage]="endTimeError()">
           <app-input [(value)]="hasta" placeholder="10:45" />
         </app-form-field>
       </div>
     }
+
+    <!-- Dónde se agenda va acá, entre la franja y «¿Con quién?»: la
+         organización elegida decide en qué agenda queda la cita. -->
 
     <app-form-field
       label="¿Con quién?"
