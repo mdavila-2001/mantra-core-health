@@ -71,6 +71,9 @@ function erroresDeConsola(page: Page): { desde(): void; (): string[] } {
     // Las teselas del mapa son de un servidor externo: en un entorno sin salida
     // a internet no llegan. Ajeno a este cambio; se excluye ESE error y nada más.
     if (/net::ERR_TUNNEL_CONNECTION_FAILED/.test(m.text())) return;
+    // Con menos movimiento la app salta la transición de vista y el router de
+    // Angular registra ese AbortError sólo en modo desarrollo (ngDevMode).
+    if (/^AbortError: Transition was skipped/.test(m.text())) return;
     errores.push(m.text());
   });
   page.on('pageerror', (e) => errores.push(e.message));
