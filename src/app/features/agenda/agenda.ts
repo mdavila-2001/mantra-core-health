@@ -38,8 +38,6 @@ import type {
   AgendaResource,
   AgendaSlot,
   Booking,
-  NewPaymentState,
-  PaymentStateCode,
   PaymentStateInfo,
 } from '../../core/data-access/scheduling/scheduling.types';
 // hasta que C0 publique los tipos congelados.
@@ -53,13 +51,8 @@ import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.types';
-import { Menu } from '../../shared/components/molecules/menu/menu';
 import { RowActions } from '../../shared/components/molecules/row-actions/row-actions';
 import type { RowAction } from '../../shared/components/molecules/row-actions/row-actions.types';
-import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
-import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
-import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
-import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Link } from '../../shared/components/atoms/link/link';
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
@@ -81,6 +74,8 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { MyAgenda } from './my-agenda/my-agenda';
+import { BookingPaymentStates } from './payment-receipts/booking-payment-states';
+import { PaymentReceiptsDialog } from './payment-receipts/payment-receipts-dialog/payment-receipts-dialog';
 import { ServicesSchedule } from './services-schedule/services-schedule';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
 import { AgendaWindowNav } from './window-nav/window-nav';
@@ -512,10 +507,6 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots
     AppButton,
     AppButtonLink,
     Badge,
-    Menu,
-    MenuItem,
-    MenuTrigger,
-    NavIcon,
     RowActions,
     StatusSeal,
     DataTable,
@@ -533,6 +524,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots
     Tooltip,
     AgendaWindowNav,
     MyAgenda,
+    PaymentReceiptsDialog,
     ServicesSchedule,
     WalkInForm,
   ],
@@ -1917,6 +1909,21 @@ export class Agenda {
     return formatDate(cupo.desde, "EEEE d 'de' MMMM, HH:mm", this.idioma);
   }
 
+  /* -- el estado del pago (corrección 11) ----------------------------------
+     «Estado del pago» abre el modal de comprobantes; el marcado a mano —el
+     menú que vivía acá— está adentro, como «Marcar sin comprobante…». Lo que
+     queda en esta pantalla es abrirlo y pintar lo que devolvió. */
+
+  private readonly paymentStates = inject(BookingPaymentStates);
+
+  /** La cita cuyos comprobantes se revisan; `null` con el modal cerrado. */
+  protected readonly paymentReview = signal<CitaVisible | null>(null);
+
+  /** El estado de pago de la lectura, o el más nuevo que dejó el modal. */
+  protected paymentStateOf(cita: CitaVisible): PaymentStateInfo | null {
+    return this.paymentStates.resolve(cita.id, cita.pago);
+  }
+
   /* -- lo que decide quien atiende (correcciones #11 y #15) ---------------- */
 
   /**
@@ -1926,68 +1933,6 @@ export class Agenda {
    * decenas de veces por turno. Lo destructivo —rechazar— sí lo pide, y además
    * con motivo.
    */
-  /**
-   * Marca el estado de pago de la cita — TAREA-13, punto 5.
-   *
-   * **El seguro se conserva** cuando se cambia sólo el estado, y viceversa: son
-   * dos preguntas distintas, y cambiar una no puede responder la otra por su
-   * cuenta. Sin este cuidado, pasar de «pendiente» a «pagada» borraría en
-   * silencio que la cita se había cubierto con seguro.
-   *
-   * No hay confirmación previa a propósito: es reversible en un clic y queda
-   * firmado con quién y cuándo, así que un diálogo de más sólo agregaría
-   * fricción a una acción que se repite muchas veces por día.
-   */
-  protected marcarPago(cita: CitaVisible, state: PaymentStateCode): void {
-    this.aplicarPago(cita, { state, insuranceUsed: cita.pago?.insuranceUsed ?? false });
-  }
-
-  /** Alterna la marca de seguro sin tocar el estado. */
-  protected alternarSeguro(cita: CitaVisible): void {
-    // Sin estado marcado no hay qué alternar: la marca de seguro acompaña a un
-    // estado, no existe suelta. El menú no la ofrece en ese caso.
-    if (cita.pago === null) {
-      return;
-    }
-    this.aplicarPago(cita, {
-      state: cita.pago.state,
-      insuranceUsed: !cita.pago.insuranceUsed,
-    });
-  }
-
-  private aplicarPago(cita: CitaVisible, cambio: NewPaymentState): void {
-    if (this.operando() !== null) {
-      return;
-    }
-    this.operando.set(cita.id);
-
-    this.scheduling.setPaymentState(cita.id, cambio).subscribe({
-      next: (estado) => {
-        this.operando.set(null);
-        this.toast.success(
-          estado.insuranceUsed ? `${estado.label}, con seguro.` : `${estado.label}.`,
-          'Pago actualizado',
-        );
-        this.trasOperar();
-      },
-      error: (error: unknown) => {
-        this.operando.set(null);
-        this.avisarFallo(error, 'No se pudo cambiar el estado de pago.');
-      },
-    });
-  }
-
-  /** Los tres estados, para el menú. La etiqueta viene del servidor al leer. */
-  protected readonly estadosDePago: readonly {
-    readonly code: PaymentStateCode;
-    readonly label: string;
-    readonly icon: NavIconName;
-  }[] = [
-    { code: 'PENDING', label: 'Pendiente de pago', icon: 'clock' },
-    { code: 'PARTIALLY_PAID', label: 'Parcialmente pagada', icon: 'billing' },
-    { code: 'PAID', label: 'Pagada', icon: 'check-circle' },
-  ];
-
   protected aceptarCita(cita: CitaVisible): void {
     if (this.operando() !== null) {
       return;

@@ -1,0 +1,57 @@
+<section class="receipt-viewer" data-testid="payment-receipt-viewer" [attr.aria-labelledby]="titleId">
+  <header class="receipt-viewer__header">
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      data-testid="payment-receipt-viewer-back"
+      (clicked)="back.emit()"
+    >
+      <app-nav-icon name="arrow-left" />
+      Volver a la lista
+    </button>
+    @if (url(); as href) {
+      <a
+        app-button
+        variant="secondary"
+        size="sm"
+        data-testid="payment-receipt-download"
+        [href]="href"
+        [attr.download]="fileName()"
+      >
+        <app-nav-icon name="download" />
+        Descargar
+      </a>
+    }
+  </header>
+
+  <h3 #title class="receipt-viewer__title" tabindex="-1" [id]="titleId">{{ heading() }}</h3>
+
+  <div class="receipt-viewer__stage" [attr.data-kind]="isPdf() ? 'pdf' : 'image'">
+    @switch (file()?.status) {
+      @case ('ready') {
+        @if (frameUrl(); as frame) {
+          <iframe class="receipt-viewer__frame" [src]="frame" [title]="'Comprobante en PDF: ' + fileName()"></iframe>
+        } @else if (url(); as src) {
+          <img class="receipt-viewer__image" [src]="src" [alt]="heading()" />
+        }
+      }
+      @case ('failed') {
+        <app-alert tone="error" title="No se pudo abrir el comprobante" class="receipt-viewer__failure">
+          Puede que se haya cortado la conexión. Pruebe de nuevo.
+          <div alert-actions>
+            <button app-button size="sm" variant="secondary" (clicked)="retry.emit()">Reintentar</button>
+          </div>
+        </app-alert>
+      }
+      @default {
+        <app-skeleton variant="rect" class="receipt-viewer__skeleton" />
+        <span class="sr-only" role="status">Abriendo el comprobante…</span>
+      }
+    }
+  </div>
+
+  @if (isPdf() && url() !== null) {
+    <p class="receipt-viewer__hint">Si el PDF no se ve en este dispositivo, use «Descargar».</p>
+  }
+</section>
