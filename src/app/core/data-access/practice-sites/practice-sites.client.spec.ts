@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 
 import { PracticeSitesClient } from './practice-sites.client';
 import type { MyRoleAssignment, PracticeSitePage } from './practice-sites.types';
@@ -83,6 +84,37 @@ describe('PracticeSitesClient', () => {
     const quitar = http.expectOne('/practitioners/me/sites/site-1/contact-phone');
     expect(quitar.request.body).toEqual({ contactPhone: null });
     quitar.flush({ id: 'site-1', contactPhone: null });
+  });
+
+  /**
+   * El logo del consultorio va a la API real: hasta el 28/10/2026 la ruta sólo
+   * existía en la maqueta y, contra la API, la petición ni salía.
+   */
+  describe('el logo del consultorio', () => {
+    it('lo fija con un PUT que lleva sólo el id del archivo y devuelve la sede con su logo', async () => {
+      const respuesta = firstValueFrom(client.setSiteLogo('site-1', 'file-logo'));
+
+      const req = http.expectOne('/practitioners/me/sites/site-1/logo');
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ fileId: 'file-logo' });
+      req.flush({ id: 'site-1', isOwnSite: true, logoFileId: 'file-logo' });
+
+      expect((await respuesta).logoFileId).toBe('file-logo');
+    });
+
+    it('con null lo quita', () => {
+      client.setSiteLogo('site-1', null).subscribe();
+
+      const req = http.expectOne('/practitioners/me/sites/site-1/logo');
+      expect(req.request.body).toEqual({ fileId: null });
+      req.flush({ id: 'site-1', isOwnSite: true, logoFileId: null });
+    });
+
+    it('escapa el identificador de la sede en la ruta', () => {
+      client.setSiteLogo('site/1', 'file-logo').subscribe();
+
+      http.expectOne('/practitioners/me/sites/site%2F1/logo').flush({ id: 'site/1' });
+    });
   });
 
   describe('Carril 18 — mis organizaciones', () => {
