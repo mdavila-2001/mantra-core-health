@@ -1,0 +1,37 @@
+<fieldset class="manual-payment" data-testid="payment-manual">
+  <legend class="manual-payment__legend">Marcar sin comprobante</legend>
+  <p class="manual-payment__hint">
+    Para el pago en efectivo, o cuando el paciente no va a subir un comprobante. Queda firmado con su
+    nombre y la hora.
+  </p>
+
+  <div class="manual-payment__options">
+    @for (option of options; track option.code) {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [attr.data-testid]="'payment-manual-' + option.code"
+        [attr.aria-pressed]="current()?.state === option.code"
+        [disabled]="disabled() || current()?.state === option.code"
+        (clicked)="selectState(option.code)"
+      >
+        <app-nav-icon [name]="option.icon" />
+        {{ option.label }}
+      </button>
+    }
+    @if (current(); as state) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="payment-manual-insurance"
+        [disabled]="disabled()"
+        (clicked)="toggleInsurance()"
+      >
+        <app-nav-icon name="umbrella" />
+        {{ state.insuranceUsed ? 'Quitar «con seguro»' : 'Marcar «con seguro»' }}
+      </button>
+    }
+  </div>
+</fieldset>
