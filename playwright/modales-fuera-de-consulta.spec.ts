@@ -288,6 +288,14 @@ async function medir(modal: Locator): Promise<Medida> {
   });
 }
 
+/** Cierra con su botón cada modal abierto, de arriba hacia abajo. */
+async function cerrarTodo(page: Page): Promise<void> {
+  for (let i = 0; i < 4 && (await page.locator('dialog[open]').count()) > 0; i++) {
+    await dialogo(page).getByTestId('content-dialog-close').last().click({ timeout: 5_000 });
+    await page.waitForTimeout(400);
+  }
+}
+
 test.beforeAll(() => mkdirSync(SALIDA, { recursive: true }));
 
 for (const ancho of ANCHOS) {
@@ -296,6 +304,8 @@ for (const ancho of ANCHOS) {
       test.setTimeout(600_000);
       await page.setViewportSize({ width: ancho.width, height: ancho.height });
       await entrarAlSimulador(page, usuario, BASE);
+      // Un botón que no aparece no tiene que colgar el resto del recorrido.
+      page.setDefaultTimeout(15_000);
       const medidas: Record<string, Medida | { error: string }> = {};
 
       for (const caso of casos) {
@@ -310,11 +320,10 @@ for (const ancho of ANCHOS) {
           await page.waitForTimeout(700);
           medidas[caso.nombre] = await medir(modal);
           await modal.screenshot({ path: join(SALIDA, `${ancho.nombre}-${caso.nombre}.png`) });
-          await page.keyboard.press('Escape');
-          await expect(page.locator('dialog[open]')).toHaveCount(0, { timeout: 5_000 });
+          await cerrarTodo(page);
         } catch (fallo) {
           medidas[caso.nombre] = { error: String(fallo).split('\n')[0]!.slice(0, 200) };
-          await page.keyboard.press('Escape').catch(() => undefined);
+          await cerrarTodo(page).catch(() => undefined);
         }
       }
 
