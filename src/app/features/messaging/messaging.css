@@ -412,3 +412,26 @@
     display: none;
   }
 }
+
+/* --- «Escribiendo como» -------------------------------------------------- */
+
+.mensajeria__como {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  flex: none;
+  padding: var(--e2) var(--e4) 0;
+}
+
+.mensajeria__como-rotulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--tinta-2);
+}
+
+.mensajeria__como-suelto {
+  display: flex;
+  justify-content: center;
+  padding-block-start: var(--e3);
+}

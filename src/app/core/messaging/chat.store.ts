@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, concatMap, EMPTY, from, map, type Observable } from 'rxjs';
 
@@ -34,6 +35,48 @@ export const PAGINA_DE_MENSAJES = 30;
 
 /** Cuántas conversaciones trae la bandeja. */
 const LIMITE_DE_BANDEJA = 50;
+
+/**
+ * Dónde se recuerda, **por pestaña**, con qué perfil se está escribiendo.
+ *
+ * `sessionStorage` y no `localStorage`: «estoy atendiendo como la farmacia» es
+ * de este rato y de esta pestaña. Lo que se guarda es el id público de la
+ * vitrina y su nombre —lo mismo que muestra la ficha pública—, atado al
+ * usuario que lo eligió: otra cuenta que entre en la misma pestaña no lo
+ * hereda. Y no autoriza nada: si la API ya no deja actuar con ese perfil,
+ * responde 403 y el store vuelve al propio.
+ */
+const CLAVE_DE_ACTUACION = 'alovida.chat.actuar-como';
+
+/** Rol del token que, con membresía activa, deja escribir como la farmacia. */
+export const ROL_PERSONAL_DE_FARMACIA = 'PHARMACY_STAFF';
+
+/**
+ * El slug de la vitrina de una organización.
+ *
+ * Lo fija la API al proyectarla (`public-profile-projection.service.ts`:
+ * `organization-<tenantId>`), y es la única forma que tiene hoy el personal de
+ * encontrar la vitrina de su farmacia **sin un pedido en la mano**: ningún
+ * endpoint de farmacia ni de «mis organizaciones» publica el `profileId`.
+ */
+export function slugDeVitrinaDeOrganizacion(tenantId: string): string {
+  return `organization-${tenantId}`;
+}
+
+/** La vitrina de una organización con la que esta sesión puede escribir. */
+export interface VitrinaParaActuar {
+  readonly profileId: string;
+  readonly nombre: string;
+}
+
+/** Lo que se guarda en {@link CLAVE_DE_ACTUACION}. */
+interface ActuacionGuardada extends VitrinaParaActuar {
+  readonly userId: string;
+}
+
+/** El aviso que se da al perder el permiso de escribir como la organización. */
+export const AVISO_SIN_PERMISO_DE_ORGANIZACION =
+  'Ya no podés escribir como la farmacia: volviste a tu perfil.';
 
 /**
  * Cuánto tiempo se puede editar un mensaje después de mandarlo.
@@ -177,6 +220,32 @@ export class ChatStore {
   /** Lo último que salió mal, para que la pantalla lo diga. */
   readonly error = signal('');
 
+  /**
+   * El perfil propio de la sesión, aunque se esté escribiendo como la
+   * farmacia. `perfil` es **con quién se actúa**: todo lo que habla con la API
+   * (bandeja, hilo, envío, leído, socket) usa ése.
+   */
+  readonly perfilPropio = signal<string | null>(null);
+
+  /**
+   * La vitrina de la organización con la que esta persona puede escribir, si
+   * se conoce: la encontró `descubrirVitrina()` o la devolvió el
+   * `POST /pharmacy/orders/:id/conversation`.
+   *
+   * Que esté acá **no** es un permiso: es la puerta que se ofrece. Quien
+   * decide es la API en cada llamada, y un 403 devuelve al perfil propio.
+   */
+  readonly vitrinaDeOrganizacion = signal<VitrinaParaActuar | null>(null);
+
+  /** `true` si se está escribiendo como la organización. */
+  readonly actuandoComoOrganizacion = computed(() => {
+    const vitrina = this.vitrinaDeOrganizacion();
+    return vitrina !== null && this.perfil() === vitrina.profileId;
+  });
+
+  /** Lo que se le avisa a quien perdió el permiso de escribir como la farmacia. */
+  readonly avisoDePerfil = signal('');
+
   /* --- Bandeja ------------------------------------------------------------ */
 
   readonly conversaciones = signal<readonly ConversationListItem[]>([]);
@@ -239,6 +308,10 @@ export class ChatStore {
   private contadorPreparado = false;
   /** Quién espera a que se resuelva el perfil propio, pedido una sola vez. */
   private esperandoPerfil: (() => void)[] | null = null;
+  /** Para qué usuario se resolvió la identidad: otro usuario la vuelve a pedir. */
+  private usuarioDeLaIdentidad: string | null = null;
+  private actuacionRestaurada = false;
+  private vitrinaBuscada: string | null = null;
   private hiloMarcado = new Set<string>();
 
   /**
@@ -346,6 +419,29 @@ export class ChatStore {
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.recargarBandeja());
 
+    // El gateway no deja actuar con el perfil pedido: o nunca pudo (una
+    // pestaña que recordaba la farmacia de otra sesión) o dejó de poder en vivo
+    // (`membership:recheck`). Si el que falló es la vitrina con la que se está
+    // escribiendo, se vuelve al perfil propio.
+    this.socket.onError.pipe(takeUntilDestroyed()).subscribe((error) => {
+      if (error.code !== 'NOT_OWN_PROFILE' || !this.actuandoComoOrganizacion()) {
+        return;
+      }
+      if (error.profileId === undefined || error.profileId === this.perfil()) {
+        this.perderPermisoDeOrganizacion();
+      }
+    });
+
+    // Otra cuenta en la misma pestaña (cerrar sesión no recarga la página): la
+    // identidad de la anterior no puede quedar puesta —sería leer su bandeja,
+    // o escribir como su farmacia—.
+    effect(() => {
+      const usuario = this.sesion.userId();
+      if (this.usuarioDeLaIdentidad !== null && usuario !== this.usuarioDeLaIdentidad) {
+        this.olvidarIdentidad();
+      }
+    });
+
     // Las fotos y documentos que aparecen en el hilo necesitan una URL
     // firmada, y pedirla desde el template sería pedirla en cada ciclo de
     // detección de cambios. Se resuelven acá, una vez por archivo.
@@ -369,6 +465,175 @@ export class ChatStore {
     }
     this.encendido = true;
     this.conPerfil(() => this.arrancarConPerfil());
+    this.descubrirVitrina();
+  }
+
+  /* --- Con qué perfil se escribe ------------------------------------------- */
+
+  /**
+   * Busca la vitrina de la farmacia de la organización activa, para ofrecer
+   * «Escribiendo como: Farmacia X».
+   *
+   * Sólo si el token trae el rol de personal de farmacia: a nadie más se le
+   * ofrece la puerta. Que la vitrina exista y sea pública no prueba que se
+   * pueda escribir con ella —eso lo decide la API con la membresía—; por eso
+   * fallar acá no es un error que se muestre: simplemente no hay selector.
+   *
+   * **El hueco**: la vitrina se encuentra por su slug determinista
+   * (`organization-<tenantId>`), que sólo resuelve si está publicada. Una
+   * vitrina privada queda alcanzable únicamente desde un pedido (el `POST` del
+   * pedido devuelve su id). Lo mínimo que lo cierra es un
+   * `GET /community/profiles/organization-showcases/me` que devuelva las
+   * vitrinas con las que la sesión puede actuar, con la misma regla que
+   * `assertOwnMessagingProfile`.
+   */
+  descubrirVitrina(): void {
+    const tenantId = this.sesion.activeTenantId();
+    if (
+      tenantId === null ||
+      !this.sesion.roles().includes(ROL_PERSONAL_DE_FARMACIA) ||
+      this.vitrinaBuscada === tenantId
+    ) {
+      return;
+    }
+    this.vitrinaBuscada = tenantId;
+    this.community.readProfileBySlug(slugDeVitrinaDeOrganizacion(tenantId)).subscribe({
+      next: (ficha) => {
+        if (ficha.tenantId !== tenantId || ficha.id === this.perfilPropio()) {
+          return;
+        }
+        const actual = this.vitrinaDeOrganizacion();
+        if (actual === null || actual.profileId === ficha.id) {
+          this.vitrinaDeOrganizacion.set({ profileId: ficha.id, nombre: ficha.displayName });
+        }
+      },
+      error: () => undefined,
+    });
+  }
+
+  /**
+   * Cambia el perfil con el que se escribe: el propio (`null`) o la vitrina de
+   * la organización.
+   *
+   * Cambiar es otra bandeja: se cierra el hilo abierto —es de la otra
+   * identidad—, se vacía la lista, se corta el socket y se vuelve a unir con
+   * el perfil nuevo, y se relee. La elección se recuerda en la pestaña.
+   */
+  actuarComo(profileId: string | null): void {
+    const vitrina = this.vitrinaDeOrganizacion();
+    const destino = profileId === null ? this.perfilPropio() : profileId;
+    if (profileId !== null && (vitrina === null || vitrina.profileId !== profileId)) {
+      return;
+    }
+    this.avisoDePerfil.set('');
+    if (destino === this.perfil()) {
+      this.guardarActuacion();
+      return;
+    }
+    this.cerrar();
+    this.perfil.set(destino);
+    this.conversaciones.set([]);
+    this.bandejaCargada.set(false);
+    this.error.set('');
+    this.guardarActuacion();
+    this.socket.reiniciar();
+    if (destino !== null && (this.encendido || this.contadorPreparado)) {
+      this.socket.joinInbox(destino);
+      this.recargarBandeja();
+    }
+  }
+
+  /** Un 403 o un `NOT_OWN_PROFILE` mientras se escribía como la organización. */
+  private perderPermisoDeOrganizacion(): void {
+    this.actuarComo(null);
+    this.vitrinaDeOrganizacion.set(null);
+    this.avisoDePerfil.set(AVISO_SIN_PERMISO_DE_ORGANIZACION);
+  }
+
+  /**
+   * `true` —y vuelve al perfil propio— si el error es un 403 recibido
+   * escribiendo como la organización.
+   */
+  private siPerdioElPermiso(error: unknown): boolean {
+    if (
+      error instanceof HttpErrorResponse &&
+      error.status === 403 &&
+      this.actuandoComoOrganizacion()
+    ) {
+      this.perderPermisoDeOrganizacion();
+      return true;
+    }
+    return false;
+  }
+
+  private guardarActuacion(): void {
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      const vitrina = this.vitrinaDeOrganizacion();
+      const usuario = this.sesion.userId();
+      if (vitrina !== null && usuario !== null && this.actuandoComoOrganizacion()) {
+        const guardada: ActuacionGuardada = { userId: usuario, ...vitrina };
+        sessionStorage.setItem(CLAVE_DE_ACTUACION, JSON.stringify(guardada));
+      } else {
+        sessionStorage.removeItem(CLAVE_DE_ACTUACION);
+      }
+    } catch {
+      // Sin almacenamiento la elección dura lo que la página: no es un error.
+    }
+  }
+
+  /** Recupera la elección de la pestaña, si es de este mismo usuario. */
+  private restaurarActuacion(): void {
+    if (this.actuacionRestaurada || !this.isBrowser) {
+      return;
+    }
+    this.actuacionRestaurada = true;
+    try {
+      const crudo = sessionStorage.getItem(CLAVE_DE_ACTUACION);
+      if (crudo === null) {
+        return;
+      }
+      const guardada = JSON.parse(crudo) as Partial<ActuacionGuardada>;
+      if (
+        typeof guardada.profileId !== 'string' ||
+        typeof guardada.nombre !== 'string' ||
+        guardada.userId !== this.sesion.userId()
+      ) {
+        sessionStorage.removeItem(CLAVE_DE_ACTUACION);
+        return;
+      }
+      this.vitrinaDeOrganizacion.set({ profileId: guardada.profileId, nombre: guardada.nombre });
+      this.perfil.set(guardada.profileId);
+    } catch {
+      // Ilegible o bloqueado: se arranca con el perfil propio.
+    }
+  }
+
+  /** Lo de la cuenta anterior fuera: perfil, vitrina, bandeja e hilo. */
+  private olvidarIdentidad(): void {
+    this.cerrar();
+    this.perfil.set(null);
+    this.perfilPropio.set(null);
+    this.perfilResuelto.set(false);
+    this.vitrinaDeOrganizacion.set(null);
+    this.avisoDePerfil.set('');
+    this.conversaciones.set([]);
+    this.bandejaCargada.set(false);
+    this.pendientes.set([]);
+    this.error.set('');
+    this.usuarioDeLaIdentidad = null;
+    this.actuacionRestaurada = false;
+    this.vitrinaBuscada = null;
+    this.contadorPreparado = false;
+    this.esperandoPerfil = null;
+    this.urlesDeArchivo.set(new Map());
+    this.socket.reiniciar();
+    if (this.encendido) {
+      this.encendido = false;
+      this.pararTemporizadores();
+    }
   }
 
   /**
@@ -414,9 +679,16 @@ export class ChatStore {
       return;
     }
     this.esperandoPerfil = [despues];
+    this.usuarioDeLaIdentidad = this.sesion.userId();
+    this.restaurarActuacion();
     this.community.getOwnProfile().subscribe({
       next: (propio) => {
-        this.perfil.set(propio?.id ?? null);
+        this.perfilPropio.set(propio?.id ?? null);
+        // Si se está escribiendo como la farmacia, eso manda: el perfil propio
+        // queda a mano para volver.
+        if (!this.actuandoComoOrganizacion()) {
+          this.perfil.set(propio?.id ?? null);
+        }
         this.perfilResuelto.set(true);
         const esperan = this.esperandoPerfil ?? [];
         this.esperandoPerfil = null;
@@ -509,9 +781,12 @@ export class ChatStore {
           this.cargandoBandeja.set(false);
           this.error.set('');
         },
-        error: () => {
+        error: (error: unknown) => {
           this.cargandoBandeja.set(false);
           this.bandejaCargada.set(true);
+          if (this.siPerdioElPermiso(error)) {
+            return;
+          }
           // No se vacía lo que ya había: un tic fallido no es motivo para
           // borrarle a alguien la bandeja que estaba mirando.
           this.error.set('No pudimos cargar tus conversaciones.');
@@ -672,13 +947,16 @@ export class ChatStore {
             this.marcarLeido();
           }
         },
-        error: () => {
+        error: (error: unknown) => {
           if (this.activaId() !== conversationId) {
             this.descartarYPedirElActual();
             return;
           }
           this.cargandoHilo.set(false);
           this.hiloCargado.set(true);
+          if (this.siPerdioElPermiso(error)) {
+            return;
+          }
           this.error.set('No pudimos cargar la conversación.');
         },
       });
@@ -1027,7 +1305,7 @@ export class ChatStore {
           );
           this.recargarBandeja();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.enviando.set(false);
           this.pendientes.update((lista) =>
             lista.map((p) =>
@@ -1036,6 +1314,7 @@ export class ChatStore {
                 : p,
             ),
           );
+          this.siPerdioElPermiso(error);
         },
       });
   }
@@ -1460,6 +1739,42 @@ export class ChatStore {
           this.error.set('No pudimos abrir la conversación.');
         },
       });
+    });
+  }
+
+  /**
+   * El chat de un pedido **del lado de la farmacia**: lo abre la API con el
+   * `POST` del pedido, que devuelve también la vitrina con la que se habla;
+   * desde ahí se escribe como esa vitrina, con la tarjeta del pedido y la
+   * misma regla de no repetirla.
+   *
+   * No espera al perfil propio: el personal de una farmacia puede no tener
+   * vitrina personal, y no la necesita para atender como la farmacia.
+   *
+   * @param alFallar - Recibe el error del `POST` (los 422 traen su `reason`),
+   *   para que lo diga la pantalla que tiene el botón.
+   */
+  abrirComoOrganizacion(
+    resolver: Observable<{ readonly conversationId: string; readonly profileId: string }>,
+    nombre: string,
+    alAbrir: (conversationId: string) => void,
+    contexto?: ContextoDeChat,
+    alFallar?: (error: unknown) => void,
+  ): void {
+    if (this.abriendo()) {
+      return;
+    }
+    this.abriendo.set(true);
+    resolver.subscribe({
+      next: ({ conversationId, profileId }) => {
+        this.vitrinaDeOrganizacion.set({ profileId, nombre });
+        this.actuarComo(profileId);
+        this.entrarAlHilo(profileId, conversationId, alAbrir, contexto);
+      },
+      error: (error: unknown) => {
+        this.abriendo.set(false);
+        alFallar?.(error);
+      },
     });
   }
 

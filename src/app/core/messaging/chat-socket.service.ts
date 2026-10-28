@@ -55,6 +55,20 @@ export interface ChatNewConversationEvent {
 }
 
 /**
+ * El gateway rechazó lo que se le pidió (`error`).
+ *
+ * `NOT_OWN_PROFILE` dice que la sesión no puede actuar con ese perfil: no es
+ * el propio ni la vitrina de una organización donde tenga membresía activa.
+ * Con `event: 'membership:recheck'` significa que **lo podía y dejó de
+ * poder** —le quitaron la membresía con el socket abierto— y trae el perfil.
+ */
+export interface ChatSocketError {
+  readonly code: string;
+  readonly event?: string;
+  readonly profileId?: string;
+}
+
+/**
  * Cliente del gateway WS de mensajería (`CommunityMessagingGateway`, backend).
  *
  * Un solo socket compartido entre la bandeja (`Messaging`) y el hilo
@@ -81,6 +95,7 @@ export class ChatSocketService {
   private readonly reads$ = new Subject<ChatReadEvent>();
   private readonly newConversations$ = new Subject<ChatNewConversationEvent>();
   private readonly updated$ = new Subject<ChatMessageEvent>();
+  private readonly errors$ = new Subject<ChatSocketError>();
 
   /** `conversation:message`, sin filtrar — cada pantalla filtra lo suyo. */
   readonly onMessage = this.messages$.asObservable();
@@ -96,6 +111,8 @@ export class ChatSocketService {
   readonly onRead = this.reads$.asObservable();
   /** `conversation:new`. */
   readonly onNewConversation = this.newConversations$.asObservable();
+  /** `error` del gateway — hoy, sobre todo, `NOT_OWN_PROFILE`. */
+  readonly onError = this.errors$.asObservable();
 
   /**
    * Conecta si hace falta y devuelve el socket.
@@ -147,6 +164,11 @@ export class ChatSocketService {
     socket.on('conversation:new', (payload: ChatNewConversationEvent) =>
       this.newConversations$.next(payload),
     );
+    socket.on('error', (payload: ChatSocketError | null | undefined) => {
+      if (payload !== null && typeof payload === 'object' && typeof payload.code === 'string') {
+        this.errors$.next(payload);
+      }
+    });
 
     this.socket = socket;
     return socket;
@@ -163,6 +185,19 @@ export class ChatSocketService {
       conversationId,
       profileId,
     });
+  }
+
+  /**
+   * Corta la conexión para que el próximo `join:*` abra una nueva.
+   *
+   * Es lo que se hace al cambiar el perfil con el que se actúa: el gateway no
+   * tiene `leave:inbox`, y seguir en la sala del perfil anterior sería recibir
+   * los mensajes de una bandeja que ya no se está mirando.
+   */
+  reiniciar(): void {
+    this.socket?.disconnect();
+    this.socket = null;
+    this.connected.set(false);
   }
 
   /** Deja el hilo. No hace falta al salir de la bandeja: `join:inbox` no expira. */

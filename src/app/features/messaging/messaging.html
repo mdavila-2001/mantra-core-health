@@ -6,6 +6,28 @@
   }
 }
 
+<!-- Se perdió el permiso de escribir como la farmacia: se dice una vez, con
+     la salida ya tomada (volvió al perfil propio). -->
+@if (store.avisoDePerfil(); as aviso) {
+  <app-alert tone="warning" class="mensajeria__alerta" data-testid="mensajeria-aviso-perfil">{{ aviso }}</app-alert>
+}
+
+<!-- «Escribiendo como»: sólo para quien atiende una farmacia con vitrina. Es
+     una puerta, no un permiso: cada llamada la autoriza la API. -->
+<ng-template #selectorDePerfil>
+  @if (opcionesDePerfil().length > 0) {
+    <div class="mensajeria__como" data-testid="mensajeria-escribiendo-como">
+      <span class="mensajeria__como-rotulo" aria-hidden="true">Escribiendo como</span>
+      <app-segmented-control
+        ariaLabel="Escribiendo como"
+        [options]="opcionesDePerfil()"
+        [value]="perfilElegido()"
+        (valueChange)="elegirPerfil($event)"
+      />
+    </div>
+  }
+</ng-template>
+
 @if (!store.perfilResuelto()) {
   <!-- S2 mientras se resuelve el perfil: el mismo marco, con la bandeja en
        esqueleto. Sin esto la pantalla saltaba de una línea de texto a dos
@@ -22,6 +44,9 @@
     <section class="mensajeria__conversacion" aria-hidden="true"></section>
   </div>
 } @else if (store.perfil() === null) {
+  <div class="mensajeria__como-suelto">
+    <ng-container *ngTemplateOutlet="selectorDePerfil" />
+  </div>
   <!-- Una puerta, no un error: la mensajería necesita el perfil público de
        `community`, que es una entidad aparte del perfil de paciente del token. -->
   <app-empty-state
@@ -50,6 +75,8 @@
           <span class="mensajeria__sin-leer">{{ store.sinLeer() }} sin leer</span>
         }
       </header>
+
+      <ng-container *ngTemplateOutlet="selectorDePerfil" />
 
       <div class="mensajeria__buscador">
         <label class="mensajeria__campo">

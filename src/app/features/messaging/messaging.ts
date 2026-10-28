@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
@@ -23,12 +24,17 @@ import type { ConversationListItem } from '../../core/data-access/community/comm
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
+import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
 
 /** Los cuatro filtros de la bandeja, en el orden en que se muestran. */
 const FILTROS = ['todos', 'no-leidos', 'favoritos', 'grupos'] as const;
 
 type Filtro = (typeof FILTROS)[number];
+
+/** Con quién se escribe: el perfil propio o la vitrina de la farmacia. */
+type PerfilElegible = 'propio' | 'organizacion';
 
 /** Cuánto se espera antes de preguntarle al directorio, al tipear. */
 const ESPERA_DE_BUSQUEDA_MS = 300;
@@ -64,7 +70,9 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
     ConversationList,
     EmptyState,
     FormsModule,
+    NgTemplateOutlet,
     RouterOutlet,
+    SegmentedControl,
   ],
   templateUrl: './messaging.html',
   styleUrl: './messaging.css',
@@ -151,6 +159,42 @@ export class Messaging {
       return nombre.includes(consulta) || ultimo.includes(consulta);
     });
   });
+
+  /**
+   * «Yo» o la farmacia: las dos identidades con las que se puede escribir.
+   * Vacío —sin selector— para quien no atiende una farmacia con vitrina.
+   */
+  protected readonly opcionesDePerfil = computed<readonly SegmentedOption<PerfilElegible>[]>(() => {
+    const vitrina = this.store.vitrinaDeOrganizacion();
+    return vitrina === null
+      ? []
+      : [
+          { value: 'propio', label: 'Yo' },
+          { value: 'organizacion', label: vitrina.nombre },
+        ];
+  });
+
+  protected readonly perfilElegido = computed<PerfilElegible>(() =>
+    this.store.actuandoComoOrganizacion() ? 'organizacion' : 'propio',
+  );
+
+  /**
+   * Cambia de identidad. Con un hilo abierto se vuelve primero a la bandeja:
+   * ese hilo es de la otra identidad y, con la nueva, puede no existir.
+   */
+  protected elegirPerfil(valor: PerfilElegible): void {
+    const destino =
+      valor === 'organizacion' ? (this.store.vitrinaDeOrganizacion()?.profileId ?? null) : null;
+    if (valor === 'organizacion' && destino === null) {
+      return;
+    }
+    const cambiar = (): void => this.store.actuarComo(destino);
+    if (this.hayHiloAbierto()) {
+      void this.router.navigate(['/messaging']).then(cambiar);
+    } else {
+      cambiar();
+    }
+  }
 
   /** Cuántas sin leer hay, para el chip. */
   protected readonly noLeidas = computed(
