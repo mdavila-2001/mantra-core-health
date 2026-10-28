@@ -428,7 +428,16 @@ export interface PaginaDeFormulario {
    */
   readonly disposicion?: 'una-columna' | 'dos-columnas' | 'tres-columnas';
 
-  /** Invariante: nunca más de {@link MAX_CAMPOS_POR_PAGINA}. */
+  /**
+   * Ver {@link SeccionDeFormulario.sinPartir}: la página viene de una sección
+   * que pidió quedar entera, y el motor no la cuenta contra el tope.
+   */
+  readonly sinPartir?: boolean;
+
+  /**
+   * Invariante: nunca más de {@link MAX_CAMPOS_POR_PAGINA}, salvo que la
+   * página venga de una sección {@link SeccionDeFormulario.sinPartir}.
+   */
   readonly campos: readonly CampoDeFormulario[];
 }
 
@@ -456,5 +465,17 @@ export interface SeccionDeFormulario {
 
   readonly hint?: string;
   readonly disposicion?: PaginaDeFormulario['disposicion'];
+
+  /**
+   * Si la sección va entera en una sola página aunque pase del tope.
+   *
+   * Para bloques que se leen como uno solo y que nadie contesta campo por
+   * campo: los papeles de un alta de organización son seis zonas de carga
+   * opcionales, y partirlas en «(1 de 2)» y «(2 de 2)» escondía la mitad
+   * (pedido del cliente del 28/10/2026: «todo en una sola vista»). No es para
+   * preguntas: una sección de preguntas largas se sigue partiendo.
+   */
+  readonly sinPartir?: boolean;
+
   readonly campos: readonly CampoDeFormulario[];
 }

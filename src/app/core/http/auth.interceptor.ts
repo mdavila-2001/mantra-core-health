@@ -45,6 +45,8 @@ const PUBLIC_PATHS: readonly string[] = [
   // La firma y el sello del alta de médico: misma pre-carga sin sesión, con
   // su propia ruta porque son imágenes y no PDF (informe B, C3).
   '/iam/auth/upload-registration-signature-image',
+  // El logo del consultorio propio del mismo alta: otra pre-carga sin sesión.
+  '/iam/auth/upload-registration-logo',
   '/iam/auth/register-practitioner',
   '/iam/auth/verify-email',
   // Verificado contra la API viva: responde 401 con un token de activación

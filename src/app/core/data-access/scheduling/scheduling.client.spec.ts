@@ -1,9 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import type { Observable } from 'rxjs';
 
 import { SchedulingClient } from './scheduling.client';
 import { esReconsulta, motivoDeReconsulta } from './scheduling.types';
+import type { TenantScope } from './tenant-scope';
 import type {
   AgendaResourceCreated,
   AgendaSlot,
@@ -507,6 +509,30 @@ describe('SchedulingClient', () => {
       });
     });
 
+    it('v4.2.64 · createTemplate manda flexibleHours en la franja flexible de una semana mixta', () => {
+      client
+        .createTemplate('res-1', {
+          name: 'Semana mixta',
+          rules: [
+            { dayOfWeek: 1, startTime: '08:00', endTime: '12:00', slotMinutes: 30, gapMinutes: 10 },
+            { dayOfWeek: 2, startTime: '08:00', endTime: '12:00', flexibleHours: true },
+          ],
+          slotMinutes: 20,
+        })
+        .subscribe();
+
+      const req = http.expectOne('/scheduling/resources/res-1/templates');
+      expect(req.request.body).toStrictEqual({
+        name: 'Semana mixta',
+        rules: [
+          { dayOfWeek: 1, startTime: '08:00', endTime: '12:00', slotMinutes: 30, gapMinutes: 10 },
+          { dayOfWeek: 2, startTime: '08:00', endTime: '12:00', flexibleHours: true },
+        ],
+        slotMinutes: 20,
+      });
+      req.flush({ id: 'tpl-1', name: 'Semana mixta', ruleCount: 2, statusConceptId: 'c' });
+    });
+
     it('getFlexibleAvailability pide la ventana en ISO y devuelve fechas', () => {
       let horas: Date[] = [];
       client
@@ -784,6 +810,151 @@ describe('SchedulingClient · walk-in idempotente', () => {
 });
 
 /**
+ * Publicar la agenda en **otra organización** que la activa.
+ *
+ * La API resuelve la organización con `X-Tenant-Id`: rechaza con 403 el
+ * `tenantId` del cuerpo o de la query que no es ése (`TENANT_SCOPE_CONFLICT`)
+ * y no ve el recurso de otra. El interceptor pone el de la sesión salvo que la
+ * petición ya traiga uno, así que lo que se fija acá es que cada paso de la
+ * publicación lo declare **sólo** cuando se le pide, sin tocar lo que ya manda.
+ */
+describe('SchedulingClient · publicar en otra organización', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const OLIVOS = { tenantId: 't-olivos' } as const;
+
+  /** Cada paso de la publicación y la lectura del horario vigente, con o sin organización. */
+  const STEPS: readonly {
+    readonly step: string;
+    readonly method: string;
+    readonly url: string;
+    readonly call: (scope?: TenantScope) => Observable<unknown>;
+  }[] = [
+    {
+      step: 'createResource',
+      method: 'POST',
+      url: '/scheduling/resources',
+      call: (scope) =>
+        client.createResource(
+          {
+            tenantId: 't-olivos',
+            resourceType: 'PRACTITIONER',
+            resourceRefType: 'practitioner_profiles',
+            resourceRefId: 'pp-1',
+            name: 'Agenda',
+          },
+          scope,
+        ),
+    },
+    {
+      step: 'createPolicy',
+      method: 'POST',
+      url: '/scheduling/booking-policies',
+      call: (scope) =>
+        client.createPolicy({ tenantId: 't-olivos', code: 'C', name: 'Reglas' }, scope),
+    },
+    {
+      step: 'createTemplate',
+      method: 'POST',
+      url: '/scheduling/resources/r-olivos/templates',
+      call: (scope) =>
+        client.createTemplate(
+          'r-olivos',
+          { name: 'Horario', rules: [{ dayOfWeek: 1, startTime: '09:00', endTime: '13:00' }] },
+          scope,
+        ),
+    },
+    {
+      step: 'generateSlots',
+      method: 'POST',
+      url: '/scheduling/templates/tpl-olivos/generate-slots',
+      call: (scope) =>
+        client.generateSlots(
+          'tpl-olivos',
+          { from: DESDE.toISOString(), to: HASTA.toISOString() },
+          scope,
+        ),
+    },
+    {
+      step: 'listTemplates',
+      method: 'GET',
+      url: '/scheduling/resources/r-olivos/templates',
+      call: (scope) => client.listTemplates('r-olivos', scope),
+    },
+    {
+      step: 'listTemplateLiveBookings',
+      method: 'GET',
+      url: '/scheduling/templates/tpl-olivos/live-bookings',
+      call: (scope) => client.listTemplateLiveBookings('tpl-olivos', scope),
+    },
+    {
+      step: 'retireTemplate',
+      method: 'DELETE',
+      url: '/scheduling/templates/tpl-olivos',
+      call: (scope) => client.retireTemplate('tpl-olivos', 'keep', scope),
+    },
+  ];
+
+  it.each(STEPS)(
+    '$step con organización declarada manda su X-Tenant-Id',
+    ({ call, method, url }) => {
+      call(OLIVOS).subscribe();
+
+      const req = http.expectOne((r) => r.url === url);
+      expect(req.request.method).toBe(method);
+      expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+      req.flush({});
+    },
+  );
+
+  it.each(STEPS)(
+    '$step sin organización declarada no manda X-Tenant-Id: lo pone la sesión',
+    ({ call, url }) => {
+      call().subscribe();
+
+      const req = http.expectOne((r) => r.url === url);
+      expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+      req.flush({});
+    },
+  );
+
+  it.each(STEPS)(
+    '$step manda el mismo cuerpo y la misma query con o sin organización',
+    ({ call, url }) => {
+      call().subscribe();
+      const unscoped = http.expectOne((r) => r.url === url);
+      call(OLIVOS).subscribe();
+      const scoped = http.expectOne((r) => r.url === url);
+
+      expect(scoped.request.body).toEqual(unscoped.request.body);
+      expect(scoped.request.params.keys()).toEqual(unscoped.request.params.keys());
+      unscoped.flush({});
+      scoped.flush({});
+    },
+  );
+
+  it('retireTemplate cancelando las citas conserva affectedBookings además de la organización', () => {
+    client.retireTemplate('tpl-olivos', 'cancel', OLIVOS).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/templates/tpl-olivos');
+    expect(req.request.params.get('affectedBookings')).toBe('cancel');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    req.flush({});
+  });
+});
+
+/**
  * `createDirectAppointment` con `followUpOf` (C4).
  *
  * El cuerpo de este cliente se arma **campo por campo**, así que lo que el
@@ -950,5 +1121,96 @@ describe('motivoDeReconsulta', () => {
     expect(motivoDeReconsulta(null)).toBe('Reconsulta');
     expect(motivoDeReconsulta(undefined)).toBe('Reconsulta');
     expect(motivoDeReconsulta('   ')).toBe('Reconsulta');
+  });
+});
+
+/**
+ * La organización **como la que se habla**, cuando no es la activa.
+ *
+ * El modal del día agenda en otra organización donde el médico está afiliado.
+ * La API resuelve la organización con `X-Tenant-Id` y rechaza con 403 la
+ * agenda de otra (`assertResourceInActiveTenant`) y el `?tenantId=` de otra
+ * (`TENANT_SCOPE_CONFLICT`). El interceptor pone el de la sesión salvo que la
+ * petición ya traiga uno, así que lo que fijan estas pruebas es que el cliente
+ * lo declare **sólo** cuando se le pide.
+ */
+describe('SchedulingClient · organización declarada', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const APPOINTMENT = {
+    patientProfileId: 'pp-1',
+    resourceId: 'r-olivos',
+    startAt: '2026-10-08T13:00:00.000Z',
+    durationMinutes: 30,
+  } as const;
+
+  const BUSY_TIME = {
+    exceptionType: 'ABSENCE',
+    startAt: '2026-10-08T13:00:00.000Z',
+    endAt: '2026-10-08T14:00:00.000Z',
+    reason: 'Reunión',
+  } as const;
+
+  it('listResources con organización declarada manda su X-Tenant-Id', () => {
+    client.listResources({ tenantId: 't-olivos' }, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/resources');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    expect(req.request.params.get('tenantId')).toBe('t-olivos');
+    req.flush({ items: [], count: 0 });
+  });
+
+  it('listResources sin organización declarada no manda X-Tenant-Id: lo pone la sesión', () => {
+    client.listResources({ tenantId: 't-1' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/resources');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ items: [], count: 0 });
+  });
+
+  it('createDirectAppointment con organización declarada manda su X-Tenant-Id', () => {
+    client.createDirectAppointment(APPOINTMENT, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    // El encabezado no cambia el cuerpo: sigue armado campo por campo.
+    expect(req.request.body).toEqual(APPOINTMENT);
+    req.flush({ bookingId: 'b-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+  });
+
+  it('createDirectAppointment sin organización declarada no manda X-Tenant-Id', () => {
+    client.createDirectAppointment(APPOINTMENT).subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ bookingId: 'b-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+  });
+
+  it('createException con organización declarada manda su X-Tenant-Id', () => {
+    client.createException('r-olivos', BUSY_TIME, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne('/scheduling/resources/r-olivos/exceptions');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    expect(req.request.body).toEqual(BUSY_TIME);
+    req.flush({ id: 'exc-1', blockedSlots: 0 });
+  });
+
+  it('createException sin organización declarada no manda X-Tenant-Id', () => {
+    client.createException('r-1', BUSY_TIME).subscribe();
+
+    const req = http.expectOne('/scheduling/resources/r-1/exceptions');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ id: 'exc-1', blockedSlots: 0 });
   });
 });
