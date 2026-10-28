@@ -340,6 +340,8 @@ describe('PractitionerDetail', () => {
       ],
       count: 1,
     });
+    // El bloque del médico de cabecera lee la elección del paciente.
+    http.expectOne('/profiles/patients/me/primary-practitioner').flush({ current: null });
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -366,7 +368,7 @@ describe('PractitionerDetail', () => {
   });
 
   /**
-   * 02/10/2026 — pedido del propietario: los horarios de otros servicios en una
+   * 02/10/2026 — request del propietario: los horarios de otros servicios en una
    * pestaña propia también del lado del paciente. La de consultas sigue siendo
    * la que abre, y la de servicios no se construye hasta que se elige.
    */
@@ -393,7 +395,14 @@ describe('PractitionerDetail', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     http.expectOne('/practitioners/per-9/insurance-networks').flush({ items: [], count: 0 });
+    http.expectOne('/profiles/patients/me/primary-practitioner').flush({ current: null });
     fixture.detectChanges();
+
+    // El botón del médico de cabecera va entre la ficha y los horarios.
+    const pagina = fixture.nativeElement as HTMLElement;
+    expect(pagina.querySelector('[data-testid="primary-doctor-elegir"]')?.textContent).toContain(
+      'Elegir como mi médico de cabecera',
+    );
 
     const seccion = (fixture.nativeElement as HTMLElement).querySelector('#horarios')!;
     const solapas = [...seccion.querySelectorAll<HTMLElement>('[role="tab"]')];

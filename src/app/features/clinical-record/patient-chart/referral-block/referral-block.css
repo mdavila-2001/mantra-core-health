@@ -2,11 +2,68 @@
   display: block;
 }
 
-.derivacion {
+.referral {
   --card-body-gap: var(--sp-4);
 }
 
-.derivacion__formulario {
+/* Los avisos van encima del formulario y no pegados a él. */
+.referral__notice {
+  margin-block-end: var(--sp-4);
+}
+
+.referral__form {
+  margin-block-end: var(--sp-2);
+}
+
+.referral__title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.referral__secondary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* ── La lista ──────────────────────────────────────────────────────────────
+   Un renglón por derivación: qué y a quién arriba, con el sello del estado al
+   final de la línea; el servicio y las fechas debajo. */
+.referral__rows {
   display: grid;
-  gap: var(--sp-4);
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.referral__row {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  min-inline-size: 0;
+}
+
+.referral__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.referral__main {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.referral__reason {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
 }

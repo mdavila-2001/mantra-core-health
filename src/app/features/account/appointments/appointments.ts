@@ -12,14 +12,12 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-// El sello de reconsulta (C4): los dos campos y su predicado viven en los
-// tipos congelados de `scheduling`.
+// El sello de reconsulta (C4): los dos campos y su predicado viven en los tipos congelados de `scheduling`.
 import { esReconsulta } from '../../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
@@ -57,6 +55,7 @@ import { DatePicker } from '../../../shared/components/organisms/date-picker/dat
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
+import { BookingPaymentReceipts } from './booking-payment-receipts/booking-payment-receipts';
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
 import {
   CAMPAIGN_PARAM,
@@ -389,6 +388,7 @@ const SEDE_CUALQUIERA = 'cualquiera';
     AppButtonLink,
     AppointmentCalendar,
     Badge,
+    BookingPaymentReceipts,
     DatePipe,
     EmptyState,
     FormField,

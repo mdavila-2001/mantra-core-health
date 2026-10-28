@@ -1465,6 +1465,21 @@ alcanzable desde este repositorio.
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
 
+### `ReferralsClient` — 4 operaciones
+
+Derivar a otro profesional o a una organización médica, por un servicio
+concreto de su catálogo (`clinical_ext`). `referralType` y
+`targetServiceCatalogId` del alta todavía no están en el `openapi.json` del que
+sale el contrato de la maqueta: se aceptan por `REFERRAL_CONTRACT_PENDING_KEYS`
+y se mandan también a la API real.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/referrals` | `ReferralBlock` | No |
+| `GET` | `/referrals` | `Consultation` (`ConsultationReferrals`) | No |
+| `GET` | `/referrals/targets` | `ReferralBlock` | No |
+| `GET` | `/referrals/target-services` | `ReferralBlock` | No |
+
 ### `QuotationsClient` — 4 operaciones
 
 | Método | Ruta | Consumidor | Pública |

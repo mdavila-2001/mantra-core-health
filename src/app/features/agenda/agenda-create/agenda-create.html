@@ -61,6 +61,14 @@
       </p>
     }
 
+    <!-- ── Dónde se publica: antes que la agenda, porque cada organización tiene las suyas ── -->
+    @if (publicaSoloLaPropia()) {
+      <fieldset class="agenda-create__bloque" [disabled]="cargando()">
+        <h2 class="agenda-create__titulo">¿En qué organización publica?</h2>
+        <app-organization-field [disabled]="cargando()" (selected)="place.choice.set($event)" />
+      </fieldset>
+    }
+
     <!-- ── Decisión 1 · qué días y en qué horario ────────────────────────── -->
     <!-- Va PRIMERO y fuera de «avanzadas»: es la pregunta que ordena todo lo
          que sigue. Publicar el horario correcto en la agenda equivocada no es
@@ -513,18 +521,7 @@
 
     <!-- ── Todo lo demás ─────────────────────────────────────────────────── -->
     <section class="agenda-create__bloque">
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        type="button"
-        [attr.aria-expanded]="avanzadasAbiertas()"
-        (clicked)="avanzadasAbiertas.set(!avanzadasAbiertas())"
-      >
-        {{ avanzadasAbiertas() ? 'Ocultar' : 'Mostrar' }} opciones avanzadas
-      </button>
-
-      @if (avanzadasAbiertas()) {
+      <app-accordion-panel heading="Opciones avanzadas" [level]="2" [(expanded)]="avanzadasAbiertas">
         <div class="agenda-create__avanzadas">
           <app-form-field
             label="Zona horaria"
@@ -635,7 +632,7 @@
             </div>
           }
         </div>
-      }
+      </app-accordion-panel>
     </section>
 
     @if (!sinDias()) {

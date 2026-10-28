@@ -34,7 +34,7 @@ import { supportCodeOf } from '@core/http/api-failure';
 export const TELEMEDICINE_NOT_ENABLED = 'TELEMEDICINE_NOT_ENABLED';
 
 /** Lo que se le dice a la persona cuando la teleconsulta no cae en una franja habilitada. */
-export const MENSAJE_SIN_TELEMEDICINA =
+const TELEMEDICINE_NOT_ENABLED_MESSAGE =
   'Esa hora no está en una franja de su horario habilitada para telemedicina. ' +
   'Elija otra modalidad u otra hora, o active «Atiende por telemedicina» en esa franja desde «Cambiar mi horario».';
 
@@ -78,10 +78,7 @@ export function franjasVigentes(
  * hora local del navegador, que es la de la sede. El fin es exclusivo: una
  * franja que termina 13:00 no admite una cita que empieza 13:00.
  */
-export function teleconsultaPermitidaEn(
-  franjas: readonly FranjaVigente[],
-  instante: Date,
-): boolean {
+function isTelemedicineAllowedAt(franjas: readonly FranjaVigente[], instante: Date): boolean {
   const dia = instante.getDay();
   const fecha = diaIso(instante);
   const minuto = instante.getHours() * 60 + instante.getMinutes();
@@ -114,8 +111,8 @@ export function rechazoPorTelemedicina(error: unknown): string | null {
   if (motivo !== TELEMEDICINE_NOT_ENABLED) return null;
   const soporte = supportCodeOf(error, body);
   return soporte === null
-    ? MENSAJE_SIN_TELEMEDICINA
-    : `${MENSAJE_SIN_TELEMEDICINA} (Código de soporte: ${soporte})`;
+    ? TELEMEDICINE_NOT_ENABLED_MESSAGE
+    : `${TELEMEDICINE_NOT_ENABLED_MESSAGE} (Código de soporte: ${soporte})`;
 }
 
 /** El día local del instante en `YYYY-MM-DD`. */
@@ -127,7 +124,7 @@ function diaIso(instante: Date): string {
 
 /**
  * El aviso temprano de una pantalla que elige agenda, hora y modalidad: el
- * texto de {@link MENSAJE_SIN_TELEMEDICINA} cuando la teleconsulta pedida cae
+ * texto de {@link TELEMEDICINE_NOT_ENABLED_MESSAGE} cuando la teleconsulta pedida cae
  * fuera de toda franja vigente con telemedicina, o `null`.
  *
  * Las franjas se leen **sólo cuando se pide teleconsulta** —es la única
@@ -163,8 +160,8 @@ export function avisoDeTeleconsulta(
       cuando !== null &&
       conocidas !== null &&
       conocidas.agenda === agenda() &&
-      !teleconsultaPermitidaEn(conocidas.franjas, cuando);
-    return fuera ? MENSAJE_SIN_TELEMEDICINA : null;
+      !isTelemedicineAllowedAt(conocidas.franjas, cuando);
+    return fuera ? TELEMEDICINE_NOT_ENABLED_MESSAGE : null;
   });
 }
 

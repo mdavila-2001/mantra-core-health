@@ -17,205 +17,6 @@
 }
 
 /* ===========================================================================
-    La vista de hoja de ruta
-    ===========================================================================
-
-    El plan dibujado: inicio → pasos → meta sobre una pista. A lo ancho la
-    pista corre en horizontal; en un modal angosto o un teléfono, en vertical,
-    porque cuatro hitos de 120 px no entran en 340 y una pista con
-    desplazamiento lateral esconde justo la meta.
-   ========================================================================= */
-
-.vista {
-  container-type: inline-size;
-  padding: var(--sp-4) var(--sp-5);
-  border: 1px solid var(--st-primary-bd);
-  border-radius: var(--r-lg);
-  background: var(--st-primary-bg);
-}
-
-.vista__cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2) var(--sp-4);
-  margin-block-end: var(--sp-4);
-}
-
-.vista__titulo {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: 0;
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.vista__titulo app-nav-icon {
-  color: var(--brand-primary);
-}
-
-.vista__estado {
-  padding: var(--sp-1) var(--sp-3);
-  border: 1px solid var(--st-warning-bd);
-  border-radius: var(--r-full);
-  background: var(--st-warning-bg);
-  color: var(--st-warning-fg);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 600;
-}
-
-.vista__estado--listo {
-  border-color: var(--st-success-bd);
-  background: var(--st-success-bg);
-  color: var(--st-success-fg);
-}
-
-/* La pista: una línea que une los nodos. En vertical corre por la izquierda,
-   detrás de los nodos; en horizontal, por arriba. */
-.vista__pista {
-  --_nodo: 2rem;
-
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.vista__pista::before {
-  content: '';
-  position: absolute;
-  inset-block: calc(var(--_nodo) / 2);
-  inset-inline-start: calc(var(--_nodo) / 2 - 1px);
-  inline-size: 2px;
-  background: var(--st-primary-bd);
-}
-
-.vista__hito {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--_nodo) 1fr;
-  column-gap: var(--sp-3);
-  align-items: center;
-  min-inline-size: 0;
-}
-
-.vista__hito > :not(.vista__nodo) {
-  grid-column: 2;
-}
-
-.vista__nodo {
-  grid-row: 1 / span 3;
-  align-self: start;
-  display: grid;
-  place-items: center;
-  inline-size: var(--_nodo);
-  block-size: var(--_nodo);
-  border: 2px solid var(--brand-primary);
-  border-radius: var(--r-full);
-  background: var(--bg-surface);
-  color: var(--brand-primary);
-  font-size: var(--fs-caption);
-  font-weight: 700;
-}
-
-.vista__nodo--paso {
-  background: var(--brand-primary);
-  color: var(--text-inverse);
-}
-
-.vista__nodo--meta {
-  border-color: var(--st-success-fg);
-  color: var(--st-success-fg);
-}
-
-.vista__nodo--vacio {
-  border-style: dashed;
-  border-color: var(--border-strong);
-}
-
-.vista__rotulo {
-  font-size: var(--fs-overline);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-.vista__dato {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.vista__nota {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-}
-
-.vista__nota--falta {
-  color: var(--text-tertiary);
-}
-
-.vista__duracion {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: var(--sp-4) 0 0;
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-/* En horizontal: los nodos arriba, el texto debajo, la línea pasando por el
-   centro de los nodos. Los hitos se reparten el ancho por igual. */
-@container (min-width: 36rem) {
-  .vista__pista {
-    flex-direction: row;
-    gap: var(--sp-3);
-  }
-
-  .vista__pista::before {
-    inset-block: auto;
-    inset-block-start: calc(var(--_nodo) / 2 - 1px);
-    inset-inline: calc(var(--_nodo) / 2);
-    inline-size: auto;
-    block-size: 2px;
-  }
-
-  .vista__hito {
-    flex: 1 1 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--sp-1);
-  }
-
-  .vista__nodo {
-    margin-block-end: var(--sp-1);
-  }
-
-  .vista__hito--meta {
-    align-items: flex-end;
-    text-align: end;
-  }
-}
-
-/* ===========================================================================
     Los tramos del formulario, sobre un riel
     ===========================================================================
 
@@ -324,7 +125,7 @@
 
 /* ---- Los pasos: un sub-riel numerado dentro del último tramo ------------ */
 
-.pasos {
+.plan-pasos {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -333,7 +134,7 @@
   list-style: none;
 }
 
-.pasos__paso {
+.plan-pasos__paso {
   display: grid;
   grid-template-columns: 1.75rem minmax(0, 1fr);
   column-gap: var(--sp-3);
@@ -343,7 +144,7 @@
   background: var(--bg-surface-alt);
 }
 
-.pasos__numero {
+.plan-pasos__numero {
   display: grid;
   place-items: center;
   inline-size: 1.75rem;
@@ -355,21 +156,21 @@
   color: var(--text-secondary);
 }
 
-.pasos__numero--escrito {
+.plan-pasos__numero--escrito {
   border-style: solid;
   border-color: var(--brand-primary);
   background: var(--brand-primary);
   color: var(--text-inverse);
 }
 
-.pasos__campos {
+.plan-pasos__campos {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   min-inline-size: 0;
 }
 
-.pasos__cabecera {
+.plan-pasos__cabecera {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -377,13 +178,13 @@
   min-block-size: 1.75rem;
 }
 
-.pasos__rotulo {
+.plan-pasos__rotulo {
   font-size: var(--fs-caption);
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.pasos__agregar {
+.plan-pasos__agregar {
   align-self: flex-start;
 }
 

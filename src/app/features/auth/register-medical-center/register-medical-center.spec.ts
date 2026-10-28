@@ -1,6 +1,7 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { Validators } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
@@ -10,6 +11,15 @@ import { MEDICAL_ORGANIZATION_TYPES } from '../../../core/data-access/directory/
 import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-center';
 
 const RUTA_ALTA = '/iam/auth/register-organization';
+
+/** Los `fileId` que devolvería la pre-carga de cada documento. */
+const DOCUMENTOS = {
+  constitutionFileId: 'f-constitucion',
+  taxIdentifierFileId: 'f-nit',
+  commerceRegistryFileId: 'f-matricula',
+  operatingLicenseFileId: 'f-licencia',
+  healthAuthorityCertificateFileId: 'f-sedes',
+};
 
 const DESTINO_TIPO = 'directory.tenants.tenant_type_concept_id';
 
@@ -41,6 +51,9 @@ describe('RegisterMedicalCenter', () => {
       disposicion?: string;
       campos: readonly {
         key: string;
+        label?: string;
+        required?: boolean;
+        control?: string;
         ancho?: string;
         opcionesEn?: string;
         hint?: string;
@@ -101,6 +114,7 @@ describe('RegisterMedicalCenter', () => {
       tenantType,
       legalName: 'Centro Médico Norte S.R.L.',
       legalEntityType: 'SRL',
+      ...DOCUMENTOS,
       ownerName: 'Marta Rojas',
       email: 'marta@centro.test',
       password: 'secreto12',
@@ -128,6 +142,7 @@ describe('RegisterMedicalCenter', () => {
         legalName: 'Centro Médico Norte S.R.L.',
         legalEntityType: 'SRL',
         tenantType: 'HOSPITAL',
+        legalDocuments: DOCUMENTOS,
         countryConceptId: 'c-bo',
         jurisdictionConceptId: 'j-nac',
       },
@@ -266,30 +281,128 @@ describe('RegisterMedicalCenter', () => {
     expect(fixture.componentInstance.form.controls.password.touched).toBe(true);
   });
 
-  it('se sirve de a cuatro campos como tope: la organización y la cuenta', () => {
+  it('se sirve de a cuatro campos como tope: la organización, sus documentos y la cuenta', () => {
     const paginas = interno().paginas();
 
-    expect(paginas).toHaveLength(2);
-    expect(paginas.map((p) => p.titulo)).toEqual(['La organización', 'Su cuenta']);
     expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
       ['tenantType', 'legalName', 'legalEntityType'],
+      ['constitutionFileId', 'taxIdentifierFileId', 'commerceRegistryFileId', 'operatingLicenseFileId'],
+      ['healthAuthorityCertificateFileId'],
       ['ownerName', 'email', 'password'],
     ]);
+    expect(paginas[0]!.titulo).toBe('La organización');
+    expect(paginas[1]!.titulo).toContain('Documentación legal obligatoria (PDF)');
+    expect(paginas[3]!.titulo).toBe('Su cuenta');
     expect(Math.max(...paginas.map((p) => p.campos.length))).toBeLessThanOrEqual(4);
   });
 
-  it('la página 1 cruza el tipo a lo ancho, con sus opciones en rejilla, y la 2 va en tres columnas', () => {
-    const [organizacion, cuenta] = interno().paginas();
+  it('el tipo de institución es un desplegable y las dos páginas van en tres columnas', () => {
+    const paginas = interno().paginas();
+    const organizacion = paginas[0];
+    const cuenta = paginas[paginas.length - 1];
     const tipo = organizacion!.campos.find((c) => c.key === 'tenantType')!;
 
-    expect(organizacion!.disposicion).toBe('dos-columnas');
-    expect(tipo.ancho).toBe('completo');
-    expect(tipo.opcionesEn).toBe('rejilla');
+    expect(tipo.control).toBe('select');
+    expect(tipo.opcionesEn).toBeUndefined();
+    expect(organizacion!.disposicion).toBe('tres-columnas');
     expect(cuenta!.disposicion).toBe('tres-columnas');
   });
 
+  it('si el catálogo de tipos societarios falla, pide al servicio su respaldo en vez de dejarlo vacío', async () => {
+    const catalogo = TestBed.inject(LegalEntityTypesCatalog);
+    const pedidos: unknown[][] = [];
+    catalogo.listar = () => throwError(() => new Error('catálogo caído'));
+    catalogo.opcionesPorPais = (...args: unknown[]) => {
+      pedidos.push(args);
+      return [{ value: 'SRL', label: 'S.R.L.' }];
+    };
+    await rearmar();
+
+    const societario = interno().paginas()[0]!.campos.find((c) => c.key === 'legalEntityType')!;
+    expect(pedidos).toEqual([[[], 'BO']]);
+    expect(societario.options).toEqual([{ value: 'SRL', label: 'S.R.L.' }]);
+  });
+
+  it('sin uno de los cinco documentos no sale a la red y lo marca', () => {
+    completar();
+    fixture.componentInstance.form.controls.operatingLicenseFileId.setValue('');
+    fixture.componentInstance.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(fixture.componentInstance.form.controls.operatingLicenseFileId.touched).toBe(true);
+    expect(fixture.componentInstance.form.controls.operatingLicenseFileId.invalid).toBe(true);
+  });
+
+  it('un profesional independiente se registra sin escritura ni matrícula, y no las envía', () => {
+    completar();
+    const form = fixture.componentInstance.form;
+    form.controls.legalEntityType.setValue('PROFESIONAL_INDEPENDIENTE');
+    form.controls.constitutionFileId.setValue('');
+    form.controls.commerceRegistryFileId.setValue('');
+    fixture.componentInstance.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    expect(req.request.body.organization.legalDocuments).toEqual({
+      taxIdentifierFileId: 'f-nit',
+      operatingLicenseFileId: 'f-licencia',
+      healthAuthorityCertificateFileId: 'f-sedes',
+    });
+    req.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
+  });
+
+  it('una unipersonal puede omitir la escritura pero no la matrícula', () => {
+    completar();
+    const form = fixture.componentInstance.form;
+    form.controls.legalEntityType.setValue('UNIPERSONAL');
+    form.controls.constitutionFileId.setValue('');
+    form.controls.commerceRegistryFileId.setValue('');
+    fixture.componentInstance.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(form.controls.constitutionFileId.valid).toBe(true);
+    expect(form.controls.commerceRegistryFileId.invalid).toBe(true);
+  });
+
+  it('una S.R.L. sigue exigiendo los cinco documentos', () => {
+    completar();
+    const form = fixture.componentInstance.form;
+    form.controls.constitutionFileId.setValue('');
+    fixture.componentInstance.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(form.controls.constitutionFileId.invalid).toBe(true);
+  });
+
+  it('los documentos que el tipo societario permite omitir se rotulan «(opcional)» y vuelven a ser obligatorios al cambiar de tipo', () => {
+    const form = fixture.componentInstance.form;
+    const campo = (clave: string) =>
+      interno()
+        .paginas()
+        .flatMap((p) => p.campos)
+        .find((c) => c.key === clave)!;
+
+    form.controls.legalEntityType.setValue('PROFESIONAL_INDEPENDIENTE');
+    expect(campo('constitutionFileId').label).toMatch(/\(opcional\)$/);
+    expect(campo('commerceRegistryFileId').label).toMatch(/\(opcional\)$/);
+    expect(campo('commerceRegistryFileId').required).toBeUndefined();
+    expect(campo('taxIdentifierFileId').label).not.toMatch(/opcional/);
+
+    form.controls.legalEntityType.setValue('SRL');
+    expect(campo('constitutionFileId').label).not.toMatch(/opcional/);
+    expect(campo('constitutionFileId').required).toBe(true);
+    expect(form.controls.commerceRegistryFileId.hasValidator(Validators.required)).toBe(true);
+  });
+
+  it('quitar un documento ya subido vacía su control', () => {
+    completar();
+    fixture.componentInstance.registrarDocumento('constitutionFileId', null);
+
+    expect(fixture.componentInstance.form.controls.constitutionFileId.value).toBe('');
+    expect(fixture.componentInstance.form.valid).toBe(false);
+  });
+
   it('la contraseña avisa su mínimo antes de equivocarse, como el alta de usuarios', () => {
-    const clave = interno().paginas()[1]!.campos.find((c) => c.key === 'password')!;
+    const clave = interno().paginas().at(-1)!.campos.find((c) => c.key === 'password')!;
     expect(clave.hint).toBe('Mínimo 8 caracteres.');
   });
 

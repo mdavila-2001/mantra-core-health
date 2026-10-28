@@ -231,6 +231,36 @@ export function fileContent(fileId: string): unknown {
   };
 }
 
+/** Lo que una ruta de contexto necesita saber para aceptar un archivo adjunto. */
+export interface AttachableFileFacts {
+  /** Quién lo subió; ausente en las semillas públicas del simulador. */
+  readonly uploaderUserId?: string;
+  readonly mimeType: string;
+  readonly sizeBytes: number;
+  readonly originalName: string;
+}
+
+/**
+ * De quién es, de qué tipo y cuánto pesa un archivo, como lo comprueba
+ * `assertUsableBy` de la API antes de colgarlo de algo (un comprobante de
+ * pago, por ejemplo). `undefined` si el archivo no existe.
+ *
+ * El tipo y el tamaño salen de los bytes subidos en esta pestaña; sin ellos
+ * —una semilla, o un archivo que perdió sus bytes al recargar— se deducen de
+ * la categoría, que es lo único que queda.
+ */
+export function attachableFileFacts(fileId: string): AttachableFileFacts | undefined {
+  const stored = archivos.get(fileId);
+  if (stored === undefined) return undefined;
+  const bytes = stored.bytes instanceof Blob ? stored.bytes : null;
+  return {
+    ...(stored.uploaderUserId === undefined ? {} : { uploaderUserId: stored.uploaderUserId }),
+    mimeType: bytes?.type || (stored.category === 'IMAGE' ? 'image/png' : 'application/pdf'),
+    sizeBytes: bytes?.size ?? 0,
+    originalName: stored.originalName,
+  };
+}
+
 /** URLs `blob:` ya creadas, para no fabricar una nueva por cada lectura. */
 const urlsDeArchivos = new Map<string, string>();
 
