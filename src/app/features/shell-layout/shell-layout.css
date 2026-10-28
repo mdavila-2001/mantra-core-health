@@ -147,3 +147,54 @@
     margin-inline-start: auto;
   }
 }
+
+/*
+ * Rediseño de la cabecera (propietario, 27/10/2026).
+ *
+ * Emergencia sale de la cabecera y encabeza el menú lateral; los destinos que
+ * quedan arriba forman una sola barra, y lo que no es un destino —campana,
+ * tema y cuenta— va después de un filete. El destino de la pantalla actual se
+ * marca (`routerLinkActive`): sin eso la cabecera no decía dónde se estaba.
+ */
+.app-side-nav__emergencia {
+  padding: 0 var(--e3) var(--e3);
+  margin-bottom: var(--e2);
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.app-shell.is-nav-recogido .app-side-nav__emergencia {
+  padding-inline: var(--e2);
+}
+
+.app-header__separador {
+  flex: none;
+  inline-size: 1px;
+  block-size: 1.75rem;
+  margin-inline: var(--e1);
+  background: var(--filete);
+}
+
+.app-header__ajustes.is-activo {
+  background: var(--sup-hover, var(--sup-inset));
+  color: var(--petroleo);
+}
+
+@media (max-width: 640px) {
+  .app-header__separador {
+    display: none;
+  }
+}
+
+/* Emergencia como ícono en la cabecera, sólo donde el menú es un cajón
+   (≤ 900 px, el mismo corte de `.app-side-nav__recoger`). Arriba de ese ancho
+   ya está a la vista, encabezando el menú lateral. */
+.app-header__emergencia {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app-header__emergencia {
+    display: inline-flex;
+    flex: none;
+  }
+}

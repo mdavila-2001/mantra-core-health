@@ -119,6 +119,24 @@
     </section>
   </app-tab>
 
+  <!-- Tutoriales se fusionó con Ajustes (propietario, 27/10/2026): salió de
+       la cabecera y vive acá, como pestaña. El centro sigue siendo su
+       pantalla, con el avance de cada recorrido. -->
+  <app-tab label="Tutoriales">
+    <section class="ajustes__bloque" data-testid="settings-tutoriales">
+      <h2 class="ajustes__titulo">Tutoriales</h2>
+      <p class="ajustes__detalle">
+        Recorridos guiados sobre la aplicación real. Puede repetirlos o dejarlos a medias y
+        retomarlos cuando quiera.
+      </p>
+      <p class="ajustes__nota">
+        <a app-button variant="secondary" routerLink="/tutorials" data-testid="settings-abrir-tutoriales">
+          Abrir el centro de tutoriales
+        </a>
+      </p>
+    </section>
+  </app-tab>
+
   @if (verificationOffered) {
     <app-tab label="Identidad">
       <section class="ajustes__bloque">

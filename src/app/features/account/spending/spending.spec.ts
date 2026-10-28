@@ -96,6 +96,16 @@ describe('Spending', () => {
 
   afterEach(() => http.verify());
 
+  it('ofrece sus facturas, que se fusionaron con «Mis gastos» en la cabecera (27/10/2026)', () => {
+    abrirSesion({});
+    montar();
+
+    const facturas = raiz().querySelector<HTMLAnchorElement>('[data-testid="spending-facturas"]');
+    expect(facturas?.tagName).toBe('A');
+    expect(facturas?.getAttribute('href')).toBe('/my-account/invoices');
+    expect(facturas?.textContent?.trim()).toBe('Ver mis facturas');
+  });
+
   it('sin perfil de paciente lo dice, sin pedir nada', () => {
     abrirSesion({});
     montar();
