@@ -61,7 +61,7 @@ import {
   IncompleteCatalog,
   type DiagnosisCatalogs,
 } from '../shared-registration/diagnostic-center-enrollment';
-import { NameFields } from '../shared-registration/name-fields/name-fields';
+import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import { nameGroup, completeName } from '../shared-registration/name-fields/person-name';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
 
@@ -451,7 +451,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     CustomField,
     RegistrationHelp,
     MapLocationPicker,
-    NameFields,
+    InlineNameFields,
     OnboardingDraftBanner,
   ],
   templateUrl: './register-imaging-center.html',
@@ -854,7 +854,7 @@ export class RegisterImagingCenter {
       icon: 'shield' as const,
       campos: [
         {
-          // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
+          // Sin rótulo ni error propios: `app-inline-name-fields` pinta cada casilla
           // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
           key: 'legalRepName',
           label: '',
