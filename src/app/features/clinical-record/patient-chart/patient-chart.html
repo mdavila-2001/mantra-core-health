@@ -143,6 +143,20 @@
             />
           </app-tab>
         }
+
+        <!-- Derivaciones: lista propia y alta en su pestaña, con el
+             consentimiento dirigido cuando el tipo lo pide. No sale de
+             `bloques()` porque no viaja en el resumen clínico: tiene su
+             lectura (`GET /referrals?patientProfileId=`). -->
+        <app-tab label="Derivaciones">
+          <app-referral-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="null"
+            [puedeEscribir]="puedeEscribir()"
+            [diagnosticos]="diagnosticosParaElPlan()"
+            [citas]="citasParaElDiagnostico()"
+          />
+        </app-tab>
       </app-tabs>
     </section>
 
@@ -413,6 +427,37 @@
       </section>
     }
   </app-content-dialog>
+}
+
+<!-- El consentimiento DIRIGIDO a la receta o al plan de la fila: su estado y la
+     acción que lo abre en modal (composition-rules §6). -->
+<ng-template #celdaConsentimiento let-fila>
+  <span class="expediente__consentimiento">
+    <app-informed-consent-badge [consent]="consentimientos.de(tipoDeConsentimiento(fila), fila.id)" />
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      data-testid="expediente-consentimiento"
+      (clicked)="abrirConsentimiento(fila)"
+    >
+      Consentimiento
+    </button>
+  </span>
+</ng-template>
+
+@if (consintiendo(); as objeto) {
+  <app-informed-consent-dialog
+    [patientProfileId]="pacienteDeLaFicha()"
+    [encounterId]="encuentroDelConsentimiento()"
+    [targetType]="objeto.tipo"
+    [targetId]="objeto.id"
+    [targetLabel]="objeto.etiqueta"
+    [defaults]="{ purposeText: objeto.etiqueta + '.' }"
+    (consentChanged)="consentimientos.incorporar($event)"
+    (closed)="consintiendo.set(null)"
+  />
 }
 
 <!-- Adjuntar, para cualquier bloque que lo admita. Abre el modal en vez de

@@ -1,0 +1,51 @@
+.derivacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  inline-size: 100%;
+}
+
+.derivacion__resumen {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+/* Cada paso en su caja: el orden se lee, y la marca dice qué falta. */
+.derivacion__paso {
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  min-inline-size: 0;
+}
+
+.derivacion__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-inline: var(--sp-1);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.derivacion__marca {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-pill);
+  color: var(--text-secondary);
+  background: var(--bg-inset);
+}
+
+.derivacion__marca--ok {
+  color: var(--st-success-fg);
+  background: var(--st-success-bg);
+}
+
+.derivacion__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

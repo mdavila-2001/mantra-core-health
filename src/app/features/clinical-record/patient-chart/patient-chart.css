@@ -251,3 +251,11 @@
   justify-content: flex-end;
   margin-block-end: var(--sp-3);
 }
+
+/* La celda del consentimiento: el estado y la acción, juntos y sin romper la fila. */
+.expediente__consentimiento {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+}

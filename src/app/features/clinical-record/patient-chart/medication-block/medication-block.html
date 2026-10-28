@@ -54,26 +54,29 @@
             @if (receta.indicacion) {
               <span class="receta__secundario">{{ receta.indicacion }}</span>
             }
+            <app-informed-consent-badge [consent]="consentimientos.de('MEDICATION_REQUEST', receta.id)" />
           </div>
 
-          <!-- Una receta emitida no ofrece nada más: es inmutable, y un botón
-               que siempre responde 422 es una trampa, no una acción. -->
-          @if (!receta.emitida) {
+          <!-- Una receta emitida no ofrece firmar ni emitir: es inmutable, y
+               un botón que siempre responde 422 es una trampa, no una acción.
+               Lo que sí ofrece siempre es su consentimiento informado: se
+               consulta y se revoca también después de emitida. -->
           <div class="receta__acciones">
-              <button
-                app-button
-                variant="neutral"
-                [iconOnly]="true"
-                type="button"
-                aria-label="Acciones de la receta"
-                [appMenuTrigger]="accionesDeLaReceta"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" aria-hidden="true">
-                  <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
-                </svg>
-              </button>
-              <app-menu #accionesDeLaReceta>
+            <button
+              app-button
+              variant="neutral"
+              [iconOnly]="true"
+              type="button"
+              aria-label="Acciones de la receta"
+              [appMenuTrigger]="accionesDeLaReceta"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" aria-hidden="true">
+                <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
+              </svg>
+            </button>
+            <app-menu #accionesDeLaReceta>
+              @if (!receta.emitida) {
                 @if (!receta.firmada) {
                   <app-menu-item
                     [disabled]="accionEnCurso() !== null"
@@ -96,9 +99,16 @@
                   </svg>
                   Emitir
                 </app-menu-item>
-              </app-menu>
-            </div>
-          }
+              }
+              <app-menu-item data-testid="receta-consentimiento" (selected)="consintiendo.set(receta)">
+                <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M9 11l2 2 4-4" /><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z" />
+                </svg>
+                Consentimiento informado
+              </app-menu-item>
+            </app-menu>
+          </div>
         </li>
       }
     </ul>
@@ -319,3 +329,18 @@
     </form>
   }
 </app-card>
+
+<!-- El consentimiento DIRIGIDO a la receta elegida: modal, como toda acción de
+     fila que pide datos (composition-rules §6). -->
+@if (consintiendo(); as receta) {
+  <app-informed-consent-dialog
+    [patientProfileId]="patientProfileId()"
+    [encounterId]="encuentroDelConsentimiento()"
+    targetType="MEDICATION_REQUEST"
+    [targetId]="receta.id"
+    [targetLabel]="etiquetaDeLaReceta(receta)"
+    [defaults]="{ purposeText: 'Tratamiento con ' + receta.medicamento + (receta.indicacion ? ' (' + receta.indicacion + ')' : '') + '.' }"
+    (consentChanged)="consentimientos.incorporar($event)"
+    (closed)="consintiendo.set(null)"
+  />
+}

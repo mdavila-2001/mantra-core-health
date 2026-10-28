@@ -241,6 +241,15 @@ describe('PatientChart', () => {
     responderPlantillasDeEspecialidad();
     responderPerfilProfesional();
     responderFavoritosDeReceta();
+    // El estado del consentimiento dirigido de cada ítem se lee aparte: se
+    // responde vacío para que `verify()` siga hablando de lo que esta prueba mira.
+    for (const consentimiento of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
+      consentimiento.flush({ items: [] });
+    }
+    // La pestaña «Derivaciones» trae su propia lista (`GET /referrals`).
+    for (const derivaciones of http.match((r) => r.url === '/referrals')) {
+      derivaciones.flush([]);
+    }
     http.verify();
   });
 

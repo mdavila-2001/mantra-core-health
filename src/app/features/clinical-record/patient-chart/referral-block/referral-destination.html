@@ -1,0 +1,118 @@
+<div class="destino" data-campo="destino">
+  <app-form-field
+    label="¿A quién derivás?"
+    [required]="true"
+    [errorMessage]="destino().modo === null ? error() : ''"
+    (focusout)="tocado.emit('destino')"
+  >
+    <app-radio-group
+      data-testid="derivacion-modo-destino"
+      [value]="destino().modo"
+      (valueChange)="elegirModo($event)"
+      [hasError]="destino().modo === null && error() !== ''"
+    >
+      <app-radio value="PROFESIONAL" label="A un profesional de la plataforma" />
+      <app-radio value="ORGANIZACION" label="A una organización o sede de la plataforma" />
+      <app-radio value="EXTERNO" label="A un destino fuera de la plataforma" />
+    </app-radio-group>
+  </app-form-field>
+
+  @switch (destino().modo) {
+    @case ('PROFESIONAL') {
+      <app-form-field
+        label="Profesional"
+        hint="Escribí el nombre, el título o dónde atiende."
+        [required]="true"
+        [errorMessage]="error()"
+        (focusout)="tocado.emit('destino')"
+      >
+        <app-reference-combobox
+          data-testid="derivacion-profesional"
+          [value]="destino().profileId ?? null"
+          [selected]="destino().profileOpcion ?? null"
+          [options]="profesionales()"
+          [loading]="buscandoProfesional()"
+          placeholder="Ej.: Gutiérrez, endocrinóloga"
+          [emptyMessage]="
+            falloProfesional()
+              ? 'No pudimos leer la guía de profesionales. Probá con un destino externo.'
+              : 'Ningún profesional coincide'
+          "
+          (searched)="buscarProfesional($event)"
+          (selectionChange)="elegirProfesional($event)"
+        />
+      </app-form-field>
+    }
+    @case ('ORGANIZACION') {
+      <app-form-field
+        label="Organización"
+        hint="Clínica, hospital, laboratorio o centro registrado en la plataforma."
+        [required]="true"
+        [errorMessage]="error()"
+        (focusout)="tocado.emit('destino')"
+      >
+        <app-reference-combobox
+          data-testid="derivacion-organizacion"
+          [value]="destino().tenantId ?? null"
+          [selected]="destino().tenantOpcion ?? null"
+          [options]="organizaciones()"
+          [loading]="buscandoOrganizacion()"
+          placeholder="Ej.: Hospital San Lucas"
+          [emptyMessage]="
+            falloOrganizacion()
+              ? 'No pudimos buscar organizaciones. Probá con un destino externo.'
+              : 'Ninguna organización coincide'
+          "
+          (searched)="buscarOrganizacion($event)"
+          (selectionChange)="elegirOrganizacion($event)"
+        />
+      </app-form-field>
+
+      @if (destino().tenantId && sedes().length > 0) {
+        <app-form-field label="Sede" hint="Opcional. Si no elegís, la organización asigna la sede.">
+          <app-select
+            data-testid="derivacion-sede"
+            [value]="destino().branchId ?? null"
+            (valueChange)="elegirSede($event)"
+            [options]="opcionesDeSede()"
+          />
+        </app-form-field>
+      }
+    }
+    @case ('EXTERNO') {
+      <app-form-field
+        label="Nombre del destino"
+        hint="El profesional o la institución, como figura en su sello."
+        [required]="true"
+        [errorMessage]="errorDelNombre() || error()"
+        data-campo="targetExternalName"
+        (focusout)="tocado.emit('targetExternalName'); tocado.emit('destino')"
+      >
+        <app-input
+          testId="derivacion-externo-nombre"
+          autocomplete="organization"
+          placeholder="Ej.: Centro de Fisioterapia Andino"
+          [value]="destino().nombre ?? ''"
+          (valueChange)="fijarNombre($event)"
+          [hasError]="(errorDelNombre() || error()) !== ''"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Contacto"
+        hint="Opcional. Teléfono, correo o dirección, para coordinar la cita."
+        [errorMessage]="errorDelContacto()"
+        data-campo="targetExternalContact"
+        (focusout)="tocado.emit('targetExternalContact')"
+      >
+        <app-input
+          testId="derivacion-externo-contacto"
+          placeholder="Ej.: 3 3345678 · Av. Busch 1234, Santa Cruz"
+          [value]="destino().contacto ?? ''"
+          (valueChange)="fijarContacto($event)"
+          [hasError]="errorDelContacto() !== ''"
+        />
+      </app-form-field>
+    }
+  }
+</div>

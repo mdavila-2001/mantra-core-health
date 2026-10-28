@@ -1,0 +1,32 @@
+/* Centrado y a lo ancho del área (composition-rules §5): sin tope propio. */
+:host {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.derivaciones {
+  display: block;
+  inline-size: 100%;
+}
+
+.derivaciones__titulo {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+}
+
+.derivaciones__bajada {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+}
+
+.derivaciones__secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.derivaciones__vencida {
+  color: var(--st-warning-fg);
+  font-weight: 600;
+}

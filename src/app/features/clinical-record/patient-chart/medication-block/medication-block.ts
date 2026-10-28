@@ -45,6 +45,10 @@ import type { DynamicEnumOption } from '../../../../core/data-access/system-cont
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
+import { consentimientosDelPaciente } from '../informed-consent/consentimientos-del-paciente';
+import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
+import { encuentroParaConsentir } from '../informed-consent/encuentro-para-consentir';
 
 /**
  * La columna que gobierna el medicamento.
@@ -125,6 +129,8 @@ export interface RecetaEnFicha {
   readonly estado: string;
   readonly firmada: boolean;
   readonly emitida: boolean;
+  /** La consulta en la que se prescribió, si la lectura la trae. Ata su consentimiento. */
+  readonly encuentroId?: string;
 }
 
 /**
@@ -208,6 +214,8 @@ export interface RecetaEnFicha {
     DatePicker,
     FormActions,
     FormField,
+    InformedConsentBadge,
+    InformedConsentDialog,
     Menu,
     MenuItem,
     MenuTrigger,
@@ -569,6 +577,27 @@ export class MedicationBlock implements DraftBlock {
   protected readonly encuentroDeLaReceta = computed<string | null>(
     () => this.citaElegida() ?? this.encounterId(),
   );
+
+  /* -- Consentimiento informado dirigido a cada receta --------------------- */
+
+  /** Los consentimientos de la persona, para la insignia de cada receta. */
+  protected readonly consentimientos = consentimientosDelPaciente(() => this.patientProfileId());
+
+  /** La receta cuyo consentimiento está abierto, o `null`. */
+  protected readonly consintiendo = signal<RecetaEnFicha | null>(null);
+
+  /**
+   * El encuentro al que se ata el consentimiento de la receta abierta: el de
+   * la propia receta, si no el del contexto, si no la cita en curso.
+   */
+  protected readonly encuentroDelConsentimiento = computed(() =>
+    encuentroParaConsentir(this.consintiendo()?.encuentroId, this.encuentroDeLaReceta(), this.citas()),
+  );
+
+  /** Lo que se consiente, en palabras: el medicamento y su pauta (DCI + dosis, Ley 1737). */
+  protected etiquetaDeLaReceta(receta: RecetaEnFicha): string {
+    return receta.indicacion === '' ? receta.medicamento : `${receta.medicamento} · ${receta.indicacion}`;
+  }
 
   /** Si el bloque puede prescribir sin encuentro abierto. */
   protected readonly sinExigirEncuentro = computed(() => !this.exigeEncuentro());

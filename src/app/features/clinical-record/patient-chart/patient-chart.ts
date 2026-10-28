@@ -84,12 +84,17 @@ import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { DocumentBlock } from './document-block/document-block';
 import { DRAFT_BLOCK } from './draft-block';
 import { FreeNoteBlock } from './free-note-block/free-note-block';
+import { consentimientosDelPaciente } from './informed-consent/consentimientos-del-paciente';
+import { encuentroParaConsentir } from './informed-consent/encuentro-para-consentir';
+import { InformedConsentBadge } from './informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from './informed-consent/informed-consent-dialog';
 import { MedicationBlock } from './medication-block/medication-block';
 import type {
   DiagnosticoEnFicha,
   RecetaEnFicha,
 } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
+import { ReferralBlock } from './referral-block/referral-block';
 import {
   camposDe,
   plantillaPorCobertura,
@@ -358,6 +363,8 @@ interface Expediente {
     DatePipe,
     DocumentBlock,
     FreeNoteBlock,
+    InformedConsentBadge,
+    InformedConsentDialog,
     Link,
     MedicationBlock,
     Menu,
@@ -366,6 +373,7 @@ interface Expediente {
     ObservationBlock,
     PdfExportButton,
     PageHeader,
+    ReferralBlock,
     RouterLink,
     Tab,
     Tabs,
@@ -421,6 +429,48 @@ export class PatientChart {
   /** El botón de adjuntos de los bloques que no tienen menú propio. */
   private readonly celdaAdjuntos =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAdjuntos');
+  /** El estado del consentimiento dirigido y la acción que lo abre (recetas y planes). */
+  private readonly celdaConsentimiento =
+    viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaConsentimiento');
+
+  /* -- Consentimiento informado DIRIGIDO -------------------------------------
+     A cada receta y a cada plan de cuidados, desde su fila: lo que la persona
+     consiente es esa indicación, no «la consulta». Una lectura por expediente
+     alimenta todas las insignias. */
+
+  protected readonly consentimientos = consentimientosDelPaciente(() => this.pacienteDeLaFicha());
+
+  /** La fila cuyo consentimiento está abierto. */
+  protected readonly consintiendo = signal<{
+    readonly id: string;
+    readonly tipo: 'MEDICATION_REQUEST' | 'CARE_PLAN';
+    readonly etiqueta: string;
+  } | null>(null);
+
+  protected tipoDeConsentimiento(fila: FilaClinica): 'MEDICATION_REQUEST' | 'CARE_PLAN' {
+    return this.bloqueDeLaFila(fila) === 'planes' ? 'CARE_PLAN' : 'MEDICATION_REQUEST';
+  }
+
+  protected abrirConsentimiento(fila: FilaClinica): void {
+    const etiqueta = fila.secundario ? `${fila.principal} · ${fila.secundario}` : fila.principal;
+    this.consintiendo.set({ id: fila.id, tipo: this.tipoDeConsentimiento(fila), etiqueta });
+  }
+
+  /**
+   * La atención a la que se ata: la de la receta (la lectura la trae), si no
+   * el encuentro abierto del expediente. El plan de cuidados no trae encuentro
+   * en la lectura de `chart`, así que usa el abierto. Sin ninguno, `null` y el
+   * panel ofrece abrir uno.
+   */
+  protected readonly encuentroDelConsentimiento = computed(() => {
+    const objeto = this.consintiendo();
+    const propio =
+      objeto?.tipo === 'MEDICATION_REQUEST'
+        ? this.datos()?.resumen.medicationRequests.find((r) => r.id === objeto.id)?.encounterId
+        : undefined;
+    const abierto = (this.datos()?.resumen.encounters ?? []).find((e) => e.endAt === undefined)?.id;
+    return encuentroParaConsentir(propio, abierto);
+  });
 
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
@@ -861,6 +911,7 @@ export class PatientChart {
       estado: this.label(receta.statusConceptId),
       firmada: receta.signedAt !== undefined,
       emitida: receta.issuedAt !== undefined,
+      ...(receta.encounterId === undefined ? {} : { encuentroId: receta.encounterId }),
     })),
   );
 
@@ -1593,6 +1644,19 @@ export class PatientChart {
       // propio camino y quedan fuera de esta tanda. `diagnosticos` no la lleva
       // porque ya adjunta desde su menú de acciones, y dos botones que abren el
       // mismo modal en la misma fila es la clase de duda que sobra.
+      // El consentimiento DIRIGIDO: a la receta y al plan de cuidados concretos.
+      ...(this.puedeEscribir() && ['medicacion', 'planes'].includes(clave ?? '')
+        ? [
+            {
+              key: 'consentimiento',
+              header: 'Consentimiento',
+              // 1 y no 2: una acción que la tabla pliega en teléfono deja la
+              // fila sin salida (lo mostró la captura a 390 px).
+              priority: 1,
+              cell: this.celdaConsentimiento(),
+            } satisfies ColumnDef<FilaClinica>,
+          ]
+        : []),
       ...(this.puedeEscribir() && ['medicacion', 'encuentros'].includes(clave ?? '')
         ? [
             {

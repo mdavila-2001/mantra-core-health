@@ -190,6 +190,11 @@ describe('DiagnosticsBlock', () => {
     // Los selectores que se montaron al final de la prueba dejan su pedido de
     // catálogo abierto; drenarlos deja que `verify()` hable de lo que importa.
     responderCatalogos();
+    // El estado del consentimiento dirigido de cada ítem se lee aparte: se
+    // responde vacío para que `verify()` siga hablando de lo que esta prueba mira.
+    for (const consentimiento of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
+      consentimiento.flush({ items: [] });
+    }
     http.verify();
   });
 
@@ -470,5 +475,29 @@ describe('DiagnosticsBlock', () => {
     componente['estudio'].set('code-hemograma');
     componente['categoria'].set('cat-lab');
     expect(componente['puedePedir']()).toBe(true);
+  });
+
+  it('cada orden ofrece su consentimiento informado y muestra que todavía no lo tiene (CPE art. 44)', () => {
+    fixture.detectChanges();
+    responderCatalogos();
+    responderCircuito({ ...CIRCUITO_VACIO, orders: [ORDEN] });
+    const lectura = http.expectOne((r) => r.url === '/consent/treatment-informed-consents');
+    expect(lectura.request.params.get('patientProfileId')).toBe('p-1');
+    lectura.flush({ items: [] });
+    fixture.detectChanges();
+
+    const pantalla = fixture.nativeElement as HTMLElement;
+    expect(pantalla.querySelector('[data-estado="NONE"]')).not.toBeNull();
+    const accion = pantalla.querySelector<HTMLElement>('[data-testid="estudios-consentimiento"]');
+    expect(accion).not.toBeNull();
+
+    const estudio = componente['estudios']()[0]!;
+    componente['consintiendo'].set(estudio);
+    fixture.detectChanges();
+    const historial = http
+      .match((r) => r.url === '/consent/treatment-informed-consents')
+      .find((r) => r.request.params.get('targetId') === 'sr-1');
+    expect(historial?.request.params.get('targetType')).toBe('SERVICE_REQUEST');
+    historial?.flush({ items: [] });
   });
 });

@@ -40,6 +40,10 @@ import { AttachmentDialog } from '../../../../shared/components/organisms/attach
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { consentimientosDelPaciente } from '../informed-consent/consentimientos-del-paciente';
+import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
+
 
 /**
  * Cuántos casos quirúrgicos se traen, y de cuántos se pide el detalle.
@@ -94,6 +98,8 @@ export interface TratamientoEnPantalla {
   readonly piezas: string;
   readonly nota: string;
   readonly cuando: Date | null;
+  /** La consulta en la que se hizo, si la lectura la trae. Ata su consentimiento. */
+  readonly encuentroId?: string;
 }
 
 /**
@@ -144,6 +150,8 @@ export interface TratamientoEnPantalla {
     DatePipe,
     FormActions,
     FormField,
+    InformedConsentBadge,
+    InformedConsentDialog,
     Odontogram,
     Select,
     Textarea,
@@ -181,6 +189,33 @@ export class ProceduresBlock {
    * sigue existiendo por si algún consumidor futuro quiere las dos juntas.
    */
   readonly modo = input<'ambos' | 'cirugia' | 'odontologia'>('ambos');
+
+  /* -- Consentimiento informado dirigido a cada procedimiento -------------- */
+
+  protected readonly consentimientos = consentimientosDelPaciente(() => this.patientProfileId());
+
+  /**
+   * El procedimiento cuyo consentimiento está abierto: id, lo que se consiente
+   * en palabras y la consulta en la que se hizo.
+   *
+   * Sólo odontología: es `clinical.procedures`, que es contra lo que la API
+   * valida `PROCEDURE`. Un caso quirúrgico vive en otra tabla y no trae
+   * encuentro; ofrecerle el consentimiento sería un formulario que siempre
+   * responde 404.
+   */
+  protected readonly consintiendo = signal<{
+    readonly id: string;
+    readonly etiqueta: string;
+    readonly encuentroId: string | null;
+  } | null>(null);
+
+  protected consentirTratamiento(tratamiento: TratamientoEnPantalla): void {
+    this.consintiendo.set({
+      id: tratamiento.id,
+      etiqueta: tratamiento.piezas === '' ? tratamiento.que : `${tratamiento.que} · pieza ${tratamiento.piezas}`,
+      encuentroId: tratamiento.encuentroId ?? null,
+    });
+  }
 
   /* -- Lo quirúrgico ------------------------------------------------------- */
 
@@ -270,6 +305,7 @@ export class ProceduresBlock {
         .join(', '),
       nota: tratamiento.noteText ?? '',
       cuando: tratamiento.performedAt ?? tratamiento.createdAt,
+      ...(tratamiento.encounterId === undefined ? {} : { encuentroId: tratamiento.encounterId }),
     })),
   );
 

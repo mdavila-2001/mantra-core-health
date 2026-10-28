@@ -120,11 +120,16 @@ describe('las fichas clínicas estándar del simulador', () => {
     }
   });
 
-  /** Odontología trae dos, y una de ellas es el odontograma. */
+  /**
+   * Odontología trae su anamnesis, su odontograma y —desde la v2 específica
+   * del catálogo del backend— el control periodontal. La lista es exacta: una
+   * ficha de más o de menos es una deriva respecto del seed.
+   */
   it('odontología trae su anamnesis y su odontograma', () => {
     const odonto = PLANTILLAS_DE_EXPEDIENTE.filter((p) => p.code.startsWith('ODONTO_'));
     expect(odonto.map((p) => p.code).sort()).toEqual([
       'ODONTO_ANAMNESIS',
+      'ODONTO_CTRL_PERIODONTAL',
       'ODONTO_ODONTOGRAMA_OMS',
     ]);
   });

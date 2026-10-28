@@ -1,0 +1,92 @@
+<app-card variant="outlined" padding="lg" class="derivaciones" data-testid="derivaciones">
+  <h2 class="derivaciones__titulo">Derivaciones</h2>
+  <p class="derivaciones__bajada">
+    A otro profesional, a una organización o sede, o fuera de la plataforma, con su resumen clínico
+    y, cuando corresponde, el consentimiento informado.
+  </p>
+
+  <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+    <app-tab [label]="'Derivaciones (' + cantidad() + ')'">
+      <app-data-table
+        [state]="estadoDeLaTabla()"
+        [columns]="columnas()"
+        [trackBy]="porFila"
+        caption="Derivaciones de la persona"
+        (retry)="recargar()"
+        (refresh)="recargar()"
+      />
+    </app-tab>
+
+    @if (puedeEscribir()) {
+      <app-tab label="Nueva derivación">
+        <app-referral-form
+          [patientProfileId]="patientProfileId()"
+          [encounterId]="encounterId()"
+          [diagnosticos]="diagnosticos()"
+          [citas]="citas()"
+          (emitida)="alEmitir($event)"
+        />
+      </app-tab>
+    }
+  </app-tabs>
+</app-card>
+
+<ng-template #celdaEstado let-fila>
+  <app-badge [variant]="fila.estado.tono" size="sm">{{ fila.estado.etiqueta }}</app-badge>
+</ng-template>
+
+<ng-template #celdaVigencia let-fila>
+  @if (fila.vigencia) {
+    <span [class.derivaciones__vencida]="fila.vencida">
+      {{ fila.vigencia | date: 'd MMM y' }}{{ fila.vencida ? ' · vencida' : '' }}
+    </span>
+  } @else {
+    <span class="derivaciones__secundario">Sin vencimiento</span>
+  }
+</ng-template>
+
+<ng-template #celdaConsentimiento let-fila>
+  @if (fila.consentimientoVinculado) {
+    <!-- El vínculo lo escribe la API: es la fuente, no la lista del panel. -->
+    <app-badge variant="success" size="sm" data-testid="derivacion-consentimiento-vinculado">Aceptado</app-badge>
+  } @else if (fila.admiteConsentimiento) {
+    <!-- Sin vínculo: lo que haya (rechazado, revocado o nada) sale de la lista. -->
+    <app-informed-consent-badge [consent]="consentimientos.de('REFERRAL', fila.id)" />
+  } @else {
+    <span class="derivaciones__secundario">No aplica</span>
+  }
+</ng-template>
+
+<ng-template #celdaVer let-fila>
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    type="button"
+    data-testid="derivacion-ver"
+    [attr.aria-label]="'Ver derivación: ' + fila.tipo + ' a ' + fila.destino"
+    (clicked)="ver(fila)"
+  >
+    Ver
+  </button>
+</ng-template>
+
+@if (abierta(); as derivacion) {
+  <app-content-dialog
+    heading="Derivación"
+    [description]="derivacion.requestedServiceText ?? 'Detalle de la derivación'"
+    size="lg"
+    (closed)="cerrarDetalle()"
+  >
+    <app-referral-detail
+      [referral]="derivacion"
+      [patientProfileId]="patientProfileId()"
+      [encounterId]="encounterId()"
+      [citas]="citas()"
+      [puedeEscribir]="puedeEscribir()"
+      [recienEmitida]="recienEmitida()"
+      (cambio)="recargar()"
+      (consentChanged)="alCambiarConsentimiento(derivacion.id, $event)"
+    />
+  </app-content-dialog>
+}

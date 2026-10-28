@@ -220,7 +220,11 @@ export class Textarea implements ControlValueAccessor {
     if (!element) {
       return;
     }
+    // Sin caja (montado dentro de una pestaña o un panel todavía sin
+    // dibujar), `scrollHeight` vale 0 y fijar `0px` dejaba el campo
+    // aplastado para siempre. Se deja el alto de `rows` hasta poder medir.
     element.style.height = 'auto';
-    element.style.height = `${element.scrollHeight}px`;
+    const alto = element.scrollHeight;
+    element.style.height = alto === 0 ? '' : `${alto}px`;
   }
 }

@@ -113,6 +113,7 @@
             <div class="estudios__principal">
               <span class="estudios__nombre">{{ estudio.estudio }}</span>
               <span class="estudios__categoria">{{ estudio.categoria }}</span>
+              <app-informed-consent-badge [consent]="consentimientos.de('SERVICE_REQUEST', estudio.id)" />
             </div>
             <div class="estudios__meta">
               <span class="estudios__estado">{{ estudio.estado }}</span>
@@ -135,6 +136,16 @@
               } @else {
                 <span class="estudios__resultado">Sin resultado todavía</span>
               }
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="estudios-consentimiento"
+                (clicked)="consintiendo.set(estudio)"
+              >
+                Consentimiento informado
+              </button>
             </div>
           </li>
         }
@@ -165,3 +176,17 @@
     }
   </section>
 </app-card>
+
+<!-- El consentimiento DIRIGIDO a la orden elegida (CPE art. 44). -->
+@if (consintiendo(); as estudio) {
+  <app-informed-consent-dialog
+    [patientProfileId]="patientProfileId()"
+    [encounterId]="estudio.encuentroId ?? encounterId()"
+    targetType="SERVICE_REQUEST"
+    [targetId]="estudio.id"
+    [targetLabel]="etiquetaDelEstudio(estudio)"
+    [defaults]="{ purposeText: estudio.categoria + ': ' + estudio.estudio + ', para orientar el diagnóstico o el tratamiento.' }"
+    (consentChanged)="consentimientos.incorporar($event)"
+    (closed)="consintiendo.set(null)"
+  />
+}

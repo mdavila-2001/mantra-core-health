@@ -39,6 +39,10 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { consentimientosDelPaciente } from '../informed-consent/consentimientos-del-paciente';
+import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 
 /**
@@ -117,6 +121,8 @@ export interface EstudioEnFicha {
   readonly duplicado: 'reused' | 'repeated' | null;
   /** La fecha del informe previo. Sólo presente cuando `duplicado === 'reused'`. */
   readonly informePrevioDel: Date | null;
+  /** La consulta en la que se pidió, si la orden la trae. Ata su consentimiento. */
+  readonly encuentroId?: string;
 }
 
 /**
@@ -165,7 +171,18 @@ export interface EstudioEnFicha {
  */
 @Component({
   selector: 'app-diagnostics-block',
-  imports: [Alert, Card, ConceptSelect, DatePipe, DuplicateStudyWarningDialog, FormActions, FormField],
+  imports: [
+    Alert,
+    AppButton,
+    Card,
+    ConceptSelect,
+    DatePipe,
+    DuplicateStudyWarningDialog,
+    FormActions,
+    FormField,
+    InformedConsentBadge,
+    InformedConsentDialog,
+  ],
   templateUrl: './diagnostics-block.html',
   styleUrl: './diagnostics-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -187,6 +204,17 @@ export class DiagnosticsBlock {
    * el bloque no vuelve a preguntarlo para que no puedan discrepar.
    */
   readonly encounterId = input<string | null>(null);
+
+  /* -- Consentimiento informado dirigido a cada orden ----------------------
+     CPE art. 44: ningún examen médico o de laboratorio sin consentimiento.
+     Una insignia por orden y la acción para registrarlo o revocarlo. */
+
+  protected readonly consentimientos = consentimientosDelPaciente(() => this.patientProfileId());
+  protected readonly consintiendo = signal<EstudioEnFicha | null>(null);
+
+  protected etiquetaDelEstudio(estudio: EstudioEnFicha): string {
+    return `${estudio.estudio} · ${estudio.categoria}`;
+  }
 
   protected readonly targetEstudio = TARGET_ESTUDIO;
   protected readonly targetCategoria = TARGET_CATEGORIA;
@@ -596,6 +624,7 @@ export class DiagnosticsBlock {
         duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
           ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
           : null,
+      ...(orden.encounterId === undefined ? {} : { encuentroId: orden.encounterId }),
     };
   }
 

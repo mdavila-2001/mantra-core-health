@@ -1,0 +1,143 @@
+<div class="detalle" data-testid="derivacion-detalle">
+  <div class="detalle__cabecera">
+    <app-badge [variant]="estado().tono" data-testid="derivacion-detalle-estado">{{ estado().etiqueta }}</app-badge>
+    @if (vencida()) {
+      <app-badge variant="warning">Vencida</app-badge>
+    }
+  </div>
+
+  @if (errorDeLaAccion(); as mensaje) {
+    <app-alert tone="error" data-testid="derivacion-error-accion">{{ mensaje }}</app-alert>
+  }
+
+  <dl class="detalle__datos">
+    <div class="detalle__fila"><dt>Tipo</dt><dd>{{ tipo() }}</dd></div>
+    <div class="detalle__fila"><dt>Destino</dt><dd>{{ destino() }}</dd></div>
+    @if (referral().targetExternalContact) {
+      <div class="detalle__fila"><dt>Contacto</dt><dd>{{ referral().targetExternalContact }}</dd></div>
+    }
+    <div class="detalle__fila">
+      <dt>Servicio pedido</dt>
+      <dd>{{ referral().requestedServiceText ?? referral().reasonText ?? 'Sin detallar' }}</dd>
+    </div>
+    @if (referral().diagnosisText) {
+      <div class="detalle__fila"><dt>Diagnóstico</dt><dd>{{ referral().diagnosisText }}</dd></div>
+    }
+    @if (referral().clinicalSummary) {
+      <div class="detalle__fila"><dt>Resumen clínico</dt><dd>{{ referral().clinicalSummary }}</dd></div>
+    }
+    @if (referral().treatmentGivenText) {
+      <div class="detalle__fila"><dt>Tratamiento realizado</dt><dd>{{ referral().treatmentGivenText }}</dd></div>
+    }
+    @if (referral().reasonText && referral().requestedServiceText) {
+      <div class="detalle__fila"><dt>Motivo</dt><dd>{{ referral().reasonText }}</dd></div>
+    }
+    <div class="detalle__fila">
+      <dt>Emitida</dt>
+      <dd>{{ referral().createdAt | date: 'd MMM y, HH:mm' }}</dd>
+    </div>
+    <div class="detalle__fila">
+      <dt>Vigente hasta</dt>
+      <dd>{{ referral().validUntil ? (referral().validUntil | date: 'd MMM y') : 'Sin fecha de vencimiento' }}</dd>
+    </div>
+    @if (ofreceConsentimiento()) {
+      <div class="detalle__fila">
+        <dt>Consentimiento</dt>
+        <dd data-testid="derivacion-detalle-consentimiento">
+          {{ referral().informedConsentId ? 'Aceptado y vinculado a esta derivación' : 'Sin consentimiento aceptado vinculado' }}
+        </dd>
+      </div>
+    }
+    @if (referral().rejectReason) {
+      <div class="detalle__fila"><dt>Motivo del rechazo</dt><dd>{{ referral().rejectReason }}</dd></div>
+    }
+    @if (referral().counterReferralText) {
+      <div class="detalle__fila">
+        <dt>Contrarreferencia</dt>
+        <dd>
+          {{ referral().counterReferralText }}
+          @if (referral().counterReferralAt) {
+            <span class="detalle__secundario">— {{ referral().counterReferralAt | date: 'd MMM y' }}</span>
+          }
+        </dd>
+      </div>
+    }
+  </dl>
+
+  @if (puedeResponder() || puedeContrarreferir() || puedeAnular()) {
+    <div class="detalle__acciones">
+      @if (puedeAnular()) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="derivacion-cancelar"
+          [disabled]="trabajando()"
+          (clicked)="anular()"
+        >
+          Cancelar derivación
+        </button>
+      }
+      @if (puedeResponder()) {
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="derivacion-rechazar"
+          [disabled]="trabajando()"
+          (clicked)="rechazar()"
+        >
+          Rechazar derivación
+        </button>
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          data-testid="derivacion-aceptar"
+          [isLoading]="trabajando()"
+          (clicked)="aceptar()"
+        >
+          Aceptar derivación
+        </button>
+      }
+      @if (puedeContrarreferir()) {
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          data-testid="derivacion-contrarreferir"
+          [isLoading]="trabajando()"
+          (clicked)="contrarreferir()"
+        >
+          Registrar contrarreferencia
+        </button>
+      }
+    </div>
+  }
+
+  @if (ofreceConsentimiento()) {
+    <section class="detalle__consentimiento" aria-labelledby="derivacion-consentimiento-titulo">
+      <h3 id="derivacion-consentimiento-titulo" class="detalle__subtitulo">
+        Consentimiento informado de esta derivación
+      </h3>
+      @if (recienEmitida()) {
+        <app-alert tone="info" data-testid="derivacion-proximo-paso">
+          Derivación emitida. Próximo paso: registrá el consentimiento de la persona antes de enviarla.
+        </app-alert>
+      }
+      <app-informed-consent-panel
+        [patientProfileId]="patientProfileId()"
+        [encounterId]="encuentroDelConsentimiento()"
+        targetType="REFERRAL"
+        [targetId]="referral().id"
+        [targetLabel]="etiquetaParaConsentir()"
+        [defaults]="defaultsDelConsentimiento()"
+        (consentChanged)="consentChanged.emit($event)"
+      />
+    </section>
+  }
+</div>
