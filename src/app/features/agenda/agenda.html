@@ -608,8 +608,8 @@
   <!-- Estado del pago en las vistas Día / Semana / Mes: la tabla de Consultas
        que lo traía se retiró (C-07) y sin esto el médico no podía revisarlo.
        La MISMA celda de pago (insignia + «Estado del pago»), en la tarjeta del
-       día y en el detalle de la semana: el modal de comprobantes se apila
-       sobre ese detalle como cualquier `<dialog>`. -->
+       día y en el detalle de la semana. El detalle se cierra al pulsar una
+       acción, así que al cerrar el modal de comprobantes se vuelve a la vista. -->
   @if (citaDelDia(booking); as cita) {
     @if (cita.admitePago && puedeAtender()) {
       <ng-container
