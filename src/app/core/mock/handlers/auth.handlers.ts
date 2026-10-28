@@ -1,3 +1,4 @@
+import { pedirAseguradoras } from './practitioner-insurer-requests.handlers';
 import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { guardarImagenDeDataUrl } from './files.handlers';
@@ -273,6 +274,9 @@ export function registrarAuth(router: MockRouter): void {
       collegeName?: string;
       collegeLicenseIssueDate?: string;
       collegeLicenseFileId?: string;
+      // Dónde dice trabajar (28/10/2026), como en la API.
+      institutionSlugs?: string[];
+      insurerCarrierIds?: string[];
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
@@ -317,6 +321,16 @@ export function registrarAuth(router: MockRouter): void {
     }
     const id = nuevoId('profesional-nuevo');
     const practitionerProfileId = uuid(`hpid-${id}`);
+    // Las aseguradoras se validan contra el catálogo antes de dar el alta por
+    // hecha, como la API: una inexistente deshace todo con 422.
+    const seguros = pedirAseguradoras(practitionerProfileId, datos.insurerCarrierIds ?? []);
+    if (seguros === null) {
+      return preconditionFailed('Alguna de las aseguradoras indicadas no existe o no está activa', {
+        field: 'insurerCarrierIds',
+      });
+    }
+    const institutionSlugs = [...new Set(datos.institutionSlugs ?? [])];
+    const affiliationIds = institutionSlugs.map((slug) => uuid(`aff-alta-${practitionerProfileId}-${slug}`));
     if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
       signatureSaveAssets(practitionerProfileId, {
         ...(datos.signatureImageBase64 === undefined
@@ -333,6 +347,10 @@ export function registrarAuth(router: MockRouter): void {
       practitionerProfileId,
       practitionerCode: `MED-${Math.floor(Math.random() * 9000 + 1000)}`,
       ...(datos.photoFileId === undefined ? {} : { photoFileId: datos.photoFileId }),
+      ...(affiliationIds.length === 0 ? {} : { affiliationIds }),
+      ...(seguros.pedidas.length === 0
+        ? {}
+        : { insurerRequestIds: seguros.pedidas.map((s) => s.id) }),
     };
   });
 

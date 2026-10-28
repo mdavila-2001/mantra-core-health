@@ -1,0 +1,74 @@
+/* Sin tope de ancho propio (composition-rules.md §5). */
+.pedidos__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.pedidos__resumen {
+  margin: 0 0 var(--e4);
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.pedidos__lista {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Quién pide a la izquierda, el sello al medio y las acciones a la derecha;
+   en angosto, uno debajo del otro. */
+.pedidos__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--e3);
+  align-items: center;
+  padding: var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-card);
+  background: var(--sup-tarjeta);
+}
+
+@media (min-width: 1024px) {
+  .pedidos__fila {
+    grid-template-columns: minmax(0, 2fr) auto minmax(0, 2fr);
+  }
+}
+
+.pedidos__quien {
+  display: grid;
+  gap: var(--e1);
+  min-inline-size: 0;
+}
+
+.pedidos__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pedidos__titulo,
+.pedidos__fecha {
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.pedidos__motivo {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.pedidos__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--e2);
+}
+
+.pedidos__motivo-campo {
+  flex: 1 1 100%;
+}

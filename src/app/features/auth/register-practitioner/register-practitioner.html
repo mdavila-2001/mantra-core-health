@@ -19,6 +19,16 @@
             ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
         </div>
+        @if (pedidosEnviados() > 0) {
+          <!-- Lo que el alta pidió en su nombre, dicho una vez: si no, quien eligió
+               tres clínicas no sabe si se mandó algo ni dónde mirarlo. -->
+          <p class="registro__pedidos" data-testid="registro-pedidos-enviados">
+            Enviamos {{ pedidosEnviados() }}
+            {{ pedidosEnviados() === 1 ? 'pedido de confirmación' : 'pedidos de confirmación' }} a
+            las instituciones y aseguradoras que eligió. Cuando inicie sesión, los sigue en
+            <strong>Mis verificaciones</strong>.
+          </p>
+        }
         <button
           app-button
           variant="primary"
@@ -1104,6 +1114,17 @@
                 [inicial]="gpsConsultorio()"
                 (confirmado)="confirmarGpsConsultorio($event)"
                 (localidad)="aplicarLocalidadConsultorio($event)"
+              />
+            </ng-template>
+
+            <!-- Instituciones y aseguradoras: un solo campo proyectado con sus
+                 dos bloques. Lo elegido vive en dos señales y viaja en el alta. -->
+            <ng-template appCampoPersonalizado="lugaresDeTrabajo">
+              <app-workplace-picker
+                [institutions]="institucionesElegidas()"
+                (institutionsChange)="institucionesElegidas.set($event)"
+                [insurerIds]="aseguradorasElegidas()"
+                (insurerIdsChange)="aseguradorasElegidas.set($event)"
               />
             </ng-template>
           </app-paginated-form>
