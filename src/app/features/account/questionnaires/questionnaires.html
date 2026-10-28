@@ -47,7 +47,17 @@
                 <div class="cuestionarios__datos">
                   <h2 class="cuestionarios__titulo">{{ cuestionario.titulo }}</h2>
 
-                  @if (cuestionario.consigna) {
+                  <!-- Qué atención es: sin esto las tarjetas de dos consultas distintas
+                       son idénticas. Con el contexto, la consigna larga (la misma en
+                       todas) se omite: se lee al abrir la encuesta. -->
+                  @if (cuestionario.contexto; as contexto) {
+                    <p class="cuestionarios__contexto" data-testid="cuestionario-contexto">
+                      {{ contexto.etiqueta }}
+                      @if (contexto.fecha) {
+                        · {{ contexto.fecha | date: 'd MMM y' }}
+                      }
+                    </p>
+                  } @else if (cuestionario.consigna) {
                     <p class="cuestionarios__consigna">{{ cuestionario.consigna }}</p>
                   }
 

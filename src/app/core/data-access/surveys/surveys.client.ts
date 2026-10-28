@@ -402,11 +402,12 @@ type WireSurveyResponse = Omit<SurveyResponse, 'submittedAt'> & {
 /** Un cuestionario repartido, tal como viaja. */
 type WirePatientInvitation = Omit<
   PatientInvitation,
-  'issuedAt' | 'expiresAt' | 'answeredAt'
+  'issuedAt' | 'expiresAt' | 'answeredAt' | 'attendedAt'
 > & {
   readonly issuedAt?: string | null;
   readonly expiresAt?: string | null;
   readonly answeredAt?: string | null;
+  readonly attendedAt?: string | null;
 };
 
 /** El cuestionario a responder, tal como viaja. */
@@ -414,12 +415,20 @@ type WirePatientQuestionnaire = WirePatientInvitation & {
   readonly questions: readonly SurveyQuestion[];
 };
 
-/** Normaliza las tres marcas de tiempo de un cuestionario repartido. */
+/**
+ * Normaliza las marcas de tiempo de un cuestionario repartido.
+ *
+ * `attendedAt` es aditivo: si la API no lo manda, la clave queda AUSENTE (no
+ * `null`), para que «no sé cuándo fue» se distinga de «la API aún no lo dice».
+ */
 function toInvitation(body: WirePatientInvitation): PatientInvitation {
+  const { attendedAt, ...resto } = body;
+  const atencion = attendedAt === undefined ? undefined : (maybeDate(attendedAt) ?? null);
   return {
-    ...body,
+    ...resto,
     issuedAt: maybeDate(body.issuedAt) ?? null,
     expiresAt: maybeDate(body.expiresAt) ?? null,
     answeredAt: maybeDate(body.answeredAt) ?? null,
+    ...(atencion === undefined ? {} : { attendedAt: atencion }),
   };
 }
