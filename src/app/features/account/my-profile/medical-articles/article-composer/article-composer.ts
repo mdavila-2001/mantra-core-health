@@ -26,6 +26,7 @@ import {
 import { ArticleBody } from '../../../../../shared/components/organisms/article-body/article-body';
 import { articleStats, htmlToArticle } from '../../../../../shared/text/article-markup';
 import { EmojiPicker } from '../../../../messaging/thread/composer/emoji-picker';
+import { LoadingState } from '../../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * Tope real de imágenes por publicación (`CreatePostDto.media`,
@@ -110,7 +111,7 @@ interface BorradorGuardado {
  */
 @Component({
   selector: 'app-article-composer',
-  imports: [AppButton, ArticleBody, DatePipe, FormField, Input, RichTextEditor, EmojiPicker],
+  imports: [AppButton, ArticleBody, DatePipe, FormField, Input, RichTextEditor, EmojiPicker, LoadingState],
   templateUrl: './article-composer.html',
   styleUrl: './article-composer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

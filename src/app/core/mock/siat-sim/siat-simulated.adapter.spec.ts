@@ -219,8 +219,23 @@ describe('SiatSimuladoAdapter', () => {
       expect(codigos(enviar(f))).toContain(953);
     });
 
-    it('sector 17 (preparado, no activo · CA-1) → 940; sector desconocido → 931', () => {
-      expect(codigos(enviar(factura(1), { codigoDocumentoSector: 17 }))).toContain(940);
+    it('sector 17 activo (H5) y habilitado al NIT: pasa la validación y el XML se mide contra su XSD → 939', () => {
+      // La factura es de compraventa: declarada como sector 17 no cumple el XSD de Hospitales/Clínicas.
+      expect(codigos(enviar(factura(1), { codigoDocumentoSector: 17 }))).toEqual([939]);
+    });
+
+    it('sector 17 sin habilitar en el NIT → 940; sector desconocido → 931', () => {
+      const sinHospital = new SiatSimulatedAdapter({
+        padron: [{ ...CONTRIBUYENTE, sectoresHabilitados: [1] }],
+        reloj: () => ahora,
+      });
+      const cuisLocal = sinHospital.solicitudCuis(CONTEXTO).codigo!;
+      const cufdLocal = sinHospital.solicitudCufd({ ...CONTEXTO, cuis: cuisLocal }).codigo!;
+      const xml = buildInvoiceXml(PURCHASE_SALE_SCHEMA, factura(1));
+      const r = sinHospital.recepcionFactura(
+        solicitud(xml, { cuis: cuisLocal, cufd: cufdLocal, codigoDocumentoSector: 17 }),
+      );
+      expect(codigos(r)).toEqual([940]);
       expect(codigos(enviar(factura(1), { codigoDocumentoSector: 99 }))).toContain(931);
     });
 

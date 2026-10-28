@@ -19,6 +19,7 @@ import { EmptyState } from '../../../shared/components/molecules/empty-state/emp
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Mínimo que acepta la API para una contraseña nueva (`ChangePasswordDto`). */
 const LARGO_MINIMO = 8;
@@ -54,6 +55,7 @@ type EstadoDeSesiones = 'cargando' | 'listo' | 'error';
     Input,
     PageHeader,
     ReactiveFormsModule,
+    LoadingState,
   ],
   templateUrl: './security.html',
   styleUrl: './security.css',

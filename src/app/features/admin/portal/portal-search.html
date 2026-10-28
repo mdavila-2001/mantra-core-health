@@ -27,7 +27,7 @@
       aria-label="Resultados de la búsqueda"
     >
       @if (buscando()) {
-        <p class="busca__estado" role="status">Buscando…</p>
+        <app-loading-state class="busca__estado" message="Buscando…" />
       }
       @if (fallo()) {
         <p class="busca__estado busca__estado--error" role="status">

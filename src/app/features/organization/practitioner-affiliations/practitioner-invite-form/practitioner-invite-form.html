@@ -23,7 +23,7 @@
   <fieldset class="invite__procedures" data-testid="invite-procedures">
     <legend class="invite__legend">Procedimientos que haría en esta sede</legend>
     @if (proceduresLoading()) {
-      <p class="invite__note">Cargando los procedimientos de la sede…</p>
+      <app-loading-state class="invite__note" message="Cargando los procedimientos de la sede…" />
     } @else {
       @for (procedure of procedures(); track procedure.id) {
         <app-checkbox

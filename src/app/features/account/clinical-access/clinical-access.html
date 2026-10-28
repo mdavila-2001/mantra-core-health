@@ -8,9 +8,11 @@
 
 <div class="acceso">
   @if (cargando()) {
-    <p class="acceso__estado" role="status" data-testid="acceso-cargando">
-      Cargando quién ve su historia…
-    </p>
+    <app-loading-state
+      class="acceso__estado"
+      data-testid="acceso-cargando"
+      message="Cargando quién ve su historia…"
+    />
   } @else if (sinPermiso()) {
     <app-alert tone="info" data-testid="acceso-sin-permiso">
       Esta sección es para pacientes. Su cuenta no tiene un perfil de paciente.

@@ -27,7 +27,7 @@
     />
 
     @if (reading()) {
-      <p class="upload__note" role="status">Revisando el archivo…</p>
+      <app-loading-state class="upload__note" message="Revisando el archivo…" />
     }
 
     @if (fileError(); as message) {

@@ -25,6 +25,7 @@ import { Avatar } from '../../shared/components/atoms/avatar/avatar';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
+import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 
 /** Los cuatro filtros de la bandeja, en el orden en que se muestran. */
 const FILTROS = ['todos', 'no-leidos', 'favoritos', 'grupos'] as const;
@@ -67,6 +68,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
     EmptyState,
     FormsModule,
     RouterOutlet,
+    LoadingState,
   ],
   templateUrl: './messaging.html',
   styleUrl: './messaging.css',

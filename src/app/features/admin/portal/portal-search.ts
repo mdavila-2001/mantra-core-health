@@ -21,6 +21,7 @@ import {
 
 import { PortalClient } from '../../../core/data-access/admin-portal/portal.client';
 import { PORTAL_NAV, portalUrl } from './portal-nav';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 export interface SearchHit {
   readonly id: string;
@@ -57,7 +58,7 @@ export function screenHits(q: string): readonly SearchHit[] {
  */
 @Component({
   selector: 'app-portal-search',
-  imports: [],
+  imports: [LoadingState],
   templateUrl: './portal-search.html',
   styleUrl: './portal-search.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
