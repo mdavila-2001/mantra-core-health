@@ -68,8 +68,7 @@
          lo que cualquiera prueba primero. -->
     <div class="app-side-nav__cabecera">
       <a class="app-side-nav__marca" routerLink="/dashboard" aria-label="AloVida — ir al panel">
-        <img class="app-side-nav__logo--claro" src="/alovida/imagenes/alovida-logo.svg" alt="" width="34" height="25" />
-        <img class="app-side-nav__logo--oscuro" src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
+        <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
         <span class="app-side-nav__palabra">AloVida</span>
       </a>
 
@@ -103,10 +102,13 @@
          cabecera; se mudó acá para despejarla sin dejar de estar en todas las
          pantallas. Primera cosa del menú, antes que cualquier destino: una
          urgencia no compite. Con la barra recogida se queda en el ícono —el
-         nombre accesible ya dice «Emergencia» y a quién llama—. -->
-    <div class="app-side-nav__emergencia" appTutorialTarget="nav-emergencia">
-      <app-panic-button [compacto]="navRecogido()" />
-    </div>
+         nombre accesible ya dice «Emergencia» y a quién llama—. Sólo para
+         quien viene a atenderse (27/10/2026): ver `ofreceEmergencia`. -->
+    @if (ofreceEmergencia()) {
+      <div class="app-side-nav__emergencia" appTutorialTarget="nav-emergencia">
+        <app-panic-button [compacto]="navRecogido()" />
+      </div>
+    }
 
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
          que cambia es cómo se pintan, no de dónde vienen.
@@ -290,8 +292,10 @@
              `app-side-nav__emergencia`). En el teléfono el menú es un cajón y
              quedaba a dos toques, así que ahí vuelve como ícono: una urgencia
              tiene que estar a uno (propietario, 27/10/2026). Fuera de esos
-             anchos lo esconde `shell-layout.css`. -->
-        <app-panic-button class="app-header__emergencia" data-testid="header-emergencia" compacto />
+             anchos lo esconde `shell-layout.css`. Mismo filtro que en el menú. -->
+        @if (ofreceEmergencia()) {
+          <app-panic-button class="app-header__emergencia" data-testid="header-emergencia" compacto />
+        }
 
         <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
              elegir: una cuenta sin dependientes no necesita conmutar nada, y un
