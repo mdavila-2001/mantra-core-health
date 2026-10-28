@@ -1,6 +1,8 @@
 <app-page-header
   title="Solicitudes recibidas"
   subtitle="Lo que cada prestador le pidió a su aseguradora: quién se atendió, con qué médico, qué servicio y cuánto."
+  [secondaryActions]="accionesDelEncabezado"
+  (actionSelected)="alElegirAccion($event)"
 />
 
 <!-- ADR-0015: una tarjeta a lo ancho con barra arriba, tabla sin scroll lateral

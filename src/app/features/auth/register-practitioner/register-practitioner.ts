@@ -1,4 +1,8 @@
 import { environment } from '../../../../environments/environment';
+import {
+  WorkplacePicker,
+  type ChosenInstitution,
+} from '../shared-registration/workplace-picker/workplace-picker';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
@@ -586,6 +590,20 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
         'Son los datos por los que le ubican en el trabajo, no los de su acceso. Puede dejarlos vacíos y cargarlos después desde su perfil.',
     },
   ],
+  workplaces: [
+    {
+      icono: 'shield',
+      titulo: 'El sello lo pone la otra parte',
+      texto:
+        'Elegir una clínica o un seguro no le acredita: le enviamos el pedido y cada uno lo confirma. Hasta entonces figura como pendiente.',
+    },
+    {
+      icono: 'building',
+      titulo: 'Lo sigue en «Mis verificaciones»',
+      texto:
+        'Ahí ve cada pedido como una conversación: cuándo lo envió, si lo aprobaron y, si lo rechazaron, por qué.',
+    },
+  ],
   practice: [
     {
       icono: 'stethoscope',
@@ -726,6 +744,7 @@ function sinTildes(texto: string): string {
     Avatar,
     OnboardingDraftBanner,
     OfficeLogoField,
+    WorkplacePicker,
   ],
   providers: [OfficeLogoSelection],
   templateUrl: './register-practitioner.html',
@@ -1850,6 +1869,14 @@ export class RegisterPractitioner {
   readonly gpsTrabajo = signal<Coordinates | null>(null);
 
   /**
+   * Las instituciones y aseguradoras con las que dice trabajar (página
+   * «Dónde trabaja y con qué seguros»). Viven en señales y no en el formulario:
+   * son opcionales, no validan nada y las gobierna `app-workplace-picker`.
+   */
+  readonly institucionesElegidas = signal<readonly ChosenInstitution[]>([]);
+  readonly aseguradorasElegidas = signal<readonly string[]>([]);
+
+  /**
    * La localidad del consultorio propio, deducida de su punto.
    *
    * Separada de la del domicilio a propósito: son dos lugares distintos, y hay
@@ -2576,6 +2603,9 @@ export class RegisterPractitioner {
 
   readonly registered = signal(false);
 
+  /** Cuántos pedidos de confirmación salieron con el alta (instituciones + seguros). */
+  readonly pedidosEnviados = signal(0);
+
   /**
    * La clave de la página que se está contestando, tal como la avisa el motor.
    *
@@ -2609,6 +2639,8 @@ export class RegisterPractitioner {
         gpsDomicilio: this.gpsDomicilio(),
         gpsTrabajo: this.gpsTrabajo(),
         gpsConsultorio: this.gpsConsultorio(),
+        institucionesElegidas: this.institucionesElegidas(),
+        aseguradorasElegidas: this.aseguradorasElegidas(),
       };
       this.draftService.saveProgress(
         'practitioner',
@@ -2660,6 +2692,14 @@ export class RegisterPractitioner {
       }
       if (extra['gpsConsultorio'] !== undefined) {
         this.gpsConsultorio.set(extra['gpsConsultorio'] as Coordinates | null);
+      }
+      if (Array.isArray(extra['institucionesElegidas'])) {
+        this.institucionesElegidas.set(
+          extra['institucionesElegidas'] as readonly ChosenInstitution[],
+        );
+      }
+      if (Array.isArray(extra['aseguradorasElegidas'])) {
+        this.aseguradorasElegidas.set(extra['aseguradorasElegidas'] as readonly string[]);
       }
       if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
         this.pasoGuardado.set(draft.stepIndex);
@@ -2957,7 +2997,13 @@ export class RegisterPractitioner {
       .subscribe({
         next: () => {
           this.iam.registerPractitioner(this.datosProfesional()).subscribe({
-            next: () => {
+            next: (alta) => {
+              // Lo que la API confirma que creó, no lo que se eligió: si un
+              // pedido no se hubiera creado, contarlo sería prometer un sello
+              // que nadie va a dar.
+              this.pedidosEnviados.set(
+                (alta?.affiliationIds?.length ?? 0) + (alta?.insurerRequestIds?.length ?? 0),
+              );
               this.state.set(ready(null));
               this.registered.set(true);
               this.limpiarBorrador();
@@ -3297,6 +3343,14 @@ export class RegisterPractitioner {
       ...(this.credencialesDeclaradas().length === 0
         ? {}
         : { credentials: this.credencialesDeclaradas() }),
+      // Dónde dice trabajar (28/10/2026). Cada una nace pendiente de que la
+      // otra parte la confirme; el alta no da por cierto ningún vínculo.
+      ...(this.institucionesElegidas().length === 0
+        ? {}
+        : { institutionSlugs: this.institucionesElegidas().map((i) => i.slug) }),
+      ...(this.aseguradorasElegidas().length === 0
+        ? {}
+        : { insurerCarrierIds: this.aseguradorasElegidas() }),
     };
   }
 

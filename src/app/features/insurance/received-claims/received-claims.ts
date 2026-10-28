@@ -12,7 +12,7 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { map, type Observable } from 'rxjs';
 
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
@@ -50,7 +50,10 @@ import {
   FilterBar,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
-import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import {
+  PageHeader,
+  type PageHeaderAction,
+} from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import {
   UNKNOWN_STATUS_VARIANT,
@@ -195,6 +198,22 @@ const SORT_VALUE: Readonly<Record<string, (claim: ReceivedClaim) => string | num
 export class ReceivedClaims {
   private readonly insurance = inject(InsuranceClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /**
+   * La puerta a la bandeja de profesionales que piden sumarse (28/10/2026):
+   * esa sección está fuera del menú cerrado de la aseguradora y éste es el
+   * lugar donde ya mira lo que le piden.
+   */
+  protected readonly accionesDelEncabezado: readonly PageHeaderAction[] = [
+    { code: 'profesionales', label: 'Profesionales que piden sumarse', icon: 'people' },
+  ];
+
+  protected alElegirAccion(code: string): void {
+    if (code === 'profesionales') {
+      void this.router.navigateByUrl('/administration/insurer-practitioner-requests');
+    }
+  }
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
 

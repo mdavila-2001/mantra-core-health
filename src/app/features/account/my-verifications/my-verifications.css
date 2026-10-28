@@ -1,0 +1,393 @@
+/* Sin tope de ancho propio: lo pone `.app-main__inner` y nadie más
+   (`docs/components/composition-rules.md` §5). */
+.verif__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.verif__esqueleto {
+  display: grid;
+  gap: var(--e3);
+}
+
+.verif__esqueleto span {
+  display: block;
+  block-size: var(--e8);
+  border-radius: var(--r-ctrl);
+  background: var(--filete-2);
+}
+
+/* ─── Hoja de ruta ──────────────────────────────────────────────────────── */
+
+.verif__resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0 0 var(--e4);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+.verif__ruta {
+  display: grid;
+  gap: 0;
+  margin: var(--e5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada tramo cuelga de una línea vertical continua: es lo que convierte una
+   lista de estados en un recorrido. La marca es el ícono del tramo. */
+.verif__tramo {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--e9) minmax(0, 1fr);
+  gap: var(--e3);
+  padding-block-end: var(--e5);
+}
+
+.verif__tramo::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--e9) 0;
+  inset-inline-start: calc(var(--e9) / 2 - 1px);
+  inline-size: 2px;
+  background: var(--filete);
+}
+
+.verif__tramo:last-child::before {
+  display: none;
+}
+
+.verif__marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--e9);
+  block-size: var(--e9);
+  border: 2px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-3);
+}
+
+.verif__tramo--approved .verif__marca {
+  border-color: var(--ok-tinta);
+  background: var(--ok-bg);
+  color: var(--ok-tinta);
+}
+
+.verif__tramo--approved::before {
+  background: var(--ok-tinta);
+}
+
+.verif__tramo--pending .verif__marca,
+.verif__tramo--in-review .verif__marca {
+  border-color: var(--aviso-tinta);
+  background: var(--aviso-bg);
+  color: var(--aviso-tinta);
+}
+
+.verif__tramo--rejected .verif__marca,
+.verif__tramo--expired .verif__marca {
+  border-color: var(--error-tinta);
+  background: var(--error-bg);
+  color: var(--error-tinta);
+}
+
+.verif__tramo--not-started .verif__marca {
+  border-style: dashed;
+}
+
+.verif__tramo-cuerpo {
+  display: grid;
+  gap: var(--e2);
+  justify-items: start;
+  min-inline-size: 0;
+  padding-block-start: var(--e2);
+}
+
+.verif__tramo-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2) var(--e3);
+}
+
+.verif__tramo-titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--text-primary);
+}
+
+.verif__opcional {
+  margin-inline-start: var(--e2);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.verif__sin-cargar {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.verif__tramo-detalle {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+/* ─── Solicitudes enviadas ──────────────────────────────────────────────── */
+
+.verif__nueva {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--e3);
+  margin-block-end: var(--e5);
+}
+
+.verif__nueva-campo {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+/* La bandeja a la izquierda y el hilo a la derecha desde 1024 px, como
+   cualquier chat de escritorio; en angosto, una debajo del otro. */
+.verif__chat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  min-block-size: 26rem;
+}
+
+@media (min-width: 1024px) {
+  .verif__chat {
+    grid-template-columns: minmax(16rem, 1fr) minmax(0, 2fr);
+  }
+}
+
+.verif__bandeja {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  overflow-y: auto;
+}
+
+@media (min-width: 1024px) {
+  .verif__bandeja {
+    border-block-end: 0;
+    border-inline-end: 1px solid var(--filete);
+  }
+}
+
+.verif__conversacion {
+  display: grid;
+  grid-template-columns: var(--e9) minmax(0, 1fr);
+  gap: var(--e3);
+  inline-size: 100%;
+  padding: var(--e3) var(--e4);
+  border: 0;
+  border-block-end: 1px solid var(--filete-2);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.verif__conversacion:hover {
+  background: var(--neutro-bg);
+}
+
+.verif__conversacion.is-abierta {
+  background: var(--info-bg);
+}
+
+.verif__conversacion:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--anillo-foco);
+}
+
+.verif__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--e9);
+  block-size: var(--e9);
+  border-radius: var(--r-pill);
+  background: var(--info-bg);
+  color: var(--info-tinta);
+  flex: none;
+}
+
+.verif__conversacion-texto {
+  display: grid;
+  gap: var(--e1);
+  min-inline-size: 0;
+}
+
+.verif__conversacion-cabeza {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.verif__contraparte {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verif__hora {
+  flex: none;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.verif__vista-previa {
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verif__estado {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.verif__estado--approved {
+  color: var(--ok-tinta);
+}
+
+.verif__estado--pending,
+.verif__estado--in-review {
+  color: var(--aviso-tinta);
+}
+
+.verif__estado--rejected {
+  color: var(--error-tinta);
+}
+
+/* El hilo, sobre el papel del chat del producto. */
+.verif__hilo {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  background: var(--chat-papel);
+}
+
+.verif__hilo-cabeza {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+}
+
+.verif__hilo-titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--text-primary);
+}
+
+.verif__hilo-sub {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.verif__mensajes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  flex: 1 1 auto;
+  margin: 0;
+  padding: var(--e4);
+  list-style: none;
+}
+
+.verif__burbuja {
+  display: grid;
+  gap: var(--e1);
+  justify-items: start;
+  max-inline-size: min(80%, 38rem);
+  padding: var(--e2) var(--e3);
+  border-radius: var(--r-ctrl);
+  background: var(--chat-ajena);
+  box-shadow: var(--sombra-1);
+  align-self: flex-start;
+  overflow-wrap: anywhere;
+  color: var(--tinta);
+}
+
+.verif__burbuja--me {
+  align-self: flex-end;
+  background: var(--chat-propia);
+}
+
+/* Lo que dice la plataforma no es de nadie: va al centro, sin globo. */
+.verif__burbuja--system {
+  align-self: center;
+  max-inline-size: 90%;
+  background: var(--neutro-bg);
+  box-shadow: none;
+  text-align: center;
+  justify-items: center;
+  color: var(--neutro-tinta);
+}
+
+.verif__burbuja-texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.verif__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e1);
+  justify-self: end;
+  font-size: var(--fs-caption);
+  color: var(--tinta-3);
+}
+
+.verif__ticks.is-leido {
+  color: var(--chat-tick-leido);
+}
+
+.verif__hilo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  padding: var(--e3) var(--e4);
+  border-block-start: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+}
+
+.verif__hilo-acciones:empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .verif__conversacion {
+    transition: background var(--mov-rapido, 120ms) var(--curva, ease);
+  }
+}

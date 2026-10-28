@@ -369,6 +369,24 @@ export function practitionerFields(
         },
       ],
     },
+    // Dónde trabaja y con qué seguros (propietario, 28/10/2026). Una sola
+    // página para las dos preguntas: son la misma —«con quién trabaja»— y el
+    // alta ya se había juntado de quince páginas a nueve. Va después del
+    // consultorio propio: primero lo que no depende de nadie, después lo que
+    // otro tiene que confirmar.
+    {
+      titulo: 'Dónde trabaja y con qué seguros',
+      clave: 'workplaces',
+      icon: 'building',
+      hint: 'Opcional. Cada institución y cada aseguradora que elija recibe un pedido y lo confirma: ése es su sello oficial.',
+      campos: [
+        {
+          key: 'lugaresDeTrabajo',
+          label: '',
+          control: 'custom',
+        },
+      ],
+    },
     {
       titulo: 'Su título profesional y foto',
       clave: 'practice',

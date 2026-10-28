@@ -49,6 +49,20 @@
     }
   }
 
+  <!-- «Mis verificaciones» (28/10/2026): fuera del menú cerrado del médico, así
+       que el panel —lo primero que ve al entrar— es una de sus puertas. -->
+  @if (atiendePacientes()) {
+    <div class="panel__verificaciones" data-testid="panel-mis-verificaciones">
+      <p class="panel__verificaciones-texto">
+        Siga el sello de su perfil y las respuestas de las instituciones y aseguradoras a las que
+        les pidió trabajar.
+      </p>
+      <a app-button variant="secondary" size="sm" routerLink="/my-account/verifications">
+        Mis verificaciones
+      </a>
+    </div>
+  }
+
   <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
      acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
   <app-page-header
