@@ -1,5 +1,21 @@
 # Estado
 
+## Glosario: ficha del término (port desde `mockup`) — 2026-10-28
+
+Port del arreglo de la ficha `/glossary/:conceptId` pedido por el cliente («Biopsia»), hecho primero en `mockup`
+(rama `claude/glosario-ficha-mockup`, con su evidencia en `evidencias/glosario-ficha-2026-10-28/`). Aquí el
+glosario ya traía soluciones propias que se conservan: la fuente de «Datos» agrupada en chips (`fuentesAgrupadas`,
+«MedlinePlus ×4»), las referencias en chips y la portada ilustrada de la cabecera. Se porta lo que faltaba:
+
+- `app-relation-groups` modo `spread` (sólo la ficha): con el bloque ≥ 52 rem la columna de más de 6 vecinos toma el
+  ancho principal y reparte sus vecinos en columnas de 15 rem, y las cortas van en un riel de 16–20 rem a su
+  derecha; más angosto, se apilan a todo el ancho. Vecinos sin subrayado salvo al pasar/enfocar.
+- Artículo: el cuerpo, tope 48 rem, centrado en su columna (sin franja vacía a la derecha); viñetas en las listas.
+- «Explicado simple» como rótulo y el resumen en el cuerpo grande, sin acotar a 80ch.
+- Pestañas del rediseño: `--r-lg` en vez de `--r-full` (la activa era una cúpula).
+
+---
+
 ## Contabilidad: llave Doctor / Contador — 2026-10-26
 
 `/administration/accounting` tiene una sola llave «Versión: Doctor | Contador». **Doctor** (por omisión) muestra el

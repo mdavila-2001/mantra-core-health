@@ -367,3 +367,23 @@
   color: var(--text-muted);
   font-size: var(--fs-caption);
 }
+
+/* «Explicado simple» es el rótulo del resumen, no una sección: va como el de
+   las zonas de relaciones y el resumen, que es lo primero que se lee, en el
+   cuerpo grande y sin acotar a 80ch (son una o dos líneas). */
+.termino__subtitulo.termino__subtitulo--rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.termino__definicion.termino__resumen {
+  max-inline-size: none;
+  color: var(--text-primary);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  text-align: start;
+  hyphens: manual;
+}
