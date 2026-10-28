@@ -87,6 +87,8 @@ export interface PracticeSite {
 export interface NewOwnSiteAddress {
   /** Líneas de la dirección (calle, número, referencia). Al menos una. */
   readonly lines: readonly string[];
+  /** Distrito o zona, aparte de las líneas (ADR-0028 de la API). */
+  readonly district?: string;
   readonly city?: string;
   /** Municipio, miembro de `VS_BO_MUNICIPALITY`. */
   readonly municipalityConceptId?: string;
