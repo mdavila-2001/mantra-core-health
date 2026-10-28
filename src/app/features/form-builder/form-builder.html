@@ -1,8 +1,10 @@
-<app-page-header
-  title="Formularios"
-  subtitle="Agregue sus propios campos a los formularios estándar de su especialidad."
-  [breadcrumbs]="breadcrumbs()"
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Formularios"
+    subtitle="Agregue sus propios campos a los formularios estándar de su especialidad."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
 
 @if (abierta(); as plantilla) {
   <!-- ─── Un formulario abierto ─────────────────────────────────────────────
