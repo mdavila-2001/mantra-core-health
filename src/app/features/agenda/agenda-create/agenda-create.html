@@ -63,10 +63,10 @@
 
     <!-- ── Dónde se publica: antes que la agenda, porque cada organización tiene las suyas ── -->
     @if (publicaSoloLaPropia()) {
-      <section class="agenda-create__bloque">
+      <fieldset class="agenda-create__bloque" [disabled]="cargando()">
         <h2 class="agenda-create__titulo">¿En qué organización publica?</h2>
-        <app-organization-field (selected)="place.choice.set($event)" />
-      </section>
+        <app-organization-field [disabled]="cargando()" (selected)="place.choice.set($event)" />
+      </fieldset>
     }
 
     <!-- ── Decisión 1 · qué días y en qué horario ────────────────────────── -->

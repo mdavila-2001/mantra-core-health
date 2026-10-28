@@ -39,6 +39,15 @@
   border-radius: var(--r-md);
 }
 
+/* El de la organización es un `fieldset`: se deshabilita entero mientras se publica,
+   porque cambiarla a mitad de camino partiría la cadena en dos organizaciones. Sin
+   el marco, el margen ni el ancho mínimo que le pone el navegador. */
+fieldset.agenda-create__bloque {
+  margin: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
 .agenda-create__titulo {
   margin: 0;
   font-size: var(--fs-h3);
