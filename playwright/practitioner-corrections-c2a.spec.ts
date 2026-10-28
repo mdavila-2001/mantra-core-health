@@ -244,7 +244,9 @@ test('médica · «Afiliarme a otra organización…» abre la solicitud en un m
   await expect(dialog).toBeVisible();
   await choose(page, dialog.getByTestId('request-practice'), 'Centro Médico Norte');
   await choose(page, dialog.getByTestId('request-site'), 'Centro Médico Norte · Sede principal');
-  await dialog.getByRole('checkbox', { name: 'Colonoscopía' }).check();
+  // El input nativo está oculto: se pulsa su rótulo visible, como lo haría la persona.
+  await dialog.locator('.checkbox-label', { hasText: 'Colonoscopía' }).click();
+  await expect(dialog.getByRole('checkbox', { name: 'Colonoscopía' })).toBeChecked();
   await snapshot(page, 'affiliation-filled-1280-light');
   await dialog.getByTestId('request-submit').click();
 
