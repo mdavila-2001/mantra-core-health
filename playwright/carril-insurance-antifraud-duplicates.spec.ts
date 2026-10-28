@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import type { Actor } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
@@ -40,8 +40,14 @@ const ADMIN_MOCK: Actor = {
 // «3000000», que es el rango de los profesionales (`indice * 12345`).
 const DOCUMENTO_PACIENTE = '5000000';
 
-/** Abre el expediente del paciente sembrado y registra un encuentro nuevo. */
-async function abrirEncuentroDelPaciente(page: Page): Promise<void> {
+/**
+ * Abre la consulta del paciente sembrado, con un encuentro en curso.
+ *
+ * La consulta cuelga del expediente (`/medical-records/:profileId/consultation`):
+ * se busca a la persona en el archivo clínico, se abre su expediente y de ahí
+ * se pasa a su consulta.
+ */
+async function abrirConsultaDelPaciente(page: Page): Promise<void> {
   await irA(page, '/medical-records');
   await estable(page);
 
@@ -49,41 +55,132 @@ async function abrirEncuentroDelPaciente(page: Page): Promise<void> {
   await page.getByTestId('clinical-record-search-by-document').click();
   await estable(page);
 
-  await page.getByRole('link', { name: 'Ver expediente' }).first().click();
+  // Por `data-testid`: el nombre accesible del enlace nombra a la persona
+  // («Ver el expediente de …»), no dice «Ver expediente».
+  await page.getByTestId('paciente-ver-expediente').first().click();
   await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
 
-  const urlExpediente = page.url();
-  await page.goto(`${urlExpediente}/encounter`, { waitUntil: 'commit' });
-  await page.waitForURL(/\/medical-records\/[^/]+\/encounter$/, { timeout: 60_000 });
-  await estable(page);
+  await irA(page, `${new URL(page.url()).pathname}/consultation`);
+  await expect(page.getByTestId('consulta-rejilla')).toBeVisible({ timeout: 30_000 });
 
-  await expect(page.getByRole('heading', { name: 'Encuentro', exact: true })).toBeVisible();
-  const registrar = page.getByRole('button', { name: 'Registrar encuentro' });
-  await expect(registrar).toBeEnabled({ timeout: 30_000 });
-  await registrar.click();
-  // El encuentro recién creado pasa a «en curso»: es la señal de que
-  // `encounterId` ya llegó al bloque de laboratorio, que lo exige para
-  // ofrecer el formulario.
+  // El encuentro en curso es lo que ata la orden: sin él la casilla no ofrece
+  // el formulario.
+  const abrir = page.getByTestId('consulta-abrir-encuentro');
+  await expect(abrir.or(page.getByTestId('encuentros-en-curso')).first()).toBeVisible({
+    timeout: 30_000,
+  });
+  if (await abrir.isVisible()) await abrir.click();
   await expect(page.getByTestId('encuentros-en-curso')).toBeVisible({ timeout: 30_000 });
 }
 
-/** Elige «Laboratorio e imagenología» en el selector de plantilla del formulario clínico. */
-async function abrirLaboratorio(page: Page): Promise<void> {
-  await page.getByLabel('Qué va a completar').selectOption({ label: 'Laboratorio e imagenología' });
-  await expect(page.getByRole('heading', { name: 'Laboratorio e imagenología' })).toBeVisible();
+/** Abre una casilla de la consulta y devuelve su modal. */
+async function abrirCasilla(page: Page, clave: string): Promise<Locator> {
+  await page.getByTestId(`consulta-casilla-${clave}`).click();
+  const modal = page.getByRole('dialog');
+  await expect(modal).toBeVisible();
+  return modal;
+}
+
+async function cerrar(page: Page, modal: Locator): Promise<void> {
+  await modal.getByTestId('content-dialog-close').click();
+  await expect(page.getByTestId('consulta-modal')).toHaveCount(0);
+}
+
+/** Contesta la ficha elegida: «No» en cada sí/no y un texto en cada campo. */
+async function contestarLaFicha(modal: Locator): Promise<void> {
+  const campos = modal.getByTestId('campo-especialidad');
+  await expect(campos.first()).toBeVisible({ timeout: 30_000 });
+  for (const campo of await campos.all()) {
+    const no = campo
+      .getByRole('radio', { name: 'No' })
+      .or(campo.getByRole('button', { name: 'No' }));
+    if ((await no.count()) > 0) {
+      await no.first().click();
+      continue;
+    }
+    const texto = campo.locator('input:not([type="number"]):not([type="hidden"])');
+    if ((await texto.count()) > 0 && (await texto.first().isEditable())) {
+      await texto.first().fill('Sin particularidades');
+      continue;
+    }
+    const numero = campo.locator('input[type="number"]');
+    if ((await numero.count()) > 0) await numero.first().fill('1');
+  }
+}
+
+/**
+ * Deja respondido el «Formulario médico» del encuentro.
+ *
+ * En la consulta, la orden de análisis cuelga de una respuesta del formulario
+ * médico: sin ella «Pedir estudio» no se habilita. Se completa la ficha que
+ * viene elegida, con lo mínimo; si el encuentro ya la tiene, alcanza.
+ */
+async function responderElFormulario(page: Page): Promise<void> {
+  const modal = await abrirCasilla(page, 'formulario');
+  const respondido = modal.getByTestId('formulario-respondido');
+  await expect(respondido.or(modal.getByTestId('campo-especialidad')).first()).toBeVisible({
+    timeout: 30_000,
+  });
+  if (!(await respondido.isVisible())) {
+    await contestarLaFicha(modal);
+    await modal.getByRole('button', { name: 'Completar formulario' }).click();
+    await expect(respondido).toBeVisible({ timeout: 30_000 });
+  }
+  await cerrar(page, modal);
+}
+
+/**
+ * Abre la casilla «Orden de análisis» de la consulta.
+ *
+ * El selector «Qué va a completar» del formulario médico ya no ofrece
+ * «Laboratorio e imagenología» (28/10/2026). El diálogo de antiduplicación
+ * vive en esta casilla: la orden que se elige en el cierre de la ficha no lo
+ * abre.
+ */
+async function abrirOrdenDeAnalisis(page: Page): Promise<Locator> {
+  const modal = await abrirCasilla(page, 'ordenes');
+  await expect(modal.getByRole('heading', { name: 'Laboratorio e imagenología' })).toBeVisible();
+  // La respuesta del formulario médico viene elegida: sin ella no se pide.
+  await expect(modal.getByTestId('respuesta-del-formulario')).toBeVisible({ timeout: 30_000 });
+  return modal;
+}
+
+/**
+ * Elige una opción de un `app-select` como lo haría la persona: toca el campo
+ * y toca la opción en el `<dialog>` que se abre. `app-select` ya no envuelve un
+ * `<select>` nativo, así que `selectOption` no tiene dónde apoyarse.
+ */
+async function elegir(zona: Locator, campo: RegExp, opcion: string): Promise<void> {
+  await zona.getByRole('combobox', { name: campo }).click();
+  const lista = zona.locator('dialog.select-dialog[open]');
+  await expect(lista).toBeVisible();
+  await lista.getByRole('option', { name: opcion, exact: true }).click();
+  await expect(lista).toHaveCount(0);
 }
 
 /**
  * Elige un estudio y su tipo, y pulsa «Pedir estudio».
  *
- * Sin `exact`: el asterisco de obligatoriedad agrega «(obligatorio)» al
- * nombre accesible del control (`FormField` lo suma como texto visualmente
- * oculto), así que el nombre real es «Tipo (obligatorio)», no «Tipo» a secas.
+ * Los campos van por prefijo: el asterisco de obligatoriedad agrega
+ * «(obligatorio)» al nombre accesible del control (`FormField` lo suma como
+ * texto visualmente oculto), así que el nombre real es «Tipo (obligatorio)»,
+ * no «Tipo» a secas.
  */
-async function pedirEstudio(page: Page, estudio: string, tipo: string): Promise<void> {
-  await page.getByLabel('Estudio').selectOption({ label: estudio });
-  await page.getByLabel('Tipo').selectOption({ label: tipo });
-  await page.getByRole('button', { name: 'Pedir estudio' }).click();
+async function pedirEstudio(modal: Locator, estudio: string, tipo: string): Promise<void> {
+  await elegir(modal, /^Estudio\b/, estudio);
+  await elegir(modal, /^Tipo\b/, tipo);
+  await modal.getByRole('button', { name: 'Pedir estudio' }).click();
+}
+
+/**
+ * Relee el histórico de estudios de la persona.
+ *
+ * En la consulta, registrar la orden cierra el modal; lo que quedó se lee al
+ * volver a abrir la casilla, que pide el histórico otra vez.
+ */
+async function releerEstudios(page: Page): Promise<Locator> {
+  await expect(page.getByTestId('consulta-modal')).toHaveCount(0, { timeout: 30_000 });
+  return abrirOrdenDeAnalisis(page);
 }
 
 /**
@@ -127,12 +224,13 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     const page = await context.newPage();
 
     await entrar(page, MEDICA_MOCK);
-    await abrirEncuentroDelPaciente(page);
-    await abrirLaboratorio(page);
+    await abrirConsultaDelPaciente(page);
+    await responderElFormulario(page);
+    const ordenes = await abrirOrdenDeAnalisis(page);
 
     // El Hemograma completo de PACIENTE lo liberó TENANT_LABORATORIO — otra
     // organización que la de `medica` (TENANT_CLINICA/TENANT_HOSPITAL).
-    await pedirEstudio(page, 'Hemograma completo', 'Laboratorio');
+    await pedirEstudio(ordenes, 'Hemograma completo', 'Laboratorio');
 
     const dialogo = await esperarDialogoDuplicado(page);
     await expect(dialogo).toContainText('Hemograma completo');
@@ -154,7 +252,8 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     await page.getByTestId('btn-reuse-previous-results').click();
     await expect(dialogo).toHaveCount(0);
     await estable(page);
-    await expect(page.getByTestId('estudios-duplicado').first()).toContainText(
+    const estudios = await releerEstudios(page);
+    await expect(estudios.getByTestId('estudios-duplicado').first()).toContainText(
       'Satisfecha por el informe del',
     );
 
@@ -168,12 +267,13 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     const page = await context.newPage();
 
     await entrar(page, MEDICA_MOCK);
-    await abrirEncuentroDelPaciente(page);
-    await abrirLaboratorio(page);
+    await abrirConsultaDelPaciente(page);
+    await responderElFormulario(page);
+    const ordenes = await abrirOrdenDeAnalisis(page);
 
     // El Perfil lipídico de PACIENTE lo liberó TENANT_CLINICA — la misma
     // organización que `medica`: acá sí llega la conclusión clínica.
-    await pedirEstudio(page, 'Perfil lipídico', 'Laboratorio');
+    await pedirEstudio(ordenes, 'Perfil lipídico', 'Laboratorio');
 
     const dialogo = await esperarDialogoDuplicado(page);
     await expect(dialogo).not.toContainText('otra organización');
@@ -194,7 +294,8 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
 
     await expect(dialogo).toHaveCount(0);
     await estable(page);
-    await expect(page.getByTestId('estudios-duplicado').first()).toContainText(
+    const estudios = await releerEstudios(page);
+    await expect(estudios.getByTestId('estudios-duplicado').first()).toContainText(
       'Repetida con justificación',
     );
 
@@ -208,9 +309,10 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     const page = await context.newPage();
 
     await entrar(page, MEDICA_MOCK);
-    await abrirEncuentroDelPaciente(page);
-    await abrirLaboratorio(page);
-    await pedirEstudio(page, 'Hemograma completo', 'Laboratorio');
+    await abrirConsultaDelPaciente(page);
+    await responderElFormulario(page);
+    const ordenes = await abrirOrdenDeAnalisis(page);
+    await pedirEstudio(ordenes, 'Hemograma completo', 'Laboratorio');
 
     await esperarDialogoDuplicado(page);
 
