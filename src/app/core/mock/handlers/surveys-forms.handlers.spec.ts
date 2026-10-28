@@ -126,6 +126,18 @@ describe('encuestas y formularios del backend demo', () => {
     });
   });
 
+  it('las respuestas recibidas llegan con la fecha redondeada al día y sin la reserva', () => {
+    const templates = data<{ id: string; published: boolean }[]>(request('GET', '/surveys/templates'));
+    const activa = templates.find((template) => template.published)!;
+    const respuestas = data<Record<string, unknown>[]>(request('GET', `/surveys/templates/${activa.id}/responses`));
+    expect(respuestas.length).toBeGreaterThan(0);
+    for (const respuesta of respuestas) {
+      // Medianoche UTC: ninguna hora exacta junto al comentario.
+      expect(respuesta['submittedAt']).toMatch(/^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/);
+      expect('appointmentBookingId' in respuesta).toBe(false);
+    }
+  });
+
   it('reporta recursos inexistentes y respuestas de invitaciones', () => {
     const missing = '/surveys/templates/missing';
     expect(status(request('GET', missing))).toBe(404);

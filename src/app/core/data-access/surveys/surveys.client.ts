@@ -267,9 +267,12 @@ export class SurveysClient {
       )
       .pipe(
         map((items) =>
-          items.map((item) => ({
-            ...item,
-            submittedAt: maybeDate(item.submittedAt) ?? null,
+          items.map(({ appointmentBookingId, ...resto }) => ({
+            ...resto,
+            // La reserva ya no viaja; una API vieja que la mande en `null` no
+            // debe dejarla como clave declarada.
+            ...(appointmentBookingId ? { appointmentBookingId } : {}),
+            submittedAt: maybeDate(resto.submittedAt) ?? null,
           })),
         ),
       );
@@ -395,7 +398,8 @@ type WireSurveyDetail = Omit<SurveyDetail, 'effectiveFrom' | 'effectiveTo' | 'as
 };
 
 /** Una respuesta recibida, tal como viaja. */
-type WireSurveyResponse = Omit<SurveyResponse, 'submittedAt'> & {
+type WireSurveyResponse = Omit<SurveyResponse, 'submittedAt' | 'appointmentBookingId'> & {
+  readonly appointmentBookingId?: string | null;
   readonly submittedAt?: string | null;
 };
 

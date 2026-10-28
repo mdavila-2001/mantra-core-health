@@ -216,7 +216,17 @@ export interface SurveyAnswer {
 export interface SurveyResponse {
   readonly id: string;
   readonly invitationId: string;
-  readonly appointmentBookingId: string;
+  /**
+   * La reserva de origen. **Opcional y en retirada**: la API deja de devolverla
+   * al profesional, porque con ella (y la fecha) una respuesta se atribuye a una
+   * cita concreta. Ningún código debe depender de que esté.
+   */
+  readonly appointmentBookingId?: string;
+  /**
+   * Cuándo se envió, **redondeado al día** (medianoche UTC): la hora exacta no
+   * viaja. Para mostrarlo hay que formatear en UTC, o el día retrocede al oeste
+   * de Greenwich.
+   */
   readonly submittedAt: Date | null;
   readonly answers: readonly SurveyAnswer[];
 }

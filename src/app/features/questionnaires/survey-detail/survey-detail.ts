@@ -543,7 +543,9 @@ export class SurveyDetailScreen {
    * (`respuestas()`) — no hace falta ida y vuelta al servidor.
    *
    * **Anónimo a propósito** (FT-29): ninguna columna identifica al paciente,
-   * porque el contrato del servidor tampoco lo manda.
+   * porque el contrato del servidor tampoco lo manda. Por lo mismo la fecha es
+   * sólo el día (`AAAA-MM-DD`): sin hora ni reserva, una fila no se atribuye a
+   * una cita concreta.
    */
   protected descargarCsv(): void {
     const encuesta = this.encuesta();
@@ -556,7 +558,7 @@ export class SurveyDetailScreen {
     const filas = this.respuestas().map((respuesta) => {
       const porPregunta = new Map(respuesta.answers.map((a) => [a.questionId, this.valorDe(a)]));
       return [
-        respuesta.submittedAt ? respuesta.submittedAt.toISOString() : '',
+        diaDeEnvio(respuesta.submittedAt),
         ...encuesta.questions.map((p) => porPregunta.get(p.id) ?? ''),
       ];
     });
@@ -593,6 +595,14 @@ export function armarBarras(
     const cantidad = cantidadDe(etiqueta);
     return { etiqueta, cantidad, porcentaje: total === 0 ? 0 : Math.round((cantidad / total) * 100) };
   });
+}
+
+/**
+ * El día de envío de una respuesta, `AAAA-MM-DD`, en UTC (el servidor lo manda
+ * redondeado al día a medianoche UTC). Sin fecha, vacío. Nunca la hora.
+ */
+export function diaDeEnvio(fecha: Date | null): string {
+  return fecha === null || Number.isNaN(fecha.getTime()) ? '' : fecha.toISOString().slice(0, 10);
 }
 
 /** El texto de un estado de error, sin inventar uno si no trae. */
