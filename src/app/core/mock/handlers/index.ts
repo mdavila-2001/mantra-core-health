@@ -5,6 +5,7 @@ import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registrarDerivaciones } from './referrals.handlers';
 import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
@@ -72,6 +73,7 @@ export function crearRouterSimulado(): MockRouter {
   registerRoleAssignments(router);
   registrarPracticas(router);
   registrarClinica(router);
+  registrarDerivaciones(router);
   registerReceivedServices(router);
   registerProcedureCenters(router);
   registerMedicalNotes(router);
