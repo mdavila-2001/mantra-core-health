@@ -618,6 +618,8 @@ describe('PatientProfileEdit', () => {
       expect(req.request.body).toEqual({
         residenceMunicipalityConceptId: 'mun-quillacollo',
         homeAddressLines: 'Av. Arce 2631, Sopocachi',
+        // El distrito viaja aparte de la calle (ADR-0028 de la API).
+        homeDistrict: 'Sopocachi',
         homeLatitude: -16.5,
         homeLongitude: -68.15,
       });

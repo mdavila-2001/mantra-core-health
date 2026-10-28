@@ -28,6 +28,8 @@ interface GuardadaSimulada {
   readonly pacienteId: string;
   readonly label: string;
   readonly lines?: string;
+  /** Distrito o zona, aparte de la calle, como en la API (ADR-0028). */
+  readonly district?: string;
   readonly municipalityConceptId: string;
   readonly latitude?: number;
   readonly longitude?: number;
@@ -65,6 +67,7 @@ function libretaDe(p: PacienteSimulado) {
     kind: 'SAVED' as const,
     label: g.label,
     ...(g.lines ? { lines: g.lines } : {}),
+    ...(g.district ? { district: g.district } : {}),
     city: displayOf(g.municipalityConceptId),
     municipalityConceptId: g.municipalityConceptId,
     ...(g.latitude !== undefined && g.longitude !== undefined
@@ -131,6 +134,9 @@ export function registrarLibretaDeDirecciones(router: MockRouter): void {
       ...(typeof c['lines'] === 'string' && c['lines'].trim() !== ''
         ? { lines: c['lines'].trim() }
         : {}),
+      ...(typeof c['district'] === 'string' && c['district'].trim() !== ''
+        ? { district: c['district'].trim() }
+        : {}),
       municipalityConceptId: municipio,
       ...punto(c),
       isPreferred: c['isPreferred'] === true,
@@ -164,6 +170,9 @@ export function registrarLibretaDeDirecciones(router: MockRouter): void {
         ? { label: c['label'].trim() }
         : {}),
       ...(typeof c['lines'] === 'string' ? { lines: c['lines'].trim() || undefined } : {}),
+      ...(typeof c['district'] === 'string'
+        ? { district: c['district'].trim() || undefined }
+        : {}),
       ...(typeof c['municipalityConceptId'] === 'string'
         ? { municipalityConceptId: c['municipalityConceptId'] }
         : {}),
