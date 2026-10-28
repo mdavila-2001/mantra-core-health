@@ -103,10 +103,13 @@
          cabecera; se mudó acá para despejarla sin dejar de estar en todas las
          pantallas. Primera cosa del menú, antes que cualquier destino: una
          urgencia no compite. Con la barra recogida se queda en el ícono —el
-         nombre accesible ya dice «Emergencia» y a quién llama—. -->
-    <div class="app-side-nav__emergencia" appTutorialTarget="nav-emergencia">
-      <app-panic-button [compacto]="navRecogido()" />
-    </div>
+         nombre accesible ya dice «Emergencia» y a quién llama—. Sólo para el
+         paciente (27/10/2026), con la misma señal de rol que el carrito. -->
+    @if (esPacienteDelCarrito()) {
+      <div class="app-side-nav__emergencia" appTutorialTarget="nav-emergencia">
+        <app-panic-button [compacto]="navRecogido()" />
+      </div>
+    }
 
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
          que cambia es cómo se pintan, no de dónde vienen.
@@ -290,8 +293,10 @@
              `app-side-nav__emergencia`). En el teléfono el menú es un cajón y
              quedaba a dos toques, así que ahí vuelve como ícono: una urgencia
              tiene que estar a uno (propietario, 27/10/2026). Fuera de esos
-             anchos lo esconde `shell-layout.css`. -->
-        <app-panic-button class="app-header__emergencia" data-testid="header-emergencia" compacto />
+             anchos lo esconde `shell-layout.css`. Sólo para el paciente. -->
+        @if (esPacienteDelCarrito()) {
+          <app-panic-button class="app-header__emergencia" data-testid="header-emergencia" compacto />
+        }
 
         <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
              elegir: una cuenta sin dependientes no necesita conmutar nada, y un

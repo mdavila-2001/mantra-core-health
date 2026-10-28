@@ -1493,6 +1493,43 @@ describe('ShellLayout', () => {
       ).toBeTruthy();
     });
 
+    describe('Emergencia es sólo del paciente (27/10/2026)', () => {
+      function emergencyInSideNav(): Element | null {
+        return raiz().querySelector('#app-side-nav [data-testid="boton-emergencia"]');
+      }
+
+      function emergencyInHeader(): Element | null {
+        return raiz().querySelector('.app-header [data-testid="header-emergencia"]');
+      }
+
+      it('el médico no la ve ni en el menú lateral ni en la cabecera', () => {
+        abrirSesion({ sub: 'u-med', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+
+        expect(emergencyInSideNav()).toBeNull();
+        expect(emergencyInHeader()).toBeNull();
+        // Tampoco queda la franja vacía con su filete arriba del menú.
+        expect(raiz().querySelector('.app-side-nav__emergencia')).toBeNull();
+      });
+
+      it('el paciente la ve en los dos lugares', () => {
+        abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+
+        expect(emergencyInSideNav()).not.toBeNull();
+        expect(emergencyInHeader()?.querySelector('[data-testid="boton-emergencia"]')).not.toBeNull();
+      });
+
+      it.each([
+        ['administración de plataforma', ['PLATFORM_ADMIN']],
+        ['seguridad', ['SECURITY_ADMIN']],
+        ['sin rol', []],
+      ])('tampoco se le ofrece a %s', (_who, roles) => {
+        abrirSesion({ sub: 'u-2', roles, tenants: ['t-1'] });
+
+        expect(emergencyInSideNav()).toBeNull();
+        expect(emergencyInHeader()).toBeNull();
+      });
+    });
+
     it.each([
       ['paciente', ['USER', 'PATIENT']],
       ['profesional', ['PRACTITIONER']],
