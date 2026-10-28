@@ -681,7 +681,9 @@ describe('NavigationService', () => {
       // renglón para todo el mundo y dejó de poder mostrar nada. «Formularios
       // y referencia» ocupa su lugar: declara cinco secciones y quien ejerce
       // ve cuatro — «Mis cuestionarios» sale por la lista cerrada de §4.H.
-      // «Encuestas» se suma el 28/10/2026, al retirarse el árbol del panel.
+      // «Encuestas» se sumó el 28/10/2026 al retirarse el árbol del panel y ese
+      // mismo día pasó a ser una pestaña de «Formularios» (`FormsHub`): ya no
+      // ocupa renglón para quien ejerce.
       abrirSesion(['PRACTITIONER']);
 
       const atencion = service.menu().find((grupo) => grupo.label === 'Atención');
@@ -696,7 +698,6 @@ describe('NavigationService', () => {
         '/my-quotations',
         // Carril 21: los grupos médicos se arman sobre el mismo catálogo.
         '/my-medical-groups',
-        '/questionnaires',
       ]);
     });
 

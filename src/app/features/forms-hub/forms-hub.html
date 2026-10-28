@@ -14,9 +14,9 @@
     <app-tab [label]="pestana.label">
       @if (pestanas()[activa()]?.ruta === pestana.ruta) {
         @if (pestana.ruta === '/form-builder') {
-          <app-form-builder embedded />
+          <app-form-builder [embedded]="true" />
         } @else {
-          <app-surveys-home embedded />
+          <app-surveys-home [embedded]="true" />
         }
       }
     </app-tab>
