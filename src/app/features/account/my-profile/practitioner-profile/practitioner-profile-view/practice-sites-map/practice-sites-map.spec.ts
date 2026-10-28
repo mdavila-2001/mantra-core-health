@@ -103,6 +103,45 @@ describe('PracticeSitesMap', () => {
 
     expect(link?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Teléfono: +591 72123456');
     expect(link?.getAttribute('href')).toBe('tel:+59172123456');
+    // El nombre dice qué hace y a quién llama, y conserva el texto visible.
+    expect(link?.getAttribute('aria-label')).toBe(
+      'Llamar a Consultorio Dra. Rojas. Teléfono: +591 72123456',
+    );
+  });
+
+  it('el teléfono es un enlace propio: ningún enlace queda dentro del botón que elige la sede', () => {
+    // Un `<a href="tel:">` dentro del `<button>` hacía que elegir la sede
+    // pudiera terminar en «¿Abrir Teléfono?».
+    const fixture = montar([sede({ contactPhone: '+591 72123456' })]);
+    const root = fixture.nativeElement as HTMLElement;
+    const phoneLink = root.querySelector<HTMLAnchorElement>('[data-testid="practice-site-contact-phone"]');
+
+    expect(root.querySelectorAll('button a')).toHaveLength(0);
+    expect(phoneLink?.closest('button')).toBeNull();
+    // Hermano del botón, colgado del renglón de la sede.
+    expect(phoneLink?.parentElement?.tagName).toBe('LI');
+  });
+
+  it('elegir la sede no activa el teléfono: sólo llama quien toca el enlace', () => {
+    const fixture = montar([sede({ contactPhone: '+591 72123456' })]);
+    const root = fixture.nativeElement as HTMLElement;
+    const phoneLink = root.querySelector<HTMLAnchorElement>('[data-testid="practice-site-contact-phone"]')!;
+    const phoneClicks: MouseEvent[] = [];
+    phoneLink.addEventListener('click', (event) => {
+      // jsdom no navega a `tel:`; basta con saber si el clic llegó al enlace.
+      event.preventDefault();
+      phoneClicks.push(event);
+    });
+    const siteButton = root.querySelector<HTMLButtonElement>('.sedes__boton')!;
+
+    siteButton.click();
+    fixture.detectChanges();
+
+    expect(siteButton.getAttribute('aria-pressed')).toBe('true');
+    expect(phoneClicks).toHaveLength(0);
+
+    phoneLink.click();
+    expect(phoneClicks).toHaveLength(1);
   });
 
   it('si ninguna está ubicada no dibuja el mapa', () => {
