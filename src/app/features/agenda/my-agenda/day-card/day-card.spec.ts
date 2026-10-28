@@ -1,10 +1,22 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import type { Signal, WritableSignal } from '@angular/core';
+import { signal, type Provider, type Signal, type WritableSignal } from '@angular/core';
+import { of } from 'rxjs';
 
 import { DayCard, type DayGap } from './day-card';
+import { SessionStore } from '../../../../core/auth/session.store';
+import type { AgendaResource } from '../../../../core/data-access/scheduling/scheduling.types';
+import { HealthcareServicesClient } from '../../../../core/data-access/healthcare-services/healthcare-services.client';
+import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
+import { ROLE_ASSIGNMENT_STATUS } from '../../../../core/data-access/practice-sites/role-assignment-concepts';
+import type { MyRoleAssignment } from '../../../../core/data-access/practice-sites/practice-sites.types';
+import { ServicesCatalogClient } from '../../../../core/data-access/services-catalog/services-catalog.client';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import {
+  AFFILIATE_LABEL,
+  OWN_OFFICE_LABEL,
+} from '../../../../shared/components/molecules/organization-select/organization-select.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
 const DIA = new Date(2026, 8, 10);
@@ -40,11 +52,12 @@ describe('TarjetaDelDia', () => {
   async function montar(
     ratosTomados: readonly DayGap[] = [],
     cupoId: string | null = null,
+    providers: readonly Provider[] = [],
   ): Promise<void> {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [DayCard],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), ...providers],
     }).compileComponents();
 
     http = TestBed.inject(HttpTestingController);
@@ -573,6 +586,268 @@ describe('TarjetaDelDia', () => {
         '¿Está seguro de agendar una sesión de 6 horas?',
       );
       http.expectNone(() => true);
+      http.verify();
+    });
+  });
+
+  /**
+   * La organización elegida decide en qué agenda queda lo creado.
+   *
+   * «Mi consultorio» viene elegido y guarda donde guardó siempre: en la agenda
+   * que pasa «Mi agenda». Otra organización guarda en la agenda del médico ahí,
+   * que se busca por su perfil; si no publicó ninguna, se dice y no se guarda.
+   */
+  describe('la organización elige la agenda', () => {
+    const PROFILE_ID = 'hp-rojas';
+
+    function affiliation(practiceId: string, practiceName: string, tenantId: string): MyRoleAssignment {
+      return {
+        id: `ra-${practiceId}`,
+        practiceId,
+        practiceName,
+        practiceSiteId: `site-${practiceId}`,
+        roleConceptId: 'role-attending',
+        status: ROLE_ASSIGNMENT_STATUS.ACTIVE,
+        isPrimary: false,
+        createdAt: new Date('2026-10-01T12:00:00Z'),
+        avatarUrl: null,
+        tenantId,
+      };
+    }
+
+    const OLIVOS = affiliation('practice-olivos', 'Clínica Los Olivos', 'tenant-olivos');
+    const SAN_JUAN = affiliation('practice-san-juan', 'Hospital San Juan', 'tenant-san-juan');
+
+    /** Una agenda de la organización; es del médico si apunta a su perfil. */
+    function scheduleOf(id: string, resourceRefId: string): AgendaResource {
+      return {
+        id,
+        name: 'Consultorio',
+        resourceTypeConceptId: 'rt-practitioner',
+        resourceRefType: 'health_practitioner_profiles',
+        resourceRefId,
+        practitionerName: null,
+        practiceId: null,
+        timeZone: 'America/La_Paz',
+        capacity: 1,
+        stateConceptId: 'st-active',
+        site: null,
+      };
+    }
+
+    /** La sesión del médico y sus afiliaciones; el formulario de afiliación sin datos. */
+    const PROVIDERS: readonly Provider[] = [
+      { provide: SessionStore, useValue: { practitionerProfileId: signal(PROFILE_ID) } },
+      {
+        provide: PracticeSitesClient,
+        useValue: {
+          listMyRoleAssignments: () => of([OLIVOS, SAN_JUAN]),
+          listSitesOfPractitioner: () => of({ items: [], count: 0 }),
+          selfRequestAffiliation: vi.fn(),
+        },
+      },
+      { provide: ServicesCatalogClient, useValue: { listPractices: () => of([]) } },
+      {
+        provide: HealthcareServicesClient,
+        useValue: { listSites: () => of([]), listOffers: () => of([]) },
+      },
+    ];
+
+    async function mountWithOrganizations(): Promise<void> {
+      await montar([], null, PROVIDERS);
+      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+    }
+
+    function root(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function organizationTrigger(): HTMLButtonElement {
+      return root().querySelector('app-organization-field .select-trigger') as HTMLButtonElement;
+    }
+
+    async function chooseOrganization(label: string): Promise<void> {
+      organizationTrigger().click();
+      await fixture.whenStable();
+      Array.from(root().querySelectorAll<HTMLElement>('app-organization-field [role="option"]'))
+        .find((row) => row.querySelector('.option-label')?.textContent?.trim() === label)
+        ?.click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    /** La búsqueda de las agendas de una organización, todavía sin respuesta. */
+    function scheduleSearch(tenantId: string) {
+      return http.expectOne(
+        (r) =>
+          r.method === 'GET' &&
+          r.url === '/scheduling/resources' &&
+          r.params.get('tenantId') === tenantId,
+      );
+    }
+
+    function answerSchedules(tenantId: string, agendas: readonly AgendaResource[]): void {
+      scheduleSearch(tenantId).flush({ items: agendas, count: agendas.length });
+      fixture.detectChanges();
+    }
+
+    function saveButton(): HTMLButtonElement {
+      return root().querySelector('[data-testid="tarjeta-guardar"]') as HTMLButtonElement;
+    }
+
+    it('empieza en «Mi consultorio» y guarda con la agenda de siempre', async () => {
+      await mountWithOrganizations();
+
+      expect(organizationTrigger().textContent?.trim()).toBe(OWN_OFFICE_LABEL);
+
+      api().save();
+      const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+      expect(req.request.body.resourceId).toBe('res-1');
+      req.flush(CREATED_APPOINTMENT);
+      http.verify();
+    });
+
+    it('con otra organización que tiene agenda, la cita va a su recurso', async () => {
+      await mountWithOrganizations();
+      await chooseOrganization('Clínica Los Olivos');
+
+      // Mientras se busca no hay agenda donde guardar.
+      expect(root().querySelector('[data-testid="day-card-destination-searching"]')?.textContent).toContain(
+        'Buscando su agenda en Clínica Los Olivos',
+      );
+      expect(api().canSave()).toBe(false);
+
+      answerSchedules('tenant-olivos', [scheduleOf('res-ajena', 'hp-otro'), scheduleOf('res-olivos', PROFILE_ID)]);
+      expect(api().canSave()).toBe(true);
+
+      api().save();
+      const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+      expect(req.request.body.resourceId).toBe('res-olivos');
+      req.flush(CREATED_APPOINTMENT);
+      http.verify();
+    });
+
+    it('el tiempo ocupado también va a la agenda de esa organización', async () => {
+      await mountWithOrganizations();
+      api().patient.set(null);
+      api().reason.set('Reunión de equipo');
+      await chooseOrganization('Clínica Los Olivos');
+      answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+
+      api().save();
+      http
+        .expectOne((r) => r.url === '/scheduling/resources/res-olivos/exceptions' && r.method === 'POST')
+        .flush({ id: 'exc-1', blockedSlots: 0 });
+      http.verify();
+    });
+
+    it('con otra organización sin agenda, avisa y no guarda', async () => {
+      await mountWithOrganizations();
+      await chooseOrganization('Hospital San Juan');
+      answerSchedules('tenant-san-juan', [scheduleOf('res-ajena', 'hp-otro')]);
+
+      expect(root().querySelector('[data-testid="day-card-destination-missing"]')?.textContent).toContain(
+        'Publique su agenda en Hospital San Juan para agendar ahí',
+      );
+      expect(api().canSave()).toBe(false);
+      // `app-button` se deshabilita con `aria-disabled`, no con el atributo nativo.
+      expect(saveButton().getAttribute('aria-disabled')).toBe('true');
+
+      api().save();
+      http.expectNone((r) => r.url === '/scheduling/appointments/direct');
+      http.verify();
+    });
+
+    it('volver a «Mi consultorio» quita el aviso y guarda con la agenda de siempre', async () => {
+      await mountWithOrganizations();
+      await chooseOrganization('Hospital San Juan');
+      answerSchedules('tenant-san-juan', []);
+
+      await chooseOrganization(OWN_OFFICE_LABEL);
+
+      expect(root().querySelector('[data-testid="day-card-destination-missing"]')).toBeNull();
+      api().save();
+      const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+      expect(req.request.body.resourceId).toBe('res-1');
+      req.flush(CREATED_APPOINTMENT);
+      http.verify();
+    });
+
+    it('la respuesta tarde de una organización que ya no está elegida se descarta', async () => {
+      await mountWithOrganizations();
+      await chooseOrganization('Clínica Los Olivos');
+      const late = scheduleSearch('tenant-olivos');
+
+      await chooseOrganization('Hospital San Juan');
+      answerSchedules('tenant-san-juan', []);
+      // Llega ahora la de Los Olivos, que sí tiene agenda: no puede ganar.
+      late.flush({ items: [scheduleOf('res-olivos', PROFILE_ID)], count: 1 });
+      fixture.detectChanges();
+
+      expect(root().querySelector('[data-testid="day-card-destination-missing"]')?.textContent).toContain(
+        'Hospital San Juan',
+      );
+      expect(api().canSave()).toBe(false);
+      http.verify();
+    });
+
+    it('la respuesta tarde tampoco pisa la vuelta a «Mi consultorio»', async () => {
+      await mountWithOrganizations();
+      await chooseOrganization('Hospital San Juan');
+      const late = scheduleSearch('tenant-san-juan');
+
+      await chooseOrganization(OWN_OFFICE_LABEL);
+      late.flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      expect(root().querySelector('[data-testid="day-card-destination-missing"]')).toBeNull();
+      api().save();
+      const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+      expect(req.request.body.resourceId).toBe('res-1');
+      req.flush(CREATED_APPOINTMENT);
+      http.verify();
+    });
+
+    it('si no se pudo buscar la agenda, lo dice, no guarda y deja reintentar', async () => {
+      await mountWithOrganizations();
+      await chooseOrganization('Clínica Los Olivos');
+      scheduleSearch('tenant-olivos').flush(null, { status: 500, statusText: 'Internal Server Error' });
+      fixture.detectChanges();
+
+      expect(root().querySelector('[data-testid="day-card-destination-failure"]')?.textContent).toContain(
+        'No pudimos consultar su agenda en Clínica Los Olivos.',
+      );
+      // Un fallo no es «no tiene agenda»: el aviso de publicar no aparece.
+      expect(root().querySelector('[data-testid="day-card-destination-missing"]')).toBeNull();
+      expect(api().canSave()).toBe(false);
+
+      root().querySelector<HTMLElement>('[data-testid="day-card-destination-retry"]')?.click();
+      answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+
+      expect(root().querySelector('[data-testid="day-card-destination-failure"]')).toBeNull();
+      expect(api().canSave()).toBe(true);
+      http.verify();
+    });
+
+    it('«Afiliarme a otra organización…» abre la solicitud y el modal del día sigue abierto', async () => {
+      await mountWithOrganizations();
+      const closed = vi.fn();
+      fixture.componentInstance.cerrada.subscribe(closed);
+
+      await chooseOrganization(AFFILIATE_LABEL);
+
+      const affiliation = root().querySelector('app-affiliation-dialog dialog');
+      expect(affiliation?.hasAttribute('open')).toBe(true);
+      expect(affiliation?.querySelector('[data-testid="request-form"]')).not.toBeNull();
+      // El modal del día no se cerró ni perdió lo cargado.
+      expect(root().querySelector('dialog')?.hasAttribute('open')).toBe(true);
+      expect(closed).not.toHaveBeenCalled();
+      expect(api().patient()?.value).toBe('pp-ana');
+      // Pedir no es elegir: el selector sigue en «Mi consultorio» y no se buscó ninguna agenda.
+      expect(organizationTrigger().textContent?.trim()).toBe(OWN_OFFICE_LABEL);
+      expect(api().canSave()).toBe(true);
+      http.expectNone((r) => r.url === '/scheduling/resources');
       http.verify();
     });
   });
