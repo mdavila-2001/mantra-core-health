@@ -3,16 +3,19 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import type {
-  NewServiceCatalogItem,
-  Practice,
-  ProcedureNomenclaturePage,
-  ProcedureNomenclatureQuery,
-  ProcedureSpecialty,
-  ServiceCatalogChanges,
-  ServiceCatalogItem,
-  ServiceCatalogPage,
-  ServiceCatalogQuery,
+import {
+  SPECIALTY_SEPARATOR,
+  type ImportProceduresBody,
+  type ImportProceduresResult,
+  type NewServiceCatalogItem,
+  type Practice,
+  type ProcedureNomenclaturePage,
+  type ProcedureNomenclatureQuery,
+  type ProcedureSpecialty,
+  type ServiceCatalogChanges,
+  type ServiceCatalogItem,
+  type ServiceCatalogPage,
+  type ServiceCatalogQuery,
 } from './services-catalog.types';
 
 /**
@@ -117,6 +120,44 @@ export class ServicesCatalogClient {
   }
 
   /**
+   * `GET /billing/service-catalog/procedure-specialties/mine` — las
+   * especialidades del arancel que le corresponden al médico autenticado.
+   *
+   * Puede responder vacío (el médico no tiene especialidad cargada o ninguna
+   * coincide con el arancel): quien lo use debe tratarlo como «sin filtro por
+   * defecto», no como error.
+   */
+  listMyProcedureSpecialties(): Observable<readonly ProcedureSpecialty[]> {
+    return this.http
+      .get<{ readonly items: readonly ProcedureSpecialty[] }>(
+        this.url('/billing/service-catalog/procedure-specialties/mine'),
+      )
+      .pipe(map((body) => body.items));
+  }
+
+  /**
+   * `POST /billing/service-catalog/import-procedures` — importa en lote al
+   * catálogo de una práctica todo lo del arancel que cumpla el filtro.
+   *
+   * Idempotente. Sólo viajan las claves con valor: el backend valida con
+   * `forbidNonWhitelisted`, y además un `q` vacío o una lista vacía se omiten
+   * en vez de mandarse, porque «sin filtro» y «filtro vacío» no son lo mismo
+   * para el servidor.
+   */
+  importProcedures(body: ImportProceduresBody): Observable<ImportProceduresResult> {
+    const cuerpo = sinIndefinidos({
+      practiceId: body.practiceId,
+      specialties: body.specialties?.length ? body.specialties : undefined,
+      codes: body.codes?.length ? body.codes : undefined,
+      q: body.q === '' ? undefined : body.q,
+    });
+    return this.http.post<ImportProceduresResult>(
+      this.url('/billing/service-catalog/import-procedures'),
+      cuerpo,
+    );
+  }
+
+  /**
    * `GET /billing/service-catalog/procedures` — una página del arancel.
    *
    * @param query - Especialidad, texto y cursor.
@@ -128,8 +169,15 @@ export class ServicesCatalogClient {
     // Parámetro a parámetro, por lo mismo que en `search`: un opcional en
     // `undefined` viajaría como clave declarada y volvería 400.
     let params = new HttpParams();
-    if (query.specialty !== undefined && query.specialty !== '') {
-      params = params.set('specialty', query.specialty);
+    // Varias especialidades viajan unidas con `|` en un solo parámetro.
+    const especialidades =
+      query.specialties !== undefined
+        ? query.specialties.filter((e) => e !== '')
+        : query.specialty !== undefined && query.specialty !== ''
+          ? [query.specialty]
+          : [];
+    if (especialidades.length > 0) {
+      params = params.set('specialty', especialidades.join(SPECIALTY_SEPARATOR));
     }
     if (query.query !== undefined && query.query !== '') {
       params = params.set('q', query.query);

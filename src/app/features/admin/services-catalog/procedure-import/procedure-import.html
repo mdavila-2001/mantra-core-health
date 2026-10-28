@@ -7,28 +7,152 @@
   </a>
 </app-page-header>
 
-<!-- La práctica es a dónde se importa. Va arriba y no dentro de cada tarjeta:
-     es una decisión que vale para toda la sesión de importación. -->
-<form class="importar__practica" (submit)="$event.preventDefault()">
-  <app-form-field
-    label="Importar al catálogo de"
-    hint="El servicio nace en la práctica que elijas."
-  >
-    <app-select
-      data-testid="importar-practica"
-      [options]="opcionesDePractica()"
-      [value]="practicaElegida()"
-      (valueChange)="cambiarPractica($event)"
-    />
-  </app-form-field>
-</form>
+<!-- La barra de importación: a dónde se importa (izquierda) y la acción en
+     lote (derecha). Va arriba y no dentro de cada tarjeta: es una decisión que
+     vale para toda la sesión. A todo el ancho, sin «medida de formulario». -->
+<section class="importar__barra" aria-label="Destino de la importación">
+  <div class="importar__practica">
+    @switch (estadoPracticas().status) {
+      @case ('loading') {
+        <div data-testid="importar-practicas-cargando" aria-busy="true">
+          <p class="importar__rotulo">Importar al catálogo de</p>
+          <app-skeleton variant="text" [lines]="1" />
+        </div>
+      }
+      @case ('ready') {
+        @if (practicaUnica(); as unica) {
+          <!-- Una sola práctica: no hay nada que elegir, y un desplegable de
+               una opción sólo parece un campo roto. -->
+          <p class="importar__rotulo">Importar al catálogo de</p>
+          <p class="importar__practica-fija" data-testid="importar-practica-fija">
+            {{ unica.name }}
+          </p>
+        } @else {
+          <app-form-field
+            label="Importar al catálogo de"
+            hint="El servicio nace en la práctica que elijas."
+          >
+            <app-select
+              data-testid="importar-practica"
+              [options]="opcionesDePractica()"
+              [value]="practicaElegida()"
+              (valueChange)="cambiarPractica($event)"
+            />
+          </app-form-field>
+        }
+      }
+      @case ('empty') {
+        <!-- El médico no tiene ninguna práctica: no es un fallo, y reintentar
+             no lo arregla. Se dice qué hacer. -->
+        <app-alert
+          tone="warning"
+          title="No tenés ninguna práctica asignada"
+          data-testid="importar-sin-practica"
+        >
+          Sin una práctica no hay catálogo al que importar. Pedile a quien
+          administre la organización que te vincule a una; mientras tanto podés
+          recorrer el arancel.
+        </app-alert>
+      }
+      @default {
+        @if (falloPracticas(); as fallo) {
+          <app-alert tone="error" [title]="fallo.titulo" data-testid="importar-practicas-error">
+            {{ fallo.mensaje }}
+            @if (fallo.idDePeticion) {
+              <span> Código para soporte: {{ fallo.idDePeticion }}.</span>
+            }
+            <div alert-actions>
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                type="button"
+                data-testid="importar-practicas-reintentar"
+                (clicked)="cargarPracticas()"
+              >
+                Reintentar
+              </button>
+              @if (fallo.accion; as accion) {
+                <a [routerLink]="accion.route">{{ accion.label }}</a>
+              }
+            </div>
+          </app-alert>
+        }
+      }
+    }
+  </div>
 
-@if (practicaElegida() === null) {
-  <!-- Sin práctica se puede mirar el arancel, pero no importar. Decirlo antes
-       evita que alguien recorra 4408 entradas para descubrirlo al tocar. -->
-  <app-alert variant="info" data-testid="importar-sin-practica">
-    Todavía no hay una práctica a la que importar. Podés recorrer el arancel
-    igual.
+  <!-- Importar en lote: todo lo que cumpla el filtro vigente, no sólo las
+       páginas ya cargadas. Con confirmación previa que dice cuántos son. -->
+  <div class="importar__lote">
+    <button
+      app-button
+      variant="primary"
+      type="button"
+      data-testid="importar-todo"
+      [isLoading]="importandoTodo()"
+      [disabled]="!puedeImportarTodo()"
+      (clicked)="importarTodo()"
+    >
+      {{ importandoTodo() ? 'Importando…' : etiquetaDeImportarTodo() }}
+    </button>
+    @if (!alcance().hayFiltro) {
+      <p class="importar__ayuda" data-testid="importar-todo-ayuda">
+        Elegí una especialidad o escribí una búsqueda para importar en lote.
+      </p>
+    }
+  </div>
+</section>
+
+@if (avisoDeEspecialidad(); as aviso) {
+  <app-alert tone="info" data-testid="importar-aviso-especialidad">{{ aviso }}</app-alert>
+}
+
+@if (fallaLecturaDelCatalogo()) {
+  <app-alert tone="warning" data-testid="importar-aviso-catalogo">
+    No pudimos leer qué servicios ya tiene la práctica, así que «Ya está en tu
+    catálogo» puede estar incompleto. Recargá la página para volver a intentarlo.
+  </app-alert>
+}
+
+@if (resultadoDeLote(); as resultado) {
+  <app-alert
+    tone="success"
+    title="Importación terminada"
+    [dismissible]="true"
+    data-testid="importar-resultado"
+    (dismissed)="descartarResultadoDeLote()"
+  >
+    En «{{ resultado.practica }}» se crearon
+    <strong data-testid="importar-resultado-creados">{{ resultado.created }}</strong>
+    servicios y se omitieron
+    <strong data-testid="importar-resultado-omitidos">{{ resultado.skipped }}</strong>
+    que ya estaban (de {{ resultado.total }} que cumplían el filtro).
+  </app-alert>
+}
+
+@if (falloDeLote(); as fallo) {
+  <app-alert tone="error" [title]="fallo.titulo" data-testid="importar-lote-error">
+    {{ fallo.mensaje }}
+    @if (fallo.idDePeticion) {
+      <span> Código para soporte: {{ fallo.idDePeticion }}.</span>
+    }
+    <div alert-actions>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        data-testid="importar-lote-reintentar"
+        [disabled]="!puedeImportarTodo()"
+        (clicked)="importarTodo()"
+      >
+        Reintentar
+      </button>
+      @if (fallo.accion; as accion) {
+        <a [routerLink]="accion.route">{{ accion.label }}</a>
+      }
+    </div>
   </app-alert>
 }
 
@@ -40,7 +164,7 @@
   [collapsible]="true"
   [expandAll]="hayFiltro()"
   searchLabel="Buscar un procedimiento por nombre"
-  noMatchesText="Ningún procedimiento del arancel coincide. Probá con otra palabra o quitá la especialidad."
+  noMatchesText="Ningún procedimiento del arancel coincide. Probá con otra palabra o elegí «Todas las especialidades»."
   (filtersChanged)="filtrar($event)"
   (moreRequested)="traerMas()"
   (retry)="reintentar()"
@@ -89,7 +213,7 @@
             type="button"
             data-testid="procedimiento-importar"
             [attr.aria-label]="'Importar: ' + procedimiento.display"
-            [disabled]="practicaElegida() === null || importando() !== null"
+            [disabled]="practicaElegida() === null || importando() !== null || importandoTodo()"
             (clicked)="importar(procedimiento)"
           >
             {{ importando() === procedimiento.code ? 'Importando…' : 'Importar' }}

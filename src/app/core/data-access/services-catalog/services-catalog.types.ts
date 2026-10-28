@@ -131,10 +131,49 @@ export interface ProcedureSpecialty {
   readonly count: number;
 }
 
+/**
+ * Separador de varias especialidades en `GET .../procedures?specialty=A|B`.
+ *
+ * Es el del contrato de la API. También es lo que viaja en la URL de la
+ * pantalla, así que un nombre de especialidad del arancel no puede contenerlo.
+ */
+export const SPECIALTY_SEPARATOR = '|';
+
 /** Filtros y paginación del nomenclador. */
 export interface ProcedureNomenclatureQuery {
+  /** Una sola especialidad. Si viene `specialties`, ésta se ignora. */
   readonly specialty?: string;
+  /**
+   * Varias especialidades a la vez (las del médico). Viajan unidas con
+   * {@link SPECIALTY_SEPARATOR}: `specialty=A|B`. Un arreglo vacío no filtra.
+   */
+  readonly specialties?: readonly string[];
+  /** Texto libre: el servidor busca por palabras, sin tildes, en nombre, código, grupo y especialidad. */
   readonly query?: string;
   readonly cursor?: string;
   readonly limit?: number;
+}
+
+/**
+ * Cuerpo de `POST /billing/service-catalog/import-procedures`: importa **en
+ * lote** al catálogo de una práctica todo lo del arancel que cumpla el filtro.
+ *
+ * Todo lo que no sea `practiceId` es filtro y se combina con «y». El servidor
+ * es idempotente: lo que la práctica ya tiene cuenta como `skipped`.
+ */
+export interface ImportProceduresBody {
+  readonly practiceId: string;
+  /** Especialidades del arancel a importar (cada una por separado, sin `|`). */
+  readonly specialties?: readonly string[];
+  /** Códigos puntuales del arancel. */
+  readonly codes?: readonly string[];
+  /** Mismo texto libre que la búsqueda del arancel. */
+  readonly q?: string;
+}
+
+/** Resultado del import en lote. `created + skipped === total`. */
+export interface ImportProceduresResult {
+  readonly created: number;
+  readonly skipped: number;
+  readonly total: number;
 }
