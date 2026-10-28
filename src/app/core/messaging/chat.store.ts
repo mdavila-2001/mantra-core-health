@@ -51,18 +51,6 @@ const CLAVE_DE_ACTUACION = 'alovida.chat.actuar-como';
 /** Rol del token que, con membresía activa, deja escribir como la farmacia. */
 export const ROL_PERSONAL_DE_FARMACIA = 'PHARMACY_STAFF';
 
-/**
- * El slug de la vitrina de una organización.
- *
- * Lo fija la API al proyectarla (`public-profile-projection.service.ts`:
- * `organization-<tenantId>`), y es la única forma que tiene hoy el personal de
- * encontrar la vitrina de su farmacia **sin un pedido en la mano**: ningún
- * endpoint de farmacia ni de «mis organizaciones» publica el `profileId`.
- */
-export function slugDeVitrinaDeOrganizacion(tenantId: string): string {
-  return `organization-${tenantId}`;
-}
-
 /** La vitrina de una organización con la que esta sesión puede escribir. */
 export interface VitrinaParaActuar {
   readonly profileId: string;
@@ -77,6 +65,24 @@ interface ActuacionGuardada extends VitrinaParaActuar {
 /** El aviso que se da al perder el permiso de escribir como la organización. */
 export const AVISO_SIN_PERMISO_DE_ORGANIZACION =
   'Ya no podés escribir como la farmacia: volviste a tu perfil.';
+
+/**
+ * El aviso al abrir un chat nuevo mientras se escribía como la organización.
+ *
+ * Como la vitrina sólo se responde: la API no deja iniciar conversaciones ni
+ * buscar contactos con ella (403). Quien tocó «Chatear» o eligió un contacto
+ * quiere escribir **él**, así que el chat se abre con el perfil propio y se
+ * dice, para que no crea que le escribió como la farmacia.
+ */
+export const AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO =
+  'Los chats nuevos se inician con tu perfil: como la farmacia sólo se responde. Volviste a «Yo».';
+
+/**
+ * El error al abrir un chat nuevo como la organización sin perfil propio al
+ * que volver.
+ */
+export const ERROR_CHAT_NUEVO_COMO_ORGANIZACION =
+  'Como la farmacia sólo se responde a quien escribe o desde un pedido. Para iniciar un chat nuevo necesitás tu perfil propio.';
 
 /**
  * Cuánto tiempo se puede editar un mensaje después de mandarlo.
@@ -228,19 +234,29 @@ export class ChatStore {
   readonly perfilPropio = signal<string | null>(null);
 
   /**
-   * La vitrina de la organización con la que esta persona puede escribir, si
-   * se conoce: la encontró `descubrirVitrina()` o la devolvió el
-   * `POST /pharmacy/orders/:id/conversation`.
+   * Las vitrinas de organización con las que esta persona puede escribir: las
+   * devolvió `GET /community/profiles/organization-showcases/me`
+   * (`descubrirVitrina()`) o el `POST /pharmacy/orders/:id/conversation`.
    *
-   * Que esté acá **no** es un permiso: es la puerta que se ofrece. Quien
+   * Que estén acá **no** es un permiso: es la puerta que se ofrece. Quien
    * decide es la API en cada llamada, y un 403 devuelve al perfil propio.
    */
-  readonly vitrinaDeOrganizacion = signal<VitrinaParaActuar | null>(null);
+  readonly vitrinasDeOrganizacion = signal<readonly VitrinaParaActuar[]>([]);
 
-  /** `true` si se está escribiendo como la organización. */
+  /**
+   * La vitrina con la que se está escribiendo o, si se escribe como uno
+   * mismo, la primera que se ofrece. `null` si no hay ninguna.
+   */
+  readonly vitrinaDeOrganizacion = computed<VitrinaParaActuar | null>(() => {
+    const vitrinas = this.vitrinasDeOrganizacion();
+    const perfil = this.perfil();
+    return vitrinas.find((v) => v.profileId === perfil) ?? vitrinas[0] ?? null;
+  });
+
+  /** `true` si se está escribiendo como una organización. */
   readonly actuandoComoOrganizacion = computed(() => {
-    const vitrina = this.vitrinaDeOrganizacion();
-    return vitrina !== null && this.perfil() === vitrina.profileId;
+    const perfil = this.perfil();
+    return this.vitrinasDeOrganizacion().some((v) => v.profileId === perfil);
   });
 
   /** Lo que se le avisa a quien perdió el permiso de escribir como la farmacia. */
@@ -311,6 +327,7 @@ export class ChatStore {
   /** Para qué usuario se resolvió la identidad: otro usuario la vuelve a pedir. */
   private usuarioDeLaIdentidad: string | null = null;
   private actuacionRestaurada = false;
+  /** Para qué usuario se pidieron ya las vitrinas: una vez por cuenta. */
   private vitrinaBuscada: string | null = null;
   private hiloMarcado = new Set<string>();
 
@@ -471,44 +488,58 @@ export class ChatStore {
   /* --- Con qué perfil se escribe ------------------------------------------- */
 
   /**
-   * Busca la vitrina de la farmacia de la organización activa, para ofrecer
-   * «Escribiendo como: Farmacia X».
+   * Pide las vitrinas de organización con las que esta sesión puede atender
+   * el chat, para ofrecer «Escribiendo como: Farmacia X».
    *
-   * Sólo si el token trae el rol de personal de farmacia: a nadie más se le
-   * ofrece la puerta. Que la vitrina exista y sea pública no prueba que se
-   * pueda escribir con ella —eso lo decide la API con la membresía—; por eso
-   * fallar acá no es un error que se muestre: simplemente no hay selector.
+   * Las da `GET /community/profiles/organization-showcases/me`, con la misma
+   * regla que autoriza escribir como ellas (`canAttend`: membresía activa
+   * OWNER/ADMIN/STAFF y, para una farmacia, `PHARMACY_STAFF`). Antes se
+   * adivinaba el slug `organization-<tenantId>`, que no es el de las farmacias
+   * sembradas (`farmacia-*`) ni resuelve una vitrina privada.
    *
-   * **El hueco**: la vitrina se encuentra por su slug determinista
-   * (`organization-<tenantId>`), que sólo resuelve si está publicada. Una
-   * vitrina privada queda alcanzable únicamente desde un pedido (el `POST` del
-   * pedido devuelve su id). Lo mínimo que lo cierra es un
-   * `GET /community/profiles/organization-showcases/me` que devuelva las
-   * vitrinas con las que la sesión puede actuar, con la misma regla que
-   * `assertOwnMessagingProfile`.
+   * Sólo si el token trae el rol de personal de farmacia: el selector es de
+   * ese mostrador. Fallar acá no es un error que se muestre: simplemente no
+   * hay selector.
    */
   descubrirVitrina(): void {
-    const tenantId = this.sesion.activeTenantId();
+    const usuario = this.sesion.userId();
     if (
-      tenantId === null ||
+      usuario === null ||
       !this.sesion.roles().includes(ROL_PERSONAL_DE_FARMACIA) ||
-      this.vitrinaBuscada === tenantId
+      this.vitrinaBuscada === usuario
     ) {
       return;
     }
-    this.vitrinaBuscada = tenantId;
-    this.community.readProfileBySlug(slugDeVitrinaDeOrganizacion(tenantId)).subscribe({
-      next: (ficha) => {
-        if (ficha.tenantId !== tenantId || ficha.id === this.perfilPropio()) {
+    this.vitrinaBuscada = usuario;
+    this.community.listOwnOrganizationShowcases().subscribe({
+      next: (items) => {
+        if (this.sesion.userId() !== usuario) {
           return;
         }
-        const actual = this.vitrinaDeOrganizacion();
-        if (actual === null || actual.profileId === ficha.id) {
-          this.vitrinaDeOrganizacion.set({ profileId: ficha.id, nombre: ficha.displayName });
-        }
+        const ofrecidas = items
+          .filter((item) => item.profileId !== this.perfilPropio())
+          .map((item) => ({ profileId: item.profileId, nombre: item.displayName }));
+        // La que está en uso (restaurada de la pestaña o abierta desde un
+        // pedido) se queda aunque no venga: si la API ya no la deja, lo dirá
+        // con un 403 al usarla, y eso devuelve al perfil propio con aviso.
+        const enUso = this.vitrinasDeOrganizacion().find((v) => v.profileId === this.perfil());
+        this.vitrinasDeOrganizacion.set(
+          enUso === undefined || ofrecidas.some((v) => v.profileId === enUso.profileId)
+            ? ofrecidas
+            : [enUso, ...ofrecidas],
+        );
       },
       error: () => undefined,
     });
+  }
+
+  /** Suma una vitrina a las ofrecidas, o le actualiza el nombre. */
+  private ofrecerVitrina(vitrina: VitrinaParaActuar): void {
+    this.vitrinasDeOrganizacion.update((vitrinas) =>
+      vitrinas.some((v) => v.profileId === vitrina.profileId)
+        ? vitrinas.map((v) => (v.profileId === vitrina.profileId ? vitrina : v))
+        : [...vitrinas, vitrina],
+    );
   }
 
   /**
@@ -520,9 +551,11 @@ export class ChatStore {
    * el perfil nuevo, y se relee. La elección se recuerda en la pestaña.
    */
   actuarComo(profileId: string | null): void {
-    const vitrina = this.vitrinaDeOrganizacion();
     const destino = profileId === null ? this.perfilPropio() : profileId;
-    if (profileId !== null && (vitrina === null || vitrina.profileId !== profileId)) {
+    if (
+      profileId !== null &&
+      !this.vitrinasDeOrganizacion().some((v) => v.profileId === profileId)
+    ) {
       return;
     }
     this.avisoDePerfil.set('');
@@ -534,6 +567,8 @@ export class ChatStore {
     this.perfil.set(destino);
     this.conversaciones.set([]);
     this.bandejaCargada.set(false);
+    // Los contactos buscados eran para iniciar chats con la otra identidad.
+    this.resultados.set([]);
     this.error.set('');
     this.guardarActuacion();
     this.socket.reiniciar();
@@ -545,8 +580,12 @@ export class ChatStore {
 
   /** Un 403 o un `NOT_OWN_PROFILE` mientras se escribía como la organización. */
   private perderPermisoDeOrganizacion(): void {
+    const perdida = this.perfil();
     this.actuarComo(null);
-    this.vitrinaDeOrganizacion.set(null);
+    // Ya no se ofrece una puerta que la API acaba de cerrar; las otras, sí.
+    this.vitrinasDeOrganizacion.update((vitrinas) =>
+      vitrinas.filter((v) => v.profileId !== perdida),
+    );
     this.avisoDePerfil.set(AVISO_SIN_PERMISO_DE_ORGANIZACION);
   }
 
@@ -571,9 +610,10 @@ export class ChatStore {
       return;
     }
     try {
-      const vitrina = this.vitrinaDeOrganizacion();
+      const perfil = this.perfil();
+      const vitrina = this.vitrinasDeOrganizacion().find((v) => v.profileId === perfil);
       const usuario = this.sesion.userId();
-      if (vitrina !== null && usuario !== null && this.actuandoComoOrganizacion()) {
+      if (vitrina !== undefined && usuario !== null) {
         const guardada: ActuacionGuardada = { userId: usuario, ...vitrina };
         sessionStorage.setItem(CLAVE_DE_ACTUACION, JSON.stringify(guardada));
       } else {
@@ -604,7 +644,7 @@ export class ChatStore {
         sessionStorage.removeItem(CLAVE_DE_ACTUACION);
         return;
       }
-      this.vitrinaDeOrganizacion.set({ profileId: guardada.profileId, nombre: guardada.nombre });
+      this.ofrecerVitrina({ profileId: guardada.profileId, nombre: guardada.nombre });
       this.perfil.set(guardada.profileId);
     } catch {
       // Ilegible o bloqueado: se arranca con el perfil propio.
@@ -617,7 +657,7 @@ export class ChatStore {
     this.perfil.set(null);
     this.perfilPropio.set(null);
     this.perfilResuelto.set(false);
-    this.vitrinaDeOrganizacion.set(null);
+    this.vitrinasDeOrganizacion.set([]);
     this.avisoDePerfil.set('');
     this.conversaciones.set([]);
     this.bandejaCargada.set(false);
@@ -1618,9 +1658,16 @@ export class ChatStore {
 
   /* --- Escribirle a alguien nuevo ----------------------------------------- */
 
+  /**
+   * Busca gente a la que todavía no se le escribió.
+   *
+   * No mientras se escribe como la organización: la API no deja buscar
+   * contactos ni iniciar chats con la vitrina (403), que sólo responde. En ese
+   * modo el buscador de la bandeja filtra los chats que ya hay y nada más.
+   */
   buscarGente(consulta: string): void {
     const q = consulta.trim();
-    if (q === '') {
+    if (q === '' || this.actuandoComoOrganizacion()) {
       this.resultados.set([]);
       return;
     }
@@ -1668,10 +1715,25 @@ export class ChatStore {
     // encendiera antes y `/community/profiles/me` fallara, quedaría prendido
     // para siempre. Dos pedidos encolados a la vez abren uno solo igual.
     this.conPerfil(() => {
+      if (this.abriendo()) {
+        return;
+      }
+      // Como la organización sólo se responde: la API no deja iniciar chats
+      // con la vitrina. Quien llega acá —un contacto del buscador, «Chatear»
+      // desde el marketplace— quiere escribir él, así que se vuelve antes al
+      // perfil propio y se avisa; sin perfil propio, se explica por qué no.
+      if (this.actuandoComoOrganizacion()) {
+        if (this.perfilPropio() === null) {
+          this.error.set(ERROR_CHAT_NUEVO_COMO_ORGANIZACION);
+          return;
+        }
+        this.actuarComo(null);
+        this.avisoDePerfil.set(AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO);
+      }
       const propio = this.perfil();
       // Sin perfil público no hay con qué abrir el hilo: la pantalla ya ofrece
       // crearlo, y eso no es un error.
-      if (propio === null || this.abriendo()) {
+      if (propio === null) {
         return;
       }
       this.abriendo.set(true);
@@ -1767,7 +1829,7 @@ export class ChatStore {
     this.abriendo.set(true);
     resolver.subscribe({
       next: ({ conversationId, profileId }) => {
-        this.vitrinaDeOrganizacion.set({ profileId, nombre });
+        this.ofrecerVitrina({ profileId, nombre });
         this.actuarComo(profileId);
         this.entrarAlHilo(profileId, conversationId, alAbrir, contexto);
       },

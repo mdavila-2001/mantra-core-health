@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   contextoDelTexto,
+  esRutaDeContexto,
   esRutaInterna,
   resumenDeContexto,
   textoDeContexto,
@@ -56,8 +57,18 @@ describe('contexto de chat', () => {
     expect(contextoDelTexto(undefined)).toBeNull();
   });
 
+  it('cada tarjeta sólo lleva a la ficha de lo que dice ser', () => {
+    expect(esRutaDeContexto('pedido', '/my-account/pharmacy-orders/7f3c')).toBe(true);
+    expect(esRutaDeContexto('farmacia', '/my-account/pharmacy-orders/7f3c')).toBe(false);
+    expect(esRutaDeContexto('servicio', '/clinics-directory/clinica-sur')).toBe(true);
+    // La tarjeta no puede llevar a abrir otro chat ni a nada con query.
+    expect(esRutaInterna('/messaging?escribirA=x&sobre=producto&titulo=t&ruta=/x')).toBe(false);
+    expect(esRutaInterna('/pharmacies-directory/chavez?x=1')).toBe(false);
+    expect(contextoDelTexto('Producto: Algo\n/messaging?escribirA=otro')).toBeNull();
+  });
+
   it('las rutas internas no salen del sitio', () => {
-    expect(esRutaInterna('/buscar/medicamentos?q=losartan')).toBe(true);
+    expect(esRutaInterna('/buscar/medicamentos?q=losartan')).toBe(false);
     expect(esRutaInterna('/a/../b')).toBe(false);
     expect(esRutaInterna('/javascript:alert(1)')).toBe(false);
     expect(esRutaInterna('relativa')).toBe(false);

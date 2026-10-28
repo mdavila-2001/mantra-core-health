@@ -315,7 +315,7 @@ describe('Messaging', () => {
     it('con la vitrina de la farmacia ofrece «Yo / Farmacia» y elegir la farmacia cambia de perfil', () => {
       conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
       const store = TestBed.inject(ChatStore);
-      store.vitrinaDeOrganizacion.set({ profileId: 'pp-farmacia', nombre: 'Farmacia Vida' });
+      store.vitrinasDeOrganizacion.set([{ profileId: 'pp-farmacia', nombre: 'Farmacia Vida' }]);
       fixture.detectChanges();
 
       const selector = consultar('mensajeria-escribiendo-como');
@@ -326,6 +326,62 @@ describe('Messaging', () => {
       const opciones = Array.from(selector!.querySelectorAll<HTMLButtonElement>('[role="radio"]'));
       opciones.find((b) => b.textContent?.includes('Farmacia Vida'))!.click();
       expect(actuar).toHaveBeenCalledWith('pp-farmacia');
+    });
+
+    it('quien atiende dos vitrinas las ve a las dos en el selector', () => {
+      conBandeja([]);
+      const store = TestBed.inject(ChatStore);
+      store.vitrinasDeOrganizacion.set([
+        { profileId: 'pp-farmacia', nombre: 'Farmacia Vida' },
+        { profileId: 'pp-farmacia-2', nombre: 'Farmacia Norte' },
+      ]);
+      fixture.detectChanges();
+
+      const opciones = Array.from(
+        consultar('mensajeria-escribiendo-como')!.querySelectorAll<HTMLButtonElement>('[role="radio"]'),
+      );
+      expect(opciones.map((b) => b.textContent?.trim())).toEqual(['Yo', 'Farmacia Vida', 'Farmacia Norte']);
+
+      const actuar = vi.spyOn(store, 'actuarComo');
+      opciones[2]!.click();
+      expect(actuar).toHaveBeenCalledWith('pp-farmacia-2');
+    });
+
+    it('como la farmacia, el buscador sólo filtra sus chats: no busca contactos ni ofrece iniciar uno', () => {
+      conBandeja([]);
+      const store = TestBed.inject(ChatStore);
+      store.vitrinasDeOrganizacion.set([{ profileId: 'pp-farmacia', nombre: 'Farmacia Vida' }]);
+      store.actuarComo('pp-farmacia');
+      http.expectOne((r) => r.url === '/community/conversations').flush({
+        items: [
+          conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Ana Rojas' }]),
+          conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Marta Quispe' }]),
+        ],
+        count: 2,
+        limit: 50,
+        nextCursor: null,
+      });
+      fixture.detectChanges();
+
+      const campo = consultar('mensajeria-consulta') as HTMLInputElement;
+      expect(campo.placeholder).toBe('Buscar en los chats de Farmacia Vida');
+
+      escribir('rojas');
+      expect(todas('conversacion').length).toBe(1);
+      expect(texto()).toContain('Ana Rojas');
+
+      // Ni al directorio: la API no deja buscar contactos como la vitrina.
+      vi.advanceTimersByTime(300);
+      http.expectNone((r) => r.url === '/public/search/practitioners');
+      expect(consultar('mensajeria-resultado')).toBeNull();
+
+      escribir('nadie');
+      vi.advanceTimersByTime(300);
+      http.expectNone((r) => r.url === '/public/search/practitioners');
+      const sinNada = consultar('mensajeria-sin-coincidencias')?.textContent ?? '';
+      expect(sinNada).toContain('Ningún chat de Farmacia Vida coincide');
+      expect(sinNada).toContain('sólo se responde');
+      expect(sinNada).not.toContain('contacto');
     });
 
     it('el aviso de que se perdió el permiso se ve en la bandeja', () => {

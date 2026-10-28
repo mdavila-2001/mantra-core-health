@@ -50,10 +50,28 @@ describe('maqueta · chat paciente ↔ farmacia', () => {
     expect(FARMACIA_VIDA.tenantId).toBe(TENANT_FARMACIA);
   });
 
-  it('el personal encuentra la vitrina de su farmacia por el slug de organización de la API', () => {
-    const r = llamar('GET', `/community/profiles/by-slug/organization-${TENANT_FARMACIA}`, MOSTRADOR);
+  it('el personal (farmacia@alovida.mock) encuentra la vitrina de su farmacia en organization-showcases/me', () => {
+    expect(MOSTRADOR.email).toBe('farmacia@alovida.mock');
+    const r = llamar('GET', '/community/profiles/organization-showcases/me', MOSTRADOR);
     expect(r.status).toBe(200);
-    expect((r.body as { id: string }).id).toBe(FARMACIA_VIDA.id);
+    const items = (r.body as { items: { profileId: string; slug: string; displayName: string; kind: string }[] }).items;
+    expect(items).toContainEqual(
+      expect.objectContaining({ profileId: FARMACIA_VIDA.id, slug: FARMACIA_VIDA.slug, kind: 'PHARMACY' }),
+    );
+    // Sólo farmacias de sus tenants.
+    expect(items.every((i) => i.kind === 'PHARMACY')).toBe(true);
+  });
+
+  it('nadie más recibe vitrinas: ni la paciente ni el visitador del mismo tenant', () => {
+    for (const user of [PACIENTE, VISITADOR]) {
+      const r = llamar('GET', '/community/profiles/organization-showcases/me', user);
+      expect((r.body as { items: unknown[] }).items).toEqual([]);
+    }
+  });
+
+  it('ya no hay slug adivinado `organization-<tenantId>`: la maqueta no lo resuelve, como la API', () => {
+    const r = llamar('GET', `/community/profiles/by-slug/organization-${TENANT_FARMACIA}`, MOSTRADOR);
+    expect(r.status).toBe(404);
   });
 
   it('el personal lee la bandeja de la farmacia; el hilo sembrado está del otro lado de la paciente', () => {

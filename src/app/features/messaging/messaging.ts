@@ -33,8 +33,14 @@ const FILTROS = ['todos', 'no-leidos', 'favoritos', 'grupos'] as const;
 
 type Filtro = (typeof FILTROS)[number];
 
-/** Con quién se escribe: el perfil propio o la vitrina de la farmacia. */
-type PerfilElegible = 'propio' | 'organizacion';
+/**
+ * Con quién se escribe: `'propio'` o el `profileId` de una vitrina de
+ * organización (puede haber más de una: quien atiende dos farmacias).
+ */
+type PerfilElegible = string;
+
+/** El valor del selector para el perfil propio. */
+const PERFIL_PROPIO = 'propio';
 
 /** Cuánto se espera antes de preguntarle al directorio, al tipear. */
 const ESPERA_DE_BUSQUEDA_MS = 300;
@@ -161,31 +167,45 @@ export class Messaging {
   });
 
   /**
-   * «Yo» o la farmacia: las dos identidades con las que se puede escribir.
-   * Vacío —sin selector— para quien no atiende una farmacia con vitrina.
+   * «Yo» y cada vitrina de organización que la sesión puede atender: las
+   * identidades con las que se puede escribir. Vacío —sin selector— para
+   * quien no atiende ninguna.
    */
   protected readonly opcionesDePerfil = computed<readonly SegmentedOption<PerfilElegible>[]>(() => {
-    const vitrina = this.store.vitrinaDeOrganizacion();
-    return vitrina === null
+    const vitrinas = this.store.vitrinasDeOrganizacion();
+    return vitrinas.length === 0
       ? []
       : [
-          { value: 'propio', label: 'Yo' },
-          { value: 'organizacion', label: vitrina.nombre },
+          { value: PERFIL_PROPIO, label: 'Yo' },
+          ...vitrinas.map((v) => ({ value: v.profileId, label: v.nombre })),
         ];
   });
 
   protected readonly perfilElegido = computed<PerfilElegible>(() =>
-    this.store.actuandoComoOrganizacion() ? 'organizacion' : 'propio',
+    this.store.actuandoComoOrganizacion() ? (this.store.perfil() ?? PERFIL_PROPIO) : PERFIL_PROPIO,
   );
+
+  /**
+   * El nombre de la vitrina con la que se escribe, o `null` si se escribe como
+   * uno mismo. En ese modo el buscador sólo filtra los chats que ya hay: la
+   * API no deja buscar contactos ni iniciar chats con la vitrina.
+   */
+  protected readonly comoOrganizacion = computed<string | null>(() =>
+    this.store.actuandoComoOrganizacion() ? (this.store.vitrinaDeOrganizacion()?.nombre ?? null) : null,
+  );
+
+  protected readonly textoDelBuscador = computed(() => {
+    const nombre = this.comoOrganizacion();
+    return nombre === null ? 'Buscar un chat o iniciar uno nuevo' : `Buscar en los chats de ${nombre}`;
+  });
 
   /**
    * Cambia de identidad. Con un hilo abierto se vuelve primero a la bandeja:
    * ese hilo es de la otra identidad y, con la nueva, puede no existir.
    */
   protected elegirPerfil(valor: PerfilElegible): void {
-    const destino =
-      valor === 'organizacion' ? (this.store.vitrinaDeOrganizacion()?.profileId ?? null) : null;
-    if (valor === 'organizacion' && destino === null) {
+    const destino = valor === PERFIL_PROPIO ? null : valor;
+    if (destino !== null && !this.store.vitrinasDeOrganizacion().some((v) => v.profileId === destino)) {
       return;
     }
     const cambiar = (): void => this.store.actuarComo(destino);

@@ -99,6 +99,22 @@ export interface PublicProfileDetail {
   readonly prestige?: PrestigeScore;
 }
 
+/**
+ * Una vitrina de organización con la que la sesión puede atender el chat
+ * (`GET /community/profiles/organization-showcases/me`).
+ *
+ * La lista la decide la API con la misma regla que autoriza escribir como la
+ * vitrina; tenerla no es un permiso, es la puerta que se ofrece.
+ */
+export interface OrganizationShowcase {
+  readonly profileId: string;
+  readonly slug: string;
+  readonly displayName: string;
+  readonly avatarFileId?: string;
+  readonly targetTypeConceptId: string;
+  readonly kind: 'ORGANIZATION' | 'PHARMACY';
+}
+
 // ─── Vitrina propia ──────────────────────────────────────────────────────────
 
 /**

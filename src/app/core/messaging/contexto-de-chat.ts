@@ -70,13 +70,37 @@ function linea(texto: string): string {
 }
 
 /**
- * Una ruta interna aceptable: absoluta, sin esquema ni host, sin `//`.
+ * A dónde puede llevar cada tipo de tarjeta: una lista cerrada de fichas, sin
+ * query ni fragmento.
  *
- * Es lo que impide que la tarjeta se convierta en un enlace a otro sitio: el
- * texto lo escribe cualquiera, y quien lo recibe lo va a tocar.
+ * El texto de la tarjeta lo escribe cualquier participante y quien lo recibe
+ * lo va a tocar. Con «cualquier ruta interna» bastaba una tarjeta hacia
+ * `/messaging?escribirA=…&sobre=…` para que, al tocarla, el otro abriera un
+ * chat con un tercero y le mandara una tarjeta a su nombre. Por eso no se
+ * acepta una ruta que no sea la ficha de lo que la tarjeta dice ser.
+ */
+const RUTAS_POR_TIPO: Readonly<Record<TipoDeContexto, readonly RegExp[]>> = {
+  pedido: [/^\/my-account\/pharmacy-orders\/[\w-]{1,64}$/u],
+  producto: [/^\/pharmacies-directory\/[\w-]{1,128}$/u],
+  farmacia: [/^\/pharmacies-directory\/[\w-]{1,128}$/u],
+  servicio: [/^\/clinics-directory\/[\w-]{1,128}$/u],
+};
+
+/** `true` si la ruta es una ficha válida para ese tipo de tarjeta. */
+export function esRutaDeContexto(tipo: TipoDeContexto, ruta: string): boolean {
+  return RUTAS_POR_TIPO[tipo].some((patron) => patron.test(ruta));
+}
+
+/**
+ * Una ruta interna aceptable para alguno de los tipos.
+ *
+ * Se conserva por quien valida antes de saber el tipo; la regla es la misma
+ * lista cerrada de {@link esRutaDeContexto}.
  */
 export function esRutaInterna(ruta: string): boolean {
-  return /^\/(?!\/)[\w\-./?=&%~]*$/u.test(ruta) && !ruta.includes('..');
+  return (Object.keys(RUTAS_POR_TIPO) as TipoDeContexto[]).some((tipo) =>
+    esRutaDeContexto(tipo, ruta),
+  );
 }
 
 /**
@@ -90,8 +114,8 @@ export function textoDeContexto(contexto: ContextoDeChat): string {
   if (titulo === '') {
     throw new Error('Un contexto de chat necesita título.');
   }
-  if (!esRutaInterna(contexto.ruta)) {
-    throw new Error(`Ruta de contexto no interna: ${contexto.ruta}`);
+  if (!esRutaDeContexto(contexto.tipo, contexto.ruta)) {
+    throw new Error(`Ruta de contexto no admitida para ${contexto.tipo}: ${contexto.ruta}`);
   }
   const detalle = contexto.detalle === undefined ? '' : linea(contexto.detalle);
   const lineas = [`${ETIQUETA_DE_CONTEXTO[contexto.tipo]}: ${titulo}`];
@@ -117,7 +141,7 @@ export function contextoDelTexto(texto: string | null | undefined): ContextoDeCh
   const tipo = primera === null ? undefined : TIPO_POR_ETIQUETA.get(primera[1] ?? '');
   const titulo = primera?.[2]?.trim() ?? '';
   const ruta = lineas[lineas.length - 1] ?? '';
-  if (tipo === undefined || titulo === '' || !esRutaInterna(ruta)) return null;
+  if (tipo === undefined || titulo === '' || !esRutaDeContexto(tipo, ruta)) return null;
 
   const detalle = lineas.length === 3 ? lineas[1] : undefined;
   return detalle === undefined || detalle === ''

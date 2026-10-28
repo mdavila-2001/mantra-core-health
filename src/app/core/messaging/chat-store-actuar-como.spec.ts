@@ -8,7 +8,12 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../auth/session.store';
-import { AVISO_SIN_PERMISO_DE_ORGANIZACION, ChatStore } from './chat.store';
+import {
+  AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO,
+  AVISO_SIN_PERMISO_DE_ORGANIZACION,
+  ChatStore,
+  ERROR_CHAT_NUEVO_COMO_ORGANIZACION,
+} from './chat.store';
 import { ChatSocketService } from './chat-socket.service';
 
 /**
@@ -18,6 +23,10 @@ import { ChatSocketService } from './chat-socket.service';
  * socket se vuelve a unir con ese `profileId`), que un 403 —de la REST o del
  * socket— devuelve al perfil propio con aviso, y que la elección se recuerda
  * en la pestaña sólo para la misma cuenta.
+ *
+ * Las vitrinas las da `GET /community/profiles/organization-showcases/me`, no
+ * un slug adivinado: las farmacias sembradas usan `farmacia-*` y una vitrina
+ * privada no se encuentra por slug.
  */
 describe('ChatStore · con qué perfil se escribe', () => {
   const PROPIO = 'pp-propio';
@@ -44,15 +53,24 @@ describe('ChatStore · con qué perfil se escribe', () => {
   });
 
   const lecturasDeBandeja = (): TestRequest[] =>
-    http.match((r) => r.url === '/community/conversations');
+    http.match((r) => r.url === '/community/conversations' && r.method === 'GET');
+
+  const VITRINAS = '/community/profiles/organization-showcases/me';
+
+  const vitrina = (profileId: string, displayName: string, slug = 'farmacia-vida') => ({
+    profileId,
+    slug,
+    displayName,
+    avatarFileId: null,
+    targetTypeConceptId: 'c-farmacia',
+    kind: 'PHARMACY',
+  });
 
   /** Enciende Chats con el perfil propio y deja descubierta la vitrina. */
   function encender(): void {
     store.iniciar();
     http.expectOne('/community/profiles/me').flush({ id: PROPIO, tenantId: TENANT, slug: 'yo', displayName: 'Yo' });
-    http
-      .expectOne(`/community/profiles/by-slug/organization-${TENANT}`)
-      .flush({ id: FARMACIA, tenantId: TENANT, slug: 'farmacia-vida', displayName: 'Farmacia Vida', targetTypeConceptId: 'c', statusConceptId: 's', badges: [], prestige: null });
+    http.expectOne(VITRINAS).flush({ items: [vitrina(FARMACIA, 'Farmacia Vida')] });
     lecturasDeBandeja().forEach((r) => r.flush(bandeja([fila('c-propia')])));
   }
 
@@ -201,7 +219,7 @@ describe('ChatStore · con qué perfil se escribe', () => {
     );
     store.iniciar();
     http.expectOne('/community/profiles/me').flush({ id: PROPIO, tenantId: TENANT, slug: 'yo', displayName: 'Yo' });
-    http.match((r) => r.url.startsWith('/community/profiles/by-slug/')).forEach((r) => r.flush(null));
+    http.expectOne(VITRINAS).flush({ items: [vitrina(FARMACIA, 'Farmacia Vida')] });
     expect(store.perfil()).toBe(FARMACIA);
     expect(store.perfilPropio()).toBe(PROPIO);
     const lecturas = lecturasDeBandeja();
@@ -216,7 +234,7 @@ describe('ChatStore · con qué perfil se escribe', () => {
     );
     store.iniciar();
     http.expectOne('/community/profiles/me').flush({ id: PROPIO, tenantId: TENANT, slug: 'yo', displayName: 'Yo' });
-    http.match((r) => r.url.startsWith('/community/profiles/by-slug/')).forEach((r) => r.flush(null));
+    http.expectOne(VITRINAS).flush({ items: [] });
     expect(store.perfil()).toBe(PROPIO);
     expect(sessionStorage.getItem(CLAVE)).toBeNull();
     lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
@@ -258,8 +276,114 @@ describe('ChatStore · con qué perfil se escribe', () => {
     store = TestBed.inject(ChatStore);
     store.iniciar();
     http.expectOne('/community/profiles/me').flush({ id: PROPIO, tenantId: 't', slug: 'yo', displayName: 'Yo' });
+    http.expectNone(VITRINAS);
     http.expectNone((r) => r.url.startsWith('/community/profiles/by-slug/'));
     lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
     expect(store.vitrinaDeOrganizacion()).toBeNull();
+  });
+
+  it('no adivina slugs: la vitrina sale del endpoint aunque su slug sea `farmacia-*`', () => {
+    store.iniciar();
+    http.expectOne('/community/profiles/me').flush({ id: PROPIO, tenantId: TENANT, slug: 'yo', displayName: 'Yo' });
+    http.expectOne(VITRINAS).flush({ items: [vitrina(FARMACIA, 'Farmacia Vida', 'farmacia-vida-centro')] });
+    http.expectNone((r) => r.url.startsWith('/community/profiles/by-slug/'));
+    expect(store.vitrinasDeOrganizacion()).toEqual([{ profileId: FARMACIA, nombre: 'Farmacia Vida' }]);
+    lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+  });
+
+  it('quien atiende dos vitrinas puede escribir con cualquiera de las dos', () => {
+    const NORTE = 'pp-farmacia-norte';
+    store.iniciar();
+    http.expectOne('/community/profiles/me').flush({ id: PROPIO, tenantId: TENANT, slug: 'yo', displayName: 'Yo' });
+    http.expectOne(VITRINAS).flush({
+      items: [vitrina(FARMACIA, 'Farmacia Vida'), vitrina(NORTE, 'Farmacia Norte', 'farmacia-norte')],
+    });
+    lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+
+    expect(store.vitrinasDeOrganizacion().map((v) => v.nombre)).toEqual(['Farmacia Vida', 'Farmacia Norte']);
+
+    store.actuarComo(NORTE);
+    expect(store.perfil()).toBe(NORTE);
+    expect(store.vitrinaDeOrganizacion()).toEqual({ profileId: NORTE, nombre: 'Farmacia Norte' });
+    const lecturas = lecturasDeBandeja();
+    expect(lecturas.length).toBe(1);
+    expect(lecturas[0]!.request.params.get('profileId')).toBe(NORTE);
+
+    // Perder el permiso de una no cierra la puerta de la otra.
+    lecturas[0]!.flush(
+      { code: 'FORBIDDEN', reason: 'NOT_OWN_PROFILE' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    expect(store.perfil()).toBe(PROPIO);
+    expect(store.vitrinasDeOrganizacion()).toEqual([{ profileId: FARMACIA, nombre: 'Farmacia Vida' }]);
+    lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+  });
+
+  describe('como la vitrina sólo se responde', () => {
+    it('no busca contactos: la API los niega (403) a la vitrina', () => {
+      encender();
+      store.actuarComo(FARMACIA);
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+
+      store.buscarGente('ana');
+      http.expectNone((r) => r.url === '/public/search/practitioners');
+      expect(store.resultados()).toEqual([]);
+      expect(store.buscandoAhora()).toBe(false);
+    });
+
+    it('cambiar a la vitrina descarta los contactos que se habían buscado', () => {
+      encender();
+      store.resultados.set([{ kind: 'PRACTITIONER', slug: 'x', displayName: 'X' } as never]);
+      store.actuarComo(FARMACIA);
+      expect(store.resultados()).toEqual([]);
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+    });
+
+    it('escribirA vuelve antes al perfil propio, lo avisa, y abre el chat con él', () => {
+      encender();
+      store.actuarComo(FARMACIA);
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+
+      const abierto = vi.fn();
+      store.escribirA('dra-quispe', abierto);
+
+      expect(store.perfil()).toBe(PROPIO);
+      expect(store.actuandoComoOrganizacion()).toBe(false);
+      expect(store.avisoDePerfil()).toBe(AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO);
+      expect(sessionStorage.getItem(CLAVE)).toBeNull();
+      // La vitrina se sigue ofreciendo: volver a ella es un toque.
+      expect(store.vitrinasDeOrganizacion()).toEqual([{ profileId: FARMACIA, nombre: 'Farmacia Vida' }]);
+
+      http
+        .expectOne('/community/profiles/by-slug/dra-quispe')
+        .flush({ id: 'pp-quispe', tenantId: 't', slug: 'dra-quispe', displayName: 'Dra. Quispe', targetTypeConceptId: 'c', statusConceptId: 's', badges: [], prestige: null });
+      const alta = http.expectOne((r) => r.url === '/community/conversations' && r.method === 'POST');
+      expect(alta.request.body).toEqual({ participantProfileIds: [PROPIO, 'pp-quispe'] });
+      alta.flush({ id: 'c-nueva' });
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+      expect(abierto).toHaveBeenCalledWith('c-nueva');
+    });
+
+    it('sin perfil propio al que volver, escribirA lo explica y no pide nada', () => {
+      sessionStorage.setItem(
+        CLAVE,
+        JSON.stringify({ userId: 'u-mostrador', profileId: FARMACIA, nombre: 'Farmacia Vida' }),
+      );
+      store.iniciar();
+      http.expectOne('/community/profiles/me').flush(null);
+      http.expectOne(VITRINAS).flush({ items: [vitrina(FARMACIA, 'Farmacia Vida')] });
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+      expect(store.actuandoComoOrganizacion()).toBe(true);
+
+      const abierto = vi.fn();
+      store.escribirA('dra-quispe', abierto);
+
+      expect(store.error()).toBe(ERROR_CHAT_NUEVO_COMO_ORGANIZACION);
+      expect(store.perfil()).toBe(FARMACIA);
+      expect(store.abriendo()).toBe(false);
+      http.expectNone('/community/profiles/by-slug/dra-quispe');
+      http.expectNone((r) => r.url === '/community/conversations' && r.method === 'POST');
+      expect(abierto).not.toHaveBeenCalled();
+    });
   });
 });

@@ -31,7 +31,7 @@ import { Router, type ParamMap, type Params } from '@angular/router';
 
 import { SessionStore } from '../auth/session.store';
 import { LOGIN_ROUTE } from '../http/auth.interceptor';
-import { esRutaInterna, type ContextoDeChat, type TipoDeContexto } from './contexto-de-chat';
+import { esRutaDeContexto, type ContextoDeChat, type TipoDeContexto } from './contexto-de-chat';
 
 /** Los nombres de los parámetros, en un solo lugar. */
 export const PARAMETRO = {
@@ -109,7 +109,7 @@ export function contextoDeLaQuery(query: ParamMap): ContextoDeChat | null {
   const titulo = query.get(PARAMETRO.titulo)?.trim() ?? '';
   const ruta = query.get(PARAMETRO.ruta) ?? '';
   const detalle = query.get(PARAMETRO.detalle)?.trim() ?? '';
-  if (tipo === null || !TIPOS.has(tipo) || titulo === '' || !esRutaInterna(ruta)) {
+  if (tipo === null || !TIPOS.has(tipo) || titulo === '' || !esRutaDeContexto(tipo as TipoDeContexto, ruta)) {
     return null;
   }
   const base = { tipo: tipo as TipoDeContexto, titulo, ruta };

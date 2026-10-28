@@ -300,17 +300,32 @@ export function registrarComunidad(router: MockRouter): void {
     return vitrinaPropia(actualizada);
   });
 
+  /**
+   * Las vitrinas de organización con las que la sesión puede atender el chat
+   * (`CommunitySocialReadService.listAttendableOrganizationShowcases`). La
+   * misma regla que {@link puedeActuarComo}: la de una farmacia de un tenant
+   * de la cuenta, con `PHARMACY_STAFF`. Va antes que `/community/profiles/:id`.
+   */
+  router.get('/community/profiles/organization-showcases/me', (request) => {
+    if (request.user === null) return { items: [] };
+    const propia = vitrinaDeSesion(request)?.id;
+    const items = vitrinas
+      .todos()
+      .filter((v) => v.kind === 'PHARMACY' && v.id !== propia && puedeActuarComo(request, v.id))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName, 'es'))
+      .map((v) => ({
+        profileId: v.id,
+        slug: v.slug,
+        displayName: v.displayName,
+        avatarFileId: v.avatarFileId === '' ? null : v.avatarFileId,
+        targetTypeConceptId: TIPO_VITRINA[v.kind],
+        kind: v.kind,
+      }));
+    return { items };
+  });
+
   router.get('/community/profiles/by-slug/:slug', ({ params }) => {
-    // `organization-<tenantId>` es el slug con el que la API proyecta la
-    // vitrina de una organización; en la maqueta las vitrinas tienen slugs
-    // legibles, así que se resuelve por el tenant.
-    const slug = params['slug']!;
-    const deOrganizacion = /^organization-(.+)$/u.exec(slug)?.[1];
-    const v =
-      vitrinaPorSlug(slug) ??
-      (deOrganizacion === undefined
-        ? undefined
-        : vitrinas.todos().find((x) => x.tenantId === deOrganizacion && x.kind !== 'PATIENT' && x.kind !== 'PRACTITIONER'));
+    const v = vitrinaPorSlug(params['slug']!);
     return v === undefined ? notFound('Perfil no encontrado') : perfilPublico(v);
   });
 
