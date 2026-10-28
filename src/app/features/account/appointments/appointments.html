@@ -249,6 +249,7 @@
                     </button>
                   }
                 </div>
+                <app-booking-payment-receipts [bookingId]="turno.id" [statusCode]="turno.codigo" [paymentState]="turno.paymentState" />
               </article>
             }
           } @else {

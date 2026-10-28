@@ -25,6 +25,7 @@ import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  PaymentStateInfo,
   ServiceOffering,
   WaitlistEntry,
 } from '../../../core/data-access/scheduling/scheduling.types';
@@ -57,6 +58,7 @@ import { DatePicker } from '../../../shared/components/organisms/date-picker/dat
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
+import { BookingPaymentReceipts } from './booking-payment-receipts/booking-payment-receipts';
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
 import {
   CAMPAIGN_PARAM,
@@ -262,6 +264,8 @@ interface TurnoVisible {
    * hace estallar `formatDate` donde nadie registró ese idioma.
    */
   readonly reconsultaDe: Date | null;
+  /** El estado de pago de la cita, para el bloque «Comprobante de pago» (corrección 11). */
+  readonly paymentState: PaymentStateInfo | null;
 }
 
 /** Una espera activa, ya lista para mostrarse (P8). */
@@ -389,6 +393,7 @@ const SEDE_CUALQUIERA = 'cualquiera';
     AppButtonLink,
     AppointmentCalendar,
     Badge,
+    BookingPaymentReceipts,
     DatePipe,
     EmptyState,
     FormField,
@@ -1904,6 +1909,7 @@ export class Appointments {
       demoraCuando: cita.delayNotice?.announcedAt ?? null,
       esReconsulta: esReconsulta(cita),
       reconsultaDe: cita.followUpOf?.startAt ?? null,
+      paymentState: cita.paymentState ?? null,
     };
   }
 
