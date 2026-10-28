@@ -2071,9 +2071,11 @@ export class ChatStore {
     error: (fallo: unknown) => void,
   ): void {
     const marca = this.marcaDeApertura();
+    let emitio = false;
     this.apertura.add(
       peticion.subscribe({
         next: (valor) => {
+          emitio = true;
           if (this.aperturaVigente(marca)) {
             next(valor);
           }
@@ -2081,6 +2083,13 @@ export class ChatStore {
         error: (fallo: unknown) => {
           if (this.aperturaVigente(marca)) {
             error(fallo);
+          }
+        },
+        // Una petición que termina sin traer nada no puede dejar `abriendo`
+        // encendido: bloquearía toda apertura de chat de la app.
+        complete: () => {
+          if (!emitio && this.aperturaVigente(marca)) {
+            error(new Error('La apertura terminó sin respuesta.'));
           }
         },
       }),

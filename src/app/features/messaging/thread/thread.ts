@@ -783,6 +783,9 @@ export class Thread {
     let observador: IntersectionObserver | null = null;
     let raiz: HTMLElement | null = null;
     let observada: Element | null = null;
+    // La barra recogida está en `display: none` y mide 0: se recuerda el
+    // último alto que tuvo a la vista para compensar también al mostrarla.
+    let ultimoAlto = 0;
 
     const alCambiar = (entradas: readonly IntersectionObserverEntry[]): void => {
       if (this.destruido) return;
@@ -791,7 +794,9 @@ export class Thread {
       const aLaVista = entrada.isIntersecting && entrada.intersectionRatio >= TARJETA_A_LA_VISTA;
       if (aLaVista === this.tarjetaALaVista()) return;
       const barra = this.barraFijada()?.nativeElement;
-      const alto = barra === undefined ? 0 : barra.offsetHeight;
+      const medido = barra === undefined ? 0 : barra.offsetHeight;
+      if (medido > 0) ultimoAlto = medido;
+      const alto = medido > 0 ? medido : ultimoAlto;
       const marco = raiz;
       this.tarjetaALaVista.set(aLaVista);
       if (marco !== null && !this.pegadoAbajo && alto > 0) {

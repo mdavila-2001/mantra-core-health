@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { NEVER, of, Subject } from 'rxjs';
+import { EMPTY, NEVER, of, Subject } from 'rxjs';
 
 import { SessionStore } from '../auth/session.store';
 import {
@@ -441,6 +441,17 @@ describe('ChatStore · revisión', () => {
       expect(error).toBeInstanceOf(ChatOcupadoError);
       expect(error.message).toBe(CHAT_YA_ABRIENDO);
       expect(alAbrir).not.toHaveBeenCalled();
+    });
+
+    it('una apertura que termina sin respuesta avisa y no deja «abriendo» trabado', () => {
+      encender();
+      const alFallar = vi.fn();
+      const alAbrir = vi.fn();
+      store.abrirComoOrganizacion(EMPTY, 'Farmacia Vida', alAbrir, undefined, alFallar);
+
+      expect(alFallar).toHaveBeenCalledOnce();
+      expect(alAbrir).not.toHaveBeenCalled();
+      expect(store.abriendo()).toBe(false);
     });
   });
 

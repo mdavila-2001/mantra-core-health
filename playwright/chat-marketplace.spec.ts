@@ -655,8 +655,17 @@ test('9 · la consola quedó limpia en toda la corrida', () => {
   // `chat-mejoras-evidencia.spec.ts`): el aviso de la maqueta, el socket que
   // no conecta sin gateway, el CSP del servidor de desarrollo y los mosaicos
   // del mapa que el proxy de la máquina no deja bajar.
-  const esperados =
-    /mock|maqueta|Angular is running in development mode|WebSocket connection to .*socket\.io.* failed|Content Security Policy|tile\.openstreetmap|net::ERR_TUNNEL_CONNECTION_FAILED|net::ERR_CONNECTION/iu;
+  // Cada patrón nombra un mensaje exacto: un `mock` suelto taparía el
+  // `[mock] el manejador falló` que es justo el que tiene que hacer fallar.
+  const esperados = new RegExp(
+    [
+      String.raw`^Angular is running in development mode`,
+      String.raw`^WebSocket connection to '[^']*socket\.io[^']*' failed`,
+      String.raw`^Executing inline script violates the following Content Security Policy directive 'script-src 'self' `,
+      String.raw`^Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED$`,
+    ].join('|'),
+    'u',
+  );
   // **Hallazgo de producto, fuera del chat**: el mapa de la ficha de farmacia
   // (`shared/components/organisms/map/map.ts`) tira
   // `Cannot read properties of undefined (reading '_leaflet_pos')` cuando se
