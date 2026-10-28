@@ -177,6 +177,14 @@ export interface MyRoleAssignment {
   readonly createdAt: Date;
   /** Logo de la organización (su ficha pública), o `null` si no tiene uno. */
   readonly avatarUrl: string | null;
+  /**
+   * La organización (tenant) de la práctica: la que pide `createResource` para
+   * publicar una agenda ahí. La devuelve la vinculación. Es opcional porque la
+   * API todavía no la manda (está pedida como campo nuevo de
+   * `GET /practitioners/me/role-assignments`); sin ella, esa organización no se
+   * ofrece para publicar.
+   */
+  readonly tenantId?: string | null;
 }
 
 /** Cuerpo de "pedir vincularme a esta organización". */

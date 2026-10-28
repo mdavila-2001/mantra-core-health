@@ -16,18 +16,21 @@ const OWN_OFFICE: PractitionerOrganization = {
   practiceSiteId: 'site-own',
   name: 'Consultorio Dra. Rojas',
   isOwnOffice: true,
+  tenantId: null,
 };
 const OLIVOS: PractitionerOrganization = {
   practiceId: 'practice-olivos',
   practiceSiteId: 'site-olivos',
   name: 'Clínica Los Olivos',
   isOwnOffice: false,
+  tenantId: 'tenant-olivos',
 };
 const SAN_LUCAS: PractitionerOrganization = {
   practiceId: 'practice-san-lucas',
   practiceSiteId: null,
   name: 'Hospital San Lucas',
   isOwnOffice: false,
+  tenantId: 'tenant-san-lucas',
 };
 
 interface Rendered {
