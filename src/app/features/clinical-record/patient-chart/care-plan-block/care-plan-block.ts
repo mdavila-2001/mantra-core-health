@@ -1,4 +1,3 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -29,6 +28,11 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import {
+  CarePlanRoute,
+  type EstadoDelPlan,
+  type PasoDelPlan,
+} from '../care-plan-route/care-plan-route';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
 import { writeMessage } from '../../write-message';
@@ -44,29 +48,6 @@ interface ActividadEnCurso {
   readonly clave: number;
   detalle: string;
   cuando: Date | null;
-}
-
-/** Un hito de la vista de hoja de ruta: un paso con algo escrito, ya numerado. */
-interface HitoDeLaRuta {
-  readonly clave: number;
-  readonly numero: number;
-  readonly detalle: string;
-  readonly cuando: Date | null;
-}
-
-const MS_POR_DIA = 24 * 60 * 60 * 1000;
-
-/**
- * Cuánto dura la vigencia, en la unidad con la que se habla en la consulta:
- * días hasta dos semanas, semanas hasta dos meses y meses de ahí en más.
- */
-export function duracionEnPalabras(desde: Date, hasta: Date): string {
-  const dias = Math.round((hasta.getTime() - desde.getTime()) / MS_POR_DIA);
-  if (dias < 1) return 'el mismo día';
-  if (dias < 14) return dias === 1 ? '1 día' : `${dias} días`;
-  if (dias < 60) return `${Math.round(dias / 7)} semanas`;
-  const meses = Math.round(dias / 30.44);
-  return meses === 1 ? '1 mes' : `${meses} meses`;
 }
 
 /**
@@ -114,15 +95,14 @@ export function duracionEnPalabras(desde: Date, hasta: Date): string {
 @Component({
   selector: 'app-care-plan-block',
   imports: [
+    CarePlanRoute,
     FormResponsePicker,
     Alert,
     AppButton,
     Card,
     AppInput,
     DatePicker,
-    DatePipe,
     NavIcon,
-    NgTemplateOutlet,
     FormActions,
     FormField,
     Select,
@@ -261,39 +241,14 @@ export class CarePlanBlock implements DraftBlock {
 
   /* -- La hoja de ruta ------------------------------------------------------ */
 
-  /** Los pasos que dicen algo: son los únicos que viajan, y los únicos que se dibujan. */
-  protected readonly pasosEscritos = computed(
-    () => this.actividades().filter((a) => a.detalle.trim() !== '').length,
-  );
-
   /**
-   * Los hitos de la vista de ruta, en el orden en que van a ocurrir.
-   *
-   * Los fechados primero y por fecha; los sin fecha al final, en el orden en
-   * que se escribieron: un paso sin día no tiene lugar en el tiempo, pero sigue
-   * siendo parte del camino. El número es el del formulario, para que «Paso 2»
-   * diga lo mismo arriba y abajo.
+   * Los pasos que dicen algo. Es la regla de qué viaja al servidor y de qué se
+   * dibuja en la ruta, y vive una sola vez: una fila vacía no es un paso sin
+   * fecha, es nada.
    */
-  protected readonly hitos = computed<readonly HitoDeLaRuta[]>(() =>
-    this.actividades()
-      .map((a, indice) => ({ clave: a.clave, numero: indice + 1, detalle: a.detalle.trim(), cuando: a.cuando }))
-      .filter((h) => h.detalle !== '')
-      .sort((a, b) => {
-        if (a.cuando === null || b.cuando === null) {
-          return a.cuando === b.cuando ? a.numero - b.numero : a.cuando === null ? 1 : -1;
-        }
-        return a.cuando.getTime() - b.cuando.getTime() || a.numero - b.numero;
-      }),
+  protected readonly actividadesEscritas = computed<readonly PasoDelPlan[]>(() =>
+    this.actividades().filter((a) => a.detalle.trim() !== ''),
   );
-
-  /** La vigencia en palabras, cuando hay inicio y fin y el fin no es anterior. */
-  protected readonly duracion = computed<string | null>(() => {
-    const desde = this.desde();
-    const hasta = this.hasta();
-    return desde === null || hasta === null || this.vigenciaInvalida()
-      ? null
-      : duracionEnPalabras(desde, hasta);
-  });
 
   /**
    * Qué tramo de la ruta está resuelto. Los obligatorios cierran con su dato;
@@ -304,14 +259,25 @@ export class CarePlanBlock implements DraftBlock {
     objetivo: this.meta().trim() !== '',
     motivo: this.hayMotivo(),
     vigencia: (this.desde() !== null || this.hasta() !== null) && !this.vigenciaInvalida(),
-    pasos: this.pasosEscritos() > 0,
+    pasos: this.actividadesEscritas().length > 0,
   }));
 
   /** Lo que falta para poder abrir el plan, contado: cuántos obligatorios quedan. */
   protected readonly obligatoriosPendientes = computed(() => {
     const t = this.tramos();
-    return [this.exigeRespuesta() ? t.origen : true, t.objetivo, t.motivo].filter((ok) => !ok)
-      .length;
+    return [t.origen, t.objetivo, t.motivo].filter((ok) => !ok).length;
+  });
+
+  /**
+   * Lo que dice la insignia de la ruta. Sigue la misma regla que habilita el
+   * botón —sin el «registrando», que es del envío y no del plan—: una vigencia
+   * invertida también bloquea, y «Lista para abrir» con el botón apagado sería
+   * una promesa falsa.
+   */
+  protected readonly estadoDelPlan = computed<EstadoDelPlan>(() => {
+    const cuantos = this.obligatoriosPendientes();
+    if (cuantos > 0) return { tipo: 'faltan', cuantos };
+    return this.vigenciaInvalida() ? { tipo: 'vigencia' } : { tipo: 'listo' };
   });
 
   /** La etiqueta del diagnóstico elegido, para la vista de ruta. */
@@ -351,12 +317,10 @@ export class CarePlanBlock implements DraftBlock {
 
     // Sólo los pasos que dicen algo: el detalle es lo que hace útil a una
     // actividad, y una fila vacía no es un paso sin fecha, es nada.
-    const activities: NewCarePlanActivity[] = this.actividades()
-      .filter((a) => a.detalle.trim() !== '')
-      .map((a) => ({
-        detailText: a.detalle.trim(),
-        ...(a.cuando === null ? {} : { scheduledAt: a.cuando }),
-      }));
+    const activities: NewCarePlanActivity[] = this.actividadesEscritas().map((a) => ({
+      detailText: a.detalle.trim(),
+      ...(a.cuando === null ? {} : { scheduledAt: a.cuando }),
+    }));
 
     const desde = this.desde();
     const hasta = this.hasta();
