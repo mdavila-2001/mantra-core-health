@@ -126,3 +126,24 @@ Los 22 archivos sobre 4 kB son los mismos en ambos builds. Cinco los toca este r
 entre 0,02 y 0,32 kB por los `var(--dur-*)`: `schedule-grid`, `register-practitioner`,
 `field-editor`, `date-picker`, `tree-select`. `appointments.css` llegó a 4,04 kB durante el
 piloto y se recortó por debajo del umbral (`68d26516`).
+
+## Expediente: vista «Tabla» y «Recorrido» — 2026-10-28
+
+Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · `ng serve --port 4300` · backend
+simulado · Chromium (Playwright) · cuenta `medica@alovida.mock`, paciente `pid-paciente`.
+
+| Comando / prueba | Resultado |
+|---|---|
+| `yarn typecheck` | 0 errores |
+| `eslint src/app/features/clinical-record/patient-chart` | 0 errores (el `yarn lint` global trae 256 errores preexistentes en specs ajenos, iguales sin este cambio) |
+| `yarn build` | completo |
+| `ng test --include='…/patient-chart/**/*.spec.ts'` | 20 archivos · 376 pruebas verdes (27 nuevas en `recorrido-clinico/`) |
+| `yarn test` completo | **no se ejecutó** |
+| Navegador 1440 / 768 / 390 | desborde horizontal de la página: 0 px en los tres; el recorrido desplaza dentro de su lienzo |
+| Clic en un nodo | abre el mismo modal de detalle que la tabla (`expediente-detalle`) |
+| Foco/puntero en «Enalapril» | ilumina Ambulatorio → Hipertensión arterial → Enalapril y atenúa el resto |
+| Grupo «+6 observaciones» | se abre (`aria-expanded=true`) y se vuelve a agrupar |
+| Tema oscuro | colores sólo de tokens `--st-*` / `--bg-*`; legible |
+
+Capturas: `capturas/recorrido-clinico/`. Revisión independiente (`visual-reviewer`,
+`frontend-reviewer`): **pendiente** — quien implementa no aprueba.

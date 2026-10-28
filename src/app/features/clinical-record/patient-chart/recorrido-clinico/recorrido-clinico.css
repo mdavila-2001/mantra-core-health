@@ -1,0 +1,397 @@
+/* ============================================================================
+    Recorrido clínico. Ni un color propio: cada tipo toma un trío `--st-*` del
+    sistema (o la superficie hundida, si no tiene significado clínico), así que
+    el tema oscuro lo resuelve el tema y no esta hoja.
+
+    Las medidas en píxeles de nodos, columnas y carriles NO son decoración: el
+    trazado de las conexiones se calcula con ellas en `recorrido-clinico.model.ts`
+    y se aplican desde la plantilla. Acá sólo vive lo que no mueve una línea.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+/* -- Tonos ------------------------------------------------------------------
+   Mismo mapa que `shared/components/tone/tone.css`, que no se puede importar
+   acá porque está escrito para el `:host` de un átomo. */
+.tono--primary   { --t-bg: var(--st-primary-bg);   --t-fg: var(--st-primary-fg);   --t-bd: var(--st-primary-bd); }
+.tono--secondary { --t-bg: var(--st-secondary-bg); --t-fg: var(--st-secondary-fg); --t-bd: var(--st-secondary-bd); }
+.tono--success   { --t-bg: var(--st-success-bg);   --t-fg: var(--st-success-fg);   --t-bd: var(--st-success-bd); }
+.tono--warning   { --t-bg: var(--st-warning-bg);   --t-fg: var(--st-warning-fg);   --t-bd: var(--st-warning-bd); }
+.tono--error     { --t-bg: var(--st-error-bg);     --t-fg: var(--st-error-fg);     --t-bd: var(--st-error-bd); }
+.tono--info      { --t-bg: var(--st-info-bg);      --t-fg: var(--st-info-fg);      --t-bd: var(--st-info-bd); }
+.tono--neutral   { --t-bg: var(--bg-inset);        --t-fg: var(--text-secondary);  --t-bd: var(--border-default); }
+
+.recorrido {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* -- Barra: leyenda y saltos ---------------------------------------------- */
+
+.recorrido__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-6);
+}
+
+.recorrido__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.recorrido__leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.recorrido__muestra {
+  inline-size: 28px;
+  block-size: 8px;
+  overflow: visible;
+}
+
+.recorrido__saltos {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.recorrido__saltos app-nav-icon {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+/* -- El lienzo ---------------------------------------------------------------
+   Contiene el desplazamiento: la página nunca se ensancha por el recorrido. */
+
+.recorrido__lienzo {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+}
+
+.recorrido__lienzo:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.recorrido__plano {
+  position: relative;
+  min-inline-size: 100%;
+}
+
+/* -- Carriles --------------------------------------------------------------- */
+
+.recorrido__carril {
+  position: absolute;
+  inset-inline: 0;
+  border-block-start: 1px solid var(--border-default);
+}
+
+/* Bandas alternadas apenas tintadas: separan carriles sin un borde más. */
+.recorrido__carril:nth-of-type(even) {
+  background: var(--bg-hover);
+}
+
+/* Pegado al borde izquierdo visible: al desplazarse, el carril no pierde nombre. */
+.recorrido__carril-rotulo {
+  position: sticky;
+  inset-inline-start: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--t-fg);
+}
+
+.recorrido__carril-rotulo app-nav-icon {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.recorrido__carril-cuenta {
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--t-bg);
+  border: 1px solid var(--t-bd);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* -- Eje y conexiones ------------------------------------------------------- */
+
+.recorrido__trazos {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.recorrido__eje {
+  stroke: var(--border-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.recorrido__arista {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    opacity var(--dur-base) ease,
+    stroke-width var(--dur-fast) ease;
+}
+
+.recorrido__arista--atencion {
+  stroke: var(--brand-primary);
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+
+.recorrido__arista--indicacion {
+  stroke: var(--st-success-fg);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.recorrido__punta {
+  fill: var(--st-success-fg);
+}
+
+.recorrido__arista--iluminada {
+  opacity: 1;
+  stroke-width: 3;
+}
+
+.recorrido__arista--atenuada {
+  opacity: 0.12;
+}
+
+/* -- Columnas --------------------------------------------------------------- */
+
+.recorrido__columnas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recorrido__columna {
+  position: absolute;
+  inset-block: 0;
+}
+
+.recorrido__cabecera {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block-start: var(--sp-3);
+  text-align: center;
+}
+
+.recorrido__fecha {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-transform: capitalize;
+  color: var(--text-primary);
+}
+
+.recorrido__contexto {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* El hito sobre el eje: lleno si es una atención, hueco si es un día suelto. */
+.recorrido__hito {
+  position: absolute;
+  inset-block-end: 8px;
+  inset-inline-start: 50%;
+  inline-size: 12px;
+  block-size: 12px;
+  margin-inline-start: -6px;
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  border: 2px solid var(--border-strong);
+}
+
+.recorrido__hito--atencion {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 4px var(--st-primary-bg);
+}
+
+/* El tiempo entre dos columnas, en el pasillo y sobre el eje. */
+.recorrido__intervalo {
+  position: absolute;
+  inset-block-end: 2px;
+  inset-inline-start: calc(var(--sp-8) * -1);
+  translate: -50% 0;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  font-size: var(--fs-overline);
+  line-height: 20px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.recorrido__nodos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* -- Nodos ------------------------------------------------------------------ */
+
+.recorrido__nodo {
+  position: absolute;
+  inset-inline: 0;
+  display: grid;
+  align-content: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-inline-start: 4px solid var(--t-bd);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    opacity var(--dur-base) ease,
+    box-shadow var(--dur-fast) ease,
+    translate var(--dur-fast) ease;
+}
+
+.recorrido__nodo:hover,
+.recorrido__nodo--enfocado {
+  box-shadow: var(--shadow-md);
+  translate: 0 -1px;
+  border-color: var(--t-bd);
+  border-inline-start-color: var(--t-fg);
+}
+
+.recorrido__nodo:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--focus-ring),
+    var(--shadow-md);
+}
+
+.recorrido__nodo--atenuado {
+  opacity: 0.35;
+}
+
+.recorrido__nodo-cabeza {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.recorrido__marca {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: var(--r-full);
+  background: var(--t-bg);
+  color: var(--t-fg);
+  border: 1px solid var(--t-bd);
+}
+
+.recorrido__marca app-nav-icon {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.recorrido__nodo-principal {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.recorrido__nodo-pie {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.recorrido__nodo-estado {
+  flex: none;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--t-bg);
+  color: var(--t-fg);
+  font-weight: 600;
+}
+
+.recorrido__nodo-secundario {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recorrido__arista,
+  .recorrido__nodo {
+    transition: none;
+  }
+
+  .recorrido__nodo:hover,
+  .recorrido__nodo--enfocado {
+    translate: none;
+  }
+}
+
+/* El nodo de grupo no es un registro: borde discontinuo y sin sombra, para
+   que se lea como «hay más acá» y no como un registro más. */
+.recorrido__nodo--grupo {
+  background: transparent;
+  border-style: dashed;
+  border-inline-start-style: solid;
+  box-shadow: none;
+}
+
+.recorrido__nodo--grupo .recorrido__nodo-principal {
+  color: var(--t-fg);
+}
