@@ -130,6 +130,10 @@
     color: var(--text-primary);
 }
 
+.farmacia__chat {
+    margin-block-start: var(--sp-2);
+}
+
 .farmacia__km {
     color: var(--text-secondary);
     font-size: var(--fs-caption);

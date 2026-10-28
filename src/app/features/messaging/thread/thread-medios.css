@@ -1,0 +1,578 @@
+/* La piel del hilo al estilo de una app de delivery: burbujas propias en el
+   color de la marca, ajenas en superficie neutra con filo, la cola en el
+   último de cada bloque, fotos redondeadas sin marco grueso, grillas de fotos
+   y la tarjeta de pedido/producto/servicio/farmacia.
+
+   Hoja aparte por el presupuesto de estilos por componente (`anyComponentStyle`
+   en `angular.json`), igual que `thread-capas.css`. Va última en `styleUrls`:
+   lo que redefine de `thread.css` gana por orden, sin subir especificidad. */
+
+/* Los tokens del chat, re-apuntados a la marca sólo dentro del hilo. Son los
+   que ya leen las reglas de `thread.css` —la burbuja, el degradé del menú del
+   mensaje—, así que cambian todas de una vez y en los dos temas. */
+:host {
+  --chat-papel: var(--sup-inset);
+  --chat-propia: var(--petroleo);
+  --chat-ajena: var(--sup-tarjeta);
+  /* El ancho de una foto, como en WhatsApp: ni miniatura ni pantalla entera. */
+  --hilo-foto: 16.25rem;
+  --hilo-foto-alto: 20rem;
+  --hilo-foto-radio: calc(var(--r-card) - 3px);
+}
+
+/* --- Burbujas ------------------------------------------------------------ */
+
+.hilo__burbuja {
+  border: 1px solid var(--filete-2);
+}
+
+.hilo__burbuja.is-propio {
+  border-color: transparent;
+  color: var(--tinta-nav);
+}
+
+.hilo__burbuja.is-propio .hilo__texto,
+.hilo__burbuja.is-propio .hilo__enlace,
+.hilo__burbuja.is-propio .hilo__mas-mensaje,
+.hilo__burbuja.is-propio .hilo__documento,
+.hilo__burbuja.is-propio .hilo__documento-icono svg,
+.hilo__burbuja.is-propio .hilo__documento-ver,
+.hilo__burbuja.is-propio .hilo__subiendo,
+.hilo__burbuja.is-propio .hilo__reintento,
+.hilo__burbuja.is-propio .hilo__ticks.is-fallado {
+  color: inherit;
+}
+
+.hilo__burbuja.is-propio .hilo__meta,
+.hilo__burbuja.is-propio .hilo__documento-detalle,
+.hilo__burbuja.is-propio .hilo__cita-texto {
+  color: inherit;
+  opacity: .88;
+}
+
+/* El doble tilde de leído, en menta: sobre el petróleo el celeste del tilde
+   no llega a 3:1. */
+.hilo__burbuja.is-propio .hilo__ticks.is-leido {
+  color: var(--menta);
+}
+
+.hilo__burbuja.is-propio .hilo__cita,
+.hilo__burbuja.is-propio .hilo__documento {
+  background: color-mix(in srgb, var(--tinta-nav) 14%, transparent);
+  border-inline-start-color: var(--menta);
+}
+
+.hilo__burbuja.is-propio .hilo__cita-autor {
+  color: var(--menta);
+}
+
+/* Las esquinas de adentro de una ráfaga se achican: tres mensajes seguidos se
+   leen como una columna, no como tres globos sueltos. */
+.hilo__burbuja:not(.is-propio):not(.is-abre) { border-start-start-radius: var(--e1); }
+.hilo__burbuja:not(.is-propio):not(.is-cierra) { border-end-start-radius: var(--e1); }
+.hilo__burbuja.is-propio:not(.is-abre) { border-start-end-radius: var(--e1); }
+.hilo__burbuja.is-propio:not(.is-cierra) { border-end-end-radius: var(--e1); }
+
+/* La cola, abajo y en el último del bloque. */
+.hilo__burbuja.is-cierra::after {
+  content: '';
+  position: absolute;
+  inset-block-end: -1px;
+  inline-size: 10px;
+  block-size: 14px;
+  background: inherit;
+}
+
+.hilo__burbuja.is-cierra:not(.is-propio) {
+  border-end-start-radius: 0;
+}
+
+.hilo__burbuja.is-cierra:not(.is-propio)::after {
+  inset-inline-start: -8px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.hilo__burbuja.is-cierra.is-propio {
+  border-end-end-radius: 0;
+}
+
+.hilo__burbuja.is-cierra.is-propio::after {
+  inset-inline-end: -8px;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
+/* Fotos y stickers no llevan cola: sin texto, el triangulito queda suelto. */
+.hilo__burbuja.is-solo-imagen::after,
+.hilo__galeria::after {
+  display: none;
+}
+
+.hilo__burbuja.is-sticker {
+  border: 0;
+}
+
+/* --- Separadores --------------------------------------------------------- */
+
+.hilo__dia {
+  align-self: center;
+  margin-block: var(--e3) var(--e1);
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.hilo__dia span {
+  text-transform: none;
+  letter-spacing: 0;
+  border: 1px solid var(--filete-2);
+}
+
+/* --- Fotos --------------------------------------------------------------- */
+
+/* Una foto: casi sin marco —tres píxeles del color de la burbuja— y
+   redondeada como la burbuja. */
+.hilo__burbuja.is-imagen,
+.hilo__galeria {
+  padding: 3px;
+}
+
+.hilo__burbuja.is-imagen .hilo__texto {
+  padding: var(--e1) 6px 0;
+}
+
+.hilo__burbuja.is-imagen .hilo__meta {
+  margin-inline-end: 6px;
+  margin-block-end: 3px;
+}
+
+.hilo__foto {
+  position: relative;
+  border-radius: var(--hilo-foto-radio);
+  overflow: hidden;
+}
+
+.hilo__imagen,
+.hilo__celda,
+.hilo__adjunto-cargando {
+  display: block;
+  position: relative;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: linear-gradient(100deg, var(--sup-inset) 30%, var(--filete-2) 50%, var(--sup-inset) 70%);
+  background-size: 300% 100%;
+  animation: hilo-esqueleto 1.4s linear infinite;
+  cursor: zoom-in;
+}
+
+.hilo__imagen {
+  inline-size: var(--hilo-foto);
+  max-inline-size: 100%;
+  min-block-size: 10rem;
+  border-radius: var(--hilo-foto-radio);
+}
+
+.hilo__adjunto-cargando {
+  inline-size: var(--hilo-foto);
+  max-inline-size: 100%;
+  block-size: 10rem;
+  margin-block-end: 3px;
+  border-radius: var(--hilo-foto-radio);
+  cursor: default;
+}
+
+.hilo__imagen img,
+.hilo__celda img {
+  display: block;
+  inline-size: 100%;
+  opacity: 0;
+  transition: opacity var(--mov-medio) var(--curva);
+}
+
+.hilo__imagen img {
+  block-size: auto;
+  max-block-size: var(--hilo-foto-alto);
+  object-fit: cover;
+}
+
+.hilo__imagen.is-lista,
+.hilo__celda.is-lista {
+  min-block-size: 0;
+  animation: none;
+  background: var(--sup-inset);
+}
+
+.hilo__imagen.is-lista img,
+.hilo__celda.is-lista img {
+  opacity: 1;
+}
+
+/* Rota: sin brillo —no está cargando— y con el aviso en el centro. Mientras
+   sube se queda así, con la capa de «Enviando…» encima. */
+.hilo__imagen.is-rota,
+.hilo__celda.is-rota {
+  animation: none;
+  background: var(--sup-inset);
+}
+
+.hilo__imagen.is-rota img,
+.hilo__celda.is-rota img {
+  display: none;
+}
+
+.hilo__foto-rota {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  padding: var(--e3);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  text-align: center;
+}
+
+.hilo__foto-rota svg {
+  inline-size: 28px;
+  block-size: 28px;
+}
+
+.hilo__imagen:focus-visible,
+.hilo__celda:focus-visible {
+  outline: 3px solid var(--aguamarina);
+  outline-offset: -3px;
+}
+
+@keyframes hilo-esqueleto {
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
+}
+
+/* Subiendo / no se envió: una capa sobre la vista previa local. */
+.hilo__foto-capa {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  background: var(--velo);
+  color: var(--tinta-nav);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.hilo__foto-capa.is-fallado {
+  pointer-events: auto;
+}
+
+.hilo__foto-reintentar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  min-block-size: 40px;
+  padding: var(--e2) var(--e4);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hilo__foto-reintentar svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.hilo__foto-reintentar:focus-visible {
+  outline: 2px solid var(--aguamarina);
+  outline-offset: 2px;
+}
+
+/* La hora encima de la foto, sobre un velo: una foto sola no tiene renglón
+   donde apoyarla. */
+.hilo__burbuja.is-solo-imagen:not(.is-fallado) .hilo__meta,
+.hilo__galeria .hilo__meta {
+  position: absolute;
+  inset-block-end: var(--e2);
+  inset-inline-end: var(--e2);
+  float: none;
+  margin: 0;
+  padding: 3px var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--velo);
+  color: var(--tinta-nav);
+  opacity: 1;
+  pointer-events: none;
+}
+
+.hilo__burbuja.is-solo-imagen .hilo__ticks.is-leido,
+.hilo__galeria .hilo__ticks.is-leido {
+  color: var(--menta);
+}
+
+/* La grilla: 2 lado a lado, 3 con la primera ancha, 4 o más en 2×2. */
+.hilo__grilla {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+  inline-size: var(--hilo-foto);
+  max-inline-size: 100%;
+  border-radius: var(--hilo-foto-radio);
+  overflow: hidden;
+}
+
+.hilo__celda {
+  aspect-ratio: 1;
+}
+
+.hilo__celda img {
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.hilo__galeria[data-cuantas='2'] .hilo__celda {
+  aspect-ratio: 3 / 4;
+}
+
+.hilo__galeria[data-cuantas='3'] .hilo__celda:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 2 / 1;
+}
+
+.hilo__celda-mas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--velo);
+  color: var(--tinta-nav);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+}
+
+.hilo__celda--cargando {
+  cursor: default;
+}
+
+/* --- La tarjeta de contexto ---------------------------------------------- */
+
+/* Blanca de los dos lados, como el resumen del pedido: es un objeto que se
+   comparte, no algo que alguien dijo con su color. */
+.hilo__burbuja.is-contexto {
+  inline-size: min(20rem, 100%);
+  padding: var(--e3);
+  border-color: var(--filete);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-2);
+  color: var(--tinta);
+}
+
+.hilo__burbuja.is-contexto .hilo__meta {
+  color: var(--tinta-3);
+  opacity: 1;
+}
+
+.hilo__burbuja.is-contexto .hilo__ticks.is-leido {
+  color: var(--chat-tick-leido);
+}
+
+.hilo__burbuja.is-contexto .hilo__mas-mensaje {
+  background: var(--sup-tarjeta);
+  color: var(--tinta-3);
+}
+
+.hilo__contexto {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+}
+
+.hilo__contexto-icono,
+.hilo__fijado-icono {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-menu);
+  background: var(--chat-cita);
+  color: var(--tinta-marca);
+}
+
+.hilo__contexto-icono {
+  inline-size: 44px;
+  block-size: 44px;
+}
+
+.hilo__contexto-icono svg {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+[data-tipo='pedido'] > .hilo__contexto-icono,
+[data-tipo='pedido'] > .hilo__fijado-icono {
+  background: var(--aviso-bg);
+  color: var(--aviso-tinta);
+}
+
+[data-tipo='producto'] > .hilo__contexto-icono,
+[data-tipo='producto'] > .hilo__fijado-icono {
+  background: var(--info-bg);
+  color: var(--info-tinta);
+}
+
+[data-tipo='servicio'] > .hilo__contexto-icono,
+[data-tipo='servicio'] > .hilo__fijado-icono {
+  background: var(--ok-bg);
+  color: var(--ok-tinta);
+}
+
+.hilo__contexto-cuerpo {
+  min-inline-size: 0;
+}
+
+.hilo__contexto-etiqueta,
+.hilo__contexto-titulo,
+.hilo__contexto-detalle {
+  margin: 0;
+}
+
+.hilo__contexto-etiqueta {
+  color: var(--tinta-2);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.hilo__contexto-titulo {
+  margin-block-start: 2px;
+  color: var(--tinta);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.hilo__contexto-detalle {
+  margin-block-start: 2px;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
+.hilo__contexto-ver {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e1);
+  min-block-size: 40px;
+  margin-block: var(--e3) var(--e1);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  color: var(--tinta-marca);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.hilo__contexto-ver svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.hilo__contexto-ver:hover,
+.hilo__fijado-ver:hover {
+  background: var(--sup-inset);
+}
+
+.hilo__contexto-ver:focus-visible,
+.hilo__fijado-ver:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* --- «Consulta sobre: …», fijada arriba ---------------------------------- */
+
+.hilo__fijado {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e2) var(--e4);
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+}
+
+.hilo__fijado-icono {
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: var(--r-ctrl);
+}
+
+.hilo__fijado-icono svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.hilo__fijado-texto {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hilo__fijado-rotulo {
+  color: var(--tinta-2);
+  font-size: var(--fs-overline);
+}
+
+.hilo__fijado-titulo {
+  overflow: hidden;
+  color: var(--tinta);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hilo__fijado-detalle {
+  color: var(--tinta-2);
+  font-weight: 400;
+}
+
+.hilo__fijado-ver {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 36px;
+  padding-inline: var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  color: var(--tinta-marca);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hilo__imagen,
+  .hilo__celda,
+  .hilo__adjunto-cargando {
+    animation: none;
+  }
+
+  .hilo__imagen img,
+  .hilo__celda img {
+    transition: none;
+  }
+}

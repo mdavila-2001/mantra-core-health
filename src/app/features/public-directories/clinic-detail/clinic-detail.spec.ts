@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ClinicDetail } from './clinic-detail';
@@ -107,9 +107,28 @@ describe('ClinicDetail', () => {
     montar();
     responder();
 
-    const botones = fixture.nativeElement.querySelectorAll('button, input');
+    // «Consultar por chat» es el único botón, y no edita nada: lleva al chat.
+    const botones = fixture.nativeElement.querySelectorAll(
+      'button:not([data-testid="consultar-servicio-por-chat"]), input',
+    );
     expect(botones.length).toBe(0);
     expect(fixture.nativeElement.textContent as string).not.toContain('Editar precio');
+  });
+
+  it('«Consultar por chat» lleva al chat de la clínica con el servicio puesto', () => {
+    montar();
+    responder();
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.nativeElement.querySelector('[data-testid="consultar-servicio-por-chat"]') as HTMLElement).click();
+
+    const [, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
+    expect(vuelta.get('escribirA')).toBe(SLUG);
+    expect(vuelta.get('sobre')).toBe('servicio');
+    expect(vuelta.get('titulo')).toBe('Consulta cardiológica');
+    expect(vuelta.get('detalle')).toBe('250,00 Bs · Clínica Los Olivos');
+    expect(vuelta.get('ruta')).toBe(`/clinics-directory/${SLUG}`);
   });
 
   it('dice que falta el arancel en vez de pintar un cero', () => {

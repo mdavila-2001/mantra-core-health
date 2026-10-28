@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import {
@@ -106,6 +106,30 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     expect(text()).toContain('La farmacia todavía no abrió tu pedido');
     expect(harness.routeNativeElement?.querySelector('[data-testid="pedido-demo"]')).toBeNull();
     expect(text()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f-]{27}/i);
+  });
+
+  it('sin vitrina de la farmacia no ofrece el chat del pedido', async () => {
+    await mount(pharmacyOrderDtoFixture({ pharmacyPublicSlug: null, pharmacyPublicProfileId: null }));
+    expect(byTestId('pedido-chatear')).toBeNull();
+  });
+
+  it('«Chatear con la farmacia» lleva al chat DEL PEDIDO con la tarjeta puesta', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ pharmacyPublicSlug: 'farmacia-vida', pharmacyPublicProfileId: 'pp-f' }),
+    );
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    click('pedido-chatear');
+
+    // Sin sesión en la prueba: pasa por el login y vuelve al chat.
+    const [destino, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    expect(destino).toEqual(['/auth']);
+    const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
+    expect(vuelta.get('pedido')).toBe(PHARMACY_ORDER_TEST_IDS.order);
+    expect(vuelta.get('sobre')).toBe('pedido');
+    expect(vuelta.get('ruta')).toBe(`/my-account/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}`);
+    expect(vuelta.get('titulo')).toContain(' · ');
+    expect(vuelta.get('detalle')).toMatch(/^\d+ productos?/u);
   });
 
   it('preserves newest-first substitutions and accepts them through the API', async () => {

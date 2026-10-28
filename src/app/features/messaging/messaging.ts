@@ -16,6 +16,9 @@ import { debounceTime, filter, map, Subject } from 'rxjs';
 import { ChatStore } from '../../core/messaging/chat.store';
 import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
 import { conQuien } from '../../core/messaging/con-quien';
+import type { ContextoDeChat } from '../../core/messaging/contexto-de-chat';
+import { contextoDeLaQuery, destinoDeLaQuery } from '../../core/messaging/enlace-de-chat';
+import { PharmacyOrdersClient } from '../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
@@ -79,6 +82,7 @@ export class Messaging {
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
   private readonly titulo = inject(Title);
+  private readonly pedidos = inject(PharmacyOrdersClient);
 
   protected readonly filtros = FILTROS;
 
@@ -176,10 +180,29 @@ export class Messaging {
     // El `?escribirA=<slug>` con el que llega el botón «Enviar mensaje» de una
     // ficha pública. Se atiende cuando el perfil propio ya está resuelto: sin
     // eso no hay con qué abrir el hilo.
+    //
+    // Los botones del marketplace («Chatear con la farmacia», «Consultar por
+    // chat») agregan de qué se trata (`sobre`, `titulo`, `detalle`, `ruta`):
+    // el store manda esa tarjeta al abrir, una sola vez. Al abrir se navega al
+    // hilo **reemplazando** esta dirección, así que ni un refresco ni el botón
+    // «atrás» vuelven a pasar por acá con los parámetros puestos.
+    //
+    // `?pedido=<id>` es el chat de un pedido de farmacia: el hilo lo abre la
+    // API (`POST /pharmacy/orders/:id/conversation`), no la bandeja.
     this.ruta.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
-      const slug = query.get('escribirA');
-      if (slug !== null && slug !== '') {
-        this.abrirConSlug(slug);
+      const destino = destinoDeLaQuery(query);
+      const contexto = contextoDeLaQuery(query) ?? undefined;
+      if (destino === null) {
+        return;
+      }
+      if ('pedido' in destino) {
+        this.store.abrirConversacion(
+          this.pedidos.abrirConversacion(destino.pedido).pipe(map((r) => r.conversationId)),
+          (conversationId) => this.irAlHilo(conversationId),
+          contexto,
+        );
+      } else {
+        this.abrirConSlug(destino.escribirA, contexto);
       }
     });
 
@@ -278,11 +301,19 @@ export class Messaging {
     this.abrirConSlug(slug);
   }
 
-  private abrirConSlug(slug: string): void {
-    this.store.escribirA(slug, (conversationId) => {
-      this.limpiarBusqueda();
-      void this.router.navigate(['/messaging', conversationId]);
-    });
+  private abrirConSlug(slug: string, contexto?: ContextoDeChat): void {
+    this.store.escribirA(
+      slug,
+      (conversationId) => this.irAlHilo(conversationId),
+      contexto,
+    );
+  }
+
+  private irAlHilo(conversationId: string): void {
+    this.limpiarBusqueda();
+    // Sin `queryParams`: la dirección del hilo no hereda `escribirA` ni el
+    // contexto, que ya se mandó.
+    void this.router.navigate(['/messaging', conversationId], { replaceUrl: true });
   }
 }
 

@@ -8,6 +8,7 @@ import {
   effect,
   ElementRef,
   inject,
+  input,
   output,
   PLATFORM_ID,
   signal,
@@ -25,12 +26,69 @@ import { SelectorEmojis } from './selector-emojis';
 import { StickerPicker } from './sticker-picker/sticker-picker';
 import { Grabador } from './grabador';
 import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
+import {
+  formatearTamano,
+  UPLOAD_MAX_BYTES,
+} from '../../../../core/data-access/files/upload-policy';
+import { esImagenAceptada, ImagenRechazada, LIENZO, prepararImagen } from './preparar-imagen';
 
-/** Lo más grande que se deja adjuntar. Más que esto no sube por el móvil. */
-const TOPE_DE_ARCHIVO = 20 * 1024 * 1024;
+/**
+ * Cuántos archivos se juntan para mandar de una vez.
+ *
+ * Seis entran en una fila de miniaturas a 390 px sin que la tira se vuelva un
+ * carrusel, y cubren el caso real —receta de dos hojas, frente y dorso de la
+ * credencial, la caja del remedio—. Cada uno sale como su propio mensaje.
+ */
+export const TOPE_DE_COLA = 6;
 
-/** Lo que el chat acepta adjuntar. */
-const TIPOS_ACEPTADOS = ['image/', 'audio/', 'video/', 'application/pdf'];
+/** Lo que se deja elegir con el selector cuando se buscan fotos. */
+const ACEPTA_FOTOS = 'image/*';
+
+/**
+ * Lo que acepta el selector por omisión y, con él, el arrastre
+ * (`appFileDropTarget` mira este `accept`). `image/*` y no la lista exacta:
+ * un HEIC o un BMP se convierten a JPEG antes de subir.
+ */
+const ACEPTA_POR_OMISION = 'image/*,application/pdf';
+
+/**
+ * Las respuestas rápidas cuando el hilo está vacío y nadie pasó otras.
+ *
+ * Genéricas a propósito: el mismo composer sirve para hablar con una farmacia,
+ * un profesional o un proveedor. Quien abre el chat desde un contexto sabe qué
+ * preguntar y pasa las suyas — {@link SUGERENCIAS_MARKETPLACE}, por ejemplo.
+ */
+export const SUGERENCIAS_POR_OMISION: readonly string[] = [
+  '¡Hola! Tengo una consulta',
+  '¿Tienen disponibilidad?',
+  'Te mando la foto de mi receta',
+];
+
+/** Las de un producto o un servicio del marketplace. */
+export const SUGERENCIAS_MARKETPLACE: readonly string[] = [
+  '¿Lo tienen en stock?',
+  '¿Cuánto tarda el envío?',
+  'Te mando la foto de mi receta',
+];
+
+/** Una sugerencia que habla de una foto abre el selector en vez de sólo escribir. */
+const PIDE_FOTO = /\b(foto|imagen)\b/i;
+
+/** Un archivo esperando a salir, con lo necesario para dibujar su miniatura. */
+export interface ArchivoEnCola {
+  readonly id: number;
+  readonly nombre: string;
+  readonly tipo: string;
+  readonly tamano: number;
+  /** `null` mientras se prepara: hasta entonces no se sabe qué va a subir. */
+  readonly archivo: File | null;
+  /**
+   * Miniatura `data:` de la imagen; `null` en un PDF, en SSR o mientras se lee.
+   * `data:` y no `blob:`: la CSP (`img-src 'self' data:`) bloquea los `blob:`.
+   */
+  readonly vistaPrevia: string | null;
+  readonly estado: 'preparando' | 'lista';
+}
 
 /**
  * La barra de escribir — carril P2 y P9.
@@ -68,12 +126,25 @@ export class Composer {
   private readonly plantillas = inject(MessageTemplates);
   private readonly route = inject(ActivatedRoute);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly lienzo = inject(LIENZO);
 
   /** Avisa que se envió, para que el hilo baje del todo. */
   readonly enviado = output<void>();
 
+  /**
+   * Respuestas rápidas que se ofrecen como chips arriba del campo.
+   *
+   * Vacío —el valor por omisión— significa «las de siempre, y sólo con el hilo
+   * vacío» ({@link SUGERENCIAS_POR_OMISION}). Con algo, se muestran aunque el
+   * hilo ya tenga mensajes: quien las pasa viene de un contexto (un producto,
+   * un pedido) y sabe que son pertinentes. En los dos casos se retiran después
+   * del primer envío.
+   */
+  readonly sugerencias = input<readonly string[]>([]);
+
   private readonly campo = viewChild<ElementRef<HTMLTextAreaElement>>('campo');
   private readonly archivo = viewChild<ElementRef<HTMLInputElement>>('archivo');
+  private readonly camara = viewChild<ElementRef<HTMLInputElement>>('camara');
 
   protected readonly texto = signal('');
   protected readonly panel = signal<'ninguno' | 'emojis' | 'adjuntar' | 'plantillas'>(
@@ -90,8 +161,57 @@ export class Composer {
   protected readonly solapa = signal<'emojis' | 'stickers'>('emojis');
   protected readonly error = signal('');
 
-  /** El archivo elegido, esperando la leyenda y el envío. */
-  protected readonly adjunto = signal<File | null>(null);
+  /** Los archivos elegidos, esperando la leyenda y el envío. */
+  protected readonly cola = signal<readonly ArchivoEnCola[]>([]);
+  private siguienteId = 0;
+  /** El archivo elegido de cada ítem que se está preparando, para comparar. */
+  private readonly originales = new Map<number, File>();
+
+  /** Lo que se anuncia a los lectores de pantalla al tocar la cola. */
+  protected readonly anuncio = signal('');
+
+  protected readonly tope = TOPE_DE_COLA;
+
+  /** Si alguno todavía se está achicando: hasta que termine no se envía. */
+  protected readonly preparando = computed(() =>
+    this.cola().some((item) => item.estado === 'preparando'),
+  );
+
+  /**
+   * Un único PDF conserva la vista previa grande de antes (`app-file-preview`
+   * lo rasteriza): de un documento importa ver qué página es. Las fotos van en
+   * la tira de miniaturas.
+   */
+  protected readonly documentoUnico = computed(() => {
+    const lista = this.cola();
+    return lista.length === 1 && lista[0].archivo !== null && !lista[0].tipo.startsWith('image/')
+      ? lista[0].archivo
+      : null;
+  });
+
+  /** Si ya se mandó algo en esta conversación: los chips se retiran. */
+  private readonly sugerenciasRetiradas = signal(false);
+
+  protected readonly chips = computed<readonly string[]>(() => {
+    if (
+      this.sugerenciasRetiradas() ||
+      this.editando() !== null ||
+      this.texto().trim() !== '' ||
+      this.cola().length > 0
+    ) {
+      return [];
+    }
+    const propias = this.sugerencias();
+    if (propias.length > 0) {
+      return propias;
+    }
+    const activa = this.store.activaId();
+    const hiloVacio =
+      this.store.hiloCargado() &&
+      this.store.mensajes().length === 0 &&
+      !this.store.pendientes().some((p) => p.conversationId === activa);
+    return hiloVacio ? SUGERENCIAS_POR_OMISION : [];
+  });
 
   /** Las plantillas de fábrica más las propias (carril P9). */
   protected readonly plantillasDisponibles = this.plantillas.todas;
@@ -109,7 +229,7 @@ export class Composer {
   private readonly borradorEnEspera = signal<string | null>(null);
 
   protected readonly puedeEnviar = computed(
-    () => this.texto().trim() !== '' || this.adjunto() !== null,
+    () => this.texto().trim() !== '' || this.cola().length > 0,
   );
 
   constructor() {
@@ -118,6 +238,7 @@ export class Composer {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(() => {
       this.texto.set(this.store.borrador());
       this.panel.set('ninguno');
+      this.sugerenciasRetiradas.set(false);
       this.limpiarAdjunto();
     });
 
@@ -195,13 +316,25 @@ export class Composer {
       return;
     }
 
-    const archivo = this.adjunto();
-    if (archivo !== null) {
-      this.store.enviarAdjunto(archivo, this.texto());
+    const cola = this.cola();
+    if (cola.length > 0) {
+      // Mientras se achica una foto no se manda nada: mandar las listas y
+      // dejar la otra atrás desordenaría la tanda.
+      if (this.preparando()) {
+        return;
+      }
+      const archivos = cola
+        .map((item) => item.archivo)
+        .filter((archivo): archivo is File => archivo !== null);
+      // Un mensaje por archivo; el texto viaja con el primero (ver
+      // `ChatStore.enviarAdjuntos`).
+      this.store.enviarAdjuntos(archivos, this.texto());
       this.limpiarAdjunto();
       this.texto.set('');
       this.store.guardarBorrador('');
+      this.sugerenciasRetiradas.set(true);
       this.enviado.emit();
+      this.enfocar();
       return;
     }
     if (this.texto().trim() === '') {
@@ -209,7 +342,30 @@ export class Composer {
     }
     this.store.enviar(this.texto());
     this.texto.set('');
+    this.sugerenciasRetiradas.set(true);
     this.enviado.emit();
+    this.enfocar();
+  }
+
+  /* --- Respuestas rápidas -------------------------------------------------- */
+
+  /**
+   * Tocar un chip **escribe** la frase y deja el foco en el campo; no la manda.
+   *
+   * Es una pregunta a una farmacia o a un profesional, no un «me gusta»: a
+   * «¿Lo tienen en stock?» casi siempre le falta la presentación o la dosis, y
+   * un mensaje mandado sin querer no se borra. Escribirla cuesta un toque más
+   * —el de enviar, que ya está a la vista— y se puede corregir antes.
+   *
+   * La que habla de una foto además abre el selector de imágenes: la frase
+   * queda como leyenda de la primera foto.
+   */
+  protected usarSugerencia(sugerencia: string): void {
+    this.alEscribir(sugerencia);
+    if (PIDE_FOTO.test(sugerencia)) {
+      this.elegirArchivo(true);
+      return;
+    }
     this.enfocar();
   }
 
@@ -256,46 +412,237 @@ export class Composer {
 
   /* --- Adjuntos ------------------------------------------------------------ */
 
+  /** Abre el selector: de fotos (galería) o de documentos (PDF). */
   protected elegirArchivo(soloImagenes: boolean): void {
     const entrada = this.archivo()?.nativeElement;
     if (entrada) {
-      entrada.accept = soloImagenes ? 'image/*,video/*' : '*/*';
+      entrada.accept = soloImagenes ? ACEPTA_FOTOS : 'application/pdf';
       entrada.click();
     }
     this.panel.set('ninguno');
   }
 
-  protected alElegir(evento: Event): void {
-    const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
-    entrada.value = '';
-    if (archivo === undefined) {
-      return;
-    }
-    if (archivo.size > TOPE_DE_ARCHIVO) {
-      this.error.set('El archivo pesa más de 20 MB.');
-      return;
-    }
-    if (!TIPOS_ACEPTADOS.some((tipo) => archivo.type.startsWith(tipo))) {
-      this.error.set('Podés mandar imágenes, videos, audios y PDF.');
-      return;
-    }
-    this.error.set('');
-    this.ponerAdjunto(archivo);
+  /** Abre la cámara trasera (en el teléfono; en la compu, el selector). */
+  protected tomarFoto(): void {
+    this.camara()?.nativeElement.click();
+    this.panel.set('ninguno');
   }
 
-  private ponerAdjunto(archivo: File): void {
-    this.limpiarAdjunto();
-    this.adjunto.set(archivo);
+  /** El `change` de los dos selectores y del arrastre (`appFileDropTarget`). */
+  protected alElegir(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivos = Array.from(entrada.files ?? []);
+    entrada.value = '';
+    if (entrada === this.archivo()?.nativeElement) {
+      // Vuelve al `accept` amplio: el arrastre lo usa para filtrar, y un PDF
+      // soltado después de abrir la galería no tiene por qué rebotar.
+      entrada.accept = ACEPTA_POR_OMISION;
+    }
+    void this.agregar(archivos);
+  }
+
+  /** Ctrl+V de una captura o de una foto copiada la suma a la cola. */
+  protected alPegar(evento: ClipboardEvent): void {
+    const datos = evento.clipboardData;
+    const archivos = Array.from(datos?.files ?? []);
+    if (archivos.length === 0 || this.editando() !== null) {
+      return;
+    }
+    // Si además viene texto (copiar de una página trae los dos), el texto se
+    // pega igual; si sólo hay imagen, se evita que el navegador pegue nada.
+    if (!Array.from(datos?.types ?? []).includes('text/plain')) {
+      evento.preventDefault();
+    }
+    void this.agregar(archivos);
+  }
+
+  /**
+   * Suma archivos a la cola: valida, achica las fotos y dice qué no entró.
+   *
+   * Devuelve la promesa para las pruebas; la pantalla no la espera.
+   */
+  async agregar(archivos: readonly File[]): Promise<void> {
+    if (archivos.length === 0 || this.editando() !== null) {
+      return;
+    }
+    const rechazos: string[] = [];
+    const libres = TOPE_DE_COLA - this.cola().length;
+    const entran = archivos.slice(0, Math.max(0, libres));
+    if (archivos.length > entran.length) {
+      rechazos.push(`Podés mandar hasta ${TOPE_DE_COLA} archivos por vez.`);
+    }
+
+    const tareas: Promise<void>[] = [];
+    for (const archivo of entran) {
+      const tipo = archivo.type.toLowerCase();
+      if (tipo === 'application/pdf') {
+        if (archivo.size > UPLOAD_MAX_BYTES) {
+          rechazos.push(`«${archivo.name}» pesa más de 10 MB.`);
+          continue;
+        }
+        this.encolar({ archivo, vistaPrevia: null, estado: 'lista' });
+        continue;
+      }
+      if (!tipo.startsWith('image/')) {
+        rechazos.push(`«${archivo.name}» no se puede mandar. Podés mandar fotos (JPG, PNG, WEBP o GIF) y PDF.`);
+        continue;
+      }
+      const id = this.encolar({
+        archivo: null,
+        original: archivo,
+        vistaPrevia: null,
+        estado: 'preparando',
+      });
+      // La miniatura sale del original mientras se achica, si el navegador lo
+      // dibuja y no es un monstruo: leer 40 MB a `data:` sólo para una
+      // miniatura de 72 px congelaría la pestaña.
+      if (esImagenAceptada(archivo.type) && archivo.size <= UPLOAD_MAX_BYTES) {
+        this.ponerVistaPrevia(id, archivo);
+      }
+      tareas.push(
+        prepararImagen(archivo, this.isBrowser, this.lienzo).then(
+          (lista) => this.terminarDePreparar(id, lista),
+          (error: unknown) => {
+            this.quitarDeLaCola(id);
+            rechazos.push(
+              error instanceof ImagenRechazada
+                ? error.message
+                : `No pudimos preparar «${archivo.name}».`,
+            );
+          },
+        ),
+      );
+    }
+
+    if (rechazos.length > 0) {
+      this.error.set(rechazos.join(' '));
+    } else {
+      this.error.set('');
+    }
+    this.anunciar();
+    this.enfocar();
+
+    await Promise.all(tareas);
+    if (rechazos.length > 0) {
+      this.error.set(rechazos.join(' '));
+    }
+    this.anunciar();
+  }
+
+  private encolar(datos: {
+    archivo: File | null;
+    original?: File;
+    vistaPrevia: string | null;
+    estado: ArchivoEnCola['estado'];
+  }): number {
+    const base = datos.archivo ?? datos.original!;
+    const id = ++this.siguienteId;
+    if (datos.original) {
+      this.originales.set(id, datos.original);
+    }
+    this.cola.update((lista) => [
+      ...lista,
+      {
+        id,
+        nombre: base.name,
+        tipo: base.type,
+        tamano: base.size,
+        archivo: datos.archivo,
+        vistaPrevia: datos.vistaPrevia,
+        estado: datos.estado,
+      },
+    ]);
+    return id;
+  }
+
+  private terminarDePreparar(id: number, archivo: File): void {
+    const actual = this.cola().find((item) => item.id === id);
+    if (actual === undefined) {
+      // Se quitó mientras se achicaba.
+      return;
+    }
+    // Si cambió el archivo (se achicó o se convirtió), la miniatura se rehace
+    // con lo que de verdad va a subir.
+    if (actual.vistaPrevia === null || archivo !== this.originales.get(id)) {
+      this.ponerVistaPrevia(id, archivo);
+    }
+    this.originales.delete(id);
+    this.cola.update((lista) =>
+      lista.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              archivo,
+              nombre: archivo.name,
+              tipo: archivo.type,
+              tamano: archivo.size,
+              estado: 'lista' as const,
+            }
+          : item,
+      ),
+    );
+  }
+
+  /** La × de una miniatura. */
+  protected quitar(item: ArchivoEnCola): void {
+    this.quitarDeLaCola(item.id);
+    this.anunciar(`Se quitó ${item.nombre}.`);
     this.enfocar();
   }
 
-  protected limpiarAdjunto(): void {
-    this.adjunto.set(null);
+  private quitarDeLaCola(id: number): void {
+    this.originales.delete(id);
+    this.cola.update((lista) => lista.filter((i) => i.id !== id));
   }
 
-  protected nombreDelAdjunto(): string {
-    return this.adjunto()?.name ?? '';
+  protected limpiarAdjunto(): void {
+    this.originales.clear();
+    this.cola.set([]);
+  }
+
+  /** El nombre y el peso, para la etiqueta de la miniatura. */
+  protected describir(item: ArchivoEnCola): string {
+    return item.estado === 'preparando'
+      ? `${item.nombre}, preparando`
+      : `${item.nombre}, ${formatearTamano(item.tamano)}`;
+  }
+
+  protected tamanoLegible(item: ArchivoEnCola): string {
+    return formatearTamano(item.tamano);
+  }
+
+  /** Puede la imagen dibujarse como miniatura en el navegador. */
+  protected esImagen(item: ArchivoEnCola): boolean {
+    return item.tipo.startsWith('image/') && item.vistaPrevia !== null;
+  }
+
+  private anunciar(texto?: string): void {
+    const n = this.cola().length;
+    const listos = this.cola().filter((i) => i.estado === 'lista').length;
+    this.anuncio.set(
+      texto ??
+        (n === 0
+          ? ''
+          : `${n} ${n === 1 ? 'archivo' : 'archivos'} para enviar` +
+            (listos < n ? `, ${n - listos} preparándose.` : '.')),
+    );
+  }
+
+  /** Lee la miniatura como `data:` y la cuelga del ítem, si sigue en la cola. */
+  private ponerVistaPrevia(id: number, archivo: File): void {
+    // Sólo de lo que el navegador dibuja seguro: un HEIC no se ve en Chrome y
+    // muestra el ícono hasta que se convierte.
+    if (!this.isBrowser || typeof FileReader === 'undefined' || !esImagenAceptada(archivo.type)) {
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => {
+      const vistaPrevia = String(lector.result);
+      this.cola.update((lista) =>
+        lista.map((item) => (item.id === id ? { ...item, vistaPrevia } : item)),
+      );
+    };
+    lector.readAsDataURL(archivo);
   }
 
   /* --- Audio --------------------------------------------------------------- */

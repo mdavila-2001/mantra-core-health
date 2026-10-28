@@ -46,6 +46,14 @@ export interface PharmacyOrderDto extends PatientSettlementFields {
   readonly siteName: string;
   readonly pharmacyId: string;
   readonly pharmacyName: string;
+  /**
+   * La vitrina pública de la farmacia del pedido: con quién es el chat del
+   * pedido. `null` (o ausente, en una API anterior) cuando la farmacia no
+   * tiene vitrina — entonces el detalle no ofrece «Chatear con la farmacia».
+   * Son identificadores públicos, no internos.
+   */
+  readonly pharmacyPublicProfileId?: string | null;
+  readonly pharmacyPublicSlug?: string | null;
   readonly medicationRequestId: string | null;
   readonly patientName: string | null;
   readonly deliveryMode: PharmacyOrderConceptDto | null;
@@ -92,4 +100,10 @@ export interface DispensePharmacyOrderDto {
   readonly pickupCode: string;
   readonly productIds?: readonly string[];
   readonly idempotencyKey: string;
+}
+
+/** `POST /pharmacy/orders/:id/conversation` — idempotente. */
+export interface PharmacyOrderConversationDto {
+  readonly conversationId: string;
+  readonly pharmacyProfileId: string;
 }

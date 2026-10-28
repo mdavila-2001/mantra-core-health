@@ -10,8 +10,8 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink, type UrlTree } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
@@ -40,6 +40,19 @@ import {
   nombreDelTipo,
   type MetadatosDeAdjunto,
 } from '../../../core/messaging/adjunto-metadata';
+import {
+  contextoDelTexto,
+  ETIQUETA_DE_CONTEXTO,
+  type ContextoDeChat,
+} from '../../../core/messaging/contexto-de-chat';
+import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
+import {
+  FOTOS_EN_GRILLA,
+  SUGERENCIAS_POR_CONTEXTO,
+  SUGERENCIAS_SIN_CONTEXTO,
+  VERBO_DE_CONTEXTO,
+} from './hilo-contexto';
+import { VisorDeImagenes, type ImagenDelVisor } from './visor-de-imagenes/visor-de-imagenes';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -54,18 +67,44 @@ import {
 export type LineaDelHilo =
   | { readonly tipo: 'fecha'; readonly clave: string; readonly etiqueta: string }
   | { readonly tipo: 'no-leidos'; readonly clave: string; readonly cuantos: number }
-  | {
-      readonly tipo: 'mensaje';
-      readonly clave: string;
-      readonly mensaje: MensajeDelHilo;
-      readonly propio: boolean;
-      /** Si arranca un bloque de quien escribe: lleva la cola de la burbuja. */
-      readonly abreBloque: boolean;
-      /** El nombre del autor, sólo en grupos y sólo al abrir bloque. */
-      readonly autor: string;
-      /** Un tono estable por perfil, para el nombre del autor en un grupo. */
-      readonly tono: number;
-    };
+  | LineaDeMensaje
+  | LineaDeGaleria;
+
+/** Lo que comparten una burbuja y una grilla de fotos: de quién y dónde cae. */
+interface BloqueDeAutor {
+  readonly propio: boolean;
+  /** Si arranca un bloque de quien escribe: lleva el aire de arriba. */
+  readonly abreBloque: boolean;
+  /**
+   * Si cierra el bloque: es el último antes de que hable otro, cambie el día
+   * o pasen cinco minutos. Lleva la cola de la burbuja, como en las apps de
+   * delivery, donde la colita marca el final de lo que alguien dijo.
+   */
+  readonly cierraBloque: boolean;
+  /** El nombre del autor, sólo en grupos y sólo al abrir bloque. */
+  readonly autor: string;
+  /** Un tono estable por perfil, para el nombre del autor en un grupo. */
+  readonly tono: number;
+}
+
+export interface LineaDeMensaje extends BloqueDeAutor {
+  readonly tipo: 'mensaje';
+  readonly clave: string;
+  readonly mensaje: MensajeDelHilo;
+  /** La tarjeta de pedido/producto/servicio/farmacia, si el texto la trae. */
+  readonly contexto: ContextoDeChat | null;
+}
+
+/**
+ * Fotos seguidas del mismo autor, sin texto: se pintan juntas en una grilla
+ * de 2×2 con «+N», como en WhatsApp. Cinco fotos en cinco burbujas apiladas
+ * ocupan tres pantallas para decir una sola cosa.
+ */
+export interface LineaDeGaleria extends BloqueDeAutor {
+  readonly tipo: 'galeria';
+  readonly clave: string;
+  readonly mensajes: readonly MensajeDelHilo[];
+}
 
 /** Cuántos tonos rotan los nombres de autor en un grupo. */
 const TONOS = 8;
@@ -170,9 +209,9 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
  */
 @Component({
   selector: 'app-thread',
-  imports: [Avatar, Composer, ContactPanel, EmptyState, FilePreview, RouterLink],
+  imports: [Avatar, Composer, ContactPanel, EmptyState, FilePreview, NgTemplateOutlet, RouterLink, Spinner, VisorDeImagenes],
   templateUrl: './thread.html',
-  styleUrls: ['./thread.css', './thread-capas.css'],
+  styleUrls: ['./thread.css', './thread-capas.css', './thread-medios.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Thread {
@@ -231,9 +270,6 @@ export class Thread {
     const id = this.store.activaId();
     return id !== null && this.preferencias.archivados().has(id);
   });
-
-  /** La imagen que se está mirando a tamaño completo. */
-  protected readonly imagenAbierta = signal<string | null>(null);
 
   /** El mensaje al que saltó una cita, para destellarlo. */
   protected readonly destellando = signal<string | null>(null);
@@ -308,7 +344,7 @@ export class Thread {
     // Cada resultado abre bloque: sin el vecino de arriba, la cola y el nombre
     // del autor son lo que dice quién habló.
     return coinciden.map((linea) =>
-      linea.tipo === 'mensaje' ? { ...linea, abreBloque: true } : linea,
+      linea.tipo === 'mensaje' ? { ...linea, abreBloque: true, cierraBloque: true } : linea,
     );
   });
 
@@ -372,15 +408,139 @@ export class Thread {
         mensaje,
         propio: esPropio,
         abreBloque,
+        cierraBloque: false,
         autor: this.nombreDe(mensaje.senderProfileId),
         tono: tonoDe(mensaje.senderProfileId),
+        contexto: mensaje.attachmentFileId ? null : contextoDelTexto(mensaje.bodyText),
       });
       autorAnterior = mensaje.senderProfileId;
       cuandoAnterior = cuando;
     });
 
-    return salida;
+    return this.agruparFotos(marcarCierres(salida));
   });
+
+  /**
+   * Junta en una grilla las fotos seguidas de un mismo bloque.
+   *
+   * Sólo las que ya llegaron —una que sube tiene su propia capa de progreso y
+   * una que falló, su reintentar— y sólo las que no llevan texto ni cita: una
+   * leyenda o una respuesta son de esa foto, no del montón.
+   */
+  private agruparFotos(lineas: readonly LineaDelHilo[]): readonly LineaDelHilo[] {
+    const salida: LineaDelHilo[] = [];
+    let tanda: LineaDeMensaje[] = [];
+
+    const volcar = (): void => {
+      const primera = tanda[0];
+      const ultima = tanda[tanda.length - 1];
+      if (primera !== undefined && ultima !== undefined && tanda.length >= 2) {
+        salida.push({
+          tipo: 'galeria',
+          clave: `g-${primera.clave}`,
+          mensajes: tanda.map((l) => l.mensaje),
+          propio: primera.propio,
+          abreBloque: primera.abreBloque,
+          cierraBloque: ultima.cierraBloque,
+          autor: primera.autor,
+          tono: primera.tono,
+        });
+      } else {
+        salida.push(...tanda);
+      }
+      tanda = [];
+    };
+
+    for (const linea of lineas) {
+      if (linea.tipo === 'mensaje' && this.agrupable(linea.mensaje)) {
+        if (tanda.length > 0 && linea.abreBloque) {
+          volcar();
+        }
+        tanda.push(linea);
+        continue;
+      }
+      volcar();
+      salida.push(linea);
+    }
+    volcar();
+    return salida;
+  }
+
+  private agrupable(mensaje: MensajeDelHilo): boolean {
+    return (
+      mensaje.estado === 'enviado' &&
+      mensaje.id !== null &&
+      !mensaje.bodyText &&
+      mensaje.replyToMessageId === undefined &&
+      !this.esSticker(mensaje) &&
+      this.esImagen(mensaje)
+    );
+  }
+
+  /**
+   * La tarjeta más reciente de la conversación: se fija arriba del hilo como
+   * «Consulta sobre: …», igual que el resumen del pedido en el chat de una app
+   * de delivery. Si se escribió desde dos fichas, manda la última.
+   */
+  protected readonly contextoFijado = computed<ContextoDeChat | null>(() => {
+    const mensajes = this.store.enOrden();
+    for (let i = mensajes.length - 1; i >= 0; i -= 1) {
+      const mensaje = mensajes[i];
+      if (mensaje !== undefined && !mensaje.attachmentFileId) {
+        const contexto = contextoDelTexto(mensaje.bodyText);
+        if (contexto !== null) return contexto;
+      }
+    }
+    return null;
+  });
+
+  /**
+   * Respuestas rápidas para el composer, sólo con el hilo recién abierto: vacío
+   * o con nada más que la tarjeta. En cuanto alguien escribió algo propio, ya
+   * no son un atajo sino ruido.
+   */
+  protected readonly sugerencias = computed<readonly string[]>(() => {
+    if (!this.store.hiloCargado()) return [];
+    const mensajes = this.store.enOrden();
+    const soloTarjetas = mensajes.every(
+      (m) => !m.attachmentFileId && contextoDelTexto(m.bodyText) !== null,
+    );
+    if (!soloTarjetas) return [];
+    const contexto = this.contextoFijado();
+    return contexto === null ? SUGERENCIAS_SIN_CONTEXTO : SUGERENCIAS_POR_CONTEXTO[contexto.tipo];
+  });
+
+  /** Todas las fotos del hilo, en orden: lo que recorre el visor con ← y →. */
+  protected readonly imagenesDelVisor = computed<readonly ImagenDelVisor[]>(() =>
+    this.store
+      .enOrden()
+      .filter((m) => !this.esSticker(m) && this.esImagen(m))
+      .map((m) => ({
+        clave: m.clave,
+        url: this.urlDelAdjunto(m) ?? '',
+        alt: this.altDeLaFoto(m),
+        pie: [this.nombreDe(m.senderProfileId), this.hora(m.sentAt)].filter(Boolean).join(' · '),
+        nombreArchivo: this.nombreParaDescargar(m),
+        accionable: m.estado === 'enviado' && m.id !== null,
+      }))
+      .filter((imagen) => imagen.url !== ''),
+  );
+
+  /** Qué foto del visor está abierta, o `null` si el visor está cerrado. */
+  protected readonly visorEn = signal<number | null>(null);
+
+  /** Las fotos que ya terminaron de bajar: hasta entonces, esqueleto. */
+  protected readonly fotosListas = signal<ReadonlySet<string>>(new Set());
+
+  /** Las fotos que el navegador no pudo dibujar. */
+  protected readonly fotosRotas = signal<ReadonlySet<string>>(new Set());
+
+  /** Rutas de las tarjetas ya convertidas en `UrlTree`, una vez por ruta. */
+  private readonly destinos = new Map<string, UrlTree>();
+
+  protected readonly etiquetaDeContexto = ETIQUETA_DE_CONTEXTO;
+  protected readonly verboDeContexto = VERBO_DE_CONTEXTO;
+  protected readonly fotosEnGrilla = FOTOS_EN_GRILLA;
 
   constructor() {
     // Por `paramMap` y no por `snapshot`: al ir de un hilo a otro el router
@@ -821,12 +981,80 @@ export class Thread {
     }
   }
 
-  protected abrirImagen(url: string): void {
-    this.imagenAbierta.set(url);
+  /* --- Fotos y visor ------------------------------------------------------ */
+
+  /** Abre el visor en la foto de ese mensaje. */
+  protected abrirImagen(mensaje: MensajeDelHilo): void {
+    const indice = this.imagenesDelVisor().findIndex((i) => i.clave === mensaje.clave);
+    if (indice !== -1) {
+      this.visorEn.set(indice);
+    }
   }
 
   protected cerrarImagen(): void {
-    this.imagenAbierta.set(null);
+    this.visorEn.set(null);
+  }
+
+  protected alMoverVisor(indice: number): void {
+    this.visorEn.set(indice);
+  }
+
+  /** «Responder» desde el visor: cierra la foto y deja la cita en el composer. */
+  protected responderDesdeVisor(clave: string): void {
+    const mensaje = this.store.enOrden().find((m) => m.clave === clave);
+    this.cerrarImagen();
+    if (mensaje !== undefined) this.responder(mensaje);
+  }
+
+  protected reenviarDesdeVisor(clave: string): void {
+    const mensaje = this.store.enOrden().find((m) => m.clave === clave);
+    this.cerrarImagen();
+    if (mensaje !== undefined) this.reenviar(mensaje);
+  }
+
+  /** La foto terminó de bajar: se quita el esqueleto. */
+  protected alCargarFoto(url: string): void {
+    if (this.fotosListas().has(url)) return;
+    this.fotosListas.update((listas) => new Set(listas).add(url));
+  }
+
+  /**
+   * La foto no se pudo dibujar —contenido roto, o una vista previa que el
+   * navegador no deja cargar—. Se dice, en vez de dejar un esqueleto que
+   * promete algo que no va a llegar o una burbuja de cero píxeles.
+   */
+  protected alFallarFoto(url: string): void {
+    if (this.fotosRotas().has(url)) return;
+    this.fotosRotas.update((rotas) => new Set(rotas).add(url));
+  }
+
+  /** Cómo se anuncia una foto a quien no la ve: su nombre, o de quién es. */
+  protected altDeLaFoto(mensaje: MensajeDelHilo): string {
+    const nombre = mensaje.pendiente?.adjunto?.nombre;
+    if (nombre !== undefined && nombre !== '') return `Foto: ${nombre}`;
+    return mensaje.senderProfileId === this.store.perfil()
+      ? 'Foto que enviaste'
+      : `Foto de ${this.nombreDe(mensaje.senderProfileId)}`;
+  }
+
+  /** Las fotos que entran en la grilla: las primeras cuatro. */
+  protected fotosDeLaGrilla(mensajes: readonly MensajeDelHilo[]): readonly MensajeDelHilo[] {
+    return mensajes.slice(0, FOTOS_EN_GRILLA);
+  }
+
+  /** La ruta de una tarjeta como `UrlTree`, para que `?` y `=` no se escapen. */
+  protected destino(ruta: string): UrlTree {
+    let arbol = this.destinos.get(ruta);
+    if (arbol === undefined) {
+      arbol = this.router.parseUrl(ruta);
+      this.destinos.set(ruta, arbol);
+    }
+    return arbol;
+  }
+
+  /** El último de una tanda de fotos lleva la hora y los tildes de la tanda. */
+  protected ultimoDe(mensajes: readonly MensajeDelHilo[]): MensajeDelHilo {
+    return mensajes[mensajes.length - 1]!;
   }
 
   /**
@@ -948,4 +1176,19 @@ function tonoDe(profileId: string): number {
     suma = (suma + profileId.charCodeAt(i)) % 997;
   }
   return suma % TONOS;
+}
+
+/**
+ * Marca el último mensaje de cada bloque: el que lleva la cola.
+ *
+ * Un mensaje cierra si lo que sigue no es un mensaje (un separador de día o de
+ * no leídos), si el siguiente abre bloque o si es el último del hilo.
+ */
+function marcarCierres(lineas: readonly LineaDelHilo[]): readonly LineaDelHilo[] {
+  return lineas.map((linea, i) => {
+    if (linea.tipo !== 'mensaje') return linea;
+    const siguiente = lineas[i + 1];
+    const cierra = siguiente === undefined || siguiente.tipo !== 'mensaje' || siguiente.abreBloque;
+    return cierra ? { ...linea, cierraBloque: true } : linea;
+  });
 }

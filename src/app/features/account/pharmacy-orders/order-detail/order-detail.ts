@@ -30,6 +30,8 @@ import { dataOf, loading, notFound, ready } from '../../../../core/view-state/vi
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import { usarIrAlChat } from '../../../../core/messaging/enlace-de-chat';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -123,6 +125,7 @@ interface AvisoDelPedido {
     AppButtonLink,
     Badge,
     DatePipe,
+    NavIcon,
     PageHeader,
     RouterLink,
     Stepper,
@@ -289,6 +292,35 @@ export class OrderDetail {
    * podría mostrar el pedido A bajo la URL de B mientras los avisos ya son de
    * B: dos mitades de dos pedidos distintos en la misma pantalla.
    */
+  private readonly irAlChat = usarIrAlChat();
+
+  /**
+   * «Chatear con la farmacia»: abre el chat **del pedido** —lo abre la API con
+   * `POST /pharmacy/orders/:id/conversation`, que sabe quién es la farmacia y
+   * si quien pide puede abrirlo—, con la
+   * tarjeta del pedido puesta —«Pedido: Farmacia Vida · Sucursal Central /
+   * 2 productos · 69,00 Bs»— para que del otro lado sepan de qué se habla
+   * sin preguntar. Nada clínico: lo mismo que dice el encabezado del pedido.
+   */
+  protected chatearConLaFarmacia(): void {
+    const pedido = this.pedido();
+    if (pedido === null || pedido.slugDeFarmacia === undefined) {
+      return;
+    }
+    const cuantos = pedido.lineas.length;
+    const productos = `${cuantos} ${cuantos === 1 ? 'producto' : 'productos'}`;
+    const total =
+      pedido.totalEstimado === null
+        ? null
+        : withDisplayCurrency(pedido.totalEstimado.replace('.', ','), pedido.moneda);
+    this.irAlChat({ pedido: pedido.id }, {
+      tipo: 'pedido',
+      titulo: `${pedido.farmacia} · ${pedido.sede}`,
+      detalle: total === null ? productos : `${productos} · ${total}`,
+      ruta: `${LISTA_ROUTE}/${pedido.id}`,
+    });
+  }
+
   protected cargar(): void {
     const orderId = this.orderId;
     if (orderId === null || orderId === '') {

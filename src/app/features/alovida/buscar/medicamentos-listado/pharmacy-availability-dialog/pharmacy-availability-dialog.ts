@@ -10,7 +10,10 @@ import {
 } from '@angular/core';
 
 import type { OfertaDeFarmacia } from '@core/data-access/public-marketplace/public-marketplace.types';
+import { usarIrAlChat } from '@core/messaging/enlace-de-chat';
 import { Badge } from '@shared/components/atoms/badge/badge';
+import { AppButton } from '@shared/components/atoms/button/button';
+import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { AppMap } from '@shared/components/organisms/map/map';
 import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/pin-mapa.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
@@ -94,7 +97,7 @@ export function withCodes(offers: readonly OfertaDeFarmacia[]): readonly OfertaV
  */
 @Component({
   selector: 'app-pharmacy-availability-dialog',
-  imports: [AppMap, Badge, ContentDialog],
+  imports: [AppButton, AppMap, Badge, ContentDialog, NavIcon],
   templateUrl: './pharmacy-availability-dialog.html',
   styleUrl: './pharmacy-availability-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -164,6 +167,27 @@ export class PharmacyAvailabilityDialog {
   protected readonly unmappedCount = computed(
     () => this.visibleOffers().length - this.mappableOffers().length,
   );
+
+  private readonly irAlChat = usarIrAlChat();
+
+  /**
+   * «Consultar por chat» a una farmacia de la lista, sobre este medicamento.
+   *
+   * La tarjeta lleva lo que la fila ya dice —marca, presentación, precio y
+   * de qué farmacia— y apunta a la ficha de esa farmacia, que es donde se ve
+   * el resto de su catálogo.
+   */
+  protected consultarPorChat(offer: OfertaDeFarmacia): void {
+    const detalle = [offer.brandName, offer.presentation, this.priceOf(offer), offer.pharmacyName]
+      .filter((parte): parte is string => parte !== null && parte !== '')
+      .join(' · ');
+    this.irAlChat({ escribirA: offer.pharmacySlug }, {
+      tipo: 'producto',
+      titulo: this.medicationName(),
+      detalle,
+      ruta: `/pharmacies-directory/${offer.pharmacySlug}`,
+    });
+  }
 
   protected handleOpened(): void {
     this.mapReady.set(true);

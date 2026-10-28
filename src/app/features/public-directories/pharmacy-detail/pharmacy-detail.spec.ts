@@ -590,9 +590,10 @@ describe('PharmacyDetail', () => {
     responder();
 
     // Se mira DENTRO de las tarjetas: fuera de ellas sí hay controles —el
-    // buscador y los chips—, y ninguno toca el catálogo.
+    // buscador y los chips—, y ninguno toca el catálogo. El único botón de la
+    // tarjeta es «Consultar por chat», que no edita nada: lleva al chat.
     const controles = fixture.nativeElement.querySelectorAll(
-      '[data-testid="pharmacy-product"] button, [data-testid="pharmacy-product"] input',
+      '[data-testid="pharmacy-product"] button:not([data-testid="consultar-producto-por-chat"]), [data-testid="pharmacy-product"] input',
     );
     expect(controles.length).toBe(0);
     expect(fixture.nativeElement.textContent as string).not.toContain('Editar precio');

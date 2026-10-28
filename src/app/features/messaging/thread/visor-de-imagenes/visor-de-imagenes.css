@@ -1,0 +1,126 @@
+/* El visor ocupa la pantalla entera y es oscuro en los dos temas: una foto se
+   mira sobre negro, no sobre el papel del chat. `--petroleo-xx` es el azul más
+   hondo de la marca, casi negro, y `--tinta-nav` el blanco que se lee sobre él
+   en claro y en oscuro. */
+
+.visor {
+  position: fixed;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  max-inline-size: none;
+  max-block-size: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--petroleo-xx);
+  color: var(--tinta-nav);
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+}
+
+.visor::backdrop {
+  background: var(--velo);
+}
+
+.visor__barra {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e2) var(--e3) var(--e2) var(--e4);
+}
+
+.visor__pie {
+  min-inline-size: 0;
+  flex: 1 1 auto;
+}
+
+.visor__autor,
+.visor__posicion {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visor__autor {
+  font-weight: 600;
+  font-size: var(--fs-body);
+}
+
+.visor__posicion {
+  opacity: .8;
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.visor__acciones {
+  flex: none;
+  display: flex;
+  gap: var(--e1);
+}
+
+.visor__boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.visor__boton:hover {
+  background: color-mix(in srgb, var(--tinta-nav) 14%, transparent);
+}
+
+.visor__boton:focus-visible {
+  outline: 2px solid var(--menta);
+  outline-offset: 2px;
+}
+
+.visor__boton svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+.visor__escena {
+  position: relative;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--e2) var(--e4) var(--e6);
+}
+
+.visor__foto {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  object-fit: contain;
+  border-radius: var(--r-ctrl);
+  user-select: none;
+}
+
+/* Los pasos flotan a los costados, sobre un disco que los separa de la foto. */
+.visor__paso {
+  position: absolute;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  background: color-mix(in srgb, var(--petroleo-xx) 60%, transparent);
+}
+
+.visor__paso--anterior { inset-inline-start: var(--e3); }
+.visor__paso--siguiente { inset-inline-end: var(--e3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .visor__boton { transition: none; }
+}

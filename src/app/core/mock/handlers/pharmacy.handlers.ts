@@ -1,13 +1,13 @@
 import { FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
 import { patientSettlementForItems } from '../fixtures/patient-settlements';
-import { vitrinas } from '../fixtures/comunidad';
+import { CONCEPTO, conversaciones, vitrinaDe, vitrinas } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { recetas } from '../fixtures/clinica';
 import { PACIENTE, pacientePorId } from '../fixtures/personas';
 // T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
 // un solo lugar, porque la pantalla también los usa.
 import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
-import { notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, contiene, cuerpo, iso, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -24,6 +24,8 @@ const BOB = c('BOB', 'Boliviano');
 
 interface FarmaciaSimulada {
   readonly id: string;
+  /** El slug de su vitrina: con quién se abre el chat de un pedido. */
+  readonly slug: string;
   readonly code: string;
   readonly name: string;
   readonly siteId: string;
@@ -55,6 +57,7 @@ const FARMACIAS: readonly FarmaciaSimulada[] = vitrinas
     const corpus = DEL_CORPUS.get(v.slug);
     return {
       id: v.tenantId,
+      slug: v.slug,
       code: v.slug.toUpperCase().replace(/-/g, '_'),
       name: v.displayName,
       siteId: corpus?.siteId ?? uuid(`pharmacy-site-${v.slug}`),
@@ -205,6 +208,11 @@ function settlementForOrder(order: PedidoSimulado) {
   return { insuranceSettlement: null, insuranceSettlementAvailability: order.estado === 'ENVIADO' ? 'PENDING_PUBLICATION' : 'NOT_AVAILABLE' };
 }
 
+/** La vitrina pública de una farmacia del mostrador, si la tiene. */
+function vitrinaDeFarmacia(farmacia: FarmaciaSimulada) {
+  return vitrinas.todos().find((v) => v.kind === 'PHARMACY' && v.slug === farmacia.slug);
+}
+
 function dto(p: PedidoSimulado, owner = false) {
   const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
   const lineas = p.lineas.map((l) => {
@@ -236,6 +244,9 @@ function dto(p: PedidoSimulado, owner = false) {
     siteName: farmacia.siteName,
     pharmacyId: farmacia.id,
     pharmacyName: farmacia.name,
+    // La vitrina pública de la farmacia (contrato nuevo de la API, nullable).
+    pharmacyPublicProfileId: vitrinaDeFarmacia(farmacia)?.id ?? null,
+    pharmacyPublicSlug: vitrinaDeFarmacia(farmacia)?.slug ?? null,
     medicationRequestId: p.medicationRequestId,
     patientName: p.patientName,
     deliveryMode: c('PINV_DELIVERY_RETIRO', 'Retiro en farmacia'),
@@ -359,6 +370,42 @@ export function registrarFarmacia(router: MockRouter): void {
   router.get('/pharmacy/orders/:id', (request) => {
     const p = pedidos.get(request.params['id']!);
     return p === undefined ? notFound('Pedido no encontrado') : dto(p, p.patientProfileId === request.user?.patientProfileId);
+  });
+
+  /**
+   * El chat del pedido: paciente ↔ vitrina de la farmacia. Idempotente.
+   *
+   * Lo pueden abrir el paciente dueño o alguien del tenant de la farmacia;
+   * cualquier otro recibe 403. Es la regla del contrato nuevo de la API, y la
+   * maqueta la aplica para que la pantalla no pueda apoyarse en otra.
+   */
+  router.post('/pharmacy/orders/:id/conversation', (request) => {
+    const p = pedidos.get(request.params['id']!);
+    if (p === undefined) return notFound('Pedido no encontrado');
+    const user = request.user;
+    const esDueno = user !== null && p.patientProfileId === user.patientProfileId;
+    const esPersonal = user !== null && user.tenants.includes(p.pharmacyId);
+    if (!esDueno && !esPersonal) return forbidden();
+    const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
+    const deLaFarmacia = vitrinaDeFarmacia(farmacia);
+    const delPaciente = vitrinaDe(p.patientProfileId);
+    if (deLaFarmacia === undefined || delPaciente === undefined) {
+      return conflict('El pedido no tiene con quién abrir el chat.');
+    }
+    const participantes = [delPaciente.id, deLaFarmacia.id];
+    const existente = conversaciones.filtrar(
+      (c) => c.participantes.length === 2 && participantes.every((id) => c.participantes.includes(id)),
+    )[0];
+    const conversacion =
+      existente ??
+      conversaciones.agregar({
+        id: nuevoId('conv'),
+        conversationTypeConceptId: CONCEPTO.conversationDirect,
+        groupId: null,
+        participantes,
+        noLeidosPor: {},
+      });
+    return { status: 201, body: { conversationId: conversacion.id, pharmacyProfileId: deLaFarmacia.id } };
   });
 
   router.post('/pharmacy/orders/:id/review', ({ params }) => cambiar(params['id']!, 'EN_REVISION'));

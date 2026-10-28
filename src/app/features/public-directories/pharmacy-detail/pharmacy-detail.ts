@@ -579,6 +579,26 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
       .join(' · ');
   }
 
+  /** «Chatear con la farmacia», desde el encabezado de la ficha. */
+  protected chatearConLaFarmacia(): void {
+    const ficha = this.ficha();
+    if (ficha === null) return;
+    const detalle = [ficha.address, ficha.city].filter((p): p is string => !!p).join(', ');
+    this.chatear({ tipo: 'farmacia', titulo: ficha.displayName, ...(detalle ? { detalle } : {}) });
+  }
+
+  /**
+   * «Consultar por chat» sobre un medicamento: nombre en negrita, y debajo la
+   * marca, la presentación y el precio que publicó esta farmacia.
+   */
+  protected consultarProducto(producto: PublicPharmacyProduct): void {
+    const precio = this.importe(producto.price, producto.currency);
+    const detalle = [producto.brandName, producto.presentation, precio, this.ficha()?.displayName]
+      .filter((parte): parte is string => !!parte)
+      .join(' · ');
+    this.chatear({ tipo: 'producto', titulo: producto.genericName, ...(detalle ? { detalle } : {}) });
+  }
+
   protected leerCatalogo(slug: string): Observable<PublicPage<PublicPharmacyProduct>> {
     return this.catalogo.pharmacyProducts(slug);
   }

@@ -5,12 +5,14 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
 import { Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
 import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
+import { Composer } from './composer/composer';
 
 /**
  * Lo que estas pruebas fijan.
@@ -683,6 +685,159 @@ describe('Thread', () => {
         expect(html).not.toContain(interno);
       }
       expect(http.match((r) => r.url.includes('download-url') || r.url.includes('/common/files'))).toHaveLength(0);
+    });
+  });
+
+  /* --- Tarjeta de contexto (marketplace) ---------------------------------- */
+
+  describe('tarjeta de contexto', () => {
+    const TARJETA =
+      'Pedido: Farmacia Chávez · Sucursal Miraflores\n2 productos · Bs 69,00\n/my-account/pharmacy-orders/7f3c';
+
+    const sugerenciasDelComposer = (): readonly string[] =>
+      (fixture.debugElement.query(By.directive(Composer)).componentInstance as Composer).sugerencias();
+
+    it('pinta el texto con forma de tarjeta como tarjeta, con su enlace interno', () => {
+      abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+
+      const tarjeta = consultar('hilo-contexto');
+      expect(tarjeta).not.toBeNull();
+      expect(tarjeta?.getAttribute('data-tipo')).toBe('pedido');
+      expect(tarjeta?.textContent).toContain('Farmacia Chávez · Sucursal Miraflores');
+      expect(tarjeta?.textContent).toContain('2 productos · Bs 69,00');
+      const ver = consultar('hilo-contexto-ver') as HTMLAnchorElement;
+      expect(ver.textContent?.trim()).toBe('Ver pedido');
+      expect(ver.getAttribute('href')).toBe('/my-account/pharmacy-orders/7f3c');
+      // La ruta cruda no se lee como texto en la burbuja.
+      expect(burbujas()[0]?.querySelector('.hilo__texto')).toBeNull();
+    });
+
+    it('la fija arriba del hilo como «Consulta sobre», con la última si hay dos', () => {
+      abrir([
+        mensaje('m-2', 'pp-1', 'Producto: Paracetamol 500 mg\n/catalogo/p/paracetamol-500'),
+        mensaje('m-1', 'pp-1', TARJETA),
+      ]);
+
+      const fijado = consultar('hilo-contexto-fijado');
+      expect(fijado?.getAttribute('data-tipo')).toBe('producto');
+      expect(fijado?.textContent).toContain('Consulta sobre: Producto');
+      expect(fijado?.textContent).toContain('Paracetamol 500 mg');
+      expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe('/catalogo/p/paracetamol-500');
+    });
+
+    it('un texto parecido con ruta externa queda como texto, sin tarjeta ni fijado', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Pedido: algo\n//sitio-malo.example/robar')]);
+
+      expect(consultar('hilo-contexto')).toBeNull();
+      expect(consultar('hilo-contexto-fijado')).toBeNull();
+      expect(burbujas()[0]?.textContent).toContain('//sitio-malo.example/robar');
+    });
+
+    it('con sólo la tarjeta, sugiere preguntas acordes al tipo', () => {
+      abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+
+      expect(sugerenciasDelComposer()[0]).toBe('¿Cuándo llega mi pedido?');
+    });
+
+    it('cada tipo trae su pregunta', () => {
+      abrir([mensaje('m-1', 'pp-1', 'Servicio: Toma de presión\n/s/toma-de-presion')]);
+      expect(sugerenciasDelComposer()).toContain('¿Qué días atienden?');
+    });
+
+    it('en cuanto alguien escribió algo propio, deja de sugerir', () => {
+      abrir([mensaje('m-2', 'pp-2', 'Hola, ¿en qué te ayudo?'), mensaje('m-1', 'pp-1', TARJETA)]);
+
+      expect(sugerenciasDelComposer()).toEqual([]);
+    });
+  });
+
+  /* --- Fotos: grilla, esqueleto y visor ----------------------------------- */
+
+  describe('fotos', () => {
+    const foto = (n: number, autor = 'pp-2') => ({
+      ...mensaje(`m-${n}`, autor, ''),
+      bodyText: null,
+      contentTypeConceptId: 'c-media',
+      attachmentFileId: `f-${n}`,
+      sentAt: `2026-08-18T10:0${n}:00.000Z`,
+    });
+
+    const png = (): Blob => new Blob([new Uint8Array(16).fill(7)], { type: 'image/png' });
+
+    /** Sirve todos los adjuntos pedidos y espera a que el store los tenga. */
+    const servirTodos = async (ids: readonly string[]): Promise<void> => {
+      fixture.detectChanges();
+      for (const id of ids) {
+        http.expectOne((r) => r.url.includes(`/attachments/${id}/content`)).flush(png());
+      }
+      for (let i = 0; i < 100 && ids.some((id) => !store.urlDe(id)); i += 1) {
+        await new Promise((listo) => setTimeout(listo, 5));
+      }
+      fixture.detectChanges();
+    };
+
+    it('mientras el adjunto baja hay esqueleto, no «Subiendo»', () => {
+      abrir([foto(1)]);
+      fixture.detectChanges();
+
+      expect(consultar('hilo-adjunto-cargando')).not.toBeNull();
+      expect(fixture.nativeElement.textContent).not.toContain('Subiendo el archivo');
+      http.match((r) => r.url.includes('/attachments/')).forEach((p) => p.flush(png()));
+    });
+
+    it('cinco fotos seguidas del mismo autor van en una grilla 2×2 con «+1»', async () => {
+      abrir([foto(5), foto(4), foto(3), foto(2), foto(1)]);
+      await servirTodos(['f-1', 'f-2', 'f-3', 'f-4', 'f-5']);
+
+      const galerias = fixture.nativeElement.querySelectorAll('[data-testid="hilo-galeria"]');
+      expect(galerias).toHaveLength(1);
+      expect(galerias[0].querySelectorAll('[data-testid="hilo-imagen"]')).toHaveLength(4);
+      expect(consultar('hilo-galeria-mas')?.textContent?.trim()).toBe('+1');
+      // Ninguna quedó suelta como burbuja aparte.
+      expect(burbujas()).toHaveLength(0);
+    });
+
+    it('una foto sola, o con otra persona en el medio, no se agrupa', async () => {
+      abrir([foto(3), foto(2, 'pp-1'), foto(1)]);
+      await servirTodos(['f-1', 'f-2', 'f-3']);
+
+      expect(consultar('hilo-galeria')).toBeNull();
+      expect(burbujas().every((b) => b.classList.contains('is-solo-imagen'))).toBe(true);
+    });
+
+    it('tocar una foto de la grilla abre el visor en ella y ← → recorren todas', async () => {
+      abrir([foto(5), foto(4), foto(3), foto(2), foto(1)]);
+      await servirTodos(['f-1', 'f-2', 'f-3', 'f-4', 'f-5']);
+
+      const celdas = fixture.nativeElement.querySelectorAll('[data-testid="hilo-imagen"]');
+      (celdas[1] as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(consultar('hilo-visor-posicion')?.textContent?.trim()).toBe('2 de 5');
+      consultar('hilo-visor')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }),
+      );
+      fixture.detectChanges();
+      expect(consultar('hilo-visor-posicion')?.textContent?.trim()).toBe('5 de 5');
+
+      (consultar('hilo-visor-cerrar') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(consultar('hilo-visor')).toBeNull();
+    });
+
+    it('responder desde el visor deja la cita de esa foto en el composer', async () => {
+      abrir([foto(2), foto(1)]);
+      await servirTodos(['f-1', 'f-2']);
+
+      (fixture.nativeElement.querySelector('[data-testid="hilo-imagen"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      (consultar('hilo-visor-responder') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(consultar('hilo-visor')).toBeNull();
+      expect(store.respondiendoA()?.id).toBe('m-1');
     });
   });
 });

@@ -17,58 +17,154 @@
   padding: var(--e2) var(--e4);
 }
 
+/* Todo lo que se toca mide 44 px: es el mínimo cómodo para un pulgar, y la
+   barra se usa con el teléfono en una mano. */
 .composer__icono,
 .composer__enviar {
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
+  inline-size: 44px;
+  block-size: 44px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
   color: var(--tinta-2);
   cursor: pointer;
-  transition: background var(--mov-rapido) var(--curva);
+  transition:
+    background var(--mov-rapido) var(--curva),
+    color var(--mov-rapido) var(--curva),
+    transform var(--mov-rapido) var(--curva);
 }
 
-.composer__icono:hover,
-.composer__icono:focus-visible {
+.composer__icono:hover {
   background: var(--sup-inset);
   color: var(--tinta-marca);
 }
 
-.composer__icono svg,
-.composer__enviar svg {
-  inline-size: 22px;
-  block-size: 22px;
+.composer__icono:focus-visible,
+.composer__enviar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
 }
 
-/* El botón de enviar sí es de marca: es la acción de la barra. */
+.composer__icono svg,
+.composer__enviar svg {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+/* El de adjuntar, afuera de la píldora: un círculo con borde, para que se lea
+   como «más opciones» y no como parte del campo. */
+.composer > .composer__icono {
+  border: 1px solid var(--filete);
+  color: var(--tinta-marca);
+}
+
+/* El botón de enviar sí es de marca: es la acción de la barra. Círculo lleno,
+   con la flecha blanca, como en PedidosYa. */
 .composer__enviar {
-  background: var(--petroleo);
-  color: #fff;
+  position: relative;
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--sombra-1);
 }
 
 .composer__enviar:hover {
-  background: var(--petroleo-x, var(--petroleo));
-  filter: brightness(1.08);
+  background: var(--brand-primary-hover);
+}
+
+.composer__enviar:active {
+  background: var(--brand-primary-active);
+  transform: scale(.94);
+}
+
+.composer__enviar:disabled {
+  opacity: .55;
+  cursor: progress;
+  transform: none;
+}
+
+/* El avión de papel apenas corrido: centrado a ojo, no a caja. */
+.composer__enviar svg {
+  inline-size: 22px;
+  block-size: 22px;
+  margin-inline-start: 3px;
+}
+
+.composer__enviar-cuenta {
+  position: absolute;
+  inset-block-start: -4px;
+  inset-inline-end: -4px;
+  min-inline-size: 20px;
+  block-size: 20px;
+  padding-inline: var(--e1);
+  border: 2px solid var(--sup-tarjeta);
+  border-radius: var(--r-pill);
+  background: var(--brand-secondary);
+  color: var(--tinta-marca);
+  font-size: var(--fs-overline);
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* --- La píldora ---------------------------------------------------------- */
+
+/* Campo y accesos en una sola cápsula redondeada. El foco se marca en la
+   cápsula entera: el textarea es sólo una parte de ella. */
+.composer__pildora {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  min-block-size: 44px;
+  padding-inline: var(--e1);
+  border: 1px solid var(--filete);
+  border-radius: calc(var(--r-menu) * 2);
+  background: var(--sup-inset);
+  transition: border-color var(--mov-rapido) var(--curva), background var(--mov-rapido) var(--curva);
+}
+
+.composer__pildora:focus-within {
+  border-color: var(--brand-primary);
+  background: var(--sup-tarjeta);
+  box-shadow: 0 0 0 3px var(--anillo-foco);
+}
+
+.composer__icono--chico {
+  color: var(--tinta-3);
+}
+
+.composer__pildora .composer__icono:hover {
+  background: none;
+  color: var(--brand-primary);
+}
+
+/* La cámara directa sólo donde hay cámara a mano: en la compu el `capture` no
+   hace nada y sería un segundo botón de «elegir foto». */
+@media (hover: hover) and (pointer: fine) {
+  .composer__icono--camara {
+    display: none;
+  }
 }
 
 .composer__campo {
   flex: 1 1 auto;
   min-inline-size: 0;
+  align-self: center;
 }
 
 .composer__campo textarea {
+  display: block;
   inline-size: 100%;
-  min-block-size: 40px;
+  min-block-size: 42px;
   max-block-size: 8.5rem;
-  padding: 10px var(--e4);
-  border: 1px solid transparent;
-  border-radius: var(--r-menu);
-  background: var(--sup-inset);
+  padding: 11px var(--e1);
+  border: 0;
+  background: transparent;
   font: inherit;
   font-size: var(--fs-body);
   line-height: 20px;
@@ -78,11 +174,204 @@
   field-sizing: content;
 }
 
+.composer__campo textarea::placeholder {
+  color: var(--tinta-3);
+}
+
+/* El anillo lo lleva la píldora (`:focus-within`). */
 .composer__campo textarea:focus-visible {
-  outline: 2px solid var(--anillo-foco);
-  outline-offset: 1px;
-  border-color: var(--petroleo);
+  outline: none;
+}
+
+/* --- Respuestas rápidas -------------------------------------------------- */
+
+.composer__chips {
+  display: flex;
+  gap: var(--e2);
+  padding: var(--e3) var(--e4) var(--e1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.composer__chips::-webkit-scrollbar {
+  display: none;
+}
+
+.composer__chip {
+  flex: none;
+  min-block-size: 36px;
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--r-pill);
   background: var(--sup-tarjeta);
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva), color var(--mov-rapido) var(--curva);
+  /* El chip mide 36 px de alto; el área tocable llega a 44 con el margen
+     invisible del pseudo. */
+  position: relative;
+}
+
+.composer__chip::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+}
+
+.composer__chip:hover {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.composer__chip:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* --- La cola de archivos ------------------------------------------------- */
+
+.composer__cola {
+  display: flex;
+  gap: var(--e3);
+  margin: 0;
+  padding: var(--e2) 0 var(--e1);
+  list-style: none;
+  overflow-x: auto;
+}
+
+.composer__miniatura {
+  position: relative;
+  flex: none;
+  inline-size: 72px;
+  block-size: 72px;
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+}
+
+.composer__miniatura img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: var(--r-menu);
+  object-fit: cover;
+}
+
+.composer__miniatura.is-preparando img {
+  opacity: .5;
+}
+
+.composer__miniatura-doc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  block-size: 100%;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  color: var(--tinta-marca);
+}
+
+.composer__miniatura-doc svg {
+  inline-size: 26px;
+  block-size: 26px;
+}
+
+.composer__miniatura-ext {
+  font-size: var(--fs-overline);
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+/* El peso, chiquito sobre la foto: decide si conviene mandarla por datos. */
+.composer__miniatura-peso {
+  position: absolute;
+  inset-inline-start: var(--e1);
+  inset-block-end: var(--e1);
+  padding: 0 var(--e1);
+  border-radius: var(--r-ctrl);
+  background: var(--velo);
+  color: var(--text-inverse);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.composer__miniatura-giro {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: 24px;
+  block-size: 24px;
+  border: 3px solid var(--filete);
+  border-block-start-color: var(--brand-primary);
+  border-radius: var(--r-pill);
+  animation: composer-giro .8s linear infinite;
+}
+
+@keyframes composer-giro {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer__miniatura-giro { animation: none; }
+}
+
+/* La ×: visible de 24 px en la esquina, tocable de 44 con el pseudo. */
+.composer__adjunto .composer__miniatura-quitar {
+  position: absolute;
+  inset-block-start: -6px;
+  inset-inline-end: -6px;
+  inline-size: 24px;
+  block-size: 24px;
+  border: 2px solid var(--sup-tarjeta);
+  background: var(--tinta);
+  color: var(--sup-tarjeta);
+}
+
+.composer__miniatura-quitar::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+
+.composer__adjunto .composer__miniatura-quitar svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.composer__miniatura-quitar:focus-visible,
+.composer__miniatura--sumar button:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+.composer__miniatura--sumar {
+  box-shadow: none;
+  background: none;
+}
+
+.composer__adjunto .composer__miniatura--sumar button {
+  inline-size: 100%;
+  block-size: 100%;
+  border: 2px dashed var(--filete);
+  border-radius: var(--r-menu);
+  color: var(--tinta-3);
+}
+
+.composer__adjunto .composer__miniatura--sumar button:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.composer__adjunto .composer__miniatura--sumar svg {
+  inline-size: 24px;
+  block-size: 24px;
 }
 
 /* --- La tira de respuesta ------------------------------------------------ */
@@ -313,12 +602,17 @@
 }
 
 @media (max-width: 60rem) {
-  .composer {
+  .composer,
+  .composer__chips {
     padding-inline: var(--e3);
+  }
+
+  .composer {
+    gap: var(--e1);
   }
 }
 
-.composer__adjunto { flex-wrap: wrap; }
+.composer__adjunto { flex-wrap: wrap; padding-block: var(--e3) var(--e2); }
 .composer__adjunto app-file-preview { flex-basis: 100%; }
 
 /* La tira de edición (F4.5).

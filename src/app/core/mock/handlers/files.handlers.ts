@@ -214,8 +214,18 @@ export function registrarArchivos(router: MockRouter): void {
     return { url: a?.dataUrl ?? imagenSvg('Archivo'), expiresAt: iso(0, 23, 59) };
   });
 
-  router.get('/common/files/:id/content', ({ params }) => {
-    const a = archivos.get(params['id']!);
+  // El adjunto de un chat se lee por la ruta contextual de community —la que
+  // usa `ChatStore`—, no por la genérica. Sin esta ruta en la maqueta, toda
+  // foto del chat volvía como 22 bytes `octet-stream` y se pintaba como
+  // documento. Los bytes son los mismos: se delega en el contenido del archivo.
+  router.get('/community/conversations/:id/attachments/:fileId/content', ({ params }) =>
+    contenidoDeArchivo(params['fileId']!),
+  );
+
+  router.get('/common/files/:id/content', ({ params }) => contenidoDeArchivo(params['id']!));
+
+  function contenidoDeArchivo(id: string) {
+    const a = archivos.get(id);
     if (a === undefined) return avatarSvg('?', '#94a3b8');
     // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
     if (a.bytes !== undefined) return a.bytes;
@@ -237,7 +247,7 @@ export function registrarArchivos(router: MockRouter): void {
         'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
       },
     };
-  });
+  }
 
   router.delete('/common/files/:id', ({ params }) => {
     archivos.borrar(params['id']!);

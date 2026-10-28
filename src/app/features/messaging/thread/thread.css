@@ -48,7 +48,7 @@
   /* Por encima del marco de mensajes (que lleva 1): el menú de la cabecera
      se despliega sobre las burbujas y, con el mismo nivel, el marco lo tapaba
      y se comía los clics. */
-  z-index: 2;
+  z-index: 3;
   flex: none;
   display: flex;
   align-items: center;
@@ -316,7 +316,7 @@
   position: relative;
   max-inline-size: min(65%, 38rem);
   padding: 6px 9px 8px;
-  border-radius: 8px;
+  border-radius: var(--r-card);
   background: var(--chat-ajena);
   box-shadow: var(--sombra-1);
   align-self: flex-start;
@@ -336,34 +336,8 @@
   margin-block-start: var(--e3);
 }
 
-/* La cola, sólo en el primero del bloque: es lo que hace que un globo se lea
-   como alguien hablando y no como una tarjeta. */
-.hilo__burbuja.is-abre::after {
-  content: '';
-  position: absolute;
-  inset-block-start: 0;
-  inline-size: 10px;
-  block-size: 12px;
-  background: inherit;
-}
-
-.hilo__burbuja.is-abre:not(.is-propio) {
-  border-start-start-radius: 0;
-}
-
-.hilo__burbuja.is-abre:not(.is-propio)::after {
-  inset-inline-start: -8px;
-  clip-path: polygon(100% 0, 100% 100%, 0 0);
-}
-
-.hilo__burbuja.is-abre.is-propio {
-  border-start-end-radius: 0;
-}
-
-.hilo__burbuja.is-abre.is-propio::after {
-  inset-inline-end: -8px;
-  clip-path: polygon(0 0, 0 100%, 100% 0);
-}
+/* La cola va en el último del bloque —ver `thread-medios.css`—, que es donde
+   la ponen las apps de delivery: marca el final de lo que alguien dijo. */
 
 /* El destello de una cita a la que se saltó: dice «es éste» sin mover nada. */
 .hilo__burbuja.is-destello {
@@ -506,24 +480,6 @@
 }
 
 /* --- Adjuntos ------------------------------------------------------------ */
-
-.hilo__imagen {
-  display: block;
-  padding: 0;
-  margin-block-end: 3px;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  cursor: zoom-in;
-  overflow: hidden;
-}
-
-.hilo__imagen img {
-  display: block;
-  max-inline-size: 100%;
-  max-block-size: 22rem;
-  border-radius: 6px;
-}
 
 .hilo__audio {
   display: block;

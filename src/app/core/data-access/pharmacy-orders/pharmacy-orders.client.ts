@@ -12,6 +12,7 @@ import {
 } from './pharmacy-orders.adapter';
 import type {
   CreatePharmacyOrderDto,
+  PharmacyOrderConversationDto,
   PharmacyOrderDto,
   PharmacyOrderListResponseDto,
 } from './pharmacy-orders.dto';
@@ -82,6 +83,17 @@ export class PharmacyOrdersClient {
     return this.http
       .get<PharmacyOrderDto>(this.orderUrl(id))
       .pipe(map((dto) => pharmacyOrderFromDto(dto, 'staff')));
+  }
+
+  /**
+   * `POST /pharmacy/orders/:id/conversation` — abre (o devuelve, es
+   * idempotente) el chat del pedido entre el paciente y su farmacia.
+   *
+   * Quién puede abrirlo —el paciente dueño o el personal de la farmacia del
+   * pedido— lo decide la API: el cliente no infiere participantes.
+   */
+  abrirConversacion(id: string): Observable<PharmacyOrderConversationDto> {
+    return this.http.post<PharmacyOrderConversationDto>(`${this.orderUrl(id)}/conversation`, {});
   }
 
   aceptarSustituciones(id: string): Observable<PedidoFarmacia> {

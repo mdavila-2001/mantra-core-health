@@ -4,7 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { Messaging } from './messaging';
 import { ChatStore } from '../../core/messaging/chat.store';
@@ -270,10 +270,136 @@ describe('Messaging', () => {
     expect(texto()).toContain('No pudimos cargar tus conversaciones.');
   });
 
+  it('si la primera lectura falla, ofrece reintentar y no dice «no tenés chats»', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    fixture.detectChanges();
+    // Antes de la respuesta: esqueletos (S2), no un vacío.
+    expect(consultar('bandeja-cargando')).not.toBeNull();
+
+    http
+      .expectOne((r) => r.url === '/community/conversations')
+      .error(new ProgressEvent('error'));
+    fixture.detectChanges();
+
+    expect(consultar('bandeja-error')).not.toBeNull();
+    expect(consultar('bandeja-vacia')).toBeNull();
+
+    consultar('bandeja-reintentar')?.click();
+    http.expectOne((r) => r.url === '/community/conversations').flush({
+      items: [],
+      count: 0,
+      limit: 50,
+      nextCursor: null,
+    });
+    fixture.detectChanges();
+
+    // Leída de verdad y sin nada: ahora sí, el vacío con su próxima acción.
+    expect(consultar('bandeja-error')).toBeNull();
+    expect(consultar('bandeja-vacia')).not.toBeNull();
+  });
+
   function escribir(valor: string): void {
     const campo = consultar('mensajeria-consulta') as HTMLInputElement;
     campo.value = valor;
     campo.dispatchEvent(new Event('input'));
     fixture.detectChanges();
   }
+});
+
+/**
+ * El `?escribirA=` con contexto con el que llegan los botones del marketplace.
+ *
+ * Fija que la bandeja le pasa al store **el contexto ya validado** y que, al
+ * abrir, navega al hilo reemplazando la dirección y sin arrastrar los
+ * parámetros: es lo que impide que un refresco vuelva a mandar la tarjeta.
+ */
+describe('Messaging — llegar con contexto', () => {
+  const perfilPropio = {
+    id: 'pp-1',
+    tenantId: 't-1',
+    targetId: 'hp-1',
+    slug: 'juan-paciente',
+    displayName: 'Juan Paciente',
+    headline: null,
+    biography: null,
+    acceptsReviews: null,
+  };
+
+  const montarEn = async (url: string) => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: '**', children: [] }]),
+      ],
+    });
+    const store = TestBed.inject(ChatStore);
+    const escribirA = vi
+      .spyOn(store, 'escribirA')
+      .mockImplementation((_slug, alAbrir) => alAbrir('c-9'));
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl(url);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(Messaging);
+    fixture.detectChanges();
+    return { escribirA, navegar };
+  };
+
+  afterEach(() => {
+    TestBed.inject(ChatStore).detener();
+    TestBed.inject(HttpTestingController)
+      .match(() => true)
+      .forEach((pedido) => pedido.flush(null));
+  });
+
+  it('pasa el contexto validado y abre el hilo sin los parámetros', async () => {
+    const { escribirA, navegar } = await montarEn(
+      '/messaging?escribirA=farmacia-vida&sobre=pedido' +
+        '&titulo=Farmacia%20Vida%20%C2%B7%20Central&detalle=2%20productos' +
+        '&ruta=%2Fmy-account%2Fpharmacy-orders%2Fo-1',
+    );
+
+    expect(escribirA).toHaveBeenCalledTimes(1);
+    expect(escribirA.mock.calls[0]?.[0]).toBe('farmacia-vida');
+    expect(escribirA.mock.calls[0]?.[2]).toEqual({
+      tipo: 'pedido',
+      titulo: 'Farmacia Vida · Central',
+      detalle: '2 productos',
+      ruta: '/my-account/pharmacy-orders/o-1',
+    });
+    expect(navegar).toHaveBeenCalledWith(['/messaging', 'c-9'], { replaceUrl: true });
+  });
+
+  it('?pedido=<id> le pide el hilo a la API del pedido, no a la bandeja', async () => {
+    const { escribirA, navegar } = await montarEn(
+      '/messaging?pedido=o-1&sobre=pedido&titulo=Farmacia%20Vida&ruta=%2Fmy-account%2Fpharmacy-orders%2Fo-1',
+    );
+    const store = TestBed.inject(ChatStore);
+    expect(escribirA).not.toHaveBeenCalled();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    http
+      .expectOne((r) => r.method === 'POST' && r.url === '/pharmacy/orders/o-1/conversation')
+      .flush({ conversationId: 'c-7', pharmacyProfileId: 'pp-f' });
+    http
+      .expectOne((r) => r.method === 'GET' && r.url === '/community/conversations/c-7/messages')
+      .flush({ items: [], count: 0, limit: 30, nextCursor: null });
+    const envio = http.expectOne(
+      (r) => r.method === 'POST' && r.url === '/community/conversations/c-7/messages',
+    );
+    expect(envio.request.body.bodyText).toBe('Pedido: Farmacia Vida\n/my-account/pharmacy-orders/o-1');
+    envio.flush({ id: 'm-1', conversationId: 'c-7', sentAt: '2026-09-08T10:00:00.000Z' });
+    expect(navegar).toHaveBeenCalledWith(['/messaging', 'c-7'], { replaceUrl: true });
+    expect(store.error()).toBe('');
+  });
+
+  it('un contexto que apunta afuera se descarta: abre el hilo sin tarjeta', async () => {
+    const { escribirA } = await montarEn(
+      '/messaging?escribirA=farmacia-vida&sobre=producto&titulo=X&ruta=https%3A%2F%2Fotro.example',
+    );
+
+    expect(escribirA).toHaveBeenCalledTimes(1);
+    expect(escribirA.mock.calls[0]?.[2]).toBeUndefined();
+  });
 });

@@ -198,7 +198,8 @@
   font-weight: 700;
 }
 
-/* --- El visor de imágenes ------------------------------------------------ */
+/* --- El fondo del reenvío ------------------------------------------------
+   Era también el del visor de fotos, que ahora es `app-visor-de-imagenes`. */
 
 .hilo__visor {
   position: fixed;
@@ -209,33 +210,4 @@
   justify-content: center;
   padding: var(--e6);
   background: var(--velo);
-  cursor: zoom-out;
-}
-
-.hilo__visor img {
-  max-inline-size: 100%;
-  max-block-size: 100%;
-  border-radius: var(--r-menu);
-  box-shadow: var(--sombra);
-}
-
-.hilo__visor-cerrar {
-  position: absolute;
-  inset-block-start: var(--e4);
-  inset-inline-end: var(--e4);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, .16);
-  color: #fff;
-  cursor: pointer;
-}
-
-.hilo__visor-cerrar svg {
-  inline-size: 20px;
-  block-size: 20px;
 }

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, concatMap, EMPTY, from, map, type Observable } from 'rxjs';
 
 import { CommunityClient } from '../data-access/community/community.client';
 import { FilesClient } from '../data-access/files/files.client';
@@ -15,6 +16,7 @@ import { SessionStore } from '../auth/session.store';
 import { ChatSocketService } from './chat-socket.service';
 import { ChatAutoReply } from './chat-auto-reply';
 import { stickerDe, type Sticker } from './sticker-pack.generated';
+import { contextoDelTexto, textoDeContexto, type ContextoDeChat } from './contexto-de-chat';
 import type {
   ConversationListItem,
   DirectMessage,
@@ -957,11 +959,20 @@ export class ChatStore {
           : p,
       ),
     );
+    // Un adjunto que falló AL SUBIR no tiene `fileId`: despacharlo así mandaba
+    // la leyenda sola —o un mensaje vacío— y la foto se perdía. Se vuelve a
+    // subir el mismo archivo, que el store guardó para esto.
+    const archivo = this.archivosSinSubir.get(pendiente.claveTemporal);
+    if (pendiente.adjunto !== undefined && !pendiente.adjunto.fileId && archivo) {
+      this.subirYDespachar(pendiente, archivo).subscribe();
+      return;
+    }
     this.despachar(pendiente);
   }
 
   /** Descarta uno que falló y no se va a reintentar. */
   descartar(pendiente: MensajePendiente): void {
+    this.archivosSinSubir.delete(pendiente.claveTemporal);
     this.pendientes.update((lista) =>
       lista.filter((p) => p.claveTemporal !== pendiente.claveTemporal),
     );
@@ -1037,39 +1048,98 @@ export class ChatStore {
    * mostrar algo es lo que hace que mandar una foto se sienta lento.
    */
   enviarAdjunto(archivo: File, leyenda: string): void {
+    this.enviarAdjuntos([archivo], leyenda);
+  }
+
+  /**
+   * Varios adjuntos de una vez: **un mensaje por archivo**, como en cualquier
+   * chat — el contrato lleva un `attachmentFileId` por mensaje y el endpoint de
+   * archivos acepta uno por petición (`upload-policy.ts`).
+   *
+   * La leyenda viaja con el **primero**: es el que se lee primero y el texto
+   * dice de qué son las fotos que siguen. Todas las burbujas aparecen en el
+   * acto y en orden; las subidas van **una detrás de otra** para que los
+   * mensajes lleguen al servidor en el mismo orden en que se ven, y una que
+   * falla no frena a las demás.
+   */
+  enviarAdjuntos(archivos: readonly File[], leyenda: string): void {
     const conversationId = this.activaId();
-    if (conversationId === null) {
+    if (conversationId === null || archivos.length === 0) {
       return;
     }
 
-    const esImagen = archivo.type.startsWith('image/');
-    const pendiente: MensajePendiente = {
-      claveTemporal: claveTemporal(),
-      conversationId,
-      bodyText: leyenda.trim(),
-      creadoEn: new Date(),
-      estado: 'enviando',
-      adjunto: {
-        nombre: archivo.name,
-        tipo: archivo.type,
-        ...(esImagen && this.isBrowser
-          ? { vistaPrevia: URL.createObjectURL(archivo) }
-          : {}),
-      },
-    };
-    this.pendientes.update((lista) => [...lista, pendiente]);
+    const lote = archivos.map((archivo, indice) => {
+      const esImagen = archivo.type.startsWith('image/');
+      const pendiente: MensajePendiente = {
+        claveTemporal: claveTemporal(),
+        conversationId,
+        bodyText: indice === 0 ? leyenda.trim() : '',
+        creadoEn: new Date(),
+        estado: 'enviando',
+        adjunto: { nombre: archivo.name, tipo: archivo.type },
+      };
+      this.archivosSinSubir.set(pendiente.claveTemporal, archivo);
+      if (esImagen) {
+        this.ponerVistaPrevia(pendiente.claveTemporal, archivo);
+      }
+      return { pendiente, archivo };
+    });
+    this.pendientes.update((lista) => [...lista, ...lote.map((l) => l.pendiente)]);
 
+    from(lote)
+      .pipe(concatMap(({ pendiente, archivo }) => this.subirYDespachar(pendiente, archivo)))
+      .subscribe();
+  }
+
+  /**
+   * Los archivos de los adjuntos que todavía no subieron, por clave temporal.
+   *
+   * Existe para el «Reintentar» de una subida fallida: el pendiente sólo guarda
+   * nombre, tipo y vista previa, y sin el `File` no hay qué volver a subir.
+   */
+  private readonly archivosSinSubir = new Map<string, File>();
+
+  /**
+   * La miniatura local del pendiente, como `data:` y no `blob:`.
+   *
+   * La CSP declara `img-src 'self' data:` (`src/server/security-headers.ts`):
+   * un `blob:` se bloqueaba en silencio y la burbuja «enviando» salía sin la
+   * foto. Se lee aparte porque `FileReader` es asíncrono; la burbuja aparece
+   * igual en el acto y la foto se suma un instante después.
+   */
+  private ponerVistaPrevia(clave: string, archivo: File): void {
+    if (!this.isBrowser || typeof FileReader === 'undefined') {
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => {
+      const vistaPrevia = String(lector.result);
+      const conVista = (p: MensajePendiente): MensajePendiente =>
+        p.claveTemporal === clave && p.adjunto
+          ? { ...p, adjunto: { ...p.adjunto, vistaPrevia } }
+          : p;
+      this.pendientes.update((lista) => lista.map(conVista));
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  /** Sube uno y, si sube, lo despacha. Nunca falla: el error queda en el pendiente. */
+  private subirYDespachar(pendiente: MensajePendiente, archivo: File): Observable<void> {
+    const esImagen = archivo.type.startsWith('image/');
     // `PHI` y no `NORMAL`: lo que se adjunta en un chat entre paciente y
     // profesional es, con toda probabilidad, la foto de un análisis o de una
     // receta. La sensibilidad cambia cómo se guarda y quién puede descargarlo,
     // así que el defecto tiene que ser el que protege, no el que conviene.
-    this.archivos
-      .upload(archivo, esImagen ? 'IMAGE' : 'DOCUMENT', 'PHI')
-      .subscribe({
-      next: (subido) => {
+    return this.archivos.upload(archivo, esImagen ? 'IMAGE' : 'DOCUMENT', 'PHI').pipe(
+      map((subido) => {
+        this.archivosSinSubir.delete(pendiente.claveTemporal);
+        // El de la lista y no el recibido: puede haber sumado la miniatura.
+        const actual =
+          this.pendientes().find((p) => p.claveTemporal === pendiente.claveTemporal) ?? pendiente;
         const conFileId: MensajePendiente = {
-          ...pendiente,
-          adjunto: { ...pendiente.adjunto!, fileId: subido.id },
+          ...actual,
+          estado: 'enviando',
+          adjunto: { ...actual.adjunto!, fileId: subido.id },
         };
         this.pendientes.update((lista) =>
           lista.map((p) =>
@@ -1077,8 +1147,8 @@ export class ChatStore {
           ),
         );
         this.despachar(conFileId);
-      },
-      error: () => {
+      }),
+      catchError(() => {
         this.pendientes.update((lista) =>
           lista.map((p) =>
             p.claveTemporal === pendiente.claveTemporal
@@ -1087,8 +1157,9 @@ export class ChatStore {
           ),
         );
         this.error.set('No pudimos subir el archivo.');
-      },
-    });
+        return EMPTY;
+      }),
+    );
   }
 
   /* --- Adjuntos ----------------------------------------------------------- */
@@ -1298,14 +1369,43 @@ export class ChatStore {
    * Son dos llamadas y no una porque la superficie pública devuelve `slug` y no
    * `profileId`: no publica identificadores internos. La segunda es idempotente
    * desde este carril: si el hilo ya existe, el backend devuelve ése.
+   *
+   * Espera al perfil propio en vez de rendirse si todavía no está: quien llega
+   * desde un botón del marketplace entra a `/messaging` en frío, y el
+   * `?escribirA=` se lee antes de que `/community/profiles/me` conteste. Antes
+   * ese caso volvía sin hacer nada y el botón parecía muerto.
+   *
+   * Con `contexto`, antes de abrir el hilo manda **una** tarjeta de contexto
+   * (ver `contexto-de-chat.ts`) — salvo que la última tarjeta del hilo ya sea
+   * sobre la misma ruta: volver a tocar «Chatear» desde el mismo pedido no
+   * tiene que repetirla.
    */
-  escribirA(slug: string, alAbrir: (conversationId: string) => void): void {
-    const propio = this.perfil();
-    if (propio === null || this.abriendo()) {
-      return;
-    }
-    this.abriendo.set(true);
+  escribirA(
+    slug: string,
+    alAbrir: (conversationId: string) => void,
+    contexto?: ContextoDeChat,
+  ): void {
+    // `abriendo` se mira y se enciende ya con el perfil resuelto: si se
+    // encendiera antes y `/community/profiles/me` fallara, quedaría prendido
+    // para siempre. Dos pedidos encolados a la vez abren uno solo igual.
+    this.conPerfil(() => {
+      const propio = this.perfil();
+      // Sin perfil público no hay con qué abrir el hilo: la pantalla ya ofrece
+      // crearlo, y eso no es un error.
+      if (propio === null || this.abriendo()) {
+        return;
+      }
+      this.abriendo.set(true);
+      this.abrirConFicha(propio, slug, alAbrir, contexto);
+    });
+  }
 
+  private abrirConFicha(
+    propio: string,
+    slug: string,
+    alAbrir: (conversationId: string) => void,
+    contexto: ContextoDeChat | undefined,
+  ): void {
     this.community.readProfileBySlug(slug).subscribe({
       next: (ficha) => {
         // Uno no se escribe a sí mismo. Sin esto, «Enviar mensaje» en la propia
@@ -1320,11 +1420,7 @@ export class ChatStore {
         this.community
           .createConversation({ participantProfileIds: [propio, ficha.id] })
           .subscribe({
-            next: ({ id }) => {
-              this.abriendo.set(false);
-              this.recargarBandeja();
-              alAbrir(id);
-            },
+            next: ({ id }) => this.entrarAlHilo(propio, id, alAbrir, contexto),
             error: () => {
               this.abriendo.set(false);
               this.error.set('No pudimos abrir la conversación.');
@@ -1336,6 +1432,91 @@ export class ChatStore {
         this.error.set('No pudimos encontrar a esa persona.');
       },
     });
+  }
+
+  /**
+   * Abre un hilo que **otro** resuelve —hoy, el chat de un pedido:
+   * `POST /pharmacy/orders/:id/conversation`— con la misma tarjeta y la misma
+   * regla de no repetirla que {@link escribirA}.
+   *
+   * El store no sabe de pedidos: recibe la petición que devuelve el id de la
+   * conversación. Quién puede abrirla lo decide esa petición en la API.
+   */
+  abrirConversacion(
+    resolver: Observable<string>,
+    alAbrir: (conversationId: string) => void,
+    contexto?: ContextoDeChat,
+  ): void {
+    this.conPerfil(() => {
+      const propio = this.perfil();
+      if (propio === null || this.abriendo()) {
+        return;
+      }
+      this.abriendo.set(true);
+      resolver.subscribe({
+        next: (id) => this.entrarAlHilo(propio, id, alAbrir, contexto),
+        error: () => {
+          this.abriendo.set(false);
+          this.error.set('No pudimos abrir la conversación.');
+        },
+      });
+    });
+  }
+
+  /** Lo común a los dos caminos: la tarjeta, si hay, y después el hilo. */
+  private entrarAlHilo(
+    propio: string,
+    id: string,
+    alAbrir: (conversationId: string) => void,
+    contexto: ContextoDeChat | undefined,
+  ): void {
+    const terminar = (): void => {
+      this.abriendo.set(false);
+      this.recargarBandeja();
+      alAbrir(id);
+    };
+    if (contexto === undefined) {
+      terminar();
+    } else {
+      this.ponerContexto(propio, id, contexto, terminar);
+    }
+  }
+
+  /**
+   * Manda la tarjeta de contexto si la última del hilo no es ya la misma.
+   *
+   * Se mira la primera página —la más reciente— y no el hilo entero: si la
+   * última tarjeta sobre ese pedido quedó treinta mensajes atrás, repetirla
+   * arriba es justamente lo útil. Si leer falla no se manda nada: una tarjeta
+   * duplicada es peor que una que falta, y el hilo se abre igual.
+   */
+  private ponerContexto(
+    propio: string,
+    conversationId: string,
+    contexto: ContextoDeChat,
+    despues: () => void,
+  ): void {
+    const fallar = (): void => {
+      this.error.set('Abrimos el chat, pero no pudimos agregar de qué se trata.');
+      despues();
+    };
+    this.community
+      .listMessages(conversationId, { profileId: propio, limit: PAGINA_DE_MENSAJES })
+      .subscribe({
+        next: (pagina) => {
+          if (ultimaTarjeta(pagina.items)?.ruta === contexto.ruta) {
+            despues();
+            return;
+          }
+          this.community
+            .sendMessage(conversationId, {
+              senderProfileId: propio,
+              bodyText: textoDeContexto(contexto),
+            })
+            .subscribe({ next: () => despues(), error: fallar });
+        },
+        error: fallar,
+      });
   }
 
   /* --- Sondeo ------------------------------------------------------------- */
@@ -1514,4 +1695,25 @@ function slugDe(nombre: string): string {
     .slice(0, 40);
   const cola = Math.random().toString(36).slice(2, 8);
   return `${base === '' ? 'perfil' : base}-${cola}`;
+}
+
+/**
+ * La tarjeta de contexto más reciente de una página de mensajes, o `null`.
+ *
+ * Por `sentAt` y no por la posición: el orden de la página es del servidor, y
+ * esta decisión —mandar o no la tarjeta— no puede depender de él.
+ */
+function ultimaTarjeta(mensajes: readonly DirectMessage[]): ContextoDeChat | null {
+  let ultima: { readonly cuando: number; readonly contexto: ContextoDeChat } | null = null;
+  for (const mensaje of mensajes) {
+    const contexto = contextoDelTexto(mensaje.bodyText);
+    if (contexto === null) {
+      continue;
+    }
+    const cuando = mensaje.sentAt?.getTime() ?? 0;
+    if (ultima === null || cuando > ultima.cuando) {
+      ultima = { cuando, contexto };
+    }
+  }
+  return ultima?.contexto ?? null;
 }

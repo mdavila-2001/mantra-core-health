@@ -195,6 +195,11 @@ export interface PedidoFarmacia extends PatientSettlementFields {
    * re-pedir uno vencido necesita reconstruir el borrador entero.
    */
   readonly pharmacyId: string;
+  /**
+   * El slug de la vitrina pública de la farmacia (`pharmacyPublicSlug`).
+   * Ausente cuando no tiene: sin él no se ofrece el chat del pedido.
+   */
+  readonly slugDeFarmacia?: string;
 }
 
 /**

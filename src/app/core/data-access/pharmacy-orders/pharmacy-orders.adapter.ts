@@ -98,6 +98,7 @@ export function pharmacyOrderFromDto(
     pago: null,
     requestId: dto.medicationRequestId,
     siteId: dto.siteId,
+    ...(dto.pharmacyPublicSlug ? { slugDeFarmacia: dto.pharmacyPublicSlug } : {}),
   };
 }
 

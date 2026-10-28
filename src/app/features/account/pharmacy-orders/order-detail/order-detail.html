@@ -2,7 +2,23 @@
   title="Pedido de farmacia"
   subtitle="El recorrido completo: del envío al retiro, con cada decisión en tus manos."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <!-- Sólo si el pedido dice con qué ficha pública hablar (`pharmacySlug`).
+       Sin eso no se ofrece: un «Chatear» que no puede abrir el chat es peor
+       que no tenerlo. -->
+  @if (pedido()?.slugDeFarmacia) {
+    <button
+      page-actions
+      app-button
+      variant="primary"
+      data-testid="pedido-chatear"
+      (clicked)="chatearConLaFarmacia()"
+    >
+      <app-nav-icon name="chat" />
+      Chatear con la farmacia
+    </button>
+  }
+</app-page-header>
 
 <app-view-state-host [state]="state()" (retry)="cargar()">
   @if (pedido(); as abierto) {

@@ -310,3 +310,13 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }
+
+/* ---- «Consultar por chat» al pie de una tarjeta -------------------------- */
+
+/* Último renglón de la tarjeta y a todo su ancho: es la acción de la tarjeta,
+   y a lo ancho se toca igual con el pulgar que con el mouse. Lo empuja al pie
+   el `margin: auto` del precio, así que en una fila todos quedan alineados. */
+.ficha-publica__chat {
+  align-self: stretch;
+  margin-block-start: var(--sp-3);
+}
