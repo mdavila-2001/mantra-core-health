@@ -78,6 +78,10 @@
   </app-card>
 }
 
+<!-- «Cómo le va»: el resumen general, ARRIBA de la lista. Pide lo suyo y falla
+     por su cuenta: que el resumen no cargue no esconde las encuestas. -->
+<app-survey-insights />
+
 <app-view-state-host [state]="vista()" (retry)="cargar()">
   <!-- S2 · Cargando. El esqueleto tiene la forma de las filas, no la de la
        barra de filtros: mientras la lista viaja no hay nada que filtrar, así

@@ -28,6 +28,7 @@ import type { SegmentedOption } from '../../shared/components/molecules/segmente
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { SurveyInsightsPanel } from './insights/survey-insights';
 import { encuestaRoute } from './questionnaires.routes';
 
 /** Largo máximo del título, el mismo que valida el backend. */
@@ -142,6 +143,7 @@ interface EncuestaVisible extends SurveySummary {
     SearchField,
     SegmentedControl,
     Skeleton,
+    SurveyInsightsPanel,
     Textarea,
     ViewStateHost,
   ],
