@@ -2831,6 +2831,125 @@ describe('Agenda', () => {
 
       expect((citas().data?.[0] as Record<string, unknown>)['admitePago']).toBe(false);
     });
+
+    /**
+     * Corrección 11 · «Estado del pago» abre el modal de comprobantes, y lo que
+     * el modal cambia se ve en la fila **sin releer la agenda**: la respuesta
+     * de la API trae el estado de pago nuevo y la fila lo pinta.
+     */
+    describe('el modal de comprobantes', () => {
+      const RECEIPTS_URL = '/scheduling/bookings/b-1/payment-receipts';
+
+      /** Un comprobante en PDF: el PDF no pide miniatura, así que no hay bytes que servir. */
+      const RECEIPT = {
+        id: 'r-1',
+        bookingId: 'b-1',
+        fileId: 'f-1',
+        mimeType: 'application/pdf',
+        originalName: 'comprobante.pdf',
+        amount: '150.00',
+        paidAt: '2026-10-27T14:00:00.000Z',
+        note: null,
+        uploadedAt: '2026-10-27T15:00:00.000Z',
+        uploadedBy: { userId: 'u-paciente', displayName: 'Ana Pérez' },
+        status: 'PENDING',
+        reviewedAt: null,
+        reviewedBy: null,
+        rejectionReason: null,
+      };
+
+      const PAID_STATE = {
+        state: 'PAID',
+        label: 'Pagada',
+        conceptId: 'c-pagada',
+        insuranceUsed: false,
+        markedByUserId: 'u-1',
+        markedAt: '2026-10-28T10:00:00.000Z',
+      };
+
+      function root(): HTMLElement {
+        return harness.routeNativeElement as HTMLElement;
+      }
+
+      async function press(testid: string): Promise<void> {
+        const button = root().querySelector<HTMLButtonElement>(`[data-testid="${testid}"]`);
+        expect(button, `no está ${testid}`).not.toBeNull();
+        button!.click();
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+      }
+
+      async function openModal(receipts: unknown[] = [RECEIPT]): Promise<void> {
+        await montar();
+        await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+        await verSolapaDeCitas();
+        await press('agenda-pago');
+        http.expectOne(RECEIPTS_URL).flush(receipts);
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+      }
+
+      function rowPaymentBadge(): string {
+        return root().querySelector('[data-testid="payment-state-badge"]')?.textContent?.trim() ?? '';
+      }
+
+      it('«Estado del pago» abre el modal, no el menú de estados', async () => {
+        await openModal();
+
+        expect(root().querySelector('app-payment-receipts-dialog')).not.toBeNull();
+        expect(root().querySelector('[data-testid="payment-receipt-confirm"]')).not.toBeNull();
+        // Ningún desplegable con los tres estados: el marcado a mano vive en el modal.
+        const menuOptions = [...root().ownerDocument.querySelectorAll('[role="menuitem"]')].map(
+          (option) => option.textContent?.trim(),
+        );
+        expect(menuOptions).not.toContain('Parcialmente pagada');
+      });
+
+      it('confirmar pinta «Pagada» en la fila con el estado que devolvió la API, sin releer la agenda', async () => {
+        await openModal();
+        expect(rowPaymentBadge()).toBe('');
+
+        await press('payment-receipt-confirm');
+        const confirmRequest = http.expectOne(`${RECEIPTS_URL}/r-1/confirm`);
+        expect(confirmRequest.request.method).toBe('POST');
+        confirmRequest.flush({
+          receipt: { ...RECEIPT, status: 'CONFIRMED', reviewedAt: PAID_STATE.markedAt },
+          paymentState: PAID_STATE,
+        });
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+
+        expect(rowPaymentBadge()).toBe('Pagada');
+        // Sin releer: ninguna lectura nueva de la agenda.
+        expect(http.match((r) => r.url === '/scheduling/bookings')).toHaveLength(0);
+        // La fila confirmada perdió sus acciones.
+        expect(root().querySelector('[data-testid="payment-receipt-confirm"]')).toBeNull();
+      });
+
+      it('«Marcar sin comprobante…» sigue marcando el pago por PUT payment-state', async () => {
+        await openModal([]);
+
+        await press('payment-receipts-manual-toggle');
+        await press('payment-manual-PAID');
+        const markRequest = http.expectOne('/scheduling/bookings/b-1/payment-state');
+        expect(markRequest.request.method).toBe('PUT');
+        // Sin estado previo, el seguro sale en falso: no se inventa una cobertura.
+        expect(markRequest.request.body).toEqual({ state: 'PAID', insuranceUsed: false });
+        markRequest.flush(PAID_STATE);
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+
+        expect(rowPaymentBadge()).toBe('Pagada');
+      });
+
+      it('cerrar el modal lo saca del DOM', async () => {
+        await openModal();
+
+        await press('content-dialog-close');
+
+        expect(root().querySelector('app-payment-receipts-dialog')).toBeNull();
+      });
+    });
   });
 
   /**
