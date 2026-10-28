@@ -43,7 +43,6 @@ import { writeFailureMessage } from '../../write-message';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import {
-  CATEGORY_LABELS,
   DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
   PRIORITY_LABELS,
   conceptosDe,
@@ -52,6 +51,7 @@ import {
 } from './analysis-order-block.helpers';
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
 import { PerformerSelector } from './performer-selector/performer-selector';
+import { createStudyCategoryState } from './study-category';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
 
 export type { EstudioEnFicha } from './analysis-order-block.helpers';
@@ -67,13 +67,9 @@ export type { EstudioEnFicha } from './analysis-order-block.helpers';
 export const TARGET_ESTUDIO = 'clinical.service_requests.code_concept_id';
 
 /**
- * Laboratorio o imagenología.
- *
- * Es lo único que separa una orden de este circuito de una derivación, y es lo
- * que la lectura de `diagnostics` usa para filtrar. Opcional en el DTO, pero el
- * formulario lo pide: una orden sin categoría no vuelve a aparecer en este
- * bloque, y ofrecer un pedido que después no se ve es exactamente lo que este
- * carril vino a arreglar.
+ * La categoría de la orden. No se elige: sale del estudio (`study-category.ts`).
+ * Opcional en el DTO, pero siempre viaja: una orden sin categoría no vuelve a
+ * aparecer en este bloque.
  */
 export const TARGET_CATEGORIA = 'clinical.service_requests.category_concept_id';
 
@@ -113,10 +109,11 @@ const TOPE = 25;
  * invariantes viven en `POST /clinical/service-requests`. Un endpoint de alta
  * propio en `diagnostics` habría sido una segunda puerta a la misma tabla.
  *
- * ## La categoría se pide aunque el contrato la deje opcional
+ * ## La categoría viaja aunque el contrato la deje opcional
  *
  * Porque es lo que hace que la orden vuelva a aparecer acá: la lectura de
- * `diagnostics` filtra por laboratorio o imagenología. Una orden sin categoría
+ * `diagnostics` filtra por categoría. No se pide: sale del estudio, que ya
+ * dice si es laboratorio, imagen o procedimiento. Una orden sin categoría
  * se guarda bien y desaparece de esta pantalla, y un pedido que no se puede
  * volver a encontrar es el defecto que este bloque vino a cerrar.
  *
@@ -192,9 +189,7 @@ export class AnalysisOrderBlock {
   );
 
   protected readonly targetEstudio = TARGET_ESTUDIO;
-  protected readonly targetCategoria = TARGET_CATEGORIA;
   protected readonly targetPrioridad = TARGET_PRIORIDAD;
-  protected readonly etiquetasDeCategoria = CATEGORY_LABELS;
   protected readonly etiquetasDePrioridad = PRIORITY_LABELS;
 
   /**
@@ -208,7 +203,12 @@ export class AnalysisOrderBlock {
   /* -- El formulario ------------------------------------------------------- */
 
   protected readonly estudio = signal<string | null>(null);
-  protected readonly categoria = signal<string | null>(null);
+  /** El tipo de la orden, deducido del estudio elegido. */
+  protected readonly tipo = createStudyCategoryState({
+    study: this.estudio,
+    studyTarget: TARGET_ESTUDIO,
+    categoryTarget: TARGET_CATEGORIA,
+  });
   protected readonly prioridad = signal<string | null>(null);
 
   /**
@@ -224,7 +224,7 @@ export class AnalysisOrderBlock {
 
   /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
   protected readonly performer = createPerformerOrderState({
-    category: this.categoria,
+    category: this.tipo.conceptId,
     study: this.estudio,
     categoryTarget: TARGET_CATEGORIA,
   });
@@ -335,7 +335,7 @@ export class AnalysisOrderBlock {
       this.hayEncuentro() &&
       !this.sinOrganizacion() &&
       this.estudio() !== null &&
-      this.categoria() !== null &&
+      this.tipo.fields() !== null &&
       !this.pidiendo() &&
       !this.checkingDuplicate() &&
       this.performer.canSubmit(),
@@ -458,13 +458,13 @@ export class AnalysisOrderBlock {
     const patientProfileId = this.patientProfileId();
     const custodianTenantId = this.organizacion();
     const codeConceptId = this.estudio();
-    const categoryConceptId = this.categoria();
+    const categoria = this.tipo.fields();
     const encounterId = this.encounterId();
 
     if (
       custodianTenantId === null ||
       codeConceptId === null ||
-      categoryConceptId === null ||
+      categoria === null ||
       encounterId === null ||
       encounterId === '' ||
       this.pidiendo()
@@ -486,7 +486,7 @@ export class AnalysisOrderBlock {
       custodianTenantId,
       patientProfileId,
       codeConceptId,
-      categoryConceptId,
+      ...categoria,
       encounterId,
       ...(this.respuestaDelFormulario() === null
         ? {}
@@ -586,7 +586,6 @@ export class AnalysisOrderBlock {
   /** Vacía el formulario tras un pedido. El siguiente arranca limpio. */
   private limpiar(): void {
     this.estudio.set(null);
-    this.categoria.set(null);
     this.prioridad.set(null);
     this.performer.reset();
   }
