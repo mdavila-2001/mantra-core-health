@@ -10,6 +10,8 @@ import { of, throwError } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
+import { FilesClient } from '../../../core/data-access/files/files.client';
+import { PaymentReceiptsClient } from '../../../core/data-access/scheduling/payment-receipts.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { AgendaResource, AgendaSlot } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -1665,6 +1667,10 @@ function montarCancelacion(opts: Opciones) {
         },
       },
       { provide: TerminologyClient, useValue: { readConceptLabels } },
+      // Corrección 11 · el detalle trae «Comprobante de pago», que lee los
+      // comprobantes de la cita: sin ninguno, para que el resto mida lo suyo.
+      { provide: PaymentReceiptsClient, useValue: { list: vi.fn().mockReturnValue(of([])) } },
+      { provide: FilesClient, useValue: { upload: vi.fn() } },
       // Sin token de paciente del seed, se inyecta el mínimo que la pantalla usa:
       // el perfil (para pedir sus turnos) y la organización, que por omisión no
       // hay — los casos de la grilla la declaran.
@@ -2064,6 +2070,26 @@ describe('Appointments · lista y calendario', () => {
     const detalle = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
     expect(detalle).not.toBeNull();
     expect(detalle.textContent).toContain('Cancelar');
+  });
+
+  it('el detalle trae el bloque «Comprobante de pago» de esa cita', async () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+    });
+    const receipts = TestBed.inject(PaymentReceiptsClient) as unknown as { list: ReturnType<typeof vi.fn> };
+
+    vista(comp).elegirVista('calendario');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    vista(comp).abrirDetalle('b1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const detail = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
+    expect(detail.querySelector('[data-testid="booking-receipts"]')?.textContent).toContain('Comprobante de pago');
+    expect(receipts.list).toHaveBeenCalledWith('b1');
   });
 });
 
