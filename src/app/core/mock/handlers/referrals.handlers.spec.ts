@@ -3,7 +3,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { PACIENTE } from '../fixtures/people';
 import { isMockReply, MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario, TENANT_HOSPITAL, TENANT_LABORATORIO, type MockUser } from '../mock-session';
-import { REFERRAL_STATUS, registrarDerivaciones } from './referrals.handlers';
+import { REFERRAL_STATUS, registerReferrals } from './referrals.handlers';
 
 /**
  * Las derivaciones del simulador. Lo que se fija: que lo emitido se relee
@@ -13,15 +13,15 @@ import { REFERRAL_STATUS, registrarDerivaciones } from './referrals.handlers';
  */
 describe('derivaciones en el mock', () => {
   const router = new MockRouter();
-  registrarDerivaciones(router);
-  const medica = buscarUsuario('medica@alovida.mock')!;
-  const paciente = buscarUsuario('paciente@alovida.mock')!;
+  registerReferrals(router);
+  const doctor = buscarUsuario('medica@alovida.mock')!;
+  const patientUser = buscarUsuario('paciente@alovida.mock')!;
 
-  function pedir(method: MockMethod, path: string, body: unknown = null, user: MockUser = medica) {
+  function send(method: MockMethod, path: string, body: unknown = null, user: MockUser = doctor) {
     const url = new URL(path, 'http://localhost');
     const route = router.match(method, url.pathname);
     if (!route) throw new Error(`Falta ruta ${method} ${path}`);
-    const salida = route.handler({
+    const output = route.handler({
       method,
       path: url.pathname,
       params: route.params,
@@ -30,12 +30,12 @@ describe('derivaciones en el mock', () => {
       headers: new HttpHeaders(),
       user,
     });
-    return isMockReply(salida) ? salida : { status: 200, body: salida };
+    return isMockReply(output) ? output : { status: 200, body: output };
   }
 
   it('busca organizaciones por nombre, sin tildes, desde dos letras', () => {
-    expect(pedir('GET', '/referrals/targets?q=s&kind=ORGANIZATION').status).toBe(400);
-    const { body } = pedir('GET', '/referrals/targets?q=lucas&kind=ORGANIZATION') as {
+    expect(send('GET', '/referrals/targets?q=s&kind=ORGANIZATION').status).toBe(400);
+    const { body } = send('GET', '/referrals/targets?q=lucas&kind=ORGANIZATION') as {
       body: { items: { id: string; kind: string }[] };
     };
     expect(body.items.map((i) => i.id)).toEqual([TENANT_HOSPITAL]);
@@ -43,14 +43,14 @@ describe('derivaciones en el mock', () => {
   });
 
   it('no ofrece a quien busca entre los profesionales', () => {
-    const { body } = pedir('GET', '/referrals/targets?q=ro&kind=PRACTITIONER') as {
+    const { body } = send('GET', '/referrals/targets?q=ro&kind=PRACTITIONER') as {
       body: { items: { id: string }[] };
     };
-    expect(body.items.some((i) => i.id === medica.practitionerProfileId)).toBe(false);
+    expect(body.items.some((i) => i.id === doctor.practitionerProfileId)).toBe(false);
   });
 
   it('un destino sin catálogo devuelve una lista vacía, no un error', () => {
-    const { status, body } = pedir('GET', `/referrals/target-services?targetTenantId=${TENANT_LABORATORIO}`) as {
+    const { status, body } = send('GET', `/referrals/target-services?targetTenantId=${TENANT_LABORATORIO}`) as {
       status: number;
       body: { items: unknown[] };
     };
@@ -59,46 +59,46 @@ describe('derivaciones en el mock', () => {
   });
 
   it('emite, se relee en la lista y una equivalente es 409', () => {
-    const servicios = pedir('GET', `/referrals/target-services?targetTenantId=${TENANT_HOSPITAL}`)
+    const offered = send('GET', `/referrals/target-services?targetTenantId=${TENANT_HOSPITAL}`)
       .body as { items: { id: string; name: string }[] };
-    const servicio = servicios.items[0]!;
-    const alta = {
+    const service = offered.items[0]!;
+    const payload = {
       patientProfileId: PACIENTE.id,
       sourceEncounterId: 'enc-prueba-derivacion',
       targetTenantId: TENANT_HOSPITAL,
-      targetServiceCatalogId: servicio.id,
+      targetServiceCatalogId: service.id,
       referralType: 'TREATMENT',
       reasonText: 'Rehabilitación',
     };
 
-    const creada = pedir('POST', '/referrals', alta) as {
+    const createdReply = send('POST', '/referrals', payload) as {
       status: number;
       body: { id: string; statusConceptId: string };
     };
-    expect(creada.status).toBe(201);
-    expect(creada.body.statusConceptId).toBe(REFERRAL_STATUS['REF_REQUESTED']);
+    expect(createdReply.status).toBe(201);
+    expect(createdReply.body.statusConceptId).toBe(REFERRAL_STATUS['REF_REQUESTED']);
 
-    const lista = pedir('GET', `/referrals?patientProfileId=${PACIENTE.id}`).body as {
+    const list = send('GET', `/referrals?patientProfileId=${PACIENTE.id}`).body as {
       id: string;
       referralType: string;
       targetDisplayName: string;
       targetServiceName: string;
     }[];
-    const releida = lista.find((d) => d.id === creada.body.id);
-    expect(releida?.referralType).toBe('TREATMENT');
-    expect(releida?.targetDisplayName).toBe('Hospital San Lucas');
-    expect(releida?.targetServiceName).toBe(servicio.name);
+    const reread = list.find((d) => d.id === createdReply.body.id);
+    expect(reread?.referralType).toBe('TREATMENT');
+    expect(reread?.targetDisplayName).toBe('Hospital San Lucas');
+    expect(reread?.targetServiceName).toBe(service.name);
     // La más reciente primero.
-    expect(lista[0]?.id).toBe(creada.body.id);
+    expect(list[0]?.id).toBe(createdReply.body.id);
 
-    expect(pedir('POST', '/referrals', alta).status).toBe(409);
+    expect(send('POST', '/referrals', payload).status).toBe(409);
   });
 
   it('sin destino no hay alta', () => {
-    expect(pedir('POST', '/referrals', { patientProfileId: PACIENTE.id }).status).toBe(400);
+    expect(send('POST', '/referrals', { patientProfileId: PACIENTE.id }).status).toBe(400);
   });
 
   it('sólo el rol clínico entra', () => {
-    expect(pedir('GET', `/referrals?patientProfileId=${PACIENTE.id}`, null, paciente).status).toBe(403);
+    expect(send('GET', `/referrals?patientProfileId=${PACIENTE.id}`, null, patientUser).status).toBe(403);
   });
 });

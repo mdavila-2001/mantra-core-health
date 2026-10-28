@@ -19,12 +19,12 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 export class ConsultationReferrals {
   private readonly referrals = inject(ReferralsClient);
 
-  readonly estado = signal<ViewState<readonly Referral[]>>(loading());
+  readonly state = signal<ViewState<readonly Referral[]>>(loading());
 
   constructor(private readonly profileId: Signal<string>) {
     effect(() => {
       const id = this.profileId();
-      untracked(() => (id === '' ? this.estado.set(loading()) : this.releer()));
+      untracked(() => (id === '' ? this.state.set(loading()) : this.reload()));
     });
   }
 
@@ -32,16 +32,16 @@ export class ConsultationReferrals {
    * Cuántas hay, o `null` sin lectura: un cero diría «no tiene ninguna»
    * cuando lo que pasa es que no se pudieron leer.
    */
-  cantidad(): number | null {
-    return dataOf(this.estado())?.length ?? null;
+  count(): number | null {
+    return dataOf(this.state())?.length ?? null;
   }
 
   /** Relee: tras emitir una derivación y al reintentar. */
-  releer(): void {
-    this.estado.set(loading());
+  reload(): void {
+    this.state.set(loading());
     this.referrals.listByPatient(this.profileId()).subscribe({
-      next: (filas) => this.estado.set(ready(filas)),
-      error: (error: unknown) => this.estado.set(errorToViewState<readonly Referral[]>(error)),
+      next: (rows) => this.state.set(ready(rows)),
+      error: (error: unknown) => this.state.set(errorToViewState<readonly Referral[]>(error)),
     });
   }
 }

@@ -6,7 +6,7 @@ import { ReferralsClient } from './referrals.client';
 import type { Referral, ReferralCreated } from './referrals.types';
 
 /** Una fila como la manda la API: opcionales en `null`, fechas en texto. */
-const FILA = {
+const ROW = {
   id: 'r-1',
   patientProfileId: 'p-1',
   sourceEncounterId: null,
@@ -54,46 +54,46 @@ describe('ReferralsClient', () => {
 
   it('listTargetServices pide por profesional o por organización, nunca por los dos', () => {
     client.listTargetServices({ targetProfileId: 'hp-1' }).subscribe();
-    const porProfesional = http.expectOne((r) => r.url === '/referrals/target-services');
-    expect(porProfesional.request.params.get('targetProfileId')).toBe('hp-1');
-    expect(porProfesional.request.params.has('targetTenantId')).toBe(false);
-    porProfesional.flush({ items: [] });
+    const byPractitioner = http.expectOne((r) => r.url === '/referrals/target-services');
+    expect(byPractitioner.request.params.get('targetProfileId')).toBe('hp-1');
+    expect(byPractitioner.request.params.has('targetTenantId')).toBe(false);
+    byPractitioner.flush({ items: [] });
 
     client.listTargetServices({ targetTenantId: 't-1' }).subscribe();
-    const porOrganizacion = http.expectOne((r) => r.url === '/referrals/target-services');
-    expect(porOrganizacion.request.params.get('targetTenantId')).toBe('t-1');
-    expect(porOrganizacion.request.params.has('targetProfileId')).toBe(false);
-    porOrganizacion.flush({ items: [] });
+    const byOrganization = http.expectOne((r) => r.url === '/referrals/target-services');
+    expect(byOrganization.request.params.get('targetTenantId')).toBe('t-1');
+    expect(byOrganization.request.params.has('targetProfileId')).toBe(false);
+    byOrganization.flush({ items: [] });
   });
 
   it('listByPatient quita los null y convierte las fechas', () => {
-    let lista: readonly Referral[] = [];
-    client.listByPatient('p-1').subscribe((r) => (lista = r));
+    let list: readonly Referral[] = [];
+    client.listByPatient('p-1').subscribe((r) => (list = r));
 
     const req = http.expectOne((r) => r.url === '/referrals');
     expect(req.request.params.get('patientProfileId')).toBe('p-1');
-    req.flush([FILA]);
+    req.flush([ROW]);
 
-    const [derivacion] = lista;
-    expect(derivacion?.createdAt).toEqual(new Date('2026-10-28T12:00:00.000Z'));
+    const [referral] = list;
+    expect(referral?.createdAt).toEqual(new Date('2026-10-28T12:00:00.000Z'));
     // Fecha sin hora: la medianoche local, no la de Greenwich.
-    expect(derivacion?.validUntil?.getDate()).toBe(31);
-    expect(derivacion?.referralType).toBe('TREATMENT');
-    expect('reasonText' in (derivacion ?? {})).toBe(false);
-    expect('respondedAt' in (derivacion ?? {})).toBe(false);
-    expect(derivacion?.targetServiceName).toBe('Fisioterapia');
+    expect(referral?.validUntil?.getDate()).toBe(31);
+    expect(referral?.referralType).toBe('TREATMENT');
+    expect('reasonText' in (referral ?? {})).toBe(false);
+    expect('respondedAt' in (referral ?? {})).toBe(false);
+    expect(referral?.targetServiceName).toBe('Fisioterapia');
   });
 
   it('un tipo que esta versión no conoce no se inventa', () => {
-    let lista: readonly Referral[] = [];
-    client.listByPatient('p-1').subscribe((r) => (lista = r));
-    http.expectOne((r) => r.url === '/referrals').flush([{ ...FILA, referralType: 'NUEVO' }]);
+    let list: readonly Referral[] = [];
+    client.listByPatient('p-1').subscribe((r) => (list = r));
+    http.expectOne((r) => r.url === '/referrals').flush([{ ...ROW, referralType: 'NUEVO' }]);
 
-    expect(lista[0]?.referralType).toBeUndefined();
+    expect(list[0]?.referralType).toBeUndefined();
   });
 
   it('create manda la vigencia como YYYY-MM-DD del día local y devuelve el alta', () => {
-    let alta: ReferralCreated | undefined;
+    let created: ReferralCreated | undefined;
     client
       .create({
         patientProfileId: 'p-1',
@@ -102,7 +102,7 @@ describe('ReferralsClient', () => {
         referralType: 'TREATMENT',
         validUntil: new Date(2026, 11, 31, 22, 30),
       })
-      .subscribe((r) => (alta = r));
+      .subscribe((r) => (created = r));
 
     const req = http.expectOne((r) => r.url === '/referrals');
     expect(req.request.method).toBe('POST');
@@ -120,7 +120,7 @@ describe('ReferralsClient', () => {
       createdAt: '2026-10-28T12:00:00.000Z',
     });
 
-    expect(alta?.id).toBe('r-9');
+    expect(created?.id).toBe('r-9');
   });
 
   it('create sin vigencia no manda la clave', () => {

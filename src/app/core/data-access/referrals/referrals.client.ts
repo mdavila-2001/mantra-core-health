@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
+import * as wire from '../wire';
 import {
   REFERRAL_TYPES,
   type NewReferral,
@@ -19,7 +19,7 @@ import {
 export const REFERRAL_TARGET_MIN_QUERY = 2;
 
 /** La fila de la lista tal como viaja: fechas en texto y opcionales en `null`. */
-type WireReferral = ConNulos<
+type WireReferral = wire.ConNulos<
   Omit<Referral, 'createdAt' | 'validUntil' | 'respondedAt' | 'referralType'>
 > & {
   readonly createdAt: string;
@@ -53,10 +53,10 @@ export class ReferralsClient {
    * equivalente.
    */
   create(body: NewReferral): Observable<ReferralCreated> {
-    const { validUntil, ...resto } = body;
+    const { validUntil, ...rest } = body;
     return this.http.post<ReferralCreated>(this.url('/referrals'), {
-      ...resto,
-      ...(validUntil === undefined ? {} : { validUntil: diaDe(validUntil) }),
+      ...rest,
+      ...(validUntil === undefined ? {} : { validUntil: toLocalDay(validUntil) }),
     });
   }
 
@@ -81,12 +81,12 @@ export class ReferralsClient {
    * se pueda armar la petición con los dos o con ninguno.
    */
   listTargetServices(
-    destino: { readonly targetProfileId: string } | { readonly targetTenantId: string },
+    target: { readonly targetProfileId: string } | { readonly targetTenantId: string },
   ): Observable<readonly ReferralTargetService[]> {
     const params =
-      'targetProfileId' in destino
-        ? new HttpParams().set('targetProfileId', destino.targetProfileId)
-        : new HttpParams().set('targetTenantId', destino.targetTenantId);
+      'targetProfileId' in target
+        ? new HttpParams().set('targetProfileId', target.targetProfileId)
+        : new HttpParams().set('targetTenantId', target.targetTenantId);
     return this.http
       .get<{
         readonly items: readonly ReferralTargetService[];
@@ -103,7 +103,7 @@ export class ReferralsClient {
       .get<readonly WireReferral[]>(this.url('/referrals'), {
         params: new HttpParams().set('patientProfileId', patientProfileId),
       })
-      .pipe(map((filas) => filas.map(toReferral)));
+      .pipe(map((rows) => rows.map(toReferral)));
   }
 
   private url(path: string): string {
@@ -111,32 +111,32 @@ export class ReferralsClient {
   }
 }
 
-function toReferral(fila: WireReferral): Referral {
-  const { createdAt, validUntil, respondedAt, referralType, ...resto } = fila;
-  const limpio = sinNulos(resto as ConNulos<Omit<Referral, 'createdAt'>>);
-  const tipo = esTipo(referralType) ? referralType : undefined;
-  const vigencia = maybeDateOnly(validUntil);
-  const respondida = maybeDate(respondedAt);
+function toReferral(row: WireReferral): Referral {
+  const { createdAt, validUntil, respondedAt, referralType, ...rest } = row;
+  const clean = wire.sinNulos(rest as wire.ConNulos<Omit<Referral, 'createdAt'>>);
+  const knownType = isKnownType(referralType) ? referralType : undefined;
+  const validDay = wire.maybeDateOnly(validUntil);
+  const responded = wire.maybeDate(respondedAt);
   return {
-    ...limpio,
+    ...clean,
     createdAt: new Date(createdAt),
-    ...(tipo === undefined ? {} : { referralType: tipo }),
-    ...(vigencia === undefined ? {} : { validUntil: vigencia }),
-    ...(respondida === undefined ? {} : { respondedAt: respondida }),
+    ...(knownType === undefined ? {} : { referralType: knownType }),
+    ...(validDay === undefined ? {} : { validUntil: validDay }),
+    ...(responded === undefined ? {} : { respondedAt: responded }),
   };
 }
 
 /** Un código que esta versión no conoce no se inventa: queda sin tipo. */
-function esTipo(valor: string | null | undefined): valor is ReferralType {
-  return (REFERRAL_TYPES as readonly string[]).includes(valor ?? '');
+function isKnownType(value: string | null | undefined): value is ReferralType {
+  return (REFERRAL_TYPES as readonly string[]).includes(value ?? '');
 }
 
 /**
  * La fecha en `YYYY-MM-DD`, en el día **local**: `toISOString()` correría al
  * día anterior todo lo elegido después de las 20:00 en Bolivia.
  */
-function diaDe(fecha: Date): string {
-  const mes = `${fecha.getMonth() + 1}`.padStart(2, '0');
-  const dia = `${fecha.getDate()}`.padStart(2, '0');
-  return `${fecha.getFullYear()}-${mes}-${dia}`;
+function toLocalDay(date: Date): string {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
 }

@@ -346,7 +346,7 @@ export class Consultation {
 
   protected readonly consulta = signal<ViewState<Consulta>>(loading());
 
-  protected readonly derivaciones = new ConsultationReferrals(this.profileId);
+  protected readonly referrals = new ConsultationReferrals(this.profileId);
   /** Nombre del paciente si se pudo leer; vacío si el padrón está prohibido. */
   private readonly nombre = signal('');
 
@@ -493,7 +493,7 @@ export class Consultation {
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
       ordenes: null,
       reconsulta: null,
-      derivacion: this.derivaciones.cantidad(), // aparte; sin lectura, sin cifra
+      derivacion: this.referrals.count(), // aparte; sin lectura, sin cifra
       planes: datos?.chart.carePlans.length ?? 0,
       // El formulario no deja una fila propia en la historia: lo que guarda
       // termina en diagnósticos, notas, documentos o laboratorio.

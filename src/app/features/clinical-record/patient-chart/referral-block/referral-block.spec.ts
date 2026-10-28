@@ -58,21 +58,21 @@ describe('ReferralBlock', () => {
   let fixture: ComponentFixture<ReferralBlock>;
   let http: HttpTestingController;
 
-  function acc<T>(nombre: string): T {
+  function member<T>(name: string): T {
     const c = fixture.componentInstance as unknown as Record<string, unknown>;
-    const valor = c[nombre];
-    return (typeof valor === 'function' ? valor.bind(c) : valor) as T;
+    const value = c[name];
+    return (typeof value === 'function' ? value.bind(c) : value) as T;
   }
 
-  function señal<T>(nombre: string): WritableSignal<T> {
-    return (fixture.componentInstance as unknown as Record<string, WritableSignal<T>>)[nombre];
+  function writable<T>(name: string): WritableSignal<T> {
+    return (fixture.componentInstance as unknown as Record<string, WritableSignal<T>>)[name];
   }
 
-  function el(): HTMLElement {
+  function host(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
   }
 
-  function crear(encounterId: string | null = 'enc-1'): void {
+  function create(encounterId: string | null = 'enc-1'): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
@@ -92,12 +92,12 @@ describe('ReferralBlock', () => {
   }
 
   /** Busca, devuelve los destinos y elige el primero que se ofrece. */
-  function elegirDestino(destinos: readonly object[], servicios: readonly object[] = [FISIO]): void {
-    acc<(q: string) => void>('buscar')('lu');
-    http.expectOne((r) => r.url === '/referrals/targets').flush({ items: destinos });
-    const opcion = acc<() => readonly ReferenceOption[]>('opciones')()[0]!;
-    acc<(o: ReferenceOption) => void>('elegir')(opcion);
-    http.expectOne((r) => r.url === '/referrals/target-services').flush({ items: servicios });
+  function pickTarget(targets: readonly object[], services: readonly object[] = [FISIO]): void {
+    member<(q: string) => void>('search')('lu');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({ items: targets });
+    const option = member<() => readonly ReferenceOption[]>('targetOptions')()[0]!;
+    member<(o: ReferenceOption) => void>('choose')(option);
+    http.expectOne((r) => r.url === '/referrals/target-services').flush({ items: services });
     fixture.detectChanges();
   }
 
@@ -111,8 +111,8 @@ describe('ReferralBlock', () => {
   /* -- Buscar ---------------------------------------------------------------- */
 
   it('busca en la API con espera, desde dos letras y por la clase elegida', async () => {
-    crear();
-    const input = el().querySelector<HTMLInputElement>('[data-testid="derivacion-profesional"] input')!;
+    create();
+    const input = host().querySelector<HTMLInputElement>('[data-testid="referral-practitioner"] input')!;
     expect(input).not.toBeNull();
 
     input.value = 'l';
@@ -133,78 +133,78 @@ describe('ReferralBlock', () => {
     expect(req.request.params.get('kind')).toBe('PRACTITIONER');
     req.flush({ items: [LUCIA] });
 
-    expect(acc<() => readonly ReferenceOption[]>('opciones')()).toEqual([
+    expect(member<() => readonly ReferenceOption[]>('targetOptions')()).toEqual([
       { value: 'hp-1', label: 'Dra. Lucía Mendoza', hint: 'Endocrinología' },
     ]);
   });
 
   it('nunca ofrece a quien deriva, aunque la API lo devuelva', () => {
-    crear();
-    acc<(q: string) => void>('buscar')('va');
+    create();
+    member<(q: string) => void>('search')('va');
     http.expectOne((r) => r.url === '/referrals/targets').flush({ items: [YO, LUCIA] });
 
-    expect(acc<() => readonly ReferenceOption[]>('opciones')().map((o) => o.value)).toEqual([
+    expect(member<() => readonly ReferenceOption[]>('targetOptions')().map((o) => o.value)).toEqual([
       'hp-1',
     ]);
   });
 
   it('a organización: busca por ORGANIZATION y pide sus servicios por targetTenantId', () => {
-    crear();
-    acc<(k: string) => void>('elegirClase')('ORGANIZATION');
+    create();
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
     fixture.detectChanges();
-    expect(el().querySelector('[data-testid="derivacion-organizacion"]')).not.toBeNull();
+    expect(host().querySelector('[data-testid="referral-organization"]')).not.toBeNull();
 
-    acc<(q: string) => void>('buscar')('san');
-    const busqueda = http.expectOne((r) => r.url === '/referrals/targets');
-    expect(busqueda.request.params.get('kind')).toBe('ORGANIZATION');
-    busqueda.flush({ items: [HOSPITAL] });
-    acc<(o: ReferenceOption) => void>('elegir')(acc<() => readonly ReferenceOption[]>('opciones')()[0]!);
+    member<(q: string) => void>('search')('san');
+    const search = http.expectOne((r) => r.url === '/referrals/targets');
+    expect(search.request.params.get('kind')).toBe('ORGANIZATION');
+    search.flush({ items: [HOSPITAL] });
+    member<(o: ReferenceOption) => void>('choose')(member<() => readonly ReferenceOption[]>('targetOptions')()[0]!);
 
-    const servicios = http.expectOne((r) => r.url === '/referrals/target-services');
-    expect(servicios.request.params.get('targetTenantId')).toBe('t-hospital');
-    expect(servicios.request.params.has('targetProfileId')).toBe(false);
-    servicios.flush({ items: [FISIO] });
+    const servicesReq = http.expectOne((r) => r.url === '/referrals/target-services');
+    expect(servicesReq.request.params.get('targetTenantId')).toBe('t-hospital');
+    expect(servicesReq.request.params.has('targetProfileId')).toBe(false);
+    servicesReq.flush({ items: [FISIO] });
 
-    expect(acc<() => readonly { label: string }[]>('opcionesDeServicio')().map((o) => o.label)).toEqual([
+    expect(member<() => readonly { label: string }[]>('serviceOptions')().map((o) => o.label)).toEqual([
       'Sin un servicio en particular',
       'Fisioterapia · Bs 120.00',
     ]);
   });
 
   it('cambiar de clase olvida el destino elegido', () => {
-    crear();
-    elegirDestino([LUCIA]);
-    acc<(k: string) => void>('elegirClase')('ORGANIZATION');
-    expect(acc<() => unknown>('destino')()).toBeNull();
-    expect(señal<string | null>('servicioElegido')()).toBeNull();
+    create();
+    pickTarget([LUCIA]);
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
+    expect(member<() => unknown>('target')()).toBeNull();
+    expect(writable<string | null>('selectedService')()).toBeNull();
   });
 
   /* -- Servicios ------------------------------------------------------------- */
 
   it('un destino sin servicios es S3 con su próxima acción, y aun así se puede derivar', () => {
-    crear();
-    elegirDestino([LUCIA], []);
+    create();
+    pickTarget([LUCIA], []);
 
-    const estado = acc<() => ViewState<unknown>>('servicios')();
-    expect(estado.status).toBe('empty');
-    expect(estado.status === 'empty' && estado.nextAction.label).toContain('busque otro destino');
-    expect(el().textContent).toContain('no tiene servicios publicados');
-    expect(acc<() => boolean>('puedeEnviar')()).toBe(true);
+    const state = member<() => ViewState<unknown>>('services')();
+    expect(state.status).toBe('empty');
+    expect(state.status === 'empty' && state.nextAction.label).toContain('busque otro destino');
+    expect(host().textContent).toContain('no tiene servicios publicados');
+    expect(member<() => boolean>('canSubmit')()).toBe(true);
   });
 
   it('el detalle del servicio elegido se muestra para no elegir a ciegas', () => {
-    crear();
-    elegirDestino([LUCIA]);
-    señal<string | null>('servicioElegido').set('s-fisio');
-    expect(acc<() => string>('detalleDelServicio')()).toBe('Diez sesiones.');
+    create();
+    pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
+    expect(member<() => string>('serviceHint')()).toBe('Diez sesiones.');
   });
 
   /* -- Tipo y envío ---------------------------------------------------------- */
 
   it('el tipo viene en Tratamiento y las cinco opciones están en castellano', () => {
-    crear();
-    expect(señal<string | null>('tipo')()).toBe('TREATMENT');
-    expect(acc<readonly { label: string }[]>('opcionesDeTipo').map((o) => o.label)).toEqual([
+    create();
+    expect(writable<string | null>('referralType')()).toBe('TREATMENT');
+    expect(member<readonly { label: string }[]>('typeOptions').map((o) => o.label)).toEqual([
       'Tratamiento',
       'Interconsulta',
       'Estudio diagnóstico',
@@ -214,21 +214,21 @@ describe('ReferralBlock', () => {
   });
 
   it('sin elegir a nadie no se puede enviar', () => {
-    crear();
-    expect(acc<() => boolean>('puedeEnviar')()).toBe(false);
-    elegirDestino([LUCIA]);
-    expect(acc<() => boolean>('puedeEnviar')()).toBe(true);
+    create();
+    expect(member<() => boolean>('canSubmit')()).toBe(false);
+    pickTarget([LUCIA]);
+    expect(member<() => boolean>('canSubmit')()).toBe(true);
   });
 
   it('deriva: persona, encuentro, destino, servicio y tipo — y NO quién deriva', () => {
-    crear();
-    let cambios = 0;
-    fixture.componentInstance.cambio.subscribe(() => (cambios += 1));
-    elegirDestino([LUCIA]);
-    señal<string | null>('servicioElegido').set('s-fisio');
-    señal<string>('motivo').set('  Control de la tiroides  ');
+    create();
+    let changes = 0;
+    fixture.componentInstance.cambio.subscribe(() => (changes += 1));
+    pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
+    writable<string>('reason').set('  Control de la tiroides  ');
 
-    acc<() => void>('derivar')();
+    member<() => void>('submit')();
 
     const req = http.expectOne((r) => r.url === '/referrals' && r.method === 'POST');
     expect(req.request.body).toEqual({
@@ -243,22 +243,22 @@ describe('ReferralBlock', () => {
     req.flush(ALTA, { status: 201, statusText: 'Created' });
     fixture.detectChanges();
 
-    expect(cambios).toBe(1);
-    expect(acc<() => string | null>('derivadoA')()).toContain('Lucía Mendoza');
-    expect(el().querySelector('[data-testid="derivacion-exito"]')).not.toBeNull();
+    expect(changes).toBe(1);
+    expect(member<() => string | null>('referredTo')()).toContain('Lucía Mendoza');
+    expect(host().querySelector('[data-testid="referral-success"]')).not.toBeNull();
     // El formulario queda limpio para derivar a otro, con Tratamiento otra vez.
-    expect(acc<() => boolean>('puedeEnviar')()).toBe(false);
-    expect(señal<string | null>('tipo')()).toBe('TREATMENT');
+    expect(member<() => boolean>('canSubmit')()).toBe(false);
+    expect(writable<string | null>('referralType')()).toBe('TREATMENT');
   });
 
   it('a una organización manda targetTenantId, y lo vacío no viaja', () => {
-    crear();
-    acc<(k: string) => void>('elegirClase')('ORGANIZATION');
-    elegirDestino([HOSPITAL]);
-    señal<string | null>('tipo').set('SECOND_OPINION');
-    señal<Date | null>('vigencia').set(new Date(2026, 11, 31));
+    create();
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
+    pickTarget([HOSPITAL]);
+    writable<string | null>('referralType').set('SECOND_OPINION');
+    writable<Date | null>('validUntil').set(new Date(2026, 11, 31));
 
-    acc<() => void>('derivar')();
+    member<() => void>('submit')();
 
     const req = http.expectOne((r) => r.url === '/referrals' && r.method === 'POST');
     expect(req.request.body).toEqual({
@@ -272,20 +272,20 @@ describe('ReferralBlock', () => {
   });
 
   it('sin encuentro abierto lo dice y no ofrece enviar', () => {
-    crear(null);
+    create(null);
 
-    expect(acc<() => boolean>('sinEncuentro')()).toBe(true);
-    expect(acc<() => boolean>('puedeEnviar')()).toBe(false);
-    expect(el().querySelector('[data-testid="derivacion-sin-encuentro"]')).not.toBeNull();
-    expect(el().querySelector('[data-testid="derivacion-enviar"]')).toBeNull();
+    expect(member<() => boolean>('noEncounter')()).toBe(true);
+    expect(member<() => boolean>('canSubmit')()).toBe(false);
+    expect(host().querySelector('[data-testid="referral-no-encounter"]')).not.toBeNull();
+    expect(host().querySelector('[data-testid="referral-submit"]')).toBeNull();
   });
 
   /* -- Errores --------------------------------------------------------------- */
 
   it('un 409 es un aviso («ya la derivó»), no un error', () => {
-    crear();
-    elegirDestino([LUCIA]);
-    acc<() => void>('derivar')();
+    create();
+    pickTarget([LUCIA]);
+    member<() => void>('submit')();
     http
       .expectOne((r) => r.url === '/referrals' && r.method === 'POST')
       .flush(
@@ -294,17 +294,17 @@ describe('ReferralBlock', () => {
       );
     fixture.detectChanges();
 
-    expect(acc<() => boolean>('yaDerivado')()).toBe(true);
-    expect(acc<() => string | null>('errorDelRegistro')()).toBeNull();
-    expect(el().querySelector('[data-testid="derivacion-duplicada"]')).not.toBeNull();
+    expect(member<() => boolean>('duplicate')()).toBe(true);
+    expect(member<() => string | null>('submissionError')()).toBeNull();
+    expect(host().querySelector('[data-testid="referral-duplicate"]')).not.toBeNull();
   });
 
   it('un 404 del encuentro se dice con palabras, no con «error», y no emite cambio', () => {
-    crear();
-    let cambios = 0;
-    fixture.componentInstance.cambio.subscribe(() => (cambios += 1));
-    elegirDestino([LUCIA]);
-    acc<() => void>('derivar')();
+    create();
+    let changes = 0;
+    fixture.componentInstance.cambio.subscribe(() => (changes += 1));
+    pickTarget([LUCIA]);
+    member<() => void>('submit')();
     http
       .expectOne((r) => r.url === '/referrals' && r.method === 'POST')
       .flush(
@@ -313,17 +313,17 @@ describe('ReferralBlock', () => {
       );
     fixture.detectChanges();
 
-    expect(cambios).toBe(0);
-    expect(acc<() => string | null>('errorDelRegistro')()).toContain('No encontramos este encuentro');
-    expect(el().querySelector('[data-testid="derivacion-error"]')).not.toBeNull();
+    expect(changes).toBe(0);
+    expect(member<() => string | null>('submissionError')()).toContain('No encontramos este encuentro');
+    expect(host().querySelector('[data-testid="referral-error"]')).not.toBeNull();
     // Lo elegido sigue ahí: reintentar no obliga a empezar de cero.
-    expect(acc<() => unknown>('destino')()).not.toBeNull();
+    expect(member<() => unknown>('target')()).not.toBeNull();
   });
 
   it('una validación del servidor se muestra con su mensaje', () => {
-    crear();
-    elegirDestino([LUCIA]);
-    acc<() => void>('derivar')();
+    create();
+    pickTarget([LUCIA]);
+    member<() => void>('submit')();
     http.expectOne((r) => r.url === '/referrals' && r.method === 'POST').flush(
       {
         statusCode: 400,
@@ -334,29 +334,29 @@ describe('ReferralBlock', () => {
       { status: 400, statusText: 'Bad Request' },
     );
     fixture.detectChanges();
-    expect(el().querySelector('[data-testid="derivacion-error"]')?.textContent).toContain('1000');
+    expect(host().querySelector('[data-testid="referral-error"]')?.textContent).toContain('1000');
   });
 
   it('si los servicios no cargan, se dice y se puede reintentar', () => {
-    crear();
-    acc<(q: string) => void>('buscar')('lu');
+    create();
+    member<(q: string) => void>('search')('lu');
     http.expectOne((r) => r.url === '/referrals/targets').flush({ items: [LUCIA] });
-    acc<(o: ReferenceOption) => void>('elegir')(acc<() => readonly ReferenceOption[]>('opciones')()[0]!);
+    member<(o: ReferenceOption) => void>('choose')(member<() => readonly ReferenceOption[]>('targetOptions')()[0]!);
     http
       .expectOne((r) => r.url === '/referrals/target-services')
       .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
-    expect(acc<() => ViewState<unknown>>('servicios')().status).toBe('error');
+    expect(member<() => ViewState<unknown>>('services')().status).toBe('error');
 
-    acc<() => void>('cargarServicios')();
+    member<() => void>('loadServices')();
     http.expectOne((r) => r.url === '/referrals/target-services').flush({ items: [FISIO] });
-    expect(acc<() => ViewState<unknown>>('servicios')().status).toBe('ready');
+    expect(member<() => ViewState<unknown>>('services')().status).toBe('ready');
   });
 
   /* -- La lista -------------------------------------------------------------- */
 
   describe('la lista', () => {
-    const DERIVACION: Referral = {
+    const REFERRAL: Referral = {
       id: 'r-1',
       patientProfileId: 'pat-1',
       statusConceptId: 'st-aceptada',
@@ -366,23 +366,23 @@ describe('ReferralBlock', () => {
       targetServiceName: 'Fisioterapia',
     };
 
-    it('sin `derivaciones` no se dibuja', () => {
-      crear();
-      expect(el().querySelector('[data-testid="derivacion-lista"]')).toBeNull();
-      expect(acc<() => unknown>('lista')()).toBeNull();
+    it('sin `referrals` no se dibuja', () => {
+      create();
+      expect(host().querySelector('[data-testid="referral-list"]')).toBeNull();
+      expect(member<() => unknown>('list')()).toBeNull();
     });
 
     it('vacía es S3 con próxima acción', () => {
-      crear();
-      fixture.componentRef.setInput('derivaciones', ready([]));
+      create();
+      fixture.componentRef.setInput('referrals', ready([]));
       fixture.detectChanges();
-      expect(acc<() => ViewState<unknown>>('lista')().status).toBe('empty');
-      expect(el().textContent).toContain('todavía no tiene derivaciones');
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('empty');
+      expect(host().textContent).toContain('todavía no tiene derivaciones');
     });
 
     it('muestra tipo, destino, servicio y el estado traducido por código', () => {
-      crear();
-      fixture.componentRef.setInput('derivaciones', ready([DERIVACION]));
+      create();
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
       fixture.detectChanges();
       http.expectOne((r) => r.url === '/terminology/concepts').flush({
         items: [
@@ -393,59 +393,59 @@ describe('ReferralBlock', () => {
       });
       fixture.detectChanges();
 
-      const filas = el().querySelectorAll('[data-testid="derivacion-fila"]');
-      expect(filas).toHaveLength(1);
-      expect(filas[0]?.textContent).toContain('Tratamiento · Hospital San Lucas');
-      expect(filas[0]?.textContent).toContain('Fisioterapia');
+      const rows = host().querySelectorAll('[data-testid="referral-row"]');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.textContent).toContain('Tratamiento · Hospital San Lucas');
+      expect(rows[0]?.textContent).toContain('Fisioterapia');
       // El código manda: el rótulo del catálogo en inglés no llega a la pantalla.
-      expect(filas[0]?.textContent).toContain('Aceptada');
-      expect(filas[0]?.textContent).not.toContain('Referral accepted');
+      expect(rows[0]?.textContent).toContain('Aceptada');
+      expect(rows[0]?.textContent).not.toContain('Referral accepted');
     });
 
     it('se sigue viendo sin encuentro abierto', () => {
-      crear(null);
-      fixture.componentRef.setInput('derivaciones', ready([DERIVACION]));
+      create(null);
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
       fixture.detectChanges();
       http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
       fixture.detectChanges();
-      expect(el().querySelectorAll('[data-testid="derivacion-fila"]')).toHaveLength(1);
+      expect(host().querySelectorAll('[data-testid="referral-row"]')).toHaveLength(1);
     });
 
     it('mientras no sabe cómo se llama el estado, la lista espera (S2): nunca un estado falso', () => {
-      crear();
-      fixture.componentRef.setInput('derivaciones', ready([DERIVACION]));
+      create();
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
       fixture.detectChanges();
-      expect(acc<() => ViewState<unknown>>('lista')().status).toBe('loading');
-      expect(el().querySelectorAll('[data-testid="derivacion-fila"]')).toHaveLength(0);
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('loading');
+      expect(host().querySelectorAll('[data-testid="referral-row"]')).toHaveLength(0);
       http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
-      expect(acc<() => ViewState<unknown>>('lista')().status).toBe('ready');
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('ready');
     });
 
     it('si el catálogo falla, la lista igual se muestra y no se vuelve a pedir al releer', () => {
-      crear();
-      fixture.componentRef.setInput('derivaciones', ready([DERIVACION]));
+      create();
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
       fixture.detectChanges();
       http
         .expectOne((r) => r.url === '/terminology/concepts')
         .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
       fixture.detectChanges();
-      expect(el().querySelector('[data-testid="derivacion-fila"]')?.textContent).toContain('Sin registrar');
+      expect(host().querySelector('[data-testid="referral-row"]')?.textContent).toContain('Sin registrar');
 
       // La relectura pasa por `loading` y vuelve con lo mismo: no hay otra petición.
-      fixture.componentRef.setInput('derivaciones', loading());
+      fixture.componentRef.setInput('referrals', loading());
       fixture.detectChanges();
-      fixture.componentRef.setInput('derivaciones', ready([DERIVACION]));
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
       fixture.detectChanges();
       http.expectNone((r) => r.url === '/terminology/concepts');
-      expect(acc<() => ViewState<unknown>>('lista')().status).toBe('ready');
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('ready');
     });
 
     it('los estados que no son datos pasan tal cual al anfitrión', () => {
-      crear();
-      fixture.componentRef.setInput('derivaciones', loading());
-      expect(acc<() => ViewState<unknown>>('lista')().status).toBe('loading');
-      fixture.componentRef.setInput('derivaciones', empty({ label: 'x' }));
-      expect(acc<() => ViewState<unknown>>('lista')().status).toBe('empty');
+      create();
+      fixture.componentRef.setInput('referrals', loading());
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('loading');
+      fixture.componentRef.setInput('referrals', empty({ label: 'x' }));
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('empty');
     });
   });
 });

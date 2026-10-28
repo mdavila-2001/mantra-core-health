@@ -261,9 +261,9 @@
         <app-referral-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
-          [derivaciones]="derivaciones.estado()"
-          (cambio)="derivaciones.releer()"
-          (reintentar)="derivaciones.releer()"
+          [referrals]="referrals.state()"
+          (cambio)="referrals.reload()"
+          (retry)="referrals.reload()"
         />
       }
       @case ('planes') {

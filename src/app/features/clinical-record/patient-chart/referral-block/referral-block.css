@@ -2,27 +2,27 @@
   display: block;
 }
 
-.derivacion {
+.referral {
   --card-body-gap: var(--sp-4);
 }
 
 /* Los avisos van encima del formulario y no pegados a él. */
-.derivacion__aviso {
+.referral__notice {
   margin-block-end: var(--sp-4);
 }
 
-.derivacion__formulario {
+.referral__form {
   margin-block-end: var(--sp-2);
 }
 
-.derivacion__titulo {
+.referral__title {
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
 }
 
-.derivacion__secundario {
+.referral__secondary {
   margin: 0;
   color: var(--text-muted);
   font-size: var(--fs-caption);
@@ -32,7 +32,7 @@
 /* ── La lista ──────────────────────────────────────────────────────────────
    Un renglón por derivación: qué y a quién arriba, con el sello del estado al
    final de la línea; el servicio y las fechas debajo. */
-.derivacion__filas {
+.referral__rows {
   display: grid;
   gap: var(--sp-2);
   margin: 0;
@@ -40,7 +40,7 @@
   list-style: none;
 }
 
-.derivacion__fila {
+.referral__row {
   display: grid;
   gap: var(--sp-1);
   padding: var(--sp-3);
@@ -49,7 +49,7 @@
   min-inline-size: 0;
 }
 
-.derivacion__cabecera {
+.referral__heading {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -58,12 +58,12 @@
   min-inline-size: 0;
 }
 
-.derivacion__principal {
+.referral__main {
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 
-.derivacion__motivo {
+.referral__reason {
   color: var(--text-secondary);
   overflow-wrap: anywhere;
 }

@@ -16,7 +16,7 @@ import { servicios, serviciosPublicadosDe } from './practice.handlers';
 /* ============================================================================
     Derivaciones (`/referrals`, módulo `clinical_ext` de la API).
 
-    Espeja el contrato acordado con la API: buscar un destino —profesional u
+    Espeja el contrato acordado con la API: buscar un destino —practitioner u
     organización médica—, leer sus servicios concretos, emitir la derivación y
     releer las de la persona. Lo que se emite se guarda por pestaña
     (`persistirEn`), así que sobrevive a un F5 y la mutación se puede
@@ -37,19 +37,19 @@ export const REFERRAL_STATUS = define('VS_REFERRAL_STATUS', [
   ['REF_REJECTED', 'Rechazada'],
 ]);
 
-const TIPOS = ['TREATMENT', 'CONSULTATION', 'DIAGNOSTIC_STUDY', 'PROCEDURE', 'SECOND_OPINION'] as const;
+const REFERRAL_TYPES = ['TREATMENT', 'CONSULTATION', 'DIAGNOSTIC_STUDY', 'PROCEDURE', 'SECOND_OPINION'] as const;
 
 /** Las organizaciones médicas que pueden recibir una derivación, con lo que las distingue. */
-const ORGANIZACIONES: readonly { readonly id: string; readonly subtitulo: string }[] = [
-  { id: TENANT_HOSPITAL, subtitulo: 'Hospital · Santa Cruz de la Sierra' },
-  { id: TENANT_CLINICA, subtitulo: 'Clínica · Santa Cruz de la Sierra' },
-  { id: TENANT_CONSULTORIO, subtitulo: 'Consultorio · Santa Cruz de la Sierra' },
+const ORGANIZATIONS: readonly { readonly id: string; readonly subtitle: string }[] = [
+  { id: TENANT_HOSPITAL, subtitle: 'Hospital · Santa Cruz de la Sierra' },
+  { id: TENANT_CLINICA, subtitle: 'Clínica · Santa Cruz de la Sierra' },
+  { id: TENANT_CONSULTORIO, subtitle: 'Consultorio · Santa Cruz de la Sierra' },
   // Sin catálogo a propósito: es el caso del destino que no publica servicios,
   // que la pantalla tiene que poder mostrar (S3 con próxima acción).
-  { id: TENANT_LABORATORIO, subtitulo: 'Laboratorio · Santa Cruz de la Sierra' },
+  { id: TENANT_LABORATORIO, subtitle: 'Laboratorio · Santa Cruz de la Sierra' },
 ];
 
-interface DerivacionSimulada {
+interface SimulatedReferral {
   readonly id: string;
   readonly patientProfileId: string;
   readonly sourceEncounterId: string | null;
@@ -68,7 +68,7 @@ interface DerivacionSimulada {
   readonly targetServiceName: string | null;
 }
 
-interface ServicioDelDestino {
+interface TargetService {
   readonly id: string;
   readonly code: string;
   readonly name: string;
@@ -80,17 +80,17 @@ interface ServicioDelDestino {
 }
 
 /** Los servicios que una organización ofrece. Siempre los mismos para el mismo destino. */
-function serviciosDeLaOrganizacion(tenantId: string | null): readonly ServicioDelDestino[] {
-  const nombre = tenantId === null ? null : (TENANT_NAMES[tenantId] ?? null);
-  const practica =
+function servicesOfOrganization(tenantId: string | null): readonly TargetService[] {
+  const name = tenantId === null ? null : (TENANT_NAMES[tenantId] ?? null);
+  const practice =
     tenantId === TENANT_CLINICA
       ? PRACTICE_OLIVOS
       : tenantId === TENANT_CONSULTORIO
         ? PRACTICE_CONSULTORIO
         : null;
-  if (practica !== null) {
+  if (practice !== null) {
     return servicios
-      .filtrar((s) => s.practiceId === practica && s.isActive)
+      .filtrar((s) => s.practiceId === practice && s.isActive)
       .map((s) => ({
         id: s.id,
         code: s.code,
@@ -99,7 +99,7 @@ function serviciosDeLaOrganizacion(tenantId: string | null): readonly ServicioDe
         price: s.defaultPrice,
         currency: s.currencyCode,
         tenantId,
-        practiceName: nombre,
+        practiceName: name,
       }));
   }
   if (tenantId === TENANT_HOSPITAL) {
@@ -111,34 +111,34 @@ function serviciosDeLaOrganizacion(tenantId: string | null): readonly ServicioDe
       price: s.price,
       currency: s.currency,
       tenantId,
-      practiceName: nombre,
+      practiceName: name,
     }));
   }
   return [];
 }
 
-function subtituloDe(p: ProfesionalSimulado): string {
-  const especialidad = p.especialidades[0];
-  return [especialidad === undefined ? null : displayOf(especialidad), p.organizacion]
-    .filter((parte): parte is string => parte !== null && parte !== '')
+function subtitleOf(p: ProfesionalSimulado): string {
+  const specialty = p.especialidades[0];
+  return [specialty === undefined ? null : displayOf(specialty), p.organizacion]
+    .filter((part): part is string => part !== null && part !== '')
     .join(' · ');
 }
 
 /** Sin tildes y en minúscula: «valeria» encuentra a «Valéria». */
-function normalizar(valor: string): string {
-  return valor.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('es');
+function normalize(value: string): string {
+  return value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('es');
 }
 
 /** Lo mismo que declara el controlador: `@Roles('CLINICIAN', 'PRACTITIONER')`. */
-function esClinico(request: MockRequest): boolean {
+function isClinician(request: MockRequest): boolean {
   const roles = request.user?.roles ?? [];
   return roles.includes('SUPERADMIN') || roles.includes('CLINICIAN') || roles.includes('PRACTITIONER');
 }
 
-const MEDICO_DE_LA_SEMILLA = PROFESSIONALS[3] ?? PROFESSIONALS[0]!;
+const SEED_PRACTITIONER = PROFESSIONALS[3] ?? PROFESSIONALS[0]!;
 
 /** Una derivación ya emitida, para que la lista de la paciente de prueba no nazca vacía. */
-export const derivaciones = new Coleccion<DerivacionSimulada>([
+export const referralList = new Coleccion<SimulatedReferral>([
   {
     id: uuid('referral-paciente-1'),
     patientProfileId: PACIENTE.id,
@@ -146,7 +146,7 @@ export const derivaciones = new Coleccion<DerivacionSimulada>([
     referringProfileId: PROFESSIONALS[0]!.id,
     targetProfileId: null,
     targetTenantId: TENANT_HOSPITAL,
-    targetServiceCatalogId: serviciosDeLaOrganizacion(TENANT_HOSPITAL)[0]?.id ?? null,
+    targetServiceCatalogId: servicesOfOrganization(TENANT_HOSPITAL)[0]?.id ?? null,
     referralType: 'DIAGNOSTIC_STUDY',
     reasonText: 'Control de la evolución con estudio complementario.',
     priorityConceptId: null,
@@ -155,14 +155,14 @@ export const derivaciones = new Coleccion<DerivacionSimulada>([
     respondedAt: iso(-3, 11),
     createdAt: iso(-5, 10),
     targetDisplayName: TENANT_NAMES[TENANT_HOSPITAL] ?? null,
-    targetServiceName: serviciosDeLaOrganizacion(TENANT_HOSPITAL)[0]?.name ?? null,
+    targetServiceName: servicesOfOrganization(TENANT_HOSPITAL)[0]?.name ?? null,
   },
   {
     id: uuid('referral-paciente-2'),
     patientProfileId: PACIENTE.id,
     sourceEncounterId: null,
     referringProfileId: PROFESSIONALS[0]!.id,
-    targetProfileId: MEDICO_DE_LA_SEMILLA.id,
+    targetProfileId: SEED_PRACTITIONER.id,
     targetTenantId: null,
     targetServiceCatalogId: null,
     // Anterior al tipo: la lista tiene que decirlo y no inventarle uno.
@@ -173,38 +173,38 @@ export const derivaciones = new Coleccion<DerivacionSimulada>([
     validUntil: null,
     respondedAt: null,
     createdAt: iso(-40, 16),
-    targetDisplayName: MEDICO_DE_LA_SEMILLA.displayName,
+    targetDisplayName: SEED_PRACTITIONER.displayName,
     targetServiceName: null,
   },
 ]).persistirEn('mock.clinical.derivaciones');
 
-export function registrarDerivaciones(router: MockRouter): void {
+export function registerReferrals(router: MockRouter): void {
   router.get('/referrals/targets', (request) => {
-    if (!esClinico(request)) return forbidden();
+    if (!isClinician(request)) return forbidden();
     const q = texto(request.query, 'q');
     if (q === null || q.trim().length < 2) {
       return validation('Escriba al menos dos letras para buscar.', [
         { message: 'Escriba al menos dos letras para buscar.' },
       ]);
     }
-    const buscado = normalizar(q.trim());
+    const needle = normalize(q.trim());
     const kind = texto(request.query, 'kind') ?? 'PRACTITIONER';
     if (kind === 'ORGANIZATION') {
       return {
-        items: ORGANIZACIONES.filter((o) => normalizar(TENANT_NAMES[o.id] ?? '').includes(buscado))
+        items: ORGANIZATIONS.filter((o) => normalize(TENANT_NAMES[o.id] ?? '').includes(needle))
           .slice(0, 20)
           .map((o) => ({
             kind: 'ORGANIZATION',
             id: o.id,
             displayName: TENANT_NAMES[o.id] ?? 'Organización',
             tenantId: o.id,
-            subtitle: o.subtitulo,
+            subtitle: o.subtitle,
           })),
       };
     }
     return {
       items: PROFESSIONALS.filter(
-        (p) => p.id !== request.user?.practitionerProfileId && normalizar(p.displayName).includes(buscado),
+        (p) => p.id !== request.user?.practitionerProfileId && normalize(p.displayName).includes(needle),
       )
         .slice(0, 20)
         .map((p) => ({
@@ -212,22 +212,22 @@ export function registrarDerivaciones(router: MockRouter): void {
           id: p.id,
           displayName: p.displayName,
           tenantId: p.tenantId,
-          subtitle: subtituloDe(p) || null,
+          subtitle: subtitleOf(p) || null,
         })),
     };
   });
 
   router.get('/referrals/target-services', (request) => {
-    if (!esClinico(request)) return forbidden();
-    const profesional = texto(request.query, 'targetProfileId');
-    const organizacion = texto(request.query, 'targetTenantId');
-    if (profesional !== null) {
+    if (!isClinician(request)) return forbidden();
+    const practitioner = texto(request.query, 'targetProfileId');
+    const organization = texto(request.query, 'targetTenantId');
+    if (practitioner !== null) {
       // El profesional ofrece los servicios de la organización en la que atiende.
-      const p = professionalById(profesional);
-      return { items: serviciosDeLaOrganizacion(p?.tenantId ?? null) };
+      const p = professionalById(practitioner);
+      return { items: servicesOfOrganization(p?.tenantId ?? null) };
     }
-    if (organizacion !== null) {
-      return { items: serviciosDeLaOrganizacion(organizacion) };
+    if (organization !== null) {
+      return { items: servicesOfOrganization(organization) };
     }
     return validation('Indique un profesional o una organización.', [
       { message: 'Indique un profesional o una organización.' },
@@ -235,19 +235,19 @@ export function registrarDerivaciones(router: MockRouter): void {
   });
 
   router.get('/referrals', (request) => {
-    if (!esClinico(request)) return forbidden();
-    const paciente = texto(request.query, 'patientProfileId');
-    if (paciente === null) {
+    if (!isClinician(request)) return forbidden();
+    const patientId = texto(request.query, 'patientProfileId');
+    if (patientId === null) {
       return validation('Falta el paciente.', [{ message: 'Falta el paciente.' }]);
     }
-    return derivaciones
-      .filtrar((d) => d.patientProfileId === paciente)
+    return referralList
+      .filtrar((d) => d.patientProfileId === patientId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   });
 
   router.post('/referrals', (request) => {
-    if (!esClinico(request)) return forbidden();
-    const datos = cuerpo<{
+    if (!isClinician(request)) return forbidden();
+    const body = cuerpo<{
       patientProfileId: string;
       sourceEncounterId: string;
       targetProfileId: string;
@@ -258,18 +258,18 @@ export function registrarDerivaciones(router: MockRouter): void {
       validUntil: string;
       priorityConceptId: string;
     }>(request);
-    if (datos.patientProfileId === undefined) {
+    if (body.patientProfileId === undefined) {
       return validation('Falta el paciente.', [{ message: 'Falta el paciente.' }]);
     }
-    if (datos.targetProfileId === undefined && datos.targetTenantId === undefined) {
+    if (body.targetProfileId === undefined && body.targetTenantId === undefined) {
       return validation('Indique a quién se deriva.', [
         { message: 'Indique a quién se deriva: un profesional o una organización.' },
       ]);
     }
-    if (datos.referralType !== undefined && !(TIPOS as readonly string[]).includes(datos.referralType)) {
+    if (body.referralType !== undefined && !(REFERRAL_TYPES as readonly string[]).includes(body.referralType)) {
       return validation('Tipo de derivación desconocido.', [{ message: 'Tipo de derivación desconocido.' }]);
     }
-    if ((datos.reasonText ?? '').length > 1000) {
+    if ((body.reasonText ?? '').length > 1000) {
       return validation('El motivo admite hasta 1000 caracteres.', [
         { message: 'El motivo admite hasta 1000 caracteres.' },
       ]);
@@ -277,53 +277,53 @@ export function registrarDerivaciones(router: MockRouter): void {
 
     // La API responde 409 ante una equivalente: mismo encuentro, mismo destino
     // y mismo servicio. Sin encuentro no hay con qué compararla.
-    const equivalente = derivaciones.filtrar(
+    const equivalent = referralList.filtrar(
       (d) =>
-        datos.sourceEncounterId !== undefined &&
-        d.sourceEncounterId === datos.sourceEncounterId &&
-        d.targetProfileId === (datos.targetProfileId ?? null) &&
-        d.targetTenantId === (datos.targetTenantId ?? null) &&
-        d.targetServiceCatalogId === (datos.targetServiceCatalogId ?? null),
+        body.sourceEncounterId !== undefined &&
+        d.sourceEncounterId === body.sourceEncounterId &&
+        d.targetProfileId === (body.targetProfileId ?? null) &&
+        d.targetTenantId === (body.targetTenantId ?? null) &&
+        d.targetServiceCatalogId === (body.targetServiceCatalogId ?? null),
     );
-    if (equivalente.length > 0) {
+    if (equivalent.length > 0) {
       return conflict('Ya existe una referencia equivalente');
     }
 
-    const profesional = datos.targetProfileId === undefined ? undefined : professionalById(datos.targetProfileId);
-    const tenantDelServicio = datos.targetTenantId ?? profesional?.tenantId ?? null;
-    const servicio =
-      datos.targetServiceCatalogId === undefined
+    const practitioner = body.targetProfileId === undefined ? undefined : professionalById(body.targetProfileId);
+    const serviceTenantId = body.targetTenantId ?? practitioner?.tenantId ?? null;
+    const service =
+      body.targetServiceCatalogId === undefined
         ? undefined
-        : serviciosDeLaOrganizacion(tenantDelServicio).find((s) => s.id === datos.targetServiceCatalogId);
+        : servicesOfOrganization(serviceTenantId).find((s) => s.id === body.targetServiceCatalogId);
 
-    const nueva = derivaciones.agregar({
+    const created = referralList.agregar({
       id: nuevoId('referral'),
-      patientProfileId: datos.patientProfileId,
-      sourceEncounterId: datos.sourceEncounterId ?? null,
+      patientProfileId: body.patientProfileId,
+      sourceEncounterId: body.sourceEncounterId ?? null,
       referringProfileId: request.user?.practitionerProfileId ?? null,
-      targetProfileId: datos.targetProfileId ?? null,
-      targetTenantId: datos.targetTenantId ?? null,
-      targetServiceCatalogId: datos.targetServiceCatalogId ?? null,
-      referralType: datos.referralType ?? null,
-      reasonText: datos.reasonText ?? null,
-      priorityConceptId: datos.priorityConceptId ?? null,
+      targetProfileId: body.targetProfileId ?? null,
+      targetTenantId: body.targetTenantId ?? null,
+      targetServiceCatalogId: body.targetServiceCatalogId ?? null,
+      referralType: body.referralType ?? null,
+      reasonText: body.reasonText ?? null,
+      priorityConceptId: body.priorityConceptId ?? null,
       statusConceptId: REFERRAL_STATUS['REF_REQUESTED']!,
-      validUntil: datos.validUntil === undefined ? null : `${datos.validUntil}T00:00:00.000Z`,
+      validUntil: body.validUntil === undefined ? null : `${body.validUntil}T00:00:00.000Z`,
       respondedAt: null,
       createdAt: new Date().toISOString(),
       targetDisplayName:
-        profesional?.displayName ??
-        (datos.targetTenantId === undefined ? null : (TENANT_NAMES[datos.targetTenantId] ?? null)),
-      targetServiceName: servicio?.name ?? null,
+        practitioner?.displayName ??
+        (body.targetTenantId === undefined ? null : (TENANT_NAMES[body.targetTenantId] ?? null)),
+      targetServiceName: service?.name ?? null,
     });
 
     return {
       status: 201,
       body: {
-        id: nueva.id,
-        patientProfileId: nueva.patientProfileId,
-        statusConceptId: nueva.statusConceptId,
-        createdAt: nueva.createdAt,
+        id: created.id,
+        patientProfileId: created.patientProfileId,
+        statusConceptId: created.statusConceptId,
+        createdAt: created.createdAt,
       },
     };
   });
