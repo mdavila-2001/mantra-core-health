@@ -56,12 +56,12 @@ export function opcionesDeDestino(servicios: readonly ServicioAsociable[]): read
     {
       value: VALOR_TODAS_MIS_CONSULTAS,
       label: 'Todas mis consultas',
-      description: 'Se ofrece al terminar cualquier consulta, sin importar el servicio.',
     },
     ...servicios.map((s) => ({
       value: s.id,
-      label: s.nombre,
-      ...(s.activo ? {} : { description: 'Servicio desactivado' }),
+      // El selector del mockup usa `<option>` nativo, que no admite una línea de
+      // descripción como la de dev: el estado va en la etiqueta.
+      label: s.activo ? s.nombre : `${s.nombre} (desactivado)`,
     })),
   ];
 }

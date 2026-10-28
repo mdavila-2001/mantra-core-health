@@ -284,22 +284,22 @@ describe('simulador de encuestas: resumen del médico y asociación', () => {
 
   describe('validación de la consulta', () => {
     it('sin from/to o con fechas mal formadas es un 400', () => {
-      expect(llamar('GET', '/surveys/insights', medica, {}, new URLSearchParams()).status).toBe(400);
-      expect(consulta('ayer', '2026-10-31').status).toBe(400);
+      expect(llamar('GET', '/surveys/insights', medica, {}, new URLSearchParams()).status).toBe(422);
+      expect(consulta('ayer', '2026-10-31').status).toBe(422);
     });
 
     it('no hay rangos libres: from es día 1 y to es el último día de un mes', () => {
-      expect(consulta('2026-10-05', '2026-10-31').status).toBe(400);
-      expect(consulta('2026-10-01', '2026-10-30').status).toBe(400);
+      expect(consulta('2026-10-05', '2026-10-31').status).toBe(422);
+      expect(consulta('2026-10-01', '2026-10-30').status).toBe(422);
       expect(consulta('2026-10-01', '2026-10-31').status).toBe(200);
       // El fin de febrero también cuenta.
       expect(consulta('2026-02-01', '2026-02-28').status).toBe(200);
     });
 
     it('a lo sumo 12 meses, y from no puede ser posterior a to', () => {
-      expect(consulta('2025-10-01', '2026-10-31').status).toBe(400); // 13 meses
+      expect(consulta('2025-10-01', '2026-10-31').status).toBe(422); // 13 meses
       expect(consulta('2025-11-01', '2026-10-31').status).toBe(200); // 12 meses
-      expect(consulta('2026-10-01', '2026-09-30').status).toBe(400);
+      expect(consulta('2026-10-01', '2026-09-30').status).toBe(422);
     });
 
     it('los tres presets del front son rangos válidos', () => {
@@ -331,15 +331,15 @@ describe('simulador de encuestas: resumen del médico y asociación', () => {
     });
 
     it('«Todas mis consultas» (CARE_TYPE) se acepta sólo con el tipo de atención consulta', () => {
-      expect(asociar(publicada, TIPO_DESTINO_CONSULTAS, uuid('otro-tipo')).status).toBe(422);
+      expect(asociar(publicada, TIPO_DESTINO_CONSULTAS, uuid('otro-tipo')).status).toBe(412);
       // La encuesta de satisfacción ya la tiene de fábrica.
       expect(asociar(uuid('survey-satisfaccion-v2'), TIPO_DESTINO_CONSULTAS, ID_TIPO_ATENCION_CONSULTA).status).toBe(409);
     });
 
     it('un servicio que no ofrece, una versión sin publicar y un id mal formado se rechazan', () => {
       expect(asociar(publicada, 'SERVICE', uuid('servicio-ajeno')).status).toBe(404);
-      expect(asociar(borrador, 'SERVICE', uuid('service-ECG')).status).toBe(422);
-      expect(asociar(publicada, 'SERVICE', 'no-es-un-uuid').status).toBe(400);
+      expect(asociar(borrador, 'SERVICE', uuid('service-ECG')).status).toBe(412);
+      expect(asociar(publicada, 'SERVICE', 'no-es-un-uuid').status).toBe(422);
     });
   });
 
