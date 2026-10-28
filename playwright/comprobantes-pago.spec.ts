@@ -70,14 +70,36 @@ function filaDeLaMedica(page: Page) {
     .last();
 }
 
-/** La médica, en su agenda del día siguiente, abre los comprobantes de Ana Lucía. */
-async function abrirComprobantesDeLaMedica(page: Page): Promise<void> {
+/**
+ * La médica busca en su agenda, día por día, la cita de Ana Lucía.
+ *
+ * La reconsulta del simulador se siembra a partir de mañana y según la hora
+ * cae un día u otro: suponer cuál sería una prueba que falla de noche.
+ */
+async function irALaCitaDeLaMedica(page: Page): Promise<void> {
   await entrar(page, DOCTORA);
   await irA(page, '/schedule');
-  await page.getByTestId('dia-siguiente').click();
-  const boton = filaDeLaMedica(page).getByTestId('agenda-comprobantes');
-  await expect(boton).toBeVisible({ timeout: 30_000 });
-  await boton.click();
+  await expect(page.getByTestId('dia-siguiente')).toBeVisible({ timeout: 30_000 });
+  for (let dia = 0; dia < 7; dia += 1) {
+    await page.getByTestId('dia-siguiente').click();
+    // `waitFor` y no `isVisible`: éste responde al instante, sin esperar a que
+    // el día termine de dibujarse, y pasaba de largo el día de la cita.
+    const esta = await filaDeLaMedica(page)
+      .getByTestId('agenda-comprobantes')
+      .waitFor({ state: 'visible', timeout: 4_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (esta) {
+      return;
+    }
+  }
+  throw new Error('La cita de Ana Lucía no aparece en la agenda de la próxima semana');
+}
+
+/** La médica abre los comprobantes de la cita de Ana Lucía. */
+async function abrirComprobantesDeLaMedica(page: Page): Promise<void> {
+  await irALaCitaDeLaMedica(page);
+  await filaDeLaMedica(page).getByTestId('agenda-comprobantes').click();
   await expect(page.getByTestId('comprobantes')).toBeVisible();
 }
 
@@ -152,6 +174,10 @@ test('el paciente sube, la médica rechaza y confirma, y la cita queda pagada', 
   // La agenda relee: la insignia de pago de la cita es la del servidor.
   await expect(filaDeLaMedica(page)).toContainText('Pagada');
   await foto(page, '07-medica-agenda-pagada-1440.png');
+  // Persistencia del lado de la médica: entrar de nuevo (recarga completa) y
+  // la cita sigue pagada.
+  await irALaCitaDeLaMedica(page);
+  await expect(filaDeLaMedica(page)).toContainText('Pagada');
 
   /* ---- 5. El paciente ve la cita pagada, también tras recargar -------- */
   await entrar(page, PACIENTE);

@@ -1718,7 +1718,7 @@ function api(comp: Appointments) {
 }
 
 describe('Appointments · comprobante de pago (v4.2.64)', () => {
-  it('ofrece el comprobante en una cita viva o atendida, nunca en una cancelada', () => {
+  it('ofrece el comprobante salvo en una cancelada, como la API', () => {
     const { fixture } = montarCancelacion({
       bookings: [
         citaMock('b-conf', 's-conf'),
@@ -1735,8 +1735,9 @@ describe('Appointments · comprobante de pago (v4.2.64)', () => {
     });
     fixture.detectChanges();
 
-    // Confirmada y atendida sí; cancelada y desconocida no.
-    expect(fixture.nativeElement.querySelectorAll('[data-testid="turnos-comprobante"]').length).toBe(2);
+    // Confirmada, atendida y un estado que la pantalla no nombra sí; la
+    // cancelada no (la API sólo la excluye a ella: `STATES_WITHOUT_PAYMENT`).
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="turnos-comprobante"]').length).toBe(3);
   });
 
   it('una cita pagada lo dice, y el modal se abre sin ofrecer subir otro', () => {

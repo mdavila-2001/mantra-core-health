@@ -1,6 +1,6 @@
 import { recursos, reservas, type ReservaSimulada } from '../fixtures/agenda';
 import { STATUS } from '../fixtures/concepts';
-import { patientById } from '../fixtures/people';
+import { patientById, professionalById } from '../fixtures/people';
 import {
   conflict,
   forbidden,
@@ -66,6 +66,31 @@ function avisarRevision(reserva: ReservaSimulada, confirmado: boolean, motivo?: 
   });
 }
 
+/**
+ * La cita ya no admite pagos. La API sólo excluye la cancelada
+ * (`STATES_WITHOUT_PAYMENT`); la maqueta además tiene `BK-REJECTED`, que en la
+ * API no existe como estado propio —un rechazo cancela la cita—, así que vale
+ * lo mismo.
+ */
+function cancelada(r: ReservaSimulada): boolean {
+  return estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED');
+}
+
+/** Avisa a la profesional de la agenda que llegó un comprobante (`receiptUploadedNotice`). */
+function avisarSubida(reserva: ReservaSimulada, paciente: string): void {
+  const recurso = recursos.get(reserva.resourceId);
+  const profesional = recurso === undefined ? undefined : professionalById(recurso.resourceRefId);
+  if (profesional === undefined) return;
+  emitirNotificacion({
+    userId: profesional.userId,
+    category: 'SCHEDULING',
+    subject: 'Recibió un comprobante de pago',
+    bodyText: `${paciente} subió el comprobante de pago de su cita. Puede confirmarlo o rechazarlo desde su agenda.`,
+    destination: { type: 'scheduling.appointment_bookings', id: reserva.id },
+    payloadJson: { bookingId: reserva.id, route: '/schedule?vista=citas' },
+  });
+}
+
 /** El paciente no revisa su propio comprobante (la API no le da el rol). */
 function esPacienteSolo(request: MockRequest): boolean {
   return request.user?.patientProfileId !== undefined && request.user.practitionerProfileId === undefined;
@@ -92,7 +117,7 @@ export function registrarComprobantesDePago(router: MockRouter): void {
     if (request.user?.patientProfileId === undefined) {
       return forbidden('Sólo el paciente sube el comprobante de su cita');
     }
-    if (estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED')) {
+    if (cancelada(r)) {
       return preconditionFailed('La cita está cancelada: no se le puede adjuntar un pago', {
         bookingId: r.id,
       });
@@ -133,6 +158,7 @@ export function registrarComprobantesDePago(router: MockRouter): void {
       reviewedBy: null,
       rejectionReason: null,
     });
+    avisarSubida(r, request.user.displayName);
     return reply(201, nuevo);
   });
 
@@ -164,17 +190,17 @@ export function registrarComprobantesDePago(router: MockRouter): void {
     const c = delaCita(r.id, request.params['receiptId']!);
     if (c === undefined) return notFound('El comprobante no existe');
     if (c.status === 'REJECTED') return conflict('El comprobante ya se rechazó', { receiptId: c.id });
-    if (estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED')) {
+    // Confirmar de nuevo devuelve lo mismo sin escribir, aunque la cita se haya
+    // cancelado después: como la API, la repetición va antes que la regla.
+    if (c.status === 'CONFIRMED') return { receipt: c, paymentState: r.paymentState };
+    if (cancelada(r)) {
       return preconditionFailed('La cita está cancelada', { bookingId: r.id });
     }
-    const confirmado =
-      c.status === 'CONFIRMED'
-        ? c
-        : comprobantes.actualizar(c.id, {
-            status: 'CONFIRMED',
-            reviewedAt: ahora(),
-            reviewedBy: revisor(request),
-          })!;
+    const confirmado = comprobantes.actualizar(c.id, {
+      status: 'CONFIRMED',
+      reviewedAt: ahora(),
+      reviewedBy: revisor(request),
+    })!;
     const pagada =
       r.paymentState?.state === 'PAID'
         ? r
@@ -188,7 +214,7 @@ export function registrarComprobantesDePago(router: MockRouter): void {
               markedAt: ahora(),
             },
           })!;
-    if (c.status !== 'CONFIRMED') avisarRevision(r, true);
+    avisarRevision(r, true);
     return { receipt: confirmado, paymentState: pagada.paymentState };
   });
 
@@ -196,16 +222,17 @@ export function registrarComprobantesDePago(router: MockRouter): void {
     const r = citaVisible(request);
     if (isMockReply(r)) return r;
     if (esPacienteSolo(request)) return forbidden('El paciente no revisa su propio comprobante');
-    const c = delaCita(r.id, request.params['receiptId']!);
-    if (c === undefined) return notFound('El comprobante no existe');
-    if (c.status === 'CONFIRMED') return conflict('El comprobante ya se confirmó', { receiptId: c.id });
+    // El cuerpo se valida antes que nada, como el `ValidationPipe` de la API.
     const motivo = (cuerpo<{ reason: string }>(request).reason ?? '').trim();
     if (motivo.length < 3) {
       return validation('El motivo del rechazo es obligatorio', [
         { field: 'reason', code: 'MIN_LENGTH', message: 'Cuente al paciente por qué lo rechaza.' },
       ]);
     }
-    if (c.status === 'REJECTED') return c;
+    const c = delaCita(r.id, request.params['receiptId']!);
+    if (c === undefined) return notFound('El comprobante no existe');
+    if (c.status === 'CONFIRMED') return conflict('El comprobante ya se confirmó', { receiptId: c.id });
+    // Rechazar de nuevo reescribe el motivo y vuelve a avisar, como la API.
     const rechazado = comprobantes.actualizar(c.id, {
       status: 'REJECTED',
       reviewedAt: ahora(),

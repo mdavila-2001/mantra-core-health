@@ -258,7 +258,10 @@ export function archivoAdjuntable(fileId: string):
   if (a === undefined) return undefined;
   // Los bytes sólo son un `Blob` en la visita en que se subieron (ver `fileContent`).
   const bytes = a.bytes instanceof Blob ? a.bytes : undefined;
-  const mimeType = bytes?.type || (a.category === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');
+  // Tras recargar sólo queda la copia `data:` (imágenes chicas): su tipo es el real.
+  const deLaCopia = /^data:([^;,]+)/.exec(a.dataUrlReal ?? '')?.[1];
+  const mimeType =
+    bytes?.type || deLaCopia || (a.category === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');
   return {
     mimeType,
     originalName: a.originalName,

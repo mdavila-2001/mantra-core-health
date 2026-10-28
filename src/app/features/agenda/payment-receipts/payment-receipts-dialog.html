@@ -3,7 +3,7 @@
   [description]="descripcion()"
   size="md"
   closeLabel="Cerrar"
-  [dismissible]="!subiendo()"
+  [dismissible]="!ocupado()"
   (closed)="cerrar()"
 >
   <div class="comprobantes" data-testid="comprobantes">
@@ -76,18 +76,19 @@
             </button>
           </div>
         </section>
-      } @else if (hayConfirmado()) {
-        <app-alert tone="success" data-testid="comprobante-confirmado">
-          Su profesional confirmó el pago. No hace falta que suba nada más.
-        </app-alert>
       } @else if (hayPendiente()) {
         <app-alert tone="info" data-testid="comprobante-pendiente">
           Su comprobante está esperando que su profesional lo revise. Le avisamos cuando lo haga.
         </app-alert>
-      } @else if (sinComprobantes()) {
-        <!-- Sin comprobantes y sin poder subir: la cita está cancelada o ya pagada. -->
+      } @else if (hayConfirmado()) {
+        <app-alert tone="success" data-testid="comprobante-confirmado">
+          Su profesional confirmó el pago. No hace falta que suba nada más.
+        </app-alert>
+      } @else {
+        <!-- Sin poder subir y sin un comprobante que lo explique: la cita ya
+             figura pagada (alguien lo marcó a mano) o se canceló. -->
         <p class="comprobantes__vacio" data-testid="comprobante-no-aplica">
-          Esta cita no necesita comprobante: ya está pagada o se canceló.
+          Esta cita no necesita comprobante: ya figura como pagada o se canceló.
         </p>
       }
     }
