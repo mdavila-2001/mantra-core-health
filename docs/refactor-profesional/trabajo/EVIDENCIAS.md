@@ -137,7 +137,7 @@ Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · base `origin/dev
 |---|---|
 | `tsc -p tsconfig.app.json --noEmit` | 0 errores |
 | `eslint src/app/features/clinical-record/patient-chart` | 0 errores (el `yarn lint` global trae errores preexistentes en specs ajenos) |
-| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **587 pruebas verdes** (las nuevas: `recorrido-clinico/` 48, `patient-chart.spec.ts` 8) |
+| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **591 pruebas verdes** (las nuevas: `recorrido-clinico/` 52, `patient-chart.spec.ts` 8) |
 | `yarn test` completo | **no se ejecutó** |
 | Navegador 1440 / 768 / 390 | desborde horizontal de la página: 0 px; el recorrido desplaza dentro de su lienzo |
 | «Secciones» sin cambios | 9 pestañas (Servicios incluida), «Nuevo diagnóstico» visible, menú de acciones Confirmar / Rechazar / Cambiar estado / Adjuntar |
@@ -178,5 +178,28 @@ en la URL (parte de 6), que se registra como pendiente. `visual-reviewer`: pendi
 Sin cambio: M7 (no hay captura previa de «Secciones»: la regresión la cubren las pruebas y el recorrido
 de pestañas, alta y menú de arriba), M8 (las «mg» de los signos vitales vienen del dato simulado, ya
 existía), M9 (la columna «Ver» en el PDF ya pasaba en todas las tablas del expediente).
+
+`visual-reviewer`, segunda vuelta: **FAIL por puntuación** (82/100, 0 HIGH; los 5 HIGH anteriores,
+resueltos). Corregido después:
+
+| Hallazgo | Arreglo | Comprobado |
+|---|---|---|
+| N1 fecha propia contra el borde | formato corto («Desde 8 Oct»; de otro año, «Inicio Sept 2025»), la posología cede primero, `overflow: hidden` en la tarjeta; la fecha entera en el título y en el nombre accesible | `recorrido-camino-resaltado.png` |
+| N2 leyenda en vertical | la barra entera (leyenda y saltos) sólo en horizontal | `recorrido-390.png`, prueba de componente |
+| N3 ancho → angosto → ancho | se fija al final cada vez que se crea un lienzo; el ajuste propio no se confunde con un desplazamiento de la persona | medido: al abrir 1724/1724, al volver a ancho 1724/1724 |
+| N4 color del estado | el estado usa la regla de la tabla (`estadoTono ?? 'info'`) | `recorrido-1440.png`, prueba de componente |
+| N5 estados y consola | `tabla-filtro-oculta-todo.png`; `consola-y-red.txt`: 0 errores de consola, 0 peticiones fallidas o ≥ 400 en el expediente (un aviso NG0505 de hidratación, propio de `ng serve` sin SSR) | — |
+| N6, N7 capturas viejas o a medio animar | rehechas | `recorrido-sin-chip-atenciones.png`, `secciones-sin-cambios-1440.png` |
+| M3, M5 sin evidencia | grupo abierto con teclado y el puntero fuera: 0 nodos atenuados; aviso «Filtrado: no se muestran atenciones.» en Recorrido | `recorrido-grupo-abierto.png`, `recorrido-sin-chip-atenciones.png` |
+
+Encontrado al rehacer las capturas, y más grave que lo anterior: con «Atenciones» filtrado, la curva
+Hipertensión → Enalapril pasaba por detrás de Atorvastatina y parecía salir de ella. Las indicaciones
+entre columnas ahora van por un recorrido ortogonal por los huecos; una prueba comprueba que no cruza
+ninguna tarjeta (`recorrido-sin-chip-atenciones.png`).
+
+Sin cambio: N8 (mayúsculas de los meses: las cabeceras siguen la regla de las tablas de `dev`), N9
+(dos momentos del mismo día cuando uno es atención y el otro no), N10 (la tabla apilada en teléfono es
+el comportamiento de `app-data-table`). Los estados de carga y error los resuelve
+`app-view-state-host`, compartido; no se capturaron.
 
 Capturas: `capturas/recorrido-clinico/`.
