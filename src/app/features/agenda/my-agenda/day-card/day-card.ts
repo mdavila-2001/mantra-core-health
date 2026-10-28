@@ -54,12 +54,22 @@ interface TimeRange {
  * Desde cuántos minutos una sesión se confirma antes de guardarla.
  *
  * Más de 4 h casi nunca es lo que se quiso agendar: suele ser una hora de fin
- * mal escrita. Se pregunta en vez de impedirlo, porque la sesión larga existe.
+ * mal escrita. Se pregunta en vez de impedirlo, porque la sesión larga existe,
+ * hasta {@link MAX_APPOINTMENT_MINUTES} en una cita.
  */
 const LONG_SESSION_MINUTES = 240;
 
+/**
+ * Lo más que puede durar una cita: la API rechaza con un 400 la cita puntual
+ * más larga (`durationMinutes`, máximo 480). El tiempo ocupado no tiene tope.
+ */
+const MAX_APPOINTMENT_MINUTES = 480;
+
 /** El error del campo «Hasta» cuando la franja escrita no cierra. */
 const END_NOT_AFTER_START = 'La hora de fin tiene que ser después de la de inicio';
+
+/** El error del campo «Hasta» cuando la cita pasa de {@link MAX_APPOINTMENT_MINUTES}. */
+const APPOINTMENT_TOO_LONG = 'Una cita no puede durar más de 8 horas';
 
 /**
  * LA TARJETA — el único gesto de creación del calendario (AG-5, parte 2).
@@ -258,18 +268,31 @@ export class DayCard {
   protected readonly blockedByGap = computed(() => this.overlaps()?.tipo === 'bloqueo');
 
   /**
+   * Si lo que se va a crear es una cita —hay paciente— y pasa del tope que
+   * acepta la API. El tiempo ocupado no tiene tope: una guardia larga existe.
+   */
+  private readonly appointmentTooLong = computed(() => {
+    const rango = this.range();
+    return (
+      this.patient() !== null && rango !== null && minutesOf(rango) > MAX_APPOINTMENT_MINUTES
+    );
+  });
+
+  /**
    * El error del campo «Hasta», o `''` mientras no haya ninguno.
    *
    * Antes la franja invertida sólo apagaba Guardar, sin decir por qué. Se dice
    * con las dos horas completas: mientras se escribe el «1» de «14:00» no hay
-   * nada mal, hay una hora a medio escribir. Sobre un cupo no aplica: ahí no
-   * hay campos, la franja la pone el cupo.
+   * nada mal, hay una hora a medio escribir. Lo mismo con la cita de más de
+   * 8 h, que la API rechazaría. Sobre un cupo no aplica: ahí no hay campos, la
+   * franja la pone el cupo.
    */
   protected readonly endTimeError = computed(() => {
     const start = withTime(this.dia(), this.from());
     const end = withTime(this.dia(), this.hasta());
     if (this.fromSlot() || start === null || end === null) return '';
-    return end.getTime() > start.getTime() ? '' : END_NOT_AFTER_START;
+    if (end.getTime() <= start.getTime()) return END_NOT_AFTER_START;
+    return this.appointmentTooLong() ? APPOINTMENT_TOO_LONG : '';
   });
 
   protected readonly canSave = computed(() => {
@@ -279,6 +302,7 @@ export class DayCard {
       this.destination.resourceId() !== null &&
       !this.saving() &&
       !this.blockedByGap() &&
+      !this.appointmentTooLong() &&
       (this.patient() !== null || this.reason().trim() !== '')
     );
   });
@@ -316,7 +340,8 @@ export class DayCard {
    * Guardar: la inferencia decide qué se crea.
    *
    * Una sesión de más de {@link LONG_SESSION_MINUTES} minutos se confirma
-   * antes; con «Volver» no se guarda nada y el modal queda como estaba.
+   * antes; con «Volver» no se guarda nada y el modal queda como estaba. Una
+   * cita de más de {@link MAX_APPOINTMENT_MINUTES} ni se pregunta: no se guarda.
    *
    * El 422 del servidor —la regla madre, con qué/cuándo/dónde— se muestra tal
    * cual: ese mensaje ya está escrito para una persona.
@@ -324,9 +349,10 @@ export class DayCard {
   protected save(): void {
     const rango = this.range();
     const resourceId = this.destination.resourceId();
-    // `canSave()` ya incluye el bloqueo y la agenda; se vuelve a mirar acá
-    // porque un botón deshabilitado no es una regla: esta función se puede
-    // invocar por teclado, por `submit` del formulario y desde una prueba.
+    // `canSave()` ya incluye el bloqueo, la agenda y el tope de la cita; se
+    // vuelve a mirar acá porque un botón deshabilitado no es una regla: esta
+    // función se puede invocar por teclado, por `submit` del formulario y
+    // desde una prueba.
     if (rango === null || resourceId === null || this.blockedByGap() || !this.canSave()) return;
 
     if (!isLongSession(rango)) {

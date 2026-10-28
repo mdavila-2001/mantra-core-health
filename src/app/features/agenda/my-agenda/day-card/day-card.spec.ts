@@ -573,6 +573,67 @@ describe('TarjetaDelDia', () => {
       );
     });
 
+    it('de 09:00 a 17:00 —8 h justas— pregunta, y con «Confirmar» guarda', async () => {
+      await withPatient();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      await writeRange('09:00', '17:00');
+
+      const [, endInput] = timeInputs();
+      expect(endInput.getAttribute('aria-invalid')).toBe('false');
+      expect(api().canSave()).toBe(true);
+
+      api().save();
+      await fixture.whenStable();
+
+      expect(confirm.mock.calls[0]?.[0]?.title).toBe(
+        '¿Está seguro de agendar una sesión de 8 horas?',
+      );
+      const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+      expect(req.request.body.durationMinutes).toBe(480);
+      req.flush(CREATED_APPOINTMENT);
+      http.verify();
+    });
+
+    it('de 09:00 a 17:30 —8 h 30 min— «Hasta» dice que una cita no pasa de 8 h y no se guarda', async () => {
+      // La API rechaza con un 400 la cita de más de 480 minutos: se dice antes.
+      await withPatient();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm');
+      await writeRange('09:00', '17:30');
+
+      const [startInput, endInput] = timeInputs();
+      expect(endInput.getAttribute('aria-invalid')).toBe('true');
+      expect(describerOf(endInput)?.textContent).toContain('Una cita no puede durar más de 8 horas');
+      expect(startInput.getAttribute('aria-invalid')).toBe('false');
+      expect(api().canSave()).toBe(false);
+
+      api().save();
+      await fixture.whenStable();
+
+      expect(confirm).not.toHaveBeenCalled();
+      http.expectNone(() => true);
+      http.verify();
+    });
+
+    it('el tiempo ocupado de más de 8 h no tiene tope: una guardia larga existe', async () => {
+      await montar();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      api().reason.set('Guardia');
+      await writeRange('08:00', '20:00');
+
+      const [, endInput] = timeInputs();
+      expect(endInput.getAttribute('aria-invalid')).toBe('false');
+      expect(api().canSave()).toBe(true);
+
+      api().save();
+      await fixture.whenStable();
+
+      expect(confirm).toHaveBeenCalledOnce();
+      http
+        .expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions' && r.method === 'POST')
+        .flush({ id: 'exc-1', blockedSlots: 0 });
+      http.verify();
+    });
+
     it('un rato ocupado largo también se confirma antes de guardarlo', async () => {
       await montar();
       const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
