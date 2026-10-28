@@ -8,6 +8,10 @@ import { provideRouter } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DialogService } from '@shared/components/molecules/dialog/dialog-service';
 import { NavigationService } from '../../../core/navigation/navigation.service';
+import {
+  OWN_OFFICE_KEY,
+  type OrganizationChoice,
+} from '../../../shared/components/molecules/organization-select/organization-select.types';
 import { AgendaCreate } from './agenda-create';
 import { environment } from '../../../../environments/environment';
 
@@ -57,6 +61,10 @@ interface Testable {
   readonly almuerzoDesde: WritableSignal<string>;
   readonly almuerzoHasta: WritableSignal<string>;
   readonly almuerzoInvalido: () => boolean;
+  /** Dónde se publica: lo elegido en el selector de organización (REQ-C2-003). */
+  readonly place: { readonly choice: WritableSignal<OrganizationChoice | null> };
+  readonly misAgendas: () => readonly unknown[];
+  readonly esCambio: () => boolean;
 }
 
 /**
@@ -1645,5 +1653,164 @@ describe('AgendaCreate', () => {
       expect(acc.almuerzoDesde()).toBe('12:30');
       expect(acc.almuerzoHasta()).toBe('14:00');
     });
+  });
+
+  /**
+   * DÓNDE SE PUBLICA — el selector de organización (REQ-C2-002 y 003).
+   *
+   * «Mi consultorio» tiene que mandar exactamente lo de antes del selector: la
+   * organización de la sesión y ninguna práctica. Otra organización manda la
+   * suya, y como cada organización tiene sus propias agendas, cambiarla suelta
+   * la agenda de la anterior y busca las de la nueva.
+   */
+  describe('la organización donde se publica', () => {
+    const OLIVOS: OrganizationChoice = {
+      key: 'practice-olivos',
+      organization: {
+        practiceId: 'practice-olivos',
+        practiceSiteId: 'site-olivos',
+        name: 'Clínica Los Olivos',
+        isOwnOffice: false,
+        tenantId: 'tenant-olivos',
+      },
+    };
+    const OWN_OFFICE: OrganizationChoice = {
+      key: OWN_OFFICE_KEY,
+      organization: {
+        practiceId: 'practice-own',
+        practiceSiteId: 'site-own',
+        name: 'Consultorio Dra. Salas',
+        isOwnOffice: true,
+        tenantId: null,
+      },
+    };
+
+    function listResourcesOf(tenantId: string) {
+      return http.expectOne(
+        (r) =>
+          r.method === 'GET' &&
+          r.url === '/scheduling/resources' &&
+          r.params.get('tenantId') === tenantId,
+      );
+    }
+
+    /** Termina el creation: plantilla y cupos, para que `verify()` no encuentre nada colgado. */
+    function finishPublishing(resourceId: string): void {
+      http
+        .expectOne(`/scheduling/resources/${resourceId}/templates`)
+        .flush({ id: 'tpl-9', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-9/generate-slots')
+        .flush({ templateId: 'tpl-9', created: 1, skipped: 0 });
+    }
+
+    it('el selector va arriba de la agenda y empieza en «Mi consultorio»', () => {
+      crearConHorarioVigente({ id: 'tpl-1', name: 'Horario', statusConceptId: 'c', rules: [] });
+      const root: HTMLElement = fixture.nativeElement;
+      const field = root.querySelector<HTMLElement>('app-organization-field');
+      const scheduleHeading = Array.from(root.querySelectorAll('h2')).find(
+        (heading) => heading.textContent?.trim() === '¿En qué agenda publica?',
+      );
+
+      expect(field?.querySelector('label')?.textContent?.trim()).toBe('Organización');
+      expect(field?.querySelector('.select-trigger')?.textContent?.trim()).toBe('Mi consultorio');
+      expect(scheduleHeading).toBeDefined();
+      expect(
+        field!.compareDocumentPosition(scheduleHeading!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('quien arma la agenda de otro recurso no elige organización', () => {
+      crear(['SCHEDULING_ADMIN'], TENANT, null);
+
+      expect(fixture.nativeElement.querySelector('app-organization-field')).toBeNull();
+    });
+
+    it('con «Mi consultorio», el recurso lleva lo de siempre: la organización de la sesión y ninguna práctica', () => {
+      crear();
+      acc.place.choice.set(OWN_OFFICE);
+      fixture.detectChanges();
+      encenderLunes();
+      acc.publicar();
+
+      const creation = http.expectOne((r) => r.method === 'POST' && r.url === '/scheduling/resources');
+      expect(creation.request.body.tenantId).toBe(TENANT);
+      expect(creation.request.body).not.toHaveProperty('practiceId');
+      creation.flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
+      finishPublishing('res-1');
+    });
+
+    it('con otra organización, busca sus agendas y el recurso lleva su organización y su práctica', () => {
+      crear();
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+      listResourcesOf('tenant-olivos').flush({ items: [], count: 0 });
+      encenderLunes();
+      acc.publicar();
+
+      const creation = http.expectOne((r) => r.method === 'POST' && r.url === '/scheduling/resources');
+      expect(creation.request.body).toMatchObject({
+        tenantId: 'tenant-olivos',
+        practiceId: 'practice-olivos',
+      });
+      creation.flush({ id: 'res-olivos', name: 'x', stateConceptId: 'c' });
+      finishPublishing('res-olivos');
+    });
+
+    it('cambiar de organización suelta la agenda y el horario de la anterior', () => {
+      crearConHorarioVigente({ id: 'tpl-1', name: 'Horario', statusConceptId: 'c', rules: [] });
+      expect(acc.resourceId()).toBe('res-1');
+      expect(acc.esCambio()).toBe(true);
+
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+
+      expect(acc.resourceId()).toBeNull();
+      expect(acc.esCambio()).toBe(false);
+      expect(acc.misAgendas()).toEqual([]);
+      listResourcesOf('tenant-olivos').flush({ items: [], count: 0 });
+    });
+
+    it('las agendas que llegan tarde de la organización anterior no pisan las de la elegida', () => {
+      crear();
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+      acc.place.choice.set(OWN_OFFICE);
+      fixture.detectChanges();
+
+      listResourcesOf('tenant-olivos').flush({
+        items: [{ id: 'res-olivos', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' }],
+        count: 1,
+      });
+
+      expect(acc.misAgendas()).toEqual([]);
+      expect(acc.resourceId()).toBeNull();
+      listResourcesOf(TENANT).flush({ items: [], count: 0 });
+    });
+  });
+
+  /* -- «Opciones avanzadas», con el patrón del sistema (REQ-C2-007) -------- */
+
+  it('«Opciones avanzadas» es una row que dice si está abierta y qué abre', () => {
+    crear();
+    const root: HTMLElement = fixture.nativeElement;
+    const row = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.trim() === 'Opciones avanzadas',
+    )!;
+
+    expect(row.getAttribute('aria-expanded')).toBe('false');
+    expect(root.textContent).not.toContain('Zona horaria');
+
+    row.click();
+    fixture.detectChanges();
+
+    expect(row.getAttribute('aria-expanded')).toBe('true');
+    expect(acc.avanzadasAbiertas()).toBe(true);
+    const region = root.querySelector<HTMLElement>(`#${row.getAttribute('aria-controls')}`);
+    expect(region?.textContent).toContain('Zona horaria');
+
+    row.click();
+    fixture.detectChanges();
+    expect(row.getAttribute('aria-expanded')).toBe('false');
   });
 });

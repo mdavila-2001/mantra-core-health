@@ -23,6 +23,12 @@ export interface PractitionerOrganization {
   readonly name: string;
   /** Es su consultorio propio y no una organización a la que se afilió. */
   readonly isOwnOffice: boolean;
+  /**
+   * La organización (tenant) donde se publica. Toda organización afiliada lo
+   * trae: sin él no se ofrece. Es `null` en «Mi consultorio», que publica en la
+   * organización de la sesión, como hasta ahora.
+   */
+  readonly tenantId: string | null;
 }
 
 /** La clave de «Mi consultorio». Es el valor elegido por omisión. */

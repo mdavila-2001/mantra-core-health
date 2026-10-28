@@ -30,6 +30,7 @@ function assignment(overrides: Partial<MyRoleAssignment> & Pick<MyRoleAssignment
     isPrimary: false,
     createdAt: new Date('2026-10-01T12:00:00Z'),
     avatarUrl: null,
+    tenantId: `tenant-${overrides.practiceId}`,
     ...overrides,
   };
 }
@@ -76,8 +77,14 @@ describe('practitionerOrganizationsOf', () => {
     const organizations = practitionerOrganizationsOf([OWN_OFFICE_ASSIGNMENT, OLIVOS_ASSIGNMENT], OWN_SITE);
 
     expect(organizations).toEqual([
-      { practiceId: 'practice-own', practiceSiteId: 'site-own', name: 'Consultorio Dra. Rojas', isOwnOffice: true },
-      { practiceId: 'practice-olivos', practiceSiteId: 'site-olivos', name: 'Clínica Los Olivos', isOwnOffice: false },
+      { practiceId: 'practice-own', practiceSiteId: 'site-own', name: 'Consultorio Dra. Rojas', isOwnOffice: true, tenantId: null },
+      {
+        practiceId: 'practice-olivos',
+        practiceSiteId: 'site-olivos',
+        name: 'Clínica Los Olivos',
+        isOwnOffice: false,
+        tenantId: 'tenant-practice-olivos',
+      },
     ]);
   });
 
@@ -110,7 +117,13 @@ describe('practitionerOrganizationsOf', () => {
     );
 
     expect(organizations).toEqual([
-      { practiceId: 'practice-sur', practiceSiteId: 'site-sur-1', name: 'Centro Médico Sur', isOwnOffice: false },
+      {
+        practiceId: 'practice-sur',
+        practiceSiteId: 'site-sur-1',
+        name: 'Centro Médico Sur',
+        isOwnOffice: false,
+        tenantId: 'tenant-practice-sur',
+      },
     ]);
   });
 
@@ -121,6 +134,34 @@ describe('practitionerOrganizationsOf', () => {
     );
 
     expect(organization.practiceSiteId).toBeNull();
+  });
+
+  it('una afiliación activa sin organización no se ofrece: no habría dónde publicar', () => {
+    const organizations = practitionerOrganizationsOf(
+      [
+        assignment({ practiceId: 'practice-sur', practiceName: 'Centro Médico Sur', tenantId: undefined }),
+        assignment({ practiceId: 'practice-norte', practiceName: 'Centro Médico Norte', tenantId: null }),
+        assignment({ practiceId: 'practice-este', practiceName: 'Centro Médico Este', tenantId: '' }),
+      ],
+      null,
+    );
+
+    expect(organizations).toEqual([]);
+  });
+
+  it('una afiliación activa con su organización se ofrece y la lleva', () => {
+    const [organization] = practitionerOrganizationsOf(
+      [assignment({ practiceId: 'practice-sur', practiceName: 'Centro Médico Sur', tenantId: 'tenant-sur' })],
+      null,
+    );
+
+    expect(organization).toMatchObject({ practiceId: 'practice-sur', tenantId: 'tenant-sur' });
+  });
+
+  it('«Mi consultorio» no lleva organización: publica en la de la sesión', () => {
+    const [ownOffice] = practitionerOrganizationsOf([OWN_OFFICE_ASSIGNMENT], OWN_SITE);
+
+    expect(ownOffice).toMatchObject({ isOwnOffice: true, tenantId: null });
   });
 });
 
@@ -206,6 +247,20 @@ describe('OrganizationSelectContainer', () => {
     expect(doubles.listSitesOfPractitioner).toHaveBeenCalledWith(PROFILE_ID);
   });
 
+  it('no ofrece la organización activa que llega sin su `tenantId`', async () => {
+    doubles.listMyRoleAssignments.mockReturnValue(
+      of([
+        OLIVOS_ASSIGNMENT,
+        assignment({ practiceId: 'practice-sur', practiceName: 'Centro Médico Sur', tenantId: undefined }),
+      ]),
+    );
+    const { fixture } = await render();
+
+    await open(fixture);
+
+    expect(rowLabels(fixture)).toEqual([OWN_OFFICE_LABEL, 'Clínica Los Olivos', AFFILIATE_LABEL]);
+  });
+
   it('con la lista vacía, solo aparece el consultorio', async () => {
     doubles.listMyRoleAssignments.mockReturnValue(of([]));
     doubles.listSitesOfPractitioner.mockReturnValue(of(page([])));
@@ -225,7 +280,13 @@ describe('OrganizationSelectContainer', () => {
     expect(choices).toEqual([
       {
         key: 'practice-olivos',
-        organization: { practiceId: 'practice-olivos', practiceSiteId: 'site-olivos', name: 'Clínica Los Olivos', isOwnOffice: false },
+        organization: {
+          practiceId: 'practice-olivos',
+          practiceSiteId: 'site-olivos',
+          name: 'Clínica Los Olivos',
+          isOwnOffice: false,
+          tenantId: 'tenant-practice-olivos',
+        },
       },
     ]);
   });
@@ -240,7 +301,13 @@ describe('OrganizationSelectContainer', () => {
     expect(choices).toEqual([
       {
         key: OWN_OFFICE_KEY,
-        organization: { practiceId: 'practice-own', practiceSiteId: 'site-own', name: 'Consultorio Dra. Rojas', isOwnOffice: true },
+        organization: {
+          practiceId: 'practice-own',
+          practiceSiteId: 'site-own',
+          name: 'Consultorio Dra. Rojas',
+          isOwnOffice: true,
+          tenantId: null,
+        },
       },
     ]);
   });
