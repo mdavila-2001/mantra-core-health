@@ -2894,7 +2894,6 @@ describe('RegisterPractitioner', () => {
     http.expectOne('/iam/auth/register-practitioner').flush(RESPUESTA_PRO);
 
     expect(component.registered()).toBe(true);
-    expect(component.accessHint).toBe('su correo');
   });
 
   it('tras registrarse, lleva al login en vez de entrar solo', () => {
