@@ -3230,7 +3230,10 @@ export class RegisterPractitioner {
     const colegio = titleCollege(this.tituloProfesionalElegido());
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
-    const calleDomicilio = componerDireccion(raw.homeAddressLines, raw.homeDistrict);
+    // Calle y distrito separados (ADR-0028 de la API). El consultorio no: su
+    // dirección vive en otra tabla y sigue llevando el distrito en la línea.
+    const calleDomicilio = raw.homeAddressLines.trim();
+    const distritoDomicilio = raw.homeDistrict.trim();
     const gpsDomicilio = this.gpsDomicilio();
     const calleTrabajo = raw.workAddressLines.trim();
     const gpsTrabajo = this.gpsTrabajo();
@@ -3282,6 +3285,7 @@ export class RegisterPractitioner {
       // El punto viaja sólo si se confirmó sobre el mapa: `gpsDomicilio` es lo
       // que emite `app-map-location-picker`, y ese sólo emite lo confirmado.
       ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
+      ...(distritoDomicilio === '' ? {} : { homeDistrict: distritoDomicilio }),
       ...(gpsDomicilio === null
         ? {}
         : { homeLatitude: gpsDomicilio.lat, homeLongitude: gpsDomicilio.lng }),
