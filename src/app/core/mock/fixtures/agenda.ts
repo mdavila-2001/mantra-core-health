@@ -31,7 +31,7 @@ export interface PlantillaSimulada {
   readonly resourceId: string;
   readonly retired: boolean;
   readonly name: string;
-  readonly rules: readonly { dayOfWeek: number; startTime: string; endTime: string; slotMinutes?: number; capacityPerSlot?: number; gapMinutes?: number; bookingMode?: 'CONSULTATIONS' | 'SERVICES' | 'MIXED'; telemedicineEnabled?: boolean }[];
+  readonly rules: readonly { dayOfWeek: number; startTime: string; endTime: string; slotMinutes?: number; capacityPerSlot?: number; gapMinutes?: number; bookingMode?: 'CONSULTATIONS' | 'SERVICES' | 'MIXED'; telemedicineEnabled?: boolean; flexibleHours?: boolean }[];
   readonly slotMinutes: number;
   readonly validFrom: string;
   readonly validTo?: string;
