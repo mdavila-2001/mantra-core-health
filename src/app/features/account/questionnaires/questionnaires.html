@@ -64,6 +64,21 @@
                 <div class="cuestionarios__acciones">
                   <app-badge [variant]="cuestionario.tono">{{ cuestionario.palabra }}</app-badge>
 
+                  <!-- Quien dijo «Ahora no» a la reseña pública puede cambiar de
+                       idea. Sólo si el servidor dice que se puede (`canReview`). -->
+                  @if (cuestionario.estado === 'ANSWERED' && resenables().has(cuestionario.id)) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      [attr.data-testid]="'resenar-' + cuestionario.id"
+                      (clicked)="abrirResena(cuestionario.id)"
+                    >
+                      Dejar reseña pública
+                    </button>
+                  }
+
                   @if (cuestionario.sePuedeResponder) {
                     <a
                       app-button-link
@@ -83,6 +98,15 @@
     }
   }
 </app-view-state-host>
+
+@if (resenando(); as atencion) {
+  <app-rate-encounter-dialog
+    [encounterId]="atencion.encounterId"
+    [practitionerName]="atencion.practitionerDisplayName"
+    (saved)="resenaPublicada()"
+    (closed)="cerrarResena()"
+  />
+}
     }
   </app-tab>
 </app-tabs>
