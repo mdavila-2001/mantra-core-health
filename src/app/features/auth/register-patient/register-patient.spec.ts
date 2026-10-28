@@ -10,6 +10,7 @@ import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-em
 import { EMPLOYER, OCCUPATION } from '../../../core/mock/fixtures/concepts';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { NOMINATIM_REVERSE_URL } from '../../../core/data-access/geo/reverse-geocoding.client';
 
 const RESPUESTA = {
   userId: 'u-1',
@@ -520,10 +521,7 @@ describe('RegisterPatient', () => {
       ]);
       // Pedido del cliente (26/10/2026): primero el mapa, que es lo único que
       // se elige; la calle, la zona y la localidad salen del punto.
-      expect(porClave('residence')).toEqual([
-        'gpsDomicilio',
-        'residenceMunicipalityConceptId',
-      ]);
+      expect(porClave('residence')).toEqual(['gpsDomicilio', 'residenceMunicipalityConceptId']);
       expect(porClave('contact')).toEqual([
         'phone',
         // Carril 03: los celulares que se suman con el «+», debajo del principal.
@@ -619,12 +617,12 @@ describe('RegisterPatient', () => {
     it('la localidad va como un único campo proyectado', () => {
       const campos = component.paginasPaciente().flatMap((pagina) => pagina.campos);
 
-      expect(
-        campos.find((campo) => campo.key === 'residenceMunicipalityConceptId')?.control,
-      ).toBe('custom');
-      expect(
-        campos.find((campo) => campo.key === 'workMunicipalityConceptId')?.control,
-      ).toBe('custom');
+      expect(campos.find((campo) => campo.key === 'residenceMunicipalityConceptId')?.control).toBe(
+        'custom',
+      );
+      expect(campos.find((campo) => campo.key === 'workMunicipalityConceptId')?.control).toBe(
+        'custom',
+      );
     });
 
     it('el motor está montado y sirve la primera página', () => {
@@ -857,7 +855,9 @@ describe('RegisterPatient', () => {
       avanzarHasta('work');
 
       const raiz = fixture.nativeElement as HTMLElement;
-      expect(raiz.querySelector('[data-testid="registration-work-map"] .mapa--seleccionable')).not.toBeNull();
+      expect(
+        raiz.querySelector('[data-testid="registration-work-map"] .mapa--seleccionable'),
+      ).not.toBeNull();
     });
   });
 
@@ -884,7 +884,9 @@ describe('RegisterPatient', () => {
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-patient');
-    expect(Object.keys(req.request.body as object).some((clave) => clave.startsWith('trustedAmbulance'))).toBe(false);
+    expect(
+      Object.keys(req.request.body as object).some((clave) => clave.startsWith('trustedAmbulance')),
+    ).toBe(false);
     req.flush(RESPUESTA);
 
     expect(TestBed.inject(TrustedAmbulanceStore).ambulancia()).toEqual({
@@ -940,9 +942,9 @@ describe('RegisterPatient', () => {
         if (clave === 'residenceMunicipalityConceptId') {
           component.elegirMunicipio(null);
         } else {
-          component.formPaciente.get(clave)?.setValue(
-            clave === 'birthDate' || clave === 'sexAtBirth' ? null : '',
-          );
+          component.formPaciente
+            .get(clave)
+            ?.setValue(clave === 'birthDate' || clave === 'sexAtBirth' ? null : '');
         }
 
         expect(
@@ -1220,9 +1222,7 @@ describe('RegisterPatient', () => {
     });
 
     it('un celular escrito pregunta, y sin confirmar no se quita', async () => {
-      const confirmar = vi
-        .spyOn(TestBed.inject(DialogService), 'confirm')
-        .mockResolvedValue(false);
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
       component.agregarTelefono();
       component.telefonosExtra.at(0).setValue('+591 71111111');
 
@@ -1566,6 +1566,10 @@ describe('RegisterPatient', () => {
     const req = http.expectOne('/public/geo/reverse');
     if (cuerpo === 'caido') {
       req.flush({ message: 'caído' }, { status: 503, statusText: 'Service Unavailable' });
+      // Caído es caído también para el respaldo que consulta el navegador.
+      http
+        .expectOne((r) => r.url === NOMINATIM_REVERSE_URL)
+        .flush(null, { status: 503, statusText: 'Service Unavailable' });
     } else {
       req.flush(cuerpo);
     }
@@ -1727,6 +1731,22 @@ describe('RegisterPatient', () => {
 
     expect(component.calleDelPunto()).toBe('caida');
     expect(component.formPaciente.controls.homeAddressLines.value).toBe('');
+  });
+
+  it('con la API sin geocodificador, la calle sale del respaldo del navegador', () => {
+    component.fijarPuntoDomicilio({ lat: -17.7833, lng: -63.1821 });
+    http
+      .expectOne('/public/geo/reverse')
+      .flush({ message: 'caído' }, { status: 503, statusText: 'Service Unavailable' });
+    http
+      .expectOne((r) => r.url === NOMINATIM_REVERSE_URL)
+      .flush({ address: { road: 'Calle 24 de Septiembre', suburb: 'Bartos' } });
+    fixture.detectChanges();
+
+    expect(component.calleDelPunto()).toBe('escrita');
+    expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+      'Calle 24 de Septiembre, Bartos',
+    );
   });
 
   it('una respuesta que llega tarde, con el pin ya movido, se descarta', () => {
@@ -2031,9 +2051,7 @@ describe('RegisterPatient', () => {
     completar();
     component.formPaciente.controls.issuerAdministrativeAreaConceptId.setValue(null);
 
-    expect(component.formPaciente.controls.issuerAdministrativeAreaConceptId.invalid).toBe(
-      true,
-    );
+    expect(component.formPaciente.controls.issuerAdministrativeAreaConceptId.invalid).toBe(true);
 
     component.submit();
     http.expectNone('/iam/auth/register-patient');
@@ -2061,15 +2079,11 @@ describe('RegisterPatient', () => {
   it('marca el teléfono del tutor como inválido si falta el nombre', () => {
     completar({ guardianPhone: '+591 71234567' });
 
-    expect(
-      component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre'),
-    ).toBe(true);
+    expect(component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre')).toBe(true);
 
     // Y el error se va en cuanto se escribe el nombre.
     component.formPaciente.controls.guardianName.setValue('Rosa Quispe');
-    expect(
-      component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre'),
-    ).toBe(false);
+    expect(component.formPaciente.controls.guardianPhone.hasError('tutorSinNombre')).toBe(false);
   });
 
   it('tras registrar muestra la confirmación y NO inicia sesión sola', () => {
@@ -2186,7 +2200,9 @@ describe('RegisterPatient', () => {
 
       // El texto sale del catálogo de errores del alta (`registration-errors.ts`):
       // dice qué dato está repetido y qué hacer.
-      expect(component.errorMessage()).toContain('Ya hay una cuenta registrada con este número de documento');
+      expect(component.errorMessage()).toContain(
+        'Ya hay una cuenta registrada con este número de documento',
+      );
       expect(component.errorMessage()).toContain('inicie sesión');
       expect(component.registered()).toBe(false);
     });
@@ -2275,9 +2291,7 @@ describe('RegisterPatient', () => {
         // algo — a diferencia de una opción vacía.
         { value: 'c-otra', label: 'Brand new relationship' },
       ]);
-      expect(component.formPaciente.controls.guardianRelationshipConceptId.invalid).toBe(
-        false,
-      );
+      expect(component.formPaciente.controls.guardianRelationshipConceptId.invalid).toBe(false);
     });
 
     it('se dibuja en la página del contacto', () => {
@@ -2316,7 +2330,9 @@ describe('RegisterPatient', () => {
       expect(control, 'el selector de ambulancia no se dibujó').not.toBeNull();
       const etiqueta = html.querySelector(`label[for="${control?.id}"]`);
       expect(etiqueta?.textContent?.trim()).toBe('Servicio de ambulancia');
-      const descritoPor = (control?.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
+      const descritoPor = (control?.getAttribute('aria-describedby') ?? '')
+        .split(' ')
+        .filter(Boolean);
       expect(descritoPor.length).toBeGreaterThanOrEqual(2);
       for (const id of descritoPor) {
         expect(html.querySelector(`#${id}`), `aria-describedby apunta a #${id}`).not.toBeNull();
@@ -2329,9 +2345,7 @@ describe('RegisterPatient', () => {
      * decir que no cargó. El alta sigue en pie — el campo es opcional.
      */
     it('cambia de `select` a proyectado si su catálogo se cae', () => {
-      http
-        .expectOne(CATALOGO_PARENTESCOS)
-        .flush(null, { status: 500, statusText: 'Server Error' });
+      http.expectOne(CATALOGO_PARENTESCOS).flush(null, { status: 500, statusText: 'Server Error' });
 
       const campo = component
         .paginasPaciente()
@@ -2343,9 +2357,7 @@ describe('RegisterPatient', () => {
     });
 
     it('«Reintentar» vuelve a la red: el fallo cacheado no dura toda la sesión', () => {
-      http
-        .expectOne(CATALOGO_PARENTESCOS)
-        .flush(null, { status: 500, statusText: 'Server Error' });
+      http.expectOne(CATALOGO_PARENTESCOS).flush(null, { status: 500, statusText: 'Server Error' });
 
       component['reintentarParentescos']();
 
@@ -2358,9 +2370,7 @@ describe('RegisterPatient', () => {
     it('manda el parentesco elegido junto al contacto', () => {
       responderCatalogo();
       completar({ guardianName: 'Rosa Quispe' });
-      component.formPaciente.controls.guardianRelationshipConceptId.setValue(
-        PARENTESCO_MADRE,
-      );
+      component.formPaciente.controls.guardianRelationshipConceptId.setValue(PARENTESCO_MADRE);
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-patient');
@@ -2392,9 +2402,7 @@ describe('RegisterPatient', () => {
     it('no manda el parentesco si no hay contacto de emergencia', () => {
       responderCatalogo();
       completar();
-      component.formPaciente.controls.guardianRelationshipConceptId.setValue(
-        PARENTESCO_MADRE,
-      );
+      component.formPaciente.controls.guardianRelationshipConceptId.setValue(PARENTESCO_MADRE);
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-patient');
@@ -2464,9 +2472,7 @@ describe('RegisterPatient', () => {
       component.formPaciente.controls.homeAddressLines.setValue('Av. Banzer #42');
       component.elegirMunicipio(MUNICIPIO_SACABA);
 
-      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
-        'Av. Banzer #42',
-      );
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Av. Banzer #42');
     });
 
     /** Una dirección de puros espacios está vacía a todos los efectos. */
@@ -2586,9 +2592,7 @@ describe('RegisterPatient', () => {
 
       component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
 
-      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
-        'Quillacollo',
-      );
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Quillacollo');
     });
 
     it('soltar la localidad NO borra lo que la persona escribió', () => {
@@ -2598,9 +2602,7 @@ describe('RegisterPatient', () => {
 
       component.elegirMunicipio(null);
 
-      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
-        'Av. Banzer #42',
-      );
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Av. Banzer #42');
     });
 
     /** Re-sembrar tampoco marca el campo: sigue sin escribirlo la persona. */
@@ -2787,7 +2789,9 @@ describe('RegisterPatient', () => {
       expect(opciones.length).toBeGreaterThan(0);
       const nombres = opciones.map((o) => o.label);
       // Incluye servicios privados verificados de Santa Cruz
-      expect(nombres.some((n) => n.includes('Cardiocruz') || n.includes('UDEM') || n.includes('168'))).toBe(true);
+      expect(
+        nombres.some((n) => n.includes('Cardiocruz') || n.includes('UDEM') || n.includes('168')),
+      ).toBe(true);
     });
 
     it('deriva departamento del emisor de CI si no hay municipio de residencia', () => {
@@ -2799,7 +2803,11 @@ describe('RegisterPatient', () => {
 
       const opciones = component.opcionesDeAmbulancia();
       const nombres = opciones.map((o) => o.label);
-      expect(nombres.some((n) => n.includes('Alerta Médica') || n.includes('SEMAT') || n.includes('168'))).toBe(true);
+      expect(
+        nombres.some(
+          (n) => n.includes('Alerta Médica') || n.includes('SEMAT') || n.includes('168'),
+        ),
+      ).toBe(true);
     });
   });
 
