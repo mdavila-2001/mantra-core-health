@@ -103,7 +103,9 @@
   border: 2px solid var(--sup-tarjeta);
   border-radius: var(--r-pill);
   background: var(--brand-secondary);
-  color: var(--tinta-marca);
+  /* Tinta fija de la rampa: `--tinta-marca` se aclara de noche y, sobre el
+     aqua que también se aclara, el número desaparecía (1:1). */
+  color: var(--c-petrol-900);
   font-size: var(--fs-overline);
   font-weight: 800;
   line-height: 16px;
@@ -314,8 +316,12 @@
   inset-block-end: var(--e1);
   padding: 0 var(--e1);
   border-radius: var(--r-ctrl);
-  background: var(--velo);
-  color: var(--text-inverse);
+  /* Velo y tinta fijos de la rampa, iguales en los dos temas: va sobre una
+     foto, que no cambia con el tema. `--text-inverse` se oscurece de noche y
+     quedaba oscuro sobre velo oscuro (1.2:1); así da ≥7:1 hasta sobre una
+     foto blanca. */
+  background: color-mix(in srgb, var(--c-petrol-900) 80%, transparent);
+  color: var(--c-petrol-50);
   font-size: var(--fs-overline);
   font-weight: 700;
   line-height: 16px;
