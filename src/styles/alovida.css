@@ -96,41 +96,41 @@
 
   /* Fondo del nav: viñeta y halo.
 
-     En claro la barra es MARFIL, no petróleo (identidad-visual.md Parte 3:
-     `--bg-surface-alt` = marfil-400 para «secciones secundarias, sidebar»).
-     El cliente pidió el 27/10/2026 bajar el azul: una columna petróleo de
-     arriba abajo era la mancha más grande de la pantalla y rompía la regla de
-     proporción «blanco = base, petróleo = acción». La viñeta y el degradado
-     de profundidad se apagan; quedan la trama de puntos y el electro en menta
-     y aguamarina. En oscuro la barra vuelve a ser petróleo: ahí la línea
-     gráfica sí pide que las superficies sean la rampa del azul. */
-  --nav-vineta-a: rgba(248, 245, 240, 0);
-  --nav-vineta-b: rgba(248, 245, 240, 0);
-  --nav-profundidad: 0;
-  --nav-halo-a:   rgba(79, 179, 169, .14);
-  --nav-halo-b:   rgba(79, 179, 169, .07);
-  --nav-halo-c:   rgba(159, 216, 208, .04);
-  --nav-halo-0:   rgba(159, 216, 208, 0);
+     La barra es PETRÓLEO en los dos temas, como en la maqueta. El 27/10/2026
+     se la había pasado a marfil en claro al bajar el azul; el equipo acordó
+     ese mismo día que la barra lateral vuelve a como estaba y que el resto de
+     aquella corrección —tinta neutral, títulos, «Ahora», síntomas— se queda.
+     Los tokens `--nav-*` siguen: cada tema dice los suyos. */
+  --nav-vineta-a: rgba(9, 62, 92, .72);
+  --nav-vineta-b: rgba(7, 47, 69, .82);
+  --nav-profundidad: 1;
+  --nav-halo-a:   rgba(79, 179, 169, .30);
+  --nav-halo-b:   rgba(79, 179, 169, .16);
+  --nav-halo-c:   rgba(122, 191, 232, .06);
+  --nav-halo-0:   rgba(122, 191, 232, 0);
 
-  /* Tinta y estados de la barra. Son tokens propios —y no `--tinta-nav`—
-     porque `--tinta-nav` sigue significando «tinta sobre petróleo» para el
-     resto de la hoja (la perilla del interruptor de tema). */
-  --nav-carril:          #F8F5F0;
-  --nav-borde:           #CDD9D5;
-  --nav-tinta:           #242828;
-  --nav-palabra:         #0B557E;
-  --nav-item:            #4E5151;
-  --nav-item-sub:        #4E5151;
-  --nav-item-fuerte:     #242828;
-  --nav-grupo:           #4E5151;
-  --nav-grupo-fuerte:    #242828;
-  --nav-item-hover-bg:   rgba(79, 179, 169, .12);
-  --nav-item-activo-bg:  rgba(79, 179, 169, .18);
-  --nav-item-activo-luz: rgba(255, 255, 255, 0);
-  --nav-filete:          #CDD9D5;
-  --nav-filete-suave:    #E3EAE7;
-  --nav-control-fondo:   #FFFFFF;
-  --nav-control-borde:   #7D8786;
+  /* Tinta y estados de la barra: tinta blanca sobre el petróleo, los mismos
+     valores que cada regla tenía escritos antes de existir estos tokens. Son
+     tokens propios —y no `--tinta-nav`— porque `--tinta-nav` sigue
+     significando «tinta sobre petróleo» para el resto de la hoja (la perilla
+     del interruptor de tema). `--nav-carril` es el fondo de la columna detrás
+     del nav (`--petroleo-x`). */
+  --nav-carril:          #072F45;
+  --nav-borde:           transparent;
+  --nav-tinta:           #FFFFFF;
+  --nav-palabra:         #FFFFFF;
+  --nav-item:            rgba(255, 255, 255, .84);
+  --nav-item-sub:        rgba(255, 255, 255, .72);
+  --nav-item-fuerte:     #FFFFFF;
+  --nav-grupo:           rgba(255, 255, 255, .5);
+  --nav-grupo-fuerte:    rgba(255, 255, 255, .82);
+  --nav-item-hover-bg:   rgba(159, 216, 208, .16);
+  --nav-item-activo-bg:  rgba(159, 216, 208, .22);
+  --nav-item-activo-luz: rgba(255, 255, 255, .12);
+  --nav-filete:          rgba(255, 255, 255, .12);
+  --nav-filete-suave:    rgba(255, 255, 255, .08);
+  --nav-control-fondo:   rgba(255, 255, 255, .10);
+  --nav-control-borde:   rgba(255, 255, 255, .24);
 
   /* Superficies
      `--sup-pagina` es **blanco** desde el 2026-09-10, por pedido del
@@ -142,7 +142,7 @@
   --sup-pagina:   #FFFFFF;
   --sup-tarjeta:  #FFFFFF;
   --sup-inset:    #F9F8F4;
-  --sup-nav:      #F8F5F0;
+  --sup-nav:      #0B557E;
 
   /* Tinta */
   --tinta:        #242828;
@@ -197,11 +197,10 @@
   /* CORRECCIÓN DE CONTRASTE (sync-alovida.mjs). La bóveda trae aguamarina al
      45 %: 1,48:1 sobre blanco, lejos del 3:1 de un indicador de foco (WCAG
      1.4.11). #33706C —el aqua-700 de v1.0— es sólido y da 5,71 sobre blanco
-     y 5,16 sobre marfil. En claro el nav también es marfil (27/10/2026), así
-     que usa el mismo anillo; en oscuro el nav es petróleo y ahí el anillo es
-     menta: ver --anillo-foco-nav en el bloque oscuro y .app-side-nav. */
+     y 5,16 sobre marfil. Sobre el petróleo del nav no se vería (1,41), así
+     que ahí el anillo es menta: ver --anillo-foco-nav y .app-side-nav. */
   --anillo-foco:  #33706C;
-  --anillo-foco-nav: #33706C;
+  --anillo-foco-nav: #9FD8D0;
 
   /* Estados: fondo tintado claro + tinta oscura del mismo tono */
   --ok-bg:        #DFEDE9;  --ok-tinta:     #27725C;
@@ -567,12 +566,12 @@ app-shell-layout { display: block; }
   background: linear-gradient(90deg, var(--nav-carril) 0 var(--w-nav), transparent var(--w-nav));
 }
 
-/* Fondo del menú de navegación: marfil en claro, petróleo en oscuro (ver los
-   tokens `--nav-*`). En oscuro, encima va un velo petróleo que garantiza el
-   contraste del texto blanco sobre las zonas claras de la textura. */
+/* Fondo del menú de navegación: petróleo en los dos temas (ver los tokens
+   `--nav-*`). Encima va un velo petróleo que garantiza el contraste del texto
+   blanco sobre las zonas claras de la textura. */
 .app-side-nav {
-  /* En oscuro el nav es petróleo y el anillo general ahí desaparece: el nav
-     usa su propio token (menta en oscuro, aqua-700 en claro sobre marfil). */
+  /* El anillo de foco del resto de la página es oscuro y sobre el petróleo
+     desaparece; en el nav se usa la menta (5,05:1 sobre #0B557E). */
   --anillo-foco: var(--anillo-foco-nav);
   position: fixed; top: 0; left: 0; bottom: 56px; width: var(--w-nav); z-index: 30;
   overflow: hidden auto;
@@ -585,8 +584,7 @@ app-shell-layout { display: block; }
 }
 
 /* Fondo del nav: viñeta + textura SVG + halo que sigue al puntero.
-   En oscuro, los tres son azules más profundos que el petróleo del nav. En
-   claro la viñeta y el degradado se apagan (`--nav-profundidad: 0`).
+   Los tres son azules más profundos que el petróleo del nav; nunca aclaran.
 
    Van en `fixed` con la misma geometría que el nav, no en `absolute`.
    El nav es `overflow: hidden auto`, así que un hijo absoluto con `inset: 0`
@@ -617,7 +615,8 @@ app-shell-layout { display: block; }
     calc(var(--puntero-yn, .5) * 16px - 8px), 0);
   transition: transform 220ms var(--curva);
 }
-/* El primer `rect` es el degradado petróleo de profundidad: sólo en oscuro. */
+/* El primer `rect` es el degradado petróleo de profundidad: cada tema lo
+   enciende o lo apaga con `--nav-profundidad`. */
 .app-side-nav__textura rect:first-of-type { opacity: var(--nav-profundidad); }
 
 /* Las dos líneas del monitor son lo único vivo del nav por su cuenta: el
@@ -685,13 +684,6 @@ app-shell-layout { display: block; }
   outline: 2px solid var(--aguamarina); outline-offset: 2px;
 }
 .app-side-nav__marca img { display: block; width: 34px; height: auto; flex: none; }
-/* El isotipo va en petróleo sobre el marfil y en blanco sobre el petróleo
-   nocturno. Las dos versiones están en el marcado; se muestra la del tema. */
-.app-side-nav__logo--oscuro { display: none !important; }
-:root[data-tema="oscuro"] .app-side-nav__logo--claro,
-:root[data-theme="dark"] .app-side-nav__logo--claro { display: none !important; }
-:root[data-tema="oscuro"] .app-side-nav__logo--oscuro,
-:root[data-theme="dark"] .app-side-nav__logo--oscuro { display: block !important; }
 .app-side-nav__palabra {
   font-family: var(--f-titulo); font-size: 22px; line-height: 28px; font-weight: 600;
   letter-spacing: .01em; color: var(--nav-palabra);
@@ -715,13 +707,11 @@ app-shell-layout { display: block; }
    cerrado: necesita más cuerpo. En oscuro todo está apagado y el mismo borde
    gritaría más que los destinos, que son lo que de verdad hay que leer. */
 :root {
-  /* En claro la barra es marfil: el botón es un control más, con el borde de
-     control de 3:1 (`--borde-ctrl`). */
-  --nav-recoger-borde: #7D8786;
-  --nav-recoger-fondo: #FFFFFF;
-  --nav-recoger-tinta: #4E5151;
-  --nav-recoger-hover-tinta: #242828;
-  --nav-recoger-hover-fondo: rgba(79, 179, 169, .12);
+  --nav-recoger-borde: rgba(255, 255, 255, .42);
+  --nav-recoger-fondo: rgba(255, 255, 255, .10);
+  --nav-recoger-tinta: rgba(255, 255, 255, .85);
+  --nav-recoger-hover-tinta: #FFFFFF;
+  --nav-recoger-hover-fondo: rgba(159, 216, 208, .22);
 }
 :root[data-tema="oscuro"], :root[data-theme="dark"] {
   --nav-recoger-borde: rgba(159, 216, 208, .48);
@@ -2461,7 +2451,7 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   html[data-js].nav-abierto .marco-atenuado { filter: none; }
   /* El halo y la textura se apoyaban en una geometría `fixed` que el
      `transform` del cajón deja de contener bien. En el cajón el nav es
-     liso —marfil en claro, petróleo en oscuro—, sin la capa decorativa. */
+     petróleo pleno: mismo hex, sin la capa decorativa. */
   html[data-js] .app-side-nav__fondo,
   html[data-js] .app-side-nav__brillo,
   html[data-js] .app-side-nav::before { display: none; }
