@@ -41,6 +41,23 @@ export interface DayGap {
   readonly tipo: 'cita' | 'bloqueo';
 }
 
+/** Una franja ya resuelta a instantes del día mirado. */
+interface TimeRange {
+  readonly desde: Date;
+  readonly hasta: Date;
+}
+
+/**
+ * Desde cuántos minutos una sesión se confirma antes de guardarla.
+ *
+ * Más de 4 h casi nunca es lo que se quiso agendar: suele ser una hora de fin
+ * mal escrita. Se pregunta en vez de impedirlo, porque la sesión larga existe.
+ */
+const LONG_SESSION_MINUTES = 240;
+
+/** El error del campo «Hasta» cuando la franja escrita no cierra. */
+const END_NOT_AFTER_START = 'La hora de fin tiene que ser después de la de inicio';
+
 /**
  * LA TARJETA — el único gesto de creación del calendario (AG-5, parte 2).
  *
@@ -222,6 +239,21 @@ export class DayCard {
    */
   protected readonly blockedByGap = computed(() => this.overlaps()?.tipo === 'bloqueo');
 
+  /**
+   * El error del campo «Hasta», o `''` mientras no haya ninguno.
+   *
+   * Antes la franja invertida sólo apagaba Guardar, sin decir por qué. Se dice
+   * con las dos horas completas: mientras se escribe el «1» de «14:00» no hay
+   * nada mal, hay una hora a medio escribir. Sobre un cupo no aplica: ahí no
+   * hay campos, la franja la pone el cupo.
+   */
+  protected readonly endTimeError = computed(() => {
+    const start = withTime(this.dia(), this.from());
+    const end = withTime(this.dia(), this.hasta());
+    if (this.fromSlot() || start === null || end === null) return '';
+    return end.getTime() > start.getTime() ? '' : END_NOT_AFTER_START;
+  });
+
   protected readonly canSave = computed(() => {
     const rango = this.range();
     return (
@@ -264,56 +296,90 @@ export class DayCard {
   /**
    * Guardar: la inferencia decide qué se crea.
    *
+   * Una sesión de más de {@link LONG_SESSION_MINUTES} minutos se confirma
+   * antes; con «Volver» no se guarda nada y el modal queda como estaba.
+   *
    * El 422 del servidor —la regla madre, con qué/cuándo/dónde— se muestra tal
    * cual: ese mensaje ya está escrito para una persona.
    */
   protected save(): void {
     const rango = this.range();
-    // `puedeGuardar()` ya incluye el bloqueo; se vuelve a mirar acá porque un
+    // `canSave()` ya incluye el bloqueo; se vuelve a mirar acá porque un
     // botón deshabilitado no es una regla: esta función se puede invocar por
     // teclado, por `submit` del formulario y desde una prueba.
     if (rango === null || this.blockedByGap() || !this.canSave()) return;
 
+    if (!isLongSession(rango)) {
+      this.persist(rango);
+      return;
+    }
+    void this.confirmLongSession(rango).then((confirmed) => {
+      if (confirmed) this.persist(rango);
+    });
+  }
+
+  /** Pregunta antes de guardar una sesión larga, con su duración y su franja. */
+  private confirmLongSession(range: TimeRange): Promise<boolean> {
+    return this.dialogs.confirm({
+      title: `¿Está seguro de agendar una sesión de ${sessionLength(minutesOf(range))}?`,
+      message: `La sesión va de ${timeOf(range.desde)} a ${timeOf(range.hasta)}.`,
+      confirmLabel: 'Confirmar',
+      cancelLabel: 'Volver',
+    });
+  }
+
+  /** Crea lo que la inferencia decidió: la cita si hay paciente; si no, el tiempo ocupado. */
+  private persist(range: TimeRange): void {
     this.saving.set(true);
     this.error.set(null);
 
-    const paciente = this.patient();
-    if (paciente !== null) {
-      const duracionMin = Math.round((rango.hasta.getTime() - rango.desde.getTime()) / 60_000);
-      this.scheduling
-        .createDirectAppointment({
-          patientProfileId: paciente.value,
-          resourceId: this.resourceId(),
-          startAt: rango.desde.toISOString(),
-          durationMinutes: duracionMin,
-          ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
-        })
-        .subscribe({
-          next: (creado) => {
-            this.saving.set(false);
-            this.toasts.success(
-              creado.retractedSlots > 0
-                ? `Le avisamos al paciente. Esto quitó ${creado.retractedSlots} ${
-                    creado.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
-                  }.`
-                : 'Le avisamos al paciente. No tiene que confirmar nada.',
-              'Cita agendada',
-            );
-            this.creada.emit();
-          },
-          error: (error: unknown) => this.failure(error),
-        });
+    const chosen = this.patient();
+    if (chosen === null) {
+      this.createBusyTime(range);
       return;
     }
+    this.createAppointment(chosen, range);
+  }
 
-    // Con citas en el rato, la API lista a quién alcanza y `BlockCancellations`
-    // pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
+  private createAppointment(patient: ReferenceOption, range: TimeRange): void {
+    this.scheduling
+      .createDirectAppointment({
+        patientProfileId: patient.value,
+        resourceId: this.resourceId(),
+        startAt: range.desde.toISOString(),
+        durationMinutes: minutesOf(range),
+        ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
+      })
+      .subscribe({
+        next: (created) => {
+          this.saving.set(false);
+          this.toasts.success(
+            created.retractedSlots > 0
+              ? `Le avisamos al paciente. Esto quitó ${created.retractedSlots} ${
+                  created.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
+                }.`
+              : 'Le avisamos al paciente. No tiene que confirmar nada.',
+            'Cita agendada',
+          );
+          this.creada.emit();
+        },
+        error: (error: unknown) => this.failure(error),
+      });
+  }
+
+  /**
+   * El tiempo ocupado del doctor.
+   *
+   * Con citas en el rato, la API lista a quién alcanza y `BlockCancellations`
+   * pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
+   */
+  private createBusyTime(range: TimeRange): void {
     this.cancellations
       .withConfirmation((confirmed) =>
         this.scheduling.createException(this.resourceId(), {
           exceptionType: 'ABSENCE',
-          startAt: rango.desde.toISOString(),
-          endAt: rango.hasta.toISOString(),
+          startAt: range.desde.toISOString(),
+          endAt: range.hasta.toISOString(),
           reason: this.reason().trim(),
           ...(confirmed ? { cancelAffectedBookings: true } : {}),
         }),
@@ -340,7 +406,7 @@ export class DayCard {
    * cualquier cosa que las escribiera terminaría en la cita. Acá se corta:
    * viniendo de un cupo, lo que se guarda es su franja, punto.
    */
-  private range(): { desde: Date; hasta: Date } | null {
+  private range(): TimeRange | null {
     if (this.fromSlot()) {
       return { desde: this.desdeInicial(), hasta: this.hastaInicial() };
     }
@@ -431,4 +497,22 @@ function withTime(dia: Date, texto: string): Date | null {
   const fecha = new Date(dia);
   fecha.setHours(Number(partes[1]), Number(partes[2]), 0, 0);
   return fecha;
+}
+
+/** Cuántos minutos dura la franja. */
+function minutesOf(range: TimeRange): number {
+  return Math.round((range.hasta.getTime() - range.desde.getTime()) / 60_000);
+}
+
+/** Si la franja pasa de {@link LONG_SESSION_MINUTES} y se confirma antes de guardarla. */
+function isLongSession(range: TimeRange): boolean {
+  return minutesOf(range) > LONG_SESSION_MINUTES;
+}
+
+/** La duración dicha para una persona: «5 horas», o «4 h 30 min» si no son horas justas. */
+function sessionLength(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (rest > 0) return `${hours} h ${rest} min`;
+  return hours === 1 ? '1 hora' : `${hours} horas`;
 }

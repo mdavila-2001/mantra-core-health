@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import type { Signal, WritableSignal } from '@angular/core';
 
 import { DayCard, type DayGap } from './day-card';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
 const DIA = new Date(2026, 8, 10);
@@ -419,13 +420,161 @@ describe('TarjetaDelDia', () => {
     });
   });
 
-  it('un rango invertido no deja guardar', async () => {
-    await montar();
-    api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
-    api().from.set('11:00');
-    api().hasta.set('10:00');
+  /**
+   * La franja escrita tiene que cerrar, y una sesión larga se confirma.
+   *
+   * Antes «Hasta» antes de «Desde» apagaba Guardar sin decir por qué. Ahora el
+   * campo «Hasta» dice qué está mal, y una sesión de más de 4 h —casi siempre
+   * una hora de fin mal escrita— pregunta antes de guardar.
+   */
+  describe('el horario se valida al escribirlo', () => {
+    /** Los dos campos de hora, en el orden en que se ven: «Desde» y «Hasta». */
+    function timeInputs(): HTMLInputElement[] {
+      const root = fixture.nativeElement as HTMLElement;
+      return Array.from(root.querySelectorAll<HTMLInputElement>('.tarjeta__rango input'));
+    }
 
-    expect(api().canSave()).toBe(false);
+    /** El nodo al que apunta el `aria-describedby` de un control, si apunta a alguno. */
+    function describerOf(control: HTMLElement): HTMLElement | null {
+      const id = control.getAttribute('aria-describedby');
+      return id === null ? null : (fixture.nativeElement as HTMLElement).querySelector(`[id="${id}"]`);
+    }
+
+    async function writeRange(start: string, end: string): Promise<void> {
+      api().from.set(start);
+      api().hasta.set(end);
+      fixture.detectChanges();
+      await fixture.whenStable();
+    }
+
+    async function withPatient(): Promise<void> {
+      await montar();
+      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      fixture.detectChanges();
+    }
+
+    it.each([
+      ['21:00', '20:00'],
+      ['10:00', '10:00'],
+    ])('de %s a %s: «Hasta» dice qué está mal y no se guarda', async (start, end) => {
+      await withPatient();
+      await writeRange(start, end);
+
+      const [startInput, endInput] = timeInputs();
+      expect(endInput.getAttribute('aria-invalid')).toBe('true');
+      expect(describerOf(endInput)?.textContent).toContain(
+        'La hora de fin tiene que ser después de la de inicio',
+      );
+      // El error es de «Hasta»: «Desde» no se marca.
+      expect(startInput.getAttribute('aria-invalid')).toBe('false');
+      expect(api().canSave()).toBe(false);
+
+      api().save();
+      http.expectNone(() => true);
+      http.verify();
+    });
+
+    it('mientras se escribe la hora de fin no hay error: está a medio escribir', async () => {
+      await withPatient();
+      await writeRange('10:00', '1');
+
+      const [, endInput] = timeInputs();
+      expect(endInput.getAttribute('aria-invalid')).toBe('false');
+      expect(fixture.nativeElement.textContent).not.toContain('La hora de fin tiene que ser');
+    });
+
+    it('de 09:00 a 10:00 guarda sin preguntar', async () => {
+      await withPatient();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm');
+      await writeRange('09:00', '10:00');
+
+      api().save();
+      const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+      expect(req.request.body.durationMinutes).toBe(60);
+      expect(confirm).not.toHaveBeenCalled();
+      req.flush(CREATED_APPOINTMENT);
+      http.verify();
+    });
+
+    it('de 09:00 a 13:00 —4 h justas— tampoco pregunta: el umbral es «más de 4 h»', async () => {
+      await withPatient();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm');
+      await writeRange('09:00', '13:00');
+
+      api().save();
+      http.expectOne((r) => r.url === '/scheduling/appointments/direct').flush(CREATED_APPOINTMENT);
+      expect(confirm).not.toHaveBeenCalled();
+      http.verify();
+    });
+
+    it('de 09:00 a 14:00 pregunta antes, y con «Confirmar» guarda', async () => {
+      await withPatient();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      await writeRange('09:00', '14:00');
+
+      api().save();
+      await fixture.whenStable();
+
+      expect(confirm).toHaveBeenCalledOnce();
+      expect(confirm.mock.calls[0]?.[0]).toMatchObject({
+        title: '¿Está seguro de agendar una sesión de 5 horas?',
+        confirmLabel: 'Confirmar',
+        cancelLabel: 'Volver',
+      });
+      const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+      expect(req.request.body.durationMinutes).toBe(300);
+      req.flush(CREATED_APPOINTMENT);
+      http.verify();
+    });
+
+    it('con «Volver» no guarda y el modal queda como estaba', async () => {
+      await withPatient();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+      const closed = vi.fn();
+      fixture.componentInstance.cerrada.subscribe(closed);
+      await writeRange('09:00', '14:00');
+
+      api().save();
+      await fixture.whenStable();
+
+      expect(confirm).toHaveBeenCalledOnce();
+      http.expectNone(() => true);
+      http.verify();
+      expect(api().from()).toBe('09:00');
+      expect(api().hasta()).toBe('14:00');
+      expect(api().patient()?.value).toBe('pp-ana');
+      expect(api().canSave()).toBe(true);
+      expect(closed).not.toHaveBeenCalled();
+    });
+
+    it('si no son horas justas lo dice en horas y minutos: «4 h 30 min»', async () => {
+      await withPatient();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+      await writeRange('09:00', '13:30');
+
+      api().save();
+      await fixture.whenStable();
+
+      expect(confirm.mock.calls[0]?.[0]?.title).toBe(
+        '¿Está seguro de agendar una sesión de 4 h 30 min?',
+      );
+    });
+
+    it('un rato ocupado largo también se confirma antes de guardarlo', async () => {
+      await montar();
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+      api().reason.set('Guardia');
+      await writeRange('08:00', '14:00');
+
+      api().save();
+      await fixture.whenStable();
+
+      expect(confirm.mock.calls[0]?.[0]?.title).toBe(
+        '¿Está seguro de agendar una sesión de 6 horas?',
+      );
+      http.expectNone(() => true);
+      http.verify();
+    });
   });
 
   it('busca pacientes y arma las opciones sin uuids a la vista', async () => {
