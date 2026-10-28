@@ -3449,6 +3449,29 @@ describe('RegisterPractitioner', () => {
       });
     });
 
+    it('el distrito del consultorio viaja aparte de la calle (ADR-0028)', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({
+        officeAddressLines: 'Calle Warnes 45',
+        officeDistrict: 'Equipetrol',
+      });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        address: { lines: ['Calle Warnes 45'], district: 'Equipetrol' },
+      });
+    });
+
+    it('un distrito solo alcanza para declarar la dirección del consultorio', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({ officeDistrict: '  Equipetrol  ' });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        address: { lines: [], district: 'Equipetrol' },
+      });
+    });
+
     it('es un lugar distinto del domicilio, y no se pisan', () => {
       // Hay quien vive en una ciudad y atiende en otra. Las dos localidades y
       // los dos puntos son señales separadas: confirmar uno no confirma el otro.

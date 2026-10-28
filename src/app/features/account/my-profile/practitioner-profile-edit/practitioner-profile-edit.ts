@@ -253,6 +253,8 @@ const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
   professionalBio: TAB_EDITOR.personales,
   homeAddressLines: TAB_EDITOR.contacto,
   workAddressLines: TAB_EDITOR.contacto,
+  homeDistrict: TAB_EDITOR.contacto,
+  workDistrict: TAB_EDITOR.contacto,
   mobilePhone: TAB_EDITOR.contacto,
   personalEmail: TAB_EDITOR.contacto,
   workEmail: TAB_EDITOR.contacto,
@@ -401,9 +403,11 @@ const CAMPOS_POR_PESTANA: Readonly<Record<number, readonly string[]>> = {
     'workEmail',
     'residenceMunicipalityConceptId',
     'homeAddressLines',
+    'homeDistrict',
     'homeLatitude',
     'homeLongitude',
     'workAddressLines',
+    'workDistrict',
     'workLatitude',
     'workLongitude',
   ],
@@ -933,6 +937,9 @@ export class PractitionerProfileEdit {
   protected readonly direccion = signal('');
   /** Dirección laboral, separada del domicilio personal. */
   protected readonly direccionTrabajo = signal('');
+  /** El distrito o zona de cada dirección, que el mapa deduce del punto (ADR-0028). */
+  protected readonly distritoDomicilio = signal('');
+  protected readonly distritoTrabajo = signal('');
   // Desde el 26/10/2026 las dos direcciones **no se escriben**: salen del
   // punto de cada mapa (ver `volcarDomicilio`). Siguen siendo señales porque
   // lo guardado se muestra y viaja igual que antes.
@@ -1019,6 +1026,7 @@ export class PractitionerProfileEdit {
     const localidad = confirmedLocality(this.localidadDomicilio(), punto);
     if (punto !== null && localidad === null) return;
     this.direccion.set(localidad?.calle ?? localidad?.zona ?? '');
+    this.distritoDomicilio.set(localidad?.zona ?? '');
     if (localidad?.municipioConceptId) this.municipioResidencia.set(localidad.municipioConceptId);
   }
 
@@ -1029,6 +1037,7 @@ export class PractitionerProfileEdit {
     const localidad = confirmedLocality(this.localidadTrabajo(), punto);
     if (punto !== null && localidad === null) return;
     this.direccionTrabajo.set(localidad?.calle ?? localidad?.zona ?? '');
+    this.distritoTrabajo.set(localidad?.zona ?? '');
   }
 
   protected readonly idsGpsDomicilio: TestIds = {
@@ -2065,6 +2074,7 @@ export class PractitionerProfileEdit {
       this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
       // ALV-009: la calle, si la declaró.
       this.direccion.set(perfil.homeAddress?.lines ?? '');
+      this.distritoDomicilio.set(perfil.homeAddress?.district ?? '');
       // Y su punto en el mapa. Las dos mitades tienen que estar: una latitud sin
       // longitud pondría el pin en el meridiano cero.
       const lat = perfil.homeAddress?.latitude;
@@ -2072,6 +2082,7 @@ export class PractitionerProfileEdit {
       this.gpsDomicilioGuardado.set(lat === undefined || lng === undefined ? null : { lat, lng });
       this.gpsDomicilio.set(undefined);
       this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+      this.distritoTrabajo.set(perfil.workAddress?.district ?? '');
       const latTrabajo = perfil.workAddress?.latitude;
       const lngTrabajo = perfil.workAddress?.longitude;
       this.gpsTrabajoGuardado.set(
@@ -2134,6 +2145,8 @@ export class PractitionerProfileEdit {
       this.municipioResidencia(),
       this.direccion(),
       this.direccionTrabajo(),
+      this.distritoDomicilio(),
+      this.distritoTrabajo(),
       this.gpsDomicilioInicial(),
       this.gpsTrabajoInicial(),
       this.textoNacimientoEditado ?? this.textoNacimientoGuardado,
@@ -2340,6 +2353,8 @@ export class PractitionerProfileEdit {
       workAddressLines: string;
       workLatitude: number | null;
       workLongitude: number | null;
+      homeDistrict: string;
+      workDistrict: string;
       taxId: string;
       taxHolderName: string;
       insuranceBillingFrequency: InsuranceBillingFrequency;
@@ -2387,6 +2402,9 @@ export class PractitionerProfileEdit {
     if (this.direccion() !== (original.homeAddress?.lines ?? '')) {
       cambios.homeAddressLines = this.direccion();
     }
+    if (this.distritoDomicilio() !== (original.homeAddress?.district ?? '')) {
+      cambios.homeDistrict = this.distritoDomicilio();
+    }
     // El punto, con los mismos tres estados que en el editor del paciente:
     // `undefined` no viaja, `null` quita y un par mueve. Mandar el punto actual
     // «por las dudas» convertiría cada guardado en una reescritura del mapa.
@@ -2400,6 +2418,9 @@ export class PractitionerProfileEdit {
     }
     if (this.direccionTrabajo() !== (original.workAddress?.lines ?? '')) {
       cambios.workAddressLines = this.direccionTrabajo();
+    }
+    if (this.distritoTrabajo() !== (original.workAddress?.district ?? '')) {
+      cambios.workDistrict = this.distritoTrabajo();
     }
     const gpsTrabajo = this.gpsTrabajo();
     if (gpsTrabajo === null) {

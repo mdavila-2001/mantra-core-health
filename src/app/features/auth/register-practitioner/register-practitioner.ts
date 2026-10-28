@@ -66,7 +66,6 @@ import {
 } from '../../../shared/components/organisms/registration-help/registration-help';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { componerDireccion } from '../shared-registration/address-line';
 import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
 import {
   MapLocationPicker,
@@ -1288,8 +1287,7 @@ export class RegisterPractitioner {
       validators: [Validators.required],
     }),
     // Lo que sale del punto, en sólo lectura: la calle, el distrito o zona (que
-    // viaja dentro de la línea de dirección, ver `componerDireccion`) y el
-    // municipio. Ya no son campos de ninguna página —los muestra el selector
+    // viaja aparte de la calle, ADR-0028 de la API) y el municipio. Ya no son campos de ninguna página —los muestra el selector
     // del mapa— y sin validadores, para que nada invisible frene el alta. Los
     // escriben `aplicarLocalidad*`.
     homeAddressLines: new FormControl('', { nonNullable: true }),
@@ -2805,19 +2803,27 @@ export class RegisterPractitioner {
   private consultorioPropio(): NewOwnSite | null {
     const raw = this.formProfesional.getRawValue();
     const nombre = raw.officeName.trim();
-    const calle = componerDireccion(raw.officeAddressLines, raw.officeDistrict);
+    const calle = raw.officeAddressLines.trim();
+    const distrito = raw.officeDistrict.trim();
     const telefono = raw.officeContactPhone.trim();
     const municipio = this.municipioConsultorio();
     const punto = this.gpsConsultorio();
 
-    if (nombre === '' && calle === '' && telefono === '' && municipio === null && punto === null) {
+    if (
+      nombre === '' &&
+      calle === '' &&
+      distrito === '' &&
+      telefono === '' &&
+      municipio === null &&
+      punto === null
+    ) {
       return null;
     }
 
     // La dirección sólo viaja si tiene algo adentro: una dirección vacía no es
     // «sin dirección», es una fila vacía en `common.addresses`. Es la misma
     // regla que ya aplica `work-history.ts` al registrar una sede.
-    const conDireccion = calle !== '' || municipio !== null || punto !== null;
+    const conDireccion = calle !== '' || distrito !== '' || municipio !== null || punto !== null;
 
     return {
       name: nombre === '' ? NOMBRE_CONSULTORIO_POR_OMISION : nombre,
@@ -2826,6 +2832,7 @@ export class RegisterPractitioner {
         ? {
             address: {
               lines: calle === '' ? [] : [calle],
+              ...(distrito === '' ? {} : { district: distrito }),
               ...(municipio === null ? {} : { municipalityConceptId: municipio }),
               ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
             },
