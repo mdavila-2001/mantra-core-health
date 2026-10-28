@@ -1,83 +1,79 @@
-<app-card variant="outlined" padding="lg" class="derivacion">
+<app-card variant="outlined" padding="lg" class="referral">
   <!-- Sin título ni bajada propios: el modal de la consulta ya dice «Derivar a
        otro profesional u organización» y explica que se le avisa a la persona.
        UNA tarjeta: el formulario arriba y, debajo, lo que la persona ya tiene
        derivado — que es donde aparece la recién emitida cuando se relee. -->
-  @if (sinEncuentro()) {
+  @if (noEncounter()) {
     <!-- Sin encuentro no hay derivación con aviso: el encuentro es lo que
          demuestra que usted atendió a esta persona. Se dice qué falta en vez
          de ofrecer un formulario que guardaría y no avisaría a nadie. -->
-    <app-alert
-      tone="info"
-      title="Abra el encuentro para derivar"
-      data-testid="derivacion-sin-encuentro"
-    >
+    <app-alert tone="info" title="Abra el encuentro para derivar" data-testid="referral-no-encounter">
       Abra el encuentro de esta consulta, arriba, y acá va a poder derivar. Así la persona recibe su
       aviso.
     </app-alert>
   } @else {
-    @if (derivadoA(); as nombre) {
-      <app-alert class="derivacion__aviso" tone="success" title="Derivación enviada" data-testid="derivacion-exito">
-        Le avisamos a la persona que la derivó a {{ nombre }}. Ya puede ver la ficha y reservar
-        desde su portal.
+    @if (referredTo(); as name) {
+      <app-alert class="referral__notice" tone="success" title="Derivación enviada" data-testid="referral-success">
+        Le avisamos a la persona que la derivó a {{ name }}. Ya puede ver la ficha y reservar desde
+        su portal.
       </app-alert>
     }
 
-    @if (yaDerivado()) {
+    @if (duplicate()) {
       <app-alert
-        class="derivacion__aviso"
+        class="referral__notice"
         tone="warning"
         title="Ya la derivó a este destino"
-        data-testid="derivacion-duplicada"
+        data-testid="referral-duplicate"
       >
         En este encuentro ya hay una derivación equivalente. No hace falta otra.
       </app-alert>
     }
 
-    @if (errorDelRegistro(); as mensaje) {
-      <app-alert class="derivacion__aviso" tone="error" data-testid="derivacion-error">{{ mensaje }}</app-alert>
+    @if (submissionError(); as message) {
+      <app-alert class="referral__notice" tone="error" data-testid="referral-error">{{ message }}</app-alert>
     }
 
-    <form class="derivacion__formulario app-form-grid" (submit)="$event.preventDefault()">
+    <form class="referral__form app-form-grid" (submit)="$event.preventDefault()">
       <app-form-field class="app-form-grid__ancho" label="¿A quién deriva?">
         <app-segmented-control
-          data-testid="derivacion-clase"
+          data-testid="referral-kind"
           ariaLabel="A quién deriva"
           size="md"
-          [options]="opcionesDeDestino"
-          [value]="clase()"
-          (valueChange)="elegirClase($event)"
+          [options]="targetKindOptions"
+          [value]="kind()"
+          (valueChange)="chooseKind($event)"
         />
       </app-form-field>
 
       <!-- El buscador se vuelve a montar al derivar: el combobox guarda su
            texto, y el de un destino que ya no está elegido no puede quedar
-           escrito. La clase ya monta uno por rama. -->
-      @if (vueltaPar()) {
-        <ng-container [ngTemplateOutlet]="buscador" />
+           escrito. La clase de destino ya monta uno por rama. -->
+      @if (remountToggle()) {
+        <ng-container [ngTemplateOutlet]="targetSearch" />
       } @else {
-        <ng-container [ngTemplateOutlet]="buscador" />
+        <ng-container [ngTemplateOutlet]="targetSearch" />
       }
-      <ng-template #buscador>
-        @if (clase() === 'PRACTITIONER') {
+      <ng-template #targetSearch>
+        @if (kind() === 'PRACTITIONER') {
           <app-form-field
             class="app-form-grid__ancho"
             icon="stethoscope"
             label="Profesional recomendado"
             hint="Escriba al menos dos letras del nombre. No aparece usted."
             [required]="true"
-            [errorMessage]="errorDeBusqueda() ?? ''"
+            [errorMessage]="searchError() ?? ''"
           >
             <app-reference-combobox
-              data-testid="derivacion-profesional"
-              [options]="opciones()"
-              [loading]="buscando()"
-              [minQueryLength]="minimoDeBusqueda"
+              data-testid="referral-practitioner"
+              [options]="targetOptions()"
+              [loading]="searching()"
+              [minQueryLength]="minQueryLength"
               label="Profesional recomendado"
               placeholder="Ej. Dra. Mendoza"
               emptyMessage="No encontramos a nadie con ese nombre"
-              (searched)="buscar($event)"
-              (selectionChange)="elegir($event)"
+              (searched)="search($event)"
+              (selectionChange)="choose($event)"
             />
           </app-form-field>
         } @else {
@@ -87,41 +83,41 @@
             label="Organización médica"
             hint="Escriba al menos dos letras del nombre de la clínica, el hospital o el laboratorio."
             [required]="true"
-            [errorMessage]="errorDeBusqueda() ?? ''"
+            [errorMessage]="searchError() ?? ''"
           >
             <app-reference-combobox
-              data-testid="derivacion-organizacion"
-              [options]="opciones()"
-              [loading]="buscando()"
-              [minQueryLength]="minimoDeBusqueda"
+              data-testid="referral-organization"
+              [options]="targetOptions()"
+              [loading]="searching()"
+              [minQueryLength]="minQueryLength"
               label="Organización médica"
               placeholder="Ej. Hospital San Lucas"
               emptyMessage="No encontramos una organización con ese nombre"
-              (searched)="buscar($event)"
-              (selectionChange)="elegir($event)"
+              (searched)="search($event)"
+              (selectionChange)="choose($event)"
             />
           </app-form-field>
         }
       </ng-template>
 
       <!-- Los servicios del destino: recién con un destino elegido. -->
-      <div class="derivacion__servicios" data-testid="derivacion-servicios">
-        @if (destino(); as elegido) {
-          <app-view-state-host [state]="servicios()" (retry)="cargarServicios()">
-            <p vsh-skeleton class="derivacion__secundario">
-              Buscando los servicios de {{ elegido.displayName }}…
+      <div class="referral__services" data-testid="referral-services">
+        @if (target(); as chosen) {
+          <app-view-state-host [state]="services()" (retry)="loadServices()">
+            <p vsh-skeleton class="referral__secondary">
+              Buscando los servicios de {{ chosen.displayName }}…
             </p>
-            <app-form-field label="Servicio" [hint]="detalleDelServicio()">
+            <app-form-field label="Servicio" [hint]="serviceHint()">
               <app-select
-                data-testid="derivacion-servicio"
-                [options]="opcionesDeServicio()"
-                [value]="servicioElegido()"
-                (valueChange)="servicioElegido.set($event)"
+                data-testid="referral-service"
+                [options]="serviceOptions()"
+                [value]="selectedService()"
+                (valueChange)="selectedService.set($event)"
               />
             </app-form-field>
           </app-view-state-host>
         } @else {
-          <p class="derivacion__secundario">
+          <p class="referral__secondary">
             Elija el destino y acá va a ver los servicios que ofrece, con su arancel.
           </p>
         }
@@ -129,19 +125,19 @@
 
       <app-form-field label="Tipo de derivación" hint="Qué se le pide al destino.">
         <app-select
-          data-testid="derivacion-tipo"
-          [options]="opcionesDeTipo"
-          [value]="tipo()"
-          (valueChange)="tipo.set($event)"
+          data-testid="referral-type"
+          [options]="typeOptions"
+          [value]="referralType()"
+          (valueChange)="referralType.set($event)"
         />
       </app-form-field>
 
       <app-form-field icon="calendar" label="Vigencia" hint="Opcional. Hasta cuándo vale.">
         <app-date-picker
-          data-testid="derivacion-vigencia"
+          data-testid="referral-valid-until"
           mode="date-only"
-          [minDate]="hoy"
-          [(value)]="vigencia"
+          [minDate]="today"
+          [(value)]="validUntil"
         />
       </app-form-field>
 
@@ -151,52 +147,52 @@
         hint="Opcional. Se lo mostramos a la persona en su aviso."
       >
         <app-textarea
-          data-testid="derivacion-motivo"
+          data-testid="referral-reason"
           [rows]="3"
-          [maxLength]="topeDelMotivo"
-          [(value)]="motivo"
+          [maxLength]="reasonMaxLength"
+          [(value)]="reason"
         />
       </app-form-field>
 
       <button
         app-button
         variant="primary"
-        data-testid="derivacion-enviar"
-        [isLoading]="enviando()"
-        [disabled]="!puedeEnviar()"
-        (clicked)="derivar()"
+        data-testid="referral-submit"
+        [isLoading]="sending()"
+        [disabled]="!canSubmit()"
+        (clicked)="submit()"
       >
         Derivar y avisar a la persona
       </button>
     </form>
   }
 
-  @if (lista(); as estado) {
+  @if (list(); as state) {
     <app-divider />
 
-    <section class="derivacion__lista" aria-labelledby="derivacion-lista-titulo">
-      <h3 id="derivacion-lista-titulo" class="derivacion__titulo">Derivaciones de esta persona</h3>
+    <section class="referral__list" aria-labelledby="referral-list-title">
+      <h3 id="referral-list-title" class="referral__title">Derivaciones de esta persona</h3>
 
-      <app-view-state-host [state]="estado" (retry)="reintentar.emit()">
-        <p vsh-skeleton class="derivacion__secundario">Buscando las derivaciones…</p>
-        <ol class="derivacion__filas" data-testid="derivacion-lista">
-          @for (fila of filas(); track fila.id) {
-            <li class="derivacion__fila" data-testid="derivacion-fila">
-              <div class="derivacion__cabecera">
-                <span class="derivacion__principal">{{ fila.tipo }} · {{ fila.destino }}</span>
-                <app-status-seal [variant]="fila.variante" [label]="fila.estado" />
+      <app-view-state-host [state]="state" (retry)="retry.emit()">
+        <p vsh-skeleton class="referral__secondary">Buscando las derivaciones…</p>
+        <ol class="referral__rows" data-testid="referral-list">
+          @for (row of rows(); track row.id) {
+            <li class="referral__row" data-testid="referral-row">
+              <div class="referral__heading">
+                <span class="referral__main">{{ row.type }} · {{ row.target }}</span>
+                <app-status-seal [variant]="row.variant" [label]="row.status" />
               </div>
-              <span class="derivacion__secundario">
-                {{ fila.servicio ?? 'Sin un servicio en particular' }}
+              <span class="referral__secondary">
+                {{ row.service ?? 'Sin un servicio en particular' }}
               </span>
-              <span class="derivacion__secundario">
-                Emitida el {{ fila.emitida | date: 'd MMM y' }}
-                @if (fila.vigencia) {
-                  · vale hasta el {{ fila.vigencia | date: 'd MMM y' }}
+              <span class="referral__secondary">
+                Emitida el {{ row.createdAt | date: 'd MMM y' }}
+                @if (row.validUntil) {
+                  · vale hasta el {{ row.validUntil | date: 'd MMM y' }}
                 }
               </span>
-              @if (fila.motivo) {
-                <span class="derivacion__motivo">{{ fila.motivo }}</span>
+              @if (row.reason) {
+                <span class="referral__reason">{{ row.reason }}</span>
               }
             </li>
           }

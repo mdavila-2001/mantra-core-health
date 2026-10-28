@@ -19,9 +19,9 @@ import type { StatusSealVariant } from '../../../../shared/components/organisms/
  * «Tratamiento» primero y por defecto: es lo que el cliente pidió
  * literalmente («derivación de servicios específicos… tipo tratamiento»).
  */
-export const TIPO_POR_DEFECTO: ReferralType = 'TREATMENT';
+export const DEFAULT_REFERRAL_TYPE: ReferralType = 'TREATMENT';
 
-const ROTULO_DEL_TIPO: Readonly<Record<ReferralType, string>> = {
+const REFERRAL_TYPE_LABELS: Readonly<Record<ReferralType, string>> = {
   TREATMENT: 'Tratamiento',
   CONSULTATION: 'Interconsulta',
   DIAGNOSTIC_STUDY: 'Estudio diagnóstico',
@@ -29,11 +29,11 @@ const ROTULO_DEL_TIPO: Readonly<Record<ReferralType, string>> = {
   SECOND_OPINION: 'Segunda opinión',
 };
 
-export const OPCIONES_DE_TIPO: readonly SelectOption<ReferralType>[] = (
-  Object.keys(ROTULO_DEL_TIPO) as ReferralType[]
-).map((value) => ({ value, label: ROTULO_DEL_TIPO[value] }));
+export const REFERRAL_TYPE_OPTIONS: readonly SelectOption<ReferralType>[] = (
+  Object.keys(REFERRAL_TYPE_LABELS) as ReferralType[]
+).map((value) => ({ value, label: REFERRAL_TYPE_LABELS[value] }));
 
-export const OPCIONES_DE_DESTINO: readonly SegmentedOption<ReferralTargetKind>[] = [
+export const TARGET_KIND_OPTIONS: readonly SegmentedOption<ReferralTargetKind>[] = [
   { value: 'PRACTITIONER', label: 'Profesional', icon: 'stethoscope' },
   // Rótulo corto: a 390 px «Organización médica» se cortaba con puntos
   // suspensivos. El nombre accesible es el completo y contiene al visible.
@@ -45,63 +45,60 @@ export const OPCIONES_DE_DESTINO: readonly SegmentedOption<ReferralTargetKind>[]
  * puede venir en inglés si el concepto no tiene designación en castellano, y
  * el tono del sello no se deduce de un texto.
  */
-const ESTADO_POR_CODIGO: Readonly<
-  Record<string, { readonly rotulo: string; readonly variante: StatusSealVariant }>
+const STATUS_BY_CODE: Readonly<
+  Record<string, { readonly label: string; readonly variant: StatusSealVariant }>
 > = {
-  REF_REQUESTED: { rotulo: 'Solicitada', variante: 'pending' },
-  REF_ACCEPTED: { rotulo: 'Aceptada', variante: 'approved' },
-  REF_REJECTED: { rotulo: 'Rechazada', variante: 'rejected' },
+  REF_REQUESTED: { label: 'Solicitada', variant: 'pending' },
+  REF_ACCEPTED: { label: 'Aceptada', variant: 'approved' },
+  REF_REJECTED: { label: 'Rechazada', variant: 'rejected' },
 };
 
 /** Una derivación ya resuelta para la lista. */
-export interface DerivacionEnPantalla {
+export interface ReferralRow {
   readonly id: string;
-  readonly tipo: string;
-  readonly destino: string;
-  readonly servicio: string | null;
-  readonly estado: string;
-  readonly variante: StatusSealVariant;
-  readonly emitida: Date;
-  readonly vigencia: Date | null;
-  readonly motivo: string | null;
+  readonly type: string;
+  readonly target: string;
+  readonly service: string | null;
+  readonly status: string;
+  readonly variant: StatusSealVariant;
+  readonly createdAt: Date;
+  readonly validUntil: Date | null;
+  readonly reason: string | null;
 }
 
-export function derivacionEnPantalla(
-  derivacion: Referral,
-  etiquetas: ConceptLabels,
-): DerivacionEnPantalla {
-  const concepto = etiquetas.get(derivacion.statusConceptId);
-  const conocido = concepto === undefined ? undefined : ESTADO_POR_CODIGO[concepto.code];
+export function toReferralRow(referral: Referral, labels: ConceptLabels): ReferralRow {
+  const concept = labels.get(referral.statusConceptId);
+  const known = concept === undefined ? undefined : STATUS_BY_CODE[concept.code];
   return {
-    id: derivacion.id,
-    tipo: derivacion.referralType === undefined ? 'Sin tipo' : ROTULO_DEL_TIPO[derivacion.referralType],
-    destino: derivacion.targetDisplayName ?? 'Destino sin nombre',
-    servicio: derivacion.targetServiceName ?? null,
+    id: referral.id,
+    type: referral.referralType === undefined ? 'Sin tipo' : REFERRAL_TYPE_LABELS[referral.referralType],
+    target: referral.targetDisplayName ?? 'Destino sin nombre',
+    service: referral.targetServiceName ?? null,
     // Un estado que esta versión no conoce no se inventa ni se oculta: se
     // dice con el rótulo del catálogo, en neutro.
-    estado: conocido?.rotulo ?? concepto?.display ?? 'Sin registrar',
-    variante: conocido?.variante ?? 'unknown',
-    emitida: derivacion.createdAt,
-    vigencia: derivacion.validUntil ?? null,
-    motivo: derivacion.reasonText ?? null,
+    status: known?.label ?? concept?.display ?? 'Sin registrar',
+    variant: known?.variant ?? 'unknown',
+    createdAt: referral.createdAt,
+    validUntil: referral.validUntil ?? null,
+    reason: referral.reasonText ?? null,
   };
 }
 
 /** «Bs 250.00» o «USD 40», tal como llegó; sin arancel, se dice. */
-export function precioDe(servicio: ReferralTargetService): string {
-  if (servicio.price === null || servicio.price === '') {
+export function formatPrice(service: ReferralTargetService): string {
+  if (service.price === null || service.price === '') {
     return 'Sin arancel declarado';
   }
-  const moneda = servicio.currency === 'BOB' ? 'Bs' : servicio.currency;
-  return moneda === null ? String(servicio.price) : `${moneda} ${servicio.price}`;
+  const currency = service.currency === 'BOB' ? 'Bs' : service.currency;
+  return currency === null ? String(service.price) : `${currency} ${service.price}`;
 }
 
 /** El servicio es opcional: la primera opción dice que se deriva sin uno. */
-export function opcionesDeServicio(
-  servicios: readonly ReferralTargetService[],
+export function serviceOptions(
+  services: readonly ReferralTargetService[],
 ): readonly SelectOption<string | null>[] {
   return [
     { value: null, label: 'Sin un servicio en particular' },
-    ...servicios.map((s) => ({ value: s.id, label: `${s.name} · ${precioDe(s)}` })),
+    ...services.map((s) => ({ value: s.id, label: `${s.name} · ${formatPrice(s)}` })),
   ];
 }

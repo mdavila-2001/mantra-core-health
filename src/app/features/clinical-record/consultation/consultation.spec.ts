@@ -75,7 +75,7 @@ const TITULOS = [
 ];
 
 /** Una derivación ya emitida, tal como la lista la API. */
-const DERIVACION = {
+const REFERRAL = {
   id: 'ref-1',
   patientProfileId: 'p-1',
   statusConceptId: 'st-solicitada',
@@ -98,12 +98,12 @@ describe('Consultation', () => {
     resumen: Record<string, unknown> = {},
     chart: Record<string, unknown> = {},
     conceptos: readonly object[] = [],
-    derivaciones: readonly object[] = [DERIVACION],
+    referrals: readonly object[] = [REFERRAL],
   ): Promise<void> {
     // Las derivaciones van por su lado: la casilla las cuenta.
     http
       .expectOne((r) => r.url === '/referrals' && r.params.get('patientProfileId') === 'p-1')
-      .flush(derivaciones);
+      .flush(referrals);
     http
       .expectOne((r) => r.url === '/profiles/patients/p-1')
       .flush({ profileId: 'p-1', displayName: 'Ana Pérez', patientCode: 'P1' });
@@ -121,7 +121,7 @@ describe('Consultation', () => {
   }
 
   /** La lectura del expediente cuando las derivaciones ya se respondieron aparte. */
-  async function responderLecturaSinDerivaciones(): Promise<void> {
+  async function flushChartReadsOnly(): Promise<void> {
     http
       .expectOne((r) => r.url === '/profiles/patients/p-1')
       .flush({ profileId: 'p-1', displayName: 'Ana Pérez', patientCode: 'P1' });
@@ -193,7 +193,7 @@ describe('Consultation', () => {
       .forEach((req) => req.flush({ items: [], count: 0, limit: 200 }));
     harness.detectChanges();
     expect(
-      harness.routeNativeElement!.querySelectorAll('[data-testid="derivacion-fila"]'),
+      harness.routeNativeElement!.querySelectorAll('[data-testid="referral-row"]'),
     ).toHaveLength(1);
   });
 
@@ -201,7 +201,7 @@ describe('Consultation', () => {
     http
       .expectOne((r) => r.url === '/referrals')
       .flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
-    await responderLecturaSinDerivaciones();
+    await flushChartReadsOnly();
 
     const casillas = interno<() => readonly { clave: string; cantidad: number | null }[]>(
       'casillas',
@@ -218,8 +218,8 @@ describe('Consultation', () => {
       )?.cantidad,
     ).toBe(0);
 
-    interno<{ releer(): void }>('derivaciones').releer();
-    http.expectOne((r) => r.url === '/referrals').flush([DERIVACION, { ...DERIVACION, id: 'ref-2' }]);
+    interno<{ reload(): void }>('referrals').reload();
+    http.expectOne((r) => r.url === '/referrals').flush([REFERRAL, { ...REFERRAL, id: 'ref-2' }]);
 
     expect(
       interno<() => readonly { clave: string; cantidad: number | null }[]>('casillas')().find(
