@@ -282,7 +282,7 @@
 @if (abierto(); as medicamento) {
   <app-pharmacy-availability-dialog
     [medicationName]="medicamento.genericName"
-    [requiresPrescription]="medicamento.requiresPrescription"
+    [requiresPrescription]="recetaDelAbierto()"
     [offers]="ofertas()"
     [loading]="cargandoDetalle()"
     [failed]="errorDetalle()"

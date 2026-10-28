@@ -22,6 +22,8 @@
 }
 
 .arbol__compuesto {
+  /* Que la cabecera fija no tape el compuesto al llevarlo a la vista. */
+  scroll-margin-block-start: var(--sp-20);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: var(--bg-surface);
@@ -42,6 +44,7 @@
 }
 
 .arbol__resumen {
+  list-style: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -51,9 +54,27 @@
   border-radius: var(--r-sm);
 }
 
-.arbol__resumen:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+.arbol__resumen::-webkit-details-marker {
+  display: none;
+}
+
+/* El chevron: «flex» en un <summary> le quita el triángulo nativo, así que se
+   dibuja acá. Apunta a la derecha plegado y hacia abajo abierto: sin él, una
+   rama abierta y una cerrada se ven iguales. */
+.arbol__resumen::before {
+  content: '';
+  flex: none;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  margin-inline: var(--sp-1) var(--sp-1);
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+details[open] > .arbol__resumen::before {
+  transform: rotate(45deg);
 }
 
 .arbol__resumen--nivel {
@@ -80,9 +101,19 @@
   margin: var(--sp-1) 0 0;
 }
 
+.arbol__nota--lectura {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* El rótulo del nivel va como sobretítulo: así no compite con el dato
+   (la marca, el grupo), que es lo que se lee. */
 .arbol__rotulo {
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
 }
 
 .arbol__marca {
@@ -124,5 +155,11 @@
 }
 
 .arbol__acciones {
-  margin-block-start: var(--sp-3);
+  margin-block: var(--sp-2) var(--sp-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arbol__resumen::before {
+    transition: none;
+  }
 }

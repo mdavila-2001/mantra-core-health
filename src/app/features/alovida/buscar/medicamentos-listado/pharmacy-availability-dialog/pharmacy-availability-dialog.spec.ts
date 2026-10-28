@@ -117,7 +117,7 @@ describe('withCodes', () => {
 })
 class HostComponent {
   readonly abierto = signal(false);
-  readonly conReceta = signal(true);
+  readonly conReceta = signal<boolean | null>(true);
   readonly ofertas = signal<readonly OfertaDeFarmacia[]>([oferta(), SIN_COORDENADAS]);
 }
 
@@ -245,8 +245,16 @@ describe('PharmacyAvailabilityDialog', () => {
 
     expect(dialogo()?.querySelector('[data-testid="ficha-receta-obligatoria"]')).toBeNull();
     expect(dialogo()?.querySelector('[data-testid="ficha-venta-libre"]')?.textContent).toContain(
-      'No requiere receta médica',
+      'Ninguna farmacia de la red lo publica como venta bajo receta',
     );
+  });
+
+  it('mientras no se sabe, no afirma ni receta ni venta libre', async () => {
+    fixture.componentInstance.conReceta.set(null);
+    await abrir();
+
+    expect(dialogo()?.querySelector('[data-testid="ficha-receta-obligatoria"]')).toBeNull();
+    expect(dialogo()?.querySelector('[data-testid="ficha-venta-libre"]')).toBeNull();
   });
 
   it('la dosis máxima tiene su lugar y dice que no hay fuente, sin inventar un número (B-13)', async () => {

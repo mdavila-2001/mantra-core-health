@@ -111,10 +111,11 @@ export class PharmacyAvailabilityDialog {
   readonly medicationName = input.required<string>();
 
   /**
-   * `true` si el medicamento se vende sólo contra receta. Encabeza el modal en
-   * un aviso propio: es lo primero que hay que saber antes de ir a comprarlo.
+   * `true` si el medicamento se vende sólo contra receta; `null` mientras no se
+   * sabe, y entonces no se afirma nada. Encabeza el modal en un aviso propio:
+   * es lo primero que hay que saber antes de ir a comprarlo.
    */
-  readonly requiresPrescription = input(false);
+  readonly requiresPrescription = input.required<boolean | null>();
 
   /** Las ofertas tal como las devolvió la API, en su orden. */
   readonly offers = input.required<readonly OfertaDeFarmacia[]>();

@@ -6,7 +6,7 @@
 >
   <!-- Lo que hay que saber antes de salir a comprarlo. -->
   <section class="ficha-medicamento" aria-label="Condiciones de venta y dosis">
-    @if (requiresPrescription()) {
+    @if (requiresPrescription() === true) {
       <div
         class="app-alert ficha-medicamento__receta"
         app-alert=""
@@ -34,10 +34,10 @@
           </p>
         </div>
       </div>
-    } @else {
+    } @else if (requiresPrescription() === false) {
       <p class="ficha-medicamento__libre" data-testid="ficha-venta-libre">
         <app-badge variant="success" size="sm">Venta libre</app-badge>
-        No requiere receta médica.
+        Ninguna farmacia de la red lo publica como venta bajo receta.
       </p>
     }
 
@@ -46,8 +46,8 @@
         <dt>Dosis máxima recomendada</dt>
         <dd data-testid="ficha-dosis-maxima">
           <span class="ficha-medicamento__sin-fuente">Sin fuente oficial cargada todavía.</span>
-          Se va a mostrar la de la ficha técnica del medicamento, con su cita. Mientras tanto, seguí
-          la indicación de tu médico o del prospecto.
+          Se mostrará la de la ficha técnica, con su cita. Mientras, seguí a tu médico o al
+          prospecto.
         </dd>
       </div>
     </dl>

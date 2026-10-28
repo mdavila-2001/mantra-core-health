@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PublicMarketplaceClient } from '@core/data-access/public-marketplace/public-marketplace.client';
 import type {
@@ -9,9 +18,8 @@ import { AppButton } from '@shared/components/atoms/button/button';
 import { Badge } from '@shared/components/atoms/badge/badge';
 
 import {
-  cuantasMarcas,
   cuantosProveedores,
-  ramasPorMarca,
+  ramaDesde,
   type EstadoDeRama,
   type RamaDeMarca,
 } from './medication-tree.logic';
@@ -61,17 +69,36 @@ export class MedicationTree {
   readonly pharmaciesRequested = output<TarjetaDeMedicamento>();
 
   private readonly vitrina = inject(PublicMarketplaceClient);
+  private readonly destruir = inject(DestroyRef);
 
   /** Las ramas de proveedores ya pedidas, por concepto. */
   protected readonly ramas = signal<ReadonlyMap<string, EstadoDeRama>>(new Map());
 
-  protected readonly cuantasMarcas = cuantasMarcas;
   protected readonly cuantosProveedores = cuantosProveedores;
 
   /** Las marcas con sus proveedores, o ninguna si todavía no llegaron. */
   protected marcasDe(medicamento: TarjetaDeMedicamento): readonly RamaDeMarca[] {
     const rama = this.ramas().get(medicamento.conceptId);
     return rama?.estado === 'datos' ? rama.marcas : [];
+  }
+
+  /**
+   * `true` / `false` cuando se sabe; `null` mientras no.
+   *
+   * La tarjeta sólo puede afirmar «con receta»: su `false` sale de ofertas
+   * recortadas por la búsqueda, así que «venta libre» se dice recién con la
+   * disponibilidad completa.
+   */
+  protected recetaDe(medicamento: TarjetaDeMedicamento): boolean | null {
+    const rama = this.ramas().get(medicamento.conceptId);
+    if (rama?.estado === 'datos') return rama.conReceta;
+    return medicamento.requiresPrescription ? true : null;
+  }
+
+  /** Cuántos nombres comerciales: los de la disponibilidad cuando llegó. */
+  protected cuantasMarcasDe(medicamento: TarjetaDeMedicamento): number {
+    const rama = this.ramas().get(medicamento.conceptId);
+    return rama?.estado === 'datos' ? rama.marcas.length : medicamento.brands.length;
   }
 
   /** Al abrir un compuesto, pide sus proveedores si todavía no los tiene. */
@@ -87,14 +114,13 @@ export class MedicationTree {
   protected cargar(medicamento: TarjetaDeMedicamento): void {
     this.fijar(medicamento.conceptId, { estado: 'carga' });
     const origen = this.origin();
-    this.vitrina.getAvailability(medicamento.conceptId, { origin: origen ?? undefined }).subscribe({
-      next: (disponibilidad) =>
-        this.fijar(medicamento.conceptId, {
-          estado: 'datos',
-          marcas: ramasPorMarca(medicamento.brands, disponibilidad.offers),
-        }),
-      error: () => this.fijar(medicamento.conceptId, { estado: 'error' }),
-    });
+    this.vitrina
+      .getAvailability(medicamento.conceptId, { origin: origen ?? undefined })
+      .pipe(takeUntilDestroyed(this.destruir))
+      .subscribe({
+        next: (disponibilidad) => this.fijar(medicamento.conceptId, ramaDesde(disponibilidad)),
+        error: () => this.fijar(medicamento.conceptId, { estado: 'error' }),
+      });
   }
 
   private fijar(conceptId: string, estado: EstadoDeRama): void {

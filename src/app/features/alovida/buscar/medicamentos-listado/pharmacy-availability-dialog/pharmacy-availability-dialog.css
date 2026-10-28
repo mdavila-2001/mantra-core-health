@@ -21,8 +21,25 @@
 /* La receta obligatoria pesa más que cualquier otro aviso del modal: borde de
    acento a la izquierda, además del fondo del tono. El texto la nombra igual:
    el estado nunca se comunica sólo por color. */
-.ficha-medicamento__receta {
-  border-inline-start: 4px solid var(--aviso-tinta);
+.ficha-medicamento__receta.app-alert {
+  border: 1px solid var(--st-warning-bd);
+  border-inline-start: 6px solid var(--st-warning-fg);
+  border-start-start-radius: var(--r-sm);
+  border-end-start-radius: var(--r-sm);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  box-shadow: none;
+}
+
+.ficha-medicamento__receta .icono {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  color: var(--st-warning-fg);
+}
+
+.ficha-medicamento__receta strong {
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
 }
 
 .ficha-medicamento__libre {
@@ -41,13 +58,14 @@
 }
 
 .ficha-medicamento__dato {
-  padding: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background: var(--bg-inset);
 }
 
 .ficha-medicamento__dato dt {
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: var(--text-primary);
 }
