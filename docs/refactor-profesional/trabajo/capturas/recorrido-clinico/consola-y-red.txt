@@ -1,0 +1,2 @@
+--- expediente ---
+[consola warning] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` 

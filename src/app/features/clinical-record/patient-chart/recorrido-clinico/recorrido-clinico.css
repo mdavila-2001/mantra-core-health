@@ -280,6 +280,7 @@
 
 .recorrido__nodo {
   position: absolute;
+  overflow: hidden;
   inset-inline: 0;
   display: grid;
   align-content: center;
@@ -374,7 +375,11 @@
   font-weight: 600;
 }
 
+/* Cede espacio antes que la fecha: «Desde 8 oct 2026» dice más que la
+   posología, que el detalle trae completa. */
 .recorrido__nodo-secundario {
+  flex: 0 1000 auto;
+  min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -407,10 +412,14 @@
 }
 
 /* La fecha propia del registro, cuando no es la de su columna. */
+/* No se encoge: el formato ya es corto (ver `fechaPropia`) y es la posología
+   la que cede. Mayúscula inicial en el mes, igual que las cabeceras. */
 .recorrido__nodo-fecha {
   flex: none;
+  white-space: nowrap;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+  text-transform: capitalize;
 }
 
 /* La indicación en texto, sólo en la disposición vertical. */

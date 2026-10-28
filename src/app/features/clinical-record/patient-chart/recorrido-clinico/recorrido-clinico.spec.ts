@@ -133,7 +133,8 @@ describe('RecorridoClinico', () => {
       (e) => (e as HTMLElement).textContent?.trim(),
     );
     expect(fechas).toHaveLength(1);
-    expect(fechas[0]).toMatch(/^Inicio 23 sept?\.? 2025$/i);
+    // De otro año: mes y año, para que entre al lado del estado.
+    expect(fechas[0]).toMatch(/^Inicio sept?\.? 2025$/i);
   });
 
   it('enfocar el control de un grupo no atenúa lo que se acaba de mostrar', () => {
@@ -154,5 +155,25 @@ describe('RecorridoClinico', () => {
     expect(fixture.nativeElement.querySelector('.recorrido__lienzo')).toBeNull();
     expect(fixture.nativeElement.querySelector('.recorrido-v')).not.toBeNull();
     expect(boton('Medicación: Enalapril').textContent).toContain('Para Hipertensión');
+  });
+  it('pinta el estado con el mismo tono que la tabla, no con el del tipo', () => {
+    fixture.componentInstance.nodos.set([
+      nodo('c', 'encuentros'),
+      { ...nodo('dx', 'diagnosticos', 'c'), estado: 'Enfermedad activa', tonoDelEstado: 'success' },
+    ]);
+    fixture.detectChanges();
+    const estado = boton('Diagnóstico: Hipertensión').querySelector('.recorrido__nodo-estado')!;
+    expect(estado.classList.contains('tono--success')).toBe(true);
+    expect(boton('Atención: Ambulatorio').querySelector('.recorrido__nodo-estado')?.classList.contains('tono--info')).toBe(true);
+  });
+
+  it('en vertical no muestra la leyenda de líneas que no dibuja', () => {
+    const recorrido = fixture.debugElement.query(By.directive(RecorridoClinico)).componentInstance as unknown as {
+      angosto: { set(v: boolean): void };
+    };
+    expect(fixture.nativeElement.querySelector('.recorrido__leyenda')).not.toBeNull();
+    recorrido.angosto.set(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.recorrido__leyenda')).toBeNull();
   });
 });
