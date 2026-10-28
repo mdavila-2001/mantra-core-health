@@ -81,8 +81,15 @@ export class RecorridoClinico {
     ubicarRecorrido(this.nodos(), this.aristas(), this.celdasAbiertas()),
   );
 
-  /** El nodo bajo el puntero o con el foco: su camino se ilumina. */
-  protected readonly enfocado = signal<string | null>(null);
+  /**
+   * El nodo bajo el puntero y el que tiene el foco, por separado: si fueran una
+   * sola señal, sacar el puntero de un nodo apagaría el camino del que sigue
+   * enfocado con el teclado. El puntero manda mientras está sobre un nodo.
+   */
+  private readonly bajoElPuntero = signal<string | null>(null);
+  private readonly conElFoco = signal<string | null>(null);
+
+  protected readonly enfocado = computed(() => this.bajoElPuntero() ?? this.conElFoco());
 
   protected readonly camino = computed(() => {
     const id = this.enfocado();
@@ -121,14 +128,22 @@ export class RecorridoClinico {
     }
     const destino = extremo === 'inicio' ? 0 : lienzo.scrollWidth;
     if (typeof lienzo.scrollTo === 'function') {
-      lienzo.scrollTo({ left: destino, behavior: 'smooth' });
+      // El desplazamiento suave también es movimiento: con «reducir
+      // movimiento» se salta, igual que las transiciones del CSS.
+      const reducir =
+        typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      lienzo.scrollTo({ left: destino, behavior: reducir ? 'auto' : 'smooth' });
     } else {
       lienzo.scrollLeft = destino;
     }
   }
 
+  protected apuntar(id: string | null): void {
+    this.bajoElPuntero.set(id);
+  }
+
   protected enfocar(id: string | null): void {
-    this.enfocado.set(id);
+    this.conElFoco.set(id);
   }
 
   /** Un registro abre su detalle; un nodo de grupo abre o cierra su celda. */
@@ -147,7 +162,7 @@ export class RecorridoClinico {
       }
       return siguiente;
     });
-    this.enfocado.set(null);
+    this.bajoElPuntero.set(null);
   }
 
   protected atenuado(id: string): boolean {
@@ -169,10 +184,13 @@ export class RecorridoClinico {
    * lo que reemplaza a las líneas para quien no las ve.
    */
   protected readonly nombres = computed(() => {
-    const { nodos, aristas } = this.plano();
-    const porId = new Map(nodos.map((n) => [n.id, n]));
+    // Los vínculos se nombran con las aristas ORIGINALES, no con las del plano:
+    // ahí un diagnóstico agrupado figura como «+2 diagnósticos», y «indicado
+    // para +2 diagnósticos» no le dice nada a quien escucha.
+    const aristas = this.aristas();
+    const porId = new Map(this.nodos().map((n) => [n.id, n]));
     const nombres = new Map<string, string>();
-    for (const nodo of nodos) {
+    for (const nodo of this.plano().nodos) {
       if (nodo.grupo !== undefined) {
         nombres.set(
           nodo.id,
