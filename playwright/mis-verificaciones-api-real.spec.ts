@@ -248,7 +248,8 @@ test('3 · la aseguradora rechaza con motivo desde su bandeja', async ({ page })
   await capturar(page, `${EVIDENCIA}/aseguradora-bandeja-1440.png`);
 
   await fila.getByTestId('aseguradora-rechazar').click();
-  await fila.getByTestId('aseguradora-motivo').locator('textarea').fill(MOTIVO);
+  // El motivo va en un diálogo, no desplegado en la fila (composition-rules.md §6).
+  await page.getByTestId('dialogo-motivo').locator('textarea').fill(MOTIVO);
   await capturar(page, `${EVIDENCIA}/aseguradora-motivo-1440.png`);
 
   const [rechazo, relectura] = await Promise.all([
@@ -258,7 +259,7 @@ test('3 · la aseguradora rechaza con motivo desde su bandeja', async ({ page })
     page.waitForResponse(
       (r) => r.url().endsWith('/insurance/practitioner-requests') && r.request().method() === 'GET',
     ),
-    fila.getByTestId('aseguradora-confirmar-rechazo').click(),
+    page.getByTestId('dialogo-confirmar').click(),
   ]);
   expect(rechazo.status()).toBe(200);
   expect(await rechazo.json()).toMatchObject({ status: 'REJECTED', decisionReasonText: MOTIVO });

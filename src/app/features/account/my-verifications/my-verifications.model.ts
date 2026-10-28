@@ -68,6 +68,21 @@ export function combineStates(states: readonly StatusSealVariant[]): RoadmapStat
   return 'unknown';
 }
 
+/**
+ * Para los tramos de contrapartes independientes —instituciones,
+ * aseguradoras— cada una decide por su lado: con una que confirmó, el médico
+ * ya trabaja con sello y el tramo lo dice; un rechazo de otra no lo anula (lo
+ * cuenta el detalle). Sólo si todas rechazaron, el tramo es un rechazo.
+ */
+export function combineIndependent(states: readonly StatusSealVariant[]): RoadmapState {
+  if (states.length === 0) return 'not-started';
+  if (states.includes('approved')) return 'approved';
+  if (states.includes('pending')) return 'pending';
+  if (states.includes('in-review')) return 'in-review';
+  if (states.every((s) => s === 'rejected' || s === 'expired')) return 'rejected';
+  return 'unknown';
+}
+
 /** «2 de 3 verificadas», o una frase para el vacío. */
 function cuenta(
   states: readonly StatusSealVariant[],
@@ -232,7 +247,7 @@ export function buildRoadmap(
       key: 'institutions',
       title: 'Instituciones donde trabaja',
       icon: 'building',
-      state: combineStates(instituciones),
+      state: combineIndependent(instituciones),
       detail: cuenta(
         instituciones,
         'institución',
@@ -245,7 +260,7 @@ export function buildRoadmap(
       key: 'insurers',
       title: 'Seguros con los que trabaja',
       icon: 'heart',
-      state: insurerRequests === null ? 'unknown' : combineStates(seguros),
+      state: insurerRequests === null ? 'unknown' : combineIndependent(seguros),
       detail:
         insurerRequests === null
           ? 'No pudimos leer sus solicitudes a aseguradoras. Reintente en unos segundos.'

@@ -138,8 +138,9 @@ test.describe('Mis verificaciones', () => {
       ]) {
         await expect(page.getByTestId(`verif-tramo-${clave}`)).toBeVisible();
       }
-      // La médica demo trae una aseguradora rechazada con motivo.
-      await expect(page.getByTestId('verif-tramo-insurers')).toContainText('Rechazado');
+      // Una aprobada (La Vitalicia) da el sello aunque otra haya rechazado: el detalle lo cuenta.
+      await expect(page.getByTestId('verif-tramo-insurers')).toContainText('Verificado');
+      await expect(page.getByTestId('verif-tramo-insurers')).toContainText('1 rechazada');
 
       const tarjeta = await medirTarjeta(page, '.verif__tarjeta');
       expect(Math.abs(tarjeta.holguraIzquierda - tarjeta.holguraDerecha)).toBeLessThanOrEqual(2);
@@ -239,12 +240,16 @@ test.describe('la aseguradora decide y el médico lo ve', () => {
     await expect(fila).toBeVisible({ timeout: 30_000 });
 
     await fila.getByTestId('aseguradora-rechazar').click();
-    await fila
-      .getByTestId('aseguradora-motivo')
+    // El motivo va en un diálogo, no desplegado en la fila (composition-rules.md §6).
+    await page
+      .getByTestId('dialogo-motivo')
       .locator('textarea')
       .fill('Sin convenio vigente en su ciudad');
     await capturar(page, `${EVIDENCIA}/aseguradora-motivo-1440.png`);
-    await fila.getByTestId('aseguradora-confirmar-rechazo').click();
+    await page.setViewportSize({ width: 390, height: 1000 });
+    await capturar(page, `${EVIDENCIA}/aseguradora-motivo-390.png`);
+    await page.setViewportSize({ width: 1440, height: 1200 });
+    await page.getByTestId('dialogo-confirmar').click();
     await expect(page.getByTestId('aseguradora-pedidos-aviso')).toContainText('Se rechazó');
 
     await page.reload();
@@ -266,6 +271,9 @@ test.describe('la aseguradora decide y el médico lo ve', () => {
     await expect(abierto).toContainText('«Sin convenio vigente en su ciudad»', { timeout: 30_000 });
     await expect(abierto).toContainText('no aceptó la solicitud');
     await capturar(page, `${EVIDENCIA}/medico-hilo-rechazado-1440.png`);
+    await page.setViewportSize({ width: 390, height: 1800 });
+    await capturar(page, `${EVIDENCIA}/medico-hilo-rechazado-390.png`);
+    await page.setViewportSize({ width: 1440, height: 1200 });
 
     await page.getByTestId('verif-volver-a-pedir').click();
     await expect(page.getByTestId('verif-aviso')).toContainText('Volvimos a enviar');

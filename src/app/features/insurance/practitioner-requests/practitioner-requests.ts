@@ -10,10 +10,9 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
@@ -56,10 +55,8 @@ const ROTULO: Readonly<Record<ReceivedInsurerRequest['status'], string>> = {
     AppButton,
     Card,
     DatePipe,
-    FormField,
     PageHeader,
     StatusSeal,
-    Textarea,
     ViewStateHost,
   ],
   templateUrl: './practitioner-requests.html',
@@ -69,9 +66,9 @@ const ROTULO: Readonly<Record<ReceivedInsurerRequest['status'], string>> = {
 export class InsurerPractitionerRequests {
   private readonly client = inject(PractitionerInsurerRequestsClient);
   private readonly navigation = inject(NavigationService);
+  private readonly dialogs = inject(DialogService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly maxMotivo = MAX_MOTIVO;
   protected readonly sello = SELLO;
   protected readonly rotulo = ROTULO;
 
@@ -98,9 +95,6 @@ export class InsurerPractitionerRequests {
     ].filter((g) => g.filas.length > 0),
   );
 
-  /** La fila con el rechazo abierto, para escribir el motivo antes de confirmar. */
-  protected readonly rechazando = signal<string | null>(null);
-  protected readonly motivo = signal('');
   protected readonly enviando = signal<string | null>(null);
   protected readonly aviso = signal<{
     tono: 'success' | 'warning' | 'error';
@@ -134,18 +128,32 @@ export class InsurerPractitionerRequests {
     this.decidir(fila, () => this.client.approve(fila.id), 'aprobó');
   }
 
-  protected abrirRechazo(fila: ReceivedInsurerRequest): void {
-    this.rechazando.set(fila.id);
-    this.motivo.set('');
-  }
-
-  protected cancelarRechazo(): void {
-    this.rechazando.set(null);
-  }
-
-  protected rechazar(fila: ReceivedInsurerRequest): void {
-    const motivo = this.motivo().trim().slice(0, MAX_MOTIVO);
-    this.decidir(fila, () => this.client.reject(fila.id, motivo), 'rechazó');
+  /**
+   * Rechazar pide el motivo en un diálogo, no desplegado en la fila
+   * (composition-rules.md §6): la lista no cambia de alto según lo que se
+   * tocó. El motivo es obligatorio acá aunque la API lo admita vacío: es lo
+   * único que el profesional lee para saber qué hacer después.
+   */
+  protected async rechazar(fila: ReceivedInsurerRequest): Promise<void> {
+    if (this.enviando() !== null) return;
+    const quien = fila.practitionerName ?? 'el profesional';
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Rechazar la solicitud',
+        message: `${quien} va a leer el motivo en su conversación y podrá volver a pedirlo más adelante.`,
+        confirmLabel: 'Rechazar',
+        cancelLabel: 'Volver',
+        destructive: true,
+      },
+      {
+        label: 'Motivo',
+        hint: 'Lo lee el profesional, tal cual lo escriba.',
+        minLength: 5,
+        maxLength: MAX_MOTIVO,
+      },
+    );
+    if (motivo === null) return;
+    this.decidir(fila, () => this.client.reject(fila.id, motivo.trim()), 'rechazó');
   }
 
   /**
@@ -203,12 +211,10 @@ export class InsurerPractitionerRequests {
       next: (filas) => {
         this.state.set(ready(filas));
         this.enviando.set(null);
-        this.rechazando.set(null);
         this.aviso.set(aviso);
       },
       error: () => {
         this.enviando.set(null);
-        this.rechazando.set(null);
         this.aviso.set({ tono: 'warning', texto: sinRelectura });
       },
     });

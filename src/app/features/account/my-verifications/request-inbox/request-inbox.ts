@@ -1,5 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  type ElementRef,
+  input,
+  model,
+  output,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -38,6 +47,23 @@ export class RequestInbox {
 
   readonly withdraw = output<RequestThread>();
   readonly requestAgain = output<RequestThread>();
+
+  private readonly hiloAbierto = viewChild<ElementRef<HTMLElement>>('hiloAbierto');
+
+  /**
+   * Abre la conversación. Apilada (angosto) queda debajo de la lista: se la
+   * trae a la vista y se le pasa el foco, que si no el toque no hace nada
+   * visible y el lector de pantalla no se entera del cambio.
+   */
+  protected abrir(id: string): void {
+    this.openId.set(id);
+    if (typeof matchMedia !== 'function' || !matchMedia('(max-width: 1023.98px)').matches) return;
+    queueMicrotask(() => {
+      const el = this.hiloAbierto()?.nativeElement;
+      el?.scrollIntoView({ block: 'start' });
+      el?.focus({ preventScroll: true });
+    });
+  }
 
   protected readonly abierto = computed<RequestThread | null>(() => {
     const hilos = this.threads();
