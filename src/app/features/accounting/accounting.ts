@@ -19,6 +19,7 @@ import {
 
 import { AuthService } from '../../core/auth/auth.service';
 import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
+import { AccountingPractices } from '../../core/data-access/accounting/accounting-practices';
 import type {
   BalanceSheet,
   ChartOfAccounts,
@@ -57,6 +58,16 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { errorMessageOf } from '../../shared/forms/form-support';
 import { CsvExportService, type CsvColumn } from '../../shared/utils/csv-export/csv-export';
+import {
+  LEDGER_TABS,
+  describeCutOff,
+  describePeriod,
+  isIsoDate,
+  periodFileSuffix,
+  subtractAmounts,
+  sumAmounts,
+  type ReportPeriod,
+} from './ledger-period';
 
 /**
  * Agrupa las consultas cobradas por mes de emisión, la más reciente arriba.
@@ -124,6 +135,56 @@ function formatearFechaDeTabla(fecha: Date): string {
 export interface FilaDelDiario extends Omit<JournalTransaction, 'transactionDate' | 'postedAt'> {
   readonly transactionDate: string;
   readonly postedAt?: string;
+  /** El estado dicho con palabras: borrador, contabilizado, reversado… */
+  readonly statusLabel: string;
+}
+
+/** Rótulo de cada estado de la máquina C-17 de la API (`ledger-read.service.ts`). */
+const JOURNAL_STATUS_LABEL: Readonly<Record<NonNullable<JournalTransaction['status']>, string>> = {
+  DRAFT: 'Borrador',
+  AUTO_CLASSIFIED: 'Clasificado',
+  PENDING_REVIEW: 'En revisión',
+  APPROVED: 'Aprobado',
+  POSTED: 'Contabilizado',
+  REVERSED: 'Reversado',
+};
+
+/** Tipos de entidad relacionada que una fila del asiento puede llevar (TAREA-20, criterio 11). */
+export type RelatedEntityKind = 'COST_CENTER' | 'PROFIT_CENTER' | 'ASSET';
+
+/** Una entidad relacionada ya elegida para una fila del asiento. */
+export interface RelatedEntity {
+  readonly kind: RelatedEntityKind;
+  readonly id: string;
+  readonly label: string;
+}
+
+const RELATED_ENTITY_KIND_LABEL: Readonly<Record<RelatedEntityKind, string>> = {
+  COST_CENTER: 'Centro de costo',
+  PROFIT_CENTER: 'Centro de beneficio',
+  ASSET: 'Activo fijo',
+};
+
+/** Una fila del asiento en curso del MODO CONTADOR. */
+export interface JournalDraftRow {
+  readonly accountId: string;
+  readonly accountLabel: string;
+  readonly direction: 'DEBIT' | 'CREDIT';
+  readonly amount: string;
+  readonly memo: string;
+  readonly related: readonly RelatedEntity[];
+}
+
+/** Las entidades relacionadas de una fila, en los campos que acepta la API. */
+export function relatedEntityFields(
+  related: readonly RelatedEntity[],
+): { costCenterId?: string; profitCenterId?: string; assetId?: string } {
+  const field: Record<RelatedEntityKind, 'costCenterId' | 'profitCenterId' | 'assetId'> = {
+    COST_CENTER: 'costCenterId',
+    PROFIT_CENTER: 'profitCenterId',
+    ASSET: 'assetId',
+  };
+  return Object.fromEntries(related.map((r) => [field[r.kind], r.id]));
 }
 
 /** Un movimiento del libro mayor, ya listo para la tabla: misma razón que `FilaDelDiario`. */
@@ -195,6 +256,7 @@ export interface MesFacturado {
 })
 export class Accounting {
   private readonly libros = inject(AccountingClient);
+  private readonly accountingPractices = inject(AccountingPractices);
   private readonly auth = inject(AuthService);
   private readonly csv = inject(CsvExportService);
 
@@ -229,7 +291,7 @@ export class Accounting {
 
   /** Las prácticas de la organización. Sin esto no hay `practiceId` que pedir. */
   private readonly practicas = toSignal(
-    this.libros.listPractices().pipe(catchError(() => of<readonly Practice[]>([]))),
+    this.accountingPractices.list().pipe(catchError(() => of<readonly Practice[]>([]))),
     { initialValue: undefined },
   );
 
@@ -250,26 +312,67 @@ export class Accounting {
     computation: (lista, previo) => previo?.value ?? lista?.[0]?.id ?? null,
   });
 
+  /* ---- Período de los informes (TAREA-20, criterio 15) ------------------- */
+
+  /**
+   * El formulario del período. Sólo se aplica al pulsar «Aplicar período»:
+   * mientras se escribe una fecha a medias no se dispara ninguna lectura.
+   */
+  protected readonly formularioDePeriodo = new FormGroup({
+    from: new FormControl('', { nonNullable: true }),
+    to: new FormControl('', { nonNullable: true }),
+  });
+
+  /** El período aplicado: lo que piden las lecturas y lo que llevan las exportaciones. */
+  protected readonly periodo = signal<ReportPeriod>({});
+  protected readonly errorDePeriodo = signal<string | null>(null);
+  protected readonly rotuloDelPeriodo = computed(() => describePeriod(this.periodo()));
+  protected readonly rotuloDelCorte = computed(() => describeCutOff(this.periodo()));
+  protected readonly sufijoDelPeriodo = computed(() => periodFileSuffix(this.periodo()));
+
+  protected aplicarPeriodo(): void {
+    const { from, to } = this.formularioDePeriodo.getRawValue();
+    const desde = from.trim();
+    const hasta = to.trim();
+    if ((desde && !isIsoDate(desde)) || (hasta && !isIsoDate(hasta))) {
+      this.errorDePeriodo.set('Escriba las fechas como AAAA-MM-DD, por ejemplo 2026-01-31.');
+      return;
+    }
+    if (desde && hasta && desde > hasta) {
+      this.errorDePeriodo.set('La fecha «Desde» no puede ser posterior a la fecha «Hasta».');
+      return;
+    }
+    this.errorDePeriodo.set(null);
+    this.periodo.set({ ...(desde ? { from: desde } : {}), ...(hasta ? { to: hasta } : {}) });
+  }
+
+  protected limpiarPeriodo(): void {
+    this.formularioDePeriodo.reset({ from: '', to: '' });
+    this.errorDePeriodo.set(null);
+    this.periodo.set({});
+  }
+
   /** Reintento manual: cambiarlo vuelve a disparar las dos lecturas. */
   private readonly intento = signal(0);
 
   private readonly practicaYIntento = computed(() => ({
     practiceId: this.practicaElegida(),
+    periodo: this.periodo(),
     intento: this.intento(),
   }));
 
   protected readonly balance = toSignal(
     toObservable(this.practicaYIntento).pipe(
-      switchMap(({ practiceId }): Observable<ViewState<TrialBalance>> => {
+      switchMap(({ practiceId, periodo }): Observable<ViewState<TrialBalance>> => {
         if (practiceId === null) {
           return of(
             empty(
               { label: 'Elegir una práctica' },
-              'Elegí una práctica para ver sus libros.',
+              'Elija una práctica para ver sus libros.',
             ),
           );
         }
-        return this.libros.trialBalance(practiceId).pipe(
+        return this.libros.trialBalance(practiceId, periodo).pipe(
           map((datos): ViewState<TrialBalance> => ready(datos)),
           startWith(loading()),
           catchError((error: unknown) =>
@@ -286,16 +389,17 @@ export class Accounting {
       switchMap(
         ({
           practiceId,
+          periodo,
         }): Observable<ViewState<readonly JournalTransaction[]>> => {
         if (practiceId === null) {
           return of(empty({ label: 'Elegir una práctica' }));
         }
-        return this.libros.listJournal(practiceId).pipe(
+        return this.libros.listJournal(practiceId, periodo).pipe(
           map((pagina): ViewState<readonly JournalTransaction[]> =>
             pagina.items.length === 0
               ? empty(
                   { label: 'Registrar un asiento' },
-                  'Esta práctica todavía no tiene asientos.',
+                  'No hay asientos en el período elegido.',
                 )
               : ready(pagina.items),
           ),
@@ -333,6 +437,7 @@ export class Accounting {
             const { postedAt, ...resto } = t;
             return {
               ...resto,
+              statusLabel: t.status == null ? 'Sin estado' : JOURNAL_STATUS_LABEL[t.status],
               transactionDate: formatearFechaDeTabla(t.transactionDate),
               ...(postedAt === undefined ? {} : { postedAt: formatearFechaDeTabla(postedAt) }),
             };
@@ -366,8 +471,9 @@ export class Accounting {
   protected readonly columnasDelDiario: readonly ColumnDef<FilaDelDiario>[] = [
     { key: 'transactionNumber', header: 'Número', priority: 1 },
     { key: 'transactionDate', header: 'Fecha', priority: 1 },
+    { key: 'statusLabel', header: 'Estado', priority: 1 },
     { key: 'totalAmount', header: 'Importe', priority: 1, align: 'end' },
-    { key: 'postedAt', header: 'Posteado', priority: 3 },
+    { key: 'postedAt', header: 'Contabilizado el', priority: 3 },
   ];
 
   protected readonly claveDeFila = (fila: TrialBalanceRow): string => fila.accountId;
@@ -384,8 +490,9 @@ export class Accounting {
   private readonly columnasCsvDelDiario: readonly CsvColumn<FilaDelDiario>[] = [
     { header: 'Número', value: (f) => f.transactionNumber ?? '' },
     { header: 'Fecha', value: (f) => f.transactionDate },
+    { header: 'Estado', value: (f) => f.statusLabel },
     { header: 'Importe', value: (f) => f.totalAmount ?? '' },
-    { header: 'Posteado', value: (f) => f.postedAt ?? '' },
+    { header: 'Contabilizado el', value: (f) => f.postedAt ?? '' },
   ];
 
   /**
@@ -400,7 +507,11 @@ export class Accounting {
   protected exportarDiarioCsv(): void {
     const estado = this.filasDelDiario();
     if (estado.status !== 'ready') return;
-    this.csv.download(estado.data, this.columnasCsvDelDiario, 'libro-diario');
+    this.csv.download(
+      estado.data,
+      this.columnasCsvDelDiario,
+      `libro-diario${this.sufijoDelPeriodo()}`,
+    );
   }
 
   /* ============================================================================
@@ -488,7 +599,7 @@ export class Accounting {
     () => this.estadoDeIngreso().status === 'loading',
   );
   protected readonly errorDeIngreso = computed(() =>
-    errorMessageOf(this.estadoDeIngreso(), 'No tenés permiso para registrar este ingreso.'),
+    errorMessageOf(this.estadoDeIngreso(), 'No tiene permiso para registrar este ingreso.'),
   );
   protected readonly ingresoRegistrado = signal(false);
 
@@ -553,7 +664,7 @@ export class Accounting {
   protected readonly estadoDeGasto = signal<ViewState<null>>(ready(null));
   protected readonly enviandoGasto = computed(() => this.estadoDeGasto().status === 'loading');
   protected readonly errorDeGasto = computed(() =>
-    errorMessageOf(this.estadoDeGasto(), 'No tenés permiso para registrar este gasto.'),
+    errorMessageOf(this.estadoDeGasto(), 'No tiene permiso para registrar este gasto.'),
   );
   protected readonly gastoRegistrado = signal(false);
 
@@ -605,7 +716,8 @@ export class Accounting {
       ========================================================================== */
 
   /** Índice de la pestaña activa entre los tres informes nuevos. */
-  protected readonly pestanaActiva = signal(0);
+  protected readonly pestanaActiva = signal<number>(LEDGER_TABS.scorecard);
+  protected readonly pestanas = LEDGER_TABS;
 
   protected readonly opcionesDeCuentaParaMayor = this.opcionesDeCuenta;
 
@@ -624,6 +736,7 @@ export class Accounting {
   private readonly parametrosDelMayor = computed(() => ({
     practiceId: this.practicaElegida(),
     accountId: this.cuentaDelMayor(),
+    periodo: this.periodo(),
     pestana: this.pestanaActiva(),
     intento: this.intento(),
   }));
@@ -631,15 +744,15 @@ export class Accounting {
   protected readonly libroMayor = toSignal(
     toObservable(this.parametrosDelMayor).pipe(
       switchMap(
-        ({ practiceId, accountId, pestana }): Observable<ViewState<GeneralLedgerEntry[]>> => {
+        ({ practiceId, accountId, periodo, pestana }): Observable<ViewState<GeneralLedgerEntry[]>> => {
           // Sólo se pide cuando la pestaña del libro mayor está activa.
-          if (pestana !== 0 || practiceId === null || accountId === null) {
+          if (pestana !== LEDGER_TABS.generalLedger || practiceId === null || accountId === null) {
             return of(empty({ label: 'Elegir una cuenta' }));
           }
-          return this.libros.generalLedger(practiceId, { accountId }).pipe(
+          return this.libros.generalLedger(practiceId, { accountId, ...periodo }).pipe(
             map((pagina): ViewState<GeneralLedgerEntry[]> =>
               pagina.items.length === 0
-                ? empty({ label: 'Sin movimientos' }, 'Esta cuenta no tiene movimientos posteados.')
+                ? empty({ label: 'Sin movimientos' }, 'Esta cuenta no tiene movimientos contabilizados en el período.')
                 : ready([...pagina.items]),
             ),
             startWith(loading()),
@@ -675,19 +788,23 @@ export class Accounting {
 
   private readonly practicaEIntentoYPestana = computed(() => ({
     practiceId: this.practicaElegida(),
+    periodo: this.periodo(),
     pestana: this.pestanaActiva(),
     intento: this.intento(),
   }));
 
   protected readonly estadoDeResultados = toSignal(
     toObservable(this.practicaEIntentoYPestana).pipe(
-      switchMap(({ practiceId, pestana }): Observable<ViewState<IncomeStatement>> => {
-        // También se pide para el Cuadro de mando (pestaña 3): el resultado
-        // neto del período es uno de sus indicadores.
-        if ((pestana !== 1 && pestana !== 3) || practiceId === null) {
+      switchMap(({ practiceId, periodo, pestana }): Observable<ViewState<IncomeStatement>> => {
+        // También se pide para el Cuadro de mando: el resultado neto del
+        // período es uno de sus indicadores.
+        if (
+          (pestana !== LEDGER_TABS.incomeStatement && pestana !== LEDGER_TABS.scorecard) ||
+          practiceId === null
+        ) {
           return of(empty({ label: 'Elegir una práctica' }));
         }
-        return this.libros.incomeStatement(practiceId).pipe(
+        return this.libros.incomeStatement(practiceId, periodo).pipe(
           map((datos): ViewState<IncomeStatement> => ready(datos)),
           startWith(loading()),
           catchError((error: unknown) => of(errorToViewState<IncomeStatement>(error))),
@@ -719,13 +836,17 @@ export class Accounting {
 
   protected readonly balanceGeneral = toSignal(
     toObservable(this.practicaEIntentoYPestana).pipe(
-      switchMap(({ practiceId, pestana }): Observable<ViewState<BalanceSheet>> => {
-        // También se pide para el Cuadro de mando (pestaña 3): activos y
-        // pasivos totales son otro de sus indicadores.
-        if ((pestana !== 2 && pestana !== 3) || practiceId === null) {
+      switchMap(({ practiceId, periodo, pestana }): Observable<ViewState<BalanceSheet>> => {
+        // También se pide para el Cuadro de mando: activos y pasivos totales
+        // son otro de sus indicadores. El balance es una foto a la fecha de
+        // corte, así que del período sólo cuenta el fin.
+        if (
+          (pestana !== LEDGER_TABS.balanceSheet && pestana !== LEDGER_TABS.scorecard) ||
+          practiceId === null
+        ) {
           return of(empty({ label: 'Elegir una práctica' }));
         }
-        return this.libros.balanceSheet(practiceId).pipe(
+        return this.libros.balanceSheet(practiceId, periodo.to ? { to: periodo.to } : {}).pipe(
           map((datos): ViewState<BalanceSheet> => ready(datos)),
           startWith(loading()),
           catchError((error: unknown) => of(errorToViewState<BalanceSheet>(error))),
@@ -813,6 +934,7 @@ export class Accounting {
   private readonly parametrosDeCaja = computed(() => ({
     practiceId: this.practicaElegida(),
     accountId: this.cuentaDeCaja(),
+    periodo: this.periodo(),
     pestana: this.pestanaActiva(),
     intento: this.intento(),
   }));
@@ -820,14 +942,14 @@ export class Accounting {
   protected readonly flujoDeCaja = toSignal(
     toObservable(this.parametrosDeCaja).pipe(
       switchMap(
-        ({ practiceId, accountId, pestana }): Observable<ViewState<GeneralLedgerEntry[]>> => {
-          if (pestana !== 4 || practiceId === null || accountId === null) {
+        ({ practiceId, accountId, periodo, pestana }): Observable<ViewState<GeneralLedgerEntry[]>> => {
+          if (pestana !== LEDGER_TABS.cashFlow || practiceId === null || accountId === null) {
             return of(empty({ label: 'Elegir una cuenta' }));
           }
-          return this.libros.generalLedger(practiceId, { accountId }).pipe(
+          return this.libros.generalLedger(practiceId, { accountId, ...periodo }).pipe(
             map((pagina): ViewState<GeneralLedgerEntry[]> =>
               pagina.items.length === 0
-                ? empty({ label: 'Sin movimientos' }, 'Esta cuenta no tiene movimientos posteados.')
+                ? empty({ label: 'Sin movimientos' }, 'Esta cuenta no tiene movimientos contabilizados en el período.')
                 : ready([...pagina.items]),
             ),
             startWith(loading()),
@@ -853,21 +975,16 @@ export class Accounting {
   /**
    * Entradas, salidas y neto del período mostrado.
    *
-   * Suma en el navegador con `Number()`, igual que `totalPendiente` más
-   * arriba: es un total **para leer**, no un importe que se vaya a mandar de
-   * vuelta al servidor — la cabecera de `accounting.types.ts` prohíbe lo
-   * segundo, no lo primero.
+   * Suma exacta sobre el texto decimal (`sumAmounts`, sin `Number`): es un
+   * total para leer, pero tiene que coincidir al céntimo con el PDF y con
+   * lo que diga el servidor.
    */
   protected readonly resumenDeCaja = computed(() => {
     const estado = this.flujoDeCaja();
     if (estado.status !== 'ready') return null;
-    const entradas = estado.data.reduce((suma, fila) => suma + Number(fila.debit), 0);
-    const salidas = estado.data.reduce((suma, fila) => suma + Number(fila.credit), 0);
-    return {
-      entradas: entradas.toFixed(2),
-      salidas: salidas.toFixed(2),
-      neto: (entradas - salidas).toFixed(2),
-    };
+    const entradas = sumAmounts(estado.data.map((fila) => fila.debit));
+    const salidas = sumAmounts(estado.data.map((fila) => fila.credit));
+    return { entradas, salidas, neto: subtractAmounts(entradas, salidas) };
   });
 
   protected readonly columnasDeCaja: readonly ColumnDef<FilaDelMayor>[] = [
@@ -931,15 +1048,92 @@ export class Accounting {
   protected readonly filaEnEdicion = signal<number | null>(null);
 
   /** Las filas ya agregadas al asiento en curso. */
-  protected readonly filasDelAsiento = signal<
-    readonly {
-      readonly accountId: string;
-      readonly accountLabel: string;
-      readonly direction: 'DEBIT' | 'CREDIT';
-      readonly amount: string;
-      readonly memo: string;
-    }[]
-  >([]);
+  protected readonly filasDelAsiento = signal<readonly JournalDraftRow[]>([]);
+
+  /* ---- Entidades relacionadas por tipo (criterio 11) --------------------- */
+
+  /** Centros de costo y de beneficio de la práctica: `GET /accounting/dimensions`. */
+  private readonly dimensiones = toSignal(
+    toObservable(computed(() => ({ practiceId: this.practicaElegida(), abierto: this.modoContadorAbierto() }))).pipe(
+      switchMap(({ practiceId, abierto }) =>
+        practiceId === null || !abierto
+          ? of([])
+          : this.libros.controllingObjects(practiceId).pipe(catchError(() => of([]))),
+      ),
+    ),
+    { initialValue: [] },
+  );
+
+  /** Activos fijos de la práctica: `GET /accounting/assets`. */
+  private readonly activosFijos = toSignal(
+    toObservable(computed(() => ({ practiceId: this.practicaElegida(), abierto: this.modoContadorAbierto() }))).pipe(
+      switchMap(({ practiceId, abierto }) =>
+        practiceId === null || !abierto
+          ? of([])
+          : this.libros.fixedAssets(practiceId).pipe(
+              map((registro) => registro.items),
+              catchError(() => of([])),
+            ),
+      ),
+    ),
+    { initialValue: [] },
+  );
+
+  /** Las entidades elegibles, por tipo. */
+  private readonly entidadesPorTipo = computed<Record<RelatedEntityKind, readonly SelectOption<string>[]>>(() => {
+    const dimension = (kind: 'COST_CENTER' | 'PROFIT_CENTER'): SelectOption<string>[] =>
+      this.dimensiones()
+        .filter((d) => d.kind === kind)
+        .map((d) => ({ value: d.id, label: `${d.code} — ${d.name}` }));
+    return {
+      COST_CENTER: dimension('COST_CENTER'),
+      PROFIT_CENTER: dimension('PROFIT_CENTER'),
+      ASSET: this.activosFijos().map((a) => ({ value: a.id, label: `${a.code} — ${a.name}` })),
+    };
+  });
+
+  /** Entidades relacionadas de la fila que se está agregando o modificando. */
+  protected readonly relacionadasEnCurso = signal<readonly RelatedEntity[]>([]);
+
+  /** El tipo elegido en el selector «Tipo de entidad relacionada». */
+  protected readonly tipoDeRelacion = new FormControl<RelatedEntityKind | ''>('', { nonNullable: true });
+  protected readonly entidadDeRelacion = new FormControl('', { nonNullable: true });
+  private readonly tipoDeRelacionElegido = toSignal(this.tipoDeRelacion.valueChanges, { initialValue: '' as const });
+
+  /** Los tipos que la fila todavía no tiene y que tienen al menos una entidad: uno de cada tipo por línea. */
+  protected readonly opcionesDeTipoDeRelacion = computed<readonly SelectOption<RelatedEntityKind>[]>(() => {
+    const usados = new Set(this.relacionadasEnCurso().map((r) => r.kind));
+    const disponibles = this.entidadesPorTipo();
+    return (Object.keys(RELATED_ENTITY_KIND_LABEL) as RelatedEntityKind[])
+      .filter((kind) => !usados.has(kind) && disponibles[kind].length > 0)
+      .map((kind) => ({ value: kind, label: RELATED_ENTITY_KIND_LABEL[kind] }));
+  });
+
+  protected readonly opcionesDeEntidadRelacionada = computed<readonly SelectOption<string>[]>(() => {
+    const kind = this.tipoDeRelacionElegido();
+    return kind === '' ? [] : this.entidadesPorTipo()[kind];
+  });
+
+  protected rotuloDeTipo(kind: RelatedEntityKind): string {
+    return RELATED_ENTITY_KIND_LABEL[kind];
+  }
+
+  protected agregarRelacionada(): void {
+    const kind = this.tipoDeRelacion.value;
+    const id = this.entidadDeRelacion.value;
+    if (kind === '' || id === '') return;
+    const opcion = this.entidadesPorTipo()[kind].find((o) => o.value === id);
+    this.relacionadasEnCurso.update((lista) => [
+      ...lista.filter((r) => r.kind !== kind),
+      { kind, id, label: opcion?.label ?? id },
+    ]);
+    this.tipoDeRelacion.setValue('');
+    this.entidadDeRelacion.setValue('');
+  }
+
+  protected quitarRelacionada(kind: RelatedEntityKind): void {
+    this.relacionadasEnCurso.update((lista) => lista.filter((r) => r.kind !== kind));
+  }
 
   /**
    * El descuadre en vivo, calculado en el cliente **sólo para mostrar**: el
@@ -950,9 +1144,9 @@ export class Accounting {
    */
   protected readonly descuadreEnVivo = computed(() => {
     const filas = this.filasDelAsiento();
-    const debe = filas.filter((f) => f.direction === 'DEBIT').reduce((s, f) => s + Number(f.amount), 0);
-    const haber = filas.filter((f) => f.direction === 'CREDIT').reduce((s, f) => s + Number(f.amount), 0);
-    return { debe: debe.toFixed(2), haber: haber.toFixed(2), diferencia: (debe - haber).toFixed(2) };
+    const debe = sumAmounts(filas.filter((f) => f.direction === 'DEBIT').map((f) => f.amount));
+    const haber = sumAmounts(filas.filter((f) => f.direction === 'CREDIT').map((f) => f.amount));
+    return { debe, haber, diferencia: subtractAmounts(debe, haber) };
   });
 
   protected readonly asientoBalanceado = computed(() => this.descuadreEnVivo().diferencia === '0.00');
@@ -964,14 +1158,20 @@ export class Accounting {
     }
     const { accountId, direction, amount, memo } = this.filaEnCurso.getRawValue();
     const opcion = this.opcionesDeCuenta().find((o) => o.value === accountId);
-    const fila = { accountId, accountLabel: opcion?.label ?? accountId, direction, amount, memo };
+    const fila: JournalDraftRow = {
+      accountId,
+      accountLabel: opcion?.label ?? accountId,
+      direction,
+      amount,
+      memo,
+      related: this.relacionadasEnCurso(),
+    };
 
     const indice = this.filaEnEdicion();
     this.filasDelAsiento.update((filas) =>
       indice === null ? [...filas, fila] : filas.map((f, i) => (i === indice ? fila : f)),
     );
-    this.filaEnEdicion.set(null);
-    this.filaEnCurso.reset({ accountId: '', direction: 'DEBIT', amount: '', memo: '' });
+    this.cancelarEdicionDeFila();
   }
 
   /** Trae los valores de una fila ya agregada de vuelta al formulario, para modificarla. */
@@ -985,17 +1185,29 @@ export class Accounting {
       amount: fila.amount,
       memo: fila.memo,
     });
+    this.relacionadasEnCurso.set(fila.related);
   }
 
   protected cancelarEdicionDeFila(): void {
     this.filaEnEdicion.set(null);
     this.filaEnCurso.reset({ accountId: '', direction: 'DEBIT', amount: '', memo: '' });
+    this.relacionadasEnCurso.set([]);
+    this.tipoDeRelacion.setValue('');
+    this.entidadDeRelacion.setValue('');
   }
 
+  /**
+   * Quita una fila. Si era la que se estaba modificando, se cancela la
+   * edición; si estaba antes, el índice en edición se corre uno para seguir
+   * apuntando a la misma fila (sin esto, guardar pisaba la fila de al lado).
+   */
   protected eliminarFila(indice: number): void {
     this.filasDelAsiento.update((filas) => filas.filter((_, i) => i !== indice));
-    if (this.filaEnEdicion() === indice) {
+    const enEdicion = this.filaEnEdicion();
+    if (enEdicion === indice) {
       this.cancelarEdicionDeFila();
+    } else if (enEdicion !== null && enEdicion > indice) {
+      this.filaEnEdicion.set(enEdicion - 1);
     }
   }
 
@@ -1020,6 +1232,7 @@ export class Accounting {
         direction: f.direction,
         amount: f.amount,
         ...(f.memo ? { memo: f.memo } : {}),
+        ...relatedEntityFields(f.related),
       })),
     };
   }
@@ -1064,8 +1277,7 @@ export class Accounting {
 
   private reiniciarFormularioDelAsiento(): void {
     this.filasDelAsiento.set([]);
-    this.filaEnEdicion.set(null);
-    this.filaEnCurso.reset({ accountId: '', direction: 'DEBIT', amount: '', memo: '' });
+    this.cancelarEdicionDeFila();
     this.cabeceraDelAsiento.reset({
       transactionDate: new Date().toISOString().slice(0, 10),
       description: '',

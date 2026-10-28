@@ -1,0 +1,22 @@
+
+✗ check-mock-vs-client
+
+  12 operación(es) sin manejador y SIN registrar en CONOCIDAS:
+
+    POST /community/conversations/contacts/search  (CommunityClient, src/app/core/data-access/community/community.client.ts)
+    POST /iam/auth/upload-registration-signature-image  (IamClient, src/app/core/data-access/iam/iam.client.ts)
+    GET /identity/verification-cases/:caseId  (IdentityAdminClient, src/app/core/data-access/identity/identity-admin.client.ts)
+    POST /insurance/patients/conversation  (InsuranceClient, src/app/core/data-access/insurance/insurance.client.ts)
+    GET /insurance/patients/options  (InsuranceClient, src/app/core/data-access/insurance/insurance.client.ts)
+    POST /insurance/patients/search  (InsuranceClient, src/app/core/data-access/insurance/insurance.client.ts)
+    DELETE /notifications/web-push/subscription  (WebPushClient, src/app/core/data-access/notifications/web-push.client.ts)
+    PUT /notifications/web-push/subscription  (WebPushClient, src/app/core/data-access/notifications/web-push.client.ts)
+    POST /referrals  (ReferralsClient, src/app/core/data-access/referrals/referrals.client.ts)
+    GET /scheduling/templates/:templateId/live-bookings  (SchedulingClient, src/app/core/data-access/scheduling/scheduling.client.ts)
+    GET /tenants/:tenantId/logo/content  (DirectoryClient, src/app/core/data-access/directory/directory.client.ts)
+    GET /terminology/concepts/:conceptId/glossary-neighborhood  (TerminologyClient, src/app/core/data-access/terminology/terminology.client.ts)
+
+  Con el mock honesto (H2.S1.M1) esto responde 501: la pantalla que lo llame
+  va a mostrar el estado de error. Si es una brecha conocida, agregala a
+  CONOCIDAS con su prompt; si no, escribile el manejador.
+

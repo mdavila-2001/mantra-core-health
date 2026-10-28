@@ -37,7 +37,8 @@ export function inicialDe(display: string): string {
  * estorba la lectura de la A.
  *
  * @param terminos - Los términos a agrupar, en cualquier orden.
- * @returns Los tramos con al menos un término, ordenados.
+ * @returns Los tramos con al menos un término, ordenados; dentro de cada uno,
+ *   los traducidos antes que los que están sólo en inglés.
  */
 export function porInicial(terminos: readonly GlossaryTerm[]): readonly GrupoAlfabetico[] {
   const porLetra = new Map<string, GlossaryTerm[]>();
@@ -60,6 +61,13 @@ export function porInicial(terminos: readonly GlossaryTerm[]): readonly GrupoAlf
     })
     .map(([letra, agrupados]) => ({
       letra,
-      terminos: [...agrupados].sort((x, y) => x.display.localeCompare(y.display, 'es')),
+      // Dentro de cada letra, primero lo que está en castellano: un término que
+      // sólo tiene su título original en inglés no le gana el lugar a uno
+      // traducido por empezar antes en el alfabeto.
+      terminos: [...agrupados].sort(
+        (x, y) =>
+          Number(x.translated === false) - Number(y.translated === false) ||
+          x.display.localeCompare(y.display, 'es'),
+      ),
     }));
 }

@@ -1,11 +1,21 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import type { WritableSignal } from '@angular/core';
+import { isSignal, type WritableSignal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { FilterBar } from '../../../../shared/components/organisms/filter-bar/filter-bar';
+import { WorkHistory } from '../work-history/work-history';
+
+import { EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { PractitionerProfileEdit } from './practitioner-profile-edit';
+import { accessibleName } from '../../../../../testing/a11y';
+import { selectOptionLabels } from '../../../../../testing/select';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * Configurar el perfil profesional.
@@ -20,10 +30,26 @@ import { PractitionerProfileEdit } from './practitioner-profile-edit';
  * 3. **Sin nada que agregar, el botón queda deshabilitado.**
  */
 
+/** Dónde se pregunta por las sedes del perfil de `PERFIL_BASE`. */
+const SEDES = '/practitioners/per-1/sites';
+
+/** Dónde se pregunta por la firma y el sello del profesional de la sesión. */
+const ACTIVOS_DE_FIRMA = '/profiles/practitioners/me/signature-assets';
+
 const PERFIL_BASE = {
   profileId: 'per-1',
   personId: 'per-1',
   practitionerCode: 'MED-7',
+  // Lo que el alta exige: el editor no deja guardar una pestaña con un campo
+  // obligatorio vacío (CORR-08, MT-38-02), así que el perfil base lo trae.
+  name: 'Ana',
+  lastName: 'Salas',
+  birthDate: '1990-01-01',
+  mobilePhone: '+591 70000000',
+  personalEmail: 'ana@ejemplo.bo',
+  // El punto del domicilio es obligatorio desde el 26/10/2026: sin él no se
+  // guarda «Contacto». Uno ya guardado vale sin volver a confirmarlo.
+  homeAddress: { lines: 'Av. Banzer 3er anillo', latitude: -17.78, longitude: -63.18 },
   displayName: 'Dra. Salas',
   professionalTitle: 'Cardióloga',
   professionalBio: 'Bio actual.',
@@ -41,6 +67,14 @@ const PERFIL_BASE = {
   activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
   createdAt: '2024-02-01T00:00:00.000Z',
 };
+
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('PractitionerProfileEdit', () => {
   let componente: PractitionerProfileEdit;
@@ -73,6 +107,10 @@ describe('PractitionerProfileEdit', () => {
                 return convertToParamMap(parametros);
               },
             },
+            // La barra de las tablas (`app-filter-bar`) lee la URL como flujo.
+            get queryParams() {
+              return of(parametros);
+            },
           },
         },
       ],
@@ -85,11 +123,40 @@ describe('PractitionerProfileEdit', () => {
     // de estas pruebas habla de él. Se da por atendido acá para que `verify()`
     // siga vigilando lo que cada prueba sí afirma, en vez de fallar en todas
     // por una lectura que es de otra pantalla.
+    //
+    // Los dos catálogos de idiomas (`VS_LANGUAGE`, `VS_LANGUAGE_PROFICIENCY`)
+    // también se piden al construirse y caen en este mismo drenaje: `items: []`
+    // los deja en «catálogo caído», así que una prueba que mire el bloque de
+    // idiomas con vista tiene que responderlos antes con
+    // `responderCatalogoDeIdiomas()` o verá el aviso de reintento en vez del
+    // formulario.
     for (const pendiente of http.match((r) => r.url.startsWith('/terminology/'))) {
       // El catálogo de municipios (ALV-003) se pide al sembrar el formulario y
       // se cancela al desmontar: una petición cancelada no se puede flushear.
       if (!pendiente.cancelled) {
         pendiente.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      }
+    }
+    // El logo del consultorio se pide al cargar (`LogoDelConsultorioClient`) y
+    // sólo las pruebas del logo hablan de él: las demás lo dan por atendido acá,
+    // igual que el catálogo de arriba.
+    for (const pendiente of http.match((r) => r.method === 'GET' && r.url === SEDES)) {
+      if (!pendiente.cancelled) {
+        pendiente.flush({ items: [], count: 0 });
+      }
+    }
+    // Los mapas de «Contacto» nacen con el punto guardado y piden su calle al
+    // mostrarse (26/10/2026): las pruebas que sólo miran la pestaña la dan por
+    // atendida acá.
+    for (const pendiente of http.match((r) => r.url.startsWith('/public/geo/reverse'))) {
+      if (!pendiente.cancelled) {
+        pendiente.flush({ found: false, attribution: '© OpenStreetMap' });
+      }
+    }
+    // Igual con la firma y el sello: sólo las pruebas de abajo hablan de ellos.
+    for (const pendiente of http.match((r) => r.method === 'GET' && r.url === ACTIVOS_DE_FIRMA)) {
+      if (!pendiente.cancelled) {
+        pendiente.flush({ signatureFileId: null, sealFileId: null });
       }
     }
     http.verify();
@@ -214,7 +281,7 @@ describe('PractitionerProfileEdit', () => {
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
-    return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
+    return (typeof valor === 'function' && !isSignal(valor) ? valor.bind(componente) : valor) as T;
   }
 
   /**
@@ -226,6 +293,38 @@ describe('PractitionerProfileEdit', () => {
    */
   function señal<T>(nombre: string): WritableSignal<T> {
     return (componente as unknown as Record<string, WritableSignal<T>>)[nombre];
+  }
+
+  /**
+   * Responde el diálogo de confirmación sin montar el `<dialog>`, y cuenta las
+   * veces que se preguntó. `confirmarCambios` y `confirmarDescarte` pasan por
+   * `confirm`, así que alcanza con reemplazar ése.
+   */
+  /** El último aviso encolado, sin pasar por el contenedor que lo pinta. */
+  function ultimoAviso(): { readonly title?: string; readonly message: string } | undefined {
+    return TestBed.inject(ToastService).toasts().at(-1);
+  }
+
+  /** Un rechazo de validación con la forma estructurada (`details.fields`). */
+  function rechazoPorCampo(field: string, mensaje: string): object {
+    return {
+      code: 'VALIDATION_FAILED',
+      message: 'Error de validación',
+      correlationId: 'corr-val',
+      details: { fields: [{ field, constraints: ['isValid'], messages: [mensaje] }] },
+      timestamp: '2026-10-08T00:00:00.000Z',
+      path: '/profiles',
+    };
+  }
+
+  function responderConfirmacion(respuesta: boolean): { preguntas: number } {
+    const registro = { preguntas: 0 };
+    const dialogos = interno<{ confirm: () => Promise<boolean> }>('dialogs');
+    dialogos.confirm = () => {
+      registro.preguntas += 1;
+      return Promise.resolve(respuesta);
+    };
+    return registro;
   }
 
   /**
@@ -253,6 +352,7 @@ describe('PractitionerProfileEdit', () => {
 
     it('mover el punto lo manda como par, y no tocarlo no manda nada', () => {
       montarYCargar();
+      señal<number>('pestana').set(1);
 
       señal<unknown>('gpsDomicilio').set({ lat: -16.5, lng: -68.15 });
       interno<() => void>('guardarPresentacion')();
@@ -262,15 +362,85 @@ describe('PractitionerProfileEdit', () => {
       req.flush(PERFIL_BASE);
     });
 
-    it('quitar el punto lo manda como null en los dos extremos', () => {
+    it('quitar el punto del domicilio no se guarda: es obligatorio (26/10/2026)', () => {
       montarYCargar();
+      señal<number>('pestana').set(1);
 
-      señal<unknown>('gpsDomicilio').set(null);
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')(null);
       interno<() => void>('guardarPresentacion')();
 
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('errorGpsDomicilio')()).toBe(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+
+      // Al confirmar otro punto, el aviso se va y el par viaja.
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')({ lat: -16.5, lng: -68.15 });
+      expect(señal<string>('errorGpsDomicilio')()).toBe('');
+    });
+
+    it('sin punto guardado, «Contacto» no se guarda hasta marcarlo', () => {
+      montarYCargar({ homeAddress: { lines: 'Av. Banzer' } });
+      señal<number>('pestana').set(1);
+      señal<string>('correoTrabajo').set('ana@hospital.bo');
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('errorGpsDomicilio')()).not.toBe('');
+    });
+
+    it('lo deducido del punto confirmado llena la calle y el municipio; sin tocar el mapa, queda lo guardado', () => {
+      montarYCargar();
+      const localidad = {
+        punto: { lat: -16.5, lng: -68.15 },
+        calle: 'Av. Arce 2631, Sopocachi',
+        calleSola: 'Av. Arce 2631',
+        zona: 'Sopocachi',
+        municipioConceptId: 'mun-lpz',
+      };
+      // El mapa siembra el punto guardado y deduce: eso no reescribe nada.
+      interno<(l: unknown) => void>('aplicarLocalidadDomicilio')({
+        ...localidad,
+        punto: { lat: -17.78, lng: -63.18 },
+      });
+      expect(señal<string>('direccion')()).toBe('Av. Banzer 3er anillo');
+
+      // Un punto nuevo, todavía sin confirmar: tampoco.
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')(null);
+      interno<(l: unknown) => void>('aplicarLocalidadDomicilio')(localidad);
+      expect(señal<string>('direccion')()).toBe('');
+
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')({ lat: -16.5, lng: -68.15 });
+      expect(señal<string>('direccion')()).toBe('Av. Arce 2631, Sopocachi');
+      expect(señal<string | null>('municipioResidencia')()).toBe('mun-lpz');
+
+      señal<number>('pestana').set(1);
+      interno<() => void>('guardarPresentacion')();
       const req = http.expectOne('/profiles/practitioners/me');
-      expect(req.request.body).toEqual({ homeLatitude: null, homeLongitude: null });
+      expect(req.request.body).toEqual({
+        residenceMunicipalityConceptId: 'mun-lpz',
+        homeAddressLines: 'Av. Arce 2631, Sopocachi',
+        // ADR-0028: el distrito viaja aparte, a su propia columna.
+        homeDistrict: 'Sopocachi',
+        homeLatitude: -16.5,
+        homeLongitude: -68.15,
+      });
       req.flush(PERFIL_BASE);
+    });
+
+    it('el trabajo toma la línea de su punto, o la zona si el mapa no tiene calle', () => {
+      montarYCargar();
+      interno<(p: unknown) => void>('confirmarGpsTrabajo')({ lat: -17.8, lng: -63.2 });
+      interno<(l: unknown) => void>('aplicarLocalidadTrabajo')({
+        punto: { lat: -17.8, lng: -63.2 },
+        calle: null,
+        calleSola: null,
+        zona: 'Equipetrol',
+        municipioConceptId: null,
+      });
+      expect(señal<string>('direccionTrabajo')()).toBe('Equipetrol');
+      expect(señal<string>('distritoTrabajo')()).toBe('Equipetrol');
     });
 
     it('el título se elige de la MISMA lista cerrada que el registro', () => {
@@ -348,14 +518,15 @@ describe('PractitionerProfileEdit', () => {
       req.flush(PERFIL_BASE);
     });
 
-    it('agrega TODAS las especialidades elegidas, no la primera', () => {
+    it('agrega TODAS las especialidades elegidas, no la primera', async () => {
       montarYCargar();
 
       señal<string>('nuevaEspecialidad').set('esp-cardio');
       interno<() => void>('agregarCasillaDeEspecialidad')();
       interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-pediatria');
 
-      interno<() => void>('agregarEspecialidad')();
+      responderConfirmacion(true);
+      await interno<() => Promise<void>>('agregarEspecialidad')();
 
       const pedidos = http.match('/profiles/practitioners/per-1/specialties');
       expect(pedidos).toHaveLength(2);
@@ -367,14 +538,15 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
     });
 
-    it('elegir dos veces la misma declara una, no dos filas iguales', () => {
+    it('elegir dos veces la misma declara una, no dos filas iguales', async () => {
       montarYCargar();
 
       señal<string>('nuevaEspecialidad').set('esp-cardio');
       interno<() => void>('agregarCasillaDeEspecialidad')();
       interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-cardio');
 
-      interno<() => void>('agregarEspecialidad')();
+      responderConfirmacion(true);
+      await interno<() => Promise<void>>('agregarEspecialidad')();
 
       const pedidos = http.match('/profiles/practitioners/per-1/specialties');
       expect(pedidos).toHaveLength(1);
@@ -466,6 +638,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('guardarPresentacion manda el NIT nuevo, y sólo el NIT', () => {
     montarYCargar();
+    señal<number>('pestana').set(2);
 
     señal<string>('nit').set('5414404011');
     interno<() => void>('guardarPresentacion')();
@@ -480,6 +653,7 @@ describe('PractitionerProfileEdit', () => {
     // Es la única forma de sacar un NIT cargado mal. Descartar los vacíos
     // dejaría el número viejo para siempre.
     montarYCargar({ taxId: '5414404011' });
+    señal<number>('pestana').set(2);
 
     señal<string>('nit').set('');
     interno<() => void>('guardarPresentacion')();
@@ -487,6 +661,31 @@ describe('PractitionerProfileEdit', () => {
     const req = http.expectOne('/profiles/practitioners/me');
     expect(req.request.body).toEqual({ taxId: '' });
     req.flush({ ...PERFIL_BASE, taxId: '' });
+  });
+
+  it('siembra la frecuencia de facturación al seguro y manda sólo la que cambió', () => {
+    montarYCargar({ insuranceBillingFrequency: 'MONTHLY' });
+    señal<number>('pestana').set(2);
+    expect(interno<() => string | null>('frecuenciaFacturacionSeguro')()).toBe('MONTHLY');
+
+    señal<string>('frecuenciaFacturacionSeguro').set('BIWEEKLY');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ insuranceBillingFrequency: 'BIWEEKLY' });
+    req.flush({ ...PERFIL_BASE, insuranceBillingFrequency: 'BIWEEKLY' });
+  });
+
+  it('sin tocar la frecuencia no la manda', () => {
+    montarYCargar({ insuranceBillingFrequency: 'WEEKLY', taxId: '1' });
+    señal<number>('pestana').set(2);
+
+    señal<string>('nit').set('2');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ taxId: '2' });
+    req.flush({ ...PERFIL_BASE, taxId: '2' });
   });
 
   it('el botón de guardar también se ofrece en la pestaña «Facturación»', () => {
@@ -502,8 +701,9 @@ describe('PractitionerProfileEdit', () => {
 
   it('no guarda con un teléfono a medias y lleva a «Contacto»', () => {
     montarYCargar();
+    señal<number>('pestana').set(1);
 
-    interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 7001');
+    interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
     interno<() => void>('guardarPresentacion')();
 
     http.expectNone('/profiles/practitioners/me');
@@ -512,16 +712,48 @@ describe('PractitionerProfileEdit', () => {
 
   it('un teléfono completo viaja con su prefijo', () => {
     montarYCargar();
+    señal<number>('pestana').set(1);
 
-    interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 70012345');
+    interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 70012345');
     interno<() => void>('guardarPresentacion')();
 
     const req = http.expectOne('/profiles/practitioners/me');
-    expect(req.request.body).toEqual({ workMobilePhone: '+591 70012345' });
+    expect(req.request.body).toEqual({ mobilePhone: '+591 70012345' });
     req.flush(PERFIL_BASE);
   });
 
   /* ---- especialidades: sólo se agregan ------------------------------------- */
+
+  /**
+   * Se mudaron de «Credenciales» a «Datos personales» el 24/09/2026 (pedido
+   * del propietario): la ficha ya las lee ahí, y el editor quedaba
+   * desalineado con la pestaña que dice corregir.
+   */
+  it('«Agregar especialidades» vive en «Datos personales», no en «Credenciales»', () => {
+    const fixture = montarConVista();
+
+    // Pestaña 0, «Datos personales»: la sección y su «Agregar especialidad» están.
+    // El alta es un modal (D-04), así que el select vive en él y no en el panel.
+    const personales = panelAbierto(fixture);
+    expect(
+      personales.querySelector('[data-testid="edicion-especialidades-cargadas"]'),
+    ).not.toBeNull();
+    expect(personales.querySelector('[data-testid="especialidad-agregar"]')).not.toBeNull();
+
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    // Pestaña 5, «Credenciales»: ya no queda ni el formulario ni la tabla.
+    const credenciales = panelAbierto(fixture);
+    expect(credenciales.querySelector('[data-testid="especialidad-select"]')).toBeNull();
+    expect(credenciales.querySelector('[data-testid="tabla-especialidades"]')).toBeNull();
+    expect(credenciales.querySelector('[data-testid="especialidad-agregar"]')).toBeNull();
+    expect(credenciales.textContent).not.toContain('Agregar especialidad');
+    // La matrícula, que sí es de esta pestaña, sigue estando.
+    expect(
+      credenciales.querySelector('[data-testid="edicion-matriculas-cargadas"]'),
+    ).not.toBeNull();
+  });
 
   it('el botón de agregar especialidad exige haber elegido una', () => {
     montarYCargar();
@@ -548,11 +780,12 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => readonly string[]>('especialidadesExtra')()).toEqual([]);
   });
 
-  it('agregarEspecialidad hace un POST y recarga el perfil', () => {
+  it('agregarEspecialidad hace un POST y recarga el perfil', async () => {
     montarYCargar();
     señal<string>('nuevaEspecialidad').set('esp-cardio');
 
-    interno<() => void>('agregarEspecialidad')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarEspecialidad')();
 
     const req = http.expectOne('/profiles/practitioners/per-1/specialties');
     expect(req.request.method).toBe('POST');
@@ -584,12 +817,13 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => boolean>('puedeAgregarMatricula')()).toBe(true);
   });
 
-  it('agregarMatricula hace un POST y recarga el perfil', () => {
+  it('agregarMatricula hace un POST y recarga el perfil', async () => {
     montarYCargar();
     señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
     señal<string>('nuevaAutoridad').set('Colegio Médico');
 
-    interno<() => void>('agregarMatricula')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
 
     const req = http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations');
     expect(req.request.method).toBe('POST');
@@ -611,14 +845,15 @@ describe('PractitionerProfileEdit', () => {
     expect(señal<readonly File[]>('archivoDeMatricula')()).toEqual([respaldo]);
   });
 
-  it('limpia el respaldo local cuando la matrícula queda agregada', () => {
+  it('limpia el respaldo local cuando la matrícula queda agregada', async () => {
     montarYCargar();
     señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
     señal<readonly File[]>('archivoDeMatricula').set([
       new File(['matrícula'], 'matricula.pdf', { type: 'application/pdf' }),
     ]);
 
-    interno<() => void>('agregarMatricula')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
     http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'file-9' });
     http
       .expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations')
@@ -636,11 +871,12 @@ describe('PractitionerProfileEdit', () => {
      existe desde el modelo v4.2.11; estas tres pruebas son las del diploma,
      aplicadas a la matrícula. */
 
-  it('sin respaldo no sube nada: la matrícula va derecha', () => {
+  it('sin respaldo no sube nada: la matrícula va derecha', async () => {
     montarYCargar();
     señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
 
-    interno<() => void>('agregarMatricula')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
 
     // Ni una petición al almacén de archivos.
     expect(http.match('/common/files/upload')).toHaveLength(0);
@@ -650,7 +886,7 @@ describe('PractitionerProfileEdit', () => {
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
   });
 
-  it('con respaldo sube primero el archivo y manda su id como fileId', () => {
+  it('con respaldo sube primero el archivo y manda su id como fileId', async () => {
     montarYCargar();
     señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
     señal<string>('nuevaAutoridad').set('Colegio Médico');
@@ -658,7 +894,8 @@ describe('PractitionerProfileEdit', () => {
       new File(['x'], 'matricula.pdf', { type: 'application/pdf' }),
     ]);
 
-    interno<() => void>('agregarMatricula')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
 
     // Primero el archivo…
     const subida = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
@@ -676,7 +913,7 @@ describe('PractitionerProfileEdit', () => {
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
   });
 
-  it('si la subida falla, la matrícula NO se crea', () => {
+  it('si la subida falla, la matrícula NO se crea', async () => {
     // Una matrícula sin el carnet que la persona creyó haber adjuntado es peor
     // que un error: nadie se entera hasta que se la rechazan.
     montarYCargar();
@@ -685,7 +922,8 @@ describe('PractitionerProfileEdit', () => {
       new File(['x'], 'matricula.pdf', { type: 'application/pdf' }),
     ]);
 
-    interno<() => void>('agregarMatricula')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
 
     http
       .expectOne((r) => r.url.endsWith('/common/files/upload'))
@@ -693,6 +931,81 @@ describe('PractitionerProfileEdit', () => {
 
     expect(http.match('/profiles/practitioners/per-1/jurisdiction-authorizations')).toHaveLength(0);
     expect(interno<() => boolean>('guardandoMatricula')()).toBe(false);
+  });
+
+  /* ---- el rechazo del alta de matrícula, dicho en el diálogo (2026-10-08) ----
+     Antes: «No se pudo agregar la matrícula. Pruebe de nuevo.» ante cualquier
+     fallo. Es el defecto del «paso 15»: el alta se caía sin decir por qué. */
+
+  it('un número rechazado queda pegado al campo del diálogo y lo escrito sigue ahí', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http
+      .expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations')
+      .flush(rechazoPorCampo('licenseNumber', 'El número de matrícula ya está registrado.'), {
+        status: 400,
+        statusText: 'Bad Request',
+      });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('licenseNumber')).toBe(
+      'El número de matrícula ya está registrado.',
+    );
+    // En el diálogo la sección visible es el diálogo: no se nombra pestaña.
+    expect(ultimoAviso()).toEqual(
+      expect.objectContaining({
+        title: 'Matrículas',
+        message: 'Revise los campos marcados y vuelva a guardar.',
+      }),
+    );
+    expect(señal<string>('nuevoNumeroDeMatricula')()).toBe('LIC-9');
+    expect(interno<() => boolean>('guardandoMatricula')()).toBe(false);
+  });
+
+  it('un rechazo de negocio de la matrícula dice el motivo y el código de soporte', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush(
+      {
+        code: 'CONFLICT',
+        message: 'Esa matrícula ya figura en su perfil.',
+        correlationId: 'corr-mat',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    expect(ultimoAviso()?.message).toBe(
+      'Esa matrícula ya figura en su perfil. (Código de soporte: corr-mat)',
+    );
+  });
+
+  it('un respaldo demasiado grande lo dice, en vez de un genérico', async () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+    señal<readonly File[]>('archivoDeMatricula').set([
+      new File(['x'], 'matricula.pdf', { type: 'application/pdf' }),
+    ]);
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarMatricula')();
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush(
+      {
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'El archivo supera los 5 MB.',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/common/files/upload',
+      },
+      { status: 413, statusText: 'Payload Too Large' },
+    );
+
+    expect(ultimoAviso()?.message).toBe('El archivo supera los 5 MB.');
   });
 
   it('la matrícula ofrece tres autoridades, con el colegio del título', () => {
@@ -743,7 +1056,6 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => readonly object[]>('filasEspecialidades')()).toEqual([
       expect.objectContaining({
         especialidad: 'Cardiología',
-        rol: 'Principal',
         estado: 'Verificada',
       }),
     ]);
@@ -752,13 +1064,23 @@ describe('PractitionerProfileEdit', () => {
     ]);
   });
 
-  /* -- Cuál es la principal (2026-09-13) -------------------------------------
-     El bloqueo del 2026-09-10: al adaptar el editor al formulario del alta
-     salieron los interruptores sueltos, y con ellos «Es mi especialidad
-     principal». Vuelve como gesto sobre una fila que ya existe. */
+  /* -- Todas por igual (D-01, 23/09/2026) -----------------------------------
+     El médico pidió que ninguna especialidad se distinga como principal. Hasta
+     entonces la tabla ponía la principal primero y la columna «Tipo» decía
+     «Principal»/«Adicional» y ofrecía «Marcar como principal». El dato
+     `isPrimary` sigue llegando del contrato: la pantalla no lo usa. */
 
-  const DOS_ESPECIALIDADES = {
+  /** La principal llega SEGUNDA a propósito: si algo la adelantara, se vería. */
+  const PRINCIPAL_AL_FINAL = {
     specialties: [
+      {
+        id: 'e-2',
+        specialtyConceptId: 'esp-pediatria',
+        isPrimary: false,
+        boardCertified: false,
+        verificationStatusConceptId: 'st-v',
+        verified: true,
+      },
       {
         id: 'e-1',
         specialtyConceptId: 'esp-cardio',
@@ -767,114 +1089,41 @@ describe('PractitionerProfileEdit', () => {
         verificationStatusConceptId: 'st-v',
         verified: true,
       },
-      {
-        id: 'e-2',
-        specialtyConceptId: 'esp-pedia',
-        isPrimary: false,
-        boardCertified: false,
-        verificationStatusConceptId: 'st-v',
-        verified: true,
-      },
     ],
   };
 
-  it('cada fila dice si es la principal y si sigue vigente', () => {
-    montarYCargar({
-      specialties: [
-        ...DOS_ESPECIALIDADES.specialties,
-        {
-          id: 'e-3',
-          specialtyConceptId: 'esp-pedia',
-          isPrimary: false,
-          boardCertified: false,
-          verificationStatusConceptId: 'st-v',
-          verified: true,
-          validTo: '2025-12-31T00:00:00.000Z',
-        },
-      ],
-    });
+  it('las especialidades van en el orden en que llegan: la principal no se adelanta', () => {
+    montarYCargar(PRINCIPAL_AL_FINAL);
 
     const filas = interno<() => readonly Record<string, unknown>[]>('filasEspecialidades')();
-    expect(filas).toEqual([
-      expect.objectContaining({ id: 'e-1', esPrincipal: true, vigente: true }),
-      expect.objectContaining({ id: 'e-2', esPrincipal: false, vigente: true }),
-      expect.objectContaining({ id: 'e-3', esPrincipal: false, vigente: false }),
-    ]);
+    expect(filas.map((fila) => fila['id'])).toEqual(['e-2', 'e-1']);
   });
 
-  it('marcar como principal hace PATCH sin ningún profileId y recarga el perfil', () => {
-    montarYCargar(DOS_ESPECIALIDADES);
+  it('ninguna fila dice cuál es la principal, y no queda gesto para marcarla', () => {
+    montarYCargar(PRINCIPAL_AL_FINAL);
 
-    const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[1]!;
-    interno<(f: unknown) => void>('marcarComoPrincipal')(fila);
-
-    // `me`, no el perfil de la petición: no hay especialidad ajena que marcar
-    // escribiendo una URL.
-    const req = http.expectOne('/profiles/practitioners/me/specialties/e-2/primary');
-    expect(req.request.method).toBe('PATCH');
-    req.flush({ id: 'e-2', isPrimary: true });
-
-    http.expectOne('/profiles/practitioners/me/summary').flush({
-      ...PERFIL_BASE,
-      specialties: [
-        { ...DOS_ESPECIALIDADES.specialties[0], isPrimary: false },
-        { ...DOS_ESPECIALIDADES.specialties[1], isPrimary: true },
-      ],
-    });
-    // Las lecturas de terminología que dispara la recarga las drena el
-    // `afterEach`: el catálogo ya está resuelto y esta prueba no lo mira.
-
-    expect(interno<() => string | null>('marcandoPrincipal')()).toBeNull();
-    expect(interno<() => readonly Record<string, unknown>[]>('filasEspecialidades')()).toEqual([
-      expect.objectContaining({ id: 'e-2', esPrincipal: true }),
-      expect.objectContaining({ id: 'e-1', esPrincipal: false }),
-    ]);
+    for (const fila of interno<() => readonly Record<string, unknown>[]>('filasEspecialidades')()) {
+      expect(fila).not.toHaveProperty('rol');
+      expect(fila).not.toHaveProperty('esPrincipal');
+    }
+    expect(
+      interno<() => readonly { header: string }[]>('columnasEspecialidades')().map((c) => c.header),
+    ).toEqual(['Especialidad', 'Desde', 'Estado', 'Acciones']);
+    expect(interno<unknown>('marcarComoPrincipal')).toBeUndefined();
+    expect(http.match((r) => r.url.endsWith('/primary'))).toHaveLength(0);
   });
 
-  it('la que ya es principal no se vuelve a marcar', () => {
-    montarYCargar(DOS_ESPECIALIDADES);
+  it('dibujada, la tabla de especialidades no dice «principal» en ninguna fila', () => {
+    const fixture = montarConVista(PRINCIPAL_AL_FINAL);
+    // Las especialidades viven en «Datos personales» desde el 24/09/2026.
+    señal<number>('pestana').set(0);
+    fixture.detectChanges();
 
-    const principal = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
-    interno<(f: unknown) => void>('marcarComoPrincipal')(principal);
-
-    expect(http.match((r) => r.url.includes('/specialties/'))).toHaveLength(0);
-  });
-
-  it('una que ya no se ejerce no se puede marcar', () => {
-    // El servidor la rechaza con 412; ofrecerlo sería prometer lo que no se
-    // puede cumplir, así que ni se pide.
-    montarYCargar({
-      specialties: [
-        {
-          id: 'e-9',
-          specialtyConceptId: 'esp-pedia',
-          isPrimary: false,
-          boardCertified: false,
-          verificationStatusConceptId: 'st-v',
-          verified: true,
-          validTo: '2025-12-31T00:00:00.000Z',
-        },
-      ],
-    });
-
-    const vieja = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
-    interno<(f: unknown) => void>('marcarComoPrincipal')(vieja);
-
-    expect(http.match((r) => r.url.includes('/specialties/'))).toHaveLength(0);
-  });
-
-  it('si el cambio falla, el perfil no se recarga y el botón se destraba', () => {
-    montarYCargar(DOS_ESPECIALIDADES);
-
-    const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[1]!;
-    interno<(f: unknown) => void>('marcarComoPrincipal')(fila);
-
-    http
-      .expectOne('/profiles/practitioners/me/specialties/e-2/primary')
-      .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
-
-    expect(http.match('/profiles/practitioners/me/summary')).toHaveLength(0);
-    expect(interno<() => string | null>('marcandoPrincipal')()).toBeNull();
+    const tabla = panelAbierto(fixture).querySelector('[data-testid="tabla-especialidades"]');
+    const texto = (tabla?.textContent ?? '').replace(/\s+/g, ' ');
+    expect(texto).toContain('Cardiología');
+    expect(texto).toContain('Pediatría');
+    expect(texto).not.toMatch(/principal/i);
   });
 
   /* -- Catálogo de especialidades (TJ-3 · F-19) ----------------------------- */
@@ -926,6 +1175,7 @@ describe('PractitionerProfileEdit', () => {
 
   it('guardarPresentacion manda homeAddressLines si la dirección cambió', () => {
     montarYCargar();
+    señal<number>('pestana').set(1);
 
     señal<string>('direccion').set('Av. Brasil 1234');
     interno<() => void>('guardarPresentacion')();
@@ -935,14 +1185,19 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, homeAddress: { lines: 'Av. Brasil 1234' } });
   });
 
-  it('Contacto ofrece una dirección de trabajo separada del domicilio', () => {
+  it('Contacto abre con el mapa del domicilio primero, y las direcciones no se escriben', () => {
     const fixture = montarConVista();
     señal<number>('pestana').set(1);
     fixture.detectChanges();
 
-    expect(
-      panelAbierto(fixture).querySelector('[data-testid="edicion-direccion-trabajo"]'),
-    ).not.toBeNull();
+    const panel = panelAbierto(fixture);
+    const formulario = panel.querySelector('form.edicion__formulario')!;
+    const primero = formulario.querySelector('app-map-location-picker, app-form-field');
+    expect(primero?.getAttribute('pinid')).toBe('edicion-domicilio');
+    // Ni casillas de dirección ni el selector manual de municipio.
+    expect(panel.querySelector('[data-testid="edicion-direccion"]')).toBeNull();
+    expect(panel.querySelector('[data-testid="edicion-direccion-trabajo"]')).toBeNull();
+    expect(panel.querySelector('app-location-picker[testid="edicion-residencia"]')).toBeNull();
   });
 
   it('siembra la dirección laboral y su punto sin mezclarlos con el domicilio', () => {
@@ -956,8 +1211,52 @@ describe('PractitionerProfileEdit', () => {
     expect(señal<unknown>('gpsTrabajoGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
   });
 
+  it('siembra el distrito de cada dirección y lo manda sólo cuando cambia (ADR-0028)', () => {
+    montarYCargar({
+      homeAddress: {
+        lines: 'Av. Brasil 1234',
+        district: 'Miraflores',
+        latitude: -16.5,
+        longitude: -68.15,
+      },
+      workAddress: { lines: 'Calle Warnes 45', district: 'Equipetrol' },
+    });
+    expect(señal<string>('distritoDomicilio')()).toBe('Miraflores');
+    expect(señal<string>('distritoTrabajo')()).toBe('Equipetrol');
+    señal<number>('pestana').set(1);
+
+    señal<string>('distritoTrabajo').set('Las Palmas');
+    interno<() => void>('guardarPresentacion')();
+
+    // El domicilio no cambió: su distrito no viaja.
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ workDistrict: 'Las Palmas' });
+    req.flush(PERFIL_BASE);
+  });
+
+  it('un distrito que el mapa ya no da viaja vacío, para quitarlo', () => {
+    // Con su punto: sin él, «Contacto» no se guarda (punto obligatorio).
+    montarYCargar({
+      homeAddress: {
+        lines: 'Av. Brasil 1234',
+        district: 'Miraflores',
+        latitude: -16.5,
+        longitude: -68.15,
+      },
+    });
+    señal<number>('pestana').set(1);
+
+    señal<string>('distritoDomicilio').set('');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ homeDistrict: '' });
+    req.flush(PERFIL_BASE);
+  });
+
   it('guardarPresentacion manda workAddressLines sólo cuando cambia', () => {
     montarYCargar({ workAddress: { lines: 'Calle Warnes 45' } });
+    señal<number>('pestana').set(1);
 
     señal<string>('direccionTrabajo').set('Av. Melchor Pinto 620');
     interno<() => void>('guardarPresentacion')();
@@ -972,6 +1271,7 @@ describe('PractitionerProfileEdit', () => {
       homeAddress: { lines: 'Av. Brasil 1234', latitude: -16.5, longitude: -68.15 },
       workAddress: { lines: 'Calle Warnes 45', latitude: -17.78, longitude: -63.18 },
     });
+    señal<number>('pestana').set(1);
 
     señal<unknown>('gpsTrabajo').set({ lat: -17.8, lng: -63.2 });
     interno<() => void>('guardarPresentacion')();
@@ -994,8 +1294,50 @@ describe('PractitionerProfileEdit', () => {
     fixture.detectChanges();
 
     const panel = panelAbierto(fixture);
-    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-domicilio"]')).not.toBeNull();
-    expect(panel.querySelector('app-ubicacion-picker[pinid="edicion-trabajo"]')).not.toBeNull();
+    expect(panel.querySelector('app-map-location-picker[pinid="edicion-domicilio"]')).not.toBeNull();
+    expect(panel.querySelector('app-map-location-picker[pinid="edicion-trabajo"]')).not.toBeNull();
+  });
+
+  /* ---- Trayectoria son los cargos; los títulos, Credenciales -------------- */
+
+  it('«Trayectoria» abre los formularios de los cargos, no los de los títulos', () => {
+    // «En trayectoria aparecen los cargos históricos, pero al darle editar no
+    // aparecen los formularios correspondientes ... aparecen los que deberían
+    // aparecer en credenciales» — propietario, 24/09/2026.
+    const fixture = montarConVista();
+    señal<number>('pestana').set(4);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    const historial = panel.querySelector('app-work-history');
+    // El MISMO componente que la ficha, pidiendo sólo el historial laboral.
+    expect(historial?.getAttribute('secciones')).toBe('historial');
+    expect(historial?.getAttribute('layout')).toBe('tabla');
+    expect(panel.querySelector('[data-testid="credencial-tipo"]')).toBeNull();
+    expect(panel.querySelector('[data-testid="edicion-formacion-cargada"]')).toBeNull();
+
+    // Las lecturas propias del historial no son asunto de esta prueba.
+    http.match(() => true);
+  });
+
+  it('«Credenciales» junta sólo matrículas y títulos, cada uno en su bloque', () => {
+    const fixture = montarConVista();
+    señal<number>('pestana').set(5);
+    fixture.detectChanges();
+
+    const panel = panelAbierto(fixture);
+    const titulos = [...panel.querySelectorAll('.edicion__titulo')].map((h) =>
+      h.textContent?.trim(),
+    );
+    expect(titulos).toEqual([
+      'Sus matrículas cargadas',
+      'Sus títulos cargados',
+    ]);
+    expect(panel.querySelector('[data-testid="edicion-idiomas"]')).toBeNull();
+    // Cada bloque ofrece su alta a la derecha de su barra; el formulario vive en un modal (D-04).
+    expect(panel.querySelector('app-filter-bar [data-testid="matricula-agregar"]')).not.toBeNull();
+    expect(panel.querySelector('app-filter-bar [data-testid="credencial-agregar"]')).not.toBeNull();
+    expect(panel.querySelector('app-work-history')).toBeNull();
   });
 
   /* ---- formación: sólo se agrega ------------------------------------------- */
@@ -1012,7 +1354,7 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => boolean>('puedeAgregarCredencial')()).toBe(true);
   });
 
-  it('agregarCredencial hace un POST y recarga el perfil', () => {
+  it('agregarCredencial hace un POST y recarga el perfil', async () => {
     montarYCargar();
     señal<string>('nuevoTipoCredencial').set('cred-titulo');
     señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
@@ -1020,7 +1362,8 @@ describe('PractitionerProfileEdit', () => {
     // siendo el nombre, así que el cuerpo del POST no cambia de forma.
     señal<string>('institucionElegida').set('Universidad Mayor de San Andrés');
 
-    interno<() => void>('agregarCredencial')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
 
     const req = http.expectOne('/profiles/practitioners/me/credentials');
     expect(req.request.method).toBe('POST');
@@ -1028,6 +1371,8 @@ describe('PractitionerProfileEdit', () => {
       credentialTypeConceptId: 'cred-titulo',
       number: 'Médico cirujano',
       issuingInstitutionText: 'Universidad Mayor de San Andrés',
+      // La ciudad sale de la institución: la sede principal de la UMSA.
+      issuingCityText: 'La Paz',
     });
     req.flush({ id: 'cred-1' });
 
@@ -1036,12 +1381,13 @@ describe('PractitionerProfileEdit', () => {
 
   /* ---- el diploma del título (2026-09-10) ---------------------------------- */
 
-  it('sin diploma no sube nada: el título va derecho', () => {
+  it('sin diploma no sube nada: el título va derecho', async () => {
     montarYCargar();
     señal<string>('nuevoTipoCredencial').set('cred-titulo');
     señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
 
-    interno<() => void>('agregarCredencial')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
 
     // Ni una petición al almacén de archivos.
     expect(http.match('/common/files/upload')).toHaveLength(0);
@@ -1049,7 +1395,7 @@ describe('PractitionerProfileEdit', () => {
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
   });
 
-  it('con diploma sube primero el archivo y manda su id como fileId', () => {
+  it('con diploma sube primero el archivo y manda su id como fileId', async () => {
     montarYCargar();
     señal<string>('nuevoTipoCredencial').set('cred-titulo');
     señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
@@ -1057,7 +1403,8 @@ describe('PractitionerProfileEdit', () => {
       new File(['x'], 'diploma.pdf', { type: 'application/pdf' }),
     ]);
 
-    interno<() => void>('agregarCredencial')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
 
     // Primero el archivo…
     const subida = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
@@ -1075,7 +1422,7 @@ describe('PractitionerProfileEdit', () => {
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
   });
 
-  it('si la subida falla, el título NO se crea', () => {
+  it('si la subida falla, el título NO se crea', async () => {
     // Un título sin el diploma que la persona creyó haber adjuntado es peor que
     // un error: nadie se entera hasta que se lo rechazan.
     montarYCargar();
@@ -1085,7 +1432,8 @@ describe('PractitionerProfileEdit', () => {
       new File(['x'], 'diploma.pdf', { type: 'application/pdf' }),
     ]);
 
-    interno<() => void>('agregarCredencial')();
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
 
     http
       .expectOne((r) => r.url.endsWith('/common/files/upload'))
@@ -1095,19 +1443,65 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => boolean>('guardandoCredencial')()).toBe(false);
   });
 
+  it('un título rechazado por campo ancla el mensaje y cerrar el diálogo lo limpia', async () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
+    http
+      .expectOne('/profiles/practitioners/me/credentials')
+      .flush(rechazoPorCampo('number', 'El número no puede superar 60 caracteres.'), {
+        status: 400,
+        statusText: 'Bad Request',
+      });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('number')).toContain('60 caracteres');
+    expect(ultimoAviso()?.title).toBe('Formación');
+    expect(señal<string>('nuevoNumeroCredencial')()).toBe('Médico cirujano');
+
+    interno<() => void>('cerrarAltaDeTitulo')();
+    expect(interno<(c: string) => string>('errorDelServidor')('number')).toBe('');
+  });
+
+  it('un 500 del título lleva el código de soporte con el que se encuentra en el log', async () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+    responderConfirmacion(true);
+    await interno<() => Promise<void>>('agregarCredencial')();
+    http.expectOne('/profiles/practitioners/me/credentials').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Internal server error',
+        correlationId: 'corr-500',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(ultimoAviso()?.message).toBe(
+      'No se pudo agregar el título. Intente de nuevo. (Código de soporte: corr-500)',
+    );
+  });
+
   /* ======================================================================
       Institución como lista, y las acciones de las tres tablas
       (propietario, 13/09/2026)
      ====================================================================== */
 
   describe('la institución sale de un catálogo, no del teclado', () => {
-    it('lo elegido del catálogo viaja como el nombre de la institución', () => {
+    it('lo elegido del catálogo viaja como el nombre de la institución', async () => {
       montarYCargar();
       señal<string>('nuevoTipoCredencial').set('cred-titulo');
       señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
       señal<string>('institucionElegida').set('Universidad Mayor de San Simón');
 
-      interno<() => void>('agregarCredencial')();
+      responderConfirmacion(true);
+      await interno<() => Promise<void>>('agregarCredencial')();
 
       const req = http.expectOne('/profiles/practitioners/me/credentials');
       // El valor de la opción ES el nombre: el contrato sigue recibiendo
@@ -1117,7 +1511,7 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
     });
 
-    it('«otra» abre el campo a mano y manda lo escrito', () => {
+    it('«otra» abre el campo a mano y manda lo escrito', async () => {
       // Sin esta salida, una lista de universidades bolivianas le impide cargar
       // el título a cualquiera que se formó en el exterior.
       montarYCargar();
@@ -1129,7 +1523,8 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => boolean>('institucionFueraDeCatalogo')()).toBe(true);
 
       señal<string>('institucionEscrita').set('  Universidad de La Habana  ');
-      interno<() => void>('agregarCredencial')();
+      responderConfirmacion(true);
+      await interno<() => Promise<void>>('agregarCredencial')();
 
       const req = http.expectOne('/profiles/practitioners/me/credentials');
       expect(req.request.body.issuingInstitutionText).toBe('Universidad de La Habana');
@@ -1137,17 +1532,660 @@ describe('PractitionerProfileEdit', () => {
       http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
     });
 
-    it('sin elegir institución no viaja el campo', () => {
+    it('sin elegir institución no viaja el campo', async () => {
       montarYCargar();
       señal<string>('nuevoTipoCredencial').set('cred-titulo');
       señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
 
-      interno<() => void>('agregarCredencial')();
+      responderConfirmacion(true);
+      await interno<() => Promise<void>>('agregarCredencial')();
 
       const req = http.expectOne('/profiles/practitioners/me/credentials');
       expect('issuingInstitutionText' in req.request.body).toBe(false);
       req.flush({ id: 'cred-1' });
       http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    });
+  });
+
+  /* ======================================================================
+      El alta del título en un modal, y la barra de su tabla
+      (D-04 y D-10, 23/09/2026)
+     ====================================================================== */
+
+  describe('el alta del título vive en un modal', () => {
+    it('sin confirmar no viaja nada y lo escrito queda', async () => {
+      montarYCargar();
+      señal<string>('nuevoTipoCredencial').set('cred-titulo');
+      señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+      const confirmacion = responderConfirmacion(false);
+
+      await interno<() => Promise<void>>('agregarCredencial')();
+
+      expect(confirmacion.preguntas).toBe(1);
+      expect(http.match('/profiles/practitioners/me/credentials')).toHaveLength(0);
+      expect(interno<() => string>('nuevoNumeroCredencial')()).toBe('Médico cirujano');
+    });
+
+    it('la pregunta es «¿Confirma estos datos?»', async () => {
+      montarYCargar();
+      señal<string>('nuevoTipoCredencial').set('cred-titulo');
+      señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+      let titulo = '';
+      const dialogos = interno<{ confirm: (c: { title: string }) => Promise<boolean> }>('dialogs');
+      dialogos.confirm = (config) => {
+        titulo = config.title;
+        return Promise.resolve(false);
+      };
+
+      await interno<() => Promise<void>>('agregarCredencial')();
+
+      expect(titulo).toBe('¿Confirma estos datos?');
+    });
+
+    it('al agregar se cierra el modal y el próximo alta empieza en blanco', async () => {
+      montarYCargar();
+      señal<boolean>('altaDeTituloAbierta').set(true);
+      señal<string>('nuevoTipoCredencial').set('cred-titulo');
+      señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+      señal<string>('institucionElegida').set('Universidad Mayor de San Andrés');
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('agregarCredencial')();
+      http.expectOne('/profiles/practitioners/me/credentials').flush({ id: 'cred-1' });
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+
+      expect(interno<() => boolean>('altaDeTituloAbierta')()).toBe(false);
+      expect(interno<() => string | null>('nuevoTipoCredencial')()).toBeNull();
+      expect(interno<() => string>('nuevoNumeroCredencial')()).toBe('');
+      expect(interno<() => string | null>('institucionElegida')()).toBeNull();
+    });
+
+    it('si el alta falla, el modal sigue abierto con lo escrito', async () => {
+      montarYCargar();
+      señal<boolean>('altaDeTituloAbierta').set(true);
+      señal<string>('nuevoTipoCredencial').set('cred-titulo');
+      señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('agregarCredencial')();
+      http
+        .expectOne('/profiles/practitioners/me/credentials')
+        .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
+
+      expect(interno<() => boolean>('altaDeTituloAbierta')()).toBe(true);
+      expect(interno<() => string>('nuevoNumeroCredencial')()).toBe('Médico cirujano');
+    });
+
+    it('sin nada escrito, cerrar no pregunta', async () => {
+      montarYCargar();
+      const confirmacion = responderConfirmacion(false);
+
+      const permitido = await interno<() => boolean | Promise<boolean>>('guardaDeAltaDeTitulo')();
+
+      expect(permitido).toBe(true);
+      expect(confirmacion.preguntas).toBe(0);
+    });
+
+    it('con algo escrito, cerrar pregunta si se descarta y respeta la respuesta', async () => {
+      montarYCargar();
+      señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+      const guarda = interno<() => boolean | Promise<boolean>>('guardaDeAltaDeTitulo');
+
+      const noDescarta = responderConfirmacion(false);
+      expect(await guarda()).toBe(false);
+      expect(noDescarta.preguntas).toBe(1);
+
+      responderConfirmacion(true);
+      expect(await guarda()).toBe(true);
+    });
+
+    it('Credenciales no tiene el formulario del título en línea: se abre desde «Agregar título»', () => {
+      const fixture = montarConVista();
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      const panel = panelAbierto(fixture);
+
+      expect(panel.querySelector('[data-testid="credencial-tipo"]')).toBeNull();
+      const boton = panel.querySelector<HTMLButtonElement>(
+        'app-filter-bar [data-testid="credencial-agregar"]',
+      );
+      expect(boton?.textContent).toContain('Agregar título');
+
+      boton?.click();
+      fixture.detectChanges();
+      for (const pendiente of http.match((r) => r.url.startsWith('/system-context/'))) {
+        pendiente.flush({
+          code: 'credential-type',
+          name: 'Tipo de credencial',
+          definitionId: 'def-1',
+          valueSetId: 'vs-1',
+          allowCustomValue: false,
+          options: [],
+        });
+      }
+      fixture.detectChanges();
+
+      const dialogo = fixture.nativeElement.querySelector('[data-testid="alta-titulo-dialogo"]');
+      expect(dialogo).not.toBeNull();
+      expect(dialogo.querySelector('[data-testid="credencial-tipo"]')).not.toBeNull();
+      expect(dialogo.querySelector('[data-testid="credencial-archivo"]')).not.toBeNull();
+    });
+  });
+
+  describe('el alta de especialidades vive en un modal', () => {
+    /** Un título pendiente y uno verificado: sólo el segundo puede respaldar. */
+    const CON_TITULOS = {
+      credentials: [
+        {
+          id: 'cred-a',
+          credentialTypeConceptId: 'cred-titulo',
+          number: 'TIT-1',
+          issuingInstitutionText: 'Universidad Mayor de San Andrés',
+          stateConceptId: 'st-pending',
+        },
+        {
+          id: 'cred-b',
+          credentialTypeConceptId: 'cred-titulo',
+          number: 'TIT-2',
+          issuingInstitutionText: 'Universidad de La Habana',
+          stateConceptId: 'st-ok',
+          verifiedAt: '2013-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+
+    function cuerpos(): readonly Record<string, unknown>[] {
+      return http.match('/profiles/practitioners/per-1/specialties').map((pedido) => {
+        const cuerpo = pedido.request.body as Record<string, unknown>;
+        pedido.flush({ id: 'sp-x' });
+        return cuerpo;
+      });
+    }
+
+    it('sin confirmar no se agrega nada y el modal sigue abierto con lo elegido', async () => {
+      montarYCargar();
+      interno<() => void>('abrirAltaDeEspecialidad')();
+      señal<string>('nuevaEspecialidad').set('esp-cardio');
+      const noConfirma = responderConfirmacion(false);
+
+      await interno<() => Promise<void>>('agregarEspecialidad')();
+
+      expect(noConfirma.preguntas).toBe(1);
+      expect(http.match('/profiles/practitioners/per-1/specialties')).toHaveLength(0);
+      expect(interno<() => boolean>('altaDeEspecialidadAbierta')()).toBe(true);
+      expect(señal<string | null>('nuevaEspecialidad')()).toBe('esp-cardio');
+    });
+
+    it('pregunta «¿Confirma estos datos?» y, guardadas, cierra el modal y lo deja en blanco', async () => {
+      montarYCargar(CON_TITULOS);
+      interno<() => void>('abrirAltaDeEspecialidad')();
+      señal<string>('nuevaEspecialidad').set('esp-cardio');
+      señal<string | null>('tituloDeRespaldo').set('cred-b');
+      const titulos: string[] = [];
+      interno<{ confirm: (c: { title: string }) => Promise<boolean> }>('dialogs').confirm = (c) => {
+        titulos.push(c.title);
+        return Promise.resolve(true);
+      };
+
+      await interno<() => Promise<void>>('agregarEspecialidad')();
+      cuerpos();
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+
+      expect(titulos).toEqual(['¿Confirma estos datos?']);
+      expect(interno<() => boolean>('altaDeEspecialidadAbierta')()).toBe(false);
+      expect(señal<string | null>('nuevaEspecialidad')()).toBeNull();
+      expect(señal<string | null>('tituloDeRespaldo')()).toBeNull();
+    });
+
+    it('el respaldo ofrece sólo los títulos verificados', () => {
+      montarYCargar(CON_TITULOS);
+
+      const opciones =
+        interno<() => readonly { value: string; label: string }[]>('opcionesDeRespaldo')();
+
+      expect(opciones.map((o) => o.value)).toEqual(['cred-b']);
+      expect(opciones[0]?.label).toContain('TIT-2');
+      expect(opciones[0]?.label).toContain('Universidad de La Habana');
+    });
+
+    it('el título elegido viaja como supportingCredentialId en cada especialidad del envío', async () => {
+      montarYCargar(CON_TITULOS);
+      señal<string>('nuevaEspecialidad').set('esp-cardio');
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-pediatria');
+      señal<string | null>('tituloDeRespaldo').set('cred-b');
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('agregarEspecialidad')();
+      const enviados = cuerpos();
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+
+      expect(enviados).toHaveLength(2);
+      expect(enviados.map((c) => c['supportingCredentialId'])).toEqual(['cred-b', 'cred-b']);
+    });
+
+    it('sin nada elegido, cerrar no pregunta; con sólo el respaldo elegido, sí', async () => {
+      montarYCargar(CON_TITULOS);
+      const guarda = interno<() => boolean | Promise<boolean>>('guardaDeAltaDeEspecialidad');
+      const pregunta = responderConfirmacion(false);
+
+      expect(await guarda()).toBe(true);
+      expect(pregunta.preguntas).toBe(0);
+
+      señal<string | null>('tituloDeRespaldo').set('cred-b');
+      expect(await guarda()).toBe(false);
+      expect(pregunta.preguntas).toBe(1);
+    });
+
+    it('no hay formulario en línea: el alta se abre desde «Agregar especialidad», en «Datos personales»', () => {
+      const fixture = montarConVista();
+      componente.pestana.set(0);
+      fixture.detectChanges();
+      const panel = panelAbierto(fixture);
+
+      expect(panel.querySelector('[data-testid="especialidad-select"]')).toBeNull();
+      const boton = panel.querySelector<HTMLButtonElement>(
+        'app-filter-bar [data-testid="especialidad-agregar"]',
+      );
+      expect(boton?.textContent).toContain('Agregar especialidad');
+
+      boton?.click();
+      fixture.detectChanges();
+
+      const dialogo = fixture.nativeElement.querySelector(
+        '[data-testid="alta-especialidad-dialogo"]',
+      );
+      expect(dialogo).not.toBeNull();
+      expect(dialogo.querySelector('[data-testid="especialidad-select"]')).not.toBeNull();
+      expect(dialogo.querySelector('[data-testid="agregar-casilla-especialidad"]')).not.toBeNull();
+      // Sin títulos verificados no hay desplegable vacío: se dice por qué.
+      expect(dialogo.querySelector('[data-testid="especialidad-respaldo"]')).toBeNull();
+      expect(dialogo.querySelector('[data-testid="especialidad-sin-respaldo"]')).not.toBeNull();
+    });
+  });
+
+  describe('la barra de la tabla de especialidades', () => {
+    const CON_ESPECIALIDADES = {
+      specialties: [
+        {
+          id: 's-1',
+          specialtyConceptId: 'esp-cardio',
+          isPrimary: false,
+          boardCertified: false,
+          verificationStatusConceptId: 'st-v',
+          verified: true,
+        },
+        {
+          id: 's-2',
+          specialtyConceptId: 'esp-pediatria',
+          isPrimary: false,
+          boardCertified: false,
+          verificationStatusConceptId: 'st-p',
+          verified: false,
+        },
+      ],
+    };
+
+    function visibles(): readonly string[] {
+      return interno<() => readonly { id: string }[]>('filasEspecialidadesVisibles')().map(
+        (f) => f.id,
+      );
+    }
+
+    it('busca por el nombre sin distinguir tildes ni mayúsculas', () => {
+      montarYCargar(CON_ESPECIALIDADES);
+      const filtrar = interno<(a: Record<string, string>) => void>('onFiltrosEspecialidades');
+
+      filtrar({ qEspecialidades: 'PEDIATRIA' });
+      expect(visibles()).toEqual(['s-2']);
+
+      filtrar({ qMatriculas: 'pediatria' });
+      expect(visibles()).toEqual(['s-1', 's-2']);
+    });
+
+    it('arranca con la búsqueda que ya trae la URL', () => {
+      parametros = { qEspecialidades: 'cardio' };
+      montarYCargar(CON_ESPECIALIDADES);
+
+      expect(visibles()).toEqual(['s-1']);
+    });
+
+    it('las barras de especialidades, matrículas y títulos escriben cada una en su clave', () => {
+      const fixture = montarConVista(CON_ESPECIALIDADES);
+      /** Las claves de las barras de la pestaña abierta. */
+      const clavesDe = (pestana: number): readonly string[] => {
+        componente.pestana.set(pestana);
+        fixture.detectChanges();
+        const abierto = fixture.debugElement
+          .queryAll(By.css('[role="tabpanel"]'))
+          .find((panel) => !(panel.nativeElement as HTMLElement).hasAttribute('hidden'));
+        return (abierto?.queryAll(By.directive(FilterBar)) ?? []).map((barra) =>
+          (barra.componentInstance as FilterBar).searchParam(),
+        );
+      };
+      expect(clavesDe(0)).toEqual(['qEspecialidades']);
+      expect(clavesDe(5)).toEqual(['qMatriculas', 'qTitulos']);
+    });
+  });
+
+  describe('el alta de la matrícula vive en un modal', () => {
+    it('sin confirmar no se agrega nada y el modal sigue abierto con lo escrito', async () => {
+      montarYCargar();
+      interno<() => void>('abrirAltaDeMatricula')();
+      señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+      const noConfirma = responderConfirmacion(false);
+
+      await interno<() => Promise<void>>('agregarMatricula')();
+
+      expect(noConfirma.preguntas).toBe(1);
+      expect(http.match('/profiles/practitioners/per-1/jurisdiction-authorizations')).toHaveLength(
+        0,
+      );
+      expect(interno<() => boolean>('altaDeMatriculaAbierta')()).toBe(true);
+      expect(señal<string>('nuevoNumeroDeMatricula')()).toBe('LIC-9');
+    });
+
+    it('pregunta «¿Confirma estos datos?» y, guardada, cierra el modal y lo deja en blanco', async () => {
+      montarYCargar();
+      interno<() => void>('abrirAltaDeMatricula')();
+      señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+      señal<string>('nuevaAutoridad').set('Colegio Médico');
+      const titulos: string[] = [];
+      interno<{ confirm: (c: { title: string }) => Promise<boolean> }>('dialogs').confirm = (c) => {
+        titulos.push(c.title);
+        return Promise.resolve(true);
+      };
+
+      await interno<() => Promise<void>>('agregarMatricula')();
+      http
+        .expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations')
+        .flush({ id: 'ja-1' });
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+
+      expect(titulos).toEqual(['¿Confirma estos datos?']);
+      expect(interno<() => boolean>('altaDeMatriculaAbierta')()).toBe(false);
+      expect(señal<string>('nuevoNumeroDeMatricula')()).toBe('');
+      expect(señal<string>('nuevaAutoridad')()).toBe('');
+    });
+
+    it('sin nada escrito, cerrar no pregunta', async () => {
+      montarYCargar();
+      const pregunta = responderConfirmacion(false);
+
+      expect(await interno<() => boolean | Promise<boolean>>('guardaDeAltaDeMatricula')()).toBe(
+        true,
+      );
+      expect(pregunta.preguntas).toBe(0);
+    });
+
+    it('con algo escrito, cerrar pregunta si se descarta y respeta la respuesta', async () => {
+      montarYCargar();
+      señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+      const guarda = interno<() => boolean | Promise<boolean>>('guardaDeAltaDeMatricula');
+
+      const noDescarta = responderConfirmacion(false);
+      expect(await guarda()).toBe(false);
+      expect(noDescarta.preguntas).toBe(1);
+
+      responderConfirmacion(true);
+      expect(await guarda()).toBe(true);
+    });
+
+    it('Credenciales ya no tiene el formulario en línea: se abre desde «Agregar matrícula»', () => {
+      const fixture = montarConVista();
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      const panel = panelAbierto(fixture);
+
+      expect(panel.querySelector('[data-testid="matricula-numero"]')).toBeNull();
+      const boton = panel.querySelector<HTMLButtonElement>(
+        'app-filter-bar [data-testid="matricula-agregar"]',
+      );
+      expect(boton?.textContent).toContain('Agregar matrícula');
+
+      boton?.click();
+      fixture.detectChanges();
+
+      const dialogo = fixture.nativeElement.querySelector('[data-testid="alta-matricula-dialogo"]');
+      expect(dialogo).not.toBeNull();
+      expect(dialogo.querySelector('[data-testid="matricula-numero"]')).not.toBeNull();
+      expect(dialogo.querySelector('[data-testid="matricula-archivo"]')).not.toBeNull();
+    });
+  });
+
+  describe('la barra de la tabla de matrículas', () => {
+    const CON_MATRICULAS = {
+      licenses: [
+        {
+          id: 'lic-a',
+          jurisdictionConceptId: 'jur-1',
+          licenseNumber: 'MP-100',
+          regulatoryAuthority: 'Ministerio de Salud y Deportes',
+          stateConceptId: 'st-a',
+        },
+        {
+          id: 'lic-b',
+          jurisdictionConceptId: 'jur-1',
+          licenseNumber: 'SC-200',
+          regulatoryAuthority: 'SEDES Santa Cruz',
+          stateConceptId: 'st-a',
+        },
+      ],
+    };
+
+    function visibles(): readonly string[] {
+      return interno<() => readonly { id: string }[]>('filasMatriculasVisibles')().map((f) => f.id);
+    }
+
+    it('busca por autoridad sin distinguir tildes ni mayúsculas, y por número', () => {
+      montarYCargar(CON_MATRICULAS);
+      const filtrar = interno<(a: Record<string, string>) => void>('onFiltrosMatriculas');
+
+      filtrar({ qMatriculas: 'MINISTERIO' });
+      expect(visibles()).toEqual(['lic-a']);
+
+      filtrar({ qMatriculas: 'sc-200' });
+      expect(visibles()).toEqual(['lic-b']);
+
+      filtrar({});
+      expect(visibles()).toEqual(['lic-a', 'lic-b']);
+    });
+
+    it('la búsqueda de otra tabla no filtra las matrículas', () => {
+      montarYCargar(CON_MATRICULAS);
+
+      interno<(a: Record<string, string>) => void>('onFiltrosMatriculas')({
+        qTitulos: 'sedes',
+        q: 'sedes',
+      });
+
+      expect(visibles()).toEqual(['lic-a', 'lic-b']);
+    });
+
+    it('arranca con la búsqueda que ya trae la URL', () => {
+      parametros = { qMatriculas: 'sedes' };
+      montarYCargar(CON_MATRICULAS);
+
+      expect(visibles()).toEqual(['lic-b']);
+    });
+
+    it('la barra de matrículas escribe en su propia clave', () => {
+      const fixture = montarConVista(CON_MATRICULAS);
+      componente.pestana.set(5);
+      fixture.detectChanges();
+
+      const barras = fixture.debugElement
+        .queryAll(By.directive(FilterBar))
+        .map((barra) => (barra.componentInstance as FilterBar).searchParam());
+      expect(barras).toContain('qMatriculas');
+    });
+  });
+
+  describe('la barra de la tabla de títulos', () => {
+    const CON_TITULOS = {
+      credentials: [
+        {
+          id: 'cred-a',
+          credentialTypeConceptId: 'cred-titulo',
+          number: 'TIT-1',
+          issuingInstitutionText: 'Universidad Mayor de San Andrés',
+          issueDate: '2016-03-01T12:00:00.000Z',
+          stateConceptId: 'st-pending',
+        },
+        {
+          id: 'cred-b',
+          credentialTypeConceptId: 'cred-titulo',
+          number: 'TIT-2',
+          issuingInstitutionText: 'Universidad de La Habana',
+          issueDate: '2012-03-01T12:00:00.000Z',
+          stateConceptId: 'st-ok',
+          verifiedAt: '2013-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+
+    function visibles(): readonly string[] {
+      return interno<() => readonly { id: string }[]>('filasFormacionVisibles')().map((f) => f.id);
+    }
+
+    it('busca en la institución sin distinguir tildes ni mayúsculas', () => {
+      montarYCargar(CON_TITULOS);
+
+      interno<(a: Record<string, string>) => void>('onFiltrosFormacion')({
+        qTitulos: 'SAN ANDRES',
+      });
+
+      expect(visibles()).toEqual(['cred-a']);
+    });
+
+    it('la institución del catálogo se lee con su sigla y la escrita a mano, tal cual (Q-8)', () => {
+      const fixture = montarConVista(CON_TITULOS);
+      componente.pestana.set(5);
+      fixture.detectChanges();
+
+      const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Universidad Mayor de San Andrés (UMSA)');
+      expect(texto).toContain('Universidad de La Habana');
+      expect(texto).not.toContain('Universidad de La Habana (');
+    });
+
+    it('«umsa» encuentra el título de la UMSA aunque lo guardado sea sólo el nombre', () => {
+      montarYCargar(CON_TITULOS);
+
+      interno<(a: Record<string, string>) => void>('onFiltrosFormacion')({ qTitulos: 'umsa' });
+
+      expect(visibles()).toEqual(['cred-a']);
+    });
+
+    it('busca también en el número', () => {
+      montarYCargar(CON_TITULOS);
+
+      interno<(a: Record<string, string>) => void>('onFiltrosFormacion')({ qTitulos: 'tit-2' });
+
+      expect(visibles()).toEqual(['cred-b']);
+    });
+
+    it('el filtro «Estado» separa lo pendiente de lo verificado', () => {
+      montarYCargar(CON_TITULOS);
+      const filtrar = interno<(a: Record<string, string>) => void>('onFiltrosFormacion');
+
+      filtrar({ estadoTitulo: 'pendiente' });
+      expect(visibles()).toEqual(['cred-a']);
+
+      filtrar({ estadoTitulo: 'verificado' });
+      expect(visibles()).toEqual(['cred-b']);
+
+      filtrar({});
+      expect(visibles()).toEqual(['cred-a', 'cred-b']);
+    });
+
+    it('arranca con la búsqueda que ya trae la URL, que es la que la barra muestra', () => {
+      parametros = { qTitulos: 'habana' };
+      montarYCargar(CON_TITULOS);
+
+      expect(visibles()).toEqual(['cred-b']);
+    });
+
+    it('la búsqueda del historial laboral (`q`) no filtra los títulos', () => {
+      parametros = { q: 'habana' };
+      montarYCargar(CON_TITULOS);
+      expect(visibles()).toEqual(['cred-a', 'cred-b']);
+
+      interno<(a: Record<string, string>) => void>('onFiltrosFormacion')({ q: 'habana' });
+      expect(visibles()).toEqual(['cred-a', 'cred-b']);
+    });
+
+    it('Trayectoria monta sólo el historial laboral; los títulos van en Credenciales, debajo de las matrículas', () => {
+      const fixture = montarConVista();
+      componente.pestana.set(4);
+      fixture.detectChanges();
+
+      const historial = fixture.debugElement.query(By.directive(WorkHistory));
+      expect(historial).not.toBeNull();
+      const bloque = historial.componentInstance as WorkHistory;
+      expect(bloque.secciones()).toBe('historial');
+      expect(bloque.layout()).toBe('tabla');
+      expect(
+        panelAbierto(fixture).querySelector('[data-testid="edicion-formacion-cargada"]'),
+      ).toBeNull();
+      http.match(() => true);
+
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      const panel = panelAbierto(fixture);
+      const matriculas = panel.querySelector('[data-testid="edicion-matriculas-cargadas"]');
+      const titulos = panel.querySelector('[data-testid="edicion-formacion-cargada"]');
+      expect(titulos).not.toBeNull();
+      const posicion = matriculas?.compareDocumentPosition(titulos as Node) ?? 0;
+      expect(posicion & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('con otra pestaña abierta, el historial de Trayectoria no se monta', () => {
+      const fixture = montarConVista();
+      componente.pestana.set(0);
+      fixture.detectChanges();
+
+      expect(fixture.debugElement.query(By.directive(WorkHistory))).toBeNull();
+    });
+
+    it('la barra de títulos escribe en su propia clave', () => {
+      const fixture = montarConVista();
+      componente.pestana.set(5);
+      fixture.detectChanges();
+
+      const barra = fixture.debugElement
+        .query(By.css('[data-testid="edicion-formacion-cargada"]'))
+        .query(By.directive(FilterBar)).componentInstance as FilterBar;
+      expect(barra.searchParam()).toBe('qTitulos');
+    });
+
+    it('cambiar de pestaña olvida las búsquedas de las tablas, también la del historial', () => {
+      parametros = { qTitulos: 'habana', estadoTitulo: 'verificado' };
+      montarYCargar(CON_TITULOS);
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'url', 'get').mockReturnValue(
+        '/my-account/edit?pestana=4&qTitulos=habana&q=umsa&estadoTitulo=verificado&qMatriculas=lp',
+      );
+      const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+      interno<() => void>('olvidarBusquedaDeLasTablas')();
+
+      expect(visibles()).toEqual(['cred-a', 'cred-b']);
+      expect(navegar).toHaveBeenCalledTimes(1);
+      const [destino, opciones] = navegar.mock.calls[0];
+      expect(String(destino)).toBe('/my-account/edit?pestana=4');
+      expect(opciones).toEqual({ replaceUrl: true });
+    });
+
+    it('sin búsqueda en la URL, cambiar de pestaña no navega', () => {
+      montarYCargar(CON_TITULOS);
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'url', 'get').mockReturnValue('/my-account/edit?pestana=4');
+      const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+      interno<() => void>('olvidarBusquedaDeLasTablas')();
+
+      expect(navegar).not.toHaveBeenCalled();
     });
   });
 
@@ -1200,6 +2238,32 @@ describe('PractitionerProfileEdit', () => {
       const dialogos = interno<{ confirm: () => Promise<boolean> }>('dialogs');
       dialogos.confirm = () => Promise.resolve(true);
     }
+
+    it('editar una especialidad no ofrece el seleccionable de certificación de junta', async () => {
+      const fixture = montarConVista({
+        ...PERFIL_CON_FILAS,
+        specialties: [{ ...PERFIL_CON_FILAS.specialties[0], boardCertified: true }],
+      });
+      const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
+      interno<(f: unknown) => void>('editarEspecialidad')(fila);
+      fixture.detectChanges();
+
+      const dialogo = fixture.nativeElement.querySelector('[data-testid="edicion-dialogo"]');
+      expect(dialogo).not.toBeNull();
+      expect(dialogo.textContent).not.toContain('Certificada por el colegio o consejo');
+      expect(dialogo.querySelector('app-switch')).toBeNull();
+
+      señal<string | null>('edicionEspecialidad').set('esp-pediatria');
+      responderConfirmacion(true);
+      await interno<() => Promise<void>>('guardarEdicion')();
+      const request = http.expectOne('/profiles/practitioners/me/specialties/spec-9');
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({ specialtyConceptId: 'esp-pediatria' });
+      request.flush(null);
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+    });
 
     it('la fila pendiente se puede corregir y retirar; la verificada no', () => {
       montarYCargar(PERFIL_CON_FILAS);
@@ -1262,7 +2326,7 @@ describe('PractitionerProfileEdit', () => {
         .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
     });
 
-    it('editar un título siembra el diálogo con lo que hay y manda un PATCH', () => {
+    it('editar un título siembra el diálogo con lo que hay y manda un PATCH', async () => {
       montarYCargar(PERFIL_CON_FILAS);
 
       const fila = interno<() => readonly { id: string }[]>('filasFormacion')().find(
@@ -1281,7 +2345,8 @@ describe('PractitionerProfileEdit', () => {
       expect(interno<() => boolean>('edicionInstitucionFueraDeCatalogo')()).toBe(false);
 
       señal<string>('edicionNumero').set('TIT-1-CORREGIDO');
-      interno<() => void>('guardarEdicion')();
+      responderConfirmacion(true);
+      await interno<() => Promise<void>>('guardarEdicion')();
 
       const req = http.expectOne('/profiles/practitioners/me/credentials/cred-9');
       expect(req.request.method).toBe('PATCH');
@@ -1289,6 +2354,7 @@ describe('PractitionerProfileEdit', () => {
         credentialTypeConceptId: 'cred-titulo',
         number: 'TIT-1-CORREGIDO',
         issuingInstitutionText: 'Universidad Mayor de San Andrés',
+        issuingCityText: 'La Paz',
         issueDate: '2016-03-01',
       });
       req.flush(null);
@@ -1296,6 +2362,183 @@ describe('PractitionerProfileEdit', () => {
       http
         .expectOne('/profiles/practitioners/me/summary')
         .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+    });
+
+    /* ---- Corregir: guardar por cambios, confirmar y adjuntar (D-08) ------- */
+
+    function abrirTitulo(): void {
+      const fila = interno<() => readonly { id: string }[]>('filasFormacion')().find(
+        (f) => f.id === 'cred-9',
+      );
+      interno<(f: unknown) => void>('editarFormacion')(fila);
+    }
+
+    it('abrir y no tocar nada deja «Guardar cambios» apagado; volver al original lo apaga de nuevo', () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      abrirTitulo();
+      const puedeGuardar = interno<() => boolean>('puedeGuardarEdicion');
+
+      expect(puedeGuardar()).toBe(false);
+
+      señal<string>('edicionNumero').set('TIT-1-CORREGIDO');
+      expect(puedeGuardar()).toBe(true);
+
+      // Un espacio de más no es un cambio: así no viaja.
+      señal<string>('edicionNumero').set('TIT-1 ');
+      expect(puedeGuardar()).toBe(false);
+    });
+
+    it('el diálogo sabe que el título ya tiene diploma, para ofrecer reemplazarlo', () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      abrirTitulo();
+
+      expect(interno<() => { archivoActual: boolean }>('edicion')().archivoActual).toBe(true);
+    });
+
+    it('guardar pregunta primero; sin confirmar no viaja nada y el diálogo sigue abierto', async () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      abrirTitulo();
+      señal<string>('edicionNumero').set('TIT-1-CORREGIDO');
+      const confirmacion = responderConfirmacion(false);
+
+      await interno<() => Promise<void>>('guardarEdicion')();
+
+      expect(confirmacion.preguntas).toBe(1);
+      expect(http.match('/profiles/practitioners/me/credentials/cred-9')).toHaveLength(0);
+      expect(señal<unknown>('edicion')()).not.toBeNull();
+      expect(señal<string>('edicionNumero')()).toBe('TIT-1-CORREGIDO');
+    });
+
+    it('con un diploma nuevo sube primero el archivo y manda su id como fileId', async () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      abrirTitulo();
+      // Elegir un archivo ya es un cambio, aunque no se toque ningún campo.
+      señal<readonly File[]>('archivoDeEdicion').set([
+        new File(['x'], 'diploma-nuevo.pdf', { type: 'application/pdf' }),
+      ]);
+      expect(interno<() => boolean>('puedeGuardarEdicion')()).toBe(true);
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('guardarEdicion')();
+
+      http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'file-88' });
+      const req = http.expectOne('/profiles/practitioners/me/credentials/cred-9');
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body.fileId).toBe('file-88');
+      req.flush(null);
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+      expect(señal<unknown>('edicion')()).toBeNull();
+    });
+
+    it('si la subida del diploma falla, no se corrige nada y el diálogo sigue abierto', async () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      abrirTitulo();
+      señal<readonly File[]>('archivoDeEdicion').set([
+        new File(['x'], 'diploma-nuevo.pdf', { type: 'application/pdf' }),
+      ]);
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('guardarEdicion')();
+      http
+        .expectOne((r) => r.url.endsWith('/common/files/upload'))
+        .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
+
+      expect(http.match('/profiles/practitioners/me/credentials/cred-9')).toHaveLength(0);
+      expect(señal<unknown>('edicion')()).not.toBeNull();
+      expect(interno<() => boolean>('guardandoEdicion')()).toBe(false);
+    });
+
+    it('una corrección rechazada se pinta debajo del campo del diálogo, que sigue abierto', async () => {
+      const fixture = montarConVista(PERFIL_CON_FILAS);
+      abrirTitulo();
+      fixture.detectChanges();
+      // El selector de tipo del diálogo pide su catálogo al dibujarse.
+      for (const pendiente of http.match((r) => r.url.startsWith('/system-context/'))) {
+        pendiente.flush({
+          code: 'credential-type',
+          name: 'Tipo de credencial',
+          definitionId: 'def-1',
+          valueSetId: 'vs-1',
+          allowCustomValue: false,
+          options: [],
+        });
+      }
+      fixture.detectChanges();
+      señal<string>('edicionNumero').set('TIT-1-corregido');
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('guardarEdicion')();
+      http
+        .expectOne('/profiles/practitioners/me/credentials/cred-9')
+        .flush(rechazoPorCampo('number', 'Ese número ya está en otro título.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+      fixture.detectChanges();
+
+      const dialogo: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="edicion-dialogo"]',
+      );
+      const campos = [...dialogo.querySelectorAll('app-form-field')];
+      const numero = campos.find((c) => (c.textContent ?? '').includes('Número / título obtenido'));
+      const fecha = campos.find((c) => (c.textContent ?? '').includes('Fecha de emisión'));
+      expect(numero?.textContent).toContain('Ese número ya está en otro título.');
+      expect(fecha?.textContent).not.toContain('Ese número');
+      expect(ultimoAviso()?.title).toBe('Formación');
+      // Lo corregido no se pierde: se ajusta y se vuelve a guardar.
+      expect(señal<string>('edicionNumero')()).toBe('TIT-1-corregido');
+      expect(señal<unknown>('edicion')()).not.toBeNull();
+    });
+
+    it('corregir una matrícula con un respaldo nuevo también manda fileId', async () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      const fila = interno<() => readonly { id: string }[]>('filasMatriculas')().find(
+        (f) => f.id === 'lic-9',
+      );
+      interno<(f: unknown) => void>('editarMatricula')(fila);
+      señal<readonly File[]>('archivoDeEdicion').set([
+        new File(['x'], 'carnet.pdf', { type: 'application/pdf' }),
+      ]);
+      responderConfirmacion(true);
+
+      await interno<() => Promise<void>>('guardarEdicion')();
+
+      http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'file-99' });
+      const req = http.expectOne('/profiles/practitioners/me/jurisdiction-authorizations/lic-9');
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body.fileId).toBe('file-99');
+      req.flush(null);
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+    });
+
+    it('cerrar sin cambios no pregunta; con cambios pregunta si se descartan', async () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      abrirTitulo();
+      const guarda = interno<() => boolean | Promise<boolean>>('guardaDeEdicion');
+
+      const sinCambios = responderConfirmacion(false);
+      expect(await guarda()).toBe(true);
+      expect(sinCambios.preguntas).toBe(0);
+
+      señal<string>('edicionNumero').set('TIT-1-CORREGIDO');
+      const conCambios = responderConfirmacion(false);
+      expect(await guarda()).toBe(false);
+      expect(conCambios.preguntas).toBe(1);
+
+      responderConfirmacion(true);
+      expect(await guarda()).toBe(true);
+    });
+
+    it('mientras guarda, el diálogo no se deja cerrar', async () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      abrirTitulo();
+      señal<boolean>('guardandoEdicion').set(true);
+
+      expect(await interno<() => boolean | Promise<boolean>>('guardaDeEdicion')()).toBe(false);
     });
 
     it('una institución vieja escrita a mano abre el campo a mano, no se pisa', () => {
@@ -1362,61 +2605,594 @@ describe('PractitionerProfileEdit', () => {
     });
   });
 
-  /**
-   * «Actividad»: la pestaña que existe **para** decir que no se edita.
-   *
-   * El doctor pidió que el editor tenga todas las pestañas de la ficha (C-05).
-   * Los cuatro contadores no se editan —son cuentas de lo que ya pasó, y uno
-   * escrito a mano deja de contar—, así que la respuesta no fue sacar la
-   * pestaña sino tenerla sin un solo campo y explicando por qué.
-   *
-   * Las dos mitades se fijan acá, porque cada una se puede romper sin la otra:
-   * alguien puede volver a quitar la pestaña, y alguien puede «completarla»
-   * poniéndole controles.
-   */
-  describe('la pestaña «Actividad» del editor', () => {
-    it('está, y enumera los cuatro contadores', () => {
-      const fixture = montarConVista();
+  describe('las tres tablas: paginación, filtro «Estado» y acciones de fila (H4.S3)', () => {
+    /** Doce títulos pendientes, del 2020 hacia atrás: la tabla los ordena del más reciente al más antiguo. */
+    const DOCE_TITULOS = {
+      credentials: Array.from({ length: 12 }, (_, i) => ({
+        id: `cred-${String(i + 1).padStart(2, '0')}`,
+        credentialTypeConceptId: 'cred-titulo',
+        number: `TIT-${i + 1}`,
+        issueDate: `${2020 - i}-03-01T12:00:00.000Z`,
+        stateConceptId: 'st-pending',
+      })),
+    };
 
-      señal<number>('pestana').set(6);
+    /** Una especialidad verificada y una pendiente; una matrícula activa y una pendiente. */
+    const CON_ESTADOS = {
+      specialties: [
+        {
+          id: 'spec-ok',
+          specialtyConceptId: 'esp-cardio',
+          isPrimary: false,
+          boardCertified: false,
+          verificationStatusConceptId: 'st-ok',
+          verified: true,
+        },
+        {
+          id: 'spec-pend',
+          specialtyConceptId: 'esp-pediatria',
+          isPrimary: false,
+          boardCertified: false,
+          verificationStatusConceptId: 'st-pending',
+          verified: false,
+        },
+      ],
+      licenses: [
+        {
+          id: 'lic-activa',
+          jurisdictionConceptId: 'jur-bo',
+          licenseNumber: 'MP-1',
+          regulatoryAuthority: 'SEDES Santa Cruz',
+          stateConceptId: 'st-activo',
+          fileId: 'file-carnet',
+        },
+        {
+          id: 'lic-pendiente',
+          jurisdictionConceptId: 'jur-bo',
+          licenseNumber: 'MP-2',
+          stateConceptId: 'st-pendiente',
+        },
+      ],
+    };
+
+    /** Los ids de lo que la tabla dibuja en la página actual. */
+    function enLaPagina(estado: string): readonly string[] {
+      const vista = interno<() => { status: string; data?: readonly { id: string }[] }>(estado)();
+      return (vista.data ?? []).map((fila) => fila.id);
+    }
+
+    function codigos(acciones: readonly { code: string }[]): readonly string[] {
+      return acciones.map((accion) => accion.code);
+    }
+
+    /** Las etiquetas de los dos estados de matrícula de `CON_ESTADOS`, con el código del simulador. */
+    function darEtiquetasDeMatricula(): void {
+      const estado = (conceptId: string, code: string, display: string) =>
+        [conceptId, { conceptId, code, display, codeSystemVersionId: 'csv-1' }] as const;
+      señal<ReadonlyMap<string, unknown>>('etiquetas').set(
+        new Map([
+          estado('st-activo', 'ST-ACTIVE', 'Activo'),
+          estado('st-pendiente', 'ST-PENDING', 'Pendiente'),
+        ]),
+      );
+    }
+
+    it('con doce títulos se ven diez y el paginador dice «1–10 de 12»; la página 2 trae los otros dos', () => {
+      const fixture = montarConVista(DOCE_TITULOS);
+      componente.pestana.set(5);
       fixture.detectChanges();
 
-      const lista = fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]');
-      expect(lista).not.toBeNull();
-      expect(lista.querySelectorAll('li')).toHaveLength(4);
-    });
+      const tabla = panelAbierto(fixture);
+      expect(
+        tabla.querySelectorAll('[data-testid="tabla-formacion"] tbody tr.data-table__row'),
+      ).toHaveLength(10);
+      expect(tabla.querySelector('[data-testid="paginacion-formacion"]')?.textContent).toContain(
+        '1–10 de 12',
+      );
 
-    it('no ofrece ni un control para escribir', () => {
-      const fixture = montarConVista();
-
-      señal<number>('pestana').set(6);
+      señal<number>('paginaFormacion').set(2);
       fixture.detectChanges();
 
-      /* El panel VISIBLE, no el primero del documento: buscar en «Datos
-         personales» —que sí tiene campos— daría rojo por mirar donde no es. */
-      expect(panelAbierto(fixture).querySelectorAll('input, select, textarea')).toHaveLength(0);
+      expect(enLaPagina('estadoFormacion')).toEqual(['cred-11', 'cred-12']);
+      expect(tabla.querySelector('[data-testid="paginacion-formacion"]')?.textContent).toContain(
+        '11–12 de 12',
+      );
     });
 
-    it('no muestra «Guardar cambios», porque no hay nada que guardar', () => {
-      montarConVista();
+    it('buscar o filtrar vuelve a la primera página; un aviso sin cambios no la mueve', () => {
+      montarYCargar(DOCE_TITULOS);
+      const filtrar = interno<(a: Record<string, string>) => void>('onFiltrosFormacion');
+      const pagina = señal<number>('paginaFormacion');
 
-      señal<number>('pestana').set(6);
-      expect(interno<() => boolean>('editandoPresentacion')()).toBe(false);
+      pagina.set(2);
+      filtrar({});
+      expect(pagina()).toBe(2);
+
+      filtrar({ qTitulos: 'tit' });
+      expect(pagina()).toBe(1);
+
+      pagina.set(2);
+      filtrar({ qTitulos: 'tit', estadoTitulo: 'pendiente' });
+      expect(pagina()).toBe(1);
+    });
+
+    it('la página de especialidades y la de matrículas también vuelven a la primera al buscar', () => {
+      montarYCargar(CON_ESTADOS);
+      señal<number>('paginaEspecialidades').set(3);
+      señal<number>('paginaMatriculas').set(3);
+
+      interno<(a: Record<string, string>) => void>('onFiltrosEspecialidades')({
+        qEspecialidades: 'x',
+      });
+      interno<(a: Record<string, string>) => void>('onFiltrosMatriculas')({ qMatriculas: 'x' });
+
+      expect(señal<number>('paginaEspecialidades')()).toBe(1);
+      expect(señal<number>('paginaMatriculas')()).toBe(1);
+    });
+
+    it('el filtro «Estado» de especialidades separa lo pendiente de lo verificado', () => {
+      montarYCargar(CON_ESTADOS);
+      const filtrar = interno<(a: Record<string, string>) => void>('onFiltrosEspecialidades');
+
+      filtrar({ estadoEspecialidad: 'pendiente' });
+      expect(enLaPagina('estadoEspecialidades')).toEqual(['spec-pend']);
+
+      filtrar({ estadoEspecialidad: 'verificado' });
+      expect(enLaPagina('estadoEspecialidades')).toEqual(['spec-ok']);
+
+      filtrar({});
+      expect(enLaPagina('estadoEspecialidades')).toEqual(['spec-ok', 'spec-pend']);
+    });
+
+    it('el filtro «Estado» de matrículas ofrece los estados que traen y filtra por el concepto', () => {
+      montarYCargar(CON_ESTADOS);
+
+      const [filtro] =
+        interno<() => readonly { key: string; options: readonly { value: string }[] }[]>(
+          'filtrosMatriculas',
+        )();
+      expect(filtro?.key).toBe('estadoMatricula');
+      expect(filtro?.options.map((opcion) => opcion.value)).toEqual(['st-activo', 'st-pendiente']);
+
+      interno<(a: Record<string, string>) => void>('onFiltrosMatriculas')({
+        estadoMatricula: 'st-pendiente',
+      });
+      expect(enLaPagina('estadoMatriculas')).toEqual(['lic-pendiente']);
+    });
+
+    it('la búsqueda y el estado arrancan con lo que ya trae la URL', () => {
+      parametros = { estadoEspecialidad: 'pendiente', estadoMatricula: 'st-activo' };
+      montarYCargar(CON_ESTADOS);
+
+      expect(enLaPagina('estadoEspecialidades')).toEqual(['spec-pend']);
+      expect(enLaPagina('estadoMatriculas')).toEqual(['lic-activa']);
+    });
+
+    it('al cambiar de pestaña se olvidan los filtros de estado y cada tabla vuelve a su primera página', () => {
+      parametros = { estadoEspecialidad: 'pendiente', estadoMatricula: 'st-activo' };
+      montarYCargar(CON_ESTADOS);
+      señal<number>('paginaFormacion').set(2);
+
+      interno<() => void>('olvidarBusquedaDeLasTablas')();
+
+      expect(enLaPagina('estadoEspecialidades')).toEqual(['spec-ok', 'spec-pend']);
+      expect(enLaPagina('estadoMatriculas')).toEqual(['lic-activa', 'lic-pendiente']);
+      expect(señal<number>('paginaFormacion')()).toBe(1);
+    });
+
+    it('las acciones de cada fila: lo verificado sólo se descarga; lo pendiente se edita y se retira', () => {
+      montarYCargar({
+        ...CON_ESTADOS,
+        credentials: [
+          {
+            id: 'c-pend-archivo',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-1',
+            stateConceptId: 'st-pending',
+            fileId: 'f-1',
+          },
+          {
+            id: 'c-pend',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-2',
+            stateConceptId: 'st-pending',
+          },
+          {
+            id: 'c-ok-archivo',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-3',
+            stateConceptId: 'st-ok',
+            verifiedAt: '2020-01-01T00:00:00.000Z',
+            fileId: 'f-3',
+          },
+          {
+            id: 'c-ok',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-4',
+            stateConceptId: 'st-ok',
+            verifiedAt: '2020-01-01T00:00:00.000Z',
+          },
+        ],
+      });
+      const titulos = interno<() => readonly { id: string }[]>('filasFormacion')();
+      const accionesDe =
+        interno<(fila: unknown) => readonly { code: string }[]>('accionesDeFormacion');
+      const porId = (id: string) => accionesDe(titulos.find((fila) => fila.id === id));
+
+      expect(codigos(porId('c-pend-archivo'))).toEqual(['editar', 'descargar', 'retirar']);
+      expect(codigos(porId('c-pend'))).toEqual(['editar', 'retirar']);
+      expect(codigos(porId('c-ok-archivo'))).toEqual(['descargar']);
+      expect(codigos(porId('c-ok'))).toEqual([]);
+
+      // Lo verificado de especialidades y matrículas, igual que los títulos (24/09/2026).
+      const [verificada, pendiente] = interno<() => readonly unknown[]>('filasEspecialidades')();
+      const accionesDeEspecialidad =
+        interno<(f: unknown) => readonly { code: string }[]>('accionesDeEspecialidad');
+      expect(codigos(accionesDeEspecialidad(verificada))).toEqual([]);
+      expect(codigos(accionesDeEspecialidad(pendiente))).toEqual(['editar', 'retirar']);
+
+      darEtiquetasDeMatricula();
+      const [activa, porVerificar] = interno<() => readonly unknown[]>('filasMatriculas')();
+      const accionesDeMatricula =
+        interno<(f: unknown) => readonly { code: string }[]>('accionesDeMatricula');
+      expect(codigos(accionesDeMatricula(activa))).toEqual(['descargar']);
+      expect(codigos(accionesDeMatricula(porVerificar))).toEqual(['editar', 'retirar']);
+    });
+
+    it('mientras no llega el estado de una matrícula, se la trata como pendiente: es lo que dice la fila', () => {
+      montarYCargar(CON_ESTADOS);
+      const [activa] = interno<() => readonly unknown[]>('filasMatriculas')();
+      expect(
+        codigos(
+          interno<(f: unknown) => readonly { code: string }[]>('accionesDeMatricula')(activa),
+        ),
+      ).toEqual(['editar', 'descargar', 'retirar']);
+    });
+
+    it('lo verificado lleva el sello azul, sin la frase «ya no se corrige»', () => {
+      const fixture = montarConVista(CON_ESTADOS);
+      darEtiquetasDeMatricula();
+      /** El sello de la fila, buscado en la pestaña abierta. */
+      const sello = (testId: string) =>
+        panelAbierto(fixture)
+          .querySelector(`[data-testid="${testId}"]`)
+          ?.parentElement?.querySelector('[data-testid="sello-verificado"]');
+      componente.pestana.set(0);
+      fixture.detectChanges();
+      expect(sello('especialidad-acciones-spec-ok')?.getAttribute('aria-label')).toBe('Verificada');
+      expect(sello('especialidad-acciones-spec-pend')).toBeFalsy();
+      expect(panelAbierto(fixture).textContent).not.toContain('ya no se corrige');
+
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      expect(sello('matricula-acciones-lic-activa')?.getAttribute('aria-label')).toBe('Activo');
+      expect(sello('matricula-acciones-lic-pendiente')).toBeFalsy();
+      expect(panelAbierto(fixture).textContent).not.toContain('ya no se corrige');
+    });
+
+    it('con tres acciones la fila muestra un solo disparador; con dos, los botones con su texto', () => {
+      const fixture = montarConVista({
+        ...CON_ESTADOS,
+        credentials: [
+          {
+            id: 'c-pend-archivo',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-1',
+            stateConceptId: 'st-pending',
+            fileId: 'f-1',
+          },
+        ],
+      });
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      const titulo = panelAbierto(fixture).querySelector(
+        '[data-testid="formacion-acciones-c-pend-archivo"]',
+      );
+      expect(titulo?.querySelectorAll('[data-testid="row-actions-trigger"]')).toHaveLength(1);
+      expect(titulo?.querySelectorAll('.row-actions__inline')).toHaveLength(0);
+
+      componente.pestana.set(0);
+      fixture.detectChanges();
+      const especialidad = panelAbierto(fixture).querySelector(
+        '[data-testid="especialidad-acciones-spec-pend"]',
+      );
+      const botones = [...(especialidad?.querySelectorAll('.row-actions__inline') ?? [])].map((b) =>
+        b.textContent?.trim(),
+      );
+      expect(botones).toEqual(['Editar', 'Retirar']);
+    });
+
+    it('el estado va debajo del identificador en las tres tablas, para cuando su columna pasa al detalle', () => {
+      const fixture = montarConVista({
+        ...CON_ESTADOS,
+        credentials: [
+          {
+            id: 'c-pend',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-1',
+            stateConceptId: 'st-pending',
+          },
+        ],
+      });
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      const titulo = panelAbierto(fixture).querySelector(
+        '[data-testid="tabla-formacion"] [data-testid="formacion-estado-en-fila"]',
+      );
+      expect(titulo?.closest('.edicion__celda-principal')?.textContent).toContain('T-1');
+      expect(titulo?.textContent?.trim()).toBeTruthy();
+
+      componente.pestana.set(0);
+      fixture.detectChanges();
+      const especialidades = [
+        ...panelAbierto(fixture).querySelectorAll('[data-testid="especialidad-estado-en-fila"]'),
+      ].map((e) => e.textContent?.trim());
+      expect(especialidades).toContain('Verificada');
+      expect(especialidades).toHaveLength(2);
+
+      componente.pestana.set(5);
+      fixture.detectChanges();
+      expect(
+        panelAbierto(fixture).querySelectorAll('[data-testid="matricula-estado-en-fila"]'),
+      ).toHaveLength(2);
+    });
+
+    it('el filtro «Estado» de especialidades dice «Verificada», como la tabla', () => {
+      const filtro =
+        interno<readonly { options: readonly { label: string }[] }[]>('filtrosEspecialidades')[0]!;
+      expect(filtro.options.map((o) => o.label)).toEqual(['Pendiente', 'Verificada']);
+    });
+
+    it('cada acción elegida llama a lo que hacía su botón', () => {
+      montarYCargar({
+        credentials: [
+          {
+            id: 'c-1',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-1',
+            stateConceptId: 'st-pending',
+            fileId: 'f-1',
+          },
+        ],
+      });
+      const [fila] = interno<() => readonly unknown[]>('filasFormacion')();
+      const llamadas: string[] = [];
+      const espia = componente as unknown as Record<string, (f: unknown) => void>;
+      for (const metodo of ['editarFormacion', 'descargarDiploma', 'retirarFormacion']) {
+        espia[metodo] = () => llamadas.push(metodo);
+      }
+
+      const ejecutar = interno<(code: string, f: unknown) => void>('ejecutarAccionDeFormacion');
+      ejecutar('editar', fila);
+      ejecutar('descargar', fila);
+      ejecutar('retirar', fila);
+      ejecutar('otra', fila);
+
+      expect(llamadas).toEqual(['editarFormacion', 'descargarDiploma', 'retirarFormacion']);
+    });
+
+    it('mientras baja un archivo o se retira una fila, esas acciones se apagan y lo dicen', () => {
+      montarYCargar({
+        credentials: [
+          {
+            id: 'c-1',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-1',
+            stateConceptId: 'st-pending',
+            fileId: 'f-1',
+          },
+          {
+            id: 'c-2',
+            credentialTypeConceptId: 'cred-titulo',
+            number: 'T-2',
+            stateConceptId: 'st-pending',
+            fileId: 'f-2',
+          },
+        ],
+      });
+      const filas = interno<() => readonly { id: string }[]>('filasFormacion')();
+      const accionesDe =
+        interno<(f: unknown) => readonly { code: string; label: string; disabled?: boolean }[]>(
+          'accionesDeFormacion',
+        );
+      const accion = (id: string, code: string) =>
+        accionesDe(filas.find((f) => f.id === id)).find((a) => a.code === code);
+
+      señal<string | null>('descargando').set('c-1');
+      expect(accion('c-1', 'descargar')).toMatchObject({ label: 'Descargando…', disabled: true });
+      expect(accion('c-2', 'descargar')).toMatchObject({ label: 'Descargar', disabled: true });
+
+      señal<string | null>('retirando').set('c-2');
+      expect(accion('c-2', 'retirar')).toMatchObject({ label: 'Retirando…', disabled: true });
+      expect(accion('c-1', 'retirar')).toMatchObject({ label: 'Retirar', disabled: true });
     });
   });
 
   /**
-   * Lo que el alta pregunta, el editor muestra y nadie puede corregir acá.
+   * Disciplina de tablas: buscador y paginación (pedido del propietario,
+   * 24/09/2026). Las tres tablas —Formación, Especialidades y Matrículas—
+   * comparten la misma implementación, así que se prueba a fondo en una y se
+   * repite el filtro en las otras dos.
+   */
+  describe('buscador y paginación de las tres tablas', () => {
+    /** Siete títulos: más que una página (5), para poder probar el corte. */
+    const SIETE_TITULOS = Array.from({ length: 7 }, (_, i) => ({
+      id: `cred-${i}`,
+      credentialTypeConceptId: 'cred-titulo',
+      number: `TIT-${i}`,
+      issuingInstitutionText:
+        i === 0 ? 'Universidad Mayor de San Andrés' : 'Universidad Católica Boliviana',
+      issueDate: `2016-0${(i % 9) + 1}-01T12:00:00.000Z`,
+      stateConceptId: 'st-pending',
+    }));
+
+    it('arranca mostrando la primera página, sin recortar por búsqueda', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+      interno<WritableSignal<number>>('tamanoPaginaFormacion').set(5);
+
+      expect(interno<() => readonly unknown[]>('filasFormacion')().length).toBe(7);
+      expect(interno<() => readonly unknown[]>('filasFormacionVisibles')().length).toBe(7);
+      expect(interno<() => { data: readonly unknown[] }>('estadoFormacion')().data).toHaveLength(5);
+      expect(interno<() => number>('paginaFormacion')()).toBe(1);
+    });
+
+    it('el buscador filtra por tipo, número o institución, sin tildes ni mayúsculas', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+      interno<WritableSignal<number>>('tamanoPaginaFormacion').set(5);
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosFormacion')({ qTitulos: 'andres' });
+
+      expect(interno<() => readonly unknown[]>('filasFormacionVisibles')().length).toBe(1);
+      expect(
+        interno<() => { data: readonly { numero: string }[] }>('estadoFormacion')().data.map((f) => f.numero),
+      ).toEqual(['TIT-0']);
+      // El total sin filtrar no cambia: el buscador recorta la VISTA, no borra nada.
+      expect(interno<() => readonly unknown[]>('filasFormacion')().length).toBe(7);
+    });
+
+    it('paginar corta el resultado, y buscar vuelve a la página 1', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+      interno<WritableSignal<number>>('tamanoPaginaFormacion').set(5);
+
+      interno<WritableSignal<number>>('paginaFormacion').set(2);
+      expect(interno<() => { data: readonly unknown[] }>('estadoFormacion')().data).toHaveLength(2);
+      expect(interno<() => number>('paginaFormacion')()).toBe(2);
+
+      // Buscar algo que da una sola página: quedarse en la 2 mostraría una
+      // tabla vacía con el paginador diciendo que hay más.
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosFormacion')({ qTitulos: 'catolica' });
+      expect(interno<() => number>('paginaFormacion')()).toBe(1);
+      expect(interno<() => readonly unknown[]>('filasFormacionVisibles')().length).toBe(6);
+    });
+
+    it('sin coincidencias, lo dice sin tocar la lectura completa', () => {
+      montarYCargar({ credentials: SIETE_TITULOS });
+      interno<WritableSignal<number>>('tamanoPaginaFormacion').set(5);
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosFormacion')({ qTitulos: 'inexistente' });
+
+      expect((interno<() => readonly unknown[]>('filasFormacion')().length > 0 && interno<() => readonly unknown[]>('filasFormacionVisibles')().length === 0)).toBe(true);
+      expect(interno<() => { data: readonly unknown[] }>('estadoFormacion')().data).toHaveLength(0);
+      expect(interno<() => readonly unknown[]>('filasFormacion')().length).toBe(7);
+    });
+
+    it('sin nada cargado no hay «sin coincidencias»: es el vacío de siempre', () => {
+      montarYCargar({ credentials: [] });
+
+      expect((interno<() => readonly unknown[]>('filasFormacion')().length > 0 && interno<() => readonly unknown[]>('filasFormacionVisibles')().length === 0)).toBe(false);
+      expect(interno<() => readonly unknown[]>('filasFormacion')().length).toBe(0);
+    });
+
+    it('la misma disciplina en Especialidades: buscador y «sin coincidencias»', () => {
+      montarYCargar({
+        specialties: [
+          {
+            id: 'spec-1',
+            specialtyConceptId: 'esp-cardio',
+            isPrimary: true,
+            boardCertified: false,
+            verificationStatusConceptId: 'st-pending',
+            verified: false,
+          },
+          {
+            id: 'spec-2',
+            specialtyConceptId: 'esp-pediatria',
+            isPrimary: false,
+            boardCertified: false,
+            verificationStatusConceptId: 'st-pending',
+            verified: false,
+          },
+        ],
+      });
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosEspecialidades')({ qEspecialidades: 'cardio' });
+      expect(interno<() => readonly unknown[]>('filasEspecialidadesVisibles')().length).toBe(1);
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosEspecialidades')({ qEspecialidades: 'no existe' });
+      expect((interno<() => readonly unknown[]>('filasEspecialidades')().length > 0 && interno<() => readonly unknown[]>('filasEspecialidadesVisibles')().length === 0)).toBe(true);
+    });
+
+    it('la misma disciplina en Matrículas: buscador y «sin coincidencias»', () => {
+      montarYCargar({
+        licenses: [
+          {
+            id: 'lic-1',
+            jurisdictionConceptId: 'jur-bo',
+            licenseNumber: 'MP-123',
+            regulatoryAuthority: 'SEDES Santa Cruz',
+            stateConceptId: 'st-ok',
+          },
+          {
+            id: 'lic-2',
+            jurisdictionConceptId: 'jur-bo',
+            licenseNumber: 'MP-456',
+            regulatoryAuthority: 'Ministerio de Salud',
+            stateConceptId: 'st-ok',
+          },
+        ],
+      });
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosMatriculas')({ qMatriculas: 'sedes' });
+      expect(interno<() => readonly unknown[]>('filasMatriculasVisibles')().length).toBe(1);
+
+      interno<(filters: Readonly<Record<string, string>>) => void>('onFiltrosMatriculas')({ qMatriculas: 'no existe' });
+      expect((interno<() => readonly unknown[]>('filasMatriculas')().length > 0 && interno<() => readonly unknown[]>('filasMatriculasVisibles')().length === 0)).toBe(true);
+    });
+  });
+
+  /**
+   * «Actividad» no está en el editor: son estadísticas y no se editan
+   * (pedido del cliente del 24/09/2026). Entre el 20 y el 24/09/2026 estuvo,
+   * sin campos; esta prueba fija que no vuelva.
+   */
+  it('no tiene pestaña «Actividad»', () => {
+    const fixture = montarConVista();
+
+    const pestanas = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]'),
+    ).map((boton) => boton.textContent?.trim() ?? '');
+    expect(pestanas).toEqual([...EDITOR_DOCTOR_TABS]);
+    expect(pestanas).not.toContain('Actividad');
+    expect(fixture.nativeElement.querySelector('[data-testid="edicion-actividad"]')).toBeNull();
+  });
+
+  /**
+   * Cada pestaña del editor tiene nombre accesible, y es su rótulo.
    *
-   * «Editar muestre TODOS los campos» (C-05). Estos tres no se pueden escribir
-   * —el contrato del perfil no los acepta, y el correo de trabajo está
-   * excluido a propósito porque es la identidad de acceso—, y hasta el
-   * 21/09/2026 el editor sencillamente no los mostraba: quien venía a
-   * corregirlos no encontraba ni el dato ni el motivo.
+   * La auditoría del 23/10/2026 las reportó como `tab` sin nombre; no se
+   * reprodujo en el navegador. Esta prueba fija el patrón del molecule `tabs`
+   * tal como lo usa el editor: el nombre y la relación con su panel.
+   */
+  it('cada pestaña se nombra por su rótulo y controla un panel que existe', () => {
+    const fixture = montarConVista();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    const tablist = raiz.querySelector('[data-testid="edicion-pestanas"] [role="tablist"]');
+    expect(tablist).not.toBeNull();
+
+    const pestanas = Array.from(tablist?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+    expect(pestanas.map((pestana) => accessibleName(pestana))).toEqual([...EDITOR_DOCTOR_TABS]);
+
+    const seleccionadas = pestanas.filter((p) => p.getAttribute('aria-selected') === 'true');
+    expect(seleccionadas).toHaveLength(1);
+    for (const pestana of pestanas) {
+      const panel = raiz.querySelector(`#${pestana.getAttribute('aria-controls') ?? ''}`);
+      expect(panel?.getAttribute('role')).toBe('tabpanel');
+      expect(panel?.getAttribute('aria-labelledby')).toBe(pestana.id);
+    }
+  });
+
+  /**
+   * Lo que el alta pregunta y el editor muestra, y cuándo no se corrige acá.
    *
-   * Las tres pruebas cubren las tres formas de romperlo: que el dato
-   * desaparezca, que alguien le ponga un control, y que alguien lo mande en el
-   * `PATCH` creyendo que ahí se guarda.
+   * «Editar muestre TODOS los campos» (C-05). Hasta el 21/09/2026 el editor no
+   * mostraba el documento: quien venía a corregirlo no encontraba ni el dato ni
+   * el motivo. Desde P28 (26/10/2026) el número se corrige mientras la
+   * identidad no está verificada; verificada, vuelve a ser un renglón fijo.
+   *
+   * Las pruebas cubren las formas de romperlo: que el dato desaparezca, que
+   * alguien le ponga un control, y que alguien lo mande en el `PATCH` creyendo
+   * que ahí se guarda.
    */
   describe('lo que se muestra y no se corrige', () => {
     const CON_IDENTIDAD = {
@@ -1425,43 +3201,142 @@ describe('PractitionerProfileEdit', () => {
       email: 'dra.salas@alovida.mock',
     };
 
-    it('«Datos personales» muestra el documento, sin control para escribirlo', () => {
-      const fixture = montarConVista(CON_IDENTIDAD);
+    it('con la identidad verificada, «Datos personales» muestra el documento sin control para escribirlo, y dice por qué', () => {
+      const fixture = montarConVista({ ...CON_IDENTIDAD, identityVerified: true });
 
       const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-documento"]');
       expect(bloque).not.toBeNull();
       expect(bloque?.textContent).toContain('5414404');
       expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
+      expect(bloque?.querySelector('[data-testid="edicion-documento-bloqueado"]')).not.toBeNull();
     });
 
-    it('«Contacto» muestra el correo de trabajo, sin control para escribirlo', () => {
+    it('con la identidad sin verificar, el número es un campo con el valor guardado (P28)', () => {
+      const fixture = montarConVista({ ...CON_IDENTIDAD, identityVerified: false });
+
+      const campo = panelAbierto(fixture).querySelector<HTMLInputElement>(
+        '[data-testid="edicion-documento"] input',
+      );
+      expect(campo).not.toBeNull();
+      expect(campo?.value).toBe('5414404');
+    });
+
+    it('corregir el número lo manda en el PATCH, recortado', () => {
+      montarYCargar({ ...CON_IDENTIDAD, identityVerified: false });
+
+      señal<string>('numeroDocumento').set(' 5414405 ');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ nationalId: '5414405' });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('un número vacío o con caracteres que el alta no acepta no se guarda y se marca en su campo', () => {
+      const fixture = montarConVista({ ...CON_IDENTIDAD, identityVerified: false });
+
+      for (const malo of ['', "54'14"]) {
+        señal<string>('numeroDocumento').set(malo);
+        interno<() => void>('guardarPresentacion')();
+        http.expectNone('/profiles/practitioners/me');
+        fixture.detectChanges();
+        const campo = panelAbierto(fixture).querySelector('[data-testid="edicion-documento"] input');
+        expect(campo?.getAttribute('aria-invalid'), malo).toBe('true');
+      }
+    });
+
+    it('con la identidad verificada el número no viaja aunque la señal cambie', () => {
+      montarYCargar({ ...CON_IDENTIDAD, identityVerified: true, sexAtBirth: 'FEMALE' });
+
+      señal<string>('numeroDocumento').set('9999999');
+      señal<string | null>('sexoAlNacer').set('MALE');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ sexAtBirth: 'MALE' });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('«Contacto» no ofrece celular ni fijo del trabajo (D-03); el correo y la dirección del trabajo sí', () => {
       const fixture = montarConVista(CON_IDENTIDAD);
 
       señal<number>('pestana').set(1);
       fixture.detectChanges();
 
-      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
-      expect(bloque).not.toBeNull();
-      expect(bloque?.textContent).toContain('dra.salas@alovida.mock');
-      expect(bloque?.querySelectorAll('input, select, textarea')).toHaveLength(0);
+      const panel = panelAbierto(fixture);
+      for (const testId of ['edicion-celular-trabajo', 'edicion-fijo-trabajo']) {
+        expect(panel.querySelector(`[data-testid="${testId}"]`), testId).toBeNull();
+      }
+      const texto = (panel.textContent ?? '').replace(/\s+/g, ' ');
+      expect(texto).not.toMatch(/(celular|fijo|tel[eé]fono)[^.]{0,20}\b(del|de) trabajo/i);
+      // D-03 cubre los dos teléfonos. El correo de trabajo se corrige acá (#645) y la
+      // dirección donde atiende también se queda (24/09/2026).
+      expect(panel.querySelector('input[data-testid="edicion-correo-trabajo"]')).not.toBeNull();
+      // Desde el 26/10/2026 sale de su punto en el mapa, no de una casilla.
+      expect(panel.querySelector('app-map-location-picker[pinid="edicion-trabajo"]')).not.toBeNull();
+      expect(panel.querySelector('[data-testid="edicion-correo-acceso"]')).toBeNull();
     });
 
-    it('prefiere workEmail cuando el correo de acceso es personal', () => {
-      const fixture = montarConVista({
+    it('guardar no manda los teléfonos del trabajo ni el correo que nadie tocó: lo guardado no se borra (D-03)', () => {
+      montarYCargar({
         ...CON_IDENTIDAD,
-        email: 'dra.salas.personal@alovida.mock',
-        workEmail: 'dra.salas@hospital.mock',
+        workMobilePhone: '+591 70088888',
+        workLandline: '+591 33000000',
+        workEmail: 'consultorio@example.test',
       });
-
       señal<number>('pestana').set(1);
-      fixture.detectChanges();
 
-      const bloque = panelAbierto(fixture).querySelector('[data-testid="edicion-correo-trabajo"]');
-      expect(bloque?.textContent).toContain('dra.salas@hospital.mock');
-      expect(bloque?.textContent).not.toContain('dra.salas.personal@alovida.mock');
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 70012345');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ mobilePhone: '+591 70012345' });
+      req.flush(PERFIL_BASE);
     });
 
-    it('guardar no manda ninguno de los tres', () => {
+    /* P28 (ID-13): el departamento emisor y el sexo al nacer se corrigen
+       siempre, también con la identidad verificada. */
+    it('«Datos personales» ofrece corregir el departamento emisor y el sexo al nacer, fuera del bloque de solo lectura', () => {
+      const fixture = montarConVista({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE', identityVerified: true });
+
+      const panel = panelAbierto(fixture);
+      expect(panel.querySelector('[data-testid="edicion-datos-del-documento"]')).not.toBeNull();
+      expect(panel.querySelector('[data-testid="edicion-departamento-emisor"]')).not.toBeNull();
+      expect(panel.querySelector('[data-testid="edicion-sexo-al-nacer"]')).not.toBeNull();
+      // El bloque del número sigue sin un solo control.
+      expect(
+        panel.querySelector('[data-testid="edicion-documento"]')?.querySelectorAll('input, select, textarea'),
+      ).toHaveLength(0);
+    });
+
+    it('guardar manda sexAtBirth y el departamento sólo si cambiaron, y el número no viaja si no se tocó', () => {
+      montarYCargar({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE' });
+
+      señal<string | null>('sexoAlNacer').set('MALE');
+      señal<string | null>('departamentoEmisor').set('dep-lpz');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({
+        sexAtBirth: 'MALE',
+        issuerAdministrativeAreaConceptId: 'dep-lpz',
+      });
+      expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain('nationalId');
+      req.flush(PERFIL_BASE);
+    });
+
+    it('sin tocar el sexo ni el departamento, no viajan', () => {
+      montarYCargar({ ...CON_IDENTIDAD, sexAtBirth: 'FEMALE' });
+
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ professionalTitle: 'Cardióloga intervencionista' });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('guardar no manda el documento ni el correo que nadie tocó', () => {
       montarYCargar(CON_IDENTIDAD);
 
       señal<string>('titulo').set('Cardióloga intervencionista');
@@ -1470,6 +3345,76 @@ describe('PractitionerProfileEdit', () => {
       const req = http.expectOne('/profiles/practitioners/me');
       expect(req.request.body).toEqual({ professionalTitle: 'Cardióloga intervencionista' });
       req.flush(PERFIL_BASE);
+    });
+  });
+
+  /**
+   * El correo de trabajo se corrige acá.
+   *
+   * Hasta el 24/09/2026 se mostraba como dato fijo con el argumento de que era
+   * la identidad de acceso. No lo es: el alta lo siembra con el mismo valor que
+   * el login, pero es una fila de contactos (correo × trabajo) y la cuenta no la
+   * lee. Lo que sí lo distingue de los otros contactos es que es obligatorio.
+   */
+  describe('el correo de trabajo', () => {
+    const CON_CORREO = { email: 'dra.salas@alovida.mock' };
+
+    function campo(fixture: ComponentFixture<PractitionerProfileEdit>): HTMLInputElement | null {
+      señal<number>('pestana').set(1);
+      fixture.detectChanges();
+      return panelAbierto(fixture).querySelector('input[data-testid="edicion-correo-trabajo"]');
+    }
+
+    it('«Contacto» lo ofrece en un campo, cargado con el guardado', async () => {
+      const fixture = montarConVista(CON_CORREO);
+
+      const input = campo(fixture);
+      await fixture.whenStable();
+      expect(input).not.toBeNull();
+      expect(input?.value).toBe('dra.salas@alovida.mock');
+    });
+
+    it('prefiere workEmail cuando el correo de acceso es otro', async () => {
+      const fixture = montarConVista({
+        email: 'dra.salas.personal@alovida.mock',
+        workEmail: 'dra.salas@hospital.mock',
+      });
+
+      const input = campo(fixture);
+      await fixture.whenStable();
+      expect(input?.value).toBe('dra.salas@hospital.mock');
+    });
+
+    it('corregido, viaja como workEmail y sin espacios', () => {
+      montarYCargar(CON_CORREO);
+      señal<number>('pestana').set(1);
+
+      señal<string>('correoTrabajo').set('  dra.salas@clinica.bo ');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ workEmail: 'dra.salas@clinica.bo' });
+      req.flush({ ...PERFIL_BASE, workEmail: 'dra.salas@clinica.bo' });
+    });
+
+    it.each([
+      ['vacío', '   ', 'Escriba su correo de trabajo.'],
+      [
+        'sin dominio con punto',
+        'dra.salas@clinica',
+        'Revise el correo: le falta algo, como la @ o el dominio.',
+      ],
+      ['sin @', 'dra.salas.clinica.bo', 'Revise el correo: le falta algo, como la @ o el dominio.'],
+    ])('%s no viaja: se marca y lleva a «Contacto»', (_caso, valor, mensaje) => {
+      montarYCargar(CON_CORREO);
+      señal<number>('pestana').set(1);
+
+      señal<string>('correoTrabajo').set(valor);
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('errorCorreoTrabajo')()).toBe(mensaje);
+      expect(señal<number>('pestana')()).toBe(1);
     });
   });
 
@@ -1484,9 +3429,184 @@ describe('PractitionerProfileEdit', () => {
    * (`details.violations`, con el nombre del campo al frente del mensaje), no
    * uno inventado para la prueba.
    */
+  describe('cada pestaña guarda sólo lo suyo (CORR-08)', () => {
+    it('guardar «Datos personales» no manda el NIT que quedó escrito en «Facturación»', () => {
+      montarYCargar();
+      señal<string>('nit').set('5414404011');
+      señal<number>('pestana').set(0);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ professionalTitle: 'Cardióloga intervencionista' });
+      req.flush({ ...PERFIL_BASE, professionalTitle: 'Cardióloga intervencionista' });
+
+      // Lo de la otra pestaña sigue ahí, sin guardar y sin perderse.
+      expect(señal<string>('nit')()).toBe('5414404011');
+    });
+
+    it('guardar «Facturación» no manda el título que quedó a medias en «Datos personales»', () => {
+      montarYCargar();
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('5414404011');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ taxId: '5414404011' });
+      req.flush({ ...PERFIL_BASE, taxId: '5414404011' });
+      expect(señal<string>('titulo')()).toBe('Cardióloga intervencionista');
+    });
+
+    it('un teléfono a medias en «Contacto» no frena el guardado de «Facturación»', () => {
+      montarYCargar();
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('5414404011');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ taxId: '5414404011' });
+      req.flush({ ...PERFIL_BASE, taxId: '5414404011' });
+    });
+
+    it('vaciar el apellido paterno no se guarda: el alta lo exige', () => {
+      montarYCargar();
+      señal<number>('pestana').set(0);
+      señal<string>('apellidoPaterno').set('  ');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(ultimoAviso()?.message).toBe('Ingrese su apellido paterno.');
+    });
+
+    it('el celular personal vacío no se guarda: el alta lo exige', () => {
+      montarYCargar();
+      señal<number>('pestana').set(1);
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(ultimoAviso()?.message).toBe('Ingrese su celular personal.');
+    });
+
+    it('un correo personal sin forma de correo no se guarda y se marca en su campo', () => {
+      montarYCargar();
+      señal<number>('pestana').set(1);
+      señal<string>('correoPersonal').set('ana-sin-arroba');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(señal<string>('personalEmailError')()).toBe('Ingrese un correo válido.');
+    });
+
+    it('los rótulos compartidos son los del alta', () => {
+      montarYCargar();
+      const rotulo = interno<(clave: string, respaldo: string) => string>('practitionerFieldLabel');
+      const exige = interno<(clave: string) => boolean>('practitionerFieldRequired');
+
+      expect(rotulo('lastName', '—')).toBe('Apellido paterno');
+      expect(rotulo('personalEmail', '—')).toBe('Su correo personal — con éste entra');
+      // El alta proyecta el nombre sin rótulo propio: el editor conserva el suyo.
+      expect(rotulo('name', 'Nombre')).toBe('Nombre');
+      expect(exige('lastName')).toBe(true);
+      expect(exige('mobilePhone')).toBe(true);
+      expect(exige('motherLastName')).toBe(false);
+    });
+
+    it('el nombre lleva la marca de obligatorio y vacío no se guarda, como en el alta', () => {
+      montarYCargar();
+      expect(interno<(clave: string) => boolean>('practitionerFieldRequired')('name')).toBe(true);
+      señal<number>('pestana').set(0);
+      señal<string>('nombre').set('  ');
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      expect(ultimoAviso()?.message).toBe('Ingrese su nombre.');
+    });
+  });
+
+  describe('guardar vuelve a lectura en la misma pestaña (CORR-08)', () => {
+    it('guardar «Contacto» vuelve a la ficha abierta en «Contacto»', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<number>('pestana').set(1);
+      señal<string>('correoPersonal').set('ana.nueva@correo.bo');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ personalEmail: 'ana.nueva@correo.bo' });
+      req.flush({ ...PERFIL_BASE, personalEmail: 'ana.nueva@correo.bo' });
+      await Promise.resolve();
+
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile'], {
+        queryParams: { pestana: 1 },
+      });
+    });
+
+    it('guardar «Datos personales» vuelve a la ficha sin pedir pestaña', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<number>('pestana').set(0);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush({ ...PERFIL_BASE, professionalTitle: 'Cardióloga intervencionista' });
+      await Promise.resolve();
+
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+    });
+
+    it('si quedó algo escrito en otra pestaña, se queda en edición y la nombra', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<string>('nit').set('5414404011');
+      señal<number>('pestana').set(0);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush({ ...PERFIL_BASE, professionalTitle: 'Cardióloga intervencionista' });
+      await Promise.resolve();
+
+      expect(navegar).not.toHaveBeenCalled();
+      expect(ultimoAviso()?.message).toBe('Quedan cambios sin guardar en «Facturación».');
+    });
+
+    it('un guardado rechazado no sale del editor', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('5414404011');
+      interno<() => void>('guardarPresentacion')();
+
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush({ message: 'No' }, { status: 422, statusText: 'Unprocessable Entity' });
+      await Promise.resolve();
+
+      expect(navegar).not.toHaveBeenCalled();
+    });
+
+    it('cancelar desde «Facturación» vuelve a la ficha en «Facturación»', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      señal<number>('pestana').set(2);
+      await interno<() => Promise<void>>('cancelarEdicion')();
+
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile'], {
+        queryParams: { pestana: 2 },
+      });
+    });
+  });
+
   describe('cuando el servidor rechaza el guardado', () => {
     function rechazar(cuerpo: object, status = 422): void {
       montarYCargar();
+      señal<number>('pestana').set(2);
       señal<string>('nit').set('12345678');
       interno<() => void>('guardarPresentacion')();
       http
@@ -1547,7 +3667,7 @@ describe('PractitionerProfileEdit', () => {
     it('unas violaciones con la forma equivocada tampoco rompen nada', () => {
       rechazar({
         code: 'VALIDATION_ERROR',
-        message: 'Revisá los datos',
+        message: 'Revise los datos',
         timestamp: '2026-09-21T00:00:00.000Z',
         path: '/profiles/practitioners/me',
         details: { violations: { taxId: 'no es una lista' } },
@@ -1608,6 +3728,83 @@ describe('PractitionerProfileEdit', () => {
     });
 
     /**
+     * Regla 6 del criterio humano: el error se dice donde se comete. El NIT
+     * vive en «Facturación»; si la persona guardó desde «Datos personales», el
+     * aviso nombra la pestaña y la pantalla la abre.
+     */
+    it('un campo rechazado en otra pestaña la nombra en el aviso y la abre', () => {
+      montarYCargar();
+      señal<number>('pestana').set(0);
+      señal<string>('titulo').set('Cardióloga intervencionista');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      expect(interno<(c: string) => string>('errorDelServidor')('taxId')).toBe(
+        'El NIT no figura en el padrón.',
+      );
+      expect(señal<number>('pestana')()).toBe(2);
+      expect(ultimoAviso()?.message).toBe(
+        `Revise los campos marcados en «${EDITOR_DOCTOR_TABS[2]}» y vuelva a guardar.`,
+      );
+    });
+
+    it('un campo rechazado en la pestaña abierta no mueve a la persona de donde está', () => {
+      montarYCargar();
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      expect(señal<number>('pestana')()).toBe(2);
+    });
+
+    it('un campo que la pantalla no muestra va con su mensaje en el aviso', () => {
+      montarYCargar();
+      señal<number>('pestana').set(2);
+      señal<string>('nit').set('12345678');
+      interno<() => void>('guardarPresentacion')();
+      http
+        .expectOne('/profiles/practitioners/me')
+        .flush(rechazoPorCampo('practiceStatus', 'El estado de práctica no admite ese valor.'), {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+
+      // Nada de «revise los campos marcados» sin campo marcado.
+      expect(ultimoAviso()?.message).toBe('El estado de práctica no admite ese valor.');
+    });
+
+    it('un rechazo sin campo dice qué no se pudo hacer y el código de soporte', () => {
+      rechazar(
+        {
+          code: 'INTERNAL',
+          message: 'Algo salió mal',
+          correlationId: 'corr-perfil',
+          timestamp: '2026-09-21T00:00:00.000Z',
+          path: '/profiles/practitioners/me',
+        },
+        500,
+      );
+
+      expect(ultimoAviso()).toEqual(
+        expect.objectContaining({
+          title: 'Perfil',
+          message: 'No se pudo guardar el cambio. Intente de nuevo. (Código de soporte: corr-perfil)',
+        }),
+      );
+    });
+
+    /**
      * Un intento que no llega al servidor no tiene quién confirme los rechazos
      * del anterior. Hasta el 22/09/2026 se quedaban pintados: la persona
      * devolvía el valor a lo guardado, apretaba Guardar, leía «No había ningún
@@ -1640,7 +3837,8 @@ describe('PractitionerProfileEdit', () => {
         path: '/profiles/practitioners/me',
       });
 
-      interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 7001');
+      señal<number>('pestana').set(1);
+      interno<{ setValue(valor: string): void }>('celularPersonal').setValue('+591 7001');
       interno<() => void>('guardarPresentacion')();
 
       http.expectNone('/profiles/practitioners/me');
@@ -1684,6 +3882,800 @@ describe('PractitionerProfileEdit', () => {
       montarYCargar();
 
       expect(interno<() => number>('pestana')()).toBe(0);
+    });
+  });
+
+  /**
+   * «Falta un botón en editar perfil para cancelar edición» (pedido del
+   * propietario, 24/09/2026). Datos personales, Contacto y Facturación son
+   * UN formulario con UN botón de guardar: cancelar descarta lo tipeado en
+   * los tres paneles tras confirmar, sin escribir en el servidor, y vuelve a la ficha.
+   */
+  describe('cancelar la edición de Datos personales, Contacto y Facturación', () => {
+    it.each([false, true])('protege incluso una fila de idioma incompleta (descarte=%s)', async (discard) => {
+      montarYCargar({ languages: [] });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(discard);
+      interno<() => void>('agregarIdioma')();
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmation.preguntas).toBe(1);
+      expect(interno<() => readonly unknown[]>('idiomas')()).toHaveLength(discard ? 0 : 1);
+      expect(navigate).toHaveBeenCalledTimes(discard ? 1 : 0);
+      http.expectNone((request) => ['PATCH', 'PUT', 'POST', 'DELETE'].includes(request.method));
+    });
+
+    it.each([false, true])('excluye idiomas ya guardados y protege otro borrador (borrador=%s)', async (keepDraft) => {
+      montarYCargar({ languages: [] });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(false);
+      if (keepDraft) señal<string>('bio').set('Otro borrador');
+      interno<() => void>('agregarIdioma')();
+      interno<(index: number, value: string) => void>('elegirIdioma')(0, 'lang-es');
+      interno<() => void>('guardarIdiomas')();
+      const request = http.expectOne('/profiles/practitioners/me');
+      request.flush({ ...PERFIL_BASE, languages: [{ languageConceptId: 'lang-es', clinicalInterpretationAllowed: false }] });
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmation.preguntas).toBe(keepDraft ? 1 : 0);
+      expect(navigate).toHaveBeenCalledTimes(keepDraft ? 0 : 1);
+      if (keepDraft) expect(señal<string>('bio')()).toBe('Otro borrador');
+      expect(interno<() => readonly { idioma: string }[]>('idiomas')()[0].idioma).toBe('lang-es');
+      http.expectNone((pending) => ['PATCH', 'PUT', 'POST', 'DELETE'].includes(pending.method));
+    });
+
+    it('espera el guardado independiente de idiomas antes de salir', async () => {
+      montarYCargar({ languages: [] });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(false);
+      interno<() => void>('agregarIdioma')();
+      interno<(index: number, value: string) => void>('elegirIdioma')(0, 'lang-es');
+      interno<() => void>('guardarIdiomas')();
+      const request = http.expectOne('/profiles/practitioners/me');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(navigate).not.toHaveBeenCalled();
+      expect(confirmation.preguntas).toBe(0);
+      request.flush({ ...PERFIL_BASE, languages: [{ languageConceptId: 'lang-es', clinicalInterpretationAllowed: false }] });
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(navigate).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+      expect(confirmation.preguntas).toBe(0);
+    });
+
+    it.each([false, true])('protege la frecuencia de facturación al cancelar (descarte=%s)', async (discard) => {
+      montarYCargar({ insuranceBillingFrequency: 'MONTHLY' });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(discard);
+      señal<string>('frecuenciaFacturacionSeguro').set('BIWEEKLY');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmation.preguntas).toBe(1);
+      expect(señal<string>('frecuenciaFacturacionSeguro')()).toBe(discard ? 'MONTHLY' : 'BIWEEKLY');
+      expect(navigate).toHaveBeenCalledTimes(discard ? 1 : 0);
+      http.expectNone((request) => ['PATCH', 'PUT', 'POST', 'DELETE'].includes(request.method));
+    });
+
+    it('revertir la frecuencia de facturación conserva la cancelación limpia', async () => {
+      montarYCargar({ insuranceBillingFrequency: 'MONTHLY' });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmation = responderConfirmacion(false);
+      señal<string>('frecuenciaFacturacionSeguro').set('BIWEEKLY');
+      señal<string>('frecuenciaFacturacionSeguro').set('MONTHLY');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmation.preguntas).toBe(0);
+      expect(navigate).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+    });
+
+    it('descarta tras confirmar y vuelve a la ficha sin escribir en el servidor', async () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(true);
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+
+      expect(señal<string>('titulo')()).toBe('Cardióloga');
+      expect(confirmacion.preguntas).toBe(1);
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+      http.expectNone((r) => ['PATCH', 'PUT', 'POST', 'DELETE'].includes(r.method));
+      // `http.verify()` del `afterEach` ya se encarga de que no haya quedado
+      // ninguna petición pendiente — cancelar no debe disparar ninguna.
+    });
+
+    it('sin cambios vuelve directo, aunque el guardado normal corrija acceptsNewPatients', async () => {
+      montarYCargar({ acceptsNewPatients: false });
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(false);
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(0);
+      expect(navegar).toHaveBeenCalledExactlyOnceWith(['/account/profile']);
+    });
+
+    it('rechazar conserva el borrador de los tres paneles, incluso un teléfono inválido', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(false);
+      señal<string>('titulo').set('Borrador');
+      señal<string>('direccion').set('Dirección de prueba');
+      señal<string>('nit').set('NIT incompleto');
+      const phone = interno<{ setValue: (v: string) => void; value: string }>('celularPersonal');
+      phone.setValue('123');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(1);
+      expect(navegar).not.toHaveBeenCalled();
+      expect(señal<string>('titulo')()).toBe('Borrador');
+      expect(señal<string>('direccion')()).toBe('Dirección de prueba');
+      expect(señal<string>('nit')()).toBe('NIT incompleto');
+      expect(phone.value).toBe('123');
+    });
+
+    it('una fecha inválida escrita en el control pide descarte y conserva el texto al rechazar', async () => {
+      const fixture = montarConVista({birthDate:'2000-01-01'});
+      const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('[data-testid="edicion-nacimiento"] input');
+      if (!campo) throw new Error('Falta el campo de nacimiento');
+      const originalDate = campo.value;
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(false);
+      campo.value = '31/02/2000';
+      campo.dispatchEvent(new Event('input',{bubbles:true}));
+      fixture.detectChanges();
+      await interno<()=>Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(1);
+      expect(navegar).not.toHaveBeenCalled();
+      expect(campo.value).toBe('31/02/2000');
+      campo.value = originalDate;
+      campo.dispatchEvent(new Event('input',{bubbles:true}));
+      fixture.detectChanges();
+      await interno<()=>Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(1);
+      expect(navegar).toHaveBeenCalledOnce();
+    });
+
+    it('volver al valor original no pide descartar', async () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(false);
+      señal<string>('titulo').set('Borrador');
+      señal<string>('titulo').set('Cardióloga');
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmacion.preguntas).toBe(0);
+      expect(navegar).toHaveBeenCalledOnce();
+    });
+
+    it('dos clics esperan una sola decisión y navegan una sola vez', async () => {
+      montarYCargar();
+      señal<string>('titulo').set('Borrador');
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      let resolver!: (aceptado: boolean) => void;
+      const confirmar = vi.fn(() => new Promise<boolean>((r) => { resolver = r; }));
+      interno<{ confirm: () => Promise<boolean> }>('dialogs').confirm = confirmar;
+      const primero = interno<() => Promise<void>>('cancelarEdicion')();
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(confirmar).toHaveBeenCalledOnce();
+      expect(navegar).not.toHaveBeenCalled();
+      resolver(true);
+      await primero;
+      expect(navegar).toHaveBeenCalledOnce();
+    });
+
+    it('no sale mientras se sube el logo', async () => {
+      montarYCargar();
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const confirmacion = responderConfirmacion(true);
+      señal<boolean>('subiendoLogo').set(true);
+      await interno<() => Promise<void>>('cancelarEdicion')();
+      expect(navegar).not.toHaveBeenCalled();
+      expect(confirmacion.preguntas).toBe(0);
+    });
+
+    it('no hace nada mientras hay un guardado en curso', () => {
+      montarYCargar({ professionalTitle: 'Cardióloga' });
+
+      señal<string>('titulo').set('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(true);
+      interno<() => void>('cancelarEdicion')();
+
+      // Cancelar a mitad de un `PATCH` dejaría el formulario mostrando un
+      // valor que la respuesta, todavía en vuelo, podría pisar igual.
+      expect(señal<string>('titulo')()).toBe('Un título a medio escribir');
+      señal<boolean>('guardandoPresentacion').set(false);
+    });
+  });
+
+  /* ---- el logo del consultorio (pestaña «Facturación») ---------------------- */
+
+  describe('el logo del consultorio', () => {
+    it('conserva el logo de PDF sin presentar el editor como vista pública', () => {
+      const fixture = montarConVista();
+
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'Cómo le ven las personas que consultan su perfil',
+      );
+      expect(fixture.nativeElement.querySelector('[data-testid="edicion-logo"]')).not.toBeNull();
+    });
+
+    const PROPIA = { id: 'site-1', isOwnSite: true, logoFileId: null };
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+
+    const archivo = (): File =>
+      new File([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], 'logo.png', {
+        type: 'image/png',
+      });
+
+    /** Deja que corra la lectura del archivo (`FileReader` es asíncrono). */
+    const esperarVista = async (): Promise<void> => {
+      for (let i = 0; i < 50 && interno<() => string | null>('logoVisible')() === null; i += 1) {
+        await new Promise((resolver) => setTimeout(resolver, 5));
+      }
+    };
+
+    /** Monta y responde la lectura del logo con la sede propia dada. */
+    function montarConSede(sede: object = PROPIA): void {
+      montarYCargar();
+      http.expectOne(SEDES).flush({ items: [sede], count: 1 });
+    }
+
+    it('trae el logo guardado y lo muestra en la caja', async () => {
+      montarConSede({ ...PROPIA, logoFileId: 'file-logo' });
+      const contenido = http.expectOne('/common/files/file-logo/content');
+      contenido.flush(new Blob([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], { type: 'image/png' }));
+      await esperarVista();
+
+      expect(interno<() => string | null>('logoVisible')()).toMatch(/^data:image\/png/);
+    });
+
+    it('sin logo ni consultorio propio la caja queda vacía y no falla', () => {
+      montarYCargar();
+      http.expectOne(SEDES).flush({ items: [], count: 0 });
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('si la lectura del logo falla, la pantalla sigue entera', () => {
+      montarYCargar();
+      http.expectOne(SEDES).flush('boom', { status: 500, statusText: 'Server Error' });
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('elegir un logo lo sube y lo deja pendiente: no se guarda hasta «Guardar cambios»', async () => {
+      montarConSede();
+
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      expect(interno<() => string | null>('logoVisible')()).toMatch(/^data:image\/png/);
+      // Ni el PUT del logo ni el PATCH del perfil salieron todavía.
+      http.expectNone((r) => r.method === 'PUT');
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('guardar sólo el logo no manda el PATCH del perfil y sí el PUT del logo', async () => {
+      montarConSede();
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      http.expectOne(SEDES).flush({ items: [PROPIA], count: 1 });
+      const put = http.expectOne('/practitioners/me/sites/site-1/logo');
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ fileId: 'file-nuevo' });
+      put.flush({ ...PROPIA, logoFileId: 'file-nuevo' });
+    });
+
+    it('quitar el logo guardado manda fileId nulo', async () => {
+      montarConSede({ ...PROPIA, logoFileId: 'file-logo' });
+      http
+        .expectOne('/common/files/file-logo/content')
+        .flush(new Blob(['x'], { type: 'image/png' }));
+      await esperarVista();
+
+      interno<() => void>('quitarLogo')();
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+
+      interno<() => void>('guardarPresentacion')();
+      http.expectOne(SEDES).flush({ items: [{ ...PROPIA, logoFileId: 'file-logo' }], count: 1 });
+      const put = http.expectOne('/practitioners/me/sites/site-1/logo');
+      expect(put.request.body).toEqual({ fileId: null });
+      put.flush({ ...PROPIA, logoFileId: null });
+    });
+
+    it('cancelar descarta el logo elegido y vuelve al guardado', async () => {
+      montarConSede();
+      responderConfirmacion(true);
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-nuevo' });
+      await esperarVista();
+
+      await interno<() => Promise<void>>('cancelarEdicion')();
+
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+      // Nada que guardar: no hay ninguna petición.
+      interno<() => void>('guardarPresentacion')();
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+    });
+
+    it('un archivo demasiado pesado se explica y no toca el logo', () => {
+      montarConSede();
+
+      interno<(r: { file: File; reason: string }[]) => void>('alRechazarLogo')([
+        { file: archivo(), reason: 'tamaño' },
+      ]);
+
+      expect(interno<() => string>('errorDelLogo')()).toContain('2 MB');
+      expect(interno<() => string | null>('logoVisible')()).toBeNull();
+    });
+
+    it('si la subida falla lo dice y no deja nada pendiente', () => {
+      montarConSede();
+
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush('boom', { status: 500, statusText: 'x' });
+
+      expect(interno<() => string>('errorDelLogo')()).toContain('No se pudo subir');
+      interno<() => void>('guardarPresentacion')();
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+    });
+  });
+
+  /* ---- la firma y el sello médicos (pestaña «Datos personales») ------------- */
+
+  describe('la firma y el sello médicos', () => {
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+    const bytes = (): ArrayBuffer =>
+      Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0)).buffer as ArrayBuffer;
+    const archivo = (): File => new File([bytes()], 'firma.png', { type: 'image/png' });
+
+    interface Imagen {
+      visible(): string | null;
+      change: string | null | undefined;
+      error(): string;
+    }
+    const firma = (): Imagen => interno<Imagen>('firma');
+    const sello = (): Imagen => interno<Imagen>('sello');
+
+    const esperar = async (leer: () => unknown): Promise<void> => {
+      for (let i = 0; i < 60 && !leer(); i += 1) {
+        await new Promise((resolver) => setTimeout(resolver, 5));
+      }
+    };
+
+    /** Monta y responde la lectura de las dos imágenes. */
+    function montarConFirma(activos: { signatureFileId: string | null; sealFileId: string | null }): void {
+      montarYCargar();
+      http.match((r) => r.url === SEDES).forEach((lectura) => lectura.flush({ items: [], count: 0 }));
+      http.expectOne(ACTIVOS_DE_FIRMA).flush(activos);
+    }
+
+    it('trae la firma y el sello guardados y los muestra en sus cajas', async () => {
+      montarConFirma({ signatureFileId: 'f1', sealFileId: 's1' });
+      http.expectOne('/common/files/f1/content').flush(new Blob([bytes()], { type: 'image/png' }));
+      http.expectOne('/common/files/s1/content').flush(new Blob([bytes()], { type: 'image/png' }));
+      await esperar(() => firma().visible() && sello().visible());
+
+      expect(firma().visible()).toMatch(/^data:image\/png/);
+      expect(sello().visible()).toMatch(/^data:image\/png/);
+    });
+
+    it('sin nada cargado las dos cajas quedan vacías y no falla', () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+
+      expect(firma().visible()).toBeNull();
+      expect(sello().visible()).toBeNull();
+    });
+
+    it('elegir una firma la sube y la deja pendiente: no se guarda hasta «Guardar cambios»', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+
+      expect(firma().change).toBe('file-firma');
+      expect(sello().change).toBeUndefined();
+      http.expectNone((r) => r.method === 'PUT');
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('guardar sólo la firma manda un PUT con esa clave y ningún PATCH del perfil', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone('/profiles/practitioners/me');
+      const put = http.expectOne(ACTIVOS_DE_FIRMA);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ signatureFileId: 'file-firma' });
+      put.flush({ signatureFileId: 'file-firma', sealFileId: null });
+      expect(firma().change).toBeUndefined();
+    });
+
+    it('firma y sello elegidos juntos viajan en un solo PUT', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+      interno<(archivos: File[]) => void>('alElegirSello')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-sello' });
+      await esperar(() => sello().visible());
+
+      interno<() => void>('guardarPresentacion')();
+
+      const put = http.expectOne(ACTIVOS_DE_FIRMA);
+      expect(put.request.body).toEqual({ signatureFileId: 'file-firma', sealFileId: 'file-sello' });
+      put.flush({ signatureFileId: 'file-firma', sealFileId: 'file-sello' });
+    });
+
+    it('quitar el sello guardado manda sealFileId nulo y deja la firma como estaba', async () => {
+      montarConFirma({ signatureFileId: 'f1', sealFileId: 's1' });
+      http.expectOne('/common/files/f1/content').flush(new Blob([bytes()], { type: 'image/png' }));
+      http.expectOne('/common/files/s1/content').flush(new Blob([bytes()], { type: 'image/png' }));
+      await esperar(() => firma().visible() && sello().visible());
+
+      (componente as unknown as { sello: { remove(): void } }).sello.remove();
+      expect(sello().visible()).toBeNull();
+      interno<() => void>('guardarPresentacion')();
+
+      const put = http.expectOne(ACTIVOS_DE_FIRMA);
+      expect(put.request.body).toEqual({ sealFileId: null });
+      put.flush({ signatureFileId: 'f1', sealFileId: null });
+    });
+
+    it('cancelar descarta lo elegido y vuelve a lo guardado', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      responderConfirmacion(true);
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+
+      await interno<() => Promise<void>>('cancelarEdicion')();
+
+      expect(firma().visible()).toBeNull();
+      expect(firma().change).toBeUndefined();
+      interno<() => void>('guardarPresentacion')();
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+    });
+
+    it('no deja guardar mientras una imagen todavía se está subiendo', () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirSello')([archivo()]);
+      const subida = http.expectOne('/common/files/upload');
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectNone((r) => r.method === 'PUT' || r.method === 'PATCH');
+      subida.flush({ id: 'file-sello' });
+    });
+
+    it('si la subida falla lo dice y no deja nada pendiente', () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush('boom', { status: 500, statusText: 'x' });
+
+      expect(firma().error()).toContain('No se pudo subir la firma');
+      expect(firma().change).toBeUndefined();
+    });
+
+    it('el logo y la firma guardan cada uno por su ruta cuando cambian a la vez', async () => {
+      montarConFirma({ signatureFileId: null, sealFileId: null });
+      interno<(archivos: File[]) => void>('alElegirFirma')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-firma' });
+      await esperar(() => firma().visible());
+      interno<(archivos: File[]) => void>('alElegirLogo')([archivo()]);
+      http.expectOne('/common/files/upload').flush({ id: 'file-logo' });
+      await esperar(() => interno<() => string | null>('logoVisible')());
+
+      interno<() => void>('guardarPresentacion')();
+
+      http.expectOne(SEDES).flush({ items: [{ id: 'site-1', isOwnSite: true }], count: 1 });
+      http.expectOne('/practitioners/me/sites/site-1/logo').flush({ id: 'site-1' });
+      http.expectOne(ACTIVOS_DE_FIRMA).flush({ signatureFileId: 'file-firma', sealFileId: null });
+    });
+  });
+
+  /**
+   * Los idiomas en los que atiende.
+   *
+   * La ficha los mostraba en «Credenciales» y el editor no los ofrecía en
+   * ninguna pestaña (doctor, 02/10/2026). Se corrigen como lista entera: viaja
+   * completa en el `PATCH` y el servidor reemplaza la guardada.
+   */
+  describe('los idiomas en los que atiende', () => {
+    interface Fila {
+      readonly idioma: string | null;
+      readonly nivel: string | null;
+      readonly interpreta: boolean;
+    }
+
+    const IDIOMAS = [
+      { languageConceptId: 'lang-es', clinicalInterpretationAllowed: true },
+      {
+        languageConceptId: 'lang-en',
+        proficiencyConceptId: 'prof-avanzado',
+        clinicalInterpretationAllowed: false,
+      },
+    ];
+
+    /** Responde sólo el catálogo de idiomas (dos opciones); el de niveles queda pendiente. */
+    function responderSoloIdiomas(): void {
+      pedidoDeConjunto('VS_LANGUAGE').flush({
+        items: [{ id: 'vs-lang', internalCode: 'VS_LANGUAGE', name: 'Idiomas', defaultVersionId: 'v1' }],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+      http
+        .expectOne((r) => r.url.includes('/terminology/value-sets/vs-lang/$expand'))
+        .flush({
+          valueSetId: 'vs-lang',
+          items: [
+            { conceptId: 'lang-es', code: 'LANG-ES', display: 'Español', codeSystemVersionId: 'csv-1' },
+            { conceptId: 'lang-en', code: 'LANG-EN', display: 'Inglés', codeSystemVersionId: 'csv-1' },
+          ],
+          count: 2,
+          limit: 200,
+          nextCursor: null,
+        });
+    }
+
+    /** Responde los dos catálogos —idiomas y niveles— con una opción cada uno de más. */
+    function responderCatalogoDeIdiomas(): void {
+      pedidoDeConjunto('VS_LANGUAGE').flush({
+        items: [{ id: 'vs-lang', internalCode: 'VS_LANGUAGE', name: 'Idiomas', defaultVersionId: 'v1' }],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+      http
+        .expectOne((r) => r.url.includes('/terminology/value-sets/vs-lang/$expand'))
+        .flush({
+          valueSetId: 'vs-lang',
+          items: [
+            { conceptId: 'lang-es', code: 'LANG-ES', display: 'Español', codeSystemVersionId: 'csv-1' },
+            { conceptId: 'lang-en', code: 'LANG-EN', display: 'Inglés', codeSystemVersionId: 'csv-1' },
+          ],
+          count: 2,
+          limit: 200,
+          nextCursor: null,
+        });
+      pedidoDeConjunto('VS_LANGUAGE_PROFICIENCY').flush({
+        items: [
+          {
+            id: 'vs-prof',
+            internalCode: 'VS_LANGUAGE_PROFICIENCY',
+            name: 'Dominio del idioma',
+            defaultVersionId: 'v1',
+          },
+        ],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
+      http
+        .expectOne((r) => r.url.includes('/terminology/value-sets/vs-prof/$expand'))
+        .flush({
+          valueSetId: 'vs-prof',
+          items: [
+            { conceptId: 'prof-avanzado', code: 'PROF-AVANZADO', display: 'Avanzado', codeSystemVersionId: 'csv-1' },
+          ],
+          count: 1,
+          limit: 200,
+          nextCursor: null,
+        });
+    }
+
+    const filas = () => interno<() => readonly Fila[]>('idiomas')();
+    const puedeGuardar = () => interno<() => boolean>('puedeGuardarIdiomas')();
+    const elegirIdioma = (i: number, v: string | null) =>
+      interno<(i: number, v: string | null) => void>('elegirIdioma')(i, v);
+
+    it('siembra una fila por idioma guardado, con su nivel y si interpreta', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      expect(filas()).toEqual([
+        { idioma: 'lang-es', nivel: null, interpreta: true },
+        { idioma: 'lang-en', nivel: 'prof-avanzado', interpreta: false },
+      ]);
+    });
+
+    it('ofrece el catálogo de idiomas y el de niveles, con «Sin especificar» al frente', () => {
+      montarYCargar();
+      responderCatalogoDeIdiomas();
+
+      const etiquetas = (nombre: string) =>
+        interno<() => readonly { label: string }[]>(nombre)().map((o) => o.label);
+      expect(etiquetas('opcionesDeIdioma')).toEqual(['Español', 'Inglés']);
+      expect(etiquetas('opcionesDeNivel')).toEqual(['Sin especificar', 'Avanzado']);
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(false);
+    });
+
+    it('sin el catálogo de niveles, igual ofrece los idiomas con «Sin especificar»', () => {
+      montarYCargar();
+      responderSoloIdiomas();
+      pedidoDeConjunto('VS_LANGUAGE_PROFICIENCY').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(false);
+      expect(interno<() => readonly unknown[]>('opcionesDeIdioma')()).toHaveLength(2);
+      expect(interno<() => readonly { label: string }[]>('opcionesDeNivel')()).toHaveLength(1);
+    });
+
+    it('si el catálogo no llega, lo dice y no ofrece un desplegable vacío', () => {
+      montarYCargar();
+      pedidoDeConjunto('VS_LANGUAGE').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      pedidoDeConjunto('VS_LANGUAGE_PROFICIENCY').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(true);
+    });
+
+    it('guardar manda la lista ENTERA en el PATCH, y sólo eso', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      interno<() => void>('agregarIdioma')();
+      elegirIdioma(2, 'lang-qu');
+      interno<(i: number, v: boolean) => void>('marcarInterpreta')(2, true);
+      interno<() => void>('guardarIdiomas')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.method).toBe('PATCH');
+      const esperados = [
+        ...IDIOMAS,
+        { languageConceptId: 'lang-qu', clinicalInterpretationAllowed: true },
+      ];
+      expect(req.request.body).toEqual({ languages: esperados });
+      req.flush({ ...PERFIL_BASE, languages: esperados });
+    });
+
+    it('«Sin especificar» en el nivel viaja como ningún nivel', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      interno<(i: number, v: string | null) => void>('elegirNivel')(1, '');
+      interno<() => void>('guardarIdiomas')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({
+        languages: [IDIOMAS[0], { languageConceptId: 'lang-en', clinicalInterpretationAllowed: false }],
+      });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('sin cambios no hay nada que guardar', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      expect(puedeGuardar()).toBe(false);
+      interno<() => void>('guardarIdiomas')();
+
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('una fila sin idioma, o un idioma repetido, no se puede guardar', () => {
+      montarYCargar({ languages: IDIOMAS });
+
+      interno<() => void>('agregarIdioma')();
+      expect(puedeGuardar()).toBe(false);
+
+      elegirIdioma(2, 'lang-es');
+      expect(interno<() => boolean>('idiomasRepetidos')()).toBe(true);
+      expect(puedeGuardar()).toBe(false);
+
+      elegirIdioma(2, 'lang-qu');
+      expect(puedeGuardar()).toBe(true);
+    });
+
+    it('quitar el último manda una lista vacía: así se retira', () => {
+      montarYCargar({ languages: [IDIOMAS[0]] });
+
+      interno<(i: number) => void>('quitarIdioma')(0);
+      interno<() => void>('guardarIdiomas')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ languages: [] });
+      req.flush({ ...PERFIL_BASE, languages: [] });
+      expect(filas()).toEqual([]);
+    });
+
+    it('la respuesta vuelve a sembrar estas filas y no pisa lo que se escribía en otra pestaña', () => {
+      montarYCargar({ languages: [] });
+
+      señal<string>('bio').set('Cambio sin guardar');
+      interno<() => void>('agregarIdioma')();
+      elegirIdioma(0, 'lang-es');
+      interno<() => void>('guardarIdiomas')();
+
+      http.expectOne('/profiles/practitioners/me').flush({
+        ...PERFIL_BASE,
+        languages: [{ languageConceptId: 'lang-es', clinicalInterpretationAllowed: false }],
+      });
+
+      expect(filas()).toEqual([{ idioma: 'lang-es', nivel: null, interpreta: false }]);
+      expect(puedeGuardar()).toBe(false);
+      expect(interno<() => string>('bio')()).toBe('Cambio sin guardar');
+    });
+
+    it('guardar otra pestaña no pisa las filas de idiomas a medio corregir', () => {
+      // La siembra corre tras cada recarga del perfil; sin esta guarda, agregar
+      // una matrícula o guardar «Datos personales» tiraba lo elegido acá.
+      montarYCargar({ languages: IDIOMAS });
+
+      interno<() => void>('agregarIdioma')();
+      elegirIdioma(2, 'lang-qu');
+      señal<string>('bio').set('Otra bio');
+      interno<() => void>('guardarPresentacion')();
+      http.expectOne('/profiles/practitioners/me').flush({ ...PERFIL_BASE, professionalBio: 'Otra bio', languages: IDIOMAS });
+
+      expect(filas()).toHaveLength(3);
+      expect(filas()[2]).toEqual({ idioma: 'lang-qu', nivel: null, interpreta: false });
+      expect(puedeGuardar()).toBe(true);
+    });
+
+    it('un rechazo del servidor suelta el botón y ancla el mensaje al bloque', () => {
+      montarYCargar({ languages: [] });
+
+      interno<() => void>('agregarIdioma')();
+      elegirIdioma(0, 'lang-es');
+      interno<() => void>('guardarIdiomas')();
+      expect(interno<() => boolean>('guardandoIdiomas')()).toBe(true);
+
+      http.expectOne('/profiles/practitioners/me').flush(
+        {
+          code: 'VALIDATION_FAILED',
+          message: 'Validación fallida',
+          details: { violations: ['languages contiene un idioma desconocido.'] },
+          timestamp: '2026-10-02T00:00:00.000Z',
+          path: '/profiles/practitioners/me',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+      expect(interno<() => boolean>('guardandoIdiomas')()).toBe(false);
+      expect(interno<(campo: string) => string>('errorDelServidor')('languages')).toContain(
+        'desconocido',
+      );
+      // Lo elegido no se pierde: se corrige y se vuelve a guardar.
+      expect(filas()).toEqual([{ idioma: 'lang-es', nivel: null, interpreta: false }]);
+    });
+
+    it('reintentar olvida el catálogo caído y lo vuelve a pedir', () => {
+      montarYCargar();
+      pedidoDeConjunto('VS_LANGUAGE').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      pedidoDeConjunto('VS_LANGUAGE_PROFICIENCY').flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(true);
+
+      interno<() => void>('reintentarIdiomas')();
+      responderCatalogoDeIdiomas();
+
+      expect(interno<() => boolean>('catalogoIdiomasCaido')()).toBe(false);
+      expect(interno<() => readonly unknown[]>('opcionesDeIdioma')()).toHaveLength(2);
+    });
+
+    it('con vista: Datos personales conserva idiomas y su guardado; Credenciales los excluye', async () => {
+      parametros = { pestana: '0' };
+      const fixture = montarConVista({ languages: IDIOMAS });
+      responderCatalogoDeIdiomas();
+      fixture.detectChanges();
+
+      const panel = panelAbierto(fixture);
+      const bloque = panel.querySelector('[data-testid="edicion-idiomas"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelectorAll('[data-testid^="idioma-select-"]')).toHaveLength(2);
+      const idioma0 = bloque?.querySelector('[data-testid="idioma-select-0"]');
+      expect(idioma0).toBeTruthy();
+      expect(await selectOptionLabels(fixture, idioma0!)).toContain('Español');
+      expect(bloque?.querySelector('[data-testid="idioma-interpreta-0"] [role="switch"]')?.getAttribute('aria-checked')).toBe('true');
+      const guardar = [...(bloque?.querySelectorAll('button') ?? [])].find((b) =>
+        b.textContent?.includes('Guardar idiomas'),
+      );
+      expect(guardar).toBeDefined();
+      expect(guardar?.hasAttribute('disabled') || guardar?.getAttribute('aria-disabled') === 'true').toBe(true);
+      expect(fixture.nativeElement.textContent).toContain('Guardar cambios');
+      señal<number>('pestana').set(5);
+      fixture.detectChanges();
+      expect(panelAbierto(fixture).querySelector('[data-testid="edicion-idiomas"]')).toBeNull();
     });
   });
 });

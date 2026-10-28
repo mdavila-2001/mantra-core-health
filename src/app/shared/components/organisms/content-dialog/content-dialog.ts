@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 
 import { nextControlId } from '@shared/forms/form-control.context';
+import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 import { AppButton } from '../../atoms/button/button';
 
 /** Los cuatro anchos de referencia del panel. Ver {@link ContentDialog.size}. */
@@ -206,6 +207,13 @@ export class ContentDialog implements OnDestroy {
    * Con `force` en verdadero se salta `closeGuard()`: lo usa quien ya decidió
    * por su cuenta —por ejemplo, al guardar— y no quiere que se le pregunte si
    * quiere descartar lo que acaba de confirmar.
+   *
+   * **`force` tampoco espera la salida del panel (140 ms); descartar sí.**
+   * Mientras el panel sale el `<dialog>` sigue siendo modal: la página de atrás
+   * está inerte, el tecleo hacia lo que sigue se pierde, y al acabar la salida
+   * el foco vuelve al control de origen y le roba el que ya tenía otro campo.
+   * Quien confirmó terminó: la página se libera en el acto (mismo criterio que
+   * `app-select`).
    */
   close(force = false): void {
     if (this.cerrado || this.cerrando) {
@@ -213,24 +221,34 @@ export class ContentDialog implements OnDestroy {
     }
     const guard = this.closeGuard();
     if (force || guard === null) {
-      this.doClose();
+      this.doClose(!force);
       return;
     }
     this.cerrando = true;
     Promise.resolve(guard()).then((permitido) => {
       this.cerrando = false;
       if (permitido) {
-        this.doClose();
+        this.doClose(true);
       }
     });
   }
 
-  private doClose(): void {
+  private doClose(conSalida: boolean): void {
     this.cerrado = true;
-    this.closeNative();
-    this.unlockScroll();
-    this.returnFocus();
-    this.closed.emit();
+    const cerrar = (): void => {
+      this.closeNative();
+      this.unlockScroll();
+      this.returnFocus();
+      this.closed.emit();
+    };
+    if (!conSalida) {
+      cerrar();
+      return;
+    }
+    // Salida corta hacia el control que lo abrió; sin animación posible
+    // (jsdom, movimiento reducido) cierra en el acto, como siempre.
+    const panel = this.dialogRef().nativeElement.querySelector<HTMLElement>('.content-dialog__panel');
+    cerrarConSalida(panel, cerrar);
   }
 
   /**
@@ -284,6 +302,12 @@ export class ContentDialog implements OnDestroy {
     } else {
       nativo.setAttribute('open', '');
     }
+    // Nace del control que lo abrió (ver `.panel-muelle` en styles.css).
+    fijarOrigenDelPanel(
+      nativo.querySelector<HTMLElement>('.content-dialog__panel'),
+      nativo,
+      this.origen,
+    );
     this.lockScroll();
     this.opened.emit();
   }

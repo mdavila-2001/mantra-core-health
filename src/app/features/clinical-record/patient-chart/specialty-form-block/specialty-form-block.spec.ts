@@ -1,13 +1,20 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import type { WritableSignal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
+import { SessionStore } from '../../../../core/auth/session.store';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { AdditionalFields, type FilaAdicional } from '../additional-fields/additional-fields';
+import type { CierreDelFormulario } from '../form-conclusion-block/form-conclusion-block';
 import {
   BLOQUE_CIRUGIA,
   BLOQUE_DIAGNOSTICO,
   BLOQUE_LABORATORIO,
   BLOQUE_ODONTOLOGIA,
+  PLANTILLA_FORMULARIO_LIBRE,
   PLANTILLA_HOJA_LIBRE,
   SpecialtyFormBlock,
 } from './specialty-form-block';
@@ -104,6 +111,14 @@ describe('SpecialtyFormBlock', () => {
         });
       }
     }
+    // Desde D4, con una plantilla elegida se dibuja el cierre de la ficha, y
+    // sus selectores piden sus catálogos. Se drenan con lista vacía: lo que
+    // gobierna el cierre lo cubren sus propias pruebas y las de abajo.
+    for (const catalogo of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      if (!catalogo.cancelled) {
+        catalogo.flush({ code: 'x', name: 'x', definitionId: 'd', valueSetId: 'v', options: [] });
+      }
+    }
     http.verify();
   });
 
@@ -146,8 +161,8 @@ describe('SpecialtyFormBlock', () => {
   /**
    * Las **plantillas** que ofrece el desplegable.
    *
-   * Deja fuera las cinco entradas fijas a propósito —diagnóstico, hoja en
-   * blanco, cirugía, odontología y laboratorio—: no son plantillas del
+   * Deja fuera las seis entradas fijas a propósito —diagnóstico, hoja en
+   * blanco, formulario libre, cirugía, odontología y laboratorio—: no son plantillas del
    * catálogo sino lo que se puede completar sin ninguna, y están siempre. Si
    * contaran, cada prueba sobre qué fichas se ofrecen tendría que sumarles
    * cinco, y el número dejaría de decir lo que la prueba quiere decir. Que
@@ -156,6 +171,7 @@ describe('SpecialtyFormBlock', () => {
   const ENTRADAS_FIJAS: readonly string[] = [
     BLOQUE_DIAGNOSTICO,
     PLANTILLA_HOJA_LIBRE,
+    PLANTILLA_FORMULARIO_LIBRE,
     BLOQUE_CIRUGIA,
     BLOQUE_ODONTOLOGIA,
     BLOQUE_LABORATORIO,
@@ -224,12 +240,23 @@ describe('SpecialtyFormBlock', () => {
     ],
   };
 
+  /**
+   * Las notas del encuentro, que el modo lectura pide para mostrar los campos
+   * adicionales guardados con la respuesta.
+   */
+  function responderNotas(items: readonly Record<string, unknown>[] = []): void {
+    http
+      .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
+      .flush({ items, limit: 50, truncated: false });
+  }
+
   /** Deja el bloque en modo lectura: plantillas + una instancia ya respondida. */
   function llegarAModoLectura() {
     peticionDePlantillas().flush([PLANTILLA]);
     fixture.detectChanges();
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
     http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
+    responderNotas();
     fixture.detectChanges();
   }
 
@@ -367,6 +394,318 @@ describe('SpecialtyFormBlock', () => {
     // `http.verify()` del afterEach certifica que no se disparó ningún POST.
   });
 
+  it('en modo lectura muestra los campos adicionales guardados con la respuesta', () => {
+    peticionDePlantillas().flush([PLANTILLA]);
+    fixture.detectChanges();
+    peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+    http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
+    const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
+    // Las del encuentro: la API rechaza `encounterId` (400, A3), así que el
+    // pedido no lo lleva y la nota de «enc-otro» de abajo se descarta en el
+    // cliente — eso lo sigue fijando la aserción de lo que se muestra.
+    expect(notas.request.params.has('encounterId')).toBe(false);
+    notas.flush({
+      items: [
+        {
+          noteId: 'nota-1',
+          encounterId: 'enc-1',
+          entries: [{ label: 'Análisis con el que vino', value: 'Adjunto: hemograma.jpg' }],
+          subjectiveText: 'Refiere mareos.',
+          createdAt: '2026-09-26T10:00:00Z',
+          releasedToPatient: false,
+        },
+        {
+          noteId: 'nota-2',
+          encounterId: 'enc-otro',
+          entries: [{ label: 'De otra consulta', value: 'no va' }],
+          createdAt: '2026-09-20T10:00:00Z',
+          releasedToPatient: false,
+        },
+      ],
+      limit: 50,
+      truncated: false,
+    });
+    fixture.detectChanges();
+    // Viven en la pestaña «Flexible»: la cerrada no se dibuja.
+    const html = fixture.nativeElement as HTMLElement;
+    const flexible = Array.from(html.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(
+      (boton) => boton.textContent?.includes('Flexible'),
+    );
+    expect(flexible?.textContent?.trim()).toBe('Flexible (2)');
+    flexible?.click();
+    fixture.detectChanges();
+
+    const lista = html.querySelector('[data-testid="adicionales-guardados"]');
+    const texto = lista?.textContent ?? '';
+    expect(texto).toContain('Análisis con el que vino');
+    expect(texto).toContain('Adjunto: hemograma.jpg');
+    expect(texto).toContain('Refiere mareos.');
+    expect(texto).not.toContain('De otra consulta');
+  });
+
+  describe('pestañas «Plantilla» y «Flexible»', () => {
+    function enCaptura(): HTMLElement {
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function pestanas(html: HTMLElement): HTMLButtonElement[] {
+      return Array.from(html.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    }
+
+    function elegir(html: HTMLElement, rotulo: RegExp): void {
+      const pestana = pestanas(html).find((boton) => rotulo.test(boton.textContent ?? ''));
+      if (pestana === undefined) throw new Error(`Falta la pestaña ${rotulo}`);
+      pestana.click();
+      fixture.detectChanges();
+    }
+
+    it('arranca en «Plantilla» con los campos fijos; lo flexible no se dibuja', () => {
+      const html = enCaptura();
+
+      expect(pestanas(html).map((boton) => boton.textContent?.trim())).toEqual([
+        'Plantilla',
+        'Flexible',
+      ]);
+      expect(html.querySelectorAll('[data-testid="campo-especialidad"]').length).toBe(2);
+      expect(html.querySelector('[data-testid="campos-adicionales"]')).toBeNull();
+    });
+
+    it('«Flexible» muestra las filas campo: valor y esconde la plantilla', () => {
+      const html = enCaptura();
+
+      elegir(html, /Flexible/);
+
+      expect(html.querySelector('[data-testid="campos-adicionales"]')).not.toBeNull();
+      expect(html.querySelector('[data-testid="campo-especialidad"]')).toBeNull();
+
+      elegir(html, /Plantilla/);
+
+      expect(html.querySelectorAll('[data-testid="campo-especialidad"]').length).toBe(2);
+    });
+
+    it('lo escrito en «Flexible» sobrevive al volver a «Plantilla» y cuenta en la pestaña', () => {
+      const html = enCaptura();
+      elegir(html, /Flexible/);
+      (html.querySelector('[data-testid="adicional-agregar-fila"]') as HTMLElement).click();
+      fixture.detectChanges();
+      const rotulo = html.querySelector<HTMLInputElement>('[data-testid="adicional-rotulo"]');
+      if (rotulo === null) throw new Error('Falta el campo de la fila');
+      rotulo.value = 'Presión arterial';
+      rotulo.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      const valor = html.querySelector<HTMLTextAreaElement>(
+        '[data-testid="adicional-valor"] textarea',
+      );
+      if (valor === null) throw new Error('Falta el valor de la fila');
+      valor.value = '128/84 mmHg';
+      valor.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      elegir(html, /Plantilla/);
+
+      // La pestaña cerrada no se dibuja, pero su componente sigue vivo.
+      expect(html.querySelector('[data-testid="campos-adicionales"]')).toBeNull();
+      expect(pestanas(html)[1].textContent?.trim()).toBe('Flexible (1)');
+      const adicionales =
+        interno<() => { entradas: () => readonly unknown[] } | undefined>('adicionales')();
+      expect(adicionales?.entradas()).toEqual([
+        { label: 'Presión arterial', value: '128/84 mmHg' },
+      ]);
+
+      elegir(html, /Flexible/);
+      expect(html.querySelector<HTMLInputElement>('[data-testid="adicional-rotulo"]')?.value).toBe(
+        'Presión arterial',
+      );
+    });
+
+    it('desde «Flexible» dice junto al botón que faltan obligatorios en «Plantilla»', () => {
+      const html = enCaptura();
+
+      elegir(html, /Flexible/);
+
+      const pendiente = html.querySelector('[data-testid="pendiente-en-la-otra-pestana"]');
+      expect(pendiente?.closest('app-form-actions')).not.toBeNull();
+      expect(pendiente?.getAttribute('role')).toBe('status');
+      expect(pendiente?.textContent?.trim()).toBe('Faltan obligatorios en «Plantilla».');
+
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fixture.detectChanges();
+
+      expect(pendiente?.textContent?.trim()).toBe('');
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(true);
+    });
+
+    it('desde «Plantilla» avisa de una fila flexible a medio escribir', () => {
+      const html = enCaptura();
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      elegir(html, /Flexible/);
+      (html.querySelector('[data-testid="adicional-agregar-fila"]') as HTMLElement).click();
+      fixture.detectChanges();
+      const valor = html.querySelector<HTMLTextAreaElement>(
+        '[data-testid="adicional-valor"] textarea',
+      );
+      if (valor === null) throw new Error('Falta el valor de la fila');
+      // Un valor sin campo: la fila queda mal escrita.
+      valor.value = 'Sin rótulo';
+      valor.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      elegir(html, /Plantilla/);
+
+      expect(
+        html.querySelector('[data-testid="pendiente-en-la-otra-pestana"]')?.textContent?.trim(),
+      ).toBe('Corrija una fila de «Flexible».');
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(false);
+    });
+
+    it('en lectura sin campos adicionales, «Flexible» lo dice en vez de quedar vacía', () => {
+      llegarAModoLectura();
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('[data-testid="respuestas-plantilla"]')).not.toBeNull();
+      elegir(html, /Flexible/);
+
+      expect(html.querySelector('[data-testid="adicionales-vacio"]')).not.toBeNull();
+      expect(html.textContent).toContain('Campos adicionales del doctor');
+    });
+
+    it('en lectura, si no se pudieron leer las notas, lo dice con el ID de la petición', () => {
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+        .flush(DETALLE);
+      http
+        .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
+        .flush(
+          { message: 'Falló', requestId: 'req-77' },
+          { status: 500, statusText: 'Server Error', headers: { 'x-request-id': 'req-77' } },
+        );
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      // Lo respondido de la plantilla se lee igual.
+      expect(html.querySelector('[data-testid="respuestas-plantilla"]')).not.toBeNull();
+      elegir(html, /Flexible/);
+
+      const alerta = html.querySelector('[data-testid="adicionales-error"]');
+      expect(alerta).not.toBeNull();
+      expect(alerta?.textContent).toContain('req-77');
+      expect(html.querySelector('[data-testid="adicionales-vacio"]')).toBeNull();
+    });
+
+    for (const [caso, status, code] of [
+      ['un 404', 404, 'NOT_FOUND'],
+      ['un 429', 429, 'RATE_LIMITED'],
+    ] as const) {
+      it(`en lectura, ${caso} de las notas es un fallo y no un «no hay nada»`, () => {
+        peticionDePlantillas().flush([PLANTILLA]);
+        fixture.detectChanges();
+        peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+        http
+          .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+          .flush(DETALLE);
+        http
+          .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
+          .flush({ code, message: 'No' }, { status, statusText: 'x' });
+        fixture.detectChanges();
+        const html = fixture.nativeElement as HTMLElement;
+
+        elegir(html, /Flexible/);
+
+        expect(html.querySelector('[data-testid="adicionales-error"]')).not.toBeNull();
+        expect(html.querySelector('[data-testid="adicionales-vacio"]')).toBeNull();
+      });
+    }
+
+    it('sin ningún valor en la plantilla no deja completar, y lo dice si hay algo flexible', () => {
+      const opcional = {
+        ...PLANTILLA,
+        fields: PLANTILLA.fields.map((campo) => ({ ...campo, required: false })),
+      };
+      peticionDePlantillas().flush([opcional]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+      const pendiente = (): string =>
+        html.querySelector('[data-testid="pendiente-en-la-otra-pestana"]')?.textContent?.trim() ??
+        '';
+
+      // Antes el botón quedaba habilitado y el clic no mandaba nada.
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(false);
+      expect(pendiente()).toBe('');
+
+      elegir(html, /Flexible/);
+      (html.querySelector('[data-testid="adicional-agregar-fila"]') as HTMLElement).click();
+      fixture.detectChanges();
+      const rotulo = html.querySelector<HTMLInputElement>('[data-testid="adicional-rotulo"]');
+      const valor = html.querySelector<HTMLTextAreaElement>(
+        '[data-testid="adicional-valor"] textarea',
+      );
+      if (rotulo === null || valor === null) throw new Error('Falta la fila');
+      rotulo.value = 'Presión arterial';
+      rotulo.dispatchEvent(new Event('input'));
+      valor.value = '128/84 mmHg';
+      valor.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(false);
+      expect(pendiente()).toBe('Complete al menos un campo de «Plantilla».');
+
+      // Sin la fila (esta sesión no tiene perfil profesional, así que lo
+      // flexible tiene su propio impedimento) y con un valor, se habilita.
+      (html.querySelector('[data-testid="adicional-quitar"]') as HTMLElement).click();
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fixture.detectChanges();
+
+      expect(interno<() => boolean>('puedeCompletar')()).toBe(true);
+      expect(pendiente()).toBe('');
+    });
+
+    it('al pasar a lectura vuelve a «Plantilla» aunque se haya completado desde «Flexible»', () => {
+      const html = enCaptura();
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      elegir(html, /Flexible/);
+
+      interno<() => void>('completar')();
+      http
+        .expectOne((r) => r.url === '/forms/instances' && r.method === 'POST')
+        .flush({ id: 'inst-1', schemaVersion: 1, state: 'open' });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-1/values' && r.method === 'POST')
+        .flush({ ids: ['v-1'] });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-1/close' && r.method === 'POST')
+        .flush({ ok: true });
+      // La relectura encuentra lo recién guardado y el bloque pasa a lectura.
+      peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+        .flush(DETALLE);
+      responderNotas();
+      fixture.detectChanges();
+
+      expect(html.querySelector('[data-testid="formulario-respondido"]')).not.toBeNull();
+      const [plantilla, flexible] = pestanas(html);
+      expect(plantilla.getAttribute('aria-selected')).toBe('true');
+      expect(flexible.getAttribute('aria-selected')).toBe('false');
+      expect(html.querySelector('[data-testid="respuestas-plantilla"]')).not.toBeNull();
+      // El cierre D4 le pregunta a la IA por lo respondido; no es lo que se
+      // prueba acá: «sin servicio», que el bloque ya sabe decir.
+      for (const sugerencia of http.match((r) => r.url.endsWith('/v1/diagnosis/suggest'))) {
+        if (!sugerencia.cancelled) {
+          sugerencia.flush(null, { status: 503, statusText: 'Service Unavailable' });
+        }
+      }
+    });
+  });
+
   it('un valor enmascarado muestra el marcador y jamás el contenido', () => {
     llegarAModoLectura();
 
@@ -396,6 +735,7 @@ describe('SpecialtyFormBlock', () => {
     // La relectura posterior encuentra la instancia recién guardada.
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
     http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
+    responderNotas();
     fixture.detectChanges();
 
     const html = fixture.nativeElement as HTMLElement;
@@ -431,6 +771,16 @@ describe('SpecialtyFormBlock', () => {
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
   });
 
+  it('corrige la preselección si el perfil llega después del catálogo', () => {
+    peticionDePlantillas().flush([PLANTILLA]);
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-1');
+
+    responderEspecialidad('sp-odo');
+
+    expect(interno<() => string | null>('plantillaId')()).toBeNull();
+    expect(etiquetasOfrecidas()).toEqual([]);
+  });
+
   it('el selector esconde las fichas de otras especialidades', () => {
     const odonto = {
       ...PLANTILLA,
@@ -441,10 +791,6 @@ describe('SpecialtyFormBlock', () => {
     };
     peticionDePlantillas().flush([PLANTILLA, odonto]);
     responderEspecialidad('sp-odo');
-    // El filtro por especialidad sigue existiendo; sólo dejó de ser el
-    // default. Se lo activa a mano para probarlo.
-    interno<(v: boolean) => void>('alternarVerTodas')(false);
-
     // La de cardiología no le sirve a quien atiende en odontología.
     expect(etiquetasOfrecidas()).toEqual(['Ficha odontológica']);
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
@@ -612,11 +958,79 @@ describe('SpecialtyFormBlock', () => {
   /** Cardiología, dermatología y las dos transversales. */
   const CATALOGO = [PLANTILLA, DERMATOLOGIA, ANAMNESIS, CONSENTIMIENTO];
 
+  describe('una ficha v2: listas y «¿cuál?»', () => {
+    const CON_CONDICION = {
+      ...PLANTILLA,
+      id: 'tpl-v2',
+      fields: [
+        { ...PLANTILLA.fields[1], fieldId: 'f-si', name: '¿Tiene alergias?', required: false },
+        {
+          assignmentId: 'as-cual',
+          fieldId: 'f-cual',
+          code: 'tipo_de_alergia',
+          name: '¿A qué?',
+          dataType: 'json',
+          required: true,
+          options: ['Medicamentos', 'Alimentos'],
+          multiple: true,
+          showWhen: { fieldId: 'f-si', equals: true },
+        },
+        {
+          assignmentId: 'as-asa',
+          fieldId: 'f-asa',
+          code: 'clasificacion_asa',
+          name: 'Clasificación ASA',
+          dataType: 'string',
+          required: false,
+          options: ['ASA I — sano', 'ASA II — enfermedad sistémica leve'],
+        },
+      ],
+    };
+
+    function abrir(): void {
+      peticionDePlantillas().flush([CON_CONDICION]);
+      responderEspecialidad('sp-1');
+      interno<(id: string) => void>('elegirPlantilla')('tpl-v2');
+      fixture.detectChanges();
+      // Sin ficha ya respondida en este encuentro: se captura.
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+    }
+
+    it('el «¿a qué?» no aparece hasta que se contesta «sí», y su obligatorio espera', () => {
+      abrir();
+      const ocultos = () => interno<() => ReadonlySet<string>>('ocultos')();
+      expect(ocultos().has('f-cual')).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('¿A qué?');
+
+      interno<(id: string, v: unknown) => void>('actualizarValor')('f-si', true);
+      fixture.detectChanges();
+      expect(ocultos().has('f-cual')).toBe(false);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('¿A qué?');
+    });
+
+    it('elige las escalas de una lista y no manda lo que quedó en un «¿cuál?» cerrado', () => {
+      abrir();
+      type Campo = (typeof CON_CONDICION.fields)[number];
+      const tipo = interno<(c: Campo) => string>('tipoDibujable');
+      expect(tipo(CON_CONDICION.fields[1])).toBe('varias');
+      expect(tipo(CON_CONDICION.fields[2])).toBe('una');
+
+      const actualizar = interno<(id: string, v: unknown) => void>('actualizarValor');
+      actualizar('f-si', true);
+      actualizar('f-cual', ['Medicamentos']);
+      actualizar('f-si', false);
+
+      const enviar = interno<(p: unknown) => readonly { fieldId: string }[]>('valoresParaEnviar');
+      expect(enviar(CON_CONDICION).map((v) => v.fieldId)).toEqual(['f-si']);
+    });
+  });
+
   it('ofrece la ficha de su especialidad y las transversales, en ese orden', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-1');
-    // El orden es de `plantillasSugeridas`, que sólo se ve sin el catálogo
-    // entero encima: se filtra a mano porque «Ver todas» ya no es el default.
+    // El orden es de `plantillasSugeridas`, que es lo que se ve por defecto;
+    // se fija explícito para que la prueba no dependa del valor inicial.
     interno<(v: boolean) => void>('alternarVerTodas')(false);
 
     expect(etiquetasOfrecidas()).toEqual([
@@ -638,45 +1052,59 @@ describe('SpecialtyFormBlock', () => {
     };
     peticionDePlantillas().flush([...CATALOGO, aMano]);
     responderEspecialidad('sp-1');
-    // El reconocimiento por concepto es del filtro por especialidad; se activa
-    // a mano porque ya no es el default.
+    // El reconocimiento por concepto es del filtro por especialidad; se fija
+    // explícito para que la prueba no dependa del valor inicial.
     interno<(v: boolean) => void>('alternarVerTodas')(false);
 
     expect(etiquetasOfrecidas()).toContain('Hoja de egreso');
     expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
   });
 
-  it('sin especialidad conocida no filtra nada ni ofrece el interruptor', () => {
+  it('sin especialidad conocida ofrece las fichas generales y permite ver todo', () => {
     peticionDePlantillas().flush(CATALOGO);
     http
       .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
       .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
 
-    // Sin perfil profesional no hay por qué filtrar: queda el catálogo entero.
-    expect(etiquetasOfrecidas()).toHaveLength(4);
-    expect(interno<() => boolean>('puedeVerTodas')()).toBe(false);
+    expect(etiquetasOfrecidas()).toEqual([
+      'Anamnesis / Historia clínica general',
+      'Consentimiento informado',
+    ]);
+    expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
   });
 
   /* ---- el interruptor «Ver todas las especialidades» ------------------------ */
 
-  it('arranca prendido —muestra el catálogo entero— y apagarlo filtra por especialidad', () => {
+  it('arranca apagado —sólo su especialidad y las generales— y prenderlo muestra todo', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-1');
 
-    // Arranca en «Ver todas»: dos cuentas con perfiles profesionales distintos
-    // no pueden ver listas de tamaño distinto por default, eso se leía como
-    // un bug («en la Mac salen más formularios»).
+    // Arranca filtrado por la especialidad de quien atiende: lo pidió el
+    // propietario el 2026-10-02 («un filtro específico de formularios por el
+    // tipo de especialidad»). El interruptor queda a la vista.
     expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
-    expect(etiquetasOfrecidas()).toHaveLength(4);
-    expect(etiquetasOfrecidas()).toContain('Examen dermatológico');
-
-    interno<(v: boolean) => void>('alternarVerTodas')(false);
     expect(etiquetasOfrecidas()).toHaveLength(3);
     expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
 
     interno<(v: boolean) => void>('alternarVerTodas')(true);
     expect(etiquetasOfrecidas()).toHaveLength(4);
     expect(etiquetasOfrecidas()).toContain('Examen dermatológico');
+
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
+    expect(etiquetasOfrecidas()).toHaveLength(3);
+  });
+
+  it('oculta los registros de odontología y cirugía ajenos a la especialidad', () => {
+    const odonto = { ...PLANTILLA, id: 'tpl-odo', specialtyConceptId: 'sp-odo', code: 'ODONTO_ANAMNESIS' };
+    peticionDePlantillas().flush([...CATALOGO, odonto]);
+    responderEspecialidad('sp-1');
+
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_ODONTOLOGIA)).toBe(false);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_CIRUGIA)).toBe(false);
+
+    interno<(v: boolean) => void>('alternarVerTodas')(true);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_ODONTOLOGIA)).toBe(true);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_CIRUGIA)).toBe(true);
   });
 
   it('el interruptor no pide plantillas de nuevo: filtra sobre lo ya traído', () => {
@@ -763,7 +1191,7 @@ describe('SpecialtyFormBlock', () => {
 
   /* ---- los dos copys, que no dicen lo mismo -------------------------------- */
 
-  it('«tu especialidad no tiene ficha» se avisa discreto y el formulario sigue', () => {
+  it('«su especialidad no tiene ficha» se avisa discreto y el formulario sigue', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-sin-ficha');
     fixture.detectChanges();
@@ -787,9 +1215,8 @@ describe('SpecialtyFormBlock', () => {
 
   /**
    * El aviso promete algo concreto —«te ofrecemos las fichas generales»—, así
-   * que sólo aparece cuando esas fichas existen. Sin ninguna transversal el
-   * filtro cae al catálogo entero, y avisar ahí sería prometer una anamnesis
-   * que nadie sembró.
+   * que sólo aparece cuando esas fichas existen. Si no hay ninguna,
+   * se ofrece explícitamente abrir el catálogo completo.
    */
   it('sin fichas generales en el catálogo no promete una que no existe', () => {
     peticionDePlantillas().flush([PLANTILLA, DERMATOLOGIA]);
@@ -801,8 +1228,12 @@ describe('SpecialtyFormBlock', () => {
     expect(interno<() => boolean>('sinFichaPropia')()).toBe(false);
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('[data-testid="sin-ficha-propia"]')).toBeNull();
-    // Sin criterio para filtrar queda el catálogo entero, no un desplegable vacío.
-    expect(etiquetasOfrecidas()).toHaveLength(2);
+    expect(etiquetasOfrecidas()).toHaveLength(0);
+    expect(html.textContent).toContain('Sin ficha para esta especialidad');
+    expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
+
+    interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_HOJA_LIBRE);
+    expect(interno<() => boolean>('sinPlantillasVisibles')()).toBe(false);
   });
 
   it('la hoja en blanco encabeza el desplegable, aun sin ninguna plantilla', () => {
@@ -816,11 +1247,10 @@ describe('SpecialtyFormBlock', () => {
     fixture.detectChanges();
 
     const opciones = opcionesCrudas();
-    expect(opciones.slice(0, 5).map((opcion) => opcion.value)).toEqual([
+    expect(opciones.slice(0, 4).map((opcion) => opcion.value)).toEqual([
       BLOQUE_DIAGNOSTICO,
       PLANTILLA_HOJA_LIBRE,
-      BLOQUE_CIRUGIA,
-      BLOQUE_ODONTOLOGIA,
+      PLANTILLA_FORMULARIO_LIBRE,
       BLOQUE_LABORATORIO,
     ]);
     // La alergia ya no se ofrece: se carga como diagnóstico (02/10/2026).
@@ -828,6 +1258,8 @@ describe('SpecialtyFormBlock', () => {
     // La hoja en blanco **conserva el segundo lugar**: enterrarla al final
     // equivale a no tenerla.
     expect(opciones[1].label).toContain('Hoja en blanco');
+    // Y el formulario libre, pegado a ella: las dos maneras de escribir sin ficha.
+    expect(opciones[2].label).toBe('Formulario libre — campo y valor');
   });
 
   /**
@@ -866,18 +1298,18 @@ describe('SpecialtyFormBlock', () => {
     elegir(BLOQUE_CIRUGIA);
     fixture.detectChanges();
     expect(html.querySelector('app-procedures-block')).not.toBeNull();
-    expect(html.querySelector('app-diagnostics-block')).toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).toBeNull();
     drenarLecturasDelBloque();
 
     elegir(BLOQUE_ODONTOLOGIA);
     fixture.detectChanges();
     expect(html.querySelector('app-procedures-block')).not.toBeNull();
-    expect(html.querySelector('app-diagnostics-block')).toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).toBeNull();
     drenarLecturasDelBloque();
 
     elegir(BLOQUE_LABORATORIO);
     fixture.detectChanges();
-    expect(html.querySelector('app-diagnostics-block')).not.toBeNull();
+    expect(html.querySelector('app-analysis-order-block')).not.toBeNull();
     expect(html.querySelector('app-procedures-block')).toBeNull();
     drenarLecturasDelBloque();
   });
@@ -900,7 +1332,7 @@ describe('SpecialtyFormBlock', () => {
     expect(html.querySelector('app-form-actions')).toBeNull();
   });
 
-  it('«el catálogo está vacío» es otro caso, y no habla de tu especialidad', () => {
+  it('«el catálogo está vacío» es otro caso, y no habla de su especialidad', () => {
     peticionDePlantillas().flush([]);
     responderEspecialidad('sp-1');
     fixture.detectChanges();
@@ -928,7 +1360,7 @@ describe('SpecialtyFormBlock', () => {
    */
   it('si el catálogo no se pudo traer, lo dice y ofrece reintentar', () => {
     peticionDePlantillas().flush(
-      { code: 'FORBIDDEN', message: 'Tu rol no permite verlas.', timestamp: '', path: '' },
+      { code: 'FORBIDDEN', message: 'Su rol no permite verlas.', timestamp: '', path: '' },
       { status: 403, statusText: 'Forbidden' },
     );
     fixture.detectChanges();
@@ -1065,5 +1497,390 @@ describe('SpecialtyFormBlock', () => {
     http.expectOne((r) => r.url === '/forms/instances/inst-9/close').flush({});
     // Tras guardar, el bloque relee para pasar a modo lectura.
     peticionDeRespuesta().flush(LISTADO_VACIO);
+  });
+
+  /* ── D4: la ficha termina en el cierre ─────────────────────────────────────
+     Lo que estas pruebas fijan: el cierre se dibuja sólo con una plantilla de
+     `forms`; las respuestas viajan a la IA en palabras y sin el odontograma;
+     completar encadena cerrar → diagnóstico → orden en ese orden, cada paso
+     con su aviso; y un fallo frena lo que sigue sin deshacer lo hecho ni
+     contar la ficha como fallida. */
+
+  /** base64url sobre UTF-8, como el token real. */
+  function jwt(payload: Record<string, unknown>): string {
+    const b64 = (o: unknown) => {
+      const bytes = new TextEncoder().encode(JSON.stringify(o));
+      return btoa(String.fromCharCode(...bytes))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    };
+    return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
+  }
+
+  describe('el cierre de la ficha (D4)', () => {
+    const CIERRE: CierreDelFormulario = {
+      diagnostico: 'dx-1',
+      orden: { codeConceptId: 'st-1', category: 'LAB', categoryConceptId: 'cat-lab' },
+    };
+
+    beforeEach(() => {
+      // Las dos altas del cierre exigen la organización de la sesión.
+      TestBed.inject(SessionStore).start({
+        accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] }),
+        refreshToken: 'r-1',
+      });
+    });
+
+    /** La señal, sin pasar por `interno`: éste ata las funciones y una señal lo es. */
+    function fijarCierre(cierre: CierreDelFormulario): void {
+      (componente as unknown as Record<string, WritableSignal<CierreDelFormulario>>)['cierre'].set(
+        cierre,
+      );
+    }
+
+    /** Abre, captura y cierra la instancia de la ficha, como el motor de `forms`. */
+    function guardarLaFicha(): void {
+      http
+        .expectOne((r) => r.url === '/forms/instances' && r.method === 'POST')
+        .flush({ id: 'inst-1', schemaVersion: 1, state: 'open' });
+      http.expectOne('/forms/instances/inst-1/values').flush({ ids: ['v-1'] });
+      // Nada del cierre se pide antes de que la ficha esté cerrada.
+      http.expectNone('/clinical/conditions');
+      http.expectOne('/forms/instances/inst-1/close').flush({ ok: true });
+    }
+
+    it('se dibuja sólo con una plantilla de forms elegida, antes de las acciones', () => {
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+
+      const html = fixture.nativeElement as HTMLElement;
+      const cierre = html.querySelector('app-form-conclusion-block');
+      const acciones = html.querySelector('app-form-actions');
+      expect(cierre).not.toBeNull();
+      expect(acciones).not.toBeNull();
+      expect(cierre!.compareDocumentPosition(acciones!) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      drenarLecturasDelBloque();
+
+      interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_HOJA_LIBRE);
+      fixture.detectChanges();
+      expect(html.querySelector('app-form-conclusion-block')).toBeNull();
+      drenarLecturasDelBloque();
+
+      interno<(id: string | null) => void>('elegirPlantilla')(BLOQUE_DIAGNOSTICO);
+      fixture.detectChanges();
+      expect(html.querySelector('app-form-conclusion-block')).toBeNull();
+      drenarLecturasDelBloque();
+    });
+
+    it('las respuestas viajan a la IA en palabras: pregunta = campo, respuesta = valor', () => {
+      peticionDePlantillas().flush([PLANTILLA]);
+      const actualizar = interno<(fieldId: string, valor: unknown) => void>('actualizarValor');
+
+      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([]);
+      actualizar('f-1', 'Buena');
+      actualizar('f-2', true);
+
+      expect(interno<() => unknown[]>('respuestasParaLaIa')()).toEqual([
+        { question: 'Tolerancia al ejercicio', answer: 'Buena' },
+        { question: 'Edema', answer: 'Sí' },
+      ]);
+    });
+
+    it('el odontograma no viaja a la IA: es un mapa de piezas, no una respuesta', () => {
+      peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+      interno<(fdi: string) => void>('abrirPieza')('16');
+      interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
+
+      const respuestas = interno<() => { question: string }[]>('respuestasParaLaIa')();
+      expect(respuestas.some((r) => r.question === 'Odontograma')).toBe(false);
+    });
+
+    it('completar encadena cerrar la ficha → diagnóstico tentativo → orden, en ese orden y con sus avisos', () => {
+      const exito = vi.spyOn(TestBed.inject(ToastService), 'success');
+      peticionDePlantillas().flush([PLANTILLA]);
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fijarCierre(CIERRE);
+      let releido = 0;
+      componente.cambio.subscribe(() => (releido += 1));
+
+      interno<() => void>('completar')();
+      guardarLaFicha();
+
+      const alta = http.expectOne((r) => r.url === '/clinical/conditions' && r.method === 'POST');
+      expect(alta.request.body).toEqual({
+        custodianTenantId: 't-1',
+        patientProfileId: 'pac-1',
+        codeConceptId: 'dx-1',
+        encounterId: 'enc-1',
+        noteText: 'Del formulario «Ficha de cardiología»',
+        // Tentativo: nace provisional hasta que el médico lo confirme.
+        verificationStatus: 'PROVISIONAL',
+      });
+      // La orden espera al diagnóstico: en serie, no en paralelo.
+      http.expectNone('/clinical/service-requests');
+      alta.flush({
+        id: 'cond-1',
+        patientProfileId: 'pac-1',
+        clinicalStatus: 'ACTIVE',
+        verificationStatus: 'PROVISIONAL',
+        clinicalCourse: null,
+        createdAt: '2026-09-26T10:00:00.000Z',
+      });
+
+      const orden = http.expectOne(
+        (r) => r.url === '/clinical/service-requests' && r.method === 'POST',
+      );
+      expect(orden.request.body).toEqual({
+        custodianTenantId: 't-1',
+        patientProfileId: 'pac-1',
+        codeConceptId: 'st-1',
+        encounterId: 'enc-1',
+        // La orden sale de la respuesta recién cerrada y queda asociada a ella.
+        formInstanceId: 'inst-1',
+        category: 'LAB',
+        categoryConceptId: 'cat-lab',
+      });
+      orden.flush({
+        id: 'ord-1',
+        status: 'st-pending',
+        intent: 'order',
+        createdAt: '2026-09-26T10:00:01.000Z',
+      });
+
+      // Recién ahora el expediente se relee y el bloque pasa a lectura.
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      expect(releido).toBe(1);
+      expect(exito.mock.calls.map(([, titulo]) => titulo)).toEqual([
+        'Formulario completado',
+        'Diagnóstico tentativo registrado',
+        'Orden de análisis pedida',
+      ]);
+      expect(interno<() => CierreDelFormulario>('cierre')()).toEqual({
+        diagnostico: null,
+        orden: null,
+      });
+      expect(interno<() => readonly string[]>('fallosDelCierre')()).toEqual([]);
+    });
+
+    it('si falla el diagnóstico, la orden no se pide; la ficha queda guardada y se dice qué faltó', () => {
+      const error = vi.spyOn(TestBed.inject(ToastService), 'error');
+      peticionDePlantillas().flush([PLANTILLA]);
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fijarCierre(CIERRE);
+      let releido = 0;
+      componente.cambio.subscribe(() => (releido += 1));
+
+      interno<() => void>('completar')();
+      guardarLaFicha();
+
+      http
+        .expectOne((r) => r.url === '/clinical/conditions' && r.method === 'POST')
+        .flush({ message: 'Se cayó' }, { status: 500, statusText: 'Server Error' });
+      // Se frena: pedir la orden de un diagnóstico que no se registró es escribir a medias.
+      http.expectNone('/clinical/service-requests');
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+
+      expect(releido).toBe(1);
+      expect(error).toHaveBeenCalledTimes(1);
+      const fallos = interno<() => readonly string[]>('fallosDelCierre')();
+      expect(fallos).toHaveLength(2);
+      expect(fallos[0]).toContain('No se registró el diagnóstico tentativo');
+      expect(fallos[1]).toContain('la orden de análisis');
+      // La ficha no falló: el aviso es ámbar y el rojo no aparece.
+      expect(interno<() => string | null>('errorDeCompletado')()).toBeNull();
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('[data-testid="formulario-cierre-fallos"]')).not.toBeNull();
+      expect(html.querySelector('[data-testid="formulario-especialidad-error"]')).toBeNull();
+      drenarLecturasDelBloque();
+    });
+
+    it('sin organización en la sesión no se registra nada del cierre, y se dice', () => {
+      TestBed.inject(SessionStore).clear();
+      const error = vi.spyOn(TestBed.inject(ToastService), 'error');
+      peticionDePlantillas().flush([PLANTILLA]);
+      interno<(fieldId: string, valor: unknown) => void>('actualizarValor')('f-1', 'Buena');
+      fijarCierre(CIERRE);
+
+      interno<() => void>('completar')();
+      guardarLaFicha();
+      http.expectNone('/clinical/conditions');
+      http.expectNone('/clinical/service-requests');
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+
+      expect(error).toHaveBeenCalledTimes(1);
+      expect(interno<() => readonly string[]>('fallosDelCierre')()[0]).toContain('organización');
+    });
+  });
+
+  /**
+   * «Formulario libre — campo y valor»: las filas de los campos adicionales,
+   * solas, sin plantilla. No pasa por `forms`, así que una ficha ya respondida
+   * no lo tapa, y registra la nota y un documento por fila con archivos.
+   */
+  describe('el formulario libre', () => {
+    beforeEach(() => {
+      TestBed.inject(SessionStore).start({
+        accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' }),
+        refreshToken: 'r-1',
+      });
+    });
+
+    function elegirLibre(notasYaRegistradas: readonly Record<string, unknown>[] = []): void {
+      interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_FORMULARIO_LIBRE);
+      const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
+      // Sin `encounterId`: la API lo rechaza con 400 (A3); se acota en el cliente.
+      expect(notas.request.params.has('encounterId')).toBe(false);
+      notas.flush({ items: notasYaRegistradas, limit: 50, truncated: false });
+      fixture.detectChanges();
+    }
+
+    function escribirFilas(filas: readonly Omit<FilaAdicional, 'clave'>[]): AdditionalFields {
+      const seccion = fixture.debugElement.query(By.directive(AdditionalFields))
+        .componentInstance as AdditionalFields;
+      (seccion as unknown as Record<string, WritableSignal<readonly FilaAdicional[]>>)[
+        'filas'
+      ]!.set(filas.map((fila, indice) => ({ clave: 100 + indice, ...fila })));
+      return seccion;
+    }
+
+    const archivo = (nombre: string) => new File(['x'], nombre, { type: 'image/jpeg' });
+
+    it('con la ficha del encuentro ya respondida, se dibuja igual y muestra lo registrado', () => {
+      llegarAModoLectura();
+      elegirLibre([
+        {
+          noteId: 'nota-1',
+          encounterId: 'enc-1',
+          entries: [{ label: 'Glucemia', value: '98 mg/dL' }],
+          createdAt: '2026-09-28T10:00:00Z',
+          releasedToPatient: false,
+        },
+      ]);
+
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('[data-testid="formulario-respondido"]')).toBeNull();
+      expect(html.querySelector('[data-testid="formulario-libre"]')).not.toBeNull();
+      expect(html.querySelectorAll('[data-testid="adicional-fila"]')).toHaveLength(1);
+      expect(
+        html.querySelector('[data-testid="formulario-libre-guardado"]')?.textContent,
+      ).toContain('Glucemia');
+      // Sin nada escrito, no hay qué guardar.
+      expect(interno<() => boolean>('puedeGuardarLibre')()).toBe(false);
+    });
+
+    it('guardar registra la nota y un documento con todos los archivos de la fila, y relee', () => {
+      let releido = 0;
+      componente.cambio.subscribe(() => (releido += 1));
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      elegirLibre();
+
+      const seccion = escribirFilas([
+        { rotulo: 'Presión arterial', valor: '128/84 mmHg', archivos: [] },
+        {
+          rotulo: 'Análisis con el que vino',
+          valor: '',
+          archivos: [archivo('hemograma.jpg'), archivo('orina.jpg'), archivo('perfil.jpg')],
+        },
+      ]);
+      expect(interno<() => boolean>('puedeGuardarLibre')()).toBe(true);
+
+      interno<() => void>('guardarLibre')();
+
+      // Nada pasa por `forms`: ni instancia abierta ni valores capturados.
+      http.expectNone((r) => r.url.startsWith('/forms/instances') && r.method === 'POST');
+      const nota = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'POST');
+      expect(nota.request.body).toMatchObject({
+        patientProfileId: 'pac-1',
+        authorProfileId: 'hp-1',
+        encounterId: 'enc-1',
+        // P39: la API guarda las filas estructuradas; ya no se aplanan en `objectiveText`.
+        entries: [
+          { label: 'Presión arterial', value: '128/84 mmHg' },
+          { label: 'Análisis con el que vino', value: 'Adjunto: hemograma.jpg, orina.jpg, perfil.jpg' },
+        ],
+      });
+      expect(nota.request.body).not.toHaveProperty('objectiveText');
+      nota.flush({ noteId: 'n-1', versionId: 'v-1' });
+
+      const subidas = http.match('/common/files/upload');
+      expect(subidas).toHaveLength(3);
+      subidas.forEach((subida, indice) => subida.flush({ id: `f-${indice}` }));
+      const documento = http.expectOne('/charts/documents');
+      expect(documento.request.body).toMatchObject({
+        title: 'Análisis con el que vino',
+        encounterId: 'enc-1',
+        files: [
+          { fileId: 'f-0', contentRole: 'PRIMARY', ordinal: 0 },
+          { fileId: 'f-1', contentRole: 'ATTACHMENT', ordinal: 1 },
+          { fileId: 'f-2', contentRole: 'ATTACHMENT', ordinal: 2 },
+        ],
+      });
+      documento.flush({ documentId: 'd-1', fileCount: 3 });
+
+      // Relee lo registrado del encuentro y deja una fila nueva, vacía.
+      http
+        .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
+        .flush({
+          items: [
+            {
+              noteId: 'n-1',
+              encounterId: 'enc-1',
+              entries: [{ label: 'Presión arterial', value: '128/84 mmHg' }],
+              createdAt: '2026-09-28T10:00:00Z',
+              releasedToPatient: false,
+            },
+          ],
+          limit: 50,
+          truncated: false,
+        });
+      fixture.detectChanges();
+
+      expect(releido).toBe(1);
+      expect(interno<() => readonly string[]>('fallosDelLibre')()).toEqual([]);
+      expect(seccion.tieneContenido()).toBe(false);
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelectorAll('[data-testid="adicional-fila"]')).toHaveLength(1);
+      expect(
+        html.querySelector('[data-testid="formulario-libre-guardado"]')?.textContent,
+      ).toContain('128/84 mmHg');
+    });
+
+    it('si la nota no se registra, no se sube nada y lo escrito se conserva para reintentar', () => {
+      let releido = 0;
+      componente.cambio.subscribe(() => (releido += 1));
+      peticionDePlantillas().flush([PLANTILLA]);
+      fixture.detectChanges();
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      elegirLibre();
+      const seccion = escribirFilas([
+        { rotulo: 'Rx tórax', valor: 'Sin hallazgos', archivos: [archivo('rx.jpg')] },
+      ]);
+
+      interno<() => void>('guardarLibre')();
+      http
+        .expectOne((r) => r.url === '/charts/notes' && r.method === 'POST')
+        .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
+
+      http.expectNone('/common/files/upload');
+      expect(releido).toBe(0);
+      expect(seccion.tieneContenido()).toBe(true);
+      const fallos = interno<() => readonly string[]>('fallosDelLibre')();
+      expect(fallos).toHaveLength(2);
+      expect(fallos[0]).toContain('No se registró la nota');
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="formulario-libre-fallos"]',
+        ),
+      ).not.toBeNull();
+    });
   });
 });

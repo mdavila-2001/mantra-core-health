@@ -6,21 +6,87 @@
 }
 
 .formulario-especialidad__titulo {
-  margin: 0 0 var(--sp-4);
+  margin: 0 0 var(--sp-5);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
 }
 
+.formulario-especialidad__selector {
+  display: grid;
+  /* Sin `minmax(0, 1fr)` la columna toma el ancho de la plantilla de nombre
+     más largo y en un teléfono el desplegable salía 49 px del modal. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-5);
+}
+
+/* A lo ancho de la tarjeta, sin «medida de formulario» (composition-rules
+   §5): con el tope de 40rem los campos terminaban 150 px antes que el
+   selector de plantilla de arriba. `minmax(0, 1fr)` evita que la columna se
+   estire al ancho mínimo de su contenido. */
 .formulario-especialidad__formulario {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
-  max-inline-size: 40rem;
+}
+
+/* El formulario libre va suelto bajo el selector, sin el aviso ni el
+   interruptor que en las fichas hacen de separación: el aire se pone acá. */
+.formulario-especialidad__libre {
+  margin-block-start: var(--sp-5);
+}
+
+/* Lo ya registrado, debajo del botón de guardar: separado por un filete para
+   que no se lea como parte de lo que se está por enviar. */
+.formulario-especialidad__ya-registrado {
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* Cada pestaña repite la rejilla del formulario: sus campos eran hijos
+   directos de él y tienen que seguir separados igual. */
+.formulario-especialidad__vista {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4) var(--sp-5);
+  min-inline-size: 0;
+}
+
+.formulario-especialidad__ficha {
+  grid-column: 1 / -1;
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.formulario-especialidad__ficha h3 {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.formulario-especialidad__ficha p {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.formulario-especialidad__campo-amplio,
+.formulario-especialidad__odontograma-desplegable,
+.formulario-especialidad__dependiente {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 48rem) {
+  .formulario-especialidad__vista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .formulario-especialidad__estado {
   margin: 0;
-  color: var(--color-text-muted, var(--c-neutral-300));
+  color: var(--text-secondary);
 }
 
 /* El aviso de «tu especialidad no tiene ficha propia»: es una situación
@@ -35,14 +101,31 @@
   color: var(--text-secondary);
 }
 
+/* Por debajo de 780 px la barra queda fija abajo y el botón se estira: sin
+   esto el motivo quedaba en una columna de 70 px, partido en cuatro
+   renglones. Con `wrap` baja a su propia línea, encima del botón. */
+@media (max-width: 779px) {
+  .formulario-especialidad__acciones {
+    flex-wrap: wrap;
+  }
+}
+
+/* El motivo del botón gris, al lado del botón. */
+.formulario-especialidad__pendiente {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
 .formulario-especialidad__ver-todas {
   justify-self: start;
 }
 
 .formulario-especialidad__respondido {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
-  max-inline-size: 40rem;
 }
 
 .formulario-especialidad__completado {
@@ -73,11 +156,21 @@
   justify-self: start;
 }
 
-/* ─── El odontograma dentro del formulario ─────────────────────────────────
-   Va sin borde ni caja propia: es un campo más del formulario, aunque ocupe
-   el ancho entero en vez de una etiqueta y un control al lado. */
+/* El mapa dental ocupa el ancho entero y se abre sólo cuando se necesita. */
+.formulario-especialidad__odontograma-desplegable {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.formulario-especialidad__odontograma-desplegable summary {
+  color: var(--brand-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .formulario-especialidad__odontograma {
-  margin: 0;
+  margin: var(--sp-3) 0 0;
   padding: 0;
   border: 0;
   min-inline-size: 0;
@@ -107,4 +200,11 @@
   flex-basis: 100%;
   font-size: var(--fs-caption);
   color: var(--text-secondary);
+}
+
+/* El «¿cuál?» de un «sí»: con sangría y un filete de marca, para que se lea
+   como continuación de la pregunta de arriba. Tokens: vale en modo oscuro. */
+.formulario-especialidad__dependiente {
+  padding-inline-start: var(--sp-4);
+  border-inline-start: 2px solid var(--c-aqua-300);
 }

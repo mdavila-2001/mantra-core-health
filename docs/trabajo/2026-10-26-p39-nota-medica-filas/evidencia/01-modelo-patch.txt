@@ -1,0 +1,13 @@
+$ psql -d mantra_p39 -v ON_ERROR_STOP=1 -f SQL/patches/2026-10-26_v4252_chart_note_entries.sql   # 2.ª corrida
+BEGIN
+psql:SQL/patches/2026-10-26_v4252_chart_note_entries.sql:34: NOTICE:  column "entries_json" of relation "clinical_note_versions" already exists, skipping
+ALTER TABLE
+COMMIT
+exit=0
+$ columnas de chart.clinical_note_versions
+       20 | t
+
+$ git diff --stat (modelo)
+ Mantra Core Health Context/modules/diagram_15_chart.puml | 1 +
+ SQL/15_chart/02_tables.sql                               | 1 +
+ 2 files changed, 2 insertions(+)

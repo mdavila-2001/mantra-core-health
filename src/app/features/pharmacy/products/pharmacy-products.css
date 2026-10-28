@@ -1,0 +1,60 @@
+:host {
+  display: block;
+}
+
+.products__pharmacy {
+  margin-block-end: var(--sp-4);
+}
+
+.products__panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.products__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.products__bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.products__bulk-count {
+  margin-inline-end: auto;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.products__main {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.products__secondary {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.products__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+}
+
+.products__price {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-primary);
+}

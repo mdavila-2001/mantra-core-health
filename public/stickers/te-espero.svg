@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Te espero en la consulta">
-  <title>Te espero en la consulta</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Le espero en la consulta">
+  <title>Le espero en la consulta</title>
   <!-- Ilustración: OpenMoji 15.0.0 (1FA7A), CC BY-SA 4.0 — https://openmoji.org -->
   <g transform="translate(48 24) scale(2)">
 <g id="color">
@@ -16,7 +16,7 @@
   </g>
   </g>
   <g>
-    <text x="120" y="194" text-anchor="middle" font-family="Poppins, 'Segoe UI', system-ui, sans-serif" font-size="19" font-weight="600" fill="#0B3953">Te espero en</text>
+    <text x="120" y="194" text-anchor="middle" font-family="Poppins, 'Segoe UI', system-ui, sans-serif" font-size="19" font-weight="600" fill="#0B3953">Le espero en</text>
     <text x="120" y="217" text-anchor="middle" font-family="Poppins, 'Segoe UI', system-ui, sans-serif" font-size="19" font-weight="600" fill="#0B3953">la consulta</text>
   </g>
 </svg>

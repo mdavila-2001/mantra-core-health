@@ -1,11 +1,57 @@
 <!-- Marca de que ESTE panel es el que se dibujó. Con dos paneles según el rol,
      una prueba de navegador necesita poder decir «llegué al del paciente» sin
      depender del saludo, que lleva su nombre. -->
-<app-page-header
-  data-testid="mi-salud"
-  [title]="nombre() === '' ? 'Mi salud' : 'Hola, ' + nombre()"
-  subtitle="Contanos qué te pasa y te decimos a quién ver. Abajo, tus turnos y tu historia."
-/>
+<!-- ─── La portada (rediseño del 22/10/2026) ────────────────────────────────
+     Antes era un encabezado de página como el de cualquier listado: «Hola,
+     <nombre completo>» en petróleo y una línea gris. Para quien le cuesta la
+     tecnología, la primera pantalla tiene que sentirse **suya** y decirle qué
+     hacer: saludo según la hora con su nombre de pila, la fecha en palabras y
+     una sola invitación —conocer la aplicación en un minuto— mientras no la
+     haya aceptado. A la derecha, el logo de AloVida tal cual es. -->
+<section class="portada" data-testid="mi-salud" aria-labelledby="portada-titulo">
+  <div class="portada__texto">
+    @if (hoy(); as fecha) {
+      <p class="portada__fecha">Hoy es {{ fecha | date: "EEEE d 'de' MMMM" }}</p>
+    }
+    <h1 class="portada__titulo" id="portada-titulo">
+      @if (nombreDePila() === '') {
+        Mi salud
+      } @else {
+        {{ saludo() }}, <span class="portada__nombre">{{ nombreDePila() }}</span>
+      }
+    </h1>
+    <p class="portada__bajada">
+      Cuéntenos qué le pasa y le decimos a quién ver. Más abajo, sus citas y su historia.
+    </p>
+    @if (!recorridoHecho()) {
+      <div class="portada__acciones">
+        <button
+          app-button
+          variant="primary"
+          size="lg"
+          type="button"
+          class="portada__recorrido"
+          data-testid="mi-salud-recorrido"
+          (clicked)="empezarRecorrido()"
+        >
+          <app-nav-icon name="teach" />
+          Conozca AloVida en 1 minuto
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Decorativa: el logo de AloVida —el de verdad, sin redibujar— en un sello
+       blanco con dos anillos que laten despacio. Sin texto alternativo: la
+       marca ya está en el menú y acá no agrega información. -->
+  <div class="portada__marca" aria-hidden="true">
+    <span class="portada__anillo"></span>
+    <span class="portada__anillo portada__anillo--segundo"></span>
+    <span class="portada__sello">
+      <img src="/alovida/imagenes/alovida-logo.svg" alt="" width="104" height="76" />
+    </span>
+  </div>
+</section>
 
 <!-- ─── C5 del plan de UX del 22/08/2026 ────────────────────────────────────
      «La primera pantalla al paciente es de síntomas».
@@ -24,6 +70,7 @@
   padding="lg"
   class="mi-salud__sintomas"
   data-testid="mi-salud-sintomas"
+  appTutorialTarget="mi-salud-sintomas"
 >
   <!-- `@defer` y no un import normal: la tabla de síntomas con sus sinónimos
        pesa, y el panel del paciente viaja en el bundle **inicial** —es el
@@ -34,29 +81,39 @@
   @defer (on immediate) {
     <app-symptom-check />
   } @placeholder {
-    <p class="mi-salud__texto">¿Qué te pasa? Contanos y te decimos a quién ver.</p>
+    <p class="mi-salud__texto">¿Qué le pasa? Cuéntenos y le decimos a quién ver.</p>
   }
 </app-card>
 
 @switch (estado().status) {
   @case ('loading') {
-    <p class="mi-salud__estado" role="status">Cargando lo tuyo…</p>
+    <p class="mi-salud__estado" role="status">Cargando lo suyo…</p>
   }
   @case ('empty') {
     <!-- Cuenta sin ficha de paciente: no es un error, es que todavía no hay
          nada que mostrarle. Se dice, en vez de dejar el panel en blanco. -->
     <app-card variant="outlined" padding="md" data-testid="mi-salud-sin-ficha">
       <p class="mi-salud__texto">
-        Tu cuenta todavía no tiene una ficha de paciente. Cuando te atiendas por primera vez, acá
-        vas a ver tu historia.
+        Su cuenta todavía no tiene una ficha de paciente. Cuando se atienda por primera vez, acá
+        va a ver su historia.
       </p>
     </app-card>
   }
   @case ('error') {
-    <app-card variant="outlined" padding="md">
-      <p class="mi-salud__estado">
-        No pudimos cargar tu información en este momento. Probá de nuevo en un rato.
+    <app-card variant="outlined" padding="md" data-testid="mi-salud-error">
+      <p class="mi-salud__estado" role="alert">
+        {{ falloGeneral() ?? 'No pudimos cargar su información en este momento.' }}
       </p>
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        type="button"
+        data-testid="mi-salud-reintentar"
+        (clicked)="cargar()"
+      >
+        Volver a cargar
+      </button>
     </app-card>
   }
   @default {
@@ -64,12 +121,12 @@
       <!-- Todavía no pasó nada: en vez de tres tarjetas vacías, la invitación a
            empezar. Es la primera pantalla de quien recién se registró. -->
       <app-card variant="outlined" padding="lg" data-testid="mi-salud-primera-vez">
-        <h2 class="mi-salud__titulo">Todavía no tenés turnos</h2>
+        <h2 class="mi-salud__titulo">Todavía no tiene citas</h2>
         <p class="mi-salud__texto">
-          Cuando pidas tu primer turno vas a ver acá cuándo es, y después de la consulta te van a
-          quedar tu receta y tu historia.
+          Cuando pida su primera cita va a ver acá cuándo es, y después de la consulta le van a
+          quedar su receta y su historia.
         </p>
-        <a app-button variant="primary" [routerLink]="misTurnos">Pedir mi primer turno</a>
+        <a app-button variant="primary" [routerLink]="misTurnos">Pedir mi primera cita</a>
       </app-card>
     } @else {
       <!-- ─── FT-03 · Tu próxima cita ───────────────────────────────────────
@@ -88,6 +145,7 @@
       <section
         class="proxima-cita"
         data-testid="mi-salud-proxima-cita"
+        appTutorialTarget="mi-salud-proxima-cita"
         [attr.data-estado]="estadoDeLaCita()"
         [attr.data-turno]="resumen().proximoTurno?.id ?? null"
         aria-labelledby="proxima-cita-titulo"
@@ -100,23 +158,29 @@
           <span class="proxima-cita__titulo-icono" aria-hidden="true">
             <app-nav-icon name="calendar" />
           </span>
-          Tu próxima cita
+          Su próxima cita
         </h2>
 
         @switch (estadoDeLaCita()) {
           @case ('loading') {
             <!-- FT-03-R06 · el hueco se dice. Una banda vacía mientras carga se
                  lee como «no tenés citas», que es la respuesta contraria. -->
-            <p class="proxima-cita__estado" role="status">Buscando tu próxima cita…</p>
+            <p class="proxima-cita__estado" role="status">Buscando su próxima cita…</p>
           }
           @case ('error') {
-            <p class="proxima-cita__estado proxima-cita__estado--error" role="alert">
-              No pudimos traer tu próxima cita. Podés verla igual en Mis citas.
+            <!-- Nunca «No tiene citas pedidas»: la lectura falló, no está vacía. -->
+            <p
+              class="proxima-cita__estado proxima-cita__estado--error"
+              role="alert"
+              data-testid="mi-salud-cita-error"
+            >
+              {{ falloDeCitas() ?? 'No pudimos traer su próxima cita.' }} Puede verla igual en Mis
+              citas.
             </p>
             <a app-button variant="outline" size="sm" [routerLink]="misTurnos">Ir a Mis citas</a>
           }
           @case ('empty') {
-            <p class="proxima-cita__estado">No tenés citas pedidas.</p>
+            <p class="proxima-cita__estado">No tiene citas pedidas.</p>
             <a app-button variant="primary" [routerLink]="misTurnos">Pedir una cita</a>
           }
           @default {
@@ -182,7 +246,7 @@
                      que poder explicarse sola. -->
                 @if (turno.delayNotice; as demora) {
                   <p class="proxima-cita__demora" data-testid="mi-salud-cita-demora">
-                    Tu profesional avisó una demora de {{ demora.delayMinutes }} minutos.
+                    Su profesional avisó una demora de {{ demora.delayMinutes }} minutos.
                   </p>
                 }
               </div>
@@ -205,12 +269,16 @@
             <app-nav-icon name="pill" />
           </span>
           <span class="mi-salud__resumen-texto">
-            <span class="mi-salud__resumen-rotulo">Tu última receta</span>
+            <span class="mi-salud__resumen-rotulo">Su última receta</span>
             @if (resumen().ultimaReceta; as cuando) {
               <span class="mi-salud__resumen-dato">{{ cuando | date: "d 'de' MMMM, y" }}</span>
+            } @else if (falloDeHistoria()) {
+              <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
+                No se pudo consultar
+              </span>
             } @else {
               <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
-                Todavía no te recetaron nada
+                Todavía no le recetaron nada
               </span>
             }
           </span>
@@ -224,12 +292,16 @@
             <app-nav-icon name="history" />
           </span>
           <span class="mi-salud__resumen-texto">
-            <span class="mi-salud__resumen-rotulo">Tu última atención</span>
+            <span class="mi-salud__resumen-rotulo">Su última atención</span>
             @if (resumen().ultimaAtencion; as cuando) {
               <span class="mi-salud__resumen-dato">{{ cuando | date: "d 'de' MMMM, y" }}</span>
+            } @else if (falloDeHistoria()) {
+              <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
+                No se pudo consultar
+              </span>
             } @else {
               <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
-                Todavía no tenés atenciones registradas
+                Todavía no tiene atenciones registradas
               </span>
             }
           </span>
@@ -238,6 +310,60 @@
           }
         </li>
       </ul>
+
+      <!-- La historia que no se pudo leer se dice, con su código de soporte:
+           «Todavía no le recetaron nada» sería afirmar lo que no se sabe. -->
+      @if (falloDeHistoria(); as motivo) {
+        <p class="mi-salud__estado" role="alert" data-testid="mi-salud-historia-error">
+          {{ motivo }}
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="mi-salud-historia-reintentar"
+            (clicked)="cargar()"
+          >
+            Volver a cargar
+          </button>
+        </p>
+      }
     }
+  }
+}
+
+<!-- ─── Para entretenerse y aprender (rediseño del 22/10/2026) ─────────────────
+     Los primeros pasos y un consejo. Van **después** de lo suyo —síntomas, cita,
+     receta— porque son para quien tiene un rato, no para quien entró apurado. -->
+<!-- En `@defer` como los síntomas: el inicio viaja en el paquete inicial, que
+     está al ras de su presupuesto. Esto se ve más abajo y puede llegar un
+     instante después. -->
+@defer (on idle) {
+  <div class="mi-salud__aprender">
+    @if (!firstSteps.dismissed()) {
+      <app-first-steps-card
+        class="mi-salud__pasos"
+        [hasAppointment]="resumen().proximoTurno !== null || resumen().ultimaAtencion !== null"
+        [tourDone]="recorridoHecho()"
+        (startTour)="empezarRecorrido()"
+      />
+    }
+  
+    <app-patient-tip-card />
+  </div>
+} @placeholder {
+  <div class="mi-salud__aprender-hueco" aria-hidden="true"></div>
+}
+
+<!-- Tarea 4 · M-06: beneficios preventivos de la aseguradora del paciente. En
+     `@defer` por la misma razón que la tarjeta de arriba: este panel viaja en el
+     bundle **inicial**. Sin campañas vigentes el widget no dibuja nada, así que
+     quien no tiene seguro, o no tiene beneficios hoy, no ve ni un renglón nuevo. -->
+@if (profileId(); as patientId) {
+  @defer (on immediate) {
+    <app-patient-campaigns-widget
+      class="mi-salud__benefits"
+      [patientProfileId]="patientId"
+    />
   }
 }

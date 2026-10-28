@@ -10,7 +10,8 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
 import { FileDownloader } from '../../../core/data-access/files/file-downloader';
@@ -27,7 +28,6 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Link } from '../../../shared/components/atoms/link/link';
 import { StoredFilePreview } from '../../../shared/components/molecules/stored-file-preview/stored-file-preview';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
@@ -142,9 +142,7 @@ type CaseCell = TemplateRef<{ $implicit: CaseRow }>;
     ContentDialog,
     DataTable,
     DatePipe,
-    Link,
     PageHeader,
-    RouterLink,
     StoredFilePreview,
     ViewStateHost,
   ],
@@ -164,6 +162,8 @@ export class VerificationCases {
   readonly embedded = input(false, { transform: booleanAttribute });
 
   private readonly identity = inject(IdentityClient);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly archivos = inject(FilesClient);
   private readonly descargas = inject(FileDownloader);
   private readonly navigation = inject(NavigationService);
@@ -209,8 +209,8 @@ export class VerificationCases {
 
   protected readonly byId = (row: CaseRow): string => row.id;
 
-  /** El caso cuyo aviso «todavía no hay veredicto» está abierto (R06/R07). */
-  protected readonly avisoDe = signal<CaseRow | null>(null);
+  /** El caso abierto en el diálogo; también se restaura desde `?case=`. */
+  protected readonly detalleDe = signal<CaseRow | null>(null);
 
   /** El caso cuya evidencia se está trayendo, para no ofrecerla dos veces. */
   protected readonly descargando = signal<string | null>(null);
@@ -221,12 +221,35 @@ export class VerificationCases {
   /** El caso cuya vista previa está desplegada, si alguno (5.2). */
   protected readonly previsualizando = signal<string | null>(null);
 
-  protected abrirAviso(caso: CaseRow): void {
-    this.avisoDe.set(caso);
+  protected abrirDetalle(caso: CaseRow): void {
+    this.detalleDe.set(caso);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: 'cases', case: caso.id },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
-  protected cerrarAviso(): void {
-    this.avisoDe.set(null);
+  protected cerrarDetalle(): void {
+    this.detalleDe.set(null);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { case: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private restaurarDetalle(caseId: string | null): void {
+    if (caseId === null) {
+      this.detalleDe.set(null);
+      return;
+    }
+    const state = this.casos();
+    if (state.status === 'ready') {
+      this.detalleDe.set(state.data.map(toCaseRow).find((row) => row.id === caseId) ?? null);
+    }
   }
 
   /**
@@ -275,7 +298,7 @@ export class VerificationCases {
   private fallaDeDescarga(): void {
     this.descargando.set(null);
     this.errorDeDescarga.set(
-      'No pudimos traer la evidencia de ese caso. Probá de nuevo en un momento.',
+      'No pudimos traer la evidencia de ese caso. Pruebe de nuevo en un momento.',
     );
   }
 
@@ -291,13 +314,19 @@ export class VerificationCases {
   }
 
   constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.restaurarDetalle(params.get('case'));
+    });
     this.cargar();
   }
 
   protected cargar(): void {
     this.casos.set(loading());
     this.identity.listVerificationCases().subscribe({
-      next: (casos) => this.casos.set(this.aEstado(casos)),
+      next: (casos) => {
+        this.casos.set(this.aEstado(casos));
+        this.restaurarDetalle(this.route.snapshot.queryParamMap.get('case'));
+      },
       error: (error: unknown) =>
         this.casos.set(errorToViewState<readonly VerificationCase[]>(error)),
     });
@@ -307,7 +336,7 @@ export class VerificationCases {
     if (casos.length === 0) {
       return empty(
         { label: 'Verificar mi identidad', route: IDENTITY_VERIFICATION_ROUTE },
-        'Cuando inicies una verificación de identidad, tus trámites van a aparecer acá.',
+        'Cuando inicie una verificación de identidad, sus trámites van a aparecer acá.',
       );
     }
     return ready(casos);

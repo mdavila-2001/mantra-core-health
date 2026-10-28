@@ -1,0 +1,62 @@
+<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" [plainSurface]="!registered()" [scene]="registered() ? 'stage' : 'split'">
+  <div class="registro" [class.registro--confirmacion]="registered()">
+    @if (registered()) {
+      <div class="registro__header">
+        <app-registration-badge type="clinic" celebrate />
+        <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="medical-center-signup-success">
+          ¡Bienvenido a AloVida! Su organización médica ya tiene cuenta
+        </h1>
+        @if (verificationSent()) {
+          <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección.</p>
+        }
+        <p class="registro__subtitle" data-testid="medical-center-signup-pending">
+          Su organización está en revisión. Cuando se apruebe, podrá configurar su práctica desde el menú.
+        </p>
+      </div>
+      <button
+        app-button
+        variant="primary"
+        size="lg"
+        class="registro__submit"
+        data-testid="medical-center-signup-go-to-login"
+        (clicked)="goToLogin()"
+      >
+        Ir a iniciar sesión
+      </button>
+    } @else {
+      <div class="registro__header">
+        <app-registration-badge type="clinic" />
+        <h1 class="registro__title">Registre su organización médica</h1>
+        <p class="registro__subtitle">
+          Cree la cuenta de su hospital, clínica, consultorio, centro de enfermería u otra institución de
+          salud. Después de que la plataforma la verifique, podrá abrir su práctica y publicar los
+          procedimientos que ofrece.
+        </p>
+      </div>
+
+      @if (errorMessage(); as mensaje) {
+        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="medical-center-signup-error">{{
+          mensaje
+        }}</app-alert>
+      }
+
+      <div class="registro__body">
+        <app-paginated-form
+          [paginas]="paginas()"
+          [form]="form"
+          label="Crear cuenta de la organización médica"
+          submitLabel="Crear cuenta de la organización"
+          [pending]="isSubmitting()"
+          (enviado)="submit()"
+          data-testid="medical-center-signup-form"
+        />
+      </div>
+
+      <div class="registro__footer">
+        <p class="registro__pie">
+          ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
+        </p>
+      </div>
+    }
+  </div>
+</app-auth-split>

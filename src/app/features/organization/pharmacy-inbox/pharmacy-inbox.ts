@@ -9,8 +9,10 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin, of, switchMap, type Subscription } from 'rxjs';
 
+import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
 import { PharmacyOrdersClient } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { PedidoFarmacia } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -20,33 +22,52 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
-import { Accordion } from '../../../shared/components/molecules/accordion/accordion';
-import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { tiempoRelativo } from '../../../shared/date/tiempo-relativo';
-import { AlarmaDePedidos } from './alarma-de-pedidos';
+import { relativeTime } from '../../../shared/date/relative-time';
+import { OrdersAlarm } from './order-alarm';
 import {
-  GRUPOS_A_LA_VISTA,
-  GRUPOS_DE_BANDEJA,
-  etiquetaDeGrupo,
-  grupoDeBandeja,
-  toBandejaStatusPresentation,
-  type BandejaStatusPresentation,
-  type GrupoDeBandeja,
-} from './bandeja-status';
-import { entregaEnPantalla, type EntregaEnPantalla } from './entrega-status';
-import { NOTA_DE_DATOS_DE_EJEMPLO } from './pharmacy-inbox.fixtures';
+  INBOX_GROUPS,
+  groupLabel,
+  inboxGroup,
+  toInboxStatusPresentation,
+  type InboxStatusPresentation,
+  type InboxGroup,
+} from './inbox-status';
+import {
+  CLOSED_CROPS,
+  SITES_ALL,
+  closedInCrop,
+  cropLabel,
+  urlCrop,
+  chosenSite,
+  pharmaciesSites,
+  type ClosedCrop,
+  type InboxSite,
+} from './inbox-filters';
+import { deliveryInScreen, type DeliveryInScreen } from './delivery-status';
 import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
  * Cada cuánto se refresca la bandeja sola. La campana ya avisa; esto es el
- * respaldo del mostrador que dejó la pestaña abierta. TODO(FAR-E2): será el
- * único mecanismo cuando el canal de la demo se vaya.
+ * respaldo del mostrador que dejó la pestaña abierta.
  */
 const SONDEO_MS = 20_000;
+
+/**
+ * Cuántos pedidos se piden de una vez: el tope que la API acepta. Si vuelven
+ * tantos, puede haber más y la pantalla lo dice en vez de cortar callada: la
+ * respuesta no trae `hasMore`, así que se deduce de la cuenta.
+ */
+const LIMITE_DE_PEDIDOS = 500;
+
+/** Las claves de la URL: recargar o compartir el enlace conserva la vista. */
+const PARAM_SEDE = 'site';
+const PARAM_CERRADOS = 'closed';
 
 /** La base del detalle: la bandeja enlaza, jamás pinta el uuid. */
 const DETALLE_ROUTE = '/administration/pharmacy-orders';
@@ -69,11 +90,13 @@ interface EncabezadoDeCola {
 
 /** Un grupo ya resuelto para la plantilla. */
 interface GrupoResuelto {
-  readonly grupo: GrupoDeBandeja;
+  readonly grupo: InboxGroup;
   /** La etiqueta entera. Es la que nombra la cola para un lector de pantalla. */
   readonly etiqueta: string;
   readonly encabezado: EncabezadoDeCola;
   readonly pedidos: readonly PedidoFarmacia[];
+  /** Sólo en «Cerrados»: de qué fechas son, para que el recorte se vea. */
+  readonly recorte: string | null;
 }
 
 /**
@@ -93,7 +116,7 @@ interface GrupoResuelto {
  * **cartel** de arriba, que dice cuántos llegaron y no se va solo, y el
  * **contador por cola**, con énfasis distinto en «Nuevos». El contador se
  * oculta del árbol accesible a propósito —el distintivo es `role="status"` y
- * cuatro de ellos serían cuatro regiones vivas peleándose con el aviso—: la
+ * seis de ellos serían seis regiones vivas peleándose con el aviso—: la
  * cifra viaja en el encabezado, en palabras.
  *
  * ## Privacidad
@@ -106,8 +129,6 @@ interface GrupoResuelto {
 @Component({
   selector: 'app-pharmacy-inbox',
   imports: [
-    Accordion,
-    AccordionPanel,
     Alert,
     Badge,
     Chip,
@@ -115,16 +136,20 @@ interface GrupoResuelto {
     FormsModule,
     PageHeader,
     RouterLink,
+    Select,
     Switch,
     ViewStateHost,
   ],
-  providers: [AlarmaDePedidos],
+  providers: [OrdersAlarm],
   templateUrl: './pharmacy-inbox.html',
   styleUrl: './pharmacy-inbox.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyInbox {
   private readonly ordersClient = inject(PharmacyOrdersClient);
+  private readonly pharmacy = inject(PharmacyClient);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly navigation = inject(NavigationService);
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private temporizador: ReturnType<typeof setTimeout> | null = null;
@@ -132,12 +157,47 @@ export class PharmacyInbox {
   /** Ids de `ENVIADO` ya vistos; `null` = la línea de base aún no existe. */
   private vistos: Set<string> | null = null;
 
-  protected readonly alarma = inject(AlarmaDePedidos);
+  /** Las peticiones vivas: cambiar de sede cancela la anterior, no la deja pisar. */
+  private cargaEnVuelo: Subscription | null = null;
+  private sondeoEnVuelo: Subscription | null = null;
+
+  protected readonly alarma = inject(OrdersAlarm);
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly detalleRoute = DETALLE_ROUTE;
-  protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
 
   protected readonly state = signal<ViewState<readonly PedidoFarmacia[]>>(loading());
+
+  /** Las sedes de la organización; vacío mientras cargan o si no hay ninguna. */
+  private readonly sedes = signal<readonly InboxSite[]>([]);
+
+  /** La sede que se ve: un id o {@link SITES_ALL}. */
+  protected readonly sedeActual = signal<string>(SITES_ALL);
+
+  /** Qué fechas de «Cerrados» se ven; las colas activas muestran todo lo pendiente. */
+  protected readonly recorte = signal<ClosedCrop>(
+    urlCrop(this.route.snapshot.queryParamMap.get(PARAM_CERRADOS)),
+  );
+
+  /** Si volvieron tantos pedidos como el tope: puede haber más de los que se ven. */
+  protected readonly posiblementeCortado = signal(false);
+
+  /** Con una sola sede el selector sobra. */
+  protected readonly hayVariasSedes = computed(() => this.sedes().length > 1);
+
+  protected readonly opcionesDeSede = computed<readonly SelectOption<string>[]>(() => {
+    const sedes = this.sedes();
+    const variasFarmacias = new Set(sedes.map((sede) => sede.farmacia)).size > 1;
+    const porSede = sedes.map((sede) => ({
+      value: sede.id,
+      label:
+        (variasFarmacias ? `${sede.farmacia} · ` : '') +
+        sede.nombre +
+        (sede.esMatriz ? ' (casa matriz)' : ''),
+    }));
+    return [...porSede, { value: SITES_ALL, label: 'Todas las sedes' }];
+  });
+
+  protected readonly opcionesDeRecorte: readonly SelectOption<string>[] = CLOSED_CROPS;
 
   /** El «ahora» de los tiempos relativos: avanza con cada tic del sondeo. */
   protected readonly ahora = signal(new Date());
@@ -164,7 +224,7 @@ export class PharmacyInbox {
 
   /** Qué está haciendo el interruptor, dicho en palabras al lado suyo. */
   protected readonly estadoDelSonido = computed(() =>
-    this.alarma.sonidoActivo() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
+    this.alarma.activeSound() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
   );
 
   private readonly lista = computed(() => {
@@ -172,47 +232,73 @@ export class PharmacyInbox {
     return estado.status === 'ready' ? estado.data : [];
   });
 
-  /** Las cuatro colas a la vista, en el orden de la tarjeta. */
-  protected readonly colas = computed(() => this.grupos().slice(0, GRUPOS_A_LA_VISTA));
-
-  /** El resto, plegado: preparación y cerrados no corren contra un reloj. */
-  protected readonly plegados = computed(() => this.grupos().slice(GRUPOS_A_LA_VISTA));
-
-  private readonly grupos = computed<readonly GrupoResuelto[]>(() => {
+  /** Las seis colas del tablero, en el orden de la tarjeta. */
+  protected readonly colas = computed<readonly GrupoResuelto[]>(() => {
     const pedidos = this.lista();
-    return GRUPOS_DE_BANDEJA.map((grupo) => {
-      const etiqueta = etiquetaDeGrupo(grupo);
+    const recorte = this.recorte();
+    const ahora = this.ahora();
+    return INBOX_GROUPS.map((grupo) => {
+      const etiqueta = groupLabel(grupo);
+      const delGrupo = pedidos.filter((pedido) => inboxGroup(pedido.estado) === grupo);
+      const esCerrados = grupo === 'CERRADOS';
       return {
         grupo,
         etiqueta,
         encabezado: partirEtiqueta(etiqueta),
-        pedidos: pedidos.filter((pedido) => grupoDeBandeja(pedido.estado) === grupo),
+        // Lo pendiente nunca se recorta: un pedido de ayer que sigue esperando
+        // sigue en su cola. La fecha sólo acota lo que ya terminó.
+        pedidos: esCerrados
+          ? delGrupo.filter((pedido) => closedInCrop(pedido.creadoEl, recorte, ahora))
+          : delGrupo,
+        recorte: esCerrados ? cropLabel(recorte) : null,
       };
     });
   });
 
   constructor() {
-    this.cargar();
+    this.cargarSedes();
     this.agendar();
     inject(DestroyRef).onDestroy(() => this.detener());
   }
 
   protected cargar(): void {
+    this.cancelarPeticiones();
     this.state.set(loading());
-    this.ordersClient.pedidosDeFarmacia().subscribe({
+    // La línea de base es de ESTA vista: con otra sede, lo que hay no es «nuevo».
+    this.vistos = null;
+    this.cargaEnVuelo = this.pedirPedidos().subscribe({
       next: (pedidos) => this.aplicar(pedidos),
       error: (error: unknown) =>
         this.state.set(errorToViewState<readonly PedidoFarmacia[]>(error)),
     });
   }
 
-  protected presentacionDe(pedido: PedidoFarmacia): BandejaStatusPresentation {
-    return toBandejaStatusPresentation(pedido.estado);
+  protected cambiarSede(valor: string | null): void {
+    this.sedeActual.set(valor ?? SITES_ALL);
+    // Cambiar de vista es acusar recibo: lo que sonaba era de la sede anterior.
+    this.destacados.set(new Set());
+    this.descartarAviso();
+    this.escribirEnLaUrl({ [PARAM_SEDE]: this.sedeActual() });
+    this.cargar();
   }
 
-  /** Por qué medio se entrega, o `null` en los pedidos que no lo declaran. */
-  protected entregaDe(pedido: PedidoFarmacia): EntregaEnPantalla | null {
-    return entregaEnPantalla(pedido);
+  /** El recorte es del lado del cliente: no vuelve a pedir nada. */
+  protected cambiarRecorte(valor: string | null): void {
+    const recorte = urlCrop(valor);
+    this.recorte.set(recorte);
+    this.escribirEnLaUrl({ [PARAM_CERRADOS]: recorte });
+  }
+
+  protected presentacionDe(pedido: PedidoFarmacia): InboxStatusPresentation {
+    return toInboxStatusPresentation(pedido.estado);
+  }
+
+  /**
+   * Por qué medio se entrega, o `null` en los pedidos que no lo declaran. Sale
+   * del contrato, como en el detalle.
+   */
+  protected entregaDe(pedido: PedidoFarmacia): DeliveryInScreen | null {
+    return deliveryInScreen(pedido);
   }
 
   /**
@@ -243,7 +329,7 @@ export class PharmacyInbox {
    */
   protected descartarAviso(): void {
     this.nuevosSinVer.set(0);
-    this.alarma.acusarRecibo();
+    this.alarma.acknowledgeReceipt();
   }
 
   protected esNuevo(pedido: PedidoFarmacia): boolean {
@@ -273,7 +359,7 @@ export class PharmacyInbox {
 
   /** «hace 5 min», o `null` para caer al formato de fecha de siempre. */
   protected llegadaDe(pedido: PedidoFarmacia): string | null {
-    return tiempoRelativo(pedido.creadoEl, this.ahora());
+    return relativeTime(pedido.creadoEl, this.ahora());
   }
 
   /** La cuenta regresiva discreta de la reserva, sólo mientras espera. */
@@ -291,10 +377,60 @@ export class PharmacyInbox {
     return `Vence en ${Math.round(minutos / 60)} h`;
   }
 
+  /** Las sedes primero: la bandeja abre en la casa matriz, no en todo. */
+  private cargarSedes(): void {
+    this.pharmacy
+      .listPharmacies()
+      .pipe(
+        switchMap((page) =>
+          page.items.length === 0
+            ? of([])
+            : forkJoin(page.items.map((item) => this.pharmacy.getPharmacy(item.id))),
+        ),
+      )
+      .subscribe({
+        next: (farmacias) => this.alResolverSedes(pharmaciesSites(farmacias)),
+        // Sin sedes la bandeja sigue sirviendo: se ve todo y el selector no sale.
+        error: () => this.alResolverSedes([]),
+      });
+  }
+
+  private alResolverSedes(sedes: readonly InboxSite[]): void {
+    this.sedes.set(sedes);
+    const elegida = chosenSite(this.route.snapshot.queryParamMap.get(PARAM_SEDE), sedes);
+    this.sedeActual.set(elegida ?? SITES_ALL);
+    this.cargar();
+  }
+
+  private pedirPedidos() {
+    const sede = this.sedeActual();
+    return this.ordersClient.pedidosDeFarmacia({
+      ...(sede === SITES_ALL ? {} : { siteId: sede }),
+      limit: LIMITE_DE_PEDIDOS,
+    });
+  }
+
+  private escribirEnLaUrl(params: Readonly<Record<string, string>>): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private cancelarPeticiones(): void {
+    this.cargaEnVuelo?.unsubscribe();
+    this.sondeoEnVuelo?.unsubscribe();
+    this.cargaEnVuelo = null;
+    this.sondeoEnVuelo = null;
+  }
+
   private aplicar(pedidos: readonly PedidoFarmacia[]): void {
+    this.posiblementeCortado.set(pedidos.length >= LIMITE_DE_PEDIDOS);
     // El S3 exige salida por contrato: la puerta natural es el panel org.
     const volverAlPanel = {
-      label: 'Ver tu organización',
+      label: 'Ver su organización',
       route: '/administration/my-organization',
     };
     this.detectarNuevos(pedidos);
@@ -334,7 +470,7 @@ export class PharmacyInbox {
     const sinVer = this.nuevosSinVer() + nuevos.length;
     this.nuevosSinVer.set(sinVer);
     this.avisoDeNuevos.set(`${fraseDeNuevos(sinVer)} a la bandeja.`);
-    this.alarma.notificar(nuevos.length);
+    this.alarma.notify(nuevos.length);
   }
 
   /** Encadena el próximo tic. Nunca hay dos vivos a la vez. */
@@ -350,6 +486,7 @@ export class PharmacyInbox {
   }
 
   private detener(): void {
+    this.cancelarPeticiones();
     if (this.temporizador !== null) {
       clearTimeout(this.temporizador);
       this.temporizador = null;
@@ -358,7 +495,12 @@ export class PharmacyInbox {
 
   /** Refresco de fondo: sin pasar por `loading`, la bandeja no parpadea. */
   private refrescar(): void {
-    this.ordersClient.pedidosDeFarmacia().subscribe({
+    // Con la carga inicial todavía viajando, el tic no tiene nada que refrescar.
+    if (this.state().status === 'loading') {
+      return;
+    }
+    this.sondeoEnVuelo?.unsubscribe();
+    this.sondeoEnVuelo = this.pedirPedidos().subscribe({
       next: (pedidos) => this.aplicar(pedidos),
       // Un tic que falla no borra la bandeja: el próximo lo reintenta.
       error: () => undefined,

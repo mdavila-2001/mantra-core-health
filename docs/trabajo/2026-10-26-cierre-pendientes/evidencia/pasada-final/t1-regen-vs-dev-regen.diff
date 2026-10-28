@@ -1,0 +1,280 @@
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/08_clinical/02_tables.sql SQL/08_clinical/02_tables.sql
+264a265,274
+> CREATE TABLE IF NOT EXISTS "clinical"."service_request_notes" (
+>     "id" uuid NOT NULL,
+>     "service_request_id" uuid NOT NULL,
+>     "clinical_note_header_id" uuid NOT NULL,
+>     "ordinal" integer NOT NULL,
+>     "created_at" timestamptz NOT NULL,
+>     "created_by_user_id" uuid,
+>     CONSTRAINT "pk_service_request_notes" PRIMARY KEY ("id")
+> );
+> 
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/08_clinical/03_fk_intra.sql SQL/08_clinical/03_fk_intra.sql
+71a72,77
+>     ALTER TABLE "clinical"."service_request_notes"
+>         ADD CONSTRAINT "fk_service_request_notes_service_request_id" FOREIGN KEY ("service_request_id")
+>         REFERENCES "clinical"."service_requests" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> DO $$ BEGIN
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/08_clinical/04_indexes.sql SQL/08_clinical/04_indexes.sql
+510a511,518
+> CREATE UNIQUE INDEX IF NOT EXISTS "ux_service_request_notes_request_note" ON "clinical"."service_request_notes" ("service_request_id", "clinical_note_header_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_service_request_notes_service_request_id" ON "clinical"."service_request_notes" ("service_request_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_service_request_notes_clinical_note_header_id" ON "clinical"."service_request_notes" ("clinical_note_header_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_service_request_notes_created_by_user_id" ON "clinical"."service_request_notes" ("created_by_user_id");
+> 
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/08_clinical/90_fk_deferred.sql SQL/08_clinical/90_fk_deferred.sql
+814a815,828
+> -- destino: chart.clinical_note_headers (requiere schema chart)
+> DO $$ BEGIN
+>     ALTER TABLE "clinical"."service_request_notes"
+>         ADD CONSTRAINT "fk_service_request_notes_clinical_note_header_id" FOREIGN KEY ("clinical_note_header_id")
+>         REFERENCES "chart"."clinical_note_headers" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+> 
+> -- destino: iam.users (requiere schema iam)
+> DO $$ BEGIN
+>     ALTER TABLE "clinical"."service_request_notes"
+>         ADD CONSTRAINT "fk_service_request_notes_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+>         REFERENCES "iam"."users" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/15_chart/02_tables.sql SQL/15_chart/02_tables.sql
+33a34
+>     "entries_json" jsonb,
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/24_pharmacy/02_tables.sql SQL/24_pharmacy/02_tables.sql
+14a15
+>     "primary_practice_site_id" uuid,
+35a37
+>     "open_24h" boolean,
+44a47,61
+> CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_on_call_shifts" (
+>     "id" uuid NOT NULL,
+>     "pharmacy_site_id" uuid NOT NULL,
+>     "starts_at" timestamptz NOT NULL,
+>     "ends_at" timestamptz NOT NULL,
+>     "source_concept_id" uuid NOT NULL,
+>     "status_concept_id" uuid NOT NULL,
+>     "created_at" timestamptz NOT NULL,
+>     "updated_at" timestamptz NOT NULL,
+>     "created_by_user_id" uuid,
+>     "updated_by_user_id" uuid,
+>     "row_version" integer NOT NULL DEFAULT 1,
+>     CONSTRAINT "pk_pharmacy_on_call_shifts" PRIMARY KEY ("id")
+> );
+> 
+80a98,102
+>     "pharmacy_product_category_id" uuid,
+>     "description_text" text,
+>     "stock_quantity" integer,
+>     "min_stock_quantity" integer,
+>     "out_of_stock_declared" boolean NOT NULL DEFAULT false,
+87a110,132
+> );
+> 
+> CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_product_categories" (
+>     "id" uuid NOT NULL,
+>     "pharmacy_id" uuid NOT NULL,
+>     "name" varchar NOT NULL,
+>     "name_key" varchar NOT NULL,
+>     "created_at" timestamptz NOT NULL,
+>     "updated_at" timestamptz NOT NULL,
+>     "created_by_user_id" uuid,
+>     "updated_by_user_id" uuid,
+>     "row_version" integer NOT NULL DEFAULT 1,
+>     CONSTRAINT "pk_pharmacy_product_categories" PRIMARY KEY ("id")
+> );
+> 
+> CREATE TABLE IF NOT EXISTS "pharmacy"."pharmacy_product_images" (
+>     "id" uuid NOT NULL,
+>     "pharmacy_product_id" uuid NOT NULL,
+>     "image_file_id" uuid NOT NULL,
+>     "ordinal" integer NOT NULL,
+>     "created_at" timestamptz NOT NULL,
+>     "created_by_user_id" uuid,
+>     CONSTRAINT "pk_pharmacy_product_images" PRIMARY KEY ("id")
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/24_pharmacy/03_fk_intra.sql SQL/24_pharmacy/03_fk_intra.sql
+11a12,17
+>     ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+>         ADD CONSTRAINT "fk_pharmacy_on_call_shifts_pharmacy_site_id" FOREIGN KEY ("pharmacy_site_id")
+>         REFERENCES "pharmacy"."pharmacy_sites" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> DO $$ BEGIN
+26a33,44
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+> 
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_product_categories"
+>         ADD CONSTRAINT "fk_pharmacy_product_categories_pharmacy_id" FOREIGN KEY ("pharmacy_id")
+>         REFERENCES "pharmacy"."pharmacies" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+> 
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_product_images"
+>         ADD CONSTRAINT "fk_pharmacy_product_images_pharmacy_product_id" FOREIGN KEY ("pharmacy_product_id")
+>         REFERENCES "pharmacy"."pharmacy_products" ("id");
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/24_pharmacy/04_indexes.sql SQL/24_pharmacy/04_indexes.sql
+18a19,20
+> CREATE INDEX IF NOT EXISTS "ix_pharmacies_primary_practice_site_id" ON "pharmacy"."pharmacies" ("primary_practice_site_id");
+> 
+48a51,64
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_pharmacy_site_id" ON "pharmacy"."pharmacy_on_call_shifts" ("pharmacy_site_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_source_concept_id" ON "pharmacy"."pharmacy_on_call_shifts" ("source_concept_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_status_concept_id" ON "pharmacy"."pharmacy_on_call_shifts" ("status_concept_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_created_by_user_id" ON "pharmacy"."pharmacy_on_call_shifts" ("created_by_user_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_updated_by_user_id" ON "pharmacy"."pharmacy_on_call_shifts" ("updated_by_user_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_on_call_shifts_site_window" ON "pharmacy"."pharmacy_on_call_shifts" ("pharmacy_site_id", "ends_at" DESC, "starts_at");
+> 
+> CREATE INDEX IF NOT EXISTS "gist_pharmacy_on_call_shifts_window" ON "pharmacy"."pharmacy_on_call_shifts" USING gist (tstzrange(starts_at, ends_at, '[)'));
+> 
+84a101,102
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_products_pharmacy_product_category_id" ON "pharmacy"."pharmacy_products" ("pharmacy_product_category_id");
+> 
+87a106,125
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_pharmacy_id" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id");
+> 
+> CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_categories_pharmacy_id_name_key" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "name_key");
+> 
+> CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_categories_pharmacy_id_id" ON "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_created_by_user_id" ON "pharmacy"."pharmacy_product_categories" ("created_by_user_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_categories_updated_by_user_id" ON "pharmacy"."pharmacy_product_categories" ("updated_by_user_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_pharmacy_product_id" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_image_file_id" ON "pharmacy"."pharmacy_product_images" ("image_file_id");
+> 
+> CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_images_pharmacy_product_id_ordinal" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id", "ordinal");
+> 
+> CREATE UNIQUE INDEX IF NOT EXISTS "uq_pharmacy_product_images_pharmacy_product_id_image_file_id" ON "pharmacy"."pharmacy_product_images" ("pharmacy_product_id", "image_file_id");
+> 
+> CREATE INDEX IF NOT EXISTS "ix_pharmacy_product_images_created_by_user_id" ON "pharmacy"."pharmacy_product_images" ("created_by_user_id");
+Only in SQL/24_pharmacy: 05_constraints.sql
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/24_pharmacy/90_fk_deferred.sql SQL/24_pharmacy/90_fk_deferred.sql
+39a40,46
+> -- destino: practice.practice_sites (requiere schema practice)
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacies"
+>         ADD CONSTRAINT "fk_pharmacies_primary_practice_site_id" FOREIGN KEY ("primary_practice_site_id")
+>         REFERENCES "practice"."practice_sites" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+> 
+118a126,153
+>     ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+>         ADD CONSTRAINT "fk_pharmacy_on_call_shifts_source_concept_id" FOREIGN KEY ("source_concept_id")
+>         REFERENCES "terminology"."catalog_concepts" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> -- destino: terminology.catalog_concepts (requiere schema terminology)
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+>         ADD CONSTRAINT "fk_pharmacy_on_call_shifts_status_concept_id" FOREIGN KEY ("status_concept_id")
+>         REFERENCES "terminology"."catalog_concepts" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> -- destino: iam.users (requiere schema iam)
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+>         ADD CONSTRAINT "fk_pharmacy_on_call_shifts_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+>         REFERENCES "iam"."users" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> -- destino: iam.users (requiere schema iam)
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_on_call_shifts"
+>         ADD CONSTRAINT "fk_pharmacy_on_call_shifts_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+>         REFERENCES "iam"."users" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> -- destino: terminology.catalog_concepts (requiere schema terminology)
+> DO $$ BEGIN
+200a236,242
+> -- compuesta: pharmacy.pharmacy_products sólo apunta a pharmacy.pharmacy_product_categories del mismo pharmacy_id
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_products"
+>         ADD CONSTRAINT "fk_pharmacy_products_pharmacy_product_category_id" FOREIGN KEY ("pharmacy_id", "pharmacy_product_category_id")
+>         REFERENCES "pharmacy"."pharmacy_product_categories" ("pharmacy_id", "id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+> 
+220a263,290
+> 
+> -- destino: iam.users (requiere schema iam)
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_product_categories"
+>         ADD CONSTRAINT "fk_pharmacy_product_categories_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+>         REFERENCES "iam"."users" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> -- destino: iam.users (requiere schema iam)
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_product_categories"
+>         ADD CONSTRAINT "fk_pharmacy_product_categories_updated_by_user_id" FOREIGN KEY ("updated_by_user_id")
+>         REFERENCES "iam"."users" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> -- destino: common.files (requiere schema common)
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_product_images"
+>         ADD CONSTRAINT "fk_pharmacy_product_images_image_file_id" FOREIGN KEY ("image_file_id")
+>         REFERENCES "common"."files" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+> 
+> -- destino: iam.users (requiere schema iam)
+> DO $$ BEGIN
+>     ALTER TABLE "pharmacy"."pharmacy_product_images"
+>         ADD CONSTRAINT "fk_pharmacy_product_images_created_by_user_id" FOREIGN KEY ("created_by_user_id")
+>         REFERENCES "iam"."users" ("id");
+> EXCEPTION WHEN duplicate_object THEN NULL; END $$;  -- (inferida por convención)
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/41_scheduling/02_tables.sql SQL/41_scheduling/02_tables.sql
+69a70
+>     "flexible_hours" boolean NOT NULL DEFAULT false,
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/_generation_report.md SQL/_generation_report.md
+15c15
+< | 08 | clinical | 23 | 236 | 16 | 260 | 10 |
+---
+> | 08 | clinical | 24 | 239 | 18 | 264 | 11 |
+31c31
+< | 24 | pharmacy | 9 | 65 | 1 | 75 | 0 |
+---
+> | 24 | pharmacy | 12 | 78 | 10 | 94 | 1 |
+40c40
+< | 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 46 |
+---
+> | 33 | integrity _(especializado/no-SQL)_ | 0 | 0 | 0 | 0 | 47 |
+77c77
+< | **Σ** | **70** | **1255** | | **512** | | **355** |
+---
+> | **Σ** | **70** | **1259** | | **523** | | **358** |
+100a101
+> - `chart_clinical_note_headers` — stub de cruce (tabla real en su módulo dueño)
+175a177,179
+> ### 24 · pharmacy
+> - `practice_practice_sites` — stub de cruce (tabla real en su módulo dueño)
+> 
+292a297
+> - `pharmacy_on_call_shifts` — stub de cruce (tabla real en su módulo dueño)
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/_integrity/integrity-matrix.md SQL/_integrity/integrity-matrix.md
+114a115,120
+> ### Módulo 24 · `pharmacy`
+> 
+> | Tabla | Estereotipo | Reglas declaradas |
+> |-------|-------------|-------------------|
+> | `pharmacy_on_call_shifts` | `REFERENCE_ONLY` | **CHECK_SQL** ck_pharmacy_on_call_shifts_window \| ("ends_at" > "starts_at" AND "ends_at" - "starts_at" <= interval '72 hours'); **EXCLUDE_SQL** ex_pharmacy_on_call_shifts_site_overlap \| "pharmacy_site_id" WITH =, tstzrange("starts_at", "ends_at", '[)') WITH && \| "status_concept_id" = '14c92252-2ad8-576c-bc34-3ae2bbdb950d' |
+> 
+diff -r -x patches /home/user/wt/final/_devmodel/SQL/apply_all.sql SQL/apply_all.sql
+266a267,268
+> \echo >>> 24_pharmacy/05_constraints.sql
+> \ir 24_pharmacy/05_constraints.sql

@@ -8,6 +8,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
@@ -18,6 +19,8 @@ import type {
   ProcedureNomenclatureItem,
   ProcedureSpecialty,
 } from '../../../../core/data-access/services-catalog/services-catalog.types';
+import { readApiError } from '../../../../core/http/api-error';
+import { describeApiFailure, fieldErrorsOf, supportCodeOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -92,6 +95,15 @@ export class ProcedureImport {
   private readonly catalog = inject(ServicesCatalogClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /**
+   * A dónde vuelve: se llega desde el catálogo administrado o, desde el
+   * carril 22, desde «Mis servicios» del médico — la misma pantalla con dos
+   * puertas.
+   */
+  protected readonly backRoute = this.router.url.startsWith('/my-services')
+    ? '/my-services'
+    : '/administration/services-catalog';
   private readonly toasts = inject(ToastService);
 
   /* ---- la práctica a la que se importa ----------------------------------- */
@@ -147,7 +159,7 @@ export class ProcedureImport {
         label: `${e.specialty} (${e.count})`,
       })),
       unavailableReason:
-        'No pudimos leer las especialidades del arancel. Podés buscar por nombre igual.',
+        'No pudimos leer las especialidades del arancel. Puede buscar por nombre igual.',
     },
   ]);
 
@@ -301,6 +313,11 @@ export class ProcedureImport {
         // después de dónde salió este servicio y no volver a importarlo.
         code: item.code,
         name: item.display,
+        // El concepto del arancel es el id que el servicio comparte con el
+        // resto del producto: las cláusulas de los seguros y las solicitudes
+        // de reembolso cruzan por él, no por el id del servicio, que es
+        // propio de cada práctica. Sin él, ningún seguro lo reconoce.
+        serviceConceptId: item.conceptId,
         defaultPrice: item.referencePrice ?? '0',
         isActive: true,
       })
@@ -312,19 +329,14 @@ export class ProcedureImport {
           );
           this.toasts.success(
             item.ocrSuspect
-              ? 'Se importó. Revisá el nombre y el precio: el arancel los marcó como dudosos.'
+              ? 'Se importó. Revise el nombre y el precio: el arancel los marcó como dudosos.'
               : 'Se importó al catálogo de la práctica.',
             item.display,
           );
         },
-        error: () => {
+        error: (error: unknown) => {
           this.importando.set(null);
-          this.toasts.show({
-            type: 'error',
-            title: 'No pudimos importarlo',
-            message:
-              'El alta de servicios exige permiso de administración. Pedilo a quien administre la organización.',
-          });
+          this.toasts.show({ type: 'error', title: 'No pudimos importarlo', message: motivoDelRechazo(error, item) });
         },
       });
   }
@@ -350,7 +362,7 @@ export class ProcedureImport {
             total.length === 0
               ? empty(
                   { label: 'Quitar los filtros' },
-                  'Ningún procedimiento del arancel coincide con lo que buscaste.',
+                  'Ningún procedimiento del arancel coincide con lo que buscó.',
                 )
               : ready(total),
           );
@@ -381,4 +393,35 @@ export class ProcedureImport {
       error: () => this.yaImportados.set(new Set()),
     });
   }
+}
+
+/** Lo que dice la pantalla cuando la API rechaza el alta por rol. */
+const SIN_PERMISO_DE_ADMINISTRACION =
+  'El alta de servicios exige permiso de administración. Pídalo a quien administre la organización.';
+
+/**
+ * Por qué no se importó un procedimiento.
+ *
+ * Sólo un `FORBIDDEN` es falta de permiso: antes cualquier fallo —un 422, un
+ * 500, un corte de red— se presentaba así, y la persona salía a pedir un
+ * permiso que ya tenía. Un `VALIDATION_FAILED` no tiene campo que corregir en
+ * esta pantalla (los datos salen del arancel tal cual), así que se dice eso.
+ */
+function motivoDelRechazo(error: unknown, item: ProcedureNomenclatureItem): string {
+  if (error instanceof HttpErrorResponse) {
+    const body = readApiError(error);
+    if (body?.code === 'FORBIDDEN') {
+      const supportCode = supportCodeOf(error, body);
+      return supportCode === null
+        ? SIN_PERMISO_DE_ADMINISTRACION
+        : `${SIN_PERMISO_DE_ADMINISTRACION} (Código de soporte: ${supportCode})`;
+    }
+  }
+  if (Object.keys(fieldErrorsOf(error)).length > 0) {
+    return describeApiFailure(
+      error,
+      `El catálogo no admite los datos de «${item.display}» tal como vienen del arancel.`,
+    );
+  }
+  return describeApiFailure(error, `No se pudo importar «${item.display}». Intente de nuevo.`);
 }

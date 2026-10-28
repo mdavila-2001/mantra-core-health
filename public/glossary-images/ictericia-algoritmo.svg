@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Enfoque diagnóstico de la ictericia en el adulto</title>
+  <desc id="d">Diagrama de decisión. Tras confirmar la ictericia y fraccionar la bilirrubina se distinguen tres patrones: predominio de bilirrubina no conjugada, que orienta a hemólisis o síndrome de Gilbert; patrón hepatocelular, que orienta a hepatitis y otras enfermedades del hígado; y patrón colestásico, que lleva a una ecografía de la vía biliar para separar obstrucción de colestasis intrahepática.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --yel:#c99a00; --yel-l:#fbefc2; --blue:#2f6fb5; --blue-l:#dbe9f7; --grn:#1f8a5b; --grn-l:#d8f0e4; --red:#c0392b; --red-l:#f8dcd8; --brn:#8a5a2b; --brn-l:#efdcc6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --yel:#e0b93a; --yel-l:#4a4224; --blue:#6aa6e6; --blue-l:#22384f; --grn:#4cc38a; --grn-l:#1f3d31; --red:#ef7467; --red-l:#4a2723; --brn:#c99a66; --brn-l:#3d3125; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); font-size: 13px; text-anchor: middle; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .s { font-size: 12.5px; }
+    .arrow { stroke: var(--muted); stroke-width: 2.2; fill: none; marker-end: url(#ah); }
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="28" class="title">Enfoque de la ictericia: un orden lógico</text>
+
+  <rect x="230" y="42" width="340" height="44" rx="10" fill="var(--yel-l)" stroke="var(--yel)" stroke-width="2"/>
+  <text x="400" y="62" class="h">Piel y mucosas amarillas</text>
+  <text x="400" y="78" class="s muted">historia, exploración y orina/heces</text>
+  <path class="arrow" d="M400 88 V108"/>
+
+  <rect x="150" y="110" width="500" height="58" rx="10" fill="var(--blue-l)" stroke="var(--blue)" stroke-width="2"/>
+  <text x="400" y="132" class="h">Análisis: bilirrubina fraccionada y pruebas hepáticas</text>
+  <text x="400" y="152" class="s">¿predomina la no conjugada, el patrón hepatocelular o el colestásico?</text>
+  <path class="arrow" d="M300 170 L135 202"/>
+  <path class="arrow" d="M400 170 V202"/>
+  <path class="arrow" d="M500 170 L665 202"/>
+
+  <!-- ramas -->
+  <rect x="20" y="204" width="230" height="70" rx="10" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <text x="135" y="226" class="h">No conjugada aislada</text>
+  <text x="135" y="245" class="s">resto de pruebas hepáticas normal</text>
+  <text x="135" y="262" class="s">(prehepática)</text>
+
+  <rect x="285" y="204" width="230" height="70" rx="10" fill="var(--grn-l)" stroke="var(--grn)" stroke-width="2"/>
+  <text x="400" y="226" class="h">Patrón hepatocelular</text>
+  <text x="400" y="245" class="s">transaminasas muy alteradas,</text>
+  <text x="400" y="262" class="s">daño de la célula hepática</text>
+
+  <rect x="550" y="204" width="230" height="70" rx="10" fill="var(--brn-l)" stroke="var(--brn)" stroke-width="2"/>
+  <text x="665" y="226" class="h">Patrón colestásico</text>
+  <text x="665" y="245" class="s">fosfatasa alcalina y GGT altas,</text>
+  <text x="665" y="262" class="s">conjugada predominante</text>
+
+  <!-- nivel 3 -->
+  <path class="arrow" d="M135 276 V318"/>
+  <rect x="20" y="320" width="230" height="110" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="135" y="342" class="h">Hemólisis o Gilbert</text>
+  <text x="135" y="362" class="s">frotis, reticulocitos y marcadores</text>
+  <text x="135" y="378" class="s">de hemólisis; si todo es normal y</text>
+  <text x="135" y="394" class="s">hay ayuno o estrés: síndrome de</text>
+  <text x="135" y="410" class="s">Gilbert (benigno)</text>
+
+  <path class="arrow" d="M400 276 V318"/>
+  <rect x="285" y="320" width="230" height="110" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="400" y="342" class="h">Buscar la causa hepática</text>
+  <text x="400" y="362" class="s">serología de hepatitis, fármacos,</text>
+  <text x="400" y="378" class="s">alcohol, autoinmunidad, hierro y</text>
+  <text x="400" y="394" class="s">cobre; ecografía y, si procede,</text>
+  <text x="400" y="410" class="s">elastografía o biopsia</text>
+
+  <path class="arrow" d="M665 276 V298"/>
+  <rect x="550" y="300" width="230" height="38" rx="10" fill="var(--blue-l)" stroke="var(--blue)" stroke-width="2"/>
+  <text x="665" y="324" class="h">Ecografía de la vía biliar</text>
+  <path class="arrow" d="M620 340 L605 358"/>
+  <path class="arrow" d="M710 340 L725 358"/>
+  <rect x="550" y="360" width="112" height="76" rx="10" fill="var(--panel)" stroke="var(--brn)" stroke-width="2"/>
+  <text x="606" y="380" class="h">Dilatada</text>
+  <text x="606" y="397" class="s">obstrucción:</text>
+  <text x="606" y="412" class="s">colangio-RM,</text>
+  <text x="606" y="427" class="s">TC o CPRE</text>
+  <rect x="668" y="360" width="112" height="76" rx="10" fill="var(--panel)" stroke="var(--brn)" stroke-width="2"/>
+  <text x="724" y="380" class="h">No dilatada</text>
+  <text x="724" y="397" class="s">colestasis</text>
+  <text x="724" y="412" class="s">intrahepática:</text>
+  <text x="724" y="427" class="s">estudio dirigido</text>
+
+  <text x="400" y="462" class="s muted">Esquema orientativo; cada caso se individualiza. Ilustración original de AloVida.</text>
+</svg>

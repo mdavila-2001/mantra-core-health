@@ -53,28 +53,6 @@
     overflow-wrap: break-word;
 }
 
-.specialty-badge__certificada {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-}
-
-.specialty-badge__certificada svg {
-    inline-size: 1em;
-    block-size: 1em;
-}
-
-/* Etiqueta de apoyo: más chica y con menos peso que el nombre, porque el dato
-   es la especialidad y esto la califica. */
-.specialty-badge__principal {
-    flex: none;
-    font-size: var(--fs-overline);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.85;
-}
-
 .specialty-badge__sello {
     flex: none;
 }

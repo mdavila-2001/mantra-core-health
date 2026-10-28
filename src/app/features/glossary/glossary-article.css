@@ -1,0 +1,283 @@
+/* Artículo enciclopédico (F9). Mobile-first; colores = tokens del sistema. */
+
+@import '../../shared/styles/enlace-chip.css';
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.articulo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+@media (min-width: 64rem) {
+  .articulo {
+    grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr);
+    gap: var(--sp-6);
+    align-items: start;
+  }
+}
+
+.articulo__indice {
+  min-inline-size: 0;
+}
+
+.articulo__indice-titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.articulo__indice ol {
+  display: flex;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0 0 var(--sp-1);
+  list-style: none;
+  overflow-x: auto;
+}
+
+.articulo__indice-enlace {
+  min-block-size: 2.75rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-link);
+  font: inherit;
+  font-size: var(--fs-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.articulo__indice-enlace:hover {
+  background: var(--bg-hover);
+}
+
+.articulo__indice-enlace:focus-visible,
+.articulo__miniatura:focus-visible,
+.articulo__tabla-marco:focus-visible,
+.articulo__titulo:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+@media (min-width: 64rem) {
+  .articulo__indice {
+    position: sticky;
+    inset-block-start: var(--sp-4);
+    max-block-size: calc(100dvh - var(--sp-8, 4rem));
+    overflow-y: auto;
+  }
+
+  .articulo__indice ol {
+    flex-direction: column;
+    gap: var(--sp-1);
+    overflow: visible;
+  }
+
+  .articulo__indice-enlace {
+    inline-size: 100%;
+    border-color: transparent;
+    background: transparent;
+    text-align: start;
+    white-space: normal;
+  }
+}
+
+.articulo__cuerpo {
+  display: grid;
+  gap: var(--sp-6);
+  min-inline-size: 0;
+  /* El texto llena su columna: con cada párrafo acotado a 75ch quedaba una
+     franja vacía a la derecha de toda la ficha (regla del cliente §5). La
+     medida de lectura la pone el cuerpo entero, centrado en su columna, y
+     sólo pesa en pantallas muy anchas. */
+  inline-size: 100%;
+  max-inline-size: 48rem;
+  margin-inline: auto;
+}
+
+.articulo__sinonimos,
+.articulo__encabezado-fuente,
+.articulo__sin-traducir {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.articulo__seccion {
+  display: grid;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  scroll-margin-block-start: var(--sp-4);
+}
+
+.articulo__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.articulo__parrafo,
+.articulo__lista {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: var(--lh-body-lg);
+}
+
+/* Las viñetas las quita el reinicio global: sin ellas, una lista de síntomas
+   se leía como un párrafo partido en renglones. */
+.articulo__lista {
+  display: grid;
+  gap: var(--sp-1);
+  padding-inline-start: var(--sp-6);
+  list-style: disc;
+}
+
+.articulo__lista li::marker {
+  color: var(--brand-primary);
+}
+
+.articulo__tabla-marco {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.articulo__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+
+.articulo__tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+  vertical-align: top;
+  color: var(--text-secondary);
+}
+
+.articulo__tabla td:first-child {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* La cita de una sección: «Fuente» y su origen como chips, la licencia como
+   sello y la fecha al final. Antes era una línea de texto con puntos medios y
+   un enlace azul subrayado del navegador. */
+.articulo__cita {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px dashed var(--border-default);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.articulo__cita-rotulo {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.articulo__sello {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2rem;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* Enlaces sueltos dentro de un pie de imagen: el color y el subrayado del
+   sistema, no el azul y el violeta de «visitado» del navegador. */
+.articulo__enlace,
+.articulo__enlace:visited {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.articulo__enlace:hover {
+  color: var(--brand-primary-hover);
+}
+
+.articulo__enlace:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.articulo__referencias {
+  max-inline-size: 75ch;
+}
+
+.articulo__galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.articulo__figura {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.articulo__miniatura {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--bg-hover);
+  cursor: zoom-in;
+}
+
+.articulo__miniatura img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+}
+
+.articulo__pie {
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.articulo__leyenda {
+  color: var(--text-secondary);
+}
+
+.articulo__ampliada {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.articulo__ampliada img {
+  inline-size: 100%;
+  max-block-size: 70dvh;
+  object-fit: contain;
+}

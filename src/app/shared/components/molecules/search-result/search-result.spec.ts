@@ -37,7 +37,7 @@ class Anfitrion {
   readonly dato = signal<SearchResultItem>({
     id: 'r-1',
     title: 'Dra. Marisol Quispe Ticona',
-    link: '/buscar/perfil-profesional-detalle',
+    link: '/search/practitioner-profile-detail',
   });
 }
 
@@ -80,7 +80,7 @@ describe('SearchResult', () => {
     const enlace = titulo!.querySelector('a')!;
 
     expect(enlace.textContent!.trim()).toBe('Dra. Marisol Quispe Ticona');
-    expect(enlace.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle');
+    expect(enlace.getAttribute('href')).toBe('/search/practitioner-profile-detail');
   });
 
   // ─── Lo que desaparece cuando no hay dato ──────────────────────────────────

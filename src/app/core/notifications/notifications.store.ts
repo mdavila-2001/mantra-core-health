@@ -13,12 +13,14 @@ import { CommunityClient } from '../data-access/community/community.client';
 import { NotificationsClient } from '../data-access/notifications/notifications.client';
 import type {
   InAppNotification,
+  NotificationAction,
   NotificationCategory,
+  NotificationDestination,
 } from '../data-access/notifications/notifications.types';
 import { rutaDeNotificacion } from './notification-routes';
 
 /** Cada cuánto se vuelve a preguntar, en milisegundos. */
-const INTERVALO_MS = 45_000;
+export const INTERVALO_MS = 45_000;
 
 /** Cuántas trae el panel de la campana. El centro pide su propia página. */
 const TOPE_PANEL = 8;
@@ -42,6 +44,10 @@ export interface AvisoUnificado {
   readonly detalle?: string;
   /** Ruta a la que navega, o `null` si no navega a ninguna. */
   readonly ruta: string | null;
+  /** A qué cosa se refiere el aviso: lo que necesitan sus acciones para actuar. */
+  readonly destino?: NotificationDestination;
+  /** Los botones que ofrece y siguen vigentes; vacío si no ofrece ninguno. */
+  readonly acciones: readonly NotificationAction[];
   /** `true` mientras siga sin leer. */
   readonly sinLeer: boolean;
   /** Cuándo llegó. */
@@ -178,7 +184,7 @@ export class NotificationsStore {
         this.cargando.set(false);
         // No se vacía lo que ya había: un tic fallido no es motivo para
         // borrarle a alguien los avisos que estaba leyendo.
-        this.error.set('No pudimos actualizar tus notificaciones.');
+        this.error.set('No pudimos actualizar sus notificaciones.');
       },
     });
 
@@ -218,18 +224,49 @@ export class NotificationsStore {
     });
   }
 
+  /**
+   * Cierra el ciclo de un aviso cuya acción se ejecutó: lo da por leído
+   * (responder ES haberlo leído) y vuelve a leer las bandejas, que ya no
+   * deberían ofrecer esos botones.
+   *
+   * Refresca aunque marcar falle: la acción ya ocurrió, y mostrar los botones
+   * de una decisión tomada invitaría a tomarla dos veces.
+   */
+  trasAccion(aviso: AvisoUnificado): void {
+    if (aviso.fuente !== 'messaging' || !aviso.sinLeer) {
+      this.refrescar();
+      return;
+    }
+    this.notifications.markRead(aviso.id).subscribe({
+      next: () => this.refrescar(),
+      error: () => this.refrescar(),
+    });
+  }
+
   /** Marca toda la bandeja de `messaging` y refresca. */
   marcarTodasLeidas(): void {
     this.notifications.markAllRead().subscribe({
       next: () => this.refrescar(),
-      error: () => this.error.set('No pudimos marcar tus notificaciones.'),
+      error: () => this.error.set('No pudimos marcar sus notificaciones.'),
     });
   }
 
-  /** Encadena el próximo tic. Nunca hay dos vivos a la vez. */
+  /**
+   * Encadena el próximo tic. Nunca hay dos vivos a la vez.
+   *
+   * TX-18: con la pestaña oculta (`document.hidden`) el tic se saltea la
+   * llamada de red y sólo se reagenda — preguntarle a la API cada 45 s por una
+   * pantalla que nadie está mirando es gasto puro, y con muchas pestañas
+   * abiertas es gasto multiplicado. La cadena sigue viva a propósito: en
+   * cuanto la pestaña vuelve a estar visible, el próximo tic (o
+   * `refrescarSiVisible`, más abajo) retoma sin que nadie tenga que
+   * reiniciar nada.
+   */
   private agendar(): void {
     this.temporizador = setTimeout(() => {
-      this.refrescar();
+      if (typeof document === 'undefined' || !document.hidden) {
+        this.refrescar();
+      }
       this.agendar();
     }, INTERVALO_MS);
   }
@@ -268,6 +305,8 @@ function deMessaging(aviso: InAppNotification): AvisoUnificado {
     titulo: aviso.subject ?? 'Novedad',
     ...(aviso.bodyText === undefined ? {} : { detalle: aviso.bodyText }),
     ruta: rutaDeNotificacion(aviso.destination),
+    ...(aviso.destination === undefined ? {} : { destino: aviso.destination }),
+    acciones: aviso.actions ?? [],
     sinLeer: aviso.unread,
     fecha: aviso.availableAt,
   };
@@ -292,11 +331,12 @@ function deCommunity(aviso: {
     id: aviso.id,
     fuente: 'community',
     categoria: 'SOCIAL',
-    titulo: aviso.previewText ?? 'Novedad en tu perfil',
+    titulo: aviso.previewText ?? 'Novedad en su perfil',
     // Al muro, que es donde vive lo social. No al objeto concreto: el aviso
     // trae `sourceRefId` con el id de una publicación o un comentario, y el
     // muro no tiene todavía pantalla de publicación suelta.
     ruta: '/feed',
+    acciones: [],
     sinLeer: !aviso.isRead,
     fecha: aviso.createdAt,
   };

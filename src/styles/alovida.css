@@ -88,16 +88,49 @@
      AC-08-3 pide que siga exactamente como está. */
   --fondo-a: rgba(159, 216, 208, .40);
   --fondo-b: rgba(79, 179, 169, .24);
-  --fondo-c: rgba(122, 191, 232, .30);
+  /* Era celeste `rgba(122, 191, 232, …)`, un azul que no está en la paleta
+     (identidad-visual.md Parte 2: «azul petróleo saturado, no celeste de
+     stock»). Pasa a aguamarina, que es la misma familia de los otros tres. */
+  --fondo-c: rgba(79, 179, 169, .18);
   --fondo-d: rgba(159, 216, 208, .26);
 
-  /* Fondo del nav: viñeta y halo */
-  --nav-vineta-a: rgba(9, 62, 92, .72);
-  --nav-vineta-b: rgba(7, 47, 69, .82);
-  --nav-halo-a:   rgba(79, 179, 169, .30);
-  --nav-halo-b:   rgba(79, 179, 169, .16);
-  --nav-halo-c:   rgba(122, 191, 232, .06);
-  --nav-halo-0:   rgba(122, 191, 232, 0);
+  /* Fondo del nav: viñeta y halo.
+
+     En claro la barra es MARFIL, no petróleo (identidad-visual.md Parte 3:
+     `--bg-surface-alt` = marfil-400 para «secciones secundarias, sidebar»).
+     El cliente pidió el 27/10/2026 bajar el azul: una columna petróleo de
+     arriba abajo era la mancha más grande de la pantalla y rompía la regla de
+     proporción «blanco = base, petróleo = acción». La viñeta y el degradado
+     de profundidad se apagan; quedan la trama de puntos y el electro en menta
+     y aguamarina. En oscuro la barra vuelve a ser petróleo: ahí la línea
+     gráfica sí pide que las superficies sean la rampa del azul. */
+  --nav-vineta-a: rgba(248, 245, 240, 0);
+  --nav-vineta-b: rgba(248, 245, 240, 0);
+  --nav-profundidad: 0;
+  --nav-halo-a:   rgba(79, 179, 169, .14);
+  --nav-halo-b:   rgba(79, 179, 169, .07);
+  --nav-halo-c:   rgba(159, 216, 208, .04);
+  --nav-halo-0:   rgba(159, 216, 208, 0);
+
+  /* Tinta y estados de la barra. Son tokens propios —y no `--tinta-nav`—
+     porque `--tinta-nav` sigue significando «tinta sobre petróleo» para el
+     resto de la hoja (la perilla del interruptor de tema). */
+  --nav-carril:          #F8F5F0;
+  --nav-borde:           #CDD9D5;
+  --nav-tinta:           #242828;
+  --nav-palabra:         #0B557E;
+  --nav-item:            #4E5151;
+  --nav-item-sub:        #4E5151;
+  --nav-item-fuerte:     #242828;
+  --nav-grupo:           #4E5151;
+  --nav-grupo-fuerte:    #242828;
+  --nav-item-hover-bg:   rgba(79, 179, 169, .12);
+  --nav-item-activo-bg:  rgba(79, 179, 169, .18);
+  --nav-item-activo-luz: rgba(255, 255, 255, 0);
+  --nav-filete:          #CDD9D5;
+  --nav-filete-suave:    #E3EAE7;
+  --nav-control-fondo:   #FFFFFF;
+  --nav-control-borde:   #7D8786;
 
   /* Superficies
      `--sup-pagina` es **blanco** desde el 2026-09-10, por pedido del
@@ -109,25 +142,41 @@
   --sup-pagina:   #FFFFFF;
   --sup-tarjeta:  #FFFFFF;
   --sup-inset:    #F9F8F4;
-  --sup-nav:      #0B557E;
+  --sup-nav:      #F8F5F0;
 
   /* Tinta */
   --tinta:        #242828;
   --tinta-2:      #4E5151;
-  --tinta-3:      #787B7B;
+  /* CORRECCIÓN DE CONTRASTE aplicada por sync-alovida.mjs (transformación 3).
+     La bóveda trae #787B7B: 3,86:1 sobre marfil y 4,27 sobre blanco, sin AA
+     para texto chico (era la excepción R1). #656768 —el ivory-800 de v1.0—
+     da 5,13 y 5,69. */
+  --tinta-3:      #656768;
   --tinta-nav:    #FFFFFF;
 
-  /* Marca */
+  /* Marca
+     --petroleo es TINTA (enlaces, iconos, bordes activos); --petroleo-relleno
+     es el FONDO que lleva texto blanco encima (botón primario, chips
+     elegidos, enviar). En claro valen lo mismo; en oscuro se separan, porque
+     un solo valor no podía cumplir los dos umbrales (era la excepción R3). */
   --petroleo:     #0B557E;
+  --petroleo-relleno: #0B557E;
   --petroleo-h:   #0B4768;
   --petroleo-p:   #0B3953;
   --aguamarina:   #4FB3A9;
   --menta:        #9FD8D0;
   --ambar:        #E4A96B;
 
-  /* Azules profundos derivados del petróleo — jerarquía, textura y sombra
-     interior. No son colores nuevos: son el mismo tono, más oscuro. */
-  --tinta-marca:  #0A3E5C;
+  /* Azules profundos derivados del petróleo — textura y sombra interior.
+
+     `--tinta-marca` ya NO es azul: era `#0A3E5C`, un petróleo que no está en
+     la rampa, y teñía títulos, rótulos, celdas numéricas, selects y pestañas
+     —casi todo el texto fuerte de la aplicación—. La línea gráfica dice que
+     títulos y cuerpo van en `--text-primary` (neutral-500, Parte 3) y
+     styles.css lo repite: «el color es texto, no marca». Corrección pedida por
+     el cliente el 27/10/2026 («está muy azul»). El nombre se conserva para no
+     tocar los ~60 usos. */
+  --tinta-marca:  #242828;
   --petroleo-x:   #072F45;
   --petroleo-xx:  #052232;
   --sombra-azul:  rgba(11, 85, 126, .14);
@@ -145,7 +194,14 @@
   --filete:       #CDD9D5;
   --filete-2:     #E3EAE7;
   --borde-ctrl:   #7D8786;
-  --anillo-foco:  rgba(79, 179, 169, .45);
+  /* CORRECCIÓN DE CONTRASTE (sync-alovida.mjs). La bóveda trae aguamarina al
+     45 %: 1,48:1 sobre blanco, lejos del 3:1 de un indicador de foco (WCAG
+     1.4.11). #33706C —el aqua-700 de v1.0— es sólido y da 5,71 sobre blanco
+     y 5,16 sobre marfil. En claro el nav también es marfil (27/10/2026), así
+     que usa el mismo anillo; en oscuro el nav es petróleo y ahí el anillo es
+     menta: ver --anillo-foco-nav en el bloque oscuro y .app-side-nav. */
+  --anillo-foco:  #33706C;
+  --anillo-foco-nav: #33706C;
 
   /* Estados: fondo tintado claro + tinta oscura del mismo tono */
   --ok-bg:        #DFEDE9;  --ok-tinta:     #27725C;
@@ -359,15 +415,18 @@ html::after {
   opacity: 1;
 }
 
-/* En claro, los dos velos se apagan (propietario, 2026-09-10: «fondo blanco»).
-   No se borran: son el fondo vivo del modo oscuro, donde siguen respirando con
-   el puntero. Acá se apagan **por tema**, no bajando `--fondo-presencia`, que
-   lo escribe el runtime en cada movimiento del mouse y volvería a encenderlos
-   en el cuadro siguiente. Sin esto, el blanco de `--sup-pagina` se ve celeste:
-   los focos de menta y aguamarina van encima. */
+/* En claro, los dos velos descansan apagados (propietario, 2026-09-10:
+   «fondo blanco») y el celeste sólo aparece con el puntero (TAREA-08,
+   REQ-08-002). No se borran: son el fondo vivo del modo oscuro. La opacidad
+   se deriva de `--fondo-presencia`, el mismo interruptor del runtime: en
+   reposo (`.35`, y también con `prefers-reduced-motion`, donde el servicio
+   nunca la toca) da 0 y el blanco de `--sup-pagina` queda limpio; con el
+   puntero activo (`1`) sube a .30 (tope por contraste AA: con los cuatro focos
+   apilados `--tinta-3` da 4,73:1; a .6 daba 4,11). Mapeo lineal: (presencia − .35) / .65
+   × .30. */
 :root:not([data-tema="oscuro"]):not([data-theme="dark"]) body::before,
 :root:not([data-tema="oscuro"]):not([data-theme="dark"]) body::after {
-  opacity: 0;
+  opacity: calc((var(--fondo-presencia, .35) - .35) / .65 * .30);
 }
 h1, h2, h3 { margin: 0; font-family: var(--f-titulo); color: var(--tinta-marca); }
 h1, .titulo-h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 600; letter-spacing: -.015em; }
@@ -477,7 +536,7 @@ router-outlet { display: none; }
   z-index: 1100;
   padding: var(--e2) var(--e4);
   border-radius: var(--r-ctrl);
-  background: var(--petroleo);
+  background: var(--petroleo-relleno);
   color: #fff;
   font-weight: 600;
   text-decoration: none;
@@ -505,25 +564,29 @@ app-shell-layout { display: block; }
    y el menú parecía cortado. */
 .app-shell {
   min-height: 100vh; padding-left: var(--w-nav); position: relative;
-  background: linear-gradient(90deg, var(--petroleo-x) 0 var(--w-nav), transparent var(--w-nav));
+  background: linear-gradient(90deg, var(--nav-carril) 0 var(--w-nav), transparent var(--w-nav));
 }
 
-/* Fondo del menú de navegación: la imagen azul del módulo. Encima va un velo
-   petróleo —el color de marca— que garantiza el contraste del texto blanco
-   sobre las zonas claras de la imagen; sin él, la banda de luz se come las
-   etiquetas. */
+/* Fondo del menú de navegación: marfil en claro, petróleo en oscuro (ver los
+   tokens `--nav-*`). En oscuro, encima va un velo petróleo que garantiza el
+   contraste del texto blanco sobre las zonas claras de la textura. */
 .app-side-nav {
+  /* En oscuro el nav es petróleo y el anillo general ahí desaparece: el nav
+     usa su propio token (menta en oscuro, aqua-700 en claro sobre marfil). */
+  --anillo-foco: var(--anillo-foco-nav);
   position: fixed; top: 0; left: 0; bottom: 56px; width: var(--w-nav); z-index: 30;
   overflow: hidden auto;
   background-color: var(--sup-nav);
-  color: var(--tinta-nav);
+  color: var(--nav-tinta);
+  border-right: 1px solid var(--nav-borde);
   padding: var(--e6) 0 var(--e7);
   display: flex; flex-direction: column; gap: var(--e5);
   isolation: isolate;
 }
 
 /* Fondo del nav: viñeta + textura SVG + halo que sigue al puntero.
-   Los tres son azules más profundos que el petróleo del nav; nunca aclaran.
+   En oscuro, los tres son azules más profundos que el petróleo del nav. En
+   claro la viñeta y el degradado se apagan (`--nav-profundidad: 0`).
 
    Van en `fixed` con la misma geometría que el nav, no en `absolute`.
    El nav es `overflow: hidden auto`, así que un hijo absoluto con `inset: 0`
@@ -554,6 +617,8 @@ app-shell-layout { display: block; }
     calc(var(--puntero-yn, .5) * 16px - 8px), 0);
   transition: transform 220ms var(--curva);
 }
+/* El primer `rect` es el degradado petróleo de profundidad: sólo en oscuro. */
+.app-side-nav__textura rect:first-of-type { opacity: var(--nav-profundidad); }
 
 /* Las dos líneas del monitor son lo único vivo del nav por su cuenta: el
    trazo avanza en bucle, como un electro. Los tres `rect` de la textura
@@ -575,8 +640,7 @@ app-shell-layout { display: block; }
   .app-side-nav__textura { transition: none; transform: none; }
   .app-side-nav__textura path { animation: none; stroke-dasharray: none; }
 }
-/* El halo aclara, no oscurece: celeste de marca sobre el petróleo. */
-/* Halo del nav: chico y celeste. Sin `screen` —esa mezcla lo empujaba hacia
+/* Halo del nav: chico y aguamarina. Sin `screen` —esa mezcla lo empujaba hacia
    el blanco— y con caída larga, para que se lea como un reflejo y no como
    una linterna. */
 .app-side-nav__brillo {
@@ -595,11 +659,17 @@ app-shell-layout { display: block; }
 
 /* La cabecera de la barra: la marca y el botón que la recoge, en una fila.
    La línea que separaba la marca del menú pasó acá, que es lo que ahora cierra
-   el bloque de arriba. */
+   el bloque de arriba.
+
+   Los costados son `--e3`, el mismo margen de los renglones de abajo: el botón
+   de recoger termina donde terminan ellos. Con `--e5` la palabra tenía 98 px
+   para sus 89 y, en cuanto la barra mostraba una barra de desplazamiento
+   clásica (15–17 px, Windows o «mostrar siempre» en macOS), quedaba cortada en
+   «AloVidc». */
 .app-side-nav__cabecera {
   display: flex; align-items: center; gap: var(--e2);
-  padding: 0 var(--e5) var(--e5); margin-bottom: var(--e1);
-  border-bottom: 1px solid rgba(255, 255, 255, .12);
+  padding: 0 var(--e3) var(--e5); margin-bottom: var(--e1);
+  border-bottom: 1px solid var(--nav-filete);
 }
 .app-side-nav__marca {
   display: flex; align-items: center; gap: var(--e3); flex: 1 1 auto; min-width: 0;
@@ -615,9 +685,16 @@ app-shell-layout { display: block; }
   outline: 2px solid var(--aguamarina); outline-offset: 2px;
 }
 .app-side-nav__marca img { display: block; width: 34px; height: auto; flex: none; }
+/* El isotipo va en petróleo sobre el marfil y en blanco sobre el petróleo
+   nocturno. Las dos versiones están en el marcado; se muestra la del tema. */
+.app-side-nav__logo--oscuro { display: none !important; }
+:root[data-tema="oscuro"] .app-side-nav__logo--claro,
+:root[data-theme="dark"] .app-side-nav__logo--claro { display: none !important; }
+:root[data-tema="oscuro"] .app-side-nav__logo--oscuro,
+:root[data-theme="dark"] .app-side-nav__logo--oscuro { display: block !important; }
 .app-side-nav__palabra {
   font-family: var(--f-titulo); font-size: 22px; line-height: 28px; font-weight: 600;
-  letter-spacing: .01em; color: #fff;
+  letter-spacing: .01em; color: var(--nav-palabra);
   white-space: nowrap; overflow: hidden;
 }
 
@@ -638,14 +715,20 @@ app-shell-layout { display: block; }
    cerrado: necesita más cuerpo. En oscuro todo está apagado y el mismo borde
    gritaría más que los destinos, que son lo que de verdad hay que leer. */
 :root {
-  --nav-recoger-borde: rgba(255, 255, 255, .42);
-  --nav-recoger-fondo: rgba(255, 255, 255, .10);
-  --nav-recoger-tinta: rgba(255, 255, 255, .85);
+  /* En claro la barra es marfil: el botón es un control más, con el borde de
+     control de 3:1 (`--borde-ctrl`). */
+  --nav-recoger-borde: #7D8786;
+  --nav-recoger-fondo: #FFFFFF;
+  --nav-recoger-tinta: #4E5151;
+  --nav-recoger-hover-tinta: #242828;
+  --nav-recoger-hover-fondo: rgba(79, 179, 169, .12);
 }
 :root[data-tema="oscuro"], :root[data-theme="dark"] {
   --nav-recoger-borde: rgba(159, 216, 208, .48);
   --nav-recoger-fondo: rgba(159, 216, 208, .10);
   --nav-recoger-tinta: rgba(255, 255, 255, .78);
+  --nav-recoger-hover-tinta: #FFFFFF;
+  --nav-recoger-hover-fondo: rgba(159, 216, 208, .22);
 }
 .app-side-nav__recoger {
   display: inline-flex; align-items: center; justify-content: center;
@@ -658,9 +741,9 @@ app-shell-layout { display: block; }
 }
 .app-side-nav__recoger svg { width: 1.35rem; height: 1.35rem; }
 .app-side-nav__recoger:hover {
-  color: #fff;
+  color: var(--nav-recoger-hover-tinta);
   border-color: var(--aguamarina);
-  background: rgba(159, 216, 208, .22);
+  background: var(--nav-recoger-hover-fondo);
 }
 .app-side-nav__recoger:focus-visible {
   outline: 2px solid var(--aguamarina); outline-offset: 2px;
@@ -679,7 +762,7 @@ app-shell-layout { display: block; }
 .app-side-nav__fijos {
   display: flex; flex-direction: column; gap: 2px;
   padding-bottom: var(--e3); margin-bottom: var(--e2);
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  border-bottom: 1px solid var(--nav-filete-suave);
 }
 
 /* Un dominio aplanado («General», «Mi cuenta»): sus destinos se apilan como
@@ -695,7 +778,7 @@ app-shell-layout { display: block; }
   margin: 0 var(--e3);
   border-radius: var(--r-ctrl);
   list-style: none; cursor: pointer;
-  color: rgba(255, 255, 255, .5);
+  color: var(--nav-grupo);
   transition: color var(--mov-rapido) var(--curva), background-color var(--mov-rapido) var(--curva);
 }
 .app-side-nav__group-summary::-webkit-details-marker { display: none; }
@@ -703,13 +786,13 @@ app-shell-layout { display: block; }
   display: flex; flex: none; width: .95rem; height: .95rem; opacity: .8;
 }
 .app-side-nav__group-summary app-nav-icon svg { width: 100%; height: 100%; }
-.app-side-nav__group-summary:hover { color: rgba(255, 255, 255, .8); }
+.app-side-nav__group-summary:hover { color: var(--nav-grupo-fuerte); }
 .app-side-nav__group-summary:focus-visible {
   outline: 2px solid var(--aguamarina); outline-offset: -2px;
 }
 /* El grupo que contiene la pantalla actual se aclara aunque esté plegado: con
    cinco dominios cerrados, es lo único que dice en cuál estás parado. */
-.app-side-nav__group-summary.tiene-la-pantalla { color: rgba(255, 255, 255, .82); }
+.app-side-nav__group-summary.tiene-la-pantalla { color: var(--nav-grupo-fuerte); }
 .app-side-nav__group-summary.tiene-la-pantalla app-nav-icon { opacity: 1; }
 .app-side-nav__group-cuerpo { display: flex; flex-direction: column; gap: 2px; }
 .app-side-nav__eyebrow { padding: 0; color: inherit; flex: 1 1 auto; }
@@ -723,7 +806,7 @@ app-shell-layout { display: block; }
   min-height: var(--h-ctrl); padding: 0 var(--e6);
   margin: 0 var(--e3);
   border-radius: var(--r-ctrl);
-  color: rgba(255, 255, 255, .84);
+  color: var(--nav-item);
   text-decoration: none; font-size: var(--fs-body);
   transition: background-color var(--mov-rapido) var(--curva), color var(--mov-rapido) var(--curva);
 }
@@ -737,15 +820,20 @@ app-shell-layout { display: block; }
 }
 .app-side-nav__item app-nav-icon svg { width: 100%; height: 100%; }
 .app-side-nav__item:hover {
-  color: #fff;
-  background: rgba(159, 216, 208, .16);
+  color: var(--nav-item-fuerte);
+  background: var(--nav-item-hover-bg);
 }
-.app-side-nav__item:hover .icono { opacity: 1; }
+.app-side-nav__item:hover .icono,
+.app-side-nav__item:hover app-nav-icon {
+  opacity: 1;
+  transform: scale(1.15) translateY(-1px);
+  filter: drop-shadow(0 2px 8px rgba(159, 216, 208, .45));
+}
 .app-side-nav__item[aria-current="true"],
 .app-side-nav__item.is-activo {
-  color: #fff; font-weight: 600;
-  background: rgba(159, 216, 208, .22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+  color: var(--nav-item-fuerte); font-weight: 600;
+  background: var(--nav-item-activo-bg);
+  box-shadow: inset 0 1px 0 var(--nav-item-activo-luz);
 }
 .app-side-nav__item[aria-current="true"]::before,
 .app-side-nav__item.is-activo::before {
@@ -755,9 +843,9 @@ app-shell-layout { display: block; }
 .app-side-nav__sub { display: flex; flex-direction: column; gap: 2px; padding: var(--e1) 0 var(--e2); }
 .app-side-nav__sub .app-side-nav__item {
   padding-left: var(--e8); min-height: var(--h-ctrl-sm); font-size: 14px;
-  color: rgba(255, 255, 255, .72);
+  color: var(--nav-item-sub);
 }
-.app-side-nav__sub .app-side-nav__item.is-activo { color: #fff; }
+.app-side-nav__sub .app-side-nav__item.is-activo { color: var(--nav-item-fuerte); }
 /* La flecha del único escalón plegable que queda —el dominio—: gira al abrirse,
    y es la única señal de que el renglón despliega algo en vez de llevar a una
    pantalla. Va más chica que un ícono de destino, como su tipografía. */
@@ -829,9 +917,9 @@ app-shell-layout { display: block; }
      dominio que queda. */
   .app-shell.is-nav-recogido .app-side-nav__group-summary { position: relative; }
   .app-shell.is-nav-recogido .app-side-nav__group-summary.tiene-la-pantalla {
-    color: #fff;
-    background: rgba(159, 216, 208, .22);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+    color: var(--nav-item-fuerte);
+    background: var(--nav-item-activo-bg);
+    box-shadow: inset 0 1px 0 var(--nav-item-activo-luz);
   }
   .app-shell.is-nav-recogido .app-side-nav__group-summary.tiene-la-pantalla::before {
     content: ""; position: absolute; left: -6px; top: 6px; bottom: 6px;
@@ -893,6 +981,9 @@ app-shell-layout { display: block; }
 }
 .app-header__ajustes:hover, .app-header__ajustes:focus-visible { background: var(--sup-hover, var(--sup-tarjeta)); }
 @media (prefers-reduced-motion: reduce) { .app-header__ajustes { transition: none; } }
+/* Red social: el único acceso con texto de la cabecera, porque su ícono no se
+   entiende solo. En angosto se queda en ícono (ver 21.4). */
+.app-header__red-social { flex: none; white-space: nowrap; }
 
 /* Badge de no leídos sobre el ícono de Chats (N-01, 2026-09-22), mismo
    tratamiento que `.campana__badge` de la campana: sobre el borde del
@@ -1049,7 +1140,7 @@ app-shell-layout { display: block; }
   transition: background-color var(--mov-rapido) var(--curva), border-color var(--mov-rapido) var(--curva), box-shadow var(--mov-rapido) var(--curva);
 }
 [app-button][data-variante="primario"] {
-  background: var(--petroleo); border-color: var(--petroleo); color: #fff;
+  background: var(--petroleo-relleno); border-color: var(--petroleo-relleno); color: #fff;
   box-shadow: var(--sombra-1);
 }
 [app-button][data-variante="primario"]:hover { background: var(--petroleo-h); border-color: var(--petroleo-h); box-shadow: var(--sombra-2); }
@@ -1065,8 +1156,27 @@ app-shell-layout { display: block; }
 [app-button][aria-disabled="true"] { opacity: .5; cursor: not-allowed; box-shadow: none; }
 [app-button][aria-busy="true"] { pointer-events: none; }
 
-a[app-link] { color: var(--petroleo); font-weight: 500; text-decoration: none; border-bottom: 1px solid transparent; }
-a[app-link]:hover { border-bottom-color: currentColor; }
+/* Enlace de texto de las plantillas que NO montan el átomo `app-link` (las
+   maquetas ALOVIDA: 551 de las 661 anclas con el atributo). Es la misma
+   definición que `atoms/link/link.css`; `link.spec.ts` vigila que coincidan.
+
+   Va con `:where()`, especificidad cero, a propósito. Como `a[app-link]` a
+   secas (0,1,1) le ganaba al `:host` del átomo (0,1,0), y el resultado era que
+   donde el átomo SÍ estaba, sus variantes `subtle` y `danger` y su subrayado no
+   se veían nunca: todo salía petróleo, sin subrayar. Con especificidad cero
+   cede ante el átomo y ante cualquier regla de componente. */
+:where(a[app-link]) {
+  color: var(--brand-primary);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--mov-rapido) var(--curva);
+}
+:where(a[app-link]:hover) {
+  color: var(--brand-primary-hover);
+  text-decoration-thickness: 2px;
+}
 
 /* --- 6 · Tarjetas -------------------------------------------------------- */
 
@@ -1704,7 +1814,6 @@ body { padding-bottom: 56px; }
 
 /* Un solo lenguaje de transición para todo lo que se puede tocar. */
 [app-button],
-a[app-link],
 .app-side-nav__item,
 .app-menu-item,
 .app-tab,
@@ -1854,10 +1963,23 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 /* Fantasma — sin caja hasta que se lo toca. */
 [app-button][data-variante="fantasma"]:hover { background: var(--info-bg); color: var(--tinta-marca); }
 
-/* El icono acompaña al texto: se corre 1 px cuando el botón responde. */
-[app-button] .icono { transition: transform var(--mov-medio) var(--curva); }
-[app-button]:hover .icono { transform: translateX(1px); }
-[app-button][data-variante="secundario"]:hover .icono { transform: translateX(-1px); }
+/* El icono acompaña al texto con respuesta elástica viva. */
+[app-button] .icono {
+  transform-origin: center center;
+  transition: transform var(--dur-base) var(--pulse-icon-ease, var(--curva)), filter var(--dur-base) var(--pulse-ease);
+}
+[app-button]:hover .icono {
+  transform: scale(1.12) translateY(-0.5px);
+  filter: drop-shadow(0 2px 6px var(--pulse-icon-glow, rgba(79, 179, 169, .35)));
+}
+[app-button]:active .icono {
+  transform: scale(0.92);
+  transition-duration: var(--dur-fast);
+}
+[app-button][data-variante="secundario"]:hover .icono,
+[app-button].btn--secondary:hover .icono {
+  transform: translateX(-2px) scale(1.1);
+}
 
 /* Los demás controles con superficie propia también reaccionan. */
 .app-tenant-switcher:hover { border-color: var(--aguamarina); background: var(--info-bg); }
@@ -1913,7 +2035,7 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 /* Las piezas de la fila acusan recibo, cada una a su manera. */
 .app-data-table tbody .app-badge { transition: transform var(--mov-medio) var(--curva), box-shadow var(--mov-medio) var(--curva); }
 .app-data-table tbody tr:hover .app-badge { transform: translateY(-1px); box-shadow: inset 0 0 0 1px rgba(11, 85, 126, .10), var(--sombra-1); }
-.app-data-table tbody tr:hover a[app-link] { border-bottom-color: currentColor; }
+.app-data-table tbody tr:hover a[app-link] { text-decoration-thickness: 2px; }
 .app-data-table tbody tr:hover .boton-desborde { color: var(--petroleo); border-color: var(--menta); background: var(--sup-tarjeta); }
 .app-data-table tbody tr:hover .celda-truncada { border-bottom-color: var(--petroleo); }
 
@@ -1964,10 +2086,30 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 
   --nav-vineta-a: rgba(3, 20, 28, .70);
   --nav-vineta-b: rgba(1, 10, 15, .86);
+  --nav-profundidad: 1;
   --nav-halo-a:   rgba(87, 194, 183, .26);
   --nav-halo-b:   rgba(87, 194, 183, .13);
   --nav-halo-c:   rgba(86, 150, 190, .06);
   --nav-halo-0:   rgba(86, 150, 190, 0);
+
+  /* En oscuro la barra sigue siendo petróleo, con la tinta blanca de siempre. */
+  --anillo-foco-nav:     #9FD8D0;
+  --nav-carril:          #041219;
+  --nav-borde:           transparent;
+  --nav-tinta:           #FFFFFF;
+  --nav-palabra:         #FFFFFF;
+  --nav-item:            rgba(255, 255, 255, .84);
+  --nav-item-sub:        rgba(255, 255, 255, .72);
+  --nav-item-fuerte:     #FFFFFF;
+  --nav-grupo:           rgba(255, 255, 255, .5);
+  --nav-grupo-fuerte:    rgba(255, 255, 255, .82);
+  --nav-item-hover-bg:   rgba(159, 216, 208, .16);
+  --nav-item-activo-bg:  rgba(159, 216, 208, .22);
+  --nav-item-activo-luz: rgba(255, 255, 255, .12);
+  --nav-filete:          rgba(255, 255, 255, .12);
+  --nav-filete-suave:    rgba(255, 255, 255, .08);
+  --nav-control-fondo:   rgba(255, 255, 255, .10);
+  --nav-control-borde:   rgba(255, 255, 255, .24);
 
   /* Superficies — neutros con sesgo al petróleo, nunca gris puro. */
   --sup-pagina:   #08161C;
@@ -1975,23 +2117,30 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   --sup-inset:    #0C1B22;
   --sup-nav:      #061821;
 
-  /* Tinta — celeste pálido, no blanco. Sobre el petróleo nocturno el blanco
-     puro vibra; un celeste desaturado se despega igual del fondo y descansa
-     la vista en una pantalla que se mira horas. */
-  --tinta:        #CFE7F2;
-  --tinta-2:      #A3C4D4;
-  --tinta-3:      #7C97A5;
+  /* Tinta — marfil, no celeste ni blanco. Sobre el petróleo nocturno el blanco
+     puro vibra; el marfil se despega igual del fondo y descansa la vista. Era
+     un celeste (`#CFE7F2`) que sumaba azul sobre azul; la línea gráfica
+     (Parte 4) pide justo lo contrario: «el marfil pasa de papel a tinta, ese
+     matiz cálido sobre el azul frío es lo que evita el dark mode genérico».
+     Secundaria y terciaria son salvia-200 y salvia-600, como en styles.css. */
+  --tinta:        #F6F3ED;
+  --tinta-2:      #E9EEED;
+  --tinta-3:      #A5B0AD;
   --tinta-nav:    #FFFFFF;
 
-  /* Marca — el petróleo se aclara para seguir leyéndose sobre fondo oscuro. */
-  --petroleo:     #12719F;
+  /* Marca — el petróleo se aclara para seguir leyéndose sobre fondo oscuro.
+     CORRECCIÓN DE CONTRASTE (cierra R3). Como tinta, #12719F daba 3,41:1 sobre
+     la página y 3,09:1 sobre la tarjeta. #4FA8D6 da 6,92 y 6,29. El relleno
+     del botón conserva #12719F: 5,40:1 con blanco encima. */
+  --petroleo:     #4FA8D6;
+  --petroleo-relleno: #12719F;
   --petroleo-h:   #1580B4;
   --petroleo-p:   #0E5F87;
   --aguamarina:   #57C2B7;
   --menta:        #1C4A4C;
   --ambar:        #E4A96B;
 
-  --tinta-marca:  #BFE4F5;
+  --tinta-marca:  #F6F3ED;
   --petroleo-x:   #041219;
   --petroleo-xx:  #020B10;
   --sombra-azul:  rgba(0, 0, 0, .50);
@@ -2000,8 +2149,11 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   /* Líneas */
   --filete:       #1E3138;
   --filete-2:     #17272D;
-  --borde-ctrl:   #4A5F64;
-  --anillo-foco:  rgba(87, 194, 183, .42);
+  /* CORRECCIÓN DE CONTRASTE (cierra R2). #4A5F64 daba 2,47:1 sobre la
+     tarjeta: el campo no se distinguía. #627A82 da 3,68 tarjeta, 3,87 inset
+     y 4,05 página (WCAG 1.4.11 pide 3:1). */
+  --borde-ctrl:   #627A82;
+  --anillo-foco:  #57C2B7; /* sólido: la aguamarina nocturna, ≥6,5:1 (sync-alovida.mjs) */
 
   /* Estados: fondo tintado oscuro + tinta clara del mismo tono */
   --ok-bg:        #0E2E27;  --ok-tinta:     #79CFAF;
@@ -2135,6 +2287,15 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 :root[data-theme="dark"] .app-theme-toggle__sol { color: var(--tinta-3); }
 :root[data-tema="oscuro"] .app-theme-toggle__luna,
 :root[data-theme="dark"] .app-theme-toggle__luna { color: var(--tinta-nav); }
+
+/* En un teléfono de 400 px o menos la barra de arriba no entraba y el avatar
+   quedaba cortado (propietario, 23/10/2026): el interruptor cede 12 px. La
+   perilla recorre lo que queda de pista: 52 − 2 de borde − 24 − 2 × 3. */
+@media (max-width: 400px) {
+  .app-theme-toggle__pista { width: 52px; padding: 0 5px; }
+  :root[data-tema="oscuro"] .app-theme-toggle__perilla,
+  :root[data-theme="dark"] .app-theme-toggle__perilla { transform: translateX(20px); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .app-theme-toggle__pista, .app-theme-toggle .icono, .app-theme-toggle__perilla { transition: none; }
@@ -2300,7 +2461,7 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   html[data-js].nav-abierto .marco-atenuado { filter: none; }
   /* El halo y la textura se apoyaban en una geometría `fixed` que el
      `transform` del cajón deja de contener bien. En el cajón el nav es
-     petróleo pleno: mismo hex, sin la capa decorativa. */
+     liso —marfil en claro, petróleo en oscuro—, sin la capa decorativa. */
   html[data-js] .app-side-nav__fondo,
   html[data-js] .app-side-nav__brillo,
   html[data-js] .app-side-nav::before { display: none; }
@@ -2391,16 +2552,19 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   .app-header { padding: 0 var(--e4); }
   .pagina-indice { padding: var(--e7) var(--e4); gap: var(--e6); }
 
+  /* Red social: sólo el ícono, con el nombre en `aria-label` y globo. */
+  .app-header__red-social-texto { display: none; }
+
   /* El selector de organización se muda al cajón. En un header de 320 px no
      entra —quedaban 33 px de desborde con la hamburguesa, el buscador, el
      interruptor de tema, la campana y el avatar— y encima ahí arriba compite
      con la acción principal. Dentro del cajón recupera su nombre completo y
      queda al lado de lo que gobierna: la navegación de esa organización.
-     Lo muda `alovida.js`; acá va sólo cómo se ve sobre el petróleo. */
+     Lo muda `alovida.js`; acá va sólo cómo se ve sobre la barra. */
   html[data-js] .app-side-nav .app-tenant-switcher {
     width: calc(100% - var(--e6) * 2); margin: 0 var(--e6); max-width: none;
-    background: rgba(255, 255, 255, .10); border-color: rgba(255, 255, 255, .24);
-    color: var(--tinta-nav); box-shadow: none;
+    background: var(--nav-control-fondo); border-color: var(--nav-control-borde);
+    color: var(--nav-tinta); box-shadow: none;
   }
   html[data-js] .app-side-nav .app-tenant-switcher:hover { border-color: var(--menta); }
   html[data-js] .app-side-nav .app-tenant-switcher span { display: inline; }
@@ -2808,7 +2972,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 }
 .landing-ambiente span:nth-child(2) {
   width: 38vw; height: 38vw; right: -12vw; top: 2vw;
-  background: radial-gradient(circle, rgba(122, 191, 232, .60), transparent 66%);
+  background: radial-gradient(circle, rgba(159, 216, 208, .60), transparent 66%);
   transform: translate3d(calc(var(--raton-x, .5) * -56px + 28px), calc(var(--raton-y, .5) * 40px - 20px), 0);
 }
 
@@ -2942,7 +3106,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 /* El nav de la ventana lleva sus etiquetas escritas. Barras grises darían la
    idea de «maqueta»; los nombres dan la de «sistema». */
 .landing-ventana__nav {
-  background: linear-gradient(168deg, var(--petroleo) 0%, var(--petroleo-x) 100%);
+  background: linear-gradient(168deg, var(--petroleo-relleno) 0%, var(--petroleo-x) 100%);
   padding: var(--e4) var(--e2); display: flex; flex-direction: column; gap: 2px;
 }
 .landing-ventana__nav span {
@@ -3065,7 +3229,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .landing-hito b { font-size: 14px; font-weight: 600; color: var(--tinta-marca); line-height: 20px; }
 .landing-hito small { font-size: 12px; line-height: 17px; color: var(--tinta-3); display: block; }
 /* El último hito es la conclusión: se marca sin cambiar de color de marca. */
-.landing-hito--cierre .landing-hito__nodo { background: var(--petroleo); color: #fff; box-shadow: none; }
+.landing-hito--cierre .landing-hito__nodo { background: var(--petroleo-relleno); color: #fff; box-shadow: none; }
 .landing-hito--cierre.esta-alcanzado .landing-hito__nodo { box-shadow: 0 0 0 5px rgba(79, 179, 169, .18); }
 
 .landing-hilo__cierre {
@@ -3201,7 +3365,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .landing-org__nodo {
   display: inline-flex; align-items: center; gap: var(--e2);
   height: 34px; padding: 0 var(--e4); border-radius: var(--r-ctrl);
-  background: var(--petroleo); color: #fff; font-size: var(--fs-caption); font-weight: 600;
+  background: var(--petroleo-relleno); color: #fff; font-size: var(--fs-caption); font-weight: 600;
 }
 .landing-org__linea { width: var(--rail); height: 18px; background: var(--filete); }
 .landing-org__hijos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); width: 100%; }
@@ -3324,7 +3488,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .landing-telefono__barra {
   height: 52px; flex: none; display: flex; align-items: center; gap: var(--e2);
   padding: 0 var(--e4);
-  background: linear-gradient(180deg, var(--petroleo), var(--petroleo-h)); color: #fff;
+  background: linear-gradient(180deg, var(--petroleo-relleno), var(--petroleo-h)); color: #fff;
 }
 .landing-telefono__barra b { font-family: var(--f-titulo); font-size: 14px; font-weight: 600; }
 .landing-telefono__barra .landing-telefono__ruta { margin-left: auto; font-size: 10px; color: rgba(255, 255, 255, .72); font-weight: 600; }
@@ -4096,4 +4260,94 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
    «Libros contables» (refactor UX). */
 .app-form-grid.app-form-grid.app-form-grid > :is(button, a)[app-button] {
   justify-self: end;
+}
+
+
+/* ===========================================================================
+    Lo que se proyecta dentro de un modal (`app-content-dialog`)
+    ===========================================================================
+
+    El modal ya es la superficie: tiene su panel, su encabezado con el título
+    y su pie. Lo que se mete adentro venía pensado para la página, y adentro
+    se notaba (receta en la consulta, 27/10/2026):
+
+    1. **Una tarjeta dentro de otra.** Cada bloque de la consulta es una
+       `app-card` con borde y 32 px de relleno; en el modal se sumaba al
+       relleno del cuerpo y dibujaba un segundo marco a pocos píxeles del
+       primero. Cuando la tarjeta es TODO el contenido —sola en el cuerpo, o
+       la raíz de un componente del cuerpo, sin nada más que un modal hijo al
+       lado— se aplana: el modal la enmarca. Una lista de tarjetas no se toca:
+       ahí cada una es un ítem.
+    2. **El título repetido.** «Prescribir medicación» arriba y «Medicación»
+       como primer renglón del cuerpo. El `h2` de esa tarjeta aplanada sigue
+       existiendo para el lector de pantalla, pero no se ve.
+    3. **Tres columnas angostas.** `auto-fit` de 15rem metía tres campos por
+       fila en un modal de 58rem, a 240 px cada uno: el texto de los
+       controles se cortaba, las ayudas ocupaban cuatro renglones y el último
+       campo quedaba solo con dos huecos al lado. En el modal la rejilla
+       tiene como mucho DOS columnas —la regla de la casa: «los formularios
+       van a dos columnas»— y una sola cuando no entran dos de 15rem.
+    4. **Un texto largo en media columna.** Un campo con `app-textarea` va a
+       lo ancho: indicaciones, motivos y notas se escriben en renglones, no
+       en una tira de 300 px.
+
+    El selector lleva `.content-dialog__cuerpo` delante, así que fuera de un
+    modal no cambia nada. Por qué el `.app-form-grid` va repetido: ver la
+    sección anterior; acá suma una clase más para ganarle a aquella.
+   ========================================================================= */
+
+/* `.card` va repetido por lo mismo que `.app-form-grid` arriba: el rediseño
+   del marco (`paciente.css`) pinta las tarjetas con
+   `:root[data-theme] .app-shell--redesign .app-main .card.card--outlined`
+   —seis clases— y sin esto el marco volvía. */
+.content-dialog__cuerpo > app-card.card.card.card.card.card:only-child,
+.content-dialog__cuerpo
+  > :not(app-card)
+  > app-card.card.card.card.card.card:first-child:not(:has(~ :not(app-content-dialog))) {
+  --_card-padding: 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Dos bloques en el mismo modal (el formulario médico y el consentimiento):
+   aplanados, los separa un filete en vez de dos marcos. */
+.content-dialog__cuerpo
+  > :not(app-card)
+  + :not(app-card)
+  > app-card.card.card.card.card.card:first-child:not(:has(~ :not(app-content-dialog))) {
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-6);
+  border-block-start-color: var(--border-subtle);
+}
+
+.content-dialog__cuerpo
+  > :first-child:not(app-card)
+  > app-card:first-child:not(:has(~ :not(app-content-dialog)))
+  > .card__body
+  > h2:first-of-type {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* `max(15rem, mitad)` como mínimo de la columna: con sitio para dos, la
+   mitad manda y no entra una tercera; sin sitio, manda 15rem y queda una. El
+   `min(100%, …)` evita el desborde en un teléfono angosto. */
+.content-dialog__cuerpo .app-form-grid.app-form-grid.app-form-grid {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, max(15rem, calc((100% - var(--sp-4, 1rem)) / 2))), 1fr)
+  );
+}
+
+.content-dialog__cuerpo .app-form-grid.app-form-grid.app-form-grid > app-form-field:has(app-textarea) {
+  grid-column: 1 / -1;
 }

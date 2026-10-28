@@ -9,41 +9,75 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, map, of, switchMap, type Observable } from 'rxjs';
+import { catchError, finalize, map, of, switchMap, timer, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import { TerminologyClient } from '@core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '@core/data-access/terminology/terminology.types';
-import { ZONAS_DEL_CUERPO, type ZonaDelCuerpo } from './zonas.datos';
+import { TriageIaClient } from '@core/data-access/triage-ia/triage-ia.client';
+import {
+  SymptomObservationsStore,
+  type ObservacionDeSintomas,
+} from '@core/symptom-notes/symptom-observations.store';
+import { BODY_ZONES, type BodyZone } from './zones.data';
+import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
+import { SpecialtyIcon } from '@shared/components/atoms/specialty-icon/specialty-icon';
+import { Spinner } from '@shared/components/atoms/spinner/spinner';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
+import { specialtyPhoto } from '@shared/utils/directory-photo';
+import {
+  recomendarMedicamentos,
+  type MedicamentoSugerido,
+} from './medications-guide.data';
 import {
   BodyMap,
   ZONAS_CON_SILUETA,
+  type SexoDeLaSilueta,
   type ZonaElegible,
 } from '@shared/components/organisms/body-map/body-map';
 
 import {
-  enumerar,
-  explicar,
+  conceptIdOf,
+  withMedicineFirstGeneral,
+  FIRST_GENERAL,
+  glossaryCode,
+  nameForShow,
+  enumerate,
+  explain,
   normalizar,
-  precalentar,
-  reconocer,
-  reconocerAlarmas,
-  reconocerNegados,
-  recomendar,
-  sugerir,
-  type Recomendacion,
+  preheat,
+  recognize,
+  recognizeAlarms,
+  recognizeNegated,
+  recommend,
+  suggest,
+  type Recommendation,
   type Sintoma,
-  TODOS_LOS_SINTOMAS,
-} from './sintomas';
-import { Dictado } from './dictado';
-import { ultimaFrase } from './texto';
+  SYMPTOMS_ALL,
+} from './symptoms';
+import { Dictation } from './dictation';
+import {
+  combine,
+  currentReading,
+  readingSymptoms,
+  readingZones,
+  type TextReading,
+} from './ai-reading';
+import { ultimaFrase } from './text';
+import { EmergencyPanel } from '../emergency/emergency-panel/emergency-panel';
+
+/**
+ * Cuánto se espera a que la persona haga una pausa antes de preguntarle al
+ * servicio de triage. Mientras tanto el motor local ya pintó lo suyo: esto sólo
+ * evita una petición por tecla.
+ */
+const PAUSA_PARA_LEER_MS = 600;
 
 /** Tope por página del listado de profesionales. */
 const POR_PAGINA = 50;
@@ -100,11 +134,26 @@ const VACIO: ReadonlyMap<string, string> = new Map();
  */
 @Component({
   selector: 'app-symptom-check',
-  imports: [Alert, AppButton, BodyMap, Card, Chip, FormField, RouterLink, Textarea],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    BodyMap,
+    Card,
+    Chip,
+    EmergencyPanel,
+    FormField,
+    RouterLink,
+    SpecialtyIcon,
+    Spinner,
+    Textarea,
+  ],
   templateUrl: './symptom-check.html',
   // El dictado vive y muere con la pantalla: ver `Dictado`.
-  providers: [Dictado],
-  styleUrl: './symptom-check.css',
+  providers: [Dictation],
+  // La tarjeta de especialidad es la del buscador de `/directory` (27/10/2026):
+  // primero la hoja compartida, después la propia, para que la propia ajuste.
+  styleUrls: ['../../shared/styles/card-grid.css', './symptom-check.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SymptomCheck {
@@ -112,7 +161,9 @@ export class SymptomCheck {
   private readonly publico = inject(PublicDirectoryClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly router = inject(Router);
-  protected readonly dictado = inject(Dictado);
+  private readonly triageIa = inject(TriageIaClient);
+  protected readonly dictado = inject(Dictation);
+  private readonly observacionesStore = inject(SymptomObservationsStore);
 
   constructor() {
     /* El índice del motor se arma la primera vez que se lo usa, y armarlo
@@ -123,9 +174,9 @@ export class SymptomCheck {
     afterNextRender(() => {
       const cuandoPueda = globalThis.requestIdleCallback;
       if (typeof cuandoPueda === 'function') {
-        cuandoPueda(() => precalentar());
+        cuandoPueda(() => preheat());
       } else {
-        setTimeout(() => precalentar());
+        setTimeout(() => preheat());
       }
     });
   }
@@ -185,6 +236,44 @@ export class SymptomCheck {
   );
 
   /**
+   * El sexo asignado al nacer del propio perfil (P-04, 2026-09-25).
+   *
+   * Se pide **al abrir**, a diferencia de las especialidades: cambia qué
+   * silueta se dibuja desde el primer instante, así que esperar a la primera
+   * tecla se vería como que la figura «cambia sola» a mitad de la pantalla.
+   * Sin sesión no se pide —no hay perfil propio que leer—, y un fallo o un
+   * perfil `INTERSEX`/`UNKNOWN` **no rompen el flujo**: se sigue mostrando la
+   * silueta neutra y la lista completa, que es mejor que arriesgar esconder
+   * un síntoma real por un dato que no se pudo confirmar.
+   */
+  private readonly sexoAlNacer = toSignal(
+    this.sinSesion() ? of(undefined) : this.leerSexoPropio(),
+    { initialValue: undefined as 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN' | undefined },
+  );
+
+  /** El sexo, recortado a lo que la silueta sabe dibujar (ver `BodyMap`). */
+  protected readonly siluetaSexo = computed<SexoDeLaSilueta | undefined>(() => {
+    const sexo = this.sexoAlNacer();
+    return sexo === 'MALE' || sexo === 'FEMALE' ? sexo : undefined;
+  });
+
+  /**
+   * Si un síntoma corresponde al sexo del propio perfil.
+   *
+   * Sin `soloParaSexo` es de cualquiera. Sin sexo conocido —`INTERSEX`,
+   * `UNKNOWN`, sin sesión o todavía sin resolver— no se filtra nada: se
+   * prefiere mostrar de más antes que esconder un síntoma real por un dato
+   * que no se pudo confirmar.
+   */
+  private sintomaVisible(sintoma: Sintoma): boolean {
+    const solo = sintoma.soloParaSexo;
+    if (solo === undefined) return true;
+    const sexo = this.siluetaSexo();
+    if (sexo === undefined) return true;
+    return solo === sexo;
+  }
+
+  /**
    * Los síntomas de alarma: los que dice el texto **y los que se tocaron**.
    *
    * Las zonas del cuerpo ofrecen «dolor de pecho» y «dificultad para respirar»
@@ -193,38 +282,208 @@ export class SymptomCheck {
    * pantalla que terminaba en la nada era justo el de las urgencias.
    */
   protected readonly alarmas = computed<readonly Sintoma[]>(() => {
-    const delTexto = reconocerAlarmas(this.texto());
+    const delTexto = recognizeAlarms(this.texto());
     const puestas = this.sintomas().filter((sintoma) => sintoma.alarma === true);
     const yaEstan = new Set(delTexto.map((sintoma) => sintoma.id));
     return [...delTexto, ...puestas.filter((sintoma) => !yaEstan.has(sintoma.id))];
   });
 
   /**
-   * Los chips: lo reconocido en el texto, menos lo quitado, más lo agregado.
+   * Lo que entendió el servicio de triage (AlovidaAIService) del último texto
+   * en el que la persona hizo una pausa, junto con ese texto.
    *
-   * El orden es el de aparición en el texto y después los agregados: ver el
-   * porqué en `reconocer`.
+   * El motor local reconoce las filas de la tabla al instante; el servicio suma
+   * lo que la tabla no tiene —«me duele la pantorrilla», «manchas en la
+   * espalda»— y ubica lo que sí tiene («hormigueo · mano izquierda»). Ver
+   * `ai-reading.ts`.
+   *
+   * Con menos de tres letras no se pregunta nada, y así en el servidor (texto
+   * vacío) no se programa ni un temporizador. Si el servicio falla o tarda,
+   * `TriageIaClient` devuelve `null` y la pantalla sigue con lo local.
+   */
+  private readonly lecturaGuardada = toSignal(
+    toObservable(this.texto).pipe(
+      map((texto) => texto.trim()),
+      switchMap((texto) =>
+        texto.length < 3
+          ? of(null)
+          : timer(PAUSA_PARA_LEER_MS).pipe(
+              switchMap(() => this.triageIa.analizar(texto)),
+              map((lectura): TextReading | null => (lectura === null ? null : { texto, lectura })),
+              // Con respuesta, sin ella (falla o espera vencida) o cancelada porque se
+              // siguió escribiendo: la consulta de ESTE texto ya no está en curso.
+              finalize(() => this.textoLeido.set(texto)),
+            ),
+      ),
+    ),
+    { initialValue: null },
+  );
+
+  /** El último texto cuya consulta al servicio terminó. */
+  private readonly textoLeido = signal('');
+
+  /**
+   * El servicio todavía está leyendo lo escrito. Con MedGemma en el servidor,
+   * lo que el motor local no entiende tarda 10–25 s; sin este estado la
+   * pantalla decía «No reconocimos ningún síntoma» mientras tanto y parecía
+   * rota. Cubre también la pausa previa a la consulta, para no titilar
+   * mientras la persona escribe.
+   */
+  protected readonly leyendoConIa = computed(() => {
+    const texto = this.texto().trim();
+    return texto.length >= 3 && this.textoLeido() !== texto;
+  });
+
+  /** La lectura del servicio que todavía vale para lo escrito. */
+  private readonly lecturaVigente = computed(() =>
+    currentReading(this.lecturaGuardada(), this.texto()),
+  );
+
+  /** Mensaje seguro del servicio; el texto local mantiene una respuesta amable con servicios viejos. */
+  protected readonly respuestaDelServicio = computed(() => this.lecturaVigente()?.response ?? null);
+
+  protected readonly respuestaEmpatica = computed(() => {
+    if (this.alarmas().length > 0 || this.texto().trim() === '') {
+      return null;
+    }
+    const respuesta = this.respuestaDelServicio();
+    if (respuesta !== null) {
+      return respuesta;
+    }
+    if (this.sintomas().length === 0) {
+      return 'Gracias por contarnos cómo se siente. A veces cuesta encontrar las palabras, y lo que siente merece atención. Un médico general puede escucharle y ayudarle a decidir el próximo paso.';
+    }
+    return 'Gracias por contarnos cómo se siente. Entendemos que esto puede preocuparle. No podemos determinar la causa por este medio, pero un profesional puede escucharle, evaluar sus síntomas y orientarle sobre los próximos pasos.';
+  });
+
+  /** Los hallazgos del servicio que todavía valen para lo escrito. */
+  private readonly deLaLectura = computed(() => readingSymptoms(this.lecturaVigente()));
+
+  /**
+   * Las zonas del cuerpo de lo que se contó: la silueta las ilumina mientras
+   * la persona escribe o dicta, y las pastillas «Piel», «Ánimo» y «General»
+   * también.
+   *
+   * Manda la ubicación del servicio cuando la hay («hormigueo · mano» es la
+   * mano); si no, la primera zona de la tabla que ofrece ese síntoma.
+   */
+  protected readonly zonasMarcadas = computed<readonly string[]>(() => {
+    const delServicio = readingZones(this.lecturaVigente());
+    const marcadas = new Set<string>();
+    for (const sintoma of this.sintomas()) {
+      const ubicadas = delServicio.get(sintoma.id);
+      if (ubicadas !== undefined && ubicadas.length > 0) {
+        ubicadas.forEach((zona) => marcadas.add(zona));
+        continue;
+      }
+      const deLaTabla = BODY_ZONES.find((zona) => zona.sintomas.includes(sintoma.id));
+      if (deLaTabla !== undefined) marcadas.add(deLaTabla.id);
+    }
+    return [...marcadas];
+  });
+
+  protected estaMarcada(idDeZona: string): boolean {
+    return this.zonasMarcadas().includes(idDeZona);
+  }
+
+  /**
+   * Los chips: lo reconocido en el texto —acá y por el servicio—, menos lo
+   * quitado, más lo agregado.
+   *
+   * El orden es el de aparición en el texto, después lo que sólo vio el
+   * servicio y al final los agregados: ver el porqué en `reconocer` y en
+   * `combinar`.
    */
   protected readonly sintomas = computed<readonly Sintoma[]>(() => {
     const quitados = this.quitados();
-    const delTexto = reconocer(this.texto()).filter((s) => !quitados.has(s.id));
+    const delTexto = combine(recognize(this.texto()), this.deLaLectura()).filter(
+      (s) => !quitados.has(s.id),
+    );
     const yaEstan = new Set(delTexto.map((s) => s.id));
-    return [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
+    const todos = [...delTexto, ...this.agregados().filter((s) => !yaEstan.has(s.id))];
+    // «Salud íntima» no ofrece lo que no corresponde al sexo del propio
+    // perfil (P-04): ni por texto reconocido, ni por lo agregado a mano.
+    return todos.filter((s) => this.sintomaVisible(s));
   });
 
   /** Lo que el autocompletado ofrece para la última palabra que se escribe. */
   protected readonly sugerencias = computed(() =>
-    sugerir(ultimaFrase(this.texto()), this.sintomas()),
+    suggest(ultimaFrase(this.texto()), this.sintomas()).filter((s) => this.sintomaVisible(s)),
   );
 
-  protected readonly recomendaciones = computed<readonly Recomendacion[]>(() =>
+  /**
+   * Por qué la lectura no es segura, o `null` si lo es. Sin certeza la
+   * respuesta por defecto es Medicina general (ver `conMedicinaGeneralPrimero`):
+   *
+   * - el texto no se reconoció y la IA ya terminó de leerlo;
+   * - todo lo reconocido lo interpretó la IA (`source: 'model'` o `'semantic'`): el motor
+   *   local no vio nada en el texto ni se eligió nada a mano o en la figura.
+   *   Lo que el servicio lee con sus tablas («manchas en la espalda» →
+   *   Dermatología) es determinista y no entra acá.
+   *
+   * Lo negado a secas («no tengo fiebre») no cuenta: ahí la pantalla ya dice
+   * qué entendió y pide lo que sí se siente.
+   */
+  /* ---- observaciones guardadas (propietario, 2026-10-08) -----------------
+     «Guardar observación» salió a pedido del cliente (27/10/2026); las ya
+     guardadas se siguen mostrando para poder borrarlas. */
+
+  /** Las observaciones guardadas en este dispositivo, la más nueva primero. */
+  protected readonly observaciones = this.observacionesStore.lista;
+
+  /** Lo que se le confirma a quien borró una observación. */
+  protected readonly avisoDeObservacion = signal('');
+
+  protected borrarObservacion(id: string): void {
+    this.observacionesStore.borrar(id);
+    this.avisoDeObservacion.set('La observación se eliminó de este dispositivo.');
+  }
+
+  protected fechaDe(observacion: ObservacionDeSintomas): string {
+    return new Date(observacion.creada).toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  protected nombresDe(observacion: ObservacionDeSintomas): string {
+    return observacion.sintomas.map((s) => s.nombre).join(' · ');
+  }
+
+  /** Para el template: el término del glosario (ver `nombreParaMostrar` en symptoms.ts). */
+  protected readonly nombreParaMostrar = nameForShow;
+  protected readonly codigoDelGlosario = glossaryCode;
+
+  protected readonly faltaDeCerteza = computed<string | null>(() => {
+    if (this.texto().trim() === '' || this.agregados().length > 0) {
+      return null;
+    }
+    if (this.sintomas().length === 0) {
+      return this.leyendoConIa() || this.descartados() !== ''
+        ? null
+        : 'No pudimos identificar con certeza qué le pasa: un médico general le evalúa y le deriva si hace falta.';
+    }
+    const fuente = this.lecturaVigente()?.source;
+    const soloIa = recognize(this.texto()).length === 0 && (fuente === 'model' || fuente === 'semantic');
+    return soloIa
+      ? 'Lo que escribió lo interpretamos con IA y puede no ser exacto: un médico general le evalúa y le deriva si hace falta.'
+      : null;
+  });
+
+  protected readonly recomendaciones = computed<readonly Recommendation[]>(() => {
     // Con una alarma en el texto no se recomienda nada: la pantalla entera pasa
     // a decir «andá a urgencias», y una lista de especialidades debajo
     // competiría con ese mensaje.
-    this.alarmas().length > 0
-      ? []
-      : recomendar(this.sintomas(), new Set(this.especialidadesDisponibles().keys())),
-  );
+    if (this.alarmas().length > 0) {
+      return [];
+    }
+    const disponibles = new Set(this.especialidadesDisponibles().keys());
+    const lista = recommend(this.sintomas(), disponibles);
+    const motivo = this.faltaDeCerteza();
+    if (lista.length === 0 && motivo === null) {
+      return lista;
+    }
+    // Medicina general va SIEMPRE primero (propietario, 2026-10-08); el motivo cambia si además
+    // no hay certeza. Los especialistas siguen debajo, con su porqué.
+    return withMedicineFirstGeneral(lista, motivo ?? FIRST_GENERAL, disponibles);
+  });
 
   /**
    * Qué decirle a quien escribió una urgencia.
@@ -242,11 +501,39 @@ export class SymptomCheck {
     this.alarmas().some((alarma) => alarma.id === 'ideas-suicidas'),
   );
 
+  /** Permite al usuario desplegar manualmente el módulo de ayuda y contención emocional desde la cabecera. */
+  protected readonly ayudaManualAbierta = signal(false);
+
+  protected alternarAyudaManual(): void {
+    this.ayudaManualAbierta.update((v) => !v);
+    if (this.ayudaManualAbierta() && typeof window !== 'undefined') {
+      setTimeout(() => document.querySelector('[data-testid="sintomas-crisis-soporte"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+  }
+
+  /** Si se debe desplegar el módulo de apoyo y contención en crisis (por detección en texto o apertura manual). */
+  protected readonly mostrarCrisis = computed(
+    () => this.esRiesgoSuicida() || this.ayudaManualAbierta(),
+  );
+
+  /** Modo activo de recomendación: por especialidades médicas o recomendación de medicamentos. */
+  protected readonly vistaRecomendacion = signal<'especialidades' | 'medicamentos'>('especialidades');
+
+  /** Medicamentos orientativos recomendados según los síntomas activos y conocimiento farmacológico. */
+  protected readonly medicamentosSugeridos = computed<readonly MedicamentoSugerido[]>(() => recomendarMedicamentos(this.sintomas()));
+
+  /** Resumen de nombres de síntomas detectados para la vista de medicamentos. */
+  protected readonly sintomasDetectadosTexto = computed(() => this.sintomas().map((s) => s.nombre).join(', '));
+
   /** Parámetros de búsqueda para recomendación de medicamentos según síntomas reconocidos. */
   protected readonly medicamentosQueryParams = computed(() => {
     const primer = this.sintomas()[0];
     return primer !== undefined ? { q: primer.nombre } : {};
   });
+
+  protected cambiarVistaRecomendacion(modo: 'especialidades' | 'medicamentos'): void {
+    this.vistaRecomendacion.set(modo);
+  }
 
   /**
    * Lo que la persona escribió **para decir que no lo tiene**.
@@ -257,7 +544,7 @@ export class SymptomCheck {
    * pantalla que escucha y un buscador que no encontró nada.
    */
   protected readonly descartados = computed(() =>
-    enumerar(reconocerNegados(this.texto()).map((sintoma) => sintoma.nombre)),
+    enumerate(recognizeNegated(this.texto()).map((sintoma) => sintoma.nombre)),
   );
 
   /** Lo que la región viva le anuncia a un lector de pantalla. */
@@ -269,12 +556,15 @@ export class SymptomCheck {
     return `Reconocimos: ${nombres.join(', ')}.`;
   });
 
-  protected readonly explicacionDe = explicar;
+  protected readonly explicacionDe = explain;
+
+  /** La foto de la tarjeta: la misma que esa especialidad tiene en `/directory`. */
+  protected readonly fotoDe = specialtyPhoto;
 
   /* --- Elegir sin escribir ---------------------------------------------- */
 
   /** Las zonas del cuerpo, tal cual la tabla. */
-  protected readonly zonas = signal(ZONAS_DEL_CUERPO);
+  protected readonly zonas = signal(BODY_ZONES);
 
   /**
    * Las pastillas: sólo lo que no tiene un lugar en la figura («piel»,
@@ -303,24 +593,27 @@ export class SymptomCheck {
    *
    * Un `id` de la tabla de zonas que no exista allá **se ignora**: la zona
    * ofrece uno menos y la pantalla sigue en pie. Es la única forma de que dos
-   * listas convivan sin que una rompa a la otra.
+   * listas convivan sin que una rompa a la otra. Y en «Salud íntima», los que
+   * no corresponden al sexo del propio perfil tampoco se ofrecen (P-04):
+   * quien busca en la zona íntima no puede elegir ahí lo del otro sexo.
    */
   protected readonly sintomasDeLaZona = computed<readonly Sintoma[]>(() => {
     const abierta = this.zonaAbierta();
     if (abierta === null) {
       return [];
     }
-    const zona = ZONAS_DEL_CUERPO.find((z) => z.id === abierta);
+    const zona = BODY_ZONES.find((z) => z.id === abierta);
     if (zona === undefined) {
       return [];
     }
     return zona.sintomas
-      .map((id) => TODOS_LOS_SINTOMAS.find((s) => s.id === id))
-      .filter((s): s is Sintoma => s !== undefined);
+      .map((id) => SYMPTOMS_ALL.find((s) => s.id === id))
+      .filter((s): s is Sintoma => s !== undefined)
+      .filter((s) => this.sintomaVisible(s));
   });
 
   /** Abre una zona, o la cierra si ya lo estaba. */
-  protected alternarZona(zona: ZonaDelCuerpo): void {
+  protected alternarZona(zona: BodyZone): void {
     this.zonaAbierta.update((previa) => (previa === zona.id ? null : zona.id));
   }
 
@@ -378,11 +671,11 @@ export class SymptomCheck {
    * pedido del catálogo.
    */
   protected alternarDictado(): void {
-    if (this.dictado.escuchando()) {
-      this.dictado.detener();
+    if (this.dictado.listening()) {
+      this.dictado.stop();
       return;
     }
-    this.dictado.empezar((final) => {
+    this.dictado.start((final) => {
       const previo = this.texto().trimEnd();
       this.escribir(previo === '' ? final : `${previo} ${final}`);
     });
@@ -420,22 +713,41 @@ export class SymptomCheck {
    * memoria por su chip, así que el texto alcanzaba. **Eso cambió**: ahora el
    * directorio acota por `?especialidad=<conceptId>` contra el servidor, y una
    * búsqueda de texto sólo funciona de rebote, porque el buscador matchea el
-   * encabezado del grupo.
+   * encabezado del grupo — y sin ese parámetro el directorio se queda en la
+   * portada agrupada por categoría en vez de abrir la lista.
    *
    * El identificador no cuesta una consulta: la lista de especialidades con
-   * gente ya se lee para no recomendar una vacía, y lo único que faltaba era no
-   * tirar el concepto al quedarse con el nombre.
+   * gente ya se lee para no recomendar una vacía. La búsqueda usa la misma
+   * tolerancia que decidió recomendar la especialidad ({@link conceptIdOf}):
+   * antes acá se buscaba por igualdad exacta mientras que la recomendación se
+   * filtraba con coincidencia difusa («Cardióloga» ↔ «Cardiología»), así que
+   * una especialidad podía recomendarse y no encontrar cómo enlazar — el bug
+   * era «recomienda Traumatología pero al tocarla no lleva a los
+   * traumatólogos».
    *
    * Sin identificador —sesión pública, o un nombre de la tabla de síntomas que
    * el catálogo no tiene— se cae al texto, que es como funcionaba hasta ahora:
    * peor destino, nunca una pantalla rota.
    */
   protected verProfesionales(nombre: string): void {
-    const conceptId = this.especialidadesDisponibles().get(normalizar(nombre));
+    const conceptId = conceptIdOf(nombre, this.especialidadesDisponibles());
     void this.router.navigate([this.rutaDeResultados()], {
       queryParams:
         conceptId === undefined || conceptId === '' ? { q: nombre } : { especialidad: conceptId },
     });
+  }
+
+  /**
+   * El sexo asignado al nacer del propio perfil, tolerante a fallo.
+   *
+   * Sólo se llama con sesión (ver {@link sexoAlNacer}): sin ella no hay
+   * `/profiles/patients/me` que leer.
+   */
+  private leerSexoPropio(): Observable<'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN' | undefined> {
+    return this.profiles.getOwnPatientProfile().pipe(
+      map((perfil) => perfil.sexAtBirth),
+      catchError(() => of(undefined)),
+    );
   }
 
   /**

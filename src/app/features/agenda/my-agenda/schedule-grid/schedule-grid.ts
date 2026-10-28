@@ -4,12 +4,18 @@ import {
   Component,
   computed,
   ElementRef,
+  inject,
   input,
   signal,
   viewChild,
 } from '@angular/core';
 
-import type { PublishedRule } from '../../../../core/data-access/scheduling/scheduling.types';
+import { nextControlId } from '@shared/forms/form-control.context';
+import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
+import type {
+  FranjaModo,
+  PublishedRule,
+} from '../../../../core/data-access/scheduling/scheduling.types';
 import type { BloqueoDelMes } from '../month-view/month-view';
 import { lunesDe } from '../week-view/week-view';
 
@@ -35,8 +41,18 @@ export interface BloqueDelHorario {
   /** Porcentaje del alto de la grilla que ocupa. */
   readonly alto: number;
   readonly etiqueta: string;
-  /** «consultas de 30 min», o «tamaño libre» cuando la franja es dinámica. */
+  /** «consultas de 30 min», «tamaño libre», u «otros servicios». */
   readonly detalle: string;
+  /**
+   * Qué admite la franja (v4.2.40). Ausente en la regla ≡ `CONSULTATIONS`.
+   *
+   * La grilla lo dice con palabras —`detalle`, `etiqueta` y el globo— y además
+   * con una clase, para que «Mis horarios» y «Horarios de otros servicios» no
+   * dependan sólo del color para distinguir una franja de la otra.
+   */
+  readonly mode: FranjaModo;
+  /** Si admite teleconsulta (ausente ≡ no): marca, etiqueta y globo, nunca sólo un ícono. */
+  readonly telemedicina: boolean;
   /** Lo que se cuenta al pasar el mouse: rótulo y valor, en orden. */
   readonly datos: readonly { readonly rotulo: string; readonly valor: string }[];
 }
@@ -51,6 +67,32 @@ export interface BloqueoDelHorario {
   readonly alto: number;
   readonly motivo: string | null;
   readonly etiqueta: string;
+}
+
+/**
+ * Una celda de la grilla accesible: un día a una hora.
+ *
+ * Es lo que recorre el teclado y lo que lee el lector de pantalla. La capa
+ * que se ve —filas teñidas, bloques, bloqueos— queda `aria-hidden`: dice lo
+ * mismo con color y forma, y un lector no puede «ver» dónde cae un bloque de
+ * alto proporcional.
+ */
+export interface ScheduleCell {
+  /** `fila-columna`, para encontrarla en el DOM al moverse con las flechas. */
+  readonly id: string;
+  readonly row: number;
+  readonly col: number;
+  readonly dia: DiaDelHorario;
+  /** «Lunes 7 de septiembre, 09:00, atendés de 08:00 a 12:00, Sede Centro». */
+  readonly etiqueta: string;
+  /** La franja que la cubre, para abrir su globo al enfocarla. */
+  readonly bloque: BloqueDelHorario | null;
+}
+
+/** Una hora de la grilla accesible, con sus siete celdas. */
+export interface ScheduleRow {
+  readonly hora: number;
+  readonly celdas: readonly ScheduleCell[];
 }
 
 /**
@@ -177,10 +219,27 @@ const SEPARACION_GLOBO = 8;
  * Cada bloque escribe sus horas y lleva su `aria-label` con el día en
  * palabras. El pedido dice «resaltado con otro color», y el color es la
  * mitad: quien no lo distingue tiene que poder leer lo mismo.
+ *
+ * ## Para el teclado y el lector, una grilla de verdad (WCAG 2.1.1 y 1.3.1)
+ *
+ * Los bloques de alto proporcional no se pueden recorrer hora por hora, y
+ * las celdas horarias eran `aria-hidden`: una hora libre no existía para el
+ * lector. Encima del dibujo va una capa transparente con el patrón `grid` de
+ * ARIA —una fila por hora, una celda por día, cabeceras de columna y de fila—
+ * con *roving tabindex*: una sola parada de `Tab`, y adentro ↑/↓ cambian de
+ * hora, ←/→ de día, Inicio/Fin van al primer y al último día y
+ * Ctrl+Inicio/Ctrl+Fin a la primera y la última celda. Cada celda dice su día,
+ * su hora, qué pasa ahí y **dónde** (`sede`), y al enfocarla abre el mismo
+ * globo que el mouse. La capa no recibe el puntero (`pointer-events: none`):
+ * el mouse sigue viendo y tocando exactamente lo de antes.
+ *
+ * Es de sólo lectura (`aria-readonly`): esta grilla muestra el patrón
+ * semanal, no reserva ni crea nada. Donde sí se crea —el día de la agenda—
+ * los huecos libres son botones con su etiqueta completa (ver `DayView`).
  */
 @Component({
   selector: 'app-schedule-grid',
-  imports: [],
+  imports: [NavIcon],
   templateUrl: './schedule-grid.html',
   styleUrl: './schedule-grid.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -230,7 +289,28 @@ export class ScheduleGrid {
    */
   readonly rango = input<RangoDeGrilla>('completo');
 
+  /**
+   * Dónde se atiende —el nombre de la sede del recurso—, para las etiquetas.
+   * `null` cuando el recurso no tiene sede registrada: la etiqueta la omite en
+   * vez de decir «en null» o inventar un lugar.
+   */
+  readonly sede = input<string | null>(null);
+
+  /**
+   * Si la semana tiene franjas de otros servicios: sólo entonces hace falta la
+   * leyenda que explica el segundo tono.
+   */
+  protected readonly hayOtrosServicios = computed(() =>
+    this.reglas().some(
+      (regla) => regla.bookingMode === 'SERVICES' || regla.bookingMode === 'MIXED',
+    ),
+  );
+
   private readonly caja = viewChild<ElementRef<HTMLElement>>('caja');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** El id de la ayuda que describe la grilla; único, hay pantallas con dos. */
+  protected readonly ayudaId = nextControlId('schedule-grid-help');
 
   constructor() {
     // Abre en la primera hora atendida. Corre cuando cambian las reglas o el
@@ -283,6 +363,8 @@ export class ScheduleGrid {
     );
     return {
       plantilla: `var(--carril) ${anchos.join(' ')}`,
+      /** Las mismas columnas sin el carril: las de la capa accesible. */
+      dias: anchos.join(' '),
       conAtencion: anchos.filter((a) => a.startsWith('minmax')).length,
       vacios: anchos.filter((a) => !a.startsWith('minmax')).length,
     };
@@ -340,6 +422,7 @@ export class ScheduleGrid {
         const inicio = minutos(r.startTime);
         const fin = minutos(r.endTime);
         const tamano = r.slotMinutes ?? this.slotMinutes();
+        const modo = r.bookingMode ?? 'CONSULTATIONS';
         return {
           id: `${r.dayOfWeek}-${r.startTime}`,
           dia: r.dayOfWeek,
@@ -347,9 +430,15 @@ export class ScheduleGrid {
           hasta: hhmm(r.endTime),
           top: ((inicio - arranque) / total) * 100,
           alto: ((fin - inicio) / total) * 100,
-          etiqueta: `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atendés`,
-          detalle: tamano ? `consultas de ${tamano} min` : 'tamaño libre',
-          datos: datosDe(r, fin - inicio, tamano),
+          etiqueta:
+            `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atiende` +
+            QUE_ATIENDE[modo] +
+            (this.sede() ? ` en ${this.sede()}` : '') +
+            (r.telemedicineEnabled === true ? ', también por telemedicina' : ''),
+          detalle: detalleDe(modo, tamano),
+          mode: modo,
+          telemedicina: r.telemedicineEnabled === true,
+          datos: datosDe(r, fin - inicio, tamano, modo),
         };
       })
       .sort((a, b) => a.top - b.top);
@@ -433,6 +522,153 @@ export class ScheduleGrid {
   /** El globo abierto, si hay uno. */
   protected readonly globo = signal<Globo | null>(null);
 
+  /** La celda que abrió el globo con el foco, para describirla con él. */
+  protected readonly celdaConGlobo = signal<string | null>(null);
+
+  /**
+   * Las filas de la grilla accesible: una por hora dibujada, siete celdas cada
+   * una, en el orden en que se ven los días (de lunes a domingo).
+   */
+  protected readonly filas = computed<readonly ScheduleRow[]>(() => {
+    const dias = this.dias();
+    const bloques = this.bloques();
+    const bloqueos = this.bloqueosPintados();
+    return this.horas().map((h, row) => ({
+      hora: h,
+      celdas: dias.map((dia, col) => {
+        const bloque =
+          bloques.find((b) => b.dia === dia.numero && overlapsHour(b.desde, b.hasta, h)) ?? null;
+        const bloqueo =
+          bloqueos.find((b) => b.dia === dia.numero && overlapsHour(b.desde, b.hasta, h)) ?? null;
+        return {
+          id: `${row}-${col}`,
+          row,
+          col,
+          dia,
+          bloque,
+          etiqueta: this.etiquetaDeCelda(dia, h, bloque, bloqueo),
+        };
+      }),
+    }));
+  });
+
+  /** Dónde está la parada de `Tab` que el teclado movió, si la movió. */
+  private readonly foco = signal<{ readonly row: number; readonly col: number } | null>(null);
+
+  /**
+   * La celda que lleva `tabindex="0"`.
+   *
+   * Hasta que el teclado la mueva, la primera hora atendida del primer día que
+   * se atiende: la misma a la que abre la caja, así que entrar con `Tab` cae
+   * donde la vista ya está mirando. Se sujeta al rango visible, porque cambiar
+   * a «horario de atención» deja menos filas.
+   */
+  protected readonly celdaActiva = computed(() => {
+    const filas = this.filas();
+    if (filas.length === 0) return { row: 0, col: 0 };
+    const movida = this.foco();
+    if (movida !== null) {
+      return { row: Math.min(movida.row, filas.length - 1), col: Math.min(movida.col, 6) };
+    }
+    const row = Math.max(
+      0,
+      filas.findIndex((f) => f.celdas.some((c) => c.bloque !== null)),
+    );
+    const col = Math.max(
+      0,
+      filas[row].celdas.findIndex((c) => c.bloque !== null),
+    );
+    return { row, col };
+  });
+
+  protected esActiva(celda: ScheduleCell): boolean {
+    const activa = this.celdaActiva();
+    return activa.row === celda.row && activa.col === celda.col;
+  }
+
+  /**
+   * Las flechas de la grilla (patrón `grid` de ARIA).
+   *
+   * ↑/↓ una hora, ←/→ un día, Inicio/Fin el primer y el último día de esa
+   * hora, Ctrl+Inicio/Ctrl+Fin la primera y la última celda. En los bordes se
+   * queda quieta: dar la vuelta de domingo a lunes haría perder la hora.
+   */
+  protected alTeclearCelda(evento: KeyboardEvent, celda: ScheduleCell): void {
+    const ultimaFila = this.filas().length - 1;
+    let { row, col } = celda;
+    switch (evento.key) {
+      case 'ArrowUp':
+        row = Math.max(0, row - 1);
+        break;
+      case 'ArrowDown':
+        row = Math.min(ultimaFila, row + 1);
+        break;
+      case 'ArrowLeft':
+        col = Math.max(0, col - 1);
+        break;
+      case 'ArrowRight':
+        col = Math.min(6, col + 1);
+        break;
+      case 'Home':
+        col = 0;
+        if (evento.ctrlKey) row = 0;
+        break;
+      case 'End':
+        col = 6;
+        if (evento.ctrlKey) row = ultimaFila;
+        break;
+      default:
+        return;
+    }
+    evento.preventDefault();
+    this.foco.set({ row, col });
+    this.host.nativeElement.querySelector<HTMLElement>(`[data-celda="${row}-${col}"]`)?.focus();
+  }
+
+  /** Enfocar una celda la vuelve la parada de `Tab` y abre el globo de su franja. */
+  protected alEnfocarCelda(evento: FocusEvent, celda: ScheduleCell): void {
+    this.foco.set({ row: celda.row, col: celda.col });
+    if (celda.bloque === null) {
+      this.cerrarGlobo();
+      return;
+    }
+    this.abrirGlobo(evento, celda.bloque, celda.dia);
+    this.celdaConGlobo.set(celda.id);
+  }
+
+  /**
+   * «Lunes 7 de septiembre, 09:00, atendés de 08:00 a 12:00, Sede Centro».
+   *
+   * Sin fechas —un horario retirado o una vista previa— el día va sin número:
+   * «Lunes, 09:00, …». Un bloqueo manda sobre la franja, igual que en el dibujo.
+   */
+  private etiquetaDeCelda(
+    dia: DiaDelHorario,
+    h: number,
+    bloque: BloqueDelHorario | null,
+    bloqueo: BloqueoDelHorario | null,
+  ): string {
+    const dayName = dia.largo.charAt(0).toUpperCase() + dia.largo.slice(1);
+    const when = this.conFechas()
+      ? `${dayName} ${dia.fecha.getDate()} de ${MESES[dia.fecha.getMonth()]}`
+      : dayName;
+    const partes = [when, this.rotulo(h)];
+    if (bloqueo !== null) {
+      partes.push(
+        `bloqueado de ${bloqueo.desde} a ${bloqueo.hasta}` +
+          (bloqueo.motivo ? ` (${bloqueo.motivo})` : ''),
+      );
+    } else if (bloque !== null) {
+      partes.push(`atiende${QUE_ATIENDE[bloque.mode]} de ${bloque.desde} a ${bloque.hasta}`);
+      const sede = this.sede();
+      if (sede) partes.push(sede);
+      if (bloque.telemedicina) partes.push('también por telemedicina');
+    } else {
+      partes.push('sin atención');
+    }
+    return partes.join(', ');
+  }
+
   /** Los bloques de un día, para pintarlos dentro de su columna. */
   protected bloquesDe(dia: number): readonly BloqueDelHorario[] {
     return this.bloques().filter((b) => b.dia === dia);
@@ -480,6 +716,7 @@ export class ScheduleGrid {
 
   protected cerrarGlobo(): void {
     this.globo.set(null);
+    this.celdaConGlobo.set(null);
   }
 
   /** «Martes 8 de septiembre», el título del globo en la semana en curso. */
@@ -490,27 +727,62 @@ export class ScheduleGrid {
   }
 }
 
+/** Qué se atiende en la franja, dicho para el globo («Atiende: …»). */
+export const ROTULO_DEL_MODO: Readonly<Record<FranjaModo, string>> = {
+  CONSULTATIONS: 'Consultas',
+  SERVICES: 'Otros servicios',
+  MIXED: 'Consultas y otros servicios',
+};
+
+/**
+ * Lo mismo, dentro de una frase: «atendés otros servicios de 14:00 a 18:00».
+ *
+ * La franja de consultas sigue diciendo sólo «atendés»: es el caso de siempre,
+ * y cambiarle la frase a quien navega con lector no le agrega nada.
+ */
+const QUE_ATIENDE: Readonly<Record<FranjaModo, string>> = {
+  CONSULTATIONS: '',
+  SERVICES: ' otros servicios',
+  MIXED: ' consultas y otros servicios',
+};
+
+/** La segunda línea del bloque. Una franja de servicios no reparte turnos. */
+function detalleDe(modo: FranjaModo, tamano: number | null): string {
+  if (modo === 'SERVICES') return 'otros servicios';
+  const consultas = tamano ? `consultas de ${tamano} min` : 'tamaño libre';
+  return modo === 'MIXED' ? `${consultas} y servicios` : consultas;
+}
+
 /** Lo que el globo cuenta de una franja, en el orden en que se lee. */
 function datosDe(
   r: PublishedRule,
   duracion: number,
   tamano: number | null,
+  modo: FranjaModo,
 ): readonly { readonly rotulo: string; readonly valor: string }[] {
   const datos: { rotulo: string; valor: string }[] = [
     { rotulo: 'Horario', valor: `${hhmm(r.startTime)} – ${hhmm(r.endTime)}` },
     { rotulo: 'Duración', valor: enPalabras(duracion) },
+    { rotulo: 'Atiende', valor: ROTULO_DEL_MODO[modo] },
+    // Sólo cuando la tiene: «no» en cada franja presencial sería ruido.
+    ...(r.telemedicineEnabled
+      ? [{ rotulo: 'Telemedicina', valor: 'Sí, también por videollamada' }]
+      : []),
   ];
+  // Una franja sólo de servicios no se parte en turnos: cada servicio dura lo
+  // que declara y el inicio lo elige el paciente. Contarle «turnos» mentiría.
+  if (modo === 'SERVICES') return datos;
   if (tamano) {
     const respiro = r.gapMinutes ?? 0;
     const turnos = Math.floor((duracion + respiro) / (tamano + respiro));
     datos.push({ rotulo: 'Cada consulta', valor: `${tamano} min` });
     if (respiro > 0) datos.push({ rotulo: 'Respiro entre consultas', valor: `${respiro} min` });
-    datos.push({ rotulo: 'Turnos en la franja', valor: String(turnos) });
+    datos.push({ rotulo: 'Horarios en la franja', valor: String(turnos) });
   } else {
     datos.push({ rotulo: 'Cada consulta', valor: 'Tamaño libre' });
   }
   if (r.capacityPerSlot && r.capacityPerSlot > 1) {
-    datos.push({ rotulo: 'Pacientes por turno', valor: String(r.capacityPerSlot) });
+    datos.push({ rotulo: 'Pacientes por horario', valor: String(r.capacityPerSlot) });
   }
   return datos;
 }
@@ -521,6 +793,11 @@ function enPalabras(minutos: number): string {
   const m = minutos % 60;
   if (h === 0) return `${m} min`;
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
+}
+
+/** Si el rato `desde`–`hasta` (`HH:MM`) pisa la hora `h`, aunque sea una parte. */
+function overlapsHour(from: string, to: string, h: number): boolean {
+  return minutos(from) < (h + 1) * 60 && minutos(to) > h * 60;
 }
 
 /** La hora de un `HH:MM:SS`. */

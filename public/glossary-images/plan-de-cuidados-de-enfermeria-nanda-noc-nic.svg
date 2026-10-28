@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Del diagnóstico NANDA-I al resultado NOC y la intervención NIC</title>
+  <desc id="d">Tres columnas enlazadas por flechas: un diagnóstico de enfermería NANDA-I, un resultado esperado NOC con indicadores medidos en una escala de cinco puntos, y una intervención NIC con actividades. Debajo, un ejemplo de movilidad física deteriorada y una barra de evaluación que compara la medición inicial con la posterior.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="38" text-anchor="middle" class="t">Tres lenguajes que se enlazan: NANDA-I, NOC y NIC</text>
+  <rect x="24" y="62" width="224" height="236" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="136" y="90" text-anchor="middle" class="h" style="fill:var(--a)">NANDA-I</text>
+  <text x="136" y="110" text-anchor="middle" class="n m">¿Qué problema o riesgo hay?</text>
+  <text x="136" y="140" text-anchor="middle" class="n">Etiqueta diagnóstica</text>
+  <text x="136" y="160" text-anchor="middle" class="n">Factores relacionados</text>
+  <text x="136" y="180" text-anchor="middle" class="n">Características definitorias</text>
+  <text x="136" y="200" text-anchor="middle" class="n">Factores de riesgo</text>
+  <text x="136" y="230" text-anchor="middle" class="n m">Se agrupa en dominios</text>
+  <text x="136" y="250" text-anchor="middle" class="n m">y clases</text>
+  <rect x="288" y="62" width="224" height="236" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="400" y="90" text-anchor="middle" class="h" style="fill:var(--b)">NOC</text>
+  <text x="400" y="110" text-anchor="middle" class="n m">¿Qué se espera lograr?</text>
+  <text x="400" y="140" text-anchor="middle" class="n">Resultado del paciente</text>
+  <text x="400" y="160" text-anchor="middle" class="n">Indicadores observables</text>
+  <text x="400" y="180" text-anchor="middle" class="n">Escala de 5 puntos</text>
+  <text x="400" y="200" text-anchor="middle" class="n">Puntuación inicial y meta</text>
+  <text x="400" y="230" text-anchor="middle" class="n m">Mide el estado, la conducta</text>
+  <text x="400" y="250" text-anchor="middle" class="n m">o la percepción</text>
+  <rect x="552" y="62" width="224" height="236" rx="12" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <text x="664" y="90" text-anchor="middle" class="h" style="fill:var(--c)">NIC</text>
+  <text x="664" y="110" text-anchor="middle" class="n m">¿Qué hará la enfermera?</text>
+  <text x="664" y="140" text-anchor="middle" class="n">Intervención con nombre</text>
+  <text x="664" y="160" text-anchor="middle" class="n">Definición</text>
+  <text x="664" y="180" text-anchor="middle" class="n">Lista de actividades</text>
+  <text x="664" y="200" text-anchor="middle" class="n">Se elige según el caso</text>
+  <text x="664" y="230" text-anchor="middle" class="n m">Directas o indirectas,</text>
+  <text x="664" y="250" text-anchor="middle" class="n m">al individuo o a la familia</text>
+  <path d="M250 180 H286" class="ln" marker-end="url(#ar)"/>
+  <path d="M514 180 H550" class="ln" marker-end="url(#ar)"/>
+  <rect x="24" y="318" width="752" height="74" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="40" y="342" class="h">Ejemplo ilustrativo</text>
+  <text x="40" y="364" class="n">Diagnóstico: deterioro de la movilidad física, relacionado con dolor y debilidad.</text>
+  <text x="40" y="382" class="n">Resultado: «Movilidad», con indicadores como equilibrio y marcha.  Intervención: terapia de ejercicios.</text>
+  <rect x="24" y="404" width="752" height="40" rx="12" fill="none" stroke="var(--b)" stroke-width="2"/>
+  <text x="400" y="429" text-anchor="middle" class="s" style="fill:var(--b)">Evaluación: la puntuación del indicador se vuelve a medir y se compara con la inicial y con la meta</text>
+  <text x="400" y="466" text-anchor="middle" class="n m">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

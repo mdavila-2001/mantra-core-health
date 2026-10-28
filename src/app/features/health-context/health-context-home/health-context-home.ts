@@ -38,7 +38,7 @@ const BASE = '/administration/health-context';
   selector: 'app-health-context-home',
   imports: [Alert, Card, Link, PageHeader, RouterLink],
   templateUrl: './health-context-home.html',
-  styleUrl: '../../portada.css',
+  styleUrl: '../../cover.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HealthContextHome {

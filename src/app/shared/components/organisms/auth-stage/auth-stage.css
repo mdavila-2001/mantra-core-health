@@ -146,14 +146,14 @@
 /* --- Motas: suben despacio, se encienden a mitad de camino y se apagan. --- */
 .auth-stage__mote {
   position: absolute;
-  left: var(--x);
+  left: var(--x, 13%);
   bottom: -2%;
-  width: var(--s);
-  height: var(--s);
+  width: var(--s, 2px);
+  height: var(--s, 2px);
   border-radius: 50%;
   background: radial-gradient(circle, #ffffff, var(--c-aqua-200) 45%, transparent 72%);
   opacity: 0;
-  animation: auth-stage-mote-rise var(--dur) linear var(--d) infinite;
+  animation: auth-stage-mote-rise var(--dur, 17s) linear var(--d) infinite;
 }
 
 @keyframes auth-stage-mote-rise {
@@ -189,6 +189,11 @@
   height: 40svh;
   aspect-ratio: 16 / 9;
   overflow: visible;
+  /* Los grosores se declaran en unidades del viewBox (1920 × 1080), y en el
+     teléfono la tira se pinta a ~0,31× contra ~0,83× en una ventana de 1440:
+     sin compensar, el trazo mide menos de un píxel y la onda se pierde. Este
+     factor (0,83 / 0,31) la deja con el mismo cuerpo en los dos tamaños. */
+  --ecg-k: 2.4;
   /* Se apaga hacia los dos bordes: la tira sale de la nada y vuelve a ella,
      como en la pantalla de un monitor, en vez de cortarse contra el marco. */
   mask-image: linear-gradient(90deg, transparent, #000000 7%, #000000 93%, transparent);
@@ -202,6 +207,7 @@
     width: 100%;
     height: 100%;
     aspect-ratio: auto;
+    --ecg-k: 1;
   }
 }
 
@@ -214,11 +220,30 @@
 /* La tira entera, tenue, que se DIBUJA al entrar: el monitor se enciende. */
 .auth-stage__ecg-base {
   stroke: url(#auth-stage-ink);
-  stroke-width: 2.2;
+  stroke-width: calc(2.2px * var(--ecg-k));
   opacity: 0.5;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
-  animation: auth-stage-ecg-draw 1.8s var(--ease-out) 0.2s forwards;
+  animation:
+    auth-stage-ecg-draw 1.8s var(--ease-out) 0.2s forwards,
+    auth-stage-ecg-breathe var(--beat) ease-in-out calc(var(--beat-start) + 1.8s) infinite;
+}
+
+/* El trazo quieto respira con el monitor: sube un poco cuando el cometa
+   llega al pico R (32,9 % del ciclo, ver más abajo) y se asienta después.
+   Es la capa de ambiente —sutil, 0,5 → 0,68—; lo protagonista sigue siendo
+   el cometa. */
+@keyframes auth-stage-ecg-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  33% {
+    opacity: 0.68;
+  }
+  60% {
+    opacity: 0.52;
+  }
 }
 
 @keyframes auth-stage-ecg-draw {
@@ -247,29 +272,29 @@
 }
 
 .auth-stage__ecg-aura {
-  --len: 190px;
+  --len: 320px;
   stroke: var(--c-aqua-400);
-  stroke-width: 20;
+  stroke-width: calc(20px * var(--ecg-k));
   opacity: 0.12;
 }
 
 .auth-stage__ecg-halo {
-  --len: 150px;
+  --len: 220px;
   stroke: var(--c-aqua-300);
-  stroke-width: 7;
+  stroke-width: calc(7px * var(--ecg-k));
   opacity: 0.4;
 }
 
 .auth-stage__ecg-comet {
   --len: 110px;
   stroke: url(#auth-stage-ink);
-  stroke-width: 3.4;
+  stroke-width: calc(3.4px * var(--ecg-k));
 }
 
 .auth-stage__ecg-spark {
   --len: 6px;
   stroke: #ffffff;
-  stroke-width: 7;
+  stroke-width: calc(7px * var(--ecg-k));
 }
 
 @keyframes auth-stage-ecg-sweep {
@@ -287,7 +312,7 @@
 .auth-stage__wave {
   fill: none;
   stroke: var(--c-aqua-100);
-  stroke-width: 1.6;
+  stroke-width: calc(1.6px * var(--ecg-k));
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
@@ -389,7 +414,135 @@
   .auth-stage__ecg-spark,
   .auth-stage__wave,
   .auth-stage__flash,
-  .auth-stage__mote {
+  .auth-stage__mote,
+  .auth-stage__glow {
     display: none;
   }
+}
+
+/* ==========================================================================
+    Modo claro — el balance invertido.
+
+    En claro el escenario deja de ser un monitor nocturno: predomina el blanco
+    (`--bg-surface` → menta 50), la tinta es petróleo y en reposo NO hay ningún
+    celeste. El celeste aparece solo junto al puntero, en `.auth-stage__glow`.
+    Todo lo de arriba es el modo oscuro y no se toca: estas reglas solo PISAN,
+    así que el oscuro queda exactamente igual.
+
+    Ningún override declara `stroke-width`: los grosores (y su `--ecg-k`) son
+    los de arriba, y con ellos el pulso y su sincronía con `--beat`.
+    ========================================================================== */
+:host-context(:root[data-tema='claro']) {
+  background:
+    radial-gradient(60% 50% at 34% 16%, var(--c-mint-50), transparent 70%),
+    linear-gradient(160deg, var(--bg-surface), var(--c-mint-50) 60%, var(--c-sage-50));
+}
+
+/* En `screen` sobre blanco no aportan nada, y apagarlas ahorra pintado. */
+:host-context(:root[data-tema='claro']) .auth-stage__aurora,
+:host-context(:root[data-tema='claro']) .auth-stage__rays,
+:host-context(:root[data-tema='claro']) .auth-stage__flash {
+  display: none;
+}
+
+/* Las líneas blancas del papel desaparecen sobre blanco: van en petróleo. */
+:host-context(:root[data-tema='claro']) .auth-stage__monitor {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--c-petrol-500) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--c-petrol-500) 6%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(color-mix(in srgb, var(--c-petrol-500) 2.5%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--c-petrol-500) 2.5%, transparent) 1px,
+      transparent 1px
+    );
+}
+
+/* Motas neutras en reposo: gris petróleo, sin celeste. */
+:host-context(:root[data-tema='claro']) .auth-stage__mote {
+  background: radial-gradient(
+    circle,
+    var(--c-petrol-300),
+    color-mix(in srgb, var(--c-sage-700) 55%, transparent) 45%,
+    transparent 72%
+  );
+}
+
+/* La tira en tinta petróleo, sólida: sin el degradado `#auth-stage-ink`, que
+   está pensado para el fondo oscuro. */
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-base {
+  stroke: var(--c-petrol-400);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-comet {
+  stroke: var(--c-petrol-600);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-spark {
+  stroke: var(--c-petrol-700);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-aura {
+  stroke: var(--c-petrol-100);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-halo {
+  stroke: var(--c-petrol-200);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__wave {
+  stroke: var(--c-petrol-200);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__wave--echo {
+  stroke: var(--c-mint-500);
+}
+
+/* --- El resplandor del puntero: el único celeste del escenario claro. -----
+   Una caja del tamaño del escenario que se DESPLAZA hasta el puntero: el % de
+   `translate` es de su propia caja, así que `(x − 0,5) × 100 %` lleva su centro
+   a donde está la mano. Las motas que caen dentro del disco se ven celestes y
+   las de afuera siguen grises.
+
+   No repite el costo medido en la nota de `.auth-stage__orb`: es UNA capa que
+   cambia solo `transform` y `opacity`. El degradado se rasteriza una vez y
+   después solo se corre; no se reposiciona el `radial-gradient` (eso repinta
+   en cada cuadro) y no hay `mix-blend-mode` ni `filter`. Las variables
+   `--pointer-*` las publica `appPointerScene` en `app-auth-split`; en reposo
+   (`--pointer-on: 0`) no se ve. */
+.auth-stage__glow {
+  display: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__glow {
+  --glow-size: min(40vmax, 28rem);
+  display: block;
+  opacity: var(--pointer-on, 0);
+  transform: translate3d(
+    calc((var(--pointer-x, 0.5) - 0.5) * 100%),
+    calc((var(--pointer-y, 0.5) - 0.5) * 100%),
+    0
+  );
+  will-change: transform, opacity;
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__glow::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--glow-size);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--fondo-c),
+    color-mix(in srgb, var(--c-aqua-300) 30%, transparent) 50%,
+    transparent
+  );
 }

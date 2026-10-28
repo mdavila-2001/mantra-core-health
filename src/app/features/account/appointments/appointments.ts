@@ -18,12 +18,17 @@ import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
+// El sello de reconsulta (C4): los dos campos y su predicado viven en los
+// tipos congelados de `scheduling`.
+import { esReconsulta } from '../../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  ServiceOffering,
   WaitlistEntry,
 } from '../../../core/data-access/scheduling/scheduling.types';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type {
   ConceptLabels,
@@ -41,18 +46,27 @@ import { ReferenceCombobox } from '../../../shared/components/molecules/referenc
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { Accordion } from '../../../shared/components/molecules/accordion/accordion';
+import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
-import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
-import { reservaDelPortalRoute } from './appointments.routes';
+import {
+  CAMPAIGN_PARAM,
+  CAMPAIGN_TITLE_PARAM,
+  FLEXIBLE_BOOKING_SLOT,
+  PROFESSIONAL_PARAM,
+  SERVICE_BOOKING_SLOT,
+  SERVICE_PARAM,
+  reservaDelPortalRoute,
+} from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
 import { splitUpcomingAndPast } from './upcoming-and-past';
 
@@ -157,8 +171,8 @@ const PARAM_DE_TURNO = 'turno';
 export const RESOURCE_PARAM = 'resource';
 
 /** El vacío de horarios antes de elegir con quién; su par de laboratorio abajo. */
-const ELEGIR_CON_QUIEN = 'Elegí con quién te querés atender para ver los horarios libres.';
-const ELEGIR_LABORATORIO = 'Elegí un laboratorio para ver los horarios libres.';
+const ELEGIR_CON_QUIEN = 'Elija con quién se quiere atender para ver los horarios libres.';
+const ELEGIR_LABORATORIO = 'Elija un laboratorio para ver los horarios libres.';
 export const LAB_RESOURCE = 'lab';
 
 /* ---- FT-05 · los cuatro filtros, también en la URL ------------------------ */
@@ -198,6 +212,11 @@ interface TurnoVisible {
   readonly sede: string;
   readonly motivo: string;
   /**
+   * El servicio que se pidió y cuánto dura, en una línea (v4.2.40). Vacío para una
+   * consulta. Sale de lo que se aceptó al reservar, no de la oferta de hoy.
+   */
+  readonly servicio: string;
+  /**
    * Por qué te cambiaron el turno, ya redactado (corrección #14).
    *
    * Vacío cuando el último cambio no exigía motivo —o cuando el turno es
@@ -224,6 +243,25 @@ interface TurnoVisible {
    * uno nuevo que no reconoce.
    */
   readonly reprogramadoDesde: Date | null;
+  /**
+   * Si este turno es una reconsulta: tu médico te citó de nuevo por una
+   * consulta anterior (C4).
+   *
+   * Importa que se vea: un turno que la persona no pidió se lee como un error
+   * de la aplicación —o como el turno de otro— si nada explica de dónde salió.
+   */
+  readonly esReconsulta: boolean;
+  /**
+   * De cuándo era la consulta de la que salió, o `null` si aquélla quedó sin
+   * horario.
+   *
+   * Va como **fecha y no como frase armada**: el resto de este archivo redacta
+   * en TypeScript sólo lo que cambia de forma —quién canceló, si hubo mensaje—,
+   * y una fecha se escribe con el `date` del idioma de la aplicación. Armarla
+   * acá obligaría a clavar `'es-BO'` en el código, que es exactamente lo que
+   * hace estallar `formatDate` donde nadie registró ese idioma.
+   */
+  readonly reconsultaDe: Date | null;
 }
 
 /** Una espera activa, ya lista para mostrarse (P8). */
@@ -234,6 +272,13 @@ interface EsperaVisible {
   readonly desde: Date | null;
   readonly hasta: Date | null;
   readonly anotadaEl: Date;
+}
+
+/** Las horas flexibles de un mismo día (A6). */
+interface GrupoDeHorasFlexibles {
+  readonly clave: string;
+  readonly titulo: string;
+  readonly horas: readonly HorarioVisible[];
 }
 
 /** Un horario que se puede pedir. */
@@ -251,7 +296,42 @@ interface HorarioVisible {
    * corriente y no un error.
    */
   readonly sede: string;
+  /**
+   * La oferta de servicio de este horario (v4.2.40). Ausente ≡ es una consulta.
+   *
+   * Un horario de servicio **no es un cupo**: lo calcula la API al leer, y el cupo
+   * nace al retenerlo. Por eso su `id` no sirve para reservar y la reserva viaja
+   * con la oferta, la sede y el inicio.
+   */
+  readonly ofertaId?: string;
+  /**
+   * Una hora de un horario flexible, sin turnos fijos (P36). Como la de un
+   * servicio, no es un cupo: se reserva por agenda e inicio.
+   */
+  readonly flexible?: boolean;
 }
+
+/**
+ * «Ecocardiograma Doppler · 30–45 min», o `''` si la cita es una consulta.
+ *
+ * Con mínimo y máximo iguales dice un solo número. El rango es honesto: cuánto
+ * tarda depende de cada paciente, y el horario ya reservó el máximo.
+ */
+function servicioEnUnaLinea(cita: Booking): string {
+  const servicio = cita.service;
+  if (servicio === undefined) return '';
+  const duracion =
+    servicio.minDurationMinutes === servicio.maxDurationMinutes
+      ? `${servicio.maxDurationMinutes} min`
+      : `${servicio.minDurationMinutes}–${servicio.maxDurationMinutes} min`;
+  return `${servicio.name} · ${duracion}`;
+}
+
+/** El valor de «¿Qué querés pedir?» que significa consulta: lo de siempre. */
+const PEDIR_CONSULTA = 'CONSULTA';
+
+/** El id que acompaña a la ruta de reserva cuando el horario no es un cupo. */
+const RESERVA_DE_SERVICIO = SERVICE_BOOKING_SLOT;
 
 /**
  * Las agendas de una misma persona, juntas (F-23).
@@ -302,19 +382,21 @@ const SEDE_CUALQUIERA = 'cualquiera';
 @Component({
   selector: 'app-appointments',
   imports: [
+    Accordion,
+    AccordionPanel,
     Alert,
     AppButton,
     AppButtonLink,
     AppointmentCalendar,
     Badge,
     DatePipe,
+    EmptyState,
     FormField,
     PageHeader,
     DatePicker,
     ReferenceCombobox,
     RouterLink,
     SearchField,
-    SegmentedControl,
     Select,
   ],
   templateUrl: './appointments.html',
@@ -380,6 +462,22 @@ export class Appointments {
   private readonly params = toSignal(this.route.queryParamMap, { initialValue: null });
 
   /**
+   * Código de la campaña preventiva del seguro desde la que se llegó, si se llegó
+   * desde una (Tarea 4). Sólo se usa para decir por qué se está agendando: no
+   * cambia ningún horario ni ningún precio.
+   */
+  protected readonly campaignCode = computed(() => {
+    const code = this.params()?.get(CAMPAIGN_PARAM)?.trim() ?? '';
+    return code === '' ? null : code.slice(0, 40);
+  });
+
+  /** Cómo se nombra la campaña al afiliado: su título si viajó, si no el código. */
+  protected readonly campaignName = computed(() => {
+    const title = this.params()?.get(CAMPAIGN_TITLE_PARAM)?.trim() ?? '';
+    return title === '' ? this.campaignCode() : title.slice(0, 120);
+  });
+
+  /**
    * Qué vista se está mirando.
    *
    * Sale de la URL y no de un signal suelto para que el enlace se comparta con
@@ -404,17 +502,6 @@ export class Appointments {
     this.route.snapshot.queryParamMap.get(PARAM_DE_TURNO),
   );
 
-  /** Las dos formas de mirar la misma colección (FT-04). */
-  protected readonly vistasDisponibles: readonly SegmentedOption<VistaDeTurnos>[] = [
-    { value: 'lista', label: 'Lista', icon: 'orders', description: 'Ver tus citas como lista' },
-    {
-      value: 'calendario',
-      label: 'Calendario',
-      icon: 'calendar',
-      description: 'Ver tus citas en un calendario',
-    },
-  ];
-
   protected elegirVista(vista: VistaDeTurnos): void {
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -436,45 +523,70 @@ export class Appointments {
   protected readonly enPedirTurno = computed(() => this.seccion() === 'pedir');
 
   /**
-   * Las dos tareas de la pantalla, arriba de todo.
+   * El botón único del encabezado: pide una hora nueva o vuelve a las citas
+   * propias, sin scrollear.
    *
-   * Sin íconos a propósito: el conmutador de lista/calendario que vive dentro
-   * de «Mis citas» ya usa `calendar`, y repetir ese dibujo acá con otro
-   * significado rompe lo único que un ícono aporta, que es reconocer de un
-   * vistazo. Dos rótulos cortos se leen igual de rápido.
+   * Antes «Pedir una cita» bajaba con `scrollIntoView` hasta la sección de
+   * abajo (R-01): con varios turnos y la lista de espera de por medio, esa
+   * sección podía quedar a miles de píxeles y bajar hasta ahí seguía siendo
+   * incómodo (medido: y=3302 a 375 px). Ahora el mismo botón cambia cuál de las
+   * dos secciones se muestra —nunca las dos juntas— y el rótulo dice adónde
+   * lleva ir, no dónde ya se está.
    */
-  protected readonly seccionesDisponibles: readonly SegmentedOption<SeccionDeTurnos>[] = [
-    { value: 'citas', label: 'Mis citas', description: 'Ver las citas que ya pediste' },
-    {
-      value: 'pedir',
-      label: 'Agendar una cita',
-      description: 'Buscar un horario libre y agendar una cita nueva',
-    },
-  ];
+  protected alternarSeccion(): void {
+    const destino: SeccionDeTurnos = this.enPedirTurno() ? SECCION_POR_DEFECTO : 'pedir';
+    // `afterNextRender` y no directo en el `.then()`: la promesa de
+    // `router.navigate` resuelve apenas la navegación termina, no cuando el
+    // `@if` de la plantilla ya redibujó la sección nueva — enfocar ahí mismo
+    // encontraba el título todavía ausente del DOM.
+    void this.irASeccion(destino).then(() => {
+      afterNextRender(() => this.enfocarSeccion(destino), { injector: this.injector });
+    });
+  }
 
+  /** El botón de «Todavía no tenés citas»: abre la otra sección por su nombre. */
   protected elegirSeccion(seccion: SeccionDeTurnos): void {
-    this.irASeccion(seccion);
+    void this.irASeccion(seccion);
   }
 
   /**
-   * Abre una sección, venga del conmutador o de una acción que necesita la otra
-   * —elegir un día en el calendario termina en «Agendar una cita»—.
+   * Abre una sección —del botón del encabezado, del vacío de «Tus citas» o de
+   * señalar un día en el calendario, que termina en «Agendar una cita»—.
    *
    * `replaceUrl` como el resto de la pantalla: cambiar de sección no puede
    * dejar una entrada de historial por clic, o «atrás» obligaría a deshacer
-   * cada ida y vuelta antes de salir de la pantalla. Y se corta temprano si ya
-   * se está ahí: navegar a lo mismo vuelve a correr los guards para nada.
+   * cada ida y vuelta antes de salir de la pantalla. Se corta temprano si ya
+   * se está ahí, con una promesa ya resuelta: quien encadena un foco después
+   * no se queda esperando una navegación que no va a pasar.
    */
-  private irASeccion(seccion: SeccionDeTurnos): void {
+  private irASeccion(seccion: SeccionDeTurnos): Promise<boolean> {
     if (this.seccion() === seccion) {
-      return;
+      return Promise.resolve(true);
     }
-    void this.router.navigate([], {
+    return this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { [PARAM_DE_SECCION]: seccion === SECCION_POR_DEFECTO ? null : seccion },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+  }
+
+  /**
+   * Lleva el foco al título de la sección recién abierta, para que el lector de
+   * pantalla anuncie dónde quedó y el teclado siga desde ahí (misma idea que
+   * R-01, generalizada a las dos direcciones). Sin animación cuando la persona
+   * pidió reducir movimiento.
+   */
+  private enfocarSeccion(seccion: SeccionDeTurnos): void {
+    const id = seccion === 'pedir' ? 'pedir-turno' : 'turnos-propios';
+    const titulo = this.document.getElementById(id);
+    if (titulo === null) {
+      return;
+    }
+    const reducir =
+      this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
+    titulo.scrollIntoView?.({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
+    titulo.focus({ preventScroll: true });
   }
 
   /* ---- FT-05 · buscar y filtrar tus citas --------------------------------- */
@@ -624,11 +736,11 @@ export class Appointments {
    * ahora viven en «Agendar una cita», así que el gesto abre esa sección con el
    * día ya puesto. Sigue sin ser un viaje de ida: el aviso de arriba de la
    * grilla dice qué día se está mirando y ofrece volver a verlos todos, y el
-   * conmutador devuelve al calendario en un clic.
+   * botón del encabezado vuelve a «Tus citas» —calendario incluido— en un clic.
    */
   protected elegirDiaDeHorarios(dia: Date): void {
     this.diaDeHorarios.set(dia);
-    this.irASeccion('pedir');
+    void this.irASeccion('pedir');
   }
 
   /** Vuelve a ofrecer los horarios de toda la ventana. */
@@ -821,6 +933,111 @@ export class Appointments {
    */
   protected readonly horariosIncompletos = signal(false);
 
+  /* ---- ¿qué se pide? consulta o un servicio (v4.2.40) ---------------------
+
+     Los servicios de un profesional —un estudio, un procedimiento— se piden con
+     la misma mecánica que una consulta: se elige con quién, qué y cuándo. Lo que
+     cambia es de dónde salen los horarios: de la grilla de la agenda para una
+     consulta, de la disponibilidad que la API CALCULA para un servicio (dura entre
+     un mínimo y un máximo, y se reserva el máximo). */
+
+  /** Los servicios que el profesional elegido deja pedir desde el portal. */
+  protected readonly ofertasDelProfesional = signal<readonly ServiceOffering[]>([]);
+
+  /** `PEDIR_CONSULTA` o el id de una oferta. */
+  protected readonly queQuiere = signal<string>(PEDIR_CONSULTA);
+
+  /** La oferta elegida, o `undefined` si se pide una consulta. */
+  protected readonly servicioElegido = computed<ServiceOffering | undefined>(() =>
+    this.ofertasDelProfesional().find((oferta) => oferta.id === this.queQuiere()),
+  );
+
+  /** Se está pidiendo un servicio y no una consulta. */
+  protected readonly enServicio = computed(() => this.servicioElegido() !== undefined);
+
+  /** Consulta, y uno por servicio con lo que dura: elegir sabiendo cuánto tarda. */
+  protected readonly opcionesDeServicio = computed<readonly SelectOption<string>[]>(() => [
+    { value: PEDIR_CONSULTA, label: 'Consulta' },
+    ...this.ofertasDelProfesional().map((oferta) => ({
+      value: oferta.id,
+      label: `${oferta.serviceName} · ${this.duracionDe(oferta)}`,
+    })),
+  ]);
+
+  /** «30–45 min», o «20 min» cuando el mínimo y el máximo coinciden. */
+  protected duracionDe(oferta: ServiceOffering): string {
+    return oferta.minDurationMinutes === oferta.maxDurationMinutes
+      ? `${oferta.maxDurationMinutes} min`
+      : `${oferta.minDurationMinutes}–${oferta.maxDurationMinutes} min`;
+  }
+
+  /** El precio de referencia del servicio, con la moneda del producto. */
+  protected precioDe(oferta: ServiceOffering): string {
+    return withDisplayCurrency(oferta.price);
+  }
+
+  /**
+   * Cambió lo que se pide: vuelven a pedirse los horarios, que son de otro origen.
+   *
+   * @param valor - `PEDIR_CONSULTA` o el id de una oferta.
+   */
+  protected elegirQueQuiere(valor: string | null): void {
+    this.queQuiere.set(valor ?? PEDIR_CONSULTA);
+    this.diaDeHorarios.set(null);
+    this.cargarHorarios();
+  }
+
+  /**
+   * Los servicios del profesional elegido.
+   *
+   * Un fallo no se muestra: sin servicios la pantalla es la de siempre, y perder
+   * la posibilidad de pedir una consulta por no poder leer los estudios sería
+   * cambiar lo principal por lo accesorio.
+   */
+  private cargarOfertas(): void {
+    this.ofertasDelProfesional.set([]);
+    this.queQuiere.set(PEDIR_CONSULTA);
+    const perfil = this.recursosEnFoco()[0]?.resourceRefId;
+    if (this.esLaboratorio() || perfil === undefined) return;
+    this.scheduling.listServiceOfferings(perfil).subscribe({
+      next: (lista) => {
+        this.ofertasDelProfesional.set(lista);
+        this.aplicarEnlaceDelServicio(lista);
+      },
+      error: () => this.ofertasDelProfesional.set([]),
+    });
+  }
+
+  /** El enlace sólo se aplica una vez: después manda lo que la persona elija a mano. */
+  private enlaceAplicado = false;
+
+  /**
+   * Con `?profesional=<perfil>` se llega con quién ya elegido.
+   *
+   * Lo trae la ficha del profesional —«Pedir turno» en uno de sus servicios—. Se
+   * aplica cuando llegan las agendas, que es cuando se sabe a cuál corresponde. Si
+   * ese profesional no tiene agenda en esta organización no se elige nada: mejor la
+   * pantalla de siempre que una elección inventada.
+   */
+  private aplicarEnlaceDelProfesional(): void {
+    if (this.enlaceAplicado) return;
+    const perfil = this.route.snapshot.queryParamMap.get(PROFESSIONAL_PARAM);
+    if (perfil === null) return;
+    const agenda = this.agendas().find((candidata) =>
+      candidata.recursos.some((recurso) => recurso.resourceRefId === perfil),
+    );
+    if (agenda === undefined) return;
+    this.enlaceAplicado = true;
+    this.elegirAgenda(agenda.clave);
+  }
+
+  /** Con `?servicio=<oferta>` queda elegido el servicio, si el profesional todavía lo ofrece. */
+  private aplicarEnlaceDelServicio(ofertas: readonly ServiceOffering[]): void {
+    const pedido = this.route.snapshot.queryParamMap.get(SERVICE_PARAM);
+    if (pedido === null || !ofertas.some((oferta) => oferta.id === pedido)) return;
+    this.elegirQueQuiere(pedido);
+  }
+
   /**
    * Lo tecleado en el buscador de profesional.
    *
@@ -863,7 +1080,7 @@ export class Appointments {
    * agenda. No lleva `route` porque el control ya está acá arriba, en la misma
    * vista: mandar a otra ruta para volver al mismo lugar sería un rodeo.
    */
-  private readonly pasoElegirAgenda = { label: 'Elegí una agenda' } as const;
+  private readonly pasoElegirAgenda = { label: 'Elija una agenda' } as const;
 
   protected readonly horarios = signal<ViewState<readonly HorarioVisible[]>>(
     empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN),
@@ -950,23 +1167,6 @@ export class Appointments {
   });
 
   /**
-   * «Pedir una cita» del encabezado: lleva a la sección que ya existe al pie y
-   * deja el foco en su título, para que el lector de pantalla anuncie dónde
-   * quedó y el teclado siga desde ahí (R-01 del mapa UX). Sin animación cuando
-   * la persona pidió reducir movimiento.
-   */
-  protected irAPedirTurno(): void {
-    const titulo = this.document.getElementById('pedir-turno');
-    if (titulo === null) {
-      return;
-    }
-    const reducir =
-      this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
-    titulo.scrollIntoView?.({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
-    titulo.focus({ preventScroll: true });
-  }
-
-  /**
    * Los mismos turnos, en la forma que el calendario entiende.
    *
    * **Los mismos**, no otra lectura: las dos vistas tienen que decir lo mismo o
@@ -977,7 +1177,7 @@ export class Appointments {
       id: turno.id,
       cuando: turno.cuando,
       hasta: turno.hasta,
-      titulo: turno.agenda === '' ? 'Turno' : turno.agenda,
+      titulo: turno.agenda === '' ? 'Cita' : turno.agenda,
       estado: turno.estado,
       tono: turno.tono,
       // FT-07-R04 · lo que la tarjeta del día no puede mostrar sin cambiar de
@@ -1025,6 +1225,38 @@ export class Appointments {
     return todos.filter((horario) => mismoDia(horario.desde, dia));
   });
 
+  /** Los horarios de turno fijo (o de servicio), uno por fila como siempre. */
+  protected readonly horariosFijos = computed<readonly HorarioVisible[]>(() =>
+    this.horariosListos().filter((horario) => horario.flexible !== true),
+  );
+
+  /**
+   * P36 · las horas de un horario flexible, **agrupadas por día** (A6). Un
+   * horario flexible ofrece una hora cada 15 minutos durante semanas: en filas
+   * eran ≈180 renglones seguidos. Por día, en un acordeón con el primero
+   * abierto, y cada hora como un botón chico.
+   */
+  protected readonly gruposFlexibles = computed<readonly GrupoDeHorasFlexibles[]>(() => {
+    const grupos = new Map<string, HorarioVisible[]>();
+    for (const horario of this.horariosListos()) {
+      if (horario.flexible !== true) continue;
+      const d = horario.desde;
+      const clave = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const lista = grupos.get(clave) ?? [];
+      lista.push(horario);
+      grupos.set(clave, lista);
+    }
+    return [...grupos.entries()].map(([clave, horas]) => ({
+      clave,
+      titulo: `${horas[0].desde.toLocaleDateString('es-BO', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short',
+      })} · ${horas.length === 1 ? '1 hora libre' : `${horas.length} horas libres`}`,
+      horas,
+    }));
+  });
+
   constructor() {
     // Se recarga con cada conmutación de paciente, no sólo al montar: los
     // turnos de un hijo no son los de su madre, y dejar los anteriores en
@@ -1049,18 +1281,19 @@ export class Appointments {
   }
 
   /**
-   * Con `?resource=lab` se llega a reservar, no a mirar la lista: el foco va a
-   * «Agendar una cita» una sola vez, cuando la lista de citas ya se pintó. Antes
-   * de eso, lo que carga arriba empujaría la sección fuera de la vista.
+   * Con `?resource=lab` se llega a reservar, no a mirar la lista: abre
+   * «Agendar una cita» directo y deja el foco en su título. Ya no hace falta
+   * esperar a que la lista de turnos termine de cargar —eso importaba cuando
+   * el destino era un `scrollIntoView` que el layout podía correr; ahora es la
+   * sección que se muestra desde el arranque, así que cambia sola sin esperar
+   * nada.
    */
   private llevarAPedirSiVieneDeUnaOrden(): void {
     if (this.route.snapshot.queryParamMap.get(RESOURCE_PARAM) !== LAB_RESOURCE) {
       return;
     }
-    const alTerminarDeCargar = effect(() => {
-      if (this.turnos().status === 'loading') return;
-      alTerminarDeCargar.destroy();
-      afterNextRender(() => this.irAPedirTurno(), { injector: this.injector });
+    void this.irASeccion('pedir').then(() => {
+      afterNextRender(() => this.enfocarSeccion('pedir'), { injector: this.injector });
     });
   }
 
@@ -1082,7 +1315,7 @@ export class Appointments {
       .subscribe({
         next: (pagina) => {
           if (pagina.items.length === 0) {
-            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pediste ningún turno.'));
+            this.turnos.set(empty(this.pasoElegirAgenda, 'Todavía no pidió ninguna cita.'));
             return;
           }
           this.traducirEstados(pagina.items);
@@ -1119,6 +1352,8 @@ export class Appointments {
     this.sedeElegida.set(SEDE_CUALQUIERA);
     this.recursos.set([]);
     this.busquedaDeRecurso.set('');
+    this.ofertasDelProfesional.set([]);
+    this.queQuiere.set(PEDIR_CONSULTA);
     this.cargarRecursos();
   }
 
@@ -1139,6 +1374,7 @@ export class Appointments {
           return mezcla;
         });
         this.sinRecursos.set(pagina.items.length === 0);
+        this.aplicarEnlaceDelProfesional();
         // Los turnos pueden haberse pintado antes que esto: las dos lecturas
         // del arranque salen a la vez. Se rehacen para que tomen el nombre de
         // su agenda, igual que con las etiquetas de estado.
@@ -1160,9 +1396,12 @@ export class Appointments {
     // «ningún horario» por una sede que este profesional no atiende.
     this.sedeElegida.set(SEDE_CUALQUIERA);
     if (clave === null) {
+      this.ofertasDelProfesional.set([]);
+      this.queQuiere.set(PEDIR_CONSULTA);
       this.horarios.set(empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN));
       return;
     }
+    this.cargarOfertas();
     this.cargarHorarios();
   }
 
@@ -1197,26 +1436,57 @@ export class Appointments {
 
     this.horarios.set(loading());
     this.horariosIncompletos.set(false);
+
+    const servicio = this.servicioElegido();
+    if (servicio !== undefined) {
+      this.cargarHorariosDeServicio(servicio, enFoco, desde, hasta, conSede);
+      return;
+    }
+
     // Se guarda el último fallo para poder distinguir un 403 de una caída de
     // red si al final NINGUNA sede contestó; con una sola en foco es el mismo
     // error de siempre, y la pantalla lo cuenta igual que antes.
     let ultimoFallo: unknown = null;
     forkJoin(
       enFoco.map((recurso) =>
-        this.scheduling
-          .listSlots({
+        forkJoin([
+          this.scheduling.listSlots({
             resourceId: recurso.id,
             from: desde,
             to: hasta,
             onlyAvailable: true,
             limit: TOPE_DE_HORARIOS,
-          })
-          .pipe(
-            map((pagina) =>
-              pagina.items
+          }),
+          // P36 · las horas del horario flexible de la misma agenda. Vacío si
+          // publicó turnos fijos. Que esta lectura falle no esconde los turnos
+          // fijos: se avisa como lista incompleta y se sigue.
+          this.scheduling.getFlexibleAvailability(recurso.id, { from: desde, to: hasta }).pipe(
+            map((disponibilidad) => disponibilidad.items),
+            catchError(() => {
+              this.horariosIncompletos.set(true);
+              return of([]);
+            }),
+          ),
+        ]).pipe(
+          map(([pagina, flexibles]) => {
+            const sede = conSede ? nombreDeSede(recurso) : '';
+            return [
+              ...pagina.items
                 .filter((cupo) => cupo.remainingCapacity > 0)
-                .map((cupo) => this.aHorarioVisible(cupo, conSede ? nombreDeSede(recurso) : '')),
-            ),
+                .map((cupo) => this.aHorarioVisible(cupo, sede)),
+              ...flexibles.map(
+                (hora): HorarioVisible => ({
+                  id: `${FLEXIBLE_BOOKING_SLOT}|${recurso.id}|${hora.startAt.toISOString()}`,
+                  desde: hora.startAt,
+                  hasta: hora.endAt,
+                  resourceId: recurso.id,
+                  lugaresLibres: 1,
+                  sede,
+                  flexible: true,
+                }),
+              ),
+            ];
+          }),
             // Que una sede no conteste no puede esconder los horarios de la
             // otra: se anota la falla y se sigue con lo que sí llegó.
             catchError((error: unknown) => {
@@ -1243,8 +1513,82 @@ export class Appointments {
         if (libres.length === 0) {
           this.horarios.set(
             empty(
-              { label: 'Probá con otra agenda' },
+              { label: 'Pruebe con otra agenda' },
               'No hay horarios libres en las próximas dos semanas.',
+            ),
+          );
+          return;
+        }
+        this.horarios.set(ready(libres));
+      },
+      error: (error: unknown) =>
+        this.horarios.set(errorToViewState<readonly HorarioVisible[]>(error)),
+    });
+  }
+
+  /**
+   * Los horarios calculados de un servicio, sede por sede.
+   *
+   * Es la misma lista que la de una consulta —ordenada por hora, con la sede cuando
+   * vienen mezcladas— pero cada fila es un **inicio posible** que la API calculó
+   * con lo que ese profesional tiene libre, no un cupo de la grilla.
+   */
+  private cargarHorariosDeServicio(
+    servicio: ServiceOffering,
+    enFoco: readonly AgendaResource[],
+    desde: Date,
+    hasta: Date,
+    conSede: boolean,
+  ): void {
+    let ultimoFallo: unknown = null;
+    forkJoin(
+      enFoco.map((recurso) =>
+        this.scheduling
+          .getServiceAvailability({
+            offeringId: servicio.id,
+            resourceId: recurso.id,
+            from: desde,
+            to: hasta,
+          })
+          .pipe(
+            map((disponibilidad) =>
+              disponibilidad.items.map(
+                (item): HorarioVisible => ({
+                  id: `${RESERVA_DE_SERVICIO}|${item.resourceId}|${item.startAt.toISOString()}`,
+                  desde: item.startAt,
+                  // Lo que se reserva: el máximo. El mínimo sólo informa.
+                  hasta: item.endAtMax,
+                  resourceId: item.resourceId,
+                  lugaresLibres: 1,
+                  sede: conSede ? nombreDeSede(recurso) : '',
+                  ofertaId: servicio.id,
+                }),
+              ),
+            ),
+            catchError((error: unknown) => {
+              ultimoFallo = error;
+              this.horariosIncompletos.set(true);
+              return of<readonly HorarioVisible[] | null>(null);
+            }),
+          ),
+      ),
+    ).subscribe({
+      next: (porRecurso) => {
+        if (porRecurso.every((lista) => lista === null)) {
+          this.horariosIncompletos.set(false);
+          this.horarios.set(errorToViewState<readonly HorarioVisible[]>(ultimoFallo));
+          return;
+        }
+        const libres = porRecurso
+          .filter((lista): lista is readonly HorarioVisible[] => lista !== null)
+          .flat()
+          .sort((a, b) => a.desde.getTime() - b.desde.getTime())
+          .slice(0, TOPE_DE_HORARIOS);
+        if (libres.length === 0) {
+          this.horarios.set(
+            empty(
+              { label: 'Pruebe con otro servicio o profesional' },
+              `No hay horarios para ${servicio.serviceName} en las próximas dos semanas.`,
             ),
           );
           return;
@@ -1297,11 +1641,11 @@ export class Appointments {
 
     const agenda = this.nombreDeLaAgenda(resourceId);
     const confirmado = await this.dialogs.confirm({
-      title: 'Anotarte en la lista de espera',
+      title: 'Anotarse en la lista de espera',
       message:
         agenda === ''
-          ? 'Te avisamos apenas se libere un horario. No reserva el turno: lo confirmás vos cuando llegue el aviso.'
-          : `Te avisamos apenas se libere un horario con ${agenda}. No reserva el turno: lo confirmás vos cuando llegue el aviso.`,
+          ? 'Le avisamos apenas se libere un horario. No reserva la cita: la confirma usted cuando llegue el aviso.'
+          : `Le avisamos apenas se libere un horario con ${agenda}. No reserva la cita: la confirma usted cuando llegue el aviso.`,
       confirmLabel: 'Anotarme',
       cancelLabel: 'Volver',
     });
@@ -1325,8 +1669,8 @@ export class Appointments {
         next: () => {
           this.anotandose.set(false);
           this.toast.success(
-            'Te avisamos apenas se libere un horario.',
-            'Estás en lista de espera',
+            'Le avisamos apenas se libere un horario.',
+            'Está en lista de espera',
           );
           this.cargarEsperas();
         },
@@ -1338,7 +1682,7 @@ export class Appointments {
               ? (estado.message ?? '')
               : '';
           this.toast.error(
-            detalle === '' ? 'No pudimos anotarte en la lista de espera.' : detalle,
+            detalle === '' ? 'No pudimos anotarse en la lista de espera.' : detalle,
             'Lista de espera',
           );
         },
@@ -1375,14 +1719,14 @@ export class Appointments {
     // en el mismo diálogo que confirma, no en un paso aparte ni después del 422.
     const motivo = await this.dialogs.confirmWithReason(
       {
-        title: 'Cancelar el turno',
-        message: `Vas a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
-        confirmLabel: 'Cancelar el turno',
+        title: 'Cancelar la cita',
+        message: `Va a cancelar ${this.nombreDelTurno(turno)}. El horario queda libre para otra persona.`,
+        confirmLabel: 'Cancelar la cita',
         cancelLabel: 'Volver',
       },
       {
         label: 'Motivo de la cancelación',
-        placeholder: 'Contá brevemente por qué no vas a poder ir',
+        placeholder: 'Cuente brevemente por qué no va a poder ir',
         hint: 'El profesional lo va a ver junto con la cancelación.',
       },
     );
@@ -1396,7 +1740,7 @@ export class Appointments {
       .subscribe({
         next: () => {
           this.operando.set(null);
-          this.toast.success('Cancelamos tu turno y liberamos el horario.', 'Turno cancelado');
+          this.toast.success('Cancelamos su cita y liberamos el horario.', 'Cita cancelada');
           // El servidor es la verdad: se relee en vez de tachar la fila y devolver
           // el cupo a mano. El turno reaparece como cancelado (por `includeCancelled`)
           // y el horario vuelve a ofrecerse.
@@ -1412,10 +1756,10 @@ export class Appointments {
   /** Cómo nombrar el turno en la confirmación: por su fecha, o genérico. */
   private nombreDelTurno(turno: TurnoVisible): string {
     if (turno.cuando === null) {
-      return 'este turno';
+      return 'esta cita';
     }
     const cuando = this.fecha.transform(turno.cuando, "EEEE d 'de' MMM 'a las' HH:mm");
-    return cuando === null ? 'este turno' : `el turno del ${cuando}`;
+    return cuando === null ? 'esta cita' : `la cita del ${cuando}`;
   }
 
   /**
@@ -1434,7 +1778,7 @@ export class Appointments {
     const codigos = estado.status === 'validation' ? estado.issues.map((issue) => issue.code) : [];
 
     if (codigos.includes('CONFLICT')) {
-      this.toast.info('Este turno ya estaba cancelado. Actualizamos tu lista.', 'Turno');
+      this.toast.info('Esta cita ya estaba cancelada. Actualizamos su lista.', 'Cita');
       this.recargar();
       return;
     }
@@ -1447,11 +1791,11 @@ export class Appointments {
       // recargar sólo haría parpadear la pantalla para mostrar lo mismo.
       const delServidor = estado.issues.find((issue) => issue.message.trim() !== '')?.message;
       if (delServidor !== undefined) {
-        this.toast.info(delServidor, 'Turno');
+        this.toast.info(delServidor, 'Cita');
         return;
       }
 
-      this.toast.info('Este turno ya no se puede cancelar. Actualizamos tu lista.', 'Turno');
+      this.toast.info('Esta cita ya no se puede cancelar. Actualizamos su lista.', 'Cita');
       this.recargar();
       return;
     }
@@ -1459,8 +1803,8 @@ export class Appointments {
     const detalle =
       estado.status === 'forbidden' || estado.status === 'error' ? (estado.message ?? '') : '';
     this.toast.error(
-      detalle === '' ? 'No pudimos cancelar el turno. Reintentá en un momento.' : detalle,
-      'Turno',
+      detalle === '' ? 'No pudimos cancelar la cita. Reintente en un momento.' : detalle,
+      'Cita',
     );
   }
 
@@ -1513,7 +1857,12 @@ export class Appointments {
   /* ---- destinos ----------------------------------------------------------- */
 
   protected rutaDeReserva(horario: HorarioVisible): string {
-    return reservaDelPortalRoute(horario.id);
+    // Un horario de servicio no es un cupo: no hay id que mandar. La pantalla de
+    // reserva lo reencuentra por la oferta, la sede y el inicio.
+    if (horario.flexible === true) return reservaDelPortalRoute(FLEXIBLE_BOOKING_SLOT);
+    return reservaDelPortalRoute(
+      horario.ofertaId === undefined ? horario.id : RESERVA_DE_SERVICIO,
+    );
   }
 
   /**
@@ -1525,6 +1874,8 @@ export class Appointments {
       recurso: horario.resourceId,
       desde: horario.desde.toISOString(),
       hasta: horario.hasta.toISOString(),
+      ...(horario.ofertaId === undefined ? {} : { oferta: horario.ofertaId }),
+      ...(horario.flexible === true ? { flexible: '1' } : {}),
     };
   }
 
@@ -1545,11 +1896,14 @@ export class Appointments {
       agenda: this.nombreDeLaAgenda(resourceId),
       sede: this.nombreDeLaSede(resourceId),
       motivo: cita.reasonText ?? '',
+      servicio: servicioEnUnaLinea(cita),
       reprogramadoDesde: cita.rescheduledFrom ?? null,
       avisoDelCambio: avisoDelCambio(cita),
       cambioCuando: cita.statusReason?.changedAt ?? null,
       avisoDeDemora: avisoDeDemora(cita),
       demoraCuando: cita.delayNotice?.announcedAt ?? null,
+      esReconsulta: esReconsulta(cita),
+      reconsultaDe: cita.followUpOf?.startAt ?? null,
     };
   }
 
@@ -1656,7 +2010,7 @@ function avisoDelCambio(cita: Booking): string {
   if (cambio === undefined || cambio.reasonText.trim() === '') {
     return '';
   }
-  const quien = cambio.actorKind === 'PATIENT' ? 'Indicaste' : 'El profesional indicó';
+  const quien = cambio.actorKind === 'PATIENT' ? 'Indicó' : 'El profesional indicó';
   return `${quien}: ${cambio.reasonText}`;
 }
 

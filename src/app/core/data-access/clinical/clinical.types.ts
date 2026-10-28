@@ -19,6 +19,41 @@
     pantalla sólo quiera contar cuántas alergias hay.
     ========================================================================== */
 
+/** Decisión terminal de C3 (P41). */
+export type DiagnosisOutcome = 'CONFIRMED' | 'REFUTED';
+
+/** Evidencia que respalda la decisión; C3 resuelve sus vínculos (P41). */
+export interface DiagnosisEvidence {
+  readonly kind: 'NOTE' | 'ANALYSIS';
+  readonly noteId?: string;
+  readonly encounterId?: string;
+  readonly serviceRequestId?: string;
+  readonly diagnosticReportId?: string;
+}
+
+/** Decisión registrada por C3; los instantes viajan como ISO (P41). */
+export interface DiagnosisVerification {
+  readonly outcome: DiagnosisOutcome;
+  readonly decidedAt: string;
+  readonly decidedByProfileId: string;
+  readonly reasonText: string | null;
+  readonly basedOn: DiagnosisEvidence | null;
+}
+
+/** Entrada de C3 para confirmar o rechazar (P41). */
+export interface NewDiagnosisVerification {
+  readonly outcome: DiagnosisOutcome;
+  /** Hasta 500 caracteres; se exige motivo o evidencia. */
+  readonly reasonText?: string;
+  readonly basedOn?: DiagnosisEvidence;
+  /** Obligatorio al confirmar si el diagnóstico todavía no declara inicio. */
+  readonly onsetAt?: string;
+  /** Obligatorio al confirmar salvo curso crónico. */
+  readonly expectedResolutionAt?: string;
+  /** Un curso crónico se confirma sin fin esperado. */
+  readonly clinicalCourseConceptId?: string;
+}
+
 /** Un diagnóstico o problema del paciente. */
 export interface Condition {
   readonly id: string;
@@ -26,6 +61,8 @@ export interface Condition {
   readonly categoryConceptId?: string;
   readonly clinicalStatusConceptId?: string;
   readonly verificationStatusConceptId?: string;
+  /** Decisión y evidencia de C3 (P41); `null` si nunca se decidió. */
+  readonly verification?: DiagnosisVerification | null;
   readonly severityConceptId?: string;
   readonly encounterId?: string;
   /** Curso clínico: agudo/crónico/subagudo/recurrente (Patch v4.0.8). */
@@ -67,8 +104,8 @@ export interface MedicationRequest {
    * El motivo escrito a mano, cuando no hay condición registrada detrás.
    *
    * Es lo que el cliente pidió para los casos psiquiátricos y para quien «sólo
-   * fue a que le receten». **Todavía no existe en el backend**: ver P24 en
-   * `PENDIENTES-BACKEND.md`.
+   * fue a que le receten». La API lo guarda en `medication_requests`
+   * (`indicationText`, P24).
    */
   readonly indicationText?: string;
   readonly prescriberProfileId?: string;
@@ -284,6 +321,12 @@ export interface CareEpisodeRegistration {
   readonly createdAt: Date;
 }
 
+/** Una fila de la nota médica de C1 (P39: `entries_json` de la versión). */
+export interface MedicalNoteEntry {
+  readonly label: string;
+  readonly value: string;
+}
+
 /** Una nota del expediente, con su versión vigente. */
 export interface ChartNote {
   readonly noteId: string;
@@ -293,6 +336,11 @@ export interface ChartNote {
   readonly currentVersionId?: string;
   readonly versionNumber?: number;
   readonly authorProfileId?: string;
+  /**
+   * Filas estructuradas de C1 de la versión vigente (P39). Ausente en las
+   * notas SOAP de antes de C1, que se leen por su texto.
+   */
+  readonly entries?: readonly MedicalNoteEntry[];
   readonly chiefComplaintText?: string;
   readonly subjectiveText?: string;
   readonly objectiveText?: string;
@@ -317,11 +365,30 @@ export interface CarePlan {
   readonly id: string;
   readonly statusConceptId: string;
   readonly intentConceptId?: string;
+  /** El diagnóstico del que cuelga, cuando el motivo es uno ya registrado. */
+  readonly conditionId?: string;
+  /**
+   * El motivo escrito a mano, cuando no cuelga de un diagnóstico.
+   *
+   * Todavía sólo lo devuelve la maqueta: la lectura real de `chart` no lo trae.
+   */
+  readonly reasonText?: string;
   readonly goalText?: string;
   readonly startDate?: Date;
   readonly endDate?: Date;
   readonly activities: readonly CarePlanActivity[];
   readonly createdAt: Date;
+}
+
+/**
+ * Un archivo gobernado de un documento del expediente (`ChartDocumentFileItemDto`
+ * de la API). Se descarga por `GET /charts/documents/:id/files/:fileId/content`.
+ */
+export interface ChartDocumentFile {
+  readonly fileId: string;
+  /** El documento en sí (`PRIMARY`) o lo que lo acompaña (`ATTACHMENT`). */
+  readonly contentRole: 'PRIMARY' | 'ATTACHMENT';
+  readonly ordinal?: number;
 }
 
 /** Un documento del expediente. */
@@ -333,6 +400,12 @@ export interface ChartDocument {
   readonly authorText?: string;
   readonly isExternal?: boolean;
   readonly documentDate?: Date;
+  /**
+   * Los archivos del documento, ordenados por `ordinal` (CL-27). Antes
+   * `toDocument` los descartaba y el expediente no podía volver a abrir lo que se
+   * había subido.
+   */
+  readonly files?: readonly ChartDocumentFile[];
   readonly createdAt: Date;
 }
 
@@ -390,6 +463,11 @@ export interface PatientChart {
 export interface NewMedicationRequest {
   readonly custodianTenantId: string;
   readonly patientProfileId: string;
+  /**
+   * La respuesta del formulario médico de la que sale (instancia de `forms`).
+   * En la cita es obligatoria (P43).
+   */
+  readonly formInstanceId?: string;
   /** El medicamento, como uuid de concepto. Nunca texto tecleado. */
   readonly medicationConceptId: string;
   readonly encounterId?: string;
@@ -482,6 +560,12 @@ export interface NewCondition {
   readonly expectedResolutionAt?: Date;
   /** Hallazgos y justificación clínica (Patch v4.1.3). Narrativa libre. */
   readonly noteText?: string;
+  /**
+   * Certeza con la que nace. Sin declarar, el servidor lo registra confirmado;
+   * un diagnóstico que sale de una sugerencia nace `PROVISIONAL` (presuntivo,
+   * «en estudio») y el profesional lo confirma o lo descarta después.
+   */
+  readonly verificationStatus?: 'CONFIRMED' | 'PROVISIONAL';
 }
 
 /**
@@ -659,10 +743,8 @@ export interface ObservationRegistration {
  * tendría forma de comprobar que existe, ni al recargar.
  *
  * El tipo y sus dos métodos entran igual porque el contrato **sí** está
- * verificado, y así el día que el backend publique la lectura la pantalla es lo
- * único que falta. Hasta entonces, la ficha del vault lo dice con el mismo
- * aviso: «Tabla ⚠︎ — la pantalla necesita un listado que el backend todavía no
- * expone».
+ * verificado. La ficha del vault lo dice con el mismo aviso: «Tabla ⚠︎ — la
+ * pantalla necesita un listado que el backend todavía no expone».
  */
 export interface NewDiagnosticReport {
   readonly custodianTenantId: string;
@@ -725,46 +807,5 @@ export interface InteractionCheckResult {
   readonly count: number;
 }
 
-/* ---- FT-22 · Aspectos médicos del titular --------------------------------- */
-
-/**
- * Lo que el propio paciente declara sobre su salud.
- *
- * ## Por qué es un contrato aparte del resumen clínico
- *
- * `ClinicalSummary` es lo que **un profesional registró**: condiciones,
- * alergias y observaciones firmadas, que el paciente no puede ni debe editar.
- * Esto es lo otro: lo que la persona dice de sí misma antes de que nadie la
- * examine —qué toma, a qué es alérgica según ella, qué le operaron—. Mezclarlos
- * en una sola lectura haría que un dato declarado se leyera como un diagnóstico.
- *
- * Todo texto libre y opcional a propósito: es una declaración, no un formulario
- * clínico codificado. Obligar a elegir de un catálogo dejaría fuera justo lo que
- * la persona quiere aclarar.
- */
-export interface OwnMedicalAspects {
-  /** Grupo y factor, tal como la persona lo declara («O+»). */
-  readonly bloodType?: string;
-  /** A qué dice ser alérgica. No reemplaza a las alergias registradas. */
-  readonly allergiesText?: string;
-  /** Enfermedades crónicas o condiciones que declara. */
-  readonly chronicConditionsText?: string;
-  /** Qué está tomando ahora, incluidos los de venta libre. */
-  readonly currentMedicationsText?: string;
-  /** Cirugías y hospitalizaciones anteriores. */
-  readonly surgeriesText?: string;
-  /** Antecedentes familiares relevantes. */
-  readonly familyHistoryText?: string;
-  /** Hábitos: tabaco, alcohol, actividad física, alimentación. */
-  readonly habitsText?: string;
-  /** Cuándo se guardó por última vez. Sólo lectura: lo pone el servidor. */
-  readonly updatedAt?: Date;
-}
-
-/**
- * Los cambios que el titular manda.
- *
- * Cada campo ausente **no se toca**; un campo en `''` lo borra. Es la
- * distinción que permite guardar una sección sin pisar las otras.
- */
-export type OwnMedicalAspectsChanges = Omit<OwnMedicalAspects, 'updatedAt'>;
+/* FT-22 · Aspectos médicos del titular: contrato aparte, en su archivo. */
+export * from './own-medical-aspects.types';

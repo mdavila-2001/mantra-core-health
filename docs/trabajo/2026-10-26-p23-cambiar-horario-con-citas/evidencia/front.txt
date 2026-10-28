@@ -1,0 +1,11 @@
+$ (mantra-core-health) NODE_OPTIONS=--max-old-space-size=4096 yarn ng test --watch=false --include scheduling-template-retire.handlers.spec.ts --include scheduling.handlers.spec.ts --include surveys-forms.handlers.spec.ts --include "src/app/core/mock/*.spec.ts" --include block-cancellations.spec.ts --include agenda-create.spec.ts --include my-agenda.spec.ts --include scheduling.client.spec.ts
+ Test Files  21 passed (21)
+      Tests  341 passed (341)
+   Duration  27.82s (transform 32.02s, setup 6.97s, import 48.67s, tests 36.90s, environment 59.01s)
+EXIT=0
+
+$ (mantra-core-health) yarn typecheck
+EXIT=0
+
+$ (mantra-core-health) npx eslint <archivos tocados>
+EXIT=0

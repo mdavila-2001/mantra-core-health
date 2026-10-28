@@ -1,0 +1,19 @@
+<!-- La anatomía es la de los otros directorios y la pone
+     `app-directory-page` (A7 del plan de UX). -->
+<app-directory-page
+  [embebido]="embebido()"
+  titulo="Directorio de aseguradoras"
+  subtitulo="Seguros de salud con ficha pública. Abra una para ver sus productos, lo que cubre cada plan y lo que no, y hablar con su broker."
+  etiquetaBusqueda="Buscar por nombre de la aseguradora"
+  [filtros]="filtros()"
+  [estado]="estado()"
+  [grupos]="tramos()"
+  [sustantivo]="sustantivo"
+  [aviso]="aviso()"
+  [textoSinCoincidencias]="sinCoincidencias()"
+  rotuloDeGrupos="Ciudad"
+  [facetaDeGrupos]="false"
+  (filtrosCambiaron)="filtrar($event)"
+  (reintentar)="cargar()"
+>
+</app-directory-page>

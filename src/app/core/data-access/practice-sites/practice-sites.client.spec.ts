@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { PracticeSitesClient } from './practice-sites.client';
-import type { PracticeSitePage } from './practice-sites.types';
+import type { MyRoleAssignment, PracticeSitePage } from './practice-sites.types';
 
 describe('PracticeSitesClient', () => {
   let client: PracticeSitesClient;
@@ -72,6 +72,19 @@ describe('PracticeSitesClient', () => {
     expect(pagina!.count).toBe(0);
   });
 
+  it('envía el teléfono particular de la sede y permite quitarlo', () => {
+    client.setSiteContactPhone('site-1', '+591 72123456').subscribe();
+    const guardar = http.expectOne('/practitioners/me/sites/site-1/contact-phone');
+    expect(guardar.request.method).toBe('PUT');
+    expect(guardar.request.body).toEqual({ contactPhone: '+591 72123456' });
+    guardar.flush({ id: 'site-1', contactPhone: '+591 72123456' });
+
+    client.setSiteContactPhone('site-1', null).subscribe();
+    const quitar = http.expectOne('/practitioners/me/sites/site-1/contact-phone');
+    expect(quitar.request.body).toEqual({ contactPhone: null });
+    quitar.flush({ id: 'site-1', contactPhone: null });
+  });
+
   describe('Carril 18 — mis organizaciones', () => {
     it('listMyRoleAssignments pide /practitioners/me/role-assignments y normaliza opcionales', () => {
       let vinculaciones: readonly unknown[] = [];
@@ -110,6 +123,58 @@ describe('PracticeSitesClient', () => {
       ]);
       expect('practiceType' in (vinculaciones[0] as object)).toBe(false);
       expect('validTo' in (vinculaciones[0] as object)).toBe(false);
+    });
+
+    it('listMyRoleAssignments conserva los campos de la afiliación por procedimiento', () => {
+      let filas: readonly MyRoleAssignment[] = [];
+      client.listMyRoleAssignments().subscribe((r) => (filas = r));
+
+      http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([
+        {
+          id: 'role-1',
+          practiceId: 'practice-1',
+          practiceName: 'Centro Norte',
+          practiceType: null,
+          practiceSiteId: 'site-1',
+          roleConceptId: 'role-attending',
+          specialtyConceptId: null,
+          healthcareServiceId: 'hs-1',
+          serviceConceptId: 'sc-1',
+          serviceDisplay: 'Colonoscopia',
+          status: 'status-invited',
+          statusConceptId: 'status-invited',
+          statusCode: 'ROLE_ASG_INVITED',
+          initiatedBy: 'PRACTICE',
+          isPrimary: false,
+          validFrom: null,
+          validTo: null,
+          createdAt: '2026-01-01T12:00:00.000Z',
+          avatarUrl: null,
+        },
+      ]);
+
+      expect(filas[0]).toEqual(
+        expect.objectContaining({
+          healthcareServiceId: 'hs-1',
+          serviceConceptId: 'sc-1',
+          serviceDisplay: 'Colonoscopia',
+          statusConceptId: 'status-invited',
+          statusCode: 'ROLE_ASG_INVITED',
+          initiatedBy: 'PRACTICE',
+        }),
+      );
+    });
+
+    it('selfRequestAffiliation envía healthcareServiceId, uno por llamada', () => {
+      client
+        .selfRequestAffiliation('practice-1', { practiceSiteId: 'site-1', healthcareServiceId: 'hs-1' })
+        .subscribe();
+
+      const req = http.expectOne(
+        (r) => r.url === '/practices/practice-1/role-assignments/self-request',
+      );
+      expect(req.request.body).toEqual({ practiceSiteId: 'site-1', healthcareServiceId: 'hs-1' });
+      req.flush({ id: 'role-1', practiceId: 'practice-1', practitionerProfileId: 'p', status: 's', createdAt: '2026-01-01T12:00:00.000Z' });
     });
 
     it('selfRequestAffiliation postea al practiceId dado y devuelve el estado PENDING', () => {

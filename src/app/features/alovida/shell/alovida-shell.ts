@@ -13,7 +13,7 @@
     ========================================================================== */
 
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -53,6 +53,7 @@ const SIN_SECCIONES: readonly SeccionAlovida[] = [];
     '(document:click)': 'alCerrarFuera($event)',
     '(document:keydown.escape)': 'cerrarDesplegables()',
   },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AlovidaShell {
   private readonly router = inject(Router);
@@ -60,16 +61,16 @@ export class AlovidaShell {
 
   /** Los diez módulos del nav, en el orden de la bóveda. */
   readonly navegacion: readonly EntradaNav[] = [
-    { rotulo: 'Inicio', icono: 'inicio', segmento: 'inicio' },
-    { rotulo: 'Identidad y accesos', icono: 'accesos', segmento: 'accesos' },
-    { rotulo: 'Datos compartidos', icono: 'datos', segmento: 'datos-compartidos' },
-    { rotulo: 'Terminología', icono: 'terminologia', segmento: 'terminologia' },
-    { rotulo: 'Organizaciones', icono: 'organizaciones', segmento: 'directorio' },
-    { rotulo: 'Personas', icono: 'personas', segmento: 'personas' },
-    { rotulo: 'Agenda', icono: 'agenda', segmento: 'agenda' },
-    { rotulo: 'Historia clínica', icono: 'historia', segmento: 'historia-clinica' },
-    { rotulo: 'Facturación', icono: 'facturacion', segmento: 'facturacion' },
-    { rotulo: 'Auditoría', icono: 'auditoria', segmento: 'auditoria' },
+    { rotulo: 'Inicio', icono: 'inicio', segmento: 'home' },
+    { rotulo: 'Identidad y accesos', icono: 'accesos', segmento: 'access-control' },
+    { rotulo: 'Datos compartidos', icono: 'datos', segmento: 'shared-data' },
+    { rotulo: 'Terminología', icono: 'terminologia', segmento: 'vocabulary' },
+    { rotulo: 'Organizaciones', icono: 'organizaciones', segmento: 'provider-directory' },
+    { rotulo: 'Personas', icono: 'personas', segmento: 'people' },
+    { rotulo: 'Agenda', icono: 'agenda', segmento: 'schedule' },
+    { rotulo: 'Historia clínica', icono: 'historia', segmento: 'medical-records' },
+    { rotulo: 'Facturación', icono: 'facturacion', segmento: 'billing' },
+    { rotulo: 'Auditoría', icono: 'auditoria', segmento: 'audit' },
   ];
 
   /** Primer segmento de la URL: es el módulo que se está mirando. */

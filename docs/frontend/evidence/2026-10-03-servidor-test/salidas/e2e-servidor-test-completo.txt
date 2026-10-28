@@ -1,0 +1,14 @@
+# 10 pruebas de navegador (Chromium, --workers=1) contra https://test.173.249.39.237.sslip.io, inicio 2026-10-03 02:46:48 hora local.
+# Mandato de las pruebas: el alta exige respuesta 201 de POST /iam/auth/register-organization; los casos de error exigen 409/422 y que no haya ningún 5xx.
+# Variable E2E_API_REAL=1; ver registro-organizacion-api-real.spec.ts.
+  ✓   1 [chromium] › playwright/registro-organizacion-api-real.spec.ts:144:7 › alta de aseguradora contra la API real › válido: el alta completa responde 201 y llega a la pantalla de éxito (13.2s)
+  ✓   2 [chromium] › playwright/registro-organizacion-api-real.spec.ts:158:7 › alta de aseguradora contra la API real › válido: «Ir a iniciar sesión» lleva a la pantalla de acceso (11.3s)
+  ✓   3 [chromium] › playwright/registro-organizacion-api-real.spec.ts:169:7 › alta de aseguradora contra la API real › visual: la pantalla de éxito se ve bien en móvil y en modo oscuro, y el botón sigue vivo (11.8s)
+  ✓   4 [chromium] › playwright/registro-organizacion-api-real.spec.ts:194:7 › alta de aseguradora contra la API real › límite: el código más corto que acepta el DTO (3 caracteres) se registra (14.0s)
+  ✓   5 [chromium] › playwright/registro-organizacion-api-real.spec.ts:208:7 › alta de aseguradora contra la API real › límite: quitar un PDF y volver a subirlo no rompe el alta (8.3s)
+  ✓   6 [chromium] › playwright/registro-organizacion-api-real.spec.ts:224:7 › alta de aseguradora contra la API real › límite: volver atrás conserva lo escrito (5.9s)
+  ✓   7 [chromium] › playwright/registro-organizacion-api-real.spec.ts:237:7 › alta de aseguradora contra la API real › error: un código de organización repetido responde 409 y el mensaje nombra la sigla (19.2s)
+  ✓   8 [chromium] › playwright/registro-organizacion-api-real.spec.ts:256:7 › alta de aseguradora contra la API real › error: un correo ya registrado responde 409 y no pierde lo escrito (18.6s)
+  ✓   9 [chromium] › playwright/registro-organizacion-api-real.spec.ts:275:7 › alta de aseguradora contra la API real › error: un archivo que dice ser PDF y no lo es lo rechaza el servidor, sin 5xx (5.1s)
+  ✓  10 [chromium] › playwright/registro-organizacion-api-real.spec.ts:301:7 › alta de aseguradora contra la API real › error: sin los documentos obligatorios «Continuar» no avanza (5.3s)
+  10 passed (1.9m)

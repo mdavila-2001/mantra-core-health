@@ -214,5 +214,4 @@ cada recarga.**
 
 Es coherente con no adivinar, pero es fricción real y repetida. Persistirla es un
 cambio de producto con su propia decisión de seguridad (¿la organización activa
-es un dato sensible?). Registrado como brecha `MEDIUM` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
+es un dato sensible?).

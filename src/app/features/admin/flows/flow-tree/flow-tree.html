@@ -1,0 +1,87 @@
+@if (raiz(); as inicio) {
+  <div class="arbol__controles">
+    <button app-button variant="outline" size="sm" data-testid="flow-tree-expand" (clicked)="expandirTodo()">Expandir todo</button>
+    <button app-button variant="outline" size="sm" data-testid="flow-tree-collapse" (clicked)="contraerTodo()">Contraer todo</button>
+  </div>
+  <div class="arbol__marco">
+    <ul class="arbol" data-testid="flow-tree" aria-label="Árbol de decisión del flujo">
+      <ng-container [ngTemplateOutlet]="nodoTpl" [ngTemplateOutletContext]="{ $implicit: inicio }" />
+    </ul>
+  </div>
+} @else {
+  <p class="arbol__vacio">El flujo no tiene un nodo raíz que mostrar.</p>
+}
+
+<ng-template #nodoTpl let-vista>
+  @let nodo = vista.nodo;
+  <li class="arbol__nodo" [attr.data-testid]="'flow-node-' + nodo.id" [attr.data-kind]="nodo.kind">
+    <div class="arbol__cabecera">
+      @if (vista.ramas.length > 0) {
+        <button
+          type="button"
+          class="arbol__plegar"
+          [attr.aria-expanded]="abierto(nodo.id)"
+          [attr.aria-controls]="'ramas-' + nodo.id"
+          [attr.aria-label]="(abierto(nodo.id) ? 'Contraer ' : 'Expandir ') + nodo.title"
+          (click)="alternar(nodo.id)"
+        >
+          <span aria-hidden="true">{{ abierto(nodo.id) ? '▾' : '▸' }}</span>
+        </button>
+      } @else {
+        <span class="arbol__plegar arbol__plegar--fin" aria-hidden="true">■</span>
+      }
+      <app-badge [variant]="rotuloNodo(nodo.kind).tone">{{ rotuloNodo(nodo.kind).label }}</app-badge>
+      <strong class="arbol__titulo">{{ nodo.title }}</strong>
+      <span class="arbol__secundario">{{ nodo.actor }}</span>
+      @if (nodo.endpoint; as ep) {
+        <code class="arbol__endpoint" [attr.data-testid]="'flow-endpoint-' + nodo.id">{{ ep.method }} {{ ep.path }}</code>
+        <app-badge [variant]="rotuloContrato(ep.contract).tone" [attr.data-testid]="'flow-contract-' + nodo.id">{{ rotuloContrato(ep.contract).label }}</app-badge>
+      }
+      @if (nodo.gap) {
+        <app-badge variant="warning" [attr.data-testid]="'flow-gap-' + nodo.id">Sin endpoint</app-badge>
+      }
+    </div>
+    @if (nodo.gap) {
+      <p class="arbol__gap">{{ nodo.gap }}</p>
+    }
+    @if (nodo.effects.length > 0) {
+      <p class="arbol__secundario">Efecto: {{ nodo.effects.join(' · ') }}</p>
+    }
+    <p class="arbol__secundario">Fuente: {{ nodo.sourceRef }}@if (nodo.uiRoute) { · Pantalla <code>{{ nodo.uiRoute }}</code> }</p>
+
+    @if (vista.ramas.length > 0 && abierto(nodo.id)) {
+      <ul class="arbol__ramas" [id]="'ramas-' + nodo.id">
+        @for (r of vista.ramas; track $index) {
+          <li class="arbol__rama" [attr.data-testid]="'flow-branch-' + nodo.id + '-' + $index">
+            <div class="arbol__rama-cabecera">
+              <app-badge [variant]="rotuloRama(r.rama.kind).tone" size="sm">{{ rotuloRama(r.rama.kind).label }}</app-badge>
+              <span class="arbol__condicion">{{ r.rama.condition }}</span>
+              <span class="arbol__secundario">→ {{ r.rama.expected }}</span>
+            </div>
+            @if (r.rama.qaCase; as caso) {
+              @let v = veredicto(caso);
+              <p class="arbol__caso">
+                <code>{{ caso.code }}</code>
+                <span class="arbol__secundario">espera {{ caso.expectedStatus }} · visto el {{ caso.observedOn }}</span>
+                <app-badge [variant]="v.tone" size="sm" [attr.data-testid]="'flow-verdict-' + nodo.id + '-' + $index">{{ v.label }}</app-badge>
+                @if (v.detail) {
+                  <span class="arbol__secundario">{{ v.detail }}</span>
+                }
+              </p>
+            } @else {
+              <p class="arbol__secundario" [attr.data-testid]="'flow-reason-' + nodo.id + '-' + $index">Sin caso de prueba: {{ r.rama.reason }}</p>
+            }
+            @if (r.referencia; as ref) {
+              <p class="arbol__secundario">{{ ref.tipo === 'continua' ? '↪ Continúa en' : '↺ Vuelve a' }} «{{ ref.titulo }}».</p>
+            }
+            @if (r.hijo) {
+              <ul class="arbol__hijos">
+                <ng-container [ngTemplateOutlet]="nodoTpl" [ngTemplateOutletContext]="{ $implicit: r.hijo }" />
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </li>
+</ng-template>

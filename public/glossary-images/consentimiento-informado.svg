@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Los cinco elementos del consentimiento informado</title>
+  <desc id="d">Un edificio con cinco columnas bajo un techo que dice consentimiento informado válido. Las columnas son capacidad, información, comprensión, voluntariedad y decisión. La base recuerda que es un proceso continuo y que puede revocarse.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; --p:#7b3b6e; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; --p:#b77ab0; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <polygon points="24,108 400,50 776,108" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="400" y="94" text-anchor="middle" class="t" style="fill:var(--b)">Consentimiento informado válido</text>
+  <g>
+    <rect x="35" y="122" width="134" height="236" rx="8" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="102" y="152" text-anchor="middle" class="k" style="fill:var(--a)">1</text>
+    <text x="102" y="178" text-anchor="middle" class="h">Capacidad</text>
+    <text x="102" y="206" text-anchor="middle" class="n">Aptitud para</text><text x="102" y="224" text-anchor="middle" class="n">comprender, valorar</text><text x="102" y="242" text-anchor="middle" class="n">y decidir sobre</text><text x="102" y="260" text-anchor="middle" class="n">esa decisión</text>
+    <text x="102" y="296" text-anchor="middle" class="n m">Se presume en el</text><text x="102" y="314" text-anchor="middle" class="n m">adulto; se evalúa</text><text x="102" y="332" text-anchor="middle" class="n m">caso a caso</text>
+  </g>
+  <g>
+    <rect x="185" y="122" width="134" height="236" rx="8" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="252" y="152" text-anchor="middle" class="k" style="fill:var(--a)">2</text>
+    <text x="252" y="178" text-anchor="middle" class="h">Información</text>
+    <text x="252" y="206" text-anchor="middle" class="n">Qué se propone,</text><text x="252" y="224" text-anchor="middle" class="n">para qué, beneficios,</text><text x="252" y="242" text-anchor="middle" class="n">riesgos relevantes,</text><text x="252" y="260" text-anchor="middle" class="n">alternativas y qué</text><text x="252" y="278" text-anchor="middle" class="n">pasa si no se hace</text>
+  </g>
+  <g>
+    <rect x="335" y="122" width="134" height="236" rx="8" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="402" y="152" text-anchor="middle" class="k" style="fill:var(--a)">3</text>
+    <text x="402" y="178" text-anchor="middle" class="h">Comprensión</text>
+    <text x="402" y="206" text-anchor="middle" class="n">Lenguaje claro,</text><text x="402" y="224" text-anchor="middle" class="n">intérprete si hace</text><text x="402" y="242" text-anchor="middle" class="n">falta, preguntas y</text><text x="402" y="260" text-anchor="middle" class="n">comprobación con</text><text x="402" y="278" text-anchor="middle" class="n">teach-back</text>
+  </g>
+  <g>
+    <rect x="485" y="122" width="134" height="236" rx="8" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="552" y="152" text-anchor="middle" class="k" style="fill:var(--a)">4</text>
+    <text x="552" y="178" text-anchor="middle" class="h">Voluntariedad</text>
+    <text x="552" y="206" text-anchor="middle" class="n">Sin coacción, ni</text><text x="552" y="224" text-anchor="middle" class="n">engaño, ni presión</text><text x="552" y="242" text-anchor="middle" class="n">indebida de familia,</text><text x="552" y="260" text-anchor="middle" class="n">equipo o contexto</text>
+  </g>
+  <g>
+    <rect x="635" y="122" width="134" height="236" rx="8" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+    <text x="702" y="152" text-anchor="middle" class="k" style="fill:var(--a)">5</text>
+    <text x="702" y="178" text-anchor="middle" class="h">Decisión</text>
+    <text x="702" y="206" text-anchor="middle" class="n">Aceptar, rechazar</text><text x="702" y="224" text-anchor="middle" class="n">o pedir tiempo, y</text><text x="702" y="242" text-anchor="middle" class="n">dejarlo registrado</text>
+  </g>
+  <rect x="24" y="366" width="752" height="46" rx="8" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <text x="400" y="394" text-anchor="middle" class="s">Es un proceso continuo, no sólo una firma: la persona puede revocarlo en cualquier momento</text>
+  <text x="400" y="440" text-anchor="middle" class="n m">Los requisitos concretos dependen de la ley y de la institución de cada lugar.</text>
+  <text x="400" y="464" text-anchor="middle" class="n m">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

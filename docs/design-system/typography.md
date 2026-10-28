@@ -129,6 +129,45 @@ distinguen una implementación correcta de una copiada a medias.
 
 `app-data-table` la usa para su `<caption>`.
 
+## Enlaces
+
+Un enlace sin estilo del sistema sale con el azul del navegador, y el violeta al
+visitarlo. Hay **tres capas**, de la más específica a la más general, y cada una
+existe porque la anterior no llega a todo:
+
+| Qué | Dónde vive | Se aplica a |
+|---|---|---|
+| Átomo `app-link` | `atoms/link/link.css` | `<a app-link>` en plantillas que importan `Link`. Trae las variantes `subtle` y `danger` y el ícono de destino externo |
+| Respaldo de `app-link` | `:where(a[app-link])` en `styles/alovida.css` | `<a app-link>` en plantillas que **no** montan el átomo (las maquetas ALOVIDA) |
+| Base de texto suelto | `:where(a[href]:not([class], [app-button], [app-link]))` en `styles.css` | Un `<a href>` sin clase: el de un párrafo, una alerta o un pie |
+
+Las tres dicen lo mismo, y `link.spec.ts` lo vigila:
+
+- color `--text-link`, que en oscuro pasa a aguamarina;
+- **subrayado siempre**, fino (`1px`, a `0.2em`): el color no puede ser el único
+  portador de «esto se puede seguir»;
+- en hover, el color baja a `--brand-primary-hover` **y** el subrayado se
+  engrosa a `2px`, para que tampoco dependa del tono.
+
+**Especificidad cero a propósito.** Las dos capas globales van dentro de
+`:where()`, así que cualquier regla de componente o de contenedor les gana sin
+pelearse. Cuando el respaldo de `app-link` era `a[app-link]` a secas, le ganaba
+al `:host` del átomo y dejaba sin efecto el subrayado y las variantes.
+
+**No hace falta una regla `:visited`.** Un `color` de autor le gana al violeta del
+navegador en todos los estados, también en el visitado.
+
+**Lo que la base no toca, y por qué:**
+
+- un `<a>` **sin `href`** no es un enlace: no se le pinta como tal;
+- un `<a>` **con clase** decide su propio aspecto (tarjeta, navegación, chip);
+- `a[app-button]` y `a[app-link]` ya tienen la suya.
+
+**Dentro de una alerta**, el enlace proyectado toma la tinta del tono
+(`color: inherit` en `alert.css`) y sigue subrayado: el color de enlace del
+sistema está calculado contra el fondo de la página, y sobre el fondo tonal de la
+alerta, en oscuro, quedaba en 4,35:1.
+
 ## Lo que no hay
 
 | Elemento | Estado |
@@ -137,6 +176,7 @@ distinguen una implementación correcta de una copiada a medias.
 | Tokens de peso (`--fw-*`) | No. El peso se escribe literal en cada regla |
 | Tokens de espaciado entre letras | No. Solo el `-0.01em` de los encabezados |
 | `text-wrap: balance` en títulos | No se usa |
+| Color de enlace para un `<a>` **con clase** que no declara color | No. Esa clase decide, y si sólo fija el peso (`.panel__fila-nombre` en `dashboard.css`) el enlace sale con el azul del navegador. Se arregla poniendo `app-link` o el color en la clase |
 | Soporte de escritura de derecha a izquierda | No |
 
 La primera es la más visible: un `display` de 44 px en un teléfono de 320 px de

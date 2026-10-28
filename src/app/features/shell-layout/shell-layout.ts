@@ -3,18 +3,22 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   DOCUMENT,
   effect,
+  HostListener,
   inject,
   signal,
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { PdfBrandingService } from '../../core/pdf-branding/pdf-branding.service';
 import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
+import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -29,6 +33,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // declara hotspot— y se monta acá porque el armazón es lo único que existe
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
+import { PanicButton } from '../emergency/panic-button/panic-button';
 import { BackLink } from '../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
@@ -37,6 +42,19 @@ import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ChatStore } from '../../core/messaging/chat.store';
+import { FirstStepsStore } from '../dashboard/patient-home/first-steps/first-steps.store';
+
+/**
+ * El `<link>` de la hoja del paciente: `bundleName` de `angular.json`.
+ *
+ * El `?v=2` es para los navegadores que la guardaron por un año antes de que
+ * el servidor la sirviera con `no-cache` (`server/build-assets.ts`): con la
+ * URL de siempre no la vuelven a pedir. No hace falta subirlo en cada cambio.
+ */
+const PATIENT_STYLESHEET_ID = 'alovida-paciente-css';
+const PATIENT_STYLESHEET_HREF = 'paciente.css?v=2';
+import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
+import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -48,6 +66,23 @@ import { ChatStore } from '../../core/messaging/chat.store';
 function contiene(ruta: string, url: string): boolean {
   return url === ruta || url.startsWith(`${ruta}/`);
 }
+
+/**
+ * Pantallas cuyo destino es un atajo de la cabecera y no un renglón del menú.
+ *
+ * Todas cuelgan de `/my-account`, que es «Mi perfil»: por la regla del prefijo
+ * más largo, estar en «Mis gastos» encendía «Mi perfil» en la barra lateral, y
+ * la pantalla se marcaba en dos lugares a la vez (propietario, 27/10/2026). El
+ * atajo ya se marca arriba (`routerLinkActive`), así que en estas el menú no
+ * reclama nada. El carrito no está: es parte de «Farmacia», y ahí marcarla es
+ * correcto.
+ */
+const DESTINOS_DE_LA_CABECERA: readonly string[] = [
+  '/my-account/spending',
+  '/my-account/invoices',
+  '/my-account/requests',
+  '/my-account/promotions',
+];
 
 /** El panel. Constante y no literal suelto: lo miran dos cosas distintas acá. */
 const PANEL = '/dashboard';
@@ -69,6 +104,13 @@ const PANEL = '/dashboard';
  * > las superficies que quedaron en el merge — `LOGIN_ROUTE` del interceptor y el `AuthService`
  * > nuestro, del que deriva `user` y `tenants` en vez de pedirle métodos que no tiene.
  */
+/** Cómo se rotula, en el menú de la cuenta, cada tipo de organización con cuenta propia. */
+const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
+  PHARMACY: 'Farmacia',
+  DIAGNOSTIC_CENTER: 'Laboratorio o centro de diagnóstico',
+  PAYER: 'Aseguradora',
+};
+
 @Component({
   selector: 'app-shell-layout',
   imports: [
@@ -77,10 +119,12 @@ const PANEL = '/dashboard';
     NgTemplateOutlet,
     AlovidaThemeToggleDirective,
     RouterLink,
+    RouterLinkActive,
     RouterOutlet,
     TutorialOverlay,
     TutorialTarget,
     NotificationBell,
+    PanicButton,
     BackLink,
     Badge,
     NavIcon,
@@ -92,7 +136,10 @@ const PANEL = '/dashboard';
 })
 export class ShellLayout {
   private readonly auth = inject(AuthService);
+  // Sólo se instancia: mantiene listo el logo del consultorio para los PDF.
+  private readonly membretePdf = inject(PdfBrandingService);
   private readonly router = inject(Router);
+  private readonly firstSteps = inject(FirstStepsStore);
   private readonly breakpoints = inject(Breakpoints);
   private readonly navigation = inject(NavigationService);
   /* El estado de la barra recogida no es de este componente: ya vivía en
@@ -132,6 +179,31 @@ export class ShellLayout {
    */
   protected readonly anuncio = signal('');
 
+  /** En móvil, agrupa destinos secundarios del encabezado sin perderlos. */
+  protected readonly accesosRapidosAbiertos = signal(false);
+
+  protected alternarAccesosRapidos(): void {
+    this.accesosRapidosAbiertos.update((abiertos) => !abiertos);
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected cerrarAccesosRapidosAlTocarFuera(evento: MouseEvent): void {
+    const anclaje = this.document.querySelector<HTMLElement>('.app-header__rapidos');
+    if (this.accesosRapidosAbiertos() && anclaje && !anclaje.contains(evento.target as Node)) {
+      this.accesosRapidosAbiertos.set(false);
+    }
+  }
+
+  protected cerrarAccesosRapidos(evento?: Event): void {
+    if (!this.accesosRapidosAbiertos()) return;
+    this.accesosRapidosAbiertos.set(false);
+    if (evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+      this.document.querySelector<HTMLElement>('[data-testid="header-mas"]')?.focus();
+    }
+  }
+
   /** La URL de la pantalla, sin parámetros de consulta ni fragmento. */
   private readonly urlActual = signal('');
 
@@ -159,6 +231,46 @@ export class ShellLayout {
     return `Chats, ${cuantos} ${cuantos === 1 ? 'mensaje sin leer' : 'mensajes sin leer'}`;
   });
 
+  /**
+   * El carrito de farmacia (H4.S1, carril 41/46): sólo el paciente lo ve — es
+   * su compra, no una herramienta de la médica ni del resto de los roles.
+   */
+  private readonly cart = inject(CartStore);
+  protected readonly unidadesDelCarrito = this.cart.unitCount;
+  protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
+
+  /**
+   * Quién ve la capa visual del rediseño (22/10/2026): el paciente y, desde la
+   * cuarta vuelta, quien atiende. El resto de los roles, la de siempre.
+   */
+  protected readonly esMedico = computed(
+    () => !this.esPacienteDelCarrito() && this.auth.roles().includes('PRACTITIONER'),
+  );
+  protected readonly usaRediseno = computed(() => this.esPacienteDelCarrito() || this.esMedico());
+  protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
+  protected readonly pharmacyTestids = PHARMACY_TESTIDS;
+
+  /**
+   * «Mis gastos» se marca también en «Mis facturas»: para el paciente es el
+   * mismo atajo desde la fusión del 27/10/2026, y sin esto la cabecera quedaba
+   * sin nada marcado al entrar por «Ver mis facturas».
+   */
+  protected readonly gastosActivo = computed(() => {
+    const url = this.urlActual();
+    return contiene('/my-account/spending', url) || contiene('/my-account/invoices', url);
+  });
+
+  /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
+  protected readonly etiquetaCarrito = computed(() => {
+    const unidades = this.unidadesDelCarrito();
+    const farmacia = this.cart.cart()?.site.pharmacyName;
+    if (unidades === 0 || farmacia === undefined) {
+      return 'Carrito';
+    }
+    const sustantivo = unidades === 1 ? 'unidad' : 'unidades';
+    return `Carrito, ${unidades} ${sustantivo} en ${farmacia}`;
+  });
+
   constructor() {
     // El catálogo de tutoriales se registra acá y no en un proveedor de arranque
     // porque el armazón es lo único que existe exactamente una vez por sesión
@@ -184,6 +296,25 @@ export class ShellLayout {
       }
     });
 
+    /* «Primeros pasos» del paciente: anota qué secciones ya conoció para que el
+       inicio le muestre el avance. Sólo para el paciente —a quien atiende no se
+       le ofrece la lista— y sólo en el navegador, donde hay dónde guardarlo. */
+    const destroyRef = inject(DestroyRef);
+    effect(() => {
+      if (this.esPacienteDelCarrito()) {
+        untracked(() => this.firstSteps.track(this.router, destroyRef));
+      }
+    });
+
+    /* La hoja visual del rediseño (`styles/paciente.css`) se compila aparte y
+       sin inyectar: sólo la descarga quien la usa —el paciente y el médico—.
+       Se pone el `<link>` desde acá —también bajo SSR, así llega en el HTML y
+       no hay parpadeo— y se quita si la sesión deja de ser de uno de ellos. */
+    effect(() => {
+      const rediseno = this.usaRediseno();
+      untracked(() => this.hojaDelPaciente(rediseno));
+    });
+
     this.urlActual.set(this.rutaLimpia());
     this.router.events
       .pipe(
@@ -192,6 +323,7 @@ export class ShellLayout {
       )
       .subscribe(() => {
         this.urlActual.set(this.rutaLimpia());
+        this.accesosRapidosAbiertos.set(false);
         this.anuncio.set(
           `${this.navigation.currentSection()?.label ?? 'Pantalla'} cargada`,
         );
@@ -252,18 +384,24 @@ export class ShellLayout {
     // Los fijos entran en la cuenta: se dibujan fuera de los grupos, pero son
     // destinos del menú igual que el resto, y sin esto «Mi perfil» era la única
     // entrada de la barra que nunca se marcaba al estar parado en ella.
-    return (
-      [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
-        .flatMap((item) =>
-          [item.route, ...(representadas.get(item.route) ?? [])]
-            .filter((ruta) => contiene(ruta, url))
-            .map((ruta) => ({ renglon: item.route, largo: ruta.length })),
-        )
-        .reduce<{ renglon: string; largo: number } | null>(
-          (mejor, actual) => (mejor === null || actual.largo > mejor.largo ? actual : mejor),
-          null,
-        )?.renglon ?? null
-    );
+    const mejor = [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
+      .flatMap((item) =>
+        [item.route, ...(representadas.get(item.route) ?? [])]
+          .filter((ruta) => contiene(ruta, url))
+          .map((ruta) => ({ renglon: item.route, largo: ruta.length })),
+      )
+      .reduce<{ renglon: string; largo: number } | null>(
+        (mejor, actual) => (mejor === null || actual.largo > mejor.largo ? actual : mejor),
+        null,
+      );
+
+    // Un atajo de la cabecera más específico que el renglón que ganó le saca la
+    // marca: el padre del menú no representa una pantalla que se abre desde arriba.
+    const atajo = DESTINOS_DE_LA_CABECERA.find((ruta) => contiene(ruta, url));
+    if (mejor !== null && atajo !== undefined && atajo.length > mejor.largo) {
+      return null;
+    }
+    return mejor?.renglon ?? null;
   });
 
   private rutaLimpia(): string {
@@ -414,7 +552,9 @@ export class ShellLayout {
     return {
       // El guard no deja llegar acá sin sesión; el userId es el último recurso
       // para que el header nunca quede sin nombre.
-      displayName: this.auth.displayName() ?? this.auth.userId() ?? '',
+      // La cuenta de una organización se muestra como la organización, no como
+      // la persona que la registró: avatar, nombre y menú salen del tenant.
+      displayName: this.nombreDeLaCuenta(),
       roles: this.auth.roles(),
     };
   });
@@ -445,7 +585,24 @@ export class ShellLayout {
     // de UX), y una novena entrada que además es una herramienta de quien
     // construye la rompe. Quien la usa de verdad —diseño y desarrollo— entra
     // por `/design-system`, que sigue en pie.
-    if (esPaciente(roles) || roles.includes('PRACTITIONER')) {
+    //
+    // Tampoco la aseguradora (2026-09-25, pedido del propietario, junto con
+    // `navigation.map.ts`): es una sesión `USER` con tenant `PAYER`, y
+    // «Sistema de diseño» es tan ajena a su trabajo como al del médico. No se
+    // generaliza a «toda cuenta sin rol de plataforma» —eso habría sido tocar
+    // también farmacia, el visitador y cualquier `USER` sin organización, que
+    // el pedido no incluía—: se agrega sólo la condición de tipo que el
+    // registro de procesos pide cerrar.
+    //
+    // Ni la farmacia (2026-09-29): su menú es el del mostrador y nada más.
+    // Ni el laboratorio (2026-09-30), por lo mismo.
+    if (
+      esPaciente(roles) ||
+      roles.includes('PRACTITIONER') ||
+      this.auth.activeTenantType() === 'PAYER' ||
+      this.auth.activeTenantType() === 'PHARMACY' ||
+      this.auth.activeTenantType() === 'DIAGNOSTIC_CENTER'
+    ) {
       return menu;
     }
     const vitrina = { label: 'Sistema de diseño', route: '/design-system', icon: 'settings' } as const;
@@ -498,9 +655,21 @@ export class ShellLayout {
    * Van traducidos por el diccionario: el código crudo (`PATIENT`, `SECURITY_ADMIN`) es
    * vocabulario de sistema, y un rol sin etiqueta se omite antes que pintarse crudo.
    */
-  protected readonly rolesLegibles = computed(() =>
-    etiquetasDeRoles(this.user()?.roles ?? []).join(' · '),
-  );
+  protected readonly rolesLegibles = computed(() => {
+    if (this.auth.isOrganizationAccount()) {
+      // «USER» no le dice nada a una farmacia: se rotula con lo que es.
+      return TIPO_DE_ORGANIZACION_LEGIBLE[this.auth.activeTenantType() ?? ''] ?? 'Organización';
+    }
+    return etiquetasDeRoles(this.user()?.roles ?? []).join(' · ');
+  });
+
+  private nombreDeLaCuenta(): string {
+    const tenantId = this.activeTenantId();
+    if (this.auth.isOrganizationAccount() && tenantId) {
+      return this.auth.tenantName(tenantId);
+    }
+    return this.auth.displayName() ?? this.auth.userId() ?? '';
+  }
 
   /**
    * El enlace de salto mueve el foco al contenido en vez de sólo desplazar la
@@ -527,6 +696,20 @@ export class ShellLayout {
   protected changeTenant(tenantId: string): void {
     this.auth.selectTenant(tenantId);
     void this.router.navigateByUrl('/dashboard');
+  }
+
+  /** Pone o quita el `<link>` de la hoja visual del paciente. Idempotente. */
+  private hojaDelPaciente(paciente: boolean): void {
+    const actual = this.document.getElementById(PATIENT_STYLESHEET_ID);
+    if (paciente && actual === null) {
+      const link = this.document.createElement('link');
+      link.id = PATIENT_STYLESHEET_ID;
+      link.rel = 'stylesheet';
+      link.href = PATIENT_STYLESHEET_HREF;
+      this.document.head.appendChild(link);
+    } else if (!paciente && actual !== null) {
+      actual.remove();
+    }
   }
 
   /**

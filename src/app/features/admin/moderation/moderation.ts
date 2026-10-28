@@ -259,7 +259,7 @@ export class Moderation {
         },
         error: () => {
           this.guardando.set(false);
-          this.error.set('No pudimos registrar la decisión. Reintentá.');
+          this.error.set('No pudimos registrar la decisión. Reintente.');
         },
       });
   }
@@ -292,7 +292,7 @@ export class Moderation {
       },
       error: () => {
         this.guardando.set(false);
-        this.error.set('No pudimos resolver la apelación. Reintentá.');
+        this.error.set('No pudimos resolver la apelación. Reintente.');
       },
     });
   }

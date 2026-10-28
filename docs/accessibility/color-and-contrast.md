@@ -14,7 +14,7 @@ automáticamente**.
 |---|---|---:|---|
 | `--text-primary` | `--c-neutral-500` | 13,46:1 | AAA |
 | `--text-secondary` | `--c-neutral-400` | 7,24:1 | AAA |
-| `--text-muted` | `--c-neutral-300` | 3,86–4,27:1 | **E1 · no llega a AA** |
+| `--text-muted` | `--c-ivory-800` | 5,13–5,69:1 | AA (era `--c-neutral-300`, 3,86:1 · E1, cerrada el 2026-09-26) |
 | `--brand-primary` | `--c-petrol-500` | 7,25:1 | AAA |
 
 ### Bordes
@@ -22,7 +22,7 @@ automáticamente**.
 | Token | Contraste | Nivel |
 |---|---:|---|
 | `--border-strong` (claro) | 3,34:1 | AA para componentes (≥3:1) |
-| `--border-strong` (oscuro) | <3:1 | **E3** |
+| `--border-strong` (oscuro) | 3,27–3,78:1 | AA para componentes (era E3, <3:1; cerrada el 2026-10-11) |
 | `--border-default` | — | **No delimita controles.** Es decorativo |
 
 Confundir los dos bordes es el error más fácil: un `<input>` con
@@ -48,13 +48,22 @@ tinta oscura encima**.
 **Las dos excepciones traen su medición.** Ése es el estándar de rigor del
 sistema: no se cambia un token sin decir cuánto mide.
 
-## Las excepciones E1–E3
+## Las excepciones E1–E3 (y R1–R3 de la hoja de la bóveda)
 
 | # | Qué | Regla |
 |---|---|---|
-| **E1** | `--text-muted` en claro, 3,86–4,27:1 | Solo texto terciario. **Jamás información clínica** |
+| ~~E1~~ | `--text-muted` en claro — **cerrada el 2026-09-26**: pasó a `--c-ivory-800` (5,13:1 en el peor caso) y `check-contrast.mjs` ya lo exige | Sigue siendo terciario: **jamás información clínica** |
 | **E2** | `--text-muted` en oscuro, 4,45:1 | Ídem |
-| **E3** | `--border-strong` en oscuro, <3:1 | Sin foco. Con foco manda el anillo |
+| ~~E3~~ | `--border-strong` en oscuro — **cerrada el 2026-10-11**: velo blanco del 24 % al 40 %, 3,27:1 en el peor caso (surface-alt) | Ya no necesita el anillo para verse |
+
+En `src/styles/alovida.css` (la hoja de la bóveda) también se cerraron el 2026-10-11:
+
+| # | Qué | Antes | Después |
+|---|---|---:|---:|
+| ~~R2~~ | `--borde-ctrl` en oscuro | #4A5F64 · 2,47:1 tarjeta | #627A82 · 3,68 tarjeta · 3,87 inset · 4,05 página |
+| ~~R3~~ | `--petroleo` en oscuro (tinta de enlace) | #12719F · 3,09:1 tarjeta | #4FA8D6 · 6,29 tarjeta · 6,92 página |
+
+R3 no tenía solución de un valor: `--petroleo` era a la vez tinta de enlace y relleno del botón primario. Se partió en dos: `--petroleo` es la tinta y `--petroleo-relleno` el fondo que lleva texto blanco (#0B557E en claro, #12719F en oscuro: 5,40:1 con blanco). Todo fondo con texto blanco encima usa `--petroleo-relleno`, nunca `--petroleo`. `check-contrast.mjs` mide los dos trabajos y ya no declara excepciones.
 
 `design-tokens.types.ts` repite la regla de E1 junto al token para que se lea al
 autocompletar.
@@ -80,6 +89,11 @@ secciones clínicas sería la mitigación natural — cuando esas secciones exis
   box-shadow: 0 0 0 4px var(--focus-ring);
 }
 ```
+
+`--focus-ring` es **sólido** desde el 2026-09-26: `--c-aqua-700` en claro
+(5,71:1 sobre blanco, 5,16:1 sobre marfil) y `--c-mint-500` en oscuro. Antes era
+aguamarina al 45 %, que compuesta sobre blanco daba 1,48:1 — por debajo del 3:1
+de WCAG 1.4.11. `check-contrast.mjs` mide el anillo contra todas las superficies.
 
 El `outline: 2px solid transparent` **no es decorativo**: en modo de contraste
 forzado (Windows) los colores se sustituyen y el `box-shadow` desaparece, pero el

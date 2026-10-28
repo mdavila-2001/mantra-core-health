@@ -12,6 +12,7 @@ import {
 import type { Observable } from 'rxjs';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import type {
   CommentThreadItem,
   NewCommentMedia,
@@ -24,6 +25,8 @@ import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { CommentMediaPicker } from '../../../shared/components/molecules/comment-media-picker/comment-media-picker';
 import { FilePreviewImage } from '../../../shared/components/molecules/file-preview-image/file-preview-image';
+import { ArticleBody } from '../../../shared/components/organisms/article-body/article-body';
+import { hasArticleStructure } from '../../../shared/text/article-markup';
 
 /** Cuántos comentarios raíz se piden por página del hilo. */
 const COMMENTS_PAGE_SIZE = 20;
@@ -84,7 +87,7 @@ export const REACCIONES_OFRECIDAS: readonly {
  */
 @Component({
   selector: 'app-post-card',
-  imports: [AppButton, Badge, Card, CommentMediaPicker, DatePipe, FilePreviewImage, Textarea],
+  imports: [AppButton, ArticleBody, Badge, Card, CommentMediaPicker, DatePipe, FilePreviewImage, Textarea],
   templateUrl: './post-card.html',
   styleUrl: './post-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,6 +99,13 @@ export class PostCard {
 
   /** La publicación a pintar. */
   readonly post = input.required<PostListItem>();
+
+  /**
+   * Si el cuerpo es un artículo: se pinta con sus secciones desplegables. El
+   * listado no trae los medios (P5), así que sus imágenes no se muestran acá
+   * —el artículo completo con imágenes se lee en la vitrina—.
+   */
+  protected readonly esArticulo = computed(() => hasArticleStructure(this.post().bodyText));
 
   /**
    * Quién mira, si hay sesión con perfil público.
@@ -230,11 +240,11 @@ export class PostCard {
           this.reaccionando.set(false);
           this.cambio.emit();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.reaccionLocal.set(anterior);
           this.deltaReacciones.set(deltaAnterior);
           this.reaccionando.set(false);
-          this.error.set('No pudimos guardar tu reacción.');
+          this.error.set(describeApiFailure(error, 'No pudimos guardar su reacción.'));
         },
       });
   }
@@ -283,11 +293,12 @@ export class PostCard {
         this.guardarCambiado.emit(!estaba);
         this.cambio.emit();
       },
-      error: () =>
+      error: (error: unknown) =>
         this.error.set(
-          estaba
-            ? 'No pudimos quitar el marcador.'
-            : 'No pudimos guardar la publicación.',
+          describeApiFailure(
+            error,
+            estaba ? 'No pudimos quitar el marcador.' : 'No pudimos guardar la publicación.',
+          ),
         ),
     });
   }
@@ -324,9 +335,9 @@ export class PostCard {
           this.cargarHilo();
           this.cambio.emit();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.comentando.set(false);
-          this.error.set('No pudimos publicar tu comentario.');
+          this.error.set(describeApiFailure(error, 'No pudimos publicar su comentario.'));
         },
       });
   }
@@ -345,9 +356,9 @@ export class PostCard {
           this.comentarios.set(pagina.items);
           this.cargandoHilo.set(false);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.cargandoHilo.set(false);
-          this.error.set('No pudimos cargar los comentarios.');
+          this.error.set(describeApiFailure(error, 'No pudimos cargar los comentarios.'));
         },
       });
   }

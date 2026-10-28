@@ -7,11 +7,10 @@ import type {
   PublicSearchQuery,
   PublicSearchResult,
 } from '@core/data-access/public-directory/public-directory.types';
-import { AppButton } from '@shared/components/atoms/button/button';
-import { DepartmentMap } from '@shared/components/organisms/department-map/department-map';
 import { DirectoryPage } from '@shared/components/organisms/directory-page/directory-page';
 import type { SustantivoDelDirectorio } from '@shared/components/organisms/directory-page/directory-page.types';
 
+import type { AccionDeLaFicha } from './public-directory-filters';
 import { PublicDirectoryListing } from './public-directory-listing';
 
 const SUSTANTIVO: SustantivoDelDirectorio = {
@@ -39,9 +38,8 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
  */
 @Component({
   selector: 'app-clinics-directory',
-  imports: [AppButton, DepartmentMap, DirectoryPage],
+  imports: [DirectoryPage],
   templateUrl: './clinics-directory.html',
-  styleUrl: './mapa-directorio.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClinicsDirectory extends PublicDirectoryListing {
@@ -52,6 +50,13 @@ export class ClinicsDirectory extends PublicDirectoryListing {
 
   /** La ficha de un resultado, dentro del panel. Ver `rutaDeLaFicha`. */
   protected readonly rutaDeLaFicha = '/clinics-directory';
+
+  /** Directo a la sección donde se elige, sin pasar por la cabecera. */
+  protected override readonly accionDeLaFicha: AccionDeLaFicha = {
+    label: 'Ver servicios y precios',
+    fragment: 'servicios',
+    icon: 'stethoscope',
+  };
 
   protected buscar(
     filtros: PublicSearchQuery,

@@ -25,7 +25,7 @@ Y la prohibición que la sostiene:
 
 | Tipo | Qué |
 |---|---|
-| `DOCUMENTAL` | `docs/**` (salvo `docs/auditoria/`, preexistente) |
+| `DOCUMENTAL` | `docs/**` |
 | `INSTRUMENTACIÓN SEGURA` | `scripts/lib/scan.mjs`, `scripts/generate-inventory.mjs`, `scripts/check-*.mjs`, `scripts/generate-doc-report.mjs`, `structurizr/workspace.dsl`, `mkdocs.yml` |
 | `CAMBIO DE PRODUCTO` | **Ninguno** |
 
@@ -101,8 +101,8 @@ rm -rf structurizr mkdocs.yml
 git clean -nd docs scripts        # revisar ANTES de borrar
 ```
 
-`docs/auditoria/` y `scripts/generate-env.mjs` son de otros trabajos y **no se
-tocan**.
+`scripts/generate-env.mjs` es de otro trabajo y **no se
+toca**.
 
 ## Lo que esta política no puede garantizar hoy
 

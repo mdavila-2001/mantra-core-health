@@ -1,0 +1,60 @@
+<app-drawer-panel
+  [open]="schemaName() !== ''"
+  heading="Schema"
+  [subheading]="schemaName()"
+  closeLabel="Cerrar el schema"
+  (closed)="closed.emit()"
+>
+  <div class="schema" data-testid="portal-schema-detail">
+    @if (summary(); as s) {
+      @if (s.description; as d) {
+        <p class="schema__muted">Módulo {{ d.moduleNumber }} · {{ d.title }} · {{ d.domain ?? 'sin dominio' }}</p>
+        <h3 class="schema__title">Negocio</h3>
+        <p>{{ d.business ?? 'La bóveda no describe el propósito de negocio de este módulo.' }}</p>
+        <h3 class="schema__title">Sistema</h3>
+        <p>{{ d.system ?? 'La nota del módulo no trae métricas.' }}</p>
+        <p class="schema__source">Fuente: {{ d.source }}</p>
+      } @else {
+        <p class="schema__muted">Ningún módulo de la bóveda declara este schema.</p>
+      }
+      <p class="schema__muted">
+        {{ s.objects }} objetos observados · {{ s.notObserved }} sin observar · {{ s.annotated }} con ficha ·
+        {{ s.approved }} aprobadas
+      </p>
+    }
+
+    <a app-link [routerLink]="modelTablesUrl" [queryParams]="{ schema: schemaName() }">
+      Ver sus tablas en el catálogo del modelo
+    </a>
+
+    <app-data-table
+      data-testid="portal-schema-objects"
+      caption="Objetos del schema"
+      heading="Objetos"
+      [state]="objects.state()"
+      [columns]="columns()"
+      [trackBy]="byId"
+      [rowLabel]="rowName"
+      [cursor]="objects.cursor()"
+      fitContainer
+      (cursorChanged)="objects.move($event)"
+      (retry)="objects.reload()"
+    />
+  </div>
+</app-drawer-panel>
+
+<ng-template #nameCell let-row>
+  <a app-link class="schema__object" [routerLink]="objectUrl(row.id)">{{ row.objectName }}</a>
+  @if (row.annotation?.businessName; as business) {
+    <span class="schema__muted">{{ business }}</span>
+  }
+</ng-template>
+
+<ng-template #stateCell let-row>
+  <app-badge size="sm" [variant]="observation(row.observationStatus).tone">
+    {{ observation(row.observationStatus).label }}
+  </app-badge>
+  @if (row.annotation; as a) {
+    <app-badge size="sm" [variant]="review(a.reviewStatus).tone">{{ review(a.reviewStatus).label }}</app-badge>
+  }
+</ng-template>

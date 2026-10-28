@@ -6,6 +6,7 @@ import { Checkbox } from '../components/atoms/checkbox/checkbox';
 import { Input } from '../components/atoms/input/input';
 import { Select } from '../components/atoms/select/select';
 import type { SelectOption } from '../components/atoms/select/select.types';
+import { chooseSelectOption, selectShownLabel, selectTrigger } from '../../../testing/select';
 
 /**
  * El contrato de estas pruebas es el de sustitución: un átomo enchufado a un
@@ -85,8 +86,10 @@ describe('ControlValueAccessor de los átomos de formulario', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      // El <option> lleva el indice, no el valor: 'urgencia' es el segundo.
-      expect(nativo<HTMLSelectElement>('select').value).toBe('1');
+      // El campo apunta al indice, no al valor: 'urgencia' es el segundo.
+      const campo = nativo<HTMLElement>('app-select');
+      expect(selectTrigger(campo).dataset['valueIndex']).toBe('1');
+      expect(selectShownLabel(campo)).toBe('Urgencia');
     });
 
     it('reset deja los controles vacíos', async () => {
@@ -130,10 +133,7 @@ describe('ControlValueAccessor de los átomos de formulario', () => {
     });
 
     it('elegir una opción manda el valor original, no el índice', async () => {
-      const select = nativo<HTMLSelectElement>('select');
-      select.value = '0';
-      select.dispatchEvent(new Event('change'));
-      await fixture.whenStable();
+      await chooseSelectOption(fixture, nativo<HTMLElement>('app-select'), 0);
 
       expect(host.form.controls.tipo.value).toBe('consulta');
     });
@@ -169,7 +169,7 @@ describe('ControlValueAccessor de los átomos de formulario', () => {
       await fixture.whenStable();
 
       expect(nativo<HTMLInputElement>('input[type=checkbox]').disabled).toBe(true);
-      expect(nativo<HTMLSelectElement>('select').disabled).toBe(true);
+      expect(selectTrigger(nativo<HTMLElement>('app-select')).disabled).toBe(true);
     });
 
     it('los validadores del formulario ven el valor del átomo', async () => {

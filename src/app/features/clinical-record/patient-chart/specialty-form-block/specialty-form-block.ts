@@ -8,12 +8,25 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
-import { of, switchMap } from 'rxjs';
+import { catchError, map, of, switchMap, tap, type Observable } from 'rxjs';
 
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
+import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
+import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
+import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
+import { writeFailureMessage } from '../../write-message';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
-import { DiagnosticsBlock } from '../diagnostics-block/diagnostics-block';
+import { AdditionalFields, entradasDelTexto } from '../additional-fields/additional-fields';
+import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
+import type { MedicalNoteEntry } from '../../../../core/data-access/clinical/clinical.types';
+import { AnalysisOrderBlock } from '../analysis-order-block/analysis-order-block';
+import {
+  FormConclusionBlock,
+  type CierreDelFormulario,
+} from '../form-conclusion-block/form-conclusion-block';
 import { FreeNoteBlock } from '../free-note-block/free-note-block';
 import { ProceduresBlock } from '../procedures-block/procedures-block';
 import type {
@@ -26,13 +39,18 @@ import type {
   FormInstanceDetail,
 } from '../../../../core/data-access/forms/forms.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import type { PractitionerSpecialty } from '../../../../core/data-access/profiles/profiles.types';
+import { currentSpecialty } from '../../../../core/data-access/profiles/current-specialty';
+import { hiddenFields } from '../../../../shared/forms/paginated/conditional-visibility';
+import { CheckboxGroup } from '../../../../shared/components/molecules/checkbox-group/checkbox-group';
+import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
@@ -40,6 +58,7 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -48,12 +67,9 @@ import {
   VALOR_ENMASCARADO,
 } from '../../../../shared/utils/clinical-pdf/clinical-pdf';
 import { Odontogram } from '../odontogram/odontogram';
-import {
-  camposDe,
-  plantillaPorCobertura,
-  respuestasDe,
-  type RespuestaVisible,
-} from './lectura-de-formulario';
+import { fieldsOf, templateByCoverage, responsesOf, type ResponseVisible } from './form-reading';
+import { esMapa, esVacio } from './form-values';
+import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
 import type { MapaDental } from '../odontogram/odontogram.types';
 
@@ -66,6 +82,18 @@ import type { MapaDental } from '../odontogram/odontogram.types';
  * nada»—. El prefijo lo hace imposible de confundir con un uuid.
  */
 export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
+
+/**
+ * El formulario que arma el doctor a mano: filas «campo: valor», y en cada una
+ * texto, uno o varios archivos o las dos cosas.
+ *
+ * Son los mismos campos adicionales que cierran cualquier plantilla, pero sin
+ * plantilla arriba: para lo que no tiene ficha —el análisis con el que vino la
+ * persona, una medición que no está en ningún formulario—. Tampoco pasa por
+ * `forms`, así que no compite con la ficha ya respondida del encuentro: se
+ * puede registrar antes, después o varias veces.
+ */
+export const PLANTILLA_FORMULARIO_LIBRE = 'formulario-libre';
 
 /**
  * Las tres entradas del selector que **no** son plantillas de `forms`.
@@ -87,8 +115,8 @@ export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
 export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 
 /**
- * Las cinco entradas fijas, en el orden en que se ofrecen. La alergia ya no
- * está: se carga como diagnóstico (cliente, 02/10/2026).
+ * Registros disponibles en cualquier especialidad. La alergia se carga como
+ * diagnóstico (cliente, 02/10/2026).
  *
  * Cirugía y odontología van separadas —antes eran una sola opción,
  * «Procedimiento»— porque no comparten ni permiso de servidor ni datos:
@@ -96,11 +124,10 @@ export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
  * rol de cirugía se topaba con un aviso de permiso denegado en medio de un
  * formulario que no le pedía nada de eso.
  */
-const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string }[] = [
+const ENTRADAS_GENERALES: readonly { readonly value: string; readonly label: string }[] = [
   { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
   { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
-  { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
-  { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
+  { value: PLANTILLA_FORMULARIO_LIBRE, label: 'Formulario libre — campo y valor' },
   { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
 ];
 
@@ -116,8 +143,27 @@ const SI_NO: readonly SegmentedOption<'si' | 'no' | ''>[] = [
   { value: 'no', label: 'No' },
 ];
 
+/**
+ * Las dos pestañas de la ficha: los campos fijos de la plantilla y las filas
+ * «campo: valor» con archivos que agrega quien atiende. Captura y lectura usan
+ * las mismas, en el mismo orden (composition-rules §5).
+ */
+export const PESTANA_PLANTILLA = 0;
+export const PESTANA_FLEXIBLE = 1;
+
+/** El rótulo de la pestaña flexible: dice cuánto lleva, para que se note. */
+function rotuloFlexible(cuantos: number): string {
+  return cuantos > 0 ? `Flexible (${cuantos})` : 'Flexible';
+}
+
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
-type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string';
+type TipoDibujable =
+  'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string' | 'una' | 'una-corta' | 'varias';
+
+/** Hasta cuántas opciones cortas se ofrecen como botones en vez de desplegable. */
+const OPCIONES_COMO_BOTONES = 4;
+/** Largo máximo de una opción para que entre en un botón. */
+const LARGO_DE_OPCION_EN_BOTON = 24;
 
 /**
  * El código del campo que se dibuja como odontograma.
@@ -150,6 +196,21 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
   dateStyle: 'long',
   timeStyle: 'short',
 });
+
+/** Un cierre sin nada elegido: la ficha se completa sola, como siempre. */
+const SIN_CIERRE: CierreDelFormulario = { diagnostico: null, orden: null };
+
+/**
+ * Un alta del cierre (D4): qué se registra después de cerrar la ficha y cómo
+ * se nombra en los avisos.
+ */
+interface PasoDelCierre {
+  /** «el diagnóstico tentativo», «la orden de análisis». */
+  readonly nombre: string;
+  readonly titulo: string;
+  readonly exito: string;
+  readonly ejecutar: () => Observable<unknown>;
+}
 
 /**
  * **Formularios clínicos por especialidad**, dentro del encuentro — carril 2,
@@ -200,25 +261,44 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
  * y versión de esquema (`forms.form_instances` es única por recurso +
  * versión). Igual que el diagnóstico repetido: no es un fallo, es la
  * plantilla ya completada para este encuentro.
+ *
+ * ## La ficha termina en un cierre (D4)
+ *
+ * Con una plantilla de `forms` elegida, debajo de los campos va el **cierre**
+ * (`app-form-conclusion-block`): la IA sugiere diagnósticos tentativos y
+ * análisis a partir de lo respondido, y quien atiende elige —opcionalmente—
+ * un diagnóstico y una orden. Al completar se encadena, en este orden: cerrar
+ * la instancia → registrar el diagnóstico (nace presuntivo, dentro del
+ * encuentro, con el nombre de la ficha como nota) → pedir la orden. Cada paso
+ * avisa por su cuenta, y **un fallo no deshace el anterior**: la ficha ya
+ * quedó guardada, y lo que no se registró se dice con todas las letras para
+ * que se haga desde su casilla.
  */
 @Component({
   selector: 'app-specialty-form-block',
   imports: [
+    AdditionalFields,
     Alert,
     AppButton,
     Card,
     DiagnosisBlock,
-    DiagnosticsBlock,
+    AnalysisOrderBlock,
+    FormConclusionBlock,
     FreeNoteBlock,
     Checkbox,
     DatePicker,
     FormActions,
     FormField,
+    LoadingState,
     Input,
     Odontogram,
     ProceduresBlock,
     SegmentedControl,
     Select,
+    Tab,
+    Tabs,
+    CheckboxGroup,
+    Textarea,
   ],
   templateUrl: './specialty-form-block.html',
   styleUrl: './specialty-form-block.css',
@@ -230,6 +310,13 @@ export class SpecialtyFormBlock {
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
   private readonly profiles = inject(ProfilesClient);
+  private readonly clinical = inject(ClinicalClient);
+  private readonly diagnostics = inject(DiagnosticsClient);
+  private readonly notes = inject(ChartNotesClient);
+
+  /** Los campos adicionales del doctor, al final de la ficha. */
+  private readonly adicionales = viewChild(AdditionalFields);
+  private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
 
   /**
@@ -270,7 +357,7 @@ export class SpecialtyFormBlock {
    * posible el match. `null` mientras no se sabe, o si la cuenta no tiene
    * perfil profesional.
    */
-  private readonly especialidad = signal<string | null>(null);
+  protected readonly especialidad = signal<string | null>(null);
 
   /** El catálogo tal como llegó, o vacío mientras no se sepa. */
   private readonly catalogo = computed<readonly ChartTemplate[]>(() => {
@@ -302,15 +389,27 @@ export class SpecialtyFormBlock {
     return sembrada?.specialtyConceptId ?? null;
   });
 
-  /** Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es. */
+  /**
+   * Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es.
+   *
+   * La ficha base —la consulta inicial— va primero y después las específicas
+   * de cada condición, por nombre: es el orden en que se usan, la primera vez
+   * y después en los controles.
+   */
   private readonly plantillasPropias = computed<readonly ChartTemplate[]>(() => {
     const especialidad = this.especialidad();
     if (especialidad === null) return [];
-    return this.catalogo().filter(
-      (plantilla) =>
-        plantilla.specialtyConceptId === especialidad &&
-        plantilla.specialtyConceptId !== this.conceptoTransversal(),
-    );
+    return this.catalogo()
+      .filter(
+        (plantilla) =>
+          plantilla.specialtyConceptId === especialidad &&
+          plantilla.specialtyConceptId !== this.conceptoTransversal(),
+      )
+      .sort(
+        (a, b) =>
+          Number(b.kind === 'BASE') - Number(a.kind === 'BASE') ||
+          a.name.localeCompare(b.name, 'es'),
+      );
   });
 
   /** Las que sirven para cualquier consulta. Nunca se esconden. */
@@ -324,22 +423,19 @@ export class SpecialtyFormBlock {
    * Lo que se le ofrece a quien atiende: primero lo suyo, después lo
    * transversal.
    *
-   * Se cae al catálogo entero en dos casos, los dos por lo mismo —filtrar sin
-   * criterio esconde más de lo que ayuda—:
-   *
-   * 1. **No se sabe la especialidad.** Una cuenta sin perfil profesional
-   *    —recepción, administración— o un perfil que no respondió. Dejar sólo
-   *    las transversales le escondería las 36 fichas de especialidad sin
-   *    saber siquiera si le corresponden.
-   * 2. **El filtro no deja nada.** Su especialidad no tiene ficha y el
-   *    catálogo tampoco tiene transversales: un desplegable vacío sobre un
-   *    catálogo que sí tiene fichas.
+   * Sin especialidad conocida se ofrecen las generales. Si tampoco existen,
+   * el catálogo completo queda disponible para no bloquear la consulta.
+   * Con especialidad conocida, una lista vacía se explica en pantalla y el
+   * profesional puede abrir el catálogo para una interconsulta.
    */
   private readonly plantillasSugeridas = computed<readonly ChartTemplate[]>(() => {
-    if (this.especialidad() === null) return this.catalogo();
+    if (this.especialidad() === null) {
+      return this.plantillasTransversales().length > 0
+        ? this.plantillasTransversales()
+        : this.catalogo();
+    }
 
-    const sugeridas = [...this.plantillasPropias(), ...this.plantillasTransversales()];
-    return sugeridas.length > 0 ? sugeridas : this.catalogo();
+    return [...this.plantillasPropias(), ...this.plantillasTransversales()];
   });
 
   /** Si hay algo escondido, y por lo tanto algo que el interruptor pueda revelar. */
@@ -350,13 +446,10 @@ export class SpecialtyFormBlock {
   /**
    * El interruptor «Ver todas las especialidades». Apagado, manda el filtro.
    *
-   * Arranca PRENDIDO a pedido explícito: el filtro por especialidad hacía que
-   * la misma cuenta viera listas de tamaño distinto según qué perfil
-   * profesional resolviera el backend, y eso se leía como un bug («en la Mac
-   * salen más formularios»). Mientras no haya una forma de fijar esto como
-   * preferencia real, mostrar todo por defecto es lo predecible.
+   * Arranca apagado para mostrar la especialidad de quien atiende y las fichas
+   * generales. La interconsulta abre el resto del catálogo a pedido.
    */
-  protected readonly verTodas = signal(true);
+  protected readonly verTodas = signal(false);
 
   protected alternarVerTodas(activado: boolean): void {
     this.verTodas.set(activado);
@@ -376,32 +469,105 @@ export class SpecialtyFormBlock {
     return visibles;
   });
 
+  protected readonly sinPlantillasVisibles = computed(
+    () =>
+      this.plantillaId() === null &&
+      this.catalogo().length > 0 &&
+      this.plantillasVisibles().length === 0,
+  );
+
   /**
    * Todo lo que se puede completar en el encuentro, en una sola lista.
    *
-   * Las fijas primero —diagnóstico, hoja en blanco, procedimiento y
-   * laboratorio— porque son las que sirven en cualquier consulta y enterrarlas
-   * al final de cuarenta y cuatro fichas equivale a no tenerlas. Detrás, las
-   * plantillas: la de la especialidad de quien atiende y las transversales.
+   * Primero los registros generales, luego cirugía y odontología cuando
+   * corresponden, y después las plantillas de la especialidad y transversales.
    */
-  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => [
-    ...ENTRADAS_FIJAS,
-    ...this.plantillasVisibles().map((plantilla) => ({
-      value: plantilla.id,
-      label: plantilla.name,
-    })),
-  ]);
+  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => {
+    const mostrarCirugia =
+      this.verTodas() ||
+      this.plantillaId() === BLOQUE_CIRUGIA ||
+      this.plantillasPropias().some((plantilla) => plantilla.code.startsWith('CIRGEN_'));
+    const mostrarOdontologia =
+      this.verTodas() ||
+      this.plantillaId() === BLOQUE_ODONTOLOGIA ||
+      this.plantillasPropias().some((plantilla) => plantilla.code.startsWith('ODONTO_'));
+
+    return [
+      ...ENTRADAS_GENERALES,
+      ...(mostrarCirugia ? [{ value: BLOQUE_CIRUGIA, label: 'Cirugía' }] : []),
+      ...(mostrarOdontologia ? [{ value: BLOQUE_ODONTOLOGIA, label: 'Odontología' }] : []),
+      ...this.plantillasVisibles().map((plantilla) => ({
+        value: plantilla.id,
+        label: plantilla.name,
+      })),
+    ];
+  });
+
+  /**
+   * La pestaña que se está mirando. `app-tab` no dibuja el panel cerrado, pero
+   * lo proyectado lo instancia este componente: los campos adicionales siguen
+   * vivos —con lo escrito y con su `viewChild`— aunque su pestaña no se vea, y
+   * se completa igual desde cualquiera de las dos.
+   */
+  protected readonly pestana = signal(PESTANA_PLANTILLA);
+
+  /** El rótulo de la pestaña flexible mientras se escribe. */
+  protected readonly rotuloFlexibleEnCaptura = computed(() =>
+    rotuloFlexible(this.adicionales()?.cantidad() ?? 0),
+  );
+
+  /** El mismo rótulo en lectura, con lo que se guardó. */
+  protected readonly rotuloFlexibleEnLectura = computed(() =>
+    // Mientras se leen las notas no se sabe cuántas hay: «Flexible» a secas
+    // se leería como «ninguna».
+    this.buscandoAdicionales()
+      ? 'Flexible (…)'
+      : rotuloFlexible(this.adicionalesGuardados().length),
+  );
+
+  /**
+   * Por qué no se puede completar, cuando la causa está en la pestaña que NO
+   * se está mirando. Va junto al botón: sin esto quedaba gris sin motivo.
+   */
+  protected readonly pendienteEnLaOtraPestana = computed<string | null>(() => {
+    if (this.plantillaElegida() === null || this.formularioRespondido() !== null) return null;
+    if (this.pestana() === PESTANA_FLEXIBLE && !this.camposObligatoriosCompletos()) {
+      return 'Faltan obligatorios en «Plantilla».';
+    }
+    const adicionales = this.adicionales();
+    if (adicionales === undefined) return null;
+    // La respuesta de la plantilla es lo que se guarda primero: sin ningún
+    // valor no hay a qué atar lo flexible, y el botón no enviaría nada.
+    if (this.camposObligatoriosCompletos() && !this.hayValoresDePlantilla()) {
+      return adicionales.tieneContenido() ? 'Complete al menos un campo de «Plantilla».' : null;
+    }
+    if (this.pestana() !== PESTANA_PLANTILLA) return null;
+    if (adicionales.hayProblemas()) {
+      return 'Corrija una fila de «Flexible».';
+    }
+    // No se corrige en la pestaña: es de la sesión. Se dice tal cual.
+    return adicionales.impedimento();
+  });
+
+  /** Si la plantilla tiene algo que enviar: sin valores, completar no hace nada. */
+  private readonly hayValoresDePlantilla = computed(() => {
+    const plantilla = this.plantillaElegida();
+    return plantilla !== null && this.valoresParaEnviar(plantilla).length > 0;
+  });
 
   /** Está elegida la hoja en blanco, así que no se dibuja ninguna ficha. */
   protected readonly hojaLibre = computed(() => this.plantillaId() === PLANTILLA_HOJA_LIBRE);
+
+  /** Está elegido el formulario libre: sólo filas «campo: valor», sin plantilla. */
+  protected readonly formularioLibre = computed(
+    () => this.plantillaId() === PLANTILLA_FORMULARIO_LIBRE,
+  );
 
   protected readonly esDiagnostico = computed(() => this.plantillaId() === BLOQUE_DIAGNOSTICO);
 
   protected readonly esCirugia = computed(() => this.plantillaId() === BLOQUE_CIRUGIA);
 
-  protected readonly esOdontologia = computed(
-    () => this.plantillaId() === BLOQUE_ODONTOLOGIA,
-  );
+  protected readonly esOdontologia = computed(() => this.plantillaId() === BLOQUE_ODONTOLOGIA);
 
   protected readonly esLaboratorio = computed(() => this.plantillaId() === BLOQUE_LABORATORIO);
 
@@ -415,11 +581,7 @@ export class SpecialtyFormBlock {
    * completar una ficha, que es cuando el modo lectura tapa el selector.
    */
   protected readonly bloquePropio = computed(
-    () =>
-      this.esDiagnostico() ||
-      this.esCirugia() ||
-      this.esOdontologia() ||
-      this.esLaboratorio(),
+    () => this.esDiagnostico() || this.esCirugia() || this.esOdontologia() || this.esLaboratorio(),
   );
 
   /**
@@ -444,10 +606,10 @@ export class SpecialtyFormBlock {
   protected readonly errorDePlantillas = computed<string | null>(() => {
     const state = this.plantillas();
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite ver las plantillas de formulario.';
+      return state.message ?? 'Su rol no permite ver las plantillas de formulario.';
     }
     if (state.status === 'not-found') {
       return 'No encontramos el catálogo de plantillas.';
@@ -467,9 +629,8 @@ export class SpecialtyFormBlock {
    * una general y se sigue.
    *
    * Las dos condiciones van juntas porque el aviso promete algo concreto. Si el
-   * catálogo no tuviera ninguna transversal, {@link plantillasSugeridas} cae al
-   * catálogo entero y no hay ninguna ficha general que ofrecer: avisar ahí sería
-   * prometer una anamnesis que no existe.
+   * catálogo no tuviera ninguna transversal, se muestra el estado vacío con
+   * acceso explícito a todas las especialidades.
    */
   protected readonly sinFichaPropia = computed(
     () =>
@@ -497,6 +658,13 @@ export class SpecialtyFormBlock {
     this.eleccionManual.set(true);
     this.plantillaId.set(id);
     this.valores.set({});
+    this.fallosDelLibre.set([]);
+    // Lo ya registrado en el encuentro se lee al entrar: el formulario libre
+    // se puede llenar varias veces y conviene ver qué quedó de la anterior.
+    const encounterId = this.encounterId();
+    if (id === PLANTILLA_FORMULARIO_LIBRE && encounterId !== null && encounterId !== '') {
+      this.consultarAdicionales(encounterId);
+    }
   }
 
   constructor() {
@@ -537,7 +705,20 @@ export class SpecialtyFormBlock {
   private resolverEspecialidad(): void {
     this.profiles.getOwnPractitionerProfile().subscribe({
       next: (perfil) => {
-        this.especialidad.set(especialidadVigente(perfil.specialties));
+        this.especialidad.set(currentSpecialty(perfil.specialties));
+        // El catálogo puede haber llegado primero y haber preseleccionado su
+        // única ficha. Si era de otra especialidad, se corrige al resolver el
+        // perfil; una elección manual permanece intacta.
+        const elegida = this.plantillaElegida();
+        if (
+          !this.eleccionManual() &&
+          elegida !== null &&
+          this.especialidad() !== null &&
+          !this.plantillasPropias().includes(elegida) &&
+          !this.plantillasTransversales().includes(elegida)
+        ) {
+          this.plantillaId.set(null);
+        }
         this.preseleccionar();
       },
       error: () => this.especialidad.set(null),
@@ -580,7 +761,7 @@ export class SpecialtyFormBlock {
     // Su especialidad no tiene ficha propia: la anamnesis general sirve para
     // cualquier consulta y es mejor que dejarlo buscándola entre 43 opciones.
     // Sólo cuando la especialidad se conoce: sin perfil profesional no hay a
-    // quién caerle y el selector se ofrece entero, como siempre.
+    // quién asignarle una ficha de especialidad.
     if (this.especialidad() !== null) {
       const general = this.anamnesisGeneral();
       if (general !== undefined) {
@@ -589,8 +770,9 @@ export class SpecialtyFormBlock {
       }
     }
 
-    // Con una sola en el catálogo no hay nada que elegir.
-    if (state.data.length === 1) {
+    // Con una sola ficha se puede adelantar la elección mientras llega el
+    // perfil; al resolverlo se descarta si pertenece a otra especialidad.
+    if (this.especialidad() === null && state.data.length === 1) {
       this.plantillaId.set(state.data[0].id);
     }
   }
@@ -624,10 +806,10 @@ export class SpecialtyFormBlock {
   protected readonly errorDeConsulta = computed<string | null>(() => {
     const state = this.respondido();
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite ver formularios clínicos.';
+      return state.message ?? 'Su rol no permite ver formularios clínicos.';
     }
     if (state.status === 'not-found') {
       return 'No encontramos el encuentro de este formulario.';
@@ -640,6 +822,88 @@ export class SpecialtyFormBlock {
     }
     return null;
   });
+
+  /**
+   * Los campos adicionales guardados con la respuesta: las filas de las notas
+   * médicas de este encuentro, y su texto libre. Se leen aparte porque viven
+   * en la nota y no en la instancia del formulario.
+   */
+  private readonly lecturaDeAdicionales = signal<ViewState<readonly MedicalNoteEntry[]>>(ready([]));
+
+  protected readonly adicionalesGuardados = computed<readonly MedicalNoteEntry[]>(() => {
+    const state = this.lecturaDeAdicionales();
+    return state.status === 'ready' ? state.data : [];
+  });
+
+  protected readonly buscandoAdicionales = computed(
+    () => this.lecturaDeAdicionales().status === 'loading',
+  );
+
+  /**
+   * Sin las notas la respuesta de la plantilla se lee igual, pero la pestaña
+   * flexible no puede decir «no hay nada»: dice que no se pudo leer.
+   */
+  protected readonly errorDeAdicionales = computed<string | null>(() => {
+    const state = this.lecturaDeAdicionales();
+    // Todo lo que no sea «buscando» ni «listo» es un fallo: un estado que se
+    // escape de acá caería en «no se agregaron campos», un vacío falso.
+    switch (state.status) {
+      case 'loading':
+      case 'ready':
+        return null;
+      case 'offline':
+        return 'No pudimos conectarnos. Revise su conexión y reintente.';
+      case 'forbidden':
+        return state.message ?? 'Su rol no permite leer las notas de esta consulta.';
+      case 'not-found':
+        return 'No encontramos las notas de esta consulta.';
+      case 'validation':
+        return (
+          state.issues.map((issue) => issue.message).join(' ') ||
+          'No pudimos leer las notas de esta consulta.'
+        );
+      case 'error':
+        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      default:
+        return 'No pudimos leer las notas de esta consulta.';
+    }
+  });
+
+  private encuentroDeLosAdicionales: string | null = null;
+
+  private consultarAdicionales(encounterId: string): void {
+    this.encuentroDeLosAdicionales = encounterId;
+    this.lecturaDeAdicionales.set(loading());
+    this.notes
+      .listNotes({ patientProfileId: this.patientProfileId(), encounterId, limit: 50 })
+      .subscribe({
+        next: (pagina) => {
+          if (this.encounterId() !== encounterId) return;
+          this.lecturaDeAdicionales.set(
+            ready(
+              pagina.items
+                .filter((nota) => nota.encounterId === encounterId)
+                .flatMap((nota) => [
+                  ...(nota.entries ?? entradasDelTexto(nota.objectiveText)),
+                  ...(nota.subjectiveText
+                    ? [{ label: 'Texto libre', value: nota.subjectiveText }]
+                    : []),
+                ]),
+            ),
+          );
+        },
+        error: (error: unknown) => {
+          if (this.encounterId() !== encounterId) return;
+          this.lecturaDeAdicionales.set(errorToViewState<readonly MedicalNoteEntry[]>(error));
+        },
+      });
+  }
+
+  protected reconsultarAdicionales(): void {
+    if (this.encuentroDeLosAdicionales !== null) {
+      this.consultarAdicionales(this.encuentroDeLosAdicionales);
+    }
+  }
 
   protected reconsultarRespuesta(): void {
     this.consultarRespuesta(this.encounterId());
@@ -665,6 +929,7 @@ export class SpecialtyFormBlock {
           // El encuentro pudo cambiar mientras la respuesta viajaba.
           if (this.encounterId() !== encounterId) return;
           this.respondido.set(ready(detalle));
+          if (detalle !== null || this.formularioLibre()) this.consultarAdicionales(encounterId);
         },
         error: (error: unknown) => {
           if (this.encounterId() !== encounterId) return;
@@ -680,7 +945,7 @@ export class SpecialtyFormBlock {
   /** Todos los campos conocidos por las plantillas, para ponerle nombre a cada valor. */
   private readonly camposConocidos = computed<ReadonlyMap<string, ChartTemplateField>>(() => {
     const state = this.plantillas();
-    return camposDe(state.status === 'ready' ? state.data : []);
+    return fieldsOf(state.status === 'ready' ? state.data : []);
   });
 
   /**
@@ -694,7 +959,7 @@ export class SpecialtyFormBlock {
     const detalle = this.formularioRespondido();
     const state = this.plantillas();
     if (detalle === null || state.status !== 'ready') return null;
-    return plantillaPorCobertura(detalle, state.data);
+    return templateByCoverage(detalle, state.data);
   });
 
   protected readonly tituloDeLaRespuesta = computed(
@@ -710,17 +975,17 @@ export class SpecialtyFormBlock {
     return Number.isNaN(fecha.getTime()) ? null : FORMATO_FECHA.format(fecha);
   });
 
-  protected readonly respuestasVisibles = computed<readonly RespuestaVisible[]>(() => {
+  protected readonly respuestasVisibles = computed<readonly ResponseVisible[]>(() => {
     const detalle = this.formularioRespondido();
     if (detalle === null) return [];
-    return respuestasDe(detalle, this.camposConocidos());
+    return responsesOf(detalle, this.camposConocidos());
   });
 
   /** Descarga el formulario respondido con el motor PDF compartido. */
   protected descargarPdf(): void {
     const detalle = this.formularioRespondido();
     if (detalle === null) return;
-    const cierre = detalle.closedAt === undefined ? undefined : new Date(detalle.closedAt);
+    const cierre = detalle.closedAt == null ? undefined : new Date(detalle.closedAt);
     downloadFormResponsePdf({
       id: detalle.id,
       titulo: this.tituloDeLaRespuesta(),
@@ -780,18 +1045,68 @@ export class SpecialtyFormBlock {
     return valor instanceof Date ? valor : null;
   }
 
-  /** Cómo dibujar un campo, a partir de su `dataType`. Lo no reconocido cae a texto. */
-  protected tipoDibujable(dataType: string): TipoDibujable {
+  /**
+   * Cómo dibujar un campo. Una lista cerrada se elige —con botones si son
+   * pocas opciones cortas, con desplegable si no, con casillas si van
+   * varias—; un párrafo va en área de texto; lo no reconocido cae a texto.
+   */
+  protected tipoDibujable(campo: ChartTemplateField): TipoDibujable {
+    const opciones = campo.options ?? [];
+    if (opciones.length > 0) {
+      if (campo.multiple === true) return 'varias';
+      const cortas =
+        opciones.length <= OPCIONES_COMO_BOTONES &&
+        opciones.every((opcion) => opcion.length <= LARGO_DE_OPCION_EN_BOTON);
+      return cortas ? 'una-corta' : 'una';
+    }
+    const { dataType } = campo;
     if (
       dataType === 'boolean' ||
       dataType === 'integer' ||
       dataType === 'decimal' ||
-      dataType === 'date'
+      dataType === 'date' ||
+      dataType === 'text'
     ) {
       return dataType;
     }
     return 'string';
   }
+
+  /** Las opciones de un campo de lista, en la forma que piden los controles. */
+  protected opcionesDe(campo: ChartTemplateField): readonly { value: string; label: string }[] {
+    const opciones = (campo.options ?? []).map((opcion) => ({ value: opcion, label: opcion }));
+    // En una de una sola respuesta, «Otro» es una opción más: lo que no está en
+    // la lista se detalla en el diagnóstico o en el relato. En las de varias lo
+    // resuelve el propio grupo de casillas, con su texto libre.
+    return campo.allowOther === true && campo.multiple !== true
+      ? [...opciones, { value: 'Otro', label: 'Otro' }]
+      : opciones;
+  }
+
+  protected valorLista(fieldId: string): readonly string[] {
+    const valor = this.valores()[fieldId];
+    return Array.isArray(valor) ? (valor as string[]) : [];
+  }
+
+  /**
+   * Los campos que su condición deja fuera de la vista, por `fieldId`: el
+   * «¿cuál?» de un «sí» que todavía no se contestó, o que se contestó «no».
+   * No se dibujan, no cuentan como obligatorios y no se envían.
+   */
+  protected readonly ocultos = computed<ReadonlySet<string>>(() => {
+    const plantilla = this.plantillaElegida();
+    if (plantilla === null) return new Set();
+    const valores = this.valores();
+    return hiddenFields(
+      plantilla.fields.map((campo) => ({
+        key: campo.fieldId,
+        ...(campo.showWhen === undefined
+          ? {}
+          : { showWhen: { key: campo.showWhen.fieldId, equals: campo.showWhen.equals } }),
+      })),
+      (fieldId) => valores[fieldId],
+    );
+  });
 
   /* -- El odontograma ------------------------------------------------------ */
 
@@ -882,7 +1197,10 @@ export class SpecialtyFormBlock {
     const plantilla = this.plantillaElegida();
     if (!plantilla) return false;
     const valores = this.valores();
-    return plantilla.fields.filter((f) => f.required).every((f) => !esVacio(valores[f.fieldId]));
+    const ocultos = this.ocultos();
+    return plantilla.fields
+      .filter((f) => f.required && !ocultos.has(f.fieldId))
+      .every((f) => !esVacio(valores[f.fieldId]));
   });
 
   protected readonly puedeCompletar = computed(
@@ -894,8 +1212,52 @@ export class SpecialtyFormBlock {
       !this.buscandoRespuesta() &&
       this.plantillaElegida() !== null &&
       this.camposObligatoriosCompletos() &&
+      // Antes el botón quedaba habilitado y el clic no hacía nada.
+      this.hayValoresDePlantilla() &&
+      // Los campos adicionales son opcionales, pero lo que se escribió ahí
+      // tiene que estar bien: se guardan con la ficha y no por separado.
+      !(this.adicionales()?.hayProblemas() ?? false) &&
+      (this.adicionales()?.impedimento() ?? null) === null &&
       !this.enviando(),
   );
+
+  /* -- El cierre de la ficha (D4) ------------------------------------------ */
+
+  /** Lo último que eligió quien atiende en el bloque de cierre. */
+  protected readonly cierre = signal<CierreDelFormulario>(SIN_CIERRE);
+
+  /**
+   * Lo que no se pudo registrar después de guardar la ficha, en palabras.
+   *
+   * Persiste más que el toast a propósito: la ficha ya quedó guardada y el
+   * bloque pasa a lectura; lo que faltó tiene que seguir a la vista para que
+   * se registre desde su casilla.
+   */
+  protected readonly fallosDelCierre = signal<readonly string[]>([]);
+
+  /**
+   * Las preguntas de la ficha con lo respondido, en palabras, para la IA.
+   *
+   * Sólo lo respondido, y nunca el odontograma: es un mapa de piezas, no una
+   * respuesta que se pueda leer.
+   */
+  protected readonly respuestasParaLaIa = computed<readonly RespuestaDeFormulario[]>(() => {
+    const plantilla = this.plantillaElegida();
+    if (plantilla === null) return [];
+    const valores = this.valores();
+    const ocultos = this.ocultos();
+    const deLaPlantilla = plantilla.fields.flatMap((campo) => {
+      const valor = valores[campo.fieldId];
+      if (ocultos.has(campo.fieldId) || esVacio(valor) || esMapa(valor)) return [];
+      return [{ question: campo.name, answer: textoDeValor(valor, campo.dataType) }];
+    });
+    // Lo que el doctor sumó a mano también es parte de lo observado.
+    const adicionales = (this.adicionales()?.entradas() ?? []).map((fila) => ({
+      question: fila.label,
+      answer: fila.value,
+    }));
+    return [...deLaPlantilla, ...adicionales];
+  });
 
   /* -- Completar ---------------------------------------------------------- */
 
@@ -922,10 +1284,10 @@ export class SpecialtyFormBlock {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite completar formularios clínicos.';
+      return state.message ?? 'Su rol no permite completar formularios clínicos.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -947,25 +1309,69 @@ export class SpecialtyFormBlock {
 
     this.enviando.set(true);
     this.resultado.set(loading());
+    this.fallosDelCierre.set([]);
+    // Los pasos del cierre se arman después de cerrar la respuesta, con su
+    // id: la orden que sale del cierre queda asociada a esa respuesta.
+    const { diagnostico, orden } = this.cierre();
+    // `custodianTenantId` es obligatorio en los dos DTO y no se deduce del
+    // paciente: es quién responde por el registro, y eso lo eligió la sesión.
+    // Sin organización la ficha se guarda igual; el cierre no, y se dice.
+    const impedimento =
+      (diagnostico !== null || orden !== null) && this.auth.activeTenantId() === null
+        ? 'Elija una organización en el encabezado para registrar el cierre.'
+        : null;
+    // Los campos adicionales van después del cierre y no dependen de él: un
+    // cierre frenado no se lleva puesta la nota ni los archivos.
+    const adicionales = this.adicionales()?.pasos(encounterId) ?? [];
 
     this.forms
       .openInstance({ resourceId: encounterId })
       .pipe(
         switchMap((instancia) =>
-          this.forms
-            .captureValues(instancia.id, values)
-            .pipe(switchMap(() => this.forms.closeInstance(instancia.id))),
+          this.forms.captureValues(instancia.id, values).pipe(
+            switchMap(() => this.forms.closeInstance(instancia.id)),
+            // Se avisa acá y no al final: la ficha ya está guardada aunque lo
+            // que sigue falle, y el orden de los avisos es el de los hechos.
+            tap(() =>
+              this.toasts.success(
+                `«${plantilla.name}» quedó guardada en la ficha.`,
+                'Formulario completado',
+              ),
+            ),
+            map(() => instancia.id),
+          ),
         ),
+        // Las altas del cierre corren después de cerrar la ficha; un fallo
+        // ahí no la deshace y no llega como error: llega como lista de lo
+        // que faltó.
+        switchMap((respuestaId) => {
+          const cierre = this.pasosDelCierre(plantilla, encounterId, respuestaId);
+          const delCierre =
+            impedimento === null
+              ? this.ejecutarEnOrden(cierre)
+              : of(this.frenados(cierre, impedimento));
+          // En dos filas separadas: un paso que falla frena a los que le
+          // siguen en su fila, y la nota no depende del diagnóstico.
+          return delCierre.pipe(
+            switchMap((fallosDelCierre) =>
+              this.ejecutarEnOrden(adicionales).pipe(
+                map((fallos) => [...fallosDelCierre, ...fallos]),
+              ),
+            ),
+          );
+        }),
       )
       .subscribe({
-        next: () => {
+        next: (fallos) => {
           this.enviando.set(false);
           this.resultado.set(ready(null));
           this.valores.set({});
-          this.toasts.success(
-            `«${plantilla.name}» quedó guardada en la ficha.`,
-            'Formulario completado',
-          );
+          this.cierre.set(SIN_CIERRE);
+          this.adicionales()?.limpiar();
+          this.fallosDelCierre.set(fallos);
+          // La lectura abre en lo principal —lo respondido de la plantilla—,
+          // aunque se haya completado desde la pestaña flexible.
+          this.pestana.set(PESTANA_PLANTILLA);
           this.cambio.emit();
           // Lo recién guardado se relee del backend y el bloque pasa a lectura.
           this.consultarRespuesta(encounterId);
@@ -977,12 +1383,165 @@ export class SpecialtyFormBlock {
       });
   }
 
+  /* -- El formulario libre ------------------------------------------------ */
+
+  /** Lo que no se pudo registrar del formulario libre, en palabras. */
+  protected readonly fallosDelLibre = signal<readonly string[]>([]);
+
+  protected readonly puedeGuardarLibre = computed(
+    () =>
+      this.hayEncuentro() &&
+      (this.adicionales()?.tieneContenido() ?? false) &&
+      !(this.adicionales()?.hayProblemas() ?? false) &&
+      (this.adicionales()?.impedimento() ?? null) === null &&
+      !this.enviando(),
+  );
+
+  /**
+   * Registra el formulario libre: la nota con las filas y un documento por
+   * cada fila con archivos, contra el encuentro en curso. Mismos pasos que los
+   * campos adicionales de una ficha, sin la ficha adelante.
+   *
+   * Si falla la nota —el primer paso— no quedó nada escrito y las filas se
+   * conservan para reintentar. Si falla un documento, la nota ya está: se
+   * vacía lo escrito para no duplicarla al volver a guardar, y lo que faltó
+   * queda nombrado.
+   */
+  protected guardarLibre(): void {
+    const encounterId = this.encounterId();
+    const adicionales = this.adicionales();
+    if (encounterId === null || adicionales === undefined || !this.puedeGuardarLibre()) {
+      return;
+    }
+    const pasos = adicionales.pasos(encounterId);
+    if (pasos.length === 0) return;
+
+    this.enviando.set(true);
+    this.fallosDelLibre.set([]);
+    this.ejecutarEnOrden(pasos, 'El formulario libre no quedó completo').subscribe((fallos) => {
+      this.enviando.set(false);
+      this.fallosDelLibre.set(fallos);
+      if (fallos.length === pasos.length) return;
+      adicionales.limpiar();
+      this.cambio.emit();
+      this.consultarAdicionales(encounterId);
+    });
+  }
+
+  /**
+   * Las altas que el cierre pide, en el orden en que se registran: primero el
+   * diagnóstico tentativo, después la orden de análisis. Ninguna es
+   * obligatoria; sin nada elegido la lista es vacía y la ficha se completa
+   * como siempre.
+   */
+  private pasosDelCierre(
+    plantilla: ChartTemplate,
+    encounterId: string,
+    respuestaId: string,
+  ): PasoDelCierre[] {
+    const { diagnostico, orden } = this.cierre();
+    const patientProfileId = this.patientProfileId();
+    // Sin organización ningún paso llega a ejecutarse (ver `completar`).
+    const custodianTenantId = this.auth.activeTenantId() ?? '';
+    const pasos: PasoDelCierre[] = [];
+
+    if (diagnostico !== null) {
+      pasos.push({
+        nombre: 'el diagnóstico tentativo',
+        titulo: 'Diagnóstico tentativo registrado',
+        exito: 'Nace presuntivo: confírmelo o recháselo en la casilla «Diagnóstico».',
+        ejecutar: () =>
+          this.clinical.createCondition({
+            custodianTenantId,
+            patientProfileId,
+            codeConceptId: diagnostico,
+            encounterId,
+            noteText: `Del formulario «${plantilla.name}»`,
+            verificationStatus: 'PROVISIONAL',
+          }),
+      });
+    }
+    if (orden !== null) {
+      pasos.push({
+        nombre: 'la orden de análisis',
+        titulo: 'Orden de análisis pedida',
+        exito: 'Quedó en la casilla «Orden de análisis» de esta consulta.',
+        ejecutar: () =>
+          this.diagnostics.requestStudy({
+            custodianTenantId,
+            patientProfileId,
+            codeConceptId: orden.codeConceptId,
+            encounterId,
+            formInstanceId: respuestaId,
+            category: orden.category,
+            ...(orden.categoryConceptId === undefined
+              ? {}
+              : { categoryConceptId: orden.categoryConceptId }),
+          }),
+      });
+    }
+    return pasos;
+  }
+
+  /** Nada del cierre se intentó, por un motivo que vale para todos los pasos. Avisado una vez. */
+  private frenados(pasos: readonly PasoDelCierre[], motivo: string): readonly string[] {
+    this.toasts.error(motivo, 'La ficha quedó guardada, pero no todo el cierre');
+    return pasos.map((paso) => `No se registró ${paso.nombre}: ${motivo}`);
+  }
+
+  /**
+   * Corre las altas una detrás de otra y devuelve lo que falló, en palabras.
+   *
+   * Un paso que falla **frena los siguientes** —pedir una orden cuando el
+   * diagnóstico que la motiva no se registró es escribir a medias— pero no
+   * deshace nada: lo hecho, hecho está, y cada cosa que faltó se nombra para
+   * que se registre desde su casilla. Nunca falla hacia arriba: la ficha ya
+   * quedó guardada y eso no se cuenta como error.
+   */
+  private ejecutarEnOrden(
+    pasos: readonly PasoDelCierre[],
+    tituloDelFallo = 'La ficha quedó guardada, pero no todo el cierre',
+  ): Observable<readonly string[]> {
+    const [primero, ...resto] = pasos;
+    if (primero === undefined) return of([]);
+    return primero.ejecutar().pipe(
+      tap(() => this.toasts.success(primero.exito, primero.titulo)),
+      switchMap(() => this.ejecutarEnOrden(resto, tituloDelFallo)),
+      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error, tituloDelFallo))),
+    );
+  }
+
+  /** El fallo de un paso y los que no se intentaron por su culpa, ya avisados. */
+  private fallosDesde(
+    paso: PasoDelCierre,
+    siguientes: readonly PasoDelCierre[],
+    error: unknown,
+    tituloDelFallo: string,
+  ): readonly string[] {
+    const estado = errorToViewState<null>(error);
+    const motivo =
+      estado.status === 'validation'
+        ? estado.issues.map((issue) => issue.message).join(' ')
+        : (writeFailureMessage(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
+    const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
+    this.toasts.error(mensaje, tituloDelFallo);
+    return [
+      mensaje,
+      ...siguientes.map(
+        (siguiente) => `No se registró ${siguiente.nombre}: se frenó por el fallo anterior.`,
+      ),
+    ];
+  }
+
   private valoresParaEnviar(plantilla: ChartTemplate): FieldValueInput[] {
     const valores = this.valores();
+    const ocultos = this.ocultos();
     const entradas: FieldValueInput[] = [];
     for (const [ordinal, campo] of plantilla.fields.entries()) {
       const crudo = valores[campo.fieldId];
-      if (esVacio(crudo)) {
+      // Lo que quedó escrito en un «¿cuál?» que después se cerró con un «no»
+      // no se manda: no es una respuesta vigente.
+      if (esVacio(crudo) || ocultos.has(campo.fieldId)) {
         continue;
       }
       entradas.push({
@@ -995,59 +1554,4 @@ export class SpecialtyFormBlock {
     }
     return entradas;
   }
-}
-
-function esVacio(valor: unknown): boolean {
-  return (
-    valor === undefined ||
-    valor === null ||
-    valor === '' ||
-    // Un odontograma sin ninguna pieza tocada es un mapa vacío: es «no lo
-    // llené», no un dato. Sin esto viajaría un `{}` y contaría como respuesta.
-    (esMapa(valor) && Object.keys(valor).length === 0)
-  );
-}
-
-/** Si el valor es un objeto plano —el mapa del odontograma, hoy—. */
-function esMapa(valor: unknown): valor is Record<string, unknown> {
-  return typeof valor === 'object' && valor !== null && !(valor instanceof Date);
-}
-
-/**
- * La especialidad con la que un profesional se presenta.
- *
- * La primaria vigente si la hay; si no, la primera vigente.
- *
- * **Vigente es una ventana, no una bandera** —mismo criterio que la matrícula
- * que firma el papel en el expediente—: sin `validTo` no caduca, y con
- * `validTo` en el futuro sigue ejerciendo. Tratar toda especialidad con fecha
- * de vencimiento como abandonada le escondería su propia ficha justo a quien
- * tiene la certificación en regla —una recertificación real declara hasta
- * cuándo vale—, y lo dejaría completando la anamnesis general. Vencida sí se
- * descarta: no debería decidir qué ficha se le ofrece hoy.
- */
-function especialidadVigente(especialidades: readonly PractitionerSpecialty[]): string | null {
-  const ahora = Date.now();
-  const vigentes = especialidades.filter((especialidad) =>
-    dentroDeLaVentana(especialidad.validFrom, especialidad.validTo, ahora),
-  );
-  const principal = vigentes.find((especialidad) => especialidad.isPrimary);
-  return (principal ?? vigentes[0])?.specialtyConceptId ?? null;
-}
-
-/**
- * Si una vigencia declarada cubre el instante dado.
- *
- * Los dos extremos son opcionales y la ausencia de cada uno significa «no
- * empieza» y «no termina», que es cómo el contrato declara sus ventanas.
- */
-function dentroDeLaVentana(
-  desde: Date | undefined,
-  hasta: Date | undefined,
-  instante: number,
-): boolean {
-  if (desde !== undefined && desde.getTime() > instante) {
-    return false;
-  }
-  return hasta === undefined || hasta.getTime() > instante;
 }

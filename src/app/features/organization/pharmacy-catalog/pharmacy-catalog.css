@@ -1,0 +1,270 @@
+/* Catálogo de productos de la farmacia. Una tarjeta con pestañas, centrada y
+   a lo ancho (composition-rules §5): sin tope propio de ancho, los campos se
+   reparten en 1 / 2 / 3 columnas según el espacio. Mobile-first. */
+
+:host {
+  display: block;
+}
+
+.catalogo {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.catalogo__farmacia {
+  margin-block-end: var(--sp-4);
+}
+
+.catalogo__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+/* ─── Productos ─────────────────────────────────────────────────────────── */
+
+.catalogo__resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-4);
+}
+
+.catalogo__cifra,
+.catalogo__resumen p {
+  margin: 0;
+}
+
+.catalogo__cifra strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--text-primary);
+}
+
+.catalogo__barra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.catalogo__buscador {
+  flex: 1 1 auto;
+}
+
+.catalogo__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.catalogo__principal {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.catalogo__secundario {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+span.catalogo__secundario {
+  display: block;
+}
+
+.catalogo__resumen .catalogo__secundario {
+  display: inline;
+}
+
+.catalogo__codigo {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* ─── Nuevo producto ────────────────────────────────────────────────────── */
+
+.catalogo__grupo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.catalogo__subtitulo {
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.catalogo__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.catalogo__errores {
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.catalogo__pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+/* ─── Importación masiva ────────────────────────────────────────────────── */
+
+.catalogo__importar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+}
+
+.catalogo__carga {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.catalogo__carga .catalogo__subtitulo {
+  margin: 0;
+}
+
+.catalogo__ayuda {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.catalogo__ayuda .catalogo__subtitulo {
+  margin: 0;
+}
+
+.catalogo__columnas {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.catalogo__columnas div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.catalogo__columnas dt {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+
+.catalogo__columnas dd {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.catalogo__cifras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-6);
+}
+
+.catalogo__cifras p {
+  margin: 0;
+}
+
+.catalogo__cifras strong {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+}
+
+.catalogo__progreso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.catalogo__progreso p {
+  margin: 0;
+}
+
+.catalogo__problema {
+  overflow-wrap: anywhere;
+}
+
+/* ─── Anchos ────────────────────────────────────────────────────────────── */
+
+@media (min-width: 780px) {
+  .catalogo__barra {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .catalogo__buscador {
+    max-inline-size: 28rem;
+  }
+
+  .catalogo__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .catalogo__campos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .catalogo__importar {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+/* La muestra de lo que se va a publicar: para ver tildes y nombres antes. */
+.catalogo__muestra ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.catalogo__muestra li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.catalogo__en-linea {
+  display: inline;
+}

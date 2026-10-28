@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { nameExtraControl } from '../../auth/shared-registration/name-fields/person-name';
 import { AssistedRegistration } from './assisted-registration';
 
 /**
@@ -42,10 +43,14 @@ describe('AssistedRegistration', () => {
 
   function completarFormulario(reason = 'Internada, sin acceso a un dispositivo propio') {
     interno<{ setValue: (v: unknown) => void }>('form').setValue({
-      name: 'Ana',
-      middleName: '',
-      lastName: 'Salas',
-      motherLastName: '',
+      patientName: {
+        name: 'Ana',
+        middleName: '',
+        thirdName: '',
+        extraNames: [],
+        lastName: 'Salas',
+        motherLastName: '',
+      },
       email: 'ana@mantra.test',
       reason,
     });
@@ -76,6 +81,20 @@ describe('AssistedRegistration', () => {
     });
     // Nadie fija la clave de otro: la elige el titular al activar.
     expect(req.request.body).not.toHaveProperty('password');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('los nombres agregados con «+ Agregar otro nombre» se pliegan en middleName', () => {
+    completarFormulario();
+    const nombre = fixture.componentInstance['form'].controls.patientName;
+    nombre.controls.middleName.setValue('María');
+    nombre.controls.extraNames.push(nameExtraControl());
+    nombre.controls.extraNames.at(0).setValue('Luz');
+    enviar();
+
+    const req = http.expectOne('/iam/users/assisted-registration');
+    expect(req.request.body.middleName).toBe('María Luz');
 
     req.flush(RESPUESTA);
   });
@@ -148,7 +167,7 @@ describe('AssistedRegistration', () => {
     http.expectOne('/iam/users/assisted-registration').flush(
       {
         code: 'FORBIDDEN',
-        message: 'Necesitás el rol SECURITY_ADMIN para registrar pacientes.',
+        message: 'Necesita el rol SECURITY_ADMIN para registrar pacientes.',
         timestamp: '2026-08-04T10:00:00Z',
         path: '/iam/users/assisted-registration',
       },

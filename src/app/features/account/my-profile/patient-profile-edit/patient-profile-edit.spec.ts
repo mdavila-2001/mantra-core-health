@@ -1,14 +1,17 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import type { WritableSignal } from '@angular/core';
+import { getDebugNode, type WritableSignal } from '@angular/core';
 import type { FormControl } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { CODIGO_OCUPACION_OTRA } from '../../../../core/data-access/terminology/bo-occupations.service';
 import { PatientProfileEdit } from './patient-profile-edit';
-import { UbicacionPicker } from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+import type { Select } from '../../../../shared/components/atoms/select/select';
+import { selectOptionLabels } from '../../../../../testing/select';
+import { MapLocationPicker } from '../../../auth/shared-registration/map-location-picker/map-location-picker';
 
 /**
  * Editar los datos propios del paciente.
@@ -43,38 +46,16 @@ const PERFIL_BASE = {
   occupationConceptId: 'oc-docente',
   phone: '+591 70055555',
   residenceMunicipalityConceptId: 'mun-sacaba',
+  // El punto del domicilio es obligatorio desde el 26/10/2026: sin él no se
+  // guarda nada. Uno ya guardado vale sin volver a confirmarlo.
+  homeAddress: { lines: 'Av. Banzer 3er anillo', latitude: -17.78, longitude: -63.18 },
   identityVerified: false,
 };
 
 /** El mensaje que el alta muestra cuando el número no está completo. */
 const TELEFONO_INCOMPLETO = 'El número está incompleto para el país elegido.';
 
-/** Un departamento y dos municipios: lo justo para que el árbol tenga forma. */
-const DEPARTAMENTOS = [
-  {
-    conceptId: 'dep-cb',
-    code: 'geo:bo:department:CB',
-    display: 'Cochabamba',
-    codeSystemVersionId: 'csv-1',
-  },
-];
-
-const MUNICIPIOS = [
-  {
-    conceptId: 'mun-sacaba',
-    code: 'geo:bo:municipality:030201',
-    display: 'Sacaba',
-    codeSystemVersionId: 'csv-1',
-  },
-  {
-    conceptId: 'mun-quillacollo',
-    code: 'geo:bo:municipality:030301',
-    display: 'Quillacollo',
-    codeSystemVersionId: 'csv-1',
-  },
-];
-
-/** Dos ocupaciones del catálogo `VS_BO_OCCUPATION`, con sus conceptos reales. */
+/** Ocupaciones del catálogo `VS_BO_OCCUPATION`, incluida su salida a texto libre. */
 const OCUPACIONES = [
   {
     conceptId: 'oc-docente',
@@ -86,6 +67,12 @@ const OCUPACIONES = [
     conceptId: 'oc-albanil',
     code: 'occupation:BUILDER',
     display: 'Albañil',
+    codeSystemVersionId: 'csv-1',
+  },
+  {
+    conceptId: 'oc-otra',
+    code: CODIGO_OCUPACION_OTRA,
+    display: 'Otra ocupación',
     codeSystemVersionId: 'csv-1',
   },
 ];
@@ -105,6 +92,22 @@ describe('PatientProfileEdit', () => {
   });
 
   afterEach(() => {
+    // Los mapas de «Contacto» nacen con el punto guardado: piden su calle y el
+    // catálogo de municipios con el que deducen la localidad (26/10/2026). Las
+    // pruebas que sólo abren la pestaña los dan por atendidos acá.
+    for (const pendiente of http.match(
+      (r) =>
+        r.url.startsWith('/public/geo/reverse') ||
+        (r.url === '/terminology/value-sets' &&
+          ['VS_BO_DEPARTMENT', 'VS_BO_MUNICIPALITY'].includes(r.params.get('code') ?? '')),
+    )) {
+      if (pendiente.cancelled) continue;
+      pendiente.flush(
+        pendiente.request.url.startsWith('/public/geo/reverse')
+          ? { found: false, attribution: '© OpenStreetMap' }
+          : { items: [], count: 0, limit: 50, nextCursor: null },
+      );
+    }
     http.verify();
   });
 
@@ -140,40 +143,17 @@ describe('PatientProfileEdit', () => {
       });
   }
 
-  /** El árbol completo, que son dos catálogos: departamentos y municipios. */
-  function responderMunicipios(): void {
-    responderConjunto('VS_BO_DEPARTMENT', 'vs-dep', DEPARTAMENTOS);
-    responderConjunto('VS_BO_MUNICIPALITY', 'vs-mun', MUNICIPIOS);
-  }
-
-  /** El catálogo de ocupaciones, que la pantalla pide junto con el árbol. */
+  /** El catálogo de ocupaciones, que la pantalla pide al montarse. */
   function responderOcupaciones(): void {
     responderConjunto('VS_BO_OCCUPATION', 'vs-oc', OCUPACIONES);
   }
 
-  /** Los dos catálogos de la pantalla, que es lo que pide al montarse. */
-  function responderCatalogos(): void {
-    responderMunicipios();
-    responderOcupaciones();
-  }
-
   /**
-   * Tumba el árbol de municipios haciendo fallar el primero de sus dos
-   * catálogos.
-   *
-   * El segundo **no se responde con un error**: el `forkJoin` que arma el árbol
-   * cancela al hermano en cuanto uno falla, y a una petición cancelada no se le
-   * puede contestar («Cannot return an error for a cancelled request»). Se
-   * drena con `match`, que la saca de las abiertas sin inventarle una
-   * respuesta que el navegador tampoco le daría. Se acota al conjunto de
-   * municipios: el de ocupaciones sale de la misma ruta y no tiene nada que ver
-   * con este fallo.
+   * Los catálogos que la pantalla pide al montarse. Los municipios ya no: los
+   * pide cada mapa al mostrarse, para deducir la localidad del punto.
    */
-  function caerseElCatalogo(): void {
-    pedidoDeConjunto('VS_BO_DEPARTMENT').error(new ProgressEvent('error'), { status: 500 });
-    http.match(
-      (r) => r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_BO_MUNICIPALITY',
-    );
+  function responderCatalogos(): void {
+    responderOcupaciones();
   }
 
   /** Tumba el catálogo de ocupaciones, que es una sola lectura. */
@@ -231,17 +211,27 @@ describe('PatientProfileEdit', () => {
     return 0;
   }
 
-  /** El `<select>` real de un campo, que vive dentro del átomo. */
-  function desplegable(testId: string): HTMLSelectElement | null {
+  /** El `app-select` de un campo, en su pestaña. */
+  function desplegable(testId: string): HTMLElement | null {
     abrirPestana(pestanaDe(testId));
-    return (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
-      `[data-testid="${testId}"] select`,
+    const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      `[data-testid="${testId}"]`,
     );
+    return campo?.matches('app-select') ? campo : (campo?.querySelector('app-select') ?? null);
   }
 
-  /** Las etiquetas que ofrece un desplegable, marcador incluido. */
-  function opcionesDe(testId: string): readonly string[] {
-    return [...(desplegable(testId)?.options ?? [])].map((opcion) => opcion.text.trim());
+  /**
+   * Las etiquetas que ofrece un desplegable, marcador incluido. El marcador ya
+   * no es una fila de la lista: es lo que el campo muestra sin elección, y sale
+   * de su `placeholder`.
+   */
+  async function opcionesDe(testId: string): Promise<readonly string[]> {
+    const host = desplegable(testId);
+    if (host === null) {
+      return [];
+    }
+    const marcador = (getDebugNode(host)?.componentInstance as Select<unknown>).placeholder();
+    return [marcador, ...(await selectOptionLabels(fixture, host))];
   }
 
   /** El `<input>` real del teléfono, que vive dentro de `app-phone-input`. */
@@ -303,24 +293,37 @@ describe('PatientProfileEdit', () => {
   }
 
   /**
-   * N-03: «Mis puntos» es la quinta pestaña de la ficha. El editor la lleva
-   * en la tira, apagada, para que pulsar el lápiz no mueva de lugar a las
-   * demás; ahí no hay nada que editar.
+   * N-03: «Mis puntos» es la billetera del programa de fidelidad, no un dato
+   * declarado, y no hay nada que editar ahí. Desde el 25/09/2026 (pedido del
+   * propietario) el editor ya no la muestra apagada: la saca de la tira.
    */
-  it('lleva «Mis puntos» en la tira, apagada: no hay nada que editar ahí', () => {
+  it('no lleva «Mis puntos» en la tira: no hay nada que editar ahí', () => {
     montarPintadoYCargado();
 
     const pestanas = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
       '[role="tab"]',
     );
-    expect(pestanas.length).toBe(5);
-    expect(pestanas[4].textContent).toContain('Mis puntos');
-    expect(pestanas[4].disabled).toBe(true);
-    expect(pestanas[4].getAttribute('aria-disabled')).toBe('true');
-    // Pulsarla no abre nada: la abierta sigue siendo la primera.
-    pestanas[4].click();
-    fixture.detectChanges();
-    expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
+    expect([...pestanas].map((p) => p.textContent?.trim())).not.toContain('Mis puntos');
+  });
+
+  it('«Seguros» y «Tutores» no se editan desde los datos personales', () => {
+    montarPintadoYCargado({
+      coverages: [{ carrierName: 'Alianza Vida Seguros', planName: 'AFI Gold' }],
+      guardians: [{ displayName: 'Carlos Mamani', phone: '+591 70055443' }],
+    });
+
+    const pestanas = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+    expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+      'Datos personales',
+      'Contacto',
+      'Facturación',
+    ]);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      'Alianza Vida Seguros',
+    );
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Carlos Mamani');
   });
 
   it('siembra el formulario con lo ya guardado, en las cuatro partes del nombre', () => {
@@ -334,6 +337,41 @@ describe('PatientProfileEdit', () => {
     expect(telefono().value).toBe('+591 70055555');
     expect(señal<string>('telefono')()).toBe('+591 70055555');
     expect(señal<string | null>('sexoAlNacer')()).toBe('FEMALE');
+  });
+
+  it('muestra el correo guardado y aclara que cambiarlo requiere verificación', () => {
+    montarPintadoYCargado({ email: 'ana@example.test' });
+
+    expect(notaDelCampo('perfil-correo', '.form-field-hint')).toContain(
+      'verificar el nuevo antes de soltar el viejo',
+    );
+    const email = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '[data-testid="perfil-correo"] input',
+    );
+    expect(email?.value).toBe('ana@example.test');
+    expect(email?.disabled).toBe(true);
+  });
+
+  it('recupera y guarda NIT y razón social con los campos fiscales del perfil', () => {
+    montarYCargar({ taxId: '1020304056', taxHolderName: 'Consultorio Ejemplo' });
+
+    expect(señal<string>('nit')()).toBe('1020304056');
+    expect(señal<string>('razonSocial')()).toBe('Consultorio Ejemplo');
+
+    señal<string>('nit').set('9988776655');
+    señal<string>('razonSocial').set('Centro Médico Ejemplo S.R.L.');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({
+      taxId: '9988776655',
+      taxHolderName: 'Centro Médico Ejemplo S.R.L.',
+    });
+    req.flush({
+      ...PERFIL_BASE,
+      taxId: '9988776655',
+      taxHolderName: 'Centro Médico Ejemplo S.R.L.',
+    });
   });
 
   /**
@@ -403,15 +441,11 @@ describe('PatientProfileEdit', () => {
     expect(fecha?.getDate()).toBe(14);
   });
 
-  /** El municipio se preselecciona por su concepto, no por su nombre. */
-  it('preselecciona el municipio guardado y ofrece el árbol del catálogo', () => {
+  /** El municipio guardado se siembra por su concepto, no por su nombre. */
+  it('siembra el municipio guardado', () => {
     montarYCargar();
 
     expect(señal<string | null>('municipio')()).toBe('mun-sacaba');
-    const arbol =
-      interno<() => readonly { label: string; items: readonly object[] }[]>('arbolMunicipios')();
-    expect(arbol.map((rama) => rama.label)).toEqual(['Cochabamba']);
-    expect(arbol[0]?.items).toHaveLength(2);
   });
 
   it('los campos que el alta no declaró arrancan vacíos, no en «undefined»', () => {
@@ -485,17 +519,53 @@ describe('PatientProfileEdit', () => {
       req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
     });
 
-    it('quitar el punto lo manda como null en los dos extremos', () => {
+    it('quitar el punto del domicilio no deja guardar: es obligatorio (26/10/2026)', () => {
+      montarPintadoYCargado(CON_DIRECCIONES);
+      expect(interno<() => boolean>('puedeGuardar')()).toBe(true);
+
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')(null);
+      interno<() => void>('guardar')();
+
+      http.expectNone('/profiles/patients/me');
+      expect(interno<() => boolean>('puedeGuardar')()).toBe(false);
+      // Desde otra pestaña, la nota dice adónde ir.
+      expect(interno<() => string | null>('pendienteEnOtraPestana')()).toBe(
+        'Marque su casa en el mapa de «Contacto».',
+      );
+      abrirPestana(pestanaDe('perfil-domicilio'));
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="perfil-domicilio-sin-punto"]',
+        )?.textContent,
+      ).toContain('Marque el lugar en el mapa y pulse «Confirmar dirección actual».');
+    });
+
+    it('sin punto guardado no se guarda hasta marcarlo', () => {
+      montarYCargar({ homeAddress: { lines: 'Av. Banzer' } });
+
+      expect(interno<() => boolean>('puedeGuardar')()).toBe(false);
+      interno<(p: unknown) => void>('confirmarGpsDomicilio')({ lat: -16.5, lng: -68.15 });
+      expect(interno<() => boolean>('puedeGuardar')()).toBe(true);
+    });
+
+    it('quitar el punto del trabajo lo manda como null en los dos extremos, y vacía su dirección', () => {
       // `null` es «lo quité» y ausente es «no lo toqué»: son dos cosas
       // distintas, y confundirlas borraría la ubicación de quien sólo vino a
       // cambiar el teléfono.
-      montarYCargar(CON_DIRECCIONES);
+      montarYCargar({
+        homeAddress: CON_DIRECCIONES.homeAddress,
+        workAddress: { lines: 'Calle Ayacucho 241', latitude: -17.8, longitude: -63.2 },
+      });
 
-      señal<unknown>('gpsDomicilio').set(null);
+      interno<(p: unknown) => void>('confirmarGpsTrabajo')(null);
       interno<() => void>('guardar')();
 
       const req = pedidoDeGuardado();
-      expect(req.request.body).toEqual({ homeLatitude: null, homeLongitude: null });
+      expect(req.request.body).toEqual({
+        workAddressLines: '',
+        workLatitude: null,
+        workLongitude: null,
+      });
       req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
     });
 
@@ -511,51 +581,98 @@ describe('PatientProfileEdit', () => {
     });
 
     /**
-     * D-06: tocar el mapa deja la dirección escrita en blanco y lo dice al
-     * lado del campo, porque el punto nuevo ya no es esa calle.
+     * Pedido del cliente del 26/10/2026: la dirección sale del punto. Lo que
+     * el mapa deduce de un punto sin confirmar no se guarda; al confirmarlo,
+     * calle y municipio se vuelcan. Sin tocar el mapa queda lo guardado.
      */
-    it('tocar el mapa vacía la dirección escrita y lo dice junto al campo', () => {
+    it('lo deducido del punto confirmado llena domicilio y municipio', () => {
       montarPintadoYCargado(CON_DIRECCIONES);
       abrirPestana(pestanaDe('perfil-domicilio'));
-      fixture.detectChanges();
-      const raiz = fixture.nativeElement as HTMLElement;
-      const [domicilio, trabajo] = fixture.debugElement
-        .queryAll(By.directive(UbicacionPicker))
-        .map((el) => el.componentInstance as UbicacionPicker);
+      const [domicilio] = fixture.debugElement
+        .queryAll(By.directive(MapLocationPicker))
+        .map((el) => el.componentInstance as MapLocationPicker);
+      const localidad = {
+        punto: { lat: -16.5, lng: -68.15 },
+        calle: 'Av. Arce 2631, Sopocachi',
+        calleSola: 'Av. Arce 2631',
+        zona: 'Sopocachi',
+        municipioConceptId: 'mun-quillacollo',
+      };
+      // El punto guardado, deducido de nuevo al abrir: no reescribe nada.
+      domicilio.localidad.emit({ ...localidad, punto: { lat: -17.78, lng: -63.18 } });
       expect(señal<string>('domicilio')()).toBe('Av. Banzer 3er anillo');
 
-      domicilio.fijarPunto({ lat: -17.79, lng: -63.19 });
-      fixture.detectChanges();
-
+      // Un punto nuevo sin confirmar: la calle vieja ya no vale, la nueva todavía no.
+      domicilio.confirmado.emit(null);
+      domicilio.localidad.emit(localidad);
       expect(señal<string>('domicilio')()).toBe('');
-      expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')?.textContent).toContain(
-        'Volvé a escribir la dirección para este punto',
-      );
-      // El trabajo no se entera: cada mapa vacía sólo su campo.
+
+      domicilio.confirmado.emit(localidad.punto);
+      expect(señal<string>('domicilio')()).toBe('Av. Arce 2631, Sopocachi');
+      expect(señal<string | null>('municipio')()).toBe('mun-quillacollo');
+      // El trabajo no se entera: cada mapa llena sólo lo suyo.
       expect(señal<string>('direccionTrabajo')()).toBe('Calle Ayacucho 241');
-      expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).toBeNull();
 
-      // Volver a escribir se lleva el aviso: acompaña al campo vacío.
-      señal<string>('domicilio').set('Av. Banzer, 4to anillo');
-      fixture.detectChanges();
-      expect(raiz.querySelector('[data-testid="perfil-domicilio-reescribir"]')).toBeNull();
-
-      trabajo.fijarPunto({ lat: -17.8, lng: -63.2 });
-      fixture.detectChanges();
-      expect(señal<string>('direccionTrabajo')()).toBe('');
-      expect(raiz.querySelector('[data-testid="perfil-trabajo-reescribir"]')).not.toBeNull();
+      interno<() => void>('guardar')();
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({
+        residenceMunicipalityConceptId: 'mun-quillacollo',
+        homeAddressLines: 'Av. Arce 2631, Sopocachi',
+        // El distrito viaja aparte de la calle (ADR-0028 de la API).
+        homeDistrict: 'Sopocachi',
+        homeLatitude: -16.5,
+        homeLongitude: -68.15,
+      });
+      req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
     });
 
-    it('los dos mapas se dibujan en la pestaña de ubicación', () => {
+    it('sin calle en el mapa, el trabajo toma la zona y nunca una calle inventada', () => {
+      montarYCargar(CON_DIRECCIONES);
+      const punto = { lat: -17.8, lng: -63.2 };
+      interno<(p: unknown) => void>('confirmarGpsTrabajo')(punto);
+      interno<(l: unknown) => void>('aplicarLocalidadTrabajo')({
+        punto,
+        calle: null,
+        calleSola: null,
+        zona: 'Casco Viejo',
+        municipioConceptId: null,
+      });
+      expect(señal<string>('direccionTrabajo')()).toBe('Casco Viejo');
+    });
+
+    it('manda domicilio y trabajo en campos separados', () => {
+      montarYCargar(CON_DIRECCIONES);
+
+      señal<string>('domicilio').set('Av. Busch 100');
+      señal<string>('direccionTrabajo').set('Calle Ayacucho 241, La Paz');
+      interno<() => void>('guardar')();
+
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({
+        homeAddressLines: 'Av. Busch 100',
+        workAddressLines: 'Calle Ayacucho 241, La Paz',
+      });
+      req.flush({
+        ...PERFIL_BASE,
+        homeAddress: { lines: 'Av. Busch 100' },
+        workAddress: { lines: 'Calle Ayacucho 241, La Paz' },
+      });
+    });
+
+    it('los dos mapas van primero en «Contacto», y las direcciones no se escriben', () => {
       montarPintadoYCargado(CON_DIRECCIONES);
-      // Los mapas viven con las direcciones, en «Ubicación y contacto».
       abrirPestana(pestanaDe('perfil-domicilio'));
       fixture.detectChanges();
 
-      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll(
-        'app-ubicacion-picker',
-      );
+      const raiz = fixture.nativeElement as HTMLElement;
+      const mapas = raiz.querySelectorAll('app-map-location-picker');
       expect(mapas).toHaveLength(2);
+      const campos = raiz.querySelector('.datos__campos');
+      expect(campos?.firstElementChild?.getAttribute('data-testid')).toBe('perfil-domicilio');
+      // Ni casillas de dirección ni árbol de municipios: todo sale del punto.
+      expect(raiz.querySelector('app-input[data-testid="perfil-domicilio"]')).toBeNull();
+      expect(raiz.querySelector('app-input[data-testid="perfil-trabajo"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="perfil-municipio"]')).toBeNull();
     });
   });
 
@@ -634,7 +751,7 @@ describe('PatientProfileEdit', () => {
 
     expect(señal<string>('nombre')()).toBe('Ana María');
     expect(interno<() => boolean>('guardando')()).toBe(false);
-    expect(toasts.toasts().at(-1)?.message).toBe('Tus datos quedaron actualizados.');
+    expect(toasts.toasts().at(-1)?.message).toBe('Sus datos quedaron actualizados.');
   });
 
   it('si el guardado falla lo dice y deja el formulario intacto para reintentar', () => {
@@ -644,9 +761,100 @@ describe('PatientProfileEdit', () => {
     interno<() => void>('guardar')();
     pedidoDeGuardado().error(new ProgressEvent('error'), { status: 500 });
 
-    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Probá de nuevo.');
+    expect(toasts.toasts().at(-1)?.message).toBe('No pudimos guardar los cambios. Pruebe de nuevo.');
     expect(interno<() => boolean>('guardando')()).toBe(false);
     expect(señal<string>('nombre')()).toBe('Ana María');
+  });
+
+  /* ---- el rechazo del servidor, dicho donde se comete (2026-10-08) -------- */
+
+  /** Un rechazo de validación con la forma estructurada (`details.fields`). */
+  function rechazoPorCampo(field: string, mensaje: string): object {
+    return {
+      code: 'VALIDATION_FAILED',
+      message: 'Error de validación',
+      correlationId: 'corr-pac',
+      details: { fields: [{ field, constraints: ['isValid'], messages: [mensaje] }] },
+      timestamp: '2026-10-08T00:00:00.000Z',
+      path: '/profiles/patients/me',
+    };
+  }
+
+  it('un campo rechazado en otra pestaña queda pegado a él, y la pantalla lo lleva ahí', () => {
+    montarPintadoYCargado();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('taxId', 'El NIT no figura en el padrón.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+    fixture.detectChanges();
+
+    expect(señal<number>('pestana')()).toBe(2);
+    expect(toasts.toasts().at(-1)?.message).toBe(
+      'Revise los campos marcados en «Facturación» y vuelva a guardar.',
+    );
+    // Se pinta debajo del NIT, no en otro campo.
+    const campos = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-form-field')];
+    const nit = campos.find((c) => (c.textContent ?? '').includes('NIT'));
+    const razon = campos.find((c) => (c.textContent ?? '').includes('Razón social'));
+    expect(nit?.textContent).toContain('El NIT no figura en el padrón.');
+    expect(razon?.textContent).not.toContain('padrón');
+    // Lo escrito en otra pestaña sigue ahí.
+    expect(señal<string>('nombre')()).toBe('Ana María');
+  });
+
+  it('un rechazo de un campo que la pantalla no muestra lleva su mensaje en el aviso', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('email', 'El correo no se cambia desde aquí.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+
+    expect(toasts.toasts().at(-1)?.message).toBe('El correo no se cambia desde aquí.');
+  });
+
+  it('un 500 lleva el código de soporte con el que se encuentra en el registro', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(
+      {
+        code: 'INTERNAL',
+        message: 'Internal server error',
+        correlationId: 'corr-500',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles/patients/me',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(toasts.toasts().at(-1)?.message).toBe(
+      'No pudimos guardar los cambios. Pruebe de nuevo. (Código de soporte: corr-500)',
+    );
+  });
+
+  it('un guardado nuevo limpia los rechazos del anterior', () => {
+    montarYCargar();
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush(rechazoPorCampo('name', 'El nombre tiene caracteres no válidos.'), {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+    expect(interno<(c: string) => string>('errorDelServidor')('name')).toContain('no válidos');
+
+    señal<string>('nombre').set('Ana Lucía');
+    interno<() => void>('guardar')();
+    pedidoDeGuardado().flush({ ...PERFIL_BASE, name: 'Ana Lucía' });
+
+    expect(interno<(c: string) => string>('errorDelServidor')('name')).toBe('');
   });
 
   /* ---- validación mínima --------------------------------------------------- */
@@ -783,30 +991,6 @@ describe('PatientProfileEdit', () => {
     http.expectNone('/profiles/patients/me');
   });
 
-  it('si el catálogo de municipios se cae, el resto del formulario sigue vivo', () => {
-    montar();
-    http.expectOne('/profiles/patients/me').flush(PERFIL_BASE);
-    caerseElCatalogo();
-    responderOcupaciones();
-
-    expect(interno<() => boolean>('catalogoMunicipiosCaido')()).toBe(true);
-    expect(interno<() => readonly unknown[]>('arbolMunicipios')()).toHaveLength(0);
-    expect(señal<string>('nombre')()).toBe('Ana');
-  });
-
-  it('reintentar el catálogo vuelve a tocar la red: el fallo cacheado no dura la sesión', () => {
-    montar();
-    http.expectOne('/profiles/patients/me').flush(PERFIL_BASE);
-    caerseElCatalogo();
-    responderOcupaciones();
-
-    interno<() => void>('reintentarMunicipios')();
-    responderMunicipios();
-
-    expect(interno<() => boolean>('catalogoMunicipiosCaido')()).toBe(false);
-    expect(interno<() => readonly unknown[]>('arbolMunicipios')()).toHaveLength(1);
-  });
-
   it('un fallo de lectura del perfil deja la pantalla en estado de error con reintento', () => {
     montar();
     http.expectOne('/profiles/patients/me').error(new ProgressEvent('error'), { status: 500 });
@@ -849,12 +1033,21 @@ describe('PatientProfileEdit', () => {
     expect(filtradas.map((o) => o.label)).toEqual(['Albañil']);
   });
 
+  it('buscar «otro» encuentra la salida transversal con ese mismo rótulo', () => {
+    montarPintadoYCargado();
+
+    señal<string>('busquedaOcupacion').set('otro');
+
+    const filtradas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
+    expect(filtradas.map((o) => o.label)).toEqual(['Otro']);
+  });
+
   /** Sin nada escrito se ofrecen todas: la lupa no esconde el catálogo. */
   it('sin búsqueda ofrece el catálogo entero', () => {
     montarPintadoYCargado();
 
     const todas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
-    expect(todas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
+    expect(todas.map((o) => o.label)).toEqual(['Docente', 'Albañil', 'Otro']);
   });
 
   /**
@@ -884,18 +1077,16 @@ describe('PatientProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, occupationConceptId: undefined });
   });
 
-  /**
-   * Las altas anteriores al catálogo guardaron texto libre. El desplegable no
-   * puede preseleccionarlo —no es un concepto— y dejarlo mudo haría creer que
-   * la persona nunca declaró su ocupación, así que la ayuda del campo lo dice.
-   */
-  it('la ocupación escrita antes del catálogo se dice en la ayuda del campo', () => {
+  it('una ocupación libre guardada abre «Otro» y permite editar el texto', () => {
     montarPintadoYCargado({ occupationConceptId: undefined, occupationFreeText: 'Panadera' });
 
-    expect(señal<string | null>('ocupacionConceptId')()).toBeNull();
-    expect(notaDelCampo('perfil-ocupacion', '.form-field-hint')).toBe(
-      'Registrada como «Panadera». Elegí una opción del catálogo para reemplazarla.',
-    );
+    expect(señal<string | null>('ocupacionConceptId')()).toBe('oc-otra');
+    expect(señal<string>('ocupacionTextoLibre')()).toBe('Panadera');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+        '[data-testid="perfil-ocupacion-otra"]',
+      )?.value,
+    ).toBe('Panadera');
   });
 
   /** Y no se manda sola: quien no toca el desplegable conserva su texto libre. */
@@ -910,10 +1101,46 @@ describe('PatientProfileEdit', () => {
     req.flush({ ...PERFIL_BASE, name: 'Ana María' });
   });
 
+  it('elegir «Otro» manda el oficio escrito libremente y quita el concepto anterior', () => {
+    montarYCargar();
+
+    interno<(opcion: { value: string; label: string }) => void>('elegirOcupacion')({
+      value: 'oc-otra',
+      label: 'Otro',
+    });
+    señal<string>('ocupacionTextoLibre').set('Apicultora');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({
+      occupationConceptId: '',
+      occupationFreeText: 'Apicultora',
+    });
+    req.flush({
+      ...PERFIL_BASE,
+      occupationConceptId: undefined,
+      occupationFreeText: 'Apicultora',
+    });
+  });
+
+  it('al cambiar «Otro» por una ocupación catalogada deja de mandar texto libre', () => {
+    montarYCargar({ occupationConceptId: undefined, occupationFreeText: 'Panadera' });
+
+    interno<(opcion: { value: string; label: string }) => void>('elegirOcupacion')({
+      value: 'oc-albanil',
+      label: 'Albañil',
+    });
+    expect(señal<string>('ocupacionTextoLibre')()).toBe('');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ occupationConceptId: 'oc-albanil' });
+    req.flush({ ...PERFIL_BASE, occupationConceptId: 'oc-albanil' });
+  });
+
   it('si el catálogo de ocupaciones se cae lo dice, y reintentar vuelve a tocar la red', () => {
     montar();
     http.expectOne('/profiles/patients/me').flush(PERFIL_BASE);
-    responderMunicipios();
     caerseElCatalogoDeOcupaciones();
     fixture.detectChanges();
 
@@ -933,7 +1160,7 @@ describe('PatientProfileEdit', () => {
     // Ya no hay `<option>` que contar: la ocupación es una lupa. Lo que importa
     // del reintento es que el catálogo volvió a estar disponible para buscar.
     const recuperadas = interno<() => readonly { label: string }[]>('ocupacionesFiltradas')();
-    expect(recuperadas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
+    expect(recuperadas.map((o) => o.label)).toEqual(['Docente', 'Albañil', 'Otro']);
   });
 
   /* ---- el sexo, con las mismas opciones que el alta ----------------------- */
@@ -942,10 +1169,10 @@ describe('PatientProfileEdit', () => {
    * Dos opciones, las del alta. Ofrecer más acá dejaría corregir los datos con
    * un valor que el alta no admite, y esa diferencia no la explica nada.
    */
-  it('el sexo se ofrece con las dos opciones del alta', () => {
+  it('el sexo se ofrece con las dos opciones del alta', async () => {
     montarPintadoYCargado();
 
-    expect(opcionesDe('perfil-genero')).toEqual(['Elegí una opción', 'Masculino', 'Femenino']);
+    expect(await opcionesDe('perfil-genero')).toEqual(['Elija una opción', 'Masculino', 'Femenino']);
   });
 
   /** Un valor heredado que ya no está en la lista se conserva: no se manda nada. */
@@ -972,5 +1199,30 @@ describe('PatientProfileEdit', () => {
 
     expect(interno<() => boolean>('puedeGuardar')()).toBe(false);
     http.expectNone('/profiles/patients/me');
+  });
+
+  /* ---- el departamento que emitió el documento (ID-22) -------------------- */
+
+  it('el departamento emisor se corrige y viaja sólo si cambió; el número nunca', () => {
+    montarYCargar({ nationalId: '5414404', issuerAdministrativeAreaConceptId: 'dep-scz' });
+
+    señal<string | null>('departamentoEmisor').set('dep-lpz');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ issuerAdministrativeAreaConceptId: 'dep-lpz' });
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain('nationalId');
+    req.flush({ ...PERFIL_BASE, issuerAdministrativeAreaConceptId: 'dep-lpz' });
+  });
+
+  it('sin tocar el departamento emisor, no viaja', () => {
+    montarYCargar({ issuerAdministrativeAreaConceptId: 'dep-scz' });
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ name: 'Ana María' });
+    req.flush({ ...PERFIL_BASE, name: 'Ana María' });
   });
 });

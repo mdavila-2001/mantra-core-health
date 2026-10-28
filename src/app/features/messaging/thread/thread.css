@@ -268,7 +268,14 @@
 
 /* En el flujo, no pegado arriba: un separador marca dónde empieza un día, y si
    se despega de ahí deja de marcar nada. */
-.hilo__dia,
+/* El `li` del día no lleva pastilla: la lleva su `span`. Con las dos, el
+   `li` —estirado por la columna flex— se pintaba como una barra blanca de
+   lado a lado con la pastilla adentro, pegada a la izquierda. */
+.hilo__dia {
+  align-self: center;
+  margin-block: var(--e2);
+}
+
 .hilo__dia span,
 .hilo__no-leidos span {
   display: inline-block;

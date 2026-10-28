@@ -10,7 +10,7 @@
     </button>
   } @else {
     <form class="reporte" data-testid="report-post" (submit)="$event.preventDefault()">
-      <p class="reporte__titulo">¿Por qué reportás esta publicación?</p>
+      <p class="reporte__titulo">¿Por qué reporta esta publicación?</p>
 
       <div class="reporte__motivos" role="group" aria-label="Motivo del reporte">
         @for (motivo of motivos; track motivo.code) {
@@ -29,7 +29,7 @@
 
       <app-form-field
         label="Detalle (opcional)"
-        hint="Lo lee el equipo de moderación. No copies acá datos de un paciente: sería agregar al sistema lo mismo que estás denunciando."
+        hint="Lo lee el equipo de moderación. No copie acá datos de un paciente: sería agregar al sistema lo mismo que está denunciando."
       >
         <app-textarea
           data-testid="report-post-detail"
@@ -38,7 +38,7 @@
           [autoResize]="true"
           [maxLength]="2000"
           [disabled]="enviando()"
-          placeholder="Qué viste, en tus palabras"
+          placeholder="Qué vio, en sus palabras"
         />
       </app-form-field>
 

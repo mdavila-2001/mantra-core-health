@@ -1,0 +1,12 @@
+[390-light] libreta tras guardar, primera fila: Casa de mi mamá Preferida Calle de demostración N.º 783 (simulada), Santa Cruz de la Sierra Editar Quitar
+[390-light] tras recargar, primera fila: Casa de mi mamá Preferida Calle de demostración N.º 783 (simulada), Santa Cruz de la Sierra Editar Quitar
+[390-light] errores de consola/red: ninguno
+[768-light] libreta tras guardar, primera fila: Casa de mi mamá Preferida Calle de demostración N.º 783 (simulada), Santa Cruz de la Sierra Editar Quitar
+[768-light] tras recargar, primera fila: Casa de mi mamá Preferida Calle de demostración N.º 783 (simulada), Santa Cruz de la Sierra Editar Quitar
+[768-light] errores de consola/red: ninguno
+[1440-light] libreta tras guardar, primera fila: Casa de mi mamá Preferida Calle de demostración N.º 783 (simulada), Santa Cruz de la Sierra Editar Quitar
+[1440-light] tras recargar, primera fila: Casa de mi mamá Preferida Calle de demostración N.º 783 (simulada), Santa Cruz de la Sierra Editar Quitar
+[1440-light] errores de consola/red: ninguno
+[1440-dark] libreta tras guardar, primera fila: Casa de mi mamá Preferida Calle de demostración N.º 783 (simulada), Santa Cruz de la Sierra Editar Quitar
+[1440-dark] tras recargar, primera fila: Casa de mi mamá Preferida Calle de demostración N.º 783 (simulada), Santa Cruz de la Sierra Editar Quitar
+[1440-dark] errores de consola/red: ninguno

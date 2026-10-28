@@ -23,7 +23,7 @@ import { entrar, estable, irA } from './support/sesion';
  * una persona real.**
  */
 
-const SALIDA = join('docs', 'trabajo', '2026-09-20-notas-cuadricula-e-internacion', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-20-notas-cuadricula-e-internacion', 'evidencia');
 
 const MEDICA: Actor = {
   rol: 'doctora',
@@ -74,8 +74,11 @@ async function abrirCasilla(page: Page, clave: string): Promise<void> {
  * nadie la veía—. Lo destapó mirar la captura, no el test.
  */
 async function abrirLaCuadricula(page: Page): Promise<void> {
-  await abrirCasilla(page, 'notas');
+  // La nota clínica ya no es casilla: vive dentro del formulario médico, como
+  // su «Hoja en blanco» (26/09/2026).
+  await abrirCasilla(page, 'formulario');
   const modal = page.getByRole('dialog');
+  await modal.getByLabel('Qué va a completar').selectOption({ label: 'Hoja en blanco — escribir sin campos' });
   await expect(modal.getByRole('tab', { name: 'Escribir' })).toBeVisible({ timeout: 30_000 });
   await modal.getByRole('tab', { name: 'Cuadrícula' }).click();
   await estable(page);
@@ -264,7 +267,7 @@ test.describe('C-23 · la hoja de internación', () => {
 
     await expect(page.getByTestId('internacion-lista')).toBeVisible({ timeout: 30_000 });
     const lista = page.getByTestId('internacion-lista');
-    await expect(lista).toContainText(/A tu cargo|A cargo de otro profesional|Sin responsable/);
+    await expect(lista).toContainText(/A su cargo|A cargo de otro profesional|Sin responsable/);
     console.log('LISTA DE INTERNACIONES:', ((await lista.textContent()) ?? '').replace(/\s+/g, ' '));
     await page.screenshot({ path: join(SALIDA, 'c23-3-lista-con-responsable.png') });
   });

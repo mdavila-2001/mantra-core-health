@@ -98,6 +98,8 @@ export type TipoDeControl =
   | 'textarea'
   | 'custom';
 
+import type { ConditionVisible } from './conditional-visibility';
+
 /** Un campo del formulario, tal como el motor necesita conocerlo para pintarlo. */
 export interface CampoDeFormulario {
   /**
@@ -173,6 +175,19 @@ export interface CampoDeFormulario {
    * guardado—.
    */
   readonly otro?: boolean;
+
+  /** Si un desplegable (select) permite filtrar u opciones con búsqueda interactiva. */
+  readonly searchable?: boolean;
+
+  /**
+   * Cuándo se muestra el campo: si el control `key` vale `equals` (ver
+   * `conditional-visibility.ts`). Es lo que pone «¿cuál?» debajo de un «sí».
+   *
+   * Oculto, el motor **deshabilita** su control: no se dibuja, su `required` no
+   * frena «Siguiente» y su valor no sale en `form.value`. Una página que se
+   * queda sin campos visibles se salta.
+   */
+  readonly showWhen?: ConditionVisible;
 
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
@@ -292,8 +307,23 @@ export interface CampoDeFormulario {
    * mínimo— y eso cubre la mayoría. Un validador propio sabe cosas que el motor
    * no puede adivinar («letras, números, punto y guion»), y ese mensaje viene
    * acá. Ver `mensajeDeError`.
+   *
+   * Reemplaza **todos** los errores del campo. Para personalizar sólo el
+   * obligatorio vacío y dejar que el motor diga el resto —el tope de
+   * caracteres con su número—, ver {@link mensajeSiFalta}.
    */
   readonly mensajeDeError?: string;
+
+  /**
+   * El mensaje del campo obligatorio **vacío**, en vez del genérico «Este dato
+   * es obligatorio.».
+   *
+   * A diferencia de `mensajeDeError`, no tapa los demás errores: una razón
+   * social de 301 caracteres sigue diciendo «No puede pasar de 300
+   * caracteres.», que es lo que la persona necesita leer. Si el campo declara
+   * también `mensajeDeError`, gana ése.
+   */
+  readonly mensajeSiFalta?: string;
 
   /**
    * Si el campo se marca como obligatorio a la vista.
@@ -324,8 +354,31 @@ export interface CampoDeFormulario {
    *
    * En pantalla angosta no hace nada: todo vuelve a una columna antes que
    * estrechar dos controles a menos de lo que se escribe adentro.
+   *
+   * `completo` cruza la fila entera **también** en una página `dos-columnas`
+   * o `tres-columnas`, donde por omisión cada campo ocupa un carril: es lo que
+   * necesita un grupo de opciones encima de un par de casillas.
    */
   readonly ancho?: 'completo' | 'mitad';
+
+  /**
+   * Cómo se acomodan las opciones de un campo `radio` desde 780 px.
+   *
+   * Por omisión, `columna`: una debajo de la otra, como siempre. `rejilla` las
+   * reparte en tantas columnas como entren —en una tarjeta ancha, una fila—:
+   * cinco opciones cortas en una columna de 190 px pegada a la izquierda dejan
+   * el resto de la tarjeta en blanco y empujan las acciones fuera de un
+   * monitor de 768 px de alto. En el teléfono vuelven a una columna. Pensado
+   * para rótulos cortos; con oraciones largas, `columna` se lee mejor.
+   */
+  readonly opcionesEn?: 'columna' | 'rejilla';
+
+  /**
+   * Un campo `select` muestra el valor elegido en hasta dos renglones antes
+   * de cortar (`multilineValue` de `app-select`). Para opciones largas que se
+   * cortarían justo en lo que dicen; por omisión, un renglón.
+   */
+  readonly valorEnDosRenglones?: boolean;
 }
 
 /** Una página: el rótulo de su sección y hasta cuatro campos. */
@@ -368,8 +421,12 @@ export interface PaginaDeFormulario {
    *
    * `dos-columnas` se reserva para pares cortos y relacionados. En pantallas
    * angostas el motor vuelve a una sola columna para no estrechar controles.
+   *
+   * `tres-columnas` es `dos-columnas` que además pasa a tres desde 1120 px:
+   * la receta de `composition-rules.md` §5 para un formulario que ocupa todo
+   * el ancho —una / dos / tres columnas— sin casillas kilométricas.
    */
-  readonly disposicion?: 'una-columna' | 'dos-columnas';
+  readonly disposicion?: 'una-columna' | 'dos-columnas' | 'tres-columnas';
 
   /** Invariante: nunca más de {@link MAX_CAMPOS_POR_PAGINA}. */
   readonly campos: readonly CampoDeFormulario[];

@@ -1,0 +1,65 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.insurer {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.insurer__title {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.insurer__name {
+  margin: 0 0 var(--sp-4);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Mobile-first: una columna; se abre a dos y a cuatro cuando hay ancho. */
+.insurer__facts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.insurer__facts div {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.insurer__facts dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.insurer__facts dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.insurer__verification {
+  margin: var(--sp-4) 0 0;
+}
+
+@media (min-width: 48rem) {
+  .insurer__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .insurer__facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

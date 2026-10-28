@@ -1,10 +1,17 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 
+import { SearchField } from '../../molecules/search-field/search-field';
+import { chooseSelectOption, selectTrigger } from '../../../../../testing/select';
 import { FilterBar, SEARCH_PARAM, type FilterDef } from './filter-bar';
 
-@Component({ selector: 'app-listado-prueba', template: '' })
+@Component({
+  selector: 'app-listado-prueba',
+  template: '',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
 class VistaListado {}
 
 const FILTROS: readonly FilterDef[] = [
@@ -33,6 +40,7 @@ const FILTRO_SIN_VALUE_SET: FilterDef = {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()" (filtersChanged)="emisiones.push($event)" />
   `,
@@ -44,6 +52,7 @@ class HostComponent {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()">
       <button filter-bar-action type="button">Agregar</button>
@@ -56,6 +65,7 @@ class HostComponentConProyeccion {
 
 @Component({
   imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-filter-bar [filters]="filtros()">
       <button filter-bar-action type="button">Primero</button>
@@ -65,6 +75,46 @@ class HostComponentConProyeccion {
 })
 class HostComponentConDosProyecciones {
   readonly filtros = signal<readonly FilterDef[]>(FILTROS);
+}
+
+/** Dos tablas en la misma pantalla, cada una con su barra y su clave de búsqueda. */
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <app-filter-bar searchParam="qTitulos" (filtersChanged)="titulos.push($event)" />
+    <app-filter-bar searchParam="qMatriculas" (filtersChanged)="matriculas.push($event)" />
+  `,
+})
+class HostComponentConDosBarras {
+  readonly titulos: Readonly<Record<string, string>>[] = [];
+  readonly matriculas: Readonly<Record<string, string>>[] = [];
+}
+
+/** Búsqueda fuera de la URL: el término lo guarda quien consume. */
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <app-filter-bar
+      [filters]="filtros()"
+      [searchInUrl]="false"
+      [searchValue]="termino()"
+      (searchChanged)="alBuscar($event)"
+      (filtersChanged)="emisiones.push($event)"
+    />
+  `,
+})
+class HostComponentWithoutUrl {
+  readonly filtros = signal<readonly FilterDef[]>(FILTROS);
+  readonly termino = signal('');
+  readonly avisos: string[] = [];
+  readonly emisiones: Readonly<Record<string, string>>[] = [];
+
+  alBuscar(term: string): void {
+    this.avisos.push(term);
+    this.termino.set(term);
+  }
 }
 
 describe('FilterBar', () => {
@@ -80,8 +130,9 @@ describe('FilterBar', () => {
     return [...root().querySelectorAll<HTMLElement>('app-chip')];
   }
 
-  function selects(): HTMLSelectElement[] {
-    return [...root().querySelectorAll<HTMLSelectElement>('select')];
+  /** Los desplegables de la barra: el host de cada `app-select`. */
+  function selects(): HTMLElement[] {
+    return [...root().querySelectorAll<HTMLElement>('app-select')];
   }
 
   async function irA(queryParams: Record<string, string>): Promise<void> {
@@ -91,7 +142,13 @@ describe('FilterBar', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HostComponent, HostComponentConProyeccion, HostComponentConDosProyecciones],
+      imports: [
+        HostComponent,
+        HostComponentConProyeccion,
+        HostComponentConDosProyecciones,
+        HostComponentConDosBarras,
+        HostComponentWithoutUrl,
+      ],
       providers: [provideRouter([{ path: 'listado', component: VistaListado }])],
     }).compileComponents();
     fixture = TestBed.createComponent(HostComponent);
@@ -126,9 +183,7 @@ describe('FilterBar', () => {
     });
 
     it('elegir un filtro lo escribe en la URL', async () => {
-      selects()[0].value = '0';
-      selects()[0].dispatchEvent(new Event('change'));
-      await fixture.whenStable();
+      await chooseSelectOption(fixture, selects()[0], 0);
 
       expect(router.url).toContain('servicio=card');
     });
@@ -187,7 +242,7 @@ describe('FilterBar', () => {
     });
 
     it('el filtro queda deshabilitado, nunca como texto libre', () => {
-      const deshabilitados = selects().filter((select) => select.disabled);
+      const deshabilitados = selects().filter((select) => selectTrigger(select).disabled);
 
       expect(deshabilitados).toHaveLength(1);
       // no hay ningún input de texto suelto haciendo de filtro de terminología
@@ -231,5 +286,329 @@ describe('FilterBar', () => {
       const botones = [...(hueco?.querySelectorAll('button') ?? [])];
       expect(botones.map((boton) => boton.textContent?.trim())).toEqual(['Primero', 'Segundo']);
     });
+  });
+
+  describe('clave de búsqueda propia (searchParam)', () => {
+    function buscadores(de: ComponentFixture<unknown>): SearchField[] {
+      return de.debugElement
+        .queryAll(By.directive(SearchField))
+        .map((nodo) => nodo.componentInstance as SearchField);
+    }
+
+    function parametros() {
+      return router.parseUrl(router.url).queryParamMap;
+    }
+
+    async function montarDosBarras(): Promise<ComponentFixture<HostComponentConDosBarras>> {
+      const dos = TestBed.createComponent(HostComponentConDosBarras);
+      await dos.whenStable();
+      return dos;
+    }
+
+    it('sin la entrada, escribe y emite bajo `q`, como siempre', async () => {
+      buscadores(fixture)[0].searched.emit('peña');
+      await fixture.whenStable();
+
+      expect(parametros().get(SEARCH_PARAM)).toBe('peña');
+      expect(host.emisiones.at(-1)).toEqual({ [SEARCH_PARAM]: 'peña' });
+    });
+
+    it('buscar en una barra no toca la clave ni el campo de la otra', async () => {
+      const dos = await montarDosBarras();
+
+      buscadores(dos)[0].searched.emit('umsa');
+      await dos.whenStable();
+
+      expect(parametros().get('qTitulos')).toBe('umsa');
+      expect(parametros().has('qMatriculas')).toBe(false);
+      expect(parametros().has(SEARCH_PARAM)).toBe(false);
+      expect(dos.componentInstance.titulos.at(-1)).toEqual({ qTitulos: 'umsa' });
+      expect(dos.componentInstance.matriculas).toHaveLength(0);
+      expect(buscadores(dos)[1].value()).toBe('');
+      dos.destroy();
+    });
+
+    it('al entrar, cada barra muestra el término de su clave', async () => {
+      await irA({ qTitulos: 'umsa', qMatriculas: 'lp-12' });
+      const dos = await montarDosBarras();
+
+      expect(buscadores(dos).map((buscador) => buscador.value())).toEqual(['umsa', 'lp-12']);
+      dos.destroy();
+    });
+
+    it('«limpiar todo» de una barra deja la búsqueda de la otra', async () => {
+      await irA({ qTitulos: 'umsa', qMatriculas: 'lp-12' });
+      const dos = await montarDosBarras();
+      const primera = (dos.nativeElement as HTMLElement).querySelector('app-filter-bar');
+
+      [...(primera?.querySelectorAll('button') ?? [])]
+        .find((boton) => boton.textContent?.trim() === 'Limpiar todo')
+        ?.click();
+      await dos.whenStable();
+
+      expect(parametros().has('qTitulos')).toBe(false);
+      expect(parametros().get('qMatriculas')).toBe('lp-12');
+      dos.destroy();
+    });
+  });
+
+  /**
+   * `searchInUrl=false`: lo tecleado es el nombre o el documento de una
+   * persona, y la URL lo dejaría en el historial y en los logs del servidor.
+   */
+  describe('búsqueda fuera de la URL (searchInUrl=false)', () => {
+    function buscador(de: ComponentFixture<unknown>): SearchField {
+      return de.debugElement.query(By.directive(SearchField)).componentInstance as SearchField;
+    }
+
+    async function montar(): Promise<ComponentFixture<HostComponentWithoutUrl>> {
+      const withoutUrl = TestBed.createComponent(HostComponentWithoutUrl);
+      await withoutUrl.whenStable();
+      return withoutUrl;
+    }
+
+    it('correcto — buscar avisa el término y no lo escribe en la URL', async () => {
+      const withoutUrl = await montar();
+
+      buscador(withoutUrl).searched.emit('Ana Quispe');
+      await withoutUrl.whenStable();
+
+      expect(withoutUrl.componentInstance.avisos).toEqual(['Ana Quispe']);
+      expect(router.url).toBe('/listado');
+      expect(withoutUrl.componentInstance.emisiones.at(-1)).toEqual({ [SEARCH_PARAM]: 'Ana Quispe' });
+      withoutUrl.destroy();
+    });
+
+    it('correcto — el campo muestra `searchValue`, no lo que diga la URL', async () => {
+      await irA({ [SEARCH_PARAM]: 'de-la-url' });
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('guardado');
+      await withoutUrl.whenStable();
+
+      expect(buscador(withoutUrl).value()).toBe('guardado');
+      withoutUrl.destroy();
+    });
+
+    it('límite — los filtros de catálogo siguen en la URL, junto al término guardado', async () => {
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('Ana');
+      await withoutUrl.whenStable();
+
+      const select = (withoutUrl.nativeElement as HTMLElement).querySelector<HTMLElement>('app-select')!;
+      await chooseSelectOption(withoutUrl, select, 0);
+
+      expect(router.url).toContain('servicio=card');
+      expect(router.url).not.toContain('Ana');
+      expect(withoutUrl.componentInstance.emisiones.at(-1)?.[SEARCH_PARAM]).toBe('Ana');
+      withoutUrl.destroy();
+    });
+
+    it('inválido — «limpiar todo» avisa un término vacío y además saca una `q` vieja de la URL', async () => {
+      await irA({ [SEARCH_PARAM]: 'enlace-viejo', servicio: 'card' });
+      const withoutUrl = await montar();
+      withoutUrl.componentInstance.termino.set('Ana');
+      await withoutUrl.whenStable();
+
+      [...(withoutUrl.nativeElement as HTMLElement).querySelectorAll('button')]
+        .find((boton) => boton.textContent?.trim() === 'Limpiar todo')
+        ?.click();
+      await withoutUrl.whenStable();
+
+      expect(withoutUrl.componentInstance.avisos.at(-1)).toBe('');
+      expect(router.url).toBe('/listado');
+      withoutUrl.destroy();
+    });
+  });
+});
+
+@Component({
+  imports: [FilterBar],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<app-filter-bar [filters]="filtros" [wrap]="envolver()" />`,
+})
+class HostConWrap {
+  readonly filtros = FILTROS;
+  readonly envolver = signal(false);
+}
+
+describe('FilterBar · wrap (opt-in)', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  it('por omisión no cambia nada: los consumidores existentes siguen en una fila', () => {
+    const fixture = TestBed.createComponent(HostConWrap);
+    fixture.detectChanges();
+    const barra = fixture.debugElement.query(By.directive(FilterBar)).nativeElement as HTMLElement;
+    expect(barra.classList.contains('filter-bar--wrap')).toBe(false);
+  });
+
+  it('con `wrap` el host lleva la clase que deja bajar los controles de renglón', () => {
+    const fixture = TestBed.createComponent(HostConWrap);
+    fixture.componentInstance.envolver.set(true);
+    fixture.detectChanges();
+    const barra = fixture.debugElement.query(By.directive(FilterBar)).nativeElement as HTMLElement;
+    expect(barra.classList.contains('filter-bar--wrap')).toBe(true);
+  });
+});
+
+describe('FilterBar · columna de facetas', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  function montar(): HTMLElement {
+    const fixture = TestBed.createComponent(FilterBar);
+    fixture.componentRef.setInput('layout', 'facets');
+    fixture.componentRef.setInput('showSearch', false);
+    fixture.componentRef.setInput('filters', [
+      {
+        key: 'departamento',
+        label: 'Departamento',
+        icon: 'pin',
+        asChips: true,
+        options: [
+          { value: 'sc', label: 'Santa Cruz (160)' },
+          { value: 'lp', label: 'La Paz' },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('dibuja el ícono del filtro en el rótulo, sin buscador', () => {
+    const raiz = montar();
+    expect(raiz.querySelector('.filter-bar__faceta-rotulo app-nav-icon')).not.toBeNull();
+    expect(raiz.querySelector('app-search-field')).toBeNull();
+  });
+
+  it('separa la cantidad del nombre para dibujarla aparte', () => {
+    const raiz = montar();
+    const opciones = [...raiz.querySelectorAll('.filter-bar__faceta-opcion')];
+    expect(opciones[0]!.querySelector('.filter-bar__faceta-texto')!.textContent!.trim()).toBe(
+      'Santa Cruz',
+    );
+    expect(opciones[0]!.querySelector('.filter-bar__faceta-cantidad')!.textContent!.trim()).toBe(
+      '160',
+    );
+    // Un rótulo sin cantidad va entero y sin pastilla.
+    expect(opciones[1]!.querySelector('.filter-bar__faceta-cantidad')).toBeNull();
+  });
+});
+
+// Propietario, 24/10/2026: «un buscador y un paginador estético para los
+// filtros». La faceta larga ya no se estira con «Ver 38 más».
+describe('FilterBar · faceta larga con buscador y páginas', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  const ESPECIALIDADES = [
+    'Cardiología', 'Dermatología', 'Gastroenterología', 'Neurología', 'Oftalmología',
+    'Pediatría', 'Psiquiatría', 'Traumatología', 'Urología', 'Odontología', 'Nefrología',
+    'Neumología', 'Endocrinología', 'Hematología', 'Reumatología', 'Oncología', 'Geriatría',
+    'Infectología',
+  ];
+
+  function montar(): ComponentFixture<FilterBar> {
+    const fixture = TestBed.createComponent(FilterBar);
+    fixture.componentRef.setInput('layout', 'facets');
+    fixture.componentRef.setInput('showSearch', false);
+    fixture.componentRef.setInput('filters', [
+      {
+        key: 'especialidad',
+        label: 'Especialidad',
+        asChips: true,
+        options: ESPECIALIDADES.map((nombre, i) => ({ value: `e${i}`, label: `${nombre} (${i + 1})` })),
+      },
+    ]);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function textos(raiz: HTMLElement): string[] {
+    return [...raiz.querySelectorAll('.filter-bar__faceta-texto')].map((t) => t.textContent!.trim());
+  }
+
+  it('muestra una página de ocho, con su paginador y sin «Ver más»', () => {
+    const raiz = montar().nativeElement as HTMLElement;
+    expect(textos(raiz)).toEqual(ESPECIALIDADES.slice(0, 8));
+    expect(raiz.querySelector('.filter-bar__faceta-paginas')).not.toBeNull();
+    expect(raiz.querySelectorAll('.filter-bar__faceta-punto').length).toBe(3);
+    expect(raiz.textContent).not.toContain('Ver ');
+  });
+
+  it('las flechas son botones de ícono con nombre, y la primera empieza deshabilitada', () => {
+    const raiz = montar().nativeElement as HTMLElement;
+    const [anterior, siguiente] = [
+      ...raiz.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-flecha'),
+    ];
+    expect(anterior!.classList).toContain('btn--icon-only');
+    expect(anterior!.getAttribute('aria-label')).toBe('Página anterior');
+    expect(anterior!.getAttribute('aria-disabled')).toBe('true');
+    expect(siguiente!.getAttribute('aria-label')).toBe('Página siguiente');
+  });
+
+  it('pasa de página con la flecha y con los puntos', () => {
+    const fixture = montar();
+    const raiz = fixture.nativeElement as HTMLElement;
+    raiz.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-flecha')[1]!.click();
+    fixture.detectChanges();
+    expect(textos(raiz)).toEqual(ESPECIALIDADES.slice(8, 16));
+
+    raiz.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-punto')[2]!.click();
+    fixture.detectChanges();
+    expect(textos(raiz)).toEqual(ESPECIALIDADES.slice(16));
+    expect(
+      raiz.querySelectorAll('.filter-bar__faceta-punto')[2]!.getAttribute('aria-current'),
+    ).toBe('page');
+  });
+
+  it('el buscador de la faceta encuentra sin tildes y vuelve a la primera página', async () => {
+    const fixture = montar();
+    const raiz = fixture.nativeElement as HTMLElement;
+    raiz.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-flecha')[1]!.click();
+    fixture.detectChanges();
+
+    const campo = fixture.debugElement.query(By.directive(SearchField))
+      .componentInstance as SearchField;
+    campo.value.set('logia');
+    fixture.detectChanges();
+    await new Promise((listo) => setTimeout(listo, 0));
+    fixture.detectChanges();
+
+    // «logía» con tilde, buscada sin ella: todas las que terminan así.
+    expect(textos(raiz)).toEqual(
+      ESPECIALIDADES.filter((e) => e.normalize('NFD').replace(/[̀-ͯ]/g, '').includes('logia')).slice(0, 8),
+    );
+    expect(raiz.querySelector('.filter-bar__faceta-punto[aria-current="page"]')).toBe(
+      raiz.querySelector('.filter-bar__faceta-punto'),
+    );
+  });
+
+  it('dice que no hay coincidencias en vez de dejar la lista vacía', async () => {
+    const fixture = montar();
+    const campo = fixture.debugElement.query(By.directive(SearchField))
+      .componentInstance as SearchField;
+    campo.value.set('zzz');
+    fixture.detectChanges();
+    await new Promise((listo) => setTimeout(listo, 0));
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('.filter-bar__faceta-sin-coincidencias')?.textContent).toContain(
+      'Ninguna opción coincide con «zzz»',
+    );
+    expect(raiz.querySelector('.filter-bar__faceta-paginas')).toBeNull();
+  });
+
+  it('la opción elegida en otra página se ve arriba de la lista', async () => {
+    const fixture = montar();
+    const router = TestBed.inject(Router);
+    await router.navigate([], { queryParams: { especialidad: 'e17' } });
+    fixture.detectChanges();
+
+    expect(textos(fixture.nativeElement as HTMLElement)[0]).toBe('Infectología');
   });
 });

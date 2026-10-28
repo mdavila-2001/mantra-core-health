@@ -13,19 +13,27 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
-import { toBookingStatusPresentation, type BookingStatusPresentation } from './booking-status';
 import {
+  AWAITING_RESPONSE_CODES,
+  toBookingStatusPresentation,
+  type BookingStatusPresentation,
+} from './booking-status';
+import {
+  BOOKING_QUERY_PARAM,
   CITA_QUERY_PARAM,
   consultationRoute,
   MOTIVO_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record/clinical-record.routes';
+import { ClinicalClient } from '../../core/data-access/clinical/clinical.client';
 import { SchedulingClient } from '../../core/data-access/scheduling/scheduling.client';
+// El sello de reconsulta (C4).
+import { esReconsulta } from '../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
   AgendaSlot,
@@ -34,6 +42,7 @@ import type {
   PaymentStateCode,
   PaymentStateInfo,
 } from '../../core/data-access/scheduling/scheduling.types';
+// hasta que C0 publique los tipos congelados.
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
@@ -48,6 +57,8 @@ import { Menu } from '../../shared/components/molecules/menu/menu';
 import { RowActions } from '../../shared/components/molecules/row-actions/row-actions';
 import type { RowAction } from '../../shared/components/molecules/row-actions/row-actions.types';
 import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
 import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Link } from '../../shared/components/atoms/link/link';
 import { Select } from '../../shared/components/atoms/select/select';
@@ -56,7 +67,10 @@ import { Switch } from '../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../shared/components/atoms/textarea/textarea';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../shared/components/molecules/alert/alert';
-import type { DialogDetail } from '../../shared/components/molecules/dialog/dialog.types';
+import type {
+  DialogConfig,
+  DialogDetail,
+} from '../../shared/components/molecules/dialog/dialog.types';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
@@ -65,9 +79,12 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
+import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { MyAgenda } from './my-agenda/my-agenda';
+import { ServicesSchedule } from './services-schedule/services-schedule';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
+import { AgendaWindowNav } from './window-nav/window-nav';
+import { rangoDeVentana } from './window-nav/window-range';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -146,10 +163,7 @@ const ROLES_QUE_OPERAN_CITAS = ['SCHEDULING_ADMIN', 'SCHEDULING_AGENT', 'SUPERAD
 const ROLES_QUE_ATIENDEN = [...ROLES_QUE_OPERAN_CITAS, 'PRACTITIONER'];
 
 /** Estados en los que una solicitud espera respuesta (corrección #11). */
-const CODIGOS_POR_RESPONDER: ReadonlySet<string> = new Set([
-  'BOOKING_REQUESTED',
-  'BOOKING_PENDING_CONFIRMATION',
-]);
+const CODIGOS_POR_RESPONDER = AWAITING_RESPONSE_CODES;
 
 /**
  * Estados desde los que se puede **iniciar** la atención (corrección #15).
@@ -262,6 +276,12 @@ export interface CitaVisible {
    * no lo distingue—.
    */
   readonly estado: BookingStatusPresentation;
+  /**
+   * Si es un turno de un servicio (estudio, procedimiento) y no una consulta.
+   * Un servicio no se mueve a un cupo de consulta: su duración es la del
+   * servicio y su lugar lo calcula la API sobre las franjas de servicios.
+   */
+  readonly esServicio?: boolean;
   readonly motivo: string;
   readonly patientProfileId: string | null;
   readonly rutaPaciente: string | null;
@@ -352,6 +372,27 @@ export interface CitaVisible {
   readonly admitePago: boolean;
   /** Con la llegada ya registrada, el check-in no se vuelve a ofrecer. */
   readonly llegadaRegistrada: boolean;
+  /**
+   * De cuándo es la consulta de la que salió esta cita, si es una reconsulta
+   * (C4). `null` cuando no lo es, que es lo corriente.
+   *
+   * Es una **fecha y no un identificador** porque lo que la fila necesita decir
+   * es «de la cita del 12 de septiembre»: el uuid del origen no ayuda a nadie a
+   * reconocer de qué consulta se trata. `null` con la cita marcada como
+   * reconsulta significa que el origen quedó sin horario, y ahí el sello va
+   * solo.
+   */
+  readonly reconsultaDe: Date | null;
+  /** Si esta cita es una reconsulta, aunque no se sepa de cuándo era la otra. */
+  readonly esReconsulta: boolean;
+}
+
+/** Lo que el historial guarda de una consulta, para avisar al completar la cita. */
+interface RegistrosDeLaCita {
+  readonly encuentros: number;
+  readonly recetas: number;
+  readonly diagnosticos: number;
+  readonly observaciones: number;
 }
 
 /** Un cupo listo para pintar. */
@@ -414,12 +455,18 @@ const SCHEDULE_VIEW = 'agenda';
 const SLOTS_VIEW = 'cupos';
 
 /**
+ * `vista` de «Horarios de otros servicios». En castellano a propósito, como
+ * las otras dos: es lo que se ve en la barra de direcciones y se comparte.
+ */
+const SERVICES_VIEW = 'servicios';
+
+/**
  * Las solapas posibles de `/schedule`. **Nunca están las cuatro a la vez**
  * (C-07, C-10): con calendario son «Consultas» (el calendario) y «Mis
  * horarios»; sin calendario —quien reparte turnos, o quien todavía no publicó
  * la suya— siguen siendo la lista y los cupos, que es su único camino.
  */
-type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
+type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots';
 
 /**
  * **Agenda** (M41) — la sección que hasta ahora era un cartel.
@@ -468,6 +515,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
     Menu,
     MenuItem,
     MenuTrigger,
+    NavIcon,
     RowActions,
     StatusSeal,
     DataTable,
@@ -483,7 +531,9 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
     Tabs,
     Textarea,
     Tooltip,
+    AgendaWindowNav,
     MyAgenda,
+    ServicesSchedule,
     WalkInForm,
   ],
   templateUrl: './agenda.html',
@@ -492,6 +542,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
 })
 export class Agenda {
   private readonly scheduling = inject(SchedulingClient);
+  private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly auth = inject(AuthService);
@@ -518,6 +569,9 @@ export class Agenda {
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPago');
   private readonly celdaPaciente =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPaciente');
+  /** C4: el motivo con el sello de reconsulta, cuando lo es. */
+  private readonly celdaMotivo =
+    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaMotivo');
   private readonly celdaFranja =
     viewChild.required<TemplateRef<{ $implicit: CupoVisible }>>('celdaFranja');
   private readonly celdaDisponibilidad =
@@ -788,19 +842,13 @@ export class Agenda {
    * 2026». Va al pie de la lista junto a los controles que la mueven, para que
    * «Siguiente» diga a dónde llevó.
    */
-  protected readonly rangoDeVentana = computed(() => {
-    const dias = VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7;
-    const desde = this.fechaBase();
-    const hasta = new Date(desde);
-    hasta.setDate(hasta.getDate() + dias - 1);
-    const fin = formatDate(hasta, 'd MMM y', this.idioma);
-    if (dias === 1) return formatDate(desde, 'EEEE d MMM y', this.idioma);
-    const inicio =
-      desde.getMonth() === hasta.getMonth() && desde.getFullYear() === hasta.getFullYear()
-        ? formatDate(desde, 'd', this.idioma)
-        : formatDate(desde, desde.getFullYear() === hasta.getFullYear() ? 'd MMM' : 'd MMM y', this.idioma);
-    return `${inicio} – ${fin}`;
-  });
+  protected readonly rangoDeVentana = computed(() =>
+    rangoDeVentana(
+      this.fechaBase(),
+      VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7,
+      this.idioma,
+    ),
+  );
 
   /** Si la ventana es la de hoy, o si se navegó a otra (ALV-024). */
   protected readonly enVentanaDeHoy = computed(() => {
@@ -836,15 +884,14 @@ export class Agenda {
    * reparte turnos no tiene agenda propia y no se le ofrece una puerta que la
    * otra pantalla no va a reconocer como suya.
    */
-  protected readonly pestanas = computed<readonly AgendaTab[]>(() =>
-    this.tieneCalendario()
-      ? (['calendar', ...(this.esQuienAtiende() ? (['schedule'] as const) : [])] as const)
-      : ([
-          'consultations',
-          ...(this.esQuienAtiende() ? (['schedule'] as const) : []),
-          'slots',
-        ] as const),
-  );
+  protected readonly pestanas = computed<readonly AgendaTab[]>(() => {
+    // «Horarios de otros servicios» va pegada a «Mis horarios» y con la misma
+    // condición: son los dos lados del mismo horario publicado.
+    const propias = this.esQuienAtiende() ? (['schedule', 'services'] as const) : ([] as const);
+    return this.tieneCalendario()
+      ? (['calendar', ...propias] as const)
+      : (['consultations', ...propias, 'slots'] as const);
+  });
 
   /**
    * La solapa abierta, leída de la URL para que un enlace pueda apuntar a una
@@ -857,6 +904,7 @@ export class Agenda {
   protected readonly pestanaActual = computed<AgendaTab>(() => {
     const vista = this.params()?.get('vista');
     if (vista === SCHEDULE_VIEW && this.esQuienAtiende()) return 'schedule';
+    if (vista === SERVICES_VIEW && this.esQuienAtiende()) return 'services';
     // C-07 · con calendario no hay ninguna tabla: `table`, `citas`,
     // `solicitudes`, `cupos` y cualquier valor viejo caen acá, que es lo que
     // `/schedule` a secas abre. No se redirige la URL a propósito: una
@@ -875,6 +923,37 @@ export class Agenda {
 
   /** Si está abierta «Mis horarios», el horario publicado. */
   protected readonly enHorario = computed(() => this.pestanaActual() === 'schedule');
+
+  /** Si está abierta «Horarios de otros servicios». */
+  protected readonly enServicios = computed(() => this.pestanaActual() === 'services');
+
+  /**
+   * Solicitudes de servicios que esperan respuesta, según las contó la pestaña
+   * la última vez que se abrió. `null` mientras no se abrió en esta visita: la
+   * cuenta exige leer las reservas de varias semanas, y hacerlo en cada entrada
+   * a `/schedule` sería una lectura de más para quien sólo mira el día.
+   */
+  protected readonly serviciosPorResponder = signal<number | null>(null);
+
+  protected readonly rotuloDeServicios = computed(() => {
+    const n = this.serviciosPorResponder();
+    return n !== null && n > 0
+      ? `Horarios de otros servicios (${n})`
+      : 'Horarios de otros servicios';
+  });
+
+  /**
+   * Suma las etiquetas de estado que resolvió «Horarios de otros servicios».
+   *
+   * Las acciones de cada fila las decide esta pantalla con `citaDelDia`, que
+   * traduce el estado con estas etiquetas. Las propias sólo cubren la ventana a
+   * la vista; sin las de la pestaña, una solicitud de la semana que viene no
+   * ofrecería «Aceptar». Se fusiona, no se pisa (mismo criterio que la agenda).
+   */
+  protected sumarEtiquetas(nuevas: ConceptLabels): void {
+    if (nuevas.size === 0) return;
+    this.etiquetas.update((actuales) => new Map([...actuales, ...nuevas]));
+  }
 
   /**
    * Si la solapa abierta es una de las listas —Consultas o Cupos—, las únicas
@@ -983,14 +1062,12 @@ export class Agenda {
    * botones hacían crecer la fila a tres renglones— es la misma decisión del
    * 2026-09-13 que ADR-0012 conserva, y no se vuelve a tomar acá.
    *
-   * ## Por qué algunas no llevan ícono
+   * ## Todas llevan ícono
    *
-   * El set de íconos del sistema es **cerrado a propósito** y todavía no cubre
-   * las acciones de fila más comunes: no tiene ver, aceptar, completar ni
-   * registrar llegada. El propio contrato de `RowAction` dice que el ícono es
-   * opcional y que «agregar nombres al set es una decisión de quien lo lleva y
-   * no se toma de paso». Así que se usan los cinco que existen y el resto va
-   * con su texto, que es lo que C-06 exige. Pedido a Itzan en el daily.
+   * Hasta el 2026-09-24 ver, aceptar, rechazar, completar y registrar llegada
+   * iban sólo con texto porque el set no los tenía, y el desplegable mezclaba
+   * opciones con dibujo y sin él. El propietario pidió ícono en todas: el set
+   * se amplió y `RowAction.icon` pasó a ser obligatorio.
    *
    * ## Los códigos no cambiaron
    *
@@ -1012,6 +1089,7 @@ export class Agenda {
       {
         code: 'agenda-detalle',
         label: this.porResponder(cita) ? 'Ver detalle de la solicitud' : 'Ver detalle de la cita',
+        icon: 'eye',
       },
     ];
 
@@ -1025,10 +1103,11 @@ export class Agenda {
           icon: 'history',
         });
       }
-      acciones.push({ code: 'agenda-aceptar', label: 'Aceptar la solicitud' });
+      acciones.push({ code: 'agenda-aceptar', label: 'Aceptar la solicitud', icon: 'check' });
       acciones.push({
         code: 'agenda-rechazar',
         label: 'Rechazar la solicitud',
+        icon: 'close',
         destructive: true,
       });
     }
@@ -1047,24 +1126,28 @@ export class Agenda {
         label: 'Continuar la consulta',
         icon: 'arrow-right',
       });
-      acciones.push({ code: 'agenda-completar', label: 'Completar la cita' });
+      acciones.push({ code: 'agenda-completar', label: 'Completar la cita', icon: 'check-circle' });
     }
 
     if (this.puedeOperarCitas() && this.estaVigente(cita)) {
       acciones.push(
         cita.llegadaRegistrada
-          ? { code: 'agenda-llego', label: 'Ya llegó', disabled: true }
-          : { code: 'agenda-llegada', label: 'Registrar que llegó' },
+          ? { code: 'agenda-llego', label: 'Ya llegó', icon: 'arrive', disabled: true }
+          : { code: 'agenda-llegada', label: 'Registrar que llegó', icon: 'arrive' },
       );
     }
 
     if (this.puedeAtender() && this.estaVigente(cita)) {
       acciones.push({ code: 'agenda-demorar', label: 'Avisar una demora', icon: 'bell' });
-      acciones.push({
-        code: 'agenda-reprogramar',
-        label: 'Mover a otro horario',
-        icon: 'calendar',
-      });
+      // «Mover» lleva a un cupo de consulta. Un servicio no cabe ahí: dura lo
+      // que declara el servicio y su lugar sale de las franjas de servicios.
+      if (cita.esServicio !== true) {
+        acciones.push({
+          code: 'agenda-reprogramar',
+          label: 'Mover a otro horario',
+          icon: 'calendar',
+        });
+      }
     }
 
     if (this.estaVigente(cita) || this.porResponder(cita)) {
@@ -1077,6 +1160,11 @@ export class Agenda {
     }
 
     return acciones;
+  }
+
+  /** Las de la fila menos «Ver detalle»: dentro del detalle ya se lo está viendo. */
+  protected accionesDelDetalle(cita: CitaVisible): readonly RowAction[] {
+    return this.accionesDe(cita).filter((accion) => accion.code !== 'agenda-detalle');
   }
 
   /** De qué fila son las acciones, para su nombre accesible. */
@@ -1114,7 +1202,7 @@ export class Agenda {
         this.continuarAtencion(cita);
         return;
       case 'agenda-completar':
-        this.completarCita(cita);
+        void this.completarCita(cita);
         return;
       case 'agenda-llegada':
         this.registrarLlegada(cita);
@@ -1246,9 +1334,14 @@ export class Agenda {
    * —`SCHEDULING_ADMIN`, `SCHEDULING_AGENT`, `PRACTITIONER`—, que es
    * exactamente {@link ROLES_QUE_ATIENDEN} salvo el comodín `SUPERADMIN`, al
    * que el `RolesGuard` le responde igual.
+   *
+   * **Al médico no se le ofrece** (pedido del propietario, 24/09): el ingreso
+   * por mostrador es trabajo de quien reparte turnos, y en la agenda del
+   * médico competía con agendar la cita. La API se lo sigue permitiendo; lo
+   * que se quita es el botón.
    */
   protected readonly puedeIngresarPorMostrador = computed(
-    () => this.puedeAtender() && this.recursoElegido() !== null,
+    () => this.puedeAtender() && !this.esQuienAtiende() && this.recursoElegido() !== null,
   );
 
   protected abrirMostrador(): void {
@@ -1280,8 +1373,8 @@ export class Agenda {
     this.toast.success(
       turno.esAltaNueva
         ? `Quedó registrado con el código ${turno.patientCode} y la atención ya está abierta.${quitados}`
-        : `El turno quedó agendado y empieza ahora.${quitados}`,
-      turno.esAltaNueva ? 'Ingreso por mostrador' : 'Turno creado',
+        : `La cita quedó agendada y empieza ahora.${quitados}`,
+      turno.esAltaNueva ? 'Ingreso por mostrador' : 'Cita creada',
     );
     this.recargar();
   }
@@ -1349,7 +1442,7 @@ export class Agenda {
         // y quien atiende necesita saberlo para avisar por otro medio.
         this.toast.success(
           resultado.affected === 0
-            ? 'No había turnos vigentes en el horario informado.'
+            ? 'No había citas vigentes en el horario informado.'
             : `Avisamos a ${resultado.notified} de ${resultado.affected} pacientes.`,
           'Demora informada',
         );
@@ -1375,7 +1468,10 @@ export class Agenda {
     // sigue en «Ver detalle», que es donde importa.
     { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
     { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
-    { key: 'motivo', header: 'Motivo de consulta', priority: 3 },
+    // C4: con celda propia, porque una reconsulta lleva su sello junto al
+    // motivo. Sin el sello, la fila de la reconsulta se lee igual que la de
+    // una cita cualquiera y se pierde de qué consulta salió.
+    { key: 'motivo', header: 'Motivo de consulta', priority: 3, cell: this.celdaMotivo() },
     // ALV-021. Texto plano — «Particular» o el nombre de la aseguradora no
     // necesitan sello ni color.
     { key: 'cobertura', header: 'Seguro', priority: 3, cell: this.celdaSeguro() },
@@ -1482,6 +1578,14 @@ export class Agenda {
       this.recursosLeidos();
       untracked(() => this.cargarAgenda());
     });
+
+    // `?booking=<id>`: se llegó desde «Lo que toca hoy» tocando una cita.
+    effect(() => {
+      const pedida = this.params()?.get(AGENDA_BOOKING_PARAM) ?? null;
+      if (pedida !== null) {
+        untracked(() => this.abrirCitaPedida(pedida));
+      }
+    });
   }
 
   /* -- Acciones ------------------------------------------------------------ */
@@ -1531,6 +1635,8 @@ export class Agenda {
         return null;
       case 'schedule':
         return SCHEDULE_VIEW;
+      case 'services':
+        return SERVICES_VIEW;
       case 'slots':
         return SLOTS_VIEW;
       case 'consultations':
@@ -1875,10 +1981,11 @@ export class Agenda {
   protected readonly estadosDePago: readonly {
     readonly code: PaymentStateCode;
     readonly label: string;
+    readonly icon: NavIconName;
   }[] = [
-    { code: 'PENDING', label: 'Pendiente de pago' },
-    { code: 'PARTIALLY_PAID', label: 'Parcialmente pagada' },
-    { code: 'PAID', label: 'Pagada' },
+    { code: 'PENDING', label: 'Pendiente de pago', icon: 'clock' },
+    { code: 'PARTIALLY_PAID', label: 'Parcialmente pagada', icon: 'billing' },
+    { code: 'PAID', label: 'Pagada', icon: 'check-circle' },
   ];
 
   protected aceptarCita(cita: CitaVisible): void {
@@ -2142,7 +2249,7 @@ export class Agenda {
       title: `Historial de ${cita.paciente}`,
       message:
         ordenadas.length === 0
-          ? 'Esta persona todavía no pidió ningún turno acá.'
+          ? 'Esta persona todavía no pidió ninguna cita acá.'
           : `${ordenadas.length} ${ordenadas.length === 1 ? 'solicitud' : 'solicitudes'}, de la más reciente a la más vieja. Incluye las rechazadas y canceladas.`,
       details: detalles,
       confirmLabel: 'Cerrar',
@@ -2165,7 +2272,7 @@ export class Agenda {
       },
       {
         label: 'Motivo del rechazo',
-        placeholder: 'Por qué no se puede tomar este turno',
+        placeholder: 'Por qué no se puede tomar este horario',
         hint: 'El paciente lo va a ver en el detalle de su turno.',
       },
     );
@@ -2244,9 +2351,9 @@ export class Agenda {
    */
   private async avisarConsultaAbierta(abierta: CitaVisible): Promise<void> {
     const ir = await this.dialogs.confirm({
-      title: 'Ya tenés una consulta en curso',
+      title: 'Ya tiene una consulta en curso',
       message:
-        `No se puede iniciar una segunda: primero cerrá la que está abierta, o volvé a ella ` +
+        `No se puede iniciar una segunda: primero cierre la que está abierta, o vuelva a ella ` +
         `para terminarla.`,
       details: [
         { label: 'En curso con', value: abierta.paciente },
@@ -2274,10 +2381,21 @@ export class Agenda {
    * C-04 · tocaron la tarjeta de una cita del calendario.
    *
    * La tarjeta **no repite un botón**: hace lo que la cita admite en su estado.
-   * Una confirmada se inicia; una ya en curso se continúa —volver a iniciarla
-   * es el 409 de arriba—; y una que ni se inicia ni está en curso (una
-   * solicitud sin aceptar, una cancelada) no navega a ninguna parte: se abre su
-   * detalle, que es lo único que se puede hacer con ella.
+   * Una ya en curso se continúa —volver a iniciarla es el 409 de arriba—; una
+   * confirmada **ofrece** iniciarse; y una que ni se inicia ni está en curso
+   * (una solicitud sin aceptar, una cancelada) no navega a ninguna parte: se
+   * abre su detalle, que es lo único que se puede hacer con ella.
+   *
+   * ## Iniciar se pregunta (propietario, 2026-10-03)
+   *
+   * Antes un toque sobre una confirmada la iniciaba en el acto. Pero tocar una
+   * tarjeta es también la forma natural de *abrirla para mirarla*, y ese toque
+   * cambiaba el estado sin que nadie lo pidiera: la cita recién aceptada pasaba
+   * a «en curso» y, con eso, perdía Mover, Cancelar, Llegó y Demora —que sólo
+   * valen sobre una cita vigente—. Quien la había aceptado volvía y la veía
+   * «sin aceptar» y con la mitad de las opciones. Es el mismo diálogo que ya
+   * usa el panel de inicio (`ofrecerAtender`): el detalle, y «Iniciar
+   * consulta» o «Ahora no».
    *
    * El estado se lee del ciclo (`sePuedeIniciar` / `sePuedeCompletar`, que
    * salen de `booking-status.ts`) y no de una bandera nueva.
@@ -2290,10 +2408,72 @@ export class Agenda {
       return;
     }
     if (this.sePuedeIniciar(cita) && this.puedeAtender()) {
-      this.iniciarAtencion(cita);
+      void this.ofrecerAtender(cita);
       return;
     }
     void this.verDetalleDeLaCita(cita);
+  }
+
+  /**
+   * Abre la cita que pidió la URL (`?booking=<id>`) lista para atenderla.
+   *
+   * Es el destino de la tarjeta «Ahora» y de los renglones del panel de
+   * inicio. Se lee la cita **por su id** y no se busca en la lista cargada:
+   * la lista es la de UNA agenda y una ventana, y quien atiende en dos sedes
+   * tiene citas de hoy que esa lista no trae.
+   *
+   * El parámetro se borra antes de preguntar: un «atrás» o una recarga no
+   * tienen que volver a ofrecer una consulta ya decidida. Lo que se ofrece
+   * sale del mismo ciclo que la tarjeta del calendario: una confirmada se
+   * inicia, una en curso se continúa y cualquier otra muestra su detalle.
+   */
+  private abrirCitaPedida(bookingId: string): void {
+    this.publicar({ [AGENDA_BOOKING_PARAM]: null });
+
+    this.scheduling
+      .getBooking(bookingId)
+      .pipe(
+        switchMap((booking) =>
+          this.terminology.readConceptLabels([booking.statusConceptId]).pipe(
+            catchError(() => of<ConceptLabels>(new Map())),
+            map((etiquetas) => ({ booking, etiquetas })),
+          ),
+        ),
+      )
+      .subscribe({
+        next: ({ booking, etiquetas }) => {
+          this.etiquetas.update((actuales) => new Map([...actuales, ...etiquetas]));
+          void this.ofrecerAtender(this.aCitaVisible(booking));
+        },
+        error: (error: unknown) => this.avisarFallo(error, 'No se pudo abrir la cita.'),
+      });
+  }
+
+  /** El paso de la cita pedida: iniciar, continuar o, si no se puede, su detalle. */
+  private async ofrecerAtender(cita: CitaVisible): Promise<void> {
+    const enCurso = this.sePuedeCompletar(cita);
+    const iniciable = this.sePuedeIniciar(cita) && this.puedeAtender();
+    if (!enCurso && !iniciable) {
+      await this.verDetalleDeLaCita(cita);
+      return;
+    }
+
+    const atender = await this.dialogs.confirm({
+      title: enCurso ? 'Consulta en curso' : 'Iniciar la consulta',
+      message: enCurso
+        ? 'Esta consulta ya empezó. Puede volver a ella y seguir registrando.'
+        : 'Al iniciarla se abre la pantalla de atención de este paciente.',
+      details: this.detalleDeSolicitud(cita),
+      confirmLabel: enCurso ? 'Continuar consulta' : 'Iniciar consulta',
+      cancelLabel: 'Ahora no',
+    });
+    if (!atender) return;
+
+    if (enCurso) {
+      this.continuarAtencion(cita);
+    } else {
+      this.iniciarAtencion(cita);
+    }
   }
 
   /**
@@ -2311,7 +2491,7 @@ export class Agenda {
     await this.dialogs.confirm({
       title: yaPaso ? 'Esta cita ya está cerrada' : 'Esta cita todavía no se atiende',
       message: this.porResponder(cita)
-        ? 'Está esperando respuesta: aceptala primero y ahí se puede iniciar la atención.'
+        ? 'Está esperando respuesta: acéptela primero y ahí se puede iniciar la atención.'
         : `Su estado es «${cita.estado.label}», y desde ese estado no se entra a atender.`,
       details: [
         { label: 'Paciente', value: cita.paciente },
@@ -2337,7 +2517,7 @@ export class Agenda {
       // expedientes, o la reserva no tiene paciente al que abrirle uno.
       this.toast.info(
         cita.rutaExpediente === null && !this.puedeVerExpedientes()
-          ? 'La atención quedó iniciada, pero esta sesión no puede abrir expedientes: pedí el permiso de historia clínica para entrar a atender.'
+          ? 'La atención quedó iniciada, pero esta sesión no puede abrir expedientes: pida el permiso de historia clínica para entrar a atender.'
           : 'La atención quedó iniciada, pero esta reserva no tiene un paciente registrado al que abrirle el expediente.',
         'No se pudo entrar a atender',
       );
@@ -2351,7 +2531,101 @@ export class Agenda {
    * Completa la cita. Es el botón «Completar cita» que la corrección #15 pide
    * que exista sin esperar la fecha; el paciente ve «completada» apenas ocurre.
    */
-  protected completarCita(cita: CitaVisible): void {
+  protected async completarCita(cita: CitaVisible): Promise<void> {
+    if (this.operando() !== null) {
+      return;
+    }
+    // Completar es un clic a un renglón del menú, pegado a «Continuar la
+    // consulta»: el error es fácil y el paciente ve «atendida» apenas ocurre.
+    // Por eso se pregunta, y la pregunta cambia según haya o no algo registrado.
+    this.operando.set(cita.id);
+    const registros = await this.registrosDeLaCita(cita);
+    this.operando.set(null);
+
+    const confirmado = await this.dialogs.confirm(this.avisoDeCompletar(cita, registros));
+    if (confirmado) {
+      this.completarConfirmada(cita);
+    }
+  }
+
+  /**
+   * Lo que el historial clínico del paciente guarda de **esta** consulta, o
+   * `null` si no se pudo saber.
+   *
+   * La lectura del encuentro no dice de qué cita viene (`appointmentId` sólo
+   * viaja en la escritura), así que el vínculo se reconstruye por el día: los
+   * encuentros del paciente que empezaron el día de la cita, y lo que cuelga de
+   * ellos por `encounterId`. Es una aproximación honesta para este aviso, que
+   * no bloquea nada: la última palabra la tiene quien confirma.
+   *
+   * **Nunca rechaza.** Sin permiso clínico, sin paciente o con la API caída, la
+   * respuesta es `null` y el diálogo dice que no pudo revisar: un aviso que
+   * impidiera completar la cita por no poder avisar sería peor que no avisar.
+   */
+  private registrosDeLaCita(cita: CitaVisible): Promise<RegistrosDeLaCita | null> {
+    const paciente = cita.patientProfileId;
+    const cuando = cita.cuando;
+    if (paciente === null || cuando === null) {
+      return Promise.resolve(null);
+    }
+
+    return firstValueFrom(
+      this.clinical.getSummary(paciente).pipe(
+        map((resumen): RegistrosDeLaCita | null => {
+          const dia = cuando.toDateString();
+          const encuentros = resumen.encounters.filter((e) => e.startAt?.toDateString() === dia);
+          const ids = new Set(encuentros.map((e) => e.id));
+          const suyos = <T extends { readonly encounterId?: string }>(filas: readonly T[]): number =>
+            filas.filter((f) => f.encounterId !== undefined && ids.has(f.encounterId)).length;
+
+          return {
+            encuentros: encuentros.length,
+            recetas: suyos(resumen.medicationRequests),
+            diagnosticos: suyos(resumen.conditions),
+            observaciones: suyos(resumen.observations),
+          };
+        }),
+        catchError(() => of(null)),
+      ),
+    );
+  }
+
+  /** El diálogo de «Completar la cita»: distinto si no hay nada registrado. */
+  private avisoDeCompletar(cita: CitaVisible, registros: RegistrosDeLaCita | null): DialogConfig {
+    const base = { title: 'Completar la cita', cancelLabel: 'Volver' } as const;
+
+    if (registros === null) {
+      return {
+        ...base,
+        message: `No pudimos revisar si la cita de ${cita.paciente} tiene algo registrado. ¿La completa igual?`,
+        confirmLabel: 'Completar la cita',
+      };
+    }
+
+    const lineas: readonly DialogDetail[] = [
+      { label: 'Encuentros', value: String(registros.encuentros) },
+      { label: 'Recetas', value: String(registros.recetas) },
+      { label: 'Diagnósticos', value: String(registros.diagnosticos) },
+      { label: 'Observaciones', value: String(registros.observaciones) },
+    ].filter((linea) => linea.value !== '0');
+
+    if (lineas.length === 0) {
+      return {
+        ...base,
+        message: `La cita de ${cita.paciente} no tiene nada registrado: ni encuentro, ni recetas, ni diagnósticos, ni observaciones. Si tocó «Completar la cita» sin querer, vuelva. ¿La completa igual?`,
+        confirmLabel: 'Completar igual',
+      };
+    }
+
+    return {
+      ...base,
+      message: `¿Completa la cita de ${cita.paciente}? Esto es lo que quedó registrado en esta consulta.`,
+      details: lineas,
+      confirmLabel: 'Completar la cita',
+    };
+  }
+
+  private completarConfirmada(cita: CitaVisible): void {
     if (this.operando() !== null) {
       return;
     }
@@ -2493,7 +2767,7 @@ export class Agenda {
                 // tiene agendas» y «no tenés una vos». Decir el primero cuando
                 // pasa el segundo manda a reportar un problema que no existe.
                 this.sinAgendaPropia()
-                  ? 'Esta organización no tiene ninguna agenda a tu nombre.'
+                  ? 'Esta organización no tiene ninguna agenda a su nombre.'
                   : 'Esta organización todavía no tiene recursos agendables cargados.',
               )
             : loading();
@@ -2541,7 +2815,9 @@ export class Agenda {
   }
 
   private aplicarCitas(
-    resultado: { error: unknown } | { items: readonly Booking[]; truncated: boolean },
+    resultado:
+      | { error: unknown }
+      | { items: readonly Booking[]; truncated: boolean },
   ): void {
     if ('error' in resultado) {
       this.citas.set(errorToViewState<readonly CitaVisible[]>(resultado.error));
@@ -2577,7 +2853,7 @@ export class Agenda {
       this.cupos.set(
         empty(
           { label: 'Ampliar a 30 días', route: '/schedule' },
-          `No hay cupos generados ${this.resumenDeVentana()} para lo que estás mirando.`,
+          `No hay cupos generados ${this.resumenDeVentana()} para lo que está mirando.`,
         ),
       );
       return;
@@ -2602,6 +2878,7 @@ export class Agenda {
       hasta: cita.endAt ?? null,
       recurso: this.nombreDeRecurso(cita.resourceId),
       estado,
+      esServicio: cita.service !== undefined && cita.service !== null,
       motivo: cita.reasonText ?? SIN_DATO,
       patientProfileId: paciente,
       rutaPaciente:
@@ -2630,6 +2907,7 @@ export class Agenda {
       motivoCrudo: cita.reasonText ?? null,
       appointmentId: cita.appointmentId ?? null,
       paramsDeLaAtencion: {
+        [BOOKING_QUERY_PARAM]: cita.id,
         ...(cita.reasonText === undefined ? {} : { [MOTIVO_QUERY_PARAM]: cita.reasonText }),
         ...(cita.appointmentId === undefined || cita.appointmentId === null
           ? {}
@@ -2640,6 +2918,11 @@ export class Agenda {
           ? consultationRoute(paciente)
           : null,
       llegadaRegistrada: cita.checkedInAt !== undefined,
+      // C4. El sello sale del vínculo y no del tipo de cita: el origen es lo
+      // que el servidor garantiza, y una cita clasificada como reconsulta sin
+      // consulta detrás no podría decir de cuál salió.
+      esReconsulta: esReconsulta(cita),
+      reconsultaDe: cita.followUpOf?.startAt ?? null,
       solicitada: cita.createdAt,
       pago: cita.paymentState ?? null,
       admitePago: estado.code !== '' && !CODIGOS_SIN_PAGO.has(estado.code),

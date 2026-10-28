@@ -31,6 +31,15 @@
             @if (sede.direccion) {
               <span class="sedes__direccion">{{ sede.direccion }}</span>
             }
+            @if (sede.contactPhone; as contactPhone) {
+              <a
+                class="sedes__ruta"
+                [href]="'tel:' + contactPhone.replaceAll(' ', '')"
+                data-testid="practice-site-contact-phone"
+              >
+                Teléfono: {{ contactPhone }}
+              </a>
+            }
             @if (!sede.ubicada) {
               <span class="sedes__aviso">Sin ubicación cargada: no aparece en el mapa.</span>
             }
@@ -49,8 +58,8 @@
 
   @if (sinUbicar() > 0 && pines().length > 0) {
     <p class="sedes__pie">
-      {{ sinUbicar() }} de tus {{ renglones().length }} sedes todavía no tienen ubicación cargada.
-      Se agrega desde «Editar tu info», en «Dónde atiendo».
+      {{ sinUbicar() }} de sus {{ renglones().length }} sedes todavía no tienen ubicación cargada.
+      Se agrega desde «Editar su info», en «Dónde atiendo».
     </p>
   }
 </div>

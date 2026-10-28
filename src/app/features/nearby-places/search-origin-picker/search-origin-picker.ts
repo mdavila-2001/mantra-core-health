@@ -30,7 +30,7 @@ const GPS_MAX_AGE_MS = 300_000;
  * al navegador: quien la negaba, o entraba desde un escritorio sin antena,
  * se quedaba sin poder ver nada cercano. El paciente ya declara su domicilio
  * y su trabajo en «Mi perfil» —con coordenadas, desde que existe
- * `app-ubicacion-picker`— y ese dato es justo lo que hacía falta para no
+ * `app-map-location-picker`— y ese dato es justo lo que hacía falta para no
  * depender del permiso del navegador.
  *
  * ## Qué hace, y qué no hace
@@ -102,10 +102,10 @@ export class SearchOriginPicker {
     const places = this.places();
     const opciones: SegmentedOption<SearchOriginSource>[] = [];
     if (places?.home) {
-      opciones.push({ value: 'home', label: 'Tu casa', icon: 'home' });
+      opciones.push({ value: 'home', label: 'Su casa', icon: 'home' });
     }
     if (places?.work) {
-      opciones.push({ value: 'work', label: 'Tu trabajo', icon: 'briefcase' });
+      opciones.push({ value: 'work', label: 'Su trabajo', icon: 'briefcase' });
     }
     opciones.push({ value: 'current', label: 'Ubicación actual', icon: 'pin' });
     return opciones;

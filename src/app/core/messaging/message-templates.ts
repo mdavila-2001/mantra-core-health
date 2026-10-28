@@ -15,14 +15,14 @@ const TOPE = 20;
  * lista que no se puede recorrer de un vistazo no se usa, se ignora.
  */
 export const PLANTILLAS_POR_DEFECTO: readonly string[] = [
-  'Recordá venir en ayunas de 8 horas.',
-  'Tus resultados están listos, pasá a retirarlos.',
-  'Tu receta ya está emitida y disponible en tu historia clínica.',
-  'Te espero en la consulta a la hora acordada. Traé tus estudios previos.',
-  'Seguí con la medicación indicada y avisame si aparece algún efecto.',
-  'Necesito que te hagas los estudios antes del próximo control.',
-  'Vamos a reprogramar tu turno. ¿Qué día te queda cómodo?',
-  'Ante cualquier síntoma nuevo, escribime por acá.',
+  'Recuerde venir en ayunas de 8 horas.',
+  'Sus resultados están listos, pase a retirarlos.',
+  'Su receta ya está emitida y disponible en su historia clínica.',
+  'Le espero en la consulta a la hora acordada. Traiga sus estudios previos.',
+  'Siga con la medicación indicada y avíseme si aparece algún efecto.',
+  'Necesito que se haga los estudios antes del próximo control.',
+  'Vamos a reprogramar su turno. ¿Qué día le queda cómodo?',
+  'Ante cualquier síntoma nuevo, escríbame por acá.',
 ];
 
 /**
@@ -63,6 +63,26 @@ export class MessageTemplates {
     ...PLANTILLAS_POR_DEFECTO,
     ...this.leer(),
   ]);
+
+  /**
+   * Olvida las plantillas propias, en memoria y en el navegador (TX-31).
+   *
+   * Lo corre `AuthService.logout` vía `SESSION_CLEANERS`: en un dispositivo
+   * compartido, las frases que escribió un médico no deben quedar para el
+   * siguiente. Las de fábrica no se tocan.
+   */
+  olvidar(): void {
+    this.propias.set([]);
+    this.todas.set([...PLANTILLAS_POR_DEFECTO]);
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      this.document.defaultView?.localStorage.removeItem(CLAVE);
+    } catch {
+      // Bloqueado: no hay nada que borrar ni forma de hacerlo.
+    }
+  }
 
   /** Sólo las propias, para la pantalla que las administra. */
   readonly mias = this.propias.asReadonly();

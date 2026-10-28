@@ -25,20 +25,20 @@
     <section class="historial__sedes" data-testid="sedes-propias">
       <h2 class="historial__titulo">Dónde atiendo</h2>
       <p class="historial__intro">
-        Los consultorios, clínicas u hospitales donde atendés hoy. Es lo que ve un paciente al
-        reservar y lo que la agenda usa para decir dónde es la consulta.
+        Los lugares donde atiende hoy: su consultorio, una clínica, un hospital o donde haga
+        cualquiera de sus servicios. Es lo que ve un paciente al reservar y lo que la agenda usa
+        para decir dónde es la atención.
       </p>
 
-      <!-- Barra: buscador (nombre + dirección, normalizado) y filtro por tipo
-           (ADR-0015, regla 5). El alta sigue disponible aunque ya haya otros
-           consultorios propios: cada uno queda como una sede independiente. -->
+      <!-- Barra: sólo el buscador (nombre + dirección, normalizado). Sin
+           filtro por tipo y con una sola puerta para agregar (propietario,
+           04/10/2026): un lugar de atención es un lugar de atención. -->
       <app-filter-bar
         searchLabel="Buscar por nombre o dirección"
         searchPlaceholder="Nombre o dirección"
-        [filters]="filtrosSedes"
         (filtersChanged)="onFiltrosSedesChanged($event)"
       >
-        @if (!altaDeSedeAbierta()) {
+        @if (!altaDeSedeAbierta() && !agregandoLugar()) {
           <button
             filter-bar-action
             app-button
@@ -46,9 +46,9 @@
             size="sm"
             type="button"
             data-testid="sede-agregar"
-            (clicked)="abrirAltaDeSede()"
+            (clicked)="abrirAgregarLugar()"
           >
-            Agregar mi consultorio propio
+            Agregar lugar de atención
           </button>
         }
       </app-filter-bar>
@@ -60,17 +60,18 @@
         [columns]="columnasSedes()"
         [trackBy]="porIdDeSede"
         [rowLabel]="nombreAccesibleDeSede"
-        caption="Tus consultorios y sedes"
+        caption="Sus lugares de atención"
         maxHeight="420px"
       />
 
       @if (sedes().length === 0) {
         <p class="historial__vacio" data-testid="sedes-vacio">
-          Todavía no cargaste ningún consultorio. Sin uno, tu ficha no dice dónde encontrarte.
+          Todavía no cargó ningún lugar de atención. Sin uno, su ficha no dice dónde
+          encontrarle.
         </p>
       } @else if (sedesFiltradas().length === 0) {
         <p class="historial__vacio" data-testid="sedes-sin-resultados">
-          Ningún consultorio coincide con la búsqueda o el filtro.
+          Ningún lugar coincide con la búsqueda.
         </p>
       } @else {
         <app-pagination
@@ -84,21 +85,20 @@
         <app-alert tone="error" data-testid="sede-error">{{ mensaje }}</app-alert>
       }
 
-      @if (!altaDeSedeAbierta()) {
-        <!-- ─── La segunda puerta ──────────────────────────────────────────
-             Crear un consultorio **tuyo** (arriba, en la barra) y declarar
-             que atendés en un hospital que ya existe no son la misma
-             operación: quien atiende en la Clínica Foianini no se crea un
-             consultorio con el nombre de la clínica. -->
+      @if (agregandoLugar() && !altaDeSedeAbierta()) {
+        <!-- ─── Agregar lugar de atención: una sola puerta ──────────────────
+             Primero el padrón oficial —quien atiende en la Clínica Foianini no
+             se crea un lugar con el nombre de la clínica—; si no está, se
+             carga uno propio con el formulario de siempre. -->
         <div class="historial__padron" data-testid="sede-padron">
-          <h3 class="historial__subtitulo">¿Atendés en un consultorio, clínica u hospital?</h3>
+          <h3 class="historial__subtitulo">Agregar lugar de atención</h3>
           <p class="historial__intro">
-            Buscalo por su nombre en el padrón oficial de salud y elegilo. No hace falta crearlo: ya
-            existe.
+            Búsquelo por su nombre en el padrón oficial de salud: clínicas, hospitales, consultorios y
+            laboratorios ya están cargados. Si es su consultorio y no aparece, cárguelo usted.
           </p>
           <app-form-field
             label="Buscar el establecimiento"
-            hint="Escribí el nombre y elegilo de la lista."
+            hint="Escriba el nombre y elíjalo de la lista."
           >
             <app-reference-combobox
               [selected]="lugarElegido()"
@@ -125,6 +125,29 @@
               </button>
             </p>
           }
+          <div class="historial__padron-salida">
+            <p class="historial__intro">¿No está en la lista?</p>
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              type="button"
+              data-testid="sede-cargar-propio"
+              (clicked)="cargarLugarPropio()"
+            >
+              Cargarlo yo
+            </button>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="sede-agregar-cancelar"
+              (clicked)="cerrarAgregarLugar()"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       }
 
@@ -135,7 +158,7 @@
            descarte que el botón Cancelar, nunca cierran directo. -->
       @if (altaDeSedeAbierta()) {
         <app-content-dialog
-          [heading]="sedeEnEdicion() === null ? 'Nuevo consultorio' : 'Corregir tu consultorio'"
+          [heading]="sedeEnEdicion() === null ? 'Nuevo lugar de atención' : 'Corregir el lugar de atención'"
           size="md"
           closeLabel="Cancelar"
           [dismissible]="false"
@@ -144,9 +167,8 @@
         >
           @if (sedeEnEdicion()) {
             <p class="historial__intro" data-testid="sede-edicion-aviso">
-              Los campos vienen con lo que ya tenías cargado: corregí lo que haga falta. Lo que
-              dejes en blanco queda como está, y para cambiar la dirección escribila entera de
-              nuevo.
+              Los campos vienen con lo que ya tenía cargado: corrija lo que haga falta. Para
+              cambiar la dirección, marque el nuevo punto en el mapa y confírmelo.
             </p>
           }
 
@@ -155,6 +177,37 @@
             data-testid="sede-formulario"
             (submit)="$event.preventDefault(); guardarSede()"
           >
+            <!-- Pedido del cliente del 26/10/2026: el punto va primero y es lo
+                 único que se marca, y es obligatorio. La calle, el mapa de
+                 Bolivia acercado, el departamento, la provincia, el municipio y
+                 la zona salen de él, en sólo lectura. Diferido a propósito:
+                 Leaflet es lo más pesado de esta tarjeta y sólo hace falta con
+                 el formulario abierto; montado recién con el modal ya visible,
+                 porque Leaflet sobre un nodo que todavía no tiene tamaño mide
+                 0 px. Sin Google —la CSP lo bloquea—. -->
+            @defer (when altaDeSedeAbierta()) {
+              <app-map-location-picker
+                pinId="sede"
+                etiquetaConfirmada="Su lugar de atención"
+                etiquetaQuitar="Quitar el punto del lugar de atención"
+                etiquetaMapa="Mapa para marcar dónde queda el lugar de atención"
+                etiquetaMarcar="Marcar el lugar en el mapa"
+                indicacionMarcar="Toque el mapa en la puerta del lugar de atención para poner el pin."
+                etiquetaFicha="Este lugar de atención"
+                [ids]="idsMapaDeSede"
+                [inicial]="puntoDeSede()"
+                (confirmado)="confirmarPuntoDeSede($event)"
+                (localidad)="aplicarLocalidadDeSede($event)"
+              />
+            } @placeholder {
+              <p class="historial__vacio">Cargando el mapa…</p>
+            }
+            @if (sinPuntoDeSede()) {
+              <p class="historial__aviso-mapa" data-testid="sede-punto-requerido" aria-live="polite">
+                Marque el lugar en el mapa y pulse «Confirmar dirección actual».
+              </p>
+            }
+
             <app-form-field label="Nombre" hint="Como lo va a ver el paciente." [required]="true">
               <app-input
                 [(value)]="nombreDeSedeNueva"
@@ -163,103 +216,21 @@
               />
             </app-form-field>
 
-            <app-form-field label="Dirección" hint="Calle, número y una referencia si hace falta.">
-              <app-input
-                [(value)]="direccionDeSede"
-                placeholder="Av. Busch 500, 2.º piso"
-                data-testid="sede-direccion"
-              />
-            </app-form-field>
-            <!-- D-06: tocar el mapa vació este campo — se anuncia acá, junto
-                 al campo, para quien no ve el mapa. -->
-            @if (avisoDireccionVaciada()) {
-              <p
-                class="historial__aviso-mapa"
-                data-testid="sede-direccion-vaciada"
-                aria-live="polite"
-              >
-                Volvé a escribir la dirección: marcar el mapa reemplaza el texto anterior.
-              </p>
-            }
-
-            <app-form-field label="Ciudad" hint="Opcional.">
-              <app-input [(value)]="ciudadDeSede" placeholder="Santa Cruz de la Sierra" />
-            </app-form-field>
-
-            <!-- Diferido a propósito: el mapa de Bolivia y Leaflet son lo más
-                 pesado de esta tarjeta y sólo hacen falta con el formulario
-                 abierto. Montado recién con el modal ya visible: Leaflet sobre
-                 un nodo que todavía no tiene tamaño mide 0 px. -->
-            @defer (when altaDeSedeAbierta()) {
-              <!-- El municipio se elige con el mapa de Bolivia del alta; el
-                   departamento se deduce de él, sin preguntarlo dos veces. -->
-              @if (catalogoMunicipiosCaido()) {
-                <p class="historial__escape">
-                  No pudimos traer el catálogo de municipios. Podés seguir sin esto.
-                  <button
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    (clicked)="reintentarMunicipios()"
-                  >
-                    Reintentar
-                  </button>
-                </p>
-              } @else if (ramasMunicipios().length > 0) {
-                <app-location-picker
-                  testId="sede-municipio"
-                  [ramas]="ramasMunicipios()"
-                  [value]="municipioDeSede()"
-                  (valueChange)="municipioDeSede.set($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento del consultorio"
-                  municipalityLabel="Municipio (opcional)"
-                  municipalityHint="Sólo se ofrecen los del departamento que elegiste."
+            @if (sedeEnEdicion() === null) {
+              <app-form-field label="Teléfono de este lugar" hint="Opcional. Puede ser distinto en cada lugar donde atiende.">
+                <app-input
+                  [(value)]="telefonoDeSedeNueva"
+                  inputMode="tel"
+                  autocomplete="tel"
+                  placeholder="+591 72123456"
+                  testId="sede-telefono-nuevo"
                 />
+              </app-form-field>
+              @if (!telefonoDeSedeNuevaValido()) {
+                <p class="historial__vacio">Use al menos seis caracteres: números, espacios, guiones o paréntesis.</p>
               }
-
-              <!-- El punto es opcional y el mapa se despliega a pedido: Leaflet no
-                   se paga en cada visita al perfil. Sin Google —la CSP lo bloquea—. -->
-              <div class="historial__mapa-bloque">
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="sede-marcar-mapa"
-                  (clicked)="alternarMapa()"
-                >
-                  {{ mapaAbierto() ? 'Ocultar el mapa' : 'Marcar el punto en el mapa (opcional)' }}
-                </button>
-                @if (mapaAbierto()) {
-                  <app-map
-                    class="historial__mapa"
-                    data-testid="sede-mapa"
-                    [pines]="pinesDeSede()"
-                    [centro]="puntoDeSede()"
-                    etiqueta="Mapa para marcar dónde queda el consultorio"
-                    (pointPicked)="marcarPunto($event)"
-                  />
-                  @if (puntoDeSede(); as punto) {
-                    <p class="historial__punto" data-testid="sede-punto">
-                      Punto marcado: {{ punto.lat | number: '1.4-4' }},
-                      {{ punto.lng | number: '1.4-4' }}
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                        (clicked)="quitarPunto()"
-                      >
-                        Quitar
-                      </button>
-                    </p>
-                  }
-                }
-              </div>
-            } @placeholder {
-              <p class="historial__vacio">Cargando el mapa…</p>
             }
+
           </form>
 
           <button
@@ -272,7 +243,7 @@
             [disabled]="!puedeGuardarSede()"
             (clicked)="guardarSede()"
           >
-            {{ sedeEnEdicion() === null ? 'Guardar consultorio' : 'Guardar los cambios' }}
+            {{ sedeEnEdicion() === null ? 'Guardar lugar' : 'Guardar los cambios' }}
           </button>
         </app-content-dialog>
       }
@@ -287,6 +258,41 @@
           (closed)="cerrarQrDeSede()"
         />
       }
+
+      @if (sedeConTelefonoAbierto(); as sedeDelTelefono) {
+        <app-content-dialog
+          [heading]="'Teléfono en ' + sedeDelTelefono.name"
+          size="sm"
+          closeLabel="Cancelar"
+          [dismissible]="!guardandoTelefono()"
+          (closed)="cerrarTelefonoDeSede()"
+        >
+          <app-form-field label="Teléfono de contacto" hint="Opcional. Dejarlo vacío quita el número de esta sede.">
+            <app-input
+              [(value)]="telefonoEnEdicion"
+              inputMode="tel"
+              autocomplete="tel"
+              placeholder="+591 72123456"
+              testId="sede-telefono-editar"
+            />
+          </app-form-field>
+          @if (errorDelTelefono(); as mensaje) {
+            <app-alert tone="error">{{ mensaje }}</app-alert>
+          }
+          @if (!telefonoEnEdicionValido()) {
+            <app-alert tone="error">Use al menos seis caracteres: números, espacios, guiones o paréntesis.</app-alert>
+          }
+          <button
+            dialog-actions
+            app-button
+            type="button"
+            variant="primary"
+            [isLoading]="guardandoTelefono()"
+            [disabled]="!telefonoEnEdicionValido()"
+            (clicked)="guardarTelefonoDeSede()"
+          >Guardar teléfono</button>
+        </app-content-dialog>
+      }
     </section>
 
     <!-- Plantillas de celda de la tabla de sedes (H4.S1, ADR-0015). El
@@ -294,16 +300,10 @@
          `patient-list.html`. -->
     <ng-template #celdaNombreSede let-sede>
       <strong>{{ sede.name }}</strong>
-    </ng-template>
-
-    <ng-template #celdaTipoSede let-sede>
-      <!-- Tuyo o de otro: el propio lo creás y lo corregís vos; en el ajeno
-           tenés un vínculo, y la sede es de la organización. -->
-      @if (sede.isOwnSite) {
-        <app-badge variant="success" value="Tu consultorio" data-testid="sede-propia-marca" />
-      } @else {
-        <app-badge variant="secondary" value="Trabajás acá" data-testid="sede-ajena-marca" />
-      }
+      <br />
+      <span class="historial__telefono" data-testid="sede-telefono">
+        {{ sede.contactPhone ? 'Tel.: ' + sede.contactPhone : 'Sin teléfono registrado' }}
+      </span>
     </ng-template>
 
     <ng-template #celdaDireccionSede let-sede>
@@ -321,12 +321,12 @@
     </ng-template>
 
     <ng-template #celdaAccionesSede let-sede>
-      <!-- Las acciones de la sede, por ADR-0012: hasta dos en la fila con su
-           texto; con tres —la propia, que suma Editar— van en un desplegable
-           con un único disparador, para que la fila no crezca. -->
+      <!-- El consultorio propio sólo ofrece QR; la sede ajena también permite
+           dejar de atender. Ambas muestran las acciones en la fila. -->
       <app-row-actions
         [actions]="accionesDeSede(sede)"
         [fila]="sede.name"
+        [attr.data-site-id]="sede.id"
         data-testid="sede-acciones"
         (actionSelected)="ejecutarAccionDeSede($event, sede)"
       />
@@ -340,47 +340,55 @@
     @if (layout() === 'flat' || layout() === 'tabla') {
       <h2 class="historial__titulo">Historial laboral</h2>
       <p class="historial__intro">
-        Los hospitales y entidades médicas donde ejerciste. Lo administrás vos: es tu trayectoria,
+        Los hospitales y entidades médicas donde ejerció. Lo administra usted: es su trayectoria,
         no un dato que cargue la organización.
       </p>
     }
 
     <!-- ─── Historial como tabla (H4.S3, ADR-0015, D-09) ────────────────────
          Mismas cinco piezas que «Dónde atiendo»: barra, tabla con alto
-         máximo, paginación en cliente. Editar/retirar/adjunto persisten sólo
-         en este componente — declarado en el encabezado de la sección TS y
-         en el `REPORTE.md` (regla 65: no hay PATCH/DELETE/fileId reales). -->
-    @if (layout() === 'tabla') {
+         máximo, paginación en cliente. Corregir el cargo y retirar van al
+         servidor. Sin adjunto: un vínculo laboral no tiene dónde guardar un
+         archivo (encabezado de la sección TS). -->
+    @if (historialEnTabla()) {
       <app-filter-bar
         searchLabel="Buscar por institución o cargo"
         searchPlaceholder="Institución o cargo"
-        (filtersChanged)="onFiltrosHistorialChanged($event)"
+        [searchInUrl]="false"
+        [searchValue]="busquedaHistorial()"
+        (searchChanged)="onFiltrosHistorialChanged({q: $event})"
       />
 
       <app-data-table
+        data-testid="historial-tabla"
         [state]="estadoHistorialTabla()"
         [columns]="columnasHistorial()"
         [trackBy]="porIdDeAfiliacion"
         [rowLabel]="nombreAccesibleDeAfiliacion"
-        caption="Tu historial laboral"
+        caption="Su historial laboral"
         maxHeight="420px"
+        (retry)="recargar()"
+        (refresh)="recargar()"
       />
 
-      @if (afiliacionesEnTabla().length === 0) {
-        <p class="historial__vacio" data-testid="historial-tabla-vacio">
-          Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente dónde
-          ejerciste antes de llegar acá.
-        </p>
-      } @else if (historialFiltrado().length === 0) {
-        <p class="historial__vacio" data-testid="historial-tabla-sin-resultados">
-          Ningún vínculo coincide con la búsqueda.
-        </p>
-      } @else {
-        <app-pagination
-          [totalItems]="historialFiltrado().length"
-          [(page)]="paginaHistorial"
-          [(pageSize)]="tamanoPaginaHistorial"
-        />
+      @if (historial().status === 'ready') {
+        @if (afiliaciones().length === 0) {
+          <p class="historial__vacio" data-testid="historial-tabla-vacio">
+            Todavía no cargó ningún vínculo laboral. Es lo que le dice a un paciente dónde
+            ejerció antes de llegar acá.
+          </p>
+        } @else if (historialFiltrado().length === 0) {
+          <p class="historial__vacio" data-testid="work-history-no-results">
+            Ningún vínculo coincide con la búsqueda.
+          </p>
+        } @else {
+          <app-pagination
+            [totalItems]="historialFiltrado().length"
+            [page]="paginaHistorialVisible()"
+            (pageChange)="paginaHistorial.set($event)"
+            [(pageSize)]="tamanoPaginaHistorial"
+          />
+        }
       }
     }
 
@@ -390,10 +398,10 @@
            profesional y lo que ninguna institución contestó todavía—, y va
            pegado al formulario que es el que corrige. Sin nada que tocar, el
            bloque no existe. -->
-    @if (layout() === 'timeline' && vinculosEditables().length > 0) {
+    @if (layout() === 'timeline' && !historialEnTabla() && vinculosEditables().length > 0) {
       <h3 class="historial__subtitulo">Corregir o retirar</h3>
       <p class="historial__intro">
-        Lo que declaraste vos, y las solicitudes que todavía nadie contestó. Lo que una institución
+        Lo que declaró usted, y las solicitudes que todavía nadie contestó. Lo que una institución
         ya confirmó o rechazó no se edita desde acá.
       </p>
       <ul class="historial__lista" data-testid="vinculos-editables">
@@ -534,14 +542,14 @@
         </ul>
       } @else if (historial().status === 'ready') {
         <p class="historial__vacio">
-          Todavía no cargaste ningún vínculo laboral. Es lo que le dice a un paciente dónde
-          ejerciste antes de llegar acá.
+          Todavía no cargó ningún vínculo laboral. Es lo que le dice a un paciente dónde
+          ejerció antes de llegar acá.
         </p>
       } @else if (historial().status !== 'loading') {
         <!-- El fallo de la lectura no tumba el formulario: cargar un vínculo
                nuevo sigue siendo posible aunque no se hayan podido leer los viejos. -->
         <p class="historial__vacio">
-          No pudimos leer tu historial.
+          No pudimos leer su historial.
           <button type="button" class="historial__reintento" (click)="recargar()">
             Reintentar
           </button>
@@ -564,7 +572,7 @@
         data-testid="abrir-alta-vinculo"
         (clicked)="abrirAltaDeVinculo()"
       >
-        Añadir elemento a tu historial
+        Añadir elemento a su historial
       </button>
     </p>
 
@@ -576,10 +584,10 @@
       <app-content-dialog
         [heading]="
           vinculoEnEdicion() === null
-            ? 'Añadir elemento a tu historial'
+            ? 'Añadir elemento a su historial'
             : 'Corregir «' + vinculoEnEdicion()?.organizationName + '»'
         "
-        description="El hospital, la clínica o el consultorio donde ejerciste, y desde cuándo."
+        description="El hospital, la clínica o el consultorio donde ejerció, y desde cuándo."
         size="md"
         closeLabel="Cancelar"
         [dismissible]="false"
@@ -601,12 +609,16 @@
                los controles a un mismo grupo. El botón proyectado queda fuera,
                así que llama a `registrar()` directo en vez de ser un submit. -->
         <form class="historial__formulario" (submit)="$event.preventDefault(); guardarVinculo()">
-          <!-- Dos formas de nombrar la institución, nunca las dos a la vez: elegirla
-               del padrón y además escribirla serían dos respuestas a una pregunta. -->
+          <!-- La institución se elige SIEMPRE del padrón: escribirla a mano
+               permitía inventar un hospital que no existe. El modo «libre»
+               sigue existiendo para corregir un vínculo YA guardado —lo pone
+               `abrirEdicionDeVinculo`, nunca esta pantalla de alta— porque lo
+               que se guardó es el nombre canónico y no un id contra el que
+               volver a buscar; dar de alta uno nuevo no tiene escape a mano. -->
           @if (modoDeInstitucion() === 'padron') {
             <app-form-field
               label="Institución"
-              hint="Escribí el nombre y elegila del padrón oficial de salud."
+              hint="Escriba el nombre y elíjala del padrón oficial de salud."
               [required]="true"
             >
               <app-reference-combobox
@@ -619,16 +631,6 @@
                 (selectionChange)="establecimiento.set($event)"
               />
             </app-form-field>
-
-            <p class="historial__escape">
-              <!-- El padrón cubre sólo Santa Cruz: quien trabajó en otro
-                   departamento necesita esta salida, y decirlo evita que la busque
-                   como si fuera una falla. -->
-              ¿Trabajaste fuera de Santa Cruz o no la encontrás?
-              <button app-button variant="ghost" size="sm" type="button" (click)="escribirAMano()">
-                Escribir el nombre a mano
-              </button>
-            </p>
           } @else {
             <app-form-field
               label="Institución"
@@ -652,7 +654,7 @@
           }
 
           <!-- ALV-007: opcional. Un vínculo con tu propio consultorio no tiene cargo. -->
-          <app-form-field label="Cargo" hint="Opcional. El puesto que ejerciste ahí, si aplica.">
+          <app-form-field label="Cargo" hint="Opcional. El puesto que ejerció ahí, si aplica.">
             <app-input [(value)]="cargo" placeholder="Médico de planta" />
           </app-form-field>
 
@@ -661,7 +663,7 @@
           @if (opcionesDeSede().length > 0 && vinculoEnEdicion() === null) {
             <app-form-field
               label="Consultorio de la plataforma"
-              hint="Opcional. Si la institución es una de las sedes donde ya atendés, atalo acá."
+              hint="Opcional. Si la institución es una de las sedes donde ya atiende, atalo acá."
             >
               <app-select
                 [(value)]="sede"
@@ -671,7 +673,7 @@
             </app-form-field>
           }
 
-          <app-form-field label="Desde" hint="Cuándo empezaste." [required]="true">
+          <app-form-field label="Desde" hint="Cuándo empezó." [required]="true">
             <app-date-picker [(value)]="desde" />
           </app-form-field>
 
@@ -679,7 +681,7 @@
                suelto: el error está ahí y ahí hay que corregirlo. -->
           <app-form-field
             label="Hasta"
-            hint="Dejalo vacío si seguís ejerciendo ahí."
+            hint="Déjelo vacío si sigue ejerciendo ahí."
             [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
           >
             <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
@@ -701,8 +703,7 @@
       </app-content-dialog>
     }
 
-    <!-- Editar un vínculo del historial: cargo y adjunto (H4.S3, doble local —
-         ver el comentario de cabecera de la sección TS). Mismo patrón de
+    <!-- Corregir el cargo de un vínculo del historial. Mismo patrón de
          guardar-por-cambios y confirmación que el modal de sedes. -->
     @if (edicionAfiliacionAbierta()) {
       <app-content-dialog
@@ -714,27 +715,15 @@
         (dismissAttempt)="intentarCerrarEdicionDeAfiliacion()"
         (closed)="intentarCerrarEdicionDeAfiliacion()"
       >
-        @if (errorDeAdjunto(); as mensaje) {
-          <app-alert tone="error">{{ mensaje }}</app-alert>
+        @if (errorDeEdicionDeAfiliacion(); as mensaje) {
+          <app-alert tone="error" data-testid="afiliacion-edicion-error">{{ mensaje }}</app-alert>
         }
         <form
           class="historial__formulario"
           (submit)="$event.preventDefault(); guardarEdicionDeAfiliacion()"
         >
-          <app-form-field label="Cargo" hint="Opcional. El puesto que ejerciste ahí, si aplica.">
+          <app-form-field label="Cargo" hint="Opcional. El puesto que ejerció ahí, si aplica.">
             <app-input [(value)]="cargoEnEdicion" placeholder="Médico de planta" />
-          </app-form-field>
-
-          <app-form-field
-            label="Adjunto"
-            hint="Opcional. Un certificado o constancia de ese vínculo (PDF, JPG o PNG)."
-          >
-            <app-file-input
-              [(files)]="archivoAdjunto"
-              accept=".pdf,.jpg,.jpeg,.png"
-              [maxFiles]="1"
-              label="Adjuntar archivo"
-            />
           </app-form-field>
         </form>
 
@@ -744,7 +733,7 @@
           type="button"
           variant="primary"
           data-testid="afiliacion-guardar"
-          [isLoading]="subiendoAdjunto()"
+          [isLoading]="guardandoAfiliacion()"
           [disabled]="!hayCambiosEnAfiliacion()"
           (clicked)="guardarEdicionDeAfiliacion()"
         >
@@ -767,29 +756,53 @@
   </div>
 </ng-template>
 
-<ng-template #celdaPeriodoHistorial let-afiliacion>
-  {{ afiliacion.startDate | date: 'MM/yyyy' }} —
-  @if (afiliacion.endDate) {
-    {{ afiliacion.endDate | date: 'MM/yyyy' }}
-  } @else {
-    actualidad
+<ng-template #celdaEstadoHistorial let-afiliacion>
+  @switch (afiliacion.statusKind) {
+    @case ('declarado') {
+      <span class="historial__estado">Declarado por usted</span>
+    }
+    @case ('pendiente') {
+      <app-status-seal variant="pending" label="Pendiente" />
+    }
+    @case ('aprobado') {
+      <app-status-seal variant="approved" label="Aprobado" />
+    }
+    @case ('rechazado') {
+      <app-status-seal variant="rejected" label="Rechazado" />
+    }
+    @case ('revocado') {
+      <app-status-seal variant="rejected" label="Revocado" />
+    }
+    @default {
+      <app-status-seal variant="unknown" label="Estado desconocido" />
+    }
   }
 </ng-template>
 
-<ng-template #celdaAdjuntoHistorial let-afiliacion>
-  @if (afiliacion.fileId) {
-    <a [href]="'/common/files/' + afiliacion.fileId + '/content'" target="_blank" rel="noopener">
-      Ver adjunto
-    </a>
-  } @else {
-    <span class="historial__vacio">Sin adjunto</span>
+<ng-template #celdaPeriodoHistorial let-afiliacion>
+  <div class="historial__institucion">
+    <span class="historial__fechas">
+      {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+      @if (afiliacion.endDate) {
+        {{ afiliacion.endDate | date: 'MM/yyyy' }}
+      } @else {
+        actualidad
+      }
+    </span>
+    <span class="historial__estado">{{ periodo(afiliacion) }}</span>
+  </div>
+  @if (avisoDelVinculo(afiliacion); as aviso) {
+    <p class="historial__estado">{{ aviso }}</p>
   }
 </ng-template>
 
 <ng-template #celdaAccionesHistorial let-afiliacion>
-  <app-row-actions
-    [actions]="accionesDeAfiliacion()"
-    [fila]="afiliacion.organizationName"
-    (actionSelected)="ejecutarAccionDeAfiliacion($event, afiliacion)"
-  />
+  @let acciones = accionesDeAfiliacion(afiliacion);
+  @if (acciones.length > 0) {
+    <app-row-actions
+      [actions]="acciones"
+      [fila]="afiliacion.organizationName"
+      (actionSelected)="ejecutarAccionDeAfiliacion($event, afiliacion)"
+    />
+  }
 </ng-template>

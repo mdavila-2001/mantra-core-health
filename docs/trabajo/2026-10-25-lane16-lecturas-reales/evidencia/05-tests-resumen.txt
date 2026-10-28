@@ -1,0 +1,11 @@
+# Resumen recortado de las corridas (la salida completa pesa cientos de KB)
+## Dirigidos (seguros, my-requests, pagos, maqueta, cliente)
+ FAIL   mantra-core-health  src/app/core/mock/siat-sim/siat-simulated.adapter.spec.ts > SiatSimuladoAdapter > recepcionFactura > sector 17 (preparado, no activo · CA-1) → 940; sector desconocido → 931
+ Test Files  1 failed | 126 passed (127)
+      Tests  1 failed | 1430 passed (1431)
+
+## Suite completa
+ FAIL   mantra-core-health  src/app/core/mock/handlers/received-services.handlers.spec.ts > handlers de servicios recibidos: GET /clinical/patients/:id/received-services > acceso > un paciente no lee los servicios de otro
+ FAIL   mantra-core-health  src/app/core/mock/siat-sim/siat-simulated.adapter.spec.ts > SiatSimuladoAdapter > recepcionFactura > sector 17 (preparado, no activo · CA-1) → 940; sector desconocido → 931
+ Test Files  2 failed | 937 passed (939)
+      Tests  2 failed | 12918 passed (12920)

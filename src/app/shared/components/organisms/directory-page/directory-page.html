@@ -7,63 +7,221 @@
   <p class="directorio__bajada-embebida">{{ subtitulo() }}</p>
 }
 
-<!-- Lo que un vertical necesita entre el título y los filtros. Hoy lo usan el
-     directorio de clínicas y el de farmacias para su mapa de Bolivia: el mapa
-     ES un filtro, así que va con los filtros y no encima del título —donde
-     quedaba antes de existir esta ranura, empujando el nombre de la pantalla
-     abajo del pliegue—. Vacío no ocupa nada, así que los otros dos directorios
-     no cambian. -->
+<!-- Lo que un vertical necesita entre el título y el buscador. Vacío no ocupa
+     nada. -->
 <ng-content select="[slot=antes-de-filtros]" />
 
-<app-filter-bar
-  [filters]="filtros()"
-  [searchLabel]="etiquetaBusqueda()"
-  (filtersChanged)="filtrosCambiaron.emit($event)"
-/>
+<!-- El buscador del marketplace: ancho, arriba de todo, con los desplegables
+     pegados a él. Los filtros de chips van a la columna de la izquierda. -->
+<div class="mercado__buscador">
+  <app-filter-bar
+    [filters]="filtrosDeArriba()"
+    [searchLabel]="etiquetaBusqueda()"
+    [searchPlaceholder]="textoDelBuscador()"
+    [showActive]="!hayColumna()"
+    (filtersChanged)="alCambiarFiltros()"
+  />
+</div>
 
 <app-view-state-host [state]="estado()" (retry)="reintentar.emit()">
   @if (portada()) {
     <!-- El nivel de arriba de un directorio con varios escalones —la portada
          de categorías de laboratorios, la de los directorios—: se ve lo que
-         el vertical proyecta, con la **misma** barra encima. Que la barra no
-         esté dentro de la ranura es lo que deja escribir sin perder el foco
-         cuando el primer término cambia la portada por la lista. -->
+         el vertical proyecta, con el **mismo** buscador encima. -->
     <ng-content select="[slot=portada]" />
   } @else {
     @if (aviso(); as texto) {
       <p class="directorio__aviso">{{ texto }}</p>
     }
 
-    @if (sinCoincidencias()) {
-      <!-- Hay directorio, pero el filtro no dejó a nadie. Ver el JSDoc de
-         `textoSinCoincidencias`. -->
-      <p class="directorio__vacio" role="status">{{ textoSinCoincidencias() }}</p>
-    } @else {
-      <p class="directorio__cuenta" role="status">{{ contador() }}</p>
+    <div class="mercado" [class.mercado--sin-columna]="!hayColumna()">
+      @if (hayColumna()) {
+        <aside class="mercado__columna" aria-label="Filtros del directorio">
+          <!-- En teléfono la columna se pliega: los resultados primero. -->
+          <button
+            type="button"
+            class="mercado__plegar"
+            [attr.aria-expanded]="columnaAbierta()"
+            aria-controls="mercado-facetas"
+            (click)="columnaAbierta.set(!columnaAbierta())"
+          >
+            <app-nav-icon name="sliders" />
+            <span>Filtros</span>
+            @if (filtrosActivosEnLaColumna() > 0) {
+              <span class="mercado__plegar-cuenta">{{ filtrosActivosEnLaColumna() }}</span>
+            }
+          </button>
 
-      @for (grupo of grupos(); track grupo.id) {
-        <section class="directorio__grupo" [attr.aria-labelledby]="'grupo-' + grupo.id">
-          @if (grupo.nombre) {
-            <h2 class="directorio__rotulo" [id]="'grupo-' + grupo.id">
-              {{ grupo.nombre }}
-              <span class="directorio__cantidad">{{ grupo.resultados.length }}</span>
-            </h2>
-          }
+          <div
+            id="mercado-facetas"
+            class="mercado__facetas"
+            [class.mercado__facetas--abiertas]="columnaAbierta()"
+          >
+            @if (filtrosDeLaColumna().length > 0) {
+              <app-filter-bar
+                layout="facets"
+                [showSearch]="false"
+                [filters]="filtrosDeLaColumna()"
+                [searchLabel]="etiquetaBusqueda()"
+                (filtersChanged)="alCambiarFiltros()"
+              />
+            }
 
+            @if (hayFacetaDeGrupos()) {
+              <div
+                class="mercado__faceta"
+                role="group"
+                aria-labelledby="mercado-faceta-grupos"
+              >
+                <p class="mercado__faceta-rotulo" id="mercado-faceta-grupos">
+                  <app-nav-icon class="mercado__faceta-icono" [name]="iconoDeGrupos()" />
+                  {{ rotuloDeGrupos() }}
+                </p>
+                <ul class="mercado__faceta-lista">
+                  <li>
+                    <button
+                      type="button"
+                      class="mercado__opcion"
+                      [attr.aria-pressed]="grupoElegido() === null"
+                      (click)="grupoElegido.set(null)"
+                    >
+                      <span class="mercado__opcion-texto">Ver todo</span>
+                    </button>
+                  </li>
+                  @for (grupo of gruposALaVista(); track grupo.id) {
+                    <li>
+                      <button
+                        type="button"
+                        class="mercado__opcion"
+                        [attr.aria-pressed]="grupoElegido() === grupo.id"
+                        (click)="elegirGrupo(grupo.id)"
+                      >
+                        <span class="mercado__opcion-texto">{{ grupo.nombre }}</span>
+                        <span class="mercado__opcion-cuenta">{{ grupo.resultados.length }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+                @if (gruposOcultos() > 0) {
+                  <button
+                    type="button"
+                    class="mercado__ver-mas"
+                    (click)="verTodosLosGrupos.set(true)"
+                  >
+                    Ver {{ gruposOcultos() }} más
+                    <app-nav-icon class="mercado__ver-mas-icono" name="arrow-right" />
+                  </button>
+                } @else if (verTodosLosGrupos()) {
+                  <button
+                    type="button"
+                    class="mercado__ver-mas"
+                    (click)="verTodosLosGrupos.set(false)"
+                  >
+                    Ver menos
+                    <app-nav-icon class="mercado__ver-mas-icono mercado__ver-mas-icono--abierto" name="arrow-right" />
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </aside>
+      }
+
+      <section class="mercado__resultados" aria-label="Resultados">
+        <div class="directorio__barra">
+          <p class="directorio__cuenta" role="status">
+            {{ contador() }}
+            @if (ambito(); as nombre) {
+              <span class="directorio__ambito">· {{ nombre }}</span>
+            }
+          </p>
+
+          <div class="directorio__herramientas">
+            <label class="mercado__orden">
+              <span>Ordenar por</span>
+              <select [value]="orden()" (change)="elegirOrden($any($event.target).value)">
+                @for (opcion of opcionesDeOrden(); track opcion.value) {
+                  <option [value]="opcion.value" [selected]="opcion.value === orden()">
+                    {{ opcion.label }}
+                  </option>
+                }
+              </select>
+            </label>
+
+            <!-- Grilla o lista, a elección de quien mira. Dos botones con
+                 `aria-pressed` y no un radio: es un interruptor de
+                 presentación, no un dato del formulario. -->
+            <div class="directorio__vistas" role="group" aria-label="Forma de ver el directorio">
+              <button
+                type="button"
+                class="directorio__vista"
+                [attr.aria-pressed]="vista() === 'grilla'"
+                (click)="elegirVista('grilla')"
+              >
+                <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+                  <rect x="2.5" y="2.5" width="6" height="6" rx="1.2" />
+                  <rect x="11.5" y="2.5" width="6" height="6" rx="1.2" />
+                  <rect x="2.5" y="11.5" width="6" height="6" rx="1.2" />
+                  <rect x="11.5" y="11.5" width="6" height="6" rx="1.2" />
+                </svg>
+                <span>Grilla</span>
+              </button>
+              <button
+                type="button"
+                class="directorio__vista"
+                [attr.aria-pressed]="vista() === 'lista'"
+                (click)="elegirVista('lista')"
+              >
+                <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+                  <rect x="2.5" y="3" width="15" height="3.4" rx="1.2" />
+                  <rect x="2.5" y="8.3" width="15" height="3.4" rx="1.2" />
+                  <rect x="2.5" y="13.6" width="15" height="3.4" rx="1.2" />
+                </svg>
+                <span>Lista</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        @if (sinCoincidencias()) {
+          <!-- Hay directorio, pero el filtro no dejó a nadie. Ver el JSDoc de
+               `textoSinCoincidencias`. -->
+          <p class="directorio__vacio" role="status">{{ textoSinCoincidencias() }}</p>
+        } @else {
           <!-- `app-result-card` es un selector de atributo sobre el `<li>`: la
-             tarjeta ES el ítem de la lista, así que un lector de pantalla
-             anuncia cuántos hay antes de leer el primero. -->
-          <ul class="directorio__grilla">
-            @for (resultado of grupo.resultados; track resultado.id) {
+               tarjeta ES el ítem de la lista, así que un lector de pantalla
+               anuncia cuántos hay antes de leer el primero. -->
+          <ul #inicioDeResultados class="directorio__grilla" [class.directorio__grilla--lista]="vista() === 'lista'">
+            @for (resultado of visibles(); track resultado.id) {
+              <!-- `--i`: el orden dentro de su tanda, para que las tarjetas
+                   entren escalonadas. Ver `.directorio__grilla > li`. -->
               <li
+                [style.--i]="$index % tamanoDeTanda()"
                 app-result-card
                 [resultado]="resultado"
+                [vista]="vista()"
                 [preventDuplicateNavigation]="preventDuplicateNavigation()"
               ></li>
             }
           </ul>
-        </section>
-      }
-    }
+
+          <!-- Páginas de verdad: ver `TANDA_POR_DEFECTO`. -->
+          @if (total() > tamanoDeTanda()) {
+            <app-pagination
+              class="directorio__paginas"
+              [totalItems]="total()"
+              [page]="paginaActual()"
+              (pageChange)="cambiarPagina($event)"
+              [pageSize]="tamanoDeTanda()"
+              [showPageSize]="false"
+              data-testid="directorio-paginas"
+            />
+          }
+        }
+      </section>
+    </div>
   }
 </app-view-state-host>
+
+<!-- Lo que un vertical necesita **debajo** de los resultados. -->
+<ng-content select="[slot=despues-de-resultados]" />

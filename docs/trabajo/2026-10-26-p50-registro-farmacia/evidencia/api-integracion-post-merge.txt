@@ -1,0 +1,12 @@
+    > 148 |       console.warn(
+          |               ^
+      149 |         `P50: ${residuo.length} organización(es) sintética(s) quedan fijadas por audit.audit_log: ${residuo.join(', ')}`,
+      150 |       );
+      151 |     }
+      at Object.warn (test/integration/pharmacy-registration.int-spec.ts:148:15)
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        40.532 s, estimated 62 s
+Ran all test suites matching test/integration/pharmacy-registration.int-spec.ts.
+EXIT 0

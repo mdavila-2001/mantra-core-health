@@ -1,0 +1,112 @@
+<app-page-header
+  title="Deriva"
+  subtitle="Dónde el frontend, la API, el contrato y el modelo no coinciden. Una diferencia no dice quién tiene razón: dice qué hay que mirar."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="drift" variant="outlined" padding="md" data-testid="portal-drift">
+  <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+    <app-tab label="Hallazgos del mapa">
+      <div class="drift__section">
+        <app-data-table
+          data-testid="portal-findings-table"
+          caption="Hallazgos del mapa de rutas"
+          [state]="findings()"
+          [columns]="findingColumns()"
+          [trackBy]="byFinding"
+          [rowLabel]="findingName"
+          rowNavigable
+          stackedOnMobile
+          (rowActivated)="open($event)"
+          (retry)="loadFindings()"
+        />
+      </div>
+    </app-tab>
+
+    <app-tab label="Modelo contra ORM">
+      <app-view-state-host [state]="drift()" (retry)="loadDrift()">
+        @if (drift(); as state) {
+          @if (state.status === 'ready') {
+            <div class="drift__section" data-testid="portal-model-drift">
+              <p class="drift__note">
+                Tres vistas del mismo esquema: el DDL del modelo (la fuente de verdad), las entidades del ORM y la base
+                desplegada.
+                @if (state.data.tables !== null) {
+                  {{ state.data.tables }} tablas en el modelo
+                  @if (state.data.divergingTables !== null) {
+                    · {{ state.data.divergingTables }} divergen de su entidad.
+                  }
+                }
+              </p>
+
+              <section class="drift__metrics" aria-label="Recuentos de la deriva">
+                @for (m of state.data.metrics; track m.key) {
+                  <app-metric-card
+                    [label]="m.label"
+                    [value]="m.value"
+                    [tone]="m.value > 0 ? 'warning' : 'success'"
+                  />
+                }
+              </section>
+
+              <h3 class="drift__title">Entidades del ORM sin tabla en el modelo</h3>
+              @if (state.data.orphanEntities.length > 0) {
+                <app-data-table
+                  caption="Entidades del ORM sin tabla en el modelo"
+                  [state]="orphans()"
+                  [columns]="orphanColumns()"
+                  [trackBy]="byTable"
+                  stackedOnMobile
+                />
+              } @else {
+                <p class="drift__note">Ninguna: cada entidad tiene su tabla en el modelo.</p>
+              }
+
+              @if (state.data.schemasWithoutDomain.length > 0) {
+                <h3 class="drift__title">Schemas sin dominio de negocio</h3>
+                <ul class="drift__chips">
+                  @for (s of state.data.schemasWithoutDomain; track s) {
+                    <li><code>{{ s }}</code></li>
+                  }
+                </ul>
+              }
+              @if (state.data.schemasWithoutApiCatalog.length > 0) {
+                <h3 class="drift__title">Schemas sin catálogo de la API</h3>
+                <ul class="drift__chips">
+                  @for (s of state.data.schemasWithoutApiCatalog; track s) {
+                    <li><code>{{ s }}</code></li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        }
+      </app-view-state-host>
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<app-portal-finding-drawer [findingId]="selected()" [heading]="selectedTitle()" (closed)="close()" />
+
+<ng-template #severityCell let-row>
+  <app-badge size="sm" [variant]="severity(row.severidad).tone">{{ severity(row.severidad).label }}</app-badge>
+</ng-template>
+
+<ng-template #titleCell let-row>
+  <a
+    app-link
+    [routerLink]="[]"
+    [queryParams]="{ hallazgo: row.id }"
+    queryParamsHandling="merge"
+    data-testid="portal-finding-link"
+  >
+    {{ row.titulo }}
+  </a>
+</ng-template>
+
+<ng-template #ddlCell let-row>
+  <app-badge size="sm" [variant]="ddl(row.ddlKind).tone">{{ ddl(row.ddlKind).label }}</app-badge>
+  @if (row.ddlSource) {
+    <span class="drift__source">{{ row.ddlSource }}</span>
+  }
+</ng-template>

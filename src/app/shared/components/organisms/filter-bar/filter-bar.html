@@ -1,12 +1,14 @@
 <div class="filter-bar__controls">
-  <app-search-field
-    class="filter-bar__search"
-    [value]="searchTerm()"
-    [label]="searchLabel()"
-    [placeholder]="searchPlaceholder()"
-    [loading]="searchLoading()"
-    (searched)="onSearch($event)"
-  />
+  @if (showSearch()) {
+    <app-search-field
+      class="filter-bar__search"
+      [value]="searchTerm()"
+      [label]="searchLabel()"
+      [placeholder]="searchPlaceholder()"
+      [loading]="searchLoading()"
+      (searched)="onSearch($event)"
+    />
+  }
 
   @for (filter of selectFilters(); track filter.key) {
     <div class="filter-bar__filter">
@@ -15,7 +17,7 @@
           [ariaLabel]="filter.label"
           [options]="filter.options"
           [value]="valueOf(filter)"
-          [placeholder]="filter.label"
+          [placeholder]="filter.placeholder ?? filter.label"
           (valueChange)="onFilterChange(filter, $event)"
         />
       } @else {
@@ -50,6 +52,109 @@
      es un `role="group"` con su rótulo, para que un lector de pantalla diga
      «Categoría, grupo» antes de leer los ocho chips. -->
 @for (grupo of chipGroups(); track grupo.label) {
+  @if (layout() === 'facets') {
+    <!-- La columna de un catálogo: rótulo arriba y una opción por renglón.
+         Botones con `aria-pressed` y no radios: tocar la opción puesta la
+         quita, igual que con los chips. -->
+    <div class="filter-bar__faceta" role="group" [attr.aria-labelledby]="'faceta-' + $index">
+      <p class="filter-bar__faceta-rotulo" [id]="'faceta-' + $index">
+        @if (grupo.icon) {
+          <app-nav-icon class="filter-bar__faceta-icono" [name]="grupo.icon" />
+        }
+        {{ grupo.label }}
+      </p>
+      @for (filter of grupo.filters; track filter.key) {
+        @if (isAvailable(filter)) {
+          <!-- Una faceta larga trae su buscador y se recorre por páginas
+               (propietario, 24/10/2026): la columna ya no se estira con
+               «Ver 38 más». -->
+          @if (llevaBuscador(filter)) {
+            <app-search-field
+              class="filter-bar__faceta-buscar"
+              [value]="busquedasDeFaceta().get(filter.key) ?? ''"
+              [label]="'Buscar en ' + grupo.label"
+              [placeholder]="'Buscar ' + grupo.label.toLowerCase()"
+              [debounceMs]="0"
+              (searched)="buscarEnFaceta(filter, $event)"
+            />
+          }
+          <ul class="filter-bar__faceta-lista">
+            @for (opcion of opcionesALaVista(filter); track opcion.value) {
+              <li>
+                <button
+                  type="button"
+                  class="filter-bar__faceta-opcion"
+                  [attr.aria-pressed]="isChipSelected(filter, opcion.value)"
+                  (click)="toggleChip(filter, opcion.value)"
+                >
+                  <span class="filter-bar__faceta-marca" aria-hidden="true"></span>
+                  @let partes = partirCantidad(opcion.label);
+                  <span class="filter-bar__faceta-texto">{{ partes.texto }}</span>
+                  @if (partes.cantidad !== null) {
+                    <span class="filter-bar__faceta-cantidad">{{ partes.cantidad }}</span>
+                  }
+                </button>
+              </li>
+            } @empty {
+              <li class="filter-bar__faceta-sin-coincidencias" role="status">
+                Ninguna opción coincide con «{{ busquedasDeFaceta().get(filter.key) }}».
+              </li>
+            }
+          </ul>
+          @if (paginasDe(filter) > 1) {
+            <!-- Botones de ícono a los lados (cuadrados, con nombre accesible)
+                 y, en el medio, un punto por página o «2 de 9». -->
+            <nav class="filter-bar__faceta-paginas" [attr.aria-label]="'Páginas de ' + grupo.label">
+              <button
+                app-button
+                iconOnly
+                variant="ghost"
+                size="sm"
+                class="filter-bar__faceta-flecha"
+                [disabled]="paginaDe(filter) === 1"
+                aria-label="Página anterior"
+                (clicked)="irAPaginaDeFaceta(filter, paginaDe(filter) - 1)"
+              >
+                <app-nav-icon name="arrow-left" />
+              </button>
+              @if (puntosDe(filter).length > 0) {
+                <span class="filter-bar__faceta-puntos">
+                  @for (numero of puntosDe(filter); track numero) {
+                    <button
+                      type="button"
+                      class="filter-bar__faceta-punto"
+                      [attr.aria-label]="'Página ' + numero"
+                      [attr.aria-current]="numero === paginaDe(filter) ? 'page' : null"
+                      (click)="irAPaginaDeFaceta(filter, numero)"
+                    ></button>
+                  }
+                </span>
+              }
+              <span class="filter-bar__faceta-pagina" aria-live="polite">
+                {{ paginaDe(filter) }} de {{ paginasDe(filter) }}
+              </span>
+              <button
+                app-button
+                iconOnly
+                variant="ghost"
+                size="sm"
+                class="filter-bar__faceta-flecha"
+                [disabled]="paginaDe(filter) === paginasDe(filter)"
+                aria-label="Página siguiente"
+                (clicked)="irAPaginaDeFaceta(filter, paginaDe(filter) + 1)"
+              >
+                <app-nav-icon name="arrow-right" />
+              </button>
+            </nav>
+          }
+        } @else {
+          <p class="filter-bar__unavailable">
+            {{ filter.unavailableReason || 'No se pudo cargar el listado de opciones.' }}
+          </p>
+        }
+      }
+    </div>
+  } @else {
   <div class="filter-bar__chips" role="group" [attr.aria-label]="grupo.label">
     <span class="filter-bar__chips-rotulo">{{ grupo.label }}</span>
     @for (filter of grupo.filters; track filter.key) {
@@ -73,20 +178,25 @@
       }
     }
   </div>
+  }
 }
 
-@if (hasActiveFilters()) {
+@if (showActive() && hasActiveFilters()) {
   <div class="filter-bar__active">
-    @for (active of activeFilters(); track active.key) {
-      <!-- El chip muestra la etiqueta legible; lo que viaja es el código. -->
-      <app-chip
-        variant="info"
-        [removable]="true"
-        [label]="active.label"
-        (removed)="removeFilter(active)"
-      >
-        {{ active.label }}
-      </app-chip>
+    <!-- En la columna de facetas lo puesto ya se ve marcado en su lista: el
+         chip repetido no entraba en el ancho y se cortaba. -->
+    @if (layout() !== 'facets') {
+      @for (active of activeFilters(); track active.key) {
+        <!-- El chip muestra la etiqueta legible; lo que viaja es el código. -->
+        <app-chip
+          variant="info"
+          [removable]="true"
+          [label]="active.label"
+          (removed)="removeFilter(active)"
+        >
+          {{ active.label }}
+        </app-chip>
+      }
     }
 
     <button app-button variant="ghost" size="sm" (clicked)="clearAll()">Limpiar todo</button>

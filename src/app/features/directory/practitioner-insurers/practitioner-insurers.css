@@ -1,0 +1,63 @@
+/* Con qué seguros trabaja el profesional. Sólo tokens ALOVIDA: el contraste AA
+   lo garantiza la paleta, y un hex a mano lo rompe sin que nadie se entere.
+
+   El título copia la escala de `.profesional__bloque-titulo` de la ficha: esta
+   tarjeta se proyecta entre las suyas y tiene que leerse como una más. */
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.insurers__title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.insurers__source {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+}
+
+.insurers__list {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Una aseguradora por fila, con sus planes al lado; en pantalla chica los
+   planes bajan debajo del nombre en vez de apretarse. */
+.insurers__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+}
+
+.insurers__name {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.insurers__plans {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.insurers__no-plans {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

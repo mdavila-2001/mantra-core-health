@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Arterias coronarias en vista anterior del corazón</title>
+  <desc id="d">Esquema simplificado del corazón visto de frente con la aorta, el tronco pulmonar y las arterias coronarias. La coronaria derecha recorre el surco entre la aurícula y el ventrículo derechos. El tronco común izquierdo se divide en la descendente anterior, que baja por el surco entre ambos ventrículos, y la circunfleja, que rodea el borde izquierdo. Un cuadro resume los territorios que irriga cada una.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --wall:#ecb5a9; --wall-d:#c9705f; --blue:#7da3d8; --red:#d6453d; --art-r:#0f7b6c; --art-l:#b4372e; --art-c:#8a5a00; --fat:#f1d98c; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --wall:#8e4b42; --wall-d:#e08a7a; --blue:#4a73ad; --red:#e0584f; --art-r:#4fd1bd; --art-l:#ff8f84; --art-c:#f2c14e; --fat:#6b5b2a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); font-size: 14px; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 19px; font-weight: 700; }
+    .lbl { font-size: 14px; font-weight: 700; }
+    .ldr { stroke: var(--muted); stroke-width: 1.2; fill: none; }
+    .art { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="30" text-anchor="middle" class="title">Arterias coronarias (vista anterior, simplificada)</text>
+
+  <!-- silueta ventricular -->
+  <path d="M320 150 C230 150 150 205 158 295 C166 370 262 418 338 446 C420 410 498 366 506 285 C514 205 430 150 320 150 Z" fill="var(--wall)" stroke="var(--wall-d)" stroke-width="2"/>
+  <!-- aurículas (apéndices) -->
+  <path d="M262 168 C214 150 176 176 178 214 C206 232 250 222 276 196 Z" fill="var(--blue)" stroke="var(--wall-d)" stroke-width="1.5"/>
+  <path d="M430 160 C480 150 520 180 506 222 C476 232 440 214 420 188 Z" fill="var(--blue)" stroke="var(--wall-d)" stroke-width="1.5" opacity=".75"/>
+  <!-- tronco pulmonar y aorta -->
+  <ellipse cx="402" cy="142" rx="34" ry="42" fill="var(--blue)" stroke="var(--wall-d)" stroke-width="1.5"/>
+  <circle cx="330" cy="148" r="30" fill="var(--red)" stroke="var(--wall-d)" stroke-width="1.5"/>
+  <path d="M330 120 L330 82 Q330 62 352 62 L420 62" stroke="var(--red)" stroke-width="22" fill="none"/>
+  <text x="330" y="153" text-anchor="middle" style="fill:#fff;font-weight:700;font-size:13px">Aorta</text>
+  <text x="410" y="146" text-anchor="middle" style="fill:#fff;font-weight:700;font-size:12px">Pulmonar</text>
+
+  <!-- surcos con grasa -->
+  <path d="M296 176 C250 196 190 240 176 302" stroke="var(--fat)" stroke-width="10" fill="none" stroke-linecap="round" opacity=".8"/>
+  <path d="M372 182 C396 250 380 350 345 440" stroke="var(--fat)" stroke-width="10" fill="none" stroke-linecap="round" opacity=".8"/>
+
+  <!-- coronaria derecha -->
+  <path class="art" stroke="var(--art-r)" stroke-width="5" d="M304 170 C262 190 196 238 180 300 C172 340 196 384 244 410"/>
+  <path class="art" stroke="var(--art-r)" stroke-width="3.5" d="M186 296 C176 336 196 380 280 430"/>
+  <!-- tronco común, descendente anterior y diagonales -->
+  <path class="art" stroke="var(--art-l)" stroke-width="5" d="M340 176 L358 192 C382 250 376 350 345 440"/>
+  <path class="art" stroke="var(--art-l)" stroke-width="3" d="M372 230 C414 244 446 288 454 346"/>
+  <path class="art" stroke="var(--art-l)" stroke-width="3" d="M376 300 C412 312 432 340 436 388"/>
+  <!-- circunfleja -->
+  <path class="art" stroke="var(--art-c)" stroke-width="5" stroke-dasharray="1 0" d="M358 192 C412 196 470 228 492 292"/>
+  <path class="art" stroke="var(--art-c)" stroke-width="3" d="M462 252 C484 290 478 336 456 372"/>
+
+  <!-- rótulos izquierda -->
+  <path class="ldr" d="M236 188 L150 134"/><text x="146" y="130" text-anchor="end" class="lbl" style="fill:var(--art-r)">Coronaria derecha</text>
+  <text x="146" y="147" text-anchor="end" class="muted">en el surco derecho</text>
+  <path class="ldr" d="M182 330 L140 330"/><text x="136" y="326" text-anchor="end" class="lbl" style="fill:var(--art-r)">Rama marginal</text>
+  <text x="136" y="343" text-anchor="end" class="muted">del borde derecho</text>
+  <path class="ldr" d="M240 410 L176 420"/><text x="172" y="424" text-anchor="end" class="lbl" style="fill:var(--art-r)">Descendente posterior</text>
+  <text x="172" y="441" text-anchor="end" class="muted">en la cara inferior</text>
+
+  <!-- rótulos derecha -->
+  <text x="446" y="84" class="lbl" style="fill:var(--art-l)">Tronco común izquierdo</text>
+  <path class="ldr" d="M452 262 L560 214"/><text x="564" y="212" class="lbl" style="fill:var(--art-c)">Circunfleja</text>
+  <text x="564" y="229" class="muted">rodea el borde izquierdo</text>
+  <path class="ldr" d="M443 316 L560 292"/><text x="564" y="290" class="lbl" style="fill:var(--art-l)">Diagonales</text>
+  <path class="ldr" d="M366 380 C440 410 520 420 560 420"/><text x="564" y="408" class="lbl" style="fill:var(--art-l)">Descendente anterior</text>
+  <text x="564" y="425" class="muted">en el surco entre ventrículos</text>
+  <path class="ldr" d="M350 190 L440 100" /><text x="446" y="100" class="muted">nace de la aorta, a la izquierda</text>
+
+  <text x="400" y="466" text-anchor="middle" class="muted" style="font-size:12px">Esquema conceptual, sin escala; el trazado real varía entre personas. Ilustración original de AloVida.</text>
+</svg>

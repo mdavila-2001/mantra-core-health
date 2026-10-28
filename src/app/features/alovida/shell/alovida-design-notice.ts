@@ -22,11 +22,11 @@ import { filter, map, startWith } from 'rxjs';
  * las dos superficies.
  */
 const PANTALLA_REAL: Readonly<Record<string, { readonly ruta: string; readonly rotulo: string }>> = {
-  buscar: { ruta: '/directory', rotulo: 'Directorio de médicos' },
-  directorio: { ruta: '/administration/organizations', rotulo: 'Organizaciones' },
-  personas: { ruta: '/administration/patients', rotulo: 'Pacientes' },
-  terminologia: { ruta: '/administration/terminology', rotulo: 'Terminología' },
-  accesos: { ruta: '/administration/delegated-access', rotulo: 'Acceso delegado' },
+  search: { ruta: '/directory', rotulo: 'Directorio de médicos' },
+  'provider-directory': { ruta: '/administration/organizations', rotulo: 'Organizaciones' },
+  people: { ruta: '/administration/patients', rotulo: 'Pacientes' },
+  vocabulary: { ruta: '/administration/terminology', rotulo: 'Terminología' },
+  'access-control': { ruta: '/administration/delegated-access', rotulo: 'Acceso delegado' },
 };
 
 /**

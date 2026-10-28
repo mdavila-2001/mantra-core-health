@@ -195,7 +195,13 @@ export interface TenantSearchQuery {
  * Códigos de tipo de organización que declara `CreateTenantDto`.
  *
  * Comparado con `dynamic-enums` el 2026-08-11: los diez códigos coinciden con
- * `directory.tenants.tenant_type_concept_id`. Se mantiene literal a propósito
+ * `directory.tenants.tenant_type_concept_id`. El 2026-10-26 la API sumó
+ * `CLINIC` al DTO, al catálogo (concepto `420eddfc-…`) y a sus tipos
+ * territoriales: son once, y `CLINIC` va después de `HOSPITAL`, en el mismo
+ * orden que `MEDICAL_ORGANIZATION_TYPES` (abajo), que es un
+ * subconjunto de esta lista (lo fija `directory.types.spec.ts`). `DIAGNOSTIC_CENTER`
+ * existe en la API pero no está acá: sólo nace por el alta pública (ver
+ * `onlyForTenantTypes` en `navigation.types.ts`). Se mantiene literal a propósito
  * —ver la nota de `organization-new.ts`—, porque este set literal se
  * reemplaza por el catálogo real. Hoy es la única fuente que el frontend
  * puede leer: el DTO los enumera (`@IsIn(TENANT_TYPE_CODES)`) y el backend
@@ -208,6 +214,7 @@ export const TENANT_TYPE_CODES = [
   'UNIVERSITY',
   'PHARMACY',
   'HOSPITAL',
+  'CLINIC',
   'MEDICAL_OFFICE',
   'NURSING',
   'HEALTH_OTHER',
@@ -228,6 +235,7 @@ export const TERRITORIAL_TENANT_TYPES: readonly TenantTypeCode[] = [
   'UNIVERSITY',
   'PHARMACY',
   'HOSPITAL',
+  'CLINIC',
   'MEDICAL_OFFICE',
   'NURSING',
   'HEALTH_OTHER',
@@ -246,11 +254,46 @@ export const TENANT_TYPE_LABELS: Readonly<Record<TenantTypeCode, string>> = {
   UNIVERSITY: 'Universidad',
   PHARMACY: 'Farmacia',
   HOSPITAL: 'Hospital',
+  CLINIC: 'Clínica',
   MEDICAL_OFFICE: 'Consultorio médico',
   NURSING: 'Centro de enfermería',
-  HEALTH_OTHER: 'Otro servicio de salud',
+  HEALTH_OTHER: 'Otra institución de salud',
   HEALTH_BUSINESS: 'Comercio de salud',
 };
+
+/**
+ * Los tipos de **organización médica**: los cinco tipos institucionales de
+ * salud que el alta pública de `register-organization` deja elegir, en el orden
+ * en que la pantalla los ofrece.
+ *
+ * Viven acá, junto a `TENANT_TYPE_CODES`, y no en el cliente HTTP del alta:
+ * son vocabulario del directorio y los leen también el registro de navegación
+ * y el alta administrativa. No son un catálogo propio del front: la API los
+ * declara (`@IsIn(TENANT_TYPE_CODES)`) y resuelve cada código a su concepto.
+ * La pantalla igual lee el catálogo `tenant-type` y ofrece sólo los que la API
+ * publica (ver `medicalOrganizationTypeOptions`); esta lista fija el orden, el
+ * subconjunto y el tipo que el compilador controla.
+ *
+ * Es un **subconjunto** de `TENANT_TYPE_CODES` y en su mismo orden: el
+ * `satisfies` impide que acá aparezca un código que el alta administrativa no
+ * conoce, y `directory.types.spec.ts` fija el orden. Sus rótulos son los de
+ * `TENANT_TYPE_LABELS`: un mismo tipo se llama igual en las dos altas.
+ */
+export const MEDICAL_ORGANIZATION_TYPES = [
+  'HOSPITAL',
+  'CLINIC',
+  'MEDICAL_OFFICE',
+  'NURSING',
+  'HEALTH_OTHER',
+] as const satisfies readonly TenantTypeCode[];
+
+/** Un tipo de organización médica: lo que viaja en `tenantType`. */
+export type MedicalOrganizationType = (typeof MEDICAL_ORGANIZATION_TYPES)[number];
+
+/** Si un código es uno de los tipos de organización médica. */
+export function isMedicalOrganizationType(code: string): code is MedicalOrganizationType {
+  return (MEDICAL_ORGANIZATION_TYPES as readonly string[]).includes(code);
+}
 
 /**
  * Datos de aseguradora. El backend los **exige** cuando el tipo es `PAYER` y
@@ -371,7 +414,31 @@ export interface BranchListItem {
   readonly branchTypeConceptId?: string;
   readonly statusConceptId: string;
   readonly timeZone?: string;
+  /**
+   * Lo que suma la carga masiva de sucursales (2026-09-30). `directory.branches`
+   * no tiene todavía dónde guardarlo (P54): hoy sólo lo devuelve el simulador.
+   */
+  readonly description?: string;
+  readonly locationUrl?: string;
+  /** El punto en el mapa, si se conoce. Van juntas o no van. */
+  readonly latitude?: number;
+  readonly longitude?: number;
   readonly createdAt: Date;
+}
+
+/**
+ * Los cambios a una sucursal (`PATCH /tenants/{id}/branches/{branchId}`).
+ *
+ * **Sólo existe en el simulador** (P54): la API real no publica edición de
+ * sucursales. `null` borra el dato; una clave ausente lo deja como está. El
+ * código no se edita: es la identidad de la sucursal.
+ */
+export interface BranchChanges {
+  readonly name?: string;
+  readonly description?: string | null;
+  readonly locationUrl?: string | null;
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
 }
 
 /** Respuesta plana de sucursales: sin cursor, con recuento. */
@@ -382,6 +449,7 @@ export interface BranchList {
 
 /** Tipos de sede que acepta el alta. */
 export type BranchTypeCode = 'CLINIC' | 'OFFICE';
+
 
 /**
  * Alta de una sucursal (`POST /tenants/{id}/branches`, UC-04-04).
@@ -401,6 +469,10 @@ export interface NewBranch {
   readonly timeZone?: string;
   readonly latitude?: number;
   readonly longitude?: number;
+  /** Suma de la carga masiva; la API todavía no la declara (P54). */
+  readonly description?: string;
+  /** El enlace de mapa tal como lo pegaron; ídem. */
+  readonly locationUrl?: string;
 }
 
 /**

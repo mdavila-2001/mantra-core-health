@@ -14,6 +14,7 @@ import {
   PLATFORM_ID,
   type ComponentRef,
   type OnDestroy,
+  type TemplateRef,
 } from '@angular/core';
 
 import { nextControlId } from '@shared/forms/form-control.context';
@@ -34,7 +35,12 @@ const NATIVELY_FOCUSABLE = 'a[href], button, input, select, textarea, [tabindex]
  * ```html
  * <button app-button iconOnly aria-label="Imprimir" appTooltip="Imprimir receta">…</button>
  * <span appTooltip="Índice de masa corporal" appTooltipPosition="right">IMC</span>
+ * <button appTooltip="Ecografía" [appTooltipTemplate]="fichaDelServicio">Ecografía</button>
  * ```
+ *
+ * Con `appTooltipTemplate` el globo pinta esa plantilla en vez del texto: para
+ * una ficha corta de sólo lectura. `appTooltip` sigue siendo obligatorio como
+ * resumen: es lo que se muestra si la plantilla falta.
  *
  * El globo se cuelga del `<body>` y se posiciona con `position: fixed` desde el
  * rectángulo del host: así no lo recorta ningún contenedor con `overflow`, que
@@ -64,6 +70,7 @@ export class Tooltip implements OnDestroy {
 
   readonly appTooltip = input<string>('');
   readonly appTooltipPosition = input<TooltipPosition>('top');
+  readonly appTooltipTemplate = input<TemplateRef<unknown> | null>(null);
 
   private panel: ComponentRef<TooltipPanel> | null = null;
   private pendingShow: ReturnType<typeof setTimeout> | null = null;
@@ -125,6 +132,7 @@ export class Tooltip implements OnDestroy {
     });
     panel.setInput('panelId', this.panelId);
     panel.setInput('text', this.appTooltip());
+    panel.setInput('template', this.appTooltipTemplate());
     panel.setInput('position', this.appTooltipPosition());
 
     this.applicationRef.attachView(panel.hostView);
@@ -278,7 +286,7 @@ export class Tooltip implements OnDestroy {
     if (!focusable && !hasVisibleText) {
       console.warn(
         '[appTooltip] el host no es enfocable ni tiene texto visible: la ayuda queda ' +
-          'fuera del alcance del teclado. Agregá tabindex="0" o un nombre accesible.',
+          'fuera del alcance del teclado. Agregue tabindex="0" o un nombre accesible.',
         host,
       );
     }

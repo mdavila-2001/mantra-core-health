@@ -56,6 +56,8 @@ export interface ViewStateNextAction {
   readonly label: string;
   /** Ruta interna de Angular. Se omite cuando la acción abre un diálogo. */
   readonly route?: string;
+  /** Parámetros de consulta de la ruta (p. ej. qué pestaña abrir). */
+  readonly queryParams?: Readonly<Record<string, string>>;
 }
 
 /** Un problema puntual devuelto por la API, ya traducido a lenguaje de la vista. */
@@ -118,6 +120,13 @@ export interface ValidationViewState {
   readonly issues: readonly ViewStateIssue[];
   /** Presente cuando la API pidió esperar (429): segundos hasta poder reintentar. */
   readonly retryAfterSeconds?: number;
+  /**
+   * El `correlationId` de la API, cuando el estado viene de una respuesta.
+   * Opcional a diferencia de S9: un error de lo ingresado lo resuelve la
+   * persona, pero un conflicto o un rechazo de negocio se reportan, y sin el
+   * código no hay cómo encontrarlos en el servidor.
+   */
+  readonly requestId?: string;
 }
 
 /**
@@ -132,6 +141,13 @@ export interface ForbiddenViewState {
   readonly status: 'forbidden';
   readonly message?: string;
   readonly nextAction?: ViewStateNextAction;
+  /**
+   * El `correlationId` de la API, cuando el estado viene de una respuesta.
+   * Opcional a diferencia de S9: un error de lo ingresado lo resuelve la
+   * persona, pero un conflicto o un rechazo de negocio se reportan, y sin el
+   * código no hay cómo encontrarlos en el servidor.
+   */
+  readonly requestId?: string;
 }
 
 /**

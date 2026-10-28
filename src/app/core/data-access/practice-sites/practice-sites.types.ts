@@ -28,6 +28,8 @@ export interface PracticeSite {
   readonly latitude: number | null;
   readonly longitude: number | null;
   readonly status: string;
+  /** Contacto de este profesional en esta sede; independiente del teléfono general. */
+  readonly contactPhone?: string | null;
   /**
    * Si es **su** consultorio —su práctica personal— y no la sede de otro.
    *
@@ -59,6 +61,21 @@ export interface PracticeSite {
    * nunca esconde el camino para cargarlo.
    */
   readonly bankQrFileId?: string | null;
+
+  /**
+   * El archivo del **logo del consultorio**, o `null` si no cargó ninguno.
+   *
+   * Es lo que sale en la pestaña «Facturación» del perfil y en el membrete de
+   * cada PDF que el profesional emite. Nadie lee este campo directamente: las
+   * pantallas y el PDF hablan con `LogoDelConsultorioClient`, que es el único
+   * que sabe **dónde** vive el logo. Hoy es la sede propia (maqueta); cuando el
+   * backend decida si va en `practice_sites` o en el perfil público de la
+   * organización, cambia ese cliente y nada más.
+   *
+   * Opcional por el mismo motivo que {@link PracticeSite.bankQrFileId}:
+   * ausente se lee como «sin logo», nunca como error.
+   */
+  readonly logoFileId?: string | null;
 }
 
 /**
@@ -70,6 +87,8 @@ export interface PracticeSite {
 export interface NewOwnSiteAddress {
   /** Líneas de la dirección (calle, número, referencia). Al menos una. */
   readonly lines: readonly string[];
+  /** Distrito o zona, aparte de las líneas (ADR-0028 de la API). */
+  readonly district?: string;
   readonly city?: string;
   /** Municipio, miembro de `VS_BO_MUNICIPALITY`. */
   readonly municipalityConceptId?: string;
@@ -89,6 +108,7 @@ export interface NewOwnSiteAddress {
  */
 export interface NewOwnSite {
   readonly name: string;
+  readonly contactPhone?: string;
   /** Zona horaria IANA. Por defecto la de La Paz. */
   readonly timeZone?: string;
   readonly address?: NewOwnSiteAddress;
@@ -142,8 +162,17 @@ export interface MyRoleAssignment {
   readonly practiceSiteId?: string;
   readonly roleConceptId: string;
   readonly specialtyConceptId?: string;
+  /** Procedimiento de la sede por el que se afilió (una fila por procedimiento). */
+  readonly healthcareServiceId?: string;
+  readonly serviceConceptId?: string;
+  readonly serviceDisplay?: string;
   /** Concepto de estado: pendiente / activa / suspendida / rechazada / finalizada. */
   readonly status: string;
+  /** El estado como concepto (v2 del contrato); se decide por `statusCode`, nunca por el uuid. */
+  readonly statusConceptId?: string;
+  readonly statusCode?: string;
+  /** Quién inició la afiliación: el centro (invitación) o el médico (solicitud). */
+  readonly initiatedBy?: 'PRACTICE' | 'PRACTITIONER';
   readonly isPrimary: boolean;
   readonly validFrom?: Date;
   readonly validTo?: Date;
@@ -157,6 +186,8 @@ export interface SelfRequestAffiliationInput {
   readonly practiceSiteId?: string;
   readonly roleConceptId?: string;
   readonly specialtyConceptId?: string;
+  /** Un procedimiento de la sede por llamada; para varios, una llamada por cada uno. */
+  readonly healthcareServiceId?: string;
   /** `YYYY-MM-DD`. */
   readonly validFrom?: string;
   readonly note?: string;

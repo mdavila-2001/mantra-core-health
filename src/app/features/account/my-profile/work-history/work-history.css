@@ -4,6 +4,7 @@
 
 :host {
   display: block;
+  min-inline-size: 0;
 }
 
 .historial {
@@ -29,6 +30,12 @@
 .historial__intro,
 .historial__vacio {
   margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.historial__telefono {
   color: var(--text-muted);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
@@ -63,6 +70,7 @@
   /* Que el nombre largo de un hospital no empuje el período fuera de la
      tarjeta: la columna cede antes que el reparto. */
   min-inline-size: 0;
+  overflow-wrap: anywhere;
 }
 
 .historial__cargo,
@@ -156,30 +164,12 @@
   border-block-end: 1px solid var(--border-subtle);
 }
 
-.historial__mapa-bloque {
-  display: grid;
-  gap: var(--sp-2);
-}
-
-/* Alto fijo: sin él Leaflet no tiene lienzo y el mapa nace de 0 px. Mismo
-   criterio que el mapa del alta de paciente. */
-.historial__mapa {
-  display: block;
-  block-size: 18rem;
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-
-.historial__punto {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
+/* Lo que falta para guardar el lugar: su punto en el mapa, obligatorio. */
+.historial__aviso-mapa {
   margin: 0;
   color: var(--text-muted);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
-  font-variant-numeric: tabular-nums;
 }
 
 /* El nombre y su insignia, en una línea: «Consultorio Dra. Rojas · Tu
@@ -255,9 +245,8 @@
    sigue a la vista sin abrir nada. Lo que se fue es la SEGUNDA copia del
    mismo aviso, la que vivía en el glifo. */
 
-/* La segunda puerta: buscar un establecimiento que ya existe. Va separada del
-   alta del consultorio propio por una línea, porque son dos operaciones
-   distintas y pegadas se leen como pasos de la misma. */
+/* El panel de «Agregar lugar de atención»: el padrón oficial primero y, al
+   pie, la salida para cargar un lugar propio. */
 .historial__padron {
   margin-block-start: var(--sp-5);
   padding-block-start: var(--sp-4);
@@ -269,4 +258,20 @@
    ninguno de sus renglones. */
 .historial__alta {
   margin: var(--sp-4) 0 0;
+}
+
+/* La salida «¿No está en la lista? Cargarlo yo» del panel de agregar lugar:
+   en fila cuando entra, apilada en pantallas chicas. */
+.historial__padron-salida {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.historial__padron-salida .historial__intro {
+  margin: 0;
 }

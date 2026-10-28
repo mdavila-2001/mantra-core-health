@@ -19,6 +19,7 @@ import type {
 } from '../../../core/data-access/insurance/insurance-analytics.types';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierDetail } from '../../../core/data-access/insurance/insurance.types';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -31,7 +32,10 @@ import { SegmentedControl } from '../../../shared/components/molecules/segmented
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -40,6 +44,13 @@ import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-expo
 import { formatKpiAmount } from '../money-format';
 import { displayCurrency } from '../../../core/money/display-currency';
 import { MonthlyTrendChart } from './monthly-trend-chart/monthly-trend-chart';
+import {
+  lossRatioTone,
+  type LossRatioTone,
+  type PlanPremium,
+} from './person-loss-report/person-loss-report.model';
+import { PersonLossReportStore } from './person-loss-report/person-loss-report.store';
+import { PersonLossReportView } from './person-loss-report/person-loss-report';
 
 /** Las cinco ventanas del filtro de periodo. `'all'` envía un `startDate` muy anterior. */
 type RangeOption = '30d' | '90d' | '180d' | '1y' | 'all';
@@ -60,6 +71,14 @@ const RANGE_OPTIONS: readonly SegmentedOption<RangeOption>[] = [
 ];
 
 const ALL_PLANS = 'all';
+
+/**
+ * Los grupos de vistas del tablero, en el orden de las pestañas. La clave es lo
+ * que viaja en `?tab=`; el rótulo está en la plantilla.
+ */
+const TAB_KEYS = ['summary', 'spend', 'population', 'by-person'] as const;
+type TabKey = (typeof TAB_KEYS)[number];
+const DEFAULT_TAB: TabKey = 'summary';
 
 /** Fecha civil de hoy en `America/La_Paz` (`YYYY-MM-DD`), sin `Date` de por medio. */
 function hoyEnLaPaz(): string {
@@ -124,6 +143,7 @@ interface FilaDeExportacion {
 @Component({
   selector: 'app-insurance-analytics',
   imports: [
+    Alert,
     AppButton,
     Badge,
     Card,
@@ -132,17 +152,22 @@ interface FilaDeExportacion {
     FormField,
     MonthlyTrendChart,
     PageHeader,
+    PersonLossReportView,
     Progress,
     SegmentedControl,
     Select,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
+  // El informe por persona vive con la pantalla, no con su pestaña: `app-tab`
+  // no dibuja el panel cerrado y cambiar de pestaña lo borraría.
+  providers: [PersonLossReportStore],
   templateUrl: './insurance-analytics.html',
   styleUrl: './insurance-analytics.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InsuranceAnalytics {
-
   private readonly analytics = inject(InsuranceAnalyticsClient);
   private readonly insurance = inject(InsuranceClient);
   private readonly csv = inject(CsvExportService);
@@ -162,8 +187,20 @@ export class InsuranceAnalytics {
 
   protected readonly planId = computed(() => this.queryParams().get('plan') ?? ALL_PLANS);
 
+  /** La pestaña activa vive en la URL, como el período y el plan. */
+  protected readonly tabIndex = computed(() => {
+    const index = TAB_KEYS.indexOf(this.queryParams().get('tab') as TabKey);
+    return index === -1 ? TAB_KEYS.indexOf(DEFAULT_TAB) : index;
+  });
+
   protected readonly data = signal<ViewState<InsuranceDashboardAnalytics>>(loading());
   private readonly carrier = signal<CarrierDetail | null>(null);
+  /**
+   * Por qué no llegaron los planes de la aseguradora, o `null`. Sin planes el
+   * filtro queda en «Todos los planes» y la prima por persona no se estima:
+   * antes eso pasaba sin decir nada.
+   */
+  protected readonly carrierError = signal<string | null>(null);
 
   protected readonly planOptions = computed<readonly SelectOption<string>[]>(() => {
     const detalle = this.carrier();
@@ -176,16 +213,33 @@ export class InsuranceAnalytics {
 
   protected readonly canExport = computed(() => dataOf(this.data()) !== null);
 
+  /** Las primas de lista de los planes, para estimar la prima de cada persona. */
+  protected readonly planPremiums = computed<readonly PlanPremium[]>(() =>
+    (this.carrier()?.products ?? [])
+      .flatMap((producto) => producto.plans)
+      .map((plan) => ({ name: plan.name, monthlyPremiumAmount: plan.monthlyPremiumAmount })),
+  );
+
+  /** El nombre del plan filtrado, o `null` para todos: el informe por persona filtra por nombre. */
+  protected readonly selectedPlanName = computed<string | null>(() => {
+    const id = this.planId();
+    if (id === ALL_PLANS) return null;
+    const planes = this.carrier()?.products.flatMap((producto) => producto.plans) ?? [];
+    return planes.find((plan) => plan.id === id)?.name ?? null;
+  });
+
+  /** La misma ventana que pide el tablero; `startDate: null` = «Todo». */
+  protected readonly reportWindow = computed(() => {
+    const hoy = hoyEnLaPaz();
+    const range = this.range();
+    return {
+      startDate: range === 'all' ? null : restarDias(hoy, RANGE_DAYS[range]),
+      endDate: hoy,
+    };
+  });
+
   constructor() {
-    this.insurance.listCarriers().subscribe({
-      next: (directory) => {
-        const first = directory.items[0];
-        if (first === undefined) return;
-        this.insurance.getCarrier(first.id).subscribe({
-          next: (detail) => this.carrier.set(detail),
-        });
-      },
-    });
+    this.loadCarrier();
 
     effect(() => {
       // Se leen para que el efecto se re-dispare con cada cambio de filtro.
@@ -195,10 +249,39 @@ export class InsuranceAnalytics {
     });
   }
 
+  protected loadCarrier(): void {
+    this.carrierError.set(null);
+    const failed = (error: unknown): void =>
+      this.carrierError.set(
+        describeApiFailure(error, 'No pudimos traer los planes de su aseguradora, así que no se puede filtrar por plan.'),
+      );
+    this.insurance.listCarriers().subscribe({
+      next: (directory) => {
+        const first = directory.items[0];
+        if (first === undefined) return;
+        this.insurance.getCarrier(first.id).subscribe({
+          next: (detail) => this.carrier.set(detail),
+          error: failed,
+        });
+      },
+      error: failed,
+    });
+  }
+
   protected changeRange(range: RangeOption): void {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { range, plan: this.planId() === ALL_PLANS ? null : this.planId() },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected changeTab(index: number): void {
+    const key = TAB_KEYS[index] ?? DEFAULT_TAB;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: key === DEFAULT_TAB ? null : key },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -237,12 +320,8 @@ export class InsuranceAnalytics {
   }
 
   /** Semáforo del loss ratio: verde < 75 %, ámbar 75–85 %, rojo > 85 %. */
-  protected lossRatioTone(percent: string | null): 'success' | 'warning' | 'error' | 'secondary' {
-    if (percent === null) return 'secondary';
-    const valor = Number(percent);
-    if (valor < 75) return 'success';
-    if (valor <= 85) return 'warning';
-    return 'error';
+  protected lossRatioTone(percent: string | null): LossRatioTone {
+    return lossRatioTone(percent);
   }
 
   protected formatear(amount: string): string {

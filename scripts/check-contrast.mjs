@@ -11,9 +11,10 @@
  * CSS. Resuelve las cadenas `var(--otro-token)` y las mezclas `rgba` sobre su
  * fondo, que es lo que hace falta para medir de verdad.
  *
- * Las excepciones E1–E3 que el sistema declara están enumeradas abajo: no se
- * ignoran, se **esperan**. Si una deja de incumplir, esto lo dice — porque una
- * excepción que ya no hace falta es deuda documental.
+ * El mecanismo de excepciones sigue (un par puede declarar `excepcion`, y si
+ * deja de incumplir esto lo dice), pero hoy NO hay ninguna: E3, R2 y R3 —los
+ * bordes de control y el petróleo en oscuro— se cerraron el 2026-10-11
+ * subiendo los tokens, sin bajar ningún umbral.
  *
  * Mide **las dos hojas**, no una:
  *
@@ -26,6 +27,13 @@
  * cazó este mismo script y se subió al 800; en la hoja de la bóveda vivió sin
  * que nadie lo viera, pintando badges de 11,5 px. Un guardarraíl que sólo mira
  * una de las dos hojas del sistema de diseño no es un guardarraíl.
+ *
+ * También mide el **anillo de foco** (WCAG 1.4.11: 3:1 contra lo que lo rodea).
+ * Era aguamarina al 45 %, y compuesto sobre blanco daba 1,48:1: el script no
+ * lo miraba porque sólo tenía pares de texto. Y mide contra el **marfil**
+ * (#F6F3ED), que ya no es un token de superficie de ninguna de las dos hojas
+ * —la página es blanca desde el 2026-09-10— pero sigue pintando secciones de la
+ * bóveda, y es el peor caso de la tinta terciaria.
  *
  * Uso: node scripts/check-contrast.mjs
  */
@@ -75,6 +83,18 @@ const OSCURO_MANUAL = new Map([
 ]);
 
 // --- color ------------------------------------------------------------------
+
+/**
+ * El marfil de marca (`--c-ivory-500`). No es la superficie de ningún tema,
+ * así que se mide como fondo literal y **sólo en claro**: en oscuro no hay
+ * marfil detrás de nada.
+ */
+const MARFIL = '#F6F3ED';
+
+/** El fondo de un par: un token del tema, o un color literal. */
+function fondoDe(par, tokens) {
+  return par.fondo.startsWith('#') ? par.fondo : resolver(tokens.get(par.fondo), tokens);
+}
 
 /** Resuelve `var(--x)` en cadena hasta llegar a un color literal. */
 function resolver(valor, tokens, profundidad = 0) {
@@ -151,21 +171,37 @@ function contraste(frente, fondo) {
  *
  * `excepcion` nombra las que el sistema declara en `identidad-visual.md` Parte
  * 8.2. Se esperan: si una **deja** de incumplir, el script lo dice.
+ *
+ * `soloEn` limita un par a un tema: el marfil sólo existe en claro.
  */
 const PARES = [
   { tinta: '--text-primary', fondo: '--bg-surface', nivel: 4.5 },
   { tinta: '--text-secondary', fondo: '--bg-surface', nivel: 4.5 },
-  // Las excepciones son **por tema**: E1 solo aplica al claro y E3 solo al
+  // Las excepciones son **por tema**: E3 solo aplica al
   // oscuro. Declararlas globales taparía un incumplimiento en el tema donde la
   // excepción no rige, que es justo lo que este script existe para evitar.
-  { tinta: '--text-muted', fondo: '--bg-surface', nivel: 4.5, excepcion: { claro: 'E1' } },
+  //
+  // `--text-muted` ya no tiene excepción: era E1 (neutral-300, 3,86:1 sobre
+  // marfil) y pasó a ivory-800. Se mide contra las cuatro superficies y el
+  // marfil, porque su peor caso nunca fue la tarjeta.
+  { tinta: '--text-muted', fondo: '--bg-surface', nivel: 4.5 },
+  { tinta: '--text-muted', fondo: '--bg-surface-alt', nivel: 4.5 },
+  { tinta: '--text-muted', fondo: '--bg-inset', nivel: 4.5 },
+  { tinta: '--text-muted', fondo: MARFIL, nivel: 4.5, soloEn: 'claro' },
+  // El anillo de foco es un componente de interfaz: 3:1 contra lo que lo rodea.
+  { tinta: '--focus-ring', fondo: '--bg-base', nivel: 3 },
+  { tinta: '--focus-ring', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--focus-ring', fondo: '--bg-surface-alt', nivel: 3 },
+  { tinta: '--focus-ring', fondo: '--bg-inset', nivel: 3 },
+  { tinta: '--focus-ring', fondo: MARFIL, nivel: 3, soloEn: 'claro' },
   { tinta: '--brand-primary', fondo: '--bg-surface', nivel: 4.5 },
-  {
-    tinta: '--border-strong',
-    fondo: '--bg-surface',
-    nivel: 3,
-    excepcion: { 'oscuro · sistema': 'E3', 'oscuro · manual': 'E3' },
-  },
+  // Borde de control: 3:1 (WCAG 1.4.11) contra TODA superficie donde vive un
+  // campo. Era la excepción E3 en oscuro (velo al 24 %, 2,15:1); se cerró
+  // subiendo el velo al 40 %, y se mide también la superficie alta (peor caso).
+  { tinta: '--border-strong', fondo: '--bg-base', nivel: 3 },
+  { tinta: '--border-strong', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--border-strong', fondo: '--bg-surface-alt', nivel: 3 },
+  { tinta: '--border-strong', fondo: '--bg-inset', nivel: 3 },
   { tinta: '--st-success-fg', fondo: '--st-success-bg', nivel: 4.5 },
   { tinta: '--st-warning-fg', fondo: '--st-warning-bg', nivel: 4.5 },
   { tinta: '--st-error-fg', fondo: '--st-error-bg', nivel: 4.5 },
@@ -200,49 +236,53 @@ const ALOVIDA_OSCURO = new Map([
  * base»— y es la que destapa que `--tinta-3` sobre marfil está peor que sobre
  * blanco.
  *
- * `R1` y `R2` son las excepciones propias de esta hoja, de la misma clase que
- * las `E1` y `E3` de v1.0: texto terciario y borde de control en oscuro.
- *
- * `R3` no es de esa clase y no debería envejecer como las otras — ver abajo.
+ * Esta hoja ya no tiene excepciones. `R1` (`--tinta-3` en claro) se cerró
+ * subiendo el token a #656768; `R2` (borde de control en oscuro, 2,47:1) y
+ * `R3` (petróleo en oscuro) se cerraron el 2026-10-11 — ver abajo.
  */
 
-/* R3 · `--petroleo` en OSCURO está sobrecargado y no tiene solución de un valor.
-   El token hace dos trabajos con umbrales que se mueven en sentido contrario:
+/* R3 (cerrada) · `--petroleo` en OSCURO estaba sobrecargado: era la TINTA de
+   `a[app-link]` (≥4,5:1 contra la superficie) y el RELLENO del botón primario
+   (≥4,5:1 con #fff encima), umbrales que se mueven en sentido contrario. Con
+   #12719F el enlace daba 3,09:1 sobre la tarjeta. Se partió en dos:
 
-     · es la TINTA de `a[app-link]`      → necesita ≥4,5:1 contra la superficie
-     · es el RELLENO del botón primario  → necesita ≥4,5:1 con #fff encima
+     · `--petroleo`          tinta   · oscuro #4FA8D6 → 6,92 página · 6,29 tarjeta
+     · `--petroleo-relleno`  relleno · oscuro #12719F → 5,40 con blanco encima
 
-   Hoy vale #12719F: 3,41:1 sobre la página y 3,09:1 sobre la tarjeta (falla como
-   enlace), con 5,40:1 de blanco encima (cumple como botón). Medido: en cuanto se
-   aclara hasta que el enlace pasa (~#1E8CC4, 4,46:1 sobre tarjeta) el blanco del
-   botón ya cayó a 3,75:1. **No hay un valor que cumpla los dos.**
-
-   La salida no es un tono, es partir el token en dos —uno de tinta y uno de
-   relleno—, y eso es decisión del diseñador sobre la hoja de la bóveda, no de
-   este repo. Por eso se registra como excepción y se avisa, que es literalmente
-   la política que fija identidad-visual.md: «si un par no llega al umbral WCAG,
-   no se ajusta el tono — se registra como excepción y se avisa al diseñador».
-
-   A diferencia de R1 y R2, ésta se espera que DESAPAREZCA: no es un límite
-   aceptado del sistema, es una tarea abierta. */
+   En claro los dos valen #0B557E. Se miden los dos trabajos por separado; el
+   relleno contra #FFFFFF literal, porque el contraste es simétrico. */
 const PARES_ALOVIDA = [
   { tinta: '--tinta', fondo: '--sup-tarjeta', nivel: 4.5 },
   { tinta: '--tinta', fondo: '--sup-pagina', nivel: 4.5 },
   { tinta: '--tinta', fondo: '--sup-inset', nivel: 4.5 },
   { tinta: '--tinta-2', fondo: '--sup-tarjeta', nivel: 4.5 },
   { tinta: '--tinta-2', fondo: '--sup-pagina', nivel: 4.5 },
-  { tinta: '--tinta-3', fondo: '--sup-tarjeta', nivel: 4.5, excepcion: { claro: 'R1' } },
-  { tinta: '--tinta-3', fondo: '--sup-pagina', nivel: 4.5, excepcion: { claro: 'R1' } },
+  { tinta: '--tinta-3', fondo: '--sup-tarjeta', nivel: 4.5 },
+  { tinta: '--tinta-3', fondo: '--sup-pagina', nivel: 4.5 },
+  { tinta: '--tinta-3', fondo: '--sup-inset', nivel: 4.5 },
+  { tinta: '--tinta-3', fondo: MARFIL, nivel: 4.5, soloEn: 'claro' },
   { tinta: '--tinta-marca', fondo: '--sup-tarjeta', nivel: 4.5 },
-  { tinta: '--petroleo', fondo: '--sup-pagina', nivel: 4.5, excepcion: { oscuro: 'R3' } },
-  { tinta: '--petroleo', fondo: '--sup-tarjeta', nivel: 4.5, excepcion: { oscuro: 'R3' } },
-  { tinta: '--borde-ctrl', fondo: '--sup-tarjeta', nivel: 3, excepcion: { oscuro: 'R2' } },
-  { tinta: '--borde-ctrl', fondo: '--sup-inset', nivel: 3, excepcion: { oscuro: 'R2' } },
+  { tinta: '--petroleo', fondo: '--sup-pagina', nivel: 4.5 },
+  { tinta: '--petroleo', fondo: '--sup-tarjeta', nivel: 4.5 },
+  { tinta: '--petroleo', fondo: '--sup-inset', nivel: 4.5 },
+  { tinta: '--petroleo-relleno', fondo: '#FFFFFF', nivel: 4.5 },
+  { tinta: '--borde-ctrl', fondo: '--sup-pagina', nivel: 3 },
+  { tinta: '--borde-ctrl', fondo: '--sup-tarjeta', nivel: 3 },
+  { tinta: '--borde-ctrl', fondo: '--sup-inset', nivel: 3 },
   { tinta: '--ok-tinta', fondo: '--ok-bg', nivel: 4.5 },
   { tinta: '--aviso-tinta', fondo: '--aviso-bg', nivel: 4.5 },
   { tinta: '--error-tinta', fondo: '--error-bg', nivel: 4.5 },
   { tinta: '--info-tinta', fondo: '--info-bg', nivel: 4.5 },
   { tinta: '--neutro-tinta', fondo: '--neutro-bg', nivel: 4.5 },
+  // Anillo de foco: 3:1 (WCAG 1.4.11). En el nav manda `--anillo-foco-nav`:
+  // en oscuro el nav es petróleo y el anillo general ahí desaparece. Detrás
+  // del nav va `--nav-carril` (marfil en claro, petróleo-x en oscuro).
+  { tinta: '--anillo-foco', fondo: '--sup-pagina', nivel: 3 },
+  { tinta: '--anillo-foco', fondo: '--sup-tarjeta', nivel: 3 },
+  { tinta: '--anillo-foco', fondo: '--sup-inset', nivel: 3 },
+  { tinta: '--anillo-foco', fondo: MARFIL, nivel: 3, soloEn: 'claro' },
+  { tinta: '--anillo-foco-nav', fondo: '--sup-nav', nivel: 3 },
+  { tinta: '--anillo-foco-nav', fondo: '--nav-carril', nivel: 3 },
 ];
 
 const TEMAS_ALOVIDA = [
@@ -265,8 +305,9 @@ for (const hoja of HOJAS) {
   filas.push('', `  ── ${hoja.nombre}`);
   for (const tema of hoja.temas) {
     for (const par of hoja.pares) {
+      if (par.soloEn !== undefined && par.soloEn !== tema.nombre) continue;
       const donde = `${hoja.nombre} · ${tema.nombre}`;
-      const fondoRgb = aRgb(resolver(tema.tokens.get(par.fondo), tema.tokens));
+      const fondoRgb = aRgb(fondoDe(par, tema.tokens));
       let tintaRgb = aRgb(resolver(tema.tokens.get(par.tinta), tema.tokens));
 
       if (fondoRgb === null || tintaRgb === null) {
@@ -323,10 +364,5 @@ if (fallos.length > 0) {
 console.log('');
 console.log(
   `  ${filas.filter((f) => f.startsWith('  ✓') || f.startsWith('  ·') || f.startsWith('  ✗')).length} ` +
-    `combinaciones medidas en ${HOJAS.length} hojas · ` +
-    `las excepciones E1–E3 (v1.0) y R1–R2 (bóveda) se esperan, no se ignoran`,
-);
-console.log(
-  '  R3 NO es un límite aceptado: --petroleo en oscuro está sobrecargado ' +
-    '(enlace y relleno de botón) y hay que partirlo en dos. Es tarea abierta del diseñador.',
+    `combinaciones medidas en ${HOJAS.length} hojas · sin excepciones declaradas`,
 );

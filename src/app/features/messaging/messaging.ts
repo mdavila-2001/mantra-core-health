@@ -4,8 +4,11 @@ import {
   computed,
   DestroyRef,
   effect,
+  ElementRef,
   inject,
   signal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -13,11 +16,12 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
-import { ChatStore } from '../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
-import { conQuien } from '../../core/messaging/con-quien';
+import { ChatStore, SIN_NOMBRE } from '../../core/messaging/chat.store';
+import { ChatPreferences } from '../../core/messaging/chat-preferences';
+import { conversationLabel } from '../../core/messaging/conversation-label';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { Avatar } from '../../shared/components/atoms/avatar/avatar';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
@@ -58,6 +62,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
   imports: [
     Alert,
     AppButton,
+    Avatar,
     ConversationList,
     EmptyState,
     FormsModule,
@@ -75,7 +80,7 @@ const ESPERA_DE_BUSQUEDA_MS = 300;
 })
 export class Messaging {
   protected readonly store = inject(ChatStore);
-  private readonly preferencias = inject(ChatPreferencias);
+  private readonly preferencias = inject(ChatPreferences);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
   private readonly titulo = inject(Title);
@@ -85,6 +90,12 @@ export class Messaging {
   protected readonly consulta = signal('');
   protected readonly filtro = signal<Filtro>('todos');
   protected readonly verArchivados = signal(false);
+  protected readonly verBloqueados = signal(false);
+
+  /** Los perfiles bloqueados, para marcar sus filas. */
+  protected readonly idsBloqueados = computed<ReadonlySet<string>>(
+    () => new Set(this.store.bloqueados().map((b) => b.profileId)),
+  );
 
   private readonly tecleado = new Subject<string>();
 
@@ -110,7 +121,7 @@ export class Messaging {
   protected readonly archivadas = computed(() =>
     this.store
       .conversaciones()
-      .filter((c) => this.preferencias.estaArchivado(c.id)),
+      .filter((c) => this.preferencias.isArchived(c.id)),
   );
 
   /**
@@ -123,13 +134,13 @@ export class Messaging {
     const enArchivados = this.verArchivados();
 
     return this.store.conversaciones().filter((conversacion) => {
-      if (this.preferencias.estaArchivado(conversacion.id) !== enArchivados) {
+      if (this.preferencias.isArchived(conversacion.id) !== enArchivados) {
         return false;
       }
       if (filtro === 'no-leidos' && conversacion.unreadCount === 0) {
         return false;
       }
-      if (filtro === 'favoritos' && !this.preferencias.esFavorito(conversacion.id)) {
+      if (filtro === 'favoritos' && !this.preferencias.isFavorite(conversacion.id)) {
         return false;
       }
       if (
@@ -142,7 +153,7 @@ export class Messaging {
       if (consulta === '') {
         return true;
       }
-      const nombre = conQuien(conversacion).toLowerCase();
+      const nombre = conversationLabel(conversacion).toLowerCase();
       const ultimo = (conversacion.lastMessage?.bodyText ?? '').toLowerCase();
       return nombre.includes(consulta) || ultimo.includes(consulta);
     });
@@ -157,14 +168,32 @@ export class Messaging {
     () => this.store.bandejaCargada() && this.visibles().length === 0,
   );
 
+  /** Para el nombre de quien se muestra en «Bloqueados» sin ficha resuelta. */
+  protected readonly sinNombre = SIN_NOMBRE;
+
   /** `true` si hay algo escrito pero ninguna conversación propia casa. */
   protected readonly sinCoincidencias = computed(
     () => this.consulta().trim() !== '' && this.visibles().length === 0,
   );
 
+  /** El `?escribirA=` que espera al perfil propio para abrir su hilo. */
+  private readonly slugPendiente = signal<string | null>(null);
+
   constructor() {
     this.store.iniciar();
     inject(DestroyRef).onDestroy(() => this.store.detener());
+
+    // El carril de filtros nace cuando se resuelve el perfil: se mide al
+    // aparecer y cada vez que cambia de ancho, para prender las flechas justas.
+    effect((onCleanup) => {
+      const el = this.carril()?.nativeElement;
+      if (el === undefined) return;
+      untracked(() => this.medirCarril());
+      if (typeof ResizeObserver === 'undefined') return;
+      const observador = new ResizeObserver(() => this.medirCarril());
+      observador.observe(el);
+      onCleanup(() => observador.disconnect());
+    });
 
     // Al directorio se le pregunta cuando la persona dejó de escribir: una
     // petición por tecla contra un buscador que atraviesa todos los tenants es
@@ -173,14 +202,25 @@ export class Messaging {
       .pipe(debounceTime(ESPERA_DE_BUSQUEDA_MS), takeUntilDestroyed())
       .subscribe((texto) => this.store.buscarGente(texto));
 
-    // El `?escribirA=<slug>` con el que llega el botón «Enviar mensaje» de una
-    // ficha pública. Se atiende cuando el perfil propio ya está resuelto: sin
-    // eso no hay con qué abrir el hilo.
+    // El `?escribirA=<slug>` con el que llegan el botón «Enviar mensaje» de una
+    // ficha pública y «Hablar con el broker» del directorio de aseguradoras. Se
+    // atiende cuando el perfil propio ya está resuelto: sin eso no hay con qué
+    // abrir el hilo. Por eso el slug queda **pendiente** y lo abre el efecto de
+    // abajo: la ruta llega antes que el perfil, y atenderlo en el acto lo
+    // descartaba en silencio —la bandeja quedaba abierta sin hilo—.
     this.ruta.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
       const slug = query.get('escribirA');
       if (slug !== null && slug !== '') {
-        this.abrirConSlug(slug);
+        this.slugPendiente.set(slug);
       }
+    });
+    effect(() => {
+      const slug = this.slugPendiente();
+      if (slug === null || this.store.perfil() === null) return;
+      untracked(() => {
+        this.slugPendiente.set(null);
+        this.abrirDesdeEnlace(slug);
+      });
     });
 
     // «(3) AloVida - Chats» en la pestaña mientras haya sin leer, como
@@ -199,11 +239,11 @@ export class Messaging {
 
   protected alEscribir(texto: string): void {
     this.consulta.set(texto);
-    if (texto.trim() === '') {
-      this.store.limpiarBusqueda();
-    } else {
-      this.tecleado.next(texto);
-    }
+    // Invalida en la misma tecla cualquier HTTP anterior. Esperar al debounce
+    // dejaba que una respuesta vieja apareciera durante 300 ms bajo el texto
+    // nuevo. También se emite el vacío para cancelar una consulta pendiente.
+    this.store.limpiarBusqueda();
+    this.tecleado.next(texto);
   }
 
   protected limpiarBusqueda(): void {
@@ -211,9 +251,31 @@ export class Messaging {
     this.store.limpiarBusqueda();
   }
 
+  /* ---- el carril de filtros, paginado con flechas ---------------------- */
+
+  private readonly carril = viewChild<ElementRef<HTMLElement>>('carril');
+  protected readonly puedeRetroceder = signal(false);
+  protected readonly puedeAvanzar = signal(false);
+
+  /** Prende o apaga cada flecha según dónde quedó el carril. */
+  protected medirCarril(): void {
+    const el = this.carril()?.nativeElement;
+    if (el === undefined) return;
+    this.puedeRetroceder.set(el.scrollLeft > 1);
+    this.puedeAvanzar.set(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }
+
+  /** Una «página» de filtros: lo que se ve del carril, menos un chip de solapa. */
+  protected pasarFiltros(sentido: 1 | -1): void {
+    const el = this.carril()?.nativeElement;
+    if (el === undefined) return;
+    el.scrollBy({ left: sentido * Math.max(el.clientWidth - 48, 48), behavior: 'smooth' });
+  }
+
   protected elegirFiltro(filtro: Filtro): void {
     this.filtro.set(filtro);
     this.verArchivados.set(false);
+    this.verBloqueados.set(false);
   }
 
   protected rotulo(filtro: Filtro): string {
@@ -231,7 +293,19 @@ export class Messaging {
 
   protected alternarArchivados(): void {
     this.verArchivados.set(!this.verArchivados());
+    this.verBloqueados.set(false);
     this.filtro.set('todos');
+  }
+
+  /** La lista de a quiénes bloqueaste, con el botón para desbloquear. */
+  protected alternarBloqueados(): void {
+    this.verBloqueados.set(!this.verBloqueados());
+    this.verArchivados.set(false);
+    this.filtro.set('todos');
+  }
+
+  protected desbloquear(profileId: string): void {
+    this.store.desbloquear(profileId);
   }
 
   private estamparTitulo(): void {
@@ -244,10 +318,10 @@ export class Messaging {
   protected atender(accion: AccionDeFila): void {
     switch (accion.tipo) {
       case 'favorito':
-        this.preferencias.alternarFavorito(accion.conversationId);
+        this.preferencias.toggleFavorite(accion.conversationId);
         break;
       case 'archivar':
-        this.preferencias.alternarArchivado(accion.conversationId);
+        this.preferencias.toggleArchived(accion.conversationId);
         break;
       case 'leer':
         this.store.marcarFilaLeida(accion.conversationId);
@@ -255,6 +329,21 @@ export class Messaging {
       case 'perfil':
         this.verPerfil(accion.conversationId);
         break;
+      case 'bloquear':
+      case 'desbloquear': {
+        const peer = this.store
+          .conversaciones()
+          .find((c) => c.id === accion.conversationId)?.peers[0];
+        if (peer === undefined) {
+          break;
+        }
+        if (accion.tipo === 'bloquear') {
+          this.store.bloquear(peer.profileId, peer.displayName);
+        } else {
+          this.store.desbloquear(peer.profileId);
+        }
+        break;
+      }
     }
   }
 
@@ -278,10 +367,34 @@ export class Messaging {
     this.abrirConSlug(slug);
   }
 
+  /** Abre el contacto autenticado sin resolverlo otra vez por slug público. */
+  protected escribirAPerfil(profileId: string): void {
+    this.store.escribirAPerfil(profileId, (conversationId) => {
+      this.limpiarBusqueda();
+      void this.router.navigate(['/messaging', conversationId]);
+    });
+  }
+
   private abrirConSlug(slug: string): void {
     this.store.escribirA(slug, (conversationId) => {
       this.limpiarBusqueda();
       void this.router.navigate(['/messaging', conversationId]);
+    });
+  }
+
+  /**
+   * Abre el hilo pedido por `?escribirA=` **reemplazando** esa entrada del
+   * historial.
+   *
+   * Con un `navigate` común quedaban dos entradas de chat apiladas —
+   * `/messaging?escribirA=…` y `/messaging/<id>`—, y la flecha «Volver» caía en
+   * la primera, que reabría el hilo: quien tocaba «Hablar con el broker» no
+   * podía salir del chat. Reemplazando, atrás vuelve a la ficha de donde vino.
+   */
+  private abrirDesdeEnlace(slug: string): void {
+    this.store.escribirA(slug, (conversationId) => {
+      this.limpiarBusqueda();
+      void this.router.navigate(['/messaging', conversationId], { replaceUrl: true });
     });
   }
 }

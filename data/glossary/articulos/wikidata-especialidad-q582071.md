@@ -1,0 +1,164 @@
+---
+slug: wikidata-especialidad-q582071
+---
+
+## [definition] Introducción
+
+La perinatología, también llamada medicina materno-fetal, es la rama de la obstetricia que se ocupa de los embarazos en los que la madre, el feto o ambos tienen un riesgo mayor que el habitual de sufrir complicaciones. Su campo de acción es el período perinatal en sentido amplio: desde la planificación de un embarazo en una mujer con una enfermedad previa, pasando por toda la gestación y el parto, hasta las primeras semanas posteriores al nacimiento. En inglés se la conoce como maternal-fetal medicine, y a quien la ejerce se le llama especialista en medicina materno-fetal, perinatólogo o perinatóloga.
+
+La particularidad de esta especialidad es que atiende a dos pacientes a la vez. Cada decisión clínica tiene en cuenta el bienestar de la mujer embarazada y el del feto, cuyos intereses casi siempre coinciden, pero que en ocasiones obligan a sopesar beneficios y riesgos distintos para cada uno. Por eso el especialista combina conocimientos de obstetricia, medicina interna, genética, diagnóstico por imagen y fisiología fetal, y trabaja en estrecha relación con neonatólogos, anestesiólogos, cardiólogos, endocrinólogos, cirujanos pediátricos y otros profesionales.
+
+La mayoría de los embarazos transcurren sin problemas y son controlados adecuadamente por obstetras, médicos de familia o parteras y obstetrices. El perinatólogo interviene cuando existe una condición que aumenta el riesgo: una enfermedad crónica materna, una complicación que aparece durante la gestación, un embarazo múltiple o un hallazgo anormal en el feto. Puede hacerlo como consultor puntual, que emite una opinión y devuelve el seguimiento al equipo de cabecera, o asumiendo el control completo del embarazo cuando la complejidad lo exige.
+
+Este artículo describe el origen de la especialidad, qué situaciones abarca, cómo trabaja el especialista, qué esperar de la consulta, cuándo conviene consultar, cómo se forma el profesional y qué lugar ocupa la perinatología en la salud pública. Es información general y no sustituye la valoración de un profesional de la salud.
+
+## [additional_information] Historia: del feto invisible al feto como paciente
+
+Durante la mayor parte de la historia de la medicina, el feto fue un ser inaccesible. La partera y el médico podían palpar el vientre, estimar el tamaño del útero y, desde el siglo XIX, escuchar los latidos fetales con el estetoscopio de madera, pero no había forma de saber cómo crecía, si estaba sano o si sufría dentro del útero. La obstetricia se centraba en el parto y en sus complicaciones mecánicas, y la mortalidad de madres y recién nacidos era alta en todo el mundo.
+
+El cambio comenzó a mediados del siglo XX con una serie de innovaciones técnicas. En la década de 1950 se empezó a extraer líquido amniótico con una aguja a través del abdomen, la amniocentesis, inicialmente para valorar la gravedad de la enfermedad hemolítica del feto causada por la incompatibilidad del factor Rh y, más tarde, para estudiar los cromosomas fetales. En 1958 el ginecólogo escocés Ian Donald y sus colaboradores publicaron el uso de la ecografía para examinar el contenido del útero, una técnica que con los años se convertiría en la herramienta central de la especialidad. En 1963 el médico neozelandés Albert William Liley realizó la primera transfusión de sangre a un feto dentro del útero para tratar la anemia grave por incompatibilidad Rh, considerada a menudo el nacimiento de la terapia fetal. En la misma época se desarrolló la monitorización electrónica continua de la frecuencia cardíaca fetal durante el trabajo de parto.
+
+Estos avances dieron lugar a una idea nueva: el feto podía ser examinado, diagnosticado y, en ciertos casos, tratado. A partir de la década de 1970 varios países reconocieron la medicina materno-fetal como subespecialidad formal de la obstetricia, con programas de formación propios, y surgieron sociedades científicas dedicadas a ella. El término «perinatología» se consolidó en esos años para designar el estudio del período que rodea al nacimiento, y en muchos países de habla hispana se usa como sinónimo de medicina materno-fetal.
+
+Las décadas siguientes trajeron la ecografía de alta resolución, el Doppler para estudiar el flujo sanguíneo de la placenta y el feto, la biopsia de vellosidades coriónicas, la cirugía fetal mínimamente invasiva mediante fetoscopia y, ya en el siglo XXI, el análisis del ADN fetal libre que circula en la sangre materna. Paralelamente, la perinatología se organizó en redes de atención regionalizadas, en las que los embarazos más complejos se derivan a centros con mayor capacidad, idea que hoy recogen documentos de consenso como los de niveles de atención materna del Colegio Estadounidense de Obstetras y Ginecólogos (ACOG).
+
+## [additional_information] Etimología y denominaciones
+
+La palabra «perinatología» combina el prefijo griego peri-, «alrededor de», con el latín natus, «nacido», y el sufijo -logía, «estudio». Literalmente significa el estudio de lo que ocurre alrededor del nacimiento. La expresión «medicina materno-fetal» subraya, en cambio, la doble condición de paciente de la madre y del feto.
+
+En la práctica, el término varía según el país. En algunos lugares la perinatología designa un campo más amplio que incluye también la neonatología, es decir, la atención del recién nacido, y se habla de «medicina perinatal» o de «centros perinatales» para referirse a la atención conjunta de madre y bebé. En otros, «perinatólogo» es exclusivamente el obstetra con formación en medicina materno-fetal. También se usan expresiones como «alto riesgo obstétrico» o «medicina fetal», esta última centrada sobre todo en el diagnóstico y el tratamiento del feto.
+
+## [scope] Qué abarca
+
+La perinatología se ocupa de todo embarazo en el que exista una amenaza mayor que la habitual para la salud de la madre o del feto. Su ámbito se puede ordenar en varios grandes bloques:
+
+• La salud materna en el embarazo: enfermedades previas de la mujer que pueden agravarse con la gestación o complicarla, y complicaciones propias del embarazo.
+• La salud fetal: el crecimiento, el desarrollo de los órganos, el bienestar en el útero y la detección de anomalías congénitas o genéticas.
+• La placenta, el cordón umbilical y el líquido amniótico, estructuras cuyo funcionamiento determina buena parte del pronóstico del embarazo.
+• La planificación del momento y la vía del nacimiento cuando el embarazo presenta riesgos, en coordinación con el equipo de neonatología.
+• El asesoramiento antes de la concepción a mujeres con enfermedades crónicas o con antecedentes de embarazos complicados.
+• El seguimiento en el puerperio de las complicaciones que se prolongan después del parto y la orientación sobre embarazos futuros.
+
+Además de la atención directa, la especialidad cumple una función de consulta para obstetras, médicos de familia y parteras, participa en la docencia y lidera buena parte de la investigación sobre complicaciones del embarazo.
+
+## [conditions_treated] Situaciones y enfermedades que atiende
+
+Las condiciones que llevan a una mujer a la consulta de perinatología son muy variadas. Pueden agruparse de la siguiente manera:
+
+• Enfermedades maternas previas al embarazo: hipertensión crónica, diabetes, enfermedades de la tiroides, cardiopatías, enfermedad renal, epilepsia, lupus y otras enfermedades autoinmunes, trastornos de la coagulación, asma grave, infección por VIH o hepatitis, obesidad y enfermedades psiquiátricas que requieren tratamiento.
+• Complicaciones que aparecen durante la gestación: preeclampsia y otros trastornos hipertensivos del embarazo, diabetes gestacional, colestasis del embarazo, amenaza de parto prematuro, rotura prematura de las membranas y sangrados del segundo o tercer trimestre.
+• Problemas de la placenta: placenta previa, placenta adherida de forma anormal a la pared del útero (espectro de placenta acreta) y desprendimiento prematuro de la placenta.
+• Embarazos múltiples, especialmente los gemelares que comparten una sola placenta, en los que pueden aparecer complicaciones específicas como el síndrome de transfusión feto-fetal.
+• Alteraciones del crecimiento fetal: la restricción del crecimiento intrauterino, en la que el feto no alcanza el tamaño esperado, y el crecimiento excesivo.
+• Anomalías congénitas detectadas por ecografía, como cardiopatías, defectos del tubo neural, hernia diafragmática o malformaciones renales, y alteraciones cromosómicas o genéticas.
+• Infecciones que pueden transmitirse al feto, como el citomegalovirus, la toxoplasmosis, la sífilis, la rubéola o el virus del Zika.
+• Enfermedad hemolítica fetal por aloinmunización, en la que anticuerpos de la madre atacan los glóbulos rojos del feto.
+• Alteraciones del volumen del líquido amniótico, por exceso o por defecto.
+• Antecedentes obstétricos adversos: pérdidas gestacionales repetidas, muerte fetal previa, parto prematuro anterior o una preeclampsia grave en un embarazo anterior.
+• Embarazos en edades extremas de la vida reproductiva y embarazos logrados con técnicas de reproducción asistida, cuando se suman otros factores de riesgo.
+
+La lista no implica que todas estas situaciones deban ser controladas exclusivamente por un perinatólogo. En muchos casos el especialista evalúa, propone un plan y el seguimiento continúa con el equipo obstétrico habitual, con controles de perinatología en momentos clave.
+
+## [subspecialties] Áreas de dedicación
+
+Aunque la medicina materno-fetal es ya una subespecialidad, dentro de ella existen áreas de dedicación más acotadas, sobre todo en centros de referencia:
+
+• Diagnóstico prenatal y ecografía fetal avanzada, centrados en la detección y caracterización de anomalías estructurales.
+• Ecocardiografía fetal, el estudio detallado del corazón del feto, a menudo en colaboración con cardiología pediátrica.
+• Genética prenatal y asesoramiento genético, junto con especialistas en genética médica.
+• Terapia y cirugía fetal: transfusiones intrauterinas, tratamiento con láser de las anastomosis placentarias en gemelos, colocación de drenajes y, en pocos centros del mundo, reparación quirúrgica de ciertos defectos antes del nacimiento.
+• Medicina obstétrica o medicina interna del embarazo, dedicada a las enfermedades maternas graves.
+• Cuidados críticos obstétricos, para mujeres que necesitan atención intensiva durante el embarazo o el puerperio.
+• Prematuridad y embarazo múltiple, con unidades específicas en algunos hospitales.
+
+## [how_it_works] Cómo trabaja el especialista
+
+El trabajo del perinatólogo se apoya en tres pilares: la evaluación clínica de la madre, el estudio del feto y la coordinación de un plan de atención compartido.
+
+La evaluación materna comienza con una historia clínica detallada que recoge las enfermedades previas, los tratamientos en curso, los antecedentes de embarazos anteriores y la historia familiar. A partir de ella el especialista estima el riesgo, decide qué controles adicionales son necesarios y, cuando corresponde, ajusta junto con el médico tratante la medicación de enfermedades crónicas para que sea compatible con el embarazo. Los criterios concretos y las pautas de tratamiento dependen de cada enfermedad y de las guías vigentes, y se individualizan siempre.
+
+El estudio del feto descansa sobre todo en la ecografía. El especialista realiza o supervisa exploraciones de mayor detalle que las habituales: la evaluación de la anatomía fetal órgano por órgano, la medición del crecimiento a lo largo del tiempo, la valoración de la placenta y del líquido amniótico, y el Doppler, que mide la velocidad de la sangre en las arterias del útero, del cordón umbilical y de ciertos vasos del feto. Estos datos permiten detectar de forma temprana una placenta que no funciona bien o un feto que se adapta a la falta de oxígeno.
+
+Cuando hace falta información sobre los cromosomas o los genes del feto, se recurre a las pruebas de cribado, que estiman una probabilidad, y a las pruebas diagnósticas, que dan una respuesta más definitiva. Entre las primeras están los análisis de sangre materna combinados con la ecografía y el estudio del ADN fetal libre en sangre materna. Entre las segundas, la amniocentesis y la biopsia de vellosidades coriónicas, procedimientos invasivos que obtienen células del feto o de la placenta y que conllevan un riesgo pequeño de complicaciones. La elección entre unas y otras se hace después de un asesoramiento que explica qué puede y qué no puede detectar cada prueba.
+
+Otros estudios habituales son la monitorización de la frecuencia cardíaca fetal, el perfil biofísico, que combina la ecografía con el registro cardíaco, la ecocardiografía fetal y, en casos seleccionados, la resonancia magnética fetal. Si el riesgo es materno, se coordinan análisis, ecocardiogramas u otras pruebas con las especialidades correspondientes.
+
+Los procedimientos que realiza el perinatólogo incluyen, además de las técnicas diagnósticas invasivas, la transfusión intrauterina, el drenaje de líquido acumulado en el feto o el exceso de líquido amniótico y, en centros especializados, la fetoscopia. También participa en la decisión del momento y la vía del parto, en el uso de medicamentos para acelerar la maduración pulmonar fetal ante un parto prematuro previsible y en la atención del parto de mayor complejidad.
+
+Por último, el especialista coordina. Un embarazo complejo puede requerir que obstetricia, neonatología, anestesiología, cirugía pediátrica, cardiología, genética, nutrición, trabajo social y salud mental compartan información y lleguen a un plan común. Ese plan suele incluir dónde debe nacer el bebé, para que el parto ocurra en un hospital con la capacidad que el recién nacido o la madre van a necesitar.
+
+## [what_to_expect] La primera consulta y cómo prepararse
+
+La derivación a perinatología puede generar preocupación, pero en la mayoría de los casos se trata de una medida preventiva: el objetivo es anticipar problemas y no necesariamente confirmar que existen. La primera consulta suele ser más larga que un control prenatal habitual.
+
+En ella el especialista revisa la historia médica y obstétrica, pregunta por los medicamentos que se toman, por las enfermedades familiares y por los resultados de los estudios ya realizados. Suele incluir una ecografía detallada y, según el motivo, una conversación sobre las opciones de pruebas adicionales. Al final se explica el plan propuesto: con qué frecuencia volver, qué estudios hacer, qué signos vigilar y cómo se coordinará el seguimiento con el obstetra de cabecera.
+
+Para aprovechar la consulta conviene llevar:
+
+• Los informes de ecografías y análisis previos del embarazo actual, y el carnet o la libreta de control prenatal.
+• Los informes de embarazos anteriores, sobre todo si hubo complicaciones, partos prematuros o cesáreas.
+• La lista completa de medicamentos, vitaminas y suplementos, con su presentación, sin suspender ninguno por cuenta propia.
+• Los informes de los especialistas que tratan alguna enfermedad crónica.
+• La información disponible sobre enfermedades hereditarias en la familia de ambos progenitores.
+• Las preguntas por escrito, para no olvidarlas.
+
+Es recomendable asistir acompañada si se desea, ya que en la consulta se pueden tratar decisiones importantes. La persona tiene derecho a recibir información clara, a pedir tiempo para pensar antes de aceptar una prueba o un procedimiento y a solicitar una segunda opinión. Cuando se identifica una anomalía fetal grave, un buen equipo de perinatología ofrece información equilibrada, acompañamiento psicológico y, si corresponde, contacto con el equipo de cuidados paliativos perinatales, respetando las decisiones de la familia dentro del marco legal de cada país.
+
+## [when_to_seek_care] Cuándo consultar con perinatología
+
+La consulta con perinatología suele ser indicada por el profesional que controla el embarazo. Puede estar justificada, entre otras situaciones, cuando:
+
+• La mujer tiene una enfermedad crónica, como hipertensión, diabetes, enfermedad cardíaca, renal, tiroidea o autoinmune, y desea quedar embarazada o ya lo está.
+• Hubo complicaciones importantes en un embarazo anterior, como preeclampsia grave, parto muy prematuro, restricción del crecimiento o muerte fetal.
+• Se trata de un embarazo de gemelos o de más fetos.
+• Una ecografía muestra una posible anomalía del feto, de la placenta o del líquido amniótico.
+• Una prueba de cribado indica una probabilidad aumentada de alteración cromosómica.
+• Existe una infección durante el embarazo que podría afectar al feto.
+• Hay antecedentes familiares de enfermedades genéticas o la pareja ya tiene un hijo con una condición hereditaria.
+
+Fuera de la consulta programada, ciertos síntomas durante el embarazo requieren atención urgente en un servicio de emergencias obstétricas, sin esperar a la cita con el especialista: sangrado vaginal, pérdida de líquido por la vagina, dolor abdominal intenso o contracciones regulares antes de tiempo, dolor de cabeza intenso o persistente, alteraciones de la visión, hinchazón súbita de la cara o las manos, dificultad para respirar, fiebre, convulsiones o la percepción de que el bebé se mueve mucho menos de lo habitual. También después del parto hay señales de alarma, como el sangrado abundante, la fiebre o el dolor de cabeza intenso, que justifican consultar de inmediato.
+
+## [training] Formación del especialista
+
+En términos generales, el perinatólogo es primero médico y luego especialista en ginecología y obstetricia. Sobre esa base completa una formación adicional en medicina materno-fetal, de varios años, que combina la práctica clínica en unidades de alto riesgo obstétrico, la ecografía y el diagnóstico prenatal avanzados, los procedimientos invasivos, la genética, el manejo de enfermedades maternas graves y, en muchos programas, la investigación. En países como Estados Unidos se trata de una subespecialidad certificada por un consejo de la especialidad, con un programa de formación estructurado y un examen propio.
+
+En Latinoamérica el recorrido habitual es similar: tras la residencia de ginecología y obstetricia, el médico cursa una subespecialidad, una alta especialidad o un programa de posgrado en medicina materno-fetal o en perinatología, según la denominación de cada país y de cada universidad. La duración, el reconocimiento formal y el nombre del título varían entre países. Muchos especialistas complementan su formación con estancias en centros de referencia del extranjero, sobre todo en ecografía fetal y en terapia fetal, y con certificaciones de sociedades internacionales de ultrasonido.
+
+En Bolivia, la puerta de entrada es la residencia médica de ginecología y obstetricia, que se realiza en hospitales docentes del sistema de salud. La formación en medicina materno-fetal se obtiene a través de programas de posgrado o, con frecuencia, en otros países de la región o de Europa, y el ejercicio especializado se concentra en los hospitales de tercer nivel y en centros privados de las principales ciudades. La disponibilidad de especialistas fuera de los grandes centros urbanos es limitada, lo que refuerza el valor de las redes de derivación y de la teleconsulta.
+
+Más allá del título, la especialidad exige una actualización permanente. Las técnicas de imagen, las pruebas genéticas y las recomendaciones de manejo cambian con rapidez, y las sociedades científicas nacionales e internacionales publican guías que se revisan con regularidad.
+
+## [importance] Lugar de la especialidad en el sistema de salud
+
+La perinatología no reemplaza el control prenatal de primer nivel; lo complementa. La Organización Mundial de la Salud recomienda que toda embarazada reciba atención prenatal de calidad, con controles periódicos que permiten detectar a tiempo los factores de riesgo. Esa atención la brindan, en la mayoría de los casos, profesionales de atención primaria y obstetras generales. La función del perinatólogo es servir de nivel especializado al que se derivan los casos que lo requieren, y devolverlos al primer nivel cuando el riesgo se ha controlado.
+
+Este modelo de atención escalonada se conoce como regionalización perinatal. Su principio es que cada embarazo sea atendido en el lugar con los recursos adecuados a su nivel de riesgo, y que existan mecanismos ágiles de derivación y traslado. El consenso del ACOG sobre niveles de atención materna, por ejemplo, distingue desde la atención básica hasta los centros regionales de atención perinatal, en los que hay especialistas en medicina materno-fetal disponibles de forma continua.
+
+La relación con otras especialidades es estrecha. Con la neonatología, la perinatología comparte la planificación del nacimiento de bebés prematuros o con malformaciones; con la genética, el diagnóstico y el asesoramiento; con la cardiología, la endocrinología, la nefrología y la reumatología, el manejo de las enfermedades maternas; con la anestesiología y los cuidados intensivos, la atención de las complicaciones graves; con la salud mental, el acompañamiento de la ansiedad, la depresión y el duelo perinatal.
+
+La importancia de la especialidad para la salud pública se entiende mejor con las cifras de la OMS. Según su nota descriptiva de 2025, en 2023 murieron alrededor de 260 000 mujeres durante el embarazo, el parto o después de él, la mayoría por causas prevenibles, y más del 90 % de esas muertes ocurrieron en países de ingreso bajo y mediano bajo. La OMS estima también que en 2020 nacieron unos 13,4 millones de bebés prematuros, y que las complicaciones de la prematuridad son la principal causa de muerte en los menores de cinco años. La hemorragia, los trastornos hipertensivos del embarazo y las infecciones figuran entre las principales causas de muerte materna, y son precisamente terrenos donde la detección temprana y la derivación oportuna cambian el desenlace. La Organización Panamericana de la Salud mantiene la salud materna como una prioridad en las Américas.
+
+## [considerations] Avances, tendencias y telemedicina
+
+La perinatología es una de las especialidades que más se transformó en las últimas décadas, y varias líneas siguen en expansión.
+
+En el diagnóstico prenatal, el estudio del ADN fetal libre en sangre materna amplió el cribado de alteraciones cromosómicas con una simple extracción de sangre, y las técnicas genómicas, como el microarreglo cromosómico y la secuenciación del exoma, permiten identificar causas genéticas en fetos con malformaciones que antes quedaban sin diagnóstico. Estas herramientas plantean también desafíos: hallazgos de significado incierto, la necesidad de un asesoramiento genético de calidad y diferencias de acceso entre poblaciones.
+
+En la predicción y prevención de complicaciones, el cribado combinado de preeclampsia en el primer trimestre, que integra la historia de la mujer, la presión arterial, el Doppler de las arterias uterinas y marcadores en sangre, permite identificar a las mujeres de mayor riesgo y ofrecerles medidas preventivas. Se investigan de forma activa nuevos marcadores para predecir el parto prematuro y la restricción del crecimiento.
+
+En la terapia fetal, la fetoscopia y las técnicas mínimamente invasivas se extendieron a más centros, y se estudian tratamientos prenatales para enfermedades que antes sólo podían abordarse después del nacimiento. Se trata de procedimientos muy especializados, que se ofrecen en un número reducido de centros y con criterios estrictos de selección.
+
+La ecografía se beneficia de equipos más portátiles y de herramientas de inteligencia artificial que ayudan a obtener y medir imágenes. Al mismo tiempo, la telemedicina permite que un perinatólogo revise a distancia las ecografías hechas en un hospital alejado, discuta un caso con el equipo local o realice consultas de seguimiento por videollamada. Para países con grandes distancias geográficas y especialistas concentrados en las ciudades, como ocurre en buena parte de Latinoamérica, estas redes pueden acercar el conocimiento especializado a zonas rurales, aunque no sustituyen la exploración física ni los procedimientos presenciales.
+
+Por último, la especialidad presta cada vez más atención a la equidad, a la atención respetuosa y culturalmente adecuada del embarazo y el parto, y al período posterior al nacimiento. Se reconoce que complicaciones como la preeclampsia o la diabetes gestacional son señales de un riesgo cardiovascular y metabólico mayor a lo largo de la vida de la mujer, lo que extiende el papel de la perinatología a la orientación del seguimiento a largo plazo.
+
+## [references]
+
+- Problemas de salud durante el embarazo | https://medlineplus.gov/spanish/highriskpregnancy.html | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.
+- Pruebas prenatales | https://medlineplus.gov/spanish/prenataltesting.html | MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.
+- What is a high-risk pregnancy? | https://www.nichd.nih.gov/health/topics/pregnancy/conditioninfo/high-risk | Eunice Kennedy Shriver National Institute of Child Health and Human Development (NICHD)
+- Mortalidad materna | https://www.who.int/es/news-room/fact-sheets/detail/maternal-mortality | Organización Mundial de la Salud
+- Nacimientos prematuros | https://www.who.int/es/news-room/fact-sheets/detail/preterm-birth | Organización Mundial de la Salud
+- WHO recommendations on antenatal care for a positive pregnancy experience | https://www.who.int/publications/i/item/9789241549912 | Organización Mundial de la Salud
+- Levels of Maternal Care | https://www.acog.org/clinical/clinical-guidance/obstetric-care-consensus/articles/2019/08/levels-of-maternal-care | American College of Obstetricians and Gynecologists (ACOG)
+- Salud materna | https://www.paho.org/es/temas/salud-materna | Organización Panamericana de la Salud

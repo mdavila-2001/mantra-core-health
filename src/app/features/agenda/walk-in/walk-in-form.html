@@ -10,8 +10,8 @@
 
     @if (paso() === 'buscando') {
       <app-form-field
-        label="¿A quién atendés?"
-        hint="Buscá por cédula, nombre o código de paciente."
+        label="¿A quién atiende?"
+        hint="Busque por cédula, nombre o código de paciente."
         [required]="true"
       >
         <app-reference-combobox
@@ -20,7 +20,7 @@
           [options]="candidatos()"
           [loading]="buscando()"
           placeholder="Cédula, nombre o código"
-          emptyMessage="Nadie coincide. Si no está en el sistema, registralo abajo."
+          emptyMessage="Nadie coincide. Si no está en el sistema, regístrelo abajo."
           (searched)="buscarPaciente($event)"
           (selectionChange)="paciente.set($event)"
         />
@@ -107,7 +107,7 @@
 
     <!-- «Empieza ahora» no es un campo: es lo que significa un turno de
          mostrador. Se dice, para que nadie busque dónde elegir la hora. -->
-    <p class="mostrador__ahora">La atención empieza ahora, en la agenda que estás mirando.</p>
+    <p class="mostrador__ahora">La atención empieza ahora, en la agenda que está mirando.</p>
   </div>
 
   <button

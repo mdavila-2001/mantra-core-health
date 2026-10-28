@@ -27,11 +27,11 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { MyOrganizations } from '../../organizations/my-organizations';
+import { MembershipsTab } from './memberships-tab/memberships-tab';
 
 /** El índice de «Mis vinculaciones», para no escribir `7` en dos lugares. */
 const PESTANA_VINCULACIONES = 7;
-import { empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
+import { dataOf, empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
 import type {
   ViewState,
   ViewStateNextAction,
@@ -39,6 +39,9 @@ import type {
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
@@ -107,7 +110,7 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
  */
 @Component({
   selector: 'app-medical-organization',
-  imports: [AppButton, Badge, DataTable, MyOrganizations, PageHeader, Tab, Tabs],
+  imports: [AppButton, Badge, DataTable, FormField, MembershipsTab, PageHeader, Select, Tab, Tabs],
   templateUrl: './medical-organization.html',
   styleUrl: './medical-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -210,6 +213,14 @@ export class MedicalOrganization {
 
   /** Las prácticas que se pueden administrar. */
   protected readonly practicas = signal<ViewState<readonly PracticeSummary[]>>(loading());
+
+  /** Las prácticas como opciones del selector, con su código para distinguirlas. */
+  protected readonly opcionesDePractica = computed<readonly SelectOption<string>[]>(() =>
+    (dataOf(this.practicas()) ?? []).map((practica) => ({
+      value: practica.id,
+      label: `${practica.name} (${practica.code})`,
+    })),
+  );
 
   /** La práctica elegida. Vacío mientras el listado no resolvió. */
   protected readonly practicaElegida = signal('');

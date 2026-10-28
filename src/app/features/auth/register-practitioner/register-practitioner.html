@@ -1,7 +1,9 @@
 <app-auth-split
-  claim="Potenciá tu práctica médica"
-  tagline="Sumate a la red de salud más grande de Bolivia y conectá con miles de pacientes."
+  claim="Potencie su práctica médica"
+  tagline="Súmese a la red de salud más grande de Bolivia y conecte con miles de pacientes."
   contentWidth="full"
+  [plainSurface]="!registered()"
+  [scene]="registered() ? 'stage' : 'split'"
 >
   <!-- El alta y la columna que la explica son una sola cosa en pantalla ancha:
        la pregunta a la izquierda y por qué se hace a la derecha. En teléfono la
@@ -12,12 +14,10 @@
     <div class="registro">
       @if (registered()) {
         <div class="registro__header">
+          <app-registration-badge type="practitioner" celebrate />
           <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
-            Tu cuenta está lista
+            ¡Bienvenido a AloVida! Su salud en un solo lugar
           </h1>
-          <p class="registro__subtitle">
-            Ya podés entrar con {{ accessHint }} y la contraseña que elegiste.
-          </p>
         </div>
         <button
           app-button
@@ -31,8 +31,17 @@
         </button>
       } @else {
         <div class="registro__header">
+          <app-registration-badge type="practitioner" />
           <h1 class="registro__title">Crear cuenta de profesional</h1>
         </div>
+
+        @if (borradorDetectado(); as borrador) {
+          <app-onboarding-draft-banner
+            [draft]="borrador"
+            (resume)="restaurarBorrador(borrador)"
+            (discard)="descartarBorrador()"
+          />
+        }
 
         @if (errorMessage(); as mensaje) {
           <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
@@ -55,7 +64,9 @@
             label="Crear cuenta"
             submitLabel="Crear cuenta"
             [iconOnlyNav]="true"
+            [allowLargePages]="true"
             [pending]="isSubmitting()"
+            [initialStep]="pasoGuardado()"
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
           >
@@ -80,7 +91,7 @@
                 <app-form-field
                   class="registro__nombre"
                   label="Segundo nombre"
-                  hint="Si no tenés, dejalo vacío."
+                  hint="Si no tiene, déjelo vacío."
                 >
                   <app-input
                     testId="registro-pro-segundo-nombre"
@@ -150,7 +161,7 @@
               <app-reference-combobox
                 data-testid="registro-pro-titulo"
                 label="Título profesional"
-                placeholder="Buscá tu título profesional…"
+                placeholder="Busque su título profesional…"
                 emptyMessage="Ningún título profesional coincide."
                 [options]="titulosProfesionalesFiltrados()"
                 [selected]="tituloProfesionalSeleccionado()"
@@ -168,21 +179,40 @@
                  la universidad elegida (ver `CampoDeEstudio`). -->
             <ng-template appCampoPersonalizado="professionalTitleEducation">
               <div class="registro__estudio">
+                <app-form-field
+                  class="registro__estudio-campo"
+                  label="Número del diploma"
+                  hint="Para guardar la universidad y el PDF con este título. No hace falta repetirlo en «Sus títulos»."
+                  [errorMessage]="
+                    formProfesional.controls.professionalTitleNumber.invalid
+                      ? 'El número del diploma no puede pasar de 100 caracteres.'
+                      : ''
+                  "
+                >
+                  <app-input
+                    testId="registro-pro-titulo-numero-principal"
+                    placeholder="Como figura en su diploma"
+                    [value]="valorDeEstudio('professionalTitleNumber')"
+                    (valueChange)="escribirEstudio('professionalTitleNumber', $event)"
+                  />
+                </app-form-field>
                 <div class="registro__estudio-campo">
                   <app-form-field
                     label="País de estudio"
-                    [hint]="padronCargando() ? 'Opcional. Cargando la lista de países…' : 'Opcional.'"
+                    [hint]="
+                      padronCargando() ? 'Opcional. Cargando la lista de países…' : 'Opcional.'
+                    "
                   >
                     <app-select
                       data-testid="registro-pro-titulo-pais"
-                      placeholder="Elegí el país"
+                      placeholder="Elija el país"
                       [options]="opcionesDePais()"
                       [value]="paisDelTituloElegido()"
                       (valueChange)="elegirPaisDelTitulo($event)"
                     />
                   </app-form-field>
                   @if (paisDelTituloEsOtro()) {
-                    <app-form-field label="¿Qué país?" hint="Como figura en tu diploma.">
+                    <app-form-field label="¿Qué país?" hint="Como figura en su diploma.">
                       <app-input
                         testId="registro-pro-titulo-pais-otro"
                         placeholder="Nombre del país"
@@ -193,14 +223,18 @@
                   }
                 </div>
 
-                <div class="registro__estudio-campo">
+                <div class="registro__estudio-campo registro__estudio-campo--ancha">
                   <app-form-field
                     label="Universidad"
-                    [hint]="paisDelTituloElegido() === null ? 'Opcional. Elegí primero el país.' : 'Opcional.'"
+                    [hint]="
+                      paisDelTituloElegido() === null
+                        ? 'Opcional. Elija primero el país.'
+                        : 'Opcional.'
+                    "
                   >
                     <app-select
                       data-testid="registro-pro-titulo-universidad"
-                      placeholder="Elegí la universidad"
+                      placeholder="Elija la universidad"
                       [options]="opcionesDeUniversidadDelTitulo()"
                       [disabled]="paisDelTituloElegido() === null"
                       [value]="universidadDelTituloElegida()"
@@ -210,7 +244,7 @@
                   @if (universidadDelTituloEsOtra()) {
                     <app-form-field
                       label="¿Cuál?"
-                      hint="El nombre completo de la institución, como figura en tu diploma."
+                      hint="El nombre completo de la institución, como figura en su diploma."
                     >
                       <app-input
                         testId="registro-pro-titulo-universidad-otra"
@@ -222,14 +256,42 @@
                   }
                 </div>
 
+                <!-- La ciudad sale de la universidad (propietario, 04/10/2026):
+                     un desplegable con sus sedes, fijo si tiene una sola y
+                     bloqueado si el padrón no conoce ninguna. Nunca se escribe. -->
                 <div class="registro__estudio-campo">
-                  <app-form-field label="Ciudad de estudio" hint="Opcional.">
-                    <app-input
-                      testId="registro-pro-titulo-ciudad"
-                      placeholder="La Paz"
-                      [value]="valorDeEstudio('professionalTitleCity')"
-                      (valueChange)="escribirEstudio('professionalTitleCity', $event)"
-                    />
+                  <app-form-field
+                    label="Ciudad de estudio"
+                    [hint]="
+                      ciudadesDelTitulo().length === 0
+                        ? universidadDelTituloElegida() !== null
+                          ? 'Opcional. Escríbala como figura en su diploma.'
+                          : 'Sale de la universidad que elija.'
+                        : ciudadesDelTitulo().length === 1
+                          ? 'La sede de esa universidad.'
+                          : 'Elija en qué sede estudió.'
+                    "
+                  >
+                    <!-- Si la universidad elegida no tiene sedes en el padrón
+                         (muchas del exterior), la ciudad se escribe: un
+                         desplegable bloqueado no dejaba completarla. -->
+                    @if (ciudadesDelTitulo().length === 0 && universidadDelTituloElegida() !== null) {
+                      <app-input
+                        testId="registro-pro-titulo-ciudad-otra"
+                        placeholder="Ciudad donde estudió"
+                        [value]="valorDeEstudio('professionalTitleCity')"
+                        (valueChange)="escribirEstudio('professionalTitleCity', $event)"
+                      />
+                    } @else {
+                      <app-select
+                        data-testid="registro-pro-titulo-ciudad"
+                        placeholder="Sale de la universidad"
+                        [options]="ciudadesDelTitulo()"
+                        [disabled]="ciudadesDelTitulo().length <= 1"
+                        [value]="ciudadDelTitulo()"
+                        (valueChange)="elegirCiudadDelTitulo($event)"
+                      />
+                    }
                   </app-form-field>
                 </div>
               </div>
@@ -240,11 +302,19 @@
                  su archivo no, y mezclarlos haría dudar de cuál frena el paso. -->
             <ng-template appCampoPersonalizado="professionalTitleFile">
               <div class="registro-respaldo">
-                <app-file-input [files]="attachmentFiles()['professional-title'] ?? []"
-                  [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
-                  accessibleLabel="Título profesional" testId="registro-pro-respaldo-titulo" removeTestId="registro-pro-respaldo-quitar-titulo"
-                  (filesChange)="updateSupportFiles('professional-title', $event)" />
-                <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB.</p>
+                <app-file-input
+                  [files]="attachmentFiles()['professional-title'] ?? []"
+                  [accept]="formatosDeTitulo"
+                  [maxSizeBytes]="maxAttachmentBytes"
+                  accessibleLabel="Título profesional"
+                  testId="registro-pro-respaldo-titulo"
+                  removeTestId="registro-pro-respaldo-quitar-titulo"
+                  (filesChange)="updateSupportFiles('professional-title', $event)"
+                />
+                <p class="registro-respaldos__ayuda">
+                  PDF. Máximo 5 MB. Se guarda junto con el número del diploma y la universidad de
+                  este paso.
+                </p>
                 @if (errorAdjunto(); as error) {
                   <p class="registro-respaldos__error" role="alert">{{ error }}</p>
                 }
@@ -262,7 +332,11 @@
                   />
                 </div>
                 <div class="registro-foto__acciones">
-                  <label [appFileDropTarget]="inputFoto" (fileDropRejected)="errorFoto.set($event)" class="registro-foto__boton-subir">
+                  <label
+                    [appFileDropTarget]="inputFoto"
+                    (fileDropRejected)="errorFoto.set($event)"
+                    class="registro-foto__boton-subir"
+                  >
                     <input
                       #inputFoto
                       type="file"
@@ -295,29 +369,172 @@
               </div>
             </ng-template>
 
-            <!--
-              Respaldos de la habilitación. Cada archivo va pegado al número
-              que respalda, no en una bolsa común de adjuntos: quien verifica
-              tiene que saber cuál corresponde a cuál sin abrirlos.
-            -->
-            <ng-template appCampoPersonalizado="credentialAttachments">
-              <div class="registro-respaldos">
-                @for (respaldo of respaldosDeHabilitacion(); track respaldo.clave) {
-                  <div class="registro-respaldo">
-                    <p class="registro-respaldo__titulo">{{ respaldo.etiqueta }}</p>
-                    <p class="registro-respaldo__dato">{{ respaldo.valor || 'Sin cargar' }}</p>
-                    <app-file-input [files]="attachmentFiles()[respaldo.clave] ?? []"
-                      [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
-                      [accessibleLabel]="respaldo.etiqueta" [testId]="'registro-pro-respaldo-' + respaldo.clave"
-                      [removeTestId]="'registro-pro-respaldo-quitar-' + respaldo.clave"
-                      (filesChange)="updateSupportFiles(respaldo.clave, $event)" />
-                  </div>
-                }
-                <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB por archivo.</p>
-                @if (errorAdjunto(); as error) {
-                  <p class="registro-respaldos__error" role="alert">{{ error }}</p>
-                }
+            <ng-template appCampoPersonalizado="signatureImageBase64">
+              <div class="registro-foto">
+                <div class="registro-foto__avatar">
+                  <app-signature-or-seal tipo="firma" [src]="firmaBase64()" />
+                </div>
+                <div class="registro-foto__acciones">
+                  <label
+                    [appFileDropTarget]="inputFirma"
+                    (fileDropRejected)="errorFirma.set($event)"
+                    class="registro-foto__boton-subir"
+                  >
+                    <input
+                      #inputFirma
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="sr-only"
+                      data-testid="registro-pro-firma-input"
+                      (change)="alSeleccionarFirma($event)"
+                    />
+                    <span class="registro-foto__label-btn">
+                      {{ firmaBase64() ? 'Cambiar firma' : 'Subir firma' }}
+                    </span>
+                  </label>
+                  @if (firmaBase64()) {
+                    <button
+                      type="button"
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-firma-quitar"
+                      (clicked)="quitarFirma(inputFirma)"
+                    >
+                      Quitar firma
+                    </button>
+                  }
+                  <p class="registro-foto__ayuda">
+                    Su firma de puño y letra, escaneada o fotografiada. JPG, PNG o WebP, máximo 2
+                    MB.
+                  </p>
+                  @if (errorFirma(); as error) {
+                    <p class="registro-foto__error" role="alert">{{ error }}</p>
+                  }
+                </div>
               </div>
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="sealImageBase64">
+              <div class="registro-foto">
+                <div class="registro-foto__avatar">
+                  <app-signature-or-seal tipo="sello" [src]="selloBase64()" />
+                </div>
+                <div class="registro-foto__acciones">
+                  <label
+                    [appFileDropTarget]="inputSello"
+                    (fileDropRejected)="errorSello.set($event)"
+                    class="registro-foto__boton-subir"
+                  >
+                    <input
+                      #inputSello
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="sr-only"
+                      data-testid="registro-pro-sello-input"
+                      (change)="alSeleccionarSello($event)"
+                    />
+                    <span class="registro-foto__label-btn">
+                      {{ selloBase64() ? 'Cambiar sello' : 'Subir sello' }}
+                    </span>
+                  </label>
+                  @if (selloBase64()) {
+                    <button
+                      type="button"
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-sello-quitar"
+                      (clicked)="quitarSello(inputSello)"
+                    >
+                      Quitar sello
+                    </button>
+                  }
+                  <p class="registro-foto__ayuda">Su sello médico. JPG, PNG o WebP, máximo 2 MB.</p>
+                  @if (errorSello(); as error) {
+                    <p class="registro-foto__error" role="alert">{{ error }}</p>
+                  }
+                </div>
+              </div>
+            </ng-template>
+
+            <!--
+              Las tres habilitaciones —matrícula, SEDES y colegio de la
+              profesión—, cada una en SU renglón: número, fecha de inscripción y
+              respaldo. Una fecha o un archivo sueltos no dicen de cuál de los
+              tres registros son, y quien verifica tiene que saberlo sin
+              abrirlos. El rótulo, el asterisco y el error del número los pone
+              el motor; el renglón es el mismo para los tres.
+            -->
+            <ng-template #renglonDeHabilitacion let-renglon>
+              <div class="registro-habilitacion" [attr.data-habilitacion]="renglon.clave">
+                <div class="registro-habilitacion__grilla">
+                  <app-form-field class="registro-habilitacion__numero" [label]="renglon.rotuloNumero">
+                    <app-input
+                      [testId]="renglon.testId"
+                      autocomplete="off"
+                      [placeholder]="renglon.placeholder"
+                      [value]="valorDeHabilitacion(renglon.control)"
+                      [hasError]="habilitacionEnRojo(renglon.control)"
+                      (valueChange)="escribirHabilitacion(renglon.control, $event)"
+                    >
+                      <app-nav-icon
+                        slot="icon-start"
+                        [name]="renglon.icono"
+                        class="registro-habilitacion__icono"
+                      />
+                    </app-input>
+                  </app-form-field>
+                  <app-form-field
+                    class="registro-habilitacion__fecha"
+                    label="Fecha de inscripción (opcional)"
+                    hint="Cuándo se registró, no cuándo vence."
+                  >
+                    <app-date-picker
+                      [attr.data-testid]="'registro-pro-fecha-' + renglon.clave"
+                      [value]="fechaDeHabilitacion(renglon.fecha)"
+                      (valueChange)="escribirFechaDeHabilitacion(renglon.fecha, $event)"
+                      [maxDate]="hoy"
+                    />
+                  </app-form-field>
+                  <!-- Sin `hint`: la zona de carga ya dice «PDF · Máximo 5 MB». -->
+                  <app-form-field class="registro-habilitacion__respaldo" label="Respaldo (opcional)">
+                    <app-file-input
+                      [files]="attachmentFiles()[renglon.clave] ?? []"
+                      [accept]="formatosDeRespaldo"
+                      [maxSizeBytes]="maxAttachmentBytes"
+                      [accessibleLabel]="'Respaldo de ' + renglon.etiqueta"
+                      [testId]="'registro-pro-respaldo-' + renglon.clave"
+                      [removeTestId]="'registro-pro-respaldo-quitar-' + renglon.clave"
+                      (filesChange)="updateSupportFiles(renglon.clave, $event)"
+                    />
+                  </app-form-field>
+                </div>
+              </div>
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="licenseNumber">
+              <ng-container
+                [ngTemplateOutlet]="renglonDeHabilitacion"
+                [ngTemplateOutletContext]="{ $implicit: renglonDe('license') }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="sedesLicenseNumber">
+              <ng-container
+                [ngTemplateOutlet]="renglonDeHabilitacion"
+                [ngTemplateOutletContext]="{ $implicit: renglonDe('sedes') }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="collegeLicenseNumber">
+              <ng-container
+                [ngTemplateOutlet]="renglonDeHabilitacion"
+                [ngTemplateOutletContext]="{ $implicit: renglonDe('college') }"
+              />
+              @if (errorAdjunto(); as error) {
+                <p class="registro-respaldos__error" role="alert">{{ error }}</p>
+              }
             </ng-template>
 
             <!--
@@ -333,17 +550,33 @@
                      El nombre, el país y la ciudad siguen visibles pero no
                      viajan; cada PDF sí queda asociado a la credencial. -->
                 <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-alcance">
-                  En esta alta se guardan el tipo, el número, la universidad y el PDF de cada título.
-                  El nombre, el país y la ciudad que completes aquí todavía no se guardan. Si falla
-                  una carga, podés reintentar y se conservan las que ya subieron.
+                  De cada título se guardan el tipo, el número, la profesión, la universidad, el
+                  país, la ciudad y el PDF. Lo único obligatorio de una fila es el número del
+                  diploma: si no lo tiene a mano, quite la fila y cárguela después desde «Mi perfil».
                 </p>
+                <!-- La universidad del título principal sólo se guarda pegada a
+                     un título con número, y en esta alta el único tipo que la
+                     lleva se llama «Otra profesión» (pensado para la segunda
+                     carrera). Mandar al médico a cargar ahí su título principal
+                     no se entiende, así que no se le pide: se le dice que no
+                     frena la cuenta y dónde completarla después. -->
+                @if (hayUniversidadPrincipalSinTitulo()) {
+                  <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-universidad">
+                    La universidad que eligió («{{ universidadPrincipal() }}») no hace falta para
+                    crear su cuenta. Para que aparezca en su perfil, después agregue su título con su
+                    número de diploma desde «Mi perfil».
+                  </p>
+                }
                 <!-- Sin catálogo de tipos, una fila con número no se puede
                      mandar: el contrato exige el concepto. Se avisa acá, donde
                      se escriben, y con el botón que vuelve a pedirlo —mismo
                      patrón que el catálogo de departamentos—. Lo ya escrito no
                      se pierde: las filas viven en su propio signal. -->
                 @if (catalogoTiposDeTituloCaido()) {
-                  <p class="registro__catalogo-caido" data-testid="registro-pro-titulos-catalogo-caido">
+                  <p
+                    class="registro__catalogo-caido"
+                    data-testid="registro-pro-titulos-catalogo-caido"
+                  >
                     No pudimos traer los tipos de título.
                     <button
                       app-button
@@ -366,18 +599,55 @@
                            campos: el id de una fila es un uuid del navegador,
                            así que una prueba no puede nombrarlo. Con esto se
                            las cuenta y se las recorre por tipo y por orden. -->
-                      <div class="registro-titulo" [attr.data-testid]="'registro-pro-fila-' + tipo.codigo">
-                        <label class="registro-titulo__campo">
-                          <span class="sr-only">Nombre de {{ tipo.singular }}</span>
-                          <input
-                            type="text"
-                            class="registro-titulo__nombre"
-                            [placeholder]="tipo.placeholderNombre"
-                            [value]="titulo.nombre"
-                            [attr.data-testid]="'registro-pro-titulo-nombre-' + titulo.id"
-                            (input)="escribirDatoDeTitulo(titulo.id, 'nombre', $any($event.target).value)"
-                          />
-                        </label>
+                      <div
+                        class="registro-titulo"
+                        [attr.data-testid]="'registro-pro-fila-' + tipo.codigo"
+                      >
+                        @if (tipo.codigo === 'UNIVERSITARIO') {
+                          <!-- La profesión se elige de la COB-2023 del INE: es un
+                               dato normalizado, no texto libre (propietario,
+                               04/10/2026). -->
+                          <div class="registro-titulo__campo">
+                            <app-reference-combobox
+                              [attr.data-testid]="'registro-pro-titulo-profesion-' + titulo.id"
+                              label="Profesión"
+                              placeholder="Busque la carrera: abogado, ingeniero civil…"
+                              emptyMessage="Ninguna profesión de la clasificación oficial coincide."
+                              [options]="profesionesDeFila(titulo.id)"
+                              [selected]="profesionElegidaDeFila(titulo)"
+                              [minQueryLength]="0"
+                              (searched)="buscarProfesionEnFila(titulo.id, $event)"
+                              (selectionChange)="elegirProfesionEnFila(titulo.id, $event)"
+                            />
+                            @if (catalogoProfesionesCaido()) {
+                              <p class="registro__catalogo-caido">
+                                No pudimos traer la lista de profesiones.
+                                <button
+                                  app-button
+                                  variant="ghost"
+                                  size="sm"
+                                  (clicked)="reintentarProfesiones()"
+                                >
+                                  Reintentar
+                                </button>
+                              </p>
+                            }
+                          </div>
+                        } @else {
+                          <label class="registro-titulo__campo">
+                            <span class="sr-only">Nombre de {{ tipo.singular }}</span>
+                            <input
+                              type="text"
+                              class="registro-titulo__nombre"
+                              [placeholder]="tipo.placeholderNombre"
+                              [value]="titulo.nombre"
+                              [attr.data-testid]="'registro-pro-titulo-nombre-' + titulo.id"
+                              (input)="
+                                escribirDatoDeTitulo(titulo.id, 'nombre', $any($event.target).value)
+                              "
+                            />
+                          </label>
+                        }
 
                         <!-- El número del diploma. Es el único obligatorio de la
                              fila: la columna que lo recibe es NOT NULL, así que
@@ -392,11 +662,15 @@
                             [value]="titulo.numero"
                             [attr.aria-invalid]="tituloSinNumero(titulo) ? 'true' : null"
                             [attr.aria-describedby]="
-                              tituloSinNumero(titulo) ? 'registro-pro-titulo-numero-error-' + titulo.id : null
+                              tituloSinNumero(titulo)
+                                ? 'registro-pro-titulo-numero-error-' + titulo.id
+                                : null
                             "
                             [class.registro-titulo__dato--invalido]="tituloSinNumero(titulo)"
                             [attr.data-testid]="'registro-pro-titulo-numero-' + titulo.id"
-                            (input)="escribirDatoDeTitulo(titulo.id, 'numero', $any($event.target).value)"
+                            (input)="
+                              escribirDatoDeTitulo(titulo.id, 'numero', $any($event.target).value)
+                            "
                           />
                           <!-- El aviso vive en la fila, al lado del campo que
                                hay que corregir: el resumen de arriba dice QUÉ
@@ -436,7 +710,11 @@
                                   [value]="titulo.pais"
                                   [attr.data-testid]="'registro-pro-titulo-pais-otro-' + titulo.id"
                                   (input)="
-                                    escribirDatoDeTitulo(titulo.id, 'pais', $any($event.target).value)
+                                    escribirDatoDeTitulo(
+                                      titulo.id,
+                                      'pais',
+                                      $any($event.target).value
+                                    )
                                   "
                                 />
                               </label>
@@ -446,7 +724,11 @@
                           <div class="registro-titulo__estudio-campo">
                             <app-select
                               [ariaLabel]="'Universidad de ' + tipo.singular"
-                              [placeholder]="titulo.paisElegido === null ? 'Elegí primero el país' : 'Universidad'"
+                              [placeholder]="
+                                titulo.paisElegido === null
+                                  ? 'Elija primero el país'
+                                  : 'Universidad'
+                              "
                               [options]="opcionesDeUniversidadDeFila(titulo)"
                               [disabled]="titulo.paisElegido === null"
                               [value]="titulo.universidadElegida"
@@ -455,7 +737,9 @@
                             />
                             @if (titulo.universidadElegida === institucionFueraDeCatalogo) {
                               <label class="registro-titulo__campo">
-                                <span class="sr-only">¿Cuál institución? de {{ tipo.singular }}</span>
+                                <span class="sr-only"
+                                  >¿Cuál institución? de {{ tipo.singular }}</span
+                                >
                                 <input
                                   type="text"
                                   class="registro-titulo__dato"
@@ -477,24 +761,45 @@
                             }
                           </div>
 
-                          <label class="registro-titulo__campo">
-                            <span class="sr-only">Ciudad de {{ tipo.singular }}</span>
-                            <input
-                              type="text"
-                              class="registro-titulo__dato"
-                              placeholder="Ciudad"
-                              [value]="titulo.ciudad"
-                              [attr.data-testid]="'registro-pro-titulo-ciudad-' + titulo.id"
-                              (input)="
-                                escribirDatoDeTitulo(titulo.id, 'ciudad', $any($event.target).value)
-                              "
-                            />
-                          </label>
+                          <div class="registro-titulo__estudio-campo">
+                            @if (
+                              ciudadesDeFila(titulo).length === 0 &&
+                              titulo.universidadElegida !== null
+                            ) {
+                              <label class="registro-titulo__campo">
+                                <span class="sr-only">Ciudad de {{ tipo.singular }}</span>
+                                <input
+                                  type="text"
+                                  class="registro-titulo__dato"
+                                  placeholder="Ciudad donde estudió"
+                                  [value]="titulo.ciudad"
+                                  [attr.data-testid]="'registro-pro-titulo-ciudad-otra-' + titulo.id"
+                                  (input)="
+                                    escribirDatoDeTitulo(titulo.id, 'ciudad', $any($event.target).value)
+                                  "
+                                />
+                              </label>
+                            } @else {
+                              <app-select
+                                [ariaLabel]="'Ciudad de ' + tipo.singular"
+                                placeholder="Ciudad: sale de la universidad"
+                                [options]="ciudadesDeFila(titulo)"
+                                [disabled]="ciudadesDeFila(titulo).length <= 1"
+                                [value]="titulo.ciudad || null"
+                                [attr.data-testid]="'registro-pro-titulo-ciudad-' + titulo.id"
+                                (valueChange)="elegirCiudadEnFila(titulo.id, $event)"
+                              />
+                            }
+                          </div>
                         </div>
-                        <app-file-input [files]="attachmentFiles()[titulo.id] ?? []"
-                          [accept]="formatosDeTitulo" [maxSizeBytes]="maxAttachmentBytes"
-                          [accessibleLabel]="tipo.singular" [testId]="'registro-pro-titulo-archivo-' + titulo.id"
-                          (filesChange)="updateTitleFiles(titulo.id, $event)" />
+                        <app-file-input
+                          [files]="attachmentFiles()[titulo.id] ?? []"
+                          [accept]="formatosDeTitulo"
+                          [maxSizeBytes]="maxAttachmentBytes"
+                          [accessibleLabel]="tipo.singular"
+                          [testId]="'registro-pro-titulo-archivo-' + titulo.id"
+                          (filesChange)="updateTitleFiles(titulo.id, $event)"
+                        />
                         <button
                           type="button"
                           app-button
@@ -524,6 +829,18 @@
                 @if (errorAdjunto(); as error) {
                   <p class="registro-titulos__error" role="alert">{{ error }}</p>
                 }
+                <!-- El resumen del paso: QUÉ sección está incompleta, con su
+                     nombre visible. El motor no deja pasar a «Siguiente»
+                     mientras esté (control `academicTitles`). -->
+                @if (avisoDeTitulosIncompletos(); as aviso) {
+                  <p
+                    class="registro-titulos__error"
+                    role="alert"
+                    data-testid="registro-pro-titulos-incompletos"
+                  >
+                    {{ aviso }}
+                  </p>
+                }
               </div>
             </ng-template>
 
@@ -536,40 +853,192 @@
               </p>
             </ng-template>
 
-            <!-- La localidad de residencia: el mismo mapa de departamentos y
-                 el mismo select acotado que el alta de paciente
-                 (`app-location-picker`). Acá es opcional, así que un catálogo
-                 caído no frena el alta: se avisa y se sigue (AC-05-15). -->
-            <!-- El registro permite hasta tres especialidades además de la principal. -->
+            <!-- Las especialidades, todas iguales: desde el 23/09/2026 no hay
+                 desplegable de «principal» (D-01). El registro del cliente
+                 permite hasta cuatro (L0174), las mismas para cualquier profesión. -->
             <ng-template appCampoPersonalizado="especialidadesExtra">
               @for (extra of especialidadesExtra(); track $index) {
-                <app-form-field [label]="'Especialidad ' + ($index + 2)">
-                  <div class="registro__especialidad-extra">
-                    <app-select
-                      [attr.data-testid]="'registro-pro-especialidad-extra-' + $index"
-                      [options]="allSpecialtyOptions()"
-                      placeholder="Sin especificar"
-                      [value]="extra === '' ? null : extra"
-                      (valueChange)="elegirEspecialidadExtra($index, $event)"
-                    />
-                    <button
-                      app-button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      [iconOnly]="true"
-                      [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
-                      [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
-                      [attr.data-testid]="'registro-pro-quitar-especialidad-' + $index"
-                      (clicked)="quitarEspecialidad($index)"
+                <div class="registro__especialidad" [attr.data-testid]="'registro-pro-especialidad-' + $index">
+                  <app-form-field [label]="'Especialidad ' + ($index + 1)">
+                    <div class="registro__especialidad-extra">
+                      <app-select
+                        [attr.data-testid]="'registro-pro-especialidad-extra-' + $index"
+                        [options]="allSpecialtyOptions()"
+                        placeholder="Sin especificar"
+                        [value]="extra === '' ? null : extra"
+                        (valueChange)="elegirEspecialidadExtra($index, $event)"
+                      />
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar la especialidad ' + ($index + 1)"
+                        [appTooltip]="'Quitar la especialidad ' + ($index + 1)"
+                        [attr.data-testid]="'registro-pro-quitar-especialidad-' + $index"
+                        (clicked)="quitarEspecialidad($index)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                  </app-form-field>
+
+                  <!-- Dónde estudió ESTA especialidad: el mismo bloque que el
+                       título profesional (número del diploma, país, universidad
+                       y ciudad), porque se cursa en otro lugar y otro año que la
+                       carrera. Aparece al elegir la especialidad: sin ella no hay
+                       a qué atar el diploma. Todo opcional salvo que, si carga
+                       algo, hace falta el número (la columna es NOT NULL). -->
+                  @if (extra !== '') {
+                    @let estudio = specialtyStudyAt($index);
+                    <div class="registro__estudio">
+                      <div class="registro__estudio-campo">
+                        <app-form-field
+                          label="Número del diploma"
+                          [hint]="'Para guardar el estudio de esta especialidad.'"
+                          [errorMessage]="
+                            specialtyStudyMissingNumber($index)
+                              ? 'Falta el número del diploma de esta especialidad.'
+                              : ''
+                          "
+                        >
+                          <app-input
+                            [testId]="'registro-pro-especialidad-numero-' + $index"
+                            placeholder="Como figura en su diploma"
+                            [value]="estudio.number"
+                            (valueChange)="writeSpecialtyStudy($index, 'number', $event)"
+                          />
+                        </app-form-field>
+                      </div>
+
+                      <div class="registro__estudio-campo">
+                        <app-form-field
+                          label="País de estudio"
+                          [hint]="
+                            padronCargando() ? 'Opcional. Cargando la lista de países…' : 'Opcional.'
+                          "
+                        >
+                          <app-select
+                            [attr.data-testid]="'registro-pro-especialidad-pais-' + $index"
+                            placeholder="Elija el país"
+                            [options]="opcionesDePais()"
+                            [value]="estudio.pickedCountry"
+                            (valueChange)="chooseSpecialtyCountry($index, $event)"
+                          />
+                        </app-form-field>
+                        @if (estudio.pickedCountry === paisFueraDeCatalogo) {
+                          <app-form-field label="¿Qué país?" hint="Como figura en su diploma.">
+                            <app-input
+                              [testId]="'registro-pro-especialidad-pais-otro-' + $index"
+                              placeholder="Nombre del país"
+                              [value]="estudio.country"
+                              (valueChange)="writeSpecialtyStudy($index, 'country', $event)"
+                            />
+                          </app-form-field>
+                        }
+                      </div>
+
+                      <div class="registro__estudio-campo registro__estudio-campo--ancha">
+                        <app-form-field
+                          label="Universidad"
+                          [hint]="
+                            estudio.pickedCountry === null
+                              ? 'Opcional. Elija primero el país.'
+                              : 'Opcional.'
+                          "
+                        >
+                          <app-select
+                            [attr.data-testid]="'registro-pro-especialidad-universidad-' + $index"
+                            placeholder="Elija la universidad"
+                            [options]="specialtyUniversityOptions($index)"
+                            [disabled]="estudio.pickedCountry === null"
+                            [value]="estudio.pickedUniversity"
+                            (valueChange)="chooseSpecialtyUniversity($index, $event)"
+                          />
+                        </app-form-field>
+                        @if (estudio.pickedUniversity === institucionFueraDeCatalogo) {
+                          <app-form-field
+                            label="¿Cuál?"
+                            hint="El nombre completo de la institución, como figura en su diploma."
+                          >
+                            <app-input
+                              [testId]="'registro-pro-especialidad-universidad-otra-' + $index"
+                              placeholder="Universidad de La Habana"
+                              [value]="estudio.university"
+                              (valueChange)="
+                                writeSpecialtyStudy($index, 'university', $event)
+                              "
+                            />
+                          </app-form-field>
+                        }
+                      </div>
+
+                      <div class="registro__estudio-campo">
+                        <app-form-field
+                          label="Ciudad de estudio"
+                          [hint]="
+                            specialtyCityOptions($index).length === 0
+                              ? estudio.pickedUniversity !== null
+                                ? 'Opcional. Escríbala como figura en su diploma.'
+                                : 'Sale de la universidad que elija.'
+                              : specialtyCityOptions($index).length === 1
+                                ? 'La sede de esa universidad.'
+                                : 'Elija en qué sede estudió.'
+                          "
+                        >
+                          @if (
+                            specialtyCityOptions($index).length === 0 &&
+                            estudio.pickedUniversity !== null
+                          ) {
+                            <app-input
+                              [testId]="'registro-pro-especialidad-ciudad-otra-' + $index"
+                              placeholder="Ciudad donde estudió"
+                              [value]="estudio.city"
+                              (valueChange)="writeSpecialtyStudy($index, 'city', $event)"
+                            />
+                          } @else {
+                            <app-select
+                              [attr.data-testid]="'registro-pro-especialidad-ciudad-' + $index"
+                              placeholder="Sale de la universidad"
+                              [options]="specialtyCityOptions($index)"
+                              [disabled]="specialtyCityOptions($index).length <= 1"
+                              [value]="estudio.city || null"
+                              (valueChange)="chooseSpecialtyCity($index, $event)"
+                            />
+                          }
+                        </app-form-field>
+                      </div>
+                    </div>
+
+                    <app-form-field
+                      label="Diploma de la especialidad (opcional)"
+                      hint="PDF, máximo 5 MB. Puede adjuntarlo ahora o cargarlo después desde su perfil."
                     >
-                      <app-nav-icon name="remove" />
-                    </button>
-                  </div>
-                </app-form-field>
+                      <app-file-input
+                        [files]="attachmentFiles()[specialtyFileKey($index)] ?? []"
+                        [accept]="formatosDeTitulo"
+                        [maxSizeBytes]="maxAttachmentBytes"
+                        [accessibleLabel]="'Diploma de la especialidad ' + ($index + 1)"
+                        [testId]="'registro-pro-especialidad-archivo-' + $index"
+                        (filesChange)="updateSpecialtyFiles($index, $event)"
+                      />
+                    </app-form-field>
+                  }
+                </div>
               }
 
-              @if (especialidadesExtra().length < 3) {
+              @if (incompleteStudiesNotice(); as aviso) {
+                <p
+                  class="registro-titulos__error"
+                  role="alert"
+                  data-testid="registro-pro-especialidades-incompletas"
+                >
+                  {{ aviso }}
+                </p>
+              }
+
+              @if (especialidadesExtra().length < maximoDeEspecialidades) {
                 <button
                   app-button
                   type="button"
@@ -578,95 +1047,63 @@
                   data-testid="registro-pro-agregar-especialidad"
                   (clicked)="agregarEspecialidad()"
                 >
-                  + Agregar otra especialidad
+                  {{
+                    especialidadesExtra().length === 0
+                      ? '+ Agregar una especialidad'
+                      : '+ Agregar otra especialidad'
+                  }}
                 </button>
               }
             </ng-template>
 
-            <ng-template appCampoPersonalizado="municipio">
-              @if (catalogoMunicipiosCaido()) {
-                <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
-                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
-                    Reintentar
-                  </button>
-                </p>
-              } @else {
-                <app-location-picker
-                  testId="registration-practitioner-residence"
-                  [ramas]="ramasMunicipios()"
-                  [value]="municipioProfesional()"
-                  (valueChange)="municipioProfesional.set($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
-                  municipalityLabel="Localidad de residencia (opcional)"
-                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
-                />
-              }
-            </ng-template>
-
-            <!-- El punto del domicilio sobre el mapa. Es el MISMO componente
-                 que usa el alta de paciente para su casa y su trabajo: pedir
-                 permiso al navegador, dibujar el pin, dejar que alguien mire el
-                 plano y diga que sí, y avisar en voz alta si no lo dice. -->
-            <!-- La localidad del consultorio: el mismo control que el
-                 domicilio, con su propio estado. Son dos lugares distintos y
-                 hay quien vive en una ciudad y atiende en otra. -->
-            <ng-template appCampoPersonalizado="municipioConsultorio">
-              @if (catalogoMunicipiosCaido()) {
-                <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
-                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
-                    Reintentar
-                  </button>
-                </p>
-              } @else {
-                <app-location-picker
-                  testId="registration-practitioner-office"
-                  [ramas]="ramasMunicipios()"
-                  [value]="municipioConsultorio()"
-                  (valueChange)="municipioConsultorio.set($event)"
-                  mapLabel="Mapa de Bolivia: elegí el departamento donde está tu consultorio"
-                  municipalityLabel="Localidad del consultorio (opcional)"
-                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
-                />
-              }
-            </ng-template>
-
-            <!-- El punto del consultorio. Mismo componente que el domicilio, y
-                 con su propia confirmación: confirmar uno no confirma el otro. -->
-            <ng-template appCampoPersonalizado="gpsConsultorio">
-              <app-ubicacion-picker
-                pinId="consultorio"
-                etiquetaConfirmada="Tu consultorio"
-                pregunta="¿Es acá donde atendés? Movete por el mapa para comprobarlo."
-                etiquetaQuitar="Quitar la ubicación de tu consultorio"
-                etiquetaMapa="La ubicación de tu consultorio en el mapa"
-                [ids]="idsUbicacionConsultorio"
-                (confirmado)="gpsConsultorio.set($event)"
-              />
-            </ng-template>
-
+            <!-- Las tres ubicaciones (pedido del cliente del 26/10/2026): el mapa
+                 abierto, el punto como lo único que se marca, y debajo lo que
+                 sale de él —calle, mapa de Bolivia acercado, departamento,
+                 provincia, municipio y zona—, en sólo lectura. Es el MISMO
+                 componente que usa el alta de paciente. Lo deducido llega por
+                 `localidad` y la pantalla lo vuelca a sus controles. -->
             <ng-template appCampoPersonalizado="gpsDomicilio">
-              <app-ubicacion-picker
+              <app-map-location-picker
                 pinId="domicilio"
-                etiquetaConfirmada="Tu dirección"
-                pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
-                etiquetaQuitar="Quitar la ubicación de tu domicilio"
-                etiquetaMapa="Tu ubicación actual en el mapa"
+                etiquetaConfirmada="Su dirección"
+                etiquetaQuitar="Quitar la ubicación de su domicilio"
+                etiquetaMapa="Su ubicación actual en el mapa"
+                etiquetaFicha="Su domicilio"
                 [ids]="idsUbicacionDomicilio"
-                (confirmado)="gpsDomicilio.set($event)"
+                [inicial]="gpsDomicilio()"
+                (confirmado)="confirmarGpsDomicilio($event)"
+                (localidad)="aplicarLocalidadDomicilio($event)"
               />
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsTrabajo">
-              <app-ubicacion-picker
+              <app-map-location-picker
                 pinId="trabajo"
-                etiquetaConfirmada="Tu lugar de trabajo"
-                pregunta="¿Es acá donde trabajás? Movete por el mapa para comprobarlo."
-                etiquetaQuitar="Quitar la ubicación de tu trabajo"
-                etiquetaMapa="La ubicación de tu trabajo en el mapa"
+                etiquetaConfirmada="Su lugar de trabajo"
+                etiquetaQuitar="Quitar la ubicación de su trabajo"
+                etiquetaMapa="La ubicación de su trabajo en el mapa"
+                etiquetaFicha="Su trabajo"
                 [ids]="idsUbicacionTrabajo"
-                (confirmado)="gpsTrabajo.set($event)"
+                [inicial]="gpsTrabajo()"
+                (confirmado)="confirmarGpsTrabajo($event)"
+                (localidad)="aplicarLocalidadTrabajo($event)"
+              />
+            </ng-template>
+
+            <!-- El punto del consultorio, con su propia confirmación: confirmar
+                 uno no confirma el otro, y hay quien vive en una ciudad y
+                 atiende en otra. -->
+            <ng-template appCampoPersonalizado="gpsConsultorio">
+              <app-map-location-picker
+                pinId="consultorio"
+                etiquetaConfirmada="Su consultorio"
+                etiquetaQuitar="Quitar la ubicación de su consultorio"
+                etiquetaMapa="La ubicación de su consultorio en el mapa"
+                etiquetaFicha="Su consultorio"
+                [ids]="idsUbicacionConsultorio"
+                [inicial]="gpsConsultorio()"
+                (confirmado)="confirmarGpsConsultorio($event)"
+                (localidad)="aplicarLocalidadConsultorio($event)"
               />
             </ng-template>
           </app-paginated-form>
@@ -674,14 +1111,14 @@
 
         <div class="registro__footer">
           <p class="registro__pie">
-            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
           </p>
         </div>
       }
     </div>
 
     @if (!registered()) {
-      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
+      <app-registration-help class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
     }
   </div>
 </app-auth-split>

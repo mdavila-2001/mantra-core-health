@@ -68,3 +68,52 @@ export interface CareRelationshipRespondInput {
   /** Sólo con `ACCEPT`: qué áreas autoriza. Aceptar no es todo o nada. */
   readonly authorizedSpecialtyConceptIds?: readonly string[];
 }
+
+/* ---- BR-20 · «Quién ve mi historia» -------------------------------------- */
+
+/** Estado legible de un acceso, con la vigencia ya considerada por la API. */
+export type AccessState = 'ACTIVE' | 'REVOKED' | 'EXPIRED' | 'OTHER';
+
+/** Una relación asistencial vista por el paciente, con el nombre del profesional. */
+export interface MyCareRelationship {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly practitionerProfileId: string;
+  readonly practitionerName?: string;
+  readonly state: AccessState;
+  readonly validFrom: Date;
+  readonly validTo?: Date;
+  readonly purposeConceptId?: string;
+}
+
+/** Un acceso clínico concedido sobre la historia del paciente. */
+export interface MyClinicalGrant {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly grantedUserId: string;
+  readonly grantedName?: string;
+  /** `true` si es un acceso de emergencia (break-the-glass). */
+  readonly isEmergency: boolean;
+  readonly state: AccessState;
+  readonly validFrom: Date;
+  readonly validTo: Date;
+}
+
+/** Lo que ve el titular en «Quién ve mi historia». */
+export interface MyClinicalAccess {
+  readonly careRelationships: readonly MyCareRelationship[];
+  readonly grants: readonly MyClinicalGrant[];
+}
+
+/**
+ * El acceso de emergencia (`POST /authz/patients/:id/break-the-glass`).
+ *
+ * `justification` es obligatoria y de al menos 10 caracteres: sin ella la API
+ * responde 400 y no crea nada. La ventana es corta (60 minutos por defecto).
+ */
+export interface BreakTheGlassInput {
+  readonly tenantId: string;
+  readonly justification: string;
+  readonly windowMinutes?: number;
+  readonly encounterId?: string;
+}
