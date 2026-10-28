@@ -84,7 +84,7 @@
 
     @switch (estado()) {
       @case ('cargando') {
-        <p class="seguridad__estado" role="status">Cargando sus sesiones…</p>
+        <app-loading-state class="seguridad__estado" message="Cargando sus sesiones…" />
       }
       @case ('error') {
         <app-alert tone="error" data-testid="seguridad-sesiones-error">

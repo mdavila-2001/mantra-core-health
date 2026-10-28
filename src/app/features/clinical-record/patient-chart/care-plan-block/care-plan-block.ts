@@ -1,3 +1,4 @@
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,6 +19,7 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
@@ -42,6 +44,29 @@ interface ActividadEnCurso {
   readonly clave: number;
   detalle: string;
   cuando: Date | null;
+}
+
+/** Un hito de la vista de hoja de ruta: un paso con algo escrito, ya numerado. */
+interface HitoDeLaRuta {
+  readonly clave: number;
+  readonly numero: number;
+  readonly detalle: string;
+  readonly cuando: Date | null;
+}
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/**
+ * Cuánto dura la vigencia, en la unidad con la que se habla en la consulta:
+ * días hasta dos semanas, semanas hasta dos meses y meses de ahí en más.
+ */
+export function duracionEnPalabras(desde: Date, hasta: Date): string {
+  const dias = Math.round((hasta.getTime() - desde.getTime()) / MS_POR_DIA);
+  if (dias < 1) return 'el mismo día';
+  if (dias < 14) return dias === 1 ? '1 día' : `${dias} días`;
+  if (dias < 60) return `${Math.round(dias / 7)} semanas`;
+  const meses = Math.round(dias / 30.44);
+  return meses === 1 ? '1 mes' : `${meses} meses`;
 }
 
 /**
@@ -95,6 +120,9 @@ interface ActividadEnCurso {
     Card,
     AppInput,
     DatePicker,
+    DatePipe,
+    NavIcon,
+    NgTemplateOutlet,
     FormActions,
     FormField,
     Select,
@@ -230,6 +258,70 @@ export class CarePlanBlock implements DraftBlock {
   protected readonly hayMotivo = computed(
     () => this.diagnosticoElegido() !== null || this.motivo().trim() !== '',
   );
+
+  /* -- La hoja de ruta ------------------------------------------------------ */
+
+  /** Los pasos que dicen algo: son los únicos que viajan, y los únicos que se dibujan. */
+  protected readonly pasosEscritos = computed(
+    () => this.actividades().filter((a) => a.detalle.trim() !== '').length,
+  );
+
+  /**
+   * Los hitos de la vista de ruta, en el orden en que van a ocurrir.
+   *
+   * Los fechados primero y por fecha; los sin fecha al final, en el orden en
+   * que se escribieron: un paso sin día no tiene lugar en el tiempo, pero sigue
+   * siendo parte del camino. El número es el del formulario, para que «Paso 2»
+   * diga lo mismo arriba y abajo.
+   */
+  protected readonly hitos = computed<readonly HitoDeLaRuta[]>(() =>
+    this.actividades()
+      .map((a, indice) => ({ clave: a.clave, numero: indice + 1, detalle: a.detalle.trim(), cuando: a.cuando }))
+      .filter((h) => h.detalle !== '')
+      .sort((a, b) => {
+        if (a.cuando === null || b.cuando === null) {
+          return a.cuando === b.cuando ? a.numero - b.numero : a.cuando === null ? 1 : -1;
+        }
+        return a.cuando.getTime() - b.cuando.getTime() || a.numero - b.numero;
+      }),
+  );
+
+  /** La vigencia en palabras, cuando hay inicio y fin y el fin no es anterior. */
+  protected readonly duracion = computed<string | null>(() => {
+    const desde = this.desde();
+    const hasta = this.hasta();
+    return desde === null || hasta === null || this.vigenciaInvalida()
+      ? null
+      : duracionEnPalabras(desde, hasta);
+  });
+
+  /**
+   * Qué tramo de la ruta está resuelto. Los obligatorios cierran con su dato;
+   * la vigencia y los pasos, que son opcionales, cuando tienen algo.
+   */
+  protected readonly tramos = computed(() => ({
+    origen: !this.faltaRespuesta(),
+    objetivo: this.meta().trim() !== '',
+    motivo: this.hayMotivo(),
+    vigencia: (this.desde() !== null || this.hasta() !== null) && !this.vigenciaInvalida(),
+    pasos: this.pasosEscritos() > 0,
+  }));
+
+  /** Lo que falta para poder abrir el plan, contado: cuántos obligatorios quedan. */
+  protected readonly obligatoriosPendientes = computed(() => {
+    const t = this.tramos();
+    return [this.exigeRespuesta() ? t.origen : true, t.objetivo, t.motivo].filter((ok) => !ok)
+      .length;
+  });
+
+  /** La etiqueta del diagnóstico elegido, para la vista de ruta. */
+  protected readonly motivoEnPalabras = computed<string>(() => {
+    const id = this.diagnosticoElegido();
+    if (id !== null) {
+      return this.diagnosticos().find((dx) => dx.id === id)?.etiqueta ?? '';
+    }
+    return this.motivo().trim();
+  });
 
   /** La meta y el motivo son lo que esta pantalla exige; el contrato sólo pide el paciente. */
   protected readonly puedeRegistrar = computed(

@@ -14,6 +14,9 @@
 
 .formulario-especialidad__selector {
   display: grid;
+  /* Sin `minmax(0, 1fr)` la columna toma el ancho de la plantilla de nombre
+     más largo y en un teléfono el desplegable salía 49 px del modal. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   margin-block-end: var(--sp-5);
 }
@@ -26,20 +29,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
-}
-
-/* El formulario libre va suelto bajo el selector, sin el aviso ni el
-   interruptor que en las fichas hacen de separación: el aire se pone acá. */
-.formulario-especialidad__libre {
-  margin-block-start: var(--sp-5);
-}
-
-/* Lo ya registrado, debajo del botón de guardar: separado por un filete para
-   que no se lea como parte de lo que se está por enviar. */
-.formulario-especialidad__ya-registrado {
-  margin-block-start: var(--sp-5);
-  padding-block-start: var(--sp-5);
-  border-block-start: 1px solid var(--border-subtle);
 }
 
 /* Cada pestaña repite la rejilla del formulario: sus campos eran hijos

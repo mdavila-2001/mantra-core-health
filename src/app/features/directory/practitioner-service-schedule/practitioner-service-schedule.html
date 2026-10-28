@@ -12,7 +12,7 @@
   <div class="otros-servicios" data-testid="service-schedule">
     @switch (offerings().status) {
       @case ('loading') {
-        <p class="otros-servicios__nota" role="status">Buscando sus servicios…</p>
+        <app-loading-state class="otros-servicios__nota" message="Buscando sus servicios…" />
       }
       @case ('error') {
         <app-empty-state
@@ -135,7 +135,10 @@
                         }
                       }
                       @case ('loading') {
-                        <p class="otros-servicios__nota" role="status">Buscando horarios…</p>
+                        <app-loading-state
+                          class="otros-servicios__nota"
+                          message="Buscando horarios…"
+                        />
                       }
                       @default {
                         <p class="otros-servicios__nota" role="alert">

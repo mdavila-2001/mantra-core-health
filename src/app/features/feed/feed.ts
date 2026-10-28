@@ -22,6 +22,7 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 import { Composer } from './composer/composer';
 import { PostCard } from './post-card/post-card';
 import { ReportPost } from './report-post/report-post';
+import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántas publicaciones se piden por página. */
 const PAGE_SIZE = 20;
@@ -107,6 +108,7 @@ const TENDENCIAS_VISIBLES = 5;
     PostCard,
     ReportPost,
     RouterLink,
+    LoadingState,
   ],
   templateUrl: './feed.html',
   styleUrl: './feed.css',

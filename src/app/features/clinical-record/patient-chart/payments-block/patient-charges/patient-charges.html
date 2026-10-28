@@ -12,7 +12,11 @@
 
   @switch (status().status) {
     @case ('loading') {
-      <p class="cobros__secundario" data-testid="cobros-cargando">Buscando los cobros…</p>
+      <app-loading-state
+        class="cobros__secundario"
+        data-testid="cobros-cargando"
+        message="Buscando los cobros…"
+      />
     }
     @case ('forbidden') {
       <!-- S5 y no S3: «no podés verlo» no es «no hay nada». -->

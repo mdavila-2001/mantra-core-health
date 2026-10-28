@@ -412,9 +412,10 @@ export interface AppSection {
    * No es `roles` al revés y la diferencia importa: `roles` decide si la
    * sesión *puede entrar* —lo pregunta `seccionRolesGuard`, que rebota—,
    * mientras que esto decide si la sección *se ofrece en el menú*. Una
-   * sección escondida acá se sigue alcanzando por su ruta, por un enlace de
-   * otra pantalla y por «Tus accesos»: lo único que pierde es el renglón
-   * lateral.
+   * sección escondida acá se sigue alcanzando por su ruta y por un enlace de
+   * otra pantalla: lo único que pierde es el renglón lateral. Desde el
+   * 28/10/2026 el panel ya no tiene árbol de accesos que la liste, así que
+   * esconder una sección exige que exista ese otro enlace.
    *
    * Nació con la lista cerrada de ocho opciones que pidió el cliente para el
    * panel del médico (22/08/2026, §4.H del plan de UX). Ahí el problema no

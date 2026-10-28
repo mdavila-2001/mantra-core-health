@@ -125,13 +125,12 @@ export const PURCHASE_SALE_SCHEMA: SectorDocumentSchema = {
 };
 
 /**
- * Sector 17 · Factura de Hospitales/Clínicas — **preparado, no activo** (CA-1).
+ * Sector 17 · Factura de Hospitales/Clínicas — activo (H5).
  *
  * El XSD exige en cada renglón `nroQuirofanoSalaOperaciones` (1–9999),
- * `nombreApellidoMedico` y `nitDocumentoMedico`, y la fuente oficial no dice
- * qué corresponde para una consulta ambulatoria. Hasta que un contador o
- * producto lo confirme, el simulador no emite en este sector ni inventa esos
- * valores.
+ * `nombreApellidoMedico` y `nitDocumentoMedico`. Para consulta ambulatoria
+ * se usa 0 / nombre del médico tratante / NIT del médico: criterio acordado
+ * junto con la activación del sector en el backend (H5 de la migración SIAT).
  */
 export const HOSPITAL_CLINIC_SCHEMA: SectorDocumentSchema = {
   codigoDocumentoSector: 17,
@@ -159,9 +158,8 @@ export const HOSPITAL_CLINIC_SCHEMA: SectorDocumentSchema = {
     field('subTotal', AMOUNT),
   ],
   detalleMaximo: 500,
-  activo: false,
-  motivoInactivo:
-    'Sector 17 preparado pero no activo: faltan confirmar quirófano/sala y NIT del médico para consulta ambulatoria (CA-1).',
+  activo: true,
+  motivoInactivo: null,
 };
 
 const SCHEMAS: readonly SectorDocumentSchema[] = [PURCHASE_SALE_SCHEMA, HOSPITAL_CLINIC_SCHEMA];

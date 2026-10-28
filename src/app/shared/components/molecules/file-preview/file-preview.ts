@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, effect, input, signal } from '@angular/core';
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { AppButton } from '../../atoms/button/button';
+import { LoadingState } from '../loading-state/loading-state';
 
 /** Vista local: imágenes como data URL y PDF rasterizado, sin iframes ni uploads. */
 @Component({
   selector: 'app-file-preview',
-  imports: [AppButton, NavIcon],
+  imports: [AppButton, NavIcon, LoadingState],
   templateUrl: './file-preview.html',
   styleUrl: './file-preview.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

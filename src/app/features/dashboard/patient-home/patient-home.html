@@ -87,7 +87,7 @@
 
 @switch (estado().status) {
   @case ('loading') {
-    <p class="mi-salud__estado" role="status">Cargando lo suyo…</p>
+    <app-loading-state class="mi-salud__estado" message="Cargando su historia clínica…" />
   }
   @case ('empty') {
     <!-- Cuenta sin ficha de paciente: no es un error, es que todavía no hay
@@ -165,7 +165,7 @@
           @case ('loading') {
             <!-- FT-03-R06 · el hueco se dice. Una banda vacía mientras carga se
                  lee como «no tenés citas», que es la respuesta contraria. -->
-            <p class="proxima-cita__estado" role="status">Buscando su próxima cita…</p>
+            <app-loading-state class="proxima-cita__estado" message="Buscando su próxima cita…" />
           }
           @case ('error') {
             <!-- Nunca «No tiene citas pedidas»: la lectura falló, no está vacía. -->

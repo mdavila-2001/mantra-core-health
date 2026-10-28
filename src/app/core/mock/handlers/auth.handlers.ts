@@ -267,11 +267,17 @@ export function registrarAuth(router: MockRouter): void {
       licenseFileId?: string;
       sedesLicenseNumber?: string;
       sedesLicenseFileId?: string;
+      sedesLicenseIssueDate?: string;
+      // El registro del colegio de la profesión, con su fecha y su respaldo.
+      collegeLicenseNumber?: string;
+      collegeName?: string;
+      collegeLicenseIssueDate?: string;
+      collegeLicenseFileId?: string;
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
     }
-    // Mismas dos precondiciones que `IamPractitionerSelfRegistrationService`.
+    // Mismas precondiciones que `IamPractitionerSelfRegistrationService`.
     if (datos.sedesLicenseFileId !== undefined && !datos.sedesLicenseNumber) {
       return preconditionFailed('El archivo del registro del SEDES necesita su número de registro', {
         field: 'sedesLicenseFileId',
@@ -281,6 +287,32 @@ export function registrarAuth(router: MockRouter): void {
       return preconditionFailed(
         'La matrícula y el registro del SEDES no pueden compartir el mismo archivo',
         { field: 'sedesLicenseFileId' },
+      );
+    }
+    if (datos.sedesLicenseIssueDate !== undefined && !datos.sedesLicenseNumber) {
+      return preconditionFailed('La fecha del registro del SEDES necesita su número de registro', {
+        field: 'sedesLicenseIssueDate',
+      });
+    }
+    if (!datos.collegeLicenseNumber) {
+      const suelto = (
+        ['collegeName', 'collegeLicenseIssueDate', 'collegeLicenseFileId'] as const
+      ).find((campo) => datos[campo] !== undefined);
+      if (suelto !== undefined) {
+        return preconditionFailed(
+          'Los datos del registro del colegio necesitan su número de registro',
+          { field: suelto },
+        );
+      }
+    }
+    if (
+      datos.collegeLicenseFileId !== undefined &&
+      (datos.collegeLicenseFileId === datos.licenseFileId ||
+        datos.collegeLicenseFileId === datos.sedesLicenseFileId)
+    ) {
+      return preconditionFailed(
+        'El registro del colegio no puede compartir el archivo de otra habilitación',
+        { field: 'collegeLicenseFileId' },
       );
     }
     const id = nuevoId('profesional-nuevo');

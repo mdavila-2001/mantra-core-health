@@ -33,6 +33,7 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 import { paginateFields } from '../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf } from '../../shared/forms/form-support';
 import { ExpandableDetail } from './expandable-detail';
+import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * FT-26 — módulo de activos y pasivos del doctor.
@@ -72,6 +73,7 @@ import { ExpandableDetail } from './expandable-detail';
     Switch,
     Tab,
     Tabs,
+    LoadingState,
   ],
   templateUrl: './assets-liabilities.html',
   styleUrl: './assets-liabilities.css',
