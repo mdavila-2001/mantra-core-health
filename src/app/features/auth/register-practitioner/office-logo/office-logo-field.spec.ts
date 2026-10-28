@@ -22,11 +22,26 @@ describe('OfficeLogoField', () => {
   const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const byTestId = (id: string): HTMLElement | null => host().querySelector(`[data-testid="${id}"]`);
 
+  const fileInput = (): HTMLInputElement =>
+    byTestId('registration-practitioner-office-logo-input') as HTMLInputElement;
+
   async function pick(file: File): Promise<void> {
-    const input = byTestId('registration-practitioner-office-logo-input') as HTMLInputElement;
+    const input = fileInput();
     Object.defineProperty(input, 'files', { value: [file], configurable: true });
     input.dispatchEvent(new Event('change'));
     await fixture.whenStable();
+  }
+
+  /** El nombre accesible del selector: lo que apunta `aria-labelledby`, o su `aria-label`. */
+  function accessibleName(input: HTMLInputElement): string {
+    const labelledBy = input.getAttribute('aria-labelledby');
+    if (labelledBy) {
+      return labelledBy
+        .split(' ')
+        .map((id) => host().querySelector(`#${id}`)?.textContent?.trim() ?? '')
+        .join(' ');
+    }
+    return input.getAttribute('aria-label') ?? '';
   }
 
   beforeEach(async () => {
@@ -58,6 +73,28 @@ describe('OfficeLogoField', () => {
     expect(TestBed.inject(OfficeLogoSelection).file()).toBeNull();
     expect(byTestId('logo-consultorio-vacio')).not.toBeNull();
     expect(logos.uploadForRegistration).not.toHaveBeenCalled();
+  });
+
+  it('el selector se llama «Logo del consultorio» y empieza sin error que lo describa', () => {
+    expect(accessibleName(fileInput())).toBe('Logo del consultorio');
+    expect(fileInput().getAttribute('aria-invalid')).toBe('false');
+    expect(fileInput().getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('con un PDF el motivo queda asociado al selector: aria-invalid y aria-describedby lo apuntan', async () => {
+    await pick(fileOf('logo.pdf', 'application/pdf'));
+
+    const error = byTestId('registration-practitioner-office-logo-error');
+    expect(error?.id).toBeTruthy();
+    expect(fileInput().getAttribute('aria-describedby')?.split(' ')).toContain(error?.id);
+    expect(fileInput().getAttribute('aria-invalid')).toBe('true');
+    expect(accessibleName(fileInput())).toBe('Logo del consultorio');
+
+    // Una imagen válida retira el motivo, y con él la descripción.
+    await pick(fileOf('logo.png', 'image/png'));
+    expect(byTestId('registration-practitioner-office-logo-error')).toBeNull();
+    expect(fileInput().getAttribute('aria-describedby')).toBeNull();
+    expect(fileInput().getAttribute('aria-invalid')).toBe('false');
   });
 
   it('con una imagen válida la muestra y ofrece quitarla; al quitarla vuelve «Sin logo»', async () => {
