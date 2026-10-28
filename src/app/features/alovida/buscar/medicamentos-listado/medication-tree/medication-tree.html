@@ -1,0 +1,134 @@
+<!-- Compuesto → para qué se usa → nombre comercial → quién lo ofrece. -->
+<ul class="arbol" data-testid="vitrina-arbol">
+  @for (medicamento of medications(); track medicamento.conceptId) {
+    <li class="arbol__compuesto">
+      <details (toggle)="alAlternar(medicamento, $event)" data-testid="arbol-compuesto">
+        <summary class="arbol__resumen">
+          <span class="arbol__nombre">{{ medicamento.genericName }}</span>
+          <span class="arbol__codigo">ATC {{ medicamento.atcCode }}</span>
+          @switch (recetaDe(medicamento)) {
+            @case (true) {
+              <app-badge variant="warning" size="sm">Con receta</app-badge>
+            }
+            @case (false) {
+              <app-badge variant="success" size="sm">Venta libre</app-badge>
+            }
+          }
+        </summary>
+
+        <div class="arbol__acciones">
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="arbol-ver-farmacias"
+            (clicked)="pharmaciesRequested.emit(medicamento)"
+          >
+            Ver ficha, farmacias y mapa
+          </button>
+        </div>
+
+        <ul class="arbol__rama">
+          <li>
+            <details open>
+              <summary class="arbol__resumen arbol__resumen--nivel">
+                <span class="arbol__rotulo">Para qué se usa</span>
+                <span>{{ medicamento.therapeuticGroup }}</span>
+              </summary>
+              <p
+                class="arbol__nota arbol__nota--lectura"
+                data-testid="arbol-indicaciones-sin-fuente"
+              >
+                Grupo terapéutico según su código ATC. Las enfermedades concretas que trata se
+                mostrarán cuando esté cargada su fuente oficial, con la cita.
+              </p>
+
+              <ul class="arbol__rama">
+                <li>
+                  <details open>
+                    <summary class="arbol__resumen arbol__resumen--nivel">
+                      <span class="arbol__rotulo">Nombres comerciales</span>
+                      <span>({{ cuantasMarcasDe(medicamento) }})</span>
+                    </summary>
+
+                    @switch (ramas().get(medicamento.conceptId)?.estado) {
+                      @case ('error') {
+                        <div class="arbol__estado" role="alert">
+                          No pudimos consultar quién lo ofrece.
+                          <button
+                            app-button
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            (clicked)="cargar(medicamento)"
+                          >
+                            Reintentar
+                          </button>
+                        </div>
+                      }
+                      @case ('datos') {
+                        @if (marcasDe(medicamento).length === 0) {
+                          <p class="arbol__nota" data-testid="arbol-sin-marcas">
+                            Ninguna farmacia de la red lo publica hoy. Preguntá por el principio
+                            activo, que es como figura en tu receta.
+                          </p>
+                        }
+                        <ul class="arbol__rama" data-testid="arbol-marcas">
+                          @for (marca of marcasDe(medicamento); track marca.marca) {
+                            <li class="arbol__marca">
+                              @if (marca.proveedores.length === 0) {
+                                <span class="arbol__marca-nombre">{{ marca.marca }}</span>
+                                <span class="arbol__nota">Ninguna farmacia la publica hoy.</span>
+                              } @else {
+                                <details>
+                                  <summary class="arbol__resumen arbol__resumen--nivel">
+                                    <span class="arbol__marca-nombre">{{ marca.marca }}</span>
+                                    <span>{{ cuantosProveedores(marca) }}</span>
+                                  </summary>
+                                  <ul class="arbol__proveedores">
+                                    @for (proveedor of marca.proveedores; track proveedor.slug) {
+                                      <li class="arbol__proveedor">
+                                        <span>{{ proveedor.nombre }}</span>
+                                        @if (proveedor.ciudad !== null) {
+                                          <span class="arbol__ciudad">{{ proveedor.ciudad }}</span>
+                                        }
+                                        <app-badge
+                                          size="sm"
+                                          [variant]="proveedor.enStock ? 'success' : 'warning'"
+                                        >
+                                          {{
+                                            proveedor.enStock ? 'Disponible hoy' : 'Sin stock hoy'
+                                          }}
+                                        </app-badge>
+                                      </li>
+                                    }
+                                  </ul>
+                                </details>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      }
+                      @default {
+                        <!-- Mientras llega, las marcas que ya trae la tarjeta. -->
+                        <ul class="arbol__rama" aria-busy="true">
+                          @for (marca of medicamento.brands; track marca) {
+                            <li class="arbol__marca">
+                              <span class="arbol__marca-nombre">{{ marca }}</span>
+                            </li>
+                          }
+                        </ul>
+                        <p class="arbol__nota" aria-live="polite">Buscando quién lo ofrece…</p>
+                      }
+                    }
+                  </details>
+                </li>
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </details>
+    </li>
+  }
+</ul>

@@ -61,7 +61,7 @@ import {
   RECORD_LEGAL_DOCUMENTS,
   type EnrollmentDocumentKey,
 } from '../shared-registration/legal-documents';
-import { NameFields } from '../shared-registration/name-fields/name-fields';
+import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import {
   nameGroup,
   completeName,
@@ -198,7 +198,7 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
     RegistrationHelp,
     MapLocationPicker,
     DropzonePdf,
-    NameFields,
+    InlineNameFields,
     OnboardingDraftBanner,
   ],
   templateUrl: './register-pharmacy.html',
@@ -370,6 +370,7 @@ export class RegisterPharmacy {
         clave: 'documentos',
         icon: 'folder' as const,
         hint: 'Opcionales: puede completarlos después desde la Ficha de su farmacia. PDF, hasta 10 MB por archivo.',
+        sinPartir: true,
         campos: this.camposDeDocumentos,
       },
       {
@@ -402,7 +403,7 @@ export class RegisterPharmacy {
         icon: 'shield' as const,
         campos: [
           {
-            // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
+            // Sin rótulo ni error propios: `app-inline-name-fields` pinta cada casilla
             // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
             key: 'legalRepName',
             label: '',

@@ -64,8 +64,20 @@ tablet y teléfono.
   (≤ 900 px) Emergencia vuelve a la cabecera como ícono circular rojo, a un toque. Medido con
   Playwright: 360, 390 y 900 px visible y sin desborde horizontal; en 1440 px oculto (ya está en
   el menú). Capturas `evidencia/em-*.png`, incluido el diálogo de números abierto desde el ícono.
-- **Aviso de demo en el teléfono:** no se movió. Sigue tapando el final del texto de la portada
-  (pasaba igual antes de este cambio).
+- **Aviso de demo (resuelto, propietario 27/10/2026):** deja de flotar en todos los anchos y va
+  al final de la página, alineado a la derecha. Cualquier posición fija tapaba algo: la portada
+  arriba, el menú lateral abajo a la izquierda (lo detectó `mock-banner-safe-zone.spec.ts`, que
+  falló con la primera versión de este trabajo), el campo de síntomas o el del chat abajo.
+  `npx playwright test mock-banner-safe-zone mock-banner-responsive` → 2 passed (sin solapes con
+  contenido ni con elementos fijos, axe limpio, claro y oscuro, 7 anchos de 320 a 1920).
+  Capturas `evidencia/demo-*.png`. Para verlo hay que desplazarse hasta el final.
+- **Prueba arreglada (TEST_BUG previo):** `mock-banner-safe-zone.spec.ts` fijaba el tema claro en
+  cada carga con `addInitScript`, así que cada `goto` deshacía el interruptor y su última
+  aserción («vuelve a claro») nunca podía cumplirse. Reproducido a mano (con el script: tras el
+  `goto` el tema vuelve a claro; sin él, el interruptor anda). Ahora fija claro sólo si no hay
+  tema guardado; el requisito no se debilitó.
+- **Entorno:** el Playwright del proyecto pide un Chromium distinto del instalado en este
+  contenedor; se corrió con una configuración temporal (fuera del repo) que apunta al instalado.
 - **«Mi perfil» encendido en Mis gastos (resuelto, propietario 27/10/2026):** el menú marca el
   renglón cuyo prefijo es el más largo, y «Mi perfil» es `/my-account`. Ahora, si la pantalla es
   un atajo de la cabecera (`/my-account/spending`, `invoices`, `requests`, `promotions`), el menú

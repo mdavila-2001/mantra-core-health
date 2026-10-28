@@ -298,25 +298,6 @@
         </app-tab>
       }
 
-      <!-- ─── Horarios de otros servicios ──────────────────────────────────
-           Pedido del propietario: los horarios de estudios, procedimientos y
-           demás servicios en una pestaña propia, separados de las consultas.
-           Mismo `@if` interno que «Mis horarios», por la misma razón. -->
-      @if (esQuienAtiende()) {
-        <app-tab [label]="rotuloDeServicios()">
-          @if (enServicios()) {
-            <!-- Las mismas acciones que el calendario: una solicitud de servicio
-                 se acepta, rechaza, mueve o cancela igual que una consulta. -->
-            <app-services-schedule
-              [appointmentActions]="accionesDeLaCitaDelDia"
-              [reloadToken]="versionDeAcciones()"
-              (statusLabels)="sumarEtiquetas($event)"
-              (pendingCount)="serviciosPorResponder.set($event)"
-            />
-          }
-        </app-tab>
-      }
-
       <!-- ─── Cupos ─────────────────────────────────────────────────────────
            Mismo criterio que la lista: sobrevive sólo donde no hay calendario,
            porque es el único lugar en que esa persona ve los huecos y puede

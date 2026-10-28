@@ -502,6 +502,7 @@ export class PaginatedForm {
     effect(() => {
       if (!isDevMode() || this.allowLargePages()) return;
       for (const pagina of this.paginas()) {
+        if (pagina.sinPartir) continue;
         // Los «¿cuál?» condicionales no cuentan: viajan con su pregunta.
         const principales = pagina.campos.filter(isMainQuestion).length;
         if (principales > MAX_CAMPOS_POR_PAGINA) {

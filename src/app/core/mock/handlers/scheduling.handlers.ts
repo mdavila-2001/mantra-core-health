@@ -1344,8 +1344,13 @@ export function registrarAgenda(router: MockRouter): void {
       // recorre cada regla. Con `find` la tarde desaparecía en silencio.
       // Horario flexible (P36): no hay grilla; las horas se calculan al leer y
       // el cupo nace al retener (`flexible-hours.handlers.ts`), como en la API.
+      // Vale para la plantilla entera o para la franja (`isFlexibleBand`).
       for (const regla of t.rules.filter(
-        (r) => t.flexibleHours !== true && r.dayOfWeek === d.getDay() && r.bookingMode !== 'SERVICES',
+        (r) =>
+          t.flexibleHours !== true &&
+          r.flexibleHours !== true &&
+          r.dayOfWeek === d.getDay() &&
+          r.bookingMode !== 'SERVICES',
       )) {
         const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
         const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];

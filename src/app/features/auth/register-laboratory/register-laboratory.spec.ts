@@ -179,9 +179,19 @@ describe('RegisterLaboratory', () => {
     // La invariante del formulario por partes. Se comprueba acá además de en el
     // motor porque una página de cinco campos no rompe nada: sólo se ve como
     // una pared, que es lo que hace abandonar un alta a la mitad.
-    for (const pagina of component.paginas()) {
+    // Salvo los papeles, que el cliente pidió en UNA sola vista (28/10/2026).
+    for (const pagina of component.paginas().filter((p) => !p.sinPartir)) {
       expect(pagina.campos.length).toBeLessThanOrEqual(MAX_CAMPOS_POR_PAGINA);
     }
+  });
+
+  it('los papeles de la empresa van en una sola página, sin «(1 de 2)»', () => {
+    const papeles = component.paginas().filter((p) => p.clave === 'documentos');
+
+    expect(papeles).toHaveLength(1);
+    expect(papeles[0].titulo).toBe('Los papeles de la empresa');
+    expect(papeles[0].sinPartir).toBe(true);
+    expect(papeles[0].campos).toHaveLength(5);
   });
 
   /* --- qué frena y qué no ------------------------------------------------ */

@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import {
@@ -67,6 +68,16 @@ describe('PanicButton', () => {
     expect(html.querySelector('[data-testid="dialogo-emergencia"]')?.hasAttribute('open')).toBe(true);
   });
 
+  it('sin un clic no llama: montarse con ambulancia de confianza no marca nada', async () => {
+    const { fixture } = montar({ nombre: 'Ambulancias de mi seguro', telefono: '+591 70012345' });
+
+    // Que corran los efectos y los `afterNextRender` del montaje: nada de eso es un gesto.
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(llamadas).toEqual([]);
+  });
+
   it('cerrar deja el diálogo cerrado', () => {
     const { fixture, html } = montar(null);
     html.querySelector<HTMLButtonElement>('[data-testid="boton-emergencia"]')!.click();
@@ -74,5 +85,65 @@ describe('PanicButton', () => {
     html.querySelector<HTMLButtonElement>('[data-testid="dialogo-emergencia-cerrar"]')!.click();
     fixture.detectChanges();
     expect(html.querySelector('[data-testid="dialogo-emergencia"]')?.hasAttribute('open')).toBe(false);
+  });
+});
+
+/**
+ * La ambulancia de confianza leída de `localStorage`, como en el navegador: es el caso que
+ * convertía la carga de «Mi perfil» en «¿Abrir Teléfono?» si algo llamaba sin un gesto.
+ */
+describe('PanicButton con la ambulancia guardada en el dispositivo', () => {
+  /** La clave de `trusted-ambulance.store.ts`: el dato tal como lo deja el registro. */
+  const TRUSTED_AMBULANCE_KEY = 'alovida.ambulancia-de-confianza';
+  let dialed: string[];
+
+  beforeEach(() => {
+    dialed = [];
+    localStorage.setItem(
+      TRUSTED_AMBULANCE_KEY,
+      JSON.stringify({ nombre: 'Ambulancias de mi seguro', telefono: '+591 70012345' }),
+    );
+    TestBed.configureTestingModule({
+      imports: [PanicButton],
+      providers: [{ provide: PHONE_DIALER, useValue: (link: string) => dialed.push(link) }],
+    });
+  });
+
+  afterEach(() => {
+    localStorage.removeItem(TRUSTED_AMBULANCE_KEY);
+  });
+
+  it('montarse no llama; el clic sí, al número guardado', async () => {
+    const fixture = TestBed.createComponent(PanicButton);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(dialed).toEqual([]);
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="boton-emergencia"]')!
+      .click();
+
+    expect(dialed).toEqual(['tel:+59170012345']);
+  });
+});
+
+/**
+ * El marcador de verdad: `location.assign` sólo ocurre cuando alguien lo invoca, nunca al
+ * resolverlo. Con eso y el `activar()` de arriba, `tel:` sólo se abre detrás de un clic.
+ */
+describe('PHONE_DIALER', () => {
+  it('resolverlo no navega; invocarlo navega al enlace que recibe', () => {
+    const assigned: string[] = [];
+    const fakeDocument = {
+      defaultView: { location: { assign: (link: string) => assigned.push(link) } },
+    };
+    TestBed.configureTestingModule({ providers: [{ provide: DOCUMENT, useValue: fakeDocument }] });
+
+    const dial = TestBed.inject(PHONE_DIALER);
+    expect(assigned).toEqual([]);
+
+    dial('tel:+59170012345');
+    expect(assigned).toEqual(['tel:+59170012345']);
   });
 });

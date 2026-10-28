@@ -80,7 +80,6 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { MyAgenda } from './my-agenda/my-agenda';
-import { ServicesSchedule } from './services-schedule/services-schedule';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
 import { PaymentReceiptsTrigger } from './payment-receipts/payment-receipts-trigger';
 import { AgendaWindowNav } from './window-nav/window-nav';
@@ -455,18 +454,12 @@ const SCHEDULE_VIEW = 'agenda';
 const SLOTS_VIEW = 'cupos';
 
 /**
- * `vista` de «Horarios de otros servicios». En castellano a propósito, como
- * las otras dos: es lo que se ve en la barra de direcciones y se comparte.
- */
-const SERVICES_VIEW = 'servicios';
-
-/**
  * Las solapas posibles de `/schedule`. **Nunca están las cuatro a la vez**
  * (C-07, C-10): con calendario son «Consultas» (el calendario) y «Mis
  * horarios»; sin calendario —quien reparte turnos, o quien todavía no publicó
  * la suya— siguen siendo la lista y los cupos, que es su único camino.
  */
-type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots';
+type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
 
 /**
  * **Agenda** (M41) — la sección que hasta ahora era un cartel.
@@ -533,7 +526,6 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots
     Tooltip,
     AgendaWindowNav,
     MyAgenda,
-    ServicesSchedule,
     WalkInForm,
     PaymentReceiptsTrigger,
   ],
@@ -886,9 +878,7 @@ export class Agenda {
    * otra pantalla no va a reconocer como suya.
    */
   protected readonly pestanas = computed<readonly AgendaTab[]>(() => {
-    // «Horarios de otros servicios» va pegada a «Mis horarios» y con la misma
-    // condición: son los dos lados del mismo horario publicado.
-    const propias = this.esQuienAtiende() ? (['schedule', 'services'] as const) : ([] as const);
+    const propias = this.esQuienAtiende() ? (['schedule'] as const) : ([] as const);
     return this.tieneCalendario()
       ? (['calendar', ...propias] as const)
       : (['consultations', ...propias, 'slots'] as const);
@@ -905,7 +895,6 @@ export class Agenda {
   protected readonly pestanaActual = computed<AgendaTab>(() => {
     const vista = this.params()?.get('vista');
     if (vista === SCHEDULE_VIEW && this.esQuienAtiende()) return 'schedule';
-    if (vista === SERVICES_VIEW && this.esQuienAtiende()) return 'services';
     // C-07 · con calendario no hay ninguna tabla: `table`, `citas`,
     // `solicitudes`, `cupos` y cualquier valor viejo caen acá, que es lo que
     // `/schedule` a secas abre. No se redirige la URL a propósito: una
@@ -924,37 +913,6 @@ export class Agenda {
 
   /** Si está abierta «Mis horarios», el horario publicado. */
   protected readonly enHorario = computed(() => this.pestanaActual() === 'schedule');
-
-  /** Si está abierta «Horarios de otros servicios». */
-  protected readonly enServicios = computed(() => this.pestanaActual() === 'services');
-
-  /**
-   * Solicitudes de servicios que esperan respuesta, según las contó la pestaña
-   * la última vez que se abrió. `null` mientras no se abrió en esta visita: la
-   * cuenta exige leer las reservas de varias semanas, y hacerlo en cada entrada
-   * a `/schedule` sería una lectura de más para quien sólo mira el día.
-   */
-  protected readonly serviciosPorResponder = signal<number | null>(null);
-
-  protected readonly rotuloDeServicios = computed(() => {
-    const n = this.serviciosPorResponder();
-    return n !== null && n > 0
-      ? `Horarios de otros servicios (${n})`
-      : 'Horarios de otros servicios';
-  });
-
-  /**
-   * Suma las etiquetas de estado que resolvió «Horarios de otros servicios».
-   *
-   * Las acciones de cada fila las decide esta pantalla con `citaDelDia`, que
-   * traduce el estado con estas etiquetas. Las propias sólo cubren la ventana a
-   * la vista; sin las de la pestaña, una solicitud de la semana que viene no
-   * ofrecería «Aceptar». Se fusiona, no se pisa (mismo criterio que la agenda).
-   */
-  protected sumarEtiquetas(nuevas: ConceptLabels): void {
-    if (nuevas.size === 0) return;
-    this.etiquetas.update((actuales) => new Map([...actuales, ...nuevas]));
-  }
 
   /**
    * Si la solapa abierta es una de las listas —Consultas o Cupos—, las únicas
@@ -1636,8 +1594,6 @@ export class Agenda {
         return null;
       case 'schedule':
         return SCHEDULE_VIEW;
-      case 'services':
-        return SERVICES_VIEW;
       case 'slots':
         return SLOTS_VIEW;
       case 'consultations':

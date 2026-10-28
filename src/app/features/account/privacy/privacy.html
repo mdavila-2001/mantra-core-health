@@ -23,9 +23,11 @@
   <div class="privacidad">
     @switch (estado().status) {
       @case ('cargando') {
-        <p class="privacidad__estado" role="status" data-testid="privacidad-cargando">
-          Cargando su información de privacidad…
-        </p>
+        <app-loading-state
+          class="privacidad__estado"
+          data-testid="privacidad-cargando"
+          message="Cargando su información de privacidad…"
+        />
       }
       @case ('error') {
         <app-alert tone="error" data-testid="privacidad-error">

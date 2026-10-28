@@ -56,6 +56,7 @@ import {
   membershipNewRoute,
   organizationVerifyRoute,
 } from '../organizations.routes';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /** Membresías por página. El backend aplica 50 por omisión y admite hasta 200. */
 const TAMANO_DE_PAGINA = 25;
@@ -127,6 +128,7 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
     RouterLink,
     Tab,
     Tabs,
+    LoadingState,
   ],
   templateUrl: './organization-detail.html',
   styleUrl: './organization-detail.css',

@@ -383,7 +383,8 @@ export class PatientProfileEdit {
    * Sin tocar el mapa (`undefined`) queda lo guardado: abrir la ficha no
    * reescribe la dirección con la del geocodificador. Un punto quitado o movido
    * sin confirmar deja el domicilio vacío —describía otro lugar—, y sin calle
-   * en el mapa va la zona o nada: nunca una calle inventada. El municipio no se
+   * en el mapa la calle queda vacía y la zona va a su propio campo: nunca una
+   * calle inventada. El municipio no se
    * vacía nunca: el contrato no admite borrarlo (ver `cambiosContra`).
    */
   private volcarDomicilio(): void {
@@ -391,7 +392,9 @@ export class PatientProfileEdit {
     if (punto === undefined) return;
     const localidad = confirmedLocality(this.localidadDomicilio(), punto);
     if (punto !== null && localidad === null) return;
-    this.domicilio.set(localidad?.calle ?? localidad?.zona ?? '');
+    // Sólo calle y número: el distrito viaja aparte (`homeDistrict`), y con la
+    // línea entera quedaba dos veces —en `lines` y en `district_text`—.
+    this.domicilio.set(localidad?.calleSola ?? '');
     this.distritoDomicilio.set(localidad?.zona ?? '');
     if (localidad?.municipioConceptId) this.municipio.set(localidad.municipioConceptId);
   }
@@ -402,7 +405,7 @@ export class PatientProfileEdit {
     if (punto === undefined) return;
     const localidad = confirmedLocality(this.localidadTrabajo(), punto);
     if (punto !== null && localidad === null) return;
-    this.direccionTrabajo.set(localidad?.calle ?? localidad?.zona ?? '');
+    this.direccionTrabajo.set(localidad?.calleSola ?? '');
     this.distritoTrabajo.set(localidad?.zona ?? '');
   }
 

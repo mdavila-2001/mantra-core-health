@@ -120,6 +120,9 @@
   font-style: italic;
 }
 
+/* Los dos enlaces del renglón —llamar y cómo llegar— van debajo del botón que
+   elige la sede, con la misma forma: son acciones de la sede, no parte de ella. */
+.sedes__telefono,
 .sedes__ruta {
   justify-self: start;
   font-size: var(--fs-caption);

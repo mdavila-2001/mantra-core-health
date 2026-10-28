@@ -35,6 +35,7 @@ import { ReferenceCombobox } from '../../../shared/components/molecules/referenc
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { aVistaDeCotizacion, motivoDeBloqueo } from './claim-quote-vm';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Importe en bolivianos: dígitos con hasta dos decimales, y algo distinto de cero. */
 const IMPORTE = /^\d+(\.\d{1,2})?$/;
@@ -51,7 +52,7 @@ const SERVICIOS_POR_BUSQUEDA = 20;
  */
 @Component({
   selector: 'app-claim-quote-section',
-  imports: [AppButton, Input, Alert, ClaimQuoteBreakdown, FormField, ReferenceCombobox],
+  imports: [AppButton, Input, Alert, ClaimQuoteBreakdown, FormField, ReferenceCombobox, LoadingState],
   templateUrl: './claim-quote-section.html',
   styleUrl: './claim-quote-section.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

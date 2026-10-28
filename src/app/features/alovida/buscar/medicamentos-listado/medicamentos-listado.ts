@@ -17,9 +17,12 @@ import { AppButton } from '@shared/components/atoms/button/button';
 import { Chip } from '@shared/components/atoms/chip/chip';
 import { CardDetailPanel } from '@shared/components/molecules/card-detail-panel/card-detail-panel';
 import { SearchField } from '@shared/components/molecules/search-field/search-field';
+import { SegmentedControl } from '@shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '@shared/components/molecules/segmented-control/segmented-control.types';
 
 import { CentroCard } from '../centro-card/centro-card';
 import { toMedicationCard, type MedicationCard } from './medication-card.mapper';
+import { MedicationTree } from './medication-tree/medication-tree';
 import { PharmacyAvailabilityDialog } from './pharmacy-availability-dialog/pharmacy-availability-dialog';
 
 /** Tope de tarjetas de la vitrina. El backend no deja pasar de 60. */
@@ -54,6 +57,14 @@ export interface PuntoDeReferencia {
 
 /** En qué estado está la vitrina. */
 type Estado = 'carga' | 'datos' | 'vacio' | 'error';
+
+/** Cómo se dibujan los resultados. */
+type Vista = 'tarjetas' | 'arbol';
+
+const VISTAS: readonly SegmentedOption<Vista>[] = [
+  { value: 'tarjetas', label: 'Tarjetas' },
+  { value: 'arbol', label: 'Árbol' },
+];
 
 /**
  * **Medicamentos** — la vitrina pública de exhibición y consulta.
@@ -90,6 +101,12 @@ type Estado = 'carga' | 'datos' | 'vacio' | 'error';
  * no es un perfil. El catálogo vive en el módulo de farmacia, así que esta
  * pantalla habla con su cara pública, `GET /public/medications`.
  *
+ * ## Tarjetas o árbol
+ *
+ * La misma búsqueda se puede ver como árbol: compuesto → para qué se usa →
+ * nombre comercial → farmacia que lo ofrece (`MedicationTree`). Es otra forma
+ * de dibujar la misma página de resultados, no otra consulta.
+ *
  * ## La ubicación se pide, no se toma
  *
  * La vitrina carga **sin coordenadas** y funciona igual: las tarjetas salen
@@ -110,8 +127,10 @@ type Estado = 'carga' | 'datos' | 'vacio' | 'error';
     CardDetailPanel,
     CentroCard,
     Chip,
+    MedicationTree,
     PharmacyAvailabilityDialog,
     SearchField,
+    SegmentedControl,
   ],
   templateUrl: './medicamentos-listado.html',
   styleUrls: ['./medicamentos-listado.css', '../centro-card/centro-grid.css'],
@@ -131,6 +150,18 @@ export class BuscarMedicamentosListado {
 
   protected readonly estado = signal<Estado>('carga');
   protected readonly pagina = signal<PaginaDeVitrina | null>(null);
+
+  protected readonly vistas = VISTAS;
+  protected readonly vista = signal<Vista>('tarjetas');
+
+  /** Las filas crudas de la página, para el árbol. */
+  protected readonly medicamentos = computed(() => this.pagina()?.items ?? []);
+
+  /** El origen en el contrato de la API, para el árbol. */
+  protected readonly origenGeo = computed<PuntoDeOrigen | null>(() => {
+    const punto = this.origen();
+    return punto === null ? null : puntoGeoDe(punto);
+  });
 
   protected readonly texto = signal('');
   protected readonly grupo = signal<string | null>(null);
@@ -154,6 +185,24 @@ export class BuscarMedicamentosListado {
   protected readonly cargandoDetalle = signal(false);
   protected readonly detalle = signal<DisponibilidadDeMedicamento | null>(null);
   protected readonly errorDetalle = signal(false);
+
+  /**
+   * Si el medicamento abierto se vende bajo receta; `null` mientras no se sabe.
+   *
+   * La tarjeta sólo vale para afirmar «con receta»: su `false` sale de ofertas
+   * recortadas por la búsqueda y el radio. «Venta libre» se afirma recién con
+   * la disponibilidad, que trae las ofertas de todo el país.
+   */
+  protected readonly recetaDelAbierto = computed<boolean | null>(() => {
+    const detalle = this.detalle();
+    if (detalle !== null) {
+      return (
+        detalle.medication.requiresPrescription ||
+        detalle.offers.some((oferta) => oferta.requiresPrescription)
+      );
+    }
+    return this.abierto()?.requiresPrescription === true ? true : null;
+  });
 
   /** Las ofertas del medicamento abierto, tal como las devolvió la API. */
   protected readonly ofertas = computed(() => this.detalle()?.offers ?? []);

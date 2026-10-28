@@ -10,36 +10,186 @@
 }
 
 .plan__form {
-  margin-block-start: var(--sp-4);
-}
-
-/* Los pasos, en líneas sueltas: el marco los hacía leer como una tabla metida
-   dentro del formulario. Una línea fina entre pasos alcanza para separarlos. */
-.plan__actividades {
-  margin: 0;
-  padding: 0;
-  border: none;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-6);
+  margin-block-start: var(--sp-6);
 }
 
-.plan__actividades-titulo {
+/* ===========================================================================
+    Los tramos del formulario, sobre un riel
+    ===========================================================================
+
+    Cada categoría de datos es un nodo del riel: el ícono del tramo mientras
+    falta, el ✓ en verde cuando está resuelto. El riel es lo que hace leer el
+    formulario como un camino y no como una pila de campos.
+   ========================================================================= */
+
+.ruta {
+  --_nodo: 2.25rem;
+
+  display: flex;
+  flex-direction: column;
+  margin: 0;
   padding: 0;
-  font-size: var(--fs-caption);
+  list-style: none;
+}
+
+.ruta__tramo {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--_nodo) minmax(0, 1fr);
+  column-gap: var(--sp-4);
+  padding-block-end: var(--sp-6);
+}
+
+/* El tramo de riel hasta el nodo siguiente. */
+.ruta__tramo::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--_nodo) 0;
+  inset-inline-start: calc(var(--_nodo) / 2 - 1px);
+  inline-size: 2px;
+  background: var(--border-subtle);
+}
+
+.ruta__tramo--ultimo {
+  padding-block-end: 0;
+}
+
+.ruta__tramo--ultimo::before {
+  content: none;
+}
+
+.ruta__tramo--listo::before {
+  background: var(--st-success-bd);
+}
+
+.ruta__nodo {
+  grid-column: 1;
+  grid-row: 1 / span 4;
+  display: grid;
+  place-items: center;
+  inline-size: var(--_nodo);
+  block-size: var(--_nodo);
+  border: 2px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  transition:
+    background-color var(--dur-base) var(--ease-standard),
+    border-color var(--dur-base) var(--ease-standard),
+    color var(--dur-base) var(--ease-standard);
+}
+
+.ruta__tramo--listo .ruta__nodo {
+  border-color: var(--st-success-fg);
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+}
+
+.ruta__cuerpo {
+  grid-column: 2;
+  min-inline-size: 0;
+}
+
+.ruta__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
   font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ruta__opcional,
+.ruta__contador {
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-full);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
-.plan__actividad {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: var(--sp-3);
-  padding-block-end: var(--sp-4);
-  border-block-end: 1px solid var(--border-subtle);
+.ruta__ayuda {
+  margin: var(--sp-1) 0 var(--sp-4);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }
 
-.plan__actividad:last-of-type {
-  border-block-end: none;
-  padding-block-end: 0;
+/* ---- Los pasos: un sub-riel numerado dentro del último tramo ------------ */
+
+.plan-pasos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.plan-pasos__paso {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  column-gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.plan-pasos__numero {
+  display: grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r-full);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.plan-pasos__numero--escrito {
+  border-style: solid;
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.plan-pasos__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.plan-pasos__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-block-size: 1.75rem;
+}
+
+.plan-pasos__rotulo {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.plan-pasos__agregar {
+  align-self: flex-start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruta__nodo {
+    transition: none;
+  }
 }

@@ -20,6 +20,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { RelatedPersonRelationshipsCatalog } from '../../../core/data-access/system-context/related-person-relationships.service';
 import { DependentFormDialog, type SolicitudEnviada } from './dependent-form-dialog';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * Las personas a cargo del titular, y el alta de una nueva.
@@ -50,6 +51,7 @@ import { DependentFormDialog, type SolicitudEnviada } from './dependent-form-dia
     FormField,
     PageHeader,
     DependentFormDialog,
+    LoadingState,
   ],
   templateUrl: './dependents.html',
   styleUrl: './dependents.css',

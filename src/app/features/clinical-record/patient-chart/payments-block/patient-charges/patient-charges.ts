@@ -46,6 +46,7 @@ import {
 } from '../../../../billing/on-screen-charges';
 import { SimulatedInvoiceDialog } from '../../../../billing/simulated-invoice-dialog/simulated-invoice-dialog';
 import { PaymentsPlan } from '../../../../billing/payment-plan/payment-plan';
+import { LoadingState } from '../../../../../shared/components/molecules/loading-state/loading-state';
 
 type Cell = TemplateRef<{ $implicit: SimulatedCharge }>;
 
@@ -80,7 +81,7 @@ export interface PersonCharges {
  */
 @Component({
   selector: 'app-patient-charges',
-  imports: [Alert, AppButton, Chip, DataTable, SimulatedInvoiceDialog, PaymentsPlan],
+  imports: [Alert, AppButton, Chip, DataTable, SimulatedInvoiceDialog, PaymentsPlan, LoadingState],
   templateUrl: './patient-charges.html',
   styleUrl: './patient-charges.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -57,15 +57,17 @@ const FORMATO = new Intl.DateTimeFormat('es-BO', {
  * Sin respuesta avisa qué falta; quien lo usa bloquea su botón mirando
  * `seleccionada()`, que queda en `null`.
  *
- * ## El formulario libre (A3, 26/10/2026)
+ * ## Las notas con filas «campo: valor» (A3, 26/10/2026)
  *
- * «Formulario libre — campo y valor» se elige en el mismo «Formulario médico»
- * pero se guarda como **nota** del expediente (P39), no como respuesta de
- * `forms`. Quien lo usa con `aceptaNotas` (la orden de análisis, que la API ata
- * a notas con `basedOnNoteIds`, P40) recibe también las notas libres **firmadas**
- * del encuentro como opción, en `notaSeleccionada`. Un borrador no sirve de
- * base —la API lo rechaza: todavía puede cambiar—, así que se ofrece firmarlo
- * acá mismo en vez de decir «Falta el formulario médico».
+ * Hasta el 28/10/2026 el «Formulario médico» ofrecía el «Formulario libre —
+ * campo y valor», que se guardaba como **nota** del expediente (P39) y no como
+ * respuesta de `forms`. Ya no se elige ahí, pero esas notas siguen existiendo,
+ * y los campos adicionales del formulario médico también dejan una nota con
+ * filas. Quien lo usa con `aceptaNotas` (la orden de análisis, que la API ata a
+ * notas con `basedOnNoteIds`, P40) recibe también las notas con filas
+ * **firmadas** del encuentro como opción, en `notaSeleccionada`. Un borrador no
+ * sirve de base —la API lo rechaza: todavía puede cambiar—, así que se ofrece
+ * firmarlo acá mismo en vez de decir «Falta el formulario médico».
  */
 @Component({
   selector: 'app-form-response-picker',

@@ -59,6 +59,12 @@ export class PanicButton {
     return propia ? `Emergencia: llamar a ${propia.nombre}` : 'Emergencia: ver los números de ambulancia';
   });
 
+  /**
+   * La única puerta a una llamada: la abre el `(clicked)` del botón, es decir, un gesto de la
+   * persona. Ni el constructor, ni un `effect`, ni un render llaman a `marcar` — tener la
+   * ambulancia de confianza guardada no puede convertir la carga de una pantalla en «¿Abrir
+   * Teléfono?». `panic-button.spec.ts` lo fija.
+   */
   protected activar(): void {
     const propia = this.ambulancia();
     if (propia) {
