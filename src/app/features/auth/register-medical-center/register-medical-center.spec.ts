@@ -8,6 +8,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import { MEDICAL_ORGANIZATION_TYPES } from '../../../core/data-access/directory/directory.types';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
 import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-center';
 
 const RUTA_ALTA = '/iam/auth/register-organization';
@@ -19,6 +20,20 @@ const DOCUMENTOS = {
   commerceRegistryFileId: 'f-matricula',
   operatingLicenseFileId: 'f-licencia',
   healthAuthorityCertificateFileId: 'f-sedes',
+};
+
+/** El poder del representante, subido por la misma pre-carga. */
+const PODER = 'f-poder';
+
+/** El punto confirmado de la casa central en las pruebas. */
+const PUNTO_CENTRAL = { lat: -17.7833, lng: -63.1821 };
+
+const RESPUESTA_ALTA = {
+  tenantId: 't-1',
+  code: 'X',
+  ownerUserId: 'u-1',
+  status: 'p',
+  emailVerificationSent: true,
 };
 
 const DESTINO_TIPO = 'directory.tenants.tenant_type_concept_id';
@@ -48,6 +63,8 @@ describe('RegisterMedicalCenter', () => {
     errorMessage: () => string | null;
     paginas: () => readonly {
       titulo: string;
+      clave?: string;
+      sinPartir?: boolean;
       disposicion?: string;
       campos: readonly {
         key: string;
@@ -109,15 +126,47 @@ describe('RegisterMedicalCenter', () => {
 
   afterEach(() => http.verify());
 
+  /** Deja el formulario en lo mínimo con lo que se puede enviar (sin gerencias ni sucursales). */
   function completar(tenantType = 'HOSPITAL'): void {
-    fixture.componentInstance.form.setValue({
+    fixture.componentInstance.form.patchValue({
       tenantType,
       legalName: 'Centro Médico Norte S.R.L.',
       legalEntityType: 'SRL',
+      taxId: '1023456789',
+      healthFacilityRegistrationNumber: 'SEDES-SC-2020-0412',
+      medicalDirectorName: { name: 'Ana', middleName: 'Lucía', lastName: 'Rojas', motherLastName: 'Paz' },
+      medicalDirectorLicense: 'MAT-12345',
+      medicalDirectorEmail: 'dir@centro.test',
+      medicalDirectorPhone: '+591 70012345',
       ...DOCUMENTOS,
-      ownerName: 'Marta Rojas',
-      email: 'marta@centro.test',
+      powerOfAttorneyFileId: PODER,
+      legalRepName: { name: 'Marta', lastName: 'Rojas' },
+      legalRepIdNumber: '4872190',
+      legalRepEmail: 'marta@centro.test',
       password: 'secreto12',
+    });
+    fixture.componentInstance.fijarGpsCentral(PUNTO_CENTRAL);
+    fixture.componentInstance.escribirLocalidadCentral({
+      punto: PUNTO_CENTRAL,
+      calle: 'Av. San Martín 123',
+      calleSola: 'Av. San Martín 123',
+      zona: null,
+      municipioConceptId: null,
+    });
+  }
+
+  /** Completa las tres gerencias (nombre, celular y correo). */
+  function completarGerencias(): void {
+    fixture.componentInstance.form.patchValue({
+      generalManagerName: { name: 'Gabriel', lastName: 'Gómez' },
+      generalManagerPhone: '+591 70011111',
+      generalManagerEmail: 'general@centro.test',
+      salesManagerName: { name: 'Carla', lastName: 'Cruz' },
+      salesManagerPhone: '+591 70022222',
+      salesManagerEmail: 'comercial@centro.test',
+      marketingManagerName: { name: 'Mario', lastName: 'Mena' },
+      marketingManagerPhone: '+591 70033333',
+      marketingManagerEmail: 'marketing@centro.test',
     });
   }
 
@@ -131,7 +180,7 @@ describe('RegisterMedicalCenter', () => {
     await fixture.whenStable();
   }
 
-  it('envía el tipo elegido con país y jurisdicción resueltos por código', () => {
+  it('envía el tipo elegido con país y jurisdicción resueltos por código, y el bloque del establecimiento', () => {
     completar();
     fixture.componentInstance.submit();
 
@@ -145,10 +194,36 @@ describe('RegisterMedicalCenter', () => {
         legalDocuments: DOCUMENTOS,
         countryConceptId: 'c-bo',
         jurisdictionConceptId: 'j-nac',
+        timeZone: 'America/La_Paz',
+        legalRepresentative: {
+          fullName: 'Marta Rojas',
+          idNumber: '4872190',
+          email: 'marta@centro.test',
+          powerOfAttorneyFileId: PODER,
+        },
+        medicalFacility: {
+          taxIdentifierNumber: '1023456789',
+          healthFacilityRegistrationNumber: 'SEDES-SC-2020-0412',
+          medicalDirector: {
+            name: 'Ana',
+            middleName: 'Lucía',
+            lastName: 'Rojas',
+            motherLastName: 'Paz',
+            professionalLicenseNumber: 'MAT-12345',
+            email: 'dir@centro.test',
+            phone: '+591 70012345',
+          },
+          headquarters: {
+            name: 'Casa central',
+            addressLines: ['Av. San Martín 123'],
+            latitude: -17.7833,
+            longitude: -63.1821,
+          },
+        },
       },
-      owner: { email: 'marta@centro.test', password: 'secreto12', displayName: 'Marta Rojas' },
+      owner: { email: 'marta@centro.test', password: 'secreto12', name: 'Marta', lastName: 'Rojas' },
     });
-    req.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: true });
+    req.flush(RESPUESTA_ALTA);
   });
 
   it.each([
@@ -281,31 +356,56 @@ describe('RegisterMedicalCenter', () => {
     expect(fixture.componentInstance.form.controls.password.touched).toBe(true);
   });
 
-  it('se sirve de a cuatro campos como tope: la organización, sus documentos y la cuenta', () => {
+  it('pide lo mismo que imagenología, sin estudios, más el registro del SEDES y el director médico', () => {
     const paginas = interno().paginas();
 
-    expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
-      ['tenantType', 'legalName', 'legalEntityType'],
-      ['constitutionFileId', 'taxIdentifierFileId', 'commerceRegistryFileId', 'operatingLicenseFileId'],
-      ['healthAuthorityCertificateFileId'],
-      ['ownerName', 'email', 'password'],
+    expect(paginas.map((p) => p.titulo)).toEqual([
+      'La organización',
+      'Datos del establecimiento',
+      'Director médico',
+      'Documentación legal obligatoria (PDF)',
+      'Dónde está la casa central',
+      'Sus sucursales',
+      'Representante legal',
+      'Poder del representante legal',
+      'Gerencia general',
+      'Gerencia comercial',
+      'Gerencia de marketing',
+      'Su acceso',
     ]);
-    expect(paginas[0]!.titulo).toBe('La organización');
-    expect(paginas[1]!.titulo).toContain('Documentación legal obligatoria (PDF)');
-    expect(paginas[3]!.titulo).toBe('Su cuenta');
-    expect(Math.max(...paginas.map((p) => p.campos.length))).toBeLessThanOrEqual(4);
+    expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
+      ['tenantType', 'legalName', 'legalEntityType', 'taxId'],
+      ['healthFacilityRegistrationNumber'],
+      ['medicalDirectorName', 'medicalDirectorLicense', 'medicalDirectorEmail', 'medicalDirectorPhone'],
+      [
+        'constitutionFileId',
+        'taxIdentifierFileId',
+        'commerceRegistryFileId',
+        'operatingLicenseFileId',
+        'healthAuthorityCertificateFileId',
+      ],
+      ['gpsCentral'],
+      ['sucursales'],
+      ['legalRepName', 'legalRepIdNumber', 'legalRepEmail', 'legalRepPhone'],
+      ['powerOfAttorneyFileId'],
+      ['generalManagerName', 'generalManagerPhone', 'generalManagerEmail'],
+      ['salesManagerName', 'salesManagerPhone', 'salesManagerEmail'],
+      ['marketingManagerName', 'marketingManagerPhone', 'marketingManagerEmail'],
+      ['password'],
+    ]);
+    // Los papeles van todos en una vista (pedido del cliente del 28/10/2026); el resto, de a cuatro como tope.
+    const documentos = paginas.find((p) => p.clave === 'documentos-legales')!;
+    expect(documentos.sinPartir).toBe(true);
+    expect(Math.max(...paginas.filter((p) => !p.sinPartir).map((p) => p.campos.length))).toBeLessThanOrEqual(4);
   });
 
-  it('el tipo de institución es un desplegable y las dos páginas van en tres columnas', () => {
-    const paginas = interno().paginas();
-    const organizacion = paginas[0];
-    const cuenta = paginas[paginas.length - 1];
-    const tipo = organizacion!.campos.find((c) => c.key === 'tenantType')!;
+  it('el tipo de institución es un desplegable y la primera página va en dos columnas', () => {
+    const organizacion = interno().paginas()[0]!;
+    const tipo = organizacion.campos.find((c) => c.key === 'tenantType')!;
 
     expect(tipo.control).toBe('select');
     expect(tipo.opcionesEn).toBeUndefined();
-    expect(organizacion!.disposicion).toBe('tres-columnas');
-    expect(cuenta!.disposicion).toBe('tres-columnas');
+    expect(organizacion.disposicion).toBe('dos-columnas');
   });
 
   it('si el catálogo de tipos societarios falla, pide al servicio su respaldo en vez de dejarlo vacío', async () => {
@@ -467,6 +567,371 @@ describe('RegisterMedicalCenter', () => {
 
     http.expectNone(RUTA_ALTA);
     expect(interno().errorMessage()).toContain('No pudimos cargar los catálogos del alta');
+  });
+
+  describe('el alta ampliada (paridad con imagenología)', () => {
+    const control = () => fixture.componentInstance.form.controls;
+    const enviar = () => fixture.componentInstance.submit();
+
+    it('las tres gerencias completas viajan como bloque, con el nombre completo', () => {
+      completar();
+      completarGerencias();
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect(req.request.body.organization.executives).toEqual({
+        generalManager: { fullName: 'Gabriel Gómez', phone: '+591 70011111', email: 'general@centro.test' },
+        commercialManager: { fullName: 'Carla Cruz', phone: '+591 70022222', email: 'comercial@centro.test' },
+        marketingManager: { fullName: 'Mario Mena', phone: '+591 70033333', email: 'marketing@centro.test' },
+      });
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('sin gerencias el alta sale igual y no manda la clave', () => {
+      completar();
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect('executives' in req.request.body.organization).toBe(false);
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('gerencias a medias (todo o nada): no sale a la red y pide completarlas o vaciarlas', () => {
+      completar();
+      completarGerencias();
+      fixture.componentInstance.form.patchValue({ salesManagerEmail: '' });
+      enviar();
+
+      http.expectNone(RUTA_ALTA);
+      expect(interno().errorMessage()).toContain('Complete las tres gerencias');
+      expect(interno().registered()).toBe(false);
+
+      // Vaciadas las tres, el alta sale sin ellas.
+      fixture.componentInstance.form.patchValue({
+        generalManagerName: { name: '', lastName: '' },
+        generalManagerPhone: '',
+        generalManagerEmail: '',
+        salesManagerName: { name: '', lastName: '' },
+        salesManagerPhone: '',
+        marketingManagerName: { name: '', lastName: '' },
+        marketingManagerPhone: '',
+        marketingManagerEmail: '',
+      });
+      enviar();
+      http.expectOne(RUTA_ALTA).flush(RESPUESTA_ALTA);
+    });
+
+    it('un correo de gerencia escrito a medias frena, aunque las gerencias sean opcionales', () => {
+      completar();
+      control().generalManagerEmail.setValue('no-es-un-correo');
+      enviar();
+
+      http.expectNone(RUTA_ALTA);
+      expect(control().generalManagerEmail.invalid).toBe(true);
+    });
+
+    it('una unipersonal se registra sin constitución ni poder, y no los envía', () => {
+      completar();
+      control().legalEntityType.setValue('UNIPERSONAL');
+      control().constitutionFileId.setValue('');
+      control().powerOfAttorneyFileId.setValue('');
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect(req.request.body.organization.legalDocuments).toEqual({
+        taxIdentifierFileId: 'f-nit',
+        commerceRegistryFileId: 'f-matricula',
+        operatingLicenseFileId: 'f-licencia',
+        healthAuthorityCertificateFileId: 'f-sedes',
+      });
+      expect('powerOfAttorneyFileId' in req.request.body.organization.legalRepresentative).toBe(false);
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('una S.R.L. sin el poder del representante no sale a la red', () => {
+      completar();
+      control().powerOfAttorneyFileId.setValue('');
+      enviar();
+
+      http.expectNone(RUTA_ALTA);
+      expect(control().powerOfAttorneyFileId.invalid).toBe(true);
+    });
+
+    it('un profesional independiente sigue necesitando el poder (sólo una unipersonal lo omite)', () => {
+      completar();
+      control().legalEntityType.setValue('PROFESIONAL_INDEPENDIENTE');
+      control().powerOfAttorneyFileId.setValue('');
+      expect(control().powerOfAttorneyFileId.invalid).toBe(true);
+    });
+
+    it('el poder se rotula «(opcional)» sólo para una unipersonal', () => {
+      const poder = () =>
+        interno()
+          .paginas()
+          .flatMap((p) => p.campos)
+          .find((c) => c.key === 'powerOfAttorneyFileId')!;
+
+      expect(poder().label).not.toMatch(/opcional/);
+      expect(poder().required).toBe(true);
+      control().legalEntityType.setValue('UNIPERSONAL');
+      expect(poder().label).toMatch(/\(opcional\)$/);
+      expect(poder().required).toBeUndefined();
+    });
+
+    it.each([
+      ['', false],
+      ['abc', false],
+      ['123', false],
+      ['1023456789', true],
+      ['1023-456-789', true],
+      [' 1023456789 ', true],
+      ['-1023456789', false],
+      ['1'.repeat(21), false],
+    ])('el NIT «%s» es válido: %s', (nit, valido) => {
+      control().taxId.setValue(nit);
+      expect(control().taxId.valid).toBe(valido);
+    });
+
+    it.each([
+      ['', false],
+      ['ab', false],
+      ['abc', true],
+      ['SEDES-SC-2020-0412', true],
+      ['SC/2020.04', true],
+      ['  SEDES-1  ', true],
+      ['SEDES SC 2020', false],
+      ['SEDES_SC', false],
+      ['A'.repeat(50), true],
+      ['A'.repeat(51), false],
+    ])('el número de registro del SEDES «%s» es válido: %s', (registro, valido) => {
+      control().healthFacilityRegistrationNumber.setValue(registro);
+      expect(control().healthFacilityRegistrationNumber.valid).toBe(valido);
+    });
+
+    it('el número de registro viaja recortado', () => {
+      completar();
+      control().healthFacilityRegistrationNumber.setValue('  SEDES-1  ');
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect(req.request.body.organization.medicalFacility.healthFacilityRegistrationNumber).toBe('SEDES-1');
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it.each([
+      ['', false],
+      ['ab', false],
+      ['MAT', true],
+      ['M'.repeat(50), true],
+      ['M'.repeat(51), false],
+    ])('la matrícula del director «%s» es válida: %s', (matricula, valida) => {
+      control().medicalDirectorLicense.setValue(matricula);
+      expect(control().medicalDirectorLicense.valid).toBe(valida);
+    });
+
+    it('el director médico pide primer nombre, apellido paterno, matrícula y correo', () => {
+      completar();
+      control().medicalDirectorName.patchValue({ name: '', lastName: '' });
+      enviar();
+      http.expectNone(RUTA_ALTA);
+      expect(control().medicalDirectorName.invalid).toBe(true);
+
+      completar();
+      control().medicalDirectorEmail.setValue('no-es-un-correo');
+      enviar();
+      http.expectNone(RUTA_ALTA);
+      expect(control().medicalDirectorEmail.invalid).toBe(true);
+    });
+
+    it('el teléfono del director es opcional y, sin él, no viaja', () => {
+      completar();
+      control().medicalDirectorPhone.setValue('');
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect('phone' in req.request.body.organization.medicalFacility.medicalDirector).toBe(false);
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('el segundo y tercer nombre del representante se pliegan en middleName del owner', () => {
+      completar();
+      control().legalRepName.patchValue({
+        name: 'Marta',
+        middleName: 'Elena',
+        thirdName: 'Sofía',
+        lastName: 'Rojas',
+        motherLastName: 'Peña',
+      });
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect(req.request.body.owner).toEqual({
+        email: 'marta@centro.test',
+        password: 'secreto12',
+        name: 'Marta',
+        middleName: 'Elena Sofía',
+        lastName: 'Rojas',
+        motherLastName: 'Peña',
+      });
+      expect(req.request.body.organization.legalRepresentative.fullName).toBe('Marta Elena Sofía Rojas Peña');
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('el teléfono del representante viaja sólo si se escribió', () => {
+      completar();
+      control().legalRepPhone.setValue('+591 70055555');
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect(req.request.body.organization.legalRepresentative.phone).toBe('+591 70055555');
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('sin el punto de la casa central no sale a la red', () => {
+      completar();
+      fixture.componentInstance.fijarGpsCentral(null);
+      enviar();
+
+      http.expectNone(RUTA_ALTA);
+      expect(control().gpsCentral.invalid).toBe(true);
+    });
+
+    it('la dirección de la casa central sale del punto', () => {
+      completar();
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect(req.request.body.organization.medicalFacility.headquarters.addressLines).toEqual([
+        'Av. San Martín 123',
+      ]);
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('las sucursales completas viajan en medicalFacility.branches', () => {
+      completar();
+      fixture.componentInstance.fijarSucursales([
+        { id: 'sucursal-1', nombre: 'Sucursal Equipetrol', direccion: 'Av. Equipetrol 1', gps: { lat: -17.76, lng: -63.2 } },
+        { id: 'sucursal-2', nombre: 'Sucursal Norte', direccion: 'Av. Banzer 2', gps: { lat: -17.7, lng: -63.17 } },
+      ]);
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect(req.request.body.organization.medicalFacility.branches).toEqual([
+        { name: 'Sucursal Equipetrol', addressLines: ['Av. Equipetrol 1'], latitude: -17.76, longitude: -63.2 },
+        { name: 'Sucursal Norte', addressLines: ['Av. Banzer 2'], latitude: -17.7, longitude: -63.17 },
+      ]);
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('una sucursal agregada y a medias (sin nombre o sin punto) frena el alta', () => {
+      completar();
+      fixture.componentInstance.fijarSucursales([
+        { id: 'sucursal-1', nombre: '', direccion: '', gps: null },
+      ]);
+      enviar();
+      http.expectNone(RUTA_ALTA);
+      expect(control().sucursales.hasError('sucursalIncompleta')).toBe(true);
+
+      fixture.componentInstance.fijarSucursales([
+        { id: 'sucursal-1', nombre: 'Sucursal Norte', direccion: '', gps: null },
+      ]);
+      enviar();
+      http.expectNone(RUTA_ALTA);
+      expect(control().sucursales.invalid).toBe(true);
+    });
+
+    it('más de 50 sucursales no se aceptan', () => {
+      const lista = Array.from({ length: 51 }, (_, i) => ({
+        id: `sucursal-${i}`,
+        nombre: `S${i}`,
+        direccion: 'x',
+        gps: { lat: -17.7, lng: -63.1 },
+      }));
+      fixture.componentInstance.fijarSucursales(lista);
+      expect(control().sucursales.hasError('demasiadasSucursales')).toBe(true);
+    });
+
+    it('sin sucursales no manda la clave branches', () => {
+      completar();
+      enviar();
+
+      const req = http.expectOne(RUTA_ALTA);
+      expect('branches' in req.request.body.organization.medicalFacility).toBe(false);
+      req.flush(RESPUESTA_ALTA);
+    });
+
+    it('un 422 de la API se muestra con su motivo y deja volver a intentar', () => {
+      completar();
+      enviar();
+      http.expectOne(RUTA_ALTA).flush(
+        {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'El bloque medicalFacility sólo corresponde a una organización médica',
+          error: 'Unprocessable Entity',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+      expect(interno().errorMessage()).toContain('medicalFacility');
+      expect(interno().registered()).toBe(false);
+      // Se puede reintentar: el envío no quedó trabado.
+      enviar();
+      http.expectOne(RUTA_ALTA).flush(RESPUESTA_ALTA);
+      expect(interno().registered()).toBe(true);
+    });
+
+    it('un 400 de validación no se traga el motivo', () => {
+      completar();
+      enviar();
+      http.expectOne(RUTA_ALTA).flush(
+        { statusCode: 400, code: 'VALIDATION_FAILED', message: 'Validation failed', error: 'Bad Request' },
+        { status: 400, statusText: 'Bad Request' },
+      );
+
+      expect(interno().errorMessage()).toBeTruthy();
+      expect(interno().registered()).toBe(false);
+    });
+
+    it('la pantalla de éxito dice que queda en revisión y adónde llegó el aviso de verificación', () => {
+      completar();
+      enviar();
+      http.expectOne(RUTA_ALTA).flush(RESPUESTA_ALTA);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const texto = (id: string) => raiz.querySelector(`[data-testid="${id}"]`)?.textContent ?? '';
+      expect(texto('medical-center-signup-success')).toContain('Su organización médica ya tiene cuenta');
+      expect(texto('medical-center-signup-pending')).toContain('está en revisión');
+      expect(texto('medical-center-signup-pending')).toContain('pendiente de verificación');
+      expect(texto('medical-center-signup-verification')).toContain('marta@centro.test');
+    });
+
+    it('si no se mandó correo de verificación, la pantalla de éxito no lo promete', () => {
+      completar();
+      enviar();
+      http.expectOne(RUTA_ALTA).flush({ ...RESPUESTA_ALTA, emailVerificationSent: false });
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="medical-center-signup-verification"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="medical-center-signup-pending"]')).not.toBeNull();
+    });
+
+    it('el borrador guardado no lleva la contraseña ni los papeles subidos', () => {
+      const guardar = vi
+        .spyOn(TestBed.inject(OnboardingDraftService), 'saveProgress')
+        .mockImplementation((...args) => ({ draftId: 'd', formType: args[0] }) as never);
+      completar();
+      fixture.componentInstance.guardarBorrador();
+
+      const datos = guardar.mock.calls.at(-1)![4] as Record<string, unknown>;
+      expect(guardar.mock.calls.at(-1)![0]).toBe('medical-center');
+      expect(datos['legalName']).toBe('Centro Médico Norte S.R.L.');
+      for (const papel of Object.keys(DOCUMENTOS).concat('powerOfAttorneyFileId')) {
+        expect(datos).not.toHaveProperty(papel);
+      }
+    });
   });
 
   it('«Ir a iniciar sesión» navega al acceso', () => {

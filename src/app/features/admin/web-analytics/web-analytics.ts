@@ -107,6 +107,7 @@ export class WebAnalytics {
     { value: 'organization', label: 'Aseguradora' },
     { value: 'laboratory', label: 'Laboratorio' },
     { value: 'imaging-center', label: 'Imagenología' },
+    { value: 'medical-center', label: 'Organización médica' },
     { value: 'pharmacy', label: 'Farmacia' },
   ];
 

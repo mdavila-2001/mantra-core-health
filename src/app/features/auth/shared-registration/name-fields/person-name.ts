@@ -97,3 +97,30 @@ export function completeName(valor: NameValue): string {
     valor.motherLastName,
   ]);
 }
+
+/** El nombre de una persona en las partes que la API guarda por separado. */
+export interface NameParts {
+  readonly name: string;
+  readonly middleName?: string;
+  readonly lastName: string;
+  readonly motherLastName?: string;
+}
+
+/**
+ * Las partes del nombre tal como las reciben `owner` y `medicalDirector`.
+ *
+ * La base no tiene columna de tercer nombre: lo que no es el primer nombre se
+ * pliega en `middleName` (ver `joinNames`), igual que en el alta de paciente,
+ * de médico y de aseguradora. El segundo nombre y el apellido materno no
+ * viajan si están vacíos.
+ */
+export function nameParts(valor: NameValue): NameParts {
+  const segundo = joinNames([valor.middleName, valor.thirdName, ...valor.extraNames]);
+  const materno = valor.motherLastName.trim();
+  return {
+    name: valor.name.trim(),
+    ...(segundo === '' ? {} : { middleName: segundo }),
+    lastName: valor.lastName.trim(),
+    ...(materno === '' ? {} : { motherLastName: materno }),
+  };
+}

@@ -1,0 +1,52 @@
+/* Una tarjeta por local, con su mapa, su nombre y, si falta algo, qué falta. */
+
+.sucursales {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  inline-size: 100%;
+}
+
+/* «Agregar» y «Subir en lote» juntos; en pantalla chica bajan uno bajo otro. */
+.sucursales__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.sucursal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.sucursal__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.sucursal__titulo {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  margin: 0;
+}
+
+.sucursal__falta {
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+  margin: 0;
+}
+
+.sucursales__vacio {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}

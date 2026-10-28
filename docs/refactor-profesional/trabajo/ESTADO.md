@@ -1,5 +1,89 @@
 # Estado
 
+## Alta de organización médica: paridad con imagenología + registro del SEDES + director médico — 2026-10-28
+
+`/auth/register/medical-center` (hospital, clínica, consultorio, enfermería, otra) pedía tipo, razón social, tipo societario,
+cinco PDF y un nombre+correo+clave. Ahora pide lo mismo que el centro de imagenología, sin los estudios por modalidad, más
+los dos datos propios de un establecimiento de salud del contrato
+(`healthFacilityRegistrationNumber` y `medicalDirector` con matrícula). Doce páginas: La organización (tipo, razón social,
+tipo societario, NIT) → Datos del establecimiento (nº de registro ante el SEDES) → Director médico (nombre en partes,
+matrícula, correo, teléfono opcional) → Documentación legal (los cinco PDF, **en una sola vista**, con `sinPartir`) → Casa
+central en el mapa → Sucursales (opcional, hasta 50, con carga en lote) → Representante legal → Poder del representante →
+Gerencia general / comercial / marketing (opcionales, todo o nada) → Su acceso.
+
+- **Contrato enviado** (`POST /iam/auth/register-organization`): `organization.medicalFacility` (NIT, nº de registro,
+  director, `headquarters`, `branches`), `legalRepresentative`, `executives`, `timeZone`, y el `owner` en partes (`name`,
+  `middleName`, `lastName`, `motherLastName`, sin `displayName`). El owner es el representante legal, como en imagenología.
+  Todo lo nuevo es aditivo: sin los bloques el cuerpo es el de siempre.
+- **Se conserva**: catálogos de tipo / país / jurisdicción por código, `entreLasOpciones`, `signupErrorMessage`, código
+  generado de la razón social, papeles opcionales por tipo societario (UNIPERSONAL sin constitución **ni poder**;
+  PROFESIONAL_INDEPENDIENTE sin constitución ni matrícula de comercio pero **con** poder, como la API), pantalla de éxito
+  con el mismo título («¡Bienvenido a AloVida! Su organización médica ya tiene cuenta»); ahora el aviso dice que queda en
+  revisión / pendiente de verificación y nombra el correo al que fue la verificación.
+- **Se extrajo a `features/auth/shared-registration/`** (la carpeta se llama así, no `registro-compartido`):
+  `branches-editor/` (lista de sucursales con mapa por sucursal + lote CSV), `executives.ts` (controles, páginas y bloque de
+  las tres gerencias) y `nameParts()` en `name-fields/person-name.ts` (nombre en partes para `owner` y `medicalDirector`).
+  Ya existían y se reutilizaron: `app-paginated-form`, `app-map-location-picker`, `app-inline-name-fields`,
+  `app-dropzone-pdf`, `legal-documents`, `password-policy`, `registration-help`, `onboarding-draft-banner`.
+- **Desvío — `register-imaging-center` NO se migró** a las piezas extraídas: sus specs llaman a sus propios métodos
+  (`agregarSucursal`, `escribirNombreDeSucursal`…), y migrarlo obligaba a cambiar esos specs (`NO_TEST_WEAKENING`). Las tres
+  altas existentes (laboratorio, imagenología, farmacia) conservan su copia de las sucursales y de las gerencias; migrarlas
+  es un trabajo aparte. Queda duplicado lo mínimo: el `SucursalDeclarada` de `branches-editor` tiene tres campos menos que el
+  de imagenología (sin descripción ni enlace, que `medicalFacility.branches` no declara).
+- **Borrador y telemetría**: formType nuevo `medical-center` (`OnboardingFormType`, filtro de `web-analytics`). El borrador
+  **no guarda** la contraseña (lo hace `sinDatosPesadosNiSecretos`) **ni los `fileId` de los papeles** (la pre-carga puede
+  vencer y la pantalla no sabría mostrarlos): quien retoma los vuelve a elegir. La API acepta cualquier `formType` como
+  cadena; el embudo de `/telemetry/onboarding` no tiene pasos propios para `medical-center` (cae a los por omisión).
+- **Gerencias a medias**: imagenología las descarta en silencio; acá, si alguna tiene algo y el bloque no está completo, no
+  se envía y la pantalla pide completarlas o vaciarlas.
+- **Simulador**: `core/mock/handlers/medical-facility.validation.ts` (+`core/data-access/iam/medical-facility.rules.ts`,
+  compartido con la pantalla) valida `medicalFacility` como el `ValidationPipe`: NIT, nº de registro, director, coordenadas
+  ambas o ninguna, hasta 50 sucursales (400) y 422 con un `tenantType` que no sea médico; responde
+  `medicalFacilityRegistered: true`. Se corrigieron dos desajustes previos del simulador frente a la API: faltaba
+  `PROFESIONAL_INDEPENDIENTE` en `VS_LEGAL_ENTITY_TYPE` y exigía constitución y matrícula a ese tipo.
+- **Contrato del simulador a mano**: `api-contract.generated.ts` se parchó para declarar `medicalFacility`
+  (`RegisterMedicalFacilityDto`, `RegisterMedicalDirectorDto`, `RegisterMedicalFacilitySiteDto`; nombres provisionales).
+  Es un archivo generado: **hay que regenerarlo con `yarn contract:refresh` cuando la rama de la API con `medicalFacility`
+  esté mergeada** (hoy `node scripts/gen-mock-contract.mjs --check` ya lo daba viejo por `SetPrimaryPractitionerDto`).
+
+**Verificado en navegador** (Chromium contra `ng serve --configuration development,demo`, 172 verificaciones con
+[`playwright/alta-organizacion-medica.mjs`](../../../playwright/alta-organizacion-medica.mjs); capturas, request y
+respuesta en [`capturas/alta-organizacion-medica-2026-10-28/`](capturas/alta-organizacion-medica-2026-10-28/)): las 12
+páginas a 1440 y a 390 px, sin desborde horizontal, la tarjeta centrada (holgura 80/80 px a 1440, 89 % del ancho) y a lo
+ancho; el NIT, el registro del SEDES y la matrícula inválidos frenan y lo dicen; los cinco papeles caben en una vista; una
+sucursal a medias frena y dice qué falta; la mutación completa UI → cuerpo HTTP exacto (`medicalFacility`, representante con
+poder, tres gerencias, owner en partes) → respuesta del simulador (`medicalFacilityRegistered: true`) → pantalla de éxito; una
+UNIPERSONAL sin constitución ni poder; un 409 real del simulador (correo repetido) con el mensaje en pantalla y el reintento
+que sale bien. La petición se lee con un espía sobre el `HttpClient` del cliente (el simulador contesta dentro de la
+aplicación: no hay petición de red que ver).
+
+**No se verificó**: contra la API real ni contra Postgres (la rama de la API con `medicalFacility` va aparte; la
+persistencia → recarga → UI sólo existe con la API real: el simulador no guarda la organización nueva); el 422 desde el
+navegador (el formulario lo bloquea antes: lo cubren los specs del simulador y del cliente); la calle y el municipio
+deducidos del punto (el sandbox no tiene red hacia el geocodificador: el campo queda en «Buscando…»); tema oscuro; 320, 768,
+1024 y 1920 px (sólo 1440 y 390); lector de pantalla y teclado más allá de lo que miden los specs.
+`playwright/cm-11-medical-center.spec.ts` se actualizó al flujo nuevo y su recorrido llega a la pantalla de éxito, pero la
+prueba falla al final por un 404 de `/glossary-data/manifest.json` en la consola (fixture no generada en este entorno, no
+tiene que ver con el alta) y las otras dos pruebas del archivo (la tarjeta en el selector de cuentas y «configurar
+práctica») fallan en este entorno porque el selector sólo muestra Paciente y Médico: no se contrastó contra la base sin el
+cambio. `playwright/cm-11-organizacion-medica-api-real.spec.ts` se adaptó a las páginas nuevas **sin ejecutarse** (exige la
+API real, Postgres y el front en `real-api`); sus dos pruebas de la página «Su cuenta» (nombre, correo y clave en un
+renglón) se reorientaron a la página del director médico porque aquella página ya no existe.
+
+**Gates** (2026-10-28, sobre la rama, tras `yarn install --immutable`): `yarn lint` exit 0 · `yarn typecheck` exit 0 ·
+`yarn build` exit 0 · pruebas: `yarn ng test` con todo junto muere en este entorno por un `fatal error: all goroutines are
+asleep - deadlock!` de esbuild (ya anotado el 2026-10-25), así que se corrió por grupos de carpetas: `core` 3.492 · `shared`
+2.399 de 2.402 · `features/auth+account+auth-providers` 2.579 (incluye `register-imaging-center.spec.ts` **sin tocar**) ·
+`features/admin+clinical-record+agenda` 1.862 · el resto de `features` 2.257, es decir 12.589 pasan y 3 fallan: `pdf-theme.spec.ts`
+«tinta-marca» (falla igual sobre la base, comprobado con `git stash`) y dos de `motion.spec.ts` que pasan solas y fallan sólo
+dentro del grupo `shared` (no se contrastó contra la base en grupo). `check-*.mjs`: los dieciséis que se corrieron fallan o
+pasan igual que antes del cambio (salida de antes y después comparada); el único que se movió es `check-max-lines`, donde
+`auth.handlers.ts` (881 → 900), `concepts.ts` (1676 → 1679) e `iam.types.ts` (1025 → 1027) ya estaban por encima de su techo
+congelado. `gen-mock-contract.mjs --check` ya daba viejo el contrato antes (`SetPrimaryPractitionerDto`) y ahora además
+señala `medicalFacility` hasta que se regenere con la rama de la API.
+
+---
+
 ## Glosario: ficha del término (port desde `mockup`) — 2026-10-28
 
 Port del arreglo de la ficha `/glossary/:conceptId` pedido por el cliente («Biopsia»), hecho primero en `mockup`

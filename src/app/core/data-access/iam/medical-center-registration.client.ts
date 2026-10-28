@@ -4,7 +4,12 @@ import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type { MedicalOrganizationType } from '../directory/directory.types';
-import type { RegisteredOrganization } from './iam.types';
+import type {
+  OrganizationExecutives,
+  OrganizationLegalRepresentative,
+  RegisteredOrganization,
+} from './iam.types';
+import type { MedicalFacility } from './medical-facility.types';
 
 /** Lo que pide el alta de una organización médica. */
 export interface MedicalCenterRegistration {
@@ -29,10 +34,69 @@ export interface MedicalCenterRegistration {
   readonly countryConceptId: string;
   /** Concept id de la jurisdicción: ver `countryConceptId`. */
   readonly jurisdictionConceptId: string;
+  /** La zona horaria de la organización (`America/La_Paz` en el alta pública). */
+  readonly timeZone?: string;
+  /**
+   * La cuenta dueña, con el nombre en partes (la misma forma del alta de
+   * aseguradora): `name` y `lastName` son obligatorios; el segundo nombre y el
+   * apellido materno, sólo si la persona los tiene.
+   */
   readonly owner: {
     readonly email: string;
     readonly password: string;
-    readonly displayName: string;
+    readonly name: string;
+    readonly middleName?: string;
+    readonly lastName: string;
+    readonly motherLastName?: string;
+  };
+  /**
+   * El representante legal y su poder. El poder lo exige la API salvo a una
+   * empresa unipersonal, así que acá es opcional.
+   */
+  readonly legalRepresentative?: Omit<OrganizationLegalRepresentative, 'powerOfAttorneyFileId'> & {
+    readonly powerOfAttorneyFileId?: string;
+  };
+  /** Las tres gerencias: un bloque de a tres, o ninguna. */
+  readonly executives?: OrganizationExecutives;
+  /**
+   * El bloque propio de un establecimiento de salud: NIT, número de registro
+   * ante la autoridad sanitaria, director médico y direcciones. Aditivo en el
+   * contrato; lo obligatorio lo impone el formulario.
+   */
+  readonly medicalFacility?: MedicalFacility;
+}
+
+/**
+ * El bloque `medicalFacility`, campo por campo: la API rechaza con 400 toda
+ * clave que su DTO no declare, y las coordenadas viajan ambas o ninguna.
+ */
+function cuerpoDeEstablecimiento(facility: MedicalFacility): unknown {
+  const sitio = (s: MedicalFacility['headquarters']) => ({
+    name: s.name,
+    addressLines: [...s.addressLines],
+    ...(s.latitude === undefined || s.longitude === undefined
+      ? {}
+      : { latitude: s.latitude, longitude: s.longitude }),
+  });
+  const { medicalDirector: d } = facility;
+  return {
+    taxIdentifierNumber: facility.taxIdentifierNumber,
+    healthFacilityRegistrationNumber: facility.healthFacilityRegistrationNumber,
+    medicalDirector: {
+      name: d.name,
+      ...(d.middleName === undefined ? {} : { middleName: d.middleName }),
+      lastName: d.lastName,
+      ...(d.motherLastName === undefined ? {} : { motherLastName: d.motherLastName }),
+      professionalLicenseNumber: d.professionalLicenseNumber,
+      email: d.email,
+      ...(d.phone === undefined ? {} : { phone: d.phone }),
+    },
+    headquarters: sitio(facility.headquarters),
+    // Sin sucursales no viaja la clave: es opcional, y `[]` no dice nada que
+    // su ausencia no diga.
+    ...(facility.branches === undefined || facility.branches.length === 0
+      ? {}
+      : { branches: facility.branches.map(sitio) }),
   };
 }
 
@@ -76,11 +140,26 @@ export class MedicalCenterRegistrationClient {
           },
           countryConceptId: registration.countryConceptId,
           jurisdictionConceptId: registration.jurisdictionConceptId,
+          ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
+          ...(registration.legalRepresentative === undefined
+            ? {}
+            : { legalRepresentative: registration.legalRepresentative }),
+          ...(registration.executives === undefined ? {} : { executives: registration.executives }),
+          ...(registration.medicalFacility === undefined
+            ? {}
+            : { medicalFacility: cuerpoDeEstablecimiento(registration.medicalFacility) }),
         },
         owner: {
           email: registration.owner.email,
           password: registration.owner.password,
-          displayName: registration.owner.displayName,
+          name: registration.owner.name,
+          ...(registration.owner.middleName === undefined
+            ? {}
+            : { middleName: registration.owner.middleName }),
+          lastName: registration.owner.lastName,
+          ...(registration.owner.motherLastName === undefined
+            ? {}
+            : { motherLastName: registration.owner.motherLastName }),
         },
       },
     );

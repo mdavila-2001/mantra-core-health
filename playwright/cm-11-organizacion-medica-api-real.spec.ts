@@ -52,7 +52,7 @@ import { pdfDePrueba } from './helpers/documentos-legales';
 import { urlDeApi } from './support/actores';
 import { esperarAplicacionLista } from './support/sesion';
 
-/** Las claves de los cinco documentos legales del alta, en el orden de sus páginas. */
+/** Las claves de los cinco documentos legales del alta, en el orden de su página. */
 const CLAVES_DE_DOCUMENTOS = [
   'constitutionFileId',
   'taxIdentifierFileId',
@@ -327,9 +327,12 @@ async function ordenVisualDeAcciones(page: Page): Promise<string[]> {
   );
 }
 
-/** Las acciones en el orden en que el tabulador las alcanza desde el último campo (la contraseña). */
-async function ordenDeFocoEnAcciones(page: Page): Promise<string[]> {
-  await page.getByTestId('medical-center-signup-password').focus();
+/** Las acciones en el orden en que el tabulador las alcanza desde el último campo de la página (por omisión, el teléfono del director). */
+async function ordenDeFocoEnAcciones(
+  page: Page,
+  ultimoCampo = 'medical-center-signup-director-phone',
+): Promise<string[]> {
+  await page.getByTestId(ultimoCampo).focus();
   const recorrido: string[] = [];
   for (let intento = 0; intento < 6; intento += 1) {
     await page.keyboard.press('Tab');
@@ -385,29 +388,62 @@ async function continuar(page: Page): Promise<void> {
   await boton.click();
 }
 
-/** Completa la primera página. `rotulo` en `null` deja el tipo sin elegir. */
+/** Completa la primera página (la empresa y su NIT). `rotulo` en `null` deja el tipo sin elegir. */
 async function paginaOrganizacion(page: Page, rotulo: string | null, razonSocial: string): Promise<void> {
   if (rotulo !== null) await elegirTipo(page, rotulo);
   await escribir(page, 'medical-center-signup-legal-name', razonSocial);
   await elegirTipoSocietario(page);
+  await escribir(page, 'medical-center-signup-tax-id', '1023456789');
 }
 
-/** Los cinco PDF, en las dos páginas de «Documentación legal obligatoria (PDF)». Deja el asistente en «Su cuenta». */
+/** El número de registro del SEDES y el director médico: las dos páginas propias de un establecimiento de salud. */
+async function paginasDelEstablecimiento(page: Page): Promise<void> {
+  await escribir(page, 'medical-center-signup-health-registration', `SEDES-SC-${RUN}`.slice(0, 50));
+  await continuar(page);
+  await escribir(page, 'medical-center-signup-director-nombre', 'Ana');
+  await escribir(page, 'medical-center-signup-director-apellido-paterno', 'Rojas');
+  await escribir(page, 'medical-center-signup-director-license', 'MAT-12345');
+  await escribir(page, 'medical-center-signup-director-email', `director.${RUN}@alovida.test`.toLowerCase());
+}
+
+/**
+ * Del número del SEDES a los cinco PDF, que van en una sola página («Documentación legal obligatoria»).
+ * Deja el asistente en «Dónde está la casa central».
+ */
 async function paginaDocumentos(page: Page): Promise<void> {
-  for (const tanda of [CLAVES_DE_DOCUMENTOS.slice(0, 4), CLAVES_DE_DOCUMENTOS.slice(4)]) {
-    for (const clave of tanda) {
-      const testId = `medical-center-signup-doc-${clave}`;
-      await page.getByTestId(testId).setInputFiles(pdfDePrueba(clave));
-      await expect(page.getByTestId(`${testId}-quitar`)).toBeVisible({ timeout: 15_000 });
-    }
-    await continuar(page);
+  await paginasDelEstablecimiento(page);
+  await continuar(page);
+  for (const clave of CLAVES_DE_DOCUMENTOS) {
+    const testId = `medical-center-signup-doc-${clave}`;
+    await page.getByTestId(testId).setInputFiles(pdfDePrueba(clave));
+    await expect(page.getByTestId(`${testId}-quitar`)).toBeVisible({ timeout: 15_000 });
   }
+  await continuar(page);
 }
 
+/**
+ * De la casa central en el mapa a la clave: el punto, las sucursales (ninguna), el representante
+ * legal —que es también el dueño de la cuenta, con `correo` como usuario—, su poder, las tres
+ * gerencias (vacías) y la contraseña. Deja el asistente en «Su acceso», sin enviar.
+ */
 async function paginaCuenta(page: Page, correo: string, password: string): Promise<void> {
-  await expect(page.getByTestId('medical-center-signup-owner-name')).toBeVisible({ timeout: 20_000 });
-  await escribir(page, 'medical-center-signup-owner-name', 'Marta Rojas');
-  await escribir(page, 'medical-center-signup-email', correo);
+  await expect(page.getByTestId('medical-center-signup-central-map')).toBeVisible({ timeout: 20_000 });
+  await page.getByTestId('medical-center-signup-central-map').click({ position: { x: 120, y: 120 } });
+  await page.getByTestId('medical-center-signup-central-location-confirm').click();
+  await expect(page.getByTestId('medical-center-signup-central-location-confirmed')).toBeAttached();
+  await continuar(page);
+  await continuar(page);
+  await escribir(page, 'medical-center-signup-legal-rep-nombre', 'Marta');
+  await escribir(page, 'medical-center-signup-legal-rep-apellido-paterno', 'Rojas');
+  await escribir(page, 'medical-center-signup-legal-rep-id', '4872190');
+  await escribir(page, 'medical-center-signup-legal-rep-email', correo);
+  await continuar(page);
+  const poder = 'medical-center-signup-doc-powerOfAttorneyFileId';
+  await page.getByTestId(poder).setInputFiles(pdfDePrueba('powerOfAttorneyFileId'));
+  await expect(page.getByTestId(`${poder}-quitar`)).toBeVisible({ timeout: 15_000 });
+  await continuar(page);
+  for (let gerencia = 0; gerencia < 3; gerencia += 1) await continuar(page);
+  await expect(page.getByTestId('medical-center-signup-password')).toBeVisible({ timeout: 20_000 });
   await escribir(page, 'medical-center-signup-password', password);
 }
 
@@ -684,7 +720,7 @@ test.describe('límite', () => {
     await paginaOrganizacion(page, 'Hospital', razonSocial);
     await continuar(page);
     await expect(page.getByText('No puede pasar de 300 caracteres.')).toBeVisible();
-    await expect(page.getByTestId('medical-center-signup-owner-name')).toHaveCount(0);
+    await expect(page.getByTestId('medical-center-signup-health-registration')).toHaveCount(0);
     // El foco va al campo con el error, no se queda en «Siguiente».
     await expect(page.getByTestId('medical-center-signup-legal-name')).toBeFocused();
     await sinDesbordeHorizontal(page);
@@ -761,7 +797,7 @@ test.describe('error', () => {
     // El párrafo del error del campo: es el que lleva el `id` al que apunta el grupo.
     const mensaje = page.locator('.form-field-error', { hasText: 'Elija el tipo de institución.' });
     await expect(mensaje).toBeVisible();
-    await expect(page.getByTestId('medical-center-signup-owner-name')).toHaveCount(0);
+    await expect(page.getByTestId('medical-center-signup-health-registration')).toHaveCount(0);
     // M2: el desplegable queda descrito por el mensaje, inválido y con el foco.
     const combobox = page.getByTestId('medical-center-signup-tenant-type').getByRole('combobox');
     const idDelMensaje = await mensaje.getAttribute('id');
@@ -900,7 +936,7 @@ test('la primera página se ve entera en los anchos de referencia, con «Siguien
   expect(vigia.problemas).toEqual([]);
 });
 
-test('la segunda página reparte la cuenta en columnas y sus acciones no se salen, en todos los anchos', async ({
+test('la página del director médico y sus acciones no se salen, en todos los anchos', async ({
   page,
 }) => {
   const vigia = vigilar(page);
@@ -909,8 +945,10 @@ test('la segunda página reparte la cuenta en columnas y sus acciones no se sale
     await abrirAlta(page);
     await paginaOrganizacion(page, 'Hospital', `Vista ${vista.label} ${RUN}`);
     await continuar(page);
-    await paginaDocumentos(page);
-    await expect(page.getByTestId('medical-center-signup-owner-name')).toBeVisible();
+    await paginasDelEstablecimiento(page);
+    // La página de la cuenta (nombre, correo y clave en un renglón) ya no existe: el alta ahora pide al
+    // director médico antes de los papeles, y es la primera página con «Atrás» y «Siguiente» a la vez.
+    await expect(page.getByTestId('medical-center-signup-director-license')).toBeVisible();
     await sinDesbordeHorizontal(page);
     await accionesDentro(page);
     await expect(page.getByTestId('paginated-form-atras')).toBeVisible();
@@ -958,23 +996,12 @@ test('la segunda página reparte la cuenta en columnas y sus acciones no se sale
       expect(acciones.apiladas, vista.label).toBe(false);
       expect(Math.abs(acciones.textoAtras - acciones.rejilla.left), vista.label).toBeLessThanOrEqual(2);
     }
-    if (vista.width >= 672 && vista.width < 1120) {
-      // Dos columnas: la contraseña, tercera, cruza la fila en vez de quedar sola.
+    if (vista.width >= 672) {
+      // Una columna a lo ancho: el último campo ocupa toda la rejilla, sin casillas kilométricas ni huecos.
       expect(Math.abs(acciones.ultimo - acciones.rejilla.width), vista.label).toBeLessThanOrEqual(1);
     }
-    if (vista.width >= 1120) {
-      const filas = await page.evaluate(
-        () =>
-          new Set(
-            [...document.querySelectorAll('.paginated-form__campo')].map((campo) =>
-              Math.round(campo.getBoundingClientRect().top),
-            ),
-          ).size,
-      );
-      expect(filas, `${vista.label}: nombre, correo y contraseña en un renglón`).toBe(1);
-    }
     await page.getByTestId('paginated-form-atras').scrollIntoViewIfNeeded();
-    await foto(page, `${vista.label}-pagina-2-acciones`);
+    await foto(page, `${vista.label}-pagina-director-acciones`);
   }
   expect(vigia.problemas).toEqual([]);
 });
@@ -988,8 +1015,8 @@ test('redimensionar de 390 a 1024 y volver: sin errores y con el orden de lectur
   await abrirAlta(page);
   await paginaOrganizacion(page, 'Hospital', `Redimensiona ${RUN}`);
   await continuar(page);
-  await paginaDocumentos(page);
-  await expect(page.getByTestId('medical-center-signup-owner-name')).toBeVisible();
+  await paginasDelEstablecimiento(page);
+  await expect(page.getByTestId('medical-center-signup-director-license')).toBeVisible();
 
   for (const [ancho, alto, apiladas] of [
     [390, 844, true],
