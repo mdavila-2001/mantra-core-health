@@ -1,4 +1,4 @@
-import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { DatePipe, isPlatformBrowser, Location } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
@@ -16,6 +16,7 @@ import type {
   AssistedRegistrationResult,
 } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { NavigationHistoryService } from '../../../core/navigation/navigation-history.service';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -82,11 +83,14 @@ const MAX_PARTE_NOMBRE = 100;
 export class AssistedRegistration {
   private readonly iam = inject(IamClient);
   private readonly navigation = inject(NavigationService);
+  private readonly history = inject(NavigationHistoryService);
+  private readonly location = inject(Location);
+  private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-/**
+  /**
    * El formulario, servido de a una página.
    *
    * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
@@ -98,18 +102,61 @@ export class AssistedRegistration {
       titulo: 'Datos del paciente',
       hint: 'Lo mínimo para crear la cuenta; el resto lo completa su filiación.',
       campos: [
-        { key: 'name', testId: 'alta-paciente-nombre', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre del paciente.' },
-        { key: 'middleName', testId: 'alta-paciente-segundo-nombre', label: 'Segundo nombre', hint: 'Si no tiene, dejalo vacío.', control: 'text' },
-        { key: 'lastName', testId: 'alta-paciente-apellido-paterno', label: 'Apellido paterno', control: 'text', required: true, mensajeDeError: 'Escribí el apellido paterno del paciente.' },
-        { key: 'motherLastName', testId: 'alta-paciente-apellido-materno', label: 'Apellido materno', hint: 'Si no lleva, dejalo vacío.', control: 'text' },
-        { key: 'email', testId: 'alta-paciente-correo', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
+        {
+          key: 'name',
+          testId: 'alta-paciente-nombre',
+          label: 'Nombre',
+          control: 'text',
+          required: true,
+          mensajeDeError: 'Escribí el nombre del paciente.',
+        },
+        {
+          key: 'middleName',
+          testId: 'alta-paciente-segundo-nombre',
+          label: 'Segundo nombre',
+          hint: 'Si no tiene, dejalo vacío.',
+          control: 'text',
+        },
+        {
+          key: 'lastName',
+          testId: 'alta-paciente-apellido-paterno',
+          label: 'Apellido paterno',
+          control: 'text',
+          required: true,
+          mensajeDeError: 'Escribí el apellido paterno del paciente.',
+        },
+        {
+          key: 'motherLastName',
+          testId: 'alta-paciente-apellido-materno',
+          label: 'Apellido materno',
+          hint: 'Si no lleva, dejalo vacío.',
+          control: 'text',
+        },
+        {
+          key: 'email',
+          testId: 'alta-paciente-correo',
+          label: 'Correo',
+          hint: 'Con este correo va a activar la cuenta e iniciar sesión.',
+          control: 'email',
+          required: true,
+          mensajeDeError: 'Ingresá un correo válido.',
+        },
       ],
     },
     {
       titulo: 'Justificación',
       hint: 'Estás creando una cuenta a nombre de otra persona: queda registrado quién y por qué.',
       campos: [
-        { key: 'reason', testId: 'alta-paciente-motivo', label: 'Motivo del registro asistido', hint: 'Queda en la trazabilidad. Máximo 500 caracteres.', control: 'textarea', required: true, mensajeDeError: 'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).' },
+        {
+          key: 'reason',
+          testId: 'alta-paciente-motivo',
+          label: 'Motivo del registro asistido',
+          hint: 'Queda en la trazabilidad. Máximo 500 caracteres.',
+          control: 'textarea',
+          required: true,
+          mensajeDeError:
+            'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).',
+        },
       ],
     },
   ]);
@@ -170,6 +217,18 @@ export class AssistedRegistration {
     return null;
   });
 
+  /**
+   * «Atrás» en el primer paso: a la pantalla de la que se vino, o a `/administration/patients` si no
+   * hubo una (enlace directo, recarga).
+   */
+  protected volver(): void {
+    if (this.history.hasInternalHistory()) {
+      this.location.back();
+      return;
+    }
+    void this.router.navigateByUrl('/administration/patients');
+  }
+
   protected submit(): void {
     if (this.isSubmitting()) {
       return;
@@ -217,8 +276,7 @@ export class AssistedRegistration {
   }
 
   private datos(): AssistedPatientRegistration {
-    const { name, middleName, lastName, motherLastName, email, reason } =
-      this.form.getRawValue();
+    const { name, middleName, lastName, motherLastName, email, reason } = this.form.getRawValue();
     const segundoNombre = middleName.trim();
     const apellidoMaterno = motherLastName.trim();
 

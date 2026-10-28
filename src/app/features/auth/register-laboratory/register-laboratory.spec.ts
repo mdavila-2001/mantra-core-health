@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
@@ -71,6 +71,19 @@ describe('RegisterLaboratory', () => {
     component.form.controls.sedesFile.setValue({ archivo: 'sedes.pdf', pesoBytes: 1000 });
   }
 
+  it('«Atrás» en el primer paso vuelve al selector de tipo de cuenta', () => {
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    fixture.detectChanges();
+    const atras = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="paginated-form-atras"]',
+    );
+
+    expect(atras).not.toBeNull();
+    atras!.click();
+
+    expect(navegar).toHaveBeenCalledWith('/auth/register');
+  });
+
   /* --- lo que pregunta --------------------------------------------------- */
 
   it('ofrece los ocho tipos de sociedad del proceso, para elegir y no para escribir', () => {
@@ -89,9 +102,7 @@ describe('RegisterLaboratory', () => {
   });
 
   it('pregunta los seis papeles del proceso, ni uno más', () => {
-    const papeles = Object.keys(component.form.controls).filter((clave) =>
-      clave.endsWith('File'),
-    );
+    const papeles = Object.keys(component.form.controls).filter((clave) => clave.endsWith('File'));
 
     expect(papeles.sort()).toEqual([
       'constitucionFile',
@@ -272,9 +283,7 @@ describe('RegisterLaboratory', () => {
   });
 
   it('mientras no se envía, el formulario está a la vista', () => {
-    const form = fixture.debugElement.query(
-      By.css('[data-testid="registro-form-laboratorio"]'),
-    );
+    const form = fixture.debugElement.query(By.css('[data-testid="registro-form-laboratorio"]'));
 
     expect(form).not.toBeNull();
   });

@@ -104,12 +104,7 @@ export interface SucursalDeclarada {
  * llamar.
  */
 export type ClaveDeAdjunto =
-  | 'constitucionFile'
-  | 'nitFile'
-  | 'seprecFile'
-  | 'licenciaFile'
-  | 'sedesFile'
-  | 'poderFile';
+  'constitucionFile' | 'nitFile' | 'seprecFile' | 'licenciaFile' | 'sedesFile' | 'poderFile';
 
 /** Formatos que se aceptan. El proceso pide PDF; se acepta la foto del papel. */
 const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
@@ -671,7 +666,10 @@ export class RegisterLaboratory {
   protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
 
   attachmentLabel(key: ClaveDeAdjunto): string {
-    return this.paginas.flatMap(page => page.campos).find(field => field.key === key)?.label ?? 'Documento';
+    return (
+      this.paginas.flatMap((page) => page.campos).find((field) => field.key === key)?.label ??
+      'Documento'
+    );
   }
 
   isAttachmentRequired(key: ClaveDeAdjunto): boolean {
@@ -688,7 +686,7 @@ export class RegisterLaboratory {
   }
 
   updateAttachment(key: ClaveDeAdjunto, files: readonly File[]): void {
-    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
+    this.attachmentFiles.update((current) => ({ ...current, [key]: files }));
     const file = files[0];
     const control = this.form.controls[key];
     control.setValue(file ? { archivo: file.name, pesoBytes: file.size } : null);
@@ -841,6 +839,14 @@ export class RegisterLaboratory {
 
   /** Si la solicitud ya se dio por enviada. */
   readonly enviada = signal(false);
+
+  /**
+   * «Atrás» en el primer paso: de vuelta al selector de tipo de cuenta, que es de
+   * donde se llegó.
+   */
+  volverAlTipoDeCuenta(): void {
+    void this.router.navigateByUrl('/auth/register');
+  }
 
   /**
    * Cierra el alta **sin salir a la red**.

@@ -57,6 +57,8 @@
             [iconOnlyNav]="true"
             [pending]="isSubmitting()"
             (pasoVisible)="recordarPaso($event)"
+            [atrasEnPrimera]="true"
+            (atrasDesdeInicio)="volverAlTipoDeCuenta()"
             (enviado)="submit()"
           >
             <!-- Los tres nombres entran como campo custom bajo `name` porque

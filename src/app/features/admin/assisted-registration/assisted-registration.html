@@ -84,6 +84,8 @@
   label="Alta de paciente"
   submitLabel="Registrar paciente"
   [pending]="isSubmitting()"
+  [atrasEnPrimera]="true"
+  (atrasDesdeInicio)="volver()"
   (enviado)="submit()"
   data-testid="alta-paciente-form"
 />

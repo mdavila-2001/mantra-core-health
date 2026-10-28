@@ -255,6 +255,19 @@ export class PaginatedForm {
   readonly iconOnlyNav = input(false, { transform: booleanAttribute });
 
   /**
+   * «Atrás» también en la primera página, para salir del formulario.
+   *
+   * Apagado por defecto: en las pantallas que montan este motor la primera
+   * página no tiene un «antes» y el botón sobraría. Lo enciende la que sí lo
+   * tiene —el alta que se elige desde un selector de tipo de cuenta— y escucha
+   * {@link atrasDesdeInicio} para llevar a quien aprieta a donde estaba.
+   *
+   * El motor no navega: no sabe de rutas, y la pantalla es la que sabe a dónde
+   * se vuelve.
+   */
+  readonly atrasEnPrimera = input(false, { transform: booleanAttribute });
+
+  /**
    * El recorrido se dibuja también con más de {@link MAX_PASOS_EN_EL_INDICADOR}
    * páginas, en su forma compacta: marcadores sin rótulo a la vista.
    *
@@ -275,6 +288,9 @@ export class PaginatedForm {
   readonly enviado = output<void>();
 
   readonly cancelado = output<void>();
+
+  /** «Atrás» apretado en la primera página, con {@link atrasEnPrimera} encendido. */
+  readonly atrasDesdeInicio = output<void>();
 
   /**
    * La página que se está mostrando, cada vez que cambia (y también la primera).
@@ -339,6 +355,9 @@ export class PaginatedForm {
 
   readonly esPrimera = computed(() => this.indice() === 0);
 
+  /** «Atrás» se dibuja salvo en la primera página, donde sólo existe si se pidió. */
+  protected readonly mostrarAtras = computed(() => !this.esPrimera() || this.atrasEnPrimera());
+
   /**
    * Si el botón de continuar se dibuja como ícono.
    *
@@ -362,9 +381,7 @@ export class PaginatedForm {
   });
 
   readonly mostrarPasos = computed(
-    () =>
-      this.total() > 1 &&
-      (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
+    () => this.total() > 1 && (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
   );
 
   /**
@@ -554,7 +571,10 @@ export class PaginatedForm {
   protected retroceder(): void {
     // Sin validar: volver atrás a corregir algo no puede quedar bloqueado por lo
     // que está mal en la página de la que se vuelve.
-    if (this.esPrimera()) return;
+    if (this.esPrimera()) {
+      if (this.atrasEnPrimera()) this.atrasDesdeInicio.emit();
+      return;
+    }
     this.indice.update((actual) => actual - 1);
   }
 

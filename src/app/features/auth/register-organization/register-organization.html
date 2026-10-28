@@ -60,6 +60,8 @@
           label="Crear cuenta de la aseguradora"
           submitLabel="Crear cuenta de la aseguradora"
           [pending]="isSubmitting()"
+          [atrasEnPrimera]="true"
+          (atrasDesdeInicio)="volverAlTipoDeCuenta()"
           (enviado)="submit()"
           (rechazada)="alRechazarPagina($event)"
           data-testid="registro-organizacion-form"

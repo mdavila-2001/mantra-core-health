@@ -68,6 +68,8 @@
             [compactSteps]="true"
             [pending]="isSubmitting()"
             (pasoVisible)="recordarPaso($event)"
+            [atrasEnPrimera]="true"
+            (atrasDesdeInicio)="volverAlTipoDeCuenta()"
             (enviado)="submit()"
           >
             <!-- Las tres casillas de nombre van en un solo campo de la página:

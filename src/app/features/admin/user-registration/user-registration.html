@@ -42,6 +42,8 @@
   label="Alta de usuario"
   submitLabel="Crear cuenta"
   [pending]="isSubmitting()"
+  [atrasEnPrimera]="true"
+  (atrasDesdeInicio)="volver()"
   (enviado)="submit()"
   data-testid="alta-usuario-form"
 />
