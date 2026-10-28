@@ -24,7 +24,6 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { Stepper } from '../../../shared/components/molecules/stepper/stepper';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { Select } from '../../../shared/components/atoms/select/select';
@@ -33,11 +32,10 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { RequestInbox } from './request-inbox/request-inbox';
-import { conceptosDe } from '../my-profile/practitioner-profile/practitioner-profile';
+import { conceptosDe } from '../my-profile/practitioner-profile/practitioner-seal';
 import {
   buildRoadmap,
   buildThreads,
-  roadmapStepper,
   type RequestThread,
   type RoadmapStep,
 } from './my-verifications.model';
@@ -48,7 +46,8 @@ interface Datos {
   readonly etiquetas: ConceptLabels;
   /** `null` si la lectura falló: la hoja de ruta lo dice en vez de esconderlo. */
   readonly seguros: readonly InsurerRequest[] | null;
-  readonly catalogo: readonly CarrierCatalogEntry[];
+  /** `null` si no se pudo leer: el campo para pedir otra lo explica. */
+  readonly catalogo: readonly CarrierCatalogEntry[] | null;
 }
 
 const PESTANAS = ['Hoja de ruta', 'Solicitudes enviadas'] as const;
@@ -88,7 +87,6 @@ const PESTANA = { ruta: 0, bandeja: 1 } as const;
     RouterLink,
     Select,
     StatusSeal,
-    Stepper,
     Tab,
     Tabs,
     ViewStateHost,
@@ -125,8 +123,6 @@ export class MyVerifications {
     return d === null ? [] : buildRoadmap(d.perfil, d.etiquetas, d.seguros);
   });
 
-  protected readonly indicador = computed(() => roadmapStepper(this.pasos()));
-
   protected readonly verificados = computed(
     () => this.pasos().filter((p) => p.state === 'approved').length,
   );
@@ -154,16 +150,34 @@ export class MyVerifications {
         .filter((r) => r.status === 'PENDING' || r.status === 'APPROVED')
         .map((r) => r.carrierId),
     );
-    return d.catalogo
+    return (d.catalogo ?? [])
       .filter((c) => !vivas.has(c.id))
       .map((c) => ({ value: c.id, label: c.isPublic ? `${c.name} (seguro público)` : c.name }));
   });
 
+  /** Por qué no se puede pedir otra, si no se puede; `null` si se puede. */
+  protected readonly sinAseguradoras = computed<string | null>(() => {
+    const d = this.datos();
+    if (d === null) return null;
+    if (d.catalogo === null) {
+      return 'No pudimos cargar la lista de aseguradoras. Vuelva a cargar la página en unos segundos.';
+    }
+    if (d.seguros === null)
+      return 'No pudimos leer sus solicitudes: reintente antes de pedir otra.';
+    return this.aseguradorasDisponibles().length === 0
+      ? 'Ya pidió trabajar con todas las aseguradoras de AloVida.'
+      : null;
+  });
+
+  /** Falló la lectura de las solicitudes a aseguradoras (no es que no haya). */
+  protected readonly segurosIlegibles = computed(() => this.datos()?.seguros === null);
+
   protected readonly aseguradoraNueva = signal<string | null>(null);
   protected readonly enviando = signal(false);
-  protected readonly avisoDeEnvio = signal<{ tono: 'success' | 'error'; texto: string } | null>(
-    null,
-  );
+  protected readonly avisoDeEnvio = signal<{
+    tono: 'success' | 'warning' | 'error';
+    texto: string;
+  } | null>(null);
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
@@ -197,7 +211,7 @@ export class MyVerifications {
             .pipe(catchError(() => of<readonly InsurerRequest[] | null>(null))),
           catalogo: this.insurance
             .listCarrierCatalog()
-            .pipe(catchError(() => of<readonly CarrierCatalogEntry[]>([]))),
+            .pipe(catchError(() => of<readonly CarrierCatalogEntry[] | null>(null))),
         }).pipe(map((resto) => ({ perfil, ...resto }))),
       ),
     );
@@ -231,53 +245,89 @@ export class MyVerifications {
   }
 
   protected retirar(hilo: RequestThread): void {
-    if (this.enviando()) return;
-    const requestId = hilo.id.replace(/^ins-/, '');
+    if (hilo.requestId === undefined || this.enviando()) return;
     this.enviando.set(true);
     this.avisoDeEnvio.set(null);
-    this.insurerRequests.withdraw(requestId).subscribe({
-      next: () => this.releerSeguros(`Retiró su solicitud a ${hilo.counterpart}.`, hilo.id),
-      error: (error: unknown) => this.fallo(error),
+    this.insurerRequests.withdraw(hilo.requestId).subscribe({
+      next: () =>
+        this.releerSeguros(
+          { tono: 'success', texto: `Retiró su solicitud a ${hilo.counterpart}.` },
+          hilo.id,
+        ),
+      error: (error: unknown) => this.fallo(error, hilo.id),
     });
   }
 
   private pedir(carrierIds: readonly string[], exito: string): void {
     this.enviando.set(true);
     this.avisoDeEnvio.set(null);
+    const abrir = `ins-${carrierIds[0]}`;
     this.insurerRequests.request(carrierIds).subscribe({
       next: () => {
         this.aseguradoraNueva.set(null);
-        this.releerSeguros(exito, null);
+        this.releerSeguros({ tono: 'success', texto: exito }, abrir);
       },
-      error: (error: unknown) => this.fallo(error),
+      error: (error: unknown) => this.fallo(error, abrir),
     });
   }
 
   /**
    * Después de escribir se vuelve a leer de la API —no se arma la fila en el
-   * cliente—: lo que se ve es lo que quedó guardado.
+   * cliente—: lo que se ve es lo que quedó guardado. Si la escritura salió y la
+   * relectura no, se dice eso: el cambio está hecho, lo que falta es verlo.
    */
-  private releerSeguros(exito: string, abrir: string | null): void {
+  private releerSeguros(
+    aviso: { tono: 'success' | 'warning' | 'error'; texto: string },
+    abrir: string | null,
+  ): void {
     this.insurerRequests.listMine().subscribe({
       next: (seguros) => {
         this.state.update((s) => (s.status === 'ready' ? ready({ ...s.data, seguros }) : s));
-        const recienPedida = seguros[0];
-        this.hiloElegidoId.set(abrir ?? (recienPedida ? `ins-${recienPedida.id}` : null));
+        if (abrir !== null) this.hiloElegidoId.set(abrir);
         this.enviando.set(false);
-        this.avisoDeEnvio.set({ tono: 'success', texto: exito });
+        this.avisoDeEnvio.set(aviso);
       },
-      error: (error: unknown) => this.fallo(error),
+      error: () => {
+        this.enviando.set(false);
+        this.avisoDeEnvio.set(
+          aviso.tono === 'success'
+            ? {
+                tono: 'warning',
+                texto: `${aviso.texto} No pudimos mostrar el estado actualizado: recargue la página para verlo.`,
+              }
+            : aviso,
+        );
+      },
     });
   }
 
-  private fallo(error: unknown): void {
+  /**
+   * La escritura no se hizo. Un 409 (ya estaba viva) o un 422 (la aseguradora
+   * respondió entretanto) dicen que lo que se ve está viejo: se relee.
+   */
+  private fallo(error: unknown, abrir: string | null): void {
+    const estado = error instanceof HttpErrorResponse ? error.status : 0;
+    if (estado === 409) {
+      this.releerSeguros(
+        { tono: 'warning', texto: 'Ya tiene una solicitud viva con esa aseguradora.' },
+        abrir,
+      );
+      return;
+    }
+    if (estado === 422) {
+      this.releerSeguros(
+        {
+          tono: 'warning',
+          texto: 'La aseguradora ya respondió esa solicitud: le mostramos su respuesta.',
+        },
+        abrir,
+      );
+      return;
+    }
     this.enviando.set(false);
-    const conflicto = error instanceof HttpErrorResponse && error.status === 409;
     this.avisoDeEnvio.set({
       tono: 'error',
-      texto: conflicto
-        ? 'Ya tiene una solicitud viva con esa aseguradora.'
-        : 'No pudimos enviar el cambio. Revise su conexión y vuelva a intentarlo.',
+      texto: 'No pudimos enviar el cambio. Revise su conexión y vuelva a intentarlo.',
     });
   }
 }

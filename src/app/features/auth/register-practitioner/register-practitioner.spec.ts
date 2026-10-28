@@ -363,7 +363,11 @@ describe('RegisterPractitioner', () => {
         'email',
         'gpsTrabajo',
       ]);
-      expect(camposDe('own-office')).toEqual(['officeName', 'officeContactPhone', 'gpsConsultorio']);
+      expect(camposDe('own-office')).toEqual([
+        'officeName',
+        'officeContactPhone',
+        'gpsConsultorio',
+      ]);
       // La autoridad emisora ya no se pregunta (26/10/2026): el colegio se
       // completa solo con el título profesional.
       // Cada habilitación es UN renglón con su número, su fecha y su respaldo
@@ -3418,7 +3422,7 @@ describe('RegisterPractitioner', () => {
       const aviso = fixture.nativeElement.querySelector(
         '[data-testid="registro-pedidos-enviados"]',
       ) as HTMLElement | null;
-      expect(aviso?.textContent).toContain('Enviamos 2');
+      expect(aviso?.textContent).toContain('Registramos 2 vínculos');
       expect(aviso?.textContent).toContain('Mis verificaciones');
     });
 
@@ -3652,6 +3656,4 @@ describe('RegisterPractitioner con mockBackend', () => {
     // que los 5 s por defecto de Vitest. Con 20 s pasa, aislada y dentro de la
     // suite; no se debilitó ninguna aserción.
   }, 20_000);
-
 });
-

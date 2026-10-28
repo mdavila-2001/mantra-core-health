@@ -169,6 +169,10 @@
       "nombre": "my-account_requests"
     },
     {
+      "ruta": "/my-account/verifications",
+      "nombre": "my-account_verifications"
+    },
+    {
       "ruta": "/administration/my-practice",
       "nombre": "administration_my-practice"
     },
@@ -436,6 +440,10 @@
       "nombre": "administration_insurance-analytics"
     },
     {
+      "ruta": "/administration/insurer-practitioner-requests",
+      "nombre": "administration_insurer-practitioner-requests"
+    },
+    {
       "ruta": "/administration/received-claims",
       "nombre": "administration_received-claims"
     },
@@ -590,6 +598,10 @@
     {
       "ruta": "/my-account/requests",
       "nombre": "my-account_requests"
+    },
+    {
+      "ruta": "/my-account/verifications",
+      "nombre": "my-account_verifications"
     },
     {
       "ruta": "/administration/my-practice",
@@ -814,6 +826,10 @@
       "nombre": "my-account_requests"
     },
     {
+      "ruta": "/my-account/verifications",
+      "nombre": "my-account_verifications"
+    },
+    {
       "ruta": "/posts",
       "nombre": "home"
     },
@@ -914,6 +930,10 @@
     {
       "ruta": "/administration/insurance-analytics",
       "nombre": "administration_insurance-analytics"
+    },
+    {
+      "ruta": "/administration/insurer-practitioner-requests",
+      "nombre": "administration_insurer-practitioner-requests"
     },
     {
       "ruta": "/administration/received-claims",
@@ -1022,6 +1042,10 @@
     {
       "ruta": "/my-account/requests",
       "nombre": "my-account_requests"
+    },
+    {
+      "ruta": "/my-account/verifications",
+      "nombre": "my-account_verifications"
     },
     {
       "ruta": "/administration/my-organization",

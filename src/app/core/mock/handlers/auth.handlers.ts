@@ -1,9 +1,12 @@
-import { pedirAseguradoras } from './practitioner-insurer-requests.handlers';
+import {
+  MAX_ASEGURADORAS_POR_ENVIO,
+  pedirAseguradoras,
+} from './practitioner-insurer-requests.handlers';
 import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
-import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, notFound, preconditionFailed, reply, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
   buscarUsuario,
@@ -274,6 +277,8 @@ export function registrarAuth(router: MockRouter): void {
       collegeName?: string;
       collegeLicenseIssueDate?: string;
       collegeLicenseFileId?: string;
+      name?: string;
+      lastName?: string;
       // Dónde dice trabajar (28/10/2026), como en la API.
       institutionSlugs?: string[];
       insurerCarrierIds?: string[];
@@ -323,7 +328,16 @@ export function registrarAuth(router: MockRouter): void {
     const practitionerProfileId = uuid(`hpid-${id}`);
     // Las aseguradoras se validan contra el catálogo antes de dar el alta por
     // hecha, como la API: una inexistente deshace todo con 422.
-    const seguros = pedirAseguradoras(practitionerProfileId, datos.insurerCarrierIds ?? []);
+    if ((datos.insurerCarrierIds ?? []).length > MAX_ASEGURADORAS_POR_ENVIO) {
+      return validation(`Hasta ${MAX_ASEGURADORAS_POR_ENVIO} aseguradoras`, [
+        { field: 'insurerCarrierIds', message: 'admite hasta 20' },
+      ]);
+    }
+    const seguros = pedirAseguradoras(
+      practitionerProfileId,
+      datos.insurerCarrierIds ?? [],
+      [datos.name, datos.lastName].filter(Boolean).join(' ') || undefined,
+    );
     if (seguros === null) {
       return preconditionFailed('Alguna de las aseguradoras indicadas no existe o no está activa', {
         field: 'insurerCarrierIds',

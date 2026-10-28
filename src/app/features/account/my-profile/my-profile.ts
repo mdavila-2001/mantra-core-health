@@ -4,7 +4,7 @@ import { PatientCoverageCard } from '../../../shared/components/molecules/patien
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
@@ -39,10 +39,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
-import {
-  PageHeader,
-  type PageHeaderAction,
-} from '../../../shared/components/organisms/page-header/page-header';
+import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import {
@@ -161,7 +158,6 @@ export class MyProfile {
   private readonly estadosDeCaso = inject(CaseStatusCatalog);
   private readonly navigation = inject(NavigationService);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
   /** Perfil de paciente en sesión (claim `pid`): lo necesita el widget de beneficios del seguro. */
   protected readonly patientProfileId = this.auth.patientProfileId;
@@ -178,23 +174,6 @@ export class MyProfile {
    * mirando un perfil de paciente que no tiene.
    */
   protected readonly esProfesional = computed(() => this.auth.practitionerProfileId() !== null);
-
-  /**
-   * «Mis verificaciones» desde el encabezado, sólo para quien ejerce: la
-   * sección está fuera del menú cerrado del médico y éste es su lugar natural
-   * —uno viene a «Mi perfil» a ver cómo lo ven y qué le falta—.
-   */
-  protected readonly accionesDelEncabezado = computed<readonly PageHeaderAction[]>(() =>
-    this.esProfesional()
-      ? [{ code: 'verificaciones', label: 'Mis verificaciones', icon: 'shield' }]
-      : [],
-  );
-
-  protected alElegirAccion(code: string): void {
-    if (code === 'verificaciones') {
-      void this.router.navigateByUrl('/my-account/verifications');
-    }
-  }
 
   /**
    * El resumen de paciente. Admite `null` **listo**, que no es lo mismo que

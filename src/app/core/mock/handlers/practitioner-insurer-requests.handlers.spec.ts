@@ -75,6 +75,29 @@ describe('simulador de la solicitud médico → aseguradora', () => {
     expect(segunda.status).toBe(409);
   });
 
+  it('volver a pedir tras un rechazo crea otra solicitud y la rechazada queda como historia', () => {
+    const antes = call<{ items: Fila[] }>('GET', '/practitioners/me/insurer-requests').body.items;
+    const rechazada = antes.find((i) => i.status === 'REJECTED')!;
+
+    const nueva = call<{ items: Fila[] }>('POST', '/practitioners/me/insurer-requests', {
+      carrierIds: [rechazada.carrierId],
+    });
+    expect(nueva.status).toBe(201);
+    const delPar = nueva.body.items.filter((i) => i.carrierId === rechazada.carrierId);
+    expect(delPar.map((i) => i.status).sort()).toEqual(['PENDING', 'REJECTED']);
+    expect(delPar.find((i) => i.status === 'REJECTED')).toMatchObject({
+      id: rechazada.id,
+      decisionReasonText: rechazada.decisionReasonText,
+    });
+  });
+
+  it('más de 20 aseguradoras por envío es 400, como el DTO de la API', () => {
+    const muchas = Array.from({ length: 21 }, (_, i) => `c-${i}`);
+    expect(
+      call('POST', '/practitioners/me/insurer-requests', { carrierIds: muchas }).status,
+    ).toBe(400);
+  });
+
   it('una aseguradora que no está en el catálogo es 422', () => {
     expect(
       call('POST', '/practitioners/me/insurer-requests', { carrierIds: ['no-existe'] }).status,
@@ -127,6 +150,7 @@ describe('simulador de la solicitud médico → aseguradora', () => {
     );
     expect(retirada.status).toBe(200);
     expect(retirada.body.status).toBe('WITHDRAWN');
+    expect((retirada.body as Fila & { decidedAt: string | null }).decidedAt).not.toBeNull();
 
     const ajena = solicitudesAAseguradoras.filtrar(
       (s) => s.practitionerProfileId !== medica.practitionerProfileId,

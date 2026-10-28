@@ -6,8 +6,8 @@
       Instituciones donde trabaja (opcional)
     </h3>
     <p class="lugares__explica">
-      Clínicas, hospitales o centros que ya están en AloVida. A cada una le vamos a pedir que
-      confirme que usted trabaja ahí: cuando lo haga, el vínculo lleva su sello oficial.
+      Clínicas, hospitales o centros que ya están en AloVida. Las que tienen quién confirme vínculos
+      reciben su pedido; cuando lo confirman, el vínculo lleva su sello oficial.
     </p>
 
     <app-form-field
@@ -58,7 +58,7 @@
               } @else {
                 <app-badge variant="info" size="sm">Institución sin verificar</app-badge>
               }
-              <app-badge variant="warning" size="sm">Su vínculo: se pedirá confirmación</app-badge>
+              <app-badge variant="warning" size="sm">Su vínculo: sin confirmar todavía</app-badge>
             </div>
             <button
               app-button
@@ -97,8 +97,8 @@
       <p class="lugares__cargando" role="status">Cargando las aseguradoras…</p>
     } @else if (catalogoFallido()) {
       <app-alert tone="warning" data-testid="registro-pro-seguros-error">
-        No pudimos cargar la lista de aseguradoras. Puede seguir con el alta y declararlas después
-        desde su perfil.
+        No pudimos cargar la lista de aseguradoras. Puede seguir con el alta y pedirlas después
+        desde «Mis verificaciones».
         <button
           app-button
           type="button"

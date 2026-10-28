@@ -5,9 +5,21 @@
   margin-inline: auto;
 }
 
-.pedidos__resumen {
-  margin: 0 0 var(--e4);
-  font-size: var(--fs-body);
+.pedidos__grupo + .pedidos__grupo {
+  margin-block-start: var(--e6);
+}
+
+.pedidos__grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0 0 var(--e3);
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.pedidos__cuenta {
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
@@ -57,8 +69,8 @@
 }
 
 .pedidos__motivo {
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
 }
 
 .pedidos__acciones {

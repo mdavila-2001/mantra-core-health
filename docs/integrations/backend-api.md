@@ -1152,6 +1152,25 @@ paciente cruza esta ruta.
 |---|---|---|
 | `GET` | `/insurance/analytics/loss-ratio` | `InsuranceAnalytics` |
 
+### `PractitionerInsurerRequestsClient` — 6 operaciones · v4.2.64
+
+El médico pide trabajar con una aseguradora y ella lo aprueba o lo rechaza con
+un motivo opcional (M26, `insurance.practitioner_insurer_requests`). Una sola
+solicitud viva —pendiente o aprobada— por médico y aseguradora; volver a pedir
+tras un rechazo o un retiro crea otra y la anterior queda como historia. La
+aseguradora sale del tenant activo (`InsurerContextService`): no hay `@Roles`,
+la barrera es la membresía. Las solicitudes también nacen con el alta
+(`POST /iam/auth/register-practitioner`, `insurerCarrierIds`).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practitioners/me/insurer-requests` | `MyVerifications` |
+| `POST` | `/practitioners/me/insurer-requests` | `MyVerifications` |
+| `POST` | `/practitioners/me/insurer-requests/:id/withdraw` | `MyVerifications` |
+| `GET` | `/insurance/practitioner-requests` | `InsurerPractitionerRequests` |
+| `POST` | `/insurance/practitioner-requests/:id/approve` | `InsurerPractitionerRequests` |
+| `POST` | `/insurance/practitioner-requests/:id/reject` | `InsurerPractitionerRequests` |
+
 ### `InsurancePortabilityClient` — 4 operaciones · subtarea 3.3, v4.2.19
 
 Portabilidad de póliza e historial de siniestralidad a 1 clic: el titular
@@ -1665,6 +1684,9 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `POST` | `/insurance/received-claims/:claimId/decision` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/insurance/received-claims/:claimId/invoice` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/insurance/received-claims/:claimId/invoice/annulment` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance/practitioner-requests` | [`PractitionerInsurerRequestsClient`](../../src/app/core/data-access/insurance/practitioner-insurer-requests.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/practitioner-requests/:id/approve` | [`PractitionerInsurerRequestsClient`](../../src/app/core/data-access/insurance/practitioner-insurer-requests.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/practitioner-requests/:id/reject` | [`PractitionerInsurerRequestsClient`](../../src/app/core/data-access/insurance/practitioner-insurer-requests.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/loyalty/me` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/loyalty/me/points` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/loyalty/me/points/redeem` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |

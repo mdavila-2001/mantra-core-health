@@ -851,7 +851,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // verificaciones». Mismo acceso que «Solicitudes recibidas» —la autoridad
     // es la membresía en la aseguradora, que resuelve la API—, y fuera del
     // menú: el de la aseguradora es una lista cerrada que fijó la propietaria.
-    // Se llega desde el encabezado de «Solicitudes recibidas».
+    // Se llega desde el panel de la aseguradora (franja de dashboard.html).
     path: 'administration/insurer-practitioner-requests',
     label: 'Profesionales que piden sumarse',
     group: 'Administración',
@@ -1691,8 +1691,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Mi cuenta',
     icon: 'shield',
     // Sin rol propio, como «Mi identidad»: «Mi cuenta» es autoservicio y no
-    // admite roles de gestión. El filtro real es tener perfil profesional, y
-    // eso lo dice la API (`/profiles/practitioners/me/summary`), no el menú.
+    // admite roles de gestión. La ruta la cierra a quien atiende
+    // (`SECCIONES_DE_QUIEN_ATIENDE` en app.routes.ts) y la API decide qué ve.
     roles: [ANY_ROLE],
     fueraDelMenuPara: [ANY_ROLE],
     availability: 'disponible',

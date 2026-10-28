@@ -46,7 +46,7 @@ const ROTULO: Readonly<Record<ReceivedInsurerRequest['status'], string>> = {
  * barrera la pone la API: esta pantalla no decide quién puede.
  *
  * Fuera del menú —el de la aseguradora es una lista cerrada que fijó la
- * propietaria—; se llega desde el encabezado de «Solicitudes recibidas».
+ * propietaria—; se llega desde la franja del panel de la aseguradora.
  */
 @Component({
   selector: 'app-insurer-practitioner-requests',
@@ -82,15 +82,30 @@ export class InsurerPractitionerRequests {
     return s.status === 'ready' ? s.data : [];
   });
 
-  protected readonly pendientes = computed(
-    () => this.filas().filter((f) => f.status === 'PENDING').length,
+  /** Por decidir arriba, lo decidido debajo; un grupo vacío no se dibuja. */
+  protected readonly grupos = computed(() =>
+    [
+      {
+        clave: 'por-decidir',
+        titulo: 'Por decidir',
+        filas: this.filas().filter((f) => f.status === 'PENDING'),
+      },
+      {
+        clave: 'decididas',
+        titulo: 'Ya decididas',
+        filas: this.filas().filter((f) => f.status !== 'PENDING'),
+      },
+    ].filter((g) => g.filas.length > 0),
   );
 
   /** La fila con el rechazo abierto, para escribir el motivo antes de confirmar. */
   protected readonly rechazando = signal<string | null>(null);
   protected readonly motivo = signal('');
   protected readonly enviando = signal<string | null>(null);
-  protected readonly aviso = signal<{ tono: 'success' | 'error'; texto: string } | null>(null);
+  protected readonly aviso = signal<{
+    tono: 'success' | 'warning' | 'error';
+    texto: string;
+  } | null>(null);
 
   constructor() {
     this.cargar();
@@ -147,31 +162,55 @@ export class InsurerPractitionerRequests {
     this.aviso.set(null);
     llamada().subscribe({
       next: () => {
-        this.client.listReceived().subscribe({
-          next: (filas) => {
-            this.state.set(ready(filas));
-            this.enviando.set(null);
-            this.rechazando.set(null);
-            this.aviso.set({
-              tono: 'success',
-              texto: `Se ${verbo} la solicitud de ${fila.practitionerName ?? 'el profesional'}. Ya lo ve en su conversación.`,
-            });
-          },
-          error: (error: unknown) => this.fallo(error),
+        const hecho = `Se ${verbo} la solicitud de ${fila.practitionerName ?? 'el profesional'}.`;
+        this.releer(
+          { tono: 'success', texto: `${hecho} Ya lo ve en su conversación.` },
+          `${hecho} No pudimos mostrar la bandeja actualizada: recárguela para verla.`,
+        );
+      },
+      error: (error: unknown) => {
+        // 422: la decidió otra persona o el profesional la retiró. Lo que se
+        // ve está viejo; se relee para mostrar cómo quedó.
+        if (error instanceof HttpErrorResponse && error.status === 422) {
+          this.releer(
+            {
+              tono: 'warning',
+              texto:
+                'Esa solicitud ya fue decidida o el profesional la retiró: le mostramos cómo quedó.',
+            },
+            'Esa solicitud ya fue decidida o el profesional la retiró. Recargue la bandeja para ver cómo quedó.',
+          );
+          return;
+        }
+        this.enviando.set(null);
+        this.aviso.set({
+          tono: 'error',
+          texto: 'No pudimos guardar la decisión. Revise su conexión y vuelva a intentarlo.',
         });
       },
-      error: (error: unknown) => this.fallo(error),
     });
   }
 
-  private fallo(error: unknown): void {
-    this.enviando.set(null);
-    const yaDecidida = error instanceof HttpErrorResponse && error.status === 422;
-    this.aviso.set({
-      tono: 'error',
-      texto: yaDecidida
-        ? 'Esa solicitud ya fue decidida o el profesional la retiró. Recargue la bandeja.'
-        : 'No pudimos guardar la decisión. Revise su conexión y vuelva a intentarlo.',
+  /**
+   * Vuelve a leer la bandeja: lo que queda en pantalla es lo que la API
+   * guardó. Si la decisión salió y la relectura no, se dice eso.
+   */
+  private releer(
+    aviso: { tono: 'success' | 'warning'; texto: string },
+    sinRelectura: string,
+  ): void {
+    this.client.listReceived().subscribe({
+      next: (filas) => {
+        this.state.set(ready(filas));
+        this.enviando.set(null);
+        this.rechazando.set(null);
+        this.aviso.set(aviso);
+      },
+      error: () => {
+        this.enviando.set(null);
+        this.rechazando.set(null);
+        this.aviso.set({ tono: 'warning', texto: sinRelectura });
+      },
     });
   }
 }

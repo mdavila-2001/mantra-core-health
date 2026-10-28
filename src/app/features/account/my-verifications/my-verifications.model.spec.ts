@@ -10,7 +10,6 @@ import {
   combineStates,
   insurerThread,
   institutionThread,
-  roadmapStepper,
 } from './my-verifications.model';
 
 const concepto = (id: string, code: string) =>
@@ -22,6 +21,9 @@ const etiquetas: ConceptLabels = new Map([
   concepto('c-auth-active', 'AUTH_ACTIVE'),
   concepto('c-auth-pending', 'AUTH_PENDING'),
   concepto('c-auth-rejected', 'AUTH_REJECTED'),
+  concepto('c-cred-verified', 'CRED_VERIFIED'),
+  concepto('c-cred-rejected', 'CRED_REJECTED'),
+  concepto('c-spec-rejected', 'SPECIALTY_REJECTED'),
 ]);
 
 function afiliacion(over: Partial<PractitionerAffiliation>): PractitionerAffiliation {
@@ -132,6 +134,58 @@ describe('buildRoadmap', () => {
     expect(seguros.detail).toContain('No pudimos leer');
   });
 
+  it('un título rechazado dice «Rechazado» aunque tenga fecha de revisión (verifiedAt)', () => {
+    // La API escribe `verifiedAt` también al RECHAZAR: el estado sale del
+    // concepto, como en «Mi perfil», nunca de la fecha.
+    const pasos = buildRoadmap(
+      perfil({
+        credentials: [
+          { id: 'c1', stateConceptId: 'c-cred-rejected', verifiedAt: new Date('2026-10-01') },
+          { id: 'c2', stateConceptId: 'c-cred-verified', verifiedAt: new Date('2026-10-01') },
+        ],
+      } as unknown as Partial<OwnPractitionerProfile>),
+      etiquetas,
+      [],
+    );
+    const titulos = pasos.find((p) => p.key === 'credentials')!;
+    expect(titulos.state).toBe('rejected');
+    expect(titulos.detail).toContain('1 de 2');
+  });
+
+  it('un título vencido es «Vencido» aunque se haya verificado', () => {
+    const pasos = buildRoadmap(
+      perfil({
+        credentials: [
+          { id: 'c1', stateConceptId: 'c-cred-verified', expiryDate: new Date('2026-01-01') },
+        ],
+      } as unknown as Partial<OwnPractitionerProfile>),
+      etiquetas,
+      [],
+      new Date('2026-10-28'),
+    );
+    expect(pasos.find((p) => p.key === 'credentials')!.state).toBe('expired');
+  });
+
+  it('una especialidad rechazada dice «Rechazado», no «Pendiente»', () => {
+    const pasos = buildRoadmap(
+      perfil({
+        specialties: [{ id: 's1', verificationStatusConceptId: 'c-spec-rejected', verified: false }],
+      } as unknown as Partial<OwnPractitionerProfile>),
+      etiquetas,
+      [],
+    );
+    expect(pasos.find((p) => p.key === 'specialties')!.state).toBe('rejected');
+  });
+
+  it('las aseguradoras cuentan sólo la última solicitud de cada una', () => {
+    const seguros = buildRoadmap(perfil(), etiquetas, [
+      solicitud({ id: 'vieja', status: 'REJECTED', createdAt: new Date('2026-10-01') }),
+      solicitud({ id: 'nueva', status: 'APPROVED', createdAt: new Date('2026-10-20') }),
+    ]).find((p) => p.key === 'insurers')!;
+    expect(seguros.state).toBe('approved');
+    expect(seguros.detail).toContain('1 de 1');
+  });
+
   it('una solicitud retirada no cuenta como pendiente', () => {
     const seguros = buildRoadmap(perfil(), etiquetas, [solicitud({ status: 'WITHDRAWN' })]).find(
       (p) => p.key === 'insurers',
@@ -140,53 +194,92 @@ describe('buildRoadmap', () => {
   });
 });
 
-describe('roadmapStepper', () => {
-  it('el tramo actual es el primero obligatorio sin verificar', () => {
-    const indicador = roadmapStepper(buildRoadmap(perfil(), etiquetas, []));
-    expect(indicador[0]!.status).toBe('complete');
-    expect(indicador[1]!.status).toBe('current');
-    expect(indicador.filter((s) => s.status === 'current')).toHaveLength(1);
-  });
-});
-
 describe('la bandeja como chat', () => {
-  it('un vínculo aprobado responde con el sello oficial y doble marca', () => {
+  it('un vínculo aprobado lo cuenta la plataforma con el sello, sin poner palabras en boca de la institución', () => {
     const hilo = institutionThread(afiliacion({ statusKind: 'aprobado', roleTitle: 'Cardióloga' }));
     expect(hilo.messages[0]).toMatchObject({ speaker: 'me', ticks: 'answered' });
     expect(hilo.messages[0]!.text).toContain('como Cardióloga');
-    expect(hilo.messages[1]).toMatchObject({ speaker: 'them', seal: 'approved', at: null });
+    expect(hilo.messages[1]).toMatchObject({ speaker: 'system', seal: 'approved', at: null });
+    expect(hilo.messages[1]!.text).toContain('Clínica Foianini confirmó');
+    expect(hilo.messages).toHaveLength(2);
     expect(hilo.stateLabel).toBe('Confirmado');
   });
 
-  it('un rechazo trae el motivo que escribió la otra parte', () => {
-    const hilo = insurerThread(
+  it('un rechazo: el aviso es de la plataforma y el motivo, en la voz de quien lo escribió', () => {
+    const hilo = insurerThread([
       solicitud({
         status: 'REJECTED',
-        decisionReasonText: 'Sin convenio vigente',
+        decisionReasonText: '  Sin convenio vigente ',
         decidedAt: new Date('2026-10-22T10:00:00Z'),
       }),
-    );
-    expect(hilo.messages[1]!.text).toContain('«Sin convenio vigente»');
-    expect(hilo.messages[1]!.at).toEqual(new Date('2026-10-22T10:00:00Z'));
+    ]);
+    expect(hilo.messages[1]).toMatchObject({ speaker: 'system', seal: 'rejected' });
+    expect(hilo.messages[2]).toEqual({
+      speaker: 'them',
+      text: '«Sin convenio vigente»',
+      at: new Date('2026-10-22T10:00:00Z'),
+    });
     expect(hilo.canRequestAgain).toBe(true);
     expect(hilo.canWithdraw).toBe(false);
   });
 
+  it('un rechazo sin motivo no inventa una burbuja de la otra parte', () => {
+    const hilo = insurerThread([solicitud({ status: 'REJECTED', decidedAt: new Date() })]);
+    expect(hilo.messages.some((m) => m.speaker === 'them')).toBe(false);
+  });
+
+  it('volver a pedir no borra la historia: el rechazo y su motivo siguen en el hilo', () => {
+    const hilo = insurerThread([
+      solicitud({ id: 'ir-2', createdAt: new Date('2026-10-25T10:00:00Z') }),
+      solicitud({
+        id: 'ir-1',
+        status: 'REJECTED',
+        decisionReasonText: 'Sin convenio vigente',
+        createdAt: new Date('2026-10-21T10:00:00Z'),
+        decidedAt: new Date('2026-10-22T10:00:00Z'),
+      }),
+    ]);
+    expect(hilo.messages.map((m) => m.speaker)).toEqual(['me', 'system', 'them', 'me', 'system']);
+    expect(hilo.messages[2]!.text).toBe('«Sin convenio vigente»');
+    expect(hilo).toMatchObject({
+      id: 'ins-c-1',
+      requestId: 'ir-2',
+      state: 'pending',
+      canWithdraw: true,
+    });
+  });
+
+  it('un retiro queda como mensaje propio con su hora', () => {
+    const hilo = insurerThread([
+      solicitud({ status: 'WITHDRAWN', decidedAt: new Date('2026-10-23T09:00:00Z') }),
+    ]);
+    expect(hilo.messages[1]).toEqual({
+      speaker: 'me',
+      text: 'Retiré la solicitud.',
+      at: new Date('2026-10-23T09:00:00Z'),
+    });
+    expect(hilo.stateLabel).toBe('Retirada');
+    expect(hilo.canRequestAgain).toBe(true);
+  });
+
   it('una pendiente se puede retirar y la plataforma dice que espera', () => {
-    const hilo = insurerThread(solicitud({}));
+    const hilo = insurerThread([solicitud({})]);
     expect(hilo.canWithdraw).toBe(true);
     expect(hilo.messages[1]).toMatchObject({ speaker: 'system' });
     expect(hilo.messages[0]!.ticks).toBe('sent');
   });
 
-  it('la bandeja junta instituciones y aseguradoras, de la novedad más reciente a la más vieja', () => {
+  it('la bandeja: un hilo por institución y uno por aseguradora, de la novedad más reciente a la más vieja', () => {
     const hilos = buildThreads(
       [
         afiliacion({ id: 'vieja', createdAt: new Date('2026-10-01') }),
         afiliacion({ id: 'sin-sede', practiceSiteId: null, statusKind: 'declarado' }),
       ],
-      [solicitud({ id: 'nueva', createdAt: new Date('2026-10-25') })],
+      [
+        solicitud({ id: 'nueva', createdAt: new Date('2026-10-25') }),
+        solicitud({ id: 'anterior', status: 'REJECTED', createdAt: new Date('2026-10-05') }),
+      ],
     );
-    expect(hilos.map((h) => h.id)).toEqual(['ins-nueva', 'inst-vieja']);
+    expect(hilos.map((h) => h.id)).toEqual(['ins-c-1', 'inst-vieja']);
   });
 });
