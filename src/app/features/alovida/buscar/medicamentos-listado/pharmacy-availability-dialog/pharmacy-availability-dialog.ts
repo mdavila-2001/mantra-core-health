@@ -44,10 +44,9 @@ export function hasCoordinates(offer: OfertaDeFarmacia): boolean {
 /** El renglón secundario del pin: distancia rotulada y dirección, lo que haya. */
 export function pinSubtitle(offer: OfertaDeFarmacia): string | undefined {
   const distance = formatDistance(offer.distanceKm);
-  const parts = [
-    distance === null ? null : `${distance} en línea recta`,
-    offer.addressText,
-  ].filter((part): part is string => part !== null);
+  const parts = [distance === null ? null : `${distance} en línea recta`, offer.addressText].filter(
+    (part): part is string => part !== null,
+  );
   return parts.length === 0 ? undefined : parts.join(' · ');
 }
 
@@ -85,6 +84,14 @@ export function withCodes(offers: readonly OfertaDeFarmacia[]): readonly OfertaV
  * resalta su pin, y el CTA del popup del pin lleva la vista a su fila
  * (AC-06-10). No se reescribió: se movió.
  *
+ * ## La receta y la dosis máxima van arriba de todo
+ *
+ * La receta obligatoria se resalta en un aviso, no en una insignia perdida en
+ * la fila: es la condición para poder comprarlo. La dosis máxima recomendada
+ * tiene su lugar fijo, pero **hoy dice que no hay fuente cargada**: la API no
+ * la sirve y una dosis escrita a mano es un dato clínico sin fuente (B-13).
+ * Cuando llegue la ficha técnica oficial, se muestra con su cita.
+ *
  * ## El mapa se monta después de abrir
  *
  * Leaflet mide el contenedor al montarse. Dentro de un `<dialog>` todavía
@@ -102,6 +109,12 @@ export function withCodes(offers: readonly OfertaDeFarmacia[]): readonly OfertaV
 export class PharmacyAvailabilityDialog {
   /** El principio activo que se está consultando. Encabeza el modal. */
   readonly medicationName = input.required<string>();
+
+  /**
+   * `true` si el medicamento se vende sólo contra receta. Encabeza el modal en
+   * un aviso propio: es lo primero que hay que saber antes de ir a comprarlo.
+   */
+  readonly requiresPrescription = input(false);
 
   /** Las ofertas tal como las devolvió la API, en su orden. */
   readonly offers = input.required<readonly OfertaDeFarmacia[]>();
@@ -128,9 +141,7 @@ export class PharmacyAvailabilityDialog {
   protected readonly visibleOffers = computed(() => withCodes(this.offers()));
 
   /** Las que el mapa puede ubicar. Las otras siguen en la lista, con aviso. */
-  protected readonly mappableOffers = computed(() =>
-    this.visibleOffers().filter(hasCoordinates),
-  );
+  protected readonly mappableOffers = computed(() => this.visibleOffers().filter(hasCoordinates));
 
   protected readonly pins = computed<readonly PinMap[]>(() =>
     this.mappableOffers().map((offer) => {
