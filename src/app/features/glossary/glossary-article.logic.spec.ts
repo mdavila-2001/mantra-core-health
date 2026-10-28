@@ -244,8 +244,19 @@ describe('glossary-article.logic', () => {
       { label: 'c', value: '3', source: 'otra', sourceUrl: 'https://x/2' },
     ]);
     expect(fuentes).toEqual([
-      { nombre: 'MedlinePlus en español (NLM)', url: 'https://x/1' },
-      { nombre: 'otra', url: 'https://x/2' },
+      { nombre: 'MedlinePlus en español (NLM)', urls: ['https://x/1'] },
+      { nombre: 'otra', urls: ['https://x/2'] },
+    ]);
+  });
+
+  it('fuentesDeLosDatos: varias páginas de la misma fuente dan un solo nombre', () => {
+    const fuentes = fuentesDeLosDatos([
+      { label: 'a', value: '1', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/1' },
+      { label: 'b', value: '2', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/2' },
+      { label: 'c', value: '3', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/3' },
+    ]);
+    expect(fuentes).toEqual([
+      { nombre: 'MedlinePlus en español (NLM)', urls: ['https://x/1', 'https://x/2', 'https://x/3'] },
     ]);
   });
 });

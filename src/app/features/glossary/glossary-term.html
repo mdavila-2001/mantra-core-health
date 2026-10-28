@@ -2,7 +2,7 @@
 
 <div class="termino">
   <div class="termino__acciones">
-    <a routerLink="/glossary">← Volver al glosario</a>
+    <a class="termino__volver" routerLink="/glossary">← Volver al glosario</a>
     @if (ficha()) {
       <button
         app-button
@@ -116,9 +116,9 @@
               }
             </div>
 
-            <h2 class="termino__subtitulo">Explicado simple</h2>
+            <h2 class="termino__subtitulo termino__subtitulo--rotulo">Explicado simple</h2>
             @if (resumen() !== '') {
-              <p class="termino__definicion">{{ resumen() }}</p>
+              <p class="termino__definicion termino__resumen">{{ resumen() }}</p>
               @if (termino.plainSummary?.translated === false) {
                 <p class="termino__sin-traducir-parcial">
                   Explicación en su idioma original: todavía no tiene traducción al castellano
@@ -385,6 +385,7 @@
                         [headingLevel]="2"
                         [tone]="zona.zone"
                         [columns]="zona.columns"
+                        [spread]="true"
                       />
                     }
                   </div>

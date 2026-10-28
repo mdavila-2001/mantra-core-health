@@ -91,6 +91,25 @@
   display: grid;
   gap: var(--sp-6);
   min-inline-size: 0;
+  /* El texto llena su columna: con cada párrafo acotado a 75ch quedaba una
+     franja vacía a la derecha de toda la ficha (regla del cliente §5). La
+     medida de lectura la pone el cuerpo entero, centrado en su columna, y
+     sólo pesa en pantallas muy anchas. */
+  inline-size: 100%;
+  max-inline-size: 48rem;
+  margin-inline: auto;
+}
+
+/* Las páginas de una fuente son números sueltos: un blanco mínimo táctil. */
+.articulo__pagina {
+  display: inline-block;
+  min-inline-size: 1.5rem;
+  text-align: center;
+}
+
+.articulo a {
+  color: var(--text-link);
+  text-underline-offset: 0.15em;
 }
 
 .articulo__sinonimos,
@@ -120,18 +139,47 @@
 .articulo__lista,
 .articulo__referencias {
   margin: 0;
-  max-inline-size: 75ch;
   color: var(--text-secondary);
+  line-height: var(--lh-body-lg);
 }
 
 .articulo__parrafo {
-  text-align: justify;
-  hyphens: auto;
+  text-align: start;
 }
 
+/* Justificado sólo con ancho suficiente: en el teléfono abría ríos entre
+   palabras. */
+@media (min-width: 48rem) {
+  .articulo__parrafo {
+    text-align: justify;
+    hyphens: auto;
+  }
+}
+
+/* Las viñetas las quita el reinicio global: sin ellas, una lista de síntomas
+   se leía como un párrafo partido en renglones. */
 .articulo__lista,
 .articulo__referencias {
-  padding-inline-start: var(--sp-5);
+  display: grid;
+  gap: var(--sp-1);
+  padding-inline-start: var(--sp-6);
+}
+
+.articulo__lista {
+  list-style: disc;
+}
+
+.articulo__lista li::marker {
+  color: var(--brand-primary);
+}
+
+.articulo__referencias {
+  list-style: decimal;
+}
+
+.articulo__referencias li::marker {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .articulo__tabla-marco {
@@ -160,6 +208,8 @@
 
 .articulo__cita {
   margin: 0;
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px dashed var(--border-default);
   font-size: var(--fs-caption);
   color: var(--text-muted);
 }

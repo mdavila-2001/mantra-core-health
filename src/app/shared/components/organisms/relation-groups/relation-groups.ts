@@ -43,6 +43,7 @@ import type {
     '[class.relation-groups--findings]': "tone() === 'findings'",
     '[class.relation-groups--next]': "tone() === 'next'",
     '[class.relation-groups--context]': "tone() === 'context'",
+    '[class.relation-groups--spread]': 'spread()',
   },
 })
 export class RelationGroups {
@@ -54,6 +55,14 @@ export class RelationGroups {
   readonly columns = input.required<readonly RelationColumnView[]>();
   readonly tone = input<RelationGroupsTone>('context');
   readonly navigation = input<RelationNavigation>('link');
+  /**
+   * Para un bloque que tiene todo el ancho (la ficha del término): la columna
+   * larga ocupa la fila entera y reparte sus vecinos en varias columnas, y las
+   * cortas se juntan en la fila siguiente. Sin esto, una lista de veinte
+   * enfermedades quedaba al lado de una caja con una sola especialidad y medio
+   * bloque vacío. En una zona angosta (el mapa) no hace falta.
+   */
+  readonly spread = input(false);
   /** Ruta de la ficha en modo `link`: se le agrega el `conceptId`. */
   readonly linkPrefix = input<string>('/glossary');
   /** En modo `select`, cómo empieza el nombre accesible del botón. */
@@ -64,4 +73,7 @@ export class RelationGroups {
   readonly columnFooter = input<TemplateRef<RelationColumnFooterContext> | null>(null);
 
   readonly neighborSelected = output<string>();
+
+  /** Desde cuántos vecinos una columna cuenta como larga en modo `spread`. */
+  protected readonly longColumn = 6;
 }

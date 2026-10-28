@@ -150,13 +150,34 @@
         <app-fact-list [hechos]="hechos()" />
         <p class="articulo__cita">
           Fuente:
-          @for (fuente of fuentesDeDatos(); track fuente.url; let ultimo = $last) {
-            @if (enlaceSeguro(fuente.url); as url) {
-              <a [href]="url" target="_blank" rel="noopener noreferrer">{{ fuente.nombre }}</a>
+          @for (fuente of fuentesDeDatos(); track fuente.nombre; let ultima = $last) {
+            @if (fuente.urls.length === 1) {
+              @if (enlaceSeguro(fuente.urls[0]); as url) {
+                <a [href]="url" target="_blank" rel="noopener noreferrer">{{ fuente.nombre }}</a>
+              } @else {
+                {{ fuente.nombre }}
+              }
             } @else {
-              {{ fuente.nombre }}
+              {{ fuente.nombre }} (páginas
+              @for (pagina of fuente.urls; track pagina; let n = $index; let ultimaPagina = $last) {
+                @if (enlaceSeguro(pagina); as url) {
+                  <a
+                    class="articulo__pagina"
+                    [href]="url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    [attr.aria-label]="fuente.nombre + ', página ' + (n + 1)"
+                    >{{ n + 1 }}</a
+                  >
+                } @else {
+                  {{ n + 1 }}
+                }
+                @if (!ultimaPagina) {
+                  ·
+                }
+              })
             }
-            @if (!ultimo) {
+            @if (!ultima) {
               ·
             }
           }
@@ -167,13 +188,13 @@
     @if (referencias().length > 0) {
       <section class="articulo__seccion" aria-labelledby="articulo-referencias">
         <h2 class="articulo__titulo" id="articulo-referencias" tabindex="-1">Referencias</h2>
-        <ul class="articulo__referencias">
+        <ol class="articulo__referencias">
           @for (ref of referencias(); track ref.url) {
             <li>
               <a [href]="ref.url" target="_blank" rel="noopener noreferrer">{{ ref.title }}</a>
             </li>
           }
-        </ul>
+        </ol>
       </section>
     }
   </div>
