@@ -81,8 +81,8 @@ export class NavigationService {
     // **No sale de `visibleSections`**: aparecer en el menú y poder entrar
     // dejaron de ser la misma pregunta cuando el panel del médico tuvo que
     // quedar en ocho renglones (§4.H del plan de UX). Una sección con
-    // `fueraDelMenuPara` sigue en `visibleSections` —el guard la deja pasar,
-    // «Tus accesos» la lista— y no ocupa un renglón acá.
+    // `fueraDelMenuPara` sigue en `visibleSections` —el guard la deja pasar— y no ocupa
+    // un renglón acá.
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
@@ -104,7 +104,10 @@ export class NavigationService {
         // Un grupo aplanado igual se reparte en bloques: `blocks` es la única
         // vista que conserva el orden de dibujo, y el día que alguien lo saque
         // de la lista tiene que volver a plegarse sin recalcular nada.
-        aplanado: seAplanaElGrupo(group, activeTenantType),
+        // Un dominio con un solo destino también va suelto: un desplegable que
+        // al abrirse muestra un único renglón es un clic de más. Es el caso
+        // de «Administración» para el médico desde el 28/10/2026.
+        aplanado: seAplanaElGrupo(group, activeTenantType) || delGrupo.length === 1,
       };
     }).filter((section) => section.items.length > 0);
   });

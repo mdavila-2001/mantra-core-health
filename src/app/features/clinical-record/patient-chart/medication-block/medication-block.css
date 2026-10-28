@@ -53,6 +53,12 @@
   flex: 1 1 20ch;
 }
 
+/* El sello es un rótulo, no una barra: en una celda de rejilla se estira a
+   todo el ancho si no se lo ancla al inicio (mismo arreglo que la consulta). */
+.receta__datos app-status-seal {
+  justify-self: start;
+}
+
 .receta__acciones {
   display: flex;
   flex-wrap: wrap;
@@ -75,10 +81,11 @@
   gap: var(--sp-4);
 }
 
-.receta__fechas-grid {
+.receta__vigencia {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+  gap: var(--sp-4);
+  align-items: start;
 }
 
 

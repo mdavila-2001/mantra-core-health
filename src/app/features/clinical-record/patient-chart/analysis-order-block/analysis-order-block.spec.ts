@@ -15,8 +15,9 @@ import { AnalysisOrderBlock, TARGET_CATEGORIA, TARGET_ESTUDIO } from './analysis
  *    el expediente no tenga que cambiar.
  * 2. **El alta pega contra `clinical`.** Una orden diagnóstica es una orden de
  *    servicio con categoría; sus invariantes no viven en `diagnostics`.
- * 3. **La categoría es obligatoria acá aunque el contrato la deje opcional.**
- *    Es lo que hace que el pedido vuelva a aparecer en el histórico.
+ * 3. **La categoría viaja siempre y sale del estudio.** No se elige aparte: es
+ *    lo que hace que el pedido vuelva a aparecer en el histórico, y un segundo
+ *    selector dejaba pedir un hemograma como imagen.
  * 4. **«Con resultado» quiere decir liberado, no redactado.** Un informe con
  *    versión vigente pero sin liberar es un borrador, y mostrarlo como
  *    resultado sería mostrar un borrador como diagnóstico.
@@ -32,6 +33,21 @@ const CATALOGO = {
   allowCustomValue: false,
   options: [
     { conceptId: 'code-hemograma', code: 'LAB_CBC', display: 'Hemograma', ordinal: 1 },
+    { conceptId: 'code-rx', code: 'IMG_RX_TORAX', display: 'Rx tórax', ordinal: 2 },
+    { conceptId: 'code-ecg', code: 'CAR_ECG', display: 'ECG', ordinal: 3 },
+    { conceptId: 'code-raro', code: 'ESTUDIO_NUEVO', display: 'Nuevo', ordinal: 4 },
+    { conceptId: 'proc-colonoscopia', code: 'PRO_COLONOSCOPIA', display: 'Colonoscopía', ordinal: 5 },
+    { conceptId: 'proc-endoscopia', code: 'PRO_ENDOSCOPIA_ALTA', display: 'Endoscopía', ordinal: 6 },
+  ],
+};
+
+/** Las categorías que publica el catálogo: el tipo de la orden viaja como su concepto. */
+const CATEGORIAS = {
+  ...CATALOGO,
+  code: 'service-request-category',
+  options: [
+    { conceptId: 'cat-lab', code: 'SR_LAB', display: 'Lab', ordinal: 1 },
+    { conceptId: 'cat-img', code: 'SR_IMAGING', display: 'Img', ordinal: 2 },
   ],
 };
 
@@ -141,7 +157,7 @@ describe('AnalysisOrderBlock', () => {
         req.flush({ message: 'sin binding' }, { status: 404, statusText: 'Not Found' });
         continue;
       }
-      req.flush(CATALOGO);
+      req.flush(req.request.params.get('target') === TARGET_CATEGORIA ? CATEGORIAS : CATALOGO);
     }
   }
 
@@ -298,18 +314,88 @@ describe('AnalysisOrderBlock', () => {
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
   });
 
-  /** La categoría es lo que hace que el pedido vuelva a aparecer en el histórico. */
-  it('no deja pedir sin categoría, aunque el contrato la declare opcional', () => {
+  /** El tipo no se elige: sale del estudio, y sin estudio no hay pedido. */
+  it('no ofrece un selector de tipo: lo deduce del estudio', () => {
+    fixture.detectChanges();
+    responderCatalogos();
+    responderCircuito();
+    fixture.detectChanges();
+
+    const etiquetas = [...fixture.nativeElement.querySelectorAll('label')].map((l: Element) =>
+      l.textContent?.trim(),
+    );
+    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Tipo'))).toBe(false);
+    expect(componente['puedePedir']()).toBe(false);
+
+    componente['estudio'].set('code-hemograma');
+    expect(componente['tipo'].label()).toBe('Laboratorio');
+    expect(componente['puedePedir']()).toBe(true);
+
+    componente['estudio'].set('code-rx');
+    expect(componente['tipo'].label()).toBe('Imagenología');
+    componente['estudio'].set('code-raro');
+    expect(componente['tipo'].label()).toContain('Otro estudio');
+  });
+
+  /** Todo viaja como el concepto publicado: en `test` el alta no acepta `category`. */
+  it.each([
+    ['code-hemograma', 'cat-lab'],
+    ['code-rx', 'cat-img'],
+  ])('el estudio %s manda la categoría %s', (estudio, esperado) => {
+    fixture.detectChanges();
+    for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      req.flush(
+        req.request.params.get('target') === TARGET_CATEGORIA
+          ? {
+              ...CATALOGO,
+              options: [
+                { conceptId: 'cat-lab', code: 'SR_LAB', display: 'Lab', ordinal: 1 },
+                { conceptId: 'cat-img', code: 'SR_IMAGING', display: 'Img', ordinal: 2 },
+              ],
+            }
+          : CATALOGO,
+      );
+    }
+    responderCircuito();
+
+    componente['estudio'].set(estudio);
+    componente['pedir']();
+    responderChequeo(false);
+
+    const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+    expect(req.request.body.categoryConceptId).toBe(esperado);
+    expect('category' in req.request.body).toBe(false);
+  });
+
+  it('un estudio sin categoría publicada no se puede pedir', () => {
     fixture.detectChanges();
     responderCatalogos();
     responderCircuito();
 
-    componente['estudio'].set('code-hemograma');
-    componente['categoria'].set(null);
+    componente['estudio'].set('code-raro');
+    expect(componente['tipo'].label()).toContain('Otro estudio');
     expect(componente['puedePedir']()).toBe(false);
+  });
 
-    componente['categoria'].set('cat-lab');
-    expect(componente['puedePedir']()).toBe(true);
+  it('un estudio cardiológico manda el concepto de la categoría publicada', () => {
+    fixture.detectChanges();
+    for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      req.flush(
+        req.request.params.get('target') === TARGET_CATEGORIA
+          ? { ...CATALOGO, options: [{ conceptId: 'cat-cardio', code: 'SR_CARDIO', display: 'Cardio', ordinal: 1 }] }
+          : CATALOGO,
+      );
+    }
+    responderCircuito();
+
+    componente['estudio'].set('code-ecg');
+    expect(componente['tipo'].label()).toBe('Estudio cardiológico');
+    componente['pedir']();
+    responderChequeo(false);
+
+    const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+    expect(req.request.body.categoryConceptId).toBe('cat-cardio');
+    expect('category' in req.request.body).toBe(false);
   });
 
   it('el alta conserva las invariantes de clinical y emite cambio solo tras guardarse', () => {
@@ -320,7 +406,6 @@ describe('AnalysisOrderBlock', () => {
     responderCircuito();
 
     componente['estudio'].set('code-hemograma');
-    componente['categoria'].set('cat-lab');
     componente['pedir']();
 
     // Primero pregunta si es un duplicado; sin uno, el alta sigue directo.
@@ -357,7 +442,6 @@ describe('AnalysisOrderBlock', () => {
     responderCircuito();
 
     componente['estudio'].set('code-hemograma');
-    componente['categoria'].set('cat-lab');
     componente['notaDelFormularioLibre'].set('nota-libre-1');
     componente['pedir']();
     responderChequeo(false);
@@ -389,7 +473,6 @@ describe('AnalysisOrderBlock', () => {
       responderCatalogos();
       responderCircuito();
       componente['estudio'].set('code-hemograma');
-      componente['categoria'].set('cat-lab');
     });
 
     it('con duplicado abre el diálogo y no manda el alta', () => {
@@ -569,7 +652,6 @@ describe('AnalysisOrderBlock', () => {
     expect(componente['errorDelHistorico']()).not.toBeNull();
 
     componente['estudio'].set('code-hemograma');
-    componente['categoria'].set('cat-lab');
     expect(componente['puedePedir']()).toBe(true);
   });
   /**
@@ -634,14 +716,13 @@ describe('AnalysisOrderBlock', () => {
       busqueda.flush({ items: [SEDE_AJENA, SEDE_PROPIA], total: 2, limit: 20, offset: 0 });
     }
 
-    /** Abre el formulario con una categoría y un estudio elegidos. */
+    /** Abre el formulario con un procedimiento o un laboratorio elegido: el tipo sale del estudio. */
     function abrir(categoria: 'cat-lab' | 'cat-proc', codigoProcedimiento = 'SR_PROCEDURE'): void {
       fixture.detectChanges();
       responderCategorias(codigoProcedimiento);
       responderCircuito();
       fixture.detectChanges();
-      componente['estudio'].set(PROCEDIMIENTO);
-      componente['categoria'].set(categoria);
+      componente['estudio'].set(categoria === 'cat-proc' ? PROCEDIMIENTO : 'code-hemograma');
       fixture.detectChanges();
     }
 

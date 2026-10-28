@@ -78,10 +78,9 @@ const leerOpciones = () =>
   selector.locator('option').evaluateAll((os) =>
     os.map((o) => ({ value: o.value, label: o.textContent?.trim() ?? '' })),
   );
-// Las cinco fijas llegan al toque; las plantillas, cuando responde el catálogo.
-// Las entradas fijas (diagnóstico, hojas libres, cirugía, odontología,
-// laboratorio) llegan al toque; las plantillas, cuando responde el catálogo.
-const FIJA = /^(Seleccionar|Diagnóstico —|Hoja en blanco|Formulario libre|Cirugía|Odontología|Laboratorio e imagenología)/;
+// Las entradas fijas (la hoja en blanco, cirugía y odontología) llegan al
+// toque; las plantillas, cuando responde el catálogo.
+const FIJA = /^(Seleccionar|Hoja en blanco|Cirugía|Odontología)/;
 let opciones = await leerOpciones();
 for (let intento = 0; intento < 60 && !opciones.some((o) => !FIJA.test(o.label)); intento++) {
   await pg.waitForTimeout(500);
@@ -155,7 +154,7 @@ try {
 log('formulario completado en la consulta: sí');
 await modal.getByRole('button', { name: 'Cerrar' }).first().click();
 
-/* ---- 3a. odontología y laboratorio, desde «Formulario clínico» ----------- */
+/* ---- 3a. odontología desde «Formulario clínico», la orden desde su casilla */
 /**
  * Elige la primera opción real de un `<select>`. Los selectores de concepto
  * repiten su placeholder como opción elegible (es «ninguno») y mientras cargan
@@ -192,28 +191,50 @@ await formDental.getByRole('button', { name: 'Registrar tratamiento' }).click();
 await modal.getByTestId('odontologia').getByText(tratamiento).first().waitFor({ timeout: 30000 });
 log(`odontología registrada en la consulta: ${tratamiento}`);
 
-await selector.selectOption({ label: 'Laboratorio e imagenología' });
+await modal.getByRole('button', { name: 'Cerrar' }).first().click();
+
+/**
+ * Abre un `app-select` y devuelve el `<dialog>` con su lista. `app-select` ya
+ * no envuelve un `<select>` nativo: se toca el campo y se elige en el diálogo.
+ * Los campos van por prefijo: los obligatorios suman «(obligatorio)» al nombre.
+ */
+async function abrirLista(zona, campo) {
+  await zona.getByRole('combobox', { name: campo }).click();
+  const lista = zona.locator('dialog.select-dialog[open]');
+  await lista.waitFor({ timeout: 30000 });
+  return lista;
+}
+
+/** Las opciones reales de una lista abierta, sin su marcador («Elija…»). */
+async function opcionesReales(lista) {
+  return (await lista.getByRole('option').allInnerTexts())
+    .map((t) => t.trim())
+    .filter((t) => t !== '' && !/^(Elija|Sin especificar|Cargando)/.test(t));
+}
+
+// El selector «Qué va a completar» ya no ofrece «Laboratorio e imagenología»
+// (28/10/2026): la orden se pide en la casilla «Orden de análisis», que cuelga
+// de la respuesta del formulario completado en el paso 3.
+await pg.getByTestId('consulta-casilla-ordenes').click();
 const formEstudio = modal.locator('form.estudios__formulario');
 await formEstudio.waitFor({ timeout: 30000 });
+await modal.getByTestId('respuesta-del-formulario').waitFor({ timeout: 30000 });
 // Uno que la persona no tenga ya: un estudio igual reciente dispara la
 // antiduplicación, y entonces no se crea una orden nueva.
 const previos = (await modal.getByTestId('estudios-lista').innerText().catch(() => '')) ?? '';
-const selectEstudio = formEstudio.locator('select').first();
-await primeraOpcion(selectEstudio);
-const estudio = await selectEstudio.evaluate(
-  (el, ya) =>
-    [...el.options]
-      .filter((o) => o.value !== '' && !o.hidden)
-      .map((o) => o.textContent?.trim() ?? '')
-      .filter((t) => !/^(Elegí|Cargando)/.test(t))
-      .find((t) => !ya.includes(t)) ?? '',
-  previos,
-);
-await selectEstudio.selectOption({ label: estudio });
-const resto = formEstudio.locator('select');
+let lista = await abrirLista(formEstudio, /^Estudio\b/);
+const estudio = (await opcionesReales(lista)).find((t) => !previos.includes(t)) ?? '';
+if (estudio === '') throw new Error('No quedó ningún estudio que la persona no tenga ya.');
+await lista.getByRole('option', { name: estudio, exact: true }).click();
 // El tipo es obligatorio; la prioridad, no.
-await primeraOpcion(resto.nth(1));
+lista = await abrirLista(formEstudio, /^Tipo\b/);
+const [tipo] = await opcionesReales(lista);
+await lista.getByRole('option', { name: tipo, exact: true }).click();
 await formEstudio.getByRole('button', { name: 'Pedir estudio' }).click();
+// Registrar la orden cierra el modal: el histórico se lee al volver a abrir la
+// casilla, que lo pide otra vez.
+await modal.waitFor({ state: 'detached', timeout: 30000 });
+await pg.getByTestId('consulta-casilla-ordenes').click();
 await modal.getByTestId('estudios-lista').getByText(estudio).first().waitFor({ timeout: 30000 });
 log(`estudio pedido en la consulta: ${estudio}`);
 await modal.getByRole('button', { name: 'Cerrar' }).first().click();

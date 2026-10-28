@@ -16,8 +16,9 @@ import { entrar, estable, irA } from './support/sesion';
  * se abren en un modal y no dentro de la fila, que el formulario de carga ya no
  * pide categoría ni sensibilidad, que la selección múltiple de formatos
  * distintos entra entera y **se manda entera** —se cuentan las peticiones—, que
- * «Grupos y foros» abre Comunidades, y que la zona «Directorios» del panel ya no
- * ofrece la tarjeta genérica mientras el menú lateral la conserva.
+ * (hasta el 28/10/2026) «Grupos y foros» abría Comunidades y la zona
+ * «Directorios» del panel no ofrecía la tarjeta genérica; esas dos pruebas se
+ * fueron con el árbol del panel.
  *
  * No demuestra la persistencia contra la base real: esta rama se sirve con el
  * backend simulado (`mock-backend.interceptor`), que es el entorno autorizado
@@ -172,92 +173,12 @@ test.describe('Corrección 10/09/2026', () => {
     await capturar(page, 'archivos', 'E07-lote-adjuntado');
   });
 
-  test('«Grupos y foros» abre Comunidades en un modal, con sus grupos', async ({ page }) => {
-    await entrar(page, doctora());
-    await irA(page, '/dashboard');
-    await estable(page);
+  // Acá había dos pruebas del árbol «Sus herramientas» del panel: «Grupos y
+  // foros» abriendo Comunidades en un modal desde la zona «Pacientes y
+  // equipo», y la zona «Directorios» sin la tarjeta genérica. El propietario
+  // mandó retirar el árbol el 28/10/2026; «Grupos y foros» pasó al menú
+  // lateral (abre `/groups`) y los directorios se abren desde su portada.
 
-    // Zona «Pacientes y equipo», que es donde vive el acceso.
-    await page.locator('[data-zona="gente"]').click();
-    const acceso = page.locator('[data-ruta="/groups"]');
-    await expect(acceso).toBeVisible();
-    // Un botón, no un enlace: no lleva a ninguna dirección.
-    await expect(acceso).toHaveAttribute('aria-haspopup', 'dialog');
-
-    const accesosAntes = await page.getByTestId('panel-acceso').count();
-    await acceso.click();
-
-    await expect(page.getByTestId('content-dialog-title')).toHaveText('Comunidades');
-    // Nada se desplegó dentro de la lista de tarjetas.
-    expect(await page.getByTestId('panel-acceso').count()).toBe(accesosAntes);
-    await capturar(page, 'comunidades', 'E09-comunidades');
-
-    /* La comunidad, con sus anuncios y sus grupos. */
-    await page.getByTestId('comunidad').first().click();
-    await expect(page.getByTestId('content-dialog')).toContainText('Anuncios');
-    const grupo = page.getByTestId('comunidad-grupo').first();
-    await expect(grupo).toBeVisible({ timeout: 30_000 });
-    await capturar(page, 'comunidades', 'E09-comunidad-con-grupos');
-
-    /* La conversación del grupo, dentro del modal. */
-    await grupo.click();
-    await expect(page.getByTestId('comunidades-volver-grupo')).toBeVisible();
-    await capturar(page, 'comunidades', 'E10-grupo-dentro-del-modal');
-
-    // Volver deshace un escalón, no cierra el modal.
-    await page.getByTestId('comunidades-volver-grupo').click();
-    await expect(page.getByTestId('content-dialog')).toBeVisible();
-    await expect(page.getByTestId('comunidad-grupo').first()).toBeVisible();
-  });
-
-  test('la zona Directorios pierde la tarjeta genérica y conserva el menú', async ({ page }) => {
-    await entrar(page, doctora());
-    await irA(page, '/dashboard');
-    await estable(page);
-
-    await page.locator('[data-zona="red"]').click();
-    const zona = page.locator('[data-zona-abierta="red"]');
-    await expect(zona).toBeVisible();
-
-    // La aserción es **localizada**: dentro del contenedor de tarjetas. El
-    // rótulo de la zona y el renglón del menú lateral tienen que seguir
-    // diciendo «Directorios».
-    await expect(zona.locator('[data-ruta="/directories"]')).toHaveCount(0);
-    await expect(zona.locator('[data-ruta="/clinics-directory"]')).toBeVisible();
-    await expect(zona.locator('[data-ruta="/laboratory-directory"]')).toBeVisible();
-    await expect(zona.locator('[data-ruta="/pharmacies-directory"]')).toBeVisible();
-    await expect(zona).toContainText('Directorios');
-    await capturar(page, 'directorios', 'E11-zona-directorios');
-
-    // El menú lateral lo conserva: es la mitad del pedido que NO se toca. Se
-    // comprueba que el renglón **está**, no que se vea: que la barra esté
-    // desplegada o recogida es estado del armazón y no de esta corrección.
-    await expect(page.locator('[data-testid="nav-enlace"][href="/directories"]')).toHaveCount(1);
-
-    /* Cada tarjeta abre **su** directorio en un modal de consulta. */
-    await zona.locator('[data-ruta="/clinics-directory"]').click();
-    await expect(page.getByTestId('content-dialog-title')).toHaveText('Directorio de clínicas');
-    await capturar(page, 'directorios', 'E11-directorio-clinicas-en-modal');
-
-    await page.keyboard.press('Escape');
-    await expect(page.getByTestId('content-dialog')).toBeHidden();
-    // Y salir del modal **no** cierra la zona de atrás: `Escape` es del modal.
-    // Este recorrido encontró exactamente eso, que las pruebas unitarias no
-    // podían ver porque hace falta el `<dialog>` de verdad.
-    await expect(zona).toBeVisible();
-
-    await zona.locator('[data-ruta="/pharmacies-directory"]').click();
-    await expect(page.getByTestId('content-dialog-title')).toHaveText('Directorio de farmacias');
-    await page.keyboard.press('Escape');
-    await expect(page.getByTestId('content-dialog')).toBeHidden();
-
-    await zona.locator('[data-ruta="/laboratory-directory"]').click();
-    await expect(page.getByTestId('content-dialog-title')).toHaveText(
-      'Directorio de laboratorios',
-    );
-  });
-
-  /** E12 · el modal en alto reducido y en teléfono. */
   test('el modal de adjuntos entra en alto reducido y en teléfono', async ({ page }) => {
     await entrar(page, doctora());
     await abrirExpediente(page);

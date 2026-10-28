@@ -381,6 +381,20 @@ export interface PractitionerRegistration {
   readonly licenseFileId?: string;
   /** El PDF del registro del SEDES, mismas reglas. La API exige `sedesLicenseNumber`. */
   readonly sedesLicenseFileId?: string;
+  /** Fecha de inscripción en el SEDES, ISO `YYYY-MM-DD`. La API exige `sedesLicenseNumber`. */
+  readonly sedesLicenseIssueDate?: string;
+  /**
+   * Registro en el colegio de la profesión (Colegio Médico, de Odontólogos…):
+   * la tercera habilitación, al lado de la matrícula y del SEDES. La API la
+   * guarda como otra autorización, con el nombre del colegio como autoridad.
+   */
+  readonly collegeLicenseNumber?: string;
+  /** El colegio que emitió el registro; sale del título profesional. */
+  readonly collegeName?: string;
+  /** Fecha de inscripción en el colegio, ISO `YYYY-MM-DD`. */
+  readonly collegeLicenseIssueDate?: string;
+  /** El PDF del registro del colegio, mismas reglas que {@link licenseFileId}. */
+  readonly collegeLicenseFileId?: string;
   readonly professionalTitle?: string;
   /**
    * Forma anterior de declarar el teléfono, hoy el del trabajo.

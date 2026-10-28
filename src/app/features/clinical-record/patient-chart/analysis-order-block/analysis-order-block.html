@@ -28,7 +28,7 @@
       pantalla: hay que declarar el catálogo del lado del servidor.
     </app-alert>
   } @else {
-    <form class="estudios__formulario" (submit)="$event.preventDefault()">
+    <form class="estudios__formulario app-form-grid" (submit)="$event.preventDefault()">
       <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
            cargada; con una sola respuesta el selector queda deshabilitado. -->
       @if (exigeRespuesta()) {
@@ -41,34 +41,27 @@
           [(notaSeleccionada)]="notaDelFormularioLibre"
         />
       }
+      <!-- El tipo no se elige: sale del estudio. Un segundo selector dejaba
+           pedir un hemograma como imagen. -->
       <app-form-field
+        class="app-form-grid__ancho"
         label="Estudio"
-        hint="Del catálogo de terminología. Qué análisis o qué imagen se pide."
+        [hint]="tipo.label() === null ? 'Busque por nombre: hemograma, radiografía de tórax, ecocardiograma…' : 'Tipo: ' + tipo.label()"
         [required]="true"
       >
         <app-concept-select
           [target]="targetEstudio"
           [(value)]="estudio"
+          [clearable]="false"
           placeholder="Elija un estudio"
         />
       </app-form-field>
 
-      <!-- Obligatoria acá aunque el contrato la deje opcional: es lo que hace
-           que el pedido vuelva a aparecer en el histórico de abajo. -->
       <app-form-field
-        label="Tipo"
-        hint="Laboratorio o imagenología. Es lo que hace que el pedido aparezca en el histórico."
-        [required]="true"
+        class="app-form-grid__ancho"
+        label="Prioridad"
+        hint="Opcional. Según su criterio clínico."
       >
-        <app-concept-select
-          [target]="targetCategoria"
-          [(value)]="categoria"
-          [labels]="etiquetasDeCategoria"
-          placeholder="Elija el tipo"
-        />
-      </app-form-field>
-
-      <app-form-field label="Prioridad" hint="Opcional. Según su criterio clínico.">
         <app-concept-select
           [target]="targetPrioridad"
           [(value)]="prioridad"

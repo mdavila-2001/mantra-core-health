@@ -17,7 +17,7 @@ import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { PdfBrandingService } from '../../core/pdf-branding/pdf-branding.service';
-import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
+import { esPaciente, etiquetasDeRoles, vieneAAtenderse } from '../../core/auth/role-labels';
 import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
@@ -238,6 +238,9 @@ export class ShellLayout {
   private readonly cart = inject(CartStore);
   protected readonly unidadesDelCarrito = this.cart.unitCount;
   protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
+
+  /** «Emergencia» (27/10/2026): sólo para quien viene a atenderse, no la señal del carrito. */
+  protected readonly ofreceEmergencia = computed(() => vieneAAtenderse(this.auth.roles()));
 
   /**
    * Quién ve la capa visual del rediseño (22/10/2026): el paciente y, desde la
