@@ -4,7 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { signal, type WritableSignal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CarePlanBlock } from './care-plan-block';
+import { CarePlanBlock, duracionEnPalabras } from './care-plan-block';
 import { environment } from '../../../../../environments/environment';
 
 /** Una expansión de catálogo con la forma que sirve `system-context`. */
@@ -268,6 +268,68 @@ describe('CarePlanBlock', () => {
       dibujar();
       interno<(clave: number, valor: string) => void>('fijarDetalle')(0, 'Caminar 30 minutos');
       expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+  });
+
+  describe('la hoja de ruta', () => {
+    /**
+     * La vista dibuja lo que va a pasar en el orden en que va a pasar: los
+     * fechados por fecha, los sin fecha al final, y sólo los que dicen algo.
+     */
+    it('ordena los pasos por fecha, deja los sin fecha al final y omite los vacíos', () => {
+      dibujar();
+      const agregar = interno<() => void>('agregarActividad');
+      const detalle = interno<(clave: number, valor: string) => void>('fijarDetalle');
+      const cuando = interno<(clave: number, valor: Date | null) => void>('fijarCuando');
+      agregar();
+      agregar();
+      agregar();
+      detalle(0, 'Sin fecha');
+      detalle(1, 'Más tarde');
+      cuando(1, new Date(2026, 11, 20));
+      detalle(2, 'Antes');
+      cuando(2, new Date(2026, 10, 5));
+      // La clave 3 queda vacía: no es un paso.
+      fixture.detectChanges();
+
+      const hitos = interno<() => readonly { detalle: string; numero: number }[]>('hitos')();
+      expect(hitos.map((h) => h.detalle)).toEqual(['Antes', 'Más tarde', 'Sin fecha']);
+      expect(hitos.map((h) => h.numero)).toEqual([3, 2, 1]);
+
+      const vista = fixture.nativeElement as HTMLElement;
+      expect(vista.querySelectorAll('[data-testid="plan-vista-paso"]').length).toBe(3);
+      expect(vista.querySelector('[data-testid="plan-contador-pasos"]')?.textContent).toContain(
+        '3 de 4',
+      );
+    });
+
+    it('cuenta los datos obligatorios que faltan para abrir el plan', () => {
+      dibujar();
+      const pendientes = interno<() => number>('obligatoriosPendientes');
+      expect(pendientes()).toBe(2);
+
+      señal<string>('meta').set('Bajar la presión.');
+      expect(pendientes()).toBe(1);
+
+      señal<string>('motivo').set('Control de presión');
+      expect(pendientes()).toBe(0);
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="plan-pendientes"]')
+          ?.textContent,
+      ).toContain('Lista para abrir');
+    });
+
+    it('la vigencia se dice en la unidad de la consulta, y no con fechas invertidas', () => {
+      expect(duracionEnPalabras(new Date(2026, 0, 1), new Date(2026, 0, 1))).toBe('el mismo día');
+      expect(duracionEnPalabras(new Date(2026, 0, 1), new Date(2026, 0, 11))).toBe('10 días');
+      expect(duracionEnPalabras(new Date(2026, 0, 1), new Date(2026, 1, 5))).toBe('5 semanas');
+      expect(duracionEnPalabras(new Date(2026, 0, 1), new Date(2026, 6, 1))).toBe('6 meses');
+
+      dibujar();
+      señal<Date | null>('desde').set(new Date(2026, 6, 1));
+      señal<Date | null>('hasta').set(new Date(2026, 0, 1));
+      expect(interno<() => string | null>('duracion')()).toBeNull();
     });
   });
 });
