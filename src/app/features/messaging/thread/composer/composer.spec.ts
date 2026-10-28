@@ -41,14 +41,29 @@ describe('Composer', () => {
     responder: vi.fn(),
   };
 
-  /** Un lienzo que mide 1200×900: ninguna foto de prueba necesita achicarse. */
+  /**
+   * Un lienzo que mide 1200×900: ninguna foto de prueba necesita achicarse.
+   * Codifica a 1000 bytes, el mismo peso de las fotos de prueba: los JPEG se
+   * redibujan siempre (para quitarles el EXIF) y salen de acá.
+   */
   const lienzo: Lienzo = {
     decodificar: async () => ({ ancho: 1200, alto: 900, dibujable: {} as CanvasImageSource, cerrar: () => undefined }),
-    codificar: async () => new Blob(['y'], { type: 'image/jpeg' }),
+    codificar: async (_f, _w, _h, tipo) => {
+      const blob = new Blob(['y'], { type: tipo });
+      Object.defineProperty(blob, 'size', { value: 1000 });
+      return blob;
+    },
   };
 
+  /** Firma + IHDR + IEND: el PNG más chico bien armado, sin metadatos. */
+  const PNG_LIMPIO = new Uint8Array([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0, 0, 0, 0,
+  ]);
+
   const foto = (nombre: string, tipo = 'image/jpeg', bytes = 1000): File => {
-    const f = new File(['x'], nombre, { type: tipo });
+    const f = new File([tipo === 'image/png' ? PNG_LIMPIO : 'x'], nombre, { type: tipo });
     Object.defineProperty(f, 'size', { value: bytes });
     return f;
   };
@@ -319,6 +334,106 @@ describe('Composer', () => {
       fixture.detectChanges();
       expect(store.enviar).toHaveBeenCalledWith('¿Lo tienen en stock?');
       expect(consultar('composer-sugerencias')).toBeNull();
+    });
+  });
+
+  /**
+   * El menú de adjuntar sigue el patrón ARIA de menú. Abierto se muda al
+   * <body> (es el `app-menu` del sistema), así que se busca en el documento.
+   */
+  describe('menú de adjuntar con teclado', () => {
+    const items = (): HTMLElement[] =>
+      Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const tecla = (destino: Element, key: string): void => {
+      destino.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+    };
+    const abrir = async (): Promise<HTMLElement> => {
+      const mas = consultar('composer-adjuntar')!;
+      mas.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      return mas;
+    };
+
+    afterEach(() => {
+      // Si una prueba falla con el menú abierto, que no quede colgado del body.
+      fixture.destroy();
+    });
+
+    it('el «+» anuncia que abre un menú y, al abrirlo, el foco entra al primer ítem', async () => {
+      const mas = consultar('composer-adjuntar')!;
+      expect(mas.getAttribute('aria-haspopup')).toBe('menu');
+      expect(mas.getAttribute('aria-expanded')).toBe('false');
+      await abrir();
+      expect(mas.getAttribute('aria-expanded')).toBe('true');
+      expect(items().map((i) => i.textContent?.trim())).toEqual([
+        'Fotos de la galería',
+        'Tomar foto',
+        'Documento PDF',
+        'Plantilla',
+      ]);
+      expect(document.activeElement).toBe(items()[0]);
+      // Íconos de línea, no emojis.
+      expect(items().every((i) => i.querySelector('svg') !== null)).toBe(true);
+      expect(items().map((i) => i.textContent).join('')).not.toMatch(/\p{Extended_Pictographic}/u);
+    });
+
+    it('↓/↑ recorren con vuelta, Inicio y Fin van a los extremos', async () => {
+      await abrir();
+      const menu = document.querySelector('[role="menu"]')!;
+      tecla(menu, 'ArrowDown');
+      expect(document.activeElement).toBe(items()[1]);
+      tecla(menu, 'End');
+      expect(document.activeElement).toBe(items()[3]);
+      tecla(menu, 'ArrowDown');
+      expect(document.activeElement).toBe(items()[0]);
+      tecla(menu, 'ArrowUp');
+      expect(document.activeElement).toBe(items()[3]);
+      tecla(menu, 'Home');
+      expect(document.activeElement).toBe(items()[0]);
+    });
+
+    it('Escape lo cierra y devuelve el foco al «+»', async () => {
+      const mas = await abrir();
+      tecla(document.querySelector('[role="menu"]')!, 'Escape');
+      expect(items()).toHaveLength(0);
+      expect(mas.getAttribute('aria-expanded')).toBe('false');
+      expect(document.activeElement).toBe(mas);
+    });
+
+    it('Tab lo cierra', async () => {
+      const mas = await abrir();
+      tecla(document.querySelector('[role="menu"]')!, 'Tab');
+      expect(items()).toHaveLength(0);
+      expect(document.activeElement).toBe(mas);
+    });
+
+    it('Enter sobre «Documento PDF» abre el selector de PDF y cierra el menú', async () => {
+      const entrada = consultar('composer-input-archivos') as HTMLInputElement;
+      const click = vi.spyOn(entrada, 'click').mockImplementation(() => undefined);
+      await abrir();
+      tecla(items()[2], 'Enter');
+      expect(click).toHaveBeenCalledOnce();
+      expect(entrada.accept).toBe('application/pdf');
+      expect(items()).toHaveLength(0);
+    });
+
+    it('«Plantilla» abre el panel de plantillas', async () => {
+      await abrir();
+      items()[3].click();
+      fixture.detectChanges();
+      expect(consultar('hilo-plantilla-nueva')).not.toBeNull();
+    });
+
+    it('abrir los emojis con el menú abierto deja un solo panel a la vista', async () => {
+      await abrir();
+      const emojis = consultar('composer-emojis')!;
+      emojis.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+      emojis.click();
+      fixture.detectChanges();
+      expect(items()).toHaveLength(0);
+      expect(emojis.getAttribute('aria-expanded')).toBe('true');
     });
   });
 });

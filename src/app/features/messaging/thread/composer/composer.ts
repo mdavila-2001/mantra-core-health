@@ -1,6 +1,10 @@
 import { FilePreview } from '../../../../shared/components/molecules/file-preview/file-preview';
 import { FileDropTarget } from '../../../../shared/forms/file-drop-target';
+import { Menu } from '../../../../shared/components/molecules/menu/menu';
+import { MenuItem } from '../../../../shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '../../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import {
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -114,6 +118,9 @@ export interface ArchivoEnCola {
     FileDropTarget,
     FormsModule,
     Grabador,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     SelectorEmojis,
     StickerPicker,
   ],
@@ -145,11 +152,21 @@ export class Composer {
   private readonly campo = viewChild<ElementRef<HTMLTextAreaElement>>('campo');
   private readonly archivo = viewChild<ElementRef<HTMLInputElement>>('archivo');
   private readonly camara = viewChild<ElementRef<HTMLInputElement>>('camara');
+  private readonly menuAdjuntar = viewChild<Menu>('menuAdjuntar');
+  private readonly filaChips = viewChild<ElementRef<HTMLElement>>('filaChips');
 
   protected readonly texto = signal('');
-  protected readonly panel = signal<'ninguno' | 'emojis' | 'adjuntar' | 'plantillas'>(
-    'ninguno',
-  );
+  /**
+   * Los paneles que se abren sobre el composer. El de adjuntar no está: es un
+   * `app-menu`, que lleva su propio estado de abierto.
+   */
+  protected readonly panel = signal<'ninguno' | 'emojis' | 'plantillas'>('ninguno');
+
+  /**
+   * Si la fila de respuestas rápidas tiene más chips de un lado o del otro:
+   * prende el degradado de ese borde.
+   */
+  protected readonly chipsDesbordan = signal({ inicio: false, final: false });
 
   /**
    * Qué pestaña del panel de figuritas está abierta.
@@ -237,7 +254,7 @@ export class Composer {
     // cambiar de chat y volver no puede tirar media frase.
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(() => {
       this.texto.set(this.store.borrador());
-      this.panel.set('ninguno');
+      this.cerrarPanel();
       this.sugerenciasRetiradas.set(false);
       this.limpiarAdjunto();
     });
@@ -253,7 +270,7 @@ export class Composer {
             this.borradorEnEspera.set(this.texto());
           }
           this.texto.set(mensaje.bodyText ?? '');
-          this.panel.set('ninguno');
+          this.cerrarPanel();
           this.limpiarAdjunto();
           this.enfocar();
           return;
@@ -274,7 +291,46 @@ export class Composer {
       }
     });
 
-    inject(DestroyRef).onDestroy(() => this.limpiarAdjunto());
+    // Se mide después de pintar: con chips nuevos, o al cambiar el ancho. Un
+    // `ResizeObserver` y no `resize` de la ventana: el panel lateral del chat
+    // también cambia el ancho de la fila.
+    let observador: ResizeObserver | null = null;
+    afterRenderEffect(() => {
+      const fila = this.filaChips()?.nativeElement;
+      this.chips();
+      observador?.disconnect();
+      observador = null;
+      if (!fila) {
+        return;
+      }
+      this.medirChips();
+      if (typeof ResizeObserver !== 'undefined') {
+        observador = new ResizeObserver(() => this.medirChips());
+        observador.observe(fila);
+      }
+    });
+
+    inject(DestroyRef).onDestroy(() => {
+      observador?.disconnect();
+      this.limpiarAdjunto();
+    });
+  }
+
+  /** Cuánto queda de la fila de chips fuera de la vista, de cada lado. */
+  protected medirChips(): void {
+    const fila = this.filaChips()?.nativeElement;
+    if (!fila) {
+      return;
+    }
+    // `scrollLeft` es negativo en RTL; con `Math.abs` sirve en los dos sentidos.
+    const recorrido = Math.abs(fila.scrollLeft);
+    const sobra = fila.scrollWidth - fila.clientWidth;
+    const inicio = recorrido > 1;
+    const final = sobra - recorrido > 1;
+    const actual = this.chipsDesbordan();
+    if (actual.inicio !== inicio || actual.final !== final) {
+      this.chipsDesbordan.set({ inicio, final });
+    }
   }
 
   protected alEscribir(valor: string): void {
@@ -369,12 +425,14 @@ export class Composer {
     this.enfocar();
   }
 
-  protected alternar(cual: 'emojis' | 'adjuntar' | 'plantillas'): void {
+  protected alternar(cual: 'emojis' | 'plantillas'): void {
     this.panel.set(this.panel() === cual ? 'ninguno' : cual);
   }
 
+  /** Cierra el panel abierto y, si estaba abierto, el menú de adjuntar. */
   protected cerrarPanel(): void {
     this.panel.set('ninguno');
+    this.menuAdjuntar()?.close();
   }
 
   /* --- Stickers ------------------------------------------------------------ */

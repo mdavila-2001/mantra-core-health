@@ -714,7 +714,7 @@ describe('Thread', () => {
 
     it('la fija arriba del hilo como «Consulta sobre», con la última si hay dos', () => {
       abrir([
-        mensaje('m-2', 'pp-1', 'Producto: Paracetamol 500 mg\n/catalogo/p/paracetamol-500'),
+        mensaje('m-2', 'pp-1', 'Producto: Paracetamol 500 mg\n/pharmacies-directory/farmacia-vida'),
         mensaje('m-1', 'pp-1', TARJETA),
       ]);
 
@@ -722,7 +722,7 @@ describe('Thread', () => {
       expect(fijado?.getAttribute('data-tipo')).toBe('producto');
       expect(fijado?.textContent).toContain('Consulta sobre: Producto');
       expect(fijado?.textContent).toContain('Paracetamol 500 mg');
-      expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe('/catalogo/p/paracetamol-500');
+      expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-vida');
     });
 
     it('un texto parecido con ruta externa queda como texto, sin tarjeta ni fijado', () => {
@@ -740,7 +740,7 @@ describe('Thread', () => {
     });
 
     it('cada tipo trae su pregunta', () => {
-      abrir([mensaje('m-1', 'pp-1', 'Servicio: Toma de presión\n/s/toma-de-presion')]);
+      abrir([mensaje('m-1', 'pp-1', 'Servicio: Toma de presión\n/clinics-directory/clinica-sur')]);
       expect(sugerenciasDelComposer()).toContain('¿Qué días atienden?');
     });
 

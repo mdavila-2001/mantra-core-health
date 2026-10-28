@@ -132,6 +132,19 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     expect(vuelta.get('detalle')).toMatch(/^\d+ productos?/u);
   });
 
+  it('«Chatear con la farmacia» es secundario y va junto a la farmacia, no sobre la decisión', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ pharmacyPublicSlug: 'farmacia-vida', pharmacyPublicProfileId: 'pp-f' }),
+    );
+    const boton = byTestId('pedido-chatear') as HTMLElement;
+    // Al lado del nombre de la farmacia, dentro de la sección del estado —
+    // no en las acciones de la página, por encima del título del pedido.
+    expect(boton.closest('section.pedido__estado')).not.toBeNull();
+    expect(boton.closest('app-page-header')).toBeNull();
+    expect(boton.classList).toContain('btn--secondary');
+    expect(boton.classList).not.toContain('btn--primary');
+  });
+
   it('preserves newest-first substitutions and accepts them through the API', async () => {
     const pending = pharmacyOrderDtoFixture({
       status: { code: 'PINV_ORDER_ACEPTACION_PENDIENTE', display: 'Pendiente' },

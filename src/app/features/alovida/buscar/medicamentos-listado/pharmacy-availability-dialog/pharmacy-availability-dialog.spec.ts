@@ -2,8 +2,9 @@
  * El modal de farmacias, sin Leaflet real: jsdom no da layout y el chunk
  * dinámico es justamente lo que no queremos en la suite.
  */
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { Router } from '@angular/router';
 
 import type { OfertaDeFarmacia } from '@core/data-access/public-marketplace/public-marketplace.types';
 import { CARGADOR_DE_LEAFLET, type CargadorDeLeaflet } from '@shared/components/organisms/map/map';
@@ -103,6 +104,7 @@ describe('withCodes', () => {
 
 @Component({
   imports: [PharmacyAvailabilityDialog],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button type="button" data-testid="abrir" (click)="abierto.set(true)">Ver farmacias</button>
     @if (abierto()) {
@@ -217,6 +219,27 @@ describe('PharmacyAvailabilityDialog', () => {
       'pharmacy-offer-A',
       'pharmacy-offer-B',
     ]);
+  });
+
+  it('«Consultar por chat» manda UNA tarjeta, la del producto, a esa farmacia', async () => {
+    await abrir();
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const boton = filas()[0].querySelector('[data-testid="consultar-oferta-por-chat"]');
+    if (!(boton instanceof HTMLElement)) {
+      throw new Error('falta «Consultar por chat»');
+    }
+    boton.click();
+
+    // Sin sesión en la prueba: pasa por el login y vuelve al chat.
+    expect(navegar).toHaveBeenCalledOnce();
+    const [, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
+    expect(vuelta.get('escribirA')).toBe('farmacia-central');
+    expect(vuelta.getAll('sobre')).toEqual(['producto']);
+    expect(vuelta.getAll('titulo')).toHaveLength(1);
+    expect(vuelta.get('detalle')).toContain('Farmacia Central');
   });
 
   it('cerrar avisa a la pantalla, que es la que desmonta el modal', async () => {

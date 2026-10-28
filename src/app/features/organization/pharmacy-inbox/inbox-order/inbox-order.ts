@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { map, type Observable } from 'rxjs';
+import { defer, finalize, map, type Observable } from 'rxjs';
 
 import { ChatStore } from '../../../../core/messaging/chat.store';
 import { contextoDePedido } from '../../../../core/messaging/contexto-de-pedido';
@@ -84,6 +84,9 @@ export function motivoDeChatNoAbierto(error: unknown): string {
   }
   return 'No pudimos abrir el chat con el paciente. Probá de nuevo en un momento.';
 }
+
+/** Cuando el store ya está abriendo otro chat y no toma este pedido. */
+export const CHAT_OCUPADO = 'Ya se está abriendo otro chat. Probá de nuevo en un momento.';
 
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
 interface AjusteEnEdicion {
@@ -413,13 +416,34 @@ export class InboxOrder {
     }
     this.abriendoChat.set(true);
     this.errorDeChat.set(null);
+    // Resguardo del spinner: el botón gira mientras el store tenga la apertura
+    // en curso, y el store avisa el final con `alAbrir` o `alFallar`. Si no
+    // avisa —hoy, cuando ya está abriendo otro chat, vuelve sin suscribirse;
+    // o si la respuesta termina sin traer el hilo—, el botón no puede quedar
+    // girando para siempre. Se sabe por el lado del componente: `defer`
+    // registra si el store llegó a pedir el hilo, y `finalize` si la petición
+    // terminó sin traer nada.
+    let pedido = false;
+    let llegoElHilo = false;
+    const resolver = defer(() => {
+      pedido = true;
+      return this.ordersClient.abrirConversacion(abierto.id);
+    }).pipe(
+      map((respuesta) => {
+        llegoElHilo = true;
+        return { conversationId: respuesta.conversationId, profileId: respuesta.pharmacyProfileId };
+      }),
+      // Con el hilo en mano el store sigue (pone la tarjeta, navega) y avisa
+      // con `alAbrir`; con error ya avisó `alFallar`, que corre antes que
+      // esto. Lo que queda es terminar sin hilo y sin error.
+      finalize(() => {
+        if (!llegoElHilo) {
+          this.abriendoChat.set(false);
+        }
+      }),
+    );
     this.chat.abrirComoOrganizacion(
-      this.ordersClient.abrirConversacion(abierto.id).pipe(
-        map((respuesta) => ({
-          conversationId: respuesta.conversationId,
-          profileId: respuesta.pharmacyProfileId,
-        })),
-      ),
+      resolver,
       abierto.farmacia,
       (conversationId) => {
         this.abriendoChat.set(false);
@@ -431,6 +455,12 @@ export class InboxOrder {
         this.errorDeChat.set(motivoDeChatNoAbierto(error));
       },
     );
+    // El store se suscribe en el acto o no se suscribe: si no pidió el hilo y
+    // tampoco avisó un fallo, es que ya estaba abriendo otro chat.
+    if (!pedido && this.abriendoChat()) {
+      this.abriendoChat.set(false);
+      this.errorDeChat.set(CHAT_OCUPADO);
+    }
   }
 
   protected cambiarDecision(indice: number, decision: unknown): void {

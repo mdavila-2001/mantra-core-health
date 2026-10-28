@@ -7,6 +7,25 @@
   gap: var(--sp-6);
 }
 
+/* El título y «Chatear con la farmacia» en un renglón cuando entran; en
+   móvil el botón baja debajo del nombre, sin estirarse. */
+.pedido__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.pedido__cabecera .pedido__titulo {
+  flex: 1 1 20ch;
+  min-inline-size: 0;
+}
+
+.pedido__chat {
+  flex: 0 0 auto;
+}
+
 .pedido__titulo {
   margin: 0;
   font-size: var(--fs-h2);

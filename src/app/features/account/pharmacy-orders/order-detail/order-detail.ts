@@ -261,6 +261,8 @@ export class OrderDetail {
   private pedidoEnVuelo: Subscription | null = null;
   private avisosEnVuelo: Subscription | null = null;
 
+  private readonly irAlChat = usarIrAlChat();
+
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.orderId = params.get('orderId');
@@ -283,19 +285,6 @@ export class OrderDetail {
   }
 
   /**
-   * Carga el pedido abierto y sus avisos.
-   *
-   * Las dos lecturas siguen la misma disciplina, y por el mismo motivo: el
-   * router **reutiliza** esta instancia al pasar de un pedido a otro, así que
-   * una respuesta del pedido anterior puede llegar después de la del nuevo.
-   * Cada carga cancela la anterior —lo que aborta su petición— y descarta
-   * cualquier respuesta cuyo pedido ya no sea el abierto. Sin esto, el detalle
-   * podría mostrar el pedido A bajo la URL de B mientras los avisos ya son de
-   * B: dos mitades de dos pedidos distintos en la misma pantalla.
-   */
-  private readonly irAlChat = usarIrAlChat();
-
-  /**
    * «Chatear con la farmacia»: abre el chat **del pedido** —lo abre la API con
    * `POST /pharmacy/orders/:id/conversation`, que sabe quién es la farmacia y
    * si quien pide puede abrirlo—, con la
@@ -312,6 +301,17 @@ export class OrderDetail {
     this.irAlChat({ pedido: pedido.id }, contextoDePedido(pedido));
   }
 
+  /**
+   * Carga el pedido abierto y sus avisos.
+   *
+   * Las dos lecturas siguen la misma disciplina, y por el mismo motivo: el
+   * router **reutiliza** esta instancia al pasar de un pedido a otro, así que
+   * una respuesta del pedido anterior puede llegar después de la del nuevo.
+   * Cada carga cancela la anterior —lo que aborta su petición— y descarta
+   * cualquier respuesta cuyo pedido ya no sea el abierto. Sin esto, el detalle
+   * podría mostrar el pedido A bajo la URL de B mientras los avisos ya son de
+   * B: dos mitades de dos pedidos distintos en la misma pantalla.
+   */
   protected cargar(): void {
     const orderId = this.orderId;
     if (orderId === null || orderId === '') {

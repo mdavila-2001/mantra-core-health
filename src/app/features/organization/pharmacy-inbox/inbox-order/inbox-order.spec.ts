@@ -16,7 +16,7 @@ import {
 } from '../../../../core/mock/fixtures/pedidos-de-farmacia';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { InboxOrder } from './inbox-order';
+import { CHAT_OCUPADO, InboxOrder, motivoDeChatNoAbierto } from './inbox-order';
 import { ChatStore } from '../../../../core/messaging/chat.store';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
@@ -746,6 +746,71 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         'La farmacia no tiene vitrina pública activa',
       );
       expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+
+    /** El botón del chat, para mirar si sigue girando. */
+    const botonDelChat = (): HTMLElement =>
+      element('[data-testid="mostrador-chatear"]') as HTMLElement;
+
+    it('store ocupado que vuelve sin avisar: el botón no queda girando y lo dice', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      // Otro chat a medio abrir: el store de hoy vuelve sin suscribirse ni
+      // llamar a nadie.
+      TestBed.inject(ChatStore).abriendo.set(true);
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      http.expectNone({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(CHAT_OCUPADO);
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+
+    it('store ocupado que sí llama a alFallar: queda su motivo, no el resguardo', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation(
+        (_resolver, _nombre, _alAbrir, _contexto, alFallar) => alFallar?.(new Error('ocupado')),
+      );
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        motivoDeChatNoAbierto(new Error('ocupado')),
+      );
+    });
+
+    it('la respuesta termina sin traer el hilo: el botón deja de girar', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      // Un store que se suscribe pero corta antes de la respuesta, sin avisar.
+      vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation((resolver) => {
+        resolver.subscribe().unsubscribe();
+      });
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('mientras el hilo se abre de verdad, el botón sí gira', async () => {
+      await abrirElChat();
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).toBe('true');
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'PATIENT_CHAT_PROFILE_MISSING', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
     });
   });
 });

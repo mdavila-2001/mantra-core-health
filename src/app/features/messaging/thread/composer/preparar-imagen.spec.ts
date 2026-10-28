@@ -2,20 +2,39 @@ import { UPLOAD_MAX_BYTES } from '../../../../core/data-access/files/upload-poli
 import {
   ImagenRechazada,
   LADO_MAXIMO,
+  LIENZO_DEL_NAVEGADOR,
   prepararImagen,
+  quitarMetadatosPng,
   renombrarComoJpeg,
   type Lienzo,
 } from './preparar-imagen';
 
+/** Un bloque PNG: largo + tipo + datos + CRC (en cero: nadie lo verifica acá). */
+const bloque = (tipo: string, datos: number[] = []): number[] => [
+  0, 0, 0, datos.length,
+  ...Array.from(tipo, (letra) => letra.charCodeAt(0)),
+  ...datos,
+  0, 0, 0, 0,
+];
+const FIRMA = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const IHDR = bloque('IHDR', [0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0]);
+const IDAT = bloque('IDAT', [1, 2, 3]);
+const IEND = bloque('IEND');
+/** «GPS» en un tEXt, como lo deja un editor que exporta el XMP. */
+const TEXTO_GPS = bloque('tEXt', Array.from('GPS\0-34.6,-58.4', (c) => c.charCodeAt(0)));
+const png = (...bloques: number[][]): Uint8Array => new Uint8Array([...FIRMA, ...bloques.flat()]);
+
 /**
- * Lo que estas pruebas fijan: una foto que ya está bien **no se toca**; una
- * enorme en píxeles o en peso, o en un formato que el servidor no reconoce, se
- * redibuja como JPEG con el lado mayor en 2048; el GIF no se redibuja nunca; y
- * sin navegador (SSR) no se inventa una reducción que no se puede hacer.
+ * Lo que estas pruebas fijan: un JPEG **se redibuja siempre**, para que el
+ * EXIF —el GPS— no salga del teléfono; a un PNG chico se le sacan los
+ * metadatos sin recomprimirlo; un WEBP chico no se toca; una imagen enorme en
+ * píxeles o en peso, o en un formato que el servidor no reconoce, se redibuja
+ * como JPEG con el lado mayor en 2048; el GIF no se redibuja nunca; y sin
+ * navegador (SSR) no se inventa una reducción que no se puede hacer.
  */
 describe('prepararImagen', () => {
-  const archivo = (nombre: string, tipo: string, bytes: number): File => {
-    const f = new File(['x'], nombre, { type: tipo });
+  const archivo = (nombre: string, tipo: string, bytes: number, contenido: BlobPart = 'x'): File => {
+    const f = new File([contenido], nombre, { type: tipo });
     Object.defineProperty(f, 'size', { value: bytes });
     return f;
   };
@@ -47,13 +66,97 @@ describe('prepararImagen', () => {
     return registro;
   };
 
-  it('deja pasar sin tocar una foto aceptada, liviana y de tamaño razonable', async () => {
-    const original = archivo('receta.jpg', 'image/jpeg', 800_000);
+  it('deja pasar sin tocar un WEBP aceptado, liviano y de tamaño razonable', async () => {
+    const original = archivo('sticker.webp', 'image/webp', 800_000);
     const l = lienzo(1600, 1200);
     const lista = await prepararImagen(original, true, l);
     expect(lista).toBe(original);
     expect(l.codificados).toEqual([]);
     expect(l.cerrado).toBe(true);
+  });
+
+  describe('EXIF: los metadatos no salen del teléfono', () => {
+    it('redibuja siempre un JPEG, aunque sea chico, al mismo tamaño y con el mismo nombre', async () => {
+      const original = archivo('receta.jpg', 'image/jpeg', 800_000);
+      const l = lienzo(1600, 1200);
+      const lista = await prepararImagen(original, true, l);
+      expect(lista).not.toBe(original);
+      expect(lista.type).toBe('image/jpeg');
+      expect(lista.name).toBe('receta.jpg');
+      // Sin achicar: sólo se redibuja para que el canvas no copie el EXIF.
+      expect(l.codificados).toEqual([{ ancho: 1600, alto: 1200, tipo: 'image/jpeg' }]);
+      expect(l.cerrado).toBe(true);
+    });
+
+    it('el lienzo real decodifica aplicando la orientación EXIF', async () => {
+      const mapa = { width: 3, height: 4, close: vi.fn() };
+      const crear = vi.fn().mockResolvedValue(mapa);
+      vi.stubGlobal('createImageBitmap', crear);
+      try {
+        const original = archivo('de-costado.jpg', 'image/jpeg', 10);
+        const imagen = await LIENZO_DEL_NAVEGADOR.decodificar(original);
+        expect(crear).toHaveBeenCalledWith(original, { imageOrientation: 'from-image' });
+        expect(imagen.ancho).toBe(3);
+        expect(imagen.alto).toBe(4);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('a un PNG chico le saca los bloques de texto sin recomprimirlo', async () => {
+      const original = archivo('captura.png', 'image/png', 50_000, png(IHDR, TEXTO_GPS, IDAT, IEND) as BlobPart);
+      const l = lienzo(800, 600);
+      const lista = await prepararImagen(original, true, l);
+      expect(lista).not.toBe(original);
+      expect(lista.type).toBe('image/png');
+      expect(lista.name).toBe('captura.png');
+      expect(new Uint8Array(await lista.arrayBuffer())).toEqual(png(IHDR, IDAT, IEND));
+      expect(l.codificados).toEqual([]);
+    });
+
+    it('un PNG chico sin metadatos pasa sin tocar (conserva la transparencia)', async () => {
+      const original = archivo('logo.png', 'image/png', 50_000, png(IHDR, IDAT, IEND) as BlobPart);
+      const l = lienzo(800, 600);
+      expect(await prepararImagen(original, true, l)).toBe(original);
+      expect(l.codificados).toEqual([]);
+    });
+
+    it('un PNG con eXIf se redibuja como PNG: sin GPS, con su orientación y su transparencia', async () => {
+      const original = archivo('camara.png', 'image/png', 50_000, png(IHDR, bloque('eXIf', [0x4d, 0x4d]), IDAT, IEND) as BlobPart);
+      const l = lienzo(800, 600);
+      const lista = await prepararImagen(original, true, l);
+      expect(lista.type).toBe('image/png');
+      expect(lista.name).toBe('camara.png');
+      expect(l.codificados).toEqual([{ ancho: 800, alto: 600, tipo: 'image/png' }]);
+    });
+
+    it('un «PNG» que por dentro no lo es se redibuja: no se deja pasar a ciegas', async () => {
+      // Un JPEG con la extensión cambiada: el navegador lo abre igual, y su
+      // EXIF viajaría entero.
+      const l = lienzo(800, 600);
+      const lista = await prepararImagen(archivo('falso.png', 'image/png', 50_000, 'no soy un png'), true, l);
+      expect(l.codificados).toEqual([{ ancho: 800, alto: 600, tipo: 'image/png' }]);
+      expect(lista.type).toBe('image/png');
+    });
+  });
+
+  describe('quitarMetadatosPng', () => {
+    it('saca eXIf, tEXt, zTXt, iTXt y tIME y deja los bloques que cambian cómo se ve', () => {
+      const color = bloque('iCCP', [1]);
+      const densidad = bloque('pHYs', [2]);
+      const resultado = quitarMetadatosPng(
+        png(IHDR, color, bloque('eXIf'), TEXTO_GPS, bloque('zTXt'), bloque('iTXt'), bloque('tIME'), densidad, IDAT, IEND),
+      );
+      expect(resultado?.quitados).toEqual(['eXIf', 'tEXt', 'zTXt', 'iTXt', 'tIME']);
+      expect(resultado?.limpio).toEqual(png(IHDR, color, densidad, IDAT, IEND));
+    });
+
+    it('devuelve null si no es un PNG o está cortado', () => {
+      expect(quitarMetadatosPng(new Uint8Array([0xff, 0xd8, 0xff, 0xe1]))).toBeNull();
+      expect(quitarMetadatosPng(png(IHDR, IDAT))).toBeNull();
+      const cortado = png(IHDR, IDAT, IEND).subarray(0, 30);
+      expect(quitarMetadatosPng(cortado)).toBeNull();
+    });
   });
 
   it('achica a 2048 de lado mayor una foto de cámara enorme en píxeles', async () => {

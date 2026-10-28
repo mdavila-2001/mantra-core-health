@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router, type ParamMap } from '@angular/router';
 import { of } from 'rxjs';
 
 import { CARGADOR_DE_LEAFLET } from '@shared/components/organisms/map/map';
@@ -597,6 +597,46 @@ describe('PharmacyDetail', () => {
     );
     expect(controles.length).toBe(0);
     expect(fixture.nativeElement.textContent as string).not.toContain('Editar precio');
+  });
+
+  /** La vuelta al chat que guardó el paso por el login (la prueba no tiene sesión). */
+  function vueltaAlChat(navegar: ReturnType<typeof vi.spyOn>): ParamMap {
+    expect(navegar).toHaveBeenCalledOnce();
+    const [, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    const router = TestBed.inject(Router);
+    return router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
+  }
+
+  it('«Consultar por chat» sobre un medicamento manda UNA tarjeta: la del producto', () => {
+    montar();
+    responder();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const boton = fixture.nativeElement.querySelector(
+      '[data-testid="consultar-producto-por-chat"]',
+    ) as HTMLElement;
+    boton.click();
+
+    const vuelta = vueltaAlChat(navegar);
+    expect(vuelta.get('escribirA')).toBe(SLUG);
+    // Un solo contexto en la URL, y es el del producto: la farmacia va en el
+    // renglón de detalle, no como una segunda tarjeta.
+    expect(vuelta.getAll('sobre')).toEqual(['producto']);
+    expect(vuelta.getAll('titulo')).toHaveLength(1);
+    expect(vuelta.get('titulo')).not.toBe('Farmacia Vida');
+    expect(vuelta.get('detalle')).toContain('Farmacia Vida');
+  });
+
+  it('«Chatear con la farmacia» manda UNA tarjeta: la de la farmacia', () => {
+    montar();
+    responder();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    (fixture.nativeElement.querySelector('[data-testid="chatear-con-la-farmacia"]') as HTMLElement).click();
+
+    const vuelta = vueltaAlChat(navegar);
+    expect(vuelta.getAll('sobre')).toEqual(['farmacia']);
+    expect(vuelta.get('titulo')).toBe('Farmacia Vida');
   });
 
   it('conserva la ficha cuando el catálogo falla', () => {

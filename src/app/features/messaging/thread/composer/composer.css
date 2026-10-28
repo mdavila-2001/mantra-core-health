@@ -193,13 +193,35 @@
   scrollbar-width: none;
 }
 
+/* La fila no muestra barra de desplazamiento: cuando hay chips fuera de la
+   vista, el borde de ese lado se desvanece y avisa que se puede deslizar.
+   Máscara y no un velo de color: funciona sobre cualquier fondo y tema. Las
+   clases las pone `medirChips()`, sólo si de verdad hay más de ese lado. */
+.composer__chips.is-sigue-al-final {
+  mask-image: linear-gradient(to right, black calc(100% - var(--e8)), transparent);
+}
+
+.composer__chips.is-sigue-al-inicio {
+  mask-image: linear-gradient(to right, transparent, black var(--e8));
+}
+
+.composer__chips.is-sigue-al-inicio.is-sigue-al-final {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black var(--e8),
+    black calc(100% - var(--e8)),
+    transparent
+  );
+}
+
 .composer__chips::-webkit-scrollbar {
   display: none;
 }
 
 .composer__chip {
   flex: none;
-  min-block-size: 36px;
+  min-block-size: 44px;
   padding: var(--e2) var(--e4);
   border: 1px solid var(--brand-primary);
   border-radius: var(--r-pill);
@@ -211,15 +233,8 @@
   white-space: nowrap;
   cursor: pointer;
   transition: background var(--mov-rapido) var(--curva), color var(--mov-rapido) var(--curva);
-  /* El chip mide 36 px de alto; el área tocable llega a 44 con el margen
-     invisible del pseudo. */
-  position: relative;
-}
-
-.composer__chip::after {
-  content: "";
-  position: absolute;
-  inset: -4px 0;
+  /* Al tabular, el chip enfocado no queda debajo del borde desvanecido. */
+  scroll-margin-inline: var(--e8);
 }
 
 .composer__chip:hover {
@@ -237,8 +252,12 @@
 .composer__cola {
   display: flex;
   gap: var(--e3);
-  margin: 0;
-  padding: var(--e2) 0 var(--e1);
+  /* La × de cada miniatura sobresale 16 px arriba y a la derecha (ver
+     abajo). La tira desplaza en horizontal, así que recorta lo que se sale de
+     su caja: el relleno le hace lugar, y el margen negativo devuelve la
+     altura que tenía la tira. */
+  margin: calc(var(--e2) * -1) 0 0;
+  padding: var(--e4) var(--e4) var(--e1) 0;
   list-style: none;
   overflow-x: auto;
 }
@@ -322,33 +341,49 @@
   .composer__miniatura-giro { animation: none; }
 }
 
-/* La ×: visible de 24 px en la esquina, tocable de 44 con el pseudo. */
+/* La ×: el botón mide 44×44 —el mínimo para un pulgar— y lo que se ve es el
+   círculo de 24 px dibujado en su centro, en la misma esquina de siempre. El
+   centro cae 6 px afuera de la miniatura: 44 / 2 − 6 = 16 px de desborde. */
 .composer__adjunto .composer__miniatura-quitar {
   position: absolute;
-  inset-block-start: -6px;
-  inset-inline-end: -6px;
-  inline-size: 24px;
-  block-size: 24px;
-  border: 2px solid var(--sup-tarjeta);
-  background: var(--tinta);
+  z-index: 1;
+  inset-block-start: -16px;
+  inset-inline-end: -16px;
+  inline-size: 44px;
+  block-size: 44px;
+  border: 0;
+  background: none;
   color: var(--sup-tarjeta);
 }
 
-.composer__miniatura-quitar::after {
+.composer__miniatura-quitar::before {
   content: "";
   position: absolute;
-  inset: -10px;
+  inset: 0;
+  margin: auto;
+  box-sizing: border-box;
+  inline-size: 24px;
+  block-size: 24px;
+  border: 2px solid var(--sup-tarjeta);
+  border-radius: var(--r-pill);
+  background: var(--tinta);
 }
 
 .composer__adjunto .composer__miniatura-quitar svg {
+  position: relative;
   inline-size: 14px;
   block-size: 14px;
 }
 
-.composer__miniatura-quitar:focus-visible,
 .composer__miniatura--sumar button:focus-visible {
   outline: 2px solid var(--anillo-foco);
   outline-offset: 2px;
+}
+
+/* El anillo abraza el círculo visible, no la caja de 44. */
+.composer__miniatura-quitar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -8px;
 }
 
 .composer__miniatura--sumar {
@@ -416,13 +451,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 28px;
-  block-size: 28px;
+  /* 44 de área tocable con el glifo de 16 de siempre; el margen negativo
+     deja la tira con la altura que tenía. */
+  inline-size: 44px;
+  block-size: 44px;
+  margin-block: calc(var(--e2) * -1);
   border: 0;
   border-radius: var(--r-pill);
   background: none;
   color: var(--tinta-2);
   cursor: pointer;
+}
+
+.composer__respuesta button:hover {
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+}
+
+.composer__respuesta button:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -4px;
 }
 
 .composer__respuesta button svg,
@@ -468,31 +516,16 @@
   background: var(--sup-tarjeta);
 }
 
-.composer__adjuntar {
-  margin: 0;
-  padding: var(--e2);
-  list-style: none;
+/* Los ítems del menú de adjuntar (`app-menu-item`, que pone la superficie, el
+   borde y la sombra del sistema). Sólo se les sube el alto a 44: el menú
+   se abre con el pulgar. El ícono, en la tinta de marca como los del campo. */
+.composer__opcion {
+  min-block-size: 44px;
 }
 
-.composer__adjuntar button {
-  display: flex;
-  align-items: center;
-  gap: var(--e3);
-  inline-size: 100%;
-  padding: var(--e2) var(--e3);
-  border: 0;
-  border-radius: var(--r-ctrl);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: var(--fs-caption);
-  text-align: start;
-  cursor: pointer;
-}
-
-.composer__adjuntar button:hover,
-.composer__adjuntar button:focus-visible {
-  background: var(--sup-inset);
+.composer__opcion [slot='icon'] {
+  display: inline-flex;
+  color: var(--tinta-marca);
 }
 
 /* --- Plantillas (carril P9) ---------------------------------------------- */
@@ -515,6 +548,7 @@
 
 .composer__plantilla-texto {
   flex: 1 1 auto;
+  min-block-size: 44px;
   padding: var(--e2);
   border: 0;
   border-radius: var(--r-ctrl);
@@ -533,6 +567,8 @@
 
 .composer__plantilla-quitar {
   flex: none;
+  min-block-size: 44px;
+  padding-inline: var(--e2);
   border: 0;
   background: none;
   color: var(--tinta-2);
@@ -554,7 +590,7 @@
 
 .composer__plantilla-nueva input {
   inline-size: 100%;
-  block-size: var(--h-ctrl);
+  block-size: 44px;
   padding-inline: var(--e3);
   border: 1px solid var(--filete);
   border-radius: var(--r-ctrl);
@@ -566,7 +602,7 @@
 
 .composer__plantilla-nueva > button {
   flex: none;
-  block-size: var(--h-ctrl);
+  block-size: 44px;
   padding-inline: var(--e3);
   border: 1px solid var(--borde-ctrl, var(--filete));
   border-radius: var(--r-ctrl);
@@ -592,6 +628,10 @@
 }
 
 .composer__error button {
+  flex: none;
+  min-block-size: 44px;
+  margin-block: calc(var(--e2) * -1);
+  padding-inline: var(--e2);
   border: 0;
   background: none;
   color: inherit;
@@ -644,6 +684,7 @@
 }
 
 .composer__solapa {
+  min-block-size: 44px;
   padding: var(--e2) var(--e3);
   border: 0;
   border-radius: var(--r-ctrl) var(--r-ctrl) 0 0;

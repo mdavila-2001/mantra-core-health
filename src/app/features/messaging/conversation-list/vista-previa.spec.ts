@@ -44,8 +44,13 @@ describe('vistaPreviaDe', () => {
   });
 
   it('cada tipo de tarjeta conserva su tipo, que decide el ícono', () => {
+    const rutas = {
+      producto: '/pharmacies-directory/farmacia-vida',
+      servicio: '/clinics-directory/clinica-sur',
+      farmacia: '/pharmacies-directory/farmacia-vida',
+    } as const;
     for (const tipo of ['producto', 'servicio', 'farmacia'] as const) {
-      const cuerpo = textoDeContexto({ tipo, titulo: 'Algo', ruta: '/x' });
+      const cuerpo = textoDeContexto({ tipo, titulo: 'Algo', ruta: rutas[tipo] });
       expect(vistaPreviaDe({ ...base, bodyText: cuerpo })).toMatchObject({
         tipo: 'contexto',
         contexto: tipo,
