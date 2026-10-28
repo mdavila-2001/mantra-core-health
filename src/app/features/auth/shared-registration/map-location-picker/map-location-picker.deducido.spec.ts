@@ -81,7 +81,9 @@ describe('MapLocationPicker — lo deducido del punto', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(campoCalle().value).toBe('Calle Guapay 3861, Equipetrol');
+    // Calle y número: el distrito va en su campo, justo debajo, no dos veces.
+    expect(campoCalle().value).toBe('Calle Guapay 3861');
+    expect(campoCalle().value).not.toContain('Equipetrol');
     expect(campoCalle().readOnly).toBe(true);
     expect(component.zone()).toBe('Equipetrol');
   });
