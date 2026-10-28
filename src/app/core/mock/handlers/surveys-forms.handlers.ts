@@ -1,9 +1,47 @@
 import { reservas } from '../fixtures/agenda';
 import { ESTADO } from '../fixtures/conceptos';
+import { reservasTerminadasDe } from '../fixtures/atencion-resenable';
+import { ofertas } from '../fixtures/servicios-ofrecidos';
 import { PACIENTE } from '../fixtures/personas';
-import { notFound, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, reply, validationPipeRejected, type MockReply, type MockRouter } from '../mock-router';
+import {
+  ID_TIPO_ATENCION_CONSULTA,
+  TIPO_DESTINO_CONSULTAS,
+} from '../../data-access/surveys/surveys-targets';
+import {
+  calcularInsights,
+  FUENTE_CONSULTA,
+  FUENTE_SERVICIO,
+  generarEnviosBase,
+  motivoDeRangoInvalido,
+  PREGUNTAS_BASE_CONSULTA,
+  PREGUNTAS_BASE_SERVICIO,
+  DESCRIPCION_BASE_CONSULTA,
+  DESCRIPCION_BASE_SERVICIO,
+  TITULO_BASE_CONSULTA,
+  TITULO_BASE_SERVICIO,
+  type PreguntaBase,
+  type EmisionSimulada,
+  type FuenteDePreguntas,
+} from './surveys-insights.simulator';
 import { plantillasVigentes } from './clinical.handlers';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
+
+/**
+ * Una precondición de negocio de la API: **422** con `code: PRECONDITION_FAILED`
+ * (`PreconditionFailedException`). El `preconditionFailed` de `mock-router` de
+ * esta rama todavía responde 412, que la API real no usa; las rutas nuevas de
+ * encuestas siguen a la API y no al helper.
+ */
+function preconditionFailed422(message: string, details: unknown = {}): MockReply {
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message,
+    error: 'Unprocessable Entity',
+    details,
+  });
+}
 
 /* ============================================================================
     Encuestas de satisfacción (motor de cuestionarios) y el motor de
@@ -113,13 +151,37 @@ function resumen(e: EncuestaSimulada) {
 const invitaciones = new Coleccion<{ id: string; surveyId: string; patientProfileId: string; status: 'PENDING' | 'ANSWERED' | 'EXPIRED'; issuedAt: string; expiresAt: string; answeredAt: string | null; appointmentBookingId: string }>(
   (() => {
     const citas = reservas.filtrar((r) => r.patientProfileId === PACIENTE.id).sort((a, b) => b.startAt.localeCompare(a.startAt));
+    // Una invitación existe porque una atención TERMINÓ: las dos primeras se atan a
+    // reservas completadas con encuentro cerrado (así «reviewable-care» las resuelve
+    // y el puente a la reseña pública funciona). La tercera está vencida y no importa.
+    const terminadas = reservasTerminadasDe(PACIENTE.id);
     return [
-      { id: uuid('invitation-1'), surveyId: uuid('survey-satisfaccion'), patientProfileId: PACIENTE.id, status: 'PENDING' as const, issuedAt: iso(-1, 12), expiresAt: iso(6), answeredAt: null, appointmentBookingId: citas[0]?.id ?? uuid('booking-x') },
-      { id: uuid('invitation-2'), surveyId: uuid('survey-teleconsulta'), patientProfileId: PACIENTE.id, status: 'ANSWERED' as const, issuedAt: iso(-15, 12), expiresAt: iso(-10), answeredAt: iso(-14, 9), appointmentBookingId: citas[1]?.id ?? uuid('booking-y') },
+      { id: uuid('invitation-1'), surveyId: uuid('survey-satisfaccion'), patientProfileId: PACIENTE.id, status: 'PENDING' as const, issuedAt: iso(-1, 12), expiresAt: iso(6), answeredAt: null, appointmentBookingId: terminadas[0]?.id ?? citas[0]?.id ?? uuid('booking-x') },
+      { id: uuid('invitation-2'), surveyId: uuid('survey-teleconsulta'), patientProfileId: PACIENTE.id, status: 'ANSWERED' as const, issuedAt: iso(-15, 12), expiresAt: iso(-10), answeredAt: iso(-14, 9), appointmentBookingId: terminadas[1]?.id ?? citas[1]?.id ?? uuid('booking-y') },
       { id: uuid('invitation-3'), surveyId: uuid('survey-satisfaccion'), patientProfileId: PACIENTE.id, status: 'EXPIRED' as const, issuedAt: iso(-40, 12), expiresAt: iso(-33), answeredAt: null, appointmentBookingId: citas[2]?.id ?? uuid('booking-z') },
     ];
   })(),
 );
+
+/** Una asociación de una versión publicada a lo evaluado. */
+interface AsignacionSimulada {
+  readonly id: string;
+  readonly surveyId: string;
+  readonly surveyVersionId: string;
+  readonly targetType: 'APPOINTMENT' | 'SERVICE' | 'CARE_TYPE';
+  readonly targetId: string;
+}
+
+/**
+ * Lo que ya está asociado de fábrica: «Satisfacción con la consulta» a todas las
+ * consultas y «Experiencia de teleconsulta» a la teleconsulta cardiológica. Es lo
+ * que la ficha muestra como «asociada hoy a» antes de que el médico toque nada.
+ * `targetId` de un servicio es `billing.service_catalog.id`.
+ */
+const asignaciones = new Coleccion<AsignacionSimulada>([
+  { id: uuid('assignment-satisfaccion'), surveyId: uuid('survey-satisfaccion'), surveyVersionId: uuid('survey-satisfaccion-v2'), targetType: TIPO_DESTINO_CONSULTAS, targetId: ID_TIPO_ATENCION_CONSULTA },
+  { id: uuid('assignment-teleconsulta'), surveyId: uuid('survey-teleconsulta'), surveyVersionId: uuid('survey-teleconsulta-v1'), targetType: 'SERVICE', targetId: uuid('service-TELE-CARDIO') },
+]);
 
 function respuestasDe(e: EncuestaSimulada) {
   const invitados = reservas.todos().slice(0, 9);
@@ -166,6 +228,139 @@ function limpiarSegunTipo(questions: readonly PreguntaSimulada[]): readonly Preg
   });
 }
 
+/* -- encuesta base, tal como la recibe el paciente --------------------------- */
+
+const ID_ENCUESTA_BASE_CONSULTA = uuid('survey-base-consulta');
+const ID_ENCUESTA_BASE_SERVICIO = uuid('survey-base-servicio');
+
+/** Qué se le muestra al paciente de una invitación: título, consigna y preguntas. */
+interface ContenidoDeInvitacion {
+  readonly title: string;
+  readonly description: string;
+  readonly questions: readonly object[];
+}
+
+/**
+ * El cuestionario de una invitación: el de la encuesta del médico o una de las
+ * BASE del sistema (que no están en el listado del médico). Las preguntas base
+ * llevan `source: 'SYSTEM'`.
+ */
+function contenidoDeInvitacion(surveyId: string): ContenidoDeInvitacion {
+  const base = (titulo: string, descripcion: string, preguntas: readonly PreguntaBase[]): ContenidoDeInvitacion => ({
+    title: titulo,
+    description: descripcion,
+    questions: preguntas.map(({ id, position, questionText, answerType, required, options, scaleMin, scaleMax, source }) => ({
+      id,
+      position,
+      questionText,
+      answerType,
+      required,
+      ...(options === undefined ? {} : { options }),
+      ...(scaleMin === undefined ? {} : { scaleMin }),
+      ...(scaleMax === undefined ? {} : { scaleMax }),
+      source,
+    })),
+  });
+  if (surveyId === ID_ENCUESTA_BASE_CONSULTA) {
+    return base(TITULO_BASE_CONSULTA, DESCRIPCION_BASE_CONSULTA, PREGUNTAS_BASE_CONSULTA);
+  }
+  if (surveyId === ID_ENCUESTA_BASE_SERVICIO) {
+    return base(TITULO_BASE_SERVICIO, DESCRIPCION_BASE_SERVICIO, PREGUNTAS_BASE_SERVICIO);
+  }
+  const e = encuestas.get(surveyId)!;
+  return { title: e.title, description: e.description, questions: e.questions };
+}
+
+/** Días que tiene el paciente para responder, como el plazo de la encuesta base. */
+const PLAZO_BASE_DIAS = 7;
+
+/**
+ * Emite la encuesta BASE al paciente cuando una atención se COMPLETA.
+ *
+ * Es la emisión automática del diseño: sale sola al cerrar una consulta o un
+ * servicio, sin que el médico la prenda ni la apague. Consulta o servicio según
+ * la reserva (con oferta de servicio ≡ servicio; sin ella ≡ consulta). Idempotente
+ * por reserva: completar dos veces no le pide dos veces lo mismo al paciente.
+ *
+ * Lo llama `POST /scheduling/bookings/:id/complete` del simulador de agenda.
+ */
+export function emitirInvitacionDeAtencion(bookingId: string): void {
+  const reserva = reservas.get(bookingId);
+  if (reserva === undefined) return;
+  if (invitaciones.todos().some((i) => i.appointmentBookingId === bookingId)) return;
+  const esServicio = reserva.serviceOfferingId !== undefined && reserva.serviceOfferingId !== null;
+  invitaciones.agregar({
+    id: nuevoId('invitation'),
+    surveyId: esServicio ? ID_ENCUESTA_BASE_SERVICIO : ID_ENCUESTA_BASE_CONSULTA,
+    patientProfileId: reserva.patientProfileId,
+    status: 'PENDING',
+    issuedAt: ahora(),
+    expiresAt: iso(PLAZO_BASE_DIAS),
+    answeredAt: null,
+    appointmentBookingId: bookingId,
+  });
+}
+
+/** Los envíos de las encuestas base, generados una sola vez por carga. */
+const enviosBase = generarEnviosBase();
+
+/** Día local `YYYY-MM-DD` de un instante ISO. */
+function diaDe(instante: string): string {
+  const d = new Date(instante);
+  const dos = (n: number): string => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())}`;
+}
+
+/**
+ * Las encuestas PROPIAS publicadas entran al resumen con las mismas respuestas
+ * que sirve su ficha (`respuestasDe`). No tienen servicio, así que el filtro por
+ * servicio las deja afuera; y se tratan como enviadas y respondidas (no hay
+ * registro de las que quedaron sin responder).
+ */
+function enviosPropios(): readonly EmisionSimulada[] {
+  return encuestas
+    .todos()
+    .filter((e) => e.published || e.status === 'INACTIVE')
+    .flatMap((e) =>
+      respuestasDe(e).map((r) => ({
+        id: r.id,
+        fuente: e.id,
+        servicioId: null,
+        emitidaEl: diaDe(r.submittedAt),
+        respondidaEl: diaDe(r.submittedAt),
+        respuestas: r.answers.map((a) => ({
+          questionId: a.questionId,
+          ...('valueNumber' in a ? { valueNumber: a.valueNumber } : {}),
+          ...('valueBoolean' in a ? { valueBoolean: a.valueBoolean } : {}),
+          ...('valueChoices' in a ? { valueChoices: a.valueChoices } : {}),
+          ...('valueText' in a ? { valueText: a.valueText } : {}),
+        })),
+      })),
+    );
+}
+
+function enviosParaInsights(): readonly EmisionSimulada[] {
+  return [...enviosBase, ...enviosPropios()];
+}
+
+function fuentesParaInsights(): readonly FuenteDePreguntas[] {
+  return [
+    { fuente: FUENTE_CONSULTA, preguntas: PREGUNTAS_BASE_CONSULTA },
+    { fuente: FUENTE_SERVICIO, preguntas: PREGUNTAS_BASE_SERVICIO },
+    ...encuestas.todos().map((e) => ({
+      fuente: e.id,
+      preguntas: e.questions.map((q) => ({
+        id: q.id,
+        questionText: q.questionText,
+        answerType: q.answerType,
+        ...(q.options === undefined ? {} : { options: q.options }),
+        ...(q.scaleMin === undefined ? {} : { scaleMin: q.scaleMin }),
+        ...(q.scaleMax === undefined ? {} : { scaleMax: q.scaleMax }),
+      })),
+    })),
+  ];
+}
+
 export function registrarEncuestas(router: MockRouter): void {
   router.get('/surveys/templates', () => encuestas.todos().map(resumen));
 
@@ -179,7 +374,18 @@ export function registrarEncuestas(router: MockRouter): void {
 
   router.get('/surveys/templates/:id', ({ params }) => {
     const e = encuestas.get(params['id']!);
-    return e === undefined ? notFound('Encuesta no encontrada') : { ...resumen(e), latestVersionId: e.latestVersionId, responseWindowDays: e.responseWindowDays, effectiveFrom: e.effectiveFrom, effectiveTo: e.effectiveTo, questions: e.questions };
+    return e === undefined
+      ? notFound('Encuesta no encontrada')
+      : {
+          ...resumen(e),
+          latestVersionId: e.latestVersionId,
+          responseWindowDays: e.responseWindowDays,
+          effectiveFrom: e.effectiveFrom,
+          effectiveTo: e.effectiveTo,
+          questions: e.questions,
+          // A qué está asociada hoy (contrato pendiente del backend: ver la ficha).
+          assignments: asignaciones.filtrar((a) => a.surveyId === e.id).map(({ id, targetType, targetId }) => ({ id, targetType, targetId })),
+        };
   });
 
   router.post('/surveys/templates/:id/versions', ({ params }) => {
@@ -315,7 +521,63 @@ export function registrarEncuestas(router: MockRouter): void {
     return e === undefined ? notFound() : e.published || e.status === 'INACTIVE' ? respuestasDe(e) : [];
   });
 
-  router.post('/surveys/assignments', () => ({ status: 201, body: { id: nuevoId('assignment') } }));
+  /**
+   * Asocia una versión PUBLICADA a un destino. Las reglas son las del diseño:
+   * `SERVICE` exige un servicio del catálogo que el profesional ofrezca;
+   * `CARE_TYPE` sólo vale para «consulta»; repetir el mismo destino es un 409.
+   * Persiste (sobrevive a recargar la pestaña), así la ficha lo vuelve a leer.
+   */
+  router.post('/surveys/assignments', (request) => {
+    const datos = cuerpo<{ surveyVersionId: string; targetType: AsignacionSimulada['targetType']; targetId: string }>(request);
+    const uuidValido = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (datos.surveyVersionId === undefined || !uuidValido.test(datos.surveyVersionId)) {
+      return validationPipeRejected('surveyVersionId: must be a UUID');
+    }
+    if (datos.targetId === undefined || !uuidValido.test(datos.targetId)) {
+      return validationPipeRejected('targetId: must be a UUID');
+    }
+    if (datos.targetType !== 'APPOINTMENT' && datos.targetType !== 'SERVICE' && datos.targetType !== 'CARE_TYPE') {
+      return validationPipeRejected('targetType: must be one of the following values: APPOINTMENT, SERVICE, CARE_TYPE');
+    }
+    const encuesta = encuestas.todos().find((e) => e.latestVersionId === datos.surveyVersionId);
+    if (encuesta === undefined) return notFound('Versión no encontrada');
+    if (!encuesta.published) return preconditionFailed422('Solo se puede asignar una versión publicada', { surveyVersionId: datos.surveyVersionId });
+    if (datos.targetType === 'SERVICE' && !ofertas.todos().some((o) => o.serviceCatalogId === datos.targetId)) {
+      return notFound('Servicio no encontrado');
+    }
+    if (datos.targetType === 'CARE_TYPE' && datos.targetId !== ID_TIPO_ATENCION_CONSULTA) {
+      return preconditionFailed422('Solo se puede asignar por tipo de atención «consulta»', { targetType: datos.targetType });
+    }
+    const repetida = asignaciones.todos().find((a) => a.surveyId === encuesta.id && a.targetType === datos.targetType && a.targetId === datos.targetId);
+    if (repetida !== undefined) {
+      return conflict('Ya existe una asignación activa de esa versión a ese destino', { assignmentId: repetida.id });
+    }
+    const nueva = asignaciones.agregar({ id: nuevoId('assignment'), surveyId: encuesta.id, surveyVersionId: datos.surveyVersionId, targetType: datos.targetType, targetId: datos.targetId });
+    return { status: 201, body: { id: nueva.id } };
+  });
+
+  /**
+   * `GET /surveys/insights?from&to&serviceId` — «cómo me va».
+   *
+   * Calculado, no escrito: parte de los envíos de las encuestas base (consulta y
+   * servicio) y de las respuestas de las encuestas propias que el detalle
+   * también sirve. Sólo agregados: ni paciente ni reserva.
+   */
+  router.get('/surveys/insights', ({ query, user }) => {
+    if (user !== null && !user.roles.some((r) => r === 'PRACTITIONER' || r === 'CLINICIAN' || r === 'SUPERADMIN')) {
+      return forbidden('Solo el profesional puede ver el resumen de sus encuestas.');
+    }
+    const dia = /^\d{4}-\d{2}-\d{2}$/;
+    const from = query.get('from') ?? '';
+    const to = query.get('to') ?? '';
+    const serviceId = query.get('serviceId') ?? undefined;
+    if (!dia.test(from)) return validationPipeRejected('from: must be a valid ISO 8601 date string');
+    if (!dia.test(to)) return validationPipeRejected('to: must be a valid ISO 8601 date string');
+    // Como la API: meses calendario completos y a lo sumo 12 (no hay rangos libres).
+    const invalido = motivoDeRangoInvalido(from, to);
+    if (invalido !== null) return validationPipeRejected(`from: ${invalido}`);
+    return calcularInsights(enviosParaInsights(), fuentesParaInsights(), { from, to, ...(serviceId === undefined ? {} : { serviceId }) });
+  });
 
   router.post('/surveys/invitations', (request) => {
     const datos = cuerpo<{ appointmentBookingIds?: string[] }>(request);
@@ -327,7 +589,7 @@ export function registrarEncuestas(router: MockRouter): void {
     invitaciones
       .filtrar((i) => i.patientProfileId === (request.user?.patientProfileId ?? PACIENTE.id))
       .map((i) => {
-        const e = encuestas.get(i.surveyId)!;
+        const e = contenidoDeInvitacion(i.surveyId);
         return { id: i.id, title: e.title, description: e.description, status: i.status, issuedAt: i.issuedAt, expiresAt: i.expiresAt, answeredAt: i.answeredAt, appointmentBookingId: i.appointmentBookingId };
       }),
   );
@@ -335,7 +597,7 @@ export function registrarEncuestas(router: MockRouter): void {
   router.get('/surveys/me/invitations/:id', ({ params }) => {
     const i = invitaciones.get(params['id']!);
     if (i === undefined) return notFound('Invitación no encontrada');
-    const e = encuestas.get(i.surveyId)!;
+    const e = contenidoDeInvitacion(i.surveyId);
     return { id: i.id, title: e.title, description: e.description, status: i.status, issuedAt: i.issuedAt, expiresAt: i.expiresAt, answeredAt: i.answeredAt, appointmentBookingId: i.appointmentBookingId, questions: e.questions };
   });
 
@@ -651,4 +913,5 @@ export function registrarEncuestas(router: MockRouter): void {
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
 encuestas.persistirEn('mock.surveys-forms.encuestas');
+asignaciones.persistirEn('mock.surveys-forms.asignaciones');
 invitaciones.persistirEn('mock.surveys-forms.invitaciones');
