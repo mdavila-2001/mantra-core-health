@@ -303,11 +303,13 @@ describe('FormConclusionBlock', () => {
     expect(html().querySelector('[data-testid="cierre-disclaimer"]')).toBeNull();
   });
 
-  it('inválido: sin servicio se dice, y elegir a mano emite igual', () => {
+  it('inválido: sin servicio no hay aviso, y elegir a mano emite igual', () => {
     sugerir.mockReturnValue(of(null));
     responder(RESPUESTAS);
 
-    expect(html().querySelector('[data-testid="cierre-sin-servicio"]')).not.toBeNull();
+    expect(html().querySelector('[data-testid="cierre-sin-servicio"]')).toBeNull();
+    expect(html().querySelector('app-alert')).toBeNull();
+    expect(html().querySelector('[data-testid="cierre-vacio"]')).toBeNull();
     expect(html().querySelector('app-concept-select')).not.toBeNull();
 
     interno<(id: string | null) => void>('elegirDiagnostico')('dx-j069');
