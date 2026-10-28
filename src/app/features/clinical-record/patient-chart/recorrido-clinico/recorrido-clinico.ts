@@ -148,23 +148,24 @@ export class RecorridoClinico {
     });
 
     // Lo más reciente es lo que se viene a mirar: el lienzo abre por el final.
-    // Sin animación —un desplazamiento suave a medio camino dejaba la última
-    // columna cortada— y sólo la primera vez que hay plano, para no
-    // arrancarle el desplazamiento a quien ya se movió.
-    let ubicado = false;
+    // Cada vez que se CREA un lienzo —al entrar a la vista, o al volver de
+    // angosto a ancho, que arma uno nuevo con el desplazamiento en cero—, y
+    // no cuando cambia el filtro: a quien ya se movió no se le arranca la
+    // posición.
     effect(() => {
-      const columnas = this.plano().columnas.length;
-      const angosto = this.angosto();
-      if (ubicado || columnas === 0 || angosto) {
+      const lienzo = this.lienzo()?.nativeElement;
+      if (lienzo === undefined) {
         return;
       }
-      ubicado = true;
       untracked(() =>
-        afterNextRender(() => this.fijarAlFinal(), { injector: this.injector }),
+        afterNextRender(() => this.fijarAlFinal(lienzo), { injector: this.injector }),
       );
     });
+    this.destroyRef.onDestroy(() => this.soltarLienzo?.());
   }
 
+  /** Desconecta el observador del lienzo anterior. */
+  private soltarLienzo: (() => void) | null = null;
 
   /**
    * Abre por el final y se queda ahí mientras quien mira no se mueva.
@@ -175,34 +176,47 @@ export class RecorridoClinico {
    * Así que, hasta el primer desplazamiento de la persona, cada cambio de
    * tamaño vuelve a pegar el lienzo al final.
    */
-  private fijarAlFinal(): void {
-    const lienzo = this.lienzo()?.nativeElement;
-    if (lienzo === undefined) {
-      return;
-    }
-    this.irA('final', false);
+  private fijarAlFinal(lienzo: HTMLElement): void {
+    this.soltarLienzo?.();
+    this.soltarLienzo = null;
     if (typeof ResizeObserver !== 'function') {
+      this.irA('final', false);
       return;
     }
     let pegado = true;
+    // Dónde lo dejó el propio componente. El evento `scroll` de ese ajuste
+    // llega después, cuando el lienzo ya pudo crecer: sin esto se leía como un
+    // desplazamiento de la persona y el lienzo se soltaba antes de tiempo.
+    let propio = lienzo.scrollLeft;
+    const pegar = (): void => {
+      this.irA('final', false);
+      propio = lienzo.scrollLeft;
+    };
     const observador = new ResizeObserver(() => {
       if (pegado) {
-        this.irA('final', false);
+        pegar();
       }
     });
     observador.observe(lienzo);
-    // Un desplazamiento que no deja el lienzo al final es de la persona: desde
-    // ahí, el lienzo es suyo.
+    if (lienzo.firstElementChild !== null) {
+      observador.observe(lienzo.firstElementChild);
+    }
+    // Un desplazamiento que no es el propio y no deja el lienzo al final es
+    // de la persona: desde ahí, el lienzo es suyo.
     const alDesplazar = (): void => {
+      if (Math.abs(lienzo.scrollLeft - propio) <= 1) {
+        return;
+      }
       if (lienzo.scrollLeft < lienzo.scrollWidth - lienzo.clientWidth - 2) {
         pegado = false;
       }
     };
     lienzo.addEventListener('scroll', alDesplazar, { passive: true });
-    this.destroyRef.onDestroy(() => {
+    pegar();
+    this.soltarLienzo = () => {
       observador.disconnect();
       lienzo.removeEventListener('scroll', alDesplazar);
-    });
+    };
   }
 
   protected irA(extremo: 'inicio' | 'final', suave = true): void {
@@ -265,7 +279,7 @@ export class RecorridoClinico {
   protected fechaPropia(
     nodo: NodoUbicado,
     columna: ColumnaUbicada,
-  ): { readonly rotulo: string; readonly fecha: Date } | null {
+  ): { readonly rotulo: string; readonly fecha: Date; readonly formato: string } | null {
     if (nodo.grupo !== undefined || nodo.cuando === null || columna.fecha === null) {
       return null;
     }
@@ -273,7 +287,12 @@ export class RecorridoClinico {
       return null;
     }
     const rotulo = nodo.tipo === 'diagnosticos' ? 'Inicio' : nodo.tipo === 'medicacion' ? 'Desde' : 'Del';
-    return { rotulo, fecha: nodo.cuando };
+    // Corta, porque la tarjeta es angosta y con el estado al lado la fecha
+    // completa se cortaba («8 Oct 20…»): sin el año si es el de la columna, y
+    // mes y año si es otro —para el comienzo de una enfermedad alcanza—. La
+    // fecha entera va en el título y en el nombre accesible.
+    const formato = nodo.cuando.getFullYear() === columna.fecha.getFullYear() ? 'd MMM' : 'MMM y';
+    return { rotulo, fecha: nodo.cuando, formato };
   }
 
   /** Un registro abre su detalle; un nodo de grupo abre o cierra su celda. */
@@ -334,6 +353,11 @@ export class RecorridoClinico {
         `${this.aspecto[nodo.tipo].singular}: ${nodo.principal}`,
         nodo.secundario,
         nodo.estado,
+        // La fecha propia del registro: la columna puede ser la de la atención
+        // y no la suya, y quien escucha no ve la tarjeta.
+        nodo.cuando === null
+          ? ''
+          : `fecha ${nodo.cuando.toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' })}`,
       ];
       for (const arista of aristas) {
         if (arista.hasta === nodo.id) {

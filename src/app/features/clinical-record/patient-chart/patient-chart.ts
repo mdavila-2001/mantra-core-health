@@ -1140,6 +1140,7 @@ export class PatientChart {
             ? ''
             : fila.secundario,
         estado: fila.estado === SIN_DATO ? '' : fila.estado,
+        tonoDelEstado: fila.estadoTono ?? 'info',
         cuando: fila.cuando,
         encuentroId: atencionDe.get(fila.id),
       }));
