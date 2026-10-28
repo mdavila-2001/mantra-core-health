@@ -137,7 +137,7 @@ Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · base `origin/dev
 |---|---|
 | `tsc -p tsconfig.app.json --noEmit` | 0 errores |
 | `eslint src/app/features/clinical-record/patient-chart` | 0 errores (el `yarn lint` global trae errores preexistentes en specs ajenos) |
-| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **584 pruebas verdes** (las nuevas: `recorrido-clinico/` 45, `patient-chart.spec.ts` 8) |
+| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **587 pruebas verdes** (las nuevas: `recorrido-clinico/` 48, `patient-chart.spec.ts` 8) |
 | `yarn test` completo | **no se ejecutó** |
 | Navegador 1440 / 768 / 390 | desborde horizontal de la página: 0 px; el recorrido desplaza dentro de su lienzo |
 | «Secciones» sin cambios | 9 pestañas (Servicios incluida), «Nuevo diagnóstico» visible, menú de acciones Confirmar / Rechazar / Cambiar estado / Adjuntar |
@@ -158,5 +158,25 @@ atrás (7), nombres accesibles de grupos (8), intervalo por días de calendario 
 movimiento» (10), puntero y foco (11), `stackedOnMobile` y `accion` (12), texto del vacío (13),
 caption de la tabla (14) y JSDoc (15). Queda como está: (16) el token de la etiqueta del intervalo, y la vista
 en la URL (parte de 6), que se registra como pendiente. `visual-reviewer`: pendiente.
+
+`visual-reviewer`, primera vuelta: **FAIL** (59/100, 5 HIGH). Corregido después:
+
+| Hallazgo | Arreglo | Comprobado |
+|---|---|---|
+| H1 notas sin nombre en la Tabla | `chiefComplaintText` vacío cae al tipo de nota y, si tampoco hay, «Nota clínica» | `tabla-1440.png` |
+| H2 registros bajo una fecha que no es la suya | cada tarjeta muestra su fecha propia cuando difiere de la columna («Inicio 23 sept 2025», «Desde 8 oct 2026») | `recorrido-1440.png`, `recorrido-390.png` |
+| H3 no abre por el final | apertura sin animación y pegado al final ante cambios de tamaño hasta que la persona se mueve; se quitó `scrollbar-gutter`, que reservaba 15 px vacíos | medido: `scrollLeft` 1724 de 1724 al abrir; al redimensionar sigue al final; tras moverse la persona, respeta su posición. Las capturas de página completa de Chromium vuelven el lienzo al inicio: por eso las del recorrido son de ventana |
+| H4 teléfono ilegible | por debajo de 650 px el recorrido es vertical, lo más reciente arriba, con la indicación en texto («Para Hipertensión…») | `recorrido-390.png` |
+| H5 detalle a medio fundido | captura tomada con el modal asentado | `recorrido-abre-detalle.png` |
+| M1 líneas sobre los rótulos | rótulo con fondo y por encima de la capa de líneas | `recorrido-768.png` |
+| M2 nombres cortados | tarjeta de 248 × 86 px, nombre en dos renglones | `recorrido-1440.png` |
+| M3 grupo abierto atenuado | el control de grupo no ilumina camino | prueba de componente |
+| M4 «Sin registrar» como dato | se omite | `recorrido-1440.png` |
+| M5 filtro sólo dicho en la Tabla | el aviso también en Recorrido | — |
+| M6 chips cortados sin señal | borde derecho desvanecido en angosto | — |
+
+Sin cambio: M7 (no hay captura previa de «Secciones»: la regresión la cubren las pruebas y el recorrido
+de pestañas, alta y menú de arriba), M8 (las «mg» de los signos vitales vienen del dato simulado, ya
+existía), M9 (la columna «Ver» en el PDF ya pasaba en todas las tablas del expediente).
 
 Capturas: `capturas/recorrido-clinico/`.
