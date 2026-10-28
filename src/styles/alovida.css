@@ -103,7 +103,6 @@
      Los tokens `--nav-*` siguen: cada tema dice los suyos. */
   --nav-vineta-a: rgba(9, 62, 92, .72);
   --nav-vineta-b: rgba(7, 47, 69, .82);
-  --nav-profundidad: 1;
   --nav-halo-a:   rgba(79, 179, 169, .30);
   --nav-halo-b:   rgba(79, 179, 169, .16);
   --nav-halo-c:   rgba(122, 191, 232, .06);
@@ -116,7 +115,6 @@
      del interruptor de tema). `--nav-carril` es el fondo de la columna detrás
      del nav (`--petroleo-x`). */
   --nav-carril:          #072F45;
-  --nav-borde:           transparent;
   --nav-tinta:           #FFFFFF;
   --nav-palabra:         #FFFFFF;
   --nav-item:            rgba(255, 255, 255, .84);
@@ -577,7 +575,6 @@ app-shell-layout { display: block; }
   overflow: hidden auto;
   background-color: var(--sup-nav);
   color: var(--nav-tinta);
-  border-right: 1px solid var(--nav-borde);
   padding: var(--e6) 0 var(--e7);
   display: flex; flex-direction: column; gap: var(--e5);
   isolation: isolate;
@@ -615,9 +612,6 @@ app-shell-layout { display: block; }
     calc(var(--puntero-yn, .5) * 16px - 8px), 0);
   transition: transform 220ms var(--curva);
 }
-/* El primer `rect` es el degradado petróleo de profundidad: cada tema lo
-   enciende o lo apaga con `--nav-profundidad`. */
-.app-side-nav__textura rect:first-of-type { opacity: var(--nav-profundidad); }
 
 /* Las dos líneas del monitor son lo único vivo del nav por su cuenta: el
    trazo avanza en bucle, como un electro. Los tres `rect` de la textura
@@ -2076,16 +2070,14 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
 
   --nav-vineta-a: rgba(3, 20, 28, .70);
   --nav-vineta-b: rgba(1, 10, 15, .86);
-  --nav-profundidad: 1;
   --nav-halo-a:   rgba(87, 194, 183, .26);
   --nav-halo-b:   rgba(87, 194, 183, .13);
   --nav-halo-c:   rgba(86, 150, 190, .06);
   --nav-halo-0:   rgba(86, 150, 190, 0);
 
-  /* En oscuro la barra sigue siendo petróleo, con la tinta blanca de siempre. */
-  --anillo-foco-nav:     #9FD8D0;
+  /* En oscuro la barra sigue siendo petróleo, con la tinta blanca de siempre.
+     El anillo del nav (`--anillo-foco-nav`) es la misma menta: no se redeclara. */
   --nav-carril:          #041219;
-  --nav-borde:           transparent;
   --nav-tinta:           #FFFFFF;
   --nav-palabra:         #FFFFFF;
   --nav-item:            rgba(255, 255, 255, .84);

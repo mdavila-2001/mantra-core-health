@@ -123,25 +123,38 @@ describe('PracticeSitesMap', () => {
   });
 
   it('elegir la sede no activa el teléfono: sólo llama quien toca el enlace', () => {
+    // Un clic sobre el renglón nace en el elemento que está bajo el puntero
+    // —el botón o cualquiera de sus hijos— y sube desde ahí. jsdom no tiene
+    // coordenadas, así que se dispara desde cada uno de esos blancos: si el
+    // enlace volviera a quedar adentro del botón, sería uno de ellos y elegir
+    // la sede terminaría en una llamada. `boton.click()` no lo probaba: un
+    // evento sube a los ancestros, nunca baja a los hijos.
     const fixture = montar([sede({ contactPhone: '+591 72123456' })]);
     const root = fixture.nativeElement as HTMLElement;
     const phoneLink = root.querySelector<HTMLAnchorElement>('[data-testid="practice-site-contact-phone"]')!;
-    const phoneClicks: MouseEvent[] = [];
+    const phoneClicks: EventTarget[] = [];
     phoneLink.addEventListener('click', (event) => {
       // jsdom no navega a `tel:`; basta con saber si el clic llegó al enlace.
       event.preventDefault();
-      phoneClicks.push(event);
+      phoneClicks.push(event.target!);
     });
     const siteButton = root.querySelector<HTMLButtonElement>('.sedes__boton')!;
+    const rowTargets = [siteButton, ...siteButton.querySelectorAll<HTMLElement>('*')];
+    // El nombre y la dirección, como mínimo: sin hijos no habría nada que probar.
+    expect(rowTargets.length).toBeGreaterThan(2);
 
-    siteButton.click();
-    fixture.detectChanges();
-
-    expect(siteButton.getAttribute('aria-pressed')).toBe('true');
+    for (const target of rowTargets) {
+      const pressedBefore = siteButton.getAttribute('aria-pressed');
+      target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+      // Cada clic en el renglón alterna la sede…
+      expect(siteButton.getAttribute('aria-pressed')).not.toBe(pressedBefore);
+    }
+    // …y ninguno pasó por el enlace.
     expect(phoneClicks).toHaveLength(0);
 
     phoneLink.click();
-    expect(phoneClicks).toHaveLength(1);
+    expect(phoneClicks).toEqual([phoneLink]);
   });
 
   it('si ninguna está ubicada no dibuja el mapa', () => {

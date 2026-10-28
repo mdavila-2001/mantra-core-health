@@ -38,6 +38,9 @@ const TRUSTED_AMBULANCE_KEY = 'alovida.ambulancia-de-confianza';
  */
 const PENDING_SEAL_LABEL = 'Especialidad pendiente de verificación';
 
+/** La pestaña de la ficha donde están las sedes (`DOCTOR_PROFILE_TABS`). */
+const SITES_TAB = 'Dónde atiendo';
+
 /** Petróleo de la barra (`--sup-nav` en claro) y tinta blanca, como los devuelve `getComputedStyle`. */
 const SIDE_NAV_PETROL = 'rgb(11, 85, 126)';
 const WHITE_INK = 'rgb(255, 255, 255)';
@@ -224,15 +227,28 @@ test.describe('Correcciones del médico · perfil y menú', () => {
       const tabs = page.locator('.mi-perfil__bloque').getByRole('tab');
       const tabCount = await tabs.count();
       expect(tabCount, 'la ficha del médico tiene pestañas').toBeGreaterThan(0);
+      let visitedSitesTab = false;
       for (let tabIndex = 0; tabIndex < tabCount; tabIndex += 1) {
-        await tabs.nth(tabIndex).click();
+        const tab = tabs.nth(tabIndex);
+        await tab.click();
         await esperarAQueSeAsiente(page);
         // En «Dónde atiendo», elegir cada sede: era el botón que envolvía al teléfono.
         const siteButtons = page.locator('.sedes__boton:visible');
+        if ((await tab.innerText()).trim() === SITES_TAB) {
+          visitedSitesTab = true;
+          // La médica del simulador atiende en cuatro sedes y dos traen teléfono.
+          // Sin una sede a la vista no se elegiría ninguna, y sin un teléfono el
+          // «ningún tel: dentro de un botón» de abajo no tendría qué mirar.
+          await expect(siteButtons.first(), 'hay sedes a la vista en «Dónde atiendo»').toBeVisible();
+          expect(await siteButtons.count(), 'sedes en «Dónde atiendo»').toBeGreaterThanOrEqual(1);
+          const phoneLinks = page.locator('[data-testid="practice-site-contact-phone"]:visible');
+          expect(await phoneLinks.count(), 'teléfonos de sede en «Dónde atiendo»').toBeGreaterThanOrEqual(1);
+        }
         for (let siteIndex = 0, siteCount = await siteButtons.count(); siteIndex < siteCount; siteIndex += 1) {
           await siteButtons.nth(siteIndex).click();
         }
       }
+      expect(visitedSitesTab, `la ficha tiene la pestaña «${SITES_TAB}»`).toBe(true);
 
       await expect(page.locator('button a[href^="tel:"]'), 'ningún enlace tel: dentro de un botón').toHaveCount(0);
       await capture(page, `doctor-my-account-tabs-${variant}`);
@@ -321,13 +337,15 @@ test.describe('Correcciones del médico · perfil y menú', () => {
 
       // Foco con teclado: desde el salto al contenido, hasta el primer destino del menú.
       await page.locator('.shell__skip-link').focus();
-      for (let step = 0; step < 12; step += 1) {
+      let onNavLink = false;
+      for (let step = 0; step < 12 && !onNavLink; step += 1) {
         await page.keyboard.press('Tab');
-        const onNavLink = await page.evaluate(
+        onNavLink = await page.evaluate(
           () => document.activeElement?.matches('#app-side-nav [data-testid="nav-enlace"]') ?? false,
         );
-        if (onNavLink) break;
       }
+      // Sin esto, doce Tab que no llegan al menú medirían el anillo de otro control.
+      expect(onNavLink, 'el foco quedó en un enlace del menú').toBe(true);
       const focusRing = await page.evaluate(() => {
         const focused = document.activeElement;
         return focused instanceof HTMLElement && focused.matches(':focus-visible')
