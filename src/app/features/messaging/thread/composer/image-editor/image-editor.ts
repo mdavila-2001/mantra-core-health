@@ -35,6 +35,7 @@ import {
   type Size,
   sizeAfter,
 } from './image-edit';
+import { LoadingState } from '../../../../../shared/components/molecules/loading-state/loading-state';
 
 export type EditorTool = 'crop' | 'draw' | 'text';
 
@@ -109,7 +110,7 @@ function releaseCanvas(canvas: HTMLCanvasElement): void {
  */
 @Component({
   selector: 'app-image-editor',
-  imports: [AppButton, NgTemplateOutlet, Tooltip],
+  imports: [AppButton, NgTemplateOutlet, Tooltip, LoadingState],
   templateUrl: './image-editor.html',
   styleUrl: './image-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

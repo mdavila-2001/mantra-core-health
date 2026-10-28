@@ -64,7 +64,7 @@
     }
 
     @if (reading()) {
-      <p class="bulk__note" role="status">Revisando el archivo…</p>
+      <app-loading-state class="bulk__note" message="Revisando el archivo…" />
     }
 
     @if (fileError(); as message) {

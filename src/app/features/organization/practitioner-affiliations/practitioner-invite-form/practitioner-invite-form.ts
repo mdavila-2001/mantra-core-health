@@ -12,6 +12,7 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántos médicos se ofrecen en el selector: el contrato no trae una búsqueda propia. */
 const PRACTITIONERS_LIMIT = 100;
@@ -26,7 +27,7 @@ const PRACTITIONERS_LIMIT = 100;
  */
 @Component({
   selector: 'app-practitioner-invite-form',
-  imports: [Alert, AppButton, Checkbox, FormField, Select],
+  imports: [Alert, AppButton, Checkbox, FormField, Select, LoadingState],
   templateUrl: './practitioner-invite-form.html',
   styleUrl: './practitioner-invite-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

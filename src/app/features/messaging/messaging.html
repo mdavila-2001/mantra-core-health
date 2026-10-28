@@ -3,7 +3,7 @@
 }
 
 @if (!store.perfilResuelto()) {
-  <p class="mensajeria__cargando" role="status">Cargando sus conversaciones…</p>
+  <app-loading-state class="mensajeria__cargando" message="Cargando sus conversaciones…" />
 } @else if (store.perfil() === null) {
   <!-- Una puerta, no un error: la mensajería necesita el perfil público de
        `community`, que es una entidad aparte del perfil de paciente del token. -->

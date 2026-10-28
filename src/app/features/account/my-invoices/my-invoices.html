@@ -104,7 +104,7 @@
     (closed)="cerrar()"
   >
     @if (cargandoFactura()) {
-      <p class="mis-facturas__secundario">Leyendo la factura…</p>
+      <app-loading-state class="mis-facturas__secundario" message="Leyendo la factura…" />
     } @else if (errorDeFactura(); as error) {
       <app-alert tone="error" title="No pudimos abrir la factura">{{ error }}</app-alert>
     } @else if (factura(); as f) {

@@ -122,7 +122,10 @@
   }
   @default {
     <section class="organizacion-medica__ambito" aria-busy="true">
-      <p class="organizacion-medica__cargando">Cargando la organización…</p>
+      <app-loading-state
+        class="organizacion-medica__cargando"
+        message="Cargando la organización…"
+      />
     </section>
   }
 }

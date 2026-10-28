@@ -3,7 +3,7 @@
 
   @switch (coberturas().status) {
     @case ('loading') {
-      <p class="cq__secundario" role="status">Buscando el seguro de la persona…</p>
+      <app-loading-state class="cq__secundario" message="Buscando el seguro de la persona…" />
     }
     @case ('empty') {
       <app-alert tone="info" title="Sin seguro vigente">
