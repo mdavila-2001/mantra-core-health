@@ -3,27 +3,29 @@
      expediente avisa arriba qué se exporta desde esta vista. -->
 <div class="recorrido" data-testid="expediente-recorrido" data-pdf-ignore>
   <!-- La leyenda va arriba y no al pie: sin ella, los colores y las dos clases
-       de línea son un código que hay que adivinar. -->
-  <div class="recorrido__barra">
-    <ul class="recorrido__leyenda" aria-label="Qué significa cada marca">
-      <li class="recorrido__leyenda-item">
-        <svg class="recorrido__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
-          <path class="recorrido__arista recorrido__arista--atencion" d="M 1 4 H 27" />
-        </svg>
-        Se decidió en esa atención
-      </li>
-      @if (hayIndicaciones()) {
+       de línea son un código que hay que adivinar. Sólo en horizontal: en
+       vertical no hay líneas que explicar (la indicación va en texto) ni
+       extremos a los que saltar. -->
+  @if (!angosto()) {
+    <div class="recorrido__barra">
+      <ul class="recorrido__leyenda" aria-label="Qué significa cada marca">
         <li class="recorrido__leyenda-item">
           <svg class="recorrido__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
-            <path class="recorrido__arista recorrido__arista--indicacion" d="M 1 4 H 25" />
-            <path class="recorrido__punta" d="M 22 1 L 27 4 L 22 7 Z" />
+            <path class="recorrido__arista recorrido__arista--atencion" d="M 1 4 H 27" />
           </svg>
-          Se indicó para ese diagnóstico
+          Se decidió en esa atención
         </li>
-      }
-    </ul>
+        @if (hayIndicaciones()) {
+          <li class="recorrido__leyenda-item">
+            <svg class="recorrido__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
+              <path class="recorrido__arista recorrido__arista--indicacion" d="M 1 4 H 25" />
+              <path class="recorrido__punta" d="M 22 1 L 27 4 L 22 7 Z" />
+            </svg>
+            Se indicó para ese diagnóstico
+          </li>
+        }
+      </ul>
 
-    @if (!angosto()) {
       <div class="recorrido__saltos">
         <button app-button variant="ghost" size="sm" type="button" (clicked)="irA('inicio')">
           <app-nav-icon name="arrow-left" />
@@ -34,8 +36,8 @@
           <app-nav-icon name="arrow-right" />
         </button>
       </div>
-    }
-  </div>
+    </div>
+  }
 
   @if (angosto()) {
     <!-- En el teléfono el tiempo corre hacia abajo y lo más reciente va
@@ -221,13 +223,17 @@
     </span>
     <span class="recorrido__nodo-pie">
       @if (nodo.estado !== '') {
-        <span class="recorrido__nodo-estado">{{ nodo.estado }}</span>
+        <span [class]="'recorrido__nodo-estado tono--' + (nodo.tonoDelEstado ?? 'info')">{{
+          nodo.estado
+        }}</span>
       }
       <!-- La fecha propia, cuando no es la de la columna: un diagnóstico que
            empezó hace un año se decidió hoy, y la tarjeta tiene que decir las
            dos cosas para no afirmar una cronología falsa. -->
       @if (fechaPropia(nodo, columna); as propia) {
-        <span class="recorrido__nodo-fecha">{{ propia.rotulo }} {{ propia.fecha | date: 'd MMM y' }}</span>
+        <span class="recorrido__nodo-fecha" [attr.title]="propia.rotulo + ' ' + (propia.fecha | date: 'd MMMM y')"
+          >{{ propia.rotulo }} {{ propia.fecha | date: propia.formato }}</span
+        >
       }
       @if (nodo.grupo || nodo.secundario !== '') {
         <span class="recorrido__nodo-secundario">{{ nodo.secundario }}</span>
