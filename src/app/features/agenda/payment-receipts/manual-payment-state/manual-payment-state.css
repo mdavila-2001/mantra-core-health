@@ -30,3 +30,22 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
+
+.manual-payment__amount {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.manual-payment__amount-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.manual-payment__saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-primary);
+}
