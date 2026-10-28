@@ -1,0 +1,25 @@
+escritorio 1 inicio: Su médico de cabecera Todavía no eligió un médico de cabecera. Su médico de cabecera es el profesional de confianza que sigue su salud de cerca. Puede cambiarlo o quitarlo cuando quiera. Buscar en la guía de médicos
+escritorio 2 ficha: Médico de cabecera Su médico de cabecera es el profesional de confianza que sigue su salud de cerca. Puede cambiarlo o quitarlo cuando quiera. Elegir como mi médico de cabecera
+escritorio 3 PUT 200 {"current":{"practitionerProfileId":"fda61e08-7e59-491e-bd63-a3d93053a58f","displayName":"Carla Gutiérrez","professionalTitle":null,"since":"2026-10-28T04:21:48.816Z"}}
+escritorio 3 aviso: Listo: Carla Gutiérrez es ahora su médico de cabecera.
+escritorio 4 DB: Ana Pérez -> Carla Gutiérrez vigente=true
+escritorio 5 tras recargar: Es su médico de cabecera desde el 28 de octubre de 2026.
+escritorio 6 inicio: Su médico de cabecera Carla Gutiérrez Desde el 28 de octubre de 2026 Ver su ficha
+escritorio 7 ficha de otro: Hoy su médico de cabecera es Carla Gutiérrez. Si elige a este profesional, lo reemplaza.
+escritorio 7 DB tras cambiar: Carla Gutiérrez vigente=false | Jorge Vargas vigente=true
+escritorio 8 quitado, aviso: Listo: ya no tiene médico de cabecera.
+escritorio 8 DB vigentes: 0
+movil 1 inicio: Su médico de cabecera Todavía no eligió un médico de cabecera. Su médico de cabecera es el profesional de confianza que sigue su salud de cerca. Puede cambiarlo o quitarlo cuando quiera. Buscar en la guía de médicos
+movil 2 ficha: Médico de cabecera Su médico de cabecera es el profesional de confianza que sigue su salud de cerca. Puede cambiarlo o quitarlo cuando quiera. Elegir como mi médico de cabecera
+movil 3 PUT 200 {"current":{"practitionerProfileId":"fda61e08-7e59-491e-bd63-a3d93053a58f","displayName":"Carla Gutiérrez","professionalTitle":null,"since":"2026-10-28T04:21:56.253Z"}}
+movil 3 aviso: Listo: Carla Gutiérrez es ahora su médico de cabecera.
+movil 4 DB: Ana Pérez -> Carla Gutiérrez vigente=true
+movil 5 tras recargar: Es su médico de cabecera desde el 28 de octubre de 2026.
+movil 6 inicio: Su médico de cabecera Carla Gutiérrez Desde el 28 de octubre de 2026 Ver su ficha
+movil 7 ficha de otro: Hoy su médico de cabecera es Carla Gutiérrez. Si elige a este profesional, lo reemplaza.
+movil 7 DB tras cambiar: Carla Gutiérrez vigente=false | Jorge Vargas vigente=true
+escritorio medico Jorge: 1 paciente lo tiene como médico de cabecera. | Pacientes que lo eligieron como médico de cabecera PACIENTE LO ELIGIÓ EL CÓDIGO DE PACIENTE Ana Pérez 28 de octubre de 2026 PAT-ca6d9d84-64f8-4718-9d4b-1170961f628a
+menú del médico tiene «Mis pacientes de cabecera»: 1
+movil medico Jorge: 1 paciente lo tiene como médico de cabecera. | Pacientes que lo eligieron como médico de cabecera PACIENTE LO ELIGIÓ EL Ver el detalle de la fila Ana Pérez 28 de octubre de 2026 ▼
+medico Carla: vacío con acción 1
+errores de consola/HTTP del flujo: ninguno

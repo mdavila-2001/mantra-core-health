@@ -1,0 +1,36 @@
+<app-page-header
+  title="Mis pacientes de cabecera"
+  subtitle="Los pacientes que lo eligieron como su médico de cabecera y desde cuándo."
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (pagina()) {
+    <p class="cabecera__resumen" data-testid="pacientes-cabecera-total">{{ resumen() }}</p>
+
+    <app-data-table
+      data-testid="pacientes-cabecera-tabla"
+      [state]="filas()"
+      [columns]="columnas"
+      [trackBy]="porId"
+      [rowLabel]="nombreDeFila"
+      caption="Pacientes que lo eligieron como médico de cabecera"
+      (retry)="retry()"
+    />
+
+    @if (hayAnterior() || haySiguiente()) {
+      <nav class="cabecera__paginas" aria-label="Páginas de pacientes">
+        <button app-button variant="outline" size="sm" type="button" [disabled]="!hayAnterior()" (clicked)="anterior()">
+          Anteriores
+        </button>
+        <button app-button variant="outline" size="sm" type="button" [disabled]="!haySiguiente()" (clicked)="siguiente()">
+          Siguientes
+        </button>
+      </nav>
+    }
+
+    <p class="cabecera__nota">
+      Que un paciente lo elija como médico de cabecera no le da acceso a su historia clínica: ese acceso
+      sigue dependiendo de su consentimiento.
+    </p>
+  }
+</app-view-state-host>

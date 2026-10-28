@@ -138,6 +138,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>
     import('./features/clinical-record/clinical-record').then((m) => m.ClinicalRecord),
+  'my-primary-patients': () =>
+    import('./features/primary-practitioner/my-primary-patients/my-primary-patients').then(
+      (m) => m.MyPrimaryPatients,
+    ),
   'administration/users': () =>
     import('./features/admin/user-registration/user-registration').then((m) => m.UserRegistration),
   'administration/patients': () =>

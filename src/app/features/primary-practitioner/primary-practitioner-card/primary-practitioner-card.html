@@ -1,0 +1,53 @@
+@if (fase() !== 'oculto') {
+  <app-card variant="outlined" padding="md" class="mi-cabecera" data-testid="mi-salud-cabecera">
+    <div class="mi-cabecera__fila">
+      <span class="mi-cabecera__icono" aria-hidden="true">
+        <app-nav-icon name="heart" />
+      </span>
+
+      <div class="mi-cabecera__texto">
+        <h2 class="mi-cabecera__rotulo">Su médico de cabecera</h2>
+        @switch (fase()) {
+          @case ('cargando') {
+            <p class="mi-cabecera__dato mi-cabecera__dato--vacio">Consultando…</p>
+          }
+          @case ('error') {
+            <p class="mi-cabecera__dato mi-cabecera__dato--vacio" role="alert">{{ copy.errorAlLeer }}</p>
+          }
+          @default {
+            @if (medico(); as m) {
+              <p class="mi-cabecera__dato" data-testid="mi-salud-cabecera-nombre">
+                <strong>{{ nombreDe(m) }}</strong>
+                @if (m.professionalTitle) {
+                  · {{ m.professionalTitle }}
+                }
+              </p>
+              <p class="mi-cabecera__desde">Desde el {{ m.since | date: "d 'de' MMMM 'de' y" }}</p>
+            } @else {
+              <p class="mi-cabecera__dato" data-testid="mi-salud-cabecera-vacio">{{ copy.sinMedico }}</p>
+              <p class="mi-cabecera__desde">{{ copy.queEs }}</p>
+            }
+          }
+        }
+      </div>
+
+      @if (fase() === 'error') {
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="cargar()">{{ copy.reintentar }}</button>
+      } @else if (fase() === 'listo') {
+        @if (medico(); as m) {
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="mi-salud-cabecera-ficha"
+            [routerLink]="['/directory', m.practitionerProfileId]"
+          >{{ copy.verFicha }}</a>
+        } @else {
+          <a app-button variant="primary" size="sm" data-testid="mi-salud-cabecera-buscar" routerLink="/directory">
+            {{ copy.buscar }}
+          </a>
+        }
+      }
+    </div>
+  </app-card>
+}
