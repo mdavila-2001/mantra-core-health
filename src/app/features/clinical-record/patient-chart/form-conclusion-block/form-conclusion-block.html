@@ -6,9 +6,9 @@
   </p>
 
   <!-- ─── Las sugerencias ───────────────────────────────────────────────────
-       Cinco estados, cada uno con su frase: sin respuestas no hay qué
-       preguntar; mientras viaja se dice; sin servicio se dice y se sigue a
-       mano; sin sugerencias se dice; con datos, la lista y el disclaimer. -->
+       Sin respuestas no hay qué preguntar; mientras viaja se dice; sin
+       sugerencias se dice; con datos, la lista y el disclaimer. Sin servicio
+       no se muestra aviso (pedido del cliente, 28/10/2026): se sigue a mano. -->
   @if (!hayRespuestas()) {
     <p class="cierre__estado" data-testid="cierre-sin-respuestas">
       Responda la ficha y acá aparecen las sugerencias.
@@ -17,11 +17,6 @@
     <p class="cierre__estado" role="status" data-testid="cierre-cargando">
       Pidiendo sugerencias a la IA…
     </p>
-  } @else if (sinServicio()) {
-    <app-alert tone="info" title="La IA no está disponible" data-testid="cierre-sin-servicio">
-      No pudimos pedir sugerencias ahora. Elija el diagnóstico y la orden a mano; la ficha se
-      completa igual.
-    </app-alert>
   } @else if (sinSugerencias()) {
     <p class="cierre__estado" data-testid="cierre-vacio">
       Sin sugerencias para estas respuestas. Elija a mano si corresponde.
