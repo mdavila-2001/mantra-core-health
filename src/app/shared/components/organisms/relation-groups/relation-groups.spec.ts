@@ -28,14 +28,16 @@ const COLUMNAS: readonly RelationColumnView[] = [
       tone="findings"
       [columns]="columnas"
       [navigation]="navegacion()"
+      [spread]="extendido()"
       emptyColumnText="Sin estudios."
       (neighborSelected)="elegidos.push($event)"
     />
   `,
 })
 class Anfitrion {
-  readonly columnas = COLUMNAS;
   readonly navegacion = signal<RelationNavigation>('link');
+  readonly extendido = signal(false);
+  readonly columnas: readonly RelationColumnView[] = COLUMNAS;
   readonly elegidos: string[] = [];
 }
 
@@ -47,7 +49,34 @@ function montar(navegacion: RelationNavigation) {
   return { fixture, host: fixture.nativeElement as HTMLElement };
 }
 
+function vecinos(n: number): RelationColumnView['items'] {
+  return Array.from({ length: n }, (_, i) => ({ conceptId: `d-${i}`, slug: `d-${i}`, display: `Enfermedad ${i}`, category: null }));
+}
+
 describe('RelationGroups', () => {
+  it('en modo `spread`, la columna larga (más de seis vecinos) se marca para ocupar la fila', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    const fixture = TestBed.createComponent(Anfitrion);
+    Object.assign(fixture.componentInstance, {
+      columnas: [
+        { key: 'diseases', title: 'Enfermedades que estudia', count: null, items: vecinos(8) },
+        { key: 'specialties', title: 'Especialidades', count: 1, items: vecinos(1) },
+      ],
+    });
+    fixture.componentInstance.extendido.set(true);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('app-relation-groups')?.classList).toContain('relation-groups--spread');
+    const largas = [...host.querySelectorAll('.relation-groups__group--long')].map((g) => g.getAttribute('aria-labelledby'));
+    expect(largas).toEqual(['zona-diseases']);
+  });
+
+  it('sin `spread` el bloque no cambia de disposición', () => {
+    const { host } = montar('link');
+    expect(host.querySelector('app-relation-groups')?.classList).not.toContain('relation-groups--spread');
+  });
+
   it('titula el bloque y cada columna, enlazados por id para el lector de pantalla', () => {
     const { host } = montar('link');
 
