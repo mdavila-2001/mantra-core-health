@@ -40,6 +40,20 @@
         }}</app-alert>
       }
 
+      <!-- Un selector por documento; sube de verdad y guarda el `fileId`. -->
+      <ng-template #bloqueDocumento let-clave>
+        <app-dropzone-pdf
+          [uploader]="subirDocumento"
+          [label]="etiquetaDeDocumento(clave)"
+          [required]="esDocumentoObligatorio(clave)"
+          [hasError]="esDocumentoInvalido(clave)"
+          [testId]="'medical-center-signup-doc-' + clave"
+          [documentoInicial]="documentoInicialDe(clave)"
+          (fileIdChange)="registrarDocumento(clave, $event)"
+          (uploaded)="recordarDocumento(clave, $event)"
+        />
+      </ng-template>
+
       <div class="registro__body">
         <app-paginated-form
           [paginas]="paginas()"
@@ -49,7 +63,13 @@
           [pending]="isSubmitting()"
           (enviado)="submit()"
           data-testid="medical-center-signup-form"
-        />
+        >
+          @for (clave of clavesDeDocumento; track clave) {
+            <ng-template [appCampoPersonalizado]="clave">
+              <ng-container [ngTemplateOutlet]="bloqueDocumento" [ngTemplateOutletContext]="{ $implicit: clave }" />
+            </ng-template>
+          }
+        </app-paginated-form>
       </div>
 
       <div class="registro__footer">

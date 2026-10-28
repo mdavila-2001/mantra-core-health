@@ -507,6 +507,7 @@ export class RegisterOrganization {
         clave: 'documentos-legales',
         icon: 'folder' as const,
         hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
+        sinPartir: true,
         campos: legalDocumentsFields(this.incorporationCountryElegido(), uiLanguage()),
       },
       {

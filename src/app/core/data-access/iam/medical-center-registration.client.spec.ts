@@ -13,6 +13,13 @@ const REGISTRATION: MedicalCenterRegistration = {
   tenantType: 'HOSPITAL',
   legalName: 'Centro Médico Norte S.R.L.',
   legalEntityType: 'SRL',
+  legalDocuments: {
+    constitutionFileId: 'f-constitucion',
+    taxIdentifierFileId: 'f-nit',
+    commerceRegistryFileId: 'f-matricula',
+    operatingLicenseFileId: 'f-licencia',
+    healthAuthorityCertificateFileId: 'f-sedes',
+  },
   countryConceptId: 'c-bo',
   jurisdictionConceptId: 'j-nac',
   owner: { email: 'marta@centro.test', password: 'S3cret-passw0rd', displayName: 'Marta Rojas' },
@@ -38,7 +45,7 @@ describe('MedicalCenterRegistrationClient', () => {
     req.flush({});
   });
 
-  it('envía el tipo, el país y la jurisdicción a register-organization', () => {
+  it('envía el tipo, los documentos, el país y la jurisdicción a register-organization', () => {
     client.register(REGISTRATION).subscribe();
 
     const req = http.expectOne((r) => r.url === '/iam/auth/register-organization');
@@ -49,12 +56,26 @@ describe('MedicalCenterRegistrationClient', () => {
         legalName: 'Centro Médico Norte S.R.L.',
         legalEntityType: 'SRL',
         tenantType: 'HOSPITAL',
+        legalDocuments: REGISTRATION.legalDocuments,
         countryConceptId: 'c-bo',
         jurisdictionConceptId: 'j-nac',
       },
       owner: { email: 'marta@centro.test', password: 'S3cret-passw0rd', displayName: 'Marta Rojas' },
     });
     req.flush({ tenantId: 't-1', code: 'CENTRO-NORTE', ownerUserId: 'u-1', status: 'p', emailVerificationSent: true });
+  });
+
+  it('no manda la escritura ni la matrícula si no las hay', () => {
+    const { constitutionFileId: _c, commerceRegistryFileId: _m, ...resto } = REGISTRATION.legalDocuments;
+    client.register({ ...REGISTRATION, legalDocuments: resto }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/iam/auth/register-organization');
+    expect(req.request.body.organization.legalDocuments).toEqual({
+      taxIdentifierFileId: 'f-nit',
+      operatingLicenseFileId: 'f-licencia',
+      healthAuthorityCertificateFileId: 'f-sedes',
+    });
+    req.flush({});
   });
 
   it('manda el nombre comercial sólo si lo hay', () => {
