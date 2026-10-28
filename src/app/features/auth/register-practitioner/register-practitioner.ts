@@ -1,5 +1,8 @@
 import { environment } from '../../../../environments/environment';
 import {
+  AYUDA_LUGARES,
+  lugaresDelAlta,
+  lugaresDelBorrador,
   WorkplacePicker,
   type ChosenInstitution,
 } from '../shared-registration/workplace-picker/workplace-picker';
@@ -590,20 +593,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
         'Son los datos por los que le ubican en el trabajo, no los de su acceso. Puede dejarlos vacíos y cargarlos después desde su perfil.',
     },
   ],
-  workplaces: [
-    {
-      icono: 'shield',
-      titulo: 'El sello lo pone la otra parte',
-      texto:
-        'Elegir una clínica o un seguro no le acredita: le enviamos el pedido y cada uno lo confirma. Hasta entonces figura como pendiente.',
-    },
-    {
-      icono: 'building',
-      titulo: 'Lo sigue en «Mis verificaciones»',
-      texto:
-        'Ahí ve cada pedido como una conversación: cuándo lo envió, si lo aprobaron y, si lo rechazaron, por qué.',
-    },
-  ],
+  workplaces: AYUDA_LUGARES,
   practice: [
     {
       icono: 'stethoscope',
@@ -2693,15 +2683,16 @@ export class RegisterPractitioner {
       if (extra['gpsConsultorio'] !== undefined) {
         this.gpsConsultorio.set(extra['gpsConsultorio'] as Coordinates | null);
       }
-      if (Array.isArray(extra['institucionesElegidas'])) {
-        this.institucionesElegidas.set(
-          extra['institucionesElegidas'] as readonly ChosenInstitution[],
-        );
-      }
-      if (Array.isArray(extra['aseguradorasElegidas'])) {
-        this.aseguradorasElegidas.set(extra['aseguradorasElegidas'] as readonly string[]);
-      }
-      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+      const lugares = lugaresDelBorrador(extra);
+      this.institucionesElegidas.set(lugares.institutions);
+      this.aseguradorasElegidas.set(lugares.insurerIds);
+      // Por la clave de la página, no por su número: sumar una página (como
+      // «workplaces», 28/10/2026) corre los números y un borrador viejo
+      // retomaría una página antes. El número queda para los sin clave.
+      const porClave = this.paginasProfesional().findIndex((p) => p.clave === draft.stepKey);
+      if (porClave >= 0) {
+        this.pasoGuardado.set(porClave);
+      } else if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
         this.pasoGuardado.set(draft.stepIndex);
       }
       this.borradorDetectado.set(null);
@@ -3343,14 +3334,7 @@ export class RegisterPractitioner {
       ...(this.credencialesDeclaradas().length === 0
         ? {}
         : { credentials: this.credencialesDeclaradas() }),
-      // Dónde dice trabajar (28/10/2026). Cada una nace pendiente de que la
-      // otra parte la confirme; el alta no da por cierto ningún vínculo.
-      ...(this.institucionesElegidas().length === 0
-        ? {}
-        : { institutionSlugs: this.institucionesElegidas().map((i) => i.slug) }),
-      ...(this.aseguradorasElegidas().length === 0
-        ? {}
-        : { insurerCarrierIds: this.aseguradorasElegidas() }),
+      ...lugaresDelAlta(this.institucionesElegidas(), this.aseguradorasElegidas()),
     };
   }
 

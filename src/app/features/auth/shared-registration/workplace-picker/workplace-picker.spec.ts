@@ -85,7 +85,7 @@ describe('WorkplacePicker', () => {
     expect(opciones.map((o) => o.label)).toEqual(['Seguros Andina', 'CNS (seguro público)']);
   });
 
-  it('elegir una institución la suma con su sello y el aviso de que el vínculo se confirmará', () => {
+  it('elegir una institución la suma con su sello y el aviso de que el vínculo todavía no está confirmado', () => {
     montar();
     http.expectOne('/insurance-carrier-catalog').flush(CATALOGO);
     buscarYElegir();
@@ -95,7 +95,7 @@ describe('WorkplacePicker', () => {
     ]);
     const fila = porTestId('registro-pro-institucion-clinica-foianini')!;
     expect(fila.textContent).toContain('Institución verificada');
-    expect(fila.textContent).toContain('se pedirá confirmación');
+    expect(fila.textContent).toContain('sin confirmar todavía');
   });
 
   it('la ya elegida no se vuelve a ofrecer ni se duplica', () => {
@@ -134,6 +134,25 @@ describe('WorkplacePicker', () => {
 
     expect(porTestId('registro-pro-seguros-error')).toBeNull();
     expect(porTestId('registro-pro-seguros')).not.toBeNull();
+  });
+
+  it('una búsqueda nueva cancela la anterior: una respuesta vieja no pisa la vigente', () => {
+    montar();
+    http.expectOne('/insurance-carrier-catalog').flush(CATALOGO);
+
+    interno<(q: string) => void>('buscar')('cl');
+    const vieja = http.expectOne((r) => r.url === '/public/search/organizations');
+    interno<(q: string) => void>('buscar')('clínica foi');
+    const vigente = http.expectOne(
+      (r) => r.url === '/public/search/organizations' && r.params.get('q') === 'clínica foi',
+    );
+    expect(vieja.cancelled).toBe(true);
+
+    vigente.flush({ items: [RESULTADO], nextCursor: null });
+    expect(interno<() => readonly { value: string }[]>('opciones')().map((o) => o.value)).toEqual(
+      ['clinica-foianini'],
+    );
+    expect(interno<() => boolean>('buscando')()).toBe(false);
   });
 
   it('una búsqueda caída avisa sin borrar lo ya elegido', () => {

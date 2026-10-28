@@ -54,6 +54,11 @@
   background: var(--info-bg);
 }
 
+/* El avatar es del mismo tono que la fila elegida: sin esto se perdía el círculo. */
+.verif__conversacion.is-abierta .verif__avatar {
+  background: var(--sup-tarjeta);
+}
+
 .verif__conversacion:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 3px var(--anillo-foco);

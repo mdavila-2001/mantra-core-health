@@ -19,19 +19,24 @@
       >
         <!-- ─── Hoja de ruta ─────────────────────────────────────────── -->
         <app-tab [label]="pestanas[0]">
-          <p class="verif__resumen" role="status" data-testid="verif-resumen">
-            <strong>{{ verificados() }} de {{ pasos().length }}</strong> tramos con sello.
+          <div class="verif__resumen" data-testid="verif-resumen">
+            <!-- Una sola frase: como ítems sueltos del flex se partía en tres renglones. -->
+            <p class="verif__resumen-texto">
+              <strong>{{ verificados() }} de {{ pasos().length }}</strong> tramos con sello.
+              @if (pendientes() > 0) {
+                Tiene {{ pendientes() }}
+                {{
+                  pendientes() === 1
+                    ? 'solicitud esperando respuesta'
+                    : 'solicitudes esperando respuesta'
+                }}.
+              }
+            </p>
             @if (pendientes() > 0) {
-              Tiene {{ pendientes() }}
-              {{
-                pendientes() === 1
-                  ? 'solicitud esperando respuesta'
-                  : 'solicitudes esperando respuesta'
-              }}.
               <button
                 app-button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 data-testid="verif-ir-bandeja"
                 (clicked)="irABandeja()"
@@ -39,9 +44,7 @@
                 Ver solicitudes
               </button>
             }
-          </p>
-
-          <app-stepper [steps]="indicador()" label="Su verificación" [compact]="true" />
+          </div>
 
           <ol class="verif__ruta" aria-label="Tramos de su verificación">
             @for (paso of pasos(); track paso.key; let i = $index) {
@@ -60,11 +63,11 @@
                         <span class="verif__opcional">Opcional</span>
                       }
                     </h2>
-                    @if (paso.state === 'not-started') {
-                      <span class="verif__sin-cargar">{{ paso.stateLabel }}</span>
-                    } @else {
-                      <app-status-seal [variant]="paso.state" [label]="paso.stateLabel" />
-                    }
+                    <!-- «Sin cargar» también es un sello: un solo modo de decir el estado. -->
+                    <app-status-seal
+                      [variant]="paso.state === 'not-started' ? 'unknown' : paso.state"
+                      [label]="paso.stateLabel"
+                    />
                   </div>
                   <p class="verif__tramo-detalle">{{ paso.detail }}</p>
                   @if (paso.action; as accion) {
@@ -86,17 +89,29 @@
             }}</app-alert>
           }
 
+          @if (segurosIlegibles()) {
+            <app-alert tone="warning" data-testid="verif-seguros-error">
+              No pudimos leer sus solicitudes a aseguradoras; las de instituciones se ven abajo.
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                size="sm"
+                data-testid="verif-seguros-reintentar"
+                (clicked)="cargar()"
+              >
+                Reintentar
+              </button>
+            </app-alert>
+          }
+
           <div class="verif__nueva" data-testid="verif-nueva-aseguradora">
-            <app-form-field
-              class="verif__nueva-campo"
-              label="Pedir trabajar con otra aseguradora"
-              hint="La aseguradora recibe su solicitud y la confirma o la rechaza."
-            >
+            <app-form-field class="verif__nueva-campo" label="Pedir trabajar con otra aseguradora">
               <app-select
                 ariaLabel="Aseguradora"
                 placeholder="Elija una aseguradora"
                 [options]="aseguradorasDisponibles()"
-                [disabled]="aseguradorasDisponibles().length === 0 || enviando()"
+                [disabled]="sinAseguradoras() !== null || enviando()"
                 [value]="aseguradoraNueva()"
                 (valueChange)="aseguradoraNueva.set($event)"
               />
@@ -112,8 +127,15 @@
               Enviar solicitud
             </button>
           </div>
+          <!-- Fuera del campo para que el botón se alinee con el selector. -->
+          <p class="verif__nueva-ayuda" data-testid="verif-nueva-ayuda">
+            {{
+              sinAseguradoras() ??
+                'Elija una aseguradora y envíe: ella recibe su solicitud y la confirma o la rechaza.'
+            }}
+          </p>
 
-          @if (hilos().length === 0) {
+          @if (hilos().length === 0 && !segurosIlegibles()) {
             <app-empty-state
               title="Todavía no envió ninguna solicitud"
               description="Pida trabajar con una aseguradora con el campo de arriba, o declare la institución donde atiende desde su perfil."

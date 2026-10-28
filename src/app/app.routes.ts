@@ -53,6 +53,13 @@ import {
   type AppSection,
 } from './core/navigation/navigation.types';
 
+/**
+ * Secciones de «Mi cuenta» que sólo tienen sentido para quien atiende. El
+ * registro las declara `ANY_ROLE` —«Mi cuenta» es autoservicio y no admite
+ * roles de gestión—, así que la restricción va en la ruta, como `my-account/edit`.
+ */
+const SECCIONES_DE_QUIEN_ATIENDE: ReadonlySet<string> = new Set(['my-account/verifications']);
+
 /** La declaración que cierra una hija de «Mi perfil» a quien atiende. */
 function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
   return {
@@ -1275,7 +1282,12 @@ function rutasDeSecciones(): Routes {
         : {}),
       // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
       // saber cuál de todas es.
-      data: { [SECTION_ROUTE_DATA]: section },
+      data: {
+        [SECTION_ROUTE_DATA]: section,
+        ...(SECCIONES_DE_QUIEN_ATIENDE.has(section.path)
+          ? { [ROLES_ROUTE_DATA]: ROLES_DE_QUIEN_ATIENDE }
+          : {}),
+      },
       ...componenteDe(section),
     };
     if (section.path !== 'my-account') {

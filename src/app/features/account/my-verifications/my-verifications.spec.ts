@@ -98,7 +98,10 @@ describe('MyVerifications', () => {
     fixture.detectChanges();
   }
 
-  function responder(seguros: typeof SEGUROS | 'error' = SEGUROS): void {
+  function responder(
+    seguros: typeof SEGUROS | 'error' = SEGUROS,
+    catalogo: typeof CATALOGO | 'error' = CATALOGO,
+  ): void {
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL);
     for (const r of http.match((req) => req.url === '/terminology/concepts')) {
       r.flush({
@@ -120,8 +123,22 @@ describe('MyVerifications', () => {
     } else {
       pedido.flush(seguros);
     }
-    http.expectOne('/insurance-carrier-catalog').flush(CATALOGO);
+    const cat = http.expectOne('/insurance-carrier-catalog');
+    if (catalogo === 'error') {
+      cat.flush(null, { status: 503, statusText: 'Caída' });
+    } else {
+      cat.flush(catalogo);
+    }
     fixture.detectChanges();
+  }
+
+  /** El componente por dentro, para manejar el selector sin el DOM de app-select. */
+  function componente() {
+    return fixture.componentInstance as unknown as {
+      aseguradorasDisponibles(): readonly { value: string }[];
+      aseguradoraNueva: { set(v: string): void };
+      pedirAseguradora(): void;
+    };
   }
 
   function texto(): string {
@@ -159,7 +176,7 @@ describe('MyVerifications', () => {
     // La novedad más reciente arriba: la solicitud a La Vitalicia (25/10).
     expect(bandeja.querySelector('li')?.textContent).toContain('La Vitalicia');
 
-    (porTestId('verif-hilo-ins-ir-1') as HTMLButtonElement).click();
+    (porTestId('verif-hilo-ins-car-1') as HTMLButtonElement).click();
     fixture.detectChanges();
     const hilo = porTestId('verif-hilo-abierto')!;
     expect(hilo.textContent).toContain('Le pedí a Alianza Seguros');
@@ -171,7 +188,7 @@ describe('MyVerifications', () => {
     montar();
     responder();
     abrirBandeja();
-    (porTestId('verif-hilo-ins-ir-2') as HTMLButtonElement).click();
+    (porTestId('verif-hilo-ins-car-2') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     (porTestId('verif-retirar') as HTMLButtonElement).click();
@@ -230,9 +247,91 @@ describe('MyVerifications', () => {
     http
       .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'POST')
       .flush({ message: 'Ya pidió' }, { status: 409, statusText: 'Conflict' });
+    // Lo que se ve está viejo: se relee.
+    http
+      .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'GET')
+      .flush(SEGUROS);
     fixture.detectChanges();
 
     expect(porTestId('verif-aviso')?.textContent).toContain('Ya tiene una solicitud viva');
+  });
+
+  it('un 422 al retirar (la aseguradora respondió entretanto) relee y muestra la respuesta', () => {
+    montar();
+    responder();
+    abrirBandeja();
+    (porTestId('verif-hilo-ins-car-2') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (porTestId('verif-retirar') as HTMLButtonElement).click();
+    http
+      .expectOne('/practitioners/me/insurer-requests/ir-2/withdraw')
+      .flush({ message: 'ya decidida' }, { status: 422, statusText: 'Unprocessable' });
+    http.expectOne('/practitioners/me/insurer-requests').flush({
+      items: [
+        SEGUROS.items[0],
+        { ...SEGUROS.items[1], status: 'APPROVED', decidedAt: '2026-10-26T10:00:00Z' },
+      ],
+      count: 2,
+    });
+    fixture.detectChanges();
+
+    expect(porTestId('verif-aviso')?.textContent).toContain('ya respondió');
+    expect(porTestId('verif-hilo-abierto')?.textContent).toContain('confirmó');
+    expect(porTestId('verif-retirar')).toBeNull();
+  });
+
+  it('si el pedido se guardó pero la relectura falla, dice que se guardó', () => {
+    montar();
+    responder();
+    abrirBandeja();
+    componente().aseguradoraNueva.set('car-3');
+    componente().pedirAseguradora();
+    http
+      .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'POST')
+      .flush({ items: [], count: 0 }, { status: 201, statusText: 'Created' });
+    http
+      .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'GET')
+      .flush(null, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+
+    const aviso = porTestId('verif-aviso')?.textContent ?? '';
+    expect(aviso).toContain('Solicitud enviada');
+    expect(aviso).toContain('recargue la página');
+    expect(aviso).not.toContain('No pudimos enviar');
+  });
+
+  it('volver a pedir conserva el rechazo anterior en la conversación', () => {
+    montar();
+    responder();
+    abrirBandeja();
+    (porTestId('verif-hilo-ins-car-1') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (porTestId('verif-volver-a-pedir') as HTMLButtonElement).click();
+    http
+      .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'POST')
+      .flush({ items: [], count: 0 });
+    http
+      .expectOne((r) => r.url === '/practitioners/me/insurer-requests' && r.method === 'GET')
+      .flush({
+        items: [
+          {
+            ...SEGUROS.items[0],
+            id: 'ir-3',
+            status: 'PENDING',
+            decisionReasonText: null,
+            createdAt: '2026-10-27T10:00:00Z',
+            decidedAt: null,
+          },
+          ...SEGUROS.items,
+        ],
+        count: 3,
+      });
+    fixture.detectChanges();
+
+    const hilo = porTestId('verif-hilo-abierto')!.textContent ?? '';
+    expect(hilo).toContain('«Sin convenio vigente»');
+    expect(hilo).toContain('Esperando que Alianza Seguros responda');
+    expect(porTestId('verif-retirar')).not.toBeNull();
   });
 
   it('si las aseguradoras no se pueden leer, la hoja de ruta lo dice en vez de caerse', () => {
@@ -241,5 +340,24 @@ describe('MyVerifications', () => {
 
     expect(porTestId('verif-tramo-insurers')?.textContent).toContain('No pudimos leer');
     expect(texto()).toContain('Mis verificaciones');
+  });
+
+  it('y la bandeja avisa el error con reintento, no un «todavía no envió» falso', () => {
+    montar();
+    responder('error');
+    abrirBandeja();
+    expect(porTestId('verif-seguros-error')).not.toBeNull();
+    expect(porTestId('verif-seguros-reintentar')).not.toBeNull();
+    // La institución se sigue viendo; el vacío no se finge.
+    expect(texto()).not.toContain('Todavía no envió ninguna solicitud');
+  });
+
+  it('sin catálogo de aseguradoras, el campo dice por qué no se puede pedir', () => {
+    montar();
+    responder(SEGUROS, 'error');
+    abrirBandeja();
+    expect(porTestId('verif-nueva-ayuda')?.textContent).toContain(
+      'No pudimos cargar la lista de aseguradoras',
+    );
   });
 });

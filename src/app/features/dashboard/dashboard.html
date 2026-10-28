@@ -49,8 +49,17 @@
     }
   }
 
-  <!-- «Mis verificaciones» (28/10/2026): fuera del menú cerrado del médico, así
-       que el panel —lo primero que ve al entrar— es una de sus puertas. -->
+  <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
+     acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
+  <app-page-header
+    [title]="tituloDelPanel()"
+    [subtitle]="subtituloDelPanel()"
+    appTutorialTarget="panel-titulo"
+  />
+
+  <!-- Puertas a dos bandejas fuera de los menús cerrados (28/10/2026), debajo
+       del saludo para no romper la jerarquía: «Mis verificaciones» para quien
+       atiende y los profesionales que piden sumarse para la aseguradora. -->
   @if (atiendePacientes()) {
     <div class="panel__verificaciones" data-testid="panel-mis-verificaciones">
       <p class="panel__verificaciones-texto">
@@ -62,14 +71,21 @@
       </a>
     </div>
   }
-
-  <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
-     acá, y repetirlo hace que un lector de pantalla lo lea dos veces en la misma pantalla. -->
-  <app-page-header
-    [title]="tituloDelPanel()"
-    [subtitle]="subtituloDelPanel()"
-    appTutorialTarget="panel-titulo"
-  />
+  @if (veProfesionalesQuePidenSumarse()) {
+    <div class="panel__verificaciones" data-testid="panel-profesionales-que-piden">
+      <p class="panel__verificaciones-texto">
+        Los profesionales que piden trabajar con su aseguradora esperan su respuesta.
+      </p>
+      <a
+        app-button
+        variant="secondary"
+        size="sm"
+        routerLink="/administration/insurer-practitioner-requests"
+      >
+        Profesionales que piden sumarse
+      </a>
+    </div>
+  }
 
   <!-- ─── Lo que toca hoy ─────────────────────────────────────────────────
        La primera franja de quien atiende, y lo primero que se ve al entrar.

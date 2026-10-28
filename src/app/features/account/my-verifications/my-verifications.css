@@ -31,6 +31,10 @@
   color: var(--text-secondary);
 }
 
+.verif__resumen-texto {
+  margin: 0;
+}
+
 .verif__ruta {
   display: grid;
   gap: 0;
@@ -131,11 +135,6 @@
   color: var(--text-muted);
 }
 
-.verif__sin-cargar {
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
-}
-
 .verif__tramo-detalle {
   margin: 0;
   font-size: var(--fs-body);
@@ -150,7 +149,12 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--e3);
-  margin-block-end: var(--e5);
+}
+
+.verif__nueva-ayuda {
+  margin-block: var(--e2) var(--e5);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
 }
 
 .verif__nueva-campo {

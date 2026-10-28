@@ -79,9 +79,11 @@
                   }}</time>
                 }
                 @if (m.ticks === 'answered') {
-                  <span class="verif__ticks is-leido" aria-label="Respondida">✓✓</span>
+                  <span class="verif__ticks is-leido" aria-hidden="true">✓✓</span>
+                  <span class="sr-only">Respondida</span>
                 } @else if (m.ticks === 'sent') {
-                  <span class="verif__ticks" aria-label="Enviada">✓</span>
+                  <span class="verif__ticks" aria-hidden="true">✓</span>
+                  <span class="sr-only">Enviada</span>
                 }
               </span>
             }
@@ -94,7 +96,7 @@
           <button
             app-button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
             data-testid="verif-retirar"
             [disabled]="busy()"

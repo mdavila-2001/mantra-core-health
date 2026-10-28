@@ -7,7 +7,8 @@ import { Alert } from '../../shared/components/molecules/alert/alert';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
-import { rolesAlcanzan } from '../../core/navigation/navigation.types';
+import { APP_SECTIONS } from '../../core/navigation/navigation.map';
+import { isVisibleTo, rolesAlcanzan } from '../../core/navigation/navigation.types';
 import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
@@ -121,6 +122,19 @@ export class Dashboard {
    * que se quedaría siempre en el vacío.
    */
   protected readonly atiendePacientes = computed(() => this.auth.practitionerProfileId() !== null);
+
+  /**
+   * La bandeja de la aseguradora está fuera de su menú cerrado: se ofrece acá
+   * a quien la sección le es visible —el mismo filtro que el menú, por rol y
+   * por tipo de organización activa—. No autoriza: eso lo hace la API.
+   */
+  protected readonly veProfesionalesQuePidenSumarse = computed(() => {
+    const seccion = APP_SECTIONS.find((s) => s.path === 'administration/insurer-practitioner-requests');
+    return (
+      seccion !== undefined &&
+      isVisibleTo(seccion, this.auth.roles(), this.auth.tenants(), this.auth.activeTenantType())
+    );
+  });
 
   /**
    * El título saluda por el nombre, igual que el panel del paciente.

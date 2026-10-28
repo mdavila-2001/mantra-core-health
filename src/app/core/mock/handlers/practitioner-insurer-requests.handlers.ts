@@ -4,6 +4,7 @@ import {
   forbidden,
   notFound,
   preconditionFailed,
+  validation,
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
@@ -21,8 +22,9 @@ import {
  *
  * Mismo contrato que `PractitionerInsurerRequestsController` e
  * `InsurerPractitionerRequestsController`: los estados viajan como clave, una
- * fila por médico y aseguradora, lo rechazado o retirado se reabre, y la
- * aseguradora sólo ve y decide lo suyo.
+ * sola fila VIVA por médico y aseguradora —volver a pedir tras un rechazo o un
+ * retiro crea otra y la anterior queda como historia— y la aseguradora sólo ve
+ * y decide lo suyo.
  */
 
 export type EstadoDeSolicitud = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
@@ -35,7 +37,12 @@ export interface SolicitudAAseguradora {
   readonly decisionReasonText: string | null;
   readonly createdAt: string;
   readonly decidedAt: string | null;
+  /** Sólo simulador: el nombre de quien se dio de alta acá, que no está en los fixtures. */
+  readonly practitionerName?: string;
 }
+
+/** El tope por envío de la API (`insurerCarrierIds`, `carrierIds`). */
+export const MAX_ASEGURADORAS_POR_ENVIO = 20;
 
 const MEDICA = IDS.medica.practitionerProfileId;
 
@@ -111,7 +118,7 @@ function vistaRecibida(s: SolicitudAAseguradora) {
   return {
     id: s.id,
     practitionerProfileId: s.practitionerProfileId,
-    practitionerName: p?.displayName ?? null,
+    practitionerName: p?.displayName ?? s.practitionerName ?? null,
     professionalTitle: p?.professionalTitle ?? null,
     status: s.status,
     decisionReasonText: s.decisionReasonText,
@@ -124,11 +131,12 @@ function vistaRecibida(s: SolicitudAAseguradora) {
  * Pide varias aseguradoras para un profesional, con las reglas de la API.
  * Lo usa también el alta simulada (`/iam/auth/register-practitioner`).
  *
- * @returns Las creadas o reabiertas; `null` si alguna aseguradora no existe.
+ * @returns Las creadas; `null` si alguna aseguradora no existe.
  */
 export function pedirAseguradoras(
   practitionerProfileId: string,
   carrierIds: readonly string[],
+  practitionerName?: string,
 ): { pedidas: SolicitudAAseguradora[]; vivas: number } | null {
   const ids = [...new Set(carrierIds)];
   if (ids.some((id) => aseguradoraDelCatalogo(id) === undefined)) {
@@ -137,30 +145,24 @@ export function pedirAseguradoras(
   const pedidas: SolicitudAAseguradora[] = [];
   let vivas = 0;
   for (const carrierId of ids) {
-    const existente = solicitudesAAseguradoras.filtrar(
+    const delPar = solicitudesAAseguradoras.filtrar(
       (s) => s.practitionerProfileId === practitionerProfileId && s.carrierId === carrierId,
-    )[0];
-    if (
-      existente !== undefined &&
-      (existente.status === 'PENDING' || existente.status === 'APPROVED')
-    ) {
+    );
+    if (delPar.some((s) => s.status === 'PENDING' || s.status === 'APPROVED')) {
       vivas += 1;
       continue;
     }
     const fila: SolicitudAAseguradora = {
-      id: existente?.id ?? uuid(`ins-req-${practitionerProfileId}-${carrierId}`),
+      id: uuid(`ins-req-${practitionerProfileId}-${carrierId}-${delPar.length}`),
       practitionerProfileId,
       carrierId,
       status: 'PENDING',
       decisionReasonText: null,
       createdAt: ahora(),
       decidedAt: null,
+      ...(practitionerName === undefined ? {} : { practitionerName }),
     };
-    if (existente === undefined) {
-      solicitudesAAseguradoras.agregar(fila);
-    } else {
-      solicitudesAAseguradoras.actualizar(fila.id, fila);
-    }
+    solicitudesAAseguradoras.agregar(fila);
     pedidas.push(fila);
   }
   return { pedidas, vivas };
@@ -210,6 +212,9 @@ export function registerPractitionerInsurerRequests(router: MockRouter): void {
       return preconditionFailed('La cuenta no tiene un perfil profesional asociado');
     }
     const datos = cuerpo<{ carrierIds: string[] }>(request);
+    if ((datos.carrierIds ?? []).length > MAX_ASEGURADORAS_POR_ENVIO) {
+      return validation(`Hasta ${MAX_ASEGURADORAS_POR_ENVIO} aseguradoras por envío`);
+    }
     const resultado = pedirAseguradoras(hpid, datos.carrierIds ?? []);
     if (resultado === null) {
       return preconditionFailed('Alguna de las aseguradoras indicadas no existe o no está activa');
@@ -229,7 +234,10 @@ export function registerPractitionerInsurerRequests(router: MockRouter): void {
     if (fila.status !== 'PENDING') {
       return preconditionFailed('Sólo se puede retirar una solicitud pendiente', { id: fila.id });
     }
-    const retirada = solicitudesAAseguradoras.actualizar(fila.id, { status: 'WITHDRAWN' });
+    const retirada = solicitudesAAseguradoras.actualizar(fila.id, {
+      status: 'WITHDRAWN',
+      decidedAt: ahora(),
+    });
     return { status: 200, body: vistaPropia(retirada ?? fila) };
   });
 

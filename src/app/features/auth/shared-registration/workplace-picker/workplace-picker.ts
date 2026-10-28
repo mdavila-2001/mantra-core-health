@@ -3,12 +3,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   model,
   OnInit,
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+
+import type { Subscription } from 'rxjs';
 
 import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../../core/data-access/insurance/insurance.types';
@@ -39,6 +42,49 @@ export interface ChosenInstitution {
   readonly city: string | null;
   /** Si la institución misma está verificada en AloVida (su sello público). */
   readonly verified: boolean;
+}
+
+/** Las tarjetas de ayuda de la página «Dónde trabaja y con qué seguros». */
+export const AYUDA_LUGARES = [
+  {
+    icono: 'shield',
+    titulo: 'El sello lo pone la otra parte',
+    texto:
+      'Elegir una clínica o un seguro no le acredita: cada uno confirma el vínculo con su sello. Una institución sin quién confirme lo deja como declarado por usted.',
+  },
+  {
+    icono: 'building',
+    titulo: 'Lo sigue en «Mis verificaciones»',
+    texto:
+      'Ahí ve cada pedido como una conversación: cuándo lo envió, si lo aprobaron y, si lo rechazaron, por qué.',
+  },
+] as const;
+
+/** Lo elegido, recuperado del borrador del alta; lo que no tenga forma se ignora. */
+export function lugaresDelBorrador(extra: Record<string, unknown>): {
+  readonly institutions: readonly ChosenInstitution[];
+  readonly insurerIds: readonly string[];
+} {
+  const instituciones = extra['institucionesElegidas'];
+  const aseguradoras = extra['aseguradorasElegidas'];
+  return {
+    institutions: Array.isArray(instituciones) ? (instituciones as ChosenInstitution[]) : [],
+    insurerIds: Array.isArray(aseguradoras) ? (aseguradoras as string[]) : [],
+  };
+}
+
+/**
+ * Lo que viaja en el alta. Cada vínculo nace pendiente de que la otra parte lo
+ * confirme; el alta no da por cierto ninguno. Sin elección, no viaja nada.
+ */
+export function lugaresDelAlta(
+  institutions: readonly ChosenInstitution[],
+  insurerIds: readonly string[],
+): { institutionSlugs?: string[]; insurerCarrierIds?: string[] } {
+  return {
+    ...(institutions.length === 0 ? {} : { institutionSlugs: institutions.map((i) => i.slug) }),
+    ...(insurerIds.length === 0 ? {} : { insurerCarrierIds: [...insurerIds] }),
+  };
 }
 
 /**
@@ -88,6 +134,16 @@ export class WorkplacePicker implements OnInit {
   protected readonly busquedaFallida = signal(false);
 
   /**
+   * La búsqueda en vuelo. Cada texto nuevo la cancela: con red lenta la
+   * respuesta de «Cl» podía llegar después de la de «Clínica Foi» y pisarla.
+   */
+  private busqueda: Subscription | null = null;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.busqueda?.unsubscribe());
+  }
+
+  /**
    * El combobox elige de a una y se vacía: lo elegido pasa a la lista de abajo.
    *
    * `app-reference-combobox` guarda su texto por dentro y lo restaura a «lo
@@ -116,13 +172,15 @@ export class WorkplacePicker implements OnInit {
   /** Busca en el directorio público de organizaciones. */
   protected buscar(texto: string): void {
     const q = texto.trim();
+    this.busqueda?.unsubscribe();
     if (q === '') {
       this.resultados.set([]);
+      this.buscando.set(false);
       return;
     }
     this.buscando.set(true);
     this.busquedaFallida.set(false);
-    this.directory.searchOrganizations({ q, limit: 10 }).subscribe({
+    this.busqueda = this.directory.searchOrganizations({ q, limit: 10 }).subscribe({
       next: (pagina) => {
         this.resultados.set(pagina.items);
         this.buscando.set(false);

@@ -5,9 +5,8 @@ import type {
 import type { InsurerRequest } from '../../../core/data-access/insurance/practitioner-insurer-requests.types';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
-import type { StepperStep } from '../../../shared/components/molecules/stepper/stepper.types';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
-import { sello } from '../my-profile/practitioner-profile/practitioner-profile';
+import { sello } from '../my-profile/practitioner-profile/practitioner-seal';
 
 /* ============================================================================
     «Mis verificaciones»: lo que hay que mostrar, armado sin DOM.
@@ -131,22 +130,30 @@ export function buildRoadmap(
   perfil: OwnPractitionerProfile,
   etiquetas: ConceptLabels,
   insurerRequests: readonly InsurerRequest[] | null,
+  ahora: Date = new Date(),
 ): readonly RoadmapStep[] {
   const perfilEstado = sello(etiquetas, perfil.verificationStatusConceptId);
   const matriculas = perfil.licenses.map((l) => sello(etiquetas, l.stateConceptId));
+  // Del concepto de estado, como en «Mi perfil»: `verifiedAt` también se
+  // escribe cuando se RECHAZA, así que leerlo daría «Verificado» a un título
+  // rechazado. El vencimiento cambia el sello, no la decisión.
   const titulos = perfil.credentials.map((c): StatusSealVariant =>
-    c.verifiedAt === undefined ? 'pending' : 'approved',
+    c.expiryDate !== undefined && c.expiryDate < ahora
+      ? 'expired'
+      : sello(etiquetas, c.stateConceptId),
   );
   const especialidades = perfil.specialties
     .filter((s) => s.validTo === undefined)
-    .map((s): StatusSealVariant => (s.verified ? 'approved' : 'pending'));
+    .map((s) => sello(etiquetas, s.verificationStatusConceptId));
   // Sólo los que se pidieron y alguien puede confirmar: un declarado no
   // espera nada, y contarlo como pendiente sería prometer un sello que no
   // va a llegar.
   const instituciones = institutionRequests(perfil.affiliations)
     .filter((a) => a.statusKind !== 'declarado')
     .map(affiliationState);
-  const seguros = (insurerRequests ?? []).filter((r) => r.status !== 'WITHDRAWN').map(insurerState);
+  const seguros = latestPerCarrier(insurerRequests ?? [])
+    .filter((r) => r.status !== 'WITHDRAWN')
+    .map(insurerState);
 
   const paso = (p: Omit<RoadmapStep, 'stateLabel'>): RoadmapStep => ({
     ...p,
@@ -253,22 +260,6 @@ export function buildRoadmap(
   ];
 }
 
-/**
- * La misma hoja de ruta en el indicador de avance: hecho, el que toca, lo que
- * viene. El primer tramo obligatorio sin verificar es el actual; si están
- * todos, el primero opcional que espere algo.
- */
-export function roadmapStepper(steps: readonly RoadmapStep[]): readonly StepperStep[] {
-  const abierto = (s: RoadmapStep) => s.state !== 'approved' && s.state !== 'not-started';
-  const actual =
-    steps.find((s) => !s.optional && s.state !== 'approved') ?? steps.find((s) => abierto(s));
-  return steps.map((s) => ({
-    label: s.title,
-    icon: s.icon,
-    status: s.state === 'approved' ? 'complete' : s === actual ? 'current' : 'upcoming',
-  }));
-}
-
 /* ---- La bandeja ------------------------------------------------------------ */
 
 /** Quién habla en una burbuja. `system` es la plataforma, no la otra parte. */
@@ -281,7 +272,7 @@ export interface ThreadMessage {
   readonly at: Date | null;
   /** Para las mías: enviada (una marca) o ya respondida (dos). */
   readonly ticks?: 'sent' | 'answered';
-  /** La burbuja que trae el sello oficial. */
+  /** El aviso trae el sello oficial o el rechazo. */
   readonly seal?: 'approved' | 'rejected';
 }
 
@@ -299,8 +290,10 @@ export interface RequestThread {
   /** Lo que se puede hacer desde la conversación. */
   readonly canWithdraw: boolean;
   readonly canRequestAgain: boolean;
-  /** La solicitud a aseguradora detrás del hilo, si lo es. */
+  /** La aseguradora del hilo, si lo es. */
   readonly carrierId?: string;
+  /** La solicitud vigente del hilo (la última), la que se puede retirar. */
+  readonly requestId?: string;
 }
 
 const THREAD_STATE_LABEL: Readonly<Record<StatusSealVariant, string>> = {
@@ -312,8 +305,10 @@ const THREAD_STATE_LABEL: Readonly<Record<StatusSealVariant, string>> = {
   unknown: 'Sin sello',
 };
 
-function motivo(texto: string | null): string {
-  return texto === null || texto.trim() === '' ? '' : ` Motivo: «${texto.trim()}».`;
+/** El motivo que escribió la otra parte, en su voz; nada si no escribió. */
+function conMotivo(texto: string | null, at: Date | null): ThreadMessage | null {
+  const limpio = texto?.trim() ?? '';
+  return limpio === '' ? null : { speaker: 'them', text: `«${limpio}»`, at };
 }
 
 /** Un vínculo con institución contado como conversación. */
@@ -331,22 +326,22 @@ export function institutionThread(a: PractitionerAffiliation): RequestThread {
     switch (a.statusKind) {
       case 'aprobado':
         return {
-          speaker: 'them',
-          text: 'Confirmamos su vínculo. Desde ahora lleva nuestro sello oficial y puede publicar su agenda con nosotros.',
+          speaker: 'system',
+          text: `${a.organizationName} confirmó su vínculo: lleva su sello oficial y puede publicar su agenda ahí.`,
           at: null,
           seal: 'approved',
         } as const;
       case 'rechazado':
         return {
-          speaker: 'them',
-          text: `No aceptamos el vínculo.${motivo(a.decisionReasonText)}`,
+          speaker: 'system',
+          text: `${a.organizationName} no aceptó el vínculo.`,
           at: null,
           seal: 'rejected',
         } as const;
       case 'revocado':
         return {
-          speaker: 'them',
-          text: `Dimos de baja el vínculo. Las citas que ya confirmó siguen en pie.${motivo(a.decisionReasonText)}`,
+          speaker: 'system',
+          text: `${a.organizationName} dio de baja el vínculo. Las citas que ya confirmó siguen en pie.`,
           at: null,
           seal: 'rejected',
         } as const;
@@ -364,6 +359,9 @@ export function institutionThread(a: PractitionerAffiliation): RequestThread {
         } as const;
     }
   })();
+  // Lo único que la institución escribió es su motivo: va en su voz, entre
+  // comillas. Lo demás lo cuenta la plataforma, sin ponerlo en su boca.
+  const suMotivo = conMotivo(a.decisionReasonText, null);
   return {
     id: `inst-${a.id}`,
     kind: 'institution',
@@ -371,54 +369,86 @@ export function institutionThread(a: PractitionerAffiliation): RequestThread {
     state,
     stateLabel: THREAD_STATE_LABEL[state],
     lastAt: a.createdAt,
-    preview: respuesta.text,
-    messages: [yo, respuesta],
+    preview: suMotivo?.text ?? respuesta.text,
+    messages: suMotivo ? [yo, respuesta, suMotivo] : [yo, respuesta],
     canWithdraw: false,
     canRequestAgain: false,
   };
 }
 
-/** Una solicitud a aseguradora contada como conversación. */
-export function insurerThread(r: InsurerRequest): RequestThread {
-  const state = insurerState(r);
-  const messages: ThreadMessage[] = [
-    {
-      speaker: 'me',
-      text: `Le pedí a ${r.carrierName} trabajar como prestador de su red.`,
-      at: r.createdAt,
-      ticks: r.status === 'PENDING' || r.status === 'WITHDRAWN' ? 'sent' : 'answered',
-    },
-  ];
+/** La última solicitud de cada aseguradora: la que dice cómo está hoy. */
+export function latestPerCarrier(requests: readonly InsurerRequest[]): readonly InsurerRequest[] {
+  const ultima = new Map<string, InsurerRequest>();
+  for (const r of requests) {
+    const previa = ultima.get(r.carrierId);
+    if (!previa || previa.createdAt < r.createdAt) ultima.set(r.carrierId, r);
+  }
+  return [...ultima.values()];
+}
+
+/** Lo que pasó con una solicitud, contado en mensajes. */
+function intento(r: InsurerRequest, esLaUltima: boolean): ThreadMessage[] {
+  const pedido: ThreadMessage = {
+    speaker: 'me',
+    text: `Le pedí a ${r.carrierName} trabajar como prestador de su red.`,
+    at: r.createdAt,
+    ticks: r.status === 'PENDING' || r.status === 'WITHDRAWN' ? 'sent' : 'answered',
+  };
   switch (r.status) {
     case 'APPROVED':
-      messages.push({
-        speaker: 'them',
-        text: 'Confirmamos que trabaja con nosotros. Su ficha lleva nuestro sello oficial.',
-        at: r.decidedAt,
-        seal: 'approved',
-      });
-      break;
-    case 'REJECTED':
-      messages.push({
-        speaker: 'them',
-        text: `No aceptamos la solicitud.${motivo(r.decisionReasonText)}`,
-        at: r.decidedAt,
-        seal: 'rejected',
-      });
-      break;
+      return [
+        pedido,
+        {
+          speaker: 'system',
+          text: `${r.carrierName} confirmó que trabaja con su red: su ficha lleva el sello oficial.`,
+          at: r.decidedAt,
+          seal: 'approved',
+        },
+      ];
+    case 'REJECTED': {
+      const suMotivo = conMotivo(r.decisionReasonText, r.decidedAt);
+      return [
+        pedido,
+        {
+          speaker: 'system',
+          text: `${r.carrierName} no aceptó la solicitud.`,
+          at: r.decidedAt,
+          seal: 'rejected',
+        },
+        ...(suMotivo ? [suMotivo] : []),
+      ];
+    }
     case 'WITHDRAWN':
-      messages.push({ speaker: 'me', text: 'Retiré la solicitud.', at: null });
-      break;
+      return [pedido, { speaker: 'me', text: 'Retiré la solicitud.', at: r.decidedAt }];
     default:
-      messages.push({
-        speaker: 'system',
-        text: `Esperando que ${r.carrierName} responda. Le avisamos cuando lo haga.`,
-        at: null,
-      });
+      return esLaUltima
+        ? [
+            pedido,
+            {
+              speaker: 'system',
+              text: `Esperando que ${r.carrierName} responda. Le avisamos cuando lo haga.`,
+              at: null,
+            },
+          ]
+        : [pedido];
   }
+}
+
+/**
+ * Todas las solicitudes a una aseguradora, contadas como UNA conversación.
+ *
+ * Volver a pedir crea otra solicitud y la anterior queda en la API como
+ * historia: el hilo las encadena de la más vieja a la más nueva, así que el
+ * motivo de un rechazo sigue a la vista después de volver a pedir.
+ */
+export function insurerThread(requests: readonly InsurerRequest[]): RequestThread {
+  const orden = [...requests].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  const r = orden[orden.length - 1]!;
+  const state = insurerState(r);
+  const messages = orden.flatMap((x) => intento(x, x === r));
   const ultimo = messages[messages.length - 1]!;
   return {
-    id: `ins-${r.id}`,
+    id: `ins-${r.carrierId}`,
     kind: 'insurer',
     counterpart: r.carrierName,
     state,
@@ -429,7 +459,15 @@ export function insurerThread(r: InsurerRequest): RequestThread {
     canWithdraw: r.status === 'PENDING',
     canRequestAgain: r.status === 'REJECTED' || r.status === 'WITHDRAWN',
     carrierId: r.carrierId,
+    requestId: r.id,
   };
+}
+
+/** Las solicitudes agrupadas por aseguradora, una conversación cada grupo. */
+function porAseguradora(requests: readonly InsurerRequest[]): InsurerRequest[][] {
+  const grupos = new Map<string, InsurerRequest[]>();
+  for (const r of requests) grupos.set(r.carrierId, [...(grupos.get(r.carrierId) ?? []), r]);
+  return [...grupos.values()];
 }
 
 /** La bandeja entera, de la novedad más reciente a la más vieja. */
@@ -439,6 +477,6 @@ export function buildThreads(
 ): readonly RequestThread[] {
   return [
     ...institutionRequests(affiliations).map(institutionThread),
-    ...insurerRequests.map(insurerThread),
+    ...porAseguradora(insurerRequests).map(insurerThread),
   ].sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
 }

@@ -91,16 +91,41 @@ describe('InsurerPractitionerRequests', () => {
     expect(porTestId('aseguradora-pedido-r-1')?.textContent).toContain('«Sin convenio vigente»');
   });
 
-  it('un 422 dice que ya fue decidida, sin romper la bandeja', () => {
+  it('un 422 dice que ya fue decidida y relee: la fila deja de ofrecer decidir', () => {
     montar();
     (porTestId('aseguradora-aprobar') as HTMLButtonElement).click();
     http
       .expectOne(`${URL}/r-1/approve`)
       .flush({ message: 'ya decidida' }, { status: 422, statusText: 'Unprocessable' });
+    http.expectOne(URL).flush({ items: [{ ...PENDIENTE, status: 'WITHDRAWN' }], count: 1 });
     fixture.detectChanges();
 
     expect(porTestId('aseguradora-pedidos-aviso')?.textContent).toContain('ya fue decidida');
     expect(porTestId('aseguradora-pedido-r-1')).not.toBeNull();
+    expect(porTestId('aseguradora-aprobar')).toBeNull();
+  });
+
+  it('decisión guardada y relectura caída: dice que se guardó, no que falló', () => {
+    montar();
+    (porTestId('aseguradora-aprobar') as HTMLButtonElement).click();
+    http.expectOne(`${URL}/r-1/approve`).flush({ ...PENDIENTE, status: 'APPROVED' });
+    http.expectOne(URL).flush(null, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+
+    const aviso = porTestId('aseguradora-pedidos-aviso')?.textContent ?? '';
+    expect(aviso).toContain('Se aprobó la solicitud de Dra. Ana Rojas.');
+    expect(aviso).toContain('recárguela');
+    expect(aviso).not.toContain('No pudimos guardar');
+  });
+
+  it('separa lo que espera decisión de lo ya decidido', () => {
+    montar([
+      PENDIENTE,
+      { ...PENDIENTE, id: 'r-2', status: 'REJECTED', decisionReasonText: 'Sin convenio' },
+    ]);
+    expect(porTestId('aseguradora-grupo-por-decidir')?.textContent).toContain('Dra. Ana Rojas');
+    expect(porTestId('aseguradora-grupo-por-decidir')?.querySelectorAll('li')).toHaveLength(1);
+    expect(porTestId('aseguradora-grupo-decididas')?.textContent).toContain('«Sin convenio»');
   });
 
   it('sin solicitudes, el vacío ofrece volver a «Solicitudes recibidas»', () => {

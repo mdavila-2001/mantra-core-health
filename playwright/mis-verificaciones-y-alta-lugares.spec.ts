@@ -264,7 +264,7 @@ test.describe('el alta de médico', () => {
       await opcion.click();
       const elegida = page.locator('[data-testid^="registro-pro-institucion-"]').first();
       await expect(elegida).toContainText(/Institución (verificada|sin verificar)/);
-      await expect(elegida).toContainText('Su vínculo: se pedirá confirmación');
+      await expect(elegida).toContainText('Su vínculo: sin confirmar todavía');
 
       // Seguros: del catálogo público.
       const seguros = page.getByTestId('registro-pro-seguros');
