@@ -37,6 +37,7 @@ import {
   reservaDelPortalRoute,
   SERVICE_BOOKING_SLOT,
 } from '../../account/appointments/appointments.routes';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -89,6 +90,7 @@ export interface SiteServiceStarts {
     RouterLink,
     Select,
     ViewStateHost,
+    LoadingState,
   ],
   templateUrl: './practitioner-service-schedule.html',
   styleUrl: './practitioner-service-schedule.css',

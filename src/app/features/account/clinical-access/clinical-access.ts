@@ -19,6 +19,7 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** El rótulo de cada estado, en castellano. */
 const ROTULO_DE_ESTADO: Readonly<Record<AccessState, string>> = {
@@ -45,7 +46,7 @@ const ROTULO_DE_ESTADO: Readonly<Record<AccessState, string>> = {
  */
 @Component({
   selector: 'app-account-clinical-access',
-  imports: [AppButton, Alert, Badge, Card, DatePipe, EmptyState, PageHeader, Tab, Tabs],
+  imports: [AppButton, Alert, Badge, Card, DatePipe, EmptyState, PageHeader, Tab, Tabs, LoadingState],
   templateUrl: './clinical-access.html',
   styleUrl: './clinical-access.css',
   host: { '[class.is-incrustada]': 'incrustada()' },
