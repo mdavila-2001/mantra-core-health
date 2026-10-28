@@ -19,7 +19,13 @@
 
   <!-- FT-22-R02/R05 · Lo que le pidieron responder. Una vez respondida, la
        encuesta no se edita: es un registro de lo que dijo ese día. -->
-  <app-tab [label]="pendientes() > 0 ? 'Encuestas (' + pendientes() + ' pendientes)' : 'Encuestas'">
+  <app-tab
+    [label]="
+      pendientes() > 0
+        ? 'Encuestas (' + pendientes() + (pendientes() === 1 ? ' pendiente)' : ' pendientes)')
+        : 'Encuestas'
+    "
+  >
     @if (seccion() === 1) {
 @if (pendientes() > 0) {
   <p class="cuestionarios__resumen" data-testid="cuestionarios-pendientes">
