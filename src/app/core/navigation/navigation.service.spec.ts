@@ -314,8 +314,15 @@ describe('NavigationService', () => {
         // globo en la cabecera, `fueraDelMenuPara: [ANY_ROLE]` — sigue
         // alcanzándose por `/messaging`, sólo que ya no ocupa un renglón.
         'Directorios',
+        // «Grupos y foros», «Laboratorio e imagen», «Encuestas» y «Organización
+        // médica» vuelven el 28/10/2026: su única puerta era el árbol «Sus
+        // herramientas» del panel, que el propietario mandó retirar. Sin
+        // renglón quedaban sin ningún enlace (decisión del propietario en la
+        // misma conversación).
+        'Grupos y foros',
         'Consultas médicas',
         'Archivo clínico',
+        'Laboratorio e imagen',
         // «Notas médicas» (antes «Evoluciones») YA NO entra: salió del menú y
         // del producto el 25/09/2026 a pedido del propietario (e000f8ce). La
         // nota se escribe y se lee desde la consulta y el expediente.
@@ -329,6 +336,8 @@ describe('NavigationService', () => {
         // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
         // por el propietario en el PR.
         'Grupos médicos',
+        'Encuestas',
+        'Organización médica',
         'Contabilidad',
       ]);
     });
@@ -367,8 +376,11 @@ describe('NavigationService', () => {
       expect(alcanzables).toContain('/lab-visits');
       expect(alcanzables).toContain('/dashboard');
 
-      expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
-      expect(rutasDelMenu()).not.toContain('/questionnaires');
+      // La organización médica y las encuestas volvieron al menú el 28/10/2026
+      // (ver la prueba de la lista cerrada); las visitas siguen fuera porque
+      // Turnos les ofrece su enlace.
+      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+      expect(rutasDelMenu()).toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
     });
 
@@ -662,6 +674,7 @@ describe('NavigationService', () => {
       // renglón para todo el mundo y dejó de poder mostrar nada. «Formularios
       // y referencia» ocupa su lugar: declara cinco secciones y quien ejerce
       // ve cuatro — «Mis cuestionarios» sale por la lista cerrada de §4.H.
+      // «Encuestas» se suma el 28/10/2026, al retirarse el árbol del panel.
       abrirSesion(['PRACTITIONER']);
 
       const atencion = service.menu().find((grupo) => grupo.label === 'Atención');
@@ -676,6 +689,7 @@ describe('NavigationService', () => {
         '/my-quotations',
         // Carril 21: los grupos médicos se arman sobre el mismo catálogo.
         '/my-medical-groups',
+        '/questionnaires',
       ]);
     });
 

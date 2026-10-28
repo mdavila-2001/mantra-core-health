@@ -87,8 +87,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // lista cerrada del médico son ocho y el panel no es una de ellas, pero
     // el motivo real —la marca del armazón ya es un enlace a `/dashboard`,
     // ofrecer «Panel» abajo es la pantalla en la que ya estás— vale para
-    // cualquier rol, no sólo para el médico (mismo caso que `access-tree.ts`
-    // excluye `dashboard` de su propio panel de accesos). Se sigue llegando
+    // cualquier rol, no sólo para el médico. Se sigue llegando
     // por la marca, por el login y por el cambio de organización.
     //
     // **No se le tocan los `roles`**: el panel lo tiene que poder abrir
@@ -315,9 +314,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // cada carril. Si algún día el producto quiere grupos de pacientes, se
     // reabre con una decisión, no con una omisión.
     path: 'groups',
-    // §4.H · fuera del menú del médico: los foros son valiosos y no son trabajo
-    // diario. Los ve igual el resto de `ROLES_QUE_EJERCEN_O_ADMINISTRAN`.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // Vuelve al menú del médico el 28/10/2026: desde §4.H estaba fuera y se
+    // abría desde el árbol «Sus herramientas» del panel, que se retiró. El
+    // muro, que también la enlaza, tampoco tiene renglón.
     label: 'Grupos y foros',
     group: 'General',
     icon: 'people',
@@ -479,12 +478,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
   // pantalla que quisiera tener.
   {
     path: 'diagnostics',
-    // §4.H · fuera del menú del médico: no está en la lista de ocho. La cola
-    // del laboratorio y los estudios de un paciente se miran **desde el
-    // paciente**, que es donde se los pidió, y para eso está el Archivo
-    // clínico. Sigue siendo sección de primer nivel para
-    // `CLINICIAN`, que es quien la usa como bandeja.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // Vuelve al menú del médico el 28/10/2026. Desde §4.H estaba fuera y su
+    // única puerta era el árbol «Sus herramientas» del panel; al retirarse
+    // ese árbol, dejarla fuera la dejaba sin ningún enlace.
     label: 'Laboratorio e imagen',
     group: 'Atención',
     icon: 'scan',
@@ -696,9 +692,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // backend. Mismo caso que M13 en `administration/geolocation`. Lo hace
     // cumplir `scripts/check-route-prefixes.mjs`.
     path: 'questionnaires',
-    // §4.H · fuera del menú del médico: se arma una encuesta desde la consulta
-    // del paciente al que se le va a asignar, no como tarea suelta.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // Vuelve al menú del médico el 28/10/2026, por el mismo motivo que
+    // «Laboratorio e imagen»: sin el árbol del panel no tenía otra puerta.
     label: 'Encuestas',
     group: 'Atención',
     icon: 'survey',
@@ -1072,10 +1067,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así a nivel raíz se iría entera a la API — el mismo motivo por el que M13
     // vive en `administration/geolocation`.
     path: 'administration/medical-organization',
-    // §4.H · fuera del menú del médico por la misma razón que «Mis
-    // organizaciones». La sigue viendo `SECURITY_ADMIN` y `PERIOP_ADMIN`, que
-    // son de quienes es la consola.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // Vuelve al menú del médico el 28/10/2026, por el mismo motivo que
+    // «Laboratorio e imagen»: sin el árbol del panel no tenía otra puerta.
     label: 'Organización médica',
     group: 'Administración',
     icon: 'hospital',
@@ -1689,10 +1682,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // **Fuera del menú lateral, igual que la sección que reemplaza.** El menú
     // del médico es una lista cerrada de nueve que el propio propietario fijó,
     // con un spec que falla si alguien agrega la décima; «Tu organización»
-    // tampoco estaba ahí. Ocupa su mismo lugar: la zona «Administración» de
-    // «Tus accesos», que es donde el propietario señaló las tres tarjetas
-    // parecidas. Y se llega también desde «Mi perfil», que es donde alguien va
-    // a buscar «¿dónde atiendo?».
+    // tampoco estaba ahí. Se llega desde «Mi perfil», pestaña «Dónde atiendo»,
+    // que es donde alguien va a buscar «¿dónde atiendo?» (el árbol «Sus
+    // herramientas» del panel, su otra puerta, se retiró el 28/10/2026).
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
     summary: 'Creá y editá tu consultorio: dirección, mapa, teléfono y horario.',
