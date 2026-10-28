@@ -47,7 +47,7 @@ const DOCUMENTO_PACIENTE = '5000000';
  * se busca a la persona en el archivo clínico, se abre su expediente y de ahí
  * se pasa a su consulta.
  */
-async function abrirConsultaDelPaciente(page: Page): Promise<void> {
+async function openPatientConsultation(page: Page): Promise<void> {
   await irA(page, '/medical-records');
   await estable(page);
 
@@ -91,7 +91,7 @@ async function cerrar(page: Page, modal: Locator): Promise<void> {
  * señale `fila`: como lo haría la persona. `app-select` ya no envuelve un
  * `<select>` nativo, así que `selectOption` no tiene dónde apoyarse.
  */
-async function tocarEnElDesplegable(
+async function pickFromDropdown(
   zona: Locator,
   disparador: Locator,
   fila: (lista: Locator) => Locator,
@@ -117,7 +117,7 @@ async function contestarCampo(campo: Locator): Promise<boolean> {
   }
   const desplegable = campo.getByRole('combobox');
   if ((await desplegable.count()) > 0) {
-    await tocarEnElDesplegable(campo, desplegable.first(), (lista) =>
+    await pickFromDropdown(campo, desplegable.first(), (lista) =>
       lista.getByRole('option', { disabled: false }).first(),
     );
     return true;
@@ -129,16 +129,16 @@ async function contestarCampo(campo: Locator): Promise<boolean> {
     await texto.first().fill('Sin particularidades');
     return true;
   }
-  const numero = campo.locator('input[type="number"]');
-  if ((await numero.count()) > 0) {
-    await numero.first().fill('1');
+  const numberInput = campo.locator('input[type="number"]');
+  if ((await numberInput.count()) > 0) {
+    await numberInput.first().fill('1');
     return true;
   }
   return false;
 }
 
 /** El rótulo de un campo de la ficha, para nombrarlo en un fallo. */
-async function rotuloDe(campo: Locator): Promise<string> {
+async function labelOf(campo: Locator): Promise<string> {
   const rotulo = campo.locator('.form-field-label');
   return (await rotulo.count()) > 0 ? (await rotulo.first().innerText()).trim() : '(sin rótulo)';
 }
@@ -153,15 +153,15 @@ async function rotuloDe(campo: Locator): Promise<string> {
  * Devuelve el rótulo de los campos cuyo control no supo contestar, para que
  * el fallo diga cuál dejó gris «Completar formulario».
  */
-async function contestarLaFicha(modal: Locator): Promise<readonly string[]> {
+async function answerSheet(modal: Locator): Promise<readonly string[]> {
   const campos = modal.getByTestId('campo-especialidad');
   await expect(campos.first()).toBeVisible({ timeout: 30_000 });
-  const sinContestar: string[] = [];
+  const unanswered: string[] = [];
   for (let indice = 0; indice < (await campos.count()); indice += 1) {
     const campo = campos.nth(indice);
-    if (!(await contestarCampo(campo))) sinContestar.push(await rotuloDe(campo));
+    if (!(await contestarCampo(campo))) unanswered.push(await labelOf(campo));
   }
-  return sinContestar;
+  return unanswered;
 }
 
 /**
@@ -171,18 +171,18 @@ async function contestarLaFicha(modal: Locator): Promise<readonly string[]> {
  * médico: sin ella «Pedir estudio» no se habilita. Se completa la ficha que
  * viene elegida, con lo mínimo; si el encuentro ya la tiene, alcanza.
  */
-async function responderElFormulario(page: Page): Promise<void> {
+async function submitMedicalForm(page: Page): Promise<void> {
   const modal = await abrirCasilla(page, 'formulario');
   const respondido = modal.getByTestId('formulario-respondido');
   await expect(respondido.or(modal.getByTestId('campo-especialidad')).first()).toBeVisible({
     timeout: 30_000,
   });
   if (!(await respondido.isVisible())) {
-    const sinContestar = await contestarLaFicha(modal);
+    const unanswered = await answerSheet(modal);
     // Se exige habilitado antes del clic: sobre un botón gris el clic espera
     // hasta agotar el tiempo y el fallo no dice qué faltó.
     const completar = modal.getByRole('button', { name: 'Completar formulario' });
-    const desconocidos = sinContestar.join(' · ') || 'ninguno';
+    const desconocidos = unanswered.join(' · ') || 'ninguno';
     await expect(
       completar,
       '«Completar formulario» sigue deshabilitado: quedó un obligatorio sin contestar. ' +
@@ -202,7 +202,7 @@ async function responderElFormulario(page: Page): Promise<void> {
  * vive en esta casilla: la orden que se elige en el cierre de la ficha no lo
  * abre.
  */
-async function abrirOrdenDeAnalisis(page: Page): Promise<Locator> {
+async function openAnalysisOrder(page: Page): Promise<Locator> {
   const modal = await abrirCasilla(page, 'ordenes');
   await expect(modal.getByRole('heading', { name: 'Laboratorio e imagenología' })).toBeVisible();
   // La respuesta del formulario médico viene elegida: sin ella no se pide.
@@ -212,7 +212,7 @@ async function abrirOrdenDeAnalisis(page: Page): Promise<Locator> {
 
 /** Elige, por su nombre, una opción del `app-select` cuyo rótulo casa con `campo`. */
 async function elegir(zona: Locator, campo: RegExp, opcion: string): Promise<void> {
-  await tocarEnElDesplegable(zona, zona.getByRole('combobox', { name: campo }), (lista) =>
+  await pickFromDropdown(zona, zona.getByRole('combobox', { name: campo }), (lista) =>
     lista.getByRole('option', { name: opcion, exact: true }),
   );
 }
@@ -239,7 +239,7 @@ async function pedirEstudio(modal: Locator, estudio: string, tipo: string): Prom
  */
 async function releerEstudios(page: Page): Promise<Locator> {
   await expect(page.getByTestId('consulta-modal')).toHaveCount(0, { timeout: 30_000 });
-  return abrirOrdenDeAnalisis(page);
+  return openAnalysisOrder(page);
 }
 
 /**
@@ -283,9 +283,9 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     const page = await context.newPage();
 
     await entrar(page, MEDICA_MOCK);
-    await abrirConsultaDelPaciente(page);
-    await responderElFormulario(page);
-    const ordenes = await abrirOrdenDeAnalisis(page);
+    await openPatientConsultation(page);
+    await submitMedicalForm(page);
+    const ordenes = await openAnalysisOrder(page);
 
     // El Hemograma completo de PACIENTE lo liberó TENANT_LABORATORIO — otra
     // organización que la de `medica` (TENANT_CLINICA/TENANT_HOSPITAL).
@@ -326,9 +326,9 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     const page = await context.newPage();
 
     await entrar(page, MEDICA_MOCK);
-    await abrirConsultaDelPaciente(page);
-    await responderElFormulario(page);
-    const ordenes = await abrirOrdenDeAnalisis(page);
+    await openPatientConsultation(page);
+    await submitMedicalForm(page);
+    const ordenes = await openAnalysisOrder(page);
 
     // El Perfil lipídico de PACIENTE lo liberó TENANT_CLINICA — la misma
     // organización que `medica`: acá sí llega la conclusión clínica.
@@ -369,9 +369,9 @@ test.describe('la alerta de estudio duplicado (maqueta)', () => {
     const page = await context.newPage();
 
     await entrar(page, MEDICA_MOCK);
-    await abrirConsultaDelPaciente(page);
-    await responderElFormulario(page);
-    const ordenes = await abrirOrdenDeAnalisis(page);
+    await openPatientConsultation(page);
+    await submitMedicalForm(page);
+    const ordenes = await openAnalysisOrder(page);
     await pedirEstudio(ordenes, 'Hemograma completo', 'Laboratorio');
 
     await esperarDialogoDuplicado(page);
