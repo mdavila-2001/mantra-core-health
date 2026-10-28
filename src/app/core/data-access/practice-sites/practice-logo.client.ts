@@ -1,23 +1,39 @@
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 
+import { API_BASE_URL, apiUrl } from '../api';
 import { FilesClient } from '../files/files.client';
 import { PracticeSitesClient } from './practice-sites.client';
 import type { PracticeSite } from './practice-sites.types';
 
 /**
+ * Los formatos que la API acepta como logo (`LOGO_IMAGE_MIME_TYPES`), con la
+ * forma del atributo `accept` para que el selector y la validación lean lo mismo.
+ */
+export const PRACTICE_LOGO_ACCEPT = 'image/png,image/jpeg,image/webp';
+
+/** El tope de un logo en la API (`LOGO_MAX_BYTES`): 2 MB. */
+export const PRACTICE_LOGO_MAX_BYTES = 2 * 1024 * 1024;
+
+/** Lo que el alta necesita de la pre-carga anónima: el id a reenviar. */
+interface RegistrationLogoUpload {
+  readonly fileId?: string | null;
+}
+
+/**
  * El logo del consultorio del profesional: **la única puerta** por la que la
- * ficha, el editor y el PDF lo leen o lo cambian.
+ * ficha, el editor, el PDF y el alta lo leen, lo suben o lo cambian.
  *
- * ## Por qué existe
+ * ## Dónde vive
  *
- * Hoy el backend no tiene dónde guardar el logo de un consultorio: la sede no
- * tiene columna y el perfil público de la organización sólo lo escribe un
- * administrador. Mientras se decide, la maqueta lo cuelga de la sede propia
- * (`PracticeSite.logoFileId`). Si cada pantalla supiera eso, mudarlo al
- * backend real sería tocar todas. Con esta fachada es tocar **este archivo**.
+ * En la sede propia (`practice.practice_sites.logo_file_id`): la API lo manda
+ * en `PracticeSite.logoFileId` y lo cambia con
+ * `PUT /practitioners/me/sites/:siteId/logo`, sólo sobre el consultorio
+ * **propio**. Las pantallas no saben nada de eso; si mañana cambia de lugar,
+ * se toca **este archivo**.
  *
- * ## Contrato que ya no cambia
+ * ## Contrato
  *
  * - {@link PracticeLogoClient.getUrl} — el logo como `data:` URL, o
  *   `null` si no hay o no se pudo leer. **Nunca falla**: un logo que no carga
@@ -26,6 +42,8 @@ import type { PracticeSite } from './practice-sites.types';
  *   No lo asocia a nada todavía.
  * - {@link PracticeLogoClient.save} — asocia (o quita, con `null`) el
  *   archivo ya subido.
+ * - {@link PracticeLogoClient.uploadForRegistration} — la pre-carga del alta,
+ *   cuando todavía no hay cuenta.
  *
  * `data:` y no una URL de archivo porque la CSP es `img-src 'self' data:`
  * (ver `FilesClient.imageDataUrl`).
@@ -34,6 +52,8 @@ import type { PracticeSite } from './practice-sites.types';
 export class PracticeLogoClient {
   private readonly sites = inject(PracticeSitesClient);
   private readonly files = inject(FilesClient);
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = inject(API_BASE_URL);
 
   /**
    * El logo del consultorio propio como `data:` URL.
@@ -54,8 +74,9 @@ export class PracticeLogoClient {
   }
 
   /**
-   * Sube la imagen. Categoría `IMAGE` y sensibilidad `NORMAL`: es el mismo
-   * caso que cita `upload-policy.ts` («el logo de una organización»).
+   * Sube la imagen. Categoría `IMAGE` y sensibilidad `NORMAL`: es lo que la API
+   * exige al asociarla como logo, junto con el formato y el tope de
+   * {@link PRACTICE_LOGO_ACCEPT} y {@link PRACTICE_LOGO_MAX_BYTES}.
    *
    * @returns El id del archivo recién subido.
    */
@@ -82,9 +103,41 @@ export class PracticeLogoClient {
     );
   }
 
+  /**
+   * Pre-carga el logo del consultorio propio que declara el alta del médico:
+   * `POST /iam/auth/upload-registration-logo`, sin sesión.
+   *
+   * El archivo nace sin dueño y sólo sirve cuando el alta lo reclama por
+   * `ownSite.logoFileId`, en la misma transacción que crea la cuenta. La API
+   * aplica las mismas reglas que al logo del perfil y las vuelve a comprobar al
+   * reclamarlo.
+   *
+   * @returns El id que el alta reenvía en `ownSite.logoFileId`.
+   * @throws Error si la API no confirma el id: un alta sin él perdería el logo
+   * sin avisar.
+   */
+  uploadForRegistration(file: File): Observable<string> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http
+      .post<RegistrationLogoUpload>(
+        apiUrl(this.baseUrl, '/iam/auth/upload-registration-logo'),
+        form,
+      )
+      .pipe(map(confirmedFileId));
+  }
+
   private ownSite(practitionerProfileId: string): Observable<PracticeSite | undefined> {
     return this.sites
       .listSitesOfPractitioner(practitionerProfileId)
       .pipe(map((pagina) => pagina.items.find((sede) => sede.isOwnSite === true)));
   }
+}
+
+function confirmedFileId(upload: RegistrationLogoUpload | null): string {
+  const fileId = upload?.fileId?.trim() ?? '';
+  if (fileId === '') {
+    throw new Error('No pudimos confirmar la carga del logo. Vuelva a intentarlo.');
+  }
+  return fileId;
 }
