@@ -46,68 +46,35 @@
                   }
                 </div>
 
-                <app-status-seal [variant]="sello[fila.status]" [label]="rotulo[fila.status]" />
+                <!-- En «Por decidir» el estado ya lo dice el grupo: el sello va en lo decidido. -->
+                @if (fila.status !== 'PENDING') {
+                  <app-status-seal [variant]="sello[fila.status]" [label]="rotulo[fila.status]" />
+                }
 
                 @if (fila.status === 'PENDING') {
                   <div class="pedidos__acciones">
-                    @if (rechazando() === fila.id) {
-                      <app-form-field
-                        class="pedidos__motivo-campo"
-                        label="Motivo (opcional)"
-                        [hint]="'Lo lee el profesional. Hasta ' + maxMotivo + ' caracteres.'"
-                      >
-                        <app-textarea
-                          data-testid="aseguradora-motivo"
-                          [rows]="2"
-                          [maxLength]="maxMotivo"
-                          [value]="motivo()"
-                          (valueChange)="motivo.set($event)"
-                        />
-                      </app-form-field>
-                      <button
-                        app-button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        data-testid="aseguradora-confirmar-rechazo"
-                        [disabled]="enviando() !== null"
-                        (clicked)="rechazar(fila)"
-                      >
-                        Confirmar rechazo
-                      </button>
-                      <button
-                        app-button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        (clicked)="cancelarRechazo()"
-                      >
-                        Cancelar
-                      </button>
-                    } @else {
-                      <button
-                        app-button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        data-testid="aseguradora-aprobar"
-                        [disabled]="enviando() !== null"
-                        (clicked)="aprobar(fila)"
-                      >
-                        Aprobar
-                      </button>
-                      <button
-                        app-button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        data-testid="aseguradora-rechazar"
-                        [disabled]="enviando() !== null"
-                        (clicked)="abrirRechazo(fila)"
-                      >
-                        Rechazar
-                      </button>
-                    }
+                    <button
+                      app-button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      data-testid="aseguradora-aprobar"
+                      [disabled]="enviando() !== null"
+                      (clicked)="aprobar(fila)"
+                    >
+                      Aprobar
+                    </button>
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      data-testid="aseguradora-rechazar"
+                      [disabled]="enviando() !== null"
+                      (clicked)="rechazar(fila)"
+                    >
+                      Rechazar
+                    </button>
                   </div>
                 }
               </li>

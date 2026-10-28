@@ -80,7 +80,3 @@
   justify-content: flex-end;
   gap: var(--e2);
 }
-
-.pedidos__motivo-campo {
-  flex: 1 1 100%;
-}

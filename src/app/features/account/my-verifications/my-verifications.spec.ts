@@ -162,7 +162,9 @@ describe('MyVerifications', () => {
 
     expect(porTestId('verif-tramo-profile')?.textContent).toContain('Verificado');
     expect(porTestId('verif-tramo-institutions')?.textContent).toContain('Pendiente');
-    expect(porTestId('verif-tramo-insurers')?.textContent).toContain('Rechazado');
+    // Una rechazó y otra espera: el tramo espera; el rechazo lo cuenta el detalle.
+    expect(porTestId('verif-tramo-insurers')?.textContent).toContain('Pendiente');
+    expect(porTestId('verif-tramo-insurers')?.textContent).toContain('1 rechazada');
     expect(porTestId('verif-resumen')?.textContent).toContain('2 solicitudes esperando respuesta');
   });
 

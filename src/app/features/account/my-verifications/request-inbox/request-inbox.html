@@ -9,7 +9,7 @@
           [class.is-abierta]="abierto()?.id === hilo.id"
           [attr.aria-current]="abierto()?.id === hilo.id ? 'true' : null"
           [attr.data-testid]="'verif-hilo-' + hilo.id"
-          (click)="openId.set(hilo.id)"
+          (click)="abrir(hilo.id)"
         >
           <span class="verif__avatar" aria-hidden="true">
             <app-nav-icon [name]="hilo.kind === 'insurer' ? 'heart' : 'building'" />
@@ -35,6 +35,8 @@
   <!-- El hilo abierto: lo que pidió y lo que le respondieron. -->
   @if (abierto(); as hilo) {
     <section
+      #hiloAbierto
+      tabindex="-1"
       class="verif__hilo"
       [attr.aria-label]="'Conversación con ' + hilo.counterpart"
       data-testid="verif-hilo-abierto"

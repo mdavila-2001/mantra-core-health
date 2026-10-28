@@ -7,6 +7,7 @@ import type { ConceptLabels } from '../../../core/data-access/terminology/termin
 import {
   buildRoadmap,
   buildThreads,
+  combineIndependent,
   combineStates,
   insurerThread,
   institutionThread,
@@ -78,6 +79,15 @@ describe('combineStates', () => {
   });
 });
 
+describe('combineIndependent', () => {
+  it('con una contraparte que confirmó, el tramo tiene sello aunque otra haya rechazado', () => {
+    expect(combineIndependent([])).toBe('not-started');
+    expect(combineIndependent(['approved', 'rejected', 'pending'])).toBe('approved');
+    expect(combineIndependent(['rejected', 'pending'])).toBe('pending');
+    expect(combineIndependent(['rejected', 'rejected'])).toBe('rejected');
+  });
+});
+
 describe('buildRoadmap', () => {
   it('ordena los tramos: primero lo que habilita a atender, después dónde y con quién', () => {
     const pasos = buildRoadmap(perfil(), etiquetas, []);
@@ -124,7 +134,8 @@ describe('buildRoadmap', () => {
       [],
     );
     const inst = pasos.find((p) => p.key === 'institutions')!;
-    expect(inst.state).toBe('pending');
+    // Una confirmó: ya trabaja con sello ahí; la otra sigue esperando (lo dice el detalle).
+    expect(inst.state).toBe('approved');
     expect(inst.detail).toContain('1 de 2');
   });
 
@@ -169,7 +180,9 @@ describe('buildRoadmap', () => {
   it('una especialidad rechazada dice «Rechazado», no «Pendiente»', () => {
     const pasos = buildRoadmap(
       perfil({
-        specialties: [{ id: 's1', verificationStatusConceptId: 'c-spec-rejected', verified: false }],
+        specialties: [
+          { id: 's1', verificationStatusConceptId: 'c-spec-rejected', verified: false },
+        ],
       } as unknown as Partial<OwnPractitionerProfile>),
       etiquetas,
       [],

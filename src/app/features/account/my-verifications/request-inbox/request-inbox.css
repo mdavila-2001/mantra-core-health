@@ -137,6 +137,14 @@
   background: var(--chat-papel);
 }
 
+/* Apilada (angosto), la conversación abierta no se lee como otra fila de la
+   lista: un filete grueso la separa del final de la lista. */
+@media (max-width: 1023.98px) {
+  .verif__hilo {
+    border-block-start: 3px solid var(--filete);
+  }
+}
+
 .verif__hilo-cabeza {
   display: flex;
   align-items: center;

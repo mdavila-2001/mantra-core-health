@@ -4,6 +4,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { InsurerPractitionerRequests } from './practitioner-requests';
 
 /**
@@ -27,10 +28,21 @@ describe('InsurerPractitionerRequests', () => {
     decidedAt: null,
   };
 
+  /** El diálogo del motivo: lo que «escribe» quien rechaza, o `null` si vuelve. */
+  let motivoDelDialogo: string | null = null;
+  const dialogs = {
+    confirmWithReason: vi.fn(async () => motivoDelDialogo),
+  };
+
   function montar(filas: unknown[] = [PENDIENTE]): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: DialogService, useValue: dialogs },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(InsurerPractitionerRequests);
@@ -50,7 +62,9 @@ describe('InsurerPractitionerRequests', () => {
     const fila = porTestId('aseguradora-pedido-r-1')!;
     expect(fila.textContent).toContain('Dra. Ana Rojas');
     expect(fila.textContent).toContain('Médica cardióloga');
-    expect(fila.textContent).toContain('Pendiente');
+    // «Por decidir» ya dice el estado: la fila no repite el sello.
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Por decidir');
+    expect(fila.textContent).not.toContain('Pendiente');
   });
 
   it('aprobar escribe y relee: el sello queda porque la API lo devolvió', () => {
@@ -70,15 +84,16 @@ describe('InsurerPractitionerRequests', () => {
     expect(porTestId('aseguradora-pedidos-aviso')?.textContent).toContain('Se aprobó');
   });
 
-  it('rechazar manda el motivo escrito, recortado', () => {
+  it('rechazar pide el motivo en un diálogo (no en la fila) y lo manda recortado', async () => {
     montar();
+    motivoDelDialogo = '  Sin convenio vigente  ';
     (porTestId('aseguradora-rechazar') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    (fixture.componentInstance as unknown as { motivo: { set(v: string): void } }).motivo.set(
-      '  Sin convenio vigente  ',
-    );
-    (porTestId('aseguradora-confirmar-rechazo') as HTMLButtonElement).click();
+    await fixture.whenStable();
 
+    expect(dialogs.confirmWithReason).toHaveBeenCalledWith(
+      expect.objectContaining({ destructive: true }),
+      expect.objectContaining({ minLength: 5, maxLength: 500 }),
+    );
     const rechazo = http.expectOne(`${URL}/r-1/reject`);
     expect(rechazo.request.body).toEqual({ reason: 'Sin convenio vigente' });
     rechazo.flush({ ...PENDIENTE, status: 'REJECTED' });
@@ -89,6 +104,15 @@ describe('InsurerPractitionerRequests', () => {
     fixture.detectChanges();
 
     expect(porTestId('aseguradora-pedido-r-1')?.textContent).toContain('«Sin convenio vigente»');
+  });
+
+  it('volver del diálogo no manda nada', async () => {
+    montar();
+    motivoDelDialogo = null;
+    (porTestId('aseguradora-rechazar') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    http.expectNone(`${URL}/r-1/reject`);
+    expect(porTestId('aseguradora-rechazar')).not.toBeNull();
   });
 
   it('un 422 dice que ya fue decidida y relee: la fila deja de ofrecer decidir', () => {
