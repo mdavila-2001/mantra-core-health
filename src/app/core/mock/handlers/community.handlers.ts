@@ -24,7 +24,7 @@ import {
 import { encuentros } from '../fixtures/clinica';
 import { ESTADO } from '../fixtures/conceptos';
 import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
-import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
 // constante que la pantalla, para que no puedan separarse.
 import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
@@ -88,6 +88,42 @@ function vitrinaDeSesion(request: MockRequest): VitrinaSimulada | undefined {
   const user = request.user;
   if (user === null) return undefined;
   return vitrinaDe(user.practitionerProfileId ?? user.patientProfileId ?? user.id) ?? vitrinaDe(user.id);
+}
+
+/**
+ * Si la sesión puede actuar con ese perfil en la mensajería: la regla de la
+ * API (`CommunityVisibilityService.assertOwnMessagingProfile`).
+ *
+ * - El perfil propio, siempre.
+ * - La vitrina de una farmacia, si la cuenta es de su tenant y tiene
+ *   `PHARMACY_STAFF` (en la API, además, membresía ACTIVA con rol OWNER, ADMIN
+ *   o STAFF: la maqueta no modela membresías, el claim `tenants` hace de tal).
+ *
+ * Sin sesión no se mira: los handlers sin token son de pruebas de la maqueta,
+ * y la API ya los cortaría con 401 antes de llegar acá.
+ */
+export function puedeActuarComo(request: MockRequest, profileId: string): boolean {
+  const user = request.user;
+  if (user === null || profileId === '') return true;
+  if (vitrinaDeSesion(request)?.id === profileId) return true;
+  const v = vitrinas.get(profileId);
+  return (
+    v !== undefined &&
+    v.kind === 'PHARMACY' &&
+    user.tenants.includes(v.tenantId) &&
+    user.roles.includes('PHARMACY_STAFF')
+  );
+}
+
+/** El 403 de la API cuando no se puede actuar con el perfil pedido. */
+export function perfilAjeno(): MockReply {
+  return reply(403, {
+    statusCode: 403,
+    code: 'FORBIDDEN',
+    reason: 'NOT_OWN_PROFILE',
+    message: 'No podés actuar con ese perfil',
+    error: 'Forbidden',
+  });
 }
 
 function perfilPublico(v: VitrinaSimulada) {
@@ -265,7 +301,16 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   router.get('/community/profiles/by-slug/:slug', ({ params }) => {
-    const v = vitrinaPorSlug(params['slug']!);
+    // `organization-<tenantId>` es el slug con el que la API proyecta la
+    // vitrina de una organización; en la maqueta las vitrinas tienen slugs
+    // legibles, así que se resuelve por el tenant.
+    const slug = params['slug']!;
+    const deOrganizacion = /^organization-(.+)$/u.exec(slug)?.[1];
+    const v =
+      vitrinaPorSlug(slug) ??
+      (deOrganizacion === undefined
+        ? undefined
+        : vitrinas.todos().find((x) => x.tenantId === deOrganizacion && x.kind !== 'PATIENT' && x.kind !== 'PRACTITIONER'));
     return v === undefined ? notFound('Perfil no encontrado') : perfilPublico(v);
   });
 
@@ -284,12 +329,14 @@ export function registrarComunidad(router: MockRouter): void {
    * literales, pero dejar la específica después de la genérica es la forma de
    * que un cambio futuro la apague sin que nadie se entere.
    */
-  router.get('/community/profiles/:id/auto-reply', ({ params }) => {
-    return respuestasAutomaticas.get(params['id']!) ?? null;
+  router.get('/community/profiles/:id/auto-reply', (request) => {
+    if (!puedeActuarComo(request, request.params['id']!)) return perfilAjeno();
+    return respuestasAutomaticas.get(request.params['id']!) ?? null;
   });
 
   router.put('/community/profiles/:id/auto-reply', (request) => {
     const perfil = request.params['id']!;
+    if (!puedeActuarComo(request, perfil)) return perfilAjeno();
     const datos = cuerpo<{
       isActive: boolean;
       inactivityMinutes: number;
@@ -712,8 +759,10 @@ export function registrarComunidad(router: MockRouter): void {
 
   /* ---- mensajería ----------------------------------------------------------- */
 
-  router.get('/community/conversations', ({ query }) => {
+  router.get('/community/conversations', (request) => {
+    const { query } = request;
     const yo = texto(query, 'profileId') ?? '';
+    if (!puedeActuarComo(request, yo)) return perfilAjeno();
     const items = conversaciones
       .filtrar((c) => c.participantes.includes(yo))
       .map((c) => conversacion(c, yo))
@@ -730,7 +779,9 @@ export function registrarComunidad(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id } };
   });
 
-  router.get('/community/conversations/:id/messages', ({ params, query }) => {
+  router.get('/community/conversations/:id/messages', (request) => {
+    const { params, query } = request;
+    if (!puedeActuarComo(request, texto(query, 'profileId') ?? '')) return perfilAjeno();
     const items = mensajes
       .filtrar((m) => m.conversationId === params['id'])
       .sort((a, b) => b.sentAt.localeCompare(a.sentAt));
@@ -748,6 +799,7 @@ export function registrarComunidad(router: MockRouter): void {
       contentType?: 'TEXT' | 'MEDIA';
       attachmentFileId?: string;
     }>(request);
+    if (!puedeActuarComo(request, datos.senderProfileId ?? '')) return perfilAjeno();
     const nuevo: MensajeSimulado = {
       id: nuevoId('msg'),
       conversationId: c.id,
@@ -810,6 +862,7 @@ export function registrarComunidad(router: MockRouter): void {
     }
     const datos = cuerpo<{ senderProfileId?: string; bodyText?: string }>(request);
     const yo = datos.senderProfileId ?? vitrinaDeSesion(request)?.id ?? '';
+    if (!puedeActuarComo(request, yo)) return perfilAjeno();
     if (m.senderProfileId !== yo) {
       return validation('Sólo el autor puede editar su mensaje');
     }
@@ -826,8 +879,12 @@ export function registrarComunidad(router: MockRouter): void {
   router.post('/community/conversations/:id/read', (request) => {
     const c = conversaciones.get(request.params['id']!);
     if (c === undefined) return notFound();
-    const datos = cuerpo<{ profileId?: string; readerProfileId?: string }>(request);
-    const yo = datos.profileId ?? datos.readerProfileId ?? vitrinaDeSesion(request)?.id ?? '';
+    // `recipientProfileId` es lo que manda el cliente (contrato de la API);
+    // sin leerlo, el leído se apuntaba siempre al perfil propio y la farmacia
+    // no podía poner su bandeja al día.
+    const datos = cuerpo<{ recipientProfileId?: string; profileId?: string; readerProfileId?: string }>(request);
+    const yo = datos.recipientProfileId ?? datos.profileId ?? datos.readerProfileId ?? vitrinaDeSesion(request)?.id ?? '';
+    if (!puedeActuarComo(request, yo)) return perfilAjeno();
     conversaciones.actualizar(c.id, { noLeidosPor: { ...c.noLeidosPor, [yo]: 0 } });
     const ultimo = mensajes.filtrar((m) => m.conversationId === c.id).sort((a, b) => b.sentAt.localeCompare(a.sentAt))[0];
     return { receiptsRecorded: 1, lastReadMessageId: ultimo?.id ?? null };

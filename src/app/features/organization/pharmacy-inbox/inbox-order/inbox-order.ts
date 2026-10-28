@@ -8,8 +8,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import type { Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map, type Observable } from 'rxjs';
+
+import { ChatStore } from '../../../../core/messaging/chat.store';
+import { contextoDePedido } from '../../../../core/messaging/contexto-de-pedido';
 
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyProduct } from '../../../../core/data-access/pharmacy/pharmacy.types';
@@ -56,6 +60,30 @@ import { displayCurrency } from '../../../../core/money/display-currency';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
 const BANDEJA_ROUTE = '/administration/pharmacy-orders';
+
+/**
+ * Lo que se le dice al mostrador cuando la API no abre el chat del pedido.
+ *
+ * Los dos 422 tienen su frase porque piden cosas distintas: uno se arregla
+ * del lado de la farmacia (publicar la vitrina), el otro no tiene arreglo
+ * desde acá (el paciente tiene que crear su perfil). Un 403 es que esta cuenta
+ * no puede escribir como la farmacia —la API lo decide por la membresía—.
+ */
+export function motivoDeChatNoAbierto(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    const reason = (error.error as { reason?: unknown } | null)?.reason;
+    if (reason === 'PATIENT_CHAT_PROFILE_MISSING') {
+      return 'El paciente todavía no tiene perfil de mensajería: no podemos abrirle el chat. Usá el teléfono o el código de retiro.';
+    }
+    if (reason === 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE') {
+      return 'La farmacia no tiene vitrina pública activa: publicala para poder chatear con los pacientes.';
+    }
+    if (error.status === 403) {
+      return 'Tu cuenta no puede escribir como la farmacia. Pedile a quien administra la farmacia que revise tu rol.';
+    }
+  }
+  return 'No pudimos abrir el chat con el paciente. Probá de nuevo en un momento.';
+}
 
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
 interface AjusteEnEdicion {
@@ -139,6 +167,13 @@ export class InboxOrder {
   private readonly dialog = inject(DialogService);
   private readonly navigation = inject(NavigationService);
   private readonly toasts = inject(ToastService);
+  private readonly chat = inject(ChatStore);
+  private readonly router = inject(Router);
+
+  /** Mientras la API abre (o reutiliza) el hilo del pedido. */
+  protected readonly abriendoChat = signal(false);
+  /** Por qué no se abrió el chat, en palabras del mostrador. */
+  protected readonly errorDeChat = signal<string | null>(null);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly bandejaRoute = BANDEJA_ROUTE;
@@ -361,6 +396,41 @@ export class InboxOrder {
       },
       error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
     });
+  }
+
+  /**
+   * «Chatear con el paciente»: la API abre —o reutiliza— el hilo del pedido
+   * entre el paciente y la vitrina de esta farmacia, y se entra a escribir
+   * **como la farmacia**, con la tarjeta del pedido puesta una sola vez.
+   *
+   * Quién puede lo decide el `POST`: personal con membresía activa. Mostrar el
+   * botón no autoriza nada.
+   */
+  protected chatearConElPaciente(): void {
+    const abierto = this.pedido();
+    if (abierto === null || this.abriendoChat()) {
+      return;
+    }
+    this.abriendoChat.set(true);
+    this.errorDeChat.set(null);
+    this.chat.abrirComoOrganizacion(
+      this.ordersClient.abrirConversacion(abierto.id).pipe(
+        map((respuesta) => ({
+          conversationId: respuesta.conversationId,
+          profileId: respuesta.pharmacyProfileId,
+        })),
+      ),
+      abierto.farmacia,
+      (conversationId) => {
+        this.abriendoChat.set(false);
+        void this.router.navigate(['/messaging', conversationId]);
+      },
+      contextoDePedido(abierto),
+      (error) => {
+        this.abriendoChat.set(false);
+        this.errorDeChat.set(motivoDeChatNoAbierto(error));
+      },
+    );
   }
 
   protected cambiarDecision(indice: number, decision: unknown): void {

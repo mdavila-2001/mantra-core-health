@@ -77,6 +77,10 @@ export const IDS = {
     userId: uuid('user-aseguradora-staff'),
     personId: uuid('person-aseguradora-staff'),
   },
+  farmacia: {
+    userId: uuid('user-farmacia-mostrador'),
+    personId: uuid('person-farmacia-mostrador'),
+  },
 } as const;
 
 export const MOCK_USERS: readonly MockUser[] = [
@@ -176,6 +180,21 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_ASEGURADORA],
     tenantNames: TENANT_NAMES,
     personId: IDS.aseguradoraStaff.personId,
+  },
+  {
+    // El mostrador de Farmacia Vida: atiende la bandeja de pedidos y chatea
+    // con los pacientes **como la farmacia**. No tiene vitrina personal —el
+    // personal de una farmacia no la necesita para atender—, así que en Chats
+    // «Yo» le ofrece crearla y «Farmacia Vida» es con quien escribe.
+    key: 'farmacia',
+    id: IDS.farmacia.userId,
+    email: 'farmacia@alovida.mock',
+    nationalId: '6120450',
+    displayName: 'Rodrigo Saavedra · Farmacia Vida',
+    roles: ['PHARMACY_STAFF'],
+    tenants: [TENANT_FARMACIA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.farmacia.personId,
   },
 ];
 

@@ -7,7 +7,7 @@ import { PACIENTE, pacientePorId } from '../fixtures/personas';
 // T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
 // un solo lugar, porque la pantalla también los usa.
 import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
-import { conflict, forbidden, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
+import { forbidden, notFound, precondition, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, contiene, cuerpo, iso, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -375,22 +375,28 @@ export function registrarFarmacia(router: MockRouter): void {
   /**
    * El chat del pedido: paciente ↔ vitrina de la farmacia. Idempotente.
    *
-   * Lo pueden abrir el paciente dueño o alguien del tenant de la farmacia;
-   * cualquier otro recibe 403. Es la regla del contrato nuevo de la API, y la
-   * maqueta la aplica para que la pantalla no pueda apoyarse en otra.
+   * Lo pueden abrir el paciente dueño o el personal de la farmacia
+   * (`PHARMACY_STAFF` con el tenant del pedido); cualquier otro recibe 403. Es
+   * la regla del contrato nuevo de la API, y la maqueta la aplica para que la
+   * pantalla no pueda apoyarse en otra. Sin vitrina de un lado o del otro
+   * responde los mismos 422 con `reason` que la API.
    */
   router.post('/pharmacy/orders/:id/conversation', (request) => {
     const p = pedidos.get(request.params['id']!);
     if (p === undefined) return notFound('Pedido no encontrado');
     const user = request.user;
     const esDueno = user !== null && p.patientProfileId === user.patientProfileId;
-    const esPersonal = user !== null && user.tenants.includes(p.pharmacyId);
+    const esPersonal =
+      user !== null && user.tenants.includes(p.pharmacyId) && user.roles.includes('PHARMACY_STAFF');
     if (!esDueno && !esPersonal) return forbidden();
     const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
     const deLaFarmacia = vitrinaDeFarmacia(farmacia);
     const delPaciente = vitrinaDe(p.patientProfileId);
-    if (deLaFarmacia === undefined || delPaciente === undefined) {
-      return conflict('El pedido no tiene con quién abrir el chat.');
+    if (deLaFarmacia === undefined) {
+      return precondition('La farmacia no tiene una vitrina activa con la que conversar', 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE');
+    }
+    if (delPaciente === undefined) {
+      return precondition('El paciente todavía no tiene un perfil con el que conversar', 'PATIENT_CHAT_PROFILE_MISSING');
     }
     const participantes = [delPaciente.id, deLaFarmacia.id];
     const existente = conversaciones.filtrar(

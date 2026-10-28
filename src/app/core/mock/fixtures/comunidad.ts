@@ -5,6 +5,7 @@ import { ESPECIALIDAD, ESTADO } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
 import { avatarSvg, Coleccion, imagenSvg, iso, portadaSvg, uuid } from '../mock-store';
+import { textoDeContexto } from '../../messaging/contexto-de-chat';
 
 /* ============================================================================
     La red social: vitrinas públicas (personas y organizaciones), publicaciones,
@@ -594,6 +595,9 @@ export interface MensajeSimulado {
 
 export const SOPORTE_ID = uuid('public-profile-support-admin');
 
+/** La vitrina de Farmacia Vida, la del mostrador de la cuenta `farmacia`. */
+const VITRINA_FARMACIA_VIDA = uuid('public-profile-farmacia-vida');
+
 export const conversaciones = new Coleccion<ConversacionSimulada>([
   { id: uuid('conv-medica-paciente'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_MEDICA.id, VITRINA_PACIENTE.id], noLeidosPor: { [VITRINA_MEDICA.id]: 0, [VITRINA_PACIENTE.id]: 1 } },
   { id: uuid('conv-medica-pediatra'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_MEDICA.id, vitrinaDe(PROFESIONALES[1]!.id)!.id], noLeidosPor: { [VITRINA_MEDICA.id]: 0 } },
@@ -602,6 +606,9 @@ export const conversaciones = new Coleccion<ConversacionSimulada>([
   { id: uuid('conv-paciente-dermatologo'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_PACIENTE.id, vitrinaDe(PROFESIONALES[3]!.id)!.id], noLeidosPor: { [VITRINA_PACIENTE.id]: 0 } },
   // Un grupo: es lo que hace ver el nombre de quien habla arriba de cada
   // burbuja, el subtítulo con los participantes y «Nombre:» en la bandeja.
+  // Paciente ↔ Farmacia Vida, abierto desde un pedido: la paciente lo ve con
+  // su perfil y el mostrador, escribiendo como la farmacia, desde el otro lado.
+  { id: uuid('conv-paciente-farmacia-vida'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [VITRINA_PACIENTE.id, VITRINA_FARMACIA_VIDA], noLeidosPor: { [VITRINA_FARMACIA_VIDA]: 1 } },
   { id: uuid('conv-equipo-cardio'), conversationTypeConceptId: CONCEPTO.conversationGroup, groupId: uuid('group-cardio'), participantes: [VITRINA_MEDICA.id, vitrinaDe(PROFESIONALES[1]!.id)!.id, vitrinaDe(PROFESIONALES[9]!.id)!.id], noLeidosPor: { [VITRINA_MEDICA.id]: 2 } },
 ]);
 
@@ -626,6 +633,14 @@ const C3 = uuid('conv-medica-endocrino');
 const C4 = uuid('conv-paciente-soporte');
 const C5 = uuid('conv-paciente-dermatologo');
 const C6 = uuid('conv-equipo-cardio');
+const C7 = uuid('conv-paciente-farmacia-vida');
+/** La tarjeta del pedido 1, tal cual la arma `contextoDePedido`. */
+const TARJETA_PEDIDO_1 = textoDeContexto({
+  tipo: 'pedido',
+  titulo: 'Farmacia Vida · Sucursal Central',
+  detalle: '2 productos',
+  ruta: `/my-account/pharmacy-orders/${uuid('pharmacy-order-1')}`,
+});
 const PEDIATRA_V = vitrinaDe(PROFESIONALES[1]!.id)!.id;
 const ENDO_V = vitrinaDe(PROFESIONALES[9]!.id)!.id;
 const DERMA_V = vitrinaDe(PROFESIONALES[3]!.id)!.id;
@@ -647,6 +662,12 @@ export const mensajes = new Coleccion<MensajeSimulado>([
   mensaje(C5, VITRINA_PACIENTE.id, 'Doctor, le mando la foto del lunar que le comenté.', -12, 19, 0, { attachmentFileId: uuid('file-lunar') }),
   mensaje(C5, DERMA_V, 'Recibido. Por la foto no parece nada preocupante, pero quiero verlo con el dermatoscopio. Reservá un turno cuando puedas.', -12, 20, 15),
   mensaje(C5, VITRINA_PACIENTE.id, 'Listo, reservé para el mes que viene. ¡Gracias!', -11, 8, 30),
+  // El chat de un pedido: la tarjeta, la consulta y el aviso de que está listo.
+  mensaje(C7, VITRINA_PACIENTE.id, TARJETA_PEDIDO_1, -4, 15, 5),
+  mensaje(C7, VITRINA_PACIENTE.id, 'Hola, ¿me confirman si tienen las dos cajas? La atorvastatina la necesito para esta semana.', -4, 15, 7),
+  mensaje(C7, VITRINA_FARMACIA_VIDA, 'Hola Ana Lucía, sí: tenemos el enalapril y la atorvastatina. Te avisamos apenas quede listo para retirar.', -4, 15, 22),
+  mensaje(C7, VITRINA_FARMACIA_VIDA, 'Tu pedido ya está listo. Podés pasar a retirarlo con el código AV-4821, de 8:00 a 22:00.', -1, 10, 12),
+  mensaje(C7, VITRINA_PACIENTE.id, '¡Gracias! Paso mañana por la tarde.', -1, 10, 40),
   // El grupo: tres voces, un documento, una foto y dos citas.
   mensaje(C6, ENDO_V, 'Colegas, les comparto la guía actualizada de anticoagulación en fibrilación auricular. Cambió el umbral de CHA2DS2-VASc para iniciar.', -2, 8, 10, { contentTypeConceptId: CONCEPTO.messageMedia, attachmentFileId: uuid('file-guia-anticoagulacion') }),
   mensaje(C6, PEDIATRA_V, '¡Gracias! ¿Aplica también para adolescentes con cardiopatía congénita?', -2, 8, 40, { replyToMessageId: uuid(`msg-${C6}--2-8-10`) }),

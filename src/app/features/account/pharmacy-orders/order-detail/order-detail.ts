@@ -49,6 +49,7 @@ import {
 } from '../pedido-status';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
+import { contextoDePedido } from '../../../../core/messaging/contexto-de-pedido';
 
 /** A dónde vuelve quien llegó a un pedido que no existe. */
 const LISTA_ROUTE = '/my-account/pharmacy-orders';
@@ -307,18 +308,8 @@ export class OrderDetail {
     if (pedido === null || pedido.slugDeFarmacia === undefined) {
       return;
     }
-    const cuantos = pedido.lineas.length;
-    const productos = `${cuantos} ${cuantos === 1 ? 'producto' : 'productos'}`;
-    const total =
-      pedido.totalEstimado === null
-        ? null
-        : withDisplayCurrency(pedido.totalEstimado.replace('.', ','), pedido.moneda);
-    this.irAlChat({ pedido: pedido.id }, {
-      tipo: 'pedido',
-      titulo: `${pedido.farmacia} · ${pedido.sede}`,
-      detalle: total === null ? productos : `${productos} · ${total}`,
-      ruta: `${LISTA_ROUTE}/${pedido.id}`,
-    });
+    // La misma tarjeta que pone el mostrador: ver `contextoDePedido`.
+    this.irAlChat({ pedido: pedido.id }, contextoDePedido(pedido));
   }
 
   protected cargar(): void {

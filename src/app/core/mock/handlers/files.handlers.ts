@@ -2,6 +2,7 @@ import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTES, PROFESIONALES } from '../fixtures/personas';
 import { noContent, type MockRouter } from '../mock-router';
+import { perfilAjeno, puedeActuarComo } from './community.handlers';
 import { ahora, avatarSvg, Coleccion, imagenSvg, iso, nuevoId, qrSvg, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -218,8 +219,10 @@ export function registrarArchivos(router: MockRouter): void {
   // usa `ChatStore`—, no por la genérica. Sin esta ruta en la maqueta, toda
   // foto del chat volvía como 22 bytes `octet-stream` y se pintaba como
   // documento. Los bytes son los mismos: se delega en el contenido del archivo.
-  router.get('/community/conversations/:id/attachments/:fileId/content', ({ params }) =>
-    contenidoDeArchivo(params['fileId']!),
+  router.get('/community/conversations/:id/attachments/:fileId/content', (request) =>
+    puedeActuarComo(request, texto(request.query, 'profileId') ?? '')
+      ? contenidoDeArchivo(request.params['fileId']!)
+      : perfilAjeno(),
   );
 
   router.get('/common/files/:id/content', ({ params }) => contenidoDeArchivo(params['id']!));

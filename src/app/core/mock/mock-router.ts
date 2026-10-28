@@ -68,6 +68,21 @@ export function preconditionFailed(message: string, details: unknown = {}): Mock
   });
 }
 
+/**
+ * 422 de precondición con su `reason`, como `PreconditionFailedException` de
+ * la API: el cliente ramifica sobre `reason`, nunca sobre el texto.
+ */
+export function precondition(message: string, reason: string, details: unknown = {}): MockReply {
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message,
+    reason,
+    error: 'Unprocessable Entity',
+    details,
+  });
+}
+
 export function forbidden(message = 'No tenés permiso para esta operación'): MockReply {
   return reply(403, { statusCode: 403, code: 'FORBIDDEN', message, error: 'Forbidden' });
 }
