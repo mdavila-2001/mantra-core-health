@@ -79,7 +79,10 @@ function watchForProblems(page: Page): string[] {
     const text = message.text();
     const isEventReplay =
       /Content Security Policy/.test(text) && EVENT_REPLAY_CSP_HASHES.some((h) => text.includes(h));
-    if (!isEventReplay) problems.push(`console: ${text}`);
+    // Una navegación que interrumpe una transición de vista del router la aborta;
+    // el navegador lo anuncia así y no es un fallo de la pantalla.
+    const isSkippedTransition = text.includes('AbortError: Transition was skipped');
+    if (!isEventReplay && !isSkippedTransition) problems.push(`console: ${text}`);
   });
   page.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`));
   page.on('response', (response) => {
