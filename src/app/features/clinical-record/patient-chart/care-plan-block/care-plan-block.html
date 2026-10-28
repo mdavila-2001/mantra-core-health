@@ -157,25 +157,25 @@
           </h3>
           <p class="ruta__ayuda">Qué hay que hacer y cuándo, paso por paso.</p>
 
-          <ol class="pasos">
+          <ol class="plan-pasos">
             @for (actividad of actividades(); track actividad.clave; let i = $index) {
               <!-- Un grupo con nombre: los campos de cada paso se llaman igual,
                    y «Qué hay que hacer» a secas no dice de cuál de los pasos es. -->
               <li
-                class="pasos__paso"
+                class="plan-pasos__paso"
                 role="group"
                 [attr.aria-labelledby]="'plan-paso-' + actividad.clave"
                 data-testid="plan-actividad"
               >
                 <span
-                  class="pasos__numero"
-                  [class.pasos__numero--escrito]="actividad.detalle.trim() !== ''"
+                  class="plan-pasos__numero"
+                  [class.plan-pasos__numero--escrito]="actividad.detalle.trim() !== ''"
                   aria-hidden="true"
                   >{{ i + 1 }}</span
                 >
-                <div class="pasos__campos">
-                  <div class="pasos__cabecera">
-                    <span class="pasos__rotulo" [id]="'plan-paso-' + actividad.clave"
+                <div class="plan-pasos__campos">
+                  <div class="plan-pasos__cabecera">
+                    <span class="plan-pasos__rotulo" [id]="'plan-paso-' + actividad.clave"
                       >Paso {{ i + 1 }}</span
                     >
                     @if (actividades().length > 1) {
@@ -223,7 +223,7 @@
             variant="outline"
             size="sm"
             type="button"
-            class="pasos__agregar"
+            class="plan-pasos__agregar"
             data-testid="plan-agregar-actividad"
             (clicked)="agregarActividad()"
           >
