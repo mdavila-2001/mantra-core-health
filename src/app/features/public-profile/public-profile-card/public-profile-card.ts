@@ -383,7 +383,8 @@ export class PublicProfileCard {
   private readonly auth = inject(AuthService);
 
   /**
-   * Si quien mira puede calificar: una sesión con perfil de paciente.
+   * Si quien mira puede calificar: una sesión con perfil de paciente, frente a
+   * la ficha de un profesional que acepta reseñas (el resto no se reseña).
    *
    * No comprueba que se haya atendido con ESTE profesional —eso lo sabe el
    * servidor, y averiguarlo acá exigiría cruzar sus atenciones con una ficha
@@ -391,7 +392,12 @@ export class PublicProfileCard {
    * el servidor explique por qué no, cuando no corresponde, es mejor que
    * esconder el camino a quien sí puede.
    */
-  protected readonly puedeCalificar = computed(() => this.auth.patientProfileId() !== null);
+  protected readonly puedeCalificar = computed(
+    () =>
+      this.auth.patientProfileId() !== null &&
+      this.perfil().kind === 'PRACTITIONER' &&
+      this.perfil().acceptsReviews,
+  );
 
   /** Si el diálogo de calificar está abierto. */
   protected readonly calificando = signal(false);
