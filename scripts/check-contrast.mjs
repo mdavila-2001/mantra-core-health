@@ -208,6 +208,7 @@ const PARES = [
   { tinta: '--st-info-fg', fondo: '--st-info-bg', nivel: 4.5 },
   { tinta: '--st-primary-fg', fondo: '--st-primary-bg', nivel: 4.5 },
   { tinta: '--st-secondary-fg', fondo: '--st-secondary-bg', nivel: 4.5 },
+  { tinta: '--st-tertiary-fg', fondo: '--st-tertiary-bg', nivel: 4.5 },
 ];
 
 const TEMAS = [

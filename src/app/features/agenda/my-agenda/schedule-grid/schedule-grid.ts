@@ -719,10 +719,10 @@ export class ScheduleGrid {
     this.celdaConGlobo.set(null);
   }
 
-  /** «Martes 8 de septiembre», el título del globo en la semana en curso. */
+  /** «Martes 8 de septiembre» en la semana en curso; «Martes» en un horario sin fechas. */
   protected tituloDelGlobo(g: Globo): string {
     const nombre = g.dia.largo.charAt(0).toUpperCase() + g.dia.largo.slice(1);
-    if (!this.conFechas()) return `${nombre}s`;
+    if (!this.conFechas()) return nombre;
     return `${nombre} ${g.dia.fecha.getDate()} de ${MESES[g.dia.fecha.getMonth()]}`;
   }
 }
