@@ -370,6 +370,7 @@ export class RegisterPharmacy {
         clave: 'documentos',
         icon: 'folder' as const,
         hint: 'Opcionales: puede completarlos después desde la Ficha de su farmacia. PDF, hasta 10 MB por archivo.',
+        sinPartir: true,
         campos: this.camposDeDocumentos,
       },
       {
