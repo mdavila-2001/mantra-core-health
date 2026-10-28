@@ -613,6 +613,10 @@ export class ProfilesClient {
       readonly workAddressLines: string;
       readonly workLatitude: number | null;
       readonly workLongitude: number | null;
+      /* Distrito o zona de cada dirección (ADR-0028), aparte de la calle.
+         `''` lo quita. */
+      readonly homeDistrict: string;
+      readonly workDistrict: string;
       /* Los idiomas en los que atiende. A diferencia del resto, viaja la lista
          ENTERA con la misma forma en que la lectura la devuelve, y se espera
          que reemplace la guardada: un idioma no tramita nada, así que no hay

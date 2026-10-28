@@ -421,6 +421,8 @@ describe('PractitionerProfileEdit', () => {
       expect(req.request.body).toEqual({
         residenceMunicipalityConceptId: 'mun-lpz',
         homeAddressLines: 'Av. Arce 2631, Sopocachi',
+        // ADR-0028: el distrito viaja aparte, a su propia columna.
+        homeDistrict: 'Sopocachi',
         homeLatitude: -16.5,
         homeLongitude: -68.15,
       });
@@ -438,6 +440,7 @@ describe('PractitionerProfileEdit', () => {
         municipioConceptId: null,
       });
       expect(señal<string>('direccionTrabajo')()).toBe('Equipetrol');
+      expect(señal<string>('distritoTrabajo')()).toBe('Equipetrol');
     });
 
     it('el título se elige de la MISMA lista cerrada que el registro', () => {
@@ -1206,6 +1209,49 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => string>('direccionTrabajo')()).toBe('Calle Warnes 45');
     expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -16.5, lng: -68.15 });
     expect(señal<unknown>('gpsTrabajoGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+  });
+
+  it('siembra el distrito de cada dirección y lo manda sólo cuando cambia (ADR-0028)', () => {
+    montarYCargar({
+      homeAddress: {
+        lines: 'Av. Brasil 1234',
+        district: 'Miraflores',
+        latitude: -16.5,
+        longitude: -68.15,
+      },
+      workAddress: { lines: 'Calle Warnes 45', district: 'Equipetrol' },
+    });
+    expect(señal<string>('distritoDomicilio')()).toBe('Miraflores');
+    expect(señal<string>('distritoTrabajo')()).toBe('Equipetrol');
+    señal<number>('pestana').set(1);
+
+    señal<string>('distritoTrabajo').set('Las Palmas');
+    interno<() => void>('guardarPresentacion')();
+
+    // El domicilio no cambió: su distrito no viaja.
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ workDistrict: 'Las Palmas' });
+    req.flush(PERFIL_BASE);
+  });
+
+  it('un distrito que el mapa ya no da viaja vacío, para quitarlo', () => {
+    // Con su punto: sin él, «Contacto» no se guarda (punto obligatorio).
+    montarYCargar({
+      homeAddress: {
+        lines: 'Av. Brasil 1234',
+        district: 'Miraflores',
+        latitude: -16.5,
+        longitude: -68.15,
+      },
+    });
+    señal<number>('pestana').set(1);
+
+    señal<string>('distritoDomicilio').set('');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ homeDistrict: '' });
+    req.flush(PERFIL_BASE);
   });
 
   it('guardarPresentacion manda workAddressLines sólo cuando cambia', () => {
