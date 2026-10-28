@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Location } from '@angular/common';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { CreatedUser, InitialRole, NewUser } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { NavigationHistoryService } from '../../../core/navigation/navigation-history.service';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -42,13 +45,7 @@ const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
  */
 @Component({
   selector: 'app-user-registration',
-  imports: [
-    Alert,
-    AnnounceOnAppear,
-    AppButton,
-    PageHeader,
-    PaginatedForm,
-  ],
+  imports: [Alert, AnnounceOnAppear, AppButton, PageHeader, PaginatedForm],
   templateUrl: './user-registration.html',
   styleUrl: './user-registration.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,10 +53,13 @@ const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
 export class UserRegistration {
   private readonly iam = inject(IamClient);
   private readonly navigation = inject(NavigationService);
+  private readonly history = inject(NavigationHistoryService);
+  private readonly location = inject(Location);
+  private readonly router = inject(Router);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-/**
+  /**
    * El formulario, servido de a una página.
    *
    * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
@@ -71,17 +71,60 @@ export class UserRegistration {
       titulo: 'Identificación',
       hint: 'Con qué entra y cómo se lo nombra.',
       campos: [
-        { key: 'displayName', testId: 'alta-usuario-nombre', label: 'Nombre visible', control: 'text', required: true, mensajeDeError: 'Escribí el nombre con el que se va a mostrar la cuenta.' },
-        { key: 'email', testId: 'alta-usuario-correo', label: 'Correo', autocomplete: 'off', hint: 'Es el identificador con el que va a iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
-        { key: 'phone', testId: 'alta-usuario-telefono', label: 'Teléfono', autocomplete: 'tel', hint: 'Opcional. Queda como punto de contacto.', control: 'text', mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.' },
+        {
+          key: 'displayName',
+          testId: 'alta-usuario-nombre',
+          label: 'Nombre visible',
+          control: 'text',
+          required: true,
+          mensajeDeError: 'Escribí el nombre con el que se va a mostrar la cuenta.',
+        },
+        {
+          key: 'email',
+          testId: 'alta-usuario-correo',
+          label: 'Correo',
+          autocomplete: 'off',
+          hint: 'Es el identificador con el que va a iniciar sesión.',
+          control: 'email',
+          required: true,
+          mensajeDeError: 'Ingresá un correo válido.',
+        },
+        {
+          key: 'phone',
+          testId: 'alta-usuario-telefono',
+          label: 'Teléfono',
+          autocomplete: 'tel',
+          hint: 'Opcional. Queda como punto de contacto.',
+          control: 'text',
+          mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.',
+        },
       ],
     },
     {
       titulo: 'Acceso',
       hint: 'La contraseña es provisional: entregala por un canal seguro.',
       campos: [
-        { key: 'password', testId: 'alta-usuario-clave', label: 'Contraseña inicial', autocomplete: 'new-password', hint: 'Mínimo 8 caracteres.', control: 'password', required: true, mensajeDeError: 'La contraseña necesita al menos 8 caracteres.' },
-        { key: 'initialRole', testId: 'alta-usuario-rol', label: 'Rol inicial', hint: 'Los demás roles se conceden después.', control: 'radio', options: [{ value: 'USER', label: 'Usuario' }, { value: 'SECURITY_ADMIN', label: 'Administrador de seguridad' }] },
+        {
+          key: 'password',
+          testId: 'alta-usuario-clave',
+          label: 'Contraseña inicial',
+          autocomplete: 'new-password',
+          hint: 'Mínimo 8 caracteres.',
+          control: 'password',
+          required: true,
+          mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
+        },
+        {
+          key: 'initialRole',
+          testId: 'alta-usuario-rol',
+          label: 'Rol inicial',
+          hint: 'Los demás roles se conceden después.',
+          control: 'radio',
+          options: [
+            { value: 'USER', label: 'Usuario' },
+            { value: 'SECURITY_ADMIN', label: 'Administrador de seguridad' },
+          ],
+        },
       ],
     },
   ]);
@@ -133,6 +176,18 @@ export class UserRegistration {
     return null;
   });
 
+  /**
+   * «Atrás» en el primer paso: a la pantalla de la que se vino, o a `/` si no
+   * hubo una (enlace directo, recarga).
+   */
+  protected volver(): void {
+    if (this.history.hasInternalHistory()) {
+      this.location.back();
+      return;
+    }
+    void this.router.navigateByUrl('/');
+  }
+
   protected submit(): void {
     if (this.isSubmitting()) {
       return;
@@ -167,8 +222,7 @@ export class UserRegistration {
   }
 
   private datos(): NewUser {
-    const { displayName, email, password, phone, initialRole: rol } =
-      this.form.getRawValue();
+    const { displayName, email, password, phone, initialRole: rol } = this.form.getRawValue();
     const telefono = phone.trim();
 
     return {

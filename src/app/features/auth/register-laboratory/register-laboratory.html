@@ -66,6 +66,8 @@
             submitLabel="Enviar solicitud"
             [iconOnlyNav]="true"
             (pasoVisible)="recordarPaso($event)"
+            [atrasEnPrimera]="true"
+            (atrasDesdeInicio)="volverAlTipoDeCuenta()"
             (enviado)="submit()"
           >
             <ng-template appCampoPersonalizado="seprecFile">

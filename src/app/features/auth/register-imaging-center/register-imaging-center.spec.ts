@@ -1,15 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import {
-  MODALIDADES,
-  RegisterImagingCenter,
-  TIPOS_DE_SOCIEDAD,
-} from './register-imaging-center';
+import { MODALIDADES, RegisterImagingCenter, TIPOS_DE_SOCIEDAD } from './register-imaging-center';
 
 /* ============================================================================
     Lo que esta pantalla promete, y por lo tanto lo que se prueba:
@@ -26,7 +22,6 @@ import {
 function archivo(nombre: string, tipo: string, bytes: number): File {
   return { name: nombre, type: tipo, size: bytes } as unknown as File;
 }
-
 
 const PDF = () => archivo('sedes.pdf', 'application/pdf', 120_000);
 
@@ -75,6 +70,19 @@ describe('RegisterImagingCenter', () => {
     component.form.controls.licenciaFile.setValue({ archivo: 'licencia.pdf', pesoBytes: 1000 });
     component.form.controls.sedesFile.setValue({ archivo: 'sedes.pdf', pesoBytes: 1000 });
   }
+
+  it('«Atrás» en el primer paso vuelve al selector de tipo de cuenta', () => {
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    fixture.detectChanges();
+    const atras = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="paginated-form-atras"]',
+    );
+
+    expect(atras).not.toBeNull();
+    atras!.click();
+
+    expect(navegar).toHaveBeenCalledWith('/auth/register');
+  });
 
   /* --- lo que pregunta --------------------------------------------------- */
 

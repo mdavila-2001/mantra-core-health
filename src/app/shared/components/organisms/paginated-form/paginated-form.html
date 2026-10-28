@@ -251,7 +251,7 @@
          `aria-label` queda en castellano y el globo lo dice también con el
          puntero y con el foco del teclado. El `data-testid` es el mismo en los
          dos modos: lo que cambia es cómo se ve, no qué botón es. -->
-    @if (!esPrimera()) {
+    @if (mostrarAtras()) {
       <!-- En modo ícono los dos botones se ven igual: dos flechas del mismo par
            con tratamientos distintos —una pelada y la otra en círculo lleno— se
            leen como dos cosas de distinta jerarquía cuando son la ida y la

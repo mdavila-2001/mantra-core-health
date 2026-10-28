@@ -119,10 +119,14 @@ const PAGINAS_CON_ADORNOS: readonly PaginaDeFormulario[] = [
       submitLabel="Crear cuenta"
       [interactiveSteps]="interactiveSteps()"
       [iconOnlyNav]="iconOnlyNav()"
+      [atrasEnPrimera]="atrasEnPrimera()"
+      (atrasDesdeInicio)="salidasAtras = salidasAtras + 1"
     />
   `,
 })
 class HostConfigurable {
+  readonly atrasEnPrimera = signal(false);
+  salidasAtras = 0;
   readonly paginas = signal<readonly PaginaDeFormulario[]>(PAGINAS_CON_ADORNOS);
   readonly interactiveSteps = signal(true);
   readonly iconOnlyNav = signal(false);
@@ -371,9 +375,7 @@ describe('PaginatedForm', () => {
       fixture.detectChanges();
 
       expect(rotulos().join(' ')).toContain('Mapa dental');
-      expect(
-        fixture.debugElement.query(By.css('[data-testid="widget-propio"]')),
-      ).not.toBeNull();
+      expect(fixture.debugElement.query(By.css('[data-testid="widget-propio"]'))).not.toBeNull();
     });
   });
 
@@ -618,6 +620,63 @@ describe('PaginatedForm', () => {
     });
   });
 
+  describe('«Atrás» en la primera página', () => {
+    let fixtureC: ComponentFixture<HostConfigurable>;
+    let hostC: HostConfigurable;
+
+    beforeEach(() => {
+      fixtureC = TestBed.createComponent(HostConfigurable);
+      hostC = fixtureC.componentInstance;
+      fixtureC.detectChanges();
+    });
+
+    function atrasC(): HTMLButtonElement | null {
+      const el = fixtureC.debugElement.query(By.css('[data-testid="paginated-form-atras"]'));
+      return el === null ? null : (el.nativeElement as HTMLButtonElement);
+    }
+
+    it('con atrasEnPrimera aparece en la primera página y avisa en vez de retroceder', () => {
+      hostC.atrasEnPrimera.set(true);
+      fixtureC.detectChanges();
+
+      expect(atrasC()).not.toBeNull();
+      atrasC()!.click();
+      fixtureC.detectChanges();
+
+      expect(hostC.salidasAtras).toBe(1);
+      expect(
+        (fixtureC.nativeElement as HTMLElement)
+          .querySelector('.paginated-form__titulo')!
+          .textContent!.trim(),
+      ).toBe('Identidad');
+    });
+
+    it('en las páginas siguientes retrocede y no emite la salida', () => {
+      hostC.atrasEnPrimera.set(true);
+      hostC.form.controls.documento.setValue('1234567');
+      fixtureC.detectChanges();
+      (
+        fixtureC.debugElement.query(By.css('[data-testid="paginated-form-continuar"]'))
+          .nativeElement as HTMLButtonElement
+      ).click();
+      fixtureC.detectChanges();
+
+      atrasC()!.click();
+      fixtureC.detectChanges();
+
+      expect(hostC.salidasAtras).toBe(0);
+      expect(
+        (fixtureC.nativeElement as HTMLElement)
+          .querySelector('.paginated-form__titulo')!
+          .textContent!.trim(),
+      ).toBe('Identidad');
+    });
+
+    it('apagado —lo normal— la primera página sigue sin «Atrás»', () => {
+      expect(atrasC()).toBeNull();
+    });
+  });
+
   describe('el ícono y la descripción del campo', () => {
     let fixtureC: ComponentFixture<HostConfigurable>;
 
@@ -667,9 +726,7 @@ describe('PaginatedForm', () => {
       const input = fixtureC.debugElement.query(By.css('input[data-testid="campo-documento"]'))
         .nativeElement as HTMLInputElement;
 
-      expect(input.placeholder).toBe(
-        'El número de tu cédula de identidad, sin puntos ni guiones.',
-      );
+      expect(input.placeholder).toBe('El número de tu cédula de identidad, sin puntos ni guiones.');
     });
   });
 
@@ -710,9 +767,7 @@ const PAGINA_DE_CASILLAS: readonly PaginaDeFormulario[] = [
 
 @Component({
   imports: [PaginatedForm],
-  template: `
-    <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
-  `,
+  template: ` <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" /> `,
 })
 class HostDeCasillas {
   readonly paginas = PAGINA_DE_CASILLAS;
@@ -830,9 +885,7 @@ const PAGINAS_DE_SI_NO: readonly PaginaDeFormulario[] = [
 
 @Component({
   imports: [PaginatedForm],
-  template: `
-    <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
-  `,
+  template: ` <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" /> `,
 })
 class HostDeSiNo {
   readonly paginas = PAGINAS_DE_SI_NO;

@@ -622,8 +622,7 @@ export class RegisterOrganization {
             label: '',
             control: 'custom' as const,
             ancho: 'completo' as const,
-            mensajeDeError:
-              'Completá el nombre y el apellido paterno del representante legal.',
+            mensajeDeError: 'Completá el nombre y el apellido paterno del representante legal.',
           },
           {
             key: 'legalRepresentativeIdNumber',
@@ -714,7 +713,7 @@ export class RegisterOrganization {
             mensajeDeError: MENSAJE_CONTRASENA_CORTA,
           },
         ],
-    },
+      },
     ]),
   );
 
@@ -1021,13 +1020,7 @@ export class RegisterOrganization {
   protected controlDeGerencia(
     gerenciaKey: 'generalManager' | 'commercialManager' | 'marketingManager',
     campoKey:
-      | 'name'
-      | 'middleName'
-      | 'thirdName'
-      | 'lastName'
-      | 'motherLastName'
-      | 'phone'
-      | 'email',
+      'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName' | 'phone' | 'email',
   ): FormControl<string> {
     return this.form.controls.executives.controls[gerenciaKey].controls[campoKey];
   }
@@ -1064,13 +1057,7 @@ export class RegisterOrganization {
     gerenciaKey: 'generalManager' | 'commercialManager' | 'marketingManager',
     campo: {
       readonly key:
-        | 'name'
-        | 'middleName'
-        | 'thirdName'
-        | 'lastName'
-        | 'motherLastName'
-        | 'phone'
-        | 'email';
+        'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName' | 'phone' | 'email';
       readonly label: string;
     },
   ): string {
@@ -1137,6 +1124,14 @@ export class RegisterOrganization {
         gerencia.expanded.set(true);
       }
     }
+  }
+
+  /**
+   * «Atrás» en el primer paso: de vuelta al selector de tipo de cuenta, que es de
+   * donde se llegó.
+   */
+  volverAlTipoDeCuenta(): void {
+    void this.router.navigateByUrl('/auth/register');
   }
 
   submit(): void {
@@ -1213,9 +1208,7 @@ export class RegisterOrganization {
         regulatorIdentifier: raw.regulatorIdentifier.trim(),
         sigla: raw.sigla.trim(),
         address: raw.address.trim(),
-        ...(casaMatriz === null
-          ? {}
-          : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
+        ...(casaMatriz === null ? {} : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
       },
       owner: {
         email: raw.email.trim(),
