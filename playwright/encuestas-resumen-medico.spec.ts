@@ -189,6 +189,21 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     expect(respuestas12m).toBeGreaterThanOrEqual(30);
     await capturar(page, '03-resumen-12-meses-claro-1440');
 
+    // «Por pregunta»: las sin datos suficientes van al final (no dejan un hueco por
+    // igualar la altura de la grilla) y, sin filtro de servicio, ninguna lectura
+    // dice «servicio»: rótulo de la dimensión y pregunta neutra. («esta consulta» sí puede
+    // aparecer en una pregunta que sólo existe en la encuesta de consulta: es verdad.)
+    const marcasDeSuprimida = await page
+      .getByTestId('resumen-pregunta')
+      .evaluateAll((items) => items.map((i) => i.querySelector('[data-testid="resumen-pregunta-suprimida"]') !== null));
+    expect(marcasDeSuprimida.length).toBeGreaterThan(0);
+    const primeraSuprimida = marcasDeSuprimida.indexOf(true);
+    if (primeraSuprimida >= 0) {
+      expect(marcasDeSuprimida.slice(primeraSuprimida).every(Boolean), 'las suprimidas van juntas al final').toBe(true);
+    }
+    const bloquePreguntas = ((await page.getByTestId('resumen-preguntas').textContent()) ?? '').replace(/\s+/g, ' ');
+    expect(bloquePreguntas).not.toMatch(/servicio(?!s juntos)/i);
+
     // ── 3. Cambiar el servicio ─────────────────────────────────────────────────
     await cambiandoElFiltro(page, () => elegirOpcion(page, 'resumen-servicio', 'Prueba de esfuerzo'));
     const traServicio = await pedidosDeInsights(page);
@@ -318,6 +333,15 @@ test.describe('Encuestas · «Cómo le va» y asociar a un servicio', () => {
     await expect(page.getByTestId('resumen-medico')).toBeVisible({ timeout: 30_000 });
     await resumenAsentado(page);
     await capturar(page, '13-resumen-claro-390');
+
+    // A 390 px los chips de estado de la lista no se cortan («Borrado…»): pasan a otra fila.
+    const rotulosDelFiltro = page.locator('[data-testid="encuestas-filtro-estado"] .segmentado__rotulo');
+    await rotulosDelFiltro.first().scrollIntoViewIfNeeded();
+    const recortados = await rotulosDelFiltro.evaluateAll((els) =>
+      els.filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.textContent?.trim()),
+    );
+    expect(recortados, 'ningún chip de estado debe cortar su texto a 390 px').toEqual([]);
+    await page.getByTestId('encuestas-barra').screenshot({ path: join(SALIDA, '17-filtro-de-estado-claro-390.png') });
     await aplicarTema(page, 'oscuro');
     await capturar(page, '14-resumen-oscuro-390');
 
