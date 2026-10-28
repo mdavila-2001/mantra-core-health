@@ -229,9 +229,38 @@ function segmentos(arista: AristaUbicada): Segmento[] {
  */
 function verificarTrazado(plano: RecorridoUbicado): void {
   const indicaciones = plano.aristas.filter((a) => a.motivo === 'indicacion');
+  // Pueden converger: las de un mismo diagnóstico (salen del mismo origen) y
+  // las que llegan a un mismo nodo de grupo «+N», que reúne varias recetas.
+  const pueden = (a: AristaUbicada, b: AristaUbicada): boolean =>
+    a.desde === b.desde || (a.hasta === b.hasta && a.hasta.startsWith('grupo:'));
   for (const a of indicaciones) {
+    // 3 · La punta de flecha: los ~14 px antes del final, sobre la última
+    //     recta. Ninguna otra indicación puede pasar por ahí.
+    const p = a.puntos ?? [];
+    const [tx, ty] = p[p.length - 1];
+    const [px] = p[p.length - 2];
+    const punta = { x0: Math.min(tx, tx + Math.sign(px - tx) * 16), x1: Math.max(tx, tx + Math.sign(px - tx) * 16), y0: ty - 6, y1: ty + 6 };
     for (const b of indicaciones) {
-      if (a.clave >= b.clave || a.desde === b.desde) {
+      if (b === a || pueden(a, b)) {
+        continue;
+      }
+      for (const sb of segmentos(b)) {
+        const enX = Math.max(sb.ax, sb.bx) >= punta.x0 && Math.min(sb.ax, sb.bx) <= punta.x1;
+        const enY = Math.max(sb.ay, sb.by) >= punta.y0 && Math.min(sb.ay, sb.by) <= punta.y1;
+        expect(enX && enY, `${b.clave} pasa por la punta de ${a.clave}`).toBe(false);
+      }
+    }
+    // 4 · Los troncos de las atenciones: a 8 px o más de cualquier vertical.
+    for (const columna of plano.columnas) {
+      const tronco = columna.x - 24;
+      for (const sg of segmentos(a)) {
+        if (sg.ax === sg.bx) {
+          expect(Math.abs(sg.ax - tronco), `${a.clave} corre pegado al tronco de ${columna.clave}`).toBeGreaterThanOrEqual(8);
+        }
+      }
+    }
+    for (const b of indicaciones) {
+      if (a.clave >= b.clave || pueden(a, b)) {
         continue;
       }
       for (const sa of segmentos(a)) {
@@ -338,6 +367,48 @@ describe('trazado de las indicaciones', () => {
       new Set([claveDeCelda('enc:c1', 'diagnosticos'), claveDeCelda('dia:2026-06-01', 'medicacion')]),
     );
     expect(plano.aristas.filter((a) => a.motivo === 'indicacion').length).toBeGreaterThanOrEqual(6);
+    verificarTrazado(plano);
+  });
+
+  it('corchetes y recetas hacia atrás: la punta no cae sobre la línea de otro diagnóstico', () => {
+    // El caso de la quinta revisión: un diagnóstico con su receta el mismo día
+    // (corchete, entra por la derecha) y otro cuya receta es de una consulta
+    // posterior (baja por el mismo pasillo, más adentro).
+    const c1 = nodo('c1', 'encuentros', new Date(2026, 0, 10));
+    const c2 = nodo('c2', 'encuentros', new Date(2026, 3, 10));
+    const plano = ubicarRecorrido(
+      [
+        c1,
+        c2,
+        nodo('hta', 'diagnosticos', new Date(2026, 0, 10), 'c1'),
+        nodo('erge', 'diagnosticos', new Date(2026, 0, 10), 'c1'),
+        nodo('losartan', 'medicacion', new Date(2026, 0, 10), 'c1'),
+        nodo('otra', 'medicacion', new Date(2026, 0, 10), 'c1'),
+        nodo('aas', 'medicacion', new Date(2026, 3, 10), 'c2'),
+        nodo('previa', 'medicacion', new Date(2025, 11, 1)),
+      ],
+      [
+        { desde: 'hta', hasta: 'losartan', motivo: 'indicacion' },
+        { desde: 'erge', hasta: 'aas', motivo: 'indicacion' },
+        { desde: 'erge', hasta: 'otra', motivo: 'indicacion' },
+        { desde: 'hta', hasta: 'previa', motivo: 'indicacion' },
+      ],
+    );
+    expect(plano.aristas.filter((a) => a.motivo === 'indicacion')).toHaveLength(4);
+    verificarTrazado(plano);
+  });
+
+  it('hacia una celda agrupada convergen en su «+N» y en nada más', () => {
+    const recetas = ['r1', 'r2', 'r3', 'r4', 'r5'].map((id) => nodo(id, 'medicacion', new Date(2026, 3, 10)));
+    const plano = ubicarRecorrido(
+      [nodo('d1', 'diagnosticos', new Date(2025, 0, 1)), nodo('d2', 'diagnosticos', new Date(2025, 0, 1)), ...recetas],
+      [
+        { desde: 'd1', hasta: 'r4', motivo: 'indicacion' },
+        { desde: 'd2', hasta: 'r5', motivo: 'indicacion' },
+        { desde: 'd2', hasta: 'r1', motivo: 'indicacion' },
+      ],
+    );
+    expect(plano.aristas.some((a) => a.hasta.startsWith('grupo:'))).toBe(true);
     verificarTrazado(plano);
   });
 
