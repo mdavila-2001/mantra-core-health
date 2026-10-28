@@ -1,0 +1,24 @@
+<app-page-header
+  title="Formularios"
+  subtitle="Los formularios de su especialidad y las encuestas que recibe cada paciente, en un solo lugar."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-tabs
+  class="forms-hub__tabs"
+  data-testid="formularios-tabs"
+  [selectedIndex]="activa()"
+  (selectedIndexChange)="elegir($event)"
+>
+  @for (pestana of pestanas(); track pestana.ruta) {
+    <app-tab [label]="pestana.label">
+      @if (pestanas()[activa()]?.ruta === pestana.ruta) {
+        @if (pestana.ruta === '/form-builder') {
+          <app-form-builder embedded />
+        } @else {
+          <app-surveys-home embedded />
+        }
+      }
+    </app-tab>
+  }
+</app-tabs>

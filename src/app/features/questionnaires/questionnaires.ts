@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -150,6 +150,12 @@ interface EncuestaVisible extends SurveySummary {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SurveysHome {
+  /**
+   * Dentro del centro «Formularios | Encuestas» la cabecera la dibuja el
+   * centro; acá sólo queda la acción «Nueva encuesta», en su propio renglón.
+   */
+  readonly embedded = input(false);
+
   private readonly surveys = inject(SurveysClient);
   private readonly toast = inject(ToastService);
   private readonly navigation = inject(NavigationService);
