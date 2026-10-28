@@ -26,7 +26,7 @@ import { agendaResourcesMy } from '../my-resource';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
 import { OrganizationField } from '../organization-field/organization-field';
 import { calculateSlots, type Calculation, type CalculatedDay } from './agenda-slots';
-import { PublicationPlace, type PublicationTarget } from './publication-target';
+import { PublicationAttempt, PublicationPlace, type PublicationTarget } from './publication-target';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -337,6 +337,7 @@ export class AgendaCreate {
     this.templateId.set(null);
     this.policyId.set(null);
     this.vigente.set(null);
+    this.attempt.reset();
   }
 
   /** Vuelve a publicar sobre una agenda que ya existe. */
@@ -351,19 +352,22 @@ export class AgendaCreate {
    *
    * Releer no es opcional: cada sede tiene su propio horario, y dejar en
    * pantalla el de la anterior haría que alguien publique creyendo que corrige
-   * lo que ya tenía.
+   * lo que ya tenía. Por lo mismo se suelta lo que el intento hizo sobre la
+   * anterior —su retiro, su plantilla—: no vale para ésta.
    */
   protected elegirSede(id: string | null): void {
     if (this.agendaNueva()) this.agendaNueva.set(false);
     if (id === null || id === this.resourceId()) return;
     this.resourceId.set(id);
+    this.templateId.set(null);
     this.vigente.set(null);
+    this.attempt.reset();
     this.loadCurrentTemplate(id);
   }
 
   /** Trae el horario vigente de una agenda; si mientras tanto se eligió otra, ya no manda. */
   private loadCurrentTemplate(resourceId: string): void {
-    this.scheduling.listTemplates(resourceId).subscribe({
+    this.scheduling.listTemplates(resourceId, this.place.scope()).subscribe({
       next: (pagina) => {
         if (resourceId !== this.resourceId()) return;
         // La primera es la que gobierna: el servidor las devuelve de la más reciente a la
@@ -741,11 +745,12 @@ export class AgendaCreate {
     this.templateId.set(null);
     this.policyId.set(null);
     this.vigente.set(null);
+    this.attempt.reset();
     // Sin rol de agenda tampoco se pregunta: la lectura devolvería 403 y esta
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
     if (perfil === null || tenantId === null || !this.puedeCrear()) return;
 
-    agendaResourcesMy(this.scheduling, tenantId, perfil).subscribe({
+    agendaResourcesMy(this.scheduling, tenantId, perfil, this.place.scope()).subscribe({
       next: (recursos) => {
         if (tenantId !== this.place.tenantId()) return;
         // Todas, no la primera: quien atiende en dos sedes tiene que poder
@@ -1082,67 +1087,66 @@ export class AgendaCreate {
     if (target === null) return;
 
     this.estado.set(loading());
+    this.attempt.begin(target);
     this.crearRecurso(target);
   }
 
   private crearRecurso(target: PublicationTarget): void {
     const yaEsta = this.resourceId();
     if (yaEsta !== null) {
-      this.crearPolitica(target.tenantId, yaEsta);
+      this.crearPolitica(target, yaEsta);
       return;
     }
 
     const general = this.formGeneral.getRawValue();
     const tecnico = this.formTecnico.getRawValue();
 
-    this.scheduling
-      .createResource({
-        tenantId: target.tenantId,
-        resourceType: (tecnico.resourceType || 'PRACTITIONER') as ResourceType,
-        resourceRefType: tecnico.resourceRefType.trim() || TABLA_DE_PERFIL_PROFESIONAL,
-        resourceRefId: tecnico.resourceRefId.trim(),
-        name: this.nombreDelRecurso(),
-        ...opcTexto('practiceId', target.practiceId ?? general.practiceId),
-        ...opcTexto('timeZone', general.timeZone),
-        // La capacidad se pregunta UNA vez: la del recurso y la de cada cupo
-        // son el mismo número, y preguntarlo dos veces sólo servía para que no
-        // coincidieran.
-        ...opcEntero('capacity', general.capacidadPorTurno),
-      })
-      .subscribe({
-        next: (recurso) => {
-          this.resourceId.set(recurso.id);
-          this.crearPolitica(target.tenantId, recurso.id);
-        },
-        error: (error: unknown) => this.fallar(error),
-      });
+    const newResource = {
+      tenantId: target.tenantId,
+      resourceType: (tecnico.resourceType || 'PRACTITIONER') as ResourceType,
+      resourceRefType: tecnico.resourceRefType.trim() || TABLA_DE_PERFIL_PROFESIONAL,
+      resourceRefId: tecnico.resourceRefId.trim(),
+      name: this.nombreDelRecurso(),
+      ...opcTexto('practiceId', target.practiceId ?? general.practiceId),
+      ...opcTexto('timeZone', general.timeZone),
+      // La capacidad se pregunta UNA vez: la del recurso y la de cada cupo
+      // son el mismo número, y preguntarlo dos veces sólo servía para que no
+      // coincidieran.
+      ...opcEntero('capacity', general.capacidadPorTurno),
+    };
+    this.scheduling.createResource(newResource, target.scope).subscribe({
+      next: (recurso) => {
+        this.resourceId.set(recurso.id);
+        this.crearPolitica(target, recurso.id);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
   }
 
-  private crearPolitica(tenantId: string, resourceId: string): void {
+  private crearPolitica(target: PublicationTarget, resourceId: string): void {
     if (!this.usarPolitica() || this.policyId() !== null) {
       this.retirarVigenteYCrear(resourceId, this.policyId());
       return;
     }
 
     const v = this.formPolitica.getRawValue();
-    this.scheduling
-      .createPolicy({
-        tenantId,
-        // Derivados: eran dos campos obligatorios que nadie vuelve a leer.
-        code: codigoDe(this.nombreDelRecurso()),
-        name: `Reglas de ${this.nombreDelRecurso()}`,
-        ...opcEntero('minNoticeMinutes', v.minNoticeMinutes),
-        ...opcEntero('maxAdvanceDays', v.maxAdvanceDays),
-        ...opcEntero('cancellationWindowMinutes', v.cancellationWindowMinutes),
-        ...opcEntero('maxActivePerPatient', v.maxActivePerPatient),
-      })
-      .subscribe({
-        next: (politica) => {
-          this.policyId.set(politica.id);
-          this.retirarVigenteYCrear(resourceId, politica.id);
-        },
-        error: (error: unknown) => this.fallar(error),
-      });
+    const newPolicy = {
+      tenantId: target.tenantId,
+      // Derivados: eran dos campos obligatorios que nadie vuelve a leer.
+      code: codigoDe(this.nombreDelRecurso()),
+      name: `Reglas de ${this.nombreDelRecurso()}`,
+      ...opcEntero('minNoticeMinutes', v.minNoticeMinutes),
+      ...opcEntero('maxAdvanceDays', v.maxAdvanceDays),
+      ...opcEntero('cancellationWindowMinutes', v.cancellationWindowMinutes),
+      ...opcEntero('maxActivePerPatient', v.maxActivePerPatient),
+    };
+    this.scheduling.createPolicy(newPolicy, target.scope).subscribe({
+      next: (politica) => {
+        this.policyId.set(politica.id);
+        this.retirarVigenteYCrear(resourceId, politica.id);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
   }
 
   /**
@@ -1171,11 +1175,11 @@ export class AgendaCreate {
    */
   private retirarVigenteYCrear(resourceId: string, policyId: string | null): void {
     const anterior = this.vigente();
-    // `yaRetirado` y no `vigente === null`: el vigente se conserva porque
+    // `attempt.retirement` y no `vigente === null`: el vigente se conserva porque
     // `esCambio()` cuelga de él —el modal de éxito dice «quedó cambiado»—, y
     // reintentar tras un fallo posterior no debe volver a retirar lo que ya
     // está retirado.
-    if (anterior === null || this.yaRetirado() || this.templateId() !== null) {
+    if (anterior === null || this.attempt.retirement() !== null || this.templateId() !== null) {
       this.crearPlantilla(resourceId, policyId);
       return;
     }
@@ -1184,30 +1188,21 @@ export class AgendaCreate {
     // pregunta antes qué hacer con ellas: cancelarlas y avisar a cada
     // paciente, o conservarlas (etapa C, 24/10/2026). Si la persona vuelve
     // atrás, no se publica nada y el formulario queda como estaba.
-    this.cancellations.retireTemplate(anterior.id).subscribe({
+    this.cancellations.retireTemplate(anterior.id, this.attempt.scope()).subscribe({
       next: (retiro) => {
         if (retiro === null) {
           this.estado.set(ready(null));
           return;
         }
-        this.yaRetirado.set(true);
-        this.cuposSoltados.set(retiro.releasedSlots);
-        this.cuposConservados.set(retiro.keptSlots);
-        this.citasCanceladas.set(retiro.cancelledBookings ?? 0);
+        this.attempt.retirement.set(retiro);
         this.crearPlantilla(resourceId, policyId);
       },
       error: (error: unknown) => this.fallar(error),
     });
   }
 
-  /** Si el horario anterior ya se retiró en este intento de publicación. */
-  private readonly yaRetirado = signal(false);
-
-  /** Cupos que el retiro del horario anterior soltó y conservó. */
-  protected readonly cuposSoltados = signal<number | null>(null);
-  protected readonly cuposConservados = signal<number | null>(null);
-  /** Citas del horario anterior canceladas al reemplazarlo, con aviso a cada paciente. */
-  protected readonly citasCanceladas = signal(0);
+  /** Dónde publica este intento y qué ya retiró. Se suelta al cambiar de organización o agenda. */
+  private readonly attempt = new PublicationAttempt();
 
   private crearPlantilla(resourceId: string, policyId: string | null): void {
     const yaEsta = this.templateId();
@@ -1246,27 +1241,26 @@ export class AgendaCreate {
       );
     });
 
-    this.scheduling
-      .createTemplate(resourceId, {
-        // Derivado: no hay `GET` de plantillas, así que este nombre no lo
-        // vuelve a leer nadie. Pedirlo era pedir una etiqueta a ciegas.
-        name: `Horario de ${this.nombreDelRecurso()}`,
-        rules,
-        // El contrato lo pide también a nivel plantilla; va el de la primera
-        // franja, que es el que gobierna cuando una regla no trae el suyo.
-        // En horario flexible, lo que se reserva por paciente (P36).
-        slotMinutes: flexible ? this.minutosPorPaciente() : rules[0]?.slotMinutes,
-        ...(flexible ? { flexibleHours: true } : {}),
-        ...(policyId === null ? {} : { bookingPolicyId: policyId }),
-        ...opcFecha('validTo', this.fechaDeFin()),
-      })
-      .subscribe({
-        next: (plantilla) => {
-          this.templateId.set(plantilla.id);
-          this.generarCupos(plantilla.id);
-        },
-        error: (error: unknown) => this.fallar(error),
-      });
+    const template = {
+      // Derivado: no hay `GET` de plantillas, así que este nombre no lo
+      // vuelve a leer nadie. Pedirlo era pedir una etiqueta a ciegas.
+      name: `Horario de ${this.nombreDelRecurso()}`,
+      rules,
+      // El contrato lo pide también a nivel plantilla; va el de la primera
+      // franja, que es el que gobierna cuando una regla no trae el suyo.
+      // En horario flexible, lo que se reserva por paciente (P36).
+      slotMinutes: flexible ? this.minutosPorPaciente() : rules[0]?.slotMinutes,
+      ...(flexible ? { flexibleHours: true } : {}),
+      ...(policyId === null ? {} : { bookingPolicyId: policyId }),
+      ...opcFecha('validTo', this.fechaDeFin()),
+    };
+    this.scheduling.createTemplate(resourceId, template, this.attempt.scope()).subscribe({
+      next: (plantilla) => {
+        this.templateId.set(plantilla.id);
+        this.generarCupos(plantilla.id);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
   }
 
   private generarCupos(templateId: string): void {
@@ -1280,18 +1274,17 @@ export class AgendaCreate {
     const fin = this.fechaDeFin();
     const hasta = fin !== null && fin.getTime() < horizonte.getTime() ? fin : horizonte;
 
-    this.scheduling
-      .generateSlots(templateId, { from: desde.toISOString(), to: hasta.toISOString() })
-      .subscribe({
-        next: (resultado) => {
-          this.cuposCreados.set(resultado.created);
-          this.compararConLoGenerado(resultado.created);
-          this.estado.set(ready(null));
-          this.publicado.set(true);
-          void this.avisarQueQuedoPublicado(resultado.created);
-        },
-        error: (error: unknown) => this.fallar(error),
-      });
+    const range = { from: desde.toISOString(), to: hasta.toISOString() };
+    this.scheduling.generateSlots(templateId, range, this.attempt.scope()).subscribe({
+      next: (resultado) => {
+        this.cuposCreados.set(resultado.created);
+        this.compararConLoGenerado(resultado.created);
+        this.estado.set(ready(null));
+        this.publicado.set(true);
+        void this.avisarQueQuedoPublicado(resultado.created);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
   }
 
   /**
@@ -1308,6 +1301,7 @@ export class AgendaCreate {
    * enlace.
    */
   private async avisarQueQuedoPublicado(cupos: number): Promise<void> {
+    const retiro = this.attempt.retirement();
     const irAVerla = await this.dialogs.confirm({
       title: this.esCambio()
         ? 'Listo, su horario quedó cambiado'
@@ -1321,12 +1315,12 @@ export class AgendaCreate {
         // Lo que pasó con el horario anterior, dicho y no callado: los turnos
         // conservados son citas de pacientes que siguen en pie, y quien acaba
         // de cambiar el horario necesita saber que están.
-        ...(this.cuposSoltados() === null
+        ...(retiro === null
           ? []
           : [
               {
                 label: 'Del horario anterior',
-                value: `${this.cuposSoltados()} horarios libres se retiraron; ${this.cuposConservados()} con cita siguen en pie`,
+                value: `${retiro.releasedSlots} horarios libres se retiraron; ${retiro.keptSlots} con cita siguen en pie`,
               },
             ]),
       ],
