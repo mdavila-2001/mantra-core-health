@@ -104,10 +104,9 @@
   border-block-start: 1px solid var(--border-default);
 }
 
-/* Bandas alternadas apenas tintadas: separan carriles sin un borde más. */
-.recorrido__carril:nth-of-type(even) {
-  background: var(--bg-hover);
-}
+/* Sin bandas tintadas: el halo de las indicaciones es del color del lienzo,
+   y sobre una banda tintada se veía como una franja de otro color alrededor
+   de cada línea. Los carriles ya se separan por su filete y su rótulo. */
 
 /* Pegado al borde izquierdo visible: al desplazarse, el carril no pierde nombre.
    Con fondo propio y por encima de la capa de líneas: sin eso, el tronco de una
