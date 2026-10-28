@@ -149,6 +149,41 @@
 }
 
 /*
+ * «Más accesos» tiene que poder abrirse (28/10/2026).
+ *
+ * La lista desplegable (`position: absolute`) colgaba de `.app-header__rapidos`,
+ * que a su vez está dentro de la tira de acciones `.app-header__derecha`. Esa
+ * tira es desplazable (`overflow-x: auto`, ≤ 900 px) y por eso recorta también
+ * en vertical —el navegador calcula el otro eje como `auto`—: el botón se
+ * marcaba abierto y no se veía ningún acceso. Además, anclada a la derecha del
+ * botón, que ya no es el borde de la pantalla (a su derecha van la campana, el
+ * tema y la cuenta), la lista se salía por la izquierda en los teléfonos.
+ *
+ * Se ancla a la cabecera (que es `sticky`, o sea, contenedor de posición): un
+ * absoluto cuyo bloque contenedor es un ancestro de la tira no lo recorta su
+ * `overflow`, y queda pegado al borde derecho de la pantalla.
+ */
+@media (max-width: 1279px) {
+  .app-shell--redesign .app-header .app-header__rapidos {
+    position: static;
+  }
+
+  .app-shell--redesign .app-header .app-header__rapidos-lista {
+    inset-inline-end: var(--e2);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header .app-header__rapidos {
+    position: static;
+  }
+
+  .app-header .app-header__rapidos-lista {
+    inset-inline-end: var(--e2);
+  }
+}
+
+/*
  * Rediseño de la cabecera (propietario, 27/10/2026).
  *
  * Emergencia sale de la cabecera y encabeza el menú lateral; los destinos que
