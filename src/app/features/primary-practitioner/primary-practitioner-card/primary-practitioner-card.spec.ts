@@ -6,7 +6,7 @@ import { provideRouter } from '@angular/router';
 import { PrimaryPractitionerCard } from './primary-practitioner-card';
 
 const URL = '/profiles/patients/me/primary-practitioner';
-const MEDICO = '11111111-1111-4111-8111-111111111111';
+const PRACTITIONER_ID = '11111111-1111-4111-8111-111111111111';
 
 describe('PrimaryPractitionerCard', () => {
   let fixture: ComponentFixture<PrimaryPractitionerCard>;
@@ -33,7 +33,7 @@ describe('PrimaryPractitionerCard', () => {
   it('con médico de cabecera muestra nombre, título, fecha y el enlace a su ficha', () => {
     leer({
       current: {
-        practitionerProfileId: MEDICO,
+        practitionerProfileId: PRACTITIONER_ID,
         displayName: 'Carla Gutiérrez',
         professionalTitle: 'Médica general',
         since: '2026-10-28T12:00:00.000Z',
@@ -44,7 +44,7 @@ describe('PrimaryPractitionerCard', () => {
     expect(byTestId('mi-salud-cabecera-name')?.textContent).toContain('Médica general');
     // El nombre del mes depende del locale del TestBed; el día y el año, no.
     expect(host().textContent).toMatch(/Desde el 28 .* 2026/);
-    expect(byTestId('mi-salud-cabecera-ficha')?.getAttribute('href')).toBe(`/directory/${MEDICO}`);
+    expect(byTestId('mi-salud-cabecera-ficha')?.getAttribute('href')).toBe(`/directory/${PRACTITIONER_ID}`);
   });
 
   it('sin médico explica qué es y ofrece buscarlo en la guía (S3 con próxima acción)', () => {

@@ -32,7 +32,7 @@ export function displayNameOf(practitioner: { readonly displayName?: string | nu
  * Los `reason` de la API que dicen que la cuenta **no es de paciente**: sin
  * perfil de paciente o sin persona vinculada. Ahí no hay nada que ofrecer.
  */
-const NO_ES_PACIENTE: ReadonlySet<string> = new Set([
+const NOT_A_PATIENT_REASONS: ReadonlySet<string> = new Set([
   'PATIENT_PROFILE_NOT_FOUND',
   'ACCOUNT_WITHOUT_LINKED_PERSON',
 ]);
@@ -50,7 +50,7 @@ export function isNotPatient(error: unknown): boolean {
   const cuerpo: unknown = error.error;
   if (typeof cuerpo !== 'object' || cuerpo === null) return false;
   const reason = (cuerpo as Record<string, unknown>)['reason'];
-  return typeof reason === 'string' && NO_ES_PACIENTE.has(reason);
+  return typeof reason === 'string' && NOT_A_PATIENT_REASONS.has(reason);
 }
 
 /** El estado HTTP de un fallo, o `null` si no fue una respuesta HTTP. */

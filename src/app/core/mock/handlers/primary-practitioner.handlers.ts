@@ -40,7 +40,7 @@ function respuesta(pacienteId: string) {
 }
 
 /** El 404 de la API para una cuenta sin perfil de paciente, con su `reason`. */
-const sinPerfilDePaciente = () =>
+const noPatientProfile = () =>
   reply(404, {
     statusCode: 404,
     code: 'NOT_FOUND',
@@ -55,12 +55,12 @@ function cerrar(e: EleccionSimulada): void {
 export function registerPrimaryPractitioner(router: MockRouter): void {
   router.get('/profiles/patients/me/primary-practitioner', (request) => {
     const p = pacienteDeSesion(request);
-    return p === undefined ? sinPerfilDePaciente() : respuesta(p.id);
+    return p === undefined ? noPatientProfile() : respuesta(p.id);
   });
 
   router.put('/profiles/patients/me/primary-practitioner', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return sinPerfilDePaciente();
+    if (p === undefined) return noPatientProfile();
     const id = cuerpo<{ practitionerProfileId: unknown }>(request).practitionerProfileId;
     if (typeof id !== 'string' || id === '') {
       return validation('Error de validación', [
@@ -81,7 +81,7 @@ export function registerPrimaryPractitioner(router: MockRouter): void {
 
   router.delete('/profiles/patients/me/primary-practitioner', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return sinPerfilDePaciente();
+    if (p === undefined) return noPatientProfile();
     const actual = currentOf(p.id);
     if (actual) cerrar(actual);
     return respuesta(p.id);

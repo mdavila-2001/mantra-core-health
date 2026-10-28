@@ -36,7 +36,7 @@ describe('PrimaryPractitionerChoice', () => {
     byTestId(id)!.click();
     fixture.detectChanges();
   };
-  const botonConTexto = (texto: string) =>
+  const buttonWithText = (texto: string) =>
     Array.from(host().querySelectorAll<HTMLButtonElement>('button')).find((b) =>
       b.textContent?.includes(texto),
     );
@@ -178,7 +178,7 @@ describe('PrimaryPractitionerChoice', () => {
     );
 
     expect(host().textContent).toContain('req-123');
-    botonConTexto('Reintentar')!.click();
+    buttonWithText('Reintentar')!.click();
     fixture.detectChanges();
     leer({ current: null });
     expect(byTestId('primary-doctor-elegir')).not.toBeNull();
