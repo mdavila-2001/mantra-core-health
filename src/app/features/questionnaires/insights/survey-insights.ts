@@ -270,16 +270,30 @@ export class SurveyInsightsPanel {
     return d ? preguntasGraficables(d.byQuestion) : [];
   });
 
-  private readonly combinadas = computed(() => combinarPorDimension(this.graficables()));
+  /**
+   * Con un servicio elegido los datos son de ese servicio y su enunciado es el
+   * correcto; sin filtro entran consultas y servicios juntos y las dimensiones
+   * compartidas se leen con el enunciado neutro.
+   */
+  private readonly combinadas = computed(() =>
+    combinarPorDimension(this.graficables(), this.servicio() === TODOS ? 'todo' : 'servicio'),
+  );
 
   protected readonly totalPreguntas = computed(() => this.combinadas().length);
 
   protected readonly preguntas = computed(() => {
-    const todas = this.combinadas();
+    // Las suprimidas al final: con una grilla de dos columnas, una pregunta sin
+    // datos al lado de una con barras deja un hueco del alto de las barras.
+    // Juntas (y compactas) ocupan poco; el orden relativo se conserva.
+    const todas = [
+      ...this.combinadas().filter((c) => !c.pregunta.suppressed),
+      ...this.combinadas().filter((c) => c.pregunta.suppressed),
+    ];
     const visibles = this.verTodas() ? todas : todas.slice(0, PREGUNTAS_VISIBLES);
     return visibles.map(({ pregunta, combinada }) => ({
       pregunta,
       combinada,
+      suprimida: pregunta.suppressed,
       rotulo: rotuloDeDimension(pregunta.dimension),
       // Una pregunta suprimida no trae nada que resumir.
       resumen: pregunta.suppressed ? null : resumirAgregado(pregunta),

@@ -4,6 +4,8 @@ import type { InsightsQuestion } from '../../../core/data-access/surveys/surveys
 import {
   barrasDeTendencia,
   combinarPorDimension,
+  preguntaNeutraDeDimension,
+  rotuloDeDimension,
   etiquetaDePeriodo,
   formatearNps,
   PERIODO_INICIAL,
@@ -260,7 +262,10 @@ describe('combinar consulta y servicio por dimensión', () => {
     expect(unica!.combinada).toBe(true);
     expect(unica!.pregunta.n).toBe(40);
     expect(unica!.pregunta.average).toBeCloseTo(3.75, 5);
-    expect(unica!.pregunta.text).toBe('Satisfacción global');
+    // El enunciado es el neutro de la dimensión: no dice «consulta» ni «servicio».
+    expect(unica!.neutra).toBe(true);
+    expect(unica!.pregunta.text).toBe(preguntaNeutraDeDimension('satisfaccion_global'));
+    expect(unica!.pregunta.text).not.toMatch(/consulta|servicio/i);
     expect(unica!.pregunta.distribution).toEqual([
       { value: 3, count: 10 },
       { value: 4, count: 30 },
@@ -299,6 +304,50 @@ describe('preguntas suprimidas por el servidor', () => {
     expect(resultado[0]!.combinada).toBe(false);
     expect(resultado[0]!.pregunta.questionId).toBe('consulta');
     expect(resultado[0]!.pregunta.n).toBe(30);
+  });
+
+  it('sin filtro, la que gana no habla de «servicio» ni de «consulta»: lleva el enunciado neutro', () => {
+    const resultado = combinarPorDimension([
+      pregunta({ questionId: 'consulta', text: 'En esta consulta, ¿con qué frecuencia le trataron con respeto?', dimension: 'trato_respetuoso', suppressed: true }),
+      pregunta({ questionId: 'servicio', text: 'Durante este servicio, ¿con qué frecuencia le trataron con respeto?', dimension: 'trato_respetuoso', n: 6, average: 4.5 }),
+    ]);
+    expect(resultado).toHaveLength(1);
+    expect(resultado[0]!.pregunta.questionId).toBe('servicio');
+    expect(resultado[0]!.pregunta.n).toBe(6);
+    expect(resultado[0]!.neutra).toBe(true);
+    expect(resultado[0]!.pregunta.text).toBe(preguntaNeutraDeDimension('trato_respetuoso'));
+    expect(resultado[0]!.pregunta.text).not.toMatch(/consulta|servicio/i);
+  });
+
+  it('con un servicio elegido conserva el enunciado de ese servicio', () => {
+    const resultado = combinarPorDimension(
+      [
+        pregunta({ questionId: 'consulta', dimension: 'trato_respetuoso', suppressed: true }),
+        pregunta({ questionId: 'servicio', text: 'Durante este servicio, ¿…?', dimension: 'trato_respetuoso', n: 6, average: 4.5 }),
+      ],
+      'servicio',
+    );
+    expect(resultado[0]!.neutra).toBe(false);
+    expect(resultado[0]!.pregunta.text).toBe('Durante este servicio, ¿…?');
+  });
+
+  it('una dimensión de una sola fuente conserva su enunciado', () => {
+    const [sola] = combinarPorDimension([
+      pregunta({ questionId: 'c', text: 'En esta consulta, ¿…?', dimension: 'comunicacion', suppressed: true }),
+    ]);
+    expect(sola!.neutra).toBe(false);
+    expect(sola!.pregunta.text).toBe('En esta consulta, ¿…?');
+  });
+
+  it('toda dimensión base tiene su enunciado neutro, sin las palabras «consulta» ni «servicio»', () => {
+    for (const dimension of [
+      'esfuerzo_acceso', 'tiempo_espera', 'comunicacion', 'claridad_explicacion',
+      'trato_respetuoso', 'seguridad_percibida', 'satisfaccion_global', 'recomendacion_nps',
+    ]) {
+      const texto = preguntaNeutraDeDimension(dimension);
+      expect(texto).not.toBe(rotuloDeDimension(dimension));
+      expect(texto).not.toMatch(/consulta|servicio/i);
+    }
   });
 
   it('gana la que sí tiene datos aunque la suprimida venga primero', () => {
