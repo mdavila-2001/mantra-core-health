@@ -9,10 +9,12 @@ import {
   signal,
 } from '@angular/core';
 
+import { SessionStore } from '../../../../core/auth/session.store';
 import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { BlockCancellations, cancelledBookingsText } from '../../block-cancellations';
+import { OrganizationField } from '../../organization-field/organization-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -23,6 +25,7 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { FranjaVigente } from '../../telemedicina';
+import { BookingDestination } from './booking-destination';
 
 /** Un rato ya tomado del día, para avisar el choque ANTES de guardar. */
 export interface DayGap {
@@ -80,6 +83,13 @@ const END_NOT_AFTER_START = 'La hora de fin tiene que ser después de la de inic
  * y la API la registra presencial. La telemedicina se habilita por franja, en
  * el horario publicado.
  *
+ * ## La organización elige la agenda
+ *
+ * «Mi consultorio» viene elegido y guarda en la agenda que pasa el contenedor,
+ * como siempre. Con otra organización, lo creado va a la agenda del médico en
+ * esa organización ({@link BookingDestination}); si no publicó ninguna ahí, se dice
+ * y no se guarda.
+ *
  * ## Los choques, en vivo y en el servidor
  *
  * Al elegir el rango, si pisa algo del día YA CARGADO la tarjeta lo dice antes
@@ -90,7 +100,7 @@ const END_NOT_AFTER_START = 'La hora de fin tiene que ser después de la de inic
  */
 @Component({
   selector: 'app-day-card',
-  imports: [Alert, AppButton, ContentDialog, FormField, Input, ReferenceCombobox],
+  imports: [Alert, AppButton, ContentDialog, FormField, Input, OrganizationField, ReferenceCombobox],
   templateUrl: './day-card.html',
   styleUrl: './day-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,12 +111,20 @@ export class DayCard {
   private readonly profiles = inject(ProfilesClient);
   private readonly toasts = inject(ToastService);
   private readonly dialogs = inject(DialogService);
+  private readonly session = inject(SessionStore);
 
   /** El día sobre el que se crea. */
   readonly dia = input.required<Date>();
 
-  /** La agenda (recurso) donde ocurre. */
+  /** La agenda (recurso) de «Mi consultorio»: donde ocurre si no se elige otra organización. */
   readonly resourceId = input.required<string>();
+
+  /** En qué agenda queda lo que se guarda, según la organización elegida. */
+  protected readonly destination = new BookingDestination(
+    this.scheduling,
+    this.session.practitionerProfileId,
+    this.resourceId,
+  );
 
   /** El rato tocado, para prellenar. */
   readonly desdeInicial = input.required<Date>();
@@ -258,6 +276,7 @@ export class DayCard {
     const rango = this.range();
     return (
       rango !== null &&
+      this.destination.resourceId() !== null &&
       !this.saving() &&
       !this.blockedByGap() &&
       (this.patient() !== null || this.reason().trim() !== '')
@@ -304,17 +323,18 @@ export class DayCard {
    */
   protected save(): void {
     const rango = this.range();
-    // `canSave()` ya incluye el bloqueo; se vuelve a mirar acá porque un
-    // botón deshabilitado no es una regla: esta función se puede invocar por
-    // teclado, por `submit` del formulario y desde una prueba.
-    if (rango === null || this.blockedByGap() || !this.canSave()) return;
+    const resourceId = this.destination.resourceId();
+    // `canSave()` ya incluye el bloqueo y la agenda; se vuelve a mirar acá
+    // porque un botón deshabilitado no es una regla: esta función se puede
+    // invocar por teclado, por `submit` del formulario y desde una prueba.
+    if (rango === null || resourceId === null || this.blockedByGap() || !this.canSave()) return;
 
     if (!isLongSession(rango)) {
-      this.persist(rango);
+      this.persist(resourceId, rango);
       return;
     }
     void this.confirmLongSession(rango).then((confirmed) => {
-      if (confirmed) this.persist(rango);
+      if (confirmed) this.persist(resourceId, rango);
     });
   }
 
@@ -328,24 +348,27 @@ export class DayCard {
     });
   }
 
-  /** Crea lo que la inferencia decidió: la cita si hay paciente; si no, el tiempo ocupado. */
-  private persist(range: TimeRange): void {
+  /**
+   * Crea lo que la inferencia decidió en la agenda elegida: la cita si hay
+   * paciente; si no, el tiempo ocupado.
+   */
+  private persist(resourceId: string, range: TimeRange): void {
     this.saving.set(true);
     this.error.set(null);
 
     const chosen = this.patient();
     if (chosen === null) {
-      this.createBusyTime(range);
+      this.createBusyTime(resourceId, range);
       return;
     }
-    this.createAppointment(chosen, range);
+    this.createAppointment(resourceId, chosen, range);
   }
 
-  private createAppointment(patient: ReferenceOption, range: TimeRange): void {
+  private createAppointment(resourceId: string, patient: ReferenceOption, range: TimeRange): void {
     this.scheduling
       .createDirectAppointment({
         patientProfileId: patient.value,
-        resourceId: this.resourceId(),
+        resourceId,
         startAt: range.desde.toISOString(),
         durationMinutes: minutesOf(range),
         ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
@@ -373,10 +396,10 @@ export class DayCard {
    * Con citas en el rato, la API lista a quién alcanza y `BlockCancellations`
    * pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
    */
-  private createBusyTime(range: TimeRange): void {
+  private createBusyTime(resourceId: string, range: TimeRange): void {
     this.cancellations
       .withConfirmation((confirmed) =>
-        this.scheduling.createException(this.resourceId(), {
+        this.scheduling.createException(resourceId, {
           exceptionType: 'ABSENCE',
           startAt: range.desde.toISOString(),
           endAt: range.hasta.toISOString(),
