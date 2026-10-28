@@ -17,6 +17,24 @@ import {
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { InboxOrder } from './inbox-order';
+import { ChatStore } from '../../../../core/messaging/chat.store';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Router } from '@angular/router';
+
+/**
+ * La sesión del mostrador. El botón del chat inyecta `ChatStore`, que mira
+ * quién es la cuenta (para no heredar la identidad de otra en la pestaña).
+ */
+const SESION_DEL_MOSTRADOR = {
+  displayName: () => 'Ana Pérez',
+  userId: () => 'u-mostrador',
+  roles: () => ['PHARMACY_STAFF'],
+  activeTenantId: () => 't-farmacia',
+};
+
+/** Donde aterriza el chat; el hilo de verdad no hace falta acá. */
+@Component({ template: '<p>hilo</p>', changeDetection: ChangeDetectionStrategy.OnPush })
+class HiloDePrueba {}
 
 describe('InboxOrder with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
@@ -31,8 +49,11 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+        provideRouter([
+          { path: 'administration/pharmacy-orders/:orderId', component: InboxOrder },
+          { path: 'messaging/:id', component: HiloDePrueba },
+        ]),
+        { provide: SessionStore, useValue: SESION_DEL_MOSTRADOR },
         {
           provide: DialogService,
           useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },
@@ -608,4 +629,123 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       ],
     });
   }
+
+  describe('«Chatear con el paciente»', () => {
+    const ID = PHARMACY_ORDER_TEST_IDS.order;
+    const VITRINA = 'vitrina-farmacia';
+
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    async function abrirElChat(): Promise<void> {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      click('mostrador-chatear');
+    }
+
+    const pagina = (items: unknown[]) => ({ items, count: items.length, limit: 30, nextCursor: null });
+
+    it('abre el hilo del pedido como la farmacia, pone la tarjeta una vez y navega al chat', async () => {
+      await abrirElChat();
+      const abrir = http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      abrir.flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+
+      // Antes de mandar la tarjeta se mira el hilo **como la farmacia**.
+      const lectura = http.expectOne((r) => r.url === '/community/conversations/c-9/messages');
+      expect(lectura.request.params.get('profileId')).toBe(VITRINA);
+      lectura.flush(pagina([]));
+
+      const tarjeta = http.expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      expect(tarjeta.request.body.senderProfileId).toBe(VITRINA);
+      expect(tarjeta.request.body.bodyText).toMatch(/^Pedido: .+\n.+\n\/my-account\/pharmacy-orders\//u);
+      tarjeta.flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+
+      const bandeja = http.expectOne((r) => r.url === '/community/conversations');
+      expect(bandeja.request.params.get('profileId')).toBe(VITRINA);
+      bandeja.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+      await harness.fixture.whenStable();
+      expect(TestBed.inject(Router).url).toBe('/messaging/c-9');
+      const store = TestBed.inject(ChatStore);
+      expect(store.perfil()).toBe(VITRINA);
+      expect(store.actuandoComoOrganizacion()).toBe(true);
+    });
+
+    it('tocarlo otra vez desde el mismo pedido no repite la tarjeta', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      http.expectOne((r) => r.url === '/community/conversations/c-9/messages').flush(pagina([]));
+      const primera = http.expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      const tarjeta = primera.request.body.bodyText as string;
+      primera.flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+      http
+        .expectOne((r) => r.url === '/community/conversations')
+        .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      await harness.fixture.whenStable();
+
+      // Vuelve al pedido y lo toca de nuevo: el hilo ya tiene esa tarjeta.
+      await harness.navigateByUrl(`/administration/pharmacy-orders/${ID}`, InboxOrder);
+      http
+        .expectOne(`/pharmacy/orders/${ID}`)
+        .flush(pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }));
+      harness.detectChanges();
+      click('mostrador-chatear');
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      http.expectOne((r) => r.url === '/community/conversations/c-9/messages').flush(
+        pagina([
+          {
+            id: 'm-1',
+            conversationId: 'c-9',
+            senderProfileId: VITRINA,
+            contentTypeConceptId: 'c-text',
+            bodyText: tarjeta,
+            sentAt: '2026-10-28T10:00:00.000Z',
+          },
+        ]),
+      );
+      http.expectNone({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      http
+        .match((r) => r.url === '/community/conversations')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 50, nextCursor: null }));
+      await harness.fixture.whenStable();
+      expect(TestBed.inject(Router).url).toBe('/messaging/c-9');
+    });
+
+    it('422 PATIENT_CHAT_PROFILE_MISSING: lo dice con su texto y no navega ni cambia de perfil', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'PATIENT_CHAT_PROFILE_MISSING', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        'El paciente todavía no tiene perfil de mensajería',
+      );
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+      expect(TestBed.inject(ChatStore).actuandoComoOrganizacion()).toBe(false);
+    });
+
+    it('422 ORGANIZATION_CHAT_PROFILE_UNAVAILABLE: dice que la farmacia no tiene vitrina activa', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        'La farmacia no tiene vitrina pública activa',
+      );
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+  });
 });

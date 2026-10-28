@@ -424,6 +424,13 @@
   padding: var(--e2) var(--e4) 0;
 }
 
+/* El control toma el resto del renglón —y baja a uno propio si no le
+   alcanza—: en angosto reparte su ancho en mitades iguales, y apretado
+   contra el rótulo cortaba el nombre de la farmacia en «Farma…». */
+.mensajeria__como app-segmented-control {
+  flex: 1 1 12rem;
+}
+
 .mensajeria__como-rotulo {
   font-size: var(--fs-caption);
   font-weight: 600;

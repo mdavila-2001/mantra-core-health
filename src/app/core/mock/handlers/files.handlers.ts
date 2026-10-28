@@ -31,6 +31,31 @@ interface ArchivoSimulado {
    * lo llevan —no hay archivo detrás— y siguen con su `dataUrl` dibujado.
    */
   readonly bytes?: Blob;
+  /**
+   * Los mismos bytes como `data:` URL, para que **sobrevivan a F5**.
+   *
+   * `bytes` es un `Blob`, y al guardarse la colección en `sessionStorage` se
+   * serializa como `{}`: después de recargar —o de cerrar sesión y entrar con
+   * otra cuenta en la misma pestaña— la foto de un chat volvía como un
+   * documento de 2 bytes. Se llena aparte porque leer un `Blob` es asíncrono.
+   * Sólo para archivos chicos: `sessionStorage` tiene pocos megas.
+   */
+  readonly bytesComoDataUrl?: string;
+}
+
+/** Hasta qué tamaño se copian los bytes subidos para que sobrevivan a F5. */
+const TOPE_PERSISTIBLE = 1_500_000;
+
+/** Un `data:` URL de vuelta a `Blob`, con su tipo. */
+function blobDeDataUrl(dataUrl: string): Blob | null {
+  const partes = /^data:([^;,]*)(;base64)?,(.*)$/su.exec(dataUrl);
+  if (partes === null || typeof Blob === 'undefined') return null;
+  const [, tipo, base64, datos] = partes;
+  if (base64 === undefined) return new Blob([decodeURIComponent(datos!)], { type: tipo });
+  const binario = atob(datos!);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+  return new Blob([bytes], { type: tipo });
 }
 
 const archivos = new Coleccion<ArchivoSimulado>([
@@ -185,6 +210,15 @@ export function registrarArchivos(router: MockRouter): void {
       // respaldo para el navegador que no trae `File` en el `FormData`.
       ...(subido === null ? {} : { bytes: subido }),
     });
+    if (subido !== null && subido.size <= TOPE_PERSISTIBLE && typeof FileReader !== 'undefined') {
+      const lector = new FileReader();
+      lector.onload = () => {
+        if (typeof lector.result === 'string' && archivos.get(nuevo.id) !== undefined) {
+          archivos.actualizar(nuevo.id, { bytesComoDataUrl: lector.result });
+        }
+      };
+      lector.readAsDataURL(subido);
+    }
     const tipo = subido?.type ?? (categoria === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');
     return { status: 201, body: { ...metadatos(nuevo), fileId: nuevo.id, versionId: nuevo.currentVersionId, size: subido?.size ?? 24_576, mimeType: tipo } };
   });
@@ -231,7 +265,12 @@ export function registrarArchivos(router: MockRouter): void {
     const a = archivos.get(id);
     if (a === undefined) return avatarSvg('?', '#94a3b8');
     // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
-    if (a.bytes !== undefined) return a.bytes;
+    // Tras una recarga `bytes` llega como `{}` (un `Blob` no se serializa):
+    // por eso se pregunta si es un `Blob` de verdad, y si no, se rearma desde
+    // la copia en `data:`.
+    if (typeof Blob !== 'undefined' && a.bytes instanceof Blob) return a.bytes;
+    const recuperado = a.bytesComoDataUrl === undefined ? null : blobDeDataUrl(a.bytesComoDataUrl);
+    if (recuperado !== null) return recuperado;
     // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
     // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
     // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía

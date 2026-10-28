@@ -305,6 +305,37 @@ describe('Messaging', () => {
     campo.dispatchEvent(new Event('input'));
     fixture.detectChanges();
   }
+
+  describe('«Escribiendo como»', () => {
+    it('no aparece para quien no tiene una farmacia con la que escribir', () => {
+      conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
+      expect(consultar('mensajeria-escribiendo-como')).toBeNull();
+    });
+
+    it('con la vitrina de la farmacia ofrece «Yo / Farmacia» y elegir la farmacia cambia de perfil', () => {
+      conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
+      const store = TestBed.inject(ChatStore);
+      store.vitrinaDeOrganizacion.set({ profileId: 'pp-farmacia', nombre: 'Farmacia Vida' });
+      fixture.detectChanges();
+
+      const selector = consultar('mensajeria-escribiendo-como');
+      expect(selector?.textContent).toContain('Yo');
+      expect(selector?.textContent).toContain('Farmacia Vida');
+
+      const actuar = vi.spyOn(store, 'actuarComo');
+      const opciones = Array.from(selector!.querySelectorAll<HTMLButtonElement>('[role="radio"]'));
+      opciones.find((b) => b.textContent?.includes('Farmacia Vida'))!.click();
+      expect(actuar).toHaveBeenCalledWith('pp-farmacia');
+    });
+
+    it('el aviso de que se perdió el permiso se ve en la bandeja', () => {
+      conBandeja([]);
+      TestBed.inject(ChatStore).avisoDePerfil.set('Ya no podés escribir como la farmacia: volviste a tu perfil.');
+      fixture.detectChanges();
+      expect(consultar('mensajeria-aviso-perfil')?.textContent).toContain('volviste a tu perfil');
+    });
+  });
+
 });
 
 /**
