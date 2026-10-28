@@ -4,10 +4,11 @@ import { map, type Observable } from 'rxjs';
 
 import { TENANT_HEADER } from '../../http/auth.interceptor';
 import { API_BASE_URL, apiUrl } from '../api';
-import { maybeDate, sinNulos, type ConNulos } from '../wire';
+import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   MyOrganization,
   OrganizationEdit,
+  OrganizationLegalDocument,
   PractitionerRequest,
   TenantAgenda,
   TenantAgendaItem,
@@ -491,8 +492,19 @@ function deLaOrganizacion(tenantId: string): HttpHeaders {
 
 type WireTenantListItem = Omit<TenantListItem, 'createdAt'> & { readonly createdAt: string };
 
-type WireMyOrganization = Omit<MyOrganization, 'createdAt'> & {
+type WireMyOrganization = Omit<MyOrganization, 'createdAt' | 'legalDocuments'> & {
   readonly createdAt: string;
+  readonly legalDocuments?: readonly WireOrganizationLegalDocument[];
+};
+
+/** El papel de la carpeta como viaja: las fechas, en texto ISO. */
+type WireOrganizationLegalDocument = Omit<
+  OrganizationLegalDocument,
+  'registeredAt' | 'validTo'
+> & {
+  readonly registeredAt?: string | null;
+  readonly validTo?: string | null;
+  readonly documentNumber?: string | null;
 };
 
 /**
@@ -644,6 +656,27 @@ function toMyOrganization(body: ConNulos<WireMyOrganization>): MyOrganization {
     // organización, cualquiera sea su tipo — ver `MyOrganization`.
     legalRepresentative: limpio.legalRepresentative,
     executives: limpio.executives,
+    legalEntityType: limpio.legalEntityType,
+    taxIdentifier: limpio.taxIdentifier,
+    legalDocuments: limpio.legalDocuments?.map(toOrganizationLegalDocument),
+  };
+}
+
+/**
+ * Las fechas son columnas sin hora: van por `maybeDateOnly` para no retroceder
+ * un día al oeste de Greenwich, y se reponen sólo si vinieron.
+ */
+function toOrganizationLegalDocument(
+  doc: WireOrganizationLegalDocument,
+): OrganizationLegalDocument {
+  const { registeredAt, validTo, documentNumber, ...resto } = doc;
+  const registrado = maybeDateOnly(registeredAt);
+  const vence = maybeDateOnly(validTo);
+  return {
+    ...resto,
+    ...(documentNumber == null ? {} : { documentNumber }),
+    ...(registrado === undefined ? {} : { registeredAt: registrado }),
+    ...(vence === undefined ? {} : { validTo: vence }),
   };
 }
 

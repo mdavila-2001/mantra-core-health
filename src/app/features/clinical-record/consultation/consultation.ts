@@ -68,6 +68,7 @@ import {
 import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
 import { FollowUpBlock } from '../patient-chart/follow-up-block/follow-up-block';
 import { ReferralBlock } from '../patient-chart/referral-block/referral-block';
+import { ConsultationReferrals } from './consultation-referrals';
 import {
   MedicationBlock,
   type DiagnosticoEnFicha,
@@ -194,8 +195,8 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
   },
   derivacion: {
     titulo: 'Derivar',
-    descripcion: 'Recomendar a otro profesional, con aviso a la persona.',
-    tituloDelModal: 'Derivar a otro profesional',
+    descripcion: 'A otro profesional u organización médica, por un servicio concreto.',
+    tituloDelModal: 'Derivar a otro profesional u organización',
     icono: 'M5 12h11m-4-4 4 4-4 4M19 5v14',
     testId: 'consulta-casilla-derivacion',
   },
@@ -345,6 +346,7 @@ export class Consultation {
 
   protected readonly consulta = signal<ViewState<Consulta>>(loading());
 
+  protected readonly referrals = new ConsultationReferrals(this.profileId);
   /** Nombre del paciente si se pudo leer; vacío si el padrón está prohibido. */
   private readonly nombre = signal('');
 
@@ -491,9 +493,7 @@ export class Consultation {
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
       ordenes: null,
       reconsulta: null,
-      // Una derivación no deja una fila propia en las dos lecturas del
-      // expediente: es un aviso a la persona, no un dato de su historia.
-      derivacion: null,
+      derivacion: this.referrals.count(), // aparte; sin lectura, sin cifra
       planes: datos?.chart.carePlans.length ?? 0,
       // El formulario no deja una fila propia en la historia: lo que guarda
       // termina en diagnósticos, notas, documentos o laboratorio.
@@ -571,7 +571,7 @@ export class Consultation {
         : `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
     }
     if (this.casillaAbierta() === 'derivacion') {
-      return `Le recomienda a ${quien} que consulte con otro profesional. Le avisamos en su campana, con un enlace a su ficha para reservar.`;
+      return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. Le avisamos en su campana, con un enlace para reservar.`;
     }
     return this.encuentroActual() === null
       ? `Se registra en la historia de ${quien}.`
