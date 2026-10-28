@@ -481,6 +481,13 @@ export interface ResenaSimulada {
   readonly reviewerDisplayModeConceptId: string;
   readonly verificationStatusConceptId: string;
   readonly publishedAt: string;
+  /**
+   * La atención que respalda la reseña (`verifiedEncounterId`). Ausente en las
+   * reseñas de la semilla, que no nacieron de ningún encuentro de la maqueta.
+   * Una reseña por encuentro: es lo que `reviewable-care` mira para decir
+   * `alreadyReviewed`.
+   */
+  readonly encounterId?: string;
   readonly dimensionScores: readonly { dimensionConceptId: string; score: number }[];
   readonly responses: readonly { id: string; responderPublicProfileId: string; responseText: string; publishedAt: string }[];
 }
