@@ -4,6 +4,8 @@ import {
   contextoDelTexto,
   esRutaDeContexto,
   esRutaInterna,
+  linea,
+  normalizarContexto,
   resumenDeContexto,
   textoDeContexto,
   type ContextoDeChat,
@@ -76,5 +78,23 @@ describe('contexto de chat', () => {
 
   it('resume la tarjeta para la bandeja', () => {
     expect(resumenDeContexto(PEDIDO)).toBe('Pedido · Farmacia Chávez · Sucursal Miraflores');
+  });
+
+  it('normalizarContexto deja el contexto como viaja en el texto, o null si no se puede mandar', () => {
+    expect(normalizarContexto({ ...PEDIDO, titulo: '  Farmacia   Chávez\n' })?.titulo).toBe('Farmacia Chávez');
+    expect(normalizarContexto({ ...PEDIDO, detalle: '   ' })).toEqual({
+      tipo: 'pedido',
+      titulo: PEDIDO.titulo,
+      ruta: PEDIDO.ruta,
+    });
+    expect(normalizarContexto({ ...PEDIDO, ruta: 'https://malo.example' })).toBeNull();
+    expect(normalizarContexto({ ...PEDIDO, tipo: 'receta' as never })).toBeNull();
+    // Lo que se lee del texto ya está normalizado: normalizarlo no lo cambia.
+    expect(normalizarContexto(contextoDelTexto(textoDeContexto(PEDIDO))!)).toEqual(PEDIDO);
+  });
+
+  it('linea recorta a 140 con elipsis', () => {
+    expect(linea('x'.repeat(200))).toHaveLength(140);
+    expect(linea('x'.repeat(200)).endsWith('…')).toBe(true);
   });
 });

@@ -12,7 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { defer, finalize, map, type Observable } from 'rxjs';
 
-import { ChatStore } from '../../../../core/messaging/chat.store';
+import { ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
 import { contextoDePedido } from '../../../../core/messaging/contexto-de-pedido';
 
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
@@ -70,6 +70,9 @@ const BANDEJA_ROUTE = '/administration/pharmacy-orders';
  * no puede escribir como la farmacia —la API lo decide por la membresía—.
  */
 export function motivoDeChatNoAbierto(error: unknown): string {
+  if (error instanceof ChatOcupadoError) {
+    return CHAT_OCUPADO;
+  }
   if (error instanceof HttpErrorResponse) {
     const reason = (error.error as { reason?: unknown } | null)?.reason;
     if (reason === 'PATIENT_CHAT_PROFILE_MISSING') {

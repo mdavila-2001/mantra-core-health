@@ -18,20 +18,23 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { ready } from '../../../core/view-state/view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import { vistaPreviaDe, type VistaPrevia } from './vista-previa';
 
 /**
- * Qué muestra la bandeja.
+ * Qué muestra la bandeja: un `ViewState` del M34 (ADR-0005), el mismo que
+ * calcula `ChatStore.bandeja`.
  *
- * - `cargando` — S2: esqueletos con la forma de las filas, para que la lista no
- *   salte cuando llegan los datos.
- * - `vacio` — S3: todavía no hay chats, con la próxima acción a la vista.
- * - `error` — la bandeja no se pudo leer y no hay nada que mostrar; se ofrece
- *   reintentar. Si había filas, se conservan y el aviso va arriba (lo pinta la
- *   pantalla): un tic fallido no borra lo que se estaba mirando.
- * - `lista` — las filas.
+ * - `loading` (S2) — esqueletos con la forma de las filas.
+ * - `empty` (S3) — todavía no hay chats, con la próxima acción a la vista.
+ * - `offline` (S8) — no hubo respuesta: «Sin conexión» y reintentar.
+ * - `forbidden` (S5) — con este perfil no se leen estos chats.
+ * - `error` (S9) — inesperado, con el código de la petición para soporte.
+ * - `ready` y `stale` (S7) — las filas; en S7, además, de cuándo son.
  */
-export type EstadoDeBandeja = 'lista' | 'cargando' | 'vacio' | 'error';
+export type EstadoDeBandeja = ViewState<unknown>;
 
 /** Cuántas filas fantasma se pintan mientras carga: lo que entra en un teléfono. */
 const FILAS_FANTASMA = 7;
@@ -59,7 +62,7 @@ export interface AccionDeFila {
  */
 @Component({
   selector: 'app-conversation-list',
-  imports: [AppButton, AppButtonLink, Avatar, EmptyState, RouterLink, Skeleton],
+  imports: [AppButton, AppButtonLink, Avatar, EmptyState, RouterLink, Skeleton, ViewStateHost],
   templateUrl: './conversation-list.html',
   styleUrl: './conversation-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,10 +83,25 @@ export class ConversationList {
   readonly resaltar = input('');
 
   /** Qué pintar: las filas, o el estado que las reemplaza. */
-  readonly estado = input<EstadoDeBandeja>('lista');
+  readonly estado = input<EstadoDeBandeja>(ready(null));
 
-  /** El motivo del error, tal como lo dio el store. */
-  readonly mensajeDeError = input('');
+  /** El motivo de S5 o S9, dicho una sola vez (no en título y descripción). */
+  protected readonly motivo = computed(() => {
+    const estado = this.estado();
+    if (estado.status === 'forbidden') {
+      return estado.message ?? 'Con este perfil no podés leer estos chats.';
+    }
+    if (estado.status === 'error') {
+      return estado.message ?? 'No pudimos leer tu bandeja.';
+    }
+    return '';
+  });
+
+  /** El id de la petición de S9, para que soporte la encuentre. */
+  protected readonly requestId = computed(() => {
+    const estado = this.estado();
+    return estado.status === 'error' ? estado.requestId : '';
+  });
 
   readonly accion = output<AccionDeFila>();
 

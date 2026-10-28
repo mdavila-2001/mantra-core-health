@@ -325,3 +325,20 @@
     transition: none;
   }
 }
+
+/* El código de soporte de S9: visible y seleccionable de un toque, es lo que
+   se dicta por teléfono. */
+.conversaciones__codigo {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  text-align: center;
+}
+
+.conversaciones__codigo code {
+  padding: 2px var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  user-select: all;
+}

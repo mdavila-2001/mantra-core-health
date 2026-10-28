@@ -1,4 +1,4 @@
-import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { inject, Injectable, InjectionToken, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { io, type Socket } from 'socket.io-client';
 import { Subject } from 'rxjs';
@@ -69,25 +69,73 @@ export interface ChatSocketError {
 }
 
 /**
+ * Lo mínimo del socket que usa el servicio. Existe para que las pruebas puedan
+ * darle uno falso sin levantar un gateway.
+ */
+export type SocketDeChat = Pick<Socket, 'on' | 'emit' | 'disconnect' | 'connected' | 'active'>;
+
+/** Abre un socket con ese token, o `null` si no hay a quién llamar. */
+export type FabricaDeSocket = (token: string) => SocketDeChat | null;
+
+/**
+ * Cómo se abre el socket. Dos situaciones en las que **no** se abre, por el
+ * mismo motivo: no hay a quién llamar.
+ *
+ * - **Bajo SSR**, porque un socket abierto en el servidor no tiene a quién
+ *   avisarle nada.
+ * - **Sobre la maqueta** (`mockBackend`), porque ahí no hay ninguna API: un
+ *   interceptor contesta las peticiones HTTP dentro de Angular, y no hay
+ *   pasarela de tiempo real que pueda contestar un handshake. Intentarlo
+ *   dejaba un `WebSocket connection … failed` en la consola de toda pantalla
+ *   que abre el chat o el centro de avisos.
+ */
+export const FABRICA_DE_SOCKET = new InjectionToken<FabricaDeSocket>('FABRICA_DE_SOCKET', {
+  providedIn: 'root',
+  factory: () => {
+    const baseUrl = inject(API_BASE_URL);
+    const enNavegador = isPlatformBrowser(inject(PLATFORM_ID));
+    return (token) => {
+      if (!enNavegador || environment.mockBackend) {
+        return null;
+      }
+      return baseUrl === ''
+        ? io({ auth: { token }, transports: ['websocket'] })
+        : io(baseUrl, { auth: { token }, transports: ['websocket'] });
+    };
+  },
+});
+
+/**
  * Cliente del gateway WS de mensajería (`CommunityMessagingGateway`, backend).
  *
  * Un solo socket compartido entre la bandeja (`Messaging`) y el hilo
  * (`Thread`): las dos pantallas se suscriben a los mismos streams y deciden
- * cada una qué le importa. El socket es **aditivo** al sondeo que ya existía
- * (`SONDEO_MS` en cada pantalla) — no lo reemplaza, es la red de seguridad si
- * el socket se cae.
+ * cada una qué le importa. El socket es **aditivo** al sondeo — no lo
+ * reemplaza, es la red de seguridad si el socket se cae.
  *
  * Sólo empuja: no manda `message:send` ni `read` por acá. Enviar y marcar
- * leído siguen siendo el `POST` de siempre (`CommunityClient`); el backend
- * emite estos tres eventos después de cada uno de esos `POST`.
+ * leído siguen siendo el `POST` de siempre (`CommunityClient`).
+ *
+ * ## Las salas se recuerdan, no se mandan a ciegas
+ *
+ * El servicio guarda **a qué bandeja y a qué hilo** tiene que estar unido, y
+ * manda los `join:*` en cada `connect` —el primero y cada reconexión—. Antes
+ * los mandaba en el momento, y dos cosas se perdían: un socket que todavía
+ * estaba en el handshake se tiraba y se abría otro (y con él el `join:inbox`
+ * que había quedado en el búfer, justo después de `actuarComo`), y una
+ * reconexión del transporte volvía sin salas: el servidor no las recuerda.
  */
 @Injectable({ providedIn: 'root' })
 export class ChatSocketService {
-  private readonly baseUrl = inject(API_BASE_URL);
   private readonly session = inject(SessionStore);
-  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly fabrica = inject(FABRICA_DE_SOCKET);
 
-  private socket: Socket | null = null;
+  private socket: SocketDeChat | null = null;
+
+  /** La bandeja a la que hay que estar unido, si alguna. */
+  private bandeja: string | null = null;
+  /** El hilo abierto al que hay que estar unido, si alguno. */
+  private hilo: { readonly conversationId: string; readonly profileId: string } | null = null;
 
   readonly connected = signal(false);
 
@@ -115,42 +163,32 @@ export class ChatSocketService {
   readonly onError = this.errors$.asObservable();
 
   /**
-   * Conecta si hace falta y devuelve el socket.
+   * Devuelve el socket, abriéndolo si hace falta.
    *
-   * Dos situaciones en las que **no** se marca, por el mismo motivo: no hay a
-   * quién llamar.
-   *
-   * - **Bajo SSR**, porque un socket abierto en el servidor no tiene a quién
-   *   avisarle nada.
-   * - **Sobre la maqueta** (`mockBackend`), porque ahí no hay ninguna API: un
-   *   interceptor contesta las peticiones HTTP dentro de Angular, y no hay
-   *   pasarela de tiempo real que pueda contestar un handshake. Intentarlo
-   *   dejaba un `WebSocket connection … failed` en la consola de toda pantalla
-   *   que abre el chat o el centro de avisos —lo destapó el barrido de rutas,
-   *   que trata un error de consola como un defecto de la pantalla, y con
-   *   razón: es lo que ve cualquiera que abra las herramientas del navegador.
+   * Uno que todavía está conectándose (`active` sin `connected`) **sirve**: se
+   * conserva. Tirarlo para abrir otro era perder el handshake en curso y lo
+   * que se había pedido en él.
    */
-  private ensureConnected(): Socket | null {
-    if (!this.isBrowser || environment.mockBackend) {
-      return null;
+  private ensureConnected(): SocketDeChat | null {
+    if (this.socket !== null && (this.socket.connected || this.socket.active)) {
+      return this.socket;
     }
     const token = this.session.accessToken();
     if (token === null) {
       return null;
     }
-    if (this.socket?.connected) {
-      return this.socket;
-    }
-    if (this.socket) {
-      this.socket.disconnect();
+    this.socket?.disconnect();
+    this.socket = null;
+
+    const socket = this.fabrica(token);
+    if (socket === null) {
+      return null;
     }
 
-    const socket =
-      this.baseUrl === ''
-        ? io({ auth: { token }, transports: ['websocket'] })
-        : io(this.baseUrl, { auth: { token }, transports: ['websocket'] });
-
-    socket.on('connect', () => this.connected.set(true));
+    socket.on('connect', () => {
+      this.connected.set(true);
+      this.unirseALasSalas(socket);
+    });
     socket.on('disconnect', () => this.connected.set(false));
     socket.on('conversation:message', (payload: MensajeDelCable) =>
       this.messages$.next(aMensaje(payload)),
@@ -174,21 +212,39 @@ export class ChatSocketService {
     return socket;
   }
 
+  /** Manda los `join:*` de lo que hoy corresponde. En cada `connect`. */
+  private unirseALasSalas(socket: SocketDeChat): void {
+    if (this.bandeja !== null) {
+      socket.emit('join:inbox', { profileId: this.bandeja });
+    }
+    if (this.hilo !== null) {
+      socket.emit('join:conversation', { ...this.hilo });
+    }
+  }
+
   /** Se une a la bandeja de un perfil: recibe `conversation:*` de todas sus conversaciones. */
   joinInbox(profileId: string): void {
-    this.ensureConnected()?.emit('join:inbox', { profileId });
+    this.bandeja = profileId;
+    const socket = this.ensureConnected();
+    // Desconectado, el `connect` lo manda: emitirlo también acá lo duplicaría
+    // al vaciarse el búfer.
+    if (socket?.connected) {
+      socket.emit('join:inbox', { profileId });
+    }
   }
 
   /** Se une al hilo abierto de una conversación. */
   joinConversation(conversationId: string, profileId: string): void {
-    this.ensureConnected()?.emit('join:conversation', {
-      conversationId,
-      profileId,
-    });
+    this.hilo = { conversationId, profileId };
+    const socket = this.ensureConnected();
+    if (socket?.connected) {
+      socket.emit('join:conversation', { conversationId, profileId });
+    }
   }
 
   /**
-   * Corta la conexión para que el próximo `join:*` abra una nueva.
+   * Corta la conexión para que el próximo `join:*` abra una nueva, y olvida
+   * las salas.
    *
    * Es lo que se hace al cambiar el perfil con el que se actúa: el gateway no
    * tiene `leave:inbox`, y seguir en la sala del perfil anterior sería recibir
@@ -197,11 +253,18 @@ export class ChatSocketService {
   reiniciar(): void {
     this.socket?.disconnect();
     this.socket = null;
+    this.bandeja = null;
+    this.hilo = null;
     this.connected.set(false);
   }
 
   /** Deja el hilo. No hace falta al salir de la bandeja: `join:inbox` no expira. */
   leaveConversation(conversationId: string): void {
-    this.socket?.emit('leave:conversation', { conversationId });
+    if (this.hilo?.conversationId === conversationId) {
+      this.hilo = null;
+    }
+    if (this.socket?.connected) {
+      this.socket.emit('leave:conversation', { conversationId });
+    }
   }
 }

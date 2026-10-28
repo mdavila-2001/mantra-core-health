@@ -63,8 +63,13 @@ const TIPO_POR_ETIQUETA: ReadonlyMap<string, TipoDeContexto> = new Map(
   ),
 );
 
-/** Una línea sin saltos ni espacios de más, recortada al tope. */
-function linea(texto: string): string {
+/**
+ * Una línea sin saltos ni espacios de más, recortada al tope.
+ *
+ * Exportada porque comparar dos tarjetas exige normalizar **los dos lados**
+ * igual: la que se lee del hilo ya pasó por acá al escribirse.
+ */
+export function linea(texto: string): string {
   const limpia = texto.replace(/\s+/gu, ' ').trim();
   return limpia.length <= TOPE_DE_LINEA ? limpia : `${limpia.slice(0, TOPE_DE_LINEA - 1)}…`;
 }
@@ -104,25 +109,44 @@ export function esRutaInterna(ruta: string): boolean {
 }
 
 /**
+ * El contexto tal como viajaría en el mensaje —título y detalle en una línea,
+ * recortados—, o `null` si no se puede mandar: tipo desconocido, título vacío
+ * o ruta fuera de la lista cerrada de su tipo.
+ *
+ * Es la validación que conviene hacer **antes** de pedir nada: quien recibe un
+ * contexto de afuera (la bandeja, al volver de un enlace) lo pasa por acá y,
+ * si no sirve, abre el hilo sin tarjeta.
+ */
+export function normalizarContexto(contexto: ContextoDeChat): ContextoDeChat | null {
+  if (!Object.hasOwn(ETIQUETA_DE_CONTEXTO, contexto.tipo)) {
+    return null;
+  }
+  const titulo = linea(contexto.titulo);
+  if (titulo === '' || !esRutaDeContexto(contexto.tipo, contexto.ruta)) {
+    return null;
+  }
+  const detalle = contexto.detalle === undefined ? '' : linea(contexto.detalle);
+  const base = { tipo: contexto.tipo, titulo, ruta: contexto.ruta };
+  return detalle === '' ? base : { ...base, detalle };
+}
+
+/**
  * El texto del mensaje que lleva la tarjeta.
  *
  * @throws Error si la ruta no es interna o el título está vacío: es un error
- *   de programación de quien arma el contexto, no un dato del usuario.
+ *   de programación de quien arma el contexto, no un dato del usuario. Quien
+ *   no puede garantizarlo valida antes con {@link normalizarContexto}.
  */
 export function textoDeContexto(contexto: ContextoDeChat): string {
-  const titulo = linea(contexto.titulo);
-  if (titulo === '') {
-    throw new Error('Un contexto de chat necesita título.');
+  const valido = normalizarContexto(contexto);
+  if (valido === null) {
+    throw new Error(`Contexto de chat inválido (${contexto.tipo}): necesita título y una ruta admitida.`);
   }
-  if (!esRutaDeContexto(contexto.tipo, contexto.ruta)) {
-    throw new Error(`Ruta de contexto no admitida para ${contexto.tipo}: ${contexto.ruta}`);
+  const lineas = [`${ETIQUETA_DE_CONTEXTO[valido.tipo]}: ${valido.titulo}`];
+  if (valido.detalle !== undefined) {
+    lineas.push(valido.detalle);
   }
-  const detalle = contexto.detalle === undefined ? '' : linea(contexto.detalle);
-  const lineas = [`${ETIQUETA_DE_CONTEXTO[contexto.tipo]}: ${titulo}`];
-  if (detalle !== '') {
-    lineas.push(detalle);
-  }
-  lineas.push(contexto.ruta);
+  lineas.push(valido.ruta);
   return lineas.join('\n');
 }
 

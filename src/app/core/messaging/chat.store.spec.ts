@@ -778,7 +778,10 @@ describe('ChatStore', () => {
       .error(new ProgressEvent('error'));
 
     expect(store.conversaciones().length).toBe(1);
-    expect(store.error()).toBe('No pudimos cargar tus conversaciones.');
+    // Queda en S7 (con filas y su antigüedad), no en el aviso global: la
+    // bandeja tiene su propio estado.
+    expect(store.bandeja().status).toBe('stale');
+    expect(store.error()).toBe('');
   });
 
   describe('escribirA con contexto', () => {

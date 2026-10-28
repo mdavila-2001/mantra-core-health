@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { CARGADOR_DE_LEAFLET } from '@shared/components/organisms/map/map';
 
 import { PharmacyDetail } from './pharmacy-detail';
+import { tomarContexto } from '../../../core/messaging/enlace-de-chat';
 
 const SLUG = 'farmacia-vida';
 
@@ -619,12 +620,17 @@ describe('PharmacyDetail', () => {
 
     const vuelta = vueltaAlChat(navegar);
     expect(vuelta.get('escribirA')).toBe(SLUG);
-    // Un solo contexto en la URL, y es el del producto: la farmacia va en el
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    expect(vuelta.has('titulo')).toBe(false);
+    expect(vuelta.getAll('ctx')).toHaveLength(1);
+    // Un solo contexto guardado, y es el del producto: la farmacia va en el
     // renglón de detalle, no como una segunda tarjeta.
-    expect(vuelta.getAll('sobre')).toEqual(['producto']);
-    expect(vuelta.getAll('titulo')).toHaveLength(1);
-    expect(vuelta.get('titulo')).not.toBe('Farmacia Vida');
-    expect(vuelta.get('detalle')).toContain('Farmacia Vida');
+    const contexto = tomarContexto(vuelta.get('ctx'));
+    expect(contexto?.tipo).toBe('producto');
+    expect(contexto?.titulo).not.toBe('Farmacia Vida');
+    expect(contexto?.detalle).toContain('Farmacia Vida');
   });
 
   it('«Chatear con la farmacia» manda UNA tarjeta: la de la farmacia', () => {
@@ -635,8 +641,12 @@ describe('PharmacyDetail', () => {
     (fixture.nativeElement.querySelector('[data-testid="chatear-con-la-farmacia"]') as HTMLElement).click();
 
     const vuelta = vueltaAlChat(navegar);
-    expect(vuelta.getAll('sobre')).toEqual(['farmacia']);
-    expect(vuelta.get('titulo')).toBe('Farmacia Vida');
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    const contexto = tomarContexto(vuelta.get('ctx'));
+    expect(contexto?.tipo).toBe('farmacia');
+    expect(contexto?.titulo).toBe('Farmacia Vida');
   });
 
   it('conserva la ficha cuando el catálogo falla', () => {

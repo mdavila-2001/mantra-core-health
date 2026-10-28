@@ -14,11 +14,16 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
-import { ChatStore } from '../../core/messaging/chat.store';
+import { ChatStore, PROXIMA_ACCION_DE_BANDEJA } from '../../core/messaging/chat.store';
+import { empty, loading } from '../../core/view-state/view-state';
 import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
 import { conQuien } from '../../core/messaging/con-quien';
 import type { ContextoDeChat } from '../../core/messaging/contexto-de-chat';
-import { contextoDeLaQuery, destinoDeLaQuery } from '../../core/messaging/enlace-de-chat';
+import {
+  destinoDeLaQuery,
+  nonceDeLaQuery,
+  tomarContexto,
+} from '../../core/messaging/enlace-de-chat';
 import { PharmacyOrdersClient } from '../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
@@ -216,14 +221,32 @@ export class Messaging {
     }
   }
 
-  /** Cuántas sin leer hay, para el chip. */
+  /**
+   * Cuántos **chats** tienen algo sin leer. Es la unidad de la píldora de la
+   * cabecera y del chip «No leídos»: antes la píldora contaba mensajes y el
+   * chip conversaciones, y «4 sin leer» al lado de «No leídos 2» parecía un
+   * error.
+   */
   protected readonly noLeidas = computed(
     () => this.store.conversaciones().filter((c) => c.unreadCount > 0).length,
   );
 
-  protected readonly vacio = computed(
-    () => this.store.bandejaCargada() && this.visibles().length === 0,
+  /** «1 chat sin leer», «3 chats sin leer». */
+  protected readonly rotuloNoLeidas = computed(() => {
+    const n = this.noLeidas();
+    return n === 1 ? '1 chat sin leer' : `${n} chats sin leer`;
+  });
+
+  /** S2 mientras se resuelve el perfil. */
+  protected readonly cargando = loading();
+
+  /** La bandeja vacía tras recortarla (todo archivado): el mismo S3 del store. */
+  protected readonly bandejaVacia = empty(
+    PROXIMA_ACCION_DE_BANDEJA,
+    'Consultá a una farmacia desde un producto o desde tu pedido, o escribile a un profesional.',
   );
+
+  protected readonly vacio = computed(() => this.visibles().length === 0);
 
   /** `true` si hay algo escrito pero ninguna conversación propia casa. */
   protected readonly sinCoincidencias = computed(
@@ -246,19 +269,21 @@ export class Messaging {
     // eso no hay con qué abrir el hilo.
     //
     // Los botones del marketplace («Chatear con la farmacia», «Consultar por
-    // chat») agregan de qué se trata (`sobre`, `titulo`, `detalle`, `ruta`):
-    // el store manda esa tarjeta al abrir, una sola vez. Al abrir se navega al
-    // hilo **reemplazando** esta dirección, así que ni un refresco ni el botón
-    // «atrás» vuelven a pasar por acá con los parámetros puestos.
+    // chat») dejan de qué se trata en `sessionStorage` y mandan sólo su nonce
+    // (`ctx=`): la tarjeta sale **sólo** si el nonce existe en esta pestaña
+    // —un enlace de afuera no puede fabricarlo— y se consume al leerlo. Sin
+    // nonce válido el hilo se abre igual, sin tarjeta. Al abrir se navega al
+    // hilo **reemplazando** esta dirección.
     //
     // `?pedido=<id>` es el chat de un pedido de farmacia: el hilo lo abre la
     // API (`POST /pharmacy/orders/:id/conversation`), no la bandeja.
     this.ruta.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
       const destino = destinoDeLaQuery(query);
-      const contexto = contextoDeLaQuery(query) ?? undefined;
       if (destino === null) {
         return;
       }
+      // Leído, borrado y validado otra vez (`tomarContexto`).
+      const contexto = tomarContexto(nonceDeLaQuery(query)) ?? undefined;
       if ('pedido' in destino) {
         this.store.abrirConversacion(
           this.pedidos.abrirConversacion(destino.pedido).pipe(map((r) => r.conversationId)),

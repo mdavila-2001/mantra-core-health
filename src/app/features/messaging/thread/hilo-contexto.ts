@@ -1,4 +1,4 @@
-import type { TipoDeContexto } from '../../../core/messaging/contexto-de-chat';
+import type { ContextoDeChat, TipoDeContexto } from '../../../core/messaging/contexto-de-chat';
 
 /* ============================================================================
     Lo que el hilo dice alrededor de una tarjeta de contexto.
@@ -45,3 +45,47 @@ export const SUGERENCIAS_SIN_CONTEXTO: readonly string[] = [
 
 /** Cuántas fotos se ven en la grilla antes del «+N». */
 export const FOTOS_EN_GRILLA = 4;
+
+/**
+ * El subtítulo de la cabecera de una conversación directa que vino desde una
+ * ficha: «Pedido · Farmacia Chávez», «Consulta por Paracetamol 500 mg». Es lo
+ * que la cabecera del chat de una app de delivery dice en vez de «Conversación
+ * directa».
+ */
+export function subtituloDeContexto(contexto: ContextoDeChat): string {
+  switch (contexto.tipo) {
+    case 'pedido':
+      return `Pedido · ${contexto.titulo}`;
+    case 'farmacia':
+      return `Consulta a ${contexto.titulo}`;
+    default:
+      return `Consulta por ${contexto.titulo}`;
+  }
+}
+
+/** El pedido de la persona y el mismo pedido en la bandeja de la farmacia. */
+const PEDIDO_PROPIO = /^\/my-account\/pharmacy-orders\/([\w-]{1,64})$/u;
+const PEDIDO_EN_LA_BANDEJA = '/administration/pharmacy-orders/';
+
+/**
+ * A dónde lleva la tarjeta según quién la mira, o `null` si para esa persona
+ * no hay ficha equivalente y no se ofrece el enlace.
+ *
+ * La tarjeta de pedido apunta al pedido del paciente (`/my-account/…`). Quien
+ * atiende como la farmacia no tiene ese pedido entre los suyos: el mismo
+ * pedido está en su bandeja, `/administration/pharmacy-orders/:id`. Producto,
+ * farmacia y servicio son fichas públicas y valen igual para los dos lados.
+ *
+ * No autoriza nada: la API decide en cada ficha. Sólo evita ofrecer una
+ * puerta que lleva a la pantalla de otro.
+ */
+export function rutaParaQuienMira(
+  contexto: ContextoDeChat,
+  comoOrganizacion: boolean,
+): string | null {
+  if (contexto.tipo !== 'pedido' || !comoOrganizacion) {
+    return contexto.ruta;
+  }
+  const id = PEDIDO_PROPIO.exec(contexto.ruta)?.[1];
+  return id === undefined ? null : `${PEDIDO_EN_LA_BANDEJA}${id}`;
+}

@@ -29,7 +29,9 @@
   display: flex;
   align-items: center;
   gap: var(--e3);
-  padding: var(--e2) var(--e3) var(--e2) var(--e4);
+  /* `--e4` a la derecha: el anillo de foco de «Cerrar» (2 px a 2 px del
+     botón) queda adentro y no toca el borde de la pantalla. */
+  padding: var(--e2) var(--e4);
 }
 
 .visor__pie {
@@ -98,7 +100,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--e2) var(--e4) var(--e6);
+  /* En angosto los pasos van abajo, en su propia franja: a los costados
+     tapaban la foto, que a 390 px ocupa el ancho entero. */
+  padding: var(--e2) var(--e4) calc(44px + var(--e6));
 }
 
 .visor__foto {
@@ -110,16 +114,27 @@
   user-select: none;
 }
 
-/* Los pasos flotan a los costados, sobre un disco que los separa de la foto. */
+/* Los pasos, sobre un disco que los separa de la foto: abajo en angosto, a
+   los costados desde 650 px, donde sobra aire a los lados de la foto. */
 .visor__paso {
   position: absolute;
-  inset-block-start: 50%;
-  transform: translateY(-50%);
+  inset-block-end: var(--e3);
   background: color-mix(in srgb, var(--petroleo-xx) 60%, transparent);
 }
 
-.visor__paso--anterior { inset-inline-start: var(--e3); }
-.visor__paso--siguiente { inset-inline-end: var(--e3); }
+.visor__paso--anterior { inset-inline-start: var(--e4); }
+.visor__paso--siguiente { inset-inline-end: var(--e4); }
+
+@media (min-width: 650px) {
+  .visor__escena {
+    padding: var(--e2) calc(44px + var(--e6)) var(--e6);
+  }
+
+  .visor__paso {
+    inset-block: 50% auto;
+    transform: translateY(-50%);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .visor__boton { transition: none; }

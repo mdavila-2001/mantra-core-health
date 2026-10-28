@@ -1,9 +1,8 @@
-<!-- Si la bandeja quedó vacía por el error, lo dice ella con su reintento:
-     el mismo motivo dos veces sería ruido. -->
+<!-- Lo que falló al abrir un chat o crear el perfil. Los fallos de la
+     bandeja los pinta la bandeja (su `ViewState`) y los de un mensaje, su
+     burbuja: ninguno de los dos viene acá. -->
 @if (store.error(); as mensaje) {
-  @if (!(store.bandejaCargada() && store.conversaciones().length === 0)) {
-    <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
-  }
+  <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
 }
 
 <!-- Se perdió el permiso de escribir como la farmacia: se dice una vez, con
@@ -38,7 +37,7 @@
         <h1 class="mensajeria__titulo">Chats</h1>
       </header>
       <div class="mensajeria__lista">
-        <app-conversation-list [conversaciones]="[]" estado="cargando" />
+        <app-conversation-list [conversaciones]="[]" [estado]="cargando" />
       </div>
     </section>
     <section class="mensajeria__conversacion" aria-hidden="true"></section>
@@ -71,8 +70,9 @@
     <section class="mensajeria__panel" aria-label="Tus conversaciones">
       <header class="mensajeria__cabecera">
         <h1 class="mensajeria__titulo">Chats</h1>
-        @if (store.sinLeer() > 0) {
-          <span class="mensajeria__sin-leer">{{ store.sinLeer() }} sin leer</span>
+        <!-- Cuenta chats, igual que el chip «No leídos»: una sola unidad. -->
+        @if (noLeidas() > 0) {
+          <span class="mensajeria__sin-leer" data-testid="mensajeria-sin-leer">{{ rotuloNoLeidas() }}</span>
         }
       </header>
 
@@ -118,7 +118,8 @@
           >
             {{ rotulo(opcion) }}
             @if (opcion === 'no-leidos' && noLeidas() > 0) {
-              <span class="mensajeria__chip-cuenta">{{ noLeidas() }}</span>
+              <span class="mensajeria__chip-cuenta" aria-hidden="true">{{ noLeidas() }}</span>
+              <span class="solo-lectores">: {{ rotuloNoLeidas() }}</span>
             }
           </button>
         }
@@ -169,16 +170,14 @@
           <p class="mensajeria__rotulo">Chats</p>
         }
 
-        @if (!store.bandejaCargada()) {
-          <app-conversation-list [conversaciones]="[]" estado="cargando" />
-        } @else if (store.error() !== '' && store.conversaciones().length === 0) {
-          <!-- Error sin nada que mostrar: el reintento, y no un «no tenés
-               chats» que sería falso. Si había filas, se quedan y avisa la
-               alerta de arriba. -->
+        <!-- El estado de la bandeja es un ViewState (M34): S2, S3, S5, S8 y
+             S9 los pinta la lista con su reintento; con filas (ready, o S7
+             si el último tic falló) se aplican los filtros. -->
+        @let bandeja = store.bandeja();
+        @if (bandeja.status !== 'ready' && bandeja.status !== 'stale') {
           <app-conversation-list
             [conversaciones]="[]"
-            estado="error"
-            [mensajeDeError]="store.error()"
+            [estado]="bandeja"
             (reintentar)="store.recargarBandeja()"
           />
         } @else if (vacio()) {
@@ -205,11 +204,13 @@
               </button>
             </p>
           } @else {
-            <app-conversation-list [conversaciones]="[]" estado="vacio" />
+            <app-conversation-list [conversaciones]="[]" [estado]="bandejaVacia" />
           }
         } @else {
           <app-conversation-list
             [conversaciones]="visibles()"
+            [estado]="bandeja"
+            (reintentar)="store.recargarBandeja()"
             [activaId]="store.activaId()"
             [perfilPropio]="store.perfil()"
             [resaltar]="consulta()"

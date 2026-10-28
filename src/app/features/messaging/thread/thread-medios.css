@@ -43,11 +43,16 @@
   color: inherit;
 }
 
-.hilo__burbuja.is-propio .hilo__meta,
 .hilo__burbuja.is-propio .hilo__documento-detalle,
 .hilo__burbuja.is-propio .hilo__cita-texto {
   color: inherit;
   opacity: .88;
+}
+
+/* La hora a opacidad plena: a 11 px, el blanco al 88 % sobre el petróleo del
+   tema oscuro daba 4.57:1, al filo. Entero da 5.4:1 (oscuro) y 8:1 (claro). */
+.hilo__burbuja.is-propio .hilo__meta {
+  color: inherit;
 }
 
 /* El doble tilde de leído, en menta: sobre el petróleo el celeste del tilde
@@ -193,6 +198,26 @@
   block-size: auto;
   max-block-size: var(--hilo-foto-alto);
   object-fit: cover;
+}
+
+/* Ya bajada, la foto manda: la burbuja toma su ancho —una vertical queda
+   angosta, como en WhatsApp— en vez de dejar una franja vacía al costado.
+   `auto` en los dos lados con máximos conserva la proporción; el mínimo evita
+   una miniatura de sello y `cover` recorta lo que sobre. */
+.hilo__imagen.is-lista {
+  inline-size: auto;
+}
+
+.hilo__imagen.is-lista img {
+  inline-size: auto;
+  max-inline-size: var(--hilo-foto);
+  min-inline-size: 7.5rem;
+}
+
+/* El texto de una foto con leyenda envuelve al ancho de la foto, no al
+   revés. */
+.hilo__burbuja.is-imagen {
+  inline-size: min-content;
 }
 
 .hilo__imagen.is-lista,
@@ -351,8 +376,11 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: var(--velo);
+  /* Un velo hondo y no `--velo`: con `--velo` el «+1» sobre una foto clara
+     quedaba gris sobre gris. Al 72 % el blanco pasa 4.5:1 aun sobre blanco. */
+  background: color-mix(in srgb, var(--petroleo-xx) 72%, transparent);
   color: var(--tinta-nav);
+  text-shadow: 0 1px 2px var(--petroleo-xx);
   font-size: var(--fs-h2);
   font-weight: 700;
 }
@@ -375,8 +403,14 @@
 }
 
 .hilo__burbuja.is-contexto .hilo__meta {
-  color: var(--tinta-3);
+  color: var(--tinta-2);
   opacity: 1;
+}
+
+/* Propia o ajena se distingue también en la tarjeta: además de la
+   alineación, el filo toma el color de la burbuja propia. */
+.hilo__burbuja.is-contexto.is-propio {
+  border: 2px solid var(--chat-propia);
 }
 
 .hilo__burbuja.is-contexto .hilo__ticks.is-leido {
@@ -384,8 +418,11 @@
 }
 
 .hilo__burbuja.is-contexto .hilo__mas-mensaje {
+  color: var(--tinta-2);
+}
+
+.hilo__burbuja.is-contexto .hilo__mas-mensaje svg {
   background: var(--sup-tarjeta);
-  color: var(--tinta-3);
 }
 
 .hilo__contexto {
@@ -531,8 +568,11 @@
 }
 
 .hilo__fijado-rotulo {
+  overflow: hidden;
   color: var(--tinta-2);
   font-size: var(--fs-overline);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hilo__fijado-titulo {

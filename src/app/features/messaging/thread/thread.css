@@ -54,7 +54,9 @@
   align-items: center;
   gap: var(--e3);
   min-block-size: var(--h-header);
-  padding: var(--e2) var(--e4);
+  /* `--e1` arriba y abajo: con los botones de 44 px la cabecera sigue en
+     `--h-header` y no crece. */
+  padding: var(--e1) var(--e4);
   border-block-end: 1px solid var(--filete);
   background: var(--sup-tarjeta);
 }
@@ -94,8 +96,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 36px;
-  block-size: 36px;
+  /* 44 × 44: el objetivo táctil mínimo. El glifo sigue en 20 px. */
+  inline-size: 44px;
+  block-size: 44px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
@@ -213,11 +216,18 @@
 }
 
 
-/* El «volver» sólo aparece en angosto: en escritorio la lista está al lado. */
+/* El «volver» sólo aparece en angosto: en escritorio la lista está al lado.
+   La flecha mide 22 px, pero lo que se toca son 44 × 44; el margen negativo
+   deja la flecha donde estaba, pegada al borde. */
 .hilo__volver {
   display: none;
   flex: none;
   align-items: center;
+  justify-content: center;
+  inline-size: 44px;
+  block-size: 44px;
+  margin-inline: calc(var(--e3) * -1) calc(var(--e2) * -1);
+  border-radius: var(--r-pill);
   color: var(--tinta-2);
 }
 
@@ -396,7 +406,9 @@
   gap: 3px;
   margin-block-start: 4px;
   margin-inline-start: var(--e2);
-  color: var(--tinta-3);
+  /* `--tinta-2` y no `--tinta-3`: a 11 px la hora tiene que llegar a 4.5:1, y
+     `--tinta-3` sobre la burbuja ajena daba 4.27:1. */
+  color: var(--tinta-2);
   font-size: var(--fs-overline);
   line-height: 1;
   user-select: none;
@@ -425,13 +437,19 @@
 
 .hilo__reintento {
   clear: both;
-  margin: var(--e2) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: var(--e1) 0 0;
   color: var(--error-tinta);
   font-size: var(--fs-overline);
 }
 
+/* 44 px de alto: el texto es chico, lo que se toca no. */
 .hilo__reintento button {
-  margin-inline-start: var(--e2);
+  min-block-size: 44px;
+  margin-inline-start: var(--e1);
+  padding-inline: var(--e2);
   border: 0;
   background: none;
   color: inherit;
@@ -580,7 +598,6 @@
 .hilo__editado {
   font-size: var(--fs-caption);
   font-style: italic;
-  opacity: .8;
 }
 
 /* El sticker: sin fondo, sin borde y sin la lupa de las fotos. La burbuja que

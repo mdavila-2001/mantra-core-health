@@ -12,6 +12,7 @@ import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-ord
 import { uuid } from '../../../../core/mock/mock-store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { OrderDetail } from './order-detail';
+import { tomarContexto } from '../../../../core/messaging/enlace-de-chat';
 
 describe('OrderDetail with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
@@ -126,10 +127,14 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     expect(destino).toEqual(['/auth']);
     const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
     expect(vuelta.get('pedido')).toBe(PHARMACY_ORDER_TEST_IDS.order);
-    expect(vuelta.get('sobre')).toBe('pedido');
-    expect(vuelta.get('ruta')).toBe(`/my-account/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}`);
-    expect(vuelta.get('titulo')).toContain(' · ');
-    expect(vuelta.get('detalle')).toMatch(/^\d+ productos?/u);
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    const contexto = tomarContexto(vuelta.get('ctx'));
+    expect(contexto?.tipo).toBe('pedido');
+    expect(contexto?.ruta).toBe(`/my-account/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}`);
+    expect(contexto?.titulo).toContain(' · ');
+    expect(contexto?.detalle).toMatch(/^\d+ productos?/u);
   });
 
   it('«Chatear con la farmacia» es secundario y va junto a la farmacia, no sobre la decisión', async () => {

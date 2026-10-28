@@ -5,6 +5,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angul
 import { of } from 'rxjs';
 
 import { ClinicDetail } from './clinic-detail';
+import { tomarContexto } from '../../../core/messaging/enlace-de-chat';
 
 const SLUG = 'clinica-los-olivos';
 
@@ -125,10 +126,15 @@ describe('ClinicDetail', () => {
     const [, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
     const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
     expect(vuelta.get('escribirA')).toBe(SLUG);
-    expect(vuelta.get('sobre')).toBe('servicio');
-    expect(vuelta.get('titulo')).toBe('Consulta cardiológica');
-    expect(vuelta.get('detalle')).toBe('250,00 Bs · Clínica Los Olivos');
-    expect(vuelta.get('ruta')).toBe(`/clinics-directory/${SLUG}`);
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    expect(tomarContexto(vuelta.get('ctx'))).toEqual({
+      tipo: 'servicio',
+      titulo: 'Consulta cardiológica',
+      detalle: '250,00 Bs · Clínica Los Olivos',
+      ruta: `/clinics-directory/${SLUG}`,
+    });
   });
 
   it('dice que falta el arancel en vez de pintar un cero', () => {

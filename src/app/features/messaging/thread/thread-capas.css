@@ -94,35 +94,60 @@
 
 .hilo__mas-mensaje {
   position: absolute;
-  inset-block-start: 2px;
-  inset-inline-end: 2px;
+  /* 44 × 44 de zona táctil con el glifo donde estaba: centrado a 12 px de la
+     esquina, como cuando el botón medía 20. Lo que crece es lo que se toca,
+     no la flecha. */
+  inset-block-start: -10px;
+  inset-inline-end: -10px;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 20px;
-  block-size: 20px;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
   border: 0;
-  border-radius: 4px;
-  background: linear-gradient(to left, var(--chat-ajena) 60%, transparent);
-  color: var(--tinta-3);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
   cursor: pointer;
   opacity: 0;
+  /* Escondido no se come el clic de un enlace que caiga debajo. */
+  pointer-events: none;
   transition: opacity var(--mov-rapido) var(--curva);
-}
-
-.hilo__burbuja.is-propio .hilo__mas-mensaje {
-  background: linear-gradient(to left, var(--chat-propia) 60%, transparent);
 }
 
 .hilo__burbuja:hover .hilo__mas-mensaje,
 .hilo__burbuja:focus-within .hilo__mas-mensaje,
 .hilo__mas-mensaje[aria-expanded='true'] {
   opacity: 1;
+  pointer-events: auto;
 }
 
+/* Un disco del color de la burbuja, del tamaño del glifo: tapa el texto de
+   debajo sin el parche de degradado que se veía antes. */
 .hilo__mas-mensaje svg {
-  inline-size: 14px;
-  block-size: 14px;
+  box-sizing: border-box;
+  inline-size: 20px;
+  block-size: 20px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--chat-ajena);
+}
+
+.hilo__burbuja.is-propio .hilo__mas-mensaje svg {
+  background: var(--chat-propia);
+}
+
+/* Sobre una foto o un sticker no hay color de burbuja: un velo. */
+.hilo__burbuja.is-imagen .hilo__mas-mensaje,
+.hilo__burbuja.is-sticker .hilo__mas-mensaje {
+  color: var(--tinta-nav);
+}
+
+.hilo__burbuja.is-imagen .hilo__mas-mensaje svg,
+.hilo__burbuja.is-sticker .hilo__mas-mensaje svg {
+  background: var(--velo);
 }
 
 .hilo__menu {
@@ -158,10 +183,34 @@
   background: var(--sup-inset);
 }
 
+/* Sin ratón el chevron se ve siempre —y además la pulsación larga abre el
+   menú—. Para que no tape el texto, la burbuja le guarda su columna a la
+   derecha y el disco deja de hacer falta. Las fotos no: guardarle columna
+   sería la franja vacía que se quitó. */
 @media (hover: none) {
   .hilo__mas-mensaje {
     opacity: 1;
+    pointer-events: auto;
   }
+
+  .hilo__burbuja:not(.is-imagen):not(.is-sticker) > .hilo__mas-mensaje svg {
+    background: none;
+  }
+
+  .hilo__burbuja:not(.is-imagen):not(.is-sticker):has(> .hilo__mas-mensaje) {
+    padding-inline-end: var(--e6);
+  }
+}
+
+/* La cruz de la búsqueda: 28 px de disco, 44 de zona táctil. */
+.hilo__buscar-cerrar {
+  position: relative;
+}
+
+.hilo__buscar-cerrar::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
 }
 
 /* --- Bajar del todo ------------------------------------------------------ */

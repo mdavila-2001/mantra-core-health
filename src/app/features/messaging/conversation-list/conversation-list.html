@@ -1,62 +1,81 @@
-@switch (estado()) {
+<!-- El estado de la bandeja es un ViewState (ADR-0005): el host decide qué
+     se pinta y la lista le da la forma de chat a cada estado. Las filas son el
+     contenido por defecto (ready y S7, que además dice de cuándo son). -->
+<app-view-state-host [state]="estado()" (retry)="reintentar.emit()" (refresh)="reintentar.emit()">
   <!-- S2: la forma de las filas, para que nada salte cuando llegan. -->
-  @case ('cargando') {
-    <div class="conversaciones__cargando" data-testid="bandeja-cargando">
-      <p class="solo-lectores" role="status">Cargando tus conversaciones…</p>
-      @for (fantasma of fantasmas; track fantasma) {
-        <div class="conversaciones__fantasma" aria-hidden="true">
-          <app-skeleton variant="circle" width="48px" height="48px" />
-          <span class="conversaciones__fantasma-texto">
-            <app-skeleton variant="rect" width="55%" height="14px" />
-            <app-skeleton variant="rect" width="85%" height="12px" />
-          </span>
-        </div>
-      }
-    </div>
-  }
+  <div vsh-skeleton class="conversaciones__cargando" data-testid="bandeja-cargando">
+    <p class="solo-lectores" role="status">Cargando tus conversaciones…</p>
+    @for (fantasma of fantasmas; track fantasma) {
+      <div class="conversaciones__fantasma" aria-hidden="true">
+        <app-skeleton variant="circle" width="48px" height="48px" />
+        <span class="conversaciones__fantasma-texto">
+          <app-skeleton variant="rect" width="55%" height="14px" />
+          <app-skeleton variant="rect" width="85%" height="12px" />
+        </span>
+      </div>
+    }
+  </div>
 
   <!-- S3: vacío con próxima acción. Los chats con una farmacia nacen de un
        producto o de un pedido, así que la salida es ir a buscarlos. -->
-  @case ('vacio') {
-    <app-empty-state
-      class="conversaciones__estado"
-      data-testid="bandeja-vacia"
-      title="Todavía no tenés chats"
-      description="Consultá a una farmacia desde un producto o desde tu pedido, o escribile a un profesional. Tus conversaciones van a aparecer acá."
-      variant="empty"
-    >
-      <a empty-actions app-button variant="primary" routerLink="/search/medications">
-        Buscar medicamentos
-      </a>
-      <a empty-actions app-button variant="secondary" routerLink="/search/practitioners">
-        Buscar profesionales
-      </a>
-    </app-empty-state>
-  }
+  <app-empty-state
+    vsh-empty
+    class="conversaciones__estado"
+    data-testid="bandeja-vacia"
+    title="Todavía no tenés chats"
+    description="Consultá a una farmacia desde un producto o desde tu pedido, o escribile a un profesional. Tus conversaciones van a aparecer acá."
+    variant="empty"
+  >
+    <a empty-actions app-button variant="primary" routerLink="/search/medications">
+      Buscar medicamentos
+    </a>
+    <a empty-actions app-button variant="secondary" routerLink="/search/practitioners">
+      Buscar profesionales
+    </a>
+  </app-empty-state>
 
-  <!-- Error sin nada que mostrar: el motivo y el reintento, nunca un vacío
-       que haga creer que no hay chats. -->
-  @case ('error') {
-    <app-empty-state
-      class="conversaciones__estado"
-      data-testid="bandeja-error"
-      title="No pudimos cargar tus chats"
-      [description]="(mensajeDeError() || 'Algo falló al leer tu bandeja.') + ' Revisá tu conexión y probá de nuevo.'"
-      variant="error"
-    >
-      <button
-        empty-actions
-        app-button
-        variant="primary"
-        data-testid="bandeja-reintentar"
-        (clicked)="reintentar.emit()"
-      >
-        Reintentar
-      </button>
-    </app-empty-state>
-  }
+  <!-- S8: la petición no llegó. Reintentar es la salida. -->
+  <app-empty-state
+    vsh-offline
+    class="conversaciones__estado"
+    data-testid="bandeja-sin-conexion"
+    title="Sin conexión"
+    description="No pudimos comunicarnos con el servidor. Revisá tu conexión: tus chats siguen ahí."
+    variant="error"
+  >
+    <button empty-actions app-button variant="primary" data-testid="bandeja-reintentar" (clicked)="reintentar.emit()">
+      Reintentar
+    </button>
+  </app-empty-state>
 
-  @default {
+  <!-- S5: la API no deja leer esta bandeja con este perfil. Sin reintento:
+       reintentar no cambia un permiso. -->
+  <app-empty-state
+    vsh-forbidden
+    class="conversaciones__estado"
+    data-testid="bandeja-sin-permiso"
+    title="Sin acceso a estos chats"
+    [description]="motivo()"
+    variant="error"
+  />
+
+  <!-- S9: algo inesperado. El motivo una vez, y el código para soporte. -->
+  <app-empty-state
+    vsh-error
+    class="conversaciones__estado"
+    data-testid="bandeja-error"
+    title="Algo salió mal"
+    [description]="motivo()"
+    variant="error"
+  >
+    <p empty-actions class="conversaciones__codigo">
+      Código de soporte: <code class="tabular-nums" data-testid="bandeja-request-id">{{ requestId() }}</code>
+    </p>
+    <button empty-actions app-button variant="primary" data-testid="bandeja-reintentar" (clicked)="reintentar.emit()">
+      Reintentar
+    </button>
+  </app-empty-state>
+
     <ul class="conversaciones">
       @for (conversacion of conversaciones(); track conversacion.id) {
         <li
@@ -217,5 +236,4 @@
         </li>
       }
     </ul>
-  }
-}
+</app-view-state-host>

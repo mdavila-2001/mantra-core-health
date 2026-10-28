@@ -15,6 +15,7 @@ import {
   pinSubtitle,
   withCodes,
 } from './pharmacy-availability-dialog';
+import { tomarContexto } from '@core/messaging/enlace-de-chat';
 
 /* ---- el doble de Leaflet -------------------------------------------------- */
 
@@ -237,9 +238,13 @@ describe('PharmacyAvailabilityDialog', () => {
     const [, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
     const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
     expect(vuelta.get('escribirA')).toBe('farmacia-central');
-    expect(vuelta.getAll('sobre')).toEqual(['producto']);
-    expect(vuelta.getAll('titulo')).toHaveLength(1);
-    expect(vuelta.get('detalle')).toContain('Farmacia Central');
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    expect(vuelta.getAll('ctx')).toHaveLength(1);
+    const contexto = tomarContexto(vuelta.get('ctx'));
+    expect(contexto?.tipo).toBe('producto');
+    expect(contexto?.detalle).toContain('Farmacia Central');
   });
 
   it('cerrar avisa a la pantalla, que es la que desmonta el modal', async () => {

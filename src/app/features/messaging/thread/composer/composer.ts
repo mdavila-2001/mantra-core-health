@@ -384,7 +384,7 @@ export class Composer {
         .filter((archivo): archivo is File => archivo !== null);
       // Un mensaje por archivo; el texto viaja con el primero (ver
       // `ChatStore.enviarAdjuntos`).
-      this.store.enviarAdjuntos(archivos, this.texto());
+      this.store.enviarAdjuntos(archivos.map((archivo) => ({ archivo, vistaPrevia: cola.find((item) => item.archivo === archivo)?.vistaPrevia ?? null })), this.texto());
       this.limpiarAdjunto();
       this.texto.set('');
       this.store.guardarBorrador('');

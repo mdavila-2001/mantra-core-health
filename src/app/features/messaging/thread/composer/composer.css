@@ -451,16 +451,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* 44 de área tocable con el glifo de 16 de siempre; el margen negativo
-     deja la tira con la altura que tenía. */
+  /* 44 de área tocable con el glifo de 16 de siempre. */
   inline-size: 44px;
   block-size: 44px;
-  margin-block: calc(var(--e2) * -1);
   border: 0;
   border-radius: var(--r-pill);
   background: none;
   color: var(--tinta-2);
   cursor: pointer;
+}
+
+/* El margen negativo deja la tira de responder con la altura que tenía. */
+.composer__respuesta button {
+  margin-block: calc(var(--e2) * -1);
 }
 
 .composer__respuesta button:hover {

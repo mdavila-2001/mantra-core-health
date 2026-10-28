@@ -50,6 +50,8 @@ import {
   FOTOS_EN_GRILLA,
   SUGERENCIAS_POR_CONTEXTO,
   SUGERENCIAS_SIN_CONTEXTO,
+  rutaParaQuienMira,
+  subtituloDeContexto,
   VERBO_DE_CONTEXTO,
 } from './hilo-contexto';
 import { VisorDeImagenes, type ImagenDelVisor } from './visor-de-imagenes/visor-de-imagenes';
@@ -124,6 +126,28 @@ const MARGEN_DE_CARGA = 220;
 
 /** Cuánto margen cuenta como «está al pie» para arrastrar el scroll. */
 const MARGEN_DEL_PIE = 90;
+
+/**
+ * Cuánto hay que mantener el dedo sobre una burbuja para abrir su menú, como
+ * en WhatsApp. Medio segundo: lo que el sistema usa para la selección de
+ * texto, así que no se adelanta a ella.
+ */
+const PULSACION_LARGA_MS = 500;
+
+/** Cuánto puede moverse el dedo sin que deje de ser una pulsación larga. */
+const TOLERANCIA_DE_PULSACION = 10;
+
+/**
+ * La tarjeta fijada arriba, con quién la mandó.
+ *
+ * El texto de una tarjeta lo puede escribir cualquier participante: decir
+ * quién la envió es lo que impide que alguien la haga pasar por un dato de la
+ * app.
+ */
+export interface ContextoFijado {
+  readonly contexto: ContextoDeChat;
+  readonly enviadaPor: string;
+}
 
 /** Un pedazo del texto de una burbuja: texto plano, un enlace o una coincidencia. */
 export interface TrozoDeTexto {
@@ -245,10 +269,18 @@ export class Thread {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private readonly marco = viewChild<ElementRef<HTMLElement>>('marco');
+  /** La lista de mensajes: se crea y se destruye al pasar de vacío a con mensajes. */
+  private readonly listaDeMensajes = viewChild<ElementRef<HTMLElement>>('lista');
   private readonly buscador = viewChild<ElementRef<HTMLInputElement>>('buscador');
 
   /** Si la vista está al pie. Arranca en `true`: un hilo se abre por el final. */
   private pegadoAbajo = true;
+
+  /** Después de destruir, ningún temporizador ni observador vuelve a tocar el DOM. */
+  private destruido = false;
+
+  /** La pulsación larga en curso: el temporizador y dónde se apoyó el dedo. */
+  private pulsacion: { readonly tic: ReturnType<typeof setTimeout>; readonly x: number; readonly y: number } | null = null;
 
   /** Alto del contenido antes de pedir lo anterior, para no saltar. */
   private altoAntesDeCargar = 0;
@@ -325,14 +357,23 @@ export class Thread {
     return activa === undefined ? null : avatarDeConQuienDe(activa);
   });
 
-  /** Los participantes, como subtítulo de un grupo. */
+  /**
+   * El subtítulo de la cabecera.
+   *
+   * En un grupo, los participantes. En una conversación directa que vino desde
+   * una ficha, de qué se habla —«Pedido · Farmacia Chávez», «Consulta por
+   * Paracetamol»—, como la cabecera del chat de una app de delivery. Si no,
+   * «Conversación directa». No hay presencia que mostrar: el contrato no la
+   * trae, y una «en línea» inventada sería peor que ninguna.
+   */
   protected readonly subtitulo = computed(() => {
     const activa = this.store.conversacionActiva();
     if (activa === undefined) {
       return '';
     }
     if (activa.peers.length <= 1) {
-      return 'Conversación directa';
+      const fijado = this.contextoFijado();
+      return fijado === null ? 'Conversación directa' : subtituloDeContexto(fijado.contexto);
     }
     const nombres = activa.peers
       .map((peer) => peer.displayName)
@@ -506,13 +547,19 @@ export class Thread {
    * «Consulta sobre: …», igual que el resumen del pedido en el chat de una app
    * de delivery. Si se escribió desde dos fichas, manda la última.
    */
-  protected readonly contextoFijado = computed<ContextoDeChat | null>(() => {
+  protected readonly contextoFijado = computed<ContextoFijado | null>(() => {
     const mensajes = this.store.enOrden();
     for (let i = mensajes.length - 1; i >= 0; i -= 1) {
       const mensaje = mensajes[i];
       if (mensaje !== undefined && !mensaje.attachmentFileId) {
         const contexto = contextoDelTexto(mensaje.bodyText);
-        if (contexto !== null) return contexto;
+        if (contexto !== null) {
+          const propio = mensaje.senderProfileId === this.store.perfil();
+          return {
+            contexto,
+            enviadaPor: propio ? 'Enviada por vos' : `Enviada por ${this.nombreDe(mensaje.senderProfileId)}`,
+          };
+        }
       }
     }
     return null;
@@ -531,7 +578,9 @@ export class Thread {
     );
     if (!soloTarjetas) return [];
     const contexto = this.contextoFijado();
-    return contexto === null ? SUGERENCIAS_SIN_CONTEXTO : SUGERENCIAS_POR_CONTEXTO[contexto.tipo];
+    return contexto === null
+      ? SUGERENCIAS_SIN_CONTEXTO
+      : SUGERENCIAS_POR_CONTEXTO[contexto.contexto.tipo];
   });
 
   /** Todas las fotos del hilo, en orden: lo que recorre el visor con ← y →. */
@@ -550,8 +599,30 @@ export class Thread {
       .filter((imagen) => imagen.url !== ''),
   );
 
-  /** Qué foto del visor está abierta, o `null` si el visor está cerrado. */
-  protected readonly visorEn = signal<number | null>(null);
+  /**
+   * Qué foto del visor está abierta —la **clave** de su mensaje—, o `null` si
+   * el visor está cerrado.
+   *
+   * Por clave y no por índice: si llega una página anterior o una URL cambia,
+   * el índice de la misma foto se corre, y el visor saltaba a otra —con lo que
+   * «Responder» o «Reenviar» apuntaban a un mensaje que no era el que se veía—.
+   */
+  protected readonly visorEn = signal<string | null>(null);
+
+  /** Dónde cae hoy la foto abierta en la lista del visor; `-1` si ya no está. */
+  protected readonly indiceDelVisor = computed(() => {
+    const clave = this.visorEn();
+    return clave === null ? -1 : this.imagenesDelVisor().findIndex((i) => i.clave === clave);
+  });
+
+  /**
+   * Lo que recibe el visor: la lista entera, o ninguna si la foto abierta dejó
+   * de estar —se descartó mientras se miraba—. Así el visor dice que no está
+   * en vez de mostrar otra en su lugar.
+   */
+  protected readonly imagenesParaElVisor = computed<readonly ImagenDelVisor[]>(() =>
+    this.indiceDelVisor() === -1 ? [] : this.imagenesDelVisor(),
+  );
 
   /** Las fotos que ya terminaron de bajar: hasta entonces, esqueleto. */
   protected readonly fotosListas = signal<ReadonlySet<string>>(new Set());
@@ -603,36 +674,53 @@ export class Thread {
       this.alCambiarElHilo(total);
     });
 
+    const destroyRef = inject(DestroyRef);
+    destroyRef.onDestroy(() => {
+      this.destruido = true;
+      this.cancelarPulsacion();
+    });
+
     // Pegado al pie aunque cambie el tamaño sin que llegue un mensaje: una foto
     // que termina de bajar, el composer que crece con una vista previa o la
     // tarjeta de respuesta, el teclado del teléfono que achica el marco. Sin
     // esto, mandar una foto dejaba la vista cortada a la mitad de la foto.
+    //
+    // Se observa el marco y la lista por `viewChild`: la lista se vuelve a
+    // crear al pasar de vacío a con mensajes, y la señal avisa cuándo. La que
+    // se fue se deja de observar, para no retener un nodo que ya no está.
     if (this.isBrowser && typeof ResizeObserver !== 'undefined') {
       const observador = new ResizeObserver(() => {
+        if (this.destruido) return;
         const marco = this.marco()?.nativeElement;
         if (marco && this.pegadoAbajo && this.altoAntesDeCargar === 0) {
           marco.scrollTop = marco.scrollHeight;
         }
       });
+      let observados: readonly HTMLElement[] = [];
       effect(() => {
-        this.lineas();
-        const marco = this.marco()?.nativeElement;
-        if (!marco) return;
-        observador.observe(marco);
-        // La lista se vuelve a crear al pasar de vacío a con mensajes.
-        setTimeout(() => {
-          const lista = marco.querySelector('.hilo__mensajes');
-          if (lista) observador.observe(lista);
-        });
+        const ahora = [this.marco()?.nativeElement, this.listaDeMensajes()?.nativeElement].filter(
+          (nodo): nodo is HTMLElement => nodo !== undefined,
+        );
+        if (this.destruido) return;
+        for (const viejo of observados) {
+          if (!ahora.includes(viejo)) observador.unobserve(viejo);
+        }
+        for (const nuevo of ahora) {
+          if (!observados.includes(nuevo)) observador.observe(nuevo);
+        }
+        observados = ahora;
       });
-      inject(DestroyRef).onDestroy(() => observador.disconnect());
+      destroyRef.onDestroy(() => {
+        observados = [];
+        observador.disconnect();
+      });
     }
 
     // El reloj de la ventana de edición. Sólo en el navegador: bajo SSR no hay
     // menú que actualizar y un intervalo dejaría colgada la renderización.
     if (this.isBrowser) {
       const tic = setInterval(() => this.ahora.set(Date.now()), TIC_DE_EDICION_MS);
-      inject(DestroyRef).onDestroy(() => clearInterval(tic));
+      destroyRef.onDestroy(() => clearInterval(tic));
     }
   }
 
@@ -991,6 +1079,50 @@ export class Thread {
     this.menuAbierto.set(this.menuAbierto() === clave ? null : clave);
   }
 
+  /* --- Pulsación larga (pantallas táctiles) -------------------------------- */
+
+  /**
+   * Un dedo se apoyó en una burbuja: si se queda medio segundo quieto, se abre
+   * el menú del mensaje, como en WhatsApp.
+   *
+   * Sólo con el dedo —el ratón tiene el chevron al pasar— y sin
+   * `preventDefault`: el navegador sigue desplazando el hilo y seleccionando
+   * texto como siempre. Si el dedo se mueve, el navegador toma el gesto para
+   * desplazar (`pointercancel`) o el movimiento pasa la tolerancia, y la
+   * pulsación se olvida.
+   */
+  protected alApoyar(clave: string, estado: MensajeDelHilo['estado'], evento: PointerEvent): void {
+    this.cancelarPulsacion();
+    if (!this.isBrowser || evento.pointerType !== 'touch' || estado !== 'enviado') return;
+    const tic = setTimeout(() => {
+      this.pulsacion = null;
+      if (this.destruido) return;
+      // Si el sistema ya empezó a seleccionar texto, se le deja: abrir el menú
+      // encima taparía los tiradores de la selección.
+      const seleccion = typeof window.getSelection === 'function' ? window.getSelection() : null;
+      if (seleccion !== null && !seleccion.isCollapsed && seleccion.toString().trim() !== '') return;
+      this.menuAbierto.set(clave);
+    }, PULSACION_LARGA_MS);
+    this.pulsacion = { tic, x: evento.clientX, y: evento.clientY };
+  }
+
+  protected alMoverDedo(evento: PointerEvent): void {
+    const actual = this.pulsacion;
+    if (
+      actual !== null &&
+      Math.hypot(evento.clientX - actual.x, evento.clientY - actual.y) > TOLERANCIA_DE_PULSACION
+    ) {
+      this.cancelarPulsacion();
+    }
+  }
+
+  protected cancelarPulsacion(): void {
+    if (this.pulsacion !== null) {
+      clearTimeout(this.pulsacion.tic);
+      this.pulsacion = null;
+    }
+  }
+
   protected responder(mensaje: MensajeDelHilo): void {
     this.menuAbierto.set(null);
     this.store.responder(mensaje);
@@ -1034,9 +1166,8 @@ export class Thread {
 
   /** Abre el visor en la foto de ese mensaje. */
   protected abrirImagen(mensaje: MensajeDelHilo): void {
-    const indice = this.imagenesDelVisor().findIndex((i) => i.clave === mensaje.clave);
-    if (indice !== -1) {
-      this.visorEn.set(indice);
+    if (this.imagenesDelVisor().some((i) => i.clave === mensaje.clave)) {
+      this.visorEn.set(mensaje.clave);
     }
   }
 
@@ -1045,7 +1176,10 @@ export class Thread {
   }
 
   protected alMoverVisor(indice: number): void {
-    this.visorEn.set(indice);
+    const clave = this.imagenesDelVisor()[indice]?.clave;
+    if (clave !== undefined) {
+      this.visorEn.set(clave);
+    }
   }
 
   /** «Responder» desde el visor: cierra la foto y deja la cita en el composer. */
@@ -1089,6 +1223,23 @@ export class Thread {
   /** Las fotos que entran en la grilla: las primeras cuatro. */
   protected fotosDeLaGrilla(mensajes: readonly MensajeDelHilo[]): readonly MensajeDelHilo[] {
     return mensajes.slice(0, FOTOS_EN_GRILLA);
+  }
+
+  /**
+   * A dónde lleva una tarjeta para quien la está mirando, o `null` si para
+   * esa persona no hay ficha a la que llevar.
+   *
+   * La farmacia que atiende como organización no abre «mis pedidos»: abre el
+   * pedido en su bandeja. Quién puede ver qué lo decide la API; esto sólo
+   * evita ofrecer una puerta que lleva a la pantalla equivocada.
+   */
+  protected rutaDeLaTarjeta(contexto: ContextoDeChat): string | null {
+    return rutaParaQuienMira(contexto, this.store.actuandoComoOrganizacion());
+  }
+
+  /** Cuántas celdas de una grilla siguen esperando su foto. */
+  protected fotosPendientes(mensajes: readonly MensajeDelHilo[]): number {
+    return this.fotosDeLaGrilla(mensajes).filter((m) => this.urlDelAdjunto(m) === null).length;
   }
 
   /** La ruta de una tarjeta como `UrlTree`, para que `?` y `=` no se escapen. */
@@ -1144,7 +1295,7 @@ export class Thread {
     }
     setTimeout(() => {
       const marco = this.marco()?.nativeElement;
-      if (!marco) {
+      if (!marco || this.destruido) {
         return;
       }
       if (this.altoAntesDeCargar > 0) {

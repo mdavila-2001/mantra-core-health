@@ -73,15 +73,19 @@
      resumen del pedido en el chat de una app de delivery: se sabe de qué se
      habla sin subir hasta el primer mensaje. -->
 @if (contextoFijado(); as fijado) {
-  <aside class="hilo__fijado" data-testid="hilo-contexto-fijado" aria-label="De qué trata la conversación" [attr.data-tipo]="fijado.tipo">
+  <!-- Con quién la envió: el texto de una tarjeta lo escribe un participante,
+       y sin decirlo cualquiera podía hacerla pasar por un dato de la app. -->
+  <aside class="hilo__fijado" data-testid="hilo-contexto-fijado" aria-label="De qué trata la conversación" [attr.data-tipo]="fijado.contexto.tipo">
     <span class="hilo__fijado-icono" aria-hidden="true">
-      <ng-container *ngTemplateOutlet="iconoDeContexto; context: { $implicit: fijado.tipo }" />
+      <ng-container *ngTemplateOutlet="iconoDeContexto; context: { $implicit: fijado.contexto.tipo }" />
     </span>
     <p class="hilo__fijado-texto">
-      <span class="hilo__fijado-rotulo">Consulta sobre: {{ etiquetaDeContexto[fijado.tipo] }}</span>
-      <span class="hilo__fijado-titulo">{{ fijado.titulo }}@if (fijado.detalle) {<span class="hilo__fijado-detalle"> · {{ fijado.detalle }}</span>}</span>
+      <span class="hilo__fijado-rotulo">Consulta sobre: {{ etiquetaDeContexto[fijado.contexto.tipo] }}<span class="hilo__fijado-autor" data-testid="hilo-contexto-fijado-autor"> · {{ fijado.enviadaPor }}</span></span>
+      <span class="hilo__fijado-titulo">{{ fijado.contexto.titulo }}@if (fijado.contexto.detalle) {<span class="hilo__fijado-detalle"> · {{ fijado.contexto.detalle }}</span>}</span>
     </p>
-    <a class="hilo__fijado-ver" data-testid="hilo-contexto-fijado-ver" [routerLink]="destino(fijado.ruta)">{{ verboDeContexto[fijado.tipo] }}</a>
+    @if (rutaDeLaTarjeta(fijado.contexto); as ruta) {
+      <a class="hilo__fijado-ver" data-testid="hilo-contexto-fijado-ver" [routerLink]="destino(ruta)">{{ verboDeContexto[fijado.contexto.tipo] }}</a>
+    }
   </aside>
 }
 
@@ -119,14 +123,14 @@
 
   @if (vacio()) {
     <app-empty-state
-      title="Todavía no se escribieron nada"
+      title="Todavía no se escribió nada"
       description="Escribí el primer mensaje abajo."
       variant="empty"
     />
   } @else {
     <!-- `log` y no `list`: un hilo de mensajes es una región viva, y lo que
          llega en vivo tiene que anunciarse a quien no lo ve. -->
-    <ol class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
+    <ol #lista class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
       @for (linea of lineas(); track linea.clave) {
         @switch (linea.tipo) {
           @case ('fecha') {
@@ -152,6 +156,11 @@
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
                 <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
               }
+              <!-- Un solo aviso por grilla: una celda en carga con su propio
+                   `status` dentro del `log` eran cuatro anuncios para una cosa. -->
+              @if (fotosPendientes(linea.mensajes); as pendientes) {
+                <span class="solo-lectores" role="status">{{ pendientes === 1 ? 'Cargando una foto…' : 'Cargando ' + pendientes + ' fotos…' }}</span>
+              }
               <div class="hilo__grilla">
                 @for (foto of fotosDeLaGrilla(linea.mensajes); track foto.clave; let i = $index, ultima = $last) {
                   @if (urlDelAdjunto(foto); as url) {
@@ -173,7 +182,7 @@
                       }
                     </button>
                   } @else {
-                    <span class="hilo__celda hilo__celda--cargando" role="status"><span class="solo-lectores">Cargando la foto…</span></span>
+                    <span class="hilo__celda hilo__celda--cargando" aria-hidden="true"></span>
                   }
                 }
               </div>
@@ -195,6 +204,11 @@
               [class.is-solo-imagen]="!esSticker(linea.mensaje) && esImagen(linea.mensaje) && !linea.mensaje.bodyText && !linea.mensaje.replyToMessageId"
               [class.is-contexto]="linea.contexto !== null"
               [attr.data-propio]="linea.propio"
+              (pointerdown)="alApoyar(linea.clave, linea.mensaje.estado, $event)"
+              (pointermove)="alMoverDedo($event)"
+              (pointerup)="cancelarPulsacion()"
+              (pointercancel)="cancelarPulsacion()"
+              (pointerleave)="cancelarPulsacion()"
             >
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
                 <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
@@ -338,10 +352,14 @@
                     }
                   </div>
                 </div>
-                <a class="hilo__contexto-ver" data-testid="hilo-contexto-ver" [routerLink]="destino(contexto.ruta)">
-                  {{ verboDeContexto[contexto.tipo] }}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
-                </a>
+                <!-- Según quién mira: la farmacia abre el pedido en su bandeja.
+                     Sin ficha equivalente, no se ofrece el enlace. -->
+                @if (rutaDeLaTarjeta(contexto); as ruta) {
+                  <a class="hilo__contexto-ver" data-testid="hilo-contexto-ver" [routerLink]="destino(ruta)">
+                    {{ verboDeContexto[contexto.tipo] }}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
+                  </a>
+                }
               } @else if (linea.mensaje.bodyText; as texto) {
                 <!-- En trozos: los enlaces se pueden tocar y, buscando, las
                      coincidencias se marcan. Todo en una línea de plantilla
@@ -475,11 +493,10 @@
 
 <!-- Las fotos a pantalla completa: ← y → recorren todas las del hilo, Escape
      cierra y el foco vuelve a la miniatura que se tocó. -->
-@let fotoAbierta = visorEn();
-@if (fotoAbierta !== null) {
+@if (visorEn() !== null) {
   <app-visor-de-imagenes
-    [imagenes]="imagenesDelVisor()"
-    [indice]="fotoAbierta"
+    [imagenes]="imagenesParaElVisor()"
+    [indice]="indiceDelVisor()"
     (indiceChange)="alMoverVisor($event)"
     (cerrado)="cerrarImagen()"
     (responder)="responderDesdeVisor($event)"

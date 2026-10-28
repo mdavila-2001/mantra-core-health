@@ -154,13 +154,16 @@ describe('ChatStore · con qué perfil se escribe', () => {
     expect(sessionStorage.getItem(CLAVE)).toBeNull();
   });
 
-  it('un 403 de la API escribiendo como la farmacia obliga a volver al perfil propio, y lo avisa', () => {
+  it('un 403 escribiendo como la farmacia, si la API ya no la lista, vuelve al perfil propio y lo avisa', () => {
     encender();
     store.actuarComo(FARMACIA);
     lecturasDeBandeja()[0]!.flush(
       { code: 'FORBIDDEN', reason: 'NOT_OWN_PROFILE' },
       { status: 403, statusText: 'Forbidden' },
     );
+    // M1: no todo 403 es perder la farmacia. Se le pregunta a la API.
+    expect(store.perfil()).toBe(FARMACIA);
+    http.expectOne(VITRINAS).flush({ items: [] });
 
     expect(store.perfil()).toBe(PROPIO);
     expect(store.actuandoComoOrganizacion()).toBe(false);
@@ -175,13 +178,16 @@ describe('ChatStore · con qué perfil se escribe', () => {
     lecturas.forEach((r) => r.flush(bandeja()));
   });
 
-  it('un 403 escribiendo con el perfil propio no es «perder la farmacia»: queda como error', () => {
+  it('un 403 escribiendo con el perfil propio no es «perder la farmacia»: la bandeja queda en S5', () => {
     encender();
     store.recargarBandeja();
     lecturasDeBandeja()[0]!.flush(null, { status: 403, statusText: 'Forbidden' });
     expect(store.perfil()).toBe(PROPIO);
     expect(store.avisoDePerfil()).toBe('');
-    expect(store.error()).toBe('No pudimos cargar tus conversaciones.');
+    http.expectNone(VITRINAS);
+    // Había una fila: se conserva, con su antigüedad (S7).
+    expect(store.bandeja().status).toBe('stale');
+    expect(store.error()).toBe('');
   });
 
   it('el socket que responde NOT_OWN_PROFILE (membership:recheck) también devuelve al perfil propio', () => {
@@ -314,6 +320,7 @@ describe('ChatStore · con qué perfil se escribe', () => {
       { code: 'FORBIDDEN', reason: 'NOT_OWN_PROFILE' },
       { status: 403, statusText: 'Forbidden' },
     );
+    http.expectOne(VITRINAS).flush({ items: [vitrina(FARMACIA, 'Farmacia Vida')] });
     expect(store.perfil()).toBe(PROPIO);
     expect(store.vitrinasDeOrganizacion()).toEqual([{ profileId: FARMACIA, nombre: 'Farmacia Vida' }]);
     lecturasDeBandeja().forEach((r) => r.flush(bandeja()));

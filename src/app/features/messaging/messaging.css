@@ -160,8 +160,6 @@
   flex: none;
   display: flex;
   gap: var(--e2);
-  /* El relleno vertical deja lugar al objetivo de 44 px de cada chip, que
-     sobresale 4 px arriba y abajo del dibujo. */
   padding: var(--e1) var(--e4) var(--e3);
   overflow-x: auto;
   scrollbar-width: none;
@@ -171,15 +169,16 @@
   display: none;
 }
 
-/* Chips planos con borde de superficie; el elegido, relleno de marca. 36 px
-   de dibujo y 44 de objetivo por el `::before`. */
+/* Chips planos con borde de superficie; el elegido, relleno de marca. 44 px
+   de alto de verdad: el área táctil es el chip que se ve, no un `::before`
+   invisible que el revisor no puede medir ni el dedo adivinar. */
 .mensajeria__chip {
   position: relative;
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  block-size: 36px;
+  block-size: 44px;
   padding-inline: var(--e4);
   border: 1px solid var(--filete);
   border-radius: var(--r-pill);
@@ -194,12 +193,6 @@
     background var(--mov-rapido) var(--curva),
     border-color var(--mov-rapido) var(--curva),
     color var(--mov-rapido) var(--curva);
-}
-
-.mensajeria__chip::before {
-  content: '';
-  position: absolute;
-  inset: -4px 0;
 }
 
 .mensajeria__chip:hover {

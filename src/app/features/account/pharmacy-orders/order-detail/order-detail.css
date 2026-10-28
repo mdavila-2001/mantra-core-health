@@ -12,7 +12,7 @@
 .pedido__cabecera {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
 }

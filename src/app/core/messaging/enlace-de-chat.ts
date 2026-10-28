@@ -5,25 +5,32 @@
 
     Los botones «Chatear con la farmacia» y «Consultar por chat» del
     marketplace no abren el hilo ellos mismos: llevan a `/messaging` con a
-    quién escribirle (`escribirA=<slug>`) y, además, **de qué** (`sobre`,
-    `titulo`, `detalle`, `ruta`). La bandeja ya sabe resolver el slug, crear el
-    hilo si no existía y pasar por el login si no hay sesión; esto sólo le
-    agrega la tarjeta de contexto que se manda al abrir.
+    quién escribirle (`escribirA=<slug>` o `pedido=<id>`) y, si hay, **de
+    qué**. La bandeja ya sabe resolver el slug, crear el hilo si no existía y
+    pasar por el login si no hay sesión; esto sólo le agrega la tarjeta de
+    contexto que se manda al abrir.
 
-    ## Por qué en la URL
+    ## Por qué el contexto NO viaja en la URL
 
-    Porque el guard de sesión de `/messaging` guarda la dirección y vuelve a
-    ella después del login: lo que no viaja en la URL se pierde en el camino.
-    Nada de lo que va acá es clínico —ver `contexto-de-chat.ts`—: es lo que ya
-    muestra la ficha pública o el pedido.
+    Antes viajaba (`?sobre=&titulo=&detalle=&ruta=`) y la bandeja lo mandaba
+    al abrir, sin preguntar. Eso convertía cualquier enlace —un mail, otra
+    web, un mensaje— en «mandá esta tarjeta, con este título, a esta vitrina»
+    en nombre de quien lo tocara con la sesión abierta.
 
-    ## La URL es de cualquiera
+    Ahora el botón deja el contexto en `sessionStorage` bajo una clave de un
+    solo uso (`ctx=<nonce>`, un `crypto.randomUUID()`), y la URL lleva sólo el
+    nonce. La bandeja manda tarjeta **sólo** si encuentra ese nonce en el
+    almacenamiento de su pestaña: un enlace de afuera no puede fabricar uno que
+    exista ahí, y con un nonce ausente o desconocido el hilo se abre igual,
+    sin tarjeta.
 
-    Quien abre `/messaging?sobre=…` puede haberla escrito a mano. Por eso
-    {@link contextoDeLaQuery} es estricta: tipo conocido, título no vacío y ruta
-    interna, o no hay tarjeta. Lo que sí no puede impedir es que alguien se
-    mande a sí mismo un contexto falso — y no hace falta: es su propio mensaje,
-    con su nombre, igual que si lo escribiera.
+    El login no lo rompe: el guard guarda la dirección (con el nonce) y vuelve
+    a ella en **la misma pestaña**, donde `sessionStorage` sigue intacto.
+
+    ## Lo que nunca va acá
+
+    Nada clínico —ver `contexto-de-chat.ts`—: es lo que ya muestra la ficha
+    pública o el pedido.
    ========================================================================== */
 
 import { inject } from '@angular/core';
@@ -31,24 +38,33 @@ import { Router, type ParamMap, type Params } from '@angular/router';
 
 import { SessionStore } from '../auth/session.store';
 import { LOGIN_ROUTE } from '../http/auth.interceptor';
-import { esRutaDeContexto, type ContextoDeChat, type TipoDeContexto } from './contexto-de-chat';
+import { normalizarContexto, type ContextoDeChat } from './contexto-de-chat';
 
 /** Los nombres de los parámetros, en un solo lugar. */
 export const PARAMETRO = {
   escribirA: 'escribirA',
   pedido: 'pedido',
-  sobre: 'sobre',
-  titulo: 'titulo',
-  detalle: 'detalle',
-  ruta: 'ruta',
+  /** El nonce del contexto guardado en la pestaña. Nunca el contexto. */
+  ctx: 'ctx',
 } as const;
 
-const TIPOS: ReadonlySet<string> = new Set<TipoDeContexto>([
-  'pedido',
-  'producto',
-  'servicio',
-  'farmacia',
-]);
+/** Prefijo de la clave de `sessionStorage` de cada contexto en espera. */
+export const PREFIJO_DE_CONTEXTO = 'alovida.chat.contexto.';
+
+/**
+ * Cuánto vive un contexto sin usar. Lo que tarda un login con margen: pasado
+ * eso, el botón que lo dejó ya no es lo que la persona tiene en la cabeza.
+ */
+export const VIGENCIA_DE_CONTEXTO_MS = 30 * 60_000;
+
+/** Lo que se guarda bajo cada nonce. */
+interface ContextoGuardado {
+  readonly contexto: ContextoDeChat;
+  readonly guardadoEn: number;
+}
+
+/** Un nonce aceptable: la forma de un `randomUUID`. Otra cosa ni se busca. */
+const NONCE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 
 /**
  * Con quién se abre el chat.
@@ -65,25 +81,17 @@ export type DestinoDeChat = { readonly escribirA: string } | { readonly pedido: 
 const ID_DE_PEDIDO = /^[\w-]{1,64}$/u;
 
 /**
- * Los `queryParams` de `/messaging` para abrir el chat con `destino` sobre
- * `contexto`.
- *
- * Sin contexto es el `?escribirA=` de siempre.
+ * Los `queryParams` de `/messaging` para abrir el chat con `destino` y, si
+ * hay, el nonce del contexto que se dejó en la pestaña.
  */
-export function enlaceDeChat(destino: DestinoDeChat, contexto?: ContextoDeChat): Params {
+export function enlaceDeChat(destino: DestinoDeChat, nonce?: string | null): Params {
   const params: Record<string, string> =
     'pedido' in destino
       ? { [PARAMETRO.pedido]: destino.pedido }
       : { [PARAMETRO.escribirA]: destino.escribirA };
-  if (contexto === undefined) {
-    return params;
+  if (nonce !== undefined && nonce !== null) {
+    params[PARAMETRO.ctx] = nonce;
   }
-  params[PARAMETRO.sobre] = contexto.tipo;
-  params[PARAMETRO.titulo] = contexto.titulo;
-  if (contexto.detalle !== undefined && contexto.detalle.trim() !== '') {
-    params[PARAMETRO.detalle] = contexto.detalle;
-  }
-  params[PARAMETRO.ruta] = contexto.ruta;
   return params;
 }
 
@@ -97,27 +105,74 @@ export function destinoDeLaQuery(query: ParamMap): DestinoDeChat | null {
   return slug !== null && slug !== '' ? { escribirA: slug } : null;
 }
 
-/**
- * El contexto que trae la URL, o `null` si no trae uno válido.
- *
- * Un contexto a medias —sin título, con un tipo inventado, con una ruta a
- * otro sitio— no se arregla: se descarta entero y el hilo se abre igual, sin
- * tarjeta.
- */
-export function contextoDeLaQuery(query: ParamMap): ContextoDeChat | null {
-  const tipo = query.get(PARAMETRO.sobre);
-  const titulo = query.get(PARAMETRO.titulo)?.trim() ?? '';
-  const ruta = query.get(PARAMETRO.ruta) ?? '';
-  const detalle = query.get(PARAMETRO.detalle)?.trim() ?? '';
-  if (tipo === null || !TIPOS.has(tipo) || titulo === '' || !esRutaDeContexto(tipo as TipoDeContexto, ruta)) {
-    return null;
-  }
-  const base = { tipo: tipo as TipoDeContexto, titulo, ruta };
-  return detalle === '' ? base : { ...base, detalle };
+/** El nonce que trae la URL, si tiene la forma de uno. */
+export function nonceDeLaQuery(query: ParamMap): string | null {
+  const nonce = query.get(PARAMETRO.ctx);
+  return nonce !== null && NONCE.test(nonce) ? nonce : null;
 }
 
 /**
- * Lo que hace un botón «Chatear»: ir a la bandeja con a quién y de qué.
+ * Deja el contexto en la pestaña y devuelve su nonce, o `null` si no se pudo
+ * (SSR, almacenamiento bloqueado, contexto inválido): entonces el chat se abre
+ * sin tarjeta, que es el modo seguro.
+ */
+export function guardarContexto(contexto: ContextoDeChat, ahora: number = Date.now()): string | null {
+  const valido = normalizarContexto(contexto);
+  if (valido === null || typeof sessionStorage === 'undefined' || typeof globalThis.crypto?.randomUUID !== 'function') {
+    return null;
+  }
+  try {
+    const nonce = globalThis.crypto.randomUUID();
+    const guardado: ContextoGuardado = { contexto: valido, guardadoEn: ahora };
+    sessionStorage.setItem(PREFIJO_DE_CONTEXTO + nonce, JSON.stringify(guardado));
+    return nonce;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * El contexto guardado bajo ese nonce, **consumiéndolo**: después de leerlo se
+ * borra, así que un refresco, el botón «atrás» o un segundo `queryParamMap`
+ * no lo vuelven a encontrar. Se valida otra vez al salir —el almacenamiento es
+ * de la pestaña, pero no es de confianza—.
+ *
+ * `null` si el nonce no existe, venció o lo guardado no es un contexto válido.
+ */
+export function tomarContexto(nonce: string | null, ahora: number = Date.now()): ContextoDeChat | null {
+  if (nonce === null || !NONCE.test(nonce) || typeof sessionStorage === 'undefined') {
+    return null;
+  }
+  try {
+    const clave = PREFIJO_DE_CONTEXTO + nonce;
+    const crudo = sessionStorage.getItem(clave);
+    if (crudo === null) {
+      return null;
+    }
+    sessionStorage.removeItem(clave);
+    const leido = JSON.parse(crudo) as Partial<ContextoGuardado> | null;
+    const contexto = leido?.contexto;
+    if (
+      typeof leido?.guardadoEn !== 'number' ||
+      ahora - leido.guardadoEn > VIGENCIA_DE_CONTEXTO_MS ||
+      typeof contexto !== 'object' ||
+      contexto === null ||
+      typeof contexto.tipo !== 'string' ||
+      typeof contexto.titulo !== 'string' ||
+      typeof contexto.ruta !== 'string' ||
+      (contexto.detalle !== undefined && typeof contexto.detalle !== 'string')
+    ) {
+      return null;
+    }
+    return normalizarContexto(contexto as ContextoDeChat);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Lo que hace un botón «Chatear»: dejar el contexto en la pestaña e ir a la
+ * bandeja con a quién y el nonce.
  *
  * Se llama en contexto de inyección (un campo del componente) y devuelve la
  * acción. Sin sesión pasa por el login con `returnUrl`: el `authGuard` de
@@ -131,7 +186,8 @@ export function usarIrAlChat(): (destino: DestinoDeChat, contexto?: ContextoDeCh
   const router = inject(Router);
   const sesion = inject(SessionStore);
   return (destino, contexto) => {
-    const queryParams = enlaceDeChat(destino, contexto);
+    const nonce = contexto === undefined ? null : guardarContexto(contexto);
+    const queryParams = enlaceDeChat(destino, nonce);
     if (sesion.isAuthenticated()) {
       void router.navigate(['/messaging'], { queryParams });
       return;

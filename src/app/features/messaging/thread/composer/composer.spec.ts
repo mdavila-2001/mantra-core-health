@@ -48,11 +48,7 @@ describe('Composer', () => {
    */
   const lienzo: Lienzo = {
     decodificar: async () => ({ ancho: 1200, alto: 900, dibujable: {} as CanvasImageSource, cerrar: () => undefined }),
-    codificar: async (_f, _w, _h, tipo) => {
-      const blob = new Blob(['y'], { type: tipo });
-      Object.defineProperty(blob, 'size', { value: 1000 });
-      return blob;
-    },
+    codificar: async (_f, _w, _h, tipo) => new Blob([new Uint8Array(1000)], { type: tipo }),
   };
 
   /** Firma + IHDR + IEND: el PNG más chico bien armado, sin metadatos. */
@@ -167,6 +163,19 @@ describe('Composer', () => {
     it('al enviar sale un mensaje por foto y el texto viaja con la primera', async () => {
       const archivos = [foto('1.jpg'), foto('2.jpg'), foto('3.jpg')];
       await agregar(archivos);
+      // Las miniaturas se leen aparte (`FileReader`): se espera a que estén,
+      // que es lo que ve quien aprieta «Enviar».
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        const fuentes = Array.from(
+          fixture.nativeElement.querySelectorAll('[data-testid="composer-miniatura"] img'),
+        ).map((img) => (img as HTMLImageElement).getAttribute('src') ?? '');
+        expect(fuentes).toHaveLength(3);
+        expect(fuentes.every((src) => src.startsWith('data:'))).toBe(true);
+      });
+      const miniaturas = Array.from(
+        fixture.nativeElement.querySelectorAll('[data-testid="composer-miniatura"] img'),
+      ).map((img) => (img as HTMLImageElement).getAttribute('src'));
       const area = consultar('hilo-texto') as HTMLTextAreaElement;
       area.value = 'La receta, frente y dorso';
       area.dispatchEvent(new Event('input'));
@@ -176,8 +185,14 @@ describe('Composer', () => {
       fixture.detectChanges();
 
       expect(store.enviarAdjuntos).toHaveBeenCalledOnce();
-      const [enviados, leyenda] = store.enviarAdjuntos.mock.calls[0];
-      expect((enviados as File[]).map((f) => f.name)).toEqual(['1.jpg', '2.jpg', '3.jpg']);
+      const [enviados, leyenda] = store.enviarAdjuntos.mock.calls[0] as [
+        { archivo: File; vistaPrevia?: string | null }[],
+        string,
+      ];
+      // Un mensaje por foto, en orden…
+      expect(enviados.map((a) => a.archivo.name)).toEqual(['1.jpg', '2.jpg', '3.jpg']);
+      // …y cada una con la miniatura que ya se leyó (M11): el store no la relee.
+      expect(enviados.map((a) => a.vistaPrevia)).toEqual(miniaturas);
       expect(leyenda).toBe('La receta, frente y dorso');
       expect(store.enviar).not.toHaveBeenCalled();
       expect(todos('composer-miniatura')).toHaveLength(0);

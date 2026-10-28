@@ -5,6 +5,15 @@ import { ConversationList } from './conversation-list';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
 import { textoDeContexto } from '../../../core/messaging/contexto-de-chat';
+import {
+  empty,
+  forbidden,
+  loading,
+  offline,
+  stale,
+  unexpectedError,
+} from '../../../core/view-state/view-state';
+import type { EstadoDeBandeja } from './conversation-list';
 
 /**
  * Lo que estas pruebas fijan de la fila de la bandeja.
@@ -112,19 +121,24 @@ describe('ConversationList', () => {
     expect(enlace?.getAttribute('aria-current')).toBe('page');
   });
 
-  describe('estados que reemplazan a la lista', () => {
-    const conEstado = (estado: 'cargando' | 'vacio' | 'error'): void => {
+  describe('estados que reemplazan a la lista (ViewState del M34)', () => {
+    const conEstado = (estado: EstadoDeBandeja, filas: ConversationListItem[] = []): void => {
       fixture = TestBed.createComponent(ConversationList);
-      fixture.componentRef.setInput('conversaciones', []);
+      fixture.componentRef.setInput('conversaciones', filas);
       fixture.componentRef.setInput('estado', estado);
-      fixture.componentRef.setInput('mensajeDeError', 'No pudimos cargar tus conversaciones.');
       fixture.detectChanges();
     };
     const buscar = (testid: string): HTMLElement | null =>
       fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+    const texto = (): string => fixture.nativeElement.textContent as string;
+    const pedidosDeReintento = (): (() => number) => {
+      let pedidos = 0;
+      fixture.componentInstance.reintentar.subscribe(() => pedidos++);
+      return () => pedidos;
+    };
 
     it('cargando (S2) pinta esqueletos y lo anuncia a los lectores', () => {
-      conEstado('cargando');
+      conEstado(loading());
       expect(buscar('bandeja-cargando')).not.toBeNull();
       expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain(
         'Cargando tus conversaciones',
@@ -133,7 +147,7 @@ describe('ConversationList', () => {
     });
 
     it('vacío (S3) ofrece una próxima acción que lleva a buscar', () => {
-      conEstado('vacio');
+      conEstado(empty({ label: 'Buscar medicamentos', route: '/search/medications' }));
       expect(buscar('bandeja-vacia')?.textContent).toContain('Todavía no tenés chats');
       const destinos = Array.from(
         fixture.nativeElement.querySelectorAll('[data-testid="bandeja-vacia"] a'),
@@ -141,15 +155,36 @@ describe('ConversationList', () => {
       expect(destinos).toContain('/search/medications');
     });
 
-    it('error ofrece reintentar y no finge que no hay chats', () => {
-      conEstado('error');
-      let pedidos = 0;
-      fixture.componentInstance.reintentar.subscribe(() => pedidos++);
-
-      expect(fixture.nativeElement.textContent).toContain('No pudimos cargar tus conversaciones.');
-      expect(fixture.nativeElement.textContent).not.toContain('Todavía no tenés chats');
+    it('sin conexión (S8) dice «Sin conexión» y ofrece reintentar', () => {
+      conEstado(offline());
+      const pedidos = pedidosDeReintento();
+      expect(buscar('bandeja-sin-conexion')?.textContent).toContain('Sin conexión');
+      expect(texto()).not.toContain('Todavía no tenés chats');
       buscar('bandeja-reintentar')?.click();
-      expect(pedidos).toBe(1);
+      expect(pedidos()).toBe(1);
+    });
+
+    it('sin permiso (S5) lo dice, sin reintento que no cambiaría nada', () => {
+      conEstado(forbidden({ message: 'Con este perfil no podés leer estos chats.' }));
+      expect(buscar('bandeja-sin-permiso')?.textContent).toContain('Con este perfil no podés leer estos chats.');
+      expect(buscar('bandeja-reintentar')).toBeNull();
+    });
+
+    it('error inesperado (S9) muestra el código de la petición, el motivo una sola vez, y reintentar', () => {
+      conEstado(unexpectedError('req-123', 'No pudimos leer tu bandeja.'));
+      const pedidos = pedidosDeReintento();
+      expect(buscar('bandeja-request-id')?.textContent).toBe('req-123');
+      const veces = texto().split('No pudimos').length - 1;
+      expect(veces).toBe(1);
+      buscar('bandeja-reintentar')?.click();
+      expect(pedidos()).toBe(1);
+    });
+
+    it('datos atrasados (S7) conservan las filas y dicen de cuándo son', () => {
+      const una = fila({ id: 'm-1', senderProfileId: 'pp-2', bodyText: 'Hola' });
+      conEstado(stale([una], new Date('2026-10-28T09:15:00')), [una]);
+      expect(buscar('conversacion')).not.toBeNull();
+      expect(texto()).toContain('28/10/2026 09:15');
     });
   });
 });

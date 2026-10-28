@@ -9,6 +9,8 @@ import { provideRouter, Router } from '@angular/router';
 import { Messaging } from './messaging';
 import { ChatStore } from '../../core/messaging/chat.store';
 import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
+import type { ContextoDeChat } from '../../core/messaging/contexto-de-chat';
+import { guardarContexto, tomarContexto } from '../../core/messaging/enlace-de-chat';
 
 /**
  * Lo que estas pruebas fijan.
@@ -267,7 +269,10 @@ describe('Messaging', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('Dra. Quispe');
-    expect(texto()).toContain('No pudimos cargar tus conversaciones.');
+    // S7: las filas se quedan y se dice que pueden estar atrasadas. Nada de
+    // aviso global encima de la pantalla.
+    expect(texto()).toContain('pueden estar atrasados');
+    expect(fixture.nativeElement.querySelector('.mensajeria__alerta')).toBeNull();
   });
 
   it('si la primera lectura falla, ofrece reintentar y no dice «no tenés chats»', () => {
@@ -282,8 +287,10 @@ describe('Messaging', () => {
       .error(new ProgressEvent('error'));
     fixture.detectChanges();
 
-    expect(consultar('bandeja-error')).not.toBeNull();
+    // La petición no llegó: S8 «Sin conexión», no un S9 ni un vacío.
+    expect(consultar('bandeja-sin-conexion')).not.toBeNull();
     expect(consultar('bandeja-vacia')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.mensajeria__alerta')).toBeNull();
 
     consultar('bandeja-reintentar')?.click();
     http.expectOne((r) => r.url === '/community/conversations').flush({
@@ -295,8 +302,34 @@ describe('Messaging', () => {
     fixture.detectChanges();
 
     // Leída de verdad y sin nada: ahora sí, el vacío con su próxima acción.
-    expect(consultar('bandeja-error')).toBeNull();
+    expect(consultar('bandeja-sin-conexion')).toBeNull();
     expect(consultar('bandeja-vacia')).not.toBeNull();
+  });
+
+  it('un error inesperado muestra el código de la petición, una sola vez el motivo', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/community/conversations')
+      .flush(
+        { code: 'INTERNAL', message: 'x', correlationId: 'req-77', timestamp: '', path: '' },
+        { status: 500, statusText: 'Error' },
+      );
+    fixture.detectChanges();
+    expect(consultar('bandeja-error')).not.toBeNull();
+    expect(consultar('bandeja-request-id')?.textContent).toBe('req-77');
+    expect(texto().split('No pudimos leer tu bandeja').length - 1).toBe(1);
+  });
+
+  it('la píldora y el chip «No leídos» cuentan lo mismo: chats', () => {
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Ana' }], 3),
+      conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Beto' }], 1),
+      conversacion('c-3', [{ profileId: 'pp-4', displayName: 'Ceci' }], 0),
+    ]);
+    expect(consultar('mensajeria-sin-leer')?.textContent?.trim()).toBe('2 chats sin leer');
+    expect(consultar('mensajeria-filtro-no-leidos')?.querySelector('.mensajeria__chip-cuenta')?.textContent?.trim()).toBe('2');
   });
 
   function escribir(valor: string): void {
@@ -395,11 +428,13 @@ describe('Messaging', () => {
 });
 
 /**
- * El `?escribirA=` con contexto con el que llegan los botones del marketplace.
+ * El `?escribirA=` con el que llegan los botones del marketplace (H1).
  *
- * Fija que la bandeja le pasa al store **el contexto ya validado** y que, al
- * abrir, navega al hilo reemplazando la dirección y sin arrastrar los
- * parámetros: es lo que impide que un refresco vuelva a mandar la tarjeta.
+ * El contexto ya no viaja en la URL: sólo el nonce (`ctx=`) de lo que el botón
+ * dejó en `sessionStorage`. Fija que la bandeja manda tarjeta **sólo** con un
+ * nonce que exista en la pestaña, que lo consume, y que un enlace de afuera
+ * (con un nonce inventado, o con los parámetros viejos `sobre`/`titulo`) abre
+ * el hilo sin tarjeta.
  */
 describe('Messaging — llegar con contexto', () => {
   const perfilPropio = {
@@ -411,6 +446,13 @@ describe('Messaging — llegar con contexto', () => {
     headline: null,
     biography: null,
     acceptsReviews: null,
+  };
+
+  const pedido: ContextoDeChat = {
+    tipo: 'pedido',
+    titulo: 'Farmacia Vida · Central',
+    detalle: '2 productos',
+    ruta: '/my-account/pharmacy-orders/o-1',
   };
 
   const montarEn = async (url: string) => {
@@ -433,35 +475,31 @@ describe('Messaging — llegar con contexto', () => {
     return { escribirA, navegar };
   };
 
+  beforeEach(() => sessionStorage.clear());
+
   afterEach(() => {
     TestBed.inject(ChatStore).detener();
     TestBed.inject(HttpTestingController)
       .match(() => true)
       .forEach((pedido) => pedido.flush(null));
+    sessionStorage.clear();
   });
 
-  it('pasa el contexto validado y abre el hilo sin los parámetros', async () => {
-    const { escribirA, navegar } = await montarEn(
-      '/messaging?escribirA=farmacia-vida&sobre=pedido' +
-        '&titulo=Farmacia%20Vida%20%C2%B7%20Central&detalle=2%20productos' +
-        '&ruta=%2Fmy-account%2Fpharmacy-orders%2Fo-1',
-    );
+  it('con el nonce que dejó el botón pasa el contexto, lo consume y abre el hilo sin los parámetros', async () => {
+    const nonce = guardarContexto(pedido)!;
+    const { escribirA, navegar } = await montarEn(`/messaging?escribirA=farmacia-vida&ctx=${nonce}`);
 
     expect(escribirA).toHaveBeenCalledTimes(1);
     expect(escribirA.mock.calls[0]?.[0]).toBe('farmacia-vida');
-    expect(escribirA.mock.calls[0]?.[2]).toEqual({
-      tipo: 'pedido',
-      titulo: 'Farmacia Vida · Central',
-      detalle: '2 productos',
-      ruta: '/my-account/pharmacy-orders/o-1',
-    });
+    expect(escribirA.mock.calls[0]?.[2]).toEqual(pedido);
     expect(navegar).toHaveBeenCalledWith(['/messaging', 'c-9'], { replaceUrl: true });
+    // De un solo uso: ya no está.
+    expect(tomarContexto(nonce)).toBeNull();
   });
 
-  it('?pedido=<id> le pide el hilo a la API del pedido, no a la bandeja', async () => {
-    const { escribirA, navegar } = await montarEn(
-      '/messaging?pedido=o-1&sobre=pedido&titulo=Farmacia%20Vida&ruta=%2Fmy-account%2Fpharmacy-orders%2Fo-1',
-    );
+  it('?pedido=<id> le pide el hilo a la API del pedido, y la tarjeta va una vez', async () => {
+    const nonce = guardarContexto({ tipo: 'pedido', titulo: 'Farmacia Vida', ruta: '/my-account/pharmacy-orders/o-1' })!;
+    const { escribirA, navegar } = await montarEn(`/messaging?pedido=o-1&ctx=${nonce}`);
     const store = TestBed.inject(ChatStore);
     expect(escribirA).not.toHaveBeenCalled();
     const http = TestBed.inject(HttpTestingController);
@@ -481,11 +519,18 @@ describe('Messaging — llegar con contexto', () => {
     expect(store.error()).toBe('');
   });
 
-  it('un contexto que apunta afuera se descarta: abre el hilo sin tarjeta', async () => {
-    const { escribirA } = await montarEn(
-      '/messaging?escribirA=farmacia-vida&sobre=producto&titulo=X&ruta=https%3A%2F%2Fotro.example',
-    );
+  it('un enlace externo con un nonce inventado abre el hilo sin tarjeta', async () => {
+    guardarContexto(pedido);
+    const { escribirA, navegar } = await montarEn('/messaging?escribirA=farmacia-vida&ctx=falso');
+    expect(escribirA).toHaveBeenCalledTimes(1);
+    expect(escribirA.mock.calls[0]?.[2]).toBeUndefined();
+    expect(navegar).toHaveBeenCalledWith(['/messaging', 'c-9'], { replaceUrl: true });
+  });
 
+  it('los parámetros viejos (sobre/titulo/ruta) ya no hacen tarjeta', async () => {
+    const { escribirA } = await montarEn(
+      '/messaging?escribirA=farmacia-vida&sobre=producto&titulo=Hola&ruta=%2Fpharmacies-directory%2Fotra',
+    );
     expect(escribirA).toHaveBeenCalledTimes(1);
     expect(escribirA.mock.calls[0]?.[2]).toBeUndefined();
   });

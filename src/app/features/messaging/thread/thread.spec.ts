@@ -13,6 +13,7 @@ import { ChatStore } from '../../../core/messaging/chat.store';
 import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 import { Composer } from './composer/composer';
+import { rutaParaQuienMira, subtituloDeContexto } from './hilo-contexto';
 
 /**
  * Lo que estas pruebas fijan.
@@ -749,6 +750,39 @@ describe('Thread', () => {
 
       expect(sugerenciasDelComposer()).toEqual([]);
     });
+
+    it('el fijado dice quién envió la tarjeta: vos u otra persona', () => {
+      abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+      expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por vos');
+    });
+
+    it('una tarjeta ajena en el fijado lleva el nombre de quien la mandó', () => {
+      abrir([mensaje('m-1', 'pp-2', TARJETA)]);
+      expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por Dra. Quispe');
+    });
+
+    it('con una tarjeta, la cabecera dice de qué se habla en vez de «Conversación directa»', () => {
+      abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+      const estado = fixture.nativeElement.querySelector('.hilo__estado') as HTMLElement;
+      expect(estado.textContent?.trim()).toBe('Pedido · Farmacia Chávez · Sucursal Miraflores');
+    });
+
+    it('sin tarjeta, la cabecera sigue diciendo «Conversación directa»', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+      const estado = fixture.nativeElement.querySelector('.hilo__estado') as HTMLElement;
+      expect(estado.textContent?.trim()).toBe('Conversación directa');
+    });
+
+    it('quien atiende como la farmacia abre el pedido en su bandeja, no en «mis pedidos»', () => {
+      abrir([mensaje('m-1', 'pp-2', TARJETA)]);
+      store.vitrinasDeOrganizacion.set([{ profileId: 'pp-1', nombre: 'Farmacia Chávez' }]);
+      fixture.detectChanges();
+
+      expect(consultar('hilo-contexto-ver')?.getAttribute('href')).toBe('/administration/pharmacy-orders/7f3c');
+      expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe(
+        '/administration/pharmacy-orders/7f3c',
+      );
+    });
   });
 
   /* --- Fotos: grilla, esqueleto y visor ----------------------------------- */
@@ -826,6 +860,30 @@ describe('Thread', () => {
       expect(consultar('hilo-visor')).toBeNull();
     });
 
+    it('el visor sigue en la misma foto cuando llega una página anterior', async () => {
+      abrir([foto(3), foto(2)], 'cursor-1');
+      await servirTodos(['f-2', 'f-3']);
+
+      // Se abre la segunda de dos: f-3, la del mensaje m-3.
+      const imagenes = fixture.nativeElement.querySelectorAll('[data-testid="hilo-imagen"]');
+      (imagenes[1] as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(consultar('hilo-visor-posicion')?.textContent?.trim()).toBe('2 de 2');
+
+      // Llega la historia con una foto más vieja: se corre el índice, no la foto.
+      store.cargarAnteriores();
+      http
+        .expectOne((r) => r.url === '/community/conversations/c-1/messages')
+        .flush({ items: [foto(1)], count: 1, limit: 30, nextCursor: null });
+      await servirTodos(['f-1']);
+
+      expect(consultar('hilo-visor-posicion')?.textContent?.trim()).toBe('3 de 3');
+      (consultar('hilo-visor-responder') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(store.respondiendoA()?.id).toBe('m-3');
+    });
+
     it('responder desde el visor deja la cita de esa foto en el composer', async () => {
       abrir([foto(2), foto(1)]);
       await servirTodos(['f-1', 'f-2']);
@@ -839,6 +897,133 @@ describe('Thread', () => {
       expect(consultar('hilo-visor')).toBeNull();
       expect(store.respondiendoA()?.id).toBe('m-1');
     });
+  });
+});
+
+describe('Thread · pulsación larga y vacío', () => {
+  let fixture: ComponentFixture<Thread>;
+  let http: HttpTestingController;
+  let store: ChatStore;
+
+  /** Un evento de puntero táctil, armado sobre `MouseEvent` por si el entorno no trae `PointerEvent`. */
+  const dedo = (tipo: string, x = 10, y = 10): Event => {
+    const evento = new MouseEvent(tipo, { bubbles: true, clientX: x, clientY: y });
+    Object.defineProperty(evento, 'pointerType', { value: 'touch' });
+    return evento;
+  };
+
+  const abrirCon = (items: unknown[]): void => {
+    http.expectOne('/community/profiles/me').flush({
+      id: 'pp-1', tenantId: 't-1', targetId: 'hp-1', slug: 'yo', displayName: 'Yo',
+      headline: null, biography: null, acceptsReviews: null,
+    });
+    fixture.detectChanges();
+    http.match((r) => r.url === '/community/conversations').forEach((p) =>
+      p.flush({
+        items: [{ id: 'c-1', conversationTypeConceptId: 'c-direct', groupId: null, lastMessageAt: null,
+          messageCount: items.length, lastMessage: null, unreadCount: 0,
+          peers: [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }] }],
+        count: 1, limit: 50, nextCursor: null,
+      }),
+    );
+    http.match((r) => r.url === '/community/conversations/c-1/messages').forEach((p) =>
+      p.flush({ items, count: items.length, limit: 30, nextCursor: null }),
+    );
+    http.match((r) => r.url === '/community/conversations/c-1/read').forEach((p) =>
+      p.flush({ receiptsRecorded: 1, lastReadMessageId: null }),
+    );
+    fixture.detectChanges();
+  };
+
+  const texto = {
+    id: 'm-1', conversationId: 'c-1', senderProfileId: 'pp-2', replyToMessageId: null,
+    contentTypeConceptId: 'c-text', bodyText: 'Hola', attachmentFileId: null, isEdited: null,
+    sentAt: '2026-08-18T10:00:00.000Z',
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: '**', children: [] }]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of({ get: (clave: string) => (clave === 'conversationId' ? 'c-1' : null) }),
+            queryParamMap: of({ get: () => null }),
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(ChatStore);
+    store.iniciar();
+    fixture = TestBed.createComponent(Thread);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    store.detener();
+    http.match(() => true).forEach((pedido) => pedido.flush(null));
+  });
+
+  const burbuja = (): HTMLElement =>
+    fixture.nativeElement.querySelector('[data-testid="mensaje"]') as HTMLElement;
+  const menu = (): HTMLElement | null => burbuja().querySelector('[role="menu"]');
+
+  it('mantener el dedo medio segundo abre el menú del mensaje', async () => {
+    abrirCon([texto]);
+    burbuja().dispatchEvent(dedo('pointerdown'));
+    await new Promise((listo) => setTimeout(listo, 560));
+    fixture.detectChanges();
+    expect(menu()).not.toBeNull();
+  });
+
+  it('si el dedo se mueve —se está desplazando—, no abre nada', async () => {
+    abrirCon([texto]);
+    burbuja().dispatchEvent(dedo('pointerdown'));
+    burbuja().dispatchEvent(dedo('pointermove', 10, 40));
+    await new Promise((listo) => setTimeout(listo, 560));
+    fixture.detectChanges();
+    expect(menu()).toBeNull();
+  });
+
+  it('soltar antes de tiempo es un toque, no una pulsación larga', async () => {
+    abrirCon([texto]);
+    burbuja().dispatchEvent(dedo('pointerdown'));
+    burbuja().dispatchEvent(dedo('pointerup'));
+    await new Promise((listo) => setTimeout(listo, 560));
+    fixture.detectChanges();
+    expect(menu()).toBeNull();
+  });
+
+  it('el hilo vacío lo dice en castellano correcto', () => {
+    abrirCon([]);
+    expect(fixture.nativeElement.textContent).toContain('Todavía no se escribió nada');
+  });
+});
+
+describe('rutaParaQuienMira y subtituloDeContexto', () => {
+  const pedido = { tipo: 'pedido', titulo: 'Farmacia Vida', ruta: '/my-account/pharmacy-orders/o-1' } as const;
+
+  it('el paciente va a su pedido y la farmacia a su bandeja', () => {
+    expect(rutaParaQuienMira(pedido, false)).toBe('/my-account/pharmacy-orders/o-1');
+    expect(rutaParaQuienMira(pedido, true)).toBe('/administration/pharmacy-orders/o-1');
+  });
+
+  it('las fichas públicas valen igual para los dos lados', () => {
+    const producto = { tipo: 'producto', titulo: 'Paracetamol', ruta: '/pharmacies-directory/vida' } as const;
+    expect(rutaParaQuienMira(producto, true)).toBe('/pharmacies-directory/vida');
+  });
+
+  it('sin ruta equivalente no se ofrece enlace', () => {
+    expect(rutaParaQuienMira({ ...pedido, ruta: '/my-account/pharmacy-orders/o-1/receipt' }, true)).toBeNull();
+  });
+
+  it('el subtítulo dice de qué se habla', () => {
+    expect(subtituloDeContexto(pedido)).toBe('Pedido · Farmacia Vida');
+    expect(subtituloDeContexto({ tipo: 'producto', titulo: 'Paracetamol', ruta: '/x' })).toBe('Consulta por Paracetamol');
   });
 });
 
