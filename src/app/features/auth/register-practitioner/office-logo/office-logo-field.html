@@ -1,0 +1,46 @@
+<div class="office-logo">
+  <!-- La misma caja que el perfil y el membrete: lo que se elige acá es lo que
+       después sale en sus PDF. Sin logo dice «Sin logo», no queda un hueco. -->
+  <app-practice-logo
+    data-testid="registration-practitioner-office-logo-preview"
+    [src]="selection.preview()"
+  />
+
+  <div class="office-logo__actions">
+    <app-file-input
+      testId="registration-practitioner-office-logo-input"
+      label="Subir logo"
+      accessibleLabel="Logo del consultorio"
+      [files]="files()"
+      [accept]="accept"
+      [maxSizeBytes]="maxBytes"
+      [maxFiles]="1"
+      [showList]="false"
+      [showFeedback]="false"
+      [hasError]="selection.error() !== null"
+      (filesChange)="choose($event)"
+      (rejected)="reject($event)"
+    />
+    @if (selection.file()) {
+      <button
+        app-button
+        type="button"
+        variant="neutral"
+        size="sm"
+        data-testid="registration-practitioner-office-logo-remove"
+        (clicked)="selection.remove()"
+      >
+        Quitar logo
+      </button>
+    }
+    @if (selection.error(); as error) {
+      <p
+        class="office-logo__error"
+        role="alert"
+        data-testid="registration-practitioner-office-logo-error"
+      >
+        {{ error }}
+      </p>
+    }
+  </div>
+</div>

@@ -200,6 +200,9 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
   // La calle y el municipio del consultorio salen de su punto (26/10/2026).
   gpsConsultorio: DOCTOR_TAB.dondeAtiendo,
   officeContactPhone: DOCTOR_TAB.dondeAtiendo,
+  // El logo no: se ve y se cambia en «Datos personales», con la firma y el
+  // sello, porque los tres son lo que sale en sus documentos.
+  officeLogo: DOCTOR_TAB.personales,
 
   /* 8 · Tu título profesional y foto */
   profilePhotoBase64: DOCTOR_TAB.personales,

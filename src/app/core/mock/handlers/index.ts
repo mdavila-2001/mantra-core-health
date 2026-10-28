@@ -50,6 +50,7 @@ import { registerReceivedServices } from './received-services.handlers';
 import { registerMedicalGroups } from './medical-groups.handlers';
 import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
+import { registerRegistrationLogo } from './registration-logo.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -113,5 +114,7 @@ export function crearRouterSimulado(): MockRouter {
   registerMedicalGroups(router);
   registerMedicalCenters(router);
   registerOrganizationPracticeHandlers(router);
+  // La pre-carga del logo del consultorio en el alta del médico.
+  registerRegistrationLogo(router);
   return router;
 }

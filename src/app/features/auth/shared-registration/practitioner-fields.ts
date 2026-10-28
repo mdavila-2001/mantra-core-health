@@ -351,6 +351,14 @@ export function practitionerFields(
             'Marque el punto exacto del consultorio y confírmelo. Se confirma aparte del de su casa.',
           control: 'custom',
         },
+        {
+          // La pantalla proyecta acá la vista previa y el selector
+          // (`app-office-logo-field`); viaja en `ownSite.logoFileId`.
+          key: 'officeLogo',
+          label: 'Logo del consultorio (opcional)',
+          hint: 'Sale en el membrete de sus PDF. PNG, JPG o WebP, de hasta 2 MB.',
+          control: 'custom',
+        },
       ],
     },
     {

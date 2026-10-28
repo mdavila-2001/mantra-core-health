@@ -26,6 +26,7 @@ import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import { mockBackendInterceptor } from '../../../core/mock/mock-backend.interceptor';
+import { OfficeLogoSelection } from './office-logo/office-logo-selection';
 
 const RESPUESTA_PRO = {
   userId: 'u',
@@ -347,7 +348,13 @@ describe('RegisterPractitioner', () => {
         'email',
         'gpsTrabajo',
       ]);
-      expect(camposDe('own-office')).toEqual(['officeName', 'officeContactPhone', 'gpsConsultorio']);
+      // El logo del consultorio (27/10/2026): opcional, cierra la página.
+      expect(camposDe('own-office')).toEqual([
+        'officeName',
+        'officeContactPhone',
+        'gpsConsultorio',
+        'officeLogo',
+      ]);
       // La autoridad emisora ya no se pregunta (26/10/2026): el colegio se
       // completa solo con el título profesional.
       expect(camposDe('credentials')).toEqual([
@@ -3356,6 +3363,169 @@ describe('RegisterPractitioner', () => {
           longitude: -63.18,
         },
       });
+    });
+  });
+
+  /* ==========================================================================
+     El logo del consultorio (REQ-C1-008).
+
+     Opcional, en la página del consultorio propio. Se pre-carga al enviar por
+     la ruta pública del alta —todavía no hay cuenta— y su id viaja en
+     `ownSite.logoFileId`, que el alta reclama en su misma transacción.
+     ========================================================================== */
+  describe('el logo del consultorio', () => {
+    const LOGO_UPLOAD = '/iam/auth/upload-registration-logo';
+
+    function logoSelection(): OfficeLogoSelection {
+      return fixture.debugElement.injector.get(OfficeLogoSelection);
+    }
+
+    /** Lleva la pantalla hasta «Su consultorio propio», «Siguiente» de a uno. */
+    function goToOwnOfficePage(): HTMLElement {
+      fixture.detectChanges();
+      for (let page = 0; page < 13; page += 1) {
+        const field: HTMLElement | null = fixture.nativeElement.querySelector(
+          '[data-campo="officeLogo"]',
+        );
+        if (field !== null) return field;
+        const next: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+          '[data-testid="paginated-form-continuar"]',
+        );
+        if (next === null) break;
+        next.click();
+        fixture.detectChanges();
+      }
+      throw new Error('No se llegó a la página «Su consultorio propio»');
+    }
+
+    it('la página del consultorio propio lo ofrece como campo opcional', () => {
+      const field = component
+        .paginasProfesional()
+        .find((formPage) => formPage.clave === 'own-office')
+        ?.campos.find((candidate) => candidate.key === 'officeLogo');
+
+      expect(field).toMatchObject({ control: 'custom', label: 'Logo del consultorio (opcional)' });
+      expect(field?.required).toBeFalsy();
+      expect(field?.hint).toContain('2 MB');
+    });
+
+    it('con un archivo válido, lo pre-carga antes del alta y el alta lleva ownSite.logoFileId', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({ officeName: 'Consultorio Suárez' });
+      const logo = archivoDe('logo.png', 'image/png', 1024);
+      logoSelection().choose(logo);
+
+      component.submit();
+
+      const upload = http.expectOne(LOGO_UPLOAD);
+      expect(upload.request.method).toBe('POST');
+      expect((upload.request.body as FormData).get('file')).toBe(logo);
+      http.expectNone('/iam/auth/register-practitioner');
+      upload.flush({
+        fileId: 'logo-alta',
+        originalName: 'logo.png',
+        sizeBytes: 1024,
+        mimeType: 'image/png',
+      });
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.ownSite).toEqual({
+        name: 'Consultorio Suárez',
+        logoFileId: 'logo-alta',
+      });
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('el logo solo ya declara el consultorio, con el nombre por omisión', () => {
+      completarProfesional();
+      logoSelection().choose(archivoDe('logo.webp', 'image/webp', 1024));
+
+      component.submit();
+      http.expectOne(LOGO_UPLOAD).flush({ fileId: 'logo-alta' });
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.ownSite).toEqual({ name: 'Mi consultorio', logoFileId: 'logo-alta' });
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('sin archivo, no pre-carga nada y el alta no lleva logoFileId', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({ officeName: 'Consultorio Suárez' });
+
+      component.submit();
+
+      http.expectNone(LOGO_UPLOAD);
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.ownSite).toEqual({ name: 'Consultorio Suárez' });
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it.each([
+      ['un PDF', archivoDe('logo.pdf', 'application/pdf', 1024), 'PNG, JPG o WebP'],
+      ['una imagen de 3 MB', archivoDe('logo.png', 'image/png', 3 * 1024 * 1024), '2 MB'],
+    ])('con %s queda el motivo y el alta no sube nada', (_case, file, reason) => {
+      completarProfesional();
+      logoSelection().choose(file);
+
+      expect(logoSelection().error()).toContain(reason);
+      component.submit();
+
+      http.expectNone(LOGO_UPLOAD);
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.ownSite).toBeUndefined();
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('con un PDF el error aparece en el campo de su página', () => {
+      completarProfesional();
+      const field = goToOwnOfficePage();
+      const input = field.querySelector<HTMLInputElement>(
+        '[data-testid="registration-practitioner-office-logo-input"]',
+      )!;
+      Object.defineProperty(input, 'files', {
+        value: [archivoDe('logo.pdf', 'application/pdf', 1024)],
+      });
+
+      input.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      const error = field.querySelector('[data-testid="registration-practitioner-office-logo-error"]');
+      expect(error?.getAttribute('role')).toBe('alert');
+      expect(error?.textContent).toContain('PNG, JPG o WebP');
+      expect(logoSelection().file()).toBeNull();
+      http.expectNone(LOGO_UPLOAD);
+    });
+
+    it('un reintento del alta no vuelve a subir el mismo logo', () => {
+      completarProfesional();
+      logoSelection().choose(archivoDe('logo.png', 'image/png', 1024));
+      component.submit();
+      http.expectOne(LOGO_UPLOAD).flush({ fileId: 'logo-alta' });
+      http
+        .expectOne('/iam/auth/register-practitioner')
+        .flush({}, { status: 503, statusText: 'Unavailable' });
+      expect(component.registered()).toBe(false);
+
+      component.submit();
+
+      http.expectNone(LOGO_UPLOAD);
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.ownSite).toEqual({ name: 'Mi consultorio', logoFileId: 'logo-alta' });
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('si la pre-carga falla, el alta no se manda', () => {
+      completarProfesional();
+      logoSelection().choose(archivoDe('logo.png', 'image/png', 1024));
+
+      component.submit();
+      http.expectOne(LOGO_UPLOAD).flush(
+        { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'El logo supera los 2 MB' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.registered()).toBe(false);
     });
   });
 
