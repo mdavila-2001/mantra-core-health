@@ -179,7 +179,8 @@ describe('AddressBook («Mis direcciones»)', () => {
     const req = http.expectOne({ method: 'POST', url: LIBRETA });
     expect(req.request.body).toEqual({
       municipalityConceptId: 'mun-scz',
-      lines: 'Calle 24 de Septiembre, Bartos',
+      // Sólo calle y número: el distrito va en su campo, no dos veces.
+      lines: 'Calle 24 de Septiembre',
       // El distrito viaja aparte de la calle (ADR-0028 de la API).
       district: 'Bartos',
       latitude: -17.7833,
