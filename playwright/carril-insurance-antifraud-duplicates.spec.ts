@@ -86,26 +86,82 @@ async function cerrar(page: Page, modal: Locator): Promise<void> {
   await expect(page.getByTestId('consulta-modal')).toHaveCount(0);
 }
 
-/** Contesta la ficha elegida: «No» en cada sí/no y un texto en cada campo. */
-async function contestarLaFicha(modal: Locator): Promise<void> {
+/**
+ * Abre un `app-select` y toca, en el `<dialog>` que se abre, la fila que
+ * señale `fila`: como lo haría la persona. `app-select` ya no envuelve un
+ * `<select>` nativo, así que `selectOption` no tiene dónde apoyarse.
+ */
+async function tocarEnElDesplegable(
+  zona: Locator,
+  disparador: Locator,
+  fila: (lista: Locator) => Locator,
+): Promise<void> {
+  await disparador.click();
+  const lista = zona.locator('dialog.select-dialog[open]');
+  await expect(lista).toBeVisible();
+  await fila(lista).click();
+  await expect(lista).toHaveCount(0);
+}
+
+/**
+ * Contesta un campo de la ficha con lo mínimo: «No» en un sí/no, la primera
+ * opción habilitada en un desplegable, un texto en un campo de texto o de
+ * párrafo y un número en un numérico. `false` si su control no es ninguno de
+ * esos.
+ */
+async function contestarCampo(campo: Locator): Promise<boolean> {
+  const no = campo.getByRole('radio', { name: 'No' }).or(campo.getByRole('button', { name: 'No' }));
+  if ((await no.count()) > 0) {
+    await no.first().click();
+    return true;
+  }
+  const desplegable = campo.getByRole('combobox');
+  if ((await desplegable.count()) > 0) {
+    await tocarEnElDesplegable(campo, desplegable.first(), (lista) =>
+      lista.getByRole('option', { disabled: false }).first(),
+    );
+    return true;
+  }
+  // `app-textarea` dibuja un `<textarea>`: el motivo de consulta y el
+  // diagnóstico de la ficha base son párrafos, no líneas.
+  const texto = campo.locator('textarea, input:not([type="number"]):not([type="hidden"])');
+  if ((await texto.count()) > 0 && (await texto.first().isEditable())) {
+    await texto.first().fill('Sin particularidades');
+    return true;
+  }
+  const numero = campo.locator('input[type="number"]');
+  if ((await numero.count()) > 0) {
+    await numero.first().fill('1');
+    return true;
+  }
+  return false;
+}
+
+/** El rótulo de un campo de la ficha, para nombrarlo en un fallo. */
+async function rotuloDe(campo: Locator): Promise<string> {
+  const rotulo = campo.locator('.form-field-label');
+  return (await rotulo.count()) > 0 ? (await rotulo.first().innerText()).trim() : '(sin rótulo)';
+}
+
+/**
+ * Contesta la ficha elegida, campo por campo.
+ *
+ * Recorre por índice y vuelve a contar en cada vuelta: una respuesta puede
+ * descubrir el campo que dependía de ella —el «¿cuál?» de un «sí»—, que se
+ * dibuja debajo de su pregunta y también se contesta.
+ *
+ * Devuelve el rótulo de los campos cuyo control no supo contestar, para que
+ * el fallo diga cuál dejó gris «Completar formulario».
+ */
+async function contestarLaFicha(modal: Locator): Promise<readonly string[]> {
   const campos = modal.getByTestId('campo-especialidad');
   await expect(campos.first()).toBeVisible({ timeout: 30_000 });
-  for (const campo of await campos.all()) {
-    const no = campo
-      .getByRole('radio', { name: 'No' })
-      .or(campo.getByRole('button', { name: 'No' }));
-    if ((await no.count()) > 0) {
-      await no.first().click();
-      continue;
-    }
-    const texto = campo.locator('input:not([type="number"]):not([type="hidden"])');
-    if ((await texto.count()) > 0 && (await texto.first().isEditable())) {
-      await texto.first().fill('Sin particularidades');
-      continue;
-    }
-    const numero = campo.locator('input[type="number"]');
-    if ((await numero.count()) > 0) await numero.first().fill('1');
+  const sinContestar: string[] = [];
+  for (let indice = 0; indice < (await campos.count()); indice += 1) {
+    const campo = campos.nth(indice);
+    if (!(await contestarCampo(campo))) sinContestar.push(await rotuloDe(campo));
   }
+  return sinContestar;
 }
 
 /**
@@ -122,8 +178,17 @@ async function responderElFormulario(page: Page): Promise<void> {
     timeout: 30_000,
   });
   if (!(await respondido.isVisible())) {
-    await contestarLaFicha(modal);
-    await modal.getByRole('button', { name: 'Completar formulario' }).click();
+    const sinContestar = await contestarLaFicha(modal);
+    // Se exige habilitado antes del clic: sobre un botón gris el clic espera
+    // hasta agotar el tiempo y el fallo no dice qué faltó.
+    const completar = modal.getByRole('button', { name: 'Completar formulario' });
+    const desconocidos = sinContestar.join(' · ') || 'ninguno';
+    await expect(
+      completar,
+      '«Completar formulario» sigue deshabilitado: quedó un obligatorio sin contestar. ' +
+        `Campos sin un control que la prueba sepa contestar: ${desconocidos}.`,
+    ).toBeEnabled();
+    await completar.click();
     await expect(respondido).toBeVisible({ timeout: 30_000 });
   }
   await cerrar(page, modal);
@@ -145,17 +210,11 @@ async function abrirOrdenDeAnalisis(page: Page): Promise<Locator> {
   return modal;
 }
 
-/**
- * Elige una opción de un `app-select` como lo haría la persona: toca el campo
- * y toca la opción en el `<dialog>` que se abre. `app-select` ya no envuelve un
- * `<select>` nativo, así que `selectOption` no tiene dónde apoyarse.
- */
+/** Elige, por su nombre, una opción del `app-select` cuyo rótulo casa con `campo`. */
 async function elegir(zona: Locator, campo: RegExp, opcion: string): Promise<void> {
-  await zona.getByRole('combobox', { name: campo }).click();
-  const lista = zona.locator('dialog.select-dialog[open]');
-  await expect(lista).toBeVisible();
-  await lista.getByRole('option', { name: opcion, exact: true }).click();
-  await expect(lista).toHaveCount(0);
+  await tocarEnElDesplegable(zona, zona.getByRole('combobox', { name: campo }), (lista) =>
+    lista.getByRole('option', { name: opcion, exact: true }),
+  );
 }
 
 /**
