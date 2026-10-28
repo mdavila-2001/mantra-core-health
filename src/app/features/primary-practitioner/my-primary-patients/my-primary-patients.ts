@@ -19,7 +19,7 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 export const PAGE_SIZE = 50;
 
 /** Una fila de la tabla, ya legible. */
-interface FilaDePaciente {
+interface PatientRow {
   readonly id: string;
   readonly nombre: string;
   readonly codigo: string;
@@ -49,14 +49,16 @@ export class MyPrimaryPatients {
   protected readonly state = signal<ViewState<PrimaryPatientsPage>>(loading());
   protected readonly pagina = computed(() => dataOf(this.state()));
   private readonly offset = signal(0);
+  /** Cambiando de página: la tabla sigue a la vista. */
+  protected readonly paginando = signal(false);
 
-  protected readonly filas = computed<ViewState<readonly FilaDePaciente[]>>(() => {
+  protected readonly filas = computed<ViewState<readonly PatientRow[]>>(() => {
     const pagina = this.pagina();
     if (pagina === null) return loading();
     return ready(pagina.items.map((p) => this.fila(p)));
   });
 
-  protected readonly columnas: readonly ColumnDef<FilaDePaciente>[] = [
+  protected readonly columnas: readonly ColumnDef<PatientRow>[] = [
     { key: 'nombre', header: 'Paciente', priority: 1 },
     { key: 'desde', header: 'Lo eligió el', priority: 1 },
     { key: 'codigo', header: 'Código de paciente', priority: 2 },
@@ -76,8 +78,8 @@ export class MyPrimaryPatients {
     return p !== null && p.offset + p.items.length < p.total;
   });
 
-  protected readonly porId = (fila: FilaDePaciente): string => fila.id;
-  protected readonly nombreDeFila = (fila: FilaDePaciente): string => fila.nombre;
+  protected readonly byTestId = (fila: PatientRow): string => fila.id;
+  protected readonly nombreDeFila = (fila: PatientRow): string => fila.nombre;
 
   constructor() {
     this.cargar();
@@ -89,18 +91,28 @@ export class MyPrimaryPatients {
 
   protected anterior(): void {
     this.offset.set(Math.max(0, this.offset() - PAGE_SIZE));
-    this.cargar();
+    this.cargar(true);
   }
 
   protected siguiente(): void {
     this.offset.set(this.offset() + PAGE_SIZE);
-    this.cargar();
+    this.cargar(true);
   }
 
-  private cargar(): void {
-    this.state.set(loading());
+  /**
+   * @param paginando - Al cambiar de página la tabla se queda en pantalla y
+   *   sólo los botones muestran que cargan: pasar por «cargando» destruiría la
+   *   navegación y el foco del teclado caería al principio del documento.
+   */
+  private cargar(paginando = false): void {
+    if (paginando) {
+      this.paginando.set(true);
+    } else {
+      this.state.set(loading());
+    }
     this.client.listOwnPatients({ limit: PAGE_SIZE, offset: this.offset() }).subscribe({
-      next: (pagina) =>
+      next: (pagina) => {
+        this.paginando.set(false);
         this.state.set(
           pagina.total === 0
             ? empty(
@@ -108,16 +120,20 @@ export class MyPrimaryPatients {
                 'Todavía ningún paciente lo eligió como médico de cabecera. Los pacientes lo hacen desde su ficha en la guía de médicos; mantener su perfil completo ayuda a que lo encuentren.',
               )
             : ready(pagina),
-        ),
-      error: (error: unknown) => this.state.set(errorToViewState<PrimaryPatientsPage>(error)),
+        );
+      },
+      error: (error: unknown) => {
+        this.paginando.set(false);
+        this.state.set(errorToViewState<PrimaryPatientsPage>(error));
+      },
     });
   }
 
-  private fila(p: PrimaryPatient): FilaDePaciente {
-    const nombre = p.displayName?.trim();
+  private fila(p: PrimaryPatient): PatientRow {
+    const name = p.displayName?.trim();
     return {
       id: p.patientProfileId,
-      nombre: nombre === undefined || nombre === '' ? 'Paciente sin nombre registrado' : nombre,
+      nombre: name === undefined || name === '' ? 'Paciente sin nombre registrado' : name,
       codigo: p.patientCode ?? '—',
       desde: formatDate(p.since, "d 'de' MMMM 'de' y", this.locale),
     };

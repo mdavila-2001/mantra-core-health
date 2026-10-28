@@ -1,5 +1,5 @@
 import { patientById, professionalById } from '../fixtures/people';
-import { notFound, preconditionFailed, validation, type MockRouter } from '../mock-router';
+import { notFound, preconditionFailed, reply, validation, type MockRouter } from '../mock-router';
 import { Coleccion, ahora, cuerpo, nuevoId } from '../mock-store';
 import { pacienteDeSesion } from './profiles.handlers';
 
@@ -21,48 +21,57 @@ interface EleccionSimulada {
   readonly hasta?: string;
 }
 
-const elecciones = new Coleccion<EleccionSimulada>([], 'medico-de-cabecera');
+const elecciones = new Coleccion<EleccionSimulada>([], 'primary-practitioner');
 
-const vigenteDe = (pacienteId: string) =>
+const currentOf = (pacienteId: string) =>
   elecciones.todos().find((e) => e.pacienteId === pacienteId && e.hasta === undefined);
 
 function respuesta(pacienteId: string) {
-  const e = vigenteDe(pacienteId);
+  const e = currentOf(pacienteId);
   if (e === undefined) return { current: null };
-  const medico = professionalById(e.profesionalId);
+  const doctor = professionalById(e.profesionalId);
   return {
     current: {
       practitionerProfileId: e.profesionalId,
-      ...(medico ? { displayName: medico.displayName, professionalTitle: medico.professionalTitle } : {}),
+      ...(doctor ? { displayName: doctor.displayName, professionalTitle: doctor.professionalTitle } : {}),
       since: e.desde,
     },
   };
 }
 
+/** El 404 de la API para una cuenta sin perfil de paciente, con su `reason`. */
+const sinPerfilDePaciente = () =>
+  reply(404, {
+    statusCode: 404,
+    code: 'NOT_FOUND',
+    message: 'Paciente no encontrado',
+    reason: 'PATIENT_PROFILE_NOT_FOUND',
+  });
+
 function cerrar(e: EleccionSimulada): void {
   elecciones.actualizar(e.id, { hasta: ahora() });
 }
 
-export function registrarMedicoDeCabecera(router: MockRouter): void {
+export function registerPrimaryPractitioner(router: MockRouter): void {
   router.get('/profiles/patients/me/primary-practitioner', (request) => {
     const p = pacienteDeSesion(request);
-    return p === undefined ? notFound('Paciente no encontrado') : respuesta(p.id);
+    return p === undefined ? sinPerfilDePaciente() : respuesta(p.id);
   });
 
   router.put('/profiles/patients/me/primary-practitioner', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return notFound('Paciente no encontrado');
+    if (p === undefined) return sinPerfilDePaciente();
     const id = cuerpo<{ practitionerProfileId: unknown }>(request).practitionerProfileId;
     if (typeof id !== 'string' || id === '') {
       return validation('Error de validación', [
         { field: 'practitionerProfileId', message: 'must be a UUID' },
       ]);
     }
-    const actual = vigenteDe(p.id);
+    const actual = currentOf(p.id);
     if (actual?.profesionalId === id) return respuesta(p.id);
-    const medico = professionalById(id);
-    if (medico === undefined) return notFound('Profesional no encontrado');
-    if (!medico.acceptsNewPatients) {
+    const doctor = professionalById(id);
+    if (doctor === undefined) return notFound('Profesional no encontrado');
+    if (!doctor.acceptsNewPatients) {
       return preconditionFailed('Este profesional no está aceptando pacientes nuevos.');
     }
     if (actual) cerrar(actual);
@@ -72,8 +81,8 @@ export function registrarMedicoDeCabecera(router: MockRouter): void {
 
   router.delete('/profiles/patients/me/primary-practitioner', (request) => {
     const p = pacienteDeSesion(request);
-    if (p === undefined) return notFound('Paciente no encontrado');
-    const actual = vigenteDe(p.id);
+    if (p === undefined) return sinPerfilDePaciente();
+    const actual = currentOf(p.id);
     if (actual) cerrar(actual);
     return respuesta(p.id);
   });
@@ -91,10 +100,10 @@ export function registrarMedicoDeCabecera(router: MockRouter): void {
       .sort((a, b) => b.desde.localeCompare(a.desde));
     return {
       items: mias.slice(offset, offset + limit).map((e) => {
-        const paciente = patientById(e.pacienteId);
+        const patient = patientById(e.pacienteId);
         return {
           patientProfileId: e.pacienteId,
-          ...(paciente ? { displayName: paciente.displayName, patientCode: paciente.patientCode } : {}),
+          ...(patient ? { displayName: patient.displayName, patientCode: patient.patientCode } : {}),
           since: e.desde,
         };
       }),

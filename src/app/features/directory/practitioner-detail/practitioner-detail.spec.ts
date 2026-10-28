@@ -368,7 +368,7 @@ describe('PractitionerDetail', () => {
   });
 
   /**
-   * 02/10/2026 — pedido del propietario: los horarios de otros servicios en una
+   * 02/10/2026 — request del propietario: los horarios de otros servicios en una
    * pestaña propia también del lado del paciente. La de consultas sigue siendo
    * la que abre, y la de servicios no se construye hasta que se elige.
    */
@@ -400,7 +400,7 @@ describe('PractitionerDetail', () => {
 
     // El botón del médico de cabecera va entre la ficha y los horarios.
     const pagina = fixture.nativeElement as HTMLElement;
-    expect(pagina.querySelector('[data-testid="medico-cabecera-elegir"]')?.textContent).toContain(
+    expect(pagina.querySelector('[data-testid="primary-doctor-elegir"]')?.textContent).toContain(
       'Elegir como mi médico de cabecera',
     );
 
