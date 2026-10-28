@@ -3,12 +3,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   input,
   output,
   signal,
   type OnInit,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, map, of, switchMap } from 'rxjs';
 
 import { FilesClient } from '../../../core/data-access/files/files.client';
@@ -122,6 +124,7 @@ export class PaymentReceiptsDialog implements OnInit {
   private readonly receipts = inject(PaymentReceiptsClient);
   private readonly files = inject(FilesClient);
   private readonly toasts = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** La cita cuyos comprobantes se miran. */
   readonly bookingId = input.required<string>();
@@ -174,6 +177,18 @@ export class PaymentReceiptsDialog implements OnInit {
   protected readonly motivo = signal('');
   protected readonly errorDeRevision = signal<string | null>(null);
 
+  /**
+   * Hay una escritura en vuelo: subir, confirmar o rechazar.
+   *
+   * Mientras dure, el modal no se deja cerrar. Cerrarlo en medio dejaba la
+   * respuesta sin nadie que la recibiera: la API ya había pagado la cita y la
+   * agenda seguía diciendo «Sin registrar», que invita a marcarla otra vez.
+   */
+  protected readonly ocupado = computed(() => this.subiendo() || this.operando() !== null);
+
+  /** Cada lectura lleva un número: sólo vale la respuesta de la última. */
+  private lectura = 0;
+
   /** Las vistas previas abiertas, por comprobante. */
   protected readonly vistas = signal<ReadonlyMap<string, VistaPrevia>>(new Map());
 
@@ -205,14 +220,18 @@ export class PaymentReceiptsDialog implements OnInit {
     this.lista().some((c) => c.status === 'CONFIRMED'),
   );
 
-  /** Si se ofrece el formulario de subida. */
+  /**
+   * Si se ofrece el formulario de subida.
+   *
+   * Manda el pago de la cita (`canUpload`), no la historia: un comprobante
+   * confirmado y un pago que después se volvió atrás admiten otro, como la API.
+   */
   protected readonly ofreceSubir = computed(
     () =>
       this.mode() === 'paciente' &&
       this.canUpload() &&
       this.comprobantes().status === 'ready' &&
-      !this.hayPendiente() &&
-      !this.hayConfirmado(),
+      !this.hayPendiente(),
   );
 
   /** El monto escrito, o `''`. El `app-input` puede devolverlo como número. */
@@ -235,15 +254,28 @@ export class PaymentReceiptsDialog implements OnInit {
     this.cargar();
   }
 
+  /**
+   * Lee la lista. Al releer tras una acción **no pasa por «cargando»**: borrar
+   * la lista desmontaba el botón que tenía el foco y lo tiraba al `body`. Y una
+   * respuesta que llega después de otra más nueva se descarta.
+   */
   protected cargar(): void {
-    this.comprobantes.set(loading());
+    const esta = ++this.lectura;
+    if (this.comprobantes().status !== 'ready') {
+      this.comprobantes.set(loading());
+    }
     this.receipts
       .list(this.bookingId())
       .pipe(
         map((items) => ready(items) as ViewState<readonly PaymentReceipt[]>),
         catchError((error: unknown) => of(errorToViewState<readonly PaymentReceipt[]>(error))),
+        takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((estado) => this.comprobantes.set(estado));
+      .subscribe((estado) => {
+        if (esta === this.lectura) {
+          this.comprobantes.set(estado);
+        }
+      });
   }
 
   protected presentacion(status: PaymentReceiptStatus): { label: string; tono: BadgeVariant } {
@@ -289,6 +321,7 @@ export class PaymentReceiptsDialog implements OnInit {
             ...(nota === '' ? {} : { note: nota }),
           }),
         ),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: () => {
@@ -325,7 +358,7 @@ export class PaymentReceiptsDialog implements OnInit {
     abiertas.set(comprobante.id, { estado: 'carga' });
     this.vistas.set(abiertas);
 
-    this.receipts.content(this.bookingId(), comprobante.id).subscribe({
+    this.receipts.content(this.bookingId(), comprobante.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (bytes) => {
         const archivo = new File([bytes], comprobante.originalName ?? 'Comprobante de pago', {
           type: bytes.type || comprobante.mimeType,
@@ -343,7 +376,7 @@ export class PaymentReceiptsDialog implements OnInit {
     this.operando.set(comprobante.id);
     this.errorDeRevision.set(null);
 
-    this.receipts.confirm(this.bookingId(), comprobante.id).subscribe({
+    this.receipts.confirm(this.bookingId(), comprobante.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ paymentState }) => {
         this.operando.set(null);
         this.toasts.success('La cita quedó pagada.', 'Comprobante confirmado');
@@ -374,6 +407,7 @@ export class PaymentReceiptsDialog implements OnInit {
 
     this.receipts
       .reject(this.bookingId(), comprobante.id, this.motivo().trim())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.operando.set(null);
@@ -396,16 +430,33 @@ export class PaymentReceiptsDialog implements OnInit {
   }
 
   /**
-   * El mensaje del servidor cuando explica algo que la persona puede entender
-   * (422 «la cita está cancelada», 409 «ya está pagada»); si no, el genérico.
+   * Qué decir cuando una escritura falla, según lo que pasó de verdad (M34).
+   *
+   * - 409/422/400: el mensaje del servidor, que explica algo que la persona
+   *   entiende («la cita ya está pagada»).
+   * - Sin conexión, sin permiso o cita que ya no existe: dicho así, porque
+   *   «pruebe de nuevo» sería falso.
+   * - Cualquier otro: el genérico **con el ID de la petición** (S9), que es lo
+   *   que soporte necesita para encontrarla.
    */
   private mensajeDeFallo(causa: unknown, generico: string): string {
     const estado = errorToViewState<null>(causa);
-    if (estado.status !== 'validation') {
-      return generico;
+    switch (estado.status) {
+      case 'validation': {
+        const mensajes = estado.issues.map((issue) => issue.message).filter((m) => m.trim() !== '');
+        return mensajes.length === 0 ? generico : mensajes.join(' ');
+      }
+      case 'offline':
+        return 'No hay conexión. Cuando vuelva, pruebe de nuevo.';
+      case 'forbidden':
+        return estado.message ?? 'No tiene permiso para hacer esto en esta cita.';
+      case 'not-found':
+        return 'La cita o el comprobante ya no existen.';
+      case 'error':
+        return `${generico} Si se repite, avise a soporte con este código: ${estado.requestId}.`;
+      default:
+        return generico;
     }
-    const mensajes = estado.issues.map((issue) => issue.message).filter((m) => m.trim() !== '');
-    return mensajes.length === 0 ? generico : mensajes.join(' ');
   }
 
   private ponerVista(id: string, vista: VistaPrevia): void {

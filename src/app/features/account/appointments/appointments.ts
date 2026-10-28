@@ -1694,6 +1694,7 @@ export class Appointments {
 
   /* ---- cancelar ----------------------------------------------------------- */
 
+  protected readonly admiteComprobante = admiteComprobante;
   /**
    * Si el turno admite cancelarse, por su código de estado.
    *
@@ -1702,7 +1703,6 @@ export class Appointments {
    * ofrece el botón. Mientras el código no se resolvió (`''`) tampoco: nunca se
    * ofrece cancelar sobre un estado que no se conoce.
    */
-  protected readonly admiteComprobante = admiteComprobante;
   protected esCancelable(turno: TurnoVisible): boolean {
     return turno.codigo !== '' && CODIGOS_CANCELABLES.has(sufijoDeCodigo(turno.codigo));
   }

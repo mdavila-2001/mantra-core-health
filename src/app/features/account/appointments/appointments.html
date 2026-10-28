@@ -237,7 +237,7 @@
                   </p>
                 }
                 <div class="turnos__acciones">
-                  @if (admiteComprobante(turno.codigo)) { <app-payment-receipts-trigger mode="paciente" [bookingId]="turno.id" [cita]="nombreDelTurno(turno)" [pago]="turno.pago" /> }
+                  @if (admiteComprobante(turno.codigo)) { <app-payment-receipts-trigger mode="paciente" [bookingId]="turno.id" [cita]="nombreDelTurno(turno)" [pago]="turno.pago" (changed)="cargarTurnos()" /> }
                   @if (esCancelable(turno)) {
                     <button
                       app-button
@@ -307,7 +307,7 @@
                               Reconsulta
                             </app-badge>
                           }
-                          @if (admiteComprobante(turno.codigo)) { <app-payment-receipts-trigger mode="paciente" [bookingId]="turno.id" [cita]="nombreDelTurno(turno)" [pago]="turno.pago" /> }
+                          @if (admiteComprobante(turno.codigo)) { <app-payment-receipts-trigger mode="paciente" [bookingId]="turno.id" [cita]="nombreDelTurno(turno)" [pago]="turno.pago" (changed)="cargarTurnos()" /> }
                           @if (esCancelable(turno)) {
                             <button
                               app-button

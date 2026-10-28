@@ -275,6 +275,63 @@ describe('PaymentReceiptsDialog — comprobantes de pago de una cita', () => {
       expect(el(fixture, 'comprobante-motivo')?.textContent).toContain('No se lee el monto');
     });
 
+    /**
+     * Cerrar en plena confirmación dejaba la respuesta sin destinatario: la API
+     * pagaba la cita y la agenda seguía diciendo «Sin registrar».
+     */
+    it('no se deja cerrar mientras confirma', async () => {
+      const { fixture, http } = await montar('revisor', false);
+      http.expectOne(LISTA).flush([comprobante()]);
+      fixture.detectChanges();
+      expect(api(fixture)['ocupado'] as () => boolean).toBeDefined();
+      expect((api(fixture)['ocupado'] as () => boolean)()).toBe(false);
+
+      (el(fixture, 'comprobante-confirmar') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect((api(fixture)['ocupado'] as () => boolean)()).toBe(true);
+
+      http.expectOne(`${LISTA}/rc-1/confirm`).flush({
+        receipt: comprobante({ status: 'CONFIRMED' }),
+        paymentState: {
+          state: 'PAID',
+          label: 'Pagada',
+          conceptId: 'c-1',
+          insuranceUsed: false,
+          markedByUserId: 'u-med',
+          markedAt: '2026-10-27T15:00:00.000Z',
+        },
+      });
+      expect((api(fixture)['ocupado'] as () => boolean)()).toBe(false);
+      http.expectOne(LISTA).flush([comprobante({ status: 'CONFIRMED' })]);
+    });
+
+    /** Releer tras una acción no borra la lista: el foco no se cae al `body`. */
+    it('releer no pasa por «cargando»', async () => {
+      const { fixture, http } = await montar('revisor', false);
+      http.expectOne(LISTA).flush([comprobante()]);
+      fixture.detectChanges();
+
+      llamar(fixture, 'cargar');
+      expect(el(fixture, 'comprobantes-lista')).not.toBeNull();
+      http.expectOne(LISTA).flush([comprobante()]);
+    });
+
+    /** S9: un error inesperado lleva el ID de la petición, que es lo que pide soporte. */
+    it('un error del servidor muestra el ID de la petición', async () => {
+      const { fixture, http } = await montar('revisor', false);
+      http.expectOne(LISTA).flush([comprobante()]);
+      fixture.detectChanges();
+
+      (el(fixture, 'comprobante-confirmar') as HTMLButtonElement).click();
+      http
+        .expectOne(`${LISTA}/rc-1/confirm`)
+        .flush({ code: 'INTERNAL', message: 'boom', correlationId: 'req-123' }, { status: 500, statusText: 'Server Error' });
+      http.expectOne(LISTA).flush([comprobante()]);
+      fixture.detectChanges();
+
+      expect(el(fixture, 'comprobante-error-revision')?.textContent).toContain('req-123');
+    });
+
     /** 409: otro lo revisó con el modal abierto. Se dice y se muestra en qué quedó. */
     it('si otro ya lo revisó, lo dice y relee', async () => {
       const { fixture, http } = await montar('revisor', false);
