@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  Injector,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { timeout } from 'rxjs';
 
@@ -87,6 +97,7 @@ export class QuestionnaireAnswer {
   private readonly navigation = inject(NavigationService);
   private readonly community = inject(CommunityClient);
   private readonly bandeja = inject(PatientSurveyInbox);
+  private readonly injector = inject(Injector);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** A dónde vuelve quien entró a responder: al listado del que salió. */
@@ -110,6 +121,14 @@ export class QuestionnaireAnswer {
   protected readonly faltantes = signal<ReadonlySet<string>>(new Set());
 
   protected readonly enviando = signal(false);
+
+  /**
+   * El aviso de «faltan N preguntas». Con muchas preguntas queda arriba, fuera
+   * de la vista de quien acaba de apretar «Enviar» abajo: sin llevarlo y
+   * enfocarlo, el envío «no hace nada» para cualquiera que no vea el borde de
+   * la pantalla, y un lector de pantalla no se entera.
+   */
+  private readonly avisoRef = viewChild('avisoFaltantesRef', { read: ElementRef<HTMLElement> });
 
   /**
    * La atención que se puede reseñar públicamente, si la encuesta recién
@@ -169,6 +188,7 @@ export class QuestionnaireAnswer {
 
     if (sinResponder.length > 0) {
       this.faltantes.set(new Set(sinResponder));
+      this.mostrarAvisoDeFaltantes();
       return;
     }
     this.faltantes.set(new Set());
@@ -192,6 +212,30 @@ export class QuestionnaireAnswer {
         this.estado.set(errorToViewState(error));
       },
     });
+  }
+
+  /**
+   * Lleva el aviso de faltantes a la vista y le da el foco, que además hace que
+   * el lector de pantalla lo lea (es `role="alert"`).
+   *
+   * Se espera al próximo render porque en el primer intento fallido el aviso
+   * todavía no existe en el DOM. `preventScroll` en el foco y desplazamiento
+   * propio: así el movimiento respeta `prefers-reduced-motion` en vez de
+   * depender del comportamiento por omisión del navegador.
+   */
+  private mostrarAvisoDeFaltantes(): void {
+    afterNextRender(
+      () => {
+        const aviso = this.avisoRef()?.nativeElement;
+        if (!aviso) return;
+        const quieto =
+          typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // jsdom no implementa `scrollIntoView`.
+        aviso.scrollIntoView?.({ block: 'center', behavior: quieto ? 'auto' : 'smooth' });
+        aviso.focus({ preventScroll: true });
+      },
+      { injector: this.injector },
+    );
   }
 
   /**
