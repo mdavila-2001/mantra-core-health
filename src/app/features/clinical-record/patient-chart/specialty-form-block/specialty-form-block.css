@@ -14,6 +14,9 @@
 
 .formulario-especialidad__selector {
   display: grid;
+  /* Sin `minmax(0, 1fr)` la columna toma el ancho de la plantilla de nombre
+     más largo y en un teléfono el desplegable salía 49 px del modal. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   margin-block-end: var(--sp-5);
 }

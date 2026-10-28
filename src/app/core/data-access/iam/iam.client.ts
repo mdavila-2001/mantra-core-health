@@ -294,6 +294,20 @@ export class IamClient {
       ...(registration.sedesLicenseFileId === undefined
         ? {}
         : { sedesLicenseFileId: registration.sedesLicenseFileId }),
+      ...(registration.sedesLicenseIssueDate === undefined
+        ? {}
+        : { sedesLicenseIssueDate: registration.sedesLicenseIssueDate }),
+      // El registro del colegio de la profesión, con su fecha y su respaldo.
+      ...(registration.collegeLicenseNumber === undefined
+        ? {}
+        : { collegeLicenseNumber: registration.collegeLicenseNumber }),
+      ...(registration.collegeName === undefined ? {} : { collegeName: registration.collegeName }),
+      ...(registration.collegeLicenseIssueDate === undefined
+        ? {}
+        : { collegeLicenseIssueDate: registration.collegeLicenseIssueDate }),
+      ...(registration.collegeLicenseFileId === undefined
+        ? {}
+        : { collegeLicenseFileId: registration.collegeLicenseFileId }),
       ...(registration.professionalTitle === undefined
         ? {}
         : { professionalTitle: registration.professionalTitle }),

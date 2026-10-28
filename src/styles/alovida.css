@@ -4182,3 +4182,93 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .app-form-grid.app-form-grid.app-form-grid > :is(button, a)[app-button] {
   justify-self: end;
 }
+
+
+/* ===========================================================================
+    Lo que se proyecta dentro de un modal (`app-content-dialog`)
+    ===========================================================================
+
+    El modal ya es la superficie: tiene su panel, su encabezado con el título
+    y su pie. Lo que se mete adentro venía pensado para la página, y adentro
+    se notaba (receta en la consulta, 27/10/2026):
+
+    1. **Una tarjeta dentro de otra.** Cada bloque de la consulta es una
+       `app-card` con borde y 32 px de relleno; en el modal se sumaba al
+       relleno del cuerpo y dibujaba un segundo marco a pocos píxeles del
+       primero. Cuando la tarjeta es TODO el contenido —sola en el cuerpo, o
+       la raíz de un componente del cuerpo, sin nada más que un modal hijo al
+       lado— se aplana: el modal la enmarca. Una lista de tarjetas no se toca:
+       ahí cada una es un ítem.
+    2. **El título repetido.** «Prescribir medicación» arriba y «Medicación»
+       como primer renglón del cuerpo. El `h2` de esa tarjeta aplanada sigue
+       existiendo para el lector de pantalla, pero no se ve.
+    3. **Tres columnas angostas.** `auto-fit` de 15rem metía tres campos por
+       fila en un modal de 58rem, a 240 px cada uno: el texto de los
+       controles se cortaba, las ayudas ocupaban cuatro renglones y el último
+       campo quedaba solo con dos huecos al lado. En el modal la rejilla
+       tiene como mucho DOS columnas —la regla de la casa: «los formularios
+       van a dos columnas»— y una sola cuando no entran dos de 15rem.
+    4. **Un texto largo en media columna.** Un campo con `app-textarea` va a
+       lo ancho: indicaciones, motivos y notas se escriben en renglones, no
+       en una tira de 300 px.
+
+    El selector lleva `.content-dialog__cuerpo` delante, así que fuera de un
+    modal no cambia nada. Por qué el `.app-form-grid` va repetido: ver la
+    sección anterior; acá suma una clase más para ganarle a aquella.
+   ========================================================================= */
+
+/* `.card` va repetido por lo mismo que `.app-form-grid` arriba: el rediseño
+   del marco (`paciente.css`) pinta las tarjetas con
+   `:root[data-theme] .app-shell--redesign .app-main .card.card--outlined`
+   —seis clases— y sin esto el marco volvía. */
+.content-dialog__cuerpo > app-card.card.card.card.card.card:only-child,
+.content-dialog__cuerpo
+  > :not(app-card)
+  > app-card.card.card.card.card.card:first-child:not(:has(~ :not(app-content-dialog))) {
+  --_card-padding: 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Dos bloques en el mismo modal (el formulario médico y el consentimiento):
+   aplanados, los separa un filete en vez de dos marcos. */
+.content-dialog__cuerpo
+  > :not(app-card)
+  + :not(app-card)
+  > app-card.card.card.card.card.card:first-child:not(:has(~ :not(app-content-dialog))) {
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-6);
+  border-block-start-color: var(--border-subtle);
+}
+
+.content-dialog__cuerpo
+  > :first-child:not(app-card)
+  > app-card:first-child:not(:has(~ :not(app-content-dialog)))
+  > .card__body
+  > h2:first-of-type {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* `max(15rem, mitad)` como mínimo de la columna: con sitio para dos, la
+   mitad manda y no entra una tercera; sin sitio, manda 15rem y queda una. El
+   `min(100%, …)` evita el desborde en un teléfono angosto. */
+.content-dialog__cuerpo .app-form-grid.app-form-grid.app-form-grid {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, max(15rem, calc((100% - var(--sp-4, 1rem)) / 2))), 1fr)
+  );
+}
+
+.content-dialog__cuerpo .app-form-grid.app-form-grid.app-form-grid > app-form-field:has(app-textarea) {
+  grid-column: 1 / -1;
+}

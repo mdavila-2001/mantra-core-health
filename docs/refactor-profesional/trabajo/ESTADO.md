@@ -1,5 +1,27 @@
 # Estado
 
+## Alta de médico: cada habilitación con su fecha y su respaldo, y el colegio de la profesión — 2026-10-27
+
+El paso «Su habilitación para ejercer» tiene tres renglones —matrícula, registro del SEDES y registro en el colegio—,
+cada uno con **su** número, **su** fecha de inscripción y **su** respaldo PDF. El colegio sale del título profesional
+elegido antes («Registro en el Colegio Médico de Bolivia», «… de Odontólogos de Bolivia»); es obligatorio cuando el
+título tiene colegio conocido. Viajan `sedesLicenseIssueDate` y `collegeLicenseNumber`/`collegeName`/
+`collegeLicenseIssueDate`/`collegeLicenseFileId`, que la API recibe desde la rama `claude/relaxed-cannon-nt2pik` de
+`mantra-core-health-api` (tercera fila de `jurisdiction_authorizations`, concepto `JURISDICTION_PROFESSIONAL_COLLEGE`).
+**Sin esa rama de la API mergeada, la API real rechaza estos campos**: hay que mergear las dos juntas.
+
+**Verificado en navegador** (Chromium contra `ng serve --configuration development,demo`, 21 verificaciones con
+[`playwright/registro-habilitacion.mjs`](../../../playwright/registro-habilitacion.mjs); capturas en
+`evidencias/registro-habilitacion-2026-10-27/`): tres renglones en orden con número, fecha y respaldo; los tres en una
+fila a 1440 px; la tarjeta a lo ancho (holgura 113/113 px); el colegio cambia con el título; sin el número del colegio
+el paso no avanza y lo dice en su renglón; sin desborde a 390 px, donde se apilan; oscuro capturado. **No se verificó**
+contra la API real ni la subida real de un PDF en el navegador (la subida se prueba por unidad).
+
+**Gates**: `tsc -p tsconfig.app.json` 0 · `eslint --max-warnings=0` sobre lo tocado 0 · specs del alta, de
+`practitioner-fields`, del cliente IAM y del editor de perfil pasan. No se corrió la suite entera ni los `check-*.mjs`.
+
+---
+
 ## Contabilidad: llave Doctor / Contador — 2026-10-26
 
 `/administration/accounting` tiene una sola llave «Versión: Doctor | Contador». **Doctor** (por omisión) muestra el

@@ -159,6 +159,7 @@ describe('RegisterPractitioner', () => {
         | 'thirdName'
         | 'motherLastName'
         | 'nationalId'
+        | 'collegeLicenseNumber'
         | 'regulatoryAuthority'
         | 'professionalTitleUniversity'
         | 'professionalTitleCountry'
@@ -182,6 +183,8 @@ describe('RegisterPractitioner', () => {
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
+      // Obligatorio para un título con colegio conocido, como el de por defecto.
+      collegeLicenseNumber: extra.collegeLicenseNumber ?? 'CMB-4410',
       // El punto del domicilio es obligatorio (26/10/2026): por defecto uno
       // confirmado, para que las pruebas a las que no les importa sigan
       // mandando el formulario. Ver `PUNTO_CASA`.
@@ -228,6 +231,8 @@ describe('RegisterPractitioner', () => {
       sexAtBirth:
         extra.sexAtBirth === undefined ? 'FEMALE' : (extra.sexAtBirth as BirthSexCode | null),
       licenseIssueDate: null,
+      sedesLicenseIssueDate: null,
+      collegeLicenseIssueDate: null,
       issuerAdministrativeAreaConceptId: 'dep-1',
       profilePhotoBase64: extra.profilePhotoBase64 ?? null,
       signatureImageBase64: null,
@@ -350,11 +355,12 @@ describe('RegisterPractitioner', () => {
       expect(camposDe('own-office')).toEqual(['officeName', 'officeContactPhone', 'gpsConsultorio']);
       // La autoridad emisora ya no se pregunta (26/10/2026): el colegio se
       // completa solo con el título profesional.
+      // Cada habilitación es UN renglón con su número, su fecha y su respaldo
+      // (27/10/2026): matrícula, SEDES y el colegio de la profesión.
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
         'sedesLicenseNumber',
-        'licenseIssueDate',
-        'credentialAttachments',
+        'collegeLicenseNumber',
       ]);
       expect(camposDe('practice')).toEqual([
         'profilePhotoBase64',
@@ -408,8 +414,8 @@ describe('RegisterPractitioner', () => {
         // `sedesLicenseNumber` salió de esta lista: ya tiene destino. Nace como
         // una segunda fila de `profiles.jurisdiction_authorizations` con
         // jurisdicción SEDES — Santa Cruz, al lado de la matrícula nacional.
-        // El del colegio profesional sigue sin columna propia.
-        'collegeLicenseNumber',
+        // `collegeLicenseNumber` salió el 27/10/2026 por lo mismo: la API lo
+        // guarda como tercera fila, con jurisdicción de colegio profesional.
         'issuingInstitutionText',
         'otherCredentials',
       ]) {
@@ -886,6 +892,10 @@ describe('RegisterPractitioner', () => {
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
+      // El registro del colegio es obligatorio para un médico, y el colegio
+      // sale del título: nadie lo escribe.
+      collegeLicenseNumber: 'CMB-4410',
+      collegeName: 'Colegio Médico de Bolivia',
       sexAtBirth: 'FEMALE',
       birthDate: '1985-05-12',
       professionalTitle: 'Médico / Médica',
@@ -1238,6 +1248,109 @@ describe('RegisterPractitioner', () => {
 
       expect(component.respaldoMatricula()).toBeNull();
       expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
+    });
+
+    describe('cada habilitación con su fecha y su respaldo, y el colegio de la profesión', () => {
+      const campoDe = (key: string) =>
+        component
+          .paginasProfesional()
+          .flatMap((pagina) => pagina.campos)
+          .find((campo) => campo.key === key);
+
+      it('los tres renglones salen en orden: matrícula, SEDES y colegio', () => {
+        expect(component.renglonesDeHabilitacion().map((renglon) => renglon.clave)).toEqual([
+          'license',
+          'sedes',
+          'college',
+        ]);
+        expect(
+          component.renglonesDeHabilitacion().map((renglon) => [renglon.control, renglon.fecha]),
+        ).toEqual([
+          ['licenseNumber', 'licenseIssueDate'],
+          ['sedesLicenseNumber', 'sedesLicenseIssueDate'],
+          ['collegeLicenseNumber', 'collegeLicenseIssueDate'],
+        ]);
+      });
+
+      it('el colegio es el que corresponde a la profesión elegida antes', () => {
+        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+        expect(campoDe('collegeLicenseNumber')?.label).toBe(
+          'Registro en el Colegio Médico de Bolivia',
+        );
+        expect(campoDe('collegeLicenseNumber')?.required).toBe(true);
+
+        component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
+        expect(campoDe('collegeLicenseNumber')?.label).toBe(
+          'Registro en el Colegio de Odontólogos de Bolivia',
+        );
+        expect(component.renglonDe('college')?.etiqueta).toBe(
+          'Registro en el Colegio de Odontólogos de Bolivia',
+        );
+      });
+
+      it('sin el número del colegio no se crea la cuenta, si la profesión tiene colegio', () => {
+        completarProfesional({ collegeLicenseNumber: '' });
+        expect(component.formProfesional.controls.collegeLicenseNumber.invalid).toBe(true);
+
+        component.submit();
+
+        http.expectNone('/iam/auth/register-practitioner');
+      });
+
+      it('una profesión sin colegio conocido no exige el registro ni lo manda', () => {
+        completarProfesional({
+          professionalTitle: 'Técnico / Técnica en Radiología',
+          collegeLicenseNumber: '',
+        });
+        expect(component.formProfesional.controls.collegeLicenseNumber.valid).toBe(true);
+        expect(campoDe('collegeLicenseNumber')?.required).toBe(false);
+
+        component.submit();
+
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body).not.toHaveProperty('collegeLicenseNumber');
+        expect(alta.request.body).not.toHaveProperty('collegeName');
+        alta.flush(RESPUESTA_PRO);
+      });
+
+      it('manda la fecha de cada registro y el colegio con su nombre', () => {
+        completarProfesional();
+        component.escribirFechaDeHabilitacion('licenseIssueDate', new Date(2015, 2, 2));
+        component.escribirFechaDeHabilitacion('sedesLicenseIssueDate', new Date(2016, 6, 11));
+        component.escribirFechaDeHabilitacion('collegeLicenseIssueDate', new Date(2015, 8, 20));
+
+        component.submit();
+
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body).toMatchObject({
+          licenseNumber: 'MP-12345',
+          licenseIssueDate: '2015-03-02',
+          sedesLicenseNumber: 'T.I. 538/14',
+          sedesLicenseIssueDate: '2016-07-11',
+          collegeLicenseNumber: 'CMB-4410',
+          collegeName: 'Colegio Médico de Bolivia',
+          collegeLicenseIssueDate: '2015-09-20',
+        });
+        alta.flush(RESPUESTA_PRO);
+      });
+
+      it('sube el PDF del colegio y manda su fileId, sin mezclarlo con los otros', () => {
+        completarProfesional();
+        const colegio = archivoDe('colegio.pdf', 'application/pdf', 1024);
+        component.updateSupportFiles('college', [colegio]);
+        expect(component.respaldoColegio()?.archivo).toBe('colegio.pdf');
+
+        component.submit();
+
+        const subida = http.expectOne('/iam/auth/upload-registration-document');
+        expect((subida.request.body as FormData).get('file')).toBe(colegio);
+        subida.flush({ fileId: 'pdf-colegio' });
+        const alta = http.expectOne('/iam/auth/register-practitioner');
+        expect(alta.request.body).toMatchObject({ collegeLicenseFileId: 'pdf-colegio' });
+        expect(alta.request.body).not.toHaveProperty('licenseFileId');
+        expect(alta.request.body).not.toHaveProperty('sedesLicenseFileId');
+        alta.flush(RESPUESTA_PRO);
+      });
     });
 
     describe('los respaldos de la habilitación viajan a la API (P29)', () => {
