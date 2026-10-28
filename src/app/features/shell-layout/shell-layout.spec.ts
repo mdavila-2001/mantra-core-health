@@ -1429,6 +1429,34 @@ describe('ShellLayout', () => {
       expect(session.isAuthenticated()).toBe(true);
     });
 
+    it.each([
+      ['profesional', ['PRACTITIONER'], true],
+      ['seguridad', ['SECURITY_ADMIN'], true],
+      ['paciente', ['USER', 'PATIENT'], false],
+      ['sin rol', [], false],
+    ])(
+      'el encabezado ofrece «Mis organizaciones» a %s: ¿se le ofrece? %s',
+      (_quien, roles, ofrecida) => {
+        // Pedido del propietario (28/10/2026): «Organización médica» sale del
+        // menú lateral y va arriba, con otro nombre. Se ofrece a quien la
+        // sección deja entrar (`visibleSections()`), no a un rol escrito acá.
+        abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles, tenants: ['t-1'] });
+
+        const enlace = raiz().querySelector<HTMLAnchorElement>(
+          '[data-testid="header-mis-organizaciones"]',
+        );
+
+        expect(enlace !== null).toBe(ofrecida);
+        if (enlace !== null) {
+          expect(enlace.tagName).toBe('A');
+          expect(enlace.getAttribute('href')).toBe('/administration/medical-organization');
+          expect(enlace.getAttribute('aria-label')).toBe('Mis organizaciones');
+        }
+        // Y ya no ocupa renglón en el menú lateral.
+        expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
+      },
+    );
+
     it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
       // Volvió a pedido del cliente (2026-09-18): claro/oscuro es un atajo;
       // Ajustes sigue siendo la puerta a todas las preferencias.

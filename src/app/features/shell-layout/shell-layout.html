@@ -407,6 +407,26 @@
             aria-label="Accesos rápidos"
             appTutorialTarget="header-atajos"
           >
+            <!-- Mis organizaciones (propietario, 28/10/2026): antes «Organización
+                 médica» en el menú lateral. Va primera porque es el contexto
+                 de las demás —dónde se trabaja— y se ofrece sólo a quien la
+                 sección deja entrar (`visibleSections()`, igual que el guard). -->
+            @if (ofreceMisOrganizaciones()) {
+              <a
+                class="app-header__ajustes"
+                routerLinkActive="is-activo"
+                ariaCurrentWhenActive="page"
+                routerLink="/administration/medical-organization"
+                data-testid="header-mis-organizaciones"
+                appTooltip="Mis organizaciones"
+                appTooltipPosition="bottom"
+                aria-label="Mis organizaciones"
+              >
+                <app-nav-icon name="hospital" />
+                <span class="app-header__rapidos-label">Mis organizaciones</span>
+              </a>
+            }
+
             <a
               app-button
               data-variante="secundario"
