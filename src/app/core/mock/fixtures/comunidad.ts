@@ -556,6 +556,25 @@ export const resenas = new Coleccion<ResenaSimulada>(
   ),
 );
 
+/**
+ * Lo que la ficha pública dice de la calificación de una vitrina: el promedio
+ * y el total **vigentes**.
+ *
+ * La semilla declara un promedio y un total por vitrina (`ratingAverage`,
+ * `ratingCount`), y cada reseña nueva —las que nacen de un encuentro, con
+ * `encounterId`— se suma encima. Se calcula al leer, a partir de `reviewList`,
+ * y no se guarda en la vitrina: las vitrinas son demasiado grandes para
+ * `sessionStorage` (la escritura falla en silencio) y el promedio volvía al de
+ * la semilla al recargar, aunque la reseña siguiera ahí.
+ */
+export function calificacionDe(v: VitrinaSimulada): { average: number | null; count: number } {
+  const nuevas = resenas.filtrar((r) => r.targetPublicProfileId === v.id && r.encounterId !== undefined);
+  const count = v.ratingCount + nuevas.length;
+  if (count === 0) return { average: null, count: 0 };
+  const suma = (v.ratingAverage ?? 0) * v.ratingCount + nuevas.reduce((total, r) => total + r.overallRating, 0);
+  return { average: Math.round((suma / count) * 10) / 10, count };
+}
+
 /* ---- grupos y temas ------------------------------------------------------- */
 
 export const TEMAS = [

@@ -2,7 +2,7 @@ import { DirectorioOficial, NOMBRE_DE_FUENTE, type ClaseOficial, type FichaOfici
 import { ETIQUETA_DE_PRECISION, FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
 import { categoriaPorCodigo } from '../fixtures/categorias-publicas';
 import { CATALOGO_MEDICAMENTOS } from '../fixtures/catalogo-medicamentos.generated';
-import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
+import { calificacionDe, comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
@@ -25,8 +25,8 @@ function resultado(v: VitrinaSimulada) {
     city: v.city,
     avatarUrl: v.avatarUrl,
     verified: v.verified,
-    ratingAverage: v.ratingAverage,
-    ratingCount: v.ratingCount,
+    ratingAverage: calificacionDe(v).average,
+    ratingCount: calificacionDe(v).count,
     coverUrl: v.coverUrl,
     address: v.address === '' ? null : v.address,
     location: { lat: v.lat, lng: v.lng },
@@ -543,8 +543,8 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
                   : { lat: sede.latitude, lng: sede.longitude },
               isOwn: sede.isOwnSite,
             })),
-      ratingAverage: v.ratingAverage,
-      ratingCount: v.ratingCount,
+      ratingAverage: calificacionDe(v).average,
+      ratingCount: calificacionDe(v).count,
       acceptsReviews: v.acceptsReviews,
       posts: publicaciones
         .filtrar((p) => p.authorPublicProfileId === v.id)
@@ -594,7 +594,8 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
       });
     // Promedio y total son los del PERFIL, no los de la página: los mismos que
     // la cabecera de la ficha (y que `POST /patients/me/reviews` actualiza).
-    return { ...paginaPublica(items, query, 20), ratingAverage: v.ratingCount === 0 ? null : v.ratingAverage, ratingCount: v.ratingCount };
+    const { average, count } = calificacionDe(v);
+    return { ...paginaPublica(items, query, 20), ratingAverage: average, ratingCount: count };
   });
 
   /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------
