@@ -55,38 +55,6 @@
       />
     </app-form-field>
 
-    <!-- La modalidad sólo existe si hay paciente: un rato ocupado del doctor no
-         se atiende «por videollamada», y ofrecerlo sería un control que no
-         significa nada. Aparece con el paciente, como la pregunta que sigue.
-
-         C-21 · alternancia y no radios: tres opciones excluyentes, que es para
-         lo que existe `segmented-control`. Se elige con flechas y un solo
-         tabulador, y anuncia su estado como `radiogroup`. -->
-    @if (patient() !== null) {
-      <div class="tarjeta__modalidad">
-        <span class="tarjeta__modalidad-titulo" id="tarjeta-modalidad">¿Cómo lo atiende?</span>
-        <app-segmented-control
-          data-testid="tarjeta-modalidad"
-          ariaLabel="¿Cómo lo atiende?"
-          size="md"
-          [options]="modalityOptions()"
-          [value]="modality()"
-          (valueChange)="modality.set($event)"
-        />
-      </div>
-      <!-- Teleconsulta en una hora sin telemedicina: la opción se apaga, y si
-           ya estaba elegida se dice por qué no se guarda. -->
-      @if (teleconsultaFueraDeFranja()) {
-        <app-alert
-          tone="warning"
-          title="Esta hora no admite teleconsulta"
-          data-testid="tarjeta-sin-telemedicina"
-        >
-          {{ mensajeSinTelemedicina }}
-        </app-alert>
-      }
-    }
-
     <app-form-field
       label="¿Qué pasa?"
       hint="El motivo de la cita, o el rótulo del rato ocupado (reunión, guardia…)."
@@ -112,10 +80,6 @@
         {{ mensaje }}
       </app-alert>
     }
-
-    <!-- El horario fijo semanal no vive acá: la tarjeta cubre lo puntual de UN
-         día. El enlace es para quien cayó buscando eso. -->
-    <a class="tarjeta__publicar" routerLink="/agenda">¿Horario fijo semanal? → Publicar agenda</a>
   </form>
 
   <!-- El pie se proyecta fuera del cuerpo con scroll: en un formulario largo el
