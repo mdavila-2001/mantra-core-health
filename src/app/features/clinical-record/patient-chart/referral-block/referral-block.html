@@ -1,7 +1,8 @@
 <app-card variant="outlined" padding="lg" class="derivacion">
   <!-- Sin título ni bajada propios: el modal de la consulta ya dice «Derivar a
-       otro profesional» y explica que se le avisa a la persona en su campana.
-       Repetirlo acá era el mismo texto dos veces, a dos dedos de distancia. -->
+       otro profesional u organización» y explica que se le avisa a la persona.
+       UNA tarjeta: el formulario arriba y, debajo, lo que la persona ya tiene
+       derivado — que es donde aparece la recién emitida cuando se relee. -->
   @if (sinEncuentro()) {
     <!-- Sin encuentro no hay derivación con aviso: el encuentro es lo que
          demuestra que usted atendió a esta persona. Se dice qué falta en vez
@@ -16,16 +17,17 @@
     </app-alert>
   } @else {
     @if (derivadoA(); as nombre) {
-      <app-alert tone="success" title="Derivación enviada" data-testid="derivacion-exito">
-        Le avisamos a la persona que le recomienda consultar con {{ nombre }}. Ya puede ver su ficha
-        y reservar desde su portal.
+      <app-alert class="derivacion__aviso" tone="success" title="Derivación enviada" data-testid="derivacion-exito">
+        Le avisamos a la persona que la derivó a {{ nombre }}. Ya puede ver la ficha y reservar
+        desde su portal.
       </app-alert>
     }
 
     @if (yaDerivado()) {
       <app-alert
+        class="derivacion__aviso"
         tone="warning"
-        title="Ya la derivó a este profesional"
+        title="Ya la derivó a este destino"
         data-testid="derivacion-duplicada"
       >
         En este encuentro ya hay una derivación equivalente. No hace falta otra.
@@ -33,50 +35,173 @@
     }
 
     @if (errorDelRegistro(); as mensaje) {
-      <app-alert tone="error" data-testid="derivacion-error">{{ mensaje }}</app-alert>
+      <app-alert class="derivacion__aviso" tone="error" data-testid="derivacion-error">{{ mensaje }}</app-alert>
     }
 
-    <app-view-state-host [state]="directorio()" (retry)="recargar()">
-      <form class="derivacion__formulario" (submit)="$event.preventDefault()">
-        <app-form-field
-          label="Profesional recomendado"
-          hint="Busque por nombre o título. No aparece usted."
-        >
-          <app-reference-combobox
-            data-testid="derivacion-profesional"
-            [value]="elegido()"
-            [selected]="profesionalElegido()"
-            [options]="opciones()"
-            [minQueryLength]="0"
+    <form class="derivacion__formulario app-form-grid" (submit)="$event.preventDefault()">
+      <app-form-field class="app-form-grid__ancho" label="¿A quién deriva?">
+        <app-segmented-control
+          data-testid="derivacion-clase"
+          ariaLabel="A quién deriva"
+          size="md"
+          [options]="opcionesDeDestino"
+          [value]="clase()"
+          (valueChange)="elegirClase($event)"
+        />
+      </app-form-field>
+
+      <!-- El buscador se vuelve a montar al derivar: el combobox guarda su
+           texto, y el de un destino que ya no está elegido no puede quedar
+           escrito. La clase ya monta uno por rama. -->
+      @if (vueltaPar()) {
+        <ng-container [ngTemplateOutlet]="buscador" />
+      } @else {
+        <ng-container [ngTemplateOutlet]="buscador" />
+      }
+      <ng-template #buscador>
+        @if (clase() === 'PRACTITIONER') {
+          <app-form-field
+            class="app-form-grid__ancho"
+            icon="stethoscope"
             label="Profesional recomendado"
-            placeholder="Ej. Dra. Mendoza"
-            emptyMessage="No encontramos a nadie con ese nombre en el directorio"
-            (searched)="buscar($event)"
-            (valueChange)="elegir($event)"
-          />
-        </app-form-field>
+            hint="Escriba al menos dos letras del nombre. No aparece usted."
+            [required]="true"
+            [errorMessage]="errorDeBusqueda() ?? ''"
+          >
+            <app-reference-combobox
+              data-testid="derivacion-profesional"
+              [options]="opciones()"
+              [loading]="buscando()"
+              [minQueryLength]="minimoDeBusqueda"
+              label="Profesional recomendado"
+              placeholder="Ej. Dra. Mendoza"
+              emptyMessage="No encontramos a nadie con ese nombre"
+              (searched)="buscar($event)"
+              (selectionChange)="elegir($event)"
+            />
+          </app-form-field>
+        } @else {
+          <app-form-field
+            class="app-form-grid__ancho"
+            icon="hospital"
+            label="Organización médica"
+            hint="Escriba al menos dos letras del nombre de la clínica, el hospital o el laboratorio."
+            [required]="true"
+            [errorMessage]="errorDeBusqueda() ?? ''"
+          >
+            <app-reference-combobox
+              data-testid="derivacion-organizacion"
+              [options]="opciones()"
+              [loading]="buscando()"
+              [minQueryLength]="minimoDeBusqueda"
+              label="Organización médica"
+              placeholder="Ej. Hospital San Lucas"
+              emptyMessage="No encontramos una organización con ese nombre"
+              (searched)="buscar($event)"
+              (selectionChange)="elegir($event)"
+            />
+          </app-form-field>
+        }
+      </ng-template>
 
-        <app-form-field label="Motivo" hint="Opcional. Se lo mostramos a la persona en su aviso.">
-          <app-textarea
-            data-testid="derivacion-motivo"
-            [rows]="3"
-            [maxLength]="topeDelMotivo"
-            [value]="motivo()"
-            (valueChange)="escribirMotivo($event)"
-          />
-        </app-form-field>
+      <!-- Los servicios del destino: recién con un destino elegido. -->
+      <div class="derivacion__servicios" data-testid="derivacion-servicios">
+        @if (destino(); as elegido) {
+          <app-view-state-host [state]="servicios()" (retry)="cargarServicios()">
+            <p vsh-skeleton class="derivacion__secundario">
+              Buscando los servicios de {{ elegido.displayName }}…
+            </p>
+            <app-form-field label="Servicio" [hint]="detalleDelServicio()">
+              <app-select
+                data-testid="derivacion-servicio"
+                [options]="opcionesDeServicio()"
+                [value]="servicioElegido()"
+                (valueChange)="servicioElegido.set($event)"
+              />
+            </app-form-field>
+          </app-view-state-host>
+        } @else {
+          <p class="derivacion__secundario">
+            Elija el destino y acá va a ver los servicios que ofrece, con su arancel.
+          </p>
+        }
+      </div>
 
-        <button
-          app-button
-          variant="primary"
-          data-testid="derivacion-enviar"
-          [isLoading]="enviando()"
-          [disabled]="!puedeEnviar()"
-          (clicked)="derivar()"
-        >
-          Derivar y avisar a la persona
-        </button>
-      </form>
-    </app-view-state-host>
+      <app-form-field label="Tipo de derivación" hint="Qué se le pide al destino.">
+        <app-select
+          data-testid="derivacion-tipo"
+          [options]="opcionesDeTipo"
+          [value]="tipo()"
+          (valueChange)="tipo.set($event)"
+        />
+      </app-form-field>
+
+      <app-form-field icon="calendar" label="Vigencia" hint="Opcional. Hasta cuándo vale.">
+        <app-date-picker
+          data-testid="derivacion-vigencia"
+          mode="date-only"
+          [minDate]="hoy"
+          [(value)]="vigencia"
+        />
+      </app-form-field>
+
+      <app-form-field
+        class="app-form-grid__ancho"
+        label="Motivo"
+        hint="Opcional. Se lo mostramos a la persona en su aviso."
+      >
+        <app-textarea
+          data-testid="derivacion-motivo"
+          [rows]="3"
+          [maxLength]="topeDelMotivo"
+          [(value)]="motivo"
+        />
+      </app-form-field>
+
+      <button
+        app-button
+        variant="primary"
+        data-testid="derivacion-enviar"
+        [isLoading]="enviando()"
+        [disabled]="!puedeEnviar()"
+        (clicked)="derivar()"
+      >
+        Derivar y avisar a la persona
+      </button>
+    </form>
+  }
+
+  @if (lista(); as estado) {
+    <app-divider />
+
+    <section class="derivacion__lista" aria-labelledby="derivacion-lista-titulo">
+      <h3 id="derivacion-lista-titulo" class="derivacion__titulo">Derivaciones de esta persona</h3>
+
+      <app-view-state-host [state]="estado" (retry)="reintentar.emit()">
+        <p vsh-skeleton class="derivacion__secundario">Buscando las derivaciones…</p>
+        <ol class="derivacion__filas" data-testid="derivacion-lista">
+          @for (fila of filas(); track fila.id) {
+            <li class="derivacion__fila" data-testid="derivacion-fila">
+              <div class="derivacion__cabecera">
+                <span class="derivacion__principal">{{ fila.tipo }} · {{ fila.destino }}</span>
+                <app-status-seal [variant]="fila.variante" [label]="fila.estado" />
+              </div>
+              <span class="derivacion__secundario">
+                {{ fila.servicio ?? 'Sin un servicio en particular' }}
+              </span>
+              <span class="derivacion__secundario">
+                Emitida el {{ fila.emitida | date: 'd MMM y' }}
+                @if (fila.vigencia) {
+                  · vale hasta el {{ fila.vigencia | date: 'd MMM y' }}
+                }
+              </span>
+              @if (fila.motivo) {
+                <span class="derivacion__motivo">{{ fila.motivo }}</span>
+              }
+            </li>
+          }
+        </ol>
+      </app-view-state-host>
+    </section>
   }
 </app-card>
