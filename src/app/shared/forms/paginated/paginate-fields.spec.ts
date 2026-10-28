@@ -117,6 +117,26 @@ describe('paginarCampos', () => {
       expect(paginateFields([])).toEqual([]);
     });
 
+    it('una sección `sinPartir` va entera en una página, sin numeración', () => {
+      const paginas = paginateFields([
+        { titulo: 'Los papeles', clave: 'documentos', sinPartir: true, campos: campos(6) },
+        { titulo: 'Contacto', campos: campos(6) },
+      ]);
+
+      expect(paginas.map((pagina) => pagina.titulo)).toEqual([
+        'Los papeles',
+        'Contacto (1 de 2)',
+        'Contacto (2 de 2)',
+      ]);
+      expect(paginas[0].campos).toHaveLength(6);
+      expect(paginas[0].sinPartir).toBe(true);
+      expect(paginas[0].clave).toBe('documentos');
+    });
+
+    it('una sección `sinPartir` vacía no produce página', () => {
+      expect(paginateFields([{ titulo: 'Nada', sinPartir: true, campos: [] }])).toEqual([]);
+    });
+
     it('una lista suelta de campos toma el título que se le dé', () => {
       const [pagina] = paginateFields(campos(2), { tituloPorDefecto: 'Sus datos' });
 

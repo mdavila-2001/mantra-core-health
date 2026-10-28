@@ -515,10 +515,8 @@ describe('RegisterOrganization', () => {
   describe('documentos legales de afiliación (subtarea 1.2)', () => {
     /**
      * Las instancias de `app-dropzone-pdf` renderizadas en la página
-     * VIGENTE. El motor sólo pinta la página actual, y con 5 campos
-     * `custom` en una sección de tope 4, se parte en «(1 de 2)» (los
-     * primeros 4) y «(2 de 2)» (el SEDES) — hay que estar en la página
-     * correcta para que aparezcan.
+     * VIGENTE. El motor sólo pinta la página actual; la sección va entera
+     * (`sinPartir`), así que los cinco están en la misma página.
      */
     function dropzonesDeDocumentos(): DropzonePdf[] {
       return fixture.debugElement
@@ -530,12 +528,10 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
-      const primeraTanda = dropzonesDeDocumentos();
-      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
-      const segundaTanda = dropzonesDeDocumentos();
+      avanzarHasta('Documentación legal obligatoria (PDF)');
 
-      const dropzones = [...primeraTanda, ...segundaTanda];
+      // Los cinco en UNA sola vista (pedido del cliente del 28/10/2026).
+      const dropzones = dropzonesDeDocumentos();
       expect(dropzones).toHaveLength(5);
       for (const dropzone of dropzones) {
         expect(dropzone.required()).toBe(true);
@@ -546,12 +542,9 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
-      const primeraTanda = dropzonesDeDocumentos().map((d) => d.testId());
-      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
-      const segundaTanda = dropzonesDeDocumentos().map((d) => d.testId());
+      avanzarHasta('Documentación legal obligatoria (PDF)');
 
-      const testIds = [...primeraTanda, ...segundaTanda];
+      const testIds = dropzonesDeDocumentos().map((d) => d.testId());
       expect(new Set(testIds).size).toBe(5);
       expect(testIds).toContain('registro-organizacion-doc-healthAuthorityCertificateFileId');
     });
@@ -572,7 +565,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
+      avanzarHasta('Documentación legal obligatoria (PDF)');
 
       const dropzoneSedes = dropzonesDeDocumentos().find(
         (d) => d.testId() === 'registro-organizacion-doc-healthAuthorityCertificateFileId',
@@ -588,7 +581,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
+      avanzarHasta('Documentación legal obligatoria (PDF)');
 
       const dropzoneConstitucion = dropzonesDeDocumentos().find(
         (d) => d.testId() === 'registro-organizacion-doc-constitutionFileId',
@@ -1157,7 +1150,8 @@ describe('RegisterOrganization', () => {
         fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
         fixture.detectChanges();
       }
-      expect(titulos.length).toBe(7);
+      // Seis: los documentos legales van en una sola página (28/10/2026).
+      expect(titulos.length).toBe(6);
       expect(titulos.some((titulo) => titulo.includes('Su cuenta'))).toBe(false);
       expect('ownerName' in component.form.controls).toBe(false);
       expect('email' in component.form.controls).toBe(false);
@@ -1390,14 +1384,14 @@ describe('RegisterOrganization', () => {
       http.expectNone('/iam/auth/register-organization');
     });
 
-    it('AC-02 y AC-04: Bolivia (zona única) queda en 7 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 6 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
 
-      // Siete: ya no hay «Tu cuenta». La única persona que inicia sesión es el
-      // representante legal, y su contraseña se pide en su propia página.
-      expect(totalDePaginas()).toBe(7);
+      // Seis: ya no hay «Tu cuenta» (la única persona que inicia sesión es el
+      // representante legal) y los documentos legales van en una sola página.
+      expect(totalDePaginas()).toBe(6);
       expect(titulosDeLosPasos().some((titulo) => titulo.includes('identifica'))).toBe(false);
 
       // «La empresa»: nombre, sigla, país, tipo societario — sin código ni
@@ -1445,7 +1439,7 @@ describe('RegisterOrganization', () => {
       // Las mismas que Bolivia: el selector de zona horaria suma un campo a
       // «Datos de la aseguradora», pero desde que «Dirección» sale del punto
       // (26/10/2026) la sección cabe en una página de cuatro.
-      expect(totalDePaginas()).toBe(7);
+      expect(totalDePaginas()).toBe(6);
 
       avanzarHasta('Datos de la aseguradora');
       // `[data-testid]` va en el host `<app-select>`; el botón que hace de

@@ -63,6 +63,10 @@
   outline-offset: 2px;
 }
 
+.dropzone-pdf__vista-previa {
+  margin-block-start: var(--sp-2);
+}
+
 .dropzone-pdf__error {
   margin: var(--sp-2) 0 0;
   color: var(--st-error-fg);
