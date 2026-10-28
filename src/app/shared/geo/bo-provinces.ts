@@ -9,7 +9,7 @@
 
     La ficha del domicilio mostraba «Provincia: No disponible» cuando la
     provincia se deducía del dibujo: dependía de bajar
-    `geo/bolivia-provincias.geojson` y de que el contorno simplificado del
+    `maps/bolivia-provinces.geojson` y de que el contorno simplificado del
     municipio cayera dentro del de su provincia. El código del INE (`DDPPMM`)
     ya dice la provincia (`DDPP`), así que se lee de acá, sin red y sin
     geometría. El dibujo queda sólo como respaldo.

@@ -70,8 +70,17 @@ export interface ProvinciasDeBolivia {
   readonly features: readonly ProvinciaGeo[];
 }
 
-/** Relativa al `<base href>`, igual que el CSS de Leaflet. */
-export const RUTA_DE_PROVINCIAS = 'geo/bolivia-provincias.geojson';
+/**
+ * Relativa al `<base href>`, igual que el CSS de Leaflet.
+ *
+ * Vive en `maps/` y no en `geo/` a propósito: `/geo/` es el prefijo de la API
+ * del M13, y tanto el nginx del despliegue (`deploy/api-locations.conf`) como
+ * el dev-server (`proxy.conf.json`) mandan todo lo que empiece así al backend,
+ * que respondía `404 Cannot GET /geo/bolivia-provincias.geojson` y dejaba los
+ * mapas sin provincias. Un archivo de `public/` no puede empezar con ningún
+ * prefijo de la API; el spec de `provinces` lo comprueba.
+ */
+export const PROVINCES_ASSET_PATH = 'maps/bolivia-provinces.geojson';
 
 /** `null` es «no hay provincias»: el mapa se dibuja igual, sin ellas. */
 export type CargadorDeProvincias = () => Promise<ProvinciasDeBolivia | null>;
@@ -97,7 +106,7 @@ export const CARGADOR_DE_PROVINCIAS = new InjectionToken<CargadorDeProvincias>(
         if (typeof fetch !== 'function') {
           return Promise.resolve(null);
         }
-        pedido ??= fetch(new URL(RUTA_DE_PROVINCIAS, documento.baseURI))
+        pedido ??= fetch(new URL(PROVINCES_ASSET_PATH, documento.baseURI))
           .then((respuesta) =>
             respuesta.ok ? (respuesta.json() as Promise<ProvinciasDeBolivia>) : null,
           )
