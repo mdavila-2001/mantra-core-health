@@ -1,0 +1,71 @@
+<details class="pending" data-testid="pending-payments" [open]="expanded()">
+  <summary class="pending__summary" data-testid="pending-payments-toggle" (click)="toggle($event)">
+    Pagos por registrar@if (status() === 'ready') { ({{ rows().length }})}
+  </summary>
+
+  <div class="pending__body">
+    @switch (status()) {
+      @case ('loading') {
+        <div role="status" aria-busy="true" data-testid="pending-payments-loading">
+          <span class="pending__sr">Cargando pagos por registrar…</span>
+          <app-skeleton variant="text" [lines]="3" />
+        </div>
+      }
+      @case ('error') {
+        <app-alert
+          tone="error"
+          title="No se pudieron cargar los pagos por registrar"
+          data-testid="pending-payments-error"
+        >
+          <div alert-actions>
+            <button app-button size="sm" data-testid="pending-payments-retry" (clicked)="reload()">
+              Reintentar
+            </button>
+          </div>
+        </app-alert>
+      }
+      @default {
+        @if (rows().length === 0) {
+          <p class="pending__empty" data-testid="pending-payments-empty">No hay pagos por registrar</p>
+        } @else {
+          <ul class="pending__list">
+            @for (row of rows(); track row.booking.id) {
+              <li class="pending__row" data-testid="pending-payment-row">
+                <div class="pending__who">
+                  <strong>{{ row.booking.patientName ?? 'Paciente asignado' }}</strong>
+                  <span class="pending__when">{{ row.booking.startAt | date: 'EEE d MMM, HH:mm' }}</span>
+                </div>
+                <div class="pending__state">
+                  <app-badge data-testid="pending-payment-state" variant="warning">
+                    {{ row.state?.label ?? 'Sin registrar' }}
+                  </app-badge>
+                  @if (row.received; as received) {
+                    <span class="pending__received" data-testid="pending-payment-received">
+                      Recibido: {{ amountLabel(received.amount) }}
+                    </span>
+                  }
+                </div>
+                <button
+                  app-button
+                  variant="outline"
+                  size="sm"
+                  data-testid="pending-payment-register"
+                  aria-haspopup="dialog"
+                  [attr.aria-label]="
+                    'Registrar pago: ' +
+                    (row.booking.patientName ?? 'Paciente asignado') +
+                    ', ' +
+                    (row.booking.startAt | date: 'HH:mm')
+                  "
+                  (clicked)="registerRequested.emit(row.booking)"
+                >
+                  Registrar pago
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  </div>
+</details>

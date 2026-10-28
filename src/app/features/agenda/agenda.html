@@ -223,6 +223,9 @@
       @if (tieneCalendario()) {
         <app-tab label="Consultas">
           @if (enCalendario()) {
+            @if (puedeAtender() && recursoElegido(); as resourceId) {
+              <app-pending-payments [resourceId]="resourceId" [reloadToken]="versionDeAcciones()" (registerRequested)="paymentReview.set(citaDelDia($event))" />
+            }
             <app-my-agenda
               mode="calendar"
               [appointmentActions]="accionesDeLaCitaDelDia"
