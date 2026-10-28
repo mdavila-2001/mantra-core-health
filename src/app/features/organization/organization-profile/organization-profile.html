@@ -55,11 +55,10 @@
 
           <app-tab label="Documentos">
             @if (sinPapeles()) {
-              <app-empty-state
-                variant="empty"
+              <app-view-state-host
                 data-testid="perfil-organizacion-sin-papeles"
-                title="Todavía no hay documentos en la carpeta"
-                description="Los documentos legales que su organización presente al registrarse aparecen acá con su estado de revisión."
+                [state]="carpetaVacia"
+                (retry)="cargar()"
               />
             } @else {
               <app-legal-documents [state]="papeles()" [readOnly]="true" (retry)="cargar()" />

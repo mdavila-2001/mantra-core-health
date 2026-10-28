@@ -305,8 +305,15 @@ function rowOf(documento: DocumentoLegal, elegidoEnPantalla: string | undefined)
     documento,
     archivo: elegidoEnPantalla ?? documento.archivo,
     sinSubir: elegidoEnPantalla !== undefined,
-    vigencia: expiryInWords(documento.diasParaVencer),
-    tonoDeVigencia: expiryVariant(documento.diasParaVencer),
+    // Vencido según el servidor pero sin un plazo negativo que lo diga (sin
+    // fecha, o con una que el reloj de acá todavía no alcanzó): manda el servidor.
+    ...(documento.vencido === true &&
+    (documento.diasParaVencer === null || documento.diasParaVencer >= 0)
+      ? { vigencia: 'vencido', tonoDeVigencia: 'error' as const }
+      : {
+          vigencia: expiryInWords(documento.diasParaVencer),
+          tonoDeVigencia: expiryVariant(documento.diasParaVencer),
+        }),
     verificacion: VERIFICATION_WORD[documento.verificacion],
     tonoDeVerificacion: VERIFICATION_TONE[documento.verificacion],
   };

@@ -25,7 +25,6 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../shared/components/molecules/card/card';
-import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -58,11 +57,44 @@ const SIN_REGISTRAR = 'Sin registrar';
 /** Un día, para contar cuánto le falta a un papel para vencer. */
 const UN_DIA_MS = 24 * 60 * 60 * 1000;
 
-/** La revisión de un papel, desde el código del catálogo de verificación. */
+/**
+ * La revisión de un papel, desde el código del catálogo de verificación.
+ *
+ * `VENCIDO` no es un estado de revisión en esta pantalla (ver
+ * `LegalDocuments`): un papel caduca después de haber sido verificado, así
+ * que se lee «Verificado» y el vencimiento va en el distintivo del plazo.
+ */
 const VERIFICACION_POR_CODIGO: Readonly<Record<string, EstadoDeVerificacion>> = {
   VERIFICADO: 'VERIFICADO',
+  VENCIDO: 'VERIFICADO',
   RECHAZADO: 'RECHAZADO',
 };
+
+/** Código del catálogo con el que el servidor declara caducado un papel. */
+const CODIGO_VENCIDO = 'VENCIDO';
+
+/**
+ * Las próximas acciones de los vacíos de la ficha (S3).
+ *
+ * Son indicaciones y no enlaces: hoy ninguna pantalla deja a un laboratorio,
+ * un centro de imagenología o una aseguradora sumar su representante ni un
+ * papel después del alta —los completa la plataforma, que puede vincular
+ * documentos a la organización al verificarla—. Un enlace a otra pantalla
+ * prometería un arreglo que no está ahí; `/administration/my-organization`,
+ * por ejemplo, ni siquiera abre para un laboratorio.
+ */
+export const PEDIR_REPRESENTANTE = {
+  label: 'Pídale a la plataforma que lo registre al verificar su organización',
+} as const;
+export const PEDIR_DOCUMENTOS = {
+  label: 'Pídale a la plataforma que los registre al verificar su organización',
+} as const;
+
+/** La carpeta sin ningún papel: un vacío con su indicación. */
+const CARPETA_VACIA = empty(
+  PEDIR_DOCUMENTOS,
+  'Su organización todavía no tiene documentos legales en su carpeta.',
+);
 
 /** Un dato de la ficha: rótulo y valor, ya en palabras. */
 export interface DatoDeLaFicha {
@@ -137,7 +169,7 @@ function contacto(persona: OrganizationContactPerson): ContactoDeLaEmpresa {
 export function genteDeLaOrganizacion(org: MyOrganization): ViewState<GenteDeLaEmpresa> {
   if (org.legalRepresentative === undefined) {
     return empty(
-      { label: 'Ver su organización', route: '/administration/my-organization' },
+      PEDIR_REPRESENTANTE,
       'Su organización todavía no registró a su representante legal.',
     );
   }
@@ -157,6 +189,10 @@ function esRolConocido(role: string): role is LegalDocumentRole {
  *
  * «Emitido el» queda sin declarar: el alta no lo pide, y la fecha en que se
  * registró en la plataforma no es la de emisión.
+ *
+ * El plazo se cuenta acá desde `validTo` porque `GET /tenants/me` no trae
+ * `daysToExpiry` como la farmacia; cuando el servidor declara el papel
+ * vencido, eso manda sobre la cuenta (`vencido`).
  */
 export function papelesDeLaOrganizacion(
   org: MyOrganization,
@@ -171,6 +207,7 @@ export function papelesDeLaOrganizacion(
     return {
       clave: papel.role,
       nombre: `${base}${numero}`,
+      // Cada fila de la carpeta envuelve un archivo (`file_id` no admite nulo).
       archivo: 'Respaldo cargado',
       emitidoEl: null,
       venceEl: papel.validTo ?? null,
@@ -179,6 +216,7 @@ export function papelesDeLaOrganizacion(
           ? null
           : Math.ceil((papel.validTo.getTime() - hoy.getTime()) / UN_DIA_MS),
       verificacion: VERIFICACION_POR_CODIGO[papel.verificationStatus] ?? 'PENDIENTE',
+      vencido: papel.verificationStatus === CODIGO_VENCIDO,
     };
   });
 }
@@ -210,7 +248,6 @@ function paisDeConstitucion(legalEntityType: string | undefined): string {
     Badge,
     Card,
     DatePipe,
-    EmptyState,
     InsurerProfileCard,
     LegalDocuments,
     OrganizationLogo,
@@ -271,6 +308,8 @@ export class OrganizationProfile {
     const org = this.organizacion();
     return org ? ready(papelesDeLaOrganizacion(org)) : loading();
   });
+
+  protected readonly carpetaVacia = CARPETA_VACIA;
 
   protected readonly sinPapeles = computed(() => {
     const estado = this.papeles();

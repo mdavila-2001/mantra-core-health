@@ -13,6 +13,7 @@ import {
   genteDeLaOrganizacion,
   OrganizationProfile,
   papelesDeLaOrganizacion,
+  PEDIR_REPRESENTANTE,
 } from './organization-profile';
 import type { MyOrganization } from '../../../core/data-access/directory/directory.types';
 
@@ -132,6 +133,28 @@ describe('OrganizationProfile', () => {
     expect(contenido).toContain('Sin registrar');
   });
 
+  it('sin papeles, «Documentos» dice el vacío con su indicación', async () => {
+    tipo.set('DIAGNOSTIC_CENTER');
+    TestBed.overrideProvider(DirectoryClient, {
+      useValue: {
+        listMyOrganizations: () =>
+          of([{ ...ORGANIZACION, payer: undefined, legalDocuments: undefined }]),
+      },
+    });
+    const fixture = TestBed.createComponent(OrganizationProfile);
+    fixture.detectChanges();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    (raiz.querySelectorAll('[role="tab"]')[2] as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const vacio = raiz.querySelector('[data-testid="perfil-organizacion-sin-papeles"]');
+    expect(vacio?.textContent).toContain('todavía no tiene documentos legales');
+    expect(vacio?.textContent).toContain('Pídale a la plataforma');
+    expect(vacio?.querySelector('a')).toBeNull();
+  });
+
   it('la ficha es UNA tarjeta con pestañas, y el representante y la carpeta se leen en las suyas', () => {
     const fixture = TestBed.createComponent(OrganizationProfile);
     fixture.detectChanges();
@@ -172,10 +195,15 @@ describe('ficha de la organización — datos', () => {
     );
   });
 
-  it('sin representante legal la pestaña es un vacío con próxima acción', () => {
+  it('sin representante legal la pestaña es un vacío con una indicación, no un enlace que no lleva a nada', () => {
     const estado = genteDeLaOrganizacion(base);
 
     expect(estado.status).toBe('empty');
+    // Ninguna pantalla deja sumarlo después del alta: un enlace prometería un
+    // arreglo que no existe (`/administration/my-organization` ni abre para un
+    // laboratorio). La acción es una indicación, sin ruta.
+    expect(estado.status === 'empty' ? estado.nextAction : null).toEqual(PEDIR_REPRESENTANTE);
+    expect(PEDIR_REPRESENTANTE).not.toHaveProperty('route');
   });
 
   it('el representante lleva su documento de identidad y las gerencias su cargo en palabras', () => {
@@ -240,7 +268,11 @@ describe('ficha de la organización — datos', () => {
     expect(papeles[0]?.nombre).toContain('N.º 7788');
     expect(papeles[0]?.verificacion).toBe('VERIFICADO');
     expect(papeles[1]?.diasParaVencer).toBe(10);
-    expect(papeles[2]?.verificacion).toBe('PENDIENTE');
+    // Vencido según el servidor: caducó después de verificarse, y lo dice el
+    // plazo aunque no haya fecha con la que contarlo.
+    expect(papeles[2]?.verificacion).toBe('VERIFICADO');
+    expect(papeles[2]?.vencido).toBe(true);
     expect(papeles[2]?.diasParaVencer).toBeNull();
+    expect(papeles[0]?.vencido).toBe(false);
   });
 });

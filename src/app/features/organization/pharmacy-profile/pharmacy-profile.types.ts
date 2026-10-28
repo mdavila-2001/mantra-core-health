@@ -129,6 +129,12 @@ export interface DocumentoLegal {
    */
   readonly diasParaVencer: number | null;
   readonly verificacion: EstadoDeVerificacion;
+  /**
+   * El servidor lo declaró vencido. Cuenta aunque no haya fecha de
+   * vencimiento con la que calcular el plazo: sin esto, un papel caducado y
+   * sin `venceEl` se leería «sin vencimiento declarado».
+   */
+  readonly vencido?: boolean;
 }
 
 /* ─── La gente de la empresa ─────────────────────────────────────────────── */

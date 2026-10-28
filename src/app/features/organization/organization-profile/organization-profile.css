@@ -75,7 +75,7 @@ app-tab > app-representative-and-managers,
 app-tab > app-legal-documents,
 app-tab > app-insurer-profile-card,
 app-tab > app-organization-logo,
-app-tab > app-empty-state {
+app-tab > app-view-state-host {
   display: block;
   padding-block-start: var(--sp-4);
 }
