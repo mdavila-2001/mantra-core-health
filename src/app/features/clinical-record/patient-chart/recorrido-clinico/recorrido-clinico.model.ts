@@ -114,8 +114,10 @@ export const MEDIDAS = {
   altoCabecera: 76,
   altoRotuloCarril: 32,
   altoNodo: 86,
-  separacionNodos: 8,
-  rellenoCarril: 12,
+  // Holgada a propósito: por este hueco cruzan las indicaciones entre
+  // columnas, cada una a su altura y a 6 px o más de las tarjetas.
+  separacionNodos: 20,
+  rellenoCarril: 16,
 } as const;
 
 export interface ColumnaUbicada {
@@ -420,6 +422,10 @@ export function ubicarRecorrido(
   const ubicadoPorId = new Map(ubicados.map((n) => [n.id, n]));
   const trazadas: AristaUbicada[] = [];
   const yaTrazadas = new Set<string>();
+  // Cada indicación tiene su carril: una bajada, un cruce y una curva propios.
+  // Con dos diagnósticos tratados, compartirlos juntaba las líneas en una sola
+  // y no se sabía qué receta iba con qué diagnóstico.
+  let indicaciones = 0;
   for (const original of aristas) {
     const arista: AristaDelRecorrido = {
       ...original,
@@ -436,7 +442,10 @@ export function ubicarRecorrido(
     trazadas.push({
       ...arista,
       clave,
-      trazo: arista.motivo === 'atencion' ? trazoDeAtencion(desde, hasta) : trazoDeIndicacion(desde, hasta),
+      trazo:
+        arista.motivo === 'atencion'
+          ? trazoDeAtencion(desde, hasta)
+          : trazoDeIndicacion(desde, hasta, indicaciones++),
     });
   }
 
@@ -481,17 +490,18 @@ function trazoDeAtencion(desde: NodoUbicado, hasta: NodoUbicado): string {
  * Hipertensión → Enalapril parecía salir de Atorvastatina: una conexión
  * clínica falsa dibujada por la geometría.
  */
-function trazoDeIndicacion(desde: NodoUbicado, hasta: NodoUbicado): string {
+function trazoDeIndicacion(desde: NodoUbicado, hasta: NodoUbicado, carril: number): string {
   const m = MEDIDAS;
   if (desde.columna === hasta.columna) {
     const x0 = desde.x + m.anchoColumna;
     const y0 = desde.y + m.altoNodo / 2;
     const x1 = hasta.x + m.anchoColumna;
     const y1 = hasta.y + m.altoNodo / 2;
-    const comba = x0 + m.separacionColumnas / 2 - 4;
+    // Cada corchete se abre a su distancia: dos en la misma columna no se pisan.
+    const comba = x0 + 10 + (carril % 4) * 5;
     return `M ${x0} ${y0} C ${comba} ${y0}, ${comba} ${y1}, ${x1} ${y1}`;
   }
-  return poligonal(puntosDeIndicacion(desde, hasta));
+  return poligonal(puntosDeIndicacion(desde, hasta, carril));
 }
 
 /**
@@ -501,24 +511,29 @@ function trazoDeIndicacion(desde: NodoUbicado, hasta: NodoUbicado): string {
 export function puntosDeIndicacion(
   desde: NodoUbicado,
   hasta: NodoUbicado,
+  carril = 0,
 ): readonly (readonly [number, number])[] {
   const m = MEDIDAS;
-  const holgura = 12;
+  // Cada carril se corre unos píxeles: la bajada del pasillo, el cruce sobre
+  // la fila y la entrada a la receta. Hasta cuatro indicaciones salen de una
+  // misma columna sin tocarse; el tronco de la atención va más afuera (−24).
+  const bajada = 6 + (carril % 4) * 4;
+  const entrada = 6 + (carril % 4) * 4;
   const y0 = desde.y + m.altoNodo / 2;
   // Entra un poco arriba del centro, para no pisar la rama de su atención.
   const y1 = hasta.y + m.altoNodo * 0.3;
-  // La mitad del hueco entre dos filas del carril, o del relleno si es la
-  // primera: ahí no hay tarjeta en ninguna columna.
-  const cruce = hasta.y - m.separacionNodos / 2;
+  // En el hueco sobre la fila de la receta: entre 6 y 14 px por encima, con
+  // un hueco de 20, así que nunca a menos de 6 px de una tarjeta.
+  const cruce = hasta.y - 6 - (carril % 3) * 4;
   if (hasta.columna > desde.columna) {
     const sale = desde.x + m.anchoColumna;
     const entra = hasta.x;
     return [
       [sale, y0],
-      [sale + holgura, y0],
-      [sale + holgura, cruce],
-      [entra - holgura, cruce],
-      [entra - holgura, y1],
+      [sale + bajada, y0],
+      [sale + bajada, cruce],
+      [entra - entrada, cruce],
+      [entra - entrada, y1],
       [entra, y1],
     ];
   }
@@ -527,10 +542,10 @@ export function puntosDeIndicacion(
   const entra = hasta.x + m.anchoColumna;
   return [
     [sale, y0],
-    [sale - holgura, y0],
-    [sale - holgura, cruce],
-    [entra + holgura, cruce],
-    [entra + holgura, y1],
+    [sale - bajada, y0],
+    [sale - bajada, cruce],
+    [entra + entrada, cruce],
+    [entra + entrada, y1],
     [entra, y1],
   ];
 }
