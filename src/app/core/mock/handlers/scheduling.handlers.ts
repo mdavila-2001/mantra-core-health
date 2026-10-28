@@ -20,8 +20,9 @@ import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { pacientePorId, pacientes } from '../fixtures/personas';
 import { representaA } from './profiles.handlers';
-import { conflict, forbidden, noContent, notFound, preconditionFailed, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, isMockReply, noContent, notFound, preconditionFailed, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
+import { emitirInvitacionDeAtencion } from './surveys-forms.handlers';
 import { liberarCupoDeServicio, liberarSobranteDeServicio, ofertaDelCupo } from './service-offerings.handlers';
 
 /* ============================================================================
@@ -514,6 +515,11 @@ export function registrarAgenda(router: MockRouter): void {
     // Terminar antes de lo reservado libera el sobrante del servicio.
     const r = reservas.get(request.params['id']!);
     if (r !== undefined) liberarSobranteDeServicio(r);
+    // La atención terminó: la encuesta base sale sola hacia el paciente (sólo si
+    // la decisión se aplicó: un rechazo no emite nada).
+    if (r !== undefined && !(isMockReply(respuesta) && respuesta.status >= 400)) {
+      emitirInvitacionDeAtencion(r.id);
+    }
     return respuesta;
   });
 

@@ -1056,11 +1056,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así a nivel raíz se iría entera a la API — el mismo motivo por el que M13
     // vive en `administration/geolocation`.
     path: 'administration/medical-organization',
-    // §4.H · fuera del menú del médico por la misma razón que «Mis
-    // organizaciones». La sigue viendo `SECURITY_ADMIN` y `PERIOP_ADMIN`, que
-    // son de quienes es la consola.
-    fueraDelMenuPara: ['PRACTITIONER'],
-    label: 'Organización médica',
+    // **Sale del menú lateral y pasa a la barra superior como «Mis
+    // organizaciones»** (propietario, 28/10/2026), junto a «Red social» y
+    // «Chats»: es un destino al que se vuelve desde cualquier pantalla, no un
+    // renglón de trabajo diario, y «Mis organizaciones» dice mejor que
+    // «Organización médica» qué se encuentra adentro (sedes, plantilla y las
+    // vinculaciones de la persona). La ruta, los `roles` y la pantalla no
+    // cambian: sólo dónde se ofrece y cómo se llama. El ícono del encabezado
+    // lo dibuja `shell-layout.html` para quien `visibleSections()` incluye
+    // esta sección, así que la puerta no se abre a nadie nuevo.
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Mis organizaciones',
     group: 'Administración',
     icon: 'hospital',
     // Los mismos roles que ya admite `GET /practices`: quien puede enumerar las

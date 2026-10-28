@@ -215,8 +215,12 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).toContain('/administration/users');
       expect(rutasDelMenu()).toContain('/administration/patients');
       // Carriles 13 y 16: las dos consolas de organización entran con el mismo
-      // rol que el resto de la configuración.
-      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+      // rol que el resto de la configuración. «Mis organizaciones» (antes
+      // «Organización médica») pasó el 28/10/2026 a la barra superior: se
+      // alcanza —`visibleSections`— pero ya no ocupa un renglón lateral.
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/administration/medical-organization');
+      expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
       expect(rutasDelMenu()).toContain('/administration/medical-laboratory');
     });
 

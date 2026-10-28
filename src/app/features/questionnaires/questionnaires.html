@@ -1,19 +1,34 @@
-<app-page-header
-  title="Encuestas"
-  subtitle="Cree encuestas para sus pacientes y revise lo que respondieron."
-  [breadcrumbs]="breadcrumbs()"
->
-  <button
-    app-button
-    page-actions
-    variant="primary"
-    type="button"
-    (click)="alternarFormulario()"
-    data-testid="encuestas-nueva"
+@if (embedded()) {
+  <div class="encuestas__cabecera">
+    <p class="encuestas__bajada">Cree encuestas para sus pacientes y revise lo que respondieron.</p>
+    <button
+      app-button
+      variant="primary"
+      type="button"
+      (click)="alternarFormulario()"
+      data-testid="encuestas-nueva"
+    >
+      {{ formularioAbierto() ? 'Cancelar' : 'Nueva encuesta' }}
+    </button>
+  </div>
+} @else {
+  <app-page-header
+    title="Encuestas"
+    subtitle="Cree encuestas para sus pacientes y revise lo que respondieron."
+    [breadcrumbs]="breadcrumbs()"
   >
-    {{ formularioAbierto() ? 'Cancelar' : 'Nueva encuesta' }}
-  </button>
-</app-page-header>
+    <button
+      app-button
+      page-actions
+      variant="primary"
+      type="button"
+      (click)="alternarFormulario()"
+      data-testid="encuestas-nueva"
+    >
+      {{ formularioAbierto() ? 'Cancelar' : 'Nueva encuesta' }}
+    </button>
+  </app-page-header>
+}
 
 @if (formularioAbierto()) {
   <app-card variant="outlined" padding="lg" class="encuestas__alta">
@@ -62,6 +77,10 @@
     </form>
   </app-card>
 }
+
+<!-- «Cómo le va»: el resumen general, ARRIBA de la lista. Pide lo suyo y falla
+     por su cuenta: que el resumen no cargue no esconde las encuestas. -->
+<app-survey-insights />
 
 <app-view-state-host [state]="vista()" (retry)="cargar()">
   <!-- S2 · Cargando. El esqueleto tiene la forma de las filas, no la de la

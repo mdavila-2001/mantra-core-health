@@ -806,4 +806,77 @@ describe('CommunityClient', () => {
     const req = http.expectOne((r) => r.url === '/community/topics');
     req.flush({ items: [], count: 0, limit: 200 });
   });
+  // ─── El puente encuesta → reseña pública ───────────────────────────────────
+
+  describe('getReviewableCare', () => {
+    it('pregunta por la RESERVA de la invitación, con la sesión como paciente (nada más viaja)', () => {
+      client.getReviewableCare('bk 1&x=1').subscribe();
+
+      const req = http.expectOne((r) => r.url === '/patients/me/reviewable-care');
+      expect(req.request.method).toBe('GET');
+      // Un solo parámetro, y codificado por HttpParams: ni paciente ni encuesta.
+      expect(req.request.params.keys()).toEqual(['appointmentBookingId']);
+      expect(req.request.params.get('appointmentBookingId')).toBe('bk 1&x=1');
+      // El `&` viaja codificado: no se cuela un segundo parámetro.
+      expect(req.request.urlWithParams).not.toContain('&x=1');
+      req.flush({
+        encounterId: 'enc-1',
+        appointmentBookingId: 'bk 1&x=1',
+        practitionerDisplayName: 'Dra. Rojas',
+        startAt: '2026-10-20T14:00:00.000Z',
+        alreadyReviewed: false,
+        canReview: true,
+      });
+    });
+
+    it('convierte la fecha en texto a Date y deja los booleanos tal cual', async () => {
+      const lectura = firstValueFrom(client.getReviewableCare('bk-1'));
+      http.expectOne((r) => r.url === '/patients/me/reviewable-care').flush({
+        encounterId: 'enc-1',
+        appointmentBookingId: 'bk-1',
+        practitionerDisplayName: 'Dra. Rojas',
+        startAt: '2026-10-20T14:00:00.000Z',
+        alreadyReviewed: false,
+        canReview: true,
+      });
+
+      const atencion = await lectura;
+      expect(atencion.startAt).toEqual(new Date('2026-10-20T14:00:00.000Z'));
+      expect(atencion).toMatchObject({
+        encounterId: 'enc-1',
+        appointmentBookingId: 'bk-1',
+        practitionerDisplayName: 'Dra. Rojas',
+        alreadyReviewed: false,
+        canReview: true,
+      });
+    });
+
+    it('los `null` del cable no se cuelan: sin fecha es null, sin reserva no hay clave', async () => {
+      const lectura = firstValueFrom(client.getReviewableCare('bk-1'));
+      http.expectOne((r) => r.url === '/patients/me/reviewable-care').flush({
+        encounterId: 'enc-1',
+        appointmentBookingId: null,
+        practitionerDisplayName: 'Dra. Rojas',
+        startAt: null,
+        alreadyReviewed: true,
+        canReview: false,
+      });
+
+      const atencion = await lectura;
+      expect(atencion.startAt).toBeNull();
+      expect('appointmentBookingId' in atencion).toBe(false);
+      expect(atencion.canReview).toBe(false);
+      expect(atencion.alreadyReviewed).toBe(true);
+    });
+
+    it('un `canReview` ausente es NO: ante la duda no se ofrece una reseña', async () => {
+      const lectura = firstValueFrom(client.getReviewableCare('bk-1'));
+      http.expectOne((r) => r.url === '/patients/me/reviewable-care').flush({
+        encounterId: 'enc-1',
+        practitionerDisplayName: 'Dra. Rojas',
+      });
+
+      expect((await lectura).canReview).toBe(false);
+    });
+  });
 });

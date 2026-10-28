@@ -2,7 +2,7 @@ import { DirectorioOficial, NOMBRE_DE_FUENTE, type ClaseOficial, type FichaOfici
 import { ETIQUETA_DE_PRECISION, FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
 import { categoriaPorCodigo } from '../fixtures/categorias-publicas';
 import { CATALOGO_MEDICAMENTOS } from '../fixtures/catalogo-medicamentos.generated';
-import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
+import { calificacionDe, comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
@@ -25,8 +25,8 @@ function resultado(v: VitrinaSimulada) {
     city: v.city,
     avatarUrl: v.avatarUrl,
     verified: v.verified,
-    ratingAverage: v.ratingAverage,
-    ratingCount: v.ratingCount,
+    ratingAverage: calificacionDe(v).average,
+    ratingCount: calificacionDe(v).count,
     coverUrl: v.coverUrl,
     address: v.address === '' ? null : v.address,
     location: { lat: v.lat, lng: v.lng },
@@ -543,8 +543,8 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
                   : { lat: sede.latitude, lng: sede.longitude },
               isOwn: sede.isOwnSite,
             })),
-      ratingAverage: v.ratingAverage,
-      ratingCount: v.ratingCount,
+      ratingAverage: calificacionDe(v).average,
+      ratingCount: calificacionDe(v).count,
       acceptsReviews: v.acceptsReviews,
       posts: publicaciones
         .filtrar((p) => p.authorPublicProfileId === v.id)
@@ -563,39 +563,39 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
     const v = vitrinaPorSlug(params['slug']!);
     if (v === undefined && (await directorio.porSlug(params['slug']!)) !== undefined) {
       // Una ficha del directorio oficial todavía no tiene opiniones.
-      return {
-        ...paginar([], query, 20),
-        ratingAverage: null,
-        ratingCount: 0,
-      };
+      return { ...paginaPublica([], query), ratingAverage: null, ratingCount: 0 };
     }
     if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
     const items = resenas
       .filtrar((r) => r.targetPublicProfileId === v.id)
       .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-      .map((r) => ({
-        id: r.id,
-        overallRating: r.overallRating,
-        reviewText: r.reviewText === '' ? null : r.reviewText,
-        reviewerDisplayName:
-          r.reviewerDisplayModeConceptId === CONCEPTO.reviewDisplayAnon
-            ? null
-            : (r.reviewerDisplayName ?? 'Paciente'),
-        publishedAt: r.publishedAt,
-        editedAt: null,
-        responses: r.responses.map((respuesta) => ({
-          id: respuesta.id,
-          responseText: respuesta.responseText,
-          publishedAt: respuesta.publishedAt,
-        })),
-      }));
-    const pagina = paginar(items, query, 20);
-    return {
-      items: pagina.items,
-      nextCursor: pagina.nextCursor,
-      ratingAverage: v.ratingAverage,
-      ratingCount: v.ratingCount,
-    };
+      .map((r) => {
+        const anonima = r.reviewerDisplayModeConceptId === CONCEPTO.reviewDisplayAnon;
+        const conFicha = vitrinas.get(r.reviewerProfileId);
+        return {
+          id: r.id,
+          overallRating: r.overallRating,
+          reviewText: r.reviewText === '' ? null : r.reviewText,
+          // La API redondea la fecha al DÍA en la lectura pública: la hora exacta
+          // de una reseña «anónima» permitiría emparejarla con la encuesta (o
+          // con la consulta) de quien la escribió. Al mediodía UTC para que
+          // ningún huso la corra de día al mostrarla.
+          publishedAt: `${r.publishedAt.slice(0, 10)}T12:00:00.000Z`,
+          editedAt: null,
+          // `null` es la decisión de quien opinó (anónima), no un nombre sin
+          // resolver: la ficha lo dice con palabras («Paciente verificado»).
+          reviewerDisplayName: anonima ? null : (r.reviewerDisplayName ?? conFicha?.displayName ?? 'Paciente'),
+          responses: r.responses.map((respuesta) => ({
+            id: respuesta.id,
+            responseText: respuesta.responseText,
+            publishedAt: `${respuesta.publishedAt.slice(0, 10)}T12:00:00.000Z`,
+          })),
+        };
+      });
+    // Promedio y total son los del PERFIL, no los de la página: los mismos que
+    // la cabecera de la ficha (y que `POST /patients/me/reviews` actualiza).
+    const { average, count } = calificacionDe(v);
+    return { ...paginaPublica(items, query, 20), ratingAverage: average, ratingCount: count };
   });
 
   /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------
