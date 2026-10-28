@@ -68,7 +68,7 @@ import {
 } from '../shared-registration/map-location-picker/map-location-picker';
 import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { NameFields } from '../shared-registration/name-fields/name-fields';
+import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import {
   nameGroup,
   completeName,
@@ -312,7 +312,7 @@ const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
     RegistrationHelp,
     MapLocationPicker,
     DropzonePdf,
-    NameFields,
+    InlineNameFields,
     OnboardingDraftBanner,
   ],
   templateUrl: './register-laboratory.html',
@@ -513,7 +513,7 @@ export class RegisterLaboratory {
         icon: 'shield' as const,
         campos: [
           {
-            // Sin rótulo ni error propios: `app-name-fields` pinta cada casilla
+            // Sin rótulo ni error propios: `app-inline-name-fields` pinta cada casilla
             // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
             key: 'legalRepName',
             label: '',

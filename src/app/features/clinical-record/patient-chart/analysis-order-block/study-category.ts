@@ -1,12 +1,14 @@
 import { computed, inject, signal, type Signal } from '@angular/core';
 
+import type { AnalysisCategory } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
 
 /**
  * Las familias de estudio que la orden distingue.
  *
- * Cada una nombra a quién va la orden, y viaja como el `categoryConceptId`
- * que publica el catálogo de categorías.
+ * Cada una nombra a quién va la orden. Las tres primeras se mandan como texto
+ * (`category`) y la API las resuelve a su concepto; las otras tres no tienen
+ * texto en el contrato y viajan como `categoryConceptId`.
  */
 export type StudyFamily = 'LAB' | 'IMAGING' | 'CARDIO' | 'PATHOLOGY' | 'PROCEDURE' | 'OTHER';
 
@@ -65,9 +67,9 @@ function categoryKey(code: string): string {
 }
 
 /** Lo que la orden manda como categoría. */
-export interface StudyCategoryFields {
-  readonly categoryConceptId: string;
-}
+export type StudyCategoryFields =
+  | { readonly category: AnalysisCategory }
+  | { readonly categoryConceptId: string };
 
 /** El tipo de la orden, deducido del estudio que se pide. */
 export interface StudyCategoryState {
@@ -86,8 +88,9 @@ export interface StudyCategoryState {
  *
  * Con dos selectores, «Hemograma» se podía pedir como «Imagenología» y la orden
  * se iba a la cola equivocada. Peor: la imagen elegida a mano se guardaba con
- * conceptos que la ficha no lista, y la orden desaparecía del histórico (lo
- * corrige la API, que suma esas categorías a la lectura de la ficha).
+ * el concepto de `clinical`, que la ficha no lista, y la orden desaparecía del
+ * histórico. Mandando `category: 'IMAGING'` la API escribe el concepto que el
+ * circuito diagnóstico lee.
  *
  * Se crea en el contexto de inyección del componente, como el estado del
  * selector de ejecutor.
@@ -129,23 +132,20 @@ export function createStudyCategoryState(inputs: {
     if (chosen === null) {
       return null;
     }
-    // En `test` el alta todavía no acepta `category` (P40) ni existe «otro
-    // estudio»: todo viaja como el concepto publicado. Sin él no se inventa
-    // uno, y el pedido no se habilita.
+    if (chosen === 'LAB' || chosen === 'IMAGING' || chosen === 'OTHER') {
+      return { category: chosen };
+    }
+    // Sin el concepto publicado no se inventa uno: la orden sale como «otro
+    // estudio», que la ficha lista y el paciente ve.
     const id = conceptId();
-    return id === null ? null : { categoryConceptId: id };
+    return id === null ? { category: 'OTHER' } : { categoryConceptId: id };
   });
 
   return {
     family,
     label: computed(() => {
       const chosen = family();
-      if (chosen === null) {
-        return null;
-      }
-      return conceptId() === null
-        ? `${STUDY_FAMILY_LABELS[chosen]} (sin categoría publicada: no se puede pedir desde acá)`
-        : STUDY_FAMILY_LABELS[chosen];
+      return chosen === null ? null : STUDY_FAMILY_LABELS[chosen];
     }),
     conceptId,
     fields,

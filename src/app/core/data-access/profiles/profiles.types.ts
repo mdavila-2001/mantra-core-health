@@ -829,6 +829,10 @@ export interface OwnAddress {
   readonly lines?: string;
   readonly city?: string;
   readonly municipalityConceptId?: string;
+  /** Provincia o condado, deducida del municipio por la API (ADR-0028). */
+  readonly administrativeArea2ConceptId?: string;
+  /** Distrito o zona, aparte de la calle (ADR-0028). */
+  readonly district?: string;
   /** Latitud y longitud viajan juntas o no viajan: media coordenada no ubica nada. */
   readonly latitude?: number;
   readonly longitude?: number;
@@ -1029,6 +1033,9 @@ export interface OwnPatientProfileChanges {
    */
   readonly homeAddressLines?: string;
   readonly workAddressLines?: string;
+  /** Distrito o zona de cada dirección (ADR-0028). `''` lo quita. */
+  readonly homeDistrict?: string;
+  readonly workDistrict?: string;
   /**
    * El punto en el mapa de cada dirección.
    *

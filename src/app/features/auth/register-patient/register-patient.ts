@@ -55,7 +55,6 @@ import type {
   BirthSexCode,
   PatientRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { componerDireccion } from '../shared-registration/address-line';
 import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -3251,9 +3250,13 @@ export class RegisterPatient {
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const sexoAlNacer = raw.sexAtBirth;
     const municipio = raw.residenceMunicipalityConceptId;
-    const calleDomicilio = componerDireccion(raw.homeAddressLines, raw.homeDistrict);
+    // La calle y el distrito viajan separados (ADR-0028 de la API): la API
+    // guarda el distrito en su propia columna y deduce la provincia del municipio.
+    const calleDomicilio = raw.homeAddressLines.trim();
+    const distritoDomicilio = raw.homeDistrict.trim();
     const municipioTrabajo = raw.workMunicipalityConceptId;
-    const calleTrabajo = componerDireccion(raw.workAddressLines, raw.workDistrict);
+    const calleTrabajo = raw.workAddressLines.trim();
+    const distritoTrabajo = raw.workDistrict.trim();
     const empresa = this.empresaSeleccionada();
     const otraEmpresa = raw.workEmployerFreeText.trim();
     // Sólo viaja lo confirmado sobre el mapa: un punto capturado y no mirado es
@@ -3329,6 +3332,7 @@ export class RegisterPatient {
       // municipio es un dato válido —mucha gente sabe su dirección y no el
       // nombre de su municipio—, así que no se condicionan entre sí.
       ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
+      ...(distritoDomicilio === '' ? {} : { homeDistrict: distritoDomicilio }),
       ...(gpsCasa === null ? {} : { homeLatitude: gpsCasa.lat, homeLongitude: gpsCasa.lng }),
       // Trabajo: la empresa **y** dónde queda. Los cuatro campos de ubicación
       // vuelven al alta por AC-03-1; el DTO nunca dejó de aceptarlos. Ver el
@@ -3339,6 +3343,7 @@ export class RegisterPatient {
       ...(empresa === null || this.empresaEsOtra() ? {} : { workEmployerConceptId: empresa }),
       ...(municipioTrabajo === null ? {} : { workMunicipalityConceptId: municipioTrabajo }),
       ...(calleTrabajo === '' ? {} : { workAddressLines: calleTrabajo }),
+      ...(distritoTrabajo === '' ? {} : { workDistrict: distritoTrabajo }),
       ...(gpsTrabajo === null
         ? {}
         : { workLatitude: gpsTrabajo.lat, workLongitude: gpsTrabajo.lng }),

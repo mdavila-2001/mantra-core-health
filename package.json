@@ -17,7 +17,7 @@
     "start:demo": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && ng serve --configuration development,demo",
     "start:real-api": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && ng serve --configuration real-api",
     "start:lan": "node scripts/generate-env.mjs && ng serve --configuration lan --host 0.0.0.0",
-    "build": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && ng build",
+    "build": "node scripts/generate-env.mjs && node scripts/generate-component-index.mjs && node scripts/with-heap.mjs ng build",
     "watch": "node scripts/generate-env.mjs && ng build --watch --configuration development",
     "test": "node scripts/generate-component-index.mjs && node scripts/generate-env.mjs && ng test",
     "test:coverage": "node scripts/generate-env.mjs && ng test --coverage --watch=false",

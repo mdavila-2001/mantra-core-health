@@ -21,12 +21,24 @@ import type {
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import type { AgendaResource, FranjaModo } from '@core/data-access/scheduling/scheduling.types';
+import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
 import { agendaResourcesMy } from '../my-resource';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
 import { OrganizationField } from '../organization-field/organization-field';
 import { calculateSlots, type Calculation, type CalculatedDay } from './agenda-slots';
 import { PublicationAttempt, PublicationPlace, type PublicationTarget } from './publication-target';
+import { ScheduleDayRow } from './schedule-day-row/schedule-day-row';
+import {
+  createScheduleDay,
+  DURATION_OPTIONS,
+  FLEXIBLE_DAY_FIELDS,
+  fixedTurnFields,
+  MODE_OPTIONS,
+  TIME_STEP_SECONDS,
+  YES_NO,
+  type ScheduleDayForm,
+  type ScheduleDayValue,
+} from './schedule-day-row/schedule-day';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -42,7 +54,6 @@ import { Router } from '@angular/router';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { BlockCancellations } from '../block-cancellations';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -78,19 +89,6 @@ const TABLA_DE_PERFIL_PROFESIONAL = 'practitioner_profiles';
  */
 const HORIZONTE_MESES = 3;
 
-/** Duraciones ofrecidas como fichas. La séptima opción es escribirla. */
-const DURACIONES = [15, 20, 30, 45, 60, 90] as const;
-
-/**
- * Respiros ofrecidos como fichas, en minutos.
- *
- * Empieza en **cero** y cero viene marcado: la mayoría de las agendas no
- * declara respiro, y obligar a elegir uno convertiría una comodidad en un
- * trámite. Cuando queda en cero no se manda nada — la columna es anulable y
- * «no lo dijo» y «dijo que no hay» no significan lo mismo.
- */
-const RESPIROS = [0, 5, 10, 15, 20, 30] as const;
-
 /**
  * A cuánto se cae la duración cuando el horario vigente no la declara.
  *
@@ -99,26 +97,11 @@ const RESPIROS = [0, 5, 10, 15, 20, 30] as const;
  */
 const DURACION_POR_OMISION = 30;
 
-/**
- * Las dos respuestas de todo interruptor de esta pantalla.
- *
- * Eran casillas de verificación y el propietario las pidió como botones de
- * «Sí / No» (18/09): una casilla sola no dice qué pasa si no la marcás, y dos
- * botones dicen las dos cosas.
- */
-const SI_NO: readonly SegmentedOption<'si' | 'no'>[] = [
-  { value: 'si', label: 'Sí' },
-  { value: 'no', label: 'No' },
-];
-
 /** El almuerzo que se propone al encenderlo: una hora, al mediodía. */
 const ALMUERZO_POR_OMISION = { desde: '13:00', hasta: '14:00' } as const;
 
 /** Entero positivo o vacío: los numéricos opcionales viajan como texto. */
 const ENTERO_POSITIVO = /^\d+$/;
-
-/** Hora `HH:MM` o `HH:MM:SS`, como la valida el DTO de la franja. */
-const HORA = /^\d{2}:\d{2}(:\d{2})?$/;
 
 /**
  * Los siete días, en el orden en que se leen.
@@ -137,25 +120,14 @@ const DIAS = [
   { numero: 0, corto: 'D', largo: 'Domingo' },
 ] as const;
 
-/** Una fila de la semana: el día y, si está activo, su horario. */
-type DiaGroup = FormGroup<{
-  activo: FormControl<boolean>;
-  desde: FormControl<string>;
-  hasta: FormControl<string>;
-  duracion: FormControl<number>;
-  respiro: FormControl<number>;
-  /** Qué admite la franja (v4.2.40). Por omisión, sólo consultas: lo de siempre. */
-  modo: FormControl<FranjaModo>;
-  /** Si la franja admite teleconsulta. Por omisión no: un horario es presencial. */
-  telemedicina: FormControl<boolean>;
-}>;
-
 /** Lo que se muestra de un día en la semana visual. */
 interface DiaVisible {
   readonly indice: number;
   readonly corto: string;
   readonly largo: string;
   readonly activo: boolean;
+  /** La fila entera, para dibujarla (`ScheduleDayRow`). */
+  readonly value: ScheduleDayValue;
 }
 
 /**
@@ -206,6 +178,7 @@ interface DiaVisible {
     OrganizationField,
     PageHeader,
     RouterLink,
+    ScheduleDayRow,
     ScheduleGrid,
     SegmentedControl,
     Select,
@@ -233,45 +206,17 @@ export class AgendaCreate {
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
 
-  protected readonly siNo = SI_NO;
-  protected readonly duraciones = DURACIONES;
-  protected readonly respiros = RESPIROS;
+  protected readonly siNo = YES_NO;
 
   /* -- La tabla, que es la forma que pidió el propietario ------------------- */
 
-  /**
-   * El paso de los campos Desde y Hasta: de a 5 minutos.
-   *
-   * Eran un select de medias horas, y el propietario pidió horarios flexibles
-   * (18/09): quien abre a las 08:15 o cierra a las 12:40 no podía decirlo. Un
-   * campo de hora acepta cualquier minuto escrito; el paso sólo ordena las
-   * flechas del teclado y la rueda del selector nativo.
-   */
-  protected readonly pasoDeHora = 300;
+  /** El paso de los campos de hora del almuerzo: el mismo de la tabla. */
+  protected readonly pasoDeHora = TIME_STEP_SECONDS;
 
-  protected readonly opcionesDeDuracion: readonly SelectOption<number>[] = DURACIONES.map((m) => ({
-    value: m,
-    label: `${m} min`,
-  }));
+  protected readonly opcionesDeDuracion = DURATION_OPTIONS;
 
-  protected readonly opcionesDeRespiro: readonly SelectOption<number>[] = RESPIROS.map((m) => ({
-    value: m,
-    label: m === 0 ? 'Sin respiro' : `${m} min`,
-  }));
-
-  /**
-   * Qué se atiende en cada franja (v4.2.40). «Ambos» comparte el tiempo: el que
-   * reserva primero se lo lleva, y una consulta que un servicio pisa deja de
-   * ofrecerse hasta que ese servicio se cancele.
-   */
-  protected readonly opcionesDeModo: readonly SelectOption<FranjaModo>[] = [
-    { value: 'CONSULTATIONS', label: 'Consultas' },
-    // «Otros servicios»: lo que el médico ofrece además de la consulta simple
-    // —cirugías, toma de muestras, tratamientos— (propietario, 04/10/2026).
-    // «Servicios» a secas se leía como sinónimo de consulta.
-    { value: 'SERVICES', label: 'Otros servicios' },
-    { value: 'MIXED', label: 'Ambos' },
-  ];
+  /** Qué se atiende en cada franja (v4.2.40); la fila lo ofrece en «Atiendo». */
+  protected readonly opcionesDeModo = MODE_OPTIONS;
 
   /** Fija un valor de la fila sin que la plantilla tenga que saber de formularios. */
   protected fijarDeLaFila(indice: number, campo: string, valor: unknown): void {
@@ -458,15 +403,35 @@ export class AgendaCreate {
   /* -- Horario flexible y almuerzo (propietario, 18/09) --------------------- */
 
   /**
-   * Horario flexible: se atiende en la franja, pero **sin turnos fijos**.
+   * Toda la semana flexible: se atiende en la franja, pero **sin turnos fijos**.
    *
-   * Con esto encendido la tabla deja de preguntar cuánto dura una consulta y
-   * cuánto descanso hay entre una y otra —son preguntas de turnos— y el
-   * paciente pide la hora que quiera dentro de la franja. Es un modo de toda
-   * la agenda, no de un día: una misma semana con lunes a turnos y martes libre
-   * no la pidió nadie y confundiría al paciente.
+   * Es el atajo de arriba de la tabla y es `flexibleHours` de la plantilla: con
+   * él encendido todos los días lo son, digan lo que digan sus filas —la misma
+   * regla que la API (`isFlexibleBand`)— y la tabla no pregunta por turnos.
+   * Para que lo sean sólo algunos días, cada fila tiene su interruptor (v4.2.64).
    */
   protected readonly flexible = signal(false);
+
+  /** Si el día se atiende sin turnos fijos: por la semana entera o por su fila. */
+  protected isFlexibleDay(index: number): boolean {
+    return this.flexible() || this.semana.at(index).controls.flexible.value;
+  }
+
+  /** Los días encendidos que se atienden sin turnos fijos. */
+  protected readonly flexibleDays = computed(() =>
+    this.diasActivos().filter((dia) => this.isFlexibleDay(dia.indice)),
+  );
+
+  /** Toda la semana encendida es flexible: lo declara la plantilla, como antes (P36). */
+  protected readonly allDaysFlexible = computed(
+    () => this.flexible() || (this.diasActivos().length > 0 && this.flexibleDays().length === this.diasActivos().length),
+  );
+
+  /** El atajo: «Sí» vuelve flexible toda la semana; «No» devuelve los turnos fijos a todos los días. */
+  protected setWeekFlexible(flexible: boolean): void {
+    this.flexible.set(flexible);
+    if (!flexible) this.semana.controls.forEach((day) => day.controls.flexible.setValue(false));
+  }
 
   /**
    * Cuánto se reserva por paciente en horario flexible (P36).
@@ -549,8 +514,9 @@ export class AgendaCreate {
   private calcularDia(indice: number, nombre: string): CalculatedDay {
     const v = this.semana.at(indice).getRawValue();
     // Una franja sólo de servicios no se corta en turnos: cada servicio dura lo que
-    // declaró su profesional y el turno nace al reservarlo.
-    if (v.modo === 'SERVICES') return { dia: nombre, turnos: [], resto: 0, restoDesde: null };
+    // declaró su profesional y el turno nace al reservarlo. Un día flexible, tampoco.
+    if (v.modo === 'SERVICES' || this.isFlexibleDay(indice))
+      return { dia: nombre, turnos: [], resto: 0, restoDesde: null };
     const franjas = this.franjasDe(indice);
     const partes = calculateSlots(
       franjas.map((franja, posicion) => ({
@@ -586,7 +552,7 @@ export class AgendaCreate {
 
   /* -- El formulario -------------------------------------------------------- */
 
-  protected readonly semana = new FormArray<DiaGroup>(DIAS.map((dia) => nuevoDia(dia.numero)));
+  protected readonly semana = new FormArray<ScheduleDayForm>(DIAS.map(() => createScheduleDay()));
 
   protected readonly formGeneral = new FormGroup({
     practiceId: new FormControl('', { nonNullable: true }),
@@ -648,6 +614,7 @@ export class AgendaCreate {
       corto: dia.corto,
       largo: dia.largo,
       activo: this.semana.at(indice).controls.activo.value,
+      value: this.semana.at(indice).getRawValue(),
     }));
   });
 
@@ -799,6 +766,7 @@ export class AgendaCreate {
         respiro: primera.gapMinutes ?? 0,
         modo: primera.bookingMode ?? 'CONSULTATIONS',
         telemedicina: primera.telemedicineEnabled === true,
+        flexible: primera.flexibleHours === true,
       });
       if (primera.telemedicineEnabled === true) conTelemedicina.add(indice);
       if (reglas.length > 1 && !this.conAlmuerzo()) {
@@ -846,12 +814,7 @@ export class AgendaCreate {
     control.setValue(!control.value);
   }
 
-  /** El «Sí / No» de cada fila: atiende ese día o no. */
-  protected fijarDia(indice: number, respuesta: 'si' | 'no'): void {
-    this.semana.at(indice).controls.activo.setValue(respuesta === 'si');
-  }
-
-  protected grupoDe(indice: number): DiaGroup {
+  protected grupoDe(indice: number): ScheduleDayForm {
     return this.semana.at(indice);
   }
 
@@ -899,11 +862,6 @@ export class AgendaCreate {
     return this.diasConTelemedicinaPublicada().has(indice) ? { telemedicineEnabled: false } : {};
   }
 
-  /** Si la franja del día es sólo de servicios: no tiene turnos fijos que contar. */
-  protected soloServicios(indice: number): boolean {
-    return this.semana.at(indice).getRawValue().modo === 'SERVICES';
-  }
-
   /* -- Repetir un horario en los demás días --------------------------------
 
      Propietario, 04/10/2026: el botón estaba al pie y copiaba el primer día
@@ -947,6 +905,7 @@ export class AgendaCreate {
         respiro: modelo.respiro,
         modo: modelo.modo,
         telemedicina: modelo.telemedicina,
+        flexible: modelo.flexible,
       });
     }
     this.versionDeLaSemana.update((v) => v + 1);
@@ -969,21 +928,26 @@ export class AgendaCreate {
    */
   protected readonly reglasDeLaPrevia = computed<readonly PublishedRule[]>(() => {
     const capacidad = Number(this.capacidadDeclarada());
-    const flexible = this.flexible();
     return this.diasActivos().flatMap((dia) => {
       const v = this.semana.at(dia.indice).getRawValue();
+      const flexible = this.isFlexibleDay(dia.indice);
       return this.franjasDe(dia.indice).map((franja) => ({
         dayOfWeek: DIAS[dia.indice].numero,
         startTime: franja.desde.trim(),
         endTime: franja.hasta.trim(),
-        ...(flexible ? {} : { slotMinutes: v.duracion }),
-        ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
+        // Cada día flexible lo dice en su franja, como la devuelve la API ya resuelta.
+        ...this.turnFieldsOf(dia.indice, v),
         ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
         ...this.telemedicinaDe(dia.indice, v.telemedicina),
-        ...(Number.isFinite(capacidad) && capacidad > 0 ? { capacityPerSlot: capacidad } : {}),
+        ...(!flexible && Number.isFinite(capacidad) && capacidad > 0 ? { capacityPerSlot: capacidad } : {}),
       }));
     });
   });
+
+  /** Lo que la franja de un día dice de sus turnos: que es flexible, o su duración y su descanso. */
+  private turnFieldsOf(index: number, day: ScheduleDayValue) {
+    return this.isFlexibleDay(index) ? FLEXIBLE_DAY_FIELDS : fixedTurnFields(day);
+  }
 
   /** Hasta cuándo va a regir, en una frase, para el globo de la grilla. */
   protected readonly vigenciaDeLaPrevia = computed(() => {
@@ -1048,7 +1012,7 @@ export class AgendaCreate {
     // Se reconstruye cada día con la fábrica en vez de listar los valores acá:
     // duplicar los valores por defecto es garantizar que un día se separen.
     for (let i = 0; i < DIAS.length; i++) {
-      this.semana.at(i).reset(nuevoDia(DIAS[i].numero).getRawValue());
+      this.semana.at(i).reset(createScheduleDay().getRawValue());
     }
     this.formGeneral.reset({
       practiceId: '',
@@ -1212,9 +1176,10 @@ export class AgendaCreate {
     }
 
     const capacidad = this.formGeneral.getRawValue().capacidadPorTurno;
-    const flexible = this.flexible();
+    const allFlexible = this.allDaysFlexible();
     const rules: ScheduleRule[] = this.diasActivos().flatMap((dia) => {
       const v = this.semana.at(dia.indice).getRawValue();
+      const flexible = this.isFlexibleDay(dia.indice);
       // Una regla por franja: con almuerzo, mañana y tarde.
       return this.franjasDe(dia.indice).map(
         (franja) =>
@@ -1222,12 +1187,10 @@ export class AgendaCreate {
             dayOfWeek: DIAS[dia.indice].numero,
             startTime: franja.desde.trim(),
             endTime: franja.hasta.trim(),
-            // En horario flexible no hay turnos que medir: ni duración ni
-            // respiro viajan, porque no los declaró nadie.
-            ...(flexible ? {} : { slotMinutes: v.duracion }),
-            // Sólo si eligió alguno: mandar `0` escribiría un cero que nadie
-            // declaró, y borraría la diferencia el día que el default cambie.
-            ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
+            // Un día de turnos lleva su duración y su descanso; uno flexible, sólo
+            // `flexibleHours` (v4.2.64). Con toda la semana flexible lo declara la
+            // plantilla, una vez, y la franja va como antes: sin nada de turnos.
+            ...(allFlexible ? {} : this.turnFieldsOf(dia.indice, v)),
             // Sólo si no es lo de siempre: ausente ≡ consultas, y escribir un valor
             // que nadie eligió borraría la diferencia entre «no lo dijo» y «dijo consultas».
             ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
@@ -1247,10 +1210,10 @@ export class AgendaCreate {
       name: `Horario de ${this.nombreDelRecurso()}`,
       rules,
       // El contrato lo pide también a nivel plantilla; va el de la primera
-      // franja, que es el que gobierna cuando una regla no trae el suyo.
-      // En horario flexible, lo que se reserva por paciente (P36).
-      slotMinutes: flexible ? this.minutosPorPaciente() : rules[0]?.slotMinutes,
-      ...(flexible ? { flexibleHours: true } : {}),
+      // franja, que es el que gobierna cuando una regla no trae el suyo. Con
+      // algún día flexible, lo que se reserva por paciente esos días (P36).
+      slotMinutes: this.flexibleDays().length > 0 ? this.minutosPorPaciente() : rules[0]?.slotMinutes,
+      ...(allFlexible ? { flexibleHours: true } : {}),
       ...(policyId === null ? {} : { bookingPolicyId: policyId }),
       ...opcFecha('validTo', this.fechaDeFin()),
     };
@@ -1384,7 +1347,7 @@ export class AgendaCreate {
     this.conAlmuerzo();
     this.almuerzoDesde();
     this.almuerzoHasta();
-    this.flexible();
+    this.allDaysFlexible();
     const activos = this.diasActivos();
     if (activos.length === 0) return '';
 
@@ -1414,8 +1377,10 @@ export class AgendaCreate {
       this.conAlmuerzo() && !this.almuerzoInvalido()
         ? `, almuerzo de ${enHoras(this.almuerzoDesde())} a ${enHoras(this.almuerzoHasta())}`
         : '';
-    if (this.flexible())
+    if (this.allDaysFlexible())
       return `${dias}${horario}${almuerzo}, horario flexible sin citas de duración fija`;
+    if (this.flexibleDays().length > 0)
+      return `${dias}${horario}${almuerzo}, con turnos fijos y días de horario flexible`;
     // Con franjas de servicios la frase no puede decir «consultas de 30 minutos» de
     // todo el horario: ni todo es consulta, ni los servicios tienen un largo único.
     const hayServicios = activos.some(
@@ -1423,31 +1388,6 @@ export class AgendaCreate {
     );
     if (hayServicios) return `${dias}${horario}${almuerzo}, con franjas de servicios`;
     return `${dias}${horario}${almuerzo}, consultas de ${primero.duracion} minutos${respiro}`;
-  });
-}
-
-/** Un día de la semana, apagado y con un horario de mañana por defecto. */
-function nuevoDia(_dayOfWeek: number): DiaGroup {
-  return new FormGroup({
-    activo: new FormControl(false, { nonNullable: true }),
-    desde: new FormControl('09:00', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.pattern(HORA)],
-    }),
-    hasta: new FormControl('13:00', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.pattern(HORA)],
-    }),
-    duracion: new FormControl(30, { nonNullable: true, validators: [Validators.required] }),
-    // Sin respiro por omisión: es lo que la agenda hacía antes de que el campo
-    // existiera, así que abrir el formulario no cambia nada de lo que ya había.
-    respiro: new FormControl(0, { nonNullable: true, validators: [Validators.required] }),
-    // Sólo consultas por omisión: es lo que toda franja era antes, así que abrir el
-    // formulario no cambia el significado de ningún horario ya publicado.
-    modo: new FormControl<FranjaModo>('CONSULTATIONS', { nonNullable: true }),
-    // Sin telemedicina por omisión: un horario es presencial hasta que el
-    // médico diga lo contrario, franja por franja.
-    telemedicina: new FormControl(false, { nonNullable: true }),
   });
 }
 

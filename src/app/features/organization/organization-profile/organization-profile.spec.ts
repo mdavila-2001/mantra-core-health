@@ -8,10 +8,21 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import { OrganizationLogoClient } from '../../../core/data-access/directory/organization-logo.client';
 import { PharmacyProfile } from '../pharmacy-profile/pharmacy-profile';
-import { OrganizationProfile } from './organization-profile';
+import {
+  datosDeLaOrganizacion,
+  genteDeLaOrganizacion,
+  OrganizationProfile,
+  papelesDeLaOrganizacion,
+  PEDIR_REPRESENTANTE,
+} from './organization-profile';
+import type { MyOrganization } from '../../../core/data-access/directory/directory.types';
 
 const ORGANIZACION = {
   id: 't-1',
+  code: 'SEGANDINA',
+  createdAt: new Date(2026, 4, 2),
+  isVerified: false,
+  canAdminister: true,
   legalName: 'Seguros Andina S.A.',
   tradeName: 'Seguros Andina',
   timeZone: 'America/La_Paz',
@@ -78,6 +89,190 @@ describe('OrganizationProfile', () => {
       useValue: { listMyOrganizations: () => of([sinPayer]) },
     });
 
-    expect(texto()).not.toContain('NIT');
+    const contenido = texto();
+    expect(contenido).not.toContain('Sigla');
+    expect(contenido).not.toContain('Casa matriz');
+  });
+
+  it('a un laboratorio le muestra su forma societaria, su país y el NIT de su carpeta', () => {
+    tipo.set('DIAGNOSTIC_CENTER');
+    const laboratorio = {
+      ...ORGANIZACION,
+      legalName: 'ERBOL SRL',
+      payer: undefined,
+      legalEntityType: 'SRL',
+      taxIdentifier: '7788990011',
+    };
+    TestBed.overrideProvider(DirectoryClient, {
+      useValue: { listMyOrganizations: () => of([laboratorio]) },
+    });
+
+    const contenido = texto();
+    expect(contenido).toContain('ERBOL SRL');
+    expect(contenido).toContain('SEGANDINA');
+    expect(contenido).toContain('Bolivia');
+    expect(contenido).toContain('7788990011');
+    expect(contenido).toContain('Pendiente de verificación');
+  });
+
+  it('lo que no se registró se dice, no se esconde', () => {
+    tipo.set('DIAGNOSTIC_CENTER');
+    const escueta = {
+      ...ORGANIZACION,
+      payer: undefined,
+      tradeName: undefined,
+      timeZone: undefined,
+    };
+    TestBed.overrideProvider(DirectoryClient, {
+      useValue: { listMyOrganizations: () => of([escueta]) },
+    });
+
+    const contenido = texto();
+    expect(contenido).toContain('Nombre comercial');
+    expect(contenido).toContain('Zona horaria');
+    expect(contenido).toContain('Sin registrar');
+  });
+
+  it('sin papeles, «Documentos» dice el vacío con su indicación', async () => {
+    tipo.set('DIAGNOSTIC_CENTER');
+    TestBed.overrideProvider(DirectoryClient, {
+      useValue: {
+        listMyOrganizations: () =>
+          of([{ ...ORGANIZACION, payer: undefined, legalDocuments: undefined }]),
+      },
+    });
+    const fixture = TestBed.createComponent(OrganizationProfile);
+    fixture.detectChanges();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    (raiz.querySelectorAll('[role="tab"]')[2] as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const vacio = raiz.querySelector('[data-testid="perfil-organizacion-sin-papeles"]');
+    expect(vacio?.textContent).toContain('todavía no tiene documentos legales');
+    expect(vacio?.textContent).toContain('Pídale a la plataforma');
+    expect(vacio?.querySelector('a')).toBeNull();
+  });
+
+  it('la ficha es UNA tarjeta con pestañas, y el representante y la carpeta se leen en las suyas', () => {
+    const fixture = TestBed.createComponent(OrganizationProfile);
+    fixture.detectChanges();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    expect(raiz.querySelectorAll('app-card.perfil-organizacion')).toHaveLength(1);
+    const pestanas = [...raiz.querySelectorAll('[role="tab"]')].map((tab) =>
+      tab.textContent?.trim(),
+    );
+    expect(pestanas).toEqual(['Organización', 'Representante y gerentes', 'Documentos', 'Logo']);
+  });
+});
+
+describe('ficha de la organización — datos', () => {
+  const base = {
+    id: 't-1',
+    code: 'ERBOL',
+    legalName: 'ERBOL SRL',
+    tenantTypeConceptId: 'tt',
+    statusConceptId: 'st',
+    verificationStatusConceptId: 'vs',
+    createdAt: new Date(2026, 0, 1),
+    myRoleConceptId: 'owner',
+    canAdminister: true,
+    isVerified: false,
+  } satisfies MyOrganization;
+
+  it('el NIT de la aseguradora gana sobre el de la carpeta: es el que la ficha edita', () => {
+    const datos = datosDeLaOrganizacion({
+      ...base,
+      taxIdentifier: '111',
+      payer: { carrierCode: 'X', regulatorIdentifier: '222', sigla: 'X', address: 'Calle 1' },
+    });
+
+    expect(datos.find((dato) => dato.etiqueta === 'NIT')?.valor).toBe('222');
+    expect(datos.find((dato) => dato.etiqueta.startsWith('Casa matriz'))?.valor).toBe(
+      'Sin registrar',
+    );
+  });
+
+  it('sin representante legal la pestaña es un vacío con una indicación, no un enlace que no lleva a nada', () => {
+    const estado = genteDeLaOrganizacion(base);
+
+    expect(estado.status).toBe('empty');
+    // Ninguna pantalla deja sumarlo después del alta: un enlace prometería un
+    // arreglo que no existe (`/administration/my-organization` ni abre para un
+    // laboratorio). La acción es una indicación, sin ruta.
+    expect(estado.status === 'empty' ? estado.nextAction : null).toEqual(PEDIR_REPRESENTANTE);
+    expect(PEDIR_REPRESENTANTE).not.toHaveProperty('route');
+  });
+
+  it('el representante lleva su documento de identidad y las gerencias su cargo en palabras', () => {
+    const estado = genteDeLaOrganizacion({
+      ...base,
+      legalRepresentative: {
+        role: 'LEGAL_REPRESENTATIVE',
+        fullName: 'Mariana Siles',
+        email: 'legal@erbol.bo',
+        idNumber: '4872190 SC',
+      },
+      executives: [{ role: 'GENERAL_MANAGER', fullName: 'Carlos Mendoza', phone: '+591 70000001' }],
+    });
+
+    expect(estado).toEqual({
+      status: 'ready',
+      data: {
+        representante: {
+          cargo: 'Representante legal',
+          nombre: 'Mariana Siles',
+          celular: null,
+          correo: 'legal@erbol.bo',
+          documento: '4872190 SC',
+        },
+        gerentes: [
+          {
+            cargo: 'Gerente General',
+            nombre: 'Carlos Mendoza',
+            celular: '+591 70000001',
+            correo: null,
+            documento: null,
+          },
+        ],
+      },
+    });
+  });
+
+  it('nombra cada papel como en el país, con su número y su estado', () => {
+    const hoy = new Date(2026, 4, 1);
+    const papeles = papelesDeLaOrganizacion(
+      {
+        ...base,
+        legalEntityType: 'SRL',
+        legalDocuments: [
+          { role: 'TAX_IDENTIFIER_DOC', verificationStatus: 'VERIFICADO', documentNumber: '7788' },
+          {
+            role: 'OPERATING_LICENSE_DOC',
+            verificationStatus: 'PENDIENTE',
+            validTo: new Date(2026, 4, 11),
+          },
+          { role: 'COMMERCE_REGISTRY_DOC', verificationStatus: 'VENCIDO' },
+        ],
+      },
+      hoy,
+    );
+
+    expect(papeles.map((papel) => papel.clave)).toEqual([
+      'TAX_IDENTIFIER_DOC',
+      'OPERATING_LICENSE_DOC',
+      'COMMERCE_REGISTRY_DOC',
+    ]);
+    expect(papeles[0]?.nombre).toContain('N.º 7788');
+    expect(papeles[0]?.verificacion).toBe('VERIFICADO');
+    expect(papeles[1]?.diasParaVencer).toBe(10);
+    // Vencido según el servidor: caducó después de verificarse, y lo dice el
+    // plazo aunque no haya fecha con la que contarlo.
+    expect(papeles[2]?.verificacion).toBe('VERIFICADO');
+    expect(papeles[2]?.vencido).toBe(true);
+    expect(papeles[2]?.diasParaVencer).toBeNull();
+    expect(papeles[0]?.vencido).toBe(false);
   });
 });
