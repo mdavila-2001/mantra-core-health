@@ -6,7 +6,10 @@
   }
   <div class="relation-groups__columns">
     @for (column of columns(); track column.key) {
-      <section class="relation-groups__group" [attr.aria-labelledby]="headingId() + '-' + column.key">
+      <section
+        class="relation-groups__group"
+        [class.relation-groups__group--long]="column.items.length > longColumn"
+        [attr.aria-labelledby]="headingId() + '-' + column.key">
         @if (headingLevel() === 2) {
           <h3 class="relation-groups__title" [id]="headingId() + '-' + column.key">
             {{ column.title }}

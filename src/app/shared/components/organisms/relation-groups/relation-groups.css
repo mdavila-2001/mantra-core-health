@@ -109,3 +109,84 @@ a.relation-groups__neighbor {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
+
+/* El vecino es un renglón de una lista con título: el subrayado de todos los
+   enlaces a la vez volvía la columna una pared de líneas. Se subraya al pasar
+   y al enfocar, que es cuando dice «esto se abre». */
+a.relation-groups__neighbor {
+  text-decoration: none;
+}
+
+a.relation-groups__neighbor:hover,
+a.relation-groups__neighbor:focus-visible {
+  text-decoration: underline;
+}
+
+.relation-groups__neighbor:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+
+/* ── Modo `spread`: el bloque a todo el ancho de la ficha ───────────────────
+   Las columnas cortas comparten fila y crecen hasta llenarla. Si además hay
+   una larga, la larga toma el ancho principal y reparte sus vecinos en
+   columnas de 15 rem, y las cortas se apilan en un riel angosto a su derecha:
+   ni la larga en una sola columna de veinte renglones, ni una corta de un
+   vecino estirada a todo el ancho al lado de un hueco. */
+:host(.relation-groups--spread) .relation-groups__columns {
+  /* Flex y no grid mientras no entra el riel: una corta que queda sola en su
+     fila se estira a lo ancho (apilada bajo la larga, como ella), en vez de
+     ocupar media fila al lado de un hueco. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+:host(.relation-groups--spread) .relation-groups__group {
+  flex: 1 1 18rem;
+  align-content: start;
+}
+
+:host(.relation-groups--spread) .relation-groups__group--long {
+  flex-basis: 100%;
+}
+
+:host(.relation-groups--spread) .relation-groups__group--long .relation-groups__list {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  column-gap: var(--sp-3);
+}
+
+/* Se mide el bloque, no la ventana: a 1024 px la tarjeta de la ficha mide
+   700 px y el riel dejaba la larga en una sola columna. */
+:host(.relation-groups--spread) {
+  container-type: inline-size;
+}
+
+@container (min-width: 52rem) {
+  /* Las filas implícitas que abarca la larga no tienen contenido propio y
+     miden cero; el espacio entre tarjetas lo da el margen, no `row-gap`, que
+     se sumaría una vez por cada fila vacía. */
+  :host(.relation-groups--spread)
+    .relation-groups__columns:has(.relation-groups__group--long):has(
+      .relation-groups__group:not(.relation-groups__group--long)
+    ) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    row-gap: 0;
+  }
+
+  :host(.relation-groups--spread)
+    .relation-groups__columns:has(.relation-groups__group:not(.relation-groups__group--long))
+    .relation-groups__group--long {
+    grid-column: 1;
+    grid-row: span 12;
+    margin-block-end: var(--sp-4);
+  }
+
+  :host(.relation-groups--spread)
+    .relation-groups__columns:has(.relation-groups__group--long)
+    .relation-groups__group:not(.relation-groups__group--long) {
+    grid-column: 2;
+    margin-block-end: var(--sp-4);
+  }
+}

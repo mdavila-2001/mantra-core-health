@@ -259,15 +259,21 @@ export function seccionesPintables(articulo: GlossaryArticle): readonly SeccionP
   });
 }
 
-/** Los nombres y enlaces distintos de las fuentes de los datos (`facts`). */
+/**
+ * Las fuentes de los datos (`facts`), una por nombre. Varios datos citan
+ * páginas distintas de la misma fuente (cuatro fichas de MedlinePlus, por
+ * ejemplo): agrupadas, el pie dice el nombre una vez y numera sus páginas, en
+ * vez de repetir «MedlinePlus en español (NLM)» cuatro veces seguidas.
+ */
 export function fuentesDeLosDatos(
   datos: readonly GlossaryArticleFact[],
-): readonly { readonly nombre: string; readonly url: string }[] {
-  const vistas = new Map<string, { nombre: string; url: string }>();
+): readonly { readonly nombre: string; readonly urls: readonly string[] }[] {
+  const vistas = new Map<string, { nombre: string; urls: string[] }>();
   for (const dato of datos) {
-    if (!vistas.has(dato.sourceUrl)) {
-      vistas.set(dato.sourceUrl, { nombre: nombreDeFuente(dato.source), url: dato.sourceUrl });
-    }
+    const nombre = nombreDeFuente(dato.source);
+    const fuente = vistas.get(nombre) ?? { nombre, urls: [] };
+    vistas.set(nombre, fuente);
+    if (!fuente.urls.includes(dato.sourceUrl)) fuente.urls.push(dato.sourceUrl);
   }
   return [...vistas.values()];
 }

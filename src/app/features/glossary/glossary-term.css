@@ -26,23 +26,27 @@
   min-inline-size: 0;
 }
 
-/* Foto a la izquierda y presentación a la derecha desde tablet; una columna
-   en el teléfono. Sin foto, el marcador ocupa el mismo lugar: la columna
-   nunca queda vacía. */
+/* Con foto: la foto a la izquierda y la presentación a la derecha desde
+   tablet; una columna en el teléfono. */
 .termino__cabecera {
   display: grid;
   gap: var(--sp-5);
   margin-block-end: var(--sp-5);
 }
 
+/* Sin foto, el marcador es un sello cuadrado al lado del texto y no una caja
+   de 16 rem casi vacía: lo que identifica al término es lo que dice. */
 @media (min-width: 48rem) {
-  .termino__cabecera {
-    grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr);
+  /* En el teléfono el sello va arriba y el resumen toma el ancho entero: al
+     lado del sello quedaba en 230 px, partido sílaba por sílaba. */
+  .termino__cabecera:not(.termino__cabecera--con-foto) {
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
   }
 
   .termino__cabecera--con-foto {
     grid-template-columns: minmax(14rem, 26rem) minmax(0, 1fr);
+    align-items: start;
   }
 }
 
@@ -60,9 +64,21 @@
 }
 
 .termino__definicion,
-.termino__verbatim,
-.termino__fuente {
+.termino__verbatim {
   max-inline-size: 80ch;
+}
+
+/* El resumen y la fuente son una o dos líneas: acotados a 80ch partían «ir a la
+   fuente» o la última palabra a un renglón propio y dejaban la mitad derecha
+   de la tarjeta vacía. */
+.termino__definicion.termino__resumen {
+  max-inline-size: none;
+}
+
+/* Los enlaces de la ficha con el color del sistema: sin esto, el violeta de
+   «visitado» del navegador se colaba sobre el fondo oscuro. */
+.termino__tarjeta a:not(.termino__categoria) {
+  color: var(--text-link);
 }
 
 .termino__definicion,
@@ -73,6 +89,40 @@
 
 .termino__pestanas {
   display: block;
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.termino__volver {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  color: var(--text-link);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.termino__volver:hover,
+.termino__volver:focus-visible {
+  text-decoration: underline;
+}
+
+/* «Explicado simple» es el rótulo del resumen, no una sección: va en versalitas
+   chicas y el resumen, que es lo primero que se lee, en el cuerpo grande. */
+.termino__subtitulo.termino__subtitulo--rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.termino__resumen {
+  hyphens: manual;
+  color: var(--text-primary);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  text-align: start;
 }
 
 .termino__acciones {
@@ -288,17 +338,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  block-size: 8rem;
+  inline-size: 3.5rem;
+  aspect-ratio: 1;
   margin: 0;
   border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--bg-inset);
-  color: var(--text-muted);
+  color: var(--brand-primary);
+}
+
+@media (min-width: 48rem) {
+  .termino__imagen-marcador {
+    inline-size: 6.5rem;
+  }
 }
 
 .termino__imagen-marcador app-glossary-category-icon {
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
+  inline-size: 45%;
+  block-size: 45%;
 }
 
 .termino__imagen-marcador app-glossary-category-icon svg {
