@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
 import { API_BASE_URL } from '../../../../core/data-access/api';
+import { NOMINATIM_REVERSE_URL } from '../../../../core/data-access/geo/reverse-geocoding.client';
 import type { PatientAddress } from '../../../../core/data-access/profiles/patient-address-book.client';
 import {
   BoMunicipalitiesCatalog,
@@ -133,7 +134,10 @@ describe('AddressBook («Mis direcciones»)', () => {
 
     boton('Usar primero').click();
     const req = http.expectOne({ method: 'PUT', url: `${LIBRETA}/mama/preferred` });
-    req.flush([{ ...MAMA, isPreferred: true }, { ...CASA, isPreferred: false }]);
+    req.flush([
+      { ...MAMA, isPreferred: true },
+      { ...CASA, isPreferred: false },
+    ]);
     fixture.detectChanges();
 
     const items = html.querySelectorAll('.libreta__item');
@@ -201,7 +205,9 @@ describe('AddressBook («Mis direcciones»)', () => {
     );
     const punto = { lat: -17.7833, lng: -63.1821 };
     mapa().confirmado.emit(punto);
-    mapa().localidad.emit(deducido(punto, { calle: null, calleSola: null, municipioConceptId: null }));
+    mapa().localidad.emit(
+      deducido(punto, { calle: null, calleSola: null, municipioConceptId: null }),
+    );
     fixture.detectChanges();
 
     boton('Guardar dirección').click();
@@ -246,12 +252,13 @@ describe('AddressBook («Mis direcciones»)', () => {
     fixture.detectChanges();
 
     boton('Guardar dirección').click();
-    http
-      .expectOne({ method: 'POST', url: LIBRETA })
-      .flush(
-        { code: 'PRECONDITION_FAILED', message: 'Puede guardar hasta 10 direcciones además de su domicilio.' },
-        { status: 422, statusText: 'Unprocessable Entity' },
-      );
+    http.expectOne({ method: 'POST', url: LIBRETA }).flush(
+      {
+        code: 'PRECONDITION_FAILED',
+        message: 'Puede guardar hasta 10 direcciones además de su domicilio.',
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
     fixture.detectChanges();
 
     expect(html.querySelector('[data-testid="libreta-formulario"]')).not.toBeNull();
@@ -263,9 +270,13 @@ describe('AddressBook («Mis direcciones»)', () => {
     responderLibreta([CASA]);
     boton('Editar').click();
     fixture.detectChanges();
-    // El mapa siembra el punto guardado y pide su calle: el proveedor no responde.
+    // El mapa siembra el punto guardado y pide su calle: el proveedor no
+    // responde, ni a la API ni al respaldo que consulta el navegador.
     http
       .expectOne({ method: 'POST', url: '/public/geo/reverse' })
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    http
+      .expectOne((r) => r.url === NOMINATIM_REVERSE_URL)
       .flush(null, { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();
 
