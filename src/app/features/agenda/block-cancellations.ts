@@ -11,6 +11,7 @@ import type {
   RetiredTemplate,
   TemplateLiveBookings,
 } from '../../core/data-access/scheduling/scheduling.types';
+import type { TenantScope } from '../../core/data-access/scheduling/tenant-scope';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
 
 /** El `failureCode` con el que la API dice «hay citas en ese rato: confirme». */
@@ -88,9 +89,12 @@ export class BlockCancellations {
    *    decisión. Con un paciente ya recibido sólo cabe conservar, y se dice.
    *
    * `null` cuando la persona vuelve atrás sin retirar.
+   *
+   * @param scope - Como qué organización se habla, si el horario no es de la
+   *   activa: la vista previa y el retiro van a la misma.
    */
-  retireTemplate(templateId: string): Observable<RetiredTemplate | null> {
-    return this.scheduling.listTemplateLiveBookings(templateId).pipe(
+  retireTemplate(templateId: string, scope?: TenantScope): Observable<RetiredTemplate | null> {
+    return this.scheduling.listTemplateLiveBookings(templateId, scope).pipe(
       // Sin vista previa —una API anterior a este cambio responde 404, y quien
       // no administra la agenda recibe 403— se retira como siempre: conservando
       // las citas. Perder el retiro entero por no poder mostrar la lista sería
@@ -102,7 +106,9 @@ export class BlockCancellations {
       ),
       switchMap((live) => from(this.decideRetire(live))),
       switchMap((decision) =>
-        decision === 'abort' ? of(null) : this.scheduling.retireTemplate(templateId, decision),
+        decision === 'abort'
+          ? of(null)
+          : this.scheduling.retireTemplate(templateId, decision, scope),
       ),
     );
   }

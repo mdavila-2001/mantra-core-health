@@ -243,9 +243,15 @@ export class SchedulingClient {
    *
    * Es la primera fase: sin recurso no hay dónde colgar la plantilla ni las
    * excepciones. Devuelve el `id` que las dos usan en su ruta.
+   *
+   * @param scope - Como qué organización se publica, si no es la activa: la API
+   *   rechaza el `tenantId` del cuerpo que no es el del encabezado.
    */
-  createResource(resource: NewAgendaResource): Observable<AgendaResourceCreated> {
-    return this.http.post<AgendaResourceCreated>(this.url('/scheduling/resources'), {
+  createResource(
+    resource: NewAgendaResource,
+    scope?: TenantScope,
+  ): Observable<AgendaResourceCreated> {
+    const body = {
       tenantId: resource.tenantId,
       resourceType: resource.resourceType,
       resourceRefType: resource.resourceRefType,
@@ -254,16 +260,21 @@ export class SchedulingClient {
       ...(resource.practiceId === undefined ? {} : { practiceId: resource.practiceId }),
       ...(resource.timeZone === undefined ? {} : { timeZone: resource.timeZone }),
       ...(resource.capacity === undefined ? {} : { capacity: resource.capacity }),
-    });
+    };
+    const url = this.url('/scheduling/resources');
+    return this.http.post<AgendaResourceCreated>(url, body, tenantOptions(scope));
   }
 
   /**
    * `POST /scheduling/booking-policies` — define una política de reserva
    * (UC-41-01). Su `id` es opcional aguas abajo: la plantilla puede referirla
    * en `bookingPolicyId`.
+   *
+   * @param scope - Como qué organización se publica, si no es la activa (ver
+   *   {@link createResource}).
    */
-  createPolicy(policy: NewBookingPolicy): Observable<BookingPolicyCreated> {
-    return this.http.post<BookingPolicyCreated>(this.url('/scheduling/booking-policies'), {
+  createPolicy(policy: NewBookingPolicy, scope?: TenantScope): Observable<BookingPolicyCreated> {
+    const body = {
       tenantId: policy.tenantId,
       code: policy.code,
       name: policy.name,
@@ -280,17 +291,23 @@ export class SchedulingClient {
         ? {}
         : { maxActivePerPatient: policy.maxActivePerPatient }),
       ...(policy.holdTtlSeconds === undefined ? {} : { holdTtlSeconds: policy.holdTtlSeconds }),
-    });
+    };
+    const url = this.url('/scheduling/booking-policies');
+    return this.http.post<BookingPolicyCreated>(url, body, tenantOptions(scope));
   }
 
   /**
    * `POST /scheduling/resources/:id/templates` — publica una plantilla con sus
    * franjas semanales (UC-41-02). Cada franja se arma campo a campo por la
    * misma razón que el cuerpo: sus opcionales no pueden viajar en `undefined`.
+   *
+   * @param scope - Como qué organización se habla, si el recurso no es de la
+   *   activa: la API no ve el recurso de otra.
    */
   createTemplate(
     resourceId: string,
     template: NewScheduleTemplate,
+    scope?: TenantScope,
   ): Observable<ScheduleTemplateCreated> {
     return this.http.post<ScheduleTemplateCreated>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
@@ -325,6 +342,7 @@ export class SchedulingClient {
         // P36: sólo si el médico lo eligió. Ausente ≡ turnos fijos.
         ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
       },
+      tenantOptions(scope),
     );
   }
 
@@ -335,10 +353,13 @@ export class SchedulingClient {
    * de plantilla, así que publicar un horario era escribirlo y no poder volver
    * a verlo. Un recurso sin plantillas responde `[]` con 200 —existe y todavía
    * no publicó—, y uno ajeno, 403.
+   *
+   * @param scope - Como qué organización se pregunta, si el recurso no es de la activa.
    */
-  listTemplates(resourceId: string): Observable<PublishedTemplatePage> {
+  listTemplates(resourceId: string, scope?: TenantScope): Observable<PublishedTemplatePage> {
     return this.http.get<PublishedTemplatePage>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
+      tenantOptions(scope),
     );
   }
 
@@ -370,14 +391,20 @@ export class SchedulingClient {
    * `affectedBookings: 'cancel'` las cancela con el motivo «cambio de
    * horario» y le avisa a cada paciente (24/10/2026); la pantalla pregunta
    * antes, con la lista de `listTemplateLiveBookings`.
+   *
+   * @param scope - Como qué organización se habla, si el horario no es de la activa.
    */
   retireTemplate(
     templateId: string,
     affectedBookings?: 'cancel' | 'keep',
+    scope?: TenantScope,
   ): Observable<RetiredTemplate> {
     return this.http.delete<RetiredTemplate>(
       this.url(`/scheduling/templates/${encodeURIComponent(templateId)}`),
-      affectedBookings === 'cancel' ? { params: { affectedBookings } } : {},
+      {
+        ...(affectedBookings === 'cancel' ? { params: { affectedBookings } } : {}),
+        ...tenantOptions(scope),
+      },
     );
   }
 
@@ -385,10 +412,16 @@ export class SchedulingClient {
    * `GET /scheduling/templates/:id/live-bookings` — las citas vivas del
    * horario, con nombre y hora: la vista previa que se muestra antes de
    * retirarlo. Sólo para quien administra la agenda.
+   *
+   * @param scope - Como qué organización se pregunta, si el horario no es de la activa.
    */
-  listTemplateLiveBookings(templateId: string): Observable<TemplateLiveBookings> {
+  listTemplateLiveBookings(
+    templateId: string,
+    scope?: TenantScope,
+  ): Observable<TemplateLiveBookings> {
     return this.http.get<TemplateLiveBookings>(
       this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/live-bookings`),
+      tenantOptions(scope),
     );
   }
 
@@ -396,11 +429,18 @@ export class SchedulingClient {
    * `POST /scheduling/templates/:id/generate-slots` — materializa los slots de
    * la plantilla en una ventana (UC-41-03). Idempotente: reejecutar no duplica,
    * los ya existentes vuelven como `skipped`.
+   *
+   * @param scope - Como qué organización se habla, si el horario no es de la activa.
    */
-  generateSlots(templateId: string, window: GenerateSlotsRequest): Observable<SlotsGenerated> {
+  generateSlots(
+    templateId: string,
+    window: GenerateSlotsRequest,
+    scope?: TenantScope,
+  ): Observable<SlotsGenerated> {
     return this.http.post<SlotsGenerated>(
       this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/generate-slots`),
       { from: window.from, to: window.to },
+      tenantOptions(scope),
     );
   }
 

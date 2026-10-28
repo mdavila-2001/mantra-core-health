@@ -153,6 +153,34 @@ describe('BlockCancellations · retirar un horario', () => {
     // `http.verify()` del afterEach falla si salió un DELETE.
   });
 
+  it('en otra organización, la vista previa y el retiro hablan como ella', async () => {
+    const result = firstValueFrom(service.retireTemplate('tpl-1', { tenantId: 't-olivos' }));
+    const preview = http.expectOne('/scheduling/templates/tpl-1/live-bookings');
+    expect(preview.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    preview.flush(sinCitas);
+    await tick();
+
+    const removal = http.expectOne((r) => r.url === '/scheduling/templates/tpl-1');
+    expect(removal.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    removal.flush(retirado);
+
+    expect(await result).toEqual(retirado);
+  });
+
+  it('sin organización declarada, ni la vista previa ni el retiro la mandan: la pone la sesión', async () => {
+    const result = firstValueFrom(service.retireTemplate('tpl-1'));
+    const preview = http.expectOne('/scheduling/templates/tpl-1/live-bookings');
+    expect(preview.request.headers.has('X-Tenant-Id')).toBe(false);
+    preview.flush(sinCitas);
+    await tick();
+
+    const removal = http.expectOne((r) => r.url === '/scheduling/templates/tpl-1');
+    expect(removal.request.headers.has('X-Tenant-Id')).toBe(false);
+    removal.flush(retirado);
+
+    expect(await result).toEqual(retirado);
+  });
+
   it('la frase del aviso cuenta las citas, y calla cuando no hubo ninguna', () => {
     expect(cancelledBookingsText(0)).toBe('');
     expect(cancelledBookingsText(undefined)).toBe('');
