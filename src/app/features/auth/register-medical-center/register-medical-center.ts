@@ -46,9 +46,10 @@ import {
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
   BranchesEditor,
+  sucursalesConIdsUnicos,
   type SucursalDeclarada,
 } from '../shared-registration/branches-editor/branches-editor';
-import { executivesIncomplete } from '../shared-registration/executives';
+import { executivesIncomplete, executivesTouched, type ExecutivesRaw } from '../shared-registration/executives';
 import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import {
   legalDocumentsFields,
@@ -202,6 +203,15 @@ export class RegisterMedicalCenter {
     initialValue: this.form.controls.legalEntityType.value,
   });
 
+  /**
+   * Si ya hay algo escrito en las gerencias. Cambia sólo al pasar de vacías a
+   * en uso (y al revés), no en cada tecla: de ahí dependen los asteriscos.
+   */
+  protected readonly gerenciasEnUso = toSignal(
+    this.form.valueChanges.pipe(map(() => executivesTouched(this.form.getRawValue() as ExecutivesRaw))),
+    { initialValue: false },
+  );
+
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly registered = signal(false);
@@ -228,6 +238,7 @@ export class RegisterMedicalCenter {
         const { required: _required, mensajeDeError: _mensaje, ...resto } = campo;
         return { ...resto, label: `${campo.label} (opcional)` };
       }),
+      gerenciasEnUso: this.gerenciasEnUso(),
       campoDePoder: notarizedPowerField(COUNTRY_CODE, lang, !opcionales.includes(KEY_NOTARIZED_POWER)),
     });
   });
@@ -465,7 +476,9 @@ export class RegisterMedicalCenter {
   protected readonly maximoSucursales = MAX_MEDICAL_FACILITY_BRANCHES;
 
   /** La lista vive en la señal (la lee el editor) y en el control (que frena las incompletas). */
-  fijarSucursales(lista: readonly SucursalDeclarada[]): void {
+  fijarSucursales(entrante: readonly SucursalDeclarada[]): void {
+    // También al restaurar un borrador viejo: los ids repetidos se renombran.
+    const lista = sucursalesConIdsUnicos(entrante);
     this.sucursales.set(lista);
     const control = this.form.controls.sucursales;
     control.setValue(lista);

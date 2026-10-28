@@ -10,6 +10,7 @@ import { SystemContextClient } from '../../../core/data-access/system-context/sy
 import { MEDICAL_ORGANIZATION_TYPES } from '../../../core/data-access/directory/directory.types';
 import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
 import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
+import { AYUDA_ALTA_MEDICA } from './medical-center.help';
 import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-center';
 
 const RUTA_ALTA = '/iam/auth/register-organization';
@@ -1100,6 +1101,60 @@ describe('RegisterMedicalCenter', () => {
       });
     });
 
+    it('al restaurar un borrador con ids de sucursal repetidos los renombra: editar una no toca a la otra', () => {
+      const repetidas = [
+        { id: 'sucursal-1', nombre: 'Norte', direccion: 'Av. A', gps: PUNTO_CENTRAL },
+        { id: 'sucursal-1', nombre: 'Sur', direccion: 'Av. B', gps: PUNTO_CENTRAL },
+      ];
+      fixture.componentInstance.restaurarBorrador({
+        data: {},
+        extraData: { sucursales: repetidas },
+        stepIndex: 0,
+      } as never);
+
+      const ids = fixture.componentInstance.sucursales().map((s) => s.id);
+      expect(ids).toEqual(['sucursal-1', 'sucursal-2']);
+      expect(control().sucursales.value.map((s) => s.id)).toEqual(ids);
+      expect(fixture.componentInstance.sucursales().map((s) => s.nombre)).toEqual(['Norte', 'Sur']);
+    });
+
+    describe('la ayuda de cada página habla de lo que esa página pide', () => {
+      const paginas = () => interno().paginas();
+      const ayudas = Object.entries(AYUDA_ALTA_MEDICA);
+
+      it('toda ayuda es de una página que existe', () => {
+        const claves = paginas().map((p) => p.clave);
+        for (const [clave] of ayudas) expect(claves, clave).toContain(clave);
+      });
+
+      it('una tarjeta que habla del correo está en una página que pide un correo', () => {
+        for (const [clave, tarjetas] of ayudas) {
+          const campos = paginas().find((p) => p.clave === clave)!.campos;
+          const pideCorreo = campos.some((c) => c.control === 'email');
+          for (const t of tarjetas) {
+            if (/correo/i.test(`${t.titulo} ${t.texto}`)) expect(pideCorreo, `${clave}: «${t.titulo}»`).toBe(true);
+          }
+        }
+      });
+
+      it('el correo del representante (el usuario) se explica en «Su acceso», con la contraseña, y no en «Representante legal»', () => {
+        const acceso = AYUDA_ALTA_MEDICA['acceso']!.map((t) => `${t.titulo} ${t.texto}`).join(' ');
+        expect(acceso).toMatch(/usuario/);
+        expect(acceso).toMatch(/contraseña/);
+        expect(paginas().find((p) => p.clave === 'acceso')!.campos.map((c) => c.key)).toContain('legalRepEmail');
+
+        const representante = AYUDA_ALTA_MEDICA['representante']!.map((t) => `${t.titulo} ${t.texto}`).join(' ');
+        expect(representante).not.toMatch(/Con este correo se entra/);
+        expect(paginas().find((p) => p.clave === 'representante')!.campos.map((c) => c.key)).not.toContain('legalRepEmail');
+      });
+
+      it('la ayuda de la gerencia general dice «las tres o ninguna», no «ninguno frena el alta»', () => {
+        const general = AYUDA_ALTA_MEDICA['gerencia-general']!.map((t) => `${t.titulo} ${t.texto}`).join(' ');
+        expect(general).not.toContain('Ninguno de los tres frena');
+        expect(general).toContain('Las tres gerencias, o ninguna');
+      });
+    });
+
     describe('las gerencias son todo o nada, dicho en la página de la gerencia que falta', () => {
       /** La primera página con algo mal, que es adonde el motor lleva a la persona al intentar avanzar o enviar. */
       const primeraPaginaConError = () =>
@@ -1157,14 +1212,37 @@ describe('RegisterMedicalCenter', () => {
         expect(fixture.componentInstance.form.valid).toBe(true);
       });
 
-      it('un apellido solo cuenta como nombre escrito, igual que al armar el bloque', () => {
+      it('con el bloque en uso, a cada gerencia le hacen falta el primer nombre Y el apellido paterno', () => {
         completar();
         completarGerencias();
         fixture.componentInstance.form.patchValue({ salesManagerName: { name: '', lastName: 'Cruz' } });
+        expect(control().salesManagerName.controls.name.hasError('required')).toBe(true);
 
+        fixture.componentInstance.form.patchValue({ salesManagerName: { name: 'Carla', lastName: '' } });
         expect(control().salesManagerName.controls.name.valid).toBe(true);
+        expect(control().salesManagerName.controls.lastName.hasError('required')).toBe(true);
+        enviar();
+        http.expectNone(RUTA_ALTA);
+        expect(primeraPaginaConError()).toBe('gerencia-comercial');
+
+        fixture.componentInstance.form.patchValue({ salesManagerName: { name: 'Carla', lastName: 'Cruz' } });
         enviar();
         http.expectOne(RUTA_ALTA).flush(RESPUESTA_ALTA);
+      });
+
+      it('con el bloque en uso las páginas marcan celular y correo como obligatorios (asterisco); vacío, no', () => {
+        const marcas = () =>
+          interno()
+            .paginas()
+            .filter((p) => p.clave?.startsWith('gerencia-'))
+            .flatMap((p) => p.campos.filter((c) => c.control === 'tel' || c.control === 'email'))
+            .map((c) => c.required === true);
+
+        expect(marcas()).toEqual([false, false, false, false, false, false]);
+        control().generalManagerPhone.setValue('+591 70011111');
+        expect(marcas()).toEqual([true, true, true, true, true, true]);
+        control().generalManagerPhone.setValue('');
+        expect(marcas()).toEqual([false, false, false, false, false, false]);
       });
 
       it('al enviar con el bloque a medias no sale a la red y marca todo para que se vea', () => {

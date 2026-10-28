@@ -21,6 +21,9 @@ import { completeName, nameGroup, type NameGroup, type NameValue } from './name-
     tres completas, y el formulario las deja opcionales.
     ========================================================================== */
 
+/** El nombre completo de una gerencia: la API lo acepta de 3 a 200 caracteres (`RegisterOrganizationExecutiveContactDto.fullName`). */
+const MIN_FULL_NAME = 3;
+
 /**
  * Los controles de las tres gerencias, listos para sumar a un `FormGroup`.
  *
@@ -29,7 +32,7 @@ import { completeName, nameGroup, type NameGroup, type NameValue } from './name-
  * Las tres son opcionales **juntas**: en cuanto hay algo escrito en cualquiera
  * de ellas, a las otras les falta lo que no tienen (el nombre, el celular y el
  * correo de cada una). Eso no lo puede decir un solo control, así que cada
- * celular, correo y primer nombre vacío es `required` mientras haya algo escrito
+ * celular, correo, primer nombre y apellido paterno vacío es `required` mientras haya algo escrito
  * en el bloque, y se revalida cuando cambia cualquier otro. Con esto el motor
  * del formulario frena en la página de la gerencia que falta —con su mensaje
  * junto al campo— en vez de dejar a la persona llegar al final para enterarse.
@@ -49,11 +52,15 @@ export function executivesControls() {
     });
   const nombre = () => {
     const grupo = nameGroup(false);
-    grupo.controls.name.addValidators((control) => {
-      if (String(control.value ?? '').trim() !== '') return null;
-      const propio = control.parent?.getRawValue() as NameValue | undefined;
-      if (propio !== undefined && completeName(propio) !== '') return null;
-      return bloqueConAlgo(control) ? { required: true } : null;
+    // En uso el bloque, a cada gerencia le hacen falta el primer nombre y el
+    // apellido paterno (la API exige un nombre completo de 3 a 200 caracteres).
+    grupo.controls.name.addValidators(faltaSiHayGerencias);
+    grupo.controls.lastName.addValidators(faltaSiHayGerencias);
+    grupo.addValidators((g) => {
+      const completo = completeName(g.getRawValue() as NameValue);
+      return completo !== '' && completo.length < MIN_FULL_NAME
+        ? { nombreCompletoCorto: { min: MIN_FULL_NAME, actual: completo.length } }
+        : null;
     });
     return grupo;
   };
@@ -73,6 +80,7 @@ export function executivesControls() {
   const revalidar = (): void => {
     for (const grupo of [controles.generalManagerName, controles.salesManagerName, controles.marketingManagerName]) {
       grupo.controls.name.updateValueAndValidity({ emitEvent: false });
+      grupo.controls.lastName.updateValueAndValidity({ emitEvent: false });
     }
     for (const control of [
       controles.generalManagerPhone,
@@ -206,8 +214,13 @@ const GERENCIAS: readonly GerenciaPagina[] = [
  *
  * @param prefijoTestId - Prefijo de los `data-testid` de la pantalla, p. ej.
  *   `registro-medico` → `registro-medico-gerente-general-celular`.
+ * @param enUso - Si ya hay algo escrito en el bloque: celular y correo pasan a
+ *   ser obligatorios (llevan asterisco), porque las tres van completas o ninguna.
  */
-export function executivesPages(prefijoTestId: string): readonly SeccionDeFormulario[] {
+export function executivesPages(
+  prefijoTestId: string,
+  enUso = false,
+): readonly SeccionDeFormulario[] {
   return GERENCIAS.map((g) => ({
     titulo: g.titulo,
     clave: g.clave,
@@ -228,6 +241,7 @@ export function executivesPages(prefijoTestId: string): readonly SeccionDeFormul
         key: `${g.prefijo}Phone`,
         label: 'Celular',
         control: 'tel' as const,
+        ...(enUso ? { required: true } : {}),
         testId: `${prefijoTestId}-${g.testId}-celular`,
         mensajeDeError: 'Escriba el celular completo, o deje las tres gerencias vacías.',
       },
@@ -235,6 +249,7 @@ export function executivesPages(prefijoTestId: string): readonly SeccionDeFormul
         key: `${g.prefijo}Email`,
         label: 'Correo',
         control: 'email' as const,
+        ...(enUso ? { required: true } : {}),
         icono: 'mail' as const,
         testId: `${prefijoTestId}-${g.testId}-correo`,
         mensajeDeError: 'Escriba un correo válido, o deje las tres gerencias vacías.',

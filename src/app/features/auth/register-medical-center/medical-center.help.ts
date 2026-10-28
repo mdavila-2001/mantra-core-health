@@ -75,10 +75,10 @@ export const AYUDA_ALTA_MEDICA: Readonly<Record<string, readonly HelpCard[]>> = 
   ],
   representante: [
     {
-      icono: 'mail',
-      titulo: 'Con este correo se entra',
+      icono: 'shield',
+      titulo: 'Quien firma y administra',
       texto:
-        'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
+        'El representante legal firma por la organización y es también quien administra la cuenta. En el paso siguiente se sube el poder que lo acredita.',
     },
   ],
   poder: [
@@ -92,9 +92,9 @@ export const AYUDA_ALTA_MEDICA: Readonly<Record<string, readonly HelpCard[]>> = 
   'gerencia-general': [
     {
       icono: 'briefcase',
-      titulo: 'Los cargos son opcionales',
+      titulo: 'Las tres gerencias, o ninguna',
       texto:
-        'Ninguno de los tres frena el alta. Se piden para saber a quién escribirle, pero van como bloque: o se cargan las tres gerencias completas, o ninguna.',
+        'Se piden para saber a quién escribirle y van como bloque: o se cargan las tres completas (nombre, celular y correo), o se dejan las tres vacías. Con las tres vacías el alta sale igual.',
     },
   ],
   'gerencia-comercial': [
@@ -114,6 +114,12 @@ export const AYUDA_ALTA_MEDICA: Readonly<Record<string, readonly HelpCard[]>> = 
     },
   ],
   acceso: [
+    {
+      icono: 'mail',
+      titulo: 'Con este correo se entra',
+      texto:
+        'El correo del representante legal es el usuario de la cuenta: con él y con la contraseña se entra a la plataforma. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
+    },
     {
       icono: 'lock',
       titulo: 'Una clave nueva, no la del correo',

@@ -19,6 +19,8 @@ export interface PaginasDeAlta {
   readonly camposDeDocumentos: readonly CampoDeFormulario[];
   /** El poder del representante, opcional sólo para una unipersonal. */
   readonly campoDePoder: CampoDeFormulario;
+  /** Si ya hay algo escrito en las gerencias: entonces las tres van completas y sus campos llevan asterisco. */
+  readonly gerenciasEnUso: boolean;
 }
 
 /**
@@ -243,7 +245,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       hint: 'Solo PDF. Una empresa unipersonal no lo necesita: el titular se representa a sí mismo.',
       campos: [ctx.campoDePoder],
     },
-    ...executivesPages(TEST_ID),
+    ...executivesPages(TEST_ID, ctx.gerenciasEnUso),
     {
       titulo: 'Su acceso',
       clave: 'acceso',

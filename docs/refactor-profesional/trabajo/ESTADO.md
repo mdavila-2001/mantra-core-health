@@ -1,5 +1,62 @@
 # Estado
 
+## Alta de organización médica: segunda pasada de correcciones — 2026-10-28
+
+Dos re-revisiones (código y visual) no hallaron HIGH; la visual dio 91/100 (umbral 92) por dos MEDIUM. Esta pasada corrige sólo
+los siete puntos que pidieron. **No se auto-aprueba.**
+
+1. **Nombre de sucursal: 200, no 300.** `branches-editor` usa `MEDICAL_SITE_NAME_MAX` (200, el de la API y el del simulador).
+   Ya no corta en silencio lo escrito ni lo que trae el CSV: el nombre de 201 caracteres se conserva, se marca inválido
+   (`El nombre no puede pasar de 200 caracteres.`, enseguida y sin esperar a «Siguiente») y la lista deja de ser válida;
+   200 pasa. Specs en el editor (200 pasa / 201 no, escrito y por lote).
+2. **Calle, distrito y nombre de sucursal ya no miden 1694 px.** `app-map-location-picker` ganó el input opt-in `disposicion`
+   (`apilada` por omisión): la casa central usa `dos-columnas` (Calle | Distrito) y cada sucursal `tres-columnas`, con el nombre
+   proyectado dentro del bloque (`[campo-previo]`) como primer campo de la rejilla: nombre | calle | distrito desde 1120 px, de a dos
+   desde 672 px, uno por renglón debajo; los avisos y la ficha de la localidad cruzan toda la fila. Imagenología, laboratorio,
+   farmacia y aseguradora no pasan el input: **mismo DOM y sin reglas CSS nuevas que los alcancen**. Comprobado en navegador:
+   la geometría del selector de imagenología (central y una sucursal, a 1920/1440/1024/768/390) es **idéntica** entre `HEAD`
+   (4bdfa85fa) y el código nuevo
+   (`correcciones-2/head-imagenologia.json` vs `ahora-imagenologia.json`, coordenada por coordenada). Medido en la casa central: a 1920,
+   Calle y Distrito 815/815 px (antes 1.668); en la sucursal, nombre/calle/distrito 493/519/519 (antes 1.608); a 1440, 333/359/359.
+   Quedan sin medir el departamento/provincia/municipio de la ficha: el sandbox no tiene red hacia el geocodificador y la ficha queda
+   en «Buscando…».
+3. **Ayudas.** La tarjeta «Con este correo se entra» se movió de «Representante legal» a «Su acceso» (con la contraseña); el
+   representante tiene ahora una tarjeta propia sin el correo. La de «Gerencia general» dice «Las tres gerencias, o ninguna». Specs que
+   atan las ayudas a su página: toda ayuda es de una página que existe; una tarjeta que habla del correo está en una página que
+   pide un correo; el correo del representante se explica en «Su acceso» y no en «Representante legal».
+4. **Borradores viejos.** `sucursalesConIdsUnicos` renombra los ids repetidos al siguiente libre (la primera conserva el suyo);
+   `fijarSucursales` —que también recibe lo restaurado— lo aplica. Specs del helper y de `restaurarBorrador`.
+5. **Nombre completo de gerencia (3–200).** Con el bloque en uso, primer nombre **y** apellido paterno son obligatorios, y un nombre
+   completo de 1–2 caracteres es inválido (`nombreCompletoCorto`; mensaje en `app-inline-name-fields`). Alcanza sólo a las gerencias:
+   `nameGroup` de las demás altas no cambió. **Cambio de criterio respecto de la pasada anterior**: antes bastaba una parte del nombre
+   («un apellido solo cuenta como nombre»); el spec que lo afirmaba pasó a afirmar lo contrario.
+6. **Gerencias a medias.** «Primer nombre» y «Apellido paterno» llevan asterisco cuando el bloque está en uso (y celular y correo,
+   por las páginas), y bajo «Apellido paterno» sale «Escriba el apellido paterno.». Probado el caso nombre cargado y apellido ausente
+   (spec del componente, del grupo y de `app-inline-name-fields`: dos asteriscos, mensaje bajo el apellido, ninguno bajo el nombre).
+   Con el bloque vacío no hay asteriscos ni mensajes.
+7. **Diálogo de lote y simulador.** `app-branch-bulk-import` tiene el input opcional `maxSucursales`: el alta médica pasa 50 y el
+   diálogo dice «Hasta 50 sucursales en total; las que sobren no se agregan.»; sin el input sigue diciendo «Hasta 300 sucursales por
+   archivo» (organización, ficha de sucursales y las otras altas, sin cambio). El simulador rechaza TLD numérico o con dígitos
+   (`a@b.12`) con `esCorreoComoLaApi`; el patrón de los formularios no cambió.
+
+**Verificado** (de a un proceso por vez): `yarn lint` exit 0 · `yarn typecheck` exit 0 · `yarn build`
+(`NG_BUILD_PARALLEL_TS=0 NODE_OPTIONS=--max-old-space-size=8192`) exit 0 · `gen-mock-contract.mjs --check` pasa · `yarn ng test`
+dirigido (register-medical-center, shared-registration, core/data-access/iam, mock/handlers/auth*, imagenología, laboratorio, farmacia,
+organización, paciente, web-analytics, branch-bulk-import, organization-branches y organization-detail): 35 archivos, 819 pruebas,
+todas pasan. **Navegador**: `playwright/alta-organizacion-medica.mjs` a 1920, 1440, 1024, 768 y 390 px en claro y oscuro: 1246 de
+1246 verificaciones, que ahora incluyen la disposición de lo deducido de la casa central y de la sucursal por ancho y que ninguna
+casilla de texto pase de 900 px. Evidencia en
+[`correcciones-2/`](capturas/alta-organizacion-medica-2026-10-28/correcciones-2/) (los `.json` completos y ocho capturas).
+`check-max-lines` sigue rojo en la base: `map-location-picker.ts` pasó de 757 a 758 líneas (techo 600; una línea, la del input);
+el resto igual.
+
+**No se ejecutó**: el spec `cm-11-organizacion-medica-api-real.spec.ts` ni `cm-11-medical-center.spec.ts` (sin API real; sin tocar en
+esta pasada), la ficha de departamento/provincia/municipio (sin geocodificador), la suite completa. Fuera de alcance, tal como se pidió:
+aviso de borrador, `--text-danger`, spinner del localizador, tamaño táctil de «Quitar», extracción de `register-medical-center.ts`,
+accesibilidad del mapa y el spec declarativo de disposición.
+
+---
+
 ## Alta de organización médica: correcciones tras la auditoría de tres revisores — 2026-10-28
 
 Los revisores auditaron `register-medical-center/`, `shared-registration/`, `core/data-access/iam/` y el simulador. Se corrigió lo

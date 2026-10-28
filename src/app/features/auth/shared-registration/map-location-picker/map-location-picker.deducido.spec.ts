@@ -288,4 +288,40 @@ describe('MapLocationPicker — lo deducido del punto', () => {
     component.confirmAddressActual();
     expect(component.confirmed()).toBe(true);
   });
+
+  describe('disposicion (opt-in del alta médica; las demás altas no lo piden)', () => {
+    const deducido = () => raiz().querySelector('[data-testid="mapa-deducido"]');
+
+    it('por omisión es apilada: sin punto no hay bloque y con punto no lleva clases de columnas', () => {
+      expect(deducido()).toBeNull();
+
+      component.pinPunto({ lat: -17.78, lng: -63.18 });
+      fixture.detectChanges();
+
+      expect(deducido()).not.toBeNull();
+      expect(deducido()!.className).toBe('registro__deducido');
+    });
+
+    it('dos-columnas marca el bloque, pero sin punto sigue sin dibujarlo', () => {
+      fixture.componentRef.setInput('disposicion', 'dos-columnas');
+      fixture.detectChanges();
+      expect(deducido()).toBeNull();
+
+      component.pinPunto({ lat: -17.78, lng: -63.18 });
+      fixture.detectChanges();
+
+      expect(deducido()!.classList.contains('registro__deducido--dos')).toBe(true);
+      expect(deducido()!.classList.contains('registro__deducido--tres')).toBe(false);
+      expect(raiz().textContent).toContain('Distrito o zona');
+    });
+
+    it('tres-columnas dibuja el bloque aun sin punto, para el campo proyectado con [campo-previo]', () => {
+      fixture.componentRef.setInput('disposicion', 'tres-columnas');
+      fixture.detectChanges();
+
+      expect(deducido()).not.toBeNull();
+      expect(deducido()!.classList.contains('registro__deducido--tres')).toBe(true);
+      expect(raiz().textContent).not.toContain('Distrito o zona');
+    });
+  });
 });

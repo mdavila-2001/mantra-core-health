@@ -12,7 +12,10 @@ import {
 } from '@angular/core';
 import type { ValidationErrors, ValidatorFn } from '@angular/forms';
 
-import { MAX_MEDICAL_FACILITY_BRANCHES } from '../../../../core/data-access/iam/medical-facility.rules';
+import {
+  MAX_MEDICAL_FACILITY_BRANCHES,
+  MEDICAL_SITE_NAME_MAX,
+} from '../../../../core/data-access/iam/medical-facility.rules';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
@@ -44,7 +47,8 @@ export const MAX_SUCURSALES_POR_DEFECTO = MAX_MEDICAL_FACILITY_BRANCHES;
 const AVISO_DEL_ARCHIVO =
   'Del archivo se toman el nombre y el punto; la dirección se deduce del punto en el mapa.';
 
-const MAX_NOMBRE = 300;
+/** El nombre de una sede: el tope del contrato (`MedicalFacilitySiteDto.name`), que el simulador también impone. */
+const MAX_NOMBRE = MEDICAL_SITE_NAME_MAX;
 const MAX_DIRECCION = 300;
 
 /**
@@ -59,12 +63,45 @@ export function faltaDeSucursal(sucursal: SucursalDeclarada): string | null {
 
 /** Lo que dice el campo del nombre cuando está vacío. */
 export function faltaDeNombre(sucursal: SucursalDeclarada): string | null {
-  return sucursal.nombre.trim() === '' ? 'Escriba el nombre de la sucursal.' : null;
+  const nombre = sucursal.nombre.trim();
+  if (nombre === '') return 'Escriba el nombre de la sucursal.';
+  return nombre.length > MAX_NOMBRE ? `El nombre no puede pasar de ${MAX_NOMBRE} caracteres.` : null;
 }
 
 /** Lo que dice el mapa cuando no tiene un punto confirmado. */
 export function faltaDePunto(sucursal: SucursalDeclarada): string | null {
   return sucursal.gps === null ? 'Marque la sucursal en el mapa y confirme la dirección.' : null;
+}
+
+/**
+ * La lista con los ids repetidos renombrados al siguiente número libre.
+ *
+ * Un borrador guardado con el contador por instancia (antes de arreglarlo)
+ * puede traer dos `sucursal-1`: con ids repetidos, editar o quitar una afecta a
+ * dos. La primera conserva su id; las repetidas toman `sucursal-N` a partir del
+ * mayor que hay. Sin repetidos devuelve la misma lista, sin copiarla.
+ */
+export function sucursalesConIdsUnicos(
+  lista: readonly SucursalDeclarada[],
+): readonly SucursalDeclarada[] {
+  let mayor = lista.reduce((max, s) => {
+    const numero = /^sucursal-(\d+)$/.exec(s.id);
+    return numero === null ? max : Math.max(max, Number(numero[1]));
+  }, 0);
+  const vistos = new Set<string>();
+  let cambio = false;
+  const unica = lista.map((s) => {
+    if (!vistos.has(s.id)) {
+      vistos.add(s.id);
+      return s;
+    }
+    cambio = true;
+    mayor += 1;
+    const id = `sucursal-${mayor}`;
+    vistos.add(id);
+    return { ...s, id };
+  });
+  return cambio ? unica : lista;
 }
 
 /**
@@ -136,9 +173,13 @@ export class BranchesEditor {
       .filter((nombre) => nombre.trim() !== ''),
   );
 
-  /** El error del nombre, sólo cuando la persona ya intentó avanzar. */
+  /**
+   * El error del nombre: el que falta, sólo cuando la persona ya intentó avanzar;
+   * el que se pasa del largo, enseguida (no hay nada que esperar para saberlo).
+   */
   protected errorDeNombre(sucursal: SucursalDeclarada): string {
-    return this.mostrarFaltantes() ? (faltaDeNombre(sucursal) ?? '') : '';
+    const falta = faltaDeNombre(sucursal) ?? '';
+    return this.mostrarFaltantes() || sucursal.nombre.trim().length > MAX_NOMBRE ? falta : '';
   }
 
   /** El error del mapa, sólo cuando la persona ya intentó avanzar. */
@@ -211,7 +252,7 @@ export class BranchesEditor {
 
   /** `app-input` emite `string | number | null`: el `null` de un campo vaciado es la cadena vacía. */
   protected escribirNombre(id: string, nombre: string | number | null): void {
-    this.actualizar(id, { nombre: nombre === null ? '' : String(nombre).slice(0, MAX_NOMBRE) });
+    this.actualizar(id, { nombre: nombre === null ? '' : String(nombre) });
   }
 
   protected fijarGps(id: string, gps: Coordinates | null): void {
@@ -234,7 +275,7 @@ export class BranchesEditor {
     const nuevas = entran.map(
       (b, i): SucursalDeclarada => ({
         id: ids[i]!,
-        nombre: b.name.slice(0, MAX_NOMBRE),
+        nombre: b.name,
         direccion: b.address.slice(0, MAX_DIRECCION),
         gps: b.coordinates === null ? null : { lat: b.coordinates.latitude, lng: b.coordinates.longitude },
       }),

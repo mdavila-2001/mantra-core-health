@@ -116,18 +116,21 @@
             <ng-template appCampoPersonalizado="generalManagerName">
               <app-inline-name-fields
                 [grupo]="form.controls.generalManagerName"
+                [obligatorio]="gerenciasEnUso()"
                 prefijoTestId="medical-center-signup-gerente-general"
               />
             </ng-template>
             <ng-template appCampoPersonalizado="salesManagerName">
               <app-inline-name-fields
                 [grupo]="form.controls.salesManagerName"
+                [obligatorio]="gerenciasEnUso()"
                 prefijoTestId="medical-center-signup-gerente-comercial"
               />
             </ng-template>
             <ng-template appCampoPersonalizado="marketingManagerName">
               <app-inline-name-fields
                 [grupo]="form.controls.marketingManagerName"
+                [obligatorio]="gerenciasEnUso()"
                 prefijoTestId="medical-center-signup-gerente-marketing"
               />
             </ng-template>
@@ -138,6 +141,7 @@
             <ng-template appCampoPersonalizado="gpsCentral">
               <app-map-location-picker
                 pinId="organizacion-medica-central"
+                disposicion="dos-columnas"
                 etiquetaConfirmada="Su casa central"
                 etiquetaQuitar="Quitar la ubicación de la casa central"
                 etiquetaMapa="La ubicación de su casa central en el mapa"

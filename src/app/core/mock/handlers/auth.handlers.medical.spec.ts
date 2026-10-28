@@ -266,7 +266,7 @@ describe('alta pública de organización médica en el simulador', () => {
 
   it('400 — el correo del director es un IsEmail estricto: «dir@clinica» y «a@b» no pasan', () => {
     const director = MEDICAL_FACILITY.medicalDirector;
-    for (const email of ['dir@clinica', 'a@b', 'dir@clinica.', 'sin-arroba', '@clinica.bo', '']) {
+    for (const email of ['dir@clinica', 'a@b', 'a@b.12', 'dir@clinica.123', 'dir@clinica.', 'sin-arroba', '@clinica.bo', '']) {
       const { status, body } = call(
         'POST',
         '/iam/auth/register-organization',

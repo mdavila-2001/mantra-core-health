@@ -154,4 +154,41 @@ describe('gerencias del alta (shared-registration/executives)', () => {
     expect(general!.hint).toContain('las tres');
     expect(general!.hint).toContain('vacías');
   });
+
+  describe('el nombre completo de una gerencia (3 a 200 caracteres en la API)', () => {
+    it('con el bloque en uso, primer nombre y apellido paterno son obligatorios', () => {
+      const form = formulario();
+      form.patchValue({ generalManagerPhone: '+591 70011111', generalManagerName: { name: 'Gabriel' } });
+
+      expect(form.controls.generalManagerName.controls.lastName.hasError('required')).toBe(true);
+      expect(form.controls.salesManagerName.controls.name.hasError('required')).toBe(true);
+      expect(form.controls.salesManagerName.controls.lastName.hasError('required')).toBe(true);
+
+      form.patchValue({ generalManagerName: { name: 'Gabriel', lastName: 'Gómez' } });
+      expect(form.controls.generalManagerName.controls.lastName.valid).toBe(true);
+    });
+
+    it('un nombre completo de 1 o 2 caracteres es inválido (nombreCompletoCorto); de 3, no', () => {
+      const form = formulario();
+      form.patchValue({ generalManagerName: { name: 'Al' } });
+      expect(form.controls.generalManagerName.hasError('nombreCompletoCorto')).toBe(true);
+
+      form.patchValue({ generalManagerName: { name: 'A', lastName: 'B' } });
+      expect(form.controls.generalManagerName.hasError('nombreCompletoCorto')).toBe(false);
+      form.patchValue({ generalManagerName: { name: 'Ana', lastName: '' } });
+      expect(form.controls.generalManagerName.hasError('nombreCompletoCorto')).toBe(false);
+    });
+
+    it('vacío no es corto: sin nada escrito el bloque es válido', () => {
+      expect(formulario().controls.generalManagerName.hasError('nombreCompletoCorto')).toBe(false);
+    });
+  });
+
+  it('con `enUso` las páginas marcan celular y correo como obligatorios; sin él, no', () => {
+    const requeridos = (enUso: boolean) =>
+      executivesPages('x', enUso).flatMap((p) => p.campos.filter((c) => c.control !== 'custom').map((c) => c.required === true));
+
+    expect(requeridos(false)).toEqual([false, false, false, false, false, false]);
+    expect(requeridos(true)).toEqual([true, true, true, true, true, true]);
+  });
 });

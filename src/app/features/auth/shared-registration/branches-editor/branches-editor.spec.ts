@@ -11,8 +11,10 @@ import type { BranchDraft } from '../../../../shared/utils/branch-import/branch-
 import {
   BranchesEditor,
   MAX_SUCURSALES_POR_DEFECTO,
+  faltaDeNombre,
   faltaDeSucursal,
   sucursalesCompletas,
+  sucursalesConIdsUnicos,
   type SucursalDeclarada,
 } from './branches-editor';
 
@@ -41,13 +43,14 @@ function borrador(parcial: Partial<BranchDraft> = {}): BranchDraft {
       prefijoTestId="t"
       [(sucursales)]="lista"
       [maximo]="maximo()"
-      [mostrarFaltantes]="true"
+      [mostrarFaltantes]="mostrarFaltantes()"
     />
   }`,
 })
 class Anfitrion {
   /** El formulario paginado destruye el editor al cambiar de página: esto lo imita. */
   readonly visible = signal(true);
+  readonly mostrarFaltantes = signal(true);
   readonly lista = signal<readonly SucursalDeclarada[]>([]);
   readonly maximo = signal(MAX_SUCURSALES_POR_DEFECTO);
 }
@@ -73,6 +76,48 @@ describe('faltaDeSucursal y sucursalesCompletas', () => {
     expect(con([sucursal(), sucursal({ id: 'b' }), sucursal({ id: 'c' })])).toEqual({
       demasiadasSucursales: { maximo: 2 },
     });
+  });
+});
+
+describe('el nombre de una sucursal: 200 como el contrato, no 300', () => {
+  it('200 pasa y 201 no, con un mensaje que dice el tope', () => {
+    expect(faltaDeNombre(sucursal({ nombre: 'N'.repeat(200) }))).toBeNull();
+    expect(faltaDeNombre(sucursal({ nombre: ` ${'N'.repeat(200)} ` }))).toBeNull();
+    expect(faltaDeNombre(sucursal({ nombre: 'N'.repeat(201) }))).toBe(
+      'El nombre no puede pasar de 200 caracteres.',
+    );
+  });
+
+  it('una lista con un nombre de 201 no es válida; con 200, sí', () => {
+    const validar = sucursalesCompletas();
+    const con = (valor: readonly SucursalDeclarada[]) =>
+      validar(new FormControl(valor, { nonNullable: true }));
+
+    expect(con([sucursal({ nombre: 'N'.repeat(200) })])).toBeNull();
+    expect(con([sucursal({ nombre: 'N'.repeat(201) })])).toEqual({ sucursalIncompleta: true });
+  });
+});
+
+describe('sucursalesConIdsUnicos (borradores viejos con ids repetidos)', () => {
+  it('sin repetidos devuelve la misma lista, sin copiarla', () => {
+    const lista = [sucursal({ id: 'sucursal-1' }), sucursal({ id: 'sucursal-2' })];
+
+    expect(sucursalesConIdsUnicos(lista)).toBe(lista);
+  });
+
+  it('el repetido toma el siguiente número libre y la primera conserva el suyo', () => {
+    const lista = [
+      sucursal({ id: 'sucursal-1', nombre: 'A' }),
+      sucursal({ id: 'sucursal-1', nombre: 'B' }),
+      sucursal({ id: 'sucursal-3', nombre: 'C' }),
+      sucursal({ id: 'sucursal-1', nombre: 'D' }),
+    ];
+
+    const unica = sucursalesConIdsUnicos(lista);
+
+    expect(unica.map((s) => s.id)).toEqual(['sucursal-1', 'sucursal-4', 'sucursal-3', 'sucursal-5']);
+    expect(unica.map((s) => s.nombre)).toEqual(['A', 'B', 'C', 'D']);
+    expect(lista[1]!.id).toBe('sucursal-1');
   });
 });
 
@@ -163,9 +208,10 @@ describe('BranchesEditor', () => {
     const errores = Array.from(
       raiz.querySelectorAll('[data-testid="t-sucursal-1"] .form-field-error'),
     ).map((e) => e.textContent?.trim());
+    // El nombre va dentro del bloque de lo deducido (primero en el DOM); el del mapa, al cierre del selector.
     expect(errores).toEqual([
-      'Marque la sucursal en el mapa y confirme la dirección.',
       'Escriba el nombre de la sucursal.',
+      'Marque la sucursal en el mapa y confirme la dirección.',
     ]);
     // Ya no es un `<p role="alert">` suelto: el campo del nombre queda marcado inválido.
     expect(raiz.querySelector('[data-testid="t-sucursal-1"] .status-error')).not.toBeNull();
@@ -197,6 +243,59 @@ describe('BranchesEditor', () => {
     const aviso = raiz.querySelector('[data-testid="t-aviso-lote"]')?.textContent ?? '';
     expect(aviso).toContain('el nombre y el punto');
     expect(aviso).not.toContain('la dirección y el punto');
+  });
+
+  it('un nombre de 201 caracteres no se corta en silencio: se conserva y dice que se pasó, sin esperar a avanzar', async () => {
+    editor().agregar();
+    editor().escribirNombre('sucursal-1', 'N'.repeat(201));
+    fixture.componentInstance.mostrarFaltantes.set(false);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.lista()[0]!.nombre).toHaveLength(201);
+    expect(raiz.textContent).toContain('El nombre no puede pasar de 200 caracteres.');
+  });
+
+  it('un nombre de 200 caracteres no dice nada', async () => {
+    editor().agregar();
+    editor().escribirNombre('sucursal-1', 'N'.repeat(200));
+    fixture.componentInstance.mostrarFaltantes.set(false);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(raiz.textContent).not.toContain('no puede pasar de');
+  });
+
+  it('el lote no corta el nombre de una fila: la marca inválida (201) y deja pasar la de 200', () => {
+    editor().agregarEnLote([borrador({ name: 'N'.repeat(201) }), borrador({ name: 'M'.repeat(200) })]);
+    const lista = fixture.componentInstance.lista();
+
+    expect(lista[0]!.nombre).toHaveLength(201);
+    expect(lista[1]!.nombre).toHaveLength(200);
+    expect(faltaDeNombre(lista[0]!)).not.toBeNull();
+    expect(faltaDeNombre(lista[1]!)).toBeNull();
+  });
+
+  it('el diálogo de carga en lote dice el tope real del alta (50), no el del archivo (300)', async () => {
+    boton('t-subir-sucursales')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const texto = raiz.textContent ?? '';
+    expect(texto).toContain('Hasta 50 sucursales en total');
+    expect(texto).not.toContain('Hasta 300 sucursales por archivo');
+  });
+
+  it('el nombre va dentro del bloque de lo deducido, como primer campo de su rejilla, aun sin punto', async () => {
+    editor().agregar();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const bloque = raiz.querySelector('[data-testid="t-sucursal-1-map-deducido"]');
+    expect(bloque).not.toBeNull();
+    expect(bloque!.classList.contains('registro__deducido--tres')).toBe(true);
+    expect(bloque!.querySelector('[data-testid="t-sucursal-1-nombre"]')).not.toBeNull();
+    expect(bloque!.firstElementChild!.querySelector('[data-testid="t-sucursal-1-nombre"]')).not.toBeNull();
   });
 
   describe('ids únicos aunque el editor se destruya y se recree', () => {

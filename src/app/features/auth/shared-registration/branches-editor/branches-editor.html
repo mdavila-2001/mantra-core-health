@@ -20,11 +20,15 @@
 
       <!-- La dirección sale del punto: la persona sólo lo marca. El campo sin
            rótulo sólo existe para dar al mapa el mismo error accesible que a
-           los demás controles. -->
+           los demás controles. El nombre va DENTRO del selector, como primer
+           campo de su rejilla (`disposicion`): junto a la calle y el distrito,
+           de a dos desde 672 px y de a tres desde 1120 px, en vez de una casilla
+           suelta a todo el ancho. -->
       <app-form-field [errorMessage]="errorDePunto(sucursal)">
         <app-map-location-picker
           [pinId]="sucursal.id"
           [inicial]="sucursal.gps"
+          disposicion="tres-columnas"
           etiquetaConfirmada="Esta sucursal"
           etiquetaQuitar="Quitar la ubicación de esta sucursal"
           etiquetaMapa="La ubicación de esta sucursal en el mapa"
@@ -32,21 +36,22 @@
           [ids]="idsDe(sucursal.id)"
           (confirmado)="fijarGps(sucursal.id, $event)"
           (localidad)="escribirLocalidad(sucursal.id, $event)"
-        />
-      </app-form-field>
-
-      <app-form-field
-        icon="building"
-        [label]="'Nombre de la sucursal ' + (i + 1)"
-        [errorMessage]="errorDeNombre(sucursal)"
-      >
-        <app-input
-          [testId]="prefijoTestId() + '-' + sucursal.id + '-nombre'"
-          placeholder="Sucursal Equipetrol"
-          [value]="sucursal.nombre"
-          [hasError]="errorDeNombre(sucursal) !== ''"
-          (valueChange)="escribirNombre(sucursal.id, $event)"
-        />
+        >
+          <app-form-field
+            campo-previo
+            icon="building"
+            [label]="'Nombre de la sucursal ' + (i + 1)"
+            [errorMessage]="errorDeNombre(sucursal)"
+          >
+            <app-input
+              [testId]="prefijoTestId() + '-' + sucursal.id + '-nombre'"
+              placeholder="Sucursal Equipetrol"
+              [value]="sucursal.nombre"
+              [hasError]="errorDeNombre(sucursal) !== ''"
+              (valueChange)="escribirNombre(sucursal.id, $event)"
+            />
+          </app-form-field>
+        </app-map-location-picker>
       </app-form-field>
     </section>
   } @empty {
@@ -92,6 +97,7 @@
   @if (cargaEnLoteAbierta()) {
     <app-branch-bulk-import
       [testIdPrefix]="prefijoTestId() + '-lote'"
+      [maxSucursales]="maximo()"
       [existingNames]="nombresEscritos()"
       (imported)="agregarEnLote($event)"
       (closed)="cargaEnLoteAbierta.set(false)"

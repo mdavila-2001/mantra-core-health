@@ -16,6 +16,7 @@
  *
  * Uso: `node playwright/alta-organizacion-medica.mjs [urlBase]`  (por omisión http://127.0.0.1:4300)
  * Variables: `PW_CHROMIUM` (ruta del ejecutable), `SALIDA` (carpeta de capturas),
+ * `IMAGENOLOGIA=1` (sólo mide la geometría del selector de punto de imagenología, para compararla con `HEAD`),
  * `SOLO_UNIPERSONAL=1` (sólo la UNIPERSONAL y el 409), `SIN_UNIPERSONAL=1`, `PREFIJO_SALIDA` (prefijo de los json),
  * `ANCHOS` (px separados por coma; por omisión `1440,390`; la línea base del repo es
  * `1920,1440,1024,768,390`), `TEMAS` (`claro`, `oscuro` o ambos; por omisión `claro`).
@@ -134,6 +135,58 @@ function celdasPorRenglon(m) {
   const filas = new Map();
   for (const c of m.celdas) filas.set(c.arriba, (filas.get(c.arriba) ?? 0) + 1);
   return [...filas.entries()].sort((a, b) => a[0] - b[0]).map(([, n]) => n);
+}
+
+const ubicaciones = [];
+
+/**
+ * Mide el bloque de lo deducido de un selector de punto (`<id>-map-deducido`): calle, distrito y, en las
+ * sucursales del alta médica, el nombre. Devuelve las celdas (hijos directos de la rejilla) y el ancho de cada
+ * casilla de texto (textarea, input y combobox).
+ */
+async function medirDeducido(p, idMapa) {
+  return p.evaluate((id) => {
+    const bloque = document.querySelector(`[data-testid="${id}-deducido"]`);
+    if (!bloque) return null;
+    const vw = window.innerWidth;
+    const caja = (el) => {
+      const r = el.getBoundingClientRect();
+      return { izq: Math.round(r.left), der: Math.round(r.right), arriba: Math.round(r.top), ancho: Math.round(r.width) };
+    };
+    const visible = (el) => el.getBoundingClientRect().width > 0;
+    const celdas = [...bloque.children].filter(visible).map((el) => ({ tag: el.tagName.toLowerCase(), ...caja(el) }));
+    const casillas = [...bloque.querySelectorAll('textarea, input:not([type=hidden]), [role=combobox]')].filter(visible).map((el) => ({
+      id: el.getAttribute('data-testid') ?? el.closest('[data-testid]')?.getAttribute('data-testid') ?? el.tagName.toLowerCase(),
+      ...caja(el),
+    }));
+    const b = caja(bloque);
+    return {
+      vw,
+      bloque: b,
+      celdas,
+      casillas,
+      renglones: Object.values(celdas.reduce((a, c) => ({ ...a, [c.arriba]: (a[c.arriba] ?? 0) + 1 }), {})),
+      desborde: casillas.filter((c) => c.der > vw + 1 || c.izq < -1).map((c) => c.id),
+    };
+  }, idMapa);
+}
+
+/**
+ * Verifica la disposición de lo deducido: `esperado(vw)` son las celdas por renglón; ninguna casilla de texto
+ * pasa de ~900 px a 1920 (regla 6 del cliente: sin casillas kilométricas); nada se sale.
+ */
+async function verificarUbicacion(p, etiqueta, nombre, idMapa, esperado) {
+  const m = await medirDeducido(p, idMapa);
+  if (!m) {
+    ok(`[${etiqueta}] ${nombre}: existe el bloque de lo deducido`, false, idMapa);
+    return;
+  }
+  ubicaciones.push({ viewport: etiqueta, pagina: nombre, ...m });
+  ok(`[${etiqueta}] ${nombre}: lo deducido se reparte ${JSON.stringify(esperado(m.vw))} a ${m.vw} px`, JSON.stringify(m.renglones) === JSON.stringify(esperado(m.vw)), `real ${JSON.stringify(m.renglones)}`);
+  const textos = m.casillas.filter((c) => !/-(departamento|provincia|municipio)$/.test(c.id));
+  const anchos = textos.map((c) => `${c.id.replace('medical-center-signup-', '')}=${c.ancho}`).join(' ');
+  ok(`[${etiqueta}] ${nombre}: ninguna casilla de texto pasa de 900 px y nada se sale (${anchos})`, m.desborde.length === 0 && textos.every((c) => c.ancho <= 900), anchos);
+  process.stdout.write(`    · ${nombre} @${m.vw}: bloque ${m.bloque.ancho} px; renglones ${JSON.stringify(m.renglones)}; ${anchos}\n`);
 }
 
 /**
@@ -391,6 +444,8 @@ async function recorrer(browser, vp) {
   await pagina(p, etiqueta, '11-central-sin-punto', 'Dónde está la casa central');
   await marcarPunto(p, 'medical-center-signup-central');
   await pagina(p, etiqueta, '12-central-con-punto', 'Dónde está la casa central');
+  // Calle y distrito, uno al lado del otro desde 672 px; la ficha de la localidad cruza todo el ancho.
+  await verificarUbicacion(p, etiqueta, '12-central-con-punto', 'medical-center-signup-central-map', (vw) => (vw >= 672 ? [2, 1] : [1, 1, 1]));
   await continuar(p);
 
   // 6 · Sucursales (una, completa)
@@ -405,9 +460,13 @@ async function recorrer(browser, vp) {
   ok(`[${etiqueta}] una sucursal a medias frena y dice qué falta, en el campo del nombre y en el del mapa`,
     textos.some((t) => /nombre de la sucursal/i.test(t)) && textos.some((t) => /mapa/i.test(t)), textos.join(' | '));
   await foto(p, etiqueta, '14-sucursal-incompleta');
+  // Sin punto, sólo el nombre (primer campo de la rejilla de la sucursal, dentro del bloque de lo deducido).
+  await verificarUbicacion(p, etiqueta, '14-sucursal-incompleta', 'medical-center-signup-sucursal-1-map', () => [1]);
   await marcarPunto(p, 'medical-center-signup-sucursal-1', 60);
   await llenar(p, 'medical-center-signup-sucursal-1-nombre', 'Sucursal Equipetrol');
   await pagina(p, etiqueta, '15-sucursal-completa', 'Sus sucursales');
+  // Nombre, calle y distrito comparten rejilla: de a tres desde 1120 px, de a dos desde 672 px.
+  await verificarUbicacion(p, etiqueta, '15-sucursal-completa', 'medical-center-signup-sucursal-1-map', (vw) => (vw >= 1120 ? [3, 1] : vw >= 672 ? [2, 1, 1] : [1, 1, 1, 1]));
   await continuar(p);
 
   // 7 · Representante legal
@@ -593,10 +652,49 @@ async function unipersonalY409(browser) {
   await ctx.close();
 }
 
+/**
+ * Geometría del selector de punto de IMAGENOLOGÍA (no se tocó): sirve para comparar el código nuevo contra
+ * `HEAD`. Salta directo a la página «ubicacion» con el `indice` del asistente (sin validar las anteriores: es
+ * una medición, no un recorrido), pone el pin y mide lo deducido de la central y de una sucursal.
+ */
+async function medirImagenologia(browser, vp) {
+  const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, locale: 'es-BO' });
+  const p = await ctx.newPage();
+  await p.goto(`${BASE}/auth/register/imaging-center`, { waitUntil: 'domcontentloaded', timeout: 240_000 });
+  await p.getByTestId('registro-form-imagenologia').waitFor({ timeout: 120_000 });
+  const saltar = (clave) =>
+    p.evaluate((c) => {
+      const comp = window.ng.getComponent(document.querySelector('app-register-imaging-center'));
+      const pf = window.ng.getComponent(document.querySelector('app-paginated-form'));
+      pf.indice.set(comp.paginas.findIndex((x) => x.clave === c));
+    }, clave);
+  await saltar('ubicacion');
+  await p.waitForTimeout(2500); // el mapa tarda en armarse tras saltar de página
+  await marcarPunto(p, 'registro-imagen-central');
+  const central = await medirDeducido(p, 'registro-imagen-central-map');
+  await saltar('sucursales');
+  await p.getByTestId('registro-imagen-agregar-sucursal').click();
+  await p.waitForTimeout(2500);
+  await marcarPunto(p, 'registro-imagen-sucursal-1', 60).catch(async () => {
+    const id = await p.evaluate(() => document.querySelector('[data-testid$="-map"][data-testid*="registro-imagen-sucursal"]')?.getAttribute('data-testid'));
+    throw new Error(`sin mapa de sucursal (${id})`);
+  });
+  const sucursal = await medirDeducido(p, 'registro-imagen-sucursal-1-map');
+  await ctx.close();
+  return { viewport: vp.etiqueta, central, sucursal };
+}
+
 async function main() {
   mkdirSync(SALIDA, { recursive: true });
   const navegador = await chromium.launch(process.env['PW_CHROMIUM'] ? { executablePath: process.env['PW_CHROMIUM'] } : {});
   try {
+    if (process.env['IMAGENOLOGIA'] === '1') {
+      const geometria = [];
+      for (const vp of VIEWPORTS.filter((v) => v.tema === 'claro')) geometria.push(await medirImagenologia(navegador, vp));
+      writeFileSync(`${SALIDA}/${process.env['PREFIJO_SALIDA'] ?? ''}imagenologia.json`, JSON.stringify(geometria, null, 2));
+      process.stdout.write(`imagenología: ${geometria.length} anchos medidos\n`);
+      return;
+    }
     if (process.env['SOLO_UNIPERSONAL'] !== '1') for (const vp of VIEWPORTS) await recorrer(navegador, vp);
     if (process.env['SIN_UNIPERSONAL'] !== '1') await unipersonalY409(navegador);
   } finally {
@@ -604,6 +702,7 @@ async function main() {
   }
   const fallos = veredictos.filter((v) => !v.cond);
   const prefijo = process.env['PREFIJO_SALIDA'] ?? '';
+  if (ubicaciones.length > 0) writeFileSync(`${SALIDA}/${prefijo}ubicaciones.json`, JSON.stringify(ubicaciones, null, 2));
   writeFileSync(`${SALIDA}/${prefijo}veredictos.json`, JSON.stringify(veredictos, null, 2));
   if (mediciones.length > 0) writeFileSync(`${SALIDA}/${prefijo}mediciones.json`, JSON.stringify(mediciones, null, 2));
   process.stdout.write(`\n${veredictos.length - fallos.length}/${veredictos.length} verificaciones\n`);

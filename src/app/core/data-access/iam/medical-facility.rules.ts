@@ -7,7 +7,7 @@
     rechaza.
     ========================================================================== */
 
-import { CORREO_CON_DOMINIO } from './strict-email';
+import { esCorreoComoLaApi } from './strict-email';
 
 /** El NIT boliviano: dígitos, con o sin guiones, de 4 a 20 caracteres. */
 export const NIT_PATTERN = /^[0-9][0-9-]{3,19}$/;
@@ -131,7 +131,7 @@ function directorIssues(director: unknown, prefijo: string): string[] {
   }
 
   const correo = recortado(d['email']) ?? '';
-  if (!CORREO_CON_DOMINIO.test(correo)) issues.push(`${prefijo}.email must be an email`);
+  if (!esCorreoComoLaApi(correo)) issues.push(`${prefijo}.email must be an email`);
   else if (correo.length > MEDICAL_EMAIL_MAX) {
     issues.push(`${prefijo}.email must be shorter than or equal to ${MEDICAL_EMAIL_MAX} characters`);
   }
