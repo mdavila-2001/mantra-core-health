@@ -1,5 +1,79 @@
 # Estado
 
+## Alta de organización médica: correcciones tras la auditoría de tres revisores — 2026-10-28
+
+Los revisores auditaron `register-medical-center/`, `shared-registration/`, `core/data-access/iam/` y el simulador. Se corrigió lo
+que pidieron (A–L) y nada más; **no se auto-aprueba**: los revisores re-auditan aparte.
+
+- **A · ids de sucursal duplicados.** `BranchesEditor` repartía `sucursal-N` con un contador por instancia; el formulario paginado
+  destruye y recrea el editor al cambiar de página y al restaurar un borrador, así que repetía `sucursal-1`. Ahora parte del mayor
+  id de la lista (y del contador del editor, que se conserva para no reusar el número de una quitada). Specs: crear dos, recrear el
+  editor y agregar; editar la nueva sin tocar las otras; restaurar un borrador y cargar en lote; ids salteados. Comprobado por
+  mutación: con el arreglo revertido fallan 4 de los specs nuevos.
+- **B · «   » pasaba `required`.** NIT, registro del SEDES, matrícula del director, documento del representante, razón social y
+  primer nombre/apellido de director y representante cuentan ahora como dato que falta (`required`, con el mensaje de «falta» del
+  campo). Pieza nueva `shared-registration/trimmed-text.ts` (`noSoloEspacios`, `largoRecortado`); `nameGroup(obligatorio,
+  viajaEnPartes)` lo pide sólo si se lo piden, así que las demás altas no cambian. La razón social no estaba en la lista de los
+  revisores: es el mismo defecto y se corrigió con él.
+- **C · borrador.** `guardarBorrador` quita `password` por su cuenta (además de `OnboardingDraftService`); el spec asevera que ni la
+  clave ni ningún `fileId` aparece en ningún argumento de `saveProgress`.
+- **D · fuerza de las pruebas.** El spec afirma la disposición de **todas** las páginas, y que toda página de dos o más campos
+  declare columnas. En `cm-11-organizacion-medica-api-real.spec.ts` la aserción de «una columna» se reemplazó por la medición real
+  de la página del director (nombre en su renglón; matrícula, correo y teléfono en un renglón desde 1120 px, de a dos desde 672 px,
+  una columna debajo). **Ese spec no se ejecutó** (exige la API real, Postgres y el front en `real-api`): sólo se comprobó con
+  `tsc`.
+- **E · columnas (regla 6 del cliente).** Organización a tres columnas; **Datos del establecimiento** (NIT + registro del SEDES) y
+  gerencias a dos; director a tres con el nombre en su renglón (`ancho: 'completo'`); representante a dos. Para no dejar casillas
+  sueltas (una página de un solo campo medía 1.614 px a 1920) se movieron **dos campos de página, sin tocar el contrato**: el NIT
+  pasó de la primera a «Datos del establecimiento», y el correo del representante —que es el usuario de la cuenta— pasó a «Su
+  acceso», junto a la contraseña. Las páginas del poder, el mapa, las sucursales y los papeles son zonas de carga o mapas, no
+  casillas. En 672–1119 px el motor cruza el último campo de una cantidad impar (regla de `paginated-form.css`): en «La
+  organización» el tipo societario ocupa el renglón entero (809 px a 1024).
+- **F · gerencias.** El texto ya no dice «Todo este paso es opcional»: dice que son las tres o ninguna. Cada celular, correo y primer
+  nombre vacío es `required` mientras haya algo escrito en el bloque (se revalidan entre sí), así que el motor frena en la página de
+  la gerencia que falta con el mensaje junto al campo, y «Enviar» lleva a la primera afectada. La pantalla además marca las
+  casillas del nombre al bloquear (`alRechazarPagina`). Se conserva el aviso de arriba como red de seguridad.
+- **G · correos.** Director, representante y gerencias usan el patrón estricto de `register-patient` (extraído a
+  `core/data-access/iam/strict-email.ts`; el alta de paciente lo importa sin cambiar de comportamiento).
+- **H · `middleName` plegado.** Segundo + tercero + agregados no pueden pasar de 100 (`nombresAdicionalesLargos`, con el mensaje que
+  ya mostraba `app-inline-name-fields`). Spec 60 + 1 + 59 (no) y 49 + 1 + 50 (sí).
+- **I · analítica.** Se quitó «Organización médica» del filtro; `medical-center` sigue en `OnboardingFormType`.
+- **J · contrato.** `api-contract.generated.ts` regenerado con `gen-mock-contract.mjs --api-ref claude/happy-noether-3qtam8`
+  (e394a98c): los DTO se llaman `MedicalFacilityDto`, `MedicalDirectorDto`, `MedicalFacilityHeadquartersDto` y
+  `MedicalFacilitySiteDto` (nada del front usaba los nombres provisionales); `--check` pasa. El simulador acepta `headquarters` y su
+  nombre como opcionales (como la API: nace «Casa central»), valida IsEmail estricto, nombre de sede 200, 1–10 líneas de ≤ 500,
+  `middleName`/`motherLastName` 100, teléfono 7–30, y devuelve 400 de forma antes que 422 de negocio. El cliente ya no manda la clave
+  `headquarters` si no la hay. **Un spec del simulador cambió de sentido**: «400 — falta la casa central» pasó a «200 — la casa
+  central es opcional», porque aquel comportamiento contradecía a la API real. No se validó el `owner` en el simulador (nunca se
+  hizo).
+- **K · duplicaciones y accesibilidad.** Un solo tope de 50 (`MAX_MEDICAL_FACILITY_BRANCHES`, pasado por `[maximo]`);
+  `MEDICAL_TENANT_TYPES` salió a favor de `isMedicalOrganizationType`; comentario CSS corregido; el aviso del lote dice la verdad
+  («se toman el nombre y el punto; la dirección se deduce del punto»); el error de una sucursal sale por `app-form-field`/`app-input`
+  (nombre y mapa) en vez del `<p role="alert">`, y al quitar una el foco pasa a la vecina o a «Agregar sucursal».
+- **L · techos de líneas.** `check-max-lines` sigue rojo en la base; la salida es la misma antes y después salvo `register-patient.ts`
+  (3.374 → 3.368). No se tocaron `auth.handlers.ts`, `concepts.ts` ni `iam.types.ts`.
+
+**Verificado** (rama, tras el reinicio del contenedor, de a un proceso por vez): `yarn lint` exit 0 · `yarn typecheck` exit 0 ·
+`yarn build` exit 0 (con `NG_BUILD_PARALLEL_TS=0 NODE_OPTIONS=--max-old-space-size=8192`) · `gen-mock-contract.mjs --check` pasa ·
+`yarn ng test` dirigido (register-medical-center, shared-registration, core/data-access/iam, mock/handlers/auth*,
+register-imaging-center, register-laboratory, register-patient, register-pharmacy, register-organization, web-analytics): 32 archivos,
+769 pruebas, todas pasan. **Navegador**: `playwright/alta-organizacion-medica.mjs` contra el servidor de desarrollo con la
+configuración `development,demo`, a 1920, 1440, 1024, 768 y 390 px en **claro y oscuro**: 1186 de 1186 verificaciones (sin desborde,
+tarjeta centrada, disposición en columnas por ancho, ningún campo corto sobre el 60 % de la rejilla, gerencias a medias, sucursal a
+medias, la mutación completa en cada ancho, la UNIPERSONAL y el 409). Mediciones por página en
+[`correcciones/mediciones.json`](capturas/alta-organizacion-medica-2026-10-28/correcciones/mediciones.json) y veredictos en
+`veredictos.json`; se conservan sólo las capturas de las páginas tocadas (el script regenera todas). A 1920 px: matrícula/correo/
+teléfono 504/504/413 px, NIT y SEDES 789/789 px, correo y contraseña 789/759 px; antes, una casilla por renglón (documento y correo del
+representante 1.644 px, contraseña 1.614 px, medidos con el código anterior a esta corrección).
+
+**No se ejecutó**: `cm-11-organizacion-medica-api-real.spec.ts` (sin API real) ni `cm-11-medical-center.spec.ts` (actualizados al
+flujo nuevo, sólo `tsc`); la persistencia → recarga → UI (el simulador no guarda la organización); la suite completa (`yarn ng test`
+entero) ni los `check-*.mjs` salvo `check-max-lines` y `gen-mock-contract --check`; geocodificación inversa (sin red). Fuera de
+alcance, tal como se pidió: aviso «Borrador guardado», `--text-danger` en oscuro, spinner del localizador, tamaño táctil de «Quitar»
+del dropzone y los tipos `medical-center` del embudo de telemetría.
+
+---
+
 ## Alta de organización médica: paridad con imagenología + registro del SEDES + director médico — 2026-10-28
 
 `/auth/register/medical-center` (hospital, clínica, consultorio, enfermería, otra) pedía tipo, razón social, tipo societario,
