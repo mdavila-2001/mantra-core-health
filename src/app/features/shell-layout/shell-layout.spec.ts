@@ -9,6 +9,8 @@ import type { ConversationListItem } from '../../core/data-access/community/comm
 import { CartStore, type NuevaLineaDeCarrito } from '../../core/data-access/pharmacy-cart/cart.store';
 import type { CartSite } from '../../core/data-access/pharmacy-cart/pharmacy-cart.types';
 import { ChatStore } from '../../core/messaging/chat.store';
+import { PatientSurveyInbox } from '../../core/patient-surveys/patient-survey-inbox';
+import type { PatientInvitation } from '../../core/data-access/surveys/surveys.types';
 import { ChatSocketService } from '../../core/messaging/chat-socket.service';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { NAV_ICON_NAMES } from '../../core/navigation/navigation.types';
@@ -76,6 +78,9 @@ describe('ShellLayout', () => {
           { path: 'my-account/invoices', children: [] },
           { path: 'my-account/requests', children: [] },
           { path: 'my-account/promotions', children: [] },
+          // «Mis encuestas» (28/10/2026): la pantalla y la de responder una.
+          { path: 'my-account/questionnaires', children: [] },
+          { path: 'my-account/questionnaires/:invitationId', children: [] },
           { path: 'my-account/pharmacy/cart', children: [] },
           // Dos de los cuatro directorios y una ficha: no ocupan renglón desde
           // el 08/09/2026, y son con lo que se comprueba que la portada se
@@ -1435,6 +1440,218 @@ describe('ShellLayout', () => {
         );
         expect(rutas.length).toBeGreaterThan(0);
         expect(rutas).not.toContain('/my-account/spending');
+      });
+    });
+
+    /**
+     * 28/10/2026 · La bandeja de encuestas del paciente, arriba. Sólo la ve el
+     * paciente, y sólo cuando una atención terminada le generó una encuesta
+     * (`GET /surveys/me/invitations` devolvió alguna). El número son las
+     * pendientes dentro del plazo.
+     */
+    describe('Mis encuestas en la cabecera', () => {
+      const EN_UN_DIA = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const AYER = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      function invitacion(
+        id: string,
+        status: PatientInvitation['status'],
+        expiresAt: Date | null = EN_UN_DIA,
+      ): PatientInvitation {
+        return {
+          id,
+          title: 'Cómo le fue en la consulta',
+          status,
+          issuedAt: AYER,
+          expiresAt,
+          answeredAt: status === 'ANSWERED' ? AYER : null,
+          appointmentBookingId: `bk-${id}`,
+        };
+      }
+
+      function enlace(): HTMLAnchorElement | null {
+        return raiz().querySelector<HTMLAnchorElement>('[data-testid="header-encuestas"]');
+      }
+
+      function badge(): Element | null {
+        return raiz().querySelector('[data-testid="header-encuestas-badge"]');
+      }
+
+      /** Responde la lectura de la bandeja que el armazón hace al tener sesión de paciente. */
+      function responder(invitaciones: readonly unknown[]): void {
+        raiz();
+        TestBed.inject(HttpTestingController)
+          .match((pedido) => pedido.url === '/surveys/me/invitations')
+          .forEach((pedido) => pedido.flush(invitaciones));
+        fixture.detectChanges();
+      }
+
+      /** Una invitación tal como viaja: fechas en texto y opcionales en `null`. */
+      function enElCable(id: string, status: string, expiresAt: Date | null = EN_UN_DIA) {
+        return {
+          id,
+          title: 'Cómo le fue en la consulta',
+          description: null,
+          status,
+          issuedAt: AYER.toISOString(),
+          expiresAt: expiresAt === null ? null : expiresAt.toISOString(),
+          answeredAt: status === 'ANSWERED' ? AYER.toISOString() : null,
+          appointmentBookingId: `bk-${id}`,
+        };
+      }
+
+      it('el paciente SIN ninguna encuesta no ve el ícono: no hay a dónde llevarlo', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([]);
+
+        expect(enlace()).toBeNull();
+      });
+
+      it('el paciente CON una encuesta ve el ícono, hasta si ya la respondió', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'ANSWERED')]);
+
+        expect(enlace()).not.toBeNull();
+        expect(enlace()?.tagName).toBe('A');
+        expect(enlace()?.querySelector('app-nav-icon')).not.toBeNull();
+        // Sin pendientes no hay número, y el nombre no inventa uno.
+        expect(badge()).toBeNull();
+        expect(enlace()?.getAttribute('aria-label')).toBe('Mis encuestas');
+      });
+
+      it('abre «Mis cuestionarios» en la pestaña de encuestas', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        expect(enlace()?.getAttribute('href')).toBe('/my-account/questionnaires?seccion=encuestas');
+      });
+
+      it('sólo es del paciente: la médica no lo ve aunque el store tuviera encuestas', () => {
+        abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        TestBed.inject(PatientSurveyInbox).sincronizar([invitacion('i-1', 'PENDING')]);
+
+        expect(enlace()).toBeNull();
+        // Y el armazón ni siquiera lee la bandeja de quien no es paciente.
+        TestBed.inject(HttpTestingController).expectNone('/surveys/me/invitations');
+      });
+
+      it('el contador son las pendientes DENTRO DEL PLAZO; una vencida no cuenta', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([
+          enElCable('i-1', 'PENDING'),
+          enElCable('i-2', 'PENDING'),
+          enElCable('i-3', 'PENDING', AYER),
+          enElCable('i-4', 'ANSWERED'),
+          enElCable('i-5', 'EXPIRED', AYER),
+        ]);
+
+        expect(badge()?.textContent?.trim()).toBe('2');
+        expect(badge()?.getAttribute('aria-hidden')).toBe('true');
+      });
+
+      it('el nombre accesible dice cuántas esperan, en singular y en plural', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        const bandeja = TestBed.inject(PatientSurveyInbox);
+
+        bandeja.sincronizar([invitacion('i-1', 'PENDING')]);
+        expect(enlace()?.getAttribute('aria-label')).toBe('Mis encuestas, 1 pendiente');
+
+        bandeja.sincronizar([invitacion('i-1', 'PENDING'), invitacion('i-2', 'PENDING')]);
+        expect(enlace()?.getAttribute('aria-label')).toBe('Mis encuestas, 2 pendientes');
+      });
+
+      it('lleva globo con su nombre, igual que Chats', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        const tooltip = fixture.debugElement
+          .query(By.css('[data-testid="header-encuestas"]'))
+          .injector.get(Tooltip);
+        expect(tooltip.appTooltip()).toBe('Mis encuestas');
+        expect(tooltip.appTooltipPosition()).toBe('bottom');
+      });
+
+      it('vive dentro de «Más accesos», la lista que en el teléfono se pliega', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        expect(
+          raiz().querySelector('.app-header__rapidos-lista [data-testid="header-encuestas"]'),
+        ).not.toBeNull();
+      });
+
+      it('no vuelve a la barra lateral: «Mis cuestionarios» sigue fuera del menú', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        const rutas = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+        expect(rutas).not.toContain('/my-account/questionnaires');
+      });
+
+      it('se marca estando en la pantalla, con o sin la pestaña de encuestas, y «Mi perfil» no', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        for (const url of [
+          '/my-account/questionnaires?seccion=encuestas',
+          '/my-account/questionnaires',
+          '/my-account/questionnaires/i-1',
+        ]) {
+          await router.navigateByUrl(url);
+          fixture.detectChanges();
+          // `routerLinkActive` se actualiza en una microtarea, después del cambio de ruta.
+          await fixture.whenStable();
+          fixture.detectChanges();
+          expect(enlace()?.classList, url).toContain('is-activo');
+          expect(enlace()?.getAttribute('aria-current'), url).toBe('page');
+          expect(
+            raiz().querySelectorAll('[data-testid="nav-enlace"][aria-current="page"]').length,
+            url,
+          ).toBe(0);
+        }
+
+        await router.navigateByUrl('/messaging');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(enlace()?.classList).not.toContain('is-activo');
+      });
+
+      it('lee la bandeja UNA vez por sesión, no una por pantalla (sin N+1)', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        const http = TestBed.inject(HttpTestingController);
+        raiz();
+        const lecturas = http.match((pedido) => pedido.url === '/surveys/me/invitations');
+        expect(lecturas.length).toBe(1);
+        lecturas[0]!.flush([enElCable('i-1', 'PENDING')]);
+
+        await router.navigateByUrl('/messaging');
+        await router.navigateByUrl('/my-account');
+        fixture.detectChanges();
+        http.expectNone('/surveys/me/invitations');
+      });
+
+      it('si la lectura falla, el ícono no aparece de más ni rompe la cabecera', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        raiz();
+        TestBed.inject(HttpTestingController)
+          .match((pedido) => pedido.url === '/surveys/me/invitations')
+          .forEach((pedido) => pedido.flush({ message: 'boom' }, { status: 500, statusText: 'x' }));
+
+        expect(enlace()).toBeNull();
+        expect(raiz().querySelector('[data-testid="header-chats"]')).not.toBeNull();
+      });
+
+      it('al cerrarse la sesión de paciente, la bandeja se olvida', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+        expect(enlace()).not.toBeNull();
+
+        abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        expect(enlace()).toBeNull();
+        expect(TestBed.inject(PatientSurveyInbox).hayInvitaciones()).toBe(false);
       });
     });
 
