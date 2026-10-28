@@ -286,3 +286,12 @@ app-card.expediente__activas {
     flex: none;
   }
 }
+
+/* Qué deja afuera el filtro, o qué no exporta el recorrido. Texto y no un
+   aviso de color: informa, no alarma. */
+.expediente__aviso-filtro {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

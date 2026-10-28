@@ -1,4 +1,7 @@
-<div class="recorrido" data-testid="expediente-recorrido">
+<!-- Fuera del PDF: el extractor lee el DOM, y un lienzo posicionado sale como
+     párrafos con el texto de cada columna pegado, sin tipo ni vínculos. El
+     expediente avisa arriba qué se exporta desde esta vista. -->
+<div class="recorrido" data-testid="expediente-recorrido" data-pdf-ignore>
   <!-- La leyenda va arriba y no al pie: sin ella, los colores y las dos clases
        de línea son un código que hay que adivinar. -->
   <div class="recorrido__barra">
@@ -116,7 +119,11 @@
             [style.width.px]="medidas.anchoColumna"
             [attr.aria-label]="
               (columna.fecha ? (columna.fecha | date: 'd MMMM y') : 'Sin fecha') +
-              (columna.encuentroId ? ', atención' : ', registros sin atención')
+              (columna.contexto === 'atencion'
+                ? ', atención'
+                : columna.contexto === 'dia'
+                  ? ', registros de atenciones que no están a la vista'
+                  : ', registros sin atención')
             "
           >
             <div class="recorrido__cabecera" [style.height.px]="medidas.altoCabecera">
@@ -129,7 +136,13 @@
                 {{ columna.fecha ? (columna.fecha | date: 'd MMM y') : 'Sin fecha' }}
               </p>
               <p class="recorrido__contexto">
-                {{ columna.encuentroId ? 'Atención' : 'Sin atención' }}
+                {{
+                  columna.contexto === 'atencion'
+                    ? 'Atención'
+                    : columna.contexto === 'dia'
+                      ? 'Registros del día'
+                      : 'Sin atención'
+                }}
               </p>
               <span
                 class="recorrido__hito"
@@ -153,8 +166,8 @@
                     [attr.title]="nodo.grupo ? nodo.secundario : nodo.principal"
                     data-testid="recorrido-nodo"
                     [attr.data-tipo]="nodo.tipo"
-                    (mouseenter)="enfocar(nodo.id)"
-                    (mouseleave)="enfocar(null)"
+                    (mouseenter)="apuntar(nodo.id)"
+                    (mouseleave)="apuntar(null)"
                     (focus)="enfocar(nodo.id)"
                     (blur)="enfocar(null)"
                     [class.recorrido__nodo--grupo]="nodo.grupo !== undefined"

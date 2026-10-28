@@ -60,8 +60,9 @@
     >
       <!-- Tres lecturas de la misma historia. «Por sección» abre la pantalla
            porque es donde se escribe; la tabla y el recorrido son de lectura y
-           comparten el filtro por tipo. -->
-      <div class="expediente__vistas">
+           comparten el filtro por tipo. Fuera del PDF: son controles, y el
+           papel no lleva botones. -->
+      <div class="expediente__vistas" data-pdf-ignore>
         <app-segmented-control
           [options]="opcionesDeVista"
           [value]="vista()"
@@ -96,17 +97,32 @@
           </button>
         </app-alert>
       } @else if (vista() === 'tabla') {
+        <!-- Lo que el filtro deja afuera se dice en texto, no sólo con un chip
+             apagado: es lo que viaja al PDF exportado desde esta vista. -->
+        @if (tiposOcultosEnPalabras() !== '') {
+          <p class="expediente__aviso-filtro" data-testid="expediente-aviso-filtro">
+            Filtrado: no se muestran {{ tiposOcultosEnPalabras() }}.
+          </p>
+        }
         <app-data-table
+          stackedOnMobile
           data-testid="expediente-tabla-unificada"
           [state]="estadoDelHistorial()"
           [columns]="columnasDelHistorial()"
           [trackBy]="porFilaDelHistorial"
           [sort]="ordenDelHistorial()"
-          caption="Todos los registros del expediente"
+          caption="Registros de la historia clínica, en orden cronológico"
           (sortChanged)="ordenarHistorial($event)"
           (retry)="recargar()"
         />
       } @else if (vista() === 'recorrido') {
+        <!-- El lienzo no sale en el PDF (lleva `data-pdf-ignore`): el papel
+             recibe esta línea en su lugar, en vez de un expediente que parezca
+             completo sin su historia. -->
+        <p class="expediente__aviso-filtro">
+          El recorrido es una vista de pantalla: para exportar la historia a PDF, usá «Tabla» o
+          «Secciones».
+        </p>
         <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
           <app-recorrido-clinico
             [nodos]="nodosDelRecorrido()"
