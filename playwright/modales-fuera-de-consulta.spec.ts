@@ -291,8 +291,18 @@ async function medir(modal: Locator): Promise<Medida> {
 /** Cierra con su botón cada modal abierto, de arriba hacia abajo. */
 async function cerrarTodo(page: Page): Promise<void> {
   for (let i = 0; i < 4 && (await page.locator('dialog[open]').count()) > 0; i++) {
-    await dialogo(page).getByTestId('content-dialog-close').last().click({ timeout: 5_000 });
+    await dialogo(page)
+      .getByTestId('content-dialog-close')
+      .last()
+      .click({ timeout: 5_000 })
+      .catch(() => page.keyboard.press('Escape'));
     await page.waitForTimeout(400);
+  }
+  // Un modal que no cierra (una confirmación de descarte, un guardia) no
+  // tiene que tapar los que siguen: se recarga la página.
+  if ((await page.locator('dialog[open]').count()) > 0) {
+    await page.goto(`${BASE}/dashboard`);
+    await page.waitForTimeout(3000);
   }
 }
 
