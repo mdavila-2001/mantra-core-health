@@ -1,0 +1,75 @@
+/* ============================================================================
+    El cuerpo del modal: el estado de pago de la cita arriba, el aviso de la
+    última acción, la lista y, si se pidió, el marcado a mano.
+    ========================================================================== */
+
+.receipts {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.receipts__payment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.receipts__payment-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.receipts__payment-note {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.receipts__list {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.receipts__item {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.receipts__skeleton {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.receipts__skeleton-row {
+  display: grid;
+  grid-template-columns: var(--sp-16) minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: start;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.receipts__skeleton-thumbnail {
+  inline-size: var(--sp-16);
+  block-size: var(--sp-16);
+}
+
+@media (min-width: 780px) {
+  .receipts__skeleton-row {
+    grid-template-columns: var(--sp-20) minmax(0, 1fr);
+  }
+
+  .receipts__skeleton-thumbnail {
+    inline-size: var(--sp-20);
+    block-size: var(--sp-20);
+  }
+}

@@ -225,7 +225,7 @@ form {
 }
 
 .login__anexo:hover {
-  background: color-mix(in srgb, var(--brand-primary) 9%, var(--bg-surface-alt));
+  background: color-mix(in srgb, var(--brand-secondary) 12%, var(--bg-surface-alt));
 }
 
 /* El hundido al pulsar. Es el gesto que más «nativo» se siente y el más barato:
@@ -243,8 +243,10 @@ form {
   inline-size: 2.25rem;
   block-size: 2.25rem;
   border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
-  color: var(--brand-primary);
+  /* Menta y no petróleo (27/10/2026, «está muy azul»): el petróleo queda para
+     «Entrar», la única acción primaria de la tarjeta. */
+  background: var(--st-secondary-bg);
+  color: var(--st-secondary-fg);
 }
 
 .login__anexo-icono svg {

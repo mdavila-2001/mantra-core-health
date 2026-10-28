@@ -75,6 +75,10 @@ describe('PatientHome', () => {
     for (const pending of http.match((r) => r.url === '/profiles/patients/me')) {
       pending.flush({});
     }
+    // La tarjeta del médico de cabecera (28/10/2026) también llega por `@defer`.
+    for (const pending of http.match((r) => r.url === '/profiles/patients/me/primary-practitioner')) {
+      pending.flush({ current: null });
+    }
     http.verify();
   });
 
@@ -144,8 +148,8 @@ describe('PatientHome', () => {
       .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
       .flush(historia ?? historiaVacia());
     fixture.detectChanges();
-    for (const pedido of http.match((r) => r.url === '/scheduling/resources')) {
-      pedido.flush({ items: recursos, count: recursos.length });
+    for (const request of http.match((r) => r.url === '/scheduling/resources')) {
+      request.flush({ items: recursos, count: recursos.length });
     }
     fixture.detectChanges();
   }
@@ -283,7 +287,7 @@ describe('PatientHome', () => {
   /* ---- FT-03 · el bloque de la próxima cita ------------------------------ */
 
   /**
-   * FT-03-R01. El texto es el pedido literal del cliente: «Tu próximo turno»
+   * FT-03-R01. El texto es el request literal del cliente: «Tu próximo turno»
    * no puede quedar en ninguna parte de la pantalla.
    */
   it('llama al bloque «Su próxima cita» y no «Su próximo turno»', async () => {
@@ -384,7 +388,7 @@ describe('PatientHome', () => {
   });
 
   /**
-   * La grilla «Ir a lo tuyo» se retiró a pedido del doctor (P-03, 22/09/2026):
+   * La grilla «Ir a lo tuyo» se retiró a request del doctor (P-03, 22/09/2026):
    * turnos e historia siguen a mano desde las tarjetas del resumen, y la Guía,
    * desde el menú. Lo que se comprueba es que no volvió, y que el camino a los
    * turnos no se fue con ella.

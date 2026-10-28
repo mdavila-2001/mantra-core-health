@@ -2,19 +2,23 @@
     `app-auth-split` en `scene="stage"`, modo claro.
 
     El escenario del latido (`app-auth-stage`) invierte su balance en claro:
-    blanco y menta, tinta petróleo, y celeste solo junto al puntero. Lo que esta
-    plantilla pinta ENCIMA del escenario tiene que acompañarlo: la columna de
-    marca pasa de texto blanco sobre un velo petróleo a tinta petróleo sobre un
-    velo blanco, y el resplandor de la tarjeta deja de ser aqua, que en reposo
-    rompería el «celeste solo con el puntero».
+    blanco y menta, latido en aguamarina, y celeste solo junto al puntero. Lo
+    que esta plantilla pinta ENCIMA del escenario tiene que acompañarlo: la
+    columna de marca pasa de texto blanco sobre un velo petróleo a tinta neutra
+    sobre un velo blanco, y el resplandor de la tarjeta es menta.
+
+    «Está muy azul» (cliente, 27/10/2026): titular y bajada iban en petróleo
+    700. La línea gráfica pide títulos en `--text-primary`; el petróleo queda
+    para la marca (isotipo y palabra) y para la acción (el botón «Entrar»).
 
     Hoja aparte y no dentro de `auth-split.css`: aquella ya es grande, y estas
     reglas son las mismas en todas las ramas. Todo es override bajo
     `:host-context(:root[data-tema='claro'])` (el script del `<head>` fija
     `data-tema` antes del primer pintado), así que el oscuro no cambia.
 
-    Contraste: petróleo 700 sobre blanco da 12,18:1, y 7,00:1 sobre aqua 300
-    puro, el peor fondo posible bajo el resplandor (identidad-visual.md §8).
+    Contraste: la tinta neutral-500 da 15,1:1 sobre blanco y 10,1:1 sobre aqua
+    300 puro, el peor fondo posible bajo el resplandor (identidad-visual.md §8);
+    la palabra en petróleo 500 da 7,25:1 sobre blanco.
     ========================================================================== */
 
 /* El logo petróleo solo existe para el escenario claro. */
@@ -33,11 +37,11 @@
   display: none;
 }
 
-/* Resplandor detrás de la tarjeta: respira igual, pero en petróleo muy suave. */
+/* Resplandor detrás de la tarjeta: respira igual, pero en menta muy suave. */
 :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__slot::before {
   background: radial-gradient(
     closest-side,
-    color-mix(in srgb, var(--c-petrol-100) 40%, transparent),
+    color-mix(in srgb, var(--c-mint-300) 45%, transparent),
     transparent
   );
 }
@@ -46,7 +50,11 @@
    marca solo se ve en escritorio. */
 @media (min-width: 1024px) {
   :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__brand {
-    color: var(--c-petrol-700);
+    color: var(--text-primary);
+  }
+
+  :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__wordmark {
+    color: var(--brand-primary);
   }
 
   :host-context(:root[data-tema='claro']) .auth-split--stage .auth-split__brand::before {

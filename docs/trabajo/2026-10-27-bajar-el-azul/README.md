@@ -24,13 +24,40 @@ Partes 2, 3 y 4.
 En **oscuro** la barra sigue siendo petróleo a propósito: ahí la línea gráfica sí
 pide que las superficies sean la rampa del azul.
 
+## Segunda tanda — pantalla de ingreso (28/10/2026)
+
+Pedido del cliente: «aclará también la pantalla de ingreso». En claro el
+escenario del latido (`auth-stage` + `auth-split-light-stage.css`) ya era blanco,
+pero todo lo que iba encima era petróleo a propósito:
+
+| Punto | Antes | Ahora |
+|---|---|---|
+| Titular «Su salud, conectada» y bajada | petrol-700 | `--text-primary`; la palabra «AloVida» queda en `--brand-primary` |
+| Electro (base, cometa, chispa, halos, onda) | petrol-100…700 | aqua-400/600/700 y menta-100/200/300 |
+| Cuadrícula del papel | petróleo al 6 % / 2,5 % | salvia-700 al 9 % / 4 % |
+| Motas | petrol-300 | menta-500 |
+| Resplandor detrás de la tarjeta | petrol-100 | menta-300 |
+| Cuadritos de «Cree su cuenta» / «Registre su organización» y su hover | petróleo al 12 % / 9 % | `--st-secondary-*` (menta) / aguamarina al 12 % |
+
+El oscuro («monitor nocturno») no se tocó: ahí la línea gráfica sí pide
+superficies petróleo. «Entrar» sigue en petróleo: es la acción primaria.
+
+| Antes | Después |
+|---|---|
+| ![](evidencia/antes-ingreso-1440-light.png) | ![](evidencia/despues-ingreso-1440-light.png) |
+| ![](evidencia/antes-ingreso-390-light.png) | ![](evidencia/despues-ingreso-390-light.png) |
+
+Oscuro, sin cambios: `evidencia/despues-ingreso-1440-dark.png`,
+`evidencia/despues-ingreso-390-dark.png`.
+
+Gates: `check-contrast` OK · `check-tokens` OK · `check-css-tokens` igual que
+`dev` · `ng test` de auth-split, auth-stage y features/auth: 32 archivos,
+811/811.
+
 ## Lo que no se tocó, y por qué
 
 - **Botón primario en petróleo**: es exactamente el rol que la línea gráfica le da
   al petróleo en claro («acción primaria»).
-- **Columna de marca del ingreso** (`auth-split`): degradado aqua → petróleo,
-  todo en paleta y diseñado como escenario fijo detrás del texto blanco. Si se
-  quiere aclarar también, es una decisión aparte.
 - **Botones del simulador** («Datos de prueba», «Ver componentes»): herramienta
   del modo demo, fuera del producto; sus colores ajenos son a propósito.
 - **Tilde de leído del chat** (`#3B9EDB`): convención de mensajería.

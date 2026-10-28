@@ -471,6 +471,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Consulte la historia clínica de los pacientes que atiende.',
     module: 'M08 clinical · M15 chart',
   },
+  {
+    // El médico de cabecera (28/10/2026): los pacientes que eligieron a este
+    // profesional. Sólo `PRACTITIONER`: la lista sale del perfil profesional de
+    // la sesión (`GET /profiles/practitioners/me/primary-patients`) y quien no
+    // lo tiene recibe 422.
+    path: 'my-primary-patients',
+    label: 'Mis pacientes de cabecera',
+    group: 'Atención',
+    icon: 'heart',
+    roles: ['PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Vea qué pacientes lo eligieron como su médico de cabecera.',
+    module: 'M05 profiles',
+  },
   // «Notas médicas» (`progress-notes`) vivió acá como sección propia entre el
   // 19/09 y el 25/09/2026. Se retiró del menú y del producto a pedido del
   // propietario: la nota médica se escribe y se lee desde la consulta y el
