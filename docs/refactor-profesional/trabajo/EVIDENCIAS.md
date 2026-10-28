@@ -126,3 +126,37 @@ Los 22 archivos sobre 4 kB son los mismos en ambos builds. Cinco los toca este r
 entre 0,02 y 0,32 kB por los `var(--dur-*)`: `schedule-grid`, `register-practitioner`,
 `field-editor`, `date-picker`, `tree-select`. `appointments.css` llegó a 4,04 kB durante el
 piloto y se recortó por debajo del umbral (`68d26516`).
+
+## Expediente: vista «Tabla» y «Recorrido» — 2026-10-28
+
+Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · base `origin/dev` (`d53965635`) ·
+`ng serve --configuration development,demo` (backend simulado) · Chromium (Playwright) · cuenta
+`medica@alovida.mock`, paciente `pid-paciente`.
+
+| Comando / prueba | Resultado |
+|---|---|
+| `tsc -p tsconfig.app.json --noEmit` | 0 errores |
+| `eslint src/app/features/clinical-record/patient-chart` | 0 errores (el `yarn lint` global trae errores preexistentes en specs ajenos) |
+| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **584 pruebas verdes** (las nuevas: `recorrido-clinico/` 45, `patient-chart.spec.ts` 8) |
+| `yarn test` completo | **no se ejecutó** |
+| Navegador 1440 / 768 / 390 | desborde horizontal de la página: 0 px; el recorrido desplaza dentro de su lienzo |
+| «Secciones» sin cambios | 9 pestañas (Servicios incluida), «Nuevo diagnóstico» visible, menú de acciones Confirmar / Rechazar / Cambiar estado / Adjuntar |
+| PDF desde las tres vistas | Secciones: la pestaña activa, como antes · Tabla: la tabla cronológica, 3 páginas · Recorrido: una línea que dice que el recorrido no se exporta (el lienzo lleva `data-pdf-ignore`). Texto extraído en `capturas/recorrido-clinico/pdf-desde-*.txt` |
+| Chip «Atenciones» apagado | las columnas cuyos registros sí tienen atención dicen «Registros del día», no «Sin atención» |
+| Teclado en un grupo | Enter expande y contrae sobre el **mismo** botón; el foco se queda y `aria-expanded` pasa de `false` a `true` |
+| Clic en un nodo | abre el mismo modal de detalle que la tabla |
+| Foco/puntero en «Enalapril» | ilumina Ambulatorio → Hipertensión arterial → Enalapril y atenúa el resto |
+| Tema oscuro | colores sólo de tokens `--st-*` / `--bg-*`; legible |
+
+### Revisión independiente
+
+`frontend-reviewer`: **no aprobado** en la primera vuelta (0 bloqueantes, 6 importantes, 10 menores).
+Corregidos en el commit siguiente: rótulo «Sin atención» falso (1), foco perdido al agrupar (2),
+PDF deformado (3), pruebas de la derivación (4), derivación extraída a
+`recorrido-clinico/historial-del-expediente.ts` (5), filtro arrastrado entre pacientes (6), curva hacia
+atrás (7), nombres accesibles de grupos (8), intervalo por días de calendario (9), «reducir
+movimiento» (10), puntero y foco (11), `stackedOnMobile` y `accion` (12), texto del vacío (13),
+caption de la tabla (14) y JSDoc (15). Queda como está: (16) el token de la etiqueta del intervalo, y la vista
+en la URL (parte de 6), que se registra como pendiente. `visual-reviewer`: pendiente.
+
+Capturas: `capturas/recorrido-clinico/`.

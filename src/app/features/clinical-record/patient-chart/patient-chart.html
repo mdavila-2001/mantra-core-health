@@ -58,6 +58,79 @@
       aria-label="Historia clínica"
       appTutorialTarget="expediente-pestanas"
     >
+      <!-- Tres lecturas de la misma historia. «Por sección» abre la pantalla
+           porque es donde se escribe; la tabla y el recorrido son de lectura y
+           comparten el filtro por tipo. Fuera del PDF: son controles, y el
+           papel no lleva botones. -->
+      <div class="expediente__vistas" data-pdf-ignore>
+        <app-segmented-control
+          [options]="opcionesDeVista"
+          [value]="vista()"
+          ariaLabel="Cómo ver la historia clínica"
+          size="md"
+          data-testid="expediente-vista"
+          (valueChange)="elegirVista($event)"
+        />
+        @if (vista() !== 'secciones' && tiposDelFiltro().length > 1) {
+          <div class="expediente__filtro" role="group" aria-label="Qué tipos de registro mostrar">
+            @for (opcion of tiposDelFiltro(); track opcion.tipo) {
+              <app-chip
+                selectable
+                [variant]="opcion.aspecto.tono"
+                [selected]="!tiposOcultos().has(opcion.tipo)"
+                (selectedChange)="alternarTipo(opcion.tipo, $event)"
+                [label]="opcion.aspecto.plural + ', ' + opcion.cantidad"
+                data-testid="expediente-filtro-tipo"
+              >
+                <app-nav-icon slot="icon" [name]="opcion.aspecto.icono" />
+                {{ opcion.aspecto.plural }} · {{ opcion.cantidad }}
+              </app-chip>
+            }
+          </div>
+        }
+      </div>
+
+      @if (vista() !== 'secciones' && filtroOcultaTodo()) {
+        <app-alert tone="info" title="El filtro oculta todos los registros">
+          <button app-button variant="outline" size="sm" type="button" (clicked)="mostrarTodosLosTipos()">
+            Mostrar todos los tipos
+          </button>
+        </app-alert>
+      } @else if (vista() === 'tabla') {
+        <!-- Lo que el filtro deja afuera se dice en texto, no sólo con un chip
+             apagado: es lo que viaja al PDF exportado desde esta vista. -->
+        @if (tiposOcultosEnPalabras() !== '') {
+          <p class="expediente__aviso-filtro" data-testid="expediente-aviso-filtro">
+            Filtrado: no se muestran {{ tiposOcultosEnPalabras() }}.
+          </p>
+        }
+        <app-data-table
+          stackedOnMobile
+          data-testid="expediente-tabla-unificada"
+          [state]="estadoDelHistorial()"
+          [columns]="columnasDelHistorial()"
+          [trackBy]="porFilaDelHistorial"
+          [sort]="ordenDelHistorial()"
+          caption="Registros de la historia clínica, en orden cronológico"
+          (sortChanged)="ordenarHistorial($event)"
+          (retry)="recargar()"
+        />
+      } @else if (vista() === 'recorrido') {
+        <!-- El lienzo no sale en el PDF (lleva `data-pdf-ignore`): el papel
+             recibe esta línea en su lugar, en vez de un expediente que parezca
+             completo sin su historia. -->
+        <p class="expediente__aviso-filtro">
+          El recorrido es una vista de pantalla: para exportar la historia a PDF, usá «Tabla» o
+          «Secciones».
+        </p>
+        <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
+          <app-recorrido-clinico
+            [nodos]="nodosDelRecorrido()"
+            [aristas]="aristasDelRecorrido()"
+            (abrir)="abrirDesdeElRecorrido($event)"
+          />
+        </app-view-state-host>
+      } @else {
       <app-tabs [(selectedIndex)]="activeTab">
         @for (bloque of bloques(); track bloque.clave) {
           <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
@@ -118,6 +191,7 @@
           }
         </app-tab>
       </app-tabs>
+      }
     </section>
     </app-card>
   </div>
@@ -151,6 +225,14 @@
   @if (fila.secundario && fila.secundario !== 'Sin registrar') {
     <span class="expediente__secundario">{{ fila.secundario }}</span>
   }
+</ng-template>
+
+<!-- El tipo, en la tabla unificada: ícono y nombre, nunca sólo el color. -->
+<ng-template #celdaTipo let-fila>
+  <app-chip [variant]="fila.aspecto.tono" size="sm">
+    <app-nav-icon slot="icon" [name]="fila.aspecto.icono" />
+    {{ fila.aspecto.singular }}
+  </app-chip>
 </ng-template>
 
 <ng-template #celdaEstado let-fila>
