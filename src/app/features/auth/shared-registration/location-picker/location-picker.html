@@ -26,9 +26,11 @@
         El punto no cae dentro de ningún municipio de Bolivia. Mueva el pin al lugar correcto.
       </p>
     } @else if (detalle() === null) {
-      <p class="location-picker__pendiente" [attr.data-testid]="testId() + '-pendiente'">
-        Buscando su departamento, provincia y municipio…
-      </p>
+      <app-loading-state
+        class="location-picker__pendiente"
+        [attr.data-testid]="testId() + '-pendiente'"
+        message="Buscando su departamento, provincia y municipio…"
+      />
     }
   } @else if (chosenDepartment() === null) {
     <p class="location-picker__pendiente" [attr.data-testid]="testId() + '-pendiente'">

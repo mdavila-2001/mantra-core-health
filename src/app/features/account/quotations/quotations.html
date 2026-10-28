@@ -155,7 +155,7 @@
     <!-- Alto máximo y scroll vertical, sin scroll lateral (ADR-0015); la
          paginación es en cliente porque la lista ya está entera en memoria. -->
     @if (searching()) {
-      <p class="cotizaciones__buscando" role="status">Buscando cotizaciones…</p>
+      <app-loading-state class="cotizaciones__buscando" message="Buscando cotizaciones…" />
     }
 
     @if (!withoutResults()) {

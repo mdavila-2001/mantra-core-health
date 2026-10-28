@@ -1,152 +1,248 @@
 <app-card variant="outlined" padding="lg" class="plan">
   <h2 class="plan__titulo">Plan de cuidados</h2>
 
+  <!-- El plan dibujado mientras se escribe: lectura de lo que hay abajo. -->
+  <app-care-plan-route
+    [meta]="meta()"
+    [motivo]="motivoEnPalabras()"
+    [desde]="desde()"
+    [hasta]="hasta()"
+    [pasos]="actividades()"
+    [estado]="estadoDelPlan()"
+  />
+
   @if (errorDelPlan(); as mensaje) {
     <app-alert tone="error" data-testid="plan-error">{{ mensaje }}</app-alert>
   }
 
-  <form class="plan__form app-form-grid" (submit)="$event.preventDefault(); registrar()">
-    <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
-         cargada; con una sola respuesta el selector queda deshabilitado. -->
-    @if (exigeRespuesta()) {
-      <app-form-response-picker
-        class="app-form-grid__ancho"
-        [encounterId]="encounterId()"
-        [(seleccionada)]="respuestaDelFormulario"
-      />
-    }
-    <!-- La meta va primero y a lo ancho: es lo que el plan promete, y todo lo
-         de abajo existe para llegar ahí. -->
-    <app-form-field
-      class="app-form-grid__ancho"
-      icon="flag"
-      label="Meta del plan"
-      hint="Qué se busca lograr y para cuándo. «Presión por debajo de 130/80 en seis meses.»"
-      [required]="true"
-    >
-      <app-textarea
-        [rows]="3"
-        [(value)]="meta"
-        data-testid="plan-meta"
-        placeholder="El objetivo clínico, en una frase que se pueda evaluar"
-      />
-    </app-form-field>
-
-    <!-- El motivo es obligatorio: un plan sin decir por qué se abre no se
-         puede evaluar. Se elige un diagnóstico ya registrado, o se escribe. -->
-    @if (hayDiagnosticos()) {
-      <app-form-field icon="stethoscope" label="Diagnóstico" [required]="true">
-        <app-select
-          data-testid="plan-diagnostico"
-          [value]="diagnosticoElegido()"
-          (valueChange)="diagnosticoElegido.set($event)"
-          [options]="opcionesDeDiagnostico()"
-        />
-      </app-form-field>
-    }
-
-    @if (diagnosticoElegido() === null) {
-      <app-form-field
-        icon="stethoscope"
-        [label]="hayDiagnosticos() ? 'Motivo escrito' : 'Motivo'"
-        [required]="true"
-      >
-        <app-input
-          type="text"
-          testId="plan-motivo"
-          [(value)]="motivo"
-          placeholder="Por ejemplo: control de presión sin diagnóstico cerrado"
-        />
-      </app-form-field>
-    }
-
-    <app-form-field label="Desde" hint="Opcional. Cuándo empieza a correr.">
-      <app-date-picker [(value)]="desde" mode="date-only" />
-    </app-form-field>
-
-    <app-form-field
-      label="Hasta"
-      hint="Opcional. Cuándo se lo vuelve a evaluar."
-      [errorMessage]="vigenciaInvalida() ? 'El fin no puede caer antes del inicio.' : ''"
-    >
-      <app-date-picker [(value)]="hasta" mode="date-only" [hasError]="vigenciaInvalida()" />
-    </app-form-field>
-
-    <!-- Los pasos, en líneas sueltas: el marco hacía leer una tabla dentro del
-         formulario, y son tres campos más, no otro formulario. -->
-    <fieldset class="plan__actividades">
-      <legend class="plan__actividades-titulo">¿Qué hay que hacer?</legend>
-
-      @for (actividad of actividades(); track actividad.clave) {
-        <div class="plan__actividad" data-testid="plan-actividad">
-          <app-form-field label="Cuándo">
-            <app-date-picker
-              [value]="actividad.cuando"
-              (valueChange)="fijarCuando(actividad.clave, $event)"
-              mode="date-time"
-            />
-          </app-form-field>
-
-          <app-form-field
-            label="Qué hay que hacer"
-            hint="Sin esto, el paso no se guarda: una fila vacía no es una actividad."
-          >
-            <app-textarea
-              [rows]="2"
-              [value]="actividad.detalle"
-              (valueChange)="fijarDetalle(actividad.clave, $event)"
-              placeholder="Caminata de 30 minutos, cinco veces por semana"
-            />
-          </app-form-field>
-
-          @if (actividades().length > 1) {
-            <button
-              app-button
-              variant="ghost"
-              size="sm"
-              type="button"
-              data-testid="plan-quitar-actividad"
-              (clicked)="quitarActividad(actividad.clave)"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                aria-hidden="true"
-                focusable="false"
+  <form class="plan__form" (submit)="$event.preventDefault(); registrar()">
+    <!-- Los datos catalogados por tramo, en el orden en que se piensa un plan:
+         de dónde sale, qué busca, por qué, cuándo corre y qué hay que hacer.
+         Cada tramo es un nodo del riel, y el nodo dice si está resuelto. El
+         estado viaja también dentro del encabezado, como texto: el color y el
+         ✓ solos no alcanzan, y quien navega por encabezados lo oye ahí. -->
+    <ol class="ruta">
+      @if (exigeRespuesta()) {
+        <li class="ruta__tramo" [class.ruta__tramo--listo]="tramos().origen">
+          <span class="ruta__nodo" aria-hidden="true">
+            <app-nav-icon [name]="tramos().origen ? 'check' : 'clipboard'" />
+          </span>
+          <div class="ruta__cuerpo">
+            <h3 class="ruta__titulo">
+              Origen
+              <span class="sr-only"
+                >— {{ tramos().origen ? 'completo' : 'falta, obligatorio' }}</span
               >
-                <path d="M6 12h12" />
-              </svg>
-              Quitar este paso
-            </button>
-          }
-        </div>
+            </h3>
+            <p class="ruta__ayuda">La respuesta del formulario médico de la que sale el plan.</p>
+            <!-- Viene cargada; con una sola respuesta el selector queda
+                 deshabilitado. -->
+            <app-form-response-picker
+              [encounterId]="encounterId()"
+              [(seleccionada)]="respuestaDelFormulario"
+            />
+          </div>
+        </li>
       }
 
-      <button
-        app-button
-        variant="outline"
-        size="sm"
-        type="button"
-        data-testid="plan-agregar-actividad"
-        (clicked)="agregarActividad()"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M12 6v12M6 12h12" />
-        </svg>
-        Agregar otro paso
-      </button>
-    </fieldset>
+      <li class="ruta__tramo" [class.ruta__tramo--listo]="tramos().objetivo">
+        <span class="ruta__nodo" aria-hidden="true">
+          <app-nav-icon [name]="tramos().objetivo ? 'check' : 'flag'" />
+        </span>
+        <div class="ruta__cuerpo">
+          <h3 class="ruta__titulo">
+            Objetivo
+            <span class="sr-only"
+              >— {{ tramos().objetivo ? 'completo' : 'falta, obligatorio' }}</span
+            >
+          </h3>
+          <p class="ruta__ayuda">
+            Lo que el plan promete. Todo lo de abajo existe para llegar ahí.
+          </p>
+          <app-form-field
+            label="Meta del plan"
+            hint="Qué se busca lograr y para cuándo. «Presión por debajo de 130/80 en seis meses.»"
+            [required]="true"
+          >
+            <app-textarea
+              [rows]="3"
+              [(value)]="meta"
+              data-testid="plan-meta"
+              placeholder="El objetivo clínico, en una frase que se pueda evaluar"
+            />
+          </app-form-field>
+        </div>
+      </li>
+
+      <!-- El motivo es obligatorio: un plan sin decir por qué se abre no se
+           puede evaluar. Se elige un diagnóstico ya registrado, o se escribe. -->
+      <li class="ruta__tramo" [class.ruta__tramo--listo]="tramos().motivo">
+        <span class="ruta__nodo" aria-hidden="true">
+          <app-nav-icon [name]="tramos().motivo ? 'check' : 'stethoscope'" />
+        </span>
+        <div class="ruta__cuerpo">
+          <h3 class="ruta__titulo">
+            Motivo
+            <span class="sr-only">— {{ tramos().motivo ? 'completo' : 'falta, obligatorio' }}</span>
+          </h3>
+          <p class="ruta__ayuda">
+            Por qué se abre: un diagnóstico ya registrado o el motivo en palabras.
+          </p>
+          <div class="app-form-grid">
+            @if (hayDiagnosticos()) {
+              <app-form-field label="Diagnóstico" [required]="true">
+                <app-select
+                  data-testid="plan-diagnostico"
+                  [value]="diagnosticoElegido()"
+                  (valueChange)="diagnosticoElegido.set($event)"
+                  [options]="opcionesDeDiagnostico()"
+                />
+              </app-form-field>
+            }
+
+            @if (diagnosticoElegido() === null) {
+              <app-form-field
+                [label]="hayDiagnosticos() ? 'Motivo escrito' : 'Motivo'"
+                [required]="true"
+              >
+                <app-input
+                  type="text"
+                  testId="plan-motivo"
+                  [(value)]="motivo"
+                  placeholder="Por ejemplo: control de presión sin diagnóstico cerrado"
+                />
+              </app-form-field>
+            }
+          </div>
+        </div>
+      </li>
+
+      <li class="ruta__tramo" [class.ruta__tramo--listo]="tramos().vigencia">
+        <span class="ruta__nodo" aria-hidden="true">
+          <app-nav-icon [name]="tramos().vigencia ? 'check' : 'calendar'" />
+        </span>
+        <div class="ruta__cuerpo">
+          <h3 class="ruta__titulo">
+            Vigencia
+            <span class="ruta__opcional">Opcional</span>
+            <span class="sr-only">— {{ tramos().vigencia ? 'completo' : 'sin completar' }}</span>
+          </h3>
+          <p class="ruta__ayuda">Desde cuándo corre el plan y cuándo se lo vuelve a evaluar.</p>
+          <div class="app-form-grid">
+            <app-form-field label="Desde" hint="Opcional. Cuándo empieza a correr.">
+              <app-date-picker [(value)]="desde" mode="date-only" />
+            </app-form-field>
+
+            <app-form-field
+              label="Hasta"
+              hint="Opcional. Cuándo se lo vuelve a evaluar."
+              [errorMessage]="vigenciaInvalida() ? 'El fin no puede caer antes del inicio.' : ''"
+            >
+              <app-date-picker [(value)]="hasta" mode="date-only" [hasError]="vigenciaInvalida()" />
+            </app-form-field>
+          </div>
+        </div>
+      </li>
+
+      <li class="ruta__tramo ruta__tramo--ultimo" [class.ruta__tramo--listo]="tramos().pasos">
+        <span class="ruta__nodo" aria-hidden="true">
+          <app-nav-icon [name]="tramos().pasos ? 'check' : 'route'" />
+        </span>
+        <div class="ruta__cuerpo">
+          <h3 class="ruta__titulo">
+            Pasos
+            <span class="ruta__contador" data-testid="plan-contador-pasos">
+              {{ actividadesEscritas().length }} de {{ actividades().length }}
+            </span>
+          </h3>
+          <p class="ruta__ayuda">Qué hay que hacer y cuándo, paso por paso.</p>
+
+          <ol class="plan-pasos">
+            @for (actividad of actividades(); track actividad.clave; let i = $index) {
+              <!-- Un grupo con nombre: los campos de cada paso se llaman igual,
+                   y «Qué hay que hacer» a secas no dice de cuál de los pasos es. -->
+              <li
+                class="plan-pasos__paso"
+                role="group"
+                [attr.aria-labelledby]="'plan-paso-' + actividad.clave"
+                data-testid="plan-actividad"
+              >
+                <span
+                  class="plan-pasos__numero"
+                  [class.plan-pasos__numero--escrito]="actividad.detalle.trim() !== ''"
+                  aria-hidden="true"
+                  >{{ i + 1 }}</span
+                >
+                <div class="plan-pasos__campos">
+                  <div class="plan-pasos__cabecera">
+                    <span class="plan-pasos__rotulo" [id]="'plan-paso-' + actividad.clave"
+                      >Paso {{ i + 1 }}</span
+                    >
+                    @if (actividades().length > 1) {
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        data-testid="plan-quitar-actividad"
+                        [attr.aria-label]="'Quitar el paso ' + (i + 1)"
+                        (clicked)="quitarActividad(actividad.clave)"
+                      >
+                        <app-nav-icon name="remove" />
+                        Quitar
+                      </button>
+                    }
+                  </div>
+
+                  <app-form-field
+                    label="Qué hay que hacer"
+                    hint="Sin esto, el paso no se guarda: una fila vacía no es una actividad."
+                  >
+                    <app-textarea
+                      [rows]="2"
+                      [value]="actividad.detalle"
+                      (valueChange)="fijarDetalle(actividad.clave, $event)"
+                      placeholder="Caminata de 30 minutos, cinco veces por semana"
+                    />
+                  </app-form-field>
+
+                  <app-form-field label="Cuándo">
+                    <app-date-picker
+                      [value]="actividad.cuando"
+                      (valueChange)="fijarCuando(actividad.clave, $event)"
+                      mode="date-time"
+                    />
+                  </app-form-field>
+                </div>
+              </li>
+            }
+          </ol>
+
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            class="plan-pasos__agregar"
+            data-testid="plan-agregar-actividad"
+            (clicked)="agregarActividad()"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M12 6v12M6 12h12" />
+            </svg>
+            Agregar otro paso
+          </button>
+        </div>
+      </li>
+    </ol>
 
     <app-form-actions
       submitLabel="Abrir el plan"

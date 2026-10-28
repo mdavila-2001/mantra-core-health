@@ -412,7 +412,9 @@ describe('PractitionerProfileEdit', () => {
       expect(señal<string>('direccion')()).toBe('');
 
       interno<(p: unknown) => void>('confirmarGpsDomicilio')({ lat: -16.5, lng: -68.15 });
-      expect(señal<string>('direccion')()).toBe('Av. Arce 2631, Sopocachi');
+      // Sólo calle y número: el distrito va aparte, no dos veces.
+      expect(señal<string>('direccion')()).toBe('Av. Arce 2631');
+      expect(señal<string>('distritoDomicilio')()).toBe('Sopocachi');
       expect(señal<string | null>('municipioResidencia')()).toBe('mun-lpz');
 
       señal<number>('pestana').set(1);
@@ -420,7 +422,7 @@ describe('PractitionerProfileEdit', () => {
       const req = http.expectOne('/profiles/practitioners/me');
       expect(req.request.body).toEqual({
         residenceMunicipalityConceptId: 'mun-lpz',
-        homeAddressLines: 'Av. Arce 2631, Sopocachi',
+        homeAddressLines: 'Av. Arce 2631',
         // ADR-0028: el distrito viaja aparte, a su propia columna.
         homeDistrict: 'Sopocachi',
         homeLatitude: -16.5,
@@ -429,7 +431,7 @@ describe('PractitionerProfileEdit', () => {
       req.flush(PERFIL_BASE);
     });
 
-    it('el trabajo toma la línea de su punto, o la zona si el mapa no tiene calle', () => {
+    it('el trabajo toma la calle de su punto y, sin calle, deja la zona sólo en su campo', () => {
       montarYCargar();
       interno<(p: unknown) => void>('confirmarGpsTrabajo')({ lat: -17.8, lng: -63.2 });
       interno<(l: unknown) => void>('aplicarLocalidadTrabajo')({
@@ -439,7 +441,8 @@ describe('PractitionerProfileEdit', () => {
         zona: 'Equipetrol',
         municipioConceptId: null,
       });
-      expect(señal<string>('direccionTrabajo')()).toBe('Equipetrol');
+      // Sin calle en el mapa la calle queda vacía: la zona no se repite en ella.
+      expect(señal<string>('direccionTrabajo')()).toBe('');
       expect(señal<string>('distritoTrabajo')()).toBe('Equipetrol');
     });
 

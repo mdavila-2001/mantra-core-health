@@ -24,6 +24,7 @@ import { EmptyState } from '../../../shared/components/molecules/empty-state/emp
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { GroupComposer } from '../group-composer/group-composer';
 import { GroupPost } from '../group-post/group-post';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántas publicaciones se piden por página. */
 const PAGE_SIZE = 20;
@@ -56,7 +57,7 @@ const MIEMBROS_VISIBLES = 20;
  */
 @Component({
   selector: 'app-group-detail',
-  imports: [Alert, AppButton, Card, EmptyState, GroupComposer, GroupPost, PageHeader],
+  imports: [Alert, AppButton, Card, EmptyState, GroupComposer, GroupPost, PageHeader, LoadingState],
   templateUrl: './group-detail.html',
   styleUrl: './group-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

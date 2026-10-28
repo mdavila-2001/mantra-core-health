@@ -109,7 +109,7 @@
     }
 
     @if (loading() && !loaded()) {
-      <p class="dependents__estado" role="status">Buscando a quiénes representa…</p>
+      <app-loading-state class="dependents__estado" message="Buscando a quiénes representa…" />
     } @else if (dependents().length === 0) {
       <!-- Pedido del cliente (27/10/2026): todos los textos de este vacío
            cierran con punto final, el título incluido. -->

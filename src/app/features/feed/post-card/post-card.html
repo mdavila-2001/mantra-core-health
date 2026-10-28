@@ -88,7 +88,7 @@
   @if (hiloAbierto()) {
     <section class="publicacion__hilo" aria-label="Comentarios">
       @if (cargandoHilo()) {
-        <p class="publicacion__cargando">Cargando comentarios…</p>
+        <app-loading-state class="publicacion__cargando" message="Cargando comentarios…" />
       } @else if (comentarios().length === 0) {
         <p class="publicacion__cargando">Todavía no hay comentarios.</p>
       } @else {

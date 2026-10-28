@@ -113,6 +113,7 @@ import {
   type ResponseVisible,
 } from './specialty-form-block/form-reading';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -417,6 +418,7 @@ interface Expediente {
     Tabs,
     TutorialTarget,
     ViewStateHost,
+    LoadingState,
   ],
   templateUrl: './patient-chart.html',
   styleUrl: './patient-chart.css',
