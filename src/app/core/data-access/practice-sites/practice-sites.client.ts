@@ -3,7 +3,6 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import { simulatorOnly } from '../simulator-only';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   MyRoleAssignment,
@@ -162,23 +161,25 @@ export class PracticeSitesClient {
   }
 
   /**
-   * `PUT /practitioners/me/sites/:siteId/logo` — el logo del consultorio.
+   * `PUT /practitioners/me/sites/:siteId/logo` — el logo del consultorio, el
+   * que sale en el membrete de sus PDF.
    *
    * Mismo molde que {@link PracticeSitesClient.setSiteBankQr}: el archivo ya
-   * está subido (`FilesClient.upload`) y lo único que viaja es su id.
+   * está subido (`FilesClient.upload`) y lo único que viaja es su id. A
+   * diferencia del QR, sólo alcanza al consultorio **propio**: la API responde
+   * 404 a una sede de otra organización y 422 a un archivo que no sirve como
+   * logo (png, jpeg o webp, sensibilidad normal, hasta 2 MB).
    *
-   * **Sólo simulador.** La API no expone esta ruta: ni `practice.practice_sites`
-   * ni `directory.tenants` tienen dónde guardar el logo del consultorio.
-   * Ningún componente lo llama: pasan por `LogoDelConsultorioClient`.
+   * Ningún componente lo llama directo: pasan por `PracticeLogoClient`.
    *
    * @param siteId - La sede propia cuyo logo se cambia.
    * @param fileId - El archivo ya subido, o `null` para quitar el logo.
    * @returns La sede con el logo aplicado.
    */
   setSiteLogo(siteId: string, fileId: string | null): Observable<PracticeSite> {
-    const url = this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/logo`);
-    return simulatorOnly('Cambiar el logo del consultorio', url, () =>
-      this.http.put<PracticeSite>(url, { fileId }),
+    return this.http.put<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/logo`),
+      { fileId },
     );
   }
 
