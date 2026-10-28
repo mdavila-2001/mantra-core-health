@@ -314,6 +314,9 @@ export class PatientProfileEdit {
   protected readonly correo = signal('');
   protected readonly domicilio = signal('');
   protected readonly direccionTrabajo = signal('');
+  /** El distrito o zona de cada dirección, que el mapa deduce del punto. */
+  protected readonly distritoDomicilio = signal('');
+  protected readonly distritoTrabajo = signal('');
 
   /**
    * El punto en el mapa de cada dirección — lo que el alta ya preguntaba y el
@@ -389,6 +392,7 @@ export class PatientProfileEdit {
     const localidad = confirmedLocality(this.localidadDomicilio(), punto);
     if (punto !== null && localidad === null) return;
     this.domicilio.set(localidad?.calle ?? localidad?.zona ?? '');
+    this.distritoDomicilio.set(localidad?.zona ?? '');
     if (localidad?.municipioConceptId) this.municipio.set(localidad.municipioConceptId);
   }
 
@@ -399,6 +403,7 @@ export class PatientProfileEdit {
     const localidad = confirmedLocality(this.localidadTrabajo(), punto);
     if (punto !== null && localidad === null) return;
     this.direccionTrabajo.set(localidad?.calle ?? localidad?.zona ?? '');
+    this.distritoTrabajo.set(localidad?.zona ?? '');
   }
 
   /**
@@ -604,6 +609,8 @@ export class PatientProfileEdit {
     this.correo.set(perfil.email ?? '');
     this.domicilio.set(perfil.homeAddress?.lines ?? '');
     this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+    this.distritoDomicilio.set(perfil.homeAddress?.district ?? '');
+    this.distritoTrabajo.set(perfil.workAddress?.district ?? '');
     this.gpsDomicilioGuardado.set(puntoDe(perfil.homeAddress));
     this.gpsTrabajoGuardado.set(puntoDe(perfil.workAddress));
     // Se reinician las intenciones: lo que la persona tocó en una visita
@@ -952,6 +959,14 @@ export class PatientProfileEdit {
     const trabajo = textoCambiado(this.direccionTrabajo(), original.workAddress?.lines);
     if (trabajo !== undefined) {
       cambios.workAddressLines = trabajo;
+    }
+    const distritoCasa = textoCambiado(this.distritoDomicilio(), original.homeAddress?.district);
+    if (distritoCasa !== undefined) {
+      cambios.homeDistrict = distritoCasa;
+    }
+    const distritoTrabajo = textoCambiado(this.distritoTrabajo(), original.workAddress?.district);
+    if (distritoTrabajo !== undefined) {
+      cambios.workDistrict = distritoTrabajo;
     }
 
     // El punto de cada dirección, con la misma regla de tres estados que el

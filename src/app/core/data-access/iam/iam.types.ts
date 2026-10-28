@@ -139,6 +139,11 @@ export interface PatientRegistration {
   /** Calle y número del domicilio, tal como lo escribe la persona. */
   readonly homeAddressLines?: string;
   /**
+   * Distrito o zona del domicilio, tal como lo da el mapa (ADR-0028 de la API).
+   * Viaja aparte de la calle: la API lo guarda en su propia columna.
+   */
+  readonly homeDistrict?: string;
+  /**
    * Latitud del domicilio.
    *
    * El par va completo o no va: media coordenada no ubica nada y el backend
@@ -180,6 +185,8 @@ export interface PatientRegistration {
   readonly workMunicipalityConceptId?: string;
   /** Calle y número del lugar de trabajo. Ver {@link PatientRegistration.workMunicipalityConceptId}. */
   readonly workAddressLines?: string;
+  /** Distrito o zona del trabajo. Ver {@link PatientRegistration.homeDistrict}. */
+  readonly workDistrict?: string;
   /**
    * Latitud del trabajo.
    *
@@ -325,6 +332,9 @@ export interface PractitionerRegistration {
    * La API guarda estas líneas en la dirección HOME de la persona.
    */
   readonly homeAddressLines?: string;
+
+  /** Distrito o zona del domicilio, aparte de la calle (ADR-0028 de la API). */
+  readonly homeDistrict?: string;
 
   /**
    * Latitud del domicilio, confirmada sobre el mapa.

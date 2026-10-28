@@ -2891,7 +2891,9 @@ describe('RegisterPractitioner', () => {
 
       component.submit();
       const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.homeAddressLines).toBe('Calle Warnes 45, Equipetrol');
+      // Calle y distrito viajan separados (ADR-0028 de la API).
+      expect(req.request.body.homeAddressLines).toBe('Calle Warnes 45');
+      expect(req.request.body.homeDistrict).toBe('Equipetrol');
       expect(req.request.body.residenceMunicipalityConceptId).toBe('mun-scz');
       expect(req.request.body.homeLatitude).toBe(-17.79);
       req.flush(RESPUESTA_PRO);

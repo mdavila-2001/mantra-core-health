@@ -158,6 +158,9 @@ describe('IamClient', () => {
           guardianRelationshipConceptId: 'd7c1a94e-5b32-5d68-9f11-3ac52e8b6d40',
           billingTaxId: '1023456789',
           billingLegalName: 'Empresa SRL',
+          homeAddressLines: 'Calle Guapay 3861',
+          homeDistrict: 'Equipetrol',
+          workDistrict: 'Centro',
         })
         .subscribe();
 
@@ -176,6 +179,11 @@ describe('IamClient', () => {
       );
       expect(req.request.body.billingTaxId).toBe('1023456789');
       expect(req.request.body.billingLegalName).toBe('Empresa SRL');
+      // El distrito viaja aparte de la calle (ADR-0028 de la API): tampoco puede
+      // perderse en la re-proyección.
+      expect(req.request.body.homeAddressLines).toBe('Calle Guapay 3861');
+      expect(req.request.body.homeDistrict).toBe('Equipetrol');
+      expect(req.request.body.workDistrict).toBe('Centro');
       expect('timeZone' in req.request.body).toBe(false);
 
       req.flush({

@@ -24,15 +24,16 @@ export function componerDireccion(calle: string, distrito: string): string {
  * «Distrito o zona (opcional)»: el campo que aparece junto a la calle en cuanto
  * hay localidad elegida (`padre` es la clave de esa localidad).
  *
- * No tiene columna propia: viaja dentro de la línea de dirección, ver
- * {@link componerDireccion}.
+ * En el domicilio y el trabajo viaja aparte de la calle, a su propia columna
+ * (ADR-0028 de la API). En el consultorio propio todavía viaja dentro de la
+ * línea de dirección, ver {@link componerDireccion}.
  */
 export function campoDistrito(key: string, testId: string, padre: string): CampoDeFormulario {
   return {
     key,
     label: 'Distrito o zona (opcional)',
     hint: 'El distrito, la zona o el barrio.',
-    description: 'Se guarda junto con la calle, en la misma línea de dirección.',
+    description: 'El distrito, la zona o el barrio de la dirección.',
     control: 'text',
     placeholder: 'Distrito 5, Zona Norte',
     testId,
