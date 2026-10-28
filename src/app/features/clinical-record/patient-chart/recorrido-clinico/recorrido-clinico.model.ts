@@ -116,6 +116,16 @@ export interface ColumnaUbicada {
   readonly fecha: Date | null;
   /** La atención que da nombre a la columna, si la hay. */
   readonly encuentroId: string | null;
+  /**
+   * Qué es la columna, para su rótulo:
+   *
+   * - `atencion`: la de una atención a la vista;
+   * - `dia`: un día cuyos registros **sí** cuelgan de una atención, pero esa
+   *   atención no está dibujada —el filtro la oculta o quedó fuera del tope de
+   *   la lectura—. Decir «Sin atención» acá sería una afirmación clínica falsa;
+   * - `sin-atencion`: ningún registro del día trae atención.
+   */
+  readonly contexto: 'atencion' | 'dia' | 'sin-atencion';
   /** Cuánto pasó desde la columna anterior, en palabras; vacío en la primera. */
   readonly intervalo: string;
   readonly nodos: readonly NodoUbicado[];
@@ -186,7 +196,11 @@ function claveDelDia(fecha: Date): string {
  * lectura del recorrido, no reemplaza a la fecha, que va en la cabecera.
  */
 export function describirIntervalo(antes: Date, despues: Date): string {
-  const dias = Math.round((despues.getTime() - antes.getTime()) / 86_400_000);
+  // Días de calendario, no tramos de 24 h: dos columnas con la misma fecha en
+  // la cabecera no pueden quedar a «1 día», ni dos fechas distintas al «mismo día».
+  const medianoche = (fecha: Date): number =>
+    Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+  const dias = Math.round((medianoche(despues) - medianoche(antes)) / 86_400_000);
   if (dias <= 0) {
     return 'el mismo día';
   }
@@ -297,7 +311,10 @@ export function ubicarRecorrido(
         celdas.set(celda, [
           ...delTipo,
           {
-            id: `contraer:${celda}`,
+            // El mismo id que el «+N» que reemplaza: Angular conserva el
+            // botón —y con él el foco y su `aria-expanded`— en vez de
+            // destruirlo y dejar a quien navega con teclado en el `<body>`.
+            id: `grupo:${celda}`,
             tipo,
             principal: 'Mostrar menos',
             secundario: `Agrupar ${delTipo.length - (TOPE_POR_CELDA - 1)} ${plural}`,
@@ -310,7 +327,7 @@ export function ubicarRecorrido(
       }
       const visibles = delTipo.slice(0, TOPE_POR_CELDA - 1);
       const ocultos = delTipo.slice(TOPE_POR_CELDA - 1);
-      const id = `expandir:${celda}`;
+      const id = `grupo:${celda}`;
       ocultos.forEach((oculto) => representante.set(oculto.id, id));
       celdas.set(celda, [
         ...visibles,
@@ -378,6 +395,12 @@ export function ubicarRecorrido(
       x,
       fecha: grupo.fecha,
       encuentroId: grupo.encuentro,
+      contexto:
+        grupo.encuentro !== null
+          ? 'atencion'
+          : grupo.nodos.some((n) => n.encuentroId !== undefined)
+            ? 'dia'
+            : 'sin-atencion',
       intervalo:
         anterior === null || grupo.fecha === null ? '' : describirIntervalo(anterior, grupo.fecha),
       nodos: nodosDeLaColumna,
@@ -449,6 +472,17 @@ function trazoDeIndicacion(desde: NodoUbicado, hasta: NodoUbicado): string {
     const y1 = hasta.y + m.altoNodo / 2;
     const comba = x0 + m.separacionColumnas / 2 - 4;
     return `M ${x0} ${y0} C ${comba} ${y0}, ${comba} ${y1}, ${x1} ${y1}`;
+  }
+  // Una receta anterior al diagnóstico (fechada hacia atrás, o un diagnóstico
+  // asentado después en otra consulta): la curva sale por la izquierda del
+  // diagnóstico y entra por la derecha de la receta, en vez de dar la vuelta
+  // por detrás de las columnas de en medio.
+  if (hasta.columna < desde.columna) {
+    const xa = desde.x;
+    const xb = hasta.x + m.anchoColumna;
+    const yb = hasta.y + m.altoNodo * 0.3;
+    const tiro = Math.max(40, (xa - xb) / 2);
+    return `M ${xa} ${y0} C ${xa - tiro} ${y0}, ${xb + tiro} ${yb}, ${xb} ${yb}`;
   }
   // Entre columnas entra por la izquierda, un poco arriba del centro, para no
   // pisar la rama de su atención, que llega al centro.

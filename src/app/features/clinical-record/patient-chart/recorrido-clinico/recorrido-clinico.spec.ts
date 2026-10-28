@@ -71,15 +71,45 @@ describe('RecorridoClinico', () => {
     expect(boton('Diagnóstico: Hipertensión').getAttribute('aria-label')).toContain('tratado con Enalapril');
   });
 
-  it('agrupa la celda llena y la abre sin pedir un detalle', () => {
+  it('agrupa la celda llena y la abre sin pedir un detalle, en el mismo botón', () => {
     const grupo = boton('Mostrar 2 observaciones más');
     expect(grupo.getAttribute('aria-expanded')).toBe('false');
     const antes = botones().length;
+    grupo.focus();
     grupo.click();
     fixture.detectChanges();
     expect(fixture.componentInstance.abiertos).toEqual([]);
     expect(botones().length).toBe(antes + 2);
-    expect(boton('Mostrar menos').getAttribute('aria-expanded')).toBe('true');
+    // Es EL MISMO elemento: quien navega con teclado no pierde el foco, y
+    // `aria-expanded` cambia sobre el botón que se activó.
+    expect(boton('Mostrar menos')).toBe(grupo);
+    expect(grupo.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(grupo);
+  });
+
+  it('nombra el diagnóstico real aunque esté agrupado en el plano', () => {
+    const muchos = [
+      nodo('c', 'encuentros'),
+      ...['dx', 'd2', 'd3', 'd4'].map((id) => nodo(id, 'diagnosticos', 'c')),
+      nodo('rx', 'medicacion', 'c'),
+    ];
+    fixture.componentInstance.nodos.set(muchos);
+    fixture.detectChanges();
+    // «Hipertensión» (dx) queda primera y visible; pruebo con uno que se agrupa.
+    fixture.componentInstance.aristas.set([{ desde: 'd4', hasta: 'rx', motivo: 'indicacion' }]);
+    fixture.detectChanges();
+    expect(boton('Medicación: Enalapril').getAttribute('aria-label')).toContain('indicado para d4');
+  });
+
+  it('sacar el puntero de un nodo no apaga el camino del que tiene el foco', () => {
+    const receta = boton('Medicación: Enalapril');
+    receta.dispatchEvent(new Event('focus'));
+    const otro = boton('Observación: o1');
+    otro.dispatchEvent(new Event('mouseenter'));
+    otro.dispatchEvent(new Event('mouseleave'));
+    fixture.detectChanges();
+    expect(boton('Diagnóstico: Hipertensión').classList.contains('recorrido__nodo--atenuado')).toBe(false);
+    expect(otro.classList.contains('recorrido__nodo--atenuado')).toBe(true);
   });
 
   it('al enfocar un registro atenúa lo que no está en su camino', () => {

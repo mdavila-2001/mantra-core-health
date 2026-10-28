@@ -142,14 +142,14 @@ describe('ubicarRecorrido · celdas agrupadas', () => {
   it('muestra los primeros y un nodo de grupo con los ocultos', () => {
     const plano = ubicarRecorrido(NODOS_LLENOS, ARISTAS_LLENAS);
     const observaciones = plano.nodos.filter((n) => n.tipo === 'observaciones');
-    expect(observaciones.map((n) => n.id)).toEqual(['ta', 'fc', `expandir:${celda}`]);
+    expect(observaciones.map((n) => n.id)).toEqual(['ta', 'fc', `grupo:${celda}`]);
     expect(observaciones[2].grupo).toEqual({ accion: 'expandir', celda, ocultos: 3 });
     expect(observaciones[2].principal).toBe('+3 observaciones');
   });
 
   it('conecta la atención al grupo una sola vez en vez de a cada oculto', () => {
     const plano = ubicarRecorrido(NODOS_LLENOS, ARISTAS_LLENAS);
-    expect(plano.aristas.filter((a) => a.hasta === `expandir:${celda}`)).toHaveLength(1);
+    expect(plano.aristas.filter((a) => a.hasta === `grupo:${celda}`)).toHaveLength(1);
     expect(plano.aristas.some((a) => a.hasta === 'peso')).toBe(false);
   });
 
@@ -159,6 +159,41 @@ describe('ubicarRecorrido · celdas agrupadas', () => {
     expect(observaciones).toHaveLength(6);
     expect(observaciones.at(-1)?.grupo?.accion).toBe('contraer');
     expect(plano.aristas.filter((a) => a.motivo === 'atencion')).toHaveLength(6);
+  });
+});
+
+describe('ubicarRecorrido · lo que el revisor encontró', () => {
+  it('no rotula «sin atención» un día cuyos registros sí cuelgan de una atención oculta', () => {
+    // La atención c9 no está dibujada (filtro o tope), pero el diagnóstico la declara.
+    const plano = ubicarRecorrido([nodo('dx', 'diagnosticos', enero, 'c9')], []);
+    expect(plano.columnas[0].contexto).toBe('dia');
+  });
+
+  it('distingue la atención a la vista y el día sin ninguna atención', () => {
+    const plano = ubicarRecorrido(NODOS, ARISTAS);
+    expect(plano.columnas.map((c) => c.contexto)).toEqual(['atencion', 'atencion', 'sin-atencion']);
+  });
+
+  it('el control de un grupo conserva su id al abrirse: el foco no se pierde', () => {
+    const signos = ['a', 'b', 'c', 'd'].map((id) => nodo(id, 'observaciones', enero));
+    const celda = ubicarRecorrido(signos, []).columnas[0].clave;
+    const clave = claveDeCelda(celda, 'observaciones');
+    const cerrado = ubicarRecorrido(signos, []).nodos.find((n) => n.grupo)!;
+    const abierto = ubicarRecorrido(signos, [], new Set([clave])).nodos.find((n) => n.grupo)!;
+    expect(abierto.id).toBe(cerrado.id);
+    expect([cerrado.grupo?.accion, abierto.grupo?.accion]).toEqual(['expandir', 'contraer']);
+  });
+
+  it('una receta anterior a su diagnóstico se conecta hacia atrás, de borde a borde', () => {
+    const plano = ubicarRecorrido(
+      [nodo('rx', 'medicacion', enero), nodo('c', 'encuentros', abril), nodo('dx', 'diagnosticos', abril, 'c')],
+      [{ desde: 'dx', hasta: 'rx', motivo: 'indicacion' }],
+    );
+    const dx = plano.nodos.find((n) => n.id === 'dx')!;
+    const rx = plano.nodos.find((n) => n.id === 'rx')!;
+    const trazo = plano.aristas[0].trazo;
+    expect(trazo.startsWith(`M ${dx.x} `)).toBe(true);
+    expect(trazo.endsWith(`${rx.x + MEDIDAS.anchoColumna} ${rx.y + MEDIDAS.altoNodo * 0.3}`)).toBe(true);
   });
 });
 
@@ -198,5 +233,10 @@ describe('describirIntervalo', () => {
     [548, '1,5 años'],
   ])('%i días → %s', (dias, esperado) => {
     expect(describirIntervalo(desde, mas(dias))).toBe(esperado);
+  });
+
+  it('cuenta días de calendario, no tramos de 24 horas', () => {
+    expect(describirIntervalo(new Date(2026, 0, 1, 8), new Date(2026, 0, 1, 21))).toBe('el mismo día');
+    expect(describirIntervalo(new Date(2026, 0, 1, 23), new Date(2026, 0, 2, 6))).toBe('1 día');
   });
 });
