@@ -68,7 +68,13 @@
         }
 
         @if (avisoFaltantes()) {
-          <app-alert tone="error" class="responder__aviso" data-testid="responder-faltantes">
+          <app-alert
+            #avisoFaltantesRef
+            tone="error"
+            class="responder__aviso"
+            tabindex="-1"
+            data-testid="responder-faltantes"
+          >
             {{ avisoFaltantes() }}
           </app-alert>
         }
