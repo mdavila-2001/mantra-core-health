@@ -137,7 +137,7 @@ Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · base `origin/dev
 |---|---|
 | `tsc -p tsconfig.app.json --noEmit` | 0 errores |
 | `eslint src/app/features/clinical-record/patient-chart` | 0 errores (el `yarn lint` global trae errores preexistentes en specs ajenos) |
-| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **591 pruebas verdes** (las nuevas: `recorrido-clinico/` 52, `patient-chart.spec.ts` 8) |
+| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **593 pruebas verdes** (las nuevas: `recorrido-clinico/` 54, `patient-chart.spec.ts` 8) |
 | `yarn test` completo | **no se ejecutó** |
 | Navegador 1440 / 768 / 390 | desborde horizontal de la página: 0 px; el recorrido desplaza dentro de su lienzo |
 | «Secciones» sin cambios | 9 pestañas (Servicios incluida), «Nuevo diagnóstico» visible, menú de acciones Confirmar / Rechazar / Cambiar estado / Adjuntar |
@@ -201,5 +201,25 @@ Sin cambio: N8 (mayúsculas de los meses: las cabeceras siguen la regla de las t
 (dos momentos del mismo día cuando uno es atención y el otro no), N10 (la tabla apilada en teléfono es
 el comportamiento de `app-data-table`). Los estados de carga y error los resuelve
 `app-view-state-host`, compartido; no se capturaron.
+
+`visual-reviewer`, tercera vuelta: **FAIL** (88/100, 1 HIGH). Corregido después:
+
+| Hallazgo | Arreglo | Comprobado |
+|---|---|---|
+| H-1 dos indicaciones comparten trazo | cada indicación tiene su carril: bajada, cruce y curva propios | prueba «con dos indicaciones, cada una va por su propio carril» |
+| M-1 cruce a 4 px de las tarjetas | separación entre filas de 20 px; el cruce queda a 6 px o más | prueba «el cruce deja al menos 6 px de aire» |
+| M-2 el recorrido ortogonal no se ve entero | captura del plano entero con «Atenciones» filtrado (para tomarla, el script quita el recorte del lienzo; el menú lateral fijo tapa el borde izquierdo) | `recorrido-sin-atenciones-entero.png` |
+| M-3 la red no estaba registrada | `consola-y-red.txt` lista las 356 peticiones del expediente con su estado: 0 fallidas, 0 ≥ 400. Las llamadas a la API las responde el backend simulado dentro de Angular y no pasan por la red | `consola-y-red.txt` |
+| L-1 fecha de otro año sin día | en vertical, siempre la fecha entera; con menos de 90 días de diferencia, con día aunque cambie el año | — |
+
+**No se pudo capturar en navegador el caso de dos indicaciones.** Para crear la segunda hace falta
+prescribir desde el expediente indicando un diagnóstico, y el formulario sólo ofrece «Otro motivo»:
+`medication-block` filtra los diagnósticos por `confirmadoEl`, y `patient-chart` no se lo pasa
+(`diagnosticosParaReceta`). Es un defecto de `dev` ajeno a este cambio; se reporta aparte. El caso
+queda cubierto por la prueba de geometría.
+
+Sin cambio: L-2 (corchete en la misma columna y poligonal entre columnas: misma línea punteada y
+misma flecha), L-3 (el chip apagado es de la primitiva `app-chip`; el aviso en texto lo compensa),
+L-4 (carga y error, de `app-view-state-host`).
 
 Capturas: `capturas/recorrido-clinico/`.
