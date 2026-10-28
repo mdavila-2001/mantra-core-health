@@ -93,6 +93,13 @@
   display: grid;
   gap: var(--sp-6);
   min-inline-size: 0;
+  /* El texto llena su columna: con cada párrafo acotado a 75ch quedaba una
+     franja vacía a la derecha de toda la ficha (regla del cliente §5). La
+     medida de lectura la pone el cuerpo entero, centrado en su columna, y
+     sólo pesa en pantallas muy anchas. */
+  inline-size: 100%;
+  max-inline-size: 48rem;
+  margin-inline: auto;
 }
 
 .articulo__sinonimos,
@@ -121,12 +128,21 @@
 .articulo__parrafo,
 .articulo__lista {
   margin: 0;
-  max-inline-size: 75ch;
   color: var(--text-secondary);
+  line-height: var(--lh-body-lg);
 }
 
+/* Las viñetas las quita el reinicio global: sin ellas, una lista de síntomas
+   se leía como un párrafo partido en renglones. */
 .articulo__lista {
-  padding-inline-start: var(--sp-5);
+  display: grid;
+  gap: var(--sp-1);
+  padding-inline-start: var(--sp-6);
+  list-style: disc;
+}
+
+.articulo__lista li::marker {
+  color: var(--brand-primary);
 }
 
 .articulo__tabla-marco {
