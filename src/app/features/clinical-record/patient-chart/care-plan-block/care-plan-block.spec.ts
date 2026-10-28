@@ -4,7 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { signal, type WritableSignal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CarePlanBlock, duracionEnPalabras } from './care-plan-block';
+import { CarePlanBlock } from './care-plan-block';
 import { environment } from '../../../../../environments/environment';
 
 /** Una expansión de catálogo con la forma que sirve `system-context`. */
@@ -272,64 +272,83 @@ describe('CarePlanBlock', () => {
   });
 
   describe('la hoja de ruta', () => {
-    /**
-     * La vista dibuja lo que va a pasar en el orden en que va a pasar: los
-     * fechados por fecha, los sin fecha al final, y sólo los que dicen algo.
-     */
-    it('ordena los pasos por fecha, deja los sin fecha al final y omite los vacíos', () => {
-      dibujar();
-      const agregar = interno<() => void>('agregarActividad');
-      const detalle = interno<(clave: number, valor: string) => void>('fijarDetalle');
-      const cuando = interno<(clave: number, valor: Date | null) => void>('fijarCuando');
-      agregar();
-      agregar();
-      agregar();
-      detalle(0, 'Sin fecha');
-      detalle(1, 'Más tarde');
-      cuando(1, new Date(2026, 11, 20));
-      detalle(2, 'Antes');
-      cuando(2, new Date(2026, 10, 5));
-      // La clave 3 queda vacía: no es un paso.
-      fixture.detectChanges();
+    function texto(testId: string): string {
+      return (
+        (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`)
+          ?.textContent ?? ''
+      ).trim();
+    }
 
-      const hitos = interno<() => readonly { detalle: string; numero: number }[]>('hitos')();
-      expect(hitos.map((h) => h.detalle)).toEqual(['Antes', 'Más tarde', 'Sin fecha']);
-      expect(hitos.map((h) => h.numero)).toEqual([3, 2, 1]);
+    it('dibuja sólo los pasos escritos y cuenta «n de m»', () => {
+      dibujar();
+      interno<() => void>('agregarActividad')();
+      interno<() => void>('agregarActividad')();
+      interno<(clave: number, valor: string) => void>('fijarDetalle')(0, 'Caminar');
+      interno<(clave: number, valor: string) => void>('fijarDetalle')(2, 'Reconsulta');
+      fixture.detectChanges();
 
       const vista = fixture.nativeElement as HTMLElement;
-      expect(vista.querySelectorAll('[data-testid="plan-vista-paso"]').length).toBe(3);
-      expect(vista.querySelector('[data-testid="plan-contador-pasos"]')?.textContent).toContain(
-        '3 de 4',
-      );
+      expect(vista.querySelectorAll('[data-testid="plan-vista-paso"]').length).toBe(2);
+      expect(texto('plan-contador-pasos')).toBe('2 de 3');
     });
 
-    it('cuenta los datos obligatorios que faltan para abrir el plan', () => {
+    it('cuenta los datos obligatorios que faltan, el origen incluido en la cita', () => {
+      fixture.componentRef.setInput('exigeRespuesta', true);
       dibujar();
-      const pendientes = interno<() => number>('obligatoriosPendientes');
-      expect(pendientes()).toBe(2);
+      expect(texto('plan-pendientes')).toBe('Faltan 3 datos obligatorios');
 
       señal<string>('meta').set('Bajar la presión.');
-      expect(pendientes()).toBe(1);
-
       señal<string>('motivo').set('Control de presión');
-      expect(pendientes()).toBe(0);
       fixture.detectChanges();
-      expect(
-        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="plan-pendientes"]')
-          ?.textContent,
-      ).toContain('Lista para abrir');
+      expect(texto('plan-pendientes')).toBe('Falta 1 dato obligatorio');
+
+      señal<string | null>('respuestaDelFormulario').set('fi-1');
+      fixture.detectChanges();
+      expect(texto('plan-pendientes')).toBe('Lista para abrir');
     });
 
-    it('la vigencia se dice en la unidad de la consulta, y no con fechas invertidas', () => {
-      expect(duracionEnPalabras(new Date(2026, 0, 1), new Date(2026, 0, 1))).toBe('el mismo día');
-      expect(duracionEnPalabras(new Date(2026, 0, 1), new Date(2026, 0, 11))).toBe('10 días');
-      expect(duracionEnPalabras(new Date(2026, 0, 1), new Date(2026, 1, 5))).toBe('5 semanas');
-      expect(duracionEnPalabras(new Date(2026, 0, 1), new Date(2026, 6, 1))).toBe('6 meses');
-
+    /**
+     * La insignia sigue la regla del botón: con la vigencia invertida el plan
+     * no se puede abrir, y decir «Lista para abrir» sería una promesa falsa.
+     */
+    it('con la vigencia invertida no dice «Lista para abrir»', () => {
       dibujar();
+      señal<string>('meta').set('Bajar la presión.');
+      señal<string>('motivo').set('Control de presión');
       señal<Date | null>('desde').set(new Date(2026, 6, 1));
       señal<Date | null>('hasta').set(new Date(2026, 0, 1));
-      expect(interno<() => string | null>('duracion')()).toBeNull();
+      fixture.detectChanges();
+
+      expect(texto('plan-pendientes')).toBe('Revisar la vigencia');
+      expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
+    });
+
+    it('el tramo resuelto se marca y lo dice dentro de su encabezado', () => {
+      dibujar();
+      const titulos = () =>
+        Array.from(
+          (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.ruta__tramo'),
+        );
+      const objetivo = () => titulos().find((t) => t.textContent?.includes('Objetivo'));
+
+      expect(objetivo()?.classList).not.toContain('ruta__tramo--listo');
+      expect(objetivo()?.querySelector('h3 .sr-only')?.textContent).toContain('falta, obligatorio');
+
+      señal<string>('meta').set('Bajar la presión.');
+      fixture.detectChanges();
+      expect(objetivo()?.classList).toContain('ruta__tramo--listo');
+      expect(objetivo()?.querySelector('h3 .sr-only')?.textContent).toContain('completo');
+    });
+
+    it('con un diagnóstico elegido, la ruta muestra su nombre como motivo', () => {
+      fixture.componentRef.setInput('diagnosticos', [{ id: 'cond-1', etiqueta: 'Hipertensión' }]);
+      dibujar();
+      señal<string | null>('diagnosticoElegido').set('cond-1');
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('.vista')?.textContent).toContain(
+        'Por Hipertensión',
+      );
     });
   });
 });
