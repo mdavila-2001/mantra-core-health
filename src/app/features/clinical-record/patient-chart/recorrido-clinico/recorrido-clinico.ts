@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   effect,
+  DestroyRef,
   ElementRef,
   inject,
   Injector,
@@ -13,16 +14,18 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
 import {
   ASPECTO_DEL_TIPO,
   conectadosA,
   MEDIDAS,
   ubicarRecorrido,
   type AristaDelRecorrido,
+  type ColumnaUbicada,
   type NodoDelRecorrido,
   type NodoUbicado,
   type TipoDelRecorrido,
@@ -57,13 +60,14 @@ import {
  */
 @Component({
   selector: 'app-recorrido-clinico',
-  imports: [AppButton, DatePipe, NavIcon],
+  imports: [AppButton, DatePipe, NavIcon, NgTemplateOutlet],
   templateUrl: './recorrido-clinico.html',
   styleUrl: './recorrido-clinico.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecorridoClinico {
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly nodos = input.required<readonly NodoDelRecorrido[]>();
   readonly aristas = input.required<readonly AristaDelRecorrido[]>();
@@ -104,24 +108,104 @@ export class RecorridoClinico {
 
   private readonly lienzo = viewChild<ElementRef<HTMLElement>>('lienzo');
 
+  /**
+   * Pantalla angosta: el recorrido se dibuja en vertical. El corte es
+   * `--bp-sm` (650 px), el de la escala del sistema. Arranca en `false` —en el
+   * servidor no hay pantalla— y se ajusta al montar en el navegador.
+   */
+  protected readonly angosto = signal(false);
+
+  /** Para el teléfono: lo más reciente arriba. */
+  protected readonly columnasRecientesPrimero = computed(() => [...this.plano().columnas].reverse());
+
+  /**
+   * Para qué diagnóstico se indicó cada receta, por id de receta, con el
+   * nombre real aunque el diagnóstico esté agrupado. En vertical no hay
+   * flecha: lo dice el texto.
+   */
+  protected readonly indicaciones = computed(() => {
+    const porId = new Map(this.nodos().map((n) => [n.id, n]));
+    const mapa = new Map<string, string>();
+    for (const arista of this.aristas()) {
+      const diagnostico = porId.get(arista.desde);
+      if (arista.motivo === 'indicacion' && diagnostico !== undefined) {
+        mapa.set(arista.hasta, diagnostico.principal);
+      }
+    }
+    return mapa;
+  });
+
   constructor() {
-    // Lo más reciente es lo que se viene a mirar: el recorrido abre por el
-    // final. Sólo la primera vez que hay plano, para no arrancarle el
-    // desplazamiento a quien ya se movió.
+    afterNextRender(() => {
+      if (typeof matchMedia !== 'function') {
+        return;
+      }
+      const consulta = matchMedia('(max-width: 649px)');
+      this.angosto.set(consulta.matches);
+      const alCambiar = (evento: MediaQueryListEvent): void => this.angosto.set(evento.matches);
+      consulta.addEventListener('change', alCambiar);
+      this.destroyRef.onDestroy(() => consulta.removeEventListener('change', alCambiar));
+    });
+
+    // Lo más reciente es lo que se viene a mirar: el lienzo abre por el final.
+    // Sin animación —un desplazamiento suave a medio camino dejaba la última
+    // columna cortada— y sólo la primera vez que hay plano, para no
+    // arrancarle el desplazamiento a quien ya se movió.
     let ubicado = false;
     effect(() => {
       const columnas = this.plano().columnas.length;
-      if (ubicado || columnas === 0) {
+      const angosto = this.angosto();
+      if (ubicado || columnas === 0 || angosto) {
         return;
       }
       ubicado = true;
       untracked(() =>
-        afterNextRender(() => this.irA('final'), { injector: this.injector }),
+        afterNextRender(() => this.fijarAlFinal(), { injector: this.injector }),
       );
     });
   }
 
-  protected irA(extremo: 'inicio' | 'final'): void {
+
+  /**
+   * Abre por el final y se queda ahí mientras quien mira no se mueva.
+   *
+   * Una sola pasada no alcanza: después del primer render el lienzo todavía
+   * cambia de ancho —la página gana su barra de desplazamiento vertical, la
+   * fuente termina de cargar— y la última columna quedaba asomando cortada.
+   * Así que, hasta el primer desplazamiento de la persona, cada cambio de
+   * tamaño vuelve a pegar el lienzo al final.
+   */
+  private fijarAlFinal(): void {
+    const lienzo = this.lienzo()?.nativeElement;
+    if (lienzo === undefined) {
+      return;
+    }
+    this.irA('final', false);
+    if (typeof ResizeObserver !== 'function') {
+      return;
+    }
+    let pegado = true;
+    const observador = new ResizeObserver(() => {
+      if (pegado) {
+        this.irA('final', false);
+      }
+    });
+    observador.observe(lienzo);
+    // Un desplazamiento que no deja el lienzo al final es de la persona: desde
+    // ahí, el lienzo es suyo.
+    const alDesplazar = (): void => {
+      if (lienzo.scrollLeft < lienzo.scrollWidth - lienzo.clientWidth - 2) {
+        pegado = false;
+      }
+    };
+    lienzo.addEventListener('scroll', alDesplazar, { passive: true });
+    this.destroyRef.onDestroy(() => {
+      observador.disconnect();
+      lienzo.removeEventListener('scroll', alDesplazar);
+    });
+  }
+
+  protected irA(extremo: 'inicio' | 'final', suave = true): void {
     const lienzo = this.lienzo()?.nativeElement;
     if (lienzo === undefined) {
       return;
@@ -132,18 +216,64 @@ export class RecorridoClinico {
       // movimiento» se salta, igual que las transiciones del CSS.
       const reducir =
         typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      lienzo.scrollTo({ left: destino, behavior: reducir ? 'auto' : 'smooth' });
+      lienzo.scrollTo({ left: destino, behavior: suave && !reducir ? 'smooth' : 'auto' });
     } else {
       lienzo.scrollLeft = destino;
     }
   }
 
-  protected apuntar(id: string | null): void {
-    this.bajoElPuntero.set(id);
+  /*
+   * Un control de grupo no ilumina camino: no es un registro, y al abrirse
+   * («Mostrar menos») atenuaba justo lo que se acababa de mostrar.
+   */
+  protected apuntar(nodo: NodoUbicado | null): void {
+    this.bajoElPuntero.set(nodo === null || nodo.grupo !== undefined ? null : nodo.id);
   }
 
-  protected enfocar(id: string | null): void {
-    this.conElFoco.set(id);
+  protected enfocar(nodo: NodoUbicado | null): void {
+    this.conElFoco.set(nodo === null || nodo.grupo !== undefined ? null : nodo.id);
+  }
+
+  /** Qué es la columna, en palabras: cabecera visible. */
+  protected contextoDe(columna: ColumnaUbicada): string {
+    return columna.contexto === 'atencion'
+      ? 'Atención'
+      : columna.contexto === 'dia'
+        ? 'Registros del día'
+        : 'Sin atención';
+  }
+
+  /** El nombre accesible de una columna: su fecha y qué es. */
+  protected rotuloDeColumna(columna: ColumnaUbicada): string {
+    const fecha =
+      columna.fecha === null
+        ? 'Sin fecha'
+        : columna.fecha.toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' });
+    const que =
+      columna.contexto === 'atencion'
+        ? 'atención'
+        : columna.contexto === 'dia'
+          ? 'registros de atenciones que no están a la vista'
+          : 'registros sin atención';
+    return `${fecha}, ${que}`;
+  }
+
+  /**
+   * La fecha propia del registro cuando no es la de su columna, con un rótulo
+   * que dice qué fecha es. `null` cuando coinciden: repetirla sería ruido.
+   */
+  protected fechaPropia(
+    nodo: NodoUbicado,
+    columna: ColumnaUbicada,
+  ): { readonly rotulo: string; readonly fecha: Date } | null {
+    if (nodo.grupo !== undefined || nodo.cuando === null || columna.fecha === null) {
+      return null;
+    }
+    if (nodo.cuando.toDateString() === columna.fecha.toDateString()) {
+      return null;
+    }
+    const rotulo = nodo.tipo === 'diagnosticos' ? 'Inicio' : nodo.tipo === 'medicacion' ? 'Desde' : 'Del';
+    return { rotulo, fecha: nodo.cuando };
   }
 
   /** Un registro abre su detalle; un nodo de grupo abre o cierra su celda. */
@@ -227,6 +357,11 @@ export class RecorridoClinico {
     }
     return nombres;
   });
+
+  /** El ícono del tipo. Método y no índice: en la plantilla del nodo el contexto llega sin tipo. */
+  protected iconoDe(tipo: TipoDelRecorrido): NavIconName {
+    return this.aspecto[tipo].icono;
+  }
 
   protected tonoDe(tipo: TipoDelRecorrido): string {
     return this.aspecto[tipo].tono;

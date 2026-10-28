@@ -100,12 +100,15 @@ export interface AristaDelRecorrido {
 
 /** Medidas en píxeles CSS. Fijas: el trazado de las conexiones depende de ellas. */
 export const MEDIDAS = {
-  anchoColumna: 232,
+  // Ancho y alto pensados para nombres clínicos largos («Hipertensión arterial
+  // esencial», «Enalapril 10 mg comprimidos») en dos renglones: con 232 × 68 se
+  // cortaban en el primero aun a 1440 px.
+  anchoColumna: 248,
   separacionColumnas: 64,
   margenLateral: 24,
   altoCabecera: 76,
   altoRotuloCarril: 32,
-  altoNodo: 68,
+  altoNodo: 86,
   separacionNodos: 8,
   rellenoCarril: 12,
 } as const;
