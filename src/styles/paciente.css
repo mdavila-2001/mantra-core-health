@@ -154,7 +154,9 @@
 /* ── Pestañas: más grandes, la elegida con fondo ────────────────────────── */
 .app-shell--redesign .app-main .tabs__tab {
   font-size: var(--fs-body-lg);
-  border-radius: var(--r-full) var(--r-full) 0 0;
+  /* `--r-lg` y no `--r-full`: en una pestaña que reparte el ancho (un tercio de
+     la ficha del glosario) el radio entero la volvía una cúpula. */
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
 }
 
 .app-shell--redesign .app-main .tabs__tab[aria-selected='true'] {
