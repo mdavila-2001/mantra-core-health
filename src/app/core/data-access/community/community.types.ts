@@ -1322,6 +1322,33 @@ export interface NewReview {
   }[];
 }
 
+/**
+ * Una atención que el paciente podría reseñar públicamente
+ * (`GET /patients/me/reviewable-care?appointmentBookingId=`).
+ *
+ * Es el **puente** entre la encuesta y la reseña: la invitación de encuesta
+ * cuelga de una *reserva* y la reseña exige un *encuentro*. El servidor resuelve
+ * reserva → cita → encuentro y dice si hoy se puede reseñar.
+ *
+ * Nada de la encuesta viaja por acá ni vuelve: la encuesta es privada y la
+ * reseña es pública, y son dos escrituras en dos tablas.
+ */
+export interface ReviewableCare {
+  /** El encuentro terminado que respalda la reseña (`verifiedEncounterId`). */
+  readonly encounterId: string;
+  readonly appointmentBookingId?: string;
+  /** Con quién fue la atención, para el texto del diálogo. */
+  readonly practitionerDisplayName: string;
+  readonly startAt: Date | null;
+  /** Si ya hay una reseña de este encuentro (una por encuentro). */
+  readonly alreadyReviewed: boolean;
+  /**
+   * Si hoy se puede reseñar: encuentro terminado, vitrina del médico que acepta
+   * reseñas y sin reseña previa. `false` es una respuesta normal, no un error.
+   */
+  readonly canReview: boolean;
+}
+
 /** Lo que se manda al responder una reseña. */
 export interface NewReviewResponse {
   readonly responseText: string;

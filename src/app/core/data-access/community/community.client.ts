@@ -82,6 +82,7 @@ import type {
   PublicDirectoryResult,
   PublicProfileDetail,
   ReactionSummary,
+  ReviewableCare,
   ReviewsQuery,
   ServiceReview,
   ServiceReviewPage,
@@ -804,6 +805,39 @@ export class CommunityClient {
   }
 
   /**
+   * `GET /patients/me/reviewable-care?appointmentBookingId=` — ¿se puede dejar
+   * una reseña pública de la atención a la que pertenece esta encuesta?
+   *
+   * La invitación de encuesta nombra una **reserva**; la reseña, un
+   * **encuentro**. Esta lectura es el puente: el servidor sigue reserva → cita →
+   * encuentro y responde `{ encounterId, canReview, alreadyReviewed, … }`.
+   *
+   * Quien pregunta es la sesión (el paciente no viaja en la consulta), y la
+   * respuesta **no contiene nada de la encuesta**.
+   *
+   * @param appointmentBookingId - La reserva de la invitación respondida.
+   * @returns La atención reseñable, con `canReview` ya resuelto por el servidor.
+   */
+  getReviewableCare(appointmentBookingId: string): Observable<ReviewableCare> {
+    return this.http
+      .get<WireReviewableCare>(this.url('/patients/me/reviewable-care'), {
+        params: new HttpParams().set('appointmentBookingId', appointmentBookingId),
+      })
+      .pipe(
+        map((cuerpo) => ({
+          encounterId: cuerpo.encounterId,
+          ...(cuerpo.appointmentBookingId
+            ? { appointmentBookingId: cuerpo.appointmentBookingId }
+            : {}),
+          practitionerDisplayName: cuerpo.practitionerDisplayName,
+          startAt: maybeDate(cuerpo.startAt) ?? null,
+          alreadyReviewed: cuerpo.alreadyReviewed === true,
+          canReview: cuerpo.canReview === true,
+        })),
+      );
+  }
+
+  /**
    * `POST /community/profiles/:profileId/reviews/:reviewId/responses` —
    * el profesional contesta una reseña de su propia vitrina.
    *
@@ -1433,6 +1467,16 @@ type WireNotification = Omit<
 
 interface WireNotificationPage extends Omit<NotificationPage, 'items'> {
   readonly items: readonly WireNotification[];
+}
+
+/** `GET /patients/me/reviewable-care` tal como viaja: fechas en texto, opcionales en `null`. */
+interface WireReviewableCare {
+  readonly encounterId: string;
+  readonly appointmentBookingId?: string | null;
+  readonly practitionerDisplayName: string;
+  readonly startAt?: string | null;
+  readonly alreadyReviewed?: boolean;
+  readonly canReview?: boolean;
 }
 
 type WireReview = Omit<
