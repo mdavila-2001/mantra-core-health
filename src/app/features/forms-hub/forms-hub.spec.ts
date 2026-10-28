@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -9,17 +9,17 @@ import { FormBuilder } from '../form-builder/form-builder';
 import { SurveysHome } from '../questionnaires/questionnaires';
 import { FormsHub } from './forms-hub';
 
-@Component({ selector: 'app-form-builder', template: '<p data-testid="stub-formularios">F</p>' })
+@Component({ selector: 'app-form-builder', template: '<p data-testid="stub-formularios">F</p>', changeDetection: ChangeDetectionStrategy.OnPush })
 class FormBuilderStub {
   readonly embedded = input(false);
 }
 
-@Component({ selector: 'app-surveys-home', template: '<p data-testid="stub-encuestas">E</p>' })
+@Component({ selector: 'app-surveys-home', template: '<p data-testid="stub-encuestas">E</p>', changeDetection: ChangeDetectionStrategy.OnPush })
 class SurveysHomeStub {
   readonly embedded = input(false);
 }
 
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class Vacio {}
 
 function seccion(path: string): AppSection {
