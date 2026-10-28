@@ -115,7 +115,9 @@
   font-size: var(--fs-h1);
   line-height: var(--lh-h1);
   letter-spacing: -0.015em;
-  color: var(--c-petrol-700, var(--brand-primary));
+  /* Tinta y no petróleo (27/10/2026, «está muy azul»): el color ya lo pone la
+     cinta. La línea gráfica pide títulos en `--text-primary`. */
+  color: var(--text-primary);
 }
 
 .app-shell--redesign .app-main app-page-header .page-header__subtitle {
@@ -190,7 +192,7 @@
 }
 
 :root[data-theme='dark'] .app-shell--redesign .app-main app-page-header .page-header__title {
-  color: var(--c-aqua-300);
+  color: var(--text-primary);
 }
 
 :root[data-theme='dark'] .app-shell--redesign .app-main .card.card--outlined,
@@ -444,11 +446,12 @@
   font-size: clamp(var(--fs-h1), 4vw, var(--fs-display));
   line-height: 1.15;
   letter-spacing: -0.02em;
-  color: var(--c-petrol-700, var(--brand-primary));
+  /* Tinta (27/10/2026, «está muy azul»): el acento lo pone el nombre. */
+  color: var(--text-primary);
 }
 
 .app-shell--paciente app-patient-home .portada__nombre {
-  background: linear-gradient(90deg, var(--c-petrol-500), var(--c-aqua-600));
+  background: linear-gradient(90deg, var(--c-aqua-700), var(--c-aqua-600));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -579,7 +582,7 @@
   font-size: var(--fs-h1);
   line-height: var(--lh-h1);
   font-weight: 600;
-  color: var(--c-petrol-700, var(--text-primary));
+  color: var(--text-primary);
 }
 
 .app-shell--paciente app-patient-home .proxima-cita__hora {
@@ -805,7 +808,7 @@
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
-  color: var(--c-petrol-700, var(--brand-primary));
+  color: var(--text-primary);
 }
 
 .app-shell--paciente app-appointments .turnos__hora {
@@ -827,7 +830,7 @@
    fondo oscuro (el petróleo y el aguamarina 700 no llegan al contraste). */
 :root[data-theme='dark'] .app-shell--paciente app-patient-home .proxima-cita__hora,
 :root[data-theme='dark'] .app-shell--paciente app-appointments .turnos__hora {
-  color: var(--c-aqua-300);
+  color: var(--text-primary);
 }
 
 :root[data-theme='dark'] .app-shell--paciente app-appointments .turnos__fecha {
