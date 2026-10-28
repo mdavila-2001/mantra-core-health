@@ -1,0 +1,12 @@
+<div class="loading-state__fila">
+  <app-spinner class="loading-state__aro" [size]="size() === 'block' ? 'md' : 'sm'" decorative />
+  <div class="loading-state__texto">
+    <p class="loading-state__mensaje">{{ message() }}</p>
+    @if (detail()) {
+      <p class="loading-state__detalle">{{ detail() }}</p>
+    }
+  </div>
+</div>
+@if (lines() > 0) {
+  <app-skeleton class="loading-state__silueta" variant="text" [lines]="lines()" />
+}

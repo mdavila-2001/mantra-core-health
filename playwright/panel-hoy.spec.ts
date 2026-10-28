@@ -187,8 +187,9 @@ test.describe('Panel · lo que toca hoy', () => {
     // Sin perfil profesional no hay jornada: no se le inventa una franja vacía.
     await expect(page.getByTestId('panel-hoy')).toHaveCount(0);
 
-    // Y lo suyo sigue en pie: los accesos y el listado de pacientes.
-    await expect(page.getByTestId('panel-accesos')).toBeVisible();
+    // Y lo suyo sigue en pie: el listado de pacientes. («Sus herramientas»
+    // se retiró del panel el 28/10/2026, para todos los roles.)
+    await expect(page.getByTestId('panel-accesos')).toHaveCount(0);
     await expect(page.getByTestId('panel-ultimos-pacientes')).toBeVisible();
 
     await quieta(page);

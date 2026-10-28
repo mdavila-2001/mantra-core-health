@@ -139,6 +139,11 @@ export interface PatientRegistration {
   /** Calle y número del domicilio, tal como lo escribe la persona. */
   readonly homeAddressLines?: string;
   /**
+   * Distrito o zona del domicilio, tal como lo da el mapa (ADR-0028 de la API).
+   * Viaja aparte de la calle: la API lo guarda en su propia columna.
+   */
+  readonly homeDistrict?: string;
+  /**
    * Latitud del domicilio.
    *
    * El par va completo o no va: media coordenada no ubica nada y el backend
@@ -180,6 +185,8 @@ export interface PatientRegistration {
   readonly workMunicipalityConceptId?: string;
   /** Calle y número del lugar de trabajo. Ver {@link PatientRegistration.workMunicipalityConceptId}. */
   readonly workAddressLines?: string;
+  /** Distrito o zona del trabajo. Ver {@link PatientRegistration.homeDistrict}. */
+  readonly workDistrict?: string;
   /**
    * Latitud del trabajo.
    *
@@ -326,6 +333,9 @@ export interface PractitionerRegistration {
    */
   readonly homeAddressLines?: string;
 
+  /** Distrito o zona del domicilio, aparte de la calle (ADR-0028 de la API). */
+  readonly homeDistrict?: string;
+
   /**
    * Latitud del domicilio, confirmada sobre el mapa.
    *
@@ -381,6 +391,20 @@ export interface PractitionerRegistration {
   readonly licenseFileId?: string;
   /** El PDF del registro del SEDES, mismas reglas. La API exige `sedesLicenseNumber`. */
   readonly sedesLicenseFileId?: string;
+  /** Fecha de inscripción en el SEDES, ISO `YYYY-MM-DD`. La API exige `sedesLicenseNumber`. */
+  readonly sedesLicenseIssueDate?: string;
+  /**
+   * Registro en el colegio de la profesión (Colegio Médico, de Odontólogos…):
+   * la tercera habilitación, al lado de la matrícula y del SEDES. La API la
+   * guarda como otra autorización, con el nombre del colegio como autoridad.
+   */
+  readonly collegeLicenseNumber?: string;
+  /** El colegio que emitió el registro; sale del título profesional. */
+  readonly collegeName?: string;
+  /** Fecha de inscripción en el colegio, ISO `YYYY-MM-DD`. */
+  readonly collegeLicenseIssueDate?: string;
+  /** El PDF del registro del colegio, mismas reglas que {@link licenseFileId}. */
+  readonly collegeLicenseFileId?: string;
   readonly professionalTitle?: string;
   /**
    * Forma anterior de declarar el teléfono, hoy el del trabajo.

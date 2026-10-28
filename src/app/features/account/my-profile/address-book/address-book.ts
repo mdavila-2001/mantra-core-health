@@ -85,6 +85,8 @@ export class AddressBook {
   /** El municipio y la calle **no se escriben**: salen del punto. */
   protected readonly municipio = signal<string | null>(null);
   protected readonly calle = signal('');
+  /** El distrito o zona del punto, que viaja aparte de la calle (ADR-0028). */
+  protected readonly distrito = signal('');
   /** El punto confirmado en el mapa, o `null`. Obligatorio. */
   protected readonly punto = signal<Coordinates | null>(null);
   /** El punto con el que se abrió (el guardado), para sembrar el mapa. */
@@ -174,6 +176,7 @@ export class AddressBook {
     this.base = base;
     this.municipio.set(base?.municipalityConceptId ?? null);
     this.calle.set(base?.lines ?? '');
+    this.distrito.set(base?.district ?? '');
     const guardado =
       base?.latitude !== undefined && base.longitude !== undefined
         ? { lat: base.latitude, lng: base.longitude }
@@ -242,13 +245,17 @@ export class AddressBook {
     const punto = this.punto();
     if (punto === null) {
       this.calle.set('');
+      this.distrito.set('');
       this.municipio.set(null);
       return;
     }
     const localidad = confirmedLocality(this.localidad(), punto);
     if (localidad === null) return;
     const mismoQueElGuardado = samePoint(punto, this.puntoInicial());
-    this.calle.set(localidad.calle ?? (mismoQueElGuardado ? (this.base?.lines ?? '') : ''));
+    // Sólo calle y número: el distrito tiene su campo, y con la línea entera
+    // quedaba dos veces.
+    this.calle.set(localidad.calleSola ?? (mismoQueElGuardado ? (this.base?.lines ?? '') : ''));
+    this.distrito.set(localidad.zona ?? (mismoQueElGuardado ? (this.base?.district ?? '') : ''));
     this.municipio.set(
       localidad.municipioConceptId ??
         (mismoQueElGuardado ? (this.base?.municipalityConceptId ?? null) : null),
@@ -268,6 +275,10 @@ export class AddressBook {
     const lugar = {
       municipalityConceptId: municipio,
       lines: this.calle().trim(),
+      // Vacío viaja sólo para borrar un distrito que la dirección ya tenía.
+      ...(this.distrito().trim() !== '' || (this.base?.district ?? '') !== ''
+        ? { district: this.distrito().trim() }
+        : {}),
       latitude: punto.lat,
       longitude: punto.lng,
     };

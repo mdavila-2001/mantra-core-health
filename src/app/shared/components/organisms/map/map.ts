@@ -25,6 +25,7 @@ import type { PinMap, PuntoGeo } from './map-pin.types';
 import { construirPopup, pinAccessibleName } from './map-popup';
 import { DEMO_ATTRIBUTION, DEMO_TILES } from './map-tiles';
 import { CARGADOR_DE_PROVINCIAS, type ProvinciasDeBolivia, provinceIn } from './provinces';
+import { LoadingState } from '../../molecules/loading-state/loading-state';
 
 /** El constructor del popup vive en `map-popup.ts`; se reexporta porque es API del organismo. */
 export { construirPopup };
@@ -129,7 +130,7 @@ export const CARGADOR_DE_LEAFLET = new InjectionToken<CargadorDeLeaflet>('CARGAD
  */
 @Component({
   selector: 'app-map',
-  imports: [],
+  imports: [LoadingState],
   templateUrl: './map.html',
   styleUrl: './map.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

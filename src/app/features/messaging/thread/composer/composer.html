@@ -68,7 +68,7 @@
       @defer (on immediate) {
         <app-emoji-picker (elegido)="insertar($event)" />
       } @placeholder {
-        <p class="composer__panel-cargando" role="status">Cargando emojis…</p>
+        <app-loading-state class="composer__panel-cargando" size="block" message="Cargando emojis…" />
       }
     } @else {
       <app-sticker-picker

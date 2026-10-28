@@ -12,7 +12,11 @@
     </p>
 
     @if (invoiceLoading()) {
-      <p class="factura__secundario" data-testid="factura-cargando">Leyendo la factura…</p>
+      <app-loading-state
+        class="factura__secundario"
+        data-testid="factura-cargando"
+        message="Leyendo la factura…"
+      />
     } @else if (invoice(); as f) {
       <!-- ── La factura emitida ─────────────────────────────────────────── -->
       <section class="factura__resultado" aria-labelledby="factura-numero" data-testid="factura-emitida">

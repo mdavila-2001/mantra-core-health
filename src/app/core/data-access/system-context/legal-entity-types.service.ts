@@ -44,7 +44,7 @@ const PAIS_POR_DEFECTO: LegalEntityCountryIso = 'BO';
  *
  * ## Por qué existe, si ya hay un catálogo de tipo societario en la API
  *
- * `LegalEntityTypesCatalog.listar()` lee las **21** opciones —las 8 de
+ * `LegalEntityTypesCatalog.listar()` lee las **40** opciones —las 27 de
  * Bolivia más las de Brasil, Estados Unidos, Argentina y México— con su
  * `display` en inglés técnico, igual que cualquier catálogo de terminología.
  * Lo que este servicio agrega es lo que la API no puede resolver por su
@@ -66,7 +66,7 @@ export class LegalEntityTypesCatalog {
   private cache: Observable<readonly DynamicEnumOption[]> | null = null;
 
   /**
-   * Las 21 opciones publicadas, en el orden en que la API las ofrece.
+   * Las 40 opciones publicadas, en el orden en que la API las ofrece.
    *
    * @returns Las opciones del catálogo; lista vacía bajo SSR.
    */
@@ -111,7 +111,7 @@ export class LegalEntityTypesCatalog {
    *
    * Si el país pedido no tiene ninguna figura en el diccionario —un país que
    * la API sembró pero que todavía no llegó acá—, cae a Bolivia: mejor una
-   * lista con las 8 figuras conocidas que un desplegable vacío que parece
+   * lista con las figuras bolivianas conocidas que un desplegable vacío que parece
    * roto.
    *
    * @param opciones - Las opciones crudas que devolvió {@link listar}.
@@ -124,12 +124,35 @@ export class LegalEntityTypesCatalog {
     countryIso: string,
     lang: UiLanguage = uiLanguage(),
   ): readonly SelectOption<string>[] {
+    if (opciones.length === 0) {
+      return this.respaldoDelDiccionario(countryIso, lang);
+    }
     const deEsePais = this.filtrarPorPais(opciones, countryIso);
     const fuente = deEsePais.length > 0 ? deEsePais : this.filtrarPorPais(opciones, PAIS_POR_DEFECTO);
     return fuente.map((opcion) => ({
       value: opcion.code,
       label: legalEntityTypeLabel(opcion.code, lang, opcion.display),
     }));
+  }
+
+  /**
+   * Las figuras del país sacadas del diccionario, cuando el catálogo no trajo
+   * nada (falló la lectura, vino vacío o estamos bajo SSR).
+   *
+   * Sin esto el selector quedaba vacío y el alta no se podía terminar. Es
+   * seguro ofrecerlas: cada código del diccionario es uno de los que la API
+   * acepta en `legalEntityType` (`LEGAL_ENTITY_TYPES` del backend; lo fija
+   * `legal-entity-types.dictionary.spec.ts`).
+   */
+  private respaldoDelDiccionario(
+    countryIso: string,
+    lang: UiLanguage,
+  ): readonly SelectOption<string>[] {
+    const delPais = (iso: string) =>
+      Object.entries(LEGAL_ENTITY_TYPES_DICTIONARY).filter(([, entry]) => entry.countryIso === iso);
+    const propias = delPais(countryIso);
+    const fuente = propias.length > 0 ? propias : delPais(PAIS_POR_DEFECTO);
+    return fuente.map(([code, entry]) => ({ value: code, label: entry.translations[lang].label }));
   }
 
   private filtrarPorPais(

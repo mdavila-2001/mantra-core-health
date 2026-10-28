@@ -28,6 +28,7 @@ import {
   provinceOfMunicipality,
   type LocalityDetail,
 } from '@shared/geo/locality-detail';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * «¿En qué localidad?»: el mapa de departamentos y el select de municipio.
@@ -70,7 +71,7 @@ import {
  */
 @Component({
   selector: 'app-location-picker',
-  imports: [DepartmentMap, AppSelect, AppInput, FormField],
+  imports: [DepartmentMap, AppSelect, AppInput, FormField, LoadingState],
   templateUrl: './location-picker.html',
   styleUrl: './location-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

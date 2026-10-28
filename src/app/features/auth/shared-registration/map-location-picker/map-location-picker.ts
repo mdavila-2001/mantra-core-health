@@ -14,8 +14,13 @@ import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
 
 import {
   ReverseGeocodingClient,
+  type AdminAreas,
   type StreetFromPoint,
 } from '../../../../core/data-access/geo/reverse-geocoding.client';
+import {
+  OPERATING_COUNTRIES,
+  joinCountryNames,
+} from '../../../../core/data-access/geo/operating-countries';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
@@ -25,6 +30,8 @@ import { LocationPicker } from '../location-picker/location-picker';
 import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
@@ -109,6 +116,10 @@ export interface LocalityFromPoint {
   readonly zona: string | null;
   /** El `conceptId` del municipio en `VS_BO_MUNICIPALITY`, o `null`. */
   readonly municipioConceptId: string | null;
+  /** El país del punto (ISO 3166-1 alfa-2), si la API lo dio. */
+  readonly paisCodigo?: string | null;
+  /** Los niveles administrativos del punto, para cualquier país; `null` si no llegaron. */
+  readonly niveles?: AdminAreas | null;
 }
 
 /** Qué pasó con la calle del último punto. */
@@ -118,8 +129,41 @@ export const STREET_TEXT: Readonly<Record<Exclude<StreetState, 'escrita'>, strin
   'sin-pedir': '',
   buscando: 'Buscando la calle de este punto…',
   'sin-calle': 'El mapa no tiene un nombre de calle en este punto.',
-  caida: 'No pudimos traer el nombre de la calle ahora. El punto se guarda igual.',
+  // Corto a propósito: el porqué y el reintento los dice el aviso de abajo.
+  // Repetir «el punto se guarda igual» en cada campo era ruido.
+  caida: 'No disponible por ahora.',
 };
+
+/** Lo que dice «Distrito o zona» mientras no hay uno que mostrar. */
+export const ZONE_TEXT: Readonly<Record<Exclude<StreetState, 'sin-pedir'>, string>> = {
+  buscando: 'Buscando el distrito de este punto…',
+  escrita: 'El mapa no tiene un distrito o zona para este punto.',
+  'sin-calle': 'El mapa no tiene un distrito o zona para este punto.',
+  caida: 'No disponible por ahora.',
+};
+
+/**
+ * El recuadro de Bolivia, con ~0,5° de margen para los municipios de borde. Fuera de él no hay
+ * departamento, provincia ni municipio que deducir, y el mapa de Bolivia no
+ * tiene dónde dibujar el punto: se dice, en vez de pintarlo fuera del plano.
+ */
+export const BOLIVIA_BOUNDS = { minLat: -23.5, maxLat: -9.2, minLng: -70.0, maxLng: -57.0 } as const;
+
+export function isInBolivia(punto: Coordinates): boolean {
+  return (
+    punto.lat >= BOLIVIA_BOUNDS.minLat &&
+    punto.lat <= BOLIVIA_BOUNDS.maxLat &&
+    punto.lng >= BOLIVIA_BOUNDS.minLng &&
+    punto.lng <= BOLIVIA_BOUNDS.maxLng
+  );
+}
+
+/**
+ * Cuánto se espera a la API por la calle. La API serializa una consulta por
+ * segundo y, si el primer proveedor cae, pregunta a un segundo: con 10 s el
+ * front se rendía antes que ella y mostraba «no pudimos» con la calle en camino.
+ */
+const STREET_TIMEOUT_MS = 20_000;
 
 export const NOTICE_REWRITE_ADDRESS = 'Vuelva a escribir la dirección para este punto.';
 
@@ -198,7 +242,17 @@ function formatCoordinate(valor: number): string {
  */
 @Component({
   selector: 'app-map-location-picker',
-  imports: [AppButton, Input, FormField, NavIcon, AppMap, AnnounceOnAppear, LocationPicker],
+  imports: [
+    AppButton,
+    Input,
+    Textarea,
+    Alert,
+    FormField,
+    NavIcon,
+    AppMap,
+    AnnounceOnAppear,
+    LocationPicker,
+  ],
   templateUrl: './map-location-picker.html',
   styleUrl: './map-location-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -224,6 +278,8 @@ export class MapLocationPicker {
         calleSola: this.streetState() === 'escrita' ? this.streetOnly() : null,
         zona: this.zone(),
         municipioConceptId: this.municipality(),
+        paisCodigo: this.countryCode(),
+        niveles: this.adminAreas(),
       });
     });
     // `effect` y no un valor inicial de la señal: el perfil llega por HTTP y el
@@ -348,12 +404,55 @@ export class MapLocationPicker {
   readonly streetOnly = signal<string | null>(null);
   readonly zone = signal<string | null>(null);
   readonly municipality = signal<string | null>(null);
+  readonly countryCode = signal<string | null>(null);
+  readonly adminAreas = signal<AdminAreas | null>(null);
 
-  /** Lo que muestra el campo «Calle», que no se edita. */
+  /** Dónde se opera hoy (ver {@link OPERATING_COUNTRIES}). */
+  private readonly operatingCountries = inject(OPERATING_COUNTRIES);
+
+  /** «Bolivia», para el aviso. */
+  protected readonly operatingCountriesName = joinCountryNames(this.operatingCountries);
+
+  /**
+   * Lo que muestra el campo «Calle», que no se edita: calle y número, sin el
+   * barrio. El distrito tiene su propio campo justo debajo, y con la línea
+   * entera se leía dos veces —y no era lo que se guarda—.
+   */
   protected readonly streetText = computed(() => {
     const estado = this.streetState();
-    return estado === 'escrita' ? (this.street() ?? '') : STREET_TEXT[estado];
+    return estado === 'escrita' ? (this.streetOnly() ?? this.street() ?? '') : STREET_TEXT[estado];
   });
+
+  /** Lo que muestra «Distrito o zona»: el del punto, o qué pasó con él. */
+  protected readonly zoneText = computed(() => {
+    const estado = this.streetState();
+    if (estado === 'sin-pedir') return '';
+    return this.zone() ?? ZONE_TEXT[estado];
+  });
+
+  /**
+   * Si el punto cae fuera de los países donde se opera.
+   *
+   * Manda el país que dio la API; sin él (todavía buscando, o la API cayó) se
+   * usa el recuadro de Bolivia, que es el único país con geometría propia en el
+   * front. Mientras se opere sólo en Bolivia, el respaldo es exacto en el
+   * centro del país y conservador en los bordes.
+   */
+  protected readonly outsideOperatingCountries = computed(() => {
+    const punto = this.punto();
+    if (punto === null) return false;
+    const pais = this.countryCode();
+    if (pais !== null) return !this.operatingCountries.includes(pais);
+    return this.operatingCountries.includes('BO') ? !isInBolivia(punto) : false;
+  });
+
+  /** Vuelve a pedir la calle del punto actual, tras una caída. */
+  protected retryStreet(): void {
+    const punto = this.punto();
+    if (punto === null) return;
+    this.streetState.set('buscando');
+    this.streetRequests.next(punto);
+  }
 
   private readonly streetRequests = new Subject<Coordinates>();
 
@@ -363,7 +462,7 @@ export class MapLocationPicker {
       .pipe(
         switchMap((punto) =>
           this.geocoder.streetAt(punto.lat, punto.lng).pipe(
-            timeout(10_000),
+            timeout(STREET_TIMEOUT_MS),
             map((calle): { punto: Coordinates; calle: StreetFromPoint | null } => ({ punto, calle })),
             catchError(() => of({ punto, calle: null })),
           ),
@@ -380,7 +479,9 @@ export class MapLocationPicker {
       this.streetState.set('caida');
       return;
     }
-    this.zone.set(calle.neighbourhood?.trim() || null);
+    this.countryCode.set(calle.countryCode?.trim().toUpperCase() || null);
+    this.adminAreas.set(calle.adminAreas ?? null);
+    this.zone.set(calle.adminAreas?.district?.trim() || calle.neighbourhood?.trim() || null);
     if (!calle.found || !calle.line) {
       this.streetState.set('sin-calle');
       return;
@@ -393,6 +494,8 @@ export class MapLocationPicker {
 
   /** Un punto nuevo: lo deducido del anterior ya no vale. */
   private deduceFrom(punto: Coordinates): void {
+    this.countryCode.set(null);
+    this.adminAreas.set(null);
     this.street.set(null);
     this.streetOnly.set(null);
     this.zone.set(null);
@@ -455,6 +558,12 @@ export class MapLocationPicker {
   /** El error de cada campo al aplicar, o `''`. */
   protected readonly errorLatitude = signal('');
   protected readonly errorLongitude = signal('');
+
+  /**
+   * El id del aviso «sólo operamos en…», para el `aria-describedby` del botón
+   * de confirmar deshabilitado: quien llega al botón con el teclado oye por qué.
+   */
+  protected readonly outsideNoticeId = nextControlId('location-outside-notice');
 
   /** El id del bloque de campos, para el `aria-controls` de su botón. */
   protected readonly coordinatesId = nextControlId('location-coordinates');
@@ -614,6 +723,11 @@ export class MapLocationPicker {
   confirmAddressActual(): void {
     const punto = this.punto();
     if (punto === null) return;
+    // Fuera de donde se opera no se confirma: el aviso lo dice («mueva el pin
+    // … para continuar») y el municipio, obligatorio, no existe afuera. El
+    // botón también queda deshabilitado; esto cubre el teclado y a quien llame
+    // al método directo.
+    if (this.outsideOperatingCountries()) return;
     this.confirmed.set(true);
     this.confirmado.emit(punto);
   }
@@ -625,6 +739,8 @@ export class MapLocationPicker {
     this.streetOnly.set(null);
     this.zone.set(null);
     this.municipality.set(null);
+    this.countryCode.set(null);
+    this.adminAreas.set(null);
     this.streetState.set('sin-pedir');
     this.marking.set(false);
     this.openCoordinates.set(false);

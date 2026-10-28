@@ -158,6 +158,9 @@ describe('IamClient', () => {
           guardianRelationshipConceptId: 'd7c1a94e-5b32-5d68-9f11-3ac52e8b6d40',
           billingTaxId: '1023456789',
           billingLegalName: 'Empresa SRL',
+          homeAddressLines: 'Calle Guapay 3861',
+          homeDistrict: 'Equipetrol',
+          workDistrict: 'Centro',
         })
         .subscribe();
 
@@ -176,6 +179,11 @@ describe('IamClient', () => {
       );
       expect(req.request.body.billingTaxId).toBe('1023456789');
       expect(req.request.body.billingLegalName).toBe('Empresa SRL');
+      // El distrito viaja aparte de la calle (ADR-0028 de la API): tampoco puede
+      // perderse en la re-proyección.
+      expect(req.request.body.homeAddressLines).toBe('Calle Guapay 3861');
+      expect(req.request.body.homeDistrict).toBe('Equipetrol');
+      expect(req.request.body.workDistrict).toBe('Centro');
       expect('timeZone' in req.request.body).toBe(false);
 
       req.flush({
@@ -743,6 +751,29 @@ describe('IamClient', () => {
       const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
       expect(req.request.body).not.toHaveProperty('licenseFileId');
       expect(req.request.body).not.toHaveProperty('sedesLicenseFileId');
+      req.flush({});
+    });
+
+    it('manda la fecha del SEDES y el registro del colegio con su fecha y su respaldo', () => {
+      client
+        .registerPractitioner({
+          ...ALTA,
+          sedesLicenseIssueDate: '2016-07-11',
+          collegeLicenseNumber: 'CMB-4410',
+          collegeName: 'Colegio Médico de Bolivia',
+          collegeLicenseIssueDate: '2015-09-20',
+          collegeLicenseFileId: 'pdf-colegio',
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body).toMatchObject({
+        sedesLicenseIssueDate: '2016-07-11',
+        collegeLicenseNumber: 'CMB-4410',
+        collegeName: 'Colegio Médico de Bolivia',
+        collegeLicenseIssueDate: '2015-09-20',
+        collegeLicenseFileId: 'pdf-colegio',
+      });
       req.flush({});
     });
   });

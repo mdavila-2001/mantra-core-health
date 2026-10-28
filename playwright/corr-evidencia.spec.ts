@@ -67,7 +67,6 @@ interface Ruta {
   readonly accion?:
     | 'crear-consultorio'
     | 'editar-perfil-consultorio'
-    | 'panel-consultorio'
     | 'practitioner-practice-tab'
     | 'practitioner-credentials-tab';
   /**
@@ -685,26 +684,6 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
                 activePage.getByRole('tab', { name: 'Credenciales' }),
               ).toHaveAttribute('aria-selected', 'true');
             }
-          }
-          if (routeEntry?.accion === 'panel-consultorio') {
-            const accesos = activePage.getByTestId('panel-accesos');
-            await accesos.scrollIntoViewIfNeeded();
-            await activePage
-              .getByTestId('panel-zona')
-              .filter({ hasText: 'Administración' })
-              .click();
-            const zonaAbierta = activePage.getByTestId('panel-zona-abierta');
-            await zonaAbierta.scrollIntoViewIfNeeded();
-            const accesoConsultorio = activePage
-              .getByTestId('panel-acceso')
-              .filter({ hasText: 'Mi consultorio propio' });
-            if (FASE === 'antes') {
-              await expect(accesoConsultorio).toHaveCount(0);
-            } else {
-              await expect(accesoConsultorio).toBeVisible();
-              await accesoConsultorio.scrollIntoViewIfNeeded();
-            }
-            await activePage.waitForTimeout(400);
           }
           if (ruta.includes('with-file=1')) {
             await activePage.getByRole('button', { name: 'Agregar matrícula' }).click();

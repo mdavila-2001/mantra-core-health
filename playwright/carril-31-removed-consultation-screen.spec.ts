@@ -18,7 +18,7 @@ import {
  * **remoción de pantalla**: no existe ninguna acción de «eliminar consulta» en
  * el front ni un `DELETE` de encuentro en los clientes, así que no hay mutación
  * que probar. Se mide, con la sesión real del médico, lo que el usuario hace:
- * entrar por la zona «Consultas» del panel, llegar a la agenda que sobrevive
+ * entrar por el renglón del menú, llegar a la agenda que sobrevive
  * (con sus datos de la API) y comprobar que la dirección vieja ya no se sirve.
  *
  *   E2E_API_REAL=1 corepack yarn pw carril-31-removed-consultation-screen --workers=1
@@ -37,19 +37,17 @@ test.afterAll(async () => {
   await session?.close();
 });
 
-test('la zona «Consultas» del panel lleva a la agenda y no a la pantalla borrada', async () => {
+test('el menú lleva a la agenda y no a la pantalla borrada', async () => {
   const { page } = session;
   await irA(page, '/');
 
-  const zone = page.locator('[data-testid="panel-zona"][data-zona="consulta"]');
-  await expect(zone).toBeVisible();
-  await zone.click();
+  // Hasta el 28/10/2026 se entraba por la zona «Consultas» del árbol del
+  // panel; el árbol se retiró y la puerta es el renglón del menú.
+  const links = page.getByTestId('nav-enlace');
+  await expect(links.first()).toBeAttached();
+  await expect(page.locator('[data-testid="nav-enlace"][data-route="/consultation"]')).toHaveCount(0);
 
-  const accesses = page.getByTestId('panel-acceso');
-  await expect(accesses.first()).toBeVisible();
-  await expect(page.locator('[data-testid="panel-acceso"][data-ruta="/consultation"]')).toHaveCount(0);
-
-  const agenda = page.locator('[data-testid="panel-acceso"][data-ruta="/schedule"]');
+  const agenda = page.locator('[data-testid="nav-enlace"][data-route="/schedule"]');
   await expect(agenda).toBeVisible();
   const resources = await responseOf(page, 'GET', /\/scheduling\/resources$/, () => agenda.click());
   expect(resources.status()).toBe(200);

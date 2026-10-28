@@ -412,7 +412,9 @@ describe('PractitionerProfileEdit', () => {
       expect(señal<string>('direccion')()).toBe('');
 
       interno<(p: unknown) => void>('confirmarGpsDomicilio')({ lat: -16.5, lng: -68.15 });
-      expect(señal<string>('direccion')()).toBe('Av. Arce 2631, Sopocachi');
+      // Sólo calle y número: el distrito va aparte, no dos veces.
+      expect(señal<string>('direccion')()).toBe('Av. Arce 2631');
+      expect(señal<string>('distritoDomicilio')()).toBe('Sopocachi');
       expect(señal<string | null>('municipioResidencia')()).toBe('mun-lpz');
 
       señal<number>('pestana').set(1);
@@ -420,14 +422,16 @@ describe('PractitionerProfileEdit', () => {
       const req = http.expectOne('/profiles/practitioners/me');
       expect(req.request.body).toEqual({
         residenceMunicipalityConceptId: 'mun-lpz',
-        homeAddressLines: 'Av. Arce 2631, Sopocachi',
+        homeAddressLines: 'Av. Arce 2631',
+        // ADR-0028: el distrito viaja aparte, a su propia columna.
+        homeDistrict: 'Sopocachi',
         homeLatitude: -16.5,
         homeLongitude: -68.15,
       });
       req.flush(PERFIL_BASE);
     });
 
-    it('el trabajo toma la línea de su punto, o la zona si el mapa no tiene calle', () => {
+    it('el trabajo toma la calle de su punto y, sin calle, deja la zona sólo en su campo', () => {
       montarYCargar();
       interno<(p: unknown) => void>('confirmarGpsTrabajo')({ lat: -17.8, lng: -63.2 });
       interno<(l: unknown) => void>('aplicarLocalidadTrabajo')({
@@ -437,7 +441,9 @@ describe('PractitionerProfileEdit', () => {
         zona: 'Equipetrol',
         municipioConceptId: null,
       });
-      expect(señal<string>('direccionTrabajo')()).toBe('Equipetrol');
+      // Sin calle en el mapa la calle queda vacía: la zona no se repite en ella.
+      expect(señal<string>('direccionTrabajo')()).toBe('');
+      expect(señal<string>('distritoTrabajo')()).toBe('Equipetrol');
     });
 
     it('el título se elige de la MISMA lista cerrada que el registro', () => {
@@ -1206,6 +1212,49 @@ describe('PractitionerProfileEdit', () => {
     expect(interno<() => string>('direccionTrabajo')()).toBe('Calle Warnes 45');
     expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -16.5, lng: -68.15 });
     expect(señal<unknown>('gpsTrabajoGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+  });
+
+  it('siembra el distrito de cada dirección y lo manda sólo cuando cambia (ADR-0028)', () => {
+    montarYCargar({
+      homeAddress: {
+        lines: 'Av. Brasil 1234',
+        district: 'Miraflores',
+        latitude: -16.5,
+        longitude: -68.15,
+      },
+      workAddress: { lines: 'Calle Warnes 45', district: 'Equipetrol' },
+    });
+    expect(señal<string>('distritoDomicilio')()).toBe('Miraflores');
+    expect(señal<string>('distritoTrabajo')()).toBe('Equipetrol');
+    señal<number>('pestana').set(1);
+
+    señal<string>('distritoTrabajo').set('Las Palmas');
+    interno<() => void>('guardarPresentacion')();
+
+    // El domicilio no cambió: su distrito no viaja.
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ workDistrict: 'Las Palmas' });
+    req.flush(PERFIL_BASE);
+  });
+
+  it('un distrito que el mapa ya no da viaja vacío, para quitarlo', () => {
+    // Con su punto: sin él, «Contacto» no se guarda (punto obligatorio).
+    montarYCargar({
+      homeAddress: {
+        lines: 'Av. Brasil 1234',
+        district: 'Miraflores',
+        latitude: -16.5,
+        longitude: -68.15,
+      },
+    });
+    señal<number>('pestana').set(1);
+
+    señal<string>('distritoDomicilio').set('');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ homeDistrict: '' });
+    req.flush(PERFIL_BASE);
   });
 
   it('guardarPresentacion manda workAddressLines sólo cuando cambia', () => {

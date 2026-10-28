@@ -70,7 +70,14 @@ async function revisarZona(page: Page, ruta: string, ancho: number, tema: 'light
 }
 
 test('el aviso demo queda en zona libre en dashboard y mi cuenta', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('mantra-core-health.theme', 'light'));
+  // Arranca en claro, pero sólo la primera vez: el script corre en cada carga, y
+  // si pisara el tema siempre, cada `goto` deshacía lo que el interruptor acaba
+  // de cambiar y la vuelta a claro de abajo no podía cumplirse nunca.
+  await page.addInitScript(() => {
+    if (localStorage.getItem('mantra-core-health.theme') === null) {
+      localStorage.setItem('mantra-core-health.theme', 'light');
+    }
+  });
   await entrarAlSimulador(page, 'paciente', '');
   const avisoHorario = page.locator('app-toast').filter({ hasText: 'Se liberó un horario' });
   if (await avisoHorario.count()) {
