@@ -492,9 +492,16 @@ export const APP_SECTIONS: readonly AppSection[] = [
   // pantalla que quisiera tener.
   {
     path: 'diagnostics',
-    // Vuelve al menú del médico el 28/10/2026. Desde §4.H estaba fuera y su
-    // única puerta era el árbol «Sus herramientas» del panel; al retirarse
-    // ese árbol, dejarla fuera la dejaba sin ningún enlace.
+    // §4.H · fuera del menú del médico: no está en la lista de ocho. La cola
+    // del laboratorio y los estudios de un paciente se miran **desde el
+    // paciente**, que es donde se los pidió, y para eso está el Archivo
+    // clínico. Sigue siendo sección de primer nivel para `CLINICIAN`, que es
+    // quien la usa como bandeja.
+    //
+    // Vuelve a estar fuera el 28/10/2026: el propietario señaló como regresión
+    // el renglón que `1d312e699` le había devuelto al médico al retirar el
+    // árbol «Sus herramientas» del panel. La ruta y el guard siguen enteros.
+    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Laboratorio e imagen',
     group: 'Atención',
     icon: 'scan',
@@ -1081,9 +1088,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así a nivel raíz se iría entera a la API — el mismo motivo por el que M13
     // vive en `administration/geolocation`.
     path: 'administration/medical-organization',
-    // Vuelve al menú del médico el 28/10/2026, por el mismo motivo que
-    // «Laboratorio e imagen»: sin el árbol del panel no tenía otra puerta.
-    label: 'Organización médica',
+    // **Sale del menú lateral y pasa a la barra superior como «Mis
+    // organizaciones»** (propietario, 28/10/2026), junto a «Red social» y
+    // «Chats»: es un destino al que se vuelve desde cualquier pantalla, no un
+    // renglón de trabajo diario, y «Mis organizaciones» dice mejor que
+    // «Organización médica» qué se encuentra adentro (sedes, plantilla y las
+    // vinculaciones de la persona). La ruta, los `roles` y la pantalla no
+    // cambian: sólo dónde se ofrece y cómo se llama. El ícono del encabezado
+    // lo dibuja `shell-layout.html` para quien `visibleSections()` incluye
+    // esta sección, así que la puerta no se abre a nadie nuevo.
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Mis organizaciones',
     group: 'Administración',
     icon: 'hospital',
     // Los mismos roles que ya admite `GET /practices`: quien puede enumerar las

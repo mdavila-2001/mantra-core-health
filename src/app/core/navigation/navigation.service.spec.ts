@@ -214,8 +214,12 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).toContain('/administration/users');
       expect(rutasDelMenu()).toContain('/administration/patients');
       // Carriles 13 y 16: las dos consolas de organización entran con el mismo
-      // rol que el resto de la configuración.
-      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+      // rol que el resto de la configuración. «Mis organizaciones» (antes
+      // «Organización médica») pasó el 28/10/2026 a la barra superior: se
+      // alcanza —`visibleSections`— pero ya no ocupa un renglón lateral.
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/administration/medical-organization');
+      expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
       expect(rutasDelMenu()).toContain('/administration/medical-laboratory');
     });
 
@@ -314,18 +318,17 @@ describe('NavigationService', () => {
         // globo en la cabecera, `fueraDelMenuPara: [ANY_ROLE]` — sigue
         // alcanzándose por `/messaging`, sólo que ya no ocupa un renglón.
         'Directorios',
-        // «Grupos y foros», «Laboratorio e imagen», «Encuestas» y «Organización
-        // médica» vuelven el 28/10/2026: su única puerta era el árbol «Sus
-        // herramientas» del panel, que el propietario mandó retirar. Sin
-        // renglón quedaban sin ningún enlace (decisión del propietario en la
-        // misma conversación).
+        // «Grupos y foros» y «Encuestas» vuelven el 28/10/2026: su única
+        // puerta era el árbol «Sus herramientas» del panel, que el propietario
+        // mandó retirar. «Laboratorio e imagen» volvió a salir ese mismo día
+        // (el propietario lo señaló como regresión) y «Organización médica» se
+        // fue a la barra superior como «Mis organizaciones».
         'Grupos y foros',
         'Consultas médicas',
         'Archivo clínico',
         // «Mis pacientes de cabecera» entra el 28/10/2026: quiénes lo eligieron
         // como médico de cabecera (pedido del propietario).
         'Mis pacientes de cabecera',
-        'Laboratorio e imagen',
         // «Notas médicas» (antes «Evoluciones») YA NO entra: salió del menú y
         // del producto el 25/09/2026 a pedido del propietario (e000f8ce). La
         // nota se escribe y se lee desde la consulta y el expediente.
@@ -340,7 +343,6 @@ describe('NavigationService', () => {
         // por el propietario en el PR.
         'Grupos médicos',
         'Encuestas',
-        'Organización médica',
         'Contabilidad',
       ]);
     });
@@ -379,10 +381,13 @@ describe('NavigationService', () => {
       expect(alcanzables).toContain('/lab-visits');
       expect(alcanzables).toContain('/dashboard');
 
-      // La organización médica y las encuestas volvieron al menú el 28/10/2026
-      // (ver la prueba de la lista cerrada); las visitas siguen fuera porque
-      // Turnos les ofrece su enlace.
-      expect(rutasDelMenu()).toContain('/administration/medical-organization');
+      // Las encuestas volvieron al menú el 28/10/2026 (ver la prueba de la
+      // lista cerrada); las visitas siguen fuera porque Turnos les ofrece su
+      // enlace. «Laboratorio e imagen» y «Mis organizaciones» tampoco ocupan
+      // renglón, pero siguen abriendo.
+      expect(alcanzables).toContain('/diagnostics');
+      expect(rutasDelMenu()).not.toContain('/diagnostics');
+      expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
       expect(rutasDelMenu()).toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
     });
