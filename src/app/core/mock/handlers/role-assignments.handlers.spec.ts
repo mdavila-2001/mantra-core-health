@@ -3,7 +3,7 @@ import { HttpHeaders } from '@angular/common/http';
 import { PROCEDURE_COLONOSCOPY, PROCEDURE_UPPER_ENDOSCOPY } from '../fixtures/healthcare-services';
 import { affiliations, PRACTICE_CM_NORTE, PRACTICE_CM_SUR, SITE_CM_NORTE_1, SITE_CM_SUR_1 } from '../fixtures/role-assignments';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
-import { buscarUsuario } from '../mock-session';
+import { buscarUsuario, TENANT_CLINICA } from '../mock-session';
 import { offers, registerHealthcareServices } from './healthcare-services.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registerRoleAssignments } from './role-assignments.handlers';
@@ -151,6 +151,18 @@ describe('handlers de afiliación médico-centro', () => {
     const mine = body.find((f) => f.healthcareServiceId !== undefined);
     expect(mine).toEqual(expect.objectContaining({ practiceName: expect.any(String), serviceDisplay: expect.any(String), statusCode: expect.any(String), initiatedBy: expect.any(String) }));
     expect(body.some((f) => f.healthcareServiceId === undefined)).toBe(true);
+  });
+
+  it('GET me trae la organización de las vinculaciones que son organizaciones de la sesión', () => {
+    type WithTenant = Row & { readonly practiceName: string; readonly tenantId?: string };
+    const { body } = call<WithTenant[]>('GET', '/practitioners/me/role-assignments');
+
+    expect(body.find((f) => f.practiceName === 'Clínica Los Olivos')?.tenantId).toBe(TENANT_CLINICA);
+    // El Centro Médico Sur no es una organización de la sesión: llega sin ella y
+    // «Publicar agenda» no lo ofrece.
+    const sur = body.filter((f) => f.practiceId === PRACTICE_CM_SUR);
+    expect(sur.length).toBeGreaterThan(0);
+    expect(sur.every((f) => f.tenantId === undefined)).toBe(true);
   });
 
   it('GET /practices incluye practice-cm-norte y practice-cm-sur', () => {

@@ -16,6 +16,9 @@ import type { PractitionerOrganization } from './organization-select.types';
  * - **El consultorio propio no se repite.** Su práctica también tiene una
  *   afiliación activa (la crea el alta del consultorio); esa fila es «Mi
  *   consultorio» y no una organización más.
+ * - **Solo las que dicen su organización.** Publicar ahí pide el `tenantId`
+ *   de la vinculación, que `createResource` exige; sin él no hay dónde crear
+ *   la agenda, así que no se ofrece.
  *
  * @param assignments - Las afiliaciones del médico, en cualquier estado.
  * @param ownSite - Su sede propia, o `null` si no registró ninguna.
@@ -25,7 +28,10 @@ export function practitionerOrganizationsOf(
   ownSite: PracticeSite | null,
 ): readonly PractitionerOrganization[] {
   const affiliated = uniqueByPractice(
-    assignments.filter((assignment) => isActive(assignment) && !isOwnPractice(assignment, ownSite)),
+    assignments.filter(
+      (assignment): assignment is AssignmentWithTenant =>
+        isActive(assignment) && hasTenant(assignment) && !isOwnPractice(assignment, ownSite),
+    ),
   );
   return ownSite === null ? affiliated : [ownOfficeOf(ownSite), ...affiliated];
 }
@@ -40,11 +46,20 @@ function isActive(assignment: MyRoleAssignment): boolean {
     : roleAssignmentState(assignment.statusCode) === 'ACTIVE';
 }
 
+/** Una afiliación con su organización a la vista: el `tenantId` llegó y no está vacío. */
+type AssignmentWithTenant = MyRoleAssignment & { readonly tenantId: string };
+
+function hasTenant(assignment: MyRoleAssignment): assignment is AssignmentWithTenant {
+  return typeof assignment.tenantId === 'string' && assignment.tenantId !== '';
+}
+
 function isOwnPractice(assignment: MyRoleAssignment, ownSite: PracticeSite | null): boolean {
   return ownSite !== null && assignment.practiceId === ownSite.practiceId;
 }
 
-function uniqueByPractice(assignments: readonly MyRoleAssignment[]): readonly PractitionerOrganization[] {
+function uniqueByPractice(
+  assignments: readonly AssignmentWithTenant[],
+): readonly PractitionerOrganization[] {
   const byPractice = new Map<string, PractitionerOrganization>();
   for (const assignment of assignments) {
     if (!byPractice.has(assignment.practiceId)) {
@@ -54,12 +69,13 @@ function uniqueByPractice(assignments: readonly MyRoleAssignment[]): readonly Pr
   return [...byPractice.values()];
 }
 
-function affiliatedOf(assignment: MyRoleAssignment): PractitionerOrganization {
+function affiliatedOf(assignment: AssignmentWithTenant): PractitionerOrganization {
   return {
     practiceId: assignment.practiceId,
     practiceSiteId: assignment.practiceSiteId ?? null,
     name: assignment.practiceName,
     isOwnOffice: false,
+    tenantId: assignment.tenantId,
   };
 }
 
@@ -69,5 +85,6 @@ function ownOfficeOf(site: PracticeSite): PractitionerOrganization {
     practiceSiteId: site.id,
     name: site.name,
     isOwnOffice: true,
+    tenantId: null,
   };
 }
