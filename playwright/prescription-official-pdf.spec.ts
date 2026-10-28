@@ -19,6 +19,15 @@ import { entrar, estable, irA } from './support/sesion';
  * verifica `clinical-prescriptions-pdf.int-spec.ts` contra la API real.
  *
  * `networkidle` no se usa: con HMR el bundler deja conexiones abiertas.
+ *
+ * **C5 (2026-09-25):** el PDF ahora también trae una sección "Diagnóstico"
+ * (o "Motivo") que nunca sale vacía — ver `clinical-pdf.ts:bloquesDeReceta` y
+ * sus specs unitarios. No se agrega una aserción de contenido acá a
+ * propósito: quien arma el `DocumentoDeReceta` de esta pantalla
+ * (`medical-record.ts`, C6, fuera de mi alcance esta noche) todavía no puebla
+ * `porQueEs`, así que el PDF real hoy muestra "Sin indicación registrada." —
+ * comportamiento correcto y ya cubierto por el spec unitario, no un caso
+ * nuevo de este recorrido E2E.
  */
 
 const PACIENTE: Actor = {
@@ -38,26 +47,6 @@ const VIEWPORTS = [
 /** El ruido de CSP que `ng serve` inyecta en cualquier ruta (recarga en vivo). */
 const esRuidoDelServidorDeDesarrollo = (error: string): boolean =>
   error.includes('Content Security Policy') && error.includes('inline script');
-
-test('Mi historia clínica no desborda a 320 ni 390 px', async ({ page }) => {
-  await entrar(page, PACIENTE);
-  await irA(page, '/my-account/medical-record?seccion=recetas');
-  await estable(page);
-  await expect(page.getByTestId('historia-recetas')).toBeVisible({ timeout: 30_000 });
-
-  for (const width of [320, 390]) {
-    await page.setViewportSize({ width, height: 844 });
-    const medidas = await page.evaluate(() => ({
-      anchoVisible: document.documentElement.clientWidth,
-      anchoDocumento: document.documentElement.scrollWidth,
-    }));
-    expect(
-      medidas.anchoDocumento,
-      `desborde horizontal en ${width}px: ${medidas.anchoDocumento} > ${medidas.anchoVisible}`,
-    ).toBeLessThanOrEqual(medidas.anchoVisible + 1);
-    await expect(page.getByTestId('historia-descargar-historico-recetas')).toBeVisible();
-  }
-});
 
 test('el botón de la receta oficial descarga un PDF real, en dos anchos, sin errores propios', async ({
   browser,

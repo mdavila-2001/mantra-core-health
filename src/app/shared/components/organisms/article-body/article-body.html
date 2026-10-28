@@ -1,0 +1,148 @@
+<ng-template #tramos let-renglon>
+  @for (tramo of renglon; track $index) {
+    @if (tramo.href) {
+      <a class="articulo__enlace" [href]="tramo.href" target="_blank" rel="noopener noreferrer">{{ tramo.text }}</a>
+    } @else if (tramo.bold) {
+      <strong>{{ tramo.text }}</strong>
+    } @else if (tramo.italic) {
+      <em>{{ tramo.text }}</em>
+    } @else if (tramo.strike) {
+      <s>{{ tramo.text }}</s>
+    } @else {
+      {{ tramo.text }}
+    }
+  }
+</ng-template>
+
+<ng-template #renglones let-lineas>
+  @for (renglon of lineas; track $index; let ultimo = $last) {
+    <ng-container [ngTemplateOutlet]="tramos" [ngTemplateOutletContext]="{ $implicit: renglon }" />
+    @if (!ultimo) { <br /> }
+  }
+</ng-template>
+
+<ng-template #bloques let-bloques>
+  @for (bloque of bloques; track $index) {
+    @switch (bloque.kind) {
+      @case ('paragraph') {
+        <p class="articulo__parrafo">
+          <ng-container [ngTemplateOutlet]="renglones" [ngTemplateOutletContext]="{ $implicit: bloque.lines }" />
+        </p>
+      }
+      @case ('quote') {
+        <blockquote class="articulo__cita">
+          <ng-container [ngTemplateOutlet]="renglones" [ngTemplateOutletContext]="{ $implicit: bloque.lines }" />
+        </blockquote>
+      }
+      @case ('rule') {
+        <hr class="articulo__separador" />
+      }
+      @case ('list') {
+        @if (bloque.ordered) {
+          <ol class="articulo__lista">
+            @for (item of bloque.items; track $index) {
+              <li><ng-container [ngTemplateOutlet]="tramos" [ngTemplateOutletContext]="{ $implicit: item }" /></li>
+            }
+          </ol>
+        } @else {
+          <ul class="articulo__lista">
+            @for (item of bloque.items; track $index) {
+              <li><ng-container [ngTemplateOutlet]="tramos" [ngTemplateOutletContext]="{ $implicit: item }" /></li>
+            }
+          </ul>
+        }
+      }
+      @case ('image') {
+        @if (urlDe(bloque); as url) {
+          <figure class="articulo__figura">
+            @if (fallo(bloque.index)) {
+              <div class="articulo__imagen-fallida" role="img" [attr.aria-label]="bloque.alt || 'Imagen del artículo'">
+                No se pudo cargar la imagen{{ bloque.alt ? ': ' + bloque.alt : '' }}.
+              </div>
+            } @else {
+              <img
+                class="articulo__imagen"
+                [src]="url"
+                [alt]="bloque.alt"
+                loading="lazy"
+                decoding="async"
+                width="1200"
+                height="800"
+                (error)="alFallar(bloque.index)"
+              />
+            }
+            @if (bloque.alt) {
+              <figcaption class="articulo__pie" aria-hidden="true">{{ bloque.alt }}</figcaption>
+            }
+          </figure>
+        }
+      }
+    }
+  }
+</ng-template>
+
+<ng-template #seccion let-s>
+  <app-accordion-panel
+    [attr.id]="prefijo + '-' + s.id"
+    [heading]="s.heading"
+    [level]="nivelDe(s)"
+    [expanded]="abierta(s.id)"
+    (expandedChange)="cambiar(s.id, $event)"
+    [attr.data-depth]="s.depth"
+    [attr.data-testid]="s.depth === 0 ? 'article-section' : 'article-subsection'"
+  >
+    <ng-container [ngTemplateOutlet]="bloques" [ngTemplateOutletContext]="{ $implicit: s.blocks }" />
+    @if (s.children.length > 0) {
+      <app-accordion class="articulo__hijas" multi>
+        @for (hija of s.children; track hija.id) {
+          <ng-container [ngTemplateOutlet]="seccion" [ngTemplateOutletContext]="{ $implicit: hija }" />
+        }
+      </app-accordion>
+    }
+  </app-accordion-panel>
+</ng-template>
+
+<article class="articulo" data-testid="article-body">
+  @if (outline().sections.length > 0 && stats().minutes > 0) {
+    <div class="articulo__meta">
+      <p class="articulo__lectura">{{ stats().minutes }} min de lectura · {{ stats().words }} palabras</p>
+      @if (todas().length >= 2) {
+        <div class="articulo__acciones" role="group" aria-label="Secciones del artículo">
+          <button type="button" class="articulo__accion" [disabled]="todasAbiertas()" (click)="expandirTodo()" data-testid="article-expand-all">
+            Expandir todo
+          </button>
+          <button type="button" class="articulo__accion" [disabled]="ningunaAbierta()" (click)="contraerTodo()" data-testid="article-collapse-all">
+            Contraer todo
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (conIndice()) {
+    <nav class="articulo__indice" [attr.aria-labelledby]="prefijo + '-indice'" data-testid="article-toc">
+      <p class="articulo__indice-titulo" [id]="prefijo + '-indice'">Índice</p>
+      <ol class="articulo__indice-lista">
+        @for (s of todas(); track s.id) {
+          <li class="articulo__indice-item" [attr.data-depth]="s.depth">
+            <button type="button" class="articulo__indice-enlace" (click)="irA(s.id)">{{ s.heading }}</button>
+          </li>
+        }
+      </ol>
+    </nav>
+  }
+
+  @if (outline().intro.length > 0) {
+    <div class="articulo__intro">
+      <ng-container [ngTemplateOutlet]="bloques" [ngTemplateOutletContext]="{ $implicit: outline().intro }" />
+    </div>
+  }
+
+  @if (outline().sections.length > 0) {
+    <app-accordion class="articulo__secciones" multi>
+      @for (s of outline().sections; track s.id) {
+        <ng-container [ngTemplateOutlet]="seccion" [ngTemplateOutletContext]="{ $implicit: s }" />
+      }
+    </app-accordion>
+  }
+</article>

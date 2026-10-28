@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { empezarElAlta } from './support/registro-paciente';
 
 /**
  * El alta pública, en lo que se ve: el carnet con su expedición en un solo
@@ -53,12 +54,8 @@ test.describe('alta pública — el documento y su expedición', () => {
     await page.goto('/auth/register/patient');
     await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
 
-    // La cédula del paciente está en la segunda página («Tu documento de
-    // identidad»): la primera es el nombre, y hay que contestarla para llegar.
-    await page.getByTestId('registro-nombre').fill('Ana');
-    await page.getByTestId('registro-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
-
+    // La cédula del paciente va en el primer paso («Identidad y ocupación»),
+    // junto al nombre: está a la vista desde que se abre el alta.
     await expect(page.getByTestId('registro-documento')).toBeVisible();
     await documentoYExpedicionEnLaMismaLinea(
       page,
@@ -98,29 +95,28 @@ test.describe('alta pública — el documento y su expedición', () => {
   });
 });
 
-test.describe('alta pública — por qué te pedimos esto', () => {
+test.describe('alta pública — por qué le pedimos esto', () => {
   test('la columna acompaña al paso y el sello de privacidad no se va nunca', async ({ page }) => {
     await page.goto('/auth/register/patient');
     await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
 
     const ayuda = page.getByRole('complementary', {
-      name: /Por qué te pedimos estos datos/i,
+      name: /Por qué le pedimos estos datos/i,
     });
     await expect(ayuda).toBeVisible();
 
-    // Paso 1: el nombre. La explicación habla del nombre.
-    await expect(ayuda.getByText('Tu nombre, como figura en tu documento')).toBeVisible();
-    await expect(ayuda.getByText('Tus datos están a salvo')).toBeVisible();
+    // Paso 1: identidad. La explicación habla del nombre y del documento.
+    await expect(ayuda.getByText('Su nombre, como figura en su documento')).toBeVisible();
+    await expect(ayuda.getByText('Con su documento va a entrar')).toBeVisible();
+    await expect(ayuda.getByText('Sus datos están a salvo')).toBeVisible();
 
-    // Paso 2: el documento. La explicación cambió con la pregunta.
-    await page.getByTestId('registro-nombre').fill('Ana');
-    await page.getByTestId('registro-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
+    // Paso 2: residencia. La explicación cambió con la pregunta.
+    await empezarElAlta(page);
 
-    await expect(ayuda.getByText('Con tu documento vas a entrar')).toBeVisible();
-    await expect(ayuda.getByText('Tu nombre, como figura en tu documento')).toHaveCount(0);
+    await expect(ayuda.getByText('Para mostrarle lo que tiene cerca')).toBeVisible();
+    await expect(ayuda.getByText('Su nombre, como figura en su documento')).toHaveCount(0);
     // El sello sigue: la promesa no depende de qué se esté contestando.
-    await expect(ayuda.getByText('Tus datos están a salvo')).toBeVisible();
+    await expect(ayuda.getByText('Sus datos están a salvo')).toBeVisible();
 
     await page.screenshot({
       path: 'artifacts/playwright/registro-ayuda-lateral.png',
@@ -134,7 +130,7 @@ test.describe('alta pública — por qué te pedimos esto', () => {
     await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
 
     const ayuda = page.getByRole('complementary', {
-      name: /Por qué te pedimos estos datos/i,
+      name: /Por qué le pedimos estos datos/i,
     });
     const cajaAyuda = await ayuda.boundingBox();
     const cajaFormulario = await page.getByTestId('registro-form-paciente').boundingBox();

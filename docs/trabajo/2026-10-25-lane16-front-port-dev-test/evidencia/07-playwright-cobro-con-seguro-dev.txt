@@ -1,0 +1,34 @@
+
+Running 25 tests using 1 worker
+
+  ok  1 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:98:9 › la médica cotiza el cobro · tema claro › REQ-16-026 · el reparto del cobro aparece en el bloque Pagos de la consulta (2.1s)
+  ok  2 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:104:9 › la médica cotiza el cobro · tema claro › REQ-16-024 · sin la aprobación previa, el envío queda deshabilitado y la alerta lo explica (1.4s)
+  ok  3 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:113:9 › la médica cotiza el cobro · tema claro › REQ-16-026 · con la aprobación, el reparto es el del servidor y el envío se habilita (500ms)
+  ok  4 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema claro › REQ-16-035 · el reparto se lee sin desborde en 375 px, tema claro (279ms)
+  ok  5 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema claro › REQ-16-035 · el reparto se lee sin desborde en 768 px, tema claro (273ms)
+  ok  6 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema claro › REQ-16-035 · el reparto se lee sin desborde en 1280 px, tema claro (366ms)
+  ok  7 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:134:9 › la médica cotiza el cobro · tema claro › la pantalla no lanza errores de ejecución durante el recorrido (1ms)
+  ok  8 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:151:9 › el paciente ve su parte y objeta · tema claro › REQ-16-031 · el paciente ve qué paga él y qué paga su aseguradora antes de pagar (1.7s)
+  ok  9 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:160:9 › el paciente ve su parte y objeta · tema claro › REQ-16-032 · objetar el cobro con un motivo cerrado deja la objeción registrada (1.4s)
+  ok 10 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:179:11 › el paciente ve su parte y objeta · tema claro › REQ-16-035 · el desglose y la objeción se leen sin desborde en 375 px, tema claro (249ms)
+  ok 11 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:179:11 › el paciente ve su parte y objeta · tema claro › REQ-16-035 · el desglose y la objeción se leen sin desborde en 768 px, tema claro (344ms)
+  ok 12 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:179:11 › el paciente ve su parte y objeta · tema claro › REQ-16-035 · el desglose y la objeción se leen sin desborde en 1280 px, tema claro (391ms)
+  ok 13 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:98:9 › la médica cotiza el cobro · tema oscuro › REQ-16-026 · el reparto del cobro aparece en el bloque Pagos de la consulta (2.1s)
+  ok 14 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:104:9 › la médica cotiza el cobro · tema oscuro › REQ-16-024 · sin la aprobación previa, el envío queda deshabilitado y la alerta lo explica (1.4s)
+  ok 15 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:113:9 › la médica cotiza el cobro · tema oscuro › REQ-16-026 · con la aprobación, el reparto es el del servidor y el envío se habilita (502ms)
+  ok 16 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema oscuro › REQ-16-035 · el reparto se lee sin desborde en 375 px, tema oscuro (239ms)
+  ok 17 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema oscuro › REQ-16-035 · el reparto se lee sin desborde en 768 px, tema oscuro (288ms)
+  ok 18 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:124:11 › la médica cotiza el cobro · tema oscuro › REQ-16-035 · el reparto se lee sin desborde en 1280 px, tema oscuro (313ms)
+  ok 19 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:134:9 › la médica cotiza el cobro · tema oscuro › la pantalla no lanza errores de ejecución durante el recorrido (1ms)
+  ok 20 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:151:9 › el paciente ve su parte y objeta · tema oscuro › REQ-16-031 · el paciente ve qué paga él y qué paga su aseguradora antes de pagar (1.8s)
+  ok 21 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:160:9 › el paciente ve su parte y objeta · tema oscuro › REQ-16-032 · objetar el cobro con un motivo cerrado deja la objeción registrada (1.5s)
+  ok 22 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:179:11 › el paciente ve su parte y objeta · tema oscuro › REQ-16-035 · el desglose y la objeción se leen sin desborde en 375 px, tema oscuro (321ms)
+  ok 23 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:179:11 › el paciente ve su parte y objeta · tema oscuro › REQ-16-035 · el desglose y la objeción se leen sin desborde en 768 px, tema oscuro (313ms)
+  ok 24 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:179:11 › el paciente ve su parte y objeta · tema oscuro › REQ-16-035 · el desglose y la objeción se leen sin desborde en 1280 px, tema oscuro (369ms)
+  ok 25 [chromium] › playwright\carril-16-cobro-con-seguro.spec.ts:190:5 › REQ-16-035 · ningún nombre de archivo de captura lleva datos de la persona (10ms)
+
+  25 passed (41.2s)
+
+real	0m42.729s
+user	0m0.077s
+sys	0m0.030s

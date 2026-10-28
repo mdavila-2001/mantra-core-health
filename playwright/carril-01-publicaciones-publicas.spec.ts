@@ -1,6 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
 import { apiViva, contextoDeApi, urlDeApi } from './support/actores';
+import { asegurarPublicacionPublica } from './support/publicacion-publica';
 
 /**
  * Carril 01 — la publicación en la red social, vista pública.
@@ -40,6 +41,7 @@ test.beforeAll(async () => {
     await apiViva(api),
     `La API E2E no responde en ${urlDeApi()}. Levantá el entorno con \`yarn seed:e2e\` en el repositorio de la API.`,
   ).toBe(true);
+  await asegurarPublicacionPublica(api);
 });
 
 test.afterAll(async () => {

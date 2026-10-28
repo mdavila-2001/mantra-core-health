@@ -25,6 +25,7 @@ import type {
   PedidoFarmacia,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -43,15 +44,15 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { toBandejaStatusPresentation } from '../bandeja-status';
-import { entregaEnPantalla } from '../entrega-status';
+import { toInboxStatusPresentation } from '../inbox-status';
+import { deliveryInScreen } from '../delivery-status';
 import {
   NOTA_DE_DATOS_DE_EJEMPLO,
   coberturaDeEjemplo,
   facturaDeEjemplo,
   type RenglonCubierto,
 } from '../pharmacy-inbox.fixtures';
-import { ResumenDeFactura } from './resumen-de-factura/resumen-de-factura';
+import { InvoiceSummary } from './invoice-summary/invoice-summary';
 import { displayCurrency } from '../../../../core/money/display-currency';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
@@ -115,7 +116,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
     PageHeader,
     Radio,
     RadioGroup,
-    ResumenDeFactura,
+    InvoiceSummary,
     RouterLink,
     Select,
     ViewStateHost,
@@ -139,6 +140,13 @@ export class InboxOrder {
   private readonly dialog = inject(DialogService);
   private readonly navigation = inject(NavigationService);
   private readonly toasts = inject(ToastService);
+
+  /**
+   * Si la pantalla puede completar con ejemplos lo que el contrato no trae
+   * (cobertura, factura, dirección). Sólo sobre la maqueta: contra la API
+   * real esas secciones no se dibujan. Ver `core/mock/sample-data.ts`.
+   */
+  private readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly bandejaRoute = BANDEJA_ROUTE;
@@ -168,7 +176,7 @@ export class InboxOrder {
    */
   protected readonly entrega = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : entregaEnPantalla(abierto);
+    return abierto === null ? null : deliveryInScreen(abierto);
   });
 
   /**
@@ -185,18 +193,21 @@ export class InboxOrder {
     const abierto = this.pedido();
     return abierto === null
       ? null
-      : toBandejaStatusPresentation(abierto.estado, this.entrega()?.modalidad ?? null);
+      : toInboxStatusPresentation(abierto.estado, this.entrega()?.modalidad ?? null);
   });
 
   /**
    * Lo que respondió el seguro, renglón por renglón — o `null` cuando la
    * persona no tiene cobertura, que es lo normal. Sale de los datos de
    * ejemplo de la pantalla y se rotula como tal: el contrato de la API no
-   * publica cobertura todavía.
+   * publica cobertura para el mostrador todavía. Contra la API real es
+   * siempre `null` y la sección no se dibuja.
    */
   protected readonly cobertura = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : coberturaDeEjemplo(abierto, this.renglonesEnPie());
+    return abierto === null || !this.sampleData
+      ? null
+      : coberturaDeEjemplo(abierto, this.renglonesEnPie());
   });
 
   /**
@@ -214,10 +225,14 @@ export class InboxOrder {
     ),
   );
 
-  /** La factura del pedido entregado, con la misma advertencia. */
+  /**
+   * La factura del pedido entregado, con la misma advertencia. Ningún módulo
+   * de la API factura pedidos de farmacia todavía: contra la API real no hay
+   * resumen que mostrar.
+   */
   protected readonly factura = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : facturaDeEjemplo(abierto);
+    return abierto === null || !this.sampleData ? null : facturaDeEjemplo(abierto);
   });
 
   /** La revisión está abierta: los ajustes por renglón se pueden editar. */
@@ -274,7 +289,7 @@ export class InboxOrder {
    * diferencia con `puedeMarcarListo` no es un descuido: acá el formulario
    * existía sin mirar la modalidad, así que un pedido cuya modalidad la API
    * no declara **lo tenía**, y quitárselo sería cambiar comportamiento. La
-   * regla es la de `bandeja-status.ts`: el nulo significa «no sabemos», y no
+   * regla es la de `inbox-status.ts`: el nulo significa «no sabemos», y no
    * saber no puede quitarle una capacidad al mostrador. Unificar las dos
    * condiciones vuelve a romper esto.
    */
@@ -417,7 +432,7 @@ export class InboxOrder {
       {
         title: 'Rechazar el pedido',
         message:
-          'El paciente va a ver el motivo tal como lo escribas: contale por qué y qué puede hacer.',
+          'El paciente va a ver el motivo tal como lo escriba: cuéntele por qué y qué puede hacer.',
         confirmLabel: 'Rechazar el pedido',
         destructive: true,
       },
@@ -488,7 +503,7 @@ export class InboxOrder {
    */
   protected avisarDescargaDeFactura(): void {
     this.toasts.info(
-      'La descarga del comprobante llega con el módulo de facturación. Lo que ves acá es un ejemplo.',
+      'La descarga del comprobante llega con el módulo de facturación. Lo que ve acá es un ejemplo.',
       'Factura de ejemplo',
     );
   }

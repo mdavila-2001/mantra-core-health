@@ -3,7 +3,16 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { InsuranceClient } from './insurance.client';
-import type { BrokerProfile, CarrierDetail, CarrierSummary } from './insurance.types';
+import { API_BASE_URL } from '../api';
+import type {
+  BrokerProfile,
+  CampaignPage,
+  CarrierDetail,
+  CarrierSummary,
+  InsurerPatientPage,
+  MyClaimList,
+  PractitionerInsuranceNetworkPage,
+} from './insurance.types';
 
 const CONCEPTO = { code: 'CARRIER_ACTIVE', display: 'Aseguradora activa' };
 const VERIFICADO = { code: 'VERIFICATION_VERIFIED', display: 'Verificado' };
@@ -32,7 +41,11 @@ describe('InsuranceClient', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '' },
+      ],
     });
 
     client = TestBed.inject(InsuranceClient);
@@ -40,6 +53,53 @@ describe('InsuranceClient', () => {
   });
 
   afterEach(() => http.verify());
+
+  it('listPractitionerCarriers lee las membresías del profesional y las agrupa por aseguradora', () => {
+    let result: unknown;
+    client.listPractitionerCarriers('hp 1/x').subscribe((carriers) => (result = carriers));
+
+    const request = http.expectOne('/practitioners/hp%201%2Fx/insurance-networks');
+    expect(request.request.method).toBe('GET');
+    const fila = (
+      membershipId: string,
+      carrierId: string,
+      carrierName: string,
+      networkName: string,
+    ) => ({
+      membershipId,
+      carrierId,
+      carrierName,
+      networkName,
+      effectiveFrom: '2026-01-01',
+      effectiveTo: null,
+    });
+    request.flush({
+      items: [
+        fila('m-1', 'c-2', 'Nacional Seguros', 'SALUD FLEXIBLE'),
+        fila('m-2', 'c-1', 'Alianza Seguros', 'OASIS'),
+        fila('m-3', 'c-1', 'Alianza Seguros', 'AFI GOLD'),
+        fila('m-4', 'c-1', 'Alianza Seguros', 'AFI GOLD'),
+      ],
+      count: 4,
+    });
+    http.verify();
+
+    expect(result).toEqual([
+      {
+        carrierId: 'c-1',
+        carrierName: 'Alianza Seguros',
+        networks: [
+          { id: 'm-3', name: 'AFI GOLD' },
+          { id: 'm-2', name: 'OASIS' },
+        ],
+      },
+      {
+        carrierId: 'c-2',
+        carrierName: 'Nacional Seguros',
+        networks: [{ id: 'm-1', name: 'SALUD FLEXIBLE' }],
+      },
+    ]);
+  });
 
   it('listCarriers pega en /insurance-carriers y convierte el alta a Date', () => {
     let filas: readonly CarrierSummary[] = [];
@@ -58,6 +118,35 @@ describe('InsuranceClient', () => {
    * `YYYY-MM-DD` pasada por `new Date()` se ancla a medianoche UTC y retrocede
    * un día al pintarse en cualquier huso al oeste de Greenwich.
    */
+  it('listNetworksOfPractitioner pega en /practitioners/:id/insurance-networks y lee la vigencia como fecha local', () => {
+    let pagina: PractitionerInsuranceNetworkPage | undefined;
+    client.listNetworksOfPractitioner('hp 1').subscribe((respuesta) => (pagina = respuesta));
+
+    http
+      .expectOne((r) => r.url === '/practitioners/hp%201/insurance-networks')
+      .flush({
+        items: [
+          {
+            membershipId: 'm-1',
+            carrierId: 'c-1',
+            carrierName: 'Seguros Andina',
+            networkName: 'Red de prestadores Seguros Andina',
+            effectiveFrom: '2025-06-01',
+            effectiveTo: null,
+          },
+        ],
+        count: 1,
+      });
+
+    const fila = pagina?.items[0];
+    expect(fila?.carrierName).toBe('Seguros Andina');
+    expect(fila?.effectiveFrom?.getFullYear()).toBe(2025);
+    expect(fila?.effectiveFrom?.getMonth()).toBe(5);
+    expect(fila?.effectiveFrom?.getDate()).toBe(1);
+    expect(fila?.effectiveTo).toBeNull();
+    expect(pagina?.count).toBe(1);
+  });
+
   it('getCarrier lee las vigencias como fecha local, no como instante UTC', () => {
     let ficha: CarrierDetail | undefined;
     client.getCarrier('c-1').subscribe((detalle) => (ficha = detalle));
@@ -243,6 +332,80 @@ describe('InsuranceClient', () => {
       });
   });
 
+  it('listCoveragesOfPatient sale a la API real (maqueta apagada) y devuelve solo los items', () => {
+    let items: unknown;
+    client.listCoveragesOfPatient('p/1').subscribe((value) => (items = value));
+
+    const request = http.expectOne((r) => r.url === '/patient-coverages/by-patient/p%2F1');
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      items: [
+        {
+          id: 'coverage-1',
+          insuranceCarrierId: 'carrier-1',
+          carrierName: 'Seguros Andina',
+          planName: 'Plan Integral',
+          validityStatus: 'CURRENT',
+          currencyCode: 'BOB',
+        },
+      ],
+    });
+
+    expect(items).toEqual([
+      expect.objectContaining({ id: 'coverage-1', validityStatus: 'CURRENT', currencyCode: 'BOB' }),
+    ]);
+  });
+
+  it('listMyClaims conserva el desglose y convierte la fecha de la objeción', () => {
+    let list: MyClaimList | undefined;
+    client.listMyClaims().subscribe((value) => (list = value));
+
+    const claim = {
+          id: 'claim-1',
+          claimIdentifier: 'CLM-1',
+          patientName: null,
+          practitioner: null,
+          providerName: 'Consultorio',
+          service: null,
+          additionalServiceCount: 0,
+          billedTotal: { amount: '500.00', currency: { code: 'BOB', display: 'Boliviano' } },
+          approvedTotal: null,
+          submittedAt: '2026-10-01T10:00:00.000Z',
+          serviceDate: null,
+          insurerName: 'Seguros Andina',
+          planName: 'Plan Integral',
+          status: null,
+          decision: null,
+          breakdown: {
+            currencyCode: 'BOB',
+            patientTotal: '50.00',
+            insurerTotal: '450.00',
+            lines: [],
+          },
+          patientObjection: {
+            id: 'd-1',
+            reason: 'AMOUNT_DIFFERS',
+            submittedAt: '2026-10-02T09:00:00.000Z',
+            status: 'OPEN',
+          },
+    };
+    http.expectOne((r) => r.url === '/insurance/my-claims').flush({
+      view: 'PATIENT',
+      truncated: false,
+      items: [
+        claim,
+        { ...claim, id: 'claim-2', breakdown: null, patientObjection: null },
+      ],
+    });
+
+    const [first, second] = list!.items;
+    expect(first!.breakdown?.patientTotal).toBe('50.00');
+    expect(first!.patientObjection?.reason).toBe('AMOUNT_DIFFERS');
+    expect(first!.patientObjection?.submittedAt).toEqual(new Date('2026-10-02T09:00:00.000Z'));
+    expect(second!.breakdown).toBeNull();
+    expect(second!.patientObjection).toBeNull();
+  });
+
   it('crea un plan conservando fechas, moneda y la ruta escapada', () => {
     const body = {
       planCode: 'ORO-2',
@@ -301,5 +464,260 @@ describe('InsuranceClient', () => {
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual(body);
     request.flush({ ok: true });
+  });
+
+  /** Tarea 3 · H8: el desglose de liquidación (`settlement`/`eob`) del detalle. */
+  it('getClaim conserva el desglose de liquidación sin convertir sus importes a número', () => {
+    let detalle: import('./insurance.types').ClaimDetail | undefined;
+    client.getClaim('claim-1').subscribe((d) => (detalle = d));
+
+    http.expectOne('/insurance-claims/claim-1').flush({
+      header: {
+        id: 'claim-1',
+        claimIdentifier: 'CLM-1',
+        patient: { id: 'p-1', displayName: 'Paciente', patientCode: null, memberIdentifier: null },
+        carrierName: 'Aseguradora X',
+        insuranceCarrierId: 'c-1',
+        carrierWhatsappNumber: null,
+        carrierCallCenterPhone: null,
+        carrierSupportEmail: null,
+        policyIdentifier: null,
+        policyBrokerName: null,
+        billedTotal: { amount: '300.00', currency: null },
+        approvedTotal: { amount: '150.00', currency: null },
+        submittedAt: null,
+        status: null,
+        hasOpenDispute: false,
+      },
+      lines: [],
+      lineBilledTotal: { amount: '300.00', currency: null },
+      lineApprovedTotal: { amount: '150.00', currency: null },
+      adjudication: null,
+      adjudicationHistory: [],
+      disputes: [],
+      settlement: {
+        availability: 'AVAILABLE',
+        totalBilledAmount: '300.00',
+        totalApprovedAmount: '150.00',
+        totalPatientAmount: '30.00',
+        totalDeniedAmount: '120.00',
+        reconciled: true,
+        exclusions: [
+          {
+            claimLineId: 'l-1',
+            itemName: 'ECG',
+            amount: '120.00',
+            policyClauseReference: 'Cláusula 12.3',
+            denialRationale: null,
+          },
+        ],
+      },
+      eob: { id: 'eob-1', publishedAt: '2026-09-20T12:00:00.000Z' },
+    });
+
+    expect(detalle?.settlement.totalApprovedAmount).toBe('150.00');
+    expect(detalle?.settlement.exclusions[0]?.amount).toBe('120.00');
+    expect(detalle?.eob).toEqual({
+      id: 'eob-1',
+      publishedAt: new Date('2026-09-20T12:00:00.000Z'),
+    });
+  });
+
+  /**
+   * Campañas preventivas de la aseguradora (Tarea 4 · M-06).
+   */
+  describe('campañas preventivas', () => {
+    function campaignWire(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'camp-1',
+        code: 'CMP-CARDIO-2026',
+        title: 'Chequeo Preventivo Cardiovascular y Perfil Lipídico',
+        description: null,
+        campaignType: 'LABORATORY',
+        status: 'ACTIVE',
+        targetCondition: { code: 'I10', display: 'Hipertensión esencial' },
+        copayBonusPercentage: 100,
+        validFrom: '2026-10-01',
+        validTo: '2026-11-30',
+        activatedAt: '2026-09-25T14:00:00.123456Z',
+        partners: [
+          {
+            id: 'p-1',
+            role: 'PROVIDER',
+            type: 'LABORATORY',
+            name: 'Laboratorio Central AloVida',
+            networkProviderMembershipId: null,
+          },
+        ],
+        createdAt: '2026-09-25T14:00:00.123456Z',
+        updatedAt: '2026-09-25T14:00:00.123456Z',
+        ...overrides,
+      };
+    }
+
+    it('listCampaigns pega en /insurance-campaigns, descarta filtros vacíos y convierte fechas', () => {
+      let page: CampaignPage = { items: [], nextCursor: null };
+      client
+        .listCampaigns({ type: 'LABORATORY', status: undefined, cursor: '', limit: 25 })
+        .subscribe((result) => (page = result));
+
+      const request = http.expectOne((r) => r.url === '/insurance-campaigns');
+      expect(request.request.method).toBe('GET');
+      expect(request.request.params.get('type')).toBe('LABORATORY');
+      expect(request.request.params.get('limit')).toBe('25');
+      // Un filtro vacío llegaría como cadena vacía y reventaría el `@IsIn()` de la API.
+      expect(request.request.params.has('status')).toBe(false);
+      expect(request.request.params.has('cursor')).toBe(false);
+      request.flush({ items: [campaignWire()], nextCursor: 'abc' });
+
+      expect(page.nextCursor).toBe('abc');
+      expect(page.items[0]?.activatedAt).toBeInstanceOf(Date);
+    });
+
+    /**
+     * El defecto que `maybeDateOnly` existe para evitar: la vigencia llega como
+     * `AAAA-MM-DD` y pasarla por `new Date()` la ancla a medianoche UTC, con lo
+     * que retrocede un día al pintarse al oeste de Greenwich (Bolivia es UTC−4).
+     */
+    it('la vigencia se convierte a día civil local, sin correrse un día', () => {
+      let from: Date | undefined;
+      let to: Date | undefined;
+      client.listCampaigns().subscribe((result) => {
+        from = result.items[0]?.validFrom;
+        to = result.items[0]?.validTo;
+      });
+
+      http
+        .expectOne((r) => r.url === '/insurance-campaigns')
+        .flush({ items: [campaignWire()], nextCursor: null });
+
+      expect([from?.getFullYear(), from?.getMonth(), from?.getDate()]).toEqual([2026, 9, 1]);
+      expect([to?.getFullYear(), to?.getMonth(), to?.getDate()]).toEqual([2026, 10, 30]);
+    });
+
+    it('createCampaign hace POST con el cuerpo tal cual y devuelve la campaña convertida', () => {
+      const input = {
+        code: 'CMP-CARDIO-2026',
+        title: 'Chequeo Preventivo Cardiovascular y Perfil Lipídico',
+        campaignType: 'LABORATORY',
+        targetConditionCode: 'I10',
+        copayBonusPercentage: 100,
+        validFrom: '2026-10-01',
+        validTo: '2026-11-30',
+        partners: [{ role: 'PROVIDER', type: 'LABORATORY', name: 'Laboratorio Central AloVida' }],
+        activate: true,
+      } as const;
+      let created: { code: string; validTo: Date } | undefined;
+      client.createCampaign(input).subscribe((result) => (created = result));
+
+      const request = http.expectOne('/insurance-campaigns');
+      expect(request.request.method).toBe('POST');
+      expect(request.request.body).toEqual(input);
+      request.flush(campaignWire());
+
+      expect(created?.code).toBe('CMP-CARDIO-2026');
+      expect(created?.validTo).toBeInstanceOf(Date);
+    });
+
+    it('updateCampaignStatus hace PATCH a /:id/status y codifica el id', () => {
+      let status: string | undefined;
+      client.updateCampaignStatus('id con/barra', 'PAUSED').subscribe((c) => (status = c.status));
+
+      const request = http.expectOne('/insurance-campaigns/id%20con%2Fbarra/status');
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({ status: 'PAUSED' });
+      request.flush(campaignWire({ status: 'PAUSED' }));
+
+      expect(status).toBe('PAUSED');
+    });
+
+    it('getActivePatientCampaigns pide con el perfil en la URL y convierte la vigencia', () => {
+      let campaigns: readonly { carrierName: string; validTo: Date }[] = [];
+      client
+        .getActivePatientCampaigns('11111111-1111-4111-8111-111111111111')
+        .subscribe((result) => (campaigns = result));
+
+      const request = http.expectOne(
+        '/insurance-campaigns/patient/11111111-1111-4111-8111-111111111111',
+      );
+      expect(request.request.method).toBe('GET');
+      request.flush([
+        {
+          id: 'camp-1',
+          code: 'CMP-CARDIO-2026',
+          title: 'Chequeo',
+          description: null,
+          campaignType: 'LABORATORY',
+          targetCondition: null,
+          copayBonusPercentage: 100,
+          validFrom: '2026-10-01',
+          validTo: '2026-11-30',
+          carrierName: 'Seguros Andina',
+          partners: [{ role: 'PROVIDER', type: 'LABORATORY', name: 'Laboratorio Central AloVida' }],
+        },
+      ]);
+
+      expect(campaigns[0]?.carrierName).toBe('Seguros Andina');
+      expect(campaigns[0]?.validTo.getDate()).toBe(30);
+    });
+  });
+
+  describe('directorio de pacientes de la aseguradora', () => {
+    it('obtiene las opciones autorizadas y resuelve chat sólo por id y canal', () => {
+      client.patientDirectoryOptions().subscribe();
+      const options = http.expectOne('/insurance/patients/options');
+      expect(options.request.method).toBe('GET');
+      options.flush({ insurers: [] });
+      client.openPatientConversation('patient-1', 'internal').subscribe();
+      const conversation = http.expectOne('/insurance/patients/conversation');
+      expect(conversation.request.method).toBe('POST');
+      expect(conversation.request.params.keys()).toEqual([]);
+      expect(conversation.request.body).toEqual({
+        patientProfileId: 'patient-1',
+        channel: 'internal',
+      });
+      conversation.flush({ conversationId: 'conversation-1' });
+    });
+    it('listInsurerPatients pega en /insurance/patients/search con los filtros presentes y omite los vacíos', () => {
+      let pagina: InsurerPatientPage | undefined;
+      client
+        .listInsurerPatients({
+          limit: 25,
+          search: 'Pérez',
+          genderConceptId: '',
+          insuranceStatus: 'NO_INSURANCE',
+          birthDateFrom: '1980-01-01',
+          cursor: undefined,
+        })
+        .subscribe((respuesta) => (pagina = respuesta));
+
+      const request = http.expectOne((r) => r.url === '/insurance/patients/search');
+      expect(request.request.method).toBe('POST');
+      expect(Object.keys(request.request.body).sort()).toEqual([
+        'birthDateFrom',
+        'insuranceStatus',
+        'limit',
+        'search',
+      ]);
+      expect(request.request.body.limit).toBe(25);
+      request.flush({
+        items: [
+          {
+            patientProfileId: 'p-1',
+            fullName: 'Ana Pérez',
+            insurers: [],
+            messaging: { channel: 'internal', available: false },
+          },
+        ],
+        total: 1,
+        limit: 25,
+        nextCursor: 'c-2',
+      });
+
+      expect(pagina?.items[0]?.insurers).toEqual([]);
+      expect(request.request.params.keys()).toEqual([]);
+      expect(pagina?.total).toBe(1);
+      expect(pagina?.nextCursor).toBe('c-2');
+    });
   });
 });

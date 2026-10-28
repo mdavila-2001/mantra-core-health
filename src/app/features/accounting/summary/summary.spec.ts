@@ -1,0 +1,751 @@
+import { provideZonelessChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { NEVER } from 'rxjs';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+
+import { API_BASE_URL } from '../../../core/data-access/api';
+import { environment } from '../../../../environments/environment';
+import { SimpleAccountingClient } from '../../../core/data-access/simple-accounting/simple-accounting.client';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { Summary } from './summary';
+import { VERSION_STORAGE_KEY } from '../accounting-version';
+
+/* ============================================================================
+    El resumen llano de Contabilidad.
+
+    Lo que se prueba acá es lo que lo distingue del cockpit —y lo que, si se
+    rompe, vuelve a dejar una pantalla que le habla al médico en idioma de
+    contador—:
+
+    1. Que «hoy», «esta semana» y «este mes» sean **tres lecturas con su
+       ventana**, no la misma cifra repetida tres veces. Es el defecto exacto
+       que motivó la pantalla.
+    2. Que los nombres de cuenta se traduzcan, y que una cuenta desconocida
+       conserve el suyo en vez de inventarse uno.
+    3. Que el aviso de vencimiento diga en texto lo que el color dice en
+       color.
+    4. Que cobrar y pagar sean la misma compensación que ya hacía el cockpit.
+
+    Lo estético se mira en el navegador, no acá.
+    ========================================================================== */
+
+const BASE = 'http://api.test';
+
+function montar(): {
+  fixture: ReturnType<typeof TestBed.createComponent<Summary>>;
+  http: HttpTestingController;
+} {
+  TestBed.configureTestingModule({
+    imports: [Summary],
+    providers: [
+      provideZonelessChangeDetection(),
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      // El resumen enlaza al cockpit, a los libros y a activos y pasivos con
+      // `routerLink`, y esa directiva pide `ActivatedRoute`.
+      provideRouter([]),
+      { provide: API_BASE_URL, useValue: BASE },
+      // La contabilidad simple que el resumen monta arriba tiene su propio
+      // cliente y sus propias pruebas. Acá se la deja sin red para que estas
+      // sigan contando, pedido por pedido, sólo lo que pide el resumen.
+      {
+        provide: SimpleAccountingClient,
+        useValue: {
+          summary: () => NEVER,
+          listAccounts: () => NEVER,
+          listRecords: () => NEVER,
+          listTransactions: () => NEVER,
+        },
+      },
+    ],
+  });
+  const fixture = TestBed.createComponent(Summary);
+  fixture.detectChanges();
+  return { fixture, http: TestBed.inject(HttpTestingController) };
+}
+
+/**
+ * Contesta el listado de prácticas y **corre un ciclo**.
+ *
+ * El ciclo no es decorativo: las nueve lecturas del tablero cuelgan de un
+ * `toObservable(computed(...))`, que es un efecto, y sin ciclo el efecto no
+ * se ejecuta y no sale ninguna petición. Mismo patrón que `cockpit.spec.ts`.
+ */
+function responderPracticas(
+  http: HttpTestingController,
+  fixture: { detectChanges: () => void },
+): void {
+  http
+    .expectOne(`${BASE}/practices`)
+    .flush([{ id: 'prac-1', code: 'P1', name: 'Consultorio de prueba' }]);
+  fixture.detectChanges();
+}
+
+/** Un estado de resultados con los totales dados y sin líneas. */
+function resultado(revenue: string, expense: string, net: string): object {
+  return {
+    revenueItems: [],
+    expenseItems: [],
+    totalRevenue: revenue,
+    totalExpense: expense,
+    netIncome: net,
+    count: 0,
+    limit: 200,
+    nextCursor: null,
+    truncated: false,
+  };
+}
+
+const CARTERA_VACIA = {
+  items: [],
+  aging: [],
+  totalReceivable: '0.00',
+  totalPayable: '0.00',
+};
+
+const SITUACION = {
+  assetItems: [],
+  liabilityItems: [],
+  equityItems: [],
+  netIncomeOfPeriod: '0.00',
+  totalAssets: '1000.00',
+  totalLiabilities: '400.00',
+  totalEquity: '600.00',
+  totalLiabilitiesAndEquity: '1000.00',
+  balanced: true,
+  count: 0,
+  limit: 200,
+  nextCursor: null,
+  truncated: false,
+};
+
+const EQUIPOS = {
+  items: [],
+  totalAcquisition: '0.00',
+  totalAccumulated: '0.00',
+  totalNetBookValue: '0.00',
+  monthlyCharge: '0.00',
+};
+
+/**
+ * Contesta las nueve lecturas del tablero. Los seis estados de resultados se
+ * responden **en el orden en que salieron**, que es el del `forkJoin`.
+ */
+/** El plan de cuentas de la práctica: de acá sale la cuenta del dinero. */
+function responderCuentas(http: HttpTestingController): void {
+  http.expectOne((r) => r.url === `${BASE}/accounting/accounts`).flush({
+    items: [{ id: 'acc-banco', code: '1.2', name: 'Banco', accountTypeConceptId: 't', normalBalanceConceptId: 'n' }],
+    count: 1,
+    limit: 200,
+  });
+}
+
+function responderTablero(
+  http: HttpTestingController,
+  estados: readonly object[],
+  opciones: { cartera?: object } = {},
+): void {
+  const pedidos = http.match((r) => r.url === `${BASE}/accounting/income-statement`);
+  expect(pedidos).toHaveLength(6);
+  pedidos.forEach((pedido, i) => pedido.flush(estados[i]));
+  http.expectOne((r) => r.url === `${BASE}/accounting/open-items`).flush(opciones.cartera ?? CARTERA_VACIA);
+  http.expectOne((r) => r.url === `${BASE}/accounting/balance-sheet`).flush(SITUACION);
+  http.expectOne((r) => r.url === `${BASE}/accounting/assets`).flush(EQUIPOS);
+  responderCuentas(http);
+}
+
+describe('Resumen contable', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    globalThis.localStorage?.removeItem(VERSION_STORAGE_KEY);
+  });
+
+  describe('los tres tramos', () => {
+    it('pide el estado de resultados SEIS veces, cada una con su ventana', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 8, 17, 12));
+      // Tres tramos y sus tres comparables. Si alguien "optimiza" esto a una
+      // sola lectura filtrada en el navegador, «hoy» vuelve a dar el total del
+      // ejercicio, que es el defecto que la pantalla vino a corregir.
+      let montaje: ReturnType<typeof montar>;
+      try {
+        montaje = montar();
+      } finally {
+        vi.useRealTimers();
+      }
+      const { fixture, http } = montaje;
+      responderPracticas(http, fixture);
+
+      const pedidos = http.match((r) => r.url === `${BASE}/accounting/income-statement`);
+      expect(pedidos).toHaveLength(6);
+
+      const ventanas = pedidos.map((p) => ({
+        from: p.request.params.get('from'),
+        to: p.request.params.get('to'),
+      }));
+      // Las seis son distintas entre sí, y las seis llevan las dos puntas.
+      expect(new Set(ventanas.map((v) => `${v.from}|${v.to}`)).size).toBe(6);
+      expect(ventanas.every((v) => v.from !== null && v.to !== null)).toBe(true);
+      // Y todas cuelgan de la práctica elegida.
+      expect(pedidos.every((p) => p.request.params.get('practiceId') === 'prac-1')).toBe(true);
+
+      pedidos.forEach((p) => p.flush(resultado('0.00', '0.00', '0.00')));
+      http.expectOne((r) => r.url === `${BASE}/accounting/open-items`).flush(CARTERA_VACIA);
+      http.expectOne((r) => r.url === `${BASE}/accounting/balance-sheet`).flush(SITUACION);
+      http.expectOne((r) => r.url === `${BASE}/accounting/assets`).flush(EQUIPOS);
+  responderCuentas(http);
+      http.verify();
+    });
+
+    it('cada tramo muestra SU cifra, y «le quedó» sale de la API sin restar acá', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, [
+        resultado('1450.00', '180.00', '1270.00'), // hoy
+        resultado('1730.00', '0.00', '1730.00'), // ayer
+        resultado('8880.00', '488.33', '8391.67'), // semana
+        resultado('1740.00', '0.00', '1740.00'), // semana previa
+        resultado('14220.00', '5483.33', '8736.67'), // mes
+        resultado('6130.00', '0.00', '6130.00'), // mes previo
+      ]);
+      fixture.detectChanges();
+
+      const tramos = (fixture.componentInstance as unknown as { brackets: () => readonly {
+        clave: string; entro: string; salio: string; quedo: string;
+      }[] }).brackets();
+
+      expect(tramos.map((t) => t.clave)).toEqual(['hoy', 'semana', 'mes']);
+      expect(tramos.map((t) => t.entro)).toEqual(['1450.00', '8880.00', '14220.00']);
+      expect(tramos.map((t) => t.salio)).toEqual(['180.00', '488.33', '5483.33']);
+      // `netIncome` tal cual: la pantalla no hace `entro - salio`.
+      expect(tramos.map((t) => t.quedo)).toEqual(['1270.00', '8391.67', '8736.67']);
+    });
+
+    it('la comparación es contra el tramo previo, no contra el tramo de al lado', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, [
+        resultado('800.00', '0.00', '800.00'), // hoy
+        resultado('1000.00', '0.00', '1000.00'), // ayer: bajó 20 %
+        resultado('1200.00', '0.00', '1200.00'), // semana
+        resultado('1000.00', '0.00', '1000.00'), // semana previa: subió 20 %
+        resultado('1000.00', '0.00', '1000.00'), // mes
+        resultado('0.00', '0.00', '0.00'), // mes previo: sin comparable
+      ]);
+      fixture.detectChanges();
+
+      const tramos = (fixture.componentInstance as unknown as { brackets: () => readonly {
+        comparacion: { direccion: string; porcentaje: number } | null;
+      }[] }).brackets();
+
+      expect(tramos[0]?.comparacion).toMatchObject({ direccion: 'baja', porcentaje: 20 });
+      expect(tramos[1]?.comparacion).toMatchObject({ direccion: 'sube', porcentaje: 20 });
+      // Mes previo en cero: no se inventa un «+100 %».
+      expect(tramos[2]?.comparacion).toBeNull();
+    });
+  });
+
+  describe('los nombres de las cuentas', () => {
+    it('traduce las del plan estándar y respeta las que no conoce', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      const mes = {
+        ...resultado('0.00', '1000.00', '-1000.00'),
+        expenseItems: [
+          { accountId: 'a1', code: '5.5', name: 'Depreciación', accountTypeConceptId: 'g', amount: '600.00' },
+          { accountId: 'a2', code: '5.3', name: 'Servicios básicos', accountTypeConceptId: 'g', amount: '300.00' },
+          { accountId: 'a3', code: '9.9', name: 'Gasto raro de la práctica', accountTypeConceptId: 'g', amount: '100.00' },
+        ],
+      };
+      responderTablero(http, [
+        resultado('0.00', '0.00', '0.00'),
+        resultado('0.00', '0.00', '0.00'),
+        resultado('0.00', '0.00', '0.00'),
+        resultado('0.00', '0.00', '0.00'),
+        mes,
+        resultado('0.00', '0.00', '0.00'),
+      ]);
+      fixture.detectChanges();
+
+      const gastos = (fixture.componentInstance as unknown as { monthExpenses: () => readonly {
+        nombre: string; porcentaje: number; aclaracion: string | null;
+      }[] }).monthExpenses();
+
+      expect(gastos.map((g) => g.nombre)).toEqual([
+        'Desgaste de los equipos',
+        'Luz, agua e internet',
+        // Una cuenta fuera del plan conocido conserva su nombre: inventarle uno
+        // llano sería peor que mostrar el que la práctica le puso.
+        'Gasto raro de la práctica',
+      ]);
+      // Ordenados de mayor a menor, con su parte del total.
+      expect(gastos.map((g) => g.porcentaje)).toEqual([60, 30, 10]);
+      // El desgaste se explica: no es plata que sale de la cuenta.
+      expect(gastos[0]?.aclaracion).toContain('No sale dinero');
+      expect(gastos[1]?.aclaracion).toBeNull();
+    });
+
+    it('una cuenta en cero no ocupa un renglón', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      const mes = {
+        ...resultado('0.00', '100.00', '-100.00'),
+        expenseItems: [
+          { accountId: 'a1', code: '5.1', name: 'Alquiler', accountTypeConceptId: 'g', amount: '100.00' },
+          { accountId: 'a2', code: '5.2', name: 'Insumos', accountTypeConceptId: 'g', amount: '0.00' },
+        ],
+      };
+      responderTablero(http, [
+        resultado('0.00', '0.00', '0.00'),
+        resultado('0.00', '0.00', '0.00'),
+        resultado('0.00', '0.00', '0.00'),
+        resultado('0.00', '0.00', '0.00'),
+        mes,
+        resultado('0.00', '0.00', '0.00'),
+      ]);
+      fixture.detectChanges();
+
+      expect(
+        (fixture.componentInstance as unknown as { monthExpenses: () => readonly unknown[] })
+          .monthExpenses(),
+      ).toHaveLength(1);
+    });
+  });
+
+  describe('lo que está pendiente', () => {
+    const hoyIso = (dias: number): string => {
+      const d = new Date();
+      d.setDate(d.getDate() + dias);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    function carteraDePrueba(): object {
+      return {
+        items: [
+          {
+            id: 'oi-1', documentNumber: 'FC-1', accountCode: '1.3', accountName: 'Por cobrar',
+            partnerName: 'Seguros Andina', side: 'RECEIVABLE', documentDate: hoyIso(-90),
+            dueDate: hoyIso(-45), amount: '4820.00', clearedAmount: '0.00',
+            openAmount: '4820.00', overdueDays: 45, agingBucket: 'D31_60',
+          },
+          {
+            id: 'oi-2', documentNumber: 'FC-2', accountCode: '1.3', accountName: 'Por cobrar',
+            partnerName: 'Nacional Vida', side: 'RECEIVABLE', documentDate: hoyIso(-20),
+            dueDate: hoyIso(8), amount: '3120.00', clearedAmount: '0.00',
+            openAmount: '3120.00', overdueDays: 0, agingBucket: 'CORRIENTE',
+          },
+          {
+            id: 'oi-3', documentNumber: 'FP-1', accountCode: '2.3', accountName: 'Proveedores',
+            partnerName: 'Droguería Boliviana', side: 'PAYABLE', documentDate: hoyIso(-30),
+            dueDate: hoyIso(-1), amount: '1740.00', clearedAmount: '0.00',
+            openAmount: '1740.00', overdueDays: 1, agingBucket: 'D1_30',
+          },
+        ],
+        aging: [],
+        totalReceivable: '7940.00',
+        totalPayable: '1740.00',
+      };
+    }
+
+    function montarConCartera(): ReturnType<typeof montar> {
+      const montado = montar();
+      responderPracticas(montado.http, montado.fixture);
+      responderTablero(
+        montado.http,
+        Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')),
+        { cartera: carteraDePrueba() },
+      );
+      montado.fixture.detectChanges();
+      return montado;
+    }
+
+    it('separa las dos columnas y pone lo más vencido arriba', () => {
+      const { fixture } = montarConCartera();
+      const c = fixture.componentInstance as unknown as {
+        teDeben: () => readonly { quien: string; aviso: string; tono: string }[];
+        amountToPay: () => readonly { quien: string; aviso: string; tono: string }[];
+      };
+
+      expect(c.teDeben().map((p) => p.quien)).toEqual(['Seguros Andina', 'Nacional Vida']);
+      expect(c.amountToPay().map((p) => p.quien)).toEqual(['Droguería Boliviana']);
+    });
+
+    it('el aviso dice en texto lo mismo que el color dice en color', () => {
+      // Regla de la casa: no depender de distinguir rojo. El chip lleva el
+      // plazo escrito, no sólo el tono.
+      const { fixture } = montarConCartera();
+      const c = fixture.componentInstance as unknown as {
+        teDeben: () => readonly { aviso: string; tono: string }[];
+        amountToPay: () => readonly { aviso: string; tono: string }[];
+      };
+
+      expect(c.teDeben()[0]).toMatchObject({ aviso: 'Venció hace 45 días', tono: 'error' });
+      expect(c.teDeben()[1]).toMatchObject({ aviso: 'Vence en 8 días', tono: 'neutral' });
+      // Un día de atraso no es lo mismo que cuarenta y cinco: avisa, no alarma.
+      expect(c.amountToPay()[0]).toMatchObject({ aviso: 'Venció hace 1 día', tono: 'warning' });
+    });
+
+    it('cuenta cuántas ya vencieron, que es el número accionable', () => {
+      const { fixture } = montarConCartera();
+      const c = fixture.componentInstance as unknown as {
+        overdueOwedToYou: () => number;
+        overdueYouOwe: () => number;
+      };
+      expect(c.overdueOwedToYou()).toBe(1);
+      expect(c.overdueYouOwe()).toBe(1);
+    });
+
+    it('«Ya me pagaron» compensa la partida y vuelve a leer el tablero', () => {
+      // Es la misma compensación que el cockpit llama «Compensar». Cambia el
+      // verbo porque cambia el lector, no el contrato.
+      const { fixture, http } = montarConCartera();
+      const c = fixture.componentInstance as unknown as {
+        teDeben: () => readonly { id: string }[];
+        settle: (p: unknown, lado: 'cobro' | 'pago') => void;
+        settlementAccount: { set: (id: string) => void };
+      };
+
+      // Sin la cuenta del dinero no se asienta nada: la pantalla no la adivina.
+      c.settle(c.teDeben()[0], 'cobro');
+      http.expectNone(`${BASE}/accounting/clearing-documents`);
+
+      c.settlementAccount.set('acc-banco');
+      c.settle(c.teDeben()[0], 'cobro');
+
+      const compensacion = http.expectOne(`${BASE}/accounting/clearing-documents`);
+      expect(compensacion.request.method).toBe('POST');
+      // El cuerpo de `CreateClearingDto` (informe B, C9), con el saldo abierto
+      // de la partida y la fecha de hoy.
+      expect(compensacion.request.body).toEqual({
+        practiceId: 'prac-1',
+        bankAccountId: 'acc-banco',
+        clearingDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        items: [{ openItemId: 'oi-1', clearedAmount: '4820.00' }],
+      });
+      compensacion.flush({ id: 'cd-1', clearingNumber: 'CLR-1', transactionId: 'tx-1', clearedItems: 1 });
+      fixture.detectChanges();
+
+      // Y no se queda con la pantalla vieja: relee todo, porque compensar
+      // cambia la cartera **y** los saldos.
+      expect(http.match((r) => r.url === `${BASE}/accounting/income-statement`)).toHaveLength(6);
+      expect(http.match((r) => r.url === `${BASE}/accounting/open-items`)).toHaveLength(1);
+    });
+
+    it('si saldar falla, dice qué no se registró, con el código de soporte, y no relee', () => {
+      const { fixture, http } = montarConCartera();
+      const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
+      const c = fixture.componentInstance as unknown as {
+        teDeben: () => readonly { id: string; quien: string }[];
+        settle: (p: unknown, lado: 'cobro' | 'pago') => void;
+        settling: () => string | null;
+        settlementAccount: { set: (id: string) => void };
+      };
+
+      c.settlementAccount.set('acc-banco');
+      c.settle(c.teDeben()[0], 'cobro');
+      http
+        .expectOne(`${BASE}/accounting/clearing-documents`)
+        .flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-cobro', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        );
+
+      expect(avisos).toHaveBeenLastCalledWith({
+        type: 'error',
+        message: 'No se pudo registrar el cobro de Seguros Andina. Intente de nuevo. (Código de soporte: corr-cobro)',
+      });
+      // El botón vuelve a estar disponible y el tablero sigue como estaba.
+      expect(c.settling()).toBeNull();
+      expect(http.match((r) => r.url === `${BASE}/accounting/open-items`)).toHaveLength(0);
+    });
+
+    it('si la partida ya estaba saldada, el aviso es el motivo de la API', () => {
+      const { fixture, http } = montarConCartera();
+      const avisos = vi.spyOn(TestBed.inject(ToastService), 'show');
+      const c = fixture.componentInstance as unknown as {
+        amountToPay: () => readonly { id: string }[];
+        settle: (p: unknown, lado: 'cobro' | 'pago') => void;
+        settlementAccount: { set: (id: string) => void };
+      };
+
+      c.settlementAccount.set('acc-banco');
+      c.settle(c.amountToPay()[0], 'pago');
+      http
+        .expectOne(`${BASE}/accounting/clearing-documents`)
+        .flush(
+          { code: 'CONFLICT', message: 'La partida ya está compensada', timestamp: '', path: '' },
+          { status: 409, statusText: 'Conflict' },
+        );
+
+      expect(avisos).toHaveBeenLastCalledWith({ type: 'error', message: 'La partida ya está compensada' });
+    });
+  });
+
+  describe('lo que tiene y lo que debe', () => {
+    it('deja fuera los equipos dados de baja y los que ya no valen nada', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      const pedidos = http.match((r) => r.url === `${BASE}/accounting/income-statement`);
+      pedidos.forEach((p) => p.flush(resultado('0.00', '0.00', '0.00')));
+      http.expectOne((r) => r.url === `${BASE}/accounting/open-items`).flush(CARTERA_VACIA);
+      http.expectOne((r) => r.url === `${BASE}/accounting/balance-sheet`).flush(SITUACION);
+      http.expectOne((r) => r.url === `${BASE}/accounting/assets`).flush({
+        items: [
+          { id: 'e1', code: 'EQ-1', name: 'Ecógrafo', className: 'Equipos', classCode: 'EQ', usefulLifeMonths: 60, acquisitionCost: '45000.00', accumulatedDepreciation: '3750.00', netBookValue: '41250.00', monthlyDepreciation: '750.00', depreciable: true, status: 'ACTIVE' },
+          { id: 'e2', code: 'EQ-0', name: 'Tensiómetro de mercurio', className: 'Equipos', classCode: 'EQ', usefulLifeMonths: 0, acquisitionCost: '350.00', accumulatedDepreciation: '350.00', netBookValue: '0.00', monthlyDepreciation: '0.00', depreciable: false, status: 'RETIRED' },
+          { id: 'e3', code: 'EQ-2', name: 'Camilla ya amortizada', className: 'Equipos', classCode: 'EQ', usefulLifeMonths: 36, acquisitionCost: '6500.00', accumulatedDepreciation: '6500.00', netBookValue: '0.00', monthlyDepreciation: '0.00', depreciable: false, status: 'ACTIVE' },
+        ],
+        totalAcquisition: '51850.00',
+        totalAccumulated: '10600.00',
+        totalNetBookValue: '41250.00',
+        monthlyCharge: '750.00',
+      });
+      responderCuentas(http);
+      fixture.detectChanges();
+
+      const equipos = (
+        fixture.componentInstance as unknown as { equipmentWithValue: () => readonly { name: string }[] }
+      ).equipmentWithValue();
+
+      // Un renglón en cero en «lo que tenés» ocupa lugar y no dice nada. El
+      // registro completo está en la pantalla de activos y pasivos.
+      expect(equipos.map((e) => e.name)).toEqual(['Ecógrafo']);
+    });
+  });
+
+  describe('la práctica', () => {
+    it('con una sola no se pregunta cuál', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      expect(
+        (fixture.componentInstance as unknown as { hasSeveralPractices: () => boolean })
+          .hasSeveralPractices(),
+      ).toBe(false);
+    });
+  });
+
+  describe('tableros y registros, en pestañas separadas', () => {
+    const rotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('.pestanas > .tabs__bar [role="tab"]')).map((t) =>
+        (t as HTMLElement).textContent?.trim() ?? '',
+      );
+
+    const subrotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('.subpestanas > .tabs__bar [role="tab"]')).map((t) =>
+        (t as HTMLElement).textContent?.trim() ?? '',
+      );
+
+    it('son dos pestañas —Resumen y, en Doctor, «Anotar gastos, equipos y deudas»— y abre en Resumen', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      expect(rotulos(fixture)).toEqual(['Resumen', 'Anotar gastos, equipos y deudas']);
+      expect(subrotulos(fixture)).toEqual([
+        'Ganancias',
+        'Por cobrar y por pagar',
+        'Lo que tiene y lo que debe',
+        'Caja y banco',
+      ]);
+      const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('¿Cuánto ganó?');
+
+      fixture.componentInstance.subtab.set(1);
+      fixture.detectChanges();
+      const textoPendientes = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(textoPendientes).toContain('Cobros y pagos pendientes');
+    });
+
+    it('divide el resumen en ingresos, pendientes, activos y flujo de dinero', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      expect(subrotulos(fixture)).toEqual([
+        'Ganancias',
+        'Por cobrar y por pagar',
+        'Lo que tiene y lo que debe',
+        'Caja y banco',
+      ]);
+
+      // Movimientos
+      expect(fixture.componentInstance.subtab()).toBe(0);
+      let texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('¿Cuánto ganó?');
+      expect(texto).toContain('¿En qué gasta?');
+
+      // Pendientes
+      fixture.componentInstance.subtab.set(1);
+      fixture.detectChanges();
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Cobros y pagos pendientes');
+
+      // Patrimonio
+      fixture.componentInstance.subtab.set(2);
+      fixture.detectChanges();
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Bienes y deudas');
+      fixture.componentInstance.subtab.set(3);
+      fixture.detectChanges();
+      texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+      expect(texto).toContain('Flujo de dinero');
+    });
+
+    it('el Resumen no trae la tarjeta de registros', () => {
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
+    });
+
+    // La contabilidad simple sólo existe en la maqueta (`simulatorAvailable()`),
+    // y en esta rama viene apagada: se enciende para el caso que la monta.
+    it('en Registros no hay tableros ni se pide el dinero del tablero de nuevo', () => {
+      const mockBackendOriginal = environment.mockBackend;
+      Object.assign(environment, { mockBackend: true });
+      onTestFinished(() => {
+        Object.assign(environment, { mockBackend: mockBackendOriginal });
+      });
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      fixture.componentInstance.tab.set(1);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).not.toBeNull();
+      expect(raiz.textContent).not.toContain('¿Cuánto ganó?');
+      expect(raiz.textContent).not.toContain('Cobros y pagos pendientes');
+      http.verify();
+    });
+
+    it('contra la API real, Registros avisa que la contabilidad simple no está y no la monta', () => {
+      const mockBackendOriginal = environment.mockBackend;
+      Object.assign(environment, { mockBackend: false });
+      onTestFinished(() => {
+        Object.assign(environment, { mockBackend: mockBackendOriginal });
+      });
+      const { fixture, http } = montar();
+      responderPracticas(http, fixture);
+      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      fixture.detectChanges();
+
+      fixture.componentInstance.tab.set(1);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="simple-accounting-unavailable"]')).not.toBeNull();
+      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
+      http.verify();
+    });
+  });
+
+  describe('la llave Doctor / Contador', () => {
+    const tablero = (): ReturnType<typeof montar> => {
+      const montado = montar();
+      responderPracticas(montado.http, montado.fixture);
+      responderTablero(montado.http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      montado.fixture.detectChanges();
+      return montado;
+    };
+
+    const raizDe = (fixture: { nativeElement: unknown }): HTMLElement => fixture.nativeElement as HTMLElement;
+
+    const opciones = (fixture: { nativeElement: unknown }): HTMLElement[] =>
+      Array.from(raizDe(fixture).querySelectorAll('[data-testid="contabilidad-version"] [role="radio"]'));
+
+    const marcada = (fixture: { nativeElement: unknown }): string | undefined =>
+      opciones(fixture)
+        .find((o) => o.getAttribute('aria-checked') === 'true')
+        ?.textContent?.trim();
+
+    it('ofrece las dos versiones y abre en Doctor, sin las herramientas del contador', () => {
+      const { fixture } = tablero();
+
+      expect(opciones(fixture).map((o) => o.textContent?.trim())).toEqual(['Doctor', 'Contador']);
+      expect(marcada(fixture)).toBe('Doctor');
+      expect(raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]')).toBeNull();
+      expect(raizDe(fixture).textContent).not.toContain('Para su contador');
+    });
+
+    it('en Contador aparecen la vista contable y el balance, y al volver a Doctor se van', () => {
+      const { fixture } = tablero();
+
+      opciones(fixture)[1]!.click();
+      fixture.detectChanges();
+
+      expect(marcada(fixture)).toBe('Contador');
+      const herramientas = raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]');
+      expect(herramientas).not.toBeNull();
+      const enlaces = Array.from(herramientas!.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+      expect(enlaces).toEqual([
+        '/administration/accounting/cockpit',
+        '/administration/accounting/books',
+      ]);
+
+      opciones(fixture)[0]!.click();
+      fixture.detectChanges();
+      expect(marcada(fixture)).toBe('Doctor');
+      expect(raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]')).toBeNull();
+    });
+
+    it('recuerda la versión que la persona dejó puesta', () => {
+      globalThis.localStorage.setItem(VERSION_STORAGE_KEY, 'contador');
+      const { fixture } = tablero();
+      expect(marcada(fixture)).toBe('Contador');
+
+      opciones(fixture)[0]!.click();
+      fixture.detectChanges();
+      expect(globalThis.localStorage.getItem(VERSION_STORAGE_KEY)).toBe('doctor');
+    });
+
+    it('un valor guardado que no es una versión se ignora y vale Doctor', () => {
+      globalThis.localStorage.setItem(VERSION_STORAGE_KEY, 'administrador');
+      const { fixture } = tablero();
+      expect(marcada(fixture)).toBe('Doctor');
+    });
+
+    it('en Registros, Doctor trae gastos, activos y deudas; Contador suma transacciones y cuentas', () => {
+      const original = environment.mockBackend;
+      Object.assign(environment, { mockBackend: true });
+      onTestFinished(() => {
+        Object.assign(environment, { mockBackend: original });
+      });
+      const { fixture } = tablero();
+      fixture.componentInstance.tab.set(1);
+      fixture.detectChanges();
+
+      const rotulosDeRegistros = (): string[] =>
+        Array.from(
+          raizDe(fixture).querySelectorAll('[data-testid="contabilidad-registros"] .tabs__bar [role="tab"]'),
+        ).map((t) => (t.textContent ?? '').replace(/\s*\(\d+\)\s*$/u, '').trim());
+
+      expect(rotulosDeRegistros()).toEqual(['Gastos', 'Activos', 'Deudas']);
+
+      opciones(fixture)[1]!.click();
+      fixture.detectChanges();
+
+      expect(rotulosDeRegistros()).toEqual(['Gastos', 'Activos', 'Deudas', 'Transacciones', 'Cuentas']);
+    });
+  });
+
+  it('no pide nada que no conteste, ni deja nada colgando', () => {
+    // `verify()` falla si quedó una petición sin responder: es la red de la
+    // que cuelga todo lo de arriba, porque un `forkJoin` al que le falta una
+    // rama no emite y la pantalla se queda cargando para siempre.
+    const { fixture, http } = montar();
+    responderPracticas(http, fixture);
+    responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+    http.verify();
+  });
+});

@@ -8,6 +8,7 @@ import {
   input,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 
@@ -63,6 +64,9 @@ import {
   host: {
     class: 'data-table',
     '[class.data-table--constrained]': 'effectiveMaxHeight() !== null',
+    '[class.data-table--wrap-headers]': 'wrapHeaders()',
+    '[class.data-table--fit-container]': 'fitContainer()',
+    '[class.data-table--apilada]': 'stackedOnMobile()',
   },
 })
 export class DataTable<Row> {
@@ -102,6 +106,13 @@ export class DataTable<Row> {
   /** Rótulo de la tabla. Va en `<caption>`, aunque sea solo para lectores. */
   readonly caption = input<string>('');
 
+  /** Título visible de la tarjeta («Registros»); junto a `totalCount` arma «REGISTROS · n». */
+  readonly heading = input<string>('');
+  /** Total de registros del filtro vigente; `null` si el origen no lo conoce. */
+  readonly totalCount = input<number | null>(null);
+  /** Texto de la paginación por cursor («Página 2 de 7 · 338 registros»). */
+  readonly pageSummary = input<string>('');
+
   /**
    * Alto máximo de la caja de la tabla (p. ej. `'480px'`), con scroll
    * **vertical** dentro de esa caja. Por omisión `null`: apagado, sin
@@ -118,6 +129,40 @@ export class DataTable<Row> {
    * omisión, apagado), no como una caja de alto cero.
    */
   readonly maxHeight = input<string | null>(null);
+
+  /**
+   * Deja que los encabezados partan en dos renglones también en escritorio.
+   *
+   * Opt-in, apagado por omisión. Existe porque en escritorio el encabezado es
+   * `nowrap` y, con varias columnas de rótulo largo («Fecha de prestación»,
+   * «Monto solicitado»), es él —no el dato— el que fija el ancho: medido en
+   * «Solicitudes recibidas», 1297 px de tabla en una caja de 1040. Partido,
+   * cada columna mide lo que su palabra más larga y la tabla entra sin scroll
+   * lateral y sin esconder columnas.
+   */
+  readonly wrapHeaders = input(false, { transform: booleanAttribute });
+
+  /**
+   * Pliega las columnas secundarias según el ancho **de la caja** y no el del
+   * viewport.
+   *
+   * Opt-in, apagado por omisión. Existe por los modales: el `@media` de 780 px
+   * despliega las columnas en cuanto la pantalla es de tablet, pero dentro de
+   * un modal la tabla puede medir 600 px con el viewport en 1024 —medido en
+   * «Pagos» de la consulta: 704 px de tabla en 596 de caja, con la columna de
+   * acciones fija tapando importes—. Con esto, la tabla es un *container* y
+   * por debajo de 52rem de caja (≈ 728 px) se comporta como en el teléfono: las
+   * secundarias viven en la fila de detalle.
+   */
+  readonly fitContainer = input(false, { transform: booleanAttribute });
+
+  /**
+   * En teléfono (≤ 40rem) cada fila pasa a ser una ficha apilada —rótulo a la
+   * izquierda, valor a la derecha— en vez de una tabla que se desplaza de costado
+   * con la última columna fija tapando datos. Opt-in: las tablas con muchas
+   * columnas de comparación siguen desplazándose.
+   */
+  readonly stackedOnMobile = input(false, { transform: booleanAttribute });
 
   /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
   protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);
@@ -186,7 +231,8 @@ export class DataTable<Row> {
   protected cellClassFor(column: ColumnDef<Row>): string {
     const secundaria = column.priority >= MOBILE_DETAIL_PRIORITY ? ' data-table__secondary' : '';
     const fija = column.sticky === 'end' ? ' data-table__cell--sticky-end' : '';
-    return `data-table__cell${secundaria}${fija} data-table__cell--${column.align ?? 'start'}`;
+    const accion = column.accion ? ' data-table__cell--accion' : '';
+    return `data-table__cell${secundaria}${fija}${accion} data-table__cell--${column.align ?? 'start'}`;
   }
 
   /** Las que en móvil se pliegan a la fila de detalle — nunca se ocultan. */
@@ -314,9 +360,34 @@ export class DataTable<Row> {
     });
   }
 
+  /**
+   * Hacia dónde se pidió la página, mientras se espera que llegue. Cuando las
+   * filas nuevas aterrizan, se convierte en {@link pageTurn}.
+   */
+  private pendingTurn: 'next' | 'prev' | null = null;
+
+  /**
+   * El giro de página que anima el `<tbody>` (pulse.md §7): las filas nuevas
+   * entran desde el lado hacia el que se avanzó. Alterna `-a`/`-b` porque es
+   * el cambio de nombre lo que hace que el navegador repita la animación.
+   */
+  protected readonly pageTurn = signal<string | null>(null);
+
+  private readonly landPageTurn = effect(() => {
+    const filas = this.rows();
+    const sentido = untracked(() => (filas.length > 0 ? this.pendingTurn : null));
+    if (sentido === null) {
+      return;
+    }
+    this.pendingTurn = null;
+    const previo = untracked(this.pageTurn);
+    this.pageTurn.set(previo === `${sentido}-a` ? `${sentido}-b` : `${sentido}-a`);
+  });
+
   protected goPrevious(): void {
     const cursor = this.cursor().prevCursor;
     if (cursor) {
+      this.pendingTurn = 'prev';
       this.cursorChanged.emit(cursor);
     }
   }
@@ -324,6 +395,7 @@ export class DataTable<Row> {
   protected goNext(): void {
     const cursor = this.cursor().nextCursor;
     if (cursor) {
+      this.pendingTurn = 'next';
       this.cursorChanged.emit(cursor);
     }
   }

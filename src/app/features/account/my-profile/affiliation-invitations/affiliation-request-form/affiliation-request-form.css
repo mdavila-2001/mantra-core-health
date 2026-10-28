@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.request {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.request__title {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.request__note {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.request__selectors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--sp-3);
+}
+
+.request__procedures {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.request__legend {
+  padding: 0;
+  margin-block-end: var(--sp-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.request__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

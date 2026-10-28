@@ -1,3 +1,5 @@
+import { addDecimalStrings, sameDecimalString } from '../../money/decimal-strings';
+
 /** Published, patient-specific adjudication. Decimal strings remain exact. */
 export type InsuranceSettlementAvailability =
   'AVAILABLE' | 'PENDING_PUBLICATION' | 'UNDER_REVIEW' | 'NOT_AVAILABLE';
@@ -73,14 +75,14 @@ function completeSettlement(
     value.totalPatientAmount,
     value.totalDeniedAmount,
   ];
-  return (
-    identifiers.every(nonEmptyText) &&
-    Number.isInteger(value.adjudicationVersion) &&
-    value.adjudicationVersion > 0 &&
-    amounts.every(decimalAmount) &&
-    ['APPROVED', 'PARTIALLY_APPROVED', 'DENIED'].includes(value.result) &&
-    Array.isArray(value.exclusions) &&
-    value.exclusions.every(
+  if (
+    !identifiers.every(nonEmptyText) ||
+    !Number.isInteger(value.adjudicationVersion) ||
+    value.adjudicationVersion <= 0 ||
+    !amounts.every(decimalAmount) ||
+    !['APPROVED', 'PARTIALLY_APPROVED', 'DENIED'].includes(value.result) ||
+    !Array.isArray(value.exclusions) ||
+    !value.exclusions.every(
       (exclusion) =>
         exclusion !== null &&
         exclusion !== undefined &&
@@ -92,7 +94,28 @@ function completeSettlement(
         ].every(nonEmptyText) &&
         decimalAmount(exclusion.amount),
     )
-  );
+  ) {
+    return false;
+  }
+  // La API ya conciliaría esto, pero un AVAILABLE con un descuadre real nunca
+  // puede mostrarse como cargo confirmado: se vuelve a comprobar acá con
+  // aritmética decimal exacta antes de aceptar el desglose.
+  const equationTotal = addDecimalStrings([
+    value.totalApprovedAmount,
+    value.totalPatientAmount,
+    value.totalDeniedAmount,
+  ]);
+  if (equationTotal === null || !sameDecimalString(value.totalBilledAmount, equationTotal)) {
+    return false;
+  }
+  const exclusionsTotal = addDecimalStrings(value.exclusions.map((exclusion) => exclusion.amount));
+  if (
+    value.exclusions.length > 0 &&
+    (exclusionsTotal === null || !sameDecimalString(value.totalDeniedAmount, exclusionsTotal))
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function nonEmptyText(value: unknown): value is string {

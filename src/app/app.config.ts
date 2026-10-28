@@ -5,11 +5,12 @@ import {
   DestroyRef,
   ErrorHandler,
   inject,
+  Injector,
   LOCALE_ID,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -17,13 +18,19 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { ThemeService } from './core/tokens/theme.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { timeoutInterceptor } from './core/http/timeout.interceptor';
+import { apiFailureLogInterceptor } from './core/http/api-failure-log.interceptor';
 import { AuthService } from './core/auth/auth.service';
+import { SESSION_CLEANERS } from './core/auth/session-cleanup';
 import { IdleLogout } from './core/auth/idle-logout';
+import { SessionEndedRedirect } from './core/auth/session-ended-redirect';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
+import { provideDependentLinkNotificationActions } from './features/account/dependents/dependent-link-notification-actions';
 import { provideUxAnalytics } from './core/observability/ux/ux-analytics.providers';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
+import { environment } from '../environments/environment';
+import { prefersReducedMotion } from './shared/motion/motion-tokens';
 
 /**
  * Datos de formato del idioma de la aplicación.
@@ -62,14 +69,33 @@ export const appConfig: ApplicationConfig = {
     // es «Trayectoria laboral» en la portada del perfil profesional (R2-4),
     // que baja hasta el bloque dentro de la misma pantalla. Sin esto el
     // fragmento cambia en la URL y la página no se mueve.
-    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
+    // Transición entre rutas con la View Transitions API: sólo el contenido
+    // (`view-transition-name: contenido`) hace un fundido corto; el menú y la
+    // barra se quedan quietos. Sin la API el router navega igual, y con
+    // `prefers-reduced-motion` no se crea la transición.
+    provideRouter(
+      routes,
+      withInMemoryScrolling({ anchorScrolling: 'enabled' }),
+      withViewTransitions({
+        skipInitialTransition: true,
+        onViewTransitionCreated: ({ transition }) => {
+          if (prefersReducedMotion()) {
+            transition.skipTransition();
+          }
+        },
+      }),
+    ),
     provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
     // servidor obliga a un reemplazo y rompe la transferencia de estado.
     //
-    // El orden de los tres interceptores importa, y ninguno de los tres está
-    // donde está por gusto:
+    // El orden de los interceptores importa, y ninguno está donde está por
+    // gusto:
     //
+    //   0. `apiFailureLogInterceptor` — por fuera de todo. Escribe en la
+    //      consola el fallo **final** que recibe la pantalla (después del
+    //      refresco de sesión y del tiempo de espera), con código, campos y
+    //      `correlationId`. Sólo en desarrollo o con `alovida.debugApi`.
     //   1. `tracingInterceptor` — el más externo. Mide la petición *lógica*:
     //      con él por dentro, un refresco de sesión con reintento produciría
     //      dos spans para lo que la pantalla vivió como una sola llamada. Y su
@@ -85,12 +111,23 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       // El simulado va último: la petición ya lleva trazas, tiempo de espera y
-      // credenciales cuando llega a él, igual que si fuera la red.
-      withInterceptors([tracingInterceptor, timeoutInterceptor, authInterceptor, mockBackendInterceptor]),
+      // credenciales cuando llega a él, igual que si fuera la red. Con la
+      // configuración real (`production-api`, `real-api`, `e2e-real`) no se
+      // registra: la petición sale a la red desde el interceptor anterior, sin
+      // pasar por un interceptor que existe sólo para la maqueta (H1.S2.M2).
+      withInterceptors([
+        apiFailureLogInterceptor,
+        tracingInterceptor,
+        timeoutInterceptor,
+        authInterceptor,
+        ...(environment.mockBackend ? [mockBackendInterceptor] : []),
+      ]),
     ),
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
     // arranque y, con la telemetría apagada, no engancha nada.
     provideObservability(),
+    // Qué hacen los botones de las notificaciones (`core/notifications/notification-actions.ts`).
+    provideDependentLinkNotificationActions(),
     // Interacciones para los mapas de calor (`POST /telemetry/activity-events`).
     // Independiente de las trazas: se enciende con `PUBLIC_UX_ANALYTICS_*`.
     provideUxAnalytics(),
@@ -98,6 +135,35 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(ThemeService);
     }),
+    // Lo sensible que otras piezas dejan en el navegador se olvida al cerrar
+    // sesión (TX-31). Se trae con `import()` al cerrar sesión: importarlo de forma
+    // estática lo arrastraba al paquete inicial, que tiene presupuesto. Ver
+    // `session-cleanup.lazy.ts`.
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () =>
+          void import('./session-cleanup.lazy').then((m) =>
+            m.olvidarLoSensibleDelNavegador(injector),
+          );
+      },
+    },
+    // Los avisos push de la cuenta que se va no deben seguir llegando a este
+    // navegador (dispositivo compartido). Import dinámico por el presupuesto del
+    // paquete inicial, igual que el limpiador de arriba.
+    {
+      provide: SESSION_CLEANERS,
+      multi: true,
+      useFactory: () => {
+        const injector = inject(Injector);
+        return () =>
+          void import('./core/notifications/web-push.service').then((m) =>
+            injector.get(m.WebPushService).forgetBrowser(),
+          );
+      },
+    },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se
     // esperara, alguien con sesión válida vería un parpadeo al login mientras
     // el canje del refresh token está en vuelo. En el servidor no hay
@@ -118,6 +184,12 @@ export const appConfig: ApplicationConfig = {
     // vacío queda con la historia clínica de alguien en pantalla.
     provideAppInitializer(() => {
       inject(IdleLogout);
+    }),
+    // Quien pierde la sesión dentro del área privada —por inactividad, desde
+    // otra pestaña o por un refresco rechazado— va al login. Sin esto la
+    // pantalla quedaba en pie sin token y ninguna acción funcionaba.
+    provideAppInitializer(() => {
+      inject(SessionEndedRedirect);
     }),
   ],
 };

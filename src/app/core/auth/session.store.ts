@@ -1,6 +1,21 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 
+import { REFRESH_COOKIE_MODE } from '../data-access/api';
 import { decodeAccessToken, type AccessTokenClaims } from './access-token';
+
+/**
+ * Tipos de organización que tienen cuenta propia en el portal. Sin el claim
+ * `accountKind`, una sesión sin perfil de paciente ni profesional cuya
+ * organización activa es de estos tipos se trata como cuenta de organización.
+ *
+ * `PROVIDER`/`HOSPITAL` no están: una clínica o «Mi consultorio» la usan
+ * personas (quien atiende), así que ahí la cuenta sigue siendo la persona.
+ */
+const ORGANIZATION_ACCOUNT_TENANT_TYPES: readonly string[] = [
+  'PHARMACY',
+  'DIAGNOSTIC_CENTER',
+  'PAYER',
+];
 
 /** Sesión abierta, tal como la necesita el interceptor. */
 export interface SessionTokens {
@@ -25,6 +40,9 @@ export interface SessionTokens {
 export class SessionStore {
   private readonly tokens = signal<SessionTokens | null>(null);
 
+  /** Con la cookie httpOnly el refresh token no pasa por acá: lo guarda el navegador. */
+  private readonly refreshCookie = inject(REFRESH_COOKIE_MODE);
+
   /** Tenant elegido cuando el token trae más de uno. */
   private readonly selectedTenantId = signal<string | null>(null);
 
@@ -45,7 +63,22 @@ export class SessionStore {
 
   readonly isAuthenticated = computed(() => this.claims() !== null);
   readonly userId = computed(() => this.claims()?.sub ?? null);
-  readonly roles = computed<readonly string[]>(() => this.claims()?.roles ?? []);
+  /**
+   * Roles **efectivos** en la organización activa, con la misma regla que
+   * `RolesGuard` de la API (TX-15):
+   *
+   * - `SUPERADMIN` es comodín: conserva todos.
+   * - Un código que **no** figura en `scopedRoles` es global: vale siempre.
+   * - Uno que figura con ámbito sólo vale en los tenants donde se concedió; sin
+   *   organización activa no vale.
+   *
+   * Es lo que decide qué se **muestra** (menús, guards de ruta, botones). Nunca
+   * reemplaza al 403: la autoridad es la API. Con un token sin `scopedRoles` es
+   * exactamente la lista `roles` del token.
+   */
+  readonly roles = computed<readonly string[]>(() =>
+    effectiveRoles(this.claims(), this.activeTenantId()),
+  );
   readonly tenants = computed<readonly string[]>(() => this.claims()?.tenants ?? []);
 
   /** Nombre para mostrar, si el token lo trae. */
@@ -85,22 +118,17 @@ export class SessionStore {
   }
 
   /**
-   * La organización propia del titular («Mi consultorio»), si el token la
-   * declara **y** está entre sus tenants. Un claim que apunte afuera se ignora.
-   */
-  readonly ownTenantId = computed<string | null>(() => {
-    const own = this.claims()?.ownTenantId;
-    return own !== undefined && this.tenants().includes(own) ? own : null;
-  });
-
-  /**
    * Tenant que viaja en `X-Tenant-Id`.
    *
-   * Con uno solo se resuelve solo. Con varios manda la elección de la persona;
-   * si todavía no eligió, se usa **su propia** organización —«Mi consultorio»
-   * de quien atiende—, que no es adivinar: es la suya. Sin organización propia
-   * **no se adivina**: hasta que elija, el encabezado no se manda. Elegir una
-   * clínica por ella podría mostrarle datos de la organización equivocada.
+   * Con uno solo se resuelve solo. Con varios manda la elección de la persona
+   * —o la última que hizo en este dispositivo, que `AuthService` restaura al
+   * abrir la sesión (TX-11)—. Si todavía no eligió, **no se adivina**: el
+   * encabezado no se manda, porque elegir una clínica por ella podría mostrarle
+   * datos de la organización equivocada.
+   *
+   * Antes se usaba un claim `ownTenantId` que sólo firmaba el simulador: la API
+   * no lo emite, así que en producción la médica con dos organizaciones veía el
+   * selector en cada sesión.
    */
   readonly activeTenantId = computed<string | null>(() => {
     const chosen = this.selectedTenantId();
@@ -108,13 +136,66 @@ export class SessionStore {
       return chosen;
     }
     const tenants = this.tenants();
-    return tenants.length === 1 ? (tenants[0] ?? null) : this.ownTenantId();
+    return tenants.length === 1 ? (tenants[0] ?? null) : null;
+  });
+
+  /**
+   * Código de tipo de la organización **activa** (`'PAYER'`, `'PROVIDER'`,
+   * `'PHARMACY'`…), o `null`.
+   *
+   * `null` en tres casos que no se distinguen porque a quien lo consume no le
+   * hace falta distinguirlos: sin organización activa (varios tenants sin
+   * elegir y sin `ownTenantId`), sin el claim `tenantTypes` en el token —una
+   * API vieja o un token emitido antes de que este claim existiera— o con un
+   * tipo que no está en el catálogo. En los tres casos el efecto es el mismo:
+   * ninguna sección se oculta por tipo de organización, que es el menú de hoy.
+   *
+   * Es dato de presentación, igual que `tenantName`: no autoriza nada. Sirve
+   * para que el registro de navegación pueda ocultarle a una organización una
+   * sección que no es suya (`AppSection.hiddenForTenantTypes`).
+   */
+  readonly activeTenantType = computed<string | null>(() => {
+    const id = this.activeTenantId();
+    return id === null ? null : (this.claims()?.tenantTypes?.[id] ?? null);
+  });
+
+  /**
+   * Si la cuenta **es** una organización (farmacia, laboratorio, aseguradora)
+   * y no una persona que la administra.
+   *
+   * Manda el claim `accountKind`; sin él (API anterior) se deduce: organización
+   * activa de un tipo con cuenta propia y ningún perfil de paciente ni
+   * profesional. La regla vive solo acá. Es presentación, no autoriza nada.
+   */
+  readonly isOrganizationAccount = computed<boolean>(() => {
+    const claims = this.claims();
+    if (claims === null) {
+      return false;
+    }
+    if (claims.accountKind !== undefined) {
+      return claims.accountKind === 'ORGANIZATION';
+    }
+    const type = this.activeTenantType();
+    return (
+      type !== null &&
+      ORGANIZATION_ACCOUNT_TENANT_TYPES.includes(type) &&
+      claims.pid === undefined &&
+      claims.hpid === undefined
+    );
   });
 
   /** Si hay que pedirle a la persona que elija organización. */
   readonly needsTenantSelection = computed(
-    () =>
-      this.tenants().length > 1 && this.selectedTenantId() === null && this.ownTenantId() === null,
+    () => this.tenants().length > 1 && this.selectedTenantId() === null,
+  );
+
+  /**
+   * Si hay con qué renovar la sesión: un refresh token guardado o, en modo
+   * cookie, una sesión abierta (el navegador manda la cookie). Sin sesión no hay
+   * nada que renovar, tampoco en modo cookie.
+   */
+  readonly canRefresh = computed(
+    () => this.refreshToken() !== null || (this.refreshCookie && this.accessToken() !== null),
   );
 
   /** Abre la sesión. Descarta la elección de tenant anterior, si la había. */
@@ -147,4 +228,27 @@ export class SessionStore {
 
 function emptyToNull(token: string | undefined): string | null {
   return token === undefined || token === '' ? null : token;
+}
+
+/**
+ * Roles vigentes en la organización activa. Misma regla que `RolesGuard`
+ * (`roles.guard.ts` de la API); ver {@link SessionStore.roles}.
+ */
+export function effectiveRoles(
+  claims: AccessTokenClaims | null,
+  activeTenantId: string | null,
+): readonly string[] {
+  if (claims === null) {
+    return [];
+  }
+  const { roles, scopedRoles } = claims;
+  if (scopedRoles === undefined || roles.includes('SUPERADMIN')) {
+    return roles;
+  }
+
+  return roles.filter((role) => {
+    const owners = Object.keys(scopedRoles).filter((tenantId) => scopedRoles[tenantId]?.includes(role));
+    // No aparece con ámbito: excepción global, vale siempre.
+    return owners.length === 0 || (activeTenantId !== null && owners.includes(activeTenantId));
+  });
 }

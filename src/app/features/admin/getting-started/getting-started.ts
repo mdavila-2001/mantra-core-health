@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
-import { CODIGO_DEL_TENANT_SEMILLA } from './tenant-semilla';
+import { TENANT_SEED_CODE } from './seed-tenant';
 import { DirectoryClient } from '../../../core/data-access/directory/directory.client';
 import type { TenantListItem } from '../../../core/data-access/directory/directory.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -148,11 +148,11 @@ export class GettingStarted {
     const definiciones: readonly Omit<Etapa, 'completa' | 'actual'>[] = [
       {
         key: 'organizacion',
-        titulo: 'Creá la organización',
+        titulo: 'Cree la organización',
         explica:
-          'La clínica, el hospital o el consultorio con el que vas a trabajar. ' +
+          'La clínica, el hospital o el consultorio con el que va a trabajar. ' +
           'El alta pide una cuenta que quede como dueña y se elige de una lista, ' +
-          'así que si todavía no existe, creala antes desde Usuarios.',
+          'así que si todavía no existe, créela antes desde Usuarios.',
         // Pendiente, el botón lleva al alta de la organización — que es lo que la
         // etapa pide. Cumplida, a la ficha de la que ya existe. Estuvieron
         // cruzados: sin organización mandaba a Usuarios y el recorrido no tenía
@@ -170,7 +170,7 @@ export class GettingStarted {
       },
       {
         key: 'verificacion',
-        titulo: 'Verificala',
+        titulo: 'Verifíquela',
         explica:
           'Nace pendiente: existe en el directorio y todavía no opera. ' +
           'Verificarla es hacerse cargo de que su documentación se revisó.',
@@ -179,7 +179,7 @@ export class GettingStarted {
       },
       {
         key: 'sede',
-        titulo: 'Abrí una sede',
+        titulo: 'Abra una sede',
         explica:
           'Cada lugar físico donde se atiende. Sin al menos una no hay dónde agendar ' +
           'ni a qué sucursal asignar a la gente.',
@@ -188,7 +188,7 @@ export class GettingStarted {
       },
       {
         key: 'plantilla',
-        titulo: 'Sumá a tu equipo',
+        titulo: 'Sume a su equipo',
         explica:
           'Mientras la plantilla esté vacía, sólo quien creó la organización puede trabajar dentro.',
         accion: 'Sumar a alguien',
@@ -268,7 +268,7 @@ export class GettingStarted {
       .pipe(
         switchMap((pagina) => {
           const reales = pagina.items.filter(
-            (tenant) => tenant.code !== CODIGO_DEL_TENANT_SEMILLA,
+            (tenant) => tenant.code !== TENANT_SEED_CODE,
           );
           if (reales.length === 0) {
             return of<Avance>({

@@ -119,10 +119,7 @@ En la práctica, casi todos los features importan por ruta profunda
 `@shared/...`. **El contrato existe y no se está ejerciendo.**
 
 No es un error —las rutas profundas compilan— pero le quita al barril su razón
-de ser: hoy nada impide importar algo interno de `shared/`. Registrado como
-brecha `MEDIUM` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md) y discutido en
-[reglas de composición](../components/composition-rules.md#el-barril-y-las-rutas-profundas).
+de ser: hoy nada impide importar algo interno de `shared/`.
 
 ## Acoplamientos que conviene conocer
 

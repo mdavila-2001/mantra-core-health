@@ -1,0 +1,57 @@
+<app-page-header
+  title="Revisión"
+  subtitle="Fichas del catálogo que alguien envió y esperan que otra persona decida. Aprobar exige una evidencia enlazada; rechazar, decir qué falta."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="review" data-testid="portal-review">
+  @if (notice(); as message) {
+    <app-alert tone="success" data-testid="portal-review-notice">{{ message }}</app-alert>
+  }
+
+  <app-filter-bar
+    searchLabel="Buscar fichas en revisión"
+    searchPlaceholder="Nombre técnico o de negocio"
+    [filters]="filterDefs()"
+    [searchLoading]="list.state().status === 'loading'"
+  />
+
+  <app-data-table
+    data-testid="portal-review-table"
+    caption="Fichas del catálogo en revisión"
+    heading="En revisión"
+    [state]="list.state()"
+    [columns]="columns()"
+    [trackBy]="byId"
+    [rowLabel]="rowName"
+    [cursor]="list.cursor()"
+    rowNavigable
+    stackedOnMobile
+    (rowActivated)="open($event)"
+    (cursorChanged)="list.move($event)"
+    (retry)="list.reload()"
+  />
+
+  <p class="review__note">
+    Sólo se listan fichas de tablas y vistas. Las fichas de columnas se deciden desde la ficha de su tabla en el
+    <a app-link [routerLink]="liveCatalogUrl">catálogo de datos</a>.
+  </p>
+</div>
+
+<app-portal-review-drawer [objectId]="selected()" (closed)="close()" (decided)="decided($event)" />
+
+<ng-template #nameCell let-row>
+  <a
+    app-link
+    class="review__name"
+    [routerLink]="[]"
+    [queryParams]="{ ficha: row.id }"
+    queryParamsHandling="merge"
+    data-testid="portal-review-link"
+  >
+    {{ row.qualifiedName }}
+  </a>
+  @if (row.businessName) {
+    <span class="review__secondary">{{ row.businessName }}</span>
+  }
+</ng-template>

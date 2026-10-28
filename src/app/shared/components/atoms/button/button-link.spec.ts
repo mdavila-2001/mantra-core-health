@@ -54,7 +54,7 @@ describe('AppButtonLink', () => {
     expect(anchor().getAttribute('href')).toBe('/pacientes/nuevo');
   });
 
-  it('viste el ancla con las mismas clases que el botón', () => {
+  it('vio el ancla con las mismas clases que el botón', () => {
     expect(anchor().className).toContain('btn');
     expect(anchor().className).toContain('btn--primary');
     expect(anchor().className).toContain('btn--md');

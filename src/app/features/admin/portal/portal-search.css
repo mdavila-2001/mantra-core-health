@@ -1,0 +1,95 @@
+.busca {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 26rem;
+}
+
+.busca__etiqueta {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.busca__campo {
+  inline-size: 100%;
+  block-size: var(--h-ctrl, 2.5rem);
+  padding-inline: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+}
+
+.busca__campo:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.busca__panel {
+  position: absolute;
+  inset-block-start: calc(100% + var(--sp-1));
+  inset-inline: 0;
+  z-index: var(--z-menu);
+  max-block-size: 22rem;
+  overflow-y: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.busca__grupo-nombre {
+  display: block;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.busca__opcion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+}
+
+.busca__opcion:hover,
+.busca__opcion--activa {
+  background: var(--bg-hover);
+}
+
+.busca__opcion--activa {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.busca__texto {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.busca__pista {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.busca__estado {
+  margin: 0;
+  padding: var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.busca__estado--error {
+  color: var(--text-danger);
+}

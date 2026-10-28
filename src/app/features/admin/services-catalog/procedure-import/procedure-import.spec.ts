@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { chooseSelectOption } from '../../../../../testing/select';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ProcedureImport } from './procedure-import';
@@ -161,13 +162,13 @@ describe('ProcedureImport', () => {
     await asentar();
   }
 
-  function seleccionarEspecialidad(etiqueta: string): void {
-    const select = el().querySelector<HTMLSelectElement>('select[aria-label="Especialidad"]');
-    if (select === null) throw new Error('No hay desplegable de especialidad');
-    const indice = [...select.options].findIndex((o) => o.textContent?.trim() === etiqueta);
-    if (indice < 0) throw new Error(`No hay la opción «${etiqueta}»`);
-    select.value = select.options[indice]?.value ?? '';
-    select.dispatchEvent(new Event('change'));
+  /** Elige en el desplegable de especialidad como lo haría la persona: abre el modal y toca la fila. */
+  async function seleccionarEspecialidad(etiqueta: string): Promise<void> {
+    const campo = el()
+      .querySelector('app-select button[aria-label="Especialidad"]')
+      ?.closest('app-select');
+    if (!campo) throw new Error('No hay desplegable de especialidad');
+    await chooseSelectOption(harness.fixture, campo, etiqueta);
   }
 
   /* ---- especialidad por omisión ------------------------------------------ */
@@ -232,7 +233,7 @@ describe('ProcedureImport', () => {
       arancel().flush(paginaDeProcedimientos([procedimiento('A1', 'Cardiología')]));
       await asentar();
 
-      seleccionarEspecialidad('Todas las especialidades');
+      await seleccionarEspecialidad('Todas las especialidades');
       await asentar();
 
       const req = arancel();
@@ -289,7 +290,7 @@ describe('ProcedureImport', () => {
       await asentar();
 
       expect(porTestId('importar-aviso-especialidad')?.textContent).toContain(
-        'No pudimos leer tus especialidades',
+        'No pudimos leer sus especialidades',
       );
     });
 
@@ -430,9 +431,9 @@ describe('ProcedureImport', () => {
 
       const alerta = porTestId('importar-practicas-error');
       expect(alerta).not.toBeNull();
-      expect(alerta?.textContent).toContain('No pudimos cargar tus prácticas');
+      expect(alerta?.textContent).toContain('No pudimos cargar sus prácticas');
       expect(alerta?.textContent).toContain('req-77');
-      // No es «No hay opciones disponibles» ni «no tenés ninguna».
+      // No es «No hay opciones disponibles» ni «no tiene ninguna».
       expect(porTestId('importar-sin-practica')).toBeNull();
 
       porTestId('importar-practicas-reintentar')?.click();
@@ -454,7 +455,7 @@ describe('ProcedureImport', () => {
       arancel().flush(paginaDeProcedimientos([]));
       await asentar();
 
-      expect(porTestId('importar-practicas-error')?.textContent).toContain('No tenés permiso');
+      expect(porTestId('importar-practicas-error')?.textContent).toContain('No tiene permiso');
     });
 
     it('sin ninguna práctica, explica qué hacer y no deja importar', async () => {
@@ -466,7 +467,7 @@ describe('ProcedureImport', () => {
       await asentar();
 
       const aviso = porTestId('importar-sin-practica');
-      expect(aviso?.textContent).toContain('No tenés ninguna práctica asignada');
+      expect(aviso?.textContent).toContain('No tiene ninguna práctica asignada');
       expect(aviso?.textContent).toContain('administre la organización');
       expect(porTestId('importar-practicas-error')).toBeNull();
       expect(deshabilitado('importar-todo')).toBe(true);
@@ -490,7 +491,7 @@ describe('ProcedureImport', () => {
     it('crea el servicio con el código y el precio del arancel, y lo marca como importado', async () => {
       await conUnProcedimiento();
 
-      expect(texto()).toContain('Ya está en tu catálogo');
+      expect(texto()).toContain('Ya está en su catálogo');
       const boton = porTestId('procedimiento-importar') as HTMLButtonElement;
       boton.click();
       await asentar();
@@ -500,6 +501,8 @@ describe('ProcedureImport', () => {
         practiceId: 'pr1',
         code: 'A1',
         name: 'Procedimiento A1',
+        // El concepto del arancel: lo cruzan las cláusulas de los seguros (dev).
+        serviceConceptId: 'c-A1',
         defaultPrice: '20.00',
         isActive: true,
       });
@@ -526,7 +529,7 @@ describe('ProcedureImport', () => {
       await importar(403);
       expect(toasts()).toContain('exige permiso de administración');
       await importar(404);
-      expect(toasts()).toContain('ya no existe o no tenés acceso');
+      expect(toasts()).toContain('ya no existe o no tiene acceso');
     });
   });
 
@@ -599,12 +602,12 @@ describe('ProcedureImport', () => {
       expect(porTestId('importar-resultado-omitidos')?.textContent).toBe('45');
       expect(porTestId('importar-resultado')?.textContent).toContain('Consultorio Central');
 
-      // Relee lo importado: ahora «Ya está en tu catálogo» sale de la fuente.
+      // Relee lo importado: ahora «Ya está en su catálogo» sale de la fuente.
       const relectura = catalogo();
       expect(relectura.request.params.get('practiceId')).toBe('pr1');
       relectura.flush(paginaDelCatalogo(['A1']));
       await asentar();
-      expect(texto()).toContain('Ya está en tu catálogo');
+      expect(texto()).toContain('Ya está en su catálogo');
       expect(botonDeLote().textContent).not.toContain('Importando');
     });
 
@@ -632,7 +635,7 @@ describe('ProcedureImport', () => {
 
     it.each([
       [403, 'exige permiso de administración'],
-      [404, 'ya no existe o no tenés acceso'],
+      [404, 'ya no existe o no tiene acceso'],
       [400, 'rechazó el pedido'],
       [500, 'error inesperado'],
       [0, 'No pudimos comunicarnos con el servidor'],
@@ -684,7 +687,7 @@ describe('ProcedureImport', () => {
 
       // A2 sólo estaba en la segunda página.
       expect(porTestId('procedimiento-importar')).toBeNull();
-      expect(texto()).toContain('Ya está en tu catálogo');
+      expect(texto()).toContain('Ya está en su catálogo');
     });
 
     it('si no se puede leer, lo avisa en vez de callar', async () => {

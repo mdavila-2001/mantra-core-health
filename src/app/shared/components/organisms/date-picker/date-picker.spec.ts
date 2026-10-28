@@ -128,6 +128,60 @@ describe('DatePicker', () => {
       expect(dialog()).toBeNull();
       expect(fixture.componentInstance.value()).toBeInstanceOf(Date);
     });
+
+    it('confirmar libera la página en el acto: el modal no sigue abierto mientras sale el panel', async () => {
+      // Con animación de salida posible (en jsdom no existe `animate`) el panel
+      // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
+      // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
+      // Una salida que nunca termina deja a la vista si confirmar espera por ella.
+      const original = HTMLElement.prototype.animate;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>(() => undefined),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+      try {
+        await abrir();
+        dias().find((day) => !day.classList.contains('other-month') && !day.disabled)!.click();
+        await fixture.whenStable();
+
+        const confirmar = [...fixture.nativeElement.querySelectorAll('.dialog-actions button')][1];
+        confirmar.click();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.value()).toBeInstanceOf(Date);
+        expect(dialog()).toBeNull();
+        expect(trigger().getAttribute('aria-expanded')).toBe('false');
+      } finally {
+        HTMLElement.prototype.animate = original;
+      }
+    });
+
+    it('descartar sí anima la salida: Cancelar espera a que el panel se vaya', async () => {
+      const original = HTMLElement.prototype.animate;
+      let terminar: () => void = () => undefined;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>((resolve) => {
+          terminar = resolve;
+        }),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+      try {
+        await abrir();
+
+        const cancelar = [...fixture.nativeElement.querySelectorAll('.dialog-actions button')][0];
+        cancelar.click();
+        await fixture.whenStable();
+        expect(dialog()).not.toBeNull();
+
+        terminar();
+        await Promise.resolve();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(dialog()).toBeNull();
+      } finally {
+        HTMLElement.prototype.animate = original;
+      }
+    });
   });
 
   describe('ingreso por teclado y máscara in-place', () => {
@@ -250,6 +304,35 @@ describe('DatePicker', () => {
 
       expect(inputEl.selectionStart).toBe(6);
       expect(inputEl.selectionEnd).toBe(10);
+    });
+
+    // Regresión 03/10/2026: vacío, la plantilla ocupa sólo la izquierda del
+    // input y un clic a la derecha dejaba el cursor en el año; «01011990»
+    // tecleado quedaba en «DD/MM/0101» y el alta no avanzaba.
+    it('con el campo vacío, un clic en cualquier punto empieza por el día', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.value).toBe('DD/MM/AAAA');
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+    });
+
+    it('el reajuste diferido del mouseup no pisa un dígito ya tecleado', async () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.focus();
+      inputEl.dispatchEvent(new MouseEvent('mouseup'));
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '0', bubbles: true, cancelable: true }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(inputEl.value).toBe('0D/MM/AAAA');
+      expect(inputEl.selectionStart).toBe(1);
     });
 
     it('Tab navega de Día a Mes y de Mes a Año', () => {
@@ -507,15 +590,51 @@ describe('DatePicker', () => {
       expect(flecha('30 años siguientes').getAttribute('aria-disabled')).toBe('true');
     });
 
-    it('la grilla de años apaga los años anteriores a minDate', async () => {
+    it('la grilla de años no empieza antes de minDate', async () => {
       fixture.componentRef.setInput('minDate', new Date(1900, 0, 1));
       fixture.componentRef.setInput('value', new Date(1905, 5, 10));
       await fixture.whenStable();
       await abrirAnios();
 
-      expect(anuncio()).toBe('Años 1880 a 1909');
-      expect(celda('1899').disabled).toBe(true);
+      // La década daría 1880–1909, con veinte años que no se pueden elegir.
+      expect(anuncio()).toBe('Años 1900 a 1929');
+      expect(celda('1899')).toBeUndefined();
       expect(celda('1900').disabled).toBe(false);
+      expect(enfocada()).toBe('1905');
+    });
+
+    it('con minDate en 1910 la primera página es 1910–1939 entera, y avanza de a treinta', async () => {
+      // El alta de paciente arranca en 1910.
+      fixture.componentRef.setInput('minDate', new Date(1910, 0, 1));
+      fixture.componentRef.setInput('maxDate', new Date(2026, 11, 31));
+      fixture.componentRef.setInput('value', new Date(1912, 5, 10));
+      await fixture.whenStable();
+      await abrirAnios();
+
+      expect(anuncio()).toBe('Años 1910 a 1939');
+      expect(celdas().map((cell) => cell.textContent?.trim())).toEqual(
+        Array.from({ length: 30 }, (_, i) => String(1910 + i)),
+      );
+      expect(celdas().some((cell) => cell.disabled)).toBe(false);
+      expect(flecha('30 años anteriores').getAttribute('aria-disabled')).toBe('true');
+
+      flecha('30 años siguientes').click();
+      await fixture.whenStable();
+      expect(anuncio()).toBe('Años 1940 a 1969');
+    });
+
+    it('una fila entera fuera de rango se quita; un año suelto guarda su casilla', async () => {
+      fixture.componentRef.setInput('maxDate', new Date(2026, 11, 31));
+      fixture.componentRef.setInput('value', new Date(2020, 5, 10));
+      await fixture.whenStable();
+      await abrirAnios();
+
+      // 2027–2029 comparten fila con 2025 y 2026: se apagan sin quitarse, para
+      // que 2025 siga en la primera columna. 2030–2039 son filas enteras fuera.
+      expect(anuncio()).toBe('Años 2000 a 2029');
+      expect(celda('2027').disabled).toBe(true);
+      expect(celda('2027').classList.contains('is-row-out-of-range')).toBe(false);
+      expect(celda('2026').classList.contains('is-row-out-of-range')).toBe(false);
     });
 
     it('en el borde de minDate la flecha de 30 años anteriores se apaga', async () => {
@@ -645,6 +764,54 @@ describe('DatePicker', () => {
       expect(encabezado().textContent).toContain(nombreDeMes(6));
       expect(encabezado().textContent).toContain('2026');
     });
+
+    /*
+     * D-05 (22/09/2026): cada botón de acción lleva ícono y nombre. En este
+     * diálogo modal no cabe la excepción del ADR-0012 §3, porque el globo que
+     * exige se cuelga del <body> y queda debajo del modal. El nombre accesible
+     * completo se conserva y contiene lo que se ve.
+     */
+    it('D-05: «Cerrar» y las flechas llevan ícono y nombre a la vista', async () => {
+      await abrir();
+      const calendario = dialog()!;
+      expect(calendario.querySelectorAll('.btn--icon-only')).toHaveLength(0);
+
+      const cerrar = calendario.querySelector<HTMLButtonElement>('.dialog-header button')!;
+      expect(cerrar.textContent?.trim()).toBe('Cerrar');
+      expect(cerrar.querySelector('svg')).not.toBeNull();
+
+      const esperadas: readonly (readonly [string, string])[] = [
+        ['Año anterior', 'Año'],
+        ['Mes anterior', 'Mes'],
+        ['Mes siguiente', 'Mes'],
+        ['Año siguiente', 'Año'],
+      ];
+      for (const [nombre, visible] of esperadas) {
+        const boton = flecha(nombre);
+        expect(boton.textContent?.trim()).toBe(visible);
+        expect(boton.querySelector('svg')).not.toBeNull();
+        expect(boton.getAttribute('aria-label')?.toLowerCase()).toContain(visible.toLowerCase());
+      }
+
+      encabezado().click();
+      await fixture.whenStable();
+      for (const nombre of ['30 años anteriores', '30 años siguientes']) {
+        expect(flecha(nombre).textContent?.trim()).toBe('30 años');
+        expect(flecha(nombre).querySelector('svg')).not.toBeNull();
+      }
+    });
+
+    it('D-05: el mes va antes que las flechas en el orden del teclado', async () => {
+      await abrir();
+      const botones = Array.from(dialog()!.querySelectorAll('.calendar-nav button'));
+      expect(botones[0]).toBe(encabezado());
+      expect(botones.slice(1).map((b) => b.getAttribute('aria-label'))).toEqual([
+        'Año anterior',
+        'Mes anterior',
+        'Mes siguiente',
+        'Año siguiente',
+      ]);
+    });
   });
 
   describe('límites de fecha (maxDate / minDate)', () => {
@@ -672,6 +839,36 @@ describe('DatePicker', () => {
       await fixture.whenStable();
 
       expect(inputEl.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('avisa por qué rechazó lo escrito: fuera de rango, inexistente, y nada cuando se corrige', async () => {
+      fixture.componentRef.setInput('minDate', new Date(1910, 0, 1));
+      fixture.componentRef.setInput('maxDate', 'today');
+      const avisos: (string | null)[] = [];
+      fixture.componentInstance.textProblem.subscribe((problema) => avisos.push(problema));
+      const valores: (Date | null)[] = [];
+      fixture.componentInstance.value.subscribe((valor) => valores.push(valor));
+      await fixture.whenStable();
+
+      async function escribir(texto: string): Promise<void> {
+        const inputEl = input()!;
+        inputEl.value = texto;
+        inputEl.dispatchEvent(new Event('input'));
+        inputEl.dispatchEvent(new Event('blur'));
+        await fixture.whenStable();
+      }
+
+      // Una fecha real anterior a 1910: el modelo no la recibe, pero se dice por qué.
+      await escribir('20/02/1800');
+      expect(avisos.at(-1)).toBe('out-of-range');
+      expect(valores).toEqual([]);
+
+      await escribir('31/02/2000');
+      expect(avisos.at(-1)).toBe('invalid');
+
+      await escribir('17/05/1990');
+      expect(avisos.at(-1)).toBeNull();
+      expect(valores.at(-1)?.getFullYear()).toBe(1990);
     });
   });
 

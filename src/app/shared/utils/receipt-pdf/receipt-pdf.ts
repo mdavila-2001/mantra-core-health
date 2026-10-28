@@ -1,8 +1,18 @@
 import type { jsPDF } from 'jspdf';
 
-import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-export';
+import {
+  buildBlocksPdf,
+  formatDateTime,
+  formatMoney,
+  noteBlock,
+  panelsBlock,
+  totalsBlock,
+  type PdfBlock,
+  type PdfExportOptions,
+  type PdfPanel,
+} from '../pdf-export/pdf-export';
 import type { DocumentoDeComprobante } from './receipt-pdf.types';
-import { withDisplayCurrency } from '../../../core/money/display-currency';
+import { displayCurrency } from '../../../core/money/display-currency';
 
 /**
  * El comprobante interno de pago en PDF (carril FAR-I5), con el molde de los
@@ -11,39 +21,74 @@ import { withDisplayCurrency } from '../../../core/money/display-currency';
  * armador de bloques exportado para probarse **sin jsPDF de por medio**, y el
  * par build/download.
  *
- * Los renglones cobrados van como tabla con su encabezado y sus importes
- * alineados a la derecha: una columna de precios sin alinear obliga a leer
- * cifra por cifra para compararlas, y este papel se lee justamente para eso.
+ * ## Cómo se compone
  *
- * Los helpers chicos (fecha, nombre de archivo) se repiten acá a propósito:
- * son privados de `clinical-pdf.ts` y ese módulo es de otro carril —
- * exportarlos sería tocarlo. TODO(equipo): unificarlos en un módulo común
- * cuando se coordine con el dueño de J3.
+ * - **Primero, qué no es**: un aviso con título dice que no es una factura y
+ *   quién la emite. El pie lo repite en todas las hojas; nada más lo repite.
+ * - **Sin folio en la portada**: el pedido no trae un número corto, y el
+ *   código de retiro no lo es —es la contraseña del mostrador, que el
+ *   adaptador ni siquiera le muestra al personal—. El uuid no se imprime.
+ * - **Las partes, lado a lado**: la farmacia, el paciente y el pago en
+ *   tarjetas. La fecha del pago va en la tarjeta del pago y no en la portada:
+ *   el comprobante no tiene fecha de emisión propia —se arma cuando se pide— y
+ *   la portada rotula honestamente la de generación.
+ * - **Lo cobrado, en tabla**, con la cantidad y el importe alineados a la
+ *   derecha: una columna de precios sin alinear obliga a leer cifra por cifra
+ *   para compararlas, y este papel se lee justamente para eso. Un renglón sin
+ *   precio ocupa su columna con una raya y una nota lo explica: una palabra en
+ *   medio de los importes desalinea la columna entera.
+ * - **El total congelado al pagar**, en la caja de totales. Sin él, un aviso
+ *   —el mismo, con el mismo texto, que la factura del pedido— y ninguna caja.
+ * - Montos en formato boliviano (`1.234,56 Bs`) y fechas `dd/mm/aaaa, hh:mm`,
+ *   con los formateadores del motor: los mismos en todos los papeles.
+ *
+ * Es un papel de AloVida y no de un médico: sale **sin bloque de firma**.
+ *
+ * Los helpers chicos (fecha, nombre de archivo) se repiten acá: los de
+ * `clinical-pdf.ts` son privados de ese módulo.
  */
-
-/** Cómo se imprime una fecha. Local, no ISO: lo lee gente. */
-const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
-  dateStyle: 'long',
-  timeStyle: 'short',
-});
-
-/** La fecha sola, para la bajada del membrete. */
-const FORMATO_DIA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
 
 /** Lo que se imprime cuando el dato no está. Nunca un hueco en blanco. */
 const SIN_DATO = 'No registrado';
 
+/** La raya que ocupa la columna de importes de un renglón sin precio. */
+const SIN_IMPORTE = '—';
+
+/** El aviso de qué es este papel —y qué no es—. */
+const NOT_INVOICE_TITLE = 'No es una factura';
+const NOT_INVOICE_TEXT =
+  'Comprobante interno de AloVida que acredita el pago del pedido. La factura la emite la farmacia.';
+
+/**
+ * Lo que dice el papel cuando falta un precio. Son los mismos textos que la
+ * factura del pedido (`order-invoice.pdf.ts`): un mismo vacío se dice igual en
+ * los dos papeles.
+ */
+const MISSING_PRICE_CAPTION = `${SIN_IMPORTE} Precio no publicado por la farmacia: el producto no tiene importe propio en el detalle.`;
+const MISSING_TOTAL_NOTE = 'Total no disponible: falta algún precio publicado.';
+
 /** Arma el PDF del comprobante. No lo guarda: devuelve el documento. */
 export function buildReceiptPdf(comprobante: DocumentoDeComprobante): jsPDF {
-  return buildBlocksPdf(bloquesDeComprobante(comprobante), {
+  return buildBlocksPdf(bloquesDeComprobante(comprobante), receiptPdfOptions(comprobante));
+}
+
+/**
+ * Las opciones del documento: membrete, portada y pie. Exportadas para que el
+ * spec fije la portada sin pasar por el motor.
+ */
+export function receiptPdfOptions(comprobante: DocumentoDeComprobante): PdfExportOptions {
+  return {
     title: 'Comprobante de pago',
     kind: 'Comprobante interno',
-    subtitle: `${textoDe(comprobante.farmacia)} · ${FORMATO_DIA.format(comprobante.pagadoEl)}`,
+    subtitle: `Pedido de farmacia · ${textoDe(comprobante.farmacia)}`,
     // El pie lo dice en todas las páginas, no sólo en la primera: si alguien
     // fotocopia la segunda carilla, tiene que seguir leyéndose que esto no es
     // una factura.
     footerNote: 'Comprobante interno · No válido como factura · AloVida',
-  });
+    // Sin `issuedAt`: el comprobante no tiene fecha de emisión propia, y la
+    // del pago no lo es. La portada dice la de generación y lo rotula así.
+    firma: null,
+  };
 }
 
 /**
@@ -64,46 +109,64 @@ export function downloadReceiptPdf(comprobante: DocumentoDeComprobante): void {
  */
 export function bloquesDeComprobante(comprobante: DocumentoDeComprobante): readonly PdfBlock[] {
   const bloques: PdfBlock[] = [
-    { kind: 'note', text: 'Comprobante interno de AloVida. No es una factura.' },
-    { kind: 'heading', text: 'Datos del pago', level: 2 },
-    campoDeBloque('Farmacia', `${textoDe(comprobante.farmacia)} — ${textoDe(comprobante.sede)}`),
+    noteBlock(NOT_INVOICE_TEXT, 'brand', NOT_INVOICE_TITLE),
+    panelsBlock(partesDe(comprobante)),
+    { kind: 'heading', text: 'Detalle del pago', level: 2 },
+    cabecera(['Producto', 'Cantidad', 'Importe']),
   ];
-  if (comprobante.paciente !== null && comprobante.paciente.trim() !== '') {
-    bloques.push(campoDeBloque('Paciente', comprobante.paciente));
-  }
-  bloques.push(
-    campoDeBloque('Pagado el', FORMATO_FECHA.format(comprobante.pagadoEl)),
-    campoDeBloque('Medio de pago', comprobante.medioDePago),
-    { kind: 'heading', text: 'Detalle', level: 2 },
-    cabecera(['Concepto', 'Cantidad', 'Importe']),
-  );
   for (const linea of comprobante.lineas) {
-    bloques.push({
-      kind: 'row',
-      text: `${linea.descripcion}\tx${linea.cantidad}\t${importeDicho(linea.importe)}`,
-      cells: [linea.descripcion, `x${linea.cantidad}`, importeDicho(linea.importe)],
-    });
+    const celdas = [
+      linea.descripcion,
+      String(linea.cantidad),
+      linea.importe === null ? SIN_IMPORTE : formatMoney(linea.importe, displayCurrency(comprobante.moneda)),
+    ];
+    bloques.push({ kind: 'row', text: celdas.join('\t'), cells: celdas });
   }
-  bloques.push({ kind: 'total', text: totalDicho(comprobante) });
-  bloques.push({ kind: 'caption', text: pieDeDocumento() });
+  if (comprobante.total === null) {
+    bloques.push(noteBlock(MISSING_TOTAL_NOTE, 'warning'));
+  } else {
+    bloques.push(
+      totalsBlock([
+        {
+          label: 'Total pagado',
+          value: formatMoney(comprobante.total, displayCurrency(comprobante.moneda)),
+          emphasis: true,
+        },
+      ]),
+    );
+  }
+  // La nota de la raya va **después** de la caja: los totales tienen que seguir
+  // pegados a la última fila para que el motor los pase de hoja juntos.
+  if (comprobante.lineas.some((linea) => linea.importe === null)) {
+    bloques.push({ kind: 'caption', text: MISSING_PRICE_CAPTION });
+  }
   return bloques;
 }
 
-/** El total en palabras, o el vacío honesto — jamás un número a medias. */
-function totalDicho(comprobante: DocumentoDeComprobante): string {
-  if (comprobante.total === null) {
-    return 'Total no disponible: falta algún precio publicado.';
+/** Las tarjetas de las partes: la farmacia, el paciente —si se sabe— y el pago. */
+function partesDe(comprobante: DocumentoDeComprobante): readonly PdfPanel[] {
+  const partes: PdfPanel[] = [
+    {
+      title: 'Farmacia',
+      fields: [
+        { label: 'Nombre', value: textoDe(comprobante.farmacia) },
+        { label: 'Sede', value: textoDe(comprobante.sede) },
+      ],
+    },
+  ];
+  if (comprobante.paciente !== null && comprobante.paciente.trim() !== '') {
+    partes.push({ title: 'Paciente', fields: [{ label: 'Nombre', value: comprobante.paciente }] });
   }
-  return `Total: ${withDisplayCurrency(comprobante.total, comprobante.moneda)}`;
-}
-
-function importeDicho(importe: string | null): string {
-  return importe ?? 'Precio no publicado';
-}
-
-/** El pie que declara qué es este papel — y qué no es. */
-function pieDeDocumento(): string {
-  return `Documento generado el ${FORMATO_FECHA.format(new Date())} desde el sistema. Este comprobante es interno y no reemplaza una factura.`;
+  partes.push({
+    title: 'Pago',
+    fields: [
+      { label: 'Pagado el', value: formatDateTime(comprobante.pagadoEl) },
+      // «Pagado en mostrador», «Pago demo — sin valor real»: dice por dónde
+      // entró el pago, no con qué se pagó.
+      { label: 'Canal de pago', value: textoDe(comprobante.medioDePago) },
+    ],
+  });
+  return partes;
 }
 
 /** El texto, o la marca de ausencia: nunca una línea que termina en dos puntos. */

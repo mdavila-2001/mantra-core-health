@@ -1,0 +1,85 @@
+<app-drawer-panel
+  [open]="objectId() !== ''"
+  heading="Decidir la ficha"
+  [subheading]="name()"
+  closeLabel="Cerrar sin decidir"
+  (closed)="closed.emit()"
+>
+  <app-view-state-host [state]="detail()" (retry)="reload()">
+    @if (object(); as o) {
+      <div class="decision" data-testid="portal-review-detail">
+        @if (error(); as message) {
+          <app-alert tone="error" data-testid="portal-review-error">{{ message }}</app-alert>
+        }
+        @if (!inReview()) {
+          <app-alert tone="info">Esta ficha ya no está en revisión: no hay nada que decidir.</app-alert>
+        }
+
+        <app-fact-list [hechos]="facts()" etiqueta="Estado de la ficha" />
+
+        <h3 class="decision__title">Lo que dice la ficha</h3>
+        <dl class="decision__answers">
+          @for (answer of answers(); track answer.label) {
+            <div class="decision__answer">
+              <dt>{{ answer.label }}</dt>
+              <dd [class.decision__missing]="!answer.text">{{ answer.text ?? 'Sin responder' }}</dd>
+            </div>
+          }
+        </dl>
+        @if (o.coverage.missingFields.length > 0) {
+          <p class="decision__note">Le falta: {{ missing(o.coverage.missingFields) }}.</p>
+        }
+
+        <div class="decision__evidence">
+          @if (!hasEvidence()) {
+            <p class="decision__note" data-testid="portal-review-needs-evidence">
+              Para aprobarla hace falta al menos una evidencia enlazada: algo que otra persona pueda abrir y comprobar.
+            </p>
+          }
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            data-testid="portal-review-add-evidence"
+            (clicked)="addingEvidence.set(true)"
+          >
+            Añadir evidencia
+          </button>
+          <a app-link [routerLink]="fullRecordUrl()">Abrir la ficha completa</a>
+        </div>
+      </div>
+    }
+  </app-view-state-host>
+
+  @if (object() && inReview()) {
+    <div drawer-footer class="decision__actions">
+      <button
+        app-button
+        variant="outline"
+        data-testid="portal-review-reject"
+        [disabled]="deciding()"
+        (clicked)="decide('REJECTED')"
+      >
+        Rechazar
+      </button>
+      <button
+        app-button
+        variant="primary"
+        data-testid="portal-review-approve"
+        [disabled]="!hasEvidence() || deciding()"
+        [isLoading]="deciding()"
+        (clicked)="decide('APPROVED')"
+      >
+        Aprobar
+      </button>
+    </div>
+  }
+</app-drawer-panel>
+
+@if (addingEvidence() && objectId()) {
+  <app-evidence-dialog
+    [objectId]="objectId()"
+    (saved)="evidenceAdded()"
+    (closed)="addingEvidence.set(false)"
+  />
+}

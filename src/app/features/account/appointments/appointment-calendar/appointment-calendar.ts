@@ -153,7 +153,7 @@ export class AppointmentCalendar {
    */
   protected readonly resumenDelMes = computed(() => {
     const cuantos = this.enElMes();
-    return cuantos === 1 ? '1 turno' : `${cuantos} turnos`;
+    return cuantos === 1 ? '1 cita' : `${cuantos} citas`;
   });
 
   /** Cuántos de los turnos caen en el mes que se está mirando. */
@@ -249,7 +249,7 @@ function claveDelDia(fecha: Date): string {
 function etiquetaDelDia(fecha: Date, cuantos: number): string {
   const dia = fechaLarga(fecha);
   if (cuantos === 0) {
-    return `${dia}, sin turnos`;
+    return `${dia}, sin citas`;
   }
-  return `${dia}, ${cuantos} ${cuantos === 1 ? 'turno' : 'turnos'}`;
+  return `${dia}, ${cuantos} ${cuantos === 1 ? 'cita' : 'citas'}`;
 }

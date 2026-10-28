@@ -45,35 +45,6 @@
   color: var(--text-muted);
 }
 
-/* Seguros y tutores, en lectura: la misma lista de la ficha. */
-.datos__lista {
-  margin: var(--sp-3) 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.datos__item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface-alt);
-}
-
-.datos__item-nombre {
-  font-weight: 600;
-}
-
-.datos__item-detalle {
-  color: var(--text-muted);
-}
-
 .datos__titulo {
   margin: 0;
   font-size: var(--fs-h3);
@@ -106,6 +77,21 @@
   grid-column: 1 / -1;
 }
 
+/* El rótulo de cada mapa: el punto es el campo, y el título dice de qué lugar. */
+.datos__subtitulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Lo que falta para guardar (el punto del domicilio) o lo que el servidor
+   rechazó de una dirección: pegado al mapa al que se refiere. */
+.datos__error {
+  color: var(--c-error-500);
+  font-size: var(--fs-caption);
+  margin: 0;
+}
+
 @media (min-width: 780px) {
   .datos__campos {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -129,6 +115,17 @@
 
 .datos__nombre-extra app-input {
   flex: 1 1 auto;
+}
+
+/* El botón de sumar una casilla va en su propio renglón, alineado a la
+   izquierda: dentro de la grilla del formulario se estiraría a todo el ancho
+   y compartiría fila con «Apellido paterno»/«Apellido materno», que quedaban
+   apretados junto a él. Mismo tratamiento que en el editor de médico
+   (`.edicion__sumar`). */
+.datos__sumar {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin: 0;
 }
 
 /* El aviso de catálogo caído: dice qué pasó y ofrece la salida en la misma

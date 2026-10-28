@@ -1,0 +1,7 @@
+/* El formulario trae su propio título y el modal ya lo dice en su encabezado,
+   que además es su nombre accesible: adentro del modal se lee una sola vez. La
+   sección del formulario sigue nombrada por ese título oculto, porque
+   `aria-labelledby` también lee lo que no se muestra. */
+:host ::ng-deep .request__title {
+  display: none;
+}

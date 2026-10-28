@@ -27,8 +27,12 @@ export type PostPreferenceAction =
   | 'contactPractitioner'
   | 'openProfile';
 
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
+
 export interface PostPreferenceEntry {
   readonly action: PostPreferenceAction;
+  /** Toda opción de desplegable lleva ícono (propietario, 2026-09-24). */
+  readonly icon: NavIconName;
   /** El texto en castellano, tal como lo pidió el propietario. */
   readonly label: string;
   readonly access: PostPreferenceAccess;
@@ -41,11 +45,11 @@ export interface PostPreferenceEntry {
  * escribió, y cambiarlo por criterio propio es cambiar el pedido.
  */
 export const POST_PREFERENCE_ENTRIES: readonly PostPreferenceEntry[] = [
-  { action: 'hideSimilar', label: 'No ver más este tipo de publicaciones', access: 'session' },
-  { action: 'report', label: 'Denunciar', access: 'session' },
-  { action: 'openPost', label: 'Ir a la publicación', access: 'public' },
-  { action: 'share', label: 'Compartir', access: 'public' },
-  { action: 'copyLink', label: 'Copiar enlace', access: 'public' },
-  { action: 'contactPractitioner', label: 'Contactarme con este doctor', access: 'session' },
-  { action: 'openProfile', label: 'Ir al perfil del doctor', access: 'public' },
+  { action: 'hideSimilar', icon: 'eye-off', label: 'No ver más este tipo de publicaciones', access: 'session' },
+  { action: 'report', icon: 'flag', label: 'Denunciar', access: 'session' },
+  { action: 'openPost', icon: 'arrow-right', label: 'Ir a la publicación', access: 'public' },
+  { action: 'share', icon: 'share', label: 'Compartir', access: 'public' },
+  { action: 'copyLink', icon: 'link', label: 'Copiar enlace', access: 'public' },
+  { action: 'contactPractitioner', icon: 'chat', label: 'Contactarme con este doctor', access: 'session' },
+  { action: 'openProfile', icon: 'patients', label: 'Ir al perfil del doctor', access: 'public' },
 ] as const;

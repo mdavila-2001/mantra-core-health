@@ -28,6 +28,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * Cómo se escribe la fecha de cada atención en el selector.
@@ -87,6 +88,7 @@ const LEYENDA: Readonly<Record<number, string>> = {
     FormField,
     Select,
     Textarea,
+    LoadingState,
   ],
   templateUrl: './rate-encounter-dialog.html',
   styleUrl: './rate-encounter-dialog.css',
@@ -146,13 +148,13 @@ export class RateEncounterDialog implements OnInit {
       return estado.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (estado.status === 'forbidden') {
-      return estado.message ?? 'Tu cuenta no puede calificar atenciones.';
+      return estado.message ?? 'Su cuenta no puede calificar atenciones.';
     }
     if (estado.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (estado.status === 'error') {
-      return estado.message || 'No pudimos publicar tu opinión.';
+      return estado.message || 'No pudimos publicar su opinión.';
     }
     return null;
   });

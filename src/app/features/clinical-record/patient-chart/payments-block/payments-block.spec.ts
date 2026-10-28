@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { SIMULATED_AVAILABLE_INVOICING } from '../../../billing/invoicing-availability';
 import { PaymentsBlock } from './payments-block';
 
 /**
@@ -17,6 +18,10 @@ import { PaymentsBlock } from './payments-block';
  *    disfraza de lista vacía.
  * 4. **Sin práctica no hay caja.** Una organización sin prácticas no es un
  *    error ni una persona sin pagos.
+ * 5. **Con la facturación simulada, «Pagos» cobra y factura** y no lee
+ *    Contabilidad: son dos lecturas del mismo dinero y no se mezclan.
+ *
+ * Las cuatro primeras son la rama sin facturación simulada (la API real).
  */
 
 const PRACTICA = {
@@ -53,7 +58,11 @@ describe('PaymentsBlock', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => false },
+      ],
     });
 
     http = TestBed.inject(HttpTestingController);
@@ -62,12 +71,17 @@ describe('PaymentsBlock', () => {
   });
 
   afterEach(() => {
+    // La cotización de cobro con seguro lee las coberturas de la persona: no es lo que
+    // estas pruebas miden, así que se responde vacía antes de verificar.
+    http.match((r) => r.url.includes('/patient-coverages/by-patient/')).forEach((r) => r.flush({ items: [] }));
     http.verify();
   });
 
   function responder(facturas: readonly Record<string, unknown>[]): void {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([PRACTICA]);
+    // Sin vinculaciones propias se cae a la primera práctica de la lista.
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     http
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush({ items: facturas, count: facturas.length });
@@ -95,10 +109,12 @@ describe('PaymentsBlock', () => {
   it('un 403 no se lee como «no pagó nada»', () => {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([PRACTICA]);
+    // Sin vinculaciones propias se cae a la primera práctica de la lista.
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     http
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush(
-        { code: 'FORBIDDEN', message: 'Tu rol no incluye la caja de esta práctica.' },
+        { code: 'FORBIDDEN', message: 'Su rol no incluye la caja de esta práctica.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
@@ -109,6 +125,7 @@ describe('PaymentsBlock', () => {
   it('sin prácticas lo dice, y no pide los pagos', () => {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     fixture.detectChanges();
 
     expect(interno<() => boolean>('sinPractica')()).toBe(true);
@@ -122,5 +139,28 @@ describe('PaymentsBlock', () => {
 
     expect(interno<() => boolean>('hayPagos')()).toBe(false);
     expect(interno<() => boolean>('sinPractica')()).toBe(false);
+  });
+});
+
+describe('PaymentsBlock con la facturación simulada', () => {
+  it('delega en los cobros de la persona y no pide Contabilidad', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => true },
+      ],
+    });
+    const http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(PaymentsBlock);
+    fixture.componentRef.setInput('patientProfileId', 'p-1');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-patient-charges')).not.toBeNull();
+    http.expectNone('/practices');
+    http.expectNone('/practitioners/me/role-assignments');
+    http.expectNone((r) => r.url === '/accounting/practitioner/paid-consultations');
+    const cobros = http.expectOne((r) => r.url.endsWith('/billing/simulated/charges'));
+    expect(cobros.request.params.get('patientProfileId')).toBe('p-1');
   });
 });

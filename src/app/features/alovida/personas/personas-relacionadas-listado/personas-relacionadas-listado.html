@@ -10,35 +10,35 @@
         <p class="caption">A quién llamar cuando el paciente no puede responder: el parentesco, el contacto de emergencia y el tutor legal, uno solo activo por paciente.</p>
       </div>
       <div class="app-page-header__acciones">
-        <a app-button="" data-variante="primario" routerLink="/personas/personas-relacionadas-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva persona relacionada</a>
+        <a app-button="" data-variante="primario" routerLink="/people/related-persons-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva persona relacionada</a>
       </div>
     </div>
     <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Pacientes">
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/pacientes-listado">Pacientes</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/vinculos-de-identidad-listado">Vínculos de identidad</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/resumen-propio-listado">Resumen propio</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/apoderados-de-portal-listado">Apoderados de portal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/patients-list">Pacientes</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/identity-links-list">Vínculos de identidad</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/own-summary-list">Resumen propio</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/portal-proxies-list">Apoderados de portal</a>
     <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Personas relacionadas</a>
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá en el listado</span>
+        <span class="solo-lectores">Busque en el listado</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input class="app-input" app-input="" type="search" placeholder="Buscá por paciente o por nombre de la persona">
+        <input class="app-input" app-input="" type="search" placeholder="Busque por paciente o por nombre de la persona">
       </label>
       <div class="app-filter-bar__fila">
       <div class="app-form-field" app-form-field="">
         <label class="app-form-field__label" for="f-1">Paciente</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       <div class="app-form-field" app-form-field="">
         <label class="app-form-field__label" for="f-2">Persona</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-2" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-2" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       <div class="app-form-field" app-form-field="">
@@ -115,7 +115,7 @@
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"></circle><path d="M3 20c0-3.1 2.7-5.2 6-5.2s6 2.1 6 5.2"></path><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1"></path><path d="M17.6 14.6c2 .7 3.4 2.3 3.4 4.3"></path></svg></span>
         <h2>Todavía no hay personas relacionadas</h2>
         <p>Son las personas a las que hay que llamar: la madre, el cónyuge, el hijo. Acá se declara el parentesco, a quién avisar en una urgencia y quién es el tutor legal —uno solo activo por paciente—. Es lo primero que mira la guardia cuando el paciente no puede responder.</p>
-        <a app-button="" data-variante="secundario" routerLink="/personas/personas-relacionadas-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva persona relacionada</a>
+        <a app-button="" data-variante="secundario" routerLink="/people/related-persons-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva persona relacionada</a>
       </div>
       </div>
       <div data-estado="carga" hidden="">
@@ -135,7 +135,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos cargar las personas relacionadas.</strong>
-            <p>El registro maestro de personas no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+            <p>El registro maestro de personas no respondió a tiempo. Vuelva a intentarlo; si sigue igual, avise a soporte con la hora exacta.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

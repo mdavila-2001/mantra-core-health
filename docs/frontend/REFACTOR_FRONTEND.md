@@ -113,19 +113,9 @@ y elegir la variante en «Escenario».
 | 12 | ¿Un cambio externo pierde selección, borrador o respuesta? | El historial no toca selección ni borradores; el filtro reinicia el cursor como antes |
 | 13 | ¿Un cierre esquiva la protección de cambios? | El escenario `con-cambios` prueba Escape y fondo → `dismissAttempt` (spec + navegador) |
 | 14 | ¿Un output se llama éxito? | `guardarSolicitado`, y el spec verifica que no exista `guardadoExitoso` |
-| 15 | ¿El iframe comparte sesión o servicios? | **Sí, todavía** (inyectores del padre). Se corrigió que la sesión se pisara sin devolverla; el resto está documentado como pendiente |
+| 15 | ¿El iframe comparte sesión o servicios? | **Sí, todavía** (inyectores del padre). Se corrigió que la sesión se pisara sin devolverla; el resto sigue compartido |
 | 16 | ¿Un mock exitoso se presenta como integración? | La evidencia dice «backend simulado» en cada veredicto; la API real no se tocó |
 | 17 | ¿Se retiró código sin revisar consumidores dinámicos? | Lo retirado eran constantes y signals privados; el grafo de usos no muestra otro consumidor |
-| 18 | ¿Se declara verificado algo solo inspeccionado? | La paridad visual del catálogo contra pantalla real está en ✘ a propósito; el aislamiento en «pendiente» |
+| 18 | ¿Se declara verificado algo solo inspeccionado? | La paridad visual del catálogo contra pantalla real está en ✘ a propósito; el aislamiento, sin verificar |
 | 19 | ¿El informe oculta pendientes reduciendo el denominador? | 4/4 consumidores de F-01; 3/6 organismos con escenario; F-02 diferida con motivo; 3 fallos de suite preexistentes listados |
 | 20 | ¿Otra persona puede ubicar la regla y cambiarla? | `cursor-history.ts`, 120 líneas con la tabla de transiciones en `CONTRATOS.md` |
-
-## Pendiente dentro del alcance
-
-| Ítem | Tipo de bloqueo | Siguiente paso |
-|---|---|---|
-| F-02 · `FilterBar` en los cuatro listados | decisión de producto | Confirmar «Limpiar todo» y ancho; migrar con los specs existentes |
-| Escenarios de `DirectoryPage`, `PageHeader`, `FilterBar` | implementación | `DirectoryPage` primero: es el único que hoy no monta |
-| Paridad visual catálogo ↔ pantalla real | implementación | Captura del organismo en el marco y en su pantalla con los mismos datos y viewport |
-| Preview con documento e inyectores propios | decisión + implementación | Ruta `/design-system/preview/<clave>` con `bootstrapApplication` y `SessionStore` en memoria |
-| Guardia por id de ejecución en `montar()` | implementación | Ignorar el `import()` resuelto si otro montaje empezó después |

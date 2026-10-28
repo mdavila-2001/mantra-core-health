@@ -1,13 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
+import { chooseSelectOption, selectOptionLabels } from '../../../../testing/select';
 import { Dependents } from './dependents';
 
 /**
@@ -43,9 +41,7 @@ function jwt(payload: Record<string, unknown>): string {
  * probar la conversión de la frontera, que es donde vivían los dos defectos que
  * `wire.ts` documenta.
  */
-function dependienteDelCable(
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> {
+function dependienteDelCable(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'proxy-1',
     patientProfileId: 'pp-hijo',
@@ -75,8 +71,14 @@ describe('Dependents', () => {
 
   afterEach(() => http.verify());
 
-  /** Abre sesión y monta la pantalla. */
-  function montar({ pid = 'pp-titular' }: { pid?: string | null } = {}): void {
+  const INCOMING = '/profiles/patients/me/dependent-requests/incoming';
+  const RELATIONSHIPS = '/system-context/dynamic-enums';
+
+  /** Abre sesión, monta la pantalla y responde la bandeja de solicitudes recibidas. */
+  function montar({
+    pid = 'pp-titular',
+    solicitudes = [],
+  }: { pid?: string | null; solicitudes?: readonly Record<string, unknown>[] } = {}): void {
     sesion.start({
       accessToken: jwt({
         sub: 'user-1',
@@ -89,13 +91,53 @@ describe('Dependents', () => {
     });
     fixture = TestBed.createComponent(Dependents);
     fixture.detectChanges();
+    if (pid !== null) {
+      http.expectOne((r) => r.url === INCOMING).flush(solicitudes);
+      if (solicitudes.length > 0) {
+        http
+          .expectOne(
+            (r) =>
+              r.url === RELATIONSHIPS &&
+              r.params.get('target') === 'profiles.related_persons.relationship_concept_id',
+          )
+          .flush({
+            code: 'related-person-relationship',
+            name: 'Parentesco',
+            definitionId: 'def-1',
+            valueSetId: 'vs-1',
+            allowCustomValue: false,
+            options: [
+              {
+                conceptId: 'rel-madre',
+                code: 'RELATIONSHIP_MOTHER',
+                display: 'Mother relationship',
+                ordinal: 1,
+                isDefault: false,
+              },
+              {
+                conceptId: 'rel-hijo',
+                code: 'RELATIONSHIP_CHILD',
+                display: 'Child relationship',
+                ordinal: 2,
+                isDefault: false,
+              },
+              {
+                conceptId: 'rel-amistad',
+                code: 'RELATIONSHIP_FRIEND',
+                display: 'Friend relationship',
+                ordinal: 3,
+                isDefault: false,
+              },
+            ],
+          });
+      }
+      fixture.detectChanges();
+    }
   }
 
   /** Responde la carga de dependientes con cuerpos del cable. */
   function responder(dependientes: readonly Record<string, unknown>[]): void {
-    http
-      .expectOne((r) => r.url === '/profiles/patients/me/dependents')
-      .flush(dependientes);
+    http.expectOne((r) => r.url === '/profiles/patients/me/dependents').flush(dependientes);
     fixture.detectChanges();
   }
 
@@ -108,7 +150,7 @@ describe('Dependents', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('Todavía no registraste a nadie');
+    expect(texto()).toContain('Todavía no registró a nadie.');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dependents-nuevo"]'),
     ).not.toBeNull();
@@ -169,10 +211,74 @@ describe('Dependents', () => {
     expect(contexto.activePatientProfileId()).toBe('pp-titular');
   });
 
+  it('muestra las solicitudes recibidas y aceptar las responde', async () => {
+    montar({
+      solicitudes: [
+        { id: 'sol-1', requesterDisplayName: 'Rosa Choque', createdAt: '2026-09-25T10:00:00.000Z' },
+      ],
+    });
+    responder([]);
+
+    expect(texto()).toContain('Le quieren registrar como dependiente');
+    expect(texto()).toContain('Rosa Choque');
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    const aceptar = raiz.querySelector<HTMLButtonElement>(
+      'button[aria-label="Aceptar la solicitud de Rosa Choque"]',
+    );
+    expect(aceptar!.getAttribute('aria-disabled')).toBe('true');
+
+    const relacion = raiz.querySelector<HTMLElement>('[data-testid="dependents-relacion-sol-1"]');
+    // La amistad no se ofrece como relación de cuidado/dependencia.
+    expect(await selectOptionLabels(fixture, relacion!)).not.toContain('Amistad');
+    await chooseSelectOption(fixture, relacion!, 1);
+    fixture.detectChanges();
+    expect(aceptar!.getAttribute('aria-disabled')).toBe('false');
+    aceptar!.click();
+
+    const peticion = http.expectOne(
+      (r) =>
+        r.method === 'POST' && r.url === '/profiles/patients/me/dependent-requests/sol-1/accept',
+    );
+    expect(peticion.request.body).toEqual({ relationshipConceptId: 'rel-hijo' });
+    peticion.flush({ id: 'sol-1', status: 'ACCEPTED' });
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="dependents-solicitudes"]',
+      ),
+    ).toBeNull();
+  });
+
+  it('rechazar llama al rechazo, no a la aceptación', () => {
+    montar({
+      solicitudes: [
+        { id: 'sol-2', requesterDisplayName: 'Rosa Choque', createdAt: '2026-09-25T10:00:00.000Z' },
+      ],
+    });
+    responder([]);
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>(
+        'button[aria-label="Rechazar la solicitud de Rosa Choque"]',
+      )!
+      .click();
+
+    http
+      .expectOne(
+        (r) =>
+          r.method === 'POST' && r.url === '/profiles/patients/me/dependent-requests/sol-2/reject',
+      )
+      .flush({ id: 'sol-2', status: 'REJECTED' });
+    http.expectNone((r) => r.url.endsWith('/accept'));
+  });
+
   it('una cuenta sin perfil de paciente no pide nada y lo explica', () => {
     montar({ pid: null });
 
     http.expectNone((r) => r.url === '/profiles/patients/me/dependents');
+    http.expectNone((r) => r.url === INCOMING);
     expect(texto()).toContain('no tiene perfil de paciente');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dependents-nuevo"]'),

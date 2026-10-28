@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">El modelo del queso suizo en la medicación</title>
+  <desc id="d">Cinco láminas con agujeros que representan las defensas del circuito de medicación: prescripción, dispensación, preparación, administración y monitoreo. Una flecha roja de un error latente atraviesa los agujeros alineados y llega al paciente como daño.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; --p:#7b3b6e; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; --p:#b77ab0; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="t">Modelo del queso suizo aplicado a los medicamentos</text>
+  <polygon points="150,124 206,104 206,324 150,344" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <ellipse cx="178" cy="220" rx="9" ry="18" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="170" cy="150" rx="6" ry="10" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="184" cy="295" rx="7" ry="12" fill="var(--bg)" stroke="var(--c)"/>
+  <text x="180" y="92" text-anchor="middle" class="h">Prescripción</text>
+  <text x="178" y="372" text-anchor="middle" class="n">Orden</text>
+  <text x="178" y="390" text-anchor="middle" class="n">estandarizada</text>
+  <polygon points="260,124 316,104 316,324 260,344" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <ellipse cx="288" cy="220" rx="9" ry="18" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="280" cy="150" rx="6" ry="10" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="294" cy="295" rx="7" ry="12" fill="var(--bg)" stroke="var(--c)"/>
+  <text x="290" y="92" text-anchor="middle" class="h">Dispensación</text>
+  <text x="288" y="372" text-anchor="middle" class="n">Revisión de</text>
+  <text x="288" y="390" text-anchor="middle" class="n">farmacia</text>
+  <polygon points="370,124 426,104 426,324 370,344" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <ellipse cx="398" cy="220" rx="9" ry="18" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="390" cy="150" rx="6" ry="10" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="404" cy="295" rx="7" ry="12" fill="var(--bg)" stroke="var(--c)"/>
+  <text x="400" y="92" text-anchor="middle" class="h">Preparación</text>
+  <text x="398" y="372" text-anchor="middle" class="n">Rotulado</text>
+  <text x="398" y="390" text-anchor="middle" class="n">claro</text>
+  <polygon points="480,124 536,104 536,324 480,344" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <ellipse cx="508" cy="220" rx="9" ry="18" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="500" cy="150" rx="6" ry="10" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="514" cy="295" rx="7" ry="12" fill="var(--bg)" stroke="var(--c)"/>
+  <text x="510" y="92" text-anchor="middle" class="h">Administración</text>
+  <text x="508" y="372" text-anchor="middle" class="n">Verificación a pie</text>
+  <text x="508" y="390" text-anchor="middle" class="n">de cama</text>
+  <polygon points="590,124 646,104 646,324 590,344" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <ellipse cx="618" cy="220" rx="9" ry="18" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="610" cy="150" rx="6" ry="10" fill="var(--bg)" stroke="var(--c)"/>
+  <ellipse cx="624" cy="295" rx="7" ry="12" fill="var(--bg)" stroke="var(--c)"/>
+  <text x="620" y="92" text-anchor="middle" class="h">Monitoreo</text>
+  <text x="618" y="372" text-anchor="middle" class="n">Vigilancia y</text>
+  <text x="618" y="390" text-anchor="middle" class="n">reporte</text>
+  <path d="M92 220 H748" stroke="var(--d)" stroke-width="3" stroke-dasharray="8 5" fill="none" marker-end="url(#ar)"/>
+  <rect x="24" y="190" width="68" height="60" rx="10" fill="var(--d-l)" stroke="var(--d)" stroke-width="2"/>
+  <text x="58" y="216" text-anchor="middle" class="n">Error</text><text x="58" y="234" text-anchor="middle" class="n">latente</text>
+  <rect x="708" y="150" width="70" height="140" rx="10" fill="var(--d-l)" stroke="var(--d)" stroke-width="2"/>
+  <text x="743" y="214" text-anchor="middle" class="h" style="fill:var(--d)">Daño</text><text x="743" y="234" text-anchor="middle" class="n">al paciente</text>
+  <text x="400" y="426" text-anchor="middle" class="n">Cada capa es una defensa con fallas; el daño ocurre cuando los agujeros se alinean.</text>
+  <text x="400" y="446" text-anchor="middle" class="n m">Más capas y mejor diseño reducen esa alineación (modelo de James Reason).</text>
+  <text x="400" y="470" text-anchor="middle" class="n m">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

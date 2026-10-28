@@ -1,5 +1,5 @@
 /* El cascarón —la tarjeta, el membrete, el pie, el aviso de catálogo caído y
-   la columna de ayuda— es `../registro-compartido/registro.css`, que esta
+   la columna de ayuda— es `../shared-registration/registration.css`, que esta
    pantalla y el alta de profesional declaran las dos en su `styleUrls`. Vivía
    acá mientras las dos altas eran un solo componente.
 
@@ -129,4 +129,53 @@ app-location-picker:focus-within .registro__campo-icono {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+}
+
+/* Cada contacto de emergencia sumado con el «+»: un grupo a lo ancho, con su
+   título, para que nombre, teléfono y relación se lean como de la misma
+   persona. Adentro los tres datos van en columnas que se apilan al angostar. */
+.registro__contacto-extra {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-3);
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  min-inline-size: 0;
+}
+
+/* En pantallas anchas, nombre, teléfono y relación en una fila: el mismo corte
+   en que los nombres pasan a ir de a dos. */
+@media (min-width: 40rem) {
+  .registro__contacto-extra {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Dentro del grupo manda la rejilla, no el «dos por fila» de los nombres. */
+.registro__contacto-extra .registro__nombre {
+  width: auto;
+  min-width: 0;
+}
+
+/* El quitar es de ícono (TAREA 04, AC-04-6): a la derecha, como el de los
+   nombres y los celulares, que lo llevan al final de su renglón. */
+.registro__contacto-extra > button {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
+.registro__contacto-extra-titulo {
+  padding-inline: var(--sp-2);
+  font-weight: 600;
+}
+
+/* Los «+ Agregar…»: botón con borde, en su propia fila al final de su bloque,
+   para que no quede flotando entre dos campos como un texto suelto. */
+.registro__agregar {
+  width: 100%;
 }

@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, effect, input, signal } from '@angular/core';
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { AppButton } from '../../atoms/button/button';
+import { LoadingState } from '../loading-state/loading-state';
 
 /** Vista local: imágenes como data URL y PDF rasterizado, sin iframes ni uploads. */
 @Component({
   selector: 'app-file-preview',
-  imports: [AppButton, NavIcon],
+  imports: [AppButton, NavIcon, LoadingState],
   templateUrl: './file-preview.html',
   styleUrl: './file-preview.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,7 +49,7 @@ export class FilePreview {
       };
       const fail = () => {
         if (active) {
-          this.error.set('No pudimos mostrar la vista previa. Revisá el archivo o elegí otro.');
+          this.error.set('No pudimos mostrar la vista previa. Revise el archivo o elija otro.');
           this.loading.set(false);
         }
       };
@@ -114,7 +115,7 @@ export class FilePreview {
       } else {
         this.loading.set(false);
         this.error.set(
-          'Este formato no tiene vista previa. Podés adjuntarlo y abrirlo con su aplicación.',
+          'Este formato no tiene vista previa. Puede adjuntarlo y abrirlo con su aplicación.',
         );
       }
     });
@@ -123,6 +124,6 @@ export class FilePreview {
   protected imageFailed(): void {
     this.preview.set('');
     this.mediaUrl.set('');
-    this.error.set('No pudimos reproducir este archivo. Revisalo o elegí otro.');
+    this.error.set('No pudimos reproducir este archivo. Revíselo o elija otro.');
   }
 }

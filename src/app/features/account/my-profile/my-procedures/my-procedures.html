@@ -1,0 +1,51 @@
+<app-page-header
+  title="Procedimientos que hago"
+  subtitle="Los procedimientos que hace en cada centro y sede, y en qué estado está cada uno. Un procedimiento nuevo queda pendiente hasta que el centro lo apruebe."
+/>
+
+<app-card class="procedures" padding="lg" data-testid="procedures-card">
+  <div class="procedures__panel">
+    <div class="procedures__bar">
+      <button
+        app-button
+        type="button"
+        size="sm"
+        [disabled]="adding()"
+        data-testid="procedures-add-open"
+        (clicked)="adding.set(true)"
+      >
+        Agregar un procedimiento
+      </button>
+    </div>
+
+    @if (adding()) {
+      <app-affiliation-request-form
+        (requested)="onRequested($event)"
+        (changed)="reload()"
+        (cancelled)="adding.set(false)"
+      />
+    }
+
+    <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+      @for (center of centers(); track center.practiceId) {
+        <section class="procedures__center" [attr.aria-label]="center.practiceName" [attr.data-testid]="'procedures-center-' + center.practiceId">
+          <h2 class="procedures__center-name">{{ center.practiceName }}</h2>
+          @for (site of center.sites; track site.siteId) {
+            <div class="procedures__site" [attr.data-testid]="'procedures-site-' + site.siteId">
+              <h3 class="procedures__site-name">{{ site.siteName }}</h3>
+              <ul class="procedures__rows">
+                @for (row of site.rows; track row.id) {
+                  <li class="procedures__row" [attr.data-testid]="'procedure-' + row.id">
+                    <span class="procedures__service">{{ row.serviceDisplay }}</span>
+                    <span class="procedures__muted">{{ initiatorText(row) }}</span>
+                    <app-badge [variant]="statusTone(row)" [attr.data-testid]="'procedure-status-' + row.id">{{ statusText(row) }}</app-badge>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </section>
+      }
+    </app-view-state-host>
+  </div>
+</app-card>

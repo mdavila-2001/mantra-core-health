@@ -9,6 +9,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, EMPTY, expand, map, of, reduce, type Subscription } from 'rxjs';
@@ -21,6 +22,8 @@ import {
   type ProcedureNomenclatureItem,
   type ProcedureSpecialty,
 } from '../../../../core/data-access/services-catalog/services-catalog.types';
+import { readApiError } from '../../../../core/http/api-error';
+import { describeApiFailure, fieldErrorsOf, supportCodeOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -143,6 +146,15 @@ export class ProcedureImport {
   private readonly catalog = inject(ServicesCatalogClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /**
+   * A dónde vuelve: se llega desde el catálogo administrado o, desde el
+   * carril 22, desde «Mis servicios» del médico — la misma pantalla con dos
+   * puertas.
+   */
+  protected readonly backRoute = this.router.url.startsWith('/my-services')
+    ? '/my-services'
+    : '/administration/services-catalog';
   private readonly toasts = inject(ToastService);
   private readonly dialogs = inject(DialogService);
   private readonly destroyRef = inject(DestroyRef);
@@ -218,10 +230,10 @@ export class ProcedureImport {
    */
   protected readonly avisoDeEspecialidad = computed<string | null>(() => {
     if (this.fallaMias()) {
-      return 'No pudimos leer tus especialidades, así que mostramos todo el arancel. Elegí una en el filtro para acotarlo.';
+      return 'No pudimos leer sus especialidades, así que mostramos todo el arancel. Elija una en el filtro para acotarlo.';
     }
     if (this.mias()?.length === 0) {
-      return 'No encontramos en el arancel una especialidad que corresponda a tu perfil, así que mostramos todo. Elegí una en el filtro para acotarlo.';
+      return 'No encontramos en el arancel una especialidad que corresponda a su perfil, así que mostramos todo. Elija una en el filtro para acotarlo.';
     }
     return null;
   });
@@ -261,7 +273,7 @@ export class ProcedureImport {
         label: 'Especialidad',
         options: opciones,
         unavailableReason:
-          'No pudimos leer las especialidades del arancel. Podés buscar por nombre igual.',
+          'No pudimos leer las especialidades del arancel. Puede buscar por nombre igual.',
       },
     ];
   });
@@ -471,8 +483,8 @@ export class ProcedureImport {
           this.estadoPracticas.set(
             lista.length === 0
               ? empty(
-                  { label: 'Pedí a quien administre la organización que te vincule a una práctica' },
-                  'No tenés ninguna práctica asignada.',
+                  { label: 'Pida a quien administre la organización que lo vincule a una práctica' },
+                  'No tiene ninguna práctica asignada.',
                 )
               : ready(lista),
           ),
@@ -582,6 +594,11 @@ export class ProcedureImport {
         // después de dónde salió este servicio y no volver a importarlo.
         code: item.code,
         name: item.display,
+        // El concepto del arancel es el id que el servicio comparte con el
+        // resto del producto: las cláusulas de los seguros y las solicitudes
+        // de reembolso cruzan por él, no por el id del servicio, que es
+        // propio de cada práctica. Sin él, ningún seguro lo reconoce.
+        serviceConceptId: item.conceptId,
         defaultPrice: item.referencePrice ?? '0',
         isActive: true,
       })
@@ -591,18 +608,17 @@ export class ProcedureImport {
           this.yaImportados.update((codigos) => new Set([...codigos, item.code]));
           this.toasts.success(
             item.ocrSuspect
-              ? 'Se importó. Revisá el nombre y el precio: el arancel los marcó como dudosos.'
+              ? 'Se importó. Revise el nombre y el precio: el arancel los marcó como dudosos.'
               : 'Se importó al catálogo de la práctica.',
             item.display,
           );
         },
         error: (error: unknown) => {
           this.importando.set(null);
-          const fallo = describirFallo(error, 'importar-uno');
           this.toasts.show({
             type: 'error',
-            title: fallo.titulo,
-            message: this.textoDe(fallo),
+            title: 'No pudimos importarlo',
+            message: motivoDelRechazo(error, item),
           });
         },
       });
@@ -642,7 +658,7 @@ export class ProcedureImport {
         (cantidad !== null && texto === ''
           ? `Se van a copiar ${cantidad} procedimientos del arancel al catálogo de la práctica. `
           : 'Se van a copiar al catálogo de la práctica todos los procedimientos del arancel que cumplan el filtro. ') +
-        'Los que ya están se omiten, así que repetirlo no duplica. Puede incluir filas que el arancel marca como «Revisar»: revisá después su nombre y su precio.',
+        'Los que ya están se omiten, así que repetirlo no duplica. Puede incluir filas que el arancel marca como «Revisar»: revise después su nombre y su precio.',
       details,
       confirmLabel: 'Importar',
     });
@@ -737,8 +753,8 @@ export class ProcedureImport {
           this.estado.set(
             total.length === 0
               ? empty(
-                  { label: 'Probá con otra palabra o con «Todas las especialidades»' },
-                  'Ningún procedimiento del arancel coincide con lo que buscaste.',
+                  { label: 'Pruebe con otra palabra o con «Todas las especialidades»' },
+                  'Ningún procedimiento del arancel coincide con lo que buscó.',
                 )
               : ready(total),
           );
@@ -755,7 +771,7 @@ export class ProcedureImport {
           this.toasts.show({
             type: 'error',
             title: 'No pudimos cargar más procedimientos',
-            message: `${fallo.mensaje} Lo que ya viste sigue acá: volvé a tocar «Cargar más».`,
+            message: `${fallo.mensaje} Lo que ya vio sigue aquí: vuelva a tocar «Cargar más».`,
           });
         },
       });
@@ -803,4 +819,39 @@ export class ProcedureImport {
         },
       });
   }
+}
+
+/** Lo que dice la pantalla cuando la API rechaza el alta por rol. */
+const SIN_PERMISO_DE_ADMINISTRACION =
+  'El alta de servicios exige permiso de administración. Pídalo a quien administre la organización.';
+
+/**
+ * Por qué no se importó un procedimiento.
+ *
+ * Sólo un `FORBIDDEN` es falta de permiso: antes cualquier fallo —un 422, un
+ * 500, un corte de red— se presentaba así, y la persona salía a pedir un
+ * permiso que ya tenía. Un `VALIDATION_FAILED` no tiene campo que corregir en
+ * esta pantalla (los datos salen del arancel tal cual), así que se dice eso.
+ */
+function motivoDelRechazo(error: unknown, item: ProcedureNomenclatureItem): string {
+  if (error instanceof HttpErrorResponse) {
+    const body = readApiError(error);
+    // Un proxy o un 502 pueden devolver el 403 sin el cuerpo de la API: el
+    // estado HTTP sigue siendo un 403 para la persona.
+    if (body?.code === 'FORBIDDEN' || error.status === 403) {
+      const supportCode = supportCodeOf(error, body);
+      return supportCode === null
+        ? SIN_PERMISO_DE_ADMINISTRACION
+        : `${SIN_PERMISO_DE_ADMINISTRACION} (Código de soporte: ${supportCode})`;
+    }
+    // La práctica elegida ya no existe: es otra instrucción que un fallo cualquiera.
+    if (error.status === 404) return describirFallo(error, 'importar-uno').mensaje;
+  }
+  if (Object.keys(fieldErrorsOf(error)).length > 0) {
+    return describeApiFailure(
+      error,
+      `El catálogo no admite los datos de «${item.display}» tal como vienen del arancel.`,
+    );
+  }
+  return describeApiFailure(error, `No se pudo importar «${item.display}». Intente de nuevo.`);
 }

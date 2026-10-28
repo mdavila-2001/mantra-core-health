@@ -1,6 +1,6 @@
 <app-page-header
   title="Grupos y foros"
-  subtitle="Comunidades por tema y especialidad dentro de tu organización."
+  subtitle="Comunidades por tema y especialidad dentro de su organización."
 />
 
 @if (error(); as mensaje) {
@@ -15,8 +15,8 @@
        que no tenía dónde hacerlo: el contrato sólo sabe de la vitrina propia
        (`PUT /community/profiles/me`). Se crea acá, con lo mínimo, y sin
        devolver la configuración al perfil — de donde el propietario la mandó
-       sacar el 2026-09-10. Ver `docs/progress/BLOCKERS.md`. -->
-  <app-vitrina-minima
+       sacar el 2026-09-10. -->
+  <app-minimal-showcase
     class="grupos__vitrina"
     motivo="grupos"
     (creada)="alCrearLaVitrina($event)"
@@ -27,8 +27,8 @@
   <!-- Una puerta, no un error: el directorio de grupos es por organización y
        elegir por la persona mostraría los de la organización equivocada. -->
   <app-empty-state
-    title="Elegí una organización"
-    description="Los grupos son de cada organización. Elegí una desde el encabezado para ver los suyos."
+    title="Elija una organización"
+    description="Los grupos son de cada organización. Elija una desde el encabezado para ver los suyos."
     variant="empty"
   />
 } @else {
@@ -65,11 +65,11 @@
     <app-card class="grupos__alta">
       <h2 class="grupos__alta-titulo">Nuevo grupo</h2>
 
-      <app-form-field label="Nombre" [required]="true">
+      <app-form-field icon="labels" label="Nombre" [required]="true">
         <app-input [(value)]="nombre" placeholder="Cardiología clínica" />
       </app-form-field>
 
-      <app-form-field label="De qué trata" hint="Opcional. Se ve en la tarjeta del directorio.">
+      <app-form-field icon="note" label="De qué trata" hint="Opcional. Se ve en la tarjeta del directorio.">
         <app-input [(value)]="descripcion" placeholder="Casos, guías y ateneos" />
       </app-form-field>
 
@@ -95,10 +95,10 @@
            resolverlo acá, sin salir del formulario que se estaba llenando. -->
       @if (!perfilListoParaPublico()) {
         <p class="grupos__aviso-perfil">
-          Para crear un grupo <strong>público</strong> necesitás tu perfil público completo: nombre
+          Para crear un grupo <strong>público</strong> necesita su perfil público completo: nombre
           visible, foto y el perfil en público.
         </p>
-        <app-vitrina-minima
+        <app-minimal-showcase
           class="grupos__vitrina"
           motivo="grupos"
           (creada)="alCrearLaVitrina($event)"
@@ -116,7 +116,7 @@
   @if (vacio()) {
     <app-empty-state
       title="No hay grupos que coincidan"
-      description="Probá con otra búsqueda o sacá el filtro de tema. También podés crear el grupo vos."
+      description="Pruebe con otra búsqueda o saque el filtro de tema. También puede crear el grupo usted."
       variant="empty"
     />
   } @else {

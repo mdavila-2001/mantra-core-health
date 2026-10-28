@@ -1,0 +1,87 @@
+<!-- Una sola tarjeta con un solo botón: lo que el botón dice cambia según la
+     situación, para que el paciente no tenga que elegir entre opciones. -->
+@if (!oculto()) {
+  <app-card
+    variant="outlined"
+    padding="lg"
+    class="cabecera"
+    data-testid="primary-doctor"
+    [class.cabecera--elegido]="esEste()"
+  >
+    <div class="cabecera__fila">
+      <span class="cabecera__icono" aria-hidden="true">
+        <app-nav-icon name="heart" />
+      </span>
+
+      <div class="cabecera__texto">
+        <h2 class="cabecera__titulo">{{ copy.titulo }}</h2>
+
+        <!-- Cargando, sin conexión o error con ID de petición: los del sistema. -->
+        <app-view-state-host [state]="estado()" (retry)="cargar()">
+          @if (esEste()) {
+            <p class="cabecera__estado" data-testid="primary-doctor-es-este">
+              <app-nav-icon name="check-circle" />
+              <span>
+                <strong>Es su médico de cabecera</strong>
+                @if (actual(); as doctor) {
+                  desde el {{ doctor.since | date: "d 'de' MMMM 'de' y" }}.
+                }
+              </span>
+            </p>
+          } @else {
+            <p class="cabecera__explicacion">{{ copy.queEs }}</p>
+            @if (actual()) {
+              <p class="cabecera__actual" data-testid="primary-doctor-actual">
+                Hoy su médico de cabecera es <strong>{{ nombreActual() }}</strong>.
+                Si elige a este profesional, lo reemplaza.
+              </p>
+            }
+            @if (cerrado()) {
+              <p class="cabecera__actual" data-testid="primary-doctor-no-acepta">{{ copy.noAcepta }}</p>
+            }
+          }
+        </app-view-state-host>
+      </div>
+
+      @if (estado().status === 'ready') {
+        <div class="cabecera__accion">
+          @if (esEste()) {
+            <button
+              #accion
+              app-button
+              variant="outline"
+              type="button"
+              data-testid="primary-doctor-quitar"
+              [isLoading]="guardando()"
+              (clicked)="quitar()"
+            >
+              {{ copy.quitar }}
+            </button>
+          } @else {
+            <button
+              #accion
+              app-button
+              variant="primary"
+              size="lg"
+              type="button"
+              data-testid="primary-doctor-elegir"
+              [isLoading]="guardando()"
+              [disabled]="cerrado()"
+              (clicked)="elegir()"
+            >
+              <app-nav-icon name="heart" />
+              {{ copy.elegir }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    @if (fallo(); as mensaje) {
+      <app-alert tone="error" class="cabecera__aviso" data-testid="primary-doctor-fallo">{{ mensaje }}</app-alert>
+    }
+    <!-- Región viva siempre presente: anuncia el resultado de pulsar el botón
+         a quien usa lector de pantalla. -->
+    <p class="cabecera__ok" role="status" aria-live="polite" data-testid="primary-doctor-aviso">{{ aviso() ?? '' }}</p>
+  </app-card>
+}

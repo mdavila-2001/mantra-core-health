@@ -8,13 +8,15 @@
   </button>
 }
 
-<button
-  app-button
-  type="submit"
-  [variant]="primaryVariant()"
-  [disabled]="isBlocked()"
-  [isLoading]="isBusy()"
-  (clicked)="handleSubmit()"
->
-  {{ primaryLabel() }}
-</button>
+@if (showSubmit()) {
+  <button
+    app-button
+    type="submit"
+    [variant]="primaryVariant()"
+    [disabled]="isBlocked()"
+    [isLoading]="isBusy()"
+    (clicked)="handleSubmit()"
+  >
+    {{ primaryLabel() }}
+  </button>
+}

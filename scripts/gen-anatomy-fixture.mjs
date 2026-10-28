@@ -23,7 +23,7 @@
  *
  * Meterlas en la misma interfaz obligaría a rellenar `enDisplay`,
  * `clinicalDefinitionEs` y `plainSummaryEs` con algo, y ese algo sería
- * inventado. Así que viajan con su propio tipo y `glosario.ts` las adapta a la
+ * inventado. Así que viajan con su propio tipo y `glossary.ts` las adapta a la
  * forma con la que el glosario sale por la API. La pantalla no se entera.
  *
  * ## Las definiciones son 27, no 3 161
@@ -51,7 +51,7 @@ const DESTINO = join(
   'core',
   'mock',
   'fixtures',
-  'anatomia.generated.ts',
+  'anatomy.generated.ts',
 );
 
 const leer = (nombre) => JSON.parse(readFileSync(join(ORIGEN, `${nombre}.json`), 'utf8'));

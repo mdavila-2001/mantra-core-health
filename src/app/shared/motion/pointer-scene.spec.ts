@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { PointerScene } from './pointer-scene.directive';
@@ -41,9 +41,18 @@ function fijarCaja(elemento: HTMLElement, ancho: number, alto: number): void {
 
 @Component({
   imports: [PointerScene],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<div class="escena" appPointerScene></div>`,
 })
 class Anfitrion {}
+
+/** El mismo escenario, pero pidiendo la vía táctil (como el acceso). */
+@Component({
+  imports: [PointerScene],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<div class="escena" appPointerScene [pointerSceneTouch]="true"></div>`,
+})
+class TouchHost {}
 
 describe('PointerScene', () => {
   let fixture: ComponentFixture<Anfitrion>;
@@ -88,12 +97,15 @@ describe('PointerScene', () => {
 
   const variable = (nombre: string): string => escena.style.getPropertyValue(nombre);
 
-  const montar = async (opciones: {
-    reducido: boolean;
-    punteroFino: boolean;
-  }): Promise<void> => {
+  const montar = async (
+    opciones: {
+      reducido: boolean;
+      punteroFino: boolean;
+    },
+    hostComponent: typeof Anfitrion | typeof TouchHost = Anfitrion,
+  ): Promise<void> => {
     fijarEntorno(opciones);
-    fixture = TestBed.createComponent(Anfitrion);
+    fixture = TestBed.createComponent(hostComponent);
     escena = fixture.nativeElement.querySelector('.escena') as HTMLElement;
     fijarCaja(escena, 200, 100);
     await fixture.whenStable();
@@ -101,10 +113,11 @@ describe('PointerScene', () => {
   };
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [Anfitrion] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [Anfitrion, TouchHost] }).compileComponents();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     window.requestAnimationFrame = rafOriginal;
     window.cancelAnimationFrame = cancelOriginal;
     window.matchMedia = matchMediaOriginal;
@@ -198,6 +211,93 @@ describe('PointerScene', () => {
 
     it('no publica nada: el reposo lo define la hoja de estilos', () => {
       mover(150, 25);
+      dejarQueLaEscenaAlcance();
+
+      expect(escena.getAttribute('style')).toBeNull();
+    });
+  });
+
+  describe('en una pantalla táctil que pide la vía táctil', () => {
+    const tap = (x: number, y: number, pointerType = 'touch'): void => {
+      const event = new MouseEvent('pointerdown', { clientX: x, clientY: y });
+      Object.defineProperty(event, 'pointerType', { value: pointerType });
+      escena.dispatchEvent(event);
+    };
+
+    beforeEach(async () => {
+      await montar({ reducido: false, punteroFino: false }, TouchHost);
+      // Después de montar (con el reloj falso Angular no llega a estabilizarse)
+      // y solo los temporizadores: los cuadros siguen en la cola de arriba.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    });
+
+    it('el toque publica el punto tocado y enciende el efecto', () => {
+      tap(150, 25);
+      dejarQueLaEscenaAlcance();
+
+      expect(Number(variable('--pointer-x'))).toBeCloseTo(0.75, 3);
+      expect(Number(variable('--pointer-y'))).toBeCloseTo(0.25, 3);
+      expect(Number(variable('--pointer-on'))).toBe(1);
+    });
+
+    it('salta al punto: el primer cuadro ya está donde se tocó, sin deslizarse desde el centro', () => {
+      tap(150, 25);
+      cuadros.shift()?.(0);
+
+      expect(Number(variable('--pointer-x'))).toBeCloseTo(0.75, 3);
+    });
+
+    it('se retira solo al vencer la espera, en el lugar del toque', () => {
+      tap(150, 25);
+      dejarQueLaEscenaAlcance();
+
+      vi.advanceTimersByTime(899);
+      expect(cuadros.length).toBe(0);
+      vi.advanceTimersByTime(1);
+      dejarQueLaEscenaAlcance();
+
+      expect(Number(variable('--pointer-on'))).toBe(0);
+      expect(Number(variable('--pointer-x'))).toBeCloseTo(0.75, 3);
+    });
+
+    it('un toque nuevo reprograma la espera: queda un solo temporizador', () => {
+      tap(150, 25);
+      vi.advanceTimersByTime(600);
+      tap(50, 75);
+      dejarQueLaEscenaAlcance();
+
+      expect(vi.getTimerCount()).toBe(1);
+      vi.advanceTimersByTime(600);
+      expect(Number(variable('--pointer-on'))).toBe(1);
+    });
+
+    it('ignora el ratón: esa vía es la del pointermove', () => {
+      tap(150, 25, 'mouse');
+      dejarQueLaEscenaAlcance();
+
+      expect(escena.getAttribute('style')).toBeNull();
+    });
+
+    it('deja de escuchar y suelta el temporizador al destruirse', () => {
+      tap(150, 25);
+      fixture.destroy();
+      cuadros = [];
+
+      expect(vi.getTimerCount()).toBe(0);
+      tap(50, 75);
+      expect(cuadros.length).toBe(0);
+    });
+  });
+
+  describe('vía táctil con «reducir movimiento» activo', () => {
+    beforeEach(async () => {
+      await montar({ reducido: true, punteroFino: false }, TouchHost);
+    });
+
+    it('no publica nada aunque se toque', () => {
+      const event = new MouseEvent('pointerdown', { clientX: 150, clientY: 25 });
+      Object.defineProperty(event, 'pointerType', { value: 'touch' });
+      escena.dispatchEvent(event);
       dejarQueLaEscenaAlcance();
 
       expect(escena.getAttribute('style')).toBeNull();

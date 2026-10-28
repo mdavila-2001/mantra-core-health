@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, switchMap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { simulatorOnly } from '../simulator-only';
 import { maybeDate, sinNulos } from '../wire';
 import { blobToDataUrl } from '../files/blob-to-data-url';
 import type {
@@ -21,6 +22,7 @@ import type {
   ConversationRead,
   ConversationsQuery,
   ChatAutoReplySettings,
+  ChatContact,
   DirectMessage,
   DirectMessagePage,
   EditDirectMessage,
@@ -50,6 +52,8 @@ import type {
   ModerationQueueItem,
   ModerationQueuePage,
   ModerationQueueQuery,
+  MyModerationDecisionItem,
+  MyModerationDecisionPage,
   NewAppeal,
   NewBlock,
   NewBookmark,
@@ -65,6 +69,7 @@ import type {
   NewReview,
   NewReviewResponse,
   ResolveAppeal,
+  NewMessageReaction,
   NewReaction,
   NewPost,
   SocialRemoval,
@@ -687,6 +692,33 @@ export class CommunityClient {
   }
 
   /**
+   * `GET /community/moderation/decisions/mine` — «Mis sanciones» (AG-18).
+   *
+   * Sin rol especial: es la lectura que le falta a cualquier cuenta para
+   * apelar. El servidor comprueba que `profileId` sea del actor; un perfil
+   * ajeno responde 403.
+   *
+   * @param profileId - El propio perfil.
+   * @param query - Cursor y tope.
+   * @returns Página de decisiones propias, con si cada una admite apelación.
+   */
+  listMyModerationDecisions(
+    profileId: string,
+    query: { readonly cursor?: string; readonly limit?: number } = {},
+  ): Observable<MyModerationDecisionPage> {
+    const params = this.cursorParams(query, new HttpParams()).set(
+      'profileId',
+      profileId,
+    );
+    return this.http
+      .get<WireMyModerationDecisionPage>(
+        this.url('/community/moderation/decisions/mine'),
+        { params },
+      )
+      .pipe(map(toMyModerationDecisionPage));
+  }
+
+  /**
    * `POST /community/reports` — reporta contenido y lo encola.
    *
    * @param reporte - Qué se reporta y por qué.
@@ -1124,6 +1156,16 @@ export class CommunityClient {
       .pipe(map((body) => body.items));
   }
 
+  /** Personas públicas y no bloqueadas para iniciar un chat autenticado. */
+  searchChatContacts(profileId: string, q: string, limit = 10): Observable<readonly ChatContact[]> {
+    return this.http
+      .post<{ readonly items: readonly ChatContact[] }>(
+        this.url('/community/conversations/contacts/search'),
+        { profileId, q, limit },
+      )
+      .pipe(map((body) => body.items));
+  }
+
   /**
    * `POST /community/conversations` — abre el hilo con alguien.
    *
@@ -1136,10 +1178,12 @@ export class CommunityClient {
    * @returns El identificador de la conversación.
    */
   createConversation(datos: NewConversation): Observable<{ readonly id: string }> {
-    return this.http.post<{ readonly id: string }>(
-      this.url('/community/conversations'),
-      datos,
-    );
+    // El cuerpo se arma clave por clave con lo que declara
+    // `CreateConversationDto`: la API rechaza con 400 cualquier clave de más.
+    return this.http.post<{ readonly id: string }>(this.url('/community/conversations'), {
+      participantProfileIds: [...datos.participantProfileIds],
+      ...(datos.conversationType === undefined ? {} : { conversationType: datos.conversationType }),
+    });
   }
 
   /**
@@ -1195,6 +1239,31 @@ export class CommunityClient {
         datos,
       )
       .pipe(map(toMessage));
+  }
+
+  /**
+   * `PUT /community/conversations/:id/messages/:messageId/reaction` —
+   * reacciona a un mensaje.
+   *
+   * La API real no publica este endpoint: sólo lo responde la maqueta, con el
+   * contrato de acá.
+   *
+   * @param conversationId - El hilo.
+   * @param messageId - Qué mensaje.
+   * @param datos - Quién reacciona y con qué; `emoji: null` quita la reacción.
+   * @returns El mensaje con sus reacciones ya al día.
+   */
+  reactToMessage(
+    conversationId: string,
+    messageId: string,
+    datos: NewMessageReaction,
+  ): Observable<DirectMessage> {
+    const url = this.url(
+      `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/reaction`,
+    );
+    return simulatorOnly('Reaccionar a un mensaje', url, () =>
+      this.http.put<WireMessage>(url, datos),
+    ).pipe(map(toMessage));
   }
 
   /**
@@ -1467,8 +1536,14 @@ interface WireConversationPage extends Omit<ConversationPage, 'items'> {
   readonly items: readonly WireConversation[];
 }
 
-type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt'> & {
+type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt' | 'deletedAt' | 'receipts'> & {
   readonly sentAt: string | null;
+  readonly deletedAt?: string | null;
+  readonly receipts?: readonly {
+    readonly profileId: string;
+    readonly deliveredAt?: string | null;
+    readonly readAt?: string | null;
+  }[] | null;
 };
 
 interface WireMessagePage extends Omit<DirectMessagePage, 'items' | 'peerReadUpTo'> {
@@ -1570,6 +1645,16 @@ interface WireModerationDecisionPage
   readonly items: readonly WireDecisionItem[];
 }
 
+type WireMyDecisionItem = Omit<
+  ConNulos<MyModerationDecisionItem>,
+  'decidedAt'
+> & { readonly decidedAt: string | null };
+
+interface WireMyModerationDecisionPage
+  extends Omit<MyModerationDecisionPage, 'items'> {
+  readonly items: readonly WireMyDecisionItem[];
+}
+
 type WireAppealItem = Omit<
   ConNulos<ModerationAppealItem>,
   'createdAt' | 'resolvedAt' | 'decision'
@@ -1626,6 +1711,19 @@ function toModerationDecisionPage(
   body: WireModerationDecisionPage,
 ): ModerationDecisionPage {
   return { ...body, items: body.items.map(toDecisionItem) };
+}
+
+function toMyDecisionItem({
+  decidedAt,
+  ...resto
+}: WireMyDecisionItem): MyModerationDecisionItem {
+  return { ...sinNulos(resto), ...fecha('decidedAt', decidedAt) };
+}
+
+function toMyModerationDecisionPage(
+  body: WireMyModerationDecisionPage,
+): MyModerationDecisionPage {
+  return { ...body, items: body.items.map(toMyDecisionItem) };
 }
 
 function toAppealItem({
@@ -1843,8 +1941,21 @@ function toConversationPage(body: WireConversationPage): ConversationPage {
   return { ...body, items: body.items.map(toConversation) };
 }
 
-function toMessage({ sentAt, ...resto }: WireMessage): DirectMessage {
-  return { ...sinNulos(resto), ...fecha('sentAt', sentAt) };
+function toMessage({ sentAt, deletedAt, receipts, ...resto }: WireMessage): DirectMessage {
+  return {
+    ...sinNulos(resto),
+    ...fecha('sentAt', sentAt),
+    ...fecha('deletedAt', deletedAt ?? null),
+    ...(receipts == null
+      ? {}
+      : {
+          receipts: receipts.map((r) => ({
+            profileId: r.profileId,
+            ...fecha('deliveredAt', r.deliveredAt ?? null),
+            ...fecha('readAt', r.readAt ?? null),
+          })),
+        }),
+  };
 }
 
 function toMessagePage({

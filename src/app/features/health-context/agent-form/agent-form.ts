@@ -12,7 +12,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
@@ -54,13 +54,13 @@ export class AgentForm {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Identidad del agente',
       hint: 'El código es único: un duplicado se rechaza con el detalle del conflicto.',
       campos: [
-        { key: 'code', label: 'Código', hint: 'Único y estable, como boletin-msal-scraper. Máx. 100 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí el código del agente (máx. 100 caracteres).' },
-        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre del agente (máx. 200 caracteres).' },
+        { key: 'code', label: 'Código', hint: 'Único y estable, como boletin-msal-scraper. Máx. 100 caracteres.', control: 'text', required: true, mensajeDeError: 'Escriba el código del agente (máx. 100 caracteres).' },
+        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escriba el nombre del agente (máx. 200 caracteres).' },
         { key: 'agentTypeConceptId', label: 'Tipo de agente', hint: 'Identificador del concepto de tipo (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
       ],
     },
@@ -108,7 +108,7 @@ export class AgentForm {
   protected readonly created = signal<AgentCreated | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para registrar agentes.'),
+    errorMessageOf(this.state(), 'No tiene permiso para registrar agentes.'),
   );
 
   protected submit(): void {

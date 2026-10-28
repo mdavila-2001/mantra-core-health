@@ -19,6 +19,14 @@ export interface AnalyticsWindowQuery {
   readonly portal?: Portal;
 }
 
+export type {
+  OnboardingFunnelReport,
+  OnboardingFunnelStep,
+  OnboardingHeatmapReport,
+  OnboardingFieldHeatmap,
+  OnboardingFormType,
+} from '../../onboarding/onboarding-draft.types';
+
 export interface AnalyticsWindow {
   readonly from: string;
   readonly to: string;

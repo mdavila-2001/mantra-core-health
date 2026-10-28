@@ -17,7 +17,6 @@ import {
   type NewTenant,
   type TenantTypeCode,
 } from '../../../../core/data-access/directory/directory.types';
-import { IamClient } from '../../../../core/data-access/iam/iam.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
@@ -30,10 +29,12 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { searchConceptOptions } from '../concept-search';
+import { crearBuscadorDePersonas } from '../people-search';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
 
 /** Largos que declara `CreateTenantDto`. */
@@ -66,6 +67,8 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  * Y **se quedan**, ahora que `dynamic-enums` existe. Se comparó (2026-08-11,
  * contra la API viva) `directory.tenants.tenant_type_concept_id` con la lista
  * de `CreateTenantDto`: **los diez códigos coinciden, en los dos sentidos**.
+ * El 2026-10-26 la API sumó `CLINIC` (Clínica) a los dos lados y a sus tipos
+ * territoriales; la lista lo sigue: son once.
  *
  * Reemplazarla por una lectura habría cambiado una lista tipada por una obtenida
  * en tiempo de ejecución, y esa lista **no es sólo un selector**: alimenta
@@ -81,7 +84,7 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
  *
  * ## País y jurisdicción se ofrecen porque sin ellos no hay alta
  *
- * Verificado contra la API viva: para los ocho tipos territoriales el backend
+ * Verificado contra la API viva: para los nueve tipos territoriales el backend
  * responde `422 · «exige país y jurisdicción»`. Se resuelven con un buscador
  * sobre la búsqueda de conceptos de `terminology` — el mismo trato que
  * cualquier referencia: se elige una etiqueta, se guarda un uuid.
@@ -112,7 +115,7 @@ const CAMPOS_DE_CORREDOR = ['brokerCode', 'licenseNumber'] as const;
   imports: [
     Alert,
     AnnounceOnAppear,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -123,7 +126,6 @@ const CAMPOS_DE_CORREDOR = ['brokerCode', 'licenseNumber'] as const;
 })
 export class OrganizationNew {
   private readonly directory = inject(DirectoryClient);
-  private readonly iam = inject(IamClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
@@ -196,6 +198,13 @@ export class OrganizationNew {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_LICENCIA)],
     }),
+
+    /* -- Buscadores (`custom`): en el grupo para que el motor los valide por
+       página. Como señales sueltas, una clínica sin jurisdicción llegaba al
+       final y «Registrar» no hacía nada, sin mensaje (2026-10-26). -------- */
+    pais: new FormControl<ReferenceOption | null>(null, [Validators.required]),
+    jurisdiccion: new FormControl<ReferenceOption | null>(null, [Validators.required]),
+    owner: new FormControl<ReferenceOption | null>(null, [Validators.required]),
   });
 
   constructor() {
@@ -226,9 +235,13 @@ export class OrganizationNew {
       if (tipo === 'BROKER') control.enable({ emitEvent: false });
       else control.disable({ emitEvent: false });
     }
+    const territorial = tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
+    for (const key of ['pais', 'jurisdiccion'] as const) {
+      const control = this.form.controls[key];
+      if (territorial) control.enable({ emitEvent: false });
+      else control.disable({ emitEvent: false });
+    }
   }
-
-
 
   /** El tipo elegido, como señal, para que las páginas reaccionen a él. */
   protected readonly tipo = toSignal(this.form.controls.tipo.valueChanges, {
@@ -247,7 +260,7 @@ export class OrganizationNew {
    * son comboboxes con búsqueda contra la API, no controles de texto.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Identificación',
         hint: 'Con qué se la encuentra y cómo se presenta.',
@@ -260,8 +273,8 @@ export class OrganizationNew {
             required: true,
             testId: 'alta-organizacion-codigo',
             mensajeDeError: this.codigoEnConflicto()
-              ? 'Ya existe una organización con este código. Probá con otro.'
-              : 'Escribí el código de la organización.',
+              ? 'Ya existe una organización con este código. Pruebe con otro.'
+              : 'Escriba el código de la organización.',
           },
           {
             key: 'legalName',
@@ -269,7 +282,7 @@ export class OrganizationNew {
             control: 'text' as const,
             required: true,
             testId: 'alta-organizacion-razon',
-            mensajeDeError: 'Escribí la razón social (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba la razón social (hasta 300 caracteres).',
           },
           {
             key: 'tradeName',
@@ -291,8 +304,8 @@ export class OrganizationNew {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeTipo,
-            placeholder: 'Elegí un tipo',
-            mensajeDeError: 'Elegí el tipo de organización.',
+            placeholder: 'Elija un tipo',
+            mensajeDeError: 'Elija el tipo de organización.',
           },
         ],
       },
@@ -305,9 +318,10 @@ export class OrganizationNew {
                 {
                   key: 'pais',
                   label: 'País',
-                  hint: 'Buscá por nombre; el código acompaña para distinguir homónimos.',
+                  hint: 'Busque por nombre; el código acompaña para distinguir homónimos.',
                   control: 'custom' as const,
                   required: true,
+                  mensajeDeError: 'Elija el país donde opera la organización.',
                 },
                 {
                   key: 'jurisdiccion',
@@ -315,6 +329,8 @@ export class OrganizationNew {
                   hint: 'La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO».',
                   control: 'custom' as const,
                   required: true,
+                  mensajeDeError:
+                    'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
                 },
               ],
             },
@@ -331,28 +347,28 @@ export class OrganizationNew {
                   label: 'Código de aseguradora',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el código de aseguradora.',
+                  mensajeDeError: 'Escriba el código de aseguradora.',
                 },
                 {
                   key: 'regulatorIdentifier',
                   label: 'NIT',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el NIT ante el regulador.',
+                  mensajeDeError: 'Escriba el NIT ante el regulador.',
                 },
                 {
                   key: 'sigla',
                   label: 'Sigla',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí la sigla (hasta 20 caracteres).',
+                  mensajeDeError: 'Escriba la sigla (hasta 20 caracteres).',
                 },
                 {
                   key: 'address',
                   label: 'Dirección',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
+                  mensajeDeError: 'Escriba la dirección (hasta 300 caracteres).',
                 },
               ],
             },
@@ -369,14 +385,14 @@ export class OrganizationNew {
                   label: 'Código de corredor',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el código de corredor.',
+                  mensajeDeError: 'Escriba el código de corredor.',
                 },
                 {
                   key: 'licenseNumber',
                   label: 'Número de licencia',
                   control: 'text' as const,
                   required: true,
-                  mensajeDeError: 'Escribí el número de licencia.',
+                  mensajeDeError: 'Escriba el número de licencia.',
                 },
               ],
             },
@@ -389,9 +405,10 @@ export class OrganizationNew {
           {
             key: 'owner',
             label: 'Usuario owner',
-            hint: 'Buscá por nombre o correo. Debe existir antes del alta.',
+            hint: 'Busque por nombre o correo. Debe existir antes del alta.',
             control: 'custom' as const,
             required: true,
+            mensajeDeError: 'Elija el usuario que queda como owner.',
           },
         ],
       },
@@ -412,9 +429,6 @@ export class OrganizationNew {
     ]),
   );
 
-  /** Marca que el envío ya se intentó, para mostrar los faltantes no tocados. */
-  private readonly enviado = signal(false);
-
   protected readonly opcionesDeTipo: readonly SelectOption<TenantTypeCode>[] =
     TENANT_TYPE_CODES.map((code) => ({ value: code, label: TENANT_TYPE_LABELS[code] }));
 
@@ -427,76 +441,49 @@ export class OrganizationNew {
     return tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
   });
 
-  protected readonly tipoFaltante = computed(() => this.enviado() && this.tipo() === null);
 
   /* ---- país y jurisdicción: obligatorios para los tipos territoriales ---- */
 
-  protected readonly pais = signal<ReferenceOption | null>(null);
+  protected readonly pais = toSignal(this.form.controls.pais.valueChanges, {
+    initialValue: null,
+  });
   protected readonly candidatosPais = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoPais = signal(false);
 
-  protected readonly jurisdiccion = signal<ReferenceOption | null>(null);
+  protected readonly jurisdiccion = toSignal(this.form.controls.jurisdiccion.valueChanges, {
+    initialValue: null,
+  });
   protected readonly candidatosJurisdiccion = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoJurisdiccion = signal(false);
 
-  protected readonly paisFaltante = computed(
-    () => this.enviado() && this.esTerritorial() && this.pais() === null,
-  );
-  protected readonly jurisdiccionFaltante = computed(
-    () => this.enviado() && this.esTerritorial() && this.jurisdiccion() === null,
-  );
-
   protected buscarPais(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosPais, this.buscandoPais);
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosPais,
+      this.buscandoPais,
+    );
   }
 
   protected buscarJurisdiccion(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosJurisdiccion, this.buscandoJurisdiccion);
-  }
-
-  /**
-   * Busca conceptos y los traduce a opciones, con el **código como pista**:
-   * la búsqueda es sobre el catálogo entero —estas dos columnas no tienen
-   * binding en `dynamic-enums`, comprobado— así que «Bolivia» también trae la
-   * moneda: el código `JUR_BO`
-   * contra `BOB` es lo que permite elegir el correcto.
-   */
-  private buscarConcepto(
-    texto: string,
-    destino: { set: (opciones: readonly ReferenceOption[]) => void },
-    cargando: { set: (valor: boolean) => void },
-  ): void {
-    if (texto === '') {
-      destino.set([]);
-      return;
-    }
-
-    cargando.set(true);
-    this.terminology.searchConcepts({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        destino.set(
-          pagina.items.map((concepto) => ({
-            value: concepto.conceptId,
-            label: concepto.display,
-            hint: concepto.code,
-          })),
-        );
-        cargando.set(false);
-      },
-      error: () => {
-        destino.set([]);
-        cargando.set(false);
-      },
-    });
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosJurisdiccion,
+      this.buscandoJurisdiccion,
+    );
   }
 
   /* ---- owner: se elige, nunca se tipea ---------------------------------- */
 
-  protected readonly owner = signal<ReferenceOption | null>(null);
-  protected readonly candidatosOwner = signal<readonly ReferenceOption[]>([]);
-  protected readonly buscandoOwner = signal(false);
+  protected readonly owner = toSignal(this.form.controls.owner.valueChanges, {
+    initialValue: null,
+  });
+  /** La búsqueda de owner: errores distintos del vacío y la última tecla manda. */
+  protected readonly owners = crearBuscadorDePersonas(CANDIDATOS_POR_BUSQUEDA);
 
-  protected readonly ownerFaltante = computed(() => this.enviado() && this.owner() === null);
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
@@ -510,7 +497,7 @@ export class OrganizationNew {
       return state.message ?? 'Sólo una cuenta SUPERADMIN puede dar de alta organizaciones.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -530,48 +517,10 @@ export class OrganizationNew {
     );
   });
 
-  /**
-   * Busca usuarios y los traduce a opciones. El `hint` distingue una cuenta
-   * sin verificar: elegir de owner a alguien que nunca activó su correo es un
-   * error que conviene ver antes de guardar.
-   */
-  protected buscarOwner(texto: string): void {
-    if (texto === '') {
-      this.candidatosOwner.set([]);
-      return;
-    }
-
-    this.buscandoOwner.set(true);
-    this.iam.searchUsers({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        this.candidatosOwner.set(
-          pagina.items.map((usuario) => ({
-            value: usuario.id,
-            label: usuario.displayName,
-            ...(usuario.emailVerified ? {} : { hint: 'Correo sin verificar' }),
-          })),
-        );
-        this.buscandoOwner.set(false);
-      },
-      error: () => {
-        // El combobox muestra «sin resultados»; el error general de la
-        // pantalla se reserva para el envío.
-        this.candidatosOwner.set([]);
-        this.buscandoOwner.set(false);
-      },
-    });
-  }
-
-  protected cambiarTipo(tipo: TenantTypeCode | null): void {
-    this.form.controls.tipo.setValue(tipo);
-  }
-
   protected submit(): void {
     if (this.enviando()) {
       return;
     }
-
-    this.enviado.set(true);
 
     if (!this.puedeEnviar()) {
       this.form.markAllAsTouched();
@@ -599,15 +548,9 @@ export class OrganizationNew {
   }
 
   private puedeEnviar(): boolean {
-    if (this.form.invalid || this.tipo() === null || this.owner() === null) {
-      return false;
-    }
-    if (this.esTerritorial() && (this.pais() === null || this.jurisdiccion() === null)) {
-      return false;
-    }
-    // Los bloques por tipo ya entran en `this.form.invalid`: el efecto de
-    // arriba apaga el que no corresponde, y un control apagado no cuenta.
-    return true;
+    // Owner, país, jurisdicción y los bloques por tipo entran en la validez del
+    // grupo: `aplicarTipo` apaga lo que el tipo no pide, y lo apagado no cuenta.
+    return this.form.valid && this.tipo() !== null;
   }
 
   /**

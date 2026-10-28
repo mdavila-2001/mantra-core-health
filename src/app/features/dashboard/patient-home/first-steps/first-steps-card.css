@@ -1,0 +1,346 @@
+:host {
+  display: block;
+}
+
+.primeros-pasos {
+  position: relative;
+  overflow: hidden;
+  padding: var(--sp-6);
+  border: 1px solid var(--c-aqua-200);
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(120% 140% at 100% 0%, var(--c-aqua-50) 0%, transparent 55%),
+    var(--bg-surface, #fff);
+  box-shadow: var(--shadow-sm);
+}
+
+.primeros-pasos__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
+.primeros-pasos__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--brand-primary);
+}
+
+.primeros-pasos__animo {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-secondary, var(--c-petrol-700));
+}
+
+/* El botón de plegar va en la esquina de arriba a la derecha, donde se busca
+   el control de una tarjeta, a cualquier ancho: en el teléfono la cabecera se
+   parte en dos renglones y, en el flujo, el botón caía solo en un tercero.
+   La cabecera le deja su lugar. 44 px de objetivo táctil (WCAG 2.5.8 pide 24;
+   el sistema usa 44). */
+.primeros-pasos__cabecera {
+  padding-inline-end: calc(44px + var(--sp-3));
+}
+
+.primeros-pasos__plegar {
+  position: absolute;
+  inset-block-start: var(--sp-4);
+  inset-inline-end: var(--sp-4);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface, #fff);
+  color: var(--brand-primary);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+.primeros-pasos__plegar:hover {
+  border-color: var(--brand-primary);
+  background: var(--bg-inset);
+}
+
+.primeros-pasos__plegar svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+/* Desplegada, la flecha apunta arriba: «tocá para subirla». */
+.primeros-pasos__plegar[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primeros-pasos__plegar,
+  .primeros-pasos__plegar svg {
+    transition: none;
+  }
+}
+
+/* Plegada, la cabecera no deja el margen de la lista que ya no está. */
+.primeros-pasos:has(.primeros-pasos__contenido[hidden]) .primeros-pasos__cabecera {
+  margin-block-end: 0;
+}
+
+.primeros-pasos__avance {
+  display: grid;
+  gap: var(--sp-2);
+  min-inline-size: min(18rem, 100%);
+  flex: 0 1 22rem;
+}
+
+.primeros-pasos__cuenta {
+  justify-self: end;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-h3);
+  color: var(--brand-primary);
+}
+
+.primeros-pasos__barra {
+  display: block;
+  block-size: 14px;
+  border-radius: var(--r-full);
+  background: var(--c-aqua-100);
+  overflow: hidden;
+}
+
+.primeros-pasos__relleno {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--c-aqua-500), var(--c-petrol-500));
+  transition: inline-size var(--spring-suave-dur, 380ms) var(--spring-suave, cubic-bezier(0.22, 1.1, 0.36, 1));
+}
+
+.primeros-pasos__lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Dos columnas cuando hay ancho: seis pasos en una sola fila larga se leen
+   como una tabla; en dos, como una lista de tareas. */
+.primeros-pasos__lista {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+}
+
+.primeros-pasos__paso {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle, var(--c-neutral-200));
+  border-radius: var(--r-lg);
+  background: var(--bg-surface, #fff);
+  transition:
+    transform var(--spring-rapido-dur, 260ms) var(--spring-rapido, ease-out),
+    box-shadow var(--spring-rapido-dur, 260ms) var(--spring-rapido, ease-out);
+}
+
+.primeros-pasos__paso--siguiente {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--c-aqua-100), var(--shadow-md);
+}
+
+.primeros-pasos__paso:not(.primeros-pasos__paso--hecho):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.primeros-pasos__paso--hecho {
+  background: var(--c-mint-50);
+  border-color: var(--c-mint-300);
+}
+
+.primeros-pasos__marca {
+  display: grid;
+  place-items: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border-radius: var(--r-full);
+  background: var(--c-aqua-100);
+  color: var(--brand-primary);
+  font-size: 1.35rem;
+}
+
+.primeros-pasos__marca svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.primeros-pasos__paso--siguiente .primeros-pasos__marca {
+  background: var(--brand-primary);
+  color: #fff;
+  animation: primeros-pasos-latido 2.4s ease-in-out infinite;
+}
+
+.primeros-pasos__paso--hecho .primeros-pasos__marca {
+  background: var(--c-success-500, #2e9b6a);
+  color: #fff;
+}
+
+.primeros-pasos__ir {
+  min-inline-size: 5.5rem;
+}
+
+.primeros-pasos__texto {
+  display: grid;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.primeros-pasos__nombre {
+  font-weight: 600;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary, var(--c-petrol-900));
+}
+
+/* Sin tachado (pedido del cliente, 27/10/2026): lo hecho ya lo dicen la
+   tilde verde y el «(hecho)» del lector de pantalla; tachado se leía como
+   cancelado. Queda sólo un tono más suave. */
+.primeros-pasos__paso--hecho .primeros-pasos__nombre {
+  color: var(--text-secondary, var(--c-petrol-700));
+}
+
+.primeros-pasos__pista {
+  font-size: var(--fs-body);
+  color: var(--text-secondary, var(--c-petrol-700));
+}
+
+/* ── El final: medalla y chispas ──────────────────────────────────────────── */
+.primeros-pasos--completa {
+  border-color: var(--c-amber-300);
+  background:
+    radial-gradient(120% 140% at 50% 0%, var(--c-amber-50) 0%, transparent 60%),
+    var(--bg-surface, #fff);
+}
+
+.primeros-pasos__medalla {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+  text-align: center;
+}
+
+.primeros-pasos__medalla-icono {
+  inline-size: 6rem;
+  block-size: 6rem;
+  animation: primeros-pasos-medalla var(--spring-rebote-dur, 460ms) var(--spring-rebote, cubic-bezier(0.34, 1.56, 0.64, 1)) both;
+}
+
+.primeros-pasos__cinta { fill: var(--c-petrol-500); }
+.primeros-pasos__disco { fill: var(--c-amber-400); stroke: var(--c-amber-600); stroke-width: 2; }
+.primeros-pasos__estrella { fill: #fff; }
+
+.primeros-pasos__medalla-texto {
+  margin: 0;
+  max-inline-size: 36ch;
+  font-size: var(--fs-body-lg);
+}
+
+.primeros-pasos__chispas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.primeros-pasos__chispa {
+  position: absolute;
+  inset-block-start: -10px;
+  inset-inline-start: calc(var(--n) * 8% - 2%);
+  inline-size: 8px;
+  block-size: 14px;
+  border-radius: 2px;
+  background: var(--c-aqua-400);
+  opacity: 0;
+  animation: primeros-pasos-chispa 1.6s ease-in calc(var(--n) * 70ms) 2 both;
+}
+
+.primeros-pasos__chispa:nth-child(3n) { background: var(--c-amber-400); }
+.primeros-pasos__chispa:nth-child(3n + 1) { background: var(--c-petrol-400); }
+
+@keyframes primeros-pasos-chispa {
+  0% { opacity: 1; transform: translateY(0) rotate(0); }
+  100% { opacity: 0; transform: translateY(220px) rotate(540deg); }
+}
+
+@keyframes primeros-pasos-medalla {
+  from { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+}
+
+@keyframes primeros-pasos-latido {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(11 85 126 / 35%); }
+  50% { box-shadow: 0 0 0 8px rgb(11 85 126 / 0%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primeros-pasos__relleno,
+  .primeros-pasos__paso { transition: none; }
+  .primeros-pasos__paso--siguiente .primeros-pasos__marca,
+  .primeros-pasos__medalla-icono,
+  .primeros-pasos__chispa { animation: none; }
+}
+
+.visualmente-oculto {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Tema oscuro: las superficies claras de la tarjeta pasan a la rampa oscura. */
+:host-context([data-theme='dark']) .primeros-pasos,
+:host-context([data-theme='dark']) .primeros-pasos__paso {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+
+:host-context([data-theme='dark']) .primeros-pasos__paso--hecho {
+  background: color-mix(in srgb, var(--c-mint-700) 25%, transparent);
+}
+
+:host-context([data-theme='dark']) .primeros-pasos__titulo,
+:host-context([data-theme='dark']) .primeros-pasos__cuenta {
+  color: var(--c-aqua-300);
+}
+
+/* Teléfono: el botón baja debajo del texto, así el nombre del paso no se parte
+   en cuatro renglones para dejarle lugar. */
+@media (max-width: 479px) {
+  .primeros-pasos {
+    padding: var(--sp-5) var(--sp-4);
+  }
+
+  .primeros-pasos__paso {
+    grid-template-columns: auto 1fr;
+  }
+
+  .primeros-pasos__ir {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+:host-context([data-theme='dark']) .primeros-pasos__barra {
+  background: rgb(255 255 255 / 12%);
+}

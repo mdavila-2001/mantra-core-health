@@ -15,58 +15,80 @@
     <app-alert tone="error" data-testid="formulario-especialidad-error">{{ mensaje }}</app-alert>
   }
 
+  <!-- Lo que el cierre no pudo registrar después de guardar la ficha. En ámbar
+       y no en rojo: la ficha sí quedó guardada, y lo que faltó se registra
+       desde su casilla. Persiste más que el toast a propósito. -->
+  @if (fallosDelCierre().length > 0) {
+    <app-alert
+      tone="warning"
+      title="La ficha quedó guardada, pero no todo el cierre"
+      data-testid="formulario-cierre-fallos"
+    >
+      @for (fallo of fallosDelCierre(); track fallo) {
+        <p class="formulario-especialidad__fallo">{{ fallo }}</p>
+      }
+    </app-alert>
+  }
+
   <!-- El selector, arriba de todo y siempre.
 
        Estaba dentro del `<form>`, es decir, detrás de la cadena de estados del
        motor de `forms`: con una ficha ya respondida el modo lectura lo tapaba, y
-       entonces no había forma de llegar al diagnóstico. Acá arriba, elegir qué
-       se va a completar no depende de si el catálogo cargó ni de lo que este
-       encuentro ya tenga escrito. -->
-  <app-form-field icon="survey" label="Qué vas a completar" hint="Una sola cosa por vez.">
-    <app-select
-      [options]="opcionesDePlantilla()"
-      [value]="plantillaId()"
-      (valueChange)="elegirPlantilla($event)"
-    />
-  </app-form-field>
+       entonces no había forma de llegar a los bloques propios. Acá arriba,
+       elegir qué se va a completar no depende de si el catálogo cargó ni de lo
+       que este encuentro ya tenga escrito. -->
+  <div class="formulario-especialidad__selector">
+    <app-form-field
+      icon="survey"
+      label="Qué va a completar"
+      [hint]="especialidad() === null ? 'Se muestran las fichas generales disponibles.' : 'Se muestran las fichas de su especialidad y las generales.'"
+    >
+      <app-select
+        [options]="opcionesDePlantilla()"
+        [value]="plantillaId()"
+        (valueChange)="elegirPlantilla($event)"
+      />
+    </app-form-field>
+    @if (puedeVerTodas()) {
+      <app-checkbox
+        class="formulario-especialidad__ver-todas"
+        label="Ver todas las especialidades"
+        [checked]="verTodas()"
+        (checkedChange)="alternarVerTodas($event)"
+        data-testid="ver-todas-especialidades"
+      />
+    }
+  </div>
 
   @if (bloquePropio()) {
-    <!-- Las tres que no pasan por `forms`: cada una escribe donde corresponde
-         —`clinical.conditions`, el histórico de procedimientos, las órdenes del
-         circuito diagnóstico— y trae su propio formulario y su propia lista. -->
-    @if (esDiagnostico()) {
-      <app-diagnosis-block
-        [patientProfileId]="patientProfileId()"
-        [encounterId]="encounterId()"
-        (cambio)="cambio.emit()"
-      />
-    } @else if (esCirugia()) {
+    <!-- Las dos que no pasan por `forms`: escriben en el histórico de
+         procedimientos y traen su propio formulario y su propia lista. -->
+    @if (esCirugia()) {
       <app-procedures-block
         [patientProfileId]="patientProfileId()"
         [encounterId]="encounterId()"
         modo="cirugia"
+        [embedded]="true"
       />
     } @else if (esOdontologia()) {
       <app-procedures-block
         [patientProfileId]="patientProfileId()"
         [encounterId]="encounterId()"
         modo="odontologia"
-      />
-    } @else if (esLaboratorio()) {
-      <app-diagnostics-block
-        [patientProfileId]="patientProfileId()"
-        [encounterId]="encounterId()"
+        [embedded]="true"
       />
     }
   } @else if (!hayEncuentro()) {
-    <app-alert tone="info" title="Abrí el encuentro para completar">
-      El formulario clínico se completa dentro de la consulta que lo motivó. Registrá el encuentro
+    <app-alert tone="info" title="Abra el encuentro para completar">
+      El formulario clínico se completa dentro de la consulta que lo motivó. Registre el encuentro
       acá arriba y el formulario aparece.
     </app-alert>
   } @else if (buscandoRespuesta()) {
-    <p class="formulario-especialidad__estado" role="status">
-      Buscando el formulario de este encuentro…
-    </p>
+    <app-loading-state
+      message="Revisando si este encuentro ya tiene formulario…"
+      detail="Si ya lo tiene, se muestra lo registrado y no se crea otro."
+      data-testid="formulario-consulta-cargando"
+    />
   } @else if (errorDeConsulta(); as mensaje) {
     <!-- Sin saber si ya hay formulario no se ofrece la captura: fallar
          cerrado es lo que evita el duplicado. -->
@@ -90,25 +112,77 @@
           — completado el {{ fecha }}
         }
       </p>
-      <dl class="formulario-especialidad__respuestas">
-        @for (respuesta of respuestasVisibles(); track respuesta.id) {
-          <div class="formulario-especialidad__respuesta">
-            <dt>{{ respuesta.etiqueta }}</dt>
-            <dd>
-              @if (respuesta.masked) {
-                <em
-                  class="formulario-especialidad__enmascarado"
-                  data-testid="respuesta-enmascarada"
-                >
-                  {{ marcadorEnmascarado }}
-                </em>
-              } @else {
-                {{ respuesta.texto }}
-              }
-            </dd>
-          </div>
-        }
-      </dl>
+      <!-- Las mismas dos pestañas que en la captura, en el mismo orden. -->
+      <app-tabs [(selectedIndex)]="pestana" data-testid="formulario-pestanas">
+        <app-tab label="Plantilla" data-testid="vista-plantilla">
+          <dl class="formulario-especialidad__respuestas" data-testid="respuestas-plantilla">
+            @for (respuesta of respuestasVisibles(); track respuesta.id) {
+              <div class="formulario-especialidad__respuesta">
+                <dt>{{ respuesta.etiqueta }}</dt>
+                <dd>
+                  @if (respuesta.masked) {
+                    <em
+                      class="formulario-especialidad__enmascarado"
+                      data-testid="respuesta-enmascarada"
+                    >
+                      {{ marcadorEnmascarado }}
+                    </em>
+                  } @else {
+                    {{ respuesta.texto }}
+                  }
+                </dd>
+              </div>
+            }
+          </dl>
+        </app-tab>
+        <app-tab [label]="rotuloFlexibleEnLectura()" data-testid="vista-flexible">
+          <section
+            class="formulario-especialidad__vista"
+            aria-labelledby="adicionales-guardados-titulo"
+          >
+            <h3 id="adicionales-guardados-titulo" class="formulario-especialidad__completado">
+              Campos adicionales del doctor
+            </h3>
+            @if (buscandoAdicionales()) {
+              <app-loading-state
+                message="Trayendo los campos adicionales de esta consulta…"
+                [lines]="2"
+                data-testid="adicionales-cargando"
+              />
+            } @else if (errorDeAdicionales(); as mensaje) {
+              <app-alert
+                tone="error"
+                title="No pudimos leer los campos adicionales"
+                data-testid="adicionales-error"
+              >
+                {{ mensaje }}
+              </app-alert>
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                class="formulario-especialidad__pdf"
+                (clicked)="reconsultarAdicionales()"
+              >
+                Reintentar
+              </button>
+            } @else if (adicionalesGuardados().length > 0) {
+              <dl class="formulario-especialidad__respuestas" data-testid="adicionales-guardados">
+                @for (fila of adicionalesGuardados(); track $index) {
+                  <div class="formulario-especialidad__respuesta">
+                    <dt>{{ fila.label }}</dt>
+                    <dd>{{ fila.value }}</dd>
+                  </div>
+                }
+              </dl>
+            } @else {
+              <p class="formulario-especialidad__estado" data-testid="adicionales-vacio">
+                En esta consulta no se agregaron campos adicionales.
+              </p>
+            }
+          </section>
+        </app-tab>
+      </app-tabs>
       <button
         app-button
         variant="outline"
@@ -120,9 +194,12 @@
       </button>
     </div>
   } @else if (buscandoPlantillas()) {
-    <p class="formulario-especialidad__estado" role="status">
-      Buscando las plantillas disponibles…
-    </p>
+    <app-loading-state
+      message="Trayendo las fichas que puede completar…"
+      detail="Van a aparecer en «Qué va a completar»."
+      [lines]="3"
+      data-testid="plantillas-cargando"
+    />
   } @else if (errorDePlantillas(); as mensaje) {
     <!-- Un fallo de lectura se dice: sin esto quedaba un formulario hueco, que
          se lee como «no hay nada para completar». -->
@@ -139,123 +216,207 @@
       Todavía no hay ninguna plantilla de formulario clínico cargada. Un admin de especialidad las
       crea en «Formularios clínicos».
     </app-alert>
+  } @else if (sinPlantillasVisibles()) {
+    <app-alert tone="info" title="Sin ficha para esta especialidad">
+      No hay formularios propios ni generales en el catálogo. Active «Ver todas las especialidades» para elegir otra ficha.
+    </app-alert>
   } @else {
     <form class="formulario-especialidad__formulario" (submit)="$event.preventDefault()">
       @if (sinFichaPropia()) {
         <!-- Situación normal, no un error: se avisa discreto y se sigue. -->
         <p class="formulario-especialidad__aviso" data-testid="sin-ficha-propia">
-          Tu especialidad todavía no tiene una ficha específica. Te ofrecemos las fichas generales,
+          Su especialidad todavía no tiene una ficha específica. Le ofrecemos las fichas generales,
           que sirven para cualquier consulta.
         </p>
       }
 
-      @if (puedeVerTodas()) {
-        <!-- El escape para la interconsulta o la segunda especialidad que no
-             está en el perfil. Filtra sobre lo ya traído: no pide nada más. -->
-        <app-checkbox
-          class="formulario-especialidad__ver-todas"
-          label="Ver todas las especialidades"
-          [checked]="verTodas()"
-          (checkedChange)="alternarVerTodas($event)"
-          data-testid="ver-todas-especialidades"
+      @if (plantillaElegida(); as plantilla) {
+        <!-- Dos pestañas: los campos fijos de la plantilla y las filas «campo:
+             valor» con archivos. `app-tab` no dibuja el panel cerrado, pero lo
+             proyectado vive en este componente: lo escrito en la otra pestaña
+             no se pierde, y un solo botón completa las dos. -->
+        <app-tabs [(selectedIndex)]="pestana" data-testid="formulario-pestanas">
+          <app-tab label="Plantilla" data-testid="vista-plantilla">
+            <div class="formulario-especialidad__vista">
+              <div class="formulario-especialidad__ficha">
+                <h3>{{ plantilla.name }}</h3>
+                <p>Complete los datos de esta consulta. Los campos obligatorios están marcados.</p>
+              </div>
+              @for (campo of plantilla.fields; track campo.fieldId) {
+                <!-- El odontograma no entra en un `app-form-field`: no es un control
+                     con etiqueta al lado sino una boca entera, con su propio panel de
+                     estados debajo. -->
+                @if (esOdontograma(campo)) {
+                  <details class="formulario-especialidad__odontograma-desplegable">
+                    <summary>{{ campo.name }}</summary>
+                    <fieldset
+                      class="formulario-especialidad__odontograma"
+                      data-testid="campo-odontograma"
+                    >
+                      <legend class="sr-only">{{ campo.name }}</legend>
+                      <app-odontogram
+                        [estados]="mapaDental(campo.fieldId)"
+                        [seleccionada]="piezaAbierta()"
+                        (pieza)="abrirPieza($event)"
+                      />
+                      @if (piezaAbierta(); as fdi) {
+                        <div class="formulario-especialidad__estados">
+                          <p class="formulario-especialidad__ayuda" id="ayuda-estado-dental">
+                            Pieza {{ fdi }} — elija su estado. Volver a elegir el mismo lo borra.
+                          </p>
+                          @for (estado of estadosDentales; track estado.codigo) {
+                            <button
+                              app-button
+                              variant="outline"
+                              size="sm"
+                              type="button"
+                              aria-describedby="ayuda-estado-dental"
+                              (clicked)="fijarEstado(campo.fieldId, estado.codigo)"
+                            >
+                              {{ estado.codigo }} · {{ estado.etiqueta }}
+                            </button>
+                          }
+                        </div>
+                      } @else {
+                        <p class="formulario-especialidad__ayuda">
+                          Elija una pieza para registrar su estado.
+                        </p>
+                      }
+                    </fieldset>
+                  </details>
+                } @else if (!ocultos().has(campo.fieldId)) {
+                  <!-- Un «¿cuál?» sólo aparece con el «sí» que lo abre, y va con
+                       sangría debajo de su pregunta. -->
+                  <app-form-field
+                    [label]="campo.name"
+                    [hint]="campo.description ?? ''"
+                    [required]="campo.required"
+                    [class.formulario-especialidad__dependiente]="campo.showWhen !== undefined"
+                    [class.formulario-especialidad__campo-amplio]="tipoDibujable(campo) === 'text' || tipoDibujable(campo) === 'varias'"
+                    data-testid="campo-especialidad"
+                  >
+                    @switch (tipoDibujable(campo)) {
+                      @case ('una-corta') {
+                        <app-segmented-control
+                          [options]="opcionesDe(campo)"
+                          [value]="valorTexto(campo.fieldId)"
+                          [ariaLabel]="campo.name"
+                          size="md"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('una') {
+                        <app-select
+                          [options]="opcionesDe(campo)"
+                          [value]="valorTexto(campo.fieldId) || null"
+                          [ariaLabel]="campo.name"
+                          placeholder="Elegir"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('varias') {
+                        <app-checkbox-group
+                          [options]="opcionesDe(campo)"
+                          [value]="valorLista(campo.fieldId)"
+                          [allowOther]="campo.allowOther ?? false"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('text') {
+                        <app-textarea
+                          [value]="valorTexto(campo.fieldId)"
+                          [rows]="2"
+                          autoResize
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('boolean') {
+                        <!-- Dos botones y no una casilla: en una ficha clínica
+                             «contestó que no» y «no se preguntó» no pueden guardarse
+                             igual, y una casilla desmarcada es las dos cosas. -->
+                        <app-segmented-control
+                          [options]="siNo"
+                          [value]="valorSiNo(campo.fieldId)"
+                          [ariaLabel]="campo.name"
+                          size="md"
+                          (valueChange)="responderSiNo(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('integer') {
+                        <app-input
+                          type="number"
+                          [value]="valorNumero(campo.fieldId)"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('decimal') {
+                        <app-input
+                          type="number"
+                          [value]="valorNumero(campo.fieldId)"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @case ('date') {
+                        <app-date-picker
+                          [value]="valorFecha(campo.fieldId)"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                      @default {
+                        <app-input
+                          [value]="valorTexto(campo.fieldId)"
+                          (valueChange)="actualizarValor(campo.fieldId, $event)"
+                        />
+                      }
+                    }
+                  </app-form-field>
+                }
+              }
+            </div>
+          </app-tab>
+
+          <!-- La nota médica y los documentos: filas propias del doctor con
+               texto, archivos o las dos cosas. Opcionales; se registran al
+               completar, contra el mismo encuentro. -->
+          <app-tab [label]="rotuloFlexibleEnCaptura()" data-testid="vista-flexible">
+            <app-additional-fields
+              [patientProfileId]="patientProfileId()"
+              [disabled]="enviando()"
+            />
+          </app-tab>
+        </app-tabs>
+
+        <!-- D4: la ficha termina en el cierre, fuera de las pestañas porque es
+             de la ficha entera. Sólo con una plantilla de `forms` elegida —los
+             bloques propios y la hoja libre no pasan por acá—. Lo que se elija
+             se registra al completar, en orden, después de cerrar la
+             instancia. -->
+        <app-form-conclusion-block
+          [respuestas]="respuestasParaLaIa()"
+          [nombreDeFicha]="plantilla.name"
+          (cierre)="cierre.set($event)"
         />
       }
 
-      @if (plantillaElegida(); as plantilla) {
-        @for (campo of plantilla.fields; track campo.fieldId) {
-          <!-- El odontograma no entra en un `app-form-field`: no es un control
-               con etiqueta al lado sino una boca entera, con su propio panel de
-               estados debajo. -->
-          @if (esOdontograma(campo)) {
-            <fieldset class="formulario-especialidad__odontograma" data-testid="campo-odontograma">
-              <legend class="formulario-especialidad__subtitulo">{{ campo.name }}</legend>
-              <app-odontogram
-                [estados]="mapaDental(campo.fieldId)"
-                [seleccionada]="piezaAbierta()"
-                (pieza)="abrirPieza($event)"
-              />
-              @if (piezaAbierta(); as fdi) {
-                <div class="formulario-especialidad__estados">
-                  <p class="formulario-especialidad__ayuda" id="ayuda-estado-dental">
-                    Pieza {{ fdi }} — elegí su estado. Volver a elegir el mismo lo borra.
-                  </p>
-                  @for (estado of estadosDentales; track estado.codigo) {
-                    <button
-                      app-button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      aria-describedby="ayuda-estado-dental"
-                      (clicked)="fijarEstado(campo.fieldId, estado.codigo)"
-                    >
-                      {{ estado.codigo }} · {{ estado.etiqueta }}
-                    </button>
-                  }
-                </div>
-              } @else {
-                <p class="formulario-especialidad__ayuda">
-                  Elegí una pieza para registrar su estado.
-                </p>
-              }
-            </fieldset>
-          } @else {
-            <app-form-field
-              [label]="campo.name"
-              [required]="campo.required"
-              data-testid="campo-especialidad"
-            >
-              @switch (tipoDibujable(campo.dataType)) {
-                @case ('boolean') {
-                  <!-- Dos botones y no una casilla: en una ficha clínica
-                       «contestó que no» y «no se preguntó» no pueden guardarse
-                       igual, y una casilla desmarcada es las dos cosas. -->
-                  <app-segmented-control
-                    [options]="siNo"
-                    [value]="valorSiNo(campo.fieldId)"
-                    [ariaLabel]="campo.name"
-                    size="md"
-                    (valueChange)="responderSiNo(campo.fieldId, $event)"
-                  />
-                }
-                @case ('integer') {
-                  <app-input
-                    type="number"
-                    [value]="valorNumero(campo.fieldId)"
-                    (valueChange)="actualizarValor(campo.fieldId, $event)"
-                  />
-                }
-                @case ('decimal') {
-                  <app-input
-                    type="number"
-                    [value]="valorNumero(campo.fieldId)"
-                    (valueChange)="actualizarValor(campo.fieldId, $event)"
-                  />
-                }
-                @case ('date') {
-                  <app-date-picker
-                    [value]="valorFecha(campo.fieldId)"
-                    (valueChange)="actualizarValor(campo.fieldId, $event)"
-                  />
-                }
-                @default {
-                  <app-input
-                    [value]="valorTexto(campo.fieldId)"
-                    (valueChange)="actualizarValor(campo.fieldId, $event)"
-                  />
-                }
-              }
-            </app-form-field>
-          }
-        }
-      }
-
       @if (!hojaLibre()) {
+        <!-- El motivo del botón gris, junto al botón: dentro de la barra, que
+             en pantallas angostas queda fija abajo. -->
         <app-form-actions
+          class="formulario-especialidad__acciones"
           submitLabel="Completar formulario"
           [pending]="enviando()"
           [disabled]="!puedeCompletar()"
           (submitted)="completar()"
-        />
+        >
+          <p
+            form-actions-extra
+            class="formulario-especialidad__pendiente"
+            role="status"
+            data-testid="pendiente-en-la-otra-pestana"
+          >
+            {{ pendienteEnLaOtraPestana() }}
+          </p>
+        </app-form-actions>
       }
     </form>
 

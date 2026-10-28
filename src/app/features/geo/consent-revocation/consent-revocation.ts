@@ -65,7 +65,7 @@ export class ConsentRevocation {
   protected readonly revoked = signal<string | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para revocar consentimientos.'),
+    errorMessageOf(this.state(), 'No tiene permiso para revocar consentimientos.'),
   );
 
   protected submit(): void {

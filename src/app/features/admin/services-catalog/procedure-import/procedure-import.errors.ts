@@ -18,27 +18,27 @@ export interface Fallo {
 
 const SIN_PERMISO: Readonly<Record<ContextoDeFallo, string>> = {
   practicas:
-    'No tenés permiso para ver las prácticas de la organización. Pedile acceso a quien administre la organización.',
+    'No tiene permiso para ver las prácticas de la organización. Pida acceso a quien administre la organización.',
   arancel:
-    'No tenés permiso para ver el arancel. Pedile acceso a quien administre la organización.',
+    'No tiene permiso para ver el arancel. Pida acceso a quien administre la organización.',
   'importar-uno':
-    'Dar de alta servicios exige permiso de administración. Pedile a quien administre la organización que lo haga o que te lo otorgue.',
+    'Dar de alta servicios exige permiso de administración. Pida a quien administre la organización que lo haga o que se lo otorgue.',
   'importar-lote':
-    'Importar al catálogo exige permiso de administración. Pedile a quien administre la organización que lo haga o que te lo otorgue.',
+    'Importar al catálogo exige permiso de administración. Pida a quien administre la organización que lo haga o que se lo otorgue.',
 };
 
 const NO_ENCONTRADO: Readonly<Record<ContextoDeFallo, string>> = {
   practicas:
-    'No encontramos las prácticas de tu organización. Recargá la página; si sigue igual, avisá a soporte.',
-  arancel: 'No encontramos el arancel. Recargá la página; si sigue igual, avisá a soporte.',
+    'No encontramos las prácticas de su organización. Recargue la página; si sigue igual, avise a soporte.',
+  arancel: 'No encontramos el arancel. Recargue la página; si sigue igual, avise a soporte.',
   'importar-uno':
-    'La práctica elegida ya no existe o no tenés acceso a ella. Elegí otra práctica o recargá la página.',
+    'La práctica elegida ya no existe o no tiene acceso a ella. Elija otra práctica o recargue la página.',
   'importar-lote':
-    'La práctica elegida ya no existe o no tenés acceso a ella. Elegí otra práctica o recargá la página.',
+    'La práctica elegida ya no existe o no tiene acceso a ella. Elija otra práctica o recargue la página.',
 };
 
 const TITULO: Readonly<Record<ContextoDeFallo, string>> = {
-  practicas: 'No pudimos cargar tus prácticas',
+  practicas: 'No pudimos cargar sus prácticas',
   arancel: 'No pudimos cargar el arancel',
   'importar-uno': 'No pudimos importarlo',
   'importar-lote': 'No pudimos importar el lote',
@@ -67,14 +67,14 @@ export function describirFallo(error: unknown, contexto: ContextoDeFallo): Fallo
     return {
       titulo: 'Sin conexión',
       mensaje:
-        'No pudimos comunicarnos con el servidor. Revisá tu conexión y volvé a intentarlo.',
+        'No pudimos comunicarnos con el servidor. Revise su conexión y vuelva a intentarlo.',
     };
   }
 
   if (estado.status === 'forbidden' && estado.nextAction?.route !== undefined) {
     return {
       titulo,
-      mensaje: estado.message ?? 'Necesitás verificar tu identidad para continuar.',
+      mensaje: estado.message ?? 'Necesita verificar su identidad para continuar.',
       accion: { label: estado.nextAction.label, route: estado.nextAction.route },
     };
   }
@@ -90,7 +90,7 @@ export function describirFallo(error: unknown, contexto: ContextoDeFallo): Fallo
   if (estado.status === 'validation' && estado.retryAfterSeconds !== undefined) {
     return {
       titulo: 'Demasiados pedidos seguidos',
-      mensaje: `Esperá ${estado.retryAfterSeconds} segundos y volvé a intentarlo.`,
+      mensaje: `Espere ${estado.retryAfterSeconds} segundos y vuelva a intentarlo.`,
     };
   }
 
@@ -108,14 +108,14 @@ export function describirFallo(error: unknown, contexto: ContextoDeFallo): Fallo
       titulo,
       mensaje:
         `El servidor rechazó el pedido${detalle === '' ? '.' : `: ${detalle}`} ` +
-        'Revisá el filtro y la práctica elegidos y volvé a intentarlo.',
+        'Revise el filtro y la práctica elegidos y vuelva a intentarlo.',
     };
   }
 
   return {
     titulo,
     mensaje:
-      'Ocurrió un error inesperado. Volvé a intentarlo en unos minutos; si sigue pasando, avisá a soporte con este código.',
+      'Ocurrió un error inesperado. Vuelva a intentarlo en unos minutos; si sigue pasando, avise a soporte con este código.',
     ...(estado.status === 'error' && estado.requestId !== 'sin-id'
       ? { idDePeticion: estado.requestId }
       : {}),

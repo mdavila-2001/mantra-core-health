@@ -7,13 +7,306 @@
 
 :host {
   display: block;
+  container-type: inline-size;
+}
+
+/* ---- el buscador del marketplace ---------------------------------------
+   Una banda propia, a lo ancho, con el campo grande: es la puerta principal
+   de la pantalla, como el buscador de una tienda. */
+.mercado__buscador {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl, var(--r-lg));
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.mercado__buscador app-filter-bar {
+  margin-block-end: 0;
+}
+
+/* ---- columna de facetas + resultados ------------------------------------
+   Mobile-first: una sola columna, con la de facetas plegada detrás de un
+   botón. Desde 860 px de contenedor, la columna fija a la izquierda. */
+.mercado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.mercado__columna {
+  min-inline-size: 0;
+}
+
+.mercado__plegar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 44px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+.mercado__plegar:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.mercado__plegar-cuenta {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 22px;
+  block-size: 22px;
+  padding: 0 6px;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.mercado__facetas {
+  display: none;
+  margin-block-start: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.mercado__facetas--abiertas {
+  display: block;
+}
+
+.mercado__faceta {
+  margin: 0;
+}
+
+app-filter-bar + .mercado__faceta {
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.mercado__faceta-rotulo {
+  margin: 0 0 var(--sp-2);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+
+.mercado__faceta-lista {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mercado__opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  min-block-size: 40px;
+  padding: var(--sp-1) var(--sp-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.mercado__opcion:hover {
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+}
+
+.mercado__opcion:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.mercado__opcion[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--brand-primary) 10%, var(--bg-surface));
+  color: var(--brand-primary);
+  font-weight: 700;
+}
+
+.mercado__opcion-texto {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.mercado__opcion-cuenta {
+  flex: none;
+  color: var(--text-tertiary, var(--text-secondary));
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.mercado__ver-mas {
+  margin-block-start: var(--sp-2);
+  padding: var(--sp-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-link, var(--brand-primary));
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mercado__ver-mas:hover {
+  text-decoration: underline;
+}
+
+.mercado__ver-mas:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.mercado__resultados {
+  min-inline-size: 0;
+}
+
+@container (min-width: 860px) {
+  .mercado:not(.mercado--sin-columna) {
+    grid-template-columns: 17rem minmax(0, 1fr);
+    gap: var(--sp-6);
+  }
+
+  .mercado__plegar {
+    display: none;
+  }
+
+  /* Pegada al desplazar: los filtros quedan a mano mientras se recorre una
+     grilla larga, como en cualquier tienda. */
+  .mercado__columna {
+    position: sticky;
+    inset-block-start: var(--sp-4);
+    max-block-size: calc(100dvh - 2 * var(--sp-4));
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .mercado__facetas {
+    display: block;
+    margin-block-start: 0;
+  }
+}
+
+/* ---- la barra de resultados -------------------------------------------- */
+.mercado__orden {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.mercado__orden select {
+  min-block-size: 40px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mercado__orden select:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.directorio__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.directorio__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.directorio__vistas {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.directorio__vista {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  /* 44 px de alto: es un control táctil, y en el teléfono es lo primero que se
+     toca al abrir el directorio. */
+  min-block-size: 40px;
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: calc(var(--r-md) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.directorio__vista svg {
+  fill: currentColor;
+}
+
+.directorio__vista:hover {
+  color: var(--text-primary);
+}
+
+.directorio__vista[aria-pressed='true'] {
+  background: var(--brand-primary);
+  color: var(--text-on-brand, #fff);
+}
+
+.directorio__vista:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 .directorio__cuenta {
-  margin: 0 0 var(--sp-4);
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.directorio__ambito {
   color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
+  font-weight: 600;
 }
 
 .directorio__aviso,
@@ -23,59 +316,9 @@
   color: var(--text-secondary);
 }
 
-.directorio__grupo + .directorio__grupo {
+.directorio__paginas {
+  justify-content: center;
   margin-block-start: var(--sp-6);
-}
-
-/* El encabezado se pega al desplazar: en un directorio largo, saber bajo qué
-   tramo se está mirando es la mitad de la información. Venía de la guía de
-   profesionales y se conserva para los cuatro.
-
-   ## Por qué es una banda con forma y ya no una regla a sangre
-
-   Era `padding: 8px 0`, sin radio y con una hairline abajo: el rótulo salía
-   pegado al borde izquierdo del contenedor y la línea cruzaba la pantalla
-   entera. Dos problemas, y el segundo es el que se veía sucio:
-
-   · **No alineaba con nada.** La tarjeta tiene `--sp-4` de padding, así que el
-     nombre de la primera empieza 16 px adentro. El rótulo empezaba en 0, y la
-     columna de texto quedaba escalonada — el título a la izquierda de todo lo
-     que titula.
-
-   · **Una regla a sangre no dice a qué pertenece.** Separa, pero no agrupa:
-     tocaba los dos bordes de la pantalla y se leía como un corte de página en
-     vez de como la etiqueta del tramo que viene abajo.
-
-   Ahora es una banda con su padding, su radio y su borde: una etiqueta que
-   contiene su texto y se reconoce como tal, alineada con el contenido que
-   encabeza. El horizontal es `--sp-4` justamente para que el rótulo caiga a
-   plomo con el nombre de las tarjetas. */
-.directorio__rotulo {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 2;
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  margin: 0 0 var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--border-subtle, var(--border-default));
-  border-radius: var(--r-md);
-  /* Opaco: si no, las tarjetas se leen a través del encabezado al desplazar.
-       `surface-alt` y no `surface`: con el mismo fondo que las tarjetas, el
-       rótulo se leería como una tarjeta más de la grilla. */
-  background: var(--bg-surface-alt);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  font-weight: 600;
-}
-
-.directorio__cantidad {
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
-  font-weight: 400;
 }
 
 /* La grilla, que es el pedido concreto del cliente («Grilla de directorio de
@@ -88,11 +331,27 @@
    tipo y dos líneas de contexto todavía se lee. */
 .directorio__grilla {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: var(--sp-4);
+  /* Teléfono: dos por fila, como la vitrina de una tienda en el celular.
+     Una sola tarjeta a lo ancho era una foto que tapaba la pantalla. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* La lista es la misma `ul` con una sola columna: la tarjeta sabe dibujarse
+   horizontal (`vista`), acá sólo se le da el ancho entero. */
+.directorio__grilla.directorio__grilla--lista {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+@container (min-width: 560px) {
+  .directorio__grilla {
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: var(--sp-4);
+  }
 }
 
 /* La bajada cuando el directorio va embebido en un modal: el título ya lo puso
@@ -103,4 +362,125 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+}
+
+/* En teléfono los botones de vista quedan en ícono: el rótulo sigue ahí para
+   el lector de pantalla. */
+.directorio__vista span {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@container (min-width: 560px) {
+  .mercado__buscador {
+    margin-block-end: var(--sp-5);
+    padding: var(--sp-4);
+  }
+
+  .directorio__vista span {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+}
+
+/* ---- detalles (propietario, 23/10/2026) ---------------------------------- */
+
+.mercado__faceta-rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mercado__faceta-icono {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--brand-primary) 10%, var(--bg-surface));
+  color: var(--brand-primary);
+  font-size: 1rem;
+}
+
+.mercado__opcion-cuenta {
+  padding: 1px 8px;
+  border-radius: var(--r-full);
+  background: var(--bg-surface-alt);
+  font-weight: 600;
+}
+
+.mercado__opcion[aria-pressed='true'] .mercado__opcion-cuenta {
+  background: color-mix(in srgb, var(--brand-primary) 14%, var(--bg-surface));
+  color: var(--brand-primary);
+}
+
+.mercado__ver-mas {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.mercado__ver-mas-icono {
+  transform: rotate(90deg);
+}
+
+.mercado__ver-mas-icono--abierto {
+  transform: rotate(-90deg);
+}
+
+.mercado__plegar app-nav-icon {
+  font-size: 1.15rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Las tarjetas entran escalonadas, de a 30 ms y con techo: la tanda entera
+     llega en menos de medio segundo, nadie espera a la última. */
+  .directorio__grilla > li {
+    animation: tarjeta-entra var(--dur-slow) var(--ease-out) backwards;
+    animation-delay: calc(min(var(--i, 0), 12) * 30ms);
+  }
+
+  /* El panel de filtros del teléfono baja en vez de aparecer de golpe. */
+  .mercado__facetas--abiertas {
+    animation: panel-baja var(--dur-base) var(--ease-out);
+  }
+
+  .mercado__opcion,
+  .mercado__plegar {
+    transition:
+      background var(--dur-fast) var(--ease-standard),
+      color var(--dur-fast) var(--ease-standard),
+      border-color var(--dur-fast) var(--ease-standard);
+  }
+
+  .mercado__ver-mas-icono {
+    transition: transform var(--dur-base) var(--ease-standard);
+  }
+}
+
+@keyframes tarjeta-entra {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes panel-baja {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* Al cambiar de página se sube a la grilla, debajo de la barra fija del armazón. */
+.directorio__grilla {
+  scroll-margin-block-start: calc(var(--h-header) + var(--sp-4));
 }

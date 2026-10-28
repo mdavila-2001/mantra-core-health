@@ -1,0 +1,7 @@
+# Mismo test — SIN el arreglo (se quita temporalmente la importación de AppButton)
+# rama: justin/alta-organizacion-boton-y-e2e · commit: 4318e3bc + modificación temporal · 2026-10-03 02:02
+     × el botón de la confirmación lleva al login 26ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   mantra-core-health  src/app/features/auth/register-organization/register-organization.spec.ts > RegisterOrganization > el botón de la confirmación lleva al login
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 76 passed (77)

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Circuito de administración de medicamentos</title>
+  <desc id="d">Ocho pasos en secuencia: prescripción, validación por farmacia, preparación, verificación a pie de cama, administración, registro, monitoreo y notificación de errores y casi-errores. La verificación a pie de cama aparece resaltada como última barrera antes de llegar al paciente.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; --p:#7b3b6e; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; --p:#b77ab0; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="36" text-anchor="middle" class="t">Circuito de administración de un medicamento</text>
+  <rect x="24" y="64" width="170" height="110" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="40" y="98" class="k" style="fill:var(--a)">1</text>
+  <text x="70" y="97" class="h">Prescripción</text>
+  <text x="109" y="132" text-anchor="middle" class="n">Orden completa</text>
+  <text x="109" y="152" text-anchor="middle" class="n">y con indicación</text>
+  <rect x="218" y="64" width="170" height="110" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="234" y="98" class="k" style="fill:var(--a)">2</text>
+  <text x="264" y="97" class="h">Validación</text>
+  <text x="303" y="132" text-anchor="middle" class="n">Revisión clínica</text>
+  <text x="303" y="152" text-anchor="middle" class="n">por farmacia</text>
+  <rect x="412" y="64" width="170" height="110" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="428" y="98" class="k" style="fill:var(--a)">3</text>
+  <text x="458" y="97" class="h">Preparación</text>
+  <text x="497" y="132" text-anchor="middle" class="n">Producto correcto,</text>
+  <text x="497" y="152" text-anchor="middle" class="n">rotulado y limpio</text>
+  <rect x="606" y="64" width="170" height="110" rx="12" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <text x="622" y="98" class="k" style="fill:var(--c)">4</text>
+  <text x="652" y="97" class="h">Verificación</text>
+  <text x="691" y="132" text-anchor="middle" class="n">Identificar al</text>
+  <text x="691" y="152" text-anchor="middle" class="n">paciente y comparar</text>
+  <rect x="606" y="214" width="170" height="110" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="622" y="248" class="k" style="fill:var(--a)">5</text>
+  <text x="652" y="247" class="h">Administración</text>
+  <text x="691" y="282" text-anchor="middle" class="n">Vía y hora</text>
+  <text x="691" y="302" text-anchor="middle" class="n">indicadas; explicar</text>
+  <rect x="412" y="214" width="170" height="110" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="428" y="248" class="k" style="fill:var(--a)">6</text>
+  <text x="458" y="247" class="h">Registro</text>
+  <text x="497" y="282" text-anchor="middle" class="n">Inmediato, por</text>
+  <text x="497" y="302" text-anchor="middle" class="n">quien administra</text>
+  <rect x="218" y="214" width="170" height="110" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="234" y="248" class="k" style="fill:var(--a)">7</text>
+  <text x="264" y="247" class="h">Monitoreo</text>
+  <text x="303" y="282" text-anchor="middle" class="n">Respuesta y efectos</text>
+  <text x="303" y="302" text-anchor="middle" class="n">adversos; avisar</text>
+  <rect x="24" y="214" width="170" height="110" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="40" y="248" class="k" style="fill:var(--a)">8</text>
+  <text x="70" y="247" class="h">Notificación</text>
+  <text x="109" y="282" text-anchor="middle" class="n">Errores y casi-</text>
+  <text x="109" y="302" text-anchor="middle" class="n">errores; aprender</text>
+  <path d="M195 119 H217" class="ln" marker-end="url(#ar)"/>
+  <path d="M389 119 H411" class="ln" marker-end="url(#ar)"/>
+  <path d="M583 119 H605" class="ln" marker-end="url(#ar)"/>
+  <path d="M691 176 V212" class="ln" marker-end="url(#ar)"/>
+  <path d="M605 269 H583" class="ln" marker-end="url(#ar)"/>
+  <path d="M411 269 H389" class="ln" marker-end="url(#ar)"/>
+  <path d="M217 269 H195" class="ln" marker-end="url(#ar)"/>
+  <rect x="24" y="346" width="752" height="86" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="372" text-anchor="middle" class="h">Cada paso es una barrera contra el error</text>
+  <text x="400" y="394" text-anchor="middle" class="n">El paso 4 (resaltado) es la última ocasión de detectar un fallo previo.</text>
+  <text x="400" y="414" text-anchor="middle" class="n m">Según el riesgo se suman códigos de barras, segunda verificación y bombas con alertas.</text>
+  <text x="400" y="458" text-anchor="middle" class="n m">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

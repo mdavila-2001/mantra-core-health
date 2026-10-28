@@ -20,6 +20,8 @@ export interface ServiceCatalogItem {
   readonly name: string;
   readonly serviceConceptId?: string;
   readonly defaultPrice: string;
+  /** Términos propios del servicio. Ausente: usa los términos por defecto. */
+  readonly termsText?: string;
   readonly currencyConceptId?: string;
   /**
    * Sigla de la moneda (`BOB`, `USD`), cuando la API pudo resolverla.
@@ -47,6 +49,8 @@ export interface ServiceCatalogChanges {
   readonly defaultPrice?: string;
   readonly currencyConceptId?: string;
   readonly isActive?: boolean;
+  /** Términos propios del servicio; `null` vuelve a los de por defecto (carril 22). */
+  readonly termsText?: string | null;
 }
 
 /**

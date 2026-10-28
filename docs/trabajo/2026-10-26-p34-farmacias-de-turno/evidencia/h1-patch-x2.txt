@@ -1,0 +1,65 @@
+== corrida 1
+BEGIN
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:30: NOTICE:  extension "btree_gist" already exists, skipping
+CREATE EXTENSION
+ALTER TABLE
+CREATE TABLE
+DO
+DO
+DO
+DO
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:91: NOTICE:  constraint "ck_pharmacy_on_call_shifts_window" of relation "pharmacy_on_call_shifts" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:95: NOTICE:  constraint "ex_pharmacy_on_call_shifts_site_overlap" of relation "pharmacy_on_call_shifts" does not exist, skipping
+ALTER TABLE
+ALTER TABLE
+COMMIT
+EXIT=0
+== corrida 2
+BEGIN
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:30: NOTICE:  extension "btree_gist" already exists, skipping
+CREATE EXTENSION
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:33: NOTICE:  column "open_24h" of relation "pharmacy_sites" already exists, skipping
+ALTER TABLE
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:48: NOTICE:  relation "pharmacy_on_call_shifts" already exists, skipping
+CREATE TABLE
+DO
+DO
+DO
+DO
+DO
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:81: NOTICE:  relation "ix_pharmacy_on_call_shifts_pharmacy_site_id" already exists, skipping
+CREATE INDEX
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:82: NOTICE:  relation "ix_pharmacy_on_call_shifts_source_concept_id" already exists, skipping
+CREATE INDEX
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:83: NOTICE:  relation "ix_pharmacy_on_call_shifts_status_concept_id" already exists, skipping
+CREATE INDEX
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:84: NOTICE:  relation "ix_pharmacy_on_call_shifts_created_by_user_id" already exists, skipping
+CREATE INDEX
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:85: NOTICE:  relation "ix_pharmacy_on_call_shifts_updated_by_user_id" already exists, skipping
+CREATE INDEX
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:86: NOTICE:  relation "ix_pharmacy_on_call_shifts_site_window" already exists, skipping
+CREATE INDEX
+psql:SQL/patches/2026-10-26_v4260_pharmacy_open_24h_on_call_shifts.sql:87: NOTICE:  relation "gist_pharmacy_on_call_shifts_window" already exists, skipping
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COMMIT
+EXIT=0
+== verificación
+open_24h|YES|boolean
+5
+9
+ck_pharmacy_on_call_shifts_window|c
+ex_pharmacy_on_call_shifts_site_overlap|x

@@ -26,3 +26,16 @@ export function apiUrl(baseUrl: string, path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return baseUrl === '' ? normalizedPath : `${baseUrl.replace(/\/$/, '')}${normalizedPath}`;
 }
+
+/**
+ * Si el refresh token viaja en una cookie `httpOnly` (TX-10, D-I).
+ *
+ * Token y no lectura directa de `environment` por la misma razón que
+ * {@link API_BASE_URL}: las pruebas fijan el modo sin tocar el entorno. Con
+ * `true`, el front nunca ve ni guarda el refresh token: pide el refresco sin
+ * cuerpo y el navegador manda la cookie (mismo origen).
+ */
+export const REFRESH_COOKIE_MODE = new InjectionToken<boolean>('REFRESH_COOKIE_MODE', {
+  providedIn: 'root',
+  factory: () => environment.refreshCookie,
+});

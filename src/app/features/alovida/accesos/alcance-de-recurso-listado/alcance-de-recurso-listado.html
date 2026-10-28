@@ -10,14 +10,14 @@
         <p class="caption">Permisos que valen sobre un registro y no sobre todo un tipo: este expediente, este encuentro, este documento. Sirven para la excepción puntual sin tocar el rol.</p>
       </div>
       <div class="app-page-header__acciones">
-        <a app-button="" data-variante="primario" routerLink="/accesos/alcance-de-recurso-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva concesión de alcance</a>
+        <a app-button="" data-variante="primario" routerLink="/access-control/resource-scope-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva concesión de alcance</a>
       </div>
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá en el listado</span>
+        <span class="solo-lectores">Busque en el listado</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input class="app-input" app-input="" type="search" placeholder="Buscá por identificador, sujeto o recurso">
+        <input class="app-input" app-input="" type="search" placeholder="Busque por identificador, sujeto o recurso">
       </label>
       <div class="app-filter-bar__fila">
       <div class="app-form-field" app-form-field="">
@@ -107,7 +107,7 @@
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16l-6.2 7v6l-3.6 2v-8z"></path></svg></span>
         <h2>No hay concesiones de alcance de recurso</h2>
         <p>Sirven para la excepción de un solo registro: abrirle a una persona este expediente y ninguno más, o cerrarle este documento sin tocarle el rol. Como todo grant, se puede dar a un usuario, a un rol o a un servicio, y denegar siempre prevalece.</p>
-        <a app-button="" data-variante="secundario" routerLink="/accesos/alcance-de-recurso-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva concesión de alcance</a>
+        <a app-button="" data-variante="secundario" routerLink="/access-control/resource-scope-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva concesión de alcance</a>
       </div>
       </div>
       <div data-estado="carga" hidden="">
@@ -127,7 +127,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos cargar las concesiones de alcance.</strong>
-            <p>El servicio de autorización no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+            <p>El servicio de autorización no respondió a tiempo. Vuelva a intentarlo; si sigue igual, avise a soporte con la hora exacta.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

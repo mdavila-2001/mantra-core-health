@@ -8,7 +8,7 @@ El [formato publicado DTCG 2025.10](https://www.designtokens.org/tr/2025.10/form
 
 ## Catálogo inicial propuesto
 
-Todos los números de esta sección son decisiones iniciales del kit, pendientes de validación en la app.
+Todos los números de esta sección son decisiones iniciales del kit; la app los valida o los ajusta.
 
 | Familia | Propuesta | Regla de uso |
 |---|---|---|

@@ -76,46 +76,6 @@ lista».** No hace falta una bandera para esconder algo que no existe.
 Y no protege nada: la autoridad es la API. Confundirlas produce el peor de los
 dos mundos — una bandera que se cree un control de acceso.
 
-## Si se implementan
-
-### Nivel 1 · Por entorno, en el build
-
-```ts
-// PROPUESTA
-export interface Environment {
-  readonly apiBaseUrl: string;
-  readonly features: Readonly<Record<string, boolean>>;
-}
-```
-
-Con `generate-env.mjs`, que ya tiene el mecanismo: una entrada más en su
-`MANIFEST`.
-
-| A favor | En contra |
-|---|---|
-| Sin infraestructura nueva | Cambiar una bandera exige **recompilar** |
-| Sin peticiones extra | No sirve para apagar algo roto en caliente |
-| Reutiliza las defensas del generador | |
-
-### Nivel 2 · Desde la API
-
-El backend devuelve las banderas del usuario y la organización.
-
-| A favor | En contra |
-|---|---|
-| Se cambian sin desplegar | Una petición más en el arranque |
-| Por usuario y por organización | Estado nuevo que gestionar |
-| **Permite apagar algo roto** | Un fallo al leerlas necesita un valor por defecto seguro |
-
-### Nivel 3 · Servicio de terceros
-
-**Rompe la propiedad de «cero terceros»** del proyecto, y con ella las cuatro
-consecuencias que enumera
-[servicios externos](../integrations/external-services.md#por-qué-esto-importa).
-
-En una aplicación de salud, un servicio que ve qué usuario tiene qué bandera ve
-más de lo que parece.
-
 ## Reglas para cuando existan
 
 1. **Una bandera no es autorización.** La autoridad es la API.
@@ -126,15 +86,3 @@ más de lo que parece.
 4. **Se prueban los dos caminos**, o la mitad del código no está probada.
 5. **No se anidan.** Dos banderas cruzadas son cuatro caminos.
 6. **Nada de PHI en la clave ni en el valor.**
-
-## Recomendación
-
-**No implementar todavía.** Con 8 pantallas de 81 y despliegue por rama, no hay
-un caso concreto que lo justifique.
-
-El primero que va a aparecer es el **nivel 2 para apagar algo roto sin
-revertir**, y conviene esperar a que aparezca en vez de construir el mecanismo
-antes.
-
-Registrado como propuesta, no como brecha, en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

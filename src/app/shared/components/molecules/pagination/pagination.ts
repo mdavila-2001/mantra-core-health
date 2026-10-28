@@ -1,10 +1,14 @@
 import {
+  afterRenderEffect,
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   input,
   model,
+  signal,
+  viewChild,
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
@@ -57,6 +61,64 @@ export class Pagination {
   readonly showPageJump = input(true, { transform: booleanAttribute });
 
   protected readonly gap = PAGE_GAP;
+
+  private readonly pagesList = viewChild<ElementRef<HTMLUListElement>>('pages');
+
+  /** Dónde está el número de la página actual, medido en el DOM. */
+  private readonly markerBox = signal<{ x: number; y: number; width: number; height: number } | null>(null);
+
+  protected readonly markerTransform = computed(() => {
+    const caja = this.markerBox();
+    return caja === null ? 'scale(0)' : `translate(${caja.x}px, ${caja.y}px)`;
+  });
+
+  protected readonly markerWidth = computed(() => this.markerBox()?.width ?? 0);
+  protected readonly markerHeight = computed(() => this.markerBox()?.height ?? 0);
+
+  /**
+   * La marca sólo se desliza a partir de la segunda posición: en la primera
+   * aparece ya en su lugar, en vez de cruzar la fila desde la izquierda.
+   */
+  protected readonly markerReady = signal(false);
+
+  protected readonly rangeLabel = computed(
+    () => `${this.rangeStart()}–${this.rangeEnd()} de ${this.totalItems()}`,
+  );
+
+  constructor() {
+    // Se mide después de pintar: la posición depende del ancho real de cada
+    // número («1» y «120» no miden lo mismo) y de si la fila partió en dos.
+    afterRenderEffect({
+      read: () => {
+        this.currentPage();
+        this.pageSlots();
+        const lista = this.pagesList()?.nativeElement;
+        const actual = lista?.querySelector<HTMLElement>('[aria-current="page"]');
+        if (!actual) {
+          this.markerBox.set(null);
+          return;
+        }
+        const previa = this.markerBox();
+        const caja = {
+          x: actual.offsetLeft,
+          y: actual.offsetTop,
+          width: actual.offsetWidth,
+          height: actual.offsetHeight,
+        };
+        if (
+          previa?.x !== caja.x ||
+          previa?.y !== caja.y ||
+          previa?.width !== caja.width ||
+          previa?.height !== caja.height
+        ) {
+          this.markerBox.set(caja);
+          if (previa !== null) {
+            this.markerReady.set(true);
+          }
+        }
+      },
+    });
+  }
 
   readonly totalPages = computed(() => {
     const porPagina = Math.max(1, Math.trunc(this.pageSize()));

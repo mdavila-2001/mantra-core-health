@@ -20,27 +20,6 @@ function createFakeStorage(): Storage {
   };
 }
 
-/** MediaQueryList mínima: solo lo que el servicio realmente usa. */
-function stubPrefersDark(matches: boolean): (dark: boolean) => void {
-  let listener: ((event: MediaQueryListEvent) => void) | null = null;
-  const query = {
-    matches,
-    media: '(prefers-color-scheme: dark)',
-    addEventListener: (_: string, handler: (event: MediaQueryListEvent) => void) => {
-      listener = handler;
-    },
-    removeEventListener: () => {
-      listener = null;
-    },
-  };
-  window.matchMedia = (() => query) as unknown as typeof window.matchMedia;
-
-  return (dark: boolean) => {
-    query.matches = dark;
-    listener?.({ matches: dark } as MediaQueryListEvent);
-  };
-}
-
 function createService(): ThemeService {
   const service = TestBed.inject(ThemeService);
   TestBed.tick(); // el atributo se estampa en un effect
@@ -50,35 +29,34 @@ function createService(): ThemeService {
 describe('ThemeService', () => {
   let storage: Storage;
   let originalStorage: PropertyDescriptor | undefined;
-  let originalMatchMedia: typeof window.matchMedia;
 
   beforeEach(() => {
-    originalMatchMedia = window.matchMedia;
     originalStorage = Object.getOwnPropertyDescriptor(window, 'localStorage');
     storage = createFakeStorage();
     Object.defineProperty(window, 'localStorage', { value: storage, configurable: true });
 
     document.documentElement.removeAttribute('data-theme');
-    stubPrefersDark(false);
+    document.documentElement.removeAttribute('data-tema');
     TestBed.configureTestingModule({});
   });
 
   afterEach(() => {
-    window.matchMedia = originalMatchMedia;
     if (originalStorage) {
       Object.defineProperty(window, 'localStorage', originalStorage);
     } else {
       Reflect.deleteProperty(window, 'localStorage');
     }
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-tema');
   });
 
   describe('preferencia inicial', () => {
-    it('sin nada guardado arranca en system y NO estampa atributo', () => {
+    it('sin nada guardado arranca en light y estampa atributo', () => {
       const service = createService();
 
-      expect(service.currentTheme()).toBe('system');
-      expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+      expect(service.currentTheme()).toBe('light');
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+      expect(document.documentElement.getAttribute('data-tema')).toBe('claro');
     });
 
     it('restaura una preferencia explícita guardada', () => {
@@ -88,45 +66,16 @@ describe('ThemeService', () => {
 
       expect(service.currentTheme()).toBe('dark');
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+      expect(document.documentElement.getAttribute('data-tema')).toBe('oscuro');
     });
 
-    it('descarta un valor que no es ThemeMode', () => {
+    it('descarta un valor que no es ThemeMode (incluyendo "system") y cae a light', () => {
       storage.setItem(THEME_STORAGE_KEY, 'neón');
 
-      expect(createService().currentTheme()).toBe('system');
-    });
-  });
+      expect(createService().currentTheme()).toBe('light');
 
-  describe('resolución contra el sistema', () => {
-    it('en system sigue la preferencia del sistema operativo', () => {
-      stubPrefersDark(true);
-
-      const service = createService();
-
-      expect(service.currentTheme()).toBe('system');
-      expect(service.resolvedTheme()).toBe('dark');
-      expect(service.isDark()).toBe(true);
-    });
-
-    it('reacciona a un cambio del sistema en caliente', () => {
-      const emitirCambio = stubPrefersDark(false);
-      const service = createService();
-      expect(service.resolvedTheme()).toBe('light');
-
-      emitirCambio(true);
-
-      expect(service.resolvedTheme()).toBe('dark');
-    });
-
-    it('una preferencia explícita gana sobre el sistema', () => {
-      stubPrefersDark(true);
-      const service = createService();
-
-      service.setTheme('light');
-      TestBed.tick();
-
-      expect(service.resolvedTheme()).toBe('light');
-      expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+      storage.setItem(THEME_STORAGE_KEY, 'system');
+      expect(createService().currentTheme()).toBe('light');
     });
   });
 
@@ -138,23 +87,12 @@ describe('ThemeService', () => {
       TestBed.tick();
 
       expect(storage.getItem(THEME_STORAGE_KEY)).toBe('dark');
-    });
-
-    it('system se guarda como ausencia de clave y quita el atributo', () => {
-      storage.setItem(THEME_STORAGE_KEY, 'dark');
-      const service = createService();
-
-      service.useSystemTheme();
-      TestBed.tick();
-
-      expect(storage.getItem(THEME_STORAGE_KEY)).toBeNull();
-      expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
   });
 
   describe('toggleTheme', () => {
-    it('desde system claro fija oscuro explícito', () => {
-      stubPrefersDark(false);
+    it('desde claro fija oscuro', () => {
       const service = createService();
 
       service.toggleTheme();
@@ -162,24 +100,19 @@ describe('ThemeService', () => {
 
       expect(service.currentTheme()).toBe('dark');
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+      expect(document.documentElement.getAttribute('data-tema')).toBe('oscuro');
     });
 
-    it('desde system oscuro fija claro explícito', () => {
-      stubPrefersDark(true);
+    it('desde oscuro fija claro', () => {
+      storage.setItem(THEME_STORAGE_KEY, 'dark');
       const service = createService();
 
       service.toggleTheme();
+      TestBed.tick();
 
       expect(service.currentTheme()).toBe('light');
-    });
-
-    it('alterna de vuelta', () => {
-      const service = createService();
-      service.setTheme('dark');
-
-      service.toggleTheme();
-
-      expect(service.currentTheme()).toBe('light');
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+      expect(document.documentElement.getAttribute('data-tema')).toBe('claro');
     });
   });
 });

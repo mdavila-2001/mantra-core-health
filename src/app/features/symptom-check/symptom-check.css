@@ -62,6 +62,32 @@
 
 /* ---- la recomendación --------------------------------------------------- */
 
+.sintomas__respuesta-ia {
+  display: block;
+  margin-block: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--filete);
+  border-inline-start: 3px solid var(--petroleo);
+  border-radius: var(--r-menu);
+  background: var(--sup-inset);
+  max-inline-size: 68ch;
+}
+
+.sintomas__respuesta-ia-rotulo {
+  display: block;
+  margin-block-end: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sintomas__respuesta-ia p {
+  margin: 0;
+  line-height: var(--lh-body);
+}
+
 .sintomas__subtitulo {
   margin: var(--sp-5) 0 var(--sp-3);
   font-size: var(--fs-h3);
@@ -101,6 +127,15 @@
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
+}
+
+.sintomas__leyendo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  max-inline-size: 60ch;
+  color: var(--text-secondary);
 }
 
 .sintomas__sin-coincidencias {
@@ -184,11 +219,11 @@
   display: block;
 }
 
-/* 18rem: el ancho de la figura (14rem) más el aire para que el selector
-   «Frente · Espalda · Cara» entre sin cortarse. */
+/* 21rem: el ancho de la figura (16rem) más el acolchado del escenario, y el
+   aire para que el selector «Frente · Espalda · Cara» entre sin cortarse. */
 @media (min-width: 48rem) {
   .sintomas__elegir {
-    grid-template-columns: 18rem minmax(0, 1fr);
+    grid-template-columns: 21rem minmax(0, 1fr);
     gap: var(--e5);
     align-items: start;
   }
@@ -226,10 +261,98 @@
   margin-block-start: 0;
 }
 
-/* Al lado de la figura hay menos ancho: las tres pastillas, en una fila. */
+/* Al lado de la figura las tres pastillas llenan su columna (sin tope de
+   30 rem: pegadas a la izquierda dejaban media tarjeta en blanco). */
 .sintomas__lado .sintomas__zonas {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  max-inline-size: 30rem;
+}
+
+/* Escritorio y sin zona abierta: las tres zonas son una lista de filas anchas,
+   alineada arriba y de altura natural (icono a la izquierda, rótulo al lado), no
+   losas estiradas hasta la altura de la figura ni chips perdidos en un rincón. */
+@media (min-width: 64rem) {
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) > .sintomas__zonas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--e2);
+  }
+
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--e4);
+    padding: var(--e4) var(--e5);
+    font-size: var(--fs-body);
+    text-align: start;
+  }
+
+  /* El chevron al final de la fila: dice «esto se abre» y llena el ancho. */
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona::after {
+    content: '';
+    margin-inline-start: auto;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-block-start: 2px solid var(--petroleo);
+    border-inline-end: 2px solid var(--petroleo);
+    transform: rotate(45deg);
+  }
+}
+
+/* ─── El «cómo funciona» (rediseño del 22/10/2026) ──────────────────────────
+   Tres pasos con número en un círculo de color, en el lugar que quedaba vacío
+   al lado de la figura. Se va apenas se toca una zona: ahí el panel muestra
+   los síntomas de esa parte. */
+.sintomas__guia {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+  padding: var(--e4) var(--e5);
+  border-radius: var(--r-menu);
+  background: var(--sup-inset);
+  list-style: none;
+  animation: sintomas-entrar var(--mov-medio) var(--curva);
+}
+
+.sintomas__guia-paso {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--e3);
+}
+
+.sintomas__guia-numero {
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 50%;
+  background: var(--petroleo);
+  color: var(--text-inverse);
+  font-family: var(--f-titulo);
+  font-weight: 700;
+}
+
+/* Los tres en tonos de la marca con texto blanco legible (≥ 4,5:1). */
+.sintomas__guia-paso:nth-child(2) .sintomas__guia-numero {
+  background: var(--c-aqua-700);
+}
+
+.sintomas__guia-paso:nth-child(3) .sintomas__guia-numero {
+  background: var(--c-amber-700);
+}
+
+.sintomas__guia-texto {
+  color: var(--tinta);
+  line-height: 1.4;
+}
+
+.sintomas__guia-texto strong {
+  color: var(--tinta-marca);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sintomas__guia {
+    animation: none;
+  }
 }
 
 .sintomas__zona {
@@ -238,10 +361,12 @@
   align-items: center;
   gap: var(--e2);
   inline-size: 100%;
-  padding: var(--e3) var(--e2);
-  border: 1px solid var(--filete);
+  padding: var(--e4) var(--e2);
+  /* Tonal y sin trazo: la tarjeta de afuera ya es la caja. */
+  border: 1px solid transparent;
   border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
+  /* Menta y no petróleo: el tono de apoyo de la línea gráfica (27/10/2026). */
+  background: color-mix(in srgb, var(--menta) 18%, var(--sup-tarjeta));
   color: var(--tinta);
   font: inherit;
   font-size: var(--fs-caption);
@@ -256,8 +381,16 @@
 .sintomas__zona:hover,
 .sintomas__zona:focus-visible {
   border-color: var(--aguamarina);
-  background: var(--sup-inset);
+  background: color-mix(in srgb, var(--aguamarina) 12%, var(--sup-inset));
   transform: translateY(-1px);
+}
+
+/* Lo que se contó nombra esta pastilla: la misma seña que la figura, un borde
+   punteado del color secundario. Si además está abierta, manda `is-abierta`. */
+.sintomas__zona.is-marcada:not(.is-abierta) {
+  border-style: dashed;
+  border-color: var(--brand-secondary);
+  background: color-mix(in srgb, var(--brand-secondary) 10%, var(--bg-surface));
 }
 
 .sintomas__zona.is-abierta {
@@ -336,8 +469,8 @@
 /* Elegido se marca con fondo, borde y peso — nunca sólo con color, y
    `aria-pressed` lo dice para quien no lo ve. */
 .sintomas__opcion-chip.is-elegido {
-  border-color: var(--petroleo);
-  background: var(--petroleo);
+  border-color: var(--petroleo-relleno);
+  background: var(--petroleo-relleno);
   color: var(--tinta-nav);
   font-weight: 600;
 }
@@ -410,15 +543,7 @@
   box-shadow: var(--sombra-1);
 }
 
-/* ---- guardar la observación --------------------------------------------- */
-
-.sintomas__observacion {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-block-start: var(--sp-4);
-}
+/* ---- observaciones guardadas ------------------------------------------- */
 
 .sintomas__guardadas {
   margin-block-start: var(--sp-4);
@@ -428,113 +553,693 @@
   margin-block-start: var(--sp-3);
 }
 
-/* ─── Bloque de recomendación de medicamentos ────────────────────────────── */
-.sintomas__medicamentos-bloque {
+/* ─── Especialidades recomendadas ─────────────────────────────────────────
+   La rejilla y la tarjeta son las de `shared/styles/card-grid.css`, las
+   mismas del buscador de especialidades de `/directory` (pedido del cliente,
+   27/10/2026). Acá sólo lo propio del chequeo: la marca de por cuál empezar y
+   la acción escrita, porque la tarjeta suma el porqué y no un recuento. */
+.sintomas__rejilla {
+  margin-block-start: var(--sp-3);
+}
+
+.sintomas__tarjeta-cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* La primera es la recomendada: un borde de marca, además de la insignia con
+   palabras, para que no dependa sólo del color. */
+.sintomas__tarjeta--primera {
+  border-color: var(--brand-primary);
+}
+
+.sintomas__tarjeta-accion {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-2);
+  color: var(--brand-primary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.sintomas__volver {
+  margin-block-end: var(--sp-3);
+}
+
+/* ─── Callout complementario en vista de especialistas ───────────────────── */
+.sintomas__meds-callout {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--e3);
-  padding: var(--e3) var(--e4);
-  margin-block-start: var(--e4);
-  border: 1px dashed var(--filete);
-  border-radius: var(--r-menu);
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  margin-block-start: var(--sp-4);
   background: var(--sup-tarjeta);
+  border: 1px solid var(--filete);
+  border-inline-start: 4px solid var(--aguamarina);
+  border-radius: var(--r-tarjeta, 12px);
   box-shadow: var(--sombra-1);
 }
 
-.sintomas__medicamentos-texto {
-  flex: 1 1 15rem;
+.sintomas__meds-callout-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 18rem;
 }
 
-/* ─── Módulo de crisis psicológica y prevención del suicidio ────────────── */
-.sintomas__crisis-soporte {
+.sintomas__meds-callout-titulo {
+  font-size: var(--fs-cuerpo-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.sintomas__meds-callout-bajada {
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--tinta-2);
+}
+
+/* ─── Sección y tarjetas de Medicamentos Sugeridos ───────────────────────── */
+.sintomas__medicamentos-seccion {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  margin-block-start: var(--sp-4);
-  padding-block-start: var(--sp-4);
+  margin-block-start: var(--sp-2);
+}
+
+.sintomas__meds-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-2);
+}
+
+.sintomas__meds-intro-texto {
+  flex: 1 1 18rem;
+}
+
+.sintomas__subtitulo--meds {
+  margin: 0 0 var(--sp-1);
+}
+
+.sintomas__meds-descripcion {
+  margin: 0;
+  font-size: var(--fs-cuerpo-sm, 0.875rem);
+  color: var(--tinta-2, #64748b);
+  max-inline-size: 68ch;
+}
+
+.sintomas__meds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  gap: var(--sp-4);
+}
+
+.sintomas__med-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--sup-tarjeta);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-tarjeta, 14px);
+  padding: var(--sp-4);
+  box-shadow: var(--sombra-1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sintomas__med-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--aguamarina);
+  box-shadow: 0 4px 16px rgba(11, 85, 126, 0.12);
+}
+
+.sintomas__med-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.sintomas__med-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 10px;
+  background: rgba(79, 179, 169, 0.12);
+  color: var(--petroleo);
+  border: 1px solid rgba(79, 179, 169, 0.25);
+  flex-shrink: 0;
+}
+
+.sintomas__med-svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.sintomas__med-main-info {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.sintomas__med-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2, 6px);
+  margin-block-end: 4px;
+}
+
+.sintomas__med-tag-atc {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--sup-inset);
+  color: var(--tinta-2);
+  border: 1px solid var(--filete);
+}
+
+.sintomas__med-titulo {
+  margin: 0;
+  font-size: var(--fs-h4, 1.125rem);
+  font-weight: 700;
+  color: var(--tinta);
+  line-height: 1.3;
+}
+
+.sintomas__med-subtitulo {
+  margin: 2px 0 0;
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--tinta-2);
+}
+
+.sintomas__med-indicacion-caja {
+  margin-block-end: var(--sp-3);
+}
+
+.sintomas__med-indicacion-texto {
+  margin: 0;
+  font-size: var(--fs-cuerpo-sm, 0.875rem);
+  color: var(--tinta);
+  line-height: 1.45;
+}
+
+/* ─── Bloque de Posología detallada ─────────────────────────────────────── */
+.sintomas__posologia-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--sup-inset);
+  border: 1px solid var(--filete);
+  border-radius: 10px;
+  margin-block-end: var(--sp-3);
+}
+
+.sintomas__posologia-encabezado {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--petroleo);
+}
+
+.sintomas__posologia-icono {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.sintomas__posologia-titulo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.sintomas__posologia-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--sp-2);
+}
+
+.sintomas__posologia-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sintomas__posologia-etiqueta {
+  font-size: 0.6875rem;
+  color: var(--tinta-3);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sintomas__posologia-valor {
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--tinta);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.sintomas__posologia-pautas {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding-block-start: 6px;
+  border-block-start: 1px solid var(--filete-2);
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--tinta-2);
+  line-height: 1.4;
+}
+
+.sintomas__posologia-pautas-icono {
+  flex-shrink: 0;
+}
+
+.sintomas__med-alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: 8px 12px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: 8px;
+  font-size: var(--fs-caption, 0.8125rem);
+  color: var(--tinta);
+  line-height: 1.4;
+  margin-block-end: var(--sp-3);
+}
+
+.sintomas__med-alerta-icono {
+  flex-shrink: 0;
+}
+
+.sintomas__med-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-block-start: auto;
+  padding-block-start: var(--sp-3);
   border-block-start: 1px solid var(--filete);
+}
+
+.sintomas__med-precio-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sintomas__med-precio-label {
+  font-size: 0.6875rem;
+  color: var(--tinta-3);
+}
+
+.sintomas__med-precio-val {
+  font-size: var(--fs-caption, 0.8125rem);
+  font-weight: 600;
+  color: var(--ok-tinta, #27725C);
+}
+
+/* ─── Aviso clínico de responsabilidad al pie ────────────────────────────── */
+.sintomas__meds-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--sup-inset);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-tarjeta, 10px);
+  color: var(--tinta-2);
+}
+
+.sintomas__meds-disclaimer-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--petroleo);
+  flex-shrink: 0;
+  margin-block-start: 2px;
+}
+
+.sintomas__meds-disclaimer-texto {
+  font-size: var(--fs-caption, 0.8125rem);
+  line-height: 1.45;
+}
+
+/* ─── Cabecera y botón de ayuda en la parte superior ──────────────────────── */
+.sintomas__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3, 12px);
+}
+
+.sintomas__cabecera-textos {
+  flex: 1 1 20rem;
+}
+
+.sintomas__cabecera-accion {
+  display: flex;
+  align-items: center;
+  padding-block-start: 2px;
+}
+
+.sintomas__boton-ayuda-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: var(--fs-caption, 0.82rem);
+  font-weight: 600;
+  color: var(--tinta-2);
+  background: var(--sup-tarjeta);
+  border: 1px solid var(--filete);
+  box-shadow: var(--sombra-1);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.sintomas__boton-ayuda-top:hover {
+  color: var(--petroleo);
+  border-color: var(--aguamarina);
+  background: rgba(79, 179, 169, 0.1);
+  transform: translateY(-1px);
+}
+
+.sintomas__boton-ayuda-top.is-activo {
+  background: var(--petroleo-relleno, #0B557E);
+  color: #ffffff;
+  border-color: var(--petroleo-relleno, #0B557E);
+}
+
+.sintomas__icono-ayuda-top {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ─── Contenedor de urgencia y soporte en crisis (ABAJO) ─────────────────── */
+.sintomas__urgencia,
+.sintomas__urgencia-top {
+  margin-block-start: var(--sp-4, 16px);
+  margin-block-end: var(--sp-4, 16px);
+  animation: urgenciaEntrada 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes urgenciaEntrada {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Módulo de crisis psicológica con soporte claro y oscuro ────────────── */
+.sintomas__crisis-soporte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4, 16px);
+}
+
+.sintomas__crisis-soporte--hd {
+  gap: var(--sp-5, 20px);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: var(--r-card, 18px);
+  background: var(--sup-tarjeta);
+  border: 1px solid var(--filete);
+  box-shadow: var(--sombra-2, 0 8px 28px -6px rgba(0, 0, 0, 0.12));
+  position: relative;
+  overflow: hidden;
+}
+
+.sintomas__crisis-soporte--hd::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4FB3A9 0%, #0B557E 50%, #3B82F6 100%);
+}
+
+.sintomas__crisis-cabecera-hd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sintomas__crisis-badge-hd {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(79, 179, 169, 0.14);
+  color: var(--aguamarina);
+  border: 1px solid rgba(79, 179, 169, 0.28);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sintomas__crisis-pulso-hd {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulsoVerde 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes pulsoVerde {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.sintomas__crisis-titulo-principal-hd {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+  font-weight: 700;
+  color: var(--tinta);
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.sintomas__crisis-subtitulo-hd {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--tinta-2);
+  line-height: 1.55;
+  max-inline-size: 50rem;
 }
 
 .sintomas__crisis-bloque {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--sp-2, 8px);
 }
 
 .sintomas__crisis-titulo {
   margin: 0;
-  font-size: var(--fs-h4);
+  font-size: var(--fs-h4, 1.05rem);
   font-weight: 600;
   color: var(--tinta);
+  letter-spacing: -0.01em;
 }
 
 .sintomas__crisis-subtexto {
   margin: 0;
-  font-size: var(--fs-cuerpo-sm);
+  font-size: var(--fs-cuerpo-sm, 0.88rem);
   color: var(--tinta-2);
+  line-height: 1.45;
 }
 
+/* Teléfonos de Crisis */
 .sintomas__crisis-telefonos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: var(--sp-2);
-  margin-block-start: var(--sp-1);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--sp-3, 14px);
+  margin-block-start: 4px;
 }
 
 .sintomas__crisis-telefono-link {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
-  padding: var(--sp-3);
-  border-radius: var(--r-tarjeta);
-  background: var(--sup-tarjeta);
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--sup-inset);
   border: 1px solid var(--filete);
+  box-shadow: var(--sombra-1);
   text-decoration: none;
   color: inherit;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+  position: relative;
 }
 
 .sintomas__crisis-telefono-link:hover {
-  border-color: var(--color-error-600, #dc2626);
-  transform: translateY(-1px);
+  border-color: var(--aguamarina);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -6px rgba(11, 85, 126, 0.2);
+}
+
+.sintomas__crisis-tel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sintomas__crisis-tel-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--petroleo);
+}
+
+.sintomas__crisis-tel-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--petroleo);
 }
 
 .sintomas__crisis-telefono-numero {
-  font-weight: 700;
-  font-size: var(--fs-h3);
-  color: var(--color-error-600, #dc2626);
+  font-weight: 800;
+  font-size: 1.65rem;
+  color: var(--petroleo);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .sintomas__crisis-telefono-desc {
-  font-size: var(--fs-caption);
+  font-size: 0.85rem;
   color: var(--tinta-2);
+  line-height: 1.35;
+  flex: 1 1 auto;
 }
 
+.sintomas__crisis-llamar-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--petroleo-relleno, #0B557E);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-block-start: 4px;
+  transition: background 0.15s ease;
+}
+
+.sintomas__crisis-telefono-link:hover .sintomas__crisis-llamar-cta {
+  background: var(--petroleo-h, #0B4768);
+}
+
+/* Acciones de Salud Mental */
 .sintomas__crisis-acciones {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-block-start: var(--sp-1);
+  align-items: center;
+  gap: 10px;
+  margin-block-start: 6px;
+}
+
+.sintomas__btn-icon {
+  width: 15px;
+  height: 15px;
+  margin-inline-end: 6px;
+  flex-shrink: 0;
+  vertical-align: -2px;
+}
+
+/* Videos OPS/OMS Grid */
+.sintomas__crisis-subbloque-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sintomas__crisis-fuente-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--tinta-3);
 }
 
 .sintomas__crisis-videos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: var(--sp-3);
-  margin-block-start: var(--sp-1);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--sp-4, 16px);
+  margin-block-start: 8px;
 }
 
 .sintomas__video-caja {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  border-radius: 14px;
+  background: var(--sup-inset);
+  border: 1px solid var(--filete);
+  overflow: hidden;
+  box-shadow: var(--sombra-1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sintomas__video-caja:hover {
+  transform: translateY(-2px);
+  border-color: var(--aguamarina);
+  box-shadow: 0 8px 20px -4px rgba(11, 85, 126, 0.16);
+}
+
+.sintomas__video-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+}
+
+.sintomas__video-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(11, 85, 126, 0.15);
+  color: var(--petroleo);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .sintomas__video-titulo {
   margin: 0;
-  font-size: var(--fs-caption);
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--tinta);
 }
@@ -543,6 +1248,24 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   border: 0;
-  border-radius: var(--r-tarjeta);
+  display: block;
   background: #000;
+}
+
+/* Footer de Emergencias */
+.sintomas__crisis-emergencia-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block-start: var(--sp-4, 16px);
+  border-block-start: 1px solid var(--filete);
+  margin-block-start: 4px;
+}
+
+.sintomas__crisis-emergencia-aviso {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tinta-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

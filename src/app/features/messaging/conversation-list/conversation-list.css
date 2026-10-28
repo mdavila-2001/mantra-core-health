@@ -16,12 +16,16 @@
   position: relative;
 }
 
+/* Rejilla fija: avatar y texto, 72 px de alto en todas las filas. El texto
+   se corta con puntos suspensivos; nunca ensancha la fila. */
 .conversaciones__item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--e3);
   padding: var(--e2) var(--e4);
-  min-block-size: 72px;
+  block-size: 72px;
+  box-sizing: border-box;
   color: inherit;
   text-decoration: none;
   transition: background var(--mov-rapido) var(--curva);
@@ -30,6 +34,10 @@
 .conversaciones__item:hover,
 .conversaciones__item:focus-visible {
   background: var(--sup-inset);
+}
+
+.conversaciones__item:active {
+  background: var(--bg-active);
 }
 
 /* La abierta se marca con fondo **y** con la barra de marca: el fondo solo es
@@ -160,6 +168,16 @@
   font-size: var(--fs-overline);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  /* ALOVIDA Pulse · lo que espera respuesta late dos veces al aparecer y se
+     posa. El contador no se anima: sólo el aro. */
+  animation: pulse-ring 1.6s var(--pulse-ease) 2 both;
+  --pulse-aura: color-mix(in srgb, var(--chat-no-leido) 65%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conversaciones__sin-leer {
+    animation: none;
+  }
 }
 
 .conversaciones__fila.is-sin-leer .conversaciones__texto-previa,
@@ -200,6 +218,12 @@
 .conversaciones__fila:focus-within .conversaciones__mas,
 .conversaciones__mas[aria-expanded='true'] {
   opacity: 1;
+}
+
+@media (hover: none), (max-width: 60rem) {
+  .conversaciones__mas {
+    opacity: 0.85;
+  }
 }
 
 .conversaciones__mas svg {
@@ -247,4 +271,15 @@
     inline-size: 32px;
     block-size: 32px;
   }
+}
+
+/* El ícono de «bloqueado», al lado de la hora y las marcas de la fila. */
+.conversaciones__bloqueada {
+  display: inline-flex;
+  color: var(--tinta-3);
+}
+
+.conversaciones__bloqueada svg {
+  inline-size: 15px;
+  block-size: 15px;
 }
