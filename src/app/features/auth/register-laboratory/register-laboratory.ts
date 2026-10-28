@@ -472,8 +472,9 @@ export class RegisterLaboratory {
         clave: 'documentos',
         icon: 'folder' as const,
         hint: 'Opcionales: puede adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
-        // Los seis, en el orden del registro de procesos: el motor parte la
-        // página sola en «(1 de 2)» y «(2 de 2)».
+        // Los papeles, en el orden del registro de procesos y en UNA sola
+        // vista: partirlos en «(1 de 2)» y «(2 de 2)» escondía la mitad.
+        sinPartir: true,
         campos: legalDocumentsFields(PAIS, uiLanguage(), false),
       },
       {
