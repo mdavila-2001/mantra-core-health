@@ -20,6 +20,7 @@ import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * Cómo se llama cada categoría **en lenguaje llano**.
@@ -103,7 +104,7 @@ const PUSH_NOTICES: Record<Exclude<WebPushOutcome, 'enabled'>, string> = {
 
 @Component({
   selector: 'app-notification-preferences',
-  imports: [Alert, AppButton, FormsModule, NavIcon, Switch],
+  imports: [Alert, AppButton, FormsModule, NavIcon, Switch, LoadingState],
   templateUrl: './notification-preferences.html',
   styleUrl: './notification-preferences.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

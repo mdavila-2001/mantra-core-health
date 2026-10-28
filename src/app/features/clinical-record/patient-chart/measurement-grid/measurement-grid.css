@@ -24,15 +24,6 @@
   line-height: var(--lh-caption);
 }
 
-.cuadricula__cargando {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-}
-
 /* ─── El vacío orienta: dice qué es una columna y qué hacer ahora ────────── */
 
 .cuadricula__vacio {

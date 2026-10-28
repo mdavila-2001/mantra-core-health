@@ -16,7 +16,11 @@
 
     @switch (estado().status) {
       @case ('loading') {
-        <p class="pagos__secundario" data-testid="pagos-cargando">Buscando los pagos…</p>
+        <app-loading-state
+          class="pagos__secundario"
+          data-testid="pagos-cargando"
+          message="Buscando los pagos…"
+        />
       }
       @case ('forbidden') {
         <!-- S5, separado de S3 a propósito: «no pagó nada» y «no podés ver lo

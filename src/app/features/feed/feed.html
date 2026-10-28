@@ -14,7 +14,7 @@
 <div class="muro">
   <main class="muro__centro">
     @if (!perfilResuelto()) {
-      <p class="muro__cargando" role="status">Cargando su muro…</p>
+      <app-loading-state class="muro__cargando" message="Cargando su muro…" />
     } @else if (perfil() === null) {
       <!-- Una puerta, no un error: el muro necesita un perfil público, que es una
            entidad aparte del perfil de paciente que trae la sesión. -->

@@ -123,7 +123,10 @@
     }
 
     @if (buscando()) {
-      <p class="tutorial-globo__espera" role="status">Buscando el elemento en la pantalla…</p>
+      <app-loading-state
+        class="tutorial-globo__espera"
+        message="Buscando el elemento en la pantalla…"
+      />
     }
 
     <div class="tutorial-globo__acciones">

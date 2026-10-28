@@ -14,7 +14,7 @@
 }
 
 @if (loading()) {
-  <p class="prefs__cargando" role="status">Cargando sus preferencias…</p>
+  <app-loading-state class="prefs__cargando" message="Cargando sus preferencias…" />
 } @else {
   <section class="prefs__bloque">
     <h3 class="prefs__titulo">Qué avisos recibe</h3>
