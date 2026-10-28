@@ -1,8 +1,10 @@
 <div class="origen" data-testid="search-origin-picker">
   @if (places() === null) {
-    <p class="origen__nota" role="status" data-testid="search-origin-status">
-      Buscando sus lugares guardados…
-    </p>
+    <app-loading-state
+      class="origen__nota"
+      data-testid="search-origin-status"
+      message="Buscando sus lugares guardados…"
+    />
   } @else if (hasSavedPlace()) {
     <app-segmented-control
       [options]="options()"
@@ -11,9 +13,11 @@
       (valueChange)="elegir($event)"
     />
     @if (locating()) {
-      <p class="origen__nota" role="status" data-testid="search-origin-status">
-        Buscando su ubicación actual…
-      </p>
+      <app-loading-state
+        class="origen__nota"
+        data-testid="search-origin-status"
+        message="Buscando su ubicación actual…"
+      />
     }
     @if (denied()) {
       <app-alert tone="warning" data-testid="search-origin-status">

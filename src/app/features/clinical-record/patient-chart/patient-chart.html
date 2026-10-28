@@ -412,7 +412,7 @@
           Formularios, procedimientos y estudios del encuentro
         </h3>
         @if (estado.status === 'loading') {
-          <p class="expediente__secundario" role="status">Buscando los formularios…</p>
+          <app-loading-state class="expediente__secundario" message="Buscando los formularios…" />
         } @else if (errorDeFormularios(); as mensaje) {
           <app-alert tone="error" title="No pudimos leer los formularios">
             {{ mensaje }}

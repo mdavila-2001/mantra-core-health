@@ -40,6 +40,7 @@ import { AGENDA_CREATE_ROUTE, AGENDA_ROUTE } from '../agenda.routes';
 import { toBookingStatusPresentation, type BookingStatusPresentation } from '../booking-status';
 import { awaitsResponse, loadServiceBookings, SERVICE_BOOKINGS_WEEKS } from './service-bookings';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Donde se marca qué atiende cada franja: la columna «Atiendo» del horario. */
 export const SCHEDULE_EDIT_ROUTE = `${AGENDA_ROUTE}/edit`;
@@ -124,6 +125,7 @@ export function servicesRulesOf(templates: readonly PublishedTemplate[]): {
     ScheduleGrid,
     StatusSeal,
     ViewStateHost,
+    LoadingState,
   ],
   templateUrl: './services-schedule.html',
   styleUrl: './services-schedule.css',
