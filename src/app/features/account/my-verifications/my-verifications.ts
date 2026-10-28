@@ -44,6 +44,8 @@ import {
 interface Datos {
   readonly perfil: OwnPractitionerProfile;
   readonly etiquetas: ConceptLabels;
+  /** No se pudieron leer los estados: los sellos dicen «Sin dato» y se avisa. */
+  readonly etiquetasFallidas: boolean;
   /** `null` si la lectura falló: la hoja de ruta lo dice en vez de esconderlo. */
   readonly seguros: readonly InsurerRequest[] | null;
   /** `null` si no se pudo leer: el campo para pedir otra lo explica. */
@@ -172,6 +174,9 @@ export class MyVerifications {
   /** Falló la lectura de las solicitudes a aseguradoras (no es que no haya). */
   protected readonly segurosIlegibles = computed(() => this.datos()?.seguros === null);
 
+  /** Falló la lectura de los estados del catálogo: se avisa, no se calla. */
+  protected readonly etiquetasIlegibles = computed(() => this.datos()?.etiquetasFallidas === true);
+
   protected readonly aseguradoraNueva = signal<string | null>(null);
   protected readonly enviando = signal(false);
   protected readonly avisoDeEnvio = signal<{
@@ -205,14 +210,21 @@ export class MyVerifications {
         forkJoin({
           etiquetas: this.terminology
             .readConceptLabels(conceptosDe(perfil))
-            .pipe(catchError(() => of<ConceptLabels>(new Map()))),
+            .pipe(catchError(() => of<ConceptLabels | null>(null))),
           seguros: this.insurerRequests
             .listMine()
             .pipe(catchError(() => of<readonly InsurerRequest[] | null>(null))),
           catalogo: this.insurance
             .listCarrierCatalog()
             .pipe(catchError(() => of<readonly CarrierCatalogEntry[] | null>(null))),
-        }).pipe(map((resto) => ({ perfil, ...resto }))),
+        }).pipe(
+          map(({ etiquetas, ...resto }) => ({
+            perfil,
+            ...resto,
+            etiquetas: etiquetas ?? new Map(),
+            etiquetasFallidas: etiquetas === null,
+          })),
+        ),
       ),
     );
   }
@@ -254,7 +266,7 @@ export class MyVerifications {
           { tono: 'success', texto: `Retiró su solicitud a ${hilo.counterpart}.` },
           hilo.id,
         ),
-      error: (error: unknown) => this.fallo(error, hilo.id),
+      error: (error: unknown) => this.fallo(error, 'retirar', hilo.id),
     });
   }
 
@@ -267,7 +279,7 @@ export class MyVerifications {
         this.aseguradoraNueva.set(null);
         this.releerSeguros({ tono: 'success', texto: exito }, abrir);
       },
-      error: (error: unknown) => this.fallo(error, abrir),
+      error: (error: unknown) => this.fallo(error, 'pedir', abrir),
     });
   }
 
@@ -302,12 +314,17 @@ export class MyVerifications {
   }
 
   /**
-   * La escritura no se hizo. Un 409 (ya estaba viva) o un 422 (la aseguradora
-   * respondió entretanto) dicen que lo que se ve está viejo: se relee.
+   * La escritura no se hizo. Cada respuesta dice algo distinto y se lo dice
+   * con sus palabras; las que avisan que lo que se ve está viejo (409, 422)
+   * releen. El 422 significa cosas distintas según la operación: al retirar,
+   * que la aseguradora ya respondió; al pedir, que esa aseguradora ya no
+   * recibe solicitudes (no existe o dejó de estar activa).
    */
-  private fallo(error: unknown, abrir: string | null): void {
+  private fallo(error: unknown, operacion: 'pedir' | 'retirar', abrir: string | null): void {
     const estado = error instanceof HttpErrorResponse ? error.status : 0;
     if (estado === 409) {
+      // Ya estaba viva: lo elegido deja de ofrecerse, y no queda elegido.
+      this.aseguradoraNueva.set(null);
       this.releerSeguros(
         { tono: 'warning', texto: 'Ya tiene una solicitud viva con esa aseguradora.' },
         abrir,
@@ -315,10 +332,14 @@ export class MyVerifications {
       return;
     }
     if (estado === 422) {
+      this.aseguradoraNueva.set(null);
       this.releerSeguros(
         {
           tono: 'warning',
-          texto: 'La aseguradora ya respondió esa solicitud: le mostramos su respuesta.',
+          texto:
+            operacion === 'retirar'
+              ? 'La aseguradora ya respondió esa solicitud: le mostramos su respuesta.'
+              : 'Esa aseguradora no está recibiendo solicitudes en este momento.',
         },
         abrir,
       );
@@ -327,7 +348,10 @@ export class MyVerifications {
     this.enviando.set(false);
     this.avisoDeEnvio.set({
       tono: 'error',
-      texto: 'No pudimos enviar el cambio. Revise su conexión y vuelva a intentarlo.',
+      texto:
+        estado === 0
+          ? 'No pudimos enviar el cambio. Revise su conexión y vuelva a intentarlo.'
+          : `No pudimos completar el cambio (error ${estado}). Vuelva a intentarlo en unos minutos.`,
     });
   }
 }

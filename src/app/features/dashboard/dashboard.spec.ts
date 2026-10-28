@@ -205,6 +205,11 @@ describe('Dashboard', () => {
       expect(franja('panel-profesionales-que-piden')).toBeNull();
     });
 
+    it('con perfil profesional pero sin rol de quien atiende, no se ofrece una puerta que la ruta cierra', () => {
+      crear({ sub: 'u-1', roles: ['INSURANCE_ANALYST'], tenants: ['t-1'], hpid: 'hp-1' });
+      expect(franja('panel-mis-verificaciones')).toBeNull();
+    });
+
     it('la aseguradora activa ve la puerta a los profesionales que piden sumarse', () => {
       crear({
         sub: 'u-1',

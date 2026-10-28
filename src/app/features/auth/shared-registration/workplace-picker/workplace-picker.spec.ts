@@ -3,7 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { WorkplacePicker } from './workplace-picker';
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { aseguradorasInactivas, lugaresDelBorrador, WorkplacePicker } from './workplace-picker';
 
 /**
  * El selector de instituciones y aseguradoras del alta de médico.
@@ -149,10 +151,60 @@ describe('WorkplacePicker', () => {
     expect(vieja.cancelled).toBe(true);
 
     vigente.flush({ items: [RESULTADO], nextCursor: null });
-    expect(interno<() => readonly { value: string }[]>('opciones')().map((o) => o.value)).toEqual(
-      ['clinica-foianini'],
-    );
+    expect(interno<() => readonly { value: string }[]>('opciones')().map((o) => o.value)).toEqual([
+      'clinica-foianini',
+    ]);
     expect(interno<() => boolean>('buscando')()).toBe(false);
+  });
+
+  it('lo restaurado que ya no está en el catálogo no viaja; sin catálogo, no viaja nada', () => {
+    montar();
+    fixture.componentInstance.insurerIds.set(['car-and', 'car-dada-de-baja']);
+    http.expectOne('/insurance-carrier-catalog').flush(CATALOGO);
+    expect(fixture.componentInstance.insurerIds()).toEqual(['car-and']);
+
+    montar();
+    fixture.componentInstance.insurerIds.set(['car-and']);
+    http.expectOne('/insurance-carrier-catalog').flush(null, { status: 503, statusText: 'Caída' });
+    expect(fixture.componentInstance.insurerIds()).toEqual([]);
+  });
+
+  it('con una sola letra no busca: la pista pide dos', () => {
+    montar();
+    http.expectOne('/insurance-carrier-catalog').flush(CATALOGO);
+    interno<(q: string) => void>('buscar')('c');
+    http.expectNone((r) => r.url === '/public/search/organizations');
+  });
+
+  it('el borrador se valida entrada por entrada, no con un `as`', () => {
+    expect(
+      lugaresDelBorrador({
+        institucionesElegidas: [
+          { slug: 'a', name: 'A', city: null, verified: true },
+          { name: 'sin slug' },
+          7,
+        ],
+        aseguradorasElegidas: ['car-and', 3, null],
+      }),
+    ).toEqual({
+      institutions: [{ slug: 'a', name: 'A', city: null, verified: true }],
+      insurerIds: ['car-and'],
+    });
+    expect(lugaresDelBorrador({})).toEqual({ institutions: [], insurerIds: [] });
+  });
+
+  it('un 422 del alta con aseguradoras inactivas dice cuáles quitar', () => {
+    const error = new HttpErrorResponse({
+      status: 422,
+      error: {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'inactiva',
+        details: { carrierIds: ['car-x'] },
+      },
+    });
+    expect(aseguradorasInactivas(error)).toEqual(['car-x']);
+    expect(aseguradorasInactivas(new HttpErrorResponse({ status: 500 }))).toEqual([]);
   });
 
   it('una búsqueda caída avisa sin borrar lo ya elegido', () => {

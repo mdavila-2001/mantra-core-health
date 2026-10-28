@@ -51,7 +51,7 @@
   <!-- Puertas a dos bandejas fuera de los menús cerrados (28/10/2026), debajo
        del saludo para no romper la jerarquía: «Mis verificaciones» para quien
        atiende y los profesionales que piden sumarse para la aseguradora. -->
-  @if (atiendePacientes()) {
+  @if (veMisVerificaciones()) {
     <div class="panel__verificaciones" data-testid="panel-mis-verificaciones">
       <p class="panel__verificaciones-texto">
         Siga el sello de su perfil y las respuestas de las instituciones y aseguradoras a las que
@@ -65,7 +65,7 @@
   @if (veProfesionalesQuePidenSumarse()) {
     <div class="panel__verificaciones" data-testid="panel-profesionales-que-piden">
       <p class="panel__verificaciones-texto">
-        Los profesionales que piden trabajar con su aseguradora esperan su respuesta.
+        Revise a los profesionales que piden trabajar con su aseguradora: aprobar les da su sello.
       </p>
       <a
         app-button

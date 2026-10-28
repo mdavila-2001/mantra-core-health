@@ -7,7 +7,7 @@ import { Alert } from '../../shared/components/molecules/alert/alert';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
-import { APP_SECTIONS } from '../../core/navigation/navigation.map';
+import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from '../../core/navigation/navigation.map';
 import { isVisibleTo, rolesAlcanzan } from '../../core/navigation/navigation.types';
 import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
@@ -120,6 +120,15 @@ export class Dashboard {
    * que se quedaría siempre en el vacío.
    */
   protected readonly atiendePacientes = computed(() => this.auth.practitionerProfileId() !== null);
+
+  /**
+   * «Mis verificaciones» con el mismo criterio que su ruta (rol de quien
+   * atiende) y además perfil profesional: ofrecer una puerta que el guard
+   * cierra sería mandar a la persona de vuelta al panel sin explicación.
+   */
+  protected readonly veMisVerificaciones = computed(
+    () => this.atiendePacientes() && rolesAlcanzan(ROLES_DE_QUIEN_ATIENDE, this.auth.roles()),
+  );
 
   /**
    * La bandeja de la aseguradora está fuera de su menú cerrado: se ofrece acá

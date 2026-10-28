@@ -25,7 +25,7 @@ import { entrar, esperarAplicacionLista, irA } from './support/sesion';
  * dejaba el armazón a medias) y con el ancho real en el nombre
  * (`support/captura.ts`). La ventana es alta para que entre la pantalla.
  */
-test.use({ reducedMotion: 'reduce' });
+test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
 const MEDICA: Actor = {
   rol: 'doctora',

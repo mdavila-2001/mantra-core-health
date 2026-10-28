@@ -54,7 +54,7 @@ test.skip(
 );
 test.setTimeout(240_000);
 // Sin transiciones de vista: la captura tiene que ser de la pantalla destino.
-test.use({ viewport: { width: 1440, height: 1100 }, reducedMotion: 'reduce' });
+test.use({ viewport: { width: 1440, height: 1100 }, contextOptions: { reducedMotion: 'reduce' } });
 
 /**
  * Los errores de consola desde que se llama a `desde()`. Se mide dentro de las
