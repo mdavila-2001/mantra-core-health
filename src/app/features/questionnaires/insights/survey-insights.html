@@ -155,17 +155,19 @@
           <h3 id="resumen-preguntas-titulo" class="resumen__subtitulo">Por pregunta</h3>
           <ul class="preguntas">
             @for (item of preguntas(); track item.pregunta.questionId) {
-              <li class="pregunta" [attr.data-testid]="'resumen-pregunta'">
-                @if (item.combinada) {
-                  <p class="pregunta__rotulo">Consultas y servicios juntos</p>
-                  <p class="pregunta__texto">{{ item.rotulo }}</p>
-                } @else {
-                  <p class="pregunta__rotulo">{{ item.rotulo }}</p>
-                  <p class="pregunta__texto">{{ item.pregunta.text }}</p>
-                }
+              <li
+                class="pregunta"
+                [class.pregunta--suprimida]="item.suprimida"
+                [attr.data-testid]="'resumen-pregunta'"
+              >
+                <p class="pregunta__rotulo">{{ item.rotulo }}</p>
+                <p class="pregunta__texto">{{ item.pregunta.text }}</p>
                 @if (item.resumen; as resumen) {
                   <p class="pregunta__meta">
                     n&nbsp;=&nbsp;{{ resumen.totalRespondida }}
+                    @if (item.combinada) {
+                      · consultas y servicios juntos
+                    }
                     @if (resumen.promedio !== null) {
                       · promedio {{ promedioTexto(resumen.promedio) }}
                       {{ resumen.escala === '0-10' ? 'de 10' : 'de 5' }}
