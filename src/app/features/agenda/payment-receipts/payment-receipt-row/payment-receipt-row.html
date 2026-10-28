@@ -1,0 +1,114 @@
+<!-- La miniatura ES el acceso al visor: es donde se apunta para ver el
+     comprobante. Un botón y no un enlace: abre el visor dentro del modal, no
+     navega. -->
+<button
+  type="button"
+  class="payment-receipt-row__thumbnail"
+  data-testid="payment-receipt-view"
+  [attr.data-kind]="isPdf() ? 'pdf' : 'image'"
+  [attr.aria-label]="'Ver ' + summary()"
+  (click)="viewRequested.emit()"
+>
+  @if (isPdf() || downloadOnly()) {
+    <!-- Un formato que no se muestra lleva el mismo ícono de archivo, sin
+         rótulo: el visor sólo ofrece descargarlo. -->
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+      <path d="M14 3v5h5" />
+    </svg>
+    @if (isPdf()) {
+      <span class="payment-receipt-row__extension" aria-hidden="true">PDF</span>
+    }
+  } @else if (thumbnailUrl(); as url) {
+    <img [src]="url" alt="" />
+  } @else if (thumbnailFailed()) {
+    <!-- Sin miniatura se ve el formato: el visor ofrece reintentar. -->
+    <span class="payment-receipt-row__extension" aria-hidden="true">IMG</span>
+  } @else {
+    <app-skeleton variant="rect" class="payment-receipt-row__thumbnail-skeleton" />
+  }
+</button>
+
+<div class="payment-receipt-row__body">
+  <div class="payment-receipt-row__heading">
+    <!-- El foco vuelve acá cuando la fila pierde sus botones —al confirmar o
+         rechazar—: si no, se iría al documento, fuera del modal. -->
+    <p class="payment-receipt-row__amount" tabindex="-1" data-testid="payment-receipt-amount">
+      {{ amount() ?? 'Sin monto declarado' }}
+    </p>
+    <app-badge size="sm" [variant]="statusVariant()" data-testid="payment-receipt-status">
+      {{ statusLabel() }}
+    </app-badge>
+  </div>
+
+  <dl class="payment-receipt-row__facts">
+    <div>
+      <dt>Fecha de pago</dt>
+      <dd>
+        @if (receipt().paidAt; as paidAt) {
+          {{ paidAt | date: 'dd/MM/yyyy' }}
+        } @else {
+          No la indicó
+        }
+      </dd>
+    </div>
+    <div>
+      <dt>Subido</dt>
+      <dd>
+        {{ receipt().uploadedBy.displayName }}, el
+        {{ receipt().uploadedAt | date: "dd/MM/yyyy 'a las' HH:mm" }}
+      </dd>
+    </div>
+    @if (receipt().note; as note) {
+      <div class="payment-receipt-row__wide">
+        <dt>Nota</dt>
+        <dd>{{ note }}</dd>
+      </div>
+    }
+    @if (receipt().reviewedBy; as reviewer) {
+      <div class="payment-receipt-row__wide">
+        <dt>{{ receipt().status === 'REJECTED' ? 'Rechazado por' : 'Confirmado por' }}</dt>
+        <dd>
+          {{ reviewer.displayName }}@if (receipt().reviewedAt; as reviewedAt) {<span>, el {{ reviewedAt | date: "dd/MM/yyyy 'a las' HH:mm" }}</span>}
+        </dd>
+      </div>
+    }
+    @if (receipt().rejectionReason; as reason) {
+      <div class="payment-receipt-row__wide">
+        <dt>Motivo del rechazo</dt>
+        <dd data-testid="payment-receipt-rejection-reason">{{ reason }}</dd>
+      </div>
+    }
+  </dl>
+
+  @if (showActions()) {
+    <div class="payment-receipt-row__actions">
+      @if (canConfirm()) {
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          data-testid="payment-receipt-confirm"
+          [attr.aria-label]="'Confirmar ' + summary()"
+          [isLoading]="confirming()"
+          [disabled]="disabled()"
+          (clicked)="confirmRequested.emit()"
+        >
+          Confirmar
+        </button>
+      }
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        data-testid="payment-receipt-reject"
+        [attr.aria-label]="'Rechazar ' + summary()"
+        [disabled]="disabled()"
+        (clicked)="rejectRequested.emit()"
+      >
+        Rechazar
+      </button>
+    </div>
+  }
+</div>

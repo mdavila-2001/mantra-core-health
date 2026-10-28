@@ -170,8 +170,7 @@
             />
 
             @if (turnoEnDetalle(); as turno) {
-              <!-- El mismo detalle que abre la lista: un turno elegido en el
-                   calendario ofrece exactamente las mismas acciones. -->
+              <!-- El mismo detalle que abre la lista: un turno elegido en el calendario ofrece exactamente las mismas acciones. -->
               <article class="turnos__detalle" data-testid="turnos-detalle">
                 <h3 class="turnos__detalle-titulo">
                   @if (turno.cuando !== null) {
@@ -249,6 +248,7 @@
                     </button>
                   }
                 </div>
+                <app-booking-payment-receipts [bookingId]="turno.id" [statusCode]="turno.codigo" />
               </article>
             }
           } @else {
