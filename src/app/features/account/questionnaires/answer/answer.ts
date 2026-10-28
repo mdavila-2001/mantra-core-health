@@ -225,7 +225,7 @@ export class QuestionnaireAnswer {
 
   /** «Ahora no», o cuando no hay reseña que ofrecer: de vuelta a la lista. */
   protected volverALaLista(): void {
-    void this.router.navigateByUrl(MIS_CUESTIONARIOS_ROUTE);
+    void this.router.navigateByUrl(`${MIS_CUESTIONARIOS_ROUTE}?seccion=encuestas`);
   }
 
   /** «Dejar una reseña»: abre el diálogo con la atención ya elegida. */

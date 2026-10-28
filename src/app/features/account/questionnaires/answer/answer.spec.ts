@@ -177,7 +177,7 @@ describe('QuestionnaireAnswer', () => {
         .flush({ ...RESEÑABLE, canReview: false, alreadyReviewed: true });
 
       expect(oferta()).toBeNull();
-      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires');
+      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires?seccion=encuestas');
     });
 
     it('si la consulta FALLA, no muestra nada y navega como hoy', () => {
@@ -187,7 +187,7 @@ describe('QuestionnaireAnswer', () => {
         .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
 
       expect(oferta()).toBeNull();
-      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires');
+      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires?seccion=encuestas');
     });
 
     it('si la atención no existe para el servidor (404), tampoco molesta', () => {
@@ -197,7 +197,7 @@ describe('QuestionnaireAnswer', () => {
         .flush({ message: 'no' }, { status: 404, statusText: 'Not Found' });
 
       expect(oferta()).toBeNull();
-      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires');
+      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires?seccion=encuestas');
     });
 
     it('«Ahora no» vuelve a la lista y no escribe ninguna reseña', () => {
@@ -207,7 +207,7 @@ describe('QuestionnaireAnswer', () => {
 
       raiz().querySelector<HTMLButtonElement>('[data-testid="responder-resena-ahora-no"]')?.click();
 
-      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires');
+      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires?seccion=encuestas');
       http.expectNone(RESEÑA);
     });
 
@@ -241,7 +241,7 @@ describe('QuestionnaireAnswer', () => {
       });
       reseña.flush({ id: 'r-1', overallRating: 5, verified: true });
 
-      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires');
+      expect(navegar).toHaveBeenCalledWith('/my-account/questionnaires?seccion=encuestas');
     });
 
     it('cerrar el diálogo sin publicar deja la oferta a la vista', () => {
