@@ -268,7 +268,7 @@ test('paciente sube un comprobante, la médica rechaza uno y confirma otro, y la
   await expect(dialog).toHaveCount(0);
   const dayActions = page.getByTestId('dia-acciones').filter({ has: paymentButton(page) });
   await expect(dayActions.getByTestId('payment-state-badge')).toHaveText('Pagada');
-  await snapshotMatrix(page, () => dayActions, 'practitioner-agenda-paid-badge');
+  await snapshotMatrix(page, () => dayActions, 'practitioner-schedule-paid-badge');
   await signOut(page);
 
   // 3 · La paciente ve el motivo del rechazado, y que ya no hace falta otro.
