@@ -181,6 +181,15 @@
   stroke-dasharray: 6 4;
 }
 
+/* Del color del lienzo: corta la línea que pasa por debajo en cada cruce. */
+.recorrido__halo {
+  fill: none;
+  stroke: var(--bg-inset);
+  stroke-width: 6;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+}
+
 .recorrido__punta {
   fill: var(--st-success-fg);
 }
@@ -257,7 +266,8 @@
 .recorrido__intervalo {
   position: absolute;
   inset-block-end: 2px;
-  inset-inline-start: calc(var(--sp-8) * -1);
+  /* El centro del pasillo lo fija la plantilla: el pasillo se ensancha
+     cuando bajan muchas indicaciones. */
   translate: -50% 0;
   padding: 0 var(--sp-2);
   border-radius: var(--r-full);

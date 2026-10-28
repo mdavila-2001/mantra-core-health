@@ -136,6 +136,16 @@
             />
           }
           @for (arista of plano().aristas; track arista.clave) {
+            <!-- El halo: un trazo ancho del color del fondo por debajo de cada
+                 indicación. Donde dos se cruzan, la de arriba corta a la de
+                 abajo y el cruce se lee como un puente, no como un empalme. -->
+            @if (arista.motivo === 'indicacion') {
+              <path
+                class="recorrido__halo"
+                [class.recorrido__arista--atenuada]="aristaAtenuada(arista.clave)"
+                [attr.d]="arista.trazo"
+              />
+            }
             <path
               class="recorrido__arista"
               [class.recorrido__arista--atencion]="arista.motivo === 'atencion'"
@@ -159,7 +169,11 @@
             >
               <div class="recorrido__cabecera" [style.height.px]="medidas.altoCabecera">
                 @if (columna.intervalo !== '') {
-                  <span class="recorrido__intervalo" aria-hidden="true">
+                  <span
+                    class="recorrido__intervalo"
+                    [style.inset-inline-start.px]="-columna.hueco / 2"
+                    aria-hidden="true"
+                  >
                     {{ columna.intervalo === 'el mismo día' ? columna.intervalo : '+ ' + columna.intervalo }}
                   </span>
                 }

@@ -138,6 +138,12 @@ export interface ColumnaUbicada {
   readonly contexto: 'atencion' | 'dia' | 'sin-atencion';
   /** Cuánto pasó desde la columna anterior, en palabras; vacío en la primera. */
   readonly intervalo: string;
+  /**
+   * El ancho del pasillo entre esta columna y la anterior (0 en la primera).
+   * No es fijo: se ensancha cuando por él bajan más indicaciones de las que
+   * entran en el ancho de siempre.
+   */
+  readonly hueco: number;
   readonly nodos: readonly NodoUbicado[];
 }
 
@@ -164,7 +170,15 @@ export interface AristaUbicada extends AristaDelRecorrido {
   readonly clave: string;
   /** El atributo `d` del `<path>`. */
   readonly trazo: string;
+  /**
+   * Los vértices del recorrido ortogonal de una indicación, antes de
+   * redondear las esquinas. Las pruebas los usan para comprobar que dos
+   * indicaciones no compartan un tramo y que ninguna pase por una tarjeta.
+   */
+  readonly puntos?: readonly Punto[];
 }
+
+export type Punto = readonly [number, number];
 
 export interface RecorridoUbicado {
   readonly ancho: number;
@@ -354,7 +368,79 @@ export function ubicarRecorrido(
     }
   }
 
-  /* 3 · Los carriles: cada uno tan alto como su celda más llena. */
+  /* 3 · Las indicaciones, antes de ubicar nada: cuántas cruzan sobre cada
+     fila decide cuánto aire hace falta encima de esa fila. */
+  const posicion = new Map<string, { columna: number; tipo: TipoDelRecorrido; fila: number }>();
+  ordenadas.forEach(([clave], columna) => {
+    for (const tipo of tiposPresentes) {
+      (celdas.get(claveDeCelda(clave, tipo)) ?? []).forEach((nodo, fila) =>
+        posicion.set(nodo.id, { columna, tipo, fila }),
+      );
+    }
+  });
+  const indicaciones: {
+    readonly arista: AristaDelRecorrido;
+    readonly clave: string;
+    readonly desde: { columna: number; tipo: TipoDelRecorrido; fila: number };
+    readonly hasta: { columna: number; tipo: TipoDelRecorrido; fila: number };
+  }[] = [];
+  const atenciones: { readonly arista: AristaDelRecorrido; readonly clave: string }[] = [];
+  const yaVistas = new Set<string>();
+  for (const original of aristas) {
+    const arista: AristaDelRecorrido = {
+      ...original,
+      desde: representante.get(original.desde) ?? original.desde,
+      hasta: representante.get(original.hasta) ?? original.hasta,
+    };
+    const desde = posicion.get(arista.desde);
+    const hasta = posicion.get(arista.hasta);
+    const clave = `${arista.motivo}:${arista.desde}>${arista.hasta}`;
+    if (desde === undefined || hasta === undefined || arista.desde === arista.hasta || yaVistas.has(clave)) {
+      continue;
+    }
+    yaVistas.add(clave);
+    if (arista.motivo === 'indicacion') {
+      indicaciones.push({ arista, clave, desde, hasta });
+    } else {
+      atenciones.push({ arista, clave });
+    }
+  }
+
+  // El cruce de cada indicación entre columnas: una altura propia sobre la
+  // fila de su receta. Las que van más lejos, más arriba: así pasan por
+  // encima de la bajada de las que entran antes, en vez de cortarla.
+  const cruces = new Map<string, number>();
+  const porFila = new Map<string, typeof indicaciones>();
+  for (const ind of indicaciones) {
+    if (ind.desde.columna === ind.hasta.columna) {
+      continue;
+    }
+    const fila = `${ind.hasta.tipo}|${ind.hasta.fila}`;
+    porFila.set(fila, [...(porFila.get(fila) ?? []), ind]);
+  }
+  const extraSobreFila = new Map<string, number>();
+  for (const [fila, grupo] of porFila) {
+    [...grupo]
+      .sort(
+        (a, b) =>
+          Math.abs(a.hasta.columna - a.desde.columna) - Math.abs(b.hasta.columna - b.desde.columna) ||
+          a.clave.localeCompare(b.clave),
+      )
+      .forEach((ind, carril) => cruces.set(ind.clave, carril));
+    const necesario = 2 * MARGEN_DE_CRUCE + (grupo.length - 1) * PASO_DE_CARRIL;
+    const base = fila.endsWith('|0') ? m.rellenoCarril : m.separacionNodos;
+    extraSobreFila.set(fila, Math.max(0, necesario - base));
+  }
+  const extraHasta = (tipo: TipoDelRecorrido, fila: number): number => {
+    let suma = 0;
+    for (let f = 0; f <= fila; f++) {
+      suma += extraSobreFila.get(`${tipo}|${f}`) ?? 0;
+    }
+    return suma;
+  };
+
+  /* 4 · Los carriles: cada uno tan alto como su celda más llena, más el aire
+     que pidan sus cruces. */
   const maximoPorTipo = new Map<TipoDelRecorrido, number>();
   for (const [clave] of ordenadas) {
     for (const tipo of tiposPresentes) {
@@ -371,30 +457,88 @@ export function ubicarRecorrido(
       m.altoRotuloCarril +
       m.rellenoCarril * 2 +
       maximo * m.altoNodo +
-      (maximo - 1) * m.separacionNodos;
+      (maximo - 1) * m.separacionNodos +
+      extraHasta(tipo, maximo - 1);
     carriles.push({ tipo, y, alto, cantidad: nodos.filter((n) => n.tipo === tipo).length });
     y += alto;
   }
   const yDelCarril = new Map(carriles.map((c) => [c.tipo, c.y]));
+  const yDeFila = (tipo: TipoDelRecorrido, fila: number): number =>
+    (yDelCarril.get(tipo) ?? 0) +
+    m.altoRotuloCarril +
+    m.rellenoCarril +
+    fila * (m.altoNodo + m.separacionNodos) +
+    extraHasta(tipo, fila);
 
-  /* 4 · Las columnas con sus nodos. */
+  /* 5 · Los tramos verticales de las indicaciones, por pasillo. Cada columna
+     tiene a su derecha un pasillo; ahí bajan las indicaciones que salen de
+     ella (y los corchetes de la misma columna), y ahí entran por la derecha
+     las que van hacia atrás. Dos tramos comparten carril sólo si no se
+     solapan en altura. */
+  const yDe = (p: { tipo: TipoDelRecorrido; fila: number }): number => yDeFila(p.tipo, p.fila);
+  const cruceDe = (ind: (typeof indicaciones)[number]): number =>
+    yDe(ind.hasta) - MARGEN_DE_CRUCE - (cruces.get(ind.clave) ?? 0) * PASO_DE_CARRIL;
+  const tramos: { columna: number; desde: number; hasta: number; clave: string; rol: 'sale' | 'entra' }[] = [];
+  for (const ind of indicaciones) {
+    const y0 = yDe(ind.desde) + m.altoNodo / 2;
+    const y1 = yDe(ind.hasta) + m.altoNodo / 2;
+    if (ind.desde.columna === ind.hasta.columna) {
+      tramos.push({ columna: ind.desde.columna, desde: Math.min(y0, y1), hasta: Math.max(y0, y1), clave: ind.clave, rol: 'sale' });
+      continue;
+    }
+    const cruce = cruceDe(ind);
+    tramos.push({ columna: ind.desde.columna, desde: Math.min(y0, cruce), hasta: Math.max(y0, cruce), clave: ind.clave, rol: 'sale' });
+    if (ind.hasta.columna < ind.desde.columna) {
+      const entrada = yDe(ind.hasta) + m.altoNodo * 0.3;
+      tramos.push({ columna: ind.hasta.columna, desde: cruce, hasta: entrada, clave: ind.clave, rol: 'entra' });
+    }
+  }
+  const carrilDelTramo = new Map<string, number>();
+  const carrilesPorPasillo = new Map<number, number>();
+  for (let columna = 0; columna < ordenadas.length; columna++) {
+    // Los más profundos, adentro: así la salida horizontal de uno no corta la
+    // bajada de otro que sigue más abajo.
+    const delPasillo = tramos
+      .filter((t) => t.columna === columna)
+      .sort((a, b) => b.hasta - a.hasta || a.clave.localeCompare(b.clave));
+    const ocupados: { desde: number; hasta: number }[][] = [];
+    for (const tramo of delPasillo) {
+      let carril = ocupados.findIndex((enUso) =>
+        enUso.every((o) => tramo.hasta + PASO_DE_CARRIL < o.desde || tramo.desde - PASO_DE_CARRIL > o.hasta),
+      );
+      if (carril === -1) {
+        carril = ocupados.length;
+        ocupados.push([]);
+      }
+      ocupados[carril].push(tramo);
+      carrilDelTramo.set(`${tramo.clave}|${tramo.rol}`, carril);
+    }
+    carrilesPorPasillo.set(columna, ocupados.length);
+  }
+
+  /* 6 · Las columnas con sus nodos. El pasillo entre dos columnas se
+     ensancha si los carriles de la izquierda no entran antes del tronco de
+     las atenciones de la derecha. */
+  const huecoTras = (columna: number): number =>
+    Math.max(
+      m.separacionColumnas,
+      INICIO_DEL_PASILLO + Math.max(0, (carrilesPorPasillo.get(columna) ?? 0) - 1) * PASO_DE_CARRIL + 32,
+    );
+  const xDeColumna: number[] = [];
+  ordenadas.forEach((_, indice) => {
+    xDeColumna.push(
+      indice === 0 ? m.margenLateral : xDeColumna[indice - 1] + m.anchoColumna + huecoTras(indice - 1),
+    );
+  });
+
   const ubicados: NodoUbicado[] = [];
   const columnas: ColumnaUbicada[] = ordenadas.map(([clave, grupo], indice) => {
-    const x = m.margenLateral + indice * (m.anchoColumna + m.separacionColumnas);
+    const x = xDeColumna[indice];
     const nodosDeLaColumna: NodoUbicado[] = [];
     for (const tipo of tiposPresentes) {
       const delTipo = celdas.get(claveDeCelda(clave, tipo)) ?? [];
-      delTipo.forEach((nodo, i) => {
-        const ubicado: NodoUbicado = {
-          ...nodo,
-          columna: indice,
-          x,
-          y:
-            (yDelCarril.get(tipo) ?? 0) +
-            m.altoRotuloCarril +
-            m.rellenoCarril +
-            i * (m.altoNodo + m.separacionNodos),
-        };
+      delTipo.forEach((nodo, fila) => {
+        const ubicado: NodoUbicado = { ...nodo, columna: indice, x, y: yDeFila(tipo, fila) };
         nodosDeLaColumna.push(ubicado);
         ubicados.push(ubicado);
       });
@@ -413,49 +557,64 @@ export function ubicarRecorrido(
             : 'sin-atencion',
       intervalo:
         anterior === null || grupo.fecha === null ? '' : describirIntervalo(anterior, grupo.fecha),
+      hueco: indice === 0 ? 0 : x - xDeColumna[indice - 1] - m.anchoColumna,
       nodos: nodosDeLaColumna,
     };
   });
 
-  /* 5 · Las conexiones. Sólo entre nodos dibujados: un extremo filtrado se
-     calla, y uno agrupado se conecta a su grupo (una sola vez). */
+  /* 7 · Las conexiones. */
   const ubicadoPorId = new Map(ubicados.map((n) => [n.id, n]));
+  const xDelCarril = (columna: number, carril: number): number =>
+    xDeColumna[columna] + m.anchoColumna + INICIO_DEL_PASILLO + carril * PASO_DE_CARRIL;
   const trazadas: AristaUbicada[] = [];
-  const yaTrazadas = new Set<string>();
-  // Cada indicación tiene su carril: una bajada, un cruce y una curva propios.
-  // Con dos diagnósticos tratados, compartirlos juntaba las líneas en una sola
-  // y no se sabía qué receta iba con qué diagnóstico.
-  let indicaciones = 0;
-  for (const original of aristas) {
-    const arista: AristaDelRecorrido = {
-      ...original,
-      desde: representante.get(original.desde) ?? original.desde,
-      hasta: representante.get(original.hasta) ?? original.hasta,
-    };
-    const desde = ubicadoPorId.get(arista.desde);
-    const hasta = ubicadoPorId.get(arista.hasta);
-    const clave = `${arista.motivo}:${arista.desde}>${arista.hasta}`;
-    if (desde === undefined || hasta === undefined || desde === hasta || yaTrazadas.has(clave)) {
-      continue;
-    }
-    yaTrazadas.add(clave);
+  for (const { arista, clave } of atenciones) {
     trazadas.push({
       ...arista,
       clave,
-      trazo:
-        arista.motivo === 'atencion'
-          ? trazoDeAtencion(desde, hasta)
-          : trazoDeIndicacion(desde, hasta, indicaciones++),
+      trazo: trazoDeAtencion(ubicadoPorId.get(arista.desde)!, ubicadoPorId.get(arista.hasta)!),
     });
   }
+  for (const ind of indicaciones) {
+    const desde = ubicadoPorId.get(ind.arista.desde)!;
+    const hasta = ubicadoPorId.get(ind.arista.hasta)!;
+    const sale = desde.x + m.anchoColumna;
+    const y0 = desde.y + m.altoNodo / 2;
+    const bajada = xDelCarril(ind.desde.columna, carrilDelTramo.get(`${ind.clave}|sale`) ?? 0);
+    let puntos: Punto[];
+    if (ind.desde.columna === ind.hasta.columna) {
+      // Un corchete por el pasillo de la derecha.
+      const y1 = hasta.y + m.altoNodo / 2;
+      puntos = [[sale, y0], [bajada, y0], [bajada, y1], [hasta.x + m.anchoColumna, y1]];
+    } else {
+      const cruce = cruceDe(ind);
+      // Entra un poco arriba del centro, para no pisar la rama de su atención.
+      const y1 = hasta.y + m.altoNodo * 0.3;
+      const entra =
+        ind.hasta.columna > ind.desde.columna
+          ? hasta.x - ENTRADA_POR_IZQUIERDA
+          : xDelCarril(ind.hasta.columna, carrilDelTramo.get(`${ind.clave}|entra`) ?? 0);
+      const borde = ind.hasta.columna > ind.desde.columna ? hasta.x : hasta.x + m.anchoColumna;
+      puntos = [[sale, y0], [bajada, y0], [bajada, cruce], [entra, cruce], [entra, y1], [borde, y1]];
+    }
+    trazadas.push({ ...ind.arista, clave: ind.clave, trazo: poligonal(puntos), puntos });
+  }
 
-  const ancho =
-    m.margenLateral * 2 +
-    Math.max(1, columnas.length) * m.anchoColumna +
-    Math.max(0, columnas.length - 1) * m.separacionColumnas;
+  const ultima = xDeColumna.length === 0 ? m.margenLateral : xDeColumna[xDeColumna.length - 1];
+  const pasilloFinal =
+    ordenadas.length === 0 ? 0 : (carrilesPorPasillo.get(ordenadas.length - 1) ?? 0) * PASO_DE_CARRIL;
+  const ancho = ultima + m.anchoColumna + Math.max(m.margenLateral, INICIO_DEL_PASILLO + pasilloFinal + 8);
 
   return { ancho, alto: y + m.rellenoCarril, columnas, carriles, nodos: ubicados, aristas: trazadas };
 }
+
+/** El aire mínimo entre un cruce y una tarjeta, arriba o abajo. */
+const MARGEN_DE_CRUCE = 8;
+/** La distancia entre dos carriles paralelos de indicación. */
+const PASO_DE_CARRIL = 7;
+/** Dónde empieza el pasillo de la derecha de una columna. */
+const INICIO_DEL_PASILLO = 8;
+/** Por dónde entra una indicación a su receta desde la izquierda. */
+const ENTRADA_POR_IZQUIERDA = 10;
 
 /**
  * De la atención a un registro de su misma columna: tronco por el pasillo
@@ -480,78 +639,14 @@ function trazoDeAtencion(desde: NodoUbicado, hasta: NodoUbicado): string {
 }
 
 /**
- * Del diagnóstico a la receta que se indicó para él.
+ * Una poligonal con las esquinas redondeadas, para que el ojo siga una línea.
  *
- * En la misma columna, un corchete por la derecha. Entre columnas, un
- * recorrido **ortogonal** por los huecos: sale del borde del diagnóstico,
- * baja por el pasillo, cruza por la franja libre que hay justo encima de la
- * fila de la receta y entra por su borde. Una curva directa pasaba por detrás
- * de las tarjetas de en medio, y con «Atenciones» filtrado la flecha
- * Hipertensión → Enalapril parecía salir de Atorvastatina: una conexión
- * clínica falsa dibujada por la geometría.
+ * Las indicaciones van así —ortogonales, por los huecos— y no en curva
+ * directa: una curva pasaba por detrás de las tarjetas de en medio, y con
+ * «Atenciones» filtrado la flecha Hipertensión → Enalapril parecía salir de
+ * Atorvastatina, una conexión clínica falsa dibujada por la geometría.
  */
-function trazoDeIndicacion(desde: NodoUbicado, hasta: NodoUbicado, carril: number): string {
-  const m = MEDIDAS;
-  if (desde.columna === hasta.columna) {
-    const x0 = desde.x + m.anchoColumna;
-    const y0 = desde.y + m.altoNodo / 2;
-    const x1 = hasta.x + m.anchoColumna;
-    const y1 = hasta.y + m.altoNodo / 2;
-    // Cada corchete se abre a su distancia: dos en la misma columna no se pisan.
-    const comba = x0 + 10 + (carril % 4) * 5;
-    return `M ${x0} ${y0} C ${comba} ${y0}, ${comba} ${y1}, ${x1} ${y1}`;
-  }
-  return poligonal(puntosDeIndicacion(desde, hasta, carril));
-}
-
-/**
- * Los vértices del recorrido ortogonal entre columnas. Exportado para las
- * pruebas: son las que comprueban que no pase por detrás de ninguna tarjeta.
- */
-export function puntosDeIndicacion(
-  desde: NodoUbicado,
-  hasta: NodoUbicado,
-  carril = 0,
-): readonly (readonly [number, number])[] {
-  const m = MEDIDAS;
-  // Cada carril se corre unos píxeles: la bajada del pasillo, el cruce sobre
-  // la fila y la entrada a la receta. Hasta cuatro indicaciones salen de una
-  // misma columna sin tocarse; el tronco de la atención va más afuera (−24).
-  const bajada = 6 + (carril % 4) * 4;
-  const entrada = 6 + (carril % 4) * 4;
-  const y0 = desde.y + m.altoNodo / 2;
-  // Entra un poco arriba del centro, para no pisar la rama de su atención.
-  const y1 = hasta.y + m.altoNodo * 0.3;
-  // En el hueco sobre la fila de la receta: entre 6 y 14 px por encima, con
-  // un hueco de 20, así que nunca a menos de 6 px de una tarjeta.
-  const cruce = hasta.y - 6 - (carril % 3) * 4;
-  if (hasta.columna > desde.columna) {
-    const sale = desde.x + m.anchoColumna;
-    const entra = hasta.x;
-    return [
-      [sale, y0],
-      [sale + bajada, y0],
-      [sale + bajada, cruce],
-      [entra - entrada, cruce],
-      [entra - entrada, y1],
-      [entra, y1],
-    ];
-  }
-  // Hacia atrás: una receta fechada antes que su diagnóstico.
-  const sale = desde.x;
-  const entra = hasta.x + m.anchoColumna;
-  return [
-    [sale, y0],
-    [sale - bajada, y0],
-    [sale - bajada, cruce],
-    [entra + entrada, cruce],
-    [entra + entrada, y1],
-    [entra, y1],
-  ];
-}
-
-/** Una poligonal con las esquinas redondeadas, para que el ojo siga una línea. */
-function poligonal(puntos: readonly (readonly [number, number])[], radio = 8): string {
+function poligonal(puntos: readonly Punto[], radio = 6): string {
   const partes = [`M ${puntos[0][0]} ${puntos[0][1]}`];
   for (let i = 1; i < puntos.length - 1; i++) {
     const [ax, ay] = puntos[i - 1];
