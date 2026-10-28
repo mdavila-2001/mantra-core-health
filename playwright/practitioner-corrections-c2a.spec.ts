@@ -21,6 +21,11 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  *
  * La paciente no publica agenda: se comprueba que la pantalla no se le ofrece.
  *
+ * La médica del simulador ya tiene un horario publicado, así que la pantalla
+ * se abre para cambiarlo: el encabezado pasa de «Publique su agenda» a «Cambie
+ * su horario» cuando ese horario llega, y la semana viene cargada de lunes a
+ * sábado. Las pruebas no dependen de ninguna de las dos cosas.
+ *
  * Las fotos quedan en `docs/frontend/evidence/correcciones-medico-c2a/`, nunca
  * de página entera: de la pantalla visible o de la pieza que se mira.
  */
@@ -30,12 +35,20 @@ const EVIDENCE_DIR = join('docs', 'frontend', 'evidence', 'correcciones-medico-c
 /** La pantalla, tal como la enlaza «Mi agenda» (`AGENDA_CREATE_ROUTE`). */
 const PUBLISH_ROUTE = '/schedule/new';
 
+/** El encabezado de la pantalla, sin horario publicado y con uno que se cambia. */
+const PUBLISH_HEADING = /^(Publique su agenda|Cambie su horario)$/;
+
 const VIEWPORTS = [
   { name: '360', width: 360, height: 800 },
   { name: '1280', width: 1280, height: 800 },
 ] as const;
 
 const THEMES = ['light', 'dark'] as const;
+
+type Theme = (typeof THEMES)[number];
+
+/** Los siete días de la semana, como los numera la tabla (`agenda-create-dia-N`). */
+const WEEK_DAY_INDEXES = [0, 1, 2, 3, 4, 5, 6] as const;
 
 /**
  * Los dos scripts en línea del «event replay» de Angular bajo SSR, que la CSP
@@ -71,14 +84,38 @@ function watchForProblems(page: Page): string[] {
   return problems;
 }
 
+/**
+ * Abre «Publicar agenda» y espera a que deje de moverse.
+ *
+ * El ancla es el selector «Organización», que está desde el primer pintado; el
+ * horario vigente llega después y cambia el encabezado, por eso se acepta
+ * cualquiera de los dos recién cuando la pantalla se asentó.
+ */
 async function openPublishScreen(page: Page): Promise<void> {
   await page.goto(PUBLISH_ROUTE, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: 'Publique su agenda' })).toBeVisible();
+  await expect(organizationSelect(page)).toBeVisible();
   await esperarAQueSeAsiente(page);
+  await expect(page.getByRole('heading', { level: 1, name: PUBLISH_HEADING })).toBeVisible();
 }
 
 function organizationSelect(page: Page): Locator {
   return page.getByRole('combobox', { name: 'Organización' });
+}
+
+/**
+ * Pasa la aplicación al tema pedido como lo hace la médica: con el conmutador
+ * del encabezado.
+ *
+ * El tema lo fija `ThemeService` en `data-theme` y no sigue a
+ * `prefers-color-scheme`: emular el esquema del sistema dejaba la pantalla
+ * clara y la foto «dark» salía clara. Se comprueba el atributo antes de seguir.
+ */
+async function useTheme(page: Page, theme: Theme): Promise<void> {
+  const root = page.locator('html');
+  if ((await root.getAttribute('data-theme')) !== theme) {
+    await page.getByTestId('header-theme-toggle').click();
+  }
+  await expect(root).toHaveAttribute('data-theme', theme);
 }
 
 function advancedOptionsRow(page: Page): Locator {
@@ -97,10 +134,29 @@ async function choose(page: Page, field: Locator, option: string): Promise<void>
 }
 
 /**
+ * Vacía la semana con «Limpiar campos»: la que viene cargada es el horario
+ * vigente de la médica, de lunes a sábado.
+ */
+async function clearWeek(page: Page): Promise<void> {
+  await page.getByTestId('agenda-create-limpiar').click();
+  const confirmation = page.getByTestId('dialogo').filter({ hasText: 'Limpiar el formulario' });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByTestId('dialogo-confirmar').click();
+  await expect(confirmation).toBeHidden();
+  for (const day of WEEK_DAY_INDEXES) {
+    await expect(
+      page.getByTestId(`agenda-create-dia-${day}`).locator('[data-value="no"]'),
+    ).toHaveAttribute('aria-checked', 'true');
+  }
+}
+
+/**
  * Lunes de consultas, martes de otros servicios y miércoles «Ambos»: los tres
  * tipos de franja en la misma semana, para que la leyenda los muestre todos.
+ * Parte de la semana vacía, así que son las tres únicas franjas.
  */
 async function buildWeekWithEveryKind(page: Page): Promise<void> {
+  await clearWeek(page);
   for (const day of [0, 1, 2]) {
     await page.getByTestId(`agenda-create-dia-${day}`).locator('[data-value="si"]').click();
   }
@@ -162,8 +218,11 @@ test('médica · «Afiliarme a otra organización…» abre la solicitud en un m
   const dialog = page.getByRole('dialog', { name: 'Pedir afiliarme a un centro' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByTestId('request-form')).toBeVisible();
-  // El título se lee una vez: lo dice el modal y el del formulario queda oculto.
-  await expect(dialog.getByText('Pedir afiliarme a un centro', { exact: true })).toHaveCount(1);
+  // El título se lee una vez: lo dice el modal y el del formulario queda oculto
+  // (sigue en el DOM con `display: none`, por eso se cuentan solo los visibles).
+  await expect(
+    dialog.getByText('Pedir afiliarme a un centro', { exact: true }).filter({ visible: true }),
+  ).toHaveCount(1);
   await expect(page).toHaveURL(new RegExp(`${PUBLISH_ROUTE}$`));
 
   for (const vp of [...VIEWPORTS].reverse()) {
@@ -206,7 +265,8 @@ test('médica · «Opciones avanzadas» es una fila plegable, cerrada y abierta'
 
   const row = advancedOptionsRow(page);
   for (const theme of THEMES) {
-    await page.emulateMedia({ colorScheme: theme });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await useTheme(page, theme);
     for (const vp of VIEWPORTS) {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await esperarAQueSeAsiente(page);
@@ -227,7 +287,6 @@ test('médica · «Opciones avanzadas» es una fila plegable, cerrada y abierta'
       await expect(row).toHaveAttribute('aria-expanded', 'false');
     }
   }
-  await page.emulateMedia({ colorScheme: 'light' });
 
   // Con el teclado también: el foco llega a la fila y Enter la abre.
   await row.focus();
@@ -282,9 +341,16 @@ test('médica · la vista previa dice «Lunes» y distingue los tres tipos, tamb
     ]),
   );
 
+  // El conmutador de tema está en el encabezado, detrás del modal: se cierra la
+  // vista previa, se cambia el tema y se vuelve a abrir con la misma semana.
   const panel = dialog.locator('.content-dialog__panel');
   for (const theme of THEMES) {
-    await page.emulateMedia({ colorScheme: theme });
+    await page.getByTestId('agenda-create-previa-volver').click();
+    await expect(dialog).toBeHidden();
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await useTheme(page, theme);
+    await openPreview(page);
+    await expect(blocks).toHaveCount(3);
     for (const vp of VIEWPORTS) {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await esperarAQueSeAsiente(page);
@@ -294,7 +360,6 @@ test('médica · la vista previa dice «Lunes» y distingue los tres tipos, tamb
       await snapshot(panel, `preview-${vp.name}-${theme}`);
     }
   }
-  await page.emulateMedia({ colorScheme: 'light' });
 
   expect(problems, problems.join('\n')).toEqual([]);
 });
@@ -307,7 +372,7 @@ test('paciente · «Publicar agenda» no se le ofrece', async ({ page }) => {
   await page.goto(PUBLISH_ROUTE, { waitUntil: 'domcontentloaded' });
   await esperarAQueSeAsiente(page);
 
-  await expect(page.getByRole('heading', { name: 'Publique su agenda' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: PUBLISH_HEADING })).toHaveCount(0);
   await expect(organizationSelect(page)).toHaveCount(0);
   await snapshot(page, 'patient-no-publish-screen-1280-light');
 
