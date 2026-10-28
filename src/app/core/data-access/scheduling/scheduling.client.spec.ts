@@ -952,3 +952,94 @@ describe('motivoDeReconsulta', () => {
     expect(motivoDeReconsulta('   ')).toBe('Reconsulta');
   });
 });
+
+/**
+ * La organización **como la que se habla**, cuando no es la activa.
+ *
+ * El modal del día agenda en otra organización donde el médico está afiliado.
+ * La API resuelve la organización con `X-Tenant-Id` y rechaza con 403 la
+ * agenda de otra (`assertResourceInActiveTenant`) y el `?tenantId=` de otra
+ * (`TENANT_SCOPE_CONFLICT`). El interceptor pone el de la sesión salvo que la
+ * petición ya traiga uno, así que lo que fijan estas pruebas es que el cliente
+ * lo declare **sólo** cuando se le pide.
+ */
+describe('SchedulingClient · organización declarada', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const APPOINTMENT = {
+    patientProfileId: 'pp-1',
+    resourceId: 'r-olivos',
+    startAt: '2026-10-08T13:00:00.000Z',
+    durationMinutes: 30,
+  } as const;
+
+  const BUSY_TIME = {
+    exceptionType: 'ABSENCE',
+    startAt: '2026-10-08T13:00:00.000Z',
+    endAt: '2026-10-08T14:00:00.000Z',
+    reason: 'Reunión',
+  } as const;
+
+  it('listResources con organización declarada manda su X-Tenant-Id', () => {
+    client.listResources({ tenantId: 't-olivos' }, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/resources');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    expect(req.request.params.get('tenantId')).toBe('t-olivos');
+    req.flush({ items: [], count: 0 });
+  });
+
+  it('listResources sin organización declarada no manda X-Tenant-Id: lo pone la sesión', () => {
+    client.listResources({ tenantId: 't-1' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/resources');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ items: [], count: 0 });
+  });
+
+  it('createDirectAppointment con organización declarada manda su X-Tenant-Id', () => {
+    client.createDirectAppointment(APPOINTMENT, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    // El encabezado no cambia el cuerpo: sigue armado campo por campo.
+    expect(req.request.body).toEqual(APPOINTMENT);
+    req.flush({ bookingId: 'b-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+  });
+
+  it('createDirectAppointment sin organización declarada no manda X-Tenant-Id', () => {
+    client.createDirectAppointment(APPOINTMENT).subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ bookingId: 'b-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+  });
+
+  it('createException con organización declarada manda su X-Tenant-Id', () => {
+    client.createException('r-olivos', BUSY_TIME, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne('/scheduling/resources/r-olivos/exceptions');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    expect(req.request.body).toEqual(BUSY_TIME);
+    req.flush({ id: 'exc-1', blockedSlots: 0 });
+  });
+
+  it('createException sin organización declarada no manda X-Tenant-Id', () => {
+    client.createException('r-1', BUSY_TIME).subscribe();
+
+    const req = http.expectOne('/scheduling/resources/r-1/exceptions');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ id: 'exc-1', blockedSlots: 0 });
+  });
+});
