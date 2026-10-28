@@ -367,8 +367,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
-  questionnaires: () =>
-    import('./features/questionnaires/questionnaires').then((m) => m.SurveysHome),
+  // «Encuestas» y «Formularios» son dos pestañas del mismo centro (28/10/2026):
+  // las dos rutas siguen vivas y dibujan `FormsHub`, que elige la pestaña por la
+  // ruta. La ficha de una encuesta (`questionnaires/:surveyId`) sigue aparte.
+  questionnaires: () => import('./features/forms-hub/forms-hub').then((m) => m.FormsHub),
   'my-account/questionnaires': () =>
     import('./features/account/questionnaires/questionnaires').then((m) => m.Questionnaires),
   glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
@@ -376,7 +378,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // login de nadie y arrastra el motor de formularios por partes para la vista
   // previa. La ruta **no puede llamarse `forms`** — es prefijo del proxy hacia
   // la API y lo verifica `check-route-prefixes.mjs`.
-  'form-builder': () => import('./features/form-builder/form-builder').then((m) => m.FormBuilder),
+  'form-builder': () => import('./features/forms-hub/forms-hub').then((m) => m.FormsHub),
   // Carril 17. Las tres pantallas van diferidas: cada una la alcanza un rol
   // distinto —el administrador del laboratorio, el visitador y el doctor— y
   // ninguna es el destino del login de nadie.

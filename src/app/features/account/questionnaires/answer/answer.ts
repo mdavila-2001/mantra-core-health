@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { timeout } from 'rxjs';
 
+import { CommunityClient } from '../../../../core/data-access/community/community.client';
+import type { ReviewableCare } from '../../../../core/data-access/community/community.types';
+import { PatientSurveyInbox } from '../../../../core/patient-surveys/patient-survey-inbox';
 import { SurveysClient } from '../../../../core/data-access/surveys/surveys.client';
 import type {
   PatientQuestionnaire,
@@ -15,6 +19,7 @@ import { BackLink } from '../../../../shared/components/atoms/back-link/back-lin
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../../shared/components/molecules/card/card';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { SurveyForm } from '../../../../shared/components/organisms/survey-form/survey-form';
@@ -23,7 +28,15 @@ import type {
   ValorDeRespuesta,
 } from '../../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { RateEncounterDialog } from '../../../public-profile/rate-encounter-dialog/rate-encounter-dialog';
 import { MIS_CUESTIONARIOS_ROUTE } from '../questionnaires.routes';
+
+/**
+ * Cuánto se espera, como mucho, la pregunta «¿se puede reseñar esta atención?»
+ * tras enviar la encuesta. Es un extra: si tarda, la persona no se queda
+ * mirando una pantalla detenida; se la lleva a su lista como siempre.
+ */
+const ESPERA_DE_RESENA_MS = 5_000;
 
 /**
  * Responder un cuestionario.
@@ -51,7 +64,17 @@ import { MIS_CUESTIONARIOS_ROUTE } from '../questionnaires.routes';
  */
 @Component({
   selector: 'app-questionnaire-answer',
-  imports: [Alert, AppButton, BackLink, PageHeader, Skeleton, SurveyForm, ViewStateHost],
+  imports: [
+    Alert,
+    AppButton,
+    BackLink,
+    Card,
+    PageHeader,
+    RateEncounterDialog,
+    Skeleton,
+    SurveyForm,
+    ViewStateHost,
+  ],
   templateUrl: './answer.html',
   styleUrl: './answer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,6 +85,8 @@ export class QuestionnaireAnswer {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly navigation = inject(NavigationService);
+  private readonly community = inject(CommunityClient);
+  private readonly bandeja = inject(PatientSurveyInbox);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** A dónde vuelve quien entró a responder: al listado del que salió. */
@@ -85,6 +110,19 @@ export class QuestionnaireAnswer {
   protected readonly faltantes = signal<ReadonlySet<string>>(new Set());
 
   protected readonly enviando = signal(false);
+
+  /**
+   * La atención que se puede reseñar públicamente, si la encuesta recién
+   * enviada la tiene (`canReview`). Con valor, la pantalla ofrece la reseña en
+   * lugar de volver a la lista.
+   *
+   * La encuesta ya está guardada cuando esto se decide: la reseña es **otra
+   * escritura, en otra tabla**, y nada de lo contestado viaja en ella.
+   */
+  protected readonly ofertaDeResena = signal<ReviewableCare | null>(null);
+
+  /** Si el diálogo de la reseña está abierto. */
+  protected readonly resenando = signal(false);
 
   /** Aviso general del intento fallido, si lo hubo. */
   protected readonly avisoFaltantes = computed(() => {
@@ -142,9 +180,10 @@ export class QuestionnaireAnswer {
     this.enviando.set(true);
     this.surveys.submitAnswers(this.invitationId, answers).subscribe({
       next: () => {
-        this.enviando.set(false);
         this.toast.success('Gracias por responder el cuestionario.');
-        void this.router.navigateByUrl(MIS_CUESTIONARIOS_ROUTE);
+        // El ícono de la barra superior cuenta pendientes: una menos.
+        this.bandeja.refrescar();
+        this.ofrecerResena(cuestionario.appointmentBookingId);
       },
       error: (error: unknown) => {
         this.enviando.set(false);
@@ -153,6 +192,57 @@ export class QuestionnaireAnswer {
         this.estado.set(errorToViewState(error));
       },
     });
+  }
+
+  /**
+   * Tras enviar: ¿se puede dejar una reseña pública de esta atención?
+   *
+   * Es una pregunta al servidor (`GET /patients/me/reviewable-care`) porque la
+   * invitación cuelga de una reserva y la reseña exige un encuentro terminado,
+   * una vitrina que acepte reseñas y que no haya reseña previa. Si la pregunta
+   * falla, tarda o responde que no, **no se muestra nada** y se navega como
+   * siempre: la encuesta ya quedó guardada y esto es un extra.
+   */
+  private ofrecerResena(appointmentBookingId: string): void {
+    this.community
+      .getReviewableCare(appointmentBookingId)
+      .pipe(timeout(ESPERA_DE_RESENA_MS))
+      .subscribe({
+        next: (atencion) => {
+          this.enviando.set(false);
+          if (atencion.canReview && atencion.encounterId) {
+            this.ofertaDeResena.set(atencion);
+            return;
+          }
+          this.volverALaLista();
+        },
+        error: () => {
+          this.enviando.set(false);
+          this.volverALaLista();
+        },
+      });
+  }
+
+  /** «Ahora no», o cuando no hay reseña que ofrecer: de vuelta a la lista. */
+  protected volverALaLista(): void {
+    void this.router.navigateByUrl(`${MIS_CUESTIONARIOS_ROUTE}?seccion=encuestas`);
+  }
+
+  /** «Dejar una reseña»: abre el diálogo con la atención ya elegida. */
+  protected abrirResena(): void {
+    this.resenando.set(true);
+  }
+
+  /** Cerró el diálogo sin publicar: la oferta sigue ahí. */
+  protected cerrarResena(): void {
+    this.resenando.set(false);
+  }
+
+  /** La reseña quedó publicada (el diálogo ya lo agradeció): a la lista. */
+  protected resenaPublicada(): void {
+    this.resenando.set(false);
+    this.ofertaDeResena.set(null);
+    this.volverALaLista();
   }
 
   /** Si la pregunta tiene un valor utilizable. */

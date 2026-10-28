@@ -412,6 +412,26 @@
             aria-label="Accesos rápidos"
             appTutorialTarget="header-atajos"
           >
+            <!-- Mis organizaciones (propietario, 28/10/2026): antes «Organización
+                 médica» en el menú lateral. Va primera porque es el contexto
+                 de las demás —dónde se trabaja— y se ofrece sólo a quien la
+                 sección deja entrar (`visibleSections()`, igual que el guard). -->
+            @if (ofreceMisOrganizaciones()) {
+              <a
+                class="app-header__ajustes"
+                routerLinkActive="is-activo"
+                ariaCurrentWhenActive="page"
+                routerLink="/administration/medical-organization"
+                data-testid="header-mis-organizaciones"
+                appTooltip="Mis organizaciones"
+                appTooltipPosition="bottom"
+                aria-label="Mis organizaciones"
+              >
+                <app-nav-icon name="hospital" />
+                <span class="app-header__rapidos-label">Mis organizaciones</span>
+              </a>
+            }
+
             <a
               app-button
               data-variante="secundario"
@@ -458,6 +478,48 @@
             />
           }
         </a>
+
+        <!-- Mis encuestas (propietario, 28/10/2026): la bandeja del paciente.
+             Sólo se ofrece cuando una atención terminada le generó una
+             encuesta (`GET /surveys/me/invitations` devolvió alguna); el número
+             son las pendientes dentro del plazo. Se marca en toda la pantalla
+             «Mis cuestionarios», no sólo con la pestaña de encuestas abierta:
+             por eso ignora los parámetros de consulta. -->
+        @if (ofreceMisEncuestas()) {
+          <a
+            class="app-header__ajustes"
+            routerLinkActive="is-activo"
+            [routerLinkActiveOptions]="{
+              exact: false,
+              paths: 'subset',
+              queryParams: 'ignored',
+              fragment: 'ignored',
+              matrixParams: 'ignored',
+            }"
+            ariaCurrentWhenActive="page"
+            [routerLink]="rutaDeEncuestas"
+            [queryParams]="parametrosDeEncuestas"
+            data-testid="header-encuestas"
+            appTooltip="Mis encuestas"
+            appTooltipPosition="bottom"
+            [attr.aria-label]="etiquetaEncuestas()"
+          >
+            <app-nav-icon name="survey" />
+            <span class="app-header__rapidos-label">Mis encuestas</span>
+            @if (encuestasPendientes() > 0) {
+              <!-- Sin «0» permanente, igual que Chats. Fuera del árbol
+                   accesible: el número ya viaja en el nombre del enlace. -->
+              <app-badge
+                class="app-header__chats-badge"
+                variant="error"
+                size="sm"
+                [value]="encuestasPendientes()"
+                aria-hidden="true"
+                data-testid="header-encuestas-badge"
+              />
+            }
+          </a>
+        }
 
         <!-- Mis facturas (propietario, 30/09/2026): las facturas emitidas, para
              TODAS las cuentas —paciente, médico y organizaciones—, por eso va

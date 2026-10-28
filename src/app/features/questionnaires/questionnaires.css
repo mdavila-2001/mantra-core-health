@@ -10,6 +10,20 @@
     cabecera de la sección.
     ========================================================================== */
 
+.encuestas__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.encuestas__bajada {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 .encuestas__alta {
   display: block;
   margin-block-end: var(--sp-6);
