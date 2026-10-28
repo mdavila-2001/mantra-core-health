@@ -4,19 +4,12 @@ import type {
 } from '../../../../core/data-access/diagnostics/diagnostics.types';
 
 /**
- * Las categorías en castellano, por código estable.
+ * Las prioridades en castellano, por código estable.
  *
  * El catálogo trae su `display` en inglés técnico porque es terminología, no
  * copy de producto, y mapear por **código** —no por uuid— es lo que permite
  * traducir sin atarse a un identificador que un re-seed puede mover.
  */
-export const CATEGORY_LABELS: Readonly<Record<string, string>> = {
-  SR_LAB: 'Laboratorio',
-  SR_IMAGING: 'Imagenología',
-  SR_PROCEDURE: 'Procedimiento',
-};
-
-/** Las prioridades en castellano. Mismo criterio que {@link CATEGORY_LABELS}. */
 export const PRIORITY_LABELS: Readonly<Record<string, string>> = {
   SR_ROUTINE: 'De rutina',
 };
@@ -34,7 +27,7 @@ export interface EstudioEnFicha {
   readonly id: string;
   /** Qué se pidió, en palabras. Nunca el uuid del concepto. */
   readonly estudio: string;
-  /** Laboratorio o imagenología. */
+  /** A quién va: laboratorio, imagen, cardiología, patología, procedimiento u otro. */
   readonly categoria: string;
   readonly estado: string;
   readonly pedidoEl: Date;
