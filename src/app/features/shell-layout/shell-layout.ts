@@ -263,6 +263,18 @@ export class ShellLayout {
     return contiene('/my-account/spending', url) || contiene('/my-account/invoices', url);
   });
 
+  /**
+   * «Mis organizaciones» en la barra superior (propietario, 28/10/2026): sólo
+   * se ofrece a quien la sección deja entrar. Se le pregunta a
+   * `visibleSections()` —la misma lista que el guard— y no a un rol escrito
+   * acá, para que la barra no pueda ofrecer una puerta que el router cierra.
+   */
+  protected readonly ofreceMisOrganizaciones = computed(() =>
+    this.navigation
+      .visibleSections()
+      .some((seccion) => seccion.path === 'administration/medical-organization'),
+  );
+
   /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
   protected readonly etiquetaCarrito = computed(() => {
     const unidades = this.unidadesDelCarrito();

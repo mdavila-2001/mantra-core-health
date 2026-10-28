@@ -8,9 +8,10 @@ import { entrar, estable, irA } from './support/sesion';
 
 /**
  * Evidencia del 28/10/2026: el panel del médico ya no dibuja «Sus
- * herramientas», y las cuatro pantallas cuya única puerta era ese árbol
- * («Grupos y foros», «Laboratorio e imagen», «Encuestas» y «Organización
- * médica») se ofrecen en el menú lateral y abren.
+ * herramientas». «Grupos y foros» y «Encuestas» se ofrecen en el menú lateral;
+ * «Laboratorio e imagen» no ocupa renglón (regresión señalada por el
+ * propietario) y «Organización médica» pasó a la barra superior como «Mis
+ * organizaciones». Las cuatro abren.
  *
  * Contra el backend simulado (`ng serve`, configuración de desarrollo).
  */
@@ -45,7 +46,7 @@ test('el panel del médico no tiene «Sus herramientas» y el menú abre lo que 
   await quieta(page);
   await page.screenshot({ path: join(SALIDA, 'panel-1440.png'), fullPage: true });
 
-  for (const ruta of ['/groups', '/diagnostics', '/questionnaires', '/administration/medical-organization']) {
+  for (const ruta of ['/groups', '/questionnaires']) {
     const enlace = page.locator(`[data-testid="nav-enlace"][data-route="${ruta}"]`);
     await expect(enlace, `${ruta} tiene renglón en el menú`).toBeVisible();
     await enlace.click();
@@ -56,6 +57,32 @@ test('el panel del médico no tiene «Sus herramientas» y el menú abre lo que 
     await quieta(page);
     await page.screenshot({ path: join(SALIDA, `${ruta.slice(1).replaceAll('/', '-')}.png`) });
   }
+
+  // «Laboratorio e imagen» y «Organización médica» ya no tienen renglón lateral.
+  for (const ruta of ['/diagnostics', '/administration/medical-organization']) {
+    await expect(
+      page.locator(`[data-testid="nav-enlace"][data-route="${ruta}"]`),
+      `${ruta} no ocupa renglón en el menú`,
+    ).toHaveCount(0);
+  }
+
+  // «Mis organizaciones» vive en la barra superior y abre la misma pantalla.
+  const misOrganizaciones = page.getByTestId('header-mis-organizaciones');
+  await expect(misOrganizaciones).toBeVisible();
+  await expect(misOrganizaciones).toHaveAccessibleName('Mis organizaciones');
+  await page.screenshot({ path: join(SALIDA, 'barra-superior-1440.png'), clip: { x: 0, y: 0, width: 1440, height: 80 } });
+  await misOrganizaciones.click();
+  await page.waitForURL((url) => url.pathname === '/administration/medical-organization');
+  await estable(page);
+  await expect(page.locator('app-section-placeholder, app-not-found, app-error-recovery')).toHaveCount(0);
+  await expect(misOrganizaciones).toHaveAttribute('aria-current', 'page');
+  await quieta(page);
+  await page.screenshot({ path: join(SALIDA, 'administration-medical-organization.png') });
+
+  // El laboratorio sigue abriendo por su ruta (no se perdió acceso).
+  await irA(page, '/diagnostics');
+  await estable(page);
+  await expect(page.locator('app-section-placeholder, app-not-found, app-error-recovery')).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await irA(page, '/dashboard');
