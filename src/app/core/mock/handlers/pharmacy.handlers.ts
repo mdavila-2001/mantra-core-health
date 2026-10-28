@@ -332,10 +332,15 @@ export function registrarFarmacia(router: MockRouter): void {
     return { items, count: items.length };
   });
 
-  router.get('/pharmacy/orders', ({ query }) => {
+  router.get('/pharmacy/orders', ({ query, user }) => {
     const status = texto(query, 'status');
+    // El mostrador ve sólo los pedidos de su farmacia, como la API (que acota
+    // por el tenant de la petición). La plataforma sigue viéndolos todos.
+    const soloSuFarmacia =
+      user !== null && user.roles.includes('PHARMACY_STAFF') && !user.roles.includes('SECURITY_ADMIN');
     const items = pedidos
       .todos()
+      .filter((p) => !soloSuFarmacia || user.tenants.includes(p.pharmacyId))
       .filter((p) => status === null || p.estado === status || `PINV_ORDER_${p.estado}` === status)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .map((order) => dto(order));

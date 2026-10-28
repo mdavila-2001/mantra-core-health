@@ -99,7 +99,7 @@ describe('ConversationList', () => {
           tipo: 'pedido',
           titulo: 'Farmacia Chávez',
           detalle: '2 productos · Bs 69,00',
-          ruta: '/my-account/pharmacy-orders/7f3c',
+          ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
         }),
       }),
     );
@@ -164,10 +164,14 @@ describe('ConversationList', () => {
       expect(pedidos()).toBe(1);
     });
 
-    it('sin permiso (S5) lo dice, sin reintento que no cambiaría nada', () => {
+    it('sin permiso (S5) lo dice y ofrece una salida: volver a pedir la bandeja', () => {
       conEstado(forbidden({ message: 'Con este perfil no podés leer estos chats.' }));
+      const pedidos = pedidosDeReintento();
       expect(buscar('bandeja-sin-permiso')?.textContent).toContain('Con este perfil no podés leer estos chats.');
+      // No es el «Reintentar» de un fallo de red: es la próxima acción de S5.
       expect(buscar('bandeja-reintentar')).toBeNull();
+      buscar('bandeja-sin-permiso-reintentar')?.click();
+      expect(pedidos()).toBe(1);
     });
 
     it('error inesperado (S9) muestra el código de la petición, el motivo una sola vez, y reintentar', () => {

@@ -339,6 +339,58 @@ describe('Messaging', () => {
     fixture.detectChanges();
   }
 
+  describe('L-6 · estados de la bandeja', () => {
+    it('si un filtro vacía la lista en S7, el aviso de antigüedad sigue a la vista', () => {
+      conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }], 0)]);
+      TestBed.inject(ChatStore).recargarBandeja();
+      http
+        .expectOne((r) => r.url === '/community/conversations')
+        .flush(null, { status: 500, statusText: 'Error' });
+      fixture.detectChanges();
+      expect(texto()).toContain('pueden estar atrasados');
+
+      consultar('mensajeria-filtro-no-leidos')?.click();
+      fixture.detectChanges();
+
+      expect(todas('conversacion').length).toBe(0);
+      expect(texto()).toContain('Ningún chat en «No leídos»');
+      expect(texto()).toContain('pueden estar atrasados');
+    });
+
+    it('con todo archivado no dice «Todavía no tenés chats»: dice cuántos hay archivados y deja verlos', () => {
+      conBandeja([
+        conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
+        conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]),
+      ]);
+      const preferencias = TestBed.inject(ChatPreferencias);
+      preferencias.alternarArchivado('c-1');
+      preferencias.alternarArchivado('c-2');
+      fixture.detectChanges();
+
+      expect(consultar('bandeja-vacia')).toBeNull();
+      expect(texto()).not.toContain('Todavía no tenés chats');
+      expect(consultar('mensajeria-todo-archivado')?.textContent).toContain('Tenés 2 chats archivados.');
+
+      consultar('mensajeria-ver-archivados')?.click();
+      fixture.detectChanges();
+      expect(todas('conversacion').length).toBe(2);
+    });
+
+    it('un 403 con filas ya cargadas es S5: no se siguen mostrando las filas', () => {
+      conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
+      TestBed.inject(ChatStore).recargarBandeja();
+      http
+        .expectOne((r) => r.url === '/community/conversations')
+        .flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
+      fixture.detectChanges();
+
+      expect(todas('conversacion').length).toBe(0);
+      expect(texto()).not.toContain('Dra. Quispe');
+      expect(texto()).not.toContain('pueden estar atrasados');
+      expect(consultar('bandeja-sin-permiso')).not.toBeNull();
+    });
+  });
+
   describe('«Escribiendo como»', () => {
     it('no aparece para quien no tiene una farmacia con la que escribir', () => {
       conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
@@ -452,7 +504,7 @@ describe('Messaging — llegar con contexto', () => {
     tipo: 'pedido',
     titulo: 'Farmacia Vida · Central',
     detalle: '2 productos',
-    ruta: '/my-account/pharmacy-orders/o-1',
+    ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
   };
 
   const montarEn = async (url: string) => {
@@ -475,6 +527,8 @@ describe('Messaging — llegar con contexto', () => {
     return { escribirA, navegar };
   };
 
+  const VIDA = { escribirA: 'farmacia-vida' } as const;
+
   beforeEach(() => sessionStorage.clear());
 
   afterEach(() => {
@@ -486,7 +540,7 @@ describe('Messaging — llegar con contexto', () => {
   });
 
   it('con el nonce que dejó el botón pasa el contexto, lo consume y abre el hilo sin los parámetros', async () => {
-    const nonce = guardarContexto(pedido)!;
+    const nonce = guardarContexto(VIDA, pedido, sessionStorage)!;
     const { escribirA, navegar } = await montarEn(`/messaging?escribirA=farmacia-vida&ctx=${nonce}`);
 
     expect(escribirA).toHaveBeenCalledTimes(1);
@@ -494,11 +548,11 @@ describe('Messaging — llegar con contexto', () => {
     expect(escribirA.mock.calls[0]?.[2]).toEqual(pedido);
     expect(navegar).toHaveBeenCalledWith(['/messaging', 'c-9'], { replaceUrl: true });
     // De un solo uso: ya no está.
-    expect(tomarContexto(nonce)).toBeNull();
+    expect(tomarContexto(nonce, VIDA, sessionStorage)).toBeNull();
   });
 
   it('?pedido=<id> le pide el hilo a la API del pedido, y la tarjeta va una vez', async () => {
-    const nonce = guardarContexto({ tipo: 'pedido', titulo: 'Farmacia Vida', ruta: '/my-account/pharmacy-orders/o-1' })!;
+    const nonce = guardarContexto({ pedido: 'o-1' }, { tipo: 'pedido', titulo: 'Farmacia Vida', ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6' }, sessionStorage)!;
     const { escribirA, navegar } = await montarEn(`/messaging?pedido=o-1&ctx=${nonce}`);
     const store = TestBed.inject(ChatStore);
     expect(escribirA).not.toHaveBeenCalled();
@@ -513,14 +567,14 @@ describe('Messaging — llegar con contexto', () => {
     const envio = http.expectOne(
       (r) => r.method === 'POST' && r.url === '/community/conversations/c-7/messages',
     );
-    expect(envio.request.body.bodyText).toBe('Pedido: Farmacia Vida\n/my-account/pharmacy-orders/o-1');
+    expect(envio.request.body.bodyText).toBe('Pedido: Farmacia Vida\n/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6');
     envio.flush({ id: 'm-1', conversationId: 'c-7', sentAt: '2026-09-08T10:00:00.000Z' });
     expect(navegar).toHaveBeenCalledWith(['/messaging', 'c-7'], { replaceUrl: true });
     expect(store.error()).toBe('');
   });
 
   it('un enlace externo con un nonce inventado abre el hilo sin tarjeta', async () => {
-    guardarContexto(pedido);
+    guardarContexto(VIDA, pedido, sessionStorage);
     const { escribirA, navegar } = await montarEn('/messaging?escribirA=farmacia-vida&ctx=falso');
     expect(escribirA).toHaveBeenCalledTimes(1);
     expect(escribirA.mock.calls[0]?.[2]).toBeUndefined();
@@ -533,5 +587,40 @@ describe('Messaging — llegar con contexto', () => {
     );
     expect(escribirA).toHaveBeenCalledTimes(1);
     expect(escribirA.mock.calls[0]?.[2]).toBeUndefined();
+  });
+
+  it('L-1 · el nonce que el botón dejó para otra farmacia no da tarjeta aunque se cambie la URL', async () => {
+    const nonce = guardarContexto({ escribirA: 'farmacia-vida' }, pedido, sessionStorage)!;
+    const { escribirA } = await montarEn(`/messaging?escribirA=otra-farmacia&ctx=${nonce}`);
+    expect(escribirA).toHaveBeenCalledTimes(1);
+    expect(escribirA.mock.calls[0]?.[0]).toBe('otra-farmacia');
+    expect(escribirA.mock.calls[0]?.[2]).toBeUndefined();
+  });
+
+  it('L-4 · si la pantalla se cerró mientras se abría el chat, no navega al hilo', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: '**', children: [] }]),
+      ],
+    });
+    const store = TestBed.inject(ChatStore);
+    let alAbrir: ((conversationId: string) => void) | undefined;
+    vi.spyOn(store, 'escribirA').mockImplementation((_slug, callback) => {
+      alAbrir = callback;
+    });
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/messaging?escribirA=farmacia-vida');
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(Messaging);
+    fixture.detectChanges();
+    expect(alAbrir).toBeDefined();
+
+    // La persona se fue a otra pantalla; la apertura termina después.
+    fixture.destroy();
+    alAbrir!('c-9');
+
+    expect(navegar).not.toHaveBeenCalled();
   });
 });

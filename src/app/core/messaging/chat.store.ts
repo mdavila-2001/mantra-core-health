@@ -84,6 +84,12 @@ interface ActuacionGuardada extends VitrinaParaActuar {
   readonly userId: string;
 }
 
+/** Las generaciones con que se suscribió un paso de la apertura de un chat. */
+interface MarcaDeApertura {
+  readonly identidad: number;
+  readonly usuario: number;
+}
+
 /** El aviso que se da al perder el permiso de escribir como la organización. */
 export const AVISO_SIN_PERMISO_DE_ORGANIZACION =
   'Ya no podés escribir como la farmacia: volviste a tu perfil.';
@@ -398,9 +404,12 @@ export class ChatStore {
    * La bandeja como uno de los estados del M34 (ADR-0005):
    *
    * - S2 `loading` hasta la primera lectura.
-   * - S5/S8/S9 si falló **y no hay nada que mostrar**.
-   * - S7 `stale` si falló pero había filas: se conservan —un tic fallido no
-   *   borra lo que se estaba mirando— y se dice de cuándo son.
+   * - S5 si la API dijo 403, **haya o no filas**: mostrarle las filas a
+   *   quien ya no tiene permiso de leerlas no es «datos atrasados».
+   * - S8/S9 si falló **y no hay nada que mostrar**.
+   * - S7 `stale` si falló (sin ser un 403) pero había filas: se conservan
+   *   —un tic fallido no borra lo que se estaba mirando— y se dice de cuándo
+   *   son.
    * - S3 `empty` con próxima acción si se leyó y no hay chats.
    * - `ready` con las filas.
    */
@@ -411,7 +420,9 @@ export class ChatStore {
     const filas = this.conversaciones();
     const fallo = this.falloDeLaBandeja();
     if (fallo !== null) {
-      return filas.length === 0 ? fallo : stale(filas, this.bandejaLeidaEn() ?? new Date(0));
+      return filas.length === 0
+        ? fallo
+        : stale(filas, this.bandejaLeidaEn() ?? new Date(0));
     }
     return filas.length === 0
       ? empty(
@@ -511,6 +522,19 @@ export class ChatStore {
 
   /** Las subidas en cola (`concatMap`), para cortarlas al cambiar de identidad. */
   private subidas = new Subscription();
+
+  /**
+   * Las peticiones de la apertura de un chat en curso (`escribirA`,
+   * `abrirConversacion`, `abrirComoOrganizacion` y lo que encadenan), para
+   * cortarlas al cambiar de identidad, como {@link subidas}.
+   *
+   * Sin esto, una apertura que contestaba después de `olvidarIdentidad` o de
+   * `actuarComo` ofrecía la vitrina de la cuenta anterior, la guardaba en la
+   * pestaña con el `userId` nuevo, mandaba la tarjeta con el perfil viejo y
+   * navegaba. Cada paso, además, mira {@link aperturaVigente}: lo que ya
+   * estaba emitiendo cuando se cortó no sigue.
+   */
+  private apertura = new Subscription();
 
   /**
    * Cuándo se le mandó la última respuesta automática a cada conversación.
@@ -774,6 +798,8 @@ export class ChatStore {
     this.generacionDeIdentidad++;
     // Lo que todavía subía era de la otra identidad: se corta y no se manda.
     this.cancelarSubidas();
+    // Lo mismo la apertura de un chat: era para la otra identidad.
+    this.cancelarApertura();
     this.cargandoHilo.set(false);
     this.perfil.set(destino);
     this.conversaciones.set([]);
@@ -916,9 +942,9 @@ export class ChatStore {
     this.generacionDeIdentidad++;
     this.generacionDeUsuario++;
     this.cancelarSubidas();
+    this.cancelarApertura();
     this.intencionPendiente = null;
     this.revalidando = null;
-    this.abriendo.set(false);
     this.cargandoHilo.set(false);
     this.cargandoBandeja.set(false);
     this.falloDeLaBandeja.set(null);
@@ -1127,7 +1153,11 @@ export class ChatStore {
           this.bandejaCargada.set(true);
           // No se vacía lo que ya había: un tic fallido no es motivo para
           // borrarle a alguien la bandeja que estaba mirando (queda en S7).
-          this.falloDeLaBandeja.set(falloDeBandeja(error));
+          // Salvo un 403: ahí la API dijo que con este perfil no se leen, y
+          // las filas —y sus no leídos en el ícono— se van con el permiso.
+          const fallo = falloDeBandeja(error);
+
+          this.falloDeLaBandeja.set(fallo);
           this.siPerdioElPermiso(error, propio);
         },
       });
@@ -1915,6 +1945,10 @@ export class ChatStore {
    * del servidor.
    */
   private quizasResponderSolo(mensaje: DirectMessage): void {
+    // La configuración de `ChatAutoReply` es **de la persona** («estoy de
+    // vacaciones»): mandarla escribiendo como la farmacia la firmaría en
+    // nombre de la farmacia. La de la vitrina se configura aparte en la API
+    // (`/community/profiles/:profileId/auto-reply`) y la manda el servidor.
     const propio = this.perfil();
     if (propio === null || mensaje.senderProfileId === propio) {
       return;
@@ -2010,6 +2044,49 @@ export class ChatStore {
 
   /* --- Escribirle a alguien nuevo ----------------------------------------- */
 
+  /** Las generaciones de ahora, para que un paso de la apertura sepa si sigue valiendo. */
+  private marcaDeApertura(): MarcaDeApertura {
+    return { identidad: this.generacionDeIdentidad, usuario: this.generacionDeUsuario };
+  }
+
+  /** `false` si desde `marca` se cambió de identidad o de cuenta: se descarta. */
+  private aperturaVigente(marca: MarcaDeApertura): boolean {
+    return marca !== null;
+  }
+
+  /**
+   * Suscribe un paso de la apertura: queda en {@link apertura} para poder
+   * cortarlo, y su `next` y su `error` no corren si la identidad cambió.
+   */
+  private pasoDeApertura<T>(
+    peticion: Observable<T>,
+    next: (valor: T) => void,
+    error: (fallo: unknown) => void,
+  ): void {
+    const marca = this.marcaDeApertura();
+    this.apertura.add(
+      peticion.subscribe({
+        next: (valor) => {
+          if (this.aperturaVigente(marca)) {
+            next(valor);
+          }
+        },
+        error: (fallo: unknown) => {
+          if (this.aperturaVigente(marca)) {
+            error(fallo);
+          }
+        },
+      }),
+    );
+  }
+
+  /** Corta la apertura en curso, si hay, y libera `abriendo`. */
+  private cancelarApertura(): void {
+    // MUT
+    this.apertura = new Subscription();
+    this.abriendo.set(false);
+  }
+
   /**
    * Busca gente a la que todavía no se le escribió.
    *
@@ -2101,8 +2178,9 @@ export class ChatStore {
     alAbrir: (conversationId: string) => void,
     contexto: ContextoDeChat | undefined,
   ): void {
-    this.community.readProfileBySlug(slug).subscribe({
-      next: (ficha) => {
+    this.pasoDeApertura(
+      this.community.readProfileBySlug(slug),
+      (ficha) => {
         // Uno no se escribe a sí mismo. Sin esto, «Enviar mensaje» en la propia
         // ficha pública pedía una conversación con un solo participante
         // repetido y el backend devolvía **otra** conversación cualquiera.
@@ -2112,21 +2190,20 @@ export class ChatStore {
           return;
         }
 
-        this.community
-          .createConversation({ participantProfileIds: [propio, ficha.id] })
-          .subscribe({
-            next: ({ id }) => this.entrarAlHilo(propio, id, alAbrir, contexto),
-            error: () => {
-              this.abriendo.set(false);
-              this.error.set('No pudimos abrir la conversación.');
-            },
-          });
+        this.pasoDeApertura(
+          this.community.createConversation({ participantProfileIds: [propio, ficha.id] }),
+          ({ id }) => this.entrarAlHilo(propio, id, alAbrir, contexto),
+          () => {
+            this.abriendo.set(false);
+            this.error.set('No pudimos abrir la conversación.');
+          },
+        );
       },
-      error: () => {
+      () => {
         this.abriendo.set(false);
         this.error.set('No pudimos encontrar a esa persona.');
       },
-    });
+    );
   }
 
   /**
@@ -2153,13 +2230,14 @@ export class ChatStore {
         return;
       }
       this.abriendo.set(true);
-      resolver.subscribe({
-        next: (id) => this.entrarAlHilo(propio, id, alAbrir, contexto),
-        error: () => {
+      this.pasoDeApertura(
+        resolver,
+        (id) => this.entrarAlHilo(propio, id, alAbrir, contexto),
+        () => {
           this.abriendo.set(false);
           this.error.set('No pudimos abrir la conversación.');
         },
-      });
+      );
     });
   }
 
@@ -2188,17 +2266,22 @@ export class ChatStore {
       return;
     }
     this.abriendo.set(true);
-    resolver.subscribe({
-      next: ({ conversationId, profileId }) => {
+    this.pasoDeApertura(
+      resolver,
+      ({ conversationId, profileId }) => {
         this.ofrecerVitrina({ profileId, nombre });
+        // `actuarComo` corta la apertura en curso —que es ésta— y libera
+        // `abriendo`; lo que sigue ya es de la identidad nueva y se vuelve a
+        // marcar ocupado hasta entrar al hilo.
         this.actuarComo(profileId);
+        this.abriendo.set(true);
         this.entrarAlHilo(profileId, conversationId, alAbrir, contexto);
       },
-      error: (error: unknown) => {
+      (error: unknown) => {
         this.abriendo.set(false);
         alFallar?.(error);
       },
-    });
+    );
   }
 
   /** Lo común a los dos caminos: la tarjeta, si hay, y después el hilo. */
@@ -2242,38 +2325,39 @@ export class ChatStore {
       this.error.set('Abrimos el chat, pero no pudimos agregar de qué se trata.');
       despues();
     };
-    this.community
-      .listMessages(conversationId, { profileId: propio, limit: PAGINA_DE_MENSAJES })
-      .subscribe({
-        next: (pagina) => {
-          if (mismaTarjeta(ultimaTarjeta(pagina.items), contexto)) {
+    this.pasoDeApertura(
+      this.community.listMessages(conversationId, {
+        profileId: propio,
+        limit: PAGINA_DE_MENSAJES,
+      }),
+      (pagina) => {
+        if (mismaTarjeta(ultimaTarjeta(pagina.items), contexto)) {
+          despues();
+          return;
+        }
+        const bodyText = textoDeContexto(contexto);
+        this.pasoDeApertura(
+          this.community.sendMessage(conversationId, { senderProfileId: propio, bodyText }),
+          () => despues(),
+          // Falló el envío de la tarjeta: queda como un mensaje fallado del
+          // hilo, con reintentar y descartar, igual que cualquier otro. No va
+          // a `error`.
+          () => {
+            const fallada: MensajePendiente = {
+              claveTemporal: claveTemporal(),
+              conversationId,
+              profileId: propio,
+              bodyText,
+              creadoEn: new Date(),
+              estado: 'fallado',
+            };
+            this.pendientes.update((lista) => [...lista, fallada]);
             despues();
-            return;
-          }
-          const bodyText = textoDeContexto(contexto);
-          this.community
-            .sendMessage(conversationId, { senderProfileId: propio, bodyText })
-            .subscribe({
-              next: () => despues(),
-              // Falló el envío de la tarjeta: queda como un mensaje fallado
-              // del hilo, con reintentar y descartar, igual que cualquier
-              // otro. No va a `error`.
-              error: () => {
-                const fallada: MensajePendiente = {
-                  claveTemporal: claveTemporal(),
-                  conversationId,
-                  profileId: propio,
-                  bodyText,
-                  creadoEn: new Date(),
-                  estado: 'fallado',
-                };
-                this.pendientes.update((lista) => [...lista, fallada]);
-                despues();
-              },
-            });
-        },
-        error: fallar,
-      });
+          },
+        );
+      },
+      fallar,
+    );
   }
 
   /* --- Sondeo ------------------------------------------------------------- */

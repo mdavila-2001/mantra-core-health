@@ -181,6 +181,8 @@
             (reintentar)="store.recargarBandeja()"
           />
         } @else if (vacio()) {
+          <!-- S7 sigue siendo S7 aunque el filtro no deje filas: el aviso de
+               antigüedad no se pierde por filtrar. -->
           @if (sinCoincidencias()) {
             <p class="mensajeria__sin-nada" role="status" data-testid="mensajeria-sin-coincidencias">
               @if (comoOrganizacion(); as nombre) {
@@ -204,7 +206,8 @@
               </button>
             </p>
           } @else {
-            <app-conversation-list [conversaciones]="[]" [estado]="bandejaVacia" />
+            <!-- Hay chats, pero todos archivados: no es el S3 «Todavía no
+                 tenés chats». La salida es abrir el cajón. -->
           }
         } @else {
           <app-conversation-list

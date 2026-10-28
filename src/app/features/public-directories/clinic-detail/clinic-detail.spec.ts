@@ -5,7 +5,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angul
 import { of } from 'rxjs';
 
 import { ClinicDetail } from './clinic-detail';
-import { tomarContexto } from '../../../core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '../../../core/messaging/enlace-de-chat';
 
 const SLUG = 'clinica-los-olivos';
 
@@ -129,7 +129,7 @@ describe('ClinicDetail', () => {
     // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
     // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
     expect(vuelta.has('sobre')).toBe(false);
-    expect(tomarContexto(vuelta.get('ctx'))).toEqual({
+    expect(tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage)).toEqual({
       tipo: 'servicio',
       titulo: 'Consulta cardiológica',
       detalle: '250,00 Bs · Clínica Los Olivos',

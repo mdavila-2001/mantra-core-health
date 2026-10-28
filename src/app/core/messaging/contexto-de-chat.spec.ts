@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   contextoDelTexto,
   esRutaDeContexto,
-  esRutaInterna,
   linea,
   normalizarContexto,
   resumenDeContexto,
@@ -11,18 +10,22 @@ import {
   type ContextoDeChat,
 } from './contexto-de-chat';
 
+/** Ningún tipo de tarjeta acepta esa ruta. */
+const deNingunTipo = (ruta: string): boolean =>
+  (['pedido', 'producto', 'farmacia', 'servicio'] as const).every((tipo) => !esRutaDeContexto(tipo, ruta));
+
 const PEDIDO: ContextoDeChat = {
   tipo: 'pedido',
   titulo: 'Farmacia Chávez · Sucursal Miraflores',
   detalle: '2 productos · Bs 69,00',
-  ruta: '/my-account/pharmacy-orders/7f3c',
+  ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
 };
 
 describe('contexto de chat', () => {
   it('ida y vuelta: el texto que se manda es la tarjeta que se lee', () => {
     const texto = textoDeContexto(PEDIDO);
     expect(texto).toBe(
-      'Pedido: Farmacia Chávez · Sucursal Miraflores\n2 productos · Bs 69,00\n/my-account/pharmacy-orders/7f3c',
+      'Pedido: Farmacia Chávez · Sucursal Miraflores\n2 productos · Bs 69,00\n/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
     );
     expect(contextoDelTexto(texto)).toEqual(PEDIDO);
   });
@@ -60,20 +63,29 @@ describe('contexto de chat', () => {
   });
 
   it('cada tarjeta sólo lleva a la ficha de lo que dice ser', () => {
-    expect(esRutaDeContexto('pedido', '/my-account/pharmacy-orders/7f3c')).toBe(true);
-    expect(esRutaDeContexto('farmacia', '/my-account/pharmacy-orders/7f3c')).toBe(false);
+    expect(esRutaDeContexto('pedido', '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6')).toBe(true);
+    expect(esRutaDeContexto('farmacia', '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6')).toBe(false);
     expect(esRutaDeContexto('servicio', '/clinics-directory/clinica-sur')).toBe(true);
     // La tarjeta no puede llevar a abrir otro chat ni a nada con query.
-    expect(esRutaInterna('/messaging?escribirA=x&sobre=producto&titulo=t&ruta=/x')).toBe(false);
-    expect(esRutaInterna('/pharmacies-directory/chavez?x=1')).toBe(false);
+    expect(deNingunTipo('/messaging?escribirA=x&sobre=producto&titulo=t&ruta=/x')).toBe(true);
+    expect(deNingunTipo('/pharmacies-directory/chavez?x=1')).toBe(true);
     expect(contextoDelTexto('Producto: Algo\n/messaging?escribirA=otro')).toBeNull();
   });
 
+  it('L-2 · la tarjeta de pedido exige un id de pedido, no las rutas reservadas del módulo', () => {
+    expect(esRutaDeContexto('pedido', '/my-account/pharmacy-orders/new')).toBe(false);
+    expect(esRutaDeContexto('pedido', '/my-account/pharmacy-orders/checkout')).toBe(false);
+    expect(esRutaDeContexto('pedido', '/my-account/pharmacy-orders/7f3c')).toBe(false);
+    expect(esRutaDeContexto('pedido', `/my-account/pharmacy-orders/${'7F3C1E2A-5B6D-4C7E-8F90-A1B2C3D4E5F6'}`)).toBe(true);
+    expect(contextoDelTexto('Pedido: Comprar\n/my-account/pharmacy-orders/checkout')).toBeNull();
+    expect(normalizarContexto({ tipo: 'pedido', titulo: 'Nuevo', ruta: '/my-account/pharmacy-orders/new' })).toBeNull();
+  });
+
   it('las rutas internas no salen del sitio', () => {
-    expect(esRutaInterna('/buscar/medicamentos?q=losartan')).toBe(false);
-    expect(esRutaInterna('/a/../b')).toBe(false);
-    expect(esRutaInterna('/javascript:alert(1)')).toBe(false);
-    expect(esRutaInterna('relativa')).toBe(false);
+    expect(deNingunTipo('/buscar/medicamentos?q=losartan')).toBe(true);
+    expect(deNingunTipo('/a/../b')).toBe(true);
+    expect(deNingunTipo('/javascript:alert(1)')).toBe(true);
+    expect(deNingunTipo('relativa')).toBe(true);
   });
 
   it('resume la tarjeta para la bandeja', () => {

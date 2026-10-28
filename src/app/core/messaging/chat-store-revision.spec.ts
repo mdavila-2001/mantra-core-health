@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { NEVER, of } from 'rxjs';
+import { NEVER, of, Subject } from 'rxjs';
 
 import { SessionStore } from '../auth/session.store';
 import {
@@ -17,6 +17,7 @@ import {
   ERROR_SIN_PERMISO_EN_LA_CONVERSACION,
 } from './chat.store';
 import { ChatSocketService } from './chat-socket.service';
+import { ChatAutoReply } from './chat-auto-reply';
 import type { ContextoDeChat } from './contexto-de-chat';
 
 /**
@@ -218,6 +219,139 @@ describe('ChatStore · revisión', () => {
       usuario.set(null);
       TestBed.tick();
       expect(store.abriendo()).toBe(false);
+    });
+  });
+
+  describe('M-1 · una apertura de la identidad anterior no sigue al cambiarla', () => {
+    const CLAVE_DE_ACTUACION = 'alovida.chat.actuar-como';
+    const pedidoCtx: ContextoDeChat = {
+      tipo: 'pedido',
+      titulo: 'Pedido de Ana',
+      ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
+    };
+
+    it('abrirComoOrganizacion que responde después de olvidar la cuenta no ofrece la vitrina, no la guarda, no manda tarjeta ni navega', () => {
+      encender();
+      const resolver = new Subject<{ conversationId: string; profileId: string }>();
+      const alAbrir = vi.fn();
+      store.abrirComoOrganizacion(resolver, 'Farmacia Vieja', alAbrir, pedidoCtx);
+      expect(resolver.observed).toBe(true);
+
+      // Sale una cuenta y entra otra en la misma pestaña.
+      usuario.set('u-otra');
+      TestBed.tick();
+      // Se cortó la apertura: no queda nadie escuchando la respuesta.
+      expect(resolver.observed).toBe(false);
+
+      resolver.next({ conversationId: 'c-1', profileId: 'pp-vieja' });
+
+      expect(store.vitrinasDeOrganizacion().some((v) => v.profileId === 'pp-vieja')).toBe(false);
+      expect(store.perfil()).not.toBe('pp-vieja');
+      expect(sessionStorage.getItem(CLAVE_DE_ACTUACION)).toBeNull();
+      expect(lecturasDelHilo()).toHaveLength(0);
+      expect(envios()).toHaveLength(0);
+      expect(alAbrir).not.toHaveBeenCalled();
+      expect(store.abriendo()).toBe(false);
+    });
+
+    it('abrirConversacion que responde después de actuarComo no manda la tarjeta con el perfil viejo ni navega', () => {
+      encender();
+      const resolver = new Subject<string>();
+      const alAbrir = vi.fn();
+      store.abrirConversacion(resolver, alAbrir, pedidoCtx);
+      expect(store.abriendo()).toBe(true);
+
+      store.actuarComo(FARMACIA);
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+      expect(resolver.observed).toBe(false);
+      expect(store.abriendo()).toBe(false);
+
+      resolver.next('c-1');
+
+      expect(lecturasDelHilo()).toHaveLength(0);
+      expect(envios()).toHaveLength(0);
+      expect(alAbrir).not.toHaveBeenCalled();
+      expect(store.perfil()).toBe(FARMACIA);
+    });
+
+    it('la lectura del hilo de la tarjeta en vuelo se corta al olvidar la cuenta', () => {
+      encender();
+      const resolver = new Subject<string>();
+      const alAbrir = vi.fn();
+      store.abrirConversacion(resolver, alAbrir, pedidoCtx);
+      resolver.next('c-1');
+      const [lectura] = lecturasDelHilo();
+      expect(lectura).toBeDefined();
+
+      usuario.set('u-otra');
+      TestBed.tick();
+
+      expect(lectura!.cancelled).toBe(true);
+      expect(envios()).toHaveLength(0);
+      expect(alAbrir).not.toHaveBeenCalled();
+    });
+
+    it('escribirA: la ficha que llega después de olvidar la cuenta no crea la conversación', () => {
+      encender();
+      const alAbrir = vi.fn();
+      store.escribirA('farmacia-vida', alAbrir, pedidoCtx);
+      const ficha$ = http.expectOne('/community/profiles/by-slug/farmacia-vida');
+
+      usuario.set('u-otra');
+      TestBed.tick();
+
+      expect(ficha$.cancelled).toBe(true);
+      http.expectNone((r) => r.method === 'POST' && r.url === '/community/conversations');
+      expect(alAbrir).not.toHaveBeenCalled();
+    });
+
+    it('abrirComoOrganizacion sin cambios de identidad sigue funcionando: actúa como la vitrina y abre', () => {
+      encender();
+      const resolver = new Subject<{ conversationId: string; profileId: string }>();
+      const alAbrir = vi.fn();
+      store.abrirComoOrganizacion(resolver, 'Farmacia Vida', alAbrir, pedidoCtx);
+      resolver.next({ conversationId: 'c-1', profileId: FARMACIA });
+      expect(store.perfil()).toBe(FARMACIA);
+      expect(store.abriendo()).toBe(true);
+      lecturasDelHilo()[0]!.flush(pagina());
+      const [tarjeta] = envios();
+      expect(tarjeta!.request.body.senderProfileId).toBe(FARMACIA);
+      tarjeta!.flush({ id: 'm-1', conversationId: 'c-1', sentAt: '2026-10-28T10:00:00.000Z' });
+      expect(alAbrir).toHaveBeenCalledWith('c-1');
+      expect(store.abriendo()).toBe(false);
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja()));
+    });
+  });
+
+  describe('M-2 · la respuesta automática personal no sale en nombre de la farmacia', () => {
+    const entrante = (): void =>
+      (socket as unknown as { messages$: { next(v: unknown): void } }).messages$.next({
+        ...mensaje('m-9', 'pp-paciente', '¿Tienen losartán?'),
+        sentAt: new Date('2026-10-28T10:00:00.000Z'),
+      });
+
+    it('escribiendo como la farmacia no contesta sola', () => {
+      encender();
+      store.actuarComo(FARMACIA);
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja([fila('c-1')])));
+      vi.spyOn(TestBed.inject(ChatAutoReply), 'corresponde').mockReturnValue(true);
+
+      entrante();
+
+      expect(envios()).toHaveLength(0);
+      expect(store.pendientes()).toEqual([]);
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja([fila('c-1')])));
+    });
+
+    it('con el perfil propio sí contesta (lo que la prueba anterior excluye)', () => {
+      encender([fila('c-1')]);
+      vi.spyOn(TestBed.inject(ChatAutoReply), 'corresponde').mockReturnValue(true);
+
+      entrante();
+
+      const [respuesta] = envios();
+      expect(respuesta!.request.body.senderProfileId).toBe(PROPIO);
+      lecturasDeBandeja().forEach((r) => r.flush(bandeja([fila('c-1')])));
     });
   });
 
@@ -489,6 +623,14 @@ describe('ChatStore · revisión', () => {
       });
       estado = store.bandeja();
       expect(estado.status === 'error' && estado.requestId).toBe('req-cabecera');
+    });
+
+    it('L-6 · un 403 con filas ya cargadas es S5, no S7: las filas se van con el permiso', () => {
+      encender([fila('c-1')]);
+      store.recargarBandeja();
+      lecturasDeBandeja()[0]!.flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
+      expect(store.bandeja().status).toBe('forbidden');
+      expect(store.conversaciones()).toEqual([]);
     });
 
     it('S7 si falla con filas: se conservan y se dice de cuándo son', () => {

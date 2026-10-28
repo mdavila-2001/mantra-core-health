@@ -802,11 +802,11 @@ describe('ChatStore', () => {
       tipo: 'pedido',
       titulo: 'Farmacia Vida · Sucursal Central',
       detalle: '2 productos · 69,00 Bs',
-      ruta: '/my-account/pharmacy-orders/o-1',
+      ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
     } as const;
 
     const tarjeta =
-      'Pedido: Farmacia Vida · Sucursal Central\n2 productos · 69,00 Bs\n/my-account/pharmacy-orders/o-1';
+      'Pedido: Farmacia Vida · Sucursal Central\n2 productos · 69,00 Bs\n/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6';
 
     /** Resuelve el perfil, la ficha y la conversación `c-1`. */
     const hastaElHilo = (): void => {
@@ -869,7 +869,11 @@ describe('ChatStore', () => {
     });
 
     it('sí la manda si la última tarjeta es de otro pedido, aunque una vieja sea de éste', () => {
-      const otro = tarjeta.replace('/o-1', '/o-2');
+      const otro = tarjeta.replace(
+        '/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
+        '/0b1c2d3e-4f50-4a6b-8c7d-8e9fa0b1c2d3',
+      );
+      expect(otro).not.toBe(tarjeta);
       store.escribirA('farmacia-vida', vi.fn(), pedido);
       hastaElHilo();
 

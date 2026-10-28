@@ -12,7 +12,7 @@ import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-ord
 import { uuid } from '../../../../core/mock/mock-store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { OrderDetail } from './order-detail';
-import { tomarContexto } from '../../../../core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '../../../../core/messaging/enlace-de-chat';
 
 describe('OrderDetail with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
@@ -130,7 +130,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
     // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
     expect(vuelta.has('sobre')).toBe(false);
-    const contexto = tomarContexto(vuelta.get('ctx'));
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
     expect(contexto?.tipo).toBe('pedido');
     expect(contexto?.ruta).toBe(`/my-account/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}`);
     expect(contexto?.titulo).toContain(' · ');

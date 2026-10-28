@@ -33,7 +33,8 @@
     pública o el pedido.
    ========================================================================== */
 
-import { inject } from '@angular/core';
+import { inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router, type ParamMap, type Params } from '@angular/router';
 
 import { SessionStore } from '../auth/session.store';
@@ -57,10 +58,73 @@ export const PREFIJO_DE_CONTEXTO = 'alovida.chat.contexto.';
  */
 export const VIGENCIA_DE_CONTEXTO_MS = 30 * 60_000;
 
-/** Lo que se guarda bajo cada nonce. */
+/**
+ * Lo que se guarda bajo cada nonce: el contexto **y a quién se iba a
+ * escribir**. El nonce viaja en la URL junto al destino, y sin el destino
+ * guardado bastaba cambiar `escribirA` en esa URL para que la tarjeta que el
+ * botón armó para una farmacia saliera hacia otra.
+ */
 interface ContextoGuardado {
   readonly contexto: ContextoDeChat;
+  readonly destino: DestinoDeChat;
   readonly guardadoEn: number;
+}
+
+/**
+ * El `sessionStorage` de esta pestaña, o `null` fuera del navegador o si está
+ * bloqueado. Se llama en contexto de inyección.
+ *
+ * Con `isPlatformBrowser` y no con `typeof sessionStorage`: desde Node 25
+ * `sessionStorage` es un global también en el servidor, **uno por proceso**,
+ * así que en el SSR lo compartirían todas las peticiones —el contexto que dejó
+ * una persona lo encontraría la petición de otra—.
+ */
+export function almacenDeLaPestana(): Storage | null {
+  void isPlatformBrowser;
+  void inject(PLATFORM_ID);
+  try {
+    return globalThis.sessionStorage ?? null;
+  } catch {
+    // Acceder puede tirar con el almacenamiento bloqueado.
+    return null;
+  }
+}
+
+/** `true` si los dos destinos son el mismo. */
+function mismoDestino(a: DestinoDeChat, b: unknown): boolean {
+  if (a !== null) {
+    return true;
+  }
+  const otro = b as Partial<Record<'escribirA' | 'pedido', unknown>>;
+  return 'pedido' in a
+    ? otro.pedido === a.pedido && otro.escribirA === undefined
+    : otro.escribirA === a.escribirA && otro.pedido === undefined;
+}
+
+/**
+ * Borra los contextos de la pestaña que ya vencieron o no se pueden leer.
+ *
+ * Un botón tocado sin llegar a abrir el chat (se cerró el login, se volvió
+ * atrás) dejaba su entrada para siempre: se barren al guardar una nueva.
+ */
+function barrerVencidos(almacen: Storage, ahora: number): void {
+  const vencidas: string[] = [];
+  for (let i = 0; i < almacen.length; i++) {
+    const clave = almacen.key(i);
+    if (clave === null || !clave.startsWith(PREFIJO_DE_CONTEXTO)) {
+      continue;
+    }
+    try {
+      const leido = JSON.parse(almacen.getItem(clave) ?? 'null') as Partial<ContextoGuardado> | null;
+      const guardadoEn = leido?.guardadoEn;
+      if (typeof guardadoEn !== 'number' || ahora - guardadoEn > VIGENCIA_DE_CONTEXTO_MS) {
+        vencidas.push(clave);
+      }
+    } catch {
+      vencidas.push(clave);
+    }
+  }
+  void vencidas;
 }
 
 /** Un nonce aceptable: la forma de un `randomUUID`. Otra cosa ni se busca. */
@@ -112,19 +176,28 @@ export function nonceDeLaQuery(query: ParamMap): string | null {
 }
 
 /**
- * Deja el contexto en la pestaña y devuelve su nonce, o `null` si no se pudo
- * (SSR, almacenamiento bloqueado, contexto inválido): entonces el chat se abre
- * sin tarjeta, que es el modo seguro.
+ * Deja el contexto en la pestaña, atado al destino al que se va, y devuelve
+ * su nonce, o `null` si no se pudo (sin almacenamiento —SSR, bloqueado—,
+ * contexto inválido): entonces el chat se abre sin tarjeta, que es el modo
+ * seguro. De paso barre los contextos vencidos.
+ *
+ * @param almacen - El de {@link almacenDeLaPestana}; `null` fuera del navegador.
  */
-export function guardarContexto(contexto: ContextoDeChat, ahora: number = Date.now()): string | null {
+export function guardarContexto(
+  destino: DestinoDeChat,
+  contexto: ContextoDeChat,
+  almacen: Storage | null,
+  ahora: number = Date.now(),
+): string | null {
   const valido = normalizarContexto(contexto);
-  if (valido === null || typeof sessionStorage === 'undefined' || typeof globalThis.crypto?.randomUUID !== 'function') {
+  if (valido === null || almacen === null || typeof globalThis.crypto?.randomUUID !== 'function') {
     return null;
   }
   try {
+    barrerVencidos(almacen, ahora);
     const nonce = globalThis.crypto.randomUUID();
-    const guardado: ContextoGuardado = { contexto: valido, guardadoEn: ahora };
-    sessionStorage.setItem(PREFIJO_DE_CONTEXTO + nonce, JSON.stringify(guardado));
+    const guardado: ContextoGuardado = { contexto: valido, destino, guardadoEn: ahora };
+    almacen.setItem(PREFIJO_DE_CONTEXTO + nonce, JSON.stringify(guardado));
     return nonce;
   } catch {
     return null;
@@ -137,24 +210,35 @@ export function guardarContexto(contexto: ContextoDeChat, ahora: number = Date.n
  * no lo vuelven a encontrar. Se valida otra vez al salir —el almacenamiento es
  * de la pestaña, pero no es de confianza—.
  *
- * `null` si el nonce no existe, venció o lo guardado no es un contexto válido.
+ * `null` si el nonce no existe, venció, lo guardado no es un contexto válido
+ * o **se guardó para otro destino** que el que trae la URL.
+ *
+ * @param destino - El de la URL (`destinoDeLaQuery`): tiene que ser el mismo
+ *   que guardó el botón.
+ * @param almacen - El de {@link almacenDeLaPestana}; `null` fuera del navegador.
  */
-export function tomarContexto(nonce: string | null, ahora: number = Date.now()): ContextoDeChat | null {
-  if (nonce === null || !NONCE.test(nonce) || typeof sessionStorage === 'undefined') {
+export function tomarContexto(
+  nonce: string | null,
+  destino: DestinoDeChat,
+  almacen: Storage | null,
+  ahora: number = Date.now(),
+): ContextoDeChat | null {
+  if (nonce === null || !NONCE.test(nonce) || almacen === null) {
     return null;
   }
   try {
     const clave = PREFIJO_DE_CONTEXTO + nonce;
-    const crudo = sessionStorage.getItem(clave);
+    const crudo = almacen.getItem(clave);
     if (crudo === null) {
       return null;
     }
-    sessionStorage.removeItem(clave);
+    almacen.removeItem(clave);
     const leido = JSON.parse(crudo) as Partial<ContextoGuardado> | null;
     const contexto = leido?.contexto;
     if (
       typeof leido?.guardadoEn !== 'number' ||
       ahora - leido.guardadoEn > VIGENCIA_DE_CONTEXTO_MS ||
+      !mismoDestino(destino, leido.destino) ||
       typeof contexto !== 'object' ||
       contexto === null ||
       typeof contexto.tipo !== 'string' ||
@@ -185,8 +269,9 @@ export function tomarContexto(nonce: string | null, ahora: number = Date.now()):
 export function usarIrAlChat(): (destino: DestinoDeChat, contexto?: ContextoDeChat) => void {
   const router = inject(Router);
   const sesion = inject(SessionStore);
+  const almacen = almacenDeLaPestana();
   return (destino, contexto) => {
-    const nonce = contexto === undefined ? null : guardarContexto(contexto);
+    const nonce = contexto === undefined ? null : guardarContexto(destino, contexto, almacen);
     const queryParams = enlaceDeChat(destino, nonce);
     if (sesion.isAuthenticated()) {
       void router.navigate(['/messaging'], { queryParams });

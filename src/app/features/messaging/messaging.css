@@ -424,6 +424,26 @@
   flex: 1 1 12rem;
 }
 
+/* 44 px de área táctil en cada opción, sin agrandar el rótulo ni el marco
+   más de lo necesario. El átomo compartido trae 32 px (o 40 en `md`), que es
+   lo que pide un formulario con ratón; acá el selector se toca con el pulgar
+   y decide en nombre de quién sale cada mensaje. La opción crece a 38 px y un
+   velo invisible de 3 px arriba y abajo —lo que ocupa el relleno del marco—
+   lleva el blanco táctil a 44, y el marco queda en 44 justos.
+
+   `::ng-deep` acotado a este contenedor: el ajuste es del chat, no del átomo,
+   y no se filtra a ningún otro consumidor. */
+.mensajeria__como app-segmented-control ::ng-deep .segmentado__opcion {
+  position: relative;
+  min-block-size: 38px;
+}
+
+.mensajeria__como app-segmented-control ::ng-deep .segmentado__opcion::after {
+  content: '';
+  position: absolute;
+  inset: -3px 0;
+}
+
 .mensajeria__como-rotulo {
   font-size: var(--fs-caption);
   font-weight: 600;

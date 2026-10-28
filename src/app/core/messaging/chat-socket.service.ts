@@ -74,8 +74,19 @@ export interface ChatSocketError {
  */
 export type SocketDeChat = Pick<Socket, 'on' | 'emit' | 'disconnect' | 'connected' | 'active'>;
 
-/** Abre un socket con ese token, o `null` si no hay a quién llamar. */
-export type FabricaDeSocket = (token: string) => SocketDeChat | null;
+/**
+ * Lo que socket.io pide antes de **cada** handshake —el primero y cada
+ * reconexión— para autenticarse.
+ *
+ * Una función y no un `{ token }` fijo: el socket que se conserva `active`
+ * reconecta solo, y con un objeto estático reintentaba para siempre con el
+ * token del momento en que se abrió, que después de rotar ya no sirve. Así
+ * cada intento lee el token vigente de la sesión.
+ */
+export type AuthDeSocket = (cb: (datos: { token: string | null }) => void) => void;
+
+/** Abre un socket que se autentica con `auth`, o `null` si no hay a quién llamar. */
+export type FabricaDeSocket = (auth: AuthDeSocket) => SocketDeChat | null;
 
 /**
  * Cómo se abre el socket. Dos situaciones en las que **no** se abre, por el
@@ -94,13 +105,13 @@ export const FABRICA_DE_SOCKET = new InjectionToken<FabricaDeSocket>('FABRICA_DE
   factory: () => {
     const baseUrl = inject(API_BASE_URL);
     const enNavegador = isPlatformBrowser(inject(PLATFORM_ID));
-    return (token) => {
+    return (auth) => {
       if (!enNavegador || environment.mockBackend) {
         return null;
       }
       return baseUrl === ''
-        ? io({ auth: { token }, transports: ['websocket'] })
-        : io(baseUrl, { auth: { token }, transports: ['websocket'] });
+        ? io({ auth, transports: ['websocket'] })
+        : io(baseUrl, { auth, transports: ['websocket'] });
     };
   },
 });
@@ -173,14 +184,15 @@ export class ChatSocketService {
     if (this.socket !== null && (this.socket.connected || this.socket.active)) {
       return this.socket;
     }
-    const token = this.session.accessToken();
-    if (token === null) {
+    if (this.session.accessToken() === null) {
       return null;
     }
     this.socket?.disconnect();
     this.socket = null;
 
-    const socket = this.fabrica(token);
+    // El token se lee en cada handshake, no al abrir: ver `AuthDeSocket`.
+    const fijo = this.session.accessToken();
+    const socket = this.fabrica((cb) => cb({ token: fijo }));
     if (socket === null) {
       return null;
     }

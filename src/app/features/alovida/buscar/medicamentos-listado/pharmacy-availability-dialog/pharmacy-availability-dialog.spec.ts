@@ -15,7 +15,7 @@ import {
   pinSubtitle,
   withCodes,
 } from './pharmacy-availability-dialog';
-import { tomarContexto } from '@core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '@core/messaging/enlace-de-chat';
 
 /* ---- el doble de Leaflet -------------------------------------------------- */
 
@@ -242,7 +242,7 @@ describe('PharmacyAvailabilityDialog', () => {
     // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
     expect(vuelta.has('sobre')).toBe(false);
     expect(vuelta.getAll('ctx')).toHaveLength(1);
-    const contexto = tomarContexto(vuelta.get('ctx'));
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
     expect(contexto?.tipo).toBe('producto');
     expect(contexto?.detalle).toContain('Farmacia Central');
   });

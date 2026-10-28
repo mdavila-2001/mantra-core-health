@@ -693,7 +693,7 @@ describe('Thread', () => {
 
   describe('tarjeta de contexto', () => {
     const TARJETA =
-      'Pedido: Farmacia Chávez · Sucursal Miraflores\n2 productos · Bs 69,00\n/my-account/pharmacy-orders/7f3c';
+      'Pedido: Farmacia Chávez · Sucursal Miraflores\n2 productos · Bs 69,00\n/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6';
 
     const sugerenciasDelComposer = (): readonly string[] =>
       (fixture.debugElement.query(By.directive(Composer)).componentInstance as Composer).sugerencias();
@@ -708,7 +708,7 @@ describe('Thread', () => {
       expect(tarjeta?.textContent).toContain('2 productos · Bs 69,00');
       const ver = consultar('hilo-contexto-ver') as HTMLAnchorElement;
       expect(ver.textContent?.trim()).toBe('Ver pedido');
-      expect(ver.getAttribute('href')).toBe('/my-account/pharmacy-orders/7f3c');
+      expect(ver.getAttribute('href')).toBe('/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6');
       // La ruta cruda no se lee como texto en la burbuja.
       expect(burbujas()[0]?.querySelector('.hilo__texto')).toBeNull();
     });
@@ -761,16 +761,90 @@ describe('Thread', () => {
       expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por Dra. Quispe');
     });
 
-    it('con una tarjeta, la cabecera dice de qué se habla en vez de «Conversación directa»', () => {
+    it('con una tarjeta, la cabecera dice de qué se habla sin repetir la farmacia del nombre', () => {
       abrir([mensaje('m-1', 'pp-1', TARJETA)]);
       const estado = fixture.nativeElement.querySelector('.hilo__estado') as HTMLElement;
-      expect(estado.textContent?.trim()).toBe('Pedido · Farmacia Chávez · Sucursal Miraflores');
+      // Tarjeta de antes del número corto: sólo «Pedido».
+      expect(estado.textContent?.trim()).toBe('Pedido');
+      expect(estado.textContent).not.toContain('Farmacia Chávez');
     });
 
-    it('sin tarjeta, la cabecera sigue diciendo «Conversación directa»', () => {
-      abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+    it('con el número corto en la tarjeta, la cabecera dice qué pedido es', () => {
+      abrir([
+        mensaje(
+          'm-1',
+          'pp-1',
+          'Pedido: #E5F6 · Farmacia Chávez · Sucursal Miraflores\n2 productos · Bs 69,00\n/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
+        ),
+      ]);
       const estado = fixture.nativeElement.querySelector('.hilo__estado') as HTMLElement;
-      expect(estado.textContent?.trim()).toBe('Conversación directa');
+      expect(estado.textContent?.trim()).toBe('Pedido · #E5F6');
+    });
+
+    it('sin tarjeta ni dato de presencia, la cabecera no inventa un subtítulo', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+      expect(fixture.nativeElement.querySelector('.hilo__estado')).toBeNull();
+      expect(fixture.nativeElement.textContent).not.toContain('Conversación directa');
+    });
+
+    it('como la farmacia, sobre el composer dice en nombre de quién se responde', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+      expect(consultar('hilo-respondiendo-como')).toBeNull();
+
+      store.vitrinasDeOrganizacion.set([{ profileId: 'pp-1', nombre: 'Farmacia Vida' }]);
+      fixture.detectChanges();
+      expect(consultar('hilo-respondiendo-como')?.textContent?.replace(/\s+/gu, ' ').trim()).toBe(
+        'Respondiendo como Farmacia Vida',
+      );
+    });
+
+    it('la barra fijada se recoge mientras la tarjeta original está a la vista', async () => {
+      let avisar: ((entradas: readonly Partial<IntersectionObserverEntry>[]) => void) | null = null;
+      const observadas: Element[] = [];
+      class ObservadorFalso {
+        constructor(alCambiar: (entradas: IntersectionObserverEntry[]) => void) {
+          avisar = (entradas) => alCambiar(entradas as IntersectionObserverEntry[]);
+        }
+        observe(nodo: Element): void {
+          observadas.push(nodo);
+        }
+        unobserve(): void {
+          // Las pruebas sólo miran qué se observa.
+        }
+        disconnect(): void {
+          // Ídem.
+        }
+        takeRecords(): IntersectionObserverEntry[] {
+          return [];
+        }
+      }
+      vi.stubGlobal('IntersectionObserver', ObservadorFalso);
+      try {
+        fixture.destroy();
+        fixture = TestBed.createComponent(Thread);
+        fixture.detectChanges();
+        abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const tarjeta = consultar('hilo-contexto')?.closest('[data-clave]') ?? null;
+        expect(tarjeta).not.toBeNull();
+        expect(observadas).toContain(tarjeta);
+        const fijado = (): HTMLElement | null => consultar('hilo-contexto-fijado');
+        expect(fijado()?.classList.contains('is-recogido')).toBe(false);
+
+        avisar!([{ target: tarjeta!, isIntersecting: true, intersectionRatio: 1 }]);
+        fixture.detectChanges();
+        expect(fijado()?.classList.contains('is-recogido')).toBe(true);
+        // Sigue siendo el mismo nodo, con lo que dice: sólo se recoge.
+        expect(fijado()?.textContent).toContain('Consulta sobre: Pedido');
+
+        avisar!([{ target: tarjeta!, isIntersecting: false, intersectionRatio: 0 }]);
+        fixture.detectChanges();
+        expect(fijado()?.classList.contains('is-recogido')).toBe(false);
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
 
     it('quien atiende como la farmacia abre el pedido en su bandeja, no en «mis pedidos»', () => {
@@ -778,9 +852,9 @@ describe('Thread', () => {
       store.vitrinasDeOrganizacion.set([{ profileId: 'pp-1', nombre: 'Farmacia Chávez' }]);
       fixture.detectChanges();
 
-      expect(consultar('hilo-contexto-ver')?.getAttribute('href')).toBe('/administration/pharmacy-orders/7f3c');
+      expect(consultar('hilo-contexto-ver')?.getAttribute('href')).toBe('/administration/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6');
       expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe(
-        '/administration/pharmacy-orders/7f3c',
+        '/administration/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
       );
     });
   });
@@ -882,6 +956,17 @@ describe('Thread', () => {
       (consultar('hilo-visor-responder') as HTMLButtonElement).click();
       fixture.detectChanges();
       expect(store.respondiendoA()?.id).toBe('m-3');
+    });
+
+    it('una foto propia en el visor dice «Vos», en voseo como el resto de la app', async () => {
+      abrir([foto(1, 'pp-1')]);
+      await servirTodos(['f-1']);
+
+      (consultar('hilo-imagen') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const pie = fixture.nativeElement.querySelector('.visor__autor') as HTMLElement | null;
+      expect(pie?.textContent?.trim()).toMatch(/^Vos · /u);
+      expect(fixture.nativeElement.textContent).not.toContain('Tú');
     });
 
     it('responder desde el visor deja la cita de esa foto en el composer', async () => {
@@ -1022,8 +1107,11 @@ describe('rutaParaQuienMira y subtituloDeContexto', () => {
   });
 
   it('el subtítulo dice de qué se habla', () => {
-    expect(subtituloDeContexto(pedido)).toBe('Pedido · Farmacia Vida');
+    expect(subtituloDeContexto(pedido)).toBe('Pedido');
+    expect(subtituloDeContexto({ ...pedido, titulo: '#22BE · Farmacia Vida · Sucursal Central' })).toBe('Pedido · #22BE');
     expect(subtituloDeContexto({ tipo: 'producto', titulo: 'Paracetamol', ruta: '/x' })).toBe('Consulta por Paracetamol');
+    // La farmacia ya es el nombre de la cabecera: no se repite.
+    expect(subtituloDeContexto({ tipo: 'farmacia', titulo: 'Farmacia Vida', ruta: '/x' })).toBe('Consulta a la farmacia');
   });
 });
 

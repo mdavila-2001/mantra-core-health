@@ -76,7 +76,7 @@ export class ConversationList {
   /** Cuál está abierta, para marcarla. */
   readonly activaId = input<string | null>(null);
 
-  /** El perfil propio: sin él no se puede decir «Tú:» ni pintar el tilde. */
+  /** El perfil propio: sin él no se puede decir «Enviado por vos» ni pintar el tilde. */
   readonly perfilPropio = input<string | null>(null);
 
   /** Lo que se escribió en el buscador, para resaltarlo en el nombre. */
@@ -143,7 +143,7 @@ export class ConversationList {
    * Quién escribió el último mensaje, cuando hace falta decirlo.
    *
    * Sólo en grupos: en una conversación de dos, el nombre ya está arriba y
-   * repetirlo en cada fila es ruido. `Tú:` sí aparece en las dos, porque saber
+   * repetirlo en cada fila es ruido. El tilde propio sí aparece en las dos, porque saber
    * si la pelota está en tu cancha es la mitad de para qué se mira una bandeja.
    */
   protected prefijo(conversacion: ConversationListItem): string {

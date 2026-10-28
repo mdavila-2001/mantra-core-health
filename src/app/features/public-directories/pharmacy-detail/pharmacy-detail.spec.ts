@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { CARGADOR_DE_LEAFLET } from '@shared/components/organisms/map/map';
 
 import { PharmacyDetail } from './pharmacy-detail';
-import { tomarContexto } from '../../../core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '../../../core/messaging/enlace-de-chat';
 
 const SLUG = 'farmacia-vida';
 
@@ -627,7 +627,7 @@ describe('PharmacyDetail', () => {
     expect(vuelta.getAll('ctx')).toHaveLength(1);
     // Un solo contexto guardado, y es el del producto: la farmacia va en el
     // renglón de detalle, no como una segunda tarjeta.
-    const contexto = tomarContexto(vuelta.get('ctx'));
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
     expect(contexto?.tipo).toBe('producto');
     expect(contexto?.titulo).not.toBe('Farmacia Vida');
     expect(contexto?.detalle).toContain('Farmacia Vida');
@@ -644,7 +644,7 @@ describe('PharmacyDetail', () => {
     // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
     // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
     expect(vuelta.has('sobre')).toBe(false);
-    const contexto = tomarContexto(vuelta.get('ctx'));
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
     expect(contexto?.tipo).toBe('farmacia');
     expect(contexto?.titulo).toBe('Farmacia Vida');
   });

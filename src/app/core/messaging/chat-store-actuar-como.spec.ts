@@ -185,8 +185,10 @@ describe('ChatStore · con qué perfil se escribe', () => {
     expect(store.perfil()).toBe(PROPIO);
     expect(store.avisoDePerfil()).toBe('');
     http.expectNone(VITRINAS);
-    // Había una fila: se conserva, con su antigüedad (S7).
-    expect(store.bandeja().status).toBe('stale');
+    // Había una fila, pero un 403 no es «datos atrasados» (S7): la API dijo
+    // que con este perfil no se leen, así que S5 y sin filas (L-6).
+    expect(store.bandeja().status).toBe('forbidden');
+    expect(store.conversaciones()).toEqual([]);
     expect(store.error()).toBe('');
   });
 

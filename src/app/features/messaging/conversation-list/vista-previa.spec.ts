@@ -29,7 +29,7 @@ describe('vistaPreviaDe', () => {
       tipo: 'pedido',
       titulo: 'Farmacia Chávez · Sucursal Miraflores',
       detalle: '2 productos · Bs 69,00',
-      ruta: '/my-account/pharmacy-orders/7f3c',
+      ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
     });
 
     const vista = vistaPreviaDe({ ...base, bodyText: cuerpo });

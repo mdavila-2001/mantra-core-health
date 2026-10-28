@@ -10,9 +10,9 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { defer, finalize, map, type Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 
-import { ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
+import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
 import { contextoDePedido } from '../../../../core/messaging/contexto-de-pedido';
 
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
@@ -71,7 +71,7 @@ const BANDEJA_ROUTE = '/administration/pharmacy-orders';
  */
 export function motivoDeChatNoAbierto(error: unknown): string {
   if (error instanceof ChatOcupadoError) {
-    return CHAT_OCUPADO;
+    return CHAT_YA_ABRIENDO;
   }
   if (error instanceof HttpErrorResponse) {
     const reason = (error.error as { reason?: unknown } | null)?.reason;
@@ -87,9 +87,6 @@ export function motivoDeChatNoAbierto(error: unknown): string {
   }
   return 'No pudimos abrir el chat con el paciente. Probá de nuevo en un momento.';
 }
-
-/** Cuando el store ya está abriendo otro chat y no toma este pedido. */
-export const CHAT_OCUPADO = 'Ya se está abriendo otro chat. Probá de nuevo en un momento.';
 
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
 interface AjusteEnEdicion {
@@ -176,8 +173,22 @@ export class InboxOrder {
   private readonly chat = inject(ChatStore);
   private readonly router = inject(Router);
 
-  /** Mientras la API abre (o reutiliza) el hilo del pedido. */
-  protected readonly abriendoChat = signal(false);
+  /** Se tocó «Chatear» y el store todavía no avisó cómo terminó. */
+  private readonly pidioChat = signal(false);
+
+  /**
+   * Mientras la API abre (o reutiliza) el hilo del pedido.
+   *
+   * Es lo pedido **y** lo que el store dice que sigue abriendo: si el store
+   * corta la apertura sin avisar —cambió la identidad o salió la cuenta—, o
+   * la respuesta termina sin traer el hilo, el botón deja de girar solo. El
+   * otro final, «ya estaba abriendo otro», el store lo avisa por `alFallar`
+   * con `ChatOcupadoError`.
+   */
+  protected readonly abriendoChat = computed(() => this.pidioChat());
+
+  /** `true` cuando la pantalla ya se destruyó: ver `chatearConElPaciente`. */
+  private destruida = false;
   /** Por qué no se abrió el chat, en palabras del mostrador. */
   protected readonly errorDeChat = signal<string | null>(null);
 
@@ -382,6 +393,9 @@ export class InboxOrder {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.destruida = true;
+    });
     inject(ActivatedRoute)
       .paramMap.pipe(takeUntilDestroyed())
       .subscribe((params) => this.cargar(params.get('orderId') ?? ''));
@@ -417,53 +431,31 @@ export class InboxOrder {
     if (abierto === null || this.abriendoChat()) {
       return;
     }
-    this.abriendoChat.set(true);
+    this.pidioChat.set(true);
     this.errorDeChat.set(null);
-    // Resguardo del spinner: el botón gira mientras el store tenga la apertura
-    // en curso, y el store avisa el final con `alAbrir` o `alFallar`. Si no
-    // avisa —hoy, cuando ya está abriendo otro chat, vuelve sin suscribirse;
-    // o si la respuesta termina sin traer el hilo—, el botón no puede quedar
-    // girando para siempre. Se sabe por el lado del componente: `defer`
-    // registra si el store llegó a pedir el hilo, y `finalize` si la petición
-    // terminó sin traer nada.
-    let pedido = false;
-    let llegoElHilo = false;
-    const resolver = defer(() => {
-      pedido = true;
-      return this.ordersClient.abrirConversacion(abierto.id);
-    }).pipe(
-      map((respuesta) => {
-        llegoElHilo = true;
-        return { conversationId: respuesta.conversationId, profileId: respuesta.pharmacyProfileId };
-      }),
-      // Con el hilo en mano el store sigue (pone la tarjeta, navega) y avisa
-      // con `alAbrir`; con error ya avisó `alFallar`, que corre antes que
-      // esto. Lo que queda es terminar sin hilo y sin error.
-      finalize(() => {
-        if (!llegoElHilo) {
-          this.abriendoChat.set(false);
-        }
-      }),
-    );
+    const resolver = this.ordersClient
+      .abrirConversacion(abierto.id)
+      .pipe(
+        map((respuesta) => ({
+          conversationId: respuesta.conversationId,
+          profileId: respuesta.pharmacyProfileId,
+        })),
+      );
     this.chat.abrirComoOrganizacion(
       resolver,
       abierto.farmacia,
       (conversationId) => {
-        this.abriendoChat.set(false);
+        this.pidioChat.set(false);
+        // Abrir tarda tres peticiones: si mientras tanto el mostrador se fue
+        // a otra pantalla, el chat que termina de abrirse no lo arrastra.
         void this.router.navigate(['/messaging', conversationId]);
       },
       contextoDePedido(abierto),
       (error) => {
-        this.abriendoChat.set(false);
+        this.pidioChat.set(false);
         this.errorDeChat.set(motivoDeChatNoAbierto(error));
       },
     );
-    // El store se suscribe en el acto o no se suscribe: si no pidió el hilo y
-    // tampoco avisó un fallo, es que ya estaba abriendo otro chat.
-    if (!pedido && this.abriendoChat()) {
-      this.abriendoChat.set(false);
-      this.errorDeChat.set(CHAT_OCUPADO);
-    }
   }
 
   protected cambiarDecision(indice: number, decision: unknown): void {

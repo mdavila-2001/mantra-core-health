@@ -18,6 +18,31 @@
   --hilo-foto: 16.25rem;
   --hilo-foto-alto: 20rem;
   --hilo-foto-radio: calc(var(--r-card) - 3px);
+
+  /* El doble tilde de leído, en dos versiones según sobre qué se apoya.
+
+     Sobre la burbuja propia (petróleo) y el velo de una foto: una aguamarina
+     clara de la rampa, que no cambia con el tema porque los dos petróleos
+     —#0B557E en claro, #12719F en oscuro— la dejan por encima de 3:1
+     (5.5:1 y 3.7:1). La `--menta` de antes se oscurece de noche (#1C4A4C) y
+     sobre el petróleo nocturno daba 1.8:1.
+
+     Sobre una superficie (la tarjeta de contexto, una burbuja ajena): el
+     petróleo profundo en claro (8:1 sobre blanco; el celeste de
+     `--chat-tick-leido` daba 2.96:1) y el celeste de la rampa en oscuro
+     (11:1 sobre la tarjeta nocturna). */
+  --hilo-tick-sobre-propia: var(--c-aqua-200);
+  --hilo-tick-sobre-superficie: var(--c-petrol-500);
+}
+
+/* Gemelo de `[data-theme="dark"]`, como los de `alovida.css`: es el único
+   atributo con el que la hoja de ALOVIDA oscurece la tarjeta. Con el tema
+   «del sistema» y sin atributo, la tarjeta del hilo sigue clara, así que acá
+   no hay variante por `prefers-color-scheme`: pintaría un tilde claro sobre
+   una tarjeta blanca. La versión sobre la burbuja propia no la necesita: es
+   la misma en los dos temas. */
+:host-context([data-theme='dark']) {
+  --hilo-tick-sobre-superficie: var(--c-petrol-100);
 }
 
 /* --- Burbujas ------------------------------------------------------------ */
@@ -55,10 +80,15 @@
   color: inherit;
 }
 
-/* El doble tilde de leído, en menta: sobre el petróleo el celeste del tilde
-   no llega a 3:1. */
+/* El doble tilde de leído sobre el petróleo: ver `--hilo-tick-sobre-propia`. */
 .hilo__burbuja.is-propio .hilo__ticks.is-leido {
-  color: var(--menta);
+  color: var(--hilo-tick-sobre-propia);
+}
+
+/* Sobre la burbuja ajena no hay tildes hoy (sólo los mensajes propios los
+   llevan); si los hubiera, van con el de superficie. */
+.hilo__burbuja:not(.is-propio) .hilo__ticks.is-leido {
+  color: var(--hilo-tick-sobre-superficie);
 }
 
 .hilo__burbuja.is-propio .hilo__cita,
@@ -291,33 +321,11 @@
   pointer-events: none;
 }
 
-.hilo__foto-capa.is-fallado {
-  pointer-events: auto;
-}
-
-.hilo__foto-reintentar {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--e2);
-  min-block-size: 40px;
-  padding: var(--e2) var(--e4);
-  border: 0;
-  border-radius: var(--r-pill);
-  background: var(--sup-tarjeta);
-  color: var(--tinta);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.hilo__foto-reintentar svg {
-  inline-size: 18px;
-  block-size: 18px;
-}
-
-.hilo__foto-reintentar:focus-visible {
-  outline: 2px solid var(--aguamarina);
-  outline-offset: 2px;
+/* La foto que no salió: sólo la marca, sin control. Reintentar y Descartar
+   van al pie de la burbuja, como en un texto que no se envió. */
+.hilo__foto-capa.is-fallado svg {
+  inline-size: 32px;
+  block-size: 32px;
 }
 
 /* La hora encima de la foto, sobre un velo: una foto sola no tiene renglón
@@ -339,7 +347,7 @@
 
 .hilo__burbuja.is-solo-imagen .hilo__ticks.is-leido,
 .hilo__galeria .hilo__ticks.is-leido {
-  color: var(--menta);
+  color: var(--hilo-tick-sobre-propia);
 }
 
 /* La grilla: 2 lado a lado, 3 con la primera ancha, 4 o más en 2×2. */
@@ -414,7 +422,7 @@
 }
 
 .hilo__burbuja.is-contexto .hilo__ticks.is-leido {
-  color: var(--chat-tick-leido);
+  color: var(--hilo-tick-sobre-superficie);
 }
 
 .hilo__burbuja.is-contexto .hilo__mas-mensaje {
@@ -506,7 +514,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--e1);
-  min-block-size: 40px;
+  /* 44 px: es el único control de la tarjeta y se toca con el pulgar. */
+  min-block-size: 44px;
   margin-block: var(--e3) var(--e1);
   border: 1px solid var(--filete);
   border-radius: var(--r-pill);
@@ -589,7 +598,13 @@
   font-weight: 400;
 }
 
+/* Recogida mientras la tarjeta original está a la vista (ver `Thread`). */
+.hilo__fijado.is-recogido {
+  display: none;
+}
+
 .hilo__fijado-ver {
+  position: relative;
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -602,6 +617,61 @@
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
+}
+
+/* El área táctil llega a 44 px de alto sin agrandar la píldora: la barra ya
+   tiene 8 px arriba y abajo, y la píldora más alta la engordaba en 390. */
+.hilo__fijado-ver::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+/* --- «Respondiendo como …», sobre el composer ---------------------------- */
+
+.hilo__como {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  margin: 0;
+  padding: var(--e1) var(--e4);
+  border-block-start: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hilo__como strong {
+  color: var(--tinta);
+}
+
+/* En ancho el selector «Escribiendo como» está a la vista, en la bandeja. */
+@media (min-width: 60.0625rem) {
+  .hilo__como {
+    display: none;
+  }
+}
+
+/* En angosto, la barra fijada en una línea más baja: cada píxel de cromo es
+   un renglón menos de conversación. */
+@media (max-width: 60rem) {
+  .hilo__fijado {
+    gap: var(--e2);
+    padding-block: var(--e1);
+  }
+
+  .hilo__fijado-icono {
+    inline-size: 32px;
+    block-size: 32px;
+  }
+
+  .hilo__fijado-icono svg {
+    inline-size: 18px;
+    block-size: 18px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,5 @@
 import type { ContextoDeChat, TipoDeContexto } from '../../../core/messaging/contexto-de-chat';
+import { numeroDelTitulo } from '../../../core/messaging/contexto-de-pedido';
 
 /* ============================================================================
     Lo que el hilo dice alrededor de una tarjeta de contexto.
@@ -48,16 +49,20 @@ export const FOTOS_EN_GRILLA = 4;
 
 /**
  * El subtítulo de la cabecera de una conversación directa que vino desde una
- * ficha: «Pedido · Farmacia Chávez», «Consulta por Paracetamol 500 mg». Es lo
- * que la cabecera del chat de una app de delivery dice en vez de «Conversación
- * directa».
+ * ficha: «Pedido · #22BE», «Consulta por Paracetamol 500 mg».
+ *
+ * Sólo **de qué** se habla, nunca con quién: la farmacia y la sede ya están en
+ * el nombre de la cabecera, y la tarjeta las repite. Decirlas una tercera vez
+ * en el subtítulo era el mismo renglón tres veces en 390 px.
  */
 export function subtituloDeContexto(contexto: ContextoDeChat): string {
   switch (contexto.tipo) {
-    case 'pedido':
-      return `Pedido · ${contexto.titulo}`;
+    case 'pedido': {
+      const numero = numeroDelTitulo(contexto.titulo);
+      return numero === null ? 'Pedido' : `Pedido · ${numero}`;
+    }
     case 'farmacia':
-      return `Consulta a ${contexto.titulo}`;
+      return 'Consulta a la farmacia';
     default:
       return `Consulta por ${contexto.titulo}`;
   }

@@ -1,4 +1,5 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -6,6 +7,7 @@ import {
   effect,
   ElementRef,
   inject,
+  Injector,
   PLATFORM_ID,
   signal,
   viewChild,
@@ -147,7 +149,15 @@ const TOLERANCIA_DE_PULSACION = 10;
 export interface ContextoFijado {
   readonly contexto: ContextoDeChat;
   readonly enviadaPor: string;
+  /** La clave del mensaje que trae la tarjeta, para saber si está a la vista. */
+  readonly clave: string;
 }
+
+/**
+ * Qué parte de la tarjeta original tiene que verse para que la barra fijada
+ * sobre: un cuarto. Con sólo un borde asomando la barra todavía hace falta.
+ */
+const TARJETA_A_LA_VISTA = 0.25;
 
 /** Un pedazo del texto de una burbuja: texto plano, un enlace o una coincidencia. */
 export interface TrozoDeTexto {
@@ -272,6 +282,7 @@ export class Thread {
   /** La lista de mensajes: se crea y se destruye al pasar de vacío a con mensajes. */
   private readonly listaDeMensajes = viewChild<ElementRef<HTMLElement>>('lista');
   private readonly buscador = viewChild<ElementRef<HTMLInputElement>>('buscador');
+  private readonly barraFijada = viewChild<ElementRef<HTMLElement>>('barraFijada');
 
   /** Si la vista está al pie. Arranca en `true`: un hilo se abre por el final. */
   private pegadoAbajo = true;
@@ -358,13 +369,15 @@ export class Thread {
   });
 
   /**
-   * El subtítulo de la cabecera.
+   * El subtítulo de la cabecera, o `''` si no hay nada cierto que decir.
    *
    * En un grupo, los participantes. En una conversación directa que vino desde
-   * una ficha, de qué se habla —«Pedido · Farmacia Chávez», «Consulta por
-   * Paracetamol»—, como la cabecera del chat de una app de delivery. Si no,
-   * «Conversación directa». No hay presencia que mostrar: el contrato no la
-   * trae, y una «en línea» inventada sería peor que ninguna.
+   * una ficha, de qué se habla —«Pedido · #22BE», «Consulta por
+   * Paracetamol»—, como la cabecera del chat de una app de delivery, sin
+   * repetir la farmacia que ya es el nombre. Si no, nada: «Conversación
+   * directa» no decía nada que no se viera, el contrato no trae el tipo de
+   * contacto (farmacia, profesional) ni la presencia, y una «en línea»
+   * inventada sería peor que ninguna.
    */
   protected readonly subtitulo = computed(() => {
     const activa = this.store.conversacionActiva();
@@ -373,13 +386,34 @@ export class Thread {
     }
     if (activa.peers.length <= 1) {
       const fijado = this.contextoFijado();
-      return fijado === null ? 'Conversación directa' : subtituloDeContexto(fijado.contexto);
+      return fijado === null ? '' : subtituloDeContexto(fijado.contexto);
     }
     const nombres = activa.peers
       .map((peer) => peer.displayName)
       .filter((nombre): nombre is string => nombre !== undefined && nombre !== null);
-    return [...nombres, 'Tú'].join(', ');
+    return [...nombres, 'Vos'].join(', ');
   });
+
+  /**
+   * Con qué vitrina se está respondiendo, o `null` si se escribe como uno
+   * mismo.
+   *
+   * En angosto el selector «Escribiendo como» queda en la bandeja, que con el
+   * hilo abierto no se ve: sin esto nada en la pantalla decía en nombre de
+   * quién salía la respuesta. No autoriza nada; lo decide la API.
+   */
+  protected readonly respondiendoComo = computed(() =>
+    this.store.actuandoComoOrganizacion() ? (this.store.vitrinaDeOrganizacion()?.nombre ?? null) : null,
+  );
+
+  /**
+   * Si la tarjeta original de la conversación está a la vista en el hilo.
+   *
+   * Mientras se ve, la barra fijada de arriba sobra —diría lo mismo dos veces
+   * en el mismo alto de pantalla— y se recoge. Sin `IntersectionObserver`
+   * (SSR, pruebas) queda en `false` y la barra se muestra siempre.
+   */
+  protected readonly tarjetaALaVista = signal(false);
 
   protected readonly esGrupo = computed(() => {
     const activa = this.store.conversacionActiva();
@@ -558,6 +592,7 @@ export class Thread {
           return {
             contexto,
             enviadaPor: propio ? 'Enviada por vos' : `Enviada por ${this.nombreDe(mensaje.senderProfileId)}`,
+            clave: mensaje.clave,
           };
         }
       }
@@ -716,6 +751,8 @@ export class Thread {
       });
     }
 
+    this.observarLaTarjetaFijada(destroyRef);
+
     // El reloj de la ventana de edición. Sólo en el navegador: bajo SSR no hay
     // menú que actualizar y un intervalo dejaría colgada la renderización.
     if (this.isBrowser) {
@@ -724,10 +761,101 @@ export class Thread {
     }
   }
 
+  /**
+   * Recoge la barra fijada mientras la tarjeta original está a la vista.
+   *
+   * Un solo observador por marco, con el marco como raíz: lo que importa es
+   * si la tarjeta se ve **dentro del hilo**, no en la ventana. Cuando cambia
+   * la tarjeta (llega otra más nueva, una búsqueda la saca de la lista) se
+   * deja de observar la anterior. Sólo en el navegador y con
+   * `IntersectionObserver`; al destruir se desconecta.
+   *
+   * Recoger o mostrar la barra cambia el alto del marco por arriba. Si se
+   * está leyendo en el medio, eso corría las burbujas bajo el dedo; por eso
+   * se compensa el scroll con el alto de la barra. Al pie no hace falta: el
+   * `ResizeObserver` ya lo mantiene pegado.
+   */
+  private observarLaTarjetaFijada(destroyRef: DestroyRef): void {
+    if (!this.isBrowser || typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+    const injector = inject(Injector);
+    let observador: IntersectionObserver | null = null;
+    let raiz: HTMLElement | null = null;
+    let observada: Element | null = null;
+
+    const alCambiar = (entradas: readonly IntersectionObserverEntry[]): void => {
+      if (this.destruido) return;
+      const entrada = entradas.filter((e) => e.target === observada).pop();
+      if (entrada === undefined) return;
+      const aLaVista = entrada.isIntersecting && entrada.intersectionRatio >= TARJETA_A_LA_VISTA;
+      if (aLaVista === this.tarjetaALaVista()) return;
+      const barra = this.barraFijada()?.nativeElement;
+      const alto = barra === undefined ? 0 : barra.offsetHeight;
+      const marco = raiz;
+      this.tarjetaALaVista.set(aLaVista);
+      if (marco !== null && !this.pegadoAbajo && alto > 0) {
+        afterNextRender(
+          () => {
+            if (!this.destruido) marco.scrollTop += aLaVista ? -alto : alto;
+          },
+          { injector },
+        );
+      }
+    };
+
+    effect(() => {
+      const marco = this.marco()?.nativeElement ?? null;
+      const fijado = this.contextoFijado();
+      this.lineas();
+      if (this.destruido) return;
+      if (marco !== raiz) {
+        observador?.disconnect();
+        observada = null;
+        raiz = marco;
+        observador =
+          marco === null
+            ? null
+            : new IntersectionObserver(alCambiar, { root: marco, threshold: [0, TARJETA_A_LA_VISTA] });
+      }
+      // Después de pintar: la burbuja de la tarjeta recién se crea en este
+      // mismo ciclo.
+      afterNextRender(
+        () => {
+          if (this.destruido || observador === null || raiz === null) return;
+          // Por atributo y comparando, no armando un selector con la clave: la
+          // clave sale del mensaje y no se interpola en un selector.
+          const nodo =
+            fijado === null
+              ? null
+              : (Array.from(raiz.querySelectorAll('[data-clave]')).find(
+                  (candidato) => candidato.getAttribute('data-clave') === fijado.clave,
+                ) ?? null);
+          if (nodo === observada) return;
+          if (observada !== null) observador.unobserve(observada);
+          observada = nodo;
+          if (nodo === null) {
+            this.tarjetaALaVista.set(false);
+          } else {
+            observador.observe(nodo);
+          }
+        },
+        { injector },
+      );
+    });
+
+    destroyRef.onDestroy(() => {
+      observador?.disconnect();
+      observador = null;
+      observada = null;
+      raiz = null;
+    });
+  }
+
   /** El nombre de quien escribió, para el rótulo de un grupo. */
   private nombreDe(profileId: string): string {
     if (profileId === this.store.perfil()) {
-      return 'Tú';
+      return 'Vos';
     }
     const activa = this.store.conversacionActiva();
     const peer = activa?.peers.find((p) => p.profileId === profileId);

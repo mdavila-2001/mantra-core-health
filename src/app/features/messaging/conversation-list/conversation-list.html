@@ -48,8 +48,10 @@
     </button>
   </app-empty-state>
 
-  <!-- S5: la API no deja leer esta bandeja con este perfil. Sin reintento:
-       reintentar no cambia un permiso. -->
+  <!-- S5: la API no deja leer esta bandeja con este perfil. S5 también
+       necesita una salida: volver a pedirla. Un permiso que se recuperó —o una
+       vitrina de la que el store ya volvió al perfil propio— se resuelve con
+       otra lectura; si sigue prohibido, la API lo vuelve a decir. -->
   <app-empty-state
     vsh-forbidden
     class="conversaciones__estado"
@@ -57,7 +59,11 @@
     title="Sin acceso a estos chats"
     [description]="motivo()"
     variant="error"
-  />
+  >
+    <button empty-actions app-button variant="primary" data-testid="bandeja-sin-permiso-reintentar" (clicked)="reintentar.emit()">
+      Volver a intentar
+    </button>
+  </app-empty-state>
 
   <!-- S9: algo inesperado. El motivo una vez, y el código para soporte. -->
   <app-empty-state
@@ -144,8 +150,10 @@
                       <span class="conversaciones__icono conversaciones__icono--contexto" aria-hidden="true">
                         @switch (vista.contexto) {
                           @case ('pedido') {
-                            <!-- La bolsa del pedido. -->
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M5 8h14l-1 12H6z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
+                            <!-- El recibo del pedido, con su borde dentado: la
+                                 bolsa de trazo fino, a 16 px, se leía como un
+                                 tacho de basura. -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>
                           }
                           @case ('producto') {
                             <!-- La cápsula del producto. -->

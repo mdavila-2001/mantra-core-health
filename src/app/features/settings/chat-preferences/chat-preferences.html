@@ -5,6 +5,15 @@
     texto. Es para avisar que no estás mirando, no para responder por vos.
   </p>
 
+  <!-- Es la de la persona, no la de la farmacia: lo dice mientras se escribe
+       como la vitrina, para que nadie crea que configuró la de la farmacia. -->
+  @if (comoOrganizacion(); as nombre) {
+    <p class="chat-prefs__aviso" data-testid="chat-prefs-personal">
+      Esta es tu respuesta automática personal, no la de {{ nombre }}: no se manda cuando
+      escribís como {{ nombre }}.
+    </p>
+  }
+
   <!-- Lo que se promete cambia según dónde esté guardada, y se dice en la
        pantalla y no sólo en el código. Guardada en el servidor contesta siempre;
        guardada acá, sólo con la aplicación abierta. Prometer lo segundo como si

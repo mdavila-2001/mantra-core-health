@@ -14,12 +14,13 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
-import { ChatStore, PROXIMA_ACCION_DE_BANDEJA } from '../../core/messaging/chat.store';
-import { empty, loading } from '../../core/view-state/view-state';
+import { ChatStore } from '../../core/messaging/chat.store';
+import { loading } from '../../core/view-state/view-state';
 import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
 import { conQuien } from '../../core/messaging/con-quien';
 import type { ContextoDeChat } from '../../core/messaging/contexto-de-chat';
 import {
+  almacenDeLaPestana,
   destinoDeLaQuery,
   nonceDeLaQuery,
   tomarContexto,
@@ -102,6 +103,15 @@ export class Messaging {
   private readonly ruta = inject(ActivatedRoute);
   private readonly titulo = inject(Title);
   private readonly pedidos = inject(PharmacyOrdersClient);
+  /** Donde los botones «Chatear» dejan el contexto; `null` en el servidor. */
+  private readonly almacen = almacenDeLaPestana();
+
+  /**
+   * `true` cuando la pantalla ya se destruyó. Abrir un chat tarda dos o tres
+   * peticiones; si mientras tanto la persona se fue a otra pantalla, el hilo
+   * que termina de abrirse no la puede arrastrar de vuelta a Chats.
+   */
+  private destruida = false;
 
   protected readonly filtros = FILTROS;
 
@@ -240,11 +250,15 @@ export class Messaging {
   /** S2 mientras se resuelve el perfil. */
   protected readonly cargando = loading();
 
-  /** La bandeja vacía tras recortarla (todo archivado): el mismo S3 del store. */
-  protected readonly bandejaVacia = empty(
-    PROXIMA_ACCION_DE_BANDEJA,
-    'Consultá a una farmacia desde un producto o desde tu pedido, o escribile a un profesional.',
-  );
+  /**
+   * «Tenés 3 chats archivados». Con todo archivado la bandeja **no** está
+   * vacía: decir «Todavía no tenés chats» (S3) sería mentir, y la salida es
+   * abrir el cajón, no ir a buscar con quién hablar.
+   */
+  protected readonly rotuloArchivadas = computed(() => {
+    const n = this.archivadas().length;
+    return n === 1 ? 'Tenés 1 chat archivado.' : `Tenés ${n} chats archivados.`;
+  });
 
   protected readonly vacio = computed(() => this.visibles().length === 0);
 
@@ -255,7 +269,10 @@ export class Messaging {
 
   constructor() {
     this.store.iniciar();
-    inject(DestroyRef).onDestroy(() => this.store.detener());
+    inject(DestroyRef).onDestroy(() => {
+      this.destruida = true;
+      this.store.detener();
+    });
 
     // Al directorio se le pregunta cuando la persona dejó de escribir: una
     // petición por tecla contra un buscador que atraviesa todos los tenants es
@@ -282,8 +299,10 @@ export class Messaging {
       if (destino === null) {
         return;
       }
-      // Leído, borrado y validado otra vez (`tomarContexto`).
-      const contexto = tomarContexto(nonceDeLaQuery(query)) ?? undefined;
+      // Leído, borrado y validado otra vez (`tomarContexto`), y sólo si el
+      // botón lo dejó para este mismo destino.
+      const contexto =
+        tomarContexto(nonceDeLaQuery(query), destino, this.almacen) ?? undefined;
       if ('pedido' in destino) {
         this.store.abrirConversacion(
           this.pedidos.abrirConversacion(destino.pedido).pipe(map((r) => r.conversationId)),
@@ -399,6 +418,7 @@ export class Messaging {
   }
 
   private irAlHilo(conversationId: string): void {
+    // La apertura terminó con la pantalla ya cerrada: no se navega.
     this.limpiarBusqueda();
     // Sin `queryParams`: la dirección del hilo no hereda `escribirA` ni el
     // contexto, que ya se mandó.

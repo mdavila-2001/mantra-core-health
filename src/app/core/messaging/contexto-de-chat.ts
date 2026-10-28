@@ -85,7 +85,13 @@ export function linea(texto: string): string {
  * acepta una ruta que no sea la ficha de lo que la tarjeta dice ser.
  */
 const RUTAS_POR_TIPO: Readonly<Record<TipoDeContexto, readonly RegExp[]>> = {
-  pedido: [/^\/my-account\/pharmacy-orders\/[\w-]{1,64}$/u],
+  // La ficha del pedido exige el id **como es**: un UUID (la API lo valida con
+  // `ParseUUIDPipe` en `/pharmacy/orders/:id` y la maqueta los genera con esa
+  // forma). Con «cualquier palabra» la tarjeta aceptaba `/new` y `/checkout`,
+  // rutas del mismo módulo que inician una compra en vez de mostrar un pedido.
+  pedido: [
+    /^\/my-account\/pharmacy-orders\/[\w-]{1,64}$/u,
+  ],
   producto: [/^\/pharmacies-directory\/[\w-]{1,128}$/u],
   farmacia: [/^\/pharmacies-directory\/[\w-]{1,128}$/u],
   servicio: [/^\/clinics-directory\/[\w-]{1,128}$/u],
@@ -94,18 +100,6 @@ const RUTAS_POR_TIPO: Readonly<Record<TipoDeContexto, readonly RegExp[]>> = {
 /** `true` si la ruta es una ficha válida para ese tipo de tarjeta. */
 export function esRutaDeContexto(tipo: TipoDeContexto, ruta: string): boolean {
   return RUTAS_POR_TIPO[tipo].some((patron) => patron.test(ruta));
-}
-
-/**
- * Una ruta interna aceptable para alguno de los tipos.
- *
- * Se conserva por quien valida antes de saber el tipo; la regla es la misma
- * lista cerrada de {@link esRutaDeContexto}.
- */
-export function esRutaInterna(ruta: string): boolean {
-  return (Object.keys(RUTAS_POR_TIPO) as TipoDeContexto[]).some((tipo) =>
-    esRutaDeContexto(tipo, ruta),
-  );
 }
 
 /**

@@ -70,13 +70,33 @@ export class ChatPreferences implements OnInit {
     this.chat.iniciar();
     // El perfil se resuelve de forma asíncrona; cuando llega se trae lo que
     // haya en el servidor, que es lo que se está aplicando de verdad.
-    queueMicrotask(() => this.autoReply.cargar(this.chat.perfil()));
+    queueMicrotask(() => this.autoReply.cargar(this.perfil()));
   }
 
-  /** El perfil propio, o `null` mientras no se resolvió. */
+  /**
+   * El perfil **propio**, o `null` mientras no se resolvió.
+   *
+   * Nunca la vitrina con la que se esté escribiendo (`ChatStore.perfil()`):
+   * esta pantalla configura la respuesta automática **de la persona** («estoy
+   * de vacaciones») y su copia local es de la persona. La API también deja
+   * configurar la de la farmacia (`PUT /community/profiles/:vitrina/auto-reply`),
+   * pero esa es de la organización y no se edita desde las preferencias de
+   * nadie: antes, con «Escribiendo como» en la farmacia, esta pantalla leía la
+   * de la farmacia y le subía la personal encima.
+   */
   private perfil(): string | null {
     return this.chat.perfil();
   }
+
+  /**
+   * El nombre de la vitrina con la que se está escribiendo, si alguna: la
+   * pantalla aclara que lo que se configura acá no se manda en su nombre.
+   */
+  protected readonly comoOrganizacion = computed<string | null>(() =>
+    this.chat.actuandoComoOrganizacion()
+      ? (this.chat.vitrinaDeOrganizacion()?.nombre ?? null)
+      : null,
+  );
 
   protected readonly esperas = ESPERAS;
   protected readonly minutosMinimo = MINUTOS_MINIMO;

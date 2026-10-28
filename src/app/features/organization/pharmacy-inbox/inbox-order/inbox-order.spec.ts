@@ -16,8 +16,8 @@ import {
 } from '../../../../core/mock/fixtures/pedidos-de-farmacia';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { CHAT_OCUPADO, InboxOrder, motivoDeChatNoAbierto } from './inbox-order';
-import { ChatStore } from '../../../../core/messaging/chat.store';
+import { InboxOrder, motivoDeChatNoAbierto } from './inbox-order';
+import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -752,19 +752,18 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const botonDelChat = (): HTMLElement =>
       element('[data-testid="mostrador-chatear"]') as HTMLElement;
 
-    it('store ocupado que vuelve sin avisar: el botón no queda girando y lo dice', async () => {
+    it('store ocupado: avisa con ChatOcupadoError, el botón no queda girando y lo dice', async () => {
       await mount(
         pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
       );
-      // Otro chat a medio abrir: el store de hoy vuelve sin suscribirse ni
-      // llamar a nadie.
+      // Otro chat a medio abrir: el store no pide este y avisa por `alFallar`.
       TestBed.inject(ChatStore).abriendo.set(true);
       click('mostrador-chatear');
       harness.detectChanges();
 
       http.expectNone({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
       expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
-      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(CHAT_OCUPADO);
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(CHAT_YA_ABRIENDO);
       expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
     });
 
@@ -797,6 +796,46 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
       http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
       expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('L-5 · un único texto de «ocupado»: el del store', () => {
+      expect(motivoDeChatNoAbierto(new ChatOcupadoError())).toBe(CHAT_YA_ABRIENDO);
+    });
+
+    it('si el store corta la apertura (cambio de cuenta) sin avisar, el botón deja de girar', async () => {
+      await abrirElChat();
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).toBe('true');
+      const abrir = http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+
+      // Sale la cuenta con el POST en vuelo: el store corta la apertura.
+      (TestBed.inject(ChatStore) as unknown as { olvidarIdentidad(): void }).olvidarIdentidad();
+      harness.detectChanges();
+
+      expect(abrir.cancelled).toBe(true);
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('L-4 · si el mostrador se fue de la pantalla mientras se abría, no lo lleva al chat', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      const lectura = http.expectOne((r) => r.url === '/community/conversations/c-9/messages');
+
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+      harness.fixture.destroy();
+
+      lectura.flush(pagina([]));
+      http
+        .expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' })
+        .flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+      http
+        .match((r) => r.url === '/community/conversations')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 50, nextCursor: null }));
+
+      expect(navegar).not.toHaveBeenCalled();
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
     });
 
     it('mientras el hilo se abre de verdad, el botón sí gira', async () => {

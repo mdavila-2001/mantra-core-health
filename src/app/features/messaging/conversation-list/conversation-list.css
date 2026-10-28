@@ -99,7 +99,9 @@
 
 .conversaciones__cuando {
   flex: none;
-  color: var(--tinta-3);
+  /* `--tinta-2` y no `--tinta-3`: a 11 px, «Ayer» en `--tinta-3` daba 4.27:1
+     sobre la fila clara, debajo de 4.5. */
+  color: var(--tinta-2);
   font-size: var(--fs-overline);
   font-variant-numeric: tabular-nums;
 }

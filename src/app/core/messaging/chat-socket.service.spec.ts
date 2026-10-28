@@ -2,7 +2,12 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../auth/session.store';
-import { ChatSocketService, FABRICA_DE_SOCKET, type SocketDeChat } from './chat-socket.service';
+import {
+  ChatSocketService,
+  FABRICA_DE_SOCKET,
+  type AuthDeSocket,
+  type SocketDeChat,
+} from './chat-socket.service';
 
 /** Un socket de mentira: guarda lo emitido y deja disparar sus eventos. */
 class SocketFalso {
@@ -51,18 +56,23 @@ class SocketFalso {
  */
 describe('ChatSocketService', () => {
   let creados: SocketFalso[];
+  let auths: AuthDeSocket[];
   let servicio: ChatSocketService;
+  const token = signal<string | null>('tok');
 
   beforeEach(() => {
     creados = [];
+    auths = [];
+    token.set('tok');
     TestBed.configureTestingModule({
       providers: [
-        { provide: SessionStore, useValue: { accessToken: signal('tok') } },
+        { provide: SessionStore, useValue: { accessToken: token } },
         {
           provide: FABRICA_DE_SOCKET,
-          useValue: () => {
+          useValue: (auth: AuthDeSocket) => {
             const socket = new SocketFalso();
             creados.push(socket);
+            auths.push(auth);
             return socket as unknown as SocketDeChat;
           },
         },
@@ -123,5 +133,26 @@ describe('ChatSocketService', () => {
     socket.emitidos.length = 0;
     socket.conectar();
     expect(socket.emitidos).toEqual([['join:inbox', { profileId: 'pp-1' }]]);
+  });
+
+  it('L-3 · cada handshake se autentica con el token vigente: rotarlo no deja al socket reintentando con el viejo', () => {
+    servicio.joinInbox('pp-1');
+    const socket = creados[0]!;
+    socket.conectar();
+    const leido = (): string | null => {
+      let visto: string | null = 'sin-llamar';
+      auths[0]!((datos) => {
+        visto = datos.token;
+      });
+      return visto;
+    };
+    expect(leido()).toBe('tok');
+
+    // El refresco rota el token con el socket vivo; socket.io reconecta solo
+    // y vuelve a pedir `auth` antes del handshake.
+    token.set('tok-rotado');
+    socket.caer();
+    expect(leido()).toBe('tok-rotado');
+    expect(creados).toHaveLength(1);
   });
 });
