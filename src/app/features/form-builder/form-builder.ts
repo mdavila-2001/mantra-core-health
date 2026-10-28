@@ -4,6 +4,7 @@ import {
   computed,
   effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -173,6 +174,12 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormBuilder {
+  /**
+   * Dentro del centro «Formularios | Encuestas» la cabecera la dibuja el
+   * centro, una sola vez; acá se omite para no repetirla (28/10/2026).
+   */
+  readonly embedded = input(false);
+
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
   private readonly navigation = inject(NavigationService);

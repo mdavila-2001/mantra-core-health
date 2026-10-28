@@ -713,8 +713,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // backend. Mismo caso que M13 en `administration/geolocation`. Lo hace
     // cumplir `scripts/check-route-prefixes.mjs`.
     path: 'questionnaires',
-    // Vuelve al menú del médico el 28/10/2026, por el mismo motivo que
-    // «Laboratorio e imagen»: sin el árbol del panel no tenía otra puerta.
+    // **Sale del menú lateral del médico y pasa a ser una pestaña de
+    // «Formularios»** (propietario, 28/10/2026): las dos son lo que se le pide
+    // al paciente y lo que se completa en la consulta. `/questionnaires` y la
+    // ficha de cada encuesta siguen abriendo; la puerta del médico es la
+    // pestaña «Encuestas» de `/form-builder` (`FormsHub`). `CLINICIAN`, que no
+    // tiene «Formularios», conserva el renglón.
+    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Encuestas',
     group: 'Atención',
     icon: 'survey',

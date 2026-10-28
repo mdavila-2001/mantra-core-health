@@ -318,11 +318,12 @@ describe('NavigationService', () => {
         // globo en la cabecera, `fueraDelMenuPara: [ANY_ROLE]` — sigue
         // alcanzándose por `/messaging`, sólo que ya no ocupa un renglón.
         'Directorios',
-        // «Grupos y foros» y «Encuestas» vuelven el 28/10/2026: su única
-        // puerta era el árbol «Sus herramientas» del panel, que el propietario
-        // mandó retirar. «Laboratorio e imagen» volvió a salir ese mismo día
-        // (el propietario lo señaló como regresión) y «Organización médica» se
-        // fue a la barra superior como «Mis organizaciones».
+        // «Grupos y foros» vuelve el 28/10/2026: su única puerta era el árbol
+        // «Sus herramientas» del panel, que el propietario mandó retirar.
+        // «Laboratorio e imagen» volvió a salir ese mismo día (el propietario lo
+        // señaló como regresión), «Organización médica» se fue a la barra
+        // superior como «Mis organizaciones» y «Encuestas» pasó a ser una
+        // pestaña de «Formularios».
         'Grupos y foros',
         'Consultas médicas',
         'Archivo clínico',
@@ -342,7 +343,6 @@ describe('NavigationService', () => {
         // destino al que se vuelve, como «Cotizaciones». Decisión a confirmar
         // por el propietario en el PR.
         'Grupos médicos',
-        'Encuestas',
         'Contabilidad',
       ]);
     });
@@ -381,14 +381,13 @@ describe('NavigationService', () => {
       expect(alcanzables).toContain('/lab-visits');
       expect(alcanzables).toContain('/dashboard');
 
-      // Las encuestas volvieron al menú el 28/10/2026 (ver la prueba de la
-      // lista cerrada); las visitas siguen fuera porque Turnos les ofrece su
-      // enlace. «Laboratorio e imagen» y «Mis organizaciones» tampoco ocupan
-      // renglón, pero siguen abriendo.
+      // Las visitas siguen fuera porque Turnos les ofrece su enlace.
+      // «Laboratorio e imagen», «Mis organizaciones» y «Encuestas» (pestaña de
+      // «Formularios») tampoco ocupan renglón, pero siguen abriendo.
       expect(alcanzables).toContain('/diagnostics');
       expect(rutasDelMenu()).not.toContain('/diagnostics');
       expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
-      expect(rutasDelMenu()).toContain('/questionnaires');
+      expect(rutasDelMenu()).not.toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
     });
 
