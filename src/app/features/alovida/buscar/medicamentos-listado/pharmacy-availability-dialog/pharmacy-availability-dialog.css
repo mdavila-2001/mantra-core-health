@@ -48,6 +48,7 @@
 
 .farmacia {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: var(--sp-3);
     padding: var(--sp-3);
@@ -130,8 +131,13 @@
     color: var(--text-primary);
 }
 
+/* «Consultar por chat» en su propio renglón, debajo de los datos y a lo
+   ancho: dentro de la columna del precio estrangulaba la dirección en un
+   teléfono. Arranca alineado con el nombre, no con la letra del pin. */
 .farmacia__chat {
-    margin-block-start: var(--sp-2);
+    flex: 1 0 100%;
+    max-inline-size: calc(100% - 28px - var(--sp-3));
+    margin-inline-start: calc(28px + var(--sp-3));
 }
 
 .farmacia__km {

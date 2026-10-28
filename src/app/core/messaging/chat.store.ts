@@ -1377,8 +1377,8 @@ export class ChatStore {
    *
    * Con `contexto`, antes de abrir el hilo manda **una** tarjeta de contexto
    * (ver `contexto-de-chat.ts`) — salvo que la última tarjeta del hilo ya sea
-   * sobre la misma ruta: volver a tocar «Chatear» desde el mismo pedido no
-   * tiene que repetirla.
+   * la misma (tipo, título y ruta): volver a tocar «Chatear» desde el mismo
+   * pedido no tiene que repetirla.
    */
   escribirA(
     slug: string,
@@ -1504,7 +1504,7 @@ export class ChatStore {
       .listMessages(conversationId, { profileId: propio, limit: PAGINA_DE_MENSAJES })
       .subscribe({
         next: (pagina) => {
-          if (ultimaTarjeta(pagina.items)?.ruta === contexto.ruta) {
+          if (mismaTarjeta(ultimaTarjeta(pagina.items), contexto)) {
             despues();
             return;
           }
@@ -1716,4 +1716,16 @@ function ultimaTarjeta(mensajes: readonly DirectMessage[]): ContextoDeChat | nul
     }
   }
   return ultima?.contexto ?? null;
+}
+
+/**
+ * `true` si dos tarjetas hablan de lo mismo: tipo, título y ruta.
+ *
+ * La ruta sola no alcanza: un producto apunta a la ficha de su farmacia, así
+ * que «Producto: Enalapril» y «Farmacia: Farmacia Vida» comparten ruta y son
+ * dos consultas distintas. El detalle no cuenta: que cambie el precio no hace
+ * de la misma consulta otra.
+ */
+function mismaTarjeta(a: ContextoDeChat | null, b: ContextoDeChat): boolean {
+  return a !== null && a.tipo === b.tipo && a.titulo === b.titulo && a.ruta === b.ruta;
 }

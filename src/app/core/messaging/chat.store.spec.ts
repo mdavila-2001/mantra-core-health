@@ -846,7 +846,7 @@ describe('ChatStore', () => {
       expect(abierto).toHaveBeenCalledWith('c-1');
     });
 
-    it('no la repite si la última tarjeta del hilo ya es sobre la misma ruta', () => {
+    it('no la repite si la última tarjeta del hilo ya es la misma', () => {
       const abierto = vi.fn();
       store.escribirA('farmacia-vida', abierto, pedido);
       hastaElHilo();
@@ -884,6 +884,26 @@ describe('ChatStore', () => {
         (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
       );
       expect(envio.request.body).toEqual({ senderProfileId: 'pp-1', bodyText: tarjeta });
+    });
+
+    it('misma ruta pero otra cosa (un producto de esa farmacia) sí manda tarjeta', () => {
+      const farmacia = 'Farmacia: Farmacia Vida\n/pharmacies-directory/farmacia-vida';
+      store.escribirA('farmacia-vida', vi.fn(), {
+        tipo: 'producto',
+        titulo: 'Enalapril',
+        detalle: '10 mg · 8,00 Bs',
+        ruta: '/pharmacies-directory/farmacia-vida',
+      });
+      hastaElHilo();
+      http
+        .expectOne((r) => r.method === 'GET' && r.url === '/community/conversations/c-1/messages')
+        .flush(pagina([mensaje('m-1', 'pp-1', farmacia)]));
+      const envio = http.expectOne(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+      expect(envio.request.body.bodyText).toBe(
+        'Producto: Enalapril\n10 mg · 8,00 Bs\n/pharmacies-directory/farmacia-vida',
+      );
     });
 
     it('si no puede leer el hilo no manda nada, pero lo abre igual', () => {

@@ -579,6 +579,31 @@ export class Thread {
       this.alCambiarElHilo(total);
     });
 
+    // Pegado al pie aunque cambie el tamaño sin que llegue un mensaje: una foto
+    // que termina de bajar, el composer que crece con una vista previa o la
+    // tarjeta de respuesta, el teclado del teléfono que achica el marco. Sin
+    // esto, mandar una foto dejaba la vista cortada a la mitad de la foto.
+    if (this.isBrowser && typeof ResizeObserver !== 'undefined') {
+      const observador = new ResizeObserver(() => {
+        const marco = this.marco()?.nativeElement;
+        if (marco && this.pegadoAbajo && this.altoAntesDeCargar === 0) {
+          marco.scrollTop = marco.scrollHeight;
+        }
+      });
+      effect(() => {
+        this.lineas();
+        const marco = this.marco()?.nativeElement;
+        if (!marco) return;
+        observador.observe(marco);
+        // La lista se vuelve a crear al pasar de vacío a con mensajes.
+        setTimeout(() => {
+          const lista = marco.querySelector('.hilo__mensajes');
+          if (lista) observador.observe(lista);
+        });
+      });
+      inject(DestroyRef).onDestroy(() => observador.disconnect());
+    }
+
     // El reloj de la ventana de edición. Sólo en el navegador: bajo SSR no hay
     // menú que actualizar y un intervalo dejaría colgada la renderización.
     if (this.isBrowser) {

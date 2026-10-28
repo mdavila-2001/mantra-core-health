@@ -53,6 +53,9 @@
         >
           @if (esImagen(item)) {
             <img [src]="item.vistaPrevia" alt="" />
+          } @else if (item.estado === 'preparando') {
+            <!-- Una foto enorme no tiene miniatura hasta achicarse: sólo el giro. -->
+            <span class="composer__miniatura-doc" aria-hidden="true"></span>
           } @else {
             <span class="composer__miniatura-doc" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>
@@ -254,7 +257,7 @@
         #campo
         data-testid="hilo-texto"
         rows="1"
-        [placeholder]="editando() === null ? (cola().length > 0 ? 'Agregá un comentario' : 'Escribí un mensaje') : 'Editá tu mensaje'"
+        [placeholder]="editando() === null ? (cola().length > 0 ? 'Agregá un texto' : 'Escribí un mensaje') : 'Editá tu mensaje'"
         title="Enter envía · Shift+Enter hace salto de línea · Ctrl+V pega una imagen"
         [ngModel]="texto()"
         (ngModelChange)="alEscribir($event)"
