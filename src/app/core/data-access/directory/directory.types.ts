@@ -67,6 +67,31 @@ export interface MyOrganization extends TenantListItem {
   readonly legalRepresentative?: OrganizationContactPerson;
   /** Las gerencias de contacto declaradas, en orden canónico. Ver {@link legalRepresentative}. */
   readonly executives?: readonly OrganizationContactPerson[];
+  /**
+   * Código de la forma societaria (`SRL`, `SA`, `US_LLC`…). Ausente si la
+   * organización nació con la forma legada, que no está en el diccionario.
+   */
+  readonly legalEntityType?: string;
+  /** El NIT declarado con su documento tributario, si lo hay. */
+  readonly taxIdentifier?: string;
+  /**
+   * Los papeles de su carpeta legal, uno por rol y en orden canónico. Ausente
+   * si no presentó ninguno. El archivo no viaja: la ficha dice qué se presentó
+   * y en qué estado está.
+   */
+  readonly legalDocuments?: readonly OrganizationLegalDocument[];
+}
+
+/** Un papel de la carpeta legal de la organización, tal como quedó registrado. */
+export interface OrganizationLegalDocument {
+  /** Rol canónico (`CONSTITUTION_DOC`, `TAX_IDENTIFIER_DOC`…). */
+  readonly role: string;
+  /** Código del estado de verificación (`PENDIENTE`, `VERIFICADO`, `RECHAZADO`, `VENCIDO`). */
+  readonly verificationStatus: string;
+  /** Número del documento, si se declaró (hoy sólo el NIT). */
+  readonly documentNumber?: string;
+  readonly registeredAt?: Date;
+  readonly validTo?: Date;
 }
 
 /**

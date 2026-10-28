@@ -413,8 +413,90 @@ function organizacionPropia(t: TenantSimulado, request: MockRequest) {
           },
         }
       : {}),
+    // Lo que el alta registró, como lo devuelve `GET /tenants/me`: forma
+    // societaria, NIT, carpeta legal, representante y gerencias.
+    ...(FICHA_DE_ALTA[t.id] ?? {}),
   };
 }
+
+/** Lo registrado en el alta de las organizaciones que tienen cuenta propia en la maqueta. */
+const FICHA_DE_ALTA: Readonly<Record<string, object>> = {
+  [TENANT_LABORATORIO]: {
+    legalEntityType: 'SRL',
+    taxIdentifier: '1023456029',
+    legalDocuments: [
+      { role: 'CONSTITUTION_DOC', verificationStatus: 'VERIFICADO', registeredAt: '2026-05-02' },
+      {
+        role: 'TAX_IDENTIFIER_DOC',
+        verificationStatus: 'VERIFICADO',
+        documentNumber: '1023456029',
+        registeredAt: '2026-05-02',
+      },
+      {
+        role: 'COMMERCE_REGISTRY_DOC',
+        verificationStatus: 'PENDIENTE',
+        registeredAt: '2026-05-02',
+      },
+      {
+        role: 'OPERATING_LICENSE_DOC',
+        verificationStatus: 'PENDIENTE',
+        registeredAt: '2026-05-02',
+        validTo: '2027-05-01',
+      },
+      {
+        role: 'HEALTH_AUTHORITY_CERT_DOC',
+        verificationStatus: 'RECHAZADO',
+        registeredAt: '2026-05-02',
+      },
+      {
+        role: 'POWER_OF_ATTORNEY_DOC',
+        verificationStatus: 'PENDIENTE',
+        registeredAt: '2026-05-02',
+      },
+    ],
+    legalRepresentative: {
+      role: 'LEGAL_REPRESENTATIVE',
+      fullName: 'Mariana Siles Rojas',
+      email: 'representante@laboratorio.mock',
+      phone: '+591 70012345',
+      idNumber: '4872190 SC',
+    },
+    executives: [
+      {
+        role: 'GENERAL_MANAGER',
+        fullName: 'Carlos Mendoza Paz',
+        email: 'gerencia@laboratorio.mock',
+        phone: '+591 70000001',
+      },
+      {
+        role: 'COMMERCIAL_MANAGER',
+        fullName: 'Ana Paz Vargas',
+        email: 'comercial@laboratorio.mock',
+        phone: '+591 70000002',
+      },
+    ],
+  },
+  [TENANT_ASEGURADORA]: {
+    legalEntityType: 'SA',
+    legalDocuments: [
+      { role: 'CONSTITUTION_DOC', verificationStatus: 'VERIFICADO', registeredAt: '2026-03-10' },
+      {
+        role: 'TAX_IDENTIFIER_DOC',
+        verificationStatus: 'VERIFICADO',
+        documentNumber: '1020304050',
+        registeredAt: '2026-03-10',
+      },
+    ],
+    taxIdentifier: '1020304050',
+    legalRepresentative: {
+      role: 'LEGAL_REPRESENTATIVE',
+      fullName: 'Jorge Andrade Quiroga',
+      email: 'legal@andina.mock',
+      phone: '+591 71111111',
+      idNumber: '3344556 LP',
+    },
+  },
+};
 
 export function registrarDirectorio(router: MockRouter): void {
   // Sustituye al `/admin/tenants` genérico de auth: acá está el modelo completo.
