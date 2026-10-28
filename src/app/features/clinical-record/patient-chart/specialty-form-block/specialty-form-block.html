@@ -34,9 +34,9 @@
 
        Estaba dentro del `<form>`, es decir, detrás de la cadena de estados del
        motor de `forms`: con una ficha ya respondida el modo lectura lo tapaba, y
-       entonces no había forma de llegar al diagnóstico. Acá arriba, elegir qué
-       se va a completar no depende de si el catálogo cargó ni de lo que este
-       encuentro ya tenga escrito. -->
+       entonces no había forma de llegar a los bloques propios. Acá arriba,
+       elegir qué se va a completar no depende de si el catálogo cargó ni de lo
+       que este encuentro ya tenga escrito. -->
   <div class="formulario-especialidad__selector">
     <app-form-field
       icon="survey"
@@ -61,16 +61,9 @@
   </div>
 
   @if (bloquePropio()) {
-    <!-- Las tres que no pasan por `forms`: cada una escribe donde corresponde
-         —`clinical.conditions`, el histórico de procedimientos, las órdenes del
-         circuito diagnóstico— y trae su propio formulario y su propia lista. -->
-    @if (esDiagnostico()) {
-      <app-diagnosis-block
-        [patientProfileId]="patientProfileId()"
-        [encounterId]="encounterId()"
-        (cambio)="cambio.emit()"
-      />
-    } @else if (esCirugia()) {
+    <!-- Las dos que no pasan por `forms`: escriben en el histórico de
+         procedimientos y traen su propio formulario y su propia lista. -->
+    @if (esCirugia()) {
       <app-procedures-block
         [patientProfileId]="patientProfileId()"
         [encounterId]="encounterId()"
@@ -84,65 +77,6 @@
         modo="odontologia"
         [embedded]="true"
       />
-    } @else if (esLaboratorio()) {
-      <app-analysis-order-block
-        [patientProfileId]="patientProfileId()"
-        [encounterId]="encounterId()"
-      />
-    }
-  } @else if (formularioLibre()) {
-    <!-- El formulario libre tampoco pasa por `forms`: son las filas «campo:
-         valor» de los campos adicionales, solas. Va antes de la cadena de
-         estados por lo mismo que los bloques propios: una ficha ya respondida
-         en este encuentro no lo tapa, se puede registrar cuantas veces haga
-         falta. -->
-    @if (!hayEncuentro()) {
-      <app-alert tone="info" title="Abra el encuentro para completar">
-        El formulario libre se registra dentro de la consulta que lo motivó. Registre el encuentro
-        acá arriba y el formulario aparece.
-      </app-alert>
-    } @else {
-      @if (fallosDelLibre().length > 0) {
-        <app-alert
-          tone="warning"
-          title="El formulario libre no quedó completo"
-          data-testid="formulario-libre-fallos"
-        >
-          @for (fallo of fallosDelLibre(); track fallo) {
-            <p class="formulario-especialidad__fallo">{{ fallo }}</p>
-          }
-        </app-alert>
-      }
-      <form
-        class="formulario-especialidad__formulario formulario-especialidad__libre"
-        data-testid="formulario-libre"
-        (submit)="$event.preventDefault()"
-      >
-        <app-additional-fields
-          [patientProfileId]="patientProfileId()"
-          [disabled]="enviando()"
-          [libre]="true"
-        />
-        <app-form-actions
-          submitLabel="Guardar formulario"
-          [pending]="enviando()"
-          [disabled]="!puedeGuardarLibre()"
-          (submitted)="guardarLibre()"
-        />
-      </form>
-      @if (adicionalesGuardados().length > 0) {
-        <div class="formulario-especialidad__respondido formulario-especialidad__ya-registrado">
-          <p class="formulario-especialidad__completado">Ya registrado en esta consulta</p>
-          <dl class="formulario-especialidad__respuestas" data-testid="formulario-libre-guardado">
-            @for (fila of adicionalesGuardados(); track $index) {
-              <div class="formulario-especialidad__respuesta">
-                <dt>{{ fila.label }}</dt>
-                <dd>{{ fila.value }}</dd>
-              </div>
-            }
-          </dl>
-        </div>
-      }
     }
   } @else if (!hayEncuentro()) {
     <app-alert tone="info" title="Abra el encuentro para completar">

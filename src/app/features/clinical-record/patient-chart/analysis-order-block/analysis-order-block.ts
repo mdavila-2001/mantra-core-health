@@ -178,9 +178,12 @@ export class AnalysisOrderBlock {
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
   /**
-   * El «Formulario libre — campo y valor» firmado del que sale, si se eligió
-   * ése en vez de una respuesta de `forms` (A3). Viaja como `basedOnNoteIds`
-   * (P40): la API lo ata a la nota y verifica que sea del mismo encuentro.
+   * La nota firmada con filas «campo: valor» de la que sale, si se eligió ésa
+   * en vez de una respuesta de `forms` (A3). Desde el 28/10/2026 el «Formulario
+   * libre — campo y valor» ya no se elige en el formulario médico: quedan las
+   * notas libres registradas antes y las de los campos adicionales de la ficha.
+   * Viaja como `basedOnNoteIds` (P40): la API la ata a la nota y verifica que
+   * sea del mismo encuentro.
    */
   protected readonly notaDelFormularioLibre = signal<string | null>(null);
 
