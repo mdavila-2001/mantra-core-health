@@ -2,15 +2,21 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import type { Signal, WritableSignal } from '@angular/core';
-import { provideRouter } from '@angular/router';
 
 import { DayCard, type DayGap } from './day-card';
-import type { ModalidadDeAtencion } from '../../../../core/data-access/scheduling/scheduling.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
 const DIA = new Date(2026, 8, 10);
 const DESDE = new Date(2026, 8, 10, 10, 0);
 const HASTA = new Date(2026, 8, 10, 10, 45);
+
+/** Lo que devuelve la API al agendar la cita puntual. */
+const CREATED_APPOINTMENT = {
+  bookingId: 'bk-1',
+  bookableSlotId: 's-1',
+  statusConceptId: 'c',
+  retractedSlots: 0,
+};
 
 /**
  * LA TARJETA — el único gesto de creación (AG-5).
@@ -37,7 +43,7 @@ describe('TarjetaDelDia', () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [DayCard],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     http = TestBed.inject(HttpTestingController);
@@ -69,7 +75,6 @@ describe('TarjetaDelDia', () => {
     readonly hasta: WritableSignal<string>;
     readonly reason: WritableSignal<string>;
     readonly patient: WritableSignal<ReferenceOption | null>;
-    readonly modality: WritableSignal<ModalidadDeAtencion>;
     readonly canSave: Signal<boolean>;
     /**
      * El buscador de pacientes y sus resultados.
@@ -132,55 +137,27 @@ describe('TarjetaDelDia', () => {
   });
 
   /**
-   * La modalidad de la atención — la teleconsulta desde la pantalla.
+   * La cita se agenda presencial: la tarjeta no pregunta por qué medio.
    *
-   * La API la acepta desde la PR #251, pero hasta acá ninguna pantalla podía
-   * mandarla: un doctor no tenía cómo declarar que atiende por video. Estas
-   * pruebas fijan las tres mitades — que el control aparece cuando tiene
-   * sentido, que el valor VIAJA (el cliente arma el cuerpo campo por campo y
-   * descarta en silencio lo que no nombra), y que se dice antes de guardar.
+   * El control de modalidad se quitó de la tarjeta. La API registra presencial
+   * la cita que llega sin `channel`, así que lo que estas pruebas fijan es que
+   * el cuerpo NO lo lleve —mandar «PRESENCIAL» igual afirmaría algo que nadie
+   * eligió— y que la pantalla no ofrezca una elección que después no viaja.
    */
-  describe('la modalidad de la atención', () => {
-    it('no se ofrece sin paciente: un rato suyo no se atiende por videollamada', async () => {
-      await montar();
-      api().reason.set('Reunión de equipo');
-      fixture.detectChanges();
-
-      expect(fixture.nativeElement.querySelector('.tarjeta__modalidad')).toBeNull();
-    });
-
-    it('aparece al elegir paciente, con presencial marcado', async () => {
+  describe('la cita se agenda presencial, sin preguntar el medio', () => {
+    it('con paciente elegido no aparece ningún control de modalidad', async () => {
       await montar();
       api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelector('.tarjeta__modalidad')).not.toBeNull();
-      expect(api().modality()).toBe('PRESENCIAL');
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('app-segmented-control')).toBeNull();
+      expect(root.querySelector('[role="radiogroup"]')).toBeNull();
+      expect(root.textContent).not.toContain('Por videollamada');
+      expect(root.textContent).not.toContain('A domicilio');
     });
 
-    it('la teleconsulta VIAJA en el cuerpo de la petición', async () => {
-      // Lo que el cliente descartaría si alguien olvidara nombrarla: el POST
-      // saldría sin `channel` y nada fallaría — la cita quedaría presencial.
-      await montar();
-      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
-      api().modality.set('TELECONSULTA');
-      fixture.detectChanges();
-
-      api().save();
-      const req = http.expectOne(
-        (r) => r.url === '/scheduling/appointments/direct' && r.method === 'POST',
-      );
-      expect(req.request.body.channel).toBe('TELECONSULTA');
-      req.flush({
-        bookingId: 'bk-1',
-        bookableSlotId: 's-1',
-        statusConceptId: 'c',
-        retractedSlots: 0,
-      });
-      http.verify();
-    });
-
-    it('presencial también viaja: elegirlo no es lo mismo que no decir nada', async () => {
+    it('el cuerpo de la reserva no lleva `channel`', async () => {
       await montar();
       api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
       fixture.detectChanges();
@@ -189,109 +166,27 @@ describe('TarjetaDelDia', () => {
       const req = http.expectOne(
         (r) => r.url === '/scheduling/appointments/direct' && r.method === 'POST',
       );
-      expect(req.request.body.channel).toBe('PRESENCIAL');
-      req.flush({
-        bookingId: 'bk-1',
-        bookableSlotId: 's-1',
-        statusConceptId: 'c',
-        retractedSlots: 0,
-      });
+      expect(req.request.body).not.toHaveProperty('channel');
+      req.flush(CREATED_APPOINTMENT);
       http.verify();
     });
 
-    it('avisa la videollamada antes de guardar, y no repite lo de siempre', async () => {
-      // Lo que se sale de la norma se dice; «en el consultorio» en cada cita
-      // presencial sería ruido.
-      //
-      // Se mira SÓLO la frase de inferencia y no la pantalla entera: los
-      // rótulos de las tres opciones también dicen «videollamada», así que
-      // aseverar sobre todo el texto probaría que el control existe, no que la
-      // frase cambió.
-      const inferencia = () =>
-        (fixture.nativeElement.querySelector('.tarjeta__inferencia')?.textContent ?? '') as string;
-
+    it('la frase de lo que va a pasar no menciona el medio', async () => {
       await montar();
       api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
       fixture.detectChanges();
-      expect(inferencia()).toContain('le avisamos al paciente');
-      expect(inferencia()).not.toContain('videollamada');
 
-      api().modality.set('TELECONSULTA');
-      fixture.detectChanges();
-      expect(inferencia()).toContain('Va por videollamada');
-
-      api().modality.set('DOMICILIO');
-      fixture.detectChanges();
-      expect(inferencia()).toContain('Va a su domicilio');
-    });
-
-    /* -- Telemedicina por franja ------------------------------------------- */
-
-    /** La opción «Por videollamada» del control segmentado. */
-    function opcionVideollamada(): HTMLButtonElement | undefined {
-      const botones = Array.from(
-        fixture.nativeElement.querySelectorAll('[data-testid="tarjeta-modalidad"] button'),
-      ) as HTMLButtonElement[];
-      return botones.find((b) => b.textContent?.includes('Por videollamada'));
-    }
-
-    it('fuera de una franja con telemedicina la videollamada se apaga y no se guarda', async () => {
-      await montar();
-      // Jueves 10/09: telemedicina sólo de 14 a 18; el rato tocado es 10:00.
-      fixture.componentRef.setInput('franjas', [
-        { dayOfWeek: 4, startTime: '08:00:00', endTime: '12:00:00' },
-        { dayOfWeek: 4, startTime: '14:00:00', endTime: '18:00:00', telemedicineEnabled: true },
-      ]);
-      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
-      fixture.detectChanges();
-      expect(opcionVideollamada()?.disabled).toBe(true);
-
-      // Si ya estaba elegida (p. ej. antes de cambiar la hora), se dice por qué.
-      api().modality.set('TELECONSULTA');
-      fixture.detectChanges();
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="tarjeta-sin-telemedicina"]')?.textContent,
-      ).toContain('habilitada para telemedicina');
-      expect(api().canSave()).toBe(false);
-      api().save();
-      http.expectNone('/scheduling/appointments/direct');
-
-      // Moverla a la franja con telemedicina la vuelve a habilitar.
-      api().from.set('15:00');
-      api().hasta.set('15:30');
-      fixture.detectChanges();
-      expect(opcionVideollamada()?.disabled).toBe(false);
-      expect(api().canSave()).toBe(true);
-    });
-
-    it('sin franjas conocidas no adivina: la videollamada sigue ofrecida', async () => {
-      await montar();
-      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
-      fixture.detectChanges();
-      expect(opcionVideollamada()?.disabled).toBe(false);
-    });
-
-    it('el 422 TELEMEDICINE_NOT_ENABLED se explica con qué hacer', async () => {
-      await montar();
-      api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
-      api().modality.set('TELECONSULTA');
-      fixture.detectChanges();
-
-      api().save();
-      http.expectOne('/scheduling/appointments/direct').flush(
-        {
-          statusCode: 422,
-          code: 'PRECONDITION_FAILED',
-          message: 'Ese horario no atiende por telemedicina.',
-          reason: 'TELEMEDICINE_NOT_ENABLED',
-        },
-        { status: 422, statusText: 'Unprocessable Entity' },
-      );
-      fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).toContain(
-        'no está en una franja de su horario habilitada para telemedicina',
+      const inference = fixture.nativeElement.querySelector('.tarjeta__inferencia') as HTMLElement;
+      expect(inference.textContent?.trim()).toBe(
+        'Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.',
       );
     });
+  });
+
+  it('no lleva a publicar el horario: la tarjeta cubre lo puntual de un día', async () => {
+    await montar();
+
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.tarjeta__cuerpo a')).toHaveLength(0);
   });
 
   it('con solo MOTIVO infiere tiempo ocupado, y lo dice', async () => {
@@ -522,22 +417,6 @@ describe('TarjetaDelDia', () => {
       expect((fixture.nativeElement as HTMLElement).textContent).toContain('pisa la cita de Beto');
       expect(api().canSave()).toBe(true);
     });
-  });
-
-  /**
-   * C-21 (2026-09-20) — las opciones excluyentes son alternancia, no radios.
-   */
-  it('la modalidad se elige con el control segmentado, sin un solo radio', async () => {
-    await montar();
-    api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
-    fixture.detectChanges();
-
-    const raiz = fixture.nativeElement as HTMLElement;
-    expect(raiz.querySelector('[data-testid="tarjeta-modalidad"]')).not.toBeNull();
-    expect(raiz.querySelectorAll('input[type="radio"]')).toHaveLength(0);
-    // Se anuncia como grupo y con su pregunta: un grupo sin nombre no se lee.
-    const grupo = raiz.querySelector('[role="radiogroup"]');
-    expect(grupo?.getAttribute('aria-label')).toBe('¿Cómo lo atiende?');
   });
 
   it('un rango invertido no deja guardar', async () => {

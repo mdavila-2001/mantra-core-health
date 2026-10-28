@@ -1,5 +1,4 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,23 +17,12 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import {
-  MODALIDADES,
-  type ModalidadDeAtencion,
-} from '../../../../core/data-access/scheduling/scheduling.types';
-import {
-  type FranjaVigente,
-  MENSAJE_SIN_TELEMEDICINA,
-  rechazoPorTelemedicina,
-  teleconsultaPermitidaEn,
-} from '../../telemedicina';
+import type { FranjaVigente } from '../../telemedicina';
 
 /** Un rato ya tomado del día, para avisar el choque ANTES de guardar. */
 export interface DayGap {
@@ -67,8 +55,13 @@ export interface DayGap {
  * Los tres tipos existen sólo en el modelo interno, jamás como menú. La
  * tercera inferencia —«abrir este rato para que reserven», la franja suelta—
  * espera el `gap_minutes` de AG-4: el respiro es parte de su diseño y
- * construirla sin él sería entregarla dos veces. Mientras tanto, el enlace
- * discreto a Publicar cubre a quien cayó acá buscando el horario semanal.
+ * construirla sin él sería entregarla dos veces.
+ *
+ * ## La cita se agenda presencial
+ *
+ * La tarjeta no pregunta por qué medio se atiende: la cita viaja sin `channel`
+ * y la API la registra presencial. La telemedicina se habilita por franja, en
+ * el horario publicado.
  *
  * ## Los choques, en vivo y en el servidor
  *
@@ -80,16 +73,7 @@ export interface DayGap {
  */
 @Component({
   selector: 'app-day-card',
-  imports: [
-    Alert,
-    AppButton,
-    ContentDialog,
-    FormField,
-    Input,
-    ReferenceCombobox,
-    RouterLink,
-    SegmentedControl,
-  ],
+  imports: [Alert, AppButton, ContentDialog, FormField, Input, ReferenceCombobox],
   templateUrl: './day-card.html',
   styleUrl: './day-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -128,10 +112,11 @@ export class DayCard {
   readonly ratosTomados = input<readonly DayGap[]>([]);
 
   /**
-   * Las franjas del horario vigente, para saber si la hora admite teleconsulta.
+   * Las franjas del horario vigente, como las pasa el contenedor.
    *
-   * `null` cuando el contenedor no las tiene: entonces no se avisa ni se
-   * deshabilita nada, y decide el servidor (422 `TELEMEDICINE_NOT_ENABLED`).
+   * Desde que la tarjeta no ofrece la modalidad no decide nada con ellas: sólo
+   * servían para apagar «Por videollamada» fuera de una franja con
+   * telemedicina. Se declara mientras el contenedor siga enlazándola.
    */
   readonly franjas = input<readonly FranjaVigente[] | null>(null);
 
@@ -147,50 +132,6 @@ export class DayCard {
   protected readonly hasta = signal('');
   protected readonly reason = signal('');
   protected readonly patient = signal<ReferenceOption | null>(null);
-  /**
-   * Por qué medio se atiende.
-   *
-   * Arranca en presencial porque es lo que pasa casi siempre; elegirlo
-   * igualmente lo GUARDA, en vez de mandarlo vacío: «nadie lo dijo» y «dijeron
-   * que es presencial» son cosas distintas en la historia del paciente.
-   */
-  protected readonly modality = signal<ModalidadDeAtencion>('PRESENCIAL');
-  protected readonly modalities = MODALIDADES;
-
-  /**
-   * Las modalidades como opciones del control segmentado.
-   *
-   * C-21 y C-10 (2026-09-20): el doctor pidió alternancia en vez de radios.
-   * Se reusa `segmented-control`, que es el `radiogroup` del sistema de diseño
-   * —con flechas y un solo tabulador—, en vez de escribir otro control: son
-   * tres opciones excluyentes, que es exactamente para lo que existe.
-   */
-  protected readonly modalityOptions = computed<readonly SegmentedOption<ModalidadDeAtencion>[]>(
-    () => {
-      const sinTelemedicina = this.teleconsultaNoAdmitida();
-      return MODALIDADES.map((m) => ({
-        value: m.valor,
-        label: m.nombre,
-        // Fuera de una franja con telemedicina la videollamada no se ofrece:
-        // la API la rechazaría. Si ya estaba elegida, el aviso dice por qué.
-        ...(m.valor === 'TELECONSULTA' && sinTelemedicina ? { disabled: true } : {}),
-      }));
-    },
-  );
-
-  /** Si, con las franjas conocidas, la hora elegida NO admite teleconsulta. */
-  private readonly teleconsultaNoAdmitida = computed(() => {
-    const franjas = this.franjas();
-    const rango = this.range();
-    return franjas !== null && rango !== null && !teleconsultaPermitidaEn(franjas, rango.desde);
-  });
-
-  /** La teleconsulta quedó elegida en una hora que no la admite: no se guarda. */
-  protected readonly teleconsultaFueraDeFranja = computed(
-    () => this.modality() === 'TELECONSULTA' && this.teleconsultaNoAdmitida(),
-  );
-
-  protected readonly mensajeSinTelemedicina = MENSAJE_SIN_TELEMEDICINA;
 
   /** Si el alta salió de un cupo ya programado: la franja no se pregunta. */
   protected readonly fromSlot = computed(() => this.cupoId() !== null);
@@ -235,13 +176,7 @@ export class DayCard {
    */
   protected readonly willHappen = computed<string | null>(() => {
     if (this.patient() !== null) {
-      // La modalidad entra en la frase sólo cuando NO es la de siempre: decir
-      // «en el consultorio» en cada cita presencial es ruido, y lo que la
-      // persona necesita confirmar de un vistazo es lo que se sale de la norma.
-      const porVideo = this.modality() === 'TELECONSULTA';
-      const aDomicilio = this.modality() === 'DOMICILIO';
-      const donde = porVideo ? ' Va por videollamada.' : aDomicilio ? ' Va a su domicilio.' : '';
-      return `Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.${donde}`;
+      return 'Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.';
     }
     if (this.reason().trim() !== '') {
       return 'Queda como tiempo ocupado suyo. El paciente no ve nada en ese rato.';
@@ -293,7 +228,6 @@ export class DayCard {
       rango !== null &&
       !this.saving() &&
       !this.blockedByGap() &&
-      !(this.patient() !== null && this.teleconsultaFueraDeFranja()) &&
       (this.patient() !== null || this.reason().trim() !== '')
     );
   });
@@ -353,7 +287,6 @@ export class DayCard {
           startAt: rango.desde.toISOString(),
           durationMinutes: duracionMin,
           ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
-          channel: this.modality(),
         })
         .subscribe({
           next: (creado) => {
@@ -461,11 +394,6 @@ export class DayCard {
    */
   private failure(error: unknown): void {
     this.saving.set(false);
-    const sinTelemedicina = rechazoPorTelemedicina(error);
-    if (sinTelemedicina !== null) {
-      this.error.set(sinTelemedicina);
-      return;
-    }
     const campos = Object.values(fieldErrorsOf(error));
     const delServidor =
       campos.length > 0
