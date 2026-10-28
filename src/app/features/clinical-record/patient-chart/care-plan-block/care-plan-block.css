@@ -125,7 +125,7 @@
 
 /* ---- Los pasos: un sub-riel numerado dentro del último tramo ------------ */
 
-.pasos {
+.plan-pasos {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -134,7 +134,7 @@
   list-style: none;
 }
 
-.pasos__paso {
+.plan-pasos__paso {
   display: grid;
   grid-template-columns: 1.75rem minmax(0, 1fr);
   column-gap: var(--sp-3);
@@ -144,7 +144,7 @@
   background: var(--bg-surface-alt);
 }
 
-.pasos__numero {
+.plan-pasos__numero {
   display: grid;
   place-items: center;
   inline-size: 1.75rem;
@@ -156,21 +156,21 @@
   color: var(--text-secondary);
 }
 
-.pasos__numero--escrito {
+.plan-pasos__numero--escrito {
   border-style: solid;
   border-color: var(--brand-primary);
   background: var(--brand-primary);
   color: var(--text-inverse);
 }
 
-.pasos__campos {
+.plan-pasos__campos {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-3);
   min-inline-size: 0;
 }
 
-.pasos__cabecera {
+.plan-pasos__cabecera {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -178,13 +178,13 @@
   min-block-size: 1.75rem;
 }
 
-.pasos__rotulo {
+.plan-pasos__rotulo {
   font-size: var(--fs-caption);
   font-weight: 700;
   color: var(--text-primary);
 }
 
-.pasos__agregar {
+.plan-pasos__agregar {
   align-self: flex-start;
 }
 
