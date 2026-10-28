@@ -53,6 +53,14 @@ const CSP_DEL_SERVIDOR_DE_DESARROLLO =
   /Executing inline script violates the following Content Security Policy/;
 
 /**
+ * Con menos movimiento la app salta la transición de vista (app.config.ts) y
+ * el router de Angular, **sólo en modo desarrollo** (`ngDevMode`), registra el
+ * AbortError del salto con console.error. En producción no se registra nada.
+ * Se excluye ESE mensaje y ningún otro.
+ */
+const TRANSICION_SALTEADA_EN_DESARROLLO = /^AbortError: Transition was skipped/;
+
+/**
  * El índice del glosario es un artefacto generado e ignorado por git
  * (`/public/glossary-data/`, `.gitignore`): en un clon recién hecho no existe y
  * su 404 aparece en cualquier pantalla pública. Ajeno a este cambio; se excluye
@@ -71,6 +79,7 @@ function juntarErrores(page: Page): () => string[] {
   page.on('console', (mensaje) => {
     if (mensaje.type() !== 'error') return;
     if (CSP_DEL_SERVIDOR_DE_DESARROLLO.test(mensaje.text())) return;
+    if (TRANSICION_SALTEADA_EN_DESARROLLO.test(mensaje.text())) return;
     consola.push(mensaje.text());
   });
   page.on('pageerror', (error) => consola.push(error.message));

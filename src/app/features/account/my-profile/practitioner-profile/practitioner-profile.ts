@@ -67,6 +67,8 @@ import type {
 import { RouterLink } from '@angular/router';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import { ROLES_DE_QUIEN_ATIENDE } from '../../../../core/navigation/navigation.map';
+import { rolesAlcanzan } from '../../../../core/navigation/navigation.types';
 import { conceptosDe, sello } from './practitioner-seal';
 
 /** Re-exportados: otras pantallas los importan desde acá desde antes de moverlos. */
@@ -265,6 +267,15 @@ export class PractitionerProfile {
   private readonly firmaYSello = inject(SignatureAndSealClient);
   private readonly insurance = inject(InsuranceClient);
   private readonly auth = inject(AuthService);
+
+  /**
+   * El enlace a «Mis verificaciones» con el criterio de su ruta: los roles de
+   * quien atiende en la organización activa. Con el perfil y sin el rol acá,
+   * el guard lo mandaría a «sección denegada».
+   */
+  protected readonly veMisVerificaciones = computed(() =>
+    rolesAlcanzan(ROLES_DE_QUIEN_ATIENDE, this.auth.roles()),
+  );
   private readonly community = inject(CommunityClient);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);

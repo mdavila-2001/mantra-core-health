@@ -826,10 +826,6 @@
       "nombre": "my-account_requests"
     },
     {
-      "ruta": "/my-account/verifications",
-      "nombre": "my-account_verifications"
-    },
-    {
       "ruta": "/posts",
       "nombre": "home"
     },
@@ -1042,10 +1038,6 @@
     {
       "ruta": "/my-account/requests",
       "nombre": "my-account_requests"
-    },
-    {
-      "ruta": "/my-account/verifications",
-      "nombre": "my-account_verifications"
     },
     {
       "ruta": "/administration/my-organization",
