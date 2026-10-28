@@ -222,4 +222,23 @@ Sin cambio: L-2 (corchete en la misma columna y poligonal entre columnas: misma 
 misma flecha), L-3 (el chip apagado es de la primitiva `app-chip`; el aviso en texto lo compensa),
 L-4 (carga y error, de `app-view-state-host`).
 
+`visual-reviewer`, cuarta vuelta: **FAIL** (84/100, 1 HIGH). El arreglo de la tercera era un
+desplazamiento por módulo (`carril % 3` para el cruce y `% 4` para la bajada): con cuatro indicaciones,
+dos volvían a compartir 648 px de recta. Rehecho de raíz:
+
+| Hallazgo | Arreglo | Comprobado |
+|---|---|---|
+| N-1 cuatro indicaciones comparten cruce | asignación real de carriles: cada indicación que cruza sobre una fila tiene su altura (8 px de aire con las tarjetas, 7 px entre carriles) y el hueco sobre la fila crece si hacen falta más; los tramos verticales se asignan por pasillo con coloreo de intervalos, y el pasillo se ensancha si no entran | prueba de propiedad sobre todas las aristas de cuatro escenarios (1, 4, 7 indicaciones, con corchetes y una hacia atrás): ningún par de distinto diagnóstico comparte un tramo a menos de 6 px y ningún tramo pasa a menos de 4 px de una tarjeta ajena. **Prueba de sabotaje:** con todas las indicaciones forzadas al mismo cruce, fallan las tres pruebas de varias indicaciones |
+| N-2 cruces que parecen empalmes | halo del color del lienzo bajo cada indicación: en un cruce, la línea de abajo queda cortada y se lee como puente | `geometria-cuatro-indicaciones.png` |
+| N-3 la prueba no alcanzaba | la prueba recorre las aristas que asigna `ubicarRecorrido`, no carriles puestos a mano | ver arriba |
+| N-5 hacia atrás pisaba la rama de la atención | ahora sale por la derecha del diagnóstico, como las demás, y entra por la derecha de la receta | prueba «una receta anterior a su diagnóstico…» |
+
+`geometria-*.png` **no son capturas de la pantalla**: dibujan en Chromium las tarjetas y los trazos
+que devuelve `ubicarRecorrido` (el mismo módulo, empaquetado con esbuild) para 4 y 7 indicaciones,
+que no se pueden crear desde la interfaz (ver arriba). Las demás capturas se rehicieron sobre la
+app con este commit.
+
+Sin cambio: N-4 (la captura entera se toma sin el recorte del lienzo; el menú lateral fijo tapa el
+borde izquierdo).
+
 Capturas: `capturas/recorrido-clinico/`.
