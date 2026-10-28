@@ -137,7 +137,7 @@ Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · base `origin/dev
 |---|---|
 | `tsc -p tsconfig.app.json --noEmit` | 0 errores |
 | `eslint src/app/features/clinical-record/patient-chart` | 0 errores (el `yarn lint` global trae errores preexistentes en specs ajenos) |
-| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **593 pruebas verdes** (las nuevas: `recorrido-clinico/` 54, `patient-chart.spec.ts` 8) |
+| `ng test --include='…/patient-chart/**/*.spec.ts'` | 33 archivos · **595 pruebas verdes** (las nuevas: `recorrido-clinico/` 56, `patient-chart.spec.ts` 8) |
 | `yarn test` completo | **no se ejecutó** |
 | Navegador 1440 / 768 / 390 | desborde horizontal de la página: 0 px; el recorrido desplaza dentro de su lienzo |
 | «Secciones» sin cambios | 9 pestañas (Servicios incluida), «Nuevo diagnóstico» visible, menú de acciones Confirmar / Rechazar / Cambiar estado / Adjuntar |
@@ -240,5 +240,19 @@ app con este commit.
 
 Sin cambio: N-4 (la captura entera se toma sin el recorte del lienzo; el menú lateral fijo tapa el
 borde izquierdo).
+
+`visual-reviewer`, quinta vuelta: **FAIL** (82/100, 1 HIGH; N-1, N-2 y N-5 resueltos según sus
+fuzzers de miles de planos). Corregido después:
+
+| Hallazgo | Arreglo | Comprobado |
+|---|---|---|
+| H-1 la punta de una flecha que entra por la derecha cae sobre la línea de otro diagnóstico | el pasillo empieza a 18 px de la tarjeta (la punta mide ~14) | prueba nueva de la caja de cada punta; **sabotaje** (pasillo a 8 px): fallan 2 pruebas. Con los fuzzers del revisor (`f4.cjs`, 3000 planos): 0 casos (antes 706 planos) |
+| M-1 el halo opaco sobre carriles tintados | sin bandas tintadas: el halo es del color del lienzo en los dos temas | `recorrido-camino-resaltado.png`, `recorrido-oscuro-indicacion.png` |
+| M-2 la última línea a 8 px del tronco | 12 px de aire con el tronco, y el pasillo se ensancha antes | prueba nueva (≥ 8 px de cualquier tronco); `f3.cjs`: 0 casos (antes 1155) |
+| M-3 convergencia hacia un «+N» | se acepta y se declara: el nodo de grupo reúne varias recetas, y varias flechas hacia él dicen «algunas de éstas son para estos diagnósticos». La prueba la permite sólo hacia un grupo | prueba «hacia una celda agrupada convergen en su «+N» y en nada más»; en `fuzz.cjs`/`f2.cjs` sólo quedan convergencias de un mismo origen o hacia un grupo |
+| L-1 la prueba no veía puntas ni troncos | `verificarTrazado` comprueba ambas | ver arriba |
+
+Sin cambio: L-2 (las imágenes `geometria-*.png` siguen sin atenciones ni tema oscuro; el halo y el
+oscuro se comprueban en las capturas de la app).
 
 Capturas: `capturas/recorrido-clinico/`.

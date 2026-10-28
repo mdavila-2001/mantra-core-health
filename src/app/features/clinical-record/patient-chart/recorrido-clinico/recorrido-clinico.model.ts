@@ -522,7 +522,10 @@ export function ubicarRecorrido(
   const huecoTras = (columna: number): number =>
     Math.max(
       m.separacionColumnas,
-      INICIO_DEL_PASILLO + Math.max(0, (carrilesPorPasillo.get(columna) ?? 0) - 1) * PASO_DE_CARRIL + 32,
+      INICIO_DEL_PASILLO +
+        Math.max(0, (carrilesPorPasillo.get(columna) ?? 0) - 1) * PASO_DE_CARRIL +
+        AIRE_CON_EL_TRONCO +
+        DISTANCIA_DEL_TRONCO,
     );
   const xDeColumna: number[] = [];
   ordenadas.forEach((_, indice) => {
@@ -612,7 +615,17 @@ const MARGEN_DE_CRUCE = 8;
 /** La distancia entre dos carriles paralelos de indicación. */
 const PASO_DE_CARRIL = 7;
 /** Dónde empieza el pasillo de la derecha de una columna. */
-const INICIO_DEL_PASILLO = 8;
+/**
+ * Dónde empieza el pasillo de la derecha de una columna. Más que el largo de
+ * una punta de flecha (unos 14 px) más un margen: las indicaciones que entran
+ * a una receta por su derecha dejan la punta entre la tarjeta y el primer
+ * carril, y ahí no puede pasar la línea de otro diagnóstico.
+ */
+const INICIO_DEL_PASILLO = 18;
+/** Aire mínimo entre el carril más externo de un pasillo y el tronco de las atenciones. */
+const AIRE_CON_EL_TRONCO = 12;
+/** A cuánto del borde izquierdo de su columna va el tronco de las atenciones. */
+const DISTANCIA_DEL_TRONCO = 24;
 /** Por dónde entra una indicación a su receta desde la izquierda. */
 const ENTRADA_POR_IZQUIERDA = 10;
 
@@ -623,7 +636,7 @@ const ENTRADA_POR_IZQUIERDA = 10;
  */
 function trazoDeAtencion(desde: NodoUbicado, hasta: NodoUbicado): string {
   const m = MEDIDAS;
-  const tronco = desde.x - m.separacionColumnas / 2 + 8;
+  const tronco = desde.x - DISTANCIA_DEL_TRONCO;
   const y0 = desde.y + m.altoNodo / 2;
   const y1 = hasta.y + m.altoNodo / 2;
   const r = Math.min(10, Math.abs(y1 - y0) / 2);
