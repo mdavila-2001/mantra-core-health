@@ -72,13 +72,13 @@ describe('MyPrimaryPatients', () => {
   });
 
   it('al pasar de página la tabla sigue a la vista y «Anteriores» vuelve atrás', () => {
-    const una = (offset: number) => ({
+    const pageAt = (offset: number) => ({
       items: [{ patientProfileId: `p${offset}`, displayName: `Paciente ${offset}`, since: '2026-10-28T12:00:00Z' }],
       total: PAGE_SIZE + 1,
       limit: PAGE_SIZE,
       offset,
     });
-    request().flush(una(0));
+    request().flush(pageAt(0));
     fixture.detectChanges();
     const boton = (texto: string) =>
       Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('nav button')).find((b) =>
@@ -89,7 +89,7 @@ describe('MyPrimaryPatients', () => {
     fixture.detectChanges();
     // Mientras carga, la navegación sigue en el DOM (no se pierde el foco).
     expect((fixture.nativeElement as HTMLElement).querySelector('nav')).not.toBeNull();
-    request().flush(una(PAGE_SIZE));
+    request().flush(pageAt(PAGE_SIZE));
     fixture.detectChanges();
     expect(texto()).toContain(`Paciente ${PAGE_SIZE}`);
 
