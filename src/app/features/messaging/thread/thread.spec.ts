@@ -8,7 +8,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
-import { Thread, trocear } from './thread';
+import { indiceDelPrimerNoLeido, Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
 import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
@@ -839,5 +839,24 @@ describe('Thread', () => {
       expect(consultar('hilo-visor')).toBeNull();
       expect(store.respondiendoA()?.id).toBe('m-1');
     });
+  });
+});
+
+describe('indiceDelPrimerNoLeido', () => {
+  const de = (...autores: string[]) => autores.map((senderProfileId) => ({ senderProfileId }));
+
+  it('cuenta los últimos ajenos desde el final', () => {
+    expect(indiceDelPrimerNoLeido(de('yo', 'ella', 'ella'), 'yo', 2)).toBe(1);
+  });
+
+  it('lo que uno manda con el hilo abierto no corre el separador', () => {
+    // Un ajeno sin leer y, después, una respuesta propia: el separador va
+    // delante del ajeno, no delante de la respuesta.
+    expect(indiceDelPrimerNoLeido(de('ella', 'yo', 'ella', 'yo'), 'yo', 1)).toBe(2);
+  });
+
+  it('sin no leídos, o con más de los que hay, no hay separador', () => {
+    expect(indiceDelPrimerNoLeido(de('ella'), 'yo', 0)).toBe(-1);
+    expect(indiceDelPrimerNoLeido(de('ella', 'yo'), 'yo', 2)).toBe(-1);
   });
 });

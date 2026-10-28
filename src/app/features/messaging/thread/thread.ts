@@ -143,6 +143,29 @@ function normalizar(texto: string): string {
 }
 
 /**
+ * Dónde va el separador de «no leídos»: delante del `sinLeer`-ésimo mensaje
+ * ajeno contando desde el final, o `-1` si no hay que ponerlo.
+ *
+ * Los propios no cuentan: la bandeja dice cuántos te escribieron, no cuántos
+ * hay, y lo que uno manda con el hilo abierto queda debajo del separador.
+ */
+export function indiceDelPrimerNoLeido(
+  mensajes: readonly { readonly senderProfileId: string }[],
+  propio: string | null,
+  sinLeer: number,
+): number {
+  if (sinLeer <= 0) return -1;
+  let ajenos = 0;
+  for (let indice = mensajes.length - 1; indice >= 0; indice -= 1) {
+    if (mensajes[indice]?.senderProfileId !== propio) {
+      ajenos += 1;
+      if (ajenos === sinLeer) return indice;
+    }
+  }
+  return -1;
+}
+
+/**
  * Parte el texto de una burbuja en trozos: enlaces clicables y, si se está
  * buscando, las coincidencias resaltadas.
  *
@@ -365,9 +388,10 @@ export class Thread {
     const mensajes = this.store.enOrden();
     const sinLeer = this.store.noLeidosAlAbrir();
     // El separador de no leídos va delante del primero que no habías visto:
-    // los últimos `sinLeer` del hilo, contando desde el final.
-    const desdeNoLeidos =
-      sinLeer > 0 && sinLeer <= mensajes.length ? mensajes.length - sinLeer : -1;
+    // el `sinLeer`-ésimo ajeno contando desde el final. Sólo cuentan los
+    // ajenos: lo que uno escribe después de abrir no es «no leído», y
+    // contarlo corría el separador por encima del mensaje recién mandado.
+    const desdeNoLeidos = indiceDelPrimerNoLeido(mensajes, propio, sinLeer);
 
     let diaAnterior = '';
     let autorAnterior: string | null = null;
