@@ -29,6 +29,7 @@ import { registrarNotificaciones } from './notifications.handlers';
 import { registerSignatureAndSeal } from './signature-and-seal.handlers';
 import { registrarPerfiles } from './profiles.handlers';
 import { registrarLibretaDeDirecciones } from './address-book.handlers';
+import { registerPrimaryPractitioner } from './primary-practitioner.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
 import { registrarPublico } from './public.handlers';
@@ -64,6 +65,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarTerminologia(router);
   registrarPerfiles(router);
   registrarLibretaDeDirecciones(router);
+  registerPrimaryPractitioner(router);
   registerSignatureAndSeal(router);
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);

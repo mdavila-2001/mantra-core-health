@@ -18,6 +18,14 @@
       <app-practitioner-insurers profileInsurers [practitionerProfileId]="profileIdVisible()" />
     </app-practitioner-profile-view>
 
+    <!-- El médico de cabecera (28/10/2026): el botón va justo debajo de la
+         ficha, donde el paciente acaba de decidir que confía en este
+         profesional, y antes de los horarios. -->
+    <app-primary-practitioner-choice
+      [practitionerProfileId]="profileIdVisible()"
+      [acceptsNewPatients]="perfil.aceptaPacientesNuevos"
+    />
+
     <!-- TP-4: los horarios, donde se toma la decisión.
          La ficha decía en qué sedes atiende, pero para saber CUÁNDO había que
          salir de acá, entrar a la reserva y elegirlo de una lista. Quien

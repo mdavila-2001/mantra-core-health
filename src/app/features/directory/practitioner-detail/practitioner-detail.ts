@@ -29,6 +29,7 @@ import { PractitionerAvailability } from '../practitioner-availability/practitio
 import { PractitionerInsurers } from '../practitioner-insurers/practitioner-insurers';
 import { PractitionerServiceSchedule } from '../practitioner-service-schedule/practitioner-service-schedule';
 import { PractitionerServices } from '../practitioner-services/practitioner-services';
+import { PrimaryPractitionerChoice } from '../../primary-practitioner/primary-practitioner-choice/primary-practitioner-choice';
 import type {
   EspecialidadVisible,
   FormacionVisible,
@@ -82,6 +83,7 @@ interface PerfilResuelto {
     PractitionerProfileView,
     PractitionerServiceSchedule,
     PractitionerServices,
+    PrimaryPractitionerChoice,
     Tab,
     Tabs,
     ViewStateHost,
