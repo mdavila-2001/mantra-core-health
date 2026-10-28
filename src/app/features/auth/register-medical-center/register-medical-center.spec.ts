@@ -1,6 +1,7 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { Validators } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
@@ -50,6 +51,8 @@ describe('RegisterMedicalCenter', () => {
       disposicion?: string;
       campos: readonly {
         key: string;
+        label?: string;
+        required?: boolean;
         control?: string;
         ancho?: string;
         opcionesEn?: string;
@@ -328,6 +331,66 @@ describe('RegisterMedicalCenter', () => {
     http.expectNone(RUTA_ALTA);
     expect(fixture.componentInstance.form.controls.operatingLicenseFileId.touched).toBe(true);
     expect(fixture.componentInstance.form.controls.operatingLicenseFileId.invalid).toBe(true);
+  });
+
+  it('un profesional independiente se registra sin escritura ni matrícula, y no las envía', () => {
+    completar();
+    const form = fixture.componentInstance.form;
+    form.controls.legalEntityType.setValue('PROFESIONAL_INDEPENDIENTE');
+    form.controls.constitutionFileId.setValue('');
+    form.controls.commerceRegistryFileId.setValue('');
+    fixture.componentInstance.submit();
+
+    const req = http.expectOne(RUTA_ALTA);
+    expect(req.request.body.organization.legalDocuments).toEqual({
+      taxIdentifierFileId: 'f-nit',
+      operatingLicenseFileId: 'f-licencia',
+      healthAuthorityCertificateFileId: 'f-sedes',
+    });
+    req.flush({ tenantId: 't-1', code: 'X', ownerUserId: 'u-1', status: 'p', emailVerificationSent: false });
+  });
+
+  it('una unipersonal puede omitir la escritura pero no la matrícula', () => {
+    completar();
+    const form = fixture.componentInstance.form;
+    form.controls.legalEntityType.setValue('UNIPERSONAL');
+    form.controls.constitutionFileId.setValue('');
+    form.controls.commerceRegistryFileId.setValue('');
+    fixture.componentInstance.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(form.controls.constitutionFileId.valid).toBe(true);
+    expect(form.controls.commerceRegistryFileId.invalid).toBe(true);
+  });
+
+  it('una S.R.L. sigue exigiendo los cinco documentos', () => {
+    completar();
+    const form = fixture.componentInstance.form;
+    form.controls.constitutionFileId.setValue('');
+    fixture.componentInstance.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(form.controls.constitutionFileId.invalid).toBe(true);
+  });
+
+  it('los documentos que el tipo societario permite omitir se rotulan «(opcional)» y vuelven a ser obligatorios al cambiar de tipo', () => {
+    const form = fixture.componentInstance.form;
+    const campo = (clave: string) =>
+      interno()
+        .paginas()
+        .flatMap((p) => p.campos)
+        .find((c) => c.key === clave)!;
+
+    form.controls.legalEntityType.setValue('PROFESIONAL_INDEPENDIENTE');
+    expect(campo('constitutionFileId').label).toMatch(/\(opcional\)$/);
+    expect(campo('commerceRegistryFileId').label).toMatch(/\(opcional\)$/);
+    expect(campo('commerceRegistryFileId').required).toBeUndefined();
+    expect(campo('taxIdentifierFileId').label).not.toMatch(/opcional/);
+
+    form.controls.legalEntityType.setValue('SRL');
+    expect(campo('constitutionFileId').label).not.toMatch(/opcional/);
+    expect(campo('constitutionFileId').required).toBe(true);
+    expect(form.controls.commerceRegistryFileId.hasValidator(Validators.required)).toBe(true);
   });
 
   it('quitar un documento ya subido vacía su control', () => {

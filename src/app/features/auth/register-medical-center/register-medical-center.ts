@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -68,6 +69,23 @@ const JURISDICTION_CODE = 'JURISDICTION_NATIONAL';
 const AVISO_CATALOGO = 'No pudimos cargar los catálogos del alta. Revise su conexión y vuelva a enviar.';
 
 const MAX_LEGAL_NAME = 300;
+
+/**
+ * Los documentos que un tipo societario puede omitir: las personas naturales
+ * no tienen escritura de constitución, y el profesional independiente ejerce
+ * con su NIT personal, sin matrícula de comercio. Es la misma regla que aplica
+ * la API (`assertLegalDocumentsForEntityType`, 422 nombrando el documento);
+ * decisión del propietario del 28/10/2026. El resto de los tipos sube los cinco.
+ */
+export const DOCUMENTOS_OPCIONALES_POR_TIPO: Readonly<Record<string, readonly DocumentLegalKey[]>> = {
+  UNIPERSONAL: ['constitutionFileId'],
+  PROFESIONAL_INDEPENDIENTE: ['constitutionFileId', 'commerceRegistryFileId'],
+};
+
+/** Los documentos que el tipo societario elegido puede omitir; ninguno si no hay tipo. */
+export function documentosOpcionales(tipoSocietario: string): readonly DocumentLegalKey[] {
+  return DOCUMENTOS_OPCIONALES_POR_TIPO[tipoSocietario] ?? [];
+}
 const MAX_EMAIL = 320;
 const MAX_NAME = 200;
 
@@ -205,6 +223,11 @@ export class RegisterMedicalCenter {
     password: new FormControl('', { nonNullable: true, validators: [...passwordValidators] }),
   });
 
+  /** El tipo societario elegido: decide qué documentos son opcionales. */
+  private readonly tipoSocietario = toSignal(this.form.controls.legalEntityType.valueChanges, {
+    initialValue: this.form.controls.legalEntityType.value,
+  });
+
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly registered = signal(false);
@@ -266,7 +289,7 @@ export class RegisterMedicalCenter {
         clave: 'documentos-legales',
         icon: 'folder' as const,
         hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
-        campos: legalDocumentsFields('BO', uiLanguage()),
+        campos: this.camposDeDocumentos(),
       },
       {
         titulo: 'Su cuenta',
@@ -306,7 +329,22 @@ export class RegisterMedicalCenter {
     ]),
   );
 
+  /**
+   * Los cinco campos de documento, con los que el tipo societario permite
+   * omitir marcados «(opcional)» y sin mensaje de obligatorio.
+   */
+  private camposDeDocumentos() {
+    const opcionales = documentosOpcionales(this.tipoSocietario());
+    return legalDocumentsFields('BO', uiLanguage()).map((campo) => {
+      if (!opcionales.some((clave) => clave === campo.key)) return campo;
+      const { required: _required, mensajeDeError: _mensaje, ...resto } = campo;
+      return { ...resto, label: `${campo.label} (opcional)` };
+    });
+  }
+
   constructor() {
+    // Cambiar el tipo societario cambia qué documentos son obligatorios.
+    this.form.controls.legalEntityType.valueChanges.subscribe((tipo) => this.exigirDocumentos(tipo));
     this.context.dynamicEnum(DESTINO_TIPO_DE_ORGANIZACION).subscribe({
       next: (catalogo) => this.ofrecerTipos(medicalOrganizationTypeOptions(catalogo)),
       error: () => this.ofrecerTipos(medicalOrganizationTypeOptions(null)),
@@ -321,6 +359,24 @@ export class RegisterMedicalCenter {
   }
 
   /* --- documentos legales (dropzone real, con `fileId`) ------------------ */
+
+  /** Vuelve obligatorios los cinco documentos salvo los que el tipo societario permite omitir. */
+  private exigirDocumentos(tipoSocietario: string): void {
+    const opcionales = documentosOpcionales(tipoSocietario);
+    for (const clave of this.clavesDeDocumento) {
+      const control = this.form.controls[clave];
+      if (opcionales.includes(clave)) {
+        control.removeValidators(Validators.required);
+      } else {
+        control.addValidators(Validators.required);
+      }
+      control.updateValueAndValidity({ emitEvent: false });
+    }
+  }
+
+  protected esDocumentoObligatorio(clave: DocumentLegalKey): boolean {
+    return !documentosOpcionales(this.tipoSocietario()).includes(clave);
+  }
 
   /** Cómo sube cada `app-dropzone-pdf`: la pre-carga pública de las demás altas. */
   protected readonly subirDocumento: PdfUploader = (file) =>
@@ -363,7 +419,7 @@ export class RegisterMedicalCenter {
     const campo = this.paginas()
       .flatMap((pagina) => pagina.campos)
       .find((c) => c.key === clave);
-    return campo?.label ?? 'Documento';
+    return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 
   submit(): void {
@@ -438,9 +494,11 @@ export class RegisterMedicalCenter {
       legalName: f.legalName.trim(),
       legalEntityType: f.legalEntityType,
       legalDocuments: {
-        constitutionFileId: f.constitutionFileId,
+        // Los opcionales que no se subieron no viajan: la API los omite sólo
+        // si el tipo societario lo permite, y un '' no es un uuid.
+        ...(f.constitutionFileId === '' ? {} : { constitutionFileId: f.constitutionFileId }),
         taxIdentifierFileId: f.taxIdentifierFileId,
-        commerceRegistryFileId: f.commerceRegistryFileId,
+        ...(f.commerceRegistryFileId === '' ? {} : { commerceRegistryFileId: f.commerceRegistryFileId }),
         operatingLicenseFileId: f.operatingLicenseFileId,
         healthAuthorityCertificateFileId: f.healthAuthorityCertificateFileId,
       },

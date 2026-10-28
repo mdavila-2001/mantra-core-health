@@ -65,6 +65,19 @@ describe('MedicalCenterRegistrationClient', () => {
     req.flush({ tenantId: 't-1', code: 'CENTRO-NORTE', ownerUserId: 'u-1', status: 'p', emailVerificationSent: true });
   });
 
+  it('no manda la escritura ni la matrícula si no las hay', () => {
+    const { constitutionFileId: _c, commerceRegistryFileId: _m, ...resto } = REGISTRATION.legalDocuments;
+    client.register({ ...REGISTRATION, legalDocuments: resto }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/iam/auth/register-organization');
+    expect(req.request.body.organization.legalDocuments).toEqual({
+      taxIdentifierFileId: 'f-nit',
+      operatingLicenseFileId: 'f-licencia',
+      healthAuthorityCertificateFileId: 'f-sedes',
+    });
+    req.flush({});
+  });
+
   it('manda el nombre comercial sólo si lo hay', () => {
     client.register({ ...REGISTRATION, tradeName: 'Norte' }).subscribe();
 
