@@ -4,8 +4,8 @@
     ========================================================================== */
 
 import type {
+  DisponibilidadDeMedicamento,
   OfertaDeFarmacia,
-  TarjetaDeMedicamento,
 } from '@core/data-access/public-marketplace/public-marketplace.types';
 
 /** Rótulo de las ofertas que la farmacia publicó sin marca. */
@@ -29,7 +29,29 @@ export interface RamaDeMarca {
 export type EstadoDeRama =
   | { readonly estado: 'carga' }
   | { readonly estado: 'error' }
-  | { readonly estado: 'datos'; readonly marcas: readonly RamaDeMarca[] };
+  | {
+      readonly estado: 'datos';
+      readonly marcas: readonly RamaDeMarca[];
+      /** Si alguna farmacia del país lo publica bajo receta. */
+      readonly conReceta: boolean;
+    };
+
+/**
+ * La rama de un compuesto a partir de su disponibilidad.
+ *
+ * Usa las marcas y la receta **de la disponibilidad**, no las de la tarjeta:
+ * la tarjeta sale de ofertas recortadas por la búsqueda y el radio, así que
+ * buscando «Cozaar» trae una sola marca, y podía decir «sin receta» aunque una
+ * farmacia fuera del radio lo publicara bajo receta.
+ */
+export function ramaDesde(disponibilidad: DisponibilidadDeMedicamento): EstadoDeRama {
+  const { medication, offers } = disponibilidad;
+  return {
+    estado: 'datos',
+    marcas: ramasPorMarca(medication.brands, offers),
+    conReceta: medication.requiresPrescription || offers.some((o) => o.requiresPrescription),
+  };
+}
 
 /**
  * Agrupa las ofertas por nombre comercial.
@@ -50,7 +72,8 @@ export function ramasPorMarca(
 ): readonly RamaDeMarca[] {
   const porMarca = new Map<string, Map<string, ProveedorDeMarca>>();
   for (const marca of marcasDeTarjeta) {
-    porMarca.set(marca, new Map());
+    const limpia = marca.trim();
+    if (limpia !== '') porMarca.set(limpia, new Map());
   }
   const sinMarca: OfertaDeFarmacia[] = [];
   for (const oferta of ofertas) {
@@ -84,12 +107,6 @@ function agregar(
     enStock: (previo?.enStock ?? false) || oferta.inStock,
   });
   porMarca.set(marca, proveedores);
-}
-
-/** «3 nombres comerciales», en singular cuando corresponde. */
-export function cuantasMarcas(medicamento: TarjetaDeMedicamento): string {
-  const n = medicamento.brands.length;
-  return n === 1 ? '1 nombre comercial' : `${n} nombres comerciales`;
 }
 
 /** «1 farmacia» / «24 farmacias»: cuántas ofrecen esta marca. */

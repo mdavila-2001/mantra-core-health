@@ -6,12 +6,28 @@
         <summary class="arbol__resumen">
           <span class="arbol__nombre">{{ medicamento.genericName }}</span>
           <span class="arbol__codigo">ATC {{ medicamento.atcCode }}</span>
-          @if (medicamento.requiresPrescription) {
-            <app-badge variant="warning" size="sm">Con receta</app-badge>
-          } @else {
-            <app-badge variant="success" size="sm">Venta libre</app-badge>
+          @switch (recetaDe(medicamento)) {
+            @case (true) {
+              <app-badge variant="warning" size="sm">Con receta</app-badge>
+            }
+            @case (false) {
+              <app-badge variant="success" size="sm">Venta libre</app-badge>
+            }
           }
         </summary>
+
+        <div class="arbol__acciones">
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="arbol-ver-farmacias"
+            (clicked)="pharmaciesRequested.emit(medicamento)"
+          >
+            Ver ficha, farmacias y mapa
+          </button>
+        </div>
 
         <ul class="arbol__rama">
           <li>
@@ -20,7 +36,10 @@
                 <span class="arbol__rotulo">Para qué se usa</span>
                 <span>{{ medicamento.therapeuticGroup }}</span>
               </summary>
-              <p class="arbol__nota" data-testid="arbol-indicaciones-sin-fuente">
+              <p
+                class="arbol__nota arbol__nota--lectura"
+                data-testid="arbol-indicaciones-sin-fuente"
+              >
                 Grupo terapéutico según su código ATC. Las enfermedades concretas que trata se
                 mostrarán cuando esté cargada su fuente oficial, con la cita.
               </p>
@@ -30,7 +49,7 @@
                   <details open>
                     <summary class="arbol__resumen arbol__resumen--nivel">
                       <span class="arbol__rotulo">Nombres comerciales</span>
-                      <span>{{ cuantasMarcas(medicamento) }}</span>
+                      <span>({{ cuantasMarcasDe(medicamento) }})</span>
                     </summary>
 
                     @switch (ramas().get(medicamento.conceptId)?.estado) {
@@ -49,6 +68,12 @@
                         </div>
                       }
                       @case ('datos') {
+                        @if (marcasDe(medicamento).length === 0) {
+                          <p class="arbol__nota" data-testid="arbol-sin-marcas">
+                            Ninguna farmacia de la red lo publica hoy. Preguntá por el principio
+                            activo, que es como figura en tu receta.
+                          </p>
+                        }
                         <ul class="arbol__rama" data-testid="arbol-marcas">
                           @for (marca of marcasDe(medicamento); track marca.marca) {
                             <li class="arbol__marca">
@@ -103,19 +128,6 @@
             </details>
           </li>
         </ul>
-
-        <div class="arbol__acciones">
-          <button
-            app-button
-            variant="secondary"
-            size="sm"
-            type="button"
-            data-testid="arbol-ver-farmacias"
-            (clicked)="pharmaciesRequested.emit(medicamento)"
-          >
-            Ver ficha, farmacias y mapa
-          </button>
-        </div>
       </details>
     </li>
   }

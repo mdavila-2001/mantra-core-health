@@ -126,4 +126,53 @@ describe('MedicationTree', () => {
       'No pudimos consultar quién lo ofrece',
     );
   });
+
+  it('no afirma «venta libre» con el dato recortado de la tarjeta; sí con la disponibilidad', async () => {
+    const sinReceta = { ...LOSARTAN, requiresPrescription: false };
+    await montar(
+      of({
+        medication: { ...sinReceta, brands: ['Cozaar', 'Losartán Inti', 'Losartán Genérico'] },
+        offers: [OFERTA],
+        generatedAt: '',
+      }),
+    );
+    fixture.componentRef.setInput('medications', [sinReceta]);
+    await fixture.whenStable();
+    expect(root().textContent).not.toContain('Venta libre');
+    expect(root().textContent).not.toContain('Con receta');
+
+    await abrirCompuesto();
+
+    // Una farmacia lo publica bajo receta: la rama lo dice aunque la tarjeta no.
+    expect(root().querySelector('summary')?.textContent).toContain('Con receta');
+    expect(root().textContent).toContain('Losartán Genérico');
+    expect(root().textContent).toContain('(3)');
+  });
+
+  it('reintentar vuelve a pedir, con el origen elegido', async () => {
+    await montar(throwError(() => new Error('caído')));
+    fixture.componentRef.setInput('origin', { lat: -17.78, lng: -63.18 });
+    await fixture.whenStable();
+
+    await abrirCompuesto();
+    const antes = getAvailability.mock.calls.length;
+    const reintentar = [...root().querySelectorAll('button')].find((b) =>
+      b.textContent?.includes('Reintentar'),
+    );
+    reintentar?.click();
+    await fixture.whenStable();
+
+    expect(getAvailability.mock.calls.length).toBe(antes + 1);
+    expect(getAvailability).toHaveBeenLastCalledWith('c-losartan', {
+      origin: { lat: -17.78, lng: -63.18 },
+    });
+  });
+
+  it('si ninguna farmacia lo publica, lo dice en vez de dejar la rama vacía', async () => {
+    await montar(of({ medication: { ...LOSARTAN, brands: [] }, offers: [], generatedAt: '' }));
+
+    await abrirCompuesto();
+
+    expect(root().querySelector('[data-testid="arbol-sin-marcas"]')).not.toBeNull();
+  });
 });

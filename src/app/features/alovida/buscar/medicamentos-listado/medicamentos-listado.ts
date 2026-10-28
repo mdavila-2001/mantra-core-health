@@ -186,6 +186,24 @@ export class BuscarMedicamentosListado {
   protected readonly detalle = signal<DisponibilidadDeMedicamento | null>(null);
   protected readonly errorDetalle = signal(false);
 
+  /**
+   * Si el medicamento abierto se vende bajo receta; `null` mientras no se sabe.
+   *
+   * La tarjeta sólo vale para afirmar «con receta»: su `false` sale de ofertas
+   * recortadas por la búsqueda y el radio. «Venta libre» se afirma recién con
+   * la disponibilidad, que trae las ofertas de todo el país.
+   */
+  protected readonly recetaDelAbierto = computed<boolean | null>(() => {
+    const detalle = this.detalle();
+    if (detalle !== null) {
+      return (
+        detalle.medication.requiresPrescription ||
+        detalle.offers.some((oferta) => oferta.requiresPrescription)
+      );
+    }
+    return this.abierto()?.requiresPrescription === true ? true : null;
+  });
+
   /** Las ofertas del medicamento abierto, tal como las devolvió la API. */
   protected readonly ofertas = computed(() => this.detalle()?.offers ?? []);
 
