@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -5,7 +6,17 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { API_BASE_URL } from '../../core/data-access/api';
+import { SurveyInsightsPanel } from './insights/survey-insights';
 import { SurveysHome } from './questionnaires';
+
+/**
+ * El bloque «Cómo le va» tiene su propio spec (`insights/survey-insights.spec.ts`)
+ * y sus propias peticiones. Acá se reemplaza por un hueco para que estas pruebas
+ * sigan midiendo SÓLO el listado —y `http.verify()` siga exigiendo que la única
+ * lectura sea la de `GET /surveys/templates`—.
+ */
+@Component({ selector: 'app-survey-insights', template: '' })
+class ResumenHueco {}
 
 /* ============================================================================
     El listado de encuestas como gestor: buscar, filtrar y tres vacíos.
@@ -71,6 +82,10 @@ describe('SurveysHome · buscar, filtrar y los vacíos que no se confunden', () 
         provideRouter([{ path: 'questionnaires', component: SurveysHome }]),
       ],
     });
+    TestBed.overrideComponent(SurveysHome, {
+      remove: { imports: [SurveyInsightsPanel] },
+      add: { imports: [ResumenHueco] },
+    });
 
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
@@ -112,6 +127,24 @@ describe('SurveysHome · buscar, filtrar y los vacíos que no se confunden', () 
     opcion!.click();
     harness.detectChanges();
   }
+
+  describe('«Cómo le va»', () => {
+    it('el resumen general va ARRIBA de la lista, no debajo ni aparte', () => {
+      responderListado(CATALOGO);
+
+      const resumen = buscar('app-survey-insights');
+      const lista = buscar('[data-testid="encuestas-lista"]');
+      expect(resumen).not.toBeNull();
+      expect(lista).not.toBeNull();
+      expect(resumen!.compareDocumentPosition(lista!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('aparece también cuando todavía no hay encuestas propias: las base ya reciben respuestas', () => {
+      responderListado([]);
+
+      expect(buscar('app-survey-insights')).not.toBeNull();
+    });
+  });
 
   describe('el buscador', () => {
     beforeEach(() => responderListado(CATALOGO));

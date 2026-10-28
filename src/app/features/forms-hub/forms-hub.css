@@ -1,0 +1,6 @@
+/* El centro ocupa todo el ancho, como «Mis cuestionarios»: una sola tarjeta con
+   pestañas, centrada y a lo ancho (regla del cliente, 09/09/2026). */
+.forms-hub__tabs {
+  display: block;
+  inline-size: 100%;
+}

@@ -2,10 +2,11 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
+import { uuid } from '../mock-store';
 
 describe('encuestas y formularios del backend demo', () => {
   const router = new MockRouter();
-  const storageKeys = ['mock.surveys-forms.encuestas', 'mock.surveys-forms.invitaciones'];
+  const storageKeys = ['mock.surveys-forms.encuestas', 'mock.surveys-forms.invitaciones', 'mock.surveys-forms.asignaciones'];
   const previous = new Map<string, string | null>();
   const patient = buscarUsuario('paciente')!;
 
@@ -114,7 +115,18 @@ describe('encuestas y formularios del backend demo', () => {
     expect(status(request('GET', '/surveys/me/invitations/missing'))).toBe(404);
     expect(status(request('POST', '/surveys/me/invitations/missing/responses'))).toBe(404);
     expect(data<{ ids: string[] }>(request('POST', '/surveys/invitations', { appointmentBookingIds: ['a', 'b'] })).ids).toHaveLength(2);
-    expect(status(request('POST', '/surveys/assignments'))).toBe(201);
+    // La asociación se valida como la API: sin cuerpo es un 400, con un servicio
+    // que el médico ofrece es un 201.
+    expect(status(request('POST', '/surveys/assignments'))).toBe(400);
+    expect(
+      status(
+        request('POST', '/surveys/assignments', {
+          surveyVersionId: uuid('survey-teleconsulta-v1'),
+          targetType: 'SERVICE',
+          targetId: uuid('service-ECG'),
+        }),
+      ),
+    ).toBe(201);
   });
 
   it('crea, lee, completa y cierra instancias de formulario', () => {

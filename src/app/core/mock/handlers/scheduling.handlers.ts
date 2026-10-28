@@ -31,6 +31,7 @@ import { representaA } from './profiles.handlers';
 import {
   conflict,
   forbidden,
+  isMockReply,
   noContent,
   notFound,
   preconditionFailed,
@@ -41,6 +42,7 @@ import {
   type MockRouter,
 } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
+import { emitirInvitacionDeAtencion } from './surveys-forms.handlers';
 import {
   liberarCupoDeServicio,
   liberarSobranteDeServicio,
@@ -693,6 +695,11 @@ export function registrarAgenda(router: MockRouter): void {
     // Terminar antes de lo reservado libera el sobrante del servicio.
     const r = reservas.get(request.params['id']!);
     if (r !== undefined) liberarSobranteDeServicio(r);
+    // La atención terminó: la encuesta base sale sola hacia el paciente (sólo si
+    // la decisión se aplicó: un rechazo no emite nada).
+    if (r !== undefined && !(isMockReply(respuesta) && respuesta.status >= 400)) {
+      emitirInvitacionDeAtencion(r.id);
+    }
     return respuesta;
   });
 
