@@ -76,6 +76,7 @@ import type {
   FlexibleHold,
   NewFlexibleHold,
 } from './scheduling.types';
+import { tenantOptions, type TenantScope } from './tenant-scope';
 
 /**
  * Cliente de `scheduling` (M41): la lectura de la agenda y el ciclo de la
@@ -118,9 +119,10 @@ export class SchedulingClient {
    * `GET /scheduling/resources` — los recursos agendables de la organización.
    *
    * @param query - Organización (obligatoria) y filtros opcionales.
+   * @param scope - Como qué organización se pregunta, si no es la activa.
    * @returns Los recursos, con su capacidad y su zona horaria.
    */
-  listResources(query: AgendaResourceQuery): Observable<AgendaResourcePage> {
+  listResources(query: AgendaResourceQuery, scope?: TenantScope): Observable<AgendaResourcePage> {
     // Parámetro a parámetro y nunca con un objeto: el backend valida con
     // `forbidNonWhitelisted`, y un opcional en `undefined` viaja como clave
     // declarada y vuelve 400.
@@ -136,7 +138,7 @@ export class SchedulingClient {
     }
 
     return this.http
-      .get<WireResourcePage>(this.url('/scheduling/resources'), { params })
+      .get<WireResourcePage>(this.url('/scheduling/resources'), { params, ...tenantOptions(scope) })
       .pipe(map((body) => ({ ...body, items: body.items.map(toResource) })));
   }
 
@@ -489,6 +491,7 @@ export class SchedulingClient {
   createException(
     resourceId: string,
     exception: NewAvailabilityException,
+    scope?: TenantScope,
   ): Observable<AvailabilityExceptionCreated> {
     return this.http.post<AvailabilityExceptionCreated>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/exceptions`),
@@ -504,6 +507,7 @@ export class SchedulingClient {
           ? {}
           : { cancelAffectedBookings: exception.cancelAffectedBookings }),
       },
+      tenantOptions(scope),
     );
   }
 
@@ -525,8 +529,11 @@ export class SchedulingClient {
    * consulta ya tiene una reconsulta por venir. Sin el campo, nada de eso
    * corre: una cita puntual se sigue creando como siempre.
    */
-  createDirectAppointment(cita: NewDirectAppointment): Observable<DirectAppointmentCreated> {
-    return this.http.post<DirectAppointmentCreated>(this.url('/scheduling/appointments/direct'), {
+  createDirectAppointment(
+    cita: NewDirectAppointment,
+    scope?: TenantScope,
+  ): Observable<DirectAppointmentCreated> {
+    const body = {
       patientProfileId: cita.patientProfileId,
       resourceId: cita.resourceId,
       startAt: cita.startAt,
@@ -552,7 +559,9 @@ export class SchedulingClient {
                 : { formInstanceId: cita.followUpOf.formInstanceId }),
             },
           }),
-    });
+    };
+    const url = this.url('/scheduling/appointments/direct');
+    return this.http.post<DirectAppointmentCreated>(url, body, tenantOptions(scope));
   }
 
   /**

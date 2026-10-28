@@ -53,9 +53,23 @@
   color: var(--text-secondary);
 }
 
-/* La inferencia: informa sin alarmar. Es lo que va a pasar, no un problema. */
-.tarjeta__inferencia {
+/* La inferencia: informa sin alarmar. Es lo que va a pasar, no un problema.
+   En qué anda la búsqueda de la agenda se dice con el mismo tono. */
+.tarjeta__inferencia,
+.tarjeta__destination-status {
   margin: 0;
   font-size: var(--fs-caption);
   color: var(--text-secondary);
+}
+
+/* El selector de organización y, debajo, la región viva de su búsqueda. La
+   región está siempre —para que el lector anuncie el cambio de texto— y vacía
+   no ocupa lugar: la separación de la tarjeta la pone sólo cuando dice algo. */
+.tarjeta__destination {
+  display: flex;
+  flex-direction: column;
+}
+
+.tarjeta__destination-status:not(:empty) {
+  margin-block-start: var(--sp-3);
 }

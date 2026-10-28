@@ -5,6 +5,7 @@ import { signal, type Provider, type Signal, type WritableSignal } from '@angula
 import { of } from 'rxjs';
 
 import { DayCard, type DayGap } from './day-card';
+import type { BookingDestination } from './booking-destination';
 import { SessionStore } from '../../../../core/auth/session.store';
 import type { AgendaResource } from '../../../../core/data-access/scheduling/scheduling.types';
 import { HealthcareServicesClient } from '../../../../core/data-access/healthcare-services/healthcare-services.client';
@@ -104,6 +105,8 @@ describe('TarjetaDelDia', () => {
     readonly hasWrittenContent: Signal<boolean>;
     /** Si el alta salió de un cupo ya programado: la franja no se pregunta (C-10). */
     readonly fromSlot: Signal<boolean>;
+    /** Dónde se guarda según la organización elegida. */
+    readonly destination: Pick<BookingDestination, 'choose'>;
     searchPatient(texto: string): void;
     save(): void;
   }
@@ -774,7 +777,7 @@ describe('TarjetaDelDia', () => {
       await chooseOrganization('Clínica Los Olivos');
 
       // Mientras se busca no hay agenda donde guardar.
-      expect(root().querySelector('[data-testid="day-card-destination-searching"]')?.textContent).toContain(
+      expect(root().querySelector('[data-testid="day-card-destination-status"]')?.textContent).toContain(
         'Buscando su agenda en Clínica Los Olivos',
       );
       expect(api().canSave()).toBe(false);
@@ -835,16 +838,15 @@ describe('TarjetaDelDia', () => {
       http.verify();
     });
 
-    it('la respuesta tarde de una organización que ya no está elegida se descarta', async () => {
+    it('cambiar de organización corta la búsqueda anterior: su respuesta ya no llega', async () => {
       await mountWithOrganizations();
       await chooseOrganization('Clínica Los Olivos');
       const late = scheduleSearch('tenant-olivos');
 
       await chooseOrganization('Hospital San Juan');
+      // La de Los Olivos, que sí tenía agenda, quedó cancelada: no puede ganar.
+      expect(late.cancelled).toBe(true);
       answerSchedules('tenant-san-juan', []);
-      // Llega ahora la de Los Olivos, que sí tiene agenda: no puede ganar.
-      late.flush({ items: [scheduleOf('res-olivos', PROFILE_ID)], count: 1 });
-      fixture.detectChanges();
 
       expect(root().querySelector('[data-testid="day-card-destination-missing"]')?.textContent).toContain(
         'Hospital San Juan',
@@ -853,14 +855,13 @@ describe('TarjetaDelDia', () => {
       http.verify();
     });
 
-    it('la respuesta tarde tampoco pisa la vuelta a «Mi consultorio»', async () => {
+    it('volver a «Mi consultorio» también corta la búsqueda en curso', async () => {
       await mountWithOrganizations();
       await chooseOrganization('Hospital San Juan');
       const late = scheduleSearch('tenant-san-juan');
 
       await chooseOrganization(OWN_OFFICE_LABEL);
-      late.flush({ items: [], count: 0 });
-      fixture.detectChanges();
+      expect(late.cancelled).toBe(true);
 
       expect(root().querySelector('[data-testid="day-card-destination-missing"]')).toBeNull();
       api().save();
@@ -910,6 +911,256 @@ describe('TarjetaDelDia', () => {
       expect(api().canSave()).toBe(true);
       http.expectNone((r) => r.url === '/scheduling/resources');
       http.verify();
+    });
+    it('cerrar el modal corta la búsqueda en curso', async () => {
+      await mountWithOrganizations();
+      await chooseOrganization('Clínica Los Olivos');
+      const pending = scheduleSearch('tenant-olivos');
+
+      fixture.destroy();
+
+      expect(pending.cancelled).toBe(true);
+      http.verify();
+    });
+
+    it('la región que dice en qué anda la búsqueda está siempre: sólo cambia su texto', async () => {
+      // Un `role="status"` que aparece con el texto ya puesto no siempre se
+      // anuncia; el que está desde el principio y cambia su texto, sí.
+      await mountWithOrganizations();
+      const region = root().querySelector<HTMLElement>('[data-testid="day-card-destination-status"]');
+      expect(region?.getAttribute('role')).toBe('status');
+      // Vacía no ocupa lugar: la hoja la separa sólo con `:not(:empty)`.
+      expect(region?.matches(':empty')).toBe(true);
+
+      await chooseOrganization('Clínica Los Olivos');
+      expect(root().querySelector('[data-testid="day-card-destination-status"]')).toBe(region);
+      expect(region?.textContent).toContain('Buscando su agenda en Clínica Los Olivos');
+
+      answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+      expect(root().querySelector('[data-testid="day-card-destination-status"]')).toBe(region);
+      expect(region?.matches(':empty')).toBe(true);
+      http.verify();
+    });
+
+    /**
+     * La API resuelve la organización con `X-Tenant-Id` y responde 403 a la
+     * agenda de otra (`assertResourceInActiveTenant`) y al `?tenantId=` de
+     * otra. En otra organización, la búsqueda y el guardado hablan como ella;
+     * en «Mi consultorio» no se declara nada y la pone la sesión.
+     */
+    describe('se le habla a la API como la organización elegida', () => {
+      /** La vista previa de la API: el rato tiene una cita y pide confirmar. */
+      const BOOKINGS_IN_THE_WAY = {
+        code: 'PRECONDITION_FAILED',
+        message: 'Ese rato tiene 1 cita con paciente. Confirme para cancelarlas.',
+        timestamp: '2026-10-24T12:00:00Z',
+        path: '/scheduling/resources/res-olivos/exceptions',
+        details: {
+          failureCode: 'BOOKINGS_REQUIRE_CONFIRMATION',
+          affectedBookings: [
+            {
+              bookingId: 'bk-1',
+              startAt: '2026-09-10T14:15:00Z',
+              endAt: '2026-09-10T14:45:00Z',
+              patientName: 'Rosa Quispe',
+              pending: false,
+            },
+          ],
+        },
+      };
+
+      it('la búsqueda de su agenda va con el X-Tenant-Id de esa organización', async () => {
+        await mountWithOrganizations();
+        await chooseOrganization('Clínica Los Olivos');
+
+        const search = scheduleSearch('tenant-olivos');
+        expect(search.request.headers.get('X-Tenant-Id')).toBe('tenant-olivos');
+        search.flush({ items: [], count: 0 });
+        http.verify();
+      });
+
+      it('la cita va con el X-Tenant-Id de esa organización', async () => {
+        await mountWithOrganizations();
+        await chooseOrganization('Clínica Los Olivos');
+        answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+
+        api().save();
+        const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+        expect(req.request.body.resourceId).toBe('res-olivos');
+        expect(req.request.headers.get('X-Tenant-Id')).toBe('tenant-olivos');
+        req.flush(CREATED_APPOINTMENT);
+        http.verify();
+      });
+
+      it('el tiempo ocupado también, y también al repetirlo confirmado', async () => {
+        await mountWithOrganizations();
+        api().patient.set(null);
+        api().reason.set('Reunión de equipo');
+        await chooseOrganization('Clínica Los Olivos');
+        answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+        vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+
+        api().save();
+        const first = http.expectOne((r) => r.url === '/scheduling/resources/res-olivos/exceptions');
+        expect(first.request.headers.get('X-Tenant-Id')).toBe('tenant-olivos');
+        first.flush(BOOKINGS_IN_THE_WAY, { status: 422, statusText: 'Unprocessable Entity' });
+        // El diálogo resuelve en una microtarea; el pedido confirmado sale después.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        const confirmed = http.expectOne((r) => r.url === '/scheduling/resources/res-olivos/exceptions');
+        expect(confirmed.request.body.cancelAffectedBookings).toBe(true);
+        expect(confirmed.request.headers.get('X-Tenant-Id')).toBe('tenant-olivos');
+        confirmed.flush({ id: 'exc-1', blockedSlots: 1, cancelledBookings: 1 });
+        http.verify();
+      });
+
+      it('en «Mi consultorio» la cita no declara organización', async () => {
+        await mountWithOrganizations();
+
+        api().save();
+        const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+        expect(req.request.body.resourceId).toBe('res-1');
+        expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+        req.flush(CREATED_APPOINTMENT);
+        http.verify();
+      });
+
+      it('en «Mi consultorio» el tiempo ocupado tampoco', async () => {
+        await mountWithOrganizations();
+        api().patient.set(null);
+        api().reason.set('Reunión de equipo');
+        fixture.detectChanges();
+
+        api().save();
+        const req = http.expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions');
+        expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+        req.flush({ id: 'exc-1', blockedSlots: 0 });
+        http.verify();
+      });
+    });
+
+    describe('desde un cupo la agenda es la del cupo', () => {
+      async function mountFromSlot(): Promise<void> {
+        await montar([], 's-1', PROVIDERS);
+        api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
+        fixture.detectChanges();
+      }
+
+      it('no muestra el selector de organización', async () => {
+        await mountFromSlot();
+
+        expect(root().querySelector('app-organization-field')).toBeNull();
+        expect(root().querySelector('[data-testid="day-card-destination-status"]')).toBeNull();
+      });
+
+      /** Una elección que el selector, escondido, no podría emitir. */
+      function chooseOlivosAnyway(): void {
+        api().destination.choose({
+          key: 'practice-olivos',
+          organization: {
+            practiceId: 'practice-olivos',
+            practiceSiteId: null,
+            name: 'Clínica Los Olivos',
+            isOwnOffice: false,
+            tenantId: 'tenant-olivos',
+          },
+        });
+        answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+      }
+
+      it('la cita va a la agenda del cupo aunque llegue otra elección: esconder no es la regla', async () => {
+        await mountFromSlot();
+        chooseOlivosAnyway();
+
+        api().save();
+        const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+        expect(req.request.body.resourceId).toBe('res-1');
+        expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+        req.flush(CREATED_APPOINTMENT);
+        http.verify();
+      });
+
+      it('y los choques del día se siguen avisando: la cita va a esa agenda', async () => {
+        const appointment: DayGap = {
+          desde: new Date(2026, 8, 10, 10, 0),
+          hasta: new Date(2026, 8, 10, 10, 30),
+          rotulo: 'la cita de Beto Peña',
+          tipo: 'cita',
+        };
+        await montar([appointment], 's-1', PROVIDERS);
+        chooseOlivosAnyway();
+
+        expect(root().textContent).toContain('pisa la cita de Beto Peña');
+        http.verify();
+      });
+    });
+
+    /**
+     * Lo que el día ya tiene tomado es de la agenda de «Mi consultorio». Con
+     * otra organización lo creado va a otra agenda: avisar un choque o frenar
+     * por un bloqueo de «Mi consultorio» sería avisar algo que no corresponde.
+     */
+    describe('los choques del día son de «Mi consultorio»', () => {
+      const BLOCK: DayGap = {
+        desde: new Date(2026, 8, 10, 9, 30),
+        hasta: new Date(2026, 8, 10, 11, 0),
+        rotulo: '«Reunión de equipo»',
+        tipo: 'bloqueo',
+      };
+      const APPOINTMENT: DayGap = {
+        desde: new Date(2026, 8, 10, 10, 0),
+        hasta: new Date(2026, 8, 10, 10, 30),
+        rotulo: 'la cita de Beto Peña',
+        tipo: 'cita',
+      };
+
+      async function mountWith(taken: readonly DayGap[]): Promise<void> {
+        await montar(taken, null, PROVIDERS);
+        api().patient.set({ value: 'pp-ana', label: 'Ana Quispe' });
+        fixture.detectChanges();
+      }
+
+      it('con otra organización un bloqueo de «Mi consultorio» no frena ni se avisa', async () => {
+        await mountWith([BLOCK]);
+        // En «Mi consultorio» el bloqueo es de esta agenda: no deja guardar.
+        expect(root().textContent).toContain('está bloqueado por «Reunión de equipo»');
+        expect(api().canSave()).toBe(false);
+
+        await chooseOrganization('Clínica Los Olivos');
+        answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+
+        expect(root().textContent).not.toContain('está bloqueado');
+        expect(api().canSave()).toBe(true);
+        api().save();
+        const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
+        expect(req.request.body.resourceId).toBe('res-olivos');
+        req.flush(CREATED_APPOINTMENT);
+        http.verify();
+      });
+
+      it('con otra organización una cita de «Mi consultorio» no se avisa como choque', async () => {
+        await mountWith([APPOINTMENT]);
+        expect(root().textContent).toContain('pisa la cita de Beto Peña');
+
+        await chooseOrganization('Clínica Los Olivos');
+        answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+
+        expect(root().textContent).not.toContain('Ese rato ya está tomado');
+        expect(root().textContent).not.toContain('pisa la cita de Beto Peña');
+        http.verify();
+      });
+
+      it('al volver a «Mi consultorio» el aviso vuelve', async () => {
+        await mountWith([BLOCK]);
+        await chooseOrganization('Clínica Los Olivos');
+        answerSchedules('tenant-olivos', [scheduleOf('res-olivos', PROFILE_ID)]);
+
+        await chooseOrganization(OWN_OFFICE_LABEL);
+
+        expect(root().textContent).toContain('está bloqueado por «Reunión de equipo»');
+        expect(api().canSave()).toBe(false);
+        http.verify();
+      });
     });
   });
 
