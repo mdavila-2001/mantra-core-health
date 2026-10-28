@@ -6,7 +6,7 @@ import { TestBed } from '@angular/core/testing';
 import {
   CARGADOR_DE_PROVINCIAS,
   type ProvinciasDeBolivia,
-  RUTA_DE_PROVINCIAS,
+  PROVINCES_ASSET_PATH,
   provinceIn,
 } from './provinces';
 
@@ -15,7 +15,7 @@ import {
  * que se publica, no un doble de él.
  */
 const PROVINCIAS = JSON.parse(
-  readFileSync(join(process.cwd(), 'public', RUTA_DE_PROVINCIAS), 'utf-8'),
+  readFileSync(join(process.cwd(), 'public', PROVINCES_ASSET_PATH), 'utf-8'),
 ) as ProvinciasDeBolivia;
 
 describe('las provincias de Bolivia', () => {
@@ -94,7 +94,7 @@ describe('CARGADOR_DE_PROVINCIAS', () => {
     expect(primera?.features).toHaveLength(112);
     expect(segunda).toBe(primera);
     expect(fetchFalso).toHaveBeenCalledTimes(1);
-    expect(String(fetchFalso.mock.calls[0]?.[0])).toContain(RUTA_DE_PROVINCIAS);
+    expect(String(fetchFalso.mock.calls[0]?.[0])).toContain(PROVINCES_ASSET_PATH);
   });
 
   it('si falla devuelve `null` y el próximo mapa lo vuelve a intentar', async () => {
@@ -110,5 +110,34 @@ describe('CARGADOR_DE_PROVINCIAS', () => {
     expect(await cargar()).toBeNull();
     expect((await cargar())?.features).toHaveLength(112);
     expect(fetchFalso).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('PROVINCES_ASSET_PATH', () => {
+  /**
+   * Los prefijos que el proxy manda a la API, de sus dos declaraciones: el
+   * dev-server (`proxy.conf.json`) y el nginx del despliegue
+   * (`deploy/api-locations.conf`). Los dos comparan por inicio de ruta.
+   */
+  function apiPrefixes(): string[] {
+    const proxyBlocks = JSON.parse(
+      readFileSync(join(process.cwd(), 'proxy.conf.json'), 'utf-8'),
+    ) as { context?: string[]; pathRewrite?: unknown }[];
+    const devServer = proxyBlocks
+      .filter((block) => block.pathRewrite === undefined)
+      .flatMap((block) => block.context ?? []);
+    const nginx = [
+      ...readFileSync(join(process.cwd(), 'deploy/api-locations.conf'), 'utf-8').matchAll(
+        /^location \^~ (\S+)/gm,
+      ),
+    ].map((match) => match[1]);
+    return [...devServer, ...nginx];
+  }
+
+  it('no empieza con ningún prefijo de la API, que se lo llevaría al backend', () => {
+    // En `geo/` el nginx lo mandaba a la API del M13 y el mapa recibía un 404.
+    const servedAt = `/${PROVINCES_ASSET_PATH}`;
+    const captured = apiPrefixes().filter((prefix) => servedAt.startsWith(prefix));
+    expect(captured).toEqual([]);
   });
 });
