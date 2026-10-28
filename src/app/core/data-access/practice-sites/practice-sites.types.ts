@@ -65,12 +65,11 @@ export interface PracticeSite {
   /**
    * El archivo del **logo del consultorio**, o `null` si no cargó ninguno.
    *
-   * Es lo que sale en la pestaña «Facturación» del perfil y en el membrete de
-   * cada PDF que el profesional emite. Nadie lee este campo directamente: las
-   * pantallas y el PDF hablan con `LogoDelConsultorioClient`, que es el único
-   * que sabe **dónde** vive el logo. Hoy es la sede propia (maqueta); cuando el
-   * backend decida si va en `practice_sites` o en el perfil público de la
-   * organización, cambia ese cliente y nada más.
+   * Es lo que sale en «Datos personales» y «Facturación» del perfil y en el
+   * membrete de cada PDF que el profesional emite. Vive en la sede propia
+   * (`practice.practice_sites.logo_file_id`) y la API lo manda en la lista, el
+   * alta, la corrección y el cambio de logo. Nadie lee este campo directamente:
+   * las pantallas y el PDF hablan con `PracticeLogoClient`.
    *
    * Opcional por el mismo motivo que {@link PracticeSite.bankQrFileId}:
    * ausente se lee como «sin logo», nunca como error.
@@ -112,6 +111,13 @@ export interface NewOwnSite {
   /** Zona horaria IANA. Por defecto la de La Paz. */
   readonly timeZone?: string;
   readonly address?: NewOwnSiteAddress;
+  /**
+   * El logo del consultorio, ya subido. En el alta del médico es la pre-carga
+   * anónima de `PracticeLogoClient.uploadForRegistration`, que el alta reclama
+   * en su misma transacción; un archivo que no sirve como logo hace responder
+   * 422 al alta entera.
+   */
+  readonly logoFileId?: string;
 }
 
 /**

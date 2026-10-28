@@ -116,6 +116,9 @@ import type {
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { BoProfessionsCatalog } from '../../../core/data-access/terminology/bo-professions.service';
 import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { OfficeLogoField } from './office-logo/office-logo-field';
+import { OfficeLogoSelection } from './office-logo/office-logo-selection';
+import { ownSiteFromAnswers } from './own-site';
 
 /**
  * `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend.
@@ -197,15 +200,6 @@ export const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
   'IMPLANTOLOGIA_ORAL',
   'ARMONIZACION_OROFACIAL',
 ]);
-
-/**
- * Cómo se llama un consultorio al que nadie le puso nombre.
- *
- * `NewOwnSite.name` es obligatorio del lado del backend, y el alta no lo exige:
- * quien deja el rótulo vacío igual tiene un consultorio. Se renombra desde el
- * perfil cuando quiera.
- */
-const NOMBRE_CONSULTORIO_POR_OMISION = 'Mi consultorio';
 
 /**
  * Quién emite la matrícula que habilita a ejercer, como lista cerrada.
@@ -731,7 +725,9 @@ function sinTildes(texto: string): string {
     Select,
     Avatar,
     OnboardingDraftBanner,
+    OfficeLogoField,
   ],
+  providers: [OfficeLogoSelection],
   templateUrl: './register-practitioner.html',
   styleUrls: ['../shared-registration/registration.css', './register-practitioner.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -739,6 +735,7 @@ function sinTildes(texto: string): string {
 export class RegisterPractitioner {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly iam = inject(IamClient);
+  private readonly officeLogo = inject(OfficeLogoSelection);
   private readonly router = inject(Router);
   private readonly systemContext = inject(SystemContextClient);
   private readonly draftService = inject(OnboardingDraftService);
@@ -2776,69 +2773,18 @@ export class RegisterPractitioner {
     return this.opcionesEspecialidad().map(({ value, label }) => ({ value, label }));
   }
 
-  /**
-   * El consultorio propio tal como viaja en el alta, o `null` si no declaró
-   * ninguno.
-   *
-   * ## Qué cuenta como «declaró uno»
-   *
-   * **Cualquiera de las cuatro piezas.** La página entera es opcional, así que
-   * lo que decide no es un campo obligatorio sino que haya algo que guardar: un
-   * nombre, una localidad, una calle o un punto. Exigir el nombre habría hecho
-   * que quien completa la dirección y se olvida del rótulo pierda lo escrito
-   * sin que nadie se lo diga, que es la clase de silencio que este alta ya
-   * corrigió en otros dos sitios.
-   *
-   * Sin nombre se manda el genérico: el backend lo exige (`NewOwnSite.name`) y
-   * un consultorio sin rótulo se sigue pudiendo renombrar desde el perfil.
-   *
-   * ## La forma es la de `NewOwnSite`, no una nueva
-   *
-   * Es exactamente el cuerpo que ya recibe `POST /practitioners/me/sites`
-   * (ALV-005/006) y que arma «Mi perfil → dónde trabajo». No se inventa un
-   * contrato: el alta pública no puede llamar a esa ruta —no hay sesión
-   * todavía, el registro termina en el login— así que el dato viaja adentro del
-   * alta y el backend reutiliza el mismo servicio.
-   */
+  /** El consultorio propio tal como viaja en el alta. La regla está en `ownSiteFromAnswers`. */
   private consultorioPropio(): NewOwnSite | null {
     const raw = this.formProfesional.getRawValue();
-    const nombre = raw.officeName.trim();
-    const calle = raw.officeAddressLines.trim();
-    const distrito = raw.officeDistrict.trim();
-    const telefono = raw.officeContactPhone.trim();
-    const municipio = this.municipioConsultorio();
-    const punto = this.gpsConsultorio();
-
-    if (
-      nombre === '' &&
-      calle === '' &&
-      distrito === '' &&
-      telefono === '' &&
-      municipio === null &&
-      punto === null
-    ) {
-      return null;
-    }
-
-    // La dirección sólo viaja si tiene algo adentro: una dirección vacía no es
-    // «sin dirección», es una fila vacía en `common.addresses`. Es la misma
-    // regla que ya aplica `work-history.ts` al registrar una sede.
-    const conDireccion = calle !== '' || distrito !== '' || municipio !== null || punto !== null;
-
-    return {
-      name: nombre === '' ? NOMBRE_CONSULTORIO_POR_OMISION : nombre,
-      ...(telefono === '' ? {} : { contactPhone: telefono }),
-      ...(conDireccion
-        ? {
-            address: {
-              lines: calle === '' ? [] : [calle],
-              ...(distrito === '' ? {} : { district: distrito }),
-              ...(municipio === null ? {} : { municipalityConceptId: municipio }),
-              ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
-            },
-          }
-        : {}),
-    };
+    return ownSiteFromAnswers({
+      name: raw.officeName,
+      addressLines: raw.officeAddressLines,
+      district: raw.officeDistrict,
+      contactPhone: raw.officeContactPhone,
+      municipalityConceptId: this.municipioConsultorio(),
+      point: this.gpsConsultorio(),
+      logoFileId: this.officeLogo.fileId(),
+    });
   }
 
   /** Ver el constructor. Se llama desde ahí: `takeUntilDestroyed` pide contexto de inyección. */
@@ -3004,7 +2950,10 @@ export class RegisterPractitioner {
     this.state.set(loading());
 
     this.subirPdfDeTitulosPendientes()
-      .pipe(concatMap(() => this.subirFirmaYSelloPendientes()))
+      .pipe(
+        concatMap(() => this.subirFirmaYSelloPendientes()),
+        concatMap(() => this.officeLogo.upload()),
+      )
       .subscribe({
         next: () => {
           this.iam.registerPractitioner(this.datosProfesional()).subscribe({

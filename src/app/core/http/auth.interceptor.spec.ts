@@ -172,6 +172,17 @@ describe('authInterceptor', () => {
       // Si hubiera intentado refrescar, verify() encontraría la petición pendiente.
       expect(session.isAuthenticated()).toBe(true);
     });
+
+    it('la pre-carga del logo del alta va sin credenciales: la cuenta todavía no existe', () => {
+      session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
+
+      http.post('/iam/auth/upload-registration-logo', new FormData()).subscribe();
+
+      const req = backend.expectOne('/iam/auth/upload-registration-logo');
+      expect(req.request.headers.has('Authorization')).toBe(false);
+
+      req.flush({ fileId: 'logo-alta' });
+    });
   });
 
   describe('catálogo de credencial opcional', () => {
