@@ -1,18 +1,16 @@
-<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" [plainSurface]="true">
-  <div class="registro">
+<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" [plainSurface]="!registered()" [scene]="registered() ? 'stage' : 'split'">
+  <div class="registro" [class.registro--confirmacion]="registered()">
     @if (registered()) {
       <div class="registro__header">
         <app-registration-badge type="clinic" celebrate />
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="medical-center-signup-success">
           ¡Bienvenido a AloVida! Su organización médica ya tiene cuenta
         </h1>
-        <p class="registro__subtitle">Concluyó el registro. Ya puede conectarse con su correo y la contraseña que eligió.</p>
         @if (verificationSent()) {
-          <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar.</p>
+          <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección.</p>
         }
         <p class="registro__subtitle" data-testid="medical-center-signup-pending">
-          Su organización está pendiente de verificación. En cuanto la plataforma la verifique, podrá abrir su
-          práctica y su primera sede desde «Configurar práctica», en el menú.
+          Su organización está en revisión. Cuando se apruebe, podrá configurar su práctica desde el menú.
         </p>
       </div>
       <button

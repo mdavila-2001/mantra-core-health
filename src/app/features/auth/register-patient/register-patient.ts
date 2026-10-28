@@ -2632,16 +2632,6 @@ export class RegisterPatient {
   readonly verificationSent = signal(false);
 
   /**
-   * Con qué va a iniciar sesión, para decírselo en la confirmación.
-   *
-   * Fijo, y ésa es la mitad del sentido de esta pantalla: el paciente entra con
-   * su documento y el correo le es opcional. El alta de profesional dice «tu
-   * correo», y mientras las dos vivían en el mismo componente esto era un
-   * `computed` sobre el tipo de cuenta.
-   */
-  readonly accessHint = 'su documento';
-
-  /**
    * La clave de la página que se está contestando, tal como la avisa el motor.
    *
    * Empieza vacía y no en la primera clave: el motor emite la página apenas

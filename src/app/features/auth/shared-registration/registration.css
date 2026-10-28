@@ -248,3 +248,16 @@ form {
     gap: var(--sp-6);
   }
 }
+
+/* La confirmación no es un formulario: es un aviso corto y un botón. A ancho
+   completo, en un monitor o una tele, el texto quedaba en una franja de punta
+   a punta y el botón en una barra de 1600 px. Lleva un tope de lectura y va
+   centrada; el alta sigue ocupando la superficie (CORR-34). Las altas sin
+   columna de ayuda (organización, centro médico) no tienen
+   `.registro-conjunto` y marcan la tarjeta misma. */
+.registro-conjunto--solo,
+.registro--confirmacion {
+  inline-size: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+}
