@@ -291,7 +291,17 @@ export class RecorridoClinico {
     // completa se cortaba («8 Oct 20…»): sin el año si es el de la columna, y
     // mes y año si es otro —para el comienzo de una enfermedad alcanza—. La
     // fecha entera va en el título y en el nombre accesible.
-    const formato = nodo.cuando.getFullYear() === columna.fecha.getFullYear() ? 'd MMM' : 'MMM y';
+    // En vertical hay lugar para la fecha entera; y cuando la diferencia es de
+    // días (un 28 de diciembre en una columna del 5 de enero) el día importa
+    // aunque el año cambie.
+    const dias = Math.abs(nodo.cuando.getTime() - columna.fecha.getTime()) / 86_400_000;
+    const formato = this.angosto()
+      ? 'd MMM y'
+      : nodo.cuando.getFullYear() === columna.fecha.getFullYear()
+        ? 'd MMM'
+        : dias < 90
+          ? 'd MMM y'
+          : 'MMM y';
     return { rotulo, fecha: nodo.cuando, formato };
   }
 
