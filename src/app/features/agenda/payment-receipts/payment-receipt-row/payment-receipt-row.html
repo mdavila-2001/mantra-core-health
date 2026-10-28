@@ -9,13 +9,17 @@
   [attr.aria-label]="'Ver ' + summary()"
   (click)="viewRequested.emit()"
 >
-  @if (isPdf()) {
+  @if (isPdf() || downloadOnly()) {
+    <!-- Un formato que no se muestra lleva el mismo ícono de archivo, sin
+         rótulo: el visor sólo ofrece descargarlo. -->
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
       <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
       <path d="M14 3v5h5" />
     </svg>
-    <span class="payment-receipt-row__extension" aria-hidden="true">PDF</span>
+    @if (isPdf()) {
+      <span class="payment-receipt-row__extension" aria-hidden="true">PDF</span>
+    }
   } @else if (thumbnailUrl(); as url) {
     <img [src]="url" alt="" />
   } @else if (thumbnailFailed()) {
@@ -80,18 +84,20 @@
 
   @if (showActions()) {
     <div class="payment-receipt-row__actions">
-      <button
-        app-button
-        variant="primary"
-        size="sm"
-        data-testid="payment-receipt-confirm"
-        [attr.aria-label]="'Confirmar ' + summary()"
-        [isLoading]="confirming()"
-        [disabled]="disabled()"
-        (clicked)="confirmRequested.emit()"
-      >
-        Confirmar
-      </button>
+      @if (canConfirm()) {
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          data-testid="payment-receipt-confirm"
+          [attr.aria-label]="'Confirmar ' + summary()"
+          [isLoading]="confirming()"
+          [disabled]="disabled()"
+          (clicked)="confirmRequested.emit()"
+        >
+          Confirmar
+        </button>
+      }
       <button
         app-button
         variant="outline"

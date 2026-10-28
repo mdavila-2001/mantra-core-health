@@ -12,20 +12,17 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-// El sello de reconsulta (C4): los dos campos y su predicado viven en los
-// tipos congelados de `scheduling`.
+// El sello de reconsulta (C4): los dos campos y su predicado viven en los tipos congelados de `scheduling`.
 import { esReconsulta } from '../../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
   AgendaSlot,
   Booking,
-  PaymentStateInfo,
   ServiceOffering,
   WaitlistEntry,
 } from '../../../core/data-access/scheduling/scheduling.types';
@@ -264,8 +261,6 @@ interface TurnoVisible {
    * hace estallar `formatDate` donde nadie registró ese idioma.
    */
   readonly reconsultaDe: Date | null;
-  /** El estado de pago de la cita, para el bloque «Comprobante de pago» (corrección 11). */
-  readonly paymentState: PaymentStateInfo | null;
 }
 
 /** Una espera activa, ya lista para mostrarse (P8). */
@@ -1909,7 +1904,6 @@ export class Appointments {
       demoraCuando: cita.delayNotice?.announcedAt ?? null,
       esReconsulta: esReconsulta(cita),
       reconsultaDe: cita.followUpOf?.startAt ?? null,
-      paymentState: cita.paymentState ?? null,
     };
   }
 

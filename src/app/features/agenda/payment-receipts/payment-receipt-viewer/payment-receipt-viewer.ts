@@ -11,6 +11,11 @@ import {
 } from '@angular/core';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 
+import {
+  describeReceipt,
+  isPdfReceipt,
+  receiptFileName,
+} from '../../../../core/data-access/scheduling/payment-receipt-format';
 import type { PaymentReceipt } from '../../../../core/data-access/scheduling/payment-receipts.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
@@ -18,8 +23,7 @@ import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { nextControlId } from '../../../../shared/forms/form-control.context';
-import { describeReceipt, isPdfReceipt, receiptFileName } from '../payment-receipt-format';
-import type { ReceiptFileState } from '../receipt-files';
+import { objectUrlOf, previewUrlOf, type ReceiptFileState } from '../receipt-files';
 
 /**
  * El comprobante a tamaño completo, **dentro del modal**, con «Descargar».
@@ -59,20 +63,22 @@ export class PaymentReceiptViewer {
     return summary.charAt(0).toLocaleUpperCase('es') + summary.slice(1);
   });
 
-  protected readonly url = computed(() => {
-    const file = this.file();
-    return file?.status === 'ready' ? file.url : null;
-  });
+  /** Lo que se descarga: la URL de objeto de los bytes, sólo si es una `blob:`. */
+  protected readonly downloadUrl = computed(() => objectUrlOf(this.file()));
+
+  /** Lo que se muestra: la misma URL, sólo si el formato es uno admitido. */
+  protected readonly previewUrl = computed(() => previewUrlOf(this.file()));
 
   /**
    * La URL del PDF para el `<iframe>`.
    *
    * Angular no deja poner una URL cualquiera en un `src` de marco, y está
-   * bien: ésta es una URL de objeto creada acá con los bytes que devolvió la
+   * bien: ésta es una URL de objeto (`blob:`, lo único que deja pasar
+   * {@link previewUrlOf}) creada en este modal con los bytes que devolvió la
    * API para esta cita, no un texto que haya escrito nadie.
    */
   protected readonly frameUrl = computed<SafeResourceUrl | null>(() => {
-    const url = this.url();
+    const url = this.previewUrl();
     return url !== null && this.isPdf() ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
   });
 

@@ -14,6 +14,12 @@ import { switchMap } from 'rxjs';
 
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { categoryForFile } from '../../../../core/data-access/files/upload-policy';
+import {
+  describeFailure,
+  formatReceiptAmount,
+  PAYMENT_RECEIPT_STATUS_LABELS,
+  PAYMENT_RECEIPT_STATUS_VARIANTS,
+} from '../../../../core/data-access/scheduling/payment-receipt-format';
 import { PaymentReceiptsClient } from '../../../../core/data-access/scheduling/payment-receipts.client';
 import {
   PAYMENT_RECEIPT_AMOUNT_PATTERN,
@@ -23,6 +29,7 @@ import {
   type NewPaymentReceipt,
   type PaymentReceipt,
 } from '../../../../core/data-access/scheduling/payment-receipts.types';
+import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
 import type { PaymentStateInfo } from '../../../../core/data-access/scheduling/scheduling.types';
 import { readApiError } from '../../../../core/http/api-error';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -40,21 +47,16 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { nextControlId } from '../../../../shared/forms/form-control.context';
-import {
-  describeFailure,
-  formatReceiptAmount,
-  PAYMENT_RECEIPT_STATUS_LABELS,
-  PAYMENT_RECEIPT_STATUS_VARIANTS,
-} from '../../../agenda/payment-receipts/payment-receipt-format';
 import { sufijoDeCodigo } from '../booking-status';
 
 /**
- * Los estados en los que una cita no lleva pago: cancelada y rechazada (la
- * API responde 422 a un comprobante ahí). Por **sufijo de código**, como el
- * resto de esta pantalla; la garantía es el servidor, esto es no ofrecer un
- * botón que va a fallar.
+ * Los estados en los que una cita no lleva pago (`STATES_WITHOUT_PAYMENT` de
+ * la API, que responde 422 a un comprobante ahí). Es uno solo: rechazar una
+ * solicitud no es un estado propio, la API la cancela con motivo. Por **sufijo
+ * de código**, como el resto de esta pantalla; la garantía es el servidor,
+ * esto es no ofrecer un botón que va a fallar.
  */
-const CODES_WITHOUT_PAYMENT: ReadonlySet<string> = new Set(['BOOKING_CANCELLED', 'BOOKING_REJECTED']);
+const CODES_WITHOUT_PAYMENT: ReadonlySet<string> = new Set(['BOOKING_CANCELLED']);
 
 /** Por qué no se ofrece subir un comprobante, o `null` si se ofrece. */
 type UploadBlocker = 'paid' | 'without-payment' | 'unknown-status';
@@ -63,6 +65,11 @@ interface UploadNotice {
   readonly tone: AlertTone;
   readonly title: string;
   readonly message: string;
+}
+
+/** La cita que el bloque muestra ahora. Cada carga es otra, aunque sea la misma cita. */
+interface ShownBooking {
+  readonly bookingId: string;
 }
 
 /**
@@ -81,9 +88,18 @@ interface UploadNotice {
  *
  * Con la cita pagada (409 de la API) o cancelada (422), el bloque lo dice en
  * vez de mostrar un formulario que va a volver con error. «Pagada» se sabe por
- * tres lados: el estado de pago que trajo la cita, un comprobante ya confirmado
- * en la lista, o un 409 al intentarlo —la lista de citas puede ser de antes de
- * que el médico confirmara—.
+ * tres lados: el estado de pago de la cita, que el bloque lee él mismo al
+ * abrirse (`GET /scheduling/bookings/:id`: la lista de citas puede ser de antes
+ * de que el médico confirmara), un comprobante ya confirmado en la lista, o un
+ * 409 al intentarlo.
+ *
+ * ## Otra cita es otro bloque
+ *
+ * La pantalla reutiliza este bloque y sólo le cambia `bookingId`. Cada carga
+ * guarda **qué cita muestra** ({@link ShownBooking}) y toda respuesta —la
+ * lista, el pago, una subida— se descarta si llega cuando ya se muestra otra:
+ * lo de la cita A no puede caer en la B. La subida sale con la cita y los
+ * datos del momento en que se envió, no con los de cuando termina el archivo.
  */
 @Component({
   selector: 'app-booking-payment-receipts',
@@ -108,11 +124,10 @@ export class BookingPaymentReceipts {
   readonly bookingId = input.required<string>();
   /** El código de catálogo del estado de la cita; `''` mientras no se resolvió. */
   readonly statusCode = input('');
-  /** El estado de pago con que llegó la cita; `null` si nadie lo marcó. */
-  readonly paymentState = input<PaymentStateInfo | null>(null);
 
   private readonly receiptsClient = inject(PaymentReceiptsClient);
   private readonly filesClient = inject(FilesClient);
+  private readonly scheduling = inject(SchedulingClient);
 
   protected readonly headingId = nextControlId('booking-payment-receipts');
   protected readonly accept = PAYMENT_RECEIPT_MIME_TYPES.join(',');
@@ -131,8 +146,11 @@ export class BookingPaymentReceipts {
   protected readonly uploading = signal(false);
   protected readonly notice = signal<UploadNotice | null>(null);
   private readonly amountTouched = signal(false);
+  /** El estado de pago de la cita; `undefined` mientras no llegó, `null` si nadie lo marcó. */
+  private readonly paymentState = signal<PaymentStateInfo | null | undefined>(undefined);
   /** La API respondió 409 al subir: la cita está pagada aunque la lista de citas no lo sepa. */
   private readonly paidAccordingToApi = signal(false);
+  private shown: ShownBooking = { bookingId: '' };
 
   /** Lo que ya subió, cuando la lista llegó. */
   protected readonly items = computed(() => {
@@ -144,14 +162,15 @@ export class BookingPaymentReceipts {
 
   protected readonly blocker = computed<UploadBlocker | null>(() => {
     const code = this.statusCode();
+    const payment = this.paymentState();
     if (
       this.paidAccordingToApi() ||
-      this.paymentState()?.state === 'PAID' ||
+      payment?.state === 'PAID' ||
       this.loaded().some((receipt) => receipt.status === 'CONFIRMED')
     ) {
       return 'paid';
     }
-    if (code === '') return 'unknown-status';
+    if (code === '' || payment === undefined) return 'unknown-status';
     return CODES_WITHOUT_PAYMENT.has(sufijoDeCodigo(code)) ? 'without-payment' : null;
   });
 
@@ -184,8 +203,10 @@ export class BookingPaymentReceipts {
     return formatReceiptAmount(receipt.amount) ?? 'Sin monto declarado';
   }
 
+  /** Reintentar la lista: la misma cita, sin tocar lo que se estaba escribiendo. */
   protected reload(): void {
-    this.load(this.bookingId());
+    this.receipts.set(loading());
+    this.requestReceipts(this.shown);
   }
 
   protected touchAmount(): void {
@@ -199,15 +220,18 @@ export class BookingPaymentReceipts {
     const file = this.files()[0];
     if (file === undefined || !this.canSubmit()) return;
 
+    const shown = this.shown;
+    const details = this.receiptDetails();
     this.uploading.set(true);
     this.notice.set(null);
     this.filesClient
       .upload(file, categoryForFile(file), 'NORMAL')
-      .pipe(switchMap(({ id }) => this.receiptsClient.upload(this.bookingId(), this.newReceipt(id))))
+      .pipe(switchMap(({ id }) => this.receiptsClient.upload(shown.bookingId, { fileId: id, ...details })))
       .subscribe({
         next: (receipt) => {
+          if (!this.isShown(shown)) return;
           this.uploading.set(false);
-          this.prepend(receipt);
+          this.receipts.set(ready([receipt, ...this.loaded()]));
           this.resetForm();
           this.notice.set({
             tone: 'success',
@@ -216,6 +240,7 @@ export class BookingPaymentReceipts {
           });
         },
         error: (error: unknown) => {
+          if (!this.isShown(shown)) return;
           this.uploading.set(false);
           this.notice.set(this.explain(error));
         },
@@ -223,28 +248,58 @@ export class BookingPaymentReceipts {
   }
 
   private load(bookingId: string): void {
+    const shown: ShownBooking = { bookingId };
+    this.shown = shown;
     this.receipts.set(loading());
+    this.paymentState.set(undefined);
     this.notice.set(null);
     this.paidAccordingToApi.set(false);
+    this.uploading.set(false);
     this.resetForm();
-    this.receiptsClient.list(bookingId).subscribe({
-      next: (items) =>
+    this.requestReceipts(shown);
+    this.requestPaymentState(shown);
+  }
+
+  private isShown(shown: ShownBooking): boolean {
+    return shown === this.shown;
+  }
+
+  private requestReceipts(shown: ShownBooking): void {
+    this.receiptsClient.list(shown.bookingId).subscribe({
+      next: (items) => {
+        if (!this.isShown(shown)) return;
         this.receipts.set(
           items.length === 0
             ? empty({ label: 'Suba su comprobante' }, 'Todavía no subió comprobantes para esta cita.')
             : ready(items),
-        ),
-      error: (error: unknown) => this.receipts.set(errorToViewState(error)),
+        );
+      },
+      error: (error: unknown) => {
+        if (this.isShown(shown)) this.receipts.set(errorToViewState(error));
+      },
     });
   }
 
-  /** El cuerpo de la subida: los opcionales sólo si se completaron. */
-  private newReceipt(fileId: string): NewPaymentReceipt {
+  private requestPaymentState(shown: ShownBooking): void {
+    this.scheduling.getBooking(shown.bookingId).subscribe({
+      next: (booking) => {
+        if (this.isShown(shown)) this.paymentState.set(booking.paymentState ?? null);
+      },
+      // Sin la cita no se sabe si está pagada: se ofrece subir, y si ya lo
+      // estaba la API responde 409 y el bloque lo explica (`explain`). El
+      // fallo de la lista, en cambio, sí se muestra: es lo que se mira acá.
+      error: () => {
+        if (this.isShown(shown)) this.paymentState.set(null);
+      },
+    });
+  }
+
+  /** Lo que el paciente completó, sin el archivo: los opcionales sólo si se completaron. */
+  private receiptDetails(): Omit<NewPaymentReceipt, 'fileId'> {
     const amount = this.normalizedAmount();
     const note = this.note().trim();
     const paidAt = this.paidAt();
     return {
-      fileId,
       ...(amount === '' ? {} : { amount }),
       ...(paidAt === null ? {} : { paidAt }),
       ...(note === '' ? {} : { note }),
@@ -262,10 +317,6 @@ export class BookingPaymentReceipts {
       };
     }
     return { tone: 'error', title: 'No se pudo subir el comprobante', message: describeFailure(error) };
-  }
-
-  private prepend(receipt: PaymentReceipt): void {
-    this.receipts.set(ready([receipt, ...this.loaded()]));
   }
 
   private resetForm(): void {

@@ -160,7 +160,8 @@ describe('PaymentReceiptsDialog', () => {
   });
 
   it('lista del más reciente al más viejo, con monto, estado e insignia', async () => {
-    await respond();
+    // Desordenados a propósito: el orden lo pone el cliente, no la respuesta.
+    await respond([IMAGE_RECEIPT, PDF_RECEIPT]);
 
     expect(all('payment-receipt-amount').map((el) => el.textContent?.trim())).toEqual([
       '80,50 Bs',
@@ -202,6 +203,65 @@ describe('PaymentReceiptsDialog', () => {
     expect(byTestId('payment-receipts-payment-state')?.textContent).toContain('Pagada');
     expect(byTestId('payment-receipts-notice')?.textContent).toContain('La cita quedó pagada.');
     expect(TestBed.inject(BookingPaymentStates).resolve(BOOKING, null)?.state).toBe('PAID');
+  });
+
+  it('con la cita ya pagada, los comprobantes pendientes no ofrecen confirmar, pero sí rechazar', async () => {
+    fixture.componentRef.setInput('paymentState', { ...PAID, markedAt: new Date(PAID.markedAt) });
+    await respond();
+
+    expect(all('payment-receipt-confirm')).toHaveLength(0);
+    expect(all('payment-receipt-reject')).toHaveLength(2);
+  });
+
+  it('confirmar uno deja la cita pagada: el otro pendiente ya no ofrece confirmar', async () => {
+    await respond();
+
+    await click(root().querySelector('[data-receipt-id="r-pdf"] [data-testid="payment-receipt-confirm"]'));
+    http
+      .expectOne(`${RECEIPTS_URL}/r-pdf/confirm`)
+      .flush({ receipt: { ...PDF_RECEIPT, status: 'CONFIRMED' }, paymentState: PAID });
+    await settle();
+
+    const image = root().querySelector('[data-receipt-id="r-img"]');
+    expect(image?.querySelector('[data-testid="payment-receipt-confirm"]')).toBeNull();
+    expect(image?.querySelector('[data-testid="payment-receipt-reject"]')).not.toBeNull();
+  });
+
+  it('con otra operación en vuelo, el rechazo espera en vez de perderse', async () => {
+    await respond();
+    const reason = 'No se lee el monto';
+
+    // Empieza a rechazar la imagen y escribe el motivo.
+    await click(root().querySelector('[data-receipt-id="r-img"] [data-testid="payment-receipt-reject"]'));
+    const textarea = byTestId('payment-receipt-rejection-form')!.querySelector('textarea')!;
+    textarea.value = reason;
+    textarea.dispatchEvent(new Event('input'));
+    await settle();
+    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe('false');
+
+    // Mientras confirma el PDF, el envío del rechazo espera: no sale ni se pierde.
+    await click(root().querySelector('[data-receipt-id="r-pdf"] [data-testid="payment-receipt-confirm"]'));
+    const confirmation = http.expectOne(`${RECEIPTS_URL}/r-pdf/confirm`);
+    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe('true');
+    byTestId('payment-receipt-rejection-form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await settle();
+    http.expectNone(`${RECEIPTS_URL}/r-img/reject`);
+    expect(byTestId('payment-receipt-rejection-form')?.querySelector('textarea')?.value).toBe(reason);
+
+    // Terminada la confirmación, el rechazo sale con lo que se había escrito.
+    confirmation.flush({ receipt: { ...PDF_RECEIPT, status: 'CONFIRMED' }, paymentState: PAID });
+    await settle();
+    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe('false');
+    byTestId('payment-receipt-rejection-form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await settle();
+    const rejection = http.expectOne(`${RECEIPTS_URL}/r-img/reject`);
+    expect(rejection.request.body).toEqual({ reason });
+    rejection.flush({ ...IMAGE_RECEIPT, status: 'REJECTED', rejectionReason: reason });
+    await settle();
+
+    expect(
+      root().querySelector('[data-receipt-id="r-img"] [data-testid="payment-receipt-status"]')?.textContent?.trim(),
+    ).toBe('Rechazado');
   });
 
   it('un 409 se explica y la lista se relee con su estado actual', async () => {
@@ -297,6 +357,23 @@ describe('PaymentReceiptsDialog', () => {
     await settle();
 
     expect(byTestId('payment-receipts-notice')?.textContent).toContain('Pagada, con seguro.');
+  });
+
+  it('«Marcar sin comprobante…» apunta a su panel sólo mientras el panel existe', async () => {
+    await respond([]);
+    const toggle = byTestId('payment-receipts-manual-toggle')!;
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.hasAttribute('aria-controls')).toBe(false);
+
+    await click(toggle);
+    const panelId = toggle.getAttribute('aria-controls');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(panelId).not.toBeNull();
+    expect(root().querySelector(`#${panelId}`)).not.toBeNull();
+
+    await click(toggle);
+    expect(toggle.hasAttribute('aria-controls')).toBe(false);
   });
 
   it('Escape cierra el modal', async () => {

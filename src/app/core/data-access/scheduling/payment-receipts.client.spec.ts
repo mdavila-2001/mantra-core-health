@@ -56,6 +56,19 @@ describe('PaymentReceiptsClient', () => {
     expect(received[0]!.amount).toBe('150.00');
   });
 
+  it('list los deja del más reciente al más viejo, venga como venga la respuesta', () => {
+    let received: readonly PaymentReceipt[] = [];
+    client.list(BOOKING).subscribe((items) => (received = items));
+
+    http.expectOne(RECEIPTS_URL).flush([
+      { ...WIRE_RECEIPT, id: 'r-medio', uploadedAt: '2026-10-27T15:00:00.000Z' },
+      { ...WIRE_RECEIPT, id: 'r-viejo', uploadedAt: '2026-10-26T09:00:00.000Z' },
+      { ...WIRE_RECEIPT, id: 'r-nuevo', uploadedAt: '2026-10-28T08:30:00.000Z' },
+    ]);
+
+    expect(received.map((receipt) => receipt.id)).toEqual(['r-nuevo', 'r-medio', 'r-viejo']);
+  });
+
   it('upload manda sólo fileId cuando el paciente no completó nada más', () => {
     client.upload(BOOKING, { fileId: 'f-1' }).subscribe();
 

@@ -17,7 +17,8 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  * 1. La paciente abre su cita en «Mis citas» y sube un comprobante.
  * 2. La médica abre «Estado del pago» en su día: ve los tres, abre el visor,
  *    rechaza el que subió la paciente —con motivo— y confirma la
- *    transferencia. La insignia de la cita pasa a «Pagada» sin recargar.
+ *    transferencia. La insignia de la cita pasa a «Pagada» sin recargar, y el
+ *    PDF que sigue pendiente ya sólo se puede rechazar.
  * 3. La paciente ve el motivo del rechazado y que ya no hace falta subir otro.
  *
  * Aparte, la médica abre «Estado del pago» de una cita sin comprobantes.
@@ -255,6 +256,11 @@ test('paciente sube un comprobante, la médica rechaza uno y confirma otro, y la
   await expect(transfer.getByTestId('payment-receipt-status')).toHaveText('Confirmado');
   await expect(transfer.getByTestId('payment-receipt-confirm')).toHaveCount(0);
   await expect(dialog.getByTestId('payment-receipts-payment-state')).toContainText('Pagada');
+  // Con la cita pagada, el PDF que sigue pendiente ya no se confirma: sólo se rechaza.
+  const qr = receiptRow(dialog, 'PDF');
+  await expect(qr.getByTestId('payment-receipt-status')).toHaveText('Pendiente');
+  await expect(qr.getByTestId('payment-receipt-confirm')).toHaveCount(0);
+  await expect(qr.getByTestId('payment-receipt-reject')).toBeVisible();
   await snapshotMatrix(page, () => dialog, 'practitioner-receipt-confirmed');
 
   // Al cerrar, la insignia de la cita en el día ya dice «Pagada»: sin recargar.

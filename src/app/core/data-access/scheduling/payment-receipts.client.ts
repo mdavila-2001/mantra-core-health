@@ -45,11 +45,17 @@ export class PaymentReceiptsClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  /** `GET …/payment-receipts` — del más reciente al más viejo. */
+  /**
+   * `GET …/payment-receipts` — del más reciente al más viejo.
+   *
+   * El orden lo pone el cliente, por `uploadedAt`, y no se confía en el de la
+   * respuesta: las dos pantallas lo prometen, y quien revisa lee primero lo
+   * último que subió el paciente.
+   */
   list(bookingId: string): Observable<readonly PaymentReceipt[]> {
     return this.http
       .get<readonly WirePaymentReceipt[]>(this.receiptsUrl(bookingId))
-      .pipe(map((items) => items.map(toPaymentReceipt)));
+      .pipe(map((items) => items.map(toPaymentReceipt).sort(newestFirst)));
   }
 
   /**
@@ -139,6 +145,10 @@ function toPaymentReceipt({
     uploadedAt: new Date(uploadedAt),
     reviewedAt: reviewedAt === null ? null : new Date(reviewedAt),
   };
+}
+
+function newestFirst(a: PaymentReceipt, b: PaymentReceipt): number {
+  return b.uploadedAt.getTime() - a.uploadedAt.getTime();
 }
 
 /** El cuerpo de la subida, clave a clave: lo ausente no viaja. */

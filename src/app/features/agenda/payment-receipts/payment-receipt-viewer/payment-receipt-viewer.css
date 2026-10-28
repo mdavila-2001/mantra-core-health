@@ -63,6 +63,14 @@
   margin: var(--sp-4);
 }
 
+.receipt-viewer__unpreviewable {
+  margin: var(--sp-4);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
 .receipt-viewer__hint {
   margin: 0;
   font-size: var(--fs-caption);

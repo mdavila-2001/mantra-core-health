@@ -16,6 +16,10 @@ import {
   type OnInit,
 } from '@angular/core';
 
+import {
+  describeReceipt,
+  isPdfReceipt,
+} from '../../../../core/data-access/scheduling/payment-receipt-format';
 import type { PaymentReceipt } from '../../../../core/data-access/scheduling/payment-receipts.types';
 import type {
   NewPaymentState,
@@ -31,7 +35,6 @@ import { ViewStateHost } from '../../../../shared/components/organisms/view-stat
 import { nextControlId } from '../../../../shared/forms/form-control.context';
 import { BookingPaymentStates } from '../booking-payment-states';
 import { ManualPaymentState } from '../manual-payment-state/manual-payment-state';
-import { describeReceipt, isPdfReceipt } from '../payment-receipt-format';
 import { PaymentReceiptRejectionForm } from '../payment-receipt-rejection-form/payment-receipt-rejection-form';
 import { PaymentReceiptRow } from '../payment-receipt-row/payment-receipt-row';
 import { PaymentReceiptViewer } from '../payment-receipt-viewer/payment-receipt-viewer';
@@ -127,7 +130,7 @@ export class PaymentReceiptsDialog implements OnInit {
       if (receipts === null) return;
       untracked(() => {
         for (const receipt of receipts) {
-          if (!isPdfReceipt(receipt)) this.files.request(this.bookingId(), receipt.id);
+          if (!isPdfReceipt(receipt)) this.files.request(this.bookingId(), receipt);
         }
       });
     });
@@ -191,7 +194,7 @@ export class PaymentReceiptsDialog implements OnInit {
 
   protected openViewer(receipt: PaymentReceipt): void {
     this.viewing.set(receipt);
-    this.files.request(this.bookingId(), receipt.id);
+    this.files.request(this.bookingId(), receipt);
   }
 
   protected closeViewer(): void {
@@ -203,7 +206,7 @@ export class PaymentReceiptsDialog implements OnInit {
   }
 
   protected retryFile(receipt: PaymentReceipt): void {
-    this.files.request(this.bookingId(), receipt.id);
+    this.files.request(this.bookingId(), receipt);
   }
 
   protected toggleManual(): void {

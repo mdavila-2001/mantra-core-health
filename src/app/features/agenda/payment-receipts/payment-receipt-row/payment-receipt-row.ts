@@ -1,18 +1,19 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import type { PaymentReceipt } from '../../../../core/data-access/scheduling/payment-receipts.types';
-import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
-import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
 import {
   describeReceipt,
   formatReceiptAmount,
   isPdfReceipt,
   PAYMENT_RECEIPT_STATUS_LABELS,
   PAYMENT_RECEIPT_STATUS_VARIANTS,
-} from '../payment-receipt-format';
-import type { ReceiptFileState } from '../receipt-files';
+} from '../../../../core/data-access/scheduling/payment-receipt-format';
+import type { PaymentReceipt } from '../../../../core/data-access/scheduling/payment-receipts.types';
+import type { PaymentStateInfo } from '../../../../core/data-access/scheduling/scheduling.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
+import { previewUrlOf, type ReceiptFileState } from '../receipt-files';
 
 /**
  * Un comprobante de pago en la lista del modal: miniatura, lo que el paciente
@@ -27,6 +28,13 @@ import type { ReceiptFileState } from '../receipt-files';
  * «Confirmar» repetido en tres filas es tres botones con el mismo nombre para
  * quien usa lector de pantalla. Cada uno lleva el monto y el día —«Confirmar
  * comprobante de 150,00 Bs del 27/10»—, que es lo que los distingue.
+ *
+ * ## Con la cita pagada ya no se confirma
+ *
+ * Confirmar un comprobante es dar la cita por pagada; si ya lo está, otro
+ * confirmado no cobra nada y se leería como un segundo pago. «Rechazar» sí
+ * sigue: decirle al paciente que esa prueba no sirve no toca el pago, y la API
+ * lo admite con la cita pagada.
  */
 @Component({
   selector: 'app-payment-receipt-row',
@@ -55,6 +63,9 @@ export class PaymentReceiptRow {
   /** Esta fila es la que se está confirmando: su botón muestra la espera. */
   readonly confirming = input(false);
 
+  /** El estado de pago actual de la cita; `null` si nadie lo marcó. */
+  readonly paymentState = input<PaymentStateInfo | null>(null);
+
   readonly viewRequested = output<void>();
   readonly confirmRequested = output<void>();
   readonly rejectRequested = output<void>();
@@ -72,10 +83,15 @@ export class PaymentReceiptRow {
     () => this.reviewable() && this.receipt().status === 'PENDING',
   );
 
-  protected readonly thumbnailUrl = computed(() => {
-    const file = this.file();
-    return file?.status === 'ready' ? file.url : null;
-  });
+  /** Ver el encabezado: con la cita pagada, sólo queda rechazar. */
+  protected readonly canConfirm = computed(() => this.paymentState()?.state !== 'PAID');
+
+  protected readonly thumbnailUrl = computed(() => previewUrlOf(this.file()));
 
   protected readonly thumbnailFailed = computed(() => this.file()?.status === 'failed');
+
+  /** Bajó, pero no es un formato que se muestre: va el ícono de archivo. */
+  protected readonly downloadOnly = computed(
+    () => this.file()?.status === 'ready' && this.thumbnailUrl() === null,
+  );
 }

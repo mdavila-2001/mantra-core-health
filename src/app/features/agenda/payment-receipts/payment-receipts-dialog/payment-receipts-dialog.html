@@ -77,14 +77,18 @@
                   [reviewable]="rejecting() !== receipt.id"
                   [disabled]="review.busy()"
                   [confirming]="isConfirming(receipt.id)"
+                  [paymentState]="currentPaymentState()"
                   (viewRequested)="openViewer(receipt)"
                   (confirmRequested)="confirm(receipt)"
                   (rejectRequested)="startRejecting(receipt)"
                 />
                 @if (rejecting() === receipt.id && receipt.status === 'PENDING') {
+                  <!-- Mientras otra operación corre, el envío espera: el modal
+                       hace una a la vez, y uno que saliera ahora se perdería. -->
                   <app-payment-receipt-rejection-form
                     [receiptLabel]="summaryOf(receipt)"
                     [submitting]="isRejecting(receipt.id)"
+                    [blocked]="review.busy()"
                     (submitted)="reject(receipt, $event)"
                     (cancelled)="cancelRejecting(receipt.id)"
                   />
@@ -115,7 +119,7 @@
       variant="ghost"
       data-testid="payment-receipts-manual-toggle"
       [attr.aria-expanded]="manualOpen()"
-      [attr.aria-controls]="manualPanelId"
+      [attr.aria-controls]="manualOpen() ? manualPanelId : null"
       (clicked)="toggleManual()"
     >
       {{ manualOpen() ? 'Ocultar el marcado sin comprobante' : 'Marcar sin comprobante…' }}
