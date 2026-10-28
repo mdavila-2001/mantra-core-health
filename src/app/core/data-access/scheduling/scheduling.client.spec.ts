@@ -509,6 +509,30 @@ describe('SchedulingClient', () => {
       });
     });
 
+    it('v4.2.64 · createTemplate manda flexibleHours en la franja flexible de una semana mixta', () => {
+      client
+        .createTemplate('res-1', {
+          name: 'Semana mixta',
+          rules: [
+            { dayOfWeek: 1, startTime: '08:00', endTime: '12:00', slotMinutes: 30, gapMinutes: 10 },
+            { dayOfWeek: 2, startTime: '08:00', endTime: '12:00', flexibleHours: true },
+          ],
+          slotMinutes: 20,
+        })
+        .subscribe();
+
+      const req = http.expectOne('/scheduling/resources/res-1/templates');
+      expect(req.request.body).toStrictEqual({
+        name: 'Semana mixta',
+        rules: [
+          { dayOfWeek: 1, startTime: '08:00', endTime: '12:00', slotMinutes: 30, gapMinutes: 10 },
+          { dayOfWeek: 2, startTime: '08:00', endTime: '12:00', flexibleHours: true },
+        ],
+        slotMinutes: 20,
+      });
+      req.flush({ id: 'tpl-1', name: 'Semana mixta', ruleCount: 2, statusConceptId: 'c' });
+    });
+
     it('getFlexibleAvailability pide la ventana en ISO y devuelve fechas', () => {
       let horas: Date[] = [];
       client
