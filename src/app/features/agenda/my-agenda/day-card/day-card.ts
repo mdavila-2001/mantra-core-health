@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   input,
   output,
@@ -24,8 +25,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import type { FranjaVigente } from '../../telemedicina';
-import { BookingDestination } from './booking-destination';
+import { BookingDestination, type BookingTarget } from './booking-destination';
 
 /** Un rato ya tomado del día, para avisar el choque ANTES de guardar. */
 export interface DayGap {
@@ -97,8 +97,9 @@ const APPOINTMENT_TOO_LONG = 'Una cita no puede durar más de 8 horas';
  *
  * «Mi consultorio» viene elegido y guarda en la agenda que pasa el contenedor,
  * como siempre. Con otra organización, lo creado va a la agenda del médico en
- * esa organización ({@link BookingDestination}); si no publicó ninguna ahí, se dice
- * y no se guarda.
+ * esa organización ({@link BookingDestination}), hablándole a la API como esa
+ * organización; si no publicó ninguna ahí, se dice y no se guarda. Desde un
+ * cupo no se elige: la cita va a la agenda del cupo.
  *
  * ## Los choques, en vivo y en el servidor
  *
@@ -134,6 +135,7 @@ export class DayCard {
     this.scheduling,
     this.session.practitionerProfileId,
     this.resourceId,
+    inject(DestroyRef),
   );
 
   /** El rato tocado, para prellenar. */
@@ -153,17 +155,8 @@ export class DayCard {
    */
   readonly cupoId = input<string | null>(null);
 
-  /** Lo que el día ya tiene tomado, para avisar el choque antes de guardar. */
+  /** Lo que el día ya tiene tomado en la agenda de «Mi consultorio», para avisar el choque. */
   readonly ratosTomados = input<readonly DayGap[]>([]);
-
-  /**
-   * Las franjas del horario vigente, como las pasa el contenedor.
-   *
-   * Desde que la tarjeta no ofrece la modalidad no decide nada con ellas: sólo
-   * servían para apagar «Por videollamada» fuera de una franja con
-   * telemedicina. Se declara mientras el contenedor siga enlazándola.
-   */
-  readonly franjas = input<readonly FranjaVigente[] | null>(null);
 
   /** Se creó algo: el contenedor recarga el día. */
   readonly creada = output<void>();
@@ -180,6 +173,18 @@ export class DayCard {
 
   /** Si el alta salió de un cupo ya programado: la franja no se pregunta. */
   protected readonly fromSlot = computed(() => this.cupoId() !== null);
+
+  /**
+   * Dónde queda lo que se guarda, o `null` mientras no haya agenda.
+   *
+   * **Desde un cupo, en la agenda de ese cupo**: el cupo ya es de una agenda,
+   * y el selector de organización ni se muestra. La regla vive acá y no sólo
+   * en la plantilla, por lo mismo que el bloqueo: esconder un control no es
+   * una regla.
+   */
+  private readonly target = computed<BookingTarget | null>(() =>
+    this.fromSlot() ? { resourceId: this.resourceId(), scope: {} } : this.destination.target(),
+  );
 
   /** La franja del cupo, en palabras, para mostrarla como dato. */
   protected readonly slotBand = computed(
@@ -230,15 +235,20 @@ export class DayCard {
   });
 
   /**
-   * El choque con lo ya cargado del día, avisado en vivo.
+   * El rato ya tomado que pisa lo que se está por crear, si hay alguno: el
+   * choque con lo ya cargado del día, avisado en vivo.
    *
    * Sólo mira lo que la pantalla ya sabe — sin viaje extra—. El servidor cruza
    * además las otras sedes al guardar.
+   *
+   * **Sólo si se guarda en la agenda del día.** Lo cargado es de la agenda de
+   * «Mi consultorio» (o del cupo): con otra organización elegida, lo creado va
+   * a otra, y avisar un choque o un bloqueo de «Mi consultorio» sería avisar
+   * algo que no corresponde. Ahí la última palabra es la del servidor.
    */
-  /** El rato ya tomado que pisa lo que se está por crear, si hay alguno. */
   private readonly overlaps = computed<DayGap | null>(() => {
     const rango = this.range();
-    if (rango === null) return null;
+    if (rango === null || this.target()?.resourceId !== this.resourceId()) return null;
     return (
       this.ratosTomados().find(
         (rato) =>
@@ -299,7 +309,7 @@ export class DayCard {
     const rango = this.range();
     return (
       rango !== null &&
-      this.destination.resourceId() !== null &&
+      this.target() !== null &&
       !this.saving() &&
       !this.blockedByGap() &&
       !this.appointmentTooLong() &&
@@ -348,19 +358,19 @@ export class DayCard {
    */
   protected save(): void {
     const rango = this.range();
-    const resourceId = this.destination.resourceId();
+    const target = this.target();
     // `canSave()` ya incluye el bloqueo, la agenda y el tope de la cita; se
     // vuelve a mirar acá porque un botón deshabilitado no es una regla: esta
     // función se puede invocar por teclado, por `submit` del formulario y
     // desde una prueba.
-    if (rango === null || resourceId === null || this.blockedByGap() || !this.canSave()) return;
+    if (rango === null || target === null || this.blockedByGap() || !this.canSave()) return;
 
     if (!isLongSession(rango)) {
-      this.persist(resourceId, rango);
+      this.persist(target, rango);
       return;
     }
     void this.confirmLongSession(rango).then((confirmed) => {
-      if (confirmed) this.persist(resourceId, rango);
+      if (confirmed) this.persist(target, rango);
     });
   }
 
@@ -378,27 +388,34 @@ export class DayCard {
    * Crea lo que la inferencia decidió en la agenda elegida: la cita si hay
    * paciente; si no, el tiempo ocupado.
    */
-  private persist(resourceId: string, range: TimeRange): void {
+  private persist(target: BookingTarget, range: TimeRange): void {
     this.saving.set(true);
     this.error.set(null);
 
     const chosen = this.patient();
     if (chosen === null) {
-      this.createBusyTime(resourceId, range);
+      this.createBusyTime(target, range);
       return;
     }
-    this.createAppointment(resourceId, chosen, range);
+    this.createAppointment(target, chosen, range);
   }
 
-  private createAppointment(resourceId: string, patient: ReferenceOption, range: TimeRange): void {
+  private createAppointment(
+    target: BookingTarget,
+    patient: ReferenceOption,
+    range: TimeRange,
+  ): void {
     this.scheduling
-      .createDirectAppointment({
-        patientProfileId: patient.value,
-        resourceId,
-        startAt: range.desde.toISOString(),
-        durationMinutes: minutesOf(range),
-        ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
-      })
+      .createDirectAppointment(
+        {
+          patientProfileId: patient.value,
+          resourceId: target.resourceId,
+          startAt: range.desde.toISOString(),
+          durationMinutes: minutesOf(range),
+          ...(this.reason().trim() === '' ? {} : { reasonText: this.reason().trim() }),
+        },
+        target.scope,
+      )
       .subscribe({
         next: (created) => {
           this.saving.set(false);
@@ -422,16 +439,20 @@ export class DayCard {
    * Con citas en el rato, la API lista a quién alcanza y `BlockCancellations`
    * pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
    */
-  private createBusyTime(resourceId: string, range: TimeRange): void {
+  private createBusyTime(target: BookingTarget, range: TimeRange): void {
     this.cancellations
       .withConfirmation((confirmed) =>
-        this.scheduling.createException(resourceId, {
-          exceptionType: 'ABSENCE',
-          startAt: range.desde.toISOString(),
-          endAt: range.hasta.toISOString(),
-          reason: this.reason().trim(),
-          ...(confirmed ? { cancelAffectedBookings: true } : {}),
-        }),
+        this.scheduling.createException(
+          target.resourceId,
+          {
+            exceptionType: 'ABSENCE',
+            startAt: range.desde.toISOString(),
+            endAt: range.hasta.toISOString(),
+            reason: this.reason().trim(),
+            ...(confirmed ? { cancelAffectedBookings: true } : {}),
+          },
+          target.scope,
+        ),
       )
       .subscribe({
         next: (res) => {

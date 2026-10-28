@@ -45,37 +45,52 @@
 
     <!-- La organización elegida decide en qué agenda queda lo creado. «Mi
          consultorio» viene elegido; «Afiliarme…» abre su modal encima de éste,
-         que sigue abierto debajo. -->
-    <app-organization-field (selected)="destination.choose($event)" />
+         que sigue abierto debajo. Desde un cupo no se pregunta: la cita va a
+         la agenda del cupo. -->
+    @if (!fromSlot()) {
+      <!-- La región viva está siempre y sólo cambia su texto: un `role="status"`
+           que aparece con el texto ya puesto no siempre se anuncia. Vacía no
+           ocupa lugar (ver `day-card.css`). -->
+      <div class="tarjeta__destination">
+        <app-organization-field (selected)="destination.choose($event)" />
+        <p
+          class="tarjeta__destination-status"
+          role="status"
+          data-testid="day-card-destination-status"
+        >
+          @if (destination.searchingIn(); as organizationName) {
+            Buscando su agenda en {{ organizationName }}…
+          }
+        </p>
+      </div>
 
-    @if (destination.searchingIn(); as organizationName) {
-      <p class="tarjeta__inferencia" role="status" data-testid="day-card-destination-searching">
-        Buscando su agenda en {{ organizationName }}…
-      </p>
-    }
+      @if (destination.missingIn(); as organizationName) {
+        <app-alert tone="warning" data-testid="day-card-destination-missing">
+          Publique su agenda en {{ organizationName }} para agendar ahí.
+        </app-alert>
+      }
 
-    @if (destination.missingIn(); as organizationName) {
-      <app-alert tone="warning" data-testid="day-card-destination-missing">
-        Publique su agenda en {{ organizationName }} para agendar ahí.
-      </app-alert>
-    }
-
-    @if (destination.failure(); as message) {
-      <app-alert tone="error" title="No se pudo buscar su agenda" data-testid="day-card-destination-failure">
-        {{ message }}
-        <div alert-actions>
-          <button
-            app-button
-            type="button"
-            variant="ghost"
-            size="sm"
-            data-testid="day-card-destination-retry"
-            (clicked)="destination.retry()"
-          >
-            Reintentar
-          </button>
-        </div>
-      </app-alert>
+      @if (destination.failure(); as message) {
+        <app-alert
+          tone="error"
+          title="No se pudo buscar su agenda"
+          data-testid="day-card-destination-failure"
+        >
+          {{ message }}
+          <div alert-actions>
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="day-card-destination-retry"
+              (clicked)="destination.retry()"
+            >
+              Reintentar
+            </button>
+          </div>
+        </app-alert>
+      }
     }
 
     <app-form-field

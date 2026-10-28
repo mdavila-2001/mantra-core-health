@@ -1,6 +1,8 @@
-import { computed, signal, type Signal } from '@angular/core';
+import { computed, signal, type DestroyRef, type Signal } from '@angular/core';
+import type { Subscription } from 'rxjs';
 
 import type { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
+import type { TenantScope } from '../../../../core/data-access/scheduling/tenant-scope';
 import { describeApiFailure } from '../../../../core/http/api-failure';
 import type {
   OrganizationChoice,
@@ -10,6 +12,15 @@ import { agendaResourceMy } from '../../my-resource';
 
 /** Una organización afiliada: la que trae dónde buscar la agenda. */
 type AffiliatedOrganization = PractitionerOrganization & { readonly tenantId: string };
+
+/**
+ * Dónde queda lo que se guarda: la agenda, y como qué organización se le habla
+ * a la API para guardar ahí (`{}` es la organización activa de la sesión).
+ */
+export interface BookingTarget {
+  readonly resourceId: string;
+  readonly scope: TenantScope;
+}
 
 /**
  * Lo que se sabe de la agenda donde se guardaría, según la organización elegida.
@@ -23,7 +34,7 @@ type AffiliatedOrganization = PractitionerOrganization & { readonly tenantId: st
 type BookingDestinationState =
   | { readonly status: 'own' }
   | { readonly status: 'searching'; readonly organizationName: string }
-  | { readonly status: 'found'; readonly resourceId: string }
+  | { readonly status: 'found'; readonly resourceId: string; readonly tenantId: string }
   | { readonly status: 'missing'; readonly organizationName: string }
   | { readonly status: 'failed'; readonly message: string };
 
@@ -36,14 +47,21 @@ type BookingDestinationState =
  * cuyo `resourceRefId` es su perfil profesional. Si tiene más de una, la
  * primera, como en esa pantalla.
  *
- * Mientras se busca, o si no hay ninguna, {@link resourceId} es `null` y no se
+ * Mientras se busca, o si no hay ninguna, {@link target} es `null` y no se
  * guarda: no hay agenda donde poner la cita.
  *
- * ## La respuesta que llega tarde se descarta
+ * ## Se le habla a la API como esa organización
  *
- * Si el médico cambia de organización antes de que vuelva la búsqueda, la
- * respuesta de la anterior ya no manda: guardaría la cita en una agenda que no
- * es la que está elegida.
+ * La API solo lista y solo agenda en la organización con que se le habla
+ * (`X-Tenant-Id`). Por eso la búsqueda y el guardado en otra organización
+ * declaran la suya ({@link BookingTarget.scope}); en «Mi consultorio» no se
+ * declara nada y va la de la sesión.
+ *
+ * ## La búsqueda anterior se corta
+ *
+ * Si el médico cambia de organización antes de que vuelva la búsqueda, o se
+ * cierra el modal, la búsqueda en curso se cancela: su respuesta guardaría la
+ * cita en una agenda que ya no es la elegida.
  */
 export class BookingDestination {
   private readonly state = signal<BookingDestinationState>({ status: 'own' });
@@ -51,8 +69,11 @@ export class BookingDestination {
   /** La organización afiliada elegida, o `null` en «Mi consultorio». */
   private chosen: AffiliatedOrganization | null = null;
 
-  /** El recurso donde se guarda, o `null` mientras no haya uno. */
-  readonly resourceId: Signal<string | null>;
+  /** La búsqueda de la agenda en curso, para cortarla. */
+  private request: Subscription | null = null;
+
+  /** Dónde se guarda, o `null` mientras no haya una agenda. */
+  readonly target: Signal<BookingTarget | null>;
 
   /** La organización donde se está buscando la agenda, mientras se busca. */
   readonly searchingIn = computed(() => {
@@ -76,21 +97,27 @@ export class BookingDestination {
    * @param scheduling - El cliente con que se listan las agendas de una organización.
    * @param practitionerProfileId - El perfil profesional de la sesión.
    * @param ownResourceId - La agenda de «Mi consultorio», la que pasa el contenedor.
+   * @param destroyRef - El ciclo de vida de quien la usa: al destruirse, se corta la búsqueda.
    */
   constructor(
     private readonly scheduling: SchedulingClient,
     private readonly practitionerProfileId: Signal<string | null>,
     ownResourceId: Signal<string>,
+    destroyRef: DestroyRef,
   ) {
-    this.resourceId = computed(() => {
+    this.target = computed(() => {
       const state = this.state();
-      if (state.status === 'own') return ownResourceId();
-      return state.status === 'found' ? state.resourceId : null;
+      if (state.status === 'own') return { resourceId: ownResourceId(), scope: {} };
+      return state.status === 'found'
+        ? { resourceId: state.resourceId, scope: { tenantId: state.tenantId } }
+        : null;
     });
+    destroyRef.onDestroy(() => this.request?.unsubscribe());
   }
 
   /** El médico eligió dónde agendar. */
   choose(choice: OrganizationChoice): void {
+    this.request?.unsubscribe();
     this.chosen = affiliatedOf(choice);
     if (this.chosen === null) {
       this.state.set({ status: 'own' });
@@ -105,31 +132,34 @@ export class BookingDestination {
   }
 
   private search(organization: AffiliatedOrganization): void {
+    this.request?.unsubscribe();
     const profileId = this.practitionerProfileId();
     if (profileId === null) {
       this.state.set({ status: 'missing', organizationName: organization.name });
       return;
     }
     this.state.set({ status: 'searching', organizationName: organization.name });
-    agendaResourceMy(this.scheduling, organization.tenantId, profileId).subscribe({
-      next: (resource) => {
-        if (this.chosen !== organization) return;
+    const scope = { tenantId: organization.tenantId };
+    this.request = agendaResourceMy(
+      this.scheduling,
+      organization.tenantId,
+      profileId,
+      scope,
+    ).subscribe({
+      next: (resource) =>
         this.state.set(
           resource === null
             ? { status: 'missing', organizationName: organization.name }
-            : { status: 'found', resourceId: resource.id },
-        );
-      },
-      error: (error: unknown) => {
-        if (this.chosen !== organization) return;
+            : { status: 'found', resourceId: resource.id, tenantId: organization.tenantId },
+        ),
+      error: (error: unknown) =>
         this.state.set({
           status: 'failed',
           message: describeApiFailure(
             error,
             `No pudimos consultar su agenda en ${organization.name}.`,
           ),
-        });
-      },
+        }),
     });
   }
 }
