@@ -15,25 +15,45 @@ export const COPY = {
   elegir: 'Elegir como mi médico de cabecera',
   quitar: 'Dejar de tenerlo como médico de cabecera',
   noAcepta: 'Este profesional no está recibiendo pacientes nuevos por ahora.',
+  noDisponible: 'Este profesional ya no está disponible para elegirlo.',
   sinMedico: 'Todavía no eligió un médico de cabecera.',
   buscar: 'Buscar en la guía de médicos',
   verFicha: 'Ver su ficha',
-  errorAlLeer: 'No pudimos consultar su médico de cabecera.',
   errorAlGuardar: 'No pudimos guardar su médico de cabecera.',
-  reintentar: 'Reintentar',
 } as const;
 
 /** El nombre a mostrar, con un genérico si la API no lo trae. */
-export function nombreDe(medico: { readonly displayName?: string | null }): string {
-  const nombre = medico.displayName?.trim();
-  return nombre === undefined || nombre === '' ? 'Su médico' : nombre;
+export function displayNameOf(practitioner: { readonly displayName?: string | null }): string {
+  const name = practitioner.displayName?.trim();
+  return name === undefined || name === '' ? 'Su médico' : name;
 }
 
 /**
- * Si el fallo dice que la cuenta **no es de paciente** (404 sin perfil de
- * paciente, 422 sin persona vinculada). Ahí no hay nada que ofrecer: el bloque
- * no se dibuja, en vez de mostrar un error que la persona no puede resolver.
+ * Los `reason` de la API que dicen que la cuenta **no es de paciente**: sin
+ * perfil de paciente o sin persona vinculada. Ahí no hay nada que ofrecer.
  */
-export function noEsPaciente(error: unknown): boolean {
-  return error instanceof HttpErrorResponse && (error.status === 404 || error.status === 422);
+const NO_ES_PACIENTE: ReadonlySet<string> = new Set([
+  'PATIENT_PROFILE_NOT_FOUND',
+  'ACCOUNT_WITHOUT_LINKED_PERSON',
+]);
+
+/**
+ * Si el fallo dice que la cuenta no es de paciente, y entonces el bloque no se
+ * dibuja en vez de mostrar un error que la persona no puede resolver.
+ *
+ * Decide por el `reason` del cuerpo y **no por el estado HTTP**: un 404 de un
+ * proxy, o de una API que todavía no tiene la ruta, tiene que verse como el
+ * error que es, no esconder la función en silencio.
+ */
+export function isNotPatient(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse)) return false;
+  const cuerpo: unknown = error.error;
+  if (typeof cuerpo !== 'object' || cuerpo === null) return false;
+  const reason = (cuerpo as Record<string, unknown>)['reason'];
+  return typeof reason === 'string' && NO_ES_PACIENTE.has(reason);
+}
+
+/** El estado HTTP de un fallo, o `null` si no fue una respuesta HTTP. */
+export function httpStatusOf(error: unknown): number | null {
+  return error instanceof HttpErrorResponse ? error.status : null;
 }

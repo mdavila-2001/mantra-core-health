@@ -9,8 +9,8 @@ const URL = '/profiles/patients/me/primary-practitioner';
 const ESTE = '11111111-1111-4111-8111-111111111111';
 const OTRO = '22222222-2222-4222-8222-222222222222';
 
-const eleccion = (id: string, nombre: string) => ({
-  current: { practitionerProfileId: id, displayName: nombre, since: '2026-10-28T12:00:00.000Z' },
+const eleccion = (id: string, name: string) => ({
+  current: { practitionerProfileId: id, displayName: name, since: '2026-10-28T12:00:00.000Z' },
 });
 
 describe('PrimaryPractitionerChoice', () => {
@@ -31,79 +31,82 @@ describe('PrimaryPractitionerChoice', () => {
   afterEach(() => http.verify());
 
   const host = () => fixture.nativeElement as HTMLElement;
-  const porId = (id: string) => host().querySelector<HTMLElement>(`[data-testid="${id}"]`);
+  const byTestId = (id: string) => host().querySelector<HTMLElement>(`[data-testid="${id}"]`);
   const pulsar = (id: string) => {
-    porId(id)!.click();
+    byTestId(id)!.click();
+    fixture.detectChanges();
+  };
+  const botonConTexto = (texto: string) =>
+    Array.from(host().querySelectorAll<HTMLButtonElement>('button')).find((b) =>
+      b.textContent?.includes(texto),
+    );
+  const leer = (cuerpo: object | string | null, opciones?: { status: number; statusText: string }) => {
+    http.expectOne({ method: 'GET', url: URL }).flush(cuerpo, opciones);
     fixture.detectChanges();
   };
 
   it('sin médico de cabecera ofrece un único botón para elegirlo, con la explicación', () => {
     montar();
-    http.expectOne({ method: 'GET', url: URL }).flush({ current: null });
-    fixture.detectChanges();
+    leer({ current: null });
 
-    expect(porId('medico-cabecera-elegir')?.textContent).toContain('Elegir como mi médico de cabecera');
+    expect(byTestId('primary-doctor-elegir')?.textContent).toContain('Elegir como mi médico de cabecera');
     expect(host().textContent).toContain('profesional de confianza');
-    expect(porId('medico-cabecera-quitar')).toBeNull();
+    expect(byTestId('primary-doctor-quitar')).toBeNull();
   });
 
-  it('al elegir manda el PUT y pinta lo que la API devolvió', () => {
+  it('al elegir manda el PUT, pinta lo que la API devolvió y deja el foco en el botón nuevo', async () => {
     montar();
-    http.expectOne({ method: 'GET', url: URL }).flush({ current: null });
-    fixture.detectChanges();
+    leer({ current: null });
 
-    pulsar('medico-cabecera-elegir');
+    pulsar('primary-doctor-elegir');
     const put = http.expectOne({ method: 'PUT', url: URL });
     expect(put.request.body).toEqual({ practitionerProfileId: ESTE });
     put.flush(eleccion(ESTE, 'Carla Gutiérrez'));
     fixture.detectChanges();
+    await fixture.whenStable();
 
-    expect(porId('medico-cabecera-es-este')?.textContent).toContain('Es su médico de cabecera');
-    expect(porId('medico-cabecera-aviso')?.textContent).toContain('Carla Gutiérrez es ahora su médico de cabecera');
-    expect(porId('medico-cabecera-quitar')).not.toBeNull();
+    expect(byTestId('primary-doctor-es-este')?.textContent).toContain('Es su médico de cabecera');
+    expect(byTestId('primary-doctor-aviso')?.textContent).toContain('Carla Gutiérrez es ahora su médico de cabecera');
+    expect(document.activeElement).toBe(byTestId('primary-doctor-quitar'));
   });
 
   it('si ya es éste, ofrece dejar de tenerlo y al quitarlo manda el DELETE', () => {
     montar();
-    http.expectOne({ method: 'GET', url: URL }).flush(eleccion(ESTE, 'Carla Gutiérrez'));
-    fixture.detectChanges();
+    leer(eleccion(ESTE, 'Carla Gutiérrez'));
 
-    pulsar('medico-cabecera-quitar');
+    pulsar('primary-doctor-quitar');
     http.expectOne({ method: 'DELETE', url: URL }).flush({ current: null });
     fixture.detectChanges();
 
-    expect(porId('medico-cabecera-elegir')).not.toBeNull();
-    expect(porId('medico-cabecera-aviso')?.textContent).toContain('ya no tiene médico de cabecera');
+    expect(byTestId('primary-doctor-elegir')).not.toBeNull();
+    expect(byTestId('primary-doctor-aviso')?.textContent).toContain('ya no tiene médico de cabecera');
   });
 
   it('si tiene otro, dice quién es y que elegir a éste lo reemplaza', () => {
     montar();
-    http.expectOne({ method: 'GET', url: URL }).flush(eleccion(OTRO, 'Jorge Vargas'));
-    fixture.detectChanges();
+    leer(eleccion(OTRO, 'Jorge Vargas'));
 
-    expect(porId('medico-cabecera-actual')?.textContent).toContain('Jorge Vargas');
-    expect(porId('medico-cabecera-actual')?.textContent).toContain('lo reemplaza');
-    expect(porId('medico-cabecera-elegir')).not.toBeNull();
+    expect(byTestId('primary-doctor-actual')?.textContent).toContain('Jorge Vargas');
+    expect(byTestId('primary-doctor-actual')?.textContent).toContain('lo reemplaza');
+    expect(byTestId('primary-doctor-elegir')).not.toBeNull();
   });
 
   it('si el profesional no recibe pacientes nuevos, el botón se apaga y lo dice', () => {
     montar(false);
-    http.expectOne({ method: 'GET', url: URL }).flush({ current: null });
-    fixture.detectChanges();
+    leer({ current: null });
 
-    expect(porId('medico-cabecera-no-acepta')).not.toBeNull();
+    expect(byTestId('primary-doctor-no-acepta')).not.toBeNull();
     // El sistema de diseño deshabilita por `aria-disabled` y corta el click.
-    expect(porId('medico-cabecera-elegir')?.getAttribute('aria-disabled')).toBe('true');
-    pulsar('medico-cabecera-elegir');
+    expect(byTestId('primary-doctor-elegir')?.getAttribute('aria-disabled')).toBe('true');
+    pulsar('primary-doctor-elegir');
     http.expectNone({ method: 'PUT', url: URL });
   });
 
-  it('un rechazo de la API se muestra con su motivo y no cambia la elección', () => {
+  it('un 422 de la API se muestra con su motivo y no cambia la elección', () => {
     montar();
-    http.expectOne({ method: 'GET', url: URL }).flush({ current: null });
-    fixture.detectChanges();
+    leer({ current: null });
 
-    pulsar('medico-cabecera-elegir');
+    pulsar('primary-doctor-elegir');
     http
       .expectOne({ method: 'PUT', url: URL })
       .flush(
@@ -112,29 +115,80 @@ describe('PrimaryPractitionerChoice', () => {
       );
     fixture.detectChanges();
 
-    expect(porId('medico-cabecera-fallo')?.textContent).toContain('no está aceptando pacientes nuevos');
-    expect(porId('medico-cabecera-es-este')).toBeNull();
+    expect(byTestId('primary-doctor-fallo')?.textContent).toContain('no está aceptando pacientes nuevos');
+    expect(byTestId('primary-doctor-es-este')).toBeNull();
   });
 
-  it('una cuenta que no es de paciente no ve el bloque', () => {
+  it('un 409 (la elección cambió en otra pestaña) avisa y relee para no quedar con datos viejos', () => {
     montar();
+    leer({ current: null });
+
+    pulsar('primary-doctor-elegir');
     http
-      .expectOne({ method: 'GET', url: URL })
-      .flush({ code: 'NOT_FOUND', message: 'Paciente no encontrado' }, { status: 404, statusText: 'Not Found' });
-    fixture.detectChanges();
+      .expectOne({ method: 'PUT', url: URL })
+      .flush(
+        { code: 'CONFLICT', message: 'Su médico de cabecera cambió mientras lo elegía. Vuelva a intentarlo.' },
+        { status: 409, statusText: 'Conflict' },
+      );
+    leer(eleccion(OTRO, 'Jorge Vargas'));
 
-    expect(porId('medico-cabecera')).toBeNull();
+    expect(byTestId('primary-doctor-fallo')).not.toBeNull();
+    expect(byTestId('primary-doctor-actual')?.textContent).toContain('Jorge Vargas');
   });
 
-  it('un fallo de red ofrece reintentar', () => {
+  it('un 404 al elegir dice que el profesional ya no está disponible y relee', () => {
     montar();
-    http.expectOne({ method: 'GET', url: URL }).flush(null, { status: 500, statusText: 'Server Error' });
+    leer({ current: null });
+
+    pulsar('primary-doctor-elegir');
+    http
+      .expectOne({ method: 'PUT', url: URL })
+      .flush(
+        { code: 'NOT_FOUND', message: 'Profesional no encontrado', reason: 'PRACTITIONER_PROFILE_NOT_FOUND' },
+        { status: 404, statusText: 'Not Found' },
+      );
+    leer({ current: null });
+
+    expect(byTestId('primary-doctor-fallo')?.textContent).toContain('ya no está disponible');
+  });
+
+  it('una cuenta que no es de paciente (por su reason) no ve el bloque', () => {
+    montar();
+    leer(
+      { code: 'NOT_FOUND', message: 'Paciente no encontrado', reason: 'PATIENT_PROFILE_NOT_FOUND' },
+      { status: 404, statusText: 'Not Found' },
+    );
+
+    expect(byTestId('primary-doctor')).toBeNull();
+  });
+
+  it('un 404 sin ese reason (proxy, ruta inexistente) NO esconde la función: muestra el error', () => {
+    montar();
+    leer('<html>Not Found</html>', { status: 404, statusText: 'Not Found' });
+
+    expect(byTestId('primary-doctor')).not.toBeNull();
+    expect(host().textContent).toContain('Algo salió mal');
+  });
+
+  it('un error inesperado muestra el código de soporte y reintenta', () => {
+    montar();
+    leer(
+      { code: 'INTERNAL', message: 'Error interno', correlationId: 'req-123' },
+      { status: 500, statusText: 'Server Error' },
+    );
+
+    expect(host().textContent).toContain('req-123');
+    botonConTexto('Reintentar')!.click();
+    fixture.detectChanges();
+    leer({ current: null });
+    expect(byTestId('primary-doctor-elegir')).not.toBeNull();
+  });
+
+  it('sin conexión lo dice como tal (S8)', () => {
+    montar();
+    http.expectOne({ method: 'GET', url: URL }).error(new ProgressEvent('error'), { status: 0 });
     fixture.detectChanges();
 
-    expect(porId('medico-cabecera-error')).not.toBeNull();
-    pulsar('medico-cabecera-reintentar');
-    http.expectOne({ method: 'GET', url: URL }).flush({ current: null });
-    fixture.detectChanges();
-    expect(porId('medico-cabecera-elegir')).not.toBeNull();
+    expect(host().textContent).toContain('Sin conexión');
   });
 });

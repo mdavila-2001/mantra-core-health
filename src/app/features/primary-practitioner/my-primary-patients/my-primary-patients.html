@@ -11,7 +11,7 @@
       data-testid="pacientes-cabecera-tabla"
       [state]="filas()"
       [columns]="columnas"
-      [trackBy]="porId"
+      [trackBy]="byTestId"
       [rowLabel]="nombreDeFila"
       caption="Pacientes que lo eligieron como médico de cabecera"
       (retry)="retry()"
@@ -19,10 +19,10 @@
 
     @if (hayAnterior() || haySiguiente()) {
       <nav class="cabecera__paginas" aria-label="Páginas de pacientes">
-        <button app-button variant="outline" size="sm" type="button" [disabled]="!hayAnterior()" (clicked)="anterior()">
+        <button app-button variant="outline" size="sm" type="button" [disabled]="!hayAnterior()" [isLoading]="paginando()" (clicked)="anterior()">
           Anteriores
         </button>
-        <button app-button variant="outline" size="sm" type="button" [disabled]="!haySiguiente()" (clicked)="siguiente()">
+        <button app-button variant="outline" size="sm" type="button" [disabled]="!haySiguiente()" [isLoading]="paginando()" (clicked)="siguiente()">
           Siguientes
         </button>
       </nav>
