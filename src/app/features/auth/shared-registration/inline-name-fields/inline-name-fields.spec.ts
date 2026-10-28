@@ -13,6 +13,43 @@ class Anfitrion {
   readonly grupo = nameGroup(true);
 }
 
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [InlineNameFields],
+  template: `<app-inline-name-fields [grupo]="grupo" [obligatorio]="true" prefijoTestId="t" />`,
+})
+class AnfitrionEnPartes {
+  /** Un nombre que viaja en partes (`name`, `middleName`, `lastName`, `motherLastName`). */
+  readonly grupo = nameGroup(true, true);
+}
+
+describe('CamposDeNombreEnLinea con el nombre en partes', () => {
+  it('60 + 1 + 59 caracteres de segundo y tercer nombre pasan los 100 del middleName y lo dice bajo el apellido', () => {
+    const fixture = TestBed.createComponent(AnfitrionEnPartes);
+    fixture.detectChanges();
+    const grupo = fixture.componentInstance.grupo;
+    grupo.patchValue({ name: 'Ana', lastName: 'Paz', middleName: 'a'.repeat(60), thirdName: 'b'.repeat(59) });
+    grupo.markAllAsTouched();
+    fixture.detectChanges();
+
+    expect(grupo.invalid).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'El segundo, tercer y demás nombres juntos no pueden pasar de 100 caracteres.',
+    );
+  });
+
+  it('un primer nombre de solo espacios dice «Escriba el primer nombre.»', () => {
+    const fixture = TestBed.createComponent(AnfitrionEnPartes);
+    fixture.detectChanges();
+    const grupo = fixture.componentInstance.grupo;
+    grupo.patchValue({ name: '   ', lastName: 'Paz' });
+    grupo.markAllAsTouched();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Escriba el primer nombre.');
+  });
+});
+
 describe('CamposDeNombreEnLinea', () => {
   function montar() {
     const fixture = TestBed.createComponent(Anfitrion);

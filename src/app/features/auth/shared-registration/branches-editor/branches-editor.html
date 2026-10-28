@@ -18,37 +18,36 @@
         </button>
       </header>
 
-      <!-- La dirección sale del punto: la persona sólo lo marca. -->
-      <app-map-location-picker
-        [pinId]="sucursal.id"
-        [inicial]="sucursal.gps"
-        etiquetaConfirmada="Esta sucursal"
-        etiquetaQuitar="Quitar la ubicación de esta sucursal"
-        etiquetaMapa="La ubicación de esta sucursal en el mapa"
-        etiquetaFicha="La dirección de esta sucursal"
-        [ids]="idsDe(sucursal.id)"
-        (confirmado)="fijarGps(sucursal.id, $event)"
-        (localidad)="escribirLocalidad(sucursal.id, $event)"
-      />
+      <!-- La dirección sale del punto: la persona sólo lo marca. El campo sin
+           rótulo sólo existe para dar al mapa el mismo error accesible que a
+           los demás controles. -->
+      <app-form-field [errorMessage]="errorDePunto(sucursal)">
+        <app-map-location-picker
+          [pinId]="sucursal.id"
+          [inicial]="sucursal.gps"
+          etiquetaConfirmada="Esta sucursal"
+          etiquetaQuitar="Quitar la ubicación de esta sucursal"
+          etiquetaMapa="La ubicación de esta sucursal en el mapa"
+          etiquetaFicha="La dirección de esta sucursal"
+          [ids]="idsDe(sucursal.id)"
+          (confirmado)="fijarGps(sucursal.id, $event)"
+          (localidad)="escribirLocalidad(sucursal.id, $event)"
+        />
+      </app-form-field>
 
-      <app-form-field icon="building" [label]="'Nombre de la sucursal ' + (i + 1)">
+      <app-form-field
+        icon="building"
+        [label]="'Nombre de la sucursal ' + (i + 1)"
+        [errorMessage]="errorDeNombre(sucursal)"
+      >
         <app-input
           [testId]="prefijoTestId() + '-' + sucursal.id + '-nombre'"
           placeholder="Sucursal Equipetrol"
           [value]="sucursal.nombre"
+          [hasError]="errorDeNombre(sucursal) !== ''"
           (valueChange)="escribirNombre(sucursal.id, $event)"
         />
       </app-form-field>
-
-      @if (mostrarFaltantes() && falta(sucursal); as motivo) {
-        <p
-          class="sucursal__falta"
-          role="alert"
-          [attr.data-testid]="prefijoTestId() + '-' + sucursal.id + '-falta'"
-        >
-          {{ motivo }}
-        </p>
-      }
     </section>
   } @empty {
     <p class="sucursales__vacio">

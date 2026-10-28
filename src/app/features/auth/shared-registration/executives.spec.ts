@@ -77,4 +77,81 @@ describe('gerencias del alta (shared-registration/executives)', () => {
     expect(paginas[0]!.campos[1]!.testId).toBe('registro-x-gerente-general-celular');
     expect(paginas[2]!.campos[2]!.testId).toBe('registro-x-gerente-marketing-correo');
   });
+
+  it('el correo exige un dominio con terminación, como el @IsEmail de la API', () => {
+    const form = formulario();
+    for (const malo of ['dir@clinica', 'a@b', 'no-es-correo']) {
+      form.controls.generalManagerEmail.setValue(malo);
+      expect(form.controls.generalManagerEmail.invalid, malo).toBe(true);
+    }
+    form.controls.generalManagerEmail.setValue('');
+    expect(form.controls.generalManagerEmail.valid).toBe(true);
+  });
+
+  describe('todo o nada: lo que falta se dice en el control de la gerencia que falta', () => {
+    it('con una sola gerencia completa, a las otras dos les falta nombre, celular y correo', () => {
+      const form = formulario();
+      form.patchValue({
+        generalManagerName: { name: 'Gabriel', lastName: 'Gómez' },
+        generalManagerPhone: '+591 70011111',
+        generalManagerEmail: 'general@x.test',
+      });
+
+      for (const clave of ['salesManager', 'marketingManager'] as const) {
+        expect(form.controls[`${clave}Phone`].hasError('required'), clave).toBe(true);
+        expect(form.controls[`${clave}Email`].hasError('required'), clave).toBe(true);
+        expect(form.controls[`${clave}Name`].controls.name.hasError('required'), clave).toBe(true);
+      }
+      expect(form.controls.generalManagerPhone.valid).toBe(true);
+      expect(form.valid).toBe(false);
+    });
+
+    it('con solo un celular escrito, a la misma gerencia le falta el resto', () => {
+      const form = formulario();
+      form.controls.salesManagerPhone.setValue('+591 70022222');
+
+      expect(form.controls.salesManagerEmail.hasError('required')).toBe(true);
+      expect(form.controls.salesManagerName.controls.name.hasError('required')).toBe(true);
+      expect(form.controls.generalManagerEmail.hasError('required')).toBe(true);
+    });
+
+    it('vaciar lo escrito levanta todos los bloqueos', () => {
+      const form = formulario();
+      form.controls.salesManagerPhone.setValue('+591 70022222');
+      expect(form.valid).toBe(false);
+
+      form.controls.salesManagerPhone.setValue('');
+      expect(form.valid).toBe(true);
+    });
+
+    it('completas las tres, el bloque es válido', () => {
+      const form = formulario();
+      completar(form);
+
+      expect(form.valid).toBe(true);
+    });
+
+    it('un celular o un correo de solo espacios cuenta como vacío, y por eso falta', () => {
+      const form = formulario();
+      completar(form);
+      form.controls.marketingManagerPhone.setValue('   ');
+
+      expect(form.controls.marketingManagerPhone.hasError('required')).toBe(true);
+    });
+  });
+
+  it('cada página de gerencia reparte celular y correo en dos columnas, con el nombre en su renglón', () => {
+    for (const pagina of executivesPages('registro-x')) {
+      expect(pagina.disposicion, pagina.clave).toBe('dos-columnas');
+      expect(pagina.campos[0]!.ancho, pagina.clave).toBe('completo');
+    }
+  });
+
+  it('el texto ya no dice «Todo este paso es opcional»: dice que son las tres o ninguna', () => {
+    const [general] = executivesPages('registro-x');
+
+    expect(general!.hint).not.toContain('Todo este paso es opcional');
+    expect(general!.hint).toContain('las tres');
+    expect(general!.hint).toContain('vacías');
+  });
 });

@@ -37,8 +37,10 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       titulo: 'La organización',
       clave: 'organizacion',
       icon: 'building' as const,
-      hint: 'Qué tipo de institución es, cómo se llama y con qué NIT factura.',
-      disposicion: 'dos-columnas' as const,
+      hint: 'Qué tipo de institución es, cómo se llama y qué figura jurídica tiene.',
+      // Tres campos cortos en un renglón desde 1120 px, de a dos desde 672 px
+      // (`composition-rules.md` §5): sin casillas kilométricas.
+      disposicion: 'tres-columnas' as const,
       campos: [
         {
           key: 'tenantType',
@@ -71,6 +73,17 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           valorEnDosRenglones: true,
           mensajeDeError: 'Elija el tipo societario.',
         },
+      ],
+    },
+    {
+      titulo: 'Datos del establecimiento',
+      clave: 'establecimiento',
+      icon: 'hospital' as const,
+      hint: 'El NIT con el que factura y el número con el que la autoridad sanitaria lo tiene registrado.',
+      // Dos números cortos, uno al lado del otro; una página de un solo campo
+      // dejaba la casilla de 1.600 px de ancho a 1920.
+      disposicion: 'dos-columnas' as const,
+      campos: [
         {
           key: 'taxId',
           label: 'Número de NIT',
@@ -82,14 +95,6 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           testId: `${TEST_ID}-tax-id`,
           mensajeDeError: 'Escriba el NIT: sólo números, de 4 a 20 caracteres.',
         },
-      ],
-    },
-    {
-      titulo: 'Datos del establecimiento',
-      clave: 'establecimiento',
-      icon: 'hospital' as const,
-      hint: 'El número con el que la autoridad sanitaria lo tiene registrado.',
-      campos: [
         {
           key: 'healthFacilityRegistrationNumber',
           label: 'Número de registro ante el SEDES',
@@ -109,6 +114,9 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'director',
       icon: 'people' as const,
       hint: 'El responsable técnico del establecimiento. No es una cuenta de la plataforma: es la persona que responde clínicamente por la institución.',
+      // El nombre ocupa el renglón entero; matrícula, correo y teléfono van
+      // juntos en el siguiente (de a dos desde 672 px, de a tres desde 1120 px).
+      disposicion: 'tres-columnas' as const,
       campos: [
         {
           // Sin rótulo ni error propios: `app-inline-name-fields` pinta cada casilla
@@ -116,6 +124,7 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           key: 'medicalDirectorName',
           label: '',
           control: 'custom' as const,
+          ancho: 'completo' as const,
           mensajeDeError: '',
         },
         {
@@ -194,11 +203,15 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'representante',
       icon: 'shield' as const,
       hint: 'Quien firma por la organización. Es también quien administra la cuenta.',
+      // El nombre en su renglón; el documento y el teléfono, uno al lado del otro. El correo —que es
+      // también el usuario de la cuenta— va con la contraseña, en la última página.
+      disposicion: 'dos-columnas' as const,
       campos: [
         {
           key: 'legalRepName',
           label: '',
           control: 'custom' as const,
+          ancho: 'completo' as const,
           mensajeDeError: '',
         },
         {
@@ -210,17 +223,6 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
           icono: 'people' as const,
           testId: `${TEST_ID}-legal-rep-id`,
           mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
-        },
-        {
-          key: 'legalRepEmail',
-          label: 'Correo del representante legal',
-          hint: 'Con este correo va a entrar a la plataforma.',
-          control: 'email' as const,
-          required: true,
-          icono: 'mail' as const,
-          autocomplete: 'username',
-          testId: `${TEST_ID}-legal-rep-email`,
-          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
         },
         {
           key: 'legalRepPhone',
@@ -247,7 +249,21 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       clave: 'acceso',
       icon: 'lock' as const,
       hint: 'Entra con el correo del representante legal y esta contraseña.',
+      // Usuario y contraseña, uno al lado del otro: una página de un solo campo dejaba la
+      // casilla de 1.600 px de ancho a 1920.
+      disposicion: 'dos-columnas' as const,
       campos: [
+        {
+          key: 'legalRepEmail',
+          label: 'Correo del representante legal',
+          hint: 'Con este correo va a entrar a la plataforma.',
+          control: 'email' as const,
+          required: true,
+          icono: 'mail' as const,
+          autocomplete: 'username',
+          testId: `${TEST_ID}-legal-rep-email`,
+          mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
+        },
         {
           key: 'password',
           label: 'Contraseña',

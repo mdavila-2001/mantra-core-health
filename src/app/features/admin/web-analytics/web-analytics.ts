@@ -101,13 +101,14 @@ export class WebAnalytics {
     { value: 'MOBILE' as const, label: 'Móvil' },
   ];
 
+  // `medical-center` no se ofrece: ni el simulador ni la API tienen todavía su embudo
+  // y caería al de `patient`, con datos que no son los suyos.
   protected readonly opcionesTipoAlta: readonly { value: OnboardingFormType; label: string }[] = [
     { value: 'patient', label: 'Paciente' },
     { value: 'practitioner', label: 'Médico' },
     { value: 'organization', label: 'Aseguradora' },
     { value: 'laboratory', label: 'Laboratorio' },
     { value: 'imaging-center', label: 'Imagenología' },
-    { value: 'medical-center', label: 'Organización médica' },
     { value: 'pharmacy', label: 'Farmacia' },
   ];
 

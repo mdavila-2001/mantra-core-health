@@ -36,14 +36,18 @@ function borrador(parcial: Partial<BranchDraft> = {}): BranchDraft {
 
 @Component({
   imports: [BranchesEditor],
-  template: `<app-branches-editor
-    prefijoTestId="t"
-    [(sucursales)]="lista"
-    [maximo]="maximo()"
-    [mostrarFaltantes]="true"
-  />`,
+  template: `@if (visible()) {
+    <app-branches-editor
+      prefijoTestId="t"
+      [(sucursales)]="lista"
+      [maximo]="maximo()"
+      [mostrarFaltantes]="true"
+    />
+  }`,
 })
 class Anfitrion {
+  /** El formulario paginado destruye el editor al cambiar de página: esto lo imita. */
+  readonly visible = signal(true);
   readonly lista = signal<readonly SucursalDeclarada[]>([]);
   readonly maximo = signal(MAX_SUCURSALES_POR_DEFECTO);
 }
@@ -151,12 +155,104 @@ describe('BranchesEditor', () => {
     expect(e.idsDe('sucursal-1').confirmar).toBe('t-sucursal-1-location-confirm');
   });
 
-  it('muestra qué le falta a una sucursal a medias', async () => {
+  it('muestra qué le falta a una sucursal a medias, junto al nombre y junto al mapa, con el error del campo', async () => {
     editor().agregar();
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(raiz.querySelector('[data-testid="t-sucursal-1-falta"]')?.textContent).toContain('nombre');
+    const errores = Array.from(
+      raiz.querySelectorAll('[data-testid="t-sucursal-1"] .form-field-error'),
+    ).map((e) => e.textContent?.trim());
+    expect(errores).toEqual([
+      'Marque la sucursal en el mapa y confirme la dirección.',
+      'Escriba el nombre de la sucursal.',
+    ]);
+    // Ya no es un `<p role="alert">` suelto: el campo del nombre queda marcado inválido.
+    expect(raiz.querySelector('[data-testid="t-sucursal-1"] .status-error')).not.toBeNull();
+    expect(raiz.querySelector('[data-testid="t-sucursal-1-falta"]')).toBeNull();
+  });
+
+  it('al quitar una sucursal el foco pasa a la que ocupa su lugar, y sin ninguna, a «Agregar sucursal»', async () => {
+    const e = editor();
+    e.agregar();
+    e.agregar();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    e.quitar('sucursal-1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(boton('t-quitar-sucursal-2'));
+
+    e.quitar('sucursal-2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(boton('t-agregar-sucursal'));
+  });
+
+  it('el aviso del lote no promete la dirección del archivo: la deduce el punto', () => {
+    editor().agregarEnLote([borrador()]);
+    fixture.detectChanges();
+
+    const aviso = raiz.querySelector('[data-testid="t-aviso-lote"]')?.textContent ?? '';
+    expect(aviso).toContain('el nombre y el punto');
+    expect(aviso).not.toContain('la dirección y el punto');
+  });
+
+  describe('ids únicos aunque el editor se destruya y se recree', () => {
+    /** Imita el cambio de página del formulario paginado: el editor muere y vuelve con la lista guardada. */
+    async function recrearEditor(): Promise<void> {
+      fixture.componentInstance.visible.set(false);
+      fixture.detectChanges();
+      fixture.componentInstance.visible.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+    }
+
+    const ids = () => fixture.componentInstance.lista().map((s) => s.id);
+
+    it('crear dos, recrear el editor con esa lista y agregar no repite ids', async () => {
+      editor().agregar();
+      editor().agregar();
+      await recrearEditor();
+      editor().agregar();
+
+      expect(ids()).toEqual(['sucursal-1', 'sucursal-2', 'sucursal-3']);
+      expect(new Set(ids()).size).toBe(3);
+    });
+
+    it('editar la nueva no toca a las anteriores', async () => {
+      editor().agregar();
+      editor().agregar();
+      await recrearEditor();
+      editor().agregar();
+      editor().escribirNombre('sucursal-3', 'Nueva');
+
+      expect(fixture.componentInstance.lista().map((s) => s.nombre)).toEqual(['', '', 'Nueva']);
+      editor().quitar('sucursal-3');
+      expect(ids()).toEqual(['sucursal-1', 'sucursal-2']);
+    });
+
+    it('al restaurar un borrador la lista llega hecha: agregar y cargar en lote parten del mayor id', async () => {
+      fixture.componentInstance.lista.set([
+        sucursal({ id: 'sucursal-1', nombre: 'A' }),
+        sucursal({ id: 'sucursal-2', nombre: 'B' }),
+      ]);
+      await recrearEditor();
+      editor().agregar();
+      editor().agregarEnLote([borrador({ name: 'C' }), borrador({ name: 'D' })]);
+
+      expect(ids()).toEqual(['sucursal-1', 'sucursal-2', 'sucursal-3', 'sucursal-4', 'sucursal-5']);
+      expect(new Set(ids()).size).toBe(5);
+    });
+
+    it('un borrador con ids salteados sigue de su mayor número', async () => {
+      fixture.componentInstance.lista.set([sucursal({ id: 'sucursal-7' })]);
+      await recrearEditor();
+      editor().agregar();
+
+      expect(ids()).toEqual(['sucursal-7', 'sucursal-8']);
+    });
   });
 
   it('el lote suma nombre, dirección y punto, e ignora descripción y enlace', () => {

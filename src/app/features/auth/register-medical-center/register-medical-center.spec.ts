@@ -1,7 +1,7 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { Validators } from '@angular/forms';
+import { FormControl, Validators } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
@@ -9,6 +9,7 @@ import { LegalEntityTypesCatalog } from '../../../core/data-access/system-contex
 import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import { MEDICAL_ORGANIZATION_TYPES } from '../../../core/data-access/directory/directory.types';
 import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
 import { signupErrorMessage, RegisterMedicalCenter } from './register-medical-center';
 
 const RUTA_ALTA = '/iam/auth/register-organization';
@@ -374,8 +375,8 @@ describe('RegisterMedicalCenter', () => {
       'Su acceso',
     ]);
     expect(paginas.map((p) => p.campos.map((c) => c.key))).toEqual([
-      ['tenantType', 'legalName', 'legalEntityType', 'taxId'],
-      ['healthFacilityRegistrationNumber'],
+      ['tenantType', 'legalName', 'legalEntityType'],
+      ['taxId', 'healthFacilityRegistrationNumber'],
       ['medicalDirectorName', 'medicalDirectorLicense', 'medicalDirectorEmail', 'medicalDirectorPhone'],
       [
         'constitutionFileId',
@@ -386,12 +387,12 @@ describe('RegisterMedicalCenter', () => {
       ],
       ['gpsCentral'],
       ['sucursales'],
-      ['legalRepName', 'legalRepIdNumber', 'legalRepEmail', 'legalRepPhone'],
+      ['legalRepName', 'legalRepIdNumber', 'legalRepPhone'],
       ['powerOfAttorneyFileId'],
       ['generalManagerName', 'generalManagerPhone', 'generalManagerEmail'],
       ['salesManagerName', 'salesManagerPhone', 'salesManagerEmail'],
       ['marketingManagerName', 'marketingManagerPhone', 'marketingManagerEmail'],
-      ['password'],
+      ['legalRepEmail', 'password'],
     ]);
     // Los papeles van todos en una vista (pedido del cliente del 28/10/2026); el resto, de a cuatro como tope.
     const documentos = paginas.find((p) => p.clave === 'documentos-legales')!;
@@ -399,13 +400,53 @@ describe('RegisterMedicalCenter', () => {
     expect(Math.max(...paginas.filter((p) => !p.sinPartir).map((p) => p.campos.length))).toBeLessThanOrEqual(4);
   });
 
-  it('el tipo de institución es un desplegable y la primera página va en dos columnas', () => {
+  it('el tipo de institución es un desplegable y la primera página reparte sus tres campos en columnas', () => {
     const organizacion = interno().paginas()[0]!;
     const tipo = organizacion.campos.find((c) => c.key === 'tenantType')!;
 
     expect(tipo.control).toBe('select');
     expect(tipo.opcionesEn).toBeUndefined();
-    expect(organizacion.disposicion).toBe('dos-columnas');
+    expect(organizacion.disposicion).toBe('tres-columnas');
+  });
+
+  it('cada página con varios campos cortos declara sus columnas (regla 6 del cliente: sin casillas kilométricas)', () => {
+    const paginas = interno().paginas();
+    const disposicion = Object.fromEntries(paginas.map((p) => [p.clave, p.disposicion]));
+
+    // La disposición de TODAS las páginas, no sólo de la primera.
+    expect(disposicion).toStrictEqual({
+      organizacion: 'tres-columnas',
+      establecimiento: 'dos-columnas',
+      director: 'tres-columnas',
+      'documentos-legales': undefined,
+      ubicacion: undefined,
+      sucursales: undefined,
+      representante: 'dos-columnas',
+      poder: undefined,
+      'gerencia-general': 'dos-columnas',
+      'gerencia-comercial': 'dos-columnas',
+      'gerencia-marketing': 'dos-columnas',
+      acceso: 'dos-columnas',
+    });
+
+    // Y la regla de fondo: una página con dos o más campos (salvo los papeles, que son zonas de carga)
+    // nunca queda en una sola columna a todo el ancho.
+    for (const pagina of paginas.filter((p) => !p.sinPartir && p.campos.length >= 2)) {
+      expect(pagina.disposicion, `${pagina.clave}: tiene ${pagina.campos.length} campos`).toBeDefined();
+    }
+  });
+
+  it('en las páginas que empiezan por el nombre, éste ocupa su renglón entero y lo demás va junto', () => {
+    const paginas = interno().paginas();
+    for (const clave of ['director', 'representante']) {
+      const [nombre, ...resto] = paginas.find((p) => p.clave === clave)!.campos;
+      expect(nombre!.control, clave).toBe('custom');
+      expect(nombre!.ancho, clave).toBe('completo');
+      expect(resto.every((c) => c.ancho === undefined), clave).toBe(true);
+    }
+    for (const clave of ['gerencia-general', 'gerencia-comercial', 'gerencia-marketing']) {
+      expect(paginas.find((p) => p.clave === clave)!.campos[0]!.ancho, clave).toBe('completo');
+    }
   });
 
   it('si el catálogo de tipos societarios falla, pide al servicio su respaldo en vez de dejarlo vacío', async () => {
@@ -925,12 +966,231 @@ describe('RegisterMedicalCenter', () => {
       completar();
       fixture.componentInstance.guardarBorrador();
 
-      const datos = guardar.mock.calls.at(-1)![4] as Record<string, unknown>;
-      expect(guardar.mock.calls.at(-1)![0]).toBe('medical-center');
+      const llamada = guardar.mock.calls.at(-1)!;
+      const datos = llamada[4] as Record<string, unknown>;
+      expect(llamada[0]).toBe('medical-center');
       expect(datos['legalName']).toBe('Centro Médico Norte S.R.L.');
+      // La defensa es de esta pantalla, no sólo de `OnboardingDraftService`: ni la clave ni los papeles
+      // llegan a `saveProgress`, ni en los datos ni en ningún otro argumento.
+      expect(datos).not.toHaveProperty('password');
       for (const papel of Object.keys(DOCUMENTOS).concat('powerOfAttorneyFileId')) {
         expect(datos).not.toHaveProperty(papel);
       }
+      const todo = JSON.stringify(llamada);
+      expect(todo).not.toContain('secreto12');
+      for (const fileId of [...Object.values(DOCUMENTOS), PODER]) expect(todo).not.toContain(fileId);
+    });
+
+    describe('un valor de solo espacios cuenta como un dato que falta (sale recortado y vacío)', () => {
+      const ESPACIOS = '   ';
+      /** El mensaje que el motor pinta para ese campo, con el control ya tocado. */
+      const mensajeDe = (clave: string): string => {
+        const campo = interno()
+          .paginas()
+          .flatMap((p) => p.campos)
+          .find((c) => c.key === clave)!;
+        const ctrl = fixture.componentInstance.form.get(clave)!;
+        ctrl.markAsTouched();
+        return mensajeDeError(ctrl, campo as never);
+      };
+
+      it.each([
+        ['taxId', 'Escriba el NIT'],
+        ['healthFacilityRegistrationNumber', 'Escriba el número de registro del SEDES'],
+        ['medicalDirectorLicense', 'Escriba la matrícula profesional del director'],
+        ['legalRepIdNumber', 'Escriba el documento del representante'],
+        ['legalName', 'Escriba la razón social'],
+      ])('%s con «   » es inválido, es «falta» y dice el mensaje de falta del campo', (clave, mensaje) => {
+        const ctrl = fixture.componentInstance.form.get(clave)!;
+        ctrl.setValue(ESPACIOS);
+
+        expect(ctrl.invalid).toBe(true);
+        expect(ctrl.hasError('required')).toBe(true);
+        expect(mensajeDe(clave)).toContain(mensaje);
+      });
+
+      it.each([
+        ['medicalDirectorName', 'name'],
+        ['medicalDirectorName', 'lastName'],
+        ['legalRepName', 'name'],
+        ['legalRepName', 'lastName'],
+      ] as const)('%s.%s con «   » es inválido y no sale a la red', (grupo, parte) => {
+        completar();
+        control()[grupo].controls[parte].setValue(ESPACIOS);
+
+        expect(control()[grupo].controls[parte].hasError('required')).toBe(true);
+        enviar();
+        http.expectNone(RUTA_ALTA);
+      });
+
+      it('la matrícula y el documento se miden recortados, como viajan', () => {
+        control().medicalDirectorLicense.setValue(' ab ');
+        control().legalRepIdNumber.setValue(' 123 ');
+
+        expect(control().medicalDirectorLicense.hasError('minlength')).toBe(true);
+        expect(control().legalRepIdNumber.hasError('minlength')).toBe(true);
+        control().medicalDirectorLicense.setValue(' MAT ');
+        control().legalRepIdNumber.setValue(' 1234 ');
+        expect(control().medicalDirectorLicense.valid).toBe(true);
+        expect(control().legalRepIdNumber.valid).toBe(true);
+      });
+    });
+
+    describe('el correo exige un dominio con terminación, como el @IsEmail de la API', () => {
+      it.each([
+        ['medicalDirectorEmail'],
+        ['legalRepEmail'],
+        ['generalManagerEmail'],
+        ['salesManagerEmail'],
+        ['marketingManagerEmail'],
+      ] as const)('%s rechaza «dir@clinica» y «a@b», y acepta «dir@clinica.bo»', (clave) => {
+        for (const malo of ['dir@clinica', 'a@b', 'dir@clinica.', '@clinica.bo']) {
+          control()[clave].setValue(malo);
+          expect(control()[clave].invalid, malo).toBe(true);
+        }
+        control()[clave].setValue('dir@clinica.bo');
+        expect(control()[clave].errors?.['pattern']).toBeUndefined();
+        expect(control()[clave].errors?.['email']).toBeUndefined();
+      });
+
+      it('un correo de director sin terminación no sale a la red', () => {
+        completar();
+        control().medicalDirectorEmail.setValue('dir@clinica');
+        enviar();
+
+        http.expectNone(RUTA_ALTA);
+        expect(control().medicalDirectorEmail.invalid).toBe(true);
+      });
+    });
+
+    describe('el segundo nombre plegado cabe en los 100 caracteres de middleName', () => {
+      it.each(['medicalDirectorName', 'legalRepName'] as const)(
+        '%s: 60 + 1 + 59 caracteres pasan de 100 y no se deja enviar, con un mensaje claro',
+        (grupo) => {
+          completar();
+          control()[grupo].patchValue({ middleName: 'a'.repeat(60), thirdName: 'b'.repeat(59) });
+
+          expect(control()[grupo].hasError('nombresAdicionalesLargos')).toBe(true);
+          expect(control()[grupo].controls.middleName.valid).toBe(true);
+          expect(control()[grupo].controls.thirdName.valid).toBe(true);
+          enviar();
+          http.expectNone(RUTA_ALTA);
+        },
+      );
+
+      it('49 + 1 + 50 caracteres son exactamente 100 y salen', () => {
+        completar();
+        control().legalRepName.patchValue({ middleName: 'a'.repeat(49), thirdName: 'b'.repeat(50) });
+        expect(control().legalRepName.hasError('nombresAdicionalesLargos')).toBe(false);
+        enviar();
+
+        const req = http.expectOne(RUTA_ALTA);
+        expect(req.request.body.owner.middleName).toHaveLength(100);
+        req.flush(RESPUESTA_ALTA);
+      });
+
+      it('las casillas agregadas también suman', () => {
+        completar();
+        const extra = new FormControl('c'.repeat(30), { nonNullable: true });
+        control().medicalDirectorName.patchValue({ middleName: 'a'.repeat(40), thirdName: 'b'.repeat(40) });
+        control().medicalDirectorName.controls.extraNames.push(extra);
+        control().medicalDirectorName.updateValueAndValidity();
+
+        expect(control().medicalDirectorName.hasError('nombresAdicionalesLargos')).toBe(true);
+      });
+    });
+
+    describe('las gerencias son todo o nada, dicho en la página de la gerencia que falta', () => {
+      /** La primera página con algo mal, que es adonde el motor lleva a la persona al intentar avanzar o enviar. */
+      const primeraPaginaConError = () =>
+        interno()
+          .paginas()
+          .find((p) => p.campos.some((c) => fixture.componentInstance.form.get(c.key)?.invalid === true))?.clave;
+
+      it('vacías las tres, ninguna página de gerencias bloquea', () => {
+        completar();
+
+        expect(fixture.componentInstance.form.valid).toBe(true);
+        expect(primeraPaginaConError()).toBeUndefined();
+      });
+
+      it('con solo la general completa, la comercial pide celular, correo y nombre; lo mismo la de marketing', () => {
+        completar();
+        fixture.componentInstance.form.patchValue({
+          generalManagerName: { name: 'Gabriel', lastName: 'Gómez' },
+          generalManagerPhone: '+591 70011111',
+          generalManagerEmail: 'general@centro.test',
+        });
+
+        expect(control().salesManagerPhone.hasError('required')).toBe(true);
+        expect(control().salesManagerEmail.hasError('required')).toBe(true);
+        expect(control().salesManagerName.controls.name.hasError('required')).toBe(true);
+        expect(control().marketingManagerPhone.hasError('required')).toBe(true);
+        expect(control().generalManagerPhone.valid).toBe(true);
+        expect(primeraPaginaConError()).toBe('gerencia-comercial');
+      });
+
+      it('con la general a medias, el motor llevaría a la persona a la general, con el mensaje junto al campo', () => {
+        completar();
+        fixture.componentInstance.form.patchValue({ generalManagerPhone: '+591 70011111' });
+
+        expect(primeraPaginaConError()).toBe('gerencia-general');
+        expect(control().generalManagerEmail.hasError('required')).toBe(true);
+        const mensaje = interno()
+          .paginas()
+          .flatMap((p) => p.campos)
+          .find((c) => c.key === 'generalManagerEmail')!;
+        control().generalManagerEmail.markAsTouched();
+        expect(mensajeDeError(control().generalManagerEmail, mensaje as never)).toContain(
+          'deje las tres gerencias vacías',
+        );
+      });
+
+      it('vaciar lo escrito levanta el bloqueo de las demás: se revalidan unas a otras', () => {
+        completar();
+        fixture.componentInstance.form.patchValue({ salesManagerPhone: '+591 70022222' });
+        expect(control().marketingManagerEmail.invalid).toBe(true);
+
+        fixture.componentInstance.form.patchValue({ salesManagerPhone: '' });
+        expect(control().marketingManagerEmail.valid).toBe(true);
+        expect(control().generalManagerName.controls.name.valid).toBe(true);
+        expect(fixture.componentInstance.form.valid).toBe(true);
+      });
+
+      it('un apellido solo cuenta como nombre escrito, igual que al armar el bloque', () => {
+        completar();
+        completarGerencias();
+        fixture.componentInstance.form.patchValue({ salesManagerName: { name: '', lastName: 'Cruz' } });
+
+        expect(control().salesManagerName.controls.name.valid).toBe(true);
+        enviar();
+        http.expectOne(RUTA_ALTA).flush(RESPUESTA_ALTA);
+      });
+
+      it('al enviar con el bloque a medias no sale a la red y marca todo para que se vea', () => {
+        completar();
+        completarGerencias();
+        fixture.componentInstance.form.patchValue({ salesManagerEmail: '' });
+        enviar();
+
+        http.expectNone(RUTA_ALTA);
+        expect(control().salesManagerEmail.touched).toBe(true);
+        expect(primeraPaginaConError()).toBe('gerencia-comercial');
+      });
+
+      it('al bloquear una página, el grupo del nombre marca sus casillas para que muestren el error', () => {
+        const componente = fixture.componentInstance as unknown as {
+          alRechazarPagina(p: { campos: readonly { key: string }[] }): void;
+        };
+        completar();
+        fixture.componentInstance.form.patchValue({ generalManagerPhone: '+591 70011111' });
+        expect(control().generalManagerName.controls.name.touched).toBe(false);
+
+        componente.alRechazarPagina({ campos: [{ key: 'generalManagerName' }, { key: 'generalManagerEmail' }] });
+
+        expect(control().generalManagerName.controls.name.touched).toBe(true);
+        expect(control().generalManagerEmail.touched).toBe(true);
+      });
     });
   });
 

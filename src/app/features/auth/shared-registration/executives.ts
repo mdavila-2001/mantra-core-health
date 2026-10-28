@@ -1,6 +1,7 @@
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators, type AbstractControl, type ValidationErrors } from '@angular/forms';
 
 import type { OrganizationExecutives } from '../../../core/data-access/iam/iam.types';
+import { CORREO_CON_DOMINIO } from '../../../core/data-access/iam/strict-email';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import type { SeccionDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { completeName, nameGroup, type NameGroup, type NameValue } from './name-fields/person-name';
@@ -20,23 +21,80 @@ import { completeName, nameGroup, type NameGroup, type NameValue } from './name-
     tres completas, y el formulario las deja opcionales.
     ========================================================================== */
 
-/** Los controles de las tres gerencias, listos para sumar a un `FormGroup`. */
+/**
+ * Los controles de las tres gerencias, listos para sumar a un `FormGroup`.
+ *
+ * ## Todo o nada, dicho donde se contesta
+ *
+ * Las tres son opcionales **juntas**: en cuanto hay algo escrito en cualquiera
+ * de ellas, a las otras les falta lo que no tienen (el nombre, el celular y el
+ * correo de cada una). Eso no lo puede decir un solo control, así que cada
+ * celular, correo y primer nombre vacío es `required` mientras haya algo escrito
+ * en el bloque, y se revalida cuando cambia cualquier otro. Con esto el motor
+ * del formulario frena en la página de la gerencia que falta —con su mensaje
+ * junto al campo— en vez de dejar a la persona llegar al final para enterarse.
+ * Vacías las tres, el bloque entero es válido y no viaja.
+ */
 export function executivesControls() {
+  const faltaSiHayGerencias = (control: AbstractControl): ValidationErrors | null => {
+    if (String(control.value ?? '').trim() !== '') return null;
+    return bloqueConAlgo(control) ? { required: true } : null;
+  };
   const celular = () =>
-    new FormControl('', { nonNullable: true, validators: [telefonoCompleto] });
+    new FormControl('', { nonNullable: true, validators: [telefonoCompleto, faltaSiHayGerencias] });
   const correo = () =>
-    new FormControl('', { nonNullable: true, validators: [Validators.email] });
-  return {
-    generalManagerName: nameGroup(false),
+    new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.email, Validators.pattern(CORREO_CON_DOMINIO), faltaSiHayGerencias],
+    });
+  const nombre = () => {
+    const grupo = nameGroup(false);
+    grupo.controls.name.addValidators((control) => {
+      if (String(control.value ?? '').trim() !== '') return null;
+      const propio = control.parent?.getRawValue() as NameValue | undefined;
+      if (propio !== undefined && completeName(propio) !== '') return null;
+      return bloqueConAlgo(control) ? { required: true } : null;
+    });
+    return grupo;
+  };
+  const controles = {
+    generalManagerName: nombre(),
     generalManagerPhone: celular(),
     generalManagerEmail: correo(),
-    salesManagerName: nameGroup(false),
+    salesManagerName: nombre(),
     salesManagerPhone: celular(),
     salesManagerEmail: correo(),
-    marketingManagerName: nameGroup(false),
+    marketingManagerName: nombre(),
     marketingManagerPhone: celular(),
     marketingManagerEmail: correo(),
   };
+
+  // Cambiar cualquiera revalida a todas: la regla de cada una depende de las otras.
+  const revalidar = (): void => {
+    for (const grupo of [controles.generalManagerName, controles.salesManagerName, controles.marketingManagerName]) {
+      grupo.controls.name.updateValueAndValidity({ emitEvent: false });
+    }
+    for (const control of [
+      controles.generalManagerPhone,
+      controles.generalManagerEmail,
+      controles.salesManagerPhone,
+      controles.salesManagerEmail,
+      controles.marketingManagerPhone,
+      controles.marketingManagerEmail,
+    ]) {
+      control.updateValueAndValidity({ emitEvent: false });
+    }
+  };
+  for (const control of Object.values(controles) as AbstractControl[]) {
+    control.valueChanges.subscribe(revalidar);
+  }
+  return controles;
+}
+
+/** Si en el formulario que contiene `control` ya hay algo escrito en las gerencias. */
+function bloqueConAlgo(control: AbstractControl): boolean {
+  const raiz = control.root;
+  return raiz instanceof FormGroup && executivesTouched(raiz.getRawValue() as ExecutivesRaw);
 }
 
 /** Lo que `getRawValue()` devuelve de {@link executivesControls}. */
@@ -86,7 +144,12 @@ export function executivesFrom(raw: ExecutivesRaw): OrganizationExecutives | nul
  * persona escribió.
  */
 export function executivesIncomplete(raw: ExecutivesRaw): boolean {
-  const algo =
+  return executivesTouched(raw) && executivesFrom(raw) === null;
+}
+
+/** Si alguna de las tres gerencias tiene algo escrito (nombre, celular o correo). */
+export function executivesTouched(raw: ExecutivesRaw): boolean {
+  return (
     [raw.generalManagerName, raw.salesManagerName, raw.marketingManagerName].some(
       (n) => completeName(n) !== '',
     ) ||
@@ -97,8 +160,8 @@ export function executivesIncomplete(raw: ExecutivesRaw): boolean {
       raw.salesManagerEmail,
       raw.marketingManagerPhone,
       raw.marketingManagerEmail,
-    ].some((v) => v.trim() !== '');
-  return algo && executivesFrom(raw) === null;
+    ].some((v) => v.trim() !== '')
+  );
 }
 
 /** Los textos de ayuda de cada gerencia, por si la pantalla los quiere propios. */
@@ -116,7 +179,7 @@ const GERENCIAS: readonly GerenciaPagina[] = [
     clave: 'gerencia-general',
     titulo: 'Gerencia general',
     icon: 'briefcase',
-    hint: 'Todo este paso es opcional: puede completarlo después.',
+    hint: 'Opcional como bloque: complete las tres gerencias (nombre, celular y correo de cada una) o deje las tres vacías.',
     prefijo: 'generalManager',
     testId: 'gerente-general',
   },
@@ -124,7 +187,7 @@ const GERENCIAS: readonly GerenciaPagina[] = [
     clave: 'gerencia-comercial',
     titulo: 'Gerencia comercial',
     icon: 'chart',
-    hint: 'Opcional. Es a quien le llega el detalle semanal de ventas y comisiones.',
+    hint: 'Opcional, pero va junto con las otras dos gerencias. Es a quien le llega el detalle semanal de ventas y comisiones.',
     prefijo: 'salesManager',
     testId: 'gerente-comercial',
   },
@@ -132,7 +195,7 @@ const GERENCIAS: readonly GerenciaPagina[] = [
     clave: 'gerencia-marketing',
     titulo: 'Gerencia de marketing',
     icon: 'megaphone',
-    hint: 'Opcional. Es con quien se coordinan las campañas.',
+    hint: 'Opcional, pero va junto con las otras dos gerencias. Es con quien se coordinan las campañas.',
     prefijo: 'marketingManager',
     testId: 'gerente-marketing',
   },
@@ -150,11 +213,14 @@ export function executivesPages(prefijoTestId: string): readonly SeccionDeFormul
     clave: g.clave,
     icon: g.icon,
     hint: g.hint,
+    // El nombre en su renglón; celular y correo, uno al lado del otro desde 672 px.
+    disposicion: 'dos-columnas' as const,
     campos: [
       {
         key: `${g.prefijo}Name`,
         label: '',
         control: 'custom' as const,
+        ancho: 'completo' as const,
         mensajeDeError: '',
         testId: `${prefijoTestId}-${g.testId}`,
       },
@@ -163,7 +229,7 @@ export function executivesPages(prefijoTestId: string): readonly SeccionDeFormul
         label: 'Celular',
         control: 'tel' as const,
         testId: `${prefijoTestId}-${g.testId}-celular`,
-        mensajeDeError: 'El número está incompleto.',
+        mensajeDeError: 'Escriba el celular completo, o deje las tres gerencias vacías.',
       },
       {
         key: `${g.prefijo}Email`,
@@ -171,7 +237,7 @@ export function executivesPages(prefijoTestId: string): readonly SeccionDeFormul
         control: 'email' as const,
         icono: 'mail' as const,
         testId: `${prefijoTestId}-${g.testId}-correo`,
-        mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
+        mensajeDeError: 'Escriba un correo válido, o deje las tres gerencias vacías.',
       },
     ],
   }));

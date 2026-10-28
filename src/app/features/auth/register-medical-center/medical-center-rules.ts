@@ -10,6 +10,7 @@ import {
 import { readApiError } from '../../../core/http/api-error';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import type { EnrollmentDocumentKey } from '../shared-registration/legal-documents';
+import { noSoloEspacios } from '../shared-registration/trimmed-text';
 
 /** Lo que dice la pantalla cuando un catálogo no sirve. */
 export const AVISO_CATALOGO =
@@ -57,17 +58,26 @@ export function entreLasOpciones(opciones: () => readonly SelectOption<string>[]
   };
 }
 
-/** El NIT, recortado, con la forma que acepta la API (`^[0-9][0-9-]{3,19}$`). */
+/**
+ * El NIT, recortado, con la forma que acepta la API (`^[0-9][0-9-]{3,19}$`).
+ * Vacío de verdad es asunto de `required`; solo espacios es un NIT que falta
+ * (sale recortado y vacío), no uno que pasa.
+ */
 export const nitValido: ValidatorFn = (control) => {
+  const faltante = noSoloEspacios(control);
+  if (faltante !== null) return faltante;
   const valor = String(control.value ?? '').trim();
   return valor === '' || NIT_PATTERN.test(valor) ? null : { pattern: true };
 };
 
 /**
  * El número de registro del establecimiento ante la autoridad sanitaria:
- * de 3 a 50 caracteres de `[A-Za-z0-9./-]`, recortado. Vacío es asunto de `required`.
+ * de 3 a 50 caracteres de `[A-Za-z0-9./-]`, recortado. Vacío de verdad es asunto
+ * de `required`; solo espacios es un número que falta.
  */
 export const registroDeEstablecimientoValido: ValidatorFn = (control) => {
+  const faltante = noSoloEspacios(control);
+  if (faltante !== null) return faltante;
   const valor = String(control.value ?? '').trim();
   if (valor === '') return null;
   if (valor.length < HEALTH_FACILITY_REGISTRATION_MIN) {

@@ -52,6 +52,42 @@ describe('reglas de medicalFacility', () => {
     expect(issues.join()).toContain('professionalLicenseNumber');
   });
 
+  it('la casa central es opcional, y también su nombre (la API le pone «Casa central»)', () => {
+    const { headquarters: _central, ...sinCentral } = VALIDO;
+
+    expect(medicalFacilityIssues(sinCentral)).toEqual([]);
+    expect(medicalFacilityIssues({ ...VALIDO, headquarters: { addressLines: ['x'] } })).toEqual([]);
+    expect(medicalFacilityIssues({ ...VALIDO, headquarters: { name: 'Central' } })).toEqual([
+      'organization.medicalFacility.headquarters.addressLines must be an array',
+    ]);
+  });
+
+  it('el correo del director es un IsEmail estricto (con terminación)', () => {
+    const con = (email: string) =>
+      medicalFacilityIssues({ ...VALIDO, medicalDirector: { ...VALIDO.medicalDirector, email } });
+
+    expect(con('dir@clinica')).toHaveLength(1);
+    expect(con('a@b')).toHaveLength(1);
+    expect(con('dir@clinica.bo')).toEqual([]);
+  });
+
+  it('respeta los topes del contrato: 200 de nombre de sede, 10 líneas de 500, 100 de middleName', () => {
+    const sede = (cambio: object) => medicalFacilityIssues({ ...VALIDO, headquarters: { ...VALIDO.headquarters, ...cambio } });
+
+    expect(sede({ name: 'N'.repeat(200) })).toEqual([]);
+    expect(sede({ name: 'N'.repeat(201) })).toHaveLength(1);
+    expect(sede({ addressLines: Array.from({ length: 10 }, () => 'x') })).toEqual([]);
+    expect(sede({ addressLines: Array.from({ length: 11 }, () => 'x') })).toHaveLength(1);
+    expect(sede({ addressLines: ['L'.repeat(500)] })).toEqual([]);
+    expect(sede({ addressLines: ['L'.repeat(501)] })).toHaveLength(1);
+    expect(
+      medicalFacilityIssues({
+        ...VALIDO,
+        medicalDirector: { ...VALIDO.medicalDirector, middleName: 'm'.repeat(101) },
+      }),
+    ).toEqual(['organization.medicalFacility.medicalDirector.middleName must be shorter than or equal to 100 characters']);
+  });
+
   it('las sucursales llevan su índice en el motivo', () => {
     const issues = medicalFacilityIssues({
       ...VALIDO,

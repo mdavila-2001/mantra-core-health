@@ -14,6 +14,8 @@ import {
   sucursalesCompletas,
   type SucursalDeclarada,
 } from '../shared-registration/branches-editor/branches-editor';
+import { CORREO_CON_DOMINIO } from '../../../core/data-access/iam/strict-email';
+import { largoRecortado, noSoloEspacios } from '../shared-registration/trimmed-text';
 import { nitValido, registroDeEstablecimientoValido } from './medical-center-rules';
 
 export const MAX_LEGAL_NAME = 300;
@@ -48,7 +50,7 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
     }),
     legalName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_LEGAL_NAME)],
+      validators: [Validators.required, noSoloEspacios, Validators.maxLength(MAX_LEGAL_NAME)],
     }),
     legalEntityType: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     taxId: new FormControl('', { nonNullable: true, validators: [Validators.required, nitValido] }),
@@ -57,18 +59,20 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
       nonNullable: true,
       validators: [Validators.required, registroDeEstablecimientoValido],
     }),
-    medicalDirectorName: nameGroup(true),
+    medicalDirectorName: nameGroup(true, true),
     medicalDirectorLicense: new FormControl('', {
       nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.minLength(PROFESSIONAL_LICENSE_MIN),
-        Validators.maxLength(PROFESSIONAL_LICENSE_MAX),
-      ],
+      // Recortada, que es como viaja: `'   '` es una matrícula que falta.
+      validators: [Validators.required, largoRecortado(PROFESSIONAL_LICENSE_MIN, PROFESSIONAL_LICENSE_MAX)],
     }),
     medicalDirectorEmail: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_EMAIL)],
+      validators: [
+        Validators.required,
+        Validators.email,
+        Validators.pattern(CORREO_CON_DOMINIO),
+        Validators.maxLength(MAX_EMAIL),
+      ],
     }),
     medicalDirectorPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
     // --- los papeles: guardan el `fileId` de la pre-carga, no el archivo -----
@@ -97,18 +101,20 @@ export function createMedicalCenterForm(tipoOfrecido: ValidatorFn) {
       validators: [sucursalesCompletas(MAX_MEDICAL_FACILITY_BRANCHES)],
     }),
     // --- el representante legal (también es el dueño de la cuenta) -----------
-    legalRepName: nameGroup(true),
+    legalRepName: nameGroup(true, true),
     legalRepIdNumber: new FormControl('', {
       nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.minLength(MIN_ID_NUMBER),
-        Validators.maxLength(MAX_ID_NUMBER),
-      ],
+      // Recortado, que es como viaja: `'   '` es un documento que falta.
+      validators: [Validators.required, largoRecortado(MIN_ID_NUMBER, MAX_ID_NUMBER)],
     }),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_EMAIL)],
+      validators: [
+        Validators.required,
+        Validators.email,
+        Validators.pattern(CORREO_CON_DOMINIO),
+        Validators.maxLength(MAX_EMAIL),
+      ],
     }),
     legalRepPhone: new FormControl('', { nonNullable: true, validators: [telefonoCompleto] }),
     // --- las tres gerencias, todas opcionales ---------------------------------

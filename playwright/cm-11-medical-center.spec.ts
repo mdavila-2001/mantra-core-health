@@ -142,19 +142,17 @@ for (const view of VIEWPORTS) {
       // `app-select` es un combobox propio que abre un `<dialog>`, no un `<select>` nativo.
       await page.getByTestId('medical-center-signup-legal-entity-type').getByRole('combobox').click();
       await page.locator('dialog.select-dialog[open]').getByRole('option').nth(1).click();
-      // Un NIT que no es un NIT frena y lo dice.
-      await escribir(page, 'medical-center-signup-tax-id', 'abc');
-      await page.getByTestId('paginated-form-continuar').click();
-      await expect(page.getByText('Escriba el NIT: sólo números')).toBeVisible();
-      await escribir(page, 'medical-center-signup-tax-id', '1023456789');
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-04-signup-page-1-filled`);
       await page.getByTestId('paginated-form-continuar').click();
 
-      // Página 2 · el número de registro del SEDES.
+      // Página 2 · el NIT y el número de registro del SEDES, juntos. Un NIT que no es un NIT frena y lo dice.
+      await escribir(page, 'medical-center-signup-tax-id', 'abc');
       await escribir(page, 'medical-center-signup-health-registration', 'SEDES SC');
       await page.getByTestId('paginated-form-continuar').click();
+      await expect(page.getByText('Escriba el NIT: sólo números')).toBeVisible();
       await expect(page.getByText('Escriba el número de registro del SEDES')).toBeVisible();
+      await escribir(page, 'medical-center-signup-tax-id', '1023456789');
       await escribir(page, 'medical-center-signup-health-registration', 'SEDES-SC-2020-0412');
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-04a-signup-health-registration`);
@@ -202,7 +200,6 @@ for (const view of VIEWPORTS) {
       await escribir(page, 'medical-center-signup-legal-rep-nombre', 'Marta');
       await escribir(page, 'medical-center-signup-legal-rep-apellido-paterno', 'Rojas');
       await escribir(page, 'medical-center-signup-legal-rep-id', '4872190');
-      await escribir(page, 'medical-center-signup-legal-rep-email', `marta${Date.now()}@centro-norte.test`);
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-05-signup-legal-rep`);
       await page.getByTestId('paginated-form-continuar').click();
@@ -218,7 +215,8 @@ for (const view of VIEWPORTS) {
       // Páginas 9 a 11 · las tres gerencias son opcionales: se siguen vacías.
       for (let i = 0; i < 3; i += 1) await page.getByTestId('paginated-form-continuar').click();
 
-      // Página 12 · la clave. «Crear cuenta» envía.
+      // Página 12 · el usuario (el correo del representante) y la clave. «Crear cuenta» envía.
+      await escribir(page, 'medical-center-signup-legal-rep-email', `marta${Date.now()}@centro-norte.test`);
       await escribir(page, 'medical-center-signup-password', 'S3cret-passw0rd');
       await noHorizontalOverflow(page);
       await foto(page, `${view.label}-05b-signup-password`);

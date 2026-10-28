@@ -9,9 +9,13 @@ import {
 } from '@angular/forms';
 
 import { joinNames } from '../../../../core/profession/additional-names';
+import { noSoloEspacios } from '../trimmed-text';
 
 const MIN_PART_NAME = 2;
 const MAX_PART_NAME = 100;
+
+/** Tope de `middleName` en la API: lo que no es el primer nombre viaja plegado ahí (ver {@link nameParts}). */
+export const MAX_FOLDED_MIDDLE_NAME = 100;
 
 /** Tope del nombre compuesto: el `@MaxLength(200)` de `fullName` en el alta de organización. */
 export const MAX_COMPLETE_NAME = 200;
@@ -49,14 +53,39 @@ function completeNameFits(): ValidatorFn {
 }
 
 /**
+ * El segundo nombre, el tercero y los agregados viajan plegados en un solo
+ * `middleName`, que la API topa en {@link MAX_FOLDED_MIDDLE_NAME}: cada casilla
+ * puede estar dentro de sus 100 y la suma no. Sin esto el envío llegaba a la
+ * red para volver con un 400.
+ */
+function additionalNamesFit(): ValidatorFn {
+  return (grupo: AbstractControl): ValidationErrors | null => {
+    const nombre = grupo.getRawValue() as NameValue;
+    const plegado = joinNames([nombre.middleName, nombre.thirdName, ...nombre.extraNames]);
+    return plegado.length > MAX_FOLDED_MIDDLE_NAME
+      ? { nombresAdicionalesLargos: { max: MAX_FOLDED_MIDDLE_NAME, actual: plegado.length } }
+      : null;
+  };
+}
+
+/**
  * El grupo del nombre de una persona.
  *
  * @param obligatorio - `true`: primer nombre y apellido paterno son requeridos
  *   (el representante legal); `false`: todo es opcional (las gerencias).
+ * @param viajaEnPartes - `true` cuando el nombre sale como `name`, `middleName`,
+ *   `lastName` y `motherLastName` (ver {@link nameParts}): un primer nombre o
+ *   apellido de solo espacios cuenta como vacío, porque sale recortado y vacío,
+ *   y el segundo nombre plegado no puede pasar de {@link MAX_FOLDED_MIDDLE_NAME}.
+ *   Por omisión no se pide: las demás altas validan lo suyo por su cuenta.
  */
-export function nameGroup(obligatorio: boolean): NameGroup {
+export function nameGroup(obligatorio: boolean, viajaEnPartes = false): NameGroup {
   const requeridas = obligatorio
-    ? [Validators.required, Validators.minLength(MIN_PART_NAME)]
+    ? [
+        Validators.required,
+        ...(viajaEnPartes ? [noSoloEspacios] : []),
+        Validators.minLength(MIN_PART_NAME),
+      ]
     : [];
   const parte = (extra: ValidatorFn[]) =>
     new FormControl('', {
@@ -72,7 +101,7 @@ export function nameGroup(obligatorio: boolean): NameGroup {
       lastName: parte(requeridas),
       motherLastName: parte([]),
     },
-    { validators: [completeNameFits()] },
+    { validators: [completeNameFits(), ...(viajaEnPartes ? [additionalNamesFit()] : [])] },
   );
 }
 

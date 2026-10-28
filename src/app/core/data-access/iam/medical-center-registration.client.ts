@@ -9,7 +9,11 @@ import type {
   OrganizationLegalRepresentative,
   RegisteredOrganization,
 } from './iam.types';
-import type { MedicalFacility } from './medical-facility.types';
+import type {
+  MedicalFacility,
+  MedicalFacilityHeadquarters,
+  MedicalFacilitySite,
+} from './medical-facility.types';
 
 /** Lo que pide el alta de una organización médica. */
 export interface MedicalCenterRegistration {
@@ -71,8 +75,8 @@ export interface MedicalCenterRegistration {
  * clave que su DTO no declare, y las coordenadas viajan ambas o ninguna.
  */
 function cuerpoDeEstablecimiento(facility: MedicalFacility): unknown {
-  const sitio = (s: MedicalFacility['headquarters']) => ({
-    name: s.name,
+  const sitio = (s: MedicalFacilitySite | MedicalFacilityHeadquarters) => ({
+    ...(s.name === undefined ? {} : { name: s.name }),
     addressLines: [...s.addressLines],
     ...(s.latitude === undefined || s.longitude === undefined
       ? {}
@@ -91,7 +95,8 @@ function cuerpoDeEstablecimiento(facility: MedicalFacility): unknown {
       email: d.email,
       ...(d.phone === undefined ? {} : { phone: d.phone }),
     },
-    headquarters: sitio(facility.headquarters),
+    // Opcional en el contrato (la API pone «Casa central»): sin ella no viaja la clave.
+    ...(facility.headquarters === undefined ? {} : { headquarters: sitio(facility.headquarters) }),
     // Sin sucursales no viaja la clave: es opcional, y `[]` no dice nada que
     // su ausencia no diga.
     ...(facility.branches === undefined || facility.branches.length === 0

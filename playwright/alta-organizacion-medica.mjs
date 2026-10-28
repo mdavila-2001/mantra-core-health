@@ -15,7 +15,14 @@
  * Nunca espera `networkidle` (con HMR no llega). Datos sintéticos: nada real.
  *
  * Uso: `node playwright/alta-organizacion-medica.mjs [urlBase]`  (por omisión http://127.0.0.1:4300)
- * Variables: `PW_CHROMIUM` (ruta del ejecutable), `SALIDA` (carpeta de capturas).
+ * Variables: `PW_CHROMIUM` (ruta del ejecutable), `SALIDA` (carpeta de capturas),
+ * `SOLO_UNIPERSONAL=1` (sólo la UNIPERSONAL y el 409), `SIN_UNIPERSONAL=1`, `PREFIJO_SALIDA` (prefijo de los json),
+ * `ANCHOS` (px separados por coma; por omisión `1440,390`; la línea base del repo es
+ * `1920,1440,1024,768,390`), `TEMAS` (`claro`, `oscuro` o ambos; por omisión `claro`).
+ *
+ * Además de las capturas, en cada página mide el ancho real de cada campo y de cada control
+ * (`mediciones.json`) y verifica la disposición en columnas por ancho: una columna en móvil, dos desde
+ * 672 px (42 rem) y tres desde 1120 px (§5 de `composition-rules.md`), sin controles que se salgan.
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -34,10 +41,19 @@ const ok = (nombre, cond, detalle = '') => {
   process.stdout.write(`${cond ? '✔' : '✘'} ${nombre}${detalle ? ' — ' + detalle : ''}\n`);
 };
 
-const VIEWPORTS = [
-  { etiqueta: 'escritorio-1440', width: 1440, height: 900 },
-  { etiqueta: 'movil-390', width: 390, height: 844 },
-];
+const ALTOS = { 1920: 1080, 1440: 900, 1024: 768, 768: 1024, 390: 844 };
+const ETIQUETAS = { 1920: 'escritorio-1920', 1440: 'escritorio-1440', 1024: 'tablet-1024', 768: 'tablet-768', 390: 'movil-390' };
+const ANCHOS = (process.env['ANCHOS'] ?? '1440,390').split(',').map((n) => Number(n.trim()));
+const TEMAS = (process.env['TEMAS'] ?? 'claro').split(',').map((t) => t.trim());
+const VIEWPORTS = TEMAS.flatMap((tema) =>
+  ANCHOS.map((width) => ({
+    etiqueta: `${ETIQUETAS[width] ?? `ancho-${width}`}${tema === 'oscuro' ? '-oscuro' : ''}`,
+    width,
+    height: ALTOS[width] ?? 900,
+    tema,
+  })),
+);
+const mediciones = [];
 
 const RUTA_ALTA = '/iam/auth/register-organization';
 const T = (id) => `[data-testid="${id}"]`;
@@ -66,6 +82,93 @@ async function medir(p) {
       form: caja('app-paginated-form'),
     };
   });
+}
+
+/**
+ * Mide la página visible: el ancho de la rejilla, de cada campo (celda) y de cada control, y en cuántos
+ * renglones se reparten las celdas. Las celdas con `[data-campo]` o con `app-form-field` son los campos.
+ */
+async function medirCampos(p) {
+  return p.evaluate(() => {
+    const vw = window.innerWidth;
+    const grilla = document.querySelector('.paginated-form__campos');
+    if (!grilla) return null;
+    const visible = (el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    };
+    const caja = (el) => {
+      const r = el.getBoundingClientRect();
+      return { izq: Math.round(r.left), der: Math.round(r.right), arriba: Math.round(r.top), abajo: Math.round(r.bottom), ancho: Math.round(r.width) };
+    };
+    const g = caja(grilla);
+    const celdas = [...grilla.children].filter(visible).map((el) => ({
+      clave: el.getAttribute('data-campo') ?? el.getAttribute('data-testid') ?? el.tagName.toLowerCase(),
+      ...caja(el),
+    }));
+    const controles = [
+      ...grilla.querySelectorAll('input:not([type=file]):not([type=hidden]):not([type=checkbox]), [role=combobox]'),
+    ]
+      .filter(visible)
+      .map((el) => ({
+        id: el.getAttribute('data-testid') ?? el.closest('[data-testid]')?.getAttribute('data-testid') ?? el.getAttribute('name') ?? 'control',
+        ...caja(el),
+      }));
+    return {
+      vw,
+      grilla: g,
+      celdas,
+      controles,
+      renglones: new Set(celdas.map((c) => c.arriba)).size,
+      desbordeControl: controles.filter((c) => c.der > vw + 1 || c.izq < -1).map((c) => c.id),
+      desbordeCelda: celdas.filter((c) => c.der > g.der + 1 || c.izq < g.izq - 1).map((c) => c.clave),
+    };
+  });
+}
+
+/**
+ * La disposición que declara el motor por ancho: 1 columna por debajo de 672 px, 2 desde 672 px (42 rem)
+ * y 3 desde 1120 px (70 rem). Devuelve cuántas celdas de cada fila hay, de arriba abajo.
+ */
+function celdasPorRenglon(m) {
+  const filas = new Map();
+  for (const c of m.celdas) filas.set(c.arriba, (filas.get(c.arriba) ?? 0) + 1);
+  return [...filas.entries()].sort((a, b) => a[0] - b[0]).map(([, n]) => n);
+}
+
+/**
+ * La disposición esperada por página y ancho: una columna por debajo de 672 px, dos desde 672 px y tres desde
+ * 1120 px. Los números son las celdas por renglón, de arriba abajo. `nombre` va siempre en su renglón.
+ */
+const ESPERADO = [
+  [/organizacion-(vacia|errores|llena)/, (vw) => (vw >= 1120 ? [3] : vw >= 672 ? [2, 1] : [1, 1, 1])],
+  [/establecimiento/, (vw) => (vw >= 672 ? [2] : [1, 1])],
+  [/director$/, (vw) => (vw >= 1120 ? [1, 3] : vw >= 672 ? [1, 2, 1] : [1, 1, 1, 1])],
+  [/representante$/, (vw) => (vw >= 672 ? [1, 2] : [1, 1, 1])],
+  [/acceso$/, (vw) => (vw >= 672 ? [2] : [1, 1])],
+  [/gerente-(general|comercial|marketing)$/, (vw) => (vw >= 672 ? [1, 2] : [1, 1, 1])],
+];
+
+function verificarDisposicion(etiqueta, nombre, m) {
+  const esperado = ESPERADO.find(([patron]) => patron.test(nombre))?.[1](m.vw);
+  if (!esperado) return;
+  const real = celdasPorRenglon(m);
+  ok(`[${etiqueta}] ${nombre}: disposición ${JSON.stringify(esperado)} a ${m.vw} px`, JSON.stringify(real) === JSON.stringify(esperado), `real ${JSON.stringify(real)}`);
+  if (m.vw >= 672) {
+    // Nada de casillas kilométricas: ningún control corto ocupa más del 60 % de la rejilla. Se exceptúa el
+    // campo que el motor cruza a todo el ancho por ser el último de una cantidad impar de celdas (entre 672 y
+    // 1119 px, en las páginas de tres columnas): así evita dejar una casilla sola con la mitad vacía
+    // (`paginated-form.css`). Las casillas del nombre se reparten solas.
+    const solaEnSuRenglon = (c) => {
+      const celda = m.celdas.find((x) => c.izq >= x.izq - 1 && c.der <= x.der + 1 && c.arriba >= x.arriba - 1 && c.arriba <= x.abajo);
+      return celda !== undefined && m.celdas.filter((x) => x.arriba === celda.arriba).length === 1 && esperado.length > 1 && m.vw < 1120;
+    };
+    const anchos = m.controles.filter(
+      (c) => !/-(nombre|segundo-nombre|tercer-nombre|apellido-paterno|apellido-materno)$/.test(c.id) && !solaEnSuRenglon(c),
+    );
+    const kilometrico = anchos.filter((c) => c.ancho > m.grilla.ancho * 0.6).map((c) => `${c.id}=${c.ancho}`);
+    ok(`[${etiqueta}] ${nombre}: ningún campo corto ocupa más del 60 % de la rejilla (${m.grilla.ancho} px)`, kilometrico.length === 0, kilometrico.join(', '));
+  }
 }
 
 /**
@@ -103,7 +206,16 @@ async function pagina(p, etiqueta, nombre, titulo) {
       m.conjunto.ancho / m.vw >= (m.vw < 800 ? 0.85 : 0.6),
     );
   }
+  const campos = await medirCampos(p);
+  if (campos) {
+    mediciones.push({ viewport: etiqueta, pagina: nombre, ...campos });
+    ok(`[${etiqueta}] ${nombre}: ningún control ni campo se sale de la tarjeta`, campos.desbordeControl.length === 0 && campos.desbordeCelda.length === 0, [...campos.desbordeControl, ...campos.desbordeCelda].join(', '));
+    const ancho = campos.controles.map((c) => `${c.id.replace('medical-center-signup-', '')}=${c.ancho}`).join(' ');
+    verificarDisposicion(etiqueta, nombre, campos);
+    process.stdout.write(`    · ${nombre} @${campos.vw}: rejilla ${campos.grilla.ancho} px; renglones ${JSON.stringify(celdasPorRenglon(campos))}; controles ${ancho}\n`);
+  }
   await foto(p, etiqueta, nombre);
+  return campos;
 }
 
 const continuar = async (p) => {
@@ -180,7 +292,19 @@ const espiado = (p) =>
 
 async function recorrer(browser, vp) {
   const { etiqueta } = vp;
-  const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, locale: 'es-BO' });
+  const ctx = await browser.newContext({
+    viewport: { width: vp.width, height: vp.height },
+    locale: 'es-BO',
+    colorScheme: vp.tema === 'oscuro' ? 'dark' : 'light',
+  });
+  // El tema lo elige la persona y se guarda en `localStorage` (`ThemeService`): se fija antes de cargar.
+  await ctx.addInitScript((tema) => {
+    try {
+      localStorage.setItem('mantra-core-health.theme', tema);
+    } catch {
+      /* sin almacenamiento: el tema queda por omisión */
+    }
+  }, vp.tema === 'oscuro' ? 'dark' : 'light');
   const p = await ctx.newPage();
   const consola = [];
   p.on('console', (m) => {
@@ -206,22 +330,19 @@ async function recorrer(browser, vp) {
   await elegirOpcion(p, 'medical-center-signup-tenant-type', 'Clínica');
   await llenar(p, 'medical-center-signup-legal-name', `Clínica Norte ${Date.now()}`);
   await elegirOpcion(p, 'medical-center-signup-legal-entity-type', /Responsabilidad Limitada/i);
-  await llenar(p, 'medical-center-signup-tax-id', 'abc');
-  await continuar(p);
-  await p.getByText('Escriba el NIT: sólo números').waitFor({ timeout: 10_000 });
-  ok(`[${etiqueta}] un NIT inválido («abc») frena y lo dice`, true);
-  await foto(p, etiqueta, '03-organizacion-nit-invalido');
-  await llenar(p, 'medical-center-signup-tax-id', '1023456789');
   await pagina(p, etiqueta, '04-organizacion-llena', 'La organización');
   await continuar(p);
 
-  // 2 · Datos del establecimiento
+  // 2 · Datos del establecimiento: el NIT y el número del SEDES, uno al lado del otro
   await p.getByTestId('medical-center-signup-health-registration').waitFor({ timeout: 15_000 });
+  await llenar(p, 'medical-center-signup-tax-id', 'abc');
   await llenar(p, 'medical-center-signup-health-registration', 'SEDES SC');
   await continuar(p);
+  await p.getByText('Escriba el NIT: sólo números').waitFor({ timeout: 10_000 });
   await p.getByText('Escriba el número de registro del SEDES').waitFor({ timeout: 10_000 });
-  ok(`[${etiqueta}] un registro del SEDES con espacio frena y lo dice`, true);
+  ok(`[${etiqueta}] un NIT inválido («abc») y un registro con espacio frenan y lo dicen`, true);
   await pagina(p, etiqueta, '05-establecimiento-invalido', 'Datos del establecimiento');
+  await llenar(p, 'medical-center-signup-tax-id', '1023456789');
   await llenar(p, 'medical-center-signup-health-registration', 'SEDES-SC-2020-0412');
   await pagina(p, etiqueta, '06-establecimiento', 'Datos del establecimiento');
   await continuar(p);
@@ -277,8 +398,12 @@ async function recorrer(browser, vp) {
   await pagina(p, etiqueta, '13-sucursales-vacio', 'Sus sucursales');
   await p.getByTestId('medical-center-signup-agregar-sucursal').click();
   await continuar(p);
-  await p.getByTestId('medical-center-signup-sucursal-1-falta').waitFor({ timeout: 10_000 });
-  ok(`[${etiqueta}] una sucursal a medias frena y dice qué falta`, true);
+  // El error ya no es un `<p role="alert">` suelto: lo dicen los campos de la sucursal (nombre y mapa).
+  const erroresSucursal = p.locator('[data-testid="medical-center-signup-sucursal-1"] .form-field-error');
+  await erroresSucursal.first().waitFor({ timeout: 10_000 });
+  const textos = await erroresSucursal.allInnerTexts();
+  ok(`[${etiqueta}] una sucursal a medias frena y dice qué falta, en el campo del nombre y en el del mapa`,
+    textos.some((t) => /nombre de la sucursal/i.test(t)) && textos.some((t) => /mapa/i.test(t)), textos.join(' | '));
   await foto(p, etiqueta, '14-sucursal-incompleta');
   await marcarPunto(p, 'medical-center-signup-sucursal-1', 60);
   await llenar(p, 'medical-center-signup-sucursal-1-nombre', 'Sucursal Equipetrol');
@@ -290,7 +415,6 @@ async function recorrer(browser, vp) {
   await nombre(p, 'medical-center-signup-legal-rep', 'Marta', 'Rojas');
   await llenar(p, 'medical-center-signup-legal-rep-id', '4872190');
   const correo = `marta.${Date.now()}@clinica-norte.test`;
-  await llenar(p, 'medical-center-signup-legal-rep-email', correo);
   await pagina(p, etiqueta, '16-representante', 'Representante legal');
   await continuar(p);
 
@@ -312,6 +436,16 @@ async function recorrer(browser, vp) {
     ['gerente-marketing', 'Gerencia de marketing', 'Mario', 'Mena', '70033333', 'marketing@clinica-norte.test'],
   ];
   let n = 18;
+  // Todo o nada: con solo el celular de la general escrito, «Siguiente» no pasa y dice qué falta JUNTO al campo.
+  await p.getByTestId('medical-center-signup-gerente-general-nombre').waitFor({ timeout: 15_000 });
+  await p.getByTestId('medical-center-signup-gerente-general-celular').fill('70011111');
+  await continuar(p);
+  await p.getByText('Escriba un correo válido, o deje las tres gerencias vacías.').waitFor({ timeout: 10_000 });
+  const sigueEnLaGeneral = (await p.locator('.paginated-form__titulo').first().innerText()).includes('Gerencia general');
+  const primerNombre = await p.getByText('Escriba el primer nombre.').count();
+  ok(`[${etiqueta}] gerencias a medias: no avanza, se queda en la gerencia afectada y dice el correo y el nombre junto al campo`, sigueEnLaGeneral && primerNombre >= 1);
+  await foto(p, etiqueta, '17b-gerencia-a-medias');
+  await p.getByTestId('medical-center-signup-gerente-general-celular').fill('');
   for (const [id, titulo, nom, ape, tel, mail] of gerencias) {
     await p.getByTestId(`medical-center-signup-${id}-nombre`).waitFor({ timeout: 15_000 });
     await nombre(p, `medical-center-signup-${id}`, nom, ape);
@@ -321,10 +455,19 @@ async function recorrer(browser, vp) {
     await pagina(p, etiqueta, `${n}-${id}`, titulo);
     n += 1;
     await continuar(p);
+    if (id === 'gerente-general') {
+      // La comercial y la de marketing están vacías y la general ya está completa: la comercial pide lo suyo.
+      await continuar(p);
+      await p.getByText('Escriba el celular completo, o deje las tres gerencias vacías.').first().waitFor({ timeout: 10_000 });
+      const sigue = (await p.locator('.paginated-form__titulo').first().innerText()).includes('Gerencia comercial');
+      ok(`[${etiqueta}] con la general completa, la comercial vacía no deja pasar y lo dice junto al campo`, sigue);
+      await foto(p, etiqueta, '18b-comercial-pide-lo-suyo');
+    }
   }
 
   // 12 · Su acceso y envío
   await p.getByTestId('medical-center-signup-password').waitFor({ timeout: 15_000 });
+  await llenar(p, 'medical-center-signup-legal-rep-email', correo);
   await llenar(p, 'medical-center-signup-password', 'S3cret-passw0rd');
   await pagina(p, etiqueta, '21-acceso', 'Su acceso');
 
@@ -383,11 +526,13 @@ async function unipersonalY409(browser) {
   await elegirOpcion(p, 'medical-center-signup-tenant-type', 'Consultorio médico');
   await llenar(p, 'medical-center-signup-legal-name', `Consultorio Paz ${Date.now()}`);
   await p.getByTestId('medical-center-signup-legal-entity-type').getByRole('combobox').click();
+  // Se espera a que el desplegable pinte sus opciones: leerlas en cuanto abre daba una lista vacía.
+  await p.locator('dialog.select-dialog[open] [role="option"]').first().waitFor({ timeout: 15_000 });
   const opciones = await p.locator('dialog.select-dialog[open] [role="option"]').allInnerTexts();
   await p.locator('dialog.select-dialog[open]').getByRole('option', { name: /unipersonal/i }).first().click();
   ok('[unipersonal] el desplegable ofrece «Unipersonal»', opciones.some((o) => /unipersonal/i.test(o)), opciones.join(' / '));
-  await llenar(p, 'medical-center-signup-tax-id', '4872190');
   await continuar(p);
+  await llenar(p, 'medical-center-signup-tax-id', '4872190');
   await llenar(p, 'medical-center-signup-health-registration', 'SEDES-LP-0001');
   await continuar(p);
   await nombre(p, 'medical-center-signup-director', 'Pedro', 'Paz');
@@ -411,14 +556,15 @@ async function unipersonalY409(browser) {
   await continuar(p); // sucursales: ninguna
   await nombre(p, 'medical-center-signup-legal-rep', 'Pedro', 'Paz');
   await llenar(p, 'medical-center-signup-legal-rep-id', '4872190');
-  // Un correo que el simulador ya conoce: 409 real, por el mismo camino que la API.
-  await llenar(p, 'medical-center-signup-legal-rep-email', 'superadmin@alovida.mock');
   await continuar(p);
   // Poder: opcional para una unipersonal, se avanza sin subirlo.
   await p.getByTestId('medical-center-signup-doc-powerOfAttorneyFileId').waitFor({ timeout: 15_000 });
   await foto(p, etiqueta, 'u2-unipersonal-poder-opcional');
   await continuar(p);
   for (let i = 0; i < 3; i += 1) await continuar(p); // gerencias vacías
+  // El correo del representante es el usuario: se escribe con la contraseña. Uno que el simulador ya
+  // conoce da el 409 real, por el mismo camino que la API.
+  await llenar(p, 'medical-center-signup-legal-rep-email', 'superadmin@alovida.mock');
   await llenar(p, 'medical-center-signup-password', 'S3cret-passw0rd');
 
   await continuar(p);
@@ -429,12 +575,10 @@ async function unipersonalY409(browser) {
   ok('[409] el error de la API es 409', primero?.error?.status === 409, JSON.stringify(primero?.error));
   await foto(p, etiqueta, 'u3-error-409');
 
-  // Corregir el correo: se vuelve a la página del representante (5 pasos atrás) y se reenvía.
-  for (let i = 0; i < 5; i += 1) await p.getByTestId('paginated-form-atras').click();
-  await p.getByTestId('medical-center-signup-legal-rep-email').waitFor({ timeout: 10_000 });
+  // Corregir el correo: está en la misma página (junto a la contraseña), se corrige y se reenvía.
   const correo = `pedro.${Date.now()}@consultorio-paz.test`;
   await llenar(p, 'medical-center-signup-legal-rep-email', correo);
-  for (let i = 0; i < 6; i += 1) await continuar(p);
+  await continuar(p);
   await p.getByTestId('medical-center-signup-success').waitFor({ timeout: 20_000 });
   const envios = await espiado(p);
   ok('[409] reintentar con otro correo funciona (el envío no queda trabado)', envios.length === 2 && Boolean(envios[1].respuesta), `${envios.length} envíos`);
@@ -453,13 +597,15 @@ async function main() {
   mkdirSync(SALIDA, { recursive: true });
   const navegador = await chromium.launch(process.env['PW_CHROMIUM'] ? { executablePath: process.env['PW_CHROMIUM'] } : {});
   try {
-    for (const vp of VIEWPORTS) await recorrer(navegador, vp);
-    await unipersonalY409(navegador);
+    if (process.env['SOLO_UNIPERSONAL'] !== '1') for (const vp of VIEWPORTS) await recorrer(navegador, vp);
+    if (process.env['SIN_UNIPERSONAL'] !== '1') await unipersonalY409(navegador);
   } finally {
     await navegador.close();
   }
   const fallos = veredictos.filter((v) => !v.cond);
-  writeFileSync(`${SALIDA}/veredictos.json`, JSON.stringify(veredictos, null, 2));
+  const prefijo = process.env['PREFIJO_SALIDA'] ?? '';
+  writeFileSync(`${SALIDA}/${prefijo}veredictos.json`, JSON.stringify(veredictos, null, 2));
+  if (mediciones.length > 0) writeFileSync(`${SALIDA}/${prefijo}mediciones.json`, JSON.stringify(mediciones, null, 2));
   process.stdout.write(`\n${veredictos.length - fallos.length}/${veredictos.length} verificaciones\n`);
   if (fallos.length > 0) process.exitCode = 1;
 }

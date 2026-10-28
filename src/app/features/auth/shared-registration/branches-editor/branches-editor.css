@@ -39,12 +39,6 @@
   margin: 0;
 }
 
-.sucursal__falta {
-  font-size: var(--fs-caption);
-  color: var(--text-danger);
-  margin: 0;
-}
-
 .sucursales__vacio {
   font-size: var(--fs-caption);
   color: var(--text-muted);

@@ -17,6 +17,7 @@ import {
   isMedicalOrganizationType,
   type MedicalOrganizationType,
 } from '../../../core/data-access/directory/directory.types';
+import { MAX_MEDICAL_FACILITY_BRANCHES } from '../../../core/data-access/iam/medical-facility.rules';
 import { MedicalCenterRegistrationClient } from '../../../core/data-access/iam/medical-center-registration.client';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
@@ -267,6 +268,15 @@ export class RegisterMedicalCenter {
     });
   }
 
+  /**
+   * Al bloquear «Siguiente» (o llevar a la primera página con algo mal), el
+   * motor sólo marca al grupo del nombre, no a sus casillas: se marcan acá para
+   * que cada una muestre su error, también el de las gerencias a medias.
+   */
+  protected alRechazarPagina(pagina: PaginaDeFormulario): void {
+    for (const campo of pagina.campos) this.form.get(campo.key)?.markAllAsTouched();
+  }
+
   protected recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
     this.guardarBorrador();
@@ -275,7 +285,8 @@ export class RegisterMedicalCenter {
   /**
    * Guarda el avance en el navegador y en el servidor. **Sin los papeles**: lo
    * que se guarda de ellos es el `fileId` de una pre-carga que puede vencer, y
-   * la pantalla no sabría mostrarlo; quien retoma los vuelve a elegir.
+   * la pantalla no sabría mostrarlo; quien retoma los vuelve a elegir. **Sin la
+   * contraseña**, nunca.
    */
   guardarBorrador(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -287,6 +298,10 @@ export class RegisterMedicalCenter {
       const datos: Record<string, unknown> = { ...this.form.getRawValue() };
       for (const papel of CLAVES_DE_PAPELES) delete datos[papel];
       delete datos['sucursales'];
+      // Una contraseña no se guarda en ningún borrador: ni en el navegador ni
+      // en el servidor. `OnboardingDraftService` también la quita, pero esta
+      // pantalla no depende de que otro se acuerde.
+      delete datos['password'];
       this.draftService.saveProgress(
         FORM_TYPE,
         indice,
@@ -446,6 +461,9 @@ export class RegisterMedicalCenter {
 
   readonly sucursales = signal<readonly SucursalDeclarada[]>([]);
 
+  /** El tope del editor y el del validador del control: el mismo número. */
+  protected readonly maximoSucursales = MAX_MEDICAL_FACILITY_BRANCHES;
+
   /** La lista vive en la señal (la lee el editor) y en el control (que frena las incompletas). */
   fijarSucursales(lista: readonly SucursalDeclarada[]): void {
     this.sucursales.set(lista);
@@ -464,14 +482,17 @@ export class RegisterMedicalCenter {
   submit(): void {
     if (this.isSubmitting()) return;
     const tipo = this.form.controls.tenantType.value;
-    if (this.form.invalid || !isMedicalOrganizationType(tipo)) {
+    // Las gerencias viajan como bloque de a tres: a medias no se descartan en
+    // silencio, se pide completarlas o vaciarlas. Los controles ya lo dicen
+    // junto a cada campo y el motor lleva a la primera página afectada; esto es
+    // la red de seguridad por si este método se llama sin pasar por él.
+    if (executivesIncomplete(this.form.getRawValue())) {
       this.form.markAllAsTouched();
+      this.errorMessage.set(AVISO_GERENCIAS);
       return;
     }
-    // Las gerencias viajan como bloque de a tres: a medias no se descartan en
-    // silencio, se pide completarlas o vaciarlas.
-    if (executivesIncomplete(this.form.getRawValue())) {
-      this.errorMessage.set(AVISO_GERENCIAS);
+    if (this.form.invalid || !isMedicalOrganizationType(tipo)) {
+      this.form.markAllAsTouched();
       return;
     }
 

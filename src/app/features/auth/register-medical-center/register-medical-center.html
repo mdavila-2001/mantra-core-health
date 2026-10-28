@@ -89,6 +89,7 @@
             [pending]="isSubmitting()"
             [iconOnlyNav]="true"
             (pasoVisible)="recordarPaso($event)"
+            (rechazada)="alRechazarPagina($event)"
             (enviado)="submit()"
             data-testid="medical-center-signup-form"
           >
@@ -151,6 +152,7 @@
             <ng-template appCampoPersonalizado="sucursales">
               <app-branches-editor
                 prefijoTestId="medical-center-signup"
+                [maximo]="maximoSucursales"
                 [sucursales]="sucursales()"
                 [mostrarFaltantes]="sucursalesConFaltantes()"
                 (sucursalesChange)="fijarSucursales($event)"

@@ -39,6 +39,18 @@ export interface MedicalFacilitySite {
   readonly longitude?: number;
 }
 
+/**
+ * La casa central: igual que cualquier sede, salvo que su nombre es opcional y
+ * la API le pone «Casa central» (`MedicalFacilityHeadquartersDto`).
+ */
+export interface MedicalFacilityHeadquarters {
+  readonly name?: string;
+  readonly addressLines: readonly string[];
+  /** Ambas coordenadas o ninguna. */
+  readonly latitude?: number;
+  readonly longitude?: number;
+}
+
 /** Lo que identifica al establecimiento de salud como tal, más allá de la empresa. */
 export interface MedicalFacility {
   /** El NIT de la empresa (`^[0-9][0-9-]{3,19}$`). */
@@ -46,8 +58,8 @@ export interface MedicalFacility {
   /** El número de registro/habilitación ante la autoridad sanitaria (SEDES en Bolivia). */
   readonly healthFacilityRegistrationNumber: string;
   readonly medicalDirector: MedicalDirector;
-  /** La casa central. */
-  readonly headquarters: MedicalFacilitySite;
+  /** La casa central. Opcional en el contrato; la pantalla la manda siempre. */
+  readonly headquarters?: MedicalFacilityHeadquarters;
   /** Sucursales declaradas; hasta {@link MAX_MEDICAL_FACILITY_BRANCHES}. */
   readonly branches?: readonly MedicalFacilitySite[];
 }

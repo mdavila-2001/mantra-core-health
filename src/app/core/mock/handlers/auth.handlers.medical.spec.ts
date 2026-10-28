@@ -184,18 +184,114 @@ describe('alta pública de organización médica en el simulador', () => {
     }
   });
 
-  it('400 — falta el director médico o la casa central', () => {
+  it('400 — falta el director médico', () => {
     const sinDirector: Record<string, unknown> = { ...MEDICAL_FACILITY };
     delete sinDirector['medicalDirector'];
     const a = call('POST', '/iam/auth/register-organization', cuerpo({ medicalFacility: sinDirector }));
     expect(a.status).toBe(400);
     expect(mensajes(a.body).join()).toContain('medicalDirector must be an object');
+  });
 
+  it('la casa central y su nombre son OPCIONALES, como en la API real (nace como «Casa central»)', () => {
     const sinCasa: Record<string, unknown> = { ...MEDICAL_FACILITY };
     delete sinCasa['headquarters'];
-    const b = call('POST', '/iam/auth/register-organization', cuerpo({ medicalFacility: sinCasa }));
-    expect(b.status).toBe(400);
-    expect(mensajes(b.body).join()).toContain('headquarters must be an object');
+    expect(call('POST', '/iam/auth/register-organization', cuerpo({ medicalFacility: sinCasa })).status).toBe(200);
+
+    const sinNombre = call(
+      'POST',
+      '/iam/auth/register-organization',
+      conFacility({ headquarters: { addressLines: ['Av. San Martín 123'] } }),
+    );
+    expect(sinNombre.status).toBe(200);
+
+    // Opcional no es «sin reglas»: la dirección sigue siendo obligatoria y el nombre, si viene, no puede ser vacío.
+    const sinDireccion = call('POST', '/iam/auth/register-organization', conFacility({ headquarters: { name: 'Casa central' } }));
+    expect(sinDireccion.status).toBe(400);
+    expect(mensajes(sinDireccion.body).join()).toContain('headquarters.addressLines');
+    const nombreVacio = call(
+      'POST',
+      '/iam/auth/register-organization',
+      conFacility({ headquarters: { name: '  ', addressLines: ['x'] } }),
+    );
+    expect(nombreVacio.status).toBe(400);
+    expect(mensajes(nombreVacio.body).join()).toContain('headquarters.name');
+  });
+
+  it('400 — las longitudes máximas del contrato: nombre de sede 200, 10 líneas de 500, middleName 100', () => {
+    const hq = MEDICAL_FACILITY.headquarters;
+    const director = MEDICAL_FACILITY.medicalDirector;
+    const casos: [string, Record<string, unknown>, string][] = [
+      ['nombre de la casa central de 201', { headquarters: { ...hq, name: 'N'.repeat(201) } }, 'headquarters.name'],
+      [
+        'nombre de una sucursal de 201',
+        { branches: [{ name: 'N'.repeat(201), addressLines: ['x'] }] },
+        'branches.0.name',
+      ],
+      [
+        'once líneas de dirección',
+        { headquarters: { ...hq, addressLines: Array.from({ length: 11 }, () => 'x') } },
+        'headquarters.addressLines must contain no more than 10',
+      ],
+      [
+        'una línea de 501 caracteres',
+        { headquarters: { ...hq, addressLines: ['L'.repeat(501)] } },
+        'headquarters.each value in addressLines',
+      ],
+      [
+        'una línea de solo espacios',
+        { branches: [{ name: 'S', addressLines: ['   '] }] },
+        'branches.0.each value in addressLines',
+      ],
+      ['middleName del director de 101', { medicalDirector: { ...director, middleName: 'm'.repeat(101) } }, 'medicalDirector.middleName'],
+      ['apellido materno del director de 101', { medicalDirector: { ...director, motherLastName: 'm'.repeat(101) } }, 'medicalDirector.motherLastName'],
+      ['teléfono del director de 6', { medicalDirector: { ...director, phone: '123456' } }, 'medicalDirector.phone'],
+    ];
+    for (const [etiqueta, cambio, esperado] of casos) {
+      const { status, body } = call('POST', '/iam/auth/register-organization', conFacility(cambio));
+
+      expect(status, etiqueta).toBe(400);
+      expect(mensajes(body).join(), etiqueta).toContain(esperado);
+    }
+    // Y en el tope, pasan.
+    const enElTope = call(
+      'POST',
+      '/iam/auth/register-organization',
+      conFacility({
+        headquarters: { ...hq, name: 'N'.repeat(200), addressLines: Array.from({ length: 10 }, () => 'L'.repeat(500)) },
+        medicalDirector: { ...director, middleName: 'm'.repeat(100), phone: '1234567' },
+      }),
+    );
+    expect(enElTope.status).toBe(200);
+  });
+
+  it('400 — el correo del director es un IsEmail estricto: «dir@clinica» y «a@b» no pasan', () => {
+    const director = MEDICAL_FACILITY.medicalDirector;
+    for (const email of ['dir@clinica', 'a@b', 'dir@clinica.', 'sin-arroba', '@clinica.bo', '']) {
+      const { status, body } = call(
+        'POST',
+        '/iam/auth/register-organization',
+        conFacility({ medicalDirector: { ...director, email } }),
+      );
+
+      expect(status, email).toBe(400);
+      expect(mensajes(body).join(), email).toContain('medicalDirector.email must be an email');
+    }
+    expect(
+      call('POST', '/iam/auth/register-organization', conFacility({ medicalDirector: { ...director, email: 'dir@clinica.bo' } })).status,
+    ).toBe(200);
+  });
+
+  it('el 400 de forma va antes que el 422 de negocio: un cuerpo mal formado con un tenantType no médico es 400', () => {
+    const malFormado = call(
+      'POST',
+      '/iam/auth/register-organization',
+      cuerpo({ tenantType: 'PHARMACY', medicalFacility: { ...MEDICAL_FACILITY, taxIdentifierNumber: 'x' } }),
+    );
+    expect(malFormado.status).toBe(400);
+    expect(mensajes(malFormado.body).join()).toContain('taxIdentifierNumber');
+
+    // Bien formado, el mismo tenantType sí es el 422.
+    expect(call('POST', '/iam/auth/register-organization', cuerpo({ tenantType: 'PHARMACY' })).status).toBe(422);
   });
 
   it('400 — coordenadas de la casa central: ambas o ninguna, y en rango', () => {

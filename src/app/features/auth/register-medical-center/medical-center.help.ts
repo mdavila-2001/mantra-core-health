@@ -23,6 +23,12 @@ export const AYUDA_ALTA_MEDICA: Readonly<Record<string, readonly HelpCard[]>> = 
   ],
   establecimiento: [
     {
+      icono: 'billing',
+      titulo: 'El NIT es el número, no el papel',
+      texto:
+        'Acá va el número de NIT con el que factura. El certificado se sube como PDF más adelante; el número permite cruzarlo con el padrón tributario.',
+    },
+    {
       icono: 'shield',
       titulo: 'Para que podamos verificarlo',
       texto:

@@ -215,6 +215,26 @@ describe('MedicalCenterRegistrationClient', () => {
     req.flush({});
   });
 
+  it('la casa central y su nombre son opcionales: sin ellos no viaja la clave (la API pone «Casa central»)', () => {
+    const { headquarters: _central, ...sinCentral } = COMPLETA.medicalFacility!;
+    client.register({ ...COMPLETA, medicalFacility: sinCentral }).subscribe();
+    const a = http.expectOne((r) => r.url === '/iam/auth/register-organization');
+    expect('headquarters' in a.request.body.organization.medicalFacility).toBe(false);
+    a.flush({});
+
+    client
+      .register({
+        ...COMPLETA,
+        medicalFacility: { ...COMPLETA.medicalFacility!, headquarters: { addressLines: ['Av. San Martín 123'] } },
+      })
+      .subscribe();
+    const b = http.expectOne((r) => r.url === '/iam/auth/register-organization');
+    expect(b.request.body.organization.medicalFacility.headquarters).toEqual({
+      addressLines: ['Av. San Martín 123'],
+    });
+    b.flush({});
+  });
+
   it('no copia claves que el DTO no declara (forbidNonWhitelisted)', () => {
     const conDeMas = {
       ...COMPLETA,
