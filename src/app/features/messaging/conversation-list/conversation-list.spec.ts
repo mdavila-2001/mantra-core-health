@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { ConversationList } from './conversation-list';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
+import { textoDeContexto } from '../../../core/messaging/contexto-de-chat';
 
 /**
  * Lo que estas pruebas fijan de la fila de la bandeja.
@@ -78,5 +79,77 @@ describe('ConversationList', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="conversacion-sticker"]'),
     ).toBeNull();
+  });
+
+  it('una tarjeta de pedido se lee como «Pedido · Farmacia», sin la ruta', () => {
+    montar(
+      fila({
+        id: 'm-1',
+        senderProfileId: 'pp-2',
+        bodyText: textoDeContexto({
+          tipo: 'pedido',
+          titulo: 'Farmacia Chávez',
+          detalle: '2 productos · Bs 69,00',
+          ruta: '/my-account/pharmacy-orders/7f3c',
+        }),
+      }),
+    );
+
+    const contexto = fixture.nativeElement.querySelector(
+      '[data-testid="conversacion-contexto"]',
+    );
+    expect(contexto?.textContent?.trim()).toBe('Pedido · Farmacia Chávez');
+    expect(fixture.nativeElement.textContent).not.toContain('/my-account');
+  });
+
+  it('la conversación abierta lleva aria-current', () => {
+    fixture = TestBed.createComponent(ConversationList);
+    fixture.componentRef.setInput('conversaciones', [fila(undefined)]);
+    fixture.componentRef.setInput('activaId', 'c-1');
+    fixture.detectChanges();
+
+    const enlace = fixture.nativeElement.querySelector('[data-testid="conversacion"]');
+    expect(enlace?.getAttribute('aria-current')).toBe('page');
+  });
+
+  describe('estados que reemplazan a la lista', () => {
+    const conEstado = (estado: 'cargando' | 'vacio' | 'error'): void => {
+      fixture = TestBed.createComponent(ConversationList);
+      fixture.componentRef.setInput('conversaciones', []);
+      fixture.componentRef.setInput('estado', estado);
+      fixture.componentRef.setInput('mensajeDeError', 'No pudimos cargar tus conversaciones.');
+      fixture.detectChanges();
+    };
+    const buscar = (testid: string): HTMLElement | null =>
+      fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+
+    it('cargando (S2) pinta esqueletos y lo anuncia a los lectores', () => {
+      conEstado('cargando');
+      expect(buscar('bandeja-cargando')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain(
+        'Cargando tus conversaciones',
+      );
+      expect(buscar('conversacion')).toBeNull();
+    });
+
+    it('vacío (S3) ofrece una próxima acción que lleva a buscar', () => {
+      conEstado('vacio');
+      expect(buscar('bandeja-vacia')?.textContent).toContain('Todavía no tenés chats');
+      const destinos = Array.from(
+        fixture.nativeElement.querySelectorAll('[data-testid="bandeja-vacia"] a'),
+      ).map((a) => (a as HTMLAnchorElement).getAttribute('href'));
+      expect(destinos).toContain('/search/medications');
+    });
+
+    it('error ofrece reintentar y no finge que no hay chats', () => {
+      conEstado('error');
+      let pedidos = 0;
+      fixture.componentInstance.reintentar.subscribe(() => pedidos++);
+
+      expect(fixture.nativeElement.textContent).toContain('No pudimos cargar tus conversaciones.');
+      expect(fixture.nativeElement.textContent).not.toContain('Todavía no tenés chats');
+      buscar('bandeja-reintentar')?.click();
+      expect(pedidos).toBe(1);
+    });
   });
 });

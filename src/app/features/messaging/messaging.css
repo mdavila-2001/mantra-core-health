@@ -13,14 +13,11 @@
   margin: var(--e3) var(--e4) 0;
 }
 
-.mensajeria__cargando {
-  padding: var(--e6);
-  color: var(--tinta-2);
-}
-
 .mensajeria {
   display: grid;
-  grid-template-columns: minmax(20rem, 30%) 1fr;
+  /* La bandeja con ancho de lectura cómodo —una fila de chat no necesita
+     más de ~28rem— y el resto para la conversación, que es donde se lee. */
+  grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr);
   block-size: 100%;
   min-block-size: 0;
   overflow: hidden;
@@ -33,8 +30,13 @@
   display: flex;
   flex-direction: column;
   min-block-size: 0;
-  border-inline-end: 1px solid var(--filete);
+  border-inline-end: 1px solid var(--filete-2);
   background: var(--sup-tarjeta);
+  /* Una sombra lateral muy leve separa la bandeja del papel del hilo sin
+     dibujar una pared. */
+  box-shadow: var(--sombra-1);
+  position: relative;
+  z-index: 1;
 }
 
 .mensajeria__cabecera {
@@ -43,7 +45,7 @@
   justify-content: space-between;
   gap: var(--e2);
   min-block-size: var(--h-header);
-  padding: 0 var(--e4);
+  padding: var(--e2) var(--e4) 0;
   flex: none;
 }
 
@@ -55,11 +57,22 @@
   color: var(--tinta-marca);
 }
 
+.mensajeria__sin-leer {
+  flex: none;
+  padding: 2px var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--info-bg);
+  color: var(--info-tinta);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- El buscador --------------------------------------------------------- */
 
 .mensajeria__buscador {
   flex: none;
-  padding: 0 var(--e3) var(--e2);
+  padding: var(--e2) var(--e4) var(--e3);
 }
 
 .mensajeria__campo {
@@ -70,27 +83,34 @@
 
 .mensajeria__campo-icono {
   position: absolute;
-  inset-inline-start: var(--e3);
+  inset-inline-start: var(--e4);
   display: inline-flex;
-  color: var(--tinta-3);
+  color: var(--tinta-2);
   pointer-events: none;
 }
 
 .mensajeria__campo-icono svg {
-  inline-size: 16px;
-  block-size: 16px;
+  inline-size: 18px;
+  block-size: 18px;
 }
 
+/* La píldora del buscador: 44 px de alto, borde de control (un campo editable
+   siempre lo lleva) y el relleno hundido de la casa. */
 .mensajeria__campo input {
   inline-size: 100%;
-  block-size: 36px;
-  padding-inline: calc(var(--e3) * 2 + 16px) var(--e8);
-  border: 1px solid transparent;
+  block-size: 44px;
+  padding-inline: calc(var(--e4) + 18px + var(--e2)) calc(var(--e2) + 32px);
+  border: 1px solid var(--borde-ctrl);
   border-radius: var(--r-pill);
   background: var(--sup-inset);
+  box-shadow: var(--inset-ctrl);
   font: inherit;
-  font-size: var(--fs-caption);
+  font-size: var(--fs-body);
   color: var(--tinta);
+}
+
+.mensajeria__campo input::placeholder {
+  color: var(--tinta-3);
 }
 
 /* La cruz nativa del `type="search"` duplicaría el botón de limpiar. */
@@ -103,6 +123,7 @@
   outline-offset: 1px;
   border-color: var(--petroleo);
   background: var(--sup-tarjeta);
+  box-shadow: none;
 }
 
 .mensajeria__campo-limpiar {
@@ -111,18 +132,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 24px;
-  block-size: 24px;
+  inline-size: 32px;
+  block-size: 32px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
-  color: var(--tinta-3);
+  color: var(--tinta-2);
   cursor: pointer;
 }
 
+.mensajeria__campo-limpiar:hover {
+  background: var(--neutro-bg);
+}
+
+.mensajeria__campo-limpiar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+}
+
 .mensajeria__campo-limpiar svg {
-  inline-size: 14px;
-  block-size: 14px;
+  inline-size: 16px;
+  block-size: 16px;
 }
 
 /* --- Los filtros --------------------------------------------------------- */
@@ -131,7 +160,9 @@
   flex: none;
   display: flex;
   gap: var(--e2);
-  padding: 0 var(--e3) var(--e2);
+  /* El relleno vertical deja lugar al objetivo de 44 px de cada chip, que
+     sobresale 4 px arriba y abajo del dibujo. */
+  padding: var(--e1) var(--e4) var(--e3);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -140,35 +171,72 @@
   display: none;
 }
 
+/* Chips planos con borde de superficie; el elegido, relleno de marca. 36 px
+   de dibujo y 44 de objetivo por el `::before`. */
 .mensajeria__chip {
+  position: relative;
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  block-size: 28px;
-  padding-inline: var(--e3);
-  border: 0;
+  block-size: 36px;
+  padding-inline: var(--e4);
+  border: 1px solid var(--filete);
   border-radius: var(--r-pill);
-  background: var(--sup-inset);
+  background: var(--sup-tarjeta);
   color: var(--tinta-2);
   font: inherit;
   font-size: var(--fs-caption);
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background var(--mov-rapido) var(--curva);
+  transition:
+    background var(--mov-rapido) var(--curva),
+    border-color var(--mov-rapido) var(--curva),
+    color var(--mov-rapido) var(--curva);
+}
+
+.mensajeria__chip::before {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
 }
 
 .mensajeria__chip:hover {
-  background: var(--neutro-bg);
+  border-color: var(--petroleo);
+  color: var(--tinta);
+}
+
+.mensajeria__chip:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
 }
 
 .mensajeria__chip.is-activo {
-  background: var(--info-bg);
-  color: var(--info-tinta);
+  border-color: var(--petroleo);
+  background: var(--petroleo);
+  color: var(--tinta-nav);
+}
+
+.mensajeria__chip-icono {
+  inline-size: 16px;
+  block-size: 16px;
 }
 
 .mensajeria__chip-cuenta {
+  min-inline-size: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--info-bg);
+  color: var(--info-tinta);
+  font-size: var(--fs-overline);
   font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.mensajeria__chip.is-activo .mensajeria__chip-cuenta {
+  background: var(--tinta-nav);
+  color: var(--petroleo);
 }
 
 /* --- La lista ------------------------------------------------------------ */
@@ -178,48 +246,7 @@
   min-block-size: 0;
   overflow-y: auto;
   border-block-start: 1px solid var(--filete-2);
-}
-
-.mensajeria__archivados {
-  display: flex;
-  align-items: center;
-  gap: var(--e3);
-  inline-size: 100%;
-  padding: var(--e3) var(--e4);
-  border: 0;
-  border-block-end: 1px solid var(--filete-2);
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.mensajeria__archivados:hover,
-.mensajeria__archivados.is-activo {
-  background: var(--sup-inset);
-}
-
-.mensajeria__archivados-icono {
-  display: inline-flex;
-  color: var(--tinta-2);
-}
-
-.mensajeria__archivados-icono svg {
-  inline-size: 20px;
-  block-size: 20px;
-}
-
-.mensajeria__archivados-texto {
-  flex: 1 1 auto;
-  text-align: start;
-  font-weight: 600;
-  font-size: var(--fs-body);
-}
-
-.mensajeria__archivados-cuenta {
-  color: var(--tinta-3);
-  font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
+  overscroll-behavior: contain;
 }
 
 .mensajeria__rotulo {
@@ -251,9 +278,18 @@
   cursor: pointer;
 }
 
+.mensajeria__contacto {
+  min-block-size: 44px;
+}
+
 .mensajeria__contacto:hover,
 .mensajeria__contacto:focus-visible {
   background: var(--sup-inset);
+}
+
+.mensajeria__contacto:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -2px;
 }
 
 .mensajeria__contacto-nombre {
@@ -267,9 +303,28 @@
 }
 
 .mensajeria__sin-nada {
-  padding: var(--e6) var(--e4);
+  margin: 0;
+  padding: var(--e8) var(--e4);
   color: var(--tinta-2);
   text-align: center;
+}
+
+.mensajeria__enlace {
+  min-block-size: 44px;
+  padding: 0 var(--e2);
+  border: 0;
+  background: none;
+  color: var(--petroleo);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.mensajeria__enlace:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  border-radius: var(--r-ctrl);
 }
 
 /* --- Columna derecha ----------------------------------------------------- */
@@ -329,13 +384,22 @@
 
 /* --- Angosto ------------------------------------------------------------- */
 
+/* En pantallas anchas la bandeja gana un poco de aire, sin pasar de lo que
+   se lee de un vistazo. */
+@media (min-width: 90rem) {
+  .mensajeria {
+    grid-template-columns: minmax(22rem, 28rem) minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 60rem) {
   .mensajeria {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mensajeria__panel {
     border-inline-end: 0;
+    box-shadow: none;
   }
 
   /* Con hilo abierto se ve el hilo; sin él, la lista. Las dos juntas en 360 px
