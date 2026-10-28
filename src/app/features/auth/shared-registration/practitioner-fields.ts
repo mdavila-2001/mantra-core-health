@@ -1,6 +1,7 @@
 import { Validators, type AbstractControl, type ValidationErrors } from '@angular/forms';
 
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
+import { PROFESSION_COLLEGE, titleCollege } from '../../../core/profession/regulatory-authorities';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import type {
@@ -88,6 +89,13 @@ export function practitionerFields(
   // sea odontólogo o médico. Antes acá se pedía «Registro del Colegio», pero
   // lo que el padrón real trae en esa casilla —y lo que la gente cargaba— es
   // el número del SEDES, que además es una habilitación y no un título.
+
+  // El tercero es el registro en el colegio de ESA profesión: el Colegio Médico
+  // para un médico, el de Odontólogos para un odontólogo. Sale del título
+  // elegido dos pasos antes, así que no se vuelve a preguntar cuál es. Sólo es
+  // obligatorio cuando el título tiene un colegio conocido.
+  const colegio = titleCollege(titulo);
+  const tieneColegio = colegio !== PROFESSION_COLLEGE;
 
   // Nombre y cédula van en UNA página, como en el alta de paciente (propietario,
   // 22/10/2026): son el mismo documento —el nombre se escribe «como figura» en
@@ -415,48 +423,51 @@ export function practitionerFields(
       // La autoridad emisora ya no se pregunta (propietario, 26/10/2026): el
       // colegio se completa solo con el título profesional
       // (`syncCollegeWithProfession`) y se puede corregir desde el perfil.
-      hint: 'Sin matrícula y registro del SEDES no podemos darle de alta. Los respaldos son opcionales.',
+      hint: 'Sin matrícula, registro del SEDES y registro del colegio no podemos darle de alta. Las fechas y los respaldos son opcionales.',
       campos: [
+        // Cada registro es UN renglón con su número, su fecha de inscripción y
+        // su respaldo (propietario, 27/10/2026): una fecha y un archivo sueltos
+        // no dicen de cuál de las tres habilitaciones son. El renglón lo
+        // proyecta la pantalla bajo la `key` del número, así el motor sigue
+        // validando el obligatorio y sabe a qué página volver.
         {
           key: 'licenseNumber',
           label: rotuloMatricula,
           hint: hintMatricula,
           description:
             'Es la que comprobamos antes de que aparezca en el directorio: es lo que le da certeza a quien le elige sin conocerle.',
-          control: 'text',
+          control: 'custom',
           required: true,
-          autocomplete: 'off',
           placeholder: placeholderMatricula,
           testId: 'registro-pro-matricula',
           icono: 'shield',
-          // Los dos números de la habilitación, en el mismo renglón: se
-          // copian de la misma credencial y se contestan de una sentada.
-          ancho: 'mitad',
           mensajeDeError: 'Ingrese su matrícula profesional.',
         },
         {
           key: 'sedesLicenseNumber',
           label: 'Registro del SEDES',
           hint: 'El de su habilitación departamental, como figura en su título del SEDES.',
-          control: 'text',
+          control: 'custom',
           required: true,
-          autocomplete: 'off',
           placeholder: 'T.I. 538/14',
           testId: 'registro-pro-credencial',
           icono: 'briefcase',
-          ancho: 'mitad',
           mensajeDeError: 'Ingrese su número de registro del SEDES.',
         },
         {
-          key: 'licenseIssueDate',
-          label: 'Fecha de inscripción (opcional)',
-          hint: 'Cuándo se registró, no cuándo vence.',
-          control: 'date',
-        },
-        {
-          key: 'credentialAttachments',
-          label: 'Respaldos',
+          key: 'collegeLicenseNumber',
+          label: tieneColegio
+            ? `Registro en el ${colegio}`
+            : 'Registro en el colegio de su profesión',
+          hint: tieneColegio
+            ? `El colegio que corresponde a su título profesional. Si no es el suyo, cambie el título en el paso anterior.`
+            : 'Su título no tiene un colegio conocido: complételo si está colegiado.',
           control: 'custom',
+          required: tieneColegio,
+          placeholder: esOdontologo ? 'COB-12345' : 'CMB-12345',
+          testId: 'registro-pro-colegio',
+          icono: 'building',
+          mensajeDeError: 'Ingrese su número de registro en el colegio.',
         },
       ],
     },

@@ -154,4 +154,74 @@ describe('DropzonePdf', () => {
     expect(fixture.componentInstance.fileId()).toBeNull();
     expect(fixture.nativeElement.querySelector('.dropzone-pdf__check')).toBeFalsy();
   });
+
+  /* --- la vista previa --------------------------------------------------- */
+
+  function vistaPrevia(): HTMLElement | null {
+    return fixture.nativeElement.querySelector('app-file-preview');
+  }
+
+  async function completarSubida(fileId: string): Promise<void> {
+    subida$.next({
+      type: HttpEventType.Response,
+      body: { fileId, originalName: 'escritura.pdf', sizeBytes: 2048, mimeType: 'application/pdf' },
+    } as HttpEvent<UploadedDocument>);
+    await fixture.whenStable();
+  }
+
+  it('sin archivo no hay vista previa; mientras sube, tampoco', async () => {
+    expect(vistaPrevia()).toBeNull();
+    await soltar([pdf('escritura.pdf', 2048)]);
+    expect(vistaPrevia()).toBeNull();
+  });
+
+  it('con el PDF subido muestra su vista previa', async () => {
+    await soltar([pdf('escritura.pdf', 2048)]);
+    await completarSubida('file-vista-1');
+
+    expect(vistaPrevia()).not.toBeNull();
+  });
+
+  it('al volver al paso, una instancia nueva muestra la vista previa del PDF ya subido', async () => {
+    await soltar([pdf('escritura.pdf', 2048)]);
+    await completarSubida('file-vista-2');
+    fixture.destroy();
+
+    const otra = TestBed.createComponent(DropzonePdf);
+    otra.componentRef.setInput('uploader', uploader);
+    otra.componentRef.setInput('label', 'Escritura de constitución');
+    otra.componentRef.setInput('testId', 'doc');
+    otra.componentRef.setInput('documentoInicial', {
+      fileId: 'file-vista-2',
+      originalName: 'escritura.pdf',
+      sizeBytes: 2048,
+      mimeType: 'application/pdf',
+    });
+    await otra.whenStable();
+
+    expect(otra.nativeElement.querySelector('app-file-preview')).not.toBeNull();
+  });
+
+  it('un documento restaurado sin el PDF local no inventa una vista previa', async () => {
+    fixture.componentRef.setInput('documentoInicial', {
+      fileId: 'file-de-otra-pestana',
+      originalName: 'escritura.pdf',
+      sizeBytes: 2048,
+      mimeType: 'application/pdf',
+    });
+    await fixture.whenStable();
+
+    expect(estado().textContent).toContain('escritura.pdf');
+    expect(vistaPrevia()).toBeNull();
+  });
+
+  it('quitar el documento quita también la vista previa', async () => {
+    await soltar([pdf('escritura.pdf', 2048)]);
+    await completarSubida('file-vista-3');
+
+    (fixture.nativeElement.querySelector('[data-testid="doc-quitar"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(vistaPrevia()).toBeNull();
+  });
 });

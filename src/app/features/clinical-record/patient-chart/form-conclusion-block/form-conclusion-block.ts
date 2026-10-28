@@ -27,7 +27,6 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
-import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
@@ -119,7 +118,7 @@ function categoriaIcd(codigo: string): string {
  */
 @Component({
   selector: 'app-form-conclusion-block',
-  imports: [Alert, AppButton, Badge, Card, ConceptSelect, FormField, Select],
+  imports: [AppButton, Badge, Card, ConceptSelect, FormField, Select],
   templateUrl: './form-conclusion-block.html',
   styleUrl: './form-conclusion-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

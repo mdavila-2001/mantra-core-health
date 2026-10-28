@@ -365,7 +365,8 @@
   /* Tonal y sin trazo: la tarjeta de afuera ya es la caja. */
   border: 1px solid transparent;
   border-radius: var(--r-menu);
-  background: color-mix(in srgb, var(--petroleo) 9%, var(--sup-tarjeta));
+  /* Menta y no petróleo: el tono de apoyo de la línea gráfica (27/10/2026). */
+  background: color-mix(in srgb, var(--menta) 18%, var(--sup-tarjeta));
   color: var(--tinta);
   font: inherit;
   font-size: var(--fs-caption);

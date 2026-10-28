@@ -224,13 +224,13 @@ export const ENROLLMENT_IN_TAB_FIELD: Readonly<Record<string, number>> = {
   professionalTitleFile: DOCTOR_TAB.credenciales,
 
   /* 9 · Tu habilitación para ejercer */
+  // La autoridad emisora ya no se pregunta en el alta (26/10/2026). Desde el
+  // 27/10/2026 cada registro es un renglón con su número, su fecha y su
+  // respaldo, proyectado bajo la clave del número: no quedan campos sueltos
+  // de fecha ni de respaldos.
   licenseNumber: DOCTOR_TAB.credenciales,
   sedesLicenseNumber: DOCTOR_TAB.credenciales,
-  // La autoridad emisora ya no se pregunta en el alta (26/10/2026).
-  licenseIssueDate: DOCTOR_TAB.credenciales,
-
-  /* 10 · Los respaldos de tu habilitación */
-  credentialAttachments: DOCTOR_TAB.credenciales,
+  collegeLicenseNumber: DOCTOR_TAB.credenciales,
 
   /* 11 · Tus títulos */
   academicTitles: DOCTOR_TAB.credenciales,

@@ -44,8 +44,9 @@ const BIENVENIDA: TutorialDefinition = {
     {
       id: 'panel',
       title: 'El panel',
-      body: 'Es su punto de partida: qué secciones tiene habilitadas, en qué organización está trabajando y cómo va su verificación de identidad.',
-      target: 'panel-accesos',
+      // Apuntaba al árbol «Sus herramientas», retirado del panel el 28/10/2026.
+      body: 'Es su punto de partida: lo que toca hoy y lo último de su organización. Las secciones se abren desde el menú de la izquierda.',
+      target: 'panel-titulo',
       placement: 'top',
     },
     {
@@ -166,8 +167,8 @@ const NAVEGACION: TutorialDefinition = {
       id: 'roles',
       title: 'Por qué ve estas secciones',
       body: 'El menú se arma con los roles de su sesión. Si una sección no aparece, es porque su rol no la puede abrir, no porque no exista.',
-      target: 'panel-accesos',
-      placement: 'top',
+      target: 'shell-nav',
+      placement: 'right',
     },
     {
       id: 'migas',
