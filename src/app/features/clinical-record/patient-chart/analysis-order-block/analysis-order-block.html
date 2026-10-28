@@ -28,7 +28,7 @@
       pantalla: hay que declarar el catálogo del lado del servidor.
     </app-alert>
   } @else {
-    <form class="estudios__formulario" (submit)="$event.preventDefault()">
+    <form class="estudios__formulario app-form-grid" (submit)="$event.preventDefault()">
       <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
            cargada; con una sola respuesta el selector queda deshabilitado. -->
       @if (exigeRespuesta()) {
@@ -42,6 +42,7 @@
         />
       }
       <app-form-field
+        class="app-form-grid__ancho"
         label="Estudio"
         hint="Del catálogo de terminología. Qué análisis o qué imagen se pide."
         [required]="true"
