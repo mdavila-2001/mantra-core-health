@@ -1,0 +1,28 @@
+@if (mode() === 'paciente' && pago()?.state === 'PAID') {
+  <app-badge variant="success" data-testid="turnos-pagada">Pagada</app-badge>
+}
+<button
+  app-button
+  [variant]="mode() === 'paciente' ? 'outline' : 'ghost'"
+  size="sm"
+  type="button"
+  [attr.data-testid]="mode() === 'paciente' ? 'turnos-comprobante' : 'agenda-comprobantes'"
+  [attr.aria-label]="(mode() === 'paciente' ? 'Comprobante de pago de ' : 'Comprobantes de pago de ') + cita()"
+  (clicked)="abierto.set(true)"
+>
+  @if (mode() === 'revisor') {
+    <app-nav-icon name="receipt" />
+  }
+  {{ mode() === 'paciente' ? 'Comprobante de pago' : 'Comprobantes' }}
+</button>
+
+@if (abierto()) {
+  <app-payment-receipts-dialog
+    [mode]="mode()"
+    [bookingId]="bookingId()"
+    [cita]="cita()"
+    [canUpload]="pago()?.state !== 'PAID'"
+    (changed)="anotarCambio()"
+    (closed)="cerrar()"
+  />
+}

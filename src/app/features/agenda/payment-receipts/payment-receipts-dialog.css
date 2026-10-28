@@ -1,0 +1,151 @@
+/* Los comprobantes de pago de una cita. Una columna: arriba lo que se puede
+   hacer (subir, en el modo paciente), abajo lo que ya hay. */
+.comprobantes {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.comprobantes__subir {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
+}
+
+.comprobantes__subtitulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.comprobantes__subir .comprobantes__subtitulo {
+  margin: 0;
+}
+
+.comprobantes__ayuda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* El monto es corto y la nota larga: en pantalla ancha van lado a lado con la
+   nota ocupando lo que sobra; en el celular, una debajo de la otra. */
+.comprobantes__campos {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 40rem) {
+  .comprobantes__campos {
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  }
+}
+
+.comprobantes__enviar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.comprobantes__vacio {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.comprobantes__lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comprobante {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.comprobante__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.comprobante__cuando,
+.comprobante__revision {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.comprobante__revision {
+  margin: 0;
+}
+
+.comprobante__datos {
+  display: grid;
+  gap: var(--sp-2) var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  margin: 0;
+}
+
+.comprobante__dato {
+  margin: 0;
+}
+
+.comprobante__dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.comprobante__dato dt {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.comprobante__dato dd {
+  margin: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.comprobante__motivo {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-inline-start: 3px solid var(--st-error-fg);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.comprobante__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.comprobante__rechazo {
+  display: grid;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.comprobante__vista {
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.comprobante__vista-estado {
+  margin: 0;
+  padding-block: var(--sp-4);
+  text-align: center;
+  color: var(--text-secondary);
+}

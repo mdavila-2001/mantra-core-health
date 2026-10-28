@@ -1,0 +1,272 @@
+<app-content-dialog
+  [heading]="titulo()"
+  [description]="descripcion()"
+  size="md"
+  closeLabel="Cerrar"
+  [dismissible]="!subiendo()"
+  (closed)="cerrar()"
+>
+  <div class="comprobantes" data-testid="comprobantes">
+    @if (mode() === 'paciente' && comprobantes().status === 'ready') {
+      @if (ofreceSubir()) {
+        <section class="comprobantes__subir" aria-labelledby="comprobantes-subir-titulo">
+          <h3 class="comprobantes__subtitulo" id="comprobantes-subir-titulo">
+            @if (sinComprobantes()) {
+              Subir el comprobante
+            } @else {
+              Subir otro comprobante
+            }
+          </h3>
+
+          @if (errorDeSubida(); as mensaje) {
+            <app-alert tone="error" data-testid="comprobante-error-subida">{{ mensaje }}</app-alert>
+          }
+
+          <app-file-input
+            testId="comprobante-archivo"
+            label="Elegir el archivo"
+            accessibleLabel="Archivo del comprobante de pago"
+            [accept]="accept"
+            [maxSizeBytes]="maxSizeBytes"
+            [showFeedback]="false"
+            [disabled]="subiendo()"
+            [files]="elegidos()"
+            (filesChange)="elegir($event)"
+            (rejected)="rechazarArchivo()"
+          />
+          <p class="comprobantes__ayuda">Una foto o captura del pago, o el PDF que le dio el banco.</p>
+
+          <div class="comprobantes__campos">
+            <app-form-field
+              label="Monto pagado"
+              hint="Opcional. Como figura en el comprobante, por ejemplo 150.00."
+              [errorMessage]="montoInvalido() ? 'Escriba sólo el número, con hasta dos decimales.' : ''"
+            >
+              <app-input
+                testId="comprobante-monto"
+                inputMode="decimal"
+                [hasError]="montoInvalido()"
+                [disabled]="subiendo()"
+                [(value)]="monto"
+              />
+            </app-form-field>
+
+            <app-form-field label="Nota para su profesional" hint="Opcional.">
+              <app-textarea
+                data-testid="comprobante-nota"
+                placeholder="Por ejemplo: pagué desde la cuenta de mi esposa"
+                [rows]="2"
+                [maxLength]="maxText"
+                [disabled]="subiendo()"
+                [(value)]="nota"
+              />
+            </app-form-field>
+          </div>
+
+          <div class="comprobantes__enviar">
+            <button
+              app-button
+              type="button"
+              data-testid="comprobante-enviar"
+              [disabled]="!puedeEnviar()"
+              [isLoading]="subiendo()"
+              (clicked)="enviar()"
+            >
+              Enviar comprobante
+            </button>
+          </div>
+        </section>
+      } @else if (hayConfirmado()) {
+        <app-alert tone="success" data-testid="comprobante-confirmado">
+          Su profesional confirmó el pago. No hace falta que suba nada más.
+        </app-alert>
+      } @else if (hayPendiente()) {
+        <app-alert tone="info" data-testid="comprobante-pendiente">
+          Su comprobante está esperando que su profesional lo revise. Le avisamos cuando lo haga.
+        </app-alert>
+      } @else if (sinComprobantes()) {
+        <!-- Sin comprobantes y sin poder subir: la cita está cancelada o ya pagada. -->
+        <p class="comprobantes__vacio" data-testid="comprobante-no-aplica">
+          Esta cita no necesita comprobante: ya está pagada o se canceló.
+        </p>
+      }
+    }
+
+    @if (errorDeRevision(); as mensaje) {
+      <app-alert tone="error" data-testid="comprobante-error-revision">{{ mensaje }}</app-alert>
+    }
+
+    <app-view-state-host [state]="comprobantes()" (retry)="cargar()">
+      @if (comprobantes().status === 'ready') {
+        @if (sinComprobantes()) {
+          @if (mode() === 'revisor') {
+            <p class="comprobantes__vacio" data-testid="comprobantes-vacio">
+              El paciente todavía no subió ningún comprobante para esta cita.
+            </p>
+          }
+        } @else {
+          <section aria-labelledby="comprobantes-lista-titulo">
+            <h3 class="comprobantes__subtitulo" id="comprobantes-lista-titulo">
+              @if (mode() === 'paciente') {
+                Lo que ya subió
+              } @else {
+                Recibidos
+              }
+            </h3>
+            <ul class="comprobantes__lista" data-testid="comprobantes-lista">
+              @for (comprobante of lista(); track comprobante.id) {
+                @let estado = presentacion(comprobante.status);
+                @let vista = vistas().get(comprobante.id);
+                <li class="comprobante" [attr.data-testid]="'comprobante-' + comprobante.status">
+                  <div class="comprobante__cabecera">
+                    <app-badge [variant]="estado.tono" size="sm">{{ estado.label }}</app-badge>
+                    <span class="comprobante__cuando">
+                      Subido el {{ comprobante.uploadedAt | date: "d 'de' MMM, HH:mm" }}
+                      @if (mode() === 'revisor') {
+                        por {{ comprobante.uploadedBy.displayName }}
+                      }
+                    </span>
+                  </div>
+
+                  @if (comprobante.amount || comprobante.paidAt || comprobante.note) {
+                    <dl class="comprobante__datos">
+                      @if (comprobante.amount) {
+                        <div class="comprobante__dato">
+                          <dt>Monto declarado</dt>
+                          <dd data-testid="comprobante-monto-leido">{{ comprobante.amount }}</dd>
+                        </div>
+                      }
+                      @if (comprobante.paidAt) {
+                        <div class="comprobante__dato">
+                          <dt>Pagado el</dt>
+                          <dd>{{ comprobante.paidAt | date: "d 'de' MMM, HH:mm" }}</dd>
+                        </div>
+                      }
+                      @if (comprobante.note) {
+                        <div class="comprobante__dato comprobante__dato--ancho">
+                          <dt>Nota</dt>
+                          <dd>{{ comprobante.note }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  }
+
+                  @if (comprobante.status === 'REJECTED') {
+                    <p class="comprobante__motivo" data-testid="comprobante-motivo">
+                      <strong>Motivo del rechazo:</strong> {{ comprobante.rejectionReason || 'sin motivo' }}
+                    </p>
+                  }
+                  @if (comprobante.reviewedAt) {
+                    <p class="comprobante__revision">
+                      Revisado el {{ comprobante.reviewedAt | date: "d 'de' MMM, HH:mm" }}
+                      @if (comprobante.reviewedBy) {
+                        por {{ comprobante.reviewedBy.displayName }}
+                      }
+                    </p>
+                  }
+
+                  <div class="comprobante__acciones">
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      data-testid="comprobante-ver"
+                      [attr.aria-expanded]="vista !== undefined"
+                      (clicked)="verComprobante(comprobante)"
+                    >
+                      {{ vista === undefined ? 'Ver el comprobante' : 'Ocultar el comprobante' }}
+                    </button>
+                    @if (mode() === 'revisor' && comprobante.status === 'PENDING' && rechazando() !== comprobante.id) {
+                      <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        data-testid="comprobante-rechazar"
+                        [disabled]="operando() !== null"
+                        (clicked)="empezarRechazo(comprobante)"
+                      >
+                        Rechazar
+                      </button>
+                      <button
+                        app-button
+                        size="sm"
+                        type="button"
+                        data-testid="comprobante-confirmar"
+                        [disabled]="operando() !== null && operando() !== comprobante.id"
+                        [isLoading]="operando() === comprobante.id"
+                        (clicked)="confirmar(comprobante)"
+                      >
+                        Confirmar el pago
+                      </button>
+                    }
+                  </div>
+
+                  @if (rechazando() === comprobante.id) {
+                    <!-- El motivo se pide acá mismo y no en otro diálogo encima de
+                         éste: el paciente lo lee para saber qué volver a subir. -->
+                    <div class="comprobante__rechazo" data-testid="comprobante-rechazo">
+                      <app-form-field
+                        label="Por qué lo rechaza"
+                        [hint]="'El paciente lo va a leer. Al menos ' + minRechazo + ' letras.'"
+                        [required]="true"
+                      >
+                        <app-textarea
+                          data-testid="comprobante-motivo-campo"
+                          placeholder="Por ejemplo: no se lee el monto"
+                          [rows]="2"
+                          [maxLength]="maxText"
+                          [disabled]="operando() === comprobante.id"
+                          [(value)]="motivo"
+                        />
+                      </app-form-field>
+                      <div class="comprobante__acciones">
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          [disabled]="operando() === comprobante.id"
+                          (clicked)="cancelarRechazo()"
+                        >
+                          Volver
+                        </button>
+                        <button
+                          app-button
+                          variant="danger"
+                          size="sm"
+                          type="button"
+                          data-testid="comprobante-rechazar-confirmar"
+                          [disabled]="!motivoValido()"
+                          [isLoading]="operando() === comprobante.id"
+                          (clicked)="rechazar(comprobante)"
+                        >
+                          Rechazar el comprobante
+                        </button>
+                      </div>
+                    </div>
+                  }
+
+                  @if (vista !== undefined) {
+                    <div class="comprobante__vista" data-testid="comprobante-vista">
+                      @if (vista.estado === 'lista') {
+                        <app-file-preview [file]="vista.archivo" />
+                      } @else if (vista.estado === 'carga') {
+                        <p class="comprobante__vista-estado"><app-spinner size="sm" label="Bajando el comprobante" /></p>
+                      } @else {
+                        <p class="comprobante__vista-estado" role="status">
+                          No pudimos abrir el comprobante. Pruebe de nuevo en un momento.
+                        </p>
+                      }
+                    </div>
+                  }
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
+    </app-view-state-host>
+  </div>
+</app-content-dialog>

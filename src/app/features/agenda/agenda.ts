@@ -42,7 +42,6 @@ import type {
   PaymentStateCode,
   PaymentStateInfo,
 } from '../../core/data-access/scheduling/scheduling.types';
-// hasta que C0 publique los tipos congelados.
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
@@ -83,6 +82,7 @@ import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './ag
 import { MyAgenda } from './my-agenda/my-agenda';
 import { ServicesSchedule } from './services-schedule/services-schedule';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
+import { PaymentReceiptsTrigger } from './payment-receipts/payment-receipts-trigger';
 import { AgendaWindowNav } from './window-nav/window-nav';
 import { rangoDeVentana } from './window-nav/window-range';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
@@ -535,6 +535,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'services' | 'slots
     MyAgenda,
     ServicesSchedule,
     WalkInForm,
+    PaymentReceiptsTrigger,
   ],
   templateUrl: './agenda.html',
   styleUrl: './agenda.css',
@@ -1667,7 +1668,7 @@ export class Agenda {
   protected readonly versionDeAcciones = signal(0);
 
   /** Después de operar una cita: se relee la lista y se avisa al calendario. */
-  private trasOperar(): void {
+  protected trasOperar(): void {
     this.cargarAgenda();
     this.versionDeAcciones.update((v) => v + 1);
   }
@@ -3113,4 +3114,3 @@ function cuenta<T>(estado: ViewState<readonly T[]>): number | null {
 function rotulo(nombre: string, total: number | null): string {
   return total === null ? nombre : `${nombre} (${total})`;
 }
-

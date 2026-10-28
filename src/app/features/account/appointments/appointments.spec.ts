@@ -10,6 +10,7 @@ import { of, throwError } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
+import { PaymentReceiptsClient } from '../../../core/data-access/scheduling/payment-receipts.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { AgendaResource, AgendaSlot } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -1664,6 +1665,8 @@ function montarCancelacion(opts: Opciones) {
           enrollWaitlist,
         },
       },
+      // v4.2.64 · lo que pide el modal del comprobante al abrirse.
+      { provide: PaymentReceiptsClient, useValue: { list: vi.fn().mockReturnValue(of([])) } },
       { provide: TerminologyClient, useValue: { readConceptLabels } },
       // Sin token de paciente del seed, se inyecta el mínimo que la pantalla usa:
       // el perfil (para pedir sus turnos) y la organización, que por omisión no
@@ -1682,6 +1685,8 @@ function montarCancelacion(opts: Opciones) {
       },
       { provide: DialogService, useValue: { confirm, confirmWithReason } },
       { provide: ToastService, useValue: toast },
+      // El modal del comprobante usa `FilesClient`, que pide `HttpClient`.
+      provideHttpClient(),
       provideRouter([]),
     ],
   });
@@ -1711,6 +1716,58 @@ function api(comp: Appointments) {
     turnosListos(): readonly { id: string; codigo: string; resourceId: string; estado: string }[];
   };
 }
+
+describe('Appointments · comprobante de pago (v4.2.64)', () => {
+  it('ofrece el comprobante en una cita viva o atendida, nunca en una cancelada', () => {
+    const { fixture } = montarCancelacion({
+      bookings: [
+        citaMock('b-conf', 's-conf'),
+        citaMock('b-done', 's-done'),
+        citaMock('b-canc', 's-canc'),
+        citaMock('b-raro', 's-raro'),
+      ],
+      labels: [
+        etiqueta('s-conf', 'BOOKING_CONFIRMED'),
+        etiqueta('s-done', 'EV_BOOKING_DONE'),
+        etiqueta('s-canc', 'BOOKING_CANCELLED'),
+        etiqueta('s-raro', 'FOO'),
+      ],
+    });
+    fixture.detectChanges();
+
+    // Confirmada y atendida sí; cancelada y desconocida no.
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="turnos-comprobante"]').length).toBe(2);
+  });
+
+  it('una cita pagada lo dice, y el modal se abre sin ofrecer subir otro', () => {
+    const { fixture } = montarCancelacion({
+      bookings: [
+        {
+          ...citaMock('b-pagada', 's-conf'),
+          paymentState: {
+            state: 'PAID',
+            label: 'Pagada',
+            conceptId: 'c-1',
+            insuranceUsed: false,
+            markedByUserId: 'u-med',
+            markedAt: new Date('2026-08-12T13:00:00.000Z'),
+          },
+        } as ReturnType<typeof citaMock>,
+      ],
+      labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED')],
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-pagada"]')).not.toBeNull();
+
+    (fixture.nativeElement.querySelector('[data-testid="turnos-comprobante"]') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-payment-receipts-dialog')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="comprobante-archivo"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="comprobante-no-aplica"]')).not.toBeNull();
+  });
+});
 
 describe('Appointments · cancelar turno propio', () => {
   it('muestra "Cancelar" solo en turnos cancelables (gate por código normalizado)', () => {
