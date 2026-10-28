@@ -241,3 +241,48 @@ app-card.expediente__activas {
   padding: 0;
   list-style: none;
 }
+
+/* ── Las tres lecturas: selector de vista y filtro por tipo ──────────────
+   El selector arriba y a la izquierda, el filtro a continuación: primero se
+   elige cómo leer y después qué. En teléfono el filtro baja a su propia
+   línea y se desplaza dentro de ella en vez de apilar ocho chips. */
+
+.expediente__vistas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  margin-block-end: var(--sp-4);
+}
+
+/* Sin esto el flex lo encoge y el control recorta sus rótulos. En angosto
+   toma la fila entera, que es lo que el control espera (su corte de 30rem). */
+.expediente__vistas app-segmented-control {
+  flex: none;
+}
+
+@media (max-width: 30rem) {
+  .expediente__vistas app-segmented-control {
+    flex: 1 1 100%;
+  }
+}
+
+.expediente__filtro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+@media (max-width: 649px) {
+  .expediente__filtro {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    inline-size: 100%;
+    padding-block-end: var(--sp-1);
+  }
+
+  .expediente__filtro app-chip {
+    flex: none;
+  }
+}
