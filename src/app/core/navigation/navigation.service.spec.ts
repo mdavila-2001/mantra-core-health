@@ -316,6 +316,9 @@ describe('NavigationService', () => {
         'Directorios',
         'Consultas médicas',
         'Archivo clínico',
+        // «Mis pacientes de cabecera» entra el 28/10/2026: quiénes lo eligieron
+        // como médico de cabecera (pedido del propietario).
+        'Mis pacientes de cabecera',
         // «Notas médicas» (antes «Evoluciones») YA NO entra: salió del menú y
         // del producto el 25/09/2026 a pedido del propietario (e000f8ce). La
         // nota se escribe y se lee desde la consulta y el expediente.

@@ -1,0 +1,100 @@
+<!-- Una sola tarjeta con un solo botón: lo que el botón dice cambia según la
+     situación, para que el paciente no tenga que elegir entre opciones. -->
+@if (fase() !== 'oculto') {
+  <app-card
+    variant="outlined"
+    padding="lg"
+    class="cabecera"
+    data-testid="medico-cabecera"
+    [class.cabecera--elegido]="esEste()"
+  >
+    <div class="cabecera__fila">
+      <span class="cabecera__icono" aria-hidden="true">
+        <app-nav-icon name="heart" />
+      </span>
+
+      <div class="cabecera__texto">
+        <h2 class="cabecera__titulo">{{ copy.titulo }}</h2>
+
+        @switch (fase()) {
+          @case ('cargando') {
+            <p class="cabecera__explicacion" data-testid="medico-cabecera-cargando">
+              Consultando su médico de cabecera…
+            </p>
+          }
+          @case ('error') {
+            <p class="cabecera__explicacion" role="alert" data-testid="medico-cabecera-error">
+              {{ copy.errorAlLeer }}
+            </p>
+          }
+          @default {
+            @if (esEste()) {
+              <p class="cabecera__estado" data-testid="medico-cabecera-es-este">
+                <app-nav-icon name="check-circle" />
+                <span>
+                  <strong>Es su médico de cabecera</strong>
+                  @if (actual(); as medico) {
+                    desde el {{ medico.since | date: "d 'de' MMMM 'de' y" }}.
+                  }
+                </span>
+              </p>
+            } @else {
+              <p class="cabecera__explicacion">{{ copy.queEs }}</p>
+              @if (actual(); as medico) {
+                <p class="cabecera__actual" data-testid="medico-cabecera-actual">
+                  Hoy su médico de cabecera es <strong>{{ nombreActual() }}</strong>.
+                  Si elige a este profesional, lo reemplaza.
+                </p>
+              }
+              @if (cerrado()) {
+                <p class="cabecera__actual" data-testid="medico-cabecera-no-acepta">{{ copy.noAcepta }}</p>
+              }
+            }
+          }
+        }
+      </div>
+
+      <div class="cabecera__accion">
+        @if (fase() === 'error') {
+          <button app-button variant="outline" type="button" data-testid="medico-cabecera-reintentar" (clicked)="cargar()">
+            {{ copy.reintentar }}
+          </button>
+        } @else if (fase() === 'listo') {
+          @if (esEste()) {
+            <button
+              app-button
+              variant="outline"
+              type="button"
+              data-testid="medico-cabecera-quitar"
+              [isLoading]="guardando()"
+              (clicked)="quitar()"
+            >
+              {{ copy.quitar }}
+            </button>
+          } @else {
+            <button
+              app-button
+              variant="primary"
+              size="lg"
+              type="button"
+              data-testid="medico-cabecera-elegir"
+              [isLoading]="guardando()"
+              [disabled]="cerrado()"
+              (clicked)="elegir()"
+            >
+              <app-nav-icon name="heart" />
+              {{ copy.elegir }}
+            </button>
+          }
+        }
+      </div>
+    </div>
+
+    @if (fallo(); as mensaje) {
+      <app-alert tone="error" class="cabecera__aviso" data-testid="medico-cabecera-fallo">{{ mensaje }}</app-alert>
+    }
+    <!-- Región viva siempre presente: anunciar el resultado de pulsar el botón
+         a quien usa lector de pantalla, sin mover el foco. -->
+    <p class="cabecera__ok" role="status" aria-live="polite" data-testid="medico-cabecera-aviso">{{ aviso() ?? '' }}</p>
+  </app-card>
+}

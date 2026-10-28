@@ -75,6 +75,10 @@ describe('PatientHome', () => {
     for (const pending of http.match((r) => r.url === '/profiles/patients/me')) {
       pending.flush({});
     }
+    // La tarjeta del médico de cabecera (28/10/2026) también llega por `@defer`.
+    for (const pending of http.match((r) => r.url === '/profiles/patients/me/primary-practitioner')) {
+      pending.flush({ current: null });
+    }
     http.verify();
   });
 

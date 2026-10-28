@@ -51,6 +51,9 @@ describe('NAV_SUBGROUPS', () => {
   const SUELTAS_A_PROPOSITO = [
     'schedule',
     'medical-records',
+    // El médico de cabecera (28/10/2026): una sola sección, al lado del archivo
+    // clínico; un subgrupo para envolverla sería el escalón de más.
+    'my-primary-patients',
     'psychological-help',
     // La portada de «Superadministración» (17/10/2026): es el tablero con el que
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
