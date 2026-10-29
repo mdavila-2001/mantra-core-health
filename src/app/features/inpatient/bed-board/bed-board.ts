@@ -199,7 +199,7 @@ export class BedBoard {
       ? 'No se pudo actualizar: se muestran los datos de antes.'
       : 'La última lectura es más vieja de lo esperado.',
   );
-  protected readonly ageMinutes = computed(() => Math.max(1, Math.floor(this.ageSeconds() / 60)));
+  protected readonly ageMinutes = computed(() => Math.max(1, Math.round(this.ageSeconds() / 60)));
 
   /** Los nueve estados M34 del tablero. */
   protected readonly state = computed<ViewState<Reading>>(() => {
@@ -394,6 +394,7 @@ export class BedBoard {
           this.refreshing.set(false);
           this.pollFailed.set(false);
           this.loadError.set(null);
+          this.now.set(new Date());
           this.reading.set({ board, receivedAt: new Date() });
         },
         error: (error: unknown) => {

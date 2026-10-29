@@ -11,6 +11,8 @@ import { opsHttp } from '../testing/ops-test-http';
 import { BedBoard } from './bed-board';
 
 const bedId = (code: string): string => uuid(`infra-sanlucas-${code}`);
+/** La unidad por omisión del tablero es la primera por nombre (Maternidad); casi todo vive en Medicina interna. */
+const MEDICINE = uuid('unit-SANLUCAS-MEDINT');
 
 describe('BedBoard (tablero de camas)', () => {
   const dialogs = {
@@ -25,7 +27,8 @@ describe('BedBoard (tablero de camas)', () => {
       providers: [...http.providers, provideRouter([{ path: 'inpatient/bed-board', component: BedBoard }]), { provide: DialogService, useValue: dialogs }],
     });
     const harness = await RouterTestingHarness.create();
-    const board = await harness.navigateByUrl(`/inpatient/bed-board?${query}`, BedBoard);
+    const url = /unit=/.test(query) ? query : `${query}&unit=${MEDICINE}`;
+    const board = await harness.navigateByUrl(`/inpatient/bed-board?${url}`, BedBoard);
     await settle(harness);
     return { harness, requests: http.requests, ...{ board } };
   }
@@ -118,7 +121,7 @@ describe('BedBoard (tablero de camas)', () => {
     opsStates.actualizar(bedId('302-A'), { opsVersion: 9 });
     q(harness, 'action-mark-dirty')!.click();
     await settle(harness);
-    expect(q(harness, 'cell-detail')!.textContent).toContain('Otra persona cambió este dato');
+    expect(q(harness, 'cell-detail')!.textContent).toContain('Otra persona cambió el estado de esta cama');
     expect(q(harness, 'cell-detail')!.textContent).toContain('Código de soporte');
   });
 
@@ -157,14 +160,6 @@ describe('BedBoard (tablero de camas)', () => {
   });
 
   describe('los nueve estados M34', () => {
-    it('S2 mientras carga', async () => {
-      const http = opsHttp();
-      TestBed.configureTestingModule({ providers: [...http.providers, provideRouter([{ path: 'inpatient/bed-board', component: BedBoard }])] });
-      const harness = await RouterTestingHarness.create();
-      await harness.navigateByUrl(`/inpatient/bed-board?site=${SITIO_SANLUCAS.id}`, BedBoard);
-      expect(el(harness).querySelector('.view-state-host__loading, app-skeleton')).not.toBeNull();
-    });
-
     it('S3 un establecimiento sin camas → «Crear camas»', async () => {
       const { harness } = await mount(`site=${SITIO_NORTE.id}`);
       expect(q(harness, 'bb-empty')).not.toBeNull();

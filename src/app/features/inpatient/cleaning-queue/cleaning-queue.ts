@@ -193,7 +193,7 @@ export class CleaningQueue {
     const r = this.reading();
     return r === null ? '' : ageLabel(r.generatedAt, this.now());
   });
-  protected readonly ageMinutes = computed(() => Math.max(1, Math.floor(this.ageSeconds() / 60)));
+  protected readonly ageMinutes = computed(() => Math.max(1, Math.round(this.ageSeconds() / 60)));
 
   protected readonly rows = computed<ViewState<readonly CleaningOrder[]>>(() => {
     const r = this.reading();
@@ -305,6 +305,7 @@ export class CleaningQueue {
           this.refreshing.set(false);
           this.pollFailed.set(false);
           this.fatal.set(null);
+          this.now.set(new Date());
           this.reading.set(list);
         },
         error: (error: unknown) => {
