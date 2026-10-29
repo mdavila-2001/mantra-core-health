@@ -1,7 +1,8 @@
 import { imagenesDeVitrina, SEMILLAS_DE_VITRINA } from './bolivia-eje-central';
 import { SEMILLAS_DE_INSTITUCIONES } from './instituciones';
 import { CATEGORIA, categoriaDeCadena, type CategoriaSimulada } from './categorias-publicas';
-import { ESPECIALIDAD, ESTADO } from './conceptos';
+import { ESPECIALIDAD, ESTADO, ESTADO_RESERVA } from './conceptos';
+import { RECURSO_CONSULTORIO_MEDICA, RECURSO_MEDICA, reservas } from './agenda';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
 import { avatarSvg, Coleccion, imagenSvg, iso, portadaSvg, uuid } from '../mock-store';
@@ -630,6 +631,26 @@ const PEDIATRA_V = vitrinaDe(PROFESIONALES[1]!.id)!.id;
 const ENDO_V = vitrinaDe(PROFESIONALES[9]!.id)!.id;
 const DERMA_V = vitrinaDe(PROFESIONALES[3]!.id)!.id;
 
+/** La confirmación sembrada en el hilo médica ↔ paciente, si la paciente tiene un turno confirmado con ella. */
+function confirmacionDeCita(): MensajeSimulado[] {
+  // El próximo turno confirmado de la paciente con la médica (en cualquiera
+  // de sus dos agendas); si no tiene, el más próximo de cualquier profesional.
+  const confirmados = reservas
+    .todos()
+    .filter((r) => r.patientProfileId === PACIENTE.id && r.statusConceptId === ESTADO_RESERVA['BK-CONFIRMED'] && new Date(r.startAt).getTime() > Date.now())
+    .sort((a, b) => a.startAt.localeCompare(b.startAt));
+  const turno = confirmados.find((r) => r.resourceId === RECURSO_MEDICA || r.resourceId === RECURSO_CONSULTORIO_MEDICA) ?? confirmados[0];
+  if (turno === undefined) return [];
+  const cuando = new Date(turno.startAt).toLocaleString('es-BO', { dateStyle: 'full', timeStyle: 'short' });
+  const texto = [
+    '✅ ¡Su cita quedó confirmada!',
+    `🗓️ ${cuando}\n👩‍⚕️ ${MEDICA.displayName}`,
+    '⏰ Le recomendamos llegar 10 minutos antes. ¡Lo esperamos! 💙',
+    `👉 Ver la cita: https://alovida.bo/my-account/appointments?turno=${turno.id}`,
+  ].join('\n\n');
+  return [mensaje(C1, VITRINA_MEDICA.id, texto, 0, 9, 45)];
+}
+
 export const mensajes = new Coleccion<MensajeSimulado>([
   mensaje(C1, VITRINA_PACIENTE.id, 'Hola doctora, buenas tardes. Quería consultarle si puedo tomar el enalapril junto con el ibuprofeno que me dieron para la espalda.', -3, 16, 5),
   mensaje(C1, VITRINA_MEDICA.id, 'Hola Ana. Mejor evitar el ibuprofeno por más de 2 o 3 días mientras tomás enalapril: puede subir la presión y afectar el riñón. Para el dolor usá paracetamol.', -3, 17, 40),
@@ -638,6 +659,11 @@ export const mensajes = new Coleccion<MensajeSimulado>([
   mensaje(C1, VITRINA_PACIENTE.id, 'Doctora, ya me llegaron los resultados del laboratorio. ¿Se los mando por acá o los llevo a la consulta del jueves?', 0, 9, 12),
   // Una respuesta con cita, para que la burbuja con el bloque citado se vea sin tener que provocarla.
   mensaje(C1, VITRINA_MEDICA.id, 'Mandámelos por acá así los miro antes del jueves. Si preferís, subilos a tu historia clínica desde https://alovida.bo/mi-historia y los veo ahí.', 0, 9, 30, { replyToMessageId: uuid(`msg-${C1}-0-9-12`) }),
+  // La confirmación que la API deja en el hilo profesional ↔ paciente al
+  // aceptar (`bookingConfirmationChatText`): con emojis y el enlace que el hilo
+  // pinta como «Ir a la cita» — a «Mis citas» para la paciente, a la agenda
+  // para la médica, que es quien la firmó.
+  ...confirmacionDeCita(),
   mensaje(C2, PEDIATRA_V, 'Vale, te derivo a la mamá de un paciente de 14 años con soplo. ¿Tenés turno esta semana?', -7, 11),
   mensaje(C2, VITRINA_MEDICA.id, 'Sí, decile que reserve el jueves a la tarde. Pasame el nombre y lo priorizo.', -7, 11, 30),
   mensaje(C2, PEDIATRA_V, 'Gracias. Es Martín Rocha Antelo.', -7, 11, 32),

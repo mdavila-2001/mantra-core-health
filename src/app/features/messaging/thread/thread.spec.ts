@@ -348,6 +348,40 @@ describe('Thread', () => {
     expect(enlace?.getAttribute('rel')).toContain('noopener');
   });
 
+  it('un aviso de cita trae el botón «Ir a la cita»: el paciente va a «Mis citas»', () => {
+    abrir([
+      mensaje(
+        'm-1',
+        'pp-2',
+        '✅ ¡Su cita quedó confirmada!\n\n👉 Ver la cita: https://alovida.bo/my-account/appointments?turno=b-1',
+      ),
+    ]);
+
+    const boton = consultar('hilo-ir-cita') as HTMLAnchorElement | null;
+    expect(boton?.textContent).toContain('Ir a la cita');
+    expect(boton?.getAttribute('href')).toBe('/my-account/appointments?turno=b-1');
+    // La URL cruda ya no se ve: el botón la reemplaza.
+    expect(burbujas()[0]!.querySelector('.hilo__texto')?.textContent).not.toContain('https://');
+  });
+
+  it('la confirmación propia (la mandó el profesional) lleva a su agenda', () => {
+    abrir([
+      mensaje(
+        'm-1',
+        'pp-1',
+        '✅ ¡Su cita quedó confirmada!\n\n👉 Ver la cita: https://alovida.bo/my-account/appointments?turno=b-1',
+      ),
+    ]);
+
+    expect(consultar('hilo-ir-cita')?.getAttribute('href')).toBe('/schedule?vista=citas&turno=b-1');
+  });
+
+  it('un mensaje sin cita no tiene botón', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola doctora')]);
+
+    expect(consultar('hilo-ir-cita')).toBeNull();
+  });
+
   it('reenviar manda el mismo texto a la conversación elegida', () => {
     abrir([mensaje('m-1', 'pp-2', 'Te dejo la orden en la historia clínica')]);
     // Otra conversación en la bandeja, para tener a quién reenviar.

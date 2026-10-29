@@ -223,11 +223,26 @@
                 }
               }
 
-              @if (linea.mensaje.bodyText; as texto) {
+              <!-- Un aviso de agenda trae el enlace a su cita: se saca del
+                   texto y se ofrece como botón, a la pantalla de quien mira. -->
+              @let cita = citaDe(linea.mensaje.bodyText, linea.propio);
+              @if (cita?.texto ?? linea.mensaje.bodyText; as texto) {
                 <!-- En trozos: los enlaces se pueden tocar y, buscando, las
                      coincidencias se marcan. Todo en una línea de plantilla
                      para no meterle espacios a un `pre-wrap`. -->
                 <p class="hilo__texto">@for (trozo of segmentos(texto); track $index) {@switch (trozo.tipo) {@case ('enlace') {<a class="hilo__enlace" [href]="trozo.valor" target="_blank" rel="noopener noreferrer">{{ trozo.valor }}</a>}@case ('marca') {<mark class="hilo__marca">{{ trozo.valor }}</mark>}@default {<ng-container>{{ trozo.valor }}</ng-container>}}}</p>
+              }
+
+              @if (cita) {
+                <a
+                  class="hilo__ir-cita"
+                  data-testid="hilo-ir-cita"
+                  [routerLink]="cita.ruta"
+                  [queryParams]="cita.parametros"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="m9 15 2 2 4-4" /></svg>
+                  <span>Ir a la cita</span>
+                </a>
               }
 
               <!-- La hora flota a la derecha de la última línea: es lo que hace

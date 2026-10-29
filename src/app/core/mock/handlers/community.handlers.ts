@@ -207,6 +207,40 @@ function conversacion(c: { id: string; conversationTypeConceptId: string; groupI
   };
 }
 
+/**
+ * Deja un aviso de agenda en el chat de «Soporte AloVida» de un paciente, como
+ * hace la API (`SupportAdminNoticeAdapter`). Sin esto la maqueta mostraba la
+ * demora en la campana y nunca en el chat, que es lo que el cliente mira.
+ *
+ * @param titularIds - Ids con los que el paciente puede figurar como titular
+ *   de su vitrina (perfil, cuenta o persona).
+ * @returns `true` si el paciente tiene vitrina y el mensaje quedó escrito.
+ */
+export function escribirDeSoporte(titularIds: readonly string[], texto: string): boolean {
+  const vitrina = vitrinas.todos().find((v) => titularIds.includes(v.targetId));
+  if (vitrina === undefined) return false;
+  let hilo = conversaciones
+    .todos()
+    .find((c) => c.groupId === null && c.participantes.includes(SOPORTE_ID) && c.participantes.includes(vitrina.id));
+  if (hilo === undefined) {
+    hilo = { id: nuevoId('conv-soporte'), conversationTypeConceptId: CONCEPTO.conversationDirect, groupId: null, participantes: [vitrina.id, SOPORTE_ID], noLeidosPor: {} };
+    conversaciones.agregar(hilo);
+  }
+  mensajes.agregar({
+    id: nuevoId('msg-soporte'),
+    conversationId: hilo.id,
+    senderProfileId: SOPORTE_ID,
+    replyToMessageId: null,
+    contentTypeConceptId: CONCEPTO.messageText,
+    bodyText: texto,
+    attachmentFileId: null,
+    isEdited: false,
+    sentAt: ahora(),
+  });
+  conversaciones.actualizar(hilo.id, { noLeidosPor: { ...hilo.noLeidosPor, [vitrina.id]: (hilo.noLeidosPor[vitrina.id] ?? 0) + 1 } });
+  return true;
+}
+
 export function registrarComunidad(router: MockRouter): void {
   /* ---- vitrina propia ------------------------------------------------------ */
 

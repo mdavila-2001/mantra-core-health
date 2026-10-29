@@ -7,6 +7,7 @@ import { AlovidaRuntimeService } from '@core/alovida/alovida-runtime.service';
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
 import { MockBanner } from './core/mock/mock-banner';
 import { AvisoDeHuecoLibre } from './features/notifications/aviso-de-hueco-libre';
+import { AvisoDeDemora } from './features/notifications/aviso-de-demora';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +20,7 @@ export class App {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly huecosLibres = inject(AvisoDeHuecoLibre);
+  private readonly demoras = inject(AvisoDeDemora);
 
   constructor() {
     /* Los comportamientos del marco ALOVIDA (menús, diálogo, cajón de
@@ -30,6 +32,10 @@ export class App {
        enciende solo en la maqueta y sólo con sesión abierta: contra la API real
        el empujón lo da el servidor (módulo 35). Ver `aviso-de-hueco-libre.ts`. */
     this.huecosLibres.empezar();
+    /* «El médico se demora» como push: toast fijo con «Ver mi cita» y, con
+       permiso, notificación del sistema. Corre también contra la API real.
+       Ver `aviso-de-demora.ts`. */
+    this.demoras.empezar();
     this.aplicarPantalla();
     this.router.events
       .pipe(
