@@ -147,6 +147,31 @@ un volcado. La vitrina exhibe los que tienen significado, no todos.
 Las tres primeras son las que más se notarían al crecer. Anotadas como `LOW`.
 
 
+## Texto de peligro: `--text-danger`, no la rampa `--c-error-*`
+
+Corrección del 2026-10-29. El mensaje de error de un campo y el asterisco de
+obligatorio (`app-form-field`) se pintaban con `--c-error-500`. Es un escalón de
+**rampa**: no cambia con el tema. En claro rinde 4,92:1 sobre blanco; en oscuro,
+**2,99:1** sobre `rgb(10, 43, 61)` (AA pide 4,5:1). Se midió por muestreo de
+píxeles en `/auth/register/medical-center` y `/auth/register/imaging-center`.
+
+El token no estaba mal: `--text-danger` (→ `--st-error-fg`) ya valía
+`--c-error-700` en claro (9,22:1) y `--c-error-200` en oscuro (7,89:1). El defecto
+era usar el escalón en vez del token. **No cambió ningún valor de token**; los
+consumidores pasaron a `var(--text-danger)`: `form-field.css` (error y
+asterisco) y los textos `.datos__error` / `.edicion__error` de los editores de
+perfil.
+
+Regla: el **texto** de peligro va con `--text-danger`; un escalón `--c-error-*`
+sólo es válido para un relleno o un borde cuyo contraste no dependa del tema.
+`scripts/check-contrast.mjs` mide ahora `--text-danger` sobre `--bg-surface`,
+`--bg-surface-alt` y `--bg-inset` en claro y en los dos oscuros.
+
+Pendiente, fuera de este cambio: los bordes de control en error
+(`border-color: var(--c-error-500)` en `input`, `select`, `textarea`,
+`checkbox`, `radio`) quedan en 2,99:1 contra la superficie oscura, a una
+centésima del 3:1 de WCAG 1.4.11.
+
 ## Radios y sombras: cuál va en qué
 
 Tabla de uso. Los valores no cambian; lo que se fija acá es **qué escalón
