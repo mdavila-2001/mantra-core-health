@@ -1,6 +1,6 @@
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
-import { TENANT_CLINICA } from '../mock-session';
+import { TENANT_CLINICA, TENANT_CONSULTORIO } from '../mock-session';
 import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -177,6 +177,11 @@ export const recursos = new Coleccion<RecursoSimulado>([
         id: uuid(`resource-consultorio-${p.id}`),
         name: `Consultorio propio · ${p.displayName}`,
         practiceId: PRACTICE_CONSULTORIO,
+        // El consultorio propio es de SU organización, no de la clínica: con el
+        // listado aislado por tenant (como la API), heredar el de la clínica
+        // lo dejaba invisible justo en «Mi consultorio», que es el tenant que
+        // la sesión de la médica abre por omisión.
+        tenantId: TENANT_CONSULTORIO,
         site: SITIO_CONSULTORIO,
       },
     ];

@@ -1,9 +1,9 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { registrarAgenda } from './scheduling.handlers';
-import { RECURSO_MEDICA } from '../fixtures/agenda';
+import { RECURSO_CONSULTORIO_MEDICA, RECURSO_MEDICA } from '../fixtures/agenda';
 import { MockRouter, type MockMethod } from '../mock-router';
-import { buscarUsuario } from '../mock-session';
+import { buscarUsuario, TENANT_CLINICA, TENANT_CONSULTORIO } from '../mock-session';
 
 /**
  * El doble de los bloqueos de agenda no puede ser más permisivo que el
@@ -177,5 +177,43 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
       endAt: '2026-10-07T09:00:00.000Z',
     });
     expect(estado('PATCH', `/scheduling/exceptions/${creado.id}`, { exceptionType: 'NOPE' })).toBe(400);
+  });
+});
+
+/**
+ * `GET /scheduling/resources` filtra por `tenantId` en la API
+ * (`SchedulingAgendaRepository.findResources`). El doble tenía `|| true` en el
+ * filtro y devolvía las agendas de todas las organizaciones a cualquier tenant.
+ */
+describe('handler de recursos de agenda — aislamiento por organización', () => {
+  const router = new MockRouter();
+  registrarAgenda(router);
+  const medica = buscarUsuario('medica')!;
+
+  function recursosDe(tenantId: string): readonly { id: string }[] {
+    const match = router.match('GET', '/scheduling/resources')!;
+    const resultado = match.handler({
+      method: 'GET',
+      path: '/scheduling/resources',
+      params: match.params,
+      query: new URLSearchParams({ tenantId }),
+      body: {},
+      headers: new HttpHeaders(),
+      user: medica,
+    }) as { items: readonly { id: string }[] };
+    return resultado.items;
+  }
+
+  it('una organización sin agendas no recibe las de otra', () => {
+    expect(recursosDe('tenant-que-no-tiene-agendas')).toEqual([]);
+  });
+
+  it('cada organización ve sólo las suyas', () => {
+    const clinica = recursosDe(TENANT_CLINICA).map((r) => r.id);
+    const consultorio = recursosDe(TENANT_CONSULTORIO).map((r) => r.id);
+
+    expect(clinica).toContain(RECURSO_MEDICA);
+    expect(clinica).not.toContain(RECURSO_CONSULTORIO_MEDICA);
+    expect(consultorio).toEqual([RECURSO_CONSULTORIO_MEDICA]);
   });
 });

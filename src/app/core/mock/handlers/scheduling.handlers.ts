@@ -126,7 +126,11 @@ export function registrarAgenda(router: MockRouter): void {
     const includeInactive = query.get('includeInactive') === 'true';
     const items = recursos
       .todos()
-      .filter((r) => tenantId === null || r.tenantId === tenantId || true)
+      // Aislado por organización, como la API (`findResources` filtra
+      // `where.tenantId` siempre): el `|| true` que había acá le mostraba a
+      // cualquier sesión las agendas de todas las organizaciones, y tapaba en
+      // la maqueta las pantallas que piden con el tenant equivocado.
+      .filter((r) => tenantId === null || r.tenantId === tenantId)
       .filter((r) => practiceId === null || r.practiceId === practiceId)
       .filter((r) => includeInactive || r.stateConceptId === ESTADO['ST-ACTIVE'])
       .map(({ tenantId: _t, ...r }) => r);
