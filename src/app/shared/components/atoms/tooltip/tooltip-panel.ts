@@ -43,7 +43,11 @@ export class TooltipPanel {
   readonly top = input<number>(0);
   readonly left = input<number>(0);
 
+  /** Con `hoverable` el globo recibe el puntero (WCAG 1.4.13); sin él, nunca se interpone. */
+  readonly hoverable = input<boolean>(false);
+
   readonly panelClasses = computed(
-    () => `tooltip tooltip--${this.position()}${this.template() === null ? '' : ' tooltip--rich'}`,
+    () =>
+      `tooltip tooltip--${this.position()}${this.template() === null ? '' : ' tooltip--rich'}${this.hoverable() ? ' tooltip--hoverable' : ''}`,
   );
 }

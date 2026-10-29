@@ -54,6 +54,7 @@ import { registerMedicalGroups } from './medical-groups.handlers';
 import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerRegistrationLogo } from './registration-logo.handlers';
+import { registerFloorPlan } from './floor-plan.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -122,5 +123,7 @@ export function crearRouterSimulado(): MockRouter {
   registerOrganizationPracticeHandlers(router);
   // La pre-carga del logo del consultorio en el alta del médico.
   registerRegistrationLogo(router);
+  // F1c · Plano de planta (CONTRATO-PLANO §3). Rutas propias: `/floor-plans`, `/sites/:id/plan-*`.
+  registerFloorPlan(router);
   return router;
 }
