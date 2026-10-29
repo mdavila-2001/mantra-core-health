@@ -152,13 +152,23 @@
   </app-tab>
 
   <app-tab label="Infraestructura">
-    <app-data-table
-      [state]="espacios()"
-      [columns]="columnasDeEspacio()"
-      [trackBy]="porId"
-      caption="Quirófanos, consultorios y demás espacios"
-      (retry)="recargar()"
-    />
+    <!-- Franja F1: el árbol editable de N niveles. Mientras la consola no
+         cargó (o falló) no hay sedes que ofrecer, y queda la tabla de siempre,
+         que ya dice los nueve estados. -->
+    @if (sedesElegibles().length > 0) {
+      <!-- Sólo con la pestaña abierta: `app-tab` proyecta aunque no se vea. -->
+      @if (pestana() === pestanaDeInfraestructura) {
+        <app-infrastructure-tab [sites]="sedesElegibles()" />
+      }
+    } @else {
+      <app-data-table
+        [state]="espacios()"
+        [columns]="columnasDeEspacio()"
+        [trackBy]="porId"
+        caption="Quirófanos, consultorios y demás espacios"
+        (retry)="recargar()"
+      />
+    }
   </app-tab>
 
   <app-tab label="Servicios">
@@ -200,6 +210,25 @@
       (retry)="recargar()"
     />
   </app-tab>
+  <!-- Franja F1: datos regulatorios (SNIS, SEDES), habilitaciones y capacidad
+       declarada frente a la real. Va antes de «Mis vinculaciones», que sigue
+       siendo la última; se monta sólo con la pestaña abierta. -->
+  <app-tab label="Establecimiento">
+    @if (pestana() === pestanaDeEstablecimiento) {
+      @if (sedesElegibles().length > 0) {
+        <app-establishment-tab [sites]="sedesElegibles()" />
+      } @else {
+        <app-data-table
+          [state]="sedes()"
+          [columns]="columnasDeSede()"
+          [trackBy]="porId"
+          caption="Sedes de la organización"
+          (retry)="recargar()"
+        />
+      }
+    }
+  </app-tab>
+
   <!-- **«Mis vinculaciones» absorbió a «Mis organizaciones»** (propietario,
        2026-09-10). Era una pantalla propia que preguntaba y respondía lo mismo
        que este panel —en qué organizaciones ejerce esta persona— con otro

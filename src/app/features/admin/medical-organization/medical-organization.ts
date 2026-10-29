@@ -28,9 +28,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { MembershipsTab } from './memberships-tab/memberships-tab';
+import { EstablishmentTab } from './infrastructure/establishment-tab/establishment-tab';
+import { InfrastructureTab, type SiteChoice } from './infrastructure/infrastructure-tab/infrastructure-tab';
 
 /** El índice de «Mis vinculaciones», para no escribir `7` en dos lugares. */
-const PESTANA_VINCULACIONES = 7;
+/** Franja F1 metió «Establecimiento» antes: era 7. */
+const PESTANA_VINCULACIONES = 8;
+/** Franja F1: «Infraestructura» (la tercera) y «Establecimiento» (la penúltima). */
+const PESTANA_INFRAESTRUCTURA = 2;
+const PESTANA_ESTABLECIMIENTO = 7;
 import { dataOf, empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
 import type {
   ViewState,
@@ -111,7 +117,7 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
  */
 @Component({
   selector: 'app-medical-organization',
-  imports: [AppButton, Badge, DataTable, FormField, MembershipsTab, PageHeader, Select, Tab, Tabs, LoadingState],
+  imports: [AppButton, Badge, DataTable, EstablishmentTab, FormField, InfrastructureTab, MembershipsTab, PageHeader, Select, Tab, Tabs, LoadingState],
   templateUrl: './medical-organization.html',
   styleUrl: './medical-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -148,6 +154,8 @@ export class MedicalOrganization {
   );
 
   protected readonly pestanaDeVinculaciones = PESTANA_VINCULACIONES;
+  protected readonly pestanaDeInfraestructura = PESTANA_INFRAESTRUCTURA;
+  protected readonly pestanaDeEstablecimiento = PESTANA_ESTABLECIMIENTO;
 
   private readonly celdaSede =
     viewChild.required<TemplateRef<{ $implicit: OrganizationSite }>>('celdaSede');
@@ -233,6 +241,18 @@ export class MedicalOrganization {
   protected readonly organizacion = computed(() => {
     const estado = this.consola();
     return estado.status === 'ready' ? estado.data.organization : null;
+  });
+
+  /**
+   * Las sedes de la organización elegida, para las pestañas «Infraestructura» y
+   * «Establecimiento» (franja F1): cada una trae la estructura de una sede.
+   * Vacío mientras la consola no cargó, y entonces ambas caen en su tabla de
+   * siempre, que ya sabe decir los nueve estados.
+   */
+  protected readonly sedesElegibles = computed<readonly SiteChoice[]>(() => {
+    const estado = this.consola();
+    if (estado.status !== 'ready') return [];
+    return estado.data.sites.map((sede) => ({ id: sede.id, code: sede.code, name: sede.name }));
   });
 
   /** Nombre de cada sede por su id: las demás pestañas devuelven `siteId` crudo. */
