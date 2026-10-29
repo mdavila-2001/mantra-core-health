@@ -19,6 +19,7 @@ import { stickerDe, type Sticker } from './sticker-pack.generated';
 import type {
   ConversationListItem,
   DirectMessage,
+  DirectMessageContentType,
   MessageReaction,
   MessageReceipt,
   PublicDirectoryResult,
@@ -124,8 +125,11 @@ export interface MensajeDelHilo {
   readonly estado: 'enviando' | 'fallado' | 'enviado';
   /** Si su texto se cambió después de mandarlo — se dice en la burbuja. */
   readonly isEdited?: boolean;
-  /** `STICKER` si es uno propio de quien lo mandó; ver `DirectMessage`. */
-  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  /**
+   * `STICKER` si es uno propio de quien lo mandó; `AUTO_REPLY_AI` si es una
+   * respuesta automática que redactó la IA. Ver `DirectMessage`.
+   */
+  readonly contentType?: DirectMessageContentType;
   readonly reactions?: readonly MessageReaction[];
   readonly receipts?: readonly MessageReceipt[];
   /** Sólo en los pendientes: con qué reintentar. */
@@ -1466,6 +1470,13 @@ export class ChatStore {
   private quizasResponderSolo(mensaje: DirectMessage): void {
     const propio = this.perfil();
     if (propio === null || mensaje.senderProfileId === propio) {
+      return;
+    }
+    // Redactar con IA lo hace el servidor (o, en la maqueta, el simulador):
+    // si el servidor la tiene, el navegador no contesta, porque saldrían dos
+    // respuestas al mismo mensaje. Si el servidor no la tiene (sin perfil, o
+    // el guardado no llegó), nadie más va a contestar: sale el respaldo.
+    if (this.autoReply.configuracion().conIa && this.autoReply.enElServidor()) {
       return;
     }
     const ahora = Date.now();

@@ -151,6 +151,19 @@ describe('Thread', () => {
     expect(textos[1]).toContain('El segundo');
   });
 
+  it('la respuesta automática que redactó la IA se rotula; las demás no', () => {
+    abrir([
+      { ...mensaje('m-2', 'pp-2', 'Gracias por escribir. La doctora le responde apenas pueda.'), contentType: 'AUTO_REPLY_AI' },
+      mensaje('m-1', 'pp-1', '¿Mañana atienden?'),
+    ]);
+
+    const [pregunta, respuesta] = burbujas();
+    expect(pregunta.querySelector('[data-testid="hilo-etiqueta-ia"]')).toBeNull();
+    expect(respuesta.querySelector('[data-testid="hilo-etiqueta-ia"]')?.textContent?.trim()).toBe(
+      'Respuesta automática generada por IA',
+    );
+  });
+
   it('distingue el mensaje propio del ajeno', () => {
     abrir([mensaje('m-1', 'pp-1', 'Mío'), mensaje('m-2', 'pp-2', 'Suyo')]);
 

@@ -10,6 +10,7 @@ import {
   CONFIGURACION_POR_DEFECTO,
   MINUTOS_MAXIMO,
 } from './chat-auto-reply';
+import { apiRealForzada } from '../mock/modo-api';
 
 /**
  * Lo que estas pruebas fijan.
@@ -234,8 +235,17 @@ describe('ChatAutoReply', () => {
       expect(servicio.configuracion().horarioDesde).toBe('07:00');
     });
 
-    it('si el servidor no la tiene y acá sí, se sube en vez de perderse', () => {
-      servicio.guardar({ activa: true, texto: 'De antes de la tabla.' }, null);
+    it('si el servidor no la tiene y la copia local es de este perfil, se sube en vez de perderse', () => {
+      // Un guardado anterior de este mismo perfil que no llegó al servidor.
+      localStorage.setItem(
+        'alovida.chat-respuesta-automatica',
+        JSON.stringify({ ...CONFIGURACION_POR_DEFECTO, activa: true, texto: 'De antes de la tabla.' }),
+      );
+      localStorage.setItem('alovida.chat-respuesta-automatica.perfil', 'pp-1');
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+      http = TestBed.inject(HttpTestingController);
+      servicio = TestBed.inject(ChatAutoReply);
 
       servicio.cargar('pp-1');
       http.expectOne('/community/profiles/pp-1/auto-reply').flush(null);
@@ -259,6 +269,48 @@ describe('ChatAutoReply', () => {
       });
     });
 
+    it('una copia local de otra cuenta (o sin dueño) no se sube al perfil que entra', () => {
+      // La Dra. A la dejó en este navegador; entra el Dr. B, que no tiene nada guardado.
+      servicio.guardar({ activa: true, texto: 'Mensaje de la Dra. A.' }, null);
+      localStorage.setItem('alovida.chat-respuesta-automatica.perfil', 'pp-a');
+
+      servicio.cargar('pp-b');
+      http.expectOne('/community/profiles/pp-b/auto-reply').flush(null);
+
+      http.expectNone((r) => r.method === 'PUT');
+      expect(servicio.configuracion()).toEqual(CONFIGURACION_POR_DEFECTO);
+      expect(localStorage.getItem('alovida.chat-respuesta-automatica.perfil')).toBe('pp-b');
+    });
+
+    it('una lectura que vuelve después de un guardado no pisa lo guardado', () => {
+      servicio.cargar('pp-1');
+      const lectura = http.expectOne((r) => r.method === 'GET' && r.url === '/community/profiles/pp-1/auto-reply');
+
+      servicio.guardar({ activa: true, texto: 'Lo nuevo.' }, 'pp-1');
+      http.expectOne((r) => r.method === 'PUT').flush({
+        id: 'ar-1', publicProfileId: 'pp-1', isActive: true, inactivityMinutes: 30, bodyText: 'Lo nuevo.',
+        cooldownHours: 4, onlyOutsideBusinessHours: false, businessHoursFrom: null, businessHoursTo: null,
+        updatedAt: '2026-09-11T10:00:00.000Z',
+      });
+      lectura.flush({
+        id: 'ar-1', publicProfileId: 'pp-1', isActive: false, inactivityMinutes: 30, bodyText: 'Lo viejo.',
+        cooldownHours: 4, onlyOutsideBusinessHours: false, businessHoursFrom: null, businessHoursTo: null,
+        updatedAt: '2026-09-10T10:00:00.000Z',
+      });
+
+      expect(servicio.configuracion().texto).toBe('Lo nuevo.');
+      expect(servicio.configuracion().activa).toBe(true);
+    });
+
+    it('avisa si el guardado llegó al servidor o no', () => {
+      const llegadas: boolean[] = [];
+      servicio.guardar({ activa: true }, 'pp-1', (llego) => llegadas.push(llego));
+      http.expectOne('/community/profiles/pp-1/auto-reply').error(new ProgressEvent('error'));
+      servicio.guardar({ activa: true }, null, (llego) => llegadas.push(llego));
+
+      expect(llegadas).toEqual([false, true]);
+    });
+
     it('si la lectura falla, lo local sigue valiendo y la pantalla no promete de más', () => {
       servicio.guardar({ activa: true }, null);
 
@@ -269,6 +321,66 @@ describe('ChatAutoReply', () => {
 
       expect(servicio.configuracion().activa).toBe(true);
       expect(servicio.enElServidor()).toBe(false);
+      // Y se distingue de «no tiene perfil»: fue la lectura la que falló.
+      expect(servicio.errorDeLectura()).toBe(true);
+    });
+  });
+
+  /* --- Responder con IA ----------------------------------------------------- */
+
+  describe('responder con IA', () => {
+    const remota = {
+      id: 'ar-1',
+      publicProfileId: 'pp-1',
+      isActive: true,
+      inactivityMinutes: 30,
+      bodyText: 'Vuelvo luego.',
+      cooldownHours: 4,
+      onlyOutsideBusinessHours: false,
+      businessHoursFrom: null,
+      businessHoursTo: null,
+      updatedAt: '2026-09-11T10:00:00.000Z',
+    };
+
+    afterEach(() => apiRealForzada.set(false));
+
+    it('en la maqueta el modo viaja como `replyMode`, con el texto como respaldo', () => {
+      expect(servicio.iaDisponible()).toBe(true);
+      servicio.guardar({ activa: true, conIa: true, texto: 'Vuelvo luego.' }, 'pp-1');
+
+      const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
+      expect(pedido.request.body).toMatchObject({ replyMode: 'AI', bodyText: 'Vuelvo luego.', isActive: true });
+      pedido.flush({ ...remota, replyMode: 'AI' });
+      expect(servicio.configuracion().conIa).toBe(true);
+    });
+
+    it('con texto fijo el modo viaja como `FIXED`', () => {
+      servicio.guardar({ activa: true, conIa: false }, 'pp-1');
+
+      const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
+      expect(pedido.request.body).toMatchObject({ replyMode: 'FIXED' });
+      pedido.flush(remota);
+    });
+
+    it('lo que dice el servidor sobre el modo gana', () => {
+      servicio.cargar('pp-1');
+      http.expectOne('/community/profiles/pp-1/auto-reply').flush({ ...remota, replyMode: 'AI' });
+
+      expect(servicio.configuracion().conIa).toBe(true);
+    });
+
+    it('contra la API real la clave no sale (sería un 400) y el modo IA no se sostiene', () => {
+      apiRealForzada.set(true);
+      expect(servicio.iaDisponible()).toBe(false);
+
+      servicio.guardar({ activa: true, conIa: true }, 'pp-1');
+
+      const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
+      expect(pedido.request.body).not.toHaveProperty('replyMode');
+      expect(servicio.configuracion().conIa).toBe(false);
+      // Sigue contestando con el texto fijo, que es lo que el servidor sabe hacer.
+      expect(servicio.configuracion().activa).toBe(true);
+      pedido.flush(remota);
     });
   });
 

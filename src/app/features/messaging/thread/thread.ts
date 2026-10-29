@@ -705,6 +705,16 @@ export class Thread {
     return mensaje.contentType === 'STICKER' || stickerDe(mensaje.attachmentFileId) !== undefined;
   }
 
+  /**
+   * `true` si es una respuesta automática que redactó la IA.
+   *
+   * Editada deja de serlo: la cambió una persona, y la etiqueta diría lo
+   * contrario de lo que pasó.
+   */
+  protected esRespuestaDeIa(mensaje: MensajeDelHilo): boolean {
+    return mensaje.contentType === 'AUTO_REPLY_AI' && mensaje.isEdited !== true;
+  }
+
   /** Cómo se anuncia el sticker a quien no lo ve. */
   protected nombreDelSticker(mensaje: MensajeDelHilo): string {
     return stickerDe(mensaje.attachmentFileId)?.nombre ?? 'Sticker';
