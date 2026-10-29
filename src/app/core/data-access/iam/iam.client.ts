@@ -755,6 +755,21 @@ export class IamClient {
     );
   }
 
+  /**
+   * `GET /iam/users/:id` — la ficha de una cuenta, reducida a lo que la vista
+   * usa (la misma forma que una fila del listado).
+   *
+   * Es lo que deja mostrar **a quién** corresponde un `userId` crudo, como el
+   * que devuelve la plantilla de una organización. Exige `SECURITY_ADMIN`:
+   * quien no lo tiene recibe `403`, y la pantalla tiene que degradar a «nombre
+   * no disponible», nunca al uuid.
+   */
+  getUser(userId: string): Observable<UserListItem> {
+    return this.http
+      .get<ConNulos<WireUserListItem>>(this.url(`/iam/users/${encodeURIComponent(userId)}`))
+      .pipe(map(toUserListItem));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
