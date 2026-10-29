@@ -171,6 +171,27 @@ describe('GlossaryGraph', () => {
     expect(url.searchParams.get('expand')).toBeNull();
   });
 
+  it('un enlace con cientos de términos abiertos pide a lo sumo doce, sin repetidos ni basura', async () => {
+    const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+    const pedidos = [...Array.from({ length: 60 }, (_, n) => uuid(n + 1)), uuid(1), uuid(2), 'no-es-un-id', '../x', TOS];
+    await harness.navigateByUrl(`/glossary/graph?focus=${TOS}&expand=${pedidos.join(',')}`, GlossaryGraph);
+
+    const lecturas = (): number =>
+      http.match((r) => r.url.endsWith('/glossary-neighborhood')).length;
+    // La raíz primero; después, de a 4 a la vez, hasta el tope.
+    let total = 0;
+    for (let ronda = 0; ronda < 10; ronda++) {
+      const abiertas = http.match((r) => r.url.endsWith('/glossary-neighborhood'));
+      if (abiertas.length === 0) break;
+      total += abiertas.length;
+      expect(abiertas.length).toBeLessThanOrEqual(4);
+      abiertas.forEach((r) => r.flush(HOOD_TOS));
+      await harness.fixture.whenStable();
+    }
+    expect(total + lecturas()).toBe(1 + 12);
+    http.match((r) => r.url.includes('/terminology/concepts/')).forEach((r) => r.flush({}, { status: 404, statusText: 'No' }));
+  });
+
   it('un error al leer el término central se dice y se puede reintentar', async () => {
     await harness.navigateByUrl(`/glossary/graph?focus=${TOS}`, GlossaryGraph);
     termino(TOS).flush({ message: 'boom' }, { status: 500, statusText: 'Error' });

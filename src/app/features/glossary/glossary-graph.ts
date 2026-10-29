@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, map, mergeMap, of, type Subscription } from 'rxjs';
+import { forkJoin, from, map, mergeMap, of, toArray, type Subscription } from 'rxjs';
 
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type {
@@ -35,7 +35,10 @@ import { ReferenceCombobox } from '../../shared/components/molecules/reference-c
 import type { ReferenceOption } from '../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
-import { ShareMenu, type ShareFormat } from '../../shared/components/molecules/share-menu/share-menu';
+import {
+  ShareMenu,
+  type ShareFormat,
+} from '../../shared/components/molecules/share-menu/share-menu';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
@@ -64,6 +67,9 @@ const DEFINITIONS_BATCH = 30;
 const DEFINITIONS_CONCURRENCY = 4;
 /** Términos abiertos que viajan en el enlace compartido. */
 const SHARED_EXPANDED_LIMIT = 12;
+/** Lecturas simultáneas al abrir los términos que trae el enlace. */
+const EXPAND_CONCURRENCY = 4;
+const CONCEPT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Cuántos cuadros se espera a que el lienzo tenga medida antes de rendirse. */
 const FIT_RETRIES = 30;
 
@@ -135,11 +141,15 @@ export class GlossaryGraph {
   );
 
   protected readonly mode = signal<GraphMode>('tree');
-  protected readonly showDefinitions = signal(this.route.snapshot.queryParamMap.get('defs') === '1');
+  protected readonly showDefinitions = signal(
+    this.route.snapshot.queryParamMap.get('defs') === '1',
+  );
 
   /* ---- lo leído -------------------------------------------------------------- */
   private readonly loaded = signal<ReadonlyMap<string, GlossaryNeighborhood>>(new Map());
-  private readonly completed = signal<ReadonlyMap<string, readonly GlossaryNeighborGroup[]>>(new Map());
+  private readonly completed = signal<ReadonlyMap<string, readonly GlossaryNeighborGroup[]>>(
+    new Map(),
+  );
   protected readonly expanded = signal<ReadonlySet<string>>(new Set());
   private readonly pending = signal<ReadonlySet<string>>(new Set());
   private readonly definitions = signal<ReadonlyMap<string, string>>(new Map());
@@ -152,7 +162,9 @@ export class GlossaryGraph {
   private readonly neighborhoods = computed<ReadonlyMap<string, GlossaryNeighborhood>>(() => {
     const full = this.completed();
     return new Map(
-      [...this.loaded()].map(([id, hood]) => [id, mergeFullGroups(hood, full.get(id) ?? [])] as const),
+      [...this.loaded()].map(
+        ([id, hood]) => [id, mergeFullGroups(hood, full.get(id) ?? [])] as const,
+      ),
     );
   });
 
@@ -186,7 +198,11 @@ export class GlossaryGraph {
     const focus = this.neighborhoods().get(this.focusId())?.focus;
     return focus === undefined
       ? null
-      : { value: focus.conceptId, label: focus.display, ...(focus.category ? { hint: focus.category.name } : {}) };
+      : {
+          value: focus.conceptId,
+          label: focus.display,
+          ...(focus.category ? { hint: focus.category.name } : {}),
+        };
   });
 
   /* ---- selección y ficha ----------------------------------------------------- */
@@ -195,7 +211,9 @@ export class GlossaryGraph {
   private readonly details = new Map<string, GlossaryTermDetail>();
 
   /* ---- acercar y arrastrar --------------------------------------------------- */
-  protected readonly viewport = new GraphViewport(() => this.canvas()?.nativeElement.getBoundingClientRect());
+  protected readonly viewport = new GraphViewport(() =>
+    this.canvas()?.nativeElement.getBoundingClientRect(),
+  );
   /** Hay que ajustar el árbol a la ventana en cuanto el lienzo exista (al abrir un término central). */
   private pendingFit = false;
   /** El componente ya no existe: los reintentos de ajuste se detienen. */
@@ -214,7 +232,8 @@ export class GlossaryGraph {
     });
   });
   protected readonly shareTitle = computed(
-    () => `Árbol de términos · ${this.neighborhoods().get(this.focusId())?.focus.display ?? 'glosario'}`,
+    () =>
+      `Árbol de términos · ${this.neighborhoods().get(this.focusId())?.focus.display ?? 'glosario'}`,
   );
 
   private rootRequest: Subscription | null = null;
@@ -296,23 +315,40 @@ export class GlossaryGraph {
       return;
     }
     this.rootState.set(loading());
-    const toOpen = [
-      conceptId,
-      ...(this.route.snapshot.queryParamMap.get('expand') ?? '')
-        .split(',')
-        .map((id) => id.trim())
-        .filter((id) => id !== '' && id !== conceptId),
-    ];
-    this.rootRequest = forkJoin(toOpen.map((id) => this.read(id))).subscribe({
-      next: () => {
-        this.expanded.set(new Set(toOpen.filter((id) => this.loaded().has(id))));
-        this.rootState.set(ready(true));
-        this.selectedId.set(conceptId);
-        this.readDetail(conceptId);
-        this.pendingFit = true;
-      },
-      error: (error: unknown) => this.rootState.set(errorToViewState<true>(error)),
-    });
+    const toOpen = [conceptId, ...this.expandedFromUrl(conceptId)];
+    // De a pocas lecturas a la vez: la dirección es de quien la comparte y no
+    // decide cuántas peticiones hace esta pantalla.
+    this.rootRequest = from(toOpen)
+      .pipe(
+        mergeMap((id) => this.read(id), EXPAND_CONCURRENCY),
+        toArray(),
+      )
+      .subscribe({
+        next: () => {
+          this.expanded.set(new Set(toOpen.filter((id) => this.loaded().has(id))));
+          this.rootState.set(ready(true));
+          this.selectedId.set(conceptId);
+          this.readDetail(conceptId);
+          this.pendingFit = true;
+        },
+        error: (error: unknown) => this.rootState.set(errorToViewState<true>(error)),
+      });
+  }
+
+  /**
+   * Los términos abiertos que pide la dirección (`?expand=a,b,c`).
+   *
+   * Es entrada de quien comparte el enlace, no de esta pantalla: se descartan los
+   * repetidos y lo que no es un identificador, y se corta en
+   * {@link SHARED_EXPANDED_LIMIT} —lo mismo que se escribe al compartir—.
+   */
+  private expandedFromUrl(rootId: string): string[] {
+    const raw = this.route.snapshot.queryParamMap.get('expand') ?? '';
+    const ids = raw
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => CONCEPT_ID.test(id) && id !== rootId);
+    return [...new Set(ids)].slice(0, SHARED_EXPANDED_LIMIT);
   }
 
   protected reload(): void {
@@ -323,12 +359,14 @@ export class GlossaryGraph {
   private read(conceptId: string) {
     const known = this.loaded().get(conceptId);
     if (known !== undefined) return of(known);
-    return this.terminology.readGlossaryNeighborhood(conceptId, { perGroup: SAMPLE_PER_GROUP }).pipe(
-      map((hood) => {
-        this.loaded.update((current) => new Map(current).set(conceptId, hood));
-        return hood;
-      }),
-    );
+    return this.terminology
+      .readGlossaryNeighborhood(conceptId, { perGroup: SAMPLE_PER_GROUP })
+      .pipe(
+        map((hood) => {
+          this.loaded.update((current) => new Map(current).set(conceptId, hood));
+          return hood;
+        }),
+      );
   }
 
   protected focusOn(conceptId: string): void {
@@ -412,7 +450,10 @@ export class GlossaryGraph {
   private showMore(node: GraphNode): void {
     const groupKey = node.key.replace(/\/more$/, '');
     this.visibleByGroup.update((current) =>
-      new Map(current).set(groupKey, (current.get(groupKey) ?? GRAPH_GROUP_PAGE) + GRAPH_GROUP_PAGE),
+      new Map(current).set(
+        groupKey,
+        (current.get(groupKey) ?? GRAPH_GROUP_PAGE) + GRAPH_GROUP_PAGE,
+      ),
     );
     const owner = node.conceptId;
     if (owner === undefined || this.completed().has(owner)) return;
@@ -508,14 +549,19 @@ export class GlossaryGraph {
     const placed = this.placed();
     if (placed === null) return false;
     const root = placed.nodes.find((entry) => entry.depth === 0);
-    return this.viewport.fit(placed.width, placed.height, root === undefined ? undefined : root.y + root.height / 2);
+    return this.viewport.fit(
+      placed.width,
+      placed.height,
+      root === undefined ? undefined : root.y + root.height / 2,
+    );
   }
 
   private fitWhenReady(attempt = 0): void {
     if (this.destroyed) return;
     afterNextRender(
       () => {
-        if (!this.fit() && attempt < FIT_RETRIES) requestAnimationFrame(() => this.fitWhenReady(attempt + 1));
+        if (!this.fit() && attempt < FIT_RETRIES)
+          requestAnimationFrame(() => this.fitWhenReady(attempt + 1));
       },
       { injector: this.injector },
     );
@@ -530,7 +576,9 @@ export class GlossaryGraph {
   /* ---- lo que dice la pantalla ---------------------------------------------------- */
 
   protected isSelected(node: GraphNode): boolean {
-    return node.kind === 'term' && node.conceptId !== undefined && node.conceptId === this.selectedId();
+    return (
+      node.kind === 'term' && node.conceptId !== undefined && node.conceptId === this.selectedId()
+    );
   }
 
   protected ariaLabelOf(node: GraphNode): string {
@@ -540,7 +588,11 @@ export class GlossaryGraph {
       case 'more':
         return `${node.label}: mostrar más términos`;
       case 'term': {
-        const state = node.loading ? 'abriendo' : node.expanded ? 'abierto, pulse para cerrar' : 'cerrado, pulse para abrir';
+        const state = node.loading
+          ? 'abriendo'
+          : node.expanded
+            ? 'abierto, pulse para cerrar'
+            : 'cerrado, pulse para abrir';
         return `${node.label}${node.sublabel ? `, ${node.sublabel}` : ''}, ${state}`;
       }
     }
@@ -572,7 +624,11 @@ export class GlossaryGraph {
           break;
         case 'pdf': {
           const png = await renderGraphPng(svg, width, height);
-          await this.share.shareFile(await renderGraphPdf(png, title, graphDefinitions(tree)), name, title);
+          await this.share.shareFile(
+            await renderGraphPdf(png, title, graphDefinitions(tree)),
+            name,
+            title,
+          );
           break;
         }
       }
