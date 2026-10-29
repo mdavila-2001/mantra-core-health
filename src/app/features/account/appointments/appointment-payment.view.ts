@@ -1,16 +1,7 @@
 import type { PaymentStateInfo } from '../../../core/data-access/scheduling/scheduling.types';
+import { displayCurrency } from '../../../core/money/display-currency';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { formatMoney } from '../../../shared/utils/pdf-export/pdf-format';
-
-/**
- * El estado de pago tal como puede llegar en la lista. El contrato de
- * facturación (§2) le suma `amountPaid` y `currencyCode`, opcionales; se leen
- * con este tipo local para no tocar `PaymentStateInfo`, que es de otro carril.
- */
-type ListedPaymentState = PaymentStateInfo & {
-  readonly amountPaid?: number | null;
-  readonly currencyCode?: string | null;
-};
 
 /** La insignia de pago de una fila de «Mis citas». */
 export interface AppointmentPaymentView {
@@ -31,18 +22,14 @@ export function appointmentPaymentView(
   paymentState: PaymentStateInfo | undefined,
 ): AppointmentPaymentView | null {
   if (paymentState === undefined) return null;
-  const { amountPaid, currencyCode } = paymentState as ListedPaymentState;
+  // FAC-01: lo cobrado viaja en el estado de pago, solo si se facturó.
+  const { amountPaid, currencyCode } = paymentState;
   return {
     label: paymentState.label,
     tone: paymentState.state === 'PAID' ? 'success' : 'warning',
     amountText:
       typeof amountPaid === 'number' && Number.isFinite(amountPaid) && amountPaid > 0
-        ? formatMoney(
-            amountPaid,
-            currencyCode === undefined || currencyCode === null || currencyCode === 'BOB'
-              ? 'Bs'
-              : currencyCode,
-          )
+        ? formatMoney(amountPaid, displayCurrency(currencyCode))
         : '',
   };
 }
