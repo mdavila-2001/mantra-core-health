@@ -11,7 +11,7 @@ import { withSpace, removeFromPlan, type EditElement, type EditSpace, type EditS
 export interface EditDraft {
   readonly v: 1;
   readonly planId: string;
-  /** `layoutVersion` sobre el que se hicieron los cambios. */
+  /** `layoutVersion` sobre element que se hicieron los cambios. */
   readonly baseVersion: number;
   readonly savedAt: string;
   readonly spaces: readonly EditSpace[];
@@ -38,7 +38,7 @@ export function buildDraft(planId: string, baseVersion: number, baseline: EditSt
     if (!before || !sameGeometry(before.geometry, space.geometry)) spaces.push(space);
   }
   const removed = [...current.removed].filter((id) => baseline.spaces.has(id));
-  const elements = [...current.elements.values()].filter((el) => !current.removedElements.has(el.id) && !sameGeometry(baseline.elements.get(el.id), el));
+  const elements = [...current.elements.values()].filter((element) => !current.removedElements.has(element.id) && !sameGeometry(baseline.elements.get(element.id), element));
   const removedElements = [...current.removedElements].filter((id) => baseline.elements.has(id));
   if (spaces.length === 0 && removed.length === 0 && elements.length === 0 && removedElements.length === 0) return null;
   return { v: 1, planId, baseVersion, savedAt: now.toISOString(), spaces, removed, elements, removedElements };
@@ -48,7 +48,7 @@ export function applyDraft(baseline: EditState, draft: EditDraft): EditState {
   let state = baseline;
   for (const space of draft.spaces) state = withSpace(state, space);
   for (const id of draft.removed) state = removeFromPlan(state, id);
-  for (const el of draft.elements ?? []) state = withElement(state, el);
+  for (const element of draft.elements ?? []) state = withElement(state, element);
   for (const id of draft.removedElements ?? []) state = removeElement(state, id);
   return state;
 }
@@ -85,7 +85,7 @@ export function saveDraft(draft: EditDraft): void {
   try {
     storage()?.setItem(draftKey(draft.planId), JSON.stringify(draft));
   } catch {
-    /* sin almacenamiento: el borrador es una comodidad */
+    /* sin almacenamiento: element borrador es una comodidad */
   }
 }
 

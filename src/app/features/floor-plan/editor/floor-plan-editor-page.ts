@@ -175,8 +175,8 @@ export class FloorPlanEditorPage {
   }
 
   protected readonly selectedWallLength = computed(() => {
-    const el = this.ed.selectedElement();
-    const host = el?.hostElementId ? this.ed.current().elements.get(el.hostElementId) : undefined;
+    const element = this.ed.selectedElement();
+    const host = element?.hostElementId ? this.ed.current().elements.get(element.hostElementId) : undefined;
     return host ? wallLength(host) : null;
   });
 
@@ -199,8 +199,8 @@ export class FloorPlanEditorPage {
     const cur = this.ed.current();
     const s = cur.spaces.get(id);
     if (s) return `${s.code} · ${s.name}`;
-    const el = cur.elements.get(id);
-    return el ? elementLabel(el) : id;
+    const element = cur.elements.get(id);
+    return element ? elementLabel(element) : id;
   };
 
   protected nameOfConflicts(ids: readonly string[]): string {

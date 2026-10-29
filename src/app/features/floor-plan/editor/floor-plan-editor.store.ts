@@ -403,8 +403,8 @@ export class FloorPlanEditorStore {
   /** Cambia un dato del muro, puerta o ventana elegido desde el panel. */
   setElementFields(id: string, fields: Partial<Pick<EditElement, 'thicknessM' | 'offsetM' | 'widthM' | 'swing' | 'swingSide'>>): void {
     const start = this.current();
-    const el = start.elements.get(id);
-    if (el) this.commit(start, withElement(start, { ...el, ...fields }));
+    const element = start.elements.get(id);
+    if (element) this.commit(start, withElement(start, { ...element, ...fields }));
   }
 
   /* ---- teclado ----------------------------------------------------------------------------- */

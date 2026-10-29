@@ -1,0 +1,9 @@
+{
+  "checks": [
+    {
+      "name": "editor 390: aviso de solo lectura y sin herramientas [390-dark]",
+      "pass": true,
+      "detail": "Información: Para editar, use una pantalla más grande La edición del plano necesita una pantalla de 768 px o más. Aquí puede ver el plano, pero no modificarlo. Volver al plano"
+    }
+  ]
+}

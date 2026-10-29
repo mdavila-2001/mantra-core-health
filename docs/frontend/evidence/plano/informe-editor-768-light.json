@@ -13,7 +13,7 @@
     {
       "name": "editor: tras recargar ofrece recuperar el borrador sin guardar [768-light]",
       "pass": true,
-      "detail": "Información: Hay un borrador sin guardar Quedó guardado en este navegador el 29/10/2026 06:00 con 1 cambios. RecuperarDescartar"
+      "detail": "Información: Hay un borrador sin guardar Quedó guardado en este navegador el 29/10/2026 07:36 con 1 cambios. RecuperarDescartar"
     },
     {
       "name": "editor: recuperar el borrador devuelve el cambio [768-light]",
@@ -58,7 +58,7 @@
     {
       "name": "editor: 422 muestra el error por figura con su vecina, el solape y el código de soporte [768-light]",
       "pass": true,
-      "detail": "2 del servidor · Error: El servidor no aceptó el dibujo Nada se guardó. Corrija las figuras señaladas (cada una dice qué hacer) y vuelva a guardar. Código de soporte: f29a383f07"
+      "detail": "2 del servidor · Error: El servidor no aceptó el dibujo Nada se guardó. Corrija las figuras señaladas (cada una dice qué hacer) y vuelva a guardar. Código de soporte: 1db78222bb"
     },
     {
       "name": "editor: el error nombra la figura, el vecino, el área solapada y qué hacer [768-light]",
@@ -78,7 +78,7 @@
     {
       "name": "editor: Ctrl+S guarda, trae la versión nueva y el código de soporte [768-light]",
       "pass": true,
-      "detail": "Éxito: Plano guardado Versión 2 · 0 ubicados, 1 movidos, 0 quitados · Código de soporte: b954cfcf57604ae9 Aviso: el área calculada de PLANO-PB-C3 · Consultorio 3 · Ginecología (34 m²) difiere 13.3 % d"
+      "detail": "Éxito: Plano guardado Versión 2 · 0 ubicados, 1 movidos, 0 quitados · Código de soporte: b165e3bc584a4aea Aviso: el área calculada de PLANO-PB-C3 · Consultorio 3 · Ginecología (34 m²) difiere 13.3 % d"
     },
     {
       "name": "editor: tras guardar, lo que se ve viene del servidor (ancho 3,00 m) [768-light]",
@@ -93,7 +93,7 @@
     {
       "name": "editor: 412 avisa «Otra persona modificó este plano» con Ver cambios y Recargar y reaplicar [768-light]",
       "pass": true,
-      "detail": "Advertencia: Otra persona modificó este plano Mientras usted editaba, el plano pasó a la versión 3. El plano cambió desde que lo abrió. Código de soporte: 15d463e3848a468d Ver cambiosRecargar y reaplicar mis cambios"
+      "detail": "Advertencia: Otra persona modificó este plano Mientras usted editaba, el plano pasó a la versión 3. El plano cambió desde que lo abrió. Código de soporte: 6c5a0e7ab42443b6 Ver cambiosRecargar y reaplicar mis cambios"
     },
     {
       "name": "editor: «Ver cambios» lista lo que cambió la otra persona [768-light]",
@@ -127,6 +127,66 @@
     },
     {
       "name": "editor: deshacer vuelve sobre lo dibujado y lo quitado [768-light]",
+      "pass": true,
+      "detail": "Todo guardado"
+    },
+    {
+      "name": "editor: la tecla W activa la herramienta Muro [768-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: Entrar termina el muro y lo deja elegido [768-light]",
+      "pass": true,
+      "detail": "Muro · 8,50 m"
+    },
+    {
+      "name": "editor: el muro nuevo cuenta como un cambio [768-light]",
+      "pass": true,
+      "detail": "Cambios sin guardar (1)"
+    },
+    {
+      "name": "editor: al pasar sobre el muro la puerta muestra dónde caería [768-light]",
+      "pass": true,
+      "detail": "1 vista previa"
+    },
+    {
+      "name": "editor: un clic ubica la puerta sobre el muro y la deja elegida [768-light]",
+      "pass": true,
+      "detail": "Puerta · 0,90 m de ancho"
+    },
+    {
+      "name": "editor: las flechas corren la puerta a lo largo del muro [768-light]",
+      "pass": true,
+      "detail": "3.8 → 4.3 m"
+    },
+    {
+      "name": "editor: la ventana se ubica sobre el muro [768-light]",
+      "pass": true,
+      "detail": "Ventana · 1,20 m de ancho"
+    },
+    {
+      "name": "editor: tres cambios sin guardar (muro, puerta, ventana) [768-light]",
+      "pass": true,
+      "detail": "Cambios sin guardar (3)"
+    },
+    {
+      "name": "editor: guardar manda muro, puerta y ventana y el servidor los cuenta [768-light]",
+      "pass": true,
+      "detail": "Éxito: Plano guardado Versión 5 · 0 ubicados, 0 movidos, 0 quitados, 3 muros, puertas o ventanas · Código de soporte: 5cc2d37d878f4c73 Aviso: el área calculada de PLANO-PB-C3 · Consultorio 3 · Ginecol"
+    },
+    {
+      "name": "editor: un clic sobre el muro lo elige [768-light]",
+      "pass": true,
+      "detail": "Muro · 8,50 m"
+    },
+    {
+      "name": "editor: Supr quita el muro con su puerta y su ventana [768-light]",
+      "pass": true,
+      "detail": "Cambios sin guardar (3)"
+    },
+    {
+      "name": "editor: Ctrl+Z los devuelve [768-light]",
       "pass": true,
       "detail": "Todo guardado"
     }

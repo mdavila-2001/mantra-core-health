@@ -86,11 +86,11 @@ export function errorMarks(
   };
   for (const issue of issues) {
     if (issue.kind === 'ELEMENT') {
-      const el = state.elements.get(issue.id);
-      const axis = el && !state.removedElements.has(el.id) ? elementAxis(state, el) : null;
-      if (el && axis && !elements.has(el.id)) {
+      const element = state.elements.get(issue.id);
+      const axis = element && !state.removedElements.has(element.id) ? elementAxis(state, element) : null;
+      if (element && axis && !elements.has(element.id)) {
         const mid = axis[Math.floor(axis.length / 2)]!;
-        elements.set(el.id, { path: pathOf(axis, false), label: `${elementLabel(el)}: ${shortIssueLabel(issue)}`, at: mid });
+        elements.set(element.id, { path: pathOf(axis, false), label: `${elementLabel(element)}: ${shortIssueLabel(issue)}`, at: mid });
       }
       continue;
     }
