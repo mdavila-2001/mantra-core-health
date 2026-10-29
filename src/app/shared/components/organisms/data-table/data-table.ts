@@ -16,6 +16,7 @@ import { NgTemplateOutlet } from '@angular/common';
 
 import { AppButton } from '../../atoms/button/button';
 import { Checkbox } from '../../atoms/checkbox/checkbox';
+import { InfoHint } from '../../atoms/info-hint/info-hint';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { ViewStateHost } from '../view-state-host/view-state-host';
 import {
@@ -57,7 +58,7 @@ import {
  */
 @Component({
   selector: 'app-data-table',
-  imports: [AppButton, Checkbox, NgTemplateOutlet, ViewStateHost],
+  imports: [AppButton, Checkbox, InfoHint, NgTemplateOutlet, ViewStateHost],
   templateUrl: './data-table.html',
   styleUrl: './data-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

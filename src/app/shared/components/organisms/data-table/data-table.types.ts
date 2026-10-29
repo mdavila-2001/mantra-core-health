@@ -24,6 +24,8 @@ export interface ColumnDef<Row> {
   /** Clave estable de la columna. Es lo que viaja al ordenar, nunca la etiqueta. */
   readonly key: string;
   readonly header: string;
+  /** Qué es la columna y cómo se lee: va en un «i» junto al encabezado (`app-info-hint`), sin ordenar al pulsarlo. */
+  readonly hint?: string;
   readonly priority: number;
   readonly align?: ColumnAlignment;
   readonly sortable?: boolean;

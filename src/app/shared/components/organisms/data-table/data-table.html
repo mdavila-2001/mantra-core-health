@@ -47,22 +47,27 @@
               [class]="cellClassFor(column)"
               [attr.aria-sort]="ariaSortFor(column)"
             >
-              @if (column.sortable) {
-                <button
-                  type="button"
-                  class="data-table__sort"
-                  data-testid="tabla-ordenar"
-                  [attr.data-columna]="column.key"
-                  (click)="toggleSort(column)"
-                >
+              <span class="data-table__th-inner">
+                @if (column.sortable) {
+                  <button
+                    type="button"
+                    class="data-table__sort"
+                    data-testid="tabla-ordenar"
+                    [attr.data-columna]="column.key"
+                    (click)="toggleSort(column)"
+                  >
+                    {{ column.header }}
+                    <span class="data-table__sort-icon" aria-hidden="true">
+                      {{ sortDirectionFor(column) === 'asc' ? '▲' : sortDirectionFor(column) === 'desc' ? '▼' : '↕' }}
+                    </span>
+                  </button>
+                } @else {
                   {{ column.header }}
-                  <span class="data-table__sort-icon" aria-hidden="true">
-                    {{ sortDirectionFor(column) === 'asc' ? '▲' : sortDirectionFor(column) === 'desc' ? '▼' : '↕' }}
-                  </span>
-                </button>
-              } @else {
-                {{ column.header }}
-              }
+                }
+                @if (column.hint) {
+                  <app-info-hint [label]="column.header" [text]="column.hint" data-testid="tabla-encabezado-info" />
+                }
+              </span>
             </th>
           }
 
@@ -99,6 +104,14 @@
                 [class.data-table__cell--vacia]="!column.cell && cellValue(row, column).trim() === ''"
                 [attr.data-label]="column.header"
               >
+                @if (column.hint) {
+                  <app-info-hint
+                    class="data-table__cell-hint"
+                    [label]="column.header"
+                    [text]="column.hint"
+                    data-testid="tabla-celda-info"
+                  />
+                }
                 @if (column.cell) {
                   <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                 } @else {
@@ -131,7 +144,12 @@
                 <dl class="data-table__detail">
                   @for (column of secondaryColumns(); track column.key) {
                     <div class="data-table__detail-item">
-                      <dt>{{ column.header }}</dt>
+                      <dt>
+                        {{ column.header }}
+                        @if (column.hint) {
+                          <app-info-hint [label]="column.header" [text]="column.hint" />
+                        }
+                      </dt>
                       <dd>
                         @if (column.cell) {
                           <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />

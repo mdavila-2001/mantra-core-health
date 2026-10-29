@@ -396,6 +396,11 @@ thead .data-table__cell {
         white-space: normal;
     }
 
+    :host(.data-table--apilada) .data-table__cell-hint {
+        display: inline-flex;
+        margin-inline-end: auto;
+    }
+
     :host(.data-table--apilada) .data-table__row > td::before {
         content: attr(data-label);
         flex: none;
@@ -474,4 +479,16 @@ thead .data-table__cell {
   inset-block-start: 0;
   z-index: 1;
   background: var(--bg-surface-alt);
+}
+
+/* El «i» de un encabezado va al lado del texto y no forma parte del botón de orden.
+   En la tabla apilada de móvil el encabezado sale de la vista: el «i» pasa a la celda,
+   junto al rótulo (solo ahí; en escritorio vive en el <th>). */
+.data-table__cell-hint {
+    display: none;
+}
+.data-table__th-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
 }

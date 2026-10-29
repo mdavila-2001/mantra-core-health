@@ -6,6 +6,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { loading, offline, ready, stale } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { columnsWithoutHint } from './data-table-hints';
 import { DataTable } from './data-table';
 import type { ColumnDef, CursorState, SortState } from './data-table.types';
 
@@ -567,5 +568,97 @@ describe('DataTable', () => {
       expect(css).toContain(':host(.data-table--apilada) .data-table__row > td::before');
       expect(css).toContain('content: attr(data-label)');
     });
+  });
+});
+
+// ---------------------------------------------------------------------------- «i» por columna
+
+const COLUMNAS_CON_HINT: readonly ColumnDef<Paciente>[] = [
+  {
+    key: 'apellido',
+    header: 'Apellido',
+    priority: 1,
+    sortable: true,
+    hint: 'El apellido tal como figura en el padrón.',
+  },
+  {
+    key: 'documento',
+    header: 'Documento',
+    priority: 1,
+    hint: 'Número de documento de identidad de la persona.',
+  },
+  { key: 'obraSocial', header: 'Obra social', priority: 2 },
+];
+
+@Component({
+  imports: [DataTable],
+  template: `
+    <app-data-table
+      [state]="state"
+      [columns]="columnas"
+      [trackBy]="porId"
+      caption="Con explicaciones"
+      [stackedOnMobile]="true"
+      (sortChanged)="ordenes.push($event)"
+    />
+  `,
+})
+class HintHostComponent {
+  readonly state = ready(FILAS);
+  readonly columnas = COLUMNAS_CON_HINT;
+  readonly porId = (row: Paciente): string => row.id;
+  readonly ordenes: SortState[] = [];
+}
+
+describe('DataTable · «i» por columna (hint)', () => {
+  let fixture: ComponentFixture<HintHostComponent>;
+  const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [HintHostComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
+    fixture = TestBed.createComponent(HintHostComponent);
+    await fixture.whenStable();
+  });
+
+  it('pinta el «i» dentro del <th> de las columnas que lo declaran, y solo de ésas', () => {
+    const ths = [...root().querySelectorAll<HTMLTableCellElement>('thead th')];
+    const conInfo = ths.filter((th) => th.querySelector('app-info-hint') !== null);
+    expect(conInfo.map((th) => th.textContent?.trim().split(/\s+/)[0])).toEqual([
+      'Apellido',
+      'Documento',
+    ]);
+  });
+
+  it('es un botón accesible con nombre «Más información sobre …» y se alcanza con Tab', () => {
+    const boton = root().querySelector<HTMLButtonElement>('thead app-info-hint button');
+    expect(boton).not.toBeNull();
+    expect(boton!.getAttribute('aria-label')).toBe('Más información sobre Apellido');
+    expect(boton!.tabIndex).toBeGreaterThanOrEqual(0);
+  });
+
+  it('pulsar el «i» NO ordena la columna; pulsar el encabezado sí', () => {
+    const host = fixture.componentInstance;
+    root().querySelector<HTMLButtonElement>('thead app-info-hint button')!.click();
+    fixture.detectChanges();
+    expect(host.ordenes).toEqual([]);
+    root().querySelector<HTMLButtonElement>('thead button.data-table__sort')!.click();
+    fixture.detectChanges();
+    expect(host.ordenes).toEqual([{ key: 'apellido', direction: 'asc' }]);
+  });
+
+  it('la tabla apilada de móvil lleva el «i» en la celda, junto al rótulo, y el CSS lo muestra solo ahí', () => {
+    const celda = root().querySelector('tbody tr.data-table__row:first-child > td[data-label="Apellido"]');
+    expect(celda?.querySelector('app-info-hint.data-table__cell-hint')).not.toBeNull();
+    const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+    expect(css).toContain('.data-table__cell-hint {\n    display: none;');
+    expect(css).toContain(':host(.data-table--apilada) .data-table__cell-hint');
+  });
+
+  it('columnsWithoutHint nombra las columnas que no se explican (para las pruebas de cada pantalla)', () => {
+    expect(columnsWithoutHint(COLUMNAS_CON_HINT)).toEqual(['obraSocial']);
+    expect(columnsWithoutHint(COLUMNAS_CON_HINT.filter((c) => c.hint))).toEqual([]);
   });
 });
