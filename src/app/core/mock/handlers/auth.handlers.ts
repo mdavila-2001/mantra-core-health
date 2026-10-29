@@ -495,17 +495,6 @@ export function registrarAuth(router: MockRouter): void {
       };
       owner?: { email?: string };
     }>({ body });
-    // Por correo exacto, no con `buscarUsuario`: aquél acepta `farmacia@…`
-    // como atajo de la cuenta demo, y acá eso respondía «ya existe» a
-    // cualquier farmacia que se registrara con `farmacia@su-dominio`.
-    const correoDelOwner = datos.owner?.email?.trim().toLocaleLowerCase('es');
-    if (
-      correoDelOwner !== undefined &&
-      (MOCK_USERS.some((u) => u.email === correoDelOwner) ||
-        cuentasRegistradas.todos().some((c) => c.email === correoDelOwner))
-    ) {
-      return conflict('Ya existe una cuenta con ese correo', { email: correoDelOwner });
-    }
     const legalEntityType = datos.organization?.legalEntityType;
     // Mismo contrato que el `ValidationPipe` real: un código fuera del
     // diccionario es 400, no un 422 de negocio (subtarea 1.1).
@@ -798,6 +787,19 @@ export function registrarAuth(router: MockRouter): void {
         ? undefined
         : (legalRepresentative === undefined ? 0 : 1) + (executives === undefined ? 0 : 3);
 
+    // Como el `ValidationPipe` va antes que el servicio, el conflicto de correo se
+    // resuelve después de validar el cuerpo: un cuerpo inválido es 400/422, no 409.
+    // Por correo exacto, no con `buscarUsuario`: aquél acepta `farmacia@…`
+    // como atajo de la cuenta demo, y acá eso respondía «ya existe» a
+    // cualquier farmacia que se registrara con `farmacia@su-dominio`.
+    const correoDelOwner = datos.owner?.email?.trim().toLocaleLowerCase('es');
+    if (
+      correoDelOwner !== undefined &&
+      (MOCK_USERS.some((u) => u.email === correoDelOwner) ||
+        cuentasRegistradas.todos().some((c) => c.email === correoDelOwner))
+    ) {
+      return conflict('Ya existe una cuenta con ese correo', { email: correoDelOwner });
+    }
     const ownerUserId = nuevoId('owner');
     const tenantDeDemostracion = TENANT_DE_DEMOSTRACION[datos.organization?.tenantType ?? ''];
     if (tenantDeDemostracion !== undefined && datos.owner?.email !== undefined) {
