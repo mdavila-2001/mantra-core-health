@@ -411,6 +411,9 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // «Indicadores de camas», sólo para hospitales y clínicas: son los únicos
     // tipos de organización con camas y pacientes internados.
     expect(flagged.map((s) => s.path)).toEqual([
+      'inpatient/admissions/new',
+      'inpatient/census',
+      'inpatient/indicators',
       'administration/medical-center-setup',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
