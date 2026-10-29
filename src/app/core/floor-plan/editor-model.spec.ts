@@ -1,4 +1,4 @@
-import { EditHistory, defaultRect, diffPatch, fromViews, isDirty, measureText, moveWithChildren, movePolygonVertex, patchSize, reapply, rectFromCorners, removeFromPlan, resizeRect, rotateRectTo, setGeometry, shapesOf, translateGeometry, type EditSpace, type EditState, type RectGeometry } from './editor-model';
+import { EditHistory, defaultRect, diffPatch, fromViews, insertPolygonVertex, isDirty, measureText, removePolygonVertex, moveWithChildren, movePolygonVertex, patchSize, reapply, rectFromCorners, removeFromPlan, resizeRect, rotateRectTo, setGeometry, shapesOf, translateGeometry, type EditSpace, type EditState, type RectGeometry } from './editor-model';
 import { validateLayout } from './layout-validation';
 import { toSpaceView } from './plan-view';
 import type { SpacePlacementDTO } from '../data-access/floor-plan/floor-plan.types';
@@ -195,5 +195,14 @@ describe('modelo del editor', () => {
       expect(result.applied).toEqual(['cama']);
       expect(result.state.removed.has('cama')).toBe(true);
     });
+  });
+
+  it('agrega un vértice en la mitad de una arista y lo quita sin bajar de tres', () => {
+    const tri = { kind: 'POLYGON' as const, vertices: [[0, 0], [4, 0], [4, 4]] as [number, number][] };
+    const four = insertPolygonVertex(tri, 0);
+    expect(four.kind === 'POLYGON' && four.vertices).toEqual([[0, 0], [2, 0], [4, 0], [4, 4]]);
+    const back = removePolygonVertex(four, 1);
+    expect(back.kind === 'POLYGON' && back.vertices.length).toBe(3);
+    expect(removePolygonVertex(tri, 0)).toBe(tri);
   });
 });

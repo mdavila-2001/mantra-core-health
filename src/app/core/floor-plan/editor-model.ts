@@ -11,6 +11,7 @@
 
 import type { LayoutPatch, PlacementGeometry, PlacementUpsert } from '../data-access/floor-plan/floor-plan.types';
 import {
+  MAX_POLYGON_VERTICES,
   bboxOf,
   normalizeDegrees,
   polygonArea,
@@ -269,6 +270,23 @@ export function rectFromCorners(a: Point, b: Point): RectGeometry {
 export function movePolygonVertex(g: PlacementGeometry, index: number, p: Point): PlacementGeometry {
   if (g.kind !== 'POLYGON') return g;
   return { kind: 'POLYGON', vertices: g.vertices.map((v, i) => (i === index ? ([roundToMillimeter(p[0]), roundToMillimeter(p[1])] as [number, number]) : v)) };
+}
+
+/** Agrega un vértice en la mitad de la arista `index` → `index + 1` (asa del medio). */
+export function insertPolygonVertex(g: PlacementGeometry, index: number, p?: Point): PlacementGeometry {
+  if (g.kind !== 'POLYGON' || g.vertices.length >= MAX_POLYGON_VERTICES) return g;
+  const a = g.vertices[index]!;
+  const b = g.vertices[(index + 1) % g.vertices.length]!;
+  const at: Point = p ?? [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const vertices = [...g.vertices];
+  vertices.splice(index + 1, 0, [roundToMillimeter(at[0]), roundToMillimeter(at[1])]);
+  return { kind: 'POLYGON', vertices };
+}
+
+/** Quita un vértice (`Supr`); un polígono no baja de tres. */
+export function removePolygonVertex(g: PlacementGeometry, index: number): PlacementGeometry {
+  if (g.kind !== 'POLYGON' || g.vertices.length <= 3) return g;
+  return { kind: 'POLYGON', vertices: g.vertices.filter((_, i) => i !== index) };
 }
 
 /** Medidas vivas al arrastrar: «4,00 × 8,50 m · 34,00 m²». */
