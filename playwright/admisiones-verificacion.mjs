@@ -72,7 +72,13 @@ async function main() {
       await pagina.setViewportSize({ width: ancho, height: ancho === 390 ? 844 : ancho === 768 ? 1024 : 1000 });
       await esperar(250);
       const archivo = `${nombre}__${tema}-${ancho}.png`;
-      await pagina.screenshot({ path: `${SALIDA}/${archivo}`, fullPage: opciones.completa ?? true });
+      // Página completa = el contenido (`main`): una captura de la página entera arrastra el menú
+      // lateral fijo, que se dibuja encima del contenido y no es lo que se quiere mostrar.
+      if (opciones.completa ?? true) {
+        await pagina.locator('main').first().screenshot({ path: `${SALIDA}/${archivo}` });
+      } else {
+        await pagina.screenshot({ path: `${SALIDA}/${archivo}` });
+      }
       archivos.push(archivo);
     }
     await pagina.setViewportSize({ width: 1440, height: 1000 });
@@ -383,6 +389,7 @@ async function main() {
   await salir();
   await entrar('paciente@alovida.mock');
   await ir('/administration/admissions');
+  await pagina.waitForURL(/\/dashboard/, { timeout: 15_000 }).catch(() => {});
   ok('El paciente no entra a «Admisiones» (el guard lo manda al panel)', pagina.url().includes('/dashboard'), pagina.url());
 
   ok('Sin errores de consola de la aplicación', errores.length === 0, errores.slice(0, 3).join(' | '));
