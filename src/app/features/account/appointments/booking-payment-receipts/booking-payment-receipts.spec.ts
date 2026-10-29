@@ -183,6 +183,21 @@ describe('BookingPaymentReceipts', () => {
       expect(byTestId('booking-receipts-form')).not.toBeNull();
     });
 
+    it('pagada a mano y sin comprobantes: no dice «otro» ni «todavía no subió»', () => {
+      const host = mount({ knownPaymentState: PAID }, []);
+
+      expect(byTestId('booking-receipts-blocked')?.textContent).toContain('no hace falta subir ningún comprobante');
+      expect(host.textContent).toContain('El pago se registró sin comprobante.');
+      expect(host.textContent).not.toContain('Todavía no subió comprobantes');
+    });
+
+    it('sin pagar y sin comprobantes, el vacío sigue invitando a subir', () => {
+      const host = mount({}, []);
+
+      expect(host.textContent).toContain('Todavía no subió comprobantes para esta cita.');
+      expect(host.textContent).not.toContain('El pago se registró sin comprobante.');
+    });
+
     it('si la cita sola no se pudo leer, usa la de la lista', () => {
       getBooking.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
       mount({ knownPaymentState: PAID });
