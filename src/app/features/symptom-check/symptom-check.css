@@ -217,13 +217,14 @@
 
 .sintomas__silueta {
   display: block;
+  --body-map-ancho: 22rem; /* antes 16: el render HD aguanta verla más grande */
 }
 
-/* 21rem: el ancho de la figura (16rem) más el acolchado del escenario, y el
-   aire para que el selector «Frente · Espalda · Cara» entre sin cortarse. */
+/* 27rem: la figura (22rem) más el acolchado del escenario y el aire para que el
+   selector de vista y la barra de zoom entren sin cortarse. */
 @media (min-width: 48rem) {
   .sintomas__elegir {
-    grid-template-columns: 21rem minmax(0, 1fr);
+    grid-template-columns: 27rem minmax(0, 1fr);
     gap: var(--e5);
     align-items: start;
   }

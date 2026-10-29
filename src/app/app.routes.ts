@@ -1089,6 +1089,17 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // El mismo vecindario que el mapa en columnas, abierto en profundidad:
+    // cada término con su definición y, ramificado, lo que lo rodea.
+    path: 'glossary/graph',
+    title: `${APP_TITLE} - Árbol de términos médicos`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/glossary/glossary-graph')
+        .then((m) => m.GlossaryGraph)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'glossary/network',
     title: `${APP_TITLE} - Mapa de relaciones del glosario`,
     canActivate: [seccionRolesGuard],
