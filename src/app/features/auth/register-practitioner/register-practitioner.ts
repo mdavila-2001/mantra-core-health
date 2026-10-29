@@ -605,7 +605,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
       icono: 'shield',
       titulo: 'Es lo que le habilita a atender',
       texto:
-        'Comprobamos matrícula y colegio antes de que aparezca en el directorio. Es lo que le da certeza a quien le elige sin conocerle.',
+        'Su solicitud queda «en revisión» hasta que el equipo la resuelva. Mientras tanto aparece en el directorio con la insignia «Matrícula en revisión», y le avisamos cuando haya una decisión.',
     },
     {
       icono: 'history',
@@ -615,9 +615,9 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
     },
     {
       icono: 'folder',
-      titulo: 'Los verifica una persona, no un robot',
+      titulo: 'Cada documento se revisa por separado',
       texto:
-        'Puede registrarse sin subirlos y cargarlos después desde su perfil. Mientras no estén, su matrícula figura como declarada y no como verificada.',
+        'Puede registrarse sin subirlos y cargarlos después desde su perfil. Mientras no estén, su matrícula figura como declarada y no como verificada. Si falta algo, el equipo se lo pide y puede corregirlo y reenviar.',
     },
   ],
   specialties: [

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { AdmissionStatusCard } from '../../admission-status-card/admission-status-card';
 import {
   catchError,
   forkJoin,
@@ -226,7 +227,7 @@ function edadDe(nacimiento?: Date): number | null {
 
 @Component({
   selector: 'app-practitioner-profile',
-  imports: [Alert, AppButton, PractitionerProfileView, ViewStateHost],
+  imports: [AdmissionStatusCard, Alert, AppButton, PractitionerProfileView, ViewStateHost],
   templateUrl: './practitioner-profile.html',
   styleUrl: './practitioner-profile.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

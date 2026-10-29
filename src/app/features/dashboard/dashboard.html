@@ -32,12 +32,21 @@
 
   @if (altaPendiente(); as alta) {
     <app-alert tone="warning" title="Complete su perfil para recibir pacientes">
-      Lleva {{ alta.cumplidas }} de {{ alta.total }} pasos. Hasta terminarlos no aparece cuando
-      alguien busca un profesional.
+      Lleva {{ alta.cumplidas }} de {{ alta.total }} pasos. Termínelos para dejar su perfil listo.
+      Su verificación es un trámite aparte: su estado figura más abajo.
       <a app-button variant="primary" size="sm" [routerLink]="['/onboarding']">
         Ver qué me falta
       </a>
     </app-alert>
+  }
+
+  <!-- El estado de la solicitud de verificación, solo para quien atiende. Va
+       diferido: este panel se importa en el paquete inicial y la tarjeta trae
+       su cliente. Verificada, no ocupa lugar. -->
+  @if (esProfesional()) {
+    @defer (on immediate) {
+      <app-admission-status-card hideWhenVerified />
+    }
   }
 
   <!-- Sin `page-meta` con el nombre: el encabezado del shell ya lo muestra a dos centímetros de
