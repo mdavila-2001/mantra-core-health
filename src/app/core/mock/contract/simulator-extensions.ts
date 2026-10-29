@@ -8,6 +8,7 @@ import {
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/profiles/profiles.types';
 import { REFERRAL_CONTRACT_PENDING_KEYS } from '../../data-access/referrals/referrals.types';
+import { CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS } from '../../data-access/community/community.types';
 
 /* ============================================================================
     Claves que la maqueta acepta aunque el DTO de la API no las declare.
@@ -39,4 +40,6 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // A diferencia del resto, el cliente SÍ las manda a la API real — ver
   // `REFERRAL_CONTRACT_PENDING_KEYS` —; se borra al regenerar el contrato.
   'POST /referrals': REFERRAL_CONTRACT_PENDING_KEYS,
+  // Respuesta automática redactada por la IA: falta la columna del modo en el modelo.
+  'PUT /community/profiles/:profileId/auto-reply': CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
 };
