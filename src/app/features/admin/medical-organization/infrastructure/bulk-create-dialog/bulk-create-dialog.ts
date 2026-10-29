@@ -138,9 +138,11 @@ export class BulkCreateDialog implements OnInit {
   protected readonly choques = computed(() => this.filas().filter((f) => f.existe).length);
 
   constructor() {
-    this.form.controls.formCode.valueChanges.subscribe(() => {
+    // Lee el valor que acaba de emitir el control: ver la nota de `SpaceFormDialog`.
+    this.form.controls.formCode.valueChanges.subscribe((forma) => {
       const actual = this.form.controls.functionCode.value;
-      if (actual !== '' && !this.opcionesDeFuncion().some((o) => o.value === actual)) {
+      const vigentes = forma === '' ? [] : functionsFor(this.catalog(), forma, this.site().regulatory.typology?.code ?? null);
+      if (actual !== '' && !vigentes.some((f) => f.code === actual)) {
         this.form.controls.functionCode.setValue('');
       }
     });

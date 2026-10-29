@@ -1,0 +1,346 @@
+{
+  "base": "http://localhost:4311",
+  "fecha": "2026-10-29T04:28:31.727Z",
+  "resultados": [
+    {
+      "nombre": "árbol con role=tree, nombre accesible y un solo tabulador",
+      "ok": true,
+      "detalle": "{\"tree\":1,\"items\":8,\"tabbables\":1,\"expandibles\":8,\"niveles\":[\"1\",\"2\"],\"etiquetaArbol\":\"Espacios del establecimiento\"}"
+    },
+    {
+      "nombre": "flechas: ↓ → → baja al primer hijo del piso (nivel 3, foco real)",
+      "ok": true,
+      "detalle": "{\"nombre\":\"Consultorio 101CONS-101\",\"nivel\":\"3\",\"rol\":\"treeitem\"}"
+    },
+    {
+      "nombre": "← sube al padre y ← lo cierra (aria-expanded=false)",
+      "ok": true,
+      "detalle": "false"
+    },
+    {
+      "nombre": "Enter elige la fila y el detalle muestra su nombre",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "crear edificio: POST /care-spaces → 201",
+      "ok": true,
+      "detalle": "{\"code\":\"ED-C\",\"name\":\"Edificio C · Anexo\",\"formCode\":\"LOC_FORM_BUILDING\",\"functionCode\":\"SPACE_FN_BUILDING_GENERIC\",\"activate\":true}"
+    },
+    {
+      "nombre": "el edificio queda en el árbol y elegido",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "crear Piso 1: 201 y queda en el árbol",
+      "ok": true,
+      "detalle": "201"
+    },
+    {
+      "nombre": "crear Consultorio C101: 201 y queda en el árbol",
+      "ok": true,
+      "detalle": "201"
+    },
+    {
+      "nombre": "crear Habitación C201: 201 y queda en el árbol",
+      "ok": true,
+      "detalle": "201"
+    },
+    {
+      "nombre": "crear Habitación C202: 201 y queda en el árbol",
+      "ok": true,
+      "detalle": "201"
+    },
+    {
+      "nombre": "crear cama C201-A: 201 con categoría y censable",
+      "ok": true,
+      "detalle": "{\"code\":\"C201-A\",\"name\":\"Cama C201-A\",\"formCode\":\"LOC_FORM_BED\",\"functionCode\":\"SPACE_FN_BED_STANDARD\",\"parentSpaceId\":\"18f971b6-1833-4ab4-ae68-9fbeb46af7aa\",\"activate\":true,\"bedCategoryCode\":\"BED_CAT_PRIVATE\",\"censable\":true}"
+    },
+    {
+      "nombre": "quirófano: sin superficie no se avanza (el perfil de la función la exige)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "crear quirófano: 201 con superficie, ACH y tiempos",
+      "ok": true,
+      "detalle": "{\"code\":\"QX-C1\",\"name\":\"Quirófano C1\",\"formCode\":\"LOC_FORM_ROOM\",\"functionCode\":\"SPACE_FN_OPERATING_ROOM\",\"parentSpaceId\":\"24ceb2fa-4332-4ad4-a83a-671a9b2d1b0e\",\"activate\":true,\"areaM2\":36,\"airChangesPerHour\":20,\"prepMinutes\":20,\"cleanupMinutes\":30}"
+    },
+    {
+      "nombre": "recarga: el edificio, el piso y la cama siguen ahí (vienen de la API simulada, no de la pantalla)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "recarga: el quirófano sigue ahí",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "masiva con un código repetido: la vista previa lo marca y «Crear» no se ofrece",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "masiva C201-{B..I}: vista previa de 8 camas, sin choques y SIN petición de alta todavía",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "masiva: POST /bulk → 201 con el patrón tal cual",
+      "ok": true,
+      "detalle": "{\"parentSpaceId\":\"18f971b6-1833-4ab4-ae68-9fbeb46af7aa\",\"formCode\":\"LOC_FORM_BED\",\"functionCode\":\"SPACE_FN_BED_STANDARD\",\"codePattern\":\"C201-{B..I}\",\"namePattern\":\"Cama C201-{B..I}\",\"censable\":true}"
+    },
+    {
+      "nombre": "masiva: las 8 camas quedan bajo la habitación (más la A: 9 hijos)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "CSV en seco: errores exactamente en las líneas 3, 4 y 5 con campo y motivo",
+      "ok": true,
+      "detalle": "[[\"3\",\"code\",\"Ese código ya se usó en este establecimiento (no se reutiliza, ni el de un espacio clausurado).\"],[\"4\",\"formCode\",\"Una forma «Cama» no puede colgar de «Piso».\"],[\"5\",\"parentCode\",\"El padre indicado no existe en este establecimiento.\"]]"
+    },
+    {
+      "nombre": "CSV con errores: «Importar» no se ofrece y no se creó nada",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "CSV corregido: dryRun=true y luego dryRun=false con las MISMAS filas; creó 3",
+      "ok": true,
+      "detalle": "[[\"dryRun=true\",200],[\"dryRun=true\",200],[\"dryRun=false\",200]] | Éxito:Se importaron 3 espacios."
+    },
+    {
+      "nombre": "ficha: centrada (holgura izquierda y derecha ≤ 2 px)",
+      "ok": true,
+      "detalle": "{\"area\":1200,\"ficha\":1120,\"izq\":40,\"der\":40,\"tarjetas\":1,\"lateral\":0}"
+    },
+    {
+      "nombre": "ficha: a lo ancho (≥ 85 % del área) y UNA tarjeta sin columna lateral",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ficha: pestañas General · Atributos técnicos · Unidades · Hijos · Historial",
+      "ok": true,
+      "detalle": "General · Atributos técnicos · Unidades · Hijos · Historial"
+    },
+    {
+      "nombre": "editar desde «Atributos técnicos» abre en la página de medidas",
+      "ok": true,
+      "detalle": "Medidas"
+    },
+    {
+      "nombre": "editar: PATCH 200 con la superficie",
+      "ok": true,
+      "detalle": "{\"name\":\"Habitación C201\",\"areaM2\":21}"
+    },
+    {
+      "nombre": "editar: la ficha muestra 21 m²",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "vincular: POST 201 y la tabla muestra la unidad propietaria",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "recarga de la ficha: el vínculo y la edición siguen",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "clausurar con camas activas: 409 con ACTIVE_CHILDREN y su próxima acción",
+      "ok": true,
+      "detalle": "[{\"kind\":\"ACTIVE_CHILDREN\",\"texto\":\"Espacios hijos vigentes2Qué hacer Clausure o mueva los 2 espacios hijos (302-A, 302-B). Abrir: espacio 1espacio 2\"}]"
+    },
+    {
+      "nombre": "el diálogo de bloqueos no ofrece confirmar la clausura",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "clausurar cama 302-A: «Clausurado» con motivo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "clausurar cama 302-B: «Clausurado» con motivo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "resuelto el bloqueo: ya no hay lista y se pide el motivo (confirmWithReason)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "clausurar habitación: POST /lifecycle 200 con action=retire y motivo",
+      "ok": true,
+      "detalle": "{\"action\":\"retire\",\"reason\":\"Remodelación completa del ala de internación\"}"
+    },
+    {
+      "nombre": "recarga: la habitación sigue clausurada y sin acciones",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "historial: queda la revisión de la clausura con su motivo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "quirófano con cirugías: bloqueo FUTURE_PROCEDURE con su próxima acción",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "412 por If-Match viejo: S4 «otra persona cambió este dato», con código de soporte y lo escrito intacto",
+      "ok": true,
+      "detalle": "Error:No se pudo guardar el espacio Otra persona cambió este dato mientras lo editaba. Recargue para ver la versión vigente. Código de soporte: req-infra-0008"
+    },
+    {
+      "nombre": "código repetido: 409 SPACE_CODE_TAKEN, S4 anclado al campo código",
+      "ok": true,
+      "detalle": "Error:No se pudo crear el espaciocode: Ese código ya se usó en este establecimiento. Un código no se reutiliza, ni siquiera el de un espacio clausurado. Código de soporte: req-infra-0008"
+    },
+    {
+      "nombre": "Establecimiento: UNA tarjeta con tres pestañas",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "habilitaciones: la guardada como vigente que venció se lee «Vencida»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "capacidad: la real se cuenta del árbol (suma la cama creada y no la clausurada) y no se escribe",
+      "ok": true,
+      "detalle": "real=4: 301-A, 301-B, UTI-1 y la C201-A nueva; la 302-A se clausuró antes"
+    },
+    {
+      "nombre": "declarar capacidad: POST 201 y la tabla muestra la declarada con su diferencia",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "habilitación nueva: POST 201 y la fila aparece",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "tipología con espacios que la incumplen: 409 TYPOLOGY_CONFLICT con la lista y enlaces",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "SNIS: PATCH /regulatory 200 (If-Match) y el dato cambió, sin verificar",
+      "ok": true,
+      "detalle": "{\"snisCode\":\"DEMO-SNIS-4242\"}"
+    },
+    {
+      "nombre": "recarga: el SNIS nuevo sigue",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "S7: la estructura vieja se dice con su antigüedad y «Actualizar»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "S5 en la pestaña: forbidden",
+      "ok": true,
+      "detalle": " Establecimiento Hospital San Lucas (SANLUCAS) Error:No tiene acceso a esta sección Código de soporte: mock-fallo"
+    },
+    {
+      "nombre": "S6 en la pestaña: not-found",
+      "ok": true,
+      "detalle": " Establecimiento Hospital San Lucas (SANLUCAS) No encontramos lo que buscaVerifique la dirección o vuelva al listado."
+    },
+    {
+      "nombre": "S6 no revela nada: sin nombres ni códigos del establecimiento",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "S8 en la pestaña: red",
+      "ok": true,
+      "detalle": " Establecimiento Hospital San Lucas (SANLUCAS) Sin conexiónNo pudimos comunicarnos con el servidor. Revise su conexión. "
+    },
+    {
+      "nombre": "S9 en la pestaña: error",
+      "ok": true,
+      "detalle": " Establecimiento Hospital San Lucas (SANLUCAS) Error:Algo salió mal Simulado: fallo del servidor. Código de soporte: moc"
+    },
+    {
+      "nombre": "S9 trae código de soporte copiable",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "S2: mientras carga la estructura no hay árbol ni datos del establecimiento",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "S3: sin estructura ofrece «Agregar el primer edificio» e «Importar CSV»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ficha S6: un espacio de otro tenant no revela nada (404 = inexistente)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ficha S5: forbidden",
+      "ok": true,
+      "detalle": "Mis organizaciones/EspacioEspacioError:No tiene acceso a esta sección Código de soporte: mock-fallo"
+    },
+    {
+      "nombre": "ficha S8: red",
+      "ok": true,
+      "detalle": "Mis organizaciones/EspacioEspacioSin conexiónNo pudimos comunicarnos con el servidor. Revise su cone"
+    },
+    {
+      "nombre": "ficha S9: error",
+      "ok": true,
+      "detalle": "Mis organizaciones/EspacioEspacioError:Algo salió mal Simulado: fallo del servidor. Código de soport"
+    },
+    {
+      "nombre": "Establecimiento S8: la capacidad sin conexión no tumba las otras secciones",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "S5 reflejado: quien sólo lee ve el árbol completo y NINGUNA acción de escritura",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "sin permiso tampoco hay «Agregar dentro»; la ficha sí se puede abrir",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ficha sin permiso: sin botones de edición ni historial",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "la API decide: una escritura directa de quien sólo lee responde 403",
+      "ok": true,
+      "detalle": "403"
+    },
+    {
+      "nombre": "sin excepciones no capturadas en la página",
+      "ok": true,
+      "detalle": ""
+    }
+  ]
+}

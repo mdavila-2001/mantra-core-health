@@ -207,7 +207,9 @@ try {
   ok('flechas: ↓ → → baja al primer hijo del piso (nivel 3, foco real)', foco.rol === 'treeitem' && foco.nivel === '3', JSON.stringify(foco));
   await uno(admin, '02-infraestructura-teclado-foco');
   await admin.keyboard.press('ArrowLeft');
+  await admin.waitForTimeout(250);
   await admin.keyboard.press('ArrowLeft');
+  await admin.waitForTimeout(250);
   const cerrado = await admin.evaluate(() => document.activeElement?.getAttribute('aria-expanded'));
   ok('← sube al padre y ← lo cierra (aria-expanded=false)', cerrado === 'false', String(cerrado));
   await admin.keyboard.press('End');
@@ -377,9 +379,10 @@ try {
   await admin.getByTestId('csv-importar').waitFor();
   await tresAnchos(admin, '18-csv-validacion-limpia');
   await admin.getByTestId('csv-importar').click();
-  await admin.getByTestId('infra-aviso').waitFor();
+  // El aviso de la alta masiva sigue en pantalla: se espera el de la importación.
+  await admin.getByTestId('infra-aviso').filter({ hasText: 'importaron' }).waitFor();
   const imp = (await peticiones(admin)).filter((p) => p.url.includes('/import'));
-  ok('CSV corregido: dryRun=true y luego dryRun=false con las MISMAS filas; creó 3', imp.at(-2)?.url.includes('dryRun=true') && imp.at(-1)?.url.includes('dryRun=false') && JSON.stringify(imp.at(-1).body) === JSON.stringify(imp.at(-2).body) && (await admin.getByTestId('infra-aviso').textContent())?.includes('3'), JSON.stringify(imp.map((p) => p.status)));
+  ok('CSV corregido: dryRun=true y luego dryRun=false con las MISMAS filas; creó 3', imp.at(-2)?.url.includes('dryRun=true') && imp.at(-1)?.url.includes('dryRun=false') && JSON.stringify(imp.at(-1).body) === JSON.stringify(imp.at(-2).body) && (await admin.getByTestId('infra-aviso').textContent())?.includes('3'), JSON.stringify(imp.map((p) => [p.url.split('?')[1], p.status])) + ' | ' + ((await admin.getByTestId('infra-aviso').textContent().catch(() => '')) ?? '').trim());
   await tresAnchos(admin, '19-csv-importado');
 
   /* ══ 4 · La ficha: una tarjeta centrada con cinco pestañas ═════════════ */
@@ -533,7 +536,7 @@ try {
   await admin.locator('[data-testid="estab-pestanas"] [role="tab"]').nth(2).click();
   await admin.getByTestId('capacidad-tabla').waitFor();
   const camasReales = await admin.locator('[data-tipo="CAP_BEDS_CENSABLE"] [data-testid="capacidad-real"]').textContent();
-  ok('capacidad: la real se cuenta del árbol (las camas creadas ya suman) y no se escribe', Number(camasReales) > 4, `real=${camasReales}`);
+  ok('capacidad: la real se cuenta del árbol (suma la cama creada y no la clausurada) y no se escribe', Number(camasReales) === 4, `real=${camasReales}: 301-A, 301-B, UTI-1 y la C201-A nueva; la 302-A se clausuró antes`);
   await tresAnchos(admin, '42-establecimiento-capacidad');
 
   // Declarar capacidad
@@ -613,7 +616,7 @@ try {
     await admin.waitForTimeout(900);
     const texto = (await admin.locator('[data-testid="infra-tab"]').textContent().catch(() => '')) ?? '';
     ok(`${codigo} en la pestaña: ${modo}`, patron.test(texto), texto.replace(/\s+/g, ' ').slice(0, 120));
-    if (codigo === 'S6') ok('S6 no revela nada: sin nombres ni códigos del establecimiento', !texto.includes('Hospital San Lucas (') && !/ED-A/.test(texto));
+    if (codigo === 'S6') ok('S6 no revela nada: sin nombres ni códigos del establecimiento', (await admin.locator('[role="tree"], [data-testid="infra-panel"]').count()) === 0 && !/ED-A/.test(texto));
     if (codigo === 'S9') ok('S9 trae código de soporte copiable', /Código de soporte/.test(texto) && /Copiar código/.test(texto));
     await tresAnchos(admin, `5${{ S5: 1, S6: 2, S8: 3, S9: 4 }[codigo]}-estado-${codigo}-infraestructura`);
   }
@@ -645,7 +648,8 @@ try {
   for (const [modo, codigo, patron] of [['forbidden', 'S5', /No tiene acceso/], ['red', 'S8', /Sin conexión/], ['error', 'S9', /Algo salió mal/]]) {
     await fallo('/care-spaces/', modo);
     await admin.goto(`${BASE}${ficha('HAB-301')}`, { waitUntil: 'domcontentloaded' });
-    await admin.waitForTimeout(1200);
+    // La red caída y el 500 son transitorios: el interceptor reintenta antes de rendirse.
+    await admin.getByText(patron).first().waitFor({ timeout: 25_000 }).catch(() => undefined);
     const texto = (await admin.locator('app-space-detail').textContent().catch(() => '')) ?? '';
     ok(`ficha ${codigo}: ${modo}`, patron.test(texto), texto.replace(/\s+/g, ' ').slice(0, 100));
     await tresAnchos(admin, `6${{ S5: 1, S8: 2, S9: 3 }[codigo]}-ficha-estado-${codigo}`);

@@ -260,16 +260,20 @@ export class SpaceFormDialog implements OnInit {
   });
 
   constructor() {
-    // La función elegida deja de valer si la forma cambia y ya no la admite.
-    this.form.controls.formCode.valueChanges.subscribe(() => {
+    // Estas dos suscripciones leen el valor del control que acaba de emitir, no
+    // las señales derivadas: `control.valueChanges` emite ANTES que
+    // `form.valueChanges`, de donde salen las señales, y leerlas acá daba el
+    // valor anterior (el `required` de la superficie no se encendía a tiempo).
+    this.form.controls.formCode.valueChanges.subscribe((forma) => {
       const actual = this.form.controls.functionCode.value;
-      if (actual !== '' && !this.funcionesDeLaForma().some((f) => f.code === actual)) {
+      const vigentes = forma === '' ? [] : functionsFor(this.catalog(), forma, this.tipologia());
+      if (actual !== '' && !vigentes.some((f) => f.code === actual)) {
         this.form.controls.functionCode.setValue('');
       }
     });
-    // `required` de lo que el perfil exige: se enciende o apaga con la función.
-    this.form.controls.functionCode.valueChanges.subscribe(() => {
-      const n = this.necesidades();
+    this.form.controls.functionCode.valueChanges.subscribe((funcion) => {
+      const perfil = this.catalog().functions.find((f) => f.code === funcion) ?? null;
+      const n = attributeNeeds(perfil, this.form.controls.formCode.value);
       this.conRequerido(this.form.controls.areaM2, n.area, [Validators.min(0.1)]);
       this.conRequerido(this.form.controls.airChangesPerHour, n.hvac, [Validators.min(0)]);
     });

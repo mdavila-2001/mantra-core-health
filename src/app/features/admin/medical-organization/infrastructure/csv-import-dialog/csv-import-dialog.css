@@ -126,3 +126,9 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }
+
+/* El nombre del campo (`parentCode`) no se parte en dos: en 390 px la tabla
+   se desplaza en su región, que es enfocable, antes que partir un identificador. */
+.csv__tabla code {
+  white-space: nowrap;
+}
