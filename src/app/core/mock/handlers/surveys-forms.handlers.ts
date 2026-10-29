@@ -3,7 +3,7 @@ import { ESTADO } from '../fixtures/conceptos';
 import { profesionalDeReserva, reservasTerminadasDe } from '../fixtures/atencion-resenable';
 import { ofertas } from '../fixtures/servicios-ofrecidos';
 import { PACIENTE } from '../fixtures/personas';
-import { conflict, forbidden, notFound, reply, validationPipeRejected, type MockReply, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, validation, type MockRouter } from '../mock-router';
 import {
   ID_TIPO_ATENCION_CONSULTA,
   TIPO_DESTINO_CONSULTAS,
@@ -26,22 +26,6 @@ import {
 } from './surveys-insights.simulator';
 import { plantillasVigentes } from './clinical.handlers';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
-
-/**
- * Una precondición de negocio de la API: **422** con `code: PRECONDITION_FAILED`
- * (`PreconditionFailedException`). El `preconditionFailed` de `mock-router` de
- * esta rama todavía responde 412, que la API real no usa; las rutas nuevas de
- * encuestas siguen a la API y no al helper.
- */
-function preconditionFailed422(message: string, details: unknown = {}): MockReply {
-  return reply(422, {
-    statusCode: 422,
-    code: 'PRECONDITION_FAILED',
-    message,
-    error: 'Unprocessable Entity',
-    details,
-  });
-}
 
 /* ============================================================================
     Encuestas de satisfacción (motor de cuestionarios) y el motor de
@@ -561,22 +545,22 @@ export function registrarEncuestas(router: MockRouter): void {
     const datos = cuerpo<{ surveyVersionId: string; targetType: AsignacionSimulada['targetType']; targetId: string }>(request);
     const uuidValido = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (datos.surveyVersionId === undefined || !uuidValido.test(datos.surveyVersionId)) {
-      return validationPipeRejected('surveyVersionId: must be a UUID');
+      return validation('Datos inválidos', [{ field: 'surveyVersionId', message: 'must be a UUID' }]);
     }
     if (datos.targetId === undefined || !uuidValido.test(datos.targetId)) {
-      return validationPipeRejected('targetId: must be a UUID');
+      return validation('Datos inválidos', [{ field: 'targetId', message: 'must be a UUID' }]);
     }
     if (datos.targetType !== 'APPOINTMENT' && datos.targetType !== 'SERVICE' && datos.targetType !== 'CARE_TYPE') {
-      return validationPipeRejected('targetType: must be one of the following values: APPOINTMENT, SERVICE, CARE_TYPE');
+      return validation('Datos inválidos', [{ field: 'targetType', message: 'must be one of the following values: APPOINTMENT, SERVICE, CARE_TYPE' }]);
     }
     const encuesta = encuestas.todos().find((e) => e.latestVersionId === datos.surveyVersionId);
     if (encuesta === undefined) return notFound('Versión no encontrada');
-    if (!encuesta.published) return preconditionFailed422('Solo se puede asignar una versión publicada', { surveyVersionId: datos.surveyVersionId });
+    if (!encuesta.published) return preconditionFailed('Solo se puede asignar una versión publicada', { surveyVersionId: datos.surveyVersionId });
     if (datos.targetType === 'SERVICE' && !ofertas.todos().some((o) => o.serviceCatalogId === datos.targetId)) {
       return notFound('Servicio no encontrado');
     }
     if (datos.targetType === 'CARE_TYPE' && datos.targetId !== ID_TIPO_ATENCION_CONSULTA) {
-      return preconditionFailed422('Solo se puede asignar por tipo de atención «consulta»', { targetType: datos.targetType });
+      return preconditionFailed('Solo se puede asignar por tipo de atención «consulta»', { targetType: datos.targetType });
     }
     const repetida = asignaciones.todos().find((a) => a.surveyId === encuesta.id && a.targetType === datos.targetType && a.targetId === datos.targetId);
     if (repetida !== undefined) {
@@ -601,11 +585,11 @@ export function registrarEncuestas(router: MockRouter): void {
     const from = query.get('from') ?? '';
     const to = query.get('to') ?? '';
     const serviceId = query.get('serviceId') ?? undefined;
-    if (!dia.test(from)) return validationPipeRejected('from: must be a valid ISO 8601 date string');
-    if (!dia.test(to)) return validationPipeRejected('to: must be a valid ISO 8601 date string');
+    if (!dia.test(from)) return validation('Datos inválidos', [{ field: 'from', message: 'must be a valid ISO 8601 date string' }]);
+    if (!dia.test(to)) return validation('Datos inválidos', [{ field: 'to', message: 'must be a valid ISO 8601 date string' }]);
     // Como la API: meses calendario completos y a lo sumo 12 (no hay rangos libres).
     const invalido = motivoDeRangoInvalido(from, to);
-    if (invalido !== null) return validationPipeRejected(`from: ${invalido}`);
+    if (invalido !== null) return validation('Datos inválidos', [{ field: 'from', message: invalido }]);
     return calcularInsights(enviosParaInsights(), fuentesParaInsights(), { from, to, ...(serviceId === undefined ? {} : { serviceId }) });
   });
 

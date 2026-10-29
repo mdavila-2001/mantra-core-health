@@ -22,6 +22,8 @@ import {
   type VitrinaSimulada,
 } from '../fixtures/comunidad';
 import { encuentros } from '../fixtures/clinica';
+import { reservas } from '../fixtures/agenda';
+import { encuentroDeReserva, profesionalDeReserva } from '../fixtures/atencion-resenable';
 import { ESTADO } from '../fixtures/conceptos';
 import { reservas } from '../fixtures/agenda';
 import { encuentroDeReserva, profesionalDeReserva } from '../fixtures/atencion-resenable';

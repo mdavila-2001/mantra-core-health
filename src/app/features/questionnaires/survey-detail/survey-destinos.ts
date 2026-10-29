@@ -50,19 +50,17 @@ export function serviciosAsociables(ofertas: readonly ServiceOffering[]): readon
   return [...porId.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 }
 
-/**
- * Las opciones del selector: «Todas mis consultas» primero, después cada servicio.
- *
- * El `app-select` de esta rama es el nativo (`<select>`): una opción no admite
- * una línea de descripción. Lo que la descripción decía va en el rótulo —un
- * servicio desactivado lo dice, no se esconde— y en la pista del campo
- * (`survey-detail.html`), que ya explica «Todas mis consultas».
- */
+/** Las opciones del selector: «Todas mis consultas» primero, después cada servicio. */
 export function opcionesDeDestino(servicios: readonly ServicioAsociable[]): readonly SelectOption<string>[] {
   return [
-    { value: VALOR_TODAS_MIS_CONSULTAS, label: 'Todas mis consultas' },
+    {
+      value: VALOR_TODAS_MIS_CONSULTAS,
+      label: 'Todas mis consultas',
+    },
     ...servicios.map((s) => ({
       value: s.id,
+      // El selector del mockup usa `<option>` nativo, que no admite una línea de
+      // descripción como la de dev: el estado va en la etiqueta.
       label: s.activo ? s.nombre : `${s.nombre} (desactivado)`,
     })),
   ];

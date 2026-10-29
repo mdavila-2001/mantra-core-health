@@ -563,11 +563,7 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
     const v = vitrinaPorSlug(params['slug']!);
     if (v === undefined && (await directorio.porSlug(params['slug']!)) !== undefined) {
       // Una ficha del directorio oficial todavía no tiene opiniones.
-      return {
-        ...paginar([], query, 20),
-        ratingAverage: null,
-        ratingCount: 0,
-      };
+      return { ...paginaPublica([], query), ratingAverage: null, ratingCount: 0 };
     }
     if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
     const items = resenas
@@ -598,14 +594,8 @@ export function registrarPublico(router: MockRouter, directorio: DirectorioOfici
       });
     // Promedio y total son los del PERFIL, no los de la página: los mismos que
     // la cabecera de la ficha (y que `POST /patients/me/reviews` actualiza).
-    const pagina = paginar(items, query, 20);
     const { average, count } = calificacionDe(v);
-    return {
-      items: pagina.items,
-      nextCursor: pagina.nextCursor,
-      ratingAverage: average,
-      ratingCount: count,
-    };
+    return { ...paginaPublica(items, query, 20), ratingAverage: average, ratingCount: count };
   });
 
   /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------
