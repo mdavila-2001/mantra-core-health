@@ -94,3 +94,24 @@ H11: 200 POST /scheduling/bookings/:id/accept
 [médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-11-10T04%3A00%3A00.000
 [médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935&lang=ES
 H11: tras recargar, la API dice statusConceptId=bf910452-1485-58ca-88dc-184b8b4b2935
+
+# 2026-10-29, segunda vuelta: H11 a 390 px y el detalle del calendario de la cita pagada a mano
+201 POST /scheduling/slots/:id/holds
+201 POST /scheduling/holds/:token/request
+H11 390: diálogo «Solicitud de consultaTodo lo que el paciente mandó con su pedido.EstadoPor confirmarPacienteAna Pagada PruebaSolicitadajueves 29 de octubre, 07:53Citasábado 7 de noviembre, 10:00Hastasábado 7 de noviembre, 10:30Profesion»
+[médica 390] 200 POST /scheduling/bookings/:id/accept
+H11 390: 200 POST /scheduling/bookings/:id/accept
+H11 390: tras recargar, la API dice status=bf910452-1485-58ca-88dc-184b8b4b2935
+cita pagada: 2026-10-29 09:00 · paymentState=null
+[paciente 1440] 200 GET /scheduling/bookings
+[paciente 1440] 200 GET /scheduling/bookings/:id/payment-receipts
+[paciente 1440] 200 GET /scheduling/bookings/:id/payment-receipts
+[paciente 1440] 200 GET /scheduling/bookings/:id
+detalle 1440: «Comprobante de pago Esta cita ya figura como pagada: no hace falta subir ningún comprobante. El pago se registró sin comprobante.»
+detalle 1440: formulario para subir comprobante visible: 0
+[paciente 390] 200 GET /scheduling/bookings
+[paciente 390] 200 GET /scheduling/bookings/:id/payment-receipts
+[paciente 390] 200 GET /scheduling/bookings/:id/payment-receipts
+[paciente 390] 200 GET /scheduling/bookings/:id
+detalle 390: «Comprobante de pago Esta cita ya figura como pagada: no hace falta subir ningún comprobante. El pago se registró sin comprobante.»
+detalle 390: formulario para subir comprobante visible: 0
