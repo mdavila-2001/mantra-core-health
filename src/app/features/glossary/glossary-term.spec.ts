@@ -118,7 +118,7 @@ describe('GlossaryTerm', () => {
     // de siempre, o sea, un término SIN artículo (404). Su pantalla se prueba
     // en `glossary-article.spec.ts`.
     http
-      .expectOne((r) => r.url.endsWith('/article'))
+      .expectOne((r) => r.url.endsWith('/glossary-article'))
       .flush(null, { status: 404, statusText: 'Not Found' });
     vecindario().flush(VECINDARIO);
   });
@@ -138,7 +138,7 @@ describe('GlossaryTerm', () => {
     return http.expectOne(
       (r) =>
         r.url.includes('/terminology/concepts/') &&
-        !r.url.endsWith('/article') &&
+        !r.url.endsWith('/glossary-article') &&
         !r.url.endsWith('/glossary-neighborhood'),
     );
   }
@@ -300,7 +300,7 @@ describe('GlossaryTerm', () => {
     await harness.fixture.whenStable();
     await abrirPestana('Relacionados');
 
-    const enlaces = [...html().querySelectorAll('.termino__relaciones a')].map((a) =>
+    const enlaces = [...html().querySelectorAll('.termino__relaciones a.relation-groups__neighbor')].map((a) =>
       a.getAttribute('href'),
     );
     expect(enlaces).toContain('/glossary/c-2');
@@ -321,6 +321,19 @@ describe('GlossaryTerm', () => {
     expect(rotulosDePestanas()).toContain('Relacionados');
   });
 
+  it('cada grupo de relaciones dice cuántos términos tiene y los muestra todos', async () => {
+    peticion().flush(FICHA);
+    await harness.fixture.whenStable();
+    await abrirPestana('Relacionados');
+
+    const grupos = [...html().querySelectorAll('.termino__relaciones .relation-groups__group')];
+    expect(grupos.length).toBeGreaterThan(0);
+    for (const grupo of grupos) {
+      const enlaces = grupo.querySelectorAll('a.relation-groups__neighbor');
+      expect(Number(grupo.querySelector('.relation-groups__count')?.textContent)).toBe(enlaces.length);
+    }
+  });
+
   it('sin relaciones, no dibuja ningún grupo', async () => {
     peticion().flush({ ...FICHA, relations: [] });
     interno<() => void>('recargarRelaciones')();
@@ -334,13 +347,11 @@ describe('GlossaryTerm', () => {
 
   // --- Imagen: hoy siempre ausente, mostrada defensivamente si existiera -----
 
-  it('sin imagen, usa el ícono de la categoría como marcador visual', async () => {
+  it('sin imagen, muestra la portada ilustrada en lugar de la foto', async () => {
     peticion().flush(FICHA);
     await harness.fixture.whenStable();
 
-    expect(
-      html().querySelector('.termino__imagen-marcador app-glossary-category-icon'),
-    ).not.toBeNull();
+    expect(html().querySelector('app-glossary-term-cover svg')).not.toBeNull();
     expect(html().querySelector('.termino__imagen img')).toBeNull();
   });
 

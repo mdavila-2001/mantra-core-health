@@ -1,14 +1,14 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
-import { MEDICA } from '../fixtures/personas';
+import { MEDICAL } from '../fixtures/people';
 import { catalogoAdministrable, registrarSeguros } from './insurance.handlers';
-import { vitrinas } from '../fixtures/comunidad';
+import { showcases } from '../fixtures/community';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
 import { uuid } from '../mock-store';
-import { PROFESIONALES } from '../fixtures/personas';
+import { PROFESSIONALS } from '../fixtures/people';
 
 interface DetailWire {
   readonly id: string;
@@ -264,6 +264,93 @@ describe('handlers de solicitudes de seguro · antiduplicación de estudios', ()
 });
 
 /**
+ * Desglose conciliado de liquidación (Tarea 3 · H8, CA-3.1/CA-3.3). Antes de
+ * esta corrección, `totalPatientAmount` se calculaba como `billed - approved`
+ * a nivel de cabecera, contando el importe rechazado dos veces.
+ */
+describe('handlers de solicitudes de seguro · desglose de liquidación (Tarea 3 · H8)', () => {
+  const router = new MockRouter();
+  const usuario = buscarUsuario('admin')!;
+
+  registrarSeguros(router);
+
+  function call<T>(method: MockMethod, path: string, body: unknown = null): T {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    return match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user: usuario,
+    }) as T;
+  }
+
+  interface DetalleWire {
+    readonly settlement: {
+      readonly availability: string;
+      readonly totalBilledAmount: string | null;
+      readonly totalApprovedAmount: string | null;
+      readonly totalPatientAmount: string | null;
+      readonly totalDeniedAmount: string | null;
+      readonly reconciled: boolean;
+      readonly exclusions: readonly { readonly policyClauseReference: string }[];
+    };
+    readonly eob: { readonly id: string } | null;
+  }
+
+  function detalleDe(claimId: string): DetalleWire {
+    const lista = call<{ items: readonly { id: string; claimIdentifier: string }[] }>(
+      'GET',
+      '/insurance-claims',
+    );
+    const id = lista.items.find((item) => item.claimIdentifier === claimId)!.id;
+    return call<DetalleWire>('GET', `/insurance-claims/${id}`);
+  }
+
+  it('CLM-2026-0177 concilia: 300 = 150 (cubierto) + 30 (copago) + 120 (rechazado)', () => {
+    const { settlement } = detalleDe('CLM-2026-0177');
+    expect(settlement.availability).toBe('AVAILABLE');
+    expect(settlement.reconciled).toBe(true);
+    expect(settlement).toMatchObject({
+      totalBilledAmount: '300.00',
+      totalApprovedAmount: '150.00',
+      totalPatientAmount: '30.00',
+      totalDeniedAmount: '120.00',
+    });
+  });
+
+  it('CLM-2026-0163 concilia: 890 = 0 + 0 + 890 (todo rechazado)', () => {
+    const { settlement } = detalleDe('CLM-2026-0163');
+    expect(settlement.reconciled).toBe(true);
+    expect(settlement).toMatchObject({
+      totalBilledAmount: '890.00',
+      totalApprovedAmount: '0.00',
+      totalPatientAmount: '0.00',
+      totalDeniedAmount: '890.00',
+    });
+  });
+
+  it('CLM-2026-0183 tiene una exclusión sin cláusula y queda UNDER_REVIEW, sin importes', () => {
+    const { settlement, eob } = detalleDe('CLM-2026-0183');
+    expect(settlement.availability).toBe('UNDER_REVIEW');
+    expect(settlement.reconciled).toBe(false);
+    expect(settlement.totalApprovedAmount).toBeNull();
+    expect(settlement.exclusions).toEqual([]);
+    expect(eob).not.toBeNull();
+  });
+
+  it('una solicitud sin dictamen queda PENDING_PUBLICATION, sin EOB', () => {
+    const { settlement, eob } = detalleDe('CLM-2026-0158');
+    expect(settlement.availability).toBe('PENDING_PUBLICATION');
+    expect(eob).toBeNull();
+  });
+});
+
+
+/**
  * `GET /practitioners/:id/insurance-carriers` — con qué seguros trabaja un
  * profesional, para su ficha. El dato sale de las redes que publican Alianza
  * Seguros y Nacional Seguros (`insurer-network.generated.ts`); estas pruebas
@@ -297,7 +384,7 @@ describe('handlers de seguros · aseguradoras de un profesional', () => {
     }) as T;
   }
 
-  const fromNetwork = PROFESIONALES.filter((p) => p.origen === 'RED_ASEGURADORA');
+  const fromNetwork = PROFESSIONALS.filter((p) => p.origen === 'RED_ASEGURADORA');
 
   it('devuelve cada aseguradora de la red con sus planes, por nombre', () => {
     const both = fromNetwork.find((p) => (p.insurerNetworks?.length ?? 0) === 2)!;
@@ -339,7 +426,7 @@ describe('handlers de seguros · aseguradoras de un profesional', () => {
   });
 
   it('un profesional que ninguna aseguradora incluyó en su red devuelve la lista vacía', () => {
-    const outside = PROFESIONALES.find((p) => p.insurerNetworks === undefined)!;
+    const outside = PROFESSIONALS.find((p) => p.insurerNetworks === undefined)!;
 
     expect(get<CarriersWire>(`/practitioners/${outside.id}/insurance-carriers`).items).toEqual([]);
   });
@@ -378,7 +465,7 @@ describe('handlers de seguros · con qué aseguradoras trabaja un profesional', 
   }
 
   it('la médica de la demo trabaja con tres aseguradoras del catálogo', () => {
-    const pagina = redes(MEDICA.id);
+    const pagina = redes(MEDICAL.id);
 
     expect(pagina.count).toBe(3);
     expect(pagina.items.map((red) => red.carrierName)).toEqual([
@@ -444,7 +531,7 @@ describe('handlers de seguros · el mercado de una aseguradora del directorio', 
     }) as Mercado;
   }
 
-  const fichas = vitrinas.todos().filter((vitrina) => vitrina.kind === 'INSURER');
+  const fichas = showcases.todos().filter((vitrina) => vitrina.kind === 'INSURER');
   const planes = (m: Mercado) => m.carrier?.products.flatMap((producto) => producto.plans) ?? [];
 
   it('el directorio tiene las 21 aseguradoras: las dos de la maqueta y las 19 reales', () => {

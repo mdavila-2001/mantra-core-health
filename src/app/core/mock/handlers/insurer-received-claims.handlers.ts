@@ -1,5 +1,5 @@
-import { conceptoPorId } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from '../fixtures/personas';
+import { conceptById } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from '../fixtures/people';
 import { conflict, forbidden, notFound, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_LABORATORIO, type MockUser } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, uuid } from '../mock-store';
@@ -39,7 +39,7 @@ const SOLICITUDES_SEMBRADAS = 180;
 const TOPE_DE_SOLICITUDES = 500;
 
 /** Pacientes escritos + los primeros generados; los registrados quedan fuera. */
-const PACIENTES_ELEGIBLES = PACIENTES.slice(0, 60);
+const PACIENTES_ELEGIBLES = PATIENTS.slice(0, 60);
 
 const BOB = { code: 'BOB', display: 'Boliviano' };
 const money = (amount: string) => ({ amount, currency: BOB });
@@ -167,6 +167,13 @@ function nuevaFactura(semilla: string, monto: string, emitidaEn: string, previas
   };
 }
 
+function ultimoNumeroDeFactura(factura: FacturaSimulada): number {
+  return Math.max(
+    Number(factura.invoiceNumber.slice(4)) || 0,
+    ...factura.previous.map(ultimoNumeroDeFactura),
+  );
+}
+
 /** Generador congruencial: la misma semilla da siempre la misma sala. */
 function azar(semilla: number): () => number {
   let estado = semilla >>> 0;
@@ -181,12 +188,12 @@ function elegir<T>(lista: readonly T[], r: () => number): T {
 }
 
 function medicosElegibles(): readonly ProfesionalSimulado[] {
-  return PROFESIONALES.filter((p) => p.origen === undefined || p.origen === 'DEMO');
+  return PROFESSIONALS.filter((p) => p.origen === undefined || p.origen === 'DEMO');
 }
 
 function especialidadDe(medico: ProfesionalSimulado): string | null {
   const id = medico.especialidades[0];
-  return id === undefined ? null : (conceptoPorId(id)?.display ?? null);
+  return id === undefined ? null : (conceptById(id)?.display ?? null);
 }
 
 function sembrar() {
@@ -282,8 +289,8 @@ function solicitudesDeLaDemo(aseguradora: string) {
         patientCode: PACIENTE.patientCode,
         memberIdentifier: `AF-${PACIENTE.patientCode.slice(4)}`,
       },
-      practitioner: { id: MEDICA.id, displayName: MEDICA.displayName, specialty: especialidadDe(MEDICA) },
-      providerName: MEDICA.organizacion,
+      practitioner: { id: MEDICAL.id, displayName: MEDICAL.displayName, specialty: especialidadDe(MEDICAL) },
+      providerName: MEDICAL.organizacion,
       service: { code: caso.code, display: caso.display },
       additionalServiceCount: 0,
       billedTotal: money(caso.total),
@@ -317,7 +324,7 @@ function quienDictamina(request: MockRequest): string {
    misma tabla** que dictamina la aseguradora —no de una copia—, así que un
    dictamen tomado en «Solicitudes recibidas» aparece acá en la próxima
    lectura, sin sincronización aparte. Contrato:
-   `docs/contracts/my-insurance-claims.md` (P56 en `PENDIENTES-BACKEND.md`).
+   `docs/contracts/my-insurance-claims.md` (P56).
 
    Cada cuenta ve sólo lo suyo, y sólo lo que necesita para entender la
    decisión: ni la factura entre prestador y aseguradora, ni los renglones, ni
@@ -511,6 +518,20 @@ export function registerInsurerReceivedClaims(
       persistir ? 'mock.insurerReceivedClaims' : undefined,
     ));
 
+  const emitirFactura = (
+    semilla: string,
+    monto: string,
+    emitidaEn: string,
+    previas: readonly FacturaSimulada[] = [],
+  ): FacturaSimulada => {
+    const ultimoPersistido = solicitudes().todos().reduce(
+      (maximo, solicitud) => Math.max(maximo, solicitud.invoice === null ? 0 : ultimoNumeroDeFactura(solicitud.invoice)),
+      4_100,
+    );
+    correlativoDeFactura = Math.max(correlativoDeFactura, ultimoPersistido - 4_100);
+    return nuevaFactura(semilla, monto, emitidaEn, previas);
+  };
+
   const ordenadas = () =>
     solicitudes()
       .todos()
@@ -564,7 +585,7 @@ export function registerInsurerReceivedClaims(
     const motivo = datos.objectionReason ?? 'NOT_INFORMED';
     if (!(MOTIVOS_DE_OBJECION as readonly string[]).includes(motivo)) {
       return validation('Motivo de objeción inválido', [
-        { field: 'objectionReason', problem: 'AMOUNT_DIFFERS, SERVICE_NOT_RECEIVED o NOT_INFORMED' },
+        { field: 'objectionReason', message: 'AMOUNT_DIFFERS, SERVICE_NOT_RECEIVED o NOT_INFORMED' },
       ]);
     }
     const objecion: ObjecionDelPaciente = {
@@ -588,11 +609,11 @@ export function registerInsurerReceivedClaims(
     const datos = cuerpo<{ outcome: string; approvedAmount: string; reason: string }>(request);
     const outcome = datos.outcome as Resultado;
     if (!(outcome in DICTAMEN)) {
-      return validation('Dictamen inválido', [{ field: 'outcome', problem: 'APPROVED, PARTIAL o REJECTED' }]);
+      return validation('Dictamen inválido', [{ field: 'outcome', message: 'APPROVED, PARTIAL o REJECTED' }]);
     }
     const motivo = (datos.reason ?? '').trim();
     if (outcome !== 'APPROVED' && motivo.length < 5) {
-      return validation('Falta el motivo', [{ field: 'reason', problem: 'Al menos 5 caracteres' }]);
+      return validation('Falta el motivo', [{ field: 'reason', message: 'Al menos 5 caracteres' }]);
     }
 
     const solicitado = centavos(actual.billedTotal.amount);
@@ -601,7 +622,7 @@ export function registerInsurerReceivedClaims(
       const pedido = String(datos.approvedAmount ?? '');
       if (!DECIMAL.test(pedido) || centavos(pedido) <= 0 || centavos(pedido) >= solicitado) {
         return validation('Monto aprobado inválido', [
-          { field: 'approvedAmount', problem: 'Mayor que cero y menor que el monto solicitado' },
+          { field: 'approvedAmount', message: 'Mayor que cero y menor que el monto solicitado' },
         ]);
       }
       aprobado = centavos(pedido);
@@ -614,7 +635,7 @@ export function registerInsurerReceivedClaims(
       status: { code, display },
       approvedTotal: money(monto),
       decision: { outcome, decidedAt: decididaEn, decidedBy: quienDictamina(request), reason: motivo === '' ? null : motivo },
-      invoice: outcome === 'REJECTED' ? null : nuevaFactura(actual.id, monto, decididaEn),
+      invoice: outcome === 'REJECTED' ? null : emitirFactura(actual.id, monto, decididaEn),
     });
   });
 
@@ -630,7 +651,7 @@ export function registerInsurerReceivedClaims(
     }
     const motivo = (cuerpo<{ reason: string }>(request).reason ?? '').trim();
     if (motivo.length < 5) {
-      return validation('Falta el motivo', [{ field: 'reason', problem: 'Al menos 5 caracteres' }]);
+      return validation('Falta el motivo', [{ field: 'reason', message: 'Al menos 5 caracteres' }]);
     }
     return solicitudes().actualizar(actual.id, {
       invoice: { ...actual.invoice, status: 'ANNULLED', annulledAt: ahora(), annulmentReason: motivo },
@@ -648,7 +669,7 @@ export function registerInsurerReceivedClaims(
     }
     const { previous, ...anulada } = actual.invoice;
     return solicitudes().actualizar(actual.id, {
-      invoice: nuevaFactura(actual.id, actual.approvedTotal.amount, ahora(), [{ ...anulada, previous: [] }, ...previous]),
+      invoice: emitirFactura(actual.id, actual.approvedTotal.amount, ahora(), [{ ...anulada, previous: [] }, ...previous]),
     });
   });
 }

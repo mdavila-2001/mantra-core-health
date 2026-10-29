@@ -155,9 +155,8 @@
 
 .atlas3d__opcion:focus-visible,
 .atlas3d__limpiar:focus-visible {
-  /* `--focus-ring` es un color, no una sombra: como `box-shadow` no pintaba nada. */
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .atlas3d__sin-pieza,
@@ -191,9 +190,8 @@
 }
 
 .atlas3d__ficha-cabecera h2:focus-visible {
-  /* `--focus-ring` es un color, no una sombra: como `box-shadow` no pintaba nada. */
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .atlas3d__lado {
@@ -247,6 +245,37 @@
   font-size: var(--fs-caption);
 }
 
+.atlas3d__estado {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__estado--error {
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+}
+
+.atlas3d__reintentar {
+  margin-inline-start: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid currentColor;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.atlas3d__reintentar:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
 .atlas3d__inicio {
   padding: var(--sp-4);
   border-radius: var(--r-md);
@@ -268,53 +297,6 @@
   border-block-start: 1px solid var(--border-subtle);
 }
 
-/* Fuentes como tabla ordenada, a la manera de una lista de referencias. */
-.atlas3d__tabla-caja {
-  inline-size: 100%;
-  overflow-x: hidden;
-}
-
-.atlas3d__tabla {
-  inline-size: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: var(--fs-caption);
-  color: var(--text-primary);
-}
-
-.atlas3d__tabla-titulo {
-  padding-block-end: var(--sp-2);
-  text-align: start;
-  color: var(--text-secondary);
-}
-
-.atlas3d__tabla th,
-.atlas3d__tabla td {
-  padding: var(--sp-2) var(--sp-3);
-  text-align: start;
-  vertical-align: top;
-  overflow-wrap: anywhere;
-  border-block-end: 1px solid var(--border-default);
-}
-
-.atlas3d__tabla thead th {
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  border-block-end-color: var(--border-strong);
-}
-
-.atlas3d__tabla thead th:nth-child(1) {
-  inline-size: 22%;
-}
-.atlas3d__tabla thead th:nth-child(2) {
-  inline-size: 14%;
-}
-.atlas3d__tabla thead th:nth-child(4) {
-  inline-size: 22%;
-}
-
 @media (min-width: 1024px) {
   .atlas3d__capas legend {
     float: inline-start;
@@ -334,121 +316,6 @@
     inset-block-start: calc(var(--h-header) + var(--sp-4));
   }
 
-}
-
-.atlas3d__descripcion p {
-  margin: 0 0 var(--sp-2);
-}
-
-.atlas3d__aspecto {
-  margin: var(--sp-3) 0 var(--sp-1);
-  font-size: var(--fs-body);
-  font-weight: 600;
-}
-
-.atlas3d__cita {
-  /* En línea y con relleno: un área de toque real sin romper el renglón. */
-  padding: 0.1em 0.2em;
-  margin-inline-start: 0.25em;
-  font-size: var(--fs-caption);
-  vertical-align: super;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.atlas3d__frase + .atlas3d__frase::before {
-  content: ' ';
-}
-
-.atlas3d__bibliografia {
-  display: grid;
-  gap: var(--sp-1);
-  margin: 0;
-  padding-inline-start: var(--sp-5);
-  /* El reset global quita los números; acá son los que nombran las citas [n]. */
-  list-style: decimal;
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  overflow-wrap: anywhere;
-}
-
-.atlas3d__bibliografia li {
-  scroll-margin-block: var(--sp-16);
-}
-
-/* La activa se marca con fondo; el anillo queda para el foco (no dos anillos). */
-.atlas3d__bibliografia li {
-  padding: 0.15em 0.4em;
-  border-inline-start: 3px solid transparent;
-}
-
-.atlas3d__bibliografia .atlas3d__fuente--activa {
-  border-inline-start-color: var(--focus-ring);
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.atlas3d__aviso-ia {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-/* Una imagen ocupa el ancho del panel; dos se reparten. */
-.atlas3d__imagenes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-  gap: var(--sp-3);
-}
-
-.atlas3d__figura {
-  margin: 0;
-}
-
-.atlas3d__figura img {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
-  max-block-size: 28rem;
-  object-fit: contain;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-sm);
-  background: var(--bg-surface);
-}
-
-.atlas3d__figura figcaption {
-  margin-block-start: var(--sp-1);
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  overflow-wrap: anywhere;
-}
-
-.atlas3d__aspecto--fuentes {
-  margin-block-start: var(--sp-4);
-  padding-block-start: var(--sp-3);
-  border-block-start: 1px solid var(--border-subtle);
-}
-
-/* Dentro de la lista con scroll el anillo exterior se recorta: va por dentro. */
-.atlas3d__resultados .atlas3d__opcion:focus-visible,
-.atlas3d__lista--larga .atlas3d__opcion:focus-visible {
-  outline-offset: -3px;
-}
-
-/* El anillo global de 4 px tapaba el punto de la frase. */
-.atlas3d__cita:focus-visible {
-  outline-width: 2px;
-  outline-offset: 0;
-  border-radius: 2px;
-}
-
-.atlas3d__bibliografia li:focus {
-  outline: none;
-}
-
-.atlas3d__bibliografia li:focus-visible,
-.atlas3d__bibliografia .atlas3d__fuente--activa:focus {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
 }
 
 /* Relaciones: un grupo por tipo, filas de una línea con el mismo sangrado
@@ -595,4 +462,55 @@
    línea; partidas, que queden centradas y no pegadas a la izquierda. */
 .atlas3d__paginas ::ng-deep .pagination__nav {
   justify-content: center;
+}
+
+
+/* ─── Créditos en tabla (port de mockup, #1434) ─── */
+/* Fuentes como tabla ordenada, a la manera de una lista de referencias. */
+.atlas3d__tabla-caja {
+  inline-size: 100%;
+  overflow-x: hidden;
+}
+
+.atlas3d__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+
+.atlas3d__tabla-titulo {
+  padding-block-end: var(--sp-2);
+  text-align: start;
+  color: var(--text-secondary);
+}
+
+.atlas3d__tabla th,
+.atlas3d__tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  border-block-end: 1px solid var(--border-default);
+}
+
+.atlas3d__tabla thead th {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-block-end-color: var(--border-strong);
+}
+
+.atlas3d__tabla thead th:nth-child(1) {
+  inline-size: 22%;
+}
+
+.atlas3d__tabla thead th:nth-child(2) {
+  inline-size: 14%;
+}
+
+.atlas3d__tabla thead th:nth-child(4) {
+  inline-size: 22%;
 }

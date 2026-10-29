@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { registrarTerminologia } from './handlers/terminology.handlers';
-import { imagenDe } from './glossary-en-linea';
+import { imageOf } from './inline-glossary';
 import {
   AlmacenDeGlosario,
   ArchivoAusente,
@@ -84,9 +84,9 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     ) as FilaDeGlosario[];
     const row = rows.find((item) => item.slug === 'wikidata-anatomia-q17120946');
     expect(row?.imageUrl).toContain('Bone');
-    expect(imagenDe(row!)).toBeUndefined();
+    expect(imageOf(row!)).toBeUndefined();
     expect(
-      imagenDe({ ...row!, properties: { ...row!.properties, image_review_status: 'approved' } })
+      imageOf({ ...row!, properties: { ...row!.properties, image_review_status: 'approved' } })
         ?.source,
     ).toBe(row?.imageUrl);
   });

@@ -12,25 +12,12 @@
  * | ISBN | Open Library (`openlibrary.org/isbn/{isbn}.json`) |
  * | URL | la propia URL: responde con estado < 400 |
  * | ID UBERON | OLS4 de EBI (`/api/ontologies/uberon/terms?obo_id=`) |
- * | ID FMA | OLS4 de EBI (`/api/ontologies/fma/terms?iri=http://purl.org/sig/ont/fma/fmaN`) |
- * | Licencia de cada imagen | API de Wikimedia Commons (`extmetadata`, de a 50); y que su miniatura responda 200 en upload.wikimedia.org |
- * | PMID y DOI de la descripción extendida | PubMed y Crossref, como los demás; además, que el DOI que dice la ficha sea el que PubMed asocia a ese PMID |
- * | Código TA2 | el vocabulario que publica el visor de FIPAT (ta2viewer.openanatomy.org): el código existe y su término latino es el de la ficha; y Wikidata (SPARQL) declara el par TA2 ↔ FMA por el que se cruzó |
+ * | ID FMA | OLS4 de EBI (`/api/ontologies/fma/terms?obo_id=`) |
+ * | Licencia de cada imagen | API de Wikimedia Commons (`extmetadata`) |
  *
  * **Falla con una sola cita irresoluble** (sale con código 1). Un host que no
  * responde cuenta como irresoluble: el validador no supone que una cita está
  * bien porque no la pudo mirar.
- *
- * ## Qué bloquea y qué sólo se informa
- *
- * Bloquea todo lo que el atlas afirma o cita: DOI, PMID, el par PMID ↔ DOI de
- * la literatura, IDs UBERON y FMA, códigos TA2 y licencias de imagen.
- *
- * Los artículos de Wikipedia, ISBN y URL que UBERON declara como respaldo de
- * SUS definiciones se reproducen tal cual (son el rastro de curaduría de la
- * ontología, no citas de este atlas) y muchos URL son de sitios ya caídos. Se
- * resuelven igual y cada fallo se lista, pero **no bloquean** salvo con
- * `--strict`, que los vuelve bloqueantes como en la primera versión.
  *
  * Además, sin red, comprueba que el catálogo salió de la release declarada:
  * SHA-256 de la entrada (si se le pasa `--uberon-obo`) y que cada id del
@@ -40,7 +27,7 @@
  * Salida: `docs/progress/evidence/anatomy-atlas/validator-<fecha>.json` y `.md`.
  *
  * Uso (detrás de un proxy, Node necesita `NODE_USE_ENV_PROXY=1`):
- *   NODE_USE_ENV_PROXY=1 node scripts/validate-anatomy-atlas.mjs [--limit N] [--uberon-obo ruta] [--strict] [--groups doi,pmid,…]
+ *   NODE_USE_ENV_PROXY=1 node scripts/validate-anatomy-atlas.mjs [--limit N] [--uberon-obo ruta]
  */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -50,7 +37,7 @@ const RAIZ = process.cwd();
 const CATALOGO = join(RAIZ, 'public', 'anatomy-atlas-3d', 'catalog');
 const DATOS = join(RAIZ, 'data', 'anatomy-ontology');
 const EVIDENCIA = join(RAIZ, 'docs', 'progress', 'evidence', 'anatomy-atlas');
-const CONCURRENCIA = Number(process.env['VALIDATOR_CONCURRENCY'] ?? 12);
+const CONCURRENCIA = 8;
 const ESPERA_MS = 20_000;
 const AGENTE = 'mantra-core-health-anatomy-validator/1.0 (open-source health platform; validation of citations)';
 
@@ -61,16 +48,6 @@ const valor = (bandera) => {
 };
 const LIMITE = valor('--limit') === null ? Infinity : Number(valor('--limit'));
 const OBO = valor('--uberon-obo');
-const ESTRICTO = args.includes('--strict');
-/**
- * `--groups doi,pmid,…`: sólo esos grupos. La corrida completa tarda más que
- * el límite de un proceso en segundo plano; partida en grupos se corre en
- * paralelo y cada parte deja su propio informe (con los grupos en el nombre).
- */
-const GRUPOS = valor('--groups')?.split(',').filter(Boolean) ?? null;
-const corre = (grupo) => GRUPOS === null || GRUPOS.includes(grupo);
-/** Las referencias que UBERON declara para sus propias definiciones: informativas salvo con `--strict`. */
-const INFORMATIVOS = new Set(['wikipedia', 'isbn', 'url']);
 
 /* ---- lo que hay que validar ---------------------------------------------- */
 
@@ -79,8 +56,6 @@ function recolectar() {
   const uberon = new Set();
   const fma = new Set();
   const imagenes = [];
-  const ta2 = [];
-  const literatura = { pmidDoi: new Map(), frases: 0, fichas: 0 };
   for (const archivo of readdirSync(CATALOGO).filter((a) => a.startsWith('structures-'))) {
     const contenido = JSON.parse(readFileSync(join(CATALOGO, archivo), 'utf8'));
     for (const ficha of Object.values(contenido)) {
@@ -91,31 +66,18 @@ function recolectar() {
         if (ref.kind in citas) citas[ref.kind].add(ref.value);
       }
       for (const imagen of ficha.images ?? []) imagenes.push({ structure: ficha.id, ...imagen });
-      if (ficha.ta2) ta2.push({ structure: ficha.id, ...ficha.ta2 });
-      const ext = ficha.extendedDescription;
-      if (ext?.status === 'described') {
-        literatura.fichas++;
-        literatura.frases += ext.sentences.length;
-        for (const fuente of ext.sources) {
-          citas.pmid.add(fuente.pmid);
-          if (fuente.doi) {
-            citas.doi.add(fuente.doi);
-            literatura.pmidDoi.set(fuente.pmid, fuente.doi);
-          }
-        }
-      }
     }
   }
   const procedencia = JSON.parse(readFileSync(join(DATOS, 'provenance.json'), 'utf8'));
   for (const fuente of ['uberon', 'fma', 'bodyparts3d']) citas.doi.add(procedencia[fuente].citationDoi);
-  return { citas, uberon, fma, imagenes, ta2, literatura, procedencia };
+  return { citas, uberon, fma, imagenes, procedencia };
 }
 
 /* ---- red ----------------------------------------------------------------- */
 
-async function pedir(url, opciones = {}, espera = ESPERA_MS) {
+async function pedir(url, opciones = {}) {
   const control = new AbortController();
-  const reloj = setTimeout(() => control.abort(), espera);
+  const reloj = setTimeout(() => control.abort(), ESPERA_MS);
   try {
     const respuesta = await fetch(url, {
       redirect: 'follow',
@@ -127,20 +89,6 @@ async function pedir(url, opciones = {}, espera = ESPERA_MS) {
   } catch (error) {
     const causa = error?.cause;
     return { status: 0, error: String(causa?.message || causa?.code || error?.message || error) };
-  } finally {
-    clearTimeout(reloj);
-  }
-}
-
-/** Como `pedir`, pero devuelve el cuerpo como texto (o `null`). */
-async function pedirTexto(url) {
-  const control = new AbortController();
-  const reloj = setTimeout(() => control.abort(), 60_000);
-  try {
-    const respuesta = await fetch(url, { redirect: 'follow', signal: control.signal, headers: { 'user-agent': AGENTE } });
-    return { status: respuesta.status, texto: respuesta.ok ? await respuesta.text() : null };
-  } catch (error) {
-    return { status: 0, texto: null, error: String(error?.cause?.message || error?.message || error) };
   } finally {
     clearTimeout(reloj);
   }
@@ -182,8 +130,7 @@ async function validarPmids(pmids) {
     for (const id of lote) {
       const doc = r.json?.result?.[id];
       const ok = r.status === 200 && doc !== undefined && doc.error === undefined;
-      const doi = doc?.articleids?.find((a) => a.idtype === 'doi')?.value ?? null;
-      salida.push({ id, ok, via: ok ? 'pubmed' : null, doi, detail: ok ? null : r.status === 200 ? doc?.error ?? 'sin registro' : motivo(r) });
+      salida.push({ id, ok, via: ok ? 'pubmed' : null, detail: ok ? null : r.status === 200 ? doc?.error ?? 'sin registro' : motivo(r) });
     }
   }
   return salida;
@@ -223,127 +170,20 @@ async function validarUrl(url) {
 }
 
 async function validarTermino(ontologia, id) {
-  // OLS4 carga el FMA con sus IRI propios (purl.org/sig/ont/fma/fmaN), no con
-  // el `obo_id` FMA:N: pedido por `obo_id` devuelve 404 aunque el término exista.
-  const fma = /^FMA:(\d+)$/.exec(id);
-  const consulta = fma ? `iri=${encodeURIComponent(`http://purl.org/sig/ont/fma/fma${fma[1]}`)}` : `obo_id=${encodeURIComponent(id)}`;
-  const r = await pedir(`https://www.ebi.ac.uk/ols4/api/ontologies/${ontologia}/terms?${consulta}`);
+  const r = await pedir(`https://www.ebi.ac.uk/ols4/api/ontologies/${ontologia}/terms?obo_id=${encodeURIComponent(id)}`);
   const ok = r.status === 200 && (r.json?._embedded?.terms?.length ?? 0) > 0;
   return { id, ok, via: ok ? 'ols4' : null, detail: ok ? null : r.status === 200 ? 'término inexistente' : motivo(r) };
 }
 
-/**
- * La licencia de cada imagen, contra Commons: de a 50 archivos por pedido y con
- * espera ante 429 (Commons limita a la IP de salida). Además, que la miniatura
- * publicada responda desde upload.wikimedia.org.
- */
-async function validarImagenes(imagenes) {
-  const salida = [];
-  for (const lote of lotes(imagenes, 50)) {
-    const titulos = [...new Set(lote.map((i) => i.file))];
-    const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=extmetadata&titles=${encodeURIComponent(titulos.join('|'))}`;
-    let r;
-    for (let intento = 0; intento < 6; intento++) {
-      r = await pedir(url);
-      if (r.status !== 429) break;
-      await new Promise((listo) => setTimeout(listo, 60_000 * (intento + 1)));
-    }
-    const paginas = new Map(Object.values(r.json?.query?.pages ?? {}).map((p) => [p.title, p]));
-    for (const imagen of lote) {
-      const meta = paginas.get(imagen.file)?.imageinfo?.[0]?.extmetadata;
-      const licencia = meta?.LicenseShortName?.value ?? null;
-      const ok = r.status === 200 && licencia !== null && licencia === imagen.license;
-      salida.push({
-        id: `${imagen.structure} ${imagen.file}`,
-        ok,
-        via: ok ? 'commons' : null,
-        detail: ok ? null : r.status === 200 ? `licencia en Commons: ${licencia}` : motivo(r),
-      });
-    }
-    await new Promise((listo) => setTimeout(listo, 1_000));
-  }
-  return salida;
-}
-
-/** Que cada miniatura publicada responda (GET de la imagen; Commons limita el ritmo). */
-async function validarMiniaturas(imagenes) {
-  const salida = [];
-  for (const imagen of imagenes) {
-    let r;
-    for (let intento = 0; intento < 5; intento++) {
-      r = await pedir(imagen.thumbUrl, { method: 'HEAD' });
-      if (r.status !== 429) break;
-      await new Promise((listo) => setTimeout(listo, 15_000 * (intento + 1)));
-    }
-    const ok = r.status === 200;
-    salida.push({ id: imagen.thumbUrl, ok, via: ok ? 'upload.wikimedia.org' : null, detail: ok ? null : motivo(r) });
-    await new Promise((listo) => setTimeout(listo, 250));
-  }
-  return salida;
-}
-
-/** El vocabulario TA2 del visor de FIPAT: el bundle trae los términos embebidos. */
-async function vocabularioTa2() {
-  const indice = await pedirTexto('https://ta2viewer.openanatomy.org/');
-  const trozo = /src="(\/static\/js\/main\.[^"]+\.js)"/.exec(indice.texto ?? '')?.[1];
-  if (!trozo) return { error: `índice del visor: ${motivo(indice)}` };
-  const bundle = await pedirTexto(`https://ta2viewer.openanatomy.org${trozo}`);
-  if (bundle.texto === null) return { error: `bundle del visor: ${motivo(bundle)}` };
-  const terminos = new Map();
-  for (const m of bundle.texto.matchAll(/JSON\.parse\('((?:[^'\\]|\\.)*)'\)/g)) {
-    const literal = m[1].replace(/\\(u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|.)/gs, (_, e) =>
-      e[0] === 'u' || e[0] === 'x' ? String.fromCharCode(parseInt(e.slice(1), 16)) : ({ n: '\n', t: '\t', r: '\r' })[e] ?? e,
-    );
-    let valor;
-    try {
-      valor = JSON.parse(literal);
-    } catch {
-      continue;
-    }
-    if (Array.isArray(valor) && valor[0]?.term && valor.length > terminos.size) {
-      terminos.clear();
-      for (const t of valor) terminos.set(String(t.id), t);
-    }
-  }
-  return { terminos };
-}
-
-/** Los pares TA2 ↔ FMA que Wikidata declara hoy (el servicio puede limitar a 1 pedido por minuto). */
-async function paresWikidata() {
-  const consulta = 'SELECT ?ta2 ?fma WHERE { ?item wdt:P7173 ?ta2 . ?item wdt:P1402 ?fma . }';
-  const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(consulta)}`;
-  let r;
-  for (let intento = 0; intento < 6; intento++) {
-    r = await pedir(url, { headers: { accept: 'application/sparql-results+json' } }, 120_000);
-    if (r.status !== 429) break;
-    await new Promise((listo) => setTimeout(listo, 65_000));
-  }
-  if (r.status !== 200 || !r.json) return { error: `Wikidata SPARQL: ${motivo(r)}` };
-  return { pares: new Set(r.json.results.bindings.map((b) => `${b.ta2.value}|${b.fma.value}`)) };
-}
-
-async function validarTa2(lista) {
-  const [vocab, wikidata] = await Promise.all([vocabularioTa2(), paresWikidata()]);
-  return lista.map((t) => {
-    const id = `${t.structure} → TA2 ${t.code}`;
-    if (vocab.error) return { id, ok: false, via: null, detail: vocab.error };
-    if (wikidata.error) return { id, ok: false, via: null, detail: wikidata.error };
-    const termino = vocab.terminos.get(t.code);
-    if (!termino) return { id, ok: false, via: null, detail: 'el código no está en el vocabulario del visor' };
-    if ((termino.term?.la ?? null) !== t.la) return { id, ok: false, via: null, detail: `latín en el visor: ${termino.term?.la}` };
-    if (!wikidata.pares.has(`${t.code}|${t.fma}`)) return { id, ok: false, via: null, detail: `Wikidata no declara TA2 ${t.code} ↔ FMA ${t.fma}` };
-    return { id, ok: true, via: 'fipat+wikidata', detail: null };
-  });
-}
-
-/** El DOI que la ficha atribuye a un PMID es el que PubMed le asocia. */
-function validarParesPmidDoi(pmidDoi, pmids) {
-  const segunPubmed = new Map(pmids.map((r) => [r.id, r.doi]));
-  return [...pmidDoi].sort().slice(0, LIMITE).map(([pmid, doi]) => {
-    const real = segunPubmed.get(pmid);
-    const ok = real !== undefined && real !== null && real.toLowerCase() === doi.toLowerCase();
-    return { id: `PMID:${pmid} ↔ ${doi}`, ok, via: ok ? 'pubmed' : null, detail: ok ? null : `PubMed asocia ${real ?? 'ningún DOI'}` };
-  });
+async function validarImagen(imagen) {
+  const r = await pedir(
+    `https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=extmetadata&titles=${encodeURIComponent(imagen.file)}`,
+  );
+  const pagina = Object.values(r.json?.query?.pages ?? {})[0];
+  const meta = pagina?.imageinfo?.[0]?.extmetadata;
+  const licencia = meta?.LicenseShortName?.value ?? null;
+  const ok = r.status === 200 && licencia !== null && licencia === imagen.license;
+  return { id: imagen.file, ok, via: ok ? 'commons' : null, detail: ok ? null : r.status === 200 ? `licencia en Commons: ${licencia}` : motivo(r) };
 }
 
 /* ---- sin red --------------------------------------------------------------- */
@@ -364,36 +204,27 @@ function comprobacionesLocales(uberon, procedencia) {
 
 async function main() {
   const inicio = new Date();
-  const { citas, uberon, fma, imagenes, ta2, literatura, procedencia } = recolectar();
+  const { citas, uberon, fma, imagenes, procedencia } = recolectar();
   const grupos = {};
-  if (corre('doi')) grupos.doi = await enParalelo(tope(citas.doi), validarDoi);
-  // El par PMID ↔ DOI necesita lo que PubMed dice de cada PMID: van juntos.
-  if (corre('pmid') || corre('pmidDoi')) grupos.pmid = await validarPmids(tope(citas.pmid));
-  if (corre('wikipedia')) grupos.wikipedia = await validarWikipedia(tope(citas.wikipedia));
-  if (corre('isbn')) grupos.isbn = await enParalelo(tope(citas.isbn), validarIsbn);
-  if (corre('url')) grupos.url = await enParalelo(tope(citas.url), validarUrl);
-  if (corre('uberon')) grupos.uberon = await enParalelo(tope(uberon), (id) => validarTermino('uberon', id));
-  if (corre('fma')) grupos.fma = await enParalelo(tope(fma), (id) => validarTermino('fma', id));
-  if (corre('imagenes')) grupos.imagenes = await validarImagenes(imagenes.slice(0, LIMITE));
-  if (corre('miniaturas')) grupos.miniaturas = await validarMiniaturas(imagenes.slice(0, LIMITE));
-  if (corre('ta2')) grupos.ta2 = await validarTa2(ta2.slice(0, LIMITE));
-  if (corre('pmid') || corre('pmidDoi')) grupos.pmidDoi = validarParesPmidDoi(literatura.pmidDoi, grupos.pmid);
+  grupos.doi = await enParalelo(tope(citas.doi), validarDoi);
+  grupos.pmid = await validarPmids(tope(citas.pmid));
+  grupos.wikipedia = await validarWikipedia(tope(citas.wikipedia));
+  grupos.isbn = await enParalelo(tope(citas.isbn), validarIsbn);
+  grupos.url = await enParalelo(tope(citas.url), validarUrl);
+  grupos.uberon = await enParalelo(tope(uberon), (id) => validarTermino('uberon', id));
+  grupos.fma = await enParalelo(tope(fma), (id) => validarTermino('fma', id));
+  grupos.imagenes = await enParalelo(imagenes.slice(0, LIMITE), validarImagen);
 
   const resumen = Object.fromEntries(
     Object.entries(grupos).map(([k, v]) => [k, { total: v.length, ok: v.filter((r) => r.ok).length, fallidas: v.filter((r) => !r.ok).length }]),
   );
   const fallidas = Object.entries(grupos).flatMap(([k, v]) => v.filter((r) => !r.ok).map((r) => ({ tipo: k, ...r })));
-  const bloqueantes = fallidas.filter((f) => ESTRICTO || !INFORMATIVOS.has(f.tipo));
   const locales = comprobacionesLocales(uberon, procedencia);
-  const aprobado = bloqueantes.length === 0;
+  const aprobado = fallidas.length === 0;
   const informe = {
     startedAt: inicio.toISOString(),
     finishedAt: new Date().toISOString(),
     limit: Number.isFinite(LIMITE) ? LIMITE : null,
-    strict: ESTRICTO,
-    groups: GRUPOS ?? 'todos',
-    blockingGroups: Object.keys(grupos).filter((k) => ESTRICTO || !INFORMATIVOS.has(k)),
-    blockingFailures: bloqueantes.length,
     totalsInCatalog: {
       doi: citas.doi.size,
       pmid: citas.pmid.size,
@@ -403,10 +234,6 @@ async function main() {
       uberon: uberon.size,
       fma: fma.size,
       images: imagenes.length,
-      ta2: ta2.length,
-      literatureStructures: literatura.fichas,
-      literatureSentences: literatura.frases,
-      literaturePmidDoiPairs: literatura.pmidDoi.size,
     },
     summary: resumen,
     passed: aprobado,
@@ -415,25 +242,18 @@ async function main() {
   };
 
   mkdirSync(EVIDENCIA, { recursive: true });
-  const sello =
-    inicio.toISOString().replace(/[:]/g, '-').replace(/\..*/, '') + (ESTRICTO ? '-strict' : '') + (GRUPOS ? `-${GRUPOS.join('+')}` : '');
+  const sello = inicio.toISOString().replace(/[:]/g, '-').replace(/\..*/, '');
   writeFileSync(join(EVIDENCIA, `validator-${sello}.json`), JSON.stringify(informe, null, 1) + '\n');
-  const filas = Object.entries(resumen)
-    .map(([k, v]) => `| ${k} | ${ESTRICTO || !INFORMATIVOS.has(k) ? 'sí' : 'no (de UBERON)'} | ${v.total} | ${v.ok} | ${v.fallidas} |`)
-    .join('\n');
+  const filas = Object.entries(resumen).map(([k, v]) => `| ${k} | ${v.total} | ${v.ok} | ${v.fallidas} |`).join('\n');
   const motivos = {};
   for (const f of fallidas) motivos[`${f.tipo}: ${f.detail}`] = (motivos[`${f.tipo}: ${f.detail}`] ?? 0) + 1;
   const md = `# Validador del atlas anatómico 3D — ${inicio.toISOString()}
 
-Resultado: **${aprobado ? 'APROBADO' : 'FALLIDO'}** (${bloqueantes.length} irresolubles bloqueantes; ${fallidas.length} en total).${Number.isFinite(LIMITE) ? ` Corrida acotada a ${LIMITE} por grupo.` : ''}${ESTRICTO ? ' Modo `--strict`: todo bloquea.' : ''}${GRUPOS ? ` Grupos de esta parte: ${GRUPOS.join(', ')}.` : ''}
+Resultado: **${aprobado ? 'APROBADO' : 'FALLIDO'}** (${fallidas.length} irresolubles).${Number.isFinite(LIMITE) ? ` Corrida acotada a ${LIMITE} por grupo.` : ''}
 
-| Grupo | Bloquea | Validadas | Resueltas | Irresolubles |
-|---|---|---|---|---|
+| Grupo | Validadas | Resueltas | Irresolubles |
+|---|---|---|---|
 ${filas}
-
-## Conteos en el catálogo
-
-${Object.entries(informe.totalsInCatalog).map(([k, v]) => `- ${k}: ${v}`).join('\n')}
 
 ## Motivos de fallo (agrupados)
 

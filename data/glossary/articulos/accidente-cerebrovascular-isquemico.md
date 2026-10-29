@@ -1,189 +1,87 @@
 ---
 slug: accidente-cerebrovascular-isquemico
-image: acv-isquemico-senales.svg | Qué ocurre en un accidente cerebrovascular isquémico y las señales de alarma para reconocerlo rápido. | Esquema con dos partes. A la izquierda, un coágulo bloquea un vaso del cerebro, una zona deja de recibir sangre, oxígeno y nutrientes, y sus células empiezan a morir en pocos minutos. A la derecha, cuatro señales de alarma: cara caída de un lado al sonreír, debilidad de un brazo que cae al levantarlo, habla arrastrada o extraña, y tiempo de llamar a emergencias de inmediato. Debajo, otras señales súbitas: adormecimiento de un lado, confusión, problemas para ver, para caminar o dolor de cabeza intenso sin causa conocida.
 ---
 
 ## [definition] Introducción
 
-Un accidente cerebrovascular (ACV), también llamado ataque cerebrovascular, ocurre cuando **se pierde el flujo de sangre a una parte del cerebro**. MedlinePlus explica que las células del cerebro no reciben el oxígeno ni los nutrientes que necesitan y **empiezan a morir en pocos minutos**, lo que puede causar daño cerebral duradero, discapacidad a largo plazo o la muerte.
+El accidente cerebrovascular (ACV) isquémico, también llamado infarto cerebral o ictus isquémico, es la muerte de tejido cerebral causada por la interrupción del flujo de sangre. Casi siempre la origina la obstrucción de una arteria por un coágulo, formado en el propio vaso cerebral o llegado desde el corazón u otra arteria. Es una urgencia: sin oxígeno, las neuronas se dañan en minutos.
 
-Hay dos tipos. El **ACV isquémico**, que es el tema de este artículo, lo causa un **coágulo de sangre que bloquea o tapona un vaso del cerebro**; según MedlinePlus es el tipo más común, alrededor del **80 %** de los casos. El **ACV hemorrágico** lo causa un vaso que se rompe y sangra dentro del cerebro. Una revisión científica describe el ACV isquémico como una interrupción del flujo cerebral inducida por trombosis o embolia.
+Es el tipo más frecuente de ACV. El hemorrágico, en el que un vaso se rompe y sangra dentro del cerebro, se trata de otra forma; por eso la imagen cerebral urgente es esencial. El accidente isquémico transitorio es una obstrucción breve sin daño permanente que avisa de mayor riesgo de ictus.
 
-La razón por la que este tema merece estar en un glosario de salud para el público general es práctica: **el ACV es una emergencia en la que el tiempo cuenta**. MedlinePlus lo dice así: el tratamiento inmediato puede salvar la vida y aumentar las posibilidades de rehabilitación y recuperación. Reconocer las señales y llamar a emergencias es lo más importante que puede hacer cualquier persona.
+La definición actual, basada en el tejido y no solo en la duración de los síntomas, reserva el nombre de ACV isquémico para el infarto que produce síntomas y distingue el infarto silente, que no los causa. «Ictus», «ACV» o «derrame» suelen usarse en sentido amplio, e incluyen el tipo hemorrágico.
 
-Este texto reúne lo que dicen MedlinePlus, la hoja informativa de la Organización Mundial de la Salud (OMS) sobre enfermedades cardiovasculares y dos revisiones científicas de acceso abierto: una sobre mecanismos y tratamiento del ACV isquémico y otra sobre la prevención primaria a nivel mundial. No indica dosis de medicamentos ni sustituye la atención de urgencia.
+## [classification] Mecanismos
 
-> Este texto es informativo. No reemplaza la evaluación de un profesional de la salud y todavía está pendiente de revisión médica. **Si usted o alguien cerca tiene señales de ACV, llame ahora mismo al servicio de emergencias de su localidad.**
+Las fuentes citan la ateroesclerosis (placa en las arterias, incluidas las carótidas), los ritmos cardíacos irregulares como la fibrilación auricular, las enfermedades de las válvulas y la anemia de células falciformes. En parte de los casos no se halla causa tras el estudio completo (ictus embólico de origen indeterminado). El código de esta ficha (infarto cerebral sin especificar) no distingue entre ellos.
 
-## [overview] Qué ocurre en el cerebro
+## [epidemiology] Magnitud del problema
 
-La revisión publicada en *Signal Transduction and Targeted Therapy* en 2022 explica que, según su origen, un ACV isquémico puede deberse a: una **embolia desde el corazón**, una **embolia de una arteria a otra** o una **enfermedad de los vasos pequeños** en el propio cerebro. Describe además que, cuando se interrumpe el flujo, se distinguen dos zonas: un **núcleo isquémico**, donde las neuronas sufren cambios graves, y una zona vecina llamada **penumbra**, donde las neuronas están dañadas pero son relativamente viables.
-
-La OMS agrega que los infartos y los accidentes cerebrovasculares suelen ser eventos agudos causados principalmente por un bloqueo que impide que la sangre llegue al corazón o al cerebro; la razón más común es la acumulación de depósitos grasos en las paredes de los vasos que los irrigan. Los accidentes cerebrovasculares también pueden deberse a sangrado de un vaso del cerebro o a coágulos.
-
-### El ataque isquémico transitorio («mini-ACV»)
-
-MedlinePlus describe una condición parecida: el **ataque isquémico transitorio (AIT)**, a veces llamado «mini-ACV». Ocurre cuando el flujo de sangre al cerebro se bloquea durante un tiempo corto; el daño a las células cerebrales no es permanente, pero **haber tenido un AIT aumenta mucho el riesgo de tener un ACV**. Por eso un AIT es una señal de alarma que también requiere atención.
-
-## [causes] Qué lo causa
-
-Para el ACV isquémico, MedlinePlus indica que la causa es un coágulo que bloquea un vaso del cerebro. Entre las condiciones que lo favorecen, señala las **enfermedades del corazón**: la fibrilación auricular y otras cardiopatías pueden formar coágulos que lleven a un ACV. La revisión científica lo precisa por el origen del coágulo (corazón, arteria a arteria, vasos pequeños) y añade que entre los factores de riesgo implicados están la diabetes, el tabaquismo, la hiperlipidemia y la hipertensión.
+Según el análisis mundial de carga de enfermedad de 2021, el ictus figura entre las primeras causas de muerte y discapacidad, y la incidencia dejó de reducirse desde 2015.
 
 ## [risk_factors] Factores de riesgo
 
-MedlinePlus enumera como principales:
+Los principales son la presión arterial alta, la diabetes, las enfermedades del corazón, el tabaquismo, los antecedentes de ACV o de accidente isquémico transitorio y la edad avanzada. También influyen el colesterol elevado, la obesidad, el sedentarismo, la dieta poco saludable y el exceso de alcohol o drogas. La OMS destaca la hipertensión y la contaminación del aire.
 
-- **Presión arterial alta**: el factor de riesgo primario.
-- **Diabetes.**
-- **Enfermedades del corazón**, como la fibrilación auricular.
-- **Fumar**: daña los vasos sanguíneos y eleva la presión.
-- **Antecedentes personales o familiares** de ACV o AIT.
-- **Edad**: el riesgo aumenta con los años.
-- **Raza y etnia**: MedlinePlus indica que las personas afroamericanas o hispanas tienen mayor riesgo (dato de Estados Unidos; este texto no extrae conclusiones para Bolivia).
+## [symptoms] Síntomas
 
-Y otros factores asociados: consumo de alcohol y de drogas ilegales, poca actividad física, colesterol alto, alimentación poco saludable y obesidad.
+Aparecen de forma brusca, casi siempre en un lado del cuerpo o en una función concreta:
 
-La revisión de la *Lancet Public Health* de 2022 señala, para 2019, los cinco principales factores de riesgo de ACV en el mundo: **presión sistólica alta, índice de masa corporal alto, glucosa alta en ayunas, contaminación del aire por partículas finas (PM2,5) y tabaquismo**.
+• Debilidad o adormecimiento de la cara, el brazo o la pierna.
+• Desviación de la boca.
+• Confusión o dificultad para hablar o entender.
+• Pérdida de visión en uno o ambos ojos.
+• Mareo, pérdida del equilibrio o dificultad para caminar.
+• Dolor de cabeza intenso y repentino sin causa conocida.
 
-## [symptoms] Síntomas y cómo reconocerlos
+La regla F.A.S.T. (cara, brazos, habla, tiempo) recuerda llamar de inmediato a emergencias.
 
-MedlinePlus indica que los síntomas **suelen aparecer de golpe**:
+## [diagnosis] Diagnóstico
 
-- **Adormecimiento o debilidad súbita** de la cara, el brazo o la pierna, especialmente de un lado del cuerpo.
-- **Confusión súbita**, dificultad para hablar o para entender lo que se dice.
-- **Problemas repentinos para ver** con uno o ambos ojos.
-- **Dificultad súbita para caminar**, mareo, pérdida del equilibrio o de la coordinación.
-- **Dolor de cabeza intenso y repentino** sin causa conocida.
-
-La OMS enumera los mismos, y precisa que el síntoma más común es la **debilidad súbita de la cara, el brazo o la pierna**, casi siempre de un solo lado del cuerpo; añade el desmayo o la pérdida del conocimiento.
-
-### La prueba FAST (en español, «cara, brazo, habla, tiempo»)
-
-MedlinePlus propone una regla fácil de recordar, que en inglés forma la palabra FAST:
-
-- **Cara (Face)**: se cae un lado de la cara al sonreír.
-- **Brazo (Arm)**: al levantar los dos brazos, uno **se desvía hacia abajo**.
-- **Habla (Speech)**: el habla es **arrastrada o extraña**.
-- **Tiempo (Time)**: es **hora de llamar a emergencias**.
-
-## [red_flags] Qué hacer: cada minuto cuenta
-
-Todas las señales anteriores son de alarma. MedlinePlus es claro: **si cree que usted o alguien más está teniendo un ACV, llame a emergencias de inmediato** y «cada minuto cuenta». La OMS coincide: las personas con estos síntomas deben buscar atención médica de inmediato. (Las fuentes citadas dan el número de emergencias de Estados Unidos; use el número de emergencias de su localidad.)
-
-Lo que este texto **no** recomienda es esperar a ver si mejora: un AIT también es una advertencia (MedlinePlus: aumenta mucho el riesgo de un ACV). Tampoco indica qué medicamento tomar mientras llega la ayuda.
-
-## [epidemiology] Cuántas personas afecta
-
-La revisión de la *Lancet Public Health* indica que en 2019 el ACV fue la **segunda causa de muerte** (6,6 millones de personas) y de discapacidad (143 millones de años de vida ajustados por discapacidad perdidos) en el mundo. En tres décadas, en términos absolutos, la incidencia mundial aumentó 70 %, la prevalencia 85 % y la mortalidad 43 %, con un incremento mayor en países de ingresos bajos y medios. Otra revisión, para el ACV isquémico, cita 5,9 millones de muertes y 102 millones de años de vida perdidos por discapacidad.
-
-La misma revisión añade un dato importante: en los países de ingresos bajos y medios los ACV ocurren **unos 15 años antes** que en los de ingresos altos, de modo que afectan a las personas en la etapa más productiva de su vida, y el conocimiento de las medidas de prevención disponibles no se ha traducido en menos ACV por las barreras para aplicarlas. La OMS, por su parte, indica que el 85 % de las muertes por enfermedad cardiovascular se deben a infarto y ACV.
-
-Este texto no incluye cifras específicas de Bolivia porque no se verificó una fuente actualizada. Para ellas conviene consultar al Ministerio de Salud y Deportes y a la Organización Panamericana de la Salud.
-
-## [diagnosis] Cómo se diagnostica
-
-MedlinePlus indica que el profesional:
-
-- Pregunta por los **síntomas y los antecedentes** y hace un **examen físico** que incluye la alerta mental, la coordinación y el equilibrio, la debilidad o adormecimiento de cara, brazos y piernas, y las dificultades para hablar o ver.
-- Pide **estudios de imágenes del cerebro**, como una tomografía o una resonancia.
-- Pide **estudios del corazón** que ayuden a detectar problemas cardíacos o coágulos que pudieron causar el ACV, como un electrocardiograma y un ecocardiograma.
-
-La indicación y la interpretación las hace el equipo de salud.
+Se basa en la historia clínica, la exploración neurológica y la imagen cerebral (tomografía o resonancia), que descarta una hemorragia y, en situaciones concretas, muestra el tejido aún recuperable, útil si se desconoce la hora de inicio. Después se buscan causas con electrocardiograma, ecocardiograma y ecografía de carótidas.
 
 ## [treatment_overview] Tratamiento
 
-MedlinePlus explica que los tratamientos incluyen **medicamentos, cirugía y rehabilitación**, y que dependen del tipo de ACV y de la etapa. Las etapas son: el **tratamiento agudo**, para intentar detener el ACV mientras ocurre; la **rehabilitación** posterior, para superar las discapacidades; y la **prevención**, para evitar un primer ACV o, si ya hubo uno, otro.
+La atención inicial busca restablecer el flujo cuanto antes: un medicamento que disuelve el coágulo, útil solo dentro de una ventana de tiempo, o la trombectomía, que extrae la obstrucción de una arteria grande. La elección depende de la hora de inicio, la arteria afectada, las imágenes y la persona.
 
-### En la fase aguda del ACV isquémico
-
-Según MedlinePlus, los tratamientos agudos son por lo general medicamentos:
-
-- Un medicamento para **disolver el coágulo** (llamado tPA). MedlinePlus señala que **solo puede recibirse dentro de las 4 horas** desde que empezaron los síntomas, y que cuanto antes se reciba, mejores son las posibilidades de recuperación. Ese plazo y los criterios los decide el equipo de salud; este texto no los fija.
-- Si no se puede recibir ese medicamento, pueden darse otros que evitan que las plaquetas se junten para formar coágulos, o **anticoagulantes** que impiden que los coágulos existentes crezcan.
-- Si hay enfermedad de la arteria carótida, puede necesitarse un procedimiento para abrirla.
-
-La revisión científica añade las intervenciones clínicas inmediatas, la **trombólisis intravenosa** y la **trombectomía mecánica**, que contribuyen a recanalizar los vasos cerebrales, y señala que los tratamientos antitrombóticos (antiplaquetarios o anticoagulantes) se recomiendan para casi todos los pacientes sin contraindicación, aunque las opciones farmacológicas siguen siendo limitadas.
-
-### Rehabilitación
-
-MedlinePlus señala que la rehabilitación ayuda a **reaprender las habilidades perdidas** por el daño, con el objetivo de que la persona sea lo más independiente posible y tenga la mejor calidad de vida posible.
+Los antiagregantes y el control de la presión, los lípidos y la glucosa previenen nuevos episodios; la anticoagulación en ictus de origen cardíaco sigue guías específicas. La rehabilitación busca la mayor autonomía posible; la atención en unidad de ictus mejora los resultados.
 
 ## [complications] Complicaciones
 
-MedlinePlus advierte que el ACV puede causar **daño cerebral duradero, discapacidad a largo plazo o la muerte**, y que **tener un ACV aumenta el riesgo de tener otro**. Las revisiones citadas lo ubican entre las principales causas de muerte y de discapacidad en el mundo.
+Puede dejar discapacidad duradera o causar la muerte: debilidad de un lado, afasia (trastorno del lenguaje), problemas visuales y cognitivos, cambios emocionales.
 
 ## [prevention] Prevención
 
-MedlinePlus propone cambios de estilo de vida «saludables para el corazón» para prevenir un primer ACV o un nuevo ACV:
-
-- Alimentación saludable para el corazón.
-- Procurar un peso saludable.
-- Manejar el estrés.
-- Actividad física regular.
-- **Dejar de fumar.**
-- **Controlar la presión arterial y el colesterol.**
-
-Si esos cambios no alcanzan, puede hacer falta medicación para controlar los factores de riesgo. La prevención de un nuevo ACV puede incluir cambios de hábitos y medicamentos.
-
-La OMS agrega que la mayoría de las enfermedades cardiovasculares puede prevenirse actuando sobre factores de conducta y ambientales: tabaco, alimentación poco saludable (incluidos el exceso de sal, azúcar y grasas), obesidad, inactividad física, alcohol y contaminación del aire; y que el tratamiento farmacológico de la hipertensión, la diabetes y los lípidos altos es necesario para reducir el riesgo.
-
-La revisión de *Lancet Public Health* subraya que la prevención primaria es una prioridad de salud pública, que sus beneficios son económicos además de sanitarios y que, aunque se conocen intervenciones basadas en evidencia, en los países de ingresos bajos y medios no se han traducido en una menor carga de ACV por las barreras para ponerlas en práctica.
-
-## [self_care] Qué puede hacer usted
-
-- **Aprenda las señales** y enséñelas a su familia: son súbitas y pueden aparecer en cualquier persona.
-- **Controle sus factores de riesgo**: presión, diabetes, colesterol, peso, tabaco y alcohol (MedlinePlus, OMS).
-- **Consulte por cualquier episodio de AIT** aunque se haya pasado: aumenta mucho el riesgo de un ACV (MedlinePlus).
-- **Si ya tuvo un ACV**, siga la rehabilitación y los medicamentos de prevención que le indiquen; tener un ACV aumenta el riesgo de otro.
-
-## [special_populations] Poblaciones con consideraciones especiales
-
-**Personas con fibrilación auricular u otras enfermedades del corazón.** Pueden formar coágulos que lleven a un ACV (MedlinePlus).
-
-**Personas con presión alta o diabetes.** Son los factores de riesgo principal y frecuente que menciona MedlinePlus.
-
-**Personas mayores.** El riesgo aumenta con la edad (MedlinePlus).
-
-**Países de ingresos bajos y medios.** Los ACV ocurren unos 15 años antes que en los de ingresos altos y la carga crece más rápido (revisión de *Lancet Public Health*).
-
-**Personas que ya tuvieron un AIT o un ACV.** Tienen más riesgo de otro.
+Se basa en controlar la presión arterial, no fumar, comer de forma saludable, mantener un peso adecuado, hacer actividad física y moderar el alcohol; en personas de alto riesgo se añaden medicamentos y el tratamiento de la fibrilación auricular o la diabetes.
 
 ## [prognosis] Pronóstico
 
-Depende de cuánto cerebro se dañe y de qué tan rápido se trate. MedlinePlus afirma que el tratamiento inmediato puede salvar la vida y aumentar las posibilidades de rehabilitación y recuperación, y que el ACV puede dejar daño duradero, discapacidad o causar la muerte. La rehabilitación busca que la persona sea lo más independiente posible.
+Varía según la zona afectada, el daño y la rapidez de la atención. Un ACV o un accidente isquémico transitorio previos aumentan la probabilidad de recaída, frecuente durante el primer año, de ahí la prevención secundaria.
 
-## [associated_conditions] Enfermedades relacionadas
+## [when_to_seek_care] Cuándo consultar
 
-- **Ataque isquémico transitorio** («mini-ACV»).
-- **ACV hemorrágico.**
-- **Hipertensión arterial**, **diabetes**, **fibrilación auricular**, **obesidad**, **dislipidemia**, **tabaquismo**: factores de riesgo.
-- **Infarto agudo de miocardio**: otro evento vascular agudo que la OMS describe con el mismo mecanismo.
+Ante cualquiera de estos síntomas hay que llamar a emergencias de inmediato, aunque mejoren, y anotar a qué hora comenzaron.
 
-## [additional_information] Preguntas frecuentes
+## [associated_conditions] Conceptos relacionados
 
-**¿Qué diferencia hay entre ACV isquémico y hemorrágico?** El isquémico lo causa un coágulo que tapa un vaso; el hemorrágico, un vaso que se rompe y sangra. El isquémico es alrededor del 80 % (MedlinePlus).
+• Accidente isquémico transitorio: episodio breve con los mismos síntomas.
+• Accidente cerebrovascular hemorrágico: el otro gran tipo, con tratamiento diferente.
+• Fibrilación auricular: arritmia que favorece coágulos que viajan al cerebro.
 
-**¿Qué es un mini-ACV?** Un AIT: el flujo de sangre se bloquea por poco tiempo. No deja daño permanente, pero aumenta mucho el riesgo de un ACV.
+## [considerations] Qué dice la evidencia
 
-**¿Cómo lo reconozco?** Con la regla de cara, brazo, habla y tiempo: cara caída, brazo que cae, habla extraña y llamar a emergencias.
+Lo expuesto se apoya en una guía estadounidense de 2026 sobre el manejo inicial, que sustituye a la de 2018, en una guía europea de prevención a largo plazo con metodología GRADE y en metaanálisis de ensayos aleatorizados: trombectomía en oclusiones de arterias grandes, trombólisis guiada por imagen con hora de inicio desconocida y unidades de ictus (Cochrane). La definición procede de un consenso de la AHA/ASA, y la magnitud del problema, de un análisis mundial de carga de enfermedad. Síntomas y factores de riesgo descansan en fuentes divulgativas (MedlinePlus, CDC, OMS).
 
-**¿Puedo esperar a ver si se pasa?** No. MedlinePlus dice que cada minuto cuenta y que debe llamar de inmediato.
-
-**¿Hay tratamiento?** Sí: medicamentos para disolver el coágulo con límite de tiempo, otros antitrombóticos y, en algunos casos, procedimientos. La decisión es del equipo de salud.
-
-**¿Se puede prevenir?** En gran medida: control de la presión, la diabetes y el colesterol, no fumar, actividad física y alimentación saludable.
-
-**¿Puede volver a ocurrir?** Sí, tener un ACV aumenta el riesgo de otro.
-
-**¿Se recupera la persona?** Con tratamiento rápido y rehabilitación aumentan las posibilidades de recuperación, según MedlinePlus; puede quedar discapacidad.
-
-## [additional_information] Limitaciones de este texto
-
-Este artículo fue redactado por el equipo de AloVida a partir de las fuentes citadas y todavía **no ha sido revisado por un profesional médico**. No indica dosis ni qué medicamento tomar durante un ACV, porque eso lo decide el servicio de emergencias. El plazo de 4 horas para el trombolítico es el que cita MedlinePlus y puede variar según el centro y las guías. Las fuentes de MedlinePlus son estadounidenses y mencionan el número de emergencias de ese país; en Bolivia debe usarse el número local, que este texto no verifica. Las revisiones científicas citadas tratan mecanismos y prevención poblacional y no son guías de tratamiento. No incluye datos de Bolivia porque no se verificó una fuente actualizada.
+Hay consenso en que es una urgencia, en que la imagen debe distinguirlo del hemorrágico, en que la reperfusión temprana mejora los resultados cuando es posible y en que las unidades especializadas y el control vascular reducen discapacidad y recaídas. Está más discutido quién se beneficia de cada reperfusión y con qué criterios: la guía de 2026 modificó la elección del trombolítico, la selección para trombectomía y las contraindicaciones de la trombólisis, y ya tiene una corrección oficial y propuestas de otros especialistas. El metaanálisis de inicio desconocido describe más hemorragias intracraneales sintomáticas, y el balance se decide caso a caso.
 
 ## [references]
 
-- Ataque cerebrovascular (MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.) | https://medlineplus.gov/stroke.html | MedlinePlus
-- Cardiovascular diseases (CVDs) — Fact sheet (World Health Organization, 31 de julio de 2025) | https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-%28cvds%29 | OMS
-- Signaling pathways involved in ischemic stroke: molecular mechanisms and therapeutic interventions. Signal Transduct Target Ther 2022 | https://pmc.ncbi.nlm.nih.gov/articles/PMC9259607/ | Signal Transduct Target Ther (acceso abierto)
-- Primary stroke prevention worldwide: translating evidence into action. Lancet Public Health 2022 | https://pmc.ncbi.nlm.nih.gov/articles/PMC8727355/ | Lancet Public Health (acceso abierto)
+- Sacco et al., 2013. An updated definition of stroke for the 21st century (AHA/ASA). PMID 23652265 | https://europepmc.org/article/MED/23652265 | Stroke
+- Prabhakaran et al., 2026. 2026 Guideline for the Early Management of Patients With Acute Ischemic Stroke (AHA/ASA). PMID 41582814 | https://europepmc.org/article/MED/41582814 | Stroke
+- Goyal et al., 2016. Endovascular thrombectomy after large-vessel ischaemic stroke: meta-analysis of individual patient data from five randomised trials. PMID 26898852 | https://europepmc.org/article/MED/26898852 | The Lancet
+- Thomalla et al., 2020. Intravenous alteplase for stroke with unknown time of onset guided by advanced imaging: meta-analysis of individual patient data. PMID 33176180 | https://europepmc.org/article/MED/33176180 | The Lancet
+- Dawson et al., 2022. European Stroke Organisation guideline on pharmacological interventions for long-term secondary prevention after ischaemic stroke or TIA. PMID 36082250 | https://europepmc.org/article/MED/36082250 | European Stroke Journal
+- Langhorne y Ramachandra, 2020. Organised inpatient (stroke unit) care for stroke: network meta-analysis. PMID 32324916 | https://europepmc.org/article/MED/32324916 | Cochrane Database of Systematic Reviews
+- GBD 2021 Stroke Risk Factor Collaborators, 2024. Global, regional, and national burden of stroke and its risk factors, 1990-2021. PMID 39304265 | https://europepmc.org/article/MED/39304265 | The Lancet Neurology
+- Accidente cerebrovascular isquémico | https://medlineplus.gov/spanish/ischemicstroke.html | MedlinePlus
+- About Stroke | https://www.cdc.gov/stroke/about/index.html | CDC
+- Stroke (hoja informativa) | https://www.who.int/news-room/fact-sheets/detail/stroke | OMS

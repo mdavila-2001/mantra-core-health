@@ -275,7 +275,7 @@ const TERMINOS: readonly Termino[] = [
   {
     slug: 'datos-resultado-del-paciente',
     categoryKey: 'equipment',
-    esName: 'Resultado del paciente',
+    esName: 'Result del paciente',
     definition: 'El resultado liberado que el paciente ve en «Mis resultados» y puede compartir.',
     plainSummaryEs: 'Lo que ve en «Mis resultados».',
     relations: [],

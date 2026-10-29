@@ -150,9 +150,7 @@ No hay un archivo de constantes. Cada ruta vive donde primero se necesita:
 > **Ojo con `IDENTITY_VERIFICATION_ROUTE`.** Vale `/identity/me`, que es la ruta
 > **de la API**, no una ruta de Angular. Ninguna ruta del router coincide, así
 > que el comodín la redirigiría a `/`. Se usa como `nextAction.route` del estado
-> S5 cuando la API responde `IDENTITY_VERIFICATION_REQUIRED`. Está registrado
-> como brecha `HIGH` en
-> [el análisis de brechas](../reports/documentation-gap-analysis.md).
+> S5 cuando la API responde `IDENTITY_VERIFICATION_REQUIRED`.
 
 ## Navegación programática
 
@@ -228,4 +226,3 @@ nunca se navega entre dos instancias distintas.
 | Pantalla 404 | Ninguna: el comodín redirige |
 
 Las tres primeras se vuelven necesarias a medida que crezcan las secciones.
-Recogidas en [el análisis de brechas](../reports/documentation-gap-analysis.md).

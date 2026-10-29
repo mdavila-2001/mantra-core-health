@@ -46,7 +46,7 @@ import { PatientInsuranceSettlement } from '../../../shared/components/molecules
 import { OrderPerformerSummary } from './order-performer-summary/order-performer-summary';
 import {
   ANALYSIS_CATEGORIES,
-  categoriaDeAnalisis,
+  tipoDeOrden,
   etiquetaDeCategoria,
   type AnalysisCategory,
   type PatientOrderRow,
@@ -240,7 +240,7 @@ export class DiagnosticOrders {
 
   private aFila(item: PatientOrder, etiquetas: ConceptLabels): PatientOrderRow {
     const categoriaOpcion = item.categoryConceptId ? etiquetas.get(item.categoryConceptId) : undefined;
-    const categoria = categoriaDeAnalisis(categoriaOpcion?.code);
+    const categoria = tipoDeOrden(item.category, categoriaOpcion?.code);
     const estadoOpcion = etiquetas.get(item.statusConceptId);
     return {
       id: item.id,
@@ -464,12 +464,17 @@ export class DiagnosticOrders {
     if (fila.insuranceSettlement) {
       acciones.push({ code: 'ver-liquidacion', label: 'Ver liquidación', icon: 'billing' });
     }
-    // Reservar sale de la orden (mockup, 2026-10-06): sólo cuando hay algo que
-    // reservar —un estudio de laboratorio o de imagen sin resultado ni turno—
-    // y lleva a elegir centro y horario para ESE estudio, sin escribir nada.
-    if (fila.bookable) {
-      acciones.push({ code: 'reservar', label: 'Reservar hora', icon: 'calendar' });
-    }
+    // Cotizar y reservar llevan al circuito de laboratorio e imagen: un procedimiento no entra ahí.
+    if (fila.type === 'PROCEDURE') return acciones;
+    // Conservada del refactor UX previo (2026-09-13): no la retira el pedido
+    // de esta noche, y quitarla sería perder una capacidad ya entregada sin
+    // que nadie lo haya pedido (ver ambigüedad registrada en PLAN.md).
+    acciones.push({
+      code: 'cotizar',
+      label: 'Comparar precio y distancia',
+      icon: 'billing',
+    });
+    acciones.push({ code: 'reservar', label: 'Reservar hora en un laboratorio', icon: 'calendar' });
     if (fila.appointment !== null) {
       acciones.push({ code: 'ver-turno', label: 'Ver cita', icon: 'calendar' });
     }
@@ -533,6 +538,14 @@ export class DiagnosticOrders {
             fragment: fila.reportId,
           });
         }
+        return;
+      case 'cotizar':
+        void this.router.navigate(['/my-account/quotations'], {
+          queryParams: {
+            q: fila.studyLabel,
+            vertical: fila.type === 'IMAGING' ? 'IMAGENOLOGIA' : 'ANALISIS',
+          },
+        });
         return;
       case 'reservar':
         void this.router.navigate(['/my-account/diagnostic-orders', fila.id, 'book']);

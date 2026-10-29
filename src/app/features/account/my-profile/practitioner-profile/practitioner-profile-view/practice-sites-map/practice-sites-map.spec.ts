@@ -5,7 +5,7 @@ import {
   CARGADOR_DE_LEAFLET,
   type CargadorDeLeaflet,
 } from '../../../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMap } from '../../../../../../shared/components/organisms/map/map-pin.types';
 import type { SedeVisible } from '../practitioner-profile-view.types';
 
 /**
@@ -62,8 +62,8 @@ describe('PracticeSitesMap', () => {
   }
 
   /** Los pines que el componente le pasa al mapa. */
-  function pines(fixture: ReturnType<typeof montar>): readonly PinMapa[] {
-    return (fixture.componentInstance as unknown as { pines: () => readonly PinMapa[] }).pines();
+  function pines(fixture: ReturnType<typeof montar>): readonly PinMap[] {
+    return (fixture.componentInstance as unknown as { pines: () => readonly PinMap[] }).pines();
   }
 
   it('pone un pin por sede ubicada, con el mismo número que la lista', () => {
@@ -103,6 +103,58 @@ describe('PracticeSitesMap', () => {
 
     expect(link?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Teléfono: +591 72123456');
     expect(link?.getAttribute('href')).toBe('tel:+59172123456');
+    // El nombre dice qué hace y a quién llama, y conserva el texto visible.
+    expect(link?.getAttribute('aria-label')).toBe(
+      'Llamar a Consultorio Dra. Rojas. Teléfono: +591 72123456',
+    );
+  });
+
+  it('el teléfono es un enlace propio: ningún enlace queda dentro del botón que elige la sede', () => {
+    // Un `<a href="tel:">` dentro del `<button>` hacía que elegir la sede
+    // pudiera terminar en «¿Abrir Teléfono?».
+    const fixture = montar([sede({ contactPhone: '+591 72123456' })]);
+    const root = fixture.nativeElement as HTMLElement;
+    const phoneLink = root.querySelector<HTMLAnchorElement>('[data-testid="practice-site-contact-phone"]');
+
+    expect(root.querySelectorAll('button a')).toHaveLength(0);
+    expect(phoneLink?.closest('button')).toBeNull();
+    // Hermano del botón, colgado del renglón de la sede.
+    expect(phoneLink?.parentElement?.tagName).toBe('LI');
+  });
+
+  it('elegir la sede no activa el teléfono: sólo llama quien toca el enlace', () => {
+    // Un clic sobre el renglón nace en el elemento que está bajo el puntero
+    // —el botón o cualquiera de sus hijos— y sube desde ahí. jsdom no tiene
+    // coordenadas, así que se dispara desde cada uno de esos blancos: si el
+    // enlace volviera a quedar adentro del botón, sería uno de ellos y elegir
+    // la sede terminaría en una llamada. `boton.click()` no lo probaba: un
+    // evento sube a los ancestros, nunca baja a los hijos.
+    const fixture = montar([sede({ contactPhone: '+591 72123456' })]);
+    const root = fixture.nativeElement as HTMLElement;
+    const phoneLink = root.querySelector<HTMLAnchorElement>('[data-testid="practice-site-contact-phone"]')!;
+    const phoneClicks: EventTarget[] = [];
+    phoneLink.addEventListener('click', (event) => {
+      // jsdom no navega a `tel:`; basta con saber si el clic llegó al enlace.
+      event.preventDefault();
+      phoneClicks.push(event.target!);
+    });
+    const siteButton = root.querySelector<HTMLButtonElement>('.sedes__boton')!;
+    const rowTargets = [siteButton, ...siteButton.querySelectorAll<HTMLElement>('*')];
+    // El nombre y la dirección, como mínimo: sin hijos no habría nada que probar.
+    expect(rowTargets.length).toBeGreaterThan(2);
+
+    for (const target of rowTargets) {
+      const pressedBefore = siteButton.getAttribute('aria-pressed');
+      target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+      // Cada clic en el renglón alterna la sede…
+      expect(siteButton.getAttribute('aria-pressed')).not.toBe(pressedBefore);
+    }
+    // …y ninguno pasó por el enlace.
+    expect(phoneClicks).toHaveLength(0);
+
+    phoneLink.click();
+    expect(phoneClicks).toEqual([phoneLink]);
   });
 
   it('si ninguna está ubicada no dibuja el mapa', () => {

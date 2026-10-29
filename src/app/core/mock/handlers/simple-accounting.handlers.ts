@@ -1,5 +1,5 @@
 import { reservas } from '../fixtures/agenda';
-import { ESTADO_RESERVA } from '../fixtures/conceptos';
+import { BOOKING_STATUS } from '../fixtures/concepts';
 import { conflict, noContent, notFound, validation, type MockRouter } from '../mock-router';
 import { Coleccion, cuerpo, hoy, isoDia, nuevoId, texto, uuid } from '../mock-store';
 import { consultasPagadas } from './finance.handlers';
@@ -239,7 +239,7 @@ export function registrarContabilidadSimple(router: MockRouter): void {
       return dia >= rango.from && dia <= rango.to;
     };
     const atendidas = reservas.filtrar(
-      (r) => r.statusConceptId === ESTADO_RESERVA['BK-COMPLETED'] && enRango(r.startAt),
+      (r) => r.statusConceptId === BOOKING_STATUS['BK-COMPLETED'] && enRango(r.startAt),
     );
     const cobradoCentavos = consultasPagadas()
       .filter(({ reserva }) => enRango(reserva.startAt))

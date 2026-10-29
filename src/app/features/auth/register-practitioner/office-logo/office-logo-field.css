@@ -1,0 +1,35 @@
+/* ============================================================================
+    Logo del consultorio en el alta: la caja 2:1 arriba y el selector debajo.
+
+    Apilados en todos los anchos: la caja tiene un ancho propio y el área de
+    soltar necesita el resto de la línea. Uno debajo del otro, ninguno depende
+    de cuánto mida la pantalla.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.office-logo {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+
+.office-logo__actions {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.office-logo__actions app-file-input {
+  justify-self: stretch;
+}
+
+.office-logo__error {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+}

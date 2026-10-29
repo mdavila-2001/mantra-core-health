@@ -150,28 +150,47 @@
 <section class="app-view-state-host" app-view-state-host="" aria-label="Medicamentos publicados">
   @switch (estado()) {
     @case ('datos') {
-      <!-- La misma grilla y la misma tarjeta que hospitales, laboratorios y
+      <div class="vitrina-vista">
+        <app-segmented-control
+          ariaLabel="Cómo ver los resultados"
+          [options]="vistas"
+          [value]="vista()"
+          (valueChange)="vista.set($event)"
+        />
+      </div>
+
+      @if (vista() === 'arbol') {
+        <div data-estado="datos">
+          <app-medication-tree
+            [medications]="medicamentos()"
+            [origin]="origenGeo()"
+            (pharmaciesRequested)="abrirDetalle($event)"
+          />
+        </div>
+      } @else {
+        <!-- La misma grilla y la misma tarjeta que hospitales, laboratorios y
            aseguradoras: lo que cambia son los datos de abajo y el pie. -->
-      <ul class="centros__grilla" data-estado="datos" data-testid="vitrina-grilla">
-        @for (item of tarjetas(); track item.id) {
-          <li app-centro-card [centro]="item.card">
-            <button
-              app-button
-              variant="secondary"
-              size="sm"
-              type="button"
-              data-testid="vitrina-ver-farmacias"
-              (clicked)="abrirDetalle(item.medication)"
-            >
-              Ver farmacias donde está disponible
-            </button>
-            <app-card-detail-panel
-              [heading]="item.medication.genericName"
-              [rows]="item.details"
-            />
-          </li>
-        }
-      </ul>
+        <ul class="centros__grilla" data-estado="datos" data-testid="vitrina-grilla">
+          @for (item of tarjetas(); track item.id) {
+            <li app-centro-card [centro]="item.card">
+              <button
+                app-button
+                variant="secondary"
+                size="sm"
+                type="button"
+                data-testid="vitrina-ver-farmacias"
+                (clicked)="abrirDetalle(item.medication)"
+              >
+                Ver farmacias donde está disponible
+              </button>
+              <app-card-detail-panel
+                [heading]="item.medication.genericName"
+                [rows]="item.details"
+              />
+            </li>
+          }
+        </ul>
+      }
     }
 
     @case ('vacio') {
@@ -263,6 +282,7 @@
 @if (abierto(); as medicamento) {
   <app-pharmacy-availability-dialog
     [medicationName]="medicamento.genericName"
+    [requiresPrescription]="recetaDelAbierto()"
     [offers]="ofertas()"
     [loading]="cargandoDetalle()"
     [failed]="errorDetalle()"

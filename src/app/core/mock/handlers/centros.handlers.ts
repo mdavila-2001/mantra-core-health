@@ -32,9 +32,9 @@ import {
   turnosDeOrdenes,
   type TurnoDeOrdenSimulado,
 } from '../fixtures/centros';
-import { ordenes } from '../fixtures/clinica';
-import { ACTIVIDAD, CANAL, ESTADO_RESERVA, ESTUDIO, TIPO_CITA } from '../fixtures/conceptos';
-import { pacientePorId } from '../fixtures/personas';
+import { orderList } from '../fixtures/clinic';
+import { ACTIVITY, CANAL, BOOKING_STATUS, ESTUDIO, APPOINTMENT_TYPE } from '../fixtures/concepts';
+import { patientById } from '../fixtures/people';
 import { conflict, forbidden, noContent, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId, uuid } from '../mock-store';
 import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
@@ -267,7 +267,7 @@ export function citaDeOrden(orderId: string): OrderAppointment | null {
 }
 
 function ordenDelPaciente(request: MockRequest) {
-  const orden = ordenes.get(request.params['orderId'] ?? '');
+  const orden = orderList.get(request.params['orderId'] ?? '');
   if (orden === undefined) return { error: notFound('Orden no encontrada') } as const;
   if (orden.patientProfileId !== pacienteDeSesion(request)) return { error: notFound('Orden no encontrada') } as const;
   const studyCode = ESTUDIO_POR_CONCEPTO.get(orden.codeConceptId);
@@ -319,7 +319,7 @@ export function registrarCentros(router: MockRouter): void {
           ? modalidad(donde).label
           : (estudiosDelCentro(u).find((e) => e.code === donde)?.name ?? donde),
     );
-    if (problemas.length > 0) return validation('El horario tiene datos incompletos.', problemas);
+    if (problemas.length > 0) return validation('El horario tiene datos incompletos.', problemas.map((p) => ({ field: p.donde, message: p.mensaje })));
     const afectados = turnosFueraDeHorario(u, schedule);
     if (afectados > 0) {
       return conflict(`Hay ${afectados} turno${afectados === 1 ? '' : 's'} reservado${afectados === 1 ? '' : 's'} que quedaría${afectados === 1 ? '' : 'n'} fuera del horario nuevo.`, {
@@ -358,7 +358,7 @@ export function registrarCentros(router: MockRouter): void {
   router.get('/diagnostic-results/me/orders/:orderId/booking-options', (request) => {
     const r = ordenDelPaciente(request);
     if ('error' in r) return r.error;
-    const paciente = pacientePorId(r.orden.patientProfileId) as { homeLat?: number | null; homeLng?: number | null } | undefined;
+    const paciente = patientById(r.orden.patientProfileId) as { homeLat?: number | null; homeLng?: number | null } | undefined;
     const casa =
       paciente?.homeLat != null && paciente.homeLng != null ? { lat: paciente.homeLat, lng: paciente.homeLng } : PLAZA_DE_SANTA_CRUZ;
     const desde = new Date();
@@ -405,7 +405,7 @@ export function registrarCentros(router: MockRouter): void {
     if (Number.isNaN(inicio.getTime())) return validation('Falta el horario elegido.');
     const libre = disponibilidad(u, r.studyCode, inicio, inicio).items.find((i) => i.startAt === inicio.toISOString());
     if (libre === undefined) return conflict('Ese horario se acaba de ocupar. Elija otro.', { slotTaken: true });
-    const paciente = pacientePorId(r.orden.patientProfileId);
+    const paciente = patientById(r.orden.patientProfileId);
     const estudio = estudiosDelCentro(u).find((e) => e.code === r.studyCode)!;
     const reserva: ReservaSimulada = {
       id: nuevoId('booking'),
@@ -413,11 +413,11 @@ export function registrarCentros(router: MockRouter): void {
       resourceId: recursoDelCentro(u),
       bookableSlotId: nuevoId('slot'),
       appointmentId: nuevoId('appointment'),
-      typeConceptId: TIPO_CITA['APT-PRIMERA']!,
+      typeConceptId: APPOINTMENT_TYPE['APT-PRIMERA']!,
       startAt: libre.startAt,
       endAt: libre.endAt,
-      statusConceptId: ESTADO_RESERVA['BK-CONFIRMED']!,
-      serviceConceptId: ACTIVIDAD['ACT-EXAMEN']!,
+      statusConceptId: BOOKING_STATUS['BK-CONFIRMED']!,
+      serviceConceptId: ACTIVITY['ACT-EXAMEN']!,
       bookingChannelConceptId: CANAL['CH-PRESENCIAL']!,
       confirmedAt: ahora(),
       checkedInAt: null,
@@ -458,8 +458,8 @@ export function registrarCentros(router: MockRouter): void {
     const turno = turnosDeOrdenes.get(r.orden.id);
     if (turno === undefined) return notFound('La orden no tiene cita');
     reservas.actualizar(turno.bookingId, {
-      statusConceptId: ESTADO_RESERVA['BK-CANCELLED']!,
-      statusReason: { reasonText: 'Cancelado por el paciente', actorKind: 'PATIENT', toStateConceptId: ESTADO_RESERVA['BK-CANCELLED']!, changedAt: ahora() },
+      statusConceptId: BOOKING_STATUS['BK-CANCELLED']!,
+      statusReason: { reasonText: 'Cancelado por el paciente', actorKind: 'PATIENT', toStateConceptId: BOOKING_STATUS['BK-CANCELLED']!, changedAt: ahora() },
     });
     turnosDeOrdenes.borrar(turno.id);
     return noContent();

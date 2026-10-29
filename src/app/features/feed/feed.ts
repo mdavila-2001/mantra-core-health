@@ -22,6 +22,7 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 import { Composer } from './composer/composer';
 import { PostCard } from './post-card/post-card';
 import { ReportPost } from './report-post/report-post';
+import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántas publicaciones se piden por página. */
 const PAGE_SIZE = 20;
@@ -93,8 +94,8 @@ const TENDENCIAS_VISIBLES = 5;
  * Lo que sí es un dato real del servidor y sí es una tendencia clínica es
  * cuánta gente se juntó alrededor de cada tema: `GET /community/groups`
  * devuelve `memberCount`. Se ordena por eso y se dice con esas palabras —«N
- * integrantes»—, para que nadie lea un número como si fuera otra cosa. El
- * recuento de etiquetas del período queda anotado en `PENDIENTES-BACKEND.md`.
+ * integrantes»—, para que nadie lea un número como si fuera otra cosa. La API
+ * no publica un recuento de etiquetas por período.
  */
 @Component({
   selector: 'app-feed',
@@ -107,6 +108,7 @@ const TENDENCIAS_VISIBLES = 5;
     PostCard,
     ReportPost,
     RouterLink,
+    LoadingState,
   ],
   templateUrl: './feed.html',
   styleUrl: './feed.css',

@@ -1972,7 +1972,7 @@
 {
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0004120",
@@ -2009,7 +2009,7 @@
 {
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0004120",
@@ -2039,7 +2039,7 @@
 {
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0004120",
@@ -5104,47 +5104,6 @@
 "target":"UBERON:0000307",
 "targetLabel":"blastula",
 "inSubset":false
-}
-],
-"regions":[]
-},
-{
-"id":"UBERON:0000359",
-"label":"preputial gland",
-"fma":[],
-"fmaSetTerm":[
-"71652"
-],
-"definition":"An aired, lobulated, modified sebaceous glands located in the inguinal region adjacent to the penis and vagina, with pheromonal functions in male rodents; in males, the preputial gland empties into the preputial cavity and in females, the preputial (aka clitoral) gland duct empties into the clitoral fossa.",
-"definitionRefs":[
-"MP:0013329"
-],
-"exactSynonyms":[
-"glandulae preputiales",
-"preputial glands",
-"preputial glands set"
-],
-"otherSynonyms":[
-"clitoral/preputial gland"
-],
-"isA":[
-{
-"target":"UBERON:0003937",
-"targetLabel":"reproductive gland",
-"inSubset":false
-},
-{
-"target":"UBERON:0015251",
-"targetLabel":"modified sebaceous gland",
-"inSubset":false
-}
-],
-"relations":[
-{
-"type":"part_of",
-"target":"UBERON:0000990",
-"targetLabel":"reproductive system",
-"inSubset":true
 }
 ],
 "regions":[]
@@ -15713,7 +15672,7 @@
 "type":"vessel_drains_blood_from",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[]
@@ -17321,7 +17280,7 @@
 "type":"vessel_supplies_blood_to",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[]
@@ -19016,7 +18975,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"part_of",
@@ -19057,7 +19016,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"part_of",
@@ -22131,7 +22090,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -22178,7 +22137,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -23119,7 +23078,7 @@
 {
 "target":"UBERON:0002460",
 "targetLabel":"vesical vein",
-"inSubset":true
+"inSubset":false
 }
 ],
 "relations":[
@@ -30063,7 +30022,7 @@
 {
 "target":"UBERON:0003840",
 "targetLabel":"hindlimb joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0011139",
@@ -30143,7 +30102,7 @@
 {
 "target":"UBERON:0003840",
 "targetLabel":"hindlimb joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0003841",
@@ -30194,7 +30153,7 @@
 {
 "target":"UBERON:0003840",
 "targetLabel":"hindlimb joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0011139",
@@ -30212,55 +30171,6 @@
 ],
 "regions":[
 "R07"
-]
-},
-{
-"id":"UBERON:0001489",
-"label":"manus joint",
-"fma":[],
-"fmaSetTerm":[
-"71345"
-],
-"definition":"A skeletal joint that is part of a manus (hand) [Automatically generated definition].",
-"definitionRefs":[
-"OBOL:automatic"
-],
-"exactSynonyms":[
-"articulationes manus",
-"hand joint",
-"joint of hand",
-"joint of manus",
-"joint of terminal segment of free upper limb",
-"manual joint"
-],
-"otherSynonyms":[],
-"isA":[
-{
-"target":"UBERON:0003839",
-"targetLabel":"forelimb joint",
-"inSubset":true
-},
-{
-"target":"UBERON:0003841",
-"targetLabel":"autopod joint",
-"inSubset":false
-},
-{
-"target":"UBERON:0011139",
-"targetLabel":"synovial limb joint",
-"inSubset":true
-}
-],
-"relations":[
-{
-"type":"part_of",
-"target":"UBERON:0002398",
-"targetLabel":"manus",
-"inSubset":true
-}
-],
-"regions":[
-"R06"
 ]
 },
 {
@@ -30290,7 +30200,7 @@
 {
 "target":"UBERON:0003839",
 "targetLabel":"forelimb joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0011139",
@@ -30334,7 +30244,7 @@
 {
 "target":"UBERON:0001489",
 "targetLabel":"manus joint",
-"inSubset":true
+"inSubset":false
 }
 ],
 "relations":[
@@ -32015,7 +31925,7 @@
 {
 "target":"UBERON:0003839",
 "targetLabel":"forelimb joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0011139",
@@ -52177,7 +52087,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -56245,60 +56155,6 @@
 "regions":[]
 },
 {
-"id":"UBERON:0002113",
-"label":"kidney",
-"fma":[],
-"fmaSetTerm":[
-"264815"
-],
-"definition":"A paired organ of the urinary tract that produces urine and maintains bodily fluid homeostasis, blood pressure, pH levels, red blood cell production and skeleton mineralization.",
-"definitionRefs":[
-"http://anatomy.uams.edu/anatomyhtml/kidney.html",
-"https://www.kidney.org/kidneydisease/top-5-jobs-kidneys-do",
-"PMID:25140012",
-"PMID:35003210",
-"Wikipedia:Kidney"
-],
-"exactSynonyms":[],
-"otherSynonyms":[
-"reniculate kidney"
-],
-"isA":[
-{
-"target":"UBERON:0000489",
-"targetLabel":"cavitated compound organ",
-"inSubset":true
-},
-{
-"target":"UBERON:0005172",
-"targetLabel":"abdomen element",
-"inSubset":false
-},
-{
-"target":"UBERON:0015212",
-"targetLabel":"lateral structure",
-"inSubset":false
-}
-],
-"relations":[
-{
-"type":"part_of",
-"target":"UBERON:0000916",
-"targetLabel":"abdomen",
-"inSubset":true
-},
-{
-"type":"part_of",
-"target":"UBERON:0011143",
-"targetLabel":"upper urinary tract",
-"inSubset":true
-}
-],
-"regions":[
-"R04"
-]
-},
-{
 "id":"UBERON:0002114",
 "label":"duodenum",
 "fma":[
@@ -56478,7 +56334,7 @@
 {
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0004120",
@@ -69805,55 +69661,6 @@
 "regions":[]
 },
 {
-"id":"UBERON:0002451",
-"label":"endometrial gland",
-"fma":[],
-"fmaSetTerm":[
-"71647"
-],
-"definition":"The mucous secreting gland associated with the mucuous membrane lining the uterus.",
-"definitionRefs":[
-"Wikipedia:Uterine_glands"
-],
-"exactSynonyms":[
-"endometrial gland",
-"endometrial mucuous gland",
-"endometrium gland",
-"glandulae uterinae",
-"uterine gland"
-],
-"otherSynonyms":[
-"glandulae uterinae"
-],
-"isA":[
-{
-"target":"UBERON:0000414",
-"targetLabel":"mucous gland",
-"inSubset":true
-},
-{
-"target":"UBERON:0005398",
-"targetLabel":"female reproductive gland",
-"inSubset":false
-}
-],
-"relations":[
-{
-"type":"part_of",
-"target":"UBERON:0001295",
-"targetLabel":"endometrium",
-"inSubset":true
-},
-{
-"type":"part_of",
-"target":"UBERON:0012276",
-"targetLabel":"endometrium glandular epithelium",
-"inSubset":true
-}
-],
-"regions":[]
-},
-{
 "id":"UBERON:0002453",
 "label":"ethmoid sinus",
 "fma":[
@@ -70039,47 +69846,6 @@
 "regions":[
 "R01"
 ]
-},
-{
-"id":"UBERON:0002460",
-"label":"vesical vein",
-"fma":[],
-"fmaSetTerm":[
-"70911"
-],
-"definition":"A tributary of the iliac vein that drains the urinary bladder.",
-"definitionRefs":[
-"UBERON:cjm",
-"Wikipedia:Vesical_veins"
-],
-"exactSynonyms":[
-"venae vesicales",
-"vesical veins",
-"vesical veins set"
-],
-"otherSynonyms":[],
-"isA":[
-{
-"target":"UBERON:0001638",
-"targetLabel":"vein",
-"inSubset":true
-}
-],
-"relations":[
-{
-"type":"tributary_of",
-"target":"UBERON:0001317",
-"targetLabel":"internal iliac vein",
-"inSubset":true
-},
-{
-"type":"vessel_drains_blood_from",
-"target":"UBERON:0001255",
-"targetLabel":"urinary bladder",
-"inSubset":true
-}
-],
-"regions":[]
 },
 {
 "id":"UBERON:0002461",
@@ -97010,7 +96776,7 @@
 {
 "target":"UBERON:0001489",
 "targetLabel":"manus joint",
-"inSubset":true
+"inSubset":false
 }
 ],
 "relations":[
@@ -98454,113 +98220,6 @@
 }
 ],
 "regions":[]
-},
-{
-"id":"UBERON:0003839",
-"label":"forelimb joint",
-"fma":[],
-"fmaSetTerm":[
-"71344"
-],
-"definition":"A limb joint that is part of a forelimb [Automatically generated definition].",
-"definitionRefs":[
-"OBOL:automatic"
-],
-"exactSynonyms":[
-"anteriormost limb joint of limb",
-"anteriormost limb limb joint",
-"fore limb joint of limb",
-"fore limb limb joint",
-"forelimb joint of limb",
-"forelimb limb joint",
-"joint of free upper limb",
-"joint of limb of anteriormost limb",
-"joint of limb of fore limb",
-"joint of limb of forelimb",
-"joint of limb of superior member",
-"joint of limb of upper extremity",
-"limb joint of anteriormost limb",
-"limb joint of fore limb",
-"limb joint of forelimb",
-"limb joint of superior member",
-"limb joint of upper extremity",
-"superior member joint of limb",
-"superior member limb joint",
-"upper extremity joint of limb",
-"upper extremity limb joint"
-],
-"otherSynonyms":[
-"wing joint"
-],
-"isA":[
-{
-"target":"UBERON:0003657",
-"targetLabel":"limb joint",
-"inSubset":true
-}
-],
-"relations":[
-{
-"type":"part_of",
-"target":"UBERON:0002102",
-"targetLabel":"forelimb",
-"inSubset":true
-}
-],
-"regions":[
-"R06"
-]
-},
-{
-"id":"UBERON:0003840",
-"label":"hindlimb joint",
-"fma":[],
-"fmaSetTerm":[
-"71348"
-],
-"definition":"A limb joint that is part of a hindlimb [Automatically generated definition].",
-"definitionRefs":[
-"OBOL:automatic"
-],
-"exactSynonyms":[
-"hind limb joint of limb",
-"hind limb limb joint",
-"hindlimb joint of limb",
-"hindlimb limb joint",
-"inferior member joint of limb",
-"inferior member limb joint",
-"joint of free lower limb",
-"joint of limb of hind limb",
-"joint of limb of hindlimb",
-"joint of limb of inferior member",
-"joint of limb of lower extremity",
-"joint of lower limb",
-"limb joint of hind limb",
-"limb joint of hindlimb",
-"limb joint of inferior member",
-"limb joint of lower extremity",
-"lower extremity joint of limb",
-"lower extremity limb joint"
-],
-"otherSynonyms":[],
-"isA":[
-{
-"target":"UBERON:0003657",
-"targetLabel":"limb joint",
-"inSubset":true
-}
-],
-"relations":[
-{
-"type":"part_of",
-"target":"UBERON:0002103",
-"targetLabel":"hindlimb",
-"inSubset":true
-}
-],
-"regions":[
-"R07"
-]
 },
 {
 "id":"UBERON:0003854",
@@ -102393,7 +102052,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -112009,7 +111668,7 @@
 {
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "relations":[],
@@ -112033,7 +111692,7 @@
 {
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "relations":[],
@@ -115424,7 +115083,7 @@
 "type":"attaches_to",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"part_of",
@@ -116414,7 +116073,7 @@
 {
 "target":"UBERON:0010425",
 "targetLabel":"internal naris",
-"inSubset":true
+"inSubset":false
 }
 ],
 "relations":[
@@ -123141,7 +122800,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -134520,7 +134179,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -150376,7 +150035,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -150931,7 +150590,7 @@
 {
 "target":"UBERON:0001489",
 "targetLabel":"manus joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0006658",
@@ -157302,7 +156961,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -159435,7 +159094,7 @@
 "type":"tributary_of",
 "target":"UBERON:0002460",
 "targetLabel":"vesical vein",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -159859,7 +159518,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -160042,7 +159701,7 @@
 {
 "target":"UBERON:0003840",
 "targetLabel":"hindlimb joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0011139",
@@ -163788,7 +163447,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -163844,7 +163503,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"part_of",
@@ -166157,7 +165816,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -168021,38 +167680,6 @@
 }
 ],
 "regions":[]
-},
-{
-"id":"UBERON:0010425",
-"label":"internal naris",
-"fma":[],
-"fmaSetTerm":[
-"76585"
-],
-"definition":"A naris that is located inside the nasal cavity and connects to the pharynx.",
-"definitionRefs":[
-"http://orcid.org/0000-0002-6601-2165"
-],
-"exactSynonyms":[
-"choana",
-"internal choana"
-],
-"otherSynonyms":[
-"choanae",
-"internal nares",
-"internal nostril"
-],
-"isA":[
-{
-"target":"UBERON:0000003",
-"targetLabel":"naris",
-"inSubset":false
-}
-],
-"relations":[],
-"regions":[
-"R01"
-]
 },
 {
 "id":"UBERON:0010427",
@@ -171738,7 +171365,7 @@
 {
 "target":"UBERON:0003839",
 "targetLabel":"forelimb joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0011139",
@@ -171778,7 +171405,7 @@
 {
 "target":"UBERON:0003839",
 "targetLabel":"forelimb joint",
-"inSubset":true
+"inSubset":false
 }
 ],
 "relations":[
@@ -171819,7 +171446,7 @@
 {
 "target":"UBERON:0003840",
 "targetLabel":"hindlimb joint",
-"inSubset":true
+"inSubset":false
 }
 ],
 "relations":[
@@ -171962,7 +171589,7 @@
 {
 "target":"UBERON:0001489",
 "targetLabel":"manus joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0002217",
@@ -172127,7 +171754,7 @@
 {
 "target":"UBERON:0001489",
 "targetLabel":"manus joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0002217",
@@ -172169,7 +171796,7 @@
 {
 "target":"UBERON:0001489",
 "targetLabel":"manus joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0002217",
@@ -172454,7 +172081,7 @@
 "type":"has_part",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"part_of",
@@ -172688,7 +172315,7 @@
 {
 "target":"UBERON:0003840",
 "targetLabel":"hindlimb joint",
-"inSubset":true
+"inSubset":false
 },
 {
 "target":"UBERON:0011139",
@@ -176354,52 +175981,6 @@
 }
 ],
 "regions":[]
-},
-{
-"id":"UBERON:0011677",
-"label":"trunk vertebra",
-"fma":[],
-"fmaSetTerm":[
-"72066"
-],
-"definition":"A vertebra in the trunk region. For tetrapods, includes lumbar and thoracic vertebrae. Excludes caudal/coccygeal vertebra, which are located posteriorly. In tetrapods this includes thoracic, lumbar and sacral vertebrae, and excludes the cervical vertebrae, which are located anteriorly.",
-"definitionRefs":[
-"UBERONREF:0000006"
-],
-"exactSynonyms":[
-"thoracolumbar vertebra"
-],
-"otherSynonyms":[
-"presacral vertebra"
-],
-"isA":[
-{
-"target":"UBERON:0003463",
-"targetLabel":"trunk bone",
-"inSubset":false
-},
-{
-"target":"UBERON:0004247",
-"targetLabel":"bone of dorsum",
-"inSubset":false
-},
-{
-"target":"UBERON:0004451",
-"targetLabel":"trunk or cervical vertebra",
-"inSubset":false
-}
-],
-"relations":[
-{
-"type":"part_of",
-"target":"UBERON:0009568",
-"targetLabel":"trunk region of vertebral column",
-"inSubset":true
-}
-],
-"regions":[
-"R02"
-]
 },
 {
 "id":"UBERON:0011695",
@@ -180443,44 +180024,6 @@
 "target":"UBERON:0005305",
 "targetLabel":"thyroid follicle",
 "inSubset":true
-}
-],
-"regions":[]
-},
-{
-"id":"UBERON:0012247",
-"label":"cervical gland",
-"fma":[],
-"fmaSetTerm":[
-"71646"
-],
-"definition":"Mucus-secreting glands in the mucosa of the uterine cervix.",
-"definitionRefs":[
-"http://www.thefreedictionary.com/cervical+glands"
-],
-"exactSynonyms":[
-"glandulae cervicales"
-],
-"otherSynonyms":[],
-"isA":[
-{
-"target":"UBERON:0002451",
-"targetLabel":"endometrial gland",
-"inSubset":true
-}
-],
-"relations":[
-{
-"type":"part_of",
-"target":"UBERON:0000002",
-"targetLabel":"uterine cervix",
-"inSubset":true
-},
-{
-"type":"part_of",
-"target":"UBERON:0012248",
-"targetLabel":"cervical mucosa",
-"inSubset":false
 }
 ],
 "regions":[]
@@ -189954,32 +189497,6 @@
 "regions":[
 "R07"
 ]
-},
-{
-"id":"UBERON:0014381",
-"label":"whorl of hair",
-"fma":[],
-"fmaSetTerm":[
-"76564"
-],
-"definition":"A patch of hair growing in the opposite direction of the rest of the hair.",
-"definitionRefs":[
-"Wikipedia:Hair_whorl"
-],
-"exactSynonyms":[],
-"otherSynonyms":[
-"hair whorl",
-"whorl"
-],
-"isA":[
-{
-"target":"UBERON:0010164",
-"targetLabel":"collection of hairs",
-"inSubset":true
-}
-],
-"relations":[],
-"regions":[]
 },
 {
 "id":"UBERON:0014385",
@@ -216015,7 +215532,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -216986,7 +216503,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -218603,7 +218120,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -218639,7 +218156,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -231714,13 +231231,13 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"vessel_supplies_blood_to",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 }
 ],
 "regions":[
@@ -231763,7 +231280,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"vessel_supplies_blood_to",
@@ -231812,7 +231329,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"vessel_supplies_blood_to",
@@ -231861,7 +231378,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"vessel_supplies_blood_to",
@@ -231910,7 +231427,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"vessel_supplies_blood_to",
@@ -231959,7 +231476,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"vessel_supplies_blood_to",
@@ -232048,7 +231565,7 @@
 "type":"part_of",
 "target":"UBERON:0002113",
 "targetLabel":"kidney",
-"inSubset":true
+"inSubset":false
 },
 {
 "type":"tributary_of",

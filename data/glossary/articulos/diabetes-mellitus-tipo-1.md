@@ -1,184 +1,65 @@
 ---
 slug: diabetes-mellitus-tipo-1
-image: diabetes-tipo-1-insulina.svg | Qué ocurre con la glucosa en la diabetes tipo 1 sin insulina y con insulina. | Dos paneles. Sin insulina: el sistema inmunitario ataca las células del páncreas que fabrican insulina, el cuerpo produce poca o ninguna, la glucosa se queda en la sangre y las células no la reciben. Con insulina diaria: la insulina permite que la glucosa pase de la sangre a las células, donde se usa como energía, y la glucosa en sangre baja. Abajo, el cuerpo de la persona con vigilancia de la glucosa con pinchazo en el dedo o monitor continuo.
 ---
 
 ## [definition] Introducción
 
-La diabetes mellitus tipo 1 es una enfermedad crónica en la que el cuerpo **produce poca o ninguna insulina**. La insulina es una hormona que fabrica el páncreas y que ayuda a que la glucosa (el azúcar de la sangre) pase de la sangre a las células, donde se usa como energía. MedlinePlus lo explica así: el cuerpo puede fabricar glucosa y también la obtiene de lo que se come, pero sin insulina **demasiada glucosa se queda en la sangre**.
+La diabetes mellitus tipo 1 es una enfermedad crónica en la que el cuerpo produce poca insulina o ninguna. En la gran mayoría de los casos la causa es autoinmunitaria: el sistema inmunitario ataca por error las células beta del páncreas, que son las que fabrican esta hormona. Sin insulina, la glucosa no entra en las células y se acumula en la sangre. Se necesita insulina todos los días para vivir.
 
-La Organización Mundial de la Salud (OMS) la caracteriza por una producción deficiente de insulina que **requiere la administración diaria de insulina**. Antes se llamaba diabetes insulinodependiente, juvenil o de inicio en la infancia. Aunque suele empezar en niños y adultos jóvenes, MedlinePlus aclara que **puede aparecer a cualquier edad**.
+Se distingue de la diabetes tipo 2, en la que el organismo no usa bien la insulina, y de la gestacional, que aparece durante el embarazo. Las denominaciones «diabetes juvenil» e «insulinodependiente» ya no se recomiendan: la tipo 1 puede empezar a cualquier edad y también hay personas con tipo 2 que usan insulina. El código E10.9 de la CIE-10-CM corresponde a la diabetes tipo 1 sin complicaciones, de modo que es más estrecho que el término general.
 
-Es distinta de la diabetes tipo 2, que es la más frecuente (la OMS indica que más del 95 % de las personas con diabetes tienen tipo 2) y en la que el cuerpo no usa bien la insulina que produce. En la tipo 1 el problema es otro: faltan las células que fabrican la insulina. Por eso no se maneja con dieta y ejercicio solos, y por eso **sin insulina una persona con diabetes tipo 1 no puede sobrevivir**, como afirma la OMS.
+## [classification] Etapas de la enfermedad
 
-Este texto reúne lo que dicen la hoja informativa de la OMS sobre diabetes, MedlinePlus y una revisión sistemática con metaanálisis sobre la frecuencia de la diabetes tipo 1 en el mundo. Es un texto general; el manejo individual, la dosis de insulina y el ajuste diario los define el equipo de salud de cada persona.
+Las guías pediátricas actuales describen un proceso gradual: una fase inicial con autoinmunidad contra las células beta pero sin síntomas, una intermedia en que la regulación de la glucosa empieza a alterarse y la clínica, con síntomas y necesidad de insulina. Por eso pueden detectarse autoanticuerpos años antes del diagnóstico y existen programas de cribado en familiares.
 
-> Este texto es informativo. No reemplaza la evaluación de un profesional de la salud y todavía está pendiente de revisión médica.
+## [causes] Causas
 
-## [overview] Qué ocurre en el cuerpo
+Se trata de una enfermedad autoinmunitaria. La destrucción de las células beta puede tardar meses o años antes de producir síntomas. Los genes aumentan el riesgo, pero muchas personas con esos genes no la desarrollan; se piensa que un desencadenante ambiental, como una infección vírica, podría intervenir. La OMS señala que la causa exacta y la forma de prevenirla siguen sin conocerse. La alimentación y el estilo de vida no la causan.
 
-MedlinePlus describe la diabetes tipo 1 como una **enfermedad autoinmune**: el sistema inmunitario ataca por error las células del páncreas que fabrican insulina. Los investigadores todavía no saben exactamente por qué ocurre; los genes y los factores ambientales podrían tener un papel en desencadenarla. La revisión sistemática que usamos coincide con la descripción: en este tipo hay destrucción celular de las células beta del páncreas, y el páncreas no libera insulina.
+## [risk_factors] Factores de riesgo
 
-Sin insulina, la glucosa no entra bien a las células y se acumula en la sangre. A eso se le llama **hiperglucemia**. La OMS explica que la hiperglucemia, si no se controla, produce con el tiempo un daño grave en muchos sistemas del cuerpo, sobre todo en los nervios y los vasos sanguíneos.
-
-Hay un segundo problema, que es particular de la diabetes tipo 1 y que puede ser urgente: la **cetoacidosis diabética**. MedlinePlus la explica así: cuando la glucosa se pone muy alta porque el cuerpo no tiene insulina suficiente para dejarla entrar en las células, el hígado descompone grasa para obtener energía y produce **cetonas**. Si las cetonas se acumulan demasiado rápido pueden llegar a niveles peligrosos. La cetoacidosis diabética es, dice MedlinePlus, **una emergencia que pone en peligro la vida**.
-
-## [causes] Qué la causa
-
-Lo que se sabe con seguridad es poco, y las fuentes lo dicen con franqueza:
-
-- MedlinePlus: es una enfermedad autoinmune; **no se sabe exactamente por qué** ocurre; los genes y factores ambientales pueden influir.
-- OMS: **ni su causa ni los medios para prevenirla se conocen**.
-
-Las fuentes consultadas no atribuyen la diabetes tipo 1 a ningún comportamiento; los factores como el sobrepeso y el poco ejercicio que menciona la OMS corresponden a la diabetes tipo 2.
-
-## [epidemiology] Cuántas personas la tienen
-
-La OMS estimó que en 2017 había **9 millones de personas con diabetes tipo 1**, la mayoría en países de ingresos altos. Es una parte pequeña del total: una revisión sistemática indica que la diabetes tipo 1 representa alrededor del 5 % al 10 % de todos los casos de diabetes.
-
-La revisión sistemática con metaanálisis publicada en *Health Promotion Perspectives* en 2020 reunió 193 estudios publicados entre 1990 y 2019. Sus resultados:
-
-- La **incidencia mundial** de diabetes tipo 1 fue de unos **15 casos por cada 100 000 personas**.
-- La **prevalencia mundial** fue de unos **9,5 por cada 10 000 personas**.
-- Por continentes, la incidencia fue de unos 15 por 100 000 en Asia, 8 en África, 15 en Europa y **20 en América**.
-- La incidencia **aumentó con el tiempo**, según el análisis de metarregresión.
-
-Los propios autores señalan que hubo **mucha heterogeneidad** entre los estudios, y que no existe información epidemiológica exacta sobre la prevalencia y la incidencia mundial de la diabetes tipo 1; por eso estas cifras deben leerse como estimaciones. Este texto no incluye datos de Bolivia porque no se verificó una fuente actualizada.
+Tener un padre, madre o hermano con diabetes tipo 1 aumenta la probabilidad. Aparece sobre todo en niños, adolescentes y adultos jóvenes, pero puede iniciarse a cualquier edad; en niños suele instalarse con rapidez y en adultos, a veces más despacio.
 
 ## [symptoms] Síntomas
 
-MedlinePlus señala que los síntomas **suelen empezar rápidamente, sobre todo en niños**, y que en adultos pueden desarrollarse más despacio. Pueden incluir:
+Sed y hambre intensas, necesidad de orinar con frecuencia, cansancio, visión borrosa, pérdida de peso sin causa aparente, heridas que cicatrizan mal e infecciones frecuentes. Pueden presentarse de forma brusca; a veces la primera manifestación es la cetoacidosis diabética, con respiración profunda o dificultosa, aliento con olor afrutado, náuseas, vómitos y dolor abdominal.
 
-- Mucha sed.
-- Mucha hambre.
-- Orinar con más frecuencia, incluso de noche.
-- Cansancio.
-- Visión borrosa.
-- Pérdida de sensibilidad en los pies u hormigueo en pies o manos.
-- Llagas que no cicatrizan.
-- Pérdida de peso sin proponérselo.
+## [diagnosis] Diagnóstico
 
-La OMS incluye en su lista de síntomas de diabetes la sed intensa, orinar más de lo habitual, visión borrosa, cansancio y pérdida de peso involuntaria, y añade que los síntomas pueden aparecer de repente. La revisión sistemática menciona además las formas más graves —cetoacidosis y estado hiperosmolar— que pueden llevar a estupor y coma.
-
-## [red_flags] Signos de alarma
-
-Consulte de inmediato, o acuda a urgencias, si una persona con sospecha o diagnóstico de diabetes tipo 1:
-
-- Tiene la glucosa muy alta y sospecha de **cetoacidosis diabética**, que MedlinePlus califica de emergencia que pone en peligro la vida.
-- Presenta **estupor o coma**, que la revisión sistemática asocia a las formas graves de la enfermedad.
-- Es un niño o un joven con **mucha sed, orina muy frecuente y pérdida de peso** que han aparecido en pocos días: según MedlinePlus, los síntomas suelen empezar rápido en los niños; consulte para que se haga un análisis de glucosa.
-
-Este texto no desarrolla la glucosa baja (hipoglucemia) porque las fuentes consultadas no la tratan; si usa insulina, su equipo de salud debe enseñarle a reconocerla y a manejarla.
-
-## [risk_factors] Quiénes tienen más riesgo
-
-Las fuentes dan pocos factores de riesgo:
-
-- **Edad**: suele comenzar en niños y adultos jóvenes, pero puede aparecer a cualquier edad (MedlinePlus).
-- **Antecedentes familiares**: tener un padre o un hermano con diabetes tipo 1 puede aumentar la probabilidad (MedlinePlus).
-- **Genes y factores ambientales**: pueden intervenir en desencadenarla, sin que se conozca cuáles (MedlinePlus).
-
-Como no se conoce su causa, la OMS señala que tampoco se conocen los medios para prevenirla.
-
-## [diagnosis] Cómo se diagnostica
-
-Según MedlinePlus, el diagnóstico se hace con **análisis de sangre que miden la glucosa** y muestran si está más alta de lo normal para la persona. La OMS agrega que el diagnóstico temprano puede lograrse con análisis de glucosa en sangre relativamente baratos. Los valores concretos que definen el diagnóstico los interpreta el profesional; este texto no los reproduce.
-
-Una vez diagnosticada, MedlinePlus menciona un análisis llamado **A1C** que muestra qué tan bien se está manejando la diabetes a lo largo del tiempo.
+Se basa en los síntomas, los antecedentes y los análisis de glucosa en sangre. Para determinar si se trata de tipo 1 pueden pedirse autoanticuerpos, que indican el ataque autoinmunitario, y el péptido C, que refleja cuánta insulina produce el propio cuerpo; la presencia de cetonas en la orina también orienta hacia el tipo 1. A veces se hacen pruebas genéticas para descartar formas menos frecuentes de diabetes. En personas sin síntomas, los autoanticuerpos permiten identificar las etapas tempranas, sobre todo en familiares y en investigación.
 
 ## [treatment_overview] Tratamiento
 
-MedlinePlus lo resume: la diabetes tipo 1 es una **condición crónica** y requiere **insulina todos los días**, ya sea con inyecciones o con una bomba de insulina. Algunas personas toman además otro medicamento que actúa junto con la insulina. La OMS coincide: las personas con diabetes tipo 1 necesitan inyecciones de insulina para sobrevivir.
+El eje es la insulina diaria, que se administra con jeringa, pluma o bomba; no puede tomarse en pastillas porque el estómago la destruiría. Se completa con controles de glucosa (medidor capilar o sensores continuos), alimentación saludable, actividad física, control de la presión arterial y del colesterol, educación en autocuidado y atención al bienestar emocional. El equipo de salud define los objetivos y el esquema de insulina de cada persona.
 
-El tratamiento tiene otras partes:
-
-- **Vigilar la glucosa**: MedlinePlus menciona las pruebas con pinchazo en el dedo y los monitores continuos de glucosa (CGM), y recomienda preguntar al profesional cuál es la mejor manera y con qué frecuencia medirla.
-- **Alimentación saludable.**
-- **Ejercicio regular.**
-
-La OMS afirma que uno de los modos más importantes de tratar la diabetes es mantener un estilo de vida saludable, y que además se necesita atención complementaria para los efectos de la enfermedad: cuidado de los pies para tratar úlceras, detección y tratamiento de la enfermedad renal y exámenes oculares para detectar retinopatía. En personas con diabetes, la OMS indica que a menudo se necesitan también medicamentos para bajar la presión arterial y estatinas para reducir el riesgo de complicaciones.
-
-El tipo de insulina, la dosis, los horarios y los ajustes los define el equipo de salud y cambian con cada persona; este texto no los fija.
+Existen además estrategias para modificar el curso de la enfermedad. El teplizumab, un anticuerpo dirigido contra los linfocitos T, retrasó el diagnóstico clínico en familiares en riesgo, y su aprobación en Estados Unidos reabrió el debate sobre el cribado; no cura ni sustituye a la insulina en quien ya la necesita. Los trasplantes de islotes o de páncreas se reservan a casos seleccionados y exigen inmunosupresores.
 
 ## [complications] Complicaciones
 
-Según MedlinePlus, con el tiempo la glucosa alta puede causar problemas serios en el **corazón, los ojos, los riñones, los nervios, las encías y los dientes**. La OMS enumera como consecuencias de la diabetes la **ceguera, la insuficiencia renal, los infartos, los accidentes cerebrovasculares y la amputación de miembros inferiores**, y precisa:
+A corto plazo, la cetoacidosis diabética es una urgencia que puede ser mortal y que a menudo desencadena una infección u otro estrés; la hipoglucemia (glucosa baja) es frecuente, y algunas personas dejan de percibir sus síntomas de aviso. A largo plazo, la glucosa alta mantenida daña vasos y nervios y aumenta el riesgo de infarto, ictus, enfermedad renal, pérdida de visión y úlceras en los pies. También son frecuentes la ansiedad, la depresión y los problemas de sueño. Un buen control de la glucosa ayuda a prevenir o retrasar muchas complicaciones.
 
-- La diabetes puede causar **pérdida permanente de la visión** al dañar los vasos sanguíneos de los ojos.
-- Muchas personas con diabetes desarrollan **problemas en los pies** por daño de los nervios y mala circulación, que pueden producir úlceras y llevar a la amputación.
-- Las personas con diabetes tienen más riesgo de infarto, accidente cerebrovascular e insuficiencia renal.
+## [associated_conditions] Conceptos relacionados
 
-Y las complicaciones agudas: la **cetoacidosis diabética** (MedlinePlus).
+• Cetoacidosis diabética: complicación aguda grave por falta de insulina.
+• Hipoglucemia: efecto frecuente del tratamiento con insulina.
+• Diabetes mellitus tipo 2: otra forma de diabetes con mecanismo distinto.
+• Neuropatía diabética y enfermedad renal crónica: complicaciones crónicas por glucosa alta sostenida.
 
-La OMS advierte, con datos de 2021, que la diabetes y la enfermedad renal causada por diabetes provocaron más de dos millones de muertes, y que la glucosa alta causa alrededor del 11 % de las muertes cardiovasculares. Son cifras de la diabetes en general, no solo de la tipo 1.
+## [considerations] Qué dice la evidencia
 
-## [prevention] Prevención
+El carácter autoinmunitario y por etapas procede de una revisión de referencia (DiMeglio et al., 2018) y de guías pediátricas (ISPAD 2022 y 2024). El manejo en adultos se apoya en el consenso ADA/EASD (Holt et al., 2021), cuyos autores admiten que refleja sobre todo opinión de expertos y que excluye las complicaciones crónicas. Los Estándares de la ADA (2025) son la referencia anual de clasificación, pero el registro consultado no trae el texto del capítulo. El efecto del teplizumab procede de un ensayo aleatorizado de fase 2 con pocos participantes, sobre todo jóvenes (Herold et al., 2019).
 
-**La diabetes tipo 1 no se puede prevenir**, según MedlinePlus; y la OMS dice que no se conocen los medios para hacerlo. Lo que sí se puede es **prevenir o retrasar sus complicaciones**. MedlinePlus lo resume así:
-
-- Mantener la glucosa controlada, con pruebas de pinchazo o un monitor continuo.
-- Elegir alimentos saludables.
-- Hacer ejercicio con regularidad.
-- Hacerse el análisis de A1C para ver qué tan bien se maneja la diabetes con el tiempo.
-
-Las medidas que la OMS recomienda para prevenir la diabetes tipo 2 —peso saludable, 150 minutos semanales de ejercicio moderado, alimentación sana, no fumar— no previenen la tipo 1, aunque mantener un estilo de vida saludable sigue siendo parte del tratamiento de las personas que ya la tienen.
-
-## [self_care] Vivir con diabetes tipo 1
-
-Con lo que dicen las fuentes, el día a día incluye:
-
-1. **Usar la insulina todos los días**, tal como la indicó su equipo de salud, con inyecciones o bomba.
-2. **Medir la glucosa** de la forma y con la frecuencia que le haya indicado el profesional.
-3. **Comer de forma saludable y hacer ejercicio con regularidad.**
-4. **Revisar los pies**: la OMS señala que muchas personas con diabetes desarrollan problemas en los pies; las llagas que no cicatrizan y la pérdida de sensibilidad son síntomas que MedlinePlus menciona.
-5. **Hacerse los controles**: análisis de A1C, exámenes oculares, detección de enfermedad renal y cuidado de los pies, según indica la OMS.
-6. **Saber reconocer una emergencia**: la cetoacidosis diabética requiere atención urgente.
-
-## [special_populations] Poblaciones con consideraciones especiales
-
-**Niños y adolescentes.** Es el grupo en el que más suele empezar, y donde los síntomas aparecen con más rapidez (MedlinePlus).
-
-**Adultos.** Puede aparecer a cualquier edad; en adultos los síntomas pueden desarrollarse más despacio, según MedlinePlus, lo que puede retrasar el diagnóstico.
-
-**Embarazo.** La OMS describe la diabetes gestacional como un tipo distinto, que ocurre durante el embarazo y se diagnostica mediante exámenes prenatales; no es lo mismo que la diabetes tipo 1 previa al embarazo. Este texto no desarrolla el manejo de la diabetes tipo 1 durante el embarazo.
-
-**Familiares.** Tener un padre o hermano con diabetes tipo 1 puede aumentar la probabilidad (MedlinePlus).
-
-## [prognosis] Pronóstico
-
-La diabetes tipo 1 es **crónica y de por vida**. La OMS sostiene que la diabetes puede tratarse y que sus consecuencias pueden evitarse o retrasarse con dieta, actividad física, medicación y detección y tratamiento periódicos de las complicaciones. MedlinePlus coincide en que se pueden prevenir o retrasar los problemas relacionados con la diabetes manejando bien la glucosa. Sin insulina, en cambio, la vida está en peligro.
-
-## [associated_conditions] Enfermedades relacionadas
-
-- **Diabetes mellitus tipo 2**: otro tipo de diabetes, mucho más frecuente, con un mecanismo distinto.
-- **Diabetes gestacional** y **prediabetes**: otras situaciones de glucosa alta que la OMS describe.
-- **Enfermedad renal crónica**, **retinopatía**, **neuropatía diabética**, **enfermedad cardiovascular**: complicaciones de la diabetes.
-- **Cetoacidosis diabética**: complicación aguda propia de la falta de insulina.
-
-## [additional_information] Preguntas frecuentes
-
-**¿La diabetes tipo 1 es por comer mucho azúcar?** Las fuentes la describen como una enfermedad autoinmune cuya causa no se conoce con exactitud y no la atribuyen al azúcar.
-
-**¿Se puede prevenir?** No, según MedlinePlus y la OMS. Sí se pueden prevenir o retrasar sus complicaciones.
-
-**¿Se cura?** Las fuentes la describen como una condición crónica que requiere insulina a diario.
-
-**¿Es solo de niños?** Suele empezar en niños y adultos jóvenes, pero puede aparecer a cualquier edad.
-
-**¿Qué es la cetoacidosis?** Una complicación en la que, sin suficiente insulina, el hígado produce cetonas que se acumulan hasta niveles peligrosos. Es una emergencia.
-
-**¿Qué es el A1C?** Un análisis de sangre que muestra qué tan bien se maneja la diabetes con el tiempo, según MedlinePlus.
-
-**¿Cómo se mide la glucosa en casa?** Con pinchazo en el dedo o con un monitor continuo de glucosa; su profesional le dirá cuál y con qué frecuencia.
-
-**¿Una dieta puede reemplazar la insulina?** No. Según la OMS, las personas con diabetes tipo 1 necesitan insulina para sobrevivir.
-
-## [additional_information] Limitaciones de este texto
-
-Este artículo fue redactado por el equipo de AloVida a partir de las fuentes citadas y todavía **no ha sido revisado por un profesional médico**. No reproduce dosis de insulina, metas de glucosa ni valores de laboratorio, porque dependen de cada persona y deben ser indicados por un profesional. No desarrolla la hipoglucemia (glucosa baja), la alimentación detallada ni el manejo del embarazo, que requieren fuentes y artículos propios. Las cifras provienen de la hoja informativa de la OMS (noviembre de 2024) y de una revisión que reconoce su propia heterogeneidad. No incluye datos de Bolivia porque no se verificó una fuente actualizada.
+Hay acuerdo en que la insulina es imprescindible y en que la causa es autoinmunitaria en la gran mayoría de los casos. Siguen siendo discutidos los desencadenantes ambientales, la prevención, la población ideal para el cribado de autoanticuerpos y el balance de las terapias que retrasan la progresión, con seguimiento a largo plazo limitado. Síntomas y signos de alarma proceden de divulgación institucional.
 
 ## [references]
 
-- Diabetes — Fact sheet (World Health Organization, 14 de noviembre de 2024) | https://www.who.int/news-room/fact-sheets/detail/diabetes | OMS
-- Diabetes tipo 1 (MedlinePlus, Biblioteca Nacional de Medicina de EE. UU.) | https://medlineplus.gov/diabetestype1.html | MedlinePlus
-- Prevalence and incidence of type 1 diabetes in the world: a systematic review and meta-analysis. Health Promot Perspect 2020 | https://pmc.ncbi.nlm.nih.gov/articles/PMC7146037/ | Health Promot Perspect (acceso abierto)
+- Type 1 diabetes | https://www.niddk.nih.gov/health-information/diabetes/overview/what-is-diabetes/type-1-diabetes | NIDDK, NIH
+- Diabetes | https://www.who.int/news-room/fact-sheets/detail/diabetes | OMS
+- Diabetes tipo 1 | https://medlineplus.gov/spanish/diabetestype1.html | MedlinePlus
+- About Type 1 Diabetes | https://www.cdc.gov/diabetes/about/about-type-1-diabetes.html | CDC
+- Holt et al., 2021. The management of type 1 diabetes in adults: a consensus report by the ADA and the EASD. PMID 34593612, DOI 10.2337/dci21-0043 | https://europepmc.org/article/MED/34593612 | Diabetes Care
+- American Diabetes Association Professional Practice Committee, 2025. Diagnosis and classification of diabetes: Standards of Care in Diabetes-2025. PMID 39651986, DOI 10.2337/dc25-s002 | https://europepmc.org/article/MED/39651986 | Diabetes Care
+- DiMeglio, Evans-Molina y Oram, 2018. Type 1 diabetes. PMID 29916386, DOI 10.1016/S0140-6736(18)31320-5 | https://europepmc.org/article/MED/29916386 | Lancet
+- Haller et al., 2024. ISPAD Clinical Practice Consensus Guidelines 2024: Screening, staging, and strategies to preserve beta-cell function in children and adolescents with type 1 diabetes. PMID 39662065, DOI 10.1159/000543035 | https://europepmc.org/article/MED/39662065 | Hormone Research in Paediatrics
+- Herold et al., 2019. An anti-CD3 antibody, teplizumab, in relatives at risk for type 1 diabetes. PMID 31180194, DOI 10.1056/NEJMoa1902226 | https://europepmc.org/article/MED/31180194 | N Engl J Med
+- Besser et al., 2022. ISPAD Clinical Practice Consensus Guidelines 2022: Stages of type 1 diabetes in children and adolescents. PMID 36177823, DOI 10.1111/pedi.13410 | https://europepmc.org/article/MED/36177823 | Pediatric Diabetes

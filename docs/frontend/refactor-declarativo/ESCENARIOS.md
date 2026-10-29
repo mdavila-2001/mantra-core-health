@@ -66,7 +66,4 @@ específicos». Evaluado; **no implementado** en esta oleada. Estado medido:
 | Ciclo A→B→A | Cada montaje destruye los anteriores (`desmontar`) y el efecto reacciona al escenario, la cuenta y el ancho | Un montaje demorado de A no reemplaza a B: `montar` es `async` pero `desmontar` corre al inicio del siguiente; **no hay** guardia por id de ejecución si dos `cargar()` se solapan. Riesgo bajo (el `import()` es rápido y cacheado); anotado |
 | `postMessage` | No se usa | — |
 
-Lo que haría falta para el aislamiento que pide el encargo: una ruta de preview (`/design-system/
-preview/<clave>?variante=…`) servida en el iframe con `bootstrapApplication` propio, un
-`SessionStore` en memoria y un `HttpClient` con adaptador que bloquee lo no esperado. Es una
-tarea de infraestructura del banco (TOOLING), no de esta oleada de producto.
+El iframe no está aislado: comparte los inyectores de la aplicación que lo aloja.

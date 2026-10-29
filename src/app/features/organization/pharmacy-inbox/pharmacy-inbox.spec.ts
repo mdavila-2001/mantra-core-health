@@ -12,27 +12,27 @@ import { pharmacyOrderDtoFixture } from '../../../core/data-access/pharmacy-orde
 import type { PharmacyOrderDto } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
 import type { PharmacySiteRead } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { FARMACIA_DETALLE } from '../../../core/data-access/pharmacy/pharmacy.fixtures';
-import { ID_PEDIDO_CON_DELIVERY } from '../../../core/mock/fixtures/pedidos-de-farmacia';
-import { AlarmaDePedidos } from './alarma-de-pedidos';
+import { ID_ORDER_WITH_DELIVERY } from '../../../core/mock/fixtures/pharmacy-orders';
+import { OrdersAlarm } from './order-alarm';
 import { PharmacyInbox } from './pharmacy-inbox';
 
 describe('PharmacyInbox with the tenant API list', () => {
   let http: HttpTestingController;
   let alarm: {
-    sonidoActivo: ReturnType<typeof signal<boolean>>;
-    alternarSonido: ReturnType<typeof vi.fn>;
-    notificar: ReturnType<typeof vi.fn>;
-    descartar: ReturnType<typeof vi.fn>;
-    acusarRecibo: ReturnType<typeof vi.fn>;
+    activeSound: ReturnType<typeof signal<boolean>>;
+    toggleSound: ReturnType<typeof vi.fn>;
+    notify: ReturnType<typeof vi.fn>;
+    discard: ReturnType<typeof vi.fn>;
+    acknowledgeReceipt: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     alarm = {
-      sonidoActivo: signal(true),
-      alternarSonido: vi.fn(),
-      notificar: vi.fn(),
-      descartar: vi.fn(),
-      acusarRecibo: vi.fn(),
+      activeSound: signal(true),
+      toggleSound: vi.fn(),
+      notify: vi.fn(),
+      discard: vi.fn(),
+      acknowledgeReceipt: vi.fn(),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -41,13 +41,18 @@ describe('PharmacyInbox with the tenant API list', () => {
         // El detalle existe como ruta para que abrir una tarjeta sea un clic
         // de verdad y no una llamada directa al método de la clase.
         provideRouter([{ path: 'administration/pharmacy-orders/:orderId', children: [] }]),
-        // `userId` lo lee el carrito (`CartStore`), que el cliente de pedidos inyecta:
-        // sin él el efecto del carrito revienta en el primer `detectChanges`.
+        // `userId` no es cosmético: sin él, `AuthService.userId` queda
+        // `undefined` (se alia por asignación, no por getter) y el
+        // `effect()` de `CartStore` —que `PharmacyOrdersClient` construye
+        // igual, aunque esta pantalla no muestre carrito— revienta con
+        // `this.auth.userId is not a function` en un tick asíncrono
+        // posterior, envenenando cualquier archivo que corra después en el
+        // mismo worker.
         { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
       ],
     });
     TestBed.overrideComponent(PharmacyInbox, {
-      set: { providers: [{ provide: AlarmaDePedidos, useValue: alarm }] },
+      set: { providers: [{ provide: OrdersAlarm, useValue: alarm }] },
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -115,8 +120,8 @@ describe('PharmacyInbox with the tenant API list', () => {
         'Nuevos',
         'En revisión',
         'Esperando al paciente',
-        'En preparación',
         'Listos para retiro',
+        'En preparación',
         'Cerrados',
       ]);
     expect(text(fixture)).toContain('Ana Paciente');
@@ -130,14 +135,14 @@ describe('PharmacyInbox with the tenant API list', () => {
     vi.useFakeTimers();
     const initial = pharmacyOrderDtoFixture();
     const fixture = mount([initial]);
-    expect(alarm.notificar).not.toHaveBeenCalled();
+    expect(alarm.notify).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(20_000);
     const added = pharmacyOrderDtoFixture({ id: '00000000-0000-4000-8000-000000000009' });
     pedidosRequest().flush({ items: [initial, added], count: 2 });
     fixture.detectChanges();
 
-    expect(alarm.notificar).toHaveBeenCalledWith(1);
+    expect(alarm.notify).toHaveBeenCalledWith(1);
     expect(text(fixture)).toContain('Llegó un pedido nuevo');
     fixture.destroy();
   });
@@ -208,8 +213,8 @@ describe('PharmacyInbox with the tenant API list', () => {
       { antes: '', unidad: 'Nuevos', conCifra: true },
       { antes: 'En', unidad: 'revisión', conCifra: true },
       { antes: 'Esperando al', unidad: 'paciente', conCifra: true },
-      { antes: 'En', unidad: 'preparación', conCifra: true },
       { antes: 'Listos para', unidad: 'retiro', conCifra: true },
+      { antes: 'En', unidad: 'preparación', conCifra: true },
       { antes: '', unidad: 'Cerrados', conCifra: true },
     ]);
     fixture.destroy();
@@ -223,7 +228,7 @@ describe('PharmacyInbox with the tenant API list', () => {
     );
 
     expect(leido[2]).toContain('Esperando al paciente');
-    expect(leido[4]).toContain('Listos para retiro');
+    expect(leido[3]).toContain('Listos para retiro');
     fixture.destroy();
   });
 
@@ -321,7 +326,7 @@ describe('PharmacyInbox with the tenant API list', () => {
   it('un pedido a domicilio se ve como delivery por lo que dice el contrato, sin rótulo de maqueta', () => {
     const fixture = mount([
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
         deliveryMode: { code: 'PINV_DELIVERY_DOMICILIO', display: 'Entrega a domicilio' },
       }),
     ]);
@@ -341,7 +346,7 @@ describe('PharmacyInbox with the tenant API list', () => {
       root.querySelector('[data-testid="bandeja-estado-sonido"]')?.textContent?.trim() ?? '';
 
     expect(etiqueta()).toBe('Aviso sonoro activado');
-    alarm.sonidoActivo.set(false);
+    alarm.activeSound.set(false);
     fixture.detectChanges();
     expect(etiqueta()).toBe('Aviso sonoro silenciado');
     fixture.destroy();
@@ -402,11 +407,13 @@ describe('PharmacyInbox with the tenant API list', () => {
     fixture.detectChanges();
 
     expect(sedeSelect(fixture)).not.toBeNull();
-    expect(text(fixture)).not.toContain('Ninguna sede está marcada');
     fixture.destroy();
   });
 
-  it('sin casa matriz marcada abre con la primera sede y lo dice', () => {
+  // Con varias sedes y ninguna matriz marcada la bandeja abre con **todas**
+  // (`siteByDefault`, 9f27b9d30): abrir con una sola sucursal escondería los
+  // pedidos de las demás. Ya no hay una sede «adivinada» que avisar.
+  it('sin casa matriz marcada y con varias sedes abre con todas, sin acotar a una sola', () => {
     const fixture = TestBed.createComponent(PharmacyInbox);
     fixture.detectChanges();
     http.expectOne('/pharmacy/pharmacies').flush({ items: [{ id: FARMACIA_DETALLE.id }], count: 1 });
@@ -415,11 +422,10 @@ describe('PharmacyInbox with the tenant API list', () => {
       .flush({ ...FARMACIA_DETALLE, sites: [{ ...SEDE_MATRIZ, isHeadOffice: false }, SEDE_NORTE] });
 
     const request = pedidosRequest();
-    expect(request.request.params.get('siteId')).toBe(SEDE_NORTE.id);
+    expect(request.request.params.has('siteId')).toBe(false);
     request.flush({ items: [], count: 0 });
     fixture.detectChanges();
 
-    expect(text(fixture)).toContain('Ninguna sede está marcada como casa matriz');
     fixture.destroy();
   });
 
@@ -444,7 +450,7 @@ describe('PharmacyInbox with the tenant API list', () => {
     });
     fixture.detectChanges();
 
-    expect(alarm.notificar).not.toHaveBeenCalled();
+    expect(alarm.notify).not.toHaveBeenCalled();
     fixture.destroy();
   });
 

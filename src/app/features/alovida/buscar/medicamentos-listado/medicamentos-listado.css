@@ -19,7 +19,12 @@
   border-radius: var(--r-signature);
   padding: var(--sp-8) var(--sp-6);
   margin-block-end: var(--sp-6);
-  background: linear-gradient(135deg, var(--c-petrol-600), var(--c-petrol-500) 55%, var(--c-aqua-600));
+  background: linear-gradient(
+    135deg,
+    var(--c-petrol-600),
+    var(--c-petrol-500) 55%,
+    var(--c-aqua-600)
+  );
   color: var(--c-ivory-50);
   box-shadow: var(--shadow-md);
 }
@@ -182,3 +187,11 @@
    pantallas del directorio comparten la misma anatomía (AC-06-2), y la lista
    de farmacias con su mapa se mudó a
    `pharmacy-availability-dialog/pharmacy-availability-dialog.css`. */
+
+/* ── Tarjetas o árbol ──────────────────────────────────────────────────────── */
+
+.vitrina-vista {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: var(--sp-4);
+}

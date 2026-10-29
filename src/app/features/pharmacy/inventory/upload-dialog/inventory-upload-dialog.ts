@@ -19,11 +19,12 @@ import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.c
 import type { PharmacyProduct } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import {
   ArchivoInvalido,
-  BYTES_MAXIMOS_DEL_ARCHIVO,
+  FILE_MAX_BYTES,
   decodificarCsv,
-} from '../../catalog-rules/catalogo.reglas';
+} from '../../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../../pharmacy-error-message';
 import { reviewInventoryCsv, type InventoryCsvReview } from '../inventory-csv';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántos problemas se listan antes de decir «y N más»: el resto está en el archivo. */
 const PROBLEMS_SHOWN = 20;
@@ -44,7 +45,7 @@ const PROBLEMS_SHOWN = 20;
  */
 @Component({
   selector: 'app-inventory-upload-dialog',
-  imports: [Alert, AppButton, ContentDialog, FileInput],
+  imports: [Alert, AppButton, ContentDialog, FileInput, LoadingState],
   templateUrl: './inventory-upload-dialog.html',
   styleUrl: './inventory-upload-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,7 +62,7 @@ export class InventoryUploadDialog {
   private readonly toasts = inject(ToastService);
   protected readonly dialog = viewChild.required(ContentDialog);
 
-  protected readonly maxBytes = BYTES_MAXIMOS_DEL_ARCHIVO;
+  protected readonly maxBytes = FILE_MAX_BYTES;
   protected readonly files = signal<readonly File[]>([]);
   protected readonly reading = signal(false);
   protected readonly review = signal<InventoryCsvReview | null>(null);

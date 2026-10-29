@@ -208,6 +208,9 @@ function originOf(url: string | undefined): string | null {
   }
 }
 
+/** El único origen ajeno al que el navegador se conecta por su cuenta. */
+export const NOMINATIM_ORIGIN = 'https://nominatim.openstreetmap.org';
+
 /**
  * La política de seguridad de contenido, ya armada.
  *
@@ -252,7 +255,10 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // navegador, como los mosaicos del mapa; copiarlas al propio almacén sería
     // redistribuirlas, que es otra decisión (de licencia) y no de esta política.
     "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es https://i.ytimg.com",
-    `connect-src 'self'${connectOrigins.length === 0 ? '' : ` ${connectOrigins.join(' ')}`}`,
+    // `nominatim.openstreetmap.org` (28/10/2026): el respaldo de la calle del
+    // mapa cuando la API no alcanza al geocodificador
+    // (`reverse-geocoding.client.ts`). Un host exacto, sólo para conexiones.
+    `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`} ${NOMINATIM_ORIGIN}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     // El visor de resultados usa blob: y la ayuda psicológica incrusta videos

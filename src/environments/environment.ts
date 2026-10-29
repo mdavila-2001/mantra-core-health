@@ -24,6 +24,7 @@ import { envFromProcess } from './env.generated';
  */
 export const environment: Environment = {
   apiBaseUrl: envFromProcess.apiBaseUrl ?? '',
+  refreshCookie: envFromProcess.refreshCookie ?? false,
 
   /** Mismo origen: ver `aiBaseUrl` en `environment.types.ts`. */
   aiBaseUrl: envFromProcess.aiBaseUrl ?? '/ai',
@@ -77,6 +78,7 @@ export const environment: Environment = {
    * entorno del proceso a propósito, para que no haya forma de apuntar esta
    * rama a una API real por accidente.
    */
+  billingSimulatedApi: false,
   mockBackend: true,
 
   /**

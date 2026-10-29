@@ -127,13 +127,13 @@ describe('Mis solicitudes: desglose y objeción del paciente', () => {
     expect(objetada.patientObjection?.reason).toBe('NOT_INFORMED');
   });
 
-  it('un motivo fuera de la lista cerrada responde 422', () => {
+  it('un motivo fuera de la lista cerrada responde 400', () => {
     const propia = misSolicitudes().items[0]!;
     const r = llamar('POST', `/insurance-claims/${propia.id}/disputes`, {
       initiatedBy: 'PATIENT',
       objectionReason: 'texto libre con datos',
     });
-    expect(r.status).toBe(422);
+    expect(r.status).toBe(400);
   });
 
   it('quien no es solo paciente pasa por el camino del prestador', () => {

@@ -20,10 +20,10 @@ import type {
   HistoriaAtencion,
 } from '../../src/app/shared/utils/clinical-pdf/clinical-pdf.types';
 import {
-  buildHistoriaConEncuentrosPdf,
-  type SeccionesNuevasDeLaHistoria,
-} from '../../src/app/shared/utils/clinical-pdf/historia-con-encuentros';
-import { establecerLogoDeDocumentos } from '../../src/app/shared/utils/pdf-export/pdf-logo';
+  buildHistoryWithEncountersPdf,
+  type HistoryNewSections,
+} from '../../src/app/shared/utils/clinical-pdf/history-with-encounters';
+import { establecerLogoDeDocumentos } from '../../src/app/core/pdf-branding/pdf-logo';
 import { fixtureImage, loadBrandFonts, SAMPLE_DATE, SAMPLE_SIGNATURE, savePdf, useSampleSignature } from './sample-setup';
 
 /**
@@ -282,7 +282,7 @@ const HISTORIA: DocumentoDeHistoria = {
 };
 
 /** Como las arma `seccionesNuevasDeLaHistoria`: de la atención más reciente a la más vieja. */
-const NUEVAS: SeccionesNuevasDeLaHistoria = {
+const NUEVAS: HistoryNewSections = {
   diagnosticos: {
     enEstudio: [{ nombre: 'Dislipidemia mixta', certeza: 'Provisional', detalle: 'pendiente de perfil lipídico' }],
     activas: [
@@ -360,7 +360,7 @@ test('muestras de los documentos clínicos', () => {
     console.log(savePdf(buildVisitPdf(ATENCION), 'clinical-visit.pdf'));
     console.log(savePdf(buildOrderPdf(ORDEN), 'clinical-order.pdf'));
     console.log(savePdf(buildFormResponsePdf(FORMULARIO), 'clinical-form-response.pdf'));
-    console.log(savePdf(buildHistoriaConEncuentrosPdf(HISTORIA, NUEVAS), 'clinical-history.pdf'));
+    console.log(savePdf(buildHistoryWithEncountersPdf(HISTORIA, NUEVAS), 'clinical-history.pdf'));
   } finally {
     establecerLogoDeDocumentos(null);
     vi.useRealTimers();

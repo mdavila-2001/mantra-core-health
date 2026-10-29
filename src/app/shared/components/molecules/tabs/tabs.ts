@@ -242,6 +242,11 @@ export class Tabs implements TabsHost {
     });
   }
 
+  /** «Todas (4)»: palabra + contador. Se queda en una línea (si no cabe, la tira se desplaza). */
+  protected esContado(rotulo: string): boolean {
+    return /^\S+ \(\d+\)$/.test(rotulo);
+  }
+
   protected medirDesborde(): void {
     const tira = this.tablist()?.nativeElement;
     if (tira === undefined) {

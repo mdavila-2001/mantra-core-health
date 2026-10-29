@@ -1,71 +1,47 @@
-<div class="centros">
-  <section class="centros__bloque" aria-labelledby="centros-titulo">
-    <h2 id="centros-titulo" class="centros__titulo">Dónde hacerse sus procedimientos</h2>
-    <p class="centros__nota" data-testid="medical-centers-origin">
-      @if (origin(); as punto) {
-        Distancias en línea recta, medidas desde {{ punto.label ?? 'el punto que eligió' }}. Puede
-        cambiar el punto en la pestaña Farmacias.
+<div class="purchase">
+  <section class="purchase__block" aria-labelledby="medical-centers-title">
+    <h2 id="medical-centers-title" class="purchase__title">Dónde hacerse sus procedimientos</h2>
+    <p class="purchase__note" data-testid="medical-centers-origin">
+      @if (origin(); as point) {
+        Distancias en línea recta, medidas desde {{ point.label }}. Puede cambiar el punto en la
+        pestaña Farmacias.
       } @else {
         Sin un punto de partida no se calculan distancias. Puede elegirlo en la pestaña Farmacias: su
         casa, una ciudad o su ubicación actual.
       }
     </p>
     <app-view-state-host [state]="state()" (retry)="load()">
-      @if (data(); as datos) {
-        <p class="centros__secundario" data-testid="medical-centers-pending">
-          Procedimientos pendientes: {{ procedureNames(datos.procedures) }}
+      @if (data(); as data) {
+        <p class="purchase__secondary" data-testid="medical-centers-procedures">
+          Procedimientos pendientes: {{ procedureNames(data.procedures) }}
         </p>
-        <ul class="centros__lista" data-testid="medical-centers-list">
-          @for (centro of visibleCenters(); track centro.id) {
-            <li class="centros__centro" data-testid="medical-center-card">
-              <div class="centros__datos">
-                <span class="centros__principal">{{ centro.name }}</span>
-                @if (centro.address !== null) {
-                  <span class="centros__secundario">{{ centro.address }}</span>
+        <ul class="purchase__branches" data-testid="medical-centers-list">
+          @for (center of visibleCenters(); track center.id) {
+            <li class="purchase__branch">
+              <div class="purchase__branch-details">
+                <span class="purchase__primary">{{ center.name }}</span>
+                @if (center.address !== null) {
+                  <span class="purchase__secondary">{{ center.address }}</span>
                 }
-                @if (centro.distance !== null) {
-                  <span class="centros__secundario">{{ centro.distance }}</span>
+                @if (center.distance !== null) {
+                  <span class="purchase__secondary">{{ center.distance }} en línea recta</span>
                 }
-                <ul class="centros__ofertas">
-                  @for (oferta of centro.offers; track oferta.procedure) {
-                    <li class="centros__oferta">
-                      <span>{{ oferta.procedure }}</span>
-                      <span class="centros__precio">{{ oferta.price }}</span>
-                      <span class="centros__secundario">{{ oferta.reference }}</span>
-                      @if (oferta.overMargin) {
-                        <span class="centros__secundario" data-testid="medical-center-over-margin">
-                          Por encima del precio de referencia
-                        </span>
-                      }
-                    </li>
-                  }
-                </ul>
-                @if (centro.total !== null) {
-                  <span class="centros__total" data-testid="medical-center-total">{{ centro.total }}</span>
-                }
-                @if (!centro.complete) {
-                  <p class="centros__faltantes" data-testid="medical-center-missing">
-                    Le falta: {{ centro.missing.join(', ') }}
+                @if (!center.complete) {
+                  <p class="purchase__missing" data-testid="medical-centers-missing">
+                    Le falta: {{ center.missing.join(', ') }}
                   </p>
                 }
               </div>
-              <div class="centros__acciones">
-                <app-badge [variant]="centro.complete ? 'success' : 'warning'">
-                  {{ centro.complete ? 'Tiene todos' : 'Le falta algo' }}
+              <div class="purchase__actions">
+                <app-badge [variant]="center.complete ? 'success' : 'warning'">
+                  {{ center.complete ? 'Tiene todos' : 'Le falta algo' }}
                 </app-badge>
-                @if (centro.worksHere) {
-                  <app-badge variant="info" data-testid="medical-center-works-here">{{ worksHereText }}</app-badge>
-                }
-                @if (centro.suggested) {
-                  <app-badge variant="info" data-testid="medical-center-suggested">{{ suggestedText }}</app-badge>
-                }
-                @if (centro.directions; as enlace) {
+                @if (center.directions; as link) {
                   <a
                     app-link
-                    data-testid="medical-center-directions"
-                    [href]="enlace"
+                    [href]="link"
                     [external]="true"
-                    [attr.aria-label]="'Cómo llegar a ' + centro.name + ' (abre en una pestaña nueva)'"
+                    [attr.aria-label]="'Cómo llegar a ' + center.name + ' (abre en una pestaña nueva)'"
                   >
                     Cómo llegar
                   </a>
@@ -74,9 +50,9 @@
             </li>
           }
         </ul>
-        @if (partialCount() > 0) {
-          @if (!showPartial() && visibleCenters().length === 0) {
-            <p class="centros__nota" data-testid="medical-centers-none-complete">
+        @if (partialCenterCount() > 0) {
+          @if (!showPartialCenters() && visibleCenters().length === 0) {
+            <p class="purchase__note" data-testid="medical-centers-none-complete">
               Ningún centro tiene hoy todos los procedimientos que le pidieron.
             </p>
           }
@@ -86,17 +62,18 @@
             size="sm"
             type="button"
             data-testid="medical-centers-show-partial"
-            [attr.aria-pressed]="showPartial()"
-            (clicked)="showPartial.set(!showPartial())"
+            [attr.aria-pressed]="showPartialCenters()"
+            (clicked)="showPartialCenters.set(!showPartialCenters())"
           >
-            {{ partialLabel() }}
+            {{ partialCentersLabel() }}
           </button>
         }
+        <p class="purchase__note">
+          La lista muestra los centros que declaran ofrecer el procedimiento. Confirme la
+          disponibilidad y el turno con el centro antes de ir.
+        </p>
       }
     </app-view-state-host>
-    @if (data()) {
-      <!-- Sin datos, la salida a «Mis órdenes» ya es la acción del estado vacío. -->
-      <a app-button variant="ghost" class="centros__volver" [routerLink]="myOrdersRoute">Ver mis órdenes</a>
-    }
+    <a app-button variant="ghost" [routerLink]="clinicsDirectoryRoute">Ver clínicas y hospitales</a>
   </section>
 </div>

@@ -15,8 +15,9 @@ import { AnalysisOrderBlock, TARGET_CATEGORIA, TARGET_ESTUDIO } from './analysis
  *    el expediente no tenga que cambiar.
  * 2. **El alta pega contra `clinical`.** Una orden diagnóstica es una orden de
  *    servicio con categoría; sus invariantes no viven en `diagnostics`.
- * 3. **La categoría es obligatoria acá aunque el contrato la deje opcional.**
- *    Es lo que hace que el pedido vuelva a aparecer en el histórico.
+ * 3. **La categoría viaja siempre y sale del estudio.** No se elige aparte: es
+ *    lo que hace que el pedido vuelva a aparecer en el histórico, y un segundo
+ *    selector dejaba pedir un hemograma como imagen.
  * 4. **«Con resultado» quiere decir liberado, no redactado.** Un informe con
  *    versión vigente pero sin liberar es un borrador, y mostrarlo como
  *    resultado sería mostrar un borrador como diagnóstico.
@@ -32,6 +33,11 @@ const CATALOGO = {
   allowCustomValue: false,
   options: [
     { conceptId: 'code-hemograma', code: 'LAB_CBC', display: 'Hemograma', ordinal: 1 },
+    { conceptId: 'code-rx', code: 'IMG_RX_TORAX', display: 'Rx tórax', ordinal: 2 },
+    { conceptId: 'code-ecg', code: 'CAR_ECG', display: 'ECG', ordinal: 3 },
+    { conceptId: 'code-raro', code: 'ESTUDIO_NUEVO', display: 'Nuevo', ordinal: 4 },
+    { conceptId: 'proc-colonoscopia', code: 'PRO_COLONOSCOPIA', display: 'Colonoscopía', ordinal: 5 },
+    { conceptId: 'proc-endoscopia', code: 'PRO_ENDOSCOPIA_ALTA', display: 'Endoscopía', ordinal: 6 },
   ],
 };
 
@@ -298,18 +304,70 @@ describe('AnalysisOrderBlock', () => {
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
   });
 
-  /** La categoría es lo que hace que el pedido vuelva a aparecer en el histórico. */
-  it('no deja pedir sin categoría, aunque el contrato la declare opcional', () => {
+  /** El tipo no se elige: sale del estudio, y sin estudio no hay pedido. */
+  it('no ofrece un selector de tipo: lo deduce del estudio', () => {
+    fixture.detectChanges();
+    responderCatalogos();
+    responderCircuito();
+    fixture.detectChanges();
+
+    const etiquetas = [...fixture.nativeElement.querySelectorAll('label')].map((l: Element) =>
+      l.textContent?.trim(),
+    );
+    expect(etiquetas.some((t: string | undefined) => t?.startsWith('Tipo'))).toBe(false);
+    expect(componente['puedePedir']()).toBe(false);
+
+    componente['estudio'].set('code-hemograma');
+    expect(componente['tipo'].label()).toBe('Laboratorio');
+    expect(componente['puedePedir']()).toBe(true);
+
+    componente['estudio'].set('code-rx');
+    expect(componente['tipo'].label()).toBe('Imagenología');
+    componente['estudio'].set('code-raro');
+    expect(componente['tipo'].label()).toBe('Otro estudio');
+  });
+
+  /**
+   * La imagen viaja como texto: la API escribe el concepto de `diagnostics`,
+   * que es el que la ficha y la cola del centro de imagen leen.
+   */
+  it.each([
+    ['code-hemograma', { category: 'LAB' }],
+    ['code-rx', { category: 'IMAGING' }],
+    ['code-raro', { category: 'OTHER' }],
+  ])('el estudio %s manda %o como categoría', (estudio, esperado) => {
     fixture.detectChanges();
     responderCatalogos();
     responderCircuito();
 
-    componente['estudio'].set('code-hemograma');
-    componente['categoria'].set(null);
-    expect(componente['puedePedir']()).toBe(false);
+    componente['estudio'].set(estudio);
+    componente['pedir']();
+    responderChequeo(false);
 
-    componente['categoria'].set('cat-lab');
-    expect(componente['puedePedir']()).toBe(true);
+    const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+    expect(req.request.body).toMatchObject(esperado);
+    expect('categoryConceptId' in req.request.body).toBe(false);
+  });
+
+  it('un estudio cardiológico manda el concepto de la categoría publicada', () => {
+    fixture.detectChanges();
+    for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
+      req.flush(
+        req.request.params.get('target') === TARGET_CATEGORIA
+          ? { ...CATALOGO, options: [{ conceptId: 'cat-cardio', code: 'SR_CARDIO', display: 'Cardio', ordinal: 1 }] }
+          : CATALOGO,
+      );
+    }
+    responderCircuito();
+
+    componente['estudio'].set('code-ecg');
+    expect(componente['tipo'].label()).toBe('Estudio cardiológico');
+    componente['pedir']();
+    responderChequeo(false);
+
+    const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+    expect(req.request.body.categoryConceptId).toBe('cat-cardio');
+    expect('category' in req.request.body).toBe(false);
   });
 
   it('el alta conserva las invariantes de clinical y emite cambio solo tras guardarse', () => {
@@ -320,7 +378,6 @@ describe('AnalysisOrderBlock', () => {
     responderCircuito();
 
     componente['estudio'].set('code-hemograma');
-    componente['categoria'].set('cat-lab');
     componente['pedir']();
 
     // Primero pregunta si es un duplicado; sin uno, el alta sigue directo.
@@ -329,7 +386,7 @@ describe('AnalysisOrderBlock', () => {
     const req = http.expectOne((r) => r.url === '/clinical/service-requests');
     expect(req.request.method).toBe('POST');
     expect(req.request.body.codeConceptId).toBe('code-hemograma');
-    expect(req.request.body.categoryConceptId).toBe('cat-lab');
+    expect(req.request.body.category).toBe('LAB');
     expect(req.request.body.encounterId).toBe('enc-1');
     expect(req.request.body.custodianTenantId).toBe('t-1');
     // La prioridad no se eligió: la clave se omite, no viaja en null.
@@ -351,6 +408,29 @@ describe('AnalysisOrderBlock', () => {
     expect(changed).toHaveBeenCalledTimes(1);
   });
 
+  it('A3: sale de un formulario libre firmado: manda basedOnNoteIds y no formInstanceId', () => {
+    fixture.detectChanges();
+    responderCatalogos();
+    responderCircuito();
+
+    componente['estudio'].set('code-hemograma');
+    componente['notaDelFormularioLibre'].set('nota-libre-1');
+    componente['pedir']();
+    responderChequeo(false);
+
+    const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+    expect(req.request.body.basedOnNoteIds).toEqual(['nota-libre-1']);
+    expect('formInstanceId' in req.request.body).toBe(false);
+    req.flush({
+      id: 'sr-1',
+      patientProfileId: 'p-1',
+      status: 'st-activa',
+      intent: 'st-orden',
+      createdAt: '2026-08-14T10:00:00.000Z',
+    });
+    responderCircuito({ ...CIRCUITO_VACIO, orders: [ORDEN] });
+  });
+
   /**
    * Antiduplicación de estudios (v4.2.17, T-26). Cuatro casos, sobre el mismo
    * `pedir()` de arriba: el chequeo encuentra un duplicado y abre el diálogo
@@ -365,7 +445,6 @@ describe('AnalysisOrderBlock', () => {
       responderCatalogos();
       responderCircuito();
       componente['estudio'].set('code-hemograma');
-      componente['categoria'].set('cat-lab');
     });
 
     it('con duplicado abre el diálogo y no manda el alta', () => {
@@ -422,6 +501,67 @@ describe('AnalysisOrderBlock', () => {
         createdAt: '2026-08-14T10:00:00.000Z',
       });
       responderCircuito();
+    });
+
+    it('repetir sobre una orden activa sin informe manda sólo la justificación (la API enlaza la orden)', () => {
+      componente['pedir']();
+      const chequeo = http.expectOne((r) => r.url === '/clinical/service-requests/duplicate-check');
+      chequeo.flush({
+        isDuplicate: true,
+        previousStudy: { ...PREVIOUS_STUDY_WIRE, reportId: null, serviceRequestId: 'sr-previa' },
+        warningMessage: 'Hay una orden activa de este estudio, sin informe.',
+        requiresJustification: true,
+        pendingReport: true,
+        windowDays: 30,
+      });
+      fixture.detectChanges();
+
+      componente['confirmRepeat']('Muestra anterior hemolizada, hay que repetirla hoy.');
+
+      const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect('previousDiagnosticReportId' in req.request.body).toBe(false);
+      expect(req.request.body.duplicateOverrideReason).toBe(
+        'Muestra anterior hemolizada, hay que repetirla hoy.',
+      );
+      req.flush({
+        id: 'sr-4',
+        patientProfileId: 'p-1',
+        status: 'st-activa',
+        intent: 'st-orden',
+        createdAt: '2026-08-14T10:00:00.000Z',
+        previousServiceRequestId: 'sr-previa',
+        duplicateOverrideReason: 'Muestra anterior hemolizada, hay que repetirla hoy.',
+      });
+      responderCircuito();
+    });
+
+    it('el histórico muestra la justificación guardada de una orden repetida sobre otra orden', () => {
+      componente['pedir']();
+      responderChequeo(false);
+      http.expectOne((r) => r.url === '/clinical/service-requests').flush({
+        id: 'sr-5',
+        patientProfileId: 'p-1',
+        status: 'st-activa',
+        intent: 'st-orden',
+        createdAt: '2026-08-14T10:00:00.000Z',
+      });
+      responderCircuito({
+        ...CIRCUITO_VACIO,
+        orders: [
+          {
+            ...ORDEN,
+            id: 'sr-5',
+            previousServiceRequestId: 'sr-previa',
+            duplicateOverrideReason: 'Muestra anterior hemolizada, hay que repetirla hoy.',
+            previousDiagnosticReportId: null,
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      expect(componente['estudios']()[0].duplicado).toBe('repeated');
+      const texto = fixture.nativeElement.querySelector('[data-testid="estudios-justificacion"]');
+      expect(texto?.textContent).toContain('Muestra anterior hemolizada');
     });
 
     it('no emite cambio si el servidor rechaza el alta', () => {
@@ -484,7 +624,6 @@ describe('AnalysisOrderBlock', () => {
     expect(componente['errorDelHistorico']()).not.toBeNull();
 
     componente['estudio'].set('code-hemograma');
-    componente['categoria'].set('cat-lab');
     expect(componente['puedePedir']()).toBe(true);
   });
   /**
@@ -549,14 +688,13 @@ describe('AnalysisOrderBlock', () => {
       busqueda.flush({ items: [SEDE_AJENA, SEDE_PROPIA], total: 2, limit: 20, offset: 0 });
     }
 
-    /** Abre el formulario con una categoría y un estudio elegidos. */
+    /** Abre el formulario con un procedimiento o un laboratorio elegido: el tipo sale del estudio. */
     function abrir(categoria: 'cat-lab' | 'cat-proc', codigoProcedimiento = 'SR_PROCEDURE'): void {
       fixture.detectChanges();
       responderCategorias(codigoProcedimiento);
       responderCircuito();
       fixture.detectChanges();
-      componente['estudio'].set(PROCEDIMIENTO);
-      componente['categoria'].set(categoria);
+      componente['estudio'].set(categoria === 'cat-proc' ? PROCEDIMIENTO : 'code-hemograma');
       fixture.detectChanges();
     }
 

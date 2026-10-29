@@ -18,6 +18,7 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
@@ -27,9 +28,14 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import {
+  CarePlanRoute,
+  type EstadoDelPlan,
+  type PasoDelPlan,
+} from '../care-plan-route/care-plan-route';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { writeMessage } from '../../write-message';
 
 /** Un diagnóstico del expediente, para colgar el plan de él. */
 export interface DiagnosticoDelPlan {
@@ -89,12 +95,14 @@ interface ActividadEnCurso {
 @Component({
   selector: 'app-care-plan-block',
   imports: [
+    CarePlanRoute,
     FormResponsePicker,
     Alert,
     AppButton,
     Card,
     AppInput,
     DatePicker,
+    NavIcon,
     FormActions,
     FormField,
     Select,
@@ -231,6 +239,56 @@ export class CarePlanBlock implements DraftBlock {
     () => this.diagnosticoElegido() !== null || this.motivo().trim() !== '',
   );
 
+  /* -- La hoja de ruta ------------------------------------------------------ */
+
+  /**
+   * Los pasos que dicen algo. Es la regla de qué viaja al servidor y de qué se
+   * dibuja en la ruta, y vive una sola vez: una fila vacía no es un paso sin
+   * fecha, es nada.
+   */
+  protected readonly actividadesEscritas = computed<readonly PasoDelPlan[]>(() =>
+    this.actividades().filter((a) => a.detalle.trim() !== ''),
+  );
+
+  /**
+   * Qué tramo de la ruta está resuelto. Los obligatorios cierran con su dato;
+   * la vigencia y los pasos, que son opcionales, cuando tienen algo.
+   */
+  protected readonly tramos = computed(() => ({
+    origen: !this.faltaRespuesta(),
+    objetivo: this.meta().trim() !== '',
+    motivo: this.hayMotivo(),
+    vigencia: (this.desde() !== null || this.hasta() !== null) && !this.vigenciaInvalida(),
+    pasos: this.actividadesEscritas().length > 0,
+  }));
+
+  /** Lo que falta para poder abrir el plan, contado: cuántos obligatorios quedan. */
+  protected readonly obligatoriosPendientes = computed(() => {
+    const t = this.tramos();
+    return [t.origen, t.objetivo, t.motivo].filter((ok) => !ok).length;
+  });
+
+  /**
+   * Lo que dice la insignia de la ruta. Sigue la misma regla que habilita el
+   * botón —sin el «registrando», que es del envío y no del plan—: una vigencia
+   * invertida también bloquea, y «Lista para abrir» con el botón apagado sería
+   * una promesa falsa.
+   */
+  protected readonly estadoDelPlan = computed<EstadoDelPlan>(() => {
+    const cuantos = this.obligatoriosPendientes();
+    if (cuantos > 0) return { tipo: 'faltan', cuantos };
+    return this.vigenciaInvalida() ? { tipo: 'vigencia' } : { tipo: 'listo' };
+  });
+
+  /** La etiqueta del diagnóstico elegido, para la vista de ruta. */
+  protected readonly motivoEnPalabras = computed<string>(() => {
+    const id = this.diagnosticoElegido();
+    if (id !== null) {
+      return this.diagnosticos().find((dx) => dx.id === id)?.etiqueta ?? '';
+    }
+    return this.motivo().trim();
+  });
+
   /** La meta y el motivo son lo que esta pantalla exige; el contrato sólo pide el paciente. */
   protected readonly puedeRegistrar = computed(
     () =>
@@ -248,7 +306,7 @@ export class CarePlanBlock implements DraftBlock {
    * que no llega desbloqueaba el formulario sin decir nada.
    */
   protected readonly errorDelPlan = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), { accion: 'abrir el plan' }),
+    writeMessage(this.registro(), { accion: 'abrir el plan' }),
   );
 
   protected registrar(): void {
@@ -259,12 +317,10 @@ export class CarePlanBlock implements DraftBlock {
 
     // Sólo los pasos que dicen algo: el detalle es lo que hace útil a una
     // actividad, y una fila vacía no es un paso sin fecha, es nada.
-    const activities: NewCarePlanActivity[] = this.actividades()
-      .filter((a) => a.detalle.trim() !== '')
-      .map((a) => ({
-        detailText: a.detalle.trim(),
-        ...(a.cuando === null ? {} : { scheduledAt: a.cuando }),
-      }));
+    const activities: NewCarePlanActivity[] = this.actividadesEscritas().map((a) => ({
+      detailText: a.detalle.trim(),
+      ...(a.cuando === null ? {} : { scheduledAt: a.cuando }),
+    }));
 
     const desde = this.desde();
     const hasta = this.hasta();

@@ -25,6 +25,7 @@ import { AppButton } from '../../atoms/button/button';
 import { Alert } from '../../molecules/alert/alert';
 import { FileInput, type RejectedFile } from '../../molecules/file-input/file-input';
 import { ContentDialog } from '../content-dialog/content-dialog';
+import { LoadingState } from '../../molecules/loading-state/loading-state';
 
 /** Cuántas filas se listan antes de decir «y N más»: el resto está en el archivo. */
 const ROWS_SHOWN = 20;
@@ -43,7 +44,7 @@ type SampleRow = (typeof BRANCH_IMPORT_SAMPLE_ROWS)[number];
  */
 @Component({
   selector: 'app-branch-bulk-import',
-  imports: [Alert, AppButton, ContentDialog, FileInput],
+  imports: [Alert, AppButton, ContentDialog, FileInput, LoadingState],
   templateUrl: './branch-bulk-import.html',
   styleUrl: './branch-bulk-import.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,6 +58,11 @@ export class BranchBulkImport {
   readonly confirmVerb = input('Agregar');
   /** Aviso propio de la pantalla (por ejemplo, qué pasa con las que no traen punto). */
   readonly contextNote = input<string | null>(null);
+  /**
+   * El tope real de la pantalla que lo abre (un alta admite menos que un archivo).
+   * Sin él, el diálogo habla del tope del archivo, como siempre.
+   */
+  readonly maxSucursales = input<number | null>(null);
   /** Mientras quien la abrió persiste, el diálogo no se cierra ni se reenvía. */
   readonly pending = input(false);
   /**
@@ -75,6 +81,7 @@ export class BranchBulkImport {
   protected readonly columns = BRANCH_IMPORT_COLUMNS;
   protected readonly maxBytes = BRANCH_IMPORT_MAX_BYTES;
   protected readonly maxRows = BRANCH_IMPORT_MAX_ROWS;
+  protected readonly tope = computed(() => this.maxSucursales() ?? this.maxRows);
 
   protected readonly files = signal<readonly File[]>([]);
   protected readonly reading = signal(false);

@@ -23,12 +23,21 @@ import { filter, map } from 'rxjs';
 
 import { SessionStore, type SessionTokens } from '../../core/auth/session.store';
 import { generarEntradas, type ValorGenerado } from '../../core/mock/faker';
-import { apiRealForzada } from '../../core/mock/modo-api';
+import { forcedRealApi } from '../../core/mock/api-mode';
 import { MOCK_USERS, emitirAccessToken, emitirRefreshToken } from '../../core/mock/mock-session';
 
+import { Select } from '../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../shared/components/atoms/select/select.types';
+import {
+  NIVELES,
+  OPCIONES_DE_CUENTA,
+  OPCIONES_DE_NIVEL,
+  VALORES_GENERADOS,
+  opcionesDeEscenario,
+} from './component-stock.opciones';
 import { COMPONENTES } from './component-index.generated';
-import type { AnfitrionDeEscenario, EscenarioDeComponente } from './escenarios/escenario.types';
-import { escenariosDe } from './escenarios/escenarios';
+import type { ScenarioHost, ComponentScenario } from './scenarios/scenario.types';
+import { scenariosOf } from './scenarios/scenarios';
 import {
   ETIQUETA_DE_NIVEL,
   type ComponenteDelStock,
@@ -57,15 +66,6 @@ import {
     abrir la consola ni la pestaña de red del navegador.
     ========================================================================== */
 
-const NIVELES: readonly NivelDeComponente[] = [
-  'atomo',
-  'molecula',
-  'organismo',
-  'pantalla',
-  'maqueta',
-  'otro',
-];
-
 export interface Dispositivo {
   readonly clave: string;
   readonly nombre: string;
@@ -83,13 +83,6 @@ const DISPOSITIVOS: readonly Dispositivo[] = [
 ];
 
 type Pestana = 'props' | 'composicion' | 'salidas' | 'problemas' | 'red' | 'accesibilidad';
-
-/**
- * La opción del selector de escenarios que monta «a ciegas», con los valores
- * del generador. Sigue existiendo para comparar: es lo que se ve cuando nadie
- * escribió un anfitrión.
- */
-const VALORES_GENERADOS = 'valores-generados';
 
 /**
  * Una dimensión de la acreditación de un componente. El estado va en palabras
@@ -117,7 +110,7 @@ interface FalloDeAccesibilidad {
 
 @Component({
   selector: 'app-component-stock',
-  imports: [RouterLink],
+  imports: [RouterLink, Select],
   templateUrl: './component-stock.html',
   styleUrl: './component-stock.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -134,7 +127,10 @@ export class ComponentStock implements OnDestroy {
   protected readonly dispositivos = DISPOSITIVOS;
   protected readonly etiquetaDeNivel = ETIQUETA_DE_NIVEL;
   protected readonly cuentas = MOCK_USERS;
-  protected readonly apiReal = apiRealForzada;
+
+  protected readonly opcionesDeCuenta = OPCIONES_DE_CUENTA;
+  protected readonly opcionesDeNivel = OPCIONES_DE_NIVEL;
+  protected readonly apiReal = forcedRealApi;
 
   /* ---- navegación --------------------------------------------------------- */
 
@@ -220,9 +216,9 @@ export class ComponentStock implements OnDestroy {
   protected readonly valoresGenerados = VALORES_GENERADOS;
 
   /** Los anfitriones escritos a mano para el componente elegido; vacío si no hay. */
-  protected readonly escenarios = computed<readonly EscenarioDeComponente[]>(() => {
+  protected readonly escenarios = computed<readonly ComponentScenario[]>(() => {
     const componente = this.elegido();
-    return componente === null ? [] : escenariosDe(componente.clave);
+    return componente === null ? [] : scenariosOf(componente.clave);
   });
 
   /**
@@ -235,8 +231,12 @@ export class ComponentStock implements OnDestroy {
     computation: () => null,
   });
 
+  protected readonly opcionesDeEscenario = computed<readonly SelectOption<string>[]>(() =>
+    opcionesDeEscenario(this.escenarios()),
+  );
+
   /** El escenario vigente, o `null` cuando se monta con valores generados. */
-  protected readonly escenario = computed<EscenarioDeComponente | null>(() => {
+  protected readonly escenario = computed<ComponentScenario | null>(() => {
     const lista = this.escenarios();
     const pedido = this.escenarioPedido();
     if (lista.length === 0 || pedido === VALORES_GENERADOS) return null;
@@ -244,8 +244,8 @@ export class ComponentStock implements OnDestroy {
   });
 
   /** El anfitrión montado, para leerle lo que el componente emitió. */
-  private readonly anfitrion = signal<AnfitrionDeEscenario | null>(null);
-  protected readonly salidas = computed(() => this.anfitrion()?.salidas() ?? []);
+  private readonly anfitrion = signal<ScenarioHost | null>(null);
+  protected readonly salidas = computed(() => this.anfitrion()?.outputs() ?? []);
 
   /**
    * Entradas cuyo valor generado el componente rechazó al montarse.
@@ -589,7 +589,7 @@ export class ComponentStock implements OnDestroy {
    * lee las salidas. No hay valores generados que editar: las entradas las
    * decide el escenario, y eso es lo que lo hace reproducible.
    */
-  private montarEscenario(escenario: EscenarioDeComponente, inyector: Injector, documento: Document): void {
+  private montarEscenario(escenario: ComponentScenario, inyector: Injector, documento: Document): void {
     const anfitrion = documento.createElement('div');
     documento.body.appendChild(anfitrion);
 

@@ -222,14 +222,14 @@ describe('cotización del cobro, rutas', () => {
     expect((r.body as { canSubmit: boolean }).canSubmit).toBe(true);
   });
 
-  it('una aseguradora que no corresponde a la cobertura responde 412', () => {
+  it('una aseguradora que no corresponde a la cobertura responde 422', () => {
     const cobertura = coberturaDePrueba();
     const r = llamar('POST', '/insurance-claims/quote', {
       insuranceCarrierId: uuid('otra-aseguradora'),
       patientCoverageId: cobertura.id,
       lines: [linea('500.00')],
     });
-    expect(r.status).toBe(412);
+    expect(r.status).toBe(422);
   });
 
   it('una cobertura desconocida responde 404', () => {

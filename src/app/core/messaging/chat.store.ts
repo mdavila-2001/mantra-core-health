@@ -18,11 +18,11 @@ import { ChatAutoReply } from './chat-auto-reply';
 import { stickerDe, type Sticker } from './sticker-pack.generated';
 import type {
   ConversationListItem,
+  ChatContact,
   DirectMessage,
   DirectMessageContentType,
   MessageReaction,
   MessageReceipt,
-  PublicDirectoryResult,
 } from '../data-access/community/community.types';
 
 /** Cada cuánto se relee la bandeja, en milisegundos. */
@@ -125,10 +125,7 @@ export interface MensajeDelHilo {
   readonly estado: 'enviando' | 'fallado' | 'enviado';
   /** Si su texto se cambió después de mandarlo — se dice en la burbuja. */
   readonly isEdited?: boolean;
-  /**
-   * `STICKER` si es uno propio de quien lo mandó; `AUTO_REPLY_AI` si es una
-   * respuesta automática que redactó la IA. Ver `DirectMessage`.
-   */
+  /** `STICKER` (propio) o `AUTO_REPLY_AI` (lo redactó la IA); ver `DirectMessage`. */
   readonly contentType?: DirectMessageContentType;
   readonly reactions?: readonly MessageReaction[];
   readonly receipts?: readonly MessageReceipt[];
@@ -283,10 +280,11 @@ export class ChatStore {
 
   /* --- Buscador de gente nueva -------------------------------------------- */
 
-  readonly resultados = signal<readonly PublicDirectoryResult[]>([]);
+  readonly resultados = signal<readonly ChatContact[]>([]);
   readonly buscandoAhora = signal(false);
   readonly abriendo = signal(false);
 
+  private versionBusqueda = 0;
   private temporizadorBandeja: ReturnType<typeof setTimeout> | null = null;
   private temporizadorHilo: ReturnType<typeof setTimeout> | null = null;
   private encendido = false;
@@ -1472,13 +1470,8 @@ export class ChatStore {
     if (propio === null || mensaje.senderProfileId === propio) {
       return;
     }
-    // Redactar con IA lo hace el servidor (o, en la maqueta, el simulador):
-    // si el servidor la tiene, el navegador no contesta, porque saldrían dos
-    // respuestas al mismo mensaje. Si el servidor no la tiene (sin perfil, o
-    // el guardado no llegó), nadie más va a contestar: sale el respaldo.
-    if (this.autoReply.configuracion().conIa && this.autoReply.enElServidor()) {
-      return;
-    }
+    // Con IA guardada en el servidor contesta él (dos respuestas, no); si no la tiene, sale el respaldo.
+    if (this.autoReply.configuracion().conIa && this.autoReply.enElServidor()) return;
     const ahora = Date.now();
     const ultimo = this.ultimoAvisoPorConversacion.get(mensaje.conversationId) ?? null;
     if (!this.autoReply.corresponde(ahora, ultimo)) {
@@ -1571,25 +1564,51 @@ export class ChatStore {
 
   buscarGente(consulta: string): void {
     const q = consulta.trim();
-    if (q === '') {
+    const propio = this.perfil();
+    const version = ++this.versionBusqueda;
+    if (q.length < 2 || propio === null) {
       this.resultados.set([]);
+      this.buscandoAhora.set(false);
       return;
     }
     this.buscandoAhora.set(true);
-    this.community.searchPractitioners(q, 10).subscribe({
+    this.community.searchChatContacts(propio, q, 10).subscribe({
       next: (items) => {
+        if (version !== this.versionBusqueda) return;
         this.resultados.set(items);
         this.buscandoAhora.set(false);
       },
       error: (error: unknown) => {
+        if (version !== this.versionBusqueda) return;
         this.buscandoAhora.set(false);
-        this.fallar(error, 'No pudimos buscar profesionales.');
+        this.fallar(error, 'No pudimos buscar personas.');
       },
     });
   }
 
   limpiarBusqueda(): void {
+    this.versionBusqueda += 1;
     this.resultados.set([]);
+    this.buscandoAhora.set(false);
+  }
+
+  /** Abre —o reutiliza— una conversación con el perfil elegido en el chat. */
+  escribirAPerfil(profileId: string, alAbrir: (conversationId: string) => void): void {
+    const propio = this.perfil();
+    if (propio === null || profileId === propio || this.abriendo()) return;
+
+    this.abriendo.set(true);
+    this.community.createConversation({ participantProfileIds: [propio, profileId] }).subscribe({
+      next: ({ id }) => {
+        this.abriendo.set(false);
+        this.recargarBandeja();
+        alAbrir(id);
+      },
+      error: () => {
+        this.abriendo.set(false);
+        this.error.set('No pudimos abrir la conversación.');
+      },
+    });
   }
 
   /**

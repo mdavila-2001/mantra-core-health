@@ -9,7 +9,7 @@
  * ser texto libre y fueran desplegables **poblados con datos**, en forma de
  * árbol: se elige el país y la lista de universidades se acota a ese país.
  * Hasta acá sólo había una lista curada a mano de universidades bolivianas
- * (`src/app/core/profesion/instituciones-educativas.ts`), y la regla de datos
+ * (`src/app/core/profession/educational-institutions.ts`), y la regla de datos
  * del proyecto pide no hardcodear un padrón sin dataset ni estrategia de
  * importación. Esto es la estrategia de importación.
  *
@@ -46,7 +46,7 @@ const raiz = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const COMMIT = '603e10f51b67c6553b9bca9aecc0db4c2417ed10';
 const URL_FUENTE = `https://raw.githubusercontent.com/Hipo/university-domains-list/${COMMIT}/world_universities_and_domains.json`;
 const FUENTE_LOCAL = resolve(raiz, 'data/universidades', `world_universities_and_domains.${COMMIT.slice(0, 7)}.json`);
-const DESTINO = resolve(raiz, 'src/app/core/profesion/universidades-por-pais.generated.ts');
+const DESTINO = resolve(raiz, 'src/app/core/profession/universities-by-country.generated.ts');
 /**
  * Las ciudades de cada universidad, de Wikidata (CC0), que deja en caché
  * `gen-ciudades-de-universidades.mjs`. Opcional: sin la caché el padrón sale
@@ -111,7 +111,7 @@ const lineas = [
   `    ${totalFuente} filas → ${paises.length} países · ${totalUniversidades} universidades.`,
   `    Ciudades: Wikidata (CC0), cruzadas por dominio web; ${totalConCiudad} universidades con ciudad.`,
   '',
-  '    Bolivia NO está acá: su lista es la curada de `instituciones-educativas.ts`',
+  '    Bolivia NO está acá: su lista es la curada de `educational-institutions.ts`',
   '    y la composición de ambas vive en `universidades-por-pais.ts`, que es lo que',
   '    importan las pantallas. Nadie importa este fichero directamente.',
   '   ========================================================================== */',

@@ -341,7 +341,7 @@
   block-size: var(--e10);
   border: 0;
   border-radius: var(--r-pill);
-  background: var(--petroleo-relleno);
+  background: var(--petroleo);
   color: var(--surface-white);
   box-shadow: var(--sombra-2);
   cursor: pointer;

@@ -144,7 +144,7 @@
   border-radius: var(--r-pill);
   background: var(--neutro-bg);
   color: var(--tinta-2);
-  font-size: var(--fs-caption);
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -177,6 +177,15 @@
 .perfil__estrella svg.perfil__estrella--vacia {
   color: var(--tinta-3);
   opacity: 0.42;
+}
+
+.profile-rating__stars {
+  display: inline-flex;
+  gap: var(--sp-1);
+}
+
+.perfil__estrella .profile-rating__star--empty {
+  color: var(--border-subtle);
 }
 
 /* Las acciones, en su propio renglón debajo de la identidad. */
@@ -365,7 +374,7 @@
   padding-block-start: var(--e4);
   border-block-start: 1px solid var(--filete-2);
   color: var(--tinta-3);
-  font-size: var(--fs-caption);
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -565,7 +574,7 @@
 .hito__periodo {
   margin: 0;
   color: var(--tinta-2);
-  font-size: var(--fs-caption);
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;

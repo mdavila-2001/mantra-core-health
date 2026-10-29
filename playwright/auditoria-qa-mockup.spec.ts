@@ -1,11 +1,14 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
 import {
+  PASOS_DEL_ALTA,
+  completarContacto,
   empezarElAlta,
   avanzarHasta,
   elegirLocalidadDeResidencia,
+  marcarYConfirmarCasa,
 } from './support/registro-paciente';
 
 const EVIDENCE_DIR = path.resolve('artifacts/playwright/auditoria');
@@ -14,8 +17,8 @@ if (!fs.existsSync(EVIDENCE_DIR)) {
 }
 
 test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
-  let consoleLogs: Array<{ type: string; text: string }> = [];
-  let networkCalls: Array<{ url: string; status: number; method: string }> = [];
+  let consoleLogs: { type: string; text: string }[] = [];
+  let networkCalls: { url: string; status: number; method: string }[] = [];
 
   test.beforeEach(async ({ page }) => {
     consoleLogs = [];
@@ -53,51 +56,36 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
 
     // El motor bloquea la transición de página: permanece en paso 1
     const tituloPaso = page.locator('.paginated-form__titulo');
-    await expect(tituloPaso).toHaveText('¿Cómo se llama?');
+    await expect(tituloPaso).toHaveText(PASOS_DEL_ALTA.identidad);
 
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc02-edge-paciente-vacios.png') });
   });
 
-  test('TC-03 [Happy Path] Registro Completo de Paciente Paso a Paso (10 pasos)', async ({ page }) => {
+  test('TC-03 [Happy Path] Registro Completo de Paciente Paso a Paso (5 pasos)', async ({ page }) => {
     const sufijo = Date.now();
     const docPrueba = `CI-QA-${sufijo}`;
     const emailPrueba = `paciente.audit.${sufijo}@example.test`;
 
-    // Pasos 1 a 4 con helper oficial probado
+    // Paso 1: identidad y ocupación (helper oficial)
     await empezarElAlta(page, docPrueba);
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso4-contactos.png') });
 
-    // Paso 5: Residencia y mapa
-    await avanzarHasta(page, '¿Dónde vive?');
+    // Paso 2: residencia y mapa
     await elegirLocalidadDeResidencia(page);
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso5-residencia-mapa.png') });
+    await marcarYConfirmarCasa(page);
+    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso2-residencia-mapa.png') });
+    await page.getByTestId('paginated-form-continuar').click();
 
-    // Paso 6: Trabajo (empresa)
-    await avanzarHasta(page, '¿Dónde trabaja?');
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso6-trabajo.png') });
+    // Paso 3: contacto y emergencia → Paso 4: empresa y lugar de trabajo
+    await completarContacto(page);
+    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso4-trabajo.png') });
 
-    // Paso 7: Lugar de trabajo
-    await avanzarHasta(page, 'El lugar donde trabaja');
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso7-lugar-trabajo.png') });
-
-    // Paso 8: Cuenta de acceso
-    await avanzarHasta(page, 'Su acceso');
+    // Paso 5: acceso, seguros y facturación
+    await avanzarHasta(page, PASOS_DEL_ALTA.resto);
     await page.getByTestId('registro-correo').fill(emailPrueba);
     await page.getByTestId('registro-password').fill('P@ssword1234!');
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso8-cuenta.png') });
-
-    // Paso 9: Seguro de salud
-    await avanzarHasta(page, 'Su seguro de salud');
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso9-seguro.png') });
-
-    // Paso 10: Datos de facturación
-    await avanzarHasta(page, 'Datos de facturación');
-    const nit = page.getByTestId('registro-nit');
-    if (await nit.isVisible().catch(() => false)) {
-      await nit.fill('9988776655');
-      await page.getByTestId('registro-razon-social').fill('Audit Corp SRL');
-    }
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso10-facturacion.png') });
+    await page.getByTestId('registro-nit').fill('9988776655');
+    await page.getByTestId('registro-razon-social').fill('Audit Corp SRL');
+    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso5-resto.png') });
 
     // Enviar formulario final
     const btnCrear = page.getByTestId('paginated-form-continuar');
@@ -106,16 +94,16 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
 
     // Confirmación final
     await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 20000 });
-    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso11-exito.png') });
+    await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc03-paso6-exito.png') });
   });
 
   test('TC-04 [Edge Case] Formato Inválido de Correo y Clave Corta en Registro', async ({ page }) => {
     await empezarElAlta(page, '1234567');
-    await avanzarHasta(page, '¿Dónde vive?');
     await elegirLocalidadDeResidencia(page);
-    await avanzarHasta(page, '¿Dónde trabaja?');
-    await avanzarHasta(page, 'El lugar donde trabaja');
-    await avanzarHasta(page, 'Su acceso');
+    await marcarYConfirmarCasa(page);
+    await page.getByTestId('paginated-form-continuar').click();
+    await completarContacto(page);
+    await avanzarHasta(page, PASOS_DEL_ALTA.resto);
 
     await page.getByTestId('registro-correo').fill('correo-sin-formato');
     await page.getByTestId('registro-password').fill('123');
@@ -123,9 +111,10 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     const btnContinuar = page.getByTestId('paginated-form-continuar');
     await btnContinuar.click();
 
-    // No debe avanzar a la página de seguros
+    // No debe crear la cuenta: sigue en el último paso
     const tituloPaso = page.locator('.paginated-form__titulo');
-    await expect(tituloPaso).toHaveText('Su acceso');
+    await expect(tituloPaso).toHaveText(PASOS_DEL_ALTA.resto);
+    await expect(page.getByTestId('registro-exito')).toHaveCount(0);
 
     await page.screenshot({ path: path.join(EVIDENCE_DIR, 'tc04-edge-acceso-invalido.png') });
   });

@@ -30,7 +30,7 @@ import { ArticleBody } from '../../../../shared/components/organisms/article-bod
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { articlePlainText } from '../../../../shared/text/article-markup';
-import { VitrinaMinima } from '../../../communities/vitrina-minima/vitrina-minima';
+import { MinShowcase } from '../../../communities/minimal-showcase/minimal-showcase';
 import { ArticleComposer, type ArticleDraft } from './article-composer/article-composer';
 
 /**
@@ -105,7 +105,7 @@ class SubidaFallida extends Error {
     RouterLink,
     Textarea,
     ViewStateHost,
-    VitrinaMinima,
+    MinShowcase,
   ],
   templateUrl: './medical-articles.html',
   styleUrl: './medical-articles.css',
@@ -260,7 +260,7 @@ export class MedicalArticles {
    * artículo con un hueco donde iba la radiografía es peor que uno que todavía
    * no salió, y lo escrito queda intacto en el compositor para reintentar.
    * Los archivos que sí subieron quedan huérfanos en `common.files`; no hay
-   * contrato para borrarlos desde acá (anotado en PENDIENTES-BACKEND).
+   * contrato para borrarlos desde acá.
    *
    * @param borrador - Lo que armó el compositor.
    */

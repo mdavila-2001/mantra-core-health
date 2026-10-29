@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmacy.types';
-import { ArchivoInvalido, leerTablaCsv } from '../catalog-rules/catalogo.reglas';
+import { ArchivoInvalido, leerTablaCsv } from '../catalog-rules/catalog.rules';
 import { inventoryCsvRows, reviewInventoryCsv } from './inventory-csv';
 
 /**

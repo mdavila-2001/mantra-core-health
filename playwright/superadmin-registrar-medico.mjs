@@ -17,8 +17,7 @@
  *   node playwright/superadmin-registrar-medico.mjs [carpeta-de-salida]
  *
  * Variables: `E2E_BASE_URL`, `E2E_MODO` (real|demo), `E2E_IDENTIFICADOR`, `E2E_CLAVE`,
- * `E2E_CHROMIUM`, `SOLO_VIEWPORT`, `SOLO_TEMA`, `E2E_CORREO` (correo del médico) y
- * `E2E_IGNORAR_CONSOLA` (regex de errores de consola ajenos que se declaran, no se tapan).
+ * `E2E_CHROMIUM`, `SOLO_VIEWPORT`, `SOLO_TEMA`, `E2E_CORREO` (correo del médico).
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -32,8 +31,6 @@ const ADMIN = {
   identificador: process.env.E2E_IDENTIFICADOR ?? 'admin@alovida.mock',
   clave: process.env.E2E_CLAVE ?? 'S3cret-passw0rd',
 };
-/** Errores de consola ajenos que se declaran y no se tapan (p. ej. el CSP de `ng serve` en `mockup`). */
-const IGNORAR_CONSOLA = process.env.E2E_IGNORAR_CONSOLA ? new RegExp(process.env.E2E_IGNORAR_CONSOLA) : null;
 const CLAVE_MEDICO = 'MedicoNuevo-2026';
 const VIEWPORTS = [
   { nombre: 'telefono', width: 390, height: 844 },
@@ -96,17 +93,8 @@ async function medirCentrado(page) {
   });
 }
 
-/**
- * Elige la primera opción real de un selector. `dev` usa el selector con diálogo
- * (se espera a que termine de cerrarse); `mockup` todavía usa el `<select>` nativo.
- */
-async function elegirPrimera(page, selector) {
-  const nativo = selector.locator('select');
-  if (await nativo.count()) {
-    await nativo.selectOption({ index: 1 });
-    return;
-  }
-  await selector.click();
+/** Elige la primera opción de un selector y espera a que su diálogo termine de cerrarse. */
+async function elegirPrimera(page) {
   await page.locator('dialog.select-dialog li[role="option"]').first().click();
   await page.locator('dialog.select-dialog').waitFor({ state: 'detached', timeout: 10_000 });
 }
@@ -118,10 +106,12 @@ async function completar(page, correo, motivo) {
   await page.getByTestId('alta-medico-correo').fill(correo);
   await pestana(page, 'Documento y matrícula');
   await page.getByTestId('alta-medico-cedula').fill(`9${Date.now().toString().slice(-6)}`);
-  await elegirPrimera(page, page.locator('app-form-field').filter({ hasText: 'Departamento que la emitió' }).locator('app-select'));
+  await page.getByRole('combobox', { name: /Departamento que la emitió/ }).click();
+  await elegirPrimera(page);
   await page.getByTestId('alta-medico-matricula-numero').fill(`MP-${SUFIJO}`);
   await page.getByTestId('alta-medico-agregar-especialidad').click();
-  await elegirPrimera(page, page.getByTestId('alta-medico-especialidad-0'));
+  await page.getByTestId('alta-medico-especialidad-0').click();
+  await elegirPrimera(page);
   await pestana(page, 'Habilitación y motivo');
   await page.getByLabel(/Motivo del registro asistido/).fill(motivo);
 }
@@ -152,7 +142,7 @@ async function main() {
       const consola = [];
       const malas = [];
       const peticiones = [];
-      page.on('console', (m) => m.type() === 'error' && !IGNORAR_CONSOLA?.test(m.text()) && consola.push(m.text().slice(0, 200)));
+      page.on('console', (m) => m.type() === 'error' && consola.push(m.text().slice(0, 200)));
       page.on('pageerror', (e) => consola.push(`pageerror: ${String(e).slice(0, 200)}`));
       page.on('request', (r) => {
         if (r.method() === 'POST' && r.url().includes('assisted-practitioner-registration')) {
@@ -210,26 +200,18 @@ async function main() {
       const correo = process.env.E2E_CORREO ?? `medico.${SUFIJO}@mantra.test`;
       await completar(page, correo, 'Está de viaje y no puede registrarse por sí mismo');
       await captura(page, path.join(SALIDA, '05-completo-escritorio-light.png'), viewport);
-      // Contra el simulador la petición no sale a la red (la contesta el interceptor del front):
-      // no hay respuesta HTTP que mirar y se juzga por lo que la pantalla muestra.
-      const real = MODO === 'real';
-      const respuesta = real
-        ? page.waitForResponse((r) => r.url().includes('assisted-practitioner-registration') && r.request().method() === 'POST')
-        : null;
+      const respuesta = page.waitForResponse((r) => r.url().includes('assisted-practitioner-registration') && r.request().method() === 'POST');
       await page.getByTestId('alta-medico-enviar').click();
-      if (real) {
-        const res = await respuesta.catch(async (e) => {
-          const visibles = await page.locator('app-form-field').evaluateAll((els) => els.map((el) => el.textContent?.replace(/\s+/g, ' ').trim().slice(0, 140)));
-          await captura(page, path.join(SALIDA, '05b-no-envio.png'), viewport);
-          throw new Error(`el alta no salió a la red: ${e.message.split('\n')[0]} · campos: ${JSON.stringify(visibles)}`);
-        });
-        if (res.status() !== 201) falla(id, `el alta respondió ${res.status()}: ${(await res.text()).slice(0, 200)}`);
-        else ok('POST /iam/users/assisted-practitioner-registration → 201');
-        const enviado = peticiones.at(-1)?.cuerpo ?? {};
-        if ('password' in enviado) falla(id, 'el cuerpo lleva contraseña');
-        else ok(`el cuerpo no lleva contraseña (campos: ${Object.keys(enviado).join(', ')})`);
-      }
-      const enviado = real ? (peticiones.at(-1)?.cuerpo ?? {}) : {};
+      const res = await respuesta.catch(async (e) => {
+        const visibles = await page.locator('app-form-field').evaluateAll((els) => els.map((el) => el.textContent?.replace(/\s+/g, ' ').trim().slice(0, 140)));
+        await captura(page, path.join(SALIDA, '05b-no-envio.png'), viewport);
+        throw new Error(`el alta no salió a la red: ${e.message.split('\n')[0]} · campos: ${JSON.stringify(visibles)}`);
+      });
+      if (res.status() !== 201) falla(id, `el alta respondió ${res.status()}: ${(await res.text()).slice(0, 200)}`);
+      else ok('POST /iam/users/assisted-practitioner-registration → 201');
+      const enviado = peticiones.at(-1)?.cuerpo ?? {};
+      if ('password' in enviado) falla(id, 'el cuerpo lleva contraseña');
+      else ok(`el cuerpo no lleva contraseña (campos: ${Object.keys(enviado).join(', ')})`);
 
       await page.getByTestId('alta-medico-exito').waitFor({ timeout: 20_000 });
       const token = (await page.getByTestId('alta-medico-token').textContent())?.trim() ?? '';
@@ -245,18 +227,11 @@ async function main() {
       await page.getByTestId('alta-medico-otra').click();
       await page.getByTestId('alta-medico-form').waitFor();
       await completar(page, correo, 'Intento repetido');
-      const segunda = real
-        ? page.waitForResponse((r) => r.url().includes('assisted-practitioner-registration') && r.request().method() === 'POST')
-        : null;
+      const segunda = page.waitForResponse((r) => r.url().includes('assisted-practitioner-registration') && r.request().method() === 'POST');
       await page.getByTestId('alta-medico-enviar').click();
-      if (real) {
-        const res2 = await segunda;
-        if (res2.status() !== 409) falla(id, `el alta repetida respondió ${res2.status()}`);
-        else ok('el correo repetido responde 409');
-      } else {
-        await page.getByTestId('alta-medico-error').waitFor({ timeout: 20_000 });
-        ok('el correo repetido se rechaza en pantalla');
-      }
+      const res2 = await segunda;
+      if (res2.status() !== 409) falla(id, `el alta repetida respondió ${res2.status()}`);
+      else ok('el correo repetido responde 409');
       await pestana(page, 'Médico');
       const valor = await page.getByTestId('alta-medico-correo').inputValue();
       if (valor !== correo) falla(id, 'se perdió lo escrito tras el 409');
@@ -268,9 +243,7 @@ async function main() {
       await captura(page, path.join(SALIDA, '07-conflicto-escritorio-light.png'), viewport);
       await contexto.close();
 
-      // 6. El médico activa su cuenta con el código y entra. (En el simulador la cuenta nueva no
-      //    existe para el login: sólo se comprueba contra la API real.)
-      if (MODO !== 'real') continue;
+      // 6. El médico activa su cuenta con el código y entra.
       const ctxMedico = await navegador.newContext({ viewport: { width: 1440, height: 900 }, locale: 'es-BO' });
       const medico = await ctxMedico.newPage();
       await medico.goto(`${BASE}/auth/activate?token=${encodeURIComponent(token)}`);

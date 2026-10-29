@@ -1,5 +1,5 @@
 import type { PdfBlock } from '../pdf-export/pdf-export';
-import { establecerFirmaDeDocumentos } from '../pdf-export/pdf-firma';
+import { setDocumentSignature } from '../../../core/pdf-branding/pdf-signature';
 import {
   bloquesDeAtencion,
   bloquesDeFormulario,
@@ -311,7 +311,7 @@ describe('Portada de la receta', () => {
   /** Una receta sin emitir con la firma escaneada estampada pasaría por firmada. */
   it('sin emitir, el bloque de firma va sin las imágenes de la firma y el sello', () => {
     const imagen = { dataUrl: 'data:image/png;base64,AA==', formato: 'PNG' as const, ancho: 1, alto: 1 };
-    establecerFirmaDeDocumentos({ nombre: 'Dra. Salas', matricula: 'M-1', firma: imagen, sello: imagen });
+    setDocumentSignature({ nombre: 'Dra. Salas', matricula: 'M-1', firma: imagen, sello: imagen });
     const { emitidaEl: _emitida, ...sinEmitir } = RECETA;
 
     expect(prescriptionPdfOptions(sinEmitir).firma).toEqual({
@@ -320,7 +320,7 @@ describe('Portada de la receta', () => {
       firma: null,
       sello: null,
     });
-    establecerFirmaDeDocumentos(null);
+    setDocumentSignature(null);
     expect(prescriptionPdfOptions(sinEmitir).firma).toBeNull();
   });
 

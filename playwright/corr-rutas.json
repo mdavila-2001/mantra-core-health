@@ -125,6 +125,10 @@
       "nombre": "my-quotations"
     },
     {
+      "ruta": "/my-medical-groups",
+      "nombre": "my-medical-groups"
+    },
+    {
       "ruta": "/questionnaires",
       "nombre": "questionnaires"
     },
@@ -139,6 +143,10 @@
     {
       "ruta": "/my-account",
       "nombre": "my-account"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
     },
     {
       "ruta": "/settings",
@@ -392,6 +400,10 @@
       "nombre": "my-quotations"
     },
     {
+      "ruta": "/my-medical-groups",
+      "nombre": "my-medical-groups"
+    },
+    {
       "ruta": "/questionnaires",
       "nombre": "questionnaires"
     },
@@ -476,6 +488,10 @@
       "nombre": "administration_medical-organization"
     },
     {
+      "ruta": "/administration/medical-center-setup",
+      "nombre": "administration_medical-center-setup"
+    },
+    {
       "ruta": "/administration/medical-laboratory",
       "nombre": "administration_medical-laboratory"
     },
@@ -504,6 +520,18 @@
       "nombre": "my-account"
     },
     {
+      "ruta": "/my-account/privacy",
+      "nombre": "my-account_privacy"
+    },
+    {
+      "ruta": "/my-account/clinical-access",
+      "nombre": "my-account_clinical-access"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
+    },
+    {
       "ruta": "/my-account/appointments",
       "nombre": "my-account_appointments"
     },
@@ -522,6 +550,10 @@
     {
       "ruta": "/my-account/quotations",
       "nombre": "my-account_cotizaciones"
+    },
+    {
+      "ruta": "/my-account/quotations",
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",
@@ -613,11 +645,11 @@
     },
     {
       "ruta": "/laboratory/reception",
-      "nombre": "laboratorio_recepcion"
+      "nombre": "laboratory_reception"
     },
     {
       "ruta": "/laboratory/queue",
-      "nombre": "laboratorio_cola"
+      "nombre": "laboratory_queue"
     },
     {
       "ruta": "/administration/laboratory-results",
@@ -626,10 +658,6 @@
     {
       "ruta": "/administration/laboratory-prices",
       "nombre": "administration_laboratory-prices"
-    },
-    {
-      "ruta": "/administration/center-schedule",
-      "nombre": "administration_center-schedule"
     },
     {
       "ruta": "/administration/laboratory-branches",
@@ -718,6 +746,18 @@
       "nombre": "my-account"
     },
     {
+      "ruta": "/my-account/privacy",
+      "nombre": "my-account_privacy"
+    },
+    {
+      "ruta": "/my-account/clinical-access",
+      "nombre": "my-account_clinical-access"
+    },
+    {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
+    },
+    {
       "ruta": "/my-account/appointments",
       "nombre": "my-account_appointments"
     },
@@ -735,7 +775,7 @@
     },
     {
       "ruta": "/my-account/quotations",
-      "nombre": "my-account_cotizaciones"
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",
@@ -940,6 +980,10 @@
       "nombre": "my-account"
     },
     {
+      "ruta": "/my-account/security",
+      "nombre": "my-account_security"
+    },
+    {
       "ruta": "/my-account/appointments",
       "nombre": "my-account_appointments"
     },
@@ -957,7 +1001,7 @@
     },
     {
       "ruta": "/my-account/quotations",
-      "nombre": "my-account_cotizaciones"
+      "nombre": "my-account_quotations"
     },
     {
       "ruta": "/my-account/questionnaires",

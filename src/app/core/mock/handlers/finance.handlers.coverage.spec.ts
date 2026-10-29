@@ -3,10 +3,6 @@ import { HttpHeaders } from '@angular/common/http';
 import { MockRouter, isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
-// Port a `mockup` del spec de `dev` (C9–C11): en esta rama `mock-router` todavía
-// responde las precondiciones con 412 y la validación con 422 —el cambio a
-// 422/400 de H2.S1.M2 no llegó—, así que se esperan esos códigos.
-
 describe('contabilidad demo: saldos y transiciones', () => {
   const keys = [
     'mock.finance.asientos', 'mock.finance.cotizaciones', 'mock.finance.activos',
@@ -62,7 +58,7 @@ describe('contabilidad demo: saldos y transiciones', () => {
       ],
     };
     const unbalanced = { ...journal, lines: [journal.lines[0], { ...journal.lines[1], amount: '12.33' }] };
-    expect(status(request('POST', '/accounting/journal-transactions', unbalanced))).toBe(412);
+    expect(status(request('POST', '/accounting/journal-transactions', unbalanced))).toBe(422);
     expect(balance()).toEqual(before);
 
     const draft = data<{ id: string; status: string; totalAmount: string }>(
@@ -70,7 +66,7 @@ describe('contabilidad demo: saldos y transiciones', () => {
     );
     expect(draft).toMatchObject({ status: 'DRAFT', totalAmount: '12.34' });
     const path = `/accounting/journal-transactions/${draft.id}`;
-    expect(status(request('POST', `${path}/post`))).toBe(412);
+    expect(status(request('POST', `${path}/post`))).toBe(422);
     expect(balance()).toEqual(before);
     for (const [action, expected] of [
       ['classify', 'AUTO_CLASSIFIED'], ['submit-review', 'PENDING_REVIEW'],
@@ -82,11 +78,11 @@ describe('contabilidad demo: saldos y transiciones', () => {
     expect(Number(posted.totalDebit) - Number(before.totalDebit)).toBeCloseTo(12.34, 2);
     expect(Number(posted.totalCredit) - Number(before.totalCredit)).toBeCloseTo(12.34, 2);
     expect(posted.balanced).toBe(true);
-    expect(status(request('POST', `${path}/post`))).toBe(412);
+    expect(status(request('POST', `${path}/post`))).toBe(422);
 
     const reversal = data<{ id: string; reversalOf: string }>(request('POST', `${path}/reverse`));
     expect(reversal.reversalOf).toBe(draft.id);
-    expect(status(request('POST', `${path}/reverse`))).toBe(412);
+    expect(status(request('POST', `${path}/reverse`))).toBe(422);
     expect(data<{ items: { role: string; id: string }[] }>(request('GET', `${path}/document-flow`)).items)
       .toEqual(expect.arrayContaining([expect.objectContaining({ role: 'REVERSION', id: reversal.id })]));
     expect(data<{ items: { role: string }[] }>(request('GET', `/accounting/journal-transactions/${reversal.id}/document-flow`)).items)
@@ -112,11 +108,11 @@ describe('contabilidad demo: saldos y transiciones', () => {
         items,
       });
     expect(status(compensar([{ openItemId: 'inexistente', clearedAmount: '1.00' }]))).toBe(404);
-    expect(status(compensar([]))).toBe(412);
+    expect(status(compensar([]))).toBe(422);
     // Más de lo pendiente es 422, igual que `SubledgerService.clearOpenItems`.
     expect(
       status(compensar([{ openItemId: receivable.id, clearedAmount: String(Number(receivable.openAmount) + 1) }])),
-    ).toBe(412);
+    ).toBe(422);
     const cleared = data<{ id: string; clearingNumber: string; clearedItems: number }>(
       compensar([{ openItemId: receivable.id, clearedAmount: receivable.openAmount }]),
     );
@@ -132,8 +128,8 @@ describe('contabilidad demo: saldos y transiciones', () => {
     const closed = years.periods.find((period) => period.status === 'CLOSED')!;
     const opened = years.periods.find((period) => period.status === 'OPEN')!;
     expect(status(request('POST', '/accounting/fiscal-periods/missing/lock'))).toBe(404);
-    expect(status(request('POST', `/accounting/fiscal-periods/${closed.id}/lock`))).toBe(412);
-    expect(status(request('POST', `/accounting/fiscal-periods/${opened.id}/lock`))).toBe(412);
+    expect(status(request('POST', `/accounting/fiscal-periods/${closed.id}/lock`))).toBe(422);
+    expect(status(request('POST', `/accounting/fiscal-periods/${opened.id}/lock`))).toBe(422);
     expect(data<{ items: { code: string }[] }>(request('GET', '/accounting/dimensions')).items)
       .toEqual(expect.arrayContaining([expect.objectContaining({ code: 'PC-10' })]));
   });
@@ -152,7 +148,7 @@ describe('contabilidad demo: saldos y transiciones', () => {
         { installmentNumber: 2, dueDate: '2026-12-01', amount: 50.00 },
       ],
     };
-    expect(status(request('POST', '/quotations', { ...quote, installments: [{ ...quote.installments[0], amount: 50.00 }, quote.installments[1]] }))).toBe(422);
+    expect(status(request('POST', '/quotations', { ...quote, installments: [{ ...quote.installments[0], amount: 50.00 }, quote.installments[1]] }))).toBe(400);
     expect(status(request('POST', '/quotations', { ...quote, serviceCatalogId: 'missing' }))).toBe(404);
     const created = data<{ id: string; appointmentId?: string; installments: { amount: number }[]; offeredPrice: number }>(
       request('POST', '/quotations', quote),
@@ -190,7 +186,7 @@ describe('contabilidad demo: saldos y transiciones', () => {
       .toMatchObject({ installmentNumber: 1, amount: '5.00' });
     expect(data<{ installmentNumber: number; amount: string }>(request('POST', `${liabilityPath}/progress`)))
       .toMatchObject({ installmentNumber: 2, amount: '5.00' });
-    expect(status(request('POST', `${liabilityPath}/progress`))).toBe(412);
+    expect(status(request('POST', `${liabilityPath}/progress`))).toBe(422);
     expect(data<{ id: string; outstandingAmount: string }[]>(request('GET', '/accounting/practitioner/liabilities'))
       .find((item) => item.id === liability.id)?.outstandingAmount).toBe('0.00');
     expect(status(request('POST', '/accounting/practitioner/liabilities/missing/progress'))).toBe(404);
@@ -234,7 +230,7 @@ describe('contabilidad demo: saldos y transiciones', () => {
     for (let period = 1; period < pending.remainingPeriods; period += 1) {
       expect(status(devengar(pending.id))).toBe(201);
     }
-    expect(status(devengar(pending.id))).toBe(412);
+    expect(status(devengar(pending.id))).toBe(422);
     expect(data<{ totalRevenue: string; totalExpense: string; netIncome: string }>(
       request('GET', '/accounting/income-statement', {}, new URLSearchParams({ from: '2026-10-01' })),
     ).netIncome).toBeDefined();

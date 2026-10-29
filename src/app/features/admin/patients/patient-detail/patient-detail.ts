@@ -36,6 +36,7 @@ import { PageHeader } from '../../../../shared/components/organisms/page-header/
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { RelatedPersonForm } from '../related-person-form/related-person-form';
 import { PATIENTS_ROUTE } from '../patients.routes';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * Un dato de la ficha, ya listo para pintar: rótulo y valor legible.
@@ -117,6 +118,7 @@ const SIN_DATO = 'Sin registrar';
     Tab,
     Tabs,
     ViewStateHost,
+    LoadingState,
   ],
   templateUrl: './patient-detail.html',
   styleUrl: './patient-detail.css',

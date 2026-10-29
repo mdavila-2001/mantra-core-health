@@ -31,8 +31,8 @@ import { entrar, estable, irA } from './support/sesion';
 /**
  * Carril 19 — barrido de todas las rutas declaradas, por rol.
  *
- * Produce `ROUTE_HEALTH_MATRIX.md`: qué pinta cada ruta para cada quien, y por
- * qué no pinta cuando no pinta. Es lo que el carril pide como salida, y lo que
+ * Produce `artifacts/route-health-matrix.md` (fuera del repositorio): qué
+ * pinta cada ruta para cada quien, y por qué no pinta cuando no pinta. Es lo que el carril pide como salida, y lo que
  * convierte «hay pestañas rotas» en una lista con nombre y apellido.
  *
  * ## Qué NO hace
@@ -47,7 +47,7 @@ import { entrar, estable, irA } from './support/sesion';
  * si la ruta existe y pinta.
  */
 
-const SALIDA = 'ROUTE_HEALTH_MATRIX.md';
+const SALIDA = 'artifacts/route-health-matrix.md';
 
 /**
  * Dónde se van dejando los parciales de cada actor.

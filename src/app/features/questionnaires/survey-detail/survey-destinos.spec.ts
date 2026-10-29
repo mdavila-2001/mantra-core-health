@@ -63,13 +63,13 @@ describe('opciones del selector', () => {
 
   it('«Todas mis consultas» va primero y después cada servicio', () => {
     const opciones = opcionesDeDestino(servicios);
-    expect(opciones.map((o) => o.label)).toEqual(['Todas mis consultas', 'Electrocardiograma', 'Holter (desactivado)']);
+    expect(opciones.map((o) => o.label)).toEqual(['Todas mis consultas', 'Electrocardiograma', 'Holter']);
     expect(opciones[0]!.value).toBe(VALOR_TODAS_MIS_CONSULTAS);
   });
 
   it('un servicio desactivado lo dice, no se esconde', () => {
-    const holter = opcionesDeDestino(servicios).find((o) => o.label.startsWith('Holter'));
-    expect(holter?.label).toBe('Holter (desactivado)');
+    const holter = opcionesDeDestino(servicios).find((o) => o.label === 'Holter');
+    expect(holter?.description).toBe('Servicio desactivado');
   });
 
   it('sin servicios queda «Todas mis consultas»: la opción no depende de la lista', () => {

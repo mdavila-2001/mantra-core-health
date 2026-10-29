@@ -16,7 +16,7 @@ import { entrar, irA } from './support/sesion';
  * Y de paso, lo que el propietario pidió el 25/09/2026: la rejilla no ofrece
  * «Medición» ni «Internación», y el menú lateral no tiene «Notas médicas».
  */
-const OUTPUT = join('docs', 'trabajo', '2026-09-25-encuentro-clinico', 'c1', 'evidencia', 'visual');
+const OUTPUT = join('artifacts', 'evidencia', '2026-09-25-encuentro-clinico', 'c1', 'evidencia', 'visual');
 const DOCTOR: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',

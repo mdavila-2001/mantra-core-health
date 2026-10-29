@@ -1,0 +1,1666 @@
+[
+  {
+    "viewport": "escritorio-1920",
+    "pagina": "12-central-con-punto",
+    "vw": 1920,
+    "bloque": {
+      "izq": 113,
+      "der": 1807,
+      "arriba": 838,
+      "ancho": 1694
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 113,
+        "der": 954,
+        "arriba": 846,
+        "ancho": 841
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 966,
+        "der": 1807,
+        "arriba": 846,
+        "ancho": 841
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 113,
+        "der": 1807,
+        "arriba": 947,
+        "ancho": 1694
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 126,
+        "der": 941,
+        "arriba": 880,
+        "ancho": 815
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 979,
+        "der": 1794,
+        "arriba": 880,
+        "ancho": 815
+      }
+    ],
+    "renglones": [
+      2,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1920",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 1920,
+    "bloque": {
+      "izq": 130,
+      "der": 1790,
+      "arriba": 969,
+      "ancho": 1660
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 130,
+        "der": 675,
+        "arriba": 977,
+        "ancho": 545
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 169,
+        "der": 662,
+        "arriba": 1003,
+        "ancho": 493
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1920",
+    "pagina": "15-sucursal-completa",
+    "vw": 1920,
+    "bloque": {
+      "izq": 130,
+      "der": 1790,
+      "arriba": 940,
+      "ancho": 1660
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 130,
+        "der": 675,
+        "arriba": 948,
+        "ancho": 545
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 687,
+        "der": 1233,
+        "arriba": 948,
+        "ancho": 545
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 1245,
+        "der": 1790,
+        "arriba": 948,
+        "ancho": 545
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 130,
+        "der": 1790,
+        "arriba": 1049,
+        "ancho": 1660
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 169,
+        "der": 662,
+        "arriba": 974,
+        "ancho": 493
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 700,
+        "der": 1220,
+        "arriba": 982,
+        "ancho": 519
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 1258,
+        "der": 1777,
+        "arriba": 982,
+        "ancho": 519
+      }
+    ],
+    "renglones": [
+      3,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1440",
+    "pagina": "12-central-con-punto",
+    "vw": 1440,
+    "bloque": {
+      "izq": 113,
+      "der": 1327,
+      "arriba": 818,
+      "ancho": 1214
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 113,
+        "der": 714,
+        "arriba": 826,
+        "ancho": 601
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 726,
+        "der": 1327,
+        "arriba": 826,
+        "ancho": 601
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 113,
+        "der": 1327,
+        "arriba": 927,
+        "ancho": 1214
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 126,
+        "der": 701,
+        "arriba": 860,
+        "ancho": 575
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 739,
+        "der": 1314,
+        "arriba": 860,
+        "ancho": 575
+      }
+    ],
+    "renglones": [
+      2,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1440",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 1440,
+    "bloque": {
+      "izq": 130,
+      "der": 1310,
+      "arriba": 945,
+      "ancho": 1180
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 130,
+        "der": 515,
+        "arriba": 953,
+        "ancho": 385
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 169,
+        "der": 502,
+        "arriba": 979,
+        "ancho": 333
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1440",
+    "pagina": "15-sucursal-completa",
+    "vw": 1440,
+    "bloque": {
+      "izq": 130,
+      "der": 1310,
+      "arriba": 916,
+      "ancho": 1180
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 130,
+        "der": 515,
+        "arriba": 924,
+        "ancho": 385
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 527,
+        "der": 913,
+        "arriba": 924,
+        "ancho": 385
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 925,
+        "der": 1310,
+        "arriba": 924,
+        "ancho": 385
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 130,
+        "der": 1310,
+        "arriba": 1025,
+        "ancho": 1180
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 169,
+        "der": 502,
+        "arriba": 950,
+        "ancho": 333
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 540,
+        "der": 900,
+        "arriba": 958,
+        "ancho": 359
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 938,
+        "der": 1297,
+        "arriba": 958,
+        "ancho": 359
+      }
+    ],
+    "renglones": [
+      3,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-1024",
+    "pagina": "12-central-con-punto",
+    "vw": 1024,
+    "bloque": {
+      "izq": 94,
+      "der": 930,
+      "arriba": 839,
+      "ancho": 835
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 94,
+        "der": 506,
+        "arriba": 847,
+        "ancho": 412
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 518,
+        "der": 930,
+        "arriba": 847,
+        "ancho": 412
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 94,
+        "der": 930,
+        "arriba": 948,
+        "ancho": 835
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 107,
+        "der": 493,
+        "arriba": 881,
+        "ancho": 386
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 531,
+        "der": 917,
+        "arriba": 881,
+        "ancho": 386
+      }
+    ],
+    "renglones": [
+      2,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-1024",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 1024,
+    "bloque": {
+      "izq": 111,
+      "der": 913,
+      "arriba": 966,
+      "ancho": 801
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 111,
+        "der": 506,
+        "arriba": 974,
+        "ancho": 395
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 150,
+        "der": 493,
+        "arriba": 1000,
+        "ancho": 343
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-1024",
+    "pagina": "15-sucursal-completa",
+    "vw": 1024,
+    "bloque": {
+      "izq": 111,
+      "der": 913,
+      "arriba": 937,
+      "ancho": 801
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 111,
+        "der": 506,
+        "arriba": 945,
+        "ancho": 395
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 518,
+        "der": 913,
+        "arriba": 945,
+        "ancho": 395
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 111,
+        "der": 506,
+        "arriba": 1046,
+        "ancho": 395
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 111,
+        "der": 913,
+        "arriba": 1147,
+        "ancho": 801
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 150,
+        "der": 493,
+        "arriba": 971,
+        "ancho": 343
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 531,
+        "der": 900,
+        "arriba": 979,
+        "ancho": 369
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 124,
+        "der": 493,
+        "arriba": 1080,
+        "ancho": 369
+      }
+    ],
+    "renglones": [
+      2,
+      1,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-768",
+    "pagina": "12-central-con-punto",
+    "vw": 768,
+    "bloque": {
+      "izq": 49,
+      "der": 719,
+      "arriba": 872,
+      "ancho": 670
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 49,
+        "der": 378,
+        "arriba": 880,
+        "ancho": 329
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 390,
+        "der": 719,
+        "arriba": 880,
+        "ancho": 329
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 49,
+        "der": 719,
+        "arriba": 989,
+        "ancho": 670
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 66,
+        "der": 361,
+        "arriba": 918,
+        "ancho": 295
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 407,
+        "der": 702,
+        "arriba": 918,
+        "ancho": 295
+      }
+    ],
+    "renglones": [
+      2,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-768",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 768,
+    "bloque": {
+      "izq": 66,
+      "der": 702,
+      "arriba": 958,
+      "ancho": 636
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 66,
+        "der": 378,
+        "arriba": 966,
+        "ancho": 312
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 109,
+        "der": 361,
+        "arriba": 992,
+        "ancho": 252
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-768",
+    "pagina": "15-sucursal-completa",
+    "vw": 768,
+    "bloque": {
+      "izq": 66,
+      "der": 702,
+      "arriba": 929,
+      "ancho": 636
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 66,
+        "der": 378,
+        "arriba": 937,
+        "ancho": 312
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 390,
+        "der": 702,
+        "arriba": 937,
+        "ancho": 312
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 66,
+        "der": 378,
+        "arriba": 1046,
+        "ancho": 312
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 66,
+        "der": 702,
+        "arriba": 1155,
+        "ancho": 636
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 109,
+        "der": 361,
+        "arriba": 963,
+        "ancho": 252
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 407,
+        "der": 685,
+        "arriba": 975,
+        "ancho": 278
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 83,
+        "der": 361,
+        "arriba": 1084,
+        "ancho": 278
+      }
+    ],
+    "renglones": [
+      2,
+      1,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "movil-390",
+    "pagina": "12-central-con-punto",
+    "vw": 390,
+    "bloque": {
+      "izq": 41,
+      "der": 349,
+      "arriba": 913,
+      "ancho": 308
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 41,
+        "der": 349,
+        "arriba": 921,
+        "ancho": 308
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 41,
+        "der": 349,
+        "arriba": 1047,
+        "ancho": 308
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 41,
+        "der": 349,
+        "arriba": 1156,
+        "ancho": 308
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 58,
+        "der": 332,
+        "arriba": 959,
+        "ancho": 274
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1085,
+        "ancho": 274
+      },
+      {
+        "id": "medical-center-signup-central-map-localidad-ficha-departamento",
+        "izq": 75,
+        "der": 315,
+        "arriba": 1846,
+        "ancho": 240
+      },
+      {
+        "id": "medical-center-signup-central-map-localidad-ficha-provincia",
+        "izq": 75,
+        "der": 315,
+        "arriba": 1929,
+        "ancho": 240
+      },
+      {
+        "id": "medical-center-signup-central-map-localidad-ficha-municipio",
+        "izq": 75,
+        "der": 315,
+        "arriba": 2012,
+        "ancho": 240
+      }
+    ],
+    "renglones": [
+      1,
+      1,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "movil-390",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 390,
+    "bloque": {
+      "izq": 58,
+      "der": 332,
+      "arriba": 1078,
+      "ancho": 274
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1086,
+        "ancho": 274
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 101,
+        "der": 315,
+        "arriba": 1112,
+        "ancho": 214
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "movil-390",
+    "pagina": "15-sucursal-completa",
+    "vw": 390,
+    "bloque": {
+      "izq": 58,
+      "der": 332,
+      "arriba": 1076,
+      "ancho": 274
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1084,
+        "ancho": 274
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1167,
+        "ancho": 274
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1293,
+        "ancho": 274
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1402,
+        "ancho": 274
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 101,
+        "der": 315,
+        "arriba": 1110,
+        "ancho": 214
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 75,
+        "der": 315,
+        "arriba": 1205,
+        "ancho": 240
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 75,
+        "der": 315,
+        "arriba": 1331,
+        "ancho": 240
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-localidad-ficha-departamento",
+        "izq": 92,
+        "der": 298,
+        "arriba": 2054,
+        "ancho": 206
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-localidad-ficha-provincia",
+        "izq": 92,
+        "der": 298,
+        "arriba": 2137,
+        "ancho": 206
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-localidad-ficha-municipio",
+        "izq": 92,
+        "der": 298,
+        "arriba": 2220,
+        "ancho": 206
+      }
+    ],
+    "renglones": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1920-oscuro",
+    "pagina": "12-central-con-punto",
+    "vw": 1920,
+    "bloque": {
+      "izq": 113,
+      "der": 1807,
+      "arriba": 838,
+      "ancho": 1694
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 113,
+        "der": 954,
+        "arriba": 846,
+        "ancho": 841
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 966,
+        "der": 1807,
+        "arriba": 846,
+        "ancho": 841
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 113,
+        "der": 1807,
+        "arriba": 947,
+        "ancho": 1694
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 126,
+        "der": 941,
+        "arriba": 880,
+        "ancho": 815
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 979,
+        "der": 1794,
+        "arriba": 880,
+        "ancho": 815
+      }
+    ],
+    "renglones": [
+      2,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1920-oscuro",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 1920,
+    "bloque": {
+      "izq": 130,
+      "der": 1790,
+      "arriba": 969,
+      "ancho": 1660
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 130,
+        "der": 675,
+        "arriba": 977,
+        "ancho": 545
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 169,
+        "der": 662,
+        "arriba": 1003,
+        "ancho": 493
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1920-oscuro",
+    "pagina": "15-sucursal-completa",
+    "vw": 1920,
+    "bloque": {
+      "izq": 130,
+      "der": 1790,
+      "arriba": 940,
+      "ancho": 1660
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 130,
+        "der": 675,
+        "arriba": 948,
+        "ancho": 545
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 687,
+        "der": 1233,
+        "arriba": 948,
+        "ancho": 545
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 1245,
+        "der": 1790,
+        "arriba": 948,
+        "ancho": 545
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 130,
+        "der": 1790,
+        "arriba": 1049,
+        "ancho": 1660
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 169,
+        "der": 662,
+        "arriba": 974,
+        "ancho": 493
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 700,
+        "der": 1220,
+        "arriba": 982,
+        "ancho": 519
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 1258,
+        "der": 1777,
+        "arriba": 982,
+        "ancho": 519
+      }
+    ],
+    "renglones": [
+      3,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1440-oscuro",
+    "pagina": "12-central-con-punto",
+    "vw": 1440,
+    "bloque": {
+      "izq": 113,
+      "der": 1327,
+      "arriba": 818,
+      "ancho": 1214
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 113,
+        "der": 714,
+        "arriba": 826,
+        "ancho": 601
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 726,
+        "der": 1327,
+        "arriba": 826,
+        "ancho": 601
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 113,
+        "der": 1327,
+        "arriba": 927,
+        "ancho": 1214
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 126,
+        "der": 701,
+        "arriba": 860,
+        "ancho": 575
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 739,
+        "der": 1314,
+        "arriba": 860,
+        "ancho": 575
+      }
+    ],
+    "renglones": [
+      2,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1440-oscuro",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 1440,
+    "bloque": {
+      "izq": 130,
+      "der": 1310,
+      "arriba": 945,
+      "ancho": 1180
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 130,
+        "der": 515,
+        "arriba": 953,
+        "ancho": 385
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 169,
+        "der": 502,
+        "arriba": 979,
+        "ancho": 333
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "escritorio-1440-oscuro",
+    "pagina": "15-sucursal-completa",
+    "vw": 1440,
+    "bloque": {
+      "izq": 130,
+      "der": 1310,
+      "arriba": 916,
+      "ancho": 1180
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 130,
+        "der": 515,
+        "arriba": 924,
+        "ancho": 385
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 527,
+        "der": 913,
+        "arriba": 924,
+        "ancho": 385
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 925,
+        "der": 1310,
+        "arriba": 924,
+        "ancho": 385
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 130,
+        "der": 1310,
+        "arriba": 1025,
+        "ancho": 1180
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 169,
+        "der": 502,
+        "arriba": 950,
+        "ancho": 333
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 540,
+        "der": 900,
+        "arriba": 958,
+        "ancho": 359
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 938,
+        "der": 1297,
+        "arriba": 958,
+        "ancho": 359
+      }
+    ],
+    "renglones": [
+      3,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-1024-oscuro",
+    "pagina": "12-central-con-punto",
+    "vw": 1024,
+    "bloque": {
+      "izq": 94,
+      "der": 930,
+      "arriba": 839,
+      "ancho": 835
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 94,
+        "der": 506,
+        "arriba": 847,
+        "ancho": 412
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 518,
+        "der": 930,
+        "arriba": 847,
+        "ancho": 412
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 94,
+        "der": 930,
+        "arriba": 948,
+        "ancho": 835
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 107,
+        "der": 493,
+        "arriba": 881,
+        "ancho": 386
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 531,
+        "der": 917,
+        "arriba": 881,
+        "ancho": 386
+      }
+    ],
+    "renglones": [
+      2,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-1024-oscuro",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 1024,
+    "bloque": {
+      "izq": 111,
+      "der": 913,
+      "arriba": 966,
+      "ancho": 801
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 111,
+        "der": 506,
+        "arriba": 974,
+        "ancho": 395
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 150,
+        "der": 493,
+        "arriba": 1000,
+        "ancho": 343
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-1024-oscuro",
+    "pagina": "15-sucursal-completa",
+    "vw": 1024,
+    "bloque": {
+      "izq": 111,
+      "der": 913,
+      "arriba": 937,
+      "ancho": 801
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 111,
+        "der": 506,
+        "arriba": 945,
+        "ancho": 395
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 518,
+        "der": 913,
+        "arriba": 945,
+        "ancho": 395
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 111,
+        "der": 506,
+        "arriba": 1046,
+        "ancho": 395
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 111,
+        "der": 913,
+        "arriba": 1147,
+        "ancho": 801
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 150,
+        "der": 493,
+        "arriba": 971,
+        "ancho": 343
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 531,
+        "der": 900,
+        "arriba": 979,
+        "ancho": 369
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 124,
+        "der": 493,
+        "arriba": 1080,
+        "ancho": 369
+      }
+    ],
+    "renglones": [
+      2,
+      1,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-768-oscuro",
+    "pagina": "12-central-con-punto",
+    "vw": 768,
+    "bloque": {
+      "izq": 49,
+      "der": 719,
+      "arriba": 872,
+      "ancho": 670
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 49,
+        "der": 378,
+        "arriba": 880,
+        "ancho": 329
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 390,
+        "der": 719,
+        "arriba": 880,
+        "ancho": 329
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 49,
+        "der": 719,
+        "arriba": 989,
+        "ancho": 670
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 66,
+        "der": 361,
+        "arriba": 918,
+        "ancho": 295
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 407,
+        "der": 702,
+        "arriba": 918,
+        "ancho": 295
+      }
+    ],
+    "renglones": [
+      2,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-768-oscuro",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 768,
+    "bloque": {
+      "izq": 66,
+      "der": 702,
+      "arriba": 958,
+      "ancho": 636
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 66,
+        "der": 378,
+        "arriba": 966,
+        "ancho": 312
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 109,
+        "der": 361,
+        "arriba": 992,
+        "ancho": 252
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "tablet-768-oscuro",
+    "pagina": "15-sucursal-completa",
+    "vw": 768,
+    "bloque": {
+      "izq": 66,
+      "der": 702,
+      "arriba": 929,
+      "ancho": 636
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 66,
+        "der": 378,
+        "arriba": 937,
+        "ancho": 312
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 390,
+        "der": 702,
+        "arriba": 937,
+        "ancho": 312
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 66,
+        "der": 378,
+        "arriba": 1046,
+        "ancho": 312
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 66,
+        "der": 702,
+        "arriba": 1155,
+        "ancho": 636
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 109,
+        "der": 361,
+        "arriba": 963,
+        "ancho": 252
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 407,
+        "der": 685,
+        "arriba": 975,
+        "ancho": 278
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 83,
+        "der": 361,
+        "arriba": 1084,
+        "ancho": 278
+      }
+    ],
+    "renglones": [
+      2,
+      1,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "movil-390-oscuro",
+    "pagina": "12-central-con-punto",
+    "vw": 390,
+    "bloque": {
+      "izq": 41,
+      "der": 349,
+      "arriba": 913,
+      "ancho": 308
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 41,
+        "der": 349,
+        "arriba": 921,
+        "ancho": 308
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 41,
+        "der": 349,
+        "arriba": 1047,
+        "ancho": 308
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 41,
+        "der": 349,
+        "arriba": 1156,
+        "ancho": 308
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-central-geocoding-notice",
+        "izq": 58,
+        "der": 332,
+        "arriba": 959,
+        "ancho": 274
+      },
+      {
+        "id": "medical-center-signup-central-map-distrito",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1085,
+        "ancho": 274
+      },
+      {
+        "id": "medical-center-signup-central-map-localidad-ficha-departamento",
+        "izq": 75,
+        "der": 315,
+        "arriba": 1846,
+        "ancho": 240
+      },
+      {
+        "id": "medical-center-signup-central-map-localidad-ficha-provincia",
+        "izq": 75,
+        "der": 315,
+        "arriba": 1929,
+        "ancho": 240
+      },
+      {
+        "id": "medical-center-signup-central-map-localidad-ficha-municipio",
+        "izq": 75,
+        "der": 315,
+        "arriba": 2012,
+        "ancho": 240
+      }
+    ],
+    "renglones": [
+      1,
+      1,
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "movil-390-oscuro",
+    "pagina": "14-sucursal-incompleta",
+    "vw": 390,
+    "bloque": {
+      "izq": 58,
+      "der": 332,
+      "arriba": 1078,
+      "ancho": 274
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1086,
+        "ancho": 274
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 101,
+        "der": 315,
+        "arriba": 1112,
+        "ancho": 214
+      }
+    ],
+    "renglones": [
+      1
+    ],
+    "desborde": []
+  },
+  {
+    "viewport": "movil-390-oscuro",
+    "pagina": "15-sucursal-completa",
+    "vw": 390,
+    "bloque": {
+      "izq": 58,
+      "der": 332,
+      "arriba": 1076,
+      "ancho": 274
+    },
+    "celdas": [
+      {
+        "tag": "app-form-field",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1084,
+        "ancho": 274
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1167,
+        "ancho": 274
+      },
+      {
+        "tag": "app-form-field",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1293,
+        "ancho": 274
+      },
+      {
+        "tag": "app-location-picker",
+        "izq": 58,
+        "der": 332,
+        "arriba": 1402,
+        "ancho": 274
+      }
+    ],
+    "casillas": [
+      {
+        "id": "medical-center-signup-sucursal-1-nombre",
+        "izq": 101,
+        "der": 315,
+        "arriba": 1110,
+        "ancho": 214
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-geocoding-notice",
+        "izq": 75,
+        "der": 315,
+        "arriba": 1205,
+        "ancho": 240
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-distrito",
+        "izq": 75,
+        "der": 315,
+        "arriba": 1331,
+        "ancho": 240
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-localidad-ficha-departamento",
+        "izq": 92,
+        "der": 298,
+        "arriba": 2054,
+        "ancho": 206
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-localidad-ficha-provincia",
+        "izq": 92,
+        "der": 298,
+        "arriba": 2137,
+        "ancho": 206
+      },
+      {
+        "id": "medical-center-signup-sucursal-1-map-localidad-ficha-municipio",
+        "izq": 92,
+        "der": 298,
+        "arriba": 2220,
+        "ancho": 206
+      }
+    ],
+    "renglones": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "desborde": []
+  }
+]

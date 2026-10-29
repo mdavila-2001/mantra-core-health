@@ -112,7 +112,7 @@ export interface CreateInsurancePlanInput {
  * endpoint y cambiar la moneda reinterpretaría todos los importes de sus
  * cláusulas—.
  *
- * **Contrato pendiente en la API**: `PUT /insurance-plans/:planId` hoy existe
+ * **La API no publica este contrato**: `PUT /insurance-plans/:planId` existe
  * sólo en la maqueta de `mockup`.
  */
 export interface UpdateInsurancePlanInput {
@@ -257,8 +257,8 @@ export interface CarrierDetail extends CarrierSummary {
    puede hablar. El catálogo comercial completo (`GET /insurance-carriers/:id`)
    sólo lo lee la propia aseguradora; esto es la vitrina.
 
-   **Contrato pendiente en la API** (P48 de `PENDIENTES-BACKEND.md`): hoy
-   existe sólo en la maqueta de `mockup`. */
+   **La API no publica este contrato** (P48): sólo existe en la maqueta de
+   `mockup`. */
 
 /** Un broker que vende productos de la aseguradora, con cómo escribirle. */
 export interface MarketplaceBroker {
@@ -541,6 +541,44 @@ export interface ClaimDispute {
   readonly filingDeadline: Date | null;
 }
 
+/**
+ * Disponibilidad del desglose de liquidación (Tarea 3 · H8, CA-3.1/CA-3.3).
+ * Idéntica semántica que `InsuranceSettlementAvailability` del paciente.
+ */
+export type ClaimSettlementAvailability =
+  'AVAILABLE' | 'PENDING_PUBLICATION' | 'UNDER_REVIEW' | 'NOT_AVAILABLE';
+
+/** Una exclusión formal del desglose, con su cita de cláusula. */
+export interface ClaimExclusion {
+  readonly claimLineId: string;
+  readonly itemName: string | null;
+  readonly amount: string;
+  readonly policyClauseReference: string;
+  readonly denialRationale: string | null;
+}
+
+/**
+ * El desglose conciliado de liquidación (contrato H8 §3–§5):
+ * `totalBilledAmount = totalApprovedAmount + totalPatientAmount +
+ * totalDeniedAmount`. `reconciled` es `true` sólo cuando esa ecuación cuadra
+ * al centavo — un `false` no se tapa redondeando.
+ */
+export interface ClaimSettlementBreakdown {
+  readonly availability: ClaimSettlementAvailability;
+  readonly totalBilledAmount: string | null;
+  readonly totalApprovedAmount: string | null;
+  readonly totalPatientAmount: string | null;
+  readonly totalDeniedAmount: string | null;
+  readonly reconciled: boolean;
+  readonly exclusions: readonly ClaimExclusion[];
+}
+
+/** La EOB de la versión vigente, si ya se publicó. */
+export interface ClaimEob {
+  readonly id: string;
+  readonly publishedAt: Date;
+}
+
 /** El detalle completo de una solicitud. */
 export interface ClaimDetail {
   readonly header: ClaimListItem;
@@ -551,6 +589,238 @@ export interface ClaimDetail {
   readonly adjudication: ClaimAdjudication | null;
   readonly adjudicationHistory: readonly ClaimAdjudication[];
   readonly disputes: readonly ClaimDispute[];
+  readonly settlement: ClaimSettlementBreakdown;
+  readonly eob: ClaimEob | null;
+}
+
+/* ---- «Mis solicitudes»: lo que decidió la aseguradora -------------------
+   La misma `insurance_claims` que dictamina la aseguradora, vista por quien
+   presentó o recibió la prestación: el paciente, el médico, el laboratorio o
+   el centro de imagenología. El lado lo decide el servidor por la sesión.
+   Contrato: `docs/contracts/my-insurance-claims.md` (P56). */
+
+/** De qué lado mira la sesión. `NONE`: la cuenta no presenta solicitudes. */
+export type MyClaimsView = 'PATIENT' | 'PRACTITIONER' | 'LABORATORY' | 'IMAGING' | 'NONE';
+
+/** El dictamen, sin quién de la aseguradora lo firmó. */
+export interface MyClaimDecision {
+  readonly outcome: ReceivedClaimOutcome;
+  readonly decidedAt: Date;
+  /** Obligatorio al rechazar o aprobar en parte; opcional al aprobar. */
+  readonly reason: string | null;
+}
+
+/** Motivos cerrados por los que un paciente objeta un cobro (REQ-16-032). */
+export type PatientObjectionReason = 'AMOUNT_DIFFERS' | 'SERVICE_NOT_RECEIVED' | 'NOT_INFORMED';
+
+/** Cómo entra cada servicio al cobro: con seguro, o el total como particular. */
+export type PatientChargeKind = 'INSURED_SHARE' | 'PRIVATE_FULL';
+
+/** Un servicio del desglose: lo que cubre el plan y lo que paga cada parte. Cadenas decimales. */
+export interface MyClaimBreakdownLine {
+  readonly key: string;
+  readonly service: string;
+  readonly billedAmount: string;
+  readonly coveragePercent: string;
+  readonly copayAmount: string;
+  readonly patientAmount: string;
+  readonly insurerAmount: string;
+  readonly chargeKind: PatientChargeKind;
+  readonly authorizationStatus: PriorAuthorizationQuoteStatus | null;
+}
+
+/** El desglose completo del cobro al paciente. El front no lo recalcula. */
+export interface MyClaimBreakdown {
+  readonly currencyCode: string | null;
+  readonly patientTotal: string;
+  readonly insurerTotal: string;
+  readonly lines: readonly MyClaimBreakdownLine[];
+}
+
+/** La objeción que el paciente presentó sobre un cobro. */
+export interface MyClaimObjection {
+  readonly id: string;
+  readonly reason: PatientObjectionReason;
+  readonly submittedAt: Date;
+  readonly status: 'OPEN' | 'RESOLVED';
+}
+
+/** Una solicitud de «Mis solicitudes». */
+export interface MyClaim {
+  readonly id: string;
+  readonly claimIdentifier: string;
+  /** `null` en la vista del paciente: es quien mira. */
+  readonly patientName: string | null;
+  readonly practitioner: Omit<ReceivedClaimPractitioner, 'id'> | null;
+  readonly providerName: string;
+  readonly service: InsuranceConcept | null;
+  readonly additionalServiceCount: number;
+  readonly billedTotal: Money;
+  /** `null` mientras no haya dictamen. **No es cero.** */
+  readonly approvedTotal: Money | null;
+  readonly submittedAt: Date | null;
+  /** Día de la atención: es una fecha, no un instante. */
+  readonly serviceDate: Date | null;
+  readonly insurerName: string;
+  readonly planName: string | null;
+  readonly status: InsuranceConcept | null;
+  /** `null` mientras la aseguradora no decidió. */
+  readonly decision: MyClaimDecision | null;
+  /** El desglose del cobro al paciente. `null` fuera de su vista y en las solicitudes que el servidor no desglosa. */
+  readonly breakdown: MyClaimBreakdown | null;
+  /** La objeción del paciente, si la presentó. `null` si no. */
+  readonly patientObjection: MyClaimObjection | null;
+}
+
+export interface MyClaimList {
+  readonly view: MyClaimsView;
+  readonly items: readonly MyClaim[];
+  /** `true` si el servidor recortó al tope. */
+  readonly truncated: boolean;
+}
+
+/* ============================================================================
+   Campañas preventivas de la aseguradora (Tarea 4 · M-06)
+
+   Proceso 4 del cliente, «Módulo de promociones»: la aseguradora publica
+   campañas de prevención junto a laboratorios e importadoras y el afiliado las
+   ve en su portal. Contrato de la API:
+   `docs/contracts/insurer-preventive-campaigns.md`.
+
+   La patología (CIE-10) sólo DESCRIBE lo que la campaña previene: nunca segmenta
+   afiliados por su historia clínica (decisión D4).
+   ========================================================================== */
+
+export type CampaignType = 'LABORATORY' | 'PHARMACY' | 'DIAGNOSTIC_IMAGING' | 'VACCINATION';
+
+export type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'EXPIRED';
+
+/** A qué estados puede llevar un operador una campaña (nunca `DRAFT`). */
+export type CampaignTargetStatus = Exclude<CampaignStatus, 'DRAFT'>;
+
+/** `SPONSOR`: importadora o fabricante que financia. `PROVIDER`: dónde se atiende. */
+export type CampaignPartnerRole = 'SPONSOR' | 'PROVIDER';
+
+export type CampaignPartnerType =
+  'IMPORTER' | 'MANUFACTURER' | 'LABORATORY' | 'PHARMACY' | 'MEDICAL_CENTER';
+
+/** La patología que la campaña previene, resuelta desde el catálogo CIE-10. */
+export interface CampaignCondition {
+  readonly code: string;
+  readonly display: string | null;
+}
+
+/** Un aliado tal como lo ve la aseguradora. */
+export interface CampaignPartner {
+  readonly id: string;
+  readonly role: CampaignPartnerRole;
+  readonly type: CampaignPartnerType;
+  readonly name: string;
+  readonly networkProviderMembershipId: string | null;
+}
+
+/** Una campaña tal como la ve la aseguradora que la creó. */
+export interface InsuranceCampaign {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly campaignType: CampaignType;
+  readonly status: CampaignStatus;
+  readonly targetCondition: CampaignCondition | null;
+  /** 0..100. `100` significa copago Bs. 0. */
+  readonly copayBonusPercentage: number;
+  /** Día civil, a medianoche local (ver `maybeDateOnly`). */
+  readonly validFrom: Date;
+  readonly validTo: Date;
+  readonly activatedAt: Date | null;
+  readonly partners: readonly CampaignPartner[];
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+/** Filtros y paginación del listado administrativo. */
+export interface CampaignQuery {
+  readonly type?: CampaignType;
+  readonly status?: CampaignStatus;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Página del listado, paginada por cursor opaco. */
+export interface CampaignPage {
+  readonly items: readonly InsuranceCampaign[];
+  /** Se reenvía tal cual; no se interpreta. */
+  readonly nextCursor: string | null;
+}
+
+/** Un aliado al crear la campaña. */
+export interface CreateCampaignPartnerInput {
+  readonly role: CampaignPartnerRole;
+  readonly type: CampaignPartnerType;
+  readonly name: string;
+}
+
+/** Cuerpo de `POST /insurance-campaigns`. Las fechas viajan como `AAAA-MM-DD`. */
+export interface CreateCampaignInput {
+  readonly code: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly campaignType: CampaignType;
+  /** Código CIE-10, p. ej. `I10`. Sólo descriptivo. */
+  readonly targetConditionCode?: string;
+  readonly copayBonusPercentage: number;
+  readonly validFrom: string;
+  readonly validTo: string;
+  readonly partners: readonly CreateCampaignPartnerInput[];
+  /** Si es `true`, la campaña nace activa en vez de en borrador. */
+  readonly activate?: boolean;
+}
+
+/** Aliado tal como lo ve el afiliado: sin ningún identificador interno. */
+export interface PatientCampaignPartner {
+  readonly role: CampaignPartnerRole;
+  readonly type: CampaignPartnerType;
+  readonly name: string;
+}
+
+/**
+ * Una campaña vigente para el afiliado. Sólo llegan campañas activas, dentro de
+ * su vigencia y de la aseguradora de una cobertura vigente propia.
+ */
+export interface PatientCampaign {
+  readonly id: string;
+  readonly code: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly campaignType: CampaignType;
+  readonly targetCondition: CampaignCondition | null;
+  readonly copayBonusPercentage: number;
+  readonly validFrom: Date;
+  readonly validTo: Date;
+  readonly carrierName: string;
+  readonly partners: readonly PatientCampaignPartner[];
+}
+
+/** Entrada para adjudicación de línea de reclamo. */
+export interface LineAdjudicationInput {
+  readonly insuranceClaimLineId: string;
+  readonly decision: 'APPROVED' | 'DENIED';
+  readonly approvedAmount?: string;
+  readonly patientAmount?: string;
+  readonly deniedAmount?: string;
+  readonly policyClauseReference?: string;
+  readonly denialRationale?: string;
+}
+
+/** Cuerpo de `POST /insurance-claims/:id/adjudications`. */
+export interface CreateAdjudicationInput {
+  readonly outcome: 'APPROVED' | 'DENIED';
+  readonly dispositionText?: string;
+  readonly totalApprovedAmount?: string;
+  readonly totalPatientAmount?: string;
+  readonly totalDeniedAmount?: string;
+  readonly lineAdjudications: readonly LineAdjudicationInput[];
 }
 
 /* ---- solicitudes recibidas por la aseguradora ----------------
@@ -659,223 +929,6 @@ export interface ReceivedClaimList {
   readonly items: readonly ReceivedClaim[];
   /** `true` si el servidor recortó al tope: hay más solicitudes que las recibidas. */
   readonly truncated: boolean;
-}
-
-/* ---- «Mis solicitudes»: lo que decidió la aseguradora -------------------
-   La misma `insurance_claims` que dictamina la aseguradora, vista por quien
-   presentó o recibió la prestación: el paciente, el médico, el laboratorio o
-   el centro de imagenología. El lado lo decide el servidor por la sesión.
-   Contrato: `docs/contracts/my-insurance-claims.md` (P56). */
-
-/** De qué lado mira la sesión. `NONE`: la cuenta no presenta solicitudes. */
-export type MyClaimsView = 'PATIENT' | 'PRACTITIONER' | 'LABORATORY' | 'IMAGING' | 'NONE';
-
-/** El dictamen, sin quién de la aseguradora lo firmó. */
-export interface MyClaimDecision {
-  readonly outcome: ReceivedClaimOutcome;
-  readonly decidedAt: Date;
-  /** Obligatorio al rechazar o aprobar en parte; opcional al aprobar. */
-  readonly reason: string | null;
-}
-
-/** Motivos cerrados por los que un paciente objeta un cobro (REQ-16-032). */
-export type PatientObjectionReason = 'AMOUNT_DIFFERS' | 'SERVICE_NOT_RECEIVED' | 'NOT_INFORMED';
-
-/** Cómo entra cada servicio al cobro: con seguro, o el total como particular. */
-export type PatientChargeKind = 'INSURED_SHARE' | 'PRIVATE_FULL';
-
-/** Un servicio del desglose: lo que cubre el plan y lo que paga cada parte. Cadenas decimales. */
-export interface MyClaimBreakdownLine {
-  readonly key: string;
-  readonly service: string;
-  readonly billedAmount: string;
-  readonly coveragePercent: string;
-  readonly copayAmount: string;
-  readonly patientAmount: string;
-  readonly insurerAmount: string;
-  readonly chargeKind: PatientChargeKind;
-  readonly authorizationStatus: PriorAuthorizationQuoteStatus | null;
-}
-
-/** El desglose completo del cobro al paciente. El front no lo recalcula. */
-export interface MyClaimBreakdown {
-  readonly currencyCode: string | null;
-  readonly patientTotal: string;
-  readonly insurerTotal: string;
-  readonly lines: readonly MyClaimBreakdownLine[];
-}
-
-/** La objeción que el paciente presentó sobre un cobro. */
-export interface MyClaimObjection {
-  readonly id: string;
-  readonly reason: PatientObjectionReason;
-  readonly submittedAt: Date;
-  readonly status: 'OPEN' | 'RESOLVED';
-}
-
-/** Una solicitud de «Mis solicitudes». */
-export interface MyClaim {
-  readonly id: string;
-  readonly claimIdentifier: string;
-  /** `null` en la vista del paciente: es quien mira. */
-  readonly patientName: string | null;
-  readonly practitioner: Omit<ReceivedClaimPractitioner, 'id'> | null;
-  readonly providerName: string;
-  readonly service: InsuranceConcept | null;
-  readonly additionalServiceCount: number;
-  readonly billedTotal: Money;
-  /** `null` mientras no haya dictamen. **No es cero.** */
-  readonly approvedTotal: Money | null;
-  readonly submittedAt: Date | null;
-  /** Día de la atención: es una fecha, no un instante. */
-  readonly serviceDate: Date | null;
-  readonly insurerName: string;
-  readonly planName: string | null;
-  readonly status: InsuranceConcept | null;
-  /** `null` mientras la aseguradora no decidió. */
-  readonly decision: MyClaimDecision | null;
-  /** El desglose del cobro al paciente. `null` fuera de su vista y mientras la API no lo entregue (P63). */
-  readonly breakdown: MyClaimBreakdown | null;
-  /** La objeción del paciente, si la presentó. `null` si no. */
-  readonly patientObjection: MyClaimObjection | null;
-}
-
-export interface MyClaimList {
-  readonly view: MyClaimsView;
-  readonly items: readonly MyClaim[];
-  /** `true` si el servidor recortó al tope. */
-  readonly truncated: boolean;
-}
-
-/* ============================================================================
-   Campañas preventivas de la aseguradora (Tarea 4 · M-06)
-
-   Proceso 4 del cliente, «Módulo de promociones»: la aseguradora publica
-   campañas de prevención junto a laboratorios e importadoras y el afiliado las
-   ve en su portal. Contrato de la API:
-   `docs/contracts/insurer-preventive-campaigns.md`.
-
-   La patología (CIE-10) sólo DESCRIBE lo que la campaña previene: nunca segmenta
-   afiliados por su historia clínica (decisión D4).
-   ========================================================================== */
-
-export type CampaignType =
-  | 'LABORATORY'
-  | 'PHARMACY'
-  | 'DIAGNOSTIC_IMAGING'
-  | 'VACCINATION';
-
-export type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'EXPIRED';
-
-/** A qué estados puede llevar un operador una campaña (nunca `DRAFT`). */
-export type CampaignTargetStatus = Exclude<CampaignStatus, 'DRAFT'>;
-
-/** `SPONSOR`: importadora o fabricante que financia. `PROVIDER`: dónde se atiende. */
-export type CampaignPartnerRole = 'SPONSOR' | 'PROVIDER';
-
-export type CampaignPartnerType =
-  | 'IMPORTER'
-  | 'MANUFACTURER'
-  | 'LABORATORY'
-  | 'PHARMACY'
-  | 'MEDICAL_CENTER';
-
-/** La patología que la campaña previene, resuelta desde el catálogo CIE-10. */
-export interface CampaignCondition {
-  readonly code: string;
-  readonly display: string | null;
-}
-
-/** Un aliado tal como lo ve la aseguradora. */
-export interface CampaignPartner {
-  readonly id: string;
-  readonly role: CampaignPartnerRole;
-  readonly type: CampaignPartnerType;
-  readonly name: string;
-  readonly networkProviderMembershipId: string | null;
-}
-
-/** Una campaña tal como la ve la aseguradora que la creó. */
-export interface InsuranceCampaign {
-  readonly id: string;
-  readonly code: string;
-  readonly title: string;
-  readonly description: string | null;
-  readonly campaignType: CampaignType;
-  readonly status: CampaignStatus;
-  readonly targetCondition: CampaignCondition | null;
-  /** 0..100. `100` significa copago Bs. 0. */
-  readonly copayBonusPercentage: number;
-  /** Día civil, a medianoche local (ver `maybeDateOnly`). */
-  readonly validFrom: Date;
-  readonly validTo: Date;
-  readonly activatedAt: Date | null;
-  readonly partners: readonly CampaignPartner[];
-  readonly createdAt: Date;
-  readonly updatedAt: Date;
-}
-
-/** Filtros y paginación del listado administrativo. */
-export interface CampaignQuery {
-  readonly type?: CampaignType;
-  readonly status?: CampaignStatus;
-  readonly cursor?: string;
-  readonly limit?: number;
-}
-
-/** Página del listado, paginada por cursor opaco. */
-export interface CampaignPage {
-  readonly items: readonly InsuranceCampaign[];
-  /** Se reenvía tal cual; no se interpreta. */
-  readonly nextCursor: string | null;
-}
-
-/** Un aliado al crear la campaña. */
-export interface CreateCampaignPartnerInput {
-  readonly role: CampaignPartnerRole;
-  readonly type: CampaignPartnerType;
-  readonly name: string;
-}
-
-/** Cuerpo de `POST /insurance-campaigns`. Las fechas viajan como `AAAA-MM-DD`. */
-export interface CreateCampaignInput {
-  readonly code: string;
-  readonly title: string;
-  readonly description?: string;
-  readonly campaignType: CampaignType;
-  /** Código CIE-10, p. ej. `I10`. Sólo descriptivo. */
-  readonly targetConditionCode?: string;
-  readonly copayBonusPercentage: number;
-  readonly validFrom: string;
-  readonly validTo: string;
-  readonly partners: readonly CreateCampaignPartnerInput[];
-  /** Si es `true`, la campaña nace activa en vez de en borrador. */
-  readonly activate?: boolean;
-}
-
-/** Aliado tal como lo ve el afiliado: sin ningún identificador interno. */
-export interface PatientCampaignPartner {
-  readonly role: CampaignPartnerRole;
-  readonly type: CampaignPartnerType;
-  readonly name: string;
-}
-
-/**
- * Una campaña vigente para el afiliado. Sólo llegan campañas activas, dentro de
- * su vigencia y de la aseguradora de una cobertura vigente propia.
- */
-export interface PatientCampaign {
-  readonly id: string;
-  readonly code: string;
-  readonly title: string;
-  readonly description: string | null;
-  readonly campaignType: CampaignType;
-  readonly targetCondition: CampaignCondition | null;
-  readonly copayBonusPercentage: number;
-  readonly validFrom: Date;
-  readonly validTo: Date;
-  readonly carrierName: string;
-  readonly partners: readonly PatientCampaignPartner[];
 }
 
 /* --- Directorio autorizado de pacientes (`POST /insurance/patients/search`) --- */
@@ -1024,21 +1077,12 @@ export interface CreatedClaim {
   readonly lineIds?: readonly string[];
 }
 
-/**
- * Claves de la disputa que solo la maqueta acepta todavía (P63): el motivo de la
- * objeción del paciente. La API real no las declara; el cliente las quita al
- * hablar con ella.
- */
-export const CLAIM_DISPUTE_SIMULATOR_EXTENSIONS: readonly string[] = ['objectionReason'];
-
-/** Cobertura vigente de una persona, para el personal. Solo existe en la maqueta (P62). */
+/** Seguro de una persona, para quien cobra. No lleva póliza ni afiliado: la API no los entrega. */
 export interface PatientCoverageOption {
   readonly id: string;
   readonly insuranceCarrierId: string;
   readonly carrierName: string;
   readonly planName: string | null;
-  readonly policyIdentifier: string | null;
-  readonly memberIdentifier: string | null;
   readonly validityStatus: CoverageValidity;
   readonly currencyCode: string | null;
 }

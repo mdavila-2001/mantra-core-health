@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -31,7 +31,17 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import {
+  MapLocationPicker,
+  type Coordinates,
+  type LocalityFromPoint,
+  type TestIds,
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
+import {
+  addressLineFromPoint,
+  confirmedLocality,
+  samePoint,
+} from '../../../auth/shared-registration/point-locality';
 import { SiteBankQrDialog } from './site-bank-qr-dialog/site-bank-qr-dialog';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -47,15 +57,14 @@ import type { ReferenceOption } from '../../../../shared/components/molecules/re
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
-import { AppMap } from '../../../../shared/components/organisms/map/map';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/map/pin-mapa.types';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import {
   FilterBar,
 } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 
 const SITE_PHONE_PATTERN = /^[+]?[0-9 ()-]{6,}$/;
 
@@ -127,22 +136,21 @@ function telefonoDeSedeValido(value: string): boolean {
   imports: [
     Alert,
     AppButton,
-    AppMap,
     Card,
     ContentDialog,
     DataTable,
     DatePicker,
     DatePipe,
-    DecimalPipe,
     FilterBar,
     FormField,
     Input,
-    LocationPicker,
+    MapLocationPicker,
     NgTemplateOutlet,
     Pagination,
     ReferenceCombobox,
     RowActions,
     Select,
+    StatusSeal,
     SiteBankQrDialog,
     UpperCasePipe,
   ],
@@ -386,18 +394,37 @@ export class WorkHistory implements OnInit {
   protected readonly telefonoDeSedeNuevaValido = computed(() =>
     telefonoDeSedeValido(this.telefonoDeSedeNueva()),
   );
+  /**
+   * La dirección, la ciudad y el municipio **no se escriben** (pedido del
+   * cliente del 26/10/2026): salen del punto confirmado en el mapa, que es lo
+   * único que se marca y es obligatorio. Ver `volcarSede`.
+   */
   protected readonly direccionDeSede = signal('');
   protected readonly ciudadDeSede = signal('');
-  /** Municipio elegido en el mapa de Bolivia (concept id), o `null`. */
+  /** Municipio del punto (concept id), o `null`. */
   protected readonly municipioDeSede = signal<string | null>(null);
-  /** El punto marcado en el mapa, si se marcó. */
-  protected readonly puntoDeSede = signal<PuntoGeo | null>(null);
-  /** Si el mapa para marcar el punto está desplegado. Cerrado por defecto: es opcional. */
-  protected readonly mapaAbierto = signal(false);
+  /** El punto confirmado en el mapa, o `null`. */
+  protected readonly puntoDeSede = signal<Coordinates | null>(null);
+  /** Lo último que el mapa dedujo de su punto, confirmado o no. */
+  private readonly localidadDeSede = signal<LocalityFromPoint | null>(null);
 
-  /** El árbol de departamentos y municipios, cuando el formulario lo pidió. */
+  protected readonly sinPuntoDeSede = computed(() => this.puntoDeSede() === null);
+
+  protected readonly idsMapaDeSede: TestIds = {
+    mapa: 'sede-mapa',
+    confirmada: 'sede-punto-confirmado',
+    avisoGeocodificacion: 'sede-aviso-calle',
+    quitar: 'sede-quitar-punto',
+    confirmar: 'sede-confirmar-punto',
+    usarUbicacion: 'sede-usar-ubicacion',
+    marcarEnMapa: 'sede-marcar-mapa',
+  };
+
+  /**
+   * El árbol de departamentos y municipios: con él se dice el departamento y
+   * el nombre de la ciudad del municipio que sale del punto.
+   */
   protected readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
-  protected readonly catalogoMunicipiosCaido = signal(false);
 
   /* ---- Atiendo en uno que ya existe --------------------------------------
 
@@ -452,22 +479,6 @@ export class WorkHistory implements OnInit {
   protected readonly registrandoSede = signal(false);
   protected readonly registroDeSede = signal<ViewState<null>>(ready(null));
   protected readonly errorDeSede = computed<string | null>(() => mensajeDe(this.registroDeSede()));
-
-  /** El punto marcado, como el único pin del mapa. */
-  protected readonly pinesDeSede = computed<readonly PinMapa[]>(() => {
-    const punto = this.puntoDeSede();
-    if (punto === null) {
-      return [];
-    }
-    return [
-      {
-        id: 'sede-nueva',
-        lat: punto.lat,
-        lng: punto.lng,
-        titulo: this.nombreDeSedeNueva().trim() || 'Consultorio',
-      },
-    ];
-  });
 
   /**
    * El departamento del municipio elegido, para que la dirección lo lleve.
@@ -623,7 +634,7 @@ export class WorkHistory implements OnInit {
 
   protected readonly puedeRegistrarSede = computed(
     () => this.nombreDeSedeNueva().trim() !== '' &&
-      this.telefonoDeSedeNuevaValido() && !this.registrandoSede(),
+      this.telefonoDeSedeNuevaValido() && !this.sinPuntoDeSede() && !this.registrandoSede(),
   );
 
   /**
@@ -636,7 +647,7 @@ export class WorkHistory implements OnInit {
     readonly direccion: string;
     readonly ciudad: string;
     readonly municipio: string | null;
-    readonly punto: PuntoGeo | null;
+    readonly punto: Coordinates | null;
   } | null>(null);
 
   protected readonly hayCambiosEnSede = computed(() => {
@@ -771,6 +782,11 @@ export class WorkHistory implements OnInit {
     const hasta = this.hasta();
     const cargo = this.cargo().trim();
     const sede = this.sede();
+    // El id del establecimiento elegido del padrón viaja con el nombre: sin él
+    // el vínculo queda como texto y la API no puede protegerlo del duplicado
+    // ni asociarlo al padrón (ID-16). Escrito a mano, no hay concepto.
+    const establecimientoElegido =
+      this.modoDeInstitucion() === 'padron' ? this.establecimiento() : null;
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -781,6 +797,9 @@ export class WorkHistory implements OnInit {
         startDate: soloFecha(desde),
         // Los opcionales sin valor se **omiten**: el backend valida con
         // `forbidNonWhitelisted`, y una clave vacía no es «sin especificar».
+        ...(establecimientoElegido === null
+          ? {}
+          : { healthFacilityConceptId: establecimientoElegido.value }),
         ...(cargo === '' ? {} : { roleTitle: cargo }),
         ...(hasta === null ? {} : { endDate: soloFecha(hasta) }),
         ...(sede === null || sede === '' ? {} : { practiceSiteId: sede }),
@@ -802,6 +821,20 @@ export class WorkHistory implements OnInit {
       });
   }
 
+  /**
+   * Los vínculos sobre los que hay algo que hacer.
+   *
+   * En la pestaña «Trayectoria» la historia completa ya está pintada arriba, y
+   * volver a listarla entera acá sería el mismo dato dos veces. Lo que ahí NO
+   * hay es dónde corregir o retirar, así que este bloque lista **sólo** lo
+   * accionable: lo que el profesional declaró por su cuenta y lo que todavía
+   * nadie contestó. Si no hay nada que tocar, no se dibuja.
+   */
+  protected readonly vinculosEditables = computed<readonly PractitionerAffiliation[]>(() =>
+    this.afiliaciones().filter(
+      (afiliacion) => this.puedeCorregirse(afiliacion) || this.puedeRetirarse(afiliacion),
+    ),
+  );
 
   /**
    * Si este vínculo lo puede corregir el profesional.
@@ -1024,24 +1057,18 @@ export class WorkHistory implements OnInit {
   }
 
   /**
-   * Al cerrar el modal de una edición, el foco vuelve al «Acciones» de esa fila.
+   * Al cerrar una edición, el foco vuelve a la acción visible de esa sede.
    *
-   * `app-content-dialog` restaura el foco al elemento que lo abrió, pero lo
-   * abrió el ítem «Editar» del menú, que ya no existe cuando el menú se cierra:
-   * sin esto el foco caía al `<body>` (medido en `evidencia/h4/teclado.md`).
+   * La fila propia ahora sólo ofrece el QR. Se identifica por ID para no
+   * confundir dos sedes con el mismo nombre ni depender de un menú retirado.
    */
   private devolverFocoALaFila(sedeId: string): void {
     afterNextRender(
       () => {
-        const sede = this.sedes().find((s) => s.id === sedeId);
-        if (sede === undefined) {
-          return;
-        }
-        const etiqueta = `Acciones de ${sede.name}`;
-        const boton = Array.from(this.host.nativeElement.querySelectorAll('button')).find(
-          (b) => b.getAttribute('aria-label') === etiqueta,
-        );
-        boton?.focus();
+        const rowActions = Array.from(
+          this.host.nativeElement.querySelectorAll<HTMLElement>('app-row-actions[data-site-id]'),
+        ).find((row) => row.dataset['siteId'] === sedeId);
+        rowActions?.querySelector<HTMLButtonElement>('button')?.focus();
       },
       { injector: this.injector },
     );
@@ -1108,7 +1135,11 @@ export class WorkHistory implements OnInit {
     this.vinculandoLugar.set(true);
     this.registroDeSede.set(loading());
     this.profiles
-      .addAffiliation({ organizationName: lugar.label, startDate: soloFecha(new Date()) })
+      .addAffiliation({
+        organizationName: lugar.label,
+        healthFacilityConceptId: lugar.value,
+        startDate: soloFecha(new Date()),
+      })
       .subscribe({
         next: () => {
           this.vinculandoLugar.set(false);
@@ -1128,40 +1159,54 @@ export class WorkHistory implements OnInit {
       });
   }
 
-  protected reintentarMunicipios(): void {
-    this.municipios.olvidar();
-    this.cargarMunicipios();
-  }
-
-  /** Despliega o guarda el mapa para marcar el punto. */
-  protected alternarMapa(): void {
-    this.mapaAbierto.update((abierto) => !abierto);
-  }
-
-  /** El punto donde se hizo clic en el mapa. */
-  /**
-   * El punto donde se hizo clic en el mapa.
-   *
-   * Vacía «Dirección» (D-06): el punto y el texto de la dirección son dos
-   * formas de decir lo mismo, y tocar el mapa después de escribir la calle
-   * dejaba las dos sin coincidir entre sí — quien tocaba el mapa **corrige**
-   * la dirección, no la complementa. El campo lo anuncia
-   * (`historial__mapa-aviso`, `aria-live`) para que quien no ve el mapa
-   * también se entere de que el texto se borró.
-   */
-  protected marcarPunto(punto: PuntoGeo): void {
+  /** El punto confirmado en el mapa (o `null` al quitarlo o moverlo sin confirmar). */
+  protected confirmarPuntoDeSede(punto: Coordinates | null): void {
     this.puntoDeSede.set(punto);
-    this.direccionDeSede.set('');
+    this.volcarSede();
   }
 
-  protected quitarPunto(): void {
-    this.puntoDeSede.set(null);
+  /** Lo que el mapa dedujo de su punto; se vuelca sólo si es del confirmado. */
+  protected aplicarLocalidadDeSede(localidad: LocalityFromPoint | null): void {
+    this.localidadDeSede.set(localidad);
+    this.volcarSede();
   }
 
-  /** D-06: si el mapa tiene un punto y la dirección está vacía, se anuncia por qué. */
-  protected readonly avisoDireccionVaciada = computed(
-    () => this.puntoDeSede() !== null && this.direccionDeSede().trim() === '',
-  );
+  /**
+   * Dirección, ciudad y municipio, sacados del punto confirmado.
+   *
+   * La dirección nunca queda vacía con un punto —si no, el punto no viajaría
+   * (ver `direccionDelFormulario`)—: la calle, o la zona y la ciudad, o el
+   * punto mismo; nunca una calle inventada. Con el punto con el que se abrió
+   * la edición vuelve lo que la sede ya tenía: abrir para corregir el nombre
+   * no reescribe la dirección. Sin punto no se toca nada: no se puede guardar
+   * así, y el próximo punto confirmado la reescribe.
+   */
+  private volcarSede(): void {
+    const punto = this.puntoDeSede();
+    if (punto === null) return;
+    const original = this.borradorOriginalDeSede();
+    if (original !== null && samePoint(punto, original.punto)) {
+      this.direccionDeSede.set(original.direccion);
+      this.ciudadDeSede.set(original.ciudad);
+      this.municipioDeSede.set(original.municipio);
+      return;
+    }
+    const localidad = confirmedLocality(this.localidadDeSede(), punto);
+    if (localidad === null) return;
+    const ciudad = this.nombreDelMunicipio(localidad.municipioConceptId);
+    this.municipioDeSede.set(localidad.municipioConceptId);
+    this.ciudadDeSede.set(ciudad ?? '');
+    this.direccionDeSede.set(addressLineFromPoint(localidad, ciudad));
+  }
+
+  private nombreDelMunicipio(conceptId: string | null): string | null {
+    if (conceptId === null) return null;
+    for (const rama of this.ramasMunicipios()) {
+      const municipio = rama.municipios.find((m) => m.conceptId === conceptId);
+      if (municipio !== undefined) return municipio.nombre;
+    }
+    return null;
+  }
 
   /**
    * Registra un consultorio propio (ALV-005/006).
@@ -1211,11 +1256,12 @@ export class WorkHistory implements OnInit {
   /**
    * Abre el formulario ya cargado con la sede que se va a corregir (P32-b).
    *
-   * Prellena el nombre y el punto, y **deja la dirección en blanco a
-   * propósito**: la lista trae `addressText` ya compuesta por el backend y
-   * descomponerla en calle, ciudad y municipio sería adivinar. Vacía significa
-   * «no la toques», que es exactamente lo que el `PATCH` hace con lo que no
-   * viaja en el cuerpo — y el formulario lo dice con todas las letras.
+   * Prellena el nombre, la dirección que ya tiene y su punto. El punto
+   * guardado entra confirmado —no se pide volver a confirmarlo— y mientras
+   * siga siendo el mismo, la dirección es la de la sede; un punto nuevo la
+   * reescribe con lo que sale de él (ver `volcarSede`). Una sede guardada sin
+   * punto tiene que marcarlo para poder guardarse: es obligatorio desde el
+   * 26/10/2026.
    *
    * @param sede - El consultorio propio a corregir.
    */
@@ -1550,28 +1596,45 @@ export class WorkHistory implements OnInit {
    */
 
   protected readonly busquedaHistorial = signal('');
+  protected readonly historialEnTabla = computed(
+    () =>
+      this.layout() === 'tabla' ||
+      (this.layout() === 'timeline' &&
+        (this.historial().status !== 'ready' || this.vinculosEditables().length > 5)),
+  );
+  private readonly filasDelHistorial = computed(() =>
+    this.layout() === 'timeline' ? this.vinculosEditables() : this.afiliaciones(),
+  );
   protected readonly paginaHistorial = signal(1);
   protected readonly tamanoPaginaHistorial = signal(10);
 
   protected readonly historialFiltrado = computed(() => {
     const termino = normalizarTexto(this.busquedaHistorial());
     if (termino === '') {
-      return this.afiliaciones();
+      return this.filasDelHistorial();
     }
-    return this.afiliaciones().filter((afiliacion) => {
+    return this.filasDelHistorial().filter((afiliacion) => {
       const institucion = normalizarTexto(afiliacion.organizationName);
       const cargo = normalizarTexto(afiliacion.roleTitle ?? '');
       return institucion.includes(termino) || cargo.includes(termino);
     });
   });
 
+  protected readonly paginaHistorialVisible = computed(() => {
+    const ultimaPagina = Math.ceil(this.historialFiltrado().length / this.tamanoPaginaHistorial());
+    return Math.max(1, Math.min(this.paginaHistorial(), ultimaPagina));
+  });
+
   protected readonly historialPaginado = computed(() => {
-    const inicio = (this.paginaHistorial() - 1) * this.tamanoPaginaHistorial();
+    const inicio = (this.paginaHistorialVisible() - 1) * this.tamanoPaginaHistorial();
     return this.historialFiltrado().slice(inicio, inicio + this.tamanoPaginaHistorial());
   });
 
   protected readonly estadoHistorialTabla = computed<ViewState<readonly PractitionerAffiliation[]>>(
-    () => ready(this.historialPaginado()),
+    () => {
+      const state = this.historial();
+      return state.status === 'ready' ? ready(this.historialPaginado()) : state;
+    },
   );
 
   protected onFiltrosHistorialChanged(activos: Readonly<Record<string, string>>): void {
@@ -1582,6 +1645,9 @@ export class WorkHistory implements OnInit {
   private readonly celdaInstitucionHistorial = viewChild.required<
     TemplateRef<{ $implicit: PractitionerAffiliation }>
   >('celdaInstitucionHistorial');
+  private readonly celdaEstadoHistorial = viewChild.required<
+    TemplateRef<{ $implicit: PractitionerAffiliation }>
+  >('celdaEstadoHistorial');
   private readonly celdaPeriodoHistorial =
     viewChild.required<TemplateRef<{ $implicit: PractitionerAffiliation }>>(
       'celdaPeriodoHistorial',
@@ -1599,8 +1665,9 @@ export class WorkHistory implements OnInit {
         priority: 1,
         cell: this.celdaInstitucionHistorial(),
       },
+      { key: 'statusKind', header: 'Estado', priority: 1, cell: this.celdaEstadoHistorial() },
       { key: 'startDate', header: 'Período', priority: 2, cell: this.celdaPeriodoHistorial() },
-      { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAccionesHistorial() },
+      { key: 'acciones', header: 'Acciones', priority: 2, cell: this.celdaAccionesHistorial() },
     ],
   );
 
@@ -1609,19 +1676,19 @@ export class WorkHistory implements OnInit {
   protected readonly nombreAccesibleDeAfiliacion = (afiliacion: PractitionerAffiliation): string =>
     afiliacion.organizationName;
 
-  protected accionesDeAfiliacion(): readonly RowAction[] {
-    return [
-      { code: 'editar', label: 'Editar', icon: 'edit' },
-      { code: 'retirar', label: 'Retirar', icon: 'remove', destructive: true },
-    ];
+  protected accionesDeAfiliacion(afiliacion: PractitionerAffiliation): readonly RowAction[] {
+    const acciones: RowAction[] = [];
+    if (this.puedeCorregirse(afiliacion)) acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    if (this.puedeRetirarse(afiliacion)) acciones.push({ code: 'retirar', label: 'Retirar', icon: 'remove', destructive: true });
+    return acciones;
   }
 
   protected ejecutarAccionDeAfiliacion(code: string, afiliacion: PractitionerAffiliation): void {
-    if (code === 'editar') {
+    if (code === 'editar' && this.puedeCorregirse(afiliacion)) {
       this.abrirEdicionDeAfiliacion(afiliacion);
       return;
     }
-    if (code === 'retirar') {
+    if (code === 'retirar' && this.puedeRetirarse(afiliacion)) {
       void this.retirarVinculo(afiliacion);
     }
   }
@@ -1774,14 +1841,10 @@ export class WorkHistory implements OnInit {
    */
   private cargarMunicipios(): void {
     this.municipios.listar().subscribe({
-      next: (ramas) => {
-        this.catalogoMunicipiosCaido.set(false);
-        this.ramasMunicipios.set(ramas);
-      },
-      error: () => {
-        this.ramasMunicipios.set([]);
-        this.catalogoMunicipiosCaido.set(true);
-      },
+      next: (ramas) => this.ramasMunicipios.set(ramas),
+      // Sin el árbol, la sede se guarda igual: con su punto y su calle, sin
+      // departamento ni nombre de ciudad.
+      error: () => this.ramasMunicipios.set([]),
     });
   }
 
@@ -1804,7 +1867,7 @@ export class WorkHistory implements OnInit {
     this.ciudadDeSede.set('');
     this.municipioDeSede.set(null);
     this.puntoDeSede.set(null);
-    this.mapaAbierto.set(false);
+    this.localidadDeSede.set(null);
     this.registroDeSede.set(ready(null));
     this.borradorOriginalDeSede.set(null);
   }
@@ -1822,7 +1885,7 @@ function mensajeDe(state: ViewState<null>): string | null {
     return 'No pudimos conectarnos. Revise su conexión y reintente.';
   }
   if (state.status === 'error') {
-    return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
+    return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
   }
   return null;
 }
@@ -1864,8 +1927,8 @@ function comoOpcion(establecimiento: LinkableOrganization): ReferenceOption {
 /**
  * Sin acentos y en minúsculas, para que el buscador de «Dónde atiendo»
  * encuentre «clinica» aunque se haya guardado «Clínica» (ADR-0015, regla 5).
- * Misma receta que ya usa el resto del proyecto (`symptom-check/texto.ts`,
- * `shared/geo/departamento-de-ciudad.ts`); se repite acá en vez de importar
+ * Misma receta que ya usa el resto del proyecto (`symptom-check/text.ts`,
+ * `shared/geo/city-department.ts`); se repite acá en vez de importar
  * de una feature ajena.
  */
 function normalizarTexto(texto: string): string {

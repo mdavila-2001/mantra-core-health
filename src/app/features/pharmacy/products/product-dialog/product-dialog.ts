@@ -34,21 +34,19 @@ import {
   type CatalogProduct,
   type PharmacyProduct,
   type PharmacyProductStatus,
-} from '../../../../core/data-access/pharmacy/pharmacy.types';
-import {
   PHARMACY_PRODUCT_SIMULATOR_EXTENSIONS,
   pharmacyProductExtensionsLabel,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import { droppedSimulatorExtensions } from '../../../../core/data-access/simulator-only';
 import {
-  CAMPOS_VACIOS,
-  LARGO_MAXIMO_DE_LA_DESCRIPCION,
-  LARGO_MAXIMO_DEL_CODIGO,
-  cambiosDelBorrador,
-  revisarProducto,
-  type CamposDelProducto,
-  type VinculoConElCatalogo,
-} from '../../catalog-rules/catalogo.reglas';
+  EMPTY_FIELDS,
+  DESCRIPTION_LONG_MAX,
+  CODE_LONG_MAX,
+  draftChanges,
+  reviewProduct,
+  type ProductFields,
+  type LinkWithCatalog,
+} from '../../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../../pharmacy-error-message';
 import {
   CATALOG_SEARCH_LIMIT,
@@ -141,14 +139,14 @@ export class ProductDialog implements OnInit {
   protected readonly dialog = viewChild.required(ContentDialog);
 
   protected readonly tabs = PRODUCT_DIALOG_TABS;
-  protected readonly codeMaxLength = LARGO_MAXIMO_DEL_CODIGO;
-  protected readonly descriptionMaxLength = LARGO_MAXIMO_DE_LA_DESCRIPCION;
+  protected readonly codeMaxLength = CODE_LONG_MAX;
+  protected readonly descriptionMaxLength = DESCRIPTION_LONG_MAX;
   protected readonly maxImages = MAX_PRODUCT_IMAGES;
   protected readonly imageAccept = IMAGE_ACCEPT;
   protected readonly imageMaxBytes = IMAGE_MAX_BYTES;
 
   protected readonly tab = signal(0);
-  protected readonly fields = signal<CamposDelProducto>(CAMPOS_VACIOS);
+  protected readonly fields = signal<ProductFields>(EMPTY_FIELDS);
   protected readonly status = signal<PharmacyProductStatus>('PUBLISHED');
   protected readonly imageIds = signal<readonly string[]>([]);
   /** Miniaturas ya leídas, por id de archivo. */
@@ -283,7 +281,7 @@ export class ProductDialog implements OnInit {
     this.initialSnapshot = this.snapshot();
   }
 
-  protected setField(field: keyof CamposDelProducto, value: string | number | null): void {
+  protected setField(field: keyof ProductFields, value: string | number | null): void {
     if (field === 'codigo') {
       this.skuTouched.set(true);
     }
@@ -421,7 +419,18 @@ export class ProductDialog implements OnInit {
     if (link === 'missing') {
       return;
     }
-    const review = revisarProducto(this.fields(), undefined, link ?? undefined);
+    // Las categorías válidas son las de ESTA farmacia (las que lista la API,
+    // incluidas las que creó ella), no las seis de partida: con éstas, una
+    // categoría propia se rechazaba antes de llegar a la API (P47, visto en
+    // navegador el 26/10/2026).
+    const allowed = this.categoryOptions()
+      .map((option) => option.value)
+      .filter((value) => value !== '');
+    const review = reviewProduct(
+      this.fields(),
+      allowed.length > 0 ? allowed : undefined,
+      link ?? undefined,
+    );
     if (!review.valido) {
       this.errors.set(review.errores);
       // Los errores del alta son de los datos generales o de la publicación:
@@ -436,7 +445,7 @@ export class ProductDialog implements OnInit {
       editing === null
         ? this.pharmacy.publishProduct(this.pharmacyId(), { ...review.borrador, ...extras })
         : this.pharmacy.updateProduct(this.pharmacyId(), editing.id, {
-            ...cambiosDelBorrador(review.borrador, true, this.isLinked()),
+            ...draftChanges(review.borrador, true, this.isLinked()),
             ...extras,
           });
     const unsaved = droppedSimulatorExtensions(
@@ -471,7 +480,7 @@ export class ProductDialog implements OnInit {
    * el que ya tiene (edición de uno vinculado) o ninguno (uno cargado a mano).
    * `'missing'` = falta elegir y ya se avisó.
    */
-  private linkOf(editing: PharmacyProduct | null): VinculoConElCatalogo | 'missing' | null {
+  private linkOf(editing: PharmacyProduct | null): LinkWithCatalog | 'missing' | null {
     if (editing !== null) {
       return editing.catalog == null ? null : { catalogProductId: editing.catalog.catalogProductId };
     }
@@ -535,9 +544,9 @@ const REQUEST_VACIA: CatalogRequestFields = {
 };
 
 /** Lo que el formulario muestra de un producto que ya existe. */
-function fieldsOf(product: PharmacyProduct): CamposDelProducto {
+function fieldsOf(product: PharmacyProduct): ProductFields {
   return {
-    ...CAMPOS_VACIOS,
+    ...EMPTY_FIELDS,
     codigo: product.productCode,
     marca: product.brandName ?? '',
     generico: product.genericName ?? '',

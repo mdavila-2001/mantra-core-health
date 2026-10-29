@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { readFileSync } from 'node:fs';
 
 import { provideHttpClient } from '@angular/common/http';
@@ -252,6 +253,13 @@ class MemoryCartStorage implements CartStorage {
 }
 
 describe('WhereToBuy', () => {
+  // Las campañas de demostración sólo existen con el interruptor encendido
+  // (`environment.campaignsDemo`, apagado fuera de `demo`): estas pruebas miden
+  // el motor de mecánicas sobre ese paquete sembrado.
+  const originalDemoCampaigns = environment.campaignsDemo;
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: originalDemoCampaigns }));
+
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let getCurrentPosition: ReturnType<typeof vi.fn>;
@@ -487,41 +495,59 @@ describe('WhereToBuy', () => {
     const tabs = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
     tabs[2]?.click();
     harness.detectChanges();
-    // Abrir «Centros médicos» es lo que dispara su lectura de órdenes.
-    http
-      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
-      .flush({ patientProfileId: 'pp-1', limit: 50, truncated: false, items: [] });
 
     expect(navigation).toHaveBeenCalledWith(
       [],
       expect.objectContaining({ queryParams: { tab: 'medical-centers' }, replaceUrl: true }),
     );
+    // Abrir Centros médicos es lo que dispara su consulta, y no antes.
+    http
+      .expectOne((r) => r.url === '/clinical/me/procedure-centers')
+      .flush({ procedures: [], centers: [], total: 0, limit: 20 });
   });
 
-  it('la pestaña «Centros médicos» monta su componente y ya no el estado vacío', async () => {
+  it('carril 19: Centros médicos abre por la URL y busca los centros de mis procedimientos', async () => {
     await mount('m-1', '?tab=medical-centers');
     respondUntilProducts();
     http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
-    // Abierta la pestaña, el componente lee las órdenes; sin procedimientos, lo dice.
-    http
-      .expectOne((r) => r.url === '/diagnostic-results/me/orders')
-      .flush({ patientProfileId: 'pp-1', limit: 50, truncated: false, items: [] });
     harness.detectChanges();
 
-    expect(harness.routeNativeElement?.querySelector('app-medical-centers-tab')).not.toBeNull();
-    expect(textOf()).toContain('No tiene procedimientos pendientes');
+    const lastQuery = http.expectOne((r) => r.url === '/clinical/me/procedure-centers');
+    // Lo que le pidieron no viaja en la URL: sólo el tope (y el origen, si lo hay).
+    expect(lastQuery.request.params.keys()).toEqual(['limit']);
+    lastQuery.flush({ procedures: [], centers: [], total: 0, limit: 20 });
+    harness.detectChanges();
+
+    const tabs = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
+    expect(tabs[2]?.getAttribute('aria-selected')).toBe('true');
+    expect(textOf()).toContain('No tiene procedimientos pendientes.');
     expect(textOf()).not.toContain('Esta parte todavía no está');
-    expect(textOf()).not.toContain('Ver clínicas y hospitales');
   });
 
-  it('sin abrir «Centros médicos» no sale ninguna petición a /medical-centers ni a las órdenes', async () => {
+  /**
+   * Sin procedimientos pendientes, Centros médicos muestra el vacío honesto y la
+   * salida al directorio de clínicas tiene que verse (antes desaparecía porque
+   * la molécula no proyectaba el enlace).
+   */
+  it('en Centros médicos, sin procedimientos pendientes, lo dice y ofrece el directorio de clínicas', async () => {
     await mount();
     respondUntilProducts();
     http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-    http.expectNone((r) => r.url.startsWith('/medical-centers'));
-    http.expectNone((r) => r.url === '/diagnostic-results/me/orders');
+    const tabs = harness.routeNativeElement?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [];
+    tabs[2]?.click();
+    harness.detectChanges();
+    http
+      .expectOne((r) => r.url === '/clinical/me/procedure-centers')
+      .flush({ procedures: [], centers: [], total: 0, limit: 20 });
+    harness.detectChanges();
+
+    expect(textOf()).toContain('No tiene procedimientos pendientes.');
+    expect(textOf()).not.toContain('Esta parte todavía no está');
+    const links = Array.from(harness.routeNativeElement?.querySelectorAll('a') ?? []);
+    expect(links.some((a) => a.textContent?.trim() === 'Ver clínicas y hospitales')).toBe(true);
   });
 
   it('con una sucursal que tiene todo, la propone sola y lo dice', async () => {
@@ -1845,6 +1871,43 @@ describe('pendingImagingStudies', () => {
   it('sin categoría, un análisis de laboratorio no cuenta como imagen', () => {
     expect(pendingImagingStudies([sortOrder('o-1', 'c-eco'), sortOrder('o-2', 'c-glu')], labels)).toEqual([
       { conceptId: 'c-eco', name: 'Ecografía abdominal' },
+    ]);
+  });
+});
+
+describe('partialCountLabel', () => {
+  it('concuerda en singular y en plural', () => {
+    expect(partialCountLabel(1, 'la', 'las')).toBe('Ver la que tiene una parte');
+    expect(partialCountLabel(3, 'los', 'los')).toBe('Ver los 3 que tienen una parte');
+  });
+});
+
+describe('pendingImagingStudies con los códigos de la API', () => {
+  const concept = (conceptId: string, code: string, display: string) =>
+    [conceptId, { conceptId, code, display, codeSystemVersionId: 'v1' }] as const;
+  const labels = new Map([
+    concept('c-eco', 'diagnostic_units:STUDY_ABDOMINAL_ULTRASOUND', 'Abdominal ultrasound'),
+    concept('c-rx', 'diagnostic_units:STUDY_CHEST_XRAY', 'Chest X-ray'),
+    concept('c-glu', 'diagnostic_units:STUDY_GLUCOSE', 'Blood glucose test'),
+    concept('cat-img', 'diagnostics:SERVICE_REQUEST_CATEGORY_IMAGING', 'Imaging'),
+  ]);
+  const sortOrder = (id: string, codeConceptId: string, categoryConceptId?: string) => ({
+    id,
+    codeConceptId,
+    categoryConceptId,
+    statusConceptId: 's-1',
+    createdAt: new Date('2026-10-01T10:00:00Z'),
+    hasReleasedResult: false,
+  });
+
+  it('reconoce la imagen por la categoría real o, sin categoría, por el estudio; el laboratorio no entra', () => {
+    const studies = pendingImagingStudies(
+      [sortOrder('o-1', 'c-rx', 'cat-img'), sortOrder('o-2', 'c-eco'), sortOrder('o-3', 'c-glu')],
+      labels,
+    );
+    expect(studies).toEqual([
+      { conceptId: 'c-rx', name: 'Chest X-ray' },
+      { conceptId: 'c-eco', name: 'Abdominal ultrasound' },
     ]);
   });
 });

@@ -5,7 +5,7 @@
   (closed)="closed.emit()"
 >
   @if (cargandoAtenciones()) {
-    <p data-testid="calificar-cargando">Buscando sus atenciones…</p>
+    <app-loading-state data-testid="calificar-cargando" message="Buscando sus atenciones…" />
   } @else if (!atencionPrefijada() && atenciones().length === 0) {
     <!-- Sin atenciones cerradas no hay formulario que mostrar: el servidor lo
          rechazaría, y ofrecerlo sería invitar a un error que sólo se descubre

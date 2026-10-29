@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { accessibleName } from '../../../../../testing/a11y';
 import { Tab } from './tab/tab';
 import { Tabs } from './tabs';
 
@@ -79,6 +80,23 @@ describe('Tabs', () => {
         expect(boton.id).toBeTruthy();
         expect(panel.id).toBeTruthy();
       });
+    });
+
+    it('cada pestaña se nombra por su rótulo, en el mismo elemento que tiene role=tab', () => {
+      expect(botones().map((boton) => accessibleName(boton))).toEqual([
+        'Evolución',
+        'Laboratorio',
+        'Órdenes',
+      ]);
+    });
+
+    it('el panel visible toma el nombre de su pestaña', async () => {
+      expect(accessibleName(paneles()[0])).toBe('Evolución');
+
+      host.seccion.set(2);
+      await fixture.whenStable();
+
+      expect(accessibleName(paneles()[2])).toBe('Órdenes');
     });
 
     it('solo una pestaña está seleccionada', () => {

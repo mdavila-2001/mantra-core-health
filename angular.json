@@ -215,6 +215,10 @@
             "lan": {
               "buildTarget": "mantra-core-health:build:development",
               "allowedHosts": true
+            },
+            "demo": {
+              "buildTarget": "mantra-core-health:build:development,demo",
+              "proxyConfig": "proxy.demo.conf.mjs"
             }
           },
           "defaultConfiguration": "development"

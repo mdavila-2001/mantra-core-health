@@ -23,7 +23,7 @@ const FICHAS: Record<string, GlossaryTermDetail> = {
   eco: ficha('eco', 'Ecógrafo', 'dicom'),
   dicom: ficha('dicom', 'Imagen DICOM', 'pacs'),
   pacs: ficha('pacs', 'Archivo de imágenes (PACS/VNA)', 'resultado'),
-  resultado: ficha('resultado', 'Resultado del paciente'),
+  resultado: ficha('resultado', 'Result del paciente'),
   // Un ciclo: a → b → a.
   a: ficha('a', 'A', 'b'),
   b: ficha('b', 'B', 'a'),
@@ -62,7 +62,7 @@ async function montar(entradas: { termino?: GlossaryTermDetail; conceptoId?: str
 describe('GlossaryDataFlow', () => {
   it('arma la cadena completa desde la ficha, en orden, y enlaza todo menos el origen', async () => {
     const { host, nombres } = await montar({ termino: FICHAS['eco']! });
-    expect(nombres()).toEqual(['Ecógrafo', 'Imagen DICOM', 'Archivo de imágenes (PACS/VNA)', 'Resultado del paciente']);
+    expect(nombres()).toEqual(['Ecógrafo', 'Imagen DICOM', 'Archivo de imágenes (PACS/VNA)', 'Result del paciente']);
     expect(host.querySelectorAll('a.flujo__nombre')).toHaveLength(3);
     expect(host.querySelector('[data-testid="glosario-mapa-de-datos"] h2')?.textContent).toContain('Mapa de conexión de datos');
   });

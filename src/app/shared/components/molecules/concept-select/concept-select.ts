@@ -98,15 +98,23 @@ export class ConceptSelect {
   /** Texto de la opción vacía. */
   readonly placeholder = input('Sin especificar');
 
+  /**
+   * Si la lista ofrece la opción vacía para desmarcar.
+   *
+   * En un campo obligatorio esa fila es un «Elija…» que se puede elegir y no
+   * elige nada: con `false` el marcador queda sólo como texto del control.
+   */
+  readonly clearable = input(true);
+
   private readonly opcionesCrudas = signal<readonly DynamicEnumOption[]>([]);
   protected readonly cargando = signal(false);
   protected readonly fallo = signal(false);
 
   protected readonly opciones = computed<readonly SelectOption<string>[]>(() => [
-    { value: '', label: this.placeholder() },
+    ...(this.clearable() ? [{ value: '', label: this.placeholder() }] : []),
     ...this.opcionesCrudas().map((opcion) => ({
       value: this.valueField() === 'code' ? opcion.code : opcion.conceptId,
-      label: this.labels()[opcion.code] ?? opcion.display,
+      label: this.labels()[opcion.code] ?? opcion.displayEs ?? opcion.display,
     })),
   ]);
 

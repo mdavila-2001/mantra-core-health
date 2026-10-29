@@ -1,16 +1,20 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import {
+  PASOS_DEL_ALTA,
+  completarContacto,
   empezarElAlta,
-  avanzarHasta,
   elegirLocalidadDeResidencia,
+  marcarYConfirmarCasa,
   elegirLocalidadDeTrabajo,
+  valorDelSelect,
 } from './support/registro-paciente';
 
 /**
  * Los dos cambios del alta pública, comprobados donde se ven.
  *
- * 1. La página del trabajo **ya no pregunta dónde queda**: pregunta la empresa,
- *    con una lupa y con «Otra empresa» para quien no está en la lista.
+ * 1. El paso del trabajo pregunta la empresa —con una lupa y con «Otra
+ *    empresa» para quien no está en la lista— y, en el mismo paso, dónde
+ *    queda, con el mismo mapa que la residencia.
  * 2. La ubicación del domicilio **ya no se muestra como par de coordenadas**:
  *    aparece un mapa con el pin y un botón que dice «Confirmar dirección
  *    actual».
@@ -28,6 +32,15 @@ import {
 /** La Plaza 24 de Septiembre, Santa Cruz: un punto real, y de los que se reconocen. */
 const PUNTO_DE_PRUEBA = { latitude: -17.7833, longitude: -63.1821 };
 
+/** Del primer paso hasta «Empresa y lugar de trabajo», con lo mínimo obligatorio. */
+async function llegarAlTrabajo(page: Page): Promise<void> {
+  await empezarElAlta(page);
+  await elegirLocalidadDeResidencia(page);
+  await marcarYConfirmarCasa(page);
+  await page.getByTestId('paginated-form-continuar').click();
+  await completarContacto(page);
+}
+
 test.describe('alta pública — la empresa y el mapa', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -41,10 +54,12 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await context.setGeolocation(PUNTO_DE_PRUEBA);
 
     await empezarElAlta(page);
-    await avanzarHasta(page, '¿Dónde vive?');
+    await expect(page.getByRole('heading', { name: PASOS_DEL_ALTA.residencia })).toBeVisible();
 
-    // Antes de pedirla no hay mapa: sólo la invitación.
-    await expect(page.getByTestId('registro-mapa-domicilio')).toHaveCount(0);
+    // Pedido del cliente (26/10/2026): el mapa ya está abierto antes de pedir
+    // nada, con el botón de la ubicación actual al lado.
+    await elegirLocalidadDeResidencia(page);
+    await expect(page.getByTestId('registro-mapa-domicilio').locator('.leaflet-container')).toBeVisible();
     await page.getByTestId('registro-usar-ubicacion').click();
 
     // El mapa, con su pin. `.mapa__lienzo` es el elemento que monta Leaflet:
@@ -74,16 +89,14 @@ test.describe('alta pública — la empresa y el mapa', () => {
     });
   });
 
-  test('la página del trabajo pregunta la empresa, no dónde queda', async ({ page }) => {
-    await empezarElAlta(page);
-    await elegirLocalidadDeResidencia(page);
-    await avanzarHasta(page, '¿Dónde trabaja?');
+  test('el paso del trabajo pregunta la empresa y dónde queda', async ({ page }) => {
+    await llegarAlTrabajo(page);
 
-    // Lo que ya no se pregunta: ni el municipio del trabajo ni su calle.
-    await expect(page.getByTestId('registro-municipio-trabajo')).toHaveCount(0);
-    await expect(page.getByTestId('registro-trabajo-calle')).toHaveCount(0);
+    // Dónde queda: el mismo mapa que la residencia, abierto para tocarlo. La
+    // calle y la localidad salen del punto (26/10/2026).
+    await expect(page.getByTestId('registration-work-map').locator('.leaflet-container')).toBeVisible();
 
-    // Lo que sí: la empresa, con su lupa.
+    // La empresa, con su lupa.
     const empresa = page.getByTestId('registro-empresa');
     await expect(empresa).toBeVisible();
 
@@ -101,9 +114,7 @@ test.describe('alta pública — la empresa y el mapa', () => {
   });
 
   test('«Otra empresa» abre el campo para escribirla', async ({ page }) => {
-    await empezarElAlta(page);
-    await elegirLocalidadDeResidencia(page);
-    await avanzarHasta(page, '¿Dónde trabaja?');
+    await llegarAlTrabajo(page);
 
     // Mientras no se elija la salida, el campo del nombre a mano no existe: no
     // está escondido con CSS, no está en la página.
@@ -126,13 +137,11 @@ test.describe('alta pública — la empresa y el mapa', () => {
   /**
    * FT-03-R07 / AG49-FT03-007: la localidad de TRABAJO se elige con el mismo
    * mapa de Bolivia que la de residencia (departamento + ciudad acotada),
-   * simétrico a `elegirLocalidadDeResidencia()`. Es su propia página («El
-   * lugar donde trabajás»), separada de la empresa.
+   * simétrico a `elegirLocalidadDeResidencia()`. Va en el mismo paso que la
+   * empresa («Empresa y lugar de trabajo»).
    */
   test('el lugar de trabajo se elige con el mismo mapa que la residencia', async ({ page }) => {
-    await empezarElAlta(page);
-    await elegirLocalidadDeResidencia(page);
-    await avanzarHasta(page, 'El lugar donde trabaja');
+    await llegarAlTrabajo(page);
 
     // Antes de elegir el departamento no hay select de ciudad: igual que en
     // residencia, es un mismo dato con dos formas de llegar a él.
@@ -140,8 +149,9 @@ test.describe('alta pública — la empresa y el mapa', () => {
 
     await elegirLocalidadDeTrabajo(page);
 
-    const municipio = page.getByTestId('registration-work-municipio').locator('select');
-    await expect(municipio).not.toHaveValue('');
+    await expect(valorDelSelect(page, 'registration-work-municipio')).not.toHaveClass(
+      /is-placeholder/,
+    );
 
     await page.screenshot({
       path: 'artifacts/playwright/registro-paciente-lugar-de-trabajo.png',

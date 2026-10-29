@@ -238,9 +238,13 @@ function bloquesDePregunta(
   // preguntas a la vista, así que se dice cuándo se contesta.
   const padre = campo.showWhen === undefined ? undefined : citas.get(campo.showWhen.key);
   if (campo.showWhen !== undefined && padre !== undefined) {
+    const { equals } = campo.showWhen;
     bloques.push({
       kind: 'caption',
-      text: `Solo si en la ${padre.numero} («${padre.enunciado}») respondió ${enPalabrasLaCondicion(campo.showWhen.equals)}.`,
+      text:
+        equals === undefined
+          ? `Solo si en la ${padre.numero} («${padre.enunciado}») contestó algo.`
+          : `Solo si en la ${padre.numero} («${padre.enunciado}») respondió ${enPalabrasLaCondicion(equals)}.`,
     });
   }
 
@@ -459,7 +463,9 @@ export const FORM_TEMPLATE_PDF_DOWNLOADER = new InjectionToken<
 });
 
 /** El valor de una condición, como se lee en papel: «Sí», «No», «A o B». */
-function enPalabrasLaCondicion(equals: NonNullable<CampoDeFormulario['showWhen']>['equals']): string {
+function enPalabrasLaCondicion(
+  equals: NonNullable<NonNullable<CampoDeFormulario['showWhen']>['equals']>,
+): string {
   const valores: readonly (string | boolean)[] = Array.isArray(equals) ? equals : [equals];
   return valores
     .map((valor) => (valor === true ? '«Sí»' : valor === false ? '«No»' : `«${valor}»`))

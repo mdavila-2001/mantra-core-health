@@ -13,12 +13,13 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink, Scroll } from '@angular/router';
-import { filter, map, type Subscription } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map, type Subscription } from 'rxjs';
 
 import { AnatomyAtlasClient } from '../../core/data-access/anatomy-atlas/anatomy-atlas.client';
 import type {
+  AnatomyComposites,
   AnatomyIndex,
   AnatomyIndexEntry,
   AnatomyLayer,
@@ -27,8 +28,6 @@ import type {
   AnatomySex,
   AnatomyStructure,
 } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
-import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
-import type { GlossaryTerm } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import {
   ATLAS_3D_FEMALE_ONLY_IDS,
@@ -40,32 +39,31 @@ import { dataOf, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Checkbox } from '../../shared/components/atoms/checkbox/checkbox';
 import { Card } from '../../shared/components/molecules/card/card';
+import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import { SearchField } from '../../shared/components/molecules/search-field/search-field';
 import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
-import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import { AnatomyViewer } from '../../shared/components/organisms/anatomy-viewer/anatomy-viewer';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import {
   DEFAULT_LAYERS,
   displayName,
+  drawnStructures,
   groupRelations,
-  groupSentences,
   LAYER_LABELS,
   LAYER_ORDER,
   meshesOf,
-  missingAspectsLabel,
-  normalizeSearch,
   ontologyUrl,
   pageOf,
   pageRelationGroups,
-  partVisibleFor,
   relatedMeshes,
   searchIndex,
   sideLabel,
+  structureIdsOf,
+  structuresWithMesh,
 } from './glossary-anatomy-atlas.logic';
 
 /** Tope de coincidencias que se calculan; se muestran de a `PAGE_SIZE.results`. */
@@ -118,7 +116,6 @@ const REGION_NAMES: Readonly<Record<string, string>> = {
 })
 export class GlossaryAnatomyAtlas {
   private readonly atlas = inject(AnatomyAtlasClient);
-  private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -131,7 +128,6 @@ export class GlossaryAnatomyAtlas {
   protected readonly layerLabels = LAYER_LABELS;
   protected readonly displayName = displayName;
   protected readonly ontologyUrl = ontologyUrl;
-  protected readonly missingAspectsLabel = missingAspectsLabel;
   protected readonly modelUrls: Readonly<Record<AnatomyLayer, string>> = {
     skeleton: this.atlas.modelUrl('skeleton.glb'),
     muscles: this.atlas.modelUrl('muscles.glb'),
@@ -143,8 +139,6 @@ export class GlossaryAnatomyAtlas {
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
   protected readonly sex = computed<AnatomySex>(() => (this.query().get('sex') === 'female' ? 'female' : 'male'));
   protected readonly structureId = computed(() => this.query().get('structure'));
-  /** La entrada de la bibliografía a la que llevó una cita [n]; se resalta (`:target` no se entera de la navegación del router). */
-  protected readonly fragment = toSignal(this.route.fragment, { initialValue: this.route.snapshot.fragment });
   /** La malla tocada, para decir de qué lado es. */
   protected readonly meshId = computed(() => this.query().get('mesh'));
 
@@ -159,21 +153,13 @@ export class GlossaryAnatomyAtlas {
 
   protected readonly partsState = signal<ViewState<readonly AnatomyPart[]>>(loading());
   private readonly indexState = signal<ViewState<AnatomyIndex>>(loading());
+  /** Sin él, las estructuras compuestas (el pulmón) se tratarían como sin pieza: es sólo un refuerzo, no bloquea. */
+  private readonly composites = signal<AnatomyComposites>({});
   protected readonly structureState = signal<ViewState<AnatomyStructure | null> | null>(null);
-
-  /**
-   * La definición que el glosario ya tiene de la estructura abierta, o `null`.
-   *
-   * Es la misma que se lee en `/glossary`: las definiciones de anatomía del
-   * glosario (Wikidata, TA98) en castellano. Sólo se usa si el nombre coincide
-   * exactamente con el de la estructura —sin tildes ni mayúsculas—; un parecido
-   * no es la misma estructura y no se muestra.
-   */
-  protected readonly glossaryEntry = signal<GlossaryTerm | null>(null);
 
   protected readonly parts = computed(() => dataOf(this.partsState()) ?? []);
   private readonly index = computed(() => dataOf(this.indexState()));
-  private readonly withMesh = computed(() => new Set(this.parts().map((p) => p.structureId)));
+  private readonly withMesh = computed(() => structuresWithMesh(this.parts(), this.composites()));
   private readonly inCatalog = computed(() => new Set((this.index()?.entries ?? []).map((e) => e[0])));
   private readonly entryById = computed(() => new Map((this.index()?.entries ?? []).map((e) => [e[0], e])));
 
@@ -184,30 +170,26 @@ export class GlossaryAnatomyAtlas {
 
   protected readonly selectedMeshes = computed(() => {
     const id = this.structureId();
-    return id === null ? [] : meshesOf(this.parts(), id, this.sex());
+    return id === null ? [] : meshesOf(this.parts(), id, this.sex(), this.composites());
+  });
+
+  /** La estructura abierta no tiene malla propia pero se dibuja con las de sus partes (el pulmón). */
+  protected readonly esCompuesta = computed(() => {
+    const id = this.structureId();
+    return id !== null && id in this.composites();
   });
 
   protected readonly relatedMeshIds = computed(() => {
     const ficha = this.structure();
-    return ficha === null ? [] : relatedMeshes(this.parts(), ficha, this.sex());
+    return ficha === null ? [] : relatedMeshes(this.parts(), ficha, this.sex(), this.composites());
   });
 
   /** Las estructuras que se están dibujando: con pieza en una capa encendida y visibles para el sexo elegido. */
-  private readonly drawn = computed(() => {
-    const capas = new Set(this.layers());
-    const sexo = this.sex();
-    return new Set(this.parts().filter((p) => capas.has(p.layer) && partVisibleFor(p, sexo)).map((p) => p.structureId));
-  });
+  private readonly drawn = computed(() => drawnStructures(this.parts(), new Set(this.layers()), this.sex(), this.composites()));
 
   protected readonly relationGroups = computed(() => {
     const ficha = this.structure();
     return ficha === null ? [] : groupRelations(ficha, this.withMesh(), this.inCatalog(), this.drawn());
-  });
-
-  /** Las frases de la descripción extendida, por aspecto y con sus citas numeradas. */
-  protected readonly sentenceGroups = computed(() => {
-    const descripcion = this.structure()?.extendedDescription;
-    return descripcion?.status === 'described' ? groupSentences(descripcion) : [];
   });
 
   /** Las láminas de Netter donde aparece la estructura, sin repetir y en orden. */
@@ -222,6 +204,11 @@ export class GlossaryAnatomyAtlas {
     const parte = malla === null ? undefined : this.parts().find((p) => p.meshId === malla);
     return parte === undefined ? null : sideLabel(parte.side);
   });
+
+  /** El catálogo de búsqueda todavía está bajando. */
+  protected readonly indexLoading = computed(() => this.indexState().status === 'loading');
+  /** El catálogo de búsqueda no se pudo bajar. */
+  protected readonly indexFailed = computed(() => this.indexState().status === 'error');
 
   protected readonly results = computed<AnatomyIndexEntry[]>(() => searchIndex(this.index()?.entries ?? [], this.search(), SEARCH_LIMIT));
 
@@ -256,7 +243,6 @@ export class GlossaryAnatomyAtlas {
   });
 
   private structureRequest: Subscription | null = null;
-  private glossaryRequest: Subscription | null = null;
   private readonly injector = inject(Injector);
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
   private readonly fichaTitulo = viewChild<ElementRef<HTMLElement>>('fichaTitulo');
@@ -270,10 +256,12 @@ export class GlossaryAnatomyAtlas {
       next: (partes) => this.partsState.set(ready(partes)),
       error: (error: unknown) => this.partsState.set(errorToViewState(error)),
     });
-    this.atlas.index().subscribe({
-      next: (indice) => this.indexState.set(ready(indice)),
-      error: (error: unknown) => this.indexState.set(errorToViewState(error)),
+    this.atlas.composites().subscribe({
+      next: (compuestas) => this.composites.set(compuestas),
+      // Sin el archivo el atlas funciona como antes: las compuestas quedan sin pieza.
+      error: () => this.composites.set({}),
     });
+    this.loadIndex();
 
     // Otra búsqueda o otra ficha vuelve a la primera página de sus listas.
     effect(() => {
@@ -294,51 +282,32 @@ export class GlossaryAnatomyAtlas {
       untracked(() => this.loadStructure(id));
     });
 
-    // Una cita [n] lleva a su entrada de la bibliografía. El desplazamiento
-    // del router (`anchorScrolling`) la deja en el borde superior, debajo de
-    // la barra fija, y no le da el foco: se centra y se enfoca acá, después
-    // de que el router termine. El evento `Scroll` sale en cada toque, aunque
-    // el ancla ya estuviera en la URL (tocar dos veces la misma fuente)...
-    // Al volver con «Atrás» a la URL sin ancla, el foco regresa a la cita
-    // desde la que se saltó (si no, quedaba en una entrada fuera de la vista).
-    this.router.events
-      .pipe(
-        filter((e): e is Scroll => e instanceof Scroll),
-        takeUntilDestroyed(),
-      )
-      .subscribe((e) => {
-        const ancla = e.anchor ?? '';
-        if (ancla.startsWith('atlas3d-fuente-')) {
-          setTimeout(() => this.revealSource(ancla), 0);
-        } else if (this.citationOrigin !== null) {
-          const origen = this.citationOrigin;
-          this.citationOrigin = null;
-          setTimeout(() => origen.isConnected && origen.focus({ preventScroll: true }), 0);
-        }
-      });
-    // ...y esto cubre el enlace abierto con el ancla, que llega antes que la ficha.
-    effect(() => {
-      const ancla = this.fragment();
-      const ficha = this.structure();
-      if (ancla === null || ficha === null || !ancla.startsWith('atlas3d-fuente-')) return;
-      untracked(() => setTimeout(() => this.revealSource(ancla), 0));
-    });
-
-    // La definición del glosario sigue a la ficha abierta.
-    effect(() => {
-      const ficha = this.structure();
-      untracked(() => this.loadGlossaryEntry(ficha));
-    });
-
     // Y el modelo también: la estructura de la URL —venga de la búsqueda o de
     // un enlace compartido— se ve aunque su capa estuviera apagada.
     effect(() => {
       const id = this.structureId();
       this.parts();
+      this.composites();
       untracked(() => {
         if (id !== null) this.showLayersOf(id);
       });
     });
+  }
+
+  /**
+   * Pide el índice de búsqueda. Pesa unos 480 KB: hasta que llega, la búsqueda
+   * no puede responder, y la pantalla lo dice en vez de mostrar «no encontramos».
+   */
+  private loadIndex(): void {
+    this.indexState.set(loading());
+    this.atlas.index().subscribe({
+      next: (indice) => this.indexState.set(ready(indice)),
+      error: (error: unknown) => this.indexState.set(errorToViewState(error)),
+    });
+  }
+
+  protected retryIndex(): void {
+    this.loadIndex();
   }
 
   private loadStructure(id: string | null): void {
@@ -363,27 +332,6 @@ export class GlossaryAnatomyAtlas {
       });
   }
 
-  private loadGlossaryEntry(ficha: AnatomyStructure | null): void {
-    this.glossaryRequest?.unsubscribe();
-    this.glossaryEntry.set(null);
-    const nombres = [ficha?.labelEs, ficha?.labelEn].filter((n): n is string => n !== null && n !== undefined);
-    if (nombres.length === 0) return;
-    const buscado = nombres.map(normalizeSearch);
-    this.glossaryRequest = this.terminology.searchGlossary({ query: nombres[0], limit: 12 }).subscribe({
-      // Un fallo del glosario no rompe la ficha: la ficha sigue con lo de UBERON.
-      error: () => this.glossaryEntry.set(null),
-      next: (pagina) =>
-        this.glossaryEntry.set(
-          pagina.items.find(
-            (t) =>
-              t.category?.internalCode === 'glossary-category-anatomy' &&
-              t.shortDefinition !== '' &&
-              buscado.includes(normalizeSearch(t.display)),
-          ) ?? null,
-        ),
-    });
-  }
-
   private revealStructure(): void {
     const titulo = this.fichaTitulo()?.nativeElement;
     if (titulo === undefined) return;
@@ -392,20 +340,6 @@ export class GlossaryAnatomyAtlas {
     if (panel !== undefined && panel.getBoundingClientRect().top < 0) {
       panel.scrollIntoView({ block: 'start', behavior: 'auto' });
     }
-  }
-
-  /** La cita [n] desde la que se saltó a la bibliografía, para devolverle el foco al volver. */
-  private citationOrigin: HTMLElement | null = null;
-
-  protected rememberCitation(event: Event): void {
-    this.citationOrigin = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
-  }
-
-  private revealSource(id: string): void {
-    const entrada = this.panel()?.nativeElement.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
-    if (entrada === null || entrada === undefined) return;
-    entrada.scrollIntoView({ block: 'center' });
-    entrada.focus({ preventScroll: true });
   }
 
   private setQuery(params: Record<string, string | null>): void {
@@ -438,7 +372,8 @@ export class GlossaryAnatomyAtlas {
 
   /** Enciende las capas donde está la estructura: abrirla desde la búsqueda tiene que mostrarla. */
   private showLayersOf(id: string): void {
-    const suyas = new Set(this.parts().filter((p) => p.structureId === id).map((p) => p.layer));
+    const ids = new Set(structureIdsOf(id, this.composites()));
+    const suyas = new Set(this.parts().filter((p) => ids.has(p.structureId)).map((p) => p.layer));
     if (suyas.size === 0) return;
     this.layers.update((capas) => LAYER_ORDER.filter((c) => capas.includes(c) || suyas.has(c)));
   }

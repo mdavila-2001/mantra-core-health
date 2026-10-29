@@ -121,14 +121,8 @@ async function main() {
 
       // Filtrar por cobertura vuelve a pedir y cambia las filas
       if (MODO === 'demo') {
-        const cobertura = page.getByRole('combobox', { name: 'Cobertura' });
-        // `dev` usa el selector con lista desplegable; `mockup` todavía el `<select>` nativo.
-        if ((await cobertura.evaluate((el) => el.tagName)) === 'SELECT') {
-          await cobertura.selectOption({ label: 'Sin sembrar' });
-        } else {
-          await cobertura.click();
-          await page.getByRole('option', { name: 'Sin sembrar' }).click();
-        }
+          await page.getByRole('combobox', { name: 'Cobertura' }).click();
+        await page.getByRole('option', { name: 'Sin sembrar' }).click();
         await page.waitForTimeout(300);
         const soloSinSembrar = (await page.getByTestId('flows-table').textContent()) ?? '';
         if (soloSinSembrar.includes('Flujo 1.3')) falla(id, 'tras filtrar «Sin sembrar» sigue apareciendo el flujo 1.3, que está sembrado');

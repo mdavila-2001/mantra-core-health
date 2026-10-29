@@ -1,0 +1,285 @@
+/* ============================================================================
+    Marco del portal de inventario. Dos columnas desde 64 rem: barra lateral
+    oscura y contenido; debajo, el menú es un <dialog> modal. Todo por tokens.
+    ========================================================================== */
+
+:host {
+  display: block;
+  font-family: var(--font-body);
+}
+
+.portal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.portal__lateral {
+  display: none;
+}
+
+.portal__principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.portal__cabecera {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.portal__hamburguesa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--h-ctrl, 2.5rem);
+  block-size: var(--h-ctrl, 2.5rem);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--fs-body-lg);
+  cursor: pointer;
+}
+
+.portal__hamburguesa:focus-visible,
+.portal__cerrar:focus-visible,
+.portal__grupo-titulo:focus-visible,
+.portal__item:focus-visible,
+.portal__explicador-boton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.portal__migas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.portal__miga + .portal__miga::before {
+  content: '›';
+  margin-inline-end: var(--sp-1);
+  color: var(--text-muted);
+}
+
+.portal__miga[aria-current='page'] {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.portal__miga a {
+  color: var(--text-link);
+}
+
+.portal__busqueda {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+  margin-inline-start: auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.portal__explicador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.portal__explicador-boton {
+  align-self: flex-start;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-pill, 999px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  cursor: pointer;
+}
+
+.portal__explicacion {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--st-info-bg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-primary);
+}
+
+.portal__contenido {
+  display: block;
+  min-inline-size: 0;
+}
+
+/* ---- navegación (la comparten la barra lateral y el cajón móvil) ---------- */
+
+.portal__marca {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-4);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--c-petrol-600);
+}
+
+.portal__marca-nombre {
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+  color: var(--text-inverse);
+}
+
+.portal__marca-sub {
+  font-size: var(--fs-caption);
+  color: var(--c-aqua-300);
+}
+
+.portal__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.portal__grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  inline-size: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--c-aqua-300);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: start;
+  cursor: pointer;
+}
+
+.portal__grupo-titulo:hover {
+  background: var(--c-petrol-600);
+}
+
+.portal__grupo-icono {
+  inline-size: var(--sp-4);
+  block-size: var(--sp-4);
+  flex-shrink: 0;
+}
+
+.portal__grupo-nombre {
+  flex: 1;
+}
+
+.portal__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: var(--sp-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal__item {
+  display: block;
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-6);
+  border-inline-start: 3px solid transparent;
+  border-radius: var(--r-md);
+  color: var(--text-inverse);
+  font-size: var(--fs-body);
+  text-decoration: none;
+}
+
+.portal__item:hover {
+  background: var(--c-petrol-600);
+}
+
+.portal__item--activo {
+  border-inline-start-color: var(--c-aqua-300);
+  background: var(--c-petrol-600);
+  font-weight: 600;
+}
+
+/* ---- menú móvil ------------------------------------------------------------ */
+
+.portal__movil {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  inline-size: min(20rem, 100%);
+  max-inline-size: 100%;
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+}
+
+.portal__movil::backdrop {
+  background: rgb(10 28 39 / 55%);
+}
+
+.portal__movil-panel {
+  block-size: 100%;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  background: linear-gradient(180deg, var(--c-petrol-900), var(--c-petrol-600));
+}
+
+.portal__movil-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.portal__cerrar {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--c-aqua-300);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-inverse);
+  cursor: pointer;
+}
+
+@media (min-width: 64rem) {
+  .portal {
+    grid-template-columns: 17rem minmax(0, 1fr);
+  }
+
+  .portal__lateral {
+    position: sticky;
+    inset-block-start: var(--sp-4);
+    display: block;
+    max-block-size: calc(100dvh - var(--sp-8));
+    overflow-y: auto;
+    padding: var(--sp-4);
+    border-radius: var(--r-lg);
+    background: linear-gradient(180deg, var(--c-petrol-900), var(--c-petrol-600));
+    box-shadow: var(--shadow-md);
+  }
+
+  .portal__hamburguesa {
+    display: none;
+  }
+}

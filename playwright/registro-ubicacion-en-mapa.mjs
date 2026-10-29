@@ -14,7 +14,7 @@
  * - El lugar de trabajo tiene el mismo selector, independiente.
  *
  * Y en el alta de profesional, que monta el componente compartido
- * `app-ubicacion-picker` DOS veces: el mismo recorrido sobre su domicilio y
+ * `app-map-location-picker` DOS veces: el mismo recorrido sobre su domicilio y
  * sobre su consultorio.
  *
  * Uso: `yarn node playwright/registro-ubicacion-en-mapa.mjs [urlBase]`

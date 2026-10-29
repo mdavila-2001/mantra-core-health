@@ -6,12 +6,13 @@ import {
   type HttpInterceptorFn,
   type HttpRequest,
 } from '@angular/common/http';
+import { inject, InjectionToken } from '@angular/core';
 import { from, Observable, of, throwError, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
-import { cuerpoDelFallo, falloPara, type FalloSimulado } from './fallos-simulados';
-import { apiRealForzada } from './modo-api';
+import { failureBody, failureFor, type SimulatedFailure } from './simulated-failures';
+import { forcedRealApi } from './api-mode';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
 import { usuarioDeAccessToken } from './mock-session';
 
@@ -41,6 +42,12 @@ function routerSimulado(): Promise<MockRouter> {
   return router;
 }
 
+/** Carga diferida; el modo real no resuelve ni invoca este proveedor. */
+export const MOCK_ROUTER_LOADER = new InjectionToken<() => Promise<MockRouter>>('MOCK_ROUTER_LOADER', {
+  providedIn: 'root',
+  factory: () => routerSimulado,
+});
+
 /**
  * El catálogo de claves del contrato (`contract/`), en su propio trozo: son
  * unos 260 kB generados desde el `openapi.json` de la API.
@@ -54,10 +61,10 @@ function validadorSimulado(): Promise<Validador> {
 }
 
 export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
-  // `apiRealForzada` es el interruptor del stock de componentes: deja pasar la
+  // `forcedRealApi` es el interruptor del stock de componentes: deja pasar la
   // petición a la red para poder comparar una pantalla con datos simulados y
-  // con datos de verdad. Apagado por omisión y sin persistir. Ver `modo-api.ts`.
-  if (!environment.mockBackend || apiRealForzada()) {
+  // con datos de verdad. Apagado por omisión y sin persistir. Ver `api-mode.ts`.
+  if (!environment.mockBackend || forcedRealApi()) {
     return next(request);
   }
 
@@ -66,7 +73,7 @@ export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  return from(Promise.all([routerSimulado(), validadorSimulado()])).pipe(
+  return from(Promise.all([inject(MOCK_ROUTER_LOADER)(), validadorSimulado()])).pipe(
     mergeMap(([tabla, contrato]) => atender(tabla, contrato, request, path)),
   );
 };
@@ -82,8 +89,8 @@ function atender(
   // El fallo a propósito va **antes** de buscar el manejador: lo que se quiere
   // mirar es la pantalla contra una petición que sale mal, no el manejador
   // devolviendo un error. Apagado salvo que la sesión lo declare; ver
-  // `fallos-simulados.ts`.
-  const fallo = falloPara(method, path);
+  // `simulated-failures.ts`.
+  const fallo = failureFor(method, path);
   if (fallo !== null) {
     return timer(latencia(path)).pipe(mergeMap(() => emitirFallo(request, path, fallo)));
   }
@@ -129,7 +136,12 @@ function atender(
     }
   } catch (error: unknown) {
     console.error('[mock] el manejador falló', method, path, error);
-    respuesta = { status: 500, body: { statusCode: 500, message: 'Fallo del backend simulado' } };
+    // Con el `code` del contrato, como el filtro de excepciones de la API: sin
+    // él `readApiError` descarta el cuerpo y la pantalla no puede ramificar.
+    respuesta = {
+      status: 500,
+      body: { statusCode: 500, code: 'INTERNAL', message: 'Fallo del backend simulado' },
+    };
   }
 
   return timer(latencia(path)).pipe(mergeMap(() => emitir(request, respuesta)));
@@ -151,7 +163,7 @@ function comoRespuesta(resultado: unknown): MockReply {
 function emitirFallo(
   request: HttpRequest<unknown>,
   path: string,
-  fallo: FalloSimulado,
+  fallo: SimulatedFailure,
 ): Observable<HttpEvent<unknown>> {
   if (fallo.modo === 'red') {
     return throwError(
@@ -164,7 +176,7 @@ function emitirFallo(
         }),
     );
   }
-  const { status, body } = cuerpoDelFallo(fallo, path);
+  const { status, body } = failureBody(fallo, path);
   return emitir(request, { status, body });
 }
 
@@ -356,6 +368,12 @@ const LATENCIA_POR_PREFIJO: readonly (readonly [string, number])[] = [
   ['/terminology', 40],
   ['/scheduling/slots', 40],
   ['/profiles', 90],
+  // La calle de un punto: el estado «Buscando la calle de este punto…» tiene
+  // que llegar a verse (y a capturarse), como la subida de documentos. 2,5 s
+  // es un supuesto, no una medición: la API real espacia las consultas a una
+  // por segundo y, si el primer proveedor cae, prueba un segundo. Con 800 ms
+  // la respuesta llegaba en medio de la captura.
+  ['/public/geo/reverse', 2500],
   // Cada parte de una subida de resultados: con la latencia por omisión, un
   // archivo de un giga (128 partes) tardaría 15 s sólo en esperas simuladas.
   ['/diagnostics/lab/result-uploads', 25],
@@ -378,32 +396,36 @@ function latencia(path: string): number {
 }
 
 /**
- * Para lo que ninguna ruta cubre. Adivina la forma por el método y la
- * consulta: una lectura con `limit`/`cursor` es una página vacía; una
- * lectura suelta, un objeto vacío; una escritura, un eco con id.
+ * Para lo que ninguna ruta cubre (H2.S1.M1, 2026-09-26).
+ *
+ * **Ya no inventa un éxito.** Hasta acá, una lectura sin manejador devolvía
+ * una página vacía y una escritura devolvía un eco con `status: 'ACTIVE'`:
+ * cualquier recorrido de la maqueta salía verde aunque la API real rechazara
+ * esa misma ruta con un 404. El 501 es la forma honesta — «esto no está
+ * implementado en el simulador», no «esto funcionó» — y trae el mismo `code`
+ * que ramifica `errorToViewState` (S9, con el path como identificador de
+ * petición) en vez de uno que la aplicación no sepa interpretar.
+ *
+ * La ruta faltante queda anotada en `window.__mockGaps` (cuando existe
+ * `window`, es decir, en el navegador) para poder recorrer la maqueta y juntar
+ * de una sola vez todo lo que el simulador todavía no cubre.
  */
 function respuestaGenerica(peticion: MockRequest): MockReply {
-  console.warn(`[mock] sin manejador para ${peticion.method} ${peticion.path} — respuesta genérica`);
-  if (peticion.method === 'GET') {
-    const paginada = peticion.query.has('limit') || peticion.query.has('cursor');
-    return {
-      status: 200,
-      body: paginada
-        ? { items: [], count: 0, limit: Number(peticion.query.get('limit') ?? 20), nextCursor: null }
-        : { items: [], count: 0 },
-    };
+  const ruta = `${peticion.method} ${peticion.path}`;
+  console.warn(`[mock] sin manejador para ${ruta} — 501`);
+  if (typeof window !== 'undefined') {
+    const global = window as unknown as { __mockGaps?: Set<string> };
+    global.__mockGaps ??= new Set();
+    global.__mockGaps.add(ruta);
   }
-  if (peticion.method === 'DELETE') {
-    return { status: 204, body: null };
-  }
-  const base = typeof peticion.body === 'object' && peticion.body !== null ? peticion.body : {};
   return {
-    status: peticion.method === 'POST' ? 201 : 200,
+    status: 501,
     body: {
-      id: `mock-${Date.now().toString(36)}`,
-      ...base,
-      createdAt: new Date().toISOString(),
-      status: 'ACTIVE',
+      statusCode: 501,
+      code: 'NOT_IMPLEMENTED_IN_MOCK',
+      message: `El simulador todavía no cubre ${ruta}.`,
+      error: 'Not Implemented',
+      path: peticion.path,
     },
   };
 }

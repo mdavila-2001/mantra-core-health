@@ -36,7 +36,7 @@ import { SegmentedControl } from '../../../../shared/components/molecules/segmen
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMap } from '../../../../shared/components/organisms/map/map-pin.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -215,6 +215,9 @@ export class WhereToBuy {
   protected readonly tabIndex = signal(
     tabIndexOf(this.route.snapshot.queryParamMap.get('tab')),
   );
+  protected readonly medicalCentersActive = computed(
+    () => WHERE_TO_BUY_TABS[this.tabIndex()] === 'medical-centers',
+  );
 
   /**
    * Cambia de pestaña y la deja en la URL (`replaceUrl`: cambiar de pestaña no
@@ -360,8 +363,8 @@ export class WhereToBuy {
   protected readonly selectedBranch = signal<string | null>(null);
 
   /** Las sedes ubicables, traducidas al contrato del organismo de mapa. */
-  protected readonly branchPins = computed<readonly PinMapa[]>(() =>
-    this.mappedBranches().map((branch): PinMapa => ({
+  protected readonly branchPins = computed<readonly PinMap[]>(() =>
+    this.mappedBranches().map((branch): PinMap => ({
       // La letra de la tarjeta es la referencia compartida: ningún uuid
       // llega al mapa, la misma regla de cero identificadores visibles.
       id: branch.code,

@@ -33,10 +33,10 @@ medida.
 En los cinco viewports, pedir `/directory` con la cuenta `superadmin@` termina
 en `/dashboard`. Capturas en `evidence/baseline/directory/`.
 
-Falta determinar si es un guardia de rol correcto (el superadmin no es
-destinatario del directorio público) o una ruta rota. **Sin esa distinción no
-es un defecto todavía, es una observación**: la clasificación exige reproducir
-con la cuenta a la que la pantalla sí está dirigida.
+Es el guardia de rol funcionando: la sección `directory` declara
+`roles: ['PATIENT', 'PRACTITIONER']` con `exclusiveRoles: true`
+(`core/navigation/navigation.map.ts`), así que el superadmin no es su
+destinatario. No es un defecto.
 
 ## Verificado, no asumido
 
@@ -56,7 +56,7 @@ como «el frontend está bien»:
 
 - **Una sola cuenta.** Sólo `superadmin@`. Las pantallas de paciente, médica,
   administrador y visitador no fueron miradas con su propio rol.
-- **28 de 232 pantallas.** Faltan las 78 hijas y las 126 portadas.
+- **28 de 232 pantallas.** Las 78 hijas y las 126 portadas no entran.
 - **Sin interacción.** Se mide la carga inicial: no se abrieron diálogos, no se
   enviaron formularios, no se recorrió con teclado, no se verificó foco.
 - **Sin los nueve estados M34.** Se ve el estado en que quedó cada pantalla con

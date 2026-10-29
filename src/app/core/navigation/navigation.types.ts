@@ -14,6 +14,7 @@
 
 // `core→core` está permitido (`scripts/check-architecture.mjs`): el tipo de
 // organización es del dominio `directory`, no de `shared/`.
+import { exigeRolEnTipo } from './navigation.payer';
 import type { TenantTypeCode } from '../data-access/directory/directory.types';
 import type { NavGroup } from './navigation.groups';
 
@@ -395,15 +396,26 @@ export interface AppSection {
   readonly onlyForTenantTypes?: readonly string[];
 
   /**
+   * En esos tipos de organización la sección exige uno de esos roles, sin el
+   * comodín de `ANY_ROLE` (`SUPERADMIN` la salva). Ver `exigeRolEnTipo` en
+   * `navigation.payer.ts`: nació con «Solicitudes de seguro».
+   */
+  readonly rolesEnTipos?: {
+    readonly tipos: readonly string[];
+    readonly roles: readonly string[];
+  };
+
+  /**
    * Roles para los que la sección **sigue existiendo y funcionando, pero no
    * ocupa una entrada de primer nivel** en el menú.
    *
    * No es `roles` al revés y la diferencia importa: `roles` decide si la
    * sesión *puede entrar* —lo pregunta `seccionRolesGuard`, que rebota—,
    * mientras que esto decide si la sección *se ofrece en el menú*. Una
-   * sección escondida acá se sigue alcanzando por su ruta, por un enlace de
-   * otra pantalla y por «Tus accesos»: lo único que pierde es el renglón
-   * lateral.
+   * sección escondida acá se sigue alcanzando por su ruta y por un enlace de
+   * otra pantalla: lo único que pierde es el renglón lateral. Desde el
+   * 28/10/2026 el panel ya no tiene árbol de accesos que la liste, así que
+   * esconder una sección exige que exista ese otro enlace.
    *
    * Nació con la lista cerrada de ocho opciones que pidió el cliente para el
    * panel del médico (22/08/2026, §4.H del plan de UX). Ahí el problema no
@@ -584,6 +596,9 @@ export function isVisibleTo(
   ) {
     return false;
   }
+
+  // Ciertos tipos de organización piden un rol de verdad: `rolesEnTipos`.
+  if (exigeRolEnTipo(section, roles, activeTenantType)) return false;
 
   // La membresía se pregunta **antes** que el rol y no la salva el comodín: no
   // es permiso, es que el dato exista. Ver {@link AppSection.requiresTenant}.

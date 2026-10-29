@@ -67,6 +67,31 @@ export interface MyOrganization extends TenantListItem {
   readonly legalRepresentative?: OrganizationContactPerson;
   /** Las gerencias de contacto declaradas, en orden canónico. Ver {@link legalRepresentative}. */
   readonly executives?: readonly OrganizationContactPerson[];
+  /**
+   * Código de la forma societaria (`SRL`, `SA`, `US_LLC`…). Ausente si la
+   * organización nació con la forma legada, que no está en el diccionario.
+   */
+  readonly legalEntityType?: string;
+  /** El NIT declarado con su documento tributario, si lo hay. */
+  readonly taxIdentifier?: string;
+  /**
+   * Los papeles de su carpeta legal, uno por rol y en orden canónico. Ausente
+   * si no presentó ninguno. El archivo no viaja: la ficha dice qué se presentó
+   * y en qué estado está.
+   */
+  readonly legalDocuments?: readonly OrganizationLegalDocument[];
+}
+
+/** Un papel de la carpeta legal de la organización, tal como quedó registrado. */
+export interface OrganizationLegalDocument {
+  /** Rol canónico (`CONSTITUTION_DOC`, `TAX_IDENTIFIER_DOC`…). */
+  readonly role: string;
+  /** Código del estado de verificación (`PENDIENTE`, `VERIFICADO`, `RECHAZADO`, `VENCIDO`). */
+  readonly verificationStatus: string;
+  /** Número del documento, si se declaró (hoy sólo el NIT). */
+  readonly documentNumber?: string;
+  readonly registeredAt?: Date;
+  readonly validTo?: Date;
 }
 
 /**
@@ -195,7 +220,13 @@ export interface TenantSearchQuery {
  * Códigos de tipo de organización que declara `CreateTenantDto`.
  *
  * Comparado con `dynamic-enums` el 2026-08-11: los diez códigos coinciden con
- * `directory.tenants.tenant_type_concept_id`. Se mantiene literal a propósito
+ * `directory.tenants.tenant_type_concept_id`. El 2026-10-26 la API sumó
+ * `CLINIC` al DTO, al catálogo (concepto `420eddfc-…`) y a sus tipos
+ * territoriales: son once, y `CLINIC` va después de `HOSPITAL`, en el mismo
+ * orden que `MEDICAL_ORGANIZATION_TYPES` (abajo), que es un
+ * subconjunto de esta lista (lo fija `directory.types.spec.ts`). `DIAGNOSTIC_CENTER`
+ * existe en la API pero no está acá: sólo nace por el alta pública (ver
+ * `onlyForTenantTypes` en `navigation.types.ts`). Se mantiene literal a propósito
  * —ver la nota de `organization-new.ts`—, porque este set literal se
  * reemplaza por el catálogo real. Hoy es la única fuente que el frontend
  * puede leer: el DTO los enumera (`@IsIn(TENANT_TYPE_CODES)`) y el backend
@@ -208,6 +239,7 @@ export const TENANT_TYPE_CODES = [
   'UNIVERSITY',
   'PHARMACY',
   'HOSPITAL',
+  'CLINIC',
   'MEDICAL_OFFICE',
   'NURSING',
   'HEALTH_OTHER',
@@ -228,6 +260,7 @@ export const TERRITORIAL_TENANT_TYPES: readonly TenantTypeCode[] = [
   'UNIVERSITY',
   'PHARMACY',
   'HOSPITAL',
+  'CLINIC',
   'MEDICAL_OFFICE',
   'NURSING',
   'HEALTH_OTHER',
@@ -246,11 +279,46 @@ export const TENANT_TYPE_LABELS: Readonly<Record<TenantTypeCode, string>> = {
   UNIVERSITY: 'Universidad',
   PHARMACY: 'Farmacia',
   HOSPITAL: 'Hospital',
+  CLINIC: 'Clínica',
   MEDICAL_OFFICE: 'Consultorio médico',
   NURSING: 'Centro de enfermería',
-  HEALTH_OTHER: 'Otro servicio de salud',
+  HEALTH_OTHER: 'Otra institución de salud',
   HEALTH_BUSINESS: 'Comercio de salud',
 };
+
+/**
+ * Los tipos de **organización médica**: los cinco tipos institucionales de
+ * salud que el alta pública de `register-organization` deja elegir, en el orden
+ * en que la pantalla los ofrece.
+ *
+ * Viven acá, junto a `TENANT_TYPE_CODES`, y no en el cliente HTTP del alta:
+ * son vocabulario del directorio y los leen también el registro de navegación
+ * y el alta administrativa. No son un catálogo propio del front: la API los
+ * declara (`@IsIn(TENANT_TYPE_CODES)`) y resuelve cada código a su concepto.
+ * La pantalla igual lee el catálogo `tenant-type` y ofrece sólo los que la API
+ * publica (ver `medicalOrganizationTypeOptions`); esta lista fija el orden, el
+ * subconjunto y el tipo que el compilador controla.
+ *
+ * Es un **subconjunto** de `TENANT_TYPE_CODES` y en su mismo orden: el
+ * `satisfies` impide que acá aparezca un código que el alta administrativa no
+ * conoce, y `directory.types.spec.ts` fija el orden. Sus rótulos son los de
+ * `TENANT_TYPE_LABELS`: un mismo tipo se llama igual en las dos altas.
+ */
+export const MEDICAL_ORGANIZATION_TYPES = [
+  'HOSPITAL',
+  'CLINIC',
+  'MEDICAL_OFFICE',
+  'NURSING',
+  'HEALTH_OTHER',
+] as const satisfies readonly TenantTypeCode[];
+
+/** Un tipo de organización médica: lo que viaja en `tenantType`. */
+export type MedicalOrganizationType = (typeof MEDICAL_ORGANIZATION_TYPES)[number];
+
+/** Si un código es uno de los tipos de organización médica. */
+export function isMedicalOrganizationType(code: string): code is MedicalOrganizationType {
+  return (MEDICAL_ORGANIZATION_TYPES as readonly string[]).includes(code);
+}
 
 /**
  * Datos de aseguradora. El backend los **exige** cuando el tipo es `PAYER` y
@@ -407,8 +475,6 @@ export interface BranchList {
 /** Tipos de sede que acepta el alta. */
 export type BranchTypeCode = 'CLINIC' | 'OFFICE';
 
-/** Claves de {@link NewBranch} que `CreateBranchDto` no declara (P54): sólo van a la maqueta. */
-export const BRANCH_SIMULATOR_EXTENSIONS: readonly string[] = ['description', 'locationUrl'];
 
 /**
  * Alta de una sucursal (`POST /tenants/{id}/branches`, UC-04-04).

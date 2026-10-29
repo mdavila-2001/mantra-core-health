@@ -178,7 +178,3 @@ concreto para agregarla.
 | 4 | Marco normativo declarado | **No existe** |
 | 5 | Canal de reporte definido | No documentado |
 | 6 | Dueño de guardia | No definido |
-
-**Sin 1 y 2, este procedimiento es teórico.** Están en
-[el análisis de brechas](../reports/documentation-gap-analysis.md) como `BLOCKER`
-y `HIGH` respectivamente.

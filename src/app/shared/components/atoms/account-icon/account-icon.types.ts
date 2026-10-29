@@ -26,6 +26,11 @@
  * de procesos) — ver el JSDoc de `RegisterPharmacy`. A diferencia de
  * `laboratory` e `imaging`, ésta **sí sale a la red** contra el simulador
  * (`POST /iam/auth/register-organization` con `tenantType: 'PHARMACY'`).
+ *
+ * `clinic` entró con el alta del centro médico (CM-11): el edificio con la cruz
+ * de salud. Sale a la red contra `register-organization` con un tipo de salud
+ * que ya existe, y su segundo paso —abrir la práctica y la primera sede— vive
+ * en `medical-center-setup`.
  */
 export const ACCOUNT_ICON_NAMES = [
   'patient',
@@ -34,19 +39,7 @@ export const ACCOUNT_ICON_NAMES = [
   'laboratory',
   'imaging',
   'pharmacy',
+  'clinic',
 ] as const;
 
-/**
- * Los íconos que no son «una de las seis puertas de la red».
- *
- * `clinic` entró con el alta del centro médico (CM-11): el edificio con la cruz
- * de salud. Va **aparte** de {@link ACCOUNT_ICON_NAMES} a propósito: la columna
- * de marca de las pantallas de acceso recorre esa lista y muestra seis puertas;
- * sumarle una séptima cambiaría todas esas pantallas, y esa decisión de diseño
- * no es de este alta. La rejilla «Registre su organización» sí lo usa.
- */
-export const EXTRA_ACCOUNT_ICON_NAMES = ['clinic'] as const;
-
-export type AccountIconName =
-  | (typeof ACCOUNT_ICON_NAMES)[number]
-  | (typeof EXTRA_ACCOUNT_ICON_NAMES)[number];
+export type AccountIconName = (typeof ACCOUNT_ICON_NAMES)[number];

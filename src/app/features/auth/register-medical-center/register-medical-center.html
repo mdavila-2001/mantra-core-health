@@ -1,61 +1,180 @@
-<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" [scene]="registered() ? 'stage' : 'calm'">
-  <div class="registro" [class.registro--confirmacion]="registered()">
-    @if (registered()) {
-      <div class="registro__header">
-        <app-registration-badge type="clinic" celebrate />
-        <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="medical-center-signup-success">
-          ¡Bienvenido a AloVida! Su centro médico ya tiene cuenta
-        </h1>
-        @if (verificationSent()) {
-          <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección.</p>
+<app-auth-split
+  [claim]="claim"
+  [tagline]="tagline"
+  contentWidth="full"
+  [plainSurface]="!registered()"
+  [scene]="registered() ? 'stage' : 'split'"
+>
+  <div class="registro-conjunto" [class.registro-conjunto--solo]="registered()">
+    <div class="registro">
+      @if (registered()) {
+        <div class="registro__header">
+          <app-registration-badge type="clinic" celebrate />
+          <h1
+            appAnuncio
+            [asertivo]="false"
+            class="registro__title"
+            data-testid="medical-center-signup-success"
+          >
+            ¡Bienvenido a AloVida! Su organización médica ya tiene cuenta
+          </h1>
+          @if (verificationSent()) {
+            <p class="registro__subtitle" data-testid="medical-center-signup-verification">
+              Le enviamos un correo a {{ accountEmail() }} para confirmar su dirección.
+            </p>
+          }
+          <p class="registro__subtitle" data-testid="medical-center-signup-pending">
+            Su organización está en revisión: queda pendiente de verificación hasta que la plataforma
+            revise sus papeles, el registro del SEDES y los datos de su director médico. Cuando se
+            apruebe, podrá configurar su práctica desde el menú.
+          </p>
+        </div>
+        <button
+          app-button
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          data-testid="medical-center-signup-go-to-login"
+          (clicked)="goToLogin()"
+        >
+          Ir a iniciar sesión
+        </button>
+      } @else {
+        <div class="registro__header">
+          <app-registration-badge type="clinic" />
+          <h1 class="registro__title">Registre su organización médica</h1>
+          <p class="registro__subtitle">
+            Cree la cuenta de su hospital, clínica, consultorio, centro de enfermería u otra institución
+            de salud. Necesitamos los datos legales de la organización, su registro del SEDES y su
+            director médico. Después de que la plataforma la verifique, podrá abrir su práctica y
+            publicar los procedimientos que ofrece.
+          </p>
+        </div>
+
+        @if (borradorDetectado(); as borrador) {
+          <app-onboarding-draft-banner
+            [draft]="borrador"
+            (resume)="restaurarBorrador(borrador)"
+            (discard)="descartarBorrador()"
+          />
         }
-        <p class="registro__subtitle" data-testid="medical-center-signup-pending">
-          Su centro está en revisión. Cuando se apruebe, podrá configurar su práctica y su sede.
-        </p>
-      </div>
-      <button
-        app-button
-        variant="primary"
-        size="lg"
-        class="registro__submit"
-        data-testid="medical-center-signup-go-to-login"
-        (clicked)="goToLogin()"
-      >
-        Ir a iniciar sesión
-      </button>
-    } @else {
-      <div class="registro__header">
-        <app-registration-badge type="clinic" />
-        <h1 class="registro__title">Registre su centro médico</h1>
-        <p class="registro__subtitle">
-          Cree la cuenta de su clínica u hospital. Después de que la plataforma la verifique, podrá abrir
-          su práctica y publicar los procedimientos que ofrece.
-        </p>
-      </div>
 
-      @if (errorMessage(); as mensaje) {
-        <app-alert appAnuncio tone="error" class="registro__alert" data-testid="medical-center-signup-error">{{
-          mensaje
-        }}</app-alert>
+        @if (errorMessage(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="registro__alert" data-testid="medical-center-signup-error">{{
+            mensaje
+          }}</app-alert>
+        }
+
+        <!-- Un selector por documento; sube de verdad y guarda el `fileId`. -->
+        <ng-template #bloqueDocumento let-clave>
+          <app-dropzone-pdf
+            [uploader]="subirDocumento"
+            [label]="etiquetaDeDocumento(clave)"
+            [required]="esDocumentoObligatorio(clave)"
+            [hasError]="esDocumentoInvalido(clave)"
+            [testId]="'medical-center-signup-doc-' + clave"
+            [documentoInicial]="documentoInicialDe(clave)"
+            (fileIdChange)="registrarDocumento(clave, $event)"
+            (uploaded)="recordarDocumento(clave, $event)"
+          />
+        </ng-template>
+
+        <div class="registro__body">
+          <app-paginated-form
+            [paginas]="paginas()"
+            [form]="form"
+            [initialStep]="pasoGuardado()"
+            label="Crear cuenta de la organización médica"
+            submitLabel="Crear cuenta de la organización"
+            [pending]="isSubmitting()"
+            [iconOnlyNav]="true"
+            (pasoVisible)="recordarPaso($event)"
+            (rechazada)="alRechazarPagina($event)"
+            (enviado)="submit()"
+            data-testid="medical-center-signup-form"
+          >
+            @for (clave of clavesDeDocumento; track clave) {
+              <ng-template [appCampoPersonalizado]="clave">
+                <ng-container [ngTemplateOutlet]="bloqueDocumento" [ngTemplateOutletContext]="{ $implicit: clave }" />
+              </ng-template>
+            }
+
+            <ng-template appCampoPersonalizado="medicalDirectorName">
+              <app-inline-name-fields
+                [grupo]="form.controls.medicalDirectorName"
+                [obligatorio]="true"
+                prefijoTestId="medical-center-signup-director"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="legalRepName">
+              <app-inline-name-fields
+                [grupo]="form.controls.legalRepName"
+                [obligatorio]="true"
+                prefijoTestId="medical-center-signup-legal-rep"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="generalManagerName">
+              <app-inline-name-fields
+                [grupo]="form.controls.generalManagerName"
+                [obligatorio]="gerenciasEnUso()"
+                prefijoTestId="medical-center-signup-gerente-general"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="salesManagerName">
+              <app-inline-name-fields
+                [grupo]="form.controls.salesManagerName"
+                [obligatorio]="gerenciasEnUso()"
+                prefijoTestId="medical-center-signup-gerente-comercial"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="marketingManagerName">
+              <app-inline-name-fields
+                [grupo]="form.controls.marketingManagerName"
+                [obligatorio]="gerenciasEnUso()"
+                prefijoTestId="medical-center-signup-gerente-marketing"
+              />
+            </ng-template>
+
+            <!-- El punto es lo único que se marca: la calle, el municipio y la
+                 zona salen de él y se muestran sin editarse. `[inicial]`
+                 devuelve el pin confirmado cuando el asistente recrea la página. -->
+            <ng-template appCampoPersonalizado="gpsCentral">
+              <app-map-location-picker
+                pinId="organizacion-medica-central"
+                disposicion="dos-columnas"
+                etiquetaConfirmada="Su casa central"
+                etiquetaQuitar="Quitar la ubicación de la casa central"
+                etiquetaMapa="La ubicación de su casa central en el mapa"
+                etiquetaFicha="La dirección de la casa central"
+                [ids]="idsUbicacionCentral"
+                [inicial]="gpsCentral()"
+                (confirmado)="fijarGpsCentral($event)"
+                (localidad)="escribirLocalidadCentral($event)"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="sucursales">
+              <app-branches-editor
+                prefijoTestId="medical-center-signup"
+                [maximo]="maximoSucursales"
+                [sucursales]="sucursales()"
+                [mostrarFaltantes]="sucursalesConFaltantes()"
+                (sucursalesChange)="fijarSucursales($event)"
+              />
+            </ng-template>
+          </app-paginated-form>
+        </div>
+
+        <div class="registro__footer">
+          <p class="registro__pie">
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
+          </p>
+        </div>
       }
+    </div>
 
-      <div class="registro__body">
-        <app-paginated-form
-          [paginas]="paginas()"
-          [form]="form"
-          label="Crear cuenta del centro médico"
-          submitLabel="Crear cuenta del centro médico"
-          [pending]="isSubmitting()"
-          (enviado)="submit()"
-          data-testid="medical-center-signup-form"
-        />
-      </div>
-
-      <div class="registro__footer">
-        <p class="registro__pie">
-          ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
-        </p>
-      </div>
+    @if (!registered()) {
+      <app-registration-help class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
     }
   </div>
 </app-auth-split>

@@ -3,13 +3,13 @@ import { dirname, join } from 'node:path';
 
 import type { jsPDF } from 'jspdf';
 
-import { establecerFirmaDeDocumentos, type PdfFirma } from '../../src/app/shared/utils/pdf-export/pdf-firma';
+import { setDocumentSignature, type PdfSignature } from '../../src/app/core/pdf-branding/pdf-signature';
 import {
-  ARCHIVOS_DE_FUENTES,
-  establecerFuentesDeDocumentos,
-  type PdfFuentes,
-} from '../../src/app/shared/utils/pdf-export/pdf-fuentes';
-import type { PdfLogo } from '../../src/app/shared/utils/pdf-export/pdf-logo';
+  FONT_FILES,
+  setDocumentFonts,
+  type PdfFonts,
+} from '../../src/app/core/pdf-branding/pdf-fonts';
+import type { PdfLogo } from '../../src/app/core/pdf-branding/pdf-logo';
 
 /**
  * Lo que el portal prepara en el navegador antes de exportar —las fuentes de
@@ -26,9 +26,9 @@ export const OUTPUT_DIR = process.env['PDF_SAMPLES_DIR'] ?? 'artifacts/pdf-sampl
 export function loadBrandFonts(): void {
   const font = (archivo: string) => ({ archivo, base64: readFileSync(join(FONTS, archivo)).toString('base64') });
   const fuentes = Object.fromEntries(
-    Object.entries(ARCHIVOS_DE_FUENTES).map(([papel, archivo]) => [papel, font(archivo)]),
-  ) as PdfFuentes;
-  establecerFuentesDeDocumentos(fuentes);
+    Object.entries(FONT_FILES).map(([papel, archivo]) => [papel, font(archivo)]),
+  ) as PdfFonts;
+  setDocumentFonts(fuentes);
 }
 
 /** Una imagen PNG de las fixtures, con sus proporciones leídas del encabezado IHDR. */
@@ -43,7 +43,7 @@ export function fixtureImage(file: string): PdfLogo {
 }
 
 /** Una profesional ficticia, con firma y sello de muestra. */
-export const SAMPLE_SIGNATURE: PdfFirma = {
+export const SAMPLE_SIGNATURE: PdfSignature = {
   nombre: 'Dra. Lucía Fernández Rojas',
   matricula: 'MP-4521',
   firma: fixtureImage('signature.png'),
@@ -51,7 +51,7 @@ export const SAMPLE_SIGNATURE: PdfFirma = {
 };
 
 export function useSampleSignature(): void {
-  establecerFirmaDeDocumentos(SAMPLE_SIGNATURE);
+  setDocumentSignature(SAMPLE_SIGNATURE);
 }
 
 /** Una fecha fija: las muestras se comparan entre corridas. */

@@ -37,7 +37,7 @@ export interface NewCarePlan {
   readonly patientProfileId: string;
   /**
    * La respuesta del formulario médico de la que sale (instancia de `forms`).
-   * En la cita es obligatoria; pendiente de backend (P43).
+   * En la cita es obligatoria (P43).
    */
   readonly formInstanceId?: string;
   /** El diagnóstico que motiva el plan, si cuelga de uno. */

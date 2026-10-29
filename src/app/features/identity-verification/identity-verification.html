@@ -88,16 +88,70 @@
           }
         }
 
-        <app-form-field icon="folder" [label]="textos().label" [required]="true" hint="Imagen o PDF, hasta 10 MB.">
+        <app-form-field label="Frente del documento" [required]="true" hint="Tome la foto completa, enfocada y sin reflejos.">
           <app-file-input
-            [(files)]="evidencia"
-            accept="image/*,application/pdf"
+            [(files)]="frente"
+            accept="image/*"
             [maxSizeBytes]="maxBytes"
             [maxFiles]="1"
             [disabled]="enviando()"
             (rejected)="alRechazar($event)"
           />
         </app-form-field>
+
+        <figure class="verificar__guia">
+          <img src="/identity-guides/document-front.svg" alt="Guía: documento completo, de frente y dentro del encuadre" />
+          <figcaption>Guía para fotografiar el frente</figcaption>
+        </figure>
+
+        <app-form-field label="Reverso del documento" [required]="true" hint="Incluya todos los datos del reverso.">
+          <app-file-input
+            [(files)]="reverso"
+            accept="image/*"
+            [maxSizeBytes]="maxBytes"
+            [maxFiles]="1"
+            [disabled]="enviando()"
+            (rejected)="alRechazar($event)"
+          />
+        </app-form-field>
+
+        <figure class="verificar__guia">
+          <img src="/identity-guides/document-back.svg" alt="Guía: reverso completo del documento dentro del encuadre" />
+          <figcaption>Guía para fotografiar el reverso</figcaption>
+        </figure>
+
+        <section class="verificar__liveness" aria-labelledby="prueba-vida-titulo">
+          <h3 id="prueba-vida-titulo">Prueba de vida con cámara</h3>
+          <p class="verificar__texto">
+            La cámara tomará tres fotos: de frente, girando a la izquierda y a la derecha.
+            Una persona revisará las capturas; no se emite una decisión biométrica automática.
+          </p>
+          <ol class="verificar__poses" aria-label="Progreso de la prueba de vida">
+            <li [class.is-complete]="pruebaVida().length > 0">1 · Frente</li>
+            <li [class.is-complete]="pruebaVida().length > 1">2 · Izquierda</li>
+            <li [class.is-complete]="pruebaVida().length > 2">3 · Derecha</li>
+          </ol>
+          <video #videoCaptura autoplay playsinline muted [hidden]="!camaraAbierta()" aria-label="Vista previa de la cámara frontal"></video>
+          @if (camaraAbierta()) {
+            <p class="verificar__pose-actual">{{ poseSiguiente() }}</p>
+            <button app-button type="button" variant="outline" (clicked)="capturarPose()">
+              Capturar {{ pruebaVida().length + 1 }} de 3
+            </button>
+            <button app-button type="button" variant="ghost" (clicked)="detenerCamara()">Cancelar cámara</button>
+          } @else if (pruebaVida().length < 3) {
+            <button app-button type="button" variant="outline" [disabled]="enviando()" (clicked)="iniciarCamara()">
+              {{ pruebaVida().length === 0 ? 'Iniciar prueba de vida' : 'Continuar con la cámara' }}
+            </button>
+          } @else {
+            <p class="verificar__capturas-listas">Las tres capturas están listas.</p>
+            <button app-button type="button" variant="ghost" [disabled]="enviando()" (clicked)="repetirPruebaVida()">
+              Repetir las tres fotos
+            </button>
+          }
+          @if (errorCamara(); as error) {
+            <app-alert appAnuncio tone="error" class="verificar__alert">{{ error }}</app-alert>
+          }
+        </section>
       </div>
 
       <button
@@ -109,7 +163,7 @@
         [isLoading]="enviando()"
         (clicked)="enviar()"
       >
-        Enviar para revisión
+        Enviar cinco evidencias para revisión
       </button>
     </app-card>
   }

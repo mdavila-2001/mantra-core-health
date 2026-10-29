@@ -8,7 +8,7 @@ import {
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
@@ -19,8 +19,10 @@ import type {
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { dataOf, loading, ready } from '../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { SpecialtyIcon } from '../../../shared/components/atoms/specialty-icon/specialty-icon';
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
 import { DirectoryPage } from '../../../shared/components/organisms/directory-page/directory-page';
 import type { SustantivoDelDirectorio } from '../../../shared/components/organisms/directory-page/directory-page.types';
@@ -35,6 +37,7 @@ import {
   type CortesDeLaGuia,
 } from './practitioner-filters';
 import { porNombre, toResultado } from './practitioner-card';
+import { specialtyPhoto } from '../../../shared/utils/directory-photo';
 
 /** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
 interface TarjetaDeEspecialidad {
@@ -61,6 +64,16 @@ const PARAM_ESPECIALIDAD = 'especialidad';
  * con un uuid.
  */
 const SIN_ESPECIALIDAD_URL = 'sin-especialidad';
+
+/**
+ * El valor con el que la URL pide la guía entera, sin acotar por especialidad.
+ *
+ * Es la primera tarjeta de la grilla (REQ-18-002): la grilla es la entrada,
+ * pero la guía telefónica completa no puede quedar inalcanzable sin escribir
+ * un nombre. Va en la misma clave que las especialidades por la misma razón
+ * que {@link SIN_ESPECIALIDAD_URL}.
+ */
+export const ALL_PRACTITIONERS_URL = 'todos';
 
 /** Tope por página del backend. La guía las junta todas. */
 const POR_PAGINA = 50;
@@ -92,6 +105,9 @@ export interface GrupoDeEspecialidad {
 /** Lo que se lee cuando el profesional no declaró especialidad. */
 const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
 
+/** El nombre de la tanda —y de la tarjeta— con la guía entera. */
+const ALL_PRACTITIONERS_LABEL = 'Todos los médicos';
+
 /**
  * **La guía de profesionales** — `GET /profiles/practitioners`.
  *
@@ -119,15 +135,17 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
  * El buscador de arriba filtra **encima** de esa estructura, en memoria, y
  * nunca es la puerta de entrada.
  *
- * ## Filas de médicos primero (propietario, 04/10/2026)
+ * ## Grilla de especialidades primero (carril 18, REQ-18-002)
  *
- * «Primero ver la opción de ver como filas y solo doctores, no como un grid de
- * especialidad.» La portada de especialidades dejó de ser la entrada: se abre
- * la lista de médicos, en filas, y la especialidad es un filtro de la barra.
- * Cada fila dice las especialidades **reales** del médico —la elegida
- * primero—, no el título escrito a mano: un cardiólogo listado bajo
- * Cardiología decía «Médico especialista» o aparecía también en el grupo de
- * otra especialidad.
+ * «Directorio de médicos debe replicar la lógica funcional de la red social:
+ * grid de especialidades y click despliega lista de doctores.» Sin
+ * especialidad ni búsqueda en la URL se ve la grilla —sólo las especialidades
+ * con gente, con su cantidad—; el clic pone la especialidad en la URL y abre la
+ * lista de esa especialidad. Escribir en el buscador salta directo a la lista.
+ * Esto reemplaza la entrada «en filas» del 04/10/2026; lo que se conserva de
+ * ese pedido es la lista misma: en filas, la especialidad como chip de la
+ * columna, y cada fila con las especialidades **reales** del médico —la
+ * elegida primero—, no el título escrito a mano.
  *
  * ## Por qué agrupa en el cliente
  *
@@ -138,9 +156,9 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
  */
 @Component({
   selector: 'app-practitioners-directory',
-  imports: [DirectoryPage],
+  imports: [AppButtonLink, DirectoryPage, RouterLink, SpecialtyIcon],
   templateUrl: './practitioners-directory.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', './practitioners-directory.css'],
+  styleUrls: ['../../../shared/styles/card-grid.css', './practitioners-directory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {
@@ -186,6 +204,29 @@ export class PractitionersDirectory {
     this.route.queryParams.pipe(map((params) => cortesDe(params))),
     { initialValue: {} as CortesDeLaGuia },
   );
+
+  /**
+   * Si se ve la grilla de especialidades en vez de la lista (REQ-18-002).
+   *
+   * Sólo cuando no se pidió nada: ni especialidad, ni texto, ni cortes. En
+   * cuanto hay cualquiera de los tres, lo que se pidió es una lista.
+   */
+  protected readonly showsLanding = computed(
+    () =>
+      this.especialidadEnUrl() === null &&
+      this.filtro().trim() === '' &&
+      Object.keys(this.cortes()).length === 0,
+  );
+
+  protected readonly photoOf = specialtyPhoto;
+
+  /**
+   * Para qué especialidad está cargada la lista, o `undefined` si todavía no
+   * se cargó ninguna. En la grilla no se trae la guía: recorrer el cursor
+   * entero sólo para mostrar tarjetas de especialidades sería pagar por una
+   * lista que nadie está mirando.
+   */
+  private loadedListFor: string | null | undefined = undefined;
 
   /** El recuento por especialidad: lo que dibuja la portada. */
   protected readonly recuento = signal<ViewState<readonly TarjetaDeEspecialidad[]>>(loading());
@@ -235,7 +276,9 @@ export class PractitionersDirectory {
       // En la columna de facetas, como la categoría de una tienda
       // (propietario, 23/10/2026).
       asChips: true,
-      options: this.tarjetas().map((tarjeta) => ({
+      options: this.tarjetas()
+        .filter((tarjeta) => tarjeta.conceptId !== ALL_PRACTITIONERS_URL)
+        .map((tarjeta) => ({
         value: tarjeta.conceptId,
         label: `${tarjeta.nombre} (${tarjeta.cantidad})`,
       })),
@@ -322,7 +365,8 @@ export class PractitionersDirectory {
     if (Object.keys(this.cortes()).length > 0) {
       return 'Ningún médico cumple todos los filtros que puso. Pruebe quitando alguno.';
     }
-    return this.especialidad() === null
+    const especialidad = this.especialidad();
+    return especialidad === null || especialidad === ALL_PRACTITIONERS_URL
       ? null
       : 'Ningún médico de esa especialidad está publicado todavía. Pruebe quitando el chip.';
   });
@@ -359,11 +403,22 @@ export class PractitionersDirectory {
     });
     effect(() => {
       const elegida = this.especialidadEnUrl();
-      untracked(() => this.cargarLista(elegida));
+      if (this.showsLanding()) {
+        return;
+      }
+      untracked(() => {
+        if (this.loadedListFor !== elegida) {
+          this.cargarLista(elegida);
+        }
+      });
     });
   }
 
   protected recargar(): void {
+    if (this.showsLanding()) {
+      this.cargarRecuento();
+      return;
+    }
     this.cargar();
   }
 
@@ -398,7 +453,7 @@ export class PractitionersDirectory {
       .subscribe({
         next: ({ recuento, etiquetas }) => {
           this.totalDeProfesionales.set(recuento.practitionerTotal);
-          const tarjetas = recuento.items.map((fila) => ({
+          const tarjetas: TarjetaDeEspecialidad[] = recuento.items.map((fila) => ({
             conceptId: fila.specialtyConceptId,
             nombre: etiquetas.get(fila.specialtyConceptId)?.display ?? SIN_ESPECIALIDAD,
             cantidad: fila.practitionerCount,
@@ -413,7 +468,22 @@ export class PractitionersDirectory {
               cantidad: recuento.withoutSpecialtyCount,
             });
           }
-          this.recuento.set(ready(tarjetas));
+          // Primero y sólo si hay alguien: la guía entera.
+          if (recuento.practitionerTotal > 0) {
+            tarjetas.unshift({
+              conceptId: ALL_PRACTITIONERS_URL,
+              nombre: ALL_PRACTITIONERS_LABEL,
+              cantidad: recuento.practitionerTotal,
+            });
+          }
+          this.recuento.set(
+            tarjetas.length === 0
+              ? empty(
+                  { label: 'Ver los directorios', route: '/directories' },
+                  'Todavía no hay médicos publicados en la guía.',
+                )
+              : ready(tarjetas),
+          );
         },
         error: (error: unknown) =>
           this.recuento.set(errorToViewState<readonly TarjetaDeEspecialidad[]>(error)),
@@ -428,6 +498,7 @@ export class PractitionersDirectory {
    * y encima el backend ya lo soportaba.
    */
   private cargarLista(specialtyConceptId: string | null): void {
+    this.loadedListFor = specialtyConceptId;
     this.estado.set(loading());
     this.recortada.set(false);
 
@@ -474,7 +545,7 @@ export class PractitionersDirectory {
     specialtyConceptId: string | null,
   ): Observable<readonly PractitionerListItem[]> {
     const filtro =
-      specialtyConceptId === null
+      specialtyConceptId === null || specialtyConceptId === ALL_PRACTITIONERS_URL
         ? {}
         : specialtyConceptId === SIN_ESPECIALIDAD_URL
           ? { withoutSpecialty: true }
@@ -564,21 +635,22 @@ function conceptosDe(filas: readonly PractitionerListItem[]): readonly string[] 
 function agrupar(
   filas: readonly PractitionerListItem[],
   etiquetas: ConceptLabels,
-  elegida: string | null = null,
+  requested: string | null = null,
 ): readonly GrupoDeEspecialidad[] {
   if (filas.length === 0) return [];
+  const elegida = requested === ALL_PRACTITIONERS_URL ? null : requested;
   const nombres = filas
     .map((fila) => fila.displayName)
     .filter((nombre): nombre is string => nombre !== undefined && nombre !== '');
   const nombreDelGrupo =
     elegida === null
-      ? 'Todos los médicos'
+      ? ALL_PRACTITIONERS_LABEL
       : elegida === SIN_ESPECIALIDAD_URL
         ? SIN_ESPECIALIDAD
         : (etiquetas.get(elegida)?.display ?? SIN_ESPECIALIDAD);
   return [
     {
-      conceptId: elegida ?? 'todos',
+      conceptId: elegida ?? ALL_PRACTITIONERS_URL,
       nombre: nombreDelGrupo,
       profesionales: filas
         .map((fila) => toResultado(fila, nombres, etiquetas, elegida))

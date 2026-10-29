@@ -16,6 +16,7 @@
 
 .glosario {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-6);
   margin-block-start: var(--sp-6);
 }
@@ -88,6 +89,8 @@
 
 .glosario__titulo-cuerpo {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-family: var(--font-display);
   font-size: var(--fs-h2);
   line-height: var(--lh-h2);
@@ -236,7 +239,10 @@
 
 .glosario__cuerpo {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .glosario__filtro {
@@ -481,6 +487,8 @@
   }
 }
 
+
+/* ─── Vista en tabla (port de mockup, #1224) ─── */
 /* --- Barra de resultados y vista de tabla ---------------------------------- */
 
 .glosario__barra {
@@ -539,9 +547,11 @@
 .glosario__tabla thead th:nth-child(1) {
   inline-size: 24%;
 }
+
 .glosario__tabla thead th:nth-child(2) {
   inline-size: 16%;
 }
+
 .glosario__tabla thead th:nth-child(4) {
   inline-size: 14%;
 }

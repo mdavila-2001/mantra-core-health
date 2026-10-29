@@ -71,9 +71,9 @@ describe('GlossaryTerm con artículo enciclopédico', () => {
 
   const html = () => harness.fixture.nativeElement as HTMLElement;
   const rotulos = () => [...html().querySelectorAll('[role="tab"]')].map((b) => b.textContent?.trim());
-  const articulo = () => http.expectOne((r) => r.url.endsWith(`/concepts/${ID}/article`));
+  const articulo = () => http.expectOne((r) => r.url.endsWith(`/concepts/${ID}/glossary-article`));
   const ficha = () =>
-    http.expectOne((r) => r.url.endsWith(`/concepts/${ID}`) && !r.url.endsWith('/article'));
+    http.expectOne((r) => r.url.endsWith(`/concepts/${ID}`) && !r.url.endsWith('/glossary-article'));
 
   it('con artículo, la pestaña «Artículo» reemplaza a «Definición»', async () => {
     articulo().flush(ARTICULO);

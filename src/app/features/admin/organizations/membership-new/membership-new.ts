@@ -18,7 +18,6 @@ import type {
   NewMembership,
   TenantRoleCode,
 } from '../../../../core/data-access/directory/directory.types';
-import { IamClient } from '../../../../core/data-access/iam/iam.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -36,6 +35,7 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import { crearBuscadorDePersonas } from '../people-search';
 
 /** Cuántos candidatos trae cada búsqueda del combobox de persona. */
 const CANDIDATOS_POR_BUSQUEDA = 10;
@@ -96,7 +96,6 @@ const ETIQUETAS_DE_ALCANCE: Readonly<Record<AccessScopeCode, string>> = {
 })
 export class MembershipNew {
   private readonly directory = inject(DirectoryClient);
-  private readonly iam = inject(IamClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -135,8 +134,8 @@ export class MembershipNew {
   /* ---- la persona: se elige, nunca se tipea ------------------------------ */
 
   protected readonly persona = signal<ReferenceOption | null>(null);
-  protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
-  protected readonly buscando = signal(false);
+  /** La búsqueda de persona: errores distintos del vacío y la última tecla manda. */
+  protected readonly personas = crearBuscadorDePersonas(CANDIDATOS_POR_BUSQUEDA);
 
   /** Marca que el envío ya se intentó, para mostrar los faltantes no tocados. */
   private readonly enviado = signal(false);
@@ -216,36 +215,6 @@ export class MembershipNew {
       // Un fallo acá no rompe el alta: deja el alcance por sede sin opciones y
       // la pantalla lo dice. El error general se reserva para el envío.
       error: () => this.sedes.set([]),
-    });
-  }
-
-  /**
-   * Busca personas y las traduce a opciones. El `hint` distingue una cuenta sin
-   * verificar, igual que en el alta de organización.
-   */
-  protected buscarPersona(texto: string): void {
-    if (texto === '') {
-      this.candidatos.set([]);
-      return;
-    }
-
-    this.buscando.set(true);
-    this.iam.searchUsers({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        this.candidatos.set(
-          pagina.items.map((usuario) => ({
-            value: usuario.id,
-            label: usuario.displayName,
-            ...(usuario.emailVerified ? {} : { hint: 'Correo sin verificar' }),
-          })),
-        );
-        this.buscando.set(false);
-      },
-      error: (error: unknown) => {
-        this.candidatos.set([]);
-        this.buscando.set(false);
-        this.avisarBusquedaNoDisponible(error);
-      },
     });
   }
 

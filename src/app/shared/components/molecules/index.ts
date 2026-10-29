@@ -66,10 +66,14 @@ export { StoredFilePreview } from './stored-file-preview/stored-file-preview';
 
 export { FormField } from './form-field/form-field';
 
-export { FirmaOSello } from './firma-o-sello/firma-o-sello';
-export type { TipoDeFirmaOSello } from './firma-o-sello/firma-o-sello';
+export { SignatureOrSeal as FirmaOSello } from './signature-or-seal/signature-or-seal';
+export type { SignatureOrSealType as TipoDeFirmaOSello } from './signature-or-seal/signature-or-seal';
 
-export { LogoConsultorio } from './logo-consultorio/logo-consultorio';
+export { PracticeLogo as LogoConsultorio } from './practice-logo/practice-logo';
+
+export { LoadingState } from './loading-state/loading-state';
+export { LOADING_STATE_SIZES } from './loading-state/loading-state.types';
+export type { LoadingStateSize } from './loading-state/loading-state.types';
 
 /* `MenuItem` y `MenuTrigger` solo tienen sentido dentro de un `Menu`. */
 export { Menu } from './menu/menu';
@@ -139,7 +143,7 @@ export type {
 } from './search-result/search-result.types';
 
 export { Stepper } from './stepper/stepper';
-export { STEP_STATUSES } from './stepper/stepper.types';
+export { porcentajeDelRecorrido, STEP_STATUSES } from './stepper/stepper.types';
 export type { StepperStep, StepStatus } from './stepper/stepper.types';
 
 /* `Tab` es la pestaña individual; sin `Tabs` alrededor no significa nada. */

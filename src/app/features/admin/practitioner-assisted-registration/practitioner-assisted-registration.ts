@@ -26,7 +26,7 @@ import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-d
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+import { joinNames } from '../../../core/profession/additional-names';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
@@ -50,8 +50,8 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
-import { CamposDeNombre } from '../../auth/registro-compartido/campos-de-nombre/campos-de-nombre';
-import { grupoDeNombre } from '../../auth/registro-compartido/campos-de-nombre/nombre-de-persona';
+import { InlineNameFields } from '../../auth/shared-registration/inline-name-fields/inline-name-fields';
+import { nameGroup } from '../../auth/shared-registration/name-fields/person-name';
 
 /** Largos que exige `RegisterPractitionerDto` en el backend. */
 const MAX_MOTIVO = 500;
@@ -89,9 +89,8 @@ const PESTANAS = ['Médico', 'Documento y matrícula', 'Habilitación y motivo']
  * escrito al cambiar de pestaña; al enviar con errores, salta a la primera
  * pestaña que tiene alguno.
  *
- * > **Decisión pendiente de negocio:** si el médico creado por el admin nace
- * > con `CLINICIAN`. Hoy la casilla viene marcada —sin el rol no puede operar—
- * > y es visible y desmarcable; el default no se esconde.
+ * El rol `CLINICIAN` viene marcado —sin el rol el médico no puede operar— y
+ * la casilla es visible y desmarcable: el default no se esconde.
  */
 @Component({
   selector: 'app-practitioner-assisted-registration',
@@ -104,7 +103,7 @@ const PESTANAS = ['Médico', 'Documento y matrícula', 'Habilitación y motivo']
     DatePipe,
     FormField,
     FormSection,
-    CamposDeNombre,
+    InlineNameFields,
     Input,
     Link,
     NavIcon,
@@ -164,7 +163,7 @@ export class PractitionerAssistedRegistration implements OnInit {
   protected readonly catalogoEspecialidadesCaido = signal(false);
 
   protected readonly form = new FormGroup({
-    doctorName: grupoDeNombre(true),
+    doctorName: nameGroup(true),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -368,7 +367,7 @@ export class PractitionerAssistedRegistration implements OnInit {
     const raw = this.form.getRawValue();
     const nombre = raw.doctorName;
     // Sin columna para tercer nombre ni agregados: se pliegan en `middleName`.
-    const segundoNombre = unirNombres([nombre.middleName, nombre.thirdName, ...nombre.extraNames]);
+    const segundoNombre = joinNames([nombre.middleName, nombre.thirdName, ...nombre.extraNames]);
     const apellidoMaterno = nombre.motherLastName.trim();
     // Sin casillas vacías ni repetidas: el contrato las toma como conceptos distintos.
     const elegidas = [...new Set(this.especialidades().filter((id) => id !== ''))];

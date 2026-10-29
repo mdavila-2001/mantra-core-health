@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { empezarElAlta } from './support/registro-paciente';
 
 /**
  * El alta pública, en lo que se ve: el carnet con su expedición en un solo
@@ -53,12 +54,8 @@ test.describe('alta pública — el documento y su expedición', () => {
     await page.goto('/auth/register/patient');
     await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
 
-    // La cédula del paciente está en la segunda página («Tu documento de
-    // identidad»): la primera es el nombre, y hay que contestarla para llegar.
-    await page.getByTestId('registro-nombre').fill('Ana');
-    await page.getByTestId('registro-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
-
+    // La cédula del paciente va en el primer paso («Identidad y ocupación»),
+    // junto al nombre: está a la vista desde que se abre el alta.
     await expect(page.getByTestId('registro-documento')).toBeVisible();
     await documentoYExpedicionEnLaMismaLinea(
       page,
@@ -108,16 +105,15 @@ test.describe('alta pública — por qué le pedimos esto', () => {
     });
     await expect(ayuda).toBeVisible();
 
-    // Paso 1: el nombre. La explicación habla del nombre.
+    // Paso 1: identidad. La explicación habla del nombre y del documento.
     await expect(ayuda.getByText('Su nombre, como figura en su documento')).toBeVisible();
+    await expect(ayuda.getByText('Con su documento va a entrar')).toBeVisible();
     await expect(ayuda.getByText('Sus datos están a salvo')).toBeVisible();
 
-    // Paso 2: el documento. La explicación cambió con la pregunta.
-    await page.getByTestId('registro-nombre').fill('Ana');
-    await page.getByTestId('registro-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
+    // Paso 2: residencia. La explicación cambió con la pregunta.
+    await empezarElAlta(page);
 
-    await expect(ayuda.getByText('Con su documento va a entrar')).toBeVisible();
+    await expect(ayuda.getByText('Para mostrarle lo que tiene cerca')).toBeVisible();
     await expect(ayuda.getByText('Su nombre, como figura en su documento')).toHaveCount(0);
     // El sello sigue: la promesa no depende de qué se esté contestando.
     await expect(ayuda.getByText('Sus datos están a salvo')).toBeVisible();

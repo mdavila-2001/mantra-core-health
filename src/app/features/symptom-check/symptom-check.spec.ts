@@ -5,9 +5,10 @@ import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
 
 import { BodyMap } from '@shared/components/organisms/body-map/body-map';
-import { RECONOCEDOR_DE_VOZ } from './dictado';
-import type { EventoDeErrorDeVoz, EventoDeResultadoDeVoz, ReconocedorDeVoz } from './dictado.types';
+import { VOICE_RECOGNIZER } from './dictation';
+import type { VoiceErrorEvent, VoiceResultEvent, VoiceRecognizer } from './dictation.types';
 import { SymptomCheck } from './symptom-check';
+import { ESPERAR_IMAGEN_DE_VISTA } from '../../shared/components/organisms/body-map/body-map';
 
 /**
  * Responde el `GET /profiles/patients/me` que se pide al abrir, con sesión
@@ -44,7 +45,12 @@ describe('SymptomCheck · a dónde lleva «ver quién atiende»', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -209,7 +215,12 @@ describe('SymptomCheck · la silueta', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -308,7 +319,12 @@ describe('SymptomCheck · el área de texto', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -357,7 +373,12 @@ describe('SymptomCheck · mientras la IA lee', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -369,7 +390,9 @@ describe('SymptomCheck · mientras la IA lee', () => {
   afterEach(() => vi.useRealTimers());
 
   function escribir(texto: string): void {
-    const control = html.querySelector<HTMLTextAreaElement>('[data-testid="sintomas-texto"] textarea');
+    const control = html.querySelector<HTMLTextAreaElement>(
+      '[data-testid="sintomas-texto"] textarea',
+    );
     if (control === null) throw new Error('no está el área de texto');
     control.value = texto;
     control.dispatchEvent(new Event('input', { bubbles: true }));
@@ -379,7 +402,9 @@ describe('SymptomCheck · mientras la IA lee', () => {
   it('dice que está leyendo, no «no reconocimos», hasta que el servicio contesta', () => {
     // Un texto que el motor local no reconoce: sólo el servicio puede leerlo.
     escribir('algo raro me pasa desde ayer');
-    expect(html.querySelector('[data-testid="sintomas-leyendo"]')?.textContent).toContain('Estamos leyendo');
+    expect(html.querySelector('[data-testid="sintomas-leyendo"]')?.textContent).toContain(
+      'Estamos leyendo',
+    );
     expect(html.textContent).not.toContain('No reconocimos');
 
     vi.advanceTimersByTime(700);
@@ -402,13 +427,13 @@ describe('SymptomCheck · mientras la IA lee', () => {
  * reconocedor real está en `evidencia/h3/dictado/`, no acá.
  */
 describe('SymptomCheck · dictar', () => {
-  class ReconocedorDoble implements ReconocedorDeVoz {
+  class ReconocedorDoble implements VoiceRecognizer {
     static ultimo: ReconocedorDoble | null = null;
     lang = '';
     continuous = false;
     interimResults = false;
-    onresult: ((evento: EventoDeResultadoDeVoz) => void) | null = null;
-    onerror: ((evento: EventoDeErrorDeVoz) => void) | null = null;
+    onresult: ((evento: VoiceResultEvent) => void) | null = null;
+    onerror: ((evento: VoiceErrorEvent) => void) | null = null;
     onend: (() => void) | null = null;
     constructor() {
       ReconocedorDoble.ultimo = this;
@@ -428,13 +453,13 @@ describe('SymptomCheck · dictar', () => {
   let html: HTMLElement;
   let http: HttpTestingController;
 
-  function montar(constructor: (new () => ReconocedorDeVoz) | null): void {
+  function montar(constructor: (new () => VoiceRecognizer) | null): void {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: RECONOCEDOR_DE_VOZ, useValue: constructor },
+        { provide: VOICE_RECOGNIZER, useValue: constructor },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -452,7 +477,7 @@ describe('SymptomCheck · dictar', () => {
     return control;
   }
 
-  function fraseFinal(texto: string): EventoDeResultadoDeVoz {
+  function fraseFinal(texto: string): VoiceResultEvent {
     const results = [Object.assign([{ transcript: texto, confidence: 1 }], { isFinal: true })];
     return { resultIndex: 0, results: results as unknown as SpeechRecognitionResultList };
   }
@@ -548,12 +573,18 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
       },
     ],
     urgency: 'programada',
+    response: 'Gracias por contarnos cómo se siente. Entendemos que esto puede preocuparle.',
   };
 
   beforeEach(() => {
     vi.useFakeTimers();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -590,22 +621,32 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('manchas en la espalda');
     expect(html.querySelector('.sintomas__recomendaciones')?.textContent).toContain('Dermatología');
+    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain(
+      'Gracias por contarnos',
+    );
   });
 
   it('si el servicio no responde, la pantalla sigue con lo que reconoce sola', () => {
     escribir('me duele la cabeza');
     vi.advanceTimersByTime(600);
-    http.expectOne('/ai/v1/triage/analyze').flush('caído', { status: 503, statusText: 'Service Unavailable' });
+    http
+      .expectOne('/ai/v1/triage/analyze')
+      .flush('caído', { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();
 
     expect(html.querySelector('.sintomas__chips')?.textContent).toContain('dolor de cabeza');
+    expect(html.querySelector('[data-testid="sintomas-respuesta-ia"]')?.textContent).toContain(
+      'Gracias por contarnos',
+    );
   });
 
   it('lo que se cuenta ilumina la silueta y las pastillas, sin abrir ninguna zona', () => {
     escribir('me duele la rodilla y ando triste');
     fixture.detectChanges();
 
-    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain('Rodillas');
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
+      'Rodillas',
+    );
     expect(
       html.querySelector('[data-testid="body-map-rodillas"]')?.closest('g')?.classList,
     ).toContain('body-map__zona--marcada');
@@ -614,13 +655,17 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
 
     // La lectura del servicio se pide igual; se la da por atendida.
     vi.advanceTimersByTime(600);
-    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada' }));
   });
 
   it('sin certeza manda a Medicina general: nada reconocido, o sólo lo que interpretó MedGemma', () => {
     escribir('tengo un problema que no se explicar');
     vi.advanceTimersByTime(600);
-    http.expectOne('/ai/v1/triage/analyze').flush({ symptoms: [], urgency: 'programada', source: 'catalog' });
+    http
+      .expectOne('/ai/v1/triage/analyze')
+      .flush({ symptoms: [], urgency: 'programada', source: 'catalog' });
     fixture.detectChanges();
     expect(html.querySelector('[data-testid="sintomas-sin-certeza"]')).not.toBeNull();
     expect(
@@ -652,20 +697,26 @@ describe('SymptomCheck · lo que entiende el servicio de triage', () => {
   it('los síntomas reconocidos se muestran con su término del glosario médico y la forma llana', () => {
     escribir('eyaculo sangre y me duele la cabeza');
     vi.advanceTimersByTime(600);
-    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
     fixture.detectChanges();
     const chips = [...html.querySelectorAll('[data-testid="sintoma-reconocido"]')];
     const textos = chips.map((c) => c.textContent?.trim());
     expect(textos).toContain('Cefalea (dolor de cabeza)');
     expect(textos).toContain('Hematospermia (sangre en el semen)');
-    expect(chips.find((c) => c.textContent?.includes('Cefalea'))?.getAttribute('data-glossary-code')).toBe('CIE-10 R51');
+    expect(
+      chips.find((c) => c.textContent?.includes('Cefalea'))?.getAttribute('data-glossary-code'),
+    ).toBe('CIE-10 R51');
   });
 
   it('con un síntoma reconocido con certeza Medicina general igual va primero, y el especialista debajo', () => {
     // Decisión del propietario (2026-10-08): Medicina general siempre primero.
     escribir('me salieron granos en la cara');
     vi.advanceTimersByTime(600);
-    http.match('/ai/v1/triage/analyze').forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
+    http
+      .match('/ai/v1/triage/analyze')
+      .forEach((req) => req.flush({ symptoms: [], urgency: 'programada', source: 'catalog' }));
     fixture.detectChanges();
     const especialidades = [
       ...html.querySelectorAll('[data-testid="sintomas-recomendaciones"] .rejilla__nombre'),
@@ -697,7 +748,12 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(SymptomCheck);
@@ -907,9 +963,9 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(html.querySelector('[data-testid="sintomas-recomendaciones"]')).not.toBeNull();
   });
 
-  it('detecta «necesito ayuda» y ubica el soporte de crisis ABAJO del área de escritura', () => {
+  it('detecta «ideas suicidas» y ubica el soporte de crisis ABAJO del área de escritura', () => {
     responderSexoPropio(http);
-    (componente as unknown as { escribir(v: string): void }).escribir('necesito ayuda');
+    (componente as unknown as { escribir(v: string): void }).escribir('tengo ideas suicidas');
     fixture.detectChanges();
     http.match(() => true);
 
@@ -919,9 +975,25 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     expect(crisis).not.toBeNull();
     expect(escribir).not.toBeNull();
     // La crisis debe aparecer después en el árbol DOM (la escritura ARRIBA, y el soporte ABAJO)
-    expect(escribir!.compareDocumentPosition(crisis!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      escribir!.compareDocumentPosition(crisis!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(crisis?.textContent).toContain('800-11-3040');
     expect(crisis?.textContent).toContain('772-22123');
+  });
+
+  it('no confunde «necesito ayuda» con ideación suicida ni bloquea la orientación médica', () => {
+    responderSexoPropio(http);
+    (componente as unknown as { escribir(v: string): void }).escribir(
+      'necesito ayuda me duele la rodilla',
+    );
+    fixture.detectChanges();
+    http.match(() => true);
+
+    html = fixture.nativeElement as HTMLElement;
+    const crisis = html.querySelector('[data-testid="sintomas-crisis-soporte"]');
+    expect(crisis).toBeNull();
+    expect(html.querySelector('.sintomas__chips')?.textContent).toContain('Dolor de rodilla');
   });
 
   it('permite abrir manualmente las líneas de contención desde el botón superior', () => {
@@ -929,7 +1001,9 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     fixture.detectChanges();
     html = fixture.nativeElement as HTMLElement;
 
-    const botonTop = html.querySelector<HTMLButtonElement>('[data-testid="sintomas-boton-ayuda-top"]');
+    const botonTop = html.querySelector<HTMLButtonElement>(
+      '[data-testid="sintomas-boton-ayuda-top"]',
+    );
     expect(botonTop).not.toBeNull();
     expect(html.querySelector('[data-testid="sintomas-crisis-soporte"]')).toBeNull();
 
@@ -939,6 +1013,295 @@ describe('SymptomCheck · «Salud íntima» respeta el sexo del paciente', () =>
     const crisis = html.querySelector('[data-testid="sintomas-crisis-soporte"]');
     expect(crisis).not.toBeNull();
     expect(crisis?.textContent).toContain('800-11-3040');
+  });
+});
+
+/**
+ * La silueta del cuerpo (P-01, doctor 22/09/2026) y las pastillas son dos
+ * puertas al mismo estado: lo que se abre desde la figura es lo mismo que se
+ * abre desde la pastilla, y la alarma sigue viva venga de donde venga.
+ *
+ * Nada de esto escribe en el área de texto, así que no se pide el catálogo:
+ * el `http.verify()` de abajo es la prueba de que la figura no dispara red.
+ */
+describe('SymptomCheck · la silueta', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let html: HTMLElement;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    fixture.detectChanges();
+    responderSexoPropio(http);
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => http.verify());
+
+  function tocar(testId: string): void {
+    const control = html.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+    if (control === null) throw new Error(`no está ${testId}`);
+    control.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+  }
+
+  function presionada(testId: string): string | null {
+    return html.querySelector(`[data-testid="${testId}"]`)?.getAttribute('aria-pressed') ?? null;
+  }
+
+  it('tocar el pecho en la figura abre sus síntomas', () => {
+    tocar('body-map-pecho');
+
+    expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
+      'dolor de pecho',
+    );
+  });
+
+  it('tocar una zona la resalta en la figura y suelta la anterior', () => {
+    tocar('body-map-pecho');
+    tocar('body-map-estomago');
+
+    expect(presionada('body-map-estomago')).toBe('true');
+    expect(presionada('body-map-pecho')).toBe('false');
+  });
+
+  /** Zonas finas: cada parte ofrece lo suyo, y lleva a especialidades distintas. */
+  it('la rodilla ofrece la rodilla, no el hombro', () => {
+    tocar('body-map-rodillas');
+    const opciones = html.querySelector('[data-testid="zona-abierta"]')?.textContent ?? '';
+
+    expect(opciones).toContain('dolor de rodilla');
+    expect(opciones).not.toContain('dolor de hombro');
+  });
+
+  it('de frente, tocar la cabeza acerca la cara para elegir los ojos', () => {
+    tocar('body-map-cabeza');
+    tocar('body-map-ojos');
+
+    expect(html.querySelector('[data-testid="zona-abierta"]')?.textContent).toContain(
+      'visión borrosa',
+    );
+  });
+
+  it('volver a tocar la zona en la figura la cierra', () => {
+    tocar('body-map-pecho');
+    tocar('body-map-pecho');
+
+    expect(html.querySelector('[data-testid="zona-abierta"]')).toBeNull();
+  });
+
+  /** La alarma es el único camino que no puede romperse: el aviso de urgencia sigue saliendo. */
+  it('un síntoma de alarma elegido desde la figura sigue disparando el aviso', () => {
+    tocar('body-map-pecho');
+    const opcion = Array.from(
+      html.querySelectorAll<HTMLButtonElement>('[data-testid="zona-abierta"] button'),
+    ).find((boton) => boton.textContent?.trim() === 'dolor de pecho');
+    if (opcion === undefined) throw new Error('no está «dolor de pecho»');
+
+    opcion.click();
+    fixture.detectChanges();
+
+    expect(html.querySelector('app-alert')?.textContent).toContain('guardia');
+  });
+
+  /**
+   * Las pastillas son el camino de «piel», «ánimo» y «general», que no tienen
+   * forma; lo que se señala en el cuerpo no se repite como pastilla.
+   */
+  it('las pastillas son sólo lo que no tiene forma', () => {
+    expect(html.querySelector('[data-testid="zona-piel"]')).not.toBeNull();
+    expect(html.querySelector('[data-testid="body-map-piel"]')).toBeNull();
+    expect(html.querySelector('[data-testid="zona-pecho"]')).toBeNull();
+  });
+});
+
+/**
+ * El área de texto es un panel a la vista (P-02, doctor 22/09/2026): no hay
+ * nada que desplegar para escribir, y el rótulo está asociado al control.
+ */
+describe('SymptomCheck · el área de texto', () => {
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let html: HTMLElement;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    fixture.detectChanges();
+    responderSexoPropio(http);
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => http.verify());
+
+  function area(): HTMLTextAreaElement {
+    const control = html.querySelector<HTMLTextAreaElement>(
+      '[data-testid="sintomas-texto"] textarea',
+    );
+    if (control === null) throw new Error('no está el área de texto');
+    return control;
+  }
+
+  it('se ve sin desplegar nada, con su rótulo asociado al control', () => {
+    expect(html.querySelector('details')).toBeNull();
+
+    const rotulo = html.querySelector<HTMLLabelElement>(`label[for="${area().id}"]`);
+    expect(rotulo?.textContent).toContain('Cuéntenos con sus palabras');
+  });
+
+  it('lo que se escribe llega a `texto()`', () => {
+    const control = area();
+    control.value = 'me duele la cabeza';
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+
+    expect((fixture.componentInstance as unknown as { texto(): string }).texto()).toBe(
+      'me duele la cabeza',
+    );
+    // Escribir pide el catálogo de especialidades —es lo previsto—; se lo da
+    // por atendido para que `verify()` no lo cuente como una petición olvidada.
+    http.match(() => true);
+  });
+});
+
+/**
+ * Dictar (P-02, Q-12), con un doble del reconocedor en los tres niveles de
+ * la regla 65: con soporte y una frase que llega al texto; sin soporte, sin
+ * botón; y el error de permiso con su frase accionable. La prueba contra el
+ * reconocedor real está en `evidencia/h3/dictado/`, no acá.
+ */
+describe('SymptomCheck · dictar', () => {
+  class ReconocedorDoble implements VoiceRecognizer {
+    static ultimo: ReconocedorDoble | null = null;
+    lang = '';
+    continuous = false;
+    interimResults = false;
+    onresult: ((evento: VoiceResultEvent) => void) | null = null;
+    onerror: ((evento: VoiceErrorEvent) => void) | null = null;
+    onend: (() => void) | null = null;
+    constructor() {
+      ReconocedorDoble.ultimo = this;
+    }
+    start(): void {
+      // el doble no escucha: los resultados se disparan a mano
+    }
+    stop(): void {
+      this.onend?.();
+    }
+    abort(): void {
+      this.onend?.();
+    }
+  }
+
+  let fixture: ReturnType<typeof TestBed.createComponent<SymptomCheck>>;
+  let html: HTMLElement;
+  let http: HttpTestingController;
+
+  function montar(constructor: (new () => VoiceRecognizer) | null): void {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: VOICE_RECOGNIZER, useValue: constructor },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(SymptomCheck);
+    fixture.detectChanges();
+    responderSexoPropio(http);
+    html = fixture.nativeElement as HTMLElement;
+  }
+
+  afterEach(() => http.verify());
+
+  function boton(): HTMLButtonElement {
+    const control = html.querySelector<HTMLButtonElement>('[data-testid="sintomas-dictar"]');
+    if (control === null) throw new Error('no está el botón de dictar');
+    return control;
+  }
+
+  function fraseFinal(texto: string): VoiceResultEvent {
+    const results = [Object.assign([{ transcript: texto, confidence: 1 }], { isFinal: true })];
+    return { resultIndex: 0, results: results as unknown as SpeechRecognitionResultList };
+  }
+
+  it('sin reconocedor en el navegador no ofrece el botón, y el área de texto sigue', () => {
+    montar(null);
+
+    expect(html.querySelector('[data-testid="sintomas-dictado"]')).toBeNull();
+    expect(html.querySelector('[data-testid="sintomas-texto"] textarea')).not.toBeNull();
+  });
+
+  it('con reconocedor ofrece «Dictar» con ícono y texto, y el aviso antes', () => {
+    montar(ReconocedorDoble);
+
+    expect(boton().textContent).toContain('Dictar');
+    expect(boton().querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+    const aviso = html.querySelector('#sintomas-dictado-aviso');
+    expect(aviso?.textContent).toContain('lo transcribe su navegador');
+    expect(aviso?.textContent).toContain('lo analizamos para entenderle');
+    expect(aviso?.textContent).toContain('no lo guardamos');
+    expect(boton().getAttribute('aria-describedby')).toBe('sintomas-dictado-aviso');
+    // El aviso está ANTES del botón en el DOM: el botón «sigue» al aviso.
+    const posicion = aviso?.compareDocumentPosition(boton()) ?? 0;
+    expect(posicion & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+  });
+
+  it('lo dictado se agrega al final de lo escrito, sin pisarlo', () => {
+    montar(ReconocedorDoble);
+    (fixture.componentInstance as unknown as { escribir(v: string): void }).escribir(
+      'me duele la cabeza',
+    );
+    fixture.detectChanges();
+
+    boton().click();
+    fixture.detectChanges();
+    expect(boton().textContent).toContain('Detener');
+    expect(html.querySelector('[data-testid="sintomas-dictado-estado"]')?.textContent).toContain(
+      'Escuchando',
+    );
+
+    ReconocedorDoble.ultimo?.onresult?.(fraseFinal('y tengo tos'));
+    fixture.detectChanges();
+
+    expect((fixture.componentInstance as unknown as { texto(): string }).texto()).toBe(
+      'me duele la cabeza y tengo tos',
+    );
+    // Escribir pide el catálogo, como al teclear: se lo da por atendido.
+    http.match(() => true);
+  });
+
+  it('sin permiso de micrófono dice qué hacer', () => {
+    montar(ReconocedorDoble);
+    boton().click();
+    fixture.detectChanges();
+
+    ReconocedorDoble.ultimo?.onerror?.({ error: 'not-allowed' });
+    ReconocedorDoble.ultimo?.onend?.();
+    fixture.detectChanges();
+
+    expect(html.querySelector('[data-testid="sintomas-dictado-estado"]')?.textContent).toContain(
+      'Active el micrófono en el navegador o escriba',
+    );
+    expect(boton().textContent).toContain('Dictar');
   });
 });
 

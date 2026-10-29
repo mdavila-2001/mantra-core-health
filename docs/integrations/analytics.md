@@ -88,13 +88,3 @@ distinta —se trata de mensajes de error, no de comportamiento—.
 
 Es la primera que conviene resolver, y está tratada por separado en
 [reporte de errores](../observability/error-reporting.md).
-
-## Estado
-
-Registrado como brecha `MEDIUM` de producto (no se puede medir nada) y `HIGH`
-operativa (no se detecta una degradación) en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
-
-**No se implementa acá**: añadir telemetría es un cambio de producto, y el plan
-lo dice explícitamente — *«No añadir telemetría nueva como parte implícita de la
-documentación.»*

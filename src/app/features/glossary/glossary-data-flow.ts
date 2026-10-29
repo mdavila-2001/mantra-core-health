@@ -10,7 +10,7 @@ import type { GlossaryRelation, GlossaryTermDetail } from '../../core/data-acces
 
     Sigue la relación «Envía datos a» desde el término de la ficha hasta el
     último eslabón: Ecógrafo → Imagen DICOM → Archivo de imágenes (PACS/VNA)
-    → Informe del estudio → Resultado del paciente. Cada eslabón es un término
+    → Informe del estudio → Result del paciente. Cada eslabón es un término
     del glosario y enlaza a su ficha.
 
     La vista de red del glosario muestra los vecinos de a un salto; esta

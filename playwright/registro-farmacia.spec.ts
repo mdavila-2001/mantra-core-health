@@ -52,11 +52,9 @@ async function completarLaEmpresa(page: Page, razonSocial = 'Farmacia San Martí
   await page.getByTestId('paginated-form-continuar').click();
 }
 
-/** Salta los seis papeles (opcionales): dos páginas, «Continuar» sin adjuntar nada. */
+/** Salta los papeles (opcionales): una sola página, «Continuar» sin adjuntar nada. */
 async function saltarLosPapeles(page: Page): Promise<void> {
-  await expect(page.locator('.paginated-form__titulo')).toContainText('Los papeles de la farmacia');
-  await page.getByTestId('paginated-form-continuar').click();
-  await expect(page.locator('.paginated-form__titulo')).toContainText('(2 de 2)');
+  await expect(page.locator('.paginated-form__titulo')).toHaveText('Los papeles de la farmacia');
   await page.getByTestId('paginated-form-continuar').click();
 }
 
@@ -74,7 +72,7 @@ async function saltarSucursales(page: Page): Promise<void> {
 }
 
 /**
- * Escribe un nombre desglosado (`app-campos-de-nombre`): primer nombre y
+ * Escribe un nombre desglosado (`app-inline-name-fields`): primer nombre y
  * apellido paterno, que son las dos partes obligatorias desde e1acc37a.
  */
 async function escribirNombre(page: Page, prefijo: string, nombre: string, apellido: string): Promise<void> {
@@ -199,8 +197,8 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
     await abrirElAlta(page);
     await completarLaEmpresa(page, 'Farmacia Completa S.R.L.');
 
-    // Los seis papeles, en dos páginas de 4 y 2.
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Los papeles de la farmacia');
+    // Los cinco papeles, en UNA sola página.
+    await expect(page.locator('.paginated-form__titulo')).toHaveText('Los papeles de la farmacia');
     for (const clave of [
       'constitutionFileId',
       'taxIdentifierFileId',
@@ -212,8 +210,6 @@ test.describe('alta pública de farmacia (Módulo Farmacia §1)', () => {
         timeout: 15_000,
       });
     }
-    await page.getByTestId('paginated-form-continuar').click();
-    await expect(page.locator('.paginated-form__titulo')).toContainText('(2 de 2)');
     // El poder ya no va acá: viaja con quien lo firma, en «Representante legal».
     await page
       .getByTestId('registro-farmacia-doc-healthAuthorityCertificateFileId')

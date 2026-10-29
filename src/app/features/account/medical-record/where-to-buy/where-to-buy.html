@@ -533,12 +533,13 @@
     </app-tab>
 
     <!-- ─── Centros médicos ─────────────────────────────────────────────────
-         Los centros que pueden hacer los procedimientos pendientes de la
-         persona. La lógica vive en `medical-centers-tab/`; esta pantalla solo
-         le da el punto de partida que eligió en Farmacias y le dice cuándo
-         está abierta, para que no pida nada antes. -->
+         Carril 19. Los procedimientos salen de las órdenes propias y los
+         centros de lo que cada sede declara ofrecer; los lee el servidor
+         (`GET /clinical/me/procedure-centers`) para que lo pedido no viaje en
+         la URL. Consulta al abrir la pestaña y vuelve a medir cuando cambia el
+         punto de partida elegido en Farmacias. -->
     <app-tab label="Centros médicos">
-      <app-medical-centers-tab [origin]="origin()" [active]="tabIndex() === 2" />
+      <app-medical-centers-tab [active]="medicalCentersActive()" [origin]="origin()" />
     </app-tab>
   </app-tabs>
 }

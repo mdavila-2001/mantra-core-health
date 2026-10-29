@@ -1,25 +1,38 @@
+import { environment } from '../../../../environments/environment';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
-import { FirmaOSello } from '../../../shared/components/molecules/firma-o-sello/firma-o-sello';
+import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
+import { SignatureOrSeal } from '../../../shared/components/molecules/signature-or-seal/signature-or-seal';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  PLATFORM_ID,
   signal,
   type WritableSignal,
 } from '@angular/core';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { HttpResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { concat, concatMap, filter, from, map, of, throwIfEmpty, toArray, type Observable } from 'rxjs';
+import {
+  concat,
+  concatMap,
+  filter,
+  from,
+  map,
+  of,
+  throwIfEmpty,
+  toArray,
+  type Observable,
+} from 'rxjs';
 
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
-import {
-  BoMunicipalitiesCatalog,
-  type RamaDepartamento,
-} from '../../../core/data-access/terminology/bo-municipalities.service';
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
@@ -28,12 +41,13 @@ import type {
   PractitionerRegistration,
   UploadedRegistrationDocument,
 } from '../../../core/data-access/iam/iam.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -44,66 +58,67 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+  RegistrationHelp,
+  type HelpCard,
+} from '../../../shared/components/organisms/registration-help/registration-help';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
+import {
+  MapLocationPicker,
+  type Coordinates,
+  type LocalityFromPoint,
+  type TestIds,
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { confirmedLocality } from '../shared-registration/point-locality';
+import { joinNames } from '../../../core/profession/additional-names';
+import {
+  PROFESSION_COLLEGE,
+  titleCollege,
+  isCollege,
+} from '../../../core/profession/regulatory-authorities';
+import {
+  PROFESSIONAL_TITLE_OPTIONS,
+  titleHealthFilter,
+} from '../../../core/profession/professional-degrees';
+import { CATALOG_OUTSIDE_INSTITUTION } from '../../../core/profession/educational-institutions';
+import {
+  CATALOG_OUTSIDE_COUNTRY,
+  UniversitiesRegistry,
+  cityToChooseUniversity,
+  choiceFromText,
+  type HealthFilter,
+} from '../../../core/profession/university-registry';
+import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
+import { MAX_ATTACHMENT_BYTES } from '../shared-registration/doctor-credentials';
+import { passwordValidators } from '../shared-registration/password-policy';
+import { identityDocumentValidators } from '../shared-registration/national-id';
+import {
+  EMPTY_STUDY,
+  isStudyMissingNumber,
+  withCountry as studyWithCountry,
+  withStudyField,
+  withUniversity as studyWithUniversity,
+  type EditableStudyField,
+  type SpecialtyStudy,
+} from '../shared-registration/specialty-study';
 import {
   practitionerFields,
   validatePractitionerPersonalEmail,
   validatePractitionerPhone,
-} from '../registro-compartido/practitioner-fields';
-import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
-import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
-import {
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
-import { unirNombres } from '../../../core/profesion/nombres-adicionales';
-import {
-  COLEGIO_DE_LA_PROFESION,
-  colegioDelTitulo,
-  esColegio,
-} from '../../../core/profesion/autoridades-reguladoras';
-import {
-  OPCIONES_TITULO_PROFESIONAL,
-  filtroDeSaludDelTitulo,
-} from '../../../core/profesion/titulos-profesionales';
-import { INSTITUCION_FUERA_DE_CATALOGO } from '../../../core/profesion/instituciones-educativas';
-import {
-  PAIS_FUERA_DE_CATALOGO,
-  PadronDeUniversidades,
-  ciudadAlElegirUniversidad,
-  eleccionDesdeTexto,
-  type FiltroDeSalud,
-} from '../../../core/profesion/padron-de-universidades';
-import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
-import {
-  MAX_ATTACHMENT_BYTES,
-  SUPPORT_FILE_FORMATS,
-} from '../registro-compartido/credenciales-del-medico';
-import { validarCedulaBoliviana } from '../registro-compartido/cedula-de-identidad';
-import {
-  ESTUDIO_VACIO,
-  conDatoEscrito as estudioConDatoEscrito,
-  conPaisElegido as estudioConPaisElegido,
-  conUniversidadElegida as estudioConUniversidadElegida,
-  estudioSinNumero,
-  type CampoEditableDeEstudio,
-  type EstudioDeEspecialidad,
-} from '../registro-compartido/estudio-de-especialidad';
-import { validadoresDeContrasena } from '../registro-compartido/politica-de-contrasena';
+} from '../shared-registration/practitioner-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { BoProfessionsCatalog } from '../../../core/data-access/terminology/bo-professions.service';
-import { RegistrationBadge } from '../registro-compartido/registration-badge';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
+import { OfficeLogoField } from './office-logo/office-logo-field';
+import { OfficeLogoSelection } from './office-logo/office-logo-selection';
+import { ownSiteFromAnswers } from './own-site';
 
 /**
  * `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend.
@@ -113,11 +128,43 @@ import { RegistrationBadge } from '../registro-compartido/registration-badge';
  * `practitioner-profile-edit`. Un módulo de utilidades para esto costaría más
  * de leer que la función.
  */
-function fechaIso(fecha: Date): string {
+function fechaIso(entrada: Date | string): string {
+  // Un borrador restaurado trae la fecha como texto ISO (pasó por JSON): se
+  // vuelve a `Date` antes de leerla, en vez de reventar en `getFullYear`.
+  const fecha = entrada instanceof Date ? entrada : new Date(entrada);
   const anio = fecha.getFullYear();
   const mes = String(fecha.getMonth() + 1).padStart(2, '0');
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${anio}-${mes}-${dia}`;
+}
+
+/** Los campos de fecha del alta: el selector sólo entiende `Date`. */
+const CAMPOS_DE_FECHA = [
+  'birthDate',
+  'licenseIssueDate',
+  'sedesLicenseIssueDate',
+  'collegeLicenseIssueDate',
+] as const;
+
+/**
+ * El borrador pasa por JSON y las fechas vuelven como texto. El selector de
+ * fecha las ignora (no son `Date`) pero el «obligatorio» las da por buenas, así
+ * que el alta llegaba al envío con un texto donde esperaba una fecha. Se
+ * convierten de vuelta, y una que no se pueda leer queda vacía.
+ */
+function revivirFechas(
+  datos: Record<string, unknown>,
+  claves: readonly string[],
+): Record<string, unknown> {
+  const copia = { ...datos };
+  for (const clave of claves) {
+    const valor = copia[clave];
+    if (typeof valor === 'string') {
+      const fecha = new Date(valor);
+      copia[clave] = Number.isNaN(fecha.getTime()) ? null : fecha;
+    }
+  }
+  return copia;
 }
 
 /**
@@ -133,7 +180,7 @@ const MAXIMO_DE_ESPECIALIDADES = 4;
  * ese mapa es de los cuatro tipos de la página «Sus títulos»; el de especialidad
  * se declara en «Sus especialidades».
  */
-const CODIGO_DE_TITULO_DE_ESPECIALIDAD = 'CREDENTIAL_TYPE_SPECIALTY';
+const SPECIALTY_CREDENTIAL_CODE = 'CREDENTIAL_TYPE_SPECIALTY';
 
 /**
  * Códigos odontológicos mantenidos para comprobar la cobertura del catálogo.
@@ -153,15 +200,6 @@ export const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
   'IMPLANTOLOGIA_ORAL',
   'ARMONIZACION_OROFACIAL',
 ]);
-
-/**
- * Cómo se llama un consultorio al que nadie le puso nombre.
- *
- * `NewOwnSite.name` es obligatorio del lado del backend, y el alta no lo exige:
- * quien deja el rótulo vacío igual tiene un consultorio. Se renombra desde el
- * perfil cuando quiera.
- */
-const NOMBRE_CONSULTORIO_POR_OMISION = 'Mi consultorio';
 
 /**
  * Quién emite la matrícula que habilita a ejercer, como lista cerrada.
@@ -209,7 +247,7 @@ const NOMBRE_CONSULTORIO_POR_OMISION = 'Mi consultorio';
  * catálogo no está disponible»—. Es el mismo que ya usa el alta de profesional
  * para `specialtyConceptIds`, y es copiable tal cual.
  */
-// La lista vive en `core/profesion/autoridades-reguladoras.ts` desde el 13/09/2026:
+// La lista vive en `core/profession/regulatory-authorities.ts` desde el 13/09/2026:
 // son tres —Ministerio de Salud, SEDES y el colegio de la profesión— y el editor
 // del perfil ofrece las mismas. Lo de arriba sigue valiendo para ella.
 
@@ -343,12 +381,12 @@ interface TituloDeclarado {
   readonly ciudad: string;
   /**
    * Qué opción del desplegable de país está marcada: el nombre, el centinela
-   * {@link PAIS_FUERA_DE_CATALOGO} —que destapa la casilla escrita— o nada.
+   * {@link CATALOG_OUTSIDE_COUNTRY} —que destapa la casilla escrita— o nada.
    * Va aparte de `pais` porque con «Otro país…» elegido y nada escrito todavía,
    * `pais` es vacío y el desplegable tiene que seguir en «Otro».
    */
   readonly paisElegido: string | null;
-  /** Lo mismo para la universidad, con {@link INSTITUCION_FUERA_DE_CATALOGO}. */
+  /** Lo mismo para la universidad, con {@link CATALOG_OUTSIDE_INSTITUTION}. */
   readonly universidadElegida: string | null;
   /** El nombre del archivo elegido, o `null` si todavía no adjuntó ninguno. */
   readonly archivo: string | null;
@@ -361,7 +399,7 @@ interface TituloDeclarado {
  *
  * Es la pregunta que más veces vuelve, así que va escrita una sola vez acá:
  *
- * - **País.** Desplegable, poblado por {@link PadronDeUniversidades}: Bolivia
+ * - **País.** Desplegable, poblado por {@link UniversitiesRegistry}: Bolivia
  *   primero y 199 países más, con «Otro país…» que destapa una casilla escrita.
  *   Lo pidió el propietario el 02/10/2026 («deben ser select, poblados con
  *   datos, como árbol para filtrar por país»). Se guarda el **nombre**: la
@@ -370,7 +408,7 @@ interface TituloDeclarado {
  *   viaja. Cuando lo reciba, es un mapeo nombre → concepto, no otra pantalla.
  * - **Universidad.** Desplegable **acotado al país elegido** —es el árbol—, con
  *   «Otra institución…» para la que falte. Bolivia usa la lista curada de
- *   `instituciones-educativas.ts`; el resto, el padrón importado. Viaja como
+ *   `educational-institutions.ts`; el resto, el padrón importado. Viaja como
  *   `issuingInstitutionText`, que sigue siendo texto: el valor de cada opción
  *   es el nombre, así que al backend le llega lo mismo que antes.
  * - **Ciudad.** Texto, **propuesto por la universidad**: al elegir una del
@@ -379,9 +417,7 @@ interface TituloDeclarado {
  *   `ciudadAlCambiarDeUniversidad`). Lo pidió el propietario el 03/10/2026
  *   («debe mostrar la ciudad por defecto»). Las de varias sedes y las del
  *   padrón importado no proponen nada, y ahí se escribe.
- *   `profiles.professional_credentials` **no tiene columna de ciudad**; se
- *   pregunta porque el propietario la pidió y el hueco queda declarado en
- *   `docs/handoff/`, no inventado acá.
+ *   Viaja en el título como `issuingCityText`.
  */
 type CampoDeEstudio = 'universidad' | 'pais' | 'ciudad';
 
@@ -390,22 +426,86 @@ type CampoEditableDeTitulo = 'nombre' | 'numero' | CampoDeEstudio;
 
 /** Los tres controles de dónde se estudió el título con el que ejerce. */
 type ClaveDeEstudioDelTitulo =
-  'professionalTitleUniversity' | 'professionalTitleCountry' | 'professionalTitleCity';
+  | 'professionalTitleNumber'
+  | 'professionalTitleUniversity'
+  | 'professionalTitleCountry'
+  | 'professionalTitleCity';
 
-/** Un respaldo suelto: el de la matrícula y el del registro del SEDES. */
+/** Un respaldo suelto: el del título, la matrícula, el SEDES o el colegio. */
 interface RespaldoDeclarado {
   readonly archivo: string;
   readonly pesoBytes: number;
 }
 
-/** Cuál respaldo suelto se está tocando: el del título, la matrícula o el SEDES. */
-type ClaveDeRespaldo = 'professional-title' | 'license' | 'sedes';
+/** Cuál respaldo suelto se está tocando: el del título o el de una habilitación. */
+type ClaveDeRespaldo = 'professional-title' | ClaveDeHabilitacion;
+
+/** Las tres habilitaciones del alta: matrícula, SEDES y colegio de la profesión. */
+type ClaveDeHabilitacion = 'license' | 'sedes' | 'college';
+
+/** El control del número de cada habilitación. */
+type ControlDeHabilitacion = 'licenseNumber' | 'sedesLicenseNumber' | 'collegeLicenseNumber';
+
+/** El control de la fecha de inscripción de cada habilitación. */
+type FechaDeHabilitacion = 'licenseIssueDate' | 'sedesLicenseIssueDate' | 'collegeLicenseIssueDate';
+
+/** Un renglón de la página de habilitación: número, fecha y respaldo de UN registro. */
+interface RenglonDeHabilitacion {
+  readonly clave: ClaveDeHabilitacion;
+  readonly control: ControlDeHabilitacion;
+  readonly fecha: FechaDeHabilitacion;
+  /** El rótulo del registro, el mismo que pone el motor sobre el renglón. */
+  readonly etiqueta: string;
+  /** El rótulo de la casilla del número: dice qué número es, sin el registro al lado. */
+  readonly rotuloNumero: string;
+  readonly placeholder: string;
+  readonly testId: string;
+  readonly icono: NavIconName;
+}
+
+/**
+ * De qué control sale cada habilitación. El rótulo, el placeholder y el ícono
+ * del número vienen de `practitionerFields`, que es la definición compartida.
+ */
+const HABILITACIONES: readonly {
+  readonly clave: ClaveDeHabilitacion;
+  readonly control: ControlDeHabilitacion;
+  readonly fecha: FechaDeHabilitacion;
+  readonly rotuloNumero: string;
+}[] = [
+  {
+    clave: 'license',
+    control: 'licenseNumber',
+    fecha: 'licenseIssueDate',
+    rotuloNumero: 'Número de matrícula',
+  },
+  {
+    clave: 'sedes',
+    control: 'sedesLicenseNumber',
+    fecha: 'sedesLicenseIssueDate',
+    rotuloNumero: 'Número de registro',
+  },
+  {
+    clave: 'college',
+    control: 'collegeLicenseNumber',
+    fecha: 'collegeLicenseIssueDate',
+    rotuloNumero: 'Número de colegiado',
+  },
+];
 
 /** Tope de peso por adjunto. El mismo que la foto de perfil. */
 const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
 
-/** Formatos que se aceptan como respaldo de un título o de una matrícula. */
-const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
+/**
+ * Formatos que se aceptan como respaldo de la matrícula y del SEDES: sólo PDF.
+ *
+ * Desde P29 estos archivos se suben a `POST /iam/auth/upload-registration-document`,
+ * que sólo admite PDF (422 `PRECONDITION_FAILED` con `detectedMimeType`). Con el
+ * selector abierto a JPG y PNG (`SUPPORT_FILE_FORMATS`), una foto de la matrícula
+ * pasaba todo el alta y la cuenta fallaba en el último paso con «problema de
+ * configuración de nuestra parte». Se ve en la evidencia visual de P29 (26/10/2026).
+ */
+const FORMATOS_DE_RESPALDO = 'application/pdf';
 
 /**
  * Por qué se pide lo que se pide, paso por paso.
@@ -420,7 +520,7 @@ const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
  * lo que más hace abandonar un registro.
  *
  * Va **al costado** y no dentro del formulario: no alarga la página, no compite
- * con los campos y se lee sólo si hace falta. Ver `app-registro-ayuda`.
+ * con los campos y se lee sólo si hace falta. Ver `app-registration-help`.
  *
  * ## Por qué es un mapa por clave y no una lista
  *
@@ -430,7 +530,7 @@ const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
  * clave la declara la propia página (`PaginaDeFormulario.clave`), así que las
  * dos mitades no se pueden separar de un descuido.
  */
-const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
   name: [
     {
       icono: 'people',
@@ -450,18 +550,40 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto: 'El «SC», «LP»… es parte del mismo carnet: por eso los dos se piden juntos.',
     },
   ],
-  credentials: [
+  access: [
     {
-      icono: 'shield',
-      titulo: 'Es lo que le habilita a atender',
+      icono: 'mail',
+      titulo: 'Con su correo personal va a entrar',
       texto:
-        'Comprobamos matrícula y colegio antes de que aparezca en el directorio. Es lo que le da certeza a quien le elige sin conocerle.',
+        'Use uno que siga teniendo si cambia de trabajo: es su identidad de acceso y por donde se recupera la cuenta si pierde la clave.',
     },
     {
-      icono: 'history',
-      titulo: 'Lo opcional puede dejarlo para después',
+      icono: 'lock',
+      titulo: 'Su contraseña, sólo suya',
       texto:
-        'La autoridad que la emitió y la fecha de inscripción no frenan su alta: se cargan cuando las tenga a mano, desde su perfil.',
+        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
+    },
+    {
+      icono: 'stethoscope',
+      titulo: 'Por qué le pedimos los dos',
+      texto:
+        'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. Los dos se guardan en su perfil. Qué clase de profesional es se pregunta más adelante, con su título.',
+    },
+  ],
+  residence: [
+    {
+      icono: 'pin',
+      titulo: 'Para ubicarle en el directorio',
+      texto:
+        'Un paciente busca por ciudad antes que por nombre. Con el punto de su casa sabemos su localidad, y aparece en la búsqueda de quien le tiene cerca.',
+    },
+  ],
+  'workplace-location': [
+    {
+      icono: 'phone',
+      titulo: 'Todo esto es del consultorio',
+      texto:
+        'Son los datos por los que le ubican en el trabajo, no los de su acceso. Puede dejarlos vacíos y cargarlos después desde su perfil.',
     },
   ],
   practice: [
@@ -478,20 +600,24 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
         'De él dependen el colegio que se le ofrece en la habilitación y las especialidades que va a poder elegir: un odontólogo no elige entre las 36 del catálogo, elige entre las suyas. Por eso se pregunta antes que las dos cosas.',
     },
   ],
-  profile: [
+  credentials: [
     {
-      icono: 'stethoscope',
-      titulo: 'Por qué le pedimos los dos',
+      icono: 'shield',
+      titulo: 'Es lo que le habilita a atender',
       texto:
-        'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. Los dos se guardan en su perfil. Qué clase de profesional es se pregunta más adelante, con su título.',
+        'Comprobamos matrícula y colegio antes de que aparezca en el directorio. Es lo que le da certeza a quien le elige sin conocerle.',
     },
-  ],
-  residence: [
     {
-      icono: 'pin',
-      titulo: 'Para ubicarle en el directorio',
+      icono: 'history',
+      titulo: 'Lo opcional puede dejarlo para después',
       texto:
-        'Un paciente busca por ciudad antes que por nombre. Con su localidad declarada aparece en la búsqueda de quien le tiene cerca.',
+        'La fecha de inscripción y los respaldos no frenan su alta: se cargan cuando los tenga a mano, desde su perfil.',
+    },
+    {
+      icono: 'folder',
+      titulo: 'Los verifica una persona, no un robot',
+      texto:
+        'Puede registrarse sin subirlos y cargarlos después desde su perfil. Mientras no estén, su matrícula figura como declarada y no como verificada.',
     },
   ],
   specialties: [
@@ -501,32 +627,6 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto:
         'Un paciente busca por especialidad. Las que elija son las búsquedas en las que va a aparecer.',
     },
-  ],
-  'personal-contact': [
-    {
-      icono: 'mail',
-      titulo: 'Con su correo personal va a entrar',
-      texto:
-        'Use uno que siga teniendo si cambia de trabajo: es su identidad de acceso y por donde se recupera la cuenta si pierde la clave.',
-    },
-  ],
-  access: [
-    {
-      icono: 'phone',
-      titulo: 'Todo esto es del consultorio',
-      texto:
-        'Son los datos por los que le ubican en el trabajo, no los de su acceso. Puede dejarlos vacíos y cargarlos después desde su perfil.',
-    },
-  ],
-  'credential-files': [
-    {
-      icono: 'folder',
-      titulo: 'Los verifica una persona, no un robot',
-      texto:
-        'Puede registrarse sin subirlos y cargarlos después desde su perfil. Mientras no estén, su matrícula figura como declarada y no como verificada.',
-    },
-  ],
-  'academic-titles': [
     {
       icono: 'teach',
       titulo: 'Cuantos tengas, no sólo uno',
@@ -540,14 +640,6 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       titulo: 'Son imágenes, no una firma electrónica',
       texto:
         'Suba la foto o el escaneo de su firma de puño y letra y de su sello. Se imprimen al pie de sus documentos junto a su nombre y matrícula. Puede saltear este paso y cargarlos después.',
-    },
-  ],
-  password: [
-    {
-      icono: 'lock',
-      titulo: 'Su contraseña, sólo suya',
-      texto:
-        'Ocho caracteres o más. Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca se la vamos a pedir por teléfono ni por correo.',
     },
   ],
 };
@@ -564,8 +656,8 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * opcional; el profesional entra con su correo y sin habilitación comprobable
  * no hay alta—, así que la única cosa que compartían de verdad era el cascarón:
  * la tarjeta, el membrete, el pie y la columna de ayuda. Eso es CSS
- * (`../registro-compartido/registro.css`) y un organismo
- * (`app-registro-ayuda`), no una clase en común.
+ * (`../shared-registration/registration.css`) y un organismo
+ * (`app-registration-help`), no una clase en común.
  *
  * ## Por qué va por el motor
  *
@@ -575,11 +667,11 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * queda acá es lo que el motor no puede saber —qué se pregunta, en qué orden y
  * contra qué endpoint va—.
  *
- * El municipio de residencia va como campo `custom` —lo dibuja un árbol con
- * búsqueda que esta pantalla proyecta y el motor no conoce—, y el departamento
- * emisor pasa a serlo sólo si su catálogo no cargó, para poder mostrar ahí el
- * «Reintentar». El motor les reserva el sitio con su rótulo y su error, y no
- * aprende nada de terminología ni de árboles.
+ * Cada ubicación es un campo `custom` —el mapa con su punto, que esta pantalla
+ * proyecta y el motor no conoce—, y el departamento emisor pasa a serlo sólo
+ * si su catálogo no cargó, para poder mostrar ahí el «Reintentar». El motor les
+ * reserva el sitio con su rótulo y su error, y no aprende nada de terminología
+ * ni de mapas.
  */
 /**
  * Las sedes de una universidad como opciones del desplegable de ciudad.
@@ -609,38 +701,47 @@ function sinTildes(texto: string): string {
 
 @Component({
   selector: 'app-register-practitioner',
-  imports: [
-    RegistrationBadge,
+  imports: [RegistrationBadge, 
     FileDropTarget,
     FileInput,
-    FirmaOSello,
+    DatePicker,
+    NgTemplateOutlet,
+    SignatureOrSeal,
     RouterLink,
     AppButton,
     NavIcon,
     Tooltip,
-    LocationPicker,
-    UbicacionPicker,
+    MapLocationPicker,
     Link,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     ReferenceCombobox,
-    RegistroAyuda,
+    RegistrationHelp,
     FormField,
     AppInput,
     Select,
     Avatar,
+    OnboardingDraftBanner,
+    OfficeLogoField,
   ],
+  providers: [OfficeLogoSelection],
   templateUrl: './register-practitioner.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-practitioner.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-practitioner.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPractitioner {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly iam = inject(IamClient);
+  private readonly officeLogo = inject(OfficeLogoSelection);
   private readonly router = inject(Router);
   private readonly systemContext = inject(SystemContextClient);
+  private readonly draftService = inject(OnboardingDraftService);
+
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
 
   /* ---- «Otra profesión»: lista normalizada (COB-2023) --------------------
 
@@ -656,7 +757,7 @@ export class RegisterPractitioner {
 
   private cargarProfesiones(): void {
     this.catalogoProfesionesCaido.set(false);
-    this.catalogoDeProfesiones.listar().subscribe({
+    this.catalogoDeProfesiones.list().subscribe({
       next: (opciones) =>
         this.profesiones.set(
           opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
@@ -667,7 +768,7 @@ export class RegisterPractitioner {
 
   /** Vuelve a pedir el catálogo de profesiones después de un fallo. */
   reintentarProfesiones(): void {
-    this.catalogoDeProfesiones.olvidar();
+    this.catalogoDeProfesiones.forget();
     this.cargarProfesiones();
   }
 
@@ -796,22 +897,6 @@ export class RegisterPractitioner {
     return `Falta el número del diploma en ${donde}. Complételo o quite la fila para seguir.`;
   });
 
-  /** Qué falta en «Sus especialidades», nombrando las casillas tal como se ven. */
-  protected readonly avisoDeEstudiosIncompletos = computed<string | null>(() => {
-    const faltantes = this.estudiosDeEspecialidad()
-      .map((estudio, indice) => (estudioSinNumero(estudio) ? `Especialidad ${indice + 1}` : null))
-      .filter((nombre): nombre is string => nombre !== null);
-    if (faltantes.length === 0) return null;
-    const donde =
-      faltantes.length === 1
-        ? `«${faltantes[0]}»`
-        : `${faltantes
-            .slice(0, -1)
-            .map((nombre) => `«${nombre}»`)
-            .join(', ')} y «${faltantes.at(-1)}»`;
-    return `Falta el número del diploma en ${donde}. Complételo o quite la especialidad para seguir.`;
-  });
-
   /** Lo mismo que {@link hayTitulosSinNumero}, público para las pruebas. */
   tituloSinNumeroEnAlgunaFila(): boolean {
     return this.hayTitulosSinNumero();
@@ -831,14 +916,87 @@ export class RegisterPractitioner {
    */
   protected hayTitulosSinTipo(): boolean {
     return (
-      this.titulos().some(
+      this.titulosParaRegistro().some(
         (titulo) =>
           titulo.numero.trim() !== '' &&
           this.conceptoPorCodigo().get(this.codigoDeConceptoPorTipo[titulo.tipo]) === undefined,
       ) ||
-      (this.estudiosDeEspecialidad().some((estudio) => estudio.numero.trim() !== '') &&
-        this.conceptoPorCodigo().get(CODIGO_DE_TITULO_DE_ESPECIALIDAD) === undefined)
+      (this.specialtyStudies().some((study) => study.number.trim() !== '') &&
+        this.conceptoPorCodigo().get(SPECIALTY_CREDENTIAL_CODE) === undefined)
     );
+  }
+
+  /** La universidad escrita en el bloque del título con el que ejerce. */
+  protected universidadPrincipal(): string {
+    return this.formProfesional.controls.professionalTitleUniversity.value.trim();
+  }
+
+  /** El diploma principal usa el mismo contrato de credenciales universitarias. */
+  private tituloPrincipalDeclarado(): TituloDeclarado | null {
+    const numero = this.formProfesional.controls.professionalTitleNumber.value.trim();
+    if (!numero) return null;
+    return {
+      id: 'professional-title',
+      tipo: 'UNIVERSITARIO',
+      nombre: this.formProfesional.controls.professionalTitle.value.trim(),
+      numero,
+      universidad: this.universidadPrincipal(),
+      pais: this.formProfesional.controls.professionalTitleCountry.value.trim(),
+      ciudad: this.formProfesional.controls.professionalTitleCity.value.trim(),
+      paisElegido: this.paisDelTituloElegido(),
+      universidadElegida: this.universidadDelTituloElegida(),
+      archivo: this.respaldoTituloProfesional()?.archivo ?? null,
+      pesoBytes: this.respaldoTituloProfesional()?.pesoBytes ?? null,
+      fileId: this.fileIdTituloPrincipal(),
+    };
+  }
+
+  /** El mismo número universitario identifica una única credencial, aunque se use una sigla. */
+  private titulosParaRegistro(): readonly TituloDeclarado[] {
+    const principal = this.tituloPrincipalDeclarado();
+    const titulos = this.titulos();
+    return principal &&
+      !titulos.some((t) => t.tipo === 'UNIVERSITARIO' && t.numero.trim() === principal.numero)
+      ? [principal, ...titulos]
+      : titulos;
+  }
+
+  /** Con número explícito se vincula por diploma; sin él se conserva la coincidencia de universidad. */
+  private filaDeLaUniversidadPrincipal(): TituloDeclarado | null {
+    const numero = this.formProfesional.controls.professionalTitleNumber.value.trim();
+    const universidad = this.universidadPrincipal().toLowerCase();
+    return (
+      this.titulosParaRegistro().find(
+        (titulo) =>
+          titulo.tipo === 'UNIVERSITARIO' &&
+          titulo.numero.trim() !== '' &&
+          (numero
+            ? titulo.numero.trim() === numero
+            : titulo.universidad.trim() === '' ||
+              titulo.universidad.trim().toLowerCase() === universidad),
+      ) ?? null
+    );
+  }
+
+  /** Un PDF o una universidad necesitan un diploma numerado; nunca se inventa el número. */
+  protected hayUniversidadPrincipalSinTitulo(): boolean {
+    return (
+      (this.universidadPrincipal() !== '' ||
+        !!this.attachmentFiles()['professional-title']?.length) &&
+      this.filaDeLaUniversidadPrincipal() === null
+    );
+  }
+
+  private usaPdfPrincipal(titulo: TituloDeclarado): boolean {
+    return (
+      titulo.id === this.filaDeLaUniversidadPrincipal()?.id &&
+      (titulo.id === 'professional-title' || !this.attachmentFiles()[titulo.id]?.length) &&
+      !!this.attachmentFiles()['professional-title']?.length
+    );
+  }
+
+  private fileIdDeTitulo(titulo: TituloDeclarado): string | null {
+    return this.usaPdfPrincipal(titulo) ? this.fileIdTituloPrincipal() : titulo.fileId;
   }
 
   /**
@@ -847,7 +1005,7 @@ export class RegisterPractitioner {
    */
   private credencialesDeclaradas(): readonly NewRegistrationCredential[] {
     const conceptos = this.conceptoPorCodigo();
-    return [...this.credencialesDeTitulos(conceptos), ...this.credencialesDeEspecialidades(conceptos)];
+    return [...this.titleCredentials(conceptos), ...this.specialtyCredentials(conceptos)];
   }
 
   /**
@@ -856,43 +1014,49 @@ export class RegisterPractitioner {
    * fila de la otra en el perfil. Sin número no hay fila (la columna es NOT NULL),
    * y eso ya frenó el envío antes de llegar acá.
    */
-  private credencialesDeEspecialidades(
+  private specialtyCredentials(
     conceptos: ReadonlyMap<string, string>,
   ): readonly NewRegistrationCredential[] {
-    const conceptId = conceptos.get(CODIGO_DE_TITULO_DE_ESPECIALIDAD);
+    const conceptId = conceptos.get(SPECIALTY_CREDENTIAL_CODE);
     if (conceptId === undefined) return [];
-    const etiquetas = new Map(this.allSpecialtyOptions().map((o) => [o.value, o.label]));
-    return this.estudiosDeEspecialidad().flatMap((estudio, indice) => {
-      const numero = estudio.numero.trim();
-      if (numero === '') return [];
-      const universidad = estudio.universidad.trim();
-      const ciudad = estudio.ciudad.trim();
-      const pais = estudio.pais.trim();
-      const especialidad = etiquetas.get(this.especialidadesExtra()[indice] ?? '') ?? '';
+    const labels = new Map(
+      this.allSpecialtyOptions().map((option) => [option.value, option.label]),
+    );
+    return this.specialtyStudies().flatMap((study, index) => {
+      const number = study.number.trim();
+      if (number === '') return [];
+      const university = study.university.trim();
+      const city = study.city.trim();
+      const country = study.country.trim();
+      const specialty = labels.get(this.especialidadesExtra()[index] ?? '') ?? '';
       return [
         {
           credentialTypeConceptId: conceptId,
-          number: numero,
-          ...(universidad === '' ? {} : { issuingInstitutionText: universidad }),
-          ...(ciudad === '' ? {} : { issuingCityText: ciudad }),
-          ...(pais === '' ? {} : { issuingCountryText: pais }),
-          ...(especialidad === '' ? {} : { titleText: especialidad }),
-          ...(estudio.fileId === null ? {} : { fileId: estudio.fileId }),
+          number,
+          ...(university === '' ? {} : { issuingInstitutionText: university }),
+          ...(city === '' ? {} : { issuingCityText: city }),
+          ...(country === '' ? {} : { issuingCountryText: country }),
+          ...(specialty === '' ? {} : { titleText: specialty }),
+          ...(study.fileId === null ? {} : { fileId: study.fileId }),
         },
       ];
     });
   }
 
-  private credencialesDeTitulos(
+  private titleCredentials(
     conceptos: ReadonlyMap<string, string>,
   ): readonly NewRegistrationCredential[] {
-    return this.titulos().flatMap((titulo) => {
+    const filaPrincipal = this.filaDeLaUniversidadPrincipal();
+    return this.titulosParaRegistro().flatMap((titulo) => {
       const numero = titulo.numero.trim();
       const conceptId = conceptos.get(this.codigoDeConceptoPorTipo[titulo.tipo]);
       if (numero === '' || conceptId === undefined) {
         return [];
       }
-      const universidad = titulo.universidad.trim();
+      const universidad =
+        titulo.universidad.trim() === '' && titulo.id === filaPrincipal?.id
+          ? this.universidadPrincipal()
+          : titulo.universidad.trim();
       const ciudad = titulo.ciudad.trim();
       const pais = titulo.pais.trim();
       return [
@@ -908,7 +1072,7 @@ export class RegisterPractitioner {
           ...(titulo.tipo !== 'UNIVERSITARIO' && titulo.nombre.trim() !== ''
             ? { titleText: titulo.nombre.trim() }
             : {}),
-          ...(titulo.fileId === null ? {} : { fileId: titulo.fileId }),
+          ...(this.fileIdDeTitulo(titulo) === null ? {} : { fileId: this.fileIdDeTitulo(titulo)! }),
         },
       ];
     });
@@ -988,19 +1152,32 @@ export class RegisterPractitioner {
     }),
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
     // Documento de identidad boliviano. Obligatorio en el alta de profesional:
     // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
     // a una persona verificable. Además del formato válido, ahora tiene que estar.
     nationalId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, validarCedulaBoliviana],
+      validators: [...identityDocumentValidators],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     sedesLicenseNumber: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
+    }),
+    // El registro del colegio de la profesión. Obligatorio sólo cuando el
+    // título elegido tiene un colegio conocido: el validador lee el título del
+    // mismo grupo y `syncCollegeWithProfession` lo vuelve a correr al cambiarlo.
+    collegeLicenseNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        (control) =>
+          titleCollege(String(control.parent?.get('professionalTitle')?.value ?? '')) ===
+          PROFESSION_COLLEGE
+            ? null
+            : Validators.required(control),
+      ],
     }),
     // Quién emitió la matrícula y con qué título ejerce: los dos salen de una
     // lista cerrada — ver `OPCIONES_AUTORIDAD_REGULADORA` y
@@ -1019,7 +1196,14 @@ export class RegisterPractitioner {
     // el alta se completa sin ninguno, y quien no se acuerde del año o del
     // nombre exacto de su casa de estudios los carga después desde el perfil.
     // Por qué son texto y no listas cerradas: ver `CampoDeEstudio`.
-    professionalTitleUniversity: new FormControl('', { nonNullable: true }),
+    professionalTitleNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(100)],
+    }),
+    professionalTitleUniversity: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
     professionalTitleCountry: new FormControl('', { nonNullable: true }),
     professionalTitleCity: new FormControl('', { nonNullable: true }),
     // Respaldo de la página «Tus títulos» para el motor de pasos, que sólo
@@ -1084,17 +1268,31 @@ export class RegisterPractitioner {
       validators: [Validators.required],
     }),
     licenseIssueDate: new FormControl<Date | null>(null),
+    sedesLicenseIssueDate: new FormControl<Date | null>(null),
+    collegeLicenseIssueDate: new FormControl<Date | null>(null),
     // El departamento de expedición es parte del mismo carnet que el número:
     // si uno es obligatorio, el otro también, o el documento queda a medias.
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
       validators: [Validators.required],
     }),
-    // La calle del domicilio. Opcional, como en el alta de paciente: la
-    // localidad es la que ubica, y esto es lo que hace falta para llegar a la
-    // puerta.
+    // **El punto del domicilio es obligatorio** (pedido del cliente del
+    // 26/10/2026) y es lo único que se marca. Vive en el formulario para que
+    // el motor frene la página sin él; no se escribe: lo llena
+    // `confirmarGpsDomicilio` con el punto CONFIRMADO, y vuelve a `null` si se
+    // quita o se mueve el pin.
+    gpsDomicilio: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
+    }),
+    // Lo que sale del punto, en sólo lectura: la calle, el distrito o zona (que
+    // viaja aparte de la calle, ADR-0028 de la API) y el municipio. Ya no son campos de ninguna página —los muestra el selector
+    // del mapa— y sin validadores, para que nada invisible frene el alta. Los
+    // escriben `aplicarLocalidad*`.
     homeAddressLines: new FormControl('', { nonNullable: true }),
+    homeDistrict: new FormControl('', { nonNullable: true }),
+    municipio: new FormControl<string | null>(null),
+    municipioConsultorio: new FormControl<string | null>(null),
     // Dirección habitual de trabajo, distinta de la casa y del consultorio
-    // que declara como propio.
+    // que declara como propio. También sale de su punto.
     workAddressLines: new FormControl('', { nonNullable: true }),
     // El consultorio propio: su nombre y su calle. Ver la página
     // «Tu consultorio propio» y el JSDoc de `datosProfesional`.
@@ -1103,7 +1301,9 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [telefonoCompleto],
     }),
+    // La calle y la zona del consultorio: salen de su punto, como las de la casa.
     officeAddressLines: new FormControl('', { nonNullable: true }),
+    officeDistrict: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
     // La firma y el sello: **imágenes**, no una firma electrónica. Opcionales.
     signatureImageBase64: new FormControl<string | null>(null),
@@ -1121,8 +1321,8 @@ export class RegisterPractitioner {
    */
   protected readonly topeDeUniversidad = 200;
 
-  protected readonly paisFueraDeCatalogo = PAIS_FUERA_DE_CATALOGO;
-  protected readonly institucionFueraDeCatalogo = INSTITUCION_FUERA_DE_CATALOGO;
+  protected readonly paisFueraDeCatalogo = CATALOG_OUTSIDE_COUNTRY;
+  protected readonly institucionFueraDeCatalogo = CATALOG_OUTSIDE_INSTITUTION;
 
   protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
   /** Los títulos académicos usan la pre-carga existente, que acepta sólo PDF. */
@@ -1151,36 +1351,85 @@ export class RegisterPractitioner {
    * tiene que dejar clarísimo cuál de las dos cosas frena el avance.
    */
   readonly respaldoTituloProfesional = signal<RespaldoDeclarado | null>(null);
+  private readonly fileIdTituloPrincipal = signal<string | null>(null);
   readonly respaldoMatricula = signal<RespaldoDeclarado | null>(null);
   readonly respaldoSedes = signal<RespaldoDeclarado | null>(null);
+  readonly respaldoColegio = signal<RespaldoDeclarado | null>(null);
+  /**
+   * El fileId de cada respaldo de habilitación ya subido (P29). Se recuerda
+   * para que un reintento del alta no vuelva a subir —ni intente reclamar dos
+   * veces— el mismo PDF, y se olvida cuando la persona cambia el archivo.
+   */
+  private readonly fileIdDeHabilitacion = signal<Partial<Record<ClaveDeHabilitacion, string>>>({});
 
   /** El error del último adjunto rechazado, si hubo. */
   readonly errorAdjunto = signal<string | null>(null);
 
   /**
-   * Los dos respaldos de la habilitación, con el número que respalda cada uno.
+   * Los tres renglones de la habilitación —matrícula, SEDES y colegio—, cada
+   * uno con su número, su fecha de inscripción y su respaldo.
    *
-   * Trae el valor del formulario para que la pantalla muestre «MP-12345» al
-   * lado de su archivo: un adjunto sin el número al lado obliga a abrirlo para
-   * saber de cuál es.
+   * Un archivo o una fecha sueltos no dicen de cuál de los tres registros son
+   * (propietario, 27/10/2026): por eso cada uno va en el renglón de su número.
+   * El rótulo y el placeholder salen de la definición compartida del alta, que
+   * es la que conoce el título elegido.
    */
-  readonly respaldosDeHabilitacion = computed(() => {
-    const raw = this.formProfesional.getRawValue();
-    return [
-      {
-        clave: 'license' as ClaveDeRespaldo,
-        etiqueta: 'Matrícula profesional',
-        valor: raw.licenseNumber.trim(),
-        adjunto: this.respaldoMatricula,
-      },
-      {
-        clave: 'sedes' as ClaveDeRespaldo,
-        etiqueta: 'Registro del SEDES',
-        valor: raw.sedesLicenseNumber.trim(),
-        adjunto: this.respaldoSedes,
-      },
-    ];
+  readonly renglonesDeHabilitacion = computed<readonly RenglonDeHabilitacion[]>(() => {
+    const campos = new Map(
+      this.paginasProfesional()
+        .flatMap((pagina) => pagina.campos)
+        .map((campo) => [campo.key, campo] as const),
+    );
+    return HABILITACIONES.map(({ clave, control, fecha, rotuloNumero }) => {
+      const campo = campos.get(control);
+      return {
+        clave,
+        control,
+        fecha,
+        rotuloNumero,
+        etiqueta: campo?.label ?? '',
+        placeholder: campo?.placeholder ?? '',
+        testId: campo?.testId ?? `registro-pro-${clave}`,
+        icono: campo?.icono ?? 'shield',
+      };
+    });
   });
+
+  /** El renglón de una habilitación, para la plantilla proyectada bajo su número. */
+  renglonDe(clave: ClaveDeHabilitacion): RenglonDeHabilitacion | undefined {
+    return this.renglonesDeHabilitacion().find((renglon) => renglon.clave === clave);
+  }
+
+  /** El número escrito de una habilitación. */
+  valorDeHabilitacion(control: ControlDeHabilitacion): string {
+    return this.formProfesional.controls[control].value;
+  }
+
+  /** Escribe el número de una habilitación desde su renglón. */
+  escribirHabilitacion(control: ControlDeHabilitacion, valor: string | number | null): void {
+    this.formProfesional.controls[control].setValue(valor === null ? '' : String(valor));
+  }
+
+  /** Si el número de una habilitación va en rojo: obligatorio y vacío, ya tocado. */
+  habilitacionEnRojo(control: ControlDeHabilitacion): boolean {
+    const campo = this.formProfesional.controls[control];
+    return campo.touched && campo.invalid;
+  }
+
+  /** La fecha de inscripción de una habilitación. */
+  fechaDeHabilitacion(fecha: FechaDeHabilitacion): Date | null {
+    return this.formProfesional.controls[fecha].value;
+  }
+
+  /** Escribe la fecha de inscripción de una habilitación. */
+  escribirFechaDeHabilitacion(fecha: FechaDeHabilitacion, valor: Date | null): void {
+    const control = this.formProfesional.controls[fecha];
+    control.setValue(valor);
+    control.markAsDirty();
+  }
+
+  /** El día de hoy: una inscripción no puede ser del futuro. */
+  protected readonly hoy = 'today';
 
   /** Agrega una fila vacía del tipo pedido, lista para escribir y adjuntar. */
   agregarTitulo(tipo: CodigoDeTitulo): void {
@@ -1274,23 +1523,23 @@ export class RegisterPractitioner {
     valor: string,
   ): TituloDeclarado {
     const escrito = { ...titulo, [campo]: valor };
-    if (campo === 'pais' && titulo.paisElegido !== PAIS_FUERA_DE_CATALOGO) {
+    if (campo === 'pais' && titulo.paisElegido !== CATALOG_OUTSIDE_COUNTRY) {
       return {
         ...escrito,
-        paisElegido: eleccionDesdeTexto(
+        paisElegido: choiceFromText(
           valor,
-          (pais) => this.padron.esPaisDelCatalogo(pais),
-          PAIS_FUERA_DE_CATALOGO,
+          (pais) => this.padron.isCatalogCountry(pais),
+          CATALOG_OUTSIDE_COUNTRY,
         ),
       };
     }
-    if (campo === 'universidad' && titulo.universidadElegida !== INSTITUCION_FUERA_DE_CATALOGO) {
+    if (campo === 'universidad' && titulo.universidadElegida !== CATALOG_OUTSIDE_INSTITUTION) {
       return {
         ...escrito,
-        universidadElegida: eleccionDesdeTexto(
+        universidadElegida: choiceFromText(
           valor,
-          (universidad) => this.padron.esUniversidadDe(titulo.pais, universidad),
-          INSTITUCION_FUERA_DE_CATALOGO,
+          (universidad) => this.padron.isUniversityOf(titulo.pais, universidad),
+          CATALOG_OUTSIDE_INSTITUTION,
         ),
       };
     }
@@ -1334,9 +1583,9 @@ export class RegisterPractitioner {
     return {
       ...titulo,
       ...universidad,
-      ciudad: ciudadAlElegirUniversidad(
+      ciudad: cityToChooseUniversity(
         titulo.ciudad,
-        this.padron.ciudadesDe(titulo.pais, universidad.universidad),
+        this.padron.citiesOf(titulo.pais, universidad.universidad),
       ),
     };
   }
@@ -1346,13 +1595,13 @@ export class RegisterPractitioner {
    * profesión» puede ser cualquier carrera; diplomados, maestrías y doctorados
    * se cargan en un alta de salud y se acotan a las casas que dictan salud.
    */
-  private filtroDeFila(titulo: TituloDeclarado): FiltroDeSalud {
+  private filtroDeFila(titulo: TituloDeclarado): HealthFilter {
     return titulo.tipo === 'UNIVERSITARIO' ? null : 'salud';
   }
 
   /** Las ciudades que puede tener una fila: las sedes de su universidad. */
   ciudadesDeFila(titulo: TituloDeclarado): readonly SelectOption<string>[] {
-    return opcionesDeCiudad(this.padron.ciudadesDe(titulo.pais, titulo.universidad));
+    return opcionesDeCiudad(this.padron.citiesOf(titulo.pais, titulo.universidad));
   }
 
   /** Elige la ciudad de una fila, que sólo puede ser una de las sedes. */
@@ -1379,7 +1628,7 @@ export class RegisterPractitioner {
   private paisElegido(eleccion: string | null): Pick<TituloDeclarado, 'pais' | 'paisElegido'> {
     return {
       paisElegido: eleccion,
-      pais: eleccion === null || eleccion === PAIS_FUERA_DE_CATALOGO ? '' : eleccion,
+      pais: eleccion === null || eleccion === CATALOG_OUTSIDE_COUNTRY ? '' : eleccion,
     };
   }
 
@@ -1389,13 +1638,13 @@ export class RegisterPractitioner {
   ): Pick<TituloDeclarado, 'universidad' | 'universidadElegida'> {
     return {
       universidadElegida: eleccion,
-      universidad: eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion,
+      universidad: eleccion === null || eleccion === CATALOG_OUTSIDE_INSTITUTION ? '' : eleccion,
     };
   }
 
   /** Las opciones de universidad de una fila: las del país que eligió. */
   opcionesDeUniversidadDeFila(titulo: TituloDeclarado): readonly SelectOption<string>[] {
-    return this.padron.opcionesDeUniversidad(titulo.pais, this.filtroDeFila(titulo));
+    return this.padron.universityOptions(titulo.pais, this.filtroDeFila(titulo));
   }
 
   /**
@@ -1415,6 +1664,8 @@ export class RegisterPractitioner {
   updateSupportFiles(key: ClaveDeRespaldo, files: readonly File[]): void {
     this.attachmentFiles.update((current) => ({ ...current, [key]: files }));
     const file = files[0];
+    if (key === 'professional-title') this.fileIdTituloPrincipal.set(null);
+    else this.fileIdDeHabilitacion.update((actual) => ({ ...actual, [key]: undefined }));
     this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
     this.errorAdjunto.set(null);
   }
@@ -1435,6 +1686,7 @@ export class RegisterPractitioner {
   /** El signal donde vive cada respaldo suelto. */
   private destinoDelRespaldo(cual: ClaveDeRespaldo) {
     if (cual === 'professional-title') return this.respaldoTituloProfesional;
+    if (cual === 'college') return this.respaldoColegio;
     return cual === 'license' ? this.respaldoMatricula : this.respaldoSedes;
   }
 
@@ -1488,6 +1740,9 @@ export class RegisterPractitioner {
    * La firma y el sello médicos del alta, como imágenes para previsualizar y
    * enviar. Opcionales: se saltan y se cargan después desde el perfil.
    */
+  private readonly imagenesSubidas: Partial<
+    Record<'signatureImageBase64' | 'sealImageBase64', { dataUrl: string; fileId: string }>
+  > = {};
   readonly firmaBase64 = signal<string | null>(null);
   readonly selloBase64 = signal<string | null>(null);
   readonly errorFirma = signal<string | null>(null);
@@ -1568,40 +1823,149 @@ export class RegisterPractitioner {
   }
 
   /**
-   * El municipio de residencia.
+   * El municipio de residencia, deducido del punto del domicilio.
    *
-   * Sigue fuera del `FormGroup` porque es un campo `custom` de verdad: lo
-   * dibuja un árbol con búsqueda que esta pantalla proyecta y el motor no
-   * conoce.
+   * Ya no se elige (26/10/2026): lo encuentra `app-map-location-picker` por el
+   * contorno donde cae el punto, y llega con lo demás en
+   * {@link aplicarLocalidadDomicilio}.
    */
   readonly municipioProfesional = signal<string | null>(null);
+
+  /** Guarda la localidad del domicilio en la señal **y** en el control espejo. */
+  private elegirMunicipioProfesional(conceptId: string | null): void {
+    this.municipioProfesional.set(conceptId);
+    this.escribirSiCambia('municipio', conceptId);
+  }
 
   /**
    * El punto del domicilio, ya confirmado sobre el mapa.
    *
-   * Lo emite `app-ubicacion-picker` y llega **sólo confirmado**: el componente
+   * Lo emite `app-map-location-picker` y llega **sólo confirmado**: el componente
    * se guarda para sí el estado intermedio —capturado y sin confirmar— y avisa
    * en pantalla que ese no se guarda. Acá no hace falta volver a preguntarlo.
    */
-  readonly gpsDomicilio = signal<Coordenadas | null>(null);
+  readonly gpsDomicilio = signal<Coordinates | null>(null);
 
   /** Ubicación laboral, confirmada por separado del domicilio y de sus sedes. */
-  readonly gpsTrabajo = signal<Coordenadas | null>(null);
+  readonly gpsTrabajo = signal<Coordinates | null>(null);
 
   /**
-   * La localidad del consultorio propio.
+   * La localidad del consultorio propio, deducida de su punto.
    *
    * Separada de la del domicilio a propósito: son dos lugares distintos, y hay
-   * quien vive en una ciudad y atiende en otra. Es el mismo par de señales que
-   * el alta de paciente tiene para su casa y su trabajo.
+   * quien vive en una ciudad y atiende en otra.
    */
   readonly municipioConsultorio = signal<string | null>(null);
 
+  /** Lo mismo, para el consultorio. */
+  private elegirMunicipioConsultorio(conceptId: string | null): void {
+    this.municipioConsultorio.set(conceptId);
+    this.escribirSiCambia('municipioConsultorio', conceptId);
+  }
+
+  /**
+   * Escribe un control de lo deducido sólo si el valor cambia.
+   *
+   * El selector avisa lo deducido cada vez que se monta su paso, aunque sea lo
+   * mismo de antes. Reescribir igual dispararía `valueChanges`, y eso borra el
+   * aviso de un envío fallido (`limpiarElErrorAlCorregir`) sin que la persona
+   * haya corregido nada.
+   */
+  private escribirSiCambia(
+    clave:
+      | 'homeAddressLines'
+      | 'homeDistrict'
+      | 'municipio'
+      | 'municipioConsultorio'
+      | 'workAddressLines'
+      | 'officeAddressLines'
+      | 'officeDistrict',
+    valor: string | null,
+  ): void {
+    const control = this.formProfesional.get(clave);
+    if (control !== null && control.value !== valor) control.setValue(valor);
+  }
+
   /** El punto del consultorio, ya confirmado sobre el mapa. */
-  readonly gpsConsultorio = signal<Coordenadas | null>(null);
+  readonly gpsConsultorio = signal<Coordinates | null>(null);
+
+  /**
+   * Lo último que cada selector dedujo de su punto, confirmado o no.
+   *
+   * Se guarda aparte porque la calle suele llegar **antes** de que la persona
+   * confirme: al confirmar se vuelca lo que ya estaba (ver `confirmedLocality`).
+   */
+  private readonly localidadDomicilio = signal<LocalityFromPoint | null>(null);
+  private readonly localidadTrabajo = signal<LocalityFromPoint | null>(null);
+  private readonly localidadConsultorio = signal<LocalityFromPoint | null>(null);
+
+  /**
+   * El punto confirmado (o `null`) del domicilio: la señal, el control
+   * obligatorio y lo que sale de él, en el acto. Un `effect` esperaría a la
+   * próxima detección de cambios y un «Siguiente» inmediato vería el control
+   * atrasado.
+   */
+  confirmarGpsDomicilio(punto: Coordinates | null): void {
+    this.gpsDomicilio.set(punto);
+    const control = this.formProfesional.controls.gpsDomicilio;
+    if (control.value !== punto) control.setValue(punto);
+    this.volcarDomicilio();
+  }
+
+  confirmarGpsTrabajo(punto: Coordinates | null): void {
+    this.gpsTrabajo.set(punto);
+    this.volcarTrabajo();
+  }
+
+  confirmarGpsConsultorio(punto: Coordinates | null): void {
+    this.gpsConsultorio.set(punto);
+    this.volcarConsultorio();
+  }
+
+  /** Lo que el selector del domicilio dedujo de su punto. */
+  aplicarLocalidadDomicilio(localidad: LocalityFromPoint | null): void {
+    this.localidadDomicilio.set(localidad);
+    this.volcarDomicilio();
+  }
+
+  aplicarLocalidadTrabajo(localidad: LocalityFromPoint | null): void {
+    this.localidadTrabajo.set(localidad);
+    this.volcarTrabajo();
+  }
+
+  aplicarLocalidadConsultorio(localidad: LocalityFromPoint | null): void {
+    this.localidadConsultorio.set(localidad);
+    this.volcarConsultorio();
+  }
+
+  /**
+   * Calle (sólo calle y número), zona y municipio del domicilio, del punto
+   * confirmado. Sin punto confirmado quedan vacíos: lo escrito antes describía
+   * otro lugar. Si el mapa no tiene calle ahí, la calle queda vacía —es
+   * opcional— y nunca se inventa.
+   */
+  private volcarDomicilio(): void {
+    const localidad = confirmedLocality(this.localidadDomicilio(), this.gpsDomicilio());
+    this.escribirSiCambia('homeAddressLines', localidad?.calleSola ?? '');
+    this.escribirSiCambia('homeDistrict', localidad?.zona ?? '');
+    this.elegirMunicipioProfesional(localidad?.municipioConceptId ?? null);
+  }
+
+  /** El trabajo no guarda zona aparte: va la línea entera (calle y barrio). */
+  private volcarTrabajo(): void {
+    const localidad = confirmedLocality(this.localidadTrabajo(), this.gpsTrabajo());
+    this.escribirSiCambia('workAddressLines', localidad?.calle ?? localidad?.zona ?? '');
+  }
+
+  private volcarConsultorio(): void {
+    const localidad = confirmedLocality(this.localidadConsultorio(), this.gpsConsultorio());
+    this.escribirSiCambia('officeAddressLines', localidad?.calleSola ?? '');
+    this.escribirSiCambia('officeDistrict', localidad?.zona ?? '');
+    this.elegirMunicipioConsultorio(localidad?.municipioConceptId ?? null);
+  }
 
   /** Los identificadores de prueba del bloque de ubicación del consultorio. */
-  protected readonly idsUbicacionConsultorio: IdsDePrueba = {
+  protected readonly idsUbicacionConsultorio: TestIds = {
     mapa: 'registration-practitioner-office-map',
     confirmada: 'registration-practitioner-office-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-office-geocoding-notice',
@@ -1612,7 +1976,7 @@ export class RegisterPractitioner {
   };
 
   /** Los identificadores de prueba del bloque de ubicación del domicilio. */
-  protected readonly idsUbicacionDomicilio: IdsDePrueba = {
+  protected readonly idsUbicacionDomicilio: TestIds = {
     mapa: 'registration-practitioner-home-map',
     confirmada: 'registration-practitioner-home-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-home-geocoding-notice',
@@ -1623,7 +1987,7 @@ export class RegisterPractitioner {
   };
 
   /** Identificadores de prueba del mapa para la dirección laboral. */
-  protected readonly idsUbicacionTrabajo: IdsDePrueba = {
+  protected readonly idsUbicacionTrabajo: TestIds = {
     mapa: 'registration-practitioner-work-map',
     confirmada: 'registration-practitioner-work-location-confirmed',
     avisoGeocodificacion: 'registration-practitioner-work-geocoding-notice',
@@ -1656,105 +2020,115 @@ export class RegisterPractitioner {
    * {@link especialidadesExtra}: la fila `i` es el estudio de la casilla `i`.
    * Es un arreglo aparte y no un objeto por casilla porque `especialidadesExtra`
    * es lo que ya leen las pruebas y el envío (`specialtyConceptIds`); una fila
-   * que falte se lee como vacía (ver {@link estudioDeEspecialidad}).
+   * que falte se lee como vacía (ver {@link specialtyStudyAt}).
    */
-  readonly estudiosDeEspecialidad = signal<readonly EstudioDeEspecialidad[]>([]);
+  readonly specialtyStudies = signal<readonly SpecialtyStudy[]>([]);
 
-  /** El estudio de la casilla `indice`; en blanco si todavía no se tocó. */
-  estudioDeEspecialidad(indice: number): EstudioDeEspecialidad {
-    return this.estudiosDeEspecialidad()[indice] ?? ESTUDIO_VACIO;
+  /** El estudio de la casilla `index`; en blanco si todavía no se tocó. */
+  specialtyStudyAt(index: number): SpecialtyStudy {
+    return this.specialtyStudies()[index] ?? EMPTY_STUDY;
   }
 
   /** La clave del PDF de una especialidad en {@link attachmentFiles}. */
-  protected claveDeDiplomaDeEspecialidad(indice: number): string {
-    return `especialidad-${indice}`;
+  protected specialtyFileKey(index: number): string {
+    return `especialidad-${index}`;
   }
 
   /**
    * Cambia el estudio de una casilla y, en el mismo paso, el control que respalda
    * la página ante el motor. Síncrono por lo mismo que {@link actualizarTitulos}.
    */
-  private actualizarEstudio(
-    indice: number,
-    cambio: (estudio: EstudioDeEspecialidad) => EstudioDeEspecialidad,
+  private updateSpecialtyStudy(
+    index: number,
+    change: (study: SpecialtyStudy) => SpecialtyStudy,
   ): void {
-    this.estudiosDeEspecialidad.update((estudios) => {
-      const siguientes = [...estudios];
-      while (siguientes.length <= indice) siguientes.push(ESTUDIO_VACIO);
-      siguientes[indice] = cambio(siguientes[indice]);
-      return siguientes;
+    this.specialtyStudies.update((studies) => {
+      const next = [...studies];
+      while (next.length <= index) next.push(EMPTY_STUDY);
+      next[index] = change(next[index]);
+      return next;
     });
-    this.sincronizarControlDeEstudios();
+    this.syncSpecialtyStudiesControl();
     this.limpiarAvisoDeTitulos();
   }
 
-  private sincronizarControlDeEstudios(): void {
-    this.formProfesional.controls.especialidadesExtra.setValue(!this.hayEstudiosSinNumero());
+  private syncSpecialtyStudiesControl(): void {
+    this.formProfesional.controls.especialidadesExtra.setValue(!this.hasStudiesMissingNumber());
   }
 
   /** Si alguna especialidad declara estudio sin el número que la hace guardable. */
-  protected hayEstudiosSinNumero(): boolean {
-    return this.estudiosDeEspecialidad().some((estudio) => estudioSinNumero(estudio));
+  protected hasStudiesMissingNumber(): boolean {
+    return this.specialtyStudies().some((study) => isStudyMissingNumber(study));
   }
 
   /** Si esta casilla declara estudio pero le falta el número. Público para la plantilla. */
-  estudioDeEspecialidadSinNumero(indice: number): boolean {
-    return estudioSinNumero(this.estudioDeEspecialidad(indice));
+  specialtyStudyMissingNumber(index: number): boolean {
+    return isStudyMissingNumber(this.specialtyStudyAt(index));
   }
 
+  /** Qué falta en «Sus especialidades», nombrando las casillas tal como se ven. */
+  protected readonly incompleteStudiesNotice = computed<string | null>(() => {
+    const missing = this.specialtyStudies()
+      .map((study, index) => (isStudyMissingNumber(study) ? `Especialidad ${index + 1}` : null))
+      .filter((name): name is string => name !== null);
+    if (missing.length === 0) return null;
+    const where =
+      missing.length === 1
+        ? `«${missing[0]}»`
+        : `${missing
+            .slice(0, -1)
+            .map((name) => `«${name}»`)
+            .join(', ')} y «${missing.at(-1)}»`;
+    return `Falta el número del diploma en ${where}. Complételo o quite la especialidad para seguir.`;
+  });
+
   /** Escribe el número, el país, la universidad o la ciudad de una especialidad. */
-  escribirEstudioDeEspecialidad(
-    indice: number,
-    campo: CampoEditableDeEstudio,
-    valor: string | number | null,
+  writeSpecialtyStudy(
+    index: number,
+    field: EditableStudyField,
+    value: string | number | null,
   ): void {
-    const texto = valor === null ? '' : String(valor);
-    this.actualizarEstudio(indice, (estudio) =>
-      estudioConDatoEscrito(estudio, campo, texto, this.padron),
-    );
+    const text = value === null ? '' : String(value);
+    this.updateSpecialtyStudy(index, (study) => withStudyField(study, field, text, this.padron));
   }
 
   /** Elige el país de una especialidad; reinicia su universidad si cambia. */
-  elegirPaisDeEspecialidad(indice: number, eleccion: string | null): void {
-    this.actualizarEstudio(indice, (estudio) =>
-      estudioConPaisElegido(estudio, eleccion, this.padron),
-    );
+  chooseSpecialtyCountry(index: number, choice: string | null): void {
+    this.updateSpecialtyStudy(index, (study) => studyWithCountry(study, choice, this.padron));
   }
 
   /** Elige la universidad de una especialidad; su ciudad la acompaña. */
-  elegirUniversidadDeEspecialidad(indice: number, eleccion: string | null): void {
-    this.actualizarEstudio(indice, (estudio) =>
-      estudioConUniversidadElegida(estudio, eleccion, this.padron),
-    );
+  chooseSpecialtyUniversity(index: number, choice: string | null): void {
+    this.updateSpecialtyStudy(index, (study) => studyWithUniversity(study, choice, this.padron));
   }
 
   /** Elige la ciudad de una especialidad, que sólo puede ser una sede de su universidad. */
-  elegirCiudadDeEspecialidad(indice: number, ciudad: string | null): void {
-    this.actualizarEstudio(indice, (estudio) => ({ ...estudio, ciudad: ciudad ?? '' }));
+  chooseSpecialtyCity(index: number, city: string | null): void {
+    this.updateSpecialtyStudy(index, (study) => ({ ...study, city: city ?? '' }));
   }
 
   /** Las universidades de una especialidad: las de salud del país elegido. */
-  opcionesDeUniversidadDeEspecialidad(indice: number): readonly SelectOption<string>[] {
-    return this.padron.opcionesDeUniversidad(this.estudioDeEspecialidad(indice).pais, 'salud');
+  specialtyUniversityOptions(index: number): readonly SelectOption<string>[] {
+    return this.padron.universityOptions(this.specialtyStudyAt(index).country, 'salud');
   }
 
   /** Las sedes de la universidad elegida para una especialidad. */
-  ciudadesDeEspecialidad(indice: number): readonly SelectOption<string>[] {
-    const estudio = this.estudioDeEspecialidad(indice);
-    return opcionesDeCiudad(this.padron.ciudadesDe(estudio.pais, estudio.universidad));
+  specialtyCityOptions(index: number): readonly SelectOption<string>[] {
+    const study = this.specialtyStudyAt(index);
+    return opcionesDeCiudad(this.padron.citiesOf(study.country, study.university));
   }
 
   /** Adjunta (o quita) el diploma de una especialidad. */
-  updateSpecialtyFiles(indice: number, files: readonly File[]): void {
+  updateSpecialtyFiles(index: number, files: readonly File[]): void {
     this.attachmentFiles.update((current) => ({
       ...current,
-      [this.claveDeDiplomaDeEspecialidad(indice)]: files,
+      [this.specialtyFileKey(index)]: files,
     }));
     const file = files[0];
-    this.actualizarEstudio(indice, (estudio) => ({
-      ...estudio,
-      archivo: file?.name ?? null,
-      pesoBytes: file?.size ?? null,
+    this.updateSpecialtyStudy(index, (study) => ({
+      ...study,
+      fileName: file?.name ?? null,
+      fileBytes: file?.size ?? null,
       fileId: null,
     }));
     this.errorAdjunto.set(null);
@@ -1773,24 +2147,22 @@ export class RegisterPractitioner {
    */
   quitarEspecialidad(indice: number): void {
     this.especialidadesExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
-    this.estudiosDeEspecialidad.update((estudios) => estudios.filter((_, i) => i !== indice));
+    this.specialtyStudies.update((studies) => studies.filter((_, i) => i !== indice));
     // Los PDF van por posición: al quitar una casilla, las de después suben un
     // lugar y su archivo con ellas; el de la quitada se descarta.
-    this.attachmentFiles.update((actuales) => {
-      const siguientes: Partial<Record<string, readonly File[]>> = {};
-      for (const [clave, archivos] of Object.entries(actuales)) {
-        const posicion = /^especialidad-(\d+)$/.exec(clave);
-        if (posicion === null) {
-          siguientes[clave] = archivos;
-        } else if (Number(posicion[1]) < indice) {
-          siguientes[clave] = archivos;
-        } else if (Number(posicion[1]) > indice) {
-          siguientes[this.claveDeDiplomaDeEspecialidad(Number(posicion[1]) - 1)] = archivos;
+    this.attachmentFiles.update((current) => {
+      const next: Partial<Record<string, readonly File[]>> = {};
+      for (const [key, files] of Object.entries(current)) {
+        const position = /^especialidad-(\d+)$/.exec(key);
+        if (position === null || Number(position[1]) < indice) {
+          next[key] = files;
+        } else if (Number(position[1]) > indice) {
+          next[this.specialtyFileKey(Number(position[1]) - 1)] = files;
         }
       }
-      return siguientes;
+      return next;
     });
-    this.sincronizarControlDeEstudios();
+    this.syncSpecialtyStudiesControl();
   }
 
   /**
@@ -1854,15 +2226,15 @@ export class RegisterPractitioner {
 
   /**
    * El padrón país → universidades. Bolivia está siempre; el resto se pide en el
-   * constructor y llega por su propio trozo. Ver {@link PadronDeUniversidades}.
+   * constructor y llega por su propio trozo. Ver {@link UniversitiesRegistry}.
    */
-  private readonly padron = inject(PadronDeUniversidades);
+  private readonly padron = inject(UniversitiesRegistry);
 
   /** Las opciones del desplegable de país, iguales en el título y en las filas. */
-  protected readonly opcionesDePais = this.padron.opcionesDePais;
+  protected readonly opcionesDePais = this.padron.countryOptions;
 
   /** Si el padrón importado todavía viene, para decirlo debajo del campo. */
-  protected readonly padronCargando = computed(() => this.padron.estado() === 'cargando');
+  protected readonly padronCargando = computed(() => this.padron.status() === 'cargando');
 
   /**
    * Qué opción del desplegable de país del título principal está marcada.
@@ -1875,10 +2247,10 @@ export class RegisterPractitioner {
   protected readonly universidadDelTituloElegida = signal<string | null>(null);
 
   protected readonly paisDelTituloEsOtro = computed(
-    () => this.paisDelTituloElegido() === PAIS_FUERA_DE_CATALOGO,
+    () => this.paisDelTituloElegido() === CATALOG_OUTSIDE_COUNTRY,
   );
   protected readonly universidadDelTituloEsOtra = computed(
-    () => this.universidadDelTituloElegida() === INSTITUCION_FUERA_DE_CATALOGO,
+    () => this.universidadDelTituloElegida() === CATALOG_OUTSIDE_INSTITUTION,
   );
 
   /** El país del título principal como texto, espejado desde el control. */
@@ -1890,9 +2262,9 @@ export class RegisterPractitioner {
    * universidad acotada a él.
    */
   protected readonly opcionesDeUniversidadDelTitulo = computed(() =>
-    this.padron.opcionesDeUniversidad(
+    this.padron.universityOptions(
       this.paisDelTituloTexto(),
-      filtroDeSaludDelTitulo(this.tituloProfesionalTexto() ?? ''),
+      titleHealthFilter(this.tituloProfesionalTexto() ?? ''),
     ),
   );
 
@@ -1911,7 +2283,7 @@ export class RegisterPractitioner {
   /** Las ciudades del título principal: las sedes de la universidad elegida. */
   protected readonly ciudadesDelTitulo = computed(() =>
     opcionesDeCiudad(
-      this.padron.ciudadesDe(this.paisDelTituloTexto(), this.universidadDelTituloTexto()),
+      this.padron.citiesOf(this.paisDelTituloTexto(), this.universidadDelTituloTexto()),
     ),
   );
 
@@ -1946,25 +2318,25 @@ export class RegisterPractitioner {
     }
     if (key === 'professionalTitleCountry') {
       this.paisDelTituloTexto.set(texto);
-      if (this.paisDelTituloElegido() !== PAIS_FUERA_DE_CATALOGO) {
+      if (this.paisDelTituloElegido() !== CATALOG_OUTSIDE_COUNTRY) {
         this.paisDelTituloElegido.set(
-          eleccionDesdeTexto(
+          choiceFromText(
             texto,
-            (pais) => this.padron.esPaisDelCatalogo(pais),
-            PAIS_FUERA_DE_CATALOGO,
+            (pais) => this.padron.isCatalogCountry(pais),
+            CATALOG_OUTSIDE_COUNTRY,
           ),
         );
       }
     }
     if (
       key === 'professionalTitleUniversity' &&
-      this.universidadDelTituloElegida() !== INSTITUCION_FUERA_DE_CATALOGO
+      this.universidadDelTituloElegida() !== CATALOG_OUTSIDE_INSTITUTION
     ) {
       this.universidadDelTituloElegida.set(
-        eleccionDesdeTexto(
+        choiceFromText(
           texto,
-          (universidad) => this.padron.esUniversidadDe(this.paisDelTituloTexto(), universidad),
-          INSTITUCION_FUERA_DE_CATALOGO,
+          (universidad) => this.padron.isUniversityOf(this.paisDelTituloTexto(), universidad),
+          CATALOG_OUTSIDE_INSTITUTION,
         ),
       );
     }
@@ -1975,7 +2347,7 @@ export class RegisterPractitioner {
    * reinicia la universidad, por lo mismo que en {@link elegirEnFila}.
    */
   elegirPaisDelTitulo(eleccion: string | null): void {
-    const pais = eleccion === null || eleccion === PAIS_FUERA_DE_CATALOGO ? '' : eleccion;
+    const pais = eleccion === null || eleccion === CATALOG_OUTSIDE_COUNTRY ? '' : eleccion;
     const cambiaDePais = pais !== this.paisDelTituloTexto();
     // Antes de mover el país: la ciudad propuesta se reconoce por la
     // universidad que estaba elegida **en el país anterior**.
@@ -1998,12 +2370,9 @@ export class RegisterPractitioner {
     const { professionalTitleUniversity, professionalTitleCity } = this.formProfesional.controls;
     const pais = this.paisDelTituloTexto();
     const universidad =
-      eleccion === null || eleccion === INSTITUCION_FUERA_DE_CATALOGO ? '' : eleccion;
+      eleccion === null || eleccion === CATALOG_OUTSIDE_INSTITUTION ? '' : eleccion;
     professionalTitleCity.setValue(
-      ciudadAlElegirUniversidad(
-        professionalTitleCity.value,
-        this.padron.ciudadesDe(pais, universidad),
-      ),
+      cityToChooseUniversity(professionalTitleCity.value, this.padron.citiesOf(pais, universidad)),
     );
     this.universidadDelTituloElegida.set(eleccion);
     this.universidadDelTituloTexto.set(universidad);
@@ -2027,25 +2396,13 @@ export class RegisterPractitioner {
    */
   private nombresAdicionales(): string {
     const raw = this.formProfesional.getRawValue();
-    return unirNombres([raw.middleName, raw.thirdName, ...this.nombresExtra()]);
+    return joinNames([raw.middleName, raw.thirdName, ...this.nombresExtra()]);
   }
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
   readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
   readonly catalogoDepartamentosCaido = signal(false);
-
-  /**
-   * Municipios (VS_BO_MUNICIPALITY), colgados de su departamento.
-   *
-   * Se guardan tal como los devuelve el catálogo, sin traducir a los grupos de
-   * `app-tree-select`: quien los dibuja ahora es `app-location-picker`, que
-   * necesita la rama entera para acotar el select de ciudad al departamento
-   * pulsado en el mapa. Es el mismo control que monta el alta de paciente.
-   */
-  private readonly municipios = inject(BoMunicipalitiesCatalog);
-  readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
-  readonly catalogoMunicipiosCaido = signal(false);
 
   /**
    * Las especialidades (VS_MEDICAL_SPECIALTY) y su catálogo.
@@ -2082,8 +2439,8 @@ export class RegisterPractitioner {
     // consulta al servidor para filtrar doce opciones agrega latencia y un
     // estado de error donde no hacía falta ninguno.
     return busqueda === ''
-      ? OPCIONES_TITULO_PROFESIONAL
-      : OPCIONES_TITULO_PROFESIONAL.filter((opcion) =>
+      ? PROFESSIONAL_TITLE_OPTIONS
+      : PROFESSIONAL_TITLE_OPTIONS.filter((opcion) =>
           opcion.label.toLowerCase().includes(busqueda),
         );
   });
@@ -2091,7 +2448,7 @@ export class RegisterPractitioner {
   /** La opción elegida, para que el rótulo vuelva al regresar a este paso. */
   readonly tituloProfesionalSeleccionado = computed<ReferenceOption | null>(() => {
     const valor = this.tituloProfesionalElegido();
-    return OPCIONES_TITULO_PROFESIONAL.find((opcion) => opcion.value === valor) ?? null;
+    return PROFESSIONAL_TITLE_OPTIONS.find((opcion) => opcion.value === valor) ?? null;
   });
 
   /**
@@ -2150,13 +2507,12 @@ export class RegisterPractitioner {
    *   set devuelve nombre y código —no la dirección ni el municipio del
    *   establecimiento—, así que el autocompletado de AC-05-9 no es alcanzable
    *   desde una pantalla sin sesión aunque el campo existiera.
-   * - **Las tres matrículas por separado** (AC-05-5). Siguen siendo **dos**
-   *   números —`licenseNumber` (Ministerio, jurisdicción nacional) y
-   *   `sedesLicenseNumber` (SEDES, jurisdicción departamental)— y **una**
-   *   autoridad. El tercero, el registro del colegio profesional, todavía no
-   *   tiene dónde ir: sería una tercera fila de `common.identifiers`, y eso es
-   *   esquema. Lo que sí se corrigió es que el segundo dejara de archivarse
-   *   como título de grado: es una habilitación y vive con la matrícula.
+   * - **Las tres matrículas por separado** (AC-05-5). Desde el 27/10/2026 son
+   *   **tres** números, cada uno con su fecha y su respaldo: `licenseNumber`
+   *   (Ministerio, jurisdicción nacional), `sedesLicenseNumber` (SEDES,
+   *   departamental) y `collegeLicenseNumber` (el colegio de la profesión,
+   *   que sale del título). La API guarda los tres como filas de
+   *   `profiles.jurisdiction_authorizations`.
    * - **Lugar de estudio** (AC-05-13). La universidad se guarda por credencial
    *   y se elige de un padrón acotado al país; el país y la ciudad se siguen
    *   preguntando, pero no viajan porque el alta no define esos campos. Los PDFs de credenciales ahora se precargan y se
@@ -2164,14 +2520,14 @@ export class RegisterPractitioner {
    *
    * ## El tope de cuatro campos por página no se relaja (AC-05-2)
    *
-   * Ninguna sección de acá llega a cinco, y aun así todas pasan por
-   * `paginarCampos`: es la función la que hace cumplir el tope, y declararlo a
-   * mano sería confiar en que quien agregue el campo trece se acuerde de contar.
+   * Todas pasan por `paginateFields`, que es la función que hace cumplir el tope,
+   * salvo **nombre y cédula**: son cinco campos en una sola página, como en el
+   * alta de paciente (propietario, 22/10/2026), y es la única excepción.
    */
   readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() =>
     practitionerFields({
       professionalTitle: this.tituloProfesionalElegido(),
-      departmentIssuerField: (testId) => this.departmentIssuerField(testId),
+      departmentIssuerField: (testId) => this.campoDepartamentoEmisor(testId),
     }),
   );
 
@@ -2187,7 +2543,7 @@ export class RegisterPractitioner {
    * La clave es la misma en los dos casos —la del control—, así que lo que se
    * haya elegido antes de un fallo no se pierde.
    */
-  private departmentIssuerField(testId: string): CampoDeFormulario {
+  private campoDepartamentoEmisor(testId: string): CampoDeFormulario {
     const base = {
       key: 'issuerAdministrativeAreaConceptId',
       label: 'Departamento de emisión',
@@ -2231,13 +2587,110 @@ export class RegisterPractitioner {
   readonly claveVisible = signal('');
 
   /** Las tarjetas del costado: por qué te pedimos lo de ESTE paso. */
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA_PROFESIONAL[this.claveVisible()] ?? [],
   );
+
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginasProfesional();
+      const clave = this.claveVisible();
+      const indice = Math.max(
+        0,
+        paginas.findIndex((p) => p.clave === clave),
+      );
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.formProfesional.getRawValue();
+      const extraData = {
+        nombresExtra: this.nombresExtra(),
+        especialidadesExtra: this.especialidadesExtra(),
+        gpsDomicilio: this.gpsDomicilio(),
+        gpsTrabajo: this.gpsTrabajo(),
+        gpsConsultorio: this.gpsConsultorio(),
+      };
+      this.draftService.saveProgress(
+        'practitioner',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'practitioner', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('practitioner');
+      if (!draft) return;
+      if (draft.data) {
+        this.formProfesional.patchValue(revivirFechas(draft.data, CAMPOS_DE_FECHA));
+        // Los municipios deducidos viajan desde sus señales: vuelven con el control.
+        const raw = this.formProfesional.getRawValue();
+        this.municipioProfesional.set(raw.municipio);
+        this.municipioConsultorio.set(raw.municipioConsultorio);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (Array.isArray(extra['nombresExtra'])) {
+        this.nombresExtra.set(extra['nombresExtra'] as readonly string[]);
+      }
+      if (Array.isArray(extra['especialidadesExtra'])) {
+        this.especialidadesExtra.set(extra['especialidadesExtra'] as readonly string[]);
+      }
+      if (extra['gpsDomicilio'] !== undefined) {
+        // La señal y el control obligatorio, juntos. Sin volcar lo deducido: la
+        // calle y la localidad ya volvieron con `data`, y el selector las vuelve
+        // a deducir del mismo punto al mostrarse.
+        const punto = extra['gpsDomicilio'] as Coordinates | null;
+        this.gpsDomicilio.set(punto);
+        this.formProfesional.controls.gpsDomicilio.setValue(punto);
+      }
+      if (extra['gpsTrabajo'] !== undefined) {
+        this.gpsTrabajo.set(extra['gpsTrabajo'] as Coordinates | null);
+      }
+      if (extra['gpsConsultorio'] !== undefined) {
+        this.gpsConsultorio.set(extra['gpsConsultorio'] as Coordinates | null);
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'practitioner', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('practitioner');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
 
   /** Lo que el motor avisa al cambiar de página. */
   protected recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
   }
 
   readonly errorMessage = computed<string | null>(() => {
@@ -2249,14 +2702,19 @@ export class RegisterPractitioner {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     }
     return null;
   });
 
   constructor() {
+    const detectado = this.draftService.detectDraft('practitioner');
+    if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+      this.borradorDetectado.set(detectado);
+    }
+    this.draftService.trackEvent('start', 'practitioner', 0);
+
     this.cargarDepartamentos();
-    this.cargarMunicipios();
     this.cargarEspecialidades();
     this.cargarTiposDeCredencial();
     this.cargarProfesiones();
@@ -2265,11 +2723,11 @@ export class RegisterPractitioner {
     void this.padron.cargar();
     this.syncCollegeWithProfession();
 
+    this.formProfesional.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
+
     // El aviso de un envío fallido se va en cuanto se corrige algo.
-    //
-    // Se ata a lo único que de verdad significa «estoy corrigiendo» —que el
-    // formulario cambie—, que cubre además el caso que el avance de página no
-    // cubría: corregir en la misma página donde falló el envío.
     this.limpiarElErrorAlCorregir();
   }
 
@@ -2280,7 +2738,7 @@ export class RegisterPractitioner {
    * otro colegio del par: una elección explícita distinta (SEDES, Enfermería…)
    * no se pisa, porque el automatismo es una ayuda, no una regla.
    *
-   * Se llama desde el constructor: `takeUntilDestroyed` pide context de
+   * Se llama desde el constructor: `takeUntilDestroyed` pide contexto de
    * inyección. Sin eso el espejo del título no se instala y el rótulo del
    * colegio deja de actualizarse — ver {@link tituloProfesionalElegido}.
    */
@@ -2291,17 +2749,19 @@ export class RegisterPractitioner {
       // Primero el espejo: de acá leen las etiquetas del colegio en el grafo
       // de señales.
       this.tituloProfesionalElegido.set(valor);
+      // Si el registro del colegio es obligatorio depende del título.
+      this.formProfesional.controls.collegeLicenseNumber.updateValueAndValidity({
+        emitEvent: false,
+      });
 
       // El colegio sigue a la profesión: la opción «Colegio de la profesión»
       // lleva el nombre del colegio de ese título. Vacía, se llena sólo si el
       // título tiene colegio conocido; un colegio ya elegido se cambia por el
       // del título nuevo. Ministerio o SEDES, elegidos a mano, no se tocan.
-      const colegio = colegioDelTitulo(valor);
+      const colegio = titleCollege(valor);
       const actual = autoridad.value;
       const cambiar =
-        actual === ''
-          ? colegio !== COLEGIO_DE_LA_PROFESION
-          : esColegio(actual) && actual !== colegio;
+        actual === '' ? colegio !== PROFESSION_COLLEGE : isCollege(actual) && actual !== colegio;
       if (cambiar) {
         autoridad.setValue(colegio);
       }
@@ -2313,63 +2773,21 @@ export class RegisterPractitioner {
     return this.opcionesEspecialidad().map(({ value, label }) => ({ value, label }));
   }
 
-  /**
-   * El consultorio propio tal como viaja en el alta, o `null` si no declaró
-   * ninguno.
-   *
-   * ## Qué cuenta como «declaró uno»
-   *
-   * **Cualquiera de las cuatro piezas.** La página entera es opcional, así que
-   * lo que decide no es un campo obligatorio sino que haya algo que guardar: un
-   * nombre, una localidad, una calle o un punto. Exigir el nombre habría hecho
-   * que quien completa la dirección y se olvida del rótulo pierda lo escrito
-   * sin que nadie se lo diga, que es la clase de silencio que este alta ya
-   * corrigió en otros dos sitios.
-   *
-   * Sin nombre se manda el genérico: el backend lo exige (`NewOwnSite.name`) y
-   * un consultorio sin rótulo se sigue pudiendo renombrar desde el perfil.
-   *
-   * ## La forma es la de `NewOwnSite`, no una nueva
-   *
-   * Es exactamente el cuerpo que ya recibe `POST /practitioners/me/sites`
-   * (ALV-005/006) y que arma «Mi perfil → dónde trabajo». No se inventa un
-   * contrato: el alta pública no puede llamar a esa ruta —no hay sesión
-   * todavía, el registro termina en el login— así que el dato viaja adentro del
-   * alta y el backend reutiliza el mismo servicio.
-   */
+  /** El consultorio propio tal como viaja en el alta. La regla está en `ownSiteFromAnswers`. */
   private consultorioPropio(): NewOwnSite | null {
     const raw = this.formProfesional.getRawValue();
-    const nombre = raw.officeName.trim();
-    const calle = raw.officeAddressLines.trim();
-    const telefono = raw.officeContactPhone.trim();
-    const municipio = this.municipioConsultorio();
-    const punto = this.gpsConsultorio();
-
-    if (nombre === '' && calle === '' && telefono === '' && municipio === null && punto === null) {
-      return null;
-    }
-
-    // La dirección sólo viaja si tiene algo adentro: una dirección vacía no es
-    // «sin dirección», es una fila vacía en `common.addresses`. Es la misma
-    // regla que ya aplica `work-history.ts` al registrar una sede.
-    const conDireccion = calle !== '' || municipio !== null || punto !== null;
-
-    return {
-      name: nombre === '' ? NOMBRE_CONSULTORIO_POR_OMISION : nombre,
-      ...(telefono === '' ? {} : { contactPhone: telefono }),
-      ...(conDireccion
-        ? {
-            address: {
-              lines: calle === '' ? [] : [calle],
-              ...(municipio === null ? {} : { municipalityConceptId: municipio }),
-              ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
-            },
-          }
-        : {}),
-    };
+    return ownSiteFromAnswers({
+      name: raw.officeName,
+      addressLines: raw.officeAddressLines,
+      district: raw.officeDistrict,
+      contactPhone: raw.officeContactPhone,
+      municipalityConceptId: this.municipioConsultorio(),
+      point: this.gpsConsultorio(),
+      logoFileId: this.officeLogo.fileId(),
+    });
   }
 
-  /** Ver el constructor. Se llama desde ahí: `takeUntilDestroyed` pide context de inyección. */
+  /** Ver el constructor. Se llama desde ahí: `takeUntilDestroyed` pide contexto de inyección. */
   private limpiarElErrorAlCorregir(): void {
     this.formProfesional.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.errorMessage() !== null) {
@@ -2399,26 +2817,6 @@ export class RegisterPractitioner {
       error: () => {
         this.opcionesDepartamento.set([]);
         this.catalogoDepartamentosCaido.set(true);
-      },
-    });
-  }
-
-  /**
-   * Trae el árbol de municipios, para «dónde vivís».
-   *
-   * Mismo criterio que los departamentos ante un fallo: el campo es opcional y
-   * el alta sigue. Lo que llega ya viene agrupado por departamento; acá sólo se
-   * traduce a la forma que espera `app-tree-select`.
-   */
-  protected cargarMunicipios(): void {
-    this.municipios.listar().subscribe({
-      next: (ramas) => {
-        this.catalogoMunicipiosCaido.set(false);
-        this.ramasMunicipios.set(ramas);
-      },
-      error: () => {
-        this.ramasMunicipios.set([]);
-        this.catalogoMunicipiosCaido.set(true);
       },
     });
   }
@@ -2456,15 +2854,6 @@ export class RegisterPractitioner {
     this.cargarDepartamentos();
   }
 
-  /** Reintenta la lectura del árbol de municipios. Ver `reintentarDepartamentos`. */
-  protected reintentarMunicipios(): void {
-    this.municipios.olvidar();
-    this.cargarMunicipios();
-    // El árbol arrastra el catálogo de departamentos, que `olvidar()` también
-    // limpia: se recarga para que el desplegable de emisión no quede vacío.
-    this.cargarDepartamentos();
-  }
-
   /* ---- Envío ------------------------------------------------------------- */
 
   /**
@@ -2486,7 +2875,7 @@ export class RegisterPractitioner {
     if (
       this.formProfesional.invalid &&
       !this.hayTitulosSinNumero() &&
-      !this.hayEstudiosSinNumero()
+      !this.hasStudiesMissingNumber()
     ) {
       this.formProfesional.markAllAsTouched();
       return;
@@ -2517,12 +2906,30 @@ export class RegisterPractitioner {
     }
     // Lo mismo para el estudio de una especialidad: sin número de diploma no se
     // puede guardar, y se dice en qué casilla y en qué paso.
-    if (this.hayEstudiosSinNumero()) {
+    if (this.hasStudiesMissingNumber()) {
       this.state.set(
         validation([
           {
             field: 'especialidadesExtra',
-            message: `Vuelva al paso «Sus especialidades». ${this.avisoDeEstudiosIncompletos() ?? ''}`.trim(),
+            message:
+              `Vuelva al paso «Sus especialidades». ${this.incompleteStudiesNotice() ?? ''}`.trim(),
+          },
+        ]),
+      );
+      return;
+    }
+    // La universidad sola conserva su carácter opcional. Un PDF declarado sí
+    // necesita un diploma numerado para que no se pierda al crear la cuenta.
+    if (
+      this.attachmentFiles()['professional-title']?.length &&
+      this.hayUniversidadPrincipalSinTitulo()
+    ) {
+      this.state.set(
+        validation([
+          {
+            field: 'professionalTitleUniversity',
+            message:
+              'Complete el número del diploma en «Su título profesional y foto». La universidad y el PDF que ya cargó se guardarán con ese título. También puede indicar su número en una fila «Universitario» de «Sus títulos».',
           },
         ]),
       );
@@ -2542,18 +2949,27 @@ export class RegisterPractitioner {
 
     this.state.set(loading());
 
-    this.subirPdfDeTitulosPendientes().subscribe({
-      next: () => {
-        this.iam.registerPractitioner(this.datosProfesional()).subscribe({
-          next: () => {
-            this.state.set(ready(null));
-            this.registered.set(true);
-          },
-          error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
-        });
-      },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
-    });
+    this.subirPdfDeTitulosPendientes()
+      .pipe(
+        concatMap(() => this.subirFirmaYSelloPendientes()),
+        concatMap(() => this.officeLogo.upload()),
+      )
+      .subscribe({
+        next: () => {
+          this.iam.registerPractitioner(this.datosProfesional()).subscribe({
+            next: () => {
+              this.state.set(ready(null));
+              this.registered.set(true);
+              this.limpiarBorrador();
+              this.draftService.trackEvent('complete', 'practitioner', 4);
+            },
+            error: (error: unknown) =>
+              this.state.set(registrationErrorToViewState(error, 'practitioner')),
+          });
+        },
+        error: (error: unknown) =>
+          this.state.set(registrationErrorToViewState(error, 'practitioner')),
+      });
   }
 
   /**
@@ -2562,21 +2978,35 @@ export class RegisterPractitioner {
    * progreso disponible para reintentar sin reclamar dos veces el mismo PDF.
    */
   private subirPdfDeTitulosPendientes(): Observable<void> {
-    return concat(this.subirPdfDeTitulos(), this.subirPdfDeEspecialidades()).pipe(
+    return concat(
+      this.uploadTitlePdfs(),
+      this.uploadSpecialtyPdfs(),
+      this.uploadLicensePdfs(),
+    ).pipe(
       toArray(),
       map(() => undefined),
     );
   }
 
-  /** Sube el diploma de cada especialidad con número, y lo recuerda en su fila. */
-  private subirPdfDeEspecialidades(): Observable<void> {
-    const pendientes = this.estudiosDeEspecialidad()
-      .map((estudio, indice) => ({ estudio, indice }))
-      .filter(({ estudio }) => estudio.numero.trim() !== '');
-    return from(pendientes).pipe(
-      concatMap(({ estudio, indice }) => {
-        const archivo = this.attachmentFiles()[this.claveDeDiplomaDeEspecialidad(indice)]?.[0];
-        if (estudio.fileId !== null || archivo === undefined) {
+  /**
+   * Sube el PDF de la matrícula, el del SEDES y el del colegio (P29), y
+   * recuerda cada fileId.
+   *
+   * Hasta el 26/10/2026 el alta no tenía dónde llevarlos: el selector aceptaba
+   * el archivo, lo mostraba con su nombre y su peso, y al crear la cuenta lo
+   * tiraba en silencio. Sólo se sube el de cada registro si se escribió su
+   * número: sin la habilitación la API no tiene fila donde dejarlo y
+   * respondería 422.
+   */
+  private uploadLicensePdfs(): Observable<void> {
+    const raw = this.formProfesional.getRawValue();
+    const claves = HABILITACIONES.filter(({ control }) => raw[control].trim() !== '').map(
+      ({ clave }) => clave,
+    );
+    return from(claves).pipe(
+      concatMap((clave) => {
+        const archivo = this.attachmentFiles()[clave]?.[0];
+        if (archivo === undefined || this.fileIdDeHabilitacion()[clave] !== undefined) {
           return of(undefined);
         }
         return this.iam.uploadRegistrationDocument(archivo).pipe(
@@ -2589,7 +3019,47 @@ export class RegisterPractitioner {
             if (!documento?.fileId || documento.fileId.trim() === '') {
               throw new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.');
             }
-            this.actualizarEstudio(indice, (actual) => ({ ...actual, fileId: documento.fileId }));
+            this.fileIdDeHabilitacion.update((actual) => ({
+              ...actual,
+              [clave]: documento.fileId,
+            }));
+            return undefined;
+          }),
+          throwIfEmpty(
+            () => new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.'),
+          ),
+        );
+      }),
+      toArray(),
+      map(() => undefined),
+    );
+  }
+
+  /** Sube el diploma de cada especialidad con número, y lo recuerda en su fila. */
+  private uploadSpecialtyPdfs(): Observable<void> {
+    const pending = this.specialtyStudies()
+      .map((study, index) => ({ study, index }))
+      .filter(({ study }) => study.number.trim() !== '');
+    return from(pending).pipe(
+      concatMap(({ study, index }) => {
+        const file = this.attachmentFiles()[this.specialtyFileKey(index)]?.[0];
+        if (study.fileId !== null || file === undefined) {
+          return of(undefined);
+        }
+        return this.iam.uploadRegistrationDocument(file).pipe(
+          filter(
+            (evento): evento is HttpResponse<UploadedRegistrationDocument> =>
+              evento instanceof HttpResponse,
+          ),
+          map((respuesta) => {
+            const documento = respuesta.body;
+            if (!documento?.fileId || documento.fileId.trim() === '') {
+              throw new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.');
+            }
+            this.updateSpecialtyStudy(index, (current) => ({
+              ...current,
+              fileId: documento.fileId,
+            }));
             return undefined;
           }),
           throwIfEmpty(
@@ -2600,12 +3070,16 @@ export class RegisterPractitioner {
     );
   }
 
-  private subirPdfDeTitulos(): Observable<void> {
-    const titulosConNumero = this.titulos().filter((titulo) => titulo.numero.trim() !== '');
+  private uploadTitlePdfs(): Observable<void> {
+    const titulosConNumero = this.titulosParaRegistro().filter(
+      (titulo) => titulo.numero.trim() !== '',
+    );
     return from(titulosConNumero).pipe(
       concatMap((titulo) => {
-        const archivo = this.attachmentFiles()[titulo.id]?.[0];
-        if (titulo.fileId !== null || archivo === undefined) {
+        const usaPrincipal = this.usaPdfPrincipal(titulo);
+        const archivo =
+          this.attachmentFiles()[usaPrincipal ? 'professional-title' : titulo.id]?.[0];
+        if (this.fileIdDeTitulo(titulo) !== null || archivo === undefined) {
           return of(undefined);
         }
         return this.iam.uploadRegistrationDocument(archivo).pipe(
@@ -2618,11 +3092,53 @@ export class RegisterPractitioner {
             if (!documento?.fileId || documento.fileId.trim() === '') {
               throw new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.');
             }
-            this.recordarFileIdDelTitulo(titulo.id, documento.fileId);
+            if (usaPrincipal) this.fileIdTituloPrincipal.set(documento.fileId);
+            else this.recordarFileIdDelTitulo(titulo.id, documento.fileId);
             return undefined;
           }),
           throwIfEmpty(
             () => new Error('No pudimos confirmar la carga del PDF. Vuelva a intentarlo.'),
+          ),
+        );
+      }),
+      toArray(),
+      map(() => undefined),
+    );
+  }
+
+  /** Recuerda cada carga confirmada; un reintento no repite esa imagen. */
+  private subirFirmaYSelloPendientes(): Observable<void> {
+    if (environment.mockBackend) return of(undefined);
+    const controles = ['signatureImageBase64', 'sealImageBase64'] as const;
+    return from(controles).pipe(
+      concatMap((control) => {
+        const dataUrl = this.formProfesional.controls[control].value;
+        if (!dataUrl || this.imagenesSubidas[control]?.dataUrl === dataUrl) {
+          return of(undefined);
+        }
+        const match = /^data:(image\/(?:png|jpeg|webp));base64,(.+)$/.exec(dataUrl);
+        if (!match) throw new Error('La imagen de firma o sello no tiene un formato válido.');
+        const bytes = Uint8Array.from(atob(match[2]), (caracter) => caracter.charCodeAt(0));
+        const archivo = new File([bytes], `${control}.${match[1].split('/')[1]}`, {
+          type: match[1],
+        });
+        return this.iam.uploadRegistrationSignatureImage(archivo).pipe(
+          filter(
+            (evento): evento is HttpResponse<UploadedRegistrationDocument> =>
+              evento instanceof HttpResponse,
+          ),
+          map((respuesta) => {
+            const fileId = respuesta.body?.fileId;
+            if (!fileId || fileId.trim() === '') {
+              throw new Error(
+                'No pudimos confirmar la carga de firma o sello. Vuelva a intentarlo.',
+              );
+            }
+            this.imagenesSubidas[control] = { dataUrl, fileId };
+            return undefined;
+          }),
+          throwIfEmpty(
+            () => new Error('No pudimos confirmar la carga de firma o sello. Vuelva a intentarlo.'),
           ),
         );
       }),
@@ -2663,9 +3179,17 @@ export class RegisterPractitioner {
     const autoridad = raw.regulatoryAuthority.trim();
     const fechaNacimiento = raw.birthDate;
     const fechaInscripcion = raw.licenseIssueDate;
+    const sedes = raw.sedesLicenseNumber.trim();
+    const fechaSedes = raw.sedesLicenseIssueDate;
+    const registroColegio = raw.collegeLicenseNumber.trim();
+    const fechaColegio = raw.collegeLicenseIssueDate;
+    const colegio = titleCollege(this.tituloProfesionalElegido());
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
+    // Calle y distrito separados (ADR-0028 de la API). El consultorio no: su
+    // dirección vive en otra tabla y sigue llevando el distrito en la línea.
     const calleDomicilio = raw.homeAddressLines.trim();
+    const distritoDomicilio = raw.homeDistrict.trim();
     const gpsDomicilio = this.gpsDomicilio();
     const calleTrabajo = raw.workAddressLines.trim();
     const gpsTrabajo = this.gpsTrabajo();
@@ -2674,12 +3198,17 @@ export class RegisterPractitioner {
     const foto = raw.profilePhotoBase64;
     const firmaImagen = raw.signatureImageBase64;
     const selloImagen = raw.sealImageBase64;
+    const respaldos = this.fileIdDeHabilitacion();
 
     return {
       // `email` del DTO es el campo de LOGIN de la API, y desde este cambio el
       // login es el correo personal: es el que el profesional conserva aunque
       // cambie de hospital. El institucional viaja aparte, en `workEmail`.
       email: correoPersonal,
+      // El correo de acceso también viaja como personal: sin `workEmail` la API
+      // lo tomaba por institucional. Con `personalEmail === email` y sin
+      // `workEmail` sabe que es el único y no inventa un contacto de trabajo.
+      personalEmail: correoPersonal,
       password: raw.password,
       name: raw.name.trim(),
       lastName: raw.lastName.trim(),
@@ -2688,8 +3217,18 @@ export class RegisterPractitioner {
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
       ...(foto ? { profilePhotoBase64: foto } : {}),
-      ...(firmaImagen ? { signatureImageBase64: firmaImagen } : {}),
-      ...(selloImagen ? { sealImageBase64: selloImagen } : {}),
+      ...(environment.mockBackend && firmaImagen ? { signatureImageBase64: firmaImagen } : {}),
+      ...(!environment.mockBackend &&
+      firmaImagen &&
+      this.imagenesSubidas.signatureImageBase64?.dataUrl === firmaImagen
+        ? { signatureFileId: this.imagenesSubidas.signatureImageBase64.fileId }
+        : {}),
+      ...(environment.mockBackend && selloImagen ? { sealImageBase64: selloImagen } : {}),
+      ...(!environment.mockBackend &&
+      selloImagen &&
+      this.imagenesSubidas.sealImageBase64?.dataUrl === selloImagen
+        ? { sealFileId: this.imagenesSubidas.sealImageBase64.fileId }
+        : {}),
       ...(documento === '' ? {} : { nationalId: documento }),
       // Sólo tiene sentido con documento: sin CI no hay identificador al que
       // atarle un departamento de emisión.
@@ -2700,8 +3239,9 @@ export class RegisterPractitioner {
       // La calle y el punto del domicilio (AC-05-8).
       //
       // El punto viaja sólo si se confirmó sobre el mapa: `gpsDomicilio` es lo
-      // que emite `app-ubicacion-picker`, y ese sólo emite lo confirmado.
+      // que emite `app-map-location-picker`, y ese sólo emite lo confirmado.
       ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
+      ...(distritoDomicilio === '' ? {} : { homeDistrict: distritoDomicilio }),
       ...(gpsDomicilio === null
         ? {}
         : { homeLatitude: gpsDomicilio.lat, homeLongitude: gpsDomicilio.lng }),
@@ -2717,6 +3257,28 @@ export class RegisterPractitioner {
       sedesLicenseNumber: raw.sedesLicenseNumber.trim(),
       ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),
       ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
+      // Los respaldos de la habilitación (P29), ya subidos por `uploadLicensePdfs`.
+      ...(respaldos.license === undefined ? {} : { licenseFileId: respaldos.license }),
+      ...(respaldos.sedes === undefined || sedes === ''
+        ? {}
+        : { sedesLicenseFileId: respaldos.sedes }),
+      ...(fechaSedes === null || sedes === ''
+        ? {}
+        : { sedesLicenseIssueDate: fechaIso(fechaSedes) }),
+      // El registro del colegio de la profesión, con su fecha y su respaldo.
+      // Nada de esto viaja sin el número: la API no tendría fila donde dejarlo.
+      ...(registroColegio === ''
+        ? {}
+        : {
+            collegeLicenseNumber: registroColegio,
+            ...(colegio === PROFESSION_COLLEGE ? {} : { collegeName: colegio }),
+            ...(fechaColegio === null
+              ? {}
+              : { collegeLicenseIssueDate: fechaIso(fechaColegio) }),
+            ...(respaldos.college === undefined
+              ? {}
+              : { collegeLicenseFileId: respaldos.college }),
+          }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
       // Los cuatro contactos por separado. `phone` ya no viaja: era el campo
       // único que mezclaba el número privado con el del consultorio, y la API
@@ -2729,8 +3291,9 @@ export class RegisterPractitioner {
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),
       // Los títulos declarados (subtarea 1.6). El PDF ya está precargado y su
-      // fileId viaja con la credencial correspondiente. Nombre, país y ciudad
-      // permanecen locales porque este contrato no los recibe.
+      // fileId viaja con la credencial correspondiente, y la universidad del
+      // título principal se une a la fila universitaria (`credencialesDeclaradas`).
+      // Nombre, país y ciudad permanecen locales porque este contrato no los recibe.
       ...(this.credencialesDeclaradas().length === 0
         ? {}
         : { credentials: this.credencialesDeclaradas() }),

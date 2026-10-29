@@ -1,13 +1,8 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import {
-  CATEGORIA_ORDEN,
-  PERFORMER_MODE,
-  SPECIMEN_CONTAINER_TYPE,
-  SPECIMEN_STATUS,
-  SPECIMEN_TYPE,
-} from '../fixtures/conceptos';
-import { PACIENTE, pacientePorId } from '../fixtures/personas';
+import { ORDER_CATEGORY, SPECIMEN_CONTAINER_TYPE, SPECIMEN_STATUS, SPECIMEN_TYPE } from '../fixtures/concepts';
+import { PERFORMER_MODE } from '../fixtures/performer-concepts';
+import { PACIENTE, patientById } from '../fixtures/people';
 import { uuid } from '../mock-store';
 import { MockRouter, isMockReply, validation, type MockMethod } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_TYPES, buscarUsuario, type MockUser } from '../mock-session';
@@ -99,7 +94,7 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
       expect([...fechas].sort()).toEqual(fechas);
 
       const first = body.items[0]!;
-      expect(first.patientDisplayName).toBe(pacientePorId(first.patientProfileId)?.displayName);
+      expect(first.patientDisplayName).toBe(patientById(first.patientProfileId)?.displayName);
       expect(first.patientCode).not.toBeNull();
       expect(first.codeDisplay).not.toBeNull();
       expect(first.requestingTenantName).not.toBeNull();
@@ -230,7 +225,7 @@ describe('bandeja de recepción del laboratorio (diagnostics inbox)', () => {
       {
         patientProfileId: PACIENTE.id,
         codeConceptId: uuid('proc-colonoscopia'),
-        categoryConceptId: CATEGORIA_ORDEN['SRQ-PROCEDURE'],
+        categoryConceptId: ORDER_CATEGORY['SRQ-PROCEDURE'],
         performerSelectionConceptId: PERFORMER_MODE['SR_PERF_ORGANIZATION'],
         suggestedPracticeSiteId: uuid('site-cm-sur-1'),
       },

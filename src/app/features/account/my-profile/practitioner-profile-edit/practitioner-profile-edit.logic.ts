@@ -1,8 +1,8 @@
 import {
-  OPCIONES_INSTITUCION_EDUCATIVA,
-  UNIVERSIDADES_DEL_SISTEMA,
-  UNIVERSIDADES_PRIVADAS,
-} from '../../../../core/profesion/instituciones-educativas';
+  OPTIONS_EDUCATIONAL_INSTITUTION,
+  SYSTEM_UNIVERSITIES,
+  PRIVATE_UNIVERSITIES,
+} from '../../../../core/profession/educational-institutions';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 
 /*
@@ -56,12 +56,29 @@ export const OPCIONES_DE_ESTADO: readonly SelectOption<EstadoDeVerificacion>[] =
 const CODIGOS_DE_MATRICULA_PENDIENTE: ReadonlySet<string> = new Set(['AUTH_PENDING', 'ST-PENDING']);
 
 /**
+ * El código tal como lo publica la terminología de la API lleva el prefijo del
+ * módulo: `profiles:AUTH_PENDING`, no `AUTH_PENDING` a secas. Comparado entero
+ * contra la lista, toda matrícula pendiente caía en «ya revisada»: la fila decía
+ * «Habilitación pendiente» y en la columna de acciones aparecía el sello de
+ * verificada en vez de Editar/Retirar (visto contra la API real el 26/09/2026,
+ * recorrido de navegador de H2). Se compara sin el prefijo; el simulador, que
+ * manda `ST-PENDING` sin prefijo, sigue igual.
+ */
+function sinPrefijoDeModulo(codigo: string): string {
+  const corte = codigo.lastIndexOf(':');
+  return corte === -1 ? codigo : codigo.slice(corte + 1);
+}
+
+/**
  * Si una matrícula todavía se puede corregir. Sin el código a la vista —las
  * etiquetas llegan después que el perfil, o no llegan— cuenta como pendiente,
  * que es lo que la fila dice mientras tanto.
  */
 export function matriculaPendiente(codigoDelEstado: string | undefined): boolean {
-  return codigoDelEstado === undefined || CODIGOS_DE_MATRICULA_PENDIENTE.has(codigoDelEstado);
+  return (
+    codigoDelEstado === undefined ||
+    CODIGOS_DE_MATRICULA_PENDIENTE.has(sinPrefijoDeModulo(codigoDelEstado))
+  );
 }
 
 /** Las mismas dos, en femenino: la tabla de especialidades dice «Verificada». */
@@ -131,7 +148,7 @@ export function coincideConElEstado(filtro: string | null, pendiente: boolean): 
 /*
  * La institución con su código (Q-8).
  *
- * El catálogo de `core/profesion/instituciones-educativas.ts` no tiene un campo
+ * El catálogo de `core/profession/educational-institutions.ts` no tiene un campo
  * de código, y ninguna capa del proyecto tiene un padrón de instituciones con
  * id. Lo que sí tiene cada casa de estudios es su sigla dentro de la etiqueta,
  * entre paréntesis —«Universidad Mayor de San Andrés (UMSA) — La Paz»—. El
@@ -140,7 +157,7 @@ export function coincideConElEstado(filtro: string | null, pendiente: boolean): 
  */
 
 /** Las instituciones que se eligen del desplegable, sin separadores de grupo. */
-const INSTITUCIONES_DEL_CATALOGO = [...UNIVERSIDADES_DEL_SISTEMA, ...UNIVERSIDADES_PRIVADAS];
+const INSTITUCIONES_DEL_CATALOGO = [...SYSTEM_UNIVERSITIES, ...PRIVATE_UNIVERSITIES];
 
 /**
  * Las sedes de una institución del catálogo, como opciones del desplegable de
@@ -208,4 +225,4 @@ export function conSiglaAdelante<T extends { readonly label: string }>(opcion: T
 
 /** El desplegable de institución del editor, con cada sigla adelante. */
 export const OPCIONES_DE_INSTITUCION_CON_SIGLA =
-  OPCIONES_INSTITUCION_EDUCATIVA.map(conSiglaAdelante);
+  OPTIONS_EDUCATIONAL_INSTITUTION.map(conSiglaAdelante);

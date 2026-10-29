@@ -15,8 +15,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { formatDate, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
-import { calcularTurnos } from '../agenda-create/agenda-turnos';
-import { forkJoin } from 'rxjs';
+import { calculateSlots } from '../agenda-create/agenda-slots';
+import { concatMap, from, toArray } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
@@ -30,6 +30,7 @@ import type {
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { describeApiFailure, fieldErrorsOf } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { BlockCancellations, cancelledBookingsText } from '../block-cancellations';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { BloqueDelDia, VisitaDelDia } from './day-view/day-view';
@@ -40,7 +41,7 @@ import {
 } from '../../../core/data-access/pharma-lab/pharma-lab-concepts.client';
 import type { VisitRequest } from '../../../core/data-access/pharma-lab/pharma-lab.types';
 import { toVisitStatusPresentation } from '../../pharma-lab/visit-status';
-import { detalleDeLaCita } from './detalle-de-la-cita';
+import { appointmentDetail } from './appointment-detail';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
@@ -56,7 +57,7 @@ import { FactList } from '../../../shared/components/molecules/fact-list/fact-li
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
+import { monthFirstDay, sumMonths } from '../../../shared/date/month-calendar';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import { aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
 import {
@@ -65,7 +66,7 @@ import {
   type PedidoDeAccion,
   type RatoTocado,
 } from './day-view/day-view';
-import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
+import { DayCard, type DayGap } from './day-card/day-card';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
@@ -232,7 +233,7 @@ const VISITAS_QUE_NO_OCUPAN: ReadonlySet<string> = new Set([
     Tooltip,
     DayView,
     MonthView,
-    TarjetaDelDia,
+    DayCard,
     WeekView,
     ScheduleGrid,
     ContentDialog,
@@ -332,6 +333,7 @@ export class MyAgenda implements OnInit {
   });
 
   private readonly scheduling = inject(SchedulingClient);
+  private readonly cancellations = inject(BlockCancellations);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly router = inject(Router);
@@ -455,7 +457,7 @@ export class MyAgenda implements OnInit {
   protected readonly solapa = signal<'patron' | 'mes'>('patron');
 
   /** El mes visible; siempre su día 1. */
-  protected readonly mesVisible = signal(primerDiaDelMes(new Date()));
+  protected readonly mesVisible = signal(monthFirstDay(new Date()));
 
   /**
    * Qué se mira en el calendario: el día, la semana o el mes — «un botón para
@@ -489,7 +491,7 @@ export class MyAgenda implements OnInit {
   protected showMonth(): void {
     this.calendarView.set('month');
     this.ratoParaCrear.set(null);
-    const mes = primerDiaDelMes(this.diaDeReferencia());
+    const mes = monthFirstDay(this.diaDeReferencia());
     if (mes.getTime() !== this.mesVisible().getTime()) {
       this.cambiarMes(mes);
     }
@@ -501,7 +503,7 @@ export class MyAgenda implements OnInit {
    */
   protected openDay(fecha: Date): void {
     this.calendarView.set('day');
-    const mes = primerDiaDelMes(fecha);
+    const mes = monthFirstDay(fecha);
     if (mes.getTime() !== this.mesVisible().getTime()) {
       this.mesVisible.set(mes);
       this.cargarMes();
@@ -526,7 +528,7 @@ export class MyAgenda implements OnInit {
       nueva.getFullYear() !== mes.getFullYear() ||
       finDeSemana.getMonth() !== mes.getMonth();
     if (cruza) {
-      this.mesVisible.set(primerDiaDelMes(nueva));
+      this.mesVisible.set(monthFirstDay(nueva));
       this.cargarMes();
     }
   }
@@ -1000,37 +1002,54 @@ export class MyAgenda implements OnInit {
       : [{ startAt: pedido.desde, endAt: pedido.hasta }];
 
     this.bloqueando.set(true);
-    forkJoin(
-      intervalos.map((intervalo) =>
-        this.scheduling.createException(recurso.id, {
-          exceptionType: pedido.exceptionType,
-          startAt: intervalo.startAt.toISOString(),
-          endAt: intervalo.endAt.toISOString(),
-          reason: pedido.motivo,
-        }),
-      ),
-    ).subscribe({
-      next: (resultados) => {
-        this.bloqueando.set(false);
-        this.bloqueoAbierto.set(false);
-        const cerrados = resultados.reduce((suma, r) => suma + r.blockedSlots, 0);
-        this.toast.success(
-          cerrados === 0
-            ? 'No había horarios libres que cerrar en ese período.'
-            : `Se cerraron ${cerrados} ${cerrados === 1 ? 'horario libre' : 'horarios libres'}.`,
-          `Bloqueó ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
-        );
-        this.cargarMes();
-      },
-      error: (error: unknown) => {
-        this.bloqueando.set(false);
-        this.avisarFallo(error, 'bloquear ese período');
-        // Se recarga igual: si alguna de las llamadas entró antes del fallo, el
-        // mes tiene que mostrarlo. Un bloqueo a medias que no se ve es peor que
-        // uno que se ve y se corrige.
-        this.cargarMes();
-      },
-    });
+    // Un intervalo a la vez, no en paralelo: si varios días tienen citas, la
+    // persona responde un modal por día, en orden, en vez de ver varios
+    // superpuestos. Un día que decide no cancelar queda sin bloquear (`null`).
+    from(intervalos)
+      .pipe(
+        concatMap((intervalo) =>
+          this.cancellations.withConfirmation((confirmed) =>
+            this.scheduling.createException(recurso.id, {
+              exceptionType: pedido.exceptionType,
+              startAt: intervalo.startAt.toISOString(),
+              endAt: intervalo.endAt.toISOString(),
+              reason: pedido.motivo,
+              ...(confirmed ? { cancelAffectedBookings: true } : {}),
+            }),
+          ),
+        ),
+        toArray(),
+      )
+      .subscribe({
+        next: (resultados) => {
+          this.bloqueando.set(false);
+          const hechos = resultados.filter((r) => r !== null);
+          if (hechos.length === 0) {
+            // Todos los días tenían citas y en ninguno se confirmó: no se
+            // bloqueó nada, y el formulario sigue abierto por si cambia el rango.
+            return;
+          }
+          this.bloqueoAbierto.set(false);
+          const cerrados = hechos.reduce((suma, r) => suma + r.blockedSlots, 0);
+          const canceladas = hechos.reduce((suma, r) => suma + r.cancelledBookings, 0);
+          this.toast.success(
+            (cerrados === 0
+              ? 'No había horarios libres que cerrar en ese período.'
+              : `Se cerraron ${cerrados} ${cerrados === 1 ? 'horario libre' : 'horarios libres'}.`) +
+              cancelledBookingsText(canceladas),
+            `Bloqueó ${hechos.length} ${hechos.length === 1 ? 'día' : 'días'}`,
+          );
+          this.cargarMes();
+        },
+        error: (error: unknown) => {
+          this.bloqueando.set(false);
+          this.avisarFallo(error, 'bloquear ese período');
+          // Se recarga igual: si alguna de las llamadas entró antes del fallo, el
+          // mes tiene que mostrarlo. Un bloqueo a medias que no se ve es peor que
+          // uno que se ve y se corrige.
+          this.cargarMes();
+        },
+      });
   }
 
   /**
@@ -1077,21 +1096,35 @@ export class MyAgenda implements OnInit {
     const hasta = new Date(desde);
     hasta.setDate(hasta.getDate() + 1);
 
-    this.scheduling
-      .createException(recurso.id, {
-        // Este atajo pide **texto libre** y nada más, así que su motivo es
-        // literalmente «Otro»: mandarlo como `ABSENCE` etiquetaría de
-        // «Ausencia» algo que la persona escribió a mano, y el paciente vería
-        // una etiqueta que nadie eligió.
-        exceptionType: 'OTHER',
-        startAt: desde.toISOString(),
-        endAt: hasta.toISOString(),
-        reason: motivo,
-      })
+    // Con citas ese día, la API lista a quién alcanza y `BlockCancellations`
+    // pregunta antes de cancelar; con el sí, se repite confirmado y se avisa.
+    this.cancellations
+      .withConfirmation((confirmed) =>
+        this.scheduling.createException(recurso.id, {
+          // Este atajo pide **texto libre** y nada más, así que su motivo es
+          // literalmente «Otro»: mandarlo como `ABSENCE` etiquetaría de
+          // «Ausencia» algo que la persona escribió a mano, y el paciente vería
+          // una etiqueta que nadie eligió.
+          exceptionType: 'OTHER',
+          startAt: desde.toISOString(),
+          endAt: hasta.toISOString(),
+          reason: motivo,
+          ...(confirmed ? { cancelAffectedBookings: true } : {}),
+        }),
+      )
       .subscribe({
         // Se recarga el mes entero y no se agrega el bloqueo a mano: la API
         // además cerró cupos, así que la ocupación cambió y no sólo la lista.
-        next: () => this.cargarMes(),
+        next: (res) => {
+          if (res === null) return;
+          if (res.cancelledBookings > 0) {
+            this.toast.success(
+              cancelledBookingsText(res.cancelledBookings).trim(),
+              'Día bloqueado',
+            );
+          }
+          this.cargarMes();
+        },
         error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
       });
   }
@@ -1114,6 +1147,23 @@ export class MyAgenda implements OnInit {
     const fin = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
     fin.setHours(Number(hh ?? 0), Number(mm ?? 0), 0, 0);
     return fin;
+  }
+
+  /**
+   * P36 · el horario flexible del día mirado, en palabras («09:00 a 13:00»), o
+   * `null` si ese día no tiene horario flexible. Un horario flexible no crea
+   * cupos: sin esto, el día decía «No atiende este día» aunque atendiera
+   * (A5, visto en navegador contra la API real el 26/10/2026).
+   */
+  protected horarioFlexibleDe(dia: Date): string | null {
+    const actual = this.estado();
+    if (actual.status !== 'ready' || actual.data.flexibleHours !== true) return null;
+    const franjas = actual.data.rules
+      .filter((regla) => regla.dayOfWeek === dia.getDay())
+      .slice()
+      .sort((a, b) => a.startTime.localeCompare(b.startTime))
+      .map((regla) => `${regla.startTime.slice(0, 5)} a ${regla.endTime.slice(0, 5)}`);
+    return franjas.length === 0 ? null : franjas.join(' y de ');
   }
 
   /** Cuánto dura un turno según el horario publicado; 30 si no lo declara. */
@@ -1255,7 +1305,7 @@ export class MyAgenda implements OnInit {
 
     const base = this.mesVisible();
     const desde = new Date(base.getFullYear(), base.getMonth(), base.getDate() - 7);
-    const finDeMes = sumarMeses(base, 1);
+    const finDeMes = sumMonths(base, 1);
     const hasta = new Date(finDeMes.getFullYear(), finDeMes.getMonth(), finDeMes.getDate() + 7);
     this.cargandoMes.set(true);
 
@@ -1341,7 +1391,7 @@ export class MyAgenda implements OnInit {
    * de guardar — con lo que la pantalla ya sabe, sin viaje extra. El servidor
    * cruza además las otras sedes al guardar: esto es aviso temprano, no regla.
    */
-  protected readonly ratosTomadosDelDia = computed<readonly RatoDelDia[]>(() => {
+  protected readonly ratosTomadosDelDia = computed<readonly DayGap[]>(() => {
     const porSlot = new Map(this.citasDelDia().map((c) => [c.bookableSlotId, c]));
     const deCitas = this.cuposDelDia()
       .filter((cupo) => porSlot.has(cupo.id))
@@ -1416,7 +1466,7 @@ export class MyAgenda implements OnInit {
     this.diaAbierto.set(nuevo);
 
     if (nuevo.getMonth() !== actual.getMonth() || nuevo.getFullYear() !== actual.getFullYear()) {
-      this.mesVisible.set(primerDiaDelMes(nuevo));
+      this.mesVisible.set(monthFirstDay(nuevo));
       this.cargarMes();
     }
     this.cargarDia(nuevo);
@@ -1486,7 +1536,7 @@ export class MyAgenda implements OnInit {
       title: 'Detalle de la cita',
       message:
         cuando === undefined ? SIN_DATO : formatDate(cuando, "EEEE d 'de' MMMM", this.idioma),
-      details: [...detalleDeLaCita(cita, estado, this.idioma, franja)],
+      details: [...appointmentDetail(cita, estado, this.idioma, franja)],
       confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
       cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
     });
@@ -1518,7 +1568,7 @@ export class MyAgenda implements OnInit {
         cita.startAt === undefined
           ? SIN_DATO
           : formatDate(cita.startAt, "EEEE d 'de' MMMM", this.idioma),
-      hechos: detalleDeLaCita(cita, estado, this.idioma).map((par) => ({
+      hechos: appointmentDetail(cita, estado, this.idioma).map((par) => ({
         etiqueta: par.label,
         valor: par.value,
       })),
@@ -1572,7 +1622,7 @@ export class MyAgenda implements OnInit {
 
   /** El total de turnos por semana de un histórico, para el resumen del modal. */
   protected totalTurnosDe(plantilla: PublishedTemplate): number {
-    return calcularTurnos(
+    return calculateSlots(
       plantilla.rules.map((regla) => ({
         dia: NOMBRE_DEL_DIA[regla.dayOfWeek] ?? `Día ${regla.dayOfWeek}`,
         desde: regla.startTime.slice(0, 5),
@@ -1793,13 +1843,23 @@ export class MyAgenda implements OnInit {
     if (!seguro) return;
 
     this.operandoHorario.set(bloque.clave);
-    this.scheduling
-      .closeSlots(recurso.id, { exceptionType: 'ERRAND', slotIds: [bloque.clave] })
+    // Si el cupo tiene paciente, la API lo dice (409 con la cita) y
+    // `BlockCancellations` pregunta antes de cancelar; con el sí, se repite
+    // confirmado y al paciente le llega el aviso.
+    this.cancellations
+      .withConfirmation((confirmed) =>
+        this.scheduling.closeSlots(recurso.id, {
+          exceptionType: 'ERRAND',
+          slotIds: [bloque.clave],
+          ...(confirmed ? { cancelAffectedBookings: true } : {}),
+        }),
+      )
       .subscribe({
         next: (res) => {
           this.operandoHorario.set(null);
+          if (res === null) return;
           this.toast.success(
-            'No vuelve aunque republiques el horario.',
+            `No vuelve aunque republique el horario.${cancelledBookingsText(res.cancelledBookings)}`,
             `${res.closedSlots} ${res.closedSlots === 1 ? 'rato cerrado' : 'ratos cerrados'}`,
           );
           this.cargarMes();
@@ -1829,7 +1889,7 @@ export class MyAgenda implements OnInit {
 
     // El mes se fija antes de leerlo: si no, se pediría el mes de hoy y en
     // seguida el del día pedido, y la primera respuesta no serviría de nada.
-    if (yaAbierto === null) this.mesVisible.set(primerDiaDelMes(dia));
+    if (yaAbierto === null) this.mesVisible.set(monthFirstDay(dia));
     this.cargarMes();
     this.openDay(dia);
     if (vista === 'week') this.showWeek();
@@ -2132,8 +2192,8 @@ export class MyAgenda implements OnInit {
    * ## Por qué pregunta antes
    *
    * Retirar no se deshace desde la pantalla: para volver atrás hay que publicar
-   * el horario de nuevo. Y aunque no haya citas comprometidas —el servidor lo
-   * rechaza con 409 si las hay—, se sueltan cupos que ya estaban ofrecidos.
+   * el horario de nuevo. Y aunque las citas comprometidas se conserven —ya no
+   * frenan el retiro (P23)—, se sueltan cupos que ya estaban ofrecidos.
    */
   protected async retirarHorario(): Promise<void> {
     const actual = this.estado();
@@ -2149,16 +2209,22 @@ export class MyAgenda implements OnInit {
     if (!confirmado) return;
 
     this.retirando.set(true);
-    this.scheduling.retireTemplate(actual.data.id).subscribe({
+    // Con citas vivas, `BlockCancellations` muestra a quién alcanzan y deja
+    // elegir: cancelarlas y avisar, o conservarlas (etapa C, 24/10/2026).
+    this.cancellations.retireTemplate(actual.data.id).subscribe({
       next: (retiro) => {
         this.retirando.set(false);
+        if (retiro === null) return;
+        const canceladas = retiro.cancelledBookings ?? 0;
         // Se dice cuántos se conservaron y no sólo cuántos se soltaron: un
         // número distinto de cero significa que hay pacientes citados en un
         // horario que el médico acaba de retirar, y eso tiene que verlo.
         this.toast.success(
-          retiro.keptSlots > 0
-            ? `Se dieron de baja ${retiro.releasedSlots} horarios libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
-            : `Se dieron de baja ${retiro.releasedSlots} horarios libres.`,
+          canceladas > 0
+            ? `Se dieron de baja ${retiro.releasedSlots} horarios libres.${cancelledBookingsText(canceladas)}`
+            : retiro.keptSlots > 0
+              ? `Se dieron de baja ${retiro.releasedSlots} horarios libres. Quedan ${retiro.keptSlots} con paciente: siga atendiéndolos.`
+              : `Se dieron de baja ${retiro.releasedSlots} horarios libres.`,
           'Horario retirado',
         );
         this.cargar();

@@ -4,10 +4,18 @@
 .claim__header,
 .claim__contact,
 .claim__adjudication,
+.claim__settlement,
 .claim__lines,
 .claim__actions,
 .claim__history {
     margin-block-end: var(--sp-8);
+}
+
+.claim__settlement-subtitle {
+    margin-block: var(--sp-5) var(--sp-3);
+    font-size: var(--fs-body);
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .claim__section-title {
@@ -206,3 +214,33 @@
     gap: var(--sp-2);
     color: var(--text-primary);
 }
+
+.claim__adjudication-actions {
+    margin-block-end: var(--sp-8);
+    padding: var(--sp-5);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+.claim__action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    margin-block-start: var(--sp-4);
+}
+
+.claim__reject-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    margin-block-start: var(--sp-3);
+}
+
+.claim__modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--sp-3);
+    margin-block-start: var(--sp-4);
+}
+

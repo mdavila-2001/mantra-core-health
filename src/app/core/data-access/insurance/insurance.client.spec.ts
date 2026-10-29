@@ -10,6 +10,7 @@ import type {
   CarrierDetail,
   CarrierSummary,
   InsurerPatientPage,
+  MyClaimList,
   PractitionerInsuranceNetworkPage,
 } from './insurance.types';
 
@@ -53,23 +54,51 @@ describe('InsuranceClient', () => {
 
   afterEach(() => http.verify());
 
-  it('listPractitionerCarriers pega en la ruta del profesional y desenvuelve items', () => {
+  it('listPractitionerCarriers lee las membresías del profesional y las agrupa por aseguradora', () => {
     let result: unknown;
     client.listPractitionerCarriers('hp 1/x').subscribe((carriers) => (result = carriers));
 
-    const request = http.expectOne('/practitioners/hp%201%2Fx/insurance-carriers');
+    const request = http.expectOne('/practitioners/hp%201%2Fx/insurance-networks');
     expect(request.request.method).toBe('GET');
-    const items = [
+    const fila = (
+      membershipId: string,
+      carrierId: string,
+      carrierName: string,
+      networkName: string,
+    ) => ({
+      membershipId,
+      carrierId,
+      carrierName,
+      networkName,
+      effectiveFrom: '2026-01-01',
+      effectiveTo: null,
+    });
+    request.flush({
+      items: [
+        fila('m-1', 'c-2', 'Nacional Seguros', 'SALUD FLEXIBLE'),
+        fila('m-2', 'c-1', 'Alianza Seguros', 'OASIS'),
+        fila('m-3', 'c-1', 'Alianza Seguros', 'AFI GOLD'),
+        fila('m-4', 'c-1', 'Alianza Seguros', 'AFI GOLD'),
+      ],
+      count: 4,
+    });
+    http.verify();
+
+    expect(result).toEqual([
       {
         carrierId: 'c-1',
         carrierName: 'Alianza Seguros',
-        networks: [{ id: 'n-1', name: 'AFI GOLD' }],
+        networks: [
+          { id: 'm-3', name: 'AFI GOLD' },
+          { id: 'm-2', name: 'OASIS' },
+        ],
       },
-    ];
-    request.flush({ items });
-    http.verify();
-
-    expect(result).toEqual(items);
+      {
+        carrierId: 'c-2',
+        carrierName: 'Nacional Seguros',
+        networks: [{ id: 'm-1', name: 'SALUD FLEXIBLE' }],
+      },
+    ]);
   });
 
   it('listCarriers pega en /insurance-carriers y convierte el alta a Date', () => {
@@ -303,6 +332,80 @@ describe('InsuranceClient', () => {
       });
   });
 
+  it('listCoveragesOfPatient sale a la API real (maqueta apagada) y devuelve solo los items', () => {
+    let items: unknown;
+    client.listCoveragesOfPatient('p/1').subscribe((value) => (items = value));
+
+    const request = http.expectOne((r) => r.url === '/patient-coverages/by-patient/p%2F1');
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      items: [
+        {
+          id: 'coverage-1',
+          insuranceCarrierId: 'carrier-1',
+          carrierName: 'Seguros Andina',
+          planName: 'Plan Integral',
+          validityStatus: 'CURRENT',
+          currencyCode: 'BOB',
+        },
+      ],
+    });
+
+    expect(items).toEqual([
+      expect.objectContaining({ id: 'coverage-1', validityStatus: 'CURRENT', currencyCode: 'BOB' }),
+    ]);
+  });
+
+  it('listMyClaims conserva el desglose y convierte la fecha de la objeción', () => {
+    let list: MyClaimList | undefined;
+    client.listMyClaims().subscribe((value) => (list = value));
+
+    const claim = {
+          id: 'claim-1',
+          claimIdentifier: 'CLM-1',
+          patientName: null,
+          practitioner: null,
+          providerName: 'Consultorio',
+          service: null,
+          additionalServiceCount: 0,
+          billedTotal: { amount: '500.00', currency: { code: 'BOB', display: 'Boliviano' } },
+          approvedTotal: null,
+          submittedAt: '2026-10-01T10:00:00.000Z',
+          serviceDate: null,
+          insurerName: 'Seguros Andina',
+          planName: 'Plan Integral',
+          status: null,
+          decision: null,
+          breakdown: {
+            currencyCode: 'BOB',
+            patientTotal: '50.00',
+            insurerTotal: '450.00',
+            lines: [],
+          },
+          patientObjection: {
+            id: 'd-1',
+            reason: 'AMOUNT_DIFFERS',
+            submittedAt: '2026-10-02T09:00:00.000Z',
+            status: 'OPEN',
+          },
+    };
+    http.expectOne((r) => r.url === '/insurance/my-claims').flush({
+      view: 'PATIENT',
+      truncated: false,
+      items: [
+        claim,
+        { ...claim, id: 'claim-2', breakdown: null, patientObjection: null },
+      ],
+    });
+
+    const [first, second] = list!.items;
+    expect(first!.breakdown?.patientTotal).toBe('50.00');
+    expect(first!.patientObjection?.reason).toBe('AMOUNT_DIFFERS');
+    expect(first!.patientObjection?.submittedAt).toEqual(new Date('2026-10-02T09:00:00.000Z'));
+    expect(second!.breakdown).toBeNull();
+    expect(second!.patientObjection).toBeNull();
+  });
+
   it('crea un plan conservando fechas, moneda y la ruta escapada', () => {
     const body = {
       planCode: 'ORO-2',
@@ -361,6 +464,63 @@ describe('InsuranceClient', () => {
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual(body);
     request.flush({ ok: true });
+  });
+
+  /** Tarea 3 · H8: el desglose de liquidación (`settlement`/`eob`) del detalle. */
+  it('getClaim conserva el desglose de liquidación sin convertir sus importes a número', () => {
+    let detalle: import('./insurance.types').ClaimDetail | undefined;
+    client.getClaim('claim-1').subscribe((d) => (detalle = d));
+
+    http.expectOne('/insurance-claims/claim-1').flush({
+      header: {
+        id: 'claim-1',
+        claimIdentifier: 'CLM-1',
+        patient: { id: 'p-1', displayName: 'Paciente', patientCode: null, memberIdentifier: null },
+        carrierName: 'Aseguradora X',
+        insuranceCarrierId: 'c-1',
+        carrierWhatsappNumber: null,
+        carrierCallCenterPhone: null,
+        carrierSupportEmail: null,
+        policyIdentifier: null,
+        policyBrokerName: null,
+        billedTotal: { amount: '300.00', currency: null },
+        approvedTotal: { amount: '150.00', currency: null },
+        submittedAt: null,
+        status: null,
+        hasOpenDispute: false,
+      },
+      lines: [],
+      lineBilledTotal: { amount: '300.00', currency: null },
+      lineApprovedTotal: { amount: '150.00', currency: null },
+      adjudication: null,
+      adjudicationHistory: [],
+      disputes: [],
+      settlement: {
+        availability: 'AVAILABLE',
+        totalBilledAmount: '300.00',
+        totalApprovedAmount: '150.00',
+        totalPatientAmount: '30.00',
+        totalDeniedAmount: '120.00',
+        reconciled: true,
+        exclusions: [
+          {
+            claimLineId: 'l-1',
+            itemName: 'ECG',
+            amount: '120.00',
+            policyClauseReference: 'Cláusula 12.3',
+            denialRationale: null,
+          },
+        ],
+      },
+      eob: { id: 'eob-1', publishedAt: '2026-09-20T12:00:00.000Z' },
+    });
+
+    expect(detalle?.settlement.totalApprovedAmount).toBe('150.00');
+    expect(detalle?.settlement.exclusions[0]?.amount).toBe('120.00');
+    expect(detalle?.eob).toEqual({
+      id: 'eob-1',
+      publishedAt: new Date('2026-09-20T12:00:00.000Z'),
+    });
   });
 
   /**

@@ -1,0 +1,93 @@
+{
+  "console": [
+    "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505",
+    "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505",
+    "warning: NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955",
+    "warning: NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://v21.angular.dev/errors/NG0505"
+  ],
+  "pageErrors": [],
+  "failed": [],
+  "network": [],
+  "assertions": [
+    {
+      "name": "la casilla «Derivar» está en la rejilla",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la casilla cuenta las derivaciones",
+      "ok": true,
+      "detail": "DerivarA otro profesional u organización médica, por un servicio concreto. 2 en la historia"
+    },
+    {
+      "name": "sin desborde horizontal a 1440",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "el modal muestra la lista de derivaciones",
+      "ok": true,
+      "detail": "2 filas"
+    },
+    {
+      "name": "el tipo viene en Tratamiento",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "un destino sin servicios es S3 con próxima acción",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "el destino trae sus servicios",
+      "ok": true,
+      "detail": "12 opciones"
+    },
+    {
+      "name": "tras derivar, la relectura trae la nueva al principio",
+      "ok": true,
+      "detail": "Tratamiento · Hospital San LucasSolicitada Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros) Emitida el 28 oct 2026 Rehabilitación de rodilla tras la consulta."
+    },
+    {
+      "name": "la fila nueva trae el servicio elegido",
+      "ok": true,
+      "detail": "Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros)"
+    },
+    {
+      "name": "la fila nueva está Solicitada",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tras recargar (F5), la casilla cuenta una más",
+      "ok": true,
+      "detail": "2 → 3"
+    },
+    {
+      "name": "tras recargar, la derivación sigue en la lista",
+      "ok": true,
+      "detail": "Tratamiento · Hospital San LucasSolicitada Descenso coténico abdomino perineal (tipo sweason, soave, duha- mel, otros) Emitida el 28 oct 2026 Rehabilitación de rodilla tras la consulta."
+    },
+    {
+      "name": "a 390 los rótulos del selector de destino no se cortan",
+      "ok": true,
+      "detail": "[true,true]"
+    },
+    {
+      "name": "sin desborde horizontal a 390 con el modal abierto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "el modal cabe a lo ancho a 390",
+      "ok": true,
+      "detail": "{\"x\":16,\"y\":16,\"width\":358,\"height\":812}"
+    },
+    {
+      "name": "sin desborde horizontal a 390 en la rejilla",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

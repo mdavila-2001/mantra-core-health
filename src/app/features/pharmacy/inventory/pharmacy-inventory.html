@@ -20,9 +20,9 @@
   @if (scope.pharmacyId() !== null) {
     <app-card class="inventory" padding="lg" data-testid="inventory-card">
       <div class="inventory__panel">
-        <app-alert tone="info" data-testid="inventory-sync-notice">
+        <p class="inventory__nota" data-testid="inventory-sync-notice">
           Cuando exista la sincronización con su sistema, esta pantalla pasa a ser sólo de lectura.
-        </app-alert>
+        </p>
 
         @if (errors().length > 0) {
           <app-alert tone="error" title="Falta resolver esto" data-testid="inventory-errors">
@@ -96,6 +96,7 @@
           [columns]="columns()"
           [trackBy]="rowId"
           [rowLabel]="rowLabel"
+          stackedOnMobile
           [cursor]="cursor()"
           (cursorChanged)="goToCursor($event)"
           (retry)="reload()"
@@ -108,8 +109,10 @@
 </app-view-state-host>
 
 <ng-template #nameCell let-product>
-  <span class="inventory__main">{{ name(product) }}</span>
-  <code class="inventory__code">{{ product.productCode }}</code>
+  <span class="inventory__producto">
+    <span class="inventory__main">{{ name(product) }}</span>
+    <code class="inventory__code">{{ product.productCode }}</code>
+  </span>
 </ng-template>
 
 <ng-template #stockCell let-product>
@@ -118,6 +121,7 @@
     inputMode="numeric"
     [ariaLabel]="'Existencias de ' + name(product)"
     [value]="stockOf(product)"
+    placeholder="Sin conteo"
     (valueChange)="setStock(product, $event)"
     [step]="1"
     [testId]="'inventory-stock-' + product.productCode"

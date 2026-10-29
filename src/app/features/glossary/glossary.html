@@ -49,79 +49,74 @@
     </nav>
   </app-filter-bar>
 
-  @if (mostrarCategorias()) {
-    <!-- ── Rejilla de categorías ────────────────────────────────────────────
-         Arriba de todo y siempre visible, también con un filtro puesto: es el
-         mapa de la enciclopedia. Conteos y chips salen de las facetas, una
-         consulta agregada del servidor: la rejilla no trae un solo término. -->
-    <section class="glosario__categorias" aria-labelledby="glosario-categorias-titulo">
-      <h2 class="glosario__titulo" id="glosario-categorias-titulo">Categorías</h2>
+  <!-- ── Rejilla de categorías ────────────────────────────────────────────
+       Arriba de todo y siempre visible, también con un filtro puesto: es el
+       mapa de la enciclopedia. Conteos y chips salen de las facetas, una
+       consulta agregada del servidor: la rejilla no trae un solo término. -->
+  <section class="glosario__categorias" aria-labelledby="glosario-categorias-titulo">
+    <h2 class="glosario__titulo" id="glosario-categorias-titulo">Categorías</h2>
 
-      <app-view-state-host [state]="facetas()" (retry)="recargarFacetas()">
-        @if (tarjetas().length === 0) {
-          <p class="glosario__aviso" role="status">
-            El glosario todavía no tiene categorías con términos cargados.
-          </p>
-        } @else {
-          <ul class="glosario__rejilla">
-            @for (tarjeta of tarjetas(); track tarjeta.id) {
-              <li class="glosario__celda">
-                <a
-                  class="glosario__tarjeta"
-                  [class.glosario__tarjeta--activa]="tarjeta.internalCode === categoriaCodigo()"
-                  [attr.aria-current]="tarjeta.internalCode === categoriaCodigo() ? 'true' : null"
-                  [routerLink]="['/glossary']"
-                  [queryParams]="{ category: tarjeta.internalCode, tag: null }"
-                  queryParamsHandling="merge"
-                  (click)="desplazarACuerpo()"
-                  [attr.title]="tarjeta.description ?? null"
-                >
-                  <span class="glosario__tarjeta-cabeza">
-                    <span class="glosario__insignia">
-                      <app-glossary-category-icon
-                        class="glosario__icono"
-                        [category]="tarjeta.internalCode"
-                      />
-                    </span>
-                    <span class="glosario__tarjeta-texto">
-                      <span class="glosario__nombre">{{ tarjeta.name }}</span>
-                      <span class="glosario__dato">
-                        {{ tarjeta.cantidad.toLocaleString('es') }}
-                        {{ tarjeta.cantidad === 1 ? 'término' : 'términos' }}
-                        <!-- Si hay términos que sólo tienen su nombre en inglés, el
-                             total solo engaña: «Enfermedades» suma las categorías
-                             ICD-10-CM sin traducir. -->
-                        @if (
-                          tarjeta.enCastellano !== undefined &&
-                          tarjeta.enCastellano < tarjeta.cantidad
-                        ) {
-                          · {{ tarjeta.enCastellano.toLocaleString('es') }} en castellano
-                        }
-                      </span>
+    <app-view-state-host [state]="facetas()" (retry)="recargarFacetas()">
+      @if (tarjetas().length === 0) {
+        <p class="glosario__aviso" role="status">
+          El glosario todavía no tiene categorías con términos cargados.
+        </p>
+      } @else {
+        <ul class="glosario__rejilla">
+          @for (tarjeta of tarjetas(); track tarjeta.id) {
+            <li class="glosario__celda">
+              <a
+                class="glosario__tarjeta"
+                [class.glosario__tarjeta--activa]="tarjeta.internalCode === categoriaCodigo()"
+                [attr.aria-current]="tarjeta.internalCode === categoriaCodigo() ? 'true' : null"
+                [routerLink]="['/glossary']"
+                [queryParams]="{ category: tarjeta.internalCode, tag: null }"
+                queryParamsHandling="merge"
+                (click)="desplazarACuerpo()"
+                [attr.title]="tarjeta.description ?? null"
+              >
+                <span class="glosario__tarjeta-cabeza">
+                  <span class="glosario__insignia">
+                    <app-glossary-category-icon
+                      class="glosario__icono"
+                      [category]="tarjeta.internalCode"
+                    />
+                  </span>
+                  <span class="glosario__tarjeta-texto">
+                    <span class="glosario__nombre">{{ tarjeta.name }}</span>
+                    <span class="glosario__dato">
+                      {{ tarjeta.cantidad.toLocaleString('es') }}
+                      {{ tarjeta.cantidad === 1 ? 'término' : 'términos' }}
+                      <!-- Si hay términos que sólo tienen su nombre en inglés, el
+                           total solo engaña: «Enfermedades» suma las categorías
+                           ICD-10-CM sin traducir. -->
+                      @if (tarjeta.enCastellano !== undefined && tarjeta.enCastellano < tarjeta.cantidad) {
+                        · {{ tarjeta.enCastellano.toLocaleString('es') }} en castellano
+                      }
                     </span>
                   </span>
+                </span>
 
-                  <!-- Los chips no son decoración: son las etiquetas que de
-                       verdad llevan los términos de esta categoría, las más
-                       frecuentes primero, contadas por el servidor. -->
-                  @if (tarjeta.etiquetas.length > 0) {
-                    <span class="glosario__chips">
-                      @for (etiqueta of tarjeta.etiquetas; track etiqueta) {
-                        <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
-                      }
-                      @if (tarjeta.etiquetasDeMas > 0) {
-                        <span class="glosario__chips-mas">+{{ tarjeta.etiquetasDeMas }}</span>
-                      }
-                    </span>
-                  }
-                </a>
-              </li>
-            }
-          </ul>
-        }
-      </app-view-state-host>
-    </section>
-  }
+                <!-- Los chips no son decoración: son las etiquetas que de
+                     verdad llevan los términos de esta categoría, las más
+                     frecuentes primero, contadas por el servidor. -->
+                @if (tarjeta.etiquetas.length > 0) {
+                  <span class="glosario__chips">
+                    @for (etiqueta of tarjeta.etiquetas; track etiqueta) {
+                      <app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip>
+                    }
+                    @if (tarjeta.etiquetasDeMas > 0) {
+                      <span class="glosario__chips-mas">+{{ tarjeta.etiquetasDeMas }}</span>
+                    }
+                  </span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </app-view-state-host>
+  </section>
 
   <!-- ── Cuerpo: las definiciones, una página del servidor ──────────────── -->
   <section class="glosario__cuerpo" aria-labelledby="glosario-cuerpo-titulo">
@@ -229,7 +224,10 @@
           </div>
         } @else {
           @for (grupo of grupos(); track grupo.letra) {
-            <section class="glosario__tramo" [attr.aria-labelledby]="'glosario-letra-' + grupo.letra">
+            <section
+              class="glosario__tramo"
+              [attr.aria-labelledby]="'glosario-letra-' + grupo.letra"
+            >
               <h3 class="glosario__letra" [id]="'glosario-letra-' + grupo.letra">
                 {{ grupo.letra }}
               </h3>
@@ -241,10 +239,7 @@
                          siendo el enlace del título (se estira con ::after). -->
                     <app-card class="glosario__entrada">
                       <div card-header class="glosario__entrada-cabeza">
-                        @if (
-                          termino.imageReviewStatus === 'approved' ? termino.imageThumbnailUrl : null;
-                          as miniatura
-                        ) {
+                        @if (termino.imageThumbnailUrl; as miniatura) {
                           <!-- La miniatura es decorativa en la lista (el nombre
                                ya está escrito al lado): alt vacío. El crédito y
                                la licencia se muestran en la ficha, junto a la

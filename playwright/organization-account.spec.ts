@@ -11,7 +11,7 @@
       3. «Mi perfil» es la ficha de la organización, con sus datos a la vista;
       4. la dirección vieja de la ficha de la farmacia redirige a «Mi perfil».
 
-    Las capturas van a `docs/progress/evidence/organization-account/`.
+    Las capturas van a `artifacts/evidencia/organization-account/`.
     ========================================================================== */
 
 import { join } from 'node:path';
@@ -21,7 +21,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { CLAVE, type Actor } from './support/actores';
 import { entrar } from './support/sesion';
 
-const EVIDENCIA = join('docs', 'progress', 'evidence', 'organization-account');
+const EVIDENCIA = join('artifacts', 'evidencia', 'organization-account');
 
 interface CuentaDeOrganizacion {
   readonly clave: string;

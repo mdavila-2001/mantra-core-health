@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
@@ -252,6 +253,11 @@ describe('la revisión del borrador', () => {
 });
 
 describe('PharmacyCampaignsClient', () => {
+  const originalCampaignsDemo = environment.campaignsDemo;
+
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: originalCampaignsDemo }));
+
   let client: PharmacyCampaignsClient;
 
   beforeEach(() => {

@@ -275,6 +275,12 @@ export const GLOSSARY_RELATION_TYPES = [
   'INCLUDES',
   'PERFORMS',
   'SENDS_DATA_TO',
+  // Capa normativa NNAC (TAREA-41 F2): relaciones con evidencia T1 de la norma.
+  'DIAGNOSTIC_CRITERION',
+  'REQUIRED_TEST',
+  'COMPLICATION',
+  'RISK_FACTOR',
+  'REFERRAL_CRITERION',
 ] as const;
 export type GlossaryRelationType = (typeof GLOSSARY_RELATION_TYPES)[number];
 
@@ -298,22 +304,6 @@ export interface GlossaryGraphNode {
   readonly display: string;
   readonly category: GlossaryCategoryRef | null;
   readonly shortDefinition: string;
-}
-
-/** Relación dirigida tal como está registrada en el catálogo. */
-export interface GlossaryGraphEdge {
-  readonly sourceConceptId: string;
-  readonly targetConceptId: string;
-  readonly type: GlossaryRelationType;
-}
-
-/** Grafo publicado y limitado para una vista interactiva. */
-export interface GlossaryGraph {
-  readonly nodes: readonly GlossaryGraphNode[];
-  readonly edges: readonly GlossaryGraphEdge[];
-  readonly count: number;
-  readonly limit: number;
-  readonly possiblyTruncated: boolean;
 }
 
 /** De qué lado de la relación está el término central. */

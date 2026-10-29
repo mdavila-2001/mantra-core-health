@@ -1544,11 +1544,11 @@
   "queries": [
    "kidney"
   ],
-  "uberon": "UBERON:0002113",
-  "matchedText": "kidney",
-  "via": "label",
-  "matchKind": "exact",
-  "reason": null
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
  },
  {
   "netterId": "ENT_c134ae38f89f32",

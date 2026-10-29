@@ -1,4 +1,3 @@
-import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,7 +6,6 @@ import {
   inject,
   input,
   output,
-  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
@@ -19,13 +17,10 @@ import { ChartTemplatesClient } from '../../../../core/data-access/chart-templat
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
-import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
-import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
-import { AdditionalFields } from '../additional-fields/additional-fields';
+import { writeFailureMessage } from '../../write-message';
+import { AdditionalFields, entradasDelTexto } from '../additional-fields/additional-fields';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
 import type { MedicalNoteEntry } from '../../../../core/data-access/clinical/clinical.types';
-import { AnalysisOrderBlock } from '../analysis-order-block/analysis-order-block';
 import {
   FormConclusionBlock,
   type CierreDelFormulario,
@@ -42,8 +37,8 @@ import type {
   FormInstanceDetail,
 } from '../../../../core/data-access/forms/forms.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { especialidadVigente } from '../../../../core/data-access/profiles/especialidad-vigente';
-import { camposOcultos } from '../../../../shared/forms/paginated/visibilidad-condicional';
+import { currentSpecialty } from '../../../../core/data-access/profiles/current-specialty';
+import { hiddenFields } from '../../../../shared/forms/paginated/conditional-visibility';
 import { CheckboxGroup } from '../../../../shared/components/molecules/checkbox-group/checkbox-group';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -61,6 +56,7 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -69,12 +65,8 @@ import {
   VALOR_ENMASCARADO,
 } from '../../../../shared/utils/clinical-pdf/clinical-pdf';
 import { Odontogram } from '../odontogram/odontogram';
-import {
-  camposDe,
-  plantillaPorCobertura,
-  respuestasDe,
-  type RespuestaVisible,
-} from './lectura-de-formulario';
+import { fieldsOf, templateByCoverage, responsesOf, type ResponseVisible } from './form-reading';
+import { esMapa, esVacio } from './form-values';
 import { textoDeValor } from '../../../../shared/utils/form-values/form-values';
 import { ESTADOS_DENTALES, recuentoCpod } from '../odontogram/odontogram.types';
 import type { MapaDental } from '../odontogram/odontogram.types';
@@ -90,39 +82,29 @@ import type { MapaDental } from '../odontogram/odontogram.types';
 export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
 
 /**
- * El formulario que arma el doctor a mano: filas «campo: valor», y en cada una
- * texto, uno o varios archivos o las dos cosas.
+ * Las dos entradas del selector que **no** son plantillas de `forms`: cirugía y
+ * odontología.
  *
- * Son los mismos campos adicionales que cierran cualquier plantilla, pero sin
- * plantilla arriba: para lo que no tiene ficha —el análisis con el que vino la
- * persona, una medición que no está en ningún formulario—. Tampoco pasa por
- * `forms`, así que no compite con la ficha ya respondida del encuentro: se
- * puede registrar antes, después o varias veces.
- */
-export const PLANTILLA_FORMULARIO_LIBRE = 'formulario-libre';
-
-/**
- * Las tres entradas del selector que **no** son plantillas de `forms`.
- *
- * Diagnosticar, registrar un procedimiento y pedir un estudio son, para quien
- * atiende, lo mismo que completar una ficha: «qué le voy a llenar a esta
- * persona». Que cada una escriba en otra tabla —`clinical.conditions`, el
- * histórico de procedimientos, las órdenes del circuito diagnóstico— es una
- * separación del backend, y no tiene por qué asomar como cuatro secciones
- * hermanas en la pantalla. Viven en esta lista por el mismo motivo por el que
- * ya vivía {@link PLANTILLA_HOJA_LIBRE}: se elige una vez, y una de las
- * respuestas posibles es «ninguna plantilla».
+ * Registrar un procedimiento es, para quien atiende, lo mismo que completar una
+ * ficha: «qué le voy a llenar a esta persona». Que escriba en otra tabla —el
+ * histórico de procedimientos— es una separación del backend, y no tiene por
+ * qué asomar como otra sección hermana en la pantalla. Viven en esta lista por
+ * el mismo motivo por el que ya vivía {@link PLANTILLA_HOJA_LIBRE}: se elige una
+ * vez, y una de las respuestas posibles es «ninguna plantilla».
  *
  * El prefijo las hace imposibles de confundir con el uuid de una plantilla.
  */
-export const BLOQUE_DIAGNOSTICO = 'bloque-diagnostico';
 export const BLOQUE_CIRUGIA = 'bloque-cirugia';
 export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
-export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 
 /**
- * Las entradas fijas, en el orden en que se ofrecen. La alergia ya no está:
- * se carga como diagnóstico (cliente, 02/10/2026).
+ * Lo que se ofrece en cualquier especialidad, antes de sus plantillas: escribir
+ * sin campos.
+ *
+ * El diagnóstico y la orden de análisis no van en esta lista: se eligen al final
+ * de la ficha, en su cierre (`app-form-conclusion-block`), y tienen sus propias
+ * casillas en la consulta. Ofrecerlos también acá era abrir dos caminos para el
+ * mismo registro. La alergia tampoco: se carga como diagnóstico.
  *
  * Cirugía y odontología van separadas —antes eran una sola opción,
  * «Procedimiento»— porque no comparten ni permiso de servidor ni datos:
@@ -130,13 +112,8 @@ export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
  * rol de cirugía se topaba con un aviso de permiso denegado en medio de un
  * formulario que no le pedía nada de eso.
  */
-const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string }[] = [
-  { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
+const ENTRADAS_GENERALES: readonly { readonly value: string; readonly label: string }[] = [
   { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
-  { value: PLANTILLA_FORMULARIO_LIBRE, label: 'Formulario libre — campo y valor' },
-  { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
-  { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
-  { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
 ];
 
 /**
@@ -165,7 +142,8 @@ function rotuloFlexible(cuantos: number): string {
 }
 
 /** Los tipos de dato que este bloque sabe dibujar como campo de captura. */
-type TipoDibujable = 'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string' | 'una' | 'una-corta' | 'varias';
+type TipoDibujable =
+  'boolean' | 'integer' | 'decimal' | 'date' | 'text' | 'string' | 'una' | 'una-corta' | 'varias';
 
 /** Hasta cuántas opciones cortas se ofrecen como botones en vez de desplegable. */
 const OPCIONES_COMO_BOTONES = 4;
@@ -288,14 +266,13 @@ interface PasoDelCierre {
     Alert,
     AppButton,
     Card,
-    DiagnosisBlock,
-    AnalysisOrderBlock,
     FormConclusionBlock,
     FreeNoteBlock,
     Checkbox,
     DatePicker,
     FormActions,
     FormField,
+    LoadingState,
     Input,
     Odontogram,
     ProceduresBlock,
@@ -324,8 +301,6 @@ export class SpecialtyFormBlock {
   private readonly adicionales = viewChild(AdditionalFields);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
-  private readonly terminology = inject(TerminologyClient);
-  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /**
    * El encuentro en curso, o `null` si no hay ninguno abierto.
@@ -365,7 +340,7 @@ export class SpecialtyFormBlock {
    * posible el match. `null` mientras no se sabe, o si la cuenta no tiene
    * perfil profesional.
    */
-  private readonly especialidad = signal<string | null>(null);
+  protected readonly especialidad = signal<string | null>(null);
 
   /** El catálogo tal como llegó, o vacío mientras no se sepa. */
   private readonly catalogo = computed<readonly ChartTemplate[]>(() => {
@@ -397,15 +372,27 @@ export class SpecialtyFormBlock {
     return sembrada?.specialtyConceptId ?? null;
   });
 
-  /** Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es. */
+  /**
+   * Las fichas de la especialidad de quien atiende. Vacío si no se sabe cuál es.
+   *
+   * La ficha base —la consulta inicial— va primero y después las específicas
+   * de cada condición, por nombre: es el orden en que se usan, la primera vez
+   * y después en los controles.
+   */
   private readonly plantillasPropias = computed<readonly ChartTemplate[]>(() => {
     const especialidad = this.especialidad();
     if (especialidad === null) return [];
-    return this.catalogo().filter(
-      (plantilla) =>
-        plantilla.specialtyConceptId === especialidad &&
-        plantilla.specialtyConceptId !== this.conceptoTransversal(),
-    );
+    return this.catalogo()
+      .filter(
+        (plantilla) =>
+          plantilla.specialtyConceptId === especialidad &&
+          plantilla.specialtyConceptId !== this.conceptoTransversal(),
+      )
+      .sort(
+        (a, b) =>
+          Number(b.kind === 'BASE') - Number(a.kind === 'BASE') ||
+          a.name.localeCompare(b.name, 'es'),
+      );
   });
 
   /** Las que sirven para cualquier consulta. Nunca se esconden. */
@@ -419,22 +406,19 @@ export class SpecialtyFormBlock {
    * Lo que se le ofrece a quien atiende: primero lo suyo, después lo
    * transversal.
    *
-   * Se cae al catálogo entero en dos casos, los dos por lo mismo —filtrar sin
-   * criterio esconde más de lo que ayuda—:
-   *
-   * 1. **No se sabe la especialidad.** Una cuenta sin perfil profesional
-   *    —recepción, administración— o un perfil que no respondió. Dejar sólo
-   *    las transversales le escondería las 36 fichas de especialidad sin
-   *    saber siquiera si le corresponden.
-   * 2. **El filtro no deja nada.** Su especialidad no tiene ficha y el
-   *    catálogo tampoco tiene transversales: un desplegable vacío sobre un
-   *    catálogo que sí tiene fichas.
+   * Sin especialidad conocida se ofrecen las generales. Si tampoco existen,
+   * el catálogo completo queda disponible para no bloquear la consulta.
+   * Con especialidad conocida, una lista vacía se explica en pantalla y el
+   * profesional puede abrir el catálogo para una interconsulta.
    */
   private readonly plantillasSugeridas = computed<readonly ChartTemplate[]>(() => {
-    if (this.especialidad() === null) return this.catalogo();
+    if (this.especialidad() === null) {
+      return this.plantillasTransversales().length > 0
+        ? this.plantillasTransversales()
+        : this.catalogo();
+    }
 
-    const sugeridas = [...this.plantillasPropias(), ...this.plantillasTransversales()];
-    return sugeridas.length > 0 ? sugeridas : this.catalogo();
+    return [...this.plantillasPropias(), ...this.plantillasTransversales()];
   });
 
   /** Si hay algo escondido, y por lo tanto algo que el interruptor pueda revelar. */
@@ -445,12 +429,8 @@ export class SpecialtyFormBlock {
   /**
    * El interruptor «Ver todas las especialidades». Apagado, manda el filtro.
    *
-   * Arranca APAGADO por decisión del propietario (2026-10-02): «debe haber un
-   * filtro específico de formularios por el tipo de especialidad». Antes
-   * arrancaba prendido porque la lista cambiaba de tamaño según el perfil y se
-   * leía como un bug; ahora el filtro es lo esperado y el interruptor queda a
-   * la vista para ver el resto. Sin especialidad conocida se ve todo igual
-   * (ver {@link plantillasSugeridas}).
+   * Arranca apagado para mostrar la especialidad de quien atiende y las fichas
+   * generales. La interconsulta abre el resto del catálogo a pedido.
    */
   protected readonly verTodas = signal(false);
 
@@ -472,21 +452,39 @@ export class SpecialtyFormBlock {
     return visibles;
   });
 
+  protected readonly sinPlantillasVisibles = computed(
+    () =>
+      this.plantillaId() === null &&
+      this.catalogo().length > 0 &&
+      this.plantillasVisibles().length === 0,
+  );
+
   /**
    * Todo lo que se puede completar en el encuentro, en una sola lista.
    *
-   * Las fijas primero —diagnóstico, hoja en blanco, procedimiento y
-   * laboratorio— porque son las que sirven en cualquier consulta y enterrarlas
-   * al final de cuarenta y cuatro fichas equivale a no tenerlas. Detrás, las
-   * plantillas: la de la especialidad de quien atiende y las transversales.
+   * Primero la hoja en blanco, luego cirugía y odontología cuando
+   * corresponden, y después las plantillas de la especialidad y transversales.
    */
-  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => [
-    ...ENTRADAS_FIJAS,
-    ...this.plantillasVisibles().map((plantilla) => ({
-      value: plantilla.id,
-      label: plantilla.name,
-    })),
-  ]);
+  protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => {
+    const mostrarCirugia =
+      this.verTodas() ||
+      this.plantillaId() === BLOQUE_CIRUGIA ||
+      this.plantillasPropias().some((plantilla) => plantilla.code.startsWith('CIRGEN_'));
+    const mostrarOdontologia =
+      this.verTodas() ||
+      this.plantillaId() === BLOQUE_ODONTOLOGIA ||
+      this.plantillasPropias().some((plantilla) => plantilla.code.startsWith('ODONTO_'));
+
+    return [
+      ...ENTRADAS_GENERALES,
+      ...(mostrarCirugia ? [{ value: BLOQUE_CIRUGIA, label: 'Cirugía' }] : []),
+      ...(mostrarOdontologia ? [{ value: BLOQUE_ODONTOLOGIA, label: 'Odontología' }] : []),
+      ...this.plantillasVisibles().map((plantilla) => ({
+        value: plantilla.id,
+        label: plantilla.name,
+      })),
+    ];
+  });
 
   /**
    * La pestaña que se está mirando. `app-tab` no dibuja el panel cerrado, pero
@@ -543,31 +541,21 @@ export class SpecialtyFormBlock {
   /** Está elegida la hoja en blanco, así que no se dibuja ninguna ficha. */
   protected readonly hojaLibre = computed(() => this.plantillaId() === PLANTILLA_HOJA_LIBRE);
 
-  /** Está elegido el formulario libre: sólo filas «campo: valor», sin plantilla. */
-  protected readonly formularioLibre = computed(
-    () => this.plantillaId() === PLANTILLA_FORMULARIO_LIBRE,
-  );
-
-  protected readonly esDiagnostico = computed(() => this.plantillaId() === BLOQUE_DIAGNOSTICO);
-
   protected readonly esCirugia = computed(() => this.plantillaId() === BLOQUE_CIRUGIA);
 
   protected readonly esOdontologia = computed(() => this.plantillaId() === BLOQUE_ODONTOLOGIA);
 
-  protected readonly esLaboratorio = computed(() => this.plantillaId() === BLOQUE_LABORATORIO);
-
   /**
-   * Lo elegido es uno de los tres bloques que escriben por su cuenta.
+   * Lo elegido es uno de los dos bloques que escriben por su cuenta.
    *
    * Se dibujan **antes** de la cadena de estados del motor de `forms` y no
-   * dentro: diagnosticar no depende de que el catálogo de plantillas haya
-   * cargado, ni de que este encuentro ya tenga una ficha respondida. Meterlos
-   * bajo esa cadena habría dejado el diagnóstico inalcanzable justo después de
-   * completar una ficha, que es cuando el modo lectura tapa el selector.
+   * dentro: registrar un procedimiento no depende de que el catálogo de
+   * plantillas haya cargado, ni de que este encuentro ya tenga una ficha
+   * respondida. Meterlos bajo esa cadena los habría dejado inalcanzables justo
+   * después de completar una ficha, que es cuando el modo lectura tapa el
+   * selector.
    */
-  protected readonly bloquePropio = computed(
-    () => this.esDiagnostico() || this.esCirugia() || this.esOdontologia() || this.esLaboratorio(),
-  );
+  protected readonly bloquePropio = computed(() => this.esCirugia() || this.esOdontologia());
 
   /**
    * No hay ninguna plantilla cargada en el sistema. Es un problema de datos:
@@ -603,7 +591,7 @@ export class SpecialtyFormBlock {
       return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos traerlas.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     }
     return null;
   });
@@ -614,9 +602,8 @@ export class SpecialtyFormBlock {
    * una general y se sigue.
    *
    * Las dos condiciones van juntas porque el aviso promete algo concreto. Si el
-   * catálogo no tuviera ninguna transversal, {@link plantillasSugeridas} cae al
-   * catálogo entero y no hay ninguna ficha general que ofrecer: avisar ahí sería
-   * prometer una anamnesis que no existe.
+   * catálogo no tuviera ninguna transversal, se muestra el estado vacío con
+   * acceso explícito a todas las especialidades.
    */
   protected readonly sinFichaPropia = computed(
     () =>
@@ -644,13 +631,6 @@ export class SpecialtyFormBlock {
     this.eleccionManual.set(true);
     this.plantillaId.set(id);
     this.valores.set({});
-    this.fallosDelLibre.set([]);
-    // Lo ya registrado en el encuentro se lee al entrar: el formulario libre
-    // se puede llenar varias veces y conviene ver qué quedó de la anterior.
-    const encounterId = this.encounterId();
-    if (id === PLANTILLA_FORMULARIO_LIBRE && encounterId !== null && encounterId !== '') {
-      this.consultarAdicionales(encounterId);
-    }
   }
 
   constructor() {
@@ -661,22 +641,6 @@ export class SpecialtyFormBlock {
     effect(() => {
       const encounterId = this.encounterId();
       untracked(() => this.consultarRespuesta(encounterId));
-    });
-    // En cuanto el catálogo está, se piden de una vez las opciones de TODOS
-    // los campos de catálogo de TODAS las plantillas — no sólo la elegida: el
-    // modo lectura puede mostrar la respuesta de otra plantilla, y pedirlas
-    // recién ahí demoraría la etiqueta detrás de un segundo viaje.
-    effect(() => {
-      const catalogo = this.catalogo();
-      const valueSetIds = new Set<string>();
-      for (const plantilla of catalogo) {
-        for (const campo of plantilla.fields) {
-          if (campo.valueSetId !== undefined) valueSetIds.add(campo.valueSetId);
-        }
-      }
-      untracked(() => {
-        for (const valueSetId of valueSetIds) this.asegurarOpcionesDeCatalogo(valueSetId);
-      });
     });
   }
 
@@ -707,7 +671,20 @@ export class SpecialtyFormBlock {
   private resolverEspecialidad(): void {
     this.profiles.getOwnPractitionerProfile().subscribe({
       next: (perfil) => {
-        this.especialidad.set(especialidadVigente(perfil.specialties));
+        this.especialidad.set(currentSpecialty(perfil.specialties));
+        // El catálogo puede haber llegado primero y haber preseleccionado su
+        // única ficha. Si era de otra especialidad, se corrige al resolver el
+        // perfil; una elección manual permanece intacta.
+        const elegida = this.plantillaElegida();
+        if (
+          !this.eleccionManual() &&
+          elegida !== null &&
+          this.especialidad() !== null &&
+          !this.plantillasPropias().includes(elegida) &&
+          !this.plantillasTransversales().includes(elegida)
+        ) {
+          this.plantillaId.set(null);
+        }
         this.preseleccionar();
       },
       error: () => this.especialidad.set(null),
@@ -750,7 +727,7 @@ export class SpecialtyFormBlock {
     // Su especialidad no tiene ficha propia: la anamnesis general sirve para
     // cualquier consulta y es mejor que dejarlo buscándola entre 43 opciones.
     // Sólo cuando la especialidad se conoce: sin perfil profesional no hay a
-    // quién caerle y el selector se ofrece entero, como siempre.
+    // quién asignarle una ficha de especialidad.
     if (this.especialidad() !== null) {
       const general = this.anamnesisGeneral();
       if (general !== undefined) {
@@ -759,8 +736,9 @@ export class SpecialtyFormBlock {
       }
     }
 
-    // Con una sola en el catálogo no hay nada que elegir.
-    if (state.data.length === 1) {
+    // Con una sola ficha se puede adelantar la elección mientras llega el
+    // perfil; al resolverlo se descarta si pertenece a otra especialidad.
+    if (this.especialidad() === null && state.data.length === 1) {
       this.plantillaId.set(state.data[0].id);
     }
   }
@@ -806,7 +784,7 @@ export class SpecialtyFormBlock {
       return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos revisarlo.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     }
     return null;
   });
@@ -816,9 +794,7 @@ export class SpecialtyFormBlock {
    * médicas de este encuentro, y su texto libre. Se leen aparte porque viven
    * en la nota y no en la instancia del formulario.
    */
-  private readonly lecturaDeAdicionales = signal<ViewState<readonly MedicalNoteEntry[]>>(
-    ready([]),
-  );
+  private readonly lecturaDeAdicionales = signal<ViewState<readonly MedicalNoteEntry[]>>(ready([]));
 
   protected readonly adicionalesGuardados = computed<readonly MedicalNoteEntry[]>(() => {
     const state = this.lecturaDeAdicionales();
@@ -853,7 +829,7 @@ export class SpecialtyFormBlock {
           'No pudimos leer las notas de esta consulta.'
         );
       case 'error':
-        return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
+        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
       default:
         return 'No pudimos leer las notas de esta consulta.';
     }
@@ -874,7 +850,7 @@ export class SpecialtyFormBlock {
               pagina.items
                 .filter((nota) => nota.encounterId === encounterId)
                 .flatMap((nota) => [
-                  ...(nota.entries ?? []),
+                  ...(nota.entries ?? entradasDelTexto(nota.objectiveText)),
                   ...(nota.subjectiveText
                     ? [{ label: 'Texto libre', value: nota.subjectiveText }]
                     : []),
@@ -919,7 +895,7 @@ export class SpecialtyFormBlock {
           // El encuentro pudo cambiar mientras la respuesta viajaba.
           if (this.encounterId() !== encounterId) return;
           this.respondido.set(ready(detalle));
-          if (detalle !== null || this.formularioLibre()) this.consultarAdicionales(encounterId);
+          if (detalle !== null) this.consultarAdicionales(encounterId);
         },
         error: (error: unknown) => {
           if (this.encounterId() !== encounterId) return;
@@ -935,7 +911,7 @@ export class SpecialtyFormBlock {
   /** Todos los campos conocidos por las plantillas, para ponerle nombre a cada valor. */
   private readonly camposConocidos = computed<ReadonlyMap<string, ChartTemplateField>>(() => {
     const state = this.plantillas();
-    return camposDe(state.status === 'ready' ? state.data : []);
+    return fieldsOf(state.status === 'ready' ? state.data : []);
   });
 
   /**
@@ -949,7 +925,7 @@ export class SpecialtyFormBlock {
     const detalle = this.formularioRespondido();
     const state = this.plantillas();
     if (detalle === null || state.status !== 'ready') return null;
-    return plantillaPorCobertura(detalle, state.data);
+    return templateByCoverage(detalle, state.data);
   });
 
   protected readonly tituloDeLaRespuesta = computed(
@@ -965,10 +941,10 @@ export class SpecialtyFormBlock {
     return Number.isNaN(fecha.getTime()) ? null : FORMATO_FECHA.format(fecha);
   });
 
-  protected readonly respuestasVisibles = computed<readonly RespuestaVisible[]>(() => {
+  protected readonly respuestasVisibles = computed<readonly ResponseVisible[]>(() => {
     const detalle = this.formularioRespondido();
     if (detalle === null) return [];
-    return respuestasDe(detalle, this.camposConocidos(), this.etiquetaDeConceptId());
+    return responsesOf(detalle, this.camposConocidos());
   });
 
   /** Descarga el formulario respondido con el motor PDF compartido. */
@@ -1087,7 +1063,7 @@ export class SpecialtyFormBlock {
     const plantilla = this.plantillaElegida();
     if (plantilla === null) return new Set();
     const valores = this.valores();
-    return camposOcultos(
+    return hiddenFields(
       plantilla.fields.map((campo) => ({
         key: campo.fieldId,
         ...(campo.showWhen === undefined
@@ -1097,115 +1073,6 @@ export class SpecialtyFormBlock {
       (fieldId) => valores[fieldId],
     );
   });
-
-  /* -- Campos de catálogo (valueSetId): un desplegable, no texto libre ------
-   *
-   * El backend ya publica `valueSetId` en cada campo (`TemplateFieldInputDto`,
-   * `ChartTemplateFieldDto`) y ya sirve sus opciones
-   * (`GET /terminology/value-sets/:id/$expand`), pero este bloque los dibujaba
-   * como texto libre igual que cualquier campo sin tipo reconocido: quien
-   * completaba la ficha tecleaba a mano un valor que ya existía como catálogo
-   * cerrado, y lo tecleado no era comparable entre dos respuestas de la misma
-   * pregunta («Fumador» contra «fumador» contra «SI»).
-   *
-   * Es un control aparte del `@switch` por `dataType` —no un caso más— porque
-   * la pertenencia a un catálogo no es un tipo de dato: conviven con `string`,
-   * `integer` o cualquier otro, igual que en `ChartTemplateFieldDto`.
-   */
-
-  /** Las opciones ya resueltas, por `valueSetId`. Ausente mientras no se pidieron. */
-  private readonly opcionesPorValueSet = signal<
-    ReadonlyMap<string, readonly SelectOption<string>[]>
-  >(new Map());
-
-  /** `valueSetId` con una lectura en curso, para no pedir el mismo catálogo dos veces. */
-  private readonly valueSetsCargando = signal<ReadonlySet<string>>(new Set());
-
-  /** `valueSetId` cuya lectura falló, para poder avisarlo en el campo. */
-  private readonly valueSetsConError = signal<ReadonlySet<string>>(new Set());
-
-  /**
-   * `conceptId → display`, para el modo lectura.
-   *
-   * Vive aparte de {@link opcionesPorValueSet} porque el modo lectura no
-   * conoce el `valueSetId` de memoria rápida: conoce el `conceptId` que se
-   * guardó, y tiene que resolverlo a lo que un humano lee. Se completa con la
-   * misma lectura que llena las opciones — no es una segunda llamada.
-   */
-  private readonly etiquetaDeConceptId = signal<ReadonlyMap<string, string>>(new Map());
-
-  /** Si el campo es de catálogo: tiene `valueSetId`, sin importar su `dataType`. */
-  protected esDeCatalogo(campo: ChartTemplateField): boolean {
-    return campo.valueSetId !== undefined;
-  }
-
-  /** Las opciones del campo, o vacío mientras no llegaron (ni dibuja texto a cambio). */
-  protected opcionesDeCatalogo(campo: ChartTemplateField): readonly SelectOption<string>[] {
-    if (campo.valueSetId === undefined) return [];
-    return this.opcionesPorValueSet().get(campo.valueSetId) ?? [];
-  }
-
-  protected catalogoCargando(campo: ChartTemplateField): boolean {
-    return campo.valueSetId !== undefined && this.valueSetsCargando().has(campo.valueSetId);
-  }
-
-  protected catalogoConError(campo: ChartTemplateField): boolean {
-    return campo.valueSetId !== undefined && this.valueSetsConError().has(campo.valueSetId);
-  }
-
-  /** El valor guardado del campo de catálogo: el `conceptId` elegido, o `null`. */
-  protected valorCatalogo(fieldId: string): string | null {
-    const valor = this.valores()[fieldId];
-    return typeof valor === 'string' ? valor : null;
-  }
-
-  /**
-   * Pide, una sola vez por `valueSetId`, las opciones de todo campo de
-   * catálogo del catálogo de plantillas — no sólo de la elegida: el modo
-   * lectura puede mostrar una respuesta de una plantilla distinta a la que
-   * está seleccionada ahora, y necesita la misma etiqueta.
-   *
-   * Sin SSR: igual que `BoDepartmentsCatalog`, durante el prerender no hay API
-   * a la que preguntar.
-   */
-  private asegurarOpcionesDeCatalogo(valueSetId: string): void {
-    if (!this.isBrowser) return;
-    if (this.opcionesPorValueSet().has(valueSetId)) return;
-    if (this.valueSetsCargando().has(valueSetId)) return;
-
-    this.valueSetsCargando.update((actuales) => new Set(actuales).add(valueSetId));
-    this.terminology.readAllOptions(valueSetId).subscribe({
-      next: (opciones) => {
-        const seleccionables = opciones.filter((opcion) => opcion.selectable !== false);
-        this.opcionesPorValueSet.update((mapa) => {
-          const nuevo = new Map(mapa);
-          nuevo.set(
-            valueSetId,
-            seleccionables.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
-          );
-          return nuevo;
-        });
-        this.etiquetaDeConceptId.update((mapa) => {
-          const nuevo = new Map(mapa);
-          for (const opcion of opciones) nuevo.set(opcion.conceptId, opcion.display);
-          return nuevo;
-        });
-        this.valueSetsCargando.update((actuales) => {
-          const nuevo = new Set(actuales);
-          nuevo.delete(valueSetId);
-          return nuevo;
-        });
-      },
-      error: () => {
-        this.valueSetsCargando.update((actuales) => {
-          const nuevo = new Set(actuales);
-          nuevo.delete(valueSetId);
-          return nuevo;
-        });
-        this.valueSetsConError.update((actuales) => new Set(actuales).add(valueSetId));
-      },
-    });
-  }
 
   /* -- El odontograma ------------------------------------------------------ */
 
@@ -1389,7 +1256,7 @@ export class SpecialtyFormBlock {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     }
     return null;
   });
@@ -1482,51 +1349,6 @@ export class SpecialtyFormBlock {
       });
   }
 
-  /* -- El formulario libre ------------------------------------------------ */
-
-  /** Lo que no se pudo registrar del formulario libre, en palabras. */
-  protected readonly fallosDelLibre = signal<readonly string[]>([]);
-
-  protected readonly puedeGuardarLibre = computed(
-    () =>
-      this.hayEncuentro() &&
-      (this.adicionales()?.tieneContenido() ?? false) &&
-      !(this.adicionales()?.hayProblemas() ?? false) &&
-      (this.adicionales()?.impedimento() ?? null) === null &&
-      !this.enviando(),
-  );
-
-  /**
-   * Registra el formulario libre: la nota con las filas y un documento por
-   * cada fila con archivos, contra el encuentro en curso. Mismos pasos que los
-   * campos adicionales de una ficha, sin la ficha adelante.
-   *
-   * Si falla la nota —el primer paso— no quedó nada escrito y las filas se
-   * conservan para reintentar. Si falla un documento, la nota ya está: se
-   * vacía lo escrito para no duplicarla al volver a guardar, y lo que faltó
-   * queda nombrado.
-   */
-  protected guardarLibre(): void {
-    const encounterId = this.encounterId();
-    const adicionales = this.adicionales();
-    if (encounterId === null || adicionales === undefined || !this.puedeGuardarLibre()) {
-      return;
-    }
-    const pasos = adicionales.pasos(encounterId);
-    if (pasos.length === 0) return;
-
-    this.enviando.set(true);
-    this.fallosDelLibre.set([]);
-    this.ejecutarEnOrden(pasos, 'El formulario libre no quedó completo').subscribe((fallos) => {
-      this.enviando.set(false);
-      this.fallosDelLibre.set(fallos);
-      if (fallos.length === pasos.length) return;
-      adicionales.limpiar();
-      this.cambio.emit();
-      this.consultarAdicionales(encounterId);
-    });
-  }
-
   /**
    * Las altas que el cierre pide, en el orden en que se registran: primero el
    * diagnóstico tentativo, después la orden de análisis. Ninguna es
@@ -1556,6 +1378,7 @@ export class SpecialtyFormBlock {
             codeConceptId: diagnostico,
             encounterId,
             noteText: `Del formulario «${plantilla.name}»`,
+            verificationStatus: 'PROVISIONAL',
           }),
       });
     }
@@ -1596,16 +1419,13 @@ export class SpecialtyFormBlock {
    * que se registre desde su casilla. Nunca falla hacia arriba: la ficha ya
    * quedó guardada y eso no se cuenta como error.
    */
-  private ejecutarEnOrden(
-    pasos: readonly PasoDelCierre[],
-    tituloDelFallo = 'La ficha quedó guardada, pero no todo el cierre',
-  ): Observable<readonly string[]> {
+  private ejecutarEnOrden(pasos: readonly PasoDelCierre[]): Observable<readonly string[]> {
     const [primero, ...resto] = pasos;
     if (primero === undefined) return of([]);
     return primero.ejecutar().pipe(
       tap(() => this.toasts.success(primero.exito, primero.titulo)),
-      switchMap(() => this.ejecutarEnOrden(resto, tituloDelFallo)),
-      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error, tituloDelFallo))),
+      switchMap(() => this.ejecutarEnOrden(resto)),
+      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error))),
     );
   }
 
@@ -1614,15 +1434,14 @@ export class SpecialtyFormBlock {
     paso: PasoDelCierre,
     siguientes: readonly PasoDelCierre[],
     error: unknown,
-    tituloDelFallo: string,
   ): readonly string[] {
     const estado = errorToViewState<null>(error);
     const motivo =
       estado.status === 'validation'
         ? estado.issues.map((issue) => issue.message).join(' ')
-        : (mensajeDeFalloDeEscritura(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
+        : (writeFailureMessage(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
     const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
-    this.toasts.error(mensaje, tituloDelFallo);
+    this.toasts.error(mensaje, 'La ficha quedó guardada, pero no todo el cierre');
     return [
       mensaje,
       ...siguientes.map(
@@ -1652,24 +1471,4 @@ export class SpecialtyFormBlock {
     }
     return entradas;
   }
-}
-
-function esVacio(valor: unknown): boolean {
-  return (
-    valor === undefined ||
-    valor === null ||
-    valor === '' ||
-    // Un odontograma sin ninguna pieza tocada es un mapa vacío: es «no lo
-    // llené», no un dato. Sin esto viajaría un `{}` y contaría como respuesta.
-    (esMapa(valor) && Object.keys(valor).length === 0) ||
-    // Una lista de varias respuestas sin ninguna marcada tampoco es un dato.
-    (Array.isArray(valor) && valor.length === 0)
-  );
-}
-
-/** Si el valor es un objeto plano —el mapa del odontograma, hoy—. */
-function esMapa(valor: unknown): valor is Record<string, unknown> {
-  return (
-    typeof valor === 'object' && valor !== null && !(valor instanceof Date) && !Array.isArray(valor)
-  );
 }

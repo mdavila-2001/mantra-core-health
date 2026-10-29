@@ -204,4 +204,180 @@ describe('AssetsLiabilities — FT-26', () => {
     expect(componente.errorDeAutomatizacionDePasivo()).toBe('El pasivo ya está saldado.');
     await flushRecarga();
   });
+
+  describe('histórico (T26 · criterios 6 y 11)', () => {
+    const ASSET = {
+      id: 'as1',
+      code: 'EQ-1',
+      name: 'Ecógrafo',
+      statusConceptId: 's',
+      acquisitionCost: '1000.00',
+      bookValue: '666.67',
+      automated: true,
+    };
+    const LIABILITY = {
+      id: 'li1',
+      code: 'PR-1',
+      name: 'Préstamo',
+      outstandingAmount: '666.67',
+      statusConceptId: 's',
+      automated: false,
+    };
+
+    function flushCargaCon(assets: unknown[], liabilities: unknown[]): void {
+      http
+        .expectOne((r) => r.url === '/practices')
+        .flush([
+          {
+            id: PRACTICE,
+            code: 'P1',
+            name: 'Práctica Uno',
+            typeConceptId: 't',
+            statusConceptId: 's',
+          },
+        ]);
+      fixture.detectChanges();
+      http
+        .expectOne((r) => r.url === '/accounting/accounts')
+        .flush({ items: [], count: 0, limit: 50 });
+      http.expectOne((r) => r.url === '/accounting/practitioner/assets').flush(assets);
+      http.expectOne((r) => r.url === '/accounting/practitioner/liabilities').flush(liabilities);
+      fixture.detectChanges();
+    }
+
+    function boton(texto: string): HTMLButtonElement {
+      const encontrado = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'),
+      ).find((b) => b.textContent?.trim() === texto);
+      if (!encontrado) throw new Error(`No hay botón «${texto}»`);
+      return encontrado;
+    }
+
+    it('abre el historial de depreciación de un activo con sus períodos y lo cierra', () => {
+      fixture.detectChanges();
+      flushCargaCon([ASSET], []);
+
+      const abrir = boton('Ver historial');
+      expect(abrir.getAttribute('aria-expanded')).toBe('false');
+      abrir.click();
+      fixture.detectChanges();
+
+      http.expectOne('/accounting/practitioner/assets/as1/depreciations').flush({
+        assetId: 'as1',
+        code: 'EQ-1',
+        acquisitionCost: '1000.00',
+        accumulatedDepreciation: '333.33',
+        bookValue: '666.67',
+        depreciations: [
+          {
+            id: 'd1',
+            fiscalPeriodId: 'p10',
+            fiscalPeriodCode: '2026-10',
+            periodStartDate: '2026-10-01',
+            periodEndDate: '2026-10-31',
+            amount: '333.33',
+            bookValueAfter: '666.67',
+            transactionId: 'tx1',
+            registeredAt: '2026-10-25T05:28:13.609Z',
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      const panel = (fixture.nativeElement as HTMLElement).querySelector('#historial-as1');
+      expect(panel?.getAttribute('aria-label')).toBe('Historial de depreciación: Ecógrafo');
+      const celdas = Array.from(panel?.querySelectorAll('tbody td') ?? []).map((td) =>
+        td.textContent?.trim(),
+      );
+      expect(celdas).toEqual(['2026-10', '333.33', '666.67']);
+      expect(panel?.textContent).toContain('Depreciación acumulada: 333.33 de 1000.00');
+      expect(boton('Ocultar historial').getAttribute('aria-expanded')).toBe('true');
+
+      boton('Ocultar historial').click();
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).querySelector('#historial-as1')).toBeNull();
+    });
+
+    it('un activo sin depreciaciones lo dice, y un fallo de lectura se muestra como error', () => {
+      fixture.detectChanges();
+      flushCargaCon([ASSET], []);
+
+      boton('Ver historial').click();
+      fixture.detectChanges();
+      http.expectOne('/accounting/practitioner/assets/as1/depreciations').flush({
+        assetId: 'as1',
+        code: 'EQ-1',
+        acquisitionCost: '1000.00',
+        accumulatedDepreciation: '0',
+        bookValue: '1000.00',
+        depreciations: [],
+      });
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('#historial-as1')?.textContent,
+      ).toContain('todavía no tiene depreciaciones registradas');
+
+      boton('Ocultar historial').click();
+      fixture.detectChanges();
+      boton('Ver historial').click();
+      fixture.detectChanges();
+      http
+        .expectOne('/accounting/practitioner/assets/as1/depreciations')
+        .flush({ message: 'caída' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('#historial-as1')?.textContent,
+      ).toContain('No pudimos cargar el historial de este activo.');
+    });
+
+    it('muestra el cronograma de un pasivo cuota por cuota, con la pagada distinguida', () => {
+      fixture.detectChanges();
+      flushCargaCon([], [LIABILITY]);
+      (
+        fixture.componentInstance as unknown as { pestanaActiva: { set: (v: number) => void } }
+      ).pestanaActiva.set(1);
+      fixture.detectChanges();
+
+      boton('Ver cronograma').click();
+      fixture.detectChanges();
+      http.expectOne('/accounting/practitioner/liabilities/li1/schedule').flush({
+        liabilityId: 'li1',
+        code: 'PR-1',
+        principalAmount: '1000.00',
+        outstandingAmount: '666.67',
+        schedule: [
+          {
+            id: 's1',
+            installmentNumber: 1,
+            dueDate: '2026-11-01',
+            principalDue: '333.33',
+            interestDue: '10.00',
+            paidAmount: '343.33',
+            statusConceptId: 'x',
+          },
+          {
+            id: 's2',
+            installmentNumber: 2,
+            dueDate: '2026-12-01',
+            principalDue: '333.33',
+            interestDue: '6.67',
+            paidAmount: '0.00',
+            statusConceptId: 'y',
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      const filas = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('#historial-li1 tbody tr'),
+      ).map((tr) => Array.from(tr.querySelectorAll('td')).map((td) => td.textContent?.trim()));
+      expect(filas).toEqual([
+        ['1', '2026-11-01', '333.33', '10.00', '343.33', 'Pagada'],
+        ['2', '2026-12-01', '333.33', '6.67', '0.00', 'Pendiente'],
+      ]);
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('#historial-li1')?.textContent,
+      ).toContain('Saldo pendiente: 666.67 de 1000.00');
+    });
+  });
 });

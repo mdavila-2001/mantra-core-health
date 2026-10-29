@@ -18,7 +18,6 @@ import type {
   ConceptSearchQuery,
   GlossaryFacets,
   GlossaryQuery,
-  GlossaryGraph,
   GlossaryNeighborhood,
   GlossaryNeighborhoodQuery,
   GlossaryTagPage,
@@ -416,7 +415,9 @@ export class TerminologyClient {
    */
   readGlossaryArticle(conceptId: string): Observable<GlossaryArticle | null> {
     return this.http
-      .get<GlossaryArticle>(this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}/article`))
+      .get<GlossaryArticle>(
+        this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}/glossary-article`),
+      )
       .pipe(
         catchError((error: unknown) =>
           error instanceof HttpErrorResponse && error.status === 404 ? of(null) : throwError(() => error),
@@ -448,14 +449,6 @@ export class TerminologyClient {
     return this.http.get<GlossaryNeighborhood>(
       this.url(`/terminology/concepts/${encodeURIComponent(conceptId)}/glossary-neighborhood`),
       { params },
-    );
-  }
-
-  /** Lee los nodos publicados y sus relaciones tipadas para el mapa. */
-  readGlossaryGraph(): Observable<GlossaryGraph> {
-    return this.http.get<GlossaryGraph>(
-      this.url('/terminology/concepts/glossary-graph'),
-      { params: new HttpParams().set('lang', IDIOMA_DEL_CATALOGO).set('limit', '500') },
     );
   }
 

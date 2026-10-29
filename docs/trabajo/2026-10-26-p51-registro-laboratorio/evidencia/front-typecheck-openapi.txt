@@ -1,0 +1,13 @@
+$ NODE_OPTIONS=--max-old-space-size=4096 yarn ng test --watch=false --include auth.handlers.laboratory.spec.ts --include register-laboratory.spec.ts --include iam.client.spec.ts  (repo mantra-core-health)
+ Test Files  3 passed (3)
+      Tests  84 passed (84)
+
+$ yarn typecheck  (repo mantra-core-health)
+tc-front2 EXIT=0
+
+$ NODE_OPTIONS=--max-old-space-size=6144 yarn typecheck  (repo API, tras merge con la rama compartida)
+src/modules/iam/application/services/iam-practitioner-self-registration.service.spec.ts(522,20): error TS7006: Parameter 'fila' implicitly has an 'any' type.
+tc-api2 EXIT=2
+
+$ yarn docs:openapi:generate  (repo API)
+openapi2 EXIT=0

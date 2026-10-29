@@ -91,6 +91,29 @@
   background: var(--bg-surface);
 }
 
+@media (max-width: 640px) {
+  .campana__panel {
+    position: fixed;
+    /* El `backdrop-filter` de la cabecera la vuelve el bloque contenedor de este
+       panel `fixed`: 12 px bajo la barra, que arriba del todo mide lo mismo
+       medida contra la cabecera o contra la ventana. */
+    inset-block-start: calc(var(--h-header, 56px) + var(--sp-3));
+    inset-inline: var(--sp-2);
+    inline-size: auto;
+    max-block-size: calc(100dvh - var(--h-header, 56px) - var(--sp-6));
+    display: flex;
+    flex-direction: column;
+  }
+
+  .campana__panel::before {
+    display: none;
+  }
+
+  .campana__lista {
+    min-block-size: 0;
+  }
+}
+
 .campana__encabezado {
   border-start-start-radius: var(--r-md);
   border-start-end-radius: var(--r-md);

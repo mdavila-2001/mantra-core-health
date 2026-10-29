@@ -3,11 +3,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
   input,
   linkedSignal,
   signal,
+  viewChild,
+  type OnDestroy,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID } from '@angular/core';
+import { concatMap, from, toArray } from 'rxjs';
 import type { Observable } from 'rxjs';
 
 import { SessionStore } from '../../core/auth/session.store';
@@ -91,9 +97,9 @@ const TEXTOS_POR_TRAMITE: Record<Tramite, TextosDelTramite> = {
  * ## El flujo, en dos peticiones
  *
  * ```text
- * FilesClient.upload(evidencia, 'DOCUMENT', 'PHI')  →  { id }
+ * FilesClient.upload(frente, reverso, 3 capturas, 'PHI') → { ids }
  *       ↓
- * IdentityClient.request…Verification({ evidenceFileId: id })   ← según el trámite
+ * IdentityClient.request…Verification({ ...ids })      ← según el trámite
  *       ↓  caseId
  * IdentityClient.getVerificationCase(caseId)        →  estado del caso
  * ```
@@ -144,7 +150,7 @@ const TIPO_DEL_TRAMITE: Readonly<Record<Tramite, string>> = {
   styleUrl: './identity-verification.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IdentityVerification {
+export class IdentityVerification implements OnDestroy {
   /**
    * `true` cuando esta pantalla vive **dentro** del centro de verificación,
    * como una de sus pestañas.
@@ -191,8 +197,14 @@ export class IdentityVerification {
     return organizaciones.length === 1 ? (organizaciones[0]?.value ?? null) : null;
   });
 
-  /** La evidencia elegida. Una sola: el backend espera un archivo. */
-  protected readonly evidencia = signal<readonly File[]>([]);
+  protected readonly frente = signal<readonly File[]>([]);
+  protected readonly reverso = signal<readonly File[]>([]);
+  protected readonly pruebaVida = signal<readonly File[]>([]);
+  protected readonly camaraAbierta = signal(false);
+  protected readonly errorCamara = signal<string | null>(null);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly video = viewChild<ElementRef<HTMLVideoElement>>('videoCaptura');
+  private flujoCamara: MediaStream | null = null;
 
   /** Motivo del último archivo rechazado por los límites del componente. */
   protected readonly rechazo = signal<string | null>(null);
@@ -236,7 +248,10 @@ export class IdentityVerification {
 
   protected readonly puedeEnviar = computed(
     () =>
-      this.evidencia().length === 1 &&
+      this.frente().length === 1 &&
+      this.reverso().length === 1 &&
+      this.pruebaVida().length === 3 &&
+      !this.camaraAbierta() &&
       !this.enviando() &&
       (this.tramite() !== 'tenant' || this.organizacionId() !== null),
   );
@@ -313,22 +328,39 @@ export class IdentityVerification {
    * de HTTP.
    */
   protected enviar(): void {
-    const archivo = this.evidencia()[0];
-    if (archivo === undefined || !this.puedeEnviar()) {
+    const [frente] = this.frente();
+    const [reverso] = this.reverso();
+    const [centro, izquierda, derecha] = this.pruebaVida();
+    if (!frente || !reverso || !centro || !izquierda || !derecha || !this.puedeEnviar()) {
       return;
     }
 
     this.rechazo.set(null);
     this.state.set(loading());
 
-    this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
-      next: ({ id }) => this.abrirCaso(id),
+    from([
+      { file: frente, category: 'DOCUMENT' as const },
+      { file: reverso, category: 'DOCUMENT' as const },
+      { file: centro, category: 'IMAGE' as const },
+      { file: izquierda, category: 'IMAGE' as const },
+      { file: derecha, category: 'IMAGE' as const },
+    ]).pipe(
+      concatMap(({ file, category }) => this.files.upload(file, category, 'PHI')),
+      toArray(),
+    ).subscribe({
+      next: ([front, back, center, turnLeft, turnRight]) => this.abrirCaso({
+        documentFrontFileId: front!.id,
+        documentBackFileId: back!.id,
+        livenessCenterFileId: center!.id,
+        livenessTurnLeftFileId: turnLeft!.id,
+        livenessTurnRightFileId: turnRight!.id,
+      }),
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
 
-  private abrirCaso(evidenceFileId: string): void {
-    this.solicitar({ evidenceFileId }).subscribe({
+  private abrirCaso(request: VerificationRequest): void {
+    this.solicitar(request).subscribe({
       next: (resultado) => {
         this.state.set(ready(null));
         // La respuesta del alta no trae el tipo; se deriva del trámite que se
@@ -406,9 +438,88 @@ export class IdentityVerification {
     }
 
     this.caso.set(null);
-    this.evidencia.set([]);
+    this.frente.set([]);
+    this.reverso.set([]);
+    this.pruebaVida.set([]);
+    this.detenerCamara();
     this.rechazo.set(null);
     this.state.set(ready(null));
+  }
+
+  /** Abre cámara frontal; la revisión humana evalúa las poses capturadas. */
+  protected async iniciarCamara(): Promise<void> {
+    this.errorCamara.set(null);
+    if (!isPlatformBrowser(this.platformId) || !navigator.mediaDevices?.getUserMedia) {
+      this.errorCamara.set('Este navegador no permite capturar la prueba de vida.');
+      return;
+    }
+    try {
+      this.flujoCamara = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+      });
+      this.camaraAbierta.set(true);
+      const video = this.video()?.nativeElement;
+      if (!video) {
+        this.detenerCamara();
+        this.errorCamara.set('No pudimos abrir la cámara. Vuelva a intentarlo.');
+        return;
+      }
+      video.srcObject = this.flujoCamara;
+      await video.play();
+    } catch {
+      this.detenerCamara();
+      this.errorCamara.set('No se pudo acceder a la cámara. Revise el permiso y reintente.');
+    }
+  }
+
+  /** Guarda el fotograma actual y avanza a la pose siguiente. */
+  protected capturarPose(): void {
+    const video = this.video()?.nativeElement;
+    if (!video || video.videoWidth === 0) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        this.errorCamara.set('No pudimos guardar la foto. Intente de nuevo.');
+        return;
+      }
+      const names = ['centro', 'giro-izquierda', 'giro-derecha'] as const;
+      const paso = this.pruebaVida().length;
+      if (paso >= names.length) return;
+      const file = new File([blob], `prueba-vida-${names[paso]}.jpg`, { type: 'image/jpeg' });
+      this.pruebaVida.update((capturas) => [...capturas, file]);
+      this.errorCamara.set(null);
+      if (this.pruebaVida().length === 3) this.detenerCamara();
+    }, 'image/jpeg', 0.9);
+  }
+
+  protected repetirPruebaVida(): void {
+    this.pruebaVida.set([]);
+    this.errorCamara.set(null);
+    void this.iniciarCamara();
+  }
+
+  protected detenerCamara(): void {
+    this.flujoCamara?.getTracks().forEach((track) => track.stop());
+    this.flujoCamara = null;
+    const video = this.video()?.nativeElement;
+    if (video) video.srcObject = null;
+    this.camaraAbierta.set(false);
+  }
+
+  protected poseSiguiente(): string {
+    return ['Mire al frente', 'Gire la cabeza a la izquierda', 'Gire la cabeza a la derecha'][
+      this.pruebaVida().length
+    ] ?? 'Prueba de vida completa';
+  }
+
+  ngOnDestroy(): void {
+    this.detenerCamara();
   }
 }
 

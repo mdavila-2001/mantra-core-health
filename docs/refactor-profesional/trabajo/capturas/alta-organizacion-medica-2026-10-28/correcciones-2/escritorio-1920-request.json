@@ -1,0 +1,80 @@
+{
+  "url": "/iam/auth/register-organization",
+  "body": {
+    "organization": {
+      "code": "CM-CLINICA-NORTE-1793230479880",
+      "legalName": "Clínica Norte 1793230479880",
+      "legalEntityType": "SRL",
+      "tenantType": "CLINIC",
+      "legalDocuments": {
+        "constitutionFileId": "61f79dd2-f6a2-4048-a39e-bcb6c2c4429a",
+        "taxIdentifierFileId": "18d9a91f-9562-460f-a7bd-f0d00463801e",
+        "commerceRegistryFileId": "2a013797-ed00-40a1-a326-9beae7102248",
+        "operatingLicenseFileId": "92532bb7-c84a-463b-a05d-2164df4b65a2",
+        "healthAuthorityCertificateFileId": "e53b4a96-b5af-426e-a7dd-5a98f5dfc3e4"
+      },
+      "countryConceptId": "a19a53c5-4803-435b-a9b3-883669d3ecd0",
+      "jurisdictionConceptId": "2a609a76-f6c3-46a6-a875-daf08d562b7c",
+      "timeZone": "America/La_Paz",
+      "legalRepresentative": {
+        "fullName": "Marta Rojas",
+        "idNumber": "4872190",
+        "email": "marta.1793230502400@clinica-norte.test",
+        "powerOfAttorneyFileId": "033454da-9838-4cc0-ab8e-a3261ef27d9a"
+      },
+      "executives": {
+        "generalManager": {
+          "fullName": "Gabriel Gómez",
+          "phone": "+591 70011111",
+          "email": "general@clinica-norte.test"
+        },
+        "commercialManager": {
+          "fullName": "Carla Cruz",
+          "phone": "+591 70022222",
+          "email": "comercial@clinica-norte.test"
+        },
+        "marketingManager": {
+          "fullName": "Mario Mena",
+          "phone": "+591 70033333",
+          "email": "marketing@clinica-norte.test"
+        }
+      },
+      "medicalFacility": {
+        "taxIdentifierNumber": "1023456789",
+        "healthFacilityRegistrationNumber": "SEDES-SC-2020-0412",
+        "medicalDirector": {
+          "name": "Ana",
+          "middleName": "Lucía",
+          "lastName": "Rojas",
+          "motherLastName": "Paz",
+          "professionalLicenseNumber": "MAT-12345",
+          "email": "dir@clinica-norte.test"
+        },
+        "headquarters": {
+          "name": "Casa central",
+          "addressLines": [
+            "Punto GPS -17.76373, -63.43163"
+          ],
+          "latitude": -17.763727170851887,
+          "longitude": -63.431625366210945
+        },
+        "branches": [
+          {
+            "name": "Sucursal Equipetrol",
+            "addressLines": [
+              "Punto GPS -17.76373, -63.40519"
+            ],
+            "latitude": -17.763727170851887,
+            "longitude": -63.40518951416016
+          }
+        ]
+      }
+    },
+    "owner": {
+      "email": "marta.1793230502400@clinica-norte.test",
+      "password": "S3cret-passw0rd",
+      "name": "Marta",
+      "lastName": "Rojas"
+    }
+  }
+}

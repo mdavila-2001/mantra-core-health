@@ -5,7 +5,11 @@ import type {
   ServiceRequestPerformerInput,
 } from './service-request-performer.types';
 
-/** Clasificación de C2; el simulador la resuelve al concepto. Pendiente de backend P40. */
+/**
+ * Clasificación de la orden de análisis (C2, P40). La API la deriva de
+ * `categoryConceptId` (laboratorio, imagen; cualquier otra categoría declarada
+ * es `OTHER`) y la acepta en el alta; ausente = la orden no declara categoría.
+ */
 export type AnalysisCategory = 'LAB' | 'IMAGING' | 'OTHER';
 
 /* ============================================================================
@@ -44,9 +48,13 @@ export interface DiagnosticOrder {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; pendiente de backend P40. */
+  /** Categoría de análisis (P40); ausente = sin clasificar. */
   readonly category?: AnalysisCategory;
-  /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
+  /**
+   * Notas médicas que motivan la orden, en el orden citado (P40). La API
+   * siempre la manda (vacía si no hay); opcional por las órdenes del simulador
+   * anteriores al campo.
+   */
   readonly basedOnNoteIds?: readonly string[];
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;
@@ -60,6 +68,11 @@ export interface DiagnosticOrder {
   readonly previousDiagnosticReportId?: string;
   /** La justificación del médico, si repitió un estudio duplicado. */
   readonly duplicateOverrideReason?: string;
+  /**
+   * La orden activa, aún sin informe, sobre la que se repitió el estudio
+   * (v4.2.47). Ausente en cualquier otro caso.
+   */
+  readonly previousServiceRequestId?: string;
 }
 
 /**
@@ -113,13 +126,21 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
   readonly codeConceptId: string;
   readonly encounterId?: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; pendiente de backend P40. */
+  /**
+   * Categoría de análisis (P40). Sola, la API la guarda como su concepto; con
+   * `categoryConceptId`, tienen que coincidir (422
+   * `SERVICE_REQUEST_CATEGORY_MISMATCH`).
+   */
   readonly category?: AnalysisCategory;
-  /** Notas médicas que motivan la orden de C2; pendiente de backend P40. */
+  /**
+   * Notas médicas que motivan la orden (P40): del mismo paciente y, con
+   * encuentro, de la misma consulta (422 `BASED_ON_NOTE_NOT_FOUND` /
+   * `BASED_ON_NOTE_ENCOUNTER_MISMATCH`). Hasta 20, sin repetidos.
+   */
   readonly basedOnNoteIds?: readonly string[];
   /**
    * La respuesta del formulario médico de la que sale (instancia de `forms`).
-   * En la cita es obligatoria; pendiente de backend (P43).
+   * En la cita es obligatoria (P43).
    */
   readonly formInstanceId?: string;
   readonly priorityConceptId?: string;
@@ -145,6 +166,10 @@ export interface NewDiagnosticOrder extends ServiceRequestPerformerInput {
 export interface DiagnosticOrderCreated {
   readonly id: string;
   readonly patientProfileId: string;
+  /** Categoría de análisis que quedó guardada (P40); ausente = sin clasificar. */
+  readonly category?: AnalysisCategory;
+  /** Notas vinculadas a la orden (P40). */
+  readonly basedOnNoteIds?: readonly string[];
   readonly status: string;
   readonly intent: string;
   readonly createdAt: Date;
@@ -166,7 +191,8 @@ export interface DuplicateStudyCheck {
 
 /** El estudio previo que satisface (o casi satisface) el pedido nuevo. */
 export interface PreviousStudy {
-  readonly reportId: string;
+  /** Ausente cuando lo que consta es una orden activa que todavía no tiene informe. */
+  readonly reportId?: string;
   readonly serviceRequestId?: string;
   readonly studyName: string;
   readonly providerName: string;
@@ -306,7 +332,10 @@ export interface PatientOrder extends PatientSettlementFields, ServiceRequestPer
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
-  /** Categoría de análisis de C2; pendiente de backend P40. */
+  /**
+   * Categoría de análisis (P40); ausente = sin clasificar. Las notas que
+   * motivan la orden no llegan al portal: una nota puede no estar liberada.
+   */
   readonly category?: AnalysisCategory;
   readonly statusConceptId: string;
   readonly priorityConceptId?: string;
@@ -343,7 +372,10 @@ export interface DiagnosticResultShare {
   readonly reportId: string;
   /** La cuenta del profesional con acceso; la API la resuelve del perfil. */
   readonly practitionerUserId: string;
-  /** Nombre del profesional, si la API lo resolvió. */
+  /**
+   * El nombre del profesional, para que «Compartido con» no muestre un uuid.
+   * Ausente si la cuenta perdió su vínculo con la persona (caso raro).
+   */
   readonly practitionerName?: string;
   readonly validFrom: Date;
   readonly validTo?: Date;
@@ -353,9 +385,14 @@ export interface DiagnosticResultShare {
 /**
  * Compartir un resultado: con quién y hasta cuándo.
  *
- * Espejo de `ShareDiagnosticResultDto` (`origin/dev`): el profesional va por
- * su **perfil** y no hay motivo — la API lo cambió en `e57b3aaa`
- * (2026-09-26, «compartir por perfil y sin motivo inventado»).
+ * `practitionerProfileId` (CL-48), no una cuenta: es el mismo id que ya trae
+ * `MyCareRelationship.practitionerProfileId` (`GET /authz/me/access`, BR-20).
+ * El paciente elige de esa lista —sus relaciones asistenciales reales—, nunca
+ * tipea un identificador. El servidor exige que la relación esté vigente antes
+ * de resolver la cuenta y crear el acceso.
+ *
+ * `reason` se retiró (CL-50): `authz.resource_scope_grants` no tiene columna
+ * para guardarlo y el backend ya lo ignoraba en silencio.
  */
 export interface NewDiagnosticResultShare {
   readonly practitionerProfileId: string;

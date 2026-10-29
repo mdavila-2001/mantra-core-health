@@ -69,7 +69,7 @@ export class IdentityClient {
   ): Observable<VerificationRequestResult> {
     return this.http.post<VerificationRequestResult>(
       this.url('/identity/me/identity-verification'),
-      { evidenceFileId: request.evidenceFileId },
+      request,
     );
   }
 
@@ -79,7 +79,7 @@ export class IdentityClient {
   ): Observable<VerificationRequestResult> {
     return this.http.post<VerificationRequestResult>(
       this.url('/identity/me/practitioner/identity-verification'),
-      { evidenceFileId: request.evidenceFileId },
+      request,
     );
   }
 
@@ -90,7 +90,7 @@ export class IdentityClient {
     return this.http.post<VerificationRequestResult>(
       this.url('/identity/me/practitioner/license-verification'),
       {
-        evidenceFileId: request.evidenceFileId,
+        ...request,
         ...(request.jurisdictionAuthorizationId === undefined
           ? {}
           : { jurisdictionAuthorizationId: request.jurisdictionAuthorizationId }),
@@ -105,7 +105,7 @@ export class IdentityClient {
   ): Observable<VerificationRequestResult> {
     return this.http.post<VerificationRequestResult>(
       this.url(`/identity/me/tenants/${encodeURIComponent(tenantId)}/verification`),
-      { evidenceFileId: request.evidenceFileId },
+      request,
     );
   }
 

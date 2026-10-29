@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTES } from '../fixtures/personas';
+import { PATIENTS } from '../fixtures/people';
 import { MockRouter, isMockReply, preconditionFailed, validation, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registerLoyalty } from './loyalty.handlers';
@@ -144,7 +144,7 @@ describe('portal de lealtad del paciente (/loyalty/me)', () => {
   });
 
   it('inválido — otro paciente no está inscrito: 200 con enrolled false y ledger vacío', () => {
-    const other: MockUser = { ...patient, id: 'otro-usuario', patientProfileId: PACIENTES[1]!.id };
+    const other: MockUser = { ...patient, id: 'otro-usuario', patientProfileId: PATIENTS[1]!.id };
 
     expect(call<Me>('GET', '/loyalty/me', { user: other })).toEqual({ status: 200, body: { enrolled: false } });
     expect(call<LedgerPage>('GET', '/loyalty/me/points', { user: other }).body).toEqual({ entries: [] });

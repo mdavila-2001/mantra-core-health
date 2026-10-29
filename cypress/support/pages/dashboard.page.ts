@@ -40,7 +40,10 @@ export const DashboardPage = {
    * tiene que ser de trabajo — si no, lo que se dibuja es el otro.
    */
   esperarCargada(): void {
-    cy.porTestId('panel-accesos').should('be.visible');
+    // Hasta el 28/10/2026 se afirmaba con el árbol «Sus herramientas», que se
+    // retiró. El título del panel de la organización lo dibuja todo rol de
+    // trabajo; el del paciente vive dentro de `mi-salud`.
+    cy.get('[data-tutorial-id="panel-titulo"]').should('be.visible');
   },
 
   /** El panel del PACIENTE cargó — «Mi salud». */
@@ -56,7 +59,7 @@ export const DashboardPage = {
    * blanco.
    */
   esperarAlgunPanel(): void {
-    cy.get('[data-testid="panel-accesos"], [data-testid="mi-salud"]').should('be.visible');
+    cy.get('[data-tutorial-id="panel-titulo"], [data-testid="mi-salud"]').should('be.visible');
   },
 
   /** Afirma el encabezado de la pantalla. */

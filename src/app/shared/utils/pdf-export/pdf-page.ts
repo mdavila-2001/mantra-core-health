@@ -2,7 +2,7 @@ import { altoDeMarca, dibujarMarcaAlovida } from './alovida-mark';
 import type { PdfComposer } from './pdf-composer';
 import type { PdfMetaEntry } from './pdf-document.types';
 import { formatDateTime } from './pdf-format';
-import { contenerLogo } from './pdf-logo';
+import { contenerLogo } from '../../../core/pdf-branding/pdf-logo';
 import {
   PDF_COLORS,
   PDF_GRADIENTS,

@@ -72,10 +72,14 @@
         }
 
         <h2 class="titulo-de-seccion">Mis activos</h2>
+        <p class="nota nota--sin-margen">
+          El interruptor «Automatizado» guarda su preferencia; el registro automático todavía no está disponible.
+          Mientras tanto, use «Registrar avance» en cada uno de sus activos.
+        </p>
         @if (assets(); as estado) {
           @switch (estado.status) {
             @case ('loading') {
-              <p class="nota" role="status">Cargando…</p>
+              <app-loading-state class="nota" message="Cargando sus activos…" />
             }
             @case ('empty') {
               <p class="nota">{{ estado.message }}</p>
@@ -115,6 +119,64 @@
                     >
                       {{ avanceDeActivoEnCurso() === activo.id ? 'Registrando…' : 'Registrar avance' }}
                     </button>
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      [attr.aria-expanded]="assetHistory.openId() === activo.id"
+                      [attr.aria-controls]="'historial-' + activo.id"
+                      [attr.aria-label]="(assetHistory.openId() === activo.id ? 'Ocultar historial' : 'Ver historial') + ': ' + activo.name"
+                      (clicked)="assetHistory.toggle(activo.id)"
+                    >
+                      {{ assetHistory.openId() === activo.id ? 'Ocultar historial' : 'Ver historial' }}
+                    </button>
+                    @if (assetHistory.openId() === activo.id) {
+                      <section class="historial" [id]="'historial-' + activo.id" [attr.aria-label]="'Historial de depreciación: ' + activo.name">
+                        @switch (assetHistory.state().status) {
+                          @case ('loading') {
+                            <app-loading-state class="nota" message="Cargando historial…" />
+                          }
+                          @case ('empty') {
+                            <p class="nota">Este activo todavía no tiene depreciaciones registradas.</p>
+                          }
+                          @case ('ready') {
+                            @if (assetHistory.state(); as estadoHistorial) {
+                              @if (estadoHistorial.status === 'ready') {
+                                <div class="historial__tabla">
+                                  <table>
+                                    <caption class="sr-only">Depreciaciones de {{ activo.name }}</caption>
+                                    <thead>
+                                      <tr>
+                                        <th scope="col">Período</th>
+                                        <th scope="col" class="numero">Depreciación</th>
+                                        <th scope="col" class="numero">Valor en libros</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      @for (fila of estadoHistorial.data.depreciations; track fila.id) {
+                                        <tr>
+                                          <td>{{ fila.fiscalPeriodCode ?? fila.registeredAt.slice(0, 10) }}</td>
+                                          <td class="numero">{{ fila.amount }}</td>
+                                          <td class="numero">{{ fila.bookValueAfter ?? '—' }}</td>
+                                        </tr>
+                                      }
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <p class="nota">
+                                  Depreciación acumulada: {{ estadoHistorial.data.accumulatedDepreciation ?? '0.00' }} de
+                                  {{ estadoHistorial.data.acquisitionCost ?? '—' }}.
+                                </p>
+                              }
+                            }
+                          }
+                          @default {
+                            <app-alert tone="error">No pudimos cargar el historial de este activo.</app-alert>
+                          }
+                        }
+                      </section>
+                    }
                   </li>
                 }
               </ul>
@@ -174,10 +236,14 @@
         }
 
         <h2 class="titulo-de-seccion">Mis pasivos</h2>
+        <p class="nota nota--sin-margen">
+          El interruptor «Automatizado» guarda su preferencia; el registro automático todavía no está disponible.
+          Mientras tanto, use «Registrar avance» en cada uno de sus pasivos.
+        </p>
         @if (liabilities(); as estado) {
           @switch (estado.status) {
             @case ('loading') {
-              <p class="nota" role="status">Cargando…</p>
+              <app-loading-state class="nota" message="Cargando sus pasivos…" />
             }
             @case ('empty') {
               <p class="nota">{{ estado.message }}</p>
@@ -215,6 +281,70 @@
                     >
                       {{ avanceDePasivoEnCurso() === pasivo.id ? 'Registrando…' : 'Registrar avance' }}
                     </button>
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      [attr.aria-expanded]="liabilitySchedule.openId() === pasivo.id"
+                      [attr.aria-controls]="'historial-' + pasivo.id"
+                      [attr.aria-label]="(liabilitySchedule.openId() === pasivo.id ? 'Ocultar cronograma' : 'Ver cronograma') + ': ' + pasivo.name"
+                      (clicked)="liabilitySchedule.toggle(pasivo.id)"
+                    >
+                      {{ liabilitySchedule.openId() === pasivo.id ? 'Ocultar cronograma' : 'Ver cronograma' }}
+                    </button>
+                    @if (liabilitySchedule.openId() === pasivo.id) {
+                      <section class="historial" [id]="'historial-' + pasivo.id" [attr.aria-label]="'Cronograma de cuotas: ' + pasivo.name">
+                        @switch (liabilitySchedule.state().status) {
+                          @case ('loading') {
+                            <app-loading-state class="nota" message="Cargando cronograma…" />
+                          }
+                          @case ('empty') {
+                            <p class="nota">Este pasivo no tiene cuotas.</p>
+                          }
+                          @case ('ready') {
+                            @if (liabilitySchedule.state(); as estadoCronograma) {
+                              @if (estadoCronograma.status === 'ready') {
+                                <div class="historial__tabla">
+                                  <table>
+                                    <caption class="sr-only">Cuotas de {{ pasivo.name }}</caption>
+                                    <thead>
+                                      <tr>
+                                        <th scope="col">Cuota</th>
+                                        <th scope="col">Vence</th>
+                                        <th scope="col" class="numero">Capital</th>
+                                        <th scope="col" class="numero">Interés</th>
+                                        <th scope="col" class="numero">Pagado</th>
+                                        <th scope="col">Estado</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      @for (cuota of estadoCronograma.data.schedule; track cuota.id) {
+                                        <tr>
+                                          <td>{{ cuota.installmentNumber }}</td>
+                                          <td>{{ cuota.dueDate ?? '—' }}</td>
+                                          <td class="numero">{{ cuota.principalDue ?? '0.00' }}</td>
+                                          <td class="numero">{{ cuota.interestDue ?? '0.00' }}</td>
+                                          <td class="numero">{{ cuota.paidAmount ?? '0.00' }}</td>
+                                          <td>{{ isInstallmentPaid(cuota.paidAmount) ? 'Pagada' : 'Pendiente' }}</td>
+                                        </tr>
+                                      }
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <p class="nota">
+                                  Saldo pendiente: {{ estadoCronograma.data.outstandingAmount ?? '—' }} de
+                                  {{ estadoCronograma.data.principalAmount ?? '—' }}.
+                                </p>
+                              }
+                            }
+                          }
+                          @default {
+                            <app-alert tone="error">No pudimos cargar el cronograma de este pasivo.</app-alert>
+                          }
+                        }
+                      </section>
+                    }
                   </li>
                 }
               </ul>

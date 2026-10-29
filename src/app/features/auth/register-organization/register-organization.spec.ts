@@ -7,9 +7,20 @@ import { provideRouter, Router } from '@angular/router';
 import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
-import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { NEVER, of } from 'rxjs';
+
+import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
+import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { selectOptionLabels, selectTrigger } from '../../../../testing/select';
 import { RegisterOrganization } from './register-organization';
-import { controlDeNombreExtra } from '../registro-compartido/campos-de-nombre/nombre-de-persona';
+import { nameExtraControl } from '../shared-registration/name-fields/person-name';
+
+/** El punto confirmado de la casa matriz en las pruebas. */
+const PUNTO_CASA_MATRIZ = { lat: -17.7833, lng: -63.1821 };
 
 const RESPUESTA = {
   tenantId: 't-1',
@@ -30,12 +41,48 @@ const CATALOGO_TIPO_SOCIETARIO = {
   valueSetId: 'vs-1',
   allowCustomValue: false,
   options: [
-    { conceptId: 'c-unipersonal', code: 'UNIPERSONAL', display: 'Sole proprietorship', ordinal: 0, isDefault: false },
-    { conceptId: 'c-srl', code: 'SRL', display: 'Limited liability company (S.R.L.)', ordinal: 1, isDefault: false },
-    { conceptId: 'c-br-ltda', code: 'BR_LTDA', display: 'Sociedade Limitada (Brazil)', ordinal: 8, isDefault: false },
-    { conceptId: 'c-br-sa', code: 'BR_SA', display: 'Sociedade Anônima (Brazil)', ordinal: 9, isDefault: false },
-    { conceptId: 'c-us-llc', code: 'US_LLC', display: 'Limited Liability Company (US)', ordinal: 12, isDefault: false },
-    { conceptId: 'c-ar-sas', code: 'AR_SAS', display: 'Sociedad por Acciones Simplificada (Argentina)', ordinal: 16, isDefault: false },
+    {
+      conceptId: 'c-unipersonal',
+      code: 'UNIPERSONAL',
+      display: 'Sole proprietorship',
+      ordinal: 0,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-srl',
+      code: 'SRL',
+      display: 'Limited liability company (S.R.L.)',
+      ordinal: 1,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-br-ltda',
+      code: 'BR_LTDA',
+      display: 'Sociedade Limitada (Brazil)',
+      ordinal: 8,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-br-sa',
+      code: 'BR_SA',
+      display: 'Sociedade Anônima (Brazil)',
+      ordinal: 9,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-us-llc',
+      code: 'US_LLC',
+      display: 'Limited Liability Company (US)',
+      ordinal: 12,
+      isDefault: false,
+    },
+    {
+      conceptId: 'c-ar-sas',
+      code: 'AR_SAS',
+      display: 'Sociedad por Acciones Simplificada (Argentina)',
+      ordinal: 16,
+      isDefault: false,
+    },
   ],
 };
 
@@ -58,6 +105,10 @@ describe('RegisterOrganization', () => {
         // El mapa de la casa matriz (subtarea 1.3) no debe cargar Leaflet de
         // verdad en jsdom: ver el mismo provider en `design-system-sample.spec.ts`.
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+        // El selector pide la calle y el catálogo de municipios; acá no
+        // responden: lo deducido se emite a mano por `localidad`.
+        { provide: ReverseGeocodingClient, useValue: { streetAt: () => NEVER } },
+        { provide: BoMunicipalitiesCatalog, useValue: { listar: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -194,6 +245,8 @@ describe('RegisterOrganization', () => {
       sigla: 'ANDINA',
       regulatorIdentifier: 'NIT-123456',
       address: 'Av. Siempre Viva 123',
+      // El punto de la casa matriz es obligatorio (pedido del cliente del 26/10/2026).
+      gpsCasaMatriz: PUNTO_CASA_MATRIZ,
       // `incorporationCountry` se declara antes que `timeZone` en el form:
       // el valor explícito de acá siempre gana sobre el default que dispara
       // la suscripción al cambiar de país (ver `acomodarPaisYTipoSocietario`).
@@ -213,8 +266,7 @@ describe('RegisterOrganization', () => {
         ...extra.legalRepresentativeNombre,
       },
       legalRepresentativeIdNumber:
-        extra.legalRepresentativeIdNumber ??
-        REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
+        extra.legalRepresentativeIdNumber ?? REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
       legalRepresentativeEmail:
         extra.legalRepresentativeEmail ?? REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
       legalRepresentativePhone: extra.legalRepresentativePhone ?? '',
@@ -236,7 +288,8 @@ describe('RegisterOrganization', () => {
    */
   function avanzarHasta(fragmentoDeTitulo: string): void {
     for (let paso = 0; paso < 12; paso += 1) {
-      const titulo = fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
+      const titulo =
+        fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
       if (titulo.includes(fragmentoDeTitulo)) return;
       const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
         '[data-testid="paginated-form-continuar"]',
@@ -265,6 +318,7 @@ describe('RegisterOrganization', () => {
     expect(component.form.controls.sigla.touched).toBe(true);
     expect(component.form.controls.regulatorIdentifier.touched).toBe(true);
     expect(component.form.controls.address.touched).toBe(true);
+    expect(component.form.controls.gpsCasaMatriz.touched).toBe(true);
     // `http.verify()` del afterEach falla si algo hubiera salido a la red.
   });
 
@@ -319,6 +373,8 @@ describe('RegisterOrganization', () => {
           regulatorIdentifier: 'NIT-123456',
           sigla: 'ANDINA',
           address: 'Av. Siempre Viva 123',
+          latitude: -17.7833,
+          longitude: -63.1821,
         },
         legalDocuments: DOCUMENTOS_DE_PRUEBA,
         legalRepresentative: {
@@ -397,6 +453,8 @@ describe('RegisterOrganization', () => {
       regulatorIdentifier: 'NIT-123456',
       sigla: 'ANDINA',
       address: 'Av. Siempre Viva 123',
+      latitude: -17.7833,
+      longitude: -63.1821,
     });
 
     req.flush(RESPUESTA);
@@ -457,10 +515,8 @@ describe('RegisterOrganization', () => {
   describe('documentos legales de afiliación (subtarea 1.2)', () => {
     /**
      * Las instancias de `app-dropzone-pdf` renderizadas en la página
-     * VIGENTE. El motor sólo pinta la página actual, y con 5 campos
-     * `custom` en una sección de tope 4, se parte en «(1 de 2)» (los
-     * primeros 4) y «(2 de 2)» (el SEDES) — hay que estar en la página
-     * correcta para que aparezcan.
+     * VIGENTE. El motor sólo pinta la página actual; la sección va entera
+     * (`sinPartir`), así que los cinco están en la misma página.
      */
     function dropzonesDeDocumentos(): DropzonePdf[] {
       return fixture.debugElement
@@ -472,12 +528,10 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
-      const primeraTanda = dropzonesDeDocumentos();
-      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
-      const segundaTanda = dropzonesDeDocumentos();
+      avanzarHasta('Documentación legal obligatoria (PDF)');
 
-      const dropzones = [...primeraTanda, ...segundaTanda];
+      // Los cinco en UNA sola vista (pedido del cliente del 28/10/2026).
+      const dropzones = dropzonesDeDocumentos();
       expect(dropzones).toHaveLength(5);
       for (const dropzone of dropzones) {
         expect(dropzone.required()).toBe(true);
@@ -488,12 +542,9 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
-      const primeraTanda = dropzonesDeDocumentos().map((d) => d.testId());
-      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
-      const segundaTanda = dropzonesDeDocumentos().map((d) => d.testId());
+      avanzarHasta('Documentación legal obligatoria (PDF)');
 
-      const testIds = [...primeraTanda, ...segundaTanda];
+      const testIds = dropzonesDeDocumentos().map((d) => d.testId());
       expect(new Set(testIds).size).toBe(5);
       expect(testIds).toContain('registro-organizacion-doc-healthAuthorityCertificateFileId');
     });
@@ -514,7 +565,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
+      avanzarHasta('Documentación legal obligatoria (PDF)');
 
       const dropzoneSedes = dropzonesDeDocumentos().find(
         (d) => d.testId() === 'registro-organizacion-doc-healthAuthorityCertificateFileId',
@@ -530,7 +581,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
-      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
+      avanzarHasta('Documentación legal obligatoria (PDF)');
 
       const dropzoneConstitucion = dropzonesDeDocumentos().find(
         (d) => d.testId() === 'registro-organizacion-doc-constitutionFileId',
@@ -575,7 +626,7 @@ describe('RegisterOrganization', () => {
     it('con la casa matriz confirmada, el cuerpo del alta lleva latitude y longitude', () => {
       fixture.detectChanges();
       completar();
-      component.gpsCasaMatriz.set({ lat: -17.7833, lng: -63.1821 });
+      component.fijarGpsCasaMatriz({ lat: -17.7, lng: -63.1 });
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
@@ -584,27 +635,44 @@ describe('RegisterOrganization', () => {
         regulatorIdentifier: 'NIT-123456',
         sigla: 'ANDINA',
         address: 'Av. Siempre Viva 123',
-        latitude: -17.7833,
-        longitude: -63.1821,
+        latitude: -17.7,
+        longitude: -63.1,
       });
 
       req.flush(RESPUESTA);
     });
 
-    it('la sección "Datos de la aseguradora" ofrece las dos puertas del mapa', () => {
+    it('sin el punto de la casa matriz no sale a la red', () => {
       fixture.detectChanges();
       completar();
+      component.fijarGpsCasaMatriz(null);
+
+      component.submit();
+
+      // `http.verify()` del afterEach falla si algo hubiera salido a la red.
+      expect(component.form.controls.gpsCasaMatriz.invalid).toBe(true);
+    });
+
+    it('la sección "Datos de la aseguradora" abre el mapa de entrada, con la ubicación actual al lado', () => {
+      fixture.detectChanges();
+      completar();
+      component.fijarGpsCasaMatriz(null);
       fixture.detectChanges();
       avanzarHasta('Datos de la aseguradora');
 
+      // Las dos puertas: tocar el plano, que ya está abierto (pedido del
+      // cliente del 26/10/2026), o pedir la ubicación actual.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-casa-matriz-map"]'),
+      ).not.toBeNull();
       expect(
         fixture.nativeElement.querySelector(
-          '[data-testid="registro-organizacion-casa-matriz-location-use"]',
+          '[data-testid="registro-organizacion-casa-matriz-location-pick-indicacion"]',
         ),
       ).not.toBeNull();
       expect(
         fixture.nativeElement.querySelector(
-          '[data-testid="registro-organizacion-casa-matriz-location-pick"]',
+          '[data-testid="registro-organizacion-casa-matriz-location-use"]',
         ),
       ).not.toBeNull();
     });
@@ -612,7 +680,7 @@ describe('RegisterOrganization', () => {
     it('una casa matriz ya confirmada sobrevive a ir y volver de página', () => {
       fixture.detectChanges();
       completar();
-      component.gpsCasaMatriz.set({ lat: -17.7833, lng: -63.1821 });
+      component.fijarGpsCasaMatriz(PUNTO_CASA_MATRIZ);
       fixture.detectChanges();
       avanzarHasta('Datos de la aseguradora');
 
@@ -628,86 +696,44 @@ describe('RegisterOrganization', () => {
     });
   });
 
-  describe('el mapa vacía la dirección de la casa matriz (D-06)', () => {
-    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
-    function direccionEscritaYDejada(): HTMLInputElement {
+  describe('la ubicación de la casa matriz sale del punto (26/10/2026)', () => {
+    function localidad(calle: string | null, zona: string | null = null): LocalityFromPoint {
+      return { punto: PUNTO_CASA_MATRIZ, calle, calleSola: calle, zona, municipioConceptId: null };
+    }
+
+    function irALaUbicacion(): void {
       fixture.detectChanges();
       completar();
+      component.fijarGpsCasaMatriz(null);
       fixture.detectChanges();
       avanzarHasta('Datos de la aseguradora');
-      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
-        '[data-testid="registro-organizacion-direccion"]',
-      );
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-      return campo;
     }
 
-    function tocarElMapa(): void {
-      const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
-      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
-      fixture.detectChanges();
+    function selector(): MapLocationPicker {
+      return fixture.debugElement.query(By.directive(MapLocationPicker))
+        .componentInstance as MapLocationPicker;
     }
 
-    function errorDe(campo: HTMLElement): string {
-      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
-    }
+    it('el mapa es el primer campo de su página, obligatorio, y «Dirección» ya no se escribe', () => {
+      const pagina = component['paginas']().find((p) => p.titulo.includes('Datos de la aseguradora'))!;
+      expect(pagina.campos[0]).toMatchObject({ key: 'gpsCasaMatriz', control: 'custom', required: true });
+      expect(pagina.campos.map((c) => c.key)).not.toContain('address');
 
-    const AVISO = '[data-testid="registro-organizacion-direccion-reescribir"]';
-
-    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
-      const campo = direccionEscritaYDejada();
-      expect(component.form.controls.address.touched).toBe(true);
-
-      tocarElMapa();
-
-      expect(campo.value).toBe('');
-      expect(errorDe(campo)).toBe('');
-      expect(fixture.nativeElement.querySelector(AVISO)).not.toBeNull();
-    });
-
-    it('el aviso queda junto a «Dirección»: el mapa es el campo siguiente', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
-
-      const siguiente = campo.closest('app-form-field')?.nextElementSibling;
-      expect(siguiente?.querySelector(AVISO)).not.toBeNull();
-    });
-
-    it('en un país con varias zonas horarias, el mapa también queda pegado a «Dirección»', () => {
-      // Con la zona horaria son cinco campos y el motor parte la sección en dos
-      // páginas: el mapa tiene que caer en la de «Dirección», justo después.
-      fixture.detectChanges();
-      completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
-      component.form.controls.incorporationCountry.setValue('US');
-      fixture.detectChanges();
-      avanzarHasta('Datos de la aseguradora');
-      // Es el caso de varias zonas: la zona horaria está en esta página.
+      irALaUbicacion();
       expect(
-        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-zona"]'),
-      ).not.toBeNull();
-
-      const campo: HTMLElement = fixture.nativeElement.querySelector(
-        '[data-testid="registro-organizacion-direccion"]',
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-direccion"]'),
+      ).toBeNull();
+      // En el DOM también va primero: antes que el NIT.
+      const campos = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll(
+          'app-map-location-picker, [data-testid="registro-organizacion-nit"]',
+        ),
       );
-      const siguiente = campo.closest('app-form-field')?.nextElementSibling;
-      expect(siguiente?.querySelector('app-ubicacion-picker')).not.toBeNull();
+      expect(campos[0]?.tagName.toLowerCase()).toBe('app-map-location-picker');
     });
 
-    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
-
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-
-      expect(errorDe(campo)).toBe('Escriba la dirección (hasta 300 caracteres).');
-      expect(fixture.nativeElement.querySelector(AVISO)).not.toBeNull();
-    });
-
-    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
+    it('sin el punto confirmado no deja pasar, y lo dice', () => {
+      irALaUbicacion();
 
       fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
       fixture.detectChanges();
@@ -715,7 +741,31 @@ describe('RegisterOrganization', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Datos de la aseguradora',
       );
-      expect(errorDe(campo)).toBe('Escriba la dirección (hasta 300 caracteres).');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+    });
+
+    it('confirmar el punto en el mapa llena el control obligatorio', () => {
+      irALaUbicacion();
+
+      selector().confirmado.emit(PUNTO_CASA_MATRIZ);
+
+      expect(component.form.controls.gpsCasaMatriz.value).toEqual(PUNTO_CASA_MATRIZ);
+      expect(component.gpsCasaMatriz()).toEqual(PUNTO_CASA_MATRIZ);
+    });
+
+    it('lo deducido del punto escribe «Dirección»; sin calle, la zona o el punto', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad('Calle Guapay 3861, Equipetrol', 'Equipetrol'));
+      expect(component.form.controls.address.value).toBe('Calle Guapay 3861, Equipetrol');
+
+      selector().localidad.emit(localidad(null, 'Equipetrol'));
+      expect(component.form.controls.address.value).toBe('Equipetrol');
+
+      selector().localidad.emit(localidad(null));
+      expect(component.form.controls.address.value).toBe('Punto GPS -17.78330, -63.18210');
     });
   });
 
@@ -805,7 +855,9 @@ describe('RegisterOrganization', () => {
     it('con la gerencia de marketing incompleta, «Continuar» no avanza y su panel se despliega solo', () => {
       fixture.detectChanges();
       completar();
-      component.form.controls.executives.controls.marketingManager.controls.nombre.controls.lastName.setValue('');
+      component.form.controls.executives.controls.marketingManager.controls.nombre.controls.lastName.setValue(
+        '',
+      );
       fixture.detectChanges();
       avanzarHasta('Directorio ejecutivo');
 
@@ -850,7 +902,8 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
 
       expect(
-        component.form.controls.executives.controls.generalManager.controls.nombre.controls.name.value,
+        component.form.controls.executives.controls.generalManager.controls.nombre.controls.name
+          .value,
       ).toBe(GERENCIAS_DE_PRUEBA.generalManager.nombre.name);
     });
 
@@ -914,12 +967,10 @@ describe('RegisterOrganization', () => {
     it('los nombres agregados con «+ Agregar otro nombre» viajan en el fullName del representante y de cada gerencia', () => {
       fixture.detectChanges();
       completar();
-      component.form.controls.legalRepresentative.controls.extraNames.push(
-        controlDeNombreExtra(),
-      );
+      component.form.controls.legalRepresentative.controls.extraNames.push(nameExtraControl());
       component.form.controls.legalRepresentative.controls.extraNames.at(0).setValue('Beatriz');
       const gerente = component.form.controls.executives.controls.commercialManager.controls.nombre;
-      gerente.controls.extraNames.push(controlDeNombreExtra());
+      gerente.controls.extraNames.push(nameExtraControl());
       gerente.controls.extraNames.at(0).setValue('Rocío');
       component.submit();
 
@@ -934,10 +985,21 @@ describe('RegisterOrganization', () => {
       req.flush(RESPUESTA);
     });
 
+    it('el segundo, tercero y nombres extra del representante (el owner) respetan el límite agregado del backend', () => {
+      fixture.detectChanges();
+      completar();
+      const grupo = component.form.controls.legalRepresentative;
+      grupo.controls.middleName.setValue('a'.repeat(50));
+      grupo.controls.thirdName.setValue('b'.repeat(50));
+      component.submit();
+      expect(grupo.hasError('nombresAdicionalesLargos')).toBe(true);
+      http.expectNone('/iam/auth/register-organization');
+    });
+
     it('los nombres agregados del representante se pliegan en el middleName del owner', () => {
       fixture.detectChanges();
       completar({ legalRepresentativeNombre: { middleName: 'María' } });
-      component.form.controls.legalRepresentative.controls.extraNames.push(controlDeNombreExtra());
+      component.form.controls.legalRepresentative.controls.extraNames.push(nameExtraControl());
       component.form.controls.legalRepresentative.controls.extraNames.at(0).setValue('Luz');
       component.submit();
 
@@ -1006,12 +1068,8 @@ describe('RegisterOrganization', () => {
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
-      expect(req.request.body.organization.executives.commercialManager.fullName).toBe(
-        'Ana Paz',
-      );
-      expect(req.request.body.organization.executives.marketingManager.fullName).toBe(
-        'Luis Rojas',
-      );
+      expect(req.request.body.organization.executives.commercialManager.fullName).toBe('Ana Paz');
+      expect(req.request.body.organization.executives.marketingManager.fullName).toBe('Luis Rojas');
 
       req.flush(RESPUESTA);
     });
@@ -1092,7 +1150,8 @@ describe('RegisterOrganization', () => {
         fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
         fixture.detectChanges();
       }
-      expect(titulos.length).toBe(7);
+      // Seis: los documentos legales van en una sola página (28/10/2026).
+      expect(titulos.length).toBe(6);
       expect(titulos.some((titulo) => titulo.includes('Su cuenta'))).toBe(false);
       expect('ownerName' in component.form.controls).toBe(false);
       expect('email' in component.form.controls).toBe(false);
@@ -1114,9 +1173,7 @@ describe('RegisterOrganization', () => {
         'registro-organizacion-representante-correo',
         'registro-organizacion-representante-password',
       ]) {
-        expect(
-          fixture.nativeElement.querySelector(`[data-testid="${testId}"]`),
-        ).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
       }
     });
 
@@ -1127,7 +1184,7 @@ describe('RegisterOrganization', () => {
       avanzarHasta('Representante legal (1 de 2)');
 
       const grilla: HTMLElement = fixture.nativeElement.querySelector(
-        'app-campos-de-nombre .nombres',
+        'app-inline-name-fields .nombres',
       );
       expect(grilla).not.toBeNull();
       expect(grilla.querySelectorAll('.nombres__campo--tercio').length).toBe(3);
@@ -1141,9 +1198,7 @@ describe('RegisterOrganization', () => {
       fixture.detectChanges();
       avanzarHasta('Representante legal (1 de 2)');
 
-      fixture.nativeElement
-        .querySelector('[data-testid="paginated-form-continuar"]')
-        ?.click();
+      fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
       fixture.detectChanges();
 
       expect(
@@ -1222,21 +1277,22 @@ describe('RegisterOrganization', () => {
   });
 
   describe('errores', () => {
-    it('CONFLICT muestra el mensaje que manda la API', () => {
+    it('CONFLICT de correo explica qué hacer, sin repetir el texto de la API', () => {
       fixture.detectChanges();
       completar();
       component.submit();
       http.expectOne('/iam/auth/register-organization').flush(
         {
           code: 'CONFLICT',
-          message: 'Ya existe una organización con ese código',
+          message: 'Ya existe una cuenta con ese correo',
           timestamp: 't',
           path: '/iam/auth/register-organization',
         },
         { status: 409, statusText: 'Conflict' },
       );
 
-      expect(component.errorMessage()).toBe('Ya existe una organización con ese código');
+      expect(component.errorMessage()).toContain('correo del representante legal');
+      expect(component.errorMessage()).toContain('¿Olvidó su contraseña?');
       expect(component.registered()).toBe(false);
     });
 
@@ -1328,14 +1384,14 @@ describe('RegisterOrganization', () => {
       http.expectNone('/iam/auth/register-organization');
     });
 
-    it('AC-02 y AC-04: Bolivia (zona única) queda en 7 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 6 páginas, sin «Cómo se la identifica», sin «Su cuenta» y sin selector de zona', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
 
-      // Siete: ya no hay «Tu cuenta». La única persona que inicia sesión es el
-      // representante legal, y su contraseña se pide en su propia página.
-      expect(totalDePaginas()).toBe(7);
+      // Seis: ya no hay «Tu cuenta» (la única persona que inicia sesión es el
+      // representante legal) y los documentos legales van en una sola página.
+      expect(totalDePaginas()).toBe(6);
       expect(titulosDeLosPasos().some((titulo) => titulo.includes('identifica'))).toBe(false);
 
       // «La empresa»: nombre, sigla, país, tipo societario — sin código ni
@@ -1368,7 +1424,7 @@ describe('RegisterOrganization', () => {
       req.flush(RESPUESTA);
     });
 
-    it('AC-03: Estados Unidos (multizona) ofrece el selector de zona horaria, preseleccionado en la del Este', () => {
+    it('AC-03: Estados Unidos (multizona) ofrece el selector de zona horaria, preseleccionado en la del Este', async () => {
       fixture.detectChanges();
       completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
       // `completar()` fija `timeZone` en 'America/La_Paz' de forma explícita
@@ -1380,20 +1436,20 @@ describe('RegisterOrganization', () => {
       component.form.controls.incorporationCountry.setValue('US');
       fixture.detectChanges();
 
-      // Una más que Bolivia: el selector de zona horaria es el quinto campo
-      // de «Datos de la aseguradora», y el motor parte esa sección en dos.
-      expect(totalDePaginas()).toBe(8);
+      // Las mismas que Bolivia: el selector de zona horaria suma un campo a
+      // «Datos de la aseguradora», pero desde que «Dirección» sale del punto
+      // (26/10/2026) la sección cabe en una página de cuatro.
+      expect(totalDePaginas()).toBe(6);
 
       avanzarHasta('Datos de la aseguradora');
-      // `[data-testid]` va en el host `<app-select>`; el `<select>` nativo
-      // (donde vive `aria-required`, ver `select.html`) es su descendiente.
+      // `[data-testid]` va en el host `<app-select>`; el botón que hace de
+      // campo (donde vive `aria-required`, ver `select.html`) es su descendiente.
       const contenedor: HTMLElement | null = fixture.nativeElement.querySelector(
         '[data-testid="registro-organizacion-zona"]',
       );
-      const nativo: HTMLSelectElement | null | undefined = contenedor?.querySelector('select');
       expect(contenedor).not.toBeNull();
-      expect(nativo?.getAttribute('aria-required')).toBe('true');
-      expect(contenedor?.querySelectorAll('option:not([hidden])').length).toBe(7);
+      expect(selectTrigger(contenedor!).getAttribute('aria-required')).toBe('true');
+      expect((await selectOptionLabels(fixture, contenedor!)).length).toBe(7);
       expect(component.form.controls.timeZone.value).toBe('America/New_York');
 
       // Elegir el Pacífico y enviar: el valor viaja en el cuerpo.

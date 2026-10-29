@@ -34,7 +34,7 @@ import { MOCK_USERS } from './mock-session';
       </div>
       @if (!plegado()) {
         <p class="mock__texto">
-          <strong>Rama mockup:</strong> sin backend. Todo lo que ve sale de datos de prueba en memoria y
+          <strong>Modo demo:</strong> sin backend. Todo lo que ve sale de datos de prueba en memoria y
           los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
         </p>
         <p class="mock__texto">
@@ -140,9 +140,14 @@ import { MOCK_USERS } from './mock-session';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MockBanner {
+  /**
+   * En backend real el banner de datos de prueba / demo se desactiva completamente.
+   */
+  protected readonly activo = false;
   protected readonly plegado = signal(true);
   protected readonly cuentas = MOCK_USERS.map((u) => ({
     email: u.email,
     rol: u.roles[0] === 'PRACTITIONER' ? 'médica' : u.roles[0] === 'PATIENT' ? 'paciente' : u.roles[0] === 'SUPERADMIN' ? 'superadmin' : u.roles[0] === 'MEDICAL_VISITOR' ? 'visitador médico' : 'administrador',
   }));
 }
+

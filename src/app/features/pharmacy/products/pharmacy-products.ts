@@ -44,7 +44,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, mapData, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
-import { COLUMNAS_DEL_CSV } from '../catalog-rules/catalogo.reglas';
+import { CSV_COLUMNS } from '../catalog-rules/catalog.rules';
 import { pharmacyErrorMessage } from '../pharmacy-error-message';
 import { PharmacyScope } from '../pharmacy-scope';
 import { ProductDialog } from './product-dialog/product-dialog';
@@ -510,7 +510,7 @@ export class PharmacyProducts {
   /** Descarga lo que el filtro deja a la vista, con las columnas de la plantilla de importación. */
   protected exportCsv(): void {
     const list = dataOf(this.filtered()) ?? [];
-    const columns: CsvColumn<PharmacyProduct>[] = COLUMNAS_DEL_CSV.map((column) => ({
+    const columns: CsvColumn<PharmacyProduct>[] = CSV_COLUMNS.map((column) => ({
       header: column.encabezado,
       value: (product) => csvValue(product, column.campo),
     }));

@@ -57,6 +57,7 @@ import type {
   WaitlistQuery,
   PublishedTemplatePage,
   RetiredTemplate,
+  TemplateLiveBookings,
   AvailabilityExceptionPage,
   NewDirectAppointment,
   DirectAppointmentCreated,
@@ -70,9 +71,12 @@ import type {
   ServiceHold,
   ServiceOffering,
   ServiceOfferingChanges,
+  FlexibleAvailability,
+  FlexibleAvailabilityQuery,
+  FlexibleHold,
+  NewFlexibleHold,
 } from './scheduling.types';
-import { SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS } from './scheduling.types';
-import { withSimulatorExtensions } from '../simulator-only';
+import { tenantOptions, type TenantScope } from './tenant-scope';
 
 /**
  * Cliente de `scheduling` (M41): la lectura de la agenda y el ciclo de la
@@ -115,9 +119,10 @@ export class SchedulingClient {
    * `GET /scheduling/resources` — los recursos agendables de la organización.
    *
    * @param query - Organización (obligatoria) y filtros opcionales.
+   * @param scope - Como qué organización se pregunta, si no es la activa.
    * @returns Los recursos, con su capacidad y su zona horaria.
    */
-  listResources(query: AgendaResourceQuery): Observable<AgendaResourcePage> {
+  listResources(query: AgendaResourceQuery, scope?: TenantScope): Observable<AgendaResourcePage> {
     // Parámetro a parámetro y nunca con un objeto: el backend valida con
     // `forbidNonWhitelisted`, y un opcional en `undefined` viaja como clave
     // declarada y vuelve 400.
@@ -133,7 +138,7 @@ export class SchedulingClient {
     }
 
     return this.http
-      .get<WireResourcePage>(this.url('/scheduling/resources'), { params })
+      .get<WireResourcePage>(this.url('/scheduling/resources'), { params, ...tenantOptions(scope) })
       .pipe(map((body) => ({ ...body, items: body.items.map(toResource) })));
   }
 
@@ -211,10 +216,7 @@ export class SchedulingClient {
    * propietario aplicada donde corresponde. Que la pantalla no ofrezca el botón
    * ahí es una cortesía, no la garantía.
    */
-  setPaymentState(
-    bookingId: string,
-    body: NewPaymentState,
-  ): Observable<PaymentStateInfo> {
+  setPaymentState(bookingId: string, body: NewPaymentState): Observable<PaymentStateInfo> {
     return this.http
       .put<WirePaymentState>(
         this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/payment-state`),
@@ -241,9 +243,15 @@ export class SchedulingClient {
    *
    * Es la primera fase: sin recurso no hay dónde colgar la plantilla ni las
    * excepciones. Devuelve el `id` que las dos usan en su ruta.
+   *
+   * @param scope - Como qué organización se publica, si no es la activa: la API
+   *   rechaza el `tenantId` del cuerpo que no es el del encabezado.
    */
-  createResource(resource: NewAgendaResource): Observable<AgendaResourceCreated> {
-    return this.http.post<AgendaResourceCreated>(this.url('/scheduling/resources'), {
+  createResource(
+    resource: NewAgendaResource,
+    scope?: TenantScope,
+  ): Observable<AgendaResourceCreated> {
+    const body = {
       tenantId: resource.tenantId,
       resourceType: resource.resourceType,
       resourceRefType: resource.resourceRefType,
@@ -252,16 +260,21 @@ export class SchedulingClient {
       ...(resource.practiceId === undefined ? {} : { practiceId: resource.practiceId }),
       ...(resource.timeZone === undefined ? {} : { timeZone: resource.timeZone }),
       ...(resource.capacity === undefined ? {} : { capacity: resource.capacity }),
-    });
+    };
+    const url = this.url('/scheduling/resources');
+    return this.http.post<AgendaResourceCreated>(url, body, tenantOptions(scope));
   }
 
   /**
    * `POST /scheduling/booking-policies` — define una política de reserva
    * (UC-41-01). Su `id` es opcional aguas abajo: la plantilla puede referirla
    * en `bookingPolicyId`.
+   *
+   * @param scope - Como qué organización se publica, si no es la activa (ver
+   *   {@link createResource}).
    */
-  createPolicy(policy: NewBookingPolicy): Observable<BookingPolicyCreated> {
-    return this.http.post<BookingPolicyCreated>(this.url('/scheduling/booking-policies'), {
+  createPolicy(policy: NewBookingPolicy, scope?: TenantScope): Observable<BookingPolicyCreated> {
+    const body = {
       tenantId: policy.tenantId,
       code: policy.code,
       name: policy.name,
@@ -278,28 +291,36 @@ export class SchedulingClient {
         ? {}
         : { maxActivePerPatient: policy.maxActivePerPatient }),
       ...(policy.holdTtlSeconds === undefined ? {} : { holdTtlSeconds: policy.holdTtlSeconds }),
-    });
+    };
+    const url = this.url('/scheduling/booking-policies');
+    return this.http.post<BookingPolicyCreated>(url, body, tenantOptions(scope));
   }
 
   /**
    * `POST /scheduling/resources/:id/templates` — publica una plantilla con sus
    * franjas semanales (UC-41-02). Cada franja se arma campo a campo por la
    * misma razón que el cuerpo: sus opcionales no pueden viajar en `undefined`.
+   *
+   * @param scope - Como qué organización se habla, si el recurso no es de la
+   *   activa: la API no ve el recurso de otra.
    */
   createTemplate(
     resourceId: string,
     template: NewScheduleTemplate,
+    scope?: TenantScope,
   ): Observable<ScheduleTemplateCreated> {
     return this.http.post<ScheduleTemplateCreated>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
-      withSimulatorExtensions({
+      {
         name: template.name,
         rules: template.rules.map((rule) => ({
           dayOfWeek: rule.dayOfWeek,
           startTime: rule.startTime,
           endTime: rule.endTime,
           ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
-          ...(rule.capacityPerSlot === undefined ? {} : { capacityPerSlot: rule.capacityPerSlot }),
+          ...(rule.capacityPerSlot === undefined
+            ? {}
+            : { capacityPerSlot: rule.capacityPerSlot }),
           // Omitido y no `0`: la columna es anulable y el servidor distingue
           // «no lo declaró» de «declaró cero». Este cuerpo se arma campo por
           // campo a propósito —para no filtrar nada que el DTO no acepte— y
@@ -307,6 +328,12 @@ export class SchedulingClient {
           ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
           // Ídem: sólo si el médico lo cambió. Ausente ≡ solo consultas.
           ...(rule.bookingMode === undefined ? {} : { bookingMode: rule.bookingMode }),
+          // Ídem: `true` si la activó, `false` si la apagó. Ausente ≡ sin telemedicina.
+          ...(rule.telemedicineEnabled === undefined
+            ? {}
+            : { telemedicineEnabled: rule.telemedicineEnabled }),
+          // v4.2.64: el día flexible de una semana mixta. Ausente ≡ turnos fijos.
+          ...(rule.flexibleHours === true ? { flexibleHours: true } : {}),
         })),
         ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
         ...(template.bookingPolicyId === undefined
@@ -314,8 +341,10 @@ export class SchedulingClient {
           : { bookingPolicyId: template.bookingPolicyId }),
         ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
         ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
+        // P36: sólo si el médico lo eligió. Ausente ≡ turnos fijos.
         ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
-      }, SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS),
+      },
+      tenantOptions(scope),
     );
   }
 
@@ -326,10 +355,13 @@ export class SchedulingClient {
    * de plantilla, así que publicar un horario era escribirlo y no poder volver
    * a verlo. Un recurso sin plantillas responde `[]` con 200 —existe y todavía
    * no publicó—, y uno ajeno, 403.
+   *
+   * @param scope - Como qué organización se pregunta, si el recurso no es de la activa.
    */
-  listTemplates(resourceId: string): Observable<PublishedTemplatePage> {
+  listTemplates(resourceId: string, scope?: TenantScope): Observable<PublishedTemplatePage> {
     return this.http.get<PublishedTemplatePage>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
+      tenantOptions(scope),
     );
   }
 
@@ -350,18 +382,48 @@ export class SchedulingClient {
   }
 
   /**
-   * `DELETE /scheduling/templates/:id` — retira un horario publicado.
+   * `DELETE /scheduling/templates/:id` — retira el horario.
    *
    * **Retira, no borra.** La plantilla queda en `TPL_RETIRED` y deja de
-   * publicarse; se sueltan los cupos que nadie reservó y se conservan los que
-   * tienen una cita detrás, viva o histórica.
+   * publicarse; se sueltan los cupos que nadie reservó y se conservan, cerrados,
+   * los que tienen una cita detrás, viva o histórica. Las citas vivas **no
+   * frenan** el retiro (P23).
    *
-   * Responde **409** cuando el horario tiene citas comprometidas, con la lista
-   * de las que hay que resolver primero en `details.bookingIds`.
+   * Por omisión conserva las citas vivas (contrato de M4). Con
+   * `affectedBookings: 'cancel'` las cancela con el motivo «cambio de
+   * horario» y le avisa a cada paciente (24/10/2026); la pantalla pregunta
+   * antes, con la lista de `listTemplateLiveBookings`.
+   *
+   * @param scope - Como qué organización se habla, si el horario no es de la activa.
    */
-  retireTemplate(templateId: string): Observable<RetiredTemplate> {
+  retireTemplate(
+    templateId: string,
+    affectedBookings?: 'cancel' | 'keep',
+    scope?: TenantScope,
+  ): Observable<RetiredTemplate> {
     return this.http.delete<RetiredTemplate>(
       this.url(`/scheduling/templates/${encodeURIComponent(templateId)}`),
+      {
+        ...(affectedBookings === 'cancel' ? { params: { affectedBookings } } : {}),
+        ...tenantOptions(scope),
+      },
+    );
+  }
+
+  /**
+   * `GET /scheduling/templates/:id/live-bookings` — las citas vivas del
+   * horario, con nombre y hora: la vista previa que se muestra antes de
+   * retirarlo. Sólo para quien administra la agenda.
+   *
+   * @param scope - Como qué organización se pregunta, si el horario no es de la activa.
+   */
+  listTemplateLiveBookings(
+    templateId: string,
+    scope?: TenantScope,
+  ): Observable<TemplateLiveBookings> {
+    return this.http.get<TemplateLiveBookings>(
+      this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/live-bookings`),
+      tenantOptions(scope),
     );
   }
 
@@ -369,11 +431,18 @@ export class SchedulingClient {
    * `POST /scheduling/templates/:id/generate-slots` — materializa los slots de
    * la plantilla en una ventana (UC-41-03). Idempotente: reejecutar no duplica,
    * los ya existentes vuelven como `skipped`.
+   *
+   * @param scope - Como qué organización se habla, si el horario no es de la activa.
    */
-  generateSlots(templateId: string, window: GenerateSlotsRequest): Observable<SlotsGenerated> {
+  generateSlots(
+    templateId: string,
+    window: GenerateSlotsRequest,
+    scope?: TenantScope,
+  ): Observable<SlotsGenerated> {
     return this.http.post<SlotsGenerated>(
       this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/generate-slots`),
       { from: window.from, to: window.to },
+      tenantOptions(scope),
     );
   }
 
@@ -445,9 +514,7 @@ export class SchedulingClient {
   }
 
   listExceptionTypes(): Observable<AvailabilityExceptionTypeList> {
-    return this.http.get<AvailabilityExceptionTypeList>(
-      this.url('/scheduling/exception-types'),
-    );
+    return this.http.get<AvailabilityExceptionTypeList>(this.url('/scheduling/exception-types'));
   }
 
   listExceptions(
@@ -466,6 +533,7 @@ export class SchedulingClient {
   createException(
     resourceId: string,
     exception: NewAvailabilityException,
+    scope?: TenantScope,
   ): Observable<AvailabilityExceptionCreated> {
     return this.http.post<AvailabilityExceptionCreated>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/exceptions`),
@@ -475,7 +543,13 @@ export class SchedulingClient {
         endAt: exception.endAt,
         ...(exception.reason === undefined ? {} : { reason: exception.reason }),
         ...(exception.isAvailable === undefined ? {} : { isAvailable: exception.isAvailable }),
+        // Sólo cuando la persona ya vio la lista y confirmó: sin esto, un rato
+        // con citas responde 422 con `affectedBookings` y no cancela nada.
+        ...(exception.cancelAffectedBookings === undefined
+          ? {}
+          : { cancelAffectedBookings: exception.cancelAffectedBookings }),
       },
+      tenantOptions(scope),
     );
   }
 
@@ -499,8 +573,9 @@ export class SchedulingClient {
    */
   createDirectAppointment(
     cita: NewDirectAppointment,
+    scope?: TenantScope,
   ): Observable<DirectAppointmentCreated> {
-    return this.http.post<DirectAppointmentCreated>(this.url('/scheduling/appointments/direct'), {
+    const body = {
       patientProfileId: cita.patientProfileId,
       resourceId: cita.resourceId,
       startAt: cita.startAt,
@@ -526,7 +601,9 @@ export class SchedulingClient {
                 : { formInstanceId: cita.followUpOf.formInstanceId }),
             },
           }),
-    });
+    };
+    const url = this.url('/scheduling/appointments/direct');
+    return this.http.post<DirectAppointmentCreated>(url, body, tenantOptions(scope));
   }
 
   /**
@@ -567,9 +644,7 @@ export class SchedulingClient {
         ...(p.occupationConceptId === undefined
           ? {}
           : { occupationConceptId: p.occupationConceptId }),
-        ...(p.occupationFreeText === undefined
-          ? {}
-          : { occupationFreeText: p.occupationFreeText }),
+        ...(p.occupationFreeText === undefined ? {} : { occupationFreeText: p.occupationFreeText }),
         ...(p.guardianName === undefined ? {} : { guardianName: p.guardianName }),
         ...(p.guardianPhone === undefined ? {} : { guardianPhone: p.guardianPhone }),
         ...(p.guardianRelationshipConceptId === undefined
@@ -584,11 +659,9 @@ export class SchedulingClient {
       ...(turno.channel === undefined ? {} : { channel: turno.channel }),
     };
     return sendIdempotent(this.submissionKeys, 'walk-in', body, (headers) =>
-      this.http.post<WalkInAppointmentCreated>(
-        this.url('/scheduling/appointments/walk-in'),
-        body,
-        { headers },
-      ),
+      this.http.post<WalkInAppointmentCreated>(this.url('/scheduling/appointments/walk-in'), body, {
+        headers,
+      }),
     );
   }
 
@@ -893,9 +966,12 @@ export class SchedulingClient {
         ? new HttpParams()
         : new HttpParams().set('practitionerProfileId', practitionerProfileId);
     return this.http
-      .get<{ readonly items: readonly ServiceOffering[] }>(this.url('/scheduling/service-offerings'), {
-        params,
-      })
+      .get<{ readonly items: readonly ServiceOffering[] }>(
+        this.url('/scheduling/service-offerings'),
+        {
+          params,
+        },
+      )
       .pipe(map((body) => body.items));
   }
 
@@ -991,7 +1067,69 @@ export class SchedulingClient {
         {
           resourceId: hold.resourceId,
           startAt: hold.startAt.toISOString(),
-          ...(hold.patientProfileId === undefined ? {} : { patientProfileId: hold.patientProfileId }),
+          ...(hold.patientProfileId === undefined
+            ? {}
+            : { patientProfileId: hold.patientProfileId }),
+        },
+      )
+      .pipe(
+        map((body) => ({
+          ...body,
+          expiresAt: new Date(body.expiresAt),
+          startAt: new Date(body.startAt),
+          endAt: new Date(body.endAt),
+        })),
+      );
+  }
+
+  /**
+   * `GET /scheduling/resources/:id/flexible-availability` — las horas que se
+   * pueden pedir en el horario flexible de una agenda (P36).
+   *
+   * Vacía si la agenda no publicó un horario flexible. Es una lectura: retener
+   * ({@link placeFlexibleHold}) la vuelve a decidir en el servidor.
+   */
+  getFlexibleAvailability(
+    resourceId: string,
+    query: FlexibleAvailabilityQuery,
+  ): Observable<FlexibleAvailability> {
+    const params = new HttpParams()
+      .set('from', query.from.toISOString())
+      .set('to', query.to.toISOString());
+    return this.http
+      .get<WireFlexibleAvailability>(
+        this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/flexible-availability`),
+        { params },
+      )
+      .pipe(
+        map((body) => ({
+          ...body,
+          items: body.items.map((item) => ({
+            templateId: item.templateId,
+            startAt: new Date(item.startAt),
+            endAt: new Date(item.endAt),
+          })),
+        })),
+      );
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/flexible-holds` — retiene la hora pedida de
+   * un horario flexible (P36).
+   *
+   * Crea el cupo con el tiempo por paciente de la plantilla. Se confirma con
+   * {@link confirmHold} o {@link requestHold}, igual que una consulta. Un 409
+   * dice que la hora ya no está libre: se vuelve a leer la disponibilidad.
+   */
+  placeFlexibleHold(resourceId: string, hold: NewFlexibleHold): Observable<FlexibleHold> {
+    return this.http
+      .post<WireFlexibleHold>(
+        this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/flexible-holds`),
+        {
+          startAt: hold.startAt.toISOString(),
+          ...(hold.patientProfileId === undefined
+            ? {}
+            : { patientProfileId: hold.patientProfileId }),
         },
       )
       .pipe(
@@ -1007,6 +1145,20 @@ export class SchedulingClient {
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+type WireFlexibleHold = Omit<FlexibleHold, 'expiresAt' | 'startAt' | 'endAt'> & {
+  readonly expiresAt: string;
+  readonly startAt: string;
+  readonly endAt: string;
+};
+
+interface WireFlexibleAvailability extends Omit<FlexibleAvailability, 'items'> {
+  readonly items: readonly {
+    readonly templateId: string;
+    readonly startAt: string;
+    readonly endAt: string;
+  }[];
 }
 
 type WireHold = Omit<SlotHold, 'expiresAt'> & { readonly expiresAt: string };
@@ -1120,9 +1272,7 @@ function toSlot({ startAt, endAt, ...resto }: WireSlot): AgendaSlot {
  * Se omite en vez de normalizarse a `null`: la clave declarada pisaría, y
  * «no es una reconsulta» tiene que poder distinguirse mirando un solo campo.
  */
-function aOrigenDeReconsulta(
-  origen: WireBooking['followUpOf'],
-): Pick<Booking, 'followUpOf'> {
+function aOrigenDeReconsulta(origen: WireBooking['followUpOf']): Pick<Booking, 'followUpOf'> {
   if (origen === undefined || origen === null) {
     return origen === null ? { followUpOf: null } : {};
   }
