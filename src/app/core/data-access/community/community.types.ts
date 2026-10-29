@@ -775,6 +775,16 @@ export interface ConversationPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Cómo se muestra un mensaje.
+ *
+ * `AUTO_REPLY_AI` es la respuesta automática que redactó la IA: la burbuja la
+ * rotula para que quien la recibe sepa que no la escribió una persona. Hoy la
+ * produce sólo la maqueta; la API la publicará con el concepto
+ * `MESSAGE_CONTENT_AUTO_REPLY_AI`.
+ */
+export type DirectMessageContentType = 'TEXT' | 'MEDIA' | 'STICKER' | 'AUTO_REPLY_AI';
+
 /** Un mensaje directo. */
 export interface DirectMessage {
   readonly id: string;
@@ -803,7 +813,7 @@ export interface DirectMessage {
    * viaja marcado. Ausente = el servidor todavía no lo publica: el mensaje se
    * ve como una imagen cualquiera, que es una degradación honesta.
    */
-  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  readonly contentType?: DirectMessageContentType;
   /**
    * Las reacciones, agrupadas por emoji. Ausente o vacío = nadie reaccionó.
    *
@@ -875,7 +885,7 @@ export interface NewDirectMessage {
   readonly bodyText: string;
   readonly replyToMessageId?: string;
   /** `MEDIA` con adjunto; `STICKER` si es uno propio (ver `DirectMessage`). */
-  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  readonly contentType?: Exclude<DirectMessageContentType, 'AUTO_REPLY_AI'>;
   readonly attachmentFileId?: string;
 }
 
@@ -914,8 +924,28 @@ export interface ChatAutoReplySettings {
    * —el turno noche—, y es válida.
    */
   readonly businessHoursTo?: string;
+  /**
+   * Quién redacta la respuesta: siempre el mismo texto (`FIXED`) o la IA de
+   * AloVida (`AI`), con `bodyText` como respaldo si la IA no responde.
+   *
+   * **Sólo en la maqueta** por ahora ({@link CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS}):
+   * guardarlo en el servidor pide una columna nueva en
+   * `community.chat_auto_replies`, que es un cambio del modelo canónico, no de
+   * la API (ADR-0021). Ausente = texto fijo.
+   */
+  readonly replyMode?: ChatAutoReplyMode;
   readonly updatedAt?: Date;
 }
+
+/** Cómo se redacta la respuesta automática. */
+export type ChatAutoReplyMode = 'FIXED' | 'AI';
+
+/**
+ * Claves del `PUT …/auto-reply` que `UpsertChatAutoReplyDto` no declara: la
+ * maqueta las guarda y el cliente no las manda a la API real, que respondería
+ * 400 (`forbidNonWhitelisted`).
+ */
+export const CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS: readonly string[] = ['replyMode'];
 
 /** Lo que se manda a `PUT /community/profiles/:id/auto-reply`. */
 export type UpsertChatAutoReply = Omit<
