@@ -240,6 +240,15 @@
                 }
               }
 
+              <!-- La respuesta que redactó la IA se rotula: quien la recibe tiene
+                   que saber que no la escribió una persona. -->
+              @if (esRespuestaDeIa(linea.mensaje)) {
+                <span class="hilo__etiqueta-ia" data-testid="hilo-etiqueta-ia">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>
+                  Respuesta automática generada por IA
+                </span>
+              }
+
               @if (linea.mensaje.bodyText; as texto) {
                 <!-- En trozos: los enlaces se pueden tocar y, buscando, las
                      coincidencias se marcan. Todo en una línea de plantilla

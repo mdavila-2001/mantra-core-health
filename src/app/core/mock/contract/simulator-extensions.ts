@@ -12,6 +12,7 @@ import {
 } from '../../data-access/profiles/profiles.types';
 import { SCHEDULE_TEMPLATE_SIMULATOR_EXTENSIONS } from '../../data-access/scheduling/scheduling.types';
 import { CLAIM_DISPUTE_SIMULATOR_EXTENSIONS } from '../../data-access/insurance/insurance.types';
+import { CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS } from '../../data-access/community/community.types';
 
 /* ============================================================================
     Claves que la maqueta acepta aunque el DTO de la API no las declare.
@@ -46,6 +47,8 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   'POST /profiles/patients/search': PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   // P54 · descripción y enlace de mapa de la sucursal (C15).
   'POST /tenants/:tenantId/branches': BRANCH_SIMULATOR_EXTENSIONS,
+  // Respuesta automática redactada por la IA: falta la columna del modo en el modelo.
+  'PUT /community/profiles/:profileId/auto-reply': CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
   // P63 · motivo de la objeción del paciente en la disputa del reclamo (REQ-16-032).
   'POST /insurance-claims/:id/disputes': CLAIM_DISPUTE_SIMULATOR_EXTENSIONS,
   // Centros médicos. A diferencia de las entradas de arriba, estas claves NO
