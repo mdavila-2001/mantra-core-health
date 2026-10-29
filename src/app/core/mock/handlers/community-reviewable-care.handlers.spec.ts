@@ -1,8 +1,13 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { reservas } from '../fixtures/agenda';
-import { reservasTerminadasDe, encuentroDeReserva } from '../fixtures/atencion-resenable';
-import { ESTADO_RESERVA } from '../fixtures/conceptos';
+import { RECURSO_MEDICA, reservas, type ReservaSimulada } from '../fixtures/agenda';
+import { encuentros } from '../fixtures/clinica';
+import {
+  encuentroDeReserva,
+  profesionalDeReserva,
+  reservasTerminadasDe,
+} from '../fixtures/atencion-resenable';
+import { ESTADO_ENCUENTRO, ESTADO_RESERVA } from '../fixtures/conceptos';
 import { resenas, vitrinaDe, vitrinas } from '../fixtures/comunidad';
 import { MEDICA, PACIENTE } from '../fixtures/personas';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
@@ -55,11 +60,48 @@ describe('reviewable-care y reseñas del simulador', () => {
     readonly canReview: boolean;
   }
 
-  const terminadas = reservasTerminadasDe(PACIENTE.id);
-  const reserva = terminadas[0]!;
+  /**
+   * La reserva terminada de la paciente de la demostración con la médica de la
+   * demostración, elegida por quién la atendió y no por su lugar en la lista.
+   *
+   * La semilla de `agenda.ts` reparte las reservas relativas a «hoy» (días de la
+   * semana, hora del día), y la que une a la paciente con la médica es una sola:
+   * con otro reloj puede no ser la primera de la lista —ni estar—. Si el
+   * sembrado no la trae, se arma con el encuentro cerrado que la paciente sí
+   * tiene con la médica (los encuentros no dependen del reloj), con la misma
+   * forma que el resto de las reservas.
+   */
+  function reservaTerminadaConLaMedica(): ReservaSimulada {
+    const sembrada = reservasTerminadasDe(PACIENTE.id).find(
+      (r) => profesionalDeReserva(r)?.id === MEDICA.id,
+    );
+    if (sembrada !== undefined) return sembrada;
+    const atencion = encuentros
+      .todos()
+      .find(
+        (e) =>
+          e.patientProfileId === PACIENTE.id &&
+          e.primaryPractitionerId === MEDICA.id &&
+          e.statusConceptId === ESTADO_ENCUENTRO['ENCST-FINISHED'] &&
+          e.endAt !== null,
+      )!;
+    const molde = reservas.todos().find((r) => r.patientProfileId === PACIENTE.id)!;
+    return reservas.agregar({
+      ...molde,
+      id: 'reserva-terminada-con-la-medica-de-la-prueba',
+      patientProfileId: PACIENTE.id,
+      resourceId: RECURSO_MEDICA,
+      statusConceptId: ESTADO_RESERVA['BK-COMPLETED']!,
+      startAt: atencion.startAt,
+      endAt: atencion.endAt!,
+    });
+  }
 
-  it('hay una reserva terminada con la médica de la demostración al frente', () => {
+  const reserva = reservaTerminadaConLaMedica();
+
+  it('hay una reserva terminada con la médica de la demostración', () => {
     expect(reserva).toBeDefined();
+    expect(profesionalDeReserva(reserva)?.id).toBe(MEDICA.id);
     expect(encuentroDeReserva(reserva)).toBeDefined();
     expect(reserva.statusConceptId).toBe(ESTADO_RESERVA['BK-COMPLETED']);
   });
