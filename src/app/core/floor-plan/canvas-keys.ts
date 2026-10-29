@@ -38,7 +38,7 @@ const DIRECTIONS: Readonly<Record<string, NavDirection>> = {
 /**
  * `Escape` descarta la tarjeta; `+ − 0 .` hacen zoom y encuadre; `/` enfoca la
  * búsqueda; `Av Pág`/`Re Pág` cambian de lienzo; las flechas van al vecino
- * espacial (con `Alt`, o en el editor, desplazan la vista); `Inicio`/`Fin` van
+ * espacial (con `Alt` desplazan la vista; en el editor empujan la figura y las resuelve el editor); `Inicio`/`Fin` van
  * al primero y al último; `Enter` y `Espacio` abren la ficha.
  */
 export function keyAction(input: KeyInput, editMode: boolean): KeyAction | null {
@@ -53,14 +53,15 @@ export function keyAction(input: KeyInput, editMode: boolean): KeyAction | null 
   if (key === 'PageUp') return { type: 'floor', step: -1 };
   const direction = DIRECTIONS[key];
   if (direction !== undefined) {
-    if (input.altKey || editMode) {
+    if (input.altKey) {
       return {
         type: 'pan',
         dx: direction === 'left' ? KEY_PAN_STEP_PX : direction === 'right' ? -KEY_PAN_STEP_PX : 0,
         dy: direction === 'up' ? KEY_PAN_STEP_PX : direction === 'down' ? -KEY_PAN_STEP_PX : 0,
       };
     }
-    return { type: 'move', direction };
+    // En el editor las flechas empujan la figura (lo resuelve el editor): el lienzo no las intercepta.
+    return editMode ? null : { type: 'move', direction };
   }
   if (key === 'Home') return { type: 'edge', which: 'first' };
   if (key === 'End') return { type: 'edge', which: 'last' };

@@ -15,10 +15,11 @@ describe('teclado del lienzo', () => {
     expect(keyAction(k('PageUp'), false)).toEqual({ type: 'floor', step: -1 });
   });
 
-  it('las flechas van al vecino espacial; con Alt o en el editor desplazan la vista', () => {
+  it('las flechas van al vecino espacial; con Alt desplazan la vista; en el editor las resuelve el editor', () => {
     expect(keyAction(k('ArrowRight'), false)).toEqual({ type: 'move', direction: 'right' });
     expect(keyAction(k('ArrowUp', { altKey: true }), false)).toEqual({ type: 'pan', dx: 0, dy: KEY_PAN_STEP_PX });
-    expect(keyAction(k('ArrowLeft'), true)).toEqual({ type: 'pan', dx: KEY_PAN_STEP_PX, dy: 0 });
+    expect(keyAction(k('ArrowLeft', { altKey: true }), true)).toEqual({ type: 'pan', dx: KEY_PAN_STEP_PX, dy: 0 });
+    expect(keyAction(k('ArrowLeft'), true)).toBeNull();
   });
 
   it('Inicio y Fin saltan al primero y al último; Enter y Espacio abren la ficha (Ctrl+Enter no)', () => {

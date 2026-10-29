@@ -204,3 +204,22 @@ export function sortedElements(elements: readonly ElementView[], layer: (typeof 
     .filter((e) => ELEMENT_LAYER[e.kind] === layer)
     .sort((a, b) => a.zOrder - b.zOrder || (a.id < b.id ? -1 : 1));
 }
+
+/** La misma figura con otra geometría (lo que se ve mientras se edita). */
+export function spaceViewFromGeometry(base: SpaceView, geometry: SpacePlacementDTO['geometry']): SpaceView {
+  const vertices = verticesOfGeometry(geometry);
+  const xs = vertices.map((v) => v[0]);
+  const ys = vertices.map((v) => v[1]);
+  const bbox: BBox = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  return { ...base, vertices, bbox, center: bboxCenter(bbox), path: pathOf(vertices), isRect: geometry.kind === 'RECT' };
+}
+
+/** Un espacio que todavía no se dibujó (sale de la paleta «sin ubicar»). */
+export function newSpaceView(input: { id: string; code: string; name: string; parentId: string | null; formCode: string; functionCode: string }, geometry: SpacePlacementDTO['geometry']): SpaceView {
+  const stub: SpaceView = {
+    id: input.id, placementId: '', rowVersion: 0, code: input.code, name: input.name, parentId: input.parentId, formCode: input.formCode,
+    functionCode: input.functionCode, inScope: true, locked: false, zOrder: input.formCode === 'BED' ? 20 : 10, vertices: [], bbox: [0, 0, 0, 0],
+    center: [0, 0], areaCalcM2: 0, path: '', band: bandOf(input.formCode), inFocus: undefined, card: undefined, isRect: true,
+  };
+  return spaceViewFromGeometry(stub, geometry);
+}
