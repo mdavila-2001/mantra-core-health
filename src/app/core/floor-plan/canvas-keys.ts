@@ -39,7 +39,8 @@ const DIRECTIONS: Readonly<Record<string, NavDirection>> = {
  * `Escape` descarta la tarjeta; `+ − 0 .` hacen zoom y encuadre; `/` enfoca la
  * búsqueda; `Av Pág`/`Re Pág` cambian de lienzo; las flechas van al vecino
  * espacial (con `Alt` desplazan la vista; en el editor empujan la figura y las resuelve el editor); `Inicio`/`Fin` van
- * al primero y al último; `Enter` y `Espacio` abren la ficha.
+ * al primero y al último; `Enter` y `Espacio` abren la ficha (en el editor, Espacio elige la figura y
+ * Entrar queda para el editor).
  */
 export function keyAction(input: KeyInput, editMode: boolean): KeyAction | null {
   const { key } = input;
@@ -65,6 +66,7 @@ export function keyAction(input: KeyInput, editMode: boolean): KeyAction | null 
   }
   if (key === 'Home') return { type: 'edge', which: 'first' };
   if (key === 'End') return { type: 'edge', which: 'last' };
-  if ((key === 'Enter' || key === ' ') && !(input.ctrlKey || input.metaKey)) return { type: 'open' };
+  // En el editor, Entrar cierra el trazo en curso o elige la figura enfocada (lo resuelve el editor); Espacio la elige.
+  if (((key === 'Enter' && !editMode) || key === ' ') && !(input.ctrlKey || input.metaKey)) return { type: 'open' };
   return null;
 }

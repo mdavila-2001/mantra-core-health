@@ -1,7 +1,7 @@
 import type { EditTool } from './plan-editor-pointer';
 
 export type KeyCommand =
-  | { readonly type: 'undo' | 'redo' | 'save' | 'escape' | 'finish-draft' | 'back-draft' | 'delete' }
+  | { readonly type: 'undo' | 'redo' | 'save' | 'escape' | 'finish-draft' | 'back-draft' | 'delete' | 'select-active' }
   | { readonly type: 'tool'; readonly tool: EditTool }
   | { readonly type: 'nudge'; readonly dx: -1 | 0 | 1; readonly dy: -1 | 0 | 1; readonly big: boolean };
 
@@ -38,7 +38,7 @@ export function editorKeyCommand(input: KeyInput, context: KeyContext): KeyComma
     return null;
   }
   if (key === 'escape') return { type: 'escape' };
-  if (key === 'enter' && context.pathDraft) return { type: 'finish-draft' };
+  if (key === 'enter') return { type: context.pathDraft ? 'finish-draft' : 'select-active' };
   if (key === 'backspace' && context.pathDraft) return { type: 'back-draft' };
   if (key === 'delete' || key === 'backspace') return { type: 'delete' };
   const tool = TOOL_KEYS[key];

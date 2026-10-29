@@ -26,6 +26,7 @@ describe('editorKeyCommand', () => {
   it('con un trazo a medias, Entrar lo cierra y Retroceso quita el último punto; sin trazo, Retroceso quita la figura', () => {
     expect(editorKeyCommand(k('Enter'), { pathDraft: true, canNudge: false })).toEqual({ type: 'finish-draft' });
     expect(editorKeyCommand(k('Backspace'), { pathDraft: true, canNudge: false })).toEqual({ type: 'back-draft' });
+    expect(editorKeyCommand(k('Enter'), ctx)).toEqual({ type: 'select-active' });
     expect(editorKeyCommand(k('Backspace'), ctx)).toEqual({ type: 'delete' });
     expect(editorKeyCommand(k('Delete'), ctx)).toEqual({ type: 'delete' });
     expect(editorKeyCommand(k('Escape'), ctx)).toEqual({ type: 'escape' });

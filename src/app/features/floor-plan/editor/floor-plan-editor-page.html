@@ -153,6 +153,7 @@
           [overlay]="ed.overlay()"
           (worldPointer)="ed.onWorld($event)"
           (viewChange)="onView($event)"
+          (activeChange)="activeId.set($event)"
           (open)="ed.select($event)"
           (pick)="ed.select($event)"
         />

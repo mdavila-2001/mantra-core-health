@@ -64,6 +64,8 @@ export class FloorPlanEditorPage {
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
   protected readonly narrow = signal(false);
   protected readonly view = signal<ViewInfo | null>(null);
+  /** La figura con el foco del teclado en el lienzo (Entrar la elige). */
+  protected readonly activeId = signal<string | null>(null);
   protected readonly reveal = signal<RevealRequest | null>(null);
   protected readonly layers = EDITOR_LAYERS;
   protected readonly tools = TOOLS;
@@ -141,6 +143,11 @@ export class FloorPlanEditorPage {
       case 'save': void ed.save(); break;
       case 'escape': ed.escape(); break;
       case 'finish-draft': ed.finishDraft(); break;
+      case 'select-active': {
+        const id = this.activeId();
+        if (id) ed.select(id);
+        break;
+      }
       case 'back-draft': ed.backDraft(); break;
       case 'delete': void ed.removeSelected(); break;
       case 'tool': ed.setTool(command.tool); break;

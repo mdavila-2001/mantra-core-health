@@ -27,6 +27,9 @@ describe('teclado del lienzo', () => {
     expect(keyAction(k('End'), false)).toEqual({ type: 'edge', which: 'last' });
     expect(keyAction(k('Enter'), false)).toEqual({ type: 'open' });
     expect(keyAction(k(' '), false)).toEqual({ type: 'open' });
+    // En el editor Entrar es del editor (cierra el trazo); Espacio elige la figura.
+    expect(keyAction(k('Enter'), true)).toBeNull();
+    expect(keyAction(k(' '), true)).toEqual({ type: 'open' });
     expect(keyAction(k('Enter', { ctrlKey: true }), false)).toBeNull();
   });
 
