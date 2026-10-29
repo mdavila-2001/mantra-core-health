@@ -16,6 +16,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ChatStore, editable, type MensajeDelHilo } from '../../../core/messaging/chat.store';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
+import { appointmentLinkOf, type MessageAppointment } from '../../../core/messaging/appointment-link';
 import type {
   ConversationListItem,
   MessageReaction,
@@ -678,6 +679,11 @@ export class Thread {
       url !== null &&
       (/^data:audio\//i.test(url) || /\.(webm|mp3|m4a|ogg|wav)(\?|$)/i.test(url))
     );
+  }
+
+  /** La cita a la que apunta un aviso de agenda, si apunta a una. */
+  protected appointmentOf(texto: string | undefined, propio: boolean): MessageAppointment | null {
+    return appointmentLinkOf(texto, propio);
   }
 
   /** El texto de una burbuja, en trozos: enlaces y coincidencias. */
