@@ -1,3 +1,4 @@
+import { admissionFileReply } from '../fixtures/admission-files';
 import { showcases } from '../fixtures/community';
 import { STATUS } from '../fixtures/concepts';
 import { PATIENTS, PROFESSIONALS } from '../fixtures/people';
@@ -393,6 +394,10 @@ export function registrarArchivos(router: MockRouter): void {
   });
 
   router.get('/common/files/:id/content', ({ params, user }) => {
+    // Los documentos de las admisiones se regeneran al pedirlos: no viven en
+    // este almacén (ver `fixtures/admission-files.ts`).
+    const deAdmision = admissionFileReply(params['id']!, user);
+    if (deAdmision !== undefined) return deAdmision;
     const a = archivos.get(params['id']!);
     if (a === undefined) return avatarSvg('?', '#94a3b8');
     if (!puedeLeerPorAutoria(a, user)) return forbidden('No tiene acceso a este archivo');

@@ -1,0 +1,109 @@
+@if (visible()) {
+  <app-card class="verificacion" variant="outlined" padding="lg" data-testid="admission-status-card">
+    <h2 class="verificacion__titulo">Estado de su verificación</h2>
+
+    @switch (state()) {
+      @case ('loading') {
+        <div aria-busy="true" data-testid="admission-card-loading">
+          <app-skeleton variant="text" [lines]="3" />
+        </div>
+      }
+      @case ('error') {
+        <p class="verificacion__error" role="status" data-testid="admission-card-error">
+          No pudimos cargar el estado de su verificación.
+          <button app-button type="button" variant="secondary" size="sm" (clicked)="load()">Reintentar</button>
+        </p>
+      }
+      @case ('ready') {
+        @if (admission(); as a) {
+          <div class="verificacion__estado">
+            <app-badge [variant]="variant()" size="lg" data-testid="admission-card-status">{{ a.status.label }}</app-badge>
+            <p class="verificacion__resumen" data-testid="admission-card-title">{{ copy().title }}</p>
+          </div>
+          <p class="verificacion__detalle">{{ copy().detail }}</p>
+
+          <p class="verificacion__fechas">
+            Enviada el {{ a.submittedAt | date: 'dd/MM/yyyy' }}.
+            @if (isOpen() && a.dueAt) {
+              <span data-testid="admission-card-due">Estimamos responderle antes del {{ a.dueAt | date: 'dd/MM/yyyy' }}.</span>
+            }
+            @if (a.status.code === 'INFO_REQUESTED' && a.infoDueAt) {
+              <span data-testid="admission-card-info-due">Puede responder hasta el {{ a.infoDueAt | date: 'dd/MM/yyyy' }}.</span>
+            }
+          </p>
+
+          @if (a.infoRequestedText) {
+            <app-alert tone="info" title="Lo que le pidieron" data-testid="admission-card-info">{{ a.infoRequestedText }}</app-alert>
+          }
+          @if (a.decisionReasonText) {
+            <app-alert
+              [tone]="a.status.code === 'REJECTED' ? 'error' : 'warning'"
+              [title]="a.status.code === 'SUSPENDED' ? 'Motivo de la suspensión' : 'Motivo'"
+              data-testid="admission-card-reason"
+            >
+              {{ a.decisionReasonText }}
+            </app-alert>
+          }
+
+          @if (a.status.code !== 'VERIFIED' && pendingItems().length > 0) {
+            <section aria-labelledby="verificacion-falta">
+              <h3 id="verificacion-falta" class="verificacion__subtitulo">Qué falta o qué se observó</h3>
+              <ul class="verificacion__items" data-testid="admission-card-items">
+                @for (item of pendingItems(); track item.id) {
+                  <li>
+                    <strong>{{ item.label }}</strong> · {{ itemState(item.state) }}
+                    @if (item.reasonText) {
+                      <span class="verificacion__motivo">{{ item.reasonText }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+
+          @if (canResubmit()) {
+            <section class="verificacion__reenvio" aria-labelledby="verificacion-reenvio">
+              <h3 id="verificacion-reenvio" class="verificacion__subtitulo">Corregir y reenviar</h3>
+              <p class="verificacion__detalle">
+                Corrija lo observado en <a [routerLink]="profileRoute">su perfil</a> y reenvíe la solicitud.
+                @if (a.resubmissionsRemaining !== null) {
+                  Le {{ a.resubmissionsRemaining === 1 ? 'queda' : 'quedan' }} {{ a.resubmissionsRemaining }}
+                  {{ a.resubmissionsRemaining === 1 ? 'reenvío' : 'reenvíos' }}.
+                }
+              </p>
+              <app-checkbox
+                label="Declaro que los datos y documentos son verídicos."
+                [checked]="attested()"
+                (checkedChange)="onAttest($event)"
+                data-testid="admission-card-attest"
+              />
+              @if (attestationTouched() && !attested()) {
+                <p class="verificacion__problema" role="alert" data-testid="admission-card-attest-error">
+                  Marque la declaración para poder reenviar.
+                </p>
+              }
+              @if (resubmitError(); as problema) {
+                <app-alert tone="error" data-testid="admission-card-resubmit-error">{{ problema }}</app-alert>
+              }
+              <button
+                app-button
+                type="button"
+                variant="primary"
+                [isLoading]="submitting()"
+                [disabled]="submitting()"
+                data-testid="admission-card-resubmit"
+                (clicked)="resubmit()"
+              >
+                Corregir y reenviar
+              </button>
+            </section>
+          } @else if (limitReached()) {
+            <app-alert tone="warning" data-testid="admission-card-limit">
+              Llegó al máximo de reenvíos. Escriba al equipo de soporte para reabrir su solicitud.
+            </app-alert>
+          }
+        }
+      }
+    }
+  </app-card>
+}

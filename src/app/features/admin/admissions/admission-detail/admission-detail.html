@@ -1,0 +1,267 @@
+<app-page-header
+  [title]="detail()?.practitioner?.fullName ?? 'Admisión'"
+  subtitle="Alta de doctor · revise cada requisito y documento antes de decidir."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <a app-button page-actions variant="secondary" [routerLink]="listRoute">Volver a las admisiones</a>
+</app-page-header>
+
+<!-- Lo que cambia se anuncia sin mover el foco (WCAG 4.1.3). -->
+<p class="sr-only" role="status" aria-live="polite" data-testid="admission-live">{{ liveMessage() }}</p>
+
+<app-view-state-host [state]="state()" (retry)="load()">
+  <div vsh-skeleton class="admision__esqueleto" data-testid="admission-detail-loading">
+    <div class="admision__esqueleto-bloque"></div>
+    <div class="admision__esqueleto-bloque admision__esqueleto-bloque--alto"></div>
+  </div>
+
+  @if (detail(); as d) {
+    <!-- UNA tarjeta, centrada y a lo ancho, con pestañas (composition-rules §5). -->
+    <app-card class="admision" variant="outlined" padding="lg" data-testid="admission-card">
+      <header class="admision__cabecera">
+        <div class="admision__identidad">
+          <app-badge [variant]="statusVariant()" size="lg" data-testid="admission-status">{{ d.status.label }}</app-badge>
+          <span class="admision__tipo">{{ d.type.label }}</span>
+          @if (d.overdue) {
+            <span class="admision__vencida" data-testid="admission-overdue">
+              Vencida hace {{ overdueDays() }} {{ overdueDays() === 1 ? 'día' : 'días' }}
+            </span>
+          }
+        </div>
+        <dl class="admision__datos">
+          <div>
+            <dt>Profesión</dt>
+            <dd>{{ d.practitioner.profession }}</dd>
+          </div>
+          <div>
+            <dt>Documento</dt>
+            <dd>{{ d.practitioner.maskedNationalId }}</dd>
+          </div>
+          <div>
+            <dt>Enviada</dt>
+            <dd>{{ d.submittedAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>Vence</dt>
+            <dd>
+              @if (d.dueAt) {
+                {{ d.dueAt | date: 'dd/MM/yyyy' }}
+              } @else {
+                Sin plazo corriendo
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Revisa</dt>
+            <dd>{{ d.assignedTo?.name ?? 'Nadie la tomó' }}</dd>
+          </div>
+          <div>
+            <dt>Avance</dt>
+            <dd data-testid="admission-progress">{{ progress() }}</dd>
+          </div>
+        </dl>
+      </header>
+
+      @if (notice(); as aviso) {
+        <app-alert [tone]="aviso.tone" data-testid="admission-notice">{{ aviso.text }}</app-alert>
+      }
+
+      <!-- Las decisiones: un solo botón primario por estado. -->
+      @if (buttons().length > 0) {
+        <div class="admision__acciones" role="group" aria-label="Acciones de la admisión" data-testid="admission-actions">
+          @for (boton of buttons(); track boton.key) {
+            <button
+              app-button
+              type="button"
+              [variant]="boton.variant"
+              [disabled]="boton.disabled || busy()"
+              [attr.aria-describedby]="boton.key === 'verify' && verifyBlockers().length > 0 ? 'admision-bloqueos' : null"
+              [attr.data-testid]="'admission-action-' + boton.key"
+              (clicked)="boton.run()"
+            >
+              {{ boton.label }}
+            </button>
+          }
+        </div>
+      } @else if (noActionsNote(); as nota) {
+        <p class="admision__nota" data-testid="admission-no-actions">{{ nota }}</p>
+      }
+      @if (verifyBlockers().length > 0) {
+        <ul id="admision-bloqueos" class="admision__bloqueos" data-testid="admission-blockers">
+          @for (razon of verifyBlockers(); track razon) {
+            <li>{{ razon }}</li>
+          }
+        </ul>
+      }
+
+      <app-tabs [(selectedIndex)]="tab">
+        <app-tab label="Resumen">
+          <div class="admision__panel" data-testid="admission-summary">
+            <dl class="admision__resumen">
+              <div><dt>Correo</dt><dd>{{ d.practitioner.email ?? 'No declarado' }}</dd></div>
+              <div><dt>Teléfono</dt><dd>{{ d.practitioner.phone ?? 'No declarado' }}</dd></div>
+              <div><dt>Ciudad</dt><dd>{{ d.practitioner.city ?? 'No declarada' }}</dd></div>
+              <div>
+                <dt>Se registró</dt>
+                <dd>
+                  @if (d.practitioner.registeredAt) {
+                    {{ d.practitioner.registeredAt | date: 'dd/MM/yyyy HH:mm' }}
+                  } @else {
+                    Sin fecha
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Matrículas, títulos y especialidades</dt>
+                <dd>{{ d.itemsSummary.licenses }} · {{ d.itemsSummary.credentials }} · {{ d.itemsSummary.specialties }}</dd>
+              </div>
+              <div><dt>Documentos subidos</dt><dd>{{ d.documents.length }}</dd></div>
+            </dl>
+
+            @if (d.infoRequestedText) {
+              <app-alert tone="info" title="Información que se pidió al médico" data-testid="admission-info-requested">
+                {{ d.infoRequestedText }}
+                @if (d.infoDueAt) {
+                  <br />Puede responder hasta el {{ d.infoDueAt | date: 'dd/MM/yyyy' }}.
+                }
+              </app-alert>
+            }
+            @if (d.decisionReasonText) {
+              <app-alert tone="warning" title="Motivo de la decisión" data-testid="admission-decision-reason">
+                {{ d.decisionReasonText }}
+              </app-alert>
+            }
+            @if (missing().length > 0 && inReview()) {
+              <p class="admision__falta" data-testid="admission-summary-missing">
+                Falta verificar: <strong>{{ missing().length }}</strong>
+                {{ missing().length === 1 ? 'requisito obligatorio' : 'requisitos obligatorios' }}.
+                <button type="button" class="admision__enlace" (click)="tab.set(TAB.requirements)">Ir a los requisitos</button>
+              </p>
+            }
+          </div>
+        </app-tab>
+
+        <app-tab label="Requisitos">
+          <app-admission-requirements
+            [requirements]="d.requirements"
+            [documents]="d.documents"
+            [canReview]="canReview()"
+            [busy]="busy()"
+            [highlight]="highlight()"
+            (review)="openRequirementReview($event)"
+            (viewDocument)="showDocument($event)"
+            (viewField)="showField($event)"
+          />
+        </app-tab>
+
+        <app-tab [label]="documentsTab()">
+          @if (!galleryExpanded()) {
+            <app-admission-evidence-gallery
+              [admissionId]="d.id"
+              [documents]="d.documents"
+              [requirements]="d.requirements"
+              [canReview]="canReview()"
+              [busy]="busy()"
+              [advanceToken]="galleryAdvance()"
+              [(selectedId)]="galleryDoc"
+              [(requirementFilter)]="galleryRequirement"
+              [(stateFilter)]="galleryState"
+              (review)="onGalleryReview($event)"
+              (showField)="showField($event)"
+              (expand)="galleryExpanded.set(true)"
+            />
+          } @else {
+            <p class="admision__nota">La evidencia está abierta en la vista ampliada.</p>
+          }
+        </app-tab>
+
+        <app-tab label="Formulario llenado">
+          <app-admission-submitted-form
+            [sections]="d.submittedForm"
+            [requirements]="d.requirements"
+            [documents]="d.documents"
+            [canReview]="canReview()"
+            [busy]="busy()"
+            [highlight]="highlight()"
+            (review)="openRequirementReview($event)"
+            (viewEvidence)="showEvidence($event)"
+          />
+        </app-tab>
+
+        <app-tab label="Historial">
+          <ol class="historial" aria-label="Historial de la admisión" data-testid="admission-history">
+            @for (e of d.events; track e.id) {
+              <li class="historial__evento">
+                <p class="historial__titulo">
+                  <strong>{{ eventLabel(e.type) }}</strong>
+                  @if (requirementLabel(e.itemId); as requisito) {
+                    · {{ requisito }}
+                  }
+                </p>
+                <p class="historial__meta">
+                  {{ e.actor.name }} · {{ e.occurredAt | date: 'dd/MM/yyyy HH:mm' }}
+                  @if (e.fromStatus && e.toStatus && e.fromStatus !== e.toStatus) {
+                    · {{ e.fromStatus }} → {{ e.toStatus }}
+                  }
+                </p>
+                @if (e.sourceLabel) {
+                  <p class="historial__detalle">Fuente: {{ e.sourceLabel }}</p>
+                }
+                @if (e.reasonText) {
+                  <p class="historial__detalle">
+                    @if (e.reasonCode) {
+                      <strong>{{ reasonLabel(e.reasonCode) }}:</strong>
+                    }
+                    {{ e.reasonText }}
+                  </p>
+                }
+                @if (e.internalNote) {
+                  <p class="historial__detalle historial__nota">
+                    <strong>Nota interna: no la ve el profesional.</strong> {{ e.internalNote }}
+                  </p>
+                }
+              </li>
+            }
+          </ol>
+        </app-tab>
+      </app-tabs>
+    </app-card>
+  }
+</app-view-state-host>
+
+@if (dialog(); as dlg) {
+  <app-admission-review-dialog
+    [config]="dlg.config"
+    [busy]="busy()"
+    [serverError]="dialogError()"
+    [stale]="dialogStale()"
+    (confirmed)="confirmDialog($event)"
+    (cancelled)="closeDialog()"
+    (reload)="refresh()"
+  />
+}
+
+@if (galleryExpanded() && detail(); as d) {
+  <app-content-dialog
+    heading="Evidencia del médico"
+    [description]="d.practitioner.fullName"
+    size="xl"
+    (closed)="galleryExpanded.set(false)"
+  >
+    <app-admission-evidence-gallery
+      [admissionId]="d.id"
+      [documents]="d.documents"
+      [requirements]="d.requirements"
+      [canReview]="canReview()"
+      [busy]="busy()"
+      [expanded]="true"
+      [advanceToken]="galleryAdvance()"
+      [(selectedId)]="galleryDoc"
+      [(requirementFilter)]="galleryRequirement"
+      [(stateFilter)]="galleryState"
+      (review)="onGalleryReview($event)"
+      (showField)="showField($event)"
+      (closeExpanded)="galleryExpanded.set(false)"
+    />
+  </app-content-dialog>
+}
