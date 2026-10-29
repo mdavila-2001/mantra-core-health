@@ -420,6 +420,18 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  */
 const PANTALLAS_HIJAS: Routes = [
   {
+    // FAC-06 · «Configuración para facturar»: ejercicio fiscal, precio de la
+    // consulta y emisor de prueba. Hereda los roles de Contabilidad; quién
+    // cambia cada cosa lo decide la API. Se llega desde la contabilidad.
+    path: 'administration/accounting/billing-setup',
+    title: `${APP_TITLE} - Configuración para facturar`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/billing-setup/billing-setup')
+        .then((m) => m.BillingSetup)
+        .catch(() => chunkFallido()),
+  },
+  {
     // El **cockpit contable**: estado del ejercicio, bandeja de documentos por
     // estado del flujo, cartera por antigüedad y cierre del período. Abría en
     // `administration/accounting` hasta el 2026-09-19; desde esa fecha esa
