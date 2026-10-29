@@ -8,9 +8,57 @@
 }
 
 .cola__estados {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
   margin-block-end: var(--sp-3);
-  overflow-x: auto;
+}
+
+.estado-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 2.5rem;
+  padding: var(--sp-1) var(--sp-3);
+  font: inherit;
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl, 999px);
+  cursor: pointer;
+}
+
+.estado-chip:hover {
+  background: var(--bg-hover);
+}
+
+.estado-chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.estado-chip--activo {
+  color: var(--text-inverse);
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.estado-chip__cuenta {
+  min-inline-size: 1.5rem;
+  padding: 0 var(--sp-1);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  background: var(--bg-inset);
+  color: var(--text-primary);
+  border-radius: 999px;
+}
+
+.estado-chip--activo .estado-chip__cuenta {
+  color: var(--brand-primary);
+  background: var(--bg-surface);
 }
 
 .cola__esqueleto {

@@ -6,14 +6,23 @@
 
 <!-- Una tarjeta a lo ancho: estados arriba, filtros, tabla y paginación (ADR-0015). -->
 <app-card class="cola" variant="outlined" padding="lg" data-testid="admissions-card">
-  <app-segmented-control
-    class="cola__estados"
-    ariaLabel="Estado de la admisión"
-    [options]="tabs()"
-    [value]="status()"
-    data-testid="admissions-status-tabs"
-    (valueChange)="selectStatus($event)"
-  />
+  <!-- Un botón por estado, con su contador. Se envuelven en vez de cortarse: un
+       «Enviad…» no dice nada, y los nueve estados no entran en una sola línea. -->
+  <div class="cola__estados" role="group" aria-label="Estado de la admisión" data-testid="admissions-status-tabs">
+    @for (opcion of tabs(); track opcion.value) {
+      <button
+        type="button"
+        class="estado-chip"
+        [class.estado-chip--activo]="status() === opcion.value"
+        [attr.aria-pressed]="status() === opcion.value"
+        [attr.data-estado]="opcion.value || 'ALL'"
+        (click)="selectStatus(opcion.value)"
+      >
+        <span class="estado-chip__nombre">{{ opcion.label }}</span>
+        <span class="estado-chip__cuenta" [attr.aria-label]="opcion.count + (opcion.count === 1 ? ' admisión' : ' admisiones')">{{ opcion.count }}</span>
+      </button>
+    }
+  </div>
 
   <!-- El buscador no escribe en la URL: ahí se tipean nombres y documentos de personas. -->
   <app-filter-bar
