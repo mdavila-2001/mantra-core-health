@@ -309,4 +309,75 @@ describe('MedicalOrganization', () => {
     http.expectOne('/practices').flush([PRACTICA]);
     http.expectOne('/practitioners/me/role-assignments').flush([]);
   });
+
+  /**
+   * LA CABECERA DE LA CONSOLA, EN SUS ESTADOS DE FALLO.
+   *
+   * El defecto: el error inesperado (S9) salía con el mensaje y SIN el código de
+   * soporte, así que quien lo veía no tenía con qué reportarlo. Ahora la
+   * cabecera pasa por el organismo compartido de los nueve estados.
+   */
+  describe('cabecera con la consola caída', () => {
+    const texto = (): string => harness.routeNativeElement?.textContent ?? '';
+
+    function consolaFalla(estado: number, cuerpo: object | null): void {
+      http.expectOne('/practices').flush([PRACTICA]);
+      harness.detectChanges();
+      http
+        .expectOne('/practices/prac-1/organization')
+        .flush(cuerpo, { status: estado, statusText: 'x' });
+      harness.detectChanges();
+    }
+
+    it('S9 muestra el código de soporte (requestId) copiable', () => {
+      consolaFalla(500, { statusCode: 500, code: 'INTERNAL', message: 'Falló', correlationId: 'req-abc-123' });
+
+      expect(texto()).toContain('req-abc-123');
+      expect(texto()).toContain('Copiar código');
+      expect(texto()).toContain('Reintentar');
+    });
+
+    it('S5 (403) y S6 (404) no se quedan en «Cargando…» y el 404 no repite el identificador', () => {
+      consolaFalla(404, { statusCode: 404, code: 'NOT_FOUND', message: 'prac-1 no existe' });
+
+      expect(texto()).not.toContain('Cargando la organización');
+      expect(texto()).toContain('No encontramos');
+      expect(texto()).not.toContain('prac-1 no existe');
+    });
+
+    it('S8: sin conexión ofrece Reintentar y reintentar vuelve a pedir la consola', () => {
+      http.expectOne('/practices').flush([PRACTICA]);
+      harness.detectChanges();
+      http.expectOne('/practices/prac-1/organization').error(new ProgressEvent('error'), { status: 0 });
+      harness.detectChanges();
+
+      expect(texto()).toContain('Sin conexión');
+      componente['recargar']();
+      http.expectOne('/practices/prac-1/organization').flush(consola());
+      harness.detectChanges();
+
+      expect(texto()).toContain('HOSP-CENTRAL');
+    });
+
+    it('S7: un corte al releer conserva lo que se veía y avisa que puede estar atrasado', () => {
+      cargar();
+      componente['recargar']();
+      http.expectOne('/practices/prac-1/organization').error(new ProgressEvent('error'), { status: 0 });
+      harness.detectChanges();
+
+      expect(texto()).toContain('HOSP-CENTRAL');
+      expect(texto()).toContain('atrasados');
+    });
+
+    it('un 403 al releer quita lo que se veía: ya no se puede afirmar que siga vigente', () => {
+      cargar();
+      componente['recargar']();
+      http
+        .expectOne('/practices/prac-1/organization')
+        .flush({ statusCode: 403, code: 'FORBIDDEN', message: 'No' }, { status: 403, statusText: 'Forbidden' });
+      harness.detectChanges();
+
+      expect(texto()).not.toContain('HOSP-CENTRAL');
+    });
+  });
 });

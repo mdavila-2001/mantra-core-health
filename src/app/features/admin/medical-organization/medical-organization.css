@@ -25,20 +25,6 @@
   border-radius: var(--r-md);
 }
 
-.organizacion-medica__ambito--error {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-5);
-  background: var(--st-error-bg);
-  color: var(--st-error-fg);
-  border-color: var(--st-error-bd);
-}
-
-.organizacion-medica__ambito--vacio {
-  color: var(--text-secondary);
-}
-
 .organizacion-medica__datos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
