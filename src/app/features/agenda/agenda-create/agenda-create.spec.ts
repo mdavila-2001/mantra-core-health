@@ -73,6 +73,8 @@ describe('AgendaCreate', () => {
    * colgado y la prueba muere por tiempo, no por comportamiento.
    */
   let respuestaDelDialogo = true;
+  /** Lo que responde `GET /practices` al abrir la pantalla. */
+  let practicasDeLaOrganizacion: readonly { id: string; code: string; name: string; status: string }[] = [];
   /** El último diálogo que se pidió, para poder mirarlo desde una prueba. */
   let ultimoDialogo: Record<string, unknown> | null = null;
   const dialogsFalsos = {
@@ -116,6 +118,9 @@ describe('AgendaCreate', () => {
     // arma {@link crearConHorarioVigente}.
     if (leeHorarioVigente(roles, tenant, perfilProfesional)) {
       http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+      // Y las prácticas de la organización, de donde sale el `practiceId` del
+      // recurso. Por omisión ninguna: el alta viaja sin práctica, como antes.
+      http.expectOne('/practices').flush(practicasDeLaOrganizacion);
     }
     fixture.detectChanges();
   }
@@ -161,6 +166,7 @@ describe('AgendaCreate', () => {
     http = TestBed.inject(HttpTestingController);
     acc = fixture.componentInstance as unknown as Testable;
     fixture.detectChanges();
+    http.expectOne('/practices').flush(practicasDeLaOrganizacion);
     http.expectOne((r) => r.url === '/scheduling/resources').flush({
       items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' }],
       count: 1,
@@ -171,7 +177,10 @@ describe('AgendaCreate', () => {
     fixture.detectChanges();
   }
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    practicasDeLaOrganizacion = [];
+  });
 
   /**
    * Contesta el retiro del horario vigente, que desde el arreglo del cierre de
@@ -886,6 +895,34 @@ describe('AgendaCreate', () => {
       expect(acc.resourceId()).toBe('res-1');
     });
 
+    it('con una sola agenda la nombra y ofrece crear otra, sin un desplegable de una opción', () => {
+      // El JSDoc decía «sólo con más de una» y el código mostraba el
+      // desplegable con una: las dos mitades de la regla estaban mezcladas.
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+      const raiz = fixture.nativeElement as HTMLElement;
+
+      expect(raiz.querySelector('[data-testid="agenda-create-sede"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="agenda-create-unica"]')?.textContent).toContain(
+        'Agenda',
+      );
+      expect(raiz.querySelector('[data-testid="agenda-create-nueva"]')).not.toBeNull();
+
+      // Con dos, sí hay entre qué elegir.
+      (fixture.componentInstance as unknown as { misAgendas: WritableSignal<unknown[]> }).misAgendas.set([
+        { id: 'res-1', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' },
+        { id: 'res-2', name: 'Sábados', resourceRefId: PERFIL, stateConceptId: 'c' },
+      ]);
+      fixture.detectChanges();
+      expect(raiz.querySelector('[data-testid="agenda-create-sede"]')).not.toBeNull();
+      expect(raiz.querySelector('[data-testid="agenda-create-unica"]')).toBeNull();
+    });
+
     it('al empezar una nueva, publicar CREA un recurso en vez de reusar', () => {
       crearConHorarioVigente({
         id: 'tpl-1',
@@ -1264,6 +1301,69 @@ describe('AgendaCreate', () => {
       expect(acc.conAlmuerzo()).toBe(true);
       expect(acc.almuerzoDesde()).toBe('12:30');
       expect(acc.almuerzoHasta()).toBe('14:00');
+    });
+  });
+  /**
+   * `practiceId` viajaba siempre vacío: el control existía y nada lo llenaba.
+   * Sale de `GET /practices` de la organización activa.
+   */
+  describe('la práctica del recurso', () => {
+    const PRACTICA = { id: 'pr-1', code: 'OLIVOS', name: 'Clínica Los Olivos', status: 'c' };
+
+    it('con una sola práctica, el alta del recurso la lleva', () => {
+      practicasDeLaOrganizacion = [PRACTICA];
+      crear();
+      encenderLunes();
+      acc.publicar();
+
+      const alta = http.expectOne('/scheduling/resources');
+      expect((alta.request.body as { practiceId?: string }).practiceId).toBe('pr-1');
+      alta.flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
+      http
+        .expectOne('/scheduling/resources/res-1/templates')
+        .flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-1/generate-slots')
+        .flush({ templateId: 'tpl-1', created: 40, skipped: 0 });
+    });
+
+    it('con varias, se pregunta cuál y viaja la elegida', () => {
+      practicasDeLaOrganizacion = [PRACTICA, { ...PRACTICA, id: 'pr-2', name: 'Consultorio' }];
+      crear();
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="agenda-create-practica"]')).not.toBeNull();
+
+      (fixture.componentInstance as unknown as { elegirPractica: (id: string) => void }).elegirPractica(
+        'pr-2',
+      );
+      encenderLunes();
+      acc.publicar();
+
+      const alta = http.expectOne('/scheduling/resources');
+      expect((alta.request.body as { practiceId?: string }).practiceId).toBe('pr-2');
+      alta.flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
+      http
+        .expectOne('/scheduling/resources/res-1/templates')
+        .flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-1/generate-slots')
+        .flush({ templateId: 'tpl-1', created: 40, skipped: 0 });
+    });
+
+    it('sin prácticas, el alta viaja sin practiceId (el contrato lo admite)', () => {
+      crear();
+      encenderLunes();
+      acc.publicar();
+
+      const alta = http.expectOne('/scheduling/resources');
+      expect('practiceId' in (alta.request.body as object)).toBe(false);
+      alta.flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
+      http
+        .expectOne('/scheduling/resources/res-1/templates')
+        .flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-1/generate-slots')
+        .flush({ templateId: 'tpl-1', created: 40, skipped: 0 });
     });
   });
 });
