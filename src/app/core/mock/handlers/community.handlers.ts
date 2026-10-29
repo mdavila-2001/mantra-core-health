@@ -25,8 +25,6 @@ import { encuentros } from '../fixtures/clinica';
 import { reservas } from '../fixtures/agenda';
 import { encuentroDeReserva, profesionalDeReserva } from '../fixtures/atencion-resenable';
 import { ESTADO } from '../fixtures/conceptos';
-import { reservas } from '../fixtures/agenda';
-import { encuentroDeReserva, profesionalDeReserva } from '../fixtures/atencion-resenable';
 import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
 import { conflict, forbidden, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
