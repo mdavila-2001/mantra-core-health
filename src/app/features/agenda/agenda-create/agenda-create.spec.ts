@@ -2266,4 +2266,80 @@ describe('AgendaCreate', () => {
     fixture.detectChanges();
     expect(row.getAttribute('aria-expanded')).toBe('false');
   });
+
+  /**
+   * LA LECTURA QUE SE TRAGABA.
+   *
+   * Si leer las agendas fallaba, el error se descartaba y el formulario quedaba
+   * en blanco «para no arruinar el alta». No era inocuo: sin las agendas leídas
+   * no hay `resourceId`, y publicar CREA una agenda nueva en vez de editar la
+   * que ya existía, duplicándola ante los pacientes.
+   */
+  describe('si no se pueden leer las agendas', () => {
+    function crearConLecturaCaida(): void {
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([{ path: 'schedule', children: [] }]),
+          {
+            provide: AuthService,
+            useValue: {
+              roles: signal<readonly string[]>(['PRACTITIONER']),
+              activeTenantId: signal<string | null>(TENANT),
+              practitionerProfileId: signal<string | null>(PERFIL),
+              displayName: signal<string | null>('Dra. Elena Salas'),
+            },
+          },
+          { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
+          { provide: DialogService, useValue: dialogsFalsos },
+        ],
+      });
+      fixture = TestBed.createComponent(AgendaCreate);
+      http = TestBed.inject(HttpTestingController);
+      acc = fixture.componentInstance as unknown as Testable;
+      fixture.detectChanges();
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+    }
+
+    it('se dice, y publicar no crea una agenda duplicada', () => {
+      crearConLecturaCaida();
+      const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="agenda-create-error-lectura"]',
+      );
+      expect(aviso).not.toBeNull();
+
+      encenderLunes();
+      acc.publicar();
+
+      http.expectNone('/scheduling/resources');
+    });
+
+    it('«Reintentar» vuelve a leer y, si anda, deja publicar', () => {
+      crearConLecturaCaida();
+      (fixture.componentInstance as unknown as { reintentarLectura(): void }).reintentarLectura();
+
+      http
+        .expectOne((r) => r.url === '/scheduling/resources')
+        .flush({
+          items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' }],
+          count: 1,
+        });
+      http.expectOne('/scheduling/resources/res-1/templates').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="agenda-create-error-lectura"]'),
+      ).toBeNull();
+      expect(acc.resourceId()).toBe('res-1');
+    });
+
+    it('con una sola agenda se ofrece el bloque (ahí vive «crear otra»), con cero no', () => {
+      crear();
+      expect(acc.eligeSede()).toBe(false);
+    });
+  });
 });

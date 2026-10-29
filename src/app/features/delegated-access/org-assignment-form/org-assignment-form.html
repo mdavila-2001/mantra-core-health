@@ -31,12 +31,31 @@
     <button app-button variant="primary" (clicked)="otraAsignacion()">Asignar otra persona</button>
   </div>
 } @else {
+  @if (organizacionActiva() === null) {
+    <app-alert tone="warning" class="m29__alert" title="Elija una organización primero" data-testid="asignacion-sin-organizacion">
+      Las personas y las sedes salen de la organización activa. Elíjala en el selector de arriba y
+      vuelva a esta pantalla.
+    </app-alert>
+  }
+
+  <!-- Un fallo al leer las opciones NO es «no hay opciones»: se dice y se puede reintentar. -->
+  @if (errorDeOpciones(); as motivo) {
+    <app-alert tone="error" class="m29__alert" data-testid="asignacion-error-opciones">
+      {{ motivo }}
+      <div alert-actions>
+        <button app-button size="sm" variant="secondary" type="button" (clicked)="recargarOpciones()">
+          Reintentar
+        </button>
+      </div>
+    </app-alert>
+  }
+
   @if (errorMessage(); as mensaje) {
     <app-alert appAnuncio tone="error" class="m29__alert">{{ mensaje }}</app-alert>
   }
 
   <app-paginated-form
-    [paginas]="paginas"
+    [paginas]="paginas()"
     [form]="form"
     label="Nueva asignación de organización"
     submitLabel="Crear asignación"

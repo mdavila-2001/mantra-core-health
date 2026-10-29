@@ -26,109 +26,74 @@
 }
 
 <!-- Ficha de ámbito: la práctica es el asunto de la pantalla, no un filtro. Va
-     arriba una sola vez y no se repite como columna en ninguna tabla. -->
-@switch (estado.status) {
-  @case ('ready') {
-    @if (ficha) {
-      <section class="organizacion-medica__ambito" aria-label="Organización">
-        <dl class="organizacion-medica__datos">
-          <div>
-            <dt>Código</dt>
-            <dd class="organizacion-medica__codigo">{{ ficha.code }}</dd>
-          </div>
-          <div>
-            <dt>Tipo</dt>
-            <dd>{{ etiquetaDe(ficha.type) }}</dd>
-          </div>
-          <div>
-            <dt>Estado</dt>
-            <dd>
-              <app-badge [variant]="varianteDe(ficha.status)">
-                {{ etiquetaDe(ficha.status) }}
-              </app-badge>
-            </dd>
-          </div>
-          @if (ficha.timeZone) {
-            <div>
-              <dt>Zona horaria</dt>
-              <dd>{{ ficha.timeZone }}</dd>
-            </div>
-          }
-          @if (ficha.currency) {
-            <div>
-              <dt>Moneda</dt>
-              <dd>{{ etiquetaDe(ficha.currency) }}</dd>
-            </div>
-          }
-        </dl>
-      </section>
-    }
+     arriba una sola vez y no se repite como columna en ninguna tabla.
 
-    <!-- Avisos que la especificación pide explícitos: documentación por vencer
-         e insumos en el punto de reposición. Salen de datos ya calculados por
-         el servidor, no de una cuenta hecha acá. -->
-    @if (documentosPorVencer().length > 0 || insumosEnFalta().length > 0) {
-      <section class="organizacion-medica__avisos" role="status">
-        @if (documentosPorVencer().length > 0) {
-          <p>
-            <strong>{{ documentosPorVencer().length }}</strong> documento(s) del legajo
-            vencidos o por vencer dentro del mes.
-          </p>
+     Los nueve estados los dibuja el organismo compartido. Antes cada caso tenía
+     su `<section>` a mano y el error (S9) salía **sin el código de soporte**: no
+     había con qué reportarlo. Un 404 conserva el texto fijo del organismo (S6,
+     igual exista o no), y la espera, el reintento y el S7 salen de un solo
+     lugar. Las pestañas de abajo no dependen de esto: «Mis vinculaciones» tiene
+     que poder usarse aun sin ninguna organización. -->
+<app-view-state-host [state]="estado" (retry)="recargar()" (refresh)="recargar()">
+  <div vsh-skeleton aria-busy="true">
+    <app-loading-state class="organizacion-medica__cargando" message="Cargando la organización…" />
+  </div>
+
+  @if (ficha) {
+    <section class="organizacion-medica__ambito" aria-label="Organización">
+      <dl class="organizacion-medica__datos">
+        <div>
+          <dt>Código</dt>
+          <dd class="organizacion-medica__codigo">{{ ficha.code }}</dd>
+        </div>
+        <div>
+          <dt>Tipo</dt>
+          <dd>{{ etiquetaDe(ficha.type) }}</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>
+            <app-badge [variant]="varianteDe(ficha.status)">
+              {{ etiquetaDe(ficha.status) }}
+            </app-badge>
+          </dd>
+        </div>
+        @if (ficha.timeZone) {
+          <div>
+            <dt>Zona horaria</dt>
+            <dd>{{ ficha.timeZone }}</dd>
+          </div>
         }
-        @if (insumosEnFalta().length > 0) {
-          <p>
-            <strong>{{ insumosEnFalta().length }}</strong> insumo(s) en el punto de
-            reposición o por debajo.
-          </p>
+        @if (ficha.currency) {
+          <div>
+            <dt>Moneda</dt>
+            <dd>{{ etiquetaDe(ficha.currency) }}</dd>
+          </div>
         }
-      </section>
-    }
-  }
-  @case ('empty') {
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--vacio">
-      <p>{{ estado.message ?? 'No hay ninguna organización que administrar.' }}</p>
+      </dl>
     </section>
   }
-  @case ('error') {
-    <!-- Un 403 acá significa «no administrás esta organización» y un 404, «no
-         existe». El backend los distingue a propósito para que el código de
-         error no sirva de sonda; la pantalla los muestra tal cual llegan. -->
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>{{ estado.message ?? 'No se pudo cargar la organización.' }}</p>
-      <button app-button variant="secondary" type="button" (click)="recargar()">
-        Reintentar
-      </button>
+
+  <!-- Avisos que la especificación pide explícitos: documentación por vencer
+       e insumos en el punto de reposición. Salen de datos ya calculados por
+       el servidor, no de una cuenta hecha acá. -->
+  @if (documentosPorVencer().length > 0 || insumosEnFalta().length > 0) {
+    <section class="organizacion-medica__avisos" role="status">
+      @if (documentosPorVencer().length > 0) {
+        <p>
+          <strong>{{ documentosPorVencer().length }}</strong> documento(s) del legajo
+          vencidos o por vencer dentro del mes.
+        </p>
+      }
+      @if (insumosEnFalta().length > 0) {
+        <p>
+          <strong>{{ insumosEnFalta().length }}</strong> insumo(s) en el punto de
+          reposición o por debajo.
+        </p>
+      }
     </section>
   }
-  @case ('forbidden') {
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>{{ estado.message ?? 'No administra esta organización.' }}</p>
-    </section>
-  }
-  @case ('not-found') {
-    <!-- Mismo texto tanto si no existe como si existe y está oculta: cualquier
-         diferencia confirmaría que el identificador es real. -->
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>No encontramos esa organización.</p>
-    </section>
-  }
-  @case ('offline') {
-    <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>No pudimos comunicarnos con el servidor.</p>
-      <button app-button variant="secondary" type="button" (click)="recargar()">
-        Reintentar
-      </button>
-    </section>
-  }
-  @default {
-    <section class="organizacion-medica__ambito" aria-busy="true">
-      <app-loading-state
-        class="organizacion-medica__cargando"
-        message="Cargando la organización…"
-      />
-    </section>
-  }
-}
+</app-view-state-host>
 
 <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
   <app-tab label="Sedes">

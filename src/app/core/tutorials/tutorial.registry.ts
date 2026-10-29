@@ -212,8 +212,11 @@ function revisarRuta(
   if (ruta === undefined) {
     return [];
   }
+  // El query y el ancla no son parte de la sección: `…/medical-organization?tab=memberships`
+  // es la sección `…/medical-organization` abierta en una pestaña.
+  const camino = ruta.split(/[?#]/, 1)[0] ?? ruta;
   const conocida = [...RUTAS_CONOCIDAS].some(
-    (declarada) => ruta === declarada || ruta.startsWith(`${declarada}/`),
+    (declarada) => camino === declarada || camino.startsWith(`${declarada}/`),
   );
   return conocida
     ? []

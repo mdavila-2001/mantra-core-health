@@ -1,10 +1,11 @@
 import { ROLE_ASSIGNMENT_STATUS } from '../../data-access/practice-sites/role-assignment-concepts';
 import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS, PRACTICE_SANLUCAS, SITIO_CONSULTORIO, SITIO_OLIVOS, SITIO_SANLUCAS } from '../fixtures/agenda';
-import { CARGO, SPECIALTY, STATUS, PROCEDIMIENTO, displayOf } from '../fixtures/concepts';
+import { CARGO, SPECIALTY, STATUS, PROCEDIMIENTO } from '../fixtures/concepts';
 import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
-import { MEDICAL, PROFESSIONALS, professionalById } from '../fixtures/people';
+import { MEDICAL, professionalById } from '../fixtures/people';
 import { myAffiliations, requestAffiliation, CM_PRACTICES } from '../fixtures/role-assignments';
 import { noContent, notFound, type MockRouter } from '../mock-router';
+import { consolaDeLaOrganizacion } from './practice-console';
 import { TENANT_CLINICA, TENANT_HOSPITAL } from '../mock-session';
 import { ahora, avatarSvg, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
@@ -304,10 +305,6 @@ export interface SedeDeProfesional {
   readonly logoFileId: string | null;
 }
 
-function concepto(code: string, display: string) {
-  return { code, display };
-}
-
 export function registrarPracticas(router: MockRouter): void {
   router.get('/practices', () => [...PRACTICAS, ...CM_PRACTICES]);
 
@@ -508,84 +505,7 @@ export function registrarPracticas(router: MockRouter): void {
 
   router.get('/practices/:id/organization', ({ params }) => {
     const practica = PRACTICAS.find((p) => p.id === params['id']);
-    if (practica === undefined) return notFound('Práctica no encontrada');
-    const esHospital = practica.id === PRACTICE_SANLUCAS;
-    const sitio = esHospital ? SITIO_SANLUCAS : practica.id === PRACTICE_CONSULTORIO ? SITIO_CONSULTORIO : SITIO_OLIVOS;
-    const sitios = [
-      { id: sitio.id, code: sitio.code, name: sitio.name, type: concepto('MAIN', 'Sede principal'), physicalType: concepto('BUILDING', 'Edificio'), operationalStatus: concepto('OPERATIONAL', 'Operativa'), status: concepto('ACTIVE', 'Activa'), timeZone: 'America/La_Paz', branchId: null, clinicalUnitCount: esHospital ? 6 : 3, careSpaceCount: esHospital ? 24 : 8 },
-      ...(esHospital ? [{ id: uuid('site-sanlucas-norte'), code: 'SANLUCAS-N', name: 'Hospital San Lucas · Anexo Norte', type: concepto('BRANCH', 'Sucursal'), physicalType: concepto('BUILDING', 'Edificio'), operationalStatus: concepto('OPERATIONAL', 'Operativa'), status: concepto('ACTIVE', 'Activa'), timeZone: 'America/La_Paz', branchId: null, clinicalUnitCount: 2, careSpaceCount: 6 }] : []),
-    ];
-    const unidades = [
-      { code: 'CARDIO', name: 'Cardiología', esp: SPECIALTY['CARDIOLOGIA']! },
-      { code: 'MEDINT', name: 'Medicina interna', esp: SPECIALTY['MEDICINA_INTERNA']! },
-      { code: 'PEDIA', name: 'Pediatría', esp: SPECIALTY['PEDIATRIA']! },
-      ...(esHospital ? [{ code: 'URG', name: 'Urgencias', esp: SPECIALTY['MEDICINA_GENERAL']! }, { code: 'QX', name: 'Quirófanos', esp: SPECIALTY['ANESTESIOLOGIA']! }, { code: 'GINE', name: 'Maternidad', esp: SPECIALTY['GINECOLOGIA_OBSTETRICIA']! }] : []),
-    ].map((u, i) => ({
-      id: uuid(`unit-${practica.code}-${u.code}`),
-      siteId: sitio.id,
-      parentUnitId: null,
-      code: u.code,
-      name: u.name,
-      type: concepto('DEPARTMENT', 'Departamento'),
-      specialty: concepto(u.code, displayOf(u.esp)),
-      serviceMode: concepto(i % 2 === 0 ? 'OUTPATIENT' : 'INPATIENT', i % 2 === 0 ? 'Ambulatorio' : 'Internación'),
-      status: concepto('ACTIVE', 'Activa'),
-    }));
-    const espacios = unidades.flatMap((u, i) => [
-      { id: uuid(`space-${u.id}-1`), siteId: sitio.id, clinicalUnitId: u.id, parentSpaceId: null, code: `${u.code}-C1`, name: `Consultorio ${i + 1}`, type: concepto('ROOM', 'Consultorio'), capacity: 1, operationalStatus: concepto('OPERATIONAL', 'Operativo'), status: concepto('ACTIVE', 'Activo') },
-      { id: uuid(`space-${u.id}-2`), siteId: sitio.id, clinicalUnitId: u.id, parentSpaceId: null, code: `${u.code}-C2`, name: `Consultorio ${i + 1}B`, type: concepto('ROOM', 'Consultorio'), capacity: 1, operationalStatus: concepto(i === 2 ? 'MAINTENANCE' : 'OPERATIONAL', i === 2 ? 'En mantenimiento' : 'Operativo'), status: concepto('ACTIVE', 'Activo') },
-    ]);
-    const personal = PROFESSIONALS.filter((p) => (esHospital ? p.organizacion === 'Hospital San Lucas' : p.organizacion === 'Clínica Los Olivos')).map((p, i) => ({
-      id: uuid(`staff-${practica.code}-${p.id}`),
-      practitionerProfileId: p.id,
-      practitionerName: p.displayName,
-      siteId: sitio.id,
-      clinicalUnitId: unidades[i % unidades.length]!.id,
-      healthcareServiceId: null,
-      role: concepto(i === 0 ? 'HEAD' : 'STAFF', i === 0 ? 'Jefe/a de servicio' : 'Médico/a de planta'),
-      specialty: p.especialidades[0] === undefined ? null : concepto('SP', displayOf(p.especialidades[0])),
-      isPrimary: i === 0,
-      validFrom: isoDia(-900 + i * 30),
-      validTo: null,
-      status: concepto('ACTIVE', 'Activo'),
-    }));
-    return {
-      organization: {
-        id: practica.id,
-        code: practica.code,
-        name: practica.name,
-        type: concepto(esHospital ? 'HOSPITAL' : 'CLINIC', esHospital ? 'Hospital' : 'Clínica'),
-        status: concepto('ACTIVE', 'Activa'),
-        timeZone: 'America/La_Paz',
-        currency: concepto('BOB', 'Boliviano'),
-      },
-      sites: sitios,
-      clinicalUnits: unidades,
-      careSpaces: espacios,
-      healthcareServices: servicios.todos().slice(0, 6).map((s, i) => ({
-        id: uuid(`hs-${s.id}`),
-        siteId: sitio.id,
-        clinicalUnitId: unidades[i % unidades.length]!.id,
-        service: concepto(s.code, s.name),
-        specialty: concepto('CARDIO', 'Cardiología'),
-        referralRequired: i % 3 === 0,
-        appointmentRequired: true,
-        telehealthAvailable: s.code === 'TELE-CARDIO',
-        status: concepto('ACTIVE', 'Activo'),
-      })),
-      staff: personal,
-      legalDocuments: [
-        { id: uuid(`doc-lic-${practica.code}`), siteId: sitio.id, type: concepto('LICENSE', 'Licencia de funcionamiento'), number: `LF-${practica.code}-2024`, issuerName: 'SEDES Santa Cruz', evidenceFileId: uuid('file-licencia'), validFrom: isoDia(-400), validTo: isoDia(330), daysToExpiry: 330, verificationStatus: concepto('VERIFIED', 'Verificado') },
-        { id: uuid(`doc-nit-${practica.code}`), siteId: null, type: concepto('TAX_ID', 'NIT'), number: '1023456019', issuerName: 'Impuestos Nacionales', evidenceFileId: null, validFrom: isoDia(-2000), validTo: null, daysToExpiry: null, verificationStatus: concepto('VERIFIED', 'Verificado') },
-        { id: uuid(`doc-bio-${practica.code}`), siteId: sitio.id, type: concepto('BIOSAFETY', 'Certificado de bioseguridad'), number: `BIO-${practica.code}`, issuerName: 'Gobierno Autónomo Municipal', evidenceFileId: null, validFrom: isoDia(-350), validTo: isoDia(15), daysToExpiry: 15, verificationStatus: concepto('PENDING', 'Por renovar') },
-      ],
-      inventory: [
-        { id: uuid(`inv-1-${practica.code}`), name: 'Guantes de nitrilo (caja x100)', lotNumber: 'L-2409', expiryDate: isoDia(400), quantityOnHand: '48', unit: concepto('BOX', 'Caja'), reorderLevel: '20', belowReorderLevel: false, status: concepto('ACTIVE', 'Disponible') },
-        { id: uuid(`inv-2-${practica.code}`), name: 'Electrodos para ECG', lotNumber: 'E-1102', expiryDate: isoDia(120), quantityOnHand: '12', unit: concepto('PACK', 'Paquete'), reorderLevel: '15', belowReorderLevel: true, status: concepto('ACTIVE', 'Disponible') },
-        { id: uuid(`inv-3-${practica.code}`), name: 'Alcohol en gel 500 ml', lotNumber: 'A-0871', expiryDate: isoDia(25), quantityOnHand: '30', unit: concepto('UNIT', 'Unidad'), reorderLevel: '10', belowReorderLevel: false, status: concepto('ACTIVE', 'Disponible') },
-        { id: uuid(`inv-4-${practica.code}`), name: 'Jeringas 5 ml', lotNumber: 'J-3340', expiryDate: isoDia(700), quantityOnHand: '4', unit: concepto('BOX', 'Caja'), reorderLevel: '8', belowReorderLevel: true, status: concepto('ACTIVE', 'Disponible') },
-      ],
-    };
+    return practica === undefined ? notFound('Práctica no encontrada') : consolaDeLaOrganizacion(practica, servicios.todos());
   });
 }
 

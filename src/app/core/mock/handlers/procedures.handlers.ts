@@ -11,7 +11,13 @@ import { ahora, Coleccion, cuerpo, iso, nuevoId, texto, uuid } from '../mock-sto
 const ROL_EQUIPO = { CIRUJANO: uuid('concept-team-role-surgeon'), ANESTESISTA: uuid('concept-team-role-anesthesiologist'), INSTRUMENTISTA: uuid('concept-team-role-scrub-nurse'), AYUDANTE: uuid('concept-team-role-assistant') } as const;
 const ESTADO_MIEMBRO = { INVITADO: uuid('concept-member-invited'), ACEPTADO: uuid('concept-member-accepted'), RECHAZADO: uuid('concept-member-declined') } as const;
 const ESTADO_CASO = { PROGRAMADO: uuid('concept-case-scheduled'), EN_CURSO: uuid('concept-case-in-progress'), COMPLETADO: uuid('concept-case-completed'), CANCELADO: uuid('concept-case-cancelled'), PENDIENTE_EQUIPO: uuid('concept-case-pending-team') } as const;
-const QUIROFANO = { Q1: uuid('operating-room-1'), Q2: uuid('operating-room-2') } as const;
+/**
+ * Los quirófanos de los casos quirúrgicos. Son los mismos ids que la consola
+ * «Organización médica» muestra como espacios del área de quirófanos
+ * (`practice.handlers.ts`): un caso programado en el quirófano «X» tiene que
+ * poder encontrarse en la estructura de la organización.
+ */
+export const QUIROFANO = { Q1: uuid('operating-room-1'), Q2: uuid('operating-room-2') } as const;
 const LATERALIDAD = { DER: uuid('concept-laterality-right'), IZQ: uuid('concept-laterality-left') } as const;
 const SITIO = { RODILLA: uuid('concept-body-site-knee'), ABDOMEN: uuid('concept-body-site-abdomen'), HOMBRO: uuid('concept-body-site-shoulder') } as const;
 

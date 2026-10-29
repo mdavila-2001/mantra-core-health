@@ -20,6 +20,15 @@ import type { TenantScope } from '@core/data-access/scheduling/tenant-scope';
  * exactamente la misma pareja de llamadas. La tercera copia es donde una de las
  * tres se queda con el criterio viejo.
  *
+ * ## Por qué NO sigue un cursor
+ *
+ * `GET /scheduling/resources` no pagina: la API devuelve **todos** los recursos
+ * de la organización en `{ items, count }`, sin `limit` ni `nextCursor`
+ * (`ListResourcesResponseDto` y `SchedulingAgendaRepository.findResources`, un
+ * `em.find` sin tope). Un bucle por cursor sería inventar un contrato; si la API
+ * llega a paginarlo, `AgendaResourcePage` tendrá que declararlo y este filtro
+ * deberá recorrer las páginas, porque se hace en el cliente.
+ *
  * Para buscar en una organización que no es la activa —el modal del día, con
  * otra organización elegida— se pasa `scope`: la API solo lista las agendas de
  * la organización como la que se habla.
@@ -40,7 +49,7 @@ export function agendaResourceMy(
  *
  * ## Por qué hizo falta
  *
- * `miRecursoDeAgenda` resolvía con `.find(...)`, que devuelve **una** y descarta
+ * La versión anterior (`miRecursoDeAgenda`) resolvía con `.find(...)`, que devuelve **una** y descarta
  * el resto. Un profesional que atiende en dos sedes tiene dos recursos, y el
  * segundo era invisible en todo el producto: no se podía elegir dónde publicar
  * un horario, y la pregunta «¿en qué consultorio?» no existía en ninguna
@@ -51,7 +60,7 @@ export function agendaResourceMy(
  *
  * ## Qué NO cambia
  *
- * `miRecursoDeAgenda` sigue devolviendo la primera y sigue siendo lo que usan
+ * {@link agendaResourceMy} sigue devolviendo la primera y sigue siendo lo que usan
  * «Consultas médicas» y «Evoluciones». Esas dos también tendrían que preguntar
  * cuál, pero cambiarlas acá sería tocar tres pantallas en un arreglo que se
  * pidió para una. Queda dicho para no perderlo.

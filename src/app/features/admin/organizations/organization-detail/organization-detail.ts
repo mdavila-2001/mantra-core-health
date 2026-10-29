@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
 import type {
@@ -27,11 +27,8 @@ import type {
 } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
-import { empty, loading, ready } from '../../../../core/view-state/view-state';
-import type {
-  ViewState,
-  ViewStateNextAction,
-} from '../../../../core/view-state/view-state.types';
+import { dataOf, hasData, loading, ready, stale } from '../../../../core/view-state/view-state';
+import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -44,6 +41,8 @@ import type { BranchDraft } from '../../../../shared/utils/branch-import/branch-
 import { createBranchesInSeries } from '../../../organization/organization-branches/create-branches-in-series';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
+import { Card } from '../../../../shared/components/molecules/card/card';
+import { historialDeCursor } from '../../../../shared/components/organisms/data-table/cursor-history';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
@@ -57,27 +56,21 @@ import {
   organizationVerifyRoute,
 } from '../organizations.routes';
 import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
+import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { crearResolvedorDeNombres } from '../person-names';
+import {
+  VARIANTE_POR_CODIGO,
+  conceptosDe,
+  esFallo,
+  estadoDeLista,
+} from './organization-detail.support';
 
-/** Membresías por página. El backend aplica 50 por omisión y admite hasta 200. */
+/** Filas por página de la plantilla y de las sub-organizaciones. El backend aplica 50 por omisión y admite hasta 200. */
 const TAMANO_DE_PAGINA = 25;
 
-/**
- * Variante del badge por **código** de concepto. Mismo criterio que el
- * listado: el código es lo estable, la etiqueta es presentación. Lo que no
- * figura se pinta `info` — estado desconocido no es estado roto.
- */
-const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
-  TENANT_ACTIVE: 'success',
-  DIR_TENANT_PENDING: 'warning',
-  DIR_TENANT_SUSPENDED: 'error',
-  TENANT_VERIFIED: 'success',
-  DIR_TENANT_UNVERIFIED: 'warning',
-  DIR_BRANCH_ACTIVE: 'success',
-  DIR_BRANCH_CLOSED: 'secondary',
-  DIR_MEMBERSHIP_ACTIVE: 'success',
-  DIR_MEMBERSHIP_ENDED: 'secondary',
-  DIR_MEMBERSHIP_SUSPENDED: 'error',
-};
+const PESTANA_SUCURSALES = 0;
+const PESTANA_PLANTILLA = 1;
+const PESTANA_HIJAS = 2;
 
 /**
  * Ficha de una organización — vistas **V04-06·L** (sucursales), **V04-02·L**
@@ -92,12 +85,26 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
  * reparten en pestañas — no repiten la organización como columna ni la piden
  * de nuevo en una barra de filtros.
  *
- * ## Dos de los tres endpoints no paginan
+ * ## Qué pagina y qué no
  *
- * `/branches` y `/branch-assignments` devuelven `{ items, count }` plano: sin
- * cursor y sin total separado. Prometer «Siguientes» sobre eso sería mentir, y
- * por eso esas dos tablas van sin pie de paginación. Membresías sí pagina por
- * cursor, y sólo ella lo lleva.
+ * `/branches` devuelve `{ items, count }` plano: sin cursor y sin total
+ * separado. Prometer «Siguientes» sobre eso sería mentir, y por eso esa tabla
+ * va sin pie de paginación. **Membresías y sub-organizaciones sí paginan por
+ * cursor**, y cada una lleva el suyo (`historialDeCursor`): antes sólo se leía
+ * la primera página de 25 y el resto de la plantilla no existía para la
+ * pantalla, sin aviso.
+ *
+ * ## Los nueve estados de la ficha
+ *
+ * La cabecera de la organización pasa por `app-view-state-host`, que los
+ * dibuja una sola vez para todo el proyecto. Antes sólo distinguía listo y
+ * error, y un 403, un 404 o un corte de red caían en el `@default`: se veía
+ * «Cargando…» para siempre. Con la ficha sin datos no se dibujan las pestañas:
+ * las tres listas cuelgan del mismo `tenantId` y fallarían igual.
+ *
+ * Recargar con la ficha a la vista no la borra: si la relectura falla por
+ * red o por error, se conserva lo que había como **S7** con la hora de la
+ * última lectura buena, en vez de tirar datos válidos por un corte.
  *
  * ## Las lecturas no piden rol global
  *
@@ -121,6 +128,7 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
     AppButtonLink,
     Badge,
     BranchBulkImport,
+    Card,
     DataTable,
     DatePipe,
     Link,
@@ -129,6 +137,7 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
     Tab,
     Tabs,
     LoadingState,
+    ViewStateHost,
   ],
   templateUrl: './organization-detail.html',
   styleUrl: './organization-detail.css',
@@ -167,6 +176,8 @@ export class OrganizationDetail {
   private readonly celdaAltaSucursal =
     viewChild.required<TemplateRef<{ $implicit: BranchListItem }>>('celdaAltaSucursal');
 
+  private readonly celdaPersona =
+    viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaPersona');
   private readonly celdaRol =
     viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaRol');
   private readonly celdaEstadoMembresia =
@@ -182,12 +193,52 @@ export class OrganizationDetail {
     viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaEstadoHija');
 
   protected readonly organizacion = signal<ViewState<TenantListItem>>(loading());
+  /** La última ficha que llegó bien, y cuándo: lo que se conserva como S7 si la relectura falla. */
+  private ultimaFicha: { readonly datos: TenantListItem; readonly en: Date } | null = null;
   protected readonly sucursales = signal<ViewState<readonly BranchListItem[]>>(loading());
   protected readonly membresias = signal<ViewState<readonly MembershipListItem[]>>(loading());
   protected readonly hijas = signal<ViewState<readonly TenantListItem[]>>(loading());
 
-  /** Etiquetas de todos los conceptos de la ficha, resueltas de una vez. */
+  /** Etiquetas de los conceptos de la ficha, acumuladas: cada página trae las suyas. */
   private readonly etiquetas = signal<ConceptLabels>(new Map());
+
+  /** Pestaña abierta: gobierna cuál es la acción principal de la cabecera. */
+  protected readonly pestana = signal(PESTANA_SUCURSALES);
+
+  /** Cursor de cada lista que pagina. Una por pestaña: moverse en una no toca la otra. */
+  private readonly paginadoDePlantilla = historialDeCursor();
+  private readonly paginadoDeHijas = historialDeCursor();
+  protected readonly cursorDePlantilla = this.paginadoDePlantilla.cursor;
+  protected readonly cursorDeHijas = this.paginadoDeHijas.cursor;
+
+  /** El nombre de cada cuenta de la plantilla, cuando la API deja leerlo. */
+  private readonly personas = crearResolvedorDeNombres();
+
+  /** La ficha ya tiene datos: es lo que habilita las pestañas y las acciones. */
+  protected readonly fichaConDatos = computed(() => hasData(this.organizacion()));
+
+  /**
+   * La acción principal de la cabecera: la de la pestaña que se está mirando.
+   *
+   * Antes «Nueva sucursal», «Sumar a alguien» y «Nueva sub-organización» sólo
+   * existían como salida del estado vacío: con una sola sucursal cargada no
+   * quedaba ningún camino para crear la segunda. La acción principal va en la
+   * ranura `page-actions`, presente en todos los anchos, y cambia con la pestaña.
+   */
+  protected readonly accionPrincipal = computed<{ label: string; route: string } | null>(() => {
+    const ficha = dataOf(this.organizacion());
+    if (ficha === null) {
+      return null;
+    }
+    switch (this.pestana()) {
+      case PESTANA_PLANTILLA:
+        return { label: 'Sumar a alguien', route: membershipNewRoute(ficha.id) };
+      case PESTANA_HIJAS:
+        return { label: 'Nueva sub-organización', route: childOrganizationNewRoute(ficha.id) };
+      default:
+        return { label: 'Nueva sucursal', route: branchNewRoute(ficha.id) };
+    }
+  });
 
   /**
    * Nombre de cada sucursal por su id. Las asignaciones y las membresías
@@ -217,6 +268,7 @@ export class OrganizationDetail {
 
   protected readonly columnasDeMembresia = computed<readonly ColumnDef<MembershipListItem>[]>(
     () => [
+      { key: 'userId', header: 'Persona', priority: 1, cell: this.celdaPersona() },
       { key: 'tenantRoleConceptId', header: 'Rol', priority: 1, cell: this.celdaRol() },
       {
         key: 'statusConceptId',
@@ -307,8 +359,36 @@ export class OrganizationDetail {
     });
   }
 
+  /**
+   * Reintento y «Actualizar»: relee todo. Con la ficha a la vista no la
+   * borra mientras carga (ver el comentario de clase sobre S7).
+   */
   protected recargar(): void {
-    this.cargar();
+    this.cargar({ conservarFicha: this.ultimaFicha !== null });
+  }
+
+  /** Reintento de una sola lista: no vuelve a pedir la ficha ni la otra pestaña. */
+  protected recargarPlantilla(): void {
+    this.cargarMembresias();
+  }
+
+  protected recargarHijas(): void {
+    this.cargarHijas();
+  }
+
+  protected moverPlantilla(cursor: string): void {
+    this.paginadoDePlantilla.mover(cursor);
+    this.cargarMembresias();
+  }
+
+  protected moverHijas(cursor: string): void {
+    this.paginadoDeHijas.mover(cursor);
+    this.cargarHijas();
+  }
+
+  /** El nombre de la cuenta, si la API dejó leerlo. */
+  protected nombreDe(userId: string): string | undefined {
+    return this.personas.nombres().get(userId);
   }
 
   /** La etiqueta de un concepto, si el catálogo la conoce. */
@@ -353,143 +433,147 @@ export class OrganizationDetail {
     return organizationVerifyRoute(ficha.data.id);
   });
 
-  private cargar(): void {
+  private cargar(opciones: { conservarFicha?: boolean } = {}): void {
     const id = this.tenantId();
     if (id === '') {
       return;
     }
 
-    this.organizacion.set(loading());
-    this.sucursales.set(loading());
-    this.membresias.set(loading());
-    this.hijas.set(loading());
-
-    // Cada rama trae su propio fallo envuelto: una lectura caída deja su
-    // pestaña en error y no arrastra a las otras tres.
-    forkJoin({
-      ficha: this.directory.getTenant(id).pipe(catchError((error: unknown) => of({ error }))),
-      sucursales: this.directory
-        .listBranches(id)
-        .pipe(catchError((error: unknown) => of({ error }))),
-      membresias: this.directory
-        .listMemberships(id, { limit: TAMANO_DE_PAGINA })
-        .pipe(catchError((error: unknown) => of({ error }))),
-      hijas: this.directory
-        .listChildTenants(id, { limit: TAMANO_DE_PAGINA })
-        .pipe(catchError((error: unknown) => of({ error }))),
-    }).subscribe(({ ficha, sucursales, membresias, hijas }) => {
-      this.organizacion.set(
-        esFallo(ficha) ? errorToViewState<TenantListItem>(ficha.error) : ready(ficha),
-      );
-
-      this.sucursales.set(
-        esFallo(sucursales)
-          ? errorToViewState<readonly BranchListItem[]>(sucursales.error)
-          : estadoDeLista(
-              sucursales.items,
-              { label: 'Nueva sucursal', route: branchNewRoute(id) },
-              'Una sucursal es cada lugar físico donde esta organización atiende. Sin al menos una no hay dónde agendar ni a qué sede asignar a la plantilla.',
-            ),
-      );
-
-      this.membresias.set(
-        esFallo(membresias)
-          ? errorToViewState<readonly MembershipListItem[]>(membresias.error)
-          : estadoDeLista(
-              membresias.items,
-              { label: 'Sumar a alguien', route: membershipNewRoute(id) },
-              'La plantilla es quién trabaja acá y con qué rol. Mientras esté vacía, sólo quien creó la organización puede entrar.',
-            ),
-      );
-
-      this.hijas.set(
-        esFallo(hijas)
-          ? errorToViewState<readonly TenantListItem[]>(hijas.error)
-          : estadoDeLista(
-              hijas.items,
-              { label: 'Nueva sub-organización', route: childOrganizationNewRoute(id) },
-              'Una sub-organización es una unidad con identidad propia dentro de esta —una red de farmacias, un instituto—. La mayoría de las organizaciones no tiene ninguna, y está bien así.',
-            ),
-      );
-
-      // Una sola lectura de terminología para toda la ficha: los concept ids
-      // de las cuatro respuestas juntos, no uno por fila ni uno por pestaña.
-      // Si el catálogo falla, las columnas degradan a «—» y nada más.
-      const conceptos = conceptosDe({
-        ...(esFallo(ficha) ? {} : { ficha }),
-        ...(esFallo(sucursales) ? {} : { sucursales: sucursales.items }),
-        ...(esFallo(membresias) ? {} : { membresias: membresias.items }),
-        ...(esFallo(hijas) ? {} : { hijas: hijas.items }),
-      });
-      if (conceptos.length === 0) {
-        return;
-      }
-      this.terminology
-        .readConceptLabels(conceptos)
-        .pipe(catchError(() => of<ConceptLabels>(new Map())))
-        .subscribe((etiquetas) => this.etiquetas.set(etiquetas));
-    });
-  }
-}
-
-
-/** Una rama del `forkJoin` que se resolvió con fallo en vez de con datos. */
-interface Fallo {
-  readonly error: unknown;
-}
-
-function esFallo(valor: object): valor is Fallo {
-  return 'error' in valor;
-}
-
-/**
- * De la lista al estado. El vacío lleva su propio texto y su propia salida:
- * «no hay sucursales» y «no hay sub-organizaciones» son situaciones distintas,
- * y la tercera —una organización sin sub-organizaciones— es lo normal, no una
- * carencia. Decirlo evita que alguien crea que le falta cargar algo.
- */
-function estadoDeLista<T>(
-  items: readonly T[],
-  accion: ViewStateNextAction,
-  mensaje: string,
-): ViewState<readonly T[]> {
-  return items.length === 0 ? empty(accion, mensaje) : ready(items);
-}
-
-/**
- * Los concept ids únicos de toda la ficha, para resolverlos en una sola
- * llamada. `Set` porque el mismo estado se repite en casi todas las filas.
- */
-function conceptosDe(fuentes: {
-  readonly ficha?: TenantListItem;
-  readonly sucursales?: readonly BranchListItem[];
-  readonly membresias?: readonly MembershipListItem[];
-  readonly hijas?: readonly TenantListItem[];
-}): readonly string[] {
-  const ids = new Set<string>();
-  const agregar = (id: string | undefined): void => {
-    if (id !== undefined) {
-      ids.add(id);
+    if (opciones.conservarFicha !== true) {
+      this.ultimaFicha = null;
+      this.organizacion.set(loading());
     }
-  };
+    this.sucursales.set(loading());
+    this.paginadoDePlantilla.reiniciar();
+    this.paginadoDeHijas.reiniciar();
 
-  if (fuentes.ficha !== undefined) {
-    agregar(fuentes.ficha.tenantTypeConceptId);
-    agregar(fuentes.ficha.statusConceptId);
-    agregar(fuentes.ficha.verificationStatusConceptId);
-  }
-  for (const sucursal of fuentes.sucursales ?? []) {
-    agregar(sucursal.branchTypeConceptId);
-    agregar(sucursal.statusConceptId);
-  }
-  for (const membresia of fuentes.membresias ?? []) {
-    agregar(membresia.tenantRoleConceptId);
-    agregar(membresia.statusConceptId);
-    agregar(membresia.accessScopeConceptId);
-  }
-  for (const hija of fuentes.hijas ?? []) {
-    agregar(hija.statusConceptId);
+    // Cada lectura falla por su cuenta: una caída deja su pestaña en error y no
+    // arrastra a las demás. Las tres listas no esperan a la ficha.
+    this.directory.getTenant(id).subscribe({
+      next: (ficha) => {
+        this.ultimaFicha = { datos: ficha, en: new Date() };
+        this.organizacion.set(ready(ficha));
+        this.resolverEtiquetas(
+          conceptosDe({ ficha }),
+        );
+      },
+      error: (error: unknown) => {
+        const estado = errorToViewState<TenantListItem>(error);
+        const previa = this.ultimaFicha;
+        // Un corte al releer no tira datos que eran buenos: se conservan,
+        // con la hora de la última lectura (S7). Un 403/404 sí los quita —ya
+        // no se puede afirmar que sigan siendo visibles—.
+        const conservable = estado.status === 'offline' || estado.status === 'error';
+        this.organizacion.set(
+          previa !== null && conservable ? stale(previa.datos, previa.en) : estado,
+        );
+      },
+    });
+
+    this.directory
+      .listBranches(id)
+      .pipe(catchError((error: unknown) => of({ error })))
+      .subscribe((sucursales) => {
+        this.sucursales.set(
+          esFallo(sucursales)
+            ? errorToViewState<readonly BranchListItem[]>(sucursales.error)
+            : estadoDeLista(
+                sucursales.items,
+                { label: 'Nueva sucursal', route: branchNewRoute(id) },
+                'Una sucursal es cada lugar físico donde esta organización atiende. Sin al menos una no hay dónde agendar ni a qué sede asignar a la plantilla.',
+              ),
+        );
+        if (!esFallo(sucursales)) {
+          this.resolverEtiquetas(conceptosDe({ sucursales: sucursales.items }));
+        }
+      });
+
+    this.cargarMembresias();
+    this.cargarHijas();
   }
 
-  return [...ids];
+  /** Una página de la plantilla, con el cursor vigente. */
+  private cargarMembresias(): void {
+    const id = this.tenantId();
+    if (id === '') {
+      return;
+    }
+    const cursor = this.paginadoDePlantilla.actual();
+    this.membresias.set(loading());
+    this.directory
+      .listMemberships(id, {
+        limit: TAMANO_DE_PAGINA,
+        ...(cursor === undefined ? {} : { cursor }),
+      })
+      .pipe(catchError((error: unknown) => of({ error })))
+      .subscribe((membresias) => {
+        if (esFallo(membresias)) {
+          // Un fallo deja el historial donde estaba: reintentar repite esta página.
+          this.paginadoDePlantilla.llego(null);
+          this.membresias.set(errorToViewState<readonly MembershipListItem[]>(membresias.error));
+          return;
+        }
+        this.paginadoDePlantilla.llego(membresias.nextCursor);
+        this.membresias.set(
+          estadoDeLista(
+            membresias.items,
+            { label: 'Sumar a alguien', route: membershipNewRoute(id) },
+            'La plantilla es quién trabaja acá y con qué rol. Mientras esté vacía, sólo quien creó la organización puede entrar.',
+          ),
+        );
+        this.resolverEtiquetas(conceptosDe({ membresias: membresias.items }));
+        this.personas.resolver(membresias.items.map((membresia) => membresia.userId));
+      });
+  }
+
+  /** Una página de las sub-organizaciones, con el cursor vigente. */
+  private cargarHijas(): void {
+    const id = this.tenantId();
+    if (id === '') {
+      return;
+    }
+    const cursor = this.paginadoDeHijas.actual();
+    this.hijas.set(loading());
+    this.directory
+      .listChildTenants(id, {
+        limit: TAMANO_DE_PAGINA,
+        ...(cursor === undefined ? {} : { cursor }),
+      })
+      .pipe(catchError((error: unknown) => of({ error })))
+      .subscribe((hijas) => {
+        if (esFallo(hijas)) {
+          this.paginadoDeHijas.llego(null);
+          this.hijas.set(errorToViewState<readonly TenantListItem[]>(hijas.error));
+          return;
+        }
+        this.paginadoDeHijas.llego(hijas.nextCursor);
+        this.hijas.set(
+          estadoDeLista(
+            hijas.items,
+            { label: 'Nueva sub-organización', route: childOrganizationNewRoute(id) },
+            'Una sub-organización es una unidad con identidad propia dentro de esta —una red de farmacias, un instituto—. La mayoría de las organizaciones no tiene ninguna, y está bien así.',
+          ),
+        );
+        this.resolverEtiquetas(conceptosDe({ hijas: hijas.items }));
+      });
+  }
+
+  /**
+   * Suma las etiquetas de unos concept ids a las que ya hay. Una lectura por
+   * tanda de ids nuevos, no una por fila; si el catálogo falla, las columnas
+   * degradan a «—» y nada más.
+   */
+  private resolverEtiquetas(conceptos: readonly string[]): void {
+    const nuevos = conceptos.filter((concepto) => !this.etiquetas().has(concepto));
+    if (nuevos.length === 0) {
+      return;
+    }
+    this.terminology
+      .readConceptLabels(nuevos)
+      .pipe(catchError(() => of<ConceptLabels>(new Map())))
+      .subscribe((etiquetas) =>
+        this.etiquetas.update((actuales) => new Map([...actuales, ...etiquetas])),
+      );
+  }
 }
+

@@ -249,17 +249,22 @@ export class AgendaCreate {
    */
   protected readonly agendaNueva = signal(false);
 
+  /**
+   * Por qué no se pudo leer la agenda o el horario vigentes. **Con un error acá
+   * no se publica**: sin `resourceId` publicar CREA una agenda y duplicaría la
+   * que ya existe.
+   */
+  protected readonly errorDeLectura = signal<string | null>(null);
+
   /** Cómo se va a llamar la agenda nueva. «Consultorio en la Caja», «Sábados». */
   protected readonly nombreNuevo = signal('');
 
   /**
-   * Se pregunta cuándo hay más de una agenda **o** cuando se está creando otra.
-   *
-   * Con una sola y sin crear, elegir entre una no es elegir.
+   * El bloque «¿En qué agenda publica?» se ofrece con **al menos una** agenda:
+   * ahí vive «crear otra agenda». Con cero se crea la primera con el formulario
+   * de siempre.
    */
-  protected readonly eligeSede = computed(
-    () => this.misAgendas().length > 1 || this.misAgendas().length > 0,
-  );
+  protected readonly eligeSede = computed(() => this.misAgendas().length > 0);
 
   protected readonly opcionesDeSede = computed<SelectOption<string>[]>(() =>
     this.misAgendas().map((r) => ({ value: r.id, label: r.name })),
@@ -322,7 +327,13 @@ export class AgendaCreate {
         this.vigente.set(vigente);
         this.cargarSemanaDesde(vigente);
       },
-      error: () => undefined,
+      error: (error: unknown) => {
+        if (resourceId !== this.resourceId()) return;
+        this.errorDeLectura.set(
+          'No pudimos leer el horario que tiene hoy en esta agenda. ' +
+            (errorMessageOf(errorToViewState<null>(error), 'No tiene permiso para leerlo.') ?? ''),
+        );
+      },
     });
   }
 
@@ -700,9 +711,8 @@ export class AgendaCreate {
    * pantalla que se reabre es **reconocible**, que es lo que hace que editar se
    * sienta editar.
    *
-   * Un fallo acá **no rompe nada**: se sigue con el formulario en blanco, que
-   * es el comportamiento de siempre. No se le arruina el alta a alguien porque
-   * la lectura de plantillas haya fallado.
+   * Un fallo acá **se dice y frena la publicación** (`errorDeLectura`): sin la
+   * agenda leída publicar crearía una nueva y duplicaría la existente.
    */
   private cargarHorarioVigente(tenantId: string | null): void {
     const perfil = this.auth.practitionerProfileId();
@@ -712,6 +722,7 @@ export class AgendaCreate {
     this.templateId.set(null);
     this.policyId.set(null);
     this.vigente.set(null);
+    this.errorDeLectura.set(null);
     this.attempt.reset();
     // Sin rol de agenda tampoco se pregunta: la lectura devolvería 403 y esta
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
@@ -733,8 +744,18 @@ export class AgendaCreate {
         this.resourceId.set(recurso.id);
         this.loadCurrentTemplate(recurso.id);
       },
-      error: () => undefined,
+      error: (error: unknown) => {
+        if (tenantId !== this.place.tenantId()) return;
+        this.errorDeLectura.set(
+          'No pudimos leer sus agendas de esta organización. ' +
+            (errorMessageOf(errorToViewState<null>(error), 'No tiene permiso para leerlas.') ?? ''),
+        );
+      },
     });
+  }
+
+  protected reintentarLectura(): void {
+    this.cargarHorarioVigente(this.place.tenantId());
   }
 
   /** Vuelca las reglas del horario vigente en la semanita del formulario. */
@@ -1041,6 +1062,8 @@ export class AgendaCreate {
    */
   protected publicar(): void {
     if (this.cargando()) return;
+    // Sin leer las agendas no se sabe si ya existe una: publicar duplicaría.
+    if (this.errorDeLectura() !== null) return;
 
     this.semana.markAllAsTouched();
     this.formGeneral.markAllAsTouched();
@@ -1318,17 +1341,6 @@ export class AgendaCreate {
         `servidor generó ${generados}, que no es múltiplo. Puede haber cambiado ` +
         'la regla del resto: ver calcularTurnos.',
     );
-  }
-
-  /** «08:00 – 18:00 (almuerzo 13:00 – 14:00)»: el día dicho como rango. */
-  private rangoDe(dia: CalculatedDay): string {
-    const indice = DIAS.findIndex((d) => d.largo.toLowerCase() === dia.dia.toLowerCase());
-    if (indice === -1) return '';
-    const v = this.semana.at(indice).getRawValue();
-    const almuerzo = this.almuerzaEse(indice)
-      ? ` (almuerzo ${this.almuerzoDesde()} – ${this.almuerzoHasta()})`
-      : '';
-    return `${v.desde} – ${v.hasta}${almuerzo}`;
   }
 
   private fallar(error: unknown): void {

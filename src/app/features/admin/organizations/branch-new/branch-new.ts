@@ -10,6 +10,7 @@ import type {
   NewBranch,
 } from '../../../../core/data-access/directory/directory.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
@@ -234,22 +235,14 @@ export class BranchNew {
     return (latitude == null) !== (longitude == null);
   });
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message || 'Necesita pertenecer a esta organización para abrir una sede.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * Por qué falló el envío, con el texto común del producto (`errorMessageOf`):
+   * incluye el 404 —antes un formulario de una organización que ya no existe
+   * no mostraba **nada** al enviar— y el código de la petición en S9.
+   */
+  protected readonly errorMessage = computed<string | null>(
+    () => errorMessageOf(this.state(), 'Necesita pertenecer a esta organización para abrir una sede.'),
+  );
 
   /** El código es único dentro de la organización: un `409` sólo viene de él. */
   protected readonly codigoEnConflicto = computed(() => {

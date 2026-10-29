@@ -44,7 +44,6 @@ import type {
 } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
-import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -54,6 +53,7 @@ import { DataTable } from '../../../shared/components/organisms/data-table/data-
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 
 /**
  * Variante del badge por **código** de concepto, no por etiqueta.
@@ -117,7 +117,20 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
  */
 @Component({
   selector: 'app-medical-organization',
-  imports: [AppButton, Badge, DataTable, EstablishmentTab, FormField, InfrastructureTab, MembershipsTab, PageHeader, Select, Tab, Tabs, LoadingState],
+  imports: [
+    Badge,
+    DataTable,
+    EstablishmentTab,
+    FormField,
+    InfrastructureTab,
+    MembershipsTab,
+    PageHeader,
+    Select,
+    Tab,
+    Tabs,
+    LoadingState,
+    ViewStateHost,
+  ],
   templateUrl: './medical-organization.html',
   styleUrl: './medical-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -237,10 +250,11 @@ export class MedicalOrganization {
   /** El árbol de la práctica elegida. */
   protected readonly consola = signal<ViewState<MedicalOrganizationConsole>>(loading());
 
-  /** La ficha, cuando la consola cargó. `null` en cualquier otro estado. */
+  /** La ficha, cuando la consola cargó (también atrasada, S7). `null` en cualquier otro estado. */
   protected readonly organizacion = computed(() => {
     const estado = this.consola();
-    return estado.status === 'ready' ? estado.data.organization : null;
+    // `stale` también trae datos: con la consola atrasada la ficha se sigue viendo.
+    return hasData(estado) ? estado.data.organization : null;
   });
 
   /**
@@ -258,14 +272,14 @@ export class MedicalOrganization {
   /** Nombre de cada sede por su id: las demás pestañas devuelven `siteId` crudo. */
   private readonly nombreDeSede = computed<ReadonlyMap<string, string>>(() => {
     const estado = this.consola();
-    if (estado.status !== 'ready') return new Map();
+    if (!hasData(estado)) return new Map();
     return new Map(estado.data.sites.map((sede) => [sede.id, sede.name]));
   });
 
   /** Nombre de cada área por su id, por el mismo motivo. */
   private readonly nombreDeArea = computed<ReadonlyMap<string, string>>(() => {
     const estado = this.consola();
-    if (estado.status !== 'ready') return new Map();
+    if (!hasData(estado)) return new Map();
     return new Map(estado.data.clinicalUnits.map((area) => [area.id, area.name]));
   });
 
@@ -328,7 +342,7 @@ export class MedicalOrganization {
   /** Documentos vencidos o por vencer dentro del mes: el aviso de la cabecera. */
   protected readonly documentosPorVencer = computed(() => {
     const estado = this.consola();
-    if (estado.status !== 'ready') return [];
+    if (!hasData(estado)) return [];
     return estado.data.legalDocuments.filter(
       (doc) => doc.daysToExpiry !== null && doc.daysToExpiry <= AVISO_DE_VENCIMIENTO_DIAS,
     );
@@ -337,7 +351,7 @@ export class MedicalOrganization {
   /** Insumos en el punto de reposición o por debajo. */
   protected readonly insumosEnFalta = computed(() => {
     const estado = this.consola();
-    if (estado.status !== 'ready') return [];
+    if (!hasData(estado)) return [];
     return estado.data.inventory.filter((item) => item.belowReorderLevel);
   });
 
@@ -445,7 +459,8 @@ export class MedicalOrganization {
       this.cargarPracticas();
       return;
     }
-    this.cargarConsola(elegida);
+    // Releer la misma práctica no borra lo que ya se ve mientras carga.
+    this.cargarConsola(elegida, { conservar: this.ultimaConsola?.practiceId === elegida });
   }
 
   /** La etiqueta de un concepto, o el guion si no vino. */
@@ -522,16 +537,38 @@ export class MedicalOrganization {
       });
   }
 
-  private cargarConsola(practiceId: string): void {
-    this.consola.set(loading());
+  /** La última consola que llegó bien, con la hora: lo que se conserva como S7 si la relectura falla. */
+  private ultimaConsola: {
+    readonly practiceId: string;
+    readonly datos: MedicalOrganizationConsole;
+    readonly en: Date;
+  } | null = null;
+
+  private cargarConsola(practiceId: string, opciones: { conservar?: boolean } = {}): void {
+    if (opciones.conservar !== true) {
+      this.ultimaConsola = null;
+      this.consola.set(loading());
+    }
     this.client
       .getConsole(practiceId)
       .pipe(catchError((error: unknown) => of({ error })))
       .subscribe((resultado) => {
+        if (practiceId !== this.practicaElegida()) return;
+        if (!esFallo(resultado)) {
+          this.ultimaConsola = { practiceId, datos: resultado, en: new Date() };
+          this.consola.set(ready(resultado));
+          return;
+        }
+        const fallo = errorToViewState<MedicalOrganizationConsole>(resultado.error);
+        const previa = this.ultimaConsola;
+        // Un corte al releer no tira datos que eran buenos (S7, con la hora de la
+        // última lectura). Un 403/404 sí: ya no se puede afirmar que sigan vigentes.
         this.consola.set(
-          esFallo(resultado)
-            ? errorToViewState<MedicalOrganizationConsole>(resultado.error)
-            : ready(resultado),
+          previa !== null &&
+            previa.practiceId === practiceId &&
+            (fallo.status === 'offline' || fallo.status === 'error')
+            ? stale(previa.datos, previa.en)
+            : fallo,
         );
       });
   }

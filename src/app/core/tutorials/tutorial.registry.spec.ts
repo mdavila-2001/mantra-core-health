@@ -132,6 +132,14 @@ describe('TutorialRegistry', () => {
     expect(registry.all()).toHaveLength(1);
   });
 
+  it('acepta una ruta con query sobre una sección declarada, y sigue avisando de una inventada', () => {
+    registry.register([tutorial({ route: '/medical-records?tab=lo-que-sea' })]);
+    expect(registry.issues()).toHaveLength(0);
+
+    registry.register([tutorial({ id: 'otro', route: '/pantalla-que-no-existe?tab=x' })]);
+    expect(registry.issues().map((p) => p.code)).toContain('ruta-invalida');
+  });
+
   it('acepta una ruta con parámetros sobre una sección declarada', () => {
     registry.register([tutorial({ route: '/medical-records/algun-id' })]);
 

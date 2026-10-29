@@ -73,7 +73,9 @@
     <!-- Va PRIMERO y fuera de «avanzadas»: es la pregunta que ordena todo lo
          que sigue. Publicar el horario correcto en la agenda equivocada no es
          un detalle de configuración, es haber abierto turnos en otra sede.
-         Sólo aparece con más de una: elegir entre una no es elegir. -->
+         Aparece cuando ya hay al menos una agenda: con una sola no hay qué
+         elegir, pero acá vive «crear otra agenda», y sin este bloque quien
+         tiene una no podría abrir la segunda. -->
     @if (eligeSede()) {
       <section class="agenda-create__bloque">
         <h2 class="agenda-create__titulo">¿En qué agenda publica?</h2>
@@ -556,6 +558,19 @@
       </p>
     }
 
+    <!-- Un fallo al leer las agendas se dice y frena la publicación: callado, el
+         formulario quedaba en blanco y publicar creaba una agenda duplicada. -->
+    @if (errorDeLectura(); as motivo) {
+      <app-alert tone="warning" title="No pudimos leer su agenda actual" data-testid="agenda-create-error-lectura">
+        {{ motivo }} Por eso no se puede publicar todavía: se duplicaría la agenda que ya tiene.
+        <div alert-actions>
+          <button app-button size="sm" variant="secondary" type="button" (clicked)="reintentarLectura()">
+            Reintentar
+          </button>
+        </div>
+      </app-alert>
+    }
+
     @if (errorMessage(); as mensaje) {
       <app-alert tone="error" title="No se pudo publicar">
         {{ mensaje }}
@@ -575,7 +590,7 @@
         app-button
         type="submit"
         [isLoading]="cargando()"
-        [disabled]="sinDias() || almuerzoInvalido()"
+        [disabled]="sinDias() || almuerzoInvalido() || errorDeLectura() !== null"
       >
         {{ esCambio() ? 'Guardar mi horario' : 'Publicar mi agenda' }}
       </button>

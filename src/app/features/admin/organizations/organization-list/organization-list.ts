@@ -31,12 +31,17 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { Link } from '../../../../shared/components/atoms/link/link';
 import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
 import { historialDeCursor } from '../../../../shared/components/organisms/data-table/cursor-history';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { ORGANIZATIONS_ROUTE, ORGANIZATION_NEW_ROUTE } from '../organizations.routes';
+import {
+  ORGANIZATIONS_ROUTE,
+  ORGANIZATION_NEW_ROUTE,
+  organizationDetailRoute,
+} from '../organizations.routes';
 
 /** Filas por página. El backend admite hasta 200 y aplica 50 por omisión. */
 const TAMANO_DE_PAGINA = 25;
@@ -78,7 +83,7 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
  */
 @Component({
   selector: 'app-organization-list',
-  imports: [AppButtonLink, Badge, DataTable, DatePipe, PageHeader, RouterLink, SearchField],
+  imports: [AppButtonLink, Badge, DataTable, DatePipe, Link, PageHeader, RouterLink, SearchField],
   templateUrl: './organization-list.html',
   styleUrl: './organization-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -143,6 +148,14 @@ export class OrganizationList {
   /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
   protected readonly nombreDeOrganizacion = (row: TenantListItem): string =>
     row.tradeName ?? row.legalName;
+
+  /** A dónde lleva una fila: la ficha de esa organización. */
+  protected readonly rutaDeFicha = organizationDetailRoute;
+
+  /** El clic en la fila (comodidad de puntero; el `<a>` del nombre es el destino accesible). */
+  protected abrir(fila: TenantListItem): void {
+    void this.router.navigateByUrl(organizationDetailRoute(fila.id));
+  }
 
   protected readonly cargando = computed(() => this.listado().status === 'loading');
 

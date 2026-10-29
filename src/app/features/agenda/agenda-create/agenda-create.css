@@ -54,115 +54,9 @@ fieldset.agenda-create__bloque {
   font-weight: 600;
 }
 
-/* ---- la semana ----------------------------------------------------------- */
-
-.agenda-create__semana {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-/* Cuadrado, con la altura del área táctil mínima: se toca con el pulgar. */
-.agenda-create__dia {
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  border: 2px solid var(--border-default);
-  border-radius: var(--r-full);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.agenda-create__dia:hover {
-  border-color: var(--border-strong);
-}
-
-.agenda-create__dia:focus-visible {
-  outline: 2px solid var(--st-primary-bd);
-  outline-offset: 2px;
-}
-
-.agenda-create__dia--activo {
-  background: var(--st-primary-bg);
-  border-color: var(--st-primary-bd);
-  color: var(--st-primary-fg);
-}
-
 .agenda-create__vacio {
   margin: 0;
   color: var(--text-secondary);
-}
-
-/* ---- una franja por día activo -------------------------------------------- */
-
-.agenda-create__franja {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  margin: 0;
-  padding: var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-}
-
-.agenda-create__franja-dia {
-  padding: 0 var(--sp-1);
-  font-weight: 600;
-}
-
-.agenda-create__horas {
-  display: grid;
-  gap: var(--sp-3);
-}
-
-@media (min-width: 30rem) {
-  .agenda-create__horas {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* ---- las fichas de duración ----------------------------------------------- */
-
-.agenda-create__duracion {
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.agenda-create__duracion-label {
-  padding: 0;
-  margin-bottom: var(--sp-2);
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-.agenda-create__fichas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.agenda-create__ficha {
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-full);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.agenda-create__ficha:focus-visible {
-  outline: 2px solid var(--st-primary-bd);
-  outline-offset: 2px;
-}
-
-.agenda-create__ficha--activa {
-  background: var(--st-primary-bg);
-  border-color: var(--st-primary-bd);
-  color: var(--st-primary-fg);
-  font-weight: 600;
 }
 
 /* ---- opciones y avanzadas -------------------------------------------------- */
@@ -369,20 +263,6 @@ fieldset.agenda-create__bloque {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
-
-/* El costo de la elección, dicho en palabras y no sólo en el número de la
-   ficha. `aria-live` en la plantilla lo anuncia al cambiar. */
-.agenda-create__consecuencia {
-  margin: var(--sp-2) 0 0;
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-}
-
-.agenda-create__consecuencia strong {
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
 
 /* -- La tabla de horarios (forma pedida en la bitácora) -------------------- */
 
