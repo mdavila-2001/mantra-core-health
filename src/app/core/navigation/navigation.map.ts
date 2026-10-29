@@ -746,6 +746,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
+    // El alta de un médico queda como una solicitud que una persona con rol de
+    // revisión resuelve requisito por requisito. La bandeja es genérica: hoy
+    // trae `ALTA_DE_DOCTOR`. El guard de sección evita la pantalla que daría
+    // 403, pero la autoridad es la API: cada acción exige su rol allá.
+    path: 'administration/admissions',
+    label: 'Admisiones',
+    group: 'Administración',
+    icon: 'clipboard',
+    roles: ['SECURITY_ADMIN', 'ADMISSIONS_REVIEWER', 'ADMISSIONS_APPROVER'],
+    availability: 'disponible',
+    summary: 'Revise y resuelva las solicitudes de ingreso, como el alta de un médico.',
+    module: 'M05 profiles',
+  },
+  {
     path: 'administration/users',
     label: 'Usuarios',
     group: 'Administración',

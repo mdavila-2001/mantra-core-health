@@ -136,6 +136,15 @@ export const IDS = {
     userId: uuid('user-farmacia-vida'),
     personId: uuid('person-farmacia-vida'),
   },
+  aprobador: {
+    userId: uuid('user-aprobador'),
+    personId: uuid('person-aprobador'),
+  },
+  medicoNuevo: {
+    userId: uuid('user-sinespecialidad'),
+    personId: uuid('person-sinespecialidad'),
+    practitionerProfileId: uuid('hpid-sinespecialidad'),
+  },
 } as const;
 
 export const MOCK_USERS: readonly MockUser[] = [
@@ -191,6 +200,9 @@ export const MOCK_USERS: readonly MockUser[] = [
       'CASHIER',
       'PERIOP_ADMIN',
       'CLINICAL_INFORMATICIAN',
+      // Revisa las admisiones; la decisión final la toma otra persona
+      // (`aprobador@alovida.mock`): cuatro ojos.
+      'ADMISSIONS_REVIEWER',
     ],
     tenants: [TENANT_CLINICA],
     tenantNames: TENANT_NAMES,
@@ -206,6 +218,33 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_PLATAFORMA, TENANT_CLINICA, TENANT_HOSPITAL],
     tenantNames: TENANT_NAMES,
     personId: IDS.superadmin.personId,
+  },
+  {
+    // Quien decide las admisiones que otro revisó. Sin `SECURITY_ADMIN`: ve la
+    // bandeja por su rol de aprobador y no puede tomar revisiones.
+    key: 'aprobador',
+    id: IDS.aprobador.userId,
+    email: 'aprobador@alovida.mock',
+    nationalId: '6667778',
+    displayName: 'Sandra Mamani Quispe',
+    roles: ['ADMISSIONS_APPROVER'],
+    tenants: [TENANT_CLINICA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.aprobador.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Un médico recién registrado: su admisión espera que corrija y reenvíe.
+    key: 'medico_nuevo',
+    id: IDS.medicoNuevo.userId,
+    email: 'medico.nuevo@alovida.mock',
+    nationalId: '3172830',
+    displayName: 'Ramiro Céspedes Villca',
+    roles: ['PRACTITIONER'],
+    tenants: [TENANT_CLINICA],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.medicoNuevo.practitionerProfileId,
+    personId: IDS.medicoNuevo.personId,
   },
   {
     key: 'visitador',
