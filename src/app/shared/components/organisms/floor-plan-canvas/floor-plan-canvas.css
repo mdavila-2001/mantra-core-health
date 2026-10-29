@@ -72,7 +72,7 @@
 /* Intensidad: «ocupada» y «mantenimiento» pesan más que «libre». */
 .sp.is-strong,
 .sp.p-strong {
-    fill: color-mix(in srgb, var(--tone-bg) 72%, var(--tone-fg));
+    fill: color-mix(in srgb, var(--tone-bg) 86%, var(--tone-fg));
 }
 
 /* Los valores «normales» no compiten con las excepciones. */
