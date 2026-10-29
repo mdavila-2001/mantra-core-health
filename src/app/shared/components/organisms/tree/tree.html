@@ -1,0 +1,53 @@
+<!-- Lista plana con `aria-level`: el foco y las flechas recorren exactamente lo
+     que se ve. El teclado vive en el `ul` (delegación); cada fila es un
+     `treeitem` focalizable por foco itinerante, así que la regla de «clic sin
+     teclado» no aplica al `li`. -->
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+<ul class="tree" role="tree" [attr.aria-label]="label()" (keydown)="onKeydown($event)">
+  @for (fila of rows(); track fila.node.id) {
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
+    <li
+      class="tree__item"
+      role="treeitem"
+      [id]="itemId(fila.node.id)"
+      [attr.data-node-id]="fila.node.id"
+      [attr.aria-level]="fila.level"
+      [attr.aria-setsize]="fila.setSize"
+      [attr.aria-posinset]="fila.position"
+      [attr.aria-expanded]="fila.expandable ? fila.expanded : null"
+      [attr.aria-selected]="selectedId() === fila.node.id"
+      [attr.aria-disabled]="fila.node.disabled ? true : null"
+      [attr.aria-labelledby]="nameId(fila.node.id)"
+      [attr.tabindex]="tabbableId() === fila.node.id ? 0 : -1"
+      [class.tree__item--selected]="selectedId() === fila.node.id"
+      [class.tree__item--muted]="fila.node.muted"
+      [class.tree__item--disabled]="fila.node.disabled"
+      [style.--tree-level]="fila.level"
+      (focus)="onFocus(fila.node.id)"
+      (click)="onRowClick(fila)"
+    >
+      <span class="tree__row">
+        @if (fila.expandable) {
+          <!-- Sólo ratón: el teclado abre y cierra con → y ←. Por eso no es un
+               botón (un control interactivo dentro de un treeitem lo anuncian mal). -->
+          <span class="tree__toggle" aria-hidden="true" (click)="onToggleClick($event, fila)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+              <polyline points="9 6 15 12 9 18" />
+            </svg>
+          </span>
+        } @else {
+          <span class="tree__toggle tree__toggle--leaf" aria-hidden="true"></span>
+        }
+        <span class="tree__name" [id]="nameId(fila.node.id)">{{ fila.node.label }}</span>
+        @if (fila.node.hint) {
+          <span class="tree__hint">{{ fila.node.hint }}</span>
+        }
+        @if (trailing(); as plantilla) {
+          <span class="tree__trailing">
+            <ng-container *ngTemplateOutlet="plantilla; context: contextOf(fila)" />
+          </span>
+        }
+      </span>
+    </li>
+  }
+</ul>

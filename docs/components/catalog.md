@@ -166,6 +166,42 @@ aparte y no una variante porque `search-result` no tiene CSS propio a propósito
 —su diseño vive en `alovida.css`, que se recopia entero desde la bóveda— y una
 variante escrita ahí desaparecería en la primera recopia.
 
+### `app-tree` — árbol de N niveles
+
+| Entrada | Para qué |
+|---|---|
+| `nodes` | Las raíces, con sus hijos anidados (`TreeNode`: `id`, `label`, `hint`, `children`, `disabled`, `muted`, `data`) |
+| `label` | Nombre accesible del árbol entero (obligatorio) |
+| `selectedId` | El nodo elegido. `model()`: se enlaza en dos sentidos |
+| `expandedIds` | Los nodos abiertos. `model()`: se enlaza en dos sentidos |
+| `trailing` | Plantilla opcional al final de cada fila (una insignia, un recuento) |
+
+Salida: `nodeActivated` (Enter sobre una fila).
+
+Existe porque `app-tree-select` es un **campo** que abre un diálogo para elegir
+una hoja y tiene **un solo nivel** de anidamiento a propósito, y
+`medication-tree` usa `<details>` anidados porque carga sus ramas al abrirlas.
+La infraestructura hospitalaria (edificio → piso → sala → habitación → cama)
+necesita una **vista** de profundidad libre, con selección y teclado. La usa la
+pestaña «Infraestructura» de la consola de organización médica.
+
+Accesibilidad según el patrón *Tree View* de ARIA: `role="tree"` con
+`role="treeitem"`, `aria-level` / `aria-setsize` / `aria-posinset`,
+`aria-expanded` sólo donde hay hijos y `aria-selected` en la elegida. **Un solo
+tabulador** (foco itinerante). Teclas: ↓ ↑ mueven el foco; → abre o baja al
+primer hijo; ← cierra o sube al padre; Inicio y Fin; `*` abre a los hermanos;
+Enter y Espacio eligen; teclear una letra salta a la próxima fila que empieza
+así. La lista es **plana** con `aria-level` — no anidada — para que el foco
+recorra exactamente lo que se ve. El nombre accesible de cada fila es su
+rótulo, no el de todo lo que contiene.
+
+**No carga hijos bajo demanda, no arrastra y no edita**: recibe el árbol
+entero y dice qué se eligió; quien lo monta decide qué significa elegir. Los
+ayudantes puros (`flattenTree`, `treeAncestorIds`, `expandableIds`) se exportan
+del barril de organismos. Escenarios en el banco de componentes:
+`features/component-stock/scenarios/tree.scenarios.ts` (cerrado, cinco niveles
+abiertos, con selección, una sola raíz).
+
 ## Componentes sin prueba propia
 
 Diez, y la mayoría por una razón buena:

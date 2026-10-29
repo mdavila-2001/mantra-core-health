@@ -1,0 +1,131 @@
+/* ============================================================================
+    Tree — árbol de N niveles. Sólo tokens; la sangría sale del nivel de cada
+    fila (`--tree-level`) y no de anidar contenedores.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tree__item {
+  outline: none;
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.tree__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 44px;
+  padding-block: var(--sp-1);
+  padding-inline: calc(var(--sp-2) + (var(--tree-level, 1) - 1) * var(--sp-5)) var(--sp-3);
+  border-radius: var(--r-sm);
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+@media (min-width: 780px) {
+  .tree__row {
+    min-block-size: 36px;
+  }
+}
+
+.tree__item:hover > .tree__row {
+  background: var(--bg-inset);
+}
+
+.tree__item--selected > .tree__row {
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
+
+.tree__item:focus-visible > .tree__row {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.tree__item--selected:focus-visible > .tree__row {
+  box-shadow:
+    inset 3px 0 0 var(--brand-primary),
+    0 0 0 3px var(--focus-ring);
+}
+
+.tree__item--muted .tree__name,
+.tree__item--muted .tree__hint {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.tree__item--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.tree__toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 24px;
+  block-size: 24px;
+  color: var(--text-secondary);
+  border-radius: var(--r-sm);
+}
+
+.tree__toggle svg {
+  inline-size: 16px;
+  block-size: 16px;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.tree__item[aria-expanded='true'] > .tree__row > .tree__toggle svg {
+  transform: rotate(90deg);
+}
+
+.tree__toggle:not(.tree__toggle--leaf):hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.tree__name {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.tree__hint {
+  flex: none;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tree__trailing {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tree__row,
+  .tree__toggle svg {
+    transition: none;
+  }
+}

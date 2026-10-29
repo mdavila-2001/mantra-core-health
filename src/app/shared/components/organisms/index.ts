@@ -49,6 +49,10 @@ export type {
   TipoDeHecho,
 } from './encounter-timeline/encounter-timeline.types';
 
+export { Tree } from './tree/tree';
+export { expandableIds, flattenTree, treeAncestorIds } from './tree/tree.logic';
+export type { TreeNode, TreeRow, TreeRowContext } from './tree/tree.types';
+
 export { FactSection } from './fact-section/fact-section';
 export { BLOQUES_POR_PAGINA, MINIMO_PARA_BUSCAR } from './fact-section/fact-section.types';
 export type { BloqueDeFicha } from './fact-section/fact-section.types';
