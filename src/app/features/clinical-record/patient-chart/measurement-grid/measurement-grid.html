@@ -7,10 +7,10 @@
 
   <!-- ─── 1 · Cargando ──────────────────────────────────────────────────── -->
   @if (cargando()) {
-    <p class="cuadricula__cargando" data-testid="cuadricula-cargando">
-      <app-spinner size="sm" label="Cargando la cuadrícula" />
-      <span>Buscando lo registrado en las consultas anteriores…</span>
-    </p>
+    <app-loading-state
+      data-testid="cuadricula-cargando"
+      message="Buscando lo registrado en las consultas anteriores…"
+    />
   } @else if (falloAlCargar()) {
     <!-- ─── 2 · Error ───────────────────────────────────────────────────── -->
     <app-alert tone="error" title="No se pudo cargar" data-testid="cuadricula-error-carga">

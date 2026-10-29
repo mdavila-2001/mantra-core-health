@@ -6,8 +6,8 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../../../../../core/data-access/terminology/bo-municipalities.service';
-import type { PuntoGeo } from '../../../../../../shared/components/organisms/map/pin-mapa.types';
-import { LocationPicker } from '../../../../../auth/registro-compartido/location-picker/location-picker';
+import type { PuntoGeo } from '../../../../../../shared/components/organisms/map/map-pin.types';
+import { LocationPicker } from '../../../../../auth/shared-registration/location-picker/location-picker';
 
 /**
  * El municipio de residencia en la ficha del médico, **sólo para mirar**.

@@ -20,7 +20,7 @@ import type {
 } from '@core/data-access/public-catalog/public-catalog.types';
 import type { PublicPage } from '@core/data-access/public-directory/public-directory.types';
 import { errorToViewState } from '@core/http/error-to-view-state';
-import { dataOf, loading, ready } from '@core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -126,7 +126,11 @@ function normalizar(texto: string): string {
     ViewStateHost,
   ],
   templateUrl: './pharmacy-detail.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../../../shared/styles/ficha-publica.css'],
+  styleUrls: [
+    '../../../shared/styles/card-grid.css',
+    '../../../shared/styles/public-sheet.css',
+    '../../../shared/styles/enlace-chip.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
@@ -403,7 +407,18 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
       .pharmacyBranches(slug)
       .pipe(takeUntilDestroyed(this.destruccion))
       .subscribe({
-        next: (pagina) => this.estadoDeSucursales.set(ready(pagina.items)),
+        // Vacío no es error ni silencio: la ficha existe, pero la cadena
+        // todavía no dio de alta ninguna sede con su dirección (API real; el
+        // simulador siempre devuelve al menos una).
+        next: (pagina) =>
+          this.estadoDeSucursales.set(
+            pagina.items.length === 0
+              ? empty(
+                  { label: 'Ver otras farmacias', route: this.rutaDelDirectorio },
+                  'Esta farmacia todavía no publicó sus sucursales. Puede ver su catálogo más abajo.',
+                )
+              : ready(pagina.items),
+          ),
         error: (error: unknown) =>
           this.estadoDeSucursales.set(errorToViewState<readonly PublicPharmacyBranch[]>(error)),
       });
@@ -490,6 +505,18 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
     const precision = sucursal.locationAccuracy;
     if (precision === null || !precision.toLowerCase().includes('aproximada')) return null;
     return precision;
+  }
+
+  /**
+   * Si la tarjeta lleva a otra ficha.
+   *
+   * Contra la API real todas las sedes de una cadena comparten la ficha de la
+   * cadena (P37, D-6): enlazarlas llevaría a la misma página que se está
+   * mirando. Sólo es enlace la sucursal con una ficha **distinta**, que hoy es
+   * el caso del simulador.
+   */
+  protected llevaAOtraFicha(sucursal: PublicPharmacyBranch): boolean {
+    return !sucursal.isCurrent && sucursal.slug !== this.slug;
   }
 
   /** La ruta de la ficha de otra sucursal, dentro del panel. */

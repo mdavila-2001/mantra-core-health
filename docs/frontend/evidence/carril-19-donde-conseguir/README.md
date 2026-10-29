@@ -1,7 +1,8 @@
 # Dónde conseguir lo de mi receta — carril 19
 
 Evidencia de `/my-account/medical-record/where-to-buy/:requestId` con la pestaña en la URL, el
-recorrido sugerido, «Cómo llegar» y los centros de imagenología por cobertura de estudios.
+recorrido sugerido y «Cómo llegar». En esta rama la pestaña de imagenología queda en estado vacío
+hasta que la búsqueda de centros por cobertura de estudios esté disponible en el backend.
 
 ## Con qué cuenta
 
@@ -10,26 +11,33 @@ paciente declaró su casa, así que las distancias se miden desde ahí sin pedir
 
 | Archivo | Qué muestra |
 |---|---|
-| `1440-imagenologia.png` | `?tab=imaging`. Los estudios pendientes del paciente y los centros que los tienen todos, del más cercano al más lejano, con dirección, distancia en línea recta y «Cómo llegar». |
-| `375-imagenologia.png` | La misma pestaña en un teléfono de 375 px: sin desborde horizontal. |
-| `375-farmacias.png` | La pestaña de farmacias en 375 px: sin desborde horizontal. |
-| `1440-recorrido-claro.png`, `1440-recorrido-oscuro.png` | El recorrido sugerido cuando una sucursal tiene todo: lo dice y no propone más paradas. |
-| `1440-tarjeta-claro.png`, `1440-tarjeta-oscuro.png` | La tarjeta de la sucursal con «Cómo llegar», que abre el punto en el mapa en una pestaña nueva. |
+| `1440-farmacias.png`, `1440-farmacias-oscuro.png` | La pestaña de farmacias en claro y en oscuro. |
+| `375-farmacias.png` | La misma pestaña en un teléfono de 375 px: sin desborde horizontal. |
+| `1440-imagenologia-vacio.png`, `375-imagenologia-vacio.png` | `?tab=imaging`: el estado vacío explica por qué todavía no se puede decir qué centro tiene todos los estudios. |
 
 ## Lo que se observó
 
 - Al elegir «Centros de imagenología» la URL pasa a `?tab=imaging`; al recargar, la pestaña activa
   sigue siendo esa.
+- La sucursal más cercana tiene toda la receta y el recorrido sugerido lo dice, sin proponer más
+  paradas.
 - «Cómo llegar» sale con `target="_blank"` y `rel="noopener noreferrer"`, hacia
-  `https://www.google.com/maps/search/?api=1&query=<lat>,<lng>`. Es navegación, no una carga: la
-  política de contenido no cambia.
-- Consola sin errores en todo el recorrido.
+  `https://www.google.com/maps/search/?api=1&query=<lat>,<lng>`.
+- 375 y 768 px sin desborde horizontal; consola sin errores.
 
 ## Lo que cubren las pruebas y no las fotos
 
-Con los datos del simulador la sucursal más cercana tiene la receta entera, así que el recorrido
-de varias paradas no aparece en pantalla. Lo cubren `where-to-buy.route.spec.ts` (el criterio
-exacto, el contraejemplo del método voraz, desempates y faltantes) y `where-to-buy.spec.ts` (dos
-sucursales incompletas que juntas cubren la receta, en orden de distancia). Lo mismo pasa con un
-centro de imagenología al que le falta un estudio: el paciente del simulador tiene uno solo
-pendiente, y el caso parcial lo cubre `where-to-buy.spec.ts`.
+El recorrido de varias paradas no aparece con estos datos, porque la sucursal más cercana tiene todo.
+Lo cubren `where-to-buy.route.spec.ts` (criterio exacto, contraejemplo del método voraz, desempates y
+faltantes) y `where-to-buy.spec.ts` (dos sucursales incompletas que juntas cubren la receta).
+
+## Centros médicos (25/10/2026)
+
+`375-centros-medicos.png`: `?tab=medical-centers` a 375 px. La pestaña sigue en estado vacío a
+propósito —no hay contrato que diga qué procedimientos le indicaron al paciente ni qué centro los
+hace (`diagnostics/me/orders` sólo trae LAB e IMAGING, `procedure-cases` es del equipo quirúrgico,
+la búsqueda por cobertura sólo acepta LABORATORY e IMAGING)—, pero ahora muestra la salida
+«Ver clínicas y hospitales»: antes el enlace no llevaba `empty-actions` y la molécula no lo
+proyectaba. Lo cubren `playwright/carril-19-where-to-buy-tabs.spec.ts` (tres pestañas, `?tab=`,
+sólo sucursales completas por defecto, «Cómo llegar» por OpenStreetMap, centros médicos sin
+lista inventada) y una prueba nueva en `where-to-buy.spec.ts`.

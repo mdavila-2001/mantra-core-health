@@ -1,4 +1,9 @@
-<app-card variant="outlined" padding="lg" class="insurer">
+<app-card
+  [variant]="enmarcado() ? 'outlined' : 'flat'"
+  [padding]="enmarcado() ? 'lg' : 'none'"
+  class="insurer"
+  [class.sin-marco]="!enmarcado()"
+>
   <h2 card-header class="insurer__title">Ficha de la aseguradora</h2>
 
   <app-view-state-host [state]="state()" (retry)="retry()">

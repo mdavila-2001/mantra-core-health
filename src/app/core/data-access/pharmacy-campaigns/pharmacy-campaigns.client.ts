@@ -31,6 +31,7 @@ import {
   EstadoDeCampana,
   FalloDeBorrador,
   ProductoConPrecioPromocional,
+  ProductoDeCatalogo,
   ProductoEnCampana,
 } from './pharmacy-campaigns.types';
 
@@ -40,14 +41,7 @@ import {
  */
 const CANAL_DE_DEMO = 'alovida.pharmacy-campaigns.demo';
 
-/** Un producto del catálogo, como lo conoce quien tiene precios a mano. */
-export interface ProductoDeCatalogo {
-  readonly productId: string;
-  readonly nombre: string;
-  readonly presentacion: string | null;
-  readonly precio: string;
-  readonly moneda: string;
-}
+export type { ProductoDeCatalogo };
 
 /**
  * Campañas de farmacia (carril FAR-I7), **sin backend y con gate de demo**.
@@ -66,10 +60,8 @@ export interface ProductoDeCatalogo {
  * Mismo camino que la billetera de puntos (FAR-I6): las **reglas** se cumplen
  * de verdad —la vigencia se evalúa contra el reloj, una campaña vencida no
  * entrega precios ni por URL directa, el promocional siempre es menor que el
- * normal— y los **datos** son de demostración.
- *
- * TODO(FAR-E?): cuando existan las lecturas, cada método pasa a su endpoint.
- * Un solo commit: el ajuste vive acá y las pantallas no se enteran.
+ * normal— y los **datos** son de demostración. Todo el acceso a campañas
+ * pasa por este cliente: las pantallas no saben de dónde salen.
  *
  * ## Por qué el gate apaga las secciones enteras
  *

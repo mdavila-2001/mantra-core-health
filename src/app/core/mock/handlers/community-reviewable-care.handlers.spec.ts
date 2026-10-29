@@ -2,9 +2,9 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { reservas } from '../fixtures/agenda';
 import { reservasTerminadasDe, encuentroDeReserva } from '../fixtures/atencion-resenable';
-import { ESTADO_RESERVA } from '../fixtures/conceptos';
-import { resenas, vitrinaDe, vitrinas } from '../fixtures/comunidad';
-import { MEDICA, PACIENTE } from '../fixtures/personas';
+import { BOOKING_STATUS } from '../fixtures/concepts';
+import { reviewList, showcaseOf, showcases } from '../fixtures/community';
+import { MEDICAL, PACIENTE } from '../fixtures/people';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarComunidad } from './community.handlers';
@@ -61,7 +61,7 @@ describe('reviewable-care y reseñas del simulador', () => {
   it('hay una reserva terminada con la médica de la demostración al frente', () => {
     expect(reserva).toBeDefined();
     expect(encuentroDeReserva(reserva)).toBeDefined();
-    expect(reserva.statusConceptId).toBe(ESTADO_RESERVA['BK-COMPLETED']);
+    expect(reserva.statusConceptId).toBe(BOOKING_STATUS['BK-COMPLETED']);
   });
 
   it('una reserva terminada se puede reseñar: devuelve el encuentro y a la médica', async () => {
@@ -74,7 +74,7 @@ describe('reviewable-care y reseñas del simulador', () => {
     expect(r.body.alreadyReviewed).toBe(false);
     expect(r.body.encounterId).toBe(encuentroDeReserva(reserva)!.id);
     expect(r.body.appointmentBookingId).toBe(reserva.id);
-    expect(r.body.practitionerDisplayName).toBe(MEDICA.displayName);
+    expect(r.body.practitionerDisplayName).toBe(MEDICAL.displayName);
   });
 
   it('sin appointmentBookingId es una validación, no un 404', async () => {
@@ -97,9 +97,9 @@ describe('reviewable-care y reseñas del simulador', () => {
   });
 
   it('si la médica no acepta reseñas, canReview es false (respuesta normal, no error)', async () => {
-    const vitrina = vitrinaDe(MEDICA.id)!;
+    const vitrina = showcaseOf(MEDICAL.id)!;
     const original = vitrina.acceptsReviews;
-    vitrinas.actualizar(vitrina.id, { acceptsReviews: false });
+    showcases.actualizar(vitrina.id, { acceptsReviews: false });
     try {
       const r = await llamar<Atencion>('GET', '/patients/me/reviewable-care', {
         query: `appointmentBookingId=${reserva.id}`,
@@ -107,14 +107,14 @@ describe('reviewable-care y reseñas del simulador', () => {
       expect(r.status).toBe(200);
       expect(r.body.canReview).toBe(false);
     } finally {
-      vitrinas.actualizar(vitrina.id, { acceptsReviews: original });
+      showcases.actualizar(vitrina.id, { acceptsReviews: original });
     }
   });
 
   describe('publicar la reseña', () => {
     const user: MockUser = { ...paciente };
     const encuentroId = encuentroDeReserva(reserva)!.id;
-    const vitrina = vitrinaDe(MEDICA.id)!;
+    const vitrina = showcaseOf(MEDICAL.id)!;
 
     interface Pagina {
       readonly items: readonly {
@@ -156,7 +156,7 @@ describe('reviewable-care y reseñas del simulador', () => {
     });
 
     it('la reseña no lleva nada de la encuesta: sólo los campos de una reseña', () => {
-      const nueva = resenas.filtrar((r) => r.encounterId === encuentroId)[0]!;
+      const nueva = reviewList.filtrar((r) => r.encounterId === encuentroId)[0]!;
       expect(Object.keys(nueva).filter((k) => /answer|invitation|survey|questionnaire/i.test(k))).toEqual([]);
     });
 

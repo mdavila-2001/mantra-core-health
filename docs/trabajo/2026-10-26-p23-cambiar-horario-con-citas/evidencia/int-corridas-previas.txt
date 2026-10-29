@@ -1,0 +1,10 @@
+$ … yarn test:integration p23-cambiar-horario-con-citas fx4-retirar-horario-publicado   (corrida 3: p23 cayó por timeout del arranque en frío, fx4 en verde)
+      9     thrown: "Exceeded timeout of 180000 ms for a hook.
+      1 FAIL test/integration/p23-cambiar-horario-con-citas.int-spec.ts (191.675 s)
+      1 Test Suites: 1 failed, 1 passed, 2 total
+      1 Tests:       9 failed, 9 passed, 18 total
+
+$ (corrida 4, sólo p23, antes de corregir el test)
+FAIL test/integration/p23-cambiar-horario-con-citas.int-spec.ts (49.875 s)
+    TypeError: c.end_at.getTime is not a function
+Tests:       1 failed, 8 passed, 9 total

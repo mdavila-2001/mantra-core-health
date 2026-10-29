@@ -41,7 +41,7 @@ import { AppButton } from '../../shared/components/atoms/button/button';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Select } from '../../shared/components/atoms/select/select';
 import { Switch } from '../../shared/components/atoms/switch/switch';
-import { AlarmaDePedidos } from '../organization/pharmacy-inbox/alarma-de-pedidos';
+import { OrdersAlarm } from '../organization/pharmacy-inbox/order-alarm';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
@@ -145,7 +145,7 @@ const STAGE_BADGE: Readonly<Record<ReceptionStage, { label: string; variant: Bad
     Select,
     Switch,
   ],
-  providers: [AlarmaDePedidos],
+  providers: [OrdersAlarm],
   templateUrl: './lab-reception.html',
   styleUrl: './lab-reception.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -240,7 +240,7 @@ export class LabReception {
 
   /* ---- las órdenes que llegan (4.2) ---------------------------------------- */
 
-  protected readonly alarma = inject(AlarmaDePedidos);
+  protected readonly alarma = inject(OrdersAlarm);
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   /** Las órdenes que ya se vieron: la primera carga es el punto de partida. */
   private vistas: Set<string> | null = null;
@@ -250,7 +250,7 @@ export class LabReception {
   protected readonly ultimaNueva = signal<LabInboxItem | null>(null);
   protected readonly avisoDeNuevas = signal('');
   protected readonly estadoDelSonido = computed(() =>
-    this.alarma.sonidoActivo() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
+    this.alarma.activeSound() ? 'Aviso sonoro activado' : 'Aviso sonoro silenciado',
   );
   private temporizador: ReturnType<typeof setTimeout> | null = null;
   private sondeoEnVuelo: Subscription | null = null;
@@ -273,7 +273,7 @@ export class LabReception {
   /** Cerrar el cartel acusa recibo: calla la alarma, la fila sigue marcada. */
   protected descartarAviso(): void {
     this.ultimaNueva.set(null);
-    this.alarma.acusarRecibo();
+    this.alarma.acknowledgeReceipt();
   }
 
   /** Encadena el próximo vistazo. Nunca hay dos vivos a la vez. */
@@ -360,7 +360,7 @@ export class LabReception {
         ? `Llegó una orden nueva de ${this.patientName(ultima)}.`
         : `Hay ${sinVer} órdenes nuevas sin recibir; la última, de ${this.patientName(ultima)}.`,
     );
-    this.alarma.notificar(llegadas.length);
+    this.alarma.notify(llegadas.length);
   }
 
   /** La muestra de una orden nueva ya se recibió: deja de ser nueva. */

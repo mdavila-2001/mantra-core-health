@@ -16,12 +16,15 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  * jueves de 14 a 18 sólo para servicios («Estudios en la clínica») y los
  * miércoles por la mañana «Ambos». Hasta este cambio esas tardes no aparecían
  * en ninguna pantalla, porque «Mis horarios» dibuja una sola plantilla.
+ *
+ * 28/10/2026: la pestaña del médico en `/schedule` se retiró (propietario: la
+ * barra es «Consultas» y «Mis horarios», nada más). Queda la del paciente.
  */
 
 /** `uuid('hpid-medica')` de `mock-session.ts`: el perfil fijo de la médica. */
 const MEDICA_PROFILE_ID = 'be0f3a66-c03e-4eac-a416-c1068238d3d2';
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-10-02-horarios-otros-servicios', 'evidencia');
+const EVIDENCIA = join('artifacts', 'evidencia', '2026-10-02-horarios-otros-servicios', 'evidencia');
 
 const VIEWPORTS = [
   { nombre: '375', width: 375, height: 812 },
@@ -96,73 +99,6 @@ async function fotos(page: Page, nombre: string): Promise<void> {
   await page.screenshot({ path: join(EVIDENCIA, `${nombre}-1440-oscuro.png`), fullPage: true });
   await page.emulateMedia({ colorScheme: 'light' });
 }
-
-test('médica · la pestaña «Horarios de otros servicios» muestra las franjas de servicios', async ({ page }) => {
-  const problemas = vigilar(page);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await entrarAlSimulador(page, 'medica', '');
-
-  await page.goto('/schedule', { waitUntil: 'domcontentloaded' });
-  const pestana = page.getByRole('tab', { name: 'Horarios de otros servicios' });
-  await expect(pestana).toBeVisible();
-  await pestana.click();
-  await expect(page).toHaveURL(/vista=servicios/);
-
-  const seccion = page.getByTestId('services-schedule');
-  await expect(seccion.getByRole('heading', { name: 'Horarios de otros servicios' })).toBeVisible();
-  const grilla = seccion.getByTestId('services-schedule-grid');
-  await expect(grilla.first()).toBeVisible();
-
-  // Martes y jueves sólo servicios; miércoles «Ambos». Ninguna de consultas sola.
-  const bloques = seccion.getByTestId('horario-bloque');
-  await expect(bloques.filter({ hasText: 'otros servicios' }).first()).toBeVisible();
-  const modos = await bloques.evaluateAll((els) => els.map((e) => e.getAttribute('data-mode')));
-  expect(modos.length).toBeGreaterThan(0);
-  expect(modos).not.toContain('CONSULTATIONS');
-  expect(modos).toContain('SERVICES');
-
-  // Los servicios que se reservan en esas franjas.
-  await expect(seccion.getByTestId('services-schedule-offering').first()).toBeVisible();
-  await expect(seccion.getByTestId('services-schedule-edit')).toHaveAttribute('href', '/schedule/edit');
-
-  await fotos(page, 'medica-horarios-otros-servicios');
-
-  // «Mis horarios» ya no mezcla las franjas que son sólo de servicios.
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.getByRole('tab', { name: 'Mis horarios' }).click();
-  await expect(page).toHaveURL(/vista=agenda/);
-  const propios = page.locator('app-my-agenda').getByTestId('horario-bloque');
-  await expect(propios.first()).toBeVisible();
-  const modosPropios = await propios.evaluateAll((els) => els.map((e) => e.getAttribute('data-mode')));
-  expect(modosPropios).not.toContain('SERVICES');
-
-  // Gestión: las solicitudes de servicios están en la pestaña, primero las que
-  // esperan respuesta (la maqueta siembra Holter y prueba de esfuerzo). Se
-  // acepta una desde acá con la misma acción del calendario.
-  await page.getByRole('tab', { name: /Horarios de otros servicios/ }).click();
-  const esperan = page.getByTestId('services-schedule-awaiting');
-  await expect(esperan).toBeVisible();
-  await expect(page.getByRole('tab', { name: /Horarios de otros servicios \(\d+\)/ })).toBeVisible();
-  const antes = await esperan.getByTestId('services-schedule-booking').count();
-  expect(antes).toBeGreaterThan(0);
-  await esperan
-    .getByTestId('services-schedule-booking')
-    .first()
-    .getByRole('button', { name: /^Acciones de la cita/ })
-    .click();
-  const aceptar = page.getByRole('menuitem', { name: 'Aceptar la solicitud' });
-  await expect(aceptar).toBeVisible();
-  await aceptar.click();
-  await expect(page.getByText('Solicitud aceptada')).toBeVisible();
-  await expect(esperan.getByTestId('services-schedule-booking')).toHaveCount(antes - 1);
-  await expect(page.getByTestId('services-schedule-upcoming')).toBeVisible();
-
-  // Un enlace directo abre la pestaña.
-  await page.goto('/schedule?vista=servicios', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByTestId('services-schedule')).toBeVisible();
-
-  expect(problemas, problemas.join('\n')).toEqual([]);
-});
 
 test('paciente · la ficha de la médica tiene la pestaña «Otros servicios» y lleva a reservar', async ({ page }) => {
   const problemas = vigilar(page);

@@ -94,7 +94,7 @@ describe('RegisterAccountType · organizaciones', () => {
       .map((el) => el.nativeElement as HTMLAnchorElement);
   }
 
-  it('ofrece las cuatro organizaciones que tienen alta, y ninguna cuenta de persona', () => {
+  it('ofrece las cinco organizaciones que tienen alta, y ninguna cuenta de persona', () => {
     const titulos = tarjetas().map((card) =>
       card.querySelector('.tipos__card-title')!.textContent!.trim(),
     );
@@ -106,7 +106,7 @@ describe('RegisterAccountType · organizaciones', () => {
       'Laboratorio',
       'Imagenología',
       'Farmacia',
-      'Centro médico',
+      'Organización médica',
     ]);
   });
 

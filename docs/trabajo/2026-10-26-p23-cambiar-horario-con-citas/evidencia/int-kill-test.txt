@@ -1,0 +1,5 @@
+$ (kill-test) repositorio y caso de uso SIN el cambio, mismo int-spec
+  ● P23 · cambiar un horario con citas › los dos cupos conservados quedan cerrados y ninguno del horario viejo se ofrece
+  ● P23 · cambiar un horario con citas › cancelada la cita viva, su cupo del horario retirado no vuelve a ofrecerse
+  ● P23 · cambiar un horario con citas › retener un cupo del horario retirado se rechaza: 422
+Tests:       3 failed, 6 passed, 9 total

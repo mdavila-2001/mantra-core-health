@@ -2,8 +2,9 @@ import type {
   ServiceRequestPerformerFields,
   ServiceRequestPerformerInput,
 } from '../../data-access/diagnostics/service-request-performer.types';
-import type { OrdenSimulada } from '../fixtures/clinica';
-import { sampleSiteName } from '../fixtures/procedure-orders';
+import { sampleSiteName, type ProcedureOrder } from '../fixtures/procedure-orders';
+
+export { seededProcedureOrdersOf } from '../fixtures/procedure-orders';
 
 /* ============================================================================
     El ejecutor de la orden en el doble (CONTRATO §3): lo que `POST
@@ -35,7 +36,7 @@ export function pickPerformerFields(
  * sugerida suma su nombre —`null` si no se conoce—, para que el paciente no
  * vea nunca un uuid.
  */
-export function performerFieldsOfOrder(order: OrdenSimulada): ServiceRequestPerformerFields {
+export function performerFieldsOfOrder(order: ProcedureOrder): ServiceRequestPerformerFields {
   if (order.performerSelectionConceptId === undefined) return {};
   return {
     performerSelectionConceptId: order.performerSelectionConceptId,

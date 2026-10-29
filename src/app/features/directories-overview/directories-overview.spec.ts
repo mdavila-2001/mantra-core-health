@@ -5,6 +5,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { selectOptionLabels } from '../../../testing/select';
 import { DirectoriesOverview } from './directories-overview';
 
 @Component({ template: '' })
@@ -94,6 +95,7 @@ describe('DirectoriesOverview', () => {
 
     const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
     expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(false);
+    expect(enlaces.length).toBe(4);
   });
 
   it('la primera puerta es la tarea principal y va destacada (22/10/2026)', () => {
@@ -241,21 +243,19 @@ describe('DirectoriesOverview', () => {
   });
 
   describe('el desplegable de directorio (24/09/2026)', () => {
-    function opciones(): string[] {
-      const select = root().querySelector<HTMLSelectElement>('app-filter-bar select');
-      return [...(select?.options ?? [])]
-        .filter((opcion) => !opcion.hidden)
-        .map((opcion) => opcion.textContent?.trim() ?? '');
+    async function opciones(): Promise<string[]> {
+      const select = root().querySelector<HTMLElement>('app-filter-bar app-select');
+      return select ? selectOptionLabels(fixture, select) : [];
     }
 
-    it('va en la misma fila que el buscador, con «Todos» y los cinco directorios', () => {
+    it('va en la misma fila que el buscador, con «Todos» y los cinco directorios', async () => {
       abrirSesion(['PRACTITIONER']);
       crear();
 
       const controles = root().querySelector('app-filter-bar .filter-bar__controls');
       expect(controles?.querySelector('app-search-field')).not.toBeNull();
-      expect(controles?.querySelector('select')).not.toBeNull();
-      expect(opciones()).toEqual([
+      expect(controles?.querySelector('app-select')).not.toBeNull();
+      expect(await opciones()).toEqual([
         'Todos los directorios',
         'Médicos',
         'Laboratorios',

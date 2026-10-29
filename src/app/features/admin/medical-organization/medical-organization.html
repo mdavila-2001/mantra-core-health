@@ -11,18 +11,18 @@
 <!-- El selector sólo aparece con más de una organización: ofrecer una lista de
      un elemento es ruido, y el caso mayoritario es tener una sola. -->
 @if (listado.status === 'ready' && listado.data.length > 1) {
-  <section class="organizacion-medica__selector">
-    <label for="practica-elegida">Organización</label>
-    <select
-      id="practica-elegida"
+  <!-- El MISMO campo que «Unidad» en el laboratorio: `app-form-field` +
+       `app-select`, que elige en el modal de la casa. Era un `<select>` del
+       navegador, con su propio alto y su lista del sistema operativo. -->
+  <app-form-field label="Organización">
+    <app-select
       [value]="practicaElegida()"
-      (change)="elegirPractica($any($event.target).value)"
-    >
-      @for (practica of listado.data; track practica.id) {
-        <option [value]="practica.id">{{ practica.name }} ({{ practica.code }})</option>
-      }
-    </select>
-  </section>
+      (valueChange)="elegirPractica($event ?? '')"
+      [options]="opcionesDePractica()"
+      placeholder="Elija una organización"
+      data-testid="practica-elegida"
+    />
+  </app-form-field>
 }
 
 <!-- Ficha de ámbito: la práctica es el asunto de la pantalla, no un filtro. Va
@@ -122,7 +122,10 @@
   }
   @default {
     <section class="organizacion-medica__ambito" aria-busy="true">
-      <p class="organizacion-medica__cargando">Cargando la organización…</p>
+      <app-loading-state
+        class="organizacion-medica__cargando"
+        message="Cargando la organización…"
+      />
     </section>
   }
 }

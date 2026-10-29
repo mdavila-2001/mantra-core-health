@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, shareReplay, type Observable } from 'rxjs';
 
-import type { AnatomyIndex, AnatomyPart, AnatomyStructure } from './anatomy-atlas.types';
+import type { AnatomyComposites, AnatomyIndex, AnatomyPart, AnatomyStructure } from './anatomy-atlas.types';
 
 /** Dónde publica el generador el catálogo y las mallas, en el mismo origen. */
 export const ANATOMY_ATLAS_BASE = '/anatomy-atlas-3d';
@@ -42,6 +42,11 @@ export class AnatomyAtlasClient {
 
   parts(): Observable<readonly AnatomyPart[]> {
     return this.once<readonly AnatomyPart[]>('catalog/parts.json');
+  }
+
+  /** Qué partes con malla tiene cada estructura compuesta (el pulmón, por sus lóbulos). */
+  composites(): Observable<AnatomyComposites> {
+    return this.once<AnatomyComposites>('catalog/composites.json');
   }
 
   index(): Observable<AnatomyIndex> {

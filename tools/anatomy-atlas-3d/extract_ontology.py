@@ -123,7 +123,6 @@ def leer_obo(ruta: Path):
             "exactSynonyms": sorted({desescapar(s) for s, t in RE_SYN.findall(bloque) if t == "EXACT"}),
             "otherSynonyms": sorted({desescapar(s) for s, t in RE_SYN.findall(bloque) if t != "EXACT"}),
             "fma": sorted(set(re.findall(r"^xref: FMA:(\d+)", bloque, re.M)), key=int),
-            "fmaSet": sorted(set(re.findall(r"^relationship: fma_set_term FMA:(\d+)", bloque, re.M)), key=int),
             "isA": re.findall(r"^is_a: (UBERON:\d+)", bloque, re.M),
             "relations": relaciones,
         }
@@ -190,10 +189,7 @@ def main() -> None:
     args = ap.parse_args()
 
     version, terminos = leer_obo(args.uberon)
-    # «Humana» = la clase declara un xref FMA, o, sin él, un `fma_set_term`: UBERON
-    # la cruza con el conjunto del FMA («Set of kidneys»). Lo segundo suma 11
-    # clases, entre ellas el riñón, que de otro modo quedaba afuera.
-    humanos = {i: t for i, t in terminos.items() if not t["obsolete"] and (t["fma"] or t["fmaSet"])}
+    humanos = {i: t for i, t in terminos.items() if not t["obsolete"] and t["fma"]}
     regiones = regiones_de({i: t for i, t in terminos.items() if not t["obsolete"]})
 
     def etiqueta(ident: str):
@@ -213,7 +209,6 @@ def main() -> None:
                 "id": ident,
                 "label": t["label"],
                 "fma": t["fma"],
-                **({"fmaSetTerm": t["fmaSet"]} if not t["fma"] else {}),
                 "definition": t["definition"],
                 "definitionRefs": t["definitionRefs"],
                 "exactSynonyms": t["exactSynonyms"],
@@ -282,7 +277,7 @@ def main() -> None:
             "citationDoi": "10.1186/gb-2012-13-1-r5",
             "termsInRelease": len(terminos),
             "humanTermsKept": len(salida),
-            "criterion": "clase UBERON no obsoleta con al menos un xref FMA o, sin él, una relación fma_set_term",
+            "criterion": "clase UBERON no obsoleta con al menos un xref FMA",
         },
         "fma": {
             "source": "FMA.csv distribuido con BodyParts3D 3.0 (copia en github.com/Kevin-Mattheus-Moerman/BodyParts3D)",
@@ -307,7 +302,7 @@ def main() -> None:
         "regionRoots": REGIONES,
     }
     (SALIDA / "provenance.json").write_text(json.dumps(procedencia, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"UBERON {version}: {len(terminos)} clases, {len(salida)} humanas (xref FMA o fma_set_term); {len(piezas)} piezas con malla")
+    print(f"UBERON {version}: {len(terminos)} clases, {len(salida)} humanas (xref FMA); {len(piezas)} piezas con malla")
 
 
 if __name__ == "__main__":

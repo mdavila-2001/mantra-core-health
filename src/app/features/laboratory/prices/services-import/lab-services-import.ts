@@ -192,7 +192,7 @@ export class LabServicesImport {
     { key: 'line', header: 'Línea', priority: 1, align: 'end' },
     { key: 'code', header: 'Código', priority: 1 },
     { key: 'name', header: 'Análisis', priority: 2 },
-    { key: 'outcome', header: 'Resultado', priority: 1, cell: this.outcomeCell() },
+    { key: 'outcome', header: 'Result', priority: 1, cell: this.outcomeCell() },
     { key: 'reason', header: 'Motivo', priority: 2 },
   ]);
 

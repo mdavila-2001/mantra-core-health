@@ -214,6 +214,7 @@ nav:
       - Credenciales locales: testing/credenciales-locales.md
       - Regresión visual: testing/visual-regression.md
       - Recorrido visual: testing/recorrido-visual.md
+      - Gate de cierre de correcciones: testing/gate-correcciones.md
       - Recorrido con usuarios reales: testing/recorrido-con-usuarios-reales.md
       - De contrato: testing/contract-tests.md
       - De accesibilidad: testing/accessibility-tests.md
@@ -268,7 +269,6 @@ nav:
       - Línea base: reports/baseline.md
       - Auditoría de estructura: reports/graphify-audit.md
       - Inventario funcional: reports/frontend-inventory.md
-      - Análisis de brechas: reports/documentation-gap-analysis.md
       - Auditoría de rendimiento: reports/performance-audit.md
       - Validación de regresiones: reports/regression-validation.md
       - Preparación productiva: reports/production-readiness.md
@@ -279,7 +279,3 @@ nav:
           - Inventario de API: reports/generated/api-inventory.md
           - Grafo de módulos: reports/generated/module-graph.md
           - Inventario E2E (Cypress): reports/generated/e2e-inventory.md
-
-  - Auditoría previa:
-      - Diagnóstico (fases 0–1): auditoria/01-diagnostico.md
-      - Fases ejecutadas 2–6: auditoria/02-fases-ejecutadas.md

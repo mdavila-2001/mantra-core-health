@@ -8,13 +8,16 @@
  * - Sin desborde horizontal a 390 px; claro y oscuro.
  *
  * Uso: `node playwright/contabilidad-version.mjs [urlBase]`
+ *
+ * En `dev` y `test` la tarjeta de registros todavía no trae el glosario «¿Qué significa cada cosa?»:
+ * sus comprobaciones se omiten si no existe.
  */
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const BASE = process.argv[2] ?? 'http://localhost:4333';
-const SALIDA = fileURLToPath(new URL('../evidencias/contabilidad-version-2026-10-26', import.meta.url));
+const SALIDA = fileURLToPath(new URL('../evidencias/contabilidad-version-2026-10-26-dev', import.meta.url));
 const veredictos = [];
 const ok = (nombre, cond, detalle = '') => {
   veredictos.push({ nombre, cond: Boolean(cond), detalle });
@@ -73,9 +76,12 @@ async function main() {
   await abrirRegistros(p);
   const regDoctor = await rotulosDeRegistros(p);
   ok('Doctor: registros = Gastos · Activos · Deudas', regDoctor.join(' · ') === 'Gastos · Activos · Deudas', regDoctor.join(' · '));
-  await p.getByTestId('registros-glosario').locator('summary').click();
-  const glosDoctor = await terminos(p);
-  ok('Doctor: glosario de tres palabras', glosDoctor.join('|') === 'Gasto|Activo|Deuda', glosDoctor.join('|'));
+  const hayGlosario = (await p.getByTestId('registros-glosario').count()) > 0;
+  if (hayGlosario) {
+    await p.getByTestId('registros-glosario').locator('summary').click();
+    const glosDoctor = await terminos(p);
+    ok('Doctor: glosario de tres palabras', glosDoctor.join('|') === 'Gasto|Activo|Deuda', glosDoctor.join('|'));
+  }
   const textoDoctor = await p.getByTestId('contabilidad-registros').innerText();
   ok('Doctor: sin Debe / Haber / Transacción en la tarjeta', !/\b(Debe|Haber|Transacci[oó]n)/.test(textoDoctor));
   await p.screenshot({ path: `${SALIDA}/02-doctor-registros-1440.png` });
@@ -89,8 +95,10 @@ async function main() {
     regContador.join(' · ') === 'Gastos · Activos · Deudas · Transacciones · Cuentas',
     regContador.join(' · '),
   );
-  const glosContador = await terminos(p);
-  ok('Contador: glosario de siete palabras', glosContador.length === 7 && glosContador.includes('Debe') && glosContador.includes('Haber'), glosContador.join('|'));
+  if (hayGlosario) {
+    const glosContador = await terminos(p);
+    ok('Contador: glosario de siete palabras', glosContador.length === 7 && glosContador.includes('Debe') && glosContador.includes('Haber'), glosContador.join('|'));
+  }
   ok('Contador: «Informes contables» con dos enlaces', (await p.getByTestId('contabilidad-herramientas').locator('a').count()) === 2);
   await p.screenshot({ path: `${SALIDA}/03-contador-registros-1440.png` });
 

@@ -4,10 +4,11 @@ import { map, type Observable } from 'rxjs';
 
 import { TENANT_HEADER } from '../../http/auth.interceptor';
 import { API_BASE_URL, apiUrl } from '../api';
-import { maybeDate, sinNulos, type ConNulos } from '../wire';
+import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   MyOrganization,
   OrganizationEdit,
+  OrganizationLegalDocument,
   PractitionerRequest,
   TenantAgenda,
   TenantAgendaItem,
@@ -31,8 +32,6 @@ import type {
   TenantSearchQuery,
   VerifyTenantConfirmation,
 } from './directory.types';
-import { BRANCH_SIMULATOR_EXTENSIONS } from './directory.types';
-import { withSimulatorExtensions } from '../simulator-only';
 
 /**
  * Cliente de `directory`: organizaciones de la plataforma y lo que hay dentro
@@ -102,8 +101,12 @@ export class DirectoryClient {
    * `POST /admin/tenants/{id}/verification` — activa la organización (UC-04-02).
    * Pide `SECURITY_ADMIN`, no `SUPERADMIN`.
    *
-   * Va sin la cabecera de organización, como el alta: es superficie de
-   * plataforma y el actor no tiene por qué pertenecer a lo que verifica.
+   * Declara como organización **la que se verifica** (`deLaOrganizacion`), no
+   * la activa de quien verifica: el interceptor ponía la activa y la API
+   * respondía 403 «tenants propietarios contradictorios» (ruta ≠ cabecera) a
+   * la plataforma, que verifica organizaciones ajenas por definición (visto en
+   * navegador contra la API real, defecto A2 del 26/10/2026). La autorización
+   * la sigue decidiendo la API (`SECURITY_ADMIN` sobre ese tenant).
    */
   verifyTenant(
     tenantId: string,
@@ -113,6 +116,7 @@ export class DirectoryClient {
       .post<WireTenantCreated>(
         this.url(`/admin/tenants/${tenantId}/verification`),
         stripUndefined(confirmation),
+        { headers: deLaOrganizacion(tenantId) },
       )
       .pipe(map(toTenantCreated));
   }
@@ -141,7 +145,7 @@ export class DirectoryClient {
     return this.http
       .post<ConNulos<WireBranchListItem>>(
         this.url(`/tenants/${tenantId}/branches`),
-        withSimulatorExtensions(stripUndefined(branch), BRANCH_SIMULATOR_EXTENSIONS),
+        stripUndefined(branch),
         { headers: deLaOrganizacion(tenantId) },
       )
       .pipe(map(toBranchListItem));
@@ -151,20 +155,18 @@ export class DirectoryClient {
    * `PATCH /tenants/{id}/branches/{branchId}` — edita el nombre, la
    * descripción y la ubicación de una sucursal.
    *
-   * **Sólo existe en el simulador** (P54): la API real no publica edición de
-   * sucursales. `null` borra el dato; una clave ausente lo deja como está.
+   * La API la publica desde el 11/10/2026 (P54). `null` borra el dato; una clave ausente lo deja como está.
    */
   updateBranch(
     tenantId: string,
     branchId: string,
     changes: BranchChanges,
   ): Observable<BranchListItem> {
+    const url = this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`);
     return this.http
-      .patch<ConNulos<WireBranchListItem>>(
-        this.url(`/tenants/${tenantId}/branches/${encodeURIComponent(branchId)}`),
-        stripUndefined(changes),
-        { headers: deLaOrganizacion(tenantId) },
-      )
+      .patch<ConNulos<WireBranchListItem>>(url, stripUndefined(changes), {
+        headers: deLaOrganizacion(tenantId),
+      })
       .pipe(map(toBranchListItem));
   }
 
@@ -341,13 +343,23 @@ export class DirectoryClient {
   /**
    * `GET /tenants/{id}/logo` — el archivo que es el logo de la organización.
    *
-   * **Contrato de la maqueta, todavía sin API** (PENDIENTES-BACKEND P58): hoy la imagen
-   * vive en el perfil público de la organización y sólo la escribe un administrador de
-   * plataforma. Ningún componente lo llama: pasan por `LogoDeOrganizacionClient`.
+   * El archivo vive en el perfil público. La API comprueba pertenencia a la
+   * organización al leer y membresía owner/admin al escribir.
    */
   getOrganizationLogo(tenantId: string): Observable<{ readonly fileId: string | null }> {
-    return this.http.get<{ readonly fileId: string | null }>(this.url(`/tenants/${tenantId}/logo`), {
+    return this.http.get<{ readonly fileId: string | null }>(
+      this.url(`/tenants/${tenantId}/logo`),
+      {
+        headers: deLaOrganizacion(tenantId),
+      },
+    );
+  }
+
+  /** Bytes autorizados por pertenencia a la organización, aunque otro miembro los haya subido. */
+  getOrganizationLogoContent(tenantId: string): Observable<Blob> {
+    return this.http.get(this.url(`/tenants/${tenantId}/logo/content`), {
       headers: deLaOrganizacion(tenantId),
+      responseType: 'blob',
     });
   }
 
@@ -480,8 +492,19 @@ function deLaOrganizacion(tenantId: string): HttpHeaders {
 
 type WireTenantListItem = Omit<TenantListItem, 'createdAt'> & { readonly createdAt: string };
 
-type WireMyOrganization = Omit<MyOrganization, 'createdAt'> & {
+type WireMyOrganization = Omit<MyOrganization, 'createdAt' | 'legalDocuments'> & {
   readonly createdAt: string;
+  readonly legalDocuments?: readonly WireOrganizationLegalDocument[];
+};
+
+/** El papel de la carpeta como viaja: las fechas, en texto ISO. */
+type WireOrganizationLegalDocument = Omit<
+  OrganizationLegalDocument,
+  'registeredAt' | 'validTo'
+> & {
+  readonly registeredAt?: string | null;
+  readonly validTo?: string | null;
+  readonly documentNumber?: string | null;
 };
 
 /**
@@ -633,6 +656,27 @@ function toMyOrganization(body: ConNulos<WireMyOrganization>): MyOrganization {
     // organización, cualquiera sea su tipo — ver `MyOrganization`.
     legalRepresentative: limpio.legalRepresentative,
     executives: limpio.executives,
+    legalEntityType: limpio.legalEntityType,
+    taxIdentifier: limpio.taxIdentifier,
+    legalDocuments: limpio.legalDocuments?.map(toOrganizationLegalDocument),
+  };
+}
+
+/**
+ * Las fechas son columnas sin hora: van por `maybeDateOnly` para no retroceder
+ * un día al oeste de Greenwich, y se reponen sólo si vinieron.
+ */
+function toOrganizationLegalDocument(
+  doc: WireOrganizationLegalDocument,
+): OrganizationLegalDocument {
+  const { registeredAt, validTo, documentNumber, ...resto } = doc;
+  const registrado = maybeDateOnly(registeredAt);
+  const vence = maybeDateOnly(validTo);
+  return {
+    ...resto,
+    ...(documentNumber == null ? {} : { documentNumber }),
+    ...(registrado === undefined ? {} : { registeredAt: registrado }),
+    ...(vence === undefined ? {} : { validTo: vence }),
   };
 }
 

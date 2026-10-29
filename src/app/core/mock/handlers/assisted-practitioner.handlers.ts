@@ -1,11 +1,5 @@
-import { conflict, forbidden, reply, validation, type MockRouter } from '../mock-router';
+import { conflict, forbidden, reply, validation, type MockRouter, type ValidationIssue } from '../mock-router';
 import { cuerpo, iso, nuevoId } from '../mock-store';
-
-/** Un problema de validación anclado a un campo, como lo devuelve la API. */
-interface ValidationIssue {
-  readonly field: string;
-  readonly message: string;
-}
 
 /* ============================================================================
     Backend simulado del alta administrativa de un médico

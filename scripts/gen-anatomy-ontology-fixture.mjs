@@ -18,29 +18,23 @@
  * - `public/anatomy-atlas-3d/models/parts-manifest.json`: qué malla está en qué
  *   capa y si es exclusiva de un sexo (lo escribe `build_models.py`).
  *
- * - `data/anatomy-ontology/ta2.json`: el código TA2 (FIPAT) de cada ficha que
- *   se pudo cruzar por FMA, de `tools/anatomy-atlas-3d/fetch_ta2.py`.
- * - `data/anatomy-ontology/literature/`: la descripción extendida. `searched.json`
- *   dice qué fichas se buscaron en PubMed y Europe PMC
- *   (`tools/anatomy-atlas-3d/fetch_literature.py`); `R0N.json` (o `R0N-k.json`, un archivo por lote de redacción), las frases
- *   parafraseadas de los resúmenes, cada una con su PMID; `sources.json`, los
- *   datos bibliográficos de cada PMID citado. Una ficha buscada sin frases queda
- *   como `no_source`; una no buscada, `null`.
- * - `data/anatomy-ontology/images/*.json`: imágenes de Wikimedia Commons con
- *   autor y licencia leídos de su API `extmetadata`.
- *
  * ## Lo que NO trae, y por qué
  *
- * - **Afirmaciones sin cita.** Una frase de la descripción extendida sin PMID
- *   que esté en `sources.json` hace fallar al generador: no se publica.
+ * - **Descripción extendida con literatura.** Exigía PubMed, Europe PMC,
+ *   OpenAlex y Crossref para citar y comprobar cada afirmación, y la red de la
+ *   sesión que armó esto no los alcanzaba. Queda `null`, con su motivo, y la
+ *   ficha lo dice. No se escribe de memoria.
+ * - **Imágenes de Wikimedia Commons.** Igual: sin la API `extmetadata` no hay
+ *   autor ni licencia comprobables, así que no hay imagen.
  * - **Relaciones que UBERON no declara.** Las inversas que se publican
  *   (`incoming`) son la misma afirmación leída desde la otra punta, no una nueva.
  *
  * ## Salida
  *
  * - `public/anatomy-atlas-3d/catalog/`: `index.json` (búsqueda y shard de cada
- *   estructura), `parts.json` (malla → estructura) y `structures-NN.json`
- *   (las fichas, en 32 shards). Se bajan bajo demanda, como el glosario: no
+ *   estructura), `parts.json` (malla → estructura), `composites.json`
+ *   (estructura compuesta → las partes suyas que tienen malla) y
+ *   `structures-NN.json` (las fichas, en 32 shards). Se bajan bajo demanda, como el glosario: no
  *   pesan en el bundle.
  * - `src/app/core/mock/fixtures/anatomy-ontology.generated.ts`: conteos,
  *   procedencia y atribuciones, que sí viajan en el código porque la pantalla
@@ -57,6 +51,13 @@ const CATALOGO = join(RAIZ, 'public', 'anatomy-atlas-3d', 'catalog');
 const MANIFIESTO_DE_MALLAS = join(RAIZ, 'public', 'anatomy-atlas-3d', 'models', 'parts-manifest.json');
 const FIXTURE = join(RAIZ, 'src', 'app', 'core', 'mock', 'fixtures', 'anatomy-ontology.generated.ts');
 const SHARDS = 32;
+/**
+ * Una estructura compuesta resalta las mallas de todas sus partes, pero no las
+ * de una clase abstracta: «órgano», «organismo» o «entidad anatómica» llegan a
+ * 150–550 mallas, y encender medio cuerpo no le muestra nada a quien buscó una
+ * estructura. Pasado este tope la estructura sigue sin pieza 3D.
+ */
+const MAX_MALLAS_COMPUESTAS = 120;
 
 const leerJson = (ruta) => JSON.parse(readFileSync(ruta, 'utf8'));
 
@@ -128,45 +129,6 @@ function clasificarReferencia(ref) {
   return { kind: 'xref', value: ref };
 }
 
-/** Los aspectos de la descripción extendida, en el orden en que se muestran. */
-const ASPECTOS = ['situation', 'parts', 'relations', 'irrigation', 'innervation', 'function', 'clinical'];
-
-/** Lo que se buscó, lo que se redactó y la bibliografía citada. */
-function leerLiteratura() {
-  const carpeta = join(DATOS, 'literature');
-  if (!existsSync(join(carpeta, 'searched.json'))) return { buscadas: new Map(), frases: {}, fuentes: {} };
-  const buscadas = new Map(leerJson(join(carpeta, 'searched.json')).structures.map((b) => [b.id, b]));
-  const fuentes = leerJson(join(carpeta, 'sources.json'));
-  const frases = {};
-  for (const a of readdirSync(carpeta).filter((a) => /^R\d\d(-\d+)?\.json$/.test(a)).sort()) Object.assign(frases, leerJson(join(carpeta, a)));
-  for (const [id, d] of Object.entries(frases)) {
-    if (!buscadas.has(id)) throw new Error(`literatura: ${id} tiene frases pero no figura en searched.json`);
-    for (const f of d.sentences) {
-      if (!ASPECTOS.includes(f.aspect)) throw new Error(`literatura: ${id} usa un aspecto desconocido «${f.aspect}»`);
-      if (!f.es?.trim()) throw new Error(`literatura: ${id} tiene una frase vacía`);
-      if (!f.cites?.length) throw new Error(`literatura: ${id} tiene una frase sin cita: «${f.es}»`);
-      for (const c of f.cites) if (!fuentes[c]) throw new Error(`literatura: ${id} cita ${c}, que no está en sources.json`);
-    }
-  }
-  return { buscadas, frases, fuentes };
-}
-
-/** La descripción extendida de una ficha: `null` si no se buscó, `no_source` si la búsqueda no dio con qué. */
-function descripcionExtendida(id, { buscadas, frases, fuentes }) {
-  if (!buscadas.has(id)) return null;
-  const d = frases[id];
-  const oraciones = [...(d?.sentences ?? [])].sort((a, b) => ASPECTOS.indexOf(a.aspect) - ASPECTOS.indexOf(b.aspect));
-  const citadas = [...new Set(oraciones.flatMap((o) => o.cites))];
-  const cubiertos = new Set(oraciones.map((o) => o.aspect));
-  return {
-    status: oraciones.length > 0 ? 'described' : 'no_source',
-    sentences: oraciones.map((o) => ({ aspect: o.aspect, es: o.es, cites: o.cites })),
-    missingAspects: ASPECTOS.filter((a) => !cubiertos.has(a)),
-    sources: citadas.map((c) => ({ id: c, ...fuentes[c] })),
-    searchedQuery: buscadas.get(id).query,
-  };
-}
-
 function main() {
   const uberon = leerJson(join(DATOS, 'uberon-human.json'));
   const piezas = leerJson(join(DATOS, 'bodyparts3d-parts.json'));
@@ -175,9 +137,6 @@ function main() {
   const mapeo = leerCarpeta('netter-mapping', []);
   const castellano = leerCarpeta('es', {});
   const netter = new Map(leerJson(join(RAIZ, 'data', 'netter-anatomia', 'entities.json')).map((e) => [e.id, e]));
-  const ta2 = existsSync(join(DATOS, 'ta2.json')) ? leerJson(join(DATOS, 'ta2.json')) : { mapped: {}, unmapped: [], source: null };
-  const literatura = leerLiteratura();
-  const imagenes = leerCarpeta('images', {});
 
   const porId = new Map(uberon.map((t) => [t.id, t]));
   const nombresExactos = new Map(
@@ -283,9 +242,8 @@ function main() {
       })),
       netter: netterPorEstructura.get(t.id) ?? [],
       meshes: mallasPorEstructura.get(t.id) ?? [],
-      ta2: ta2.mapped[t.id] ?? null,
-      extendedDescription: descripcionExtendida(t.id, literatura),
-      images: imagenes[t.id] ?? [],
+      extendedDescription: null,
+      images: [],
     };
   });
 
@@ -314,10 +272,46 @@ function main() {
       incoming: [],
       netter: [],
       meshes: mallasPorEstructura.get(p.structureId) ?? [],
-      ta2: ta2.mapped[p.structureId] ?? null,
-      extendedDescription: descripcionExtendida(p.structureId, literatura),
-      images: imagenes[p.structureId] ?? [],
+      extendedDescription: null,
+      images: [],
     });
+  }
+
+  /* ---- estructuras compuestas -------------------------------------------
+     «Pulmón», «pulmón derecho» o «corazón» no tienen malla propia: BodyParts3D
+     dibuja sus lóbulos y cavidades. Sin esto el índice las marcaba «sin pieza
+     3D» y no se resaltaba nada, aunque el modelo las contiene enteras. Una
+     compuesta resalta las mallas de sus partes: lo que la ontología declara
+     como «es un» o «forma parte de» (en cualquiera de los dos sentidos). */
+  const hijos = new Map();
+  const agregarHijo = (padre, hijo) => {
+    if (!porId.has(padre) || !porId.has(hijo) || padre === hijo) return;
+    const lista = hijos.get(padre) ?? new Set();
+    lista.add(hijo);
+    hijos.set(padre, lista);
+  };
+  for (const t of uberon) {
+    for (const r of t.isA) agregarHijo(r.target, t.id);
+    for (const r of t.relations) {
+      if (r.type === 'part_of') agregarHijo(r.target, t.id);
+      else if (r.type === 'has_part') agregarHijo(t.id, r.target);
+    }
+  }
+  const compuestas = {};
+  for (const t of uberon) {
+    if (mallasPorEstructura.has(t.id)) continue;
+    const vistos = new Set();
+    const pila = [t.id];
+    while (pila.length > 0) {
+      for (const hijo of hijos.get(pila.pop()) ?? []) {
+        if (vistos.has(hijo)) continue;
+        vistos.add(hijo);
+        pila.push(hijo);
+      }
+    }
+    const miembros = [...vistos].filter((id) => mallasPorEstructura.has(id)).sort();
+    const nMallas = miembros.reduce((n, id) => n + mallasPorEstructura.get(id).length, 0);
+    if (nMallas > 0 && nMallas <= MAX_MALLAS_COMPUESTAS) compuestas[t.id] = miembros;
   }
 
   /* ---- escritura --------------------------------------------------------- */
@@ -328,10 +322,11 @@ function main() {
     writeFileSync(join(CATALOGO, `structures-${String(i).padStart(2, '0')}.json`), JSON.stringify(contenido) + '\n'),
   );
   const indice = fichas
-    .map((f) => [f.id, f.labelEs, f.labelEn, f.meshes.length > 0 ? 1 : 0])
+    .map((f) => [f.id, f.labelEs, f.labelEn, f.meshes.length > 0 || f.id in compuestas ? 1 : 0])
     .sort((a, b) => (a[1] ?? a[2]).localeCompare(b[1] ?? b[2], 'es'));
   writeFileSync(join(CATALOGO, 'index.json'), JSON.stringify({ shards: SHARDS, entries: indice }) + '\n');
   writeFileSync(join(CATALOGO, 'parts.json'), JSON.stringify(partes) + '\n');
+  writeFileSync(join(CATALOGO, 'composites.json'), JSON.stringify(compuestas) + '\n');
   writeFileSync(
     join(DATOS, 'netter-mapping-report.json'),
     JSON.stringify({ ...cruce, sinRevisar }, null, 1) + '\n',
@@ -372,23 +367,13 @@ function main() {
     definitionsEs: fichas.filter((f) => f.definition?.es).length,
     labelsEs: fichas.filter((f) => f.labelEs).length,
     meshes: partes.length,
+    compositeStructures: Object.keys(compuestas).length,
     meshesMappedToUberon: partes.filter((p) => p.match !== 'fma_only').length,
     netterEntries: cruce.total,
     netterMapped: cruce.aceptadas,
     netterUnmapped: cruce.sinCruce.length,
     netterRejected: cruce.rechazadas.length,
     netterNotReviewed: sinRevisar.length,
-    ta2Vocabulary: ta2.source?.vocabulary ?? null,
-    ta2Crosswalk: ta2.source?.crosswalk ?? null,
-    ta2Mapped: fichas.filter((f) => f.ta2).length,
-    ta2Unmapped: fichas.filter((f) => !f.ta2).length,
-    literatureSearched: fichas.filter((f) => f.extendedDescription).length,
-    literatureDescribed: fichas.filter((f) => f.extendedDescription?.status === 'described').length,
-    literatureNoSource: fichas.filter((f) => f.extendedDescription?.status === 'no_source').length,
-    literatureSentences: fichas.reduce((n, f) => n + (f.extendedDescription?.sentences.length ?? 0), 0),
-    literatureSourcesCited: new Set(fichas.flatMap((f) => f.extendedDescription?.sources.map((s) => s.id) ?? [])).size,
-    images: fichas.reduce((n, f) => n + f.images.length, 0),
-    structuresWithImages: fichas.filter((f) => f.images.length > 0).length,
     femaleOnlyStructures: femeninas.length,
     femaleOnlyWithMesh: femeninas.filter((id) => mallasPorEstructura.has(id)).length,
   };

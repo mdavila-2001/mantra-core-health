@@ -150,6 +150,127 @@
         }
       </app-tab>
 
+      <app-tab label="Altas y Deserción">
+        <div class="analitica__onboarding-toolbar" data-testid="analytics-onboarding-toolbar">
+          <div class="analitica__selector-grupo">
+            <span class="analitica__control-label">Tipo de cuenta:</span>
+            <app-select ariaLabel="Tipo de alta" [options]="opcionesTipoAlta" [value]="tipoAlta()" (valueChange)="cambiarTipoAlta($event)" />
+          </div>
+          <div class="analitica__selector-grupo">
+            <span class="analitica__control-label">Métrica de calor:</span>
+            <app-segmented-control ariaLabel="Métrica de mapa de calor" [options]="opcionesMetricaCalor" [value]="metricaCalor()" (valueChange)="cambiarMetricaCalor($event)" />
+          </div>
+        </div>
+
+        @if (embudoOnboarding(); as estadoEmbudo) {
+          <app-view-state-host [state]="estadoEmbudo" (retry)="cargarOnboarding()">
+            @if (estadoEmbudo.status === 'ready') {
+              <div class="analitica__totales" data-testid="onboarding-kpi-totals">
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ entero(estadoEmbudo.data.totalStarted) }}</span>
+                  <span class="analitica__rotulo">Altas iniciadas</span>
+                </div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ entero(estadoEmbudo.data.totalCompleted) }}</span>
+                  <span class="analitica__rotulo">Completadas con éxito</span>
+                </div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ porcentaje(estadoEmbudo.data.overallConversion) }}</span>
+                  <span class="analitica__rotulo">Tasa de finalización</span>
+                </div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">Paso {{ estadoEmbudo.data.bottleneckStepNumber }}</span>
+                  <span class="analitica__rotulo">Punto crítico de deserción</span>
+                  <span class="analitica__ayuda">Mayor índice de abandono</span>
+                </div>
+                <div class="analitica__total">
+                  <span class="analitica__valor">{{ estadoEmbudo.data.averageCompletionMinutes }} min</span>
+                  <span class="analitica__rotulo">Tiempo medio de llenado</span>
+                </div>
+              </div>
+
+              <section class="analitica__seccion-grafico" aria-label="Embudo de deserción">
+                <h3 class="analitica__subtitulo">Embudo de retención y deserción por paso</h3>
+                <p class="analitica__ayuda">Muestra el flujo de retención y la cantidad de personas que desertaron en cada fase del alta.</p>
+                
+                <ol class="analitica__pasos" data-testid="onboarding-funnel-steps">
+                  @for (paso of estadoEmbudo.data.steps; track paso.stepNumber) {
+                    <li class="analitica__paso analitica__paso--onboarding">
+                      <div class="analitica__paso-cabecera">
+                        <span class="analitica__paso-nombre">Paso {{ paso.stepNumber }}: <strong>{{ paso.stepTitle }}</strong></span>
+                        <span class="analitica__paso-stats">{{ entero(paso.reachedCount) }} usuarios ({{ porcentaje(paso.conversionFromStart) }}) · prom. {{ paso.averageDwellSeconds }}s</span>
+                      </div>
+                      <div class="analitica__paso-barra-wrap">
+                        <span class="analitica__paso-barra">
+                          <span class="analitica__paso-relleno" [style.inline-size]="(paso.conversionFromStart * 100) + '%'"></span>
+                        </span>
+                        @if (paso.droppedFromPrevious !== null) {
+                          <span class="analitica__desercion-tag">−{{ entero(paso.droppedFromPrevious) }} deserción ({{ porcentaje(1 - (paso.conversionFromPrevious ?? 1)) }})</span>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ol>
+              </section>
+            }
+          </app-view-state-host>
+        }
+
+        @if (mapaCalorOnboarding(); as estadoCalor) {
+          <app-view-state-host [state]="estadoCalor" (retry)="cargarOnboarding()">
+            @if (estadoCalor.status === 'ready') {
+              <section class="analitica__seccion-grafico" aria-label="Mapa de calor de formulario">
+                <div class="analitica__heatmap-header">
+                  <div>
+                    <h3 class="analitica__subtitulo">Mapa de calor del formulario</h3>
+                    <p class="analitica__ayuda">Identifica los campos con mayor concentración de fricción, tiempo o abandonos para optimizar la conversión.</p>
+                  </div>
+                  <div class="analitica__heatmap-leyenda" aria-label="Leyenda de calor">
+                    <span class="analitica__leyenda-item analitica__leyenda-item--low">Baja fricción</span>
+                    <span class="analitica__leyenda-item analitica__leyenda-item--medium">Fricción moderada</span>
+                    <span class="analitica__leyenda-item analitica__leyenda-item--critical">Punto crítico</span>
+                  </div>
+                </div>
+
+                <div class="analitica__heatmap-grid" data-testid="onboarding-heatmap-grid">
+                  @for (campo of estadoCalor.data.fields; track campo.fieldKey) {
+                    <div class="analitica__heatmap-card analitica__heatmap-card--{{ campo.thermalLevel }}">
+                      <div class="analitica__heatmap-card-header">
+                        <span class="analitica__heatmap-field-label">{{ campo.fieldLabel }}</span>
+                        <span class="analitica__heatmap-score-badge analitica__heatmap-score-badge--{{ campo.thermalLevel }}">
+                          {{ campo.thermalScore }}%
+                        </span>
+                      </div>
+                      <div class="analitica__heatmap-field-meta">
+                        <code>{{ campo.fieldKey }}</code> · Paso {{ campo.stepNumber }}
+                      </div>
+                      <div class="analitica__heatmap-metric-details">
+                        <div class="analitica__heatmap-detail-row">
+                          <span>Errores de validación:</span>
+                          <strong>{{ entero(campo.errorCount) }}</strong>
+                        </div>
+                        <div class="analitica__heatmap-detail-row">
+                          <span>Frecuencia interacción:</span>
+                          <strong>{{ entero(campo.interactionCount) }}</strong>
+                        </div>
+                        <div class="analitica__heatmap-detail-row">
+                          <span>Último campo antes de salir:</span>
+                          <strong>{{ entero(campo.abandonmentCount) }}</strong>
+                        </div>
+                        <div class="analitica__heatmap-detail-row">
+                          <span>Tiempo en campo:</span>
+                          <strong>{{ (campo.averageTimeMs / 1000) | number: '1.1-1' }} s</strong>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
+            }
+          </app-view-state-host>
+        }
+      </app-tab>
+
       <app-tab label="Sesiones">
         <app-view-state-host [state]="sesiones()" (retry)="cargar()">
           @if (sesiones(); as estado) {

@@ -9,7 +9,9 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
 import type { ChartOfAccounts, LedgerAccount, Practice } from '../../core/data-access/accounting/accounting.types';
 import { AssetsLiabilitiesClient } from '../../core/data-access/assets-liabilities/assets-liabilities.client';
 import type {
+  AssetDepreciationHistory,
   AssetSummary,
+  LiabilityScheduleView,
   LiabilitySummary,
 } from '../../core/data-access/assets-liabilities/assets-liabilities.types';
 import { describeApiFailure } from '../../core/http/api-failure';
@@ -28,8 +30,10 @@ import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf } from '../../shared/forms/form-support';
+import { ExpandableDetail } from './expandable-detail';
+import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * FT-26 — módulo de activos y pasivos del doctor.
@@ -69,6 +73,7 @@ import { errorMessageOf } from '../../shared/forms/form-support';
     Switch,
     Tab,
     Tabs,
+    LoadingState,
   ],
   templateUrl: './assets-liabilities.html',
   styleUrl: './assets-liabilities.css',
@@ -171,7 +176,7 @@ export class AssetsLiabilities {
    * Las dos últimas sólo se entienden con las cuentas ya elegidas.
    */
   protected readonly paginasDeActivo = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué se compró',
         campos: [
@@ -332,6 +337,7 @@ export class AssetsLiabilities {
         next: () => {
           this.avanceDeActivoEnCurso.set(null);
           this.reintentar();
+          this.assetHistory.reloadIfOpen(asset.id);
         },
         error: (error: unknown) => {
           this.avanceDeActivoEnCurso.set(null);
@@ -382,7 +388,7 @@ export class AssetsLiabilities {
    * plan de cuotas.
    */
   protected readonly paginasDePasivo = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué se debe',
         campos: [
@@ -532,6 +538,7 @@ export class AssetsLiabilities {
         next: () => {
           this.avanceDePasivoEnCurso.set(null);
           this.reintentar();
+          this.liabilitySchedule.reloadIfOpen(liability.id);
         },
         error: (error: unknown) => {
           this.avanceDePasivoEnCurso.set(null);
@@ -540,5 +547,25 @@ export class AssetsLiabilities {
           );
         },
       });
+  }
+
+  /* Histórico (T26 · criterios 6 y 11): uno abierto por pestaña, ver `ExpandableDetail`. */
+  protected readonly assetHistory = new ExpandableDetail<AssetDepreciationHistory>(
+    (id) => this.client.readAssetDepreciations(id),
+    (history) =>
+      history.depreciations.length === 0
+        ? empty({ label: 'Registrar avance' }, 'Este activo todavía no tiene depreciaciones registradas.')
+        : ready(history),
+  );
+
+  protected readonly liabilitySchedule = new ExpandableDetail<LiabilityScheduleView>(
+    (id) => this.client.readLiabilitySchedule(id),
+    (view) =>
+      view.schedule.length === 0 ? empty({ label: 'Dar de alta un pasivo' }, 'Este pasivo no tiene cuotas.') : ready(view),
+  );
+
+  /** Una cuota está pagada cuando su importe pagado es mayor que cero. */
+  protected isInstallmentPaid(paidAmount: string | undefined): boolean {
+    return Number(paidAmount ?? '0') > 0;
   }
 }

@@ -297,6 +297,20 @@
       />
     </app-form-field>
 
+    <!-- Aviso temprano de telemedicina: con las franjas del horario ya leídas,
+         la teleconsulta fuera de una franja habilitada no se deja guardar. La
+         regla es del servidor (422 TELEMEDICINE_NOT_ENABLED); esto sólo evita
+         el viaje para enterarse. -->
+    @if (sinTelemedicina(); as aviso) {
+      <app-alert
+        tone="warning"
+        title="Esta hora no admite teleconsulta"
+        data-testid="cita-sin-telemedicina"
+      >
+        {{ aviso }}
+      </app-alert>
+    }
+
     <!-- La hora es un campo de texto, igual que en la tarjeta del día: el
          producto no tiene todavía un selector de hora propio, y el nativo
          traería el mismo problema que el de fecha. -->

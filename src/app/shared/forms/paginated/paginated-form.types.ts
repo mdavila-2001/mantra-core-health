@@ -98,7 +98,7 @@ export type TipoDeControl =
   | 'textarea'
   | 'custom';
 
-import type { CondicionVisible } from './visibilidad-condicional';
+import type { ConditionVisible } from './conditional-visibility';
 
 /** Un campo del formulario, tal como el motor necesita conocerlo para pintarlo. */
 export interface CampoDeFormulario {
@@ -181,13 +181,13 @@ export interface CampoDeFormulario {
 
   /**
    * Cuándo se muestra el campo: si el control `key` vale `equals` (ver
-   * `visibilidad-condicional.ts`). Es lo que pone «¿cuál?» debajo de un «sí».
+   * `conditional-visibility.ts`). Es lo que pone «¿cuál?» debajo de un «sí».
    *
    * Oculto, el motor **deshabilita** su control: no se dibuja, su `required` no
    * frena «Siguiente» y su valor no sale en `form.value`. Una página que se
    * queda sin campos visibles se salta.
    */
-  readonly showWhen?: CondicionVisible;
+  readonly showWhen?: ConditionVisible;
 
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
@@ -307,8 +307,23 @@ export interface CampoDeFormulario {
    * mínimo— y eso cubre la mayoría. Un validador propio sabe cosas que el motor
    * no puede adivinar («letras, números, punto y guion»), y ese mensaje viene
    * acá. Ver `mensajeDeError`.
+   *
+   * Reemplaza **todos** los errores del campo. Para personalizar sólo el
+   * obligatorio vacío y dejar que el motor diga el resto —el tope de
+   * caracteres con su número—, ver {@link mensajeSiFalta}.
    */
   readonly mensajeDeError?: string;
+
+  /**
+   * El mensaje del campo obligatorio **vacío**, en vez del genérico «Este dato
+   * es obligatorio.».
+   *
+   * A diferencia de `mensajeDeError`, no tapa los demás errores: una razón
+   * social de 301 caracteres sigue diciendo «No puede pasar de 300
+   * caracteres.», que es lo que la persona necesita leer. Si el campo declara
+   * también `mensajeDeError`, gana ése.
+   */
+  readonly mensajeSiFalta?: string;
 
   /**
    * Si el campo se marca como obligatorio a la vista.
@@ -339,8 +354,31 @@ export interface CampoDeFormulario {
    *
    * En pantalla angosta no hace nada: todo vuelve a una columna antes que
    * estrechar dos controles a menos de lo que se escribe adentro.
+   *
+   * `completo` cruza la fila entera **también** en una página `dos-columnas`
+   * o `tres-columnas`, donde por omisión cada campo ocupa un carril: es lo que
+   * necesita un grupo de opciones encima de un par de casillas.
    */
   readonly ancho?: 'completo' | 'mitad';
+
+  /**
+   * Cómo se acomodan las opciones de un campo `radio` desde 780 px.
+   *
+   * Por omisión, `columna`: una debajo de la otra, como siempre. `rejilla` las
+   * reparte en tantas columnas como entren —en una tarjeta ancha, una fila—:
+   * cinco opciones cortas en una columna de 190 px pegada a la izquierda dejan
+   * el resto de la tarjeta en blanco y empujan las acciones fuera de un
+   * monitor de 768 px de alto. En el teléfono vuelven a una columna. Pensado
+   * para rótulos cortos; con oraciones largas, `columna` se lee mejor.
+   */
+  readonly opcionesEn?: 'columna' | 'rejilla';
+
+  /**
+   * Un campo `select` muestra el valor elegido en hasta dos renglones antes
+   * de cortar (`multilineValue` de `app-select`). Para opciones largas que se
+   * cortarían justo en lo que dicen; por omisión, un renglón.
+   */
+  readonly valorEnDosRenglones?: boolean;
 }
 
 /** Una página: el rótulo de su sección y hasta cuatro campos. */
@@ -383,10 +421,23 @@ export interface PaginaDeFormulario {
    *
    * `dos-columnas` se reserva para pares cortos y relacionados. En pantallas
    * angostas el motor vuelve a una sola columna para no estrechar controles.
+   *
+   * `tres-columnas` es `dos-columnas` que además pasa a tres desde 1120 px:
+   * la receta de `composition-rules.md` §5 para un formulario que ocupa todo
+   * el ancho —una / dos / tres columnas— sin casillas kilométricas.
    */
-  readonly disposicion?: 'una-columna' | 'dos-columnas';
+  readonly disposicion?: 'una-columna' | 'dos-columnas' | 'tres-columnas';
 
-  /** Invariante: nunca más de {@link MAX_CAMPOS_POR_PAGINA}. */
+  /**
+   * Ver {@link SeccionDeFormulario.sinPartir}: la página viene de una sección
+   * que pidió quedar entera, y el motor no la cuenta contra el tope.
+   */
+  readonly sinPartir?: boolean;
+
+  /**
+   * Invariante: nunca más de {@link MAX_CAMPOS_POR_PAGINA}, salvo que la
+   * página venga de una sección {@link SeccionDeFormulario.sinPartir}.
+   */
   readonly campos: readonly CampoDeFormulario[];
 }
 
@@ -414,5 +465,17 @@ export interface SeccionDeFormulario {
 
   readonly hint?: string;
   readonly disposicion?: PaginaDeFormulario['disposicion'];
+
+  /**
+   * Si la sección va entera en una sola página aunque pase del tope.
+   *
+   * Para bloques que se leen como uno solo y que nadie contesta campo por
+   * campo: los papeles de un alta de organización son seis zonas de carga
+   * opcionales, y partirlas en «(1 de 2)» y «(2 de 2)» escondía la mitad
+   * (pedido del cliente del 28/10/2026: «todo en una sola vista»). No es para
+   * preguntas: una sección de preguntas largas se sigue partiendo.
+   */
+  readonly sinPartir?: boolean;
+
   readonly campos: readonly CampoDeFormulario[];
 }

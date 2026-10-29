@@ -25,7 +25,7 @@ import {
 } from '../../../../core/data-access/billing-simulated/payment-proof';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
-import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { drawQr } from '../../../../shared/utils/qr/draw-qr';
 
 @Component({
   selector: 'app-session-payment',
@@ -117,7 +117,7 @@ export class SessionPayment {
     const canvas = this.canvas();
     const charge = this.charge();
     if (!this.browser || canvas === undefined || charge === null || charge.payment !== null) return;
-    dibujarQr(
+    drawQr(
       canvas.nativeElement,
       `ALOVIDA-PAGO-DEMO|${charge.id}|${charge.total} BOB`,
       176,

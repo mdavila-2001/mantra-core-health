@@ -1,0 +1,51 @@
+:host {
+  display: block;
+}
+
+.manual-payment {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.manual-payment__legend {
+  padding: 0 var(--sp-1);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.manual-payment__hint {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.manual-payment__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.manual-payment__amount {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.manual-payment__amount-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.manual-payment__saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-primary);
+}

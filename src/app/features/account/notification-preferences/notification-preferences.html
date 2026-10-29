@@ -14,7 +14,7 @@
 }
 
 @if (loading()) {
-  <p class="prefs__cargando" role="status">Cargando sus preferencias…</p>
+  <app-loading-state class="prefs__cargando" message="Cargando sus preferencias…" />
 } @else {
   <section class="prefs__bloque">
     <h3 class="prefs__titulo">Qué avisos recibe</h3>
@@ -41,6 +41,40 @@
       }
     </ul>
   </section>
+
+  @if (webPush.supported) {
+    <section class="prefs__bloque">
+      <h3 class="prefs__titulo">En este navegador</h3>
+
+      <div class="prefs__fila">
+        <span class="prefs__texto">
+          <span class="prefs__nombre">Avisarme aunque la página esté cerrada</span>
+          <!-- Se dice qué verá en pantalla: nada clínico, sólo que hay un aviso. -->
+          <span class="prefs__detalle">
+            Le mostramos un aviso breve, sin datos de su salud. El detalle lo ve al abrir la
+            aplicación.
+          </span>
+        </span>
+        <span class="prefs__derecha">
+          <app-switch
+            class="prefs__switch"
+            data-testid="pref-web-push"
+            label="Avisarme aunque la página esté cerrada"
+            [checked]="webPush.subscribed()"
+            [disabled]="webPush.busy()"
+            (checkedChange)="togglePush($event)"
+          />
+          <app-nav-icon class="prefs__icono" name="bell" />
+        </span>
+      </div>
+
+      @if (pushNotice(); as notice) {
+        <app-alert tone="warning" class="prefs__alerta" data-testid="pref-web-push-notice">{{
+          notice
+        }}</app-alert>
+      }
+    </section>
+  }
 
   <section class="prefs__bloque">
     <h3 class="prefs__titulo">Silencio nocturno</h3>

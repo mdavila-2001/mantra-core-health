@@ -58,8 +58,8 @@ const NOT_COMPUTABLE = '—';
  * componente sólo lo pide, lo muestra y lo exporta.
  *
  * **Alcance honesto:** el listado de solicitudes del servidor viene con tope.
- * Cuando llega recortado (`truncated`) el informe se rotula parcial. El
- * agregado exacto por persona necesita un endpoint propio: `PENDIENTES-BACKEND.md`.
+ * Cuando llega recortado (`truncated`) el informe se rotula parcial: la API
+ * no publica el agregado exacto por persona.
  */
 @Component({
   selector: 'app-person-loss-report',

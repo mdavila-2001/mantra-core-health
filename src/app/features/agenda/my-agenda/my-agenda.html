@@ -102,7 +102,7 @@
             </a>
             <a
               app-button
-              variant="secondary"
+              variant="primary"
               size="sm"
               data-testid="calendario-agendar-cita"
               [routerLink]="rutaAgendarCita"
@@ -205,6 +205,7 @@
                 <app-day-view
                   [dia]="dia"
                   [sede]="sede()"
+                  [horarioFlexible]="horarioFlexibleDe(dia)"
                   [cupos]="cuposDelDia()"
                   [citas]="citasDelDia()"
                   [bloqueos]="bloqueosDelMes()"
@@ -231,11 +232,10 @@
                   (quitarOcupado)="quitarOcupado($event)"
                 />
 
-                <!-- LA TARJETA (AG-5): tocar un rato libre del día la abre con
-                     esa franja ya puesta. -->
+                <!-- LA TARJETA (AG-5): un rato libre la abre con su franja puesta. -->
                 @if (ratoParaCrear(); as rato) {
                   @if (recurso(); as elRecurso) {
-                    <app-tarjeta-del-dia
+                    <app-day-card
                       [dia]="dia"
                       [resourceId]="elRecurso.id"
                       [desdeInicial]="rato.desde"

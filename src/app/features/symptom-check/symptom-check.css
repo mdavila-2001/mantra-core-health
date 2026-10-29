@@ -62,6 +62,32 @@
 
 /* ---- la recomendación --------------------------------------------------- */
 
+.sintomas__respuesta-ia {
+  display: block;
+  margin-block: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--filete);
+  border-inline-start: 3px solid var(--petroleo);
+  border-radius: var(--r-menu);
+  background: var(--sup-inset);
+  max-inline-size: 68ch;
+}
+
+.sintomas__respuesta-ia-rotulo {
+  display: block;
+  margin-block-end: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sintomas__respuesta-ia p {
+  margin: 0;
+  line-height: var(--lh-body);
+}
+
 .sintomas__subtitulo {
   margin: var(--sp-5) 0 var(--sp-3);
   font-size: var(--fs-h3);
@@ -235,10 +261,40 @@
   margin-block-start: 0;
 }
 
-/* Al lado de la figura hay menos ancho: las tres pastillas, en una fila. */
+/* Al lado de la figura las tres pastillas llenan su columna (sin tope de
+   30 rem: pegadas a la izquierda dejaban media tarjeta en blanco). */
 .sintomas__lado .sintomas__zonas {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  max-inline-size: 30rem;
+}
+
+/* Escritorio y sin zona abierta: las tres zonas son una lista de filas anchas,
+   alineada arriba y de altura natural (icono a la izquierda, rótulo al lado), no
+   losas estiradas hasta la altura de la figura ni chips perdidos en un rincón. */
+@media (min-width: 64rem) {
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) > .sintomas__zonas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--e2);
+  }
+
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--e4);
+    padding: var(--e4) var(--e5);
+    font-size: var(--fs-body);
+    text-align: start;
+  }
+
+  /* El chevron al final de la fila: dice «esto se abre» y llena el ancho. */
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona::after {
+    content: '';
+    margin-inline-start: auto;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-block-start: 2px solid var(--petroleo);
+    border-inline-end: 2px solid var(--petroleo);
+    transform: rotate(45deg);
+  }
 }
 
 /* ─── El «cómo funciona» (rediseño del 22/10/2026) ──────────────────────────
@@ -270,7 +326,7 @@
   block-size: 2rem;
   border-radius: 50%;
   background: var(--petroleo);
-  color: #fff;
+  color: var(--text-inverse);
   font-family: var(--f-titulo);
   font-weight: 700;
 }
@@ -305,10 +361,12 @@
   align-items: center;
   gap: var(--e2);
   inline-size: 100%;
-  padding: var(--e3) var(--e2);
-  border: 1px solid var(--filete);
+  padding: var(--e4) var(--e2);
+  /* Tonal y sin trazo: la tarjeta de afuera ya es la caja. */
+  border: 1px solid transparent;
   border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
+  /* Menta y no petróleo: el tono de apoyo de la línea gráfica (27/10/2026). */
+  background: color-mix(in srgb, var(--menta) 18%, var(--sup-tarjeta));
   color: var(--tinta);
   font: inherit;
   font-size: var(--fs-caption);
@@ -323,7 +381,7 @@
 .sintomas__zona:hover,
 .sintomas__zona:focus-visible {
   border-color: var(--aguamarina);
-  background: var(--sup-inset);
+  background: color-mix(in srgb, var(--aguamarina) 12%, var(--sup-inset));
   transform: translateY(-1px);
 }
 
@@ -496,7 +554,7 @@
 }
 
 /* ─── Especialidades recomendadas ─────────────────────────────────────────
-   La rejilla y la tarjeta son las de `shared/styles/rejilla-de-tarjetas.css`, las
+   La rejilla y la tarjeta son las de `shared/styles/card-grid.css`, las
    mismas del buscador de especialidades de `/directory` (pedido del cliente,
    27/10/2026). Acá sólo lo propio del chequeo: la marca de por cuál empezar y
    la acción escrita, porque la tarjeta suma el porqué y no un recuento. */
@@ -598,7 +656,7 @@
 
 .sintomas__meds-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
   gap: var(--sp-4);
 }
 
@@ -1020,7 +1078,7 @@
 /* Teléfonos de Crisis */
 .sintomas__crisis-telefonos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: var(--sp-3, 14px);
   margin-block-start: 4px;
 }
@@ -1136,7 +1194,7 @@
 
 .sintomas__crisis-videos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: var(--sp-4, 16px);
   margin-block-start: 8px;
 }

@@ -4,7 +4,7 @@ import type { GlossaryArticle } from '../../core/data-access/terminology/glossar
 import type { GlossaryTermDetail } from '../../core/data-access/terminology/terminology.types';
 import { valorDeTexto } from '../../core/data-access/terminology/terminology.types';
 import type { PdfBlock } from '../../shared/utils/pdf-export/pdf-export';
-import type { PdfLogo } from '../../shared/utils/pdf-export/pdf-logo';
+import type { PdfLogo } from '../../core/pdf-branding/pdf-logo';
 import {
   fechaLegible,
   imagenesVisibles,
@@ -55,7 +55,7 @@ async function readImage(url: string): Promise<PdfLogo> {
       reader.onerror = () => reject(new Error('No se pudo leer la imagen.'));
       reader.readAsDataURL(blob);
     });
-    const { prepararImagenPdf } = await import('../../shared/utils/pdf-export/pdf-logo');
+    const { prepararImagenPdf } = await import('../../core/pdf-branding/pdf-logo');
     const image = await prepararImagenPdf(dataUrl);
     if (image === null) throw new Error('No se pudo preparar la imagen para PDF.');
     return image;

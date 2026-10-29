@@ -27,6 +27,7 @@ import type { BreadcrumbItem } from '../../../shared/components/molecules/breadc
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { WebPushService } from '../../../core/notifications/web-push.service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
@@ -37,6 +38,7 @@ import {
   comoMotivoDeConsulta,
 } from '../../../core/symptom-notes/symptom-observations.store';
 import { AGENDA_ROUTE } from '../agenda.routes';
+import { FLEXIBLE_PARAM, releerHoraFlexible, retenerHoraFlexible } from './flexible-booking';
 
 /** Largo que declara `ConfirmBookingDto` para el motivo. */
 const MAX_MOTIVO = 500;
@@ -127,6 +129,7 @@ export class BookingNew {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly webPush = inject(WebPushService);
   private readonly observaciones = inject(SymptomObservationsStore);
 
   /* ---- por dónde entró quien reserva ------------------------------------- */
@@ -203,6 +206,9 @@ export class BookingNew {
 
   /** Se reserva un servicio y no una consulta. */
   protected readonly esServicio = this.ofertaId !== null;
+
+  /** Se reserva una hora de un horario flexible, sin turnos fijos (P36). */
+  private readonly esFlexible = this.route.snapshot.queryParamMap.get(FLEXIBLE_PARAM) === '1';
 
   /**
    * Lo que el catálogo y el profesional dicen del servicio: nombre, precio y
@@ -366,7 +372,7 @@ export class BookingNew {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     }
     return null;
   });
@@ -442,6 +448,10 @@ export class BookingNew {
       this.cargarHorarioDeServicio(this.ofertaId, this.resourceId, this.desde, this.hasta);
       return;
     }
+    if (this.esFlexible) {
+      this.cargarHoraFlexible(this.resourceId, this.desde);
+      return;
+    }
 
     this.scheduling
       .listSlots({ resourceId: this.resourceId, from: this.desde, to: this.hasta })
@@ -513,12 +523,45 @@ export class BookingNew {
       return;
     }
 
-    this.scheduling.placeHold(this.slotId, { patientProfileId: paciente.value }).subscribe({
+    // Una hora flexible (P36) nace al retener, como un servicio; un 409 dice que
+    // otro la tomó y se relee la lista, igual que en {@link retenerServicio}.
+    const retencion$ =
+      this.esFlexible && this.resourceId !== null && this.desde !== null
+        ? retenerHoraFlexible(this.scheduling, this.resourceId, this.desde, paciente.value)
+        : this.scheduling.placeHold(this.slotId, { patientProfileId: paciente.value });
+    retencion$.subscribe({
       next: (retencion) => {
         this.state.set(ready(null));
         this.retencion.set(retencion);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => {
+        this.state.set(errorToViewState<null>(error));
+        if (this.esFlexible) this.cargarCupo();
+      },
+    });
+  }
+
+  /** Reencuentra la hora flexible pedida (P36); si ya no está libre, lo dice. */
+  private cargarHoraFlexible(resourceId: string, desde: Date): void {
+    releerHoraFlexible(
+      this.scheduling,
+      this.slotId,
+      resourceId,
+      desde,
+      MARGEN_DE_RELECTURA_MS,
+    ).subscribe({
+      next: (hora) =>
+        this.cupo.set(
+          hora === null
+            ? empty(
+                this.esAutoservicio
+                  ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
+                  : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
+                'Esa hora ya no está disponible: otra cita la ocupó. Elija otra de la lista.',
+              )
+            : ready(hora),
+        ),
+      error: (error: unknown) => this.cupo.set(errorToViewState<AgendaSlot>(error)),
     });
   }
 
@@ -660,6 +703,9 @@ export class BookingNew {
           if (precargada !== null && motivo !== '') {
             this.observaciones.marcarUsada(precargada.id);
           }
+          // Su primera cita es el momento en que los avisos dejan de ser abstractos:
+          // se le ofrece el permiso una sola vez, sin bloquear la navegación.
+          void this.webPush.offerAfterFirstBooking();
           void this.router.navigateByUrl(MIS_TURNOS_ROUTE);
           return;
         }

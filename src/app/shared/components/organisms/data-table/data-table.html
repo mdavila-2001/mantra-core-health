@@ -1,4 +1,13 @@
 <!-- Los 9 estados los dibuja el view-state-host: acá no se reimplementa ninguno. -->
+@if (heading() || totalCount() !== null) {
+  <header class="data-table__heading" data-testid="tabla-encabezado">
+    <span class="data-table__heading-title">{{ heading() }}</span>
+    @if (totalCount() !== null) {
+      <span class="data-table__heading-count" data-testid="tabla-total">{{ totalCount() }}</span>
+    }
+  </header>
+}
+
 <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="refresh.emit()">
   <div
     #scrollBox
@@ -85,7 +94,11 @@
             }
 
             @for (column of columns(); track column.key) {
-              <td [class]="cellClassFor(column)">
+              <td
+                [class]="cellClassFor(column)"
+                [class.data-table__cell--vacia]="!column.cell && cellValue(row, column).trim() === ''"
+                [attr.data-label]="column.header"
+              >
                 @if (column.cell) {
                   <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                 } @else {
@@ -148,6 +161,9 @@
        tampoco los necesita. -->
   @if (hasPrevious() || hasNext()) {
   <nav class="data-table__cursor" aria-label="Paginación del listado">
+    @if (pageSummary()) {
+      <span class="data-table__page-summary" data-testid="tabla-resumen">{{ pageSummary() }}</span>
+    }
     <button
       app-button
       variant="outline"

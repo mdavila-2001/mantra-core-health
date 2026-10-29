@@ -133,6 +133,7 @@ export class DataCatalog {
   protected readonly opcionesRevision: readonly SelectOption<ReviewStatus | 'NONE' | null>[] = [
     { value: null, label: 'Cualquier estado de ficha' },
     { value: 'NONE', label: 'Sin ficha' },
+    { value: 'AUTO_DETECTED', label: 'Auto-detectada' },
     { value: 'DRAFT', label: 'Borrador' },
     { value: 'NEEDS_REVIEW', label: 'En revisión' },
     { value: 'APPROVED', label: 'Aprobada' },

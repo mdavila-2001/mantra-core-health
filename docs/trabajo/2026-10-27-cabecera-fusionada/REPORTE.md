@@ -89,27 +89,3 @@ tablet y teléfono.
   (`evidencia/activo-invoices.png`); en Mis solicitudes «Mis gastos» no se marca.
 - Consola durante la verificación: un 404 de `glossary-data/manifest.json`, ajeno a este cambio
   (los datos del glosario se generan aparte y no están en este entorno local).
-
-## Propagación a `mockup` (2026-10-28)
-
-Rama `claude/serene-ptolemy-l17o2g-mockup`, desde `origin/mockup`, con los cinco commits por
-`cherry-pick -x`. Un conflicto en `shell-layout.css`: `dev` tiene bloques que `mockup` no
-(barra translúcida y cabecera en una fila del Carril F); se resolvió conservando `mockup` y
-agregando sólo el bloque de este trabajo. El texto propio de `mockup` del aviso («Rama mockup»)
-se conservó.
-
-| Qué | Comando | Resultado |
-|---|---|---|
-| Typecheck | `yarn typecheck` | EXIT 0 |
-| Lint de lo tocado | `npx eslint <archivos>` | EXIT 0 |
-| Pruebas dirigidas | `ng test --include` (las 10 de arriba) | 10 archivos, 193 pruebas en verde |
-| Aviso de demo | `playwright test mock-banner-safe-zone mock-banner-responsive` | 2 passed (ver nota de CSP) |
-| Navegador | paciente, 1440 y 390 px, oscuro | Mis gastos y Mis facturas → cabecera «Mis gastos», menú sin marca; Ajustes → «Ajustes». Capturas `evidencia/m-*.png` |
-
-**CSP de `mockup` (ENVIRONMENT, previo):** `src/server/security-headers.ts` en `mockup` sólo
-permite un script en línea por hash. Bloquea los dos que Angular inyecta al renderizar en el
-servidor (la repetición de eventos, `jsaction`), que salen como errores en la consola, y
-también la inyección de axe de `mock-banner-safe-zone.spec.ts`. Este trabajo no toca ese
-archivo. Por eso el spec se corrió con `bypassCSP` en una configuración temporal fuera del
-repo, sin cambiar sus aserciones. Queda por decidir aparte si la CSP de `mockup` debe admitir
-esos scripts.

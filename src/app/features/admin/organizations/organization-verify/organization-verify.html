@@ -10,7 +10,12 @@
   }}</app-alert>
 }
 
-<form (ngSubmit)="submit()" novalidate data-testid="verificar-form">
+<!-- Sin FormsModule no hay NgForm: `(ngSubmit)` nunca se emitía y el botón
+     «submit» de la barra disparaba el envío NATIVO del formulario, que
+     recargaba la página (GET a la misma URL con «?») y abortaba el POST en
+     vuelo. Por eso «Verificar y activar» no mostraba ni el éxito ni el error
+     (A2, 26/10/2026, visto en navegador). El envío lo emite la barra. -->
+<form (submit)="$event.preventDefault()" novalidate data-testid="verificar-form">
   <app-alert tone="info" class="alta__alert">
     Verificar es hacerse cargo de que la documentación regulatoria de
     <strong data-testid="verificar-nombre">{{ nombre() }}</strong> se revisó. Al confirmar, queda

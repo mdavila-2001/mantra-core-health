@@ -10,7 +10,7 @@ import type {
   SimulatedPlanInstance,
   SimulatedSalesNote,
 } from '../../src/app/core/data-access/billing-simulated/billing-simulated.types';
-import { buildSalesNotePdf } from '../../src/app/features/billing/nota-de-venta';
+import { buildSalesNotePdf } from '../../src/app/features/billing/sales-note';
 import { loadBrandFonts, savePdf, useSampleSignature } from './sample-setup';
 
 /**

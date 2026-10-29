@@ -150,6 +150,3 @@ este dominio.
 | Revisar `@hono/node-server` | En la próxima subida de `@angular/cli` |
 | Revisar el par no satisfecho | Ídem |
 | Actualizar Angular | Fuera del alcance de este trabajo |
-
-Registrado en [la línea base](../reports/baseline.md#43--vulnerabilidad-moderada-en-una-transitiva-de-desarrollo)
-y en [el análisis de brechas](../reports/documentation-gap-analysis.md).

@@ -10,6 +10,8 @@ import { of, throwError } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
+import { FilesClient } from '../../../core/data-access/files/files.client';
+import { PaymentReceiptsClient } from '../../../core/data-access/scheduling/payment-receipts.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { AgendaResource, AgendaSlot } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -281,6 +283,79 @@ describe('Appointments', () => {
     });
   });
 
+  /* ---- H03 · el pago en la lista ------------------------------------------ */
+
+  describe('H03: la fila de «Mis citas» muestra el pago', () => {
+    const PAID_STATE = {
+      state: 'PAID',
+      label: 'Pagada',
+      conceptId: 'c-pagada',
+      insuranceUsed: false,
+      markedByUserId: 'u-medica',
+      markedAt: '2026-10-28T10:00:00.000Z',
+    };
+
+    /** La fila de la lista, por el motivo de la cita (lo único que la distingue en pantalla). */
+    function rowWith(reason: string): HTMLElement | null {
+      const rows = [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.turnos__item'),
+      ];
+      return rows.find((li) => li.textContent?.includes(reason)) ?? null;
+    }
+
+    function start(bookings: unknown[]): void {
+      montar();
+      responderArranque(bookings);
+      responderTerminologia([
+        { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+      ]);
+    }
+
+    it('una cita PAID lleva la insignia con la etiqueta de la API; otra sin paymentState, ninguna', () => {
+      start([
+        { ...cita('b-1', CONFIRMADO), reasonText: 'pagada-b1', paymentState: PAID_STATE },
+        { ...cita('b-2', CONFIRMADO), reasonText: 'sin-pago-b2' },
+      ]);
+
+      const paidRow = rowWith('pagada-b1');
+      const unpaidRow = rowWith('sin-pago-b2');
+      expect(
+        paidRow?.querySelector('[data-testid="appointment-payment-badge"]')?.textContent?.trim(),
+      ).toBe('Pagada');
+      expect(unpaidRow?.querySelector('[data-testid="appointment-payment-badge"]')).toBeNull();
+      // Sin monto en la respuesta, ningún monto en pantalla.
+      expect(paidRow?.textContent).not.toContain('Bs');
+    });
+
+    it('una cita aceptada y sin pagar ofrece «Subir comprobante»; la pagada, no', () => {
+      start([
+        { ...cita('b-1', CONFIRMADO), reasonText: 'pagada-b1', paymentState: PAID_STATE },
+        { ...cita('b-2', CONFIRMADO), reasonText: 'sin-pago-b2' },
+      ]);
+
+      expect(
+        rowWith('pagada-b1')?.querySelector('[data-testid="appointment-receipt-upload-toggle"]'),
+      ).toBeNull();
+      const upload = rowWith('sin-pago-b2')?.querySelector<HTMLElement>(
+        '[data-testid="appointment-receipt-upload-toggle"]',
+      );
+      expect(upload?.textContent?.trim()).toBe('Subir comprobante');
+      expect(rowWith('sin-pago-b2')?.querySelector('app-booking-payment-receipts')).toBeNull();
+
+      upload!.click();
+      fixture.detectChanges();
+
+      // El mismo bloque del calendario, montado a pedido: lee sus comprobantes y la cita.
+      expect(rowWith('sin-pago-b2')?.querySelector('app-booking-payment-receipts')).not.toBeNull();
+      http.expectOne((r) => r.url === '/scheduling/bookings/b-2/payment-receipts').flush([]);
+      http.expectOne((r) => r.url === '/scheduling/bookings/b-2').flush({ id: 'b-2' });
+      fixture.detectChanges();
+      expect(
+        rowWith('sin-pago-b2')?.querySelector('[data-testid="booking-receipts-form"]'),
+      ).not.toBeNull();
+    });
+  });
+
   /* ---- TJ-2 · la ventana y la reprogramación ------------------------------ */
 
   describe('reglas finas de la cita (TJ-2)', () => {
@@ -382,6 +457,60 @@ describe('Appointments', () => {
       expect(fixture.nativeElement.querySelector('[aria-labelledby="pedir-turno"]')).not.toBeNull();
       expect(fixture.nativeElement.querySelector('[aria-labelledby="turnos-propios"]')).toBeNull();
       expect(document.activeElement?.id).toBe('pedir-turno');
+    });
+
+    /**
+     * Tarea 4 · M-06: el widget de beneficios del seguro lleva acá con
+     * `?campaign=<código>`. La pantalla sólo dice por qué se está agendando; no
+     * cambia horarios ni precios.
+     */
+    it('con ?campaign=<código> avisa que se agenda por una campaña del seguro', async () => {
+      await TestBed.inject(Router).navigateByUrl(
+        '/?seccion=pedir&resource=lab&campaign=CMP-CARDIO-2026&campaignTitle=Chequeo%20Cardiovascular',
+      );
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+      http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="turnos-campana"]',
+      );
+      // Se nombra por su título, no por el código, que no le dice nada a quien agenda.
+      expect(aviso?.textContent).toContain('Chequeo Cardiovascular');
+      expect(aviso?.textContent).not.toContain('CMP-CARDIO-2026');
+    });
+
+    it('sin título en la dirección, el aviso cae al código de la campaña', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?campaign=CMP-CARDIO-2026');
+      montar();
+      responderArranque([]);
+
+      const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="turnos-campana"]',
+      );
+      expect(aviso?.textContent).toContain('CMP-CARDIO-2026');
+    });
+
+    it('sin ?campaign no hay aviso de campaña', () => {
+      montar();
+      responderArranque([]);
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="turnos-campana"]'),
+      ).toBeNull();
+    });
+
+    it('un ?campaign vacío o sólo con espacios tampoco muestra aviso', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?campaign=%20%20');
+      montar();
+      responderArranque([]);
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="turnos-campana"]'),
+      ).toBeNull();
     });
 
     /**
@@ -791,6 +920,7 @@ describe('Appointments', () => {
 
   /** Los cupos que devuelve cada sede, indexados por el recurso que se pidió. */
   function cuposPorRecurso(): Map<string | null, TestRequest> {
+    sinHorasFlexibles();
     return new Map(
       http
         .match((r) => r.url === '/scheduling/slots')
@@ -808,6 +938,16 @@ describe('Appointments', () => {
     http
       .match((r) => r.url === '/scheduling/service-offerings')
       .forEach((pedido) => pedido.flush({ items: [] }));
+  }
+
+  /**
+   * Cada agenda pide también sus horas de horario flexible (P36). Estos tests son
+   * de turnos fijos: se responde que no hay, que deja la lista como era.
+   */
+  function sinHorasFlexibles(): void {
+    http
+      .match((r) => r.url.endsWith('/flexible-availability'))
+      .forEach((pedido) => pedido.flush({ resourceId: '', stepMinutes: 15, items: [] }));
   }
 
   function paginaDeCupos(items: readonly unknown[]) {
@@ -1070,11 +1210,45 @@ describe('Appointments', () => {
       crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
       interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
       sinServicios();
+      sinHorasFlexibles();
       http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([cupo('h-1', 'r-centro', HORA_TEMPRANO)]));
 
       const [horario] = interno<() => readonly object[]>('horariosListos')();
       expect(interno<(h: object) => string>('rutaDeReserva')(horario)).toContain('h-1');
       expect(interno<(h: object) => Record<string, string>>('paramsDeReserva')(horario)).not.toHaveProperty('oferta');
+    });
+
+    it('A6 · las horas flexibles se agrupan por día en un acordeón, no una fila por hora', async () => {
+      montar();
+      responderArranque([]);
+      crudo<{ set: (v: unknown) => void }>('recursos').set([DOS_CONSULTORIOS[0]]);
+      interno<(clave: string | null) => void>('elegirAgenda')(AGENDA_DE_ANA);
+      sinServicios();
+      http
+        .match((r) => r.url.endsWith('/flexible-availability'))
+        .forEach((pedido) =>
+          pedido.flush({
+            resourceId: 'r-centro',
+            stepMinutes: 15,
+            items: [
+              { templateId: 't', startAt: '2026-09-02T13:00:00Z', endAt: '2026-09-02T13:30:00Z' },
+              { templateId: 't', startAt: '2026-09-02T13:15:00Z', endAt: '2026-09-02T13:45:00Z' },
+              { templateId: 't', startAt: '2026-09-03T13:00:00Z', endAt: '2026-09-03T13:30:00Z' },
+            ],
+          }),
+        );
+      http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
+      await abrirPedir();
+
+      const grupos = interno<() => readonly { horas: readonly object[] }[]>('gruposFlexibles')();
+      expect(grupos.map((g) => g.horas.length)).toEqual([2, 1]);
+      expect(interno<() => readonly object[]>('horariosFijos')()).toEqual([]);
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="turnos-flexibles"]')).not.toBeNull();
+      expect(raiz.querySelectorAll('app-accordion-panel').length).toBe(2);
+      // Cada hora es un botón con su nombre completo para el lector de pantalla.
+      const hora = raiz.querySelector('[data-testid="turnos-hora-flexible"]');
+      expect(hora?.getAttribute('aria-label')).toMatch(/^Pedir el .+ a las \d{2}:\d{2}$/);
     });
 
     it('volver a «Consulta» vuelve a pedir los cupos de la grilla', () => {
@@ -1111,6 +1285,7 @@ describe('Appointments', () => {
       await abrirPedir();
       // Una sola sede en foco: ahí la espera sí se ofrecería para una consulta.
       interno<(sede: string | null) => void>('elegirSede')('sede-centro');
+      sinHorasFlexibles();
       http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
       fixture.detectChanges();
       expect(interno<() => string | null>('recursoParaEspera')()).toBe('r-centro');
@@ -1170,6 +1345,7 @@ describe('Appointments', () => {
       http
         .expectOne((r) => r.url === '/scheduling/service-offerings')
         .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
+      sinHorasFlexibles();
       http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
       fixture.detectChanges();
 
@@ -1187,6 +1363,7 @@ describe('Appointments', () => {
     sinServicios();
 
     expect(interno<() => boolean>('preguntaPorSede')()).toBe(false);
+    sinHorasFlexibles();
     http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
   });
 
@@ -1286,6 +1463,7 @@ describe('Appointments', () => {
     expect(interno<() => string | null>('recursoParaEspera')()).toBeNull();
 
     interno<(sede: string | null) => void>('elegirSede')('sede-norte');
+    sinHorasFlexibles();
     http.expectOne((r) => r.url === '/scheduling/slots').flush(paginaDeCupos([]));
 
     expect(interno<() => string | null>('recursoParaEspera')()).toBe('r-norte');
@@ -1551,13 +1729,23 @@ function montarCancelacion(opts: Opciones) {
           searchBookings,
           listResources,
           listSlots,
+          // P36 · sin horario flexible publicado: la lista es la de los turnos fijos.
+          getFlexibleAvailability: vi
+            .fn()
+            .mockReturnValue(of({ resourceId: '', stepMinutes: 15, items: [] })),
           cancelBooking,
           rescheduleBooking,
           listWaitlist,
           enrollWaitlist,
+          // Corrección 11 · el bloque «Comprobante de pago» lee el pago de la cita.
+          getBooking: vi.fn((id: string) => of({ id })),
         },
       },
       { provide: TerminologyClient, useValue: { readConceptLabels } },
+      // Corrección 11 · el detalle trae «Comprobante de pago», que lee los
+      // comprobantes de la cita: sin ninguno, para que el resto mida lo suyo.
+      { provide: PaymentReceiptsClient, useValue: { list: vi.fn().mockReturnValue(of([])) } },
+      { provide: FilesClient, useValue: { upload: vi.fn() } },
       // Sin token de paciente del seed, se inyecta el mínimo que la pantalla usa:
       // el perfil (para pedir sus turnos) y la organización, que por omisión no
       // hay — los casos de la grilla la declaran.
@@ -1957,6 +2145,29 @@ describe('Appointments · lista y calendario', () => {
     const detalle = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
     expect(detalle).not.toBeNull();
     expect(detalle.textContent).toContain('Cancelar');
+  });
+
+  it('el detalle trae el bloque «Comprobante de pago» de esa cita', async () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+    });
+    const receipts = TestBed.inject(PaymentReceiptsClient) as unknown as { list: ReturnType<typeof vi.fn> };
+    const scheduling = TestBed.inject(SchedulingClient) as unknown as { getBooking: ReturnType<typeof vi.fn> };
+
+    vista(comp).elegirVista('calendario');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    vista(comp).abrirDetalle('b1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const detail = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
+    expect(detail.querySelector('[data-testid="booking-receipts"]')?.textContent).toContain('Comprobante de pago');
+    expect(receipts.list).toHaveBeenCalledWith('b1');
+    // El pago lo lee el bloque: la pantalla no lo arrastra en su modelo de turno.
+    expect(scheduling.getBooking).toHaveBeenCalledWith('b1');
   });
 });
 

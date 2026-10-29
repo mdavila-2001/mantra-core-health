@@ -1,0 +1,43 @@
+@if (!oculto()) {
+  <app-card variant="outlined" padding="md" class="mi-cabecera" data-testid="mi-salud-cabecera">
+    <div class="mi-cabecera__fila">
+      <span class="mi-cabecera__icono" aria-hidden="true">
+        <app-nav-icon name="heart" />
+      </span>
+
+      <div class="mi-cabecera__texto">
+        <h2 class="mi-cabecera__rotulo">Su médico de cabecera</h2>
+        <app-view-state-host [state]="estado()" (retry)="cargar()">
+          @if (doctor(); as m) {
+            <p class="mi-cabecera__dato" data-testid="mi-salud-cabecera-name">
+              <strong>{{ displayNameOf(m) }}</strong>
+              @if (m.professionalTitle) {
+                · {{ m.professionalTitle }}
+              }
+            </p>
+            <p class="mi-cabecera__desde">Desde el {{ m.since | date: "d 'de' MMMM 'de' y" }}</p>
+          } @else {
+            <p class="mi-cabecera__dato" data-testid="mi-salud-cabecera-vacio">{{ copy.sinMedico }}</p>
+            <p class="mi-cabecera__desde">{{ copy.queEs }}</p>
+          }
+        </app-view-state-host>
+      </div>
+
+      @if (estado().status === 'ready') {
+        @if (doctor(); as m) {
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="mi-salud-cabecera-ficha"
+            [routerLink]="['/directory', m.practitionerProfileId]"
+          >{{ copy.verFicha }}</a>
+        } @else {
+          <a app-button variant="primary" size="sm" data-testid="mi-salud-cabecera-buscar" routerLink="/directory">
+            {{ copy.buscar }}
+          </a>
+        }
+      }
+    </div>
+  </app-card>
+}

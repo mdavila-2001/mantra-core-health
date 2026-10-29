@@ -1,7 +1,7 @@
 import { cpuUsage } from 'node:process';
 
 import { BANCO, type CasoDelBanco } from './corpus.fixture';
-import { reconocer, reconocerAlarmas } from './sintomas';
+import { recognize, recognizeAlarms } from './symptoms';
 
 /**
  * La medición del reconocimiento de síntomas.
@@ -15,8 +15,8 @@ import { reconocer, reconocerAlarmas } from './sintomas';
  * número no dice qué arreglar.
  */
 function fallosDe(caso: CasoDelBanco): string | null {
-  const sintomas = [...reconocer(caso.texto)].map((s) => s.id).sort();
-  const alarmas = [...reconocerAlarmas(caso.texto)].map((s) => s.id).sort();
+  const sintomas = [...recognize(caso.texto)].map((s) => s.id).sort();
+  const alarmas = [...recognizeAlarms(caso.texto)].map((s) => s.id).sort();
   const esperados = [...caso.sintomas].sort();
   const esperadas = [...(caso.alarmas ?? [])].sort();
 
@@ -40,7 +40,7 @@ describe('el banco de textos', () => {
     // El error más caro de esta pantalla no es no entender: es asustar. Una
     // alarma de más se mide aparte y no se negocia con el porcentaje general.
     const deMas = BANCO.filter((caso) => (caso.alarmas ?? []).length === 0)
-      .filter((caso) => reconocerAlarmas(caso.texto).length > 0)
+      .filter((caso) => recognizeAlarms(caso.texto).length > 0)
       .map((caso) => caso.texto);
 
     expect(deMas).toEqual([]);
@@ -50,7 +50,7 @@ describe('el banco de textos', () => {
     // Y el segundo error más caro es el contrario.
     const faltantes = BANCO.filter((caso) => (caso.alarmas ?? []).length > 0)
       .filter((caso) => {
-        const dio = new Set(reconocerAlarmas(caso.texto).map((s) => s.id));
+        const dio = new Set(recognizeAlarms(caso.texto).map((s) => s.id));
         return (caso.alarmas ?? []).some((esperada) => !dio.has(esperada));
       })
       .map((caso) => caso.texto);
@@ -70,12 +70,12 @@ describe('el banco de textos', () => {
 
 describe('el coste de reconocer', () => {
   it('analiza un texto largo en menos de lo que dura una tecla', () => {
-      // Esto corre en cada pulsación. Si tarda, la pantalla se traba mientras
-      // alguien cuenta lo que le pasa, que es el único momento que importa.
-      const largo =
-        'me duele mucho la cabeza hace tres dias, tengo fiebre de 38.5, nauseas y no puedo dormir. ' +
-        'ademas me arde al orinar y se me hinchan los tobillos desde el lunes pasado';
-      reconocer(largo);
+    // Esto corre en cada pulsación. Si tarda, la pantalla se traba mientras
+    // alguien cuenta lo que le pasa, que es el único momento que importa.
+    const largo =
+      'me duele mucho la cabeza hace tres dias, tengo fiebre de 38.5, nauseas y no puedo dormir. ' +
+      'ademas me arde al orinar y se me hinchan los tobillos desde el lunes pasado';
+    recognize(largo);
 
       // Calienta el camino que se mide para que el primer JIT no sesgue el
       // resultado. Se mide tiempo de CPU del proceso (no tiempo de pared): una
@@ -84,14 +84,14 @@ describe('el coste de reconocer', () => {
       // esconder una regresión sostenida. El límite sigue siendo el presupuesto
       // de una tecla: 16 ms de trabajo activo por texto.
       for (let vuelta = 0; vuelta < 10; vuelta += 1) {
-        reconocer(`${largo} warmup-${vuelta}`);
+        recognize(`${largo} warmup-${vuelta}`);
       }
 
       const porVez: number[] = [];
       for (let tanda = 0; tanda < 7; tanda += 1) {
         const inicio = cpuUsage();
         for (let vuelta = 0; vuelta < 100; vuelta += 1) {
-          reconocer(`${largo} ${tanda}-${vuelta}`);
+          recognize(`${largo} ${tanda}-${vuelta}`);
         }
         const consumido = cpuUsage(inicio);
         porVez.push((consumido.user + consumido.system) / 1000 / 100);

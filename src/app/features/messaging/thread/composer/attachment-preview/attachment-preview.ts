@@ -23,7 +23,7 @@ import { AppButton } from '../../../../../shared/components/atoms/button/button'
 import { Tooltip } from '../../../../../shared/components/atoms/tooltip/tooltip';
 import { inertBackground, trapTabKey } from '../../../../../shared/a11y/modal-focus';
 import { formatearTamano } from '../../../../../core/data-access/files/upload-policy';
-import { nombreDelTipo } from '../../../../../core/messaging/adjunto-metadata';
+import { typeName as mimeTypeName } from '../../../../../core/messaging/attachment-metadata';
 import {
   type AttachmentDraft,
   attachmentKind,
@@ -353,7 +353,7 @@ export class AttachmentPreview {
 
   /** «PDF», «Audio»… Nunca el tipo MIME crudo: eso no lo lee nadie. */
   private typeName(file: File): string {
-    const name = file.type === '' ? '' : nombreDelTipo(file.type);
+    const name = file.type === '' ? '' : mimeTypeName(file.type);
     if (name !== '' && name !== file.type) return name;
     if (file.type.startsWith('audio/')) return 'Audio';
     if (file.type.startsWith('video/')) return 'Video';

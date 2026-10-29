@@ -27,11 +27,11 @@ import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Chip } from '../../shared/components/atoms/chip/chip';
+import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../shared/components/molecules/card/card';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
-import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
 import {
   FilterBar,
   type FilterDef,
@@ -65,8 +65,8 @@ export type VistaDelGlosario = 'grid' | 'table';
 
 /** Las dos vistas del selector, en el orden en que se ofrecen. */
 export const VISTAS_DEL_GLOSARIO: readonly SegmentedOption<VistaDelGlosario>[] = Object.freeze([
-  { value: 'grid', label: 'Tarjetas', icon: 'grid', description: 'Ver los resultados como tarjetas' },
-  { value: 'table', label: 'Tabla', icon: 'table', description: 'Ver los resultados como tabla' },
+  { value: 'grid', label: 'Tarjetas', description: 'Ver los resultados como tarjetas' },
+  { value: 'table', label: 'Tabla', description: 'Ver los resultados como tabla' },
 ]);
 
 /** Tope de páginas para ofrecer el select «ir a la página»; ver `permiteSaltar`. */
@@ -132,13 +132,13 @@ export interface TarjetaDeCategoria {
     AppButtonLink,
     Card,
     Chip,
+    SegmentedControl,
     FilterBar,
     GlossaryCategoryIcon,
     NavIcon,
     PageHeader,
     Pagination,
     RouterLink,
-    SegmentedControl,
     ViewStateHost,
   ],
   templateUrl: './glossary.html',
@@ -150,6 +150,16 @@ export class Glossary {
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /** La vista de los resultados; sin `?view=` válido, tarjetas. */
+  protected readonly vista = toSignal(
+    this.route.queryParamMap.pipe(
+      map((params): VistaDelGlosario => (params.get('view') === 'table' ? 'table' : 'grid')),
+    ),
+    { initialValue: 'grid' as VistaDelGlosario },
+  );
+
+  protected readonly vistas = VISTAS_DEL_GLOSARIO;
   private readonly injector = inject(Injector);
   private readonly document = inject(DOCUMENT);
 
@@ -181,24 +191,6 @@ export class Glossary {
     this.route.queryParamMap.pipe(map((params) => params.get('tag') ?? '')),
     { initialValue: '' },
   );
-
-  /** La vista de los resultados; sin `?view=` válido, tarjetas. */
-  protected readonly vista = toSignal(
-    this.route.queryParamMap.pipe(
-      map((params): VistaDelGlosario => (params.get('view') === 'table' ? 'table' : 'grid')),
-    ),
-    { initialValue: 'grid' as VistaDelGlosario },
-  );
-
-  protected readonly vistas = VISTAS_DEL_GLOSARIO;
-
-  /**
-   * Las categorías se esconden mientras se busca por texto: quien escribió ya
-   * eligió su camino y la rejilla le empuja los resultados fuera de la pantalla.
-   * Con una categoría o etiqueta elegida siguen visibles, porque son el mapa
-   * para cambiar de tema.
-   */
-  protected readonly mostrarCategorias = computed(() => this.busqueda() === '');
 
   /** Si hay algo puesto: texto, categoría o etiqueta. */
   protected readonly hayAlgoPuesto = computed(
@@ -366,7 +358,7 @@ export class Glossary {
     });
   }
 
-  /** Cambia entre tarjetas y tabla sin tocar el filtro ni la página. */
+  /** Pasa de tarjetas a tabla y vuelta; la elección viaja en la URL (`?view=`). */
   protected elegirVista(vista: VistaDelGlosario): void {
     this.navegar({ view: vista === 'grid' ? null : vista });
   }

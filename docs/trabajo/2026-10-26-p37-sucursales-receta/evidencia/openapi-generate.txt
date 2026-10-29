@@ -1,0 +1,6 @@
+  956 DTO de cuerpo · 12 esquemas homónimos renombrados (EvidenceInputDto, CreateAssignmentDto, LocationPingDto, RunDueSchedulesDto, QualityFindingDto, CreateAffiliationDto) · 1172 esquemas con additionalProperties: false.
+  51/51 rutas públicas marcadas, 253 tags globales, 1076 descripciones y 13366 respuestas de error añadidas.
+OpenAPI generado: 1421 paths, 1567 operaciones, 1456 esquemas.
+  → /home/user/wt/p37/mantra-core-health-api/openapi/openapi.json
+  → /home/user/wt/p37/mantra-core-health-api/openapi/openapi.yaml
+OA_EXIT=0

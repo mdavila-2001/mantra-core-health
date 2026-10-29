@@ -220,3 +220,25 @@ ${describirViolaciones(violations)}`,
     );
   }
 }
+
+/**
+ * El nombre accesible de un elemento, calculado como lo calcula axe (el
+ * algoritmo de accname: `aria-labelledby`, `aria-label`, contenido…).
+ *
+ * Existe para que una prueba afirme **el nombre**, no el mecanismo: un enlace
+ * puede nombrarse por su texto oculto a la vista o por un `aria-label`, y la
+ * prueba no tiene por qué saber cuál. Lo que importa es que no quede mudo.
+ *
+ * Respeta los estilos que el DOM de prueba sí conoce: el CSS del componente que
+ * Angular inyecta. Un `display: none` puesto ahí saca el texto del nombre,
+ * igual que en el navegador. Lo que sólo vive en la hoja global
+ * (`styles/alovida.css`) jsdom no lo carga.
+ */
+export function accessibleName(element: Element): string {
+  axe.setup(element.ownerDocument.documentElement);
+  try {
+    return axe.commons.text.accessibleText(element).trim();
+  } finally {
+    axe.teardown();
+  }
+}

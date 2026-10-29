@@ -183,24 +183,6 @@
   gap: var(--sp-3);
   max-height: calc(100vh - 2 * var(--sp-4));
   overflow-y: auto;
-  animation: dialog-appear var(--dur-base) var(--pulse-ease);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .date-picker-panel {
-    animation: none;
-  }
-}
-
-@keyframes dialog-appear {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 .dialog-header {
@@ -388,6 +370,32 @@
   background: transparent;
 }
 
+/* Un año fuera de `minDate`/`maxDate` no se muestra atenuado: no se ve. Un
+   1890 gris en el alta, que arranca en 1910, se leía como elegible y roto.
+   Suelto en una fila con años válidos guarda su casilla (`visibility`), para
+   que su columna no se corra; una fila entera fuera de rango se quita
+   (`display`), y los años que quedan suben arriba como en la última página. */
+.calendar-grid-years .calendar-unit-btn.is-disabled {
+  visibility: hidden;
+}
+
+.calendar-grid-years .calendar-unit-btn.is-row-out-of-range {
+  display: none;
+}
+
+/* Las seis filas de siempre reservan su alto aunque se quiten algunas: el
+   diálogo no cambia de tamaño al pasar de página. */
+.calendar-grid-years {
+  min-block-size: calc(6 * 40px + 5 * var(--sp-1));
+  align-content: start;
+}
+
+@media (max-width: 779px) {
+  .calendar-grid-years {
+    min-block-size: calc(6 * 44px + 5 * var(--sp-1));
+  }
+}
+
 /* Sección Selector de Hora */
 .time-picker-section {
   display: flex;
@@ -410,14 +418,9 @@
   gap: var(--sp-1);
 }
 
+/* El marco lo pone `app-select`; aquí sólo el ancho de cada mitad. */
 .time-select {
-  background-color: var(--bg-surface-alt);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-xs);
-  padding: 4px var(--sp-2);
-  font-family: var(--font-body);
-  font-size: var(--fs-caption);
-  color: var(--text-primary);
+  width: 7.5rem;
 }
 
 .time-separator {

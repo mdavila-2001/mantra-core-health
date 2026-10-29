@@ -76,6 +76,8 @@ export interface LedgerEntry {
   /** Importe en moneda base, decimal como texto. */
   readonly amountBase: string;
   readonly costCenterId?: string;
+  readonly profitCenterId?: string;
+  readonly assetId?: string;
   readonly currencyConceptId?: string;
 }
 
@@ -213,6 +215,10 @@ export interface JournalLineInput {
   /** Decimal como texto, positivo. */
   readonly amount: string;
   readonly memo?: string;
+  /** Entidades relacionadas por tipo (TAREA-20): una de cada tipo por línea. */
+  readonly costCenterId?: string;
+  readonly profitCenterId?: string;
+  readonly assetId?: string;
 }
 
 /** Cuerpo de `POST /accounting/journal-transactions` y `.../drafts`. */

@@ -149,6 +149,7 @@ describe('MedicalNoteBlock', () => {
       patientProfileId: 'p-1',
       authorProfileId: 'hp-1',
       encounterId: 'e-1',
+      // P39: la API guarda las filas estructuradas; ya no se aplanan en `objectiveText`.
       entries: [
         { label: 'Presión arterial', value: '120/80' },
         { label: 'Dolor', value: 'Lumbar, 6/10' },

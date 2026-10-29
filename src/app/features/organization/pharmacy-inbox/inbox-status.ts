@@ -1,0 +1,170 @@
+import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
+import type {
+  EstadoDePedido,
+  ModalidadDeEntrega,
+} from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+
+/**
+ * La presentación de los estados DEL LADO DEL MOSTRADOR (FAR-I3).
+ *
+ * Los rótulos de seis de ellos siguen el vocabulario del mockup del cliente
+ * (29/09/2026): Pendiente · Revisión de receta · En preparación · Listo para
+ * retiro · Finalizada · Cancelada. Sólo cambia la palabra: los códigos de
+ * `EstadoDePedido` son el contrato y no se tocan.
+ *
+ * `order-status.ts` (FAR-I2) le habla al paciente («La farmacia todavía no
+ * abrió tu pedido»); esta tabla le habla a quien atiende («Nadie lo abrió
+ * todavía»). Mismo criterio: el código del contrato es la identidad y jamás
+ * llega a la pantalla.
+ */
+export interface InboxStatusPresentation {
+  readonly tone: BadgeVariant;
+  readonly label: string;
+  /** Qué significa este estado para el mostrador, y qué toca hacer. */
+  readonly descripcion: string;
+}
+
+const PRESENTATION_BY_STATUS: Readonly<Record<EstadoDePedido, InboxStatusPresentation>> =
+  Object.freeze({
+    ENVIADO: {
+      tone: 'info',
+      label: 'Pendiente',
+      descripcion: 'Nadie lo abrió todavía. Ábralo para empezar a revisarlo.',
+    },
+    EN_REVISION: {
+      tone: 'info',
+      label: 'Revisión de receta',
+      descripcion: 'Lo está revisando: confirme, proponga una alternativa o recháselo.',
+    },
+    CONFIRMADO: {
+      tone: 'success',
+      label: 'En preparación',
+      descripcion: 'Confirmado. Cuando esté armado, márquelo como listo.',
+    },
+    ACEPTACION_PENDIENTE: {
+      tone: 'warning',
+      label: 'Esperando al paciente',
+      descripcion: 'Le propuso una alternativa. La decisión es suya.',
+    },
+    ACEPTADO: {
+      tone: 'success',
+      label: 'Propuesta aceptada',
+      descripcion: 'Aceptó la alternativa. Siga preparando el pedido.',
+    },
+    LISTO_PARA_RETIRO: {
+      tone: 'success',
+      label: 'Listo para retiro',
+      descripcion: 'El pedido espera en el mostrador con su código de retiro.',
+    },
+    RETIRADO: {
+      tone: 'secondary',
+      label: 'Finalizada',
+      descripcion: 'El pedido salió completo.',
+    },
+    RECHAZADO: {
+      tone: 'error',
+      label: 'Rechazado',
+      descripcion: 'Lo rechazó; el paciente ve el motivo en palabras.',
+    },
+    VENCIDO: {
+      tone: 'warning',
+      label: 'Vencido',
+      descripcion: 'Pasaron las 48 horas y la reserva se liberó.',
+    },
+    CANCELADO: {
+      tone: 'error',
+      label: 'Cancelada',
+      descripcion: 'El paciente canceló el pedido.',
+    },
+  });
+
+/**
+ * Lo que cambia cuando el pedido **no** se retira en el mostrador.
+ *
+ * La tabla de arriba se escribió cuando todos los pedidos eran de retiro, y
+ * un par de frases dan por sentado ese final. «Cuando esté armado, marcalo
+ * como listo» es la que miente: el detalle no le ofrece ese botón a un pedido
+ * que sale por reparto —marcar listo es preparar un retiro— así que el texto
+ * estaría pidiendo algo que la pantalla no deja hacer.
+ *
+ * Se aparta **sólo lo que cambia**: el resto del mapa vale igual para las dos
+ * entregas, y el texto de retiro no se toca ni una coma.
+ */
+const DESCRIPTION_IF_SALE_BY_DISTRIBUTION: Readonly<Partial<Record<EstadoDePedido, string>>> =
+  Object.freeze({
+    // Los dos estados que `puedePrepararse` habilita, y en los que el detalle
+    // ofrece «Marcar listo para retirar» sólo si el pedido se retira.
+    CONFIRMADO: 'Confirmado. Este pedido sale por reparto, no se retira en el mostrador.',
+    ACEPTADO:
+      'Aceptó la alternativa. Siga preparándolo: sale por reparto, no se retira en el mostrador.',
+    // Y el estado en el que el detalle pide el código de retiro, que un
+    // pedido de reparto no tiene a quién pedírselo.
+    LISTO_PARA_RETIRO: 'El pedido está armado y sale por reparto; nadie lo retira del mostrador.',
+  });
+
+/**
+ * Cómo mostrar un estado. Jamás lanza: la tabla cubre el contrato entero.
+ *
+ * La modalidad es opcional y por omisión no cambia nada: quien sólo necesita
+ * el tono y la palabra —la tarjeta de la bandeja— la omite y recibe lo mismo
+ * de siempre. El detalle, que sí muestra la frase y las acciones, la pasa
+ * para que las dos digan lo mismo.
+ */
+export function toInboxStatusPresentation(
+  estado: EstadoDePedido,
+  modalidad: ModalidadDeEntrega | null = null,
+): InboxStatusPresentation {
+  const presentacion = PRESENTATION_BY_STATUS[estado];
+  if (modalidad === null || modalidad === 'RETIRO') {
+    return presentacion;
+  }
+  const descripcion = DESCRIPTION_IF_SALE_BY_DISTRIBUTION[estado];
+  return descripcion === undefined ? presentacion : { ...presentacion, descripcion };
+}
+
+/**
+ * Los grupos de la bandeja, en el orden de la tarjeta: una columna del tablero
+ * cada uno, de lo que corre contra el reloj (los nuevos arriba y destacados) a
+ * lo que ya terminó.
+ */
+export const INBOX_GROUPS = [
+  'NUEVOS',
+  'EN_REVISION',
+  'ESPERANDO_PACIENTE',
+  'LISTOS',
+  'EN_PREPARACION',
+  'CERRADOS',
+] as const;
+
+export type InboxGroup = (typeof INBOX_GROUPS)[number];
+
+const GROUP_LABEL: Readonly<Record<InboxGroup, string>> = Object.freeze({
+  NUEVOS: 'Nuevos',
+  EN_REVISION: 'En revisión',
+  ESPERANDO_PACIENTE: 'Esperando al paciente',
+  LISTOS: 'Listos para retiro',
+  EN_PREPARACION: 'En preparación',
+  CERRADOS: 'Cerrados',
+});
+
+export function groupLabel(grupo: InboxGroup): string {
+  return GROUP_LABEL[grupo];
+}
+
+const GROUP_BY_STATUS: Readonly<Record<EstadoDePedido, InboxGroup>> = Object.freeze({
+  ENVIADO: 'NUEVOS',
+  EN_REVISION: 'EN_REVISION',
+  ACEPTACION_PENDIENTE: 'ESPERANDO_PACIENTE',
+  LISTO_PARA_RETIRO: 'LISTOS',
+  CONFIRMADO: 'EN_PREPARACION',
+  ACEPTADO: 'EN_PREPARACION',
+  RETIRADO: 'CERRADOS',
+  RECHAZADO: 'CERRADOS',
+  VENCIDO: 'CERRADOS',
+  CANCELADO: 'CERRADOS',
+});
+
+/** En qué grupo de la bandeja cae un pedido según su estado. */
+export function inboxGroup(estado: EstadoDePedido): InboxGroup {
+  return GROUP_BY_STATUS[estado];
+}

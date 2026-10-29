@@ -19,7 +19,9 @@ import { entrar, irA } from './support/sesion';
  * 5. Cuentas: tabla y modal; las generales no se borran, las propias sí.
  * 6. Lo guardado sigue ahí después de recargar.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-28-contabilidad-simple', 'evidencia');
+const SALIDA = process.env['E2E_EVIDENCE_DIR']
+  ? join(process.env['E2E_EVIDENCE_DIR'], 'accounting')
+  : join('artifacts', 'evidencia', '2026-09-28-contabilidad-simple', 'evidencia');
 const DOCTORA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',
@@ -141,6 +143,7 @@ test('el doctor ve sus tres números y lleva gastos, activos, deudas, transaccio
   await dialogo
     .locator('[data-testid="transaccion-haber"] select')
     .selectOption({ label: '1.2 · Banco' });
+  await dialogo.getByRole('button', { name: 'Siguiente', exact: true }).click();
   await dialogo.getByTestId('transaccion-monto').fill('800');
   await page.screenshot({ path: join(SALIDA, '5-transaccion-nueva.png') });
   await dialogo.getByTestId('transaccion-guardar').click();

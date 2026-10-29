@@ -122,13 +122,27 @@ export class NotificationCenter {
     if (!this.cargoAlgunaVez()) return loading();
     const visibles = this.avisosFiltrados();
     if (visibles.length === 0 && !this.hayMas()) {
-      const mensaje = this.soloSinLeer()
-        ? 'No hay notificaciones sin leer.'
-        : 'No encontramos avisos en esta categoría.';
-      return empty({ label: 'Ir a preferencias', route: '/settings' }, mensaje);
+      return empty({ label: 'Ir a preferencias', route: '/settings' }, this.descripcionVacio());
     }
     return ready(visibles);
   });
+
+  /**
+   * El título del vacío conserva los textos de siempre para «Todas» y «Sin
+   * leer» (los comprueba `playwright/carril-35-notification-center.spec.ts`);
+   * las pestañas de categoría dicen que no hay avisos de esa familia.
+   */
+  protected readonly tituloVacio = computed(() => {
+    const tab = this.pestana();
+    if (tab === 0) return 'Todavía no tiene notificaciones';
+    if (tab === UNREAD_TAB) return 'No tiene notificaciones sin leer';
+    return 'No tiene avisos en esta categoría';
+  });
+  protected readonly descripcionVacio = computed(() =>
+    this.pestana() === 0 || this.pestana() === UNREAD_TAB
+      ? 'Acá van a aparecer los avisos de sus recetas, sus consultas, sus turnos y sus mensajes.'
+      : 'Cuando llegue uno de esta categoría, lo va a ver acá.',
+  );
   protected readonly hayFiltrosSinResultados = computed(
     () => this.avisosFiltrados().length === 0 && this.hayMas(),
   );
@@ -188,6 +202,21 @@ export class NotificationCenter {
    */
   protected abrir(aviso: InAppNotification): void {
     const ruta = this.rutaDe(aviso);
+    this.marcarLeida(aviso);
+    if (ruta) {
+      void this.router.navigateByUrl(ruta);
+    }
+  }
+
+  /**
+   * Marca un aviso como leído sin navegar.
+   *
+   * Es lo único que se puede hacer con un aviso **sin destino**: no es un
+   * control —un enlace que no lleva a ningún lado se lee como producto roto—,
+   * y sin este botón la única salida para sacarlo de «sin leer» era «Marcar
+   * todas», que se lleva puestas las demás.
+   */
+  protected marcarLeida(aviso: InAppNotification): void {
     if (aviso.unread) {
       this.notifications.markRead(aviso.id).subscribe({
         next: () => {
@@ -204,9 +233,6 @@ export class NotificationCenter {
         error: (error: unknown) =>
           this.errorState.set(errorToViewState<readonly InAppNotification[]>(error)),
       });
-    }
-    if (ruta) {
-      void this.router.navigateByUrl(ruta);
     }
   }
 

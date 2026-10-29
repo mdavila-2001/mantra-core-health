@@ -10,7 +10,7 @@ import {
   CONFIGURACION_POR_DEFECTO,
   MINUTOS_MAXIMO,
 } from './chat-auto-reply';
-import { apiRealForzada } from '../mock/modo-api';
+import { forcedRealApi as apiRealForzada } from '../mock/api-mode';
 
 /**
  * Lo que estas pruebas fijan.
@@ -344,25 +344,21 @@ describe('ChatAutoReply', () => {
 
     afterEach(() => apiRealForzada.set(false));
 
-    it('en la maqueta el modo viaja como `replyMode`, con el texto como respaldo', () => {
-      expect(servicio.iaDisponible()).toBe(true);
+    it('en esta rama la app va contra la API real: el modo IA no se ofrece y `replyMode` nunca sale', () => {
+      // `test` y `dev` se construyen con `mockBackend: false`: la maqueta, que es
+      // la única que guarda el modo, no corre acá.
+      expect(servicio.iaDisponible()).toBe(false);
       servicio.guardar({ activa: true, conIa: true, texto: 'Vuelvo luego.' }, 'pp-1');
 
       const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
-      expect(pedido.request.body).toMatchObject({ replyMode: 'AI', bodyText: 'Vuelvo luego.', isActive: true });
-      pedido.flush({ ...remota, replyMode: 'AI' });
-      expect(servicio.configuracion().conIa).toBe(true);
-    });
-
-    it('con texto fijo el modo viaja como `FIXED`', () => {
-      servicio.guardar({ activa: true, conIa: false }, 'pp-1');
-
-      const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
-      expect(pedido.request.body).toMatchObject({ replyMode: 'FIXED' });
+      expect(pedido.request.body).not.toHaveProperty('replyMode');
+      expect(pedido.request.body).toMatchObject({ bodyText: 'Vuelvo luego.', isActive: true });
+      expect(servicio.configuracion().conIa).toBe(false);
       pedido.flush(remota);
     });
 
-    it('lo que dice el servidor sobre el modo gana', () => {
+    it('lo que dice el servidor sobre el modo gana, donde el modo está disponible', () => {
+      vi.spyOn(servicio, 'iaDisponible').mockReturnValue(true);
       servicio.cargar('pp-1');
       http.expectOne('/community/profiles/pp-1/auto-reply').flush({ ...remota, replyMode: 'AI' });
 

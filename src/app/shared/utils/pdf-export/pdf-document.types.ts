@@ -1,5 +1,5 @@
-import type { PdfFirma } from './pdf-firma';
-import type { PdfLogo } from './pdf-logo';
+import type { PdfSignature } from '../../../core/pdf-branding/pdf-signature';
+import type { PdfLogo } from '../../../core/pdf-branding/pdf-logo';
 import type { PdfTone } from './pdf-theme';
 
 /** Un dato con su etiqueta. */
@@ -100,11 +100,11 @@ export interface PdfExportOptions {
    * matrícula debajo.
    *
    * Ausente, se usa la del profesional de la sesión (ver
-   * `establecerFirmaDeDocumentos`); `null`, el documento sale **sin bloque de
+   * `setDocumentSignature`); `null`, el documento sale **sin bloque de
    * firma**. Sin imágenes el bloque sale igual, con la línea de firma vacía.
    * Son imágenes, **no una firma electrónica**.
    */
-  readonly firma?: PdfFirma | null;
+  readonly firma?: PdfSignature | null;
 }
 
 /**

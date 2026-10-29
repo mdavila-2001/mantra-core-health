@@ -129,7 +129,7 @@
 
 @if (invoicing(); as charge) {
   @if (catalogs(); as catalog) {
-    <app-factura-simulada-dialog
+    <app-simulated-invoice-dialog
       [cobro]="charge"
       [catalogos]="catalog"
       (pagado)="onInvoiceDone()"

@@ -1,0 +1,11 @@
+                  id                  | flexible_hours |    status     
+--------------------------------------+----------------+---------------
+ c77eec50-0a1f-4684-80c8-0fb1aade00c1 | t              | TPL_RETIRED
+ 7e5ff4d1-fea3-45ba-8bea-08fe2babda17 | t              | TPL_PUBLISHED
+(2 rows)
+
+                  id                  |        start_at        | slot_status  |             booking_status              
+--------------------------------------+------------------------+--------------+-----------------------------------------
+ 96e8ac86-c9a3-4506-8157-06c874953632 | 2026-10-27 10:30:00+00 | SLOT_BLOCKED | scheduling:BOOKING_PENDING_CONFIRMATION
+(1 row)
+

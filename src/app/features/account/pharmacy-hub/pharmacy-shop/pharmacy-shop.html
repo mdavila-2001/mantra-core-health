@@ -154,6 +154,20 @@
       />
     </div>
 
+    <!-- P34 · el filtro lo resuelve el servidor (openNow=true). -->
+    <div class="tienda__filtros">
+      <app-chip
+        selectable
+        data-testid="tienda-solo-abiertas"
+        label="Sólo abiertas ahora: 24 h o de turno"
+        [selected]="soloAbiertas()"
+        (selectedChange)="soloAbiertas.set($event)"
+      >
+        Abiertas ahora
+      </app-chip>
+      <span class="tienda__filtros-nota">Horario declarado por cada farmacia · hora de Bolivia</span>
+    </div>
+
     <app-view-state-host [state]="sitios()" (retry)="reintentarSitios()">
       <ul class="tienda__lista-farmacias" data-testid="tienda-farmacias">
         @for (sitio of listaDeSitios(); track sitio.siteId) {
@@ -165,6 +179,11 @@
                 @if (sitio.addressText) { · {{ sitio.addressText }} }
                 @if (sitio.distanceKm !== null) { · {{ sitio.distanceKm }} km }
               </span>
+              @if (aperturaDe(sitio); as apertura) {
+                <app-badge [variant]="apertura.tono" size="sm" data-testid="tienda-apertura">
+                  {{ apertura.texto }}
+                </app-badge>
+              }
             </div>
             <button
               app-button

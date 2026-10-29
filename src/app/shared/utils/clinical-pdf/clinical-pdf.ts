@@ -1,6 +1,6 @@
 import type { jsPDF } from 'jspdf';
 
-import { firmaDeDocumentos, type PdfFirma } from '../pdf-export/pdf-firma';
+import { documentSignature, type PdfSignature } from '../../../core/pdf-branding/pdf-signature';
 
 import {
   buildBlocksPdf,
@@ -124,8 +124,8 @@ export function prescriptionPdfOptions(receta: DocumentoDeReceta): PdfExportOpti
  * por una. Queda la línea con el nombre y la matrícula, para firmar a mano si
  * hiciera falta. Sin profesional en la sesión, sin bloque.
  */
-function firmaSinImagenes(): PdfFirma | null {
-  const firma = firmaDeDocumentos();
+function firmaSinImagenes(): PdfSignature | null {
+  const firma = documentSignature();
   return firma === null ? null : { ...firma, firma: null, sello: null };
 }
 

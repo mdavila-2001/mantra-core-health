@@ -1,7 +1,7 @@
 import {
-  UNIVERSIDADES_DEL_SISTEMA,
-  UNIVERSIDADES_PRIVADAS,
-} from '../../../../core/profesion/instituciones-educativas';
+  SYSTEM_UNIVERSITIES,
+  PRIVATE_UNIVERSITIES,
+} from '../../../../core/profession/educational-institutions';
 import {
   codigoDeInstitucion,
   coincideConElConcepto,
@@ -111,6 +111,10 @@ describe('practitioner-profile-edit.logic', () => {
     it('pendiente con el código de la API o del simulador', () => {
       expect(matriculaPendiente('AUTH_PENDING')).toBe(true);
       expect(matriculaPendiente('ST-PENDING')).toBe(true);
+      // La API publica el código con el prefijo del módulo (visto contra la API
+      // real el 26/09/2026): sin esto la matrícula pendiente mostraba el sello.
+      expect(matriculaPendiente('profiles:AUTH_PENDING')).toBe(true);
+      expect(matriculaPendiente('profiles:AUTH_ACTIVE')).toBe(false);
     });
 
     it('activa o vencida ya no se corrige', () => {
@@ -165,7 +169,7 @@ describe('practitioner-profile-edit.logic', () => {
     });
 
     it('sólo tres instituciones del catálogo no traen sigla en su etiqueta', () => {
-      const sinSigla = [...UNIVERSIDADES_DEL_SISTEMA, ...UNIVERSIDADES_PRIVADAS]
+      const sinSigla = [...SYSTEM_UNIVERSITIES, ...PRIVATE_UNIVERSITIES]
         .filter((opcion) => codigoDeInstitucion(opcion.value) === null)
         .map((opcion) => opcion.value);
 

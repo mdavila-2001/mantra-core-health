@@ -84,7 +84,7 @@
 }
 
 .trigger-value.is-placeholder {
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 /* ==========================================================================
@@ -122,24 +122,6 @@
      y los botones quedan siempre a la vista. */
   max-height: calc(100vh - 2 * var(--sp-4));
   overflow: hidden;
-  animation: tree-dialog-appear var(--dur-base) var(--pulse-ease);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tree-select-panel {
-    animation: none;
-  }
-}
-
-@keyframes tree-dialog-appear {
-  from {
-    opacity: 0;
-    transform: scale(0.97) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 .dialog-header {

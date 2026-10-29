@@ -208,6 +208,7 @@ const PARES = [
   { tinta: '--st-info-fg', fondo: '--st-info-bg', nivel: 4.5 },
   { tinta: '--st-primary-fg', fondo: '--st-primary-bg', nivel: 4.5 },
   { tinta: '--st-secondary-fg', fondo: '--st-secondary-bg', nivel: 4.5 },
+  { tinta: '--st-tertiary-fg', fondo: '--st-tertiary-bg', nivel: 4.5 },
 ];
 
 const TEMAS = [
@@ -274,14 +275,15 @@ const PARES_ALOVIDA = [
   { tinta: '--error-tinta', fondo: '--error-bg', nivel: 4.5 },
   { tinta: '--info-tinta', fondo: '--info-bg', nivel: 4.5 },
   { tinta: '--neutro-tinta', fondo: '--neutro-bg', nivel: 4.5 },
-  // Anillo de foco: 3:1 (WCAG 1.4.11). En el nav manda `--anillo-foco-nav`,
-  // porque el anillo general es oscuro y sobre el petróleo desaparece.
+  // Anillo de foco: 3:1 (WCAG 1.4.11). En el nav manda `--anillo-foco-nav`:
+  // el nav es petróleo en los dos temas y el anillo general ahí desaparece.
+  // Detrás del nav va `--nav-carril` (petróleo-x en los dos temas).
   { tinta: '--anillo-foco', fondo: '--sup-pagina', nivel: 3 },
   { tinta: '--anillo-foco', fondo: '--sup-tarjeta', nivel: 3 },
   { tinta: '--anillo-foco', fondo: '--sup-inset', nivel: 3 },
   { tinta: '--anillo-foco', fondo: MARFIL, nivel: 3, soloEn: 'claro' },
   { tinta: '--anillo-foco-nav', fondo: '--sup-nav', nivel: 3 },
-  { tinta: '--anillo-foco-nav', fondo: '--petroleo-x', nivel: 3 },
+  { tinta: '--anillo-foco-nav', fondo: '--nav-carril', nivel: 3 },
 ];
 
 const TEMAS_ALOVIDA = [

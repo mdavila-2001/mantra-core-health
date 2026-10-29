@@ -48,7 +48,7 @@ import {
   type PublicComment,
   type PublicSocialActor,
 } from '@core/data-access/public-directory/public-directory.types';
-import { inicialesDe } from '@shared/text/iniciales';
+import { initialsOf } from '@shared/text/initials';
 
 type EstadoHilo = 'carga' | 'datos' | 'vacio' | 'error';
 
@@ -196,7 +196,7 @@ export class PublicPostComments implements OnInit {
   }
 
   protected iniciales(autor: PublicSocialActor): string {
-    return inicialesDe(autor.displayName);
+    return initialsOf(autor.displayName);
   }
 
   protected respuestasDe(commentId: string): readonly PublicComment[] {

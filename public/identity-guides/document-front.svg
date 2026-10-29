@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Fotografía del frente del documento</title>
+  <desc id="desc">Documento horizontal completo dentro de un marco, con la foto y datos visibles.</desc>
+  <rect width="640" height="360" rx="28" fill="#f3f7f6"/>
+  <rect x="112" y="70" width="416" height="220" rx="18" fill="#fff" stroke="#24786e" stroke-width="6"/>
+  <rect x="140" y="104" width="112" height="142" rx="10" fill="#d8e9e5"/>
+  <circle cx="196" cy="151" r="27" fill="#78a69d"/>
+  <path d="M153 224c7-31 25-45 43-45s36 14 43 45" fill="#78a69d"/>
+  <path d="M284 123h195M284 158h166M284 193h183M284 228h124" stroke="#91aaa5" stroke-width="10" stroke-linecap="round"/>
+  <path d="m78 52-25 18 25 18M562 52l25 18-25 18M78 308l-25-18 25-18M562 308l25-18-25-18" fill="none" stroke="#d38a36" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

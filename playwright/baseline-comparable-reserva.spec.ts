@@ -14,7 +14,7 @@ const PACIENTE: Actor = {
 };
 
 /**
- * Escrita a mano en `fixtures/personas.ts` (índice 0): es una persona
+ * Escrita a mano en `fixtures/people.ts` (índice 0): es una persona
  * **sintética**, no un médico real, y es la única cardióloga con agenda
  * publicada en los dos cortes que se comparan.
  *
@@ -28,7 +28,7 @@ const PACIENTE: Actor = {
 const PROFESIONAL_SINTETICA = 'Valeria Rojas Mendoza';
 
 const CORTE = process.env['BASELINE_CORTE'];
-const SALIDA = join('docs', 'trabajo', '2026-09-23-baseline-comparable-reserva', 'evidencia', CORTE ?? 'sin-corte');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-23-baseline-comparable-reserva', 'evidencia', CORTE ?? 'sin-corte');
 
 /**
  * `page.screenshot()` —a diferencia de `toHaveScreenshot()`— **no** congela las

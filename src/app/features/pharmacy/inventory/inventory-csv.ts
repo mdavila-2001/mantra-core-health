@@ -5,8 +5,8 @@ import type {
 import {
   ArchivoInvalido,
   leerTablaCsv,
-  sinTildes,
-} from '../catalog-rules/catalogo.reglas';
+  withoutAccents,
+} from '../catalog-rules/catalog.rules';
 import { productName, productStatus } from '../products/product-view';
 
 /** Tope de existencias y de umbral: el mismo del servidor. */
@@ -177,7 +177,7 @@ export function reviewInventoryCsv(
 
 /** Lo que ya tiene el producto, dicho como una línea, para no mandar lo que no cambia. */
 function isSameAsCurrent(line: PharmacyInventoryLine, product: PharmacyProduct): boolean {
-  const sameStock = line.stock === undefined || line.stock === (product.stock ?? 0);
+  const sameStock = line.stock === undefined || line.stock === product.stock;
   const sameMinimum =
     line.minStock === undefined || line.minStock === (product.minStock ?? INVENTORY_DEFAULT_MINIMUM);
   const sameAvailability = line.inStock === undefined || line.inStock === (product.inStock !== false);
@@ -198,7 +198,7 @@ function wholeNumber(text: string): number | null | 'invalid' {
 
 /** Hay / no hay en cualquiera de sus grafías; `null` si la celda está vacía. */
 function availability(text: string): boolean | null | 'invalid' {
-  const clean = sinTildes(text.trim());
+  const clean = withoutAccents(text.trim());
   if (clean === '') {
     return null;
   }
@@ -224,7 +224,8 @@ export function inventoryCsvRows(products: readonly PharmacyProduct[]): readonly
     .map((product) => ({
       code: product.productCode,
       name: productName(product),
-      stock: String(product.stock ?? 0),
+      // Sin conteo (`null`) se exporta vacío: la farmacia no lleva cantidades.
+      stock: product.stock === null || product.stock === undefined ? '' : String(product.stock),
       minimum: String(product.minStock ?? INVENTORY_DEFAULT_MINIMUM),
       available: product.inStock === false ? 'no' : 'sí',
     }));

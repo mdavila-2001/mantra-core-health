@@ -1,12 +1,12 @@
-import { encuentros, type EncuentroSimulado } from './clinica';
-import { ESTADO_ENCUENTRO, ESTADO_RESERVA } from './conceptos';
+import { encounterList, type SimulatedEncounter } from './clinic';
+import { BOOKING_STATUS, ENCOUNTER_STATUS } from './concepts';
 import {
   RECURSO_CONSULTORIO_MEDICA,
   recursoDe,
   reservas,
   type ReservaSimulada,
 } from './agenda';
-import { MEDICA, PROFESIONALES, type ProfesionalSimulado } from './personas';
+import { MEDICAL, PROFESSIONALS, type ProfesionalSimulado } from './people';
 
 /* ============================================================================
     El puente reserva → encuentro del simulador.
@@ -24,8 +24,8 @@ import { MEDICA, PROFESIONALES, type ProfesionalSimulado } from './personas';
 
 /** El profesional que atendió una reserva, por el recurso de agenda que ocupó. */
 export function profesionalDeReserva(reserva: ReservaSimulada): ProfesionalSimulado | undefined {
-  if (reserva.resourceId === RECURSO_CONSULTORIO_MEDICA) return MEDICA;
-  return PROFESIONALES.find((p) => recursoDe(p) === reserva.resourceId);
+  if (reserva.resourceId === RECURSO_CONSULTORIO_MEDICA) return MEDICAL;
+  return PROFESSIONALS.find((p) => recursoDe(p) === reserva.resourceId);
 }
 
 /**
@@ -35,17 +35,17 @@ export function profesionalDeReserva(reserva: ReservaSimulada): ProfesionalSimul
  * ausente no se reseña. Entre los encuentros cerrados de la misma persona con
  * el mismo profesional se elige el de fecha más cercana a la reserva.
  */
-export function encuentroDeReserva(reserva: ReservaSimulada): EncuentroSimulado | undefined {
-  if (reserva.statusConceptId !== ESTADO_RESERVA['BK-COMPLETED']) return undefined;
+export function encuentroDeReserva(reserva: ReservaSimulada): SimulatedEncounter | undefined {
+  if (reserva.statusConceptId !== BOOKING_STATUS['BK-COMPLETED']) return undefined;
   const profesional = profesionalDeReserva(reserva);
   if (profesional === undefined) return undefined;
   const inicio = new Date(reserva.startAt).getTime();
-  return encuentros
+  return encounterList
     .filtrar(
       (e) =>
         e.patientProfileId === reserva.patientProfileId &&
         e.primaryPractitionerId === profesional.id &&
-        e.statusConceptId === ESTADO_ENCUENTRO['ENCST-FINISHED'] &&
+        e.statusConceptId === ENCOUNTER_STATUS['ENCST-FINISHED'] &&
         e.endAt !== null,
     )
     .sort(
@@ -67,6 +67,6 @@ export function reservasTerminadasDe(patientProfileId: string): ReservaSimulada[
     .filter((r) => new Date(r.startAt).getTime() < Date.now())
     .filter((r) => encuentroDeReserva(r) !== undefined)
     .sort((a, b) => b.startAt.localeCompare(a.startAt));
-  const conLaMedica = terminadas.filter((r) => profesionalDeReserva(r)?.id === MEDICA.id);
+  const conLaMedica = terminadas.filter((r) => profesionalDeReserva(r)?.id === MEDICAL.id);
   return [...conLaMedica.slice(0, 1), ...terminadas.filter((r) => r !== conLaMedica[0])];
 }

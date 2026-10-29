@@ -56,6 +56,12 @@ export interface DialogDetail {
 }
 
 export interface DialogConfig {
+  /**
+   * Frase que hay que escribir tal cual para poder confirmar (una acción que
+   * cambia mucho con una sola pulsación). Sin ella el botón no confirma.
+   */
+  readonly confirmPhrase?: string;
+
   readonly title: string;
   readonly message: string;
   /**

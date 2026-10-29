@@ -8,6 +8,7 @@ import {
   bloquesDeTexto,
   enlaceSeguro,
   fechaLegible,
+  fuentesAgrupadas,
   fuentesDeLosDatos,
   imagenesVisibles,
   motivoDeExtracto,
@@ -244,19 +245,20 @@ describe('glossary-article.logic', () => {
       { label: 'c', value: '3', source: 'otra', sourceUrl: 'https://x/2' },
     ]);
     expect(fuentes).toEqual([
-      { nombre: 'MedlinePlus en español (NLM)', urls: ['https://x/1'] },
-      { nombre: 'otra', urls: ['https://x/2'] },
+      { nombre: 'MedlinePlus en español (NLM)', url: 'https://x/1' },
+      { nombre: 'otra', url: 'https://x/2' },
     ]);
   });
 
-  it('fuentesDeLosDatos: varias páginas de la misma fuente dan un solo nombre', () => {
-    const fuentes = fuentesDeLosDatos([
-      { label: 'a', value: '1', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/1' },
-      { label: 'b', value: '2', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/2' },
-      { label: 'c', value: '3', source: 'nlm-medlineplus-es', sourceUrl: 'https://x/3' },
+  it('fuentesAgrupadas junta las fuentes que se repiten y cuenta sus datos', () => {
+    const datos = ['1', '2', '3'].map((n) => ({ label: n, value: n, source: 'mondo', sourceUrl: `https://m/${n}` }));
+    const fuentes = fuentesAgrupadas([
+      ...datos,
+      { label: 'x', value: 'x', source: 'icd10cm-tabular', sourceUrl: 'https://i/1' },
     ]);
     expect(fuentes).toEqual([
-      { nombre: 'MedlinePlus en español (NLM)', urls: ['https://x/1', 'https://x/2', 'https://x/3'] },
+      { nombre: 'mondo', url: 'https://m/1', cantidad: 3 },
+      { nombre: 'icd10cm-tabular', url: 'https://i/1', cantidad: 1 },
     ]);
   });
 });

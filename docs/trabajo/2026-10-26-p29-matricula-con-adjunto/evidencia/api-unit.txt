@@ -1,0 +1,6 @@
+
+Test Suites: 2 passed, 2 total
+Tests:       135 passed, 135 total
+Snapshots:   0 total
+Time:        26.657 s, estimated 36 s
+Ran all test suites matching src/modules/iam/application/services/iam-practitioner-self-registration.service.spec.ts|src/modules/iam/presentation/dto/register-practitioner.dto.spec.ts.

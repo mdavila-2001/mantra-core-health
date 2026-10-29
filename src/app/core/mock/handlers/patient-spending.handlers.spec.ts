@@ -6,7 +6,7 @@ import { buscarUsuario } from '../mock-session';
 import { crearRouterSimulado } from './index';
 import { spendingMovementsFor } from './patient-spending.handlers';
 
-/** `GET /patient-spending/me` del backend simulado (P43). */
+/** `GET /patient-spending/me` del backend simulado (P44): la misma forma que la API. */
 describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
   const router = crearRouterSimulado();
   const paciente = buscarUsuario('paciente')!;
@@ -30,6 +30,8 @@ describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
     const page = pedir(paciente, { from: '2025-01-01', to: '2026-12-31' }) as PatientSpendingResponseDto;
 
     expect(page.currency).toBe('BOB');
+    // Como la API: dice si recortó; la maqueta nunca llega al tope.
+    expect(page.truncated).toBe(false);
     expect(page.items.length).toBeGreaterThan(24);
     const fechas = page.items.map((item) => item.occurredAt);
     expect([...fechas].sort().reverse()).toEqual(fechas);
@@ -70,6 +72,22 @@ describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
     }
   });
 
+  it('no muestra un gasto de hoy hasta que llega su hora', () => {
+    const id = paciente.patientProfileId!;
+    const from = '2026-10-01';
+    const to = '2026-10-01';
+    const early = new Date(2026, 9, 1, 0, 0);
+    const late = new Date(2026, 9, 1, 23, 59);
+    const before = spendingMovementsFor(id, from, to, early);
+    const after = spendingMovementsFor(id, from, to, late);
+
+    expect(before).toEqual([]);
+    expect(after.length).toBeGreaterThan(0);
+    for (const item of after) {
+      expect(new Date(item.occurredAt).getTime()).toBeLessThanOrEqual(late.getTime());
+    }
+  });
+
   it('determinista — el mes no cambia según el rango que se pida', () => {
     const id = paciente.patientProfileId!;
     const soloMarzo = spendingMovementsFor(id, '2026-03-01', '2026-03-31', TODAY);
@@ -88,25 +106,31 @@ describe('handlers de gastos del paciente: GET /patient-spending/me', () => {
     expect(mia.map((m) => m.paidAmount)).not.toEqual(suya.map((m) => m.paidAmount));
   });
 
-  it('error — sin rango, o con un rango al revés, es 422', () => {
-    const invalidos: readonly Record<string, string>[] = [
-      {},
-      { from: '2026-01-01' },
-      { from: '2026-09-01', to: '2026-01-01' },
+  it('error — sin rango, o con un rango al revés, es 400', () => {
+    const invalidos: readonly { query: Record<string, string>; violation: string }[] = [
+      { query: {}, violation: '`from` y `to` son obligatorios, con formato YYYY-MM-DD' },
+      { query: { from: '2026-01-01' }, violation: '`from` y `to` son obligatorios, con formato YYYY-MM-DD' },
+      { query: { from: '2026-09-01', to: '2026-01-01' }, violation: '`from` no puede ser posterior a `to`' },
     ];
-    for (const query of invalidos) {
+    for (const { query, violation } of invalidos) {
       const reply = pedir(paciente, query);
-      expect(isMockReply(reply) && reply.status).toBe(422);
+      expect(isMockReply(reply) && reply.status).toBe(400);
+      expect(reply).toMatchObject({
+        body: { statusCode: 400, code: 'VALIDATION_FAILED', details: { violations: [violation] } },
+      });
     }
   });
 
-  it('error — una cuenta sin perfil de paciente recibe la precondición (412)', () => {
+  it('error — una cuenta sin perfil de paciente recibe la precondición (422)', () => {
     const medico = buscarUsuario('medica')!;
     const reply = pedir({ ...medico, patientProfileId: undefined }, {
       from: '2026-01-01',
       to: '2026-09-27',
     });
 
-    expect(isMockReply(reply) && reply.status).toBe(412);
+    expect(isMockReply(reply) && reply.status).toBe(422);
+    expect(reply).toMatchObject({
+      body: { statusCode: 422, code: 'PRECONDITION_FAILED', message: 'La cuenta no tiene perfil de paciente' },
+    });
   });
 });

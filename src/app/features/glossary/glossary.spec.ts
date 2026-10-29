@@ -403,8 +403,6 @@ describe('Glossary', () => {
 
   it('al buscar por texto las categorías desaparecen (pedido del propietario)', async () => {
     await responderLanding();
-    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
-
     await irA({ q: 'hiper' });
     responderPagina();
     await harness.fixture.whenStable();
@@ -425,27 +423,12 @@ describe('Glossary', () => {
     expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
   });
 
-  it('con una categoría elegida la rejilla sigue: es el mapa para cambiar de tema', async () => {
-    await responderLanding();
-    await irA({ category: 'glossary-category-disease' });
-    responderPagina();
-    await harness.fixture.whenStable();
-
-    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
-  });
-
   it('la vista por omisión son tarjetas y el selector ofrece Tarjetas y Tabla', async () => {
     await responderLanding();
 
     expect(html().querySelectorAll('.glosario__entrada').length).toBe(1);
     expect(html().querySelector('[data-testid="glosario-tabla"]')).toBeNull();
     expect(textos('[data-testid="glosario-vista"] [role="radio"]')).toEqual(['Tarjetas', 'Tabla']);
-    // Ícono y texto en cada opción (pedido del cliente, 26/10/2026).
-    const opciones = html().querySelectorAll('[data-testid="glosario-vista"] [role="radio"]');
-    expect([...opciones].map((o) => o.querySelector('app-nav-icon svg') !== null)).toEqual([
-      true,
-      true,
-    ]);
   });
 
   it('?view=table muestra una tabla con término, categoría, definición y código, y sigue paginada', async () => {

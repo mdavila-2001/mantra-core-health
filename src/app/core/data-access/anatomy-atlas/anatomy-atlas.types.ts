@@ -86,74 +86,9 @@ export interface AnatomyStructure {
   readonly incoming: readonly AnatomyIncomingRelation[];
   readonly netter: readonly AnatomyNetterEntry[];
   readonly meshes: readonly string[];
-  /** El código TA2 (FIPAT), si un FMA de la ficha lleva a uno solo; `null` si no se pudo cruzar. */
-  readonly ta2: AnatomyTa2 | null;
-  /** `null` si no se buscó literatura para esta estructura (está fuera de la prioridad). */
-  readonly extendedDescription: AnatomyExtendedDescription | null;
-  readonly images: readonly AnatomyImage[];
-}
-
-/** Un término de la Terminologia Anatomica 2, cruzado por FMA vía Wikidata. */
-export interface AnatomyTa2 {
-  readonly code: string;
-  readonly la: string | null;
-  readonly en: string | null;
-  /** El FMA de la ficha por el que se cruzó. */
-  readonly fma: string;
-  /** El ítem de Wikidata que declara el par TA2 ↔ FMA. */
-  readonly wikidata: string;
-}
-
-/** Lo que se describe, en el orden en que se muestra. */
-export type AnatomyAspect = 'situation' | 'parts' | 'relations' | 'irrigation' | 'innervation' | 'function' | 'clinical';
-
-/** Una frase parafraseada de la literatura, con sus citas (`PMID:…`). */
-export interface AnatomyCitedSentence {
-  readonly aspect: AnatomyAspect;
-  readonly es: string;
-  readonly cites: readonly string[];
-}
-
-/** Un artículo citado. */
-export interface AnatomyLiteratureSource {
-  /** `PMID:…`, la clave con que lo citan las frases. */
-  readonly id: string;
-  readonly pmid: string;
-  readonly doi: string | null;
-  readonly title: string;
-  readonly journal: string | null;
-  readonly year: string | null;
-}
-
-/**
- * La descripción extendida: frases parafraseadas de resúmenes de PubMed y
- * Europe PMC. `no_source` = se buscó y no hubo con qué sustentar ninguna frase.
- */
-export interface AnatomyExtendedDescription {
-  readonly status: 'described' | 'no_source';
-  readonly sentences: readonly AnatomyCitedSentence[];
-  /** Los aspectos sin fuente: quedan vacíos y se dice. */
-  readonly missingAspects: readonly AnatomyAspect[];
-  readonly sources: readonly AnatomyLiteratureSource[];
-  readonly searchedQuery: string;
-}
-
-/** Una imagen de Wikimedia Commons, con autor y licencia leídos de su API `extmetadata`. */
-export interface AnatomyImage {
-  /** `File:…` en Commons. */
-  readonly file: string;
-  readonly thumbUrl: string;
-  readonly pageUrl: string;
-  readonly author: string;
-  /** `LicenseShortName` de Commons, tal cual («Public domain», «CC BY-SA 4.0»). */
-  readonly license: string;
-  readonly licenseUrl: string | null;
-  readonly width: number;
-  readonly height: number;
-  /** Texto alternativo en castellano. */
-  readonly altEs: string;
-  /** El URL de la API de la que se leyeron autor y licencia. */
-  readonly metadataUrl: string;
+  /** Siempre `null` en esta versión: no hubo acceso a la literatura para citarla. */
+  readonly extendedDescription: null;
+  readonly images: readonly never[];
 }
 
 /** Una fila del índice: `[id, nombre en castellano, nombre en inglés, tiene malla]`. */
@@ -163,3 +98,10 @@ export interface AnatomyIndex {
   readonly shards: number;
   readonly entries: readonly AnatomyIndexEntry[];
 }
+
+/**
+ * Estructura compuesta → las partes suyas que sí tienen malla propia. «Pulmón»
+ * no tiene malla: BodyParts3D dibuja sus lóbulos. Sólo figuran las compuestas
+ * (las que tienen malla propia no están) y no las clases demasiado generales.
+ */
+export type AnatomyComposites = Readonly<Record<string, readonly string[]>>;

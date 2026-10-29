@@ -1,0 +1,6 @@
+$ yarn test src/modules/scheduling/infrastructure/repositories/scheduling-catalog.repository.spec.ts src/modules/scheduling/application/catalog/scheduling-catalog.service.spec.ts
+Test Suites: 2 passed, 2 total
+Tests:       143 passed, 143 total
+
+$ npx eslint <5 archivos tocados>
+EXIT=0

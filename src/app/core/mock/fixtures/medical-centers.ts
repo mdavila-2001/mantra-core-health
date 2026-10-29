@@ -1,7 +1,7 @@
 import type { MedicalCenterOffer } from '../../data-access/medical-centers/medical-centers.types';
 import { uuid } from '../mock-store';
-import { ESTUDIO, MONEDA_PLAN_SEGURO } from './conceptos';
-import { MEDICA } from './personas';
+import { CURRENCY_PLAN_INSURANCE, ESTUDIO } from './concepts';
+import { MEDICAL } from './people';
 
 /* ============================================================================
     Centros médicos de ejemplo (CM-09).
@@ -14,7 +14,7 @@ import { MEDICA } from './personas';
     - `practice-cm-sur` no ofrece `proc-colonoscopia`: es el parcial.
     - El electrocardiograma es el procedimiento que la maqueta ya tiene en las
       órdenes del paciente de ejemplo; ambos centros lo ofrecen para que la
-      pestaña tenga algo que mostrar sin esperar las órdenes de CM-08.
+      búsqueda tenga algo que mostrar sin esperar las órdenes de CM-08.
     - La médica de ejemplo trabaja en el centro **sur**, que no es el primero de
       la lista: que su centro aparezca atrás es la prueba visible de que el
       vínculo no mejora la posición.
@@ -24,10 +24,10 @@ export const PROCEDURE_ENDOSCOPY = uuid('proc-endoscopia-alta');
 export const PROCEDURE_COLONOSCOPY = uuid('proc-colonoscopia');
 export const PROCEDURE_ECG = ESTUDIO['STUDY-ECG']!;
 
-const BOLIVIANO = MONEDA_PLAN_SEGURO['BOB']!;
+const BOLIVIANO_CONCEPT_ID = CURRENCY_PLAN_INSURANCE['BOB']!;
 
 /** Una sede publicada: dónde está, qué ofrece y qué médicos de ejemplo trabajan ahí. */
-export interface SedeDeCentroMedico {
+export interface MedicalCenterSite {
   readonly practiceId: string;
   readonly practiceSiteId: string;
   readonly name: string;
@@ -39,7 +39,7 @@ export interface SedeDeCentroMedico {
   readonly practitionerProfileIds: readonly string[];
 }
 
-function oferta(
+function offer(
   procedureConceptId: string,
   procedureDisplay: string,
   price: number,
@@ -50,7 +50,7 @@ function oferta(
     procedureConceptId,
     procedureDisplay,
     price,
-    currencyConceptId: BOLIVIANO,
+    currencyConceptId: BOLIVIANO_CONCEPT_ID,
     referencePrice,
     referenceUnit,
     // La API todavía no calcula el sobreprecio (A-1/A-2).
@@ -58,7 +58,7 @@ function oferta(
   };
 }
 
-export const SEDES_DE_CENTROS_MEDICOS: readonly SedeDeCentroMedico[] = [
+export const MEDICAL_CENTER_SITES: readonly MedicalCenterSite[] = [
   {
     practiceId: uuid('practice-cm-norte'),
     practiceSiteId: uuid('site-cm-norte-1'),
@@ -67,9 +67,9 @@ export const SEDES_DE_CENTROS_MEDICOS: readonly SedeDeCentroMedico[] = [
     latitude: -17.7381,
     longitude: -63.1659,
     offers: [
-      oferta(PROCEDURE_ENDOSCOPY, 'Endoscopia digestiva alta', 650, 380, 'UMA'),
-      oferta(PROCEDURE_COLONOSCOPY, 'Colonoscopia', 900, 520, 'UMA'),
-      oferta(PROCEDURE_ECG, 'Electrocardiograma', 120, null, null),
+      offer(PROCEDURE_ENDOSCOPY, 'Endoscopia digestiva alta', 650, 380, 'UMA'),
+      offer(PROCEDURE_COLONOSCOPY, 'Colonoscopia', 900, 520, 'UMA'),
+      offer(PROCEDURE_ECG, 'Electrocardiograma', 120, null, null),
     ],
     practitionerProfileIds: [],
   },
@@ -81,9 +81,9 @@ export const SEDES_DE_CENTROS_MEDICOS: readonly SedeDeCentroMedico[] = [
     latitude: -17.8021,
     longitude: -63.1778,
     offers: [
-      oferta(PROCEDURE_ENDOSCOPY, 'Endoscopia digestiva alta', 580, 380, 'UMA'),
-      oferta(PROCEDURE_ECG, 'Electrocardiograma', 100, 25, 'USD'),
+      offer(PROCEDURE_ENDOSCOPY, 'Endoscopia digestiva alta', 580, 380, 'UMA'),
+      offer(PROCEDURE_ECG, 'Electrocardiograma', 100, 25, 'USD'),
     ],
-    practitionerProfileIds: [MEDICA.id],
+    practitionerProfileIds: [MEDICAL.id],
   },
 ];

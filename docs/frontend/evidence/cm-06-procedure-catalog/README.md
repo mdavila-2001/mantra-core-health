@@ -1,7 +1,7 @@
 # CM-06 · Procedimientos por sede — evidencia
 
-- **Fecha:** 2026-10-25 · base `origin/mockup` `51adedfba` + los commits del carril.
-- **Dónde se corrió:** `ng serve` de `mockup` (maqueta), cuenta `admin@alovida.mock`,
+- **Fecha:** 2026-10-25 · base `origin/dev` `eae8f7ad` + el commit del carril.
+- **Dónde se corrió:** `ng serve --configuration development,demo` (maqueta), cuenta `admin@alovida.mock`,
   ruta `/administration/services-catalog/procedure-offers`, Chromium sin interfaz.
 - **Cableado usado sólo para esta corrida** (no va en este commit; es de CM-00 y CM-07): la ruta
   `administration/services-catalog/procedure-offers`, `registerHealthcareServices(router)` en

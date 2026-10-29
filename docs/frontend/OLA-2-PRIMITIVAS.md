@@ -55,12 +55,9 @@ Sobre los que quedan sin tokenizar, la distinción que importa:
 
 ## Lo que esta auditoría NO cubre
 
-Sigue pendiente, y es trabajo por componente, no automatizable:
+Es trabajo por componente, no automatizable:
 
 - matriz visual de cada primitiva con todas sus variantes;
 - los nueve estados M34 por primitiva;
 - recorrido de teclado real (orden de tabulación, trampas de foco en diálogos);
 - pruebas de componente donde falten.
-
-Son 89 primitivas. A una microtarea por primitiva con los gates del playbook,
-es un programa, no una corrida.

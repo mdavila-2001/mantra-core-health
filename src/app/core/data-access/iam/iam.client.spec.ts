@@ -2,7 +2,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { environment } from '../../../../environments/environment';
 import { IamClient } from './iam.client';
+
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('IamClient', () => {
   let client: IamClient;
@@ -90,6 +99,15 @@ describe('IamClient', () => {
    */
   const MUNICIPIO = 'ee4f2681-6c58-5f4c-8f83-8d19de56099a';
 
+  /** Los cinco campos que la API exige además del documento (ID-21). */
+  const EXIGIDOS = {
+    email: 'ana@mantra.test',
+    birthDate: '1990-04-12',
+    phone: '+591 70012345',
+    sexAtBirth: 'FEMALE',
+    issuerAdministrativeAreaConceptId: 'c0a80101-0000-4000-8000-000000000001',
+  } as const;
+
   describe('registerPatient', () => {
     it('manda solo los campos obligatorios cuando no hay opcionales', () => {
       client
@@ -98,6 +116,7 @@ describe('IamClient', () => {
           password: 'secreto12',
           name: 'Ana',
           lastName: 'Paz',
+          ...EXIGIDOS,
           residenceMunicipalityConceptId: MUNICIPIO,
         })
         .subscribe();
@@ -111,6 +130,7 @@ describe('IamClient', () => {
         password: 'secreto12',
         name: 'Ana',
         lastName: 'Paz',
+        ...EXIGIDOS,
         residenceMunicipalityConceptId: MUNICIPIO,
       });
 
@@ -132,13 +152,15 @@ describe('IamClient', () => {
           middleName: 'María',
           lastName: 'Paz',
           motherLastName: 'Quiroga',
-          email: 'ana@mantra.test',
-          birthDate: '1990-04-12',
+          ...EXIGIDOS,
           residenceMunicipalityConceptId: MUNICIPIO,
           guardianName: 'Rosa Quispe',
           guardianRelationshipConceptId: 'd7c1a94e-5b32-5d68-9f11-3ac52e8b6d40',
           billingTaxId: '1023456789',
           billingLegalName: 'Empresa SRL',
+          homeAddressLines: 'Calle Guapay 3861',
+          homeDistrict: 'Equipetrol',
+          workDistrict: 'Centro',
         })
         .subscribe();
 
@@ -157,6 +179,11 @@ describe('IamClient', () => {
       );
       expect(req.request.body.billingTaxId).toBe('1023456789');
       expect(req.request.body.billingLegalName).toBe('Empresa SRL');
+      // El distrito viaja aparte de la calle (ADR-0028 de la API): tampoco puede
+      // perderse en la re-proyección.
+      expect(req.request.body.homeAddressLines).toBe('Calle Guapay 3861');
+      expect(req.request.body.homeDistrict).toBe('Equipetrol');
+      expect(req.request.body.workDistrict).toBe('Centro');
       expect('timeZone' in req.request.body).toBe(false);
 
       req.flush({
@@ -166,6 +193,56 @@ describe('IamClient', () => {
         patientCode: 'PAC-1',
         emailVerificationSent: true,
       });
+    });
+  });
+
+  describe('registerPharmacyOrganization (P50)', () => {
+    const alta = {
+      code: 'FARM-1023456029',
+      legalName: 'Farmacia Central S.R.L.',
+      legalEntityType: 'SRL',
+      countryConceptId: 'pais',
+      jurisdictionConceptId: 'jurisdiccion',
+      taxIdentifier: '1023456029',
+      legalAddress: 'Av. Cristo Redentor 1234',
+      owner: { email: 'legal@farmacia.test', password: 'secreto12', displayName: 'Mariana Siles' },
+      legalRepresentative: {
+        fullName: 'Mariana Siles',
+        email: 'legal@farmacia.test',
+        idNumber: '4872190 SC',
+      },
+    } as const;
+
+    it('la dirección legal viaja como dirección de la casa central, con su punto y sus sucursales', () => {
+      client
+        .registerPharmacyOrganization({
+          ...alta,
+          headquarters: { latitude: -17.78, longitude: -63.18 },
+          branches: [{ name: 'Sucursal Equipetrol', latitude: -17.76, longitude: -63.19 }],
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.taxIdentifier).toBe('1023456029');
+      expect(req.request.body.organization.pharmacy).toEqual({
+        address: 'Av. Cristo Redentor 1234',
+        latitude: -17.78,
+        longitude: -63.18,
+        branches: [{ name: 'Sucursal Equipetrol', latitude: -17.76, longitude: -63.19 }],
+      });
+      // Sin poder: la farmacia lo presenta para operar, no para registrarse.
+      expect('powerOfAttorneyFileId' in req.request.body.organization.legalRepresentative).toBe(false);
+      req.flush({ tenantId: 't', pharmacyId: 'f' });
+    });
+
+    it('sin punto ni sucursales, el bloque viaja igual con la dirección', () => {
+      client.registerPharmacyOrganization(alta).subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.pharmacy).toEqual({
+        address: 'Av. Cristo Redentor 1234',
+      });
+      req.flush({ tenantId: 't', pharmacyId: 'f' });
     });
   });
 
@@ -203,6 +280,20 @@ describe('IamClient', () => {
     });
 
     req.flush({ items: [], count: 0, limit: 10, nextCursor: null });
+  });
+
+  it('searchUsers sale también contra la API real: ya no es «sólo simulador»', () => {
+    Object.assign(environment, { mockBackend: false });
+    try {
+      client.searchUsers({ query: 'ana' }).subscribe();
+
+      const req = http.expectOne('/iam/users/search');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ q: 'ana' });
+      req.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+    } finally {
+      Object.assign(environment, { mockBackend: true });
+    }
   });
 
   it('searchUsers sin filtros (o con texto vacío) manda un cuerpo vacío', () => {
@@ -410,6 +501,116 @@ describe('IamClient', () => {
       req.flush(RESPUESTA);
     });
 
+    it('la aseguradora sigue mandando tenantType PAYER y su bloque payer, sin diagnosticUnit', () => {
+      client
+        .registerOrganization({
+          code: 'ANDINA-SALUD',
+          legalName: 'Andina Salud S.A.',
+          legalEntityType: 'SRL',
+          payer: PAYER_SIN_UBICACION,
+          owner: { email: 'a@m.test', password: 'secreto12', name: 'Ana', lastName: 'Paz' },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.tenantType).toBe('PAYER');
+      expect(req.request.body.organization.diagnosticUnit).toBeUndefined();
+      expect(req.request.body.organization.countryConceptId).toBeUndefined();
+
+      req.flush(RESPUESTA);
+    });
+
+    it('un centro diagnóstico manda su unidad y su territorio, sin payer y sin claves de más', () => {
+      client
+        .registerOrganization({
+          tenantType: 'DIAGNOSTIC_CENTER',
+          code: 'LAB_SUR_ABCDE',
+          legalName: 'Laboratorio del Sur',
+          legalEntityType: 'UNIPERSONAL',
+          timeZone: 'America/La_Paz',
+          countryConceptId: 'c-bo',
+          jurisdictionConceptId: 'j-nac',
+          diagnosticUnit: {
+            diagnosticUnitTypeConceptId: 'u-lab',
+            modalityConceptIds: ['m-lab'],
+            primarySite: {
+              name: 'Central',
+              timeZone: 'America/La_Paz',
+              address: { lines: ['Av. Cañoto 234'], latitude: -17.78, longitude: -63.18 },
+            },
+          },
+          owner: { email: 'a@m.test', password: 'secreto12', displayName: 'Ana Paz' },
+          legalDocuments: {
+            taxIdentifierFileId: 'f1',
+            commerceRegistryFileId: 'f2',
+            operatingLicenseFileId: 'f3',
+            healthAuthorityCertificateFileId: 'f4',
+          },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body).toEqual({
+        organization: {
+          code: 'LAB_SUR_ABCDE',
+          legalName: 'Laboratorio del Sur',
+          legalEntityType: 'UNIPERSONAL',
+          tenantType: 'DIAGNOSTIC_CENTER',
+          timeZone: 'America/La_Paz',
+          countryConceptId: 'c-bo',
+          jurisdictionConceptId: 'j-nac',
+          diagnosticUnit: {
+            diagnosticUnitTypeConceptId: 'u-lab',
+            modalityConceptIds: ['m-lab'],
+            primarySite: {
+              name: 'Central',
+              timeZone: 'America/La_Paz',
+              address: { lines: ['Av. Cañoto 234'], latitude: -17.78, longitude: -63.18 },
+            },
+          },
+          legalDocuments: {
+            taxIdentifierFileId: 'f1',
+            commerceRegistryFileId: 'f2',
+            operatingLicenseFileId: 'f3',
+            healthAuthorityCertificateFileId: 'f4',
+          },
+        },
+        owner: { email: 'a@m.test', password: 'secreto12', displayName: 'Ana Paz' },
+      });
+
+      req.flush({ ...RESPUESTA, diagnosticUnitId: 'du-1' });
+    });
+
+    it('el punto de la sede sólo viaja completo: sin longitud no manda ninguno', () => {
+      client
+        .registerOrganization({
+          tenantType: 'DIAGNOSTIC_CENTER',
+          code: 'LAB_SUR_ABCDE',
+          legalName: 'Laboratorio del Sur',
+          legalEntityType: 'UNIPERSONAL',
+          countryConceptId: 'c-bo',
+          jurisdictionConceptId: 'j-nac',
+          diagnosticUnit: {
+            diagnosticUnitTypeConceptId: 'u-lab',
+            modalityConceptIds: [],
+            primarySite: { name: 'Central', address: { lines: ['x'], latitude: -17.78 } },
+          },
+          owner: { email: 'a@m.test', password: 'secreto12', displayName: 'Ana Paz' },
+          legalDocuments: {
+            taxIdentifierFileId: 'f1',
+            commerceRegistryFileId: 'f2',
+            operatingLicenseFileId: 'f3',
+            healthAuthorityCertificateFileId: 'f4',
+          },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.diagnosticUnit.primarySite.address).toEqual({ lines: ['x'] });
+
+      req.flush(RESPUESTA);
+    });
+
     /** El representante legal y las tres gerencias (subtarea 1.4). */
     const LEGAL_REPRESENTATIVE = {
       fullName: 'Mariana Siles Justiniano',
@@ -477,5 +678,157 @@ describe('IamClient', () => {
 
       req.flush(RESPUESTA);
     });
+  });
+
+  describe('registerPractitioner: firma y sello', () => {
+    const IMG = 'data:image/png;base64,iVBORw0KGgo=';
+    const ALTA = {
+      email: 'dra@ejemplo.bo',
+      password: 'secreto12',
+      name: 'Ana',
+      lastName: 'Paz',
+      licenseNumber: 'MP-1',
+      sedesLicenseNumber: 'SEDES-1',
+      signatureImageBase64: IMG,
+      sealImageBase64: IMG,
+    } as unknown as Parameters<IamClient['registerPractitioner']>[0];
+    const env = environment as { mockBackend: boolean };
+    const original = env.mockBackend;
+
+    afterEach(() => {
+      env.mockBackend = original;
+    });
+
+    it('contra la API real no las manda: su DTO las rechaza con 400', () => {
+      env.mockBackend = false;
+      client.registerPractitioner(ALTA).subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body).not.toHaveProperty('signatureImageBase64');
+      expect(req.request.body).not.toHaveProperty('sealImageBase64');
+      req.flush({});
+    });
+
+    it('contra el simulador sí las manda', () => {
+      env.mockBackend = true;
+      client.registerPractitioner(ALTA).subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body.signatureImageBase64).toBe(IMG);
+      expect(req.request.body.sealImageBase64).toBe(IMG);
+      req.flush({});
+    });
+  });
+
+  describe('registerPractitioner: respaldos de la habilitación (P29)', () => {
+    const ALTA = {
+      email: 'dra@ejemplo.bo',
+      password: 'secreto12',
+      name: 'Ana',
+      lastName: 'Paz',
+      licenseNumber: 'MP-1',
+      sedesLicenseNumber: 'SEDES-1',
+    } as unknown as Parameters<IamClient['registerPractitioner']>[0];
+
+    it('manda el fileId de la matrícula y el del SEDES', () => {
+      client
+        .registerPractitioner({
+          ...ALTA,
+          licenseFileId: 'pdf-matricula',
+          sedesLicenseFileId: 'pdf-sedes',
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body.licenseFileId).toBe('pdf-matricula');
+      expect(req.request.body.sedesLicenseFileId).toBe('pdf-sedes');
+      req.flush({});
+    });
+
+    it('sin archivos no manda las claves', () => {
+      client.registerPractitioner(ALTA).subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body).not.toHaveProperty('licenseFileId');
+      expect(req.request.body).not.toHaveProperty('sedesLicenseFileId');
+      req.flush({});
+    });
+
+    it('manda la fecha del SEDES y el registro del colegio con su fecha y su respaldo', () => {
+      client
+        .registerPractitioner({
+          ...ALTA,
+          sedesLicenseIssueDate: '2016-07-11',
+          collegeLicenseNumber: 'CMB-4410',
+          collegeName: 'Colegio Médico de Bolivia',
+          collegeLicenseIssueDate: '2015-09-20',
+          collegeLicenseFileId: 'pdf-colegio',
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url.endsWith('/iam/auth/register-practitioner'));
+      expect(req.request.body).toMatchObject({
+        sedesLicenseIssueDate: '2016-07-11',
+        collegeLicenseNumber: 'CMB-4410',
+        collegeName: 'Colegio Médico de Bolivia',
+        collegeLicenseIssueDate: '2015-09-20',
+        collegeLicenseFileId: 'pdf-colegio',
+      });
+      req.flush({});
+    });
+  });
+});
+
+describe('IamClient · precarga de firma/sello', () => {
+  let http: HttpTestingController;
+  let client: IamClient;
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
+    client = TestBed.inject(IamClient);
+  });
+  afterEach(() => http.verify());
+
+  it('envía multipart a la ruta de imágenes sin fijar Content-Type', () => {
+    const file = new File(['imagen'], 'firma.png', { type: 'image/png' });
+    client.uploadRegistrationSignatureImage(file).subscribe();
+    const req = http.expectOne('/iam/auth/upload-registration-signature-image');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.get('file')).toBe(file);
+    expect(req.request.headers.has('Content-Type')).toBe(false);
+    req.flush({ fileId: 'firma-id' });
+  });
+
+  it('el cliente real conserva fileId y no envía base64 incompatible', () => {
+    const original = environment.mockBackend;
+    Object.assign(environment, { mockBackend: false });
+    try {
+      client
+        .registerPractitioner({
+          email: 'qa@example.test',
+          password: 'clave123',
+          name: 'QA',
+          lastName: 'Prueba',
+          licenseNumber: 'QA-123',
+          sedesLicenseNumber: 'SEDES-QA-123',
+          nationalId: 'QA-123',
+          issuerAdministrativeAreaConceptId: '22222222-2222-4222-8222-222222222222',
+          signatureImageBase64: 'imagen',
+          sealImageBase64: 'imagen',
+          signatureFileId: 'firma-id',
+          sealFileId: 'sello-id',
+        })
+        .subscribe();
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.signatureFileId).toBe('firma-id');
+      expect(req.request.body.sealFileId).toBe('sello-id');
+      expect(req.request.body.signatureImageBase64).toBeUndefined();
+      expect(req.request.body.sealImageBase64).toBeUndefined();
+      req.flush({});
+    } finally {
+      Object.assign(environment, { mockBackend: original });
+    }
   });
 });

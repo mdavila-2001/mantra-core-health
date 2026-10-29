@@ -1,19 +1,13 @@
-import { CORREDORES_CON_PERFIL, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
-import { ASEGURADORAS_REALES, type AseguradoraReal } from '../fixtures/instituciones.generated';
-import { conceptoPorId } from '../fixtures/conceptos';
+import { BROKERS_WITH_PROFILE, showcases, type SimulatedShowcase } from '../fixtures/community';
+import { ASEGURADORAS_REALES, type AseguradoraReal } from '../fixtures/institutions.generated';
+import { conceptById } from '../fixtures/concepts';
 import { INSURER_NETWORK_PRACTITIONERS } from '../fixtures/insurer-network.generated';
-import { MEDICA, PACIENTES, PACIENTE, profesionalPorId } from '../fixtures/personas';
-import {
-  forbidden,
-  noContent,
-  notFound,
-  preconditionFailed,
-  type MockRequest,
-  type MockRouter,
-} from '../mock-router';
+import { MEDICAL, PATIENTS, PACIENTE, professionalById } from '../fixtures/people';
+import { conflict, forbidden, noContent, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 import type { PriorAuthorizationQuoteStatus } from '../../data-access/insurance/insurance.types';
 import { IDS, TENANT_ASEGURADORA } from '../mock-session';
 import { procedimientoPorConceptId } from './practice.handlers';
+import type { CreateAdjudicationInput } from '../../data-access/insurance/insurance.types';
 import {
   ahora,
   Coleccion,
@@ -37,6 +31,16 @@ function c(code: string, display: string) {
 
 const BOB = c('BOB', 'Boliviano');
 const money = (amount: string) => ({ amount, currency: BOB });
+
+function cents(amount: string | undefined): number | null {
+  if (amount === undefined) return 0;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(amount)) return null;
+  const [units, fraction = ''] = amount.split('.');
+  const value = Number(units) * 100 + Number(fraction.padEnd(2, '0'));
+  return Number.isSafeInteger(value) ? value : null;
+}
+
+const asAmount = (value: number): string => `${Math.floor(value / 100)}.${String(value % 100).padStart(2, '0')}`;
 
 interface BeneficioSimulado {
   readonly id: string;
@@ -490,7 +494,7 @@ function actualizarProducto(
 }
 
 function concepto(id: string) {
-  const item = conceptoPorId(id);
+  const item = conceptById(id);
   return c(item?.code ?? id, item?.display ?? id);
 }
 
@@ -558,6 +562,11 @@ export interface SolicitudSimulada {
   readonly submittedAt: string;
   readonly status: { code: string; display: string };
   readonly hasOpenDispute: boolean;
+  readonly adjudicationVersion?: number;
+  readonly dispositionText?: string;
+  readonly adjudicatedAt?: string;
+  /** undefined conserva las EOB historicas; null significa dictamen aun no publicado. */
+  readonly eobPublishedAt?: string | null;
   readonly lineas: readonly {
     service: string;
     billed: string;
@@ -680,6 +689,23 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       false,
       [['Consulta general', '320.00', null, 'PENDING']],
     ],
+    // Tarea 3 · H8 (CA-3.3): una exclusión sin cláusula contractual degrada
+    // la liquidación a UNDER_REVIEW — nunca se publica un rechazo sin
+    // respaldo de póliza. Nivel inválido de la maqueta (`insurance.handlers.spec.ts`).
+    [
+      'CLM-2026-0183',
+      0,
+      '200.00',
+      '80.00',
+      -4,
+      'PARTIAL',
+      'Aprobada parcialmente',
+      false,
+      [
+        ['Consulta cardiológica', '120.00', '80.00', 'APPROVED'],
+        ['Radiografía de tórax', '80.00', '0.00', 'DENIED'],
+      ],
+    ],
   ].map(
     (
       [claimIdentifier, carrierIndex, billed, approved, dias, code, display, disputa, lineas],
@@ -692,7 +718,13 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       // "titular sin coberturas" con recordCount === 0 esperado
       // (insurance-portability.handlers.spec.ts:16) — usar el 1 rompía
       // exactamente esa aserción.
-      patientProfileId: PACIENTES[[0, 5, 2, 0, 8, 0, 3][i]!]!.id,
+      //
+      // CLM-2026-0183 (el último, Tarea 3) va al índice 5 (`p-torrez`, también
+      // de Seguros Andina) y no a PACIENTE: el certificado de portabilidad de
+      // la titular de demostración suma exactamente sus 3 reclamos reales más
+      // el relleno histórico (14 reclamos / Bs 12 450, ver
+      // `insurance-portability.handlers.ts`), y un cuarto lo rompía.
+      patientProfileId: PATIENTS[[0, 5, 2, 0, 8, 0, 3, 5][i]!]!.id,
       carrierIndex: carrierIndex as number,
       policyIdentifier: `POL-${100200 + i * 17}`,
       billed: billed as string,
@@ -739,7 +771,7 @@ export function solicitudDeLaCita(cita: { id: string; patientProfileId: string; 
 }
 
 function itemDeSolicitud(s: SolicitudSimulada) {
-  const paciente = PACIENTES.find((p) => p.id === s.patientProfileId) ?? PACIENTE;
+  const paciente = PATIENTS.find((p) => p.id === s.patientProfileId) ?? PACIENTE;
   const aseguradora = ASEGURADORAS[s.carrierIndex]!;
   return {
     id: s.id,
@@ -821,9 +853,7 @@ export function pendienteDeAseguradoras(): { monto: string; solicitudes: number 
 }
 
 /* ---- con qué aseguradoras trabaja un profesional ----------------------------
-   `GET /practitioners/:id/insurance-networks`. La API real todavía no la sirve
-   (`docs/pendientes-backend-seguros-del-medico.md`); la forma es la que pide
-   ahí el contrato.
+   `GET /practitioners/:id/insurance-networks`, con la forma de la API.
 
    Dos fuentes, y ninguna inventa nada sobre alguien real:
 
@@ -889,11 +919,11 @@ function redesImportadas(): ReadonlyMap<string, readonly RedDelProfesional[]> {
 
 /** Las redes en las que figura un profesional; vacío si no figura en ninguna. */
 export function redesDelProfesional(practitionerProfileId: string): readonly RedDelProfesional[] {
-  if (practitionerProfileId === MEDICA.id) {
+  if (practitionerProfileId === MEDICAL.id) {
     return [
-      redDelCatalogo(MEDICA.id, ASEGURADORAS[0]!, isoDia(-480)),
-      redDelCatalogo(MEDICA.id, ASEGURADORAS[2]!, isoDia(-300)),
-      redDelCatalogo(MEDICA.id, ASEGURADORAS[3]!, isoDia(-120)),
+      redDelCatalogo(MEDICAL.id, ASEGURADORAS[0]!, isoDia(-480)),
+      redDelCatalogo(MEDICAL.id, ASEGURADORAS[2]!, isoDia(-300)),
+      redDelCatalogo(MEDICAL.id, ASEGURADORAS[3]!, isoDia(-120)),
     ];
   }
   return redesImportadas().get(practitionerProfileId) ?? [];
@@ -916,7 +946,7 @@ function nombreComparable(nombre: string): string {
 }
 
 /** La aseguradora real de la planilla del propietario detrás de una ficha, si la hay. */
-function aseguradoraRealDe(ficha: VitrinaSimulada): AseguradoraReal | undefined {
+function aseguradoraRealDe(ficha: SimulatedShowcase): AseguradoraReal | undefined {
   return ASEGURADORAS_REALES.find((real) => uuid(`insurer-${real.id}`) === ficha.targetId);
 }
 
@@ -930,7 +960,7 @@ function aseguradoraRealDe(ficha: VitrinaSimulada): AseguradoraReal | undefined 
  * comparaba `displayName === name` al pie de la letra, y ninguna de las 19
  * aseguradoras reales calzaba: todas abrían «todavía no publicó sus productos».
  */
-function indiceDelCatalogo(ficha: VitrinaSimulada): number {
+function indiceDelCatalogo(ficha: SimulatedShowcase): number {
   const porSlug = ASEGURADORAS.findIndex((a) => a.fichas?.includes(ficha.slug) ?? false);
   if (porSlug >= 0) return porSlug;
   const nombres = new Set(
@@ -984,7 +1014,7 @@ function aDecena(monto: number): string {
  * un producto que no tiene, y no lleva canales de contacto ni matrícula del
  * regulador por lo mismo.
  */
-function aseguradoraDeLaFicha(ficha: VitrinaSimulada): AseguradoraDelCatalogo {
+function aseguradoraDeLaFicha(ficha: SimulatedShowcase): AseguradoraDelCatalogo {
   const real = aseguradoraRealDe(ficha);
   const cubreSalud = real?.coversHealth ?? ficha.categoria?.code !== 'seguros-generales';
   const codigo = codigoDeAseguradora(ficha.slug);
@@ -1030,7 +1060,7 @@ function brokersDelMercado(indice: number, slug: string) {
   const conChat = (corredor: (typeof CORREDORES)[number]) => ({
     ...resumenDeCorredor(corredor, CORREDORES.indexOf(corredor)),
     chatSlug:
-      CORREDORES_CON_PERFIL.find((p) => p.brokerCode === corredor.brokerCode)?.slug ?? null,
+      BROKERS_WITH_PROFILE.find((p) => p.brokerCode === corredor.brokerCode)?.slug ?? null,
   });
   if (indice >= 0) {
     return CORREDORES.filter((corredor) => corredor.carriers.includes(indice)).map(conChat);
@@ -1118,7 +1148,7 @@ function perfilDe(personaId: string): string | undefined {
  * catálogo. `coverage-<id>` es el mismo id que muestra su ficha.
  */
 function coberturaDeLaMaqueta(coverageId: string) {
-  const paciente = PACIENTES.find((p) => coverageId === `coverage-${p.id}`);
+  const paciente = PATIENTS.find((p) => coverageId === `coverage-${p.id}`);
   if (paciente === undefined || paciente.aseguradora === undefined || paciente.plan === undefined) {
     return undefined;
   }
@@ -1260,7 +1290,7 @@ export function registrarSeguros(router: MockRouter): void {
 
   // La ficha del profesional: con qué aseguradoras trabaja (su red y planes).
   router.get('/practitioners/:id/insurance-carriers', ({ params }) => {
-    const practitioner = profesionalPorId(params['id']!);
+    const practitioner = professionalById(params['id']!);
     if (practitioner === undefined) return notFound('Profesional no encontrado');
     return { items: carriersOfPractitioner(practitioner.insurerNetworks ?? []) };
   });
@@ -1293,7 +1323,7 @@ export function registrarSeguros(router: MockRouter): void {
   // Una ficha sin catálogo sembrado recibe el de ejemplo: ninguna tarjeta del
   // directorio abre una página sin productos.
   router.get('/insurance-marketplace/insurers/:slug', ({ params }) => {
-    const ficha = vitrinas
+    const ficha = showcases
       .todos()
       .find((vitrina) => vitrina.slug === params['slug'] && vitrina.kind === 'INSURER');
     if (ficha === undefined) return notFound('Aseguradora no encontrada');
@@ -1535,7 +1565,7 @@ export function registrarSeguros(router: MockRouter): void {
   router.get('/insurance-brokers/:id/clients', ({ params }) => {
     const b = CORREDORES.find((x) => x.id === params['id']);
     if (b === undefined) return notFound('Corredor no encontrado');
-    const items = PACIENTES.filter((p) => p.aseguradora !== undefined)
+    const items = PATIENTS.filter((p) => p.aseguradora !== undefined)
       .slice(0, 4)
       .map((p, i) => ({
         id: uuid(`broker-client-${b.id}-${p.id}`),
@@ -1603,11 +1633,11 @@ export function registrarSeguros(router: MockRouter): void {
   });
 
   /**
-   * Coberturas de una persona, para quien atiende (P62). Solo maqueta: la API
-   * todavía no expone esta lectura al personal.
+   * Seguros de una persona, para quien cobra. Con la forma de la API real: sin
+   * póliza ni afiliado.
    */
   router.get('/patient-coverages/by-patient/:patientProfileId', ({ params }) => {
-    const paciente = PACIENTES.find((p) => p.id === params['patientProfileId'] || perfilDe(p.id) === params['patientProfileId']);
+    const paciente = PATIENTS.find((p) => p.id === params['patientProfileId'] || perfilDe(p.id) === params['patientProfileId']);
     if (paciente === undefined) return notFound('Persona no encontrada');
     const cobertura = coberturaDeLaMaqueta(`coverage-${paciente.id}`);
     if (cobertura === undefined) return { status: 200, body: { items: [] } };
@@ -1620,8 +1650,6 @@ export function registrarSeguros(router: MockRouter): void {
             insuranceCarrierId: cobertura.aseguradora.id,
             carrierName: cobertura.aseguradora.name,
             planName: cobertura.plan.name,
-            policyIdentifier: `POL-${paciente.patientCode.slice(4)}`,
-            memberIdentifier: `AF-${paciente.patientCode.slice(4)}`,
             validityStatus: 'CURRENT',
             currencyCode: 'BOB',
           },
@@ -1680,37 +1708,80 @@ export function registrarSeguros(router: MockRouter): void {
     const s = solicitudes.get(params['id']!);
     if (s === undefined) return notFound('Solicitud no encontrada');
     const adjudicada = s.approved !== null;
+    const items = s.lineas.map((l, i) => ({
+      id: uuid(`line-${s.id}-${i}`),
+      linea: l,
+    }));
+    // El copago del paciente es SOLO lo que queda a su cargo en las líneas
+    // APROBADAS (facturado − aprobado de esa línea). Una línea DENIED no le
+    // agrega copago al paciente: su importe entero va a "rechazado". Sumar
+    // `billed − approved` a nivel de cabecera (como antes) contaba el
+    // rechazado dos veces — CLM-2026-0177 daba 150+150+120=420 sobre 300
+    // facturados.
+    const totalPatientAmount = s.lineas
+      .filter((l) => l.decision === 'APPROVED')
+      .reduce((t, l) => t + (Number(l.billed) - Number(l.approved ?? '0')), 0)
+      .toFixed(2);
+    const totalDeniedAmount = s.lineas
+      .filter((l) => l.decision === 'DENIED')
+      .reduce((t, l) => t + Number(l.billed), 0)
+      .toFixed(2);
+    // CA-3.3: una exclusión sin cláusula contractual nunca se publica como
+    // liquidación firme.
+    const exclusionSinClausula = s.lineas.some(
+      (l) => l.decision === 'DENIED' && (l.clause === null || l.clause.trim() === ''),
+    );
+    const settlementAvailability = !adjudicada || s.eobPublishedAt === null
+      ? 'PENDING_PUBLICATION'
+      : exclusionSinClausula
+        ? 'UNDER_REVIEW'
+        : 'AVAILABLE';
+    const settlement = {
+      availability: settlementAvailability,
+      totalBilledAmount: settlementAvailability === 'AVAILABLE' ? s.billed : null,
+      totalApprovedAmount: settlementAvailability === 'AVAILABLE' ? s.approved : null,
+      totalPatientAmount: settlementAvailability === 'AVAILABLE' ? totalPatientAmount : null,
+      totalDeniedAmount: settlementAvailability === 'AVAILABLE' ? totalDeniedAmount : null,
+      reconciled: settlementAvailability === 'AVAILABLE',
+      exclusions:
+        settlementAvailability === 'AVAILABLE'
+          ? items
+              .filter(({ linea }) => linea.decision === 'DENIED')
+              .map(({ id, linea }) => ({
+                claimLineId: id,
+                itemName: linea.service,
+                amount: linea.billed,
+                policyClauseReference: linea.clause!,
+                denialRationale: linea.rationale,
+              }))
+          : [],
+    };
     const adjudicacion = adjudicada
       ? {
           id: uuid(`adj-${s.id}`),
-          adjudicationVersion: 1,
+          adjudicationVersion: s.adjudicationVersion ?? 1,
           outcome: s.status,
-          dispositionText:
+          dispositionText: s.dispositionText ?? (
             s.status.code === 'REJECTED'
               ? 'Prestación no cubierta por el plan contratado.'
               : s.status.code === 'PARTIAL'
                 ? 'El electrocardiograma requiere autorización previa.'
-                : 'Aprobada según tarifario vigente.',
+                : 'Aprobada según tarifario vigente.'),
           totalApprovedAmount: money(s.approved!),
-          totalPatientAmount: money((Number(s.billed) - Number(s.approved)).toFixed(2)),
-          totalDeniedAmount: money(
-            s.lineas
-              .filter((l) => l.decision === 'DENIED')
-              .reduce((t, l) => t + Number(l.billed), 0)
-              .toFixed(2),
-          ),
-          adjudicatedAt: iso(-1),
+          totalPatientAmount: money(totalPatientAmount),
+          totalDeniedAmount: money(totalDeniedAmount),
+          adjudicatedAt: s.adjudicatedAt ?? iso(-1),
         }
       : null;
     return {
       header: itemDeSolicitud(s),
-      lines: s.lineas.map((l, i) => ({
-        id: uuid(`line-${s.id}-${i}`),
+      lines: items.map(({ id, linea: l }, i) => ({
+        id,
         lineSequence: i + 1,
         service: c(`SVC-${i}`, l.service),
         billedAmount: money(l.billed),
         patientResponsibilityAmount:
-          l.approved === null ? null : money((Number(l.billed) - Number(l.approved)).toFixed(2)),
+          l.approved === null ? null : money(l.decision === 'DENIED' ? '0.00' : (Number(l.billed) - Number(l.approved)).toFixed(2)),
         approvedAmount: l.approved === null ? null : money(l.approved),
         deniedAmount: l.decision === 'DENIED' ? money(l.billed) : null,
         decision: c(
@@ -1729,6 +1800,8 @@ export function registrarSeguros(router: MockRouter): void {
       })),
       lineBilledTotal: money(s.billed),
       lineApprovedTotal: s.approved === null ? null : money(s.approved),
+      settlement,
+      eob: adjudicada && s.eobPublishedAt !== null ? { id: uuid(`eob-${s.id}`), publishedAt: s.eobPublishedAt ?? iso(-1) } : null,
       adjudication: adjudicacion,
       adjudicationHistory: adjudicacion === null ? [] : [adjudicacion],
       disputes: s.hasOpenDispute
@@ -1746,6 +1819,84 @@ export function registrarSeguros(router: MockRouter): void {
     };
   });
 
+  router.post('/insurance-claims/:id/adjudications', (request) => {
+    const claim = solicitudes.get(request.params['id']!);
+    if (claim === undefined) return notFound('Solicitud no encontrada');
+    const input = cuerpo<CreateAdjudicationInput>(request);
+    if (input.outcome !== 'APPROVED' && input.outcome !== 'DENIED') {
+      return validation('Dictamen inválido', [{ field: 'outcome', message: 'debe ser APPROVED o DENIED' }]);
+    }
+    if (!Array.isArray(input.lineAdjudications) || input.lineAdjudications.length !== claim.lineas.length) {
+      return validation('Cada línea requiere dictamen', [{ field: 'lineAdjudications', message: 'cantidad incorrecta' }]);
+    }
+
+    const byId = new Map(input.lineAdjudications.map((line) => [line.insuranceClaimLineId, line]));
+    if (byId.size !== claim.lineas.length) {
+      return validation('Cada línea requiere un dictamen único', [{ field: 'lineAdjudications', message: 'línea duplicada' }]);
+    }
+
+    let approvedTotal = 0;
+    let patientTotal = 0;
+    let deniedTotal = 0;
+    const lines: SolicitudSimulada['lineas'][number][] = [];
+    for (const [index, current] of claim.lineas.entries()) {
+      const line = byId.get(uuid(`line-${claim.id}-${index}`));
+      if (line === undefined || (line.decision !== 'APPROVED' && line.decision !== 'DENIED')) {
+        return validation('Línea de dictamen inválida', [{ field: 'lineAdjudications', message: 'id o decisión inválida' }]);
+      }
+      const approved = cents(line.approvedAmount);
+      const patient = cents(line.patientAmount);
+      const denied = cents(line.deniedAmount);
+      const billed = cents(current.billed)!;
+      if (approved === null || patient === null || denied === null || approved + patient + denied !== billed ||
+        (line.decision === 'DENIED' && (approved !== 0 || patient !== 0)) ||
+        (line.decision === 'APPROVED' && denied !== 0)) {
+        return validation('Importes de línea inválidos', [{ field: 'lineAdjudications', message: 'los importes deben conciliar con lo facturado' }]);
+      }
+      approvedTotal += approved;
+      patientTotal += patient;
+      deniedTotal += denied;
+      lines.push({
+        ...current,
+        approved: asAmount(approved),
+        decision: line.decision,
+        clause: line.decision === 'DENIED' ? line.policyClauseReference?.trim() || null : null,
+        rationale: line.decision === 'DENIED' ? line.denialRationale?.trim() || null : null,
+      });
+    }
+    if ((input.outcome === 'DENIED' && approvedTotal > 0) || (input.outcome === 'APPROVED' && approvedTotal === 0)) {
+      return validation('Resultado incongruente con las líneas', [{ field: 'outcome', message: 'no coincide con los importes' }]);
+    }
+    const totals = [
+      [input.totalApprovedAmount, approvedTotal],
+      [input.totalPatientAmount, patientTotal],
+      [input.totalDeniedAmount, deniedTotal],
+    ] as const;
+    if (totals.some(([declared, calculated]) => declared !== undefined && cents(declared) !== calculated)) {
+      return validation('Totales incongruentes', [{ field: 'totalApprovedAmount', message: 'no coincide con las líneas' }]);
+    }
+
+    const nextVersion = (claim.adjudicationVersion ?? (claim.approved === null ? 0 : 1)) + 1;
+    solicitudes.actualizar(claim.id, {
+      approved: asAmount(approvedTotal),
+      status: deniedTotal === 0 ? c('APPROVED', 'Aprobada') : approvedTotal === 0 ? c('REJECTED', 'Rechazada') : c('PARTIAL', 'Aprobada parcialmente'),
+      lineas: lines,
+      adjudicationVersion: nextVersion,
+      dispositionText: input.dispositionText,
+      adjudicatedAt: ahora(),
+      eobPublishedAt: null,
+    });
+    return { status: 201, body: { id: uuid(`adj-${claim.id}-${nextVersion}`) } };
+  });
+
+  router.post('/insurance-claims/:id/eob', (request) => {
+    const claim = solicitudes.get(request.params['id']!);
+    if (claim === undefined) return notFound('Solicitud no encontrada');
+    if (claim.approved === null) return preconditionFailed('Adjudicá la solicitud antes de publicar la EOB');
+    if (claim.eobPublishedAt !== null) return conflict('La EOB ya fue publicada');
+    solicitudes.actualizar(claim.id, { eobPublishedAt: ahora() });
+    return { status: 201, body: { id: uuid(`eob-${claim.id}`) } };
+  });
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */

@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { PharmacyProduct } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { PharmacyInventory } from './pharmacy-inventory';
+import { afterAll, beforeAll } from 'vitest';
+import { environment } from '../../../../environments/environment';
 
 /**
  * «Inventario» de la farmacia (carril B, 29/09/2026): existencias y umbral
@@ -49,6 +51,11 @@ interface Internal {
 }
 
 describe('PharmacyInventory', () => {
+  // Las escrituras de farmacia son «sólo simulador»: sin esto la petición no sale.
+  const originalMockBackend = environment.mockBackend;
+  beforeAll(() => Object.assign(environment, { mockBackend: true }));
+  afterAll(() => Object.assign(environment, { mockBackend: originalMockBackend }));
+
   let fixture: ComponentFixture<PharmacyInventory>;
   let http: HttpTestingController;
 

@@ -3,7 +3,7 @@
  *
  * ## Por qué existe
  *
- * El backend siembra **43 formularios** con procedencia documentada
+ * El backend siembra formularios con procedencia documentada
  * (`mantra-core-health-api/src/common/seed/data/clinical-forms/`), y el
  * simulador servía **cuatro escritos a mano** con códigos que ni siquiera
  * coincidían. Para una doctora de medicina general, de neurología o de
@@ -38,7 +38,7 @@ const DESTINO = join(
   'core',
   'mock',
   'fixtures',
-  'fichas-estandar.generated.ts',
+  'standard-sheets.generated.ts',
 );
 
 const fichas = [];
@@ -51,6 +51,7 @@ for (const carpeta of readdirSync(ORIGEN, { withFileTypes: true })) {
       code: ficha.code,
       name: ficha.name,
       version: ficha.version ?? 1,
+      kind: ficha.kind ?? 'BASE',
       specialty: ficha.specialty.code,
       ...(ficha.provenance === undefined ? {} : { provenance: ficha.provenance }),
       fields: ficha.fields.map((campo) => ({
@@ -125,6 +126,12 @@ export interface FichaEstandar {
   readonly name: string;
   /** Versión de la ficha en el catálogo: sube cuando cambia su esquema. */
   readonly version: number;
+  /**
+   * La clase de ficha: la consulta inicial de la especialidad (\`BASE\`), el
+   * control estándar de una condición (\`SPECIFIC\`) o una de toda consulta
+   * (\`GENERAL\`).
+   */
+  readonly kind: 'BASE' | 'SPECIFIC' | 'GENERAL';
   /** Código de \`VS_MEDICAL_SPECIALTY\`, o \`TRANSVERSAL\`. */
   readonly specialty: string;
   readonly provenance?: ProcedenciaDeFicha;

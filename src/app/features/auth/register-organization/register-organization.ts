@@ -1,18 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NgTemplateOutlet } from '@angular/common';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, inject, PLATFORM_ID, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { OrganizationRegistration } from '../../../core/data-access/iam/iam.types';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -33,42 +31,43 @@ import {
   telefonoCompleto,
 } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { mensajeDeError } from '../../../shared/forms/paginated/mensaje-de-error';
+import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import {
-  camposDeDocumentosLegales,
-  campoDelPoderNotariado,
-  DOCUMENTOS_LEGALES_DEL_REGISTRO,
-  type ClaveDeDocumentoDelAlta,
-} from '../registro-compartido/documentos-legales';
+  legalDocumentsFields,
+  notarizedPowerField,
+  RECORD_LEGAL_DOCUMENTS,
+  type EnrollmentDocumentKey,
+} from '../shared-registration/legal-documents';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
-import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+  MapLocationPicker,
+  type Coordinates,
+  type LocalityFromPoint,
+  type TestIds,
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
+import { joinNames } from '../../../core/profession/additional-names';
 import {
   esPaisMultizona,
   obtenerZonaHorariaDefectoDePais,
   obtenerZonasHorariasDePais,
 } from '../../../core/i18n/timezone-by-country';
-import { CamposDeNombre } from '../registro-compartido/campos-de-nombre/campos-de-nombre';
+import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
 import {
-  grupoDeNombre,
-  nombreCompleto,
-  type ValorDeNombre,
-} from '../registro-compartido/campos-de-nombre/nombre-de-persona';
-import { codigoDesdeSigla, MAX_SIGLA, MIN_SIGLA, siglaDerivaCodigo } from './codigo-desde-sigla';
-import { RegistrationBadge } from '../registro-compartido/registration-badge';
+  nameGroup,
+  completeName,
+  type NameValue,
+} from '../shared-registration/name-fields/person-name';
+import { codeFromAcronym, MAX_ACRONYM, MIN_ACRONYM, codeDriftAcronym } from './code-from-acronym';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -96,7 +95,6 @@ const PAIS_POR_DEFECTO = 'BO';
  * muestra ningún «código», ese 409 genérico se reescribe nombrando la sigla,
  * que es lo único que la persona escribió.
  */
-const MENSAJE_CODIGO_EN_USO_API = 'El código de organización ya existe';
 
 /**
  * Una gerencia de contacto (subtarea 1.4): el nombre como grupo compartido
@@ -105,7 +103,7 @@ const MENSAJE_CODIGO_EN_USO_API = 'El código de organización ya existe';
  */
 function grupoDeGerente() {
   return new FormGroup({
-    nombre: grupoDeNombre(true),
+    nombre: nameGroup(true),
     phone: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, telefonoCompleto],
@@ -133,7 +131,7 @@ function grupoDeGerente() {
  * ## El tipo de tenant es fijo
  *
  * A diferencia del alta administrativa (`OrganizationNew`), que ofrece los
- * diez tipos de `TENANT_TYPE_CODES`, acá no hay nada que elegir: esta
+ * once tipos de `TENANT_TYPE_CODES`, acá no hay nada que elegir: esta
  * pantalla sólo da de alta aseguradoras, así que el cliente manda
  * `tenantType: 'PAYER'` fijo y el bloque `payer` **siempre** viaja completo.
  *
@@ -159,8 +157,7 @@ function grupoDeGerente() {
  */
 @Component({
   selector: 'app-register-organization',
-  imports: [
-    RegistrationBadge,
+  imports: [RegistrationBadge, 
     RouterLink,
     // El botón «Ir a iniciar sesión» de la confirmación es `<button app-button>`:
     // sin esta importación es un `<button>` nativo y su `(clicked)` —un output
@@ -173,10 +170,10 @@ function grupoDeGerente() {
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     NgTemplateOutlet,
     DropzonePdf,
-    UbicacionPicker,
+    MapLocationPicker,
     // Representante legal y gerencias (subtarea 1.4): el acordeón se declara
     // fuera del `[formGroup]` del motor (como los demás `ng-template` de
     // `appCampoPersonalizado`), así que sus controles se enchufan con
@@ -187,16 +184,23 @@ function grupoDeGerente() {
     FormField,
     Input,
     PhoneInput,
-    CamposDeNombre,
+    InlineNameFields,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-organization.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-organization.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-organization.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterOrganization {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
+  private readonly draftService = inject(OnboardingDraftService);
+
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
+  readonly claveVisible = signal('');
 
   protected readonly claim = 'Gestione su aseguradora en un solo lugar';
   protected readonly tagline =
@@ -219,9 +223,9 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.minLength(MIN_SIGLA),
-        Validators.maxLength(MAX_SIGLA),
-        siglaDerivaCodigo,
+        Validators.minLength(MIN_ACRONYM),
+        Validators.maxLength(MAX_ACRONYM),
+        codeDriftAcronym,
       ],
     }),
     // País de constitución y tipo societario (subtarea 1.1). El país nunca
@@ -239,9 +243,19 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NIT)],
     }),
+    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
+    // la casa matriz, ver `escribirLocalidadCasaMatriz`. Sigue obligatoria
+    // porque la API la exige, y nunca queda vacía con un punto puesto.
     address: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
+    }),
+    // **El punto de la casa matriz es obligatorio** (mismo pedido). Vive en el
+    // formulario porque el motor valida de a una página y sólo frena lo que
+    // está en el `FormGroup`. Lo escribe `fijarGpsCasaMatriz` con el punto
+    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    gpsCasaMatriz: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
     }),
     // Siempre tiene un valor: para países de zona única lo asigna
     // `acomodarPaisYTipoSocietario` sin que la persona la vea; para
@@ -279,7 +293,7 @@ export class RegisterOrganization {
     // alta. El teléfono es el único dato de contacto opcional: el registro
     // de procesos no lo pide, y `telefonoCompleto` deja pasar la cadena
     // vacía (ver su JSDoc).
-    legalRepresentative: grupoDeNombre(true),
+    legalRepresentative: nameGroup(true),
     legalRepresentativeIdNumber: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -317,7 +331,7 @@ export class RegisterOrganization {
     // acá sólo falta la clave con la que va a entrar. Ver `datos()`.
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
   });
 
@@ -381,16 +395,16 @@ export class RegisterOrganization {
    * cuenta»: la única persona que inicia sesión por una aseguradora es su
    * representante legal, y su contraseña se pide en la misma sección que su
    * nombre y su correo. Para un país de zona única (Bolivia, Argentina…) el
-   * alta queda en **7 páginas**; para uno multizona (Estados Unidos, Brasil,
-   * México) el selector de zona horaria en «Datos de la aseguradora» suma un
-   * quinto campo a esa sección, que el motor parte en dos — **8 páginas**
-   * sólo ahí.
+   * alta queda en **7 páginas**. Para uno multizona (Estados Unidos, Brasil,
+   * México) el selector de zona horaria suma un campo a «Datos de la
+   * aseguradora»; desde que «Dirección» dejó de escribirse (26/10/2026) la
+   * sección sigue cabiendo en una página de cuatro, así que también son 7.
    *
    * `computed`, y no una constante: las opciones del tipo societario y de
    * zona horaria cambian con el país elegido (subtareas 1.1 y ésta).
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'La empresa',
         hint: 'Cómo se llama y qué figura jurídica tiene.',
@@ -441,6 +455,18 @@ export class RegisterOrganization {
         titulo: 'Datos de la aseguradora',
         hint: 'Lo que la plataforma necesita para facturarle y ubicarla.',
         campos: [
+          // El mapa va primero y es lo único de la ubicación que se marca: la
+          // dirección, el departamento, el municipio y la zona salen del punto
+          // y el selector los muestra sin dejarlos editar (26/10/2026).
+          {
+            key: 'gpsCasaMatriz',
+            label: 'Ubicación de la casa matriz en el mapa',
+            hint: 'Use su GPS o toque el plano. De ese punto sacamos la dirección, el municipio y la zona.',
+            control: 'custom' as const,
+            ancho: 'completo' as const,
+            required: true,
+            mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+          },
           {
             key: 'regulatorIdentifier',
             label: 'NIT',
@@ -449,25 +475,6 @@ export class RegisterOrganization {
             required: true,
             testId: 'registro-organizacion-nit',
             mensajeDeError: 'Escriba el NIT de la empresa.',
-          },
-          {
-            key: 'address',
-            label: 'Dirección',
-            hint: 'La de la casa matriz. Las de cada sucursal se cargan después.',
-            control: 'text' as const,
-            required: true,
-            testId: 'registro-organizacion-direccion',
-            mensajeDeError: 'Escriba la dirección (hasta 300 caracteres).',
-          },
-          // El mapa va pegado a «Dirección», como en las otras altas: cuando lo
-          // tocan, vacía el campo y lo dice arriba del plano, y ese aviso tiene
-          // que leerse junto al campo que vació (D-06).
-          {
-            key: 'gpsCasaMatriz',
-            label: 'Ubicación de la casa matriz en el mapa (opcional)',
-            hint: 'Use su GPS o toque el plano. Sin el punto, la aseguradora no aparece cuando alguien busca la más cercana.',
-            control: 'custom' as const,
-            ancho: 'completo' as const,
           },
           // Sólo en países multizona: uno de zona única (Bolivia, Argentina)
           // no tiene nada que preguntar acá — `acomodarPaisYTipoSocietario`
@@ -500,7 +507,8 @@ export class RegisterOrganization {
         clave: 'documentos-legales',
         icon: 'folder' as const,
         hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
-        campos: camposDeDocumentosLegales(this.incorporationCountryElegido(), uiLanguage()),
+        sinPartir: true,
+        campos: legalDocumentsFields(this.incorporationCountryElegido(), uiLanguage()),
       },
       {
         titulo: 'Representante legal',
@@ -516,8 +524,7 @@ export class RegisterOrganization {
             label: '',
             control: 'custom' as const,
             ancho: 'completo' as const,
-            mensajeDeError:
-              'Complete el nombre y el apellido paterno del representante legal.',
+            mensajeDeError: 'Complete el nombre y el apellido paterno del representante legal.',
           },
           {
             key: 'legalRepresentativeIdNumber',
@@ -546,7 +553,7 @@ export class RegisterOrganization {
             required: true,
             autocomplete: 'new-password',
             testId: 'registro-organizacion-representante-password',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+            mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
           {
             key: 'legalRepresentativePhone',
@@ -555,7 +562,7 @@ export class RegisterOrganization {
             testId: 'registro-organizacion-representante-telefono',
             mensajeDeError: 'Complete el número.',
           },
-          campoDelPoderNotariado(this.incorporationCountryElegido(), uiLanguage()),
+          notarizedPowerField(this.incorporationCountryElegido(), uiLanguage()),
         ],
       },
       {
@@ -595,7 +602,7 @@ export class RegisterOrganization {
       // único que la persona escribió y puede cambiar. Cualquier otro 409
       // (el correo del owner, por ejemplo) se muestra tal como lo manda
       // la API.
-      if (mensaje === MENSAJE_CODIGO_EN_USO_API) {
+      if (state.issues[0]?.field === 'code') {
         const sigla = this.form.controls.sigla.value.trim();
         return `La sigla «${sigla}» ya está en uso en la plataforma. Elija otra.`;
       }
@@ -610,9 +617,102 @@ export class RegisterOrganization {
     return null;
   });
 
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginas();
+      const clave = this.claveVisible();
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.form.getRawValue();
+      const extraData = {
+        gpsCasaMatriz: this.gpsCasaMatriz(),
+      };
+      this.draftService.saveProgress(
+        'organization',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'organization', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('organization');
+      if (!draft) return;
+      if (draft.data) {
+        this.form.patchValue(draft.data);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (extra['gpsCasaMatriz'] !== undefined) {
+        this.fijarGpsCasaMatriz(extra['gpsCasaMatriz'] as Coordinates | null);
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'organization', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('organization');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Lo que el motor avisa al cambiar de página. */
+  protected recordarPaso(pagina: PaginaDeFormulario): void {
+    this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
+  }
+
   constructor() {
+    const detectado = this.draftService.detectDraft('organization');
+    if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+      this.borradorDetectado.set(detectado);
+    }
+    this.draftService.trackEvent('start', 'organization', 0);
+
+    // El representante legal es el owner: sus nombres adicionales viajan
+    // plegados en el `middleName` de la cuenta, que el backend topa en 100.
+    this.form.controls.legalRepresentative.addValidators((grupo) => {
+      const nombre = grupo.getRawValue() as NameValue;
+      return joinNames([nombre.middleName, nombre.thirdName, ...nombre.extraNames]).length > 100
+        ? { nombresAdicionalesLargos: true }
+        : null;
+    });
+    this.form.controls.legalRepresentative.updateValueAndValidity();
     this.cargarTipoSocietario();
     this.acomodarPaisYTipoSocietario();
+
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
   }
 
   /**
@@ -671,42 +771,36 @@ export class RegisterOrganization {
   /**
    * La ubicación de la casa matriz, si la persona la confirmó (subtarea 1.3).
    *
-   * Una señal y no un `FormControl`: el campo es `custom` (lo pinta
-   * `app-ubicacion-picker`, no un control de texto), y `app-paginated-form`
-   * tolera un campo `custom` sin control homónimo en el `FormGroup`. Pasarla
-   * como `[inicial]` al picker es lo que le permite sobrevivir a que el
-   * asistente destruya y recree esta página al navegar (misma lección que
-   * `documentosSubidos`, arriba).
+   * Pasarla como `[inicial]` al picker es lo que le permite sobrevivir a que
+   * el asistente destruya y recree esta página al navegar (misma lección que
+   * `documentosSubidos`, arriba). El control homónimo del formulario es el que
+   * hace obligatorio el punto y el que viaja; los dos los escribe
+   * {@link fijarGpsCasaMatriz}.
    */
-  readonly gpsCasaMatriz = signal<Coordenadas | null>(null);
+  readonly gpsCasaMatriz = signal<Coordinates | null>(null);
 
-  /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
-   *
-   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
-   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
-   * vuelve a escribir, se va solo.
-   */
-  private readonly direccionVaciadaPorElMapa = signal(false);
-  private readonly direccionEscrita = toSignal(this.form.controls.address.valueChanges, {
-    initialValue: '',
-  });
-  readonly direccionPorReescribir = computed(
-    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
-  );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
-
-  /** Tocaron el mapa de la casa matriz: la dirección escrita ya no vale (D-06). */
-  vaciarDireccionPorElMapa(): void {
+  /** El punto confirmado de la casa matriz (o `null`), en la señal y en el control obligatorio. */
+  fijarGpsCasaMatriz(punto: Coordinates | null): void {
+    this.gpsCasaMatriz.set(punto);
+    const control = this.form.controls.gpsCasaMatriz;
+    if (control.value !== punto) control.setValue(punto);
+    // Con punto, la dirección nunca queda vacía: es un obligatorio que no se
+    // ve, y un borrador viejo podría traer el punto sin ella.
     const direccion = this.form.controls.address;
-    direccion.setValue('');
-    // El vaciado lo hizo el sistema, no la persona: el campo vuelve a «sin
-    // tocar» y el error de obligatorio espera a que lo toque o intente avanzar.
-    direccion.markAsUntouched();
-    this.direccionVaciadaPorElMapa.set(true);
+    if (punto !== null && direccion.value.trim() === '') direccion.setValue(pointLabel(punto));
   }
 
-  protected readonly idsUbicacionCasaMatriz: IdsDePrueba = {
+  /**
+   * Lo deducido del punto de la casa matriz llena «Dirección», que ya no se
+   * escribe a mano. Sin punto no se toca: el punto obligatorio, que sí se ve,
+   * es el que frena.
+   */
+  escribirLocalidadCasaMatriz(localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.form.controls.address.setValue(addressFromPoint(localidad, null, MAX_DIRECCION));
+  }
+
+  protected readonly idsUbicacionCasaMatriz: TestIds = {
     mapa: 'registro-organizacion-casa-matriz-map',
     confirmada: 'registro-organizacion-casa-matriz-location-confirmed',
     avisoGeocodificacion: 'registro-organizacion-casa-matriz-geocoding-notice',
@@ -717,7 +811,7 @@ export class RegisterOrganization {
   };
 
   /** Los cinco documentos legales, en el orden del registro de procesos (subtarea 1.2). */
-  protected readonly documentosLegales = DOCUMENTOS_LEGALES_DEL_REGISTRO;
+  protected readonly documentosLegales = RECORD_LEGAL_DOCUMENTS;
 
   /** Cómo sube cada `app-dropzone-pdf`: delega en el mismo endpoint de pre-carga pública. */
   protected readonly subirDocumento: PdfUploader = (file) =>
@@ -729,11 +823,11 @@ export class RegisterOrganization {
    * Ver el JSDoc de `documentoInicial` en `DropzonePdf`.
    */
   protected readonly documentosSubidos = signal<
-    Partial<Record<ClaveDeDocumentoDelAlta, UploadedDocument>>
+    Partial<Record<EnrollmentDocumentKey, UploadedDocument>>
   >({});
 
   /** Guarda el `fileId` que la dropzone recordó, en el control que le corresponde. */
-  protected registrarDocumento(clave: ClaveDeDocumentoDelAlta, fileId: string | null): void {
+  protected registrarDocumento(clave: EnrollmentDocumentKey, fileId: string | null): void {
     const control = this.form.controls[clave];
     control.setValue(fileId ?? '');
     control.markAsTouched();
@@ -747,7 +841,7 @@ export class RegisterOrganization {
   }
 
   /** Recuerda el documento recién subido para poder restaurarlo tras ir y volver. */
-  protected recordarDocumento(clave: ClaveDeDocumentoDelAlta, documento: UploadedDocument): void {
+  protected recordarDocumento(clave: EnrollmentDocumentKey, documento: UploadedDocument): void {
     this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
   }
 
@@ -759,18 +853,18 @@ export class RegisterOrganization {
    * contexto para un `ng-template` sin directiva propia), y TypeScript no
    * deja indexar un `Record` con una clave `any` bajo `noImplicitAny`.
    */
-  protected documentoInicialDe(clave: ClaveDeDocumentoDelAlta): UploadedDocument | null {
+  protected documentoInicialDe(clave: EnrollmentDocumentKey): UploadedDocument | null {
     return this.documentosSubidos()[clave] ?? null;
   }
 
   /** Si ese documento está tocado y vacío/incompleto — mismo criterio que el resto de los campos. */
-  protected esDocumentoInvalido(clave: ClaveDeDocumentoDelAlta): boolean {
+  protected esDocumentoInvalido(clave: EnrollmentDocumentKey): boolean {
     const control = this.form.controls[clave];
     return control.touched && control.invalid;
   }
 
   /** El rótulo ya traducido del documento, para pasárselo a su dropzone. */
-  protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
+  protected etiquetaDeDocumento(clave: EnrollmentDocumentKey): string {
     const campo = this.paginas()
       .flatMap((pagina) => pagina.campos)
       .find((c) => c.key === clave);
@@ -888,8 +982,10 @@ export class RegisterOrganization {
         this.state.set(ready(null));
         this.verificationSent.set(resultado.emailVerificationSent);
         this.registered.set(true);
+        this.limpiarBorrador();
+        this.draftService.trackEvent('complete', 'organization', 4);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'organization')),
     });
   }
 
@@ -913,7 +1009,7 @@ export class RegisterOrganization {
     const timeZone = raw.timeZone.trim();
     // El código de tenant y el de aseguradora nacen de la sigla: la persona
     // ya no escribe ninguno de los dos. Ver el JSDoc de `codigoDesdeSigla`.
-    const codigo = codigoDesdeSigla(raw.sigla);
+    const codigo = codeFromAcronym(raw.sigla);
     // El owner ES el representante legal: la API pide una cuenta owner con
     // su correo y su clave, y la aseguradora sólo tiene una persona que
     // inicia sesión. Su nombre y su correo viajan dos veces —como `owner`,
@@ -922,16 +1018,16 @@ export class RegisterOrganization {
     //
     // El backend no tiene columna de tercer nombre: se pliega en
     // `middleName`, igual que en el alta de paciente y de médico.
-    const segundoNombre = unirNombres([
+    const segundoNombre = joinNames([
       raw.legalRepresentative.middleName,
       raw.legalRepresentative.thirdName,
       ...raw.legalRepresentative.extraNames,
     ]);
     const apellidoMaterno = raw.legalRepresentative.motherLastName.trim();
-    const casaMatriz = this.gpsCasaMatriz();
+    const casaMatriz = raw.gpsCasaMatriz;
     const telefonoRepresentante = raw.legalRepresentativePhone.trim();
-    const gerente = (g: { nombre: ValorDeNombre; phone: string; email: string }) => ({
-      fullName: nombreCompleto(g.nombre),
+    const gerente = (g: { nombre: NameValue; phone: string; email: string }) => ({
+      fullName: completeName(g.nombre),
       phone: g.phone.trim(),
       email: g.email.trim(),
     });
@@ -947,9 +1043,7 @@ export class RegisterOrganization {
         regulatorIdentifier: raw.regulatorIdentifier.trim(),
         sigla: raw.sigla.trim(),
         address: raw.address.trim(),
-        ...(casaMatriz === null
-          ? {}
-          : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
+        ...(casaMatriz === null ? {} : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
       },
       owner: {
         email: raw.legalRepresentativeEmail.trim(),
@@ -969,7 +1063,7 @@ export class RegisterOrganization {
       // Representante legal y gerencias (subtarea 1.4): al nivel de
       // `organization`, nunca dentro de `payer` — ver el JSDoc de la clase.
       legalRepresentative: {
-        fullName: nombreCompleto(raw.legalRepresentative),
+        fullName: completeName(raw.legalRepresentative),
         idNumber: raw.legalRepresentativeIdNumber.trim(),
         email: raw.legalRepresentativeEmail.trim(),
         ...(telefonoRepresentante === '' ? {} : { phone: telefonoRepresentante }),

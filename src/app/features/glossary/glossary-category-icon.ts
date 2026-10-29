@@ -106,16 +106,20 @@ export function glossaryCategoryOrder(internalCode: string): number {
           <circle cx="12" cy="17.5" r="1.3" />
         }
         @case ('glossary-category-disease') {
-          <!-- Virus. -->
-          <circle cx="12" cy="12" r="4" />
-          <line x1="12" y1="2" x2="12" y2="5" />
-          <line x1="12" y1="19" x2="12" y2="22" />
-          <line x1="2" y1="12" x2="5" y2="12" />
-          <line x1="19" y1="12" x2="22" y2="12" />
-          <line x1="5.3" y1="5.3" x2="7.4" y2="7.4" />
-          <line x1="16.6" y1="16.6" x2="18.7" y2="18.7" />
-          <line x1="5.3" y1="18.7" x2="7.4" y2="16.6" />
-          <line x1="16.6" y1="7.4" x2="18.7" y2="5.3" />
+          <!-- Virus: cuerpo, espículas y una perla en cada punta (sin las
+               perlas, las ocho rayas se leían como un sol). -->
+          <circle cx="12" cy="12" r="4.2" />
+          <path d="M12 7.8V4.6M12 16.2v3.2M7.8 12H4.6M16.2 12h3.2M9 9 6.9 6.9M15 15l2.1 2.1M9 15l-2.1 2.1M15 9l2.1-2.1" />
+          <circle cx="12" cy="3.4" r="1" />
+          <circle cx="12" cy="20.6" r="1" />
+          <circle cx="3.4" cy="12" r="1" />
+          <circle cx="20.6" cy="12" r="1" />
+          <circle cx="6.1" cy="6.1" r="1" />
+          <circle cx="17.9" cy="17.9" r="1" />
+          <circle cx="6.1" cy="17.9" r="1" />
+          <circle cx="17.9" cy="6.1" r="1" />
+          <circle cx="10.6" cy="11" r=".5" />
+          <circle cx="13.4" cy="13" r=".5" />
         }
         @case ('glossary-category-specialty') {
           <!-- Estetoscopio. -->

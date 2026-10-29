@@ -1,3 +1,21 @@
+/* Las acciones pasan a otra fila en pantallas de teléfono y tablet, sin ocultar controles
+   ni reducir sus areas tactiles cuando aparece la navegacion de retorno. */
+@media (max-width: 1024px) {
+  .app-header {
+    height: auto;
+    min-height: var(--h-header);
+    padding-block: var(--e2);
+  }
+
+  .app-header__derecha {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: var(--e1);
+  }
+}
+
 /*
  * Lo propio del armazón que la hoja global (`styles/alovida.css`) no trae.
  *
@@ -149,6 +167,64 @@
 }
 
 /*
+ * Barra superior translúcida (Carril F · material `fino`), sólo CSS.
+ *
+ * Arriba del todo es la franja de siempre; al desplazar, el contenido pasa por
+ * debajo y la barra se vuelve vidrio: tinte + desenfoque + un solo trazo fino
+ * inferior. El cambio lo conduce el scroll de la página (`animation-timeline:
+ * scroll()`), así que es progresivo —se completa en 48 px— y no hay estado en
+ * TypeScript. Los navegadores sin esa API (Firefox) ven la barra en vidrio
+ * siempre: el mismo material, sin el fundido. Sin `backdrop-filter` o con
+ * `prefers-reduced-transparency` el tinte es el respaldo opaco: el texto nunca
+ * depende del desenfoque.
+ */
+.app-header {
+  background: var(--material-fino-tinte);
+  -webkit-backdrop-filter: var(--material-fino-desenfoque);
+  backdrop-filter: var(--material-fino-desenfoque);
+  border-bottom-color: var(--material-trazo);
+}
+
+@keyframes barra-a-vidrio {
+  from {
+    background: var(--sup-pagina);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+    border-bottom-color: transparent;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .app-header {
+    animation: barra-a-vidrio linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 48px;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-header {
+    background: var(--material-respaldo);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-header {
+    background: var(--material-respaldo);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    animation: none;
+  }
+}
+
+/*
+ * Cabecera de teléfono en UNA fila (Carril F). Entre 360 y 640 px las acciones
+ * caben sin envolver —medido: el último botón termina a 382 px de 390, a 352 de
+ * 360 y a 396 de 412—, y envueltas dejaban al avatar solo en una segunda fila:
+ * 101 px de cabecera contra 61. Debajo de 360 sigue envolviendo, que es lo que
+ * evita el desborde en los teléfonos más angostos.
+ */
+/*
  * «Más accesos» tiene que poder abrirse (28/10/2026).
  *
  * La lista desplegable (`position: absolute`) colgaba de `.app-header__rapidos`,
@@ -183,6 +259,38 @@
   }
 }
 
+@media (min-width: 360px) and (max-width: 640px) {
+  .app-header {
+    gap: 4px;
+  }
+
+  .app-header__derecha {
+    flex-wrap: nowrap;
+    gap: 2px;
+    /* Sin `overflow: visible`: queda la tira desplazable de arriba como red de
+       seguridad si un rol suma un selector y las acciones no caben. */
+  }
+}
+
+/*
+ * Renglones del menú con rótulo largo (27/10/2026). «Mi historia clínica» parte
+ * en dos líneas con la barra a 232 px o con la letra del rediseño. Con el
+ * interlineado heredado de párrafo y sin relleno vertical, el renglón doble
+ * crecía hasta rozar al de abajo y se leía como dos destinos. Interlineado de
+ * cuerpo, relleno propio y corte equilibrado: el renglón doble se lee como uno
+ * y respira igual que los de una línea (que no cambian de alto: el mínimo
+ * sigue mandando).
+ */
+.app-side-nav__item {
+  padding-block: var(--sp-1);
+  line-height: var(--lh-body);
+}
+
+.app-side-nav__item .side-nav__label {
+  min-inline-size: 0;
+  text-wrap: balance;
+}
+
 /*
  * Rediseño de la cabecera (propietario, 27/10/2026).
  *
@@ -194,11 +302,20 @@
 .app-side-nav__emergencia {
   padding: 0 var(--e3) var(--e3);
   margin-bottom: var(--e2);
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  border-bottom: 1px solid var(--nav-filete-suave);
 }
 
 .app-shell.is-nav-recogido .app-side-nav__emergencia {
   padding-inline: var(--e2);
+}
+
+/* Emergencia en el menú, sólo en la versión responsive (propietario,
+   28/10/2026): arriba de 900 px —el corte de `.app-header__emergencia` y de
+   `NAV_RAIL_MIN_WIDTH`— la barra es columna fija y el botón no va. */
+@media (min-width: 901px) {
+  .app-side-nav__emergencia {
+    display: none;
+  }
 }
 
 .app-header__separador {
@@ -222,7 +339,7 @@
 
 /* Emergencia como ícono en la cabecera, sólo donde el menú es un cajón
    (≤ 900 px, el mismo corte de `.app-side-nav__recoger`). Arriba de ese ancho
-   ya está a la vista, encabezando el menú lateral. */
+   no se ofrece (propietario, 28/10/2026). */
 .app-header__emergencia {
   display: none;
 }

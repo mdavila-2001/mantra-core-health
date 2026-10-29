@@ -15,6 +15,17 @@ export default defineConfig({
     // Una sola compilación de pruebas por vez: el mockup Angular agota la RAM
     // del equipo cuando Vitest abre varios trabajadores en paralelo.
     maxWorkers: 1,
+    /**
+     * Un `TestBed` de Angular por archivo es pesado (compila el módulo de
+     * pruebas entero). Con el pool por defecto —un worker por núcleo— la
+     * máquina se queda sin memoria a mitad de la suite y el proceso muere con
+     * `Worker exited unexpectedly` sin que ningún test lo reporte como
+     * fallado: parece una suite roja al azar y en realidad es un crash.
+     * Cuatro hilos concurrentes es el punto donde la suite completa termina
+     * sin crashear en esta máquina.
+     */
+    pool: 'threads',
+    maxWorkers: 4,
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'json-summary', 'lcov'],

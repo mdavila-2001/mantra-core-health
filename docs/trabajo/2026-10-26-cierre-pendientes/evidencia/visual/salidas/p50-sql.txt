@@ -1,0 +1,8 @@
+ representantes 
+----------------
+              4
+(1 row)
+
+ERROR:  relation "tenancy.tenants" does not exist
+LINE 1: select t.id, t.code, t.legal_name from tenancy.tenants t whe...
+                                               ^

@@ -64,22 +64,42 @@
       <ul class="rejilla ficha-publica__rejilla" data-testid="pharmacy-branches">
         @for (sucursal of sucursalesOrdenadas(); track sucursal.id) {
           <li>
-            <!-- La que se está mirando NO es un enlace: llevaría a la misma
-                 página. Las otras sí, y la tarjeta entera es el control. -->
-            @if (sucursal.isCurrent) {
+            <!-- Una sucursal cuya ficha es ésta NO es un enlace: llevaría a la
+                 misma página (contra la API real, todas las de una cadena
+                 comparten ficha). Las de otra ficha sí, y la tarjeta entera es
+                 el control. -->
+            @if (!llevaAOtraFicha(sucursal)) {
               <article class="rejilla__tarjeta" data-testid="pharmacy-branch">
                 <app-nav-icon class="rejilla__icono" name="pill" />
 
                 <div class="ficha-publica__titular">
                   <h3 class="rejilla__nombre">{{ sucursal.siteName }}</h3>
-                  <app-chip class="ficha-publica__grupo-chip" size="sm" variant="info" label="Está viendo ésta">
-                    Está viendo ésta
-                  </app-chip>
+                  @if (sucursal.isCurrent) {
+                    <app-chip class="ficha-publica__grupo-chip" size="sm" variant="info" label="Está viendo ésta">
+                      Está viendo ésta
+                    </app-chip>
+                  }
                 </div>
 
                 <p class="rejilla__dato">{{ dondeQueda(sucursal) }}</p>
                 @if (sucursal.openingHours) {
                   <p class="rejilla__resumen">{{ sucursal.openingHours }}</p>
+                }
+                @if (sucursal.description) {
+                  <p class="rejilla__resumen" data-testid="pharmacy-branch-description">{{ sucursal.description }}</p>
+                }
+                <!-- El enlace sólo existe en la tarjeta que no es enlace: un
+                     <a> dentro de otro no es HTML válido. La API ya exige
+                     http(s); se abre aparte porque es otro sitio. -->
+                @if (sucursal.locationUrl) {
+                  <a
+                    class="enlace-chip enlace-chip--largo"
+                    [href]="sucursal.locationUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="pharmacy-branch-map-link"
+                    [attr.aria-label]="'Cómo llegar a ' + sucursal.siteName + ' (abre el mapa en otra pestaña)'"
+                  >Cómo llegar</a>
                 }
                 @if (sucursal.phone) {
                   <p class="rejilla__resumen">{{ sucursal.phone }}</p>
@@ -107,6 +127,9 @@
                 <p class="rejilla__dato">{{ dondeQueda(sucursal) }}</p>
                 @if (sucursal.openingHours) {
                   <p class="rejilla__resumen">{{ sucursal.openingHours }}</p>
+                }
+                @if (sucursal.description) {
+                  <p class="rejilla__resumen">{{ sucursal.description }}</p>
                 }
                 @if (sucursal.phone) {
                   <p class="rejilla__resumen">{{ sucursal.phone }}</p>

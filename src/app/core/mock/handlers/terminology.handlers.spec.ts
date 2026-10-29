@@ -4,13 +4,13 @@ import { join } from 'node:path';
 
 import { registrarTerminologia } from './terminology.handlers';
 import {
-  ACTIVIDAD,
-  CATEGORIA_ORDEN,
-  conjuntoPorCodigo,
+  ACTIVITY,
+  ORDER_CATEGORY,
+  setByCode,
   MEDICAMENTO,
-  TIPO_CITA,
-  VERIFICACION_DX,
-} from '../fixtures/conceptos';
+  APPOINTMENT_TYPE,
+  VERIFICATION_DX,
+} from '../fixtures/concepts';
 import { valorDeTexto } from '../../data-access/terminology/terminology.types';
 import { AlmacenDeGlosario, ArchivoAusente, type LectorDeArchivos } from '../glossary-shards';
 import { MockRouter, type MockMethod } from '../mock-router';
@@ -324,11 +324,13 @@ describe('doble de la carga masiva de terminología', () => {
     expect(codigoDeError(body)).toBe('IMPORT_PROFILE_UNKNOWN');
   });
 
-  it('sin archivo da 412, no un 500', () => {
-    // El contrato es explícito: ningún camino devuelve 500.
+  it('sin archivo da 422, no un 500', () => {
+    // El contrato es explícito: ningún camino devuelve 500. 422, no 412
+    // (H2.S1.M2, 2026-09-26): la API responde las precondiciones de negocio
+    // con `PreconditionFailedException`, que es 422.
     const { status, body } = llamar('POST', RUTA, { body: null });
 
-    expect(status).toBe(412);
+    expect(status).toBe(422);
     expect(codigoDeError(body)).toBe('PRECONDITION_FAILED');
   });
 
@@ -406,7 +408,7 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
   async function expand(
     code: string,
   ): Promise<readonly { conceptId: string; code: string; display: string }[]> {
-    const valueSet = conjuntoPorCodigo(code);
+    const valueSet = setByCode(code);
     if (valueSet === undefined) throw new Error('No existe el conjunto ' + code);
     const path = '/terminology/value-sets/' + valueSet.id + '/$expand';
     const match = router.match('GET', path);
@@ -424,9 +426,9 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
   }
 
   it.each([
-    ['VS_ACTIVITY_TYPE', 'ACT-FOLLOW-UP', 'Reconsulta', ACTIVIDAD['ACT-FOLLOW-UP']],
-    ['VS_APPOINTMENT_TYPE', 'APT-RECONSULTA', 'Reconsulta', TIPO_CITA['APT-RECONSULTA']],
-    ['VS_SERVICE_REQUEST_CATEGORY', 'SRQ-OTHER', 'Otro', CATEGORIA_ORDEN['SRQ-OTHER']],
+    ['VS_ACTIVITY_TYPE', 'ACT-FOLLOW-UP', 'Reconsulta', ACTIVITY['ACT-FOLLOW-UP']],
+    ['VS_APPOINTMENT_TYPE', 'APT-RECONSULTA', 'Reconsulta', APPOINTMENT_TYPE['APT-RECONSULTA']],
+    ['VS_SERVICE_REQUEST_CATEGORY', 'SRQ-OTHER', 'Otro', ORDER_CATEGORY['SRQ-OTHER']],
   ])('expande %s con un único %s, su etiqueta y su ID estable', async (valueSet, code, display, id) => {
     const items = await expand(valueSet!);
     expect(id).toEqual(expect.any(String));
@@ -438,7 +440,7 @@ describe('contrato C0: expansión de conceptos clínicos', () => {
 
   it('conserva todos los estados de verificación diagnóstica publicados', async () => {
     const items = await expand('VS_CONDITION_VERIFICATION');
-    for (const [code, conceptId] of Object.entries(VERIFICACION_DX)) {
+    for (const [code, conceptId] of Object.entries(VERIFICATION_DX)) {
       expect(items).toContainEqual(expect.objectContaining({ code, conceptId }));
     }
   });
@@ -716,5 +718,48 @@ describe('artículo enciclopédico del glosario', () => {
   it('responde 404 a un término que no tiene artículo, sin inventarlo', async () => {
     const respuesta = await get('/terminology/concepts/00000000-0000-4000-a000-000000000000/article');
     expect(respuesta.status).toBe(404);
+  });
+});
+
+/** F9: la maqueta sirve el artículo con el mismo contrato que la API. */
+describe('artículo enciclopédico del glosario', () => {
+  const publicDirectory = join(process.cwd(), 'public');
+  const readSeed: LectorDeArchivos = (path) => {
+    const file = join(publicDirectory, path);
+    if (path.startsWith('glossary-data/') || !existsSync(file)) {
+      return Promise.reject(new ArchivoAusente(path));
+    }
+    return Promise.resolve(JSON.parse(readFileSync(file, 'utf8')) as unknown);
+  };
+  const router = new MockRouter();
+  registrarTerminologia(router, new AlmacenDeGlosario(readSeed));
+
+  async function get(path: string): Promise<{ status?: number; [key: string]: unknown }> {
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    return (await match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: null,
+      headers: new HttpHeaders(),
+      user: null,
+    })) as { status?: number; [key: string]: unknown };
+  }
+
+  const tonsillitisId = '5b49faa0-dafb-4630-a8f1-0f90e60113d0';
+
+  it('devuelve el artículo de la semilla con sus secciones y fuentes', async () => {
+    const article = await get(`/terminology/concepts/${tonsillitisId}/glossary-article`);
+    expect(article['conceptRef']).toEqual(expect.objectContaining({ slug: 'medlineplus-es-6441' }));
+    expect(article['sections']).toHaveLength(10);
+  });
+
+  it('responde 404 cuando no hay artículo', async () => {
+    const response = await get(
+      '/terminology/concepts/00000000-0000-4000-a000-000000000000/glossary-article',
+    );
+    expect(response.status).toBe(404);
   });
 });

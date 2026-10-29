@@ -1,0 +1,25 @@
+$ MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 DB_NAME=mantra_p34 … yarn test:integration pharmacy-on-call-shifts
+Test Suites: 1 passed, 1 total
+Tests:       13 passed, 13 total
+Time:        60.311 s, estimated 193 s
+INT_EXIT=0
+
+# Los 13 casos (test/integration/pharmacy-on-call-shifts.int-spec.ts):
+- sin nada declarado, open-now no inventa farmacias abiertas
+- autorización: sin token 401, paciente 403, personal de otra farmacia 403
+- la sede de otra farmacia, pedida desde la propia ruta, es 404 como una inexistente
+- 24 h: se declara, persiste, se publica, y null la retira
+- un cuerpo sin open24h es 400 (vacío no es «no»)
+- turno: se registra, se publica con su fin en hora de Bolivia, y la recarga lo trae
+- dos turnos activos solapados de la misma sede: 409
+- la base rechaza el solape aunque no se pase por la API (EXCLUDE) y un turno > 72 h (CHECK)
+- turno vencido: la API no lo acepta y, escrito directo en la base, no se publica
+- una hora sin desplazamiento es 400
+- cancelar: deja de publicarse y no se puede cancelar dos veces
+- open-now pagina con cursor y valida sus parámetros
+- GET /pharmacy/sites trae open24h y onCallUntil
+
+# Corridas anteriores en rojo y su causa (entorno, no producto):
+- sin dist/: "Metadata for entity CatalogConcepts not found"
+- argumento .ts detectado por MikroORM sin MIKRO_ORM_CLI_ALWAYS_ALLOW_TS: "Must use import to load ES Module"
+- dos corridas con la máquina saturada (12 agentes): beforeAll > 180 s esperando el arranque; sin cambios de código entre ésas y la verde

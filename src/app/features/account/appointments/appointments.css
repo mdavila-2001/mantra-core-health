@@ -207,6 +207,33 @@
   padding: var(--sp-4);
 }
 
+/* P36 · las horas flexibles de un día: botones chicos que se acomodan solos. */
+.turnos__flexibles {
+  display: block;
+  margin-block-end: var(--sp-3);
+}
+
+.turnos__horas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Las citas y la lista de espera son filas de LECTURA, no opciones: superficie
+   tonal sin borde y esquina de tarjeta, para que la pantalla no sea una pila de
+   cajas. Los horarios (`.turnos__horario`) sí son opciones a elegir y conservan
+   su borde. */
+.turnos__item,
+.turnos__espera {
+  background: var(--bg-surface-alt);
+  border-color: transparent;
+  border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-5);
+}
+
 /* El horario y su acción caben lado a lado apenas hay ancho. */
 @media (min-width: 32rem) {
   .turnos__item,
@@ -334,4 +361,21 @@
 .turnos__campana {
   display: block;
   margin-block: var(--sp-4);
+}
+
+/* «Cancelar» es una acción secundaria y destructiva: texto discreto en el tono
+   de error (con icono de estado el color no va solo), no un recuadro por fila. */
+.turnos__cancelar {
+  color: var(--st-error-fg);
+}
+
+/* El estado no va sólo en el color: un aspa delante del texto. */
+.turnos__cancelar::before {
+  content: '';
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  margin-inline-end: var(--sp-1);
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat;
 }

@@ -7,14 +7,11 @@ import { By } from '@angular/platform-browser';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { AdditionalFields, type FilaAdicional } from '../additional-fields/additional-fields';
 import type { CierreDelFormulario } from '../form-conclusion-block/form-conclusion-block';
+import { ProceduresBlock } from '../procedures-block/procedures-block';
 import {
   BLOQUE_CIRUGIA,
-  BLOQUE_DIAGNOSTICO,
-  BLOQUE_LABORATORIO,
   BLOQUE_ODONTOLOGIA,
-  PLANTILLA_FORMULARIO_LIBRE,
   PLANTILLA_HOJA_LIBRE,
   SpecialtyFormBlock,
 } from './specialty-form-block';
@@ -184,24 +181,19 @@ describe('SpecialtyFormBlock', () => {
     return (componente as unknown as Record<string, { set: (v: T) => void }>)[nombre];
   }
 
-  /** Lo que el desplegable ofrece hoy, en orden. */
   /**
    * Las **plantillas** que ofrece el desplegable.
    *
-   * Deja fuera las seis entradas fijas a propósito —diagnóstico, hoja en
-   * blanco, formulario libre, cirugía, odontología y laboratorio—: no son plantillas del
-   * catálogo sino lo que se puede completar sin ninguna, y están siempre. Si
-   * contaran, cada prueba sobre qué fichas se ofrecen tendría que sumarles
-   * cinco, y el número dejaría de decir lo que la prueba quiere decir. Que
-   * estén, y en qué orden, lo fija su propia prueba.
+   * Deja fuera las entradas que no son plantillas del catálogo —la hoja en
+   * blanco, siempre, y cirugía y odontología cuando corresponden—: son lo que se
+   * puede completar sin ninguna. Si contaran, cada prueba sobre qué fichas se
+   * ofrecen tendría que sumarlas, y el número dejaría de decir lo que la prueba
+   * quiere decir. Que estén, y en qué orden, lo fijan sus propias pruebas.
    */
   const ENTRADAS_FIJAS: readonly string[] = [
-    BLOQUE_DIAGNOSTICO,
     PLANTILLA_HOJA_LIBRE,
-    PLANTILLA_FORMULARIO_LIBRE,
     BLOQUE_CIRUGIA,
     BLOQUE_ODONTOLOGIA,
-    BLOQUE_LABORATORIO,
   ];
 
   function etiquetasOfrecidas(): string[] {
@@ -213,9 +205,9 @@ describe('SpecialtyFormBlock', () => {
   /**
    * Vacía las lecturas que dispara el bloque recién montado.
    *
-   * Diagnóstico, procedimiento y laboratorio traen cada uno sus catálogos y su
-   * histórico. Esta prueba mira que se dibuje el bloque correcto, no lo que
-   * cada uno hace con sus datos, pero el `afterEach` verifica que no queden
+   * Cirugía, odontología y el cierre de la ficha traen cada uno sus catálogos
+   * y su histórico. Estas pruebas miran que se dibuje el bloque correcto, no lo
+   * que cada uno hace con sus datos, pero el `afterEach` verifica que no queden
    * peticiones sin responder: se les contesta vacío y listo.
    */
   function drenarLecturasDelBloque(): void {
@@ -432,8 +424,10 @@ describe('SpecialtyFormBlock', () => {
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
     http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
     const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
-    // Se piden las del encuentro, no todas las de la persona.
-    expect(notas.request.params.get('encounterId')).toBe('enc-1');
+    // Las del encuentro: la API rechaza `encounterId` (400, A3), así que el
+    // pedido no lo lleva y la nota de «enc-otro» de abajo se descarta en el
+    // cliente — eso lo sigue fijando la aserción de lo que se muestra.
+    expect(notas.request.params.has('encounterId')).toBe(false);
     notas.flush({
       items: [
         {
@@ -801,6 +795,16 @@ describe('SpecialtyFormBlock', () => {
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
   });
 
+  it('corrige la preselección si el perfil llega después del catálogo', () => {
+    peticionDePlantillas().flush([PLANTILLA]);
+    expect(interno<() => string | null>('plantillaId')()).toBe('tpl-1');
+
+    responderEspecialidad('sp-odo');
+
+    expect(interno<() => string | null>('plantillaId')()).toBeNull();
+    expect(etiquetasOfrecidas()).toEqual([]);
+  });
+
   it('el selector esconde las fichas de otras especialidades', () => {
     const odonto = {
       ...PLANTILLA,
@@ -811,10 +815,6 @@ describe('SpecialtyFormBlock', () => {
     };
     peticionDePlantillas().flush([PLANTILLA, odonto]);
     responderEspecialidad('sp-odo');
-    // El filtro por especialidad sigue existiendo; sólo dejó de ser el
-    // default. Se lo activa a mano para probarlo.
-    interno<(v: boolean) => void>('alternarVerTodas')(false);
-
     // La de cardiología no le sirve a quien atiende en odontología.
     expect(etiquetasOfrecidas()).toEqual(['Ficha odontológica']);
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-odo');
@@ -1084,15 +1084,17 @@ describe('SpecialtyFormBlock', () => {
     expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
   });
 
-  it('sin especialidad conocida no filtra nada ni ofrece el interruptor', () => {
+  it('sin especialidad conocida ofrece las fichas generales y permite ver todo', () => {
     peticionDePlantillas().flush(CATALOGO);
     http
       .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
       .flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
 
-    // Sin perfil profesional no hay por qué filtrar: queda el catálogo entero.
-    expect(etiquetasOfrecidas()).toHaveLength(4);
-    expect(interno<() => boolean>('puedeVerTodas')()).toBe(false);
+    expect(etiquetasOfrecidas()).toEqual([
+      'Anamnesis / Historia clínica general',
+      'Consentimiento informado',
+    ]);
+    expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
   });
 
   /* ---- el interruptor «Ver todas las especialidades» ------------------------ */
@@ -1114,6 +1116,19 @@ describe('SpecialtyFormBlock', () => {
 
     interno<(v: boolean) => void>('alternarVerTodas')(false);
     expect(etiquetasOfrecidas()).toHaveLength(3);
+  });
+
+  it('oculta los registros de odontología y cirugía ajenos a la especialidad', () => {
+    const odonto = { ...PLANTILLA, id: 'tpl-odo', specialtyConceptId: 'sp-odo', code: 'ODONTO_ANAMNESIS' };
+    peticionDePlantillas().flush([...CATALOGO, odonto]);
+    responderEspecialidad('sp-1');
+
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_ODONTOLOGIA)).toBe(false);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_CIRUGIA)).toBe(false);
+
+    interno<(v: boolean) => void>('alternarVerTodas')(true);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_ODONTOLOGIA)).toBe(true);
+    expect(opcionesCrudas().some((opcion) => opcion.value === BLOQUE_CIRUGIA)).toBe(true);
   });
 
   it('el interruptor no pide plantillas de nuevo: filtra sobre lo ya traído', () => {
@@ -1224,9 +1239,8 @@ describe('SpecialtyFormBlock', () => {
 
   /**
    * El aviso promete algo concreto —«te ofrecemos las fichas generales»—, así
-   * que sólo aparece cuando esas fichas existen. Sin ninguna transversal el
-   * filtro cae al catálogo entero, y avisar ahí sería prometer una anamnesis
-   * que nadie sembró.
+   * que sólo aparece cuando esas fichas existen. Si no hay ninguna,
+   * se ofrece explícitamente abrir el catálogo completo.
    */
   it('sin fichas generales en el catálogo no promete una que no existe', () => {
     peticionDePlantillas().flush([PLANTILLA, DERMATOLOGIA]);
@@ -1238,8 +1252,12 @@ describe('SpecialtyFormBlock', () => {
     expect(interno<() => boolean>('sinFichaPropia')()).toBe(false);
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('[data-testid="sin-ficha-propia"]')).toBeNull();
-    // Sin criterio para filtrar queda el catálogo entero, no un desplegable vacío.
-    expect(etiquetasOfrecidas()).toHaveLength(2);
+    expect(etiquetasOfrecidas()).toHaveLength(0);
+    expect(html.textContent).toContain('Sin ficha para esta especialidad');
+    expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
+
+    interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_HOJA_LIBRE);
+    expect(interno<() => boolean>('sinPlantillasVisibles')()).toBe(false);
   });
 
   it('la hoja en blanco encabeza el desplegable, aun sin ninguna plantilla', () => {
@@ -1253,47 +1271,56 @@ describe('SpecialtyFormBlock', () => {
     fixture.detectChanges();
 
     const opciones = opcionesCrudas();
-    expect(opciones.slice(0, 6).map((opcion) => opcion.value)).toEqual([
-      BLOQUE_DIAGNOSTICO,
-      PLANTILLA_HOJA_LIBRE,
-      PLANTILLA_FORMULARIO_LIBRE,
-      BLOQUE_CIRUGIA,
-      BLOQUE_ODONTOLOGIA,
-      BLOQUE_LABORATORIO,
-    ]);
-    // La alergia ya no se ofrece: se carga como diagnóstico (02/10/2026).
+    expect(opciones.map((opcion) => opcion.value)).toEqual([PLANTILLA_HOJA_LIBRE]);
+    expect(opciones[0].label).toBe('Hoja en blanco — escribir sin campos');
+    // La alergia no se ofrece: se carga como diagnóstico.
     expect(opciones.map((opcion) => opcion.value)).not.toContain('bloque-alergia');
-    // La hoja en blanco **conserva el segundo lugar**: enterrarla al final
-    // equivale a no tenerla.
-    expect(opciones[1].label).toContain('Hoja en blanco');
-    // Y el formulario libre, pegado a ella: las dos maneras de escribir sin ficha.
-    expect(opciones[2].label).toBe('Formulario libre — campo y valor');
+  });
+
+  it('después de la hoja en blanco van las fichas de la especialidad y las generales', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-1');
+
+    expect(opcionesCrudas().map((opcion) => opcion.label)).toEqual([
+      'Hoja en blanco — escribir sin campos',
+      'Ficha de cardiología',
+      'Anamnesis / Historia clínica general',
+      'Consentimiento informado',
+    ]);
   });
 
   /**
-   * Las tres entradas que no pasan por `forms` se dibujan por encima de la
+   * Diagnosticar y pedir un estudio se hacen en el cierre de la ficha y en sus
+   * casillas de la consulta; las filas «campo: valor» viven en la pestaña
+   * «Flexible». Ofrecerlos también en el selector era abrir dos caminos para el
+   * mismo registro, así que no vuelven ni con el catálogo entero a la vista.
+   */
+  it('no ofrece diagnóstico, formulario libre ni laboratorio, ni con todas las especialidades', () => {
+    peticionDePlantillas().flush(CATALOGO);
+    responderEspecialidad('sp-1');
+    const removedLabels = [
+      'Diagnóstico — del catálogo CIE-10',
+      'Formulario libre — campo y valor',
+      'Laboratorio e imagenología',
+    ];
+    const offeredRemoved = () =>
+      opcionesCrudas()
+        .map((opcion) => opcion.label)
+        .filter((etiqueta) => removedLabels.includes(etiqueta));
+
+    expect(offeredRemoved()).toEqual([]);
+
+    interno<(v: boolean) => void>('alternarVerTodas')(true);
+    expect(offeredRemoved()).toEqual([]);
+  });
+
+  /**
+   * Las dos entradas que no pasan por `forms` se dibujan por encima de la
    * cadena de estados del motor, y no dentro: es lo que las deja alcanzables
    * cuando el encuentro ya tiene una ficha respondida —el modo lectura tapaba
    * el selector— o cuando el catálogo ni siquiera cargó.
    */
-  it('elegir el diagnóstico dibuja su bloque y ninguna ficha', () => {
-    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
-    responderEspecialidad('sp-odonto');
-    fixture.detectChanges();
-    peticionDeRespuesta().flush(LISTADO_VACIO);
-    fixture.detectChanges();
-
-    interno<(id: string | null) => void>('elegirPlantilla')(BLOQUE_DIAGNOSTICO);
-    fixture.detectChanges();
-
-    const html = fixture.nativeElement as HTMLElement;
-    expect(html.querySelector('app-diagnosis-block')).not.toBeNull();
-    expect(html.querySelector('[data-testid="campo-especialidad"]')).toBeNull();
-    expect(html.querySelector('[data-testid="campo-odontograma"]')).toBeNull();
-    drenarLecturasDelBloque();
-  });
-
-  it('cirugía, odontología y laboratorio traen cada uno su bloque', () => {
+  it('cirugía y odontología traen cada una su bloque, y ninguna ficha', () => {
     peticionDePlantillas().flush([PLANTILLA_ODONTO]);
     responderEspecialidad('sp-odonto');
     fixture.detectChanges();
@@ -1302,23 +1329,22 @@ describe('SpecialtyFormBlock', () => {
 
     const html = fixture.nativeElement as HTMLElement;
     const elegir = interno<(id: string | null) => void>('elegirPlantilla');
+    const procedureMode = () =>
+      (
+        fixture.debugElement.query(By.directive(ProceduresBlock))
+          .componentInstance as ProceduresBlock
+      ).modo();
 
     elegir(BLOQUE_CIRUGIA);
     fixture.detectChanges();
-    expect(html.querySelector('app-procedures-block')).not.toBeNull();
-    expect(html.querySelector('app-analysis-order-block')).toBeNull();
+    expect(procedureMode()).toBe('cirugia');
+    expect(html.querySelector('[data-testid="campo-especialidad"]')).toBeNull();
     drenarLecturasDelBloque();
 
     elegir(BLOQUE_ODONTOLOGIA);
     fixture.detectChanges();
-    expect(html.querySelector('app-procedures-block')).not.toBeNull();
-    expect(html.querySelector('app-analysis-order-block')).toBeNull();
-    drenarLecturasDelBloque();
-
-    elegir(BLOQUE_LABORATORIO);
-    fixture.detectChanges();
-    expect(html.querySelector('app-analysis-order-block')).not.toBeNull();
-    expect(html.querySelector('app-procedures-block')).toBeNull();
+    expect(procedureMode()).toBe('odontologia');
+    expect(html.querySelector('[data-testid="campo-odontograma"]')).toBeNull();
     drenarLecturasDelBloque();
   });
 
@@ -1579,7 +1605,7 @@ describe('SpecialtyFormBlock', () => {
       expect(html.querySelector('app-form-conclusion-block')).toBeNull();
       drenarLecturasDelBloque();
 
-      interno<(id: string | null) => void>('elegirPlantilla')(BLOQUE_DIAGNOSTICO);
+      interno<(id: string | null) => void>('elegirPlantilla')(BLOQUE_CIRUGIA);
       fixture.detectChanges();
       expect(html.querySelector('app-form-conclusion-block')).toBeNull();
       drenarLecturasDelBloque();
@@ -1626,6 +1652,8 @@ describe('SpecialtyFormBlock', () => {
         codeConceptId: 'dx-1',
         encounterId: 'enc-1',
         noteText: 'Del formulario «Ficha de cardiología»',
+        // Tentativo: nace provisional hasta que el médico lo confirme.
+        verificationStatus: 'PROVISIONAL',
       });
       // La orden espera al diagnóstico: en serie, no en paralelo.
       http.expectNone('/clinical/service-requests');
@@ -1721,280 +1749,6 @@ describe('SpecialtyFormBlock', () => {
 
       expect(error).toHaveBeenCalledTimes(1);
       expect(interno<() => readonly string[]>('fallosDelCierre')()[0]).toContain('organización');
-    });
-  });
-
-  /**
-   * «Formulario libre — campo y valor»: las filas de los campos adicionales,
-   * solas, sin plantilla. No pasa por `forms`, así que una ficha ya respondida
-   * no lo tapa, y registra la nota y un documento por fila con archivos.
-   */
-  describe('el formulario libre', () => {
-    beforeEach(() => {
-      TestBed.inject(SessionStore).start({
-        accessToken: jwt({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' }),
-        refreshToken: 'r-1',
-      });
-    });
-
-    function elegirLibre(notasYaRegistradas: readonly Record<string, unknown>[] = []): void {
-      interno<(id: string | null) => void>('elegirPlantilla')(PLANTILLA_FORMULARIO_LIBRE);
-      const notas = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET');
-      expect(notas.request.params.get('encounterId')).toBe('enc-1');
-      notas.flush({ items: notasYaRegistradas, limit: 50, truncated: false });
-      fixture.detectChanges();
-    }
-
-    function escribirFilas(filas: readonly Omit<FilaAdicional, 'clave'>[]): AdditionalFields {
-      const seccion = fixture.debugElement.query(By.directive(AdditionalFields))
-        .componentInstance as AdditionalFields;
-      (seccion as unknown as Record<string, WritableSignal<readonly FilaAdicional[]>>)[
-        'filas'
-      ]!.set(filas.map((fila, indice) => ({ clave: 100 + indice, ...fila })));
-      return seccion;
-    }
-
-    const archivo = (nombre: string) => new File(['x'], nombre, { type: 'image/jpeg' });
-
-    it('con la ficha del encuentro ya respondida, se dibuja igual y muestra lo registrado', () => {
-      llegarAModoLectura();
-      elegirLibre([
-        {
-          noteId: 'nota-1',
-          encounterId: 'enc-1',
-          entries: [{ label: 'Glucemia', value: '98 mg/dL' }],
-          createdAt: '2026-09-28T10:00:00Z',
-          releasedToPatient: false,
-        },
-      ]);
-
-      const html = fixture.nativeElement as HTMLElement;
-      expect(html.querySelector('[data-testid="formulario-respondido"]')).toBeNull();
-      expect(html.querySelector('[data-testid="formulario-libre"]')).not.toBeNull();
-      expect(html.querySelectorAll('[data-testid="adicional-fila"]')).toHaveLength(1);
-      expect(
-        html.querySelector('[data-testid="formulario-libre-guardado"]')?.textContent,
-      ).toContain('Glucemia');
-      // Sin nada escrito, no hay qué guardar.
-      expect(interno<() => boolean>('puedeGuardarLibre')()).toBe(false);
-    });
-
-    it('guardar registra la nota y un documento con todos los archivos de la fila, y relee', () => {
-      let releido = 0;
-      componente.cambio.subscribe(() => (releido += 1));
-      peticionDePlantillas().flush([PLANTILLA]);
-      fixture.detectChanges();
-      peticionDeRespuesta().flush(LISTADO_VACIO);
-      elegirLibre();
-
-      const seccion = escribirFilas([
-        { rotulo: 'Presión arterial', valor: '128/84 mmHg', archivos: [] },
-        {
-          rotulo: 'Análisis con el que vino',
-          valor: '',
-          archivos: [archivo('hemograma.jpg'), archivo('orina.jpg'), archivo('perfil.jpg')],
-        },
-      ]);
-      expect(interno<() => boolean>('puedeGuardarLibre')()).toBe(true);
-
-      interno<() => void>('guardarLibre')();
-
-      // Nada pasa por `forms`: ni instancia abierta ni valores capturados.
-      http.expectNone((r) => r.url.startsWith('/forms/instances') && r.method === 'POST');
-      const nota = http.expectOne((r) => r.url === '/charts/notes' && r.method === 'POST');
-      expect(nota.request.body).toMatchObject({
-        patientProfileId: 'pac-1',
-        authorProfileId: 'hp-1',
-        encounterId: 'enc-1',
-        entries: [
-          { label: 'Presión arterial', value: '128/84 mmHg' },
-          {
-            label: 'Análisis con el que vino',
-            value: 'Adjunto: hemograma.jpg, orina.jpg, perfil.jpg',
-          },
-        ],
-      });
-      nota.flush({ noteId: 'n-1', versionId: 'v-1' });
-
-      const subidas = http.match('/common/files/upload');
-      expect(subidas).toHaveLength(3);
-      subidas.forEach((subida, indice) => subida.flush({ id: `f-${indice}` }));
-      const documento = http.expectOne('/charts/documents');
-      expect(documento.request.body).toMatchObject({
-        title: 'Análisis con el que vino',
-        encounterId: 'enc-1',
-        files: [
-          { fileId: 'f-0', contentRole: 'PRIMARY', ordinal: 0 },
-          { fileId: 'f-1', contentRole: 'ATTACHMENT', ordinal: 1 },
-          { fileId: 'f-2', contentRole: 'ATTACHMENT', ordinal: 2 },
-        ],
-      });
-      documento.flush({ documentId: 'd-1', fileCount: 3 });
-
-      // Relee lo registrado del encuentro y deja una fila nueva, vacía.
-      http
-        .expectOne((r) => r.url === '/charts/notes' && r.method === 'GET')
-        .flush({
-          items: [
-            {
-              noteId: 'n-1',
-              encounterId: 'enc-1',
-              entries: [{ label: 'Presión arterial', value: '128/84 mmHg' }],
-              createdAt: '2026-09-28T10:00:00Z',
-              releasedToPatient: false,
-            },
-          ],
-          limit: 50,
-          truncated: false,
-        });
-      fixture.detectChanges();
-
-      expect(releido).toBe(1);
-      expect(interno<() => readonly string[]>('fallosDelLibre')()).toEqual([]);
-      expect(seccion.tieneContenido()).toBe(false);
-      const html = fixture.nativeElement as HTMLElement;
-      expect(html.querySelectorAll('[data-testid="adicional-fila"]')).toHaveLength(1);
-      expect(
-        html.querySelector('[data-testid="formulario-libre-guardado"]')?.textContent,
-      ).toContain('128/84 mmHg');
-    });
-
-    it('si la nota no se registra, no se sube nada y lo escrito se conserva para reintentar', () => {
-      let releido = 0;
-      componente.cambio.subscribe(() => (releido += 1));
-      peticionDePlantillas().flush([PLANTILLA]);
-      fixture.detectChanges();
-      peticionDeRespuesta().flush(LISTADO_VACIO);
-      elegirLibre();
-      const seccion = escribirFilas([
-        { rotulo: 'Rx tórax', valor: 'Sin hallazgos', archivos: [archivo('rx.jpg')] },
-      ]);
-
-      interno<() => void>('guardarLibre')();
-      http
-        .expectOne((r) => r.url === '/charts/notes' && r.method === 'POST')
-        .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
-
-      http.expectNone('/common/files/upload');
-      expect(releido).toBe(0);
-      expect(seccion.tieneContenido()).toBe(true);
-      const fallos = interno<() => readonly string[]>('fallosDelLibre')();
-      expect(fallos).toHaveLength(2);
-      expect(fallos[0]).toContain('No se registró la nota');
-      fixture.detectChanges();
-      expect(
-        (fixture.nativeElement as HTMLElement).querySelector(
-          '[data-testid="formulario-libre-fallos"]',
-        ),
-      ).not.toBeNull();
-    });
-  });
-
-  /**
-   * Un campo con `valueSetId` se dibuja como desplegable sobre el catálogo de
-   * terminología — no como texto libre, que es lo que pasaba antes: el
-   * backend ya publicaba `valueSetId` por campo y ya servía sus opciones por
-   * `GET /terminology/value-sets/:id/$expand`, y este bloque los ignoraba.
-   */
-  describe('campo de catálogo (valueSetId)', () => {
-    it('se dibuja como desplegable, con las opciones del conjunto de valores', () => {
-      peticionDePlantillas().flush([PLANTILLA_CATALOGO]);
-      fixture.detectChanges();
-
-      peticionDeExpansion('vs-tabaco').flush({
-        valueSetId: 'vs-tabaco',
-        valueSetVersionId: 'vsv-1',
-        version: '1.0.0',
-        items: [
-          { conceptId: 'c-nunca', code: 'NUNCA', display: 'Nunca', codeSystemVersionId: 'cv-1' },
-          {
-            conceptId: 'c-exfumador',
-            code: 'EX',
-            display: 'Ex fumador',
-            codeSystemVersionId: 'cv-1',
-          },
-        ],
-        count: 2,
-        limit: 200,
-        nextCursor: null,
-      });
-      peticionDeRespuesta().flush(LISTADO_VACIO);
-      fixture.detectChanges();
-
-      const campo = (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="campo-catalogo"]',
-      );
-      expect(campo).not.toBeNull();
-      const select = campo!.querySelector('select') as HTMLSelectElement;
-      expect(Array.from(select.options).map((opcion) => opcion.textContent?.trim())).toEqual([
-        'Seleccionar opción',
-        'Nunca',
-        'Ex fumador',
-      ]);
-
-      // Elegir «Ex fumador»: índice 2, porque el 0 es el placeholder oculto.
-      select.selectedIndex = 2;
-      select.dispatchEvent(new Event('change'));
-      fixture.detectChanges();
-
-      const valores = interno<() => Record<string, unknown>>('valores')();
-      // Lo que se guarda es el `conceptId`, no la etiqueta: es lo que
-      // `valoresParaEnviar` manda y lo que el modo lectura tiene que resolver
-      // de vuelta a texto.
-      expect(valores['f-10']).toBe('c-exfumador');
-    });
-
-    it('en modo lectura, muestra la etiqueta elegida y no el conceptId guardado', () => {
-      peticionDePlantillas().flush([PLANTILLA_CATALOGO]);
-      fixture.detectChanges();
-
-      peticionDeExpansion('vs-tabaco').flush({
-        valueSetId: 'vs-tabaco',
-        valueSetVersionId: 'vsv-1',
-        version: '1.0.0',
-        items: [
-          {
-            conceptId: 'c-exfumador',
-            code: 'EX',
-            display: 'Ex fumador',
-            codeSystemVersionId: 'cv-1',
-          },
-        ],
-        count: 1,
-        limit: 200,
-        nextCursor: null,
-      });
-      peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
-      http
-        .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
-        .flush({
-          ...INSTANCIA,
-          values: [
-            {
-              id: 'v-10',
-              fieldId: 'f-10',
-              dataType: 'string',
-              value: 'c-exfumador',
-              ordinal: 0,
-              masked: false,
-            },
-          ],
-        });
-      // El modo lectura carga también el bloque de notas/adicionales.
-      http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET').flush({
-        items: [],
-        limit: 50,
-        truncated: false,
-      });
-      fixture.detectChanges();
-
-      const respuestas =
-        interno<() => readonly { etiqueta: string; texto: string; masked: boolean }[]>(
-          'respuestasVisibles',
-        )();
-      expect(respuestas).toEqual([
-        { id: 'v-10', etiqueta: '¿Fuma?', texto: 'Ex fumador', masked: false },
-      ]);
     });
   });
 });

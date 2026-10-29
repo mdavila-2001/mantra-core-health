@@ -4,6 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { SearchField } from '../../molecules/search-field/search-field';
+import { chooseSelectOption, selectTrigger } from '../../../../../testing/select';
 import { FilterBar, SEARCH_PARAM, type FilterDef } from './filter-bar';
 
 @Component({
@@ -129,8 +130,9 @@ describe('FilterBar', () => {
     return [...root().querySelectorAll<HTMLElement>('app-chip')];
   }
 
-  function selects(): HTMLSelectElement[] {
-    return [...root().querySelectorAll<HTMLSelectElement>('select')];
+  /** Los desplegables de la barra: el host de cada `app-select`. */
+  function selects(): HTMLElement[] {
+    return [...root().querySelectorAll<HTMLElement>('app-select')];
   }
 
   async function irA(queryParams: Record<string, string>): Promise<void> {
@@ -181,9 +183,7 @@ describe('FilterBar', () => {
     });
 
     it('elegir un filtro lo escribe en la URL', async () => {
-      selects()[0].value = '0';
-      selects()[0].dispatchEvent(new Event('change'));
-      await fixture.whenStable();
+      await chooseSelectOption(fixture, selects()[0], 0);
 
       expect(router.url).toContain('servicio=card');
     });
@@ -242,7 +242,7 @@ describe('FilterBar', () => {
     });
 
     it('el filtro queda deshabilitado, nunca como texto libre', () => {
-      const deshabilitados = selects().filter((select) => select.disabled);
+      const deshabilitados = selects().filter((select) => selectTrigger(select).disabled);
 
       expect(deshabilitados).toHaveLength(1);
       // no hay ningún input de texto suelto haciendo de filtro de terminología
@@ -394,10 +394,8 @@ describe('FilterBar', () => {
       withoutUrl.componentInstance.termino.set('Ana');
       await withoutUrl.whenStable();
 
-      const select = (withoutUrl.nativeElement as HTMLElement).querySelector('select')!;
-      select.value = '0';
-      select.dispatchEvent(new Event('change'));
-      await withoutUrl.whenStable();
+      const select = (withoutUrl.nativeElement as HTMLElement).querySelector<HTMLElement>('app-select')!;
+      await chooseSelectOption(withoutUrl, select, 0);
 
       expect(router.url).toContain('servicio=card');
       expect(router.url).not.toContain('Ana');

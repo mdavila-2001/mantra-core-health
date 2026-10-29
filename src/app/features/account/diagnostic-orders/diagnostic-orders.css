@@ -17,8 +17,9 @@
 }
 
 .ordenes__resumen {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  font-weight: 600;
   margin: var(--sp-4) 0 0;
 }
 
@@ -56,4 +57,13 @@
   display: flex;
   justify-content: flex-end;
   margin-block-start: var(--sp-4);
+}
+
+/* El estudio es lo que identifica la fila: con ancho propio en lugar de la
+   sobra de la tabla (una ecografía con su detalle se partía en seis renglones). */
+@media (min-width: 780px) {
+  .ordenes__estudio {
+    display: inline-block;
+    min-inline-size: 15rem;
+  }
 }

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import {
-  DIAS_DE_LA_SEMANA,
+  WEEK_DAYS,
   DURACIONES_DE_TURNO,
 } from '../../../core/data-access/diagnostic-units/center-schedule.rules';
 import type { ScheduleBlock, ScheduleWindow } from '../../../core/data-access/diagnostic-units/center-schedule.types';
@@ -63,7 +63,7 @@ export class ScheduleBlockEditor {
   }));
 
   protected readonly dias = computed(() =>
-    DIAS_DE_LA_SEMANA.map((d) => {
+    WEEK_DAYS.map((d) => {
       const franja = this.block().windows.find((w) => w.dayOfWeek === d.dayOfWeek) ?? null;
       return { ...d, franja };
     }),

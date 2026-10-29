@@ -151,7 +151,7 @@ export const PDF_GRADIENTS = {
  * Las cuatro piezas tipográficas, con el nombre con que se registran en
  * `jsPDF`. Son las de AloVida (`--f-titulo` y `--f-texto`): Poppins para lo
  * que se destaca y Nunito Sans para lo que se lee. Sin las fuentes cargadas
- * (ver `pdf-fuentes.ts`) caen a Helvetica.
+ * (ver `core/pdf-branding/pdf-fonts.ts`) caen a Helvetica.
  */
 export const PDF_FONTS = {
   /** Poppins SemiBold: títulos. */

@@ -16,6 +16,7 @@ import { Select } from '../../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../../shared/components/molecules/form-field/form-field';
+import { LoadingState } from '../../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * **Pedir afiliarme a un centro** con los procedimientos que haría en una sede
@@ -29,7 +30,7 @@ import { FormField } from '../../../../../shared/components/molecules/form-field
  */
 @Component({
   selector: 'app-affiliation-request-form',
-  imports: [Alert, AppButton, Checkbox, FormField, Select],
+  imports: [Alert, AppButton, Checkbox, FormField, Select, LoadingState],
   templateUrl: './affiliation-request-form.html',
   styleUrl: './affiliation-request-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

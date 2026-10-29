@@ -2,6 +2,10 @@ import { Location } from '@angular/common';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+import { SessionStore } from './core/auth/session.store';
+import { LOGIN_ROUTE } from './core/http/auth.interceptor';
+import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import {
@@ -11,10 +15,10 @@ import {
   titleOf,
 } from './core/navigation/navigation.types';
 import {
-  indiceDePestana,
-  PESTANA,
-  PESTANAS_DEL_PERFIL,
-} from './features/account/my-profile/pestanas-del-perfil';
+  tabIndex,
+  TAB,
+  PROFILE_TABS,
+} from './features/account/my-profile/profile-tabs';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
@@ -74,8 +78,8 @@ describe('rutas del armazón', () => {
   /**
    * Ninguna **pantalla** puede quedar fuera del árbol que el registro declara.
    *
-   * Una ruta hija es legítima de dos maneras: **es** una sección, o **cuelga**
-   * de una —el alta, la ficha de un registro, un flujo alternativo—. Lo que
+   * Una ruta hija **es** una sección, **cuelga** de una o declara un alias de
+   * ella con la misma política —el alta, la ficha, un flujo alternativo—. Lo que
    * sigue prohibido es una pantalla que no se pueda alcanzar desde ninguna
    * sección: esa es una pantalla a la que el menú nunca lleva y que nadie
    * recuerda mantener.
@@ -118,10 +122,38 @@ describe('rutas del armazón', () => {
       if (path === '' || r.redirectTo !== undefined || sinSeccionAProposito.includes(path)) {
         return false;
       }
-      return !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`));
+      const esAliasDeclarado = APP_SECTIONS.some(
+        (seccion) =>
+          r.data?.[SECTION_ROUTE_DATA] === seccion &&
+          seccion.representaEnElMenu?.includes(path) === true &&
+          r.pathMatch === 'full' &&
+          r.canActivate?.includes(seccionRolesGuard) === true &&
+          r.data?.[ROLES_ROUTE_DATA] === seccion.roles,
+      );
+      return (
+        !esAliasDeclarado &&
+        !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`))
+      );
     });
 
     expect(huerfanas.map((r) => r.path)).toEqual([]);
+  });
+
+  it('el alias del perfil conserva el cargador, el título y la política de Mi perfil', async () => {
+    const canonica = hijas.find((route) => route.path === 'my-account');
+    const alias = hijas.find((route) => route.path === 'account/profile');
+    const seccion = APP_SECTIONS.find((section) => section.path === 'my-account');
+    const { MyAccount } = await import('./features/account/my-account/my-account');
+
+    expect(alias).toBeDefined();
+    expect(alias?.redirectTo).toBeUndefined();
+    expect(alias?.pathMatch).toBe('full');
+    expect(alias?.title).toBe(canonica?.title);
+    expect(alias?.data?.[SECTION_ROUTE_DATA]).toBe(seccion);
+    expect(alias?.data?.[ROLES_ROUTE_DATA]).toBe(seccion?.roles);
+    expect(alias?.canActivate).toEqual(canonica?.canActivate);
+    expect(await alias?.loadComponent?.()).toBe(MyAccount);
+    expect(APP_SECTIONS.some((section) => section.path === 'account/profile')).toBe(false);
   });
 
   /**
@@ -401,25 +433,20 @@ describe('rutas del armazón', () => {
    * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
   it('una sección disponible NO cae en el placeholder', async () => {
-    const secciones = APP_SECTIONS.filter(
+    const sections = APP_SECTIONS.filter(
       (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
     );
+    await Promise.all(sections.map(async (section) => {
+      const ruta = hijas.find((route) => route.path === section.path);
+      const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
-    // Las cargas son independientes: resolverlas en paralelo evita que el
-    // tiempo de esta prueba crezca como la suma de todas las pantallas.
-    await Promise.all(
-      secciones.map(async (section) => {
-        const ruta = hijas.find((route) => route.path === section.path);
-        const componente = ruta?.component ?? (await ruta?.loadComponent?.());
-
-        expect(componente, section.path).toBeDefined();
-        // Se compara por identidad y no por `name`: el compilador de Angular
-        // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
-        // rompería sin que nada esté mal.
-        expect(componente, section.path).not.toBe(SectionPlaceholder);
-      }),
-    );
-  }, 60_000);
+      expect(componente, section.path).toBeDefined();
+      // Se compara por identidad y no por `name`: el compilador de Angular
+      // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
+      // rompería sin que nada esté mal.
+      expect(componente, section.path).not.toBe(SectionPlaceholder);
+    }));
+  }, 30_000);
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
     for (const section of APP_SECTIONS.filter((s) => s.availability === 'planificada')) {
@@ -460,7 +487,12 @@ describe('rutas públicas del buscador', () => {
   let location: Location;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(routes),
+        { provide: PublicDirectoryClient, useValue: { getProfile: () => of(null) } },
+      ],
+    });
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
   });
@@ -504,9 +536,11 @@ describe('rutas públicas del buscador', () => {
    * que retroceder al `search` generado para encontrarlo. Es el supuesto del
    * que depende que las dos formas convivan.
    */
-  it('las URL de la bóveda siguen abriendo, por retroceso al bloque generado', async () => {
-    expect(await resuelve('/search/finder-list')).toBe(true);
-    expect(await resuelve('/search/practitioner-profile-detail')).toBe(true);
+  it('las URL de la bóveda conservan su destino en API real', async () => {
+    expect(await router.navigateByUrl('/search/finder-list')).toBe(true);
+    expect(location.path()).toBe('/search');
+    expect(await router.navigateByUrl('/search/practitioner-profile-detail')).toBe(true);
+    expect(location.path()).toBe('/search/practitioners');
   });
 
   // ─── TAREA-29: las direcciones viejas siguen abriendo ──────────────────────
@@ -528,6 +562,11 @@ describe('rutas públicas del buscador', () => {
     // Las direcciones en castellano de las maquetas, a su dirección nueva.
     ['/buscar/buscador-listado', '/search/finder-list'],
     ['/buscar/perfil-profesional-detalle', '/search/practitioner-profile-detail'],
+    ['/buscar/perfil-farmacia-detalle/una', '/f/una'],
+    ['/search/pharmacy-profile-detail/una', '/f/una'],
+    // Las direcciones en castellano de las maquetas: vieja → nueva → real.
+    ['/buscar/buscador-listado', '/search'],
+    ['/buscar/perfil-profesional-detalle', '/search/practitioners'],
     ['/buscar/perfil-farmacia-detalle/una', '/f/una'],
     ['/search/pharmacy-profile-detail/una', '/f/una'],
   ])('%s redirige a %s', async (vieja, nueva) => {
@@ -572,6 +611,65 @@ function withoutGuards(tree: typeof routes): typeof routes {
     ...(route.children === undefined ? {} : { children: withoutGuards(route.children) }),
   }));
 }
+
+describe('el alias del perfil conserva su URL con los guards reales', () => {
+  let router: Router;
+  let session: SessionStore;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    router = TestBed.inject(Router);
+    session = TestBed.inject(SessionStore);
+  });
+
+  function openSession(rol: string): void {
+    // Claims sintéticos ASCII: el test de rutas sólo necesita identidad y rol.
+    const payload = btoa(JSON.stringify({ sub: 'perfil-test', roles: [rol], tenants: ['t-1'] }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    session.start({ accessToken: `eyJhbGciOiJIUzI1NiJ9.${payload}.firma`, refreshToken: 'r-test' });
+  }
+
+  it.each(['PRACTITIONER', 'PATIENT', 'USER'])(
+    'una sesión %s abre la misma ficha sin cambiar la URL',
+    async (rol) => {
+      openSession(rol);
+
+      expect(await router.navigateByUrl('/account/profile')).toBe(true);
+      expect(router.url).toBe('/account/profile');
+      expect(router.routerState.snapshot.root.firstChild?.firstChild?.routeConfig?.path).toBe(
+        'account/profile',
+      );
+    },
+  );
+
+  it('conserva query y fragmento al abrir el alias', async () => {
+    openSession('PRACTITIONER');
+    const url = '/account/profile?pestana=personales#datos';
+
+    await router.navigateByUrl(url);
+
+    expect(router.url).toBe(url);
+  });
+
+  it('sin sesión la URL del perfil pasa por el login', async () => {
+    await router.navigateByUrl('/account/profile');
+
+    expect(router.url).toBe(LOGIN_ROUTE);
+  });
+
+  it('el acceso anterior a Mi perfil continúa disponible', async () => {
+    openSession('PRACTITIONER');
+
+    await router.navigateByUrl('/my-account');
+
+    expect(router.url).toBe('/my-account');
+    expect(router.routerState.snapshot.root.firstChild?.firstChild?.routeConfig?.path).toBe(
+      'my-account',
+    );
+  });
+});
 
 /**
  * El comprobante (FAR-I5) vive en `…/:orderId/receipt`, declarado DESPUÉS del
@@ -662,10 +760,10 @@ describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
   }
 
   it('la clave de la redirección es la pestaña «Mis puntos» de la ficha', () => {
-    const indice = indiceDePestana(SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null);
+    const indice = tabIndex(SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null);
 
-    expect(indice).toBe(PESTANA.puntos);
-    expect(PESTANAS_DEL_PERFIL[indice ?? -1]).toBe('Mis puntos');
+    expect(indice).toBe(TAB.puntos);
+    expect(PROFILE_TABS[indice ?? -1]).toBe('Mis puntos');
   });
 
   it('`/my-account/loyalty` termina en `/my-account?pestana=puntos`', async () => {

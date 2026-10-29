@@ -178,6 +178,7 @@
            encuentro en curso ya es el contexto— porque ahí la lista baja vacía. -->
       @if (opcionesDeCita().length > 1) {
         <app-form-field icon="calendar"
+          class="app-form-grid__ancho"
           label="¿De qué consulta es la receta?"
           hint="La cita que la motiva, incluidas las ya finalizadas."
         >
@@ -195,10 +196,10 @@
            como se elige un medicamento. Sigue sin haber texto libre: lo que se
            guarda es el `conceptId` de lo elegido. -->
       <app-form-field icon="pill"
+        class="app-form-grid__ancho"
         label="Medicamento"
         hint="Busque por nombre o código. Es lo único obligatorio."
         [required]="true"
-        [errorMessage]="erroresDeCampo()['medicationConceptId']"
       >
         <app-reference-combobox
           [(value)]="medicamento"
@@ -286,19 +287,22 @@
         />
       </app-form-field>
 
-      <app-form-field icon="history"
-        label="Duración del tratamiento"
-        hint="Opcional. Días previstos de toma, o tratamiento continuo. Deriva el fin de vigencia y sugiere la cantidad."
-      >
-        <app-select
-          [value]="duracionRapidaElegida()"
-          [options]="opcionesDuracionRapida"
-          placeholder="Elija una duración"
-          (valueChange)="elegirDuracionRapida($event)"
-        />
-      </app-form-field>
+      <!-- La duración va en la misma fila que las dos fechas porque es lo que
+           las deriva: sola en la rejilla de dos columnas quedaba con un hueco
+           al lado y lejos del fin de vigencia que calcula. -->
+      <div class="receta__vigencia">
+        <app-form-field icon="history"
+          label="Duración del tratamiento"
+          hint="Opcional. Días previstos de toma, o tratamiento continuo. Deriva el fin de vigencia y sugiere la cantidad."
+        >
+          <app-select
+            [value]="duracionRapidaElegida()"
+            [options]="opcionesDuracionRapida"
+            placeholder="Elija una duración"
+            (valueChange)="elegirDuracionRapida($event)"
+          />
+        </app-form-field>
 
-      <div class="receta__fechas-grid app-form-grid">
         <app-form-field icon="calendar" label="Inicio de vigencia" hint="Desde cuándo es válida la receta.">
           <app-date-picker [(value)]="validFrom" />
         </app-form-field>
@@ -325,6 +329,7 @@
            momento se liga a un diagnóstico confirmado o a un motivo escrito.
            Ya no hay opción vacía. -->
       <app-form-field icon="heart"
+        class="app-form-grid__ancho"
         label="¿Para qué es esta receta?"
         hint="Elija un diagnóstico confirmado o «Otro motivo» para escribirlo."
       >

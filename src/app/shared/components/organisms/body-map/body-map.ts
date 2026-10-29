@@ -2,12 +2,13 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
+  InjectionToken,
   PLATFORM_ID,
   computed,
   effect,
   inject,
   input,
+  linkedSignal,
   model,
   signal,
 } from '@angular/core';
@@ -53,6 +54,19 @@ interface VistaDibujable {
   readonly vista: VistaDelCuerpo;
   readonly zonas: readonly ZonaDibujable[];
 }
+
+/**
+ * Si el cambio de vista espera a que llegue la imagen de la nueva (y se
+ * precargan las demás). Es la conducta de producción; se apaga sólo en las
+ * pruebas que no cargan imágenes y necesitan el cambio síncrono.
+ */
+export const ESPERAR_IMAGEN_DE_VISTA = new InjectionToken<boolean>('ESPERAR_IMAGEN_DE_VISTA', {
+  providedIn: 'root',
+  factory: () => true,
+});
+
+/** Cuánto se espera una imagen antes de darla por perdida y mostrar la vista igual. */
+const ESPERA_MAXIMA_DE_IMAGEN_MS = 4000;
 
 /** Para que cada silueta tenga su propio degradado aunque haya dos en la página. */
 let siguienteSilueta = 0;
@@ -102,13 +116,19 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  * `scripts/gen-body-zones.py`). La imagen va debajo como `<image>` del mismo
  * SVG; las zonas, transparentes, encima.
  *
- * **Las tres vistas se bajan juntas, apenas se monta la figura** (reporte del
- * propietario, 24/10/2026: «tarda muchísimo en cambiar de frente a espalda y
- * cara»). Antes sólo se pedía la imagen de la vista puesta, y como el servidor
- * sirve `public/` con `no-cache` —a propósito, ver `server/build-assets.ts`—
- * cada cambio de vista era una consulta al servidor: 1,1–1,6 s medidos contra
- * la demo, con la foto vieja debajo de las zonas nuevas mientras tanto. Ahora
- * se guardan decodificadas en memoria como `blob:` y el cambio no toca la red.
+ * **Imagen y zonas cambian juntas.** Al cambiar de vista, la figura que se ve
+ * sigue siendo la anterior hasta que la imagen de la nueva está descargada y
+ * decodificada; recién entonces se cambian a la vez la imagen, el `viewBox` y
+ * las zonas. Antes cambiaban las zonas al instante y la imagen cuando llegaba:
+ * con conexión lenta se veía el contorno de la espalda sobre el maniquí de
+ * frente (reporte del cliente, 24/10/2026). Cuando la vista pedida ya se
+ * pintó una vez no hay espera. Al terminar de pintar la vista puesta, las
+ * otras dos se precargan en reposo (unos 50 KB cada una), para que el segundo
+ * cambio sea inmediato.
+ *
+ * **El escenario no cambia de alto.** La cara es más baja que el cuerpo; sin
+ * reserva, cada paso entre «Frente» y «Cara» corría 90 px todo lo que hay
+ * debajo. El marco reserva el alto de la figura entera y la cara se centra.
  *
  * ## El equivalente por teclado no es un añadido, es la mitad del control
  *
@@ -186,69 +206,6 @@ export class BodyMap {
    */
   protected readonly idDeLaElegida = `body-map-elegida-${siguienteSilueta++}`;
 
-  private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
-
-  /** Las imágenes ya bajadas y decodificadas: ruta pública → URL `blob:`. */
-  private readonly enMemoria = signal<ReadonlyMap<string, string>>(new Map());
-
-  /** Rutas cuya descarga ya arrancó, para no pedir dos veces la misma. */
-  private readonly pedidas = new Set<string>();
-
-  private destruida = false;
-
-  constructor() {
-    // Las tres vistas del sexo puesto; si el sexo llega después (el perfil se
-    // resuelve tarde), se bajan las de ese también.
-    effect(() => {
-      for (const vista of this.vistasDelSexo()) this.precargar(vista.image);
-    });
-    inject(DestroyRef).onDestroy(() => {
-      this.destruida = true;
-      for (const url of this.enMemoria().values()) URL.revokeObjectURL(url);
-    });
-  }
-
-  /** Lo que dibuja el `<image>`: la copia en memoria si ya está, si no la ruta. */
-  protected imagenDe(vista: VistaDelCuerpo): string {
-    return this.enMemoria().get(vista.image) ?? vista.image;
-  }
-
-  /**
-   * Baja una imagen una sola vez y la deja decodificada en memoria.
-   *
-   * Sólo en el navegador: en el servidor no hay a quién mostrársela, y sin
-   * `fetch` o `URL.createObjectURL` (jsdom) la vista sigue con su ruta, que es
-   * exactamente como funcionaba antes.
-   */
-  private precargar(ruta: string): void {
-    if (!this.esNavegador || this.pedidas.has(ruta)) return;
-    if (typeof fetch !== 'function' || typeof URL.createObjectURL !== 'function') return;
-    this.pedidas.add(ruta);
-    void this.bajar(ruta);
-  }
-
-  private async bajar(ruta: string): Promise<void> {
-    try {
-      const respuesta = await fetch(ruta);
-      if (!respuesta.ok) throw new Error(`${ruta}: HTTP ${respuesta.status}`);
-      const url = URL.createObjectURL(await respuesta.blob());
-      // Decodificada antes de usarla: si no, el primer cambio de vista igual
-      // esperaría al decodificador y se vería un cuadro vacío.
-      const imagen = new Image();
-      imagen.src = url;
-      if (typeof imagen.decode === 'function') await imagen.decode();
-      if (this.destruida) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-      this.enMemoria.update((previas) => new Map(previas).set(ruta, url));
-    } catch {
-      // Sin la copia en memoria la vista pide su ruta como antes: más lento,
-      // pero se ve. Se olvida el pedido para reintentarlo si vuelve a hacer falta.
-      this.pedidas.delete(ruta);
-    }
-  }
-
   /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
   private readonly apuntada = signal<string | null>(null);
 
@@ -298,6 +255,36 @@ export class BodyMap {
     return vistas.find((v) => v.zonas.some((zona) => zona.id === elegida)) ?? pedida;
   });
 
+  private readonly esperaLaImagen =
+    isPlatformBrowser(inject(PLATFORM_ID)) && inject(ESPERAR_IMAGEN_DE_VISTA);
+
+  /** Las imágenes ya descargadas y decodificadas (o que fallaron: no se espera para siempre). */
+  private readonly imagenesListas = signal<ReadonlySet<string>>(new Set());
+  private readonly imagenesPedidas = new Map<string, Promise<void>>();
+
+  /**
+   * La vista que se **ve**: la pedida cuando su imagen ya está lista; hasta
+   * entonces, la anterior. Imagen, `viewBox` y zonas salen de la misma vista.
+   * La primera vista no espera (no hay nada anterior que mostrar).
+   */
+  protected readonly vistaVisible = linkedSignal<
+    { objetivo: VistaDibujable | null; listas: ReadonlySet<string> },
+    VistaDibujable | null
+  >({
+    source: () => ({ objetivo: this.vista(), listas: this.imagenesListas() }),
+    computation: ({ objetivo, listas }, previo) => {
+      if (objetivo === null) return null;
+      if (!this.esperaLaImagen || listas.has(objetivo.vista.image)) return objetivo;
+      return previo?.value ?? objetivo;
+    },
+  });
+
+  /** Hay una vista pedida cuya imagen todavía viene en camino. */
+  protected readonly cambiandoDeVista = computed(() => {
+    const objetivo = this.vista();
+    return objetivo !== null && objetivo !== this.vistaVisible();
+  });
+
   /**
    * Dónde va el marcador de la elegida: un punto por cada parte de la zona en
    * la vista puesta (las dos manos llevan dos). Vacío si no hay elegida o si
@@ -306,7 +293,7 @@ export class BodyMap {
   protected readonly centrosDeLaElegida = computed<readonly (readonly [number, number])[]>(() => {
     const elegida = this.value();
     if (elegida === null) return [];
-    return this.vista()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
+    return this.vistaVisible()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
   });
 
   protected readonly opcionesDeVista = computed<readonly SegmentedOption<IdDeVista>[]>(() =>
@@ -322,7 +309,9 @@ export class BodyMap {
       .filter((zona) => marcadas.has(zona.id))
       .map((zona) => zona.nombre);
     if (nombres.length === 0) return null;
-    return nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`;
+    return nombres.length === 1
+      ? nombres[0]
+      : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`;
   });
 
   /** El nombre de la zona apuntada, salvo que ya sea la elegida (eso ya se dice abajo). */
@@ -339,6 +328,45 @@ export class BodyMap {
   /** El nombre que se anuncia: el de la zona y, si lo contado la nombra, eso también. */
   protected nombreAccesible(zona: ZonaDibujable): string {
     return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
+  }
+
+  constructor() {
+    // Pide la imagen de la vista puesta y, cuando ésa ya está, las otras.
+    effect(() => {
+      const objetivo = this.vista();
+      if (!this.esperaLaImagen || objetivo === null) return;
+      this.precargar(objetivo.vista.image).then(() => {
+        const otras = this.vistas().filter((v) => v !== objetivo);
+        const enReposo = (tarea: () => void): void =>
+          typeof requestIdleCallback === 'function'
+            ? void requestIdleCallback(tarea)
+            : void setTimeout(tarea, 200);
+        enReposo(() => otras.forEach((v) => void this.precargar(v.vista.image)));
+      });
+    });
+  }
+
+  /** Descarga y decodifica una imagen una sola vez; resuelve también si falla. */
+  private precargar(url: string): Promise<void> {
+    const enCurso = this.imagenesPedidas.get(url);
+    if (enCurso !== undefined) return enCurso;
+    const imagen = new Image();
+    imagen.src = url;
+    const marcar = (): void => this.imagenesListas.update((listas) => new Set(listas).add(url));
+    const decodificada =
+      typeof imagen.decode === 'function'
+        ? imagen.decode()
+        : new Promise<void>((resolver, rechazar) => {
+            imagen.onload = () => resolver();
+            imagen.onerror = rechazar;
+          });
+    // Una imagen que no llega no deja la figura congelada: pasado el tope se
+    // muestra la vista igual (con su imagen rota o a medio cargar, pero con las
+    // zonas que se pueden tocar).
+    const tope = new Promise<void>((resolver) => setTimeout(resolver, ESPERA_MAXIMA_DE_IMAGEN_MS));
+    const lista = Promise.race([decodificada, tope]).then(marcar, marcar);
+    this.imagenesPedidas.set(url, lista);
+    return lista;
   }
 
   protected apuntar(id: string | null): void {

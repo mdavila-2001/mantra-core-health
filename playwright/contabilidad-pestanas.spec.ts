@@ -14,7 +14,7 @@ import { entrar, irA } from './support/sesion';
  * Comprueba la separación en escritorio y en móvil, que el fondo es blanco y
  * que el contenido ocupa el ancho del área, y deja una foto de cada pestaña.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-30-contabilidad-en-pestanas', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-30-contabilidad-en-pestanas', 'evidencia');
 const DOCTORA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',
@@ -73,6 +73,7 @@ for (const vista of VISTAS) {
     await page.getByRole('tab', { name: 'Movimientos' }).click();
     await expect(page.getByTestId('contabilidad-registros')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Nuevo gasto' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Lo que tiene y lo que debe' })).toBeVisible();
     await foto(page, vista, `resumen-${vista.nombre}.png`);
 
     /* ---- Registros: tablas, ningún tablero ---------------------------- */

@@ -1,0 +1,76 @@
+diff -r /tmp/claude-0/-home-user/0e42d73f-6de3-5107-929f-1674e66a4707/scratchpad/final/cat-base/foreign-keys/clinical.2.fk.ts src/orm/catalog/foreign-keys/clinical.2.fk.ts
+5c5
+<  * 49 restricciones. Generado desde las notas `FK/` de la bóveda SALUD;
+---
+>  * 52 restricciones. Generado desde las notas `FK/` de la bóveda SALUD;
+33a34,36
+>   ['service_request_notes', 'clinical_note_header_id', 'chart', 'clinical_note_headers', 'id'],
+>   ['service_request_notes', 'created_by_user_id', 'iam', 'users', 'id'],
+>   ['service_request_notes', 'service_request_id', 'clinical', 'service_requests', 'id'],
+diff -r /tmp/claude-0/-home-user/0e42d73f-6de3-5107-929f-1674e66a4707/scratchpad/final/cat-base/foreign-keys/pharmacy.fk.ts src/orm/catalog/foreign-keys/pharmacy.fk.ts
+5c5
+<  * 64 restricciones. Generado desde las notas `FK/` de la bóveda SALUD;
+---
+>  * 78 restricciones. Generado desde las notas `FK/` de la bóveda SALUD;
+13a14
+>   ['pharmacies', 'primary_practice_site_id', 'practice', 'practice_sites', 'id'],
+40a42,46
+>   ['pharmacy_on_call_shifts', 'created_by_user_id', 'iam', 'users', 'id'],
+>   ['pharmacy_on_call_shifts', 'pharmacy_site_id', 'pharmacy', 'pharmacy_sites', 'id'],
+>   ['pharmacy_on_call_shifts', 'source_concept_id', 'terminology', 'catalog_concepts', 'id'],
+>   ['pharmacy_on_call_shifts', 'status_concept_id', 'terminology', 'catalog_concepts', 'id'],
+>   ['pharmacy_on_call_shifts', 'updated_by_user_id', 'iam', 'users', 'id'],
+48a55,57
+>   ['pharmacy_product_categories', 'created_by_user_id', 'iam', 'users', 'id'],
+>   ['pharmacy_product_categories', 'pharmacy_id', 'pharmacy', 'pharmacies', 'id'],
+>   ['pharmacy_product_categories', 'updated_by_user_id', 'iam', 'users', 'id'],
+53a63,65
+>   ['pharmacy_product_images', 'created_by_user_id', 'iam', 'users', 'id'],
+>   ['pharmacy_product_images', 'image_file_id', 'common', 'files', 'id'],
+>   ['pharmacy_product_images', 'pharmacy_product_id', 'pharmacy', 'pharmacy_products', 'id'],
+57a70
+>   ['pharmacy_products', 'catalog_product_concept_id', 'terminology', 'catalog_concepts', 'id'],
+63a77
+>   ['pharmacy_products', 'pharmacy_product_category_id', 'pharmacy', 'pharmacy_product_categories', 'id'],
+diff -r /tmp/claude-0/-home-user/0e42d73f-6de3-5107-929f-1674e66a4707/scratchpad/final/cat-base/indexes/clinical.2.idx.ts src/orm/catalog/indexes/clinical.2.idx.ts
+5c5
+<  * 76 definiciones. Generado desde los `<<INDEX_SET>>` de la bóveda SALUD;
+---
+>  * 80 definiciones. Generado desde los `<<INDEX_SET>>` de la bóveda SALUD;
+57a58,61
+>   ['service_request_notes', 'ux_service_request_notes_request_note', ['service_request_id', 'clinical_note_header_id'], true, 'btree'],
+>   ['service_request_notes', 'ix_service_request_notes_service_request_id', ['service_request_id'], false, 'btree'],
+>   ['service_request_notes', 'ix_service_request_notes_clinical_note_header_id', ['clinical_note_header_id'], false, 'btree'],
+>   ['service_request_notes', 'ix_service_request_notes_created_by_user_id', ['created_by_user_id'], false, 'btree'],
+diff -r /tmp/claude-0/-home-user/0e42d73f-6de3-5107-929f-1674e66a4707/scratchpad/final/cat-base/indexes/pharmacy.idx.ts src/orm/catalog/indexes/pharmacy.idx.ts
+5c5
+<  * 68 definiciones. Generado desde los `<<INDEX_SET>>` de la bóveda SALUD;
+---
+>  * 89 definiciones. Generado desde los `<<INDEX_SET>>` de la bóveda SALUD;
+16a17
+>   ['pharmacies', 'ix_pharmacies_primary_practice_site_id', ['primary_practice_site_id'], false, 'btree'],
+43a45,50
+>   ['pharmacy_on_call_shifts', 'ix_pharmacy_on_call_shifts_pharmacy_site_id', ['pharmacy_site_id'], false, 'btree'],
+>   ['pharmacy_on_call_shifts', 'ix_pharmacy_on_call_shifts_source_concept_id', ['source_concept_id'], false, 'btree'],
+>   ['pharmacy_on_call_shifts', 'ix_pharmacy_on_call_shifts_status_concept_id', ['status_concept_id'], false, 'btree'],
+>   ['pharmacy_on_call_shifts', 'ix_pharmacy_on_call_shifts_created_by_user_id', ['created_by_user_id'], false, 'btree'],
+>   ['pharmacy_on_call_shifts', 'ix_pharmacy_on_call_shifts_updated_by_user_id', ['updated_by_user_id'], false, 'btree'],
+>   ['pharmacy_on_call_shifts', 'ix_pharmacy_on_call_shifts_site_window', ['pharmacy_site_id', 'ends_at desc', 'starts_at'], false, 'btree'],
+51a59,63
+>   ['pharmacy_product_categories', 'ix_pharmacy_product_categories_pharmacy_id', ['pharmacy_id'], false, 'btree'],
+>   ['pharmacy_product_categories', 'uq_pharmacy_product_categories_pharmacy_id_name_key', ['pharmacy_id', 'name_key'], true, 'btree'],
+>   ['pharmacy_product_categories', 'uq_pharmacy_product_categories_pharmacy_id_id', ['pharmacy_id', 'id'], true, 'btree'],
+>   ['pharmacy_product_categories', 'ix_pharmacy_product_categories_created_by_user_id', ['created_by_user_id'], false, 'btree'],
+>   ['pharmacy_product_categories', 'ix_pharmacy_product_categories_updated_by_user_id', ['updated_by_user_id'], false, 'btree'],
+56a69,73
+>   ['pharmacy_product_images', 'ix_pharmacy_product_images_pharmacy_product_id', ['pharmacy_product_id'], false, 'btree'],
+>   ['pharmacy_product_images', 'ix_pharmacy_product_images_image_file_id', ['image_file_id'], false, 'btree'],
+>   ['pharmacy_product_images', 'uq_pharmacy_product_images_pharmacy_product_id_ordinal', ['pharmacy_product_id', 'ordinal'], true, 'btree'],
+>   ['pharmacy_product_images', 'uq_pharmacy_product_images_pharmacy_product_id_image_file_id', ['pharmacy_product_id', 'image_file_id'], true, 'btree'],
+>   ['pharmacy_product_images', 'ix_pharmacy_product_images_created_by_user_id', ['created_by_user_id'], false, 'btree'],
+66a84,86
+>   ['pharmacy_products', 'ix_pharmacy_products_catalog_product_concept_id', ['catalog_product_concept_id'], false, 'btree'],
+>   ['pharmacy_products', 'uq_pharmacy_products_catalog_presentation', ['pharmacy_id', 'catalog_product_concept_id', 'catalog_presentation_code'], true, 'btree', 'catalog_product_concept_id IS NOT NULL AND catalog_presentation_code IS NOT NULL'],
+>   ['pharmacy_products', 'uq_pharmacy_products_catalog_no_presentation', ['pharmacy_id', 'catalog_product_concept_id'], true, 'btree', 'catalog_product_concept_id IS NOT NULL AND catalog_presentation_code IS NULL'],
+67a88
+>   ['pharmacy_products', 'ix_pharmacy_products_pharmacy_product_category_id', ['pharmacy_product_category_id'], false, 'btree'],

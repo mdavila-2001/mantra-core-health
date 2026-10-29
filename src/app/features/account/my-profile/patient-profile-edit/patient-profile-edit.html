@@ -184,6 +184,17 @@
                 />
               </app-form-field>
 
+              <!-- El departamento que emitió el documento: se corrige, el número no
+                   (ID-22). -->
+              <app-form-field label="Departamento que emitió su documento">
+                <app-select
+                  data-testid="perfil-departamento-emisor"
+                  [options]="opcionesDepartamento()"
+                  [(value)]="departamentoEmisor"
+                  placeholder="Elija un departamento"
+                />
+              </app-form-field>
+
               @if (catalogoOcupacionesCaido()) {
                 <app-form-field label="Ocupación (opcional)">
                   <p class="datos__aviso" data-testid="perfil-ocupaciones-caido">
@@ -239,13 +250,70 @@
 
         <!-- ─── Contacto ────────────────────────────────────────────────── -->
         <app-tab [label]="pestanas[1]">
-          <!-- El municipio viaja SOLO: el departamento lo deriva el backend del
-               código del INE, así que el par no puede llegar incoherente. -->
           <section class="datos__seccion">
             <h3 class="datos__titulo">Contacto</h3>
             <p class="datos__nota">Cómo ubicarle y dónde vive.</p>
 
             <div class="datos__campos">
+              <!-- Pedido del cliente del 26/10/2026: cada dirección es un punto
+                   en el mapa, primero en la pestaña, y es lo único que se marca.
+                   La calle, el mapa de Bolivia acercado, el departamento, la
+                   provincia, el municipio y la zona salen del punto y se
+                   muestran en sólo lectura. El del domicilio es obligatorio; uno
+                   ya guardado vale sin volver a confirmarlo. Es el MISMO bloque
+                   del alta, no una copia. El municipio viaja SOLO: el
+                   departamento lo deriva el backend del código del INE. -->
+              <div class="datos__direccion" data-testid="perfil-domicilio">
+                <h4 class="datos__subtitulo">
+                  Domicilio <span aria-hidden="true">*</span>
+                  <span class="sr-only">(obligatorio)</span>
+                </h4>
+                <app-map-location-picker
+                  pinId="perfil-domicilio"
+                  etiquetaConfirmada="Su casa"
+                  etiquetaQuitar="Quitar la ubicación de su casa"
+                  etiquetaMapa="La ubicación de su casa en el mapa"
+                  etiquetaMarcar="Marcar mi casa en el mapa"
+                  indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
+                  etiquetaFicha="Su domicilio"
+                  [ids]="idsGpsDomicilio"
+                  [inicial]="gpsDomicilioGuardado()"
+                  (confirmado)="confirmarGpsDomicilio($event)"
+                  (localidad)="aplicarLocalidadDomicilio($event)"
+                />
+                @if (sinPuntoDeDomicilio()) {
+                  <p class="datos__error" role="alert" data-testid="perfil-domicilio-sin-punto">
+                    {{ mensajeSinPunto }}
+                  </p>
+                }
+                @if (errorDelServidor('homeAddressLines'); as error) {
+                  <p class="datos__error" role="alert">{{ error }}</p>
+                }
+                @if (errorDelServidor('residenceMunicipalityConceptId'); as error) {
+                  <p class="datos__error" role="alert">{{ error }}</p>
+                }
+              </div>
+
+              <div class="datos__direccion" data-testid="perfil-trabajo">
+                <h4 class="datos__subtitulo">Trabajo (opcional)</h4>
+                <app-map-location-picker
+                  pinId="perfil-trabajo"
+                  etiquetaConfirmada="Su trabajo"
+                  etiquetaQuitar="Quitar la ubicación de su trabajo"
+                  etiquetaMapa="La ubicación de su trabajo en el mapa"
+                  etiquetaMarcar="Marcar mi trabajo en el mapa"
+                  indicacionMarcar="Toque el mapa en la puerta de su trabajo para poner el pin."
+                  etiquetaFicha="Su trabajo"
+                  [ids]="idsGpsTrabajo"
+                  [inicial]="gpsTrabajoGuardado()"
+                  (confirmado)="confirmarGpsTrabajo($event)"
+                  (localidad)="aplicarLocalidadTrabajo($event)"
+                />
+                @if (errorDelServidor('workAddressLines'); as error) {
+                  <p class="datos__error" role="alert">{{ error }}</p>
+                }
+              </div>
+
               <app-form-field
                 label="Teléfono"
                 hint="Con el que podamos llamarle. Vaciarlo le deja sin teléfono."
@@ -265,128 +333,6 @@
                   [testId]="'perfil-telefono'"
                 />
               </app-form-field>
-
-              @if (catalogoMunicipiosCaido()) {
-                <app-form-field label="¿Dónde vive?">
-                  <p class="datos__aviso" data-testid="perfil-municipios-caidos">
-                    No pudimos traer el catálogo de municipios.
-                    <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
-                      Reintentar
-                    </button>
-                  </p>
-                </app-form-field>
-              } @else {
-                <!-- El selector de ubicación es el árbol del alta: primero el
-                     departamento y dentro sus municipios, con buscador. No es
-                     una casilla de texto: el valor es un concepto del catálogo,
-                     y así lo que se elija se lee igual en la ficha. -->
-                <app-form-field
-                  label="¿Dónde vive?"
-                  hint="Busque su municipio, o abra su departamento."
-                  [errorMessage]="errorDelServidor('residenceMunicipalityConceptId')"
-                >
-                  <app-tree-select
-                    data-testid="perfil-municipio"
-                    [groups]="arbolMunicipios()"
-                    [(value)]="municipio"
-                    placeholder="Sin especificar"
-                    dialogTitle="¿Dónde vive?"
-                    searchPlaceholder="Buscar municipio o departamento…"
-                    emptyMessage="Ningún municipio coincide con esa búsqueda."
-                  />
-                </app-form-field>
-              }
-
-              <!-- Las dos direcciones. Van acá porque responden a «cómo ubicarte»,
-                   que es de lo que trata esta pestaña. El municipio de arriba sigue
-                   viajando aparte: sale del catálogo, y estas son texto libre porque
-                   una dirección boliviana real —«Av. Prolongación Beni #5100, esq.
-                   6to anillo»— no entra en una lista. -->
-              <!-- La dirección y su mapa van juntos y a lo ancho de la rejilla.
-                   Sueltos, el mapa caía en la columna siguiente —debajo del
-                   teléfono— y quedaba asociado al campo equivocado. -->
-              <div class="datos__direccion">
-                <app-form-field
-                  label="Domicilio"
-                  hint="Calle, número y zona. Vaciarlo lo quita de su ficha."
-                  [errorMessage]="errorDelServidor('homeAddressLines')"
-                >
-                  <app-input
-                    data-testid="perfil-domicilio"
-                    [(value)]="domicilio"
-                    placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
-                  />
-                </app-form-field>
-                @if (domicilioPorReescribir()) {
-                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                       anuncia sin robar el foco, que sigue en el mapa. -->
-                  <app-alert
-                    appAnuncio
-                    [asertivo]="false"
-                    [enfocar]="false"
-                    tone="info"
-                    data-testid="perfil-domicilio-reescribir"
-                  >
-                    {{ avisoReescribir }}
-                  </app-alert>
-                }
-
-                <!-- El punto en el mapa, como en una app de pedidos: se pide la
-                     ubicación o se marca el pin a mano, y se confirma mirándolo.
-                     Es el MISMO bloque del alta, no una copia. -->
-                <app-ubicacion-picker
-                  pinId="perfil-domicilio"
-                  etiquetaConfirmada="Su casa"
-                  etiquetaQuitar="Quitar la ubicación de su casa"
-                  etiquetaMapa="La ubicación de su casa en el mapa"
-                  etiquetaMarcar="Marcar mi casa en el mapa"
-                  indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
-                  [ids]="idsGpsDomicilio"
-                  [inicial]="gpsDomicilioGuardado()"
-                  (confirmado)="gpsDomicilio.set($event)"
-                  (puntoElegido)="vaciarDomicilioPorElMapa()"
-                />
-              </div>
-
-              <div class="datos__direccion">
-                <app-form-field
-                  label="Dirección de trabajo"
-                  hint="Si trabaja fuera de Bolivia, sume ciudad y país a la dirección."
-                  [errorMessage]="errorDelServidor('workAddressLines')"
-                >
-                  <app-input
-                    data-testid="perfil-trabajo"
-                    [(value)]="direccionTrabajo"
-                    placeholder="Calle Ayacucho #241, Casco Viejo"
-                  />
-                </app-form-field>
-                @if (trabajoPorReescribir()) {
-                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                       anuncia sin robar el foco, que sigue en el mapa. -->
-                  <app-alert
-                    appAnuncio
-                    [asertivo]="false"
-                    [enfocar]="false"
-                    tone="info"
-                    data-testid="perfil-trabajo-reescribir"
-                  >
-                    {{ avisoReescribir }}
-                  </app-alert>
-                }
-
-                <app-ubicacion-picker
-                  pinId="perfil-trabajo"
-                  etiquetaConfirmada="Su trabajo"
-                  etiquetaQuitar="Quitar la ubicación de su trabajo"
-                  etiquetaMapa="La ubicación de su trabajo en el mapa"
-                  etiquetaMarcar="Marcar mi trabajo en el mapa"
-                  indicacionMarcar="Toque el mapa en la puerta de su trabajo para poner el pin."
-                  [ids]="idsGpsTrabajo"
-                  [inicial]="gpsTrabajoGuardado()"
-                  (confirmado)="gpsTrabajo.set($event)"
-                  (puntoElegido)="vaciarTrabajoPorElMapa()"
-                />
-              </div>
 
               <!-- El correo se MUESTRA y no se edita, y eso hay que decirlo: antes no
                    aparecía, y no verlo se lee como que la app lo perdió.

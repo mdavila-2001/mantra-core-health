@@ -95,6 +95,12 @@ button.avisos__item:focus-visible {
   --notificacion-acciones-inicio: calc(var(--e4) + 2.25rem + var(--e3));
 }
 
+/* «Marcar como leída» de un aviso sin destino, con la misma sangría. */
+.avisos__marcar {
+  padding-block: 0 var(--e3);
+  padding-inline: calc(var(--e4) + 2.25rem + var(--e3)) var(--e4);
+}
+
 /* El dibujo de la familia: dice de qué se trata antes de leer el título, que
    es lo que permite barrer treinta filas sin leerlas todas. */
 .avisos__glifo {

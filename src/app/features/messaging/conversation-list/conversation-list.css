@@ -220,6 +220,12 @@
   opacity: 1;
 }
 
+@media (hover: none), (max-width: 60rem) {
+  .conversaciones__mas {
+    opacity: 0.85;
+  }
+}
+
 .conversaciones__mas svg {
   inline-size: 16px;
   block-size: 16px;

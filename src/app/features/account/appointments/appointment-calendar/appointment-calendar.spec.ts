@@ -122,9 +122,7 @@ describe('AppointmentCalendar', () => {
     expect(aviso?.textContent).toContain('1 cita sin horario');
   });
 
-  it('al cambiar de mes la cita de hoy deja de verse, y «Hoy» la trae de vuelta', () => {
-    // Fecha fija, como en dev: con la de hoy, a fin de mes la grilla del mes
-    // siguiente todavía muestra la semana de hoy y la cita no desaparece.
+  it('al cambiar de mes el turno de hoy deja de verse, y «Hoy» lo trae de vuelta', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 8, 15, 12));
     const { fixture } = montar([turno()]);

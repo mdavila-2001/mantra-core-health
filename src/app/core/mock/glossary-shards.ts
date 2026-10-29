@@ -1,3 +1,5 @@
+import { ArchivoAusente, type LectorDeArchivos } from '../data-access/glossary/glossary-shards.reader';
+export { ArchivoAusente, leerConFetch, type LectorDeArchivos } from '../data-access/glossary/glossary-shards.reader';
 import type { GlossaryArticle } from '../data-access/terminology/glossary-article.types';
 import { uuid } from './mock-store';
 
@@ -5,7 +7,7 @@ import { uuid } from './mock-store';
     El glosario del simulador, **bajo demanda**.
 
     Hasta el 2026-09-30 el simulador importaba el glosario entero
-    (`fixtures/glosario.generated.ts`, 1 MB, y el atlas anatómico, otro
+    (`fixtures/glossary.generated.ts`, 1 MB, y el atlas anatómico, otro
     1,7 MB) dentro del trozo de los manejadores. Con el glosario en castellano
     de cientos de miles de términos eso ya no entra en un bundle: ahora lee
     **shards** estáticos con `fetch` diferido, igual que la API pagina en la
@@ -139,9 +141,6 @@ export interface PedidoDePagina {
   readonly limit: number;
 }
 
-/** Cómo se leen los archivos: `fetch` en el navegador, un doble en las pruebas. */
-export type LectorDeArchivos = (ruta: string) => Promise<unknown>;
-
 /**
  * El orden de las referencias cuando vienen de varias cubetas (búsqueda de una
  * sola letra): por categoría, en el orden del manifiesto, y dentro de ella por
@@ -154,9 +153,6 @@ function compararPorOrden(manifiesto: ManifiestoDelGlosario) {
   return (a: EntradaDeBusqueda, b: EntradaDeBusqueda) =>
     (orden.get(a[0]) ?? 0) - (orden.get(b[0]) ?? 0) || a[1] - b[1] || a[2] - b[2];
 }
-
-/** El error que distingue «no existe» de «falló»: la raíz completa puede faltar. */
-export class ArchivoAusente extends Error {}
 
 /** Sin tildes ni mayúsculas: la misma normalización que la API y el constructor. */
 export function normalizar(texto: string): string {
@@ -509,25 +505,3 @@ export class AlmacenDeGlosario {
     };
   }
 }
-
-/**
- * El lector del navegador: `fetch` relativo a la base del documento.
- *
- * Fuera del navegador (SSR, pruebas sin doble) no hay de dónde leer: se dice
- * con un error explícito y el manejador contesta 503, en vez de colgar el
- * render esperando un archivo que nunca llega.
- */
-export const leerConFetch: LectorDeArchivos = async (ruta) => {
-  if (typeof fetch === 'undefined' || typeof document === 'undefined') {
-    throw new Error('El glosario de la maqueta sólo se lee en el navegador.');
-  }
-  const respuesta = await fetch(new URL(ruta, document.baseURI).toString());
-  if (respuesta.status === 404) throw new ArchivoAusente(ruta);
-  if (!respuesta.ok) throw new Error(`No se pudo leer ${ruta}: ${respuesta.status}`);
-  // El servidor de desarrollo devuelve `index.html` con 200 para cualquier
-  // ruta que no conoce: si no es JSON, el archivo no existe.
-  if (!(respuesta.headers.get('content-type') ?? '').includes('json')) {
-    throw new ArchivoAusente(ruta);
-  }
-  return respuesta.json();
-};

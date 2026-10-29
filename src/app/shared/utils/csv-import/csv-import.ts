@@ -3,7 +3,7 @@
     renglones de celdas.
 
     Nació dentro de las reglas del catálogo de farmacia
-    (`features/pharmacy/catalog-rules/catalogo.reglas.ts`) y se mudó acá cuando
+    (`features/pharmacy/catalog-rules/catalog.rules.ts`) y se mudó acá cuando
     la carga masiva de sucursales necesitó exactamente lo mismo: separador
     detectado (Excel en castellano exporta con `;`), comillas RFC 4180,
     Windows-1252 de reserva y el apóstrofo anti-fórmula de `CsvExportService`

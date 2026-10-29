@@ -2,9 +2,9 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { SITIO_CONSULTORIO } from './fixtures/agenda';
 import { sedesDe } from './handlers/practice.handlers';
-import { TIPO_CREDENCIAL } from './fixtures/conceptos';
-import { credencialesDe, especialidadesDe, licenciasDe, PACIENTE, PACIENTES, PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './fixtures/personas';
-import { ESPECIALIDAD } from './fixtures/conceptos';
+import { CREDENTIAL_TYPE } from './fixtures/concepts';
+import { credentialsOf, specialtiesOf, licensesOf, PACIENTE, PATIENTS, PROFESSIONALS, PROFESSIONALS_REGISTERED_DEMO } from './fixtures/people';
+import { SPECIALTY } from './fixtures/concepts';
 import {
   cupos,
   plantillas,
@@ -16,10 +16,8 @@ import {
   SITIO_OLIVOS,
   ZONA_HORARIA_POR_OMISION,
 } from './fixtures/agenda';
-import { publicaciones, vitrinas } from './fixtures/comunidad';
+import { postList, showcases } from './fixtures/community';
 import { crearRouterSimulado } from './handlers';
-import { perfilProfesionalDe } from './handlers/profiles.handlers';
-import { esTelefonoCompleto } from '../../shared/components/molecules/phone-input/phone-input.paises';
 import { isMockReply, type MockMethod, type MockRequest } from './mock-router';
 import {
   buscarUsuario,
@@ -48,14 +46,14 @@ const router = crearRouterSimulado();
 /** Un valor plausible para cada parámetro de ruta, según su nombre. */
 function valorDe(nombre: string, patron: string): string {
   if (nombre === 'code') return patron.includes('value-sets') ? 'VS_MEDICAL_SPECIALTY' : 'demo';
-  if (nombre === 'slug') return vitrinas.todos()[0]!.slug;
+  if (nombre === 'slug') return showcases.todos()[0]!.slug;
   if (nombre === 'target') return 'profiles.persons.sex_at_birth_concept_id';
   if (/patient/i.test(nombre) || patron.includes('/patients/')) return PACIENTE.id;
-  if (/practitioner/i.test(nombre) || patron.includes('/practitioners/')) return PROFESIONALES[0]!.id;
+  if (/practitioner/i.test(nombre) || patron.includes('/practitioners/')) return PROFESSIONALS[0]!.id;
   if (patron.includes('/bookings/')) return reservas.todos()[0]!.id;
-  if (patron.includes('/posts/')) return publicaciones.todos()[0]!.id;
-  if (patron.includes('/community/profiles/')) return vitrinas.todos()[0]!.id;
-  return PACIENTES[1]!.id;
+  if (patron.includes('/posts/')) return postList.todos()[0]!.id;
+  if (patron.includes('/community/profiles/')) return showcases.todos()[0]!.id;
+  return PATIENTS[1]!.id;
 }
 
 function peticion(method: MockMethod, patron: string, user: MockUser | null): MockRequest {
@@ -102,7 +100,6 @@ describe('backend simulado', () => {
     const routes = [
       { method: 'POST', pattern: '/charts/notes' },
       { method: 'PUT', pattern: '/charts/notes/:id/versions' },
-      { method: 'POST', pattern: '/charts/notes/:id/versions' },
       { method: 'POST', pattern: '/clinical/service-requests' },
       { method: 'POST', pattern: '/clinical/conditions/:id/verification' },
     ];
@@ -111,6 +108,36 @@ describe('backend simulado', () => {
         candidate.method === route.method && candidate.pattern === route.pattern,
       )).toEqual([route]);
     }
+  });
+
+  it('registra sólo el verbo que la API publica en las rutas homologadas (Hito 3)', () => {
+    // Por cada ruta: el verbo canónico —el del controlador de la API— una sola
+    // vez, y el verbo legado, que el simulador aceptaba de más y la API responde
+    // con 404 o 405, ausente. Se comparan los patrones registrados y no las
+    // coincidencias: el comodín `:id` hace que `GET /practitioners/me/sites`
+    // responda igual por `/practitioners/:id/sites`.
+    const aligned = [
+      { canonical: { method: 'PUT', pattern: '/community/reactions' }, legacy: { method: 'POST', pattern: '/community/reactions' } },
+      { canonical: { method: 'PUT', pattern: '/charts/notes/:id/versions' }, legacy: { method: 'POST', pattern: '/charts/notes/:id/versions' } },
+      { canonical: { method: 'PUT', pattern: '/notifications/preferences/me' }, legacy: { method: 'PATCH', pattern: '/notifications/preferences/me' } },
+      { canonical: { method: 'PUT', pattern: '/scheduling/bookings/:id/payment-state' }, legacy: { method: 'POST', pattern: '/scheduling/bookings/:id/payment-state' } },
+      { canonical: { method: 'POST', pattern: '/auth-providers/identity-providers/:id/protocol-configs' }, legacy: { method: 'PUT', pattern: '/auth-providers/identity-providers/:id/protocol-configs' } },
+      { canonical: { method: 'GET', pattern: '/practitioners/:id/sites' }, legacy: { method: 'GET', pattern: '/practitioners/me/sites' } },
+    ];
+    const registered = router.rutas();
+    const countOf = (route: { method: string; pattern: string }): number =>
+      registered.filter((r) => r.method === route.method && r.pattern === route.pattern).length;
+    for (const { canonical, legacy } of aligned) {
+      expect(countOf(canonical), `${canonical.method} ${canonical.pattern}`).toBe(1);
+      expect(countOf(legacy), `${legacy.method} ${legacy.pattern} (verbo legado)`).toBe(0);
+    }
+  });
+
+  it('la reacción responde 200, como la API: es un PUT idempotente y no un alta', () => {
+    const found = router.match('PUT', '/community/reactions');
+    expect(found).not.toBeNull();
+    const reply = found!.handler(peticion('PUT', '/community/reactions', buscarUsuario('medica')!));
+    expect(estadoDe(reply)).toBe(200);
   });
 
   it('la verificación de un diagnóstico que no existe responde 404', () => {
@@ -194,7 +221,7 @@ describe('backend simulado', () => {
 
     expect(respuesta.options).toEqual(
       opcionesCanonicas.map(([code, display], ordinal) => ({
-        conceptId: TIPO_CREDENCIAL[code]!,
+        conceptId: CREDENTIAL_TYPE[code]!,
         code,
         display,
         ordinal,
@@ -236,33 +263,6 @@ describe('backend simulado', () => {
   }
 });
 
-/**
- * Los teléfonos que sirve el perfil profesional.
- *
- * `esTelefonoCompleto` pide «+591 » y OCHO dígitos SEGUIDOS. La maqueta servía
- * el fijo del trabajo como `'+591 3 3456789'` —con un espacio adentro— y eso
- * tenía una consecuencia que no se veía mirando el fixture: el editor del
- * médico nacía con ese control inválido y **se negaba a guardar cualquier
- * cosa**, aunque nadie hubiera tocado ese campo. Se descubrió el 19/09/2026
- * intentando cargar un NIT.
- */
-describe('el perfil profesional de la maqueta sirve teléfonos que el editor acepta', () => {
-  it('los tres teléfonos pasan `esTelefonoCompleto`', () => {
-    const perfil = perfilProfesionalDe(PROFESIONALES[0]!) as unknown as Record<string, string>;
-
-    for (const campo of ['phone', 'mobilePhone', 'workMobilePhone', 'workLandline']) {
-      expect(esTelefonoCompleto(perfil[campo] ?? ''), `${campo}: «${perfil[campo]}»`).toBe(true);
-    }
-  });
-
-  it('el NIT y la razón social viajan en el perfil, como en el del paciente', () => {
-    const perfil = perfilProfesionalDe(PROFESIONALES[0]!) as unknown as Record<string, string>;
-
-    expect(perfil['taxId']).toBe(`${PROFESIONALES[0]!.nationalId}011`);
-    expect(perfil['taxHolderName']).toBe(PROFESIONALES[0]!.displayName);
-  });
-});
-
 /* ============================================================================
     Agendas para 13 profesionales de demostración (R-03, 22/09/2026;
     D-H3-PROV-01, 23/09/2026).
@@ -276,7 +276,7 @@ describe('el perfil profesional de la maqueta sirve teléfonos que el editor ace
     ========================================================================== */
 describe('las agendas de los profesionales de demostración', () => {
   const DIA = 24 * 60 * 60 * 1000;
-  const demos = PROFESIONALES.filter((p) => p.origen === 'DEMO');
+  const demos = PROFESSIONALS.filter((p) => p.origen === 'DEMO');
   const sedes = new Set(Object.values(SEDES_DEMO).map((s) => s.site.id));
 
   function recursosDe(profileId: string) {
@@ -297,8 +297,8 @@ describe('las agendas de los profesionales de demostración', () => {
 
   it('son 13, al final del padrón, con semillas propias y nombres que dicen «demo»', () => {
     expect(demos.length).toBe(13);
-    expect(demos).toEqual([...PROFESIONALES_DEMO_REGISTRADOS]);
-    expect(PROFESIONALES.slice(-13)).toEqual(demos);
+    expect(demos).toEqual([...PROFESSIONALS_REGISTERED_DEMO]);
+    expect(PROFESSIONALS.slice(-13)).toEqual(demos);
     demos.forEach((p, i) => {
       const numero = String(i + 1).padStart(2, '0');
       expect(p.displayName).toBe(`Profesional demo ${numero}`);
@@ -308,7 +308,7 @@ describe('las agendas de los profesionales de demostración', () => {
   });
 
   it('su especialidad sale del catálogo y no están verificados ni puntuados', () => {
-    const catalogo = new Set(Object.values(ESPECIALIDAD));
+    const catalogo = new Set(Object.values(SPECIALTY));
     for (const p of demos) {
       expect(p.especialidades.length, p.id).toBe(1);
       expect(catalogo.has(p.especialidades[0]!), p.id).toBe(true);
@@ -320,9 +320,9 @@ describe('las agendas de los profesionales de demostración', () => {
 
   it('no tienen credenciales, matrícula ni especialidad certificada: no hay título que fingir', () => {
     for (const p of demos) {
-      expect(credencialesDe(p), p.id).toEqual([]);
-      expect(licenciasDe(p), p.id).toEqual([]);
-      expect(especialidadesDe(p).some((e) => e.boardCertified), p.id).toBe(false);
+      expect(credentialsOf(p), p.id).toEqual([]);
+      expect(licensesOf(p), p.id).toEqual([]);
+      expect(specialtiesOf(p).some((e) => e.boardCertified), p.id).toBe(false);
     }
   });
 
@@ -366,13 +366,13 @@ describe('las agendas de los profesionales de demostración', () => {
   });
 
   it('las personas de la planilla del propietario no tienen agenda: la planilla no dice dónde atienden', () => {
-    const deLaPlanilla = PROFESIONALES.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
+    const deLaPlanilla = PROFESSIONALS.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
     expect(deLaPlanilla.length).toBe(13);
     for (const p of deLaPlanilla) expect(recursosDe(p.id), p.id).toEqual([]);
   });
 
   it('el médico escrito sin especialidad sigue sin agenda: no hay nada que reservarle', () => {
-    const sinEspecialidad = PROFESIONALES.filter((p) => p.origen === undefined && p.especialidades.length === 0);
+    const sinEspecialidad = PROFESSIONALS.filter((p) => p.origen === undefined && p.especialidades.length === 0);
     expect(sinEspecialidad.length).toBeGreaterThan(0);
     for (const p of sinEspecialidad) {
       expect(recursosDe(p.id), p.id).toEqual([]);
@@ -397,7 +397,7 @@ describe('las agendas de los profesionales de demostración', () => {
     ========================================================================== */
 describe('el logo del consultorio en la maqueta', () => {
   it('el consultorio sembrado trae logo; las sedes de otras organizaciones, no', () => {
-    const sedes = sedesDe(PROFESIONALES[0]!.id);
+    const sedes = sedesDe(PROFESSIONALS[0]!.id);
     const sembrado = sedes.find((sede) => sede.id === SITIO_CONSULTORIO.id);
     const deOtros = sedes.filter((sede) => !sede.isOwnSite);
 

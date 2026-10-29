@@ -55,7 +55,16 @@ ENV CYPRESS_INSTALL_BINARY=0 \
     # memory` (exit 1, no 137: fue el montón y no el guardián). La aplicación
     # creció y el compilador de Angular ya no entraba. Medido con Node 24 y un
     # trabajador: con 1,5 GB falla, con 2 GB compila.
-    NODE_OPTIONS=--max-old-space-size=2048 \
+    #
+    # 4 GB desde el 26/10/2026: volvió a pasar lo mismo con 2 GB. Todos los
+    # despliegues de la web en `dev` (4d94e05) y `test` (94adefc) morían en
+    # `yarn build` con exit 1 y el sitio quedaba sirviendo la versión anterior.
+    # Reproducido con `production-api` y un trabajador: con 2 GB, `JS heap out
+    # of memory`; con 3 GB compila justo; con 4 GB compila con margen. El pico
+    # de RSS medido es de ~2,5 GB tanto con 3 como con 4 GB, así que el techo
+    # más alto no hace crecer la memoria real: sólo evita que el montón se
+    # quede corto cuando la aplicación siga creciendo.
+    NODE_OPTIONS=--max-old-space-size=4096 \
     # Cuántos procesos de esbuild corren a la vez. Por omisión, uno por núcleo:
     # con doce núcleos y 447 fragmentos diferidos el pico se va por encima de los
     # 6 GB y el cgroup mata la construcción (`ng build` a 4,7 GB de RSS, medido).
@@ -91,10 +100,18 @@ ENV PUBLIC_API_BASE_URL=$PUBLIC_API_BASE_URL
 ARG PUBLIC_AI_BASE_URL="/ai"
 ENV PUBLIC_AI_BASE_URL=$PUBLIC_AI_BASE_URL
 
+# `production` (el valor por omisión de `ng build`) es la maqueta: sin este ARG
+# el contenedor sale SIEMPRE con el backend simulado encendido, sin importar
+# qué variables de entorno se le pasen. Un despliegue real pide
+# `--build-arg BUILD_CONFIGURATION=production-api` (H1.S1): SSR encendido,
+# simulador y las cuatro demostraciones apagadas. La maqueta sigue viva sin
+# tocar nada: no pasar el ARG construye exactamente lo mismo que antes.
+ARG BUILD_CONFIGURATION="production"
+
 # `yarn build` encadena `env:generate`, que además estampa versión y commit en
 # el paquete. El commit sale de Git, y por eso `.git` tiene que estar en el
 # contexto: sin él queda `desconocido` y se pierde la trazabilidad del artefacto.
-RUN yarn build
+RUN yarn build --configuration=$BUILD_CONFIGURATION
 
 # ─── Etapa 2 · dependencias de producción ────────────────────────────────────
 FROM node:24-bookworm-slim AS prod-deps

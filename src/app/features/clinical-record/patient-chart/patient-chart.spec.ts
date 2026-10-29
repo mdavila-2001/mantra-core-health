@@ -8,6 +8,7 @@ import { SessionStore } from '../../../core/auth/session.store';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 import {
   bloquesDeAtencion,
   bloquesDeReceta,
@@ -2059,6 +2060,194 @@ describe('PatientChart', () => {
       interno<() => void>('cerrarCambioDeEstado')();
 
       expect(interno<(id: string) => string | null>('destinoEstadoDe')(fila.id)).toBeNull();
+    });
+  });
+
+  /**
+   * CL-27: `toDocument` descartaba `files` y el expediente no podía volver a
+   * abrir lo que se subió. Ahora cada archivo es un enlace que baja por
+   * `GET /charts/documents/:id/files/:fileId/content`, con la credencial.
+   */
+  describe('los archivos de un documento del expediente (CL-27)', () => {
+    const DOCUMENTO = {
+      id: 'd-1',
+      title: 'Laboratorio completo',
+      statusConceptId: 'st-final',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      files: [
+        { fileId: 'f-2', contentRole: 'ATTACHMENT', ordinal: 1 },
+        { fileId: 'f-1', contentRole: 'PRIMARY', ordinal: 0 },
+      ],
+    };
+
+    interface FilaConArchivos {
+      id: string;
+      archivos: readonly { fileId: string; rotulo: string }[];
+    }
+
+    it('la fila trae un archivo por cada uno, en orden y con rotulo legible', () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0];
+
+      expect(fila?.archivos).toEqual([
+        { fileId: 'f-1', rotulo: 'Archivo 1 · Principal' },
+        { fileId: 'f-2', rotulo: 'Archivo 2' },
+      ]);
+    });
+
+    it('descargar pide los bytes a la ruta del documento y los entrega, sin window.open', () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+      const guardar = vi
+        .spyOn(TestBed.inject(FileDownloadService), 'save')
+        .mockImplementation(() => undefined);
+      const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0]!;
+      interno<(f: unknown, a: unknown) => void>('descargarArchivo')(fila, fila.archivos[0]);
+
+      const pedido = http.expectOne('/charts/documents/d-1/files/f-1/content');
+      expect(pedido.request.responseType).toBe('blob');
+      pedido.flush(new Blob(['%PDF'], { type: 'application/pdf' }), {
+        headers: { 'Content-Disposition': "attachment; filename*=UTF-8''laboratorio.pdf" },
+      });
+
+      expect(guardar).toHaveBeenCalledWith(expect.any(Blob), 'laboratorio.pdf');
+      expect(abrir).not.toHaveBeenCalled();
+      abrir.mockRestore();
+      guardar.mockRestore();
+    });
+
+    it('un 403 (sin vinculo asistencial con el paciente) no entrega nada', async () => {
+      responderNombre();
+      responderExpediente({ chart: { documents: [DOCUMENTO] } });
+      const guardar = vi
+        .spyOn(TestBed.inject(FileDownloadService), 'save')
+        .mockImplementation(() => undefined);
+
+      const fila = interno<() => readonly FilaConArchivos[]>('documentos')()[0]!;
+      interno<(f: unknown, a: unknown) => void>('descargarArchivo')(fila, fila.archivos[0]);
+      http
+        .expectOne('/charts/documents/d-1/files/f-1/content')
+        .flush(new Blob([JSON.stringify({ code: 'FORBIDDEN', message: 'x' })]), {
+          status: 403,
+          statusText: 'Forbidden',
+        });
+
+      // El cuerpo del error llega como Blob y se relee de forma asincronica.
+      await vi.waitFor(() => expect(interno<() => string | null>('bajando')()).toBeNull());
+
+      expect(guardar).not.toHaveBeenCalled();
+      guardar.mockRestore();
+    });
+  });
+
+  /**
+   * Las dos lecturas nuevas: tabla unificada y recorrido. La geometría y la
+   * derivación de vínculos tienen sus propias pruebas en `recorrido-clinico/`;
+   * acá, que el expediente las monte sin tocar la vista de siempre.
+   */
+  describe('las vistas Tabla y Recorrido', () => {
+    const CON_ATENCION = {
+      resumen: {
+        encounters: [{ id: 'e-1', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z', endAt: '2026-05-20T11:00:00.000Z' }],
+        conditions: [{ ...RESUMEN.conditions[0], encounterId: 'e-1' }],
+        medicationRequests: [],
+      },
+    };
+
+    function pintar(opciones: { resumen?: object } = {}): HTMLElement {
+      responderNombre();
+      responderExpediente(opciones);
+      harness.fixture.detectChanges();
+      return harness.routeNativeElement as HTMLElement;
+    }
+
+    function elegir(vista: string): void {
+      interno<(v: string) => void>('elegirVista')(vista);
+      harness.fixture.detectChanges();
+    }
+
+    it('abre en «Secciones», con las pestañas de siempre', () => {
+      const raiz = pintar();
+      expect(interno<() => string>('vista')()).toBe('secciones');
+      expect(raiz.querySelector('app-tabs')).not.toBeNull();
+      expect(raiz.querySelector('[data-testid="expediente-tabla-unificada"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="expediente-recorrido"]')).toBeNull();
+    });
+
+    it('«Tabla» junta los registros de todos los bloques en una sola tabla', () => {
+      const raiz = pintar();
+      elegir('tabla');
+      expect(raiz.querySelector('app-tabs')).toBeNull();
+      const filas = interno<() => readonly { id: string; tipo: string }[]>('filasDelHistorial')();
+      expect(filas.map((f) => [f.id, f.tipo])).toEqual(
+        expect.arrayContaining([
+          ['c-1', 'diagnosticos'],
+          ['o-1', 'observaciones'],
+        ]),
+      );
+      expect(raiz.querySelector('[data-testid="expediente-tabla-unificada"]')).not.toBeNull();
+    });
+
+    it('«Recorrido» conecta el diagnóstico con la atención que lo declara, y nada más', () => {
+      const raiz = pintar(CON_ATENCION);
+      elegir('recorrido');
+      expect(interno<() => readonly object[]>('aristasDelRecorrido')()).toEqual([
+        { desde: 'e-1', hasta: 'c-1', motivo: 'atencion' },
+      ]);
+      expect(raiz.querySelectorAll('[data-testid="recorrido-nodo"]').length).toBe(3);
+    });
+
+    it('el filtro oculta un tipo en las dos vistas y lo dice en texto', () => {
+      const raiz = pintar();
+      elegir('tabla');
+      interno<(t: string, v: boolean) => void>('alternarTipo')('observaciones', false);
+      harness.fixture.detectChanges();
+      expect(interno<() => readonly { id: string }[]>('filasDelHistorial')().map((f) => f.id)).toEqual(['c-1']);
+      expect(interno<() => readonly { id: string }[]>('nodosDelRecorrido')().map((n) => n.id)).toEqual(['c-1']);
+      expect(raiz.querySelector('[data-testid="expediente-aviso-filtro"]')?.textContent).toContain('observaciones');
+    });
+
+    it('si el filtro oculta todo, ofrece volver a mostrarlo en vez del vacío del paciente', () => {
+      pintar();
+      elegir('tabla');
+      interno<(t: string, v: boolean) => void>('alternarTipo')('observaciones', false);
+      interno<(t: string, v: boolean) => void>('alternarTipo')('diagnosticos', false);
+      expect(interno<() => boolean>('filtroOcultaTodo')()).toBe(true);
+      interno<() => void>('mostrarTodosLosTipos')();
+      expect(interno<() => boolean>('filtroOcultaTodo')()).toBe(false);
+    });
+
+    it('el selector de vista y el filtro no van al PDF; el lienzo del recorrido tampoco', () => {
+      const raiz = pintar();
+      elegir('recorrido');
+      expect(raiz.querySelector('.expediente__vistas')?.hasAttribute('data-pdf-ignore')).toBe(true);
+      expect(raiz.querySelector('[data-testid="expediente-recorrido"]')?.hasAttribute('data-pdf-ignore')).toBe(true);
+    });
+
+    it('elegir un nodo abre el mismo detalle que la tabla', () => {
+      pintar(CON_ATENCION);
+      elegir('recorrido');
+      interno<(id: string) => void>('abrirDesdeElRecorrido')('c-1');
+      const abierta = interno<() => { fila: { id: string }; bloque: string } | null>('filaEnDetalle')();
+      expect(abierta?.fila.id).toBe('c-1');
+      expect(abierta?.bloque).toBe('diagnosticos');
+    });
+
+    it('el filtro no pasa de una persona a otra', async () => {
+      pintar();
+      interno<(t: string, v: boolean) => void>('alternarTipo')('observaciones', false);
+      await harness.navigateByUrl('/medical-records/p-2', PatientChart);
+      expect(interno<() => ReadonlySet<string>>('tiposOcultos')().size).toBe(0);
+      // Lo que la segunda persona pidió no es parte de esta prueba: se drena.
+      for (const req of http.match((r) => r.url.includes('p-2'))) {
+        if (!req.cancelled) {
+          req.flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+        }
+      }
     });
   });
 });
