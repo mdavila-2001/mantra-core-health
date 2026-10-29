@@ -606,14 +606,7 @@ describe('Resumen contable', () => {
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
     });
 
-    // La contabilidad simple sólo existe en la maqueta (`simulatorAvailable()`),
-    // y en esta rama viene apagada: se enciende para el caso que la monta.
     it('en Registros no hay tableros ni se pide el dinero del tablero de nuevo', () => {
-      const mockBackendOriginal = environment.mockBackend;
-      Object.assign(environment, { mockBackend: true });
-      onTestFinished(() => {
-        Object.assign(environment, { mockBackend: mockBackendOriginal });
-      });
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
@@ -629,7 +622,9 @@ describe('Resumen contable', () => {
       http.verify();
     });
 
-    it('contra la API real, Registros avisa que la contabilidad simple no está y no la monta', () => {
+    // H12: la API publica `/accounting/practitioner/simple/*` desde el 24/10; la
+    // guarda vieja decía «el servidor aún no ofrece esta función».
+    it('contra la API real, Registros monta la contabilidad simple y no avisa que falta', () => {
       const mockBackendOriginal = environment.mockBackend;
       Object.assign(environment, { mockBackend: false });
       onTestFinished(() => {
@@ -644,8 +639,9 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;
-      expect(raiz.querySelector('[data-testid="simple-accounting-unavailable"]')).not.toBeNull();
-      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="simple-accounting-unavailable"]')).toBeNull();
+      expect(raiz.querySelector('app-simple-accounting')).not.toBeNull();
+      expect(raiz.textContent).not.toContain('El servidor aún no ofrece esta función');
       http.verify();
     });
   });
