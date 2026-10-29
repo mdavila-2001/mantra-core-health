@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import type { TemplateRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { catchError, map, of, switchMap } from 'rxjs';
 
 import { QuotationsClient } from '../../../core/data-access/quotations/quotations.client';
 import type { QuotationListItem } from '../../../core/data-access/quotations/quotations.types';
 import type { PatientListItem } from '../../../core/data-access/profiles/profiles.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
+import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
+import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
@@ -21,6 +24,7 @@ import { DataTable } from '../../../shared/components/organisms/data-table/data-
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { QUOTATION_NEW_ROUTE } from '../quotations.routes';
+import { quotationDate, quotationPrice, quotationStatusLabel } from './quotation-list.view';
 
 /** Tope del buscador de pacientes. La API pagina por cursor; acá alcanza una página. */
 const TOPE_PACIENTES = 25;
@@ -50,6 +54,7 @@ export class QuotationList {
   private readonly profiles = inject(ProfilesClient);
   private readonly quotations = inject(QuotationsClient);
   private readonly navigation = inject(NavigationService);
+  private readonly terminology = inject(TerminologyClient);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly nuevaCotizacionRoute = QUOTATION_NEW_ROUTE;
@@ -58,6 +63,10 @@ export class QuotationList {
     viewChild.required<TemplateRef<{ $implicit: QuotationListItem }>>('celdaEstado');
   private readonly celdaPrecio =
     viewChild.required<TemplateRef<{ $implicit: QuotationListItem }>>('celdaPrecio');
+  private readonly attentionCell =
+    viewChild.required<TemplateRef<{ $implicit: QuotationListItem }>>('attentionCell');
+  private readonly validUntilCell =
+    viewChild.required<TemplateRef<{ $implicit: QuotationListItem }>>('validUntilCell');
   private readonly celdaAccionPaciente =
     viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaAccionPaciente');
 
@@ -130,10 +139,39 @@ export class QuotationList {
       { key: 'serviceNameSnapshot', header: 'Servicio', priority: 1 },
       { key: 'offeredPrice', header: 'Precio ofrecido', priority: 1, align: 'end', cell: this.celdaPrecio() },
       { key: 'status', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-      { key: 'attentionDate', header: 'Fecha de atención', priority: 2 },
-      { key: 'validUntil', header: 'Válida hasta', priority: 2 },
+      {
+        key: 'attentionDate',
+        header: 'Fecha de atención',
+        priority: 2,
+        cell: this.attentionCell(),
+      },
+      { key: 'validUntil', header: 'Válida hasta', priority: 2, cell: this.validUntilCell() },
     ],
   );
+
+  /**
+   * H15: el estado y la moneda llegan como conceptos (`statusConceptId`,
+   * `currencyConceptId`); sin traducirlos, la celda de estado salía vacía y el
+   * precio sin moneda. Se leen una vez por página, sin repetir ids.
+   */
+  private readonly labels = signal<ConceptLabels>(new Map());
+
+  /** «300,00 Bs»; con otra moneda, su código; sin moneda resuelta, el número solo. */
+  protected priceOf(row: QuotationListItem): string {
+    const currency =
+      row.currencyConceptId === undefined
+        ? undefined
+        : this.labels().get(row.currencyConceptId)?.code;
+    return quotationPrice(row.offeredPrice, currency);
+  }
+
+  /** El estado legible, por código (`quotation-list.view.ts`); nunca el uuid ni una celda vacía. */
+  protected statusOf(row: QuotationListItem): string {
+    const concept = this.labels().get(row.statusConceptId);
+    return quotationStatusLabel(row.statusCode ?? concept?.code, concept?.display);
+  }
+
+  protected readonly formatDate = quotationDate;
 
   protected readonly porCotizacion = (fila: QuotationListItem): string => fila.id;
   /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
@@ -149,18 +187,36 @@ export class QuotationList {
 
   private cargarCotizaciones(patientProfileId: string): void {
     this.cotizaciones.set(loading());
-    this.quotations.listQuotationsByPatient(patientProfileId).subscribe({
-      next: (items) =>
-        this.cotizaciones.set(
-          items.length > 0
-            ? ready(items)
-            : empty(
-                { label: 'Nueva cotización', route: QUOTATION_NEW_ROUTE },
-                'Esta persona todavía no tiene cotizaciones.',
-              ),
+    this.quotations
+      .listQuotationsByPatient(patientProfileId)
+      .pipe(
+        switchMap((items) =>
+          this.terminology
+            .readConceptLabels(
+              items
+                .flatMap((row) => [row.statusConceptId, row.currencyConceptId])
+                .filter((id): id is string => typeof id === 'string' && id !== ''),
+            )
+            .pipe(
+              catchError(() => of<ConceptLabels>(new Map())),
+              map((labels) => ({ items, labels })),
+            ),
         ),
-      error: (error: unknown) =>
-        this.cotizaciones.set(errorToViewState<readonly QuotationListItem[]>(error)),
-    });
+      )
+      .subscribe({
+        next: ({ items, labels }) => {
+          this.labels.set(labels);
+          this.cotizaciones.set(
+            items.length > 0
+              ? ready(items)
+              : empty(
+                  { label: 'Nueva cotización', route: QUOTATION_NEW_ROUTE },
+                  'Esta persona todavía no tiene cotizaciones.',
+                ),
+          );
+        },
+        error: (error: unknown) =>
+          this.cotizaciones.set(errorToViewState<readonly QuotationListItem[]>(error)),
+      });
   }
 }
