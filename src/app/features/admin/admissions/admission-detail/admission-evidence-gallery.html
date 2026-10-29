@@ -95,6 +95,10 @@
             <div><dt>Tipo</dt><dd>{{ typeLabel(item.document) }}</dd></div>
             <div><dt>Tamaño</dt><dd>{{ sizeLabel(item.document) }}</dd></div>
             <div>
+              <dt>Huella SHA-256</dt>
+              <dd><code class="galeria__huella" [attr.title]="item.document.evidenceSha256" data-testid="gallery-hash">{{ hash(item.document) }}</code></dd>
+            </div>
+            <div>
               <dt>Subido</dt>
               <dd>
                 @if (item.document.uploadedAt) {

@@ -141,7 +141,11 @@
           </div>
         </app-tab>
 
+        <!-- El contenido de una pestaña se crea aunque su panel no se dibuje (la
+             proyección es de quien la declara): sin el @if, el carrusel pediría
+             —y dejaría registrado— el acceso a un documento sin que nadie lo mire. -->
         <app-tab label="Requisitos">
+          @if (tab() === TAB.requirements) {
           <app-admission-requirements
             [requirements]="d.requirements"
             [documents]="d.documents"
@@ -152,10 +156,11 @@
             (viewDocument)="showDocument($event)"
             (viewField)="showField($event)"
           />
+          }
         </app-tab>
 
         <app-tab [label]="documentsTab()">
-          @if (!galleryExpanded()) {
+          @if (tab() === TAB.documents && !galleryExpanded()) {
             <app-admission-evidence-gallery
               [admissionId]="d.id"
               [documents]="d.documents"
@@ -170,12 +175,13 @@
               (showField)="showField($event)"
               (expand)="galleryExpanded.set(true)"
             />
-          } @else {
+          } @else if (tab() === TAB.documents) {
             <p class="admision__nota">La evidencia está abierta en la vista ampliada.</p>
           }
         </app-tab>
 
         <app-tab label="Formulario llenado">
+          @if (tab() === TAB.form) {
           <app-admission-submitted-form
             [sections]="d.submittedForm"
             [requirements]="d.requirements"
@@ -186,6 +192,7 @@
             (review)="openRequirementReview($event)"
             (viewEvidence)="showEvidence($event)"
           />
+          }
         </app-tab>
 
         <app-tab label="Historial">

@@ -137,6 +137,12 @@
   font-weight: 600;
 }
 
+.vinculo__huella {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .vinculo__acciones {
   display: inline-flex;
   gap: var(--sp-2);

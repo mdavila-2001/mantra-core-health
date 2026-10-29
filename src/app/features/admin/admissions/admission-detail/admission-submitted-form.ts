@@ -7,7 +7,7 @@ import type {
   SubmittedFormField,
   SubmittedFormSection,
 } from '@core/data-access/admissions/admissions.types';
-import { requirementStatusLabel, requirementStatusVariant } from '@shared/admissions/admission-presentation';
+import { requirementStatusLabel, requirementStatusVariant, shortHash } from '@shared/admissions/admission-presentation';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { Alert } from '@shared/components/molecules/alert/alert';
@@ -80,6 +80,10 @@ export class AdmissionSubmittedForm {
     return field.requirementCode === null
       ? null
       : (this.requirements().find((r) => r.code === field.requirementCode) ?? null);
+  }
+
+  protected hash(r: AdmissionRequirement): string {
+    return shortHash(r.evidenceSha256);
   }
 
   protected statusLabel(r: AdmissionRequirement): string {
