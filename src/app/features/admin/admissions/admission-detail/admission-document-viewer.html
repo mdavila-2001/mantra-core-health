@@ -1,0 +1,129 @@
+<div class="visor" [attr.data-state]="state()" data-testid="admission-viewer">
+  <div class="visor__barra" role="toolbar" [attr.aria-label]="'Controles de ' + document().name">
+    @if (state() === 'ready') {
+      <button app-button type="button" variant="ghost" size="sm" [iconOnly]="true" aria-label="Alejar" [disabled]="zoom() <= 0.25" (clicked)="zoomBy(-0.25)">
+        <span aria-hidden="true">−</span>
+      </button>
+      <output class="visor__zoom" aria-live="polite" data-testid="viewer-zoom">{{ zoomPercent() }}</output>
+      <button app-button type="button" variant="ghost" size="sm" [iconOnly]="true" aria-label="Acercar" [disabled]="zoom() >= 4" (clicked)="zoomBy(0.25)">
+        <span aria-hidden="true">+</span>
+      </button>
+      <button app-button type="button" variant="ghost" size="sm" (clicked)="fit()">Ajustar</button>
+      <button app-button type="button" variant="ghost" size="sm" data-testid="viewer-rotate" (clicked)="rotate()">
+        <app-nav-icon name="refresh" /> Rotar
+      </button>
+      @if (kind() === 'pdf' && pages() > 1) {
+        <span class="visor__paginas">
+          <button app-button type="button" variant="ghost" size="sm" [iconOnly]="true" aria-label="Página anterior" [disabled]="page() <= 1" (clicked)="goTo(-1)">
+            <app-nav-icon name="arrow-left" />
+          </button>
+          <span aria-live="polite" data-testid="viewer-page">Página {{ page() }} de {{ pages() }}</span>
+          <button app-button type="button" variant="ghost" size="sm" [iconOnly]="true" aria-label="Página siguiente" [disabled]="page() >= pages()" (clicked)="goTo(1)">
+            <app-nav-icon name="arrow-right" />
+          </button>
+        </span>
+      }
+    }
+    <span class="visor__espacio"></span>
+    @if (safeUrl(); as url) {
+      <a class="visor__enlace" [href]="url" [attr.download]="document().name" data-testid="viewer-download">
+        <app-nav-icon name="download" /> Descargar
+      </a>
+      <button app-button type="button" variant="ghost" size="sm" data-testid="viewer-open" (clicked)="openInNewTab()">
+        <app-nav-icon name="share" /> Abrir en pestaña nueva
+      </button>
+    }
+  </div>
+
+  <!-- El escenario es una región enfocable: con el foco en él, + − 0 R y
+       RePág/AvPág actúan sobre el documento. Las flechas quedan para la
+       galería. -->
+  <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+  <div
+    #stage
+    class="visor__escenario"
+    role="region"
+    tabindex="0"
+    [attr.aria-label]="'Vista de ' + document().name + '. Teclas: más y menos para el zoom, cero para ajustar, R para rotar.'"
+    (keydown)="onKeydown($event)"
+    (wheel)="onWheel($event)"
+    (pointerdown)="dragStart($event)"
+    (pointermove)="dragMove($event)"
+    (pointerup)="dragEnd()"
+    (pointercancel)="dragEnd()"
+  >
+    @switch (state()) {
+      @case ('loading') {
+        <div class="visor__carga" aria-busy="true" data-testid="viewer-loading">
+          <app-skeleton variant="rect" height="14rem" />
+          <span class="sr-only">Cargando el documento…</span>
+        </div>
+      }
+      @case ('ready') {
+        @if (kind() === 'image') {
+          @if (isLarge()) {
+            <p class="visor__aviso" role="status" data-testid="viewer-large">
+              Imagen de {{ megapixels() }} megapíxeles ({{ sizeText() }}): puede tardar en mostrarse con zoom.
+            </p>
+          }
+          <div
+            class="visor__lienzo"
+            [style.--zoom]="zoom()"
+            [style.--rot]="rotation() + 'deg'"
+            [style.aspect-ratio]="aspect()"
+            [class.visor__lienzo--lateral]="sideways()"
+          >
+            <img
+              class="visor__imagen"
+              [src]="safeUrl()"
+              [alt]="alt()"
+              draggable="false"
+              (load)="onImageLoad($event)"
+              (error)="onImageError()"
+            />
+          </div>
+        } @else {
+          <canvas #canvas class="visor__pdf" role="img" [attr.aria-label]="alt() + ', página ' + page() + ' de ' + pages()"></canvas>
+        }
+      }
+      @case ('unsupported') {
+        <div class="visor__mensaje" role="status" data-testid="viewer-unsupported">
+          <p><strong>Este formato no tiene vista previa.</strong></p>
+          <p>{{ typeText() }} · {{ sizeText() }}. Descárguelo para revisarlo con su aplicación.</p>
+        </div>
+      }
+      @case ('corrupt') {
+        <div class="visor__mensaje visor__mensaje--error" role="alert" data-testid="viewer-corrupt">
+          <p><strong>No pudimos abrir el archivo.</strong></p>
+          <p>Parece dañado o incompleto. Puede intentar descargarlo o pedirle al médico que lo suba de nuevo.</p>
+        </div>
+      }
+      @case ('forbidden') {
+        <div class="visor__mensaje visor__mensaje--error" role="alert" data-testid="viewer-forbidden">
+          <p><strong>No tiene acceso a este archivo.</strong></p>
+          <p>Su cuenta no puede ver este documento. Pida acceso a quien administra la seguridad.</p>
+        </div>
+      }
+      @case ('not-found') {
+        <div class="visor__mensaje visor__mensaje--error" role="alert" data-testid="viewer-not-found">
+          <p><strong>El archivo ya no está disponible.</strong></p>
+          <p>Fue retirado o nunca terminó de subirse. Pida al médico que lo suba de nuevo.</p>
+        </div>
+      }
+      @default {
+        <div class="visor__mensaje visor__mensaje--error" role="alert" data-testid="viewer-error">
+          <p><strong>No pudimos cargar el archivo.</strong></p>
+          <p>Revise su conexión e intente de nuevo.</p>
+          <button app-button type="button" variant="secondary" size="sm" data-testid="viewer-retry" (clicked)="retry()">Reintentar</button>
+        </div>
+      }
+    }
+  </div>
+
+  <p class="visor__pie">
+    {{ typeText() }} · {{ sizeText() }}
+    @if (megapixels(); as mp) {
+      · {{ mp }} MP
+    }
+  </p>
+</div>

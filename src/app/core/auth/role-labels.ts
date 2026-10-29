@@ -24,6 +24,8 @@ export const ROLE_LABELS: Readonly<Record<string, string>> = {
   SCHEDULING_AGENT: 'Agente de agenda',
   MEDICAL_VISITOR: 'Visitador médico',
   IDENTITY_ADMIN: 'Administración de identidad',
+  ADMISSIONS_REVIEWER: 'Revisión de admisiones',
+  ADMISSIONS_APPROVER: 'Aprobación de admisiones',
   PLATFORM_ADMIN: 'Administración de plataforma',
   BUSINESS_ADMIN: 'Administración comercial',
   PAYMENTS_ADMIN: 'Administración de pagos',

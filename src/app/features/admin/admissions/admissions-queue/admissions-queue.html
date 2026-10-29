@@ -1,0 +1,101 @@
+<app-page-header
+  title="Admisiones"
+  subtitle="Las solicitudes que esperan una decisión, de la que vence antes a la que vence después."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- Una tarjeta a lo ancho: estados arriba, filtros, tabla y paginación (ADR-0015). -->
+<app-card class="cola" variant="outlined" padding="lg" data-testid="admissions-card">
+  <app-segmented-control
+    class="cola__estados"
+    ariaLabel="Estado de la admisión"
+    [options]="tabs()"
+    [value]="status()"
+    data-testid="admissions-status-tabs"
+    (valueChange)="selectStatus($event)"
+  />
+
+  <!-- El buscador no escribe en la URL: ahí se tipean nombres y documentos de personas. -->
+  <app-filter-bar
+    searchLabel="Buscar admisiones"
+    searchPlaceholder="Nombre, cédula o matrícula"
+    [searchInUrl]="false"
+    [searchValue]="searchText()"
+    [filters]="filterDefs"
+    wrap
+    (searchChanged)="onSearch($event)"
+  />
+
+  <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+    <div vsh-skeleton class="cola__esqueleto" data-testid="admissions-loading">
+      <div class="cola__esqueleto-fila"></div>
+      <div class="cola__esqueleto-fila"></div>
+      <div class="cola__esqueleto-fila"></div>
+      <div class="cola__esqueleto-fila"></div>
+    </div>
+
+    @if (page(); as pagina) {
+      @if (rows().length === 0) {
+        <div class="cola__vacio" data-testid="admissions-no-match">
+          <p>Ninguna admisión coincide con la búsqueda o los filtros.</p>
+          <button app-button type="button" variant="secondary" size="sm" (clicked)="clearFilters()">Quitar filtros</button>
+        </div>
+      } @else {
+        <app-data-table
+          [state]="tableState()"
+          [columns]="columns()"
+          [trackBy]="byId"
+          [rowLabel]="rowLabel"
+          [cursor]="cursorState()"
+          rowNavigable
+          wrapHeaders
+          caption="Admisiones, ordenadas por vencimiento"
+          data-testid="admissions-table"
+          (rowActivated)="open($event)"
+          (cursorChanged)="goTo($event)"
+        />
+        <p class="cola__pagina" aria-live="polite" data-testid="admissions-page">Página {{ pageNumber() }}</p>
+      }
+    }
+  </app-view-state-host>
+</app-card>
+
+<ng-template #nameCell let-fila>
+  <a app-link class="cola__nombre" [routerLink]="detailRoute(fila.id)" data-testid="admission-open">{{ fila.name }}</a>
+  <span class="cola__secundario">{{ fila.profession }} · {{ fila.maskedId }}</span>
+  <span class="cola__secundario">{{ fila.typeLabel }}</span>
+</ng-template>
+
+<ng-template #statusCell let-fila>
+  <app-badge [variant]="fila.statusVariant" data-testid="admission-row-status">{{ fila.statusLabel }}</app-badge>
+</ng-template>
+
+<ng-template #progressCell let-fila>
+  <span class="cola__avance-texto">{{ fila.progress }}</span>
+  <span class="cola__barra" aria-hidden="true"><span class="cola__relleno" [style.inline-size.%]="fila.ratio * 100"></span></span>
+</ng-template>
+
+<ng-template #dueCell let-fila>
+  @if (fila.dueAt) {
+    <span class="cola__fecha">{{ fila.dueAt | date: 'dd/MM/yyyy' }}</span>
+    @if (fila.overdue) {
+      <span class="cola__vencida" data-testid="admission-row-overdue">
+        Vencida hace {{ fila.overdueDays }} {{ fila.overdueDays === 1 ? 'día' : 'días' }}
+      </span>
+    }
+  } @else {
+    <span class="cola__secundario">Sin plazo corriendo</span>
+  }
+</ng-template>
+
+<ng-template #assigneeCell let-fila>
+  @if (fila.assignee) {
+    {{ fila.assignee }}
+  } @else {
+    <span class="cola__secundario">Sin asignar</span>
+  }
+</ng-template>
+
+<ng-template #actionCell let-fila>
+  <a app-link [routerLink]="detailRoute(fila.id)" [attr.aria-label]="'Revisar la admisión de ' + fila.name">Revisar</a>
+</ng-template>

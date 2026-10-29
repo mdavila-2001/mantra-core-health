@@ -1,0 +1,102 @@
+:host {
+  display: block;
+}
+
+.cola {
+  display: block;
+  inline-size: 100%;
+}
+
+.cola__estados {
+  display: block;
+  margin-block-end: var(--sp-3);
+  overflow-x: auto;
+}
+
+.cola__esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+}
+
+.cola__esqueleto-fila {
+  block-size: 3.5rem;
+  background: var(--bg-inset);
+  border-radius: var(--r-md);
+}
+
+.cola__vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-8, var(--sp-6));
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.cola__vacio p {
+  margin: 0;
+}
+
+.cola__nombre {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cola__secundario {
+  display: block;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.cola__avance-texto {
+  display: block;
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+
+.cola__barra {
+  display: block;
+  inline-size: 7rem;
+  max-inline-size: 100%;
+  block-size: 0.375rem;
+  margin-block-start: var(--sp-1);
+  overflow: hidden;
+  background: var(--bg-inset);
+  border-radius: var(--r-xs);
+}
+
+.cola__relleno {
+  display: block;
+  block-size: 100%;
+  background: var(--st-success-fg);
+}
+
+.cola__fecha {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+/* «Vencida» se dice con palabras y con color: el color solo no alcanza. */
+.cola__vencida {
+  display: inline-block;
+  margin-block-start: var(--sp-1);
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--st-error-fg);
+  background: var(--st-error-bg);
+  border: 1px solid var(--st-error-bd);
+  border-radius: var(--r-sm);
+}
+
+.cola__pagina {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  text-align: end;
+}
