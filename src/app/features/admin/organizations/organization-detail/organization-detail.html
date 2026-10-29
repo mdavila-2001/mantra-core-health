@@ -5,116 +5,157 @@
   subtitle="Sus sucursales, su plantilla y las sub-organizaciones que dependen de ella."
   [breadcrumbs]="breadcrumbs()"
 >
+  <!-- Las altas van arriba, siempre a mano, y no sólo en el vacío de cada
+       pestaña: con una sucursal cargada ya no había forma de abrir la segunda.
+       Se ofrecen a quien la API se las va a aceptar; la API decide igual.
+       Un @if por enlace y con el <a> como única raíz: un bloque con varias
+       raíces no se proyecta en `page-actions` y desaparece del DOM. -->
   @if (rutaDeVerificacion(); as rutaVerificar) {
-    <a app-button page-actions variant="primary" [routerLink]="rutaVerificar">
-      Verificar
+    <a app-button page-actions variant="primary" [routerLink]="rutaVerificar">Verificar</a>
+  }
+  @if (fichaLista() && puedeAdministrar()) {
+    <a
+      app-button
+      page-actions
+      variant="secondary"
+      data-testid="ficha-nueva-sucursal"
+      [routerLink]="rutaDeSucursal()"
+    >
+      Nueva sucursal
     </a>
   }
-  <a app-button page-actions variant="secondary" [routerLink]="rutaDelListado">
-    Volver al listado
-  </a>
+  @if (fichaLista() && puedeAdministrar()) {
+    <a
+      app-button
+      page-actions
+      variant="secondary"
+      data-testid="ficha-sumar-persona"
+      [routerLink]="rutaDeMembresia()"
+    >
+      Sumar a alguien
+    </a>
+  }
+  @if (fichaLista() && puedeCrearHijas()) {
+    <a
+      app-button
+      page-actions
+      variant="secondary"
+      data-testid="ficha-nueva-hija"
+      [routerLink]="rutaDeHija()"
+    >
+      Nueva sub-organización
+    </a>
+  }
+  @if (ofreceListado()) {
+    <a app-button page-actions variant="ghost" [routerLink]="rutaDelListado">Volver al listado</a>
+  }
 </app-page-header>
 
-<!-- Ficha de ámbito: el `tenantId` es obligatorio en los tres endpoints, así
-     que es el asunto de la pantalla y no un filtro. Va arriba, una sola vez, y
-     no se repite como columna en ninguna de las tres tablas. -->
-@switch (ficha.status) {
-  @case ('ready') {
-    <section class="organizacion__ambito" aria-label="Organización">
-      <dl class="organizacion__datos">
-        <div>
-          <dt>Código</dt>
-          <dd class="organizacion__codigo">{{ ficha.data.code }}</dd>
-        </div>
-        @if (ficha.data.tradeName) {
+<!-- Los nueve estados de la organización en un solo lugar. Un 403 («no
+     pertenecés») es S5 y un 404 es S6, que no muestra un solo dato del
+     recurso: por eso las pestañas viven DENTRO del host y sólo existen en
+     `ready`. -->
+<app-view-state-host [state]="ficha" (retry)="recargar()" data-testid="ficha-organizacion">
+  @if (ficha.status === 'ready') {
+    <!-- UNA tarjeta con pestañas, centrada y a lo ancho (composition-rules §5). -->
+    <app-card class="organizacion__tarjeta" variant="outlined" padding="lg">
+      <section class="organizacion__ambito" aria-label="Datos de la organización">
+        <dl class="organizacion__datos">
           <div>
-            <dt>Nombre comercial</dt>
-            <dd>{{ ficha.data.tradeName }}</dd>
+            <dt>Código</dt>
+            <dd class="organizacion__codigo">{{ ficha.data.code }}</dd>
           </div>
-        }
-        <div>
-          <dt>Tipo</dt>
-          <dd>{{ etiquetaDe(ficha.data.tenantTypeConceptId)?.display ?? '—' }}</dd>
-        </div>
-        <div>
-          <dt>Estado</dt>
-          <dd>
-            <app-badge [variant]="varianteDe(ficha.data.statusConceptId)">
-              {{ etiquetaDe(ficha.data.statusConceptId)?.display ?? '—' }}
-            </app-badge>
-          </dd>
-        </div>
-        <div>
-          <dt>Verificación</dt>
-          <dd>
-            <app-badge [variant]="varianteDe(ficha.data.verificationStatusConceptId)">
-              {{ etiquetaDe(ficha.data.verificationStatusConceptId)?.display ?? '—' }}
-            </app-badge>
-          </dd>
-        </div>
-        <div>
-          <dt>Alta</dt>
-          <dd>{{ ficha.data.createdAt | date: 'dd/MM/yyyy' }}</dd>
-        </div>
-      </dl>
-    </section>
+          @if (ficha.data.tradeName) {
+            <div>
+              <dt>Nombre comercial</dt>
+              <dd>{{ ficha.data.tradeName }}</dd>
+            </div>
+          }
+          <div>
+            <dt>Tipo</dt>
+            <dd>{{ etiquetaDe(ficha.data.tenantTypeConceptId)?.display ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              <app-badge [variant]="varianteDe(ficha.data.statusConceptId)">
+                {{ etiquetaDe(ficha.data.statusConceptId)?.display ?? '—' }}
+              </app-badge>
+            </dd>
+          </div>
+          <div>
+            <dt>Verificación</dt>
+            <dd>
+              <app-badge [variant]="varianteDe(ficha.data.verificationStatusConceptId)">
+                {{ etiquetaDe(ficha.data.verificationStatusConceptId)?.display ?? '—' }}
+              </app-badge>
+            </dd>
+          </div>
+          <div>
+            <dt>Alta</dt>
+            <dd>{{ ficha.data.createdAt | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="cambiarPestana($event)">
+        <app-tab label="Sucursales">
+          <app-data-table
+            [state]="vistaDeSucursales()"
+            [columns]="columnasDeSucursal()"
+            [trackBy]="porId"
+            caption="Sucursales de la organización"
+            data-testid="ficha-sucursales"
+            (retry)="recargar()"
+          />
+          <!-- Sin pie de paginación a propósito: `GET /tenants/{id}/branches`
+               devuelve todas en una respuesta. -->
+          <p class="organizacion__nota">
+            El endpoint devuelve las sucursales de esta organización en una sola respuesta: no
+            pagina.
+          </p>
+        </app-tab>
+
+        <app-tab label="Plantilla">
+          <app-data-table
+            [state]="vistaDeMembresias()"
+            [columns]="columnasDeMembresia()"
+            [trackBy]="porId"
+            [rowLabel]="nombreDeFila"
+            [cursor]="cursorMembresias()"
+            caption="Personas con membresía en la organización"
+            data-testid="ficha-plantilla"
+            (cursorChanged)="moverMembresias($event)"
+            (retry)="recargar()"
+          />
+        </app-tab>
+
+        <app-tab label="Sub-organizaciones">
+          <app-data-table
+            [state]="vistaDeHijas()"
+            [columns]="columnasDeHija()"
+            [trackBy]="porId"
+            [cursor]="cursorHijas()"
+            caption="Organizaciones que dependen de esta"
+            data-testid="ficha-hijas"
+            (cursorChanged)="moverHijas($event)"
+            (retry)="recargar()"
+          />
+        </app-tab>
+      </app-tabs>
+    </app-card>
   }
-  @case ('error') {
-    <!-- Un 403 acá significa «no pertenecés a esta organización» y un 404,
-         «no existe». El backend los distingue a propósito para que el código de
-         error no sirva de sonda; la pantalla los muestra tal cual llegan. -->
-    <section class="organizacion__ambito organizacion__ambito--error" role="alert">
-      <p>{{ ficha.message }}</p>
-      <button app-button variant="secondary" type="button" (click)="recargar()">
-        Reintentar
-      </button>
-    </section>
-  }
-  @default {
-    <section class="organizacion__ambito" aria-busy="true">
-      <p class="organizacion__cargando">Cargando la organización…</p>
-    </section>
-  }
+</app-view-state-host>
+
+@if (asignandoA(); as membresia) {
+  <app-branch-assignment-dialog
+    [tenantId]="tenantId()"
+    [membershipId]="membresia.id"
+    [persona]="personaDe(membresia.userId)"
+    [sucursales]="sucursalesCargadas()"
+    (closed)="cerrarAsignacion()"
+  />
 }
-
-<app-tabs>
-  <app-tab label="Sucursales">
-    <app-data-table
-      [state]="sucursales()"
-      [columns]="columnasDeSucursal()"
-      [trackBy]="porId"
-      caption="Sucursales de la organización"
-      (retry)="recargar()"
-    />
-    <!-- Sin pie de paginación a propósito: `GET /tenants/{id}/branches`
-         devuelve todas en una respuesta. Prometer «Siguientes» sobre un
-         endpoint que no lo hace sería mentir. -->
-    <p class="organizacion__nota">
-      El endpoint devuelve las sucursales de esta organización en una sola
-      respuesta: no pagina.
-    </p>
-  </app-tab>
-
-  <app-tab label="Plantilla">
-    <app-data-table
-      [state]="membresias()"
-      [columns]="columnasDeMembresia()"
-      [trackBy]="porId"
-      caption="Personas con membresía en la organización"
-      (retry)="recargar()"
-    />
-  </app-tab>
-
-  <app-tab label="Sub-organizaciones">
-    <app-data-table
-      [state]="hijas()"
-      [columns]="columnasDeHija()"
-      [trackBy]="porId"
-      caption="Organizaciones que dependen de esta"
-      (retry)="recargar()"
-    />
-  </app-tab>
-</app-tabs>
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 
@@ -139,6 +180,15 @@
   {{ sucursal.createdAt | date: 'dd/MM/yyyy' }}
 </ng-template>
 
+<!-- La persona, por su nombre. El contrato devuelve `userId` crudo y la ficha
+     lo resuelve; si no puede, lo dice —nunca muestra el uuid—. -->
+<ng-template #celdaPersona let-membresia>
+  <span class="organizacion__nombre">{{ personaDe(membresia.userId) }}</span>
+  @if (esLaSesion(membresia.userId)) {
+    <span class="organizacion__secundario">Tu cuenta</span>
+  }
+</ng-template>
+
 <ng-template #celdaRol let-membresia>
   <span class="organizacion__nombre">
     {{ etiquetaDe(membresia.tenantRoleConceptId)?.display ?? '—' }}
@@ -154,8 +204,8 @@
   </app-badge>
 </ng-template>
 
-<!-- El contrato devuelve `primaryBranchId` crudo; el nombre legible lo resuelve
-     la pantalla contra las sucursales que ya cargó. El uuid no se muestra. -->
+<!-- `primaryBranchId` crudo; el nombre lo resuelve la ficha contra las
+     sucursales que ya cargó. -->
 <ng-template #celdaSede let-membresia>
   {{ sucursalDe(membresia.primaryBranchId) ?? '—' }}
 </ng-template>
@@ -171,6 +221,19 @@
   } @else {
     —
   }
+</ng-template>
+
+<!-- Una acción que pide elegir algo va en modal (composition-rules §6). -->
+<ng-template #celdaAccionesMembresia let-membresia>
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    data-testid="ficha-asignar-sede"
+    (clicked)="abrirAsignacion(membresia)"
+  >
+    Asignar sede
+  </button>
 </ng-template>
 
 <ng-template #celdaHija let-hija>

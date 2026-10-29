@@ -1,7 +1,7 @@
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/conceptos';
 import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
-import { notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { forbidden, notFound, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 import {
   IDS,
   MOCK_USERS,
@@ -374,6 +374,32 @@ function organizacionPropia(t: TenantSimulado, request: MockRequest) {
   };
 }
 
+/**
+ * `assertCanRead` de la API (`TenantAdministrationService`): las lecturas de
+ * `/tenants/:id/**` no piden rol global, pero sí pertenecer a la organización
+ * —o ser de la plataforma—. Sin esto la maqueta le mostraba la ficha de
+ * cualquier organización a cualquier sesión, y el estado «no tenés acceso»
+ * (S5) de la ficha no se podía ni mirar.
+ *
+ * @returns El `403` que respondería la API, o `null` si puede leer.
+ */
+export function sinLecturaDe(tenantId: string, request: MockRequest): MockReply | null {
+  const user = request.user;
+  if (user === null) return forbidden('Se requiere pertenecer a la organización');
+  if (user.roles.includes('SECURITY_ADMIN') || user.roles.includes('SUPERADMIN')) return null;
+  const pertenece =
+    user.tenants.includes(tenantId) ||
+    membresias.filtrar(
+      (m) =>
+        m.tenantId === tenantId &&
+        m.userId === user.id &&
+        m.statusConceptId === ESTADO['ST-ACTIVE'],
+    ).length > 0;
+  return pertenece
+    ? null
+    : forbidden('Se requiere pertenecer a la organización, o ser administrador de la plataforma');
+}
+
 export function registrarDirectorio(router: MockRouter): void {
   // Sustituye al `/admin/tenants` genérico de auth: acá está el modelo completo.
   router.get('/admin/tenants', ({ query }) => {
@@ -461,8 +487,10 @@ export function registrarDirectorio(router: MockRouter): void {
     return { items };
   });
 
-  router.get('/tenants/:id', ({ params }) => {
-    const t = tenants.get(params['id']!);
+  router.get('/tenants/:id', (request) => {
+    const denegado = sinLecturaDe(request.params['id']!, request);
+    if (denegado !== null) return denegado;
+    const t = tenants.get(request.params['id']!);
     return t === undefined
       ? notFound('Organización no encontrada')
       : { ...t, parentTenantId: t.parentTenantId ?? undefined };
@@ -480,15 +508,17 @@ export function registrarDirectorio(router: MockRouter): void {
     return { ...actualizado, parentTenantId: actualizado.parentTenantId ?? undefined };
   });
 
-  router.get('/tenants/:id/child-tenants', ({ params, query }) =>
-    paginar(
+  router.get('/tenants/:id/child-tenants', (request) => {
+    const denegado = sinLecturaDe(request.params['id']!, request);
+    if (denegado !== null) return denegado;
+    return paginar(
       tenants
-        .filtrar((t) => t.parentTenantId === params['id'])
+        .filtrar((t) => t.parentTenantId === request.params['id'])
         .map((t) => ({ ...t, parentTenantId: t.parentTenantId ?? undefined })),
-      query,
+      request.query,
       25,
-    ),
-  );
+    );
+  });
 
   router.post('/tenants/:id/child-tenants', (request) => {
     const datos = cuerpo<{ code: string; legalName: string }>(request);
@@ -518,7 +548,10 @@ export function registrarDirectorio(router: MockRouter): void {
     };
   });
 
-  router.get('/tenants/:id/branches', ({ params }) => {
+  router.get('/tenants/:id/branches', (request) => {
+    const { params } = request;
+    const denegado = sinLecturaDe(params['id']!, request);
+    if (denegado !== null) return denegado;
     const items = sucursales
       .filtrar((s) => s.tenantId === params['id'])
       .map(({ tenantId: _t, ...s }) => s);
@@ -546,7 +579,10 @@ export function registrarDirectorio(router: MockRouter): void {
     return { status: 201, body: resto };
   });
 
-  router.get('/tenants/:id/memberships', ({ params, query }) => {
+  router.get('/tenants/:id/memberships', (request) => {
+    const { params, query } = request;
+    const denegado = sinLecturaDe(params['id']!, request);
+    if (denegado !== null) return denegado;
     const status = texto(query, 'statusConceptId');
     const items = membresias
       .filtrar((m) => m.tenantId === params['id'])
