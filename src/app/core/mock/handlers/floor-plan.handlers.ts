@@ -66,6 +66,19 @@ function readRoleOverride(): PlanRole | null {
   }
 }
 
+/**
+ * Escenarios de demostración (solo simulador): `sessionStorage['mock:plan-scenario']` =
+ * `no-plans` (la sede no tiene lienzos) o `empty-plan` (el lienzo no tiene espacios dibujados).
+ */
+function readScenario(): 'no-plans' | 'empty-plan' | null {
+  try {
+    const raw = typeof sessionStorage === 'undefined' ? null : sessionStorage.getItem('mock:plan-scenario');
+    return raw === 'no-plans' || raw === 'empty-plan' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
 function bboxOfPlacement(rec: PlacementRec): BBox {
   return bboxOf(verticesOf(rec.geometry));
 }
@@ -160,6 +173,7 @@ export function registerFloorPlan(router: MockRouter, model: FloorPlanModel = ne
     const actor = guard(request);
     if (isReply(actor)) return actor;
     if (request.params['siteId'] === FOREIGN_SITE_ID) return notFound();
+    if (readScenario() === 'no-plans') return [];
     return (['CP', 'PB', 'P1'] as const).map((c) => {
       const { siteId: _s, northBearingDeg: _n, gridSizeM: _g, snapToGrid: _sn, contactToleranceM: _c, rowVersion: _r, siblings: _sib, ...summary } = metaOf(c);
       void [_s, _n, _g, _sn, _c, _r, _sib];
@@ -194,7 +208,7 @@ export function registerFloorPlan(router: MockRouter, model: FloorPlanModel = ne
 
     const focusKeys = focusKeySet(focusSpace, focusUnit);
     const window: BBox | null = bboxParam ? (bboxParam.split(',').map(Number) as unknown as BBox) : null;
-    let recs = model.placementsOf(code);
+    let recs = readScenario() === 'empty-plan' ? [] : model.placementsOf(code);
     if (!includeRetired) recs = recs.filter((r) => model.lifecycleOf(r.key) !== 'SPACE_RETIRED');
     if (focusKeys !== null && unitMode === 'filter') recs = recs.filter((r) => focusKeys.has(r.key));
     if (window !== null) recs = recs.filter((r) => intersects(bboxOfPlacement(r), window));

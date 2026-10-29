@@ -180,7 +180,7 @@ export class FloorPlanPage {
       untracked(() => {
         const store = this.store;
         store.siteId.set(q.get('site') ?? store.siteId());
-        store.planId.set(q.get('plan'));
+        store.planId.set(q.get('plan') || null);
         store.focusSpaceId.set(q.get('focus') || null);
         store.unitId.set(q.get('unit') || null);
         const color = q.get('color') as ColorMode | null;
@@ -192,7 +192,7 @@ export class FloorPlanPage {
           this.pendingReveal = q.get('space');
           this.hover.set(null);
           this.hiddenValues.set(new Set());
-          void (store.planId() === null ? store.bootstrap() : store.load());
+          void (store.planId() === null || store.plans().length === 0 ? store.bootstrap() : store.load());
         }
       });
     });

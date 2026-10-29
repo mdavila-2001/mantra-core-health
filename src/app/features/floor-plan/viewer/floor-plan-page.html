@@ -1,7 +1,7 @@
 <app-page-header
   title="Plano de planta"
   subtitle="Vea cada piso, área o zona con el estado de sus espacios. Pase el puntero, use las flechas o toque un espacio para ver su detalle."
-  [breadcrumbs]="[{ label: 'Mis organizaciones', route: '/administration/medical-organization' }, { label: 'Plano de planta' }]"
+  [breadcrumbs]="[{ label: 'Mis organizaciones', routerLink: '/administration/medical-organization' }, { label: 'Plano de planta' }]"
 />
 
 <a class="plan-skip" href="javascript:void(0)" (click)="showList(); $event.preventDefault()" data-testid="plan-skip-list">Ir a la lista de espacios</a>

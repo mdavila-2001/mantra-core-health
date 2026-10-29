@@ -126,7 +126,7 @@
     @for (v of verticals(); track v.id) {
       @if (v.label && v.vertices[0]; as p) {
         <g class="lbl" [style.transform]="'translate(' + (v.vertices[0][0] + 0.2) + 'px,' + (v.vertices[0][1] + 0.2) + 'px)'">
-          <g class="lbl__scale"><text class="lbl__note" x="3" y="12">{{ v.label }}</text></g>
+          <g class="lbl__scale"><text class="lbl__note" x="3" y="12">{{ v.verticalLinkCode ?? v.label }}</text></g>
         </g>
       }
     }
@@ -169,7 +169,7 @@
 </svg>
 
 <ng-template #fill let-row="row">
-  <path
+  <svg:path
     [class]="row.cls"
     [class.is-selected]="row.s.id === selectedId()"
     [class.is-dim]="row.dim || row.hiddenByLegend"
@@ -185,10 +185,10 @@
     [attr.data-visual]="row.visual.key"
   />
   @if (row.patternUrl && !row.hiddenByLegend) {
-    <path [class]="'sp-pat tone-' + row.visual.tone" [class.is-dim]="row.dim" [attr.d]="row.s.path" [attr.fill]="row.patternUrl" pointer-events="none" />
+    <svg:path [class]="'sp-pat tone-' + row.visual.tone" [class.is-dim]="row.dim" [attr.d]="row.s.path" [attr.fill]="row.patternUrl" pointer-events="none" />
   }
   @if (row.showBorder && !row.hiddenByLegend) {
-    <path [class]="'sp-iso tone-' + row.visual.tone" [class.is-dim]="row.dim" [attr.d]="row.s.path" pointer-events="none" />
+    <svg:path [class]="'sp-iso tone-' + row.visual.tone" [class.is-dim]="row.dim" [attr.d]="row.s.path" pointer-events="none" />
   }
 </ng-template>
 

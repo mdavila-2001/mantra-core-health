@@ -36,6 +36,7 @@ import {
   type PixelSize,
   type Viewport,
 } from '../../../../core/floor-plan/plan-viewport';
+import { shortName } from '../../../../core/floor-plan/labels';
 import { GridIndex, defaultCellSize } from '../../../../core/floor-plan/spatial-index';
 import { nextInDirection, readingOrder, type NavDirection, type NavItem } from '../../../../core/floor-plan/spatial-nav';
 import {
@@ -322,7 +323,7 @@ export class FloorPlanCanvas {
       const glyph = showGlyphs && fitsGlyph && s.band !== 'zone' ? visual.glyph : null;
       const mark = showGlyphs && fitsGlyph && s.band !== 'zone' ? visual.mark : undefined;
       let text: string | null = null;
-      if (showLabels && s.band === 'zone') text = widthPx >= 80 ? s.name : null;
+      if (showLabels && s.band === 'zone') text = widthPx >= 70 ? shortName(s.name, Math.floor((widthPx - 12) / 7.6)) || null : null;
       else if (showLabels && s.band === 'room' && fitsText) text = shortName(s.name, Math.floor(widthPx / 6.5));
       if (text === null && glyph === null && mark === undefined) continue;
       const zone = s.band === 'zone';
@@ -963,12 +964,4 @@ function cancelAnimationFrameSafe(handle: number): void {
 
 function cssEscape(value: string): string {
   return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(value) : value.replace(/["\\]/g, '\\$&');
-}
-
-/** El nombre del local recortado a lo que cabe: «Consultorio 1 · Medicina general» → «Consultorio 1». */
-export function shortName(name: string, maxChars: number): string {
-  const head = name.split(' · ')[0]!;
-  if (head.length <= maxChars) return head;
-  if (maxChars < 4) return '';
-  return `${head.slice(0, maxChars - 1).trimEnd()}…`;
 }
