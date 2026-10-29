@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { AdtClient } from '../../../core/data-access/adt/adt.client';
@@ -65,7 +66,9 @@ const NUMERO = new Intl.NumberFormat('es-BO', { maximumFractionDigits: 2, minimu
 export class Indicators {
   private readonly client = inject(AdtClient);
   private readonly session = inject(SessionStore);
+  private readonly route = inject(ActivatedRoute);
   protected readonly sites = inject(InpatientSites);
+  private readonly consulta = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
 
   private readonly ayer = sumarDias(hoyEnLaSede(), -1);
   protected readonly hasta = signal(this.ayer);
@@ -107,6 +110,17 @@ export class Indicators {
 
   constructor() {
     this.sites.load();
+    // `?from=AAAA-MM-DD&to=AAAA-MM-DD`: enlace directo a un período.
+    effect(() => {
+      const q = this.consulta();
+      const re = /^\d{4}-\d{2}-\d{2}$/;
+      const desde = q.get('from');
+      const hasta = q.get('to');
+      untracked(() => {
+        if (desde !== null && re.test(desde)) this.desde.set(desde);
+        if (hasta !== null && re.test(hasta)) this.hasta.set(hasta);
+      });
+    });
     effect(() => {
       const s = this.sites.state();
       const id = this.sites.siteId();

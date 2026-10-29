@@ -37,7 +37,7 @@
     <div class="indicadores" data-testid="indicadores">
       <app-card>
         <p class="indicadores__periodo" data-testid="indicadores-calculo">
-          Período del {{ fechaCorta(i.period.from) }} al {{ fechaCorta(i.period.to) }} · {{ i.coverage.daysClosed }} de {{ i.days }} días cerrados · calculado el {{ fechaYHora(i.asOf) }} (hace {{ antiguedad() }}).
+          Período del {{ fechaCorta(i.period.from) }} al {{ fechaCorta(i.period.to) }} · {{ i.coverage.daysClosed }} de {{ i.days }} días cerrados · calculado el {{ fechaYHora(i.asOf) }} ({{ antiguedad() }}).
         </p>
 
         <ul class="kpis" aria-label="Indicadores principales">

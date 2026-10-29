@@ -1,0 +1,374 @@
+{
+  "resultados": [
+    {
+      "nombre": "el paso Cama ofrece sólo camas asignables y avisa las que quedan afuera",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "«ver también las no asignables» muestra la sucia con su motivo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "hombre a habitación de mujeres: advertencia forzable con «Forzar con justificación»",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "con menos de 20 caracteres el diálogo no confirma (sigue abierto, sin forzar)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "la confirmación avisa que quedará un incidente",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "el ingreso lleva a la ficha, en la cama 303-B, con el incidente abierto",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "la pestaña de incidentes muestra la regla y la justificación",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "tras recargar, la internación sigue en 303-B",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "el simulador emitió el evento clinical.adt.placement_override",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "el incidente pasa a Revisado",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "cama tomada por otra persona: 409 BED_NOT_ASSIGNABLE dicho en palabras",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "el rechazo trae código de soporte",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "carrera de dos ingresos a la misma cama: BED_DOUBLE_OCCUPANCY",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ingreso sin cama: queda pendiente de cama",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "asignar cama: la ficha lee 304-A del servidor",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "el traslado explica qué hace en una sola operación",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "traslado: origen sucio y orden de limpieza creada",
+      "ok": true,
+      "detalle": "Éxito:HechoTrasladado a la cama 305-B. La cama 301-B quedó sucia y se generó la orden de limpieza b81363f7."
+    },
+    {
+      "nombre": "traslado: la ficha lee 305-B",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "movimientos: A01 completada, A02 en curso con la cama anterior",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "en el registro del simulador 301-B quedó libre y 305-B ocupada",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "intercambio A17: ahora está en 305-A",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "intercambio: no se generó orden de limpieza (ninguna cama quedó libre)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "eventos HL7: A01, A02, A17 y A20 emitidos",
+      "ok": true,
+      "detalle": "ADT^A20,ADT^A01,ADT^A02,ADT^A17"
+    },
+    {
+      "nombre": "el egreso exige disposición",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "egreso: la cama quedó sucia con su orden",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "egreso: la internación figura finalizada",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "la cama del egreso aparece NO asignable y sucia",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "terminada la limpieza, la cama vuelve a ser asignable",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "censo de ayer: abierto, vista previa calculada",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "cerrar: el sello pasa a Cerrado y trae la huella",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "el ajuste se lista aparte y el original no se reescribe (original → ajustado)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "tras recargar, el cierre y el ajuste persisten",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "un censo cerrado no ofrece cerrar de nuevo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "cerrar el día de hoy: rechazado, el día no terminó",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "indicadores con el censo de ayer cerrado: período completo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "los cuatro KPI traen valor",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "muestra el momento del cálculo",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "el expediente muestra la cama (UTI-1) y la unidad de la internación abierta",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "«Ver ficha de internación» abre la ficha",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "«Internar» abre el ingreso con la persona elegida",
+      "ok": true,
+      "detalle": "Martín Rocha Antelo"
+    },
+    {
+      "nombre": "ingreso S5: Limpieza no ve el formulario",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Admin de organización: el ingreso es S5 (separación de funciones)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Admin de organización sí ve el censo y puede ajustar (no ingresar)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "S6: una internación ajena no revela nada",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "ingreso S8: red",
+      "ok": true,
+      "detalle": "Internación/Nuevo ingresoNuevo ingresoInterne a una persona en una cama del esta"
+    },
+    {
+      "nombre": "ingreso S9: error",
+      "ok": true,
+      "detalle": "Internación/Nuevo ingresoNuevo ingresoInterne a una persona en una cama del esta"
+    },
+    {
+      "nombre": "ingreso S9 trae código de soporte",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "estancia S8: red",
+      "ok": true,
+      "detalle": "Internación/Censo/Ficha de internaciónFicha de internaciónSin conexiónNo pudimos"
+    },
+    {
+      "nombre": "estancia S9: error",
+      "ok": true,
+      "detalle": "Internación/Censo/Ficha de internaciónFicha de internaciónError:Algo salió mal S"
+    },
+    {
+      "nombre": "estancia S9 trae código de soporte",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "censo S8: red",
+      "ok": true,
+      "detalle": "Internación/Censo diarioCenso diarioLa foto de cada unidad a la medianoche: cama"
+    },
+    {
+      "nombre": "censo S9: error",
+      "ok": true,
+      "detalle": "Internación/Censo diarioCenso diarioLa foto de cada unidad a la medianoche: cama"
+    },
+    {
+      "nombre": "censo S9 trae código de soporte",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "indicadores S8: red",
+      "ok": true,
+      "detalle": "Internación/Indicadores de camasIndicadores de camasOcupación, estancia, giro y "
+    },
+    {
+      "nombre": "indicadores S9: error",
+      "ok": true,
+      "detalle": "Internación/Indicadores de camasIndicadores de camasOcupación, estancia, giro y "
+    },
+    {
+      "nombre": "indicadores S9 trae código de soporte",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "estancia S7: dice la antigüedad del dato",
+      "ok": true,
+      "detalle": "Internación/Censo/Jorge Luis Mamani ChoqueJorge Luis Mamani ChoqueInternación desde el 24/10/2026, 1"
+    },
+    {
+      "nombre": "censo S7: dice la antigüedad del dato",
+      "ok": true,
+      "detalle": "Internación/Censo diarioCenso diarioLa foto de cada unidad a la medianoche: camas, pacientes, ingres"
+    },
+    {
+      "nombre": "indicadores S7: dice la antigüedad del dato",
+      "ok": true,
+      "detalle": "Internación/Indicadores de camasIndicadores de camasOcupación, estancia, giro y sustitución de camas"
+    },
+    {
+      "nombre": "indicadores S3: sin días cerrados dice cómo salir (cerrar un censo)",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "censo S3: un establecimiento sin camas ofrece crear camas",
+      "ok": true,
+      "detalle": ""
+    }
+  ],
+  "capturas": [
+    "01-ingreso-paso-cama-1440.png",
+    "01-ingreso-paso-cama-768.png",
+    "01-ingreso-paso-cama-390.png",
+    "01-ingreso-paso-cama-1440-oscuro.png",
+    "02-ingreso-compatibilidad-forzable-1440.png",
+    "02-ingreso-compatibilidad-forzable-768.png",
+    "02-ingreso-compatibilidad-forzable-390.png",
+    "02-ingreso-compatibilidad-forzable-1440-oscuro.png",
+    "03-ingreso-forzar-justificacion-valida-1440.png",
+    "04-estancia-cama-actual-1440.png",
+    "04-estancia-cama-actual-768.png",
+    "04-estancia-cama-actual-390.png",
+    "04-estancia-cama-actual-1440-oscuro.png",
+    "05-estancia-incidentes-1440.png",
+    "06-rechazo-cama-ocupada-S4-1440.png",
+    "07-rechazo-carrera-BED_DOUBLE_OCCUPANCY-1440.png",
+    "08-ingreso-sin-cama-1440.png",
+    "09-estancia-pendiente-de-cama-1440.png",
+    "10-accion-trasladar-1440.png",
+    "11-estancia-movimientos-traslado-1440.png",
+    "11-estancia-movimientos-traslado-390.png",
+    "12-intercambio-resultado-1440.png",
+    "13-accion-egreso-1440.png",
+    "14-cama-sucia-no-asignable-1440.png",
+    "15-cama-vuelve-asignable-1440.png",
+    "16-censo-abierto-vista-previa-1440.png",
+    "16-censo-abierto-vista-previa-768.png",
+    "16-censo-abierto-vista-previa-390.png",
+    "16-censo-abierto-vista-previa-1440-oscuro.png",
+    "17-censo-cerrado-1440.png",
+    "17-censo-cerrado-390.png",
+    "17-censo-cerrado-1440-oscuro.png",
+    "18-censo-ajuste-dialogo-1440.png",
+    "19-censo-ajustado-1440.png",
+    "20-censo-hoy-no-se-cierra-S4-1440.png",
+    "21-indicadores-1440.png",
+    "21-indicadores-768.png",
+    "21-indicadores-390.png",
+    "21-indicadores-1440-oscuro.png",
+    "22-expediente-bloque-internacion-1440.png",
+    "22-expediente-bloque-internacion-390.png",
+    "22-expediente-bloque-internacion-1440-oscuro.png",
+    "23-S5-ingreso-limpieza-1440.png",
+    "23-S5-ingreso-limpieza-768.png",
+    "23-S5-ingreso-limpieza-390.png",
+    "24-S5-estancia-limpieza-1440.png",
+    "25-S5-censo-limpieza-1440.png",
+    "26-S5-ingreso-admin-organizacion-1440.png",
+    "27-S6-estancia-1440.png",
+    "27-S6-estancia-768.png",
+    "27-S6-estancia-390.png",
+    "28-S9-ingreso-1440.png",
+    "29-S9-estancia-1440.png",
+    "30-S8-censo-1440.png",
+    "31-S9-censo-1440.png",
+    "32-S9-indicadores-1440.png",
+    "33-S2-ingreso-1440.png",
+    "34-S2-censo-1440.png",
+    "35-S7-censo-1440.png",
+    "36-S7-indicadores-1440.png",
+    "37-S3-indicadores-1440.png",
+    "38-S3-censo-1440.png"
+  ],
+  "erroresDePagina": []
+}

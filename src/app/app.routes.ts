@@ -157,6 +157,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/medical-organization/medical-organization').then(
       (m) => m.MedicalOrganization,
     ),
+  // Internación / ADT (franja F3): ingreso, censo diario e indicadores de camas.
+  'inpatient/admissions/new': () =>
+    import('./features/inpatient/admission-new/admission-new').then((m) => m.AdmissionNew),
+  'inpatient/census': () => import('./features/inpatient/census/census').then((m) => m.Census),
+  'inpatient/indicators': () =>
+    import('./features/inpatient/indicators/indicators').then((m) => m.Indicators),
   // TP-1: la organización mirándose a sí misma. Diferida por lo mismo que sus
   // hermanas de administración.
   'administration/my-organization': () =>
@@ -722,42 +728,15 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Internación / ADT (F3). Una tarjeta ancha con pasos (ingreso) o con pestañas
-    // (ficha de internación), regla del 09/09/2026. Quién puede operar camas no
-    // es un rol del token: las secciones se ofrecen a toda sesión con organización
-    // y es la API quien contesta 403 (pantalla S5).
-    path: 'inpatient/admissions/new',
-    title: `${APP_TITLE} - Nuevo ingreso`,
-    canActivate: [seccionRolesGuard],
-    loadComponent: () =>
-      import('./features/inpatient/admission-new/admission-new')
-        .then((m) => m.AdmissionNew)
-        .catch(() => chunkFallido()),
-  },
-  {
+    // Internación / ADT (F3). El ingreso, el censo y los indicadores son secciones
+    // del menú y sus pantallas están en `PANTALLAS_DIFERIDAS`; la ficha de una
+    // internación no es una sección: se llega desde el censo o el expediente.
+    // Quién puede operar camas no es un rol del token: la API contesta 403 (S5).
     path: 'inpatient/stays/:encounterId',
     title: `${APP_TITLE} - Ficha de internación`,
     loadComponent: () =>
       import('./features/inpatient/stay/stay')
         .then((m) => m.Stay)
-        .catch(() => chunkFallido()),
-  },
-  {
-    path: 'inpatient/census',
-    title: `${APP_TITLE} - Censo diario`,
-    canActivate: [seccionRolesGuard],
-    loadComponent: () =>
-      import('./features/inpatient/census/census')
-        .then((m) => m.Census)
-        .catch(() => chunkFallido()),
-  },
-  {
-    path: 'inpatient/indicators',
-    title: `${APP_TITLE} - Indicadores de camas`,
-    canActivate: [seccionRolesGuard],
-    loadComponent: () =>
-      import('./features/inpatient/indicators/indicators')
-        .then((m) => m.Indicators)
         .catch(() => chunkFallido()),
   },
   {

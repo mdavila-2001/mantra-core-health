@@ -61,7 +61,7 @@
               <div><dt>Alta prevista</dt><dd>{{ f.encounter.expectedDischargeAt ? fechaYHora(f.encounter.expectedDischargeAt) : 'Sin fecha' }}</dd></div>
               <div><dt>Aislamiento</dt><dd>{{ f.encounter.isolation.display }}{{ f.encounter.isolationOrganism ? ' · ' + f.encounter.isolationOrganism : '' }}</dd></div>
             </dl>
-            <p class="estancia__nota">Datos leídos hace {{ antiguedad() }}. Cada acción vuelve a leer la ficha del servidor.</p>
+            <p class="estancia__nota">Datos leídos {{ antiguedad() }}. Cada acción vuelve a leer la ficha del servidor.</p>
           </app-tab>
 
           <app-tab label="Movimientos">

@@ -189,7 +189,15 @@ function carreraPorCama(careSpaceId: string): MockReply | null {
   } catch {
     return null;
   }
-  const rival = PATIENTS[19]!;
+  ocuparConRival(careSpaceId);
+  return conflicto('BED_DOUBLE_OCCUPANCY', 'La base rechazó la segunda ocupación de la cama (EXCLUDE).');
+}
+
+let rivales = 0;
+
+/** Otra sesión ocupa la cama: una internación de urgencia de un paciente que la semilla no usa. */
+function ocuparConRival(careSpaceId: string): void {
+  const rival = PATIENTS[19 + (rivales++ % 20)]!;
   const idRival = nuevoId('adt-rival');
   ingresos.agregar({
     id: idRival,
@@ -223,7 +231,6 @@ function carreraPorCama(careSpaceId: string): MockReply | null {
     incidentId: null,
   });
   sincronizarClinica();
-  return conflicto('BED_DOUBLE_OCCUPANCY', 'La base rechazó la segunda ocupación de la cama (EXCLUDE).');
 }
 
 function cama(id: string) {
@@ -833,6 +840,10 @@ interface AyudasDeAdt {
   completarLimpieza(code: string): boolean;
   eventos(): readonly { eventType: string; hl7: string; aggregateId: string; payload: unknown }[];
   ocupacionPorCodigo(): Readonly<Record<string, string | null>>;
+  /** Otra sesión ocupa la cama antes de que se confirme (para ver el rechazo por cama ocupada). */
+  tomarCama(code: string): boolean;
+  /** El id de perfil de un paciente de la maqueta, por apellido (para armar enlaces en la evidencia). */
+  pacienteId(apellido: string): string | null;
 }
 
 /**
@@ -845,6 +856,13 @@ function instalarAyudasDeDemostracion(): void {
   if (typeof window === 'undefined') return;
   const ayudas: AyudasDeAdt = {
     completarLimpieza,
+    pacienteId: (apellido) => PATIENTS.find((p) => p.lastName === apellido)?.id ?? null,
+    tomarCama: (code) => {
+      const e = espacios.filtrar((x) => x.siteId === SITIO_ADT && x.code === code)[0];
+      if (e === undefined) return false;
+      ocuparConRival(e.id);
+      return true;
+    },
     eventos: () => eventos.todos().map(({ eventType, hl7, aggregateId, payload }) => ({ eventType, hl7, aggregateId, payload })),
     ocupacionPorCodigo: () =>
       Object.fromEntries(camasDelSitio(SITIO_ADT).map((b) => [b.code, celda(b, 'SUPERVISION').occupancy.encounterId ?? null])),
