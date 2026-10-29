@@ -67,7 +67,7 @@
   }
 
   <ul class="bb__legend" aria-label="Leyenda de estados" data-testid="bb-legend">
-    @for (l of legend; track l.label) {
+    @for (l of legend(); track l.label) {
       <li><app-bed-status-badge [look]="l" /></li>
     }
   </ul>

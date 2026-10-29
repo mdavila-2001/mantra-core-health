@@ -141,3 +141,9 @@
   justify-content: flex-end;
   margin-block-end: var(--sp-3);
 }
+
+/* El control de vista no se parte ni se recorta en 390 px: si no cabe junto a «Ubicación», baja de renglón. */
+.bb__toolbar app-segmented-control {
+  flex: 0 0 auto;
+  min-inline-size: 190px;
+}

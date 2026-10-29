@@ -18,7 +18,7 @@
  * Sirve la salida de `ng build --configuration development,demo` con un
  * servidor estático con respaldo a index.html. NUNCA espera `networkidle`.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
@@ -52,6 +52,8 @@ function uuid(seed) {
 const bedId = (code) => (code === 'QX-1' ? uuid('operating-room-1') : code === 'QX-2' ? uuid('operating-room-2') : uuid(`infra-sanlucas-${code}`));
 const SITE_ID = uuid('site-sanlucas');
 
+const ONLY = (process.env['ONLY'] ?? '').split(',').filter(Boolean).map(Number);
+const want = (n) => ONLY.length === 0 || ONLY.includes(n);
 const results = [];
 const ok = (name, cond, detail = '') => {
   results.push({ name, ok: Boolean(cond), detail });
@@ -59,6 +61,21 @@ const ok = (name, cond, detail = '') => {
 };
 
 mkdirSync(OUT, { recursive: true });
+function saveResults() {
+  // Con ONLY (re-corrida parcial) se mezcla con lo ya guardado: gana la comprobación más nueva de cada nombre.
+  let merged = results;
+  try {
+    if (ONLY.length > 0) {
+      const prev = JSON.parse(readFileSync(`${OUT}results.json`, 'utf8')).results;
+      const names = new Set(results.map((r) => r.name));
+      merged = [...prev.filter((r) => !names.has(r.name)), ...results];
+    }
+  } catch {
+    // sin corrida previa: queda lo de esta
+  }
+  writeFileSync(`${OUT}results.json`, JSON.stringify({ base: BASE, generated: new Date().toISOString(), results: merged }, null, 2));
+}
+
 const browser = await chromium.launch({ ...(EXECUTABLE ? { executablePath: EXECUTABLE } : {}), args: ['--no-sandbox'] });
 
 /** Una página con sesión, la persona elegida y el guion de deriva apagado (estado determinista). */
@@ -188,7 +205,7 @@ try {
 
   // ───────────────────────────────────────────────────────────────────────────
   // 1 · El tablero: siete estados, unidades en pestañas, recuentos, leyenda.
-  {
+  if (want(0)) {
     const p = await newPage({ persona: 'nurse' });
     await board(p);
     ok('el tablero es UNA tarjeta con las unidades en pestañas', (await p.locator('app-card').count()) === 1 && (await p.getByRole('tab').count()) >= 5);
@@ -223,7 +240,7 @@ try {
 
   // ───────────────────────────────────────────────────────────────────────────
   // 2 · El flujo completo, con recarga dura entre pasos.
-  {
+  if (want(1)) {
     const p = await newPage({ persona: 'maintenance' });
     const cell = bedId('302-A');
     await board(p, `&cell=${cell}`);
@@ -331,7 +348,7 @@ try {
 
   // ───────────────────────────────────────────────────────────────────────────
   // 3 · Los rechazos de la API vistos desde la pantalla.
-  {
+  if (want(2)) {
     const p = await newPage({ persona: 'nurse' });
     await board(p, `&cell=${bedId('302-B')}`);
     await tab(p, 'Medicina interna');
@@ -368,7 +385,7 @@ try {
     await p.context().close();
   }
 
-  {
+  if (want(3)) {
     // 3.4 compromisos futuros: un quirófano con cirugías en la ventana
     const p = await newPage({ persona: 'admin' });
     await board(p, `&cell=${bedId('QX-1')}`);
@@ -396,7 +413,7 @@ try {
 
   // ───────────────────────────────────────────────────────────────────────────
   // 4 · Aislamiento y cohorte.
-  {
+  if (want(4)) {
     const p = await newPage({ persona: 'nurse' });
     await board(p, `&cell=${bedId('AIS-2A')}`);
     await tab(p, 'Medicina interna');
@@ -445,7 +462,7 @@ try {
 
   // ───────────────────────────────────────────────────────────────────────────
   // 5 · Vistas por rol.
-  for (const [persona, label, widths] of [
+  if (want(5)) for (const [persona, label, widths] of [
     ['housekeeping', 'role-housekeeping-hygiene-only', [WIDTHS[0], WIDTHS[2]]],
     ['maintenance', 'role-maintenance', [WIDTHS[0]]],
     ['admin', 'role-admin', [WIDTHS[0]]],
@@ -470,7 +487,7 @@ try {
 
   // ───────────────────────────────────────────────────────────────────────────
   // 6 · La cola de limpieza.
-  {
+  if (want(6)) {
     const p = await newPage({ persona: 'housekeeping-supervisor' });
     await queue(p);
     const cols = (await p.locator('thead th').allInnerTexts()).join('|');
@@ -492,7 +509,7 @@ try {
 
   // ───────────────────────────────────────────────────────────────────────────
   // 7 · La pestaña «Operación» de la ficha del espacio (la sexta; las cinco de F1 no se mueven).
-  {
+  if (want(7)) {
     const p = await newPage({ persona: 'nurse' });
     await p.goto(`${BASE}/administration/medical-organization/spaces/${bedId('312-A')}`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
     await p.getByTestId('ficha-espacio').waitFor({ timeout: 60_000 });
@@ -518,7 +535,7 @@ try {
 
   // ───────────────────────────────────────────────────────────────────────────
   // 8 · El sondeo cambia el estado sin tocar la pantalla (guion de deriva activo).
-  {
+  if (want(8)) {
     const p = await newPage({ persona: 'nurse', drift: 'on' });
     await board(p);
     await tab(p, 'Medicina interna');
@@ -541,16 +558,19 @@ try {
   // ───────────────────────────────────────────────────────────────────────────
   // 9 · Los estados M34 del tablero y de la cola.
   const forceFail = (pattern, mode) => ({ 'mock:fallos': JSON.stringify([{ patron: pattern, modo: mode }]) });
-  {
+  if (want(9)) {
     // S2
-    const p = await newPage({ persona: 'nurse', init: { lento: '1' } });
-    await p.goto(`${BASE}/inpatient/bed-board?site=${SITE_ID}`, { waitUntil: 'domcontentloaded' });
-    await p.waitForTimeout(2200);
+    const p = await newPage({ persona: 'nurse' });
+    // La espera se alarga recién con la sesión abierta y se navega DENTRO de la aplicación:
+    // una carga completa también alarga el arranque y la pantalla sale en blanco, no en S2.
+    await p.evaluate(() => sessionStorage.setItem('lento', '1'));
+    await p.getByRole('link', { name: 'Tablero de camas' }).first().click();
+    await p.waitForTimeout(1800);
     ok('S2: cargando muestra el esqueleto', (await p.locator('app-skeleton, .view-state-host__loading').count()) > 0);
     await one(p, 'm34-S2-loading');
     await p.context().close();
   }
-  {
+  if (want(10)) {
     // S3 · establecimiento sin camas
     const p = await newPage({ persona: 'nurse' });
     await p.goto(`${BASE}/inpatient/bed-board?site=${uuid('site-sanlucas-norte')}`, { waitUntil: 'domcontentloaded' });
@@ -563,7 +583,7 @@ try {
     await one(p, 'm34-S3-unit-filter-empty');
     await p.context().close();
   }
-  for (const [code, mode, init, expect, pattern] of [
+  if (want(11)) for (const [code, mode, init, expect, pattern] of [
     ['S5', 'forbidden', forceFail('/bed-board', 'forbidden'), /No tiene acceso/, null],
     ['S8', 'red', forceFail('/bed-board', 'red'), /Sin conexión/, null],
     ['S9', 'error', forceFail('/bed-board', 'error'), /Código de soporte/, null],
@@ -577,7 +597,7 @@ try {
     if (code === 'S9') await shots(p, 'm34-S9-error', { widths: [WIDTHS[2]] });
     await p.context().close();
   }
-  {
+  if (want(12)) {
     // S6
     const p = await newPage({ persona: 'nurse' });
     await p.goto(`${BASE}/inpatient/bed-board?site=${uuid('site-otro-tenant')}`, { waitUntil: 'domcontentloaded' });
@@ -587,7 +607,7 @@ try {
     await one(p, 'm34-S6-not-found');
     await p.context().close();
   }
-  {
+  if (want(13)) {
     // S7 por antigüedad de la lectura
     const p = await newPage({ persona: 'nurse', init: { 'mock:infra-antiguedad': '4' } });
     await board(p);
@@ -597,7 +617,7 @@ try {
     await shots(p, 'm34-S7-stale-by-age');
     await p.context().close();
   }
-  {
+  if (want(14)) {
     // S7 por sondeo caído
     const p = await newPage({ persona: 'nurse' });
     await board(p);
@@ -613,7 +633,7 @@ try {
     ok('S7: al reintentar con éxito el aviso desaparece', (await p.getByTestId('bb-stale').count()) === 0);
     await p.context().close();
   }
-  for (const [code, init, expect] of [
+  if (want(15)) for (const [code, init, expect] of [
     ['S3', null, /Ninguna orden coincide con ese estado/],
     ['S5', forceFail('/cleaning-orders', 'forbidden'), /No tiene acceso/],
     ['S9', forceFail('/cleaning-orders', 'error'), /Código de soporte/],
@@ -626,7 +646,7 @@ try {
     await one(p, `m34-queue-${code}`);
     await p.context().close();
   }
-  {
+  if (want(16)) {
     const p = await newPage({ persona: 'housekeeping', init: { 'mock:infra-antiguedad': '5' } });
     await queue(p);
     ok('cola S7: «Dato de hace 5 min»', /Dato de hace 5 min/.test(await p.getByTestId('cq-stale').innerText()));
@@ -635,8 +655,8 @@ try {
   }
 
 
-  writeFileSync(`${OUT}results.json`, JSON.stringify({ base: BASE, generated: new Date().toISOString(), results }, null, 2));
 } finally {
+  saveResults();
   await browser.close();
 }
 const failed = results.filter((r) => !r.ok);

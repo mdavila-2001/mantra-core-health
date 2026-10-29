@@ -11,13 +11,18 @@ import type { AppSection } from './navigation.types';
 
     Los `roles` son los del token que dejan entrar a la pantalla; **no son el
     permiso**. Enfermería, limpieza y mantenimiento son asignaciones delegadas
-    que el token no trae: quien las tiene llega con `USER` (o con su rol
-    clínico). Qué puede hacer cada quien lo decide la API en cada petición y lo
+    que el token no trae. Por eso la puerta se abre con los roles del token que
+    sí existen hoy —administración, jefatura de quirófano y personal clínico— y
+    **no** con `USER`: ese rol lo comparten las cuentas de laboratorio, farmacia y
+    aseguradora, cuyos menús son listas cerradas. Abrirla al personal de
+    enfermería, limpieza y mantenimiento exige que el token (o la API) exponga
+    sus asignaciones delegadas: es una decisión de integración, no de esta
+    pantalla. Qué puede hacer cada quien lo decide la API en cada petición y lo
     declara en `viewer`; un rol sin alcance recibe 403 o 404 y la pantalla lo
     dice (S5/S6). El paciente no entra.
     ========================================================================== */
 
-const ROLES_DE_LA_OPERACION = ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PERIOP_NURSE', 'CLINICIAN', 'PRACTITIONER', 'USER'] as const;
+const ROLES_DE_LA_OPERACION = ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PERIOP_NURSE', 'CLINICIAN'] as const;
 
 export const INPATIENT_SECTIONS: readonly AppSection[] = [
   {

@@ -308,7 +308,12 @@ export class BedBoard {
     return s.detail === null ? s.headline : `${s.headline} · ${s.detail}`;
   };
   protected readonly ageOf = (c: BedBoardCell): string => ageLabel(c.lastEventAt, this.now());
-  protected readonly legend = (Object.keys(V2_LABEL) as V2Code[]).map((code) => lookOfV2(code));
+  /** La leyenda dice lo que el tablero dibuja: los siete estados, o los de higiene en la vista de Limpieza. */
+  protected readonly legend = computed(() =>
+    this.hygieneOnly()
+      ? (['HYG_INSPECTED', 'HYG_CLEAN', 'HYG_DIRTY', 'HYG_CLEANING', 'HYG_CONTAMINATED'] as const).map((c) => lookOfHygiene(c, c === 'HYG_CLEAN'))
+      : (Object.keys(V2_LABEL) as V2Code[]).map((code) => lookOfV2(code)),
+  );
 
   constructor() {
     this.directory.sites().subscribe({

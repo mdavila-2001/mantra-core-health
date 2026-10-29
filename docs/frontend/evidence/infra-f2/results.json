@@ -1,0 +1,406 @@
+{
+  "base": "http://127.0.0.1:4320",
+  "generated": "2026-10-29T08:37:33.561Z",
+  "results": [
+    {
+      "name": "mantenimiento sin fecha estimada → 422",
+      "ok": true,
+      "detail": "{\"action\":\"start-maintenance\",\"kindCode\":\"BLOCK_MAINTENANCE\",\"reasonCode\":\"BLOCK_RSN_PREVENTIVE_MAINTENANCE\"}"
+    },
+    {
+      "name": "el rechazo se muestra bajo «Fecha estimada»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mantenimiento con motivo y fecha → 200",
+      "ok": true,
+      "detail": "{\"action\":\"start-maintenance\",\"kindCode\":\"BLOCK_MAINTENANCE\",\"reasonCode\":\"BLOCK_RSN_PREVENTIVE_MAINTENANCE\",\"expectedEndAt\":\"2026-10-30T16:00:00.000Z\"}"
+    },
+    {
+      "name": "el cuerpo lleva el motivo y la fecha estimada",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "persistencia: la fila del estado quedó en mantenimiento con su fecha",
+      "ok": true,
+      "detail": "{\"a\":\"SPACE_OP_MAINTENANCE\",\"h\":\"2026-10-30T16:00:00.000Z\"}"
+    },
+    {
+      "name": "persistencia: hay un bloqueo vigente de mantenimiento",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "persistencia: evento A20 con v2 = C y fuente de bloqueo",
+      "ok": true,
+      "detail": "{\"v2\":\"C\",\"to\":\"SPACE_OP_MAINTENANCE\",\"rid\":\"req-ops-0001\"}"
+    },
+    {
+      "name": "recarga: la celda dice «Mantenimiento · hasta dd/mm hh:mm»",
+      "ok": true,
+      "detail": "302-A No disponible Mantenimiento preventivo hasta 30/10 12:00 hace 7 s"
+    },
+    {
+      "name": "recarga: el panel conserva el bloqueo y la orden de trabajo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "terminar el mantenimiento → 200",
+      "ok": true,
+      "detail": "{\"note\":\"Se revisó y lubricó el mecanismo\"}"
+    },
+    {
+      "name": "la cama queda sucia y con orden de limpieza (regla B.5-25)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la cola muestra la orden del fin de mantenimiento",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "iniciar la limpieza → 200 con If-Match",
+      "ok": true,
+      "detail": "/cleaning-orders/35ca714c-d6ed-44f6-aa71-0d2a7b8d15a2/start"
+    },
+    {
+      "name": "la fila pasa a «En curso»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "terminar la limpieza → 200",
+      "ok": true,
+      "detail": "/cleaning-orders/35ca714c-d6ed-44f6-aa71-0d2a7b8d15a2/finish"
+    },
+    {
+      "name": "la fila pasa a «Por inspeccionar»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Limpieza no ve «Aprobar» sobre lo que ella misma terminó",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "limpia pero sin inspeccionar: «Por limpiar», no asignable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "inspeccionar PASS → 200",
+      "ok": true,
+      "detail": "{\"result\":\"PASS\"}"
+    },
+    {
+      "name": "la orden sale de las abiertas",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "persistencia: cuatro eventos A20 de higiene en orden (sucia → limpiando → limpia → inspeccionada)",
+      "ok": true,
+      "detail": "HYG_DIRTY,HYG_CLEANING,HYG_CLEAN,HYG_INSPECTED"
+    },
+    {
+      "name": "recarga: la cama quedó disponible y asignable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "bloqueo sin motivo → 422 BLOCK_REASON_REQUIRED",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "el rechazo cuelga del campo «Motivo»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "motivo «Otro» sin detalle → 422",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "limpieza intenta bloquear → 403 INFRA_ACTION_NOT_ALLOWED",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la pantalla lo dice (S5) con los roles que sí podrían y el código de soporte",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "bloquear un quirófano con cirugías en la ventana → 409",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la pantalla lista cada compromiso con su próxima acción",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "«Bloquear de todos modos» está deshabilitado hasta confirmar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "con acknowledgeConflicts → 200",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "el quirófano queda bloqueado (administrativo)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "aéreo en un local con la validación de climatización vencida → 422",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la pantalla dice qué le falta al local",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "aislamiento por gotas → 200 y devuelve las camas hermanas bloqueadas",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "302-A queda «Aislada»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "302-B (libre, misma habitación) queda bloqueada por cohorte",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "levantar el aislamiento → 200",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "exige limpieza terminal: la cama no es asignable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la hermana se libera",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la cola muestra la orden TERMINAL por fin de aislamiento",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Limpieza: ni paciente, ni aislamiento, ni ocupación a la vista",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Limpieza: el panel solo trae el eje de higiene",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Mantenimiento: ofrece terminar el mantenimiento y no bloquear",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Administración: el bloqueo vencido se marca y se puede levantar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Admisión: ve al paciente (iniciales, edad) y no cambia estados",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la cola no trae columnas de paciente",
+      "ok": true,
+      "detail": "PRIORIDAD|CAMA|TIPO|ESTADO|PEDIDA|ASIGNADA A|ACCIONES|Ver el detalle de la fila"
+    },
+    {
+      "name": "la orden inmediata va primero y la terminal está resaltada",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la cola muestra «Pedida hace N min» y quién la tiene",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la ficha sigue siendo UNA tarjeta y tiene seis pestañas (las cinco de F1 y «Operación»)",
+      "ok": true,
+      "detail": "General|Atributos técnicos|Unidades|Hijos|Historial|Operación"
+    },
+    {
+      "name": "abrir la ficha NO pide el estado operativo hasta abrir la pestaña",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Operación: ejes, bloqueo vigente con su «hasta» e historial abierto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "un espacio sin estado operativo lo dice y no pide nada",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "antes del sondeo: 303-B en limpieza (H) y 303-A reservada (R)",
+      "ok": true,
+      "detail": "H,R"
+    },
+    {
+      "name": "el sondeo solo (sin tocar nada): 303-A pasó a ocupada y 303-B a «Limpia, falta inspección»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "hubo sondeos periódicos del tablero",
+      "ok": true,
+      "detail": "5 lecturas"
+    },
+    {
+      "name": "S7: «Dato de hace 4 min» con «Reintentar»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S7: los datos siguen a la vista",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S7 por sondeo caído: quedan los datos de antes marcados como atrasados",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S7: al reintentar con éxito el aviso desaparece",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cola S3",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cola S5",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cola S9",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cola S7: «Dato de hace 5 min»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S2: cargando muestra el esqueleto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S3: sin camas → «Crear camas»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S3 de unidad: «Ninguna cama coincide con los filtros» → Quitar los filtros",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S5: forbidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S8: red",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S9: error",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "S6: un establecimiento de otro tenant no revela nada",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "el tablero abre sin parámetros y elige un establecimiento por sí solo",
+      "ok": true,
+      "detail": "http://127.0.0.1:4320/inpatient/bed-board"
+    },
+    {
+      "name": "el tablero es UNA tarjeta con las unidades en pestañas",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Medicina interna muestra U, O, R, H, K, I y C",
+      "ok": true,
+      "detail": "O,U,H,R,I,C,K"
+    },
+    {
+      "name": "«Actualizado hace…» siempre visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sin desborde horizontal a 1440",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sin desborde horizontal a 1440",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sin desborde horizontal a 768",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sin desborde horizontal a 390",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la lista muestra las mismas camas",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
