@@ -7,7 +7,7 @@
  * levantado (`BASE`, por omisión http://localhost:4200). Nunca espera
  * `networkidle`: con HMR no llega.
  */
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const BASE = process.env.BASE ?? 'http://localhost:4200';
@@ -197,6 +197,8 @@ for (const [nombre, correo] of corridas) {
   if (SOLO && !SOLO.includes(nombre)) continue;
   for (const ancho of ANCHOS) {
     for (const tema of TEMAS) {
+      // FALTANTES=1: no repite lo que ya tiene captura (útil tras un corte del contenedor).
+      if (process.env.FALTANTES && existsSync(`${OUT}/${nombre}-${ancho}-${tema}.png`)) continue;
       const ctx = await contexto(ancho, tema);
       const pg = await ctx.newPage();
       const errores = [];
