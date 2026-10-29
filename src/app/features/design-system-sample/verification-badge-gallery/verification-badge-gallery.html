@@ -1,5 +1,5 @@
-<section class="showroom-section" data-testid="showroom-verification-badge">
-    <h2>03b · Insignia de verificación</h2>
+<div data-testid="showroom-verification-badge">
+    <h3>Insignia de verificación</h3>
     <p class="sandbox-note">
         <code>app-verification-badge</code>: el sello de AloVida junto al nombre. El estado
         lo decide la API; la insignia sólo lo pinta. <strong>Sólo <code>VERIFIED</code>
@@ -8,7 +8,7 @@
         con foco, hover o clic, y se cierra con Esc.
     </p>
 
-    <h3>Estados · variante icono</h3>
+    <h4>Estados · variante icono</h4>
     <div class="sandbox-grid">
         @for (status of verificationStatuses; track status) {
             <span class="sandbox-verification">
@@ -23,14 +23,14 @@
         }
     </div>
 
-    <h3>Estados · variante con texto</h3>
+    <h4>Estados · variante con texto</h4>
     <div class="sandbox-grid">
         @for (status of verificationStatuses; track status) {
             <app-verification-badge [status]="status" variant="label" />
         }
     </div>
 
-    <h3>Tamaños, junto a un nombre</h3>
+    <h4>Tamaños, junto a un nombre</h4>
     <div class="sandbox-grid">
         @for (size of verificationSizes; track size) {
             <span class="sandbox-verification-name" [class]="'sandbox-verification-name--' + size">
@@ -39,4 +39,4 @@
             </span>
         }
     </div>
-</section>
+</div>
