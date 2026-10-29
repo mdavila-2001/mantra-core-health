@@ -51,6 +51,12 @@ describe('appointmentPaymentView (H03)', () => {
     expect(JSON.stringify(nulo)).not.toContain('0,00');
   });
 
+  it('con amountPaid en 0 tampoco dibuja monto: «Pagada · 0,00 Bs» se contradice', () => {
+    const cero = appointmentPaymentView({ ...PAID, amountPaid: 0, currencyCode: 'BOB' } as PaymentStateInfo);
+    expect(cero?.label).toBe(PAID.label);
+    expect(cero?.amountText).toBe('');
+  });
+
   it('otra moneda: el número y su código', () => {
     const view = appointmentPaymentView({
       ...PAID,

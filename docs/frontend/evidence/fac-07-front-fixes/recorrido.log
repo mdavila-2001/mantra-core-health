@@ -40,3 +40,20 @@ H07 390 ajena: texto del profesional: true; texto de pacientes: false; código d
 H07 390 inventado: texto del profesional: true; texto de pacientes: false; código de soporte: true; enlace → /medical-records/00000000-0000-4000-8000-000000000000/request-access
 paciente en la consulta: /dashboard · «Hoy es jueves 29 de octubre Buenas noches, Ana Cuéntenos qué le pasa y le decimos a quién ver. Más abajo, sus citas y su historia. Conozca A»
 paciente en contabilidad: /dashboard · «Hoy es jueves 29 de octubre Buenas noches, Ana Cuéntenos qué le pasa y le decimos a quién ver. Más abajo, sus citas y su historia. Conozca A»
+
+# 2026-10-29, segunda vuelta: H12 con un gasto creado a 390 px
+[médica 390] 200 GET /accounting/practitioner/simple/transactions
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/accounts
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/records
+H12 390: aviso «no disponible»: 0
+[médica 390] 201 POST /accounting/practitioner/simple/records
+H12 390: 201 POST /accounting/practitioner/simple/records → {"id":"067dc2b5-e238-448e-8ebf-edd017e50ba8","kind":"EXPENSE","date":"2026-10-29","accountId":"c6a17452-5a7a-414c-8581-79b928f0515f","description":"Alcohol en g
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/transactions
+[médica 390] 200 GET /accounting/practitioner/simple/accounts
+H12 390: tras recargar, el gasto sigue en la tabla
