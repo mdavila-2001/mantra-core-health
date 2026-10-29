@@ -73,23 +73,31 @@
     <!-- Va PRIMERO y fuera de «avanzadas»: es la pregunta que ordena todo lo
          que sigue. Publicar el horario correcto en la agenda equivocada no es
          un detalle de configuración, es haber abierto turnos en otra sede.
-         Sólo aparece con más de una: elegir entre una no es elegir. -->
+         Aparece con una agenda o más —con una sola es donde vive «crear otra
+         agenda»—, pero el desplegable sólo con más de una: elegir entre una
+         no es elegir. -->
     @if (eligeSede()) {
       <section class="agenda-create__bloque">
         <h2 class="agenda-create__titulo">¿En qué agenda publica?</h2>
 
         @if (!agendaNueva()) {
-          <app-form-field
-            label="Agenda"
-            hint="El horario de abajo se publica sólo en la que elija."
-          >
-            <app-select
-              data-testid="agenda-create-sede"
-              [options]="opcionesDeSede()"
-              [value]="resourceId()"
-              (valueChange)="elegirSede($event)"
-            />
-          </app-form-field>
+          @if (hayParaElegir()) {
+            <app-form-field
+              label="Agenda"
+              hint="El horario de abajo se publica sólo en la que elija."
+            >
+              <app-select
+                data-testid="agenda-create-sede"
+                [options]="opcionesDeSede()"
+                [value]="resourceId()"
+                (valueChange)="elegirSede($event)"
+              />
+            </app-form-field>
+          } @else if (unicaAgenda(); as unica) {
+            <p class="agenda-create__nota" data-testid="agenda-create-unica">
+              Publica en «{{ unica.name }}».
+            </p>
+          }
 
           <!-- Sin esto, quien ya tenía una agenda no podía crear una segunda
                nunca: la pantalla decía «Publicar mi agenda» y en realidad
@@ -134,6 +142,32 @@
           </button>
         }
       </section>
+    }
+
+    <!-- La práctica del recurso nuevo. Con una sola se fija sola; con varias
+         se pregunta, porque una agenda sin práctica no aparece donde se la
+         busca por práctica. Una agenda que ya existe conserva la suya. -->
+    @if (eligePractica()) {
+      <section class="agenda-create__bloque">
+        <h2 class="agenda-create__titulo">¿De qué práctica es esta agenda?</h2>
+        <app-form-field
+          label="Práctica"
+          hint="La agenda se publica dentro de la práctica que elija de esta organización."
+        >
+          <app-select
+            data-testid="agenda-create-practica"
+            [options]="opcionesDePractica()"
+            [value]="formGeneral.controls.practiceId.value || null"
+            (valueChange)="elegirPractica($event)"
+            placeholder="Elija una práctica"
+          />
+        </app-form-field>
+      </section>
+    } @else if (practicasFallaron() && resourceId() === null && !practicaDelDestino()) {
+      <p class="agenda-create__nota" data-testid="agenda-create-sin-practica">
+        No pudimos leer las prácticas de esta organización: la agenda se va a publicar sin
+        práctica asignada.
+      </p>
     }
 
     <section class="agenda-create__bloque">

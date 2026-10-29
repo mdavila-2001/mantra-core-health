@@ -12,6 +12,8 @@ import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } fr
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { MedicalOrganizationClient } from '../../../core/data-access/medical-organization/medical-organization.client';
+import type { PracticeSummary } from '../../../core/data-access/medical-organization/medical-organization.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
   PublishedRule,
@@ -191,6 +193,7 @@ interface DiaVisible {
 })
 export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
+  private readonly organizacionMedica = inject(MedicalOrganizationClient);
   private readonly dialogs = inject(DialogService);
   private readonly cancellations = inject(BlockCancellations);
   private readonly router = inject(Router);
@@ -253,12 +256,32 @@ export class AgendaCreate {
   protected readonly nombreNuevo = signal('');
 
   /**
-   * Se pregunta cuándo hay más de una agenda **o** cuando se está creando otra.
+   * Si se muestra el bloque «¿En qué agenda publicás?».
    *
-   * Con una sola y sin crear, elegir entre una no es elegir.
+   * Aparece **con una agenda o más**, o mientras se crea otra: aunque haya una
+   * sola, ahí vive la salida «crear otra agenda», y sin el bloque quien ya
+   * tenía una no podía abrir una segunda nunca. Sin ninguna no aparece: la
+   * primera se crea sin preguntar dónde.
+   *
+   * La expresión anterior (`length > 1 || length > 0`) decía lo mismo que
+   * `length > 0` y su comentario prometía «sólo con más de una»: las dos
+   * mitades de la regla estaban mezcladas. La otra mitad es
+   * {@link hayParaElegir}.
    */
   protected readonly eligeSede = computed(
-    () => this.misAgendas().length > 1 || this.misAgendas().length > 0,
+    () => this.misAgendas().length > 0 || this.agendaNueva(),
+  );
+
+  /**
+   * Si hay **entre qué** elegir: el desplegable sólo con más de una agenda.
+   * Con una sola, el bloque la nombra y ofrece crear otra; un desplegable de
+   * una opción no es una elección.
+   */
+  protected readonly hayParaElegir = computed(() => this.misAgendas().length > 1);
+
+  /** La única agenda, para nombrarla cuando no hay entre qué elegir. */
+  protected readonly unicaAgenda = computed(() =>
+    this.misAgendas().length === 1 ? (this.misAgendas()[0] ?? null) : null,
   );
 
   protected readonly opcionesDeSede = computed<SelectOption<string>[]>(() =>
@@ -283,6 +306,62 @@ export class AgendaCreate {
     this.policyId.set(null);
     this.vigente.set(null);
     this.attempt.reset();
+  }
+
+  /** Las prácticas de la organización activa (`GET /practices`). */
+  protected readonly practicas = signal<readonly PracticeSummary[]>([]);
+
+  private practicasPedidas = false;
+
+  /** La lectura de prácticas falló: la agenda se publicaría sin práctica, y se dice. */
+  protected readonly practicasFallaron = signal(false);
+
+  protected readonly opcionesDePractica = computed<SelectOption<string>[]>(() =>
+    this.practicas().map((p) => ({ value: p.id, label: p.name })),
+  );
+
+  /**
+   * Se pregunta la práctica sólo cuando se va a **crear** un recurso
+   * (`resourceId` vacío) y hay más de una: con una sola se fija sola, y una
+   * agenda que ya existe conserva la suya —`practiceId` sólo viaja en el alta—.
+   */
+  protected readonly eligePractica = computed(
+    () => this.resourceId() === null && !this.practicaDelDestino() && this.practicas().length > 1,
+  );
+
+  /**
+   * La organización afiliada elegida en «¿Dónde publica?» ya trae su práctica
+   * (`PublicationTarget.practiceId`) y gana sobre la del formulario: ahí no se
+   * pregunta ni se avisa por la práctica de la organización activa.
+   */
+  protected readonly practicaDelDestino = computed(
+    () => this.place.target()?.practiceId !== undefined,
+  );
+
+  /** La práctica que se pone sola: la única, si hay una sola. */
+  private practicaPorOmision(): string {
+    const items = this.practicas();
+    return items.length === 1 ? (items[0]?.id ?? '') : '';
+  }
+
+  protected elegirPractica(id: string | null): void {
+    this.formGeneral.controls.practiceId.setValue(id ?? '');
+  }
+
+  private cargarPracticas(): void {
+    this.organizacionMedica.listPractices().subscribe({
+      next: (items) => {
+        this.practicas.set(items);
+        this.practicasFallaron.set(false);
+        if (this.formGeneral.controls.practiceId.value === '') {
+          this.formGeneral.controls.practiceId.setValue(this.practicaPorOmision());
+        }
+      },
+      error: () => {
+        this.practicas.set([]);
+        this.practicasFallaron.set(true);
+      },
+    });
   }
 
   /** Vuelve a publicar sobre una agenda que ya existe. */
@@ -555,6 +634,11 @@ export class AgendaCreate {
   protected readonly semana = new FormArray<ScheduleDayForm>(DIAS.map(() => createScheduleDay()));
 
   protected readonly formGeneral = new FormGroup({
+    // La práctica (M14) de la organización activa a la que pertenece el
+    // recurso. Viajaba siempre vacía: nada la llenaba, y una agenda sin
+    // `practiceId` no aparece en ninguna lectura que filtre por práctica
+    // (`GET /scheduling/resources?practiceId=`). Sale de `GET /practices`: con
+    // una sola se fija sola, con varias se pregunta (ver `eligePractica`).
     practiceId: new FormControl('', { nonNullable: true }),
     tieneFin: new FormControl<'no' | 'si'>('no', { nonNullable: true }),
     capacidadPorTurno: new FormControl('1', {
@@ -717,6 +801,13 @@ export class AgendaCreate {
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
     if (perfil === null || tenantId === null || !this.puedeCrear()) return;
 
+    // Una sola vez: son las prácticas de la organización activa de la sesión,
+    // y no cambian al elegir otra organización en «¿Dónde publica?» (ésa trae
+    // la suya en `PublicationTarget.practiceId`).
+    if (!this.practicasPedidas) {
+      this.practicasPedidas = true;
+      this.cargarPracticas();
+    }
     agendaResourcesMy(this.scheduling, tenantId, perfil, this.place.scope()).subscribe({
       next: (recursos) => {
         if (tenantId !== this.place.tenantId()) return;
@@ -1015,7 +1106,9 @@ export class AgendaCreate {
       this.semana.at(i).reset(createScheduleDay().getRawValue());
     }
     this.formGeneral.reset({
-      practiceId: '',
+      // La práctica no es algo que la persona haya escrito: se conserva la
+      // que corresponde a la organización.
+      practiceId: this.practicaPorOmision(),
       tieneFin: 'no',
       capacidadPorTurno: '1',
       timeZone: '',
