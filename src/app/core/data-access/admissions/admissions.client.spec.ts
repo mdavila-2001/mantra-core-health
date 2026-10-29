@@ -1,4 +1,5 @@
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+/* eslint-disable @typescript-eslint/no-explicit-any -- los cuerpos son JSON del contrato HTTP del backend (sin tipo estático en la prueba); lo que se verifica es su forma, no su tipo TS. */
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 

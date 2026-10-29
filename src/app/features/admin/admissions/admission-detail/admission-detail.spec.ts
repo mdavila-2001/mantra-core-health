@@ -6,21 +6,62 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { vi } from 'vitest';
 
-import type { AdmissionAllowedAction } from '@core/data-access/admissions/admissions.types';
-import { wireDetail, wireRequirement } from '../../../../../testing/admissions';
+import { SessionStore } from '@core/auth/session.store';
+import type { WireAdmissionDetail, WireReviewItem } from '@core/data-access/admissions/admissions.types';
+import { wireDetail, wireDocument, wireItem, wireRequirement } from '../../../../../testing/admissions';
 import { AdmissionDetail } from './admission-detail';
 
 @Component({ template: '' })
 class Vacia {}
 
-const PERMITE = (...codes: AdmissionAllowedAction['code'][]): AdmissionAllowedAction[] =>
-  codes.map((code) => ({ code, allowed: true }));
+/** Un token con los roles de la prueba: la pantalla ofrece las acciones según rol y estado; la API autoriza cada una. */
+function token(claims: Record<string, unknown>): string {
+  const enc = (v: object): string => btoa(JSON.stringify(v)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${enc({ alg: 'none' })}.${enc(claims)}.x`;
+}
 
-const VERIFICADOS = [
-  wireRequirement({ id: 'req-1', code: 'NATIONAL_ID', label: 'Cédula de identidad', status: 'VERIFIED' }),
-  wireRequirement({ id: 'req-2', code: 'PROFESSIONAL_LICENSE', label: 'Matrícula profesional', status: 'VERIFIED' }),
-  wireRequirement({ id: 'req-3', code: 'SEDES_REGISTRATION', label: 'Registro del SEDES', mandatory: false, status: 'PENDING', documents: [] }),
+const REVISOR = 'ADMISSIONS_REVIEWER';
+const APROBADOR = 'ADMISSIONS_APPROVER';
+
+/** La cédula y la matrícula: cada ficha trae SU versión (la de la ficha, distinta de la de la admisión, que es 3). */
+const FICHA_CI = wireItem({ id: 'rev-1', itemId: 'item-1', itemType: 'PROFILE', label: 'Cédula 4567890', fileId: 'f-1', evidenceSha256: 'a'.repeat(64), rowVersion: 5 });
+const FICHA_MATRICULA = wireItem({ id: 'rev-2', itemId: 'item-2', label: 'Matrícula MP-2404', fileId: 'f-2', evidenceSha256: 'b'.repeat(64), rowVersion: 6 });
+
+function requisitos(ci: WireReviewItem = FICHA_CI, matricula: WireReviewItem = FICHA_MATRICULA) {
+  return [
+    wireRequirement({ code: 'CI', label: 'Cédula de identidad', evidenceKind: 'DATA', requiresSource: true, items: [ci] }),
+    wireRequirement({ code: 'MATRICULA_MSALUD', label: 'Matrícula profesional', items: [matricula] }),
+    wireRequirement({ code: 'REGISTRO_SEDES', label: 'Registro del SEDES', required: false, items: [], state: 'NOT_PROVIDED', satisfied: true, blockedBy: null }),
+  ];
+}
+
+const DOCUMENTOS = [
+  wireDocument({ id: 'd-1', requirementCode: 'CI', fileId: 'f-1', name: 'cedula.pdf' }),
+  wireDocument({ id: 'd-2', requirementCode: 'MATRICULA_MSALUD', fileId: 'f-2', name: 'matricula.pdf', evidenceSha256: 'b'.repeat(64) }),
 ];
+
+const BLOQUEOS = [
+  { requirementCode: 'CI', label: 'Cédula de identidad', reason: 'PENDING' as const },
+  { requirementCode: 'MATRICULA_MSALUD', label: 'Matrícula profesional', reason: 'PENDING' as const },
+];
+
+/** La ficha de una admisión en revisión con dos requisitos documentales y uno opcional sin aportar. */
+function base(overrides: Partial<WireAdmissionDetail> = {}): WireAdmissionDetail {
+  return wireDetail({ requirements: requisitos(), documents: DOCUMENTOS, blockers: BLOQUEOS, ...overrides });
+}
+
+/** Los obligatorios verificados y el servidor dice que ya se puede resolver. */
+const VERIFICADOS = requisitos(
+  { ...FICHA_CI, state: 'VERIFIED' },
+  { ...FICHA_MATRICULA, state: 'VERIFIED' },
+);
+const LISTA_PARA_VERIFICAR: Partial<WireAdmissionDetail> = {
+  requirements: VERIFICADOS,
+  requirementsSummary: { total: 3, verified: 2, rejected: 0, pending: 1 },
+  blockers: [],
+  canVerify: true,
+  fourEyesRequired: false,
+};
 
 describe('AdmissionDetail', () => {
   let http: HttpTestingController;
@@ -38,6 +79,7 @@ describe('AdmissionDetail', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
+    sesion(REVISOR, APROBADOR);
   });
 
   afterEach(() => {
@@ -54,7 +96,15 @@ describe('AdmissionDetail', () => {
     harness.detectChanges();
   };
 
-  async function abrir(detalle = wireDetail({ allowedActions: PERMITE('REQUEST_INFO', 'REVIEW_REQUIREMENT') })): Promise<void> {
+  /** Abre la sesión con estos roles: decide qué botones se ofrecen, nunca qué se puede hacer (eso lo decide la API). */
+  function sesion(...roles: string[]): void {
+    TestBed.inject(SessionStore).start({
+      accessToken: token({ sub: 'u-rev', sid: 's', roles, tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+  }
+
+  async function abrir(detalle: WireAdmissionDetail = base()): Promise<void> {
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/administration/admissions/adm-1', AdmissionDetail);
     http.expectOne('/admissions/adm-1').flush(detalle);
@@ -110,7 +160,7 @@ describe('AdmissionDetail', () => {
     });
 
     it('«Vencida hace N días» con palabras', async () => {
-      await abrir(wireDetail({ overdue: true, dueAt: new Date(Date.now() - 2 * 86_400_000).toISOString() }));
+      await abrir(base({ overdue: true, dueAt: new Date(Date.now() - 2 * 86_400_000).toISOString() }));
       expect(q('admission-overdue')?.textContent).toContain('Vencida hace 2 días');
     });
 
@@ -156,100 +206,123 @@ describe('AdmissionDetail', () => {
       await settle();
       expect(texto()).toContain('rq-9');
       await clic(boton(/Reintentar/));
-      http.expectOne('/admissions/adm-1').flush(wireDetail());
+      http.expectOne('/admissions/adm-1').flush(base());
       await settle();
       expect(q('admission-card')).not.toBeNull();
     });
   });
 
-  describe('las acciones según lo que la API permite', () => {
+  describe('las acciones según el rol y el estado (la API autoriza cada una)', () => {
     it('una admisión enviada se toma con «Tomar revisión», mandando la versión vista', async () => {
-      await abrir(wireDetail({ status: { code: 'SUBMITTED', label: 'Enviada' }, rowVersion: 7, allowedActions: PERMITE('CLAIM') }));
+      await abrir(base({ status: { code: 'ENVIADA', label: 'Enviada' }, rowVersion: 7 }));
       expect(q('admission-action-claim')?.textContent).toContain('Tomar revisión');
       await clic(q('admission-action-claim'));
       const req = POST('/admissions/adm-1/claim');
       expect(req.request.body).toEqual({ expectedRowVersion: 7 });
-      req.flush(wireDetail({ rowVersion: 8, allowedActions: PERMITE('REQUEST_INFO') }));
+      req.flush(base({ rowVersion: 8 }));
       await settle();
       expect(q('admission-status')?.textContent).toContain('En revisión');
       expect(q('admission-live')?.textContent).toContain('Tomó la revisión');
     });
 
     it('un doble clic manda una sola petición', async () => {
-      await abrir(wireDetail({ status: { code: 'SUBMITTED', label: 'Enviada' }, allowedActions: PERMITE('CLAIM') }));
+      await abrir(base({ status: { code: 'ENVIADA', label: 'Enviada' } }));
       const b = q<HTMLButtonElement>('admission-action-claim')!;
       b.click();
       b.click();
       b.click();
       await settle();
       const req = POST('/admissions/adm-1/claim');
-      req.flush(wireDetail());
+      req.flush(base());
       await settle();
     });
 
-    it('sin el permiso de tomarla, el botón está deshabilitado', async () => {
-      await abrir(wireDetail({ status: { code: 'SUBMITTED', label: 'Enviada' }, allowedActions: [{ code: 'CLAIM', allowed: false, reasonCode: 'ROLE', message: 'Requiere el rol «Revisión de admisiones».' }] }));
+    it('sin el rol de revisión, «Tomar revisión» está deshabilitado', async () => {
+      sesion(APROBADOR);
+      await abrir(base({ status: { code: 'ENVIADA', label: 'Enviada' } }));
       expect(q('admission-action-claim')?.getAttribute('aria-disabled')).toBe('true');
     });
 
-    it('«Verificar al profesional» está deshabilitado con obligatorios sin verificar y dice cuáles faltan', async () => {
-      await abrir(wireDetail({ allowedActions: PERMITE('DECIDE', 'REQUEST_INFO') }));
+    it('«Verificar al profesional» está deshabilitado mientras el servidor no lo permita y dice cuáles faltan, con los bloqueos de la API', async () => {
+      await abrir();
       expect(q('admission-action-verify')?.getAttribute('aria-disabled')).toBe('true');
-      expect(q('admission-blockers')?.textContent).toContain('Falta verificar: Cédula de identidad, Matrícula profesional.');
+      expect(q('admission-blockers')?.textContent).toContain(
+        'Falta resolver: Cédula de identidad: espera su revisión; Matrícula profesional: espera su revisión.',
+      );
       expect(q('admission-action-verify')?.getAttribute('aria-describedby')).toBe('admision-bloqueos');
     });
 
-    it('con todos los obligatorios verificados se habilita', async () => {
-      await abrir(wireDetail({ requirements: VERIFICADOS, requirementsSummary: { total: 3, verified: 2, rejected: 0, pending: 1 }, allowedActions: PERMITE('DECIDE') }));
+    it('cuando el servidor dice que se puede verificar (canVerify) se habilita', async () => {
+      await abrir(base(LISTA_PARA_VERIFICAR));
       expect(q('admission-action-verify')?.getAttribute('aria-disabled')).toBe('false');
       expect(q('admission-blockers')).toBeNull();
     });
 
-    it('cuatro ojos: a quien revisó se le explica por qué no puede aprobar, con las palabras de la API', async () => {
-      await abrir(wireDetail({
-        requirements: VERIFICADOS,
-        allowedActions: [{ code: 'DECIDE', allowed: false, reasonCode: 'FOUR_EYES', message: 'Otra persona debe aprobar: usted revisó esta admisión.' }],
-      }));
-      expect(q('admission-action-verify')?.getAttribute('aria-disabled')).toBe('true');
-      expect(q('admission-blockers')?.textContent).toContain('Otra persona debe aprobar');
-      expect(q('admission-action-reject')).toBeNull();
+    it('cuatro ojos: si la configuración lo exige, la ficha explica que decide otra persona y la API lo valida al confirmar', async () => {
+      await abrir(base({ ...LISTA_PARA_VERIFICAR, fourEyesRequired: true }));
+      expect(q('admission-blockers')?.textContent).toContain('La decisión final la toma una persona distinta de quienes revisaron los requisitos.');
+      expect(q('admission-action-verify')?.getAttribute('aria-disabled')).toBe('false');
     });
 
-    it('«Liberar» y «Reasignar» aparecen solo si la API los permite', async () => {
-      await abrir(wireDetail({ allowedActions: PERMITE('RELEASE', 'REASSIGN'), assignableReviewers: [{ id: 'u2', name: 'Rosario Quispe' }] }));
+    it('sin el rol de aprobación no hay decisión final: «Verificar» deshabilitado, sin «Rechazar admisión», pero sí «Pedir información»', async () => {
+      sesion(REVISOR);
+      await abrir(base(LISTA_PARA_VERIFICAR));
+      expect(q('admission-action-verify')?.getAttribute('aria-disabled')).toBe('true');
+      expect(q('admission-action-reject')).toBeNull();
+      expect(q('admission-action-info')).not.toBeNull();
+    });
+
+    it('«Liberar» y «Reasignar» aparecen según el rol: el revisor libera, solo el aprobador reasigna', async () => {
+      sesion(REVISOR);
+      await abrir();
       expect(q('admission-action-release')).not.toBeNull();
-      expect(q('admission-action-reassign')).not.toBeNull();
+      expect(q('admission-action-reassign')).toBeNull();
+    });
+
+    it('reasignar manda la cuenta del revisor y la versión vista', async () => {
+      await abrir();
+      expect(q('admission-action-release')).not.toBeNull();
       await clic(q('admission-action-reassign'));
-      await elegir('admission-review-assignee', 'u2');
+      const entrada = q<HTMLInputElement>('admission-review-assignee-id')!;
+      entrada.value = '11111111-2222-4333-8444-555555555555';
+      entrada.dispatchEvent(new Event('input', { bubbles: true }));
+      await settle();
       await clic(q('admission-review-confirm'));
       const req = POST('/admissions/adm-1/reassign');
-      expect(req.request.body).toMatchObject({ assigneeId: 'u2', expectedRowVersion: 3 });
-      req.flush(wireDetail({ assignedTo: { id: 'u2', name: 'Rosario Quispe' } }));
+      expect(req.request.body).toEqual({ toUserId: '11111111-2222-4333-8444-555555555555', expectedRowVersion: 3 });
+      req.flush(base({ assignedTo: { id: '11111111-2222-4333-8444-555555555555', name: 'Rosario Quispe' } }));
       await settle();
       expect(texto()).toContain('Rosario Quispe');
     });
 
     it('liberar devuelve la revisión a la cola', async () => {
-      await abrir(wireDetail({ allowedActions: PERMITE('RELEASE') }));
+      await abrir();
       await clic(q('admission-action-release'));
       await clic(q('admission-review-confirm'));
       const req = POST('/admissions/adm-1/release');
       expect(req.request.body).toEqual({ expectedRowVersion: 3 });
-      req.flush(wireDetail({ status: { code: 'SUBMITTED', label: 'Enviada' }, assignedTo: null }));
+      req.flush(base({ status: { code: 'ENVIADA', label: 'Enviada' }, assignedTo: null }));
       await settle();
       expect(q('admission-status')?.textContent).toContain('Enviada');
     });
 
     it('el estado verificado ofrece suspender y el suspendido, reponer', async () => {
-      await abrir(wireDetail({ status: { code: 'VERIFIED', label: 'Verificada' }, allowedActions: PERMITE('SUSPEND') }));
+      await abrir(base({ status: { code: 'VERIFICADA', label: 'Verificada' } }));
       expect(q('admission-action-suspend')).not.toBeNull();
       expect(q('admission-action-verify')).toBeNull();
     });
 
+    it('un suspendido ofrece reponer', async () => {
+      await abrir(base({ status: { code: 'SUSPENDIDA', label: 'Suspendida' } }));
+      expect(q('admission-action-reinstate')).not.toBeNull();
+      expect(q('admission-action-suspend')).toBeNull();
+    });
+
     it('sin ninguna acción posible, una nota en vez de botones muertos', async () => {
-      await abrir(wireDetail({ status: { code: 'VERIFIED', label: 'Verificada' }, allowedActions: [{ code: 'SUSPEND', allowed: false, message: 'Requiere el rol «Aprobación de admisiones».' }] }));
+      sesion(REVISOR);
+      await abrir(base({ status: { code: 'VERIFICADA', label: 'Verificada' } }));
       expect(q('admission-actions')).toBeNull();
-      expect(q('admission-no-actions')?.textContent).toContain('Aprobación de admisiones');
+      expect(q('admission-no-actions')?.textContent).toContain('persona distinta de quienes revisaron');
     });
   });
 
@@ -267,15 +340,15 @@ describe('AdmissionDetail', () => {
       expect(texto()).toContain('Elija de dónde obtuvo el dato.');
       await elegir('admission-review-source-type', 'MINSALUD_REGISTRY');
       await clic(q('admission-review-confirm'));
-      const req = POST('/admissions/adm-1/items/req-1/review');
+      const req = POST('/admissions/adm-1/items/rev-1/review');
       expect(req.request.body).toMatchObject({
-        decision: 'VERIFIED', sourceType: 'MINSALUD_REGISTRY', evidenceSha256: 'a'.repeat(64), expectedRowVersion: 3,
+        decision: 'VERIFIED', sourceType: 'REGISTRO_MINSALUD', evidenceSha256: 'a'.repeat(64), expectedRowVersion: 5,
       });
       expect(req.request.body.sourceConsultedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect('reason' in req.request.body).toBe(false);
-      req.flush(wireDetail({
+      req.flush(base({
         rowVersion: 4,
-        requirements: [wireRequirement({ id: 'req-1', code: 'NATIONAL_ID', label: 'Cédula de identidad', status: 'VERIFIED', source: { type: { code: 'MINSALUD_REGISTRY', label: 'Registro del Ministerio de Salud' }, ref: null, consultedAt: '2026-10-29T12:00:00Z' } })],
+        requirements: requisitos({ ...FICHA_CI, state: 'VERIFIED', rowVersion: 6, sourceType: 'REGISTRO_MINSALUD', sourceRef: null, sourceConsultedAt: '2026-10-29T12:00:00Z' }),
         requirementsSummary: { total: 3, verified: 2, rejected: 0, pending: 1 },
       }));
       await settle();
@@ -283,6 +356,19 @@ describe('AdmissionDetail', () => {
       expect(q('requirement-source')?.textContent).toContain('Registro del Ministerio de Salud');
       expect(q('admission-progress')?.textContent).toContain('2 de 3');
       expect(q('admission-review-form')).toBeNull();
+    });
+
+    it('un requisito que no exige fuente se verifica sin declararla, con la huella vista y la versión de la ficha', async () => {
+      const sinFuente = [wireRequirement({ code: 'CI', label: 'Cédula de identidad', evidenceKind: 'DATA', requiresSource: false, items: [FICHA_CI] })];
+      await abrir(base({ requirements: sinFuente }));
+      await pestana(/Requisitos/);
+      await clic(q('requirement-verify'));
+      await clic(q('admission-review-confirm'));
+      const req = POST('/admissions/adm-1/items/rev-1/review');
+      expect(req.request.body).toMatchObject({ decision: 'VERIFIED', evidenceSha256: 'a'.repeat(64), expectedRowVersion: 5 });
+      expect('sourceType' in req.request.body).toBe(false);
+      req.flush(base());
+      await settle();
     });
 
     it('rechazar exige código y texto; manda el motivo estructurado y la nota interna aparte', async () => {
@@ -294,10 +380,10 @@ describe('AdmissionDetail', () => {
       await elegir('admission-review-reason-code', 'ILLEGIBLE');
       await escribirMotivo('El documento está cortado.');
       await clic(q('admission-review-confirm'));
-      const req = POST('/admissions/adm-1/items/req-1/review');
-      expect(req.request.body).toMatchObject({ decision: 'REJECTED', reasonCode: 'ILLEGIBLE', reason: 'El documento está cortado.', expectedRowVersion: 3 });
+      const req = POST('/admissions/adm-1/items/rev-1/review');
+      expect(req.request.body).toMatchObject({ decision: 'REJECTED', reasonCode: 'ILEGIBLE', reason: 'El documento está cortado.', expectedRowVersion: 5 });
       expect('internalNote' in req.request.body).toBe(false);
-      req.flush(wireDetail());
+      req.flush(base());
       await settle();
     });
 
@@ -305,12 +391,12 @@ describe('AdmissionDetail', () => {
       await abrirVerificar();
       await elegir('admission-review-source-type', 'SEDES');
       await clic(q('admission-review-confirm'));
-      POST('/admissions/adm-1/items/req-1/review').flush(
+      POST('/admissions/adm-1/items/rev-1/review').flush(
         { code: 'PRECONDITION_FAILED', message: 'La fuente no es válida para este requisito.', details: { reason: 'ADMISSION_ITEM_REQUIRES_SOURCE' } },
         { status: 412, statusText: 'Precondition Failed' },
       );
       await settle();
-      expect(q('admission-review-error')?.textContent).toContain('La fuente no es válida');
+      expect(q('admission-review-error')?.textContent).toContain('Para verificar, indique de dónde obtuvo el dato.');
       expect(q('admission-review-form')).not.toBeNull();
     });
 
@@ -318,7 +404,7 @@ describe('AdmissionDetail', () => {
       await abrirVerificar();
       await elegir('admission-review-source-type', 'SEDES');
       await clic(q('admission-review-confirm'));
-      POST('/admissions/adm-1/items/req-1/review').flush({ code: 'FORBIDDEN' }, { status: 403, statusText: 'Forbidden' });
+      POST('/admissions/adm-1/items/rev-1/review').flush({ code: 'FORBIDDEN' }, { status: 403, statusText: 'Forbidden' });
       await settle();
       expect(q('admission-review-error')?.textContent).toContain('«Revisión de admisiones»');
     });
@@ -330,22 +416,22 @@ describe('AdmissionDetail', () => {
       await elegir('admission-review-reason-code', 'NAME_MISMATCH');
       await escribirMotivo('El nombre no coincide.');
       await clic(q('admission-review-confirm'));
-      POST('/admissions/adm-1/items/req-1/review').flush(
+      POST('/admissions/adm-1/items/rev-1/review').flush(
         { code: 'CONFLICT', details: { reason: 'ADMISSION_STALE', currentRowVersion: 9 } }, { status: 409, statusText: 'Conflict' },
       );
       await settle();
       expect(q('admission-review-stale')).not.toBeNull();
       expect(el().querySelector<HTMLTextAreaElement>('app-admission-review-dialog textarea')!.value).toBe('El nombre no coincide.');
       await clic(q('admission-review-reload'));
-      http.expectOne('/admissions/adm-1').flush(wireDetail({ rowVersion: 9, requirements: [wireRequirement({ id: 'req-1', evidenceSha256: 'c'.repeat(64) })] }));
+      http.expectOne('/admissions/adm-1').flush(base({ rowVersion: 9, requirements: requisitos({ ...FICHA_CI, rowVersion: 9, evidenceSha256: 'c'.repeat(64) }) }));
       await settle();
       expect(q('admission-review-stale')).toBeNull();
       await clic(q('admission-review-confirm'));
-      const req = POST('/admissions/adm-1/items/req-1/review');
-      expect(req.request.body).toMatchObject({ reasonCode: 'NAME_MISMATCH', reason: 'El nombre no coincide.', expectedRowVersion: 9 });
+      const req = POST('/admissions/adm-1/items/rev-1/review');
+      expect(req.request.body).toMatchObject({ reasonCode: 'NO_COINCIDE_NOMBRE', reason: 'El nombre no coincide.', expectedRowVersion: 9 });
       // No se adopta en silencio la huella nueva: decide sobre lo que se miró.
       expect(req.request.body.evidenceSha256).toBe('a'.repeat(64));
-      req.flush(wireDetail({ rowVersion: 10 }));
+      req.flush(base({ rowVersion: 10 }));
       await settle();
     });
 
@@ -353,11 +439,11 @@ describe('AdmissionDetail', () => {
       await abrirVerificar();
       await elegir('admission-review-source-type', 'SEDES');
       await clic(q('admission-review-confirm'));
-      POST('/admissions/adm-1/items/req-1/review').flush(
+      POST('/admissions/adm-1/items/rev-1/review').flush(
         { code: 'CONFLICT', message: 'x', details: { reason: 'ADMISSION_EVIDENCE_CHANGED' } }, { status: 409, statusText: 'Conflict' },
       );
       await settle();
-      http.expectOne('/admissions/adm-1').flush(wireDetail({ requirements: [wireRequirement({ id: 'req-1', evidenceSha256: 'd'.repeat(64) })] }));
+      http.expectOne('/admissions/adm-1').flush(base({ requirements: requisitos({ ...FICHA_CI, evidenceSha256: 'd'.repeat(64) }) }));
       await settle();
       expect(q('admission-review-form')).toBeNull();
       expect(q('admission-notice')?.textContent).toContain('El profesional cambió este documento; revíselo de nuevo.');
@@ -366,14 +452,14 @@ describe('AdmissionDetail', () => {
       await clic(q('requirement-verify'));
       await elegir('admission-review-source-type', 'SEDES');
       await clic(q('admission-review-confirm'));
-      expect(POST('/admissions/adm-1/items/req-1/review').request.body.evidenceSha256).toBe('d'.repeat(64));
+      expect(POST('/admissions/adm-1/items/rev-1/review').request.body.evidenceSha256).toBe('d'.repeat(64));
     });
 
     it('un 404 al decidir cierra todo y muestra «no encontrado»', async () => {
       await abrirVerificar();
       await elegir('admission-review-source-type', 'SEDES');
       await clic(q('admission-review-confirm'));
-      POST('/admissions/adm-1/items/req-1/review').flush({}, { status: 404, statusText: 'x' });
+      POST('/admissions/adm-1/items/rev-1/review').flush({}, { status: 404, statusText: 'x' });
       await settle();
       expect(texto()).toContain('No encontramos lo que busca');
       expect(q('admission-review-form')).toBeNull();
@@ -386,60 +472,61 @@ describe('AdmissionDetail', () => {
       b.click();
       b.click();
       await settle();
-      POST('/admissions/adm-1/items/req-1/review').flush(wireDetail());
+      POST('/admissions/adm-1/items/rev-1/review').flush(base());
       await settle();
     });
   });
 
   describe('la decisión final', () => {
     it('verificar al profesional pide confirmar con un resumen y NO manda ítems', async () => {
-      await abrir(wireDetail({ requirements: VERIFICADOS, requirementsSummary: { total: 3, verified: 2, rejected: 0, pending: 1 }, allowedActions: PERMITE('DECIDE') }));
+      await abrir(base(LISTA_PARA_VERIFICAR));
       await clic(q('admission-action-verify'));
       expect(q('admission-review-warning')?.textContent).toContain('decisión final');
       expect(q('admission-review-summary')?.textContent).toContain('2 de 3 requisitos verificados');
       await clic(q('admission-review-confirm'));
       const req = POST('/admissions/adm-1/decision');
       expect(req.request.body).toEqual({ decision: 'VERIFIED', expectedRowVersion: 3 });
-      req.flush(wireDetail({ status: { code: 'VERIFIED', label: 'Verificada' }, allowedActions: PERMITE('SUSPEND') }));
+      req.flush(base({ status: { code: 'VERIFICADA', label: 'Verificada' } }));
       await settle();
       expect(q('admission-status')?.textContent).toContain('Verificada');
       expect(q('admission-action-suspend')).not.toBeNull();
     });
 
-    it('un 412 porque la API ve obligatorios pendientes se muestra en el diálogo', async () => {
-      await abrir(wireDetail({ requirements: VERIFICADOS, allowedActions: PERMITE('DECIDE') }));
+    it('un 422 porque la API ve obligatorios pendientes se muestra en el diálogo', async () => {
+      await abrir(base(LISTA_PARA_VERIFICAR));
       await clic(q('admission-action-verify'));
       await clic(q('admission-review-confirm'));
       POST('/admissions/adm-1/decision').flush(
-        { code: 'PRECONDITION_FAILED', message: 'Faltan 1 requisito(s) obligatorio(s) por verificar.', details: { reason: 'ADMISSION_REQUIREMENTS_PENDING' } },
-        { status: 412, statusText: 'x' },
+        { code: 'UNPROCESSABLE', message: 'Faltan 1 requisito(s) obligatorio(s) por verificar.', details: { reason: 'ADMISSION_CHECKLIST_INCOMPLETE' } },
+        { status: 422, statusText: 'x' },
       );
       await settle();
-      expect(q('admission-review-error')?.textContent).toContain('Faltan 1 requisito');
+      expect(q('admission-review-error')?.textContent).toContain('hay requisitos obligatorios sin verificar');
+      expect(q('admission-review-form')).not.toBeNull();
     });
 
     it('un 403 de cuatro ojos se dice con las palabras de la API', async () => {
-      await abrir(wireDetail({ requirements: VERIFICADOS, allowedActions: PERMITE('DECIDE') }));
+      await abrir(base(LISTA_PARA_VERIFICAR));
       await clic(q('admission-action-verify'));
       await clic(q('admission-review-confirm'));
       POST('/admissions/adm-1/decision').flush(
-        { code: 'FORBIDDEN', message: 'Otra persona debe aprobar.', details: { reason: 'ADMISSION_FOUR_EYES' } }, { status: 403, statusText: 'x' },
+        { code: 'FORBIDDEN', message: 'Otra persona debe aprobar.', details: { reason: 'ADMISSION_FOUR_EYES_REQUIRED' } }, { status: 403, statusText: 'x' },
       );
       await settle();
       expect(q('admission-review-error')?.textContent).toContain('Otra persona debe aprobar.');
     });
 
     it('rechazar la admisión es destructivo, pide código y motivo, y manda el motivo para el médico', async () => {
-      await abrir(wireDetail({ allowedActions: PERMITE('DECIDE') }));
+      await abrir();
       await clic(q('admission-action-reject'));
       await elegir('admission-review-reason-code', 'NOT_IN_REGISTRY');
       await escribirMotivo('La matrícula no figura en el registro.');
       await clic(q('admission-review-confirm'));
       const req = POST('/admissions/adm-1/decision');
       expect(req.request.body).toEqual({
-        decision: 'REJECTED', reasonCode: 'NOT_IN_REGISTRY', reason: 'La matrícula no figura en el registro.', expectedRowVersion: 3,
+        decision: 'REJECTED', reasonCode: 'NO_FIGURA_EN_REGISTRO', reason: 'La matrícula no figura en el registro.', expectedRowVersion: 3,
       });
-      req.flush(wireDetail({ status: { code: 'REJECTED', label: 'Rechazada' }, decisionReasonText: 'La matrícula no figura en el registro.' }));
+      req.flush(base({ status: { code: 'RECHAZADA', label: 'Rechazada' }, decisionReasonText: 'La matrícula no figura en el registro.' }));
       await settle();
       expect(q('admission-decision-reason')?.textContent).toContain('no figura');
     });
@@ -451,8 +538,8 @@ describe('AdmissionDetail', () => {
       await escribirMotivo('Falta el reverso de la cédula.');
       await clic(q('admission-review-confirm'));
       const req = POST('/admissions/adm-1/request-info');
-      expect(req.request.body).toMatchObject({ reasonCode: 'INCOMPLETE_DOCUMENT', reason: 'Falta el reverso de la cédula.', expectedRowVersion: 3 });
-      req.flush(wireDetail({ status: { code: 'INFO_REQUESTED', label: 'Información requerida' }, infoRequestedText: 'Falta el reverso de la cédula.' }));
+      expect(req.request.body).toMatchObject({ reasonCode: 'DOCUMENTO_INCOMPLETO', reason: 'Falta el reverso de la cédula.', expectedRowVersion: 3 });
+      req.flush(base({ status: { code: 'INFORMACION_REQUERIDA', label: 'Información requerida' }, infoRequestedText: 'Falta el reverso de la cédula.' }));
       await settle();
       expect(q('admission-status')?.textContent).toContain('Información requerida');
     });
@@ -474,10 +561,10 @@ describe('AdmissionDetail', () => {
       await clic(q('gallery-verify'));
       await elegir('admission-review-source-type', 'PROVIDED_DOCUMENT');
       await clic(q('admission-review-confirm'));
-      const req = POST('/admissions/adm-1/items/req-1/review');
-      req.flush(wireDetail({
+      const req = POST('/admissions/adm-1/items/rev-1/review');
+      req.flush(base({
         rowVersion: 4,
-        requirements: [wireRequirement({ id: 'req-1', code: 'NATIONAL_ID', label: 'Cédula de identidad', status: 'VERIFIED' }), wireDetail().requirements![1]!, wireDetail().requirements![2]!],
+        requirements: requisitos({ ...FICHA_CI, state: 'VERIFIED', rowVersion: 6 }),
       }));
       await settle();
       http.match((r) => r.url.startsWith('/admissions/adm-1/documents')).forEach((r) => r.flush({}, { status: 404, statusText: 'x' }));
@@ -507,21 +594,27 @@ describe('AdmissionDetail', () => {
   });
 
   describe('el historial', () => {
-    it('lista los eventos con quién y cuándo, y rotula la nota interna', async () => {
-      const ev = wireDetail().events[0]!;
-      await abrir(wireDetail({ events: [ev, { ...ev, id: 'ev-2', type: 'ITEM_REJECTED', reasonCode: 'ILLEGIBLE', reasonText: 'No se lee.', internalNote: 'Sospecho del escaneo.', actor: { id: 'u', name: 'Marcelo Dávila' } }] }));
+    it('lista los eventos con quién y cuándo; la bitácora no lleva la nota interna', async () => {
+      const ev = base().events[0]!;
+      await abrir(base({ events: [ev, { ...ev, id: 'ev-2', type: 'ITEM_REJECTED', reasonCode: 'ILEGIBLE', reasonText: 'No se lee.', actor: { id: 'u', name: 'Marcelo Dávila' } }] }));
       await pestana(/Historial/);
       const t = q('admission-history')?.textContent ?? '';
       expect(t).toContain('Solicitud enviada');
       expect(t).toContain('Requisito rechazado');
       expect(t).toContain('Ilegible o cortado');
-      expect(t).toContain('Nota interna: no la ve el profesional');
       expect(t).toContain('Marcelo Dávila');
+      expect(t).not.toContain('Nota interna');
+    });
+
+    it('la nota interna de la admisión sale en el resumen, rotulada como no visible para el profesional', async () => {
+      await abrir(base({ internalNote: 'Sospecho del escaneo.' }));
+      expect(q('admission-internal-note')?.textContent).toContain('Nota interna: no la ve el profesional');
+      expect(q('admission-internal-note')?.textContent).toContain('Sospecho del escaneo.');
     });
   });
 
   it('la región viva anuncia el resultado de cada acción', async () => {
-    await abrir(wireDetail({ status: { code: 'SUBMITTED', label: 'Enviada' }, allowedActions: PERMITE('CLAIM') }));
+    await abrir(base({ status: { code: 'ENVIADA', label: 'Enviada' } }));
     expect(q('admission-live')?.getAttribute('aria-live')).toBe('polite');
     await clic(q('admission-action-claim'));
     POST('/admissions/adm-1/claim').flush({}, { status: 403, statusText: 'x' });
@@ -531,7 +624,7 @@ describe('AdmissionDetail', () => {
   });
 
   it('una ficha sin requisitos no se puede verificar', async () => {
-    await abrir(wireDetail({ requirements: [], allowedActions: PERMITE('DECIDE') }));
+    await abrir(base({ requirements: [], blockers: [], canVerify: false }));
     expect(q('admission-action-verify')?.getAttribute('aria-disabled')).toBe('true');
     vi.useRealTimers();
   });

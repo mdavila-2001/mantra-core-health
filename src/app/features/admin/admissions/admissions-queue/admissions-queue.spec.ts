@@ -84,15 +84,21 @@ describe('AdmissionsQueue', () => {
     expect(q('admission-row-overdue')?.textContent).toContain('Vencida hace 3 días');
   });
 
-  it('con el plazo pausado no hay fecha de vencimiento', async () => {
-    await abrir('/administration/admissions', wirePage([wireSummary({ dueAt: null, status: { code: 'INFO_REQUESTED', label: 'Información requerida' } })]));
+  it('con el plazo pausado no hay fecha de vencimiento, aunque la API siga mandando dueAt', async () => {
+    await abrir('/administration/admissions', wirePage([wireSummary({ status: { code: 'INFORMACION_REQUERIDA', label: 'Información requerida' } })]));
     expect(el().textContent).toContain('Sin plazo corriendo');
   });
 
   describe('los estados con contadores', () => {
     it('muestra «Todas» y un contador por estado, tal como los da el servidor', async () => {
       await abrir('/administration/admissions', wirePage([wireSummary()], { counts: { SUBMITTED: 4, IN_REVIEW: 2, VERIFIED: 10 } }));
-      const chip = (code: string): string => (el().querySelector(`.estado-chip[data-estado="${code}"]`)?.textContent ?? '').replace(/\s+/g, ' ').trim();
+      // El nombre y la cuenta son dos elementos (sin espacio entre ellos en el DOM): se leen juntos, como «Todas 16».
+      const chip = (code: string): string => {
+        const boton = el().querySelector(`.estado-chip[data-estado="${code}"]`);
+        const nombre = boton?.querySelector('.estado-chip__nombre')?.textContent?.trim() ?? '';
+        const cuenta = boton?.querySelector('.estado-chip__cuenta')?.textContent?.trim() ?? '';
+        return `${nombre} ${cuenta}`.trim();
+      };
       expect(chip('ALL')).toBe('Todas 16');
       expect(chip('SUBMITTED')).toBe('Enviadas 4');
       expect(chip('IN_REVIEW')).toBe('En revisión 2');
@@ -115,13 +121,14 @@ describe('AdmissionsQueue', () => {
       await harness.fixture.whenStable();
       expect(TestBed.inject(Router).url).toContain('status=IN_REVIEW');
       const req = pedida();
-      expect(req.request.params.get('status')).toBe('IN_REVIEW');
+      // La URL de la pantalla habla en inglés; la petición, en el vocabulario de la API.
+      expect(req.request.params.get('status')).toBe('EN_REVISION');
       req.flush(wirePage([], { counts: {} }));
     });
 
     it('recargar con el estado en la URL reproduce la misma bandeja', async () => {
       const req = await abrir('/administration/admissions?status=VERIFIED&type=ALTA_DE_DOCTOR&overdue=true');
-      expect(req.request.params.get('status')).toBe('VERIFIED');
+      expect(req.request.params.get('status')).toBe('VERIFICADA');
       expect(req.request.params.get('type')).toBe('ALTA_DE_DOCTOR');
       expect(req.request.params.get('overdue')).toBe('true');
     });
@@ -168,10 +175,14 @@ describe('AdmissionsQueue', () => {
         (q('admissions-no-match')!.querySelector('button') as HTMLButtonElement).click();
         await vi.advanceTimersByTimeAsync(10);
         harness.detectChanges();
-        const req = pedida();
-        expect(req.request.method).toBe('GET');
-        expect(req.request.params.has('status')).toBe(false);
-        req.flush(wirePage());
+        // Limpiar la búsqueda y limpiar la dirección son dos cambios de filtro: la primera lectura queda superada por la última.
+        const pedidas = http.match((r) => r.url === '/admissions' || r.url === '/admissions/search');
+        expect(pedidas.length).toBeGreaterThan(0);
+        const ultima = pedidas.at(-1)!;
+        expect(ultima.request.method).toBe('GET');
+        expect(ultima.request.params.has('status')).toBe(false);
+        pedidas.slice(0, -1).forEach((anterior) => anterior.flush(wirePage([], { counts: {} })));
+        ultima.flush(wirePage());
       } finally {
         vi.useRealTimers();
       }
@@ -275,9 +286,11 @@ describe('AdmissionsQueue', () => {
 
     it('una respuesta vieja no pisa a la nueva', async () => {
       await abrir();
-      await TestBed.inject(Router).navigateByUrl('/administration/admissions?status=A');
+      await TestBed.inject(Router).navigateByUrl('/administration/admissions?status=VERIFIED');
+      harness.detectChanges();
       const primera = pedida();
-      await TestBed.inject(Router).navigateByUrl('/administration/admissions?status=B');
+      await TestBed.inject(Router).navigateByUrl('/administration/admissions?status=REJECTED');
+      harness.detectChanges();
       const segunda = pedida();
       segunda.flush(wirePage([wireSummary({ id: 'nueva', practitioner: { id: 'p', fullName: 'Respuesta nueva', profession: 'x', maskedNationalId: '*' } })]));
       primera.flush(wirePage([wireSummary({ id: 'vieja', practitioner: { id: 'p', fullName: 'Respuesta vieja', profession: 'x', maskedNationalId: '*' } })]));

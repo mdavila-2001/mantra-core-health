@@ -1,14 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- los cuerpos son JSON del contrato HTTP del backend (sin tipo estático en la prueba); lo que se verifica es su forma, no su tipo TS. */
 import { HttpHeaders } from '@angular/common/http';
 
 import { admissionFileReply } from '../fixtures/admission-files';
+import { MAX_REENVIOS, OTRO_REVISOR } from '../fixtures/admissions';
 import { MockRouter, isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 import {
-  MAX_REENVIOS,
   crearAdmisionDeAltaDeDoctor,
   registrarAdmisiones,
   reemplazarEvidencia,
   reiniciarAdmisiones,
+  vencerEnlaces,
 } from './admissions.handlers';
 
 /* Las reglas del contrato de `/admissions`, aplicadas por el simulador: roles,
@@ -47,6 +49,7 @@ function llamar(method: MockMethod, path: string, body: unknown = undefined, use
 
 const lista = (query = '', user = revisor) => llamar('GET', '/admissions', undefined, user, query);
 
+/** La API habla en español (`ENVIADA`, `EN_REVISION`…): el filtro y los códigos de estado van así en el cable. */
 function primeraEn(estado: string, extra = ''): any {
   const r = lista(`status=${estado}&${extra}`);
   expect(r.status).toBe(200);
@@ -57,31 +60,36 @@ function primeraEn(estado: string, extra = ''): any {
 
 const detalle = (id: string, user = revisor) => llamar('GET', `/admissions/${id}`, undefined, user);
 
-/** La huella que el revisor tenía en pantalla para ese requisito. */
-const hashDe = (d: any, requirementId: string): string => d.requirements.find((r: any) => r.id === requirementId).evidenceSha256;
+/** La ficha n de un requisito: lo que se revisa. `id` es el de su revisión (el `:itemId` de la ruta) y `rowVersion`, el de la ficha. */
+const fichaDe = (d: any, code: string, n = 0): any => d.requirements.find((r: any) => r.code === code).items[n];
 
-const FUENTE = { sourceType: 'MINSALUD_REGISTRY', sourceRef: 'Comprobante 4512' };
-const MOTIVO = { reasonCode: 'ILLEGIBLE', reason: 'La imagen está cortada.' };
+/** Revisa una ficha mandando, por defecto, la versión de LA FICHA y la huella que el revisor tenía en pantalla. */
+function revisar(d: any, ficha: any, cuerpo: Record<string, unknown>, user = revisor): Resp {
+  return llamar('POST', `/admissions/${d.id}/items/${ficha.id}/review`, { expectedRowVersion: ficha.rowVersion, ...cuerpo }, user);
+}
+
+const MATRICULA = 'MATRICULA_MSALUD';
+const FUENTE = { sourceType: 'REGISTRO_MINSALUD', sourceRef: 'Comprobante 4512' };
+const MOTIVO = { reasonCode: 'ILEGIBLE', reason: 'La imagen está cortada.' };
 
 /** Toma una admisión enviada y devuelve su detalle. */
 function tomar(): any {
-  const fila = primeraEn('SUBMITTED');
+  const fila = primeraEn('ENVIADA');
   const r = llamar('POST', `/admissions/${fila.id}/claim`, { expectedRowVersion: fila.rowVersion });
   expect(r.status).toBe(200);
   return r.body;
 }
 
-function verificarObligatorios(d: any): any {
+/** Verifica TODAS las fichas del checklist (también las de requisitos opcionales que el médico aportó: el servidor las bloquea mientras estén pendientes). */
+function verificarTodo(d: any): any {
   let actual = d;
-  for (const req of actual.requirements.filter((x: any) => x.mandatory)) {
-    const r = llamar('POST', `/admissions/${d.id}/items/${req.id}/review`, {
-      decision: 'VERIFIED',
-      ...FUENTE,
-      evidenceSha256: req.evidenceSha256,
-      expectedRowVersion: actual.rowVersion,
-    });
-    expect(r.status).toBe(200);
-    actual = r.body;
+  for (const req of d.requirements) {
+    for (const ficha of req.items) {
+      const vigente = fichaDe(actual, req.code, req.items.indexOf(ficha));
+      const r = revisar(actual, vigente, { decision: 'VERIFIED', ...FUENTE, evidenceSha256: vigente.evidenceSha256 });
+      expect(r.status, `${req.code}: ${JSON.stringify(r.body)}`).toBe(200);
+      actual = r.body;
+    }
   }
   return actual;
 }
@@ -100,20 +108,17 @@ describe('Admisiones del simulador', () => {
       expect(lista('', soloSeguridad).status).toBe(200);
     });
 
-    it('trae cuentas por estado y respeta el orden por vencimiento', () => {
+    it('trae cuentas por estado y las ordena por vencimiento (el cable siempre trae dueAt; pausarlo es cosa del cliente)', () => {
       const r = lista();
-      expect(r.body.counts['SUBMITTED']).toBeGreaterThan(0);
-      expect(r.body.counts['VERIFIED']).toBeGreaterThan(0);
-      const conPlazo = r.body.items.filter((i: any) => i.dueAt !== null).map((i: any) => Date.parse(i.dueAt));
-      expect([...conPlazo].sort((a, b) => a - b)).toEqual(conPlazo);
-      // Las que no tienen plazo corriendo van al final.
-      const ultimaConPlazo = r.body.items.map((i: any) => i.dueAt !== null).lastIndexOf(true);
-      const primeraSinPlazo = r.body.items.map((i: any) => i.dueAt === null).indexOf(true);
-      expect(primeraSinPlazo).toBeGreaterThan(ultimaConPlazo);
+      expect(r.body.counts['ENVIADA']).toBeGreaterThan(0);
+      expect(r.body.counts['VERIFICADA']).toBeGreaterThan(0);
+      const plazos = r.body.items.map((i: any) => Date.parse(i.dueAt));
+      expect(plazos.every((t: number) => Number.isFinite(t))).toBe(true);
+      expect([...plazos].sort((a, b) => a - b)).toEqual(plazos);
     });
 
     it('filtra por estado, tipo, asignación y vencimiento', () => {
-      expect(lista('status=VERIFIED').body.items.every((i: any) => i.status.code === 'VERIFIED')).toBe(true);
+      expect(lista('status=VERIFICADA').body.items.every((i: any) => i.status.code === 'VERIFICADA')).toBe(true);
       expect(lista('type=OTRO_TIPO').body.items).toHaveLength(0);
       expect(lista('assignedTo=none').body.items.every((i: any) => i.assignedTo === null)).toBe(true);
       const vencidas = lista('overdue=true').body.items;
@@ -123,7 +128,7 @@ describe('Admisiones del simulador', () => {
 
     it('los contadores no se ven afectados por el filtro de estado', () => {
       const todas = lista().body.counts;
-      expect(lista('status=VERIFIED').body.counts).toEqual(todas);
+      expect(lista('status=VERIFICADA').body.counts).toEqual(todas);
     });
 
     it('pagina por cursor sin repetir ni saltear', () => {
@@ -166,43 +171,52 @@ describe('Admisiones del simulador', () => {
 
   describe('tomar la revisión', () => {
     it('solo la toma un revisor', () => {
-      const fila = primeraEn('SUBMITTED');
+      const fila = primeraEn('ENVIADA');
       const r = llamar('POST', `/admissions/${fila.id}/claim`, { expectedRowVersion: fila.rowVersion }, aprobador);
       expect(r.status).toBe(403);
       expect(r.body.details.requiredRole).toBe('ADMISSIONS_REVIEWER');
     });
 
     it('SECURITY_ADMIN solo no puede tomarla: sin rol implícito', () => {
-      const fila = primeraEn('SUBMITTED');
+      const fila = primeraEn('ENVIADA');
       expect(llamar('POST', `/admissions/${fila.id}/claim`, { expectedRowVersion: fila.rowVersion }, soloSeguridad).status).toBe(403);
     });
 
     it('queda en revisión, asignada y con un evento', () => {
       const d = tomar();
-      expect(d.status.code).toBe('IN_REVIEW');
+      expect(d.status.code).toBe('EN_REVISION');
       expect(d.assignedTo.id).toBe(revisor.id);
       expect(d.events.at(-1).type).toBe('CLAIMED');
       expect(d.rowVersion).toBeGreaterThan(1);
     });
 
+    it('al tomarla se materializa la revisión de cada ficha, con su propia versión', () => {
+      const antes = detalle(primeraEn('ENVIADA').id).body;
+      expect(antes.requirements.flatMap((r: any) => r.items).every((f: any) => f.id === null && f.rowVersion === null)).toBe(true);
+      const d = tomar();
+      const fichas = d.requirements.flatMap((r: any) => r.items);
+      expect(fichas.length).toBeGreaterThan(0);
+      expect(fichas.every((f: any) => typeof f.id === 'string' && f.rowVersion === 1)).toBe(true);
+    });
+
     it('con una versión vieja responde 409 ADMISSION_STALE', () => {
-      const fila = primeraEn('SUBMITTED');
+      const fila = primeraEn('ENVIADA');
       const r = llamar('POST', `/admissions/${fila.id}/claim`, { expectedRowVersion: fila.rowVersion - 1 });
       expect(r.status).toBe(409);
-      expect(r.body.details.reason).toBe('ADMISSION_STALE');
+      expect(r.body.reason).toBe('ADMISSION_STALE');
       expect(r.body.details.currentRowVersion).toBe(fila.rowVersion);
     });
 
     it('sin versión esperada responde 412', () => {
-      const fila = primeraEn('SUBMITTED');
+      const fila = primeraEn('ENVIADA');
       expect(llamar('POST', `/admissions/${fila.id}/claim`, {}).status).toBe(412);
     });
 
     it('una admisión que no está enviada responde 412 de transición inválida', () => {
-      const fila = primeraEn('VERIFIED');
+      const fila = primeraEn('VERIFICADA');
       const r = llamar('POST', `/admissions/${fila.id}/claim`, { expectedRowVersion: fila.rowVersion });
       expect(r.status).toBe(412);
-      expect(r.body.details.reason).toBe('ADMISSION_INVALID_TRANSITION');
+      expect(r.body.reason).toBe('ADMISSION_INVALID_TRANSITION');
     });
 
     it('un id que no existe es 404', () => {
@@ -210,134 +224,183 @@ describe('Admisiones del simulador', () => {
     });
   });
 
-  describe('revisar un requisito', () => {
-    it('verificar exige el tipo de fuente: sin él, 412', () => {
+  describe('revisar una ficha', () => {
+    it('verificar una ficha que exige fuente sin el tipo de fuente: 412', () => {
       const d = tomar();
-      const req = d.requirements[0];
-      const r = llamar('POST', `/admissions/${d.id}/items/${req.id}/review`, { decision: 'VERIFIED', evidenceSha256: hashDe(d, req.id), expectedRowVersion: d.rowVersion });
+      const ficha = fichaDe(d, MATRICULA);
+      const r = revisar(d, ficha, { decision: 'VERIFIED', evidenceSha256: ficha.evidenceSha256 });
       expect(r.status).toBe(412);
-      expect(r.body.details.reason).toBe('ADMISSION_ITEM_REQUIRES_SOURCE');
+      expect(r.body.reason).toBe('ADMISSION_ITEM_REQUIRES_SOURCE');
+    });
+
+    it('un requisito que no exige fuente (la cédula) se verifica sin declararla', () => {
+      const d = tomar();
+      const ficha = fichaDe(d, 'CI');
+      expect(d.requirements.find((r: any) => r.code === 'CI').requiresSource).toBe(false);
+      const r = revisar(d, ficha, { decision: 'VERIFIED', evidenceSha256: ficha.evidenceSha256 });
+      expect(r.status).toBe(200);
+      expect(fichaDe(r.body, 'CI').state).toBe('VERIFIED');
     });
 
     it('la referencia es opcional salvo en «Otra fuente»', () => {
       const d = tomar();
-      const [a, b] = d.requirements;
-      const sinRef = llamar('POST', `/admissions/${d.id}/items/${a.id}/review`, { decision: 'VERIFIED', evidenceSha256: hashDe(d, a.id), sourceType: 'SEDES', expectedRowVersion: d.rowVersion });
+      const a = fichaDe(d, MATRICULA);
+      const b = fichaDe(d, 'TITULO_UNIVERSITARIO');
+      const sinRef = revisar(d, a, { decision: 'VERIFIED', evidenceSha256: a.evidenceSha256, sourceType: 'SEDES' });
       expect(sinRef.status).toBe(200);
-      expect(sinRef.body.requirements[0].source.type.code).toBe('SEDES');
-      expect(sinRef.body.requirements[0].source.ref).toBeNull();
-      const otra = llamar('POST', `/admissions/${d.id}/items/${b.id}/review`, { decision: 'VERIFIED', evidenceSha256: hashDe(d, b.id), sourceType: 'OTHER', expectedRowVersion: sinRef.body.rowVersion });
+      expect(fichaDe(sinRef.body, MATRICULA).sourceType).toBe('SEDES');
+      expect(fichaDe(sinRef.body, MATRICULA).sourceRef).toBeNull();
+      const otra = revisar(sinRef.body, b, { decision: 'VERIFIED', evidenceSha256: b.evidenceSha256, sourceType: 'OTRO' });
       expect(otra.status).toBe(412);
-      expect(otra.body.details.reason).toBe('ADMISSION_ITEM_REQUIRES_SOURCE');
+      expect(otra.body.reason).toBe('ADMISSION_ITEM_REQUIRES_SOURCE');
     });
 
     it('no obliga a una dirección web: un número de comprobante alcanza', () => {
       const d = tomar();
-      const r = llamar('POST', `/admissions/${d.id}/items/${d.requirements[0].id}/review`, { decision: 'VERIFIED', evidenceSha256: hashDe(d, d.requirements[0].id), ...FUENTE, expectedRowVersion: d.rowVersion });
+      const ficha = fichaDe(d, MATRICULA);
+      const r = revisar(d, ficha, { decision: 'VERIFIED', evidenceSha256: ficha.evidenceSha256, ...FUENTE });
       expect(r.status).toBe(200);
-      expect(r.body.requirements[0].source.ref).toBe('Comprobante 4512');
+      expect(fichaDe(r.body, MATRICULA).sourceRef).toBe('Comprobante 4512');
+      expect(fichaDe(r.body, MATRICULA).sourceType).toBe('REGISTRO_MINSALUD');
     });
 
-    it('rechazar exige el código y el texto', () => {
+    it('rechazar exige el texto; el código es opcional y, sin él, queda «OTRO»', () => {
       const d = tomar();
-      const url = `/admissions/${d.id}/items/${d.requirements[0].id}/review`;
-      const sinCodigo = llamar('POST', url, { decision: 'REJECTED', reason: 'No se lee el número.', expectedRowVersion: d.rowVersion });
-      expect(sinCodigo.status).toBe(412);
-      expect(sinCodigo.body.details.reason).toBe('ADMISSION_REASON_CODE_REQUIRED');
-      const sinTexto = llamar('POST', url, { decision: 'REJECTED', reasonCode: 'ILLEGIBLE', expectedRowVersion: d.rowVersion });
+      const ficha = fichaDe(d, MATRICULA);
+      const sinTexto = revisar(d, ficha, { decision: 'REJECTED', reasonCode: 'ILEGIBLE' });
       expect(sinTexto.status).toBe(412);
-      expect(sinTexto.body.details.reason).toBe('ADMISSION_REASON_REQUIRED');
+      expect(sinTexto.body.reason).toBe('ADMISSION_REASON_REQUIRED');
+      const sinCodigo = revisar(d, ficha, { decision: 'REJECTED', reason: 'No se lee el número.' });
+      expect(sinCodigo.status).toBe(200);
+      expect(fichaDe(sinCodigo.body, MATRICULA).reasonCode).toBe('OTRO');
     });
 
     it('el motivo acepta 500 caracteres y rechaza 501', () => {
       const d = tomar();
-      const url = `/admissions/${d.id}/items/${d.requirements[0].id}/review`;
-      const en501 = llamar('POST', url, { decision: 'REJECTED', reasonCode: 'OTHER', reason: 'a'.repeat(501), expectedRowVersion: d.rowVersion });
+      const ficha = fichaDe(d, MATRICULA);
+      const en501 = revisar(d, ficha, { decision: 'REJECTED', reasonCode: 'OTRO', reason: 'a'.repeat(501) });
       expect(en501.status).toBe(412);
-      const en500 = llamar('POST', url, { decision: 'REJECTED', reasonCode: 'OTHER', reason: 'a'.repeat(500), expectedRowVersion: d.rowVersion });
+      const en500 = revisar(d, ficha, { decision: 'REJECTED', reasonCode: 'OTRO', reason: 'a'.repeat(500) });
       expect(en500.status).toBe(200);
-      expect(en500.body.requirements[0].reasonText).toHaveLength(500);
+      expect(fichaDe(en500.body, MATRICULA).reasonText).toHaveLength(500);
     });
 
-    it('un motivo de 4 caracteres es corto', () => {
+    it('el contrato no fija un largo mínimo del motivo: uno corto alcanza, uno en blanco no', () => {
       const d = tomar();
-      const r = llamar('POST', `/admissions/${d.id}/items/${d.requirements[0].id}/review`, { decision: 'REJECTED', reasonCode: 'OTHER', reason: 'abcd', expectedRowVersion: d.rowVersion });
-      expect(r.status).toBe(412);
+      const ficha = fichaDe(d, MATRICULA);
+      expect(revisar(d, ficha, { decision: 'REJECTED', reasonCode: 'OTRO', reason: '   ' }).status).toBe(412);
+      const corto = revisar(d, ficha, { decision: 'REJECTED', reasonCode: 'OTRO', reason: 'abcd' });
+      expect(corto.status).toBe(200);
     });
 
     it('guarda código, texto y nota interna, y el avance se actualiza', () => {
       const d = tomar();
-      const r = llamar('POST', `/admissions/${d.id}/items/${d.requirements[0].id}/review`, {
-        decision: 'INFO_REQUIRED', ...MOTIVO, internalNote: 'Coincide con otro expediente.', expectedRowVersion: d.rowVersion,
-      });
-      const req = r.body.requirements[0];
-      expect(req.status).toBe('INFO_REQUIRED');
-      expect(req.reasonCode).toBe('ILLEGIBLE');
-      expect(req.internalNote).toBe('Coincide con otro expediente.');
+      const ficha = fichaDe(d, MATRICULA);
+      const r = revisar(d, ficha, { decision: 'INFO_REQUIRED', ...MOTIVO, internalNote: 'Coincide con otro expediente.' });
+      const guardada = fichaDe(r.body, MATRICULA);
+      expect(guardada.state).toBe('INFO_REQUIRED');
+      expect(guardada.reasonCode).toBe('ILEGIBLE');
+      expect(guardada.internalNote).toBe('Coincide con otro expediente.');
       expect(r.body.requirementsSummary.pending).toBeGreaterThan(0);
-      expect(r.body.documents.filter((x: any) => x.requirementCode === req.code).every((x: any) => x.reviewState === 'INFO_REQUIRED')).toBe(true);
+      expect(r.body.documents.filter((x: any) => x.requirementCode === MATRICULA).every((x: any) => x.reviewState === 'INFO_REQUIRED')).toBe(true);
+    });
+
+    it('la revisión de una ficha sube la versión de LA FICHA, no la de la admisión', () => {
+      const d = tomar();
+      const ficha = fichaDe(d, MATRICULA);
+      const r = revisar(d, ficha, { decision: 'REJECTED', ...MOTIVO });
+      expect(r.body.rowVersion).toBe(d.rowVersion);
+      expect(fichaDe(r.body, MATRICULA).rowVersion).toBe(ficha.rowVersion + 1);
+    });
+
+    it('repetir la misma revisión no escribe nada ni duplica el evento', () => {
+      const d = tomar();
+      const ficha = fichaDe(d, MATRICULA);
+      const cuerpo = { decision: 'VERIFIED', evidenceSha256: ficha.evidenceSha256, ...FUENTE };
+      const primera = revisar(d, ficha, cuerpo);
+      const repetida = revisar(d, ficha, cuerpo);
+      expect(repetida.status).toBe(200);
+      expect(repetida.body.events).toHaveLength(primera.body.events.length);
+      expect(fichaDe(repetida.body, MATRICULA).rowVersion).toBe(fichaDe(primera.body, MATRICULA).rowVersion);
     });
 
     it('solo quien tomó la revisión puede revisar: otro revisor recibe 403', () => {
       const d = tomar();
+      const ficha = fichaDe(d, MATRICULA);
       const otro = { ...revisor, id: 'otro-revisor' };
-      const r = llamar('POST', `/admissions/${d.id}/items/${d.requirements[0].id}/review`, { decision: 'VERIFIED', evidenceSha256: hashDe(d, d.requirements[0].id), ...FUENTE, expectedRowVersion: d.rowVersion }, otro);
+      const r = revisar(d, ficha, { decision: 'VERIFIED', evidenceSha256: ficha.evidenceSha256, ...FUENTE }, otro);
       expect(r.status).toBe(403);
-      expect(r.body.details.reason).toBe('ADMISSION_NOT_ASSIGNED');
+      expect(r.body.reason).toBe('ADMISSION_NOT_ASSIGNED_TO_ACTOR');
     });
 
-    it('un requisito inexistente es 404 y una versión vieja, 409', () => {
+    it('una ficha inexistente es 404 y una versión vieja de la ficha, 409', () => {
       const d = tomar();
-      expect(llamar('POST', `/admissions/${d.id}/items/no-existe/review`, { decision: 'VERIFIED', ...FUENTE, expectedRowVersion: d.rowVersion }).status).toBe(404);
-      expect(llamar('POST', `/admissions/${d.id}/items/${d.requirements[0].id}/review`, { decision: 'VERIFIED', evidenceSha256: hashDe(d, d.requirements[0].id), ...FUENTE, expectedRowVersion: d.rowVersion - 1 }).status).toBe(409);
+      const ficha = fichaDe(d, MATRICULA);
+      expect(llamar('POST', `/admissions/${d.id}/items/no-existe/review`, { decision: 'VERIFIED', ...FUENTE, expectedRowVersion: ficha.rowVersion }).status).toBe(404);
+      const vieja = revisar(d, ficha, { decision: 'VERIFIED', evidenceSha256: ficha.evidenceSha256, ...FUENTE, expectedRowVersion: ficha.rowVersion - 1 });
+      expect(vieja.status).toBe(409);
+      expect(vieja.body.reason).toBe('ADMISSION_STALE');
     });
 
     it('no se puede revisar una admisión que no está en revisión', () => {
-      const fila = primeraEn('SUBMITTED');
-      const d = detalle(fila.id).body;
-      const r = llamar('POST', `/admissions/${d.id}/items/${d.requirements[0].id}/review`, { decision: 'VERIFIED', evidenceSha256: hashDe(d, d.requirements[0].id), ...FUENTE, expectedRowVersion: d.rowVersion });
+      const d = detalle(primeraEn('VERIFICADA').id).body;
+      const ficha = fichaDe(d, MATRICULA);
+      const r = revisar(d, ficha, { decision: 'REJECTED', ...MOTIVO });
       expect(r.status).toBe(412);
+      expect(r.body.reason).toBe('ADMISSION_INVALID_TRANSITION');
     });
   });
 
   describe('la huella de la evidencia', () => {
-    it('cada requisito y cada documento traen su huella de 64 caracteres', () => {
-      const d = detalle(primeraEn('SUBMITTED').id).body;
-      for (const r of d.requirements) expect(r.evidenceSha256).toMatch(/^[0-9a-f]{64}$/);
+    it('cada ficha y cada documento traen su huella de 64 caracteres', () => {
+      const d = detalle(primeraEn('ENVIADA').id).body;
+      for (const r of d.requirements) for (const f of r.items) expect(f.evidenceSha256).toMatch(/^[0-9a-f]{64}$/);
       for (const doc of d.documents) expect(doc.evidenceSha256).toMatch(/^[0-9a-f]{64}$/);
     });
 
     it('verificar sin huella es 412: no se decide sin saber qué se miró', () => {
       const d = tomar();
-      const r = llamar('POST', `/admissions/${d.id}/items/${d.requirements[0].id}/review`, { decision: 'VERIFIED', ...FUENTE, expectedRowVersion: d.rowVersion });
+      const r = revisar(d, fichaDe(d, MATRICULA), { decision: 'VERIFIED', ...FUENTE });
       expect(r.status).toBe(412);
-      expect(r.body.details.reason).toBe('ADMISSION_EVIDENCE_REQUIRED');
+      expect(r.body.reason).toBe('ADMISSION_EVIDENCE_REQUIRED');
     });
 
     it('si el médico reemplazó el archivo mientras se lo miraba, 409 ADMISSION_EVIDENCE_CHANGED y no se verifica', () => {
       const d = tomar();
-      const req = d.requirements[0];
-      expect(reemplazarEvidencia(d.id, req.code)).toBe(true);
-      const r = llamar('POST', `/admissions/${d.id}/items/${req.id}/review`, { decision: 'VERIFIED', ...FUENTE, evidenceSha256: req.evidenceSha256, expectedRowVersion: d.rowVersion });
+      const ficha = fichaDe(d, MATRICULA);
+      expect(reemplazarEvidencia(d.id, MATRICULA)).toBe(true);
+      const r = revisar(d, ficha, { decision: 'VERIFIED', ...FUENTE, evidenceSha256: ficha.evidenceSha256 });
       expect(r.status).toBe(409);
-      expect(r.body.details.reason).toBe('ADMISSION_EVIDENCE_CHANGED');
+      expect(r.body.reason).toBe('ADMISSION_EVIDENCE_CHANGED');
       const despues = detalle(d.id).body;
-      expect(despues.requirements[0].status).toBe('PENDING');
-      expect(despues.requirements[0].evidenceSha256).not.toBe(req.evidenceSha256);
+      expect(fichaDe(despues, MATRICULA).state).toBe('PENDING');
+      expect(fichaDe(despues, MATRICULA).evidenceSha256).not.toBe(ficha.evidenceSha256);
       // Con la huella nueva —tras volver a mirar— sí se puede decidir.
-      const ok = llamar('POST', `/admissions/${d.id}/items/${req.id}/review`, { decision: 'VERIFIED', ...FUENTE, evidenceSha256: despues.requirements[0].evidenceSha256, expectedRowVersion: despues.rowVersion });
+      const nueva = fichaDe(despues, MATRICULA);
+      const ok = revisar(despues, nueva, { decision: 'VERIFIED', ...FUENTE, evidenceSha256: nueva.evidenceSha256 });
       expect(ok.status).toBe(200);
     });
 
     it('al rechazar la huella es opcional, pero si viene y no coincide también es 409', () => {
       const d = tomar();
-      const req = d.requirements[0];
-      expect(llamar('POST', `/admissions/${d.id}/items/${req.id}/review`, { decision: 'REJECTED', ...MOTIVO, expectedRowVersion: d.rowVersion }).status).toBe(200);
+      const ficha = fichaDe(d, MATRICULA);
+      const rechazada = revisar(d, ficha, { decision: 'REJECTED', ...MOTIVO });
+      expect(rechazada.status).toBe(200);
       const d2 = detalle(d.id).body;
-      reemplazarEvidencia(d.id, req.code);
-      const r = llamar('POST', `/admissions/${d.id}/items/${req.id}/review`, { decision: 'INFO_REQUIRED', ...MOTIVO, evidenceSha256: req.evidenceSha256, expectedRowVersion: d2.rowVersion });
+      reemplazarEvidencia(d.id, MATRICULA);
+      const r = revisar(d2, fichaDe(d2, MATRICULA), { decision: 'INFO_REQUIRED', ...MOTIVO, evidenceSha256: ficha.evidenceSha256 });
       expect(r.status).toBe(409);
-      expect(r.body.details.reason).toBe('ADMISSION_EVIDENCE_CHANGED');
+      expect(r.body.reason).toBe('ADMISSION_EVIDENCE_CHANGED');
+    });
+
+    it('una ficha ya revisada cuyo archivo cambia vuelve a pendiente y lo avisa (evidenceChanged)', () => {
+      const d = tomar();
+      const ficha = fichaDe(d, MATRICULA);
+      expect(revisar(d, ficha, { decision: 'VERIFIED', evidenceSha256: ficha.evidenceSha256, ...FUENTE }).status).toBe(200);
+      reemplazarEvidencia(d.id, MATRICULA);
+      const despues = fichaDe(detalle(d.id).body, MATRICULA);
+      expect(despues.evidenceChanged).toBe(true);
+      expect(despues.state).toBe('PENDING');
     });
   });
 
@@ -355,51 +418,66 @@ describe('Admisiones del simulador', () => {
       const suya = lista('').body.items.find((i: any) => i.practitioner.fullName.includes('Ramiro'));
       const r = detalle(suya.id, comoMedico());
       expect(r.status).toBe(403);
-      expect(r.body.details.reason).toBe('ADMISSION_SELF_ACCESS');
+      expect(r.body.reason).toBe('ADMISSION_SELF_ACCESS');
       expect(r.body.message).toContain('No puede revisar su propia solicitud');
       const accion = llamar('POST', `/admissions/${suya.id}/claim`, { expectedRowVersion: suya.rowVersion }, comoMedico());
-      expect(accion.body.details.reason).toBe('ADMISSION_SELF_ACCESS');
+      expect(accion.body.reason).toBe('ADMISSION_SELF_ACCESS');
     });
   });
 
   describe('la decisión final', () => {
     it('solo la toma un aprobador', () => {
-      const d = verificarObligatorios(tomar());
+      const d = verificarTodo(tomar());
       const r = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'VERIFIED', expectedRowVersion: d.rowVersion }, revisor);
       expect(r.status).toBe(403);
       expect(r.body.details.requiredRole).toBe('ADMISSIONS_APPROVER');
     });
 
-    it('con un obligatorio sin verificar responde 412 y nombra cuántos faltan', () => {
+    it('con un obligatorio sin verificar responde 412 ADMISSION_CHECKLIST_INCOMPLETE y trae los bloqueos', () => {
       const d = tomar();
+      expect(d.canVerify).toBe(false);
       const r = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'VERIFIED', expectedRowVersion: d.rowVersion }, aprobador);
       expect(r.status).toBe(412);
-      expect(r.body.details.reason).toBe('ADMISSION_REQUIREMENTS_PENDING');
-      expect(r.body.details.requirementIds.length).toBeGreaterThan(0);
+      expect(r.body.reason).toBe('ADMISSION_CHECKLIST_INCOMPLETE');
+      expect(r.body.details.blockers.length).toBeGreaterThan(0);
+      expect(r.body.details.blockers.map((b: any) => b.requirementCode)).toContain(MATRICULA);
     });
 
-    it('con todos los obligatorios verificados, otra persona verifica al profesional', () => {
-      const d = verificarObligatorios(tomar());
+    it('con todo verificado el servidor lo dice (canVerify) y otra persona verifica al profesional', () => {
+      const d = verificarTodo(tomar());
+      expect(d.canVerify).toBe(true);
+      expect(d.blockers).toEqual([]);
       const r = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'VERIFIED', expectedRowVersion: d.rowVersion }, aprobador);
       expect(r.status).toBe(200);
-      expect(r.body.status.code).toBe('VERIFIED');
-      expect(r.body.dueAt).toBeNull();
+      expect(r.body.status.code).toBe('VERIFICADA');
+      expect(r.body.validUntil).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       // Y queda en la lista, con el estado nuevo.
-      expect(lista('status=VERIFIED').body.items.map((i: any) => i.id)).toContain(d.id);
+      expect(lista('status=VERIFICADA').body.items.map((i: any) => i.id)).toContain(d.id);
     });
 
-    it('la decisión no lleva ítems: el servidor deriva el estado de las revisiones', () => {
-      const d = verificarObligatorios(tomar());
-      const r = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'VERIFIED', items: [{ type: 'LICENSE', id: 'x', decision: 'VERIFIED' }], expectedRowVersion: d.rowVersion }, aprobador);
-      expect(r.status).toBe(200);
+    it('mientras queden fichas pendientes el detalle nombra los bloqueos y el servidor no deja verificar', () => {
+      const d = detalle(primeraEn('ENVIADA').id).body;
+      expect(d.canVerify).toBe(false);
+      expect(d.fourEyesRequired).toBe(true);
+      expect(d.blockers.length).toBeGreaterThan(0);
+      expect(d.blockers.every((b: any) => ['MISSING', 'REJECTED', 'PENDING', 'INFO_REQUIRED', 'BELOW_MINIMUM'].includes(b.reason))).toBe(true);
+    });
+
+    it('la decisión no lleva ítems: el servidor deriva el estado de las revisiones y rechaza los que lleguen (412)', () => {
+      const d = verificarTodo(tomar());
+      const conItems = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'VERIFIED', items: [{ type: 'LICENSE', id: 'x', decision: 'VERIFIED' }], expectedRowVersion: d.rowVersion }, aprobador);
+      expect(conItems.status).toBe(412);
+      expect(conItems.body.reason).toBe('ADMISSION_DECISION_ITEMS_NOT_ACCEPTED');
+      const sinItems = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'VERIFIED', expectedRowVersion: d.rowVersion }, aprobador);
+      expect(sinItems.status).toBe(200);
     });
 
     it('cuatro ojos: quien revisó no puede decidir aunque tenga el rol de aprobador', () => {
-      const d = verificarObligatorios(tomar());
+      const d = verificarTodo(tomar());
       const ambos = { ...revisor, roles: [...revisor.roles, 'ADMISSIONS_APPROVER'] };
       const r = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'VERIFIED', expectedRowVersion: d.rowVersion }, ambos);
       expect(r.status).toBe(403);
-      expect(r.body.details.reason).toBe('ADMISSION_FOUR_EYES');
+      expect(r.body.reason).toBe('ADMISSION_FOUR_EYES_REQUIRED');
       expect(r.body.message).toContain('Otra persona debe aprobar');
     });
 
@@ -409,130 +487,154 @@ describe('Admisiones del simulador', () => {
       const comoMedico = { ...aprobador, id: medicoNuevo.id };
       const r = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'REJECTED', ...MOTIVO, expectedRowVersion: d.rowVersion }, comoMedico);
       expect(r.status).toBe(403);
-      expect(r.body.details.reason).toBe('ADMISSION_SELF_ACCESS');
+      expect(r.body.reason).toBe('ADMISSION_SELF_ACCESS');
     });
 
-    it('rechazar exige código y motivo; guarda el motivo para el médico', () => {
+    it('rechazar exige motivo; guarda código y texto para el médico', () => {
       const d = tomar();
       const sin = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'REJECTED', expectedRowVersion: d.rowVersion }, aprobador);
       expect(sin.status).toBe(412);
-      const con = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'REJECTED', reasonCode: 'NOT_IN_REGISTRY', reason: 'La matrícula no figura.', internalNote: 'Revisar con el colegio.', expectedRowVersion: d.rowVersion }, aprobador);
+      expect(sin.body.reason).toBe('ADMISSION_REASON_REQUIRED');
+      const con = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'REJECTED', reasonCode: 'NO_FIGURA_EN_REGISTRO', reason: 'La matrícula no figura.', internalNote: 'Revisar con el colegio.', expectedRowVersion: d.rowVersion }, aprobador);
       expect(con.status).toBe(200);
-      expect(con.body.status.code).toBe('REJECTED');
+      expect(con.body.status.code).toBe('RECHAZADA');
       expect(con.body.decisionReasonText).toBe('La matrícula no figura.');
+      expect(con.body.decisionReasonCode).toBe('NO_FIGURA_EN_REGISTRO');
     });
   });
 
-  describe('lo que la API dice que se puede hacer (allowedActions)', () => {
-    const accion = (d: any, code: string) => d.allowedActions.find((a: any) => a.code === code);
-
-    it('un revisor puede tomar una enviada y no decidir', () => {
-      const d = detalle(primeraEn('SUBMITTED').id).body;
-      expect(accion(d, 'CLAIM').allowed).toBe(true);
-      expect(accion(d, 'DECIDE').allowed).toBe(false);
-      expect(accion(d, 'DECIDE').reasonCode).toBe('ROLE');
+  describe('quién puede qué lo decide la API en cada petición (ya no hay allowedActions)', () => {
+    it('el detalle no trae listas de acciones permitidas ni de a quién reasignar', () => {
+      const d = detalle(primeraEn('ENVIADA').id).body;
+      expect(d.allowedActions).toBeUndefined();
+      expect(d.assignableReviewers).toBeUndefined();
     });
 
-    it('a quien revisó se le explica el cuatro ojos', () => {
-      const d = verificarObligatorios(tomar());
-      const ambos = { ...revisor, roles: [...revisor.roles, 'ADMISSIONS_APPROVER'] };
-      const decide = accion(detalle(d.id, ambos).body, 'DECIDE');
-      expect(decide.allowed).toBe(false);
-      expect(decide.reasonCode).toBe('FOUR_EYES');
-      expect(decide.message).toContain('Otra persona debe aprobar');
-    });
-
-    it('un aprobador distinto sí puede decidir y puede reasignar', () => {
+    it('un revisor toma una enviada y no decide: la decisión le responde 403 con el rol que falta', () => {
       const d = tomar();
-      const visto = detalle(d.id, aprobador).body;
-      expect(accion(visto, 'DECIDE').allowed).toBe(true);
-      expect(accion(visto, 'REASSIGN').allowed).toBe(true);
-      expect(visto.assignableReviewers.length).toBeGreaterThan(0);
+      const r = llamar('POST', `/admissions/${d.id}/decision`, { decision: 'REJECTED', ...MOTIVO, expectedRowVersion: d.rowVersion }, revisor);
+      expect(r.status).toBe(403);
+      expect(r.body.details.requiredRole).toBe('ADMISSIONS_APPROVER');
     });
 
-    it('un revisor no recibe la lista de a quién reasignar', () => {
-      expect(detalle(primeraEn('SUBMITTED').id).body.assignableReviewers).toEqual([]);
+    it('un aprobador distinto sí decide y reasigna', () => {
+      const d = tomar();
+      expect(llamar('POST', `/admissions/${d.id}/reassign`, { toUserId: OTRO_REVISOR.id, expectedRowVersion: d.rowVersion }, aprobador).status).toBe(200);
     });
   });
 
   describe('pedir información, liberar, reasignar, suspender y reponer', () => {
-    it('pedir información pausa el plazo y da un plazo al médico', () => {
+    it('pedir información da un plazo al médico y el estado deja de correr el SLA', () => {
       const d = tomar();
-      expect(d.dueAt).not.toBeNull();
       const r = llamar('POST', `/admissions/${d.id}/request-info`, { ...MOTIVO, expectedRowVersion: d.rowVersion });
       expect(r.status).toBe(200);
-      expect(r.body.status.code).toBe('INFO_REQUESTED');
-      expect(r.body.dueAt).toBeNull();
+      expect(r.body.status.code).toBe('INFORMACION_REQUERIDA');
+      expect(r.body.infoRequestedText).toBe('La imagen está cortada.');
       expect(Date.parse(r.body.infoDueAt)).toBeGreaterThan(Date.now() + 25 * 86_400_000);
     });
 
-    it('sin código o sin texto, 412', () => {
+    it('sin texto, 412; sin código, queda «OTRO»', () => {
       const d = tomar();
-      expect(llamar('POST', `/admissions/${d.id}/request-info`, { reason: 'Falta el reverso.', expectedRowVersion: d.rowVersion }).status).toBe(412);
-      expect(llamar('POST', `/admissions/${d.id}/request-info`, { reasonCode: 'OTHER', expectedRowVersion: d.rowVersion }).status).toBe(412);
+      const sinTexto = llamar('POST', `/admissions/${d.id}/request-info`, { reasonCode: 'OTRO', expectedRowVersion: d.rowVersion });
+      expect(sinTexto.status).toBe(412);
+      expect(sinTexto.body.reason).toBe('ADMISSION_REASON_REQUIRED');
+      const sinCodigo = llamar('POST', `/admissions/${d.id}/request-info`, { reason: 'Falta el reverso.', expectedRowVersion: d.rowVersion });
+      expect(sinCodigo.status).toBe(200);
+      expect(sinCodigo.body.events.at(-1).reasonCode).toBe('OTRO');
     });
 
     it('liberar devuelve la revisión a la cola', () => {
       const d = tomar();
       const r = llamar('POST', `/admissions/${d.id}/release`, { expectedRowVersion: d.rowVersion });
       expect(r.status).toBe(200);
-      expect(r.body.status.code).toBe('SUBMITTED');
+      expect(r.body.status.code).toBe('ENVIADA');
       expect(r.body.assignedTo).toBeNull();
     });
 
-    it('reasignar la pasa a otra persona; un destino inválido es 412', () => {
+    it('reasignar la pasa a otra cuenta de revisión; un destino inválido es 412', () => {
       const d = tomar();
-      const destino = detalle(d.id, aprobador).body.assignableReviewers.find((p: any) => p.id !== revisor.id);
-      const malo = llamar('POST', `/admissions/${d.id}/reassign`, { assigneeId: 'nadie', expectedRowVersion: d.rowVersion }, aprobador);
+      const malo = llamar('POST', `/admissions/${d.id}/reassign`, { toUserId: 'nadie', expectedRowVersion: d.rowVersion }, aprobador);
       expect(malo.status).toBe(412);
-      const r = llamar('POST', `/admissions/${d.id}/reassign`, { assigneeId: destino.id, expectedRowVersion: d.rowVersion }, aprobador);
+      expect(malo.body.reason).toBe('ADMISSION_ASSIGNEE_INVALID');
+      const r = llamar('POST', `/admissions/${d.id}/reassign`, { toUserId: OTRO_REVISOR.id, expectedRowVersion: d.rowVersion }, aprobador);
       expect(r.status).toBe(200);
-      expect(r.body.assignedTo.id).toBe(destino.id);
+      expect(r.body.assignedTo.id).toBe(OTRO_REVISOR.id);
     });
 
     it('un revisor no puede reasignar', () => {
       const d = tomar();
-      expect(llamar('POST', `/admissions/${d.id}/reassign`, { assigneeId: revisor.id, expectedRowVersion: d.rowVersion }).status).toBe(403);
+      const r = llamar('POST', `/admissions/${d.id}/reassign`, { toUserId: OTRO_REVISOR.id, expectedRowVersion: d.rowVersion });
+      expect(r.status).toBe(403);
+      expect(r.body.details.requiredRole).toBe('ADMISSIONS_APPROVER');
     });
 
     it('suspender una verificada y reponerla, ambas con motivo', () => {
-      const fila = primeraEn('VERIFIED');
+      const fila = primeraEn('VERIFICADA');
       const sinMotivo = llamar('POST', `/admissions/${fila.id}/suspend`, { expectedRowVersion: fila.rowVersion }, aprobador);
       expect(sinMotivo.status).toBe(412);
       const susp = llamar('POST', `/admissions/${fila.id}/suspend`, { ...MOTIVO, expectedRowVersion: fila.rowVersion }, aprobador);
       expect(susp.status).toBe(200);
-      expect(susp.body.status.code).toBe('SUSPENDED');
+      expect(susp.body.status.code).toBe('SUSPENDIDA');
       const rep = llamar('POST', `/admissions/${fila.id}/reinstate`, { reason: 'Se resolvió la denuncia.', expectedRowVersion: susp.body.rowVersion }, aprobador);
-      expect(rep.body.status.code).toBe('VERIFIED');
+      expect(rep.body.status.code).toBe('VERIFICADA');
     });
 
     it('no se suspende una admisión que no está verificada', () => {
-      const fila = primeraEn('SUBMITTED');
+      const fila = primeraEn('ENVIADA');
       expect(llamar('POST', `/admissions/${fila.id}/suspend`, { ...MOTIVO, expectedRowVersion: fila.rowVersion }, aprobador).status).toBe(412);
     });
   });
 
   describe('los documentos', () => {
-    it('el acceso queda registrado en el historial sin subir la versión', () => {
-      const d = detalle(primeraEn('SUBMITTED').id).body;
+    const pedirAcceso = (d: any, fileId: string, user = revisor): Resp => llamar('POST', `/admissions/${d.id}/documents/${fileId}/download-url`, {}, user);
+
+    it('la dirección se pide por POST, dura dos minutos y no cambia la versión ni el historial de la admisión', () => {
+      const d = detalle(primeraEn('ENVIADA').id).body;
       const doc = d.documents[0];
-      const acceso = llamar('GET', `/admissions/${d.id}/documents/${doc.fileId}`);
-      expect(acceso.status).toBe(200);
+      const acceso = pedirAcceso(d, doc.fileId);
+      expect(acceso.status).toBe(201);
       expect(acceso.body.url).toContain(doc.fileId);
-      expect(Date.parse(acceso.body.expiresAt)).toBeGreaterThan(Date.now());
+      expect(acceso.body.name).toBe(doc.name);
+      expect(acceso.body.mimeType).toBe(doc.mimeType);
+      const vida = Date.parse(acceso.body.expiresAt) - Date.now();
+      expect(vida).toBeGreaterThan(60_000);
+      expect(vida).toBeLessThanOrEqual(120_000);
       const despues = detalle(d.id).body;
-      expect(despues.events.at(-1).type).toBe('DOCUMENT_VIEWED');
+      expect(despues.events).toHaveLength(d.events.length);
       expect(despues.rowVersion).toBe(d.rowVersion);
     });
 
     it('un archivo que no es de la admisión es 404 y sin rol, 403', () => {
-      const d = detalle(primeraEn('SUBMITTED').id).body;
-      expect(llamar('GET', `/admissions/${d.id}/documents/otro-archivo`).status).toBe(404);
-      expect(llamar('GET', `/admissions/${d.id}/documents/${d.documents[0].fileId}`, undefined, paciente).status).toBe(403);
+      const d = detalle(primeraEn('ENVIADA').id).body;
+      expect(pedirAcceso(d, 'otro-archivo').status).toBe(404);
+      expect(pedirAcceso(d, d.documents[0].fileId, paciente).status).toBe(403);
+    });
+
+    it('la dirección firmada sirve el contenido con nosniff y sin caché; una firma alterada es 403 y una vencida, 410', () => {
+      const d = detalle(primeraEn('ENVIADA').id).body;
+      const doc = d.documents[0];
+      const [ruta, consulta] = (pedirAcceso(d, doc.fileId).body.url as string).split('?') as [string, string];
+      const m = router.match('GET', ruta)!;
+      const ok = m.handler({
+        method: 'GET', path: ruta, params: m.params, query: new URLSearchParams(consulta), body: undefined, headers: new HttpHeaders(), user: revisor,
+      } satisfies MockRequest) as any;
+      expect(ok.status).toBe(200);
+      expect(ok.headers['X-Content-Type-Options']).toBe('nosniff');
+      expect(ok.headers['Cache-Control']).toContain('no-store');
+      const alterada = llamar('GET', ruta, undefined, revisor, consulta.replace(/signature=.*/, 'signature=falsa'));
+      expect(alterada.status).toBe(403);
+      expect(alterada.body.reason).toBe('ADMISSION_DOCUMENT_URL_INVALID');
+      // La firma está atada a quien la pidió.
+      expect(llamar('GET', ruta, undefined, aprobador, consulta).status).toBe(403);
+      vencerEnlaces(true);
+      const vencida = (pedirAcceso(d, doc.fileId).body.url as string).split('?') as [string, string];
+      const gone = llamar('GET', vencida[0], undefined, revisor, vencida[1]);
+      expect(gone.status).toBe(410);
+      expect(gone.body.reason).toBe('ADMISSION_DOCUMENT_URL_INVALID');
     });
 
     it('el contenido es un PNG o un PDF de verdad y lo lee quien revisa, no un paciente', async () => {
-      const d = detalle(primeraEn('SUBMITTED').id).body;
+      const d = detalle(primeraEn('ENVIADA').id).body;
       const imagen = d.documents.find((x: any) => x.mimeType === 'image/png');
       const pdf = d.documents.find((x: any) => x.mimeType === 'application/pdf');
       const png = admissionFileReply(imagen.fileId, revisor);
@@ -549,36 +651,39 @@ describe('Admisiones del simulador', () => {
       expect(admissionFileReply(suyoDoc.fileId, medica)?.status).toBe(403);
     });
 
-    it('la semilla trae un caso con decenas de documentos y nombres larguísimos', () => {
-      const grande = lista().body.items
-        .map((i: any) => detalle(i.id).body)
-        .find((d: any) => d.documents.length >= 50);
+    it('la semilla trae un caso con decenas de documentos (uno de 6 MB) y otro con nombres larguísimos', () => {
+      const todas = lista().body.items.map((i: any) => detalle(i.id).body);
+      const grande = todas.find((d: any) => d.documents.length >= 50);
       expect(grande).toBeDefined();
-      expect(grande.documents.some((x: any) => x.name.length > 100)).toBe(true);
       expect(grande.documents.some((x: any) => x.sizeBytes >= 5_000_000)).toBe(true);
+      const largos = todas.find((d: any) => d.documents.some((x: any) => x.name.length > 100));
+      expect(largos).toBeDefined();
     });
   });
 
   describe('el formulario llenado', () => {
-    it('trae secciones, marca los datos obligatorios que faltan y no inventa valores', () => {
+    const SECCIONES = ['personal', 'contact', 'addresses', 'licenses', 'education', 'specialties', 'practices'];
+
+    it('trae el formulario por secciones y no inventa lo que el médico no declaró', () => {
+      const d = detalle(primeraEn('ENVIADA').id).body;
+      expect(Object.keys(d.submittedForm)).toEqual(expect.arrayContaining(SECCIONES));
+      expect(d.submittedFormSource).toBe('SNAPSHOT');
       const incompleta = lista().body.items
         .map((i: any) => detalle(i.id).body)
-        .find((d: any) => d.submittedForm.some((s: any) => s.fields.some((f: any) => f.required && f.value === null)));
+        .find((x: any) => x.submittedForm.personal.birthDate === null);
       expect(incompleta).toBeDefined();
-      const secciones = incompleta.submittedForm.map((s: any) => s.key);
-      expect(secciones).toEqual(expect.arrayContaining(['personal', 'contact', 'home', 'licenses', 'education', 'specialties']));
+      expect(incompleta.submittedForm.personal.age).toBeNull();
+      expect(incompleta.submittedForm.contact.personalMobile).toBeNull();
     });
 
     it('los campos enlazan a un requisito que existe', () => {
-      const d = detalle(primeraEn('SUBMITTED').id).body;
+      const d = detalle(primeraEn('ENVIADA').id).body;
       const codigos = new Set(d.requirements.map((r: any) => r.code));
-      for (const s of d.submittedForm) {
-        for (const f of s.fields) {
-          if (f.requirementCode !== null && f.requirementCode !== 'SPECIALTY_CERTIFICATE') {
-            expect(codigos.has(f.requirementCode)).toBe(true);
-          }
-        }
-      }
+      const f = d.submittedForm;
+      const enlaces = [f.personal.requirementCode, ...f.licenses, ...f.education, ...f.specialties, ...f.practices]
+        .map((x: any) => (typeof x === 'string' ? x : x.requirementCode));
+      expect(enlaces.length).toBeGreaterThan(1);
+      for (const codigo of enlaces) expect(codigos.has(codigo), String(codigo)).toBe(true);
     });
   });
 
@@ -589,14 +694,20 @@ describe('Admisiones del simulador', () => {
       expect(texto).not.toMatch(/https?:\/\//);
     });
 
-    it('el colegio es opcional y la firma no es un requisito de verificación', () => {
-      const d = detalle(primeraEn('SUBMITTED').id).body;
-      expect(d.requirements.find((r: any) => r.code === 'COLLEGE_REGISTRATION').mandatory).toBe(false);
+    it('la firma no es un requisito de verificación y el SEDES es opcional', () => {
+      const d = detalle(primeraEn('ENVIADA').id).body;
       expect(d.requirements.some((r: any) => r.code === 'SIGNATURE_SEAL')).toBe(false);
+      expect(d.requirements.find((r: any) => r.code === 'REGISTRO_SEDES').required).toBe(false);
+    });
+
+    it('el catálogo del médico exige cédula, matrícula, título y Colegio Médico; lo demás es opcional', () => {
+      const d = detalle(primeraEn('ENVIADA').id).body;
+      const obligatorios = d.requirements.filter((r: any) => r.required).map((r: any) => r.code).sort();
+      expect(obligatorios).toEqual(['CI', 'MATRICULA_MSALUD', 'REGISTRO_COLEGIO_MEDICO', 'TITULO_UNIVERSITARIO']);
     });
 
     it('el plazo es de tres días hábiles', () => {
-      const fila = lista().body.items.find((i: any) => i.status.code === 'SUBMITTED' && i.dueAt !== null);
+      const fila = lista().body.items.find((i: any) => i.status.code === 'ENVIADA');
       const dias = (Date.parse(fila.dueAt) - Date.parse(fila.submittedAt)) / 86_400_000;
       expect(dias).toBeGreaterThanOrEqual(3);
       expect(dias).toBeLessThanOrEqual(5);
@@ -604,72 +715,105 @@ describe('Admisiones del simulador', () => {
   });
 
   describe('lo que ve el propio médico', () => {
+    const mia = (user: any) => llamar('GET', '/profiles/practitioners/me/admission', undefined, user);
+    const reenviar = (user: any, cuerpo: unknown = { attested: true, attestationVersion: '2026-10' }) =>
+      llamar('POST', '/profiles/practitioners/me/admission/resubmit', cuerpo, user);
+
     it('quien no tiene admisión recibe 404', () => {
-      expect(llamar('GET', '/profiles/practitioners/me/admission', undefined, paciente).status).toBe(404);
+      expect(mia(paciente).status).toBe(404);
     });
 
     it('la médica con la que se entra está verificada', () => {
-      const r = llamar('GET', '/profiles/practitioners/me/admission', undefined, medica);
-      expect(r.body.status.code).toBe('VERIFIED');
+      const r = mia(medica);
+      expect(r.body.status.code).toBe('VERIFICADA');
+      expect(r.body.canResubmit).toBe(false);
     });
 
-    it('el médico nuevo ve qué se le pidió, sin notas internas ni códigos internos', () => {
-      const r = llamar('GET', '/profiles/practitioners/me/admission', undefined, medicoNuevo);
+    it('el médico nuevo ve qué se le pidió, sin notas internas', () => {
+      const r = mia(medicoNuevo);
       expect(r.status).toBe(200);
-      expect(r.body.status.code).toBe('INFO_REQUESTED');
+      expect(r.body.status.code).toBe('INFORMACION_REQUERIDA');
       expect(r.body.infoRequestedText).toContain('Falta');
-      expect(r.body.resubmissionsRemaining).toBe(MAX_REENVIOS);
-      expect(JSON.stringify(r.body)).not.toMatch(/internalNote|Nota interna|reasonCode/);
+      expect(r.body.canResubmit).toBe(true);
+      expect(r.body.resubmissionCount).toBe(0);
+      expect(JSON.stringify(r.body)).not.toMatch(/internalNote|Nota interna/);
       expect(r.body.items.find((i: any) => i.state === 'INFO_REQUIRED').reasonText).toBeTruthy();
+      // Lo verificado no arrastra motivo.
+      expect(r.body.items.filter((i: any) => i.state === 'VERIFIED').every((i: any) => i.reasonText === null && i.reasonCode === null)).toBe(true);
+    });
+
+    it('la sospecha de fraude es del personal: al médico se le muestra «OTRO»', () => {
+      crearAdmisionDeAltaDeDoctor({ userId: 'u-fraude', profileId: 'p-fraude', displayName: 'Prueba Sintética Nueve', nationalId: '9990001' });
+      const fila = lista('status=ENVIADA').body.items.find((i: any) => i.practitioner.fullName === 'Prueba Sintética Nueve');
+      const tomada = llamar('POST', `/admissions/${fila.id}/claim`, { expectedRowVersion: fila.rowVersion }).body;
+      const ficha = fichaDe(tomada, MATRICULA);
+      expect(revisar(tomada, ficha, { decision: 'REJECTED', reasonCode: 'SOSPECHA_DE_FRAUDE', reason: 'El número no corresponde.', internalNote: 'Mismo sello que otro expediente.' }).status).toBe(200);
+      const r = mia({ ...paciente, id: 'u-fraude' });
+      expect(r.status).toBe(200);
+      const observada = r.body.items.find((i: any) => i.state === 'REJECTED');
+      expect(observada.reasonCode).toBe('OTRO');
+      expect(JSON.stringify(r.body)).not.toMatch(/SOSPECHA_DE_FRAUDE|Mismo sello/);
     });
 
     it('reenviar exige la atestación', () => {
-      const r = llamar('POST', '/profiles/practitioners/me/admission/resubmit', {}, medicoNuevo);
+      const r = reenviar(medicoNuevo, {});
       expect(r.status).toBe(412);
-      expect(r.body.details.reason).toBe('ADMISSION_ATTESTATION_REQUIRED');
+      expect(r.body.reason).toBe('ADMISSION_ATTESTATION_REQUIRED');
     });
 
-    it('reenviar con atestación vuelve a SUBMITTED, reinicia lo observado y descuenta un reenvío', () => {
-      const r = llamar('POST', '/profiles/practitioners/me/admission/resubmit', { attested: true, attestationVersion: '2026-10' }, medicoNuevo);
+    it('reenviar con atestación vuelve a ENVIADA, reinicia lo observado y cuenta el reenvío', () => {
+      const r = reenviar(medicoNuevo);
       expect(r.status).toBe(200);
-      expect(r.body.status.code).toBe('SUBMITTED');
-      expect(r.body.resubmissionsRemaining).toBe(MAX_REENVIOS - 1);
+      expect(r.body.status.code).toBe('ENVIADA');
+      expect(r.body.resubmissionCount).toBe(1);
+      expect(r.body.canResubmit).toBe(false);
       expect(r.body.items.some((i: any) => i.state === 'INFO_REQUIRED')).toBe(false);
       // La bandeja la ve de nuevo como enviada, con plazo corriendo.
-      const fila = lista('status=SUBMITTED', revisor).body.items.find((i: any) => i.practitioner.fullName.includes('Ramiro'));
-      expect(fila.dueAt).not.toBeNull();
+      const fila = lista('status=ENVIADA', revisor).body.items.find((i: any) => i.practitioner.fullName.includes('Ramiro'));
+      expect(Date.parse(fila.dueAt)).toBeGreaterThan(Date.now());
     });
 
     it('no se puede reenviar lo que no está observado', () => {
-      const r = llamar('POST', '/profiles/practitioners/me/admission/resubmit', { attested: true, attestationVersion: '2026-10' }, medica);
+      const r = reenviar(medica);
       expect(r.status).toBe(412);
-      expect(r.body.details.reason).toBe('ADMISSION_INVALID_TRANSITION');
+      expect(r.body.reason).toBe('ADMISSION_INVALID_TRANSITION');
     });
 
     it('hay un tope de reenvíos', () => {
-      const cuerpo = { attested: true, attestationVersion: '2026-10' };
       for (let i = 0; i < MAX_REENVIOS; i++) {
-        expect(llamar('POST', '/profiles/practitioners/me/admission/resubmit', cuerpo, medicoNuevo).status).toBe(200);
+        expect(reenviar(medicoNuevo).status).toBe(200);
         // El equipo vuelve a pedir información para que el médico pueda reenviar otra vez.
-        const fila = lista('status=SUBMITTED').body.items.find((x: any) => x.practitioner.fullName.includes('Ramiro'));
+        const fila = lista('status=ENVIADA').body.items.find((x: any) => x.practitioner.fullName.includes('Ramiro'));
         const tomada = llamar('POST', `/admissions/${fila.id}/claim`, { expectedRowVersion: fila.rowVersion });
         llamar('POST', `/admissions/${fila.id}/request-info`, { ...MOTIVO, expectedRowVersion: tomada.body.rowVersion });
       }
-      const r = llamar('POST', '/profiles/practitioners/me/admission/resubmit', cuerpo, medicoNuevo);
+      expect(mia(medicoNuevo).body.canResubmit).toBe(false);
+      const r = reenviar(medicoNuevo);
       expect(r.status).toBe(412);
-      expect(r.body.details.reason).toBe('ADMISSION_RESUBMISSION_LIMIT');
+      expect(r.body.reason).toBe('ADMISSION_RESUBMISSION_LIMIT');
+    });
+
+    it('retirar la solicitud: solo si está enviada o con información pedida', () => {
+      expect(mia(medicoNuevo).body.canWithdraw).toBe(true);
+      const r = llamar('POST', '/profiles/practitioners/me/admission/withdraw', {}, medicoNuevo);
+      expect(r.status).toBe(200);
+      expect(r.body.status.code).toBe('RETIRADA');
+      expect(r.body.canWithdraw).toBe(false);
+      const ya = llamar('POST', '/profiles/practitioners/me/admission/withdraw', {}, medica);
+      expect(ya.status).toBe(412);
+      expect(ya.body.reason).toBe('ADMISSION_INVALID_TRANSITION');
     });
   });
 
   describe('el alta de un médico', () => {
     it('crea una admisión enviada, con todos sus requisitos pendientes y el plazo corriendo', () => {
-      const antes = lista().body.counts['SUBMITTED'] as number;
+      const antes = lista().body.counts['ENVIADA'] as number;
       crearAdmisionDeAltaDeDoctor({ userId: 'u-nuevo', profileId: 'p-nuevo', displayName: 'Lucía Torrez Aramayo', nationalId: '7771234' });
       const despues = lista().body;
-      expect(despues.counts['SUBMITTED']).toBe(antes + 1);
+      expect(despues.counts['ENVIADA']).toBe(antes + 1);
       const fila = despues.items.find((i: any) => i.practitioner.fullName === 'Lucía Torrez Aramayo');
-      expect(fila.status.code).toBe('SUBMITTED');
-      expect(fila.dueAt).not.toBeNull();
+      expect(fila.status.code).toBe('ENVIADA');
+      expect(Date.parse(fila.dueAt)).toBeGreaterThan(Date.now());
       expect(fila.requirementsSummary.verified).toBe(0);
       expect(fila.practitioner.maskedNationalId).toBe('****234');
     });
