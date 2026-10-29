@@ -1,0 +1,65 @@
+{
+  "checks": [
+    {
+      "name": "una sola parada de Tab en el lienzo [1440 dark]",
+      "pass": true,
+      "detail": "tabindex=0: 1"
+    },
+    {
+      "name": "Tab entra al lienzo [1440 dark]",
+      "pass": true,
+      "detail": "21 Tab → Cama 1 · Habitación 101, cama estándar, ocupada, higiene limpia, sin aislamiento, dato actualizado ahora"
+    },
+    {
+      "name": "las flechas recorren los espacios [1440 dark]",
+      "pass": true,
+      "detail": "Cama 1 · Habitación 102, cama estándar, libre, higiene inspeccionada, sin aislamiento, dato actualizado ahora"
+    },
+    {
+      "name": "la tarjeta aparece por foco, sin robar el foco [1440 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "anillo de foco de dos tonos [1440 dark]",
+      "pass": true,
+      "detail": "{\"outer\":{\"stroke\":\"rgb(10, 43, 61)\",\"w\":\"7px\"},\"inner\":{\"stroke\":\"rgb(159, 216, 208)\",\"w\":\"3.5px\"}}"
+    },
+    {
+      "name": "Escape cierra la tarjeta sin mover el foco [1440 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Inicio y Fin saltan al primero y al último [1440 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "+ y 0 hacen zoom y ajustan [1440 dark]",
+      "pass": true,
+      "detail": "127 % → 159 % → 127 %"
+    },
+    {
+      "name": "Enter abre la ficha [1440 dark]",
+      "pass": true,
+      "detail": "/administration/medical-organization/spaces/93428bcd-06c3-48c7-abd2-a69a0641d104"
+    },
+    {
+      "name": "primer toque abre la tarjeta (dialog no modal) [1440 dark]",
+      "pass": true,
+      "detail": "dialog"
+    },
+    {
+      "name": "segundo toque abre la ficha [1440 dark]",
+      "pass": true,
+      "detail": "/administration/medical-organization/spaces/62f2728e-52eb-42c0-ae47-41f2e494014e"
+    },
+    {
+      "name": "tocar el fondo cierra la tarjeta [1440 dark]",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "notes": []
+}

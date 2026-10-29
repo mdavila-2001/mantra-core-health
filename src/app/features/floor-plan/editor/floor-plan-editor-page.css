@@ -1,0 +1,82 @@
+/* Editor del plano — 1440: paleta · lienzo · inspector; 768: apilado; 390: solo lectura. */
+:host { display: grid; gap: var(--sp-3); width: 100%; }
+
+.ed-skeleton { height: min(60vh, 560px); border-radius: var(--r-lg); border: 1px solid var(--border-default); background: var(--bg-inset); }
+
+.ed-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+}
+.ed-tools { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.ed-tools--end { margin-left: auto; }
+.ed-key {
+    margin-left: var(--sp-1);
+    padding: 0 var(--sp-1);
+    border: 1px solid currentColor;
+    border-radius: var(--r-sm);
+    font: inherit;
+    font-size: var(--fs-overline);
+    opacity: 0.85;
+}
+.ed-dirty { font-size: var(--fs-caption); color: var(--text-secondary); font-weight: 600; }
+.ed-dirty.is-dirty { color: var(--text-primary); }
+.ed-dirty.is-dirty::before { content: '● '; color: var(--st-warning-fg); }
+
+/* La ayuda de la herramienta flota sobre el lienzo: si empujara el plano, el puntero dejaría de apuntar a lo que se ve. */
+.ed-hint {
+    position: absolute;
+    z-index: 2;
+    top: var(--sp-2);
+    left: var(--sp-2);
+    right: 64px;
+    margin: 0;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: var(--fs-caption);
+    pointer-events: none;
+}
+
+.ed-changes { padding: var(--sp-3); background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--r-lg); font-size: var(--fs-caption); }
+.ed-changes h2 { margin: 0 0 var(--sp-2); font-size: var(--fs-body); }
+.ed-changes ul { margin: 0; padding-left: var(--sp-5); display: grid; gap: var(--sp-1); }
+.ed-collides { color: var(--st-error-fg); font-weight: 600; }
+.ed-warning { margin-top: var(--sp-1); }
+
+.ed-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: var(--sp-3);
+    align-items: start;
+}
+.ed-body.is-read-only { grid-template-columns: minmax(0, 1fr); }
+.ed-right { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); align-content: start; position: sticky; top: var(--sp-3); max-height: calc(100vh - 2 * var(--sp-3)); overflow: auto; }
+.ed-right > *, .ed-pick app-select { min-width: 0; }
+.ed-pick { display: grid; gap: 2px; font-size: var(--fs-caption); color: var(--text-secondary); font-weight: 600; }
+
+.ed-stage {
+    position: relative;
+    height: clamp(380px, 54vh, 640px);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: var(--bg-inset);
+}
+.ed-stage app-floor-plan-canvas { position: absolute; inset: 0; }
+
+@media (max-width: 1099.98px) {
+    .ed-body { grid-template-columns: minmax(0, 1fr); }
+    .ed-right { position: static; max-height: none; overflow: visible; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ed-stage { height: clamp(400px, 58vh, 620px); }
+}
+@media (max-width: 767.98px) {
+    .ed-stage { height: clamp(320px, 56vh, 520px); }
+}

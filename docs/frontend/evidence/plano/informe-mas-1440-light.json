@@ -1,0 +1,71 @@
+{
+  "checks": [
+    {
+      "name": "leyenda de «occupancy» con valores [1440 light]",
+      "pass": true,
+      "detail": "3 valores"
+    },
+    {
+      "name": "leyenda de «hygiene» con valores [1440 light]",
+      "pass": true,
+      "detail": "5 valores"
+    },
+    {
+      "name": "leyenda de «v2» con valores [1440 light]",
+      "pass": true,
+      "detail": "7 valores"
+    },
+    {
+      "name": "leyenda de «availability» con valores [1440 light]",
+      "pass": true,
+      "detail": "5 valores"
+    },
+    {
+      "name": "leyenda de «isolation» con valores [1440 light]",
+      "pass": true,
+      "detail": "5 valores"
+    },
+    {
+      "name": "leyenda de «unit» con valores [1440 light]",
+      "pass": true,
+      "detail": "6 valores"
+    },
+    {
+      "name": "leyenda de «function» con valores [1440 light]",
+      "pass": true,
+      "detail": "2 valores"
+    },
+    {
+      "name": "pulsar un valor de la leyenda lo atenúa en el plano [1440 light]",
+      "pass": true,
+      "detail": "0 → 3"
+    },
+    {
+      "name": "la lista alternativa muestra los espacios con sus estados [1440 light]",
+      "pass": true,
+      "detail": "46 filas"
+    },
+    {
+      "name": "la lista selecciona con teclado [1440 light]",
+      "pass": true,
+      "detail": "/administration/medical-organization/plan?plan=87ae036b-1267-4ef5-a079-88eac08711b0&view=list&space=62f2728e-52eb-42c0-ae47-41f2e494014e"
+    },
+    {
+      "name": "la búsqueda sin acentos encuentra «quirofano» [1440 light]",
+      "pass": true,
+      "detail": "2 resultados"
+    },
+    {
+      "name": "elegir un resultado cambia de lienzo y lo selecciona [1440 light]",
+      "pass": true,
+      "detail": "/administration/medical-organization/plan?plan=87ae036b-1267-4ef5-a079-88eac08711b0&space=fcaa1926-d8b8-4a98-a151-f63260f1ad3e"
+    },
+    {
+      "name": "la unidad Cirugía cruza pisos: una pestaña por piso [1440 light]",
+      "pass": true,
+      "detail": "Piso 111 | Planta baja1"
+    }
+  ],
+  "notes": [],
+  "perf": {}
+}

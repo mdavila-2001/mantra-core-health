@@ -18,6 +18,12 @@ export const TOOLTIP_OPPOSITE: Readonly<Record<TooltipPosition, TooltipPosition>
   right: 'left',
 });
 
+/** Puente al salir del control hacia un globo `hoverable` (CONTRATO-PLANO §5.6: `PLAN_HOVER_CLOSE_MS`). */
+export const TOOLTIP_CLOSE_DELAY_MS = 200;
+
+/** Margen interior con el que el modo `shift` mantiene el globo dentro del viewport. Espeja `--sp-2`. */
+export const TOOLTIP_VIEWPORT_MARGIN_PX = 8;
+
 /**
  * Espera del puntero antes de mostrar: sin ella, cruzar una barra de íconos
  * densa dispara una ráfaga de globos. Con el teclado la espera es 0 — quien

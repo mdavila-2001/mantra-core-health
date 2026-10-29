@@ -27,6 +27,11 @@
     overflow-wrap: break-word;
 }
 
+/* Hoverable (WCAG 1.4.13): el puntero puede llegar al globo sin que se cierre. */
+:host(.tooltip--hoverable) {
+    pointer-events: auto;
+}
+
 /* Una ficha (código, cantidades, importes) necesita más aire que una frase. */
 :host(.tooltip--rich) {
     max-width: 360px;

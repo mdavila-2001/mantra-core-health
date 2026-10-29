@@ -1,0 +1,141 @@
+{
+  "checks": [
+    {
+      "name": "hover ocupada [768 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-101-C1 · Cama 1 · Habitación 101 Edificio principal › Piso 1 › Internación Medicina › Habitación 101 Cama estándar · Cama · Activo Unidad Medicina inte"
+    },
+    {
+      "name": "hover aislamiento [768 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-AIS-C1 · Cama 1 · Aislamiento 1 (presión negativa) Edificio principal › Piso 1 › Internación Medicina › Aislamiento 1 (presión negativa) Cama estándar "
+    },
+    {
+      "name": "hover mantenimiento [768 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-202-C1 · Cama 1 · Habitación 202 Edificio principal › Piso 1 › Internación Cirugía › Habitación 202 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "singleton [768 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "hoverable: ir hacia la tarjeta no la cierra [768 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Escape descarta la tarjeta sin mover el foco [768 dark]",
+      "pass": true,
+      "detail": "Cama 1 · Habitación 101, cama estándar, ocupada, higiene limpia, sin aislamiento, dato actualizado ahora"
+    },
+    {
+      "name": "borde norte: la tarjeta no se recorta [768 dark]",
+      "pass": true,
+      "detail": "lado=bottom"
+    },
+    {
+      "name": "borde sur: la tarjeta no se recorta [768 dark]",
+      "pass": true,
+      "detail": "lado=top"
+    },
+    {
+      "name": "borde oeste: la tarjeta no se recorta [768 dark]",
+      "pass": true,
+      "detail": "lado=right"
+    },
+    {
+      "name": "borde este: la tarjeta no se recorta [768 dark]",
+      "pass": true,
+      "detail": "lado=bottom"
+    }
+  ],
+  "flips": [
+    {
+      "vp": "768",
+      "theme": "dark",
+      "edge": "norte",
+      "card": {
+        "l": 29,
+        "t": 604.328125,
+        "r": 308.9375,
+        "b": 887.328125,
+        "w": 279.9375,
+        "h": 283
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "bottom"
+    },
+    {
+      "vp": "768",
+      "theme": "dark",
+      "edge": "sur",
+      "card": {
+        "l": 399,
+        "t": 316.84375,
+        "r": 739,
+        "b": 616.84375,
+        "w": 340,
+        "h": 300
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "top"
+    },
+    {
+      "vp": "768",
+      "theme": "dark",
+      "edge": "oeste",
+      "card": {
+        "l": 198.84375,
+        "t": 500.921875,
+        "r": 538.84375,
+        "b": 844.921875,
+        "w": 340,
+        "h": 344
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "right"
+    },
+    {
+      "vp": "768",
+      "theme": "dark",
+      "edge": "este",
+      "card": {
+        "l": 399,
+        "t": 604.328125,
+        "r": 739,
+        "b": 929.328125,
+        "w": 340,
+        "h": 325
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "bottom"
+    }
+  ],
+  "notes": []
+}

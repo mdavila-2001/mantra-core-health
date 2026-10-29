@@ -1,0 +1,289 @@
+/* ============================================================================
+    Lienzo del plano de planta — solo tokens del sistema (CONTRATO-PLANO §5.4).
+
+    Cada tono define tres variables (`--tone-bg`, `--tone-fg`, `--tone-bd`) que
+    siguen al tema claro/oscuro porque salen de `--st-*`. Los patrones y los
+    glifos usan `currentColor`/`--tone-fg`, así que sobreviven a `forced-colors`.
+    ========================================================================== */
+
+:host {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+    overflow: hidden;
+    background: var(--bg-inset);
+    color: var(--text-primary);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    /* La inversa del zoom (metros por píxel) la escribe el componente. */
+    --u: 0.1;
+}
+
+:host(.plan-canvas--grabbing) { cursor: grabbing; }
+:host(.plan-canvas--hand) { cursor: grab; }
+
+.plan__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    outline: none;
+}
+
+.plan__sheet {
+    fill: var(--bg-surface);
+    stroke: var(--border-strong);
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+}
+
+.plan__grid {
+    fill: none;
+    stroke: var(--border-default);
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+}
+
+/* ---- tonos ---------------------------------------------------------------- */
+.tone-success { --tone-bg: var(--st-success-bg); --tone-fg: var(--st-success-fg); }
+.tone-info { --tone-bg: var(--st-info-bg); --tone-fg: var(--st-info-fg); }
+.tone-warning { --tone-bg: var(--st-warning-bg); --tone-fg: var(--st-warning-fg); }
+.tone-error { --tone-bg: var(--st-error-bg); --tone-fg: var(--st-error-fg); }
+.tone-accent { --tone-bg: var(--st-tertiary-bg); --tone-fg: var(--st-tertiary-fg); }
+.tone-primary { --tone-bg: var(--st-primary-bg); --tone-fg: var(--st-primary-fg); }
+.tone-secondary { --tone-bg: var(--st-secondary-bg); --tone-fg: var(--st-secondary-fg); }
+.tone-neutral { --tone-bg: var(--bg-surface-alt); --tone-fg: var(--text-secondary); }
+.tone-silhouette { --tone-bg: var(--bg-inset); --tone-fg: var(--text-muted); }
+
+/* ---- rellenos --------------------------------------------------------------- */
+.sp {
+    fill: var(--tone-bg, var(--bg-surface));
+    stroke: var(--tone-fg, var(--border-strong));
+    stroke-width: 1.25px;
+    vector-effect: non-scaling-stroke;
+    cursor: pointer;
+    outline: none;
+    transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+/* Intensidad: «ocupada» y «mantenimiento» pesan más que «libre». */
+.sp.is-strong,
+.sp.p-strong {
+    fill: color-mix(in srgb, var(--tone-bg) 86%, var(--tone-fg));
+}
+
+/* Los valores «normales» no compiten con las excepciones. */
+.sp.is-quiet { fill: var(--bg-surface); stroke: var(--border-strong); }
+
+.sp--zone {
+    fill: color-mix(in srgb, var(--tone-bg, var(--bg-surface-alt)) 38%, var(--bg-surface));
+    stroke: var(--border-strong);
+    stroke-width: 1px;
+    cursor: default;
+}
+
+.sp--bed { stroke-width: 1px; }
+.sp.is-silhouette { fill: var(--bg-inset); stroke: var(--border-default); cursor: default; }
+.sp.is-stateless { fill: var(--bg-surface); }
+
+/* Bordes por estado: «cerrada/reservada» punteado; el aislamiento va aparte (.sp-iso). */
+.sp.b-dotted { stroke-dasharray: 3 3; }
+
+.sp-pat {
+    color: var(--tone-fg);
+    stroke: none;
+}
+.pat-line { stroke: currentColor; stroke-width: 1.1; fill: none; opacity: 0.7; }
+.pat-line--thick { stroke-width: 1.8; }
+.pat-dot { fill: currentColor; opacity: 0.75; }
+
+/* Aislamiento: borde discontinuo GRUESO, por encima del relleno y de cualquier patrón. */
+.sp-iso {
+    fill: none;
+    stroke: var(--tone-fg);
+    stroke-width: 4px;
+    stroke-dasharray: 8 5;
+    vector-effect: non-scaling-stroke;
+}
+
+.sp.is-dim, .sp-pat.is-dim, .sp-iso.is-dim { opacity: 0.28; }
+.sp.is-locked { stroke-dasharray: none; }
+
+.sp.is-selected { stroke-width: 2.5px; }
+
+/* ---- error del editor: borde propio + el glifo/mensaje van en el overlay ---- */
+.sp.is-error {
+    stroke: var(--st-error-fg);
+    stroke-width: 3px;
+    fill: color-mix(in srgb, var(--st-error-bg) 70%, var(--bg-surface));
+}
+
+/* ---- áreas de toque ---------------------------------------------------------- */
+.halo {
+    r: calc(22px * var(--u));
+    fill: transparent;
+    stroke: none;
+}
+
+/* ---- elementos ---------------------------------------------------------------- */
+.el { fill: none; stroke-linejoin: miter; }
+.el--wall {
+    stroke: var(--text-primary);
+    stroke-width: max(var(--w, 0.12px), calc(1.2px * var(--u)));
+    stroke-linecap: square;
+}
+.el--circulation {
+    fill: color-mix(in srgb, var(--bg-surface-alt) 60%, var(--bg-surface));
+    stroke: none;
+}
+.el--vertical {
+    fill: var(--bg-surface-alt);
+    stroke: var(--text-secondary);
+    stroke-width: 1.25px;
+    vector-effect: non-scaling-stroke;
+}
+.el--gap {
+    stroke: var(--bg-surface);
+    stroke-width: max(var(--w, 0.16px), calc(2px * var(--u)));
+}
+.el--door-leaf {
+    stroke: var(--text-primary);
+    stroke-width: 1.6px;
+    vector-effect: non-scaling-stroke;
+}
+.el--door-arc {
+    stroke: var(--text-secondary);
+    stroke-width: 1px;
+    stroke-dasharray: 3 2;
+    vector-effect: non-scaling-stroke;
+}
+.el--window {
+    stroke: var(--brand-primary);
+    stroke-width: max(0.06px, calc(2px * var(--u)));
+}
+
+/* ---- rótulos y glifos (en píxeles de pantalla, no de mundo) ------------------ */
+.lbl { transform-box: view-box; }
+.lbl__scale { transform: scale(var(--u)); }
+.lbl__text,
+.lbl__zone,
+.lbl__note,
+.lbl__mark {
+    font-family: var(--font-body);
+    fill: var(--text-primary);
+    paint-order: stroke;
+    stroke: var(--bg-surface);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+.lbl__text { font-size: 11px; font-weight: 600; }
+.lbl__zone { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; fill: var(--text-secondary); }
+.lbl__note { font-size: 12px; font-weight: 700; }
+.lbl__mark { font-size: 12px; font-weight: 700; }
+.lbl__glyph {
+    color: var(--text-primary);
+    stroke: currentColor;
+    stroke-width: 1.7;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    overflow: visible;
+}
+.ov-label { font-family: var(--font-body); font-size: 11px; font-weight: 700; fill: var(--text-primary); paint-order: stroke; stroke: var(--bg-surface); stroke-width: 4px; }
+.ov-label--error { fill: var(--st-error-fg); }
+
+/* ---- rastros: selección, resalte, hover y foco ---------------------------------- */
+.trace { fill: none; vector-effect: non-scaling-stroke; }
+.trace--selected { stroke: var(--brand-primary); stroke-width: 3px; }
+.trace--hover { stroke: var(--brand-primary); stroke-width: 2px; stroke-dasharray: none; }
+.trace--highlight {
+    stroke: var(--brand-primary);
+    stroke-width: 5px;
+    animation: plan-ring 1.5s var(--ease-out) 1 both;
+}
+/* Anillo de foco de dos tonos (claro + oscuro, ≥ 3 px) para verse sobre cualquier relleno. */
+.trace--focus-outer { stroke: var(--bg-surface); stroke-width: 7px; }
+.trace--focus-inner { stroke: var(--focus-ring); stroke-width: 3.5px; }
+
+@keyframes plan-ring {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ---- editor ------------------------------------------------------------------------ */
+.ov { fill: none; vector-effect: non-scaling-stroke; }
+.ov--draft { stroke: var(--brand-primary); stroke-width: 2px; stroke-dasharray: 6 4; fill: color-mix(in srgb, var(--brand-primary) 12%, transparent); }
+.ov--ghost { stroke: var(--text-secondary); stroke-width: 1.5px; stroke-dasharray: 3 3; }
+.ov--error { stroke: var(--st-error-fg); stroke-width: 3px; fill: color-mix(in srgb, var(--st-error-fg) 14%, transparent); }
+.ov--selection { stroke: var(--brand-primary); stroke-width: 1.5px; }
+.ov--selection-line { stroke: var(--brand-primary); stroke-width: 5px; stroke-opacity: 0.45; stroke-linecap: round; stroke-linejoin: round; }
+.ov--error-line { stroke: var(--st-error-fg); stroke-width: 5px; stroke-opacity: 0.6; stroke-linecap: round; stroke-linejoin: round; }
+.ov--guide { stroke: var(--st-tertiary-fg); stroke-width: 1px; stroke-dasharray: 2 3; }
+.ov--measure { stroke: var(--text-secondary); stroke-width: 1px; }
+.handle {
+    r: calc(7px * var(--u));
+    fill: var(--bg-surface);
+    stroke: var(--brand-primary);
+    stroke-width: 2px;
+    vector-effect: non-scaling-stroke;
+    touch-action: none;
+}
+:host(.plan-canvas--touch) .handle { r: calc(22px * var(--u)); fill-opacity: 0.9; }
+.handle--rotate { fill: var(--brand-primary); }
+.snap-mark { r: calc(5px * var(--u)); fill: none; stroke: var(--st-tertiary-fg); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+
+/* ---- controles flotantes -------------------------------------------------------------- */
+.plan__hud {
+    position: absolute;
+    right: var(--sp-3);
+    bottom: var(--sp-3);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: var(--sp-1);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-sm);
+}
+.hud-zoom {
+    min-width: 4ch;
+    text-align: center;
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+}
+.plan__north {
+    position: absolute;
+    top: var(--sp-3);
+    right: var(--sp-3);
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    font-size: var(--fs-caption);
+    font-weight: 700;
+    color: var(--text-primary);
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sp { transition: none; }
+    /* Sin animación el anillo del resultado de búsqueda queda estático. */
+    .trace--highlight { animation: none; opacity: 1; }
+}
+
+@media (forced-colors: active) {
+    .sp { fill: Canvas; stroke: CanvasText; }
+    .sp-pat { color: CanvasText; }
+    .sp-iso { stroke: CanvasText; }
+    .trace--focus-inner { stroke: Highlight; }
+    .trace--focus-outer { stroke: Canvas; }
+    .el--wall { stroke: CanvasText; }
+}

@@ -1,0 +1,216 @@
+<app-page-header
+  title="Plano de planta"
+  subtitle="Vea cada piso, área o zona con el estado de sus espacios. Pase el puntero, use las flechas o toque un espacio para ver su detalle."
+  [breadcrumbs]="[{ label: 'Mis organizaciones', routerLink: '/administration/medical-organization' }, { label: 'Plano de planta' }]"
+/>
+
+<a class="plan-skip" href="javascript:void(0)" (click)="showList(); $event.preventDefault()" data-testid="plan-skip-list">Ir a la lista de espacios</a>
+
+<app-view-state-host [state]="store.screenState()" (retry)="retry()" (refresh)="store.retryState()">
+  <div vsh-skeleton class="plan-skeleton" aria-hidden="true" data-testid="plan-skeleton">
+    <div class="plan-skeleton__bar"></div>
+    <div class="plan-skeleton__stage"></div>
+  </div>
+
+  <!-- S7: la antigüedad siempre visible, con salida. -->
+  <app-alert vsh-stale tone="warning" [title]="store.pollFailure() === 'offline' ? 'Sin conexión: se muestra lo último que llegó' : 'El estado puede estar atrasado'" data-testid="plan-stale">
+    {{ staleText() }} · <strong>Desactualizado</strong>
+    @if (store.pollRequestId(); as rid) { · Código de soporte: <code>{{ rid }}</code> }
+    <div alert-actions>
+      <button app-button size="sm" variant="secondary" type="button" data-testid="plan-stale-retry" (clicked)="store.retryState()">Reintentar</button>
+    </div>
+  </app-alert>
+
+  @if (store.layoutChanged()) {
+    <app-alert tone="info" title="Otra persona modificó el plano" data-testid="plan-layout-changed">
+      El dibujo cambió desde que lo abrió.
+      <div alert-actions>
+        <button app-button size="sm" variant="secondary" type="button" (clicked)="store.load()">Recargar</button>
+      </div>
+    </app-alert>
+  }
+
+  <div class="plan-toolbar" role="toolbar" aria-label="Controles del plano">
+    <div class="plan-tabs" role="tablist" [attr.aria-label]="tabsLabel()" data-testid="plan-tabs">
+      @for (tab of store.tabs(); track tab.id) {
+        <button
+          type="button"
+          role="tab"
+          class="plan-tab"
+          [class.is-active]="tab.id === store.planId()"
+          [attr.aria-selected]="tab.id === store.planId()"
+          [attr.data-plan]="tab.code"
+          (click)="goToPlan(tab.id)"
+        >
+          {{ tab.label }}@if (tab.count !== null) { <span class="plan-tab__count">{{ tab.count }}</span> }
+        </button>
+      }
+    </div>
+
+    <div class="plan-search">
+      <app-search-field
+        label="Buscar un espacio"
+        placeholder="Buscar por código o nombre"
+        [debounceMs]="200"
+        [value]="searchText()"
+        (searched)="onSearch($event)"
+      />
+      @if (store.searchResults().length > 0) {
+        <ul class="plan-hits" role="listbox" aria-label="Resultados de la búsqueda" data-testid="plan-hits">
+          @for (hit of store.searchResults(); track hit.spaceId) {
+            <li role="presentation">
+              <button type="button" role="option" class="plan-hit" [attr.aria-selected]="false" (click)="chooseHit(hit)">
+                <strong>{{ hit.code }}</strong> {{ hit.name }}
+                <span class="plan-hit__where">{{ hit.placed ? hit.floorPlanName : 'Sin dibujar' }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <app-segmented-control
+      ariaLabel="Vista del plano"
+      [options]="viewOptions"
+      [value]="planView()"
+      (valueChange)="onView($event)"
+    />
+
+    <button app-button size="sm" variant="outline" type="button" class="plan-toggle-filters" [attr.aria-expanded]="filtersOpen()" (clicked)="filtersOpen.set(!filtersOpen())" data-testid="plan-filters-toggle">
+      Filtros y colores
+    </button>
+
+    <div class="plan-filters" [class.is-open]="filtersOpen()">
+      <div class="plan-field">
+        <span>Colorear por</span>
+        <app-select
+          ariaLabel="Colorear por"
+          [options]="colorOptions()"
+          [value]="store.colorBy()"
+          (valueChange)="onColor($event)"
+        />
+      </div>
+      <div class="plan-field">
+        <span>Área o zona</span>
+        <app-select ariaLabel="Foco por área o zona" [options]="zoneSelectOptions()" [value]="store.focusSpaceId() ?? ''" (valueChange)="onFocusZone($event)" />
+      </div>
+      <div class="plan-field">
+        <span>Unidad clínica</span>
+        <app-select ariaLabel="Filtrar por unidad clínica" [options]="unitSelectOptions()" [value]="store.unitId() ?? ''" (valueChange)="onUnit($event)" />
+      </div>
+    </div>
+
+    @if (store.viewer()?.canEditPlan) {
+      <button app-button size="sm" variant="primary" type="button" data-testid="plan-edit" (clicked)="edit()">Editar plano</button>
+    }
+  </div>
+
+  @if (planView() === 'list') {
+    <app-plan-space-list
+      [spaces]="store.spaces()"
+      [states]="store.states()"
+      [canSeeState]="store.canSeeState()"
+      [selectedId]="store.selectedId()"
+      (pick)="onPick($event)"
+      (open)="openFile($event)"
+    />
+  } @else {
+    <div class="plan-body" [class.has-panel]="selectedModel() !== null && !narrow()">
+      <aside class="plan-left" aria-label="Capas y leyenda">
+        <button app-button size="sm" variant="outline" type="button" class="plan-toggle-tools" [attr.aria-expanded]="toolsOpen()" (clicked)="toolsOpen.set(!toolsOpen())">
+          Capas y leyenda
+        </button>
+        <div class="plan-tools" [class.is-open]="toolsOpen()">
+          <app-plan-legend
+            [mode]="store.colorBy()"
+            [items]="store.legend()"
+            [hiddenKeys]="hiddenValues()"
+            [note]="legendNote()"
+            (toggled)="toggleLegend($event)"
+          />
+          <fieldset class="plan-layers">
+            <legend>Capas</legend>
+            @for (layer of layerList; track layer.id) {
+              <app-checkbox [label]="layer.label" [checked]="isLayerOn(layer.id)" (checkedChange)="toggleLayer(layer.id, $event)" />
+            }
+          </fieldset>
+        </div>
+      </aside>
+
+      <section class="plan-stage" aria-label="Plano" data-testid="plan-stage">
+        @if (store.meta(); as meta) {
+          <app-floor-plan-canvas
+            [planName]="meta.name"
+            [widthM]="meta.widthM"
+            [heightM]="meta.heightM"
+            [gridSizeM]="meta.gridSizeM"
+            [northBearingDeg]="meta.northBearingDeg"
+            [spaces]="store.spaces()"
+            [elements]="store.elements()"
+            [states]="store.states()"
+            [canSeeState]="store.canSeeState()"
+            [asOf]="store.asOf()"
+            [nowMs]="store.nowMs()"
+            [colorBy]="store.colorBy()"
+            [categoryVisuals]="store.categoryVisuals()"
+            [layers]="layers()"
+            [hiddenValues]="hiddenValues()"
+            [selectedId]="store.selectedId()"
+            [highlightId]="highlightId()"
+            [focusIds]="store.focusSet()"
+            [frame]="frame()"
+            [reveal]="reveal()"
+            [cardTargetId]="hover()?.spaceId ?? null"
+            (hoverChange)="onHover($event)"
+            (open)="openFile($event)"
+            (pick)="onPick($event)"
+            (viewChange)="onView2($event)"
+            (searchRequested)="focusSearch()"
+            (floorStep)="stepFloor($event)"
+          />
+          @if (view(); as v) {
+            <div class="plan-minimap" [class.is-closed]="!minimapOpen()">
+              <button app-button size="sm" variant="outline" type="button" class="plan-minimap__toggle" [attr.aria-expanded]="minimapOpen()" (clicked)="minimapOpen.set(!minimapOpen())">
+                {{ minimapOpen() ? 'Ocultar minimapa' : 'Minimapa' }}
+              </button>
+              @if (minimapOpen()) {
+                <app-floor-plan-minimap [widthM]="meta.widthM" [heightM]="meta.heightM" [spaces]="store.spaces()" [visible]="v.visible" (centerChange)="onMinimap($event)" />
+              }
+            </div>
+          }
+        }
+      </section>
+
+      @if (selectedModel(); as selected) {
+        @if (!narrow()) {
+          <aside class="plan-right" aria-label="Espacio seleccionado" data-testid="plan-selection">
+            <app-plan-selection-panel
+              [model]="selected"
+              [children]="selectedChildren()"
+              [canOpenFile]="store.viewer()?.canOpenSpaceFile ?? false"
+              (closed)="onPick(null)"
+              (openFile)="openFile(store.selectedId())"
+              (pickChild)="onPick($event)"
+            />
+          </aside>
+        }
+      }
+    </div>
+
+    @if (hover(); as h) {
+      @if (cardModel(); as model) {
+        <app-plan-space-card
+          [model]="model"
+          [hover]="h"
+          [narrow]="narrow()"
+          [spaceSizePx]="spaceSize()"
+          [canOpenFile]="store.viewer()?.canOpenSpaceFile ?? false"
+          (enter)="canvas()?.cardEnter()"
+          (leave)="canvas()?.cardLeave()"
+          (closed)="closeCard()"
+          (openFile)="openFile(h.spaceId)"
+        />
+      }
+    }
+  }
+</app-view-state-host>

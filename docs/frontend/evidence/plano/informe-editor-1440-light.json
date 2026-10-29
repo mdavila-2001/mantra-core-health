@@ -1,0 +1,194 @@
+{
+  "checks": [
+    {
+      "name": "editor: abre desde el visor con el botón «Editar plano» [1440-light]",
+      "pass": true,
+      "detail": "http://127.0.0.1:4310/administration/medical-organization/plan/edit?plan=78adebce-16fe-468a-a40e-447cff980af8&site=1293b757-9c2c-466f-ac0f-89f8718574b6"
+    },
+    {
+      "name": "editor: sin cambios al abrir [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: tras recargar ofrece recuperar el borrador sin guardar [1440-light]",
+      "pass": true,
+      "detail": "Información: Hay un borrador sin guardar Quedó guardado en este navegador el 29/10/2026 07:34 con 1 cambios. RecuperarDescartar"
+    },
+    {
+      "name": "editor: recuperar el borrador devuelve el cambio [1440-light]",
+      "pass": true,
+      "detail": "Cambios sin guardar (1)"
+    },
+    {
+      "name": "editor: descartar vuelve al plano cargado [1440-light]",
+      "pass": true,
+      "detail": "Todo guardado"
+    },
+    {
+      "name": "editor: elegir una figura muestra sus medidas y asas [1440-light]",
+      "pass": true,
+      "detail": "PLANO-PB-C1 · Consultorio 1 · Medicina general 4,00 × 8,50 m · 34,00 m² Centro X (m) Centro Y (m) Ancho (m) Fondo (m) Gi · asas 9"
+    },
+    {
+      "name": "editor: redimensionar por medidas exactas cambia el ancho y marca cambios [1440-light]",
+      "pass": true,
+      "detail": "4,00 × 8,50 m · 34,00 m² → 3,00 × 8,50 m · 25,50 m²"
+    },
+    {
+      "name": "editor: arrastrar mueve la figura y el imán la deja en la grilla (0,5 m) [1440-light]",
+      "pass": true,
+      "detail": "28 → 28.5"
+    },
+    {
+      "name": "editor: sin problemas tras un movimiento corto [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: deshacer queda habilitado [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: un solape se marca al instante con borde, glifo y mensaje (ayuda local) [1440-light]",
+      "pass": true,
+      "detail": "2 problemas locales"
+    },
+    {
+      "name": "editor: 422 muestra el error por figura con su vecina, el solape y el código de soporte [1440-light]",
+      "pass": true,
+      "detail": "2 del servidor · Error: El servidor no aceptó el dibujo Nada se guardó. Corrija las figuras señaladas (cada una dice qué hacer) y vuelva a guardar. Código de soporte: 4095751816"
+    },
+    {
+      "name": "editor: el error nombra la figura, el vecino, el área solapada y qué hacer [1440-light]",
+      "pass": true,
+      "detail": "Problemas del dibujo 2 ⚠ PLANO-PB-C1 · Consultorio 1 · Medicina general PLANO-PB-C1 se solapa con PLANO-PB-C2. Choca con PLANO-PB-C2 · Consultorio 2 · Pediatría (25.27 m² de solape) Separar los locales. Dos locales pueden tocarse por la pared, pero no pisarse."
+    },
+    {
+      "name": "editor: pulsar el error enfoca la figura [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: Ctrl+Z deshace el arrastre y se limpian los errores [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: Ctrl+S guarda, trae la versión nueva y el código de soporte [1440-light]",
+      "pass": true,
+      "detail": "Éxito: Plano guardado Versión 2 · 0 ubicados, 1 movidos, 0 quitados · Código de soporte: c05700d9b9364ee9 Aviso: el área calculada de PLANO-PB-C3 · Consultorio 3 · Ginecología (34 m²) difiere 13.3 % d"
+    },
+    {
+      "name": "editor: tras guardar, lo que se ve viene del servidor (ancho 3,00 m) [1440-light]",
+      "pass": true,
+      "detail": "3,00 × 8,50 m · 25,50 m²"
+    },
+    {
+      "name": "editor: las flechas empujan la figura un paso de grilla [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: 412 avisa «Otra persona modificó este plano» con Ver cambios y Recargar y reaplicar [1440-light]",
+      "pass": true,
+      "detail": "Advertencia: Otra persona modificó este plano Mientras usted editaba, el plano pasó a la versión 3. El plano cambió desde que lo abrió. Código de soporte: 516d3fc711a94cb7 Ver cambiosRecargar y reaplicar mis cambios"
+    },
+    {
+      "name": "editor: «Ver cambios» lista lo que cambió la otra persona [1440-light]",
+      "pass": true,
+      "detail": "Lo que cambió en el servidor PLANO-PB-OBS-C4 Cama 4 · Observación (4 camas): quitado."
+    },
+    {
+      "name": "editor: «Recargar y reaplicar» conserva mi cambio que no choca [1440-light]",
+      "pass": true,
+      "detail": "Información: Se reaplicaron sus cambios 1 cambio se reaplicó sobre la versión nueva. Revise el resultado y guarde."
+    },
+    {
+      "name": "editor: tras reaplicar, guardar funciona con la versión nueva [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: quitar del plano confirma y devuelve el espacio a la paleta [1440-light]",
+      "pass": true,
+      "detail": "Sin ubicar 1 Buscar en la lista PLANO-PB-C2 Consultorio 2 · Pediatría Local"
+    },
+    {
+      "name": "editor: elegir un espacio de la paleta activa el dibujo [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: dibujar el local lo ubica y lo deja elegido [1440-light]",
+      "pass": true,
+      "detail": "PLANO-PB-C2 · Consultorio 2 · Pediatría 3,98 × 8,50 m · 33,82 m² Centro X (m) Centro Y (m) Ancho (m)"
+    },
+    {
+      "name": "editor: deshacer vuelve sobre lo dibujado y lo quitado [1440-light]",
+      "pass": true,
+      "detail": "Todo guardado"
+    },
+    {
+      "name": "editor: la tecla W activa la herramienta Muro [1440-light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "editor: Entrar termina el muro y lo deja elegido [1440-light]",
+      "pass": true,
+      "detail": "Muro · 8,50 m"
+    },
+    {
+      "name": "editor: el muro nuevo cuenta como un cambio [1440-light]",
+      "pass": true,
+      "detail": "Cambios sin guardar (1)"
+    },
+    {
+      "name": "editor: al pasar sobre el muro la puerta muestra dónde caería [1440-light]",
+      "pass": true,
+      "detail": "1 vista previa"
+    },
+    {
+      "name": "editor: un clic ubica la puerta sobre el muro y la deja elegida [1440-light]",
+      "pass": true,
+      "detail": "Puerta · 0,90 m de ancho"
+    },
+    {
+      "name": "editor: las flechas corren la puerta a lo largo del muro [1440-light]",
+      "pass": true,
+      "detail": "3.8 → 4.3 m"
+    },
+    {
+      "name": "editor: la ventana se ubica sobre el muro [1440-light]",
+      "pass": true,
+      "detail": "Ventana · 1,20 m de ancho"
+    },
+    {
+      "name": "editor: tres cambios sin guardar (muro, puerta, ventana) [1440-light]",
+      "pass": true,
+      "detail": "Cambios sin guardar (3)"
+    },
+    {
+      "name": "editor: guardar manda muro, puerta y ventana y el servidor los cuenta [1440-light]",
+      "pass": true,
+      "detail": "Éxito: Plano guardado Versión 5 · 0 ubicados, 0 movidos, 0 quitados, 3 muros, puertas o ventanas · Código de soporte: 2f79dbedfd5c4841 Aviso: el área calculada de PLANO-PB-C3 · Consultorio 3 · Ginecol"
+    },
+    {
+      "name": "editor: un clic sobre el muro lo elige [1440-light]",
+      "pass": true,
+      "detail": "Muro · 8,50 m"
+    },
+    {
+      "name": "editor: Supr quita el muro con su puerta y su ventana [1440-light]",
+      "pass": true,
+      "detail": "Cambios sin guardar (3)"
+    },
+    {
+      "name": "editor: Ctrl+Z los devuelve [1440-light]",
+      "pass": true,
+      "detail": "Todo guardado"
+    }
+  ]
+}

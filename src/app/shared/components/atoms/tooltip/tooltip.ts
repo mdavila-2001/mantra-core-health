@@ -19,10 +19,12 @@ import {
 
 import { nextControlId } from '@shared/forms/form-control.context';
 import { TooltipPanel } from './tooltip-panel';
+import { placeFloating, type Rect } from './floating-placement';
 import {
+  TOOLTIP_CLOSE_DELAY_MS,
   TOOLTIP_GAP_PX,
   TOOLTIP_HOVER_DELAY_MS,
-  TOOLTIP_OPPOSITE,
+  TOOLTIP_VIEWPORT_MARGIN_PX,
   type TooltipPosition,
 } from './tooltip.types';
 
@@ -50,12 +52,27 @@ const NATIVELY_FOCUSABLE = 'a[href], button, input, select, textarea, [tabindex]
  * Bajo SSR no hace absolutamente nada: no hay `document` que medir. El globo
  * aparece con el puntero (tras una espera corta) y con el foco (sin espera);
  * se va con `mouseleave`, `blur` o `Escape`.
+ *
+ * ## Modo rico (CONTRATO-PLANO §5.6, WCAG 2.1 SC 1.4.13)
+ *
+ * Tres entradas opcionales, apagadas por omisión (el globo simple no cambia):
+ *
+ * - `appTooltipShift`: además de voltear, **desplaza** el globo a lo largo del
+ *   eje para que no se recorte en el borde, y prueba también los lados
+ *   perpendiculares. Usa el mismo motor que la tarjeta del plano
+ *   (`placeFloating`): no hay un segundo posicionador.
+ * - `appTooltipHoverable`: el puntero puede pasar del control al globo sin que
+ *   se cierre (se espera `TOOLTIP_CLOSE_DELAY_MS` al salir) y `Escape` lo
+ *   descarta en cualquier momento sin mover el foco. Solo para contenido de
+ *   lectura; un globo con controles sigue siendo un diálogo no modal.
+ * - `appTooltipAnchor`: un rectángulo de viewport que reemplaza al del host,
+ *   para anclar a un punto (por ejemplo el cursor sobre un espacio grande).
  */
 @Directive({
   selector: '[appTooltip]',
   host: {
     '(mouseenter)': 'scheduleShow()',
-    '(mouseleave)': 'hide()',
+    '(mouseleave)': 'leave()',
     '(focus)': 'show()',
     '(blur)': 'hide()',
     '(keydown.escape)': 'hide()',
@@ -71,15 +88,34 @@ export class Tooltip implements OnDestroy {
   readonly appTooltip = input<string>('');
   readonly appTooltipPosition = input<TooltipPosition>('top');
   readonly appTooltipTemplate = input<TemplateRef<unknown> | null>(null);
+  /** Desplazar (además de voltear) para no recortar el globo. */
+  readonly appTooltipShift = input(false);
+  /** El puntero puede entrar al globo; `Escape` lo descarta (WCAG 1.4.13). */
+  readonly appTooltipHoverable = input(false);
+  /** Rectángulo de viewport al que anclar en vez del host. */
+  readonly appTooltipAnchor = input<Rect | null>(null);
 
   private panel: ComponentRef<TooltipPanel> | null = null;
   private pendingShow: ReturnType<typeof setTimeout> | null = null;
+  private pendingHide: ReturnType<typeof setTimeout> | null = null;
+  private overPanel = false;
   /** El host podía tener su propia descripción: se restituye al ocultar. */
   private describedByBeforeShow: string | null = null;
   private readonly panelId = nextControlId('tooltip');
 
   /** Referencia estable: `removeEventListener` necesita la MISMA función. */
   private readonly repositionOnViewportChange = (): void => this.place();
+  private readonly dismissOnEscape = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') this.hide();
+  };
+  private readonly panelEnter = (): void => {
+    this.overPanel = true;
+    this.cancelPendingHide();
+  };
+  private readonly panelLeave = (): void => {
+    this.overPanel = false;
+    this.scheduleHide();
+  };
 
   constructor() {
     // El texto puede cambiar con el globo abierto —el resumen del paciente en la
@@ -121,6 +157,31 @@ export class Tooltip implements OnDestroy {
     }, TOOLTIP_HOVER_DELAY_MS);
   }
 
+  /** Salir con el puntero: cierra ya, o da un puente para llegar al globo si es hoverable. */
+  protected leave(): void {
+    if (this.appTooltipHoverable() && this.panel !== null) {
+      this.cancelPendingShow();
+      this.scheduleHide();
+      return;
+    }
+    this.hide();
+  }
+
+  private scheduleHide(): void {
+    this.cancelPendingHide();
+    this.pendingHide = setTimeout(() => {
+      this.pendingHide = null;
+      if (!this.overPanel) this.hide();
+    }, TOOLTIP_CLOSE_DELAY_MS);
+  }
+
+  private cancelPendingHide(): void {
+    if (this.pendingHide !== null) {
+      clearTimeout(this.pendingHide);
+      this.pendingHide = null;
+    }
+  }
+
   /** Con el teclado no se espera: llegar al control ya es la intención. */
   protected show(): void {
     if (!this.isBrowser || this.panel !== null || !this.appTooltip().trim()) {
@@ -134,10 +195,18 @@ export class Tooltip implements OnDestroy {
     panel.setInput('text', this.appTooltip());
     panel.setInput('template', this.appTooltipTemplate());
     panel.setInput('position', this.appTooltipPosition());
+    panel.setInput('hoverable', this.appTooltipHoverable());
 
     this.applicationRef.attachView(panel.hostView);
     this.document.body.appendChild(panel.location.nativeElement);
     this.panel = panel;
+    this.cancelPendingHide();
+    if (this.appTooltipHoverable()) {
+      const element = panel.location.nativeElement as HTMLElement;
+      element.addEventListener('mouseenter', this.panelEnter);
+      element.addEventListener('mouseleave', this.panelLeave);
+      this.document.addEventListener('keydown', this.dismissOnEscape);
+    }
 
     this.place();
     this.describeHost();
@@ -146,12 +215,18 @@ export class Tooltip implements OnDestroy {
 
   protected hide(): void {
     this.cancelPendingShow();
+    this.cancelPendingHide();
 
     const panel = this.panel;
     if (panel === null) {
       return;
     }
     this.panel = null;
+    this.overPanel = false;
+    const element = panel.location.nativeElement as HTMLElement;
+    element.removeEventListener('mouseenter', this.panelEnter);
+    element.removeEventListener('mouseleave', this.panelLeave);
+    this.document.removeEventListener('keydown', this.dismissOnEscape);
 
     this.listenToViewport(false);
     this.restoreHostDescription();
@@ -179,58 +254,29 @@ export class Tooltip implements OnDestroy {
     // caja vacía de puro padding, queda corrido hacia abajo sobre el host y
     // centrado con un ancho casi nulo.
     panel.changeDetectorRef.detectChanges();
-    const host = this.hostElement.nativeElement.getBoundingClientRect();
+    const hostRect = this.appTooltipAnchor() ?? toRect(this.hostElement.nativeElement.getBoundingClientRect());
     const globe = (panel.location.nativeElement as HTMLElement).getBoundingClientRect();
-    const position = this.fittingPosition(host, globe);
-    const { top, left } = this.coordinatesFor(position, host, globe);
+    const view = this.document.defaultView;
+    const shift = this.appTooltipShift();
+    const placement = placeFloating(
+      hostRect,
+      { width: globe.width, height: globe.height },
+      {
+        preferred: this.appTooltipPosition(),
+        gap: TOOLTIP_GAP_PX,
+        bounds: { left: 0, top: 0, width: view?.innerWidth ?? 0, height: view?.innerHeight ?? 0 },
+        margin: shift ? TOOLTIP_VIEWPORT_MARGIN_PX : 0,
+        shift,
+        // Sin `shift` se conserva el comportamiento histórico: probar el lado pedido y su opuesto.
+        legacy: !shift,
+      },
+    );
 
-    panel.setInput('position', position);
-    panel.setInput('top', top);
-    panel.setInput('left', left);
+    panel.setInput('position', placement.side);
+    panel.setInput('top', placement.top);
+    panel.setInput('left', placement.left);
     // El globo ya está en el DOM: sin esto se pinta un frame en (0,0).
     panel.changeDetectorRef.detectChanges();
-  }
-
-  private fittingPosition(host: DOMRect, globe: DOMRect): TooltipPosition {
-    const requested = this.appTooltipPosition();
-    return this.fits(requested, host, globe) ? requested : TOOLTIP_OPPOSITE[requested];
-  }
-
-  private fits(position: TooltipPosition, host: DOMRect, globe: DOMRect): boolean {
-    const view = this.document.defaultView;
-    const viewportWidth = view?.innerWidth ?? 0;
-    const viewportHeight = view?.innerHeight ?? 0;
-
-    switch (position) {
-      case 'top':
-        return host.top - globe.height - TOOLTIP_GAP_PX >= 0;
-      case 'bottom':
-        return host.bottom + globe.height + TOOLTIP_GAP_PX <= viewportHeight;
-      case 'left':
-        return host.left - globe.width - TOOLTIP_GAP_PX >= 0;
-      case 'right':
-        return host.right + globe.width + TOOLTIP_GAP_PX <= viewportWidth;
-    }
-  }
-
-  private coordinatesFor(
-    position: TooltipPosition,
-    host: DOMRect,
-    globe: DOMRect,
-  ): { top: number; left: number } {
-    const centerX = host.left + host.width / 2 - globe.width / 2;
-    const centerY = host.top + host.height / 2 - globe.height / 2;
-
-    switch (position) {
-      case 'top':
-        return { top: host.top - globe.height - TOOLTIP_GAP_PX, left: centerX };
-      case 'bottom':
-        return { top: host.bottom + TOOLTIP_GAP_PX, left: centerX };
-      case 'left':
-        return { top: centerY, left: host.left - globe.width - TOOLTIP_GAP_PX };
-      case 'right':
-        return { top: centerY, left: host.right + TOOLTIP_GAP_PX };
-    }
   }
 
   /**
@@ -291,4 +337,8 @@ export class Tooltip implements OnDestroy {
       );
     }
   }
+}
+
+function toRect(box: DOMRect): Rect {
+  return { left: box.left, top: box.top, width: box.width, height: box.height };
 }

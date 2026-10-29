@@ -1,0 +1,48 @@
+:host { display: block; }
+.legend__title { margin: 0 0 var(--sp-2); font-size: var(--fs-overline); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); font-weight: 700; }
+.legend__note { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+.legend__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-1); }
+
+.tone-success { --tone-bg: var(--st-success-bg); --tone-fg: var(--st-success-fg); }
+.tone-info { --tone-bg: var(--st-info-bg); --tone-fg: var(--st-info-fg); }
+.tone-warning { --tone-bg: var(--st-warning-bg); --tone-fg: var(--st-warning-fg); }
+.tone-error { --tone-bg: var(--st-error-bg); --tone-fg: var(--st-error-fg); }
+.tone-accent { --tone-bg: var(--st-tertiary-bg); --tone-fg: var(--st-tertiary-fg); }
+.tone-primary { --tone-bg: var(--st-primary-bg); --tone-fg: var(--st-primary-fg); }
+.tone-secondary { --tone-bg: var(--st-secondary-bg); --tone-fg: var(--st-secondary-fg); }
+.tone-neutral { --tone-bg: var(--bg-surface-alt); --tone-fg: var(--text-secondary); }
+
+.legend__item {
+    display: grid;
+    grid-template-columns: 28px 28px 1fr auto;
+    align-items: center;
+    gap: var(--sp-2);
+    width: 100%;
+    min-height: 36px;
+    padding: var(--sp-1) var(--sp-2);
+    border: 1px solid transparent;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--fs-caption);
+    text-align: left;
+    cursor: pointer;
+}
+.legend__item:hover { background: var(--bg-hover); }
+.legend__item:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 1px; }
+.legend__item.is-off { opacity: 0.55; }
+.legend__item.is-off .legend__label { text-decoration: line-through; }
+
+.legend__swatch { width: 28px; height: 20px; }
+.sw-fill { fill: var(--tone-bg); stroke: var(--tone-fg); stroke-width: 1.5; }
+.sw-strong { fill: color-mix(in srgb, var(--tone-bg) 72%, var(--tone-fg)); }
+.sw-dotted { stroke-dasharray: 3 2; }
+.sw-iso { fill: none; stroke-width: 3; stroke-dasharray: 5 3; }
+.sw-line { stroke: var(--tone-fg); stroke-width: 1.2; fill: none; opacity: 0.75; }
+.sw-dots { stroke: var(--tone-fg); stroke-width: 2; stroke-linecap: round; opacity: 0.8; }
+
+.legend__glyph { display: inline-flex; align-items: center; gap: 2px; color: var(--text-primary); font-size: 15px; min-height: 15px; }
+.legend__mark { font-size: var(--fs-caption); font-weight: 800; }
+.legend__label { font-weight: 600; }
+.legend__count { font-variant-numeric: tabular-nums; color: var(--text-secondary); font-weight: 700; }

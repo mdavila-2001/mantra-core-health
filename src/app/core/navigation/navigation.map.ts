@@ -1116,6 +1116,34 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M14 practice',
   },
   {
+    // F1c · Plano de planta (CONTRATO-PLANO §5.1). Se llega desde el árbol de
+    // infraestructura («Ver en plano») y desde la ficha del espacio, así que no
+    // ocupa un renglón del menú. Los roles son los de la consola de la que
+    // cuelga; **la API decide** qué ve cada uno (siluetas, estado, paciente).
+    path: 'administration/medical-organization/plan',
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Plano de planta',
+    group: 'Administración',
+    icon: 'hospital',
+    roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Vea cada piso, área o zona con el estado de sus espacios y el detalle al pasar el puntero.',
+    module: 'M14 practice',
+  },
+  {
+    // F1c · el editor del plano. Se llega desde «Editar plano» del visor, solo con
+    // `viewer.canEditPlan`; la API decide y rechaza con 403 lo que no corresponda.
+    path: 'administration/medical-organization/plan/edit',
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Editar plano de planta',
+    group: 'Administración',
+    icon: 'hospital',
+    roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN'],
+    availability: 'disponible',
+    summary: 'Dibuje y acomode los espacios del plano: mover, redimensionar, rotar y guardar sin pisar a otra persona.',
+    module: 'M14 practice',
+  },
+  {
     // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
     // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al
     // proxy. La API decide quién puede (membresía OWNER/ADMIN de esa organización

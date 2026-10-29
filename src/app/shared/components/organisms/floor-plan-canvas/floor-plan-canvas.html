@@ -1,0 +1,202 @@
+<svg
+  #svg
+  class="plan__svg"
+  [attr.viewBox]="viewBox()"
+  preserveAspectRatio="xMidYMid meet"
+  role="group"
+  [attr.aria-label]="groupLabel()"
+  [attr.tabindex]="activeId() === null ? 0 : null"
+  [attr.data-testid]="'plan-svg'"
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp($event)"
+  (pointercancel)="onPointerCancel($event)"
+  (pointerleave)="onPointerLeave()"
+  (contextmenu)="$event.preventDefault()"
+  (keydown)="onKeyDown($event)"
+  (focusin)="onFocusIn($event)"
+  (focusout)="onFocusOut($event)"
+>
+  <defs app-plan-glyph-defs></defs>
+  <defs>
+    <!-- Patrones en px: se escalan con la inversa del zoom para que las rayas no crezcan al acercar. -->
+    <pattern id="plan-pat-diagonal" width="8" height="8" patternUnits="userSpaceOnUse" [attr.patternTransform]="patternScale()">
+      <path d="M0 8L8 0M-2 2L2 -2M6 10L10 6" class="pat-line" />
+    </pattern>
+    <pattern id="plan-pat-cross" width="8" height="8" patternUnits="userSpaceOnUse" [attr.patternTransform]="patternScale()">
+      <path d="M0 8L8 0M-2 2L2 -2M6 10L10 6M0 0L8 8M-2 6L2 10M6 -2L10 2" class="pat-line" />
+    </pattern>
+    <pattern id="plan-pat-dots" width="6" height="6" patternUnits="userSpaceOnUse" [attr.patternTransform]="patternScale()">
+      <circle cx="1.5" cy="1.5" r="0.9" class="pat-dot" />
+      <circle cx="4.5" cy="4.5" r="0.9" class="pat-dot" />
+    </pattern>
+    <pattern id="plan-pat-hstripes" width="8" height="6" patternUnits="userSpaceOnUse" [attr.patternTransform]="patternScale()">
+      <path d="M0 1.5H8" class="pat-line pat-line--thick" />
+    </pattern>
+    <pattern id="plan-pat-grid" width="6" height="6" patternUnits="userSpaceOnUse" [attr.patternTransform]="patternScale()">
+      <path d="M0 3H6M3 0V6" class="pat-line" />
+    </pattern>
+  </defs>
+
+  <rect class="plan__sheet" x="0" y="0" [attr.width]="widthM()" [attr.height]="heightM()" />
+  @if (gridPath()) {
+    <path class="plan__grid" [attr.d]="gridPath()" />
+  }
+
+  <g class="l-circulation">
+    @for (el of circulation(); track el.id) {
+      <path class="el el--circulation" [attr.d]="el.path" />
+    }
+  </g>
+
+  <!-- Áreas de toque (44 px) de los espacios chicos: solo si se usó el dedo. -->
+  <g class="l-halos">
+    @for (halo of haloRows(); track halo.id) {
+      <circle class="halo" [attr.cx]="halo.x" [attr.cy]="halo.y" [attr.data-space-id]="halo.id" />
+    }
+  </g>
+
+  <!-- Rellenos: zonas, locales y camas, en ese orden. Cada uno es blanco de puntería y nodo enfocable. -->
+  <g class="l-fills">
+    @for (row of zoneRows(); track row.s.id) {
+      <ng-container *ngTemplateOutlet="fill; context: { row }" />
+    }
+    @for (row of solidRows(); track row.s.id) {
+      <ng-container *ngTemplateOutlet="fill; context: { row }" />
+    }
+  </g>
+
+  <g class="l-walls" pointer-events="none">
+    @for (w of walls(); track w.id) {
+      @if (w.path) {
+        <path class="el el--wall" [attr.d]="w.path" [style.--w]="(w.thicknessM ?? 0.12) + 'px'" />
+      }
+    }
+  </g>
+
+  <g class="l-verticals" pointer-events="none">
+    @for (v of verticals(); track v.id) {
+      <path class="el el--vertical" [attr.d]="v.path" />
+    }
+  </g>
+
+  <g class="l-openings" pointer-events="none">
+    @for (o of openings(); track o.id) {
+      @if (o.opening; as op) {
+        <path class="el el--gap" [attr.d]="op.gap" [style.--w]="(op.thicknessM + 0.04) + 'px'" />
+        @if (o.kind === 'DOOR') {
+          <path class="el el--door-leaf" [attr.d]="'M' + op.hinge[0] + ' ' + op.hinge[1] + ' L' + op.leafEnd[0] + ' ' + op.leafEnd[1]" />
+          <path class="el el--door-arc" [attr.d]="op.arc" />
+        } @else {
+          <path class="el el--window" [attr.d]="op.gap" />
+        }
+      }
+    }
+  </g>
+
+  <g class="l-labels" pointer-events="none" aria-hidden="true">
+    @for (r of labelRows(); track r.s.id) {
+      <g class="lbl" [style.transform]="'translate(' + r.x + 'px,' + r.y + 'px)'">
+        <g class="lbl__scale">
+          @if (r.zone) {
+            @if (r.text) {
+              <text class="lbl__zone" x="6" y="15">{{ r.text }}</text>
+            }
+          } @else {
+            @if (r.glyph) {
+              <use class="lbl__glyph" [attr.href]="'#plan-g-' + r.glyph" [attr.x]="r.mark ? -14 : -8" [attr.y]="r.text ? -19 : -8" width="16" height="16" />
+              @if (r.mark) {
+                <text class="lbl__mark" x="4" [attr.y]="r.text ? -7 : 5">{{ r.mark }}</text>
+              }
+            }
+            @if (r.text) {
+              <text class="lbl__text" text-anchor="middle" [attr.y]="r.glyph ? 12 : 4">{{ r.text }}</text>
+            }
+          }
+        </g>
+      </g>
+    }
+    @for (a of annotations(); track a.id) {
+      @if (a.label && a.vertices[0]; as p) {
+        <g class="lbl" [style.transform]="'translate(' + p[0] + 'px,' + p[1] + 'px)'">
+          <g class="lbl__scale"><text class="lbl__note" text-anchor="middle">{{ a.label }}</text></g>
+        </g>
+      }
+    }
+    @for (v of verticals(); track v.id) {
+      @if (v.label && v.vertices[0]; as p) {
+        <g class="lbl" [style.transform]="'translate(' + (v.vertices[0][0] + 0.2) + 'px,' + (v.vertices[0][1] + 0.2) + 'px)'">
+          <g class="lbl__scale"><text class="lbl__note" x="3" y="12">{{ v.verticalLinkCode ?? v.label }}</text></g>
+        </g>
+      }
+    }
+  </g>
+
+  <g class="l-traces" pointer-events="none">
+    @if (selected(); as sel) {
+      <path class="trace trace--selected" [attr.d]="sel.path" />
+    }
+    @if (highlighted(); as hi) {
+      <path class="trace trace--highlight" [attr.d]="hi.path" />
+    }
+    @if (hovered(); as hv) {
+      <path class="trace trace--hover" [attr.d]="hv.path" />
+    }
+    @if (focusVisible() && active(); as act) {
+      <path class="trace trace--focus-outer" [attr.d]="act.path" />
+      <path class="trace trace--focus-inner" [attr.d]="act.path" />
+    }
+  </g>
+
+  @if (overlay(); as ov) {
+    <g class="l-overlay">
+      @for (shape of ov.shapes; track shape.id) {
+        <path [class]="'ov ov--' + shape.kind" [attr.d]="shape.path" pointer-events="none" />
+      }
+      @for (h of ov.handles; track h.id) {
+        <circle class="handle" [class]="'handle handle--' + h.kind" [attr.cx]="h.x" [attr.cy]="h.y" [attr.data-handle-id]="h.id" [style.cursor]="h.cursor" />
+      }
+      @if (ov.snapMark; as m) {
+        <circle class="snap-mark" [attr.cx]="m[0]" [attr.cy]="m[1]" pointer-events="none" />
+      }
+      @for (l of ov.labels; track $index) {
+        <g class="lbl" [style.transform]="'translate(' + l.x + 'px,' + l.y + 'px)'" pointer-events="none">
+          <g class="lbl__scale"><text [class]="'ov-label ov-label--' + l.kind" text-anchor="middle">{{ l.text }}</text></g>
+        </g>
+      }
+    </g>
+  }
+</svg>
+
+<ng-template #fill let-row="row">
+  <svg:path
+    [class]="row.cls"
+    [class.is-selected]="row.s.id === selectedId()"
+    [class.is-dim]="row.dim || row.hiddenByLegend"
+    [class.is-error]="overlay()?.errorIds?.has(row.s.id) === true"
+    [attr.d]="row.s.path"
+    [attr.data-space-id]="row.s.id"
+    [attr.role]="row.interactive ? 'button' : null"
+    [attr.aria-label]="row.aria"
+    [attr.aria-pressed]="row.interactive ? row.s.id === selectedId() : null"
+    [attr.aria-describedby]="row.s.id === cardTargetId() ? cardDomId() : null"
+    [attr.aria-hidden]="row.interactive ? null : 'true'"
+    [attr.tabindex]="row.interactive ? (row.s.id === activeId() ? 0 : -1) : null"
+    [attr.data-visual]="row.visual.key"
+  />
+  @if (row.patternUrl && !row.hiddenByLegend) {
+    <svg:path [class]="'sp-pat tone-' + row.visual.tone" [class.is-dim]="row.dim" [attr.d]="row.s.path" [attr.fill]="row.patternUrl" pointer-events="none" />
+  }
+  @if (row.showBorder && !row.hiddenByLegend) {
+    <svg:path [class]="'sp-iso tone-' + row.visual.tone" [class.is-dim]="row.dim" [attr.d]="row.s.path" pointer-events="none" />
+  }
+</ng-template>
+
+<div class="plan__hud" aria-label="Controles de zoom" role="group">
+  <button app-button variant="outline" size="sm" iconOnly type="button" aria-label="Alejar" data-testid="plan-zoom-out" (clicked)="zoomOut()">−</button>
+  <output class="hud-zoom" aria-live="off" data-testid="plan-zoom">{{ zoom() }} %</output>
+  <button app-button variant="outline" size="sm" iconOnly type="button" aria-label="Acercar" data-testid="plan-zoom-in" (clicked)="zoomIn()">+</button>
+  <button app-button variant="outline" size="sm" type="button" data-testid="plan-fit" (clicked)="fit()">Ajustar</button>
+</div>
+<div class="plan__north" aria-hidden="true" [style.transform]="'rotate(' + -northBearingDeg() + 'deg)'"><span>N</span></div>
+<div class="sr-only" aria-live="polite" role="status">{{ liveText() }}</div>

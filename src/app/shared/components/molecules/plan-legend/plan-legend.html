@@ -1,0 +1,40 @@
+<h3 class="legend__title">Leyenda · {{ title() }}</h3>
+@if (note()) {
+  <p class="legend__note">{{ note() }}</p>
+} @else {
+  <ul class="legend__list" [attr.aria-label]="'Leyenda: ' + title() + ', ' + total() + ' espacios'">
+    @for (item of items(); track item.visual.key) {
+      <li>
+        <button
+          type="button"
+          class="legend__item tone-{{ item.visual.tone }}"
+          [class.is-off]="hiddenKeys().has(item.visual.key)"
+          [attr.aria-pressed]="!hiddenKeys().has(item.visual.key)"
+          [attr.data-visual]="item.visual.key"
+          (click)="toggled.emit(item.visual.key)"
+        >
+          <svg class="legend__swatch" viewBox="0 0 28 20" aria-hidden="true" focusable="false">
+            <rect class="sw-fill" x="1" y="1" width="26" height="18" rx="3" [class.sw-strong]="item.visual.pattern === 'solid-strong' || item.visual.strong" [class.sw-dotted]="item.visual.border === 'dotted'" [class.sw-iso]="item.visual.border === 'dashed-thick'" />
+            @switch (item.visual.pattern) {
+              @case ('diagonal') { <path class="sw-line" d="M3 19L17 1M10 19L24 1M-2 14L9 1M17 19L27 7" /> }
+              @case ('cross') { <path class="sw-line" d="M3 19L17 1M10 19L24 1M-2 14L9 1M17 19L27 7M3 1L17 19M10 1L24 19M-2 6L9 19M17 1L27 13" /> }
+              @case ('dots') { <path class="sw-dots" d="M6 5h.01M14 5h.01M22 5h.01M10 10h.01M18 10h.01M6 15h.01M14 15h.01M22 15h.01" /> }
+              @case ('hstripes') { <path class="sw-line" d="M2 5H26M2 10H26M2 15H26" /> }
+              @case ('grid') { <path class="sw-line" d="M2 7H26M2 13H26M9 1V19M19 1V19" /> }
+            }
+          </svg>
+          <span class="legend__glyph">
+            @if (item.visual.glyph) {
+              <app-plan-glyph [name]="item.visual.glyph" />
+            }
+            @if (item.visual.mark) {
+              <span class="legend__mark">{{ item.visual.mark }}</span>
+            }
+          </span>
+          <span class="legend__label">{{ item.visual.label }}</span>
+          <span class="legend__count" data-testid="legend-count">{{ item.count }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+}

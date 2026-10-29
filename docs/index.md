@@ -102,6 +102,7 @@ acuse**. → [reglas de negocio](business/business-rules.md#reglas-de-privacidad
 | [Catálogo de componentes](components/catalog.md) | 48 en tres niveles |
 | [Reglas de composición](components/composition-rules.md) · [Entradas y salidas](components/props-and-events.md) | |
 | [Formularios](components/forms.md) · [Tablas](components/tables.md) · [Diálogos](components/modals-and-overlays.md) · [Avisos](components/notifications.md) | |
+| [Plano de planta](components/plano-de-planta.md) | Lienzo SVG, tarjeta de detalle y editor |
 | [Sistema de diseño](design-system/principles.md) | ALOVIDA v1.0 |
 | [Tokens](design-system/tokens.md) · [Colores](design-system/colors.md) · [Tipografía](design-system/typography.md) · [Temas](design-system/themes.md) | |
 
