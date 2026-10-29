@@ -68,15 +68,30 @@ function readRoleOverride(): PlanRole | null {
 
 /**
  * Escenarios de demostración (solo simulador): `sessionStorage['mock:plan-scenario']` =
- * `no-plans` (la sede no tiene lienzos) o `empty-plan` (el lienzo no tiene espacios dibujados).
+ * `no-plans` (la sede no tiene lienzos), `empty-plan` (el lienzo no tiene espacios dibujados) o
+ * `concurrent-edit` (la próxima escritura encuentra que otra persona quitó una cama del plano
+ * un instante antes: da el 412 del editor y se apaga sola).
  */
-function readScenario(): 'no-plans' | 'empty-plan' | null {
+function readScenario(): 'no-plans' | 'empty-plan' | 'concurrent-edit' | null {
   try {
     const raw = typeof sessionStorage === 'undefined' ? null : sessionStorage.getItem('mock:plan-scenario');
-    return raw === 'no-plans' || raw === 'empty-plan' ? raw : null;
+    return raw === 'no-plans' || raw === 'empty-plan' || raw === 'concurrent-edit' ? raw : null;
   } catch {
     return null;
   }
+}
+
+/** Simulador: «otra persona» quita del plano la última cama dibujada y sube la versión. */
+function simulateOtherEditor(model: FloorPlanModel, code: PlanCode): void {
+  try {
+    sessionStorage.removeItem('mock:plan-scenario');
+  } catch {
+    /* sin almacenamiento no hay escenario que apagar */
+  }
+  const beds = model.placementsOf(code).filter((rec) => SEED_SPACE_BY_KEY.get(rec.key)?.form === 'BED');
+  const last = beds[beds.length - 1];
+  if (last) model.placements.delete(last.key);
+  model.plans.get(code)!.layoutVersion += 1;
 }
 
 function bboxOfPlacement(rec: PlacementRec): BBox {
@@ -440,6 +455,7 @@ export function registerFloorPlan(router: MockRouter, model: FloorPlanModel = ne
     if (!actor.caps.canEditPlan) {
       return planError(403, PLAN_REASONS.ACTION_NOT_ALLOWED, 'Editar el plano es editar estructura: su rol no puede hacerlo.', { details: { requiredRoles: ['SA', 'AO', 'AS'] } });
     }
+    if (readScenario() === 'concurrent-edit') simulateOtherEditor(model, code);
     const ifMatch = request.headers.get('If-Match');
     const plan = model.plans.get(code)!;
     if (ifMatch === null || Number(ifMatch) !== plan.layoutVersion) {

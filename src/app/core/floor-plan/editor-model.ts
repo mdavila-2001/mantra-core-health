@@ -199,6 +199,22 @@ export function moveWithChildren(state: EditState, id: string, dx: number, dy: n
   return next;
 }
 
+/** El espacio y todo lo que dibujó dentro (hijos, nietos…). */
+export function descendantsOf(state: EditState, id: string): Set<string> {
+  const ids = new Set<string>([id]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const s of state.spaces.values()) {
+      if (!ids.has(s.id) && s.parentId !== null && ids.has(s.parentId) && !state.removed.has(s.id)) {
+        ids.add(s.id);
+        grew = true;
+      }
+    }
+  }
+  return ids;
+}
+
 export type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 export const MIN_SIDE_M = 0.05;

@@ -160,6 +160,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // F1c · el plano de planta: SVG pesado, se descarga solo al entrar.
   'administration/medical-organization/plan': () =>
     import('./features/floor-plan/viewer/floor-plan-page').then((m) => m.FloorPlanPage),
+  'administration/medical-organization/plan/edit': () =>
+    import('./features/floor-plan/editor/floor-plan-editor-page').then((m) => m.FloorPlanEditorPage),
   // TP-1: la organización mirándose a sí misma. Diferida por lo mismo que sus
   // hermanas de administración.
   'administration/my-organization': () =>

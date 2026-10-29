@@ -1,0 +1,179 @@
+<app-page-header
+  title="Editar plano de planta"
+  subtitle="Dibuje, mueva, redimensione y rote los espacios. Los cambios se guardan juntos y el servidor valida cada figura."
+  [breadcrumbs]="[{ label: 'Mis organizaciones', routerLink: '/administration/medical-organization' }, { label: 'Plano de planta', routerLink: '/administration/medical-organization/plan' }, { label: 'Editar' }]"
+/>
+
+<app-view-state-host [state]="screenState()" (retry)="retry()">
+  <div vsh-skeleton class="ed-skeleton" aria-hidden="true" data-testid="editor-skeleton"></div>
+
+  @if (narrow()) {
+    <app-alert tone="info" title="Para editar, use una pantalla más grande" data-testid="editor-narrow">
+      La edición del plano necesita una pantalla de 768 px o más. Aquí puede ver el plano, pero no modificarlo.
+      <div alert-actions>
+        <button app-button size="sm" variant="secondary" type="button" (clicked)="leave()">Volver al plano</button>
+      </div>
+    </app-alert>
+  } @else {
+    <div class="ed-toolbar" role="toolbar" aria-label="Herramientas del editor" data-testid="editor-toolbar">
+      <div class="ed-tools" role="group" aria-label="Herramientas de dibujo">
+        @for (t of tools; track t.id) {
+          <button
+            app-button
+            size="sm"
+            [variant]="ed.tool() === t.id ? 'primary' : 'outline'"
+            type="button"
+            [attr.aria-pressed]="ed.tool() === t.id"
+            [attr.aria-keyshortcuts]="t.key"
+            [attr.title]="t.hint + ' (' + t.key + ')'"
+            [attr.data-testid]="'editor-tool-' + t.id"
+            (clicked)="setTool(t.id)"
+          >{{ t.label }} <kbd class="ed-key">{{ t.key }}</kbd></button>
+        }
+      </div>
+      <div class="ed-tools" role="group" aria-label="Historial">
+        <button app-button size="sm" variant="outline" type="button" [disabled]="!ed.canUndo()" aria-keyshortcuts="Control+Z" data-testid="editor-undo" (clicked)="ed.undo()">Deshacer</button>
+        <button app-button size="sm" variant="outline" type="button" [disabled]="!ed.canRedo()" aria-keyshortcuts="Control+Shift+Z" data-testid="editor-redo" (clicked)="ed.redo()">Rehacer</button>
+      </div>
+      <app-switch label="Imán a la grilla" [checked]="ed.snapOn()" (checkedChange)="setSnap($event)" />
+      <span class="ed-dirty" [class.is-dirty]="ed.dirty()" role="status" data-testid="editor-dirty">{{ changedText() }}</span>
+      <div class="ed-tools ed-tools--end">
+        <button app-button size="sm" variant="ghost" type="button" [disabled]="!ed.dirty()" data-testid="editor-discard" (clicked)="discard()">Descartar</button>
+        <button app-button size="sm" variant="primary" type="button" [isLoading]="ed.saving()" [disabled]="!ed.dirty()" aria-keyshortcuts="Control+S" data-testid="editor-save" (clicked)="ed.save()">Guardar <kbd class="ed-key">Ctrl+S</kbd></button>
+        <button app-button size="sm" variant="outline" type="button" data-testid="editor-leave" (clicked)="leave()">Volver al plano</button>
+      </div>
+    </div>
+
+    @if (ed.pendingDraft(); as draft) {
+      <app-alert tone="info" title="Hay un borrador sin guardar" data-testid="editor-draft">
+        Quedó guardado en este navegador el {{ draft.savedAt | date: 'dd/MM/yyyy HH:mm' }} con {{ draft.spaces.length + draft.removed.length }} cambios.
+        <div alert-actions>
+          <button app-button size="sm" variant="secondary" type="button" data-testid="editor-draft-recover" (clicked)="ed.recoverDraft()">Recuperar</button>
+          <button app-button size="sm" variant="ghost" type="button" data-testid="editor-draft-discard" (clicked)="ed.discardDraft()">Descartar</button>
+        </div>
+      </app-alert>
+    }
+
+    @switch (ed.failure()?.kind) {
+      @case ('invalid') {
+        <app-alert tone="error" title="El servidor no aceptó el dibujo" data-testid="editor-error-invalid">
+          Nada se guardó. Corrija las figuras señaladas (cada una dice qué hacer) y vuelva a guardar.
+          @if (ed.failure(); as f) { @if (f.kind === 'invalid' && f.requestId) { <span> Código de soporte: <code data-testid="editor-request-id">{{ f.requestId }}</code></span> } }
+        </app-alert>
+      }
+      @case ('conflict') {
+        <app-alert tone="warning" title="Otra persona modificó este plano" data-testid="editor-conflict">
+          @if (ed.failure(); as f) {
+            @if (f.kind === 'conflict') {
+              Mientras usted editaba, el plano pasó a la versión {{ f.currentVersion ?? 'más nueva' }}.@if (f.summary) { <span> {{ f.summary }}</span> }
+              @if (f.requestId) { <span> Código de soporte: <code data-testid="editor-request-id">{{ f.requestId }}</code></span> }
+            }
+          }
+          <div alert-actions>
+            <button app-button size="sm" variant="outline" type="button" data-testid="editor-view-changes" (clicked)="ed.showRemoteChanges()">Ver cambios</button>
+            <button app-button size="sm" variant="secondary" type="button" [isLoading]="ed.saving()" data-testid="editor-reapply" (clicked)="ed.reloadAndReapply()">Recargar y reaplicar mis cambios</button>
+          </div>
+        </app-alert>
+      }
+      @case ('forbidden') {
+        <app-alert tone="error" title="Su rol no puede modificar este plano" data-testid="editor-error-forbidden">
+          El servidor rechazó el guardado. Pida a quien administra la sede que le dé permiso de edición.
+        </app-alert>
+      }
+      @case ('offline') {
+        <app-alert tone="warning" title="Sin conexión" data-testid="editor-error-offline">
+          No se pudo guardar. Sus cambios siguen en este navegador; reintente cuando vuelva la conexión.
+          <div alert-actions><button app-button size="sm" variant="secondary" type="button" (clicked)="ed.save()">Reintentar</button></div>
+        </app-alert>
+      }
+      @case ('error') {
+        <app-alert tone="error" title="No pudimos guardar el plano" data-testid="editor-error-unexpected">
+          @if (ed.failure(); as f) { @if (f.kind === 'error') { {{ f.message }} @if (f.requestId) { <span> Código de soporte: <code data-testid="editor-request-id">{{ f.requestId }}</code></span> } } }
+          <div alert-actions><button app-button size="sm" variant="secondary" type="button" (clicked)="ed.save()">Reintentar</button></div>
+        </app-alert>
+      }
+    }
+
+    @if (ed.remoteChanges(); as changes) {
+      <section class="ed-changes" aria-label="Cambios de la otra persona" data-testid="editor-remote-changes">
+        <h2>Lo que cambió en el servidor</h2>
+        @if (changes.length === 0) { <p>No hay diferencias de dibujo; solo cambió la versión.</p> }
+        <ul>
+          @for (c of changes; track c.id) {
+            <li>
+              <strong>{{ c.code }}</strong> {{ c.name }}: {{ c.what }}.
+              @if (c.collides) { <span class="ed-collides">También lo cambió usted: no se reaplica solo.</span> }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (ed.reapplied(); as r) {
+      <app-alert tone="info" title="Se reaplicaron sus cambios" data-testid="editor-reapplied">
+        {{ r.applied }} {{ r.applied === 1 ? 'cambio se reaplicó' : 'cambios se reaplicaron' }} sobre la versión nueva.
+        @if (r.conflicts.length > 0) { {{ r.conflicts.length }} chocaban con los de la otra persona y no se reaplicaron: {{ nameOfConflicts(r.conflicts) }}. Revíselos y vuelva a guardar. }
+        @else { Revise el resultado y guarde. }
+      </app-alert>
+    }
+
+    @if (ed.lastSave(); as saved) {
+      @if (!ed.dirty()) {
+        <app-alert tone="success" title="Plano guardado" data-testid="editor-saved">
+          Versión {{ saved.version }} · {{ saved.counts }} · Código de soporte: <code data-testid="editor-request-id">{{ saved.requestId }}</code>
+          @for (w of saved.warnings; track w.spaceId) {
+            <div class="ed-warning">Aviso: el área calculada de {{ nameOf(w.spaceId) }} ({{ w.calculatedM2 }} m²) difiere {{ w.deviationPct }} % de la declarada ({{ w.declaredM2 }} m²).</div>
+          }
+        </app-alert>
+      }
+    }
+
+    @if (ed.hint(); as hint) {
+      <p class="ed-hint" role="status" data-testid="editor-hint">{{ hint }}</p>
+    }
+  }
+
+  <div class="ed-body" [class.is-read-only]="narrow()">
+    @if (!narrow()) {
+      <aside class="ed-left" aria-label="Espacios sin ubicar">
+        <app-plan-editor-palette [entries]="ed.palette()" [armedId]="ed.armedId()" (arm)="ed.arm($event)" (placeCenter)="placeCenter()" />
+      </aside>
+    }
+
+    <section class="ed-stage" aria-label="Plano en edición" data-testid="editor-stage">
+      @if (plan.meta(); as meta) {
+        <app-floor-plan-canvas
+          [planName]="meta.name"
+          [widthM]="meta.widthM"
+          [heightM]="meta.heightM"
+          [gridSizeM]="meta.gridSizeM"
+          [northBearingDeg]="meta.northBearingDeg"
+          [spaces]="ed.views()"
+          [elements]="plan.elements()"
+          [colorBy]="'none'"
+          [layers]="layers"
+          [selectedId]="ed.selectedId()"
+          [reveal]="reveal()"
+          [interactionMode]="narrow() ? 'view' : 'edit'"
+          [handTool]="ed.tool() === 'hand'"
+          [overlay]="ed.overlay()"
+          (worldPointer)="ed.onWorld($event)"
+          (viewChange)="onView($event)"
+          (open)="ed.select($event)"
+          (pick)="ed.select($event)"
+        />
+      }
+    </section>
+
+    @if (!narrow()) {
+      <aside class="ed-right" aria-label="Figura elegida y problemas">
+        <div class="ed-pick">
+          <span class="ed-pick__label">Elegir figura por nombre</span>
+          <app-select ariaLabel="Elegir figura por nombre" [options]="figureOptions()" [value]="ed.selectedId() ?? ''" (valueChange)="ed.select($event || null)" />
+        </div>
+        <app-plan-editor-inspector [space]="ed.selected()" (geometryChange)="onGeometry($event)" (lockToggled)="ed.toggleLock(ed.selectedId()!)" (remove)="ed.removeSelected()" />
+        <app-plan-editor-issues [issues]="ed.issues()" [nameOf]="nameOf" (pickIssue)="focusIssue($event)" />
+      </aside>
+    }
+  </div>
+</app-view-state-host>

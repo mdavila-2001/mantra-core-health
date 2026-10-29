@@ -1131,6 +1131,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M14 practice',
   },
   {
+    // F1c · el editor del plano. Se llega desde «Editar plano» del visor, solo con
+    // `viewer.canEditPlan`; la API decide y rechaza con 403 lo que no corresponda.
+    path: 'administration/medical-organization/plan/edit',
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Editar plano de planta',
+    group: 'Administración',
+    icon: 'hospital',
+    roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN'],
+    availability: 'disponible',
+    summary: 'Dibuje y acomode los espacios del plano: mover, redimensionar, rotar y guardar sin pisar a otra persona.',
+    module: 'M14 practice',
+  },
+  {
     // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
     // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al
     // proxy. La API decide quién puede (membresía OWNER/ADMIN de esa organización
