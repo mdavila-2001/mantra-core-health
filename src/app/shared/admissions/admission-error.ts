@@ -13,6 +13,8 @@ import { etiquetaDeRol } from '@core/auth/role-labels';
 
 export type AdmissionErrorKind =
   | 'stale'
+  | 'evidence-changed'
+  | 'self-access'
   | 'role'
   | 'four-eyes'
   | 'not-assigned'
@@ -65,6 +67,22 @@ export function readAdmissionError(error: unknown, fallbackRole: string | null =
 
   if (error.status === 0) {
     return { ...base, kind: 'offline', message: 'No hay conexión con el servidor. Revise su red e intente de nuevo.', requiredRole: null };
+  }
+  if (reason === 'ADMISSION_EVIDENCE_CHANGED') {
+    return {
+      ...base,
+      kind: 'evidence-changed',
+      requiredRole: null,
+      message: 'El profesional cambió este documento; revíselo de nuevo.',
+    };
+  }
+  if (reason === 'ADMISSION_SELF_ACCESS') {
+    return {
+      ...base,
+      kind: 'self-access',
+      requiredRole: null,
+      message: 'No puede revisar su propia solicitud. Pídale a otra persona del equipo que la revise.',
+    };
   }
   if (error.status === 409 || reason === 'ADMISSION_STALE') {
     return {
