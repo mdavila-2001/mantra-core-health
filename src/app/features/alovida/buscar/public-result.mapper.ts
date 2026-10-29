@@ -16,6 +16,7 @@
     sin reseñas pondrá «0,0 ★» en una ficha de salud.
     ========================================================================== */
 
+import { verificationOf } from '@core/verification/verification-status';
 import type { SearchResultItem } from '@shared/components/molecules';
 import { initialsOf } from '@shared/text/initials';
 import { directoryPhoto, diagnosisCenterTheme } from '@shared/utils/directory-photo';
@@ -218,6 +219,9 @@ export function aTarjeta(
     ...(opciones.mostrarTipo === false
       ? {}
       : { kind: { label: ROTULO_POR_TIPO[resultado.kind], tone: 'info' as const } }),
+    // El check azul sólo es de los profesionales: «Profesional verificado» no
+    // se le dice a una clínica ni a una farmacia.
+    ...(resultado.kind === 'PRACTITIONER' ? { verification: verificationOf(resultado) } : {}),
     meta,
     seals: [
       resultado.verified

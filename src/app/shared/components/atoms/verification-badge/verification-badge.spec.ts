@@ -16,19 +16,29 @@ describe('VerificationBadge', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  /** El elemento que lleva el rol: el pictograma ES la información. */
-  function badge(): HTMLElement | null {
+  /** El pictograma con nombre: el elemento que lleva el rol. */
+  function face(): HTMLElement | null {
     return host().querySelector<HTMLElement>('[role="img"]');
   }
 
-  function globe(): HTMLElement | null {
-    return document.body.querySelector('app-tooltip-panel');
+  /** El control que se enfoca: un botón (con popover) o, sin foco, un span. */
+  function trigger(): HTMLElement | null {
+    return host().querySelector<HTMLElement>('.vb');
+  }
+
+  function popover(): HTMLElement | null {
+    return host().querySelector<HTMLElement>('.vb-pop');
   }
 
   async function setInputs(inputs: Record<string, unknown>): Promise<void> {
     for (const [name, value] of Object.entries(inputs)) {
       fixture.componentRef.setInput(name, value);
     }
+    await fixture.whenStable();
+  }
+
+  async function focusTrigger(): Promise<void> {
+    trigger()?.dispatchEvent(new FocusEvent('focus'));
     await fixture.whenStable();
   }
 
@@ -43,7 +53,6 @@ describe('VerificationBadge', () => {
 
   afterEach(() => {
     fixture.destroy();
-    document.body.querySelectorAll('app-tooltip-panel').forEach((node) => node.remove());
   });
 
   describe('estados', () => {
@@ -59,45 +68,63 @@ describe('VerificationBadge', () => {
       }
     });
 
-    it('IN_REVIEW pinta un reloj, no un check, y dice «Verificación en proceso»', async () => {
+    it('IN_REVIEW pinta un reloj, no un sello, y dice «Verificación en proceso»', async () => {
       await setInputs({ status: 'IN_REVIEW' });
       expect(host().querySelector('.vb__disc')).not.toBeNull();
       expect(host().querySelector('.vb__glyph')).not.toBeNull();
-      expect(badge()?.getAttribute('aria-label')).toBe('Verificación en proceso');
-      expect(badge()?.classList.contains('vb--in-review')).toBe(true);
+      expect(face()?.getAttribute('aria-label')).toBe('Verificación en proceso');
+      expect(trigger()?.classList.contains('vb--in-review')).toBe(true);
     });
 
-    it('SUSPENDED y EXPIRED llevan su texto y ninguna marca de verificado', async () => {
-      await setInputs({ status: 'SUSPENDED', variant: 'label' });
-      expect(host().textContent).toContain('Verificación suspendida');
+    it('EXPIRED lleva su pictograma gris y su texto, sin ninguna marca de verificado', async () => {
       await setInputs({ status: 'EXPIRED', variant: 'label' });
       expect(host().textContent).toContain('Verificación vencida');
+      expect(host().querySelector('.vb__disc')).not.toBeNull();
       expect(host().querySelector('.vb__check')).toBeNull();
     });
 
-    it('UNVERIFIED en variante icono no pinta nada y oculta el host', async () => {
-      await setInputs({ status: 'UNVERIFIED' });
-      expect(badge()).toBeNull();
-      expect(host().classList.contains('vb-host--hidden')).toBe(true);
-    });
+    it('SUSPENDED y UNVERIFIED nunca dibujan un glifo: en icono no hay nada, en label sólo texto', async () => {
+      for (const status of ['SUSPENDED', 'UNVERIFIED']) {
+        await setInputs({ status, variant: 'icon' });
+        expect(face(), status).toBeNull();
+        expect(host().classList.contains('vb-host--hidden'), status).toBe(true);
 
-    it('UNVERIFIED en variante label dice «No verificado» sin check', async () => {
+        await setInputs({ status, variant: 'label' });
+        expect(host().querySelector('svg'), status).toBeNull();
+        expect(host().classList.contains('vb-host--hidden'), status).toBe(false);
+      }
+      await setInputs({ status: 'SUSPENDED', variant: 'label' });
+      expect(host().textContent).toContain('Verificación suspendida');
       await setInputs({ status: 'UNVERIFIED', variant: 'label' });
       expect(host().textContent).toContain('No verificado');
-      expect(host().querySelector('.vb__check')).toBeNull();
-      expect(host().classList.contains('vb-host--hidden')).toBe(false);
     });
 
     it('un estado desconocido, nulo o indefinido no pinta check ni icono', async () => {
       for (const status of ['RARO', '', null, undefined, 7]) {
         await setInputs({ status });
-        expect(badge(), String(status)).toBeNull();
+        expect(face(), String(status)).toBeNull();
         expect(host().querySelector('.vb__check'), String(status)).toBeNull();
       }
     });
 
     it('por omisión no pinta nada: nadie queda verificado por descuido', () => {
-      expect(badge()).toBeNull();
+      expect(face()).toBeNull();
+    });
+
+    it('un VERIFIED con la vigencia vencida se pinta como vencido, no como verificado', async () => {
+      await setInputs({ status: 'VERIFIED', validUntil: '2020-01-31', variant: 'label' });
+      expect(host().querySelector('.vb__check')).toBeNull();
+      expect(host().textContent).toContain('Verificación vencida');
+      expect(face()?.getAttribute('aria-label')).toBe('Verificación vencida');
+
+      await focusTrigger();
+      expect(popover()?.textContent).toMatch(/vencida/);
+      expect(popover()?.textContent).toMatch(/Venció el 31 de enero de 2020/);
+    });
+
+    it('un VERIFIED vigente sigue siendo VERIFIED', async () => {
+      await setInputs({ status: 'VERIFIED', validUntil: '2099-01-31' });
+      expect(host().querySelector('.vb__check')).not.toBeNull();
     });
   });
 
@@ -106,7 +133,7 @@ describe('VerificationBadge', () => {
       for (const size of VERIFICATION_BADGE_SIZES) {
         for (const variant of VERIFICATION_BADGE_VARIANTS) {
           await setInputs({ status: 'VERIFIED', size, variant });
-          const classes = badge()?.classList;
+          const classes = trigger()?.classList;
           expect(classes?.contains(`vb--${size}`), `${size}/${variant}`).toBe(true);
           expect(classes?.contains(`vb--${variant}`), `${size}/${variant}`).toBe(true);
         }
@@ -122,44 +149,44 @@ describe('VerificationBadge', () => {
 
     it('la animación es opt-in', async () => {
       await setInputs({ status: 'VERIFIED' });
-      expect(badge()?.classList.contains('vb--animated')).toBe(false);
+      expect(trigger()?.classList.contains('vb--animated')).toBe(false);
       await setInputs({ animated: true });
-      expect(badge()?.classList.contains('vb--animated')).toBe(true);
+      expect(trigger()?.classList.contains('vb--animated')).toBe(true);
     });
   });
 
   describe('accesibilidad', () => {
     it('role="img" con el nombre completo de cada estado', async () => {
-      for (const status of ['VERIFIED', 'IN_REVIEW', 'SUSPENDED', 'EXPIRED'] as const) {
+      for (const status of ['VERIFIED', 'IN_REVIEW', 'EXPIRED'] as const) {
         await setInputs({ status });
-        expect(badge()?.getAttribute('aria-label')).toBe(VERIFICATION_COPY[status]!.name);
+        expect(face()?.getAttribute('aria-label')).toBe(VERIFICATION_COPY[status]!.name);
       }
       await setInputs({ status: 'VERIFIED' });
-      expect(badge()?.getAttribute('aria-label')).toBe('Profesional verificado');
+      expect(face()?.getAttribute('aria-label')).toBe('Profesional verificado');
     });
 
     it('el sujeto entra en el nombre accesible', async () => {
       await setInputs({ status: 'VERIFIED', subject: 'Dra. Ana Rojas' });
-      expect(badge()?.getAttribute('aria-label')).toBe('Dra. Ana Rojas, profesional verificado');
+      expect(face()?.getAttribute('aria-label')).toBe('Dra. Ana Rojas, profesional verificado');
       await setInputs({ status: 'IN_REVIEW' });
-      expect(badge()?.getAttribute('aria-label')).toBe('Dra. Ana Rojas, verificación en proceso');
+      expect(face()?.getAttribute('aria-label')).toBe('Dra. Ana Rojas, verificación en proceso');
     });
 
     it('un sujeto vacío o de espacios se ignora', async () => {
       await setInputs({ status: 'VERIFIED', subject: '   ' });
-      expect(badge()?.getAttribute('aria-label')).toBe('Profesional verificado');
+      expect(face()?.getAttribute('aria-label')).toBe('Profesional verificado');
     });
 
     it('un nombre de 200 caracteres cabe entero; uno de 5000 se acota', async () => {
       const largo = 'A'.repeat(200);
       await setInputs({ status: 'VERIFIED', subject: largo });
-      expect(badge()?.getAttribute('aria-label')).toBe(`${largo}, profesional verificado`);
+      expect(face()?.getAttribute('aria-label')).toBe(`${largo}, profesional verificado`);
 
       await setInputs({ subject: 'B'.repeat(5000) });
-      const label = badge()?.getAttribute('aria-label') ?? '';
+      const label = face()?.getAttribute('aria-label') ?? '';
       expect(label.length).toBeLessThan(260);
       expect(label.startsWith('B'.repeat(199) + '…')).toBe(true);
-      expect(badge()).not.toBeNull();
+      expect(face()).not.toBeNull();
     });
 
     it('el pictograma es decorativo para el lector: el nombre sale del aria-label', async () => {
@@ -169,77 +196,138 @@ describe('VerificationBadge', () => {
       expect(svg?.getAttribute('focusable')).toBe('false');
     });
 
-    it('es enfocable con teclado por omisión y deja de serlo con interactive=false', async () => {
+    it('por omisión es un botón (foco de teclado) y con interactive=false un span sin tabstop', async () => {
       await setInputs({ status: 'VERIFIED' });
-      expect(badge()?.tabIndex).toBe(0);
+      expect(trigger()?.tagName).toBe('BUTTON');
+      expect(trigger()?.getAttribute('type')).toBe('button');
       await setInputs({ interactive: false });
-      expect(badge()?.hasAttribute('tabindex')).toBe(false);
+      expect(trigger()?.tagName).toBe('SPAN');
+      expect(trigger()?.hasAttribute('tabindex')).toBe(false);
     });
 
     it('sin foco, el significado queda en title para el puntero', async () => {
       await setInputs({ status: 'VERIFIED', interactive: false });
-      expect(badge()?.getAttribute('title')).toContain(
+      expect(trigger()?.getAttribute('title')).toContain(
         'Identidad y matrícula profesional comprobadas por AloVida',
       );
       await setInputs({ interactive: true });
-      expect(badge()?.hasAttribute('title')).toBe(false);
+      expect(trigger()?.hasAttribute('title')).toBe(false);
     });
 
-    it('no tiene violaciones serias de axe en ningún estado', async () => {
+    it('no tiene violaciones serias de axe en ningún estado, abierto ni cerrado', async () => {
       for (const status of ['VERIFIED', 'IN_REVIEW', 'SUSPENDED', 'EXPIRED', 'UNVERIFIED']) {
         for (const variant of ['icon', 'label']) {
           await setInputs({ status, variant, subject: 'Dra. Ana Rojas' });
           await expectNoSeriousViolations(host());
+          await focusTrigger();
+          await expectNoSeriousViolations(host());
+          trigger()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         }
       }
     });
   });
 
-  describe('tooltip', () => {
-    async function focusBadge(): Promise<void> {
-      badge()?.dispatchEvent(new FocusEvent('focus'));
-      await fixture.whenStable();
-    }
-
-    it('abre con el foco, dice qué significa y se cierra con Escape', async () => {
+  describe('popover', () => {
+    it('abre con el foco, dice qué significa y qué NO significa, y lo enlaza con aria-describedby', async () => {
       await setInputs({ status: 'VERIFIED' });
-      await focusBadge();
-      expect(globe()?.getAttribute('role')).toBe('tooltip');
-      expect(globe()?.textContent).toContain('Identidad y matrícula profesional comprobadas por AloVida.');
-      expect(badge()?.getAttribute('aria-describedby')).toBe(globe()?.id);
+      await focusTrigger();
+      expect(popover()?.getAttribute('role')).toBe('tooltip');
+      expect(popover()?.textContent).toContain('Identidad y matrícula profesional comprobadas por AloVida');
+      expect(popover()?.textContent).toContain('No es una recomendación clínica');
+      expect(trigger()?.getAttribute('aria-describedby')).toBe(popover()?.id);
+      expect(trigger()?.getAttribute('aria-expanded')).toBe('true');
+    });
 
-      badge()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-      expect(globe()).toBeNull();
+    it('se descarta con Esc desde el botón (WCAG 1.4.13)', async () => {
+      await setInputs({ status: 'VERIFIED' });
+      await focusTrigger();
+      trigger()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await fixture.whenStable();
+      expect(popover()).toBeNull();
+      expect(trigger()?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('se descarta con Esc también desde el propio popover', async () => {
+      await setInputs({ status: 'VERIFIED' });
+      await focusTrigger();
+      popover()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await fixture.whenStable();
+      expect(popover()).toBeNull();
+    });
+
+    it('un clic lo fija: no se cierra al perder el foco ni al irse el puntero; otro clic lo cierra', async () => {
+      await setInputs({ status: 'VERIFIED' });
+      trigger()?.click();
+      await fixture.whenStable();
+      expect(popover()).not.toBeNull();
+
+      trigger()?.dispatchEvent(new FocusEvent('blur'));
+      trigger()?.dispatchEvent(new Event('pointerleave'));
+      await new Promise((resolve) => setTimeout(resolve, 260));
+      await fixture.whenStable();
+      expect(popover()).not.toBeNull();
+
+      trigger()?.click();
+      await fixture.whenStable();
+      expect(popover()).toBeNull();
+    });
+
+    it('es hoverable: entrar en el popover cancela el cierre; salir lo cierra', async () => {
+      await setInputs({ status: 'VERIFIED' });
+      await focusTrigger();
+      trigger()?.dispatchEvent(new FocusEvent('blur'));
+      trigger()?.dispatchEvent(new Event('pointerleave'));
+      popover()?.dispatchEvent(new Event('pointerenter'));
+      await new Promise((resolve) => setTimeout(resolve, 260));
+      await fixture.whenStable();
+      expect(popover()).not.toBeNull();
+
+      popover()?.dispatchEvent(new Event('pointerleave'));
+      await new Promise((resolve) => setTimeout(resolve, 260));
+      await fixture.whenStable();
+      expect(popover()).toBeNull();
+    });
+
+    it('un clic fuera lo cierra', async () => {
+      await setInputs({ status: 'VERIFIED' });
+      trigger()?.click();
+      await fixture.whenStable();
+      document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+      await fixture.whenStable();
+      expect(popover()).toBeNull();
     });
 
     it('muestra fecha de verificación y vigencia sólo si vienen y son reales', async () => {
-      await setInputs({ status: 'VERIFIED', verifiedAt: '2026-03-12', validUntil: '2027-03-12' });
-      await focusBadge();
-      expect(globe()?.textContent).toMatch(/Verificación realizada el 12 de marzo de 2026/);
-      expect(globe()?.textContent).toMatch(/Vigente hasta el 12 de marzo de 2027/);
+      await setInputs({ status: 'VERIFIED', verifiedAt: '2026-03-12', validUntil: '2099-03-12' });
+      await focusTrigger();
+      expect(popover()?.textContent).toMatch(/Verificación realizada el 12 de marzo de 2026/);
+      expect(popover()?.textContent).toMatch(/Vigente hasta el 12 de marzo de 2099/);
     });
 
     it('no inventa fechas: nulas o inválidas no se muestran', async () => {
       await setInputs({ status: 'VERIFIED', verifiedAt: null, validUntil: 'nunca' });
-      await focusBadge();
-      expect(globe()?.textContent).not.toMatch(/Verificación realizada|Vigente hasta/);
+      await focusTrigger();
+      expect(popover()?.textContent).not.toMatch(/Verificación realizada|Vigente hasta/);
     });
 
-    it('EXPIRED dice cuándo venció; IN_REVIEW no muestra fechas', async () => {
-      await setInputs({ status: 'EXPIRED', validUntil: '2026-01-05' });
-      await focusBadge();
-      expect(globe()?.textContent).toMatch(/Venció el 5 de enero de 2026/);
-
-      badge()?.dispatchEvent(new FocusEvent('blur'));
-      await setInputs({ status: 'IN_REVIEW', verifiedAt: '2026-03-12', validUntil: '2027-03-12' });
-      await focusBadge();
-      expect(globe()?.textContent).not.toMatch(/2026|2027/);
+    it('IN_REVIEW no muestra fechas', async () => {
+      await setInputs({ status: 'IN_REVIEW', verifiedAt: '2026-03-12', validUntil: '2099-03-12' });
+      await focusTrigger();
+      expect(popover()?.textContent).not.toMatch(/2026|2099/);
     });
 
-    it('interactive=false no abre ningún globo', async () => {
+    it('interactive=false no abre ningún popover', async () => {
       await setInputs({ status: 'VERIFIED', interactive: false });
-      await focusBadge();
-      expect(globe()).toBeNull();
+      trigger()?.dispatchEvent(new FocusEvent('focus'));
+      await fixture.whenStable();
+      expect(popover()).toBeNull();
+    });
+
+    it('al destruir el componente no deja temporizadores ni oyentes de documento', async () => {
+      await setInputs({ status: 'VERIFIED' });
+      await focusTrigger();
+      fixture.destroy();
+      expect(() => document.body.dispatchEvent(new Event('pointerdown'))).not.toThrow();
     });
   });
 });

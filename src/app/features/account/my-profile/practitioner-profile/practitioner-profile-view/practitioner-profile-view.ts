@@ -23,6 +23,7 @@ import {
 } from '../../doctor-profile-tabs';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
+import { VerificationBadge } from '../../../../../shared/components/atoms/verification-badge/verification-badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../../shared/components/atoms/button/button-link';
 import { ProfileAffiliationLinks } from '../../affiliation-invitations/profile-affiliation-links/profile-affiliation-links';
@@ -99,6 +100,7 @@ interface FilaCredencial {
     FileDropTarget,
     Avatar,
     Badge,
+    VerificationBadge,
     AppButton,
     AppButtonLink,
     Card,

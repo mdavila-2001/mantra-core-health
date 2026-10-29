@@ -1,3 +1,4 @@
+import { verificationOf } from '../../../core/verification/verification-status';
 import type { PractitionerListItem } from '../../../core/data-access/profiles/profiles.types';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
@@ -137,6 +138,9 @@ export function toResultado(
     ...(fila.ratingAverage != null && (fila.ratingCount ?? 0) > 0
       ? { rating: { average: fila.ratingAverage, count: fila.ratingCount! } }
       : {}),
+    // El check azul junto al nombre: lo decide la API (`verification`, o `verified`
+    // en una API que todavía no lo envía). Acá sólo se traduce.
+    verification: verificationOf(fila),
     meta,
     seals: sellos,
   };

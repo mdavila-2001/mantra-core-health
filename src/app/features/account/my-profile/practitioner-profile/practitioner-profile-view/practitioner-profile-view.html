@@ -840,7 +840,23 @@
         }
 
         <div class="profesional__identidad-texto">
-          <h2 class="profesional__nombre">{{ perfil().nombre }}</h2>
+          <h2 class="profesional__nombre">
+            {{ perfil().nombre }}
+            <!-- El check azul (o el reloj de «en verificación») junto al nombre:
+                 lo decide la API, acá sólo se pinta. El sello de habilitación de
+                 abajo sigue dando el detalle del trámite. -->
+            @if (perfil().verificacion?.insignia; as insignia) {
+              <app-verification-badge
+                class="profesional__insignia"
+                size="lg"
+                [animated]="true"
+                [status]="insignia.status"
+                [verifiedAt]="insignia.verifiedAt"
+                [validUntil]="insignia.validUntil"
+                [subject]="perfil().nombre"
+              />
+            }
+          </h2>
 
           @if (perfil().titulo) {
             <p class="profesional__titulo">{{ perfil().titulo }}</p>

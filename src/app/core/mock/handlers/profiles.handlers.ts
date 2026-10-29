@@ -26,6 +26,7 @@ import {
   type SimulatedAffiliation,
   type PacienteSimulado,
   type ProfesionalSimulado,
+  verificationBodyOf,
 } from '../fixtures/people';
 import {
   conflict,
@@ -601,6 +602,7 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     },
     practitionerCategoryConceptId: DOCTOR_CATEGORY,
     verificationStatusConceptId: p.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-PENDING']!,
+    verification: verificationBodyOf(p),
     practiceStatusConceptId: STATUS['ST-ACTIVE']!,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
@@ -640,6 +642,7 @@ function itemDeGuia(p: ProfesionalSimulado) {
     photoFileId: p.photoFileId,
     verificationStatusConceptId: p.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-PENDING']!,
     verified: p.verified,
+    verification: verificationBodyOf(p),
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
     specialties: p.especialidades.map((specialtyConceptId, i) => ({

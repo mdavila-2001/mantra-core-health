@@ -40,6 +40,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { insuranceBillingFrequencyLabel } from '../../../../core/profession/insurance-billing-frequency';
 import { HelpBlockDismissalStore } from '../../../../core/tutorials/help-block-dismissal.store';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
+import { verificationWithSealFallback } from '../../../../core/verification/verification-status';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -667,6 +668,10 @@ export class PractitionerProfile {
       verificacion: {
         label: label(etiquetas, perfil.verificationStatusConceptId),
         variant: sello(etiquetas, perfil.verificationStatusConceptId),
+        insignia: verificationWithSealFallback(
+          perfil,
+          sello(etiquetas, perfil.verificationStatusConceptId),
+        ),
       },
       estadoDePractica: label(etiquetas, perfil.practiceStatusConceptId),
       aceptaPacientesNuevos: perfil.acceptsNewPatients,

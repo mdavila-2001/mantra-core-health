@@ -31,6 +31,8 @@
     «página 3 de 47» está pidiendo algo que este contrato no da.
     ========================================================================== */
 
+import type { VerificationDto } from '../../verification/verification-status';
+
 // ─── Perfil público ──────────────────────────────────────────────────────────
 
 /** Un sello de verificación sobre un perfil público. */
@@ -74,6 +76,11 @@ export type PublicProfileKind =
 export interface PublicProfileDetail {
   readonly id: string;
   readonly tenantId: string;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: la ficha deriva entonces de sus sellos (`badges`).
+   */
+  readonly verification?: VerificationDto | null;
   /** A qué apunta el perfil: profesional, organización, farmacia… */
   readonly targetTypeConceptId: string;
   /**
@@ -749,6 +756,11 @@ export interface PublicDirectoryResult {
   readonly headline: string | null;
   readonly city: string | null;
   readonly verified: boolean;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
 }
 
 /** Persona autenticada que puede elegirse para iniciar un chat. */
@@ -757,6 +769,11 @@ export interface ChatContact {
   readonly displayName: string;
   readonly headline: string | null;
   readonly avatarUrl: string | null;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
 }
 
 /** El otro lado de una conversación. */
@@ -765,6 +782,11 @@ export interface ConversationPeer {
   readonly displayName?: string;
   /** Su avatar público, o `null`/ausente si no subió ninguno. */
   readonly avatarUrl?: string | null;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
 }
 
 /** Una página de conversaciones. */

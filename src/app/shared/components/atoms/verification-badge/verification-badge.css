@@ -30,12 +30,27 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: var(--sp-1);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
     border-radius: var(--r-full);
     color: var(--_fg);
+    font: inherit;
     font-family: var(--font-body);
     font-weight: 600;
     white-space: nowrap;
+}
+
+button.vb {
+    cursor: pointer;
+}
+
+.vb__face {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    border-radius: inherit;
 }
 
 /* ---- tamaños (sólo el pictograma; la variante con texto fija el suyo) ----- */
@@ -75,7 +90,13 @@
 
 /* ---- estados --------------------------------------------------------------- */
 
-.vb__seal { fill: var(--verified-bg); }
+.vb__seal {
+    fill: var(--verified-bg);
+    /* esquinas suaves: el escudo se lee como sello y no como señal de tránsito */
+    stroke: var(--verified-bg);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+}
 
 .vb__check {
     fill: none;
@@ -113,11 +134,20 @@
 .vb--label {
     --_size: 1.45em;
 
-    padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-1);
     border: 1px solid var(--_bd);
     background: var(--_bg);
     font-size: var(--fs-caption);
     line-height: var(--lh-caption);
+}
+
+.vb--label .vb__face {
+    padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-1);
+}
+
+/* sin glifo (suspendida, no verificada): el texto solo, con el mismo aire a ambos lados */
+.vb--label.vb--suspended .vb__face,
+.vb--label.vb--unverified .vb__face {
+    padding-inline: var(--sp-2);
 }
 
 .vb--label.vb--md { font-size: var(--fs-caption); }
@@ -157,21 +187,55 @@
     }
 }
 
-/* ---- cuerpo del tooltip ---------------------------------------------------- */
+/* ---- popover ----------------------------------------------------------------
+   Vive en la capa superior (`popover="manual"`): ningún `overflow` de la tarjeta
+   o de la lista lo recorta. Se ubica con `top/left` desde el pictograma. Tiene
+   puntero a propósito: se puede entrar en él (WCAG 1.4.13). */
 
-.vb-tip {
+.vb-pop {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    inline-size: max-content;
+    max-inline-size: min(20rem, calc(100vw - 2 * var(--sp-2)));
     display: flex;
     flex-direction: column;
     gap: var(--sp-1);
+    padding: var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    font-weight: 400;
+    line-height: var(--lh-caption);
     text-align: start;
+    white-space: normal;
+    overflow-wrap: break-word;
+    z-index: var(--z-tooltip);
+    animation: vb-pop-in var(--dur-fast) var(--ease-out);
 }
 
-.vb-tip__title { font-weight: 700; }
-.vb-tip__body { font-weight: 400; }
+.vb-pop__title {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 700;
+}
 
-.vb-tip__date {
+.vb-pop__body { color: var(--text-primary); }
+.vb-pop__limits { color: var(--text-secondary); }
+
+.vb-pop__date {
+    color: var(--text-secondary);
     font-variant-numeric: tabular-nums;
-    opacity: 0.85;
+}
+
+@keyframes vb-pop-in {
+    from {
+        opacity: 0;
+    }
 }
 
 /* ---- contraste forzado: colores de sistema, la forma sigue diciendo el estado -- */
@@ -180,6 +244,8 @@
     .vb__seal { fill: Highlight; }
     .vb__check { stroke: HighlightText; }
     .vb__disc { fill: Canvas; stroke: CanvasText; }
+    .vb-pop { border-color: CanvasText; background: Canvas; color: CanvasText; }
+    .vb-pop__body, .vb-pop__limits, .vb-pop__date { color: CanvasText; }
     .vb__glyph { stroke: CanvasText; }
     .vb__dot { fill: CanvasText; }
     .vb--label { border-color: CanvasText; background: Canvas; color: CanvasText; }

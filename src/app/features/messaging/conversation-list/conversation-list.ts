@@ -10,11 +10,16 @@ import {
 import { RouterLink } from '@angular/router';
 
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
-import { conversationAvatar, conversationLabel } from '../../../core/messaging/conversation-label';
+import {
+  conversationAvatar,
+  conversationLabel,
+  conversationVerification,
+} from '../../../core/messaging/conversation-label';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
 import { chatTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
 
 /** Lo que la fila le pide a la pantalla que haga. */
 export interface AccionDeFila {
@@ -39,7 +44,7 @@ export interface AccionDeFila {
  */
 @Component({
   selector: 'app-conversation-list',
-  imports: [Avatar, RouterLink],
+  imports: [Avatar, RouterLink, VerificationBadge],
   templateUrl: './conversation-list.html',
   styleUrl: './conversation-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +74,7 @@ export class ConversationList {
 
   protected readonly conQuien = conversationLabel;
   protected readonly avatarDeConQuien = conversationAvatar;
+  protected readonly verificacionDe = conversationVerification;
 
   protected esFavorito(id: string): boolean {
     return this.preferencias.isFavorite(id);
