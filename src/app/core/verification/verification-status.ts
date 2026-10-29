@@ -138,24 +138,28 @@ export function verificationOf(
   };
 }
 
+/** Bolivia no tiene horario de verano: America/La_Paz es UTC-4 todo el año. */
+const LA_PAZ_UTC_OFFSET_HOURS = -4;
+
 /**
- * ¿Ya pasó la vigencia? La vigencia vale hasta el FIN del día indicado (hora
- * local), no hasta su medianoche: una fecha sin hora no adelanta el vencimiento.
+ * ¿Ya pasó la vigencia? «Válido hasta» es el FIN del día indicado en
+ * America/La_Paz (23:59:59.999, UTC-4), no su medianoche UTC: convertir una fecha
+ * a instante en UTC adelantaría el vencimiento cuatro horas (ADR D-04).
  */
 export function isPastValidity(validUntil: Date | null, now: Date = new Date()): boolean {
   if (validUntil === null) {
     return false;
   }
-  const endOfDay = new Date(
+  const endOfDay = Date.UTC(
     validUntil.getFullYear(),
     validUntil.getMonth(),
     validUntil.getDate(),
-    23,
+    23 - LA_PAZ_UTC_OFFSET_HOURS,
     59,
     59,
     999,
   );
-  return endOfDay.getTime() < now.getTime();
+  return endOfDay < now.getTime();
 }
 
 /**

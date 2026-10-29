@@ -97,10 +97,16 @@ describe('mapeador de resultados públicos', () => {
     ]);
   });
 
-  it('lo verificado se rotula «Verificado»', () => {
-    expect(aTarjeta(fila({ verified: true })).seals).toEqual([
+  it('lo verificado que NO es un profesional se rotula «Verificado»', () => {
+    expect(aTarjeta(fila({ kind: 'ORGANIZATION', verified: true })).seals).toEqual([
       { label: 'Verificado', tone: 'ok' },
     ]);
+  });
+
+  it('un profesional verificado lo dice la insignia, sin un segundo «Verificado» de texto', () => {
+    const tarjeta = aTarjeta(fila({ verified: true }));
+    expect(tarjeta.seals).toEqual([]);
+    expect(tarjeta.verification?.status).toBe('VERIFIED');
   });
 
   // ─── Enlaces por vertical ──────────────────────────────────────────────────
@@ -137,5 +143,29 @@ describe('mapeador de resultados públicos', () => {
     expect(aTarjeta(fila({ kind: 'PHARMACY', slug: 'centro' })).id).not.toBe(
       aTarjeta(fila({ kind: 'ORGANIZATION', slug: 'centro' })).id,
     );
+  });
+
+  // ─── La insignia de verificación ───────────────────────────────────────────
+
+  it('un profesional lleva la verificación que dice la API, y deriva de `verified` si no la envía', () => {
+    expect(aTarjeta(fila({ verified: true })).verification?.status).toBe('VERIFIED');
+    expect(aTarjeta(fila({ verified: false })).verification?.status).toBe('UNVERIFIED');
+    expect(
+      aTarjeta(fila({ verified: false, verification: { status: 'IN_REVIEW' } })).verification
+        ?.status,
+    ).toBe('IN_REVIEW');
+  });
+
+  it('`verification` manda sobre `verified:true` si la API la degradó', () => {
+    expect(
+      aTarjeta(fila({ verified: true, verification: { status: 'SUSPENDED' } })).verification
+        ?.status,
+    ).toBe('SUSPENDED');
+  });
+
+  it('una clínica o una farmacia no llevan la insignia de profesional', () => {
+    for (const kind of ['ORGANIZATION', 'PHARMACY', 'DIAGNOSTIC_UNIT', 'INSURER'] as const) {
+      expect(aTarjeta(fila({ kind, verified: true })).verification).toBeUndefined();
+    }
   });
 });

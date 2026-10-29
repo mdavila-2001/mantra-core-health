@@ -52,7 +52,6 @@ function professional(
     nuevos?: boolean;
     tele?: boolean;
     verified?: boolean;
-    verificationStatus?: 'IN_REVIEW' | 'SUSPENDED' | 'EXPIRED';
     ids?: { id: string; personId: string; userId: string };
     nacimiento?: string;
   },
@@ -86,7 +85,6 @@ function professional(
     tenantId: datos.org === 'hospital' ? TENANT_HOSPITAL : TENANT_CLINICA,
     organizacion: datos.org === 'hospital' ? 'Hospital San Lucas' : 'Clínica Los Olivos',
     verified: datos.verified ?? true,
-    ...(datos.verificationStatus === undefined ? {} : { verificationStatus: datos.verificationStatus }),
     acceptsNewPatients: datos.nuevos ?? true,
     telehealthAvailable: datos.tele ?? indice % 2 === 0,
     ratingAverage: datos.rating ?? 4.2 + (indice % 4) * 0.2,
@@ -138,7 +136,7 @@ const WRITTEN_PROFESSIONALS: readonly ProfesionalSimulado[] = [
   professional('medgeneral', { nombre: 'Sofía', apellidos: ['Arce', 'Chávez'], titulo: 'Médica general', especialidades: [SPECIALTY['MEDICINA_GENERAL']!], bio: 'Medicina familiar. Primer contacto para toda la familia.', rating: 4.8, tele: true, nuevos: true }, 11),
   professional('nutricionista', { nombre: 'Gabriela', apellidos: ['Rivera', 'Ortiz'], titulo: 'Nutricionista', especialidades: [SPECIALTY['NUTRICION']!], bio: 'Planes de alimentación para diabetes, hipertensión y deporte.', rating: 4.9, tele: true }, 12),
   professional('neumologo', { nombre: 'Hugo', apellidos: ['Flores', 'Zambrana'], titulo: 'Neumólogo', especialidades: [SPECIALTY['NEUMOLOGIA']!], bio: 'Asma, EPOC y apnea del sueño.', ciudad: 1, org: 'hospital', rating: 4.2 }, 13),
-  professional('sinespecialidad', { nombre: 'Ramiro', apellidos: ['Céspedes', 'Villca'], titulo: 'Médico', especialidades: [], bio: 'Médico recién titulado, en proceso de registro de especialidad.', rating: 0, verified: false, verificationStatus: 'IN_REVIEW', nuevos: false }, 14),
+  professional('sinespecialidad', { nombre: 'Ramiro', apellidos: ['Céspedes', 'Villca'], titulo: 'Médico', especialidades: [], bio: 'Médico recién titulado, en proceso de registro de especialidad.', rating: 0, verified: false, nuevos: false }, 14),
 ];
 
 /* ---- y los de la red de las aseguradoras ----------------------------------
@@ -233,20 +231,6 @@ export const PROFESSIONALS: readonly ProfesionalSimulado[] = [
 ];
 
 export const MEDICAL = PROFESSIONALS[0]!;
-
-/**
- * El objeto `verification` como lo serializa la API (aditivo, junto a
- * `verified`). Sólo `verified: true` es VERIFIED; el resto es lo que la
- * semilla declare o NO verificado. Las fechas sólo existen para el verificado.
- */
-export function verificationBodyOf(
-  p: Pick<ProfesionalSimulado, 'verified' | 'verificationStatus'>,
-): { status: string; verifiedAt: string | null; validUntil: string | null } {
-  if (p.verified) {
-    return { status: 'VERIFIED', verifiedAt: isoDia(-180), validUntil: isoDia(365) };
-  }
-  return { status: p.verificationStatus ?? 'UNVERIFIED', verifiedAt: null, validUntil: null };
-}
 
 export function professionalById(id: string): ProfesionalSimulado | undefined {
   return PROFESSIONALS.find((p) => p.id === id || p.userId === id || p.personId === id);

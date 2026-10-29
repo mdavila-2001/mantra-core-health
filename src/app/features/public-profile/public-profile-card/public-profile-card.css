@@ -123,6 +123,10 @@
   block-size: 22px;
 }
 
+.perfil__cola {
+  white-space: nowrap;
+}
+
 .perfil__insignia {
   margin-inline-start: var(--e1);
 }

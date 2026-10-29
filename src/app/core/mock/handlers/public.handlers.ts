@@ -8,8 +8,8 @@ import {
   affiliationList,
   PROFESSIONALS,
   professionalById,
-  verificationBodyOf,
 } from '../fixtures/people';
+import { showcaseVerification } from '../fixtures/verification-body';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
 import { addDecimalStrings } from '../../money/decimal-strings';
 import { notFound, validation, type MockRouter } from '../mock-router';
@@ -22,13 +22,6 @@ import { ahora, contiene, iso, isoDia, paginar, texto, uuid } from '../mock-stor
 
 type ClasePublica = 'PRACTITIONER' | 'ORGANIZATION' | 'PHARMACY' | 'DIAGNOSTIC_UNIT' | 'INSURER';
 
-/** `verification` sólo para los profesionales: una clínica no es «un profesional verificado». */
-function verificacionDeVitrina(v: SimulatedShowcase): { verification?: ReturnType<typeof verificationBodyOf> } {
-  if (v.kind !== 'PRACTITIONER') return {};
-  const profesional = professionalById(v.targetId);
-  return profesional === undefined ? {} : { verification: verificationBodyOf(profesional) };
-}
-
 function resultado(v: SimulatedShowcase) {
   return {
     kind: v.kind as ClasePublica,
@@ -38,7 +31,7 @@ function resultado(v: SimulatedShowcase) {
     city: v.city,
     avatarUrl: v.avatarUrl,
     verified: v.verified,
-    ...verificacionDeVitrina(v),
+    ...showcaseVerification(v),
     ratingAverage: calificacionDe(v).average,
     ratingCount: calificacionDe(v).count,
     coverUrl: v.coverUrl,
@@ -584,7 +577,7 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
       avatarUrl: v.avatarUrl,
       coverUrl: v.coverUrl,
       verified: v.verified,
-      ...verificacionDeVitrina(v),
+      ...showcaseVerification(v),
       city: v.city,
       address: v.address === '' ? null : v.address,
       location: { lat: v.lat, lng: v.lng },

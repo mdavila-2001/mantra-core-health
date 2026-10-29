@@ -213,6 +213,16 @@ sello dibujado a mano, un ✓ junto a «verificado» o una clase propia fuera de
 átomo. Los sellos heredados —de organizaciones y credenciales, que el átomo no
 cubre— están congelados en `scripts/baselines/verification-badge.json`.
 
+**Una sola fuente visual del estado.** Donde antes había un chip («Verificado»,
+«Pendiente», con un «?» cuando el catálogo no se resolvía) hoy está el átomo: la
+ficha del profesional muestra la insignia junto al nombre y, en «Estado de
+habilitación», la variante con texto; las especialidades muestran el átomo sólo
+si el servidor trajo su estado (un estado ilegible no se inventa como
+«Verificado»); las tarjetas de la Guía y del buscador ya no repiten el sello de
+texto «Matrícula verificada». Los chips `app-status-seal` siguen siendo del
+estado de un **trámite** (cita, receta, credencial, matrícula), no de la
+verificación de la persona, y el gate lo vigila (regla R5).
+
 Dónde está montado: ficha del profesional (Guía y «Mi perfil»), tarjetas de la
 Guía y del buscador público, ficha pública, tendencias, encabezado y lista del
 chat y su panel de contacto.

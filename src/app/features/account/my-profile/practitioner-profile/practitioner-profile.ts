@@ -851,9 +851,16 @@ function label(etiquetas: ConceptLabels, conceptId: string | undefined): string 
  * inventar, y acá lo que se afirma es la habilitación de alguien para ejercer.
  */
 export function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusSealVariant {
-  const codigo = conceptId === undefined ? undefined : etiquetas.get(conceptId)?.code;
-  if (codigo === undefined) {
+  const crudo = conceptId === undefined ? undefined : etiquetas.get(conceptId)?.code;
+  if (crudo === undefined) {
     return 'unknown';
+  }
+  // «ST-VERIFIED» (catálogo de registros) y «PRACT_VERIF_VERIFIED» (el estado del
+  // profesional) dicen lo mismo que «VERIFIED»: sin esto quedaban en `unknown` y el
+  // sello mostraba un «?» junto a la palabra «Verificado».
+  const codigo = crudo.replace(/^ST-/, '').replace(/-/g, '_');
+  if (/(^|_)VERIFIED$/.test(codigo) && !/(^|_)UNVERIFIED$/.test(codigo)) {
+    return 'approved';
   }
   if (codigo === 'REJECTED' || codigo === 'REVOKED' || codigo.endsWith('_REJECTED') || codigo.endsWith('_REVOKED')) return 'rejected';
   if (codigo === 'EXPIRED' || codigo.endsWith('_EXPIRED')) return 'expired';

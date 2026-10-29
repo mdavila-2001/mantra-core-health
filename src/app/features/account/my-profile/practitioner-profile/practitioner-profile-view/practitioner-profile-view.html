@@ -55,7 +55,12 @@
 
         <div class="mi-perfil__rotulo">
           <h2 class="mi-perfil__titulo">Sus datos</h2>
-          <p class="mi-perfil__nombre">{{ perfil().nombre }}</p>
+          <p class="mi-perfil__nombre">
+            {{ perfil().nombre }}
+            @if (perfil().verificacion?.insignia; as v) {
+              <app-verification-badge class="profesional__insignia" size="md" [animated]="true" [status]="v.status" [verifiedAt]="v.verifiedAt" [validUntil]="v.validUntil" [subject]="perfil().nombre" />
+            }
+          </p>
           <!-- «Telemedicina», reubicada acá al quitar «Cómo atendés» de la
                pestaña «Dónde atiendo» (C-01, 20/09/2026).
 
@@ -237,8 +242,9 @@
           <div class="mi-perfil__dato">
             <dt>Estado de habilitación</dt>
             <dd>
-              @if (perfil().verificacion; as estado) {
-                <app-status-seal [variant]="estado.variant" [label]="estado.label" />
+              @if (perfil().verificacion?.insignia; as v) {
+                <!-- Una sola fuente visual del estado: el átomo, con su palabra. -->
+                <app-verification-badge variant="label" size="md" [status]="v.status" [verifiedAt]="v.verifiedAt" [validUntil]="v.validUntil" [subject]="perfil().nombre" />
               } @else {
                 <span class="mi-perfil__ausente">Sin determinar</span>
               }
@@ -841,21 +847,12 @@
 
         <div class="profesional__identidad-texto">
           <h2 class="profesional__nombre">
-            {{ perfil().nombre }}
-            <!-- El check azul (o el reloj de «en verificación») junto al nombre:
-                 lo decide la API, acá sólo se pinta. El sello de habilitación de
-                 abajo sigue dando el detalle del trámite. -->
-            @if (perfil().verificacion?.insignia; as insignia) {
-              <app-verification-badge
-                class="profesional__insignia"
-                size="lg"
-                [animated]="true"
-                [status]="insignia.status"
-                [verifiedAt]="insignia.verifiedAt"
-                [validUntil]="insignia.validUntil"
-                [subject]="perfil().nombre"
-              />
-            }
+            {{ nombreEnDos().head }}<span class="profesional__cola">{{ nombreEnDos().tail }}
+              <!-- El sello (o el reloj de «en verificación»): lo decide la API; acá se pinta. -->
+              @if (perfil().verificacion?.insignia; as v) {
+                <app-verification-badge class="profesional__insignia" size="lg" [animated]="true" [status]="v.status" [verifiedAt]="v.verifiedAt" [validUntil]="v.validUntil" [subject]="perfil().nombre" />
+              }
+            </span>
           </h2>
 
           @if (perfil().titulo) {
@@ -886,9 +883,10 @@
 
         <!-- El estado de habilitación va en la portada porque es lo que decide
            si puede ejercer, no un detalle administrativo. -->
-        @if (perfil().verificacion; as estado) {
+        <!-- El estado de verificación va con el nombre (la insignia) y en «Estado de
+             habilitación»; acá queda sólo el estado de la práctica. -->
+        @if (perfil().estadoDePractica) {
           <div class="profesional__sello">
-            <app-status-seal [variant]="estado.variant" [label]="estado.label" />
             <span class="profesional__sello-pie">{{ perfil().estadoDePractica }}</span>
           </div>
         }
