@@ -464,6 +464,30 @@ describe('rutas del armazón', () => {
     // sección del producto; su ruta tiene que existir igual.
     expect(routes.some((route) => route.path === 'design-system')).toBe(true);
   });
+
+  /**
+   * «Mis organizaciones» pasó a ser una pestaña de «Organización médica». El
+   * enlace viejo (historiales, correos) tiene que seguir cayendo en ESA pestaña
+   * y no en la primera —«Sedes»—, que es administrativa.
+   */
+  it('`my-organizations` redirige a «Mis vinculaciones» (?tab=memberships)', () => {
+    const vieja = hijas.find((route) => route.path === 'my-organizations');
+    expect(typeof vieja?.redirectTo).toBe('function');
+
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    const destino = TestBed.runInInjectionContext(() =>
+      (
+        vieja?.redirectTo as (data: {
+          queryParams: Record<string, string>;
+          fragment: string | null;
+        }) => unknown
+      )({ queryParams: {}, fragment: null }),
+    );
+
+    expect(TestBed.inject(Router).serializeUrl(destino as never)).toBe(
+      '/administration/medical-organization?tab=memberships',
+    );
+  });
 });
 
 /**
