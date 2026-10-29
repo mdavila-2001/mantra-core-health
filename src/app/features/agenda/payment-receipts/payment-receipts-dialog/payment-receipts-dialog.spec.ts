@@ -202,9 +202,7 @@ describe('PaymentReceiptsDialog', () => {
       );
     await settle();
 
-    const retry = [...root().querySelectorAll('button')].find((b) =>
-      b.textContent?.includes('Reintentar'),
-    );
+    const retry = [...root().querySelectorAll('button')].find((b) => b.textContent?.includes('Reintentar'));
     await click(retry ?? null);
 
     http.expectOne(RECEIPTS_URL).flush([]);
@@ -243,9 +241,7 @@ describe('PaymentReceiptsDialog', () => {
     await click(byTestId('payment-receipt-confirm'));
     // En vuelo: los botones quedan deshabilitados, no sale un segundo envío.
     // `app-button` deshabilita con `aria-disabled` y corta el clic él mismo.
-    expect(
-      all('payment-receipt-reject').every((b) => b.getAttribute('aria-disabled') === 'true'),
-    ).toBe(true);
+    expect(all('payment-receipt-reject').every((b) => b.getAttribute('aria-disabled') === 'true')).toBe(true);
     byTestId('payment-receipt-confirm')!.click();
     const request = http.expectOne(`${RECEIPTS_URL}/r-pdf/confirm`);
     request.flush({ receipt: { ...PDF_RECEIPT, status: 'CONFIRMED' }, paymentState: PAID });
@@ -269,9 +265,7 @@ describe('PaymentReceiptsDialog', () => {
   it('confirmar uno deja la cita pagada: el otro pendiente ya no ofrece confirmar', async () => {
     await respond();
 
-    await click(
-      root().querySelector('[data-receipt-id="r-pdf"] [data-testid="payment-receipt-confirm"]'),
-    );
+    await click(root().querySelector('[data-receipt-id="r-pdf"] [data-testid="payment-receipt-confirm"]'));
     http
       .expectOne(`${RECEIPTS_URL}/r-pdf/confirm`)
       .flush({ receipt: { ...PDF_RECEIPT, status: 'CONFIRMED' }, paymentState: PAID });
@@ -287,43 +281,27 @@ describe('PaymentReceiptsDialog', () => {
     const reason = 'No se lee el monto';
 
     // Empieza a rechazar la imagen y escribe el motivo.
-    await click(
-      root().querySelector('[data-receipt-id="r-img"] [data-testid="payment-receipt-reject"]'),
-    );
+    await click(root().querySelector('[data-receipt-id="r-img"] [data-testid="payment-receipt-reject"]'));
     const textarea = byTestId('payment-receipt-rejection-form')!.querySelector('textarea')!;
     textarea.value = reason;
     textarea.dispatchEvent(new Event('input'));
     await settle();
-    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe(
-      'false',
-    );
+    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe('false');
 
     // Mientras confirma el PDF, el envío del rechazo espera: no sale ni se pierde.
-    await click(
-      root().querySelector('[data-receipt-id="r-pdf"] [data-testid="payment-receipt-confirm"]'),
-    );
+    await click(root().querySelector('[data-receipt-id="r-pdf"] [data-testid="payment-receipt-confirm"]'));
     const confirmation = http.expectOne(`${RECEIPTS_URL}/r-pdf/confirm`);
-    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe(
-      'true',
-    );
-    byTestId('payment-receipt-rejection-form')!.dispatchEvent(
-      new Event('submit', { cancelable: true }),
-    );
+    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe('true');
+    byTestId('payment-receipt-rejection-form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await settle();
     http.expectNone(`${RECEIPTS_URL}/r-img/reject`);
-    expect(byTestId('payment-receipt-rejection-form')?.querySelector('textarea')?.value).toBe(
-      reason,
-    );
+    expect(byTestId('payment-receipt-rejection-form')?.querySelector('textarea')?.value).toBe(reason);
 
     // Terminada la confirmación, el rechazo sale con lo que se había escrito.
     confirmation.flush({ receipt: { ...PDF_RECEIPT, status: 'CONFIRMED' }, paymentState: PAID });
     await settle();
-    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe(
-      'false',
-    );
-    byTestId('payment-receipt-rejection-form')!.dispatchEvent(
-      new Event('submit', { cancelable: true }),
-    );
+    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe('false');
+    byTestId('payment-receipt-rejection-form')!.dispatchEvent(new Event('submit', { cancelable: true }));
     await settle();
     const rejection = http.expectOne(`${RECEIPTS_URL}/r-img/reject`);
     expect(rejection.request.body).toEqual({ reason });
@@ -331,9 +309,7 @@ describe('PaymentReceiptsDialog', () => {
     await settle();
 
     expect(
-      root()
-        .querySelector('[data-receipt-id="r-img"] [data-testid="payment-receipt-status"]')
-        ?.textContent?.trim(),
+      root().querySelector('[data-receipt-id="r-img"] [data-testid="payment-receipt-status"]')?.textContent?.trim(),
     ).toBe('Rechazado');
   });
 
@@ -349,9 +325,7 @@ describe('PaymentReceiptsDialog', () => {
       );
     await settle();
 
-    expect(byTestId('payment-receipts-notice')?.textContent).toContain(
-      'Este comprobante ya estaba rechazado',
-    );
+    expect(byTestId('payment-receipts-notice')?.textContent).toContain('Este comprobante ya estaba rechazado');
     http
       .expectOne(RECEIPTS_URL)
       .flush([{ ...PDF_RECEIPT, status: 'REJECTED', rejectionReason: 'Es de otra cita' }]);
@@ -377,9 +351,7 @@ describe('PaymentReceiptsDialog', () => {
     textarea!.value = '  No se lee el monto  ';
     textarea!.dispatchEvent(new Event('input'));
     await settle();
-    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe(
-      'false',
-    );
+    expect(byTestId('payment-receipt-rejection-submit')?.getAttribute('aria-disabled')).toBe('false');
     form!.dispatchEvent(new Event('submit', { cancelable: true }));
     await settle();
 
@@ -457,9 +429,7 @@ describe('PaymentReceiptsDialog', () => {
     http.expectOne(RECEIPTS_URL).flush([]);
     await settle();
 
-    root()
-      .querySelector('dialog')!
-      .dispatchEvent(new Event('cancel', { cancelable: true }));
+    root().querySelector('dialog')!.dispatchEvent(new Event('cancel', { cancelable: true }));
     await settle();
 
     expect(closed).toBe(1);

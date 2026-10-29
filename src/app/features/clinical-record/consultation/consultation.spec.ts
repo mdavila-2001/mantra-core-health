@@ -250,8 +250,9 @@ describe('Consultation', () => {
       .flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
     await flushChartReadsOnly();
 
-    const casillas =
-      interno<() => readonly { clave: string; cantidad: number | null }[]>('casillas')();
+    const casillas = interno<() => readonly { clave: string; cantidad: number | null }[]>(
+      'casillas',
+    )();
     expect(casillas.find((c) => c.clave === 'derivacion')?.cantidad).toBeNull();
     expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
   });
