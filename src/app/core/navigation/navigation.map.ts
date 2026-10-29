@@ -1115,6 +1115,50 @@ export const APP_SECTIONS: readonly AppSection[] = [
       'Administre sedes, áreas, quirófanos, consultorios, plantilla, legajo y sus vinculaciones.',
     module: 'M14 practice',
   },
+  /* ---- Internación / ADT (franja F3) ----------------------------------------
+     Quién interna, mueve o egresa pacientes no es un rol del token: es una
+     asignación delegada (Enfermería, Admisión, supervisión) que el token no
+     transporta. Por eso las tres secciones las ve cualquier sesión con
+     organización (`requiresTenant`) menos el paciente, y es la API quien
+     contesta 403 —y la pantalla S5— a quien no tiene la asignación. La ficha de
+     una internación (`inpatient/stays/:encounterId`) no es una sección: se llega
+     desde el censo o desde el expediente. */
+  {
+    path: 'inpatient/admissions/new',
+    label: 'Nuevo ingreso',
+    group: 'Atención',
+    icon: 'hospital',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Interne a una persona en una cama, o regístrela sin cama para asignarla después.',
+    module: 'M08 clinical',
+  },
+  {
+    path: 'inpatient/census',
+    label: 'Censo diario',
+    group: 'Atención',
+    icon: 'clipboard',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'La foto de cada unidad a la medianoche. Cerrada no se edita: se ajusta con motivo.',
+    module: 'M08 clinical',
+  },
+  {
+    path: 'inpatient/indicators',
+    label: 'Indicadores de camas',
+    group: 'Atención',
+    icon: 'chart',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Ocupación, estancia, giro y sustitución de camas, del censo cerrado.',
+    module: 'M08 clinical',
+  },
   {
     // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
     // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al

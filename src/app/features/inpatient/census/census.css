@@ -1,0 +1,104 @@
+:host {
+  display: block;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
+.barra__fecha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 12rem;
+}
+
+.barra__rotulo {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.barra__atajos {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.censo {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.unidad + .unidad {
+  margin-block-start: var(--sp-8);
+  padding-block-start: var(--sp-6);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.unidad__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.unidad__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.unidad__subtitulo {
+  margin: var(--sp-5) 0 var(--sp-3);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+}
+
+.unidad__nota,
+.censo__nota {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.censo__nota {
+  margin-block-start: var(--sp-6);
+}
+
+.ajustes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ajustes li {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.ajustes p {
+  margin: 0;
+}
+
+.ajustes__motivo {
+  margin-block-start: var(--sp-1);
+}
+
+.ajustes__quien {
+  margin-block-start: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

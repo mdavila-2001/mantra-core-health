@@ -1,0 +1,102 @@
+<app-page-header
+  title="Censo diario"
+  subtitle="La foto de cada unidad a la medianoche: camas, pacientes, ingresos y egresos. Cerrada, no se edita; se ajusta."
+  [breadcrumbs]="breadcrumbs"
+>
+  <app-site-switcher page-meta />
+</app-page-header>
+
+<div class="barra" data-testid="censo-filtros">
+  <div class="barra__fecha">
+    <label class="barra__rotulo" for="censo-fecha">Día del censo</label>
+    <app-date-picker [value]="fechaDeCalendario()" (valueChange)="cambiarFecha($event)" [maxDate]="fechaDeCalendario()" />
+  </div>
+  <div class="barra__atajos">
+    <button app-button variant="outline" type="button" (clicked)="irAAyer()" data-testid="censo-ayer">Ayer</button>
+    <button app-button variant="outline" type="button" (clicked)="irAHoy()" data-testid="censo-hoy">Hoy</button>
+  </div>
+  @if (viewer()?.canCloseCensus && abiertas().length > 0) {
+    <button app-button variant="primary" type="button" [isLoading]="cerrando()" (clicked)="cerrar()" data-testid="censo-cerrar">Cerrar censo del día</button>
+  }
+</div>
+
+<app-view-state-host [state]="state()" (retry)="reintentar()" (refresh)="cargar()">
+  @if (datos(); as d) {
+    @if (aviso(); as texto) {
+      <app-alert tone="success" title="Hecho" data-testid="censo-aviso">{{ texto }}</app-alert>
+    }
+    <app-adt-issue [state]="problema()" heading="No se pudo completar" />
+
+    <div class="censo" data-testid="censo">
+      <app-card>
+        @for (u of unidades(); track u.day.unit.id) {
+          <section class="unidad" [attr.data-testid]="'censo-unidad-' + u.day.unit.code" [attr.data-estado]="u.day.status">
+            <header class="unidad__cabecera">
+              <h2 class="unidad__titulo">{{ u.day.unit.name }}</h2>
+              @if (u.day.status === 'CLOSED') {
+                <app-status-seal variant="approved" label="Cerrado" data-testid="censo-sello">
+                  {{ u.day.closedBy ?? 'Corte programado' }} · {{ fechaYHora(u.day.closedAt) }}
+                </app-status-seal>
+              } @else {
+                <app-status-seal variant="pending" label="Abierto · vista previa" data-testid="censo-sello">
+                  Se calcula en vivo y no se guarda hasta cerrar.
+                </app-status-seal>
+              }
+            </header>
+            <app-data-table
+              [state]="filas(u)"
+              [columns]="u.day.status === 'CLOSED' ? columnasCerrado() : columnasAbierto()"
+              [trackBy]="porCampo"
+              stackedOnMobile
+              [caption]="'Censo de ' + u.day.unit.name + ' del ' + fechaCorta(u.day.censusDate)"
+              (retry)="cargar()"
+              [attr.data-testid]="'censo-tabla-' + u.day.unit.code"
+            />
+            @if (u.day.contentHash) {
+              <p class="unidad__nota">Huella del snapshot <code class="tabular-nums">{{ u.day.contentHash }}</code> · corte {{ fechaYHora(u.day.cutoffAt) }}</p>
+            }
+            @if (u.adjustments.length > 0) {
+              <h3 class="unidad__subtitulo">Ajustes ({{ u.adjustments.length }})</h3>
+              <ol class="ajustes" [attr.data-testid]="'censo-ajustes-' + u.day.unit.code">
+                @for (a of u.adjustments; track a.id) {
+                  <li>
+                    <p class="ajustes__cambio"><strong>{{ etiquetaDe(a.fieldCode) }}:</strong> <s class="tabular-nums">{{ a.previousValue }}</s> → <strong class="tabular-nums">{{ a.newValue }}</strong></p>
+                    <p class="ajustes__motivo">{{ a.reasonText }}</p>
+                    <p class="ajustes__quien">{{ a.adjustedBy }} · {{ fechaYHora(a.createdAt) }} · código de soporte <code class="tabular-nums">{{ a.requestId }}</code></p>
+                  </li>
+                }
+              </ol>
+            }
+          </section>
+        }
+        <p class="censo__nota">Datos leídos hace {{ antiguedad() }}. Los indicadores usan solo los días cerrados, con sus ajustes: <a [routerLink]="rutaIndicadores">ver indicadores</a>.</p>
+      </app-card>
+    </div>
+  }
+</app-view-state-host>
+
+<ng-template #celdaDato let-f>{{ f.etiqueta }}</ng-template>
+<ng-template #celdaSnapshot let-f><span class="tabular-nums">{{ f.snapshot }}</span></ng-template>
+<ng-template #celdaAjustado let-f>
+  @if (f.ajustado !== f.snapshot) {
+    <span class="tabular-nums" [attr.data-testid]="'ajustado-' + f.campo"><s>{{ f.snapshot }}</s> → <strong>{{ f.ajustado }}</strong></span>
+  } @else {
+    <span class="tabular-nums">{{ f.ajustado }}</span>
+  }
+</ng-template>
+<ng-template #celdaAjustar let-f>
+  @if (unidadDe(f.unidadId); as u) {
+    <button app-button variant="outline" size="sm" type="button" (clicked)="abrirAjuste(u, f)" [attr.data-testid]="'ajustar-' + u.day.unit.code + '-' + f.campo">Ajustar</button>
+  }
+</ng-template>
+
+@if (ajustando(); as a) {
+  <app-census-adjust-dialog
+    [day]="a.unidad.day"
+    [field]="a.fila.campo"
+    [etiqueta]="a.fila.etiqueta"
+    [actual]="a.fila.ajustado"
+    (adjusted)="alAjustar()"
+    (closed)="ajustando.set(null)"
+  />
+}

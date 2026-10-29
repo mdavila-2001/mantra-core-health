@@ -84,7 +84,7 @@ import {
   type PerfilAdt,
   type UbicacionSim,
 } from './adt.store';
-import { espacios, sitioPropio } from './infrastructure.store';
+import { atrasoDeLectura, espacios, sitioPropio } from './infrastructure.store';
 import { episodeList, encounterList } from '../fixtures/clinic';
 import { ENCOUNTER_STATUS, STATUS } from '../fixtures/concepts';
 
@@ -111,6 +111,8 @@ import { ENCOUNTER_STATUS, STATUS } from '../fixtures/concepts';
 type Resultado<T> = { ok: true; valor: T } | { ok: false; respuesta: MockReply };
 
 const AHORA = (): string => new Date().toISOString();
+/** Instante de una lectura, atrasado lo que pida `mock:infra-antiguedad` (la maqueta del S7). */
+const LECTURA = (): string => new Date(Date.now() - atrasoDeLectura() * 60_000).toISOString();
 const CODIGOS = <T extends { code: string }>(lista: readonly T[]): string[] => lista.map((x) => x.code);
 
 function exigir(request: MockRequest, permitido: (p: PerfilAdt) => boolean, roles: readonly string[]): { perfil: PerfilAdt } | MockReply {
@@ -239,6 +241,7 @@ function vistaDeEstancia(i: IngresoSim, perfil: PerfilAdt): StayView {
   return {
     encounter: {
       id: i.id,
+      siteId: i.siteId,
       episodeId: i.episodeId,
       patient: pacienteResumido(p),
       status: estadoDeEncuentro(i.status),
@@ -259,7 +262,7 @@ function vistaDeEstancia(i: IngresoSim, perfil: PerfilAdt): StayView {
     currentBed: activa === undefined ? null : referenciaDeCama(espacios.get(activa.careSpaceId)!),
     movements: ubicacionesDe(i.id).map(movimiento),
     incidents: incidentes.filtrar((x) => x.encounterId === i.id).map(incidenteVisible),
-    asOf: AHORA(),
+    asOf: LECTURA(),
     viewer: viewerDe(perfil),
   };
 }
@@ -658,7 +661,7 @@ export function registerAdt(router: MockRouter): void {
       .map(filaDeCensoVivo)
       .filter((f) => unidad === null || (f.bed !== null && unidadDeCama(espacios.get(f.bed.id)!)?.id === unidad))
       .sort((a, b) => (a.bed?.code ?? 'ZZZ').localeCompare(b.bed?.code ?? 'ZZZ', 'es', { numeric: true }));
-    return { items: filas, nextCursor: null, generatedAt: AHORA(), viewer: viewerDe(perm.perfil) };
+    return { items: filas, nextCursor: null, generatedAt: LECTURA(), viewer: viewerDe(perm.perfil) };
   });
 
   router.get('/clinical/encounters/:id/stay', (request) => {
@@ -700,7 +703,7 @@ export function registerAdt(router: MockRouter): void {
     const respuesta: CensusResponse = {
       siteId,
       date: fecha,
-      asOf: AHORA(),
+      asOf: LECTURA(),
       units: unidades.map((u) => {
         const day = diaDeCenso(siteId, u, fecha);
         return { day, adjustments: day.id === null ? [] : ajustesDe(day.id), adjustedTotals: day.id === null ? null : totalesAjustados(day) };
@@ -767,7 +770,7 @@ export function registerAdt(router: MockRouter): void {
       return validation('Error de validación', [{ field: 'from', message: 'el período es inválido' }]);
     }
     if ((Date.parse(hasta) - Date.parse(desde)) / 86_400_000 + 1 > 366) return regla('INDICATOR_RANGE_TOO_LONG', 'El período no puede superar 366 días.');
-    return calcularIndicadores(siteId, desde, hasta, request.query.get('unitId'));
+    return { ...calcularIndicadores(siteId, desde, hasta, request.query.get('unitId')), asOf: LECTURA() };
   });
 }
 

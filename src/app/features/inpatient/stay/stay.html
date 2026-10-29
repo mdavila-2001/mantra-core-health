@@ -1,0 +1,156 @@
+<app-page-header
+  [title]="encuentro()?.patient?.name ?? 'Ficha de internación'"
+  [subtitle]="encuentro() ? 'Internación desde el ' + fechaYHora(encuentro()!.startAt) + ' · ' + encuentro()!.reasonText : ''"
+  [breadcrumbs]="breadcrumbs()"
+>
+  @if (encuentro(); as e) {
+    <span page-meta class="meta">
+      <app-badge [variant]="enCurso() ? 'success' : 'secondary'" data-testid="estancia-estado">{{ e.status.display }}</app-badge>
+      <app-badge [variant]="nivel(e.levelOfCare)">{{ e.levelOfCare.display }}</app-badge>
+      @if (e.isolation.code !== 'ISO_NONE') {
+        <app-badge [variant]="aislamiento(e.isolation)" data-testid="estancia-aislamiento">Aislamiento: {{ e.isolation.display }}</app-badge>
+      }
+    </span>
+  }
+</app-page-header>
+
+<app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+  @if (ficha(); as f) {
+    @if (esNuevo() && accionAbierta() === null) {
+      <app-alert tone="success" title="Ingreso registrado" data-testid="estancia-nuevo">
+        {{ f.currentBed ? 'La internación quedó en la cama ' + f.currentBed.code + '.' : 'La internación quedó pendiente de cama: asígnela desde las acciones.' }}
+      </app-alert>
+    }
+    @if (f.incidents.length > 0 && f.incidents[0].status.code === 'PLC_INC_OPEN') {
+      <app-alert tone="warning" title="Hay un incidente de ubicación abierto" data-testid="estancia-incidente-abierto">
+        Se forzó la compatibilidad de una cama de esta internación. Supervisión debe revisarlo (pestaña «Compatibilidad e incidentes»).
+      </app-alert>
+    }
+
+    <!-- Una sola tarjeta, centrada y a lo ancho, con las pestañas: regla del
+         09/09/2026 (docs/components/composition-rules.md §5). -->
+    <div class="estancia" data-testid="estancia">
+      <app-card>
+        <div class="estancia__acciones">
+          <app-bed-actions [siteId]="siteId()" [encounterId]="id()" [viewer]="f.viewer ?? null" (changed)="alCambiar($event)" />
+        </div>
+
+        <app-tabs [(selectedIndex)]="pestana" data-testid="estancia-pestanas">
+          <app-tab label="Cama actual">
+            <dl class="estancia__datos" data-testid="estancia-cama">
+              <div class="estancia__dato--ancho">
+                <dt>Cama</dt>
+                <dd data-testid="estancia-cama-actual">
+                  @if (f.currentBed; as cama) {
+                    <strong>{{ cama.code }}</strong> · {{ cama.path.length ? cama.path[cama.path.length - 1].name : cama.name }}
+                    <span class="estancia__camino">{{ cama.path.map(p => p.name).join(' › ') }}</span>
+                  } @else {
+                    <app-badge variant="warning">Pendiente de cama</app-badge>
+                    <span class="estancia__camino">
+                      {{ enCurso() ? 'La internación se registró sin cama. Asígnela o resérvela desde las acciones.' : 'La internación terminó.' }}
+                    </span>
+                  }
+                </dd>
+              </div>
+              <div><dt>Unidad</dt><dd>{{ f.encounter.unitName ?? '—' }}</dd></div>
+              <div><dt>Paciente</dt><dd>{{ f.encounter.patient.name }} · {{ f.encounter.patient.ageYears }} años · {{ sexo(f.encounter.patient.sexCode) }}</dd></div>
+              <div><dt>Profesional tratante</dt><dd>{{ f.encounter.attendingName ?? '—' }}</dd></div>
+              <div><dt>Procedencia</dt><dd>{{ f.encounter.admissionSource.display }}</dd></div>
+              <div><dt>Nivel de cuidado</dt><dd>{{ f.encounter.levelOfCare.display }}</dd></div>
+              <div><dt>Días de estancia</dt><dd class="tabular-nums">{{ f.encounter.losDays }}</dd></div>
+              <div><dt>Alta prevista</dt><dd>{{ f.encounter.expectedDischargeAt ? fechaYHora(f.encounter.expectedDischargeAt) : 'Sin fecha' }}</dd></div>
+              <div><dt>Aislamiento</dt><dd>{{ f.encounter.isolation.display }}{{ f.encounter.isolationOrganism ? ' · ' + f.encounter.isolationOrganism : '' }}</dd></div>
+            </dl>
+            <p class="estancia__nota">Datos leídos hace {{ antiguedad() }}. Cada acción vuelve a leer la ficha del servidor.</p>
+          </app-tab>
+
+          <app-tab label="Movimientos">
+            <app-data-table
+              [state]="movimientos()"
+              [columns]="columnas()"
+              [trackBy]="porMovimiento"
+              stackedOnMobile
+              caption="Movimientos de cama de la internación"
+              data-testid="estancia-movimientos"
+            />
+          </app-tab>
+
+          <app-tab label="Compatibilidad e incidentes">
+            <app-adt-issue [state]="problema()" heading="No se pudo registrar la revisión" />
+            @if (f.incidents.length === 0) {
+              <div class="estancia__vacio" data-testid="estancia-sin-incidentes">
+                <p>Ninguna cama de esta internación se asignó forzando la compatibilidad: no hay incidentes.</p>
+                <button app-button variant="outline" type="button" (clicked)="pestana.set(1)">Ver los movimientos</button>
+              </div>
+            } @else {
+              <ol class="estancia__incidentes" data-testid="estancia-incidentes">
+                @for (i of f.incidents; track i.id) {
+                  <li>
+                    <header>
+                      <strong>Cama {{ i.bed.code }}</strong>
+                      <app-badge [variant]="varianteDeIncidente(i.status.code)" [attr.data-testid]="'incidente-estado-' + i.id">{{ i.status.display }}</app-badge>
+                      <span class="estancia__cuando">{{ fechaYHora(i.createdAt) }} · autorizó {{ i.authorizedBy }}</span>
+                    </header>
+                    <ul class="estancia__reglas">
+                      @for (v of i.violations; track v.rule) {
+                        <li><strong>{{ regla(v.rule) }}.</strong> {{ v.detail }}</li>
+                      }
+                    </ul>
+                    <p class="estancia__justificacion"><span>Justificación:</span> {{ i.justificationText }}</p>
+                    @if (i.reviewedBy) {
+                      <p class="estancia__nota">Revisó {{ i.reviewedBy }} el {{ fechaYHora(i.reviewedAt) }}: {{ i.reviewNote }}</p>
+                    }
+                    @if (puedeRevisar() && i.status.code !== 'PLC_INC_CLOSED') {
+                      <div class="estancia__botones">
+                        @if (i.status.code === 'PLC_INC_OPEN') {
+                          <button app-button variant="outline" size="sm" type="button" [isLoading]="revisando() === i.id" (clicked)="revisar(i, 'REVIEWED')" data-testid="incidente-revisar">Marcar como revisado</button>
+                        }
+                        <button app-button variant="ghost" size="sm" type="button" [isLoading]="revisando() === i.id" (clicked)="revisar(i, 'CLOSED')" data-testid="incidente-cerrar">Cerrar</button>
+                      </div>
+                    } @else if (!puedeRevisar() && i.status.code === 'PLC_INC_OPEN') {
+                      <p class="estancia__nota">Solo la supervisión de enfermería revisa los incidentes.</p>
+                    }
+                  </li>
+                }
+              </ol>
+            }
+          </app-tab>
+
+          <app-tab label="Egreso">
+            @if (enCurso()) {
+              <div class="estancia__egreso" data-testid="estancia-egreso">
+                <p>La internación sigue en curso. Al registrar el egreso se cierra la ubicación y la internación, la cama queda sucia y se crea la orden de limpieza (terminal si hubo aislamiento).</p>
+                <button app-button variant="danger" type="button" (clicked)="abrirEgreso()" data-testid="estancia-dar-alta">Registrar el egreso</button>
+              </div>
+            } @else {
+              <dl class="estancia__datos" data-testid="estancia-egresado">
+                <div><dt>Disposición</dt><dd>{{ f.encounter.dischargeDisposition?.display ?? '—' }}</dd></div>
+                <div><dt>Egreso</dt><dd>{{ f.encounter.endAt ? fechaYHora(f.encounter.endAt) : '—' }}</dd></div>
+                <div><dt>Días de estancia</dt><dd class="tabular-nums">{{ f.encounter.losDays }}</dd></div>
+              </dl>
+            }
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    </div>
+  }
+</app-view-state-host>
+
+<ng-template #celdaMovimiento let-m>
+  <span class="mov__tipo">{{ m.movementType.display }}</span>
+  @if (m.endReason) {
+    <span class="mov__sec">{{ m.endReason.display }}</span>
+  }
+  @if (m.incidentId) {
+    <app-badge variant="warning">Forzada</app-badge>
+  }
+</ng-template>
+<ng-template #celdaCama let-m>
+  <strong>{{ m.bed.code }}</strong>
+  <span class="mov__sec">{{ m.bed.path.length ? m.bed.path[m.bed.path.length - 1].name : '' }}</span>
+</ng-template>
+<ng-template #celdaDesde let-m>{{ fechaYHora(m.periodStart) }}</ng-template>
+<ng-template #celdaHasta let-m>{{ m.periodEnd ? fechaYHora(m.periodEnd) : 'En curso' }}</ng-template>
+<ng-template #celdaEstado let-m>
+  <app-badge [variant]="varianteDeMovimiento(m.status.code)">{{ m.status.display }}</app-badge>
+</ng-template>

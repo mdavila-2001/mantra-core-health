@@ -1,0 +1,130 @@
+<app-page-header
+  title="Indicadores de camas"
+  subtitle="Ocupación, estancia, giro y sustitución de camas, calculados del censo diario cerrado."
+  [breadcrumbs]="breadcrumbs"
+>
+  <app-site-switcher page-meta />
+</app-page-header>
+
+<div class="barra" data-testid="indicadores-filtros">
+  <div class="barra__campo">
+    <span class="barra__rotulo" id="ind-desde">Desde</span>
+    <app-date-picker [value]="desdeFecha()" (valueChange)="cambiarDesde($event)" [maxDate]="hastaFecha()" />
+  </div>
+  <div class="barra__campo">
+    <span class="barra__rotulo" id="ind-hasta">Hasta</span>
+    <app-date-picker [value]="hastaFecha()" (valueChange)="cambiarHasta($event)" [minDate]="desdeFecha()" />
+  </div>
+  <div class="barra__campo barra__campo--unidad">
+    <span class="barra__rotulo">Unidad</span>
+    <app-select [options]="opcionesDeUnidad()" [value]="unidad()" (valueChange)="cambiarUnidad($event)" ariaLabel="Unidad" data-testid="indicadores-unidad" />
+  </div>
+</div>
+
+<app-view-state-host [state]="state()" (retry)="reintentar()" (refresh)="cargar()">
+  @if (datos(); as i) {
+    @if (parcial()) {
+      <app-alert tone="warning" title="Faltan días por cerrar: los valores son parciales" data-testid="indicadores-faltan">
+        <p class="nota">Solo cuentan los {{ i.coverage.daysClosed }} de {{ i.days }} días cerrados. Un día sin cerrar no entra en el cálculo.</p>
+        <ul class="faltan">
+          @for (d of i.coverage.daysMissing; track d) {
+            <li><a [routerLink]="rutaCenso" [queryParams]="rutaDeCierre(d)" [attr.data-testid]="'indicadores-cerrar-' + d">Cerrar censo del {{ fechaCorta(d) }}</a></li>
+          }
+        </ul>
+      </app-alert>
+    }
+
+    <div class="indicadores" data-testid="indicadores">
+      <app-card>
+        <p class="indicadores__periodo" data-testid="indicadores-calculo">
+          Período del {{ fechaCorta(i.period.from) }} al {{ fechaCorta(i.period.to) }} · {{ i.coverage.daysClosed }} de {{ i.days }} días cerrados · calculado el {{ fechaYHora(i.asOf) }} (hace {{ antiguedad() }}).
+        </p>
+
+        <ul class="kpis" aria-label="Indicadores principales">
+          <li><app-metric-card label="Ocupación" [value]="n(i.occupancyPct, ' %')" hint="Días-paciente ÷ días-cama disponibles" tone="info" data-testid="kpi-ocupacion" /></li>
+          <li><app-metric-card label="Promedio de estancia" [value]="n(i.alos, ' días')" hint="Días de estancia de los egresos ÷ egresos" data-testid="kpi-estancia" /></li>
+          <li><app-metric-card label="Giro de cama" [value]="n(i.bedTurnover)" hint="Egresos ÷ camas promedio" data-testid="kpi-giro" /></li>
+          <li><app-metric-card label="Intervalo de sustitución" [value]="n(i.turnoverInterval, ' días')" hint="(Días-cama − días-paciente) ÷ egresos" data-testid="kpi-sustitucion" /></li>
+        </ul>
+
+        <h2 class="seccion">Del período</h2>
+        <div class="tabla" role="region" tabindex="0" aria-label="Datos base del período">
+          <table data-testid="indicadores-base">
+            <caption class="solo-lectores">Datos base del período, sumados de los días cerrados con sus ajustes</caption>
+            <thead><tr><th scope="col">Dato</th><th scope="col" class="num">Valor</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Días-cama disponibles</th><td class="num">{{ n(i.bedDaysAvailable) }}</td></tr>
+              <tr><th scope="row">Días-paciente</th><td class="num">{{ n(i.patientDays) }}</td></tr>
+              <tr><th scope="row">Ingresos</th><td class="num">{{ n(i.admissions) }}</td></tr>
+              <tr><th scope="row">Egresos</th><td class="num">{{ n(i.discharges) }}</td></tr>
+              <tr><th scope="row">Días de estancia de los egresos</th><td class="num">{{ n(i.dischargeStayDays) }}</td></tr>
+              <tr><th scope="row">Camas promedio disponibles</th><td class="num">{{ n(i.avgBeds) }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="seccion">Por unidad</h2>
+        @if (i.byUnit && i.byUnit.length > 0) {
+          <div class="tabla" role="region" tabindex="0" aria-label="Indicadores por unidad">
+            <table data-testid="indicadores-unidades">
+              <caption class="solo-lectores">Indicadores por unidad en el período</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Unidad</th>
+                  <th scope="col" class="num">Ocupación</th>
+                  <th scope="col" class="num">Estancia (días)</th>
+                  <th scope="col" class="num">Giro</th>
+                  <th scope="col" class="num">Sustitución (días)</th>
+                  <th scope="col" class="num">Egresos</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (u of i.byUnit; track u.unit.id) {
+                  <tr [attr.data-testid]="'indicadores-unidad-' + u.unit.code">
+                    <th scope="row">{{ u.unit.name }}</th>
+                    <td class="num">{{ n(u.occupancyPct, ' %') }}</td>
+                    <td class="num">{{ n(u.alos) }}</td>
+                    <td class="num">{{ n(u.bedTurnover) }}</td>
+                    <td class="num">{{ n(u.turnoverInterval) }}</td>
+                    <td class="num">{{ n(u.discharges) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <h2 class="seccion">Rotación de cama</h2>
+        <p class="nota">Desde el egreso hasta que la cama vuelve a estar disponible (orden de limpieza inspeccionada), con el desglose de dónde se va el tiempo.</p>
+        <div class="tabla" role="region" tabindex="0" aria-label="Rotación de cama">
+          <table data-testid="indicadores-rotacion">
+            <caption class="solo-lectores">Rotación de cama en minutos</caption>
+            <thead>
+              <tr><th scope="col">Mediana (p50)</th><th scope="col">Percentil 90</th><th scope="col">Espera para empezar</th><th scope="col">Limpieza</th><th scope="col">Inspección</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ min(i.bedTurnaroundMinutes.p50) }}</td>
+                <td>{{ min(i.bedTurnaroundMinutes.p90) }}</td>
+                <td>{{ min(i.bedTurnaroundMinutes.waitToStart) }}</td>
+                <td>{{ min(i.bedTurnaroundMinutes.cleaning) }}</td>
+                <td>{{ min(i.bedTurnaroundMinutes.inspection) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="seccion">Prueba cruzada</h2>
+        @if (cruzadaFalla()) {
+          <app-alert tone="warning" title="La prueba cruzada se desvía" data-testid="indicadores-cruzada-aviso">
+            Recalculada desde el promedio de estancia y el giro, la ocupación daría {{ n(i.crossCheck.occupancyFromAlos, ' %') }}, un {{ n(desvio(), ' %') }} de diferencia. Suele deberse a pacientes que cruzan los bordes del período o a ajustes: es un aviso, no un bloqueo.
+          </app-alert>
+        } @else {
+          <p class="nota" data-testid="indicadores-cruzada">
+            Ocupación recalculada desde la estancia y el giro: {{ n(i.crossCheck.occupancyFromAlos, ' %') }} (diferencia {{ n(desvio(), ' %') }}). Cuadra con la calculada.
+          </p>
+        }
+      </app-card>
+    </div>
+  }
+</app-view-state-host>

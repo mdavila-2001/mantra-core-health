@@ -299,6 +299,8 @@ export interface PlacementIncident {
 
 export interface StayEncounter {
   readonly id: string;
+  /** SUPUESTO F3-7: el establecimiento de la internación; sin él se usa el elegido en pantalla. */
+  readonly siteId?: string;
   readonly episodeId: string | null;
   readonly patient: StayPatient;
   readonly status: AdtConcept;

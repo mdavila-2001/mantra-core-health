@@ -1,0 +1,47 @@
+<div class="compat" data-testid="compatibilidad" aria-live="polite">
+  @if (checking()) {
+    <app-alert tone="info" data-testid="compatibilidad-consultando">Comprobando si la cama es compatible…</app-alert>
+  } @else if (previewUnavailable()) {
+    <app-alert tone="info" title="La compatibilidad se verifica al confirmar" data-testid="compatibilidad-al-confirmar">
+      Esta vista previa no está disponible. El servidor comprueba la cama al confirmar y, si no es compatible, lo explica aquí.
+    </app-alert>
+  } @else if (result(); as r) {
+    @if (bloqueantes().length > 0) {
+      <app-alert tone="error" title="Esta cama no se puede asignar" data-testid="compatibilidad-bloqueante">
+        <ul class="compat__lista">
+          @for (v of bloqueantes(); track v.rule + v.detail) {
+            <li><strong>{{ regla(v) }}.</strong> {{ v.detail }}</li>
+          }
+        </ul>
+        <p class="compat__nota">Estas reglas no se pueden forzar. Elija otra cama.</p>
+      </app-alert>
+    }
+    @if (forzables().length > 0) {
+      <app-alert tone="warning" title="La cama no es compatible, pero se puede forzar" data-testid="compatibilidad-forzable">
+        <ul class="compat__lista">
+          @for (v of forzables(); track v.rule + v.detail) {
+            <li><strong>{{ regla(v) }}.</strong> {{ v.detail }}</li>
+          }
+        </ul>
+        @if (bloqueantes().length === 0) {
+          @if (forced()) {
+            <p class="compat__nota" data-testid="compatibilidad-forzada">
+              Se forzará con justificación y quedará un incidente de ubicación abierto.
+              <button app-button variant="ghost" size="sm" type="button" (clicked)="forceCleared.emit()">Quitar la justificación</button>
+            </p>
+          } @else if (canOverride()) {
+            <button app-button variant="outline" type="button" (clicked)="forceRequested.emit()" data-testid="compatibilidad-forzar">Forzar con justificación</button>
+            <p class="compat__nota">Pide una justificación de al menos 20 caracteres y deja un incidente de ubicación para revisar.</p>
+          } @else {
+            <p class="compat__nota" data-testid="compatibilidad-sin-permiso">
+              Solo la supervisión de enfermería puede forzar la compatibilidad. Elija otra cama o pida que lo autorice.
+            </p>
+          }
+        }
+      </app-alert>
+    }
+    @if (r.violations.length === 0) {
+      <app-alert tone="success" data-testid="compatibilidad-ok">La cama es compatible con la persona.</app-alert>
+    }
+  }
+</div>

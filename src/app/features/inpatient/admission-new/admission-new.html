@@ -1,0 +1,92 @@
+<app-page-header
+  title="Nuevo ingreso"
+  subtitle="Interne a una persona en una cama del establecimiento, o regístrela sin cama para asignarla después."
+  [breadcrumbs]="breadcrumbs"
+>
+  <app-site-switcher page-meta />
+</app-page-header>
+
+<app-view-state-host [state]="state()" (retry)="reintentar()" (refresh)="reintentar()">
+  @if (contexto()) {
+    <!-- Una sola tarjeta, centrada y a lo ancho, con el recorrido en pasos: regla
+         del 09/09/2026 (docs/components/composition-rules.md §5). -->
+    <div class="ingreso" data-testid="ingreso">
+      <app-adt-issue [state]="problema()" heading="No se pudo registrar el ingreso" />
+
+      <app-paginated-form
+        [paginas]="paginas()"
+        [form]="form"
+        label="Nuevo ingreso"
+        submitLabel="Registrar ingreso"
+        submitTestId="ingreso-registrar"
+        cancelLabel="Cancelar"
+        [pending]="enviando()"
+        (enviado)="submit()"
+        (cancelado)="cancelar()"
+        data-testid="ingreso-formulario"
+      >
+        <ng-template appCampoPersonalizado="patient">
+          <app-reference-combobox
+            label="Buscar paciente"
+            [selected]="paciente()"
+            [options]="candidatos()"
+            [loading]="buscando()"
+            placeholder="Nombre, código o documento"
+            emptyMessage="Ninguna persona coincide"
+            (searched)="buscarPaciente($event)"
+            (selectionChange)="elegirPaciente($event)"
+            data-testid="ingreso-buscar-paciente"
+          />
+          @if (errorDeBusqueda()) {
+            <app-alert tone="error" data-testid="ingreso-busqueda-fallida">No se pudo buscar. Reintente en un momento.</app-alert>
+          }
+        </ng-template>
+
+        <ng-template appCampoPersonalizado="bed">
+          <div class="ingreso__cama" data-testid="ingreso-paso-cama">
+            <app-segmented-control
+              ariaLabel="Qué hacer con la cama"
+              [options]="modos"
+              [value]="modo()"
+              (valueChange)="cambiarModo($event)"
+            />
+            @if (modo() === 'NONE') {
+              <app-alert tone="info" title="Queda pendiente de cama" data-testid="ingreso-sin-cama">
+                La internación se registra sin ubicación. Aparece en el censo vivo como «pendiente de cama» y se asigna desde el tablero cuando haya una.
+              </app-alert>
+            } @else {
+              <app-bed-picker [cells]="cells()" [value]="camaElegida()?.id ?? null" (picked)="elegirCama($event)" />
+              @if (camaElegida()) {
+                <app-compat-panel
+                  [result]="compat()"
+                  [checking]="comprobando()"
+                  [previewUnavailable]="sinVistaPrevia()"
+                  [canOverride]="puedeForzar()"
+                  [forced]="justificacion() !== null"
+                  (forceRequested)="forzar()"
+                  (forceCleared)="justificacion.set(null)"
+                />
+              }
+            }
+          </div>
+        </ng-template>
+
+        <ng-template appCampoPersonalizado="confirm">
+          <dl class="ingreso__resumen" data-testid="ingreso-resumen">
+            @for (fila of resumen(); track fila.rotulo) {
+              <div>
+                <dt>{{ fila.rotulo }}</dt>
+                <dd>{{ fila.valor }}</dd>
+              </div>
+            }
+          </dl>
+          @if (justificacion() !== null) {
+            <app-alert tone="warning" title="Ingreso con la compatibilidad forzada" data-testid="ingreso-forzado">
+              Quedará un incidente de ubicación abierto con esta justificación: «{{ justificacion() }}».
+            </app-alert>
+          }
+        </ng-template>
+      </app-paginated-form>
+    </div>
+  }
+</app-view-state-host>

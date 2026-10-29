@@ -1,0 +1,50 @@
+:host {
+  display: inline-flex;
+}
+
+.bed-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--tono-bd);
+  border-radius: var(--r-full);
+  background-color: var(--tono-bg);
+  color: var(--tono-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+:host([data-tone='success']) { --tono-bg: var(--st-success-bg); --tono-fg: var(--st-success-fg); --tono-bd: var(--st-success-bd); }
+:host([data-tone='warning']) { --tono-bg: var(--st-warning-bg); --tono-fg: var(--st-warning-fg); --tono-bd: var(--st-warning-bd); }
+:host([data-tone='error']) { --tono-bg: var(--st-error-bg); --tono-fg: var(--st-error-fg); --tono-bd: var(--st-error-bd); }
+:host([data-tone='info']) { --tono-bg: var(--st-info-bg); --tono-fg: var(--st-info-fg); --tono-bd: var(--st-info-bd); }
+:host([data-tone='primary']) { --tono-bg: var(--st-primary-bg); --tono-fg: var(--st-primary-fg); --tono-bd: var(--st-primary-bd); }
+:host([data-tone='secondary']) { --tono-bg: var(--st-secondary-bg); --tono-fg: var(--st-secondary-fg); --tono-bd: var(--st-secondary-bd); }
+
+/* Un rayado por estado: el patrón dice lo mismo que el texto cuando el color no se distingue. */
+.bed-status[data-pattern='occupied'] {
+  background-image: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--tono-fg) 14%, transparent) 5px 6px);
+}
+.bed-status[data-pattern='reserved'] {
+  background-image: radial-gradient(color-mix(in srgb, var(--tono-fg) 28%, transparent) 1px, transparent 1.4px);
+  background-size: 6px 6px;
+}
+.bed-status[data-pattern='housekeeping'] {
+  background-image: repeating-linear-gradient(0deg, transparent 0 4px, color-mix(in srgb, var(--tono-fg) 18%, transparent) 4px 5px);
+}
+.bed-status[data-pattern='contaminated'] {
+  background-image: repeating-linear-gradient(45deg, transparent 0 4px, color-mix(in srgb, var(--tono-fg) 26%, transparent) 4px 6px);
+}
+.bed-status[data-pattern='isolated'] {
+  background-image: repeating-linear-gradient(90deg, transparent 0 5px, color-mix(in srgb, var(--tono-fg) 20%, transparent) 5px 6px);
+}
+.bed-status[data-pattern='closed'] {
+  background-image: repeating-linear-gradient(-45deg, transparent 0 6px, color-mix(in srgb, var(--tono-fg) 12%, transparent) 6px 7px);
+}
+
+.bed-status__glifo {
+  flex: none;
+}

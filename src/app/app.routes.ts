@@ -722,6 +722,45 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Internación / ADT (F3). Una tarjeta ancha con pasos (ingreso) o con pestañas
+    // (ficha de internación), regla del 09/09/2026. Quién puede operar camas no
+    // es un rol del token: las secciones se ofrecen a toda sesión con organización
+    // y es la API quien contesta 403 (pantalla S5).
+    path: 'inpatient/admissions/new',
+    title: `${APP_TITLE} - Nuevo ingreso`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/inpatient/admission-new/admission-new')
+        .then((m) => m.AdmissionNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'inpatient/stays/:encounterId',
+    title: `${APP_TITLE} - Ficha de internación`,
+    loadComponent: () =>
+      import('./features/inpatient/stay/stay')
+        .then((m) => m.Stay)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'inpatient/census',
+    title: `${APP_TITLE} - Censo diario`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/inpatient/census/census')
+        .then((m) => m.Census)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'inpatient/indicators',
+    title: `${APP_TITLE} - Indicadores de camas`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/inpatient/indicators/indicators')
+        .then((m) => m.Indicators)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'administration/patients/merge',
     title: `${APP_TITLE} - Fusionar duplicados`,
     canActivate: [seccionRolesGuard],

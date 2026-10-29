@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.acciones__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.acciones__botones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.acciones__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.acciones__enlace {
+  color: var(--brand-primary);
+  font-weight: 600;
+  min-block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+}

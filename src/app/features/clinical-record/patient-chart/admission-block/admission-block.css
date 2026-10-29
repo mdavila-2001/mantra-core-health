@@ -84,3 +84,22 @@
   color: var(--text-muted);
   font-size: var(--fs-overline);
 }
+
+.internacion__cama {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.internacion__enlace {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.internacion__enlace--accion {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  justify-self: start;
+}

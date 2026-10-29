@@ -1,0 +1,121 @@
+<app-content-dialog [heading]="titulo()" closeLabel="Cancelar" size="lg" (closed)="closed.emit()">
+  <div class="accion" [attr.data-testid]="'accion-' + kind()">
+    <app-adt-issue [state]="problema()" [heading]="'No se pudo completar: ' + titulo().toLowerCase()" />
+    @if (sinPermiso(); as texto) {
+      <app-alert tone="error" title="Sin permiso para esta acción" role="alert" data-testid="accion-sin-permiso">{{ texto }}</app-alert>
+    }
+    @if (versionVieja()) {
+      <app-alert tone="warning" title="La internación cambió" data-testid="accion-version-vieja">
+        Otra persona la modificó mientras la miraba. Cierre y vuelva a abrirla para ver la versión vigente.
+      </app-alert>
+    }
+
+    @if (encuentro(); as e) {
+      <p class="accion__quien" data-testid="accion-paciente">
+        <strong>{{ e.patient.name }}</strong> · {{ e.patient.ageYears }} años
+        @if (estancia()?.currentBed) {
+          · {{ textoDeCama(estancia()!.currentBed) }}
+        } @else {
+          · pendiente de cama
+        }
+      </p>
+    }
+
+    @switch (kind()) {
+      @case ('assign') { <ng-container *ngTemplateOutlet="asignar" /> }
+      @case ('reserve') { <ng-container *ngTemplateOutlet="asignar" /> }
+      @case ('transfer') {
+        <h3 class="accion__paso">1 · Cama de destino</h3>
+        <app-bed-picker [cells]="camas()" [value]="camaElegida()?.id ?? null" [excludeId]="estancia()?.currentBed?.id ?? null" (picked)="elegirCama($event)" />
+        @if (camaElegida()) {
+          <app-compat-panel [result]="compat()" [checking]="comprobando()" [canOverride]="puedeForzar()" [forced]="justificacion() !== null" (forceRequested)="forzar()" (forceCleared)="justificacion.set(null)" />
+        }
+        <h3 class="accion__paso">2 · Motivo y hora</h3>
+        <div class="accion__campos">
+          <app-form-field label="Motivo del traslado" [required]="true">
+            <app-select [options]="motivos" [value]="motivo()" (valueChange)="motivo.set($event)" ariaLabel="Motivo del traslado" data-testid="traslado-motivo" />
+          </app-form-field>
+          <app-form-field label="Hora del traslado" hint="Si no la cambia, es ahora.">
+            <app-date-picker mode="date-time" [(value)]="cuando" [maxDate]="ahora" />
+          </app-form-field>
+        </div>
+        <p class="accion__efecto" data-testid="traslado-efecto">
+          Al confirmar, en una sola operación: se cierra la cama actual, se abre la de destino, la actual queda sucia y se crea su orden de limpieza.
+        </p>
+      }
+      @case ('swap') {
+        <h3 class="accion__paso">1 · Cama con la que se intercambia</h3>
+        <app-bed-picker mode="occupied" [cells]="camas()" [value]="camaElegida()?.id ?? null" [excludeId]="estancia()?.currentBed?.id ?? cell()?.id ?? null" (picked)="elegirCama($event)" />
+        @if (compat()) {
+          <app-compat-panel [result]="compat()" [canOverride]="puedeForzar()" [forced]="justificacion() !== null" (forceRequested)="forzar()" (forceCleared)="justificacion.set(null)" />
+        }
+        <h3 class="accion__paso">2 · Motivo</h3>
+        <app-form-field label="Motivo del intercambio" [required]="true">
+          <app-textarea [(value)]="razon" [rows]="3" ariaLabel="Motivo del intercambio" data-testid="intercambio-motivo" />
+        </app-form-field>
+        <p class="accion__efecto">Las dos personas cambian de cama en una sola operación; ninguna cama queda libre, así que no se genera limpieza.</p>
+      }
+      @case ('discharge') {
+        <div class="accion__campos">
+          <app-form-field label="Disposición del egreso" [required]="true">
+            <app-select [options]="disposiciones" [value]="disposicion()" (valueChange)="disposicion.set($event)" placeholder="Cómo egresa" ariaLabel="Disposición del egreso" data-testid="egreso-disposicion" />
+          </app-form-field>
+          <app-form-field label="Hora del egreso" [required]="true">
+            <app-date-picker mode="date-time" [(value)]="cuando" [maxDate]="ahora" />
+          </app-form-field>
+        </div>
+        <app-form-field label="Observaciones" hint="Opcional.">
+          <app-textarea [(value)]="razon" [rows]="2" ariaLabel="Observaciones del egreso" data-testid="egreso-observaciones" />
+        </app-form-field>
+        <app-switch label="Cerrar también el episodio" [(checked)]="cerrarEpisodio" />
+        <p class="accion__efecto" data-testid="egreso-efecto">
+          Al confirmar se cierra la ubicación y la internación. La cama queda sucia y se crea la orden de limpieza (terminal si hubo aislamiento).
+        </p>
+      }
+      @case ('cancel') {
+        <p>Se va a cancelar: <strong>{{ locationLabel() }}</strong>.</p>
+        <app-form-field label="Motivo de la cancelación" [required]="true">
+          <app-textarea [(value)]="razon" [rows]="3" ariaLabel="Motivo de la cancelación" data-testid="cancelar-motivo" />
+        </app-form-field>
+      }
+    }
+
+    <div class="accion__pie">
+      <button app-button variant="outline" type="button" (clicked)="closed.emit()">Cancelar</button>
+      <button app-button variant="primary" type="button" [disabled]="!listo()" [isLoading]="enviando()" (clicked)="confirmar()" [attr.data-testid]="'accion-confirmar'">
+        {{ titulo() }}
+      </button>
+    </div>
+  </div>
+
+  <ng-template #asignar>
+    @if (eligePersona()) {
+      <h3 class="accion__paso">1 · Persona pendiente de cama</h3>
+      @if (pendientes().length === 0) {
+        <app-alert tone="info" title="No hay personas pendientes de cama" data-testid="accion-sin-pendientes">
+          Ingrese a la persona primero desde «Nuevo ingreso» (puede quedar sin cama) y vuelva aquí.
+        </app-alert>
+      } @else {
+        <ul class="accion__personas">
+          @for (p of pendientes(); track p.encounterId) {
+            <li>
+              <button type="button" class="persona" [class.persona--elegida]="p.encounterId === personaElegida()" [attr.aria-pressed]="p.encounterId === personaElegida()" (click)="elegirPersona(p.encounterId)" [attr.data-testid]="'persona-' + p.encounterId">
+                <strong>{{ p.patient.name }}</strong>
+                <span>{{ p.patient.ageYears }} años · {{ p.levelOfCare.display }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+    @if (cell() === null) {
+      <h3 class="accion__paso">{{ eligePersona() ? '2 · Cama' : 'Cama' }}</h3>
+      <app-bed-picker [cells]="camas()" [value]="camaElegida()?.id ?? null" (picked)="elegirCama($event)" />
+    } @else {
+      <p class="accion__quien" data-testid="accion-cama-fija">Cama <strong>{{ cell()!.code }}</strong> · {{ bedPathText(cell()!.path) }}</p>
+    }
+    @if (destino() && encuentro()) {
+      <app-compat-panel [result]="compat()" [checking]="comprobando()" [canOverride]="puedeForzar()" [forced]="justificacion() !== null" (forceRequested)="forzar()" (forceCleared)="justificacion.set(null)" />
+    }
+  </ng-template>
+</app-content-dialog>

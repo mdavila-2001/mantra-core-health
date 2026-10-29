@@ -154,6 +154,13 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: ['lab-visits', 'my-visits'],
   },
   {
+    label: 'Internación',
+    group: 'Atención',
+    icon: 'hospital',
+    // Franja F3 (ADT): ingresar, el censo de cada día y los indicadores que salen de él.
+    paths: ['inpatient/admissions/new', 'inpatient/census', 'inpatient/indicators'],
+  },
+  {
     label: 'Formularios y referencia',
     group: 'Atención',
     icon: 'clipboard',

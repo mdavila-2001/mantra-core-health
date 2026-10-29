@@ -1,0 +1,121 @@
+:host {
+  display: block;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
+.barra__campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 11rem;
+}
+
+.barra__campo--unidad {
+  min-inline-size: 14rem;
+}
+
+.barra__rotulo {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.indicadores {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.indicadores__periodo,
+.nota {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+  margin: 0 0 var(--sp-6);
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 560px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.seccion {
+  margin: var(--sp-6) 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.faltan {
+  margin: var(--sp-2) 0 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.faltan a {
+  font-weight: 600;
+}
+
+.tabla {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.tabla table {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th,
+.tabla td {
+  padding: var(--sp-3) var(--sp-4);
+  text-align: start;
+  border-block-end: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.tabla thead th {
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+}
+
+.tabla tbody th {
+  font-weight: 500;
+}
+
+.tabla .num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.solo-lectores {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

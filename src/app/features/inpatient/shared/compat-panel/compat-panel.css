@@ -1,0 +1,20 @@
+:host {
+  display: block;
+}
+
+.compat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.compat__lista {
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.compat__nota {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
