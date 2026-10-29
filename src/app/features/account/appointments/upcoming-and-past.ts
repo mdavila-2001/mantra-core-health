@@ -46,6 +46,12 @@ export function splitUpcomingAndPast<T extends TimedItem>(
   return { upcoming, past };
 }
 
+/** Si la cita ya terminó a `now`: la que va a «Anteriores». */
+export function hasEnded(item: TimedItem, now: Date): boolean {
+  const end = item.hasta ?? item.cuando;
+  return end instanceof Date && end.getTime() < now.getTime();
+}
+
 function isUpcoming(item: TimedItem, now: Date): boolean {
   const end = item.hasta ?? item.cuando;
   return end === null || end.getTime() >= now.getTime();
