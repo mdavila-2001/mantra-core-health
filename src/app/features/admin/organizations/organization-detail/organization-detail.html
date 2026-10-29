@@ -1,148 +1,164 @@
 @let ficha = organizacion();
 
 <app-page-header
-  [title]="ficha.status === 'ready' ? ficha.data.legalName : 'Organización'"
+  [title]="ficha.status === 'ready' || ficha.status === 'stale' ? ficha.data.legalName : 'Organización'"
   subtitle="Sus sucursales, su plantilla y las sub-organizaciones que dependen de ella."
   [breadcrumbs]="breadcrumbs()"
 >
+  <!-- Acciones en la ranura `page-actions`, presentes en todos los anchos. La
+       principal es la de la pestaña abierta; antes «Nueva sucursal» y las
+       otras dos sólo existían como salida de un estado vacío. -->
+  @if (accionPrincipal(); as principal) {
+    <a
+      app-button
+      page-actions
+      variant="primary"
+      data-testid="organizacion-accion-principal"
+      [routerLink]="principal.route"
+    >
+      {{ principal.label }}
+    </a>
+  }
   @if (rutaDeVerificacion(); as rutaVerificar) {
-    <a app-button page-actions variant="primary" [routerLink]="rutaVerificar">
+    <a app-button page-actions variant="secondary" [routerLink]="rutaVerificar">
       Verificar
     </a>
   }
-  <a app-button page-actions variant="secondary" [routerLink]="rutaDelListado">
+  <a app-button page-actions variant="ghost" [routerLink]="rutaDelListado">
     Volver al listado
   </a>
 </app-page-header>
 
-<!-- Ficha de ámbito: el `tenantId` es obligatorio en los tres endpoints, así
-     que es el asunto de la pantalla y no un filtro. Va arriba, una sola vez, y
-     no se repite como columna en ninguna de las tres tablas. -->
-@switch (ficha.status) {
-  @case ('ready') {
-    <section class="organizacion__ambito" aria-label="Organización">
-      <dl class="organizacion__datos">
-        <div>
-          <dt>Código</dt>
-          <dd class="organizacion__codigo">{{ ficha.data.code }}</dd>
-        </div>
-        @if (ficha.data.tradeName) {
-          <div>
-            <dt>Nombre comercial</dt>
-            <dd>{{ ficha.data.tradeName }}</dd>
-          </div>
-        }
-        <div>
-          <dt>Tipo</dt>
-          <dd>{{ etiquetaDe(ficha.data.tenantTypeConceptId)?.display ?? '—' }}</dd>
-        </div>
-        <div>
-          <dt>Estado</dt>
-          <dd>
-            <app-badge [variant]="varianteDe(ficha.data.statusConceptId)">
-              {{ etiquetaDe(ficha.data.statusConceptId)?.display ?? '—' }}
-            </app-badge>
-          </dd>
-        </div>
-        <div>
-          <dt>Verificación</dt>
-          <dd>
-            <app-badge [variant]="varianteDe(ficha.data.verificationStatusConceptId)">
-              {{ etiquetaDe(ficha.data.verificationStatusConceptId)?.display ?? '—' }}
-            </app-badge>
-          </dd>
-        </div>
-        <div>
-          <dt>Alta</dt>
-          <dd>{{ ficha.data.createdAt | date: 'dd/MM/yyyy' }}</dd>
-        </div>
-      </dl>
-    </section>
-  }
-  @case ('error') {
-    <!-- Un 403 acá significa «no pertenecés a esta organización» y un 404,
-         «no existe». El backend los distingue a propósito para que el código de
-         error no sirva de sonda; la pantalla los muestra tal cual llegan. -->
-    <section class="organizacion__ambito organizacion__ambito--error" role="alert">
-      <p>{{ ficha.message }}</p>
-      <button app-button variant="secondary" type="button" (click)="recargar()">
-        Reintentar
-      </button>
-    </section>
-  }
-  @default {
-    <section class="organizacion__ambito" aria-busy="true">
+<!-- UNA tarjeta con pestañas (regla del 09/09/2026): la ficha de ámbito arriba
+     y, debajo, las tres listas del mismo registro. El `tenantId` es obligatorio
+     en los tres endpoints, así que es el asunto de la pantalla y no un filtro:
+     va una sola vez y no se repite como columna. -->
+<app-card class="organizacion__tarjeta">
+  <!-- Los nueve estados, dibujados por el organismo compartido: un 403, un 404
+       o un corte ya no dejan «Cargando…» para siempre, el reintento tiene su
+       estilo y el S9 muestra el código de soporte. -->
+  <app-view-state-host [state]="ficha" (retry)="recargar()" (refresh)="recargar()">
+    <div vsh-skeleton aria-busy="true">
       <app-loading-state class="organizacion__cargando" message="Cargando la organización…" />
-    </section>
-  }
-}
-
-<app-tabs>
-  <app-tab label="Sucursales">
-    <div class="organizacion__acciones-sucursal">
-      <button
-        app-button
-        type="button"
-        variant="secondary"
-        size="sm"
-        [disabled]="!puedeSubirEnLote() || creandoLote()"
-        data-testid="organizacion-subir-sucursales"
-        (clicked)="abrirCargaEnLote()"
-      >
-        Subir sucursales en lote (CSV)
-      </button>
     </div>
 
-    @if (rechazosDelLote().length > 0) {
-      <app-alert
-        tone="warning"
-        title="Estas sucursales no se crearon"
-        data-testid="organizacion-lote-rechazos"
-      >
-        <ul class="organizacion__rechazos">
-          @for (rechazo of rechazosDelLote(); track rechazo.nombre) {
-            <li><strong>{{ rechazo.nombre }}:</strong> {{ rechazo.motivo }}</li>
+    @if (ficha.status === 'ready' || ficha.status === 'stale') {
+      <section class="organizacion__ambito" aria-label="Organización">
+        <dl class="organizacion__datos">
+          <div>
+            <dt>Código</dt>
+            <dd class="organizacion__codigo">{{ ficha.data.code }}</dd>
+          </div>
+          @if (ficha.data.tradeName) {
+            <div>
+              <dt>Nombre comercial</dt>
+              <dd>{{ ficha.data.tradeName }}</dd>
+            </div>
           }
-        </ul>
-      </app-alert>
+          <div>
+            <dt>Tipo</dt>
+            <dd>{{ etiquetaDe(ficha.data.tenantTypeConceptId)?.display ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              <app-badge [variant]="varianteDe(ficha.data.statusConceptId)">
+                {{ etiquetaDe(ficha.data.statusConceptId)?.display ?? '—' }}
+              </app-badge>
+            </dd>
+          </div>
+          <div>
+            <dt>Verificación</dt>
+            <dd>
+              <app-badge [variant]="varianteDe(ficha.data.verificationStatusConceptId)">
+                {{ etiquetaDe(ficha.data.verificationStatusConceptId)?.display ?? '—' }}
+              </app-badge>
+            </dd>
+          </div>
+          <div>
+            <dt>Alta</dt>
+            <dd>{{ ficha.data.createdAt | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+        </dl>
+      </section>
     }
+  </app-view-state-host>
 
-    <app-data-table
-      [state]="sucursales()"
-      [columns]="columnasDeSucursal()"
-      [trackBy]="porId"
-      caption="Sucursales de la organización"
-      (retry)="recargar()"
-    />
-    <!-- Sin pie de paginación a propósito: `GET /tenants/{id}/branches`
-         devuelve todas en una respuesta. Prometer «Siguientes» sobre un
-         endpoint que no lo hace sería mentir. -->
-    <p class="organizacion__nota">
-      El endpoint devuelve las sucursales de esta organización en una sola
-      respuesta: no pagina.
-    </p>
-  </app-tab>
+  <!-- Sin ficha no hay pestañas: las tres listas cuelgan del mismo `tenantId`
+       y fallarían igual (403/404) o sin sentido. -->
+  @if (fichaConDatos()) {
+    <app-tabs [(selectedIndex)]="pestana">
+      <app-tab label="Sucursales">
+        <div class="organizacion__acciones-sucursal">
+          <button
+            app-button
+            type="button"
+            variant="secondary"
+            size="sm"
+            [disabled]="!puedeSubirEnLote() || creandoLote()"
+            data-testid="organizacion-subir-sucursales"
+            (clicked)="abrirCargaEnLote()"
+          >
+            Subir sucursales en lote (CSV)
+          </button>
+        </div>
 
-  <app-tab label="Plantilla">
-    <app-data-table
-      [state]="membresias()"
-      [columns]="columnasDeMembresia()"
-      [trackBy]="porId"
-      caption="Personas con membresía en la organización"
-      (retry)="recargar()"
-    />
-  </app-tab>
+        @if (rechazosDelLote().length > 0) {
+          <app-alert
+            tone="warning"
+            title="Estas sucursales no se crearon"
+            data-testid="organizacion-lote-rechazos"
+          >
+            <ul class="organizacion__rechazos">
+              @for (rechazo of rechazosDelLote(); track rechazo.nombre) {
+                <li><strong>{{ rechazo.nombre }}:</strong> {{ rechazo.motivo }}</li>
+              }
+            </ul>
+          </app-alert>
+        }
 
-  <app-tab label="Sub-organizaciones">
-    <app-data-table
-      [state]="hijas()"
-      [columns]="columnasDeHija()"
-      [trackBy]="porId"
-      caption="Organizaciones que dependen de esta"
-      (retry)="recargar()"
-    />
-  </app-tab>
-</app-tabs>
+        <app-data-table
+          [state]="sucursales()"
+          [columns]="columnasDeSucursal()"
+          [trackBy]="porId"
+          caption="Sucursales de la organización"
+          (retry)="recargar()"
+        />
+        <!-- Sin pie de paginación a propósito: `GET /tenants/{id}/branches`
+             devuelve todas en una respuesta. Prometer «Siguientes» sobre un
+             endpoint que no lo hace sería mentir. -->
+        <p class="organizacion__nota">
+          El endpoint devuelve las sucursales de esta organización en una sola
+          respuesta: no pagina.
+        </p>
+      </app-tab>
+
+      <app-tab label="Plantilla">
+        <app-data-table
+          [state]="membresias()"
+          [columns]="columnasDeMembresia()"
+          [trackBy]="porId"
+          caption="Personas con membresía en la organización"
+          [cursor]="cursorDePlantilla()"
+          (cursorChanged)="moverPlantilla($event)"
+          (retry)="recargarPlantilla()"
+        />
+      </app-tab>
+
+      <app-tab label="Sub-organizaciones">
+        <app-data-table
+          [state]="hijas()"
+          [columns]="columnasDeHija()"
+          [trackBy]="porId"
+          caption="Organizaciones que dependen de esta"
+          [cursor]="cursorDeHijas()"
+          (cursorChanged)="moverHijas($event)"
+          (retry)="recargarHijas()"
+        />
+      </app-tab>
+    </app-tabs>
+  }
+</app-card>
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 
@@ -171,6 +187,18 @@
 
 <ng-template #celdaAltaSucursal let-sucursal>
   {{ sucursal.createdAt | date: 'dd/MM/yyyy' }}
+</ng-template>
+
+<!-- La cuenta se muestra por su nombre. Si la API no deja leerlo (esa lectura
+     es de SECURITY_ADMIN) se dice, y el uuid queda como pista secundaria
+     recortada, no como si fuera el dato. -->
+<ng-template #celdaPersona let-membresia>
+  @if (nombreDe(membresia.userId); as nombre) {
+    <span class="organizacion__nombre">{{ nombre }}</span>
+  } @else {
+    <span class="organizacion__nombre organizacion__nombre--sin-dato">Nombre no disponible</span>
+  }
+  <span class="organizacion__secundario">Cuenta {{ membresia.userId.slice(0, 8) }}</span>
 </ng-template>
 
 <ng-template #celdaRol let-membresia>

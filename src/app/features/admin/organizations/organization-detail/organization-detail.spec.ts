@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionStore } from '../../../../core/auth/session.store';
+import { AuthzAdminClient } from '../../../../core/data-access/authz-admin/authz-admin.client';
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
 import type {
   BranchListItem,
@@ -85,6 +86,7 @@ describe('OrganizationDetail · sucursales en lote', () => {
       providers: [
         provideRouter([]),
         { provide: DirectoryClient, useValue: directory },
+        { provide: AuthzAdminClient, useValue: { displayNameOf: () => of('Ana Pérez') } },
         { provide: TerminologyClient, useValue: { readConceptLabels: () => of(new Map()) } },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
         { provide: SessionStore, useValue: { roles: signal([]) } },

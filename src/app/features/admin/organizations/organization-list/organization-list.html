@@ -32,6 +32,8 @@
   [columns]="columnas()"
   [trackBy]="porId"
   [rowLabel]="nombreDeOrganizacion"
+  rowNavigable
+  (rowActivated)="abrir($event)"
   caption="Organizaciones registradas en la plataforma"
   [cursor]="cursor()"
   (cursorChanged)="mover($event)"
@@ -40,7 +42,16 @@
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaOrganizacion let-organizacion>
-  <span class="organizaciones__nombre">{{ organizacion.legalName }}</span>
+  <!-- El enlace real: el clic en la fila es comodidad de puntero, pero el
+       teclado, el lector de pantalla y «abrir en pestaña nueva» necesitan un
+       `<a>`. Antes el listado no llevaba a ninguna parte. -->
+  <a
+    app-link
+    class="organizaciones__nombre"
+    [routerLink]="rutaDeFicha(organizacion.id)"
+    [attr.data-testid]="'organizacion-abrir-' + organizacion.code"
+    >{{ organizacion.legalName }}</a
+  >
   @if (organizacion.tradeName) {
     <span class="organizaciones__comercial">{{ organizacion.tradeName }}</span>
   }

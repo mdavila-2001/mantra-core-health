@@ -29,16 +29,6 @@
   border-radius: var(--r-md);
 }
 
-.organizacion__ambito--error {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-5);
-  background: var(--st-error-bg);
-  color: var(--st-error-fg);
-  border-color: var(--st-error-bd);
-}
-
 .organizacion__datos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -107,4 +97,21 @@
   display: inline-block;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
+}
+
+/* La ficha va dentro de la tarjeta única: la tarjeta pone el marco, y el ámbito
+   —que sigue siendo un bloque inset— no repite borde exterior pegado al de ella. */
+.organizacion__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.organizacion__tarjeta .organizacion__ambito {
+  margin-block-end: var(--sp-6);
+}
+
+.organizacion__nombre--sin-dato {
+  color: var(--text-secondary);
+  font-style: italic;
 }

@@ -204,4 +204,18 @@ describe('OrganizationList', () => {
 
     expect(estado().status).toBe('offline');
   });
+
+  /**
+   * El defecto: el listado mostraba cada organización como texto y no llevaba a
+   * ninguna parte. La ficha existía, pero sólo se llegaba tipeando la URL.
+   */
+  it('el nombre de cada organización es un enlace real a su ficha', () => {
+    responder([FILA]);
+
+    const enlace = (harness.routeNativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-testid="organizacion-abrir-FARMACIA-SUR"]',
+    );
+
+    expect(enlace?.getAttribute('href')).toBe('/administration/organizations/t-1');
+  });
 });
