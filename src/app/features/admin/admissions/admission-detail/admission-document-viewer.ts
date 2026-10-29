@@ -60,7 +60,7 @@ export function safeDownloadName(name: string | null | undefined, fallback = 'do
     // eslint-disable-next-line no-control-regex
     .replace(/[\\/:*?"<>|\u0000-\u001f\u007f]+/g, '-')
     .replace(/\.{2,}/g, '.')
-    .replace(/^[\s.\-]+|[\s.\-]+$/g, '')
+    .replace(/^[\s.-]+|[\s.-]+$/g, '')
     .slice(0, 120);
   return limpio === '' ? fallback : limpio;
 }
@@ -242,7 +242,7 @@ export class AdmissionDocumentViewer {
    */
   private async show(blob: Blob): Promise<void> {
     const token = ++this.showToken;
-    let real: SafeDocumentType | null = null;
+    let real: SafeDocumentType | null;
     try {
       real = sniffDocumentType(await readHead(blob));
     } catch {
