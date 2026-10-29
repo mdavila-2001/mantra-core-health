@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
 import {
   ROLES_ROUTE_DATA,
   SECTION_ROUTE_DATA,
@@ -157,12 +158,34 @@ describe('rutas del armazón', () => {
       return section !== undefined && restringePorRol(section);
     });
 
+    /**
+     * Pantallas que la sección cerraría de más y llevan un guard propio, más
+     * angosto que «nada» y más ancho que el de la sección: la API las abre al
+     * OWNER/ADMIN de la organización (`assertCanAdminister`) y no sólo a
+     * `SECURITY_ADMIN`. Siguen guardadas: cambian de guard, no lo pierden.
+     */
+    const CON_GUARD_PROPIO: Readonly<Record<string, unknown>> = {
+      'administration/organizations/:tenantId/branches/new': organizacionAdministrableGuard,
+      'administration/organizations/:tenantId/memberships/new': organizacionAdministrableGuard,
+    };
+
     it('lo lleva toda pantalla hija cuya sección declara roles', () => {
       const destapadas = hijasDeSeccionConRoles
         .filter((r) => !SIN_GUARD_A_PROPOSITO.includes(r.path ?? ''))
+        .filter((r) => CON_GUARD_PROPIO[r.path ?? ''] === undefined)
         .filter((r) => !(r.canActivate ?? []).includes(seccionRolesGuard));
 
       expect(destapadas.map((r) => r.path)).toEqual([]);
+    });
+
+    it('las altas de sucursal y membresía llevan el guard de la organización, no el de sección', () => {
+      for (const [path, guard] of Object.entries(CON_GUARD_PROPIO)) {
+        const ruta = hijas.find((r) => r.path === path);
+
+        expect(ruta, path).toBeDefined();
+        expect(ruta?.canActivate ?? [], path).toContain(guard);
+        expect(ruta?.canActivate ?? [], path).not.toContain(seccionRolesGuard);
+      }
     });
 
     it('las excepciones existen, cuelgan de una sección con roles y siguen sin guard', () => {
@@ -243,8 +266,28 @@ describe('rutas del armazón', () => {
 
     for (const redireccion of redirecciones) {
       expect(redireccion.pathMatch, redireccion.path).toBe('full');
-      expect(destinos, redireccion.path).toContain(redireccion.redirectTo);
+      // La query no es parte del destino: `?tab=memberships` abre una pestaña
+      // de una ruta que tiene que existir igual.
+      expect(destinos, redireccion.path).toContain(redireccion.redirectTo.split('?')[0]);
     }
+  });
+
+  it('«my-organizations» abre «Organización médica» en la pestaña «Mis vinculaciones»', async () => {
+    const vieja = [...hijas, ...routes].find((r) => r.path === 'my-organizations');
+    expect(vieja?.redirectTo).toBe('/administration/medical-organization?tab=memberships');
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          { path: 'my-organizations', pathMatch: 'full', redirectTo: vieja?.redirectTo as string },
+          { path: 'administration/medical-organization', children: [] },
+        ]),
+      ],
+    });
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/my-organizations');
+
+    expect(router.url).toBe('/administration/medical-organization?tab=memberships');
   });
 
   /**

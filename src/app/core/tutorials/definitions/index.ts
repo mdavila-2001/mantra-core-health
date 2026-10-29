@@ -375,7 +375,9 @@ const ORGANIZACIONES: TutorialDefinition = {
   title: 'Vincularte a una organización',
   description: 'Pedir una vinculación y entender qué implica (y qué no).',
   category: 'Administración',
-  route: '/administration/medical-organization',
+  // Directo a la pestaña: el tutorial habla de «Mis vinculaciones», y sin el
+  // parámetro abría el panel en «Resumen», donde nada de lo que dice está.
+  route: '/administration/medical-organization?tab=memberships',
   roles: ['PRACTITIONER'],
   estimatedMinutes: 2,
   level: 'inicial',

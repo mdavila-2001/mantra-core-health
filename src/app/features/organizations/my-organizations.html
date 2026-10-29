@@ -1,6 +1,10 @@
 @if (!embedded()) {
+  <!-- «Mis vinculaciones» y no «Mis organizaciones»: ese rótulo es desde el
+       19/09/2026 el de `administration/my-practice` (dónde atiende), y esta
+       pantalla es la pestaña «Mis vinculaciones» del panel. Dos destinos con
+       el mismo nombre eran dos respuestas a «¿dónde atiendo?». -->
   <app-page-header
-    title="Mis organizaciones"
+    title="Mis vinculaciones"
     subtitle="Dónde tenés una vinculación, y pedir una nueva"
   />
 
@@ -26,6 +30,16 @@
 
 <h2 class="titulo-de-seccion">Pedir una vinculación</h2>
 <app-card>
+  @if (errorDeOrganizaciones(); as mensaje) {
+    <app-alert tone="error" class="alerta-de-formulario" data-testid="mis-vinculaciones-orgs-error">
+      No pudimos traer las organizaciones disponibles. {{ mensaje }}
+      <div alert-actions>
+        <button app-button variant="outline" size="sm" (clicked)="cargarOrganizaciones()">
+          Reintentar
+        </button>
+      </div>
+    </app-alert>
+  }
   @if (errorDeSolicitud(); as mensaje) {
     <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
   }
@@ -61,7 +75,7 @@
 
 <!-- El organismo de tabla del sistema, en vez de la lista de tarjetas que el
      propietario marcó como «totalmente detonada» (2026-09-10). -->
-@if (filas().length === 0 && !cargandoVinculaciones()) {
+@if (sinVinculaciones()) {
   <app-empty-state
     title="Todavía no tenés vinculaciones"
     description="Pedí una arriba para empezar."
@@ -73,6 +87,7 @@
     [trackBy]="porId"
     caption="Tus vinculaciones con organizaciones"
     data-testid="mis-vinculaciones"
+    (retry)="reintentarVinculaciones()"
   />
 }
 
