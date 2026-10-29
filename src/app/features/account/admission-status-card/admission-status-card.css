@@ -79,3 +79,17 @@
   gap: var(--sp-3);
   color: var(--text-secondary);
 }
+
+.verificacion__retiro {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.verificacion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

@@ -52,8 +52,9 @@ export function canReadAdmissionFile(
 }
 
 /**
- * La respuesta de `GET /common/files/:id/content` para un documento de admisión,
- * o `undefined` si el id no es de una admisión (lo atiende el almacén normal).
+ * Los bytes de un documento de admisión, o `undefined` si el id no es de una.
+ * Los entrega `GET /admissions/:id/documents/:fileId/content` tras comprobar la
+ * firma; este archivo solo sabe generarlos.
  */
 export function admissionFileReply(
   id: string,

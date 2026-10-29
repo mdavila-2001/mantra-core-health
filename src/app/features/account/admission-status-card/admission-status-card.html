@@ -66,9 +66,8 @@
               <h3 id="verificacion-reenvio" class="verificacion__subtitulo">Corregir y reenviar</h3>
               <p class="verificacion__detalle">
                 Corrija lo observado en <a [routerLink]="profileRoute">su perfil</a> y reenvíe la solicitud.
-                @if (a.resubmissionsRemaining !== null) {
-                  Le {{ a.resubmissionsRemaining === 1 ? 'queda' : 'quedan' }} {{ a.resubmissionsRemaining }}
-                  {{ a.resubmissionsRemaining === 1 ? 'reenvío' : 'reenvíos' }}.
+                @if (a.resubmissionCount > 0) {
+                  Ya la reenvió {{ a.resubmissionCount }} {{ a.resubmissionCount === 1 ? 'vez' : 'veces' }}.
                 }
               </p>
               <app-checkbox
@@ -101,6 +100,32 @@
             <app-alert tone="warning" data-testid="admission-card-limit">
               Llegó al máximo de reenvíos. Escriba al equipo de soporte para reabrir su solicitud.
             </app-alert>
+          }
+
+          @if (canWithdraw()) {
+            <section class="verificacion__retiro" aria-labelledby="verificacion-retiro">
+              <h3 id="verificacion-retiro" class="verificacion__subtitulo">Retirar la solicitud</h3>
+              @if (confirmingWithdraw()) {
+                <p class="verificacion__detalle" data-testid="admission-card-withdraw-confirm">
+                  Si la retira, el equipo deja de revisarla y no podrá reenviarla. ¿Desea retirarla?
+                </p>
+                <div class="verificacion__acciones">
+                  <button app-button type="button" variant="danger" [isLoading]="submitting()" [disabled]="submitting()" data-testid="admission-card-withdraw-yes" (clicked)="withdraw()">
+                    Sí, retirar mi solicitud
+                  </button>
+                  <button app-button type="button" variant="secondary" [disabled]="submitting()" data-testid="admission-card-withdraw-no" (clicked)="keepApplication()">
+                    No, mantenerla
+                  </button>
+                </div>
+              } @else {
+                <button app-button type="button" variant="ghost" size="sm" data-testid="admission-card-withdraw" (clicked)="askWithdraw()">
+                  Retirar mi solicitud
+                </button>
+              }
+              @if (!canResubmit() && resubmitError(); as problema) {
+                <app-alert tone="error" data-testid="admission-card-withdraw-error">{{ problema }}</app-alert>
+              }
+            </section>
           }
         }
       }

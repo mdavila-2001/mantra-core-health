@@ -54,24 +54,38 @@ export interface AdmissionCoded {
   readonly label: string;
 }
 
-/** Estado de un requisito. */
+/**
+ * Estado de una ficha (ítem) y de un documento: lo que el revisor decide.
+ * El del requisito entero, que agrega varias fichas, es {@link RequirementStateCode}.
+ */
 export const REQUIREMENT_STATUS_CODES = ['PENDING', 'VERIFIED', 'REJECTED', 'INFO_REQUIRED'] as const;
 export type RequirementStatusCode = (typeof REQUIREMENT_STATUS_CODES)[number];
 
-/** Lo que el revisor decide sobre un requisito. */
+/**
+ * Estado del requisito completo, tal como lo evalúa la API: además de los de
+ * una ficha puede no haberse aportado nada (`NOT_PROVIDED`, opcional) o faltar
+ * lo mínimo (`MISSING`, obligatorio).
+ */
+export type RequirementStateCode = RequirementStatusCode | 'NOT_PROVIDED' | 'MISSING';
+
+/** Lo que el revisor decide sobre una ficha. */
 export type RequirementDecision = 'VERIFIED' | 'REJECTED' | 'INFO_REQUIRED';
 
-/** Clase de ítem de la ficha del profesional a la que apunta un requisito. */
-export type AdmissionItemType = 'LICENSE' | 'CREDENTIAL' | 'SPECIALTY';
+/** Clase de ficha del profesional a la que apunta un ítem del checklist. */
+export type AdmissionItemType = 'LICENSE' | 'CREDENTIAL' | 'SPECIALTY' | 'PROFILE';
 
 /**
  * Fuentes de verificación. No hay un registro público con dirección estable
  * para todas: el revisor declara de dónde sacó el dato, y la dirección o el
  * número de comprobante es opcional.
+ *
+ * La API habla en español (`REGISTRO_MINSALUD`); el cliente traduce en la
+ * frontera (`admissions.client.ts`) y el resto de la aplicación usa estos.
  */
 export const SOURCE_TYPE_CODES = [
   'MINSALUD_REGISTRY',
   'MEDICAL_COLLEGE',
+  'DENTAL_COLLEGE',
   'SEDES',
   'SEGIP',
   'PROVIDED_DOCUMENT',
@@ -82,6 +96,7 @@ export type SourceTypeCode = (typeof SOURCE_TYPE_CODES)[number];
 export const SOURCE_TYPE_LABELS: Readonly<Record<SourceTypeCode, string>> = {
   MINSALUD_REGISTRY: 'Registro del Ministerio de Salud',
   MEDICAL_COLLEGE: 'Colegio Médico',
+  DENTAL_COLLEGE: 'Colegio de Odontólogos',
   SEDES: 'SEDES',
   SEGIP: 'SEGIP',
   PROVIDED_DOCUMENT: 'Documento aportado por el médico',
@@ -91,8 +106,9 @@ export const SOURCE_TYPE_LABELS: Readonly<Record<SourceTypeCode, string>> = {
 /**
  * Motivos de rechazo o de pedido de información (lista cerrada). El código
  * alimenta la estadística; el texto que ve el médico lo escribe el revisor.
- * No hay un código de «sospecha de fraude» a propósito: una sospecha va en la
- * nota interna, nunca en un código que el solicitante pueda leer.
+ * `SUSPECTED_FRAUD` es solo del personal: la API se lo muestra al médico como
+ * «Otro», y la sospecha se escribe en la nota interna, nunca en el texto que
+ * el solicitante lee.
  */
 export const REASON_CODES = [
   'ILLEGIBLE',
@@ -100,6 +116,7 @@ export const REASON_CODES = [
   'NAME_MISMATCH',
   'NOT_IN_REGISTRY',
   'INCOMPLETE_DOCUMENT',
+  'SUSPECTED_FRAUD',
   'OTHER',
 ] as const;
 export type ReasonCode = (typeof REASON_CODES)[number];
@@ -110,24 +127,32 @@ export const REASON_CODE_LABELS: Readonly<Record<ReasonCode, string>> = {
   NAME_MISMATCH: 'El nombre no coincide',
   NOT_IN_REGISTRY: 'No figura en el registro',
   INCOMPLETE_DOCUMENT: 'Documento incompleto',
+  SUSPECTED_FRAUD: 'Sospecha de fraude (solo el personal lo ve)',
   OTHER: 'Otro motivo',
 };
+
+/** Motivos que el médico no ve como tales. */
+export const STAFF_ONLY_REASON_CODES: readonly ReasonCode[] = ['SUSPECTED_FRAUD'];
 
 export interface AdmissionPractitioner {
   readonly id: string;
   readonly fullName: string;
-  readonly profession: string;
-  readonly maskedNationalId: string;
+  readonly profession: string | null;
+  readonly maskedNationalId: string | null;
 }
 
-/** Contacto completo: sólo en el detalle. */
+/** Datos completos: solo en el detalle, solo para quien revisa. */
 export interface AdmissionPractitionerContact extends AdmissionPractitioner {
-  /** Documento completo: sólo lo ve quien revisa, en el detalle. */
   readonly nationalId: string | null;
-  readonly email: string | null;
-  readonly phone: string | null;
-  readonly city: string | null;
-  readonly registeredAt: Date | null;
+  readonly nationalIdIssuer: string | null;
+  readonly birthDate: string | null;
+  readonly age: number | null;
+  readonly occupation: string | null;
+  readonly personalMobile: string | null;
+  readonly personalEmail: string | null;
+  readonly workMobile: string | null;
+  readonly workPhone: string | null;
+  readonly workEmail: string | null;
 }
 
 export interface AdmissionPerson {
@@ -173,7 +198,7 @@ export interface AdmissionPage {
 export interface AdmissionListQuery {
   readonly type?: string;
   readonly status?: string;
-  /** Un id de persona, o `none` para las que nadie tomó. */
+  /** Un id de persona, `me` o `none` para las que nadie tomó. */
   readonly assignedTo?: string;
   readonly overdue?: boolean;
   /** Nombre, documento o matrícula. Con texto, la consulta va por `POST /admissions/search`. */
@@ -185,9 +210,10 @@ export interface AdmissionListQuery {
 
 export interface AdmissionLicense {
   readonly id: string;
+  readonly requirementCode: string;
   readonly number: string;
-  readonly jurisdiction: string;
-  readonly state: string;
+  readonly jurisdiction: string | null;
+  readonly state: AdmissionCoded;
   readonly fileId: string | null;
   readonly verifiedAt: Date | null;
   readonly rejectionReasonText: string | null;
@@ -195,9 +221,11 @@ export interface AdmissionLicense {
 
 export interface AdmissionCredential {
   readonly id: string;
-  readonly title: string;
-  readonly institution: string;
-  readonly state: string;
+  readonly requirementCode: string;
+  readonly level: string;
+  readonly title: string | null;
+  readonly institution: string | null;
+  readonly state: AdmissionCoded;
   readonly fileId: string | null;
   readonly verifiedAt: Date | null;
   readonly rejectionReasonText: string | null;
@@ -205,26 +233,13 @@ export interface AdmissionCredential {
 
 export interface AdmissionSpecialty {
   readonly id: string;
-  readonly name: string;
-  readonly state: string;
+  readonly requirementCode: string;
+  readonly name: string | null;
+  readonly state: AdmissionCoded;
   readonly supportingCredentialId: string | null;
 }
 
-/** Un documento que respalda un requisito. El contenido se pide por `fileId`. */
-export interface RequirementDocument {
-  readonly fileId: string;
-  readonly name: string;
-  readonly mimeType: string | null;
-  readonly sizeBytes: number | null;
-}
-
-/** Un dato cargado (no un archivo) que el revisor contrasta con su fuente. */
-export interface RequirementDatum {
-  readonly label: string;
-  readonly value: string;
-}
-
-/** La fuente que el revisor declaró al verificar un requisito. */
+/** La fuente que el revisor declaró al verificar una ficha. */
 export interface RequirementSource {
   readonly type: AdmissionCoded;
   /** Número de comprobante, nombre del documento o dirección web. Opcional. */
@@ -232,45 +247,79 @@ export interface RequirementSource {
   readonly consultedAt: Date | null;
 }
 
-export interface AdmissionRequirement {
-  readonly id: string;
-  readonly code: string;
-  readonly label: string;
-  readonly description: string | null;
-  readonly mandatory: boolean;
-  readonly status: RequirementStatusCode;
-  readonly documents: readonly RequirementDocument[];
-  readonly data: readonly RequirementDatum[];
-  /** Ítem de la ficha al que corresponde (matrícula, título, especialidad). */
-  readonly itemRef: { readonly type: AdmissionItemType; readonly id: string } | null;
-  readonly source: RequirementSource | null;
+/**
+ * Una ficha concreta de un requisito (una matrícula, un título, una
+ * especialidad o el perfil): lo que se verifica o se rechaza, una por una.
+ */
+export interface AdmissionReviewItem {
   /**
-   * La huella de lo que hay que mirar para decidir (los documentos y los
-   * datos del requisito). Se manda al verificar: si el médico cambió algo
-   * mientras tanto, la API responde 409 `ADMISSION_EVIDENCE_CHANGED`.
+   * Id de la revisión: el `:itemId` de `.../items/:itemId/review`. Es `null`
+   * hasta que alguien toma la admisión y se materializa.
    */
-  readonly evidenceSha256: string | null;
+  readonly id: string | null;
+  /** La ficha misma (matrícula, título…). */
+  readonly itemId: string;
+  readonly itemType: AdmissionItemType;
+  readonly label: string;
+  readonly state: RequirementStatusCode;
+  readonly fileId: string | null;
+  readonly source: RequirementSource | null;
   readonly reasonCode: string | null;
   /** Lo que lee el médico. */
   readonly reasonText: string | null;
   /** Solo para el personal: el médico nunca la recibe. */
   readonly internalNote: string | null;
-  readonly reviewedAt: Date | null;
   readonly reviewedBy: AdmissionPerson | null;
+  readonly reviewedAt: Date | null;
+  /** El dato o el archivo cambió después de revisarse: la revisión ya no vale. */
+  readonly evidenceChanged: boolean;
+  /**
+   * La huella de lo que hay que mirar para decidir (el dato y el archivo de
+   * hoy). Se devuelve al verificar: si el médico cambió algo mientras tanto,
+   * la API responde 409 `ADMISSION_EVIDENCE_CHANGED`.
+   */
+  readonly evidenceSha256: string;
+  /** Versión DE LA FICHA (no de la admisión): es el `expectedRowVersion` de su revisión. */
+  readonly rowVersion: number | null;
+}
+
+export interface AdmissionRequirement {
+  readonly code: string;
+  readonly label: string;
+  readonly description: string | null;
+  readonly mandatory: boolean;
+  readonly evidenceKind: 'DOCUMENT' | 'DATA';
+  /** Verificar una ficha de este requisito exige declarar la fuente. */
+  readonly requiresSource: boolean;
+  readonly minItems: number | null;
+  readonly maxItems: number | null;
+  readonly state: RequirementStateCode;
+  readonly satisfied: boolean;
+  /** Qué impide darlo por cumplido, si algo. */
+  readonly blockedBy: string | null;
+  readonly items: readonly AdmissionReviewItem[];
+}
+
+/** Por qué todavía no se puede verificar al profesional. */
+export interface AdmissionBlocker {
+  readonly requirementCode: string;
+  readonly label: string;
+  readonly reason: 'MISSING' | 'REJECTED' | 'PENDING' | 'INFO_REQUIRED' | 'BELOW_MINIMUM';
 }
 
 export interface AdmissionEvent {
   readonly id: string;
   readonly type: string;
-  readonly fromStatus: string | null;
-  readonly toStatus: string | null;
+  readonly fromStatus: AdmissionCoded | null;
+  readonly toStatus: AdmissionCoded | null;
   readonly itemType: string | null;
   readonly itemId: string | null;
-  readonly sourceLabel: string | null;
+  readonly requirementCode: string | null;
+  readonly sourceUri: string | null;
   readonly reasonCode: string | null;
   readonly reasonText: string | null;
-  readonly internalNote: string | null;
-  readonly actor: AdmissionPerson;
+  readonly actor: AdmissionPerson | null;
+  readonly actorRole: string | null;
   readonly occurredAt: Date;
 }
 
@@ -288,7 +337,7 @@ export interface AdmissionDocument {
   readonly uploadedAt: Date | null;
   readonly pages: number | null;
   readonly reviewState: RequirementStatusCode | null;
-  /** Huella SHA-256 del contenido, tal como la API lo tiene hoy. */
+  /** Huella de la ficha a la que pertenece el archivo. */
   readonly evidenceSha256: string | null;
 }
 
@@ -298,6 +347,7 @@ export interface SubmittedFormField {
   readonly label: string;
   /** `null` o vacío: el médico no lo declaró. */
   readonly value: string | null;
+  /** Obligatorio si el requisito que lo respalda lo es. */
   readonly required: boolean;
   /** Requisito que verifica este campo, si lo hay. */
   readonly requirementCode: string | null;
@@ -311,7 +361,7 @@ export interface SubmittedFormSection {
   readonly fields: readonly SubmittedFormField[];
 }
 
-/** Las acciones que el servidor admite para QUIEN pide, con el motivo si no. */
+/** Acciones de la ficha: la API autoriza cada una; la pantalla solo decide si las ofrece. */
 export const ADMISSION_ACTION_CODES = [
   'CLAIM',
   'RELEASE',
@@ -324,31 +374,32 @@ export const ADMISSION_ACTION_CODES = [
 ] as const;
 export type AdmissionActionCode = (typeof ADMISSION_ACTION_CODES)[number];
 
-export interface AdmissionAllowedAction {
-  readonly code: AdmissionActionCode;
-  readonly allowed: boolean;
-  /** Por qué no: `FOUR_EYES`, `ROLE`, `STATE`, `NOT_ASSIGNED`… */
-  readonly reasonCode?: string;
-  /** Explicación lista para mostrar. */
-  readonly message?: string;
-}
-
 export interface AdmissionDetail extends Omit<AdmissionSummary, 'practitioner'> {
   readonly practitioner: AdmissionPractitionerContact;
   readonly documents: readonly AdmissionDocument[];
   readonly submittedForm: readonly SubmittedFormSection[];
+  /** `SNAPSHOT`: foto tomada al enviar. `LIVE`: lectura viva del perfil (sin foto). */
+  readonly submittedFormSource: 'SNAPSHOT' | 'LIVE';
   readonly licenses: readonly AdmissionLicense[];
   readonly credentials: readonly AdmissionCredential[];
   readonly specialties: readonly AdmissionSpecialty[];
   readonly requirements: readonly AdmissionRequirement[];
+  readonly blockers: readonly AdmissionBlocker[];
+  /** Hoy se podría resolver «verificada» (lo decide el servidor). */
+  readonly canVerify: boolean;
+  /** La configuración exige un aprobador distinto de quienes revisaron. */
+  readonly fourEyesRequired: boolean;
   readonly events: readonly AdmissionEvent[];
   readonly infoRequestedText: string | null;
   readonly infoDueAt: Date | null;
   readonly decisionReasonText: string | null;
-  /** Qué puede hacer QUIEN mira. Vacío: la pantalla decide por rol y estado. */
-  readonly allowedActions: readonly AdmissionAllowedAction[];
-  /** A quién se puede reasignar (solo para quien aprueba). */
-  readonly assignableReviewers: readonly AdmissionPerson[];
+  readonly decisionReasonCode: string | null;
+  /** Nota interna de la decisión: solo para el personal. */
+  readonly internalNote: string | null;
+  /** Hasta cuándo vale la verificación (`YYYY-MM-DD`, inclusive). */
+  readonly validUntil: string | null;
+  readonly resubmissionCount: number;
+  readonly attestedAt: Date | null;
 }
 
 /* ---- comandos ------------------------------------------------------------ */
@@ -359,12 +410,11 @@ export interface ClaimAdmissionCommand {
 
 export interface ReleaseAdmissionCommand {
   readonly expectedRowVersion: number;
-  readonly reason?: string;
 }
 
 export interface ReassignAdmissionCommand {
-  readonly assigneeId: string;
-  readonly reason?: string;
+  /** Cuenta del revisor que recibe la admisión. */
+  readonly toUserId: string;
   readonly expectedRowVersion: number;
 }
 
@@ -381,7 +431,7 @@ export interface RequestInfoCommand extends StructuredReason {
 
 /**
  * La decisión final no lleva ítems: el servidor lee las revisiones de cada
- * requisito y deriva el estado de la matrícula, los títulos y las especialidades.
+ * ficha y deriva el estado de la matrícula, los títulos y las especialidades.
  */
 export interface AdmissionDecisionCommand {
   readonly decision: 'VERIFIED' | 'REJECTED';
@@ -417,12 +467,16 @@ export interface RequirementReviewCommand {
   readonly reasonCode?: ReasonCode;
   readonly reason?: string;
   readonly internalNote?: string;
+  /** Versión de la FICHA (`AdmissionReviewItem.rowVersion`), no de la admisión. */
   readonly expectedRowVersion: number;
 }
 
+/** La dirección firmada de un documento (2 minutos de vida, atada a quien la pidió). */
 export interface DocumentAccess {
   readonly url: string;
   readonly expiresAt: Date;
+  readonly name: string;
+  readonly mimeType: string;
 }
 
 /* ---- lo que ve el propio médico ------------------------------------------- */
@@ -433,6 +487,7 @@ export interface MyAdmissionItem {
   readonly label: string;
   readonly state: string;
   readonly reasonText: string | null;
+  readonly reasonCode: string | null;
 }
 
 export interface MyAdmission {
@@ -444,34 +499,40 @@ export interface MyAdmission {
   readonly infoDueAt: Date | null;
   readonly infoRequestedText: string | null;
   readonly decisionReasonText: string | null;
-  /** Reenvíos que le quedan; `null` si la API no pone tope. */
-  readonly resubmissionsRemaining: number | null;
+  readonly validUntil: string | null;
   readonly items: readonly MyAdmissionItem[];
-}
-
-export interface ResubmitCommand {
-  /** «Declaro que los datos y documentos son verídicos». */
-  readonly attested: true;
-  readonly attestationVersion: string;
+  readonly resubmissionCount: number;
+  /** La API decide si puede reenviar (estado y tope de reenvíos). */
+  readonly canResubmit: boolean;
+  readonly canWithdraw: boolean;
 }
 
 /** La versión del texto de atestación que se muestra en pantalla. */
 export const ATTESTATION_VERSION = '2026-10';
 
-/* ---- wire ----------------------------------------------------------------- */
+/* ---- wire: el contrato real de la API (códigos en español) ------------------- */
 
 type Iso = string;
 
+export interface WireCoded {
+  readonly code: string;
+  readonly label: string;
+}
+
 export interface WireAdmissionSummary {
   readonly id: string;
-  readonly type: AdmissionCoded;
-  readonly status: AdmissionCoded;
-  readonly practitioner: AdmissionPractitioner;
+  readonly type: WireCoded;
+  readonly status: WireCoded;
+  readonly practitioner: {
+    readonly id: string;
+    readonly fullName: string;
+    readonly profession: string | null;
+    readonly maskedNationalId: string | null;
+  };
   readonly itemsSummary: AdmissionItemsSummary;
-  /** Ausente en una API anterior a la lista de requisitos: se resume en cero. */
-  readonly requirementsSummary?: RequirementsSummary;
+  readonly requirementsSummary: RequirementsSummary;
   readonly submittedAt: Iso;
-  readonly dueAt: Iso | null;
+  readonly dueAt: Iso;
   readonly overdue: boolean;
   readonly assignedTo: AdmissionPerson | null;
   readonly rowVersion: number;
@@ -483,47 +544,223 @@ export interface WireAdmissionPage {
   readonly counts: Readonly<Record<string, number>>;
 }
 
-export interface WireAdmissionDetail extends Omit<WireAdmissionSummary, 'practitioner'> {
-  readonly practitioner: Omit<AdmissionPractitionerContact, 'registeredAt'> & {
-    readonly registeredAt?: Iso | null;
+export interface WireReviewItem {
+  readonly id: string | null;
+  readonly itemId: string;
+  readonly itemType: AdmissionItemType;
+  readonly label: string;
+  readonly state: string;
+  readonly fileId: string | null;
+  readonly verificationSourceUri: string | null;
+  readonly sourceType: string | null;
+  readonly sourceRef: string | null;
+  readonly sourceConsultedAt: Iso | null;
+  readonly reasonCode: string | null;
+  readonly reasonText: string | null;
+  readonly internalNote: string | null;
+  readonly reviewedBy: AdmissionPerson | null;
+  readonly reviewedAt: Iso | null;
+  readonly evidenceChanged: boolean;
+  readonly evidenceSha256: string;
+  readonly rowVersion: number | null;
+}
+
+export interface WireRequirement {
+  readonly code: string;
+  readonly label: string;
+  readonly description: string | null;
+  readonly required: boolean;
+  readonly evidenceKind: string;
+  readonly requiresSource: boolean;
+  readonly professionGroup: string | null;
+  readonly minItems: number | null;
+  readonly maxItems: number | null;
+  readonly state: string;
+  readonly satisfied: boolean;
+  readonly blockedBy: string | null;
+  readonly items: readonly WireReviewItem[];
+}
+
+export interface WireDocument {
+  readonly id: string;
+  readonly requirementCode: string;
+  readonly fileId: string;
+  readonly name: string;
+  readonly mimeType: string;
+  readonly sizeBytes: number;
+  readonly uploadedAt: Iso;
+  readonly pages: number | null;
+  readonly reviewState: string;
+  readonly evidenceSha256: string;
+}
+
+export interface WireEvent {
+  readonly id: string;
+  readonly type: string;
+  readonly fromStatus: WireCoded | null;
+  readonly toStatus: WireCoded | null;
+  readonly itemType: string | null;
+  readonly itemId: string | null;
+  readonly requirementCode: string | null;
+  readonly verificationSourceUri: string | null;
+  readonly reasonCode: string | null;
+  readonly reasonText: string | null;
+  readonly actor: AdmissionPerson | null;
+  readonly actorRole: string | null;
+  readonly occurredAt: Iso;
+}
+
+interface WireAddress {
+  readonly lines: string | null;
+  readonly locality: string | null;
+  readonly department: string | null;
+  readonly gps: { readonly lat: number; readonly lng: number } | null;
+}
+
+/** El formulario tal como lo envió el médico (`submittedForm` del detalle). */
+export interface WireSubmittedForm {
+  readonly personal: {
+    readonly requirementCode: string;
+    readonly firstName: string | null;
+    readonly middleName: string | null;
+    readonly paternalLastName: string | null;
+    readonly maternalLastName: string | null;
+    readonly nationalId: string | null;
+    readonly nationalIdIssuer: string | null;
+    readonly birthDate: string | null;
+    readonly age: number | null;
+    readonly occupation: string | null;
   };
-  readonly licenses: readonly (Omit<AdmissionLicense, 'verifiedAt'> & { readonly verifiedAt: Iso | null })[];
-  readonly credentials: readonly (Omit<AdmissionCredential, 'verifiedAt'> & {
+  readonly contact: {
+    readonly personalMobile: string | null;
+    readonly personalEmail: string | null;
+    readonly workMobile: string | null;
+    readonly workPhone: string | null;
+    readonly workEmail: string | null;
+  };
+  readonly addresses: { readonly home: WireAddress | null; readonly work: WireAddress | null };
+  readonly licenses: readonly {
+    readonly id: string;
+    readonly requirementCode: string;
+    readonly number: string;
+    readonly jurisdiction: string | null;
+    readonly authority: string | null;
+    readonly validFrom: string | null;
+    readonly validTo: string | null;
+    readonly fileId: string | null;
+  }[];
+  readonly education: readonly {
+    readonly id: string;
+    readonly requirementCode: string;
+    readonly level: string;
+    readonly title: string | null;
+    readonly institution: string | null;
+    readonly year: number | null;
+    readonly number: string;
+    readonly fileId: string | null;
+  }[];
+  readonly specialties: readonly {
+    readonly id: string;
+    readonly requirementCode: string;
+    readonly name: string | null;
+    readonly isPrimary: boolean;
+    readonly supportingCredentialId: string | null;
+  }[];
+  readonly practices: readonly {
+    readonly id: string;
+    readonly requirementCode: string;
+    readonly name: string;
+    readonly address: string | null;
+    readonly gps: { readonly lat: number; readonly lng: number } | null;
+  }[];
+}
+
+export interface WireAdmissionDetail extends Omit<WireAdmissionSummary, 'practitioner'> {
+  readonly practitioner: WireAdmissionSummary['practitioner'] & {
+    readonly nationalId: string | null;
+    readonly nationalIdIssuer: string | null;
+    readonly birthDate: string | null;
+    readonly age: number | null;
+    readonly occupation: string | null;
+    readonly personalMobile: string | null;
+    readonly personalEmail: string | null;
+    readonly workMobile: string | null;
+    readonly workPhone: string | null;
+    readonly workEmail: string | null;
+  };
+  readonly licenses: readonly {
+    readonly id: string;
+    readonly requirementCode: string;
+    readonly number: string;
+    readonly jurisdiction: string | null;
+    readonly state: WireCoded;
+    readonly fileId: string | null;
     readonly verifiedAt: Iso | null;
-  })[];
-  readonly specialties: readonly AdmissionSpecialty[];
-  readonly requirements?: readonly (Omit<AdmissionRequirement, 'reviewedAt' | 'source' | 'evidenceSha256'> & {
-    readonly evidenceSha256?: string | null;
-    readonly reviewedAt: Iso | null;
-    readonly source: (Omit<RequirementSource, 'consultedAt'> & { readonly consultedAt: Iso | null }) | null;
-  })[];
-  /** Ausentes en una API anterior: el cliente los deriva de los requisitos y la ficha. */
-  readonly documents?: readonly (Omit<AdmissionDocument, 'uploadedAt' | 'evidenceSha256'> & {
-    readonly uploadedAt: Iso | null;
-    readonly evidenceSha256?: string | null;
-  })[];
-  readonly submittedForm?: readonly SubmittedFormSection[];
-  readonly events: readonly (Omit<AdmissionEvent, 'occurredAt'> & { readonly occurredAt: Iso })[];
+    readonly verificationSourceUri: string | null;
+    readonly rejectionReasonText: string | null;
+  }[];
+  readonly credentials: readonly {
+    readonly id: string;
+    readonly requirementCode: string;
+    readonly level: string;
+    readonly title: string | null;
+    readonly institution: string | null;
+    readonly state: WireCoded;
+    readonly fileId: string | null;
+    readonly verifiedAt: Iso | null;
+    readonly verificationSourceUri: string | null;
+    readonly rejectionReasonText: string | null;
+  }[];
+  readonly specialties: readonly {
+    readonly id: string;
+    readonly requirementCode: string;
+    readonly name: string | null;
+    readonly state: WireCoded;
+    readonly supportingCredentialId: string | null;
+  }[];
+  readonly events: readonly WireEvent[];
   readonly infoRequestedText: string | null;
-  readonly infoDueAt?: Iso | null;
+  readonly infoDueAt: Iso | null;
   readonly decisionReasonText: string | null;
-  readonly allowedActions?: readonly AdmissionAllowedAction[];
-  readonly assignableReviewers?: readonly AdmissionPerson[];
+  readonly decisionReasonCode: string | null;
+  readonly internalNote: string | null;
+  readonly validUntil: string | null;
+  readonly resubmissionCount: number;
+  readonly attestedAt: Iso | null;
+  readonly fourEyesRequired: boolean;
+  readonly requirements: readonly WireRequirement[];
+  readonly blockers: readonly AdmissionBlocker[];
+  readonly canVerify: boolean;
+  readonly documents: readonly WireDocument[];
+  readonly submittedForm: WireSubmittedForm;
+  readonly submittedFormSource: string;
 }
 
 export interface WireMyAdmission {
   readonly id: string;
-  readonly status: AdmissionCoded;
+  readonly status: WireCoded;
   readonly submittedAt: Iso;
-  readonly dueAt: Iso | null;
-  readonly infoDueAt?: Iso | null;
+  readonly dueAt: Iso;
   readonly infoRequestedText: string | null;
+  readonly infoDueAt: Iso | null;
   readonly decisionReasonText: string | null;
-  readonly resubmissionsRemaining?: number | null;
-  readonly items: readonly MyAdmissionItem[];
+  readonly validUntil: string | null;
+  readonly items: readonly {
+    readonly type: string;
+    readonly id: string;
+    readonly label: string;
+    readonly state: string;
+    readonly reasonText: string | null;
+    readonly reasonCode: string | null;
+  }[];
+  readonly resubmissionCount: number;
+  readonly canResubmit: boolean;
+  readonly canWithdraw: boolean;
 }
 
 export interface WireDocumentAccess {
   readonly url: string;
   readonly expiresAt: Iso;
+  readonly name: string;
+  readonly mimeType: string;
 }

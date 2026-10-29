@@ -15,6 +15,7 @@ import {
 import type {
   AdmissionDocument,
   AdmissionRequirement,
+  AdmissionReviewItem,
   RequirementDecision,
 } from '@core/data-access/admissions/admissions.types';
 import {
@@ -28,15 +29,18 @@ import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { EmptyState } from '@shared/components/molecules/empty-state/empty-state';
 import { AdmissionDocumentViewer } from './admission-document-viewer';
 
-/** Lo que el carrusel pide hacer sobre el requisito del documento en pantalla. */
+/** Lo que el carrusel pide hacer sobre la ficha del documento en pantalla. */
 export interface GalleryReviewRequest {
-  readonly requirementId: string;
+  readonly itemId: string;
+  readonly requirementCode: string;
   readonly decision: RequirementDecision;
 }
 
 interface GalleryItem {
   readonly document: AdmissionDocument;
   readonly requirement: AdmissionRequirement | null;
+  /** La ficha a la que pertenece el archivo: es lo que se revisa. */
+  readonly item: AdmissionReviewItem | null;
   readonly position: number;
 }
 
@@ -96,15 +100,18 @@ export class AdmissionEvidenceGallery {
     return this.documents()
       .filter((d) => porRequisito === '' || d.requirementCode === porRequisito)
       .filter((d) => {
-        const estado = reqs.get(d.requirementCode)?.status ?? d.reviewState;
+        const estado = this.itemOf(reqs.get(d.requirementCode), d)?.state ?? d.reviewState;
         return porEstado === '' || estado === porEstado;
       })
-      .map((document, index) => ({
-        document,
-        requirement: reqs.get(document.requirementCode) ?? null,
-        position: index + 1,
-      }));
+      .map((document, index) => {
+        const requirement = reqs.get(document.requirementCode) ?? null;
+        return { document, requirement, item: this.itemOf(requirement ?? undefined, document), position: index + 1 };
+      });
   });
+
+  private itemOf(requirement: AdmissionRequirement | undefined, doc: AdmissionDocument): AdmissionReviewItem | null {
+    return requirement?.items.find((i) => i.fileId === doc.fileId) ?? null;
+  }
 
   protected readonly index = computed(() => {
     const id = this.selectedId();
@@ -161,11 +168,11 @@ export class AdmissionEvidenceGallery {
   }
 
   protected statusLabel(item: GalleryItem): string {
-    return requirementStatusLabel(item.requirement?.status ?? item.document.reviewState);
+    return requirementStatusLabel(item.item?.state ?? item.document.reviewState);
   }
 
   protected statusKey(item: GalleryItem): string {
-    return (item.requirement?.status ?? item.document.reviewState ?? 'PENDING').toLowerCase();
+    return (item.item?.state ?? item.document.reviewState ?? 'PENDING').toLowerCase();
   }
 
   protected typeLabel(doc: AdmissionDocument): string {
@@ -208,7 +215,7 @@ export class AdmissionEvidenceGallery {
     const start = this.index();
     for (let step = 1; step <= items.length; step++) {
       const candidate = items[(start + step) % items.length]!;
-      const state = candidate.requirement?.status ?? candidate.document.reviewState ?? 'PENDING';
+      const state = candidate.item?.state ?? candidate.document.reviewState ?? 'PENDING';
       if (PENDING_STATES.includes(state)) {
         this.selectedId.set(candidate.document.id);
         return;
@@ -229,9 +236,16 @@ export class AdmissionEvidenceGallery {
     this.stateFilter.set((event.target as HTMLSelectElement).value);
   }
 
+  /** La ficha ya tiene su revisión (la admisión se tomó): sin ella no hay a qué mandar la decisión. */
+  protected reviewable(item: AdmissionReviewItem | null): boolean {
+    return this.canReview() && item !== null && item.id !== null && item.rowVersion !== null;
+  }
+
   protected decide(decision: RequirementDecision): void {
-    const requisito = this.current()?.requirement;
-    if (requisito && !this.busy()) this.review.emit({ requirementId: requisito.id, decision });
+    const actual = this.current();
+    if (actual?.requirement && actual.item && this.reviewable(actual.item) && !this.busy()) {
+      this.review.emit({ itemId: actual.item.itemId, requirementCode: actual.requirement.code, decision });
+    }
   }
 
   protected onKeydown(event: KeyboardEvent): void {

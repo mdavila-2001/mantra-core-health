@@ -69,13 +69,14 @@ export class AdmissionStatusCard {
   protected readonly pendingItems = computed(() =>
     (this.admission()?.items ?? []).filter((i) => i.state !== 'VERIFIED'),
   );
-  protected readonly canResubmit = computed(() => {
-    const a = this.admission();
-    return this.copy().canResubmit && (a?.resubmissionsRemaining ?? 1) > 0;
-  });
+  /** La API decide si puede reenviar (estado y tope de reenvíos). */
+  protected readonly canResubmit = computed(() => this.admission()?.canResubmit === true);
+  /** El estado admitiría un reenvío pero la API lo niega: se llegó al tope. */
   protected readonly limitReached = computed(
-    () => this.copy().canResubmit && this.admission()?.resubmissionsRemaining === 0,
+    () => this.copy().canResubmit && this.admission()?.canResubmit === false,
   );
+  protected readonly canWithdraw = computed(() => this.admission()?.canWithdraw === true);
+  protected readonly confirmingWithdraw = signal(false);
   protected readonly attestationVersion = ATTESTATION_VERSION;
   protected readonly profileRoute = '/my-account';
 
@@ -111,7 +112,7 @@ export class AdmissionStatusCard {
     if (!this.attested()) return;
     this.submitting.set(true);
     this.resubmitError.set(null);
-    this.client.resubmitMyAdmission({ attested: true, attestationVersion: ATTESTATION_VERSION }).subscribe({
+    this.client.resubmitMyAdmission().subscribe({
       next: (mia) => {
         this.admission.set(mia);
         this.attested.set(false);
@@ -122,6 +123,41 @@ export class AdmissionStatusCard {
       error: (error: unknown) => {
         this.submitting.set(false);
         this.resubmitError.set(readAdmissionError(error).message);
+        // Si el tope o el estado cambiaron, se muestra lo vigente.
+        this.reload();
+      },
+    });
+  }
+
+  /** Relee la solicitud sin pasar por «cargando»: se usa tras un rechazo de la API. */
+  private reload(): void {
+    this.client.myAdmission().subscribe({ next: (mia) => this.admission.set(mia), error: () => undefined });
+  }
+
+  protected askWithdraw(): void {
+    this.confirmingWithdraw.set(true);
+  }
+
+  protected keepApplication(): void {
+    this.confirmingWithdraw.set(false);
+  }
+
+  protected withdraw(): void {
+    if (this.submitting()) return;
+    this.submitting.set(true);
+    this.resubmitError.set(null);
+    this.client.withdrawMyAdmission().subscribe({
+      next: (mia) => {
+        this.admission.set(mia);
+        this.confirmingWithdraw.set(false);
+        this.submitting.set(false);
+        this.toast.success('Retiramos su solicitud.');
+      },
+      error: (error: unknown) => {
+        this.submitting.set(false);
+        this.confirmingWithdraw.set(false);
+        this.resubmitError.set(readAdmissionError(error).message);
+        this.reload();
       },
     });
   }

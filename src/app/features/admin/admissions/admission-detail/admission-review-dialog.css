@@ -73,3 +73,9 @@
   font-size: var(--fs-caption);
   color: var(--text-danger);
 }
+
+.review-dialog__aviso {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
