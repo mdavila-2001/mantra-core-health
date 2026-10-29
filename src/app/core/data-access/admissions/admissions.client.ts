@@ -1,6 +1,6 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, switchMap, type Observable } from 'rxjs';
+import { catchError, map, switchMap, throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
@@ -105,6 +105,7 @@ function documentosDe(requisitos: AdmissionDetail['requirements']): AdmissionDoc
       uploadedAt: null,
       pages: null,
       reviewState: r.status,
+      evidenceSha256: null,
     })),
   );
 }
@@ -162,6 +163,7 @@ function toDetail(wire: WireAdmissionDetail): AdmissionDetail {
     status: requirementCode(r.status),
     reviewedAt: fecha(r.reviewedAt),
     source: r.source === null ? null : { ...r.source, consultedAt: fecha(r.source.consultedAt) },
+    evidenceSha256: r.evidenceSha256 ?? null,
   }));
   return {
     ...toSummary(wire),
@@ -176,6 +178,7 @@ function toDetail(wire: WireAdmissionDetail): AdmissionDetail {
         : wire.documents.map((d) => ({
             ...d,
             uploadedAt: fecha(d.uploadedAt),
+            evidenceSha256: d.evidenceSha256 ?? null,
             reviewState: d.reviewState === null ? null : requirementCode(d.reviewState),
           })),
     submittedForm: wire.submittedForm ?? formularioDe(wire),
@@ -224,6 +227,13 @@ function paramsOf(query: AdmissionListQuery): HttpParams {
   return params.set('sort', query.sort ?? 'due_at');
 }
 
+/** Dirección absoluta de otro origen que el de la API: no lleva nuestra credencial. */
+function isForeignAbsolute(url: string, apiBaseUrl: string): boolean {
+  if (!/^https?:\/\//i.test(url)) return false;
+  const raiz = apiBaseUrl.replace(/\/+$/, '');
+  return !(raiz !== '' && url.startsWith(raiz) && (url.length === raiz.length || '/?#'.includes(url[raiz.length]!)));
+}
+
 /**
  * Admisiones (`/admissions`): la bandeja de quien revisa y resuelve, y la
  * lectura del propio médico (`/profiles/practitioners/me/admission`).
@@ -236,14 +246,17 @@ function paramsOf(query: AdmissionListQuery): HttpParams {
 @Injectable({ providedIn: 'root' })
 export class AdmissionsClient {
   private readonly http = inject(HttpClient);
+  /**
+   * Un cliente **sin interceptores** para las direcciones firmadas de otro
+   * origen: ni `Authorization` ni `X-Tenant-Id` (la credencial es de esta API,
+   * no de un almacenamiento de terceros) ni ninguna cabecera propia, que suele
+   * invalidar una firma.
+   */
+  private readonly bare = new HttpClient(inject(HttpBackend));
   private readonly baseUrl = inject(API_BASE_URL);
 
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
-  }
-
-  private admission(id: string): string {
-    return this.url(`/admissions/${encodeURIComponent(id)}`);
   }
 
   /**
@@ -273,56 +286,71 @@ export class AdmissionsClient {
 
   /** `GET /admissions/:id` — la ficha completa, con requisitos e historial. */
   get(id: string): Observable<AdmissionDetail> {
-    return this.http.get<WireAdmissionDetail>(this.admission(id)).pipe(map(toDetail));
+    return this.http
+      .get<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}`))
+      .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/claim` — tomar la revisión (REVIEWER). */
   claim(id: string, command: ClaimAdmissionCommand): Observable<AdmissionDetail> {
-    return this.write(id, 'claim', command);
+    return this.http
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/claim`), command)
+      .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/release` — soltar una revisión tomada. */
   release(id: string, command: ReleaseAdmissionCommand): Observable<AdmissionDetail> {
-    return this.write(id, 'release', command);
+    return this.http
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/release`), command)
+      .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/reassign` — pasar la revisión a otra persona (APPROVER). */
   reassign(id: string, command: ReassignAdmissionCommand): Observable<AdmissionDetail> {
-    return this.write(id, 'reassign', command);
+    return this.http
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/reassign`), command)
+      .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/request-info` — pedir información (REVIEWER). */
   requestInfo(id: string, command: RequestInfoCommand): Observable<AdmissionDetail> {
-    return this.write(id, 'request-info', command);
+    return this.http
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/request-info`), command)
+      .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/items/:itemId/review` — revisar un requisito (REVIEWER). */
   reviewRequirement(
     id: string,
-    requirementId: string,
+    itemId: string,
     command: RequirementReviewCommand,
   ): Observable<AdmissionDetail> {
-    return this.write(id, `items/${encodeURIComponent(requirementId)}/review`, command);
+    return this.http
+      .post<WireAdmissionDetail>(
+        this.url(`/admissions/${encodeURIComponent(id)}/items/${encodeURIComponent(itemId)}/review`),
+        command,
+      )
+      .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/decision` — la decisión final (APPROVER). */
   decide(id: string, command: AdmissionDecisionCommand): Observable<AdmissionDetail> {
-    return this.write(id, 'decision', command);
+    return this.http
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/decision`), command)
+      .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/suspend` (APPROVER). */
   suspend(id: string, command: SuspendCommand): Observable<AdmissionDetail> {
-    return this.write(id, 'suspend', command);
+    return this.http
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/suspend`), command)
+      .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/reinstate` (APPROVER). */
   reinstate(id: string, command: ReinstateCommand): Observable<AdmissionDetail> {
-    return this.write(id, 'reinstate', command);
-  }
-
-  private write(id: string, action: string, command: object): Observable<AdmissionDetail> {
     return this.http
-      .post<WireAdmissionDetail>(`${this.admission(id)}/${action}`, command)
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/reinstate`), command)
       .pipe(map(toDetail));
   }
 
@@ -333,22 +361,36 @@ export class AdmissionsClient {
    */
   documentAccess(id: string, fileId: string): Observable<DocumentAccess> {
     return this.http
-      .get<WireDocumentAccess>(`${this.admission(id)}/documents/${encodeURIComponent(fileId)}`)
+      .get<WireDocumentAccess>(
+        this.url(`/admissions/${encodeURIComponent(id)}/documents/${encodeURIComponent(fileId)}`),
+      )
       .pipe(map((acceso) => ({ url: acceso.url, expiresAt: new Date(acceso.expiresAt) })));
   }
 
-  /** Pide el acceso y baja los bytes del documento con esa dirección firmada. */
+  /**
+   * Pide el acceso y baja los bytes del documento con esa dirección.
+   *
+   * Una dirección firmada de otro origen se baja sin credenciales; si responde
+   * 401/403/410 es que venció y se lanza {@link DocumentLinkExpiredError}: la
+   * pantalla pide una nueva. Una ruta de esta API sigue por el cliente normal.
+   */
   documentContent(
     id: string,
     fileId: string,
   ): Observable<{ readonly blob: Blob; readonly originalName: string | null }> {
     return this.documentAccess(id, fileId).pipe(
-      switchMap((acceso) =>
-        this.http.get(/^https?:\/\//i.test(acceso.url) ? acceso.url : this.url(acceso.url), {
-          responseType: 'blob',
-          observe: 'response',
-        }),
-      ),
+      switchMap((acceso) => {
+        const externa = isForeignAbsolute(acceso.url, this.baseUrl);
+        const cliente = externa ? this.bare : this.http;
+        const direccion = /^https?:\/\//i.test(acceso.url) ? acceso.url : this.url(acceso.url);
+        return cliente.get(direccion, { responseType: 'blob', observe: 'response' }).pipe(
+          catchError((error: unknown) =>
+            externa && error instanceof HttpErrorResponse && [401, 403, 410].includes(error.status)
+              ? throwError(() => new DocumentLinkExpiredError(error.status))
+              : throwError(() => error),
+          ),
+        );
+      }),
       map((respuesta) => ({
         blob: respuesta.body ?? new Blob([]),
         originalName: nombreDe(respuesta.headers.get('Content-Disposition')),
@@ -382,4 +424,17 @@ function nombreDe(cabecera: string | null): string | null {
     }
   }
   return /filename="?([^";]+)"?/i.exec(cabecera)?.[1] ?? null;
+}
+
+/**
+ * La dirección firmada de un documento ya no sirve (venció o fue revocada).
+ *
+ * Se distingue del 403 de la API porque la salida es otra: pedir una dirección
+ * nueva, no «pida acceso».
+ */
+export class DocumentLinkExpiredError extends Error {
+  constructor(readonly status: number) {
+    super('El enlace del documento venció.');
+    this.name = 'DocumentLinkExpiredError';
+  }
 }
