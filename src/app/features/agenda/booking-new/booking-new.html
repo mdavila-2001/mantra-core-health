@@ -69,7 +69,9 @@
               <dt>Servicio</dt>
               <dd>
                 {{ s.serviceName }}
-                <span class="reserva__cifra" data-testid="reserva-duracion">· dura {{ duracion() }}</span>
+                <span class="reserva__cifra" data-testid="reserva-duracion"
+                  >· dura {{ duracion() }}</span
+                >
               </dd>
             </div>
             <div class="reserva__dato" data-testid="reserva-precio">
@@ -90,6 +92,17 @@
               <dt>Disponibilidad</dt>
               <dd>{{ cupo.remainingCapacity }} de {{ cupo.capacity }} sin ocupar</dd>
             </div>
+            <!-- FAC-01: el precio de la consulta viene con el turno. Sin precio
+                 publicado se dice así, nunca «0,00». Si la API no lo manda
+                 (\`undefined\`), el renglón no se dibuja. -->
+            @if (cupo.price !== undefined) {
+              <div class="reserva__dato" data-testid="reserva-precio-consulta">
+                <dt>Precio de la consulta</dt>
+                <dd [class.reserva__cifra]="!!precio()">
+                  {{ precio() || 'El consultorio todavía no publicó el precio' }}
+                </dd>
+              </div>
+            }
           }
 
           <!-- Dónde es el turno. El renglón aparece sólo si el recurso tiene
@@ -108,8 +121,8 @@
                que queda es confirmar antes del vencimiento. -->
           <app-alert appAnuncio tone="success" title="Cupo retenido" class="reserva__alert">
             @if (esAutoservicio) {
-              Se lo guardamos hasta las {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme
-              antes de esa hora o el horario vuelve a quedar libre.
+              Se lo guardamos hasta las {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme antes
+              de esa hora o el horario vuelve a quedar libre.
             } @else {
               Retenido a nombre de {{ paciente()?.label }} hasta las
               {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme antes de esa hora o el cupo
@@ -173,8 +186,8 @@
               </app-form-field>
               @if (observacionPrecargada) {
                 <p class="reserva__nota" data-testid="reserva-observacion-precargada">
-                  Completamos el motivo con la observación de síntomas que guardó. Puede editarla antes de solicitar
-                  la cita.
+                  Completamos el motivo con la observación de síntomas que guardó. Puede editarla
+                  antes de solicitar la cita.
                 </p>
               }
             </app-form-section>

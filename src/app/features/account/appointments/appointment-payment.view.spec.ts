@@ -46,7 +46,7 @@ describe('appointmentPaymentView (H03)', () => {
 
   it('sin monto, o con null, no dibuja ningún monto: nunca «0,00»', () => {
     expect(appointmentPaymentView(PAID)?.amountText).toBe('');
-    const nulo = appointmentPaymentView({ ...PAID, amountPaid: null } as PaymentStateInfo);
+    const nulo = appointmentPaymentView({ ...PAID, amountPaid: null } as unknown as PaymentStateInfo);
     expect(nulo?.amountText).toBe('');
     expect(JSON.stringify(nulo)).not.toContain('0,00');
   });
@@ -62,7 +62,7 @@ describe('appointmentPaymentView (H03)', () => {
       ...PAID,
       amountPaid: 20,
       currencyCode: 'USD',
-    } as PaymentStateInfo);
+    } as unknown as PaymentStateInfo);
     expect(view?.amountText).toBe('20,00 USD');
   });
 });

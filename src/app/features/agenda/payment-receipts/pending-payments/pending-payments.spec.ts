@@ -8,7 +8,6 @@ import type {
   PaymentStateInfo,
 } from '../../../../core/data-access/scheduling/scheduling.types';
 import { BookingPaymentStates } from '../booking-payment-states';
-import { ReceivedAmountStore } from '../received-amount-store';
 import { PendingPayments } from './pending-payments';
 
 function paymentState(state: PaymentStateInfo['state'], label: string): PaymentStateInfo {
@@ -104,12 +103,32 @@ describe('PendingPayments', () => {
     expect(searchBookings).toHaveBeenCalledTimes(1);
   });
 
-  it('muestra el monto recibido si existe', () => {
-    const root = render(items(booking('b-1', '2026-10-10T15:00:00.000Z')));
-    TestBed.inject(ReceivedAmountStore).set('b-1', 150);
-    fixture.detectChanges();
+  it('muestra lo recibido que dice la API (FAC-01)', () => {
+    const root = render(
+      items(
+        booking('b-1', '2026-10-10T15:00:00.000Z', {
+          paymentState: {
+            ...paymentState('PARTIALLY_PAID', 'Parcialmente pagada'),
+            amountPaid: 1500,
+            currencyCode: 'BOB',
+          },
+        }),
+      ),
+    );
 
-    expect(q(root, 'pending-payment-received')?.textContent).toContain('Bs 150,00');
+    expect(q(root, 'pending-payment-received')?.textContent).toContain('1.500,00 Bs');
+  });
+
+  it('sin monto facturado no inventa «Recibido»', () => {
+    const root = render(
+      items(
+        booking('b-1', '2026-10-10T15:00:00.000Z', {
+          paymentState: paymentState('PARTIALLY_PAID', 'Parcialmente pagada'),
+        }),
+      ),
+    );
+
+    expect(q(root, 'pending-payment-received')).toBeNull();
   });
 
   it('vacío: dice que no hay pagos y queda cerrado', () => {
