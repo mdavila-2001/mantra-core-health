@@ -968,6 +968,10 @@ export function registrarAdmisiones(router: MockRouter): void {
     if (fila === undefined) return falla(404, 'NOT_FOUND', 'ADMISSION_NOT_FOUND', 'No tiene una admisión');
     const mala = transicion(fila, REENVIABLES, 'reenviar');
     if (mala !== null) return mala;
+    const cuerpoReenvio = cuerpo<Record<string, unknown>>(request);
+    if (cuerpoReenvio['attested'] !== true || typeof cuerpoReenvio['attestationVersion'] !== 'string' || cuerpoReenvio['attestationVersion'] === '') {
+      return rechazo(412, 'ADMISSION_ATTESTATION_REQUIRED', 'Debe declarar que los datos y documentos son verídicos.');
+    }
     if (fila.resubmissionCount >= MAX_REENVIOS) {
       return rechazo(412, 'ADMISSION_RESUBMISSION_LIMIT', 'Llegó al máximo de reenvíos. Escriba al equipo de soporte para reabrir su solicitud.');
     }

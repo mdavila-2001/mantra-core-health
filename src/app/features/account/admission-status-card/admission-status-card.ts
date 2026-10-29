@@ -55,7 +55,6 @@ export class AdmissionStatusCard {
   protected readonly state = signal<CardState>('loading');
   protected readonly admission = signal<MyAdmission | null>(null);
   protected readonly attested = signal(false);
-  protected readonly attestationTouched = signal(false);
   protected readonly submitting = signal(false);
   protected readonly resubmitError = signal<string | null>(null);
 
@@ -108,15 +107,14 @@ export class AdmissionStatusCard {
 
   protected resubmit(): void {
     if (this.submitting()) return;
-    this.attestationTouched.set(true);
+    // Sin la casilla marcada no sale ninguna petición: la atestación es de la persona.
     if (!this.attested()) return;
     this.submitting.set(true);
     this.resubmitError.set(null);
-    this.client.resubmitMyAdmission().subscribe({
+    this.client.resubmitMyAdmission({ attested: true, attestationVersion: ATTESTATION_VERSION }).subscribe({
       next: (mia) => {
         this.admission.set(mia);
         this.attested.set(false);
-        this.attestationTouched.set(false);
         this.submitting.set(false);
         this.toast.success('Reenviamos su solicitud. Le avisaremos cuando haya una decisión.');
       },
