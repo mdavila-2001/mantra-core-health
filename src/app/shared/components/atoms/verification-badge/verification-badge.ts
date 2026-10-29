@@ -60,7 +60,8 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long',
  *   ÚNICO estado que pinta un tilde.
  * - `IN_REVIEW` → reloj ámbar con borde: «en verificación», inconfundible con el sello.
  * - `EXPIRED` → pictograma gris con exclamación y su texto: «verificación vencida».
- * - `SUSPENDED` / `UNVERIFIED` / un estado desconocido → NUNCA un glifo. En la
+ * - `UNVERIFIED` (incluida una suspensión o un rechazo, que la API colapsa ahí) o un
+ *   estado desconocido → NUNCA un glifo. En la
  *   variante `icon` no se pinta nada; en `label` sólo el texto.
  *
  * **El estado lo decide la API.** Este componente no lo infiere ni otorga nada;

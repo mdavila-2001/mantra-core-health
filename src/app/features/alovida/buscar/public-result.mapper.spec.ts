@@ -158,9 +158,9 @@ describe('mapeador de resultados públicos', () => {
 
   it('`verification` manda sobre `verified:true` si la API la degradó', () => {
     expect(
-      aTarjeta(fila({ verified: true, verification: { status: 'SUSPENDED' } })).verification
+      aTarjeta(fila({ verified: true, verification: { status: 'UNVERIFIED' } })).verification
         ?.status,
-    ).toBe('SUSPENDED');
+    ).toBe('UNVERIFIED');
   });
 
   it('una clínica o una farmacia no llevan la insignia de profesional', () => {
