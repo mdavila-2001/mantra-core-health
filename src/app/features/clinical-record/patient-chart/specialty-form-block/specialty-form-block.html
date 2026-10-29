@@ -295,21 +295,8 @@
                     [class.formulario-especialidad__campo-amplio]="tipoDibujable(campo) === 'text' || tipoDibujable(campo) === 'varias'"
                     data-testid="campo-especialidad"
                   >
-                    @if (campo.valueSetId; as valueSetId) {
-                      <!-- Campo de catálogo: `valueSetId` manda sobre el `dataType` —
-                           conviven, igual que en `ChartTemplateFieldDto`. Las
-                           opciones salen del conjunto de valores, no se tipean. -->
-                      <app-select
-                        [options]="catalogs.optionsOf(valueSetId)"
-                        [value]="valorTexto(campo.fieldId) || null"
-                        [disabled]="catalogs.isLoading(valueSetId)"
-                        [placeholder]="catalogs.placeholderOf(valueSetId)"
-                        (valueChange)="actualizarValor(campo.fieldId, $event)"
-                        data-testid="campo-catalogo"
-                      />
-                    } @else {
-                      @switch (tipoDibujable(campo)) {
-                        @case ('una-corta') {
+                    @switch (tipoDibujable(campo)) {
+                      @case ('una-corta') {
                         <app-segmented-control
                           [options]="opcionesDe(campo)"
                           [value]="valorTexto(campo.fieldId)"
@@ -380,7 +367,6 @@
                           [value]="valorTexto(campo.fieldId)"
                           (valueChange)="actualizarValor(campo.fieldId, $event)"
                         />
-                      }
                       }
                     }
                   </app-form-field>

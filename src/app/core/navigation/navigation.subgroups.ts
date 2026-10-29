@@ -494,15 +494,8 @@ export const GRUPOS_APLANADOS_POR_TIPO_DE_ORGANIZACION: Readonly<
   PAYER: new Set<NavGroup>(['Administración']),
 };
 
-/** ¿Se dibuja este dominio sin desplegable para la organización activa o rol superadmin? */
-export function isGroupFlattened(
-  group: NavGroup,
-  activeTenantType: string | null,
-  roles?: readonly string[],
-): boolean {
-  if (roles?.includes('SUPERADMIN')) {
-    return true;
-  }
+/** ¿Se dibuja este dominio sin desplegable para la organización activa? */
+export function seAplanaElGrupo(group: NavGroup, activeTenantType: string | null): boolean {
   if (GRUPOS_APLANADOS.has(group)) {
     return true;
   }

@@ -846,26 +846,18 @@ describe('NavigationService', () => {
       ]);
     });
 
-    it('el aplanado es de la aseguradora o superadmin: otros administradores siguen viendo el desplegable', () => {
-      abrirSesion(['SECURITY_ADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
-
-      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
-      expect(administracion?.aplanado).toBe(false);
-    });
-
-    it('sin el claim de tipo, «Administración» sigue plegada para roles no superadmin', () => {
-      abrirSesion(['SECURITY_ADMIN'], ['t-1']);
-
-      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
-      expect(administracion?.aplanado).toBe(false);
-    });
-
-    it('los grupos de superadministración vienen todos aplanados para mostrar los accesos sin desplegables', () => {
+    it('el aplanado es de la aseguradora: quien administra la plataforma sigue viendo el desplegable', () => {
       abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
 
-      const grupos = service.menu();
-      expect(grupos.length).toBeGreaterThan(0);
-      expect(grupos.every((g) => g.aplanado)).toBe(true);
+      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
+      expect(administracion?.aplanado).toBe(false);
+    });
+
+    it('sin el claim de tipo, «Administración» sigue plegada', () => {
+      abrirSesion(['SUPERADMIN'], ['t-1']);
+
+      const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
+      expect(administracion?.aplanado).toBe(false);
     });
 
     it('no alcanza a entrar a lo que le cerraron: sigue existiendo el guard, no sólo el menú', () => {
