@@ -136,11 +136,21 @@ const EQUIPOS = {
  */
 /** El plan de cuentas de la práctica: de acá sale la cuenta del dinero. */
 function responderCuentas(http: HttpTestingController): void {
-  http.expectOne((r) => r.url === `${BASE}/accounting/accounts`).flush({
-    items: [{ id: 'acc-banco', code: '1.2', name: 'Banco', accountTypeConceptId: 't', normalBalanceConceptId: 'n' }],
-    count: 1,
-    limit: 200,
-  });
+  http
+    .expectOne((r) => r.url === `${BASE}/accounting/accounts`)
+    .flush({
+      items: [
+        {
+          id: 'acc-banco',
+          code: '1.2',
+          name: 'Banco',
+          accountTypeConceptId: 't',
+          normalBalanceConceptId: 'n',
+        },
+      ],
+      count: 1,
+      limit: 200,
+    });
 }
 
 function responderTablero(
@@ -151,7 +161,9 @@ function responderTablero(
   const pedidos = http.match((r) => r.url === `${BASE}/accounting/income-statement`);
   expect(pedidos).toHaveLength(6);
   pedidos.forEach((pedido, i) => pedido.flush(estados[i]));
-  http.expectOne((r) => r.url === `${BASE}/accounting/open-items`).flush(opciones.cartera ?? CARTERA_VACIA);
+  http
+    .expectOne((r) => r.url === `${BASE}/accounting/open-items`)
+    .flush(opciones.cartera ?? CARTERA_VACIA);
   http.expectOne((r) => r.url === `${BASE}/accounting/balance-sheet`).flush(SITUACION);
   http.expectOne((r) => r.url === `${BASE}/accounting/assets`).flush(EQUIPOS);
   responderCuentas(http);
@@ -196,7 +208,7 @@ describe('Resumen contable', () => {
       http.expectOne((r) => r.url === `${BASE}/accounting/open-items`).flush(CARTERA_VACIA);
       http.expectOne((r) => r.url === `${BASE}/accounting/balance-sheet`).flush(SITUACION);
       http.expectOne((r) => r.url === `${BASE}/accounting/assets`).flush(EQUIPOS);
-  responderCuentas(http);
+      responderCuentas(http);
       http.verify();
     });
 
@@ -213,9 +225,16 @@ describe('Resumen contable', () => {
       ]);
       fixture.detectChanges();
 
-      const tramos = (fixture.componentInstance as unknown as { brackets: () => readonly {
-        clave: string; entro: string; salio: string; quedo: string;
-      }[] }).brackets();
+      const tramos = (
+        fixture.componentInstance as unknown as {
+          brackets: () => readonly {
+            clave: string;
+            entro: string;
+            salio: string;
+            quedo: string;
+          }[];
+        }
+      ).brackets();
 
       expect(tramos.map((t) => t.clave)).toEqual(['hoy', 'semana', 'mes']);
       expect(tramos.map((t) => t.entro)).toEqual(['1450.00', '8880.00', '14220.00']);
@@ -237,9 +256,13 @@ describe('Resumen contable', () => {
       ]);
       fixture.detectChanges();
 
-      const tramos = (fixture.componentInstance as unknown as { brackets: () => readonly {
-        comparacion: { direccion: string; porcentaje: number } | null;
-      }[] }).brackets();
+      const tramos = (
+        fixture.componentInstance as unknown as {
+          brackets: () => readonly {
+            comparacion: { direccion: string; porcentaje: number } | null;
+          }[];
+        }
+      ).brackets();
 
       expect(tramos[0]?.comparacion).toMatchObject({ direccion: 'baja', porcentaje: 20 });
       expect(tramos[1]?.comparacion).toMatchObject({ direccion: 'sube', porcentaje: 20 });
@@ -255,9 +278,27 @@ describe('Resumen contable', () => {
       const mes = {
         ...resultado('0.00', '1000.00', '-1000.00'),
         expenseItems: [
-          { accountId: 'a1', code: '5.5', name: 'Depreciación', accountTypeConceptId: 'g', amount: '600.00' },
-          { accountId: 'a2', code: '5.3', name: 'Servicios básicos', accountTypeConceptId: 'g', amount: '300.00' },
-          { accountId: 'a3', code: '9.9', name: 'Gasto raro de la práctica', accountTypeConceptId: 'g', amount: '100.00' },
+          {
+            accountId: 'a1',
+            code: '5.5',
+            name: 'Depreciación',
+            accountTypeConceptId: 'g',
+            amount: '600.00',
+          },
+          {
+            accountId: 'a2',
+            code: '5.3',
+            name: 'Servicios básicos',
+            accountTypeConceptId: 'g',
+            amount: '300.00',
+          },
+          {
+            accountId: 'a3',
+            code: '9.9',
+            name: 'Gasto raro de la práctica',
+            accountTypeConceptId: 'g',
+            amount: '100.00',
+          },
         ],
       };
       responderTablero(http, [
@@ -270,9 +311,15 @@ describe('Resumen contable', () => {
       ]);
       fixture.detectChanges();
 
-      const gastos = (fixture.componentInstance as unknown as { monthExpenses: () => readonly {
-        nombre: string; porcentaje: number; aclaracion: string | null;
-      }[] }).monthExpenses();
+      const gastos = (
+        fixture.componentInstance as unknown as {
+          monthExpenses: () => readonly {
+            nombre: string;
+            porcentaje: number;
+            aclaracion: string | null;
+          }[];
+        }
+      ).monthExpenses();
 
       expect(gastos.map((g) => g.nombre)).toEqual([
         'Desgaste de los equipos',
@@ -294,8 +341,20 @@ describe('Resumen contable', () => {
       const mes = {
         ...resultado('0.00', '100.00', '-100.00'),
         expenseItems: [
-          { accountId: 'a1', code: '5.1', name: 'Alquiler', accountTypeConceptId: 'g', amount: '100.00' },
-          { accountId: 'a2', code: '5.2', name: 'Insumos', accountTypeConceptId: 'g', amount: '0.00' },
+          {
+            accountId: 'a1',
+            code: '5.1',
+            name: 'Alquiler',
+            accountTypeConceptId: 'g',
+            amount: '100.00',
+          },
+          {
+            accountId: 'a2',
+            code: '5.2',
+            name: 'Insumos',
+            accountTypeConceptId: 'g',
+            amount: '0.00',
+          },
         ],
       };
       responderTablero(http, [
@@ -309,8 +368,9 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       expect(
-        (fixture.componentInstance as unknown as { monthExpenses: () => readonly unknown[] })
-          .monthExpenses(),
+        (
+          fixture.componentInstance as unknown as { monthExpenses: () => readonly unknown[] }
+        ).monthExpenses(),
       ).toHaveLength(1);
     });
   });
@@ -326,22 +386,49 @@ describe('Resumen contable', () => {
       return {
         items: [
           {
-            id: 'oi-1', documentNumber: 'FC-1', accountCode: '1.3', accountName: 'Por cobrar',
-            partnerName: 'Seguros Andina', side: 'RECEIVABLE', documentDate: hoyIso(-90),
-            dueDate: hoyIso(-45), amount: '4820.00', clearedAmount: '0.00',
-            openAmount: '4820.00', overdueDays: 45, agingBucket: 'D31_60',
+            id: 'oi-1',
+            documentNumber: 'FC-1',
+            accountCode: '1.3',
+            accountName: 'Por cobrar',
+            partnerName: 'Seguros Andina',
+            side: 'RECEIVABLE',
+            documentDate: hoyIso(-90),
+            dueDate: hoyIso(-45),
+            amount: '4820.00',
+            clearedAmount: '0.00',
+            openAmount: '4820.00',
+            overdueDays: 45,
+            agingBucket: 'D31_60',
           },
           {
-            id: 'oi-2', documentNumber: 'FC-2', accountCode: '1.3', accountName: 'Por cobrar',
-            partnerName: 'Nacional Vida', side: 'RECEIVABLE', documentDate: hoyIso(-20),
-            dueDate: hoyIso(8), amount: '3120.00', clearedAmount: '0.00',
-            openAmount: '3120.00', overdueDays: 0, agingBucket: 'CORRIENTE',
+            id: 'oi-2',
+            documentNumber: 'FC-2',
+            accountCode: '1.3',
+            accountName: 'Por cobrar',
+            partnerName: 'Nacional Vida',
+            side: 'RECEIVABLE',
+            documentDate: hoyIso(-20),
+            dueDate: hoyIso(8),
+            amount: '3120.00',
+            clearedAmount: '0.00',
+            openAmount: '3120.00',
+            overdueDays: 0,
+            agingBucket: 'CORRIENTE',
           },
           {
-            id: 'oi-3', documentNumber: 'FP-1', accountCode: '2.3', accountName: 'Proveedores',
-            partnerName: 'Droguería Boliviana', side: 'PAYABLE', documentDate: hoyIso(-30),
-            dueDate: hoyIso(-1), amount: '1740.00', clearedAmount: '0.00',
-            openAmount: '1740.00', overdueDays: 1, agingBucket: 'D1_30',
+            id: 'oi-3',
+            documentNumber: 'FP-1',
+            accountCode: '2.3',
+            accountName: 'Proveedores',
+            partnerName: 'Droguería Boliviana',
+            side: 'PAYABLE',
+            documentDate: hoyIso(-30),
+            dueDate: hoyIso(-1),
+            amount: '1740.00',
+            clearedAmount: '0.00',
+            openAmount: '1740.00',
+            overdueDays: 1,
+            agingBucket: 'D1_30',
           },
         ],
         aging: [],
@@ -425,7 +512,12 @@ describe('Resumen contable', () => {
         clearingDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         items: [{ openItemId: 'oi-1', clearedAmount: '4820.00' }],
       });
-      compensacion.flush({ id: 'cd-1', clearingNumber: 'CLR-1', transactionId: 'tx-1', clearedItems: 1 });
+      compensacion.flush({
+        id: 'cd-1',
+        clearingNumber: 'CLR-1',
+        transactionId: 'tx-1',
+        clearedItems: 1,
+      });
       fixture.detectChanges();
 
       // Y no se queda con la pantalla vieja: relee todo, porque compensar
@@ -449,13 +541,20 @@ describe('Resumen contable', () => {
       http
         .expectOne(`${BASE}/accounting/clearing-documents`)
         .flush(
-          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-cobro', timestamp: '', path: '' },
+          {
+            code: 'INTERNAL',
+            message: 'Internal server error',
+            correlationId: 'corr-cobro',
+            timestamp: '',
+            path: '',
+          },
           { status: 500, statusText: 'Server Error' },
         );
 
       expect(avisos).toHaveBeenLastCalledWith({
         type: 'error',
-        message: 'No se pudo registrar el cobro de Seguros Andina. Intente de nuevo. (Código de soporte: corr-cobro)',
+        message:
+          'No se pudo registrar el cobro de Seguros Andina. Intente de nuevo. (Código de soporte: corr-cobro)',
       });
       // El botón vuelve a estar disponible y el tablero sigue como estaba.
       expect(c.settling()).toBeNull();
@@ -480,7 +579,10 @@ describe('Resumen contable', () => {
           { status: 409, statusText: 'Conflict' },
         );
 
-      expect(avisos).toHaveBeenLastCalledWith({ type: 'error', message: 'La partida ya está compensada' });
+      expect(avisos).toHaveBeenLastCalledWith({
+        type: 'error',
+        message: 'La partida ya está compensada',
+      });
     });
   });
 
@@ -492,22 +594,65 @@ describe('Resumen contable', () => {
       pedidos.forEach((p) => p.flush(resultado('0.00', '0.00', '0.00')));
       http.expectOne((r) => r.url === `${BASE}/accounting/open-items`).flush(CARTERA_VACIA);
       http.expectOne((r) => r.url === `${BASE}/accounting/balance-sheet`).flush(SITUACION);
-      http.expectOne((r) => r.url === `${BASE}/accounting/assets`).flush({
-        items: [
-          { id: 'e1', code: 'EQ-1', name: 'Ecógrafo', className: 'Equipos', classCode: 'EQ', usefulLifeMonths: 60, acquisitionCost: '45000.00', accumulatedDepreciation: '3750.00', netBookValue: '41250.00', monthlyDepreciation: '750.00', depreciable: true, status: 'ACTIVE' },
-          { id: 'e2', code: 'EQ-0', name: 'Tensiómetro de mercurio', className: 'Equipos', classCode: 'EQ', usefulLifeMonths: 0, acquisitionCost: '350.00', accumulatedDepreciation: '350.00', netBookValue: '0.00', monthlyDepreciation: '0.00', depreciable: false, status: 'RETIRED' },
-          { id: 'e3', code: 'EQ-2', name: 'Camilla ya amortizada', className: 'Equipos', classCode: 'EQ', usefulLifeMonths: 36, acquisitionCost: '6500.00', accumulatedDepreciation: '6500.00', netBookValue: '0.00', monthlyDepreciation: '0.00', depreciable: false, status: 'ACTIVE' },
-        ],
-        totalAcquisition: '51850.00',
-        totalAccumulated: '10600.00',
-        totalNetBookValue: '41250.00',
-        monthlyCharge: '750.00',
-      });
+      http
+        .expectOne((r) => r.url === `${BASE}/accounting/assets`)
+        .flush({
+          items: [
+            {
+              id: 'e1',
+              code: 'EQ-1',
+              name: 'Ecógrafo',
+              className: 'Equipos',
+              classCode: 'EQ',
+              usefulLifeMonths: 60,
+              acquisitionCost: '45000.00',
+              accumulatedDepreciation: '3750.00',
+              netBookValue: '41250.00',
+              monthlyDepreciation: '750.00',
+              depreciable: true,
+              status: 'ACTIVE',
+            },
+            {
+              id: 'e2',
+              code: 'EQ-0',
+              name: 'Tensiómetro de mercurio',
+              className: 'Equipos',
+              classCode: 'EQ',
+              usefulLifeMonths: 0,
+              acquisitionCost: '350.00',
+              accumulatedDepreciation: '350.00',
+              netBookValue: '0.00',
+              monthlyDepreciation: '0.00',
+              depreciable: false,
+              status: 'RETIRED',
+            },
+            {
+              id: 'e3',
+              code: 'EQ-2',
+              name: 'Camilla ya amortizada',
+              className: 'Equipos',
+              classCode: 'EQ',
+              usefulLifeMonths: 36,
+              acquisitionCost: '6500.00',
+              accumulatedDepreciation: '6500.00',
+              netBookValue: '0.00',
+              monthlyDepreciation: '0.00',
+              depreciable: false,
+              status: 'ACTIVE',
+            },
+          ],
+          totalAcquisition: '51850.00',
+          totalAccumulated: '10600.00',
+          totalNetBookValue: '41250.00',
+          monthlyCharge: '750.00',
+        });
       responderCuentas(http);
       fixture.detectChanges();
 
       const equipos = (
-        fixture.componentInstance as unknown as { equipmentWithValue: () => readonly { name: string }[] }
+        fixture.componentInstance as unknown as {
+          equipmentWithValue: () => readonly { name: string }[];
+        }
       ).equipmentWithValue();
 
       // Un renglón en cero en «lo que tenés» ocupa lugar y no dice nada. El
@@ -521,27 +666,31 @@ describe('Resumen contable', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
       expect(
-        (fixture.componentInstance as unknown as { hasSeveralPractices: () => boolean })
-          .hasSeveralPractices(),
+        (
+          fixture.componentInstance as unknown as { hasSeveralPractices: () => boolean }
+        ).hasSeveralPractices(),
       ).toBe(false);
     });
   });
 
   describe('tableros y registros, en pestañas separadas', () => {
     const rotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
-      Array.from(fixture.nativeElement.querySelectorAll('.pestanas > .tabs__bar [role="tab"]')).map((t) =>
-        (t as HTMLElement).textContent?.trim() ?? '',
+      Array.from(fixture.nativeElement.querySelectorAll('.pestanas > .tabs__bar [role="tab"]')).map(
+        (t) => (t as HTMLElement).textContent?.trim() ?? '',
       );
 
     const subrotulos = (fixture: { nativeElement: HTMLElement }): string[] =>
-      Array.from(fixture.nativeElement.querySelectorAll('.subpestanas > .tabs__bar [role="tab"]')).map((t) =>
-        (t as HTMLElement).textContent?.trim() ?? '',
-      );
+      Array.from(
+        fixture.nativeElement.querySelectorAll('.subpestanas > .tabs__bar [role="tab"]'),
+      ).map((t) => (t as HTMLElement).textContent?.trim() ?? '');
 
     it('son dos pestañas —Resumen y, en Doctor, «Anotar gastos, equipos y deudas»— y abre en Resumen', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
-      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      responderTablero(
+        http,
+        Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')),
+      );
       fixture.detectChanges();
 
       expect(rotulos(fixture)).toEqual(['Resumen', 'Anotar gastos, equipos y deudas']);
@@ -563,7 +712,10 @@ describe('Resumen contable', () => {
     it('divide el resumen en ingresos, pendientes, activos y flujo de dinero', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
-      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      responderTablero(
+        http,
+        Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')),
+      );
       fixture.detectChanges();
 
       expect(subrotulos(fixture)).toEqual([
@@ -599,24 +751,23 @@ describe('Resumen contable', () => {
     it('el Resumen no trae la tarjeta de registros', () => {
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
-      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      responderTablero(
+        http,
+        Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')),
+      );
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;
       expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
     });
 
-    // La contabilidad simple sólo existe en la maqueta (`simulatorAvailable()`),
-    // y en esta rama viene apagada: se enciende para el caso que la monta.
     it('en Registros no hay tableros ni se pide el dinero del tablero de nuevo', () => {
-      const mockBackendOriginal = environment.mockBackend;
-      Object.assign(environment, { mockBackend: true });
-      onTestFinished(() => {
-        Object.assign(environment, { mockBackend: mockBackendOriginal });
-      });
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
-      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      responderTablero(
+        http,
+        Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')),
+      );
       fixture.detectChanges();
 
       fixture.componentInstance.tab.set(1);
@@ -629,7 +780,9 @@ describe('Resumen contable', () => {
       http.verify();
     });
 
-    it('contra la API real, Registros avisa que la contabilidad simple no está y no la monta', () => {
+    // H12: la API publica `/accounting/practitioner/simple/*` desde el 24/10; la
+    // guarda vieja decía «el servidor aún no ofrece esta función».
+    it('contra la API real, Registros monta la contabilidad simple y no avisa que falta', () => {
       const mockBackendOriginal = environment.mockBackend;
       Object.assign(environment, { mockBackend: false });
       onTestFinished(() => {
@@ -637,15 +790,19 @@ describe('Resumen contable', () => {
       });
       const { fixture, http } = montar();
       responderPracticas(http, fixture);
-      responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      responderTablero(
+        http,
+        Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')),
+      );
       fixture.detectChanges();
 
       fixture.componentInstance.tab.set(1);
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;
-      expect(raiz.querySelector('[data-testid="simple-accounting-unavailable"]')).not.toBeNull();
-      expect(raiz.querySelector('[data-testid="contabilidad-registros"]')).toBeNull();
+      expect(raiz.querySelector('[data-testid="simple-accounting-unavailable"]')).toBeNull();
+      expect(raiz.querySelector('app-simple-accounting')).not.toBeNull();
+      expect(raiz.textContent).not.toContain('El servidor aún no ofrece esta función');
       http.verify();
     });
   });
@@ -654,15 +811,21 @@ describe('Resumen contable', () => {
     const tablero = (): ReturnType<typeof montar> => {
       const montado = montar();
       responderPracticas(montado.http, montado.fixture);
-      responderTablero(montado.http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+      responderTablero(
+        montado.http,
+        Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')),
+      );
       montado.fixture.detectChanges();
       return montado;
     };
 
-    const raizDe = (fixture: { nativeElement: unknown }): HTMLElement => fixture.nativeElement as HTMLElement;
+    const raizDe = (fixture: { nativeElement: unknown }): HTMLElement =>
+      fixture.nativeElement as HTMLElement;
 
     const opciones = (fixture: { nativeElement: unknown }): HTMLElement[] =>
-      Array.from(raizDe(fixture).querySelectorAll('[data-testid="contabilidad-version"] [role="radio"]'));
+      Array.from(
+        raizDe(fixture).querySelectorAll('[data-testid="contabilidad-version"] [role="radio"]'),
+      );
 
     const marcada = (fixture: { nativeElement: unknown }): string | undefined =>
       opciones(fixture)
@@ -685,9 +848,13 @@ describe('Resumen contable', () => {
       fixture.detectChanges();
 
       expect(marcada(fixture)).toBe('Contador');
-      const herramientas = raizDe(fixture).querySelector('[data-testid="contabilidad-herramientas"]');
+      const herramientas = raizDe(fixture).querySelector(
+        '[data-testid="contabilidad-herramientas"]',
+      );
       expect(herramientas).not.toBeNull();
-      const enlaces = Array.from(herramientas!.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+      const enlaces = Array.from(herramientas!.querySelectorAll('a')).map((a) =>
+        a.getAttribute('href'),
+      );
       expect(enlaces).toEqual([
         '/administration/accounting/cockpit',
         '/administration/accounting/books',
@@ -727,7 +894,9 @@ describe('Resumen contable', () => {
 
       const rotulosDeRegistros = (): string[] =>
         Array.from(
-          raizDe(fixture).querySelectorAll('[data-testid="contabilidad-registros"] .tabs__bar [role="tab"]'),
+          raizDe(fixture).querySelectorAll(
+            '[data-testid="contabilidad-registros"] .tabs__bar [role="tab"]',
+          ),
         ).map((t) => (t.textContent ?? '').replace(/\s*\(\d+\)\s*$/u, '').trim());
 
       expect(rotulosDeRegistros()).toEqual(['Gastos', 'Activos', 'Deudas']);
@@ -735,7 +904,13 @@ describe('Resumen contable', () => {
       opciones(fixture)[1]!.click();
       fixture.detectChanges();
 
-      expect(rotulosDeRegistros()).toEqual(['Gastos', 'Activos', 'Deudas', 'Transacciones', 'Cuentas']);
+      expect(rotulosDeRegistros()).toEqual([
+        'Gastos',
+        'Activos',
+        'Deudas',
+        'Transacciones',
+        'Cuentas',
+      ]);
     });
   });
 
@@ -745,7 +920,10 @@ describe('Resumen contable', () => {
     // rama no emite y la pantalla se queda cargando para siempre.
     const { fixture, http } = montar();
     responderPracticas(http, fixture);
-    responderTablero(http, Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')));
+    responderTablero(
+      http,
+      Array.from({ length: 6 }, () => resultado('0.00', '0.00', '0.00')),
+    );
     http.verify();
   });
 });
