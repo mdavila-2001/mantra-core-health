@@ -4,7 +4,10 @@
 <app-page-header
   title="Contabilidad"
   subtitle="Cuánto ingresó, en qué gastó, qué le deben y qué tiene que pagar."
-/>
+>
+  <a app-button page-actions variant="outline" routerLink="/administration/accounting/billing-setup"
+    data-testid="billing-setup-link"><app-nav-icon name="wallet" /> Configuración para facturar</a>
+</app-page-header>
 
 <!-- Una sola barra arriba (27/10/2026): de qué consultorio son las cifras y
      cómo se leen. Antes eran dos bloques apilados —«Versión» y «Consultorio»—
