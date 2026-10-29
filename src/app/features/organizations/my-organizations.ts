@@ -9,8 +9,6 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, of } from 'rxjs';
 
 import { AccountingClient } from '../../core/data-access/accounting/accounting.client';
 import type { Practice } from '../../core/data-access/accounting/accounting.types';
@@ -130,12 +128,15 @@ export class MyOrganizations {
    * releer la lista, y una única suscripción de `toSignal` no ofrece forma de
    * volver a dispararla sin este signal.
    */
-  private readonly vinculaciones = signal<readonly MyRoleAssignment[] | undefined>(undefined);
+  private readonly vinculaciones = signal<ViewState<readonly MyRoleAssignment[]>>(loading());
 
-  protected readonly cargandoVinculaciones = computed(() => this.vinculaciones() === undefined);
+  protected readonly cargandoVinculaciones = computed(
+    () => this.vinculaciones().status === 'loading',
+  );
 
-  protected readonly filas = computed<readonly AssignmentRow[]>(() =>
-    (this.vinculaciones() ?? []).map((v) => ({
+  protected readonly filas = computed<readonly AssignmentRow[]>(() => {
+    const estado = this.vinculaciones();
+    return (estado.status === 'ready' || estado.status === 'stale' ? estado.data : []).map((v) => ({
       ...v,
       statusLabel: roleAssignmentStatusLabel(v.status),
       isFinal:
@@ -143,8 +144,8 @@ export class MyOrganizations {
         v.status === ROLE_ASSIGNMENT_STATUS.ENDED,
       verified: v.status === ROLE_ASSIGNMENT_STATUS.ACTIVE,
       statusVariant: varianteDeEstado(v.status),
-    })),
-  );
+    }));
+  });
 
   /* --- la tabla ---------------------------------------------------------- *
      El propietario pidió el 2026-09-10 que esta pantalla «sea como están los
@@ -167,19 +168,44 @@ export class MyOrganizations {
 
   protected readonly porId = (fila: AssignmentRow): string => fila.id;
 
-  /** El estado de la tabla, en los términos del M34. */
-  protected readonly estadoDeLaTabla = computed<ViewState<readonly AssignmentRow[]>>(() =>
-    this.vinculaciones() === undefined ? loading() : ready(this.filas()),
+  /**
+   * El estado de la tabla, en los términos del M34. Un fallo de la lectura es
+   * su estado (S5/S8/S9 con reintento), no una lista vacía: antes el
+   * `catchError(() => [])` decía «todavía no tenés vinculaciones» a quien sí
+   * las tenía y simplemente no se pudieron leer.
+   */
+  protected readonly estadoDeLaTabla = computed<ViewState<readonly AssignmentRow[]>>(() => {
+    const estado = this.vinculaciones();
+    if (estado.status === 'ready' || estado.status === 'stale') {
+      return { ...estado, data: this.filas() };
+    }
+    return estado;
+  });
+
+  /** Sin vinculaciones de verdad: la respuesta llegó y vino vacía. */
+  protected readonly sinVinculaciones = computed(() => {
+    const estado = this.vinculaciones();
+    return estado.status === 'ready' && estado.data.length === 0;
+  });
+
+  /**
+   * Las organizaciones a las que se puede pedir vinculación. Si la lectura
+   * falla se dice —con reintento— en vez de dejar el selector vacío sin
+   * explicación, que se lee como «no hay ninguna».
+   */
+  private readonly practicas = signal<ViewState<readonly Practice[]>>(loading());
+
+  protected readonly errorDeOrganizaciones = computed(() =>
+    errorMessageOf(this.practicas(), 'No tenés permiso para ver las organizaciones disponibles.'),
   );
 
-  private readonly practicas = toSignal(
-    this.accounting.listPractices().pipe(catchError(() => of<readonly Practice[]>([]))),
-    { initialValue: undefined },
-  );
-
-  protected readonly opcionesDeOrganizacion = computed<readonly SelectOption<string>[]>(() =>
-    (this.practicas() ?? []).map((p) => ({ value: p.id, label: p.name })),
-  );
+  protected readonly opcionesDeOrganizacion = computed<readonly SelectOption<string>[]>(() => {
+    const estado = this.practicas();
+    return (estado.status === 'ready' ? estado.data : []).map((p) => ({
+      value: p.id,
+      label: p.name,
+    }));
+  });
 
   protected readonly organizacionElegida = signal<string | null>(null);
 
@@ -191,6 +217,19 @@ export class MyOrganizations {
   protected readonly solicitudEnviada = signal(false);
 
   constructor() {
+    this.recargarVinculaciones();
+    this.cargarOrganizaciones();
+  }
+
+  protected cargarOrganizaciones(): void {
+    this.practicas.set(loading());
+    this.accounting.listPractices().subscribe({
+      next: (items) => this.practicas.set(ready(items)),
+      error: (error: unknown) => this.practicas.set(errorToViewState<readonly Practice[]>(error)),
+    });
+  }
+
+  protected reintentarVinculaciones(): void {
     this.recargarVinculaciones();
   }
 
@@ -213,9 +252,11 @@ export class MyOrganizations {
   }
 
   private recargarVinculaciones(): void {
-    this.practiceSites
-      .listMyRoleAssignments()
-      .pipe(catchError(() => of<readonly MyRoleAssignment[]>([])))
-      .subscribe((items) => this.vinculaciones.set(items));
+    this.vinculaciones.set(loading());
+    this.practiceSites.listMyRoleAssignments().subscribe({
+      next: (items) => this.vinculaciones.set(ready(items)),
+      error: (error: unknown) =>
+        this.vinculaciones.set(errorToViewState<readonly MyRoleAssignment[]>(error)),
+    });
   }
 }

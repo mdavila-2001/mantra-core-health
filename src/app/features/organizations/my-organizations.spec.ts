@@ -166,4 +166,40 @@ describe('MyOrganizations — Carril 18', () => {
       expect.objectContaining({ isFinal: true, statusLabel: 'Rechazada' }),
     );
   });
+  it('si las vinculaciones no se pueden leer, lo dice con su código y no «no tenés ninguna»', () => {
+    // Antes `catchError(() => [])` convertía el fallo en una lista vacía.
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/practitioners/me/role-assignments')
+      .flush(null, { status: 500, statusText: 'Error', headers: { 'x-request-id': 'req-vinc' } });
+    http.expectOne((r) => r.url === '/practices').flush([]);
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.textContent).not.toContain('Todavía no tenés vinculaciones');
+    expect(raiz.textContent).toContain('req-vinc');
+
+    [...raiz.querySelectorAll('button')].find((b) => b.textContent?.includes('Reintentar'))?.click();
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
+    fixture.detectChanges();
+    expect(raiz.textContent).toContain('Todavía no tenés vinculaciones');
+  });
+
+  it('si las organizaciones disponibles no se pueden leer, lo dice y deja reintentar', () => {
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
+    http.expectOne((r) => r.url === '/practices').error(new ProgressEvent('error'), { status: 0 });
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    const aviso = raiz.querySelector('[data-testid="mis-vinculaciones-orgs-error"]');
+    expect(aviso?.textContent).toContain('No pudimos traer las organizaciones disponibles');
+
+    [...(aviso?.querySelectorAll('button') ?? [])]
+      .find((b) => b.textContent?.includes('Reintentar'))
+      ?.click();
+    http.expectOne((r) => r.url === '/practices').flush([]);
+    fixture.detectChanges();
+    expect(raiz.querySelector('[data-testid="mis-vinculaciones-orgs-error"]')).toBeNull();
+  });
 });
