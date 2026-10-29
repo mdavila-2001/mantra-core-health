@@ -83,3 +83,17 @@ export {
   TOOLTIP_POSITIONS,
 } from './tooltip/tooltip.types';
 export type { TooltipPosition } from './tooltip/tooltip.types';
+
+/* El «check azul» de un profesional verificado, y sus estados hermanos (en
+   verificación, suspendida, vencida). El estado lo decide la API; el adaptador
+   que lo normaliza vive en `@core/verification/verification-status`. */
+export { VerificationBadge } from './verification-badge/verification-badge';
+export {
+  VERIFICATION_BADGE_SIZES,
+  VERIFICATION_BADGE_VARIANTS,
+  VERIFICATION_COPY,
+} from './verification-badge/verification-badge.types';
+export type {
+  VerificationBadgeSize,
+  VerificationBadgeVariant,
+} from './verification-badge/verification-badge.types';

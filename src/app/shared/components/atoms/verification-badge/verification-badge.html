@@ -1,0 +1,58 @@
+@if (painted()) {
+  <!-- `role="img"` con nombre completo: el pictograma ES la información, y en la
+       variante con texto el aria-label repite la palabra visible a propósito
+       (los hijos de un `img` son presentacionales). Foco sólo si hay tooltip. -->
+  <span
+    [class]="rootClasses()"
+    role="img"
+    [attr.aria-label]="ariaLabel()"
+    [attr.tabindex]="interactive() ? 0 : null"
+    [attr.title]="interactive() ? null : summary()"
+    [appTooltip]="interactive() ? summary() : ''"
+    [appTooltipTemplate]="interactive() ? card : null"
+    appTooltipPosition="top"
+  >
+    <svg class="vb__icon" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+      @switch (state()) {
+        @case ('VERIFIED') {
+          <path class="vb__seal" [attr.d]="sealPath" />
+          <path class="vb__check" d="M7.7 12.5l2.9 2.9 5.7-6.3" />
+        }
+        @case ('IN_REVIEW') {
+          <circle class="vb__disc" cx="12" cy="12" r="10.2" />
+          <path class="vb__glyph" d="M12 6.9v5.3l3.4 2" />
+        }
+        @case ('SUSPENDED') {
+          <circle class="vb__disc" cx="12" cy="12" r="10.2" />
+          <path class="vb__glyph" d="M9.6 8.4v7.2M14.4 8.4v7.2" />
+        }
+        @case ('EXPIRED') {
+          <circle class="vb__disc" cx="12" cy="12" r="10.2" />
+          <path class="vb__glyph" d="M12 7.2v5.6" />
+          <circle class="vb__dot" cx="12" cy="16.4" r="1.25" />
+        }
+        @default {
+          <circle class="vb__disc" cx="12" cy="12" r="10.2" />
+          <path class="vb__glyph" d="M8.6 12h6.8" />
+        }
+      }
+    </svg>
+    @if (variant() === 'label') {
+      <span class="vb__text">{{ copy().visible }}</span>
+    }
+  </span>
+}
+
+<!-- Cuerpo del tooltip: sólo lectura (un tooltip se cierra al mover el foco). -->
+<ng-template #card>
+  <span class="vb-tip">
+    <strong class="vb-tip__title">{{ copy().name }}</strong>
+    <span class="vb-tip__body">{{ copy().meaning }}</span>
+    @if (verifiedAtText(); as verified) {
+      <span class="vb-tip__date">{{ verified }}</span>
+    }
+    @if (validUntilText(); as until) {
+      <span class="vb-tip__date">{{ until }}</span>
+    }
+  </span>
+</ng-template>

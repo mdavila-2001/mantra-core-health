@@ -1,0 +1,188 @@
+/* ============================================================================
+    Insignia de verificación — el check azul del profesional.
+
+    Cero valores propios de color: el sello usa `--verified-bg/-fg` (medidos en
+    check-contrast.mjs, ≥3:1 contra toda superficie, claro y oscuro), el reloj
+    de «en verificación» el trío `--st-warning-*` y los estados sin check un
+    gris neutro. El tamaño sigue al texto vecino (`em`) con un piso en px de
+    sistema, para que a 16 px siga nítido y con fuente grande no se quede chico.
+    ========================================================================== */
+
+:host {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    /* alinea el centro óptico del sello con la altura de x del nombre vecino */
+    vertical-align: -0.2em;
+    line-height: 1;
+}
+
+:host(.vb-host--hidden) {
+    display: none;
+}
+
+.vb {
+    --_size: max(var(--sp-5), 1.15em);
+    --_bg: var(--bg-inset);
+    --_fg: var(--text-secondary);
+    --_bd: var(--border-strong);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    border-radius: var(--r-full);
+    color: var(--_fg);
+    font-family: var(--font-body);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ---- tamaños (sólo el pictograma; la variante con texto fija el suyo) ----- */
+
+.vb--sm { --_size: max(var(--sp-4), 1em); }
+.vb--md { --_size: max(var(--sp-5), 1.15em); }
+.vb--lg { --_size: max(var(--sp-6), 1.2em); }
+
+.vb__icon {
+    inline-size: var(--_size);
+    block-size: var(--_size);
+    flex: none;
+    overflow: visible;
+}
+
+/* ---- zona táctil: el pictograma de 16 px no es un blanco de 24 --------------
+   El pseudo-elemento sólo agranda el área de puntero y de foco; no mueve nada.
+   En pantallas táctiles crece hasta ≥44 px. */
+
+.vb--icon::after {
+    content: '';
+    position: absolute;
+    inset: calc(-1 * var(--sp-1));
+    border-radius: var(--r-full);
+}
+
+@media (pointer: coarse) {
+    .vb--icon::after {
+        inset: calc(-1 * var(--sp-3));
+    }
+}
+
+.vb:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+
+/* ---- estados --------------------------------------------------------------- */
+
+.vb__seal { fill: var(--verified-bg); }
+
+.vb__check {
+    fill: none;
+    stroke: var(--verified-fg);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.vb__disc {
+    fill: var(--_bg);
+    stroke: var(--_bd);
+    stroke-width: 1.6;
+}
+
+.vb__glyph {
+    fill: none;
+    stroke: var(--_fg);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.vb__dot { fill: var(--_fg); }
+
+/* en verificación: ámbar con borde; la forma (reloj) lo separa del check */
+.vb--in-review {
+    --_bg: var(--st-warning-bg);
+    --_fg: var(--st-warning-fg);
+    --_bd: var(--st-warning-fg);
+}
+
+/* ---- variante con texto: píldora ------------------------------------------- */
+
+.vb--label {
+    --_size: 1.45em;
+
+    padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-1);
+    border: 1px solid var(--_bd);
+    background: var(--_bg);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.vb--label.vb--md { font-size: var(--fs-caption); }
+.vb--label.vb--lg { font-size: var(--fs-body); }
+
+.vb--label.vb--verified {
+    --_bg: var(--st-primary-bg);
+    --_fg: var(--st-primary-fg);
+    --_bd: var(--st-primary-bd);
+}
+
+.vb--label.vb--in-review {
+    --_bd: var(--st-warning-bd);
+}
+
+/* en la píldora el borde es decorativo: el disco conserva su trazo propio */
+.vb--label .vb__disc { stroke: var(--_fg); }
+
+.vb__text { color: var(--_fg); }
+
+/* ---- aparición (opcional) -------------------------------------------------- */
+
+.vb--animated .vb__icon {
+    animation: vb-pop var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes vb-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vb--animated .vb__icon {
+        animation: none;
+    }
+}
+
+/* ---- cuerpo del tooltip ---------------------------------------------------- */
+
+.vb-tip {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    text-align: start;
+}
+
+.vb-tip__title { font-weight: 700; }
+.vb-tip__body { font-weight: 400; }
+
+.vb-tip__date {
+    font-variant-numeric: tabular-nums;
+    opacity: 0.85;
+}
+
+/* ---- contraste forzado: colores de sistema, la forma sigue diciendo el estado -- */
+
+@media (forced-colors: active) {
+    .vb__seal { fill: Highlight; }
+    .vb__check { stroke: HighlightText; }
+    .vb__disc { fill: Canvas; stroke: CanvasText; }
+    .vb__glyph { stroke: CanvasText; }
+    .vb__dot { fill: CanvasText; }
+    .vb--label { border-color: CanvasText; background: Canvas; color: CanvasText; }
+    .vb__text { color: CanvasText; }
+    .vb:focus-visible { outline-color: Highlight; }
+}
