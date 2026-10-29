@@ -165,6 +165,33 @@ describe('BookingPaymentReceipts', () => {
     expect(byTestId('booking-receipts-blocked')?.textContent).toContain('ya figura como pagada');
   });
 
+  describe('H03: el pago que ya trajo la lista (`knownPaymentState`)', () => {
+    it('la cita sola sin paymentState y la lista dice PAID: «ya figura como pagada», sin formulario', () => {
+      mount({ knownPaymentState: PAID });
+
+      expect(byTestId('booking-receipts-form')).toBeNull();
+      expect(byTestId('booking-receipts-blocked')?.textContent).toContain('ya figura como pagada');
+    });
+
+    it('la cita sola con paymentState manda sobre la de la lista', () => {
+      getBooking.mockReturnValue(
+        of(booking('b-1', { ...PAID, state: 'PENDING', label: 'Pendiente de pago' })),
+      );
+      mount({ knownPaymentState: PAID });
+
+      expect(byTestId('booking-receipts-blocked')).toBeNull();
+      expect(byTestId('booking-receipts-form')).not.toBeNull();
+    });
+
+    it('si la cita sola no se pudo leer, usa la de la lista', () => {
+      getBooking.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+      mount({ knownPaymentState: PAID });
+
+      expect(byTestId('booking-receipts-form')).toBeNull();
+      expect(byTestId('booking-receipts-blocked')?.textContent).toContain('ya figura como pagada');
+    });
+  });
+
   it('mientras no se sabe si la cita está pagada, no ofrece subir', () => {
     getBooking.mockReturnValue(new Subject());
     mount();
