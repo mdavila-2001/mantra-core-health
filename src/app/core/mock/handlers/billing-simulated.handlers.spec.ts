@@ -155,7 +155,7 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
         items: { appointmentId: string | null; paidTotal: string }[];
       };
       expect(recibidos.items).toContainEqual(expect.objectContaining({ appointmentId: reserva.appointmentId, paidTotal: cobro!.total }));
-      expect(llamar('POST', `/billing/simulated/payment-reports/${cobro!.id}/confirm`, {}, medica).status).toBe(412);
+      expect(llamar('POST', `/billing/simulated/payment-reports/${cobro!.id}/confirm`, {}, medica).status).toBe(422); // PRECONDITION_FAILED es 422 en la API, no 412
     } finally {
       reservas.actualizar(reserva.id, { paymentState: estadoAnterior, paymentAmount: importeAnterior });
     }
