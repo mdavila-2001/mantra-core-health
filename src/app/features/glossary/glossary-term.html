@@ -1,9 +1,24 @@
 <app-page-header [title]="titulo()" subtitle="Término del glosario" [breadcrumbs]="breadcrumbs()" />
 
 <div class="termino">
-  <p class="termino__volver">
+  <div class="termino__acciones">
     <a class="termino__enlace" routerLink="/glossary">← Volver al glosario</a>
-  </p>
+    @if (ficha()) {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [isLoading]="pdfOcupado()"
+        [disabled]="!articuloCargado()"
+        (clicked)="descargarPdf()"
+      >
+        Descargar ficha en PDF
+      </button>
+    }
+  </div>
+  @if (pdfError()) {
+    <p class="termino__pdf-error" role="alert">{{ pdfError() }}</p>
+  }
 
   <app-view-state-host [state]="termino()" (retry)="recargar()">
     @if (ficha(); as termino) {

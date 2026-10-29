@@ -71,8 +71,17 @@
   display: block;
 }
 
-.termino__volver {
+.termino__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.termino__pdf-error {
   margin: 0;
+  color: var(--st-error-fg);
 }
 
 .termino__clasificacion {

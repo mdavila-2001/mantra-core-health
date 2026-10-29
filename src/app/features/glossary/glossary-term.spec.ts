@@ -3,7 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { vi } from 'vitest';
 
+import { GlossaryPdfService } from './glossary-pdf.service';
 import { GlossaryTerm } from './glossary-term';
 
 /**
@@ -676,5 +678,44 @@ describe('GlossaryTerm', () => {
     const fuente = html().querySelector('[data-testid="termino-fuente-definicion"]');
     expect(fuente?.textContent).toContain('MedlinePlus en español');
     expect(fuente?.textContent).toContain('30/09/2026');
+  });
+
+  describe('descarga de la ficha en PDF', () => {
+    const botonPdf = () =>
+      [...html().querySelectorAll<HTMLButtonElement>('button')].find((b) =>
+        (b.textContent ?? '').includes('Descargar ficha en PDF'),
+      );
+
+    it('no ofrece el botón hasta que la ficha llegó', () => {
+      peticion();
+      expect(botonPdf()).toBeUndefined();
+    });
+
+    it('con la ficha leída, el botón baja el PDF con la ficha y su artículo (aquí, sin artículo)', async () => {
+      const download = vi.spyOn(TestBed.inject(GlossaryPdfService), 'download').mockResolvedValue();
+      peticion().flush(FICHA);
+      await harness.fixture.whenStable();
+
+      expect(botonPdf()).toBeDefined();
+      botonPdf()?.click();
+      await harness.fixture.whenStable();
+
+      expect(download).toHaveBeenCalledTimes(1);
+      expect(download.mock.calls[0]?.[0].conceptId).toBe(FICHA.conceptId);
+      expect(download.mock.calls[0]?.[1]).toBeNull();
+      expect(html().querySelector('.termino__pdf-error')).toBeNull();
+    });
+
+    it('si el PDF falla, lo dice en usted y la ficha sigue a la vista', async () => {
+      vi.spyOn(TestBed.inject(GlossaryPdfService), 'download').mockRejectedValue(new Error('x'));
+      peticion().flush(FICHA);
+      await harness.fixture.whenStable();
+
+      botonPdf()?.click();
+      await harness.fixture.whenStable();
+
+      expect(html().querySelector('.termino__pdf-error')?.textContent).toContain('Vuelva a intentarlo');
+      expect(html().textContent).toContain('Hipertensión esencial');
+    });
   });
 });
