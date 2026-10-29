@@ -4,9 +4,9 @@
   gap: var(--sp-3, 0.75rem);
   padding: var(--sp-3, 0.75rem) var(--sp-4, 1rem);
   border-radius: var(--r-md, 8px);
-  border: 1px solid var(--st-info-bd, #93c5fd);
-  background: var(--st-info-bg, #eff6ff);
-  color: var(--st-info-fg, #1e3a8a);
+  border: 1px solid var(--st-info-bd);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
   font-family: var(--font-body, system-ui, sans-serif);
   font-size: var(--fs-body, 0.875rem);
   line-height: var(--lh-body, 1.4);
@@ -18,11 +18,12 @@
   display: flex;
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--st-info-fg, #1e3a8a);
+  color: var(--st-info-fg);
 }
 
 .onboarding-draft-banner__content {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--sp-2, 0.5rem);
@@ -44,17 +45,18 @@
 
 .onboarding-draft-banner__title {
   font-weight: 600;
-  color: var(--st-info-fg, #1e3a8a);
+  color: var(--st-info-fg);
 }
 
 .onboarding-draft-banner__details {
   font-size: 0.8125rem;
-  color: var(--color-text-secondary, #475569);
+  color: var(--st-info-fg);
 }
 
 .onboarding-draft-banner__actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--sp-2, 0.5rem);
   flex-shrink: 0;
   margin-top: var(--sp-1, 0.25rem);
