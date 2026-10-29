@@ -10,6 +10,7 @@ import { admissionFileDescriptor, registerAdmissionFile } from '../fixtures/admi
 import {
   APROBADOR,
   OTRO_REVISOR,
+  huella,
   PLANTILLA_ALTA_DE_DOCTOR,
   PLAZO_INFORMACION_DIAS,
   REVISOR_ADMIN,
@@ -116,6 +117,33 @@ export function crearAdmisionDeAltaDeDoctor(datos: {
   filas.agregar({ ...fila, id: nuevoId('adm') });
 }
 
+/**
+ * Para las pruebas y las demostraciones: el médico reemplaza el archivo de un
+ * requisito mientras el revisor lo mira. Cambia la huella sin subir la versión
+ * de la admisión, que es justo el caso que la huella existe para detectar.
+ */
+export function reemplazarEvidencia(admissionId: string, requirementCode: string): boolean {
+  const fila = filas.get(admissionId);
+  if (fila === undefined) return false;
+  const nueva = huella(requirementCode, ahora(), 'reemplazo');
+  const requisitos = (fila.requirements ?? []).map((r) => (r.code === requirementCode ? { ...r, evidenceSha256: nueva } : r));
+  const documentos = (fila.documents ?? []).map((d) => (d.requirementCode === requirementCode ? { ...d, evidenceSha256: huella(d.fileId, nueva) } : d));
+  filas.agregar({ ...fila, requirements: requisitos, documents: documentos });
+  return true;
+}
+
+/**
+ * Para las demostraciones: sube la versión de una admisión como si otra
+ * persona la hubiera modificado, para ver el aviso de «otra persona modificó
+ * esta admisión» (409) sin necesitar dos sesiones.
+ */
+export function tocarVersion(admissionId: string): boolean {
+  const fila = filas.get(admissionId);
+  if (fila === undefined) return false;
+  filas.agregar({ ...fila, rowVersion: fila.rowVersion + 1 });
+  return true;
+}
+
 /** Para las pruebas: vuelve a la semilla. */
 export function reiniciarAdmisiones(): void {
   for (const f of filas.todos()) filas.borrar(f.id);
@@ -201,6 +229,12 @@ function accionesPara(fila: FilaAdmision, user: MockUser): AdmissionAllowedActio
   ];
 }
 
+/** Quien tiene rol de admisiones y es el propio profesional no revisa su solicitud. */
+const esPropia = (fila: FilaAdmision, user: MockUser | null): boolean =>
+  user !== null && fila.practitionerUserId === user.id;
+
+const AUTOACCESO = 'No puede revisar su propia solicitud.';
+
 function aResumen(fila: FilaAdmision): WireAdmissionSummary {
   return {
     id: fila.id,
@@ -278,6 +312,7 @@ interface Contexto {
 function contexto(request: MockRequest): Contexto | MockReply {
   const fila = filas.get(request.params['id']!);
   if (fila === undefined) return notFound('No encontrado');
+  if (esPropia(fila, request.user)) return prohibido('ADMISSION_SELF_ACCESS', AUTOACCESO);
   return { fila, body: cuerpo<Record<string, unknown>>(request) };
 }
 
@@ -369,6 +404,11 @@ const esMotivo = (valor: unknown): valor is { code: string | null; text: string;
 /* ---- rutas ----------------------------------------------------------------- */
 
 export function registrarAdmisiones(router: MockRouter): void {
+  // Solo en el simulador y solo en el navegador: palancas para recorrer a mano
+  // los dos conflictos (versión vieja y evidencia cambiada).
+  if (typeof window !== 'undefined') {
+    (window as unknown as { __mockAdmisiones?: unknown }).__mockAdmisiones = { reemplazarEvidencia, tocarVersion };
+  }
   const listar = (request: MockRequest, q: string, filtros: URLSearchParams): MockReply | unknown => {
     if (!conRol(request.user, ROL_REVISOR, ROL_APROBADOR, 'SECURITY_ADMIN')) {
       return rolFaltante(ROL_REVISOR, 'Su cuenta no puede ver las admisiones.');
@@ -377,6 +417,8 @@ export function registrarAdmisiones(router: MockRouter): void {
     const asignado = filtros.get('assignedTo');
     const soloVencidas = filtros.get('overdue') === 'true';
     const base = filas.todos().filter((f) => {
+      // Su propia solicitud no aparece en su bandeja.
+      if (esPropia(f, request.user)) return false;
       if (tipo !== null && tipo !== '' && f.type.code !== tipo) return false;
       if (asignado === 'none' && f.assignedTo !== null) return false;
       if (asignado !== null && asignado !== '' && asignado !== 'none' && f.assignedTo?.id !== asignado) return false;
@@ -449,7 +491,6 @@ export function registrarAdmisiones(router: MockRouter): void {
     const mala = transicion(c.fila, ['SUBMITTED'], 'tomar');
     if (mala !== null) return mala;
     const user = request.user!;
-    if (user.id === c.fila.practitionerUserId) return prohibido('ADMISSION_FOUR_EYES', 'No puede revisar su propia admisión.');
     return aDetalle(
       guardar(c.fila, { status: estado('IN_REVIEW'), assignedTo: actorDe(user), claimedById: user.id }, {
         type: 'CLAIMED', fromStatus: 'SUBMITTED', toStatus: 'IN_REVIEW', actor: actorDe(user),
@@ -548,6 +589,15 @@ export function registrarAdmisiones(router: MockRouter): void {
     if (decision !== 'VERIFIED' && decision !== 'REJECTED' && decision !== 'INFO_REQUIRED') {
       return rechazo(412, 'ADMISSION_INVALID_DECISION', 'La decisión sobre el requisito no es válida.');
     }
+    // La huella de lo que el revisor tenía en pantalla: obligatoria al verificar.
+    const vista = c.body['evidenceSha256'];
+    if (decision === 'VERIFIED' && (typeof vista !== 'string' || vista === '')) {
+      return rechazo(412, 'ADMISSION_EVIDENCE_REQUIRED', 'Falta la huella de la evidencia que revisó.', { requirementId: requisito.id });
+    }
+    if (typeof vista === 'string' && vista !== '' && vista !== requisito.evidenceSha256) {
+      // El médico cambió el documento mientras se lo miraba: no se decide a ciegas.
+      return rechazo(409, 'ADMISSION_EVIDENCE_CHANGED', 'El profesional cambió este documento; revíselo de nuevo.', { requirementId: requisito.id });
+    }
     let cambios: Partial<(typeof requisito)>;
     let sourceLabel: string | null = null;
     if (decision === 'VERIFIED') {
@@ -625,31 +675,36 @@ export function registrarAdmisiones(router: MockRouter): void {
     );
   });
 
-  for (const [ruta, desde, hacia, tipo, verbo, conCodigo] of [
-    ['suspend', 'VERIFIED', 'SUSPENDED', 'SUSPENDED', 'suspender', true],
-    ['reinstate', 'SUSPENDED', 'VERIFIED', 'REINSTATED', 'reponer', false],
-  ] as const) {
-    router.post(`/admissions/:id/${ruta}`, (request) => {
-      if (!conRol(request.user, ROL_APROBADOR)) {
-        return rolFaltante(ROL_APROBADOR, `Para ${verbo} una admisión hace falta el rol «Aprobación de admisiones».`);
-      }
-      const c = contexto(request);
-      if (esRespuesta(c)) return c;
-      const stale = obsoleta(c);
-      if (stale !== null) return stale;
-      const mala = transicion(c.fila, [desde], verbo);
-      if (mala !== null) return mala;
-      const motivo = validarMotivo(c.body, conCodigo);
-      if (!esMotivo(motivo)) return motivo;
-      return aDetalle(
-        guardar(c.fila, { status: estado(hacia), decisionReasonText: ruta === 'suspend' ? motivo.text : null }, {
-          type: tipo, fromStatus: desde, toStatus: hacia, actor: actorDe(request.user!),
-          reasonCode: motivo.code, reasonText: motivo.text, internalNote: motivo.note,
-        }),
-        request.user!,
-      );
-    });
-  }
+  const cambiarEstado = (
+    ruta: 'suspend' | 'reinstate',
+    desde: string,
+    hacia: string,
+    tipo: string,
+    verbo: string,
+    conCodigo: boolean,
+  ) => (request: MockRequest): MockReply | unknown => {
+    if (!conRol(request.user, ROL_APROBADOR)) {
+      return rolFaltante(ROL_APROBADOR, `Para ${verbo} una admisión hace falta el rol «Aprobación de admisiones».`);
+    }
+    const c = contexto(request);
+    if (esRespuesta(c)) return c;
+    const stale = obsoleta(c);
+    if (stale !== null) return stale;
+    const mala = transicion(c.fila, [desde], verbo);
+    if (mala !== null) return mala;
+    const motivo = validarMotivo(c.body, conCodigo);
+    if (!esMotivo(motivo)) return motivo;
+    return aDetalle(
+      guardar(c.fila, { status: estado(hacia), decisionReasonText: ruta === 'suspend' ? motivo.text : null }, {
+        type: tipo, fromStatus: desde, toStatus: hacia, actor: actorDe(request.user!),
+        reasonCode: motivo.code, reasonText: motivo.text, internalNote: motivo.note,
+      }),
+      request.user!,
+    );
+  };
+
+  router.post('/admissions/:id/suspend', cambiarEstado('suspend', 'VERIFIED', 'SUSPENDED', 'SUSPENDED', 'suspender', true));
+  router.post('/admissions/:id/reinstate', cambiarEstado('reinstate', 'SUSPENDED', 'VERIFIED', 'REINSTATED', 'reponer', false));
 
   /* ---- lo que ve el propio médico ------------------------------------------ */
 
