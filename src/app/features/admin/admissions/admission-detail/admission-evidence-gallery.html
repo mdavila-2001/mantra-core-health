@@ -1,0 +1,177 @@
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+<section
+  class="galeria"
+  [class.galeria--ampliada]="expanded()"
+  role="region"
+  aria-roledescription="carrusel"
+  aria-label="Evidencia subida por el médico"
+  data-testid="evidence-gallery"
+  (keydown)="onKeydown($event)"
+>
+  @if (documents().length === 0) {
+    <app-empty-state
+      title="Este médico no subió documentos"
+      description="Los requisitos se contrastan solo con los datos del formulario. Si hace falta evidencia, pídasela con «Pedir información»."
+    />
+  } @else {
+    <div class="galeria__filtros">
+      <label class="galeria__filtro">
+        <span>Requisito</span>
+        <select data-testid="gallery-filter-requirement" [value]="requirementFilter()" (change)="onRequirementFilter($event)">
+          <option value="">Todos</option>
+          @for (opcion of requirementOptions(); track opcion.code) {
+            <option [value]="opcion.code">{{ opcion.label }}</option>
+          }
+        </select>
+      </label>
+      <label class="galeria__filtro">
+        <span>Estado</span>
+        <select data-testid="gallery-filter-state" [value]="stateFilter()" (change)="onStateFilter($event)">
+          <option value="">Todos</option>
+          @for (opcion of stateOptions; track opcion.code) {
+            <option [value]="opcion.code">{{ opcion.label }}</option>
+          }
+        </select>
+      </label>
+      <p class="galeria__contador" aria-live="polite" data-testid="gallery-counter">
+        @if (total() > 0) {
+          {{ index() + 1 }} de {{ total() }}
+        } @else {
+          0 de 0
+        }
+      </p>
+      @if (!expanded()) {
+        <button app-button type="button" variant="secondary" size="sm" data-testid="gallery-expand" (clicked)="expand.emit()">
+          Ampliar
+        </button>
+      } @else {
+        <button app-button type="button" variant="secondary" size="sm" data-testid="gallery-collapse" (clicked)="closeExpanded.emit()">
+          Cerrar vista ampliada
+        </button>
+      }
+    </div>
+
+    @if (current(); as item) {
+      <div class="galeria__cuerpo">
+        <div class="galeria__visor" (touchstart)="touchStart($event)" (touchend)="touchEnd($event)">
+          <button
+            app-button
+            type="button"
+            variant="neutral"
+            [iconOnly]="true"
+            class="galeria__flecha galeria__flecha--prev"
+            aria-label="Documento anterior"
+            data-testid="gallery-prev"
+            [disabled]="index() === 0"
+            (clicked)="move(-1)"
+          >
+            <app-nav-icon name="arrow-left" />
+          </button>
+          <app-admission-document-viewer [admissionId]="admissionId()" [document]="item.document" />
+          <button
+            app-button
+            type="button"
+            variant="neutral"
+            [iconOnly]="true"
+            class="galeria__flecha galeria__flecha--next"
+            aria-label="Documento siguiente"
+            data-testid="gallery-next"
+            [disabled]="index() >= total() - 1"
+            (clicked)="move(1)"
+          >
+            <app-nav-icon name="arrow-right" />
+          </button>
+        </div>
+
+        <aside class="galeria__ficha" aria-label="Detalle del documento" data-testid="gallery-info">
+          <p class="galeria__requisito" data-testid="gallery-requirement">
+            {{ item.requirement?.label ?? 'Requisito sin identificar' }}
+            @if (item.requirement?.mandatory) {
+              <span class="galeria__obligatorio">Obligatorio</span>
+            }
+          </p>
+          <h3 class="galeria__nombre" data-testid="gallery-name">{{ item.document.name }}</h3>
+          <dl class="galeria__datos">
+            <div><dt>Tipo</dt><dd>{{ typeLabel(item.document) }}</dd></div>
+            <div><dt>Tamaño</dt><dd>{{ sizeLabel(item.document) }}</dd></div>
+            <div>
+              <dt>Huella SHA-256</dt>
+              <dd><code class="galeria__huella" [attr.title]="item.document.evidenceSha256" data-testid="gallery-hash">{{ hash(item.document) }}</code></dd>
+            </div>
+            <div>
+              <dt>Subido</dt>
+              <dd>
+                @if (item.document.uploadedAt) {
+                  {{ item.document.uploadedAt | date: 'dd/MM/yyyy HH:mm' }}
+                } @else {
+                  Sin fecha registrada
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Estado de la revisión</dt>
+              <dd>
+                <span class="estado" [attr.data-estado]="statusKey(item)" data-testid="gallery-status">
+                  <span class="estado__punto" aria-hidden="true"></span>{{ statusLabel(item) }}
+                </span>
+              </dd>
+            </div>
+          </dl>
+
+          @if (item.requirement; as requisito) {
+            @if (item.item?.evidenceChanged) {
+              <p class="galeria__motivo" role="status" data-testid="gallery-evidence-changed">
+                El médico cambió esta ficha después de la última revisión: revísela de nuevo.
+              </p>
+            }
+            @if (item.item?.reasonText; as motivo) {
+              <p class="galeria__motivo">Motivo: {{ motivo }}</p>
+            }
+            <div class="galeria__acciones">
+              @if (canReview()) {
+                <button app-button type="button" variant="primary" size="sm" [disabled]="busy() || !reviewable(item.item)" data-testid="gallery-verify" (clicked)="decide('VERIFIED')">
+                  Verificar
+                </button>
+                <button app-button type="button" variant="danger" size="sm" [disabled]="busy() || !reviewable(item.item)" data-testid="gallery-reject" (clicked)="decide('REJECTED')">
+                  Rechazar
+                </button>
+                <button app-button type="button" variant="secondary" size="sm" [disabled]="busy() || !reviewable(item.item)" data-testid="gallery-info-required" (clicked)="decide('INFO_REQUIRED')">
+                  Pedir información
+                </button>
+              }
+              <button app-button type="button" variant="ghost" size="sm" data-testid="gallery-show-field" (clicked)="showField.emit(requisito.code)">
+                Ver el campo en el formulario
+              </button>
+            </div>
+          }
+        </aside>
+      </div>
+    } @else {
+      <div class="galeria__vacio" data-testid="gallery-no-match">
+        <p>Ningún documento coincide con el filtro.</p>
+        <button app-button type="button" variant="secondary" size="sm" (clicked)="clearFilters()">Quitar filtros</button>
+      </div>
+    }
+
+    <ul class="galeria__tira" aria-label="Miniaturas de los documentos" data-testid="gallery-strip">
+      @for (item of items(); track item.document.id; let i = $index) {
+        <li>
+          <button
+            #thumb
+            type="button"
+            class="miniatura"
+            [class.miniatura--activa]="i === index()"
+            [attr.aria-current]="i === index() ? 'true' : null"
+            [attr.aria-label]="'Documento ' + (i + 1) + ' de ' + total() + ': ' + item.document.name + ', ' + statusLabel(item)"
+            [attr.data-estado]="statusKey(item)"
+            (click)="select(item.document.id)"
+          >
+            <span class="miniatura__tipo">{{ shortType(item.document) }}</span>
+            <span class="miniatura__numero">{{ i + 1 }}</span>
+            <span class="miniatura__estado" aria-hidden="true"></span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>
