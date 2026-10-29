@@ -7,6 +7,7 @@ import {
   PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/profiles/profiles.types';
+import { INFRASTRUCTURE_CONTRACT_PENDING_KEYS } from '../../data-access/infrastructure/infrastructure.types';
 import { REFERRAL_CONTRACT_PENDING_KEYS } from '../../data-access/referrals/referrals.types';
 
 /* ============================================================================
@@ -39,4 +40,8 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // A diferencia del resto, el cliente SÍ las manda a la API real — ver
   // `REFERRAL_CONTRACT_PENDING_KEYS` —; se borra al regenerar el contrato.
   'POST /referrals': REFERRAL_CONTRACT_PENDING_KEYS,
+  // Infraestructura hospitalaria (F1, §3 de CONTRATO-F0-F1): el alta de un
+  // espacio gana forma, función, padre y atributos técnicos. Igual que arriba,
+  // el cliente SÍ las manda a la API real; se borra al regenerar el contrato.
+  'POST /sites/:siteId/care-spaces': INFRASTRUCTURE_CONTRACT_PENDING_KEYS,
 };

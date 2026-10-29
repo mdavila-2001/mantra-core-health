@@ -292,6 +292,37 @@ export interface SpaceAttributesInput {
   readonly gln?: string;
 }
 
+/**
+ * Las claves del alta de un espacio que el `openapi.json` de `dev` todavía no
+ * declara: la API de la franja F1 las agrega (§3 del contrato) y el contrato
+ * generado es anterior. Como pasa con `REFERRAL_CONTRACT_PENDING_KEYS`, el
+ * cliente SÍ las manda a la API real; el simulador las acepta hasta que se
+ * regenere el contrato (`yarn contract:refresh`), momento en que este registro
+ * se borra.
+ */
+export const INFRASTRUCTURE_CONTRACT_PENDING_KEYS: readonly string[] = [
+  'formCode',
+  'functionCode',
+  'parentSpaceId',
+  'clinicalUnitId',
+  'description',
+  'capacity',
+  'floorNumber',
+  'areaM2',
+  'asepsisCode',
+  'pressureCode',
+  'airChangesPerHour',
+  'hvacValidatedOn',
+  'sexRestrictionCode',
+  'ageGroupCode',
+  'bedCategoryCode',
+  'censable',
+  'prepMinutes',
+  'cleanupMinutes',
+  'gln',
+  'activate',
+];
+
 /** `POST /sites/:siteId/care-spaces` */
 export interface CreateCareSpaceRequest extends SpaceAttributesInput {
   readonly code: string;
