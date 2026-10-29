@@ -1,7 +1,7 @@
 import { conceptById } from '../fixtures/concepts';
 import { CONCEPT, conversationList, showcaseOf } from '../fixtures/community';
 import { PATIENTS, type PacienteSimulado } from '../fixtures/people';
-import { forbidden, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { forbidden, notFound, preconditionFailed, unprocessable, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { bodyAsQuery, Coleccion, cuerpo, nuevoId, paginar, texto, uuid } from '../mock-store';
 import { perteneceALaAseguradora } from './insurance.handlers';
 
@@ -122,7 +122,7 @@ export function registerInsurerPatients(router: MockRouter, { persistir = true }
     const desde = texto(query, 'birthDateFrom');
     const hasta = texto(query, 'birthDateTo');
     if (desde !== null && hasta !== null && desde > hasta) {
-      return validation('Rango de fechas inválido', [{ field: 'birthDateFrom', message: 'Debe ser anterior o igual a birthDateTo' }]);
+      return unprocessable('Rango de fechas inválido', [{ field: 'birthDateFrom', problem: 'Debe ser anterior o igual a birthDateTo' }]);
     }
 
     const orden = ORDENES[texto(query, 'sortBy') ?? 'fullName'] ?? ORDENES['fullName']!;

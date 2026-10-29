@@ -65,7 +65,6 @@
     "mock:glossary:shards": "node scripts/glossary-shards.mjs",
     "mock:glossary:articles": "node scripts/glossary-articles.mjs",
     "mock:glossary:incoming": "node scripts/glossary-incoming-index.mjs",
-    "mock:glossary:articles": "node scripts/glossary-articles.mjs",
     "mock:anatomy": "node scripts/gen-anatomy-fixture.mjs",
     "mock:anatomy-ontology": "node scripts/gen-anatomy-ontology-fixture.mjs",
     "mock:institutions": "node scripts/gen-institutions-fixture.mjs",

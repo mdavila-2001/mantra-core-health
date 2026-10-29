@@ -535,6 +535,16 @@ export function registrarTerminologia(
     }
   });
 
+  // Alias de la ruta anterior (`/article`): la maqueta la sigue sirviendo.
+  router.get('/terminology/concepts/:id/article', async ({ params }) => {
+    try {
+      const article = await glosario.articulo(params['id']!);
+      return article ?? notFound('El término no tiene artículo');
+    } catch (error: unknown) {
+      return glosarioNoDisponible(error);
+    }
+  });
+
   router.get('/terminology/concepts/:id', async ({ params }) => {
     const c = conceptById(params['id']!);
     if (c === undefined) {

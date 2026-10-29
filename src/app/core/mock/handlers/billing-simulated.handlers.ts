@@ -40,6 +40,7 @@ import {
   preconditionFailed,
   reply,
   unauthorized,
+  unprocessable,
   validation,
   type MockReply,
   type MockRequest,
@@ -255,7 +256,7 @@ export function registrarFacturacionSimulada(router: MockRouter, opciones: Opcio
     if (cobro === null || cobro.source !== 'CONSULTATION' || cobro.patientProfileId !== paciente) return notFound('El cobro no existe');
     const comprobante = comprobanteDelCuerpo(cuerpo<{ proof: unknown }>(request));
     if (comprobante !== undefined && 'problem' in comprobante) {
-      return validation('El comprobante no es válido', [{ field: 'proof', message: comprobante.problem }]);
+      return unprocessable('El comprobante no es válido', [{ field: 'proof', problem: comprobante.problem }]);
     }
     return aRespuesta(facturacion().informarPagoDelPaciente(cobro.id, comprobante), 201);
   });
