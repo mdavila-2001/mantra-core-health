@@ -18,9 +18,7 @@
       <p class="receipts__payment" data-testid="payment-receipts-payment-state">
         <span class="receipts__payment-label">Estado del pago de la cita</span>
         @if (currentPaymentState(); as state) {
-          <app-badge [variant]="state.state === 'PAID' ? 'success' : 'warning'">{{
-            state.label
-          }}</app-badge>
+          <app-badge [variant]="state.state === 'PAID' ? 'success' : 'warning'">{{ state.label }}</app-badge>
           @if (state.insuranceUsed) {
             <span class="receipts__payment-note">con seguro</span>
           }

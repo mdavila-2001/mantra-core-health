@@ -244,7 +244,9 @@ export class PaymentReceiptsDialog implements OnInit {
   }
 
   private focusInRow(receiptId: string, selector: string): void {
-    this.afterRender(() => this.query(`[data-receipt-id="${receiptId}"] ${selector}`)?.focus());
+    this.afterRender(() =>
+      this.query(`[data-receipt-id="${receiptId}"] ${selector}`)?.focus(),
+    );
   }
 
   private afterRender(task: () => void): void {
