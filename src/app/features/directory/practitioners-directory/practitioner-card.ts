@@ -99,13 +99,10 @@ export function toResultado(
   }
 
   const sellos = [];
-  // El sello de matrícula verificada, primero: es lo que distingue a quien
-  // probó lo que declara del resto del padrón, y la guía los lista a todos.
-  // Sólo se marca al verificado: estampar «sin verificar» a quien todavía no
-  // pasó por el trámite dice de él algo que no es suyo.
-  if (fila.verified) {
-    sellos.push({ label: 'Matrícula verificada', tone: 'ok' as const });
-  }
+  // La verificación ya no es un sello de texto: la dice la insignia junto al nombre
+  // (`verification`), una sola fuente visual. Antes había acá un «Matrícula verificada»
+  // que repetía —y podía contradecir— a la insignia.
+  const verificacion = verificationOf(fila);
   // La disponibilidad para pacientes nuevos ya no se estampa: el sello salía en
   // TODA tarjeta, también en la de quien nunca tocó el ajuste, y el valor por
   // defecto anunciaba «No toma pacientes nuevos» de profesionales que sí los
@@ -140,7 +137,7 @@ export function toResultado(
       : {}),
     // El check azul junto al nombre: lo decide la API (`verification`, o `verified`
     // en una API que todavía no lo envía). Acá sólo se traduce.
-    verification: verificationOf(fila),
+    verification: verificacion,
     meta,
     seals: sellos,
   };

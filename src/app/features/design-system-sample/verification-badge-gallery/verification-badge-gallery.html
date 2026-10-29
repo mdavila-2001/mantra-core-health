@@ -1,0 +1,42 @@
+<section class="showroom-section" data-testid="showroom-verification-badge">
+    <h2>03b · Insignia de verificación</h2>
+    <p class="sandbox-note">
+        <code>app-verification-badge</code>: el sello de AloVida junto al nombre. El estado
+        lo decide la API; la insignia sólo lo pinta. <strong>Sólo <code>VERIFIED</code>
+        lleva tilde</strong>; «en verificación» es un reloj ámbar, «vencida» un
+        pictograma gris, y «suspendida» o «no verificada» no dibujan ningún glifo. Se abre
+        con foco, hover o clic, y se cierra con Esc.
+    </p>
+
+    <h3>Estados · variante icono</h3>
+    <div class="sandbox-grid">
+        @for (status of verificationStatuses; track status) {
+            <span class="sandbox-verification">
+                <code>{{ status }}</code>
+                <app-verification-badge
+                    [status]="status"
+                    subject="Dra. Ana Rojas"
+                    verifiedAt="2026-03-12"
+                    validUntil="2099-03-12"
+                />
+            </span>
+        }
+    </div>
+
+    <h3>Estados · variante con texto</h3>
+    <div class="sandbox-grid">
+        @for (status of verificationStatuses; track status) {
+            <app-verification-badge [status]="status" variant="label" />
+        }
+    </div>
+
+    <h3>Tamaños, junto a un nombre</h3>
+    <div class="sandbox-grid">
+        @for (size of verificationSizes; track size) {
+            <span class="sandbox-verification-name" [class]="'sandbox-verification-name--' + size">
+                Dra. Ana Rojas
+                <app-verification-badge status="VERIFIED" [size]="size" subject="Dra. Ana Rojas" />
+            </span>
+        }
+    </div>
+</section>

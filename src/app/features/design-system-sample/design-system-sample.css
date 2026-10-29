@@ -182,20 +182,3 @@
     font-size: var(--fs-caption);
     line-height: var(--lh-caption);
 }
-.sandbox-verification {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-2);
-}
-
-.sandbox-verification-name {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-1);
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.sandbox-verification-name--sm { font-size: var(--fs-body); }
-.sandbox-verification-name--md { font-size: var(--fs-body-lg); }
-.sandbox-verification-name--lg { font-size: var(--fs-h3); }

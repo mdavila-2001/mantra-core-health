@@ -19,12 +19,6 @@ export interface ProfesionalSimulado {
   readonly tenantId: string;
   readonly organizacion: string;
   readonly verified: boolean;
-  /**
-   * El estado de verificación cuando NO es «verificado»: `IN_REVIEW` (el
-   * trámite está en curso) o los que la API distingue además. Ausente = no
-   * verificado y sin trámite. Sólo se mira si `verified` es `false`.
-   */
-  readonly verificationStatus?: 'IN_REVIEW' | 'SUSPENDED' | 'EXPIRED';
   readonly acceptsNewPatients: boolean;
   readonly telehealthAvailable: boolean;
   readonly ratingAverage: number;

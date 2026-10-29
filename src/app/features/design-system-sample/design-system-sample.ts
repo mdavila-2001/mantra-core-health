@@ -1,6 +1,3 @@
-import { VerificationBadge } from '../../shared/components/atoms/verification-badge/verification-badge';
-import { VERIFICATION_BADGE_SIZES } from '../../shared/components/atoms/verification-badge/verification-badge.types';
-import { VERIFICATION_STATUSES } from '../../core/verification/verification-status';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -79,6 +76,7 @@ import {
   PERSISTENT_DEMO_TOAST,
 } from '../../core/dev/toast-samples';
 import { OrganismsGallery } from './organisms-gallery/organisms-gallery';
+import { VerificationBadgeGallery } from './verification-badge-gallery/verification-badge-gallery';
 import { ViewStateGallery } from './view-state-gallery/view-state-gallery';
 
 const DEMO_LOADING_MS = 1500;
@@ -92,7 +90,6 @@ const DEMO_UPLOAD_STEP = 12;
     Avatar,
     AvatarGroup,
     Badge,
-    VerificationBadge,
     AppButton,
     AppButtonLink,
     Input,
@@ -128,6 +125,7 @@ const DEMO_UPLOAD_STEP = 12;
     EmptyState,
     Accordion,
     AccordionPanel,
+    VerificationBadgeGallery,
     ViewStateGallery,
     OrganismsGallery,
     ReactiveFormsModule,
@@ -139,9 +137,6 @@ const DEMO_UPLOAD_STEP = 12;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DesignSystemSample {
-  protected readonly verificationStatuses = VERIFICATION_STATUSES;
-  protected readonly verificationSizes = VERIFICATION_BADGE_SIZES;
-
   private readonly themeService = inject(ThemeService);
   private readonly dialogs = inject(DialogService);
 

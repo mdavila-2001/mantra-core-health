@@ -14,6 +14,14 @@
  *                  sello dibujado a mano.
  *   R3 · trazo   — el contorno del escudo del átomo copiado en otro archivo.
  *   R4 · clase   — una clase propia cuyo nombre dice verified/verificado/a.
+ *   R5 · chip    — un `<app-status-seal>` (el chip del estado de un trámite) cuyo
+ *                  `variant` o `label` se arma con la verificación del profesional
+ *                  (`verificacion`, `verification`, «habilitación»): una segunda
+ *                  fuente visual del mismo estado, que además puede contradecir
+ *                  a la insignia (un «?» junto a «Verificado», «Pendiente» junto
+ *                  al reloj de «en verificación»).
+ *   R6 · rótulo  — un sello de texto «Verificado» / «Matrícula verificada» armado
+ *                  a mano (`label: 'Verificado'`) para un resultado.
  *
  * Es análisis de texto, sin dependencias, y sólo mira lo que se puede mirar:
  * cuando una regla duda, avisa de más (nunca de menos).
@@ -111,6 +119,20 @@ export function findViolations(ruta, texto) {
       agregar('R2 svg de sello', linea, contexto.replace(/\s+/g, ' '));
     }
   }
+
+  // R5 · chip de trámite que dice la verificación del profesional
+  for (const m of texto.matchAll(/<app-status-seal\b[^>]*>/gi)) {
+    if (/\[(?:variant|label)\]\s*=\s*"[^"]*(?:verificacion|verification|habilitaci)/i.test(m[0])) {
+      agregar('R5 chip de estado', texto.slice(0, m.index).split('\n').length, m[0].replace(/\s+/g, ' '));
+    }
+  }
+
+  // R6 · sello de texto «Verificado» armado a mano
+  lineas.forEach((l, i) => {
+    if (/\blabel\s*:\s*'(?:Matr[ií]cula verificada|Verificad[oa])'/.test(l)) {
+      agregar('R6 rótulo de texto', i + 1, l);
+    }
+  });
 
   // R3 · el contorno del átomo copiado
   const trazo = texto.indexOf(SEAL_PATH_PREFIX);

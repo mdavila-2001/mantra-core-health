@@ -321,6 +321,7 @@ export type DesignToken =
   | StatusToken
   | BrandToneToken
   | HeatToken
+  | VerifiedToken
   | EffectToken
   | SpacingToken
   | RadiusToken
@@ -390,6 +391,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
     STATUS_SLOTS.map((slot): BrandToneToken => `--st-${tone}-${slot}`),
   ),
   ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
+  ...Object.values(VERIFIED),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),

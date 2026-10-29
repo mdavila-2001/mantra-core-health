@@ -414,7 +414,10 @@ describe('PractitionersDirectory', () => {
     const conSello = todos.find((p) => p.id === 'per-1');
     const sinSello = todos.find((p) => p.id === 'per-2');
 
-    expect(conSello?.seals?.map((s) => s.label)).toContain('Matrícula verificada');
+    // La verificación la dice la insignia (`verification`), no un sello de texto.
+    expect(conSello?.verification?.status).toBe('VERIFIED');
+    expect(conSello?.seals?.map((s) => s.label) ?? []).not.toContain('Matrícula verificada');
+    expect(sinSello?.verification?.status).toBe('UNVERIFIED');
     // Al pendiente no se le estampa «sin verificar»: eso diría de él algo que
     // no es suyo, y el padrón lo publica igual.
     expect(sinSello?.seals?.map((s) => s.label) ?? []).not.toContain('Matrícula verificada');
@@ -714,8 +717,13 @@ describe('PractitionersDirectory', () => {
     // anunciaba «No toma pacientes nuevos» de gente que sí los toma.
     expect(sellos('Acepta pacientes nuevos')).toBe(false);
     expect(sellos('No toma pacientes nuevos')).toBe(false);
-    // Los sellos que sí distinguen siguen en pie.
-    expect(sellos('Matrícula verificada')).toBe(true);
+    // La verificación ya no es un sello de texto sino la insignia junto al nombre.
+    expect(sellos('Matrícula verificada')).toBe(false);
+    expect(
+      grupos()
+        .flatMap((g) => g.profesionales)
+        .some((p) => p.verification?.status === 'VERIFIED'),
+    ).toBe(true);
   });
 
   it('el clic lleva a la ficha del profesional', () => {

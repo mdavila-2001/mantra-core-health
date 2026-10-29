@@ -25,7 +25,7 @@ import { reservas } from '../fixtures/agenda';
 import { encounterList } from '../fixtures/clinic';
 import { encuentroDeReserva, profesionalDeReserva } from '../fixtures/atencion-resenable';
 import { STATUS } from '../fixtures/concepts';
-import { professionalById, verificationBodyOf } from '../fixtures/people';
+import { showcaseVerification } from '../fixtures/verification-body';
 import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
 import { conflict, forbidden, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
@@ -117,7 +117,7 @@ function perfilPublico(v: SimulatedShowcase) {
     verificationStatusConceptId: v.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-UNVERIFIED']!,
     acceptsReviews: v.acceptsReviews,
     statusConceptId: STATUS['ST-ACTIVE']!,
-    ...verificacionDeVitrina(v),
+    ...showcaseVerification(v),
     badges: v.verified ? [{ id: uuid(`badge-${v.id}`), badgeTypeConceptId: CONCEPT.badgeVerified, verificationMethodConceptId: CONCEPT.badgeMethod, validFrom: iso(-300), validTo: null }] : [],
     prestige: v.kind === 'PRACTITIONER' ? { totalPoints: String(120 + v.seguidores * 3), levelConceptId: CONCEPT.prestigeLevel, rankPosition: 1 + (v.seguidores % 40), calculatedAt: iso(-1) } : null,
   };
@@ -200,13 +200,6 @@ function hiloDeComentarios(postId: string) {
   return todos.filter((c) => c.parentCommentId === null).map(armar);
 }
 
-/** `verification` sólo para los profesionales (el check azul es de ellos). */
-function verificacionDeVitrina(v: SimulatedShowcase): { verification?: ReturnType<typeof verificationBodyOf> } {
-  if (v.kind !== 'PRACTITIONER') return {};
-  const profesional = professionalById(v.targetId);
-  return profesional === undefined ? {} : { verification: verificationBodyOf(profesional) };
-}
-
 function conversacion(c: { id: string; conversationTypeConceptId: string; groupId: string | null; participantes: readonly string[]; noLeidosPor: Record<string, number> }, yo: string) {
   const delHilo = messageList.filtrar((m) => m.conversationId === c.id).sort((a, b) => a.sentAt.localeCompare(b.sentAt));
   const ultimo = delHilo.at(-1);
@@ -223,7 +216,7 @@ function conversacion(c: { id: string; conversationTypeConceptId: string; groupI
       .map((p) => {
         if (p === SUPPORT_ID) return { profileId: p, displayName: 'Soporte AloVida', avatarUrl: null };
         const v = showcases.get(p);
-        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null, ...(v === undefined ? {} : verificacionDeVitrina(v)) };
+        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null, ...(v === undefined ? {} : showcaseVerification(v)) };
       }),
   };
 }

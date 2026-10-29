@@ -26,8 +26,8 @@ import {
   type SimulatedAffiliation,
   type PacienteSimulado,
   type ProfesionalSimulado,
-  verificationBodyOf,
 } from '../fixtures/people';
+import { verificationBodyOf } from '../fixtures/verification-body';
 import {
   conflict,
   forbidden,

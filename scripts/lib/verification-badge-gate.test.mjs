@@ -46,6 +46,26 @@ test('R4: una clase que sólo contiene la palabra por casualidad no se marca', (
   assert.deepEqual(reglas('src/app/features/x/x.html', '<div class="reverifier-note"></div>'), []);
 });
 
+test('R5: un app-status-seal que dice la verificación del profesional es una segunda fuente visual', () => {
+  const html = '<app-status-seal [variant]="estado.variant" [label]="perfil().verificacion.label" />';
+  assert.deepEqual(reglas('src/app/features/x/x.html', html), ['R5']);
+  assert.deepEqual(
+    reglas('src/app/features/x/x.html', '<app-status-seal [variant]="habilitacion.sello" label="x" />'),
+    ['R5'],
+  );
+});
+
+test('R5: un app-status-seal de un trámite cualquiera no es un hallazgo', () => {
+  const html = '<app-status-seal [variant]="cita.estado.variant" [label]="cita.estado.label" />';
+  assert.deepEqual(reglas('src/app/features/x/x.html', html), []);
+});
+
+test('R6: un sello de texto «Verificado» o «Matrícula verificada» armado a mano se detecta', () => {
+  assert.deepEqual(reglas('src/app/features/x/x.ts', "sellos.push({ label: 'Matrícula verificada', tone: 'ok' });"), ['R6']);
+  assert.deepEqual(reglas('src/app/features/x/x.ts', "{ label: 'Verificado', tone: 'ok' }"), ['R6']);
+  assert.deepEqual(reglas('src/app/features/x/x.ts', "{ label: 'Declarado', tone: 'neutro' }"), []);
+});
+
 test('el átomo, las pruebas, los generados y los mocks están exentos', () => {
   const sucio = '<span class="x-verified">✓ Verificado</span>';
   assert.deepEqual(reglas(`${ATOM_DIR}verification-badge.html`, sucio), []);

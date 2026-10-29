@@ -151,6 +151,16 @@ export function fotoDelResultado(resultado: PublicSearchResult): string | null {
 }
 
 /**
+ * ¿El sello textual «Verificado»? Un profesional se rige por `verification`
+ * (y por su vigencia); el resto, por `verified`.
+ */
+function estaVerificado(resultado: PublicSearchResult): boolean {
+  return resultado.kind === 'PRACTITIONER'
+    ? verificationOf(resultado).status === 'VERIFIED'
+    : resultado.verified;
+}
+
+/**
  * Traduce una fila del directorio a la tarjeta de la maqueta.
  *
  * ## Lo que no inventa
@@ -223,11 +233,16 @@ export function aTarjeta(
     // se le dice a una clínica ni a una farmacia.
     ...(resultado.kind === 'PRACTITIONER' ? { verification: verificationOf(resultado) } : {}),
     meta,
-    seals: [
-      resultado.verified
-        ? { label: 'Verificado', tone: 'ok' as const }
-        : { label: 'Declarado', tone: 'neutro' as const },
-    ],
+    // Un profesional verificado lo dice la insignia junto al nombre: sin un segundo
+    // «Verificado» de texto. Lo no verificado sigue rotulado «Declarado».
+    seals:
+      resultado.kind === 'PRACTITIONER' && estaVerificado(resultado)
+        ? []
+        : [
+            estaVerificado(resultado)
+              ? { label: 'Verificado', tone: 'ok' as const }
+              : { label: 'Declarado', tone: 'neutro' as const },
+          ],
   };
 }
 

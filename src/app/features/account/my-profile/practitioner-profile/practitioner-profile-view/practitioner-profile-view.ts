@@ -1,3 +1,4 @@
+import { splitLastWord } from '../../../../../shared/text/split-last-word';
 import { FileDropTarget } from '../../../../../shared/forms/file-drop-target';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal, viewChild, type OnInit, type TemplateRef } from '@angular/core';
@@ -133,6 +134,9 @@ interface FilaCredencial {
 export class PractitionerProfileView implements OnInit {
   /** El perfil, ya resuelto por el contenedor. */
   readonly perfil = input.required<PerfilProfesionalVisible>();
+
+  /** El nombre con la última palabra aparte: la insignia viaja con ella y no queda sola en una línea. */
+  protected readonly nombreEnDos = computed(() => splitLastWord(this.perfil().nombre));
 
   protected readonly trayectoriaDensa = computed(() =>
     this.perfil().actividadActual.length + this.perfil().experienciaHistorica.length > 5);

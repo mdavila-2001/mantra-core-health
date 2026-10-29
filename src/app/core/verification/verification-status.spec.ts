@@ -151,12 +151,21 @@ describe('verification-status', () => {
   });
 
   describe('vigencia vencida (defensa en profundidad)', () => {
-    const now = new Date(2026, 9, 29, 15, 0);
+    // 15:00 UTC = 11:00 en La Paz, el 29 de octubre
+    const now = new Date(Date.UTC(2026, 9, 29, 15, 0));
 
-    it('la vigencia vale hasta el fin del día indicado, no hasta su medianoche', () => {
+    it('la vigencia vale hasta el fin del día indicado en La Paz, no hasta su medianoche UTC', () => {
       expect(isPastValidity(new Date(2026, 9, 29, 12), now)).toBe(false);
       expect(isPastValidity(new Date(2026, 9, 28, 12), now)).toBe(true);
       expect(isPastValidity(null, now)).toBe(false);
+    });
+
+    it('borde: 23:59 en La Paz sigue vigente y 00:00 del día siguiente ya venció', () => {
+      const hoy = new Date(2026, 9, 29, 12);
+      // 23:59:00 en La Paz = 03:59:00 UTC del día siguiente
+      expect(isPastValidity(hoy, new Date(Date.UTC(2026, 9, 30, 3, 59, 0)))).toBe(false);
+      // 00:00:00 en La Paz del día siguiente = 04:00:00 UTC
+      expect(isPastValidity(hoy, new Date(Date.UTC(2026, 9, 30, 4, 0, 0)))).toBe(true);
     });
 
     it('un VERIFIED con validUntil vencido se degrada a EXPIRED, aunque la API diga VERIFIED', () => {

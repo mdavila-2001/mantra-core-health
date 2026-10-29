@@ -39,6 +39,9 @@ const HOVER_OPEN_DELAY_MS = 200;
 /** Margen para que el puntero viaje del pictograma al popover sin que se cierre (WCAG 1.4.13, «hoverable»). */
 const HOVER_CLOSE_DELAY_MS = 180;
 
+/** Margen tras abrir en el que un scroll/resize no cierra (el foco puede desplazar la página). */
+const VIEWPORT_GRACE_MS = 250;
+
 const POPOVER_GAP_PX = 8;
 const VIEWPORT_MARGIN_PX = 8;
 
@@ -119,7 +122,17 @@ export class VerificationBadge implements OnDestroy {
       this.close();
     }
   };
-  private readonly closeOnViewportChange = (): void => this.close();
+  /**
+   * Un desplazamiento o cambio de tamaño cierra el popover (queda fuera de lugar),
+   * salvo el que provoca el propio foco al traer el botón a la vista, que llega
+   * justo después de abrir.
+   */
+  private readonly closeOnViewportChange = (): void => {
+    if (Date.now() - this.openedAt > VIEWPORT_GRACE_MS) {
+      this.close();
+    }
+  };
+  private openedAt = 0;
 
   /** El estado a pintar: el declarado, salvo un VERIFIED con la vigencia ya vencida. */
   readonly state = computed<VerificationStatus>(() =>
@@ -276,6 +289,7 @@ export class VerificationBadge implements OnDestroy {
       return;
     }
     this.open.set(true);
+    this.openedAt = Date.now();
     this.listenToDocument(true);
     // El popover existe sólo con `open`: se muestra en la capa superior y se
     // ubica cuando el render lo puso en el DOM.
