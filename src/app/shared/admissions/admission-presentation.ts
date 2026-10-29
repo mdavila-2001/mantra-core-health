@@ -61,7 +61,7 @@ export const ADMISSION_STATUS_TABS: readonly { readonly code: AdmissionStatusCod
   { code: 'VERIFIED', label: 'Verificadas' },
   { code: 'REJECTED', label: 'Rechazadas' },
   { code: 'SUSPENDED', label: 'Suspendidas' },
-  { code: 'EXPIRED', label: 'Vencidas' },
+  { code: 'EXPIRED', label: 'Verificación vencida' },
   { code: 'ABANDONED', label: 'Abandonadas' },
   { code: 'WITHDRAWN', label: 'Retiradas' },
 ];
@@ -174,6 +174,11 @@ export function todayIso(now: Date = new Date()): string {
 }
 
 /* ---- formato ------------------------------------------------------------------ */
+
+/** Los primeros caracteres de una huella, para leerla sin ocupar la pantalla. */
+export function shortHash(hash: string | null): string {
+  return hash === null || hash === '' ? 'Sin huella' : `${hash.slice(0, 12)}…`;
+}
 
 export function formatBytes(bytes: number | null): string {
   if (bytes === null) return 'Tamaño desconocido';

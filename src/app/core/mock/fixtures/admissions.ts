@@ -164,6 +164,13 @@ function datosDe(code: string, p: Pick<Persona, 'displayName' | 'matricula' | 'n
   }
 }
 
+/** Una huella de 64 hex, determinista por contenido. No es un SHA-256 real: es la forma del dato. */
+export function huella(...partes: string[]): string {
+  const a = uuid(`sha-a-${partes.join('|')}`).replace(/-/g, '');
+  const b = uuid(`sha-b-${partes.join('|')}`).replace(/-/g, '');
+  return `${a}${b}`.slice(0, 64);
+}
+
 const tipoDeArchivo = (kind: string): string => (kind.startsWith('png') ? 'image/png' : 'application/pdf');
 
 export function requisitosDe(
@@ -192,6 +199,7 @@ export function requisitosDe(
     });
     const revisado = status !== 'PENDING';
     const fuente = TIPO_DE_FUENTE[t.code]!;
+    const datos = datosDe(t.code, p);
     return [
       {
         id: uuid(`adm-req-${clave}-${t.code}`),
@@ -201,7 +209,8 @@ export function requisitosDe(
         mandatory: t.mandatory,
         status,
         documents,
-        data: datosDe(t.code, p),
+        data: datos,
+        evidenceSha256: huella(...documents.map((d) => huella(d.fileId, d.name)), ...datos.map((x) => `${x.label}=${x.value}`)),
         itemRef: t.itemType === undefined ? null : { type: t.itemType, id: uuid(`adm-item-${clave}-${t.code}`) },
         source:
           status === 'VERIFIED'
@@ -241,6 +250,7 @@ export function requisitoConMuchosDocumentos(clave: string, p: Pick<Persona, 'us
     status: 'PENDING',
     documents,
     data: [],
+    evidenceSha256: huella(...documents.map((d) => huella(d.fileId, d.name))),
     itemRef: null,
     source: null,
     reasonCode: null,
@@ -272,6 +282,7 @@ export function documentosDeRequisitos(requisitos: readonly Requisito[], subido:
       uploadedAt: subido,
       pages: d.name.startsWith('titulo') ? 42 : d.mimeType === 'application/pdf' ? 1 : null,
       reviewState: r.status,
+      evidenceSha256: huella(d.fileId, d.name),
     })),
   );
 }
