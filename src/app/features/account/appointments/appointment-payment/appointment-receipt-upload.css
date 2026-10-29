@@ -1,0 +1,16 @@
+/* Sin caja propia: la fila de «Mis citas» es una grilla y el bloque ocupa el
+   renglón entero, como el motivo. Sin nada que ofrecer, no deja un hueco. */
+:host {
+  display: contents;
+}
+
+.receipt-upload {
+  display: grid;
+  gap: var(--sp-3);
+  grid-column: 1 / -1;
+  justify-items: start;
+}
+
+.receipt-upload > app-booking-payment-receipts {
+  justify-self: stretch;
+}
