@@ -195,6 +195,12 @@ const PARES = [
   { tinta: '--focus-ring', fondo: '--bg-inset', nivel: 3 },
   { tinta: '--focus-ring', fondo: MARFIL, nivel: 3, soloEn: 'claro' },
   { tinta: '--brand-primary', fondo: '--bg-surface', nivel: 4.5 },
+  // Texto de peligro (error de campo, asterisco de obligatorio) sobre las
+  // superficies donde vive un formulario. Lo pintaba la rampa fija
+  // `--c-error-500` (2,99:1 en oscuro); el token semántico cambia con el tema.
+  { tinta: '--text-danger', fondo: '--bg-surface', nivel: 4.5 },
+  { tinta: '--text-danger', fondo: '--bg-surface-alt', nivel: 4.5 },
+  { tinta: '--text-danger', fondo: '--bg-inset', nivel: 4.5 },
   // Borde de control: 3:1 (WCAG 1.4.11) contra TODA superficie donde vive un
   // campo. Era la excepción E3 en oscuro (velo al 24 %, 2,15:1); se cerró
   // subiendo el velo al 40 %, y se mide también la superficie alta (peor caso).

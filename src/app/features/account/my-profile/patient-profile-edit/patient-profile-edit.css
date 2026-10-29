@@ -87,7 +87,7 @@
 /* Lo que falta para guardar (el punto del domicilio) o lo que el servidor
    rechazó de una dirección: pegado al mapa al que se refiere. */
 .datos__error {
-  color: var(--c-error-500);
+  color: var(--text-danger);
   font-size: var(--fs-caption);
   margin: 0;
 }
